@@ -6,10 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "cf:dev": "opennextjs-cloudflare preview",
-    "cf:build": "opennextjs-cloudflare build --dangerouslyUseUnsupportedNextVersion",
-    "cf:deploy": "opennextjs-cloudflare build --dangerouslyUseUnsupportedNextVersion && opennextjs-cloudflare deploy"
+    "cf:build": "opennextjs-cloudflare build --dangerouslyUseUnsupportedNextVersion"
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.16.4",
