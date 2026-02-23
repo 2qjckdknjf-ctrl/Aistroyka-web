@@ -1,0 +1,120 @@
+================================================================================
+FULL REPO AUDIT: Supabase cookie adapters & setAll(cookiesToSet) duplicates
+Investigation only — no fixes applied.
+================================================================================
+
+A) REPO ROOT AND STRUCTURE
+---------------------------
+
+1) pwd:
+/Users/alex/Desktop/AISTROYKA/AISTROYKA-WEB
+
+2) git rev-parse --show-toplevel:
+/Users/alex/Desktop/AISTROYKA/AISTROYKA-WEB
+
+3) ls -la (top-level):
+total 224
+drwxr-xr-x@ 37 alex  staff  1184 Feb 23 15:20 .
+drwxr-xr-x@ 16 alex  staff   512 Feb 23 15:20 ..
+-rw-r--r--@  1 alex  staff   288 Feb 23 13:30 .dev.vars 2.example
+-rw-r--r--@  1 alex  staff   288 Feb 23 13:30 .dev.vars.example
+... (app, components, docs, lib, public, scripts, .git, config files, etc.)
+Note: Many " 2" duplicate files at top level (e.g. "middleware 2.ts", "package 2.json").
+
+
+B) ALL CANDIDATE FILES
+----------------------
+
+1) find . -type f -path "*supabase*" -name "server.ts" -print
+   ./lib/supabase/server.ts
+
+2) find . -type f -path "*supabase*" -name "middleware.ts" -print
+   ./lib/supabase/middleware.ts
+
+3) All server/middleware *.ts under supabase (server*.ts, middleware*.ts):
+   find . -type f -path "*supabase*" \( -name "server*.ts" -o -name "middleware*.ts" \) -print
+   ./lib/supabase/middleware.ts
+   ./lib/supabase/middleware 2.ts
+   ./lib/supabase/server 2.ts
+   ./lib/supabase/server.ts
+
+4) rg -n "setAll\\(cookiesToSet" .  (in .ts files only)
+   ./lib/supabase/server.ts:19:        setAll(cookiesToSet: CookieToSet[]) {
+   ./lib/supabase/middleware.ts:22:        setAll(cookiesToSet: CookieToSet[]) {
+   ./lib/supabase/server 2.ts:17:        setAll(cookiesToSet) {
+   ./lib/supabase/middleware 2.ts:20:        setAll(cookiesToSet) {
+
+5) rg -n "create(Server|Middleware)Client" .
+   ./lib/supabase/server.ts:1:import { createServerClient } from "@supabase/ssr";
+   ./lib/supabase/server.ts:11:  return createServerClient(
+   ./lib/supabase/middleware.ts:1:import { createServerClient } from "@supabase/ssr";
+   ./lib/supabase/middleware.ts:14:  const supabase = createServerClient(
+   ./lib/supabase/server 2.ts:1:import { createServerClient } from "@supabase/ssr";
+   ./lib/supabase/server 2.ts:9:  return createServerClient(
+   ./lib/supabase/middleware 2.ts:1:import { createServerClient } from "@supabase/ssr";
+   ./lib/supabase/middleware 2.ts:12:  const supabase = createServerClient(
+
+
+C) WHICH FILE TYPESCRIPT COMPILES
+---------------------------------
+
+1) npx tsc -p tsconfig.json --noEmit --pretty false
+   NOT RUN (npx not available in this environment).
+   Run locally to capture first TypeScript error lines.
+
+2) npx tsc -p tsconfig.json --noEmit --listFiles --pretty false > /tmp/tsc-files.txt
+   NOT RUN (npx not available). /tmp/tsc-files.txt empty or stale.
+
+3) rg -n "lib/supabase/server.ts" /tmp/tsc-files.txt
+   (no matches — file empty)
+
+4) rg -n "supabase/server" /tmp/tsc-files.txt
+   (no matches — file empty)
+
+ACTION: Run locally:
+  npx tsc -p tsconfig.json --noEmit --listFiles --pretty false > /tmp/tsc-files.txt
+  rg "supabase/server" /tmp/tsc-files.txt
+to confirm which server.ts paths tsc includes.
+
+
+D) NESTED GIT REPOS AND SYMLINKS
+--------------------------------
+
+1) find . -type d -name ".git" -print
+   ./.git
+   (only root repo — no nested .git)
+
+2) find . -type l -maxdepth 6 -print
+   (no symlinks found)
+
+
+E) OUTPUT SUMMARY
+-----------------
+
+All supabase server.ts paths found:
+  - ./lib/supabase/server.ts          (tracked, typed setAll)
+  - ./lib/supabase/server 2.ts        (untracked duplicate, UNTYPED setAll)
+
+All setAll(cookiesToSet) occurrences (file:line):
+  - lib/supabase/server.ts:19         setAll(cookiesToSet: CookieToSet[])   [TYPED]
+  - lib/supabase/server 2.ts:17       setAll(cookiesToSet)                  [IMPLICIT ANY]
+  - lib/supabase/middleware.ts:22     setAll(cookiesToSet: CookieToSet[])   [TYPED]
+  - lib/supabase/middleware 2.ts:20   setAll(cookiesToSet)                  [IMPLICIT ANY]
+
+Does lib/supabase/server.ts appear in tsc --listFiles output?
+  Could not verify (npx/tsc not available). Run locally as in section C.
+
+Nested .git findings:
+  Only ./.git. No nested repos.
+
+Symlink findings:
+  None.
+
+CONCLUSION (investigation only):
+  - Two duplicate files with UNTYPED setAll exist on disk: "server 2.ts" and "middleware 2.ts".
+  - If the build or bundler (e.g. OpenNext/Cloudflare) includes files by pattern or path and picks "server 2.ts" or both server.ts and "server 2.ts", the untyped implementation could cause the persistent TS error at "line 17" (which matches "server 2.ts" line 17).
+  - Recommended next step: remove or exclude "server 2.ts" and "middleware 2.ts" from the repo and build (e.g. delete untracked duplicates or add to .gitignore), then re-run tsc and CF build.
+
+================================================================================
+End of audit. No fixes applied.
+================================================================================
