@@ -8,8 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "cf:dev": "opennextjs-cloudflare preview",
-    "cf:build": "opennextjs-cloudflare build",
-    "cf:deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
+    "cf:build": "opennextjs-cloudflare build --dangerouslyUseUnsupportedNextVersion",
+    "cf:deploy": "opennextjs-cloudflare build --dangerouslyUseUnsupportedNextVersion && opennextjs-cloudflare deploy"
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.16.4",
