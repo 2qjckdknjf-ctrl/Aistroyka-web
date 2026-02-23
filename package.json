@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "cf:build": "node scripts/print-server-ts-head.cjs && opennextjs-cloudflare build --dangerouslyUseUnsupportedNextVersion",
+    "cf:build": "opennextjs-cloudflare build --dangerouslyUseUnsupportedNextVersion",
     "cf:deploy": "wrangler deploy"
   },
   "dependencies": {
