@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { getPublicEnv } from "@/lib/env";
 
-type CookieToSet = { name: string; value: string; options?: Record<string, unknown> };
+export type CookieToSet = { name: string; value: string; options?: Record<string, unknown> };
 
 export async function createClient() {
   const cookieStore = await cookies();
