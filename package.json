@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "cf:build": "node scripts/print-server-ts-head.cjs && opennextjs-cloudflare build --dangerouslyUseUnsupportedNextVersion"
+    "cf:build": "node scripts/print-server-ts-head.cjs && opennextjs-cloudflare build --dangerouslyUseUnsupportedNextVersion",
+    "cf:deploy": "wrangler deploy"
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.16.4",
@@ -26,6 +27,6 @@
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.15",
     "typescript": "^5.6.3",
-    "wrangler": "^3.99.0"
+    "wrangler": "^4.67.0"
   }
 }
