@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { getPublicEnv } from "@/lib/env";
 
 export async function createClient() {
+  type CookieToSet = { name: string; value: string; options?: Record<string, unknown> };
   const cookieStore = await cookies();
   const { NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY } = getPublicEnv();
 
@@ -14,10 +15,10 @@ export async function createClient() {
         getAll() {
           return cookieStore.getAll();
         },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet: CookieToSet[]) {
           try {
             cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
+              cookieStore.set(name, value, options as any)
             );
           } catch {
             // ignore in Server Components
