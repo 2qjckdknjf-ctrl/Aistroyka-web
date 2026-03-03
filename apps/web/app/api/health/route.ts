@@ -1,6 +1,6 @@
 /**
  * Readiness/health check for the unified system (site + engine + AI).
- * GET /api/health → { ok, db, aiConfigured, openaiConfigured, supabaseReachable?, reason? }.
+ * GET /api/health → { ok, db, aiConfigured, openaiConfigured, supabaseReachable?, buildStamp?: { sha7, buildTime }, reason? }.
  * - aiConfigured: AI_ANALYSIS_URL is set (job processor can call AI).
  * - openaiConfigured: OPENAI_API_KEY is set (in-app /api/ai/analyze-image can run).
  * - supabaseReachable: Supabase URL is reachable (no URL leaked in response).
@@ -64,12 +64,15 @@ export async function GET() {
 
   const ok = db === "ok";
   const status = ok ? 200 : 503;
+  const sha = process.env.NEXT_PUBLIC_BUILD_SHA ?? "";
+  const buildTime = process.env.NEXT_PUBLIC_BUILD_TIME ?? "";
   const body: Record<string, unknown> = {
     ok,
     db,
     aiConfigured,
     openaiConfigured,
     supabaseReachable,
+    buildStamp: sha ? { sha7: sha.slice(0, 7), buildTime } : undefined,
   };
   if (reason) body.reason = reason;
   if (!ok && reason === "missing_supabase_env") {
