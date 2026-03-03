@@ -81,8 +81,8 @@ export async function middleware(request: NextRequest) {
   }
 
   sessionResponse.headers.forEach((v, k) => res.headers.set(k, v));
-  if (isProtected || pathWithoutLoc === "/") {
-    res.headers.set("Cache-Control", "no-store");
+  if (isProtected || pathWithoutLoc === "/" || isAuthPage) {
+    res.headers.set("Cache-Control", "private, no-store, max-age=0, must-revalidate");
   }
   return applySecurityHeaders(res, isProduction);
 }
