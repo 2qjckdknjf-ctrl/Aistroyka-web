@@ -1,6 +1,8 @@
 # Cloudflare Workers config for Next.js via @opennextjs/cloudflare
 # Do not put secrets here; use dashboard or .dev.vars (local).
-# Multi-env: use --env staging | production. Account from CLOUDFLARE_ACCOUNT_ID in CI.
+# Multi-env: use --env staging | production.
+
+account_id = "864f04d729c24f574a228558b40d7b82"
 
 name = "aistroyka-web"
 compatibility_date = "2024-12-30"
@@ -16,31 +18,32 @@ binding = "WORKER_SELF_REFERENCE"
 service = "aistroyka-web"
 
 # ----------------------------------------
-# [env.production] — production Worker
+# [env.production] — production Worker (custom domain only)
 # ----------------------------------------
 [env.production]
 name = "aistroyka-web-production"
+workers_dev = false
+preview_urls = false
 
 [env.production.assets]
 directory = ".open-next/assets"
 binding = "ASSETS"
 
-# Temporarily commented to isolate 7003 — revert in follow-up if deploy succeeds
-# [[env.production.routes]]
-# pattern = "aistroyka.ai"
-# zone_name = "aistroyka.ai"
-#
-# [[env.production.routes]]
-# pattern = "aistroyka.ai/*"
-# zone_name = "aistroyka.ai"
-#
-# [[env.production.routes]]
-# pattern = "www.aistroyka.ai"
-# zone_name = "aistroyka.ai"
-#
-# [[env.production.routes]]
-# pattern = "www.aistroyka.ai/*"
-# zone_name = "aistroyka.ai"
+[[env.production.routes]]
+pattern = "aistroyka.ai"
+zone_name = "aistroyka.ai"
+
+[[env.production.routes]]
+pattern = "aistroyka.ai/*"
+zone_name = "aistroyka.ai"
+
+[[env.production.routes]]
+pattern = "www.aistroyka.ai"
+zone_name = "aistroyka.ai"
+
+[[env.production.routes]]
+pattern = "www.aistroyka.ai/*"
+zone_name = "aistroyka.ai"
 
 [[env.production.services]]
 binding = "WORKER_SELF_REFERENCE"
