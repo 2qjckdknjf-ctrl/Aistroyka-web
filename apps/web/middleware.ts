@@ -55,6 +55,9 @@ export async function middleware(request: NextRequest) {
   }
 
   const { response: sessionResponse, user } = await updateSession(request);
+  if (sessionResponse.status === 503) {
+    return applySecurityHeaders(sessionResponse, process.env.NODE_ENV === "production");
+  }
   let res = await intlMiddleware(request);
 
   const pathnameForLoc = request.nextUrl.pathname;
@@ -70,6 +73,7 @@ export async function middleware(request: NextRequest) {
     loginUrl.searchParams.set("next", pathnameForLoc);
     const redir = NextResponse.redirect(loginUrl);
     sessionResponse.headers.forEach((v, k) => redir.headers.set(k, v));
+    redir.headers.set("X-Auth-Redirect", "login");
     return applySecurityHeaders(redir, isProduction);
   }
   if (isAuthPage && user) {
@@ -77,10 +81,12 @@ export async function middleware(request: NextRequest) {
     const nextUrl = next.startsWith("/") ? new URL(next, request.url) : new URL(`/${locale}/dashboard`, request.url);
     const redir = NextResponse.redirect(nextUrl);
     sessionResponse.headers.forEach((v, k) => redir.headers.set(k, v));
+    redir.headers.set("X-Auth-Redirect", "dashboard");
     return applySecurityHeaders(redir, isProduction);
   }
 
   sessionResponse.headers.forEach((v, k) => res.headers.set(k, v));
+  res.headers.set("X-Auth-Redirect", "pass");
   if (isProtected || pathWithoutLoc === "/" || isAuthPage) {
     res.headers.set("Cache-Control", "private, no-store, max-age=0, must-revalidate");
   }

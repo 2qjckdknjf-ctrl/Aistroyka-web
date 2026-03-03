@@ -1,7 +1,12 @@
 /**
  * Runtime env validation for public Supabase vars.
  * Use getPublicEnv() everywhere instead of process.env for these vars.
- * Throws a clear error if required vars are missing (e.g. on Cloudflare, set in dashboard or .dev.vars).
+ * Throws a clear error if required vars are missing.
+ *
+ * Where vars come from:
+ * - Local: .env.local (NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY)
+ * - Cloudflare: set at build time (e.g. Pages → Settings → Environment variables for Production/Preview),
+ *   so they are inlined into the client bundle; runtime Worker env is not available to NEXT_PUBLIC_*.
  */
 
 export interface PublicEnv {

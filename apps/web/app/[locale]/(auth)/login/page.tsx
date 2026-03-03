@@ -1,10 +1,11 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Link, useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
+import { hasSupabaseEnv } from "@/lib/env";
 import { Input, Button, Alert } from "@/components/ui";
 
 const SIGN_IN_TIMEOUT_MS = 15_000;
@@ -109,6 +110,11 @@ function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState<LoginStep>("idle");
+  const [envOk, setEnvOk] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    setEnvOk(hasSupabaseEnv());
+  }, []);
 
   async function doSignIn() {
     setError(null);
@@ -181,6 +187,13 @@ function LoginForm() {
             <h1 className="text-aistroyka-title2 font-bold tracking-tight text-aistroyka-text-primary sm:text-aistroyka-title">{t("login")}</h1>
             <p className="mt-aistroyka-1 text-aistroyka-subheadline text-aistroyka-text-secondary">{t("tagline")}</p>
           </div>
+          {envOk === false && (
+            <Alert
+              message="Supabase not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY (e.g. in .env.local or Cloudflare build env)."
+              style="error"
+              className="mb-aistroyka-4"
+            />
+          )}
           <form onSubmit={handleSubmit} className="space-y-aistroyka-5">
             <Input
               id="email"
@@ -207,7 +220,7 @@ function LoginForm() {
               </div>
             )}
             {!error && (
-              <Button type="submit" loading={loading} disabled={loading} className="w-full">
+              <Button type="submit" loading={loading} disabled={loading || envOk === false} className="w-full">
                 {loading ? t("signingIn") : t("signIn")}
               </Button>
             )}
