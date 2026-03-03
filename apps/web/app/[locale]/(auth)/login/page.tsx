@@ -23,44 +23,78 @@ type SignInResult = {
   ok: boolean;
   stage: "supabase_ok" | "error";
   durationMs: number;
+  traceId: string;
   errorCode?: string;
   errorMessage?: string;
+  errorName?: string;
 };
+
+function safeString(value: unknown): string {
+  if (value instanceof Error) return value.message;
+  return String(value);
+}
 
 async function signInWithObservability(
   email: string,
-  password: string
+  password: string,
+  traceId: string
 ): Promise<SignInResult> {
   const start = Date.now();
-  const supabase = createClient();
-  const signInPromise = supabase.auth.signInWithPassword({ email, password });
-  const timeoutPromise = new Promise<never>((_, reject) =>
-    setTimeout(() => reject(new Error("timeout")), SIGN_IN_TIMEOUT_MS)
-  );
   try {
+    const supabase = createClient();
+    const signInPromise = supabase.auth.signInWithPassword({ email, password });
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("timeout")), SIGN_IN_TIMEOUT_MS)
+    );
     const { error } = await Promise.race([signInPromise, timeoutPromise]);
     const durationMs = Date.now() - start;
     if (error) {
+      if (typeof window !== "undefined") {
+        console.error("[login] auth error", {
+          traceId,
+          errorCode: "auth",
+          message: error.message,
+          durationMs,
+          emailPresent: !!email,
+        });
+      }
       return {
         ok: false,
         stage: "error",
         durationMs,
+        traceId,
         errorCode: "auth",
         errorMessage: error.message,
       };
     }
-    return { ok: true, stage: "supabase_ok", durationMs };
+    return { ok: true, stage: "supabase_ok", durationMs, traceId };
   } catch (thrown) {
     const durationMs = Date.now() - start;
     const isTimeout = thrown instanceof Error && thrown.message === "timeout";
     const isNetwork =
-      thrown instanceof TypeError && (thrown.message?.includes("fetch") || thrown.message?.includes("network"));
+      thrown instanceof TypeError &&
+      (safeString(thrown).toLowerCase().includes("fetch") || safeString(thrown).toLowerCase().includes("network"));
+    const errorCode = isTimeout ? "timeout" : isNetwork ? "network" : "unknown";
+    const errorMessage = safeString(thrown);
+    const errorName = thrown instanceof Error ? thrown.name : undefined;
+    if (typeof window !== "undefined") {
+      console.error("[login] signIn failed", {
+        traceId,
+        errorCode,
+        errorMessage,
+        errorName,
+        durationMs,
+        emailPresent: !!email,
+      });
+    }
     return {
       ok: false,
       stage: "error",
       durationMs,
-      errorCode: isTimeout ? "timeout" : isNetwork ? "network" : "unknown",
-      errorMessage: thrown instanceof Error ? thrown.message : String(thrown),
+      traceId,
+      errorCode,
+      errorMessage,
+      errorName,
     };
   }
 }
@@ -80,8 +114,9 @@ function LoginForm() {
     setError(null);
     setStep("submitting");
     setLoading(true);
+    const traceId = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `t-${Date.now()}`;
     try {
-      const result = await signInWithObservability(email, password);
+      const result = await signInWithObservability(email, password, traceId);
       if (!result.ok) {
         setStep(
           result.errorCode === "timeout"
@@ -99,8 +134,12 @@ function LoginForm() {
           setError(t("invalidCredentials"));
         } else if (result.errorCode === "auth" && (msg.includes("email not confirmed") || msg.includes("confirm"))) {
           setError(t("emailNotConfirmed"));
+        } else if (result.errorCode === "auth" && result.errorMessage) {
+          setError(result.errorMessage);
+        } else if (result.errorMessage && result.errorMessage.length < 200) {
+          setError(result.errorMessage);
         } else {
-          setError(t("defaultError"));
+          setError(t("defaultError") + ` (${result.errorCode ?? "unknown"}, traceId: ${result.traceId})`);
         }
         return;
       }
@@ -115,9 +154,14 @@ function LoginForm() {
       router.refresh();
     } catch (thrown) {
       setStep("error:unknown");
-      setError(t("defaultError"));
+      const errMsg = thrown instanceof Error ? thrown.message : String(thrown);
       if (typeof window !== "undefined") {
-        console.warn("[login] unexpected throw", thrown);
+        console.error("[login] unexpected throw", { traceId, errorMessage: errMsg, name: thrown instanceof Error ? thrown.name : undefined });
+      }
+      if (errMsg && errMsg.length < 200 && !errMsg.toLowerCase().includes("password")) {
+        setError(errMsg);
+      } else {
+        setError(t("defaultError") + ` (traceId: ${traceId})`);
       }
     } finally {
       setLoading(false);
