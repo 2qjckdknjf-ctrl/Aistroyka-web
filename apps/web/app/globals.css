@@ -1,0 +1,56 @@
+@import "./design-tokens.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-[var(--aistroyka-bg-primary)] text-[var(--aistroyka-text-primary)] antialiased;
+  }
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  [tabindex]:focus-visible {
+    @apply outline-none ring-2 ring-[var(--aistroyka-focus)] ring-offset-2;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex min-h-[var(--aistroyka-touch-min)] items-center justify-center rounded-[var(--aistroyka-radius-lg)] bg-[var(--aistroyka-accent)] px-4 py-2.5 text-sm font-semibold text-[var(--aistroyka-text-inverse)] transition-[transform,opacity] duration-[var(--aistroyka-duration-fast)] hover:bg-[var(--aistroyka-accent-hover)] active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50 motion-reduce:transition-none motion-reduce:active:scale-100;
+  }
+  .btn-secondary {
+    @apply inline-flex min-h-[var(--aistroyka-touch-min)] items-center justify-center rounded-[var(--aistroyka-radius-lg)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] px-4 py-2.5 text-sm font-semibold text-[var(--aistroyka-text-primary)] transition-[transform,opacity] duration-[var(--aistroyka-duration-fast)] hover:bg-[var(--aistroyka-surface-raised)] active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50 motion-reduce:transition-none motion-reduce:active:scale-100;
+  }
+  .card {
+    @apply rounded-[var(--aistroyka-radius-card)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] p-4 shadow-[var(--aistroyka-shadow-e1)] sm:p-6;
+  }
+  .card-elevated {
+    @apply rounded-[var(--aistroyka-radius-card)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] p-4 shadow-[var(--aistroyka-shadow-e2)] sm:p-6;
+  }
+  .input-field {
+    @apply min-h-[var(--aistroyka-touch-min)] w-full rounded-[var(--aistroyka-radius-lg)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] px-4 py-2.5 text-base text-[var(--aistroyka-text-primary)] placeholder-[var(--aistroyka-text-tertiary)] transition-colors focus:border-[var(--aistroyka-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--aistroyka-accent)] focus:ring-opacity-20;
+  }
+  .table-cell {
+    @apply px-3 py-2.5 sm:px-5 sm:py-3.5;
+  }
+}
+
+/* AI Signal: subtle pulse only for analyzing state (opacity 0.06 -> 0.10), no glow */
+@keyframes ai-signal-pulse {
+  0%,
+  100% {
+    opacity: 0.06;
+  }
+  50% {
+    opacity: 0.1;
+  }
+}
+@layer utilities {
+  .animate-ai-signal-pulse {
+    animation: ai-signal-pulse 2s ease-in-out infinite;
+  }
+}

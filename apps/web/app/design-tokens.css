@@ -1,0 +1,161 @@
+/**
+ * Aistroyka Design Tokens — 1:1 with iOS (see docs/ios-ui-source-of-truth.md).
+ * Use via Tailwind or var(--aistroyka-*). No hardcoded colors in components.
+ */
+
+:root {
+  /* —— Brand (iOS ColorTokens) —— */
+  --aistroyka-accent: #7342d9;
+  --aistroyka-accent-hover: #6147c7;
+  --aistroyka-accent-pressed: #5238b8;
+  --aistroyka-accent-disabled: #b9a5e8; /* accent at 50% opacity equivalent */
+
+  /* —— Surfaces (branded) —— */
+  --aistroyka-bg-branded: #0d142e;
+  --aistroyka-bg-branded-surface: #1a1f42;
+
+  /* —— Surfaces (app / system) —— */
+  --aistroyka-bg-primary: #f2f2f7;
+  --aistroyka-bg-secondary: #ffffff;
+  --aistroyka-surface: #ffffff;
+  --aistroyka-surface-raised: #f2f2f7;
+  --aistroyka-surface-muted: #e5e5ea;
+
+  /* —— Text —— */
+  --aistroyka-text-primary: #000000;
+  --aistroyka-text-secondary: rgba(60, 60, 67, 0.6);
+  --aistroyka-text-tertiary: rgba(60, 60, 67, 0.5);
+  --aistroyka-text-inverse: #ffffff;
+  --aistroyka-text-on-branded: rgba(255, 255, 255, 0.82);
+
+  /* —— Semantic —— */
+  --aistroyka-success: #34c759;
+  --aistroyka-warning: #ff9500;
+  --aistroyka-error: #ff3b30;
+  --aistroyka-info: #007aff;
+
+  /* —— Borders —— */
+  --aistroyka-border-subtle: rgba(60, 60, 67, 0.29);
+  --aistroyka-border-strong: #38383a;
+
+  /* —— Focus (iOS interactiveFocus = accent) —— */
+  --aistroyka-focus: var(--aistroyka-accent);
+  /* Light tint for active nav / selected state */
+  --aistroyka-accent-light: #ede9fc;
+
+  /* —— Typography (iOS scale → rem @ 16px) —— */
+  --aistroyka-font-large: 2.125rem;      /* largeTitle 34pt */
+  --aistroyka-font-title: 1.75rem;      /* title 28pt */
+  --aistroyka-font-title2: 1.375rem;    /* title2 22pt */
+  --aistroyka-font-title3: 1.25rem;     /* title3 20pt */
+  --aistroyka-font-headline: 1.0625rem; /* headline 17pt */
+  --aistroyka-font-body: 1.0625rem;     /* body 17pt */
+  --aistroyka-font-callout: 1rem;      /* callout 16pt */
+  --aistroyka-font-subheadline: 0.9375rem; /* subheadline 15pt */
+  --aistroyka-font-footnote: 0.8125rem; /* footnote 13pt */
+  --aistroyka-font-caption: 0.75rem;   /* caption 12pt */
+  --aistroyka-font-caption2: 0.6875rem; /* caption2 11pt */
+  --aistroyka-empty-icon: 48px;
+  --aistroyka-empty-icon-sm: 44px;
+
+  /* —— Spacing (4pt grid, iOS SpacingTokens) —— */
+  --aistroyka-space-1: 4px;   /* xxxs */
+  --aistroyka-space-2: 8px;   /* xxs */
+  --aistroyka-space-3: 12px;  /* xs */
+  --aistroyka-space-4: 16px;  /* sm */
+  --aistroyka-space-5: 20px;  /* md */
+  --aistroyka-space-6: 24px;  /* lg */
+  --aistroyka-space-8: 32px;  /* xl */
+  --aistroyka-space-10: 40px; /* xxl */
+  --aistroyka-space-12: 48px; /* xxxl */
+  --aistroyka-screen-x: 16px;
+  --aistroyka-section-y: 24px;
+  --aistroyka-empty-padding: 32px;
+  --aistroyka-touch-min: 44px;
+
+  /* —— Radius (iOS RadiusTokens) —— */
+  --aistroyka-radius-xs: 4px;
+  --aistroyka-radius-sm: 6px;
+  --aistroyka-radius-md: 8px;
+  --aistroyka-radius-lg: 10px;
+  --aistroyka-radius-xl: 16px;
+  --aistroyka-radius-xxl: 20px;
+  --aistroyka-radius-card: 16px;
+
+  /* —— Elevation (iOS e1–e4) —— */
+  --aistroyka-shadow-e1: 0 2px 4px rgba(0, 0, 0, 0.08);
+  --aistroyka-shadow-e2: 0 4px 8px rgba(0, 0, 0, 0.12);
+  --aistroyka-shadow-e3: 0 8px 16px rgba(0, 0, 0, 0.16);
+  --aistroyka-shadow-e4: 0 12px 24px rgba(0, 0, 0, 0.2);
+  --aistroyka-e1-stroke-opacity: 0.12;
+  --aistroyka-e2-stroke-opacity: 0.18;
+  --aistroyka-e1-tint-opacity: 0.02;
+  --aistroyka-e2-tint-opacity: 0.04;
+
+  /* —— Motion (iOS MotionTokens) —— */
+  --aistroyka-duration-instant: 150ms;
+  --aistroyka-duration-fast: 250ms;
+  --aistroyka-duration-normal: 350ms;
+  --aistroyka-duration-slow: 500ms;
+  --aistroyka-duration-button: 200ms;
+
+  /* —— Opacity (iOS OpacityTokens) —— */
+  --aistroyka-opacity-disabled: 0.5;
+  --aistroyka-opacity-subtle: 0.7;
+  --aistroyka-opacity-pressed: 0.92;
+  --aistroyka-opacity-surface-badge: 0.2;
+  --aistroyka-opacity-skeleton-line: 0.3;
+  --aistroyka-opacity-skeleton-title: 0.25;
+  --aistroyka-overlay-dim: 0.3;
+
+  /* —— Grid (iOS GridTokens) —— */
+  --aistroyka-skeleton-line-height: 16px;
+  --aistroyka-skeleton-title-height: 20px;
+
+  /* ========== Component token layer (reference global tokens) ========== */
+
+  /* Button primary */
+  --aistroyka-button-primary-bg: var(--aistroyka-accent);
+  --aistroyka-button-primary-hover-bg: var(--aistroyka-accent-hover);
+  --aistroyka-button-primary-pressed-bg: var(--aistroyka-accent-pressed);
+  --aistroyka-button-primary-disabled-bg: var(--aistroyka-accent-disabled);
+  --aistroyka-button-primary-text: var(--aistroyka-text-inverse);
+
+  /* Button secondary */
+  --aistroyka-button-secondary-bg: var(--aistroyka-surface);
+  --aistroyka-button-secondary-border: var(--aistroyka-border-subtle);
+  --aistroyka-button-secondary-text: var(--aistroyka-text-primary);
+  --aistroyka-button-secondary-text-disabled: var(--aistroyka-text-tertiary);
+
+  /* Card */
+  --aistroyka-card-bg: var(--aistroyka-surface);
+  --aistroyka-card-border: var(--aistroyka-border-subtle);
+  --aistroyka-card-stroke-opacity-e1: var(--aistroyka-e1-stroke-opacity);
+  --aistroyka-card-stroke-opacity-e2: var(--aistroyka-e2-stroke-opacity);
+  --aistroyka-card-shadow-e1: var(--aistroyka-shadow-e1);
+  --aistroyka-card-shadow-e2: var(--aistroyka-shadow-e2);
+  --aistroyka-card-padding: var(--aistroyka-space-4);
+  --aistroyka-card-border-e1: rgba(60, 60, 67, 0.12);
+  --aistroyka-card-border-e2: rgba(60, 60, 67, 0.18);
+
+  /* Input */
+  --aistroyka-input-bg: var(--aistroyka-surface);
+  --aistroyka-input-border: var(--aistroyka-border-subtle);
+  --aistroyka-input-focus-ring: var(--aistroyka-accent);
+  --aistroyka-input-error-border: var(--aistroyka-error);
+  --aistroyka-input-padding: var(--aistroyka-space-4);
+  --aistroyka-input-radius: var(--aistroyka-radius-lg);
+
+  /* Badge / StatusChip */
+  --aistroyka-badge-neutral-bg: rgba(60, 60, 67, 0.2);
+  --aistroyka-badge-neutral-text: var(--aistroyka-text-secondary);
+  --aistroyka-badge-success-bg: rgba(52, 199, 89, 0.2);
+  --aistroyka-badge-success-text: var(--aistroyka-success);
+  --aistroyka-badge-warning-bg: rgba(255, 149, 0, 0.2);
+  --aistroyka-badge-warning-text: var(--aistroyka-warning);
+  --aistroyka-badge-error-bg: rgba(255, 59, 48, 0.2);
+  --aistroyka-badge-error-text: var(--aistroyka-error);
+
+  /* Alert / Banner */
+  --aistroyka-alert-border-opacity: 0.5;
+}

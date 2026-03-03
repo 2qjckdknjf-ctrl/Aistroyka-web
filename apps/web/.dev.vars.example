@@ -1,0 +1,8 @@
+# Copy to .dev.vars for local Wrangler/OpenNext preview (npm run cf:dev).
+# Do not commit .dev.vars.
+
+NEXTJS_ENV=development
+NEXT_PUBLIC_SUPABASE_URL=https://vthfrxehrursfloevnlp.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0aGZyeGVocnVyc2Zsb2V2bmxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzMDYzODIsImV4cCI6MjA4Njg4MjM4Mn0.sihdkAmP8aWvA_Y_xvLbh_ALuIy-IoX-kBuGBWjK560
+# Canonical app URL (optional; defaults to https://aistroyka.ai)
+NEXT_PUBLIC_APP_URL=https://aistroyka.ai

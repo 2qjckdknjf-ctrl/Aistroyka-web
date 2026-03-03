@@ -1,0 +1,48 @@
+# dependencies
+node_modules
+.pnp
+.pnp.js
+
+# testing
+coverage
+
+# next
+.next
+out
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+build-server-ts-head.log
+
+# env
+.env
+.env.local
+supabase/.env
+.env.development.local
+.env.test.local
+.env.production.local
+.env.staging
+.env.production
+.env.cf
+.env.migrate
+
+# vercel
+.vercel
+
+# cloudflare / opennext
+.open-next
+.dev.vars
+
+# duplicate copies (avoid TS picking untyped adapter)
+lib/supabase/server 2.ts
+lib/supabase/middleware 2.ts
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts

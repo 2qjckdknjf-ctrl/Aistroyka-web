@@ -1,0 +1,239 @@
+commit 32aa2f596ddce0738f81f8a24d24500f26b48688
+Author: OldMasterAI <2qjckdknjf>
+Date:   Mon Mar 2 04:01:25 2026 +0100
+
+    Web AI P0 polish: tests + docs
+    
+    Made-with: Cursor
+
+commit 770ff7561f7ed5a48355f9dd0abfa4e442d75ee9
+Author: OldMasterAI <2qjckdknjf>
+Date:   Mon Mar 2 04:01:18 2026 +0100
+
+    Web AI P0 polish: global error boundary + consistent states + a11y
+    
+    Made-with: Cursor
+
+commit f4e4a213192c3ce97aa616e0fda1234e086bff5e
+Author: OldMasterAI <2qjckdknjf>
+Date:   Mon Mar 2 04:01:12 2026 +0100
+
+    Web AI P0 polish: low-confidence explainer + follow-up CTA
+    
+    Made-with: Cursor
+
+commit 0f817895c2ff6891fe54d735190e09e18d3e296f
+Author: OldMasterAI <2qjckdknjf>
+Date:   Mon Mar 2 04:01:04 2026 +0100
+
+    Web AI P0 polish: error banners + retry-after UX
+    
+    Made-with: Cursor
+
+commit f9fff1dea02276d70530528c51360279f6531241
+Author: OldMasterAI <2qjckdknjf>
+Date:   Mon Mar 2 04:00:56 2026 +0100
+
+    Web AI P0 polish: authoritative request_id handling
+    
+    Made-with: Cursor
+
+commit 67c341bba0fc62b5c7041a9cb073dfb8e6a85e35
+Author: OldMasterAI <2qjckdknjf>
+Date:   Mon Mar 2 03:46:22 2026 +0100
+
+    Web AI: add minimal smoke test + docs
+    
+    Made-with: Cursor
+
+commit 0849dd5aac39a787da9a20ef44e8dee476c2af44
+Author: OldMasterAI <2qjckdknjf>
+Date:   Mon Mar 2 03:46:13 2026 +0100
+
+    Web AI: integrate panel into project/ai pages
+    
+    Made-with: Cursor
+
+commit 84946b8920754a3ff881c6ae9cb0d1a472b80e02
+Author: OldMasterAI <2qjckdknjf>
+Date:   Mon Mar 2 03:46:03 2026 +0100
+
+    Web AI: add AiActionPanel + low confidence UX + request id display
+    
+    Made-with: Cursor
+
+commit d664757de34e894681cce77bab106fa614915587
+Author: OldMasterAI <2qjckdknjf>
+Date:   Mon Mar 2 03:45:52 2026 +0100
+
+    Web AI: add engine client + unified error mapping
+    
+    Made-with: Cursor
+
+commit cd5082a27704e7431ad9d157aa9bc01fb0d31268
+Author: OldMasterAI <2qjckdknjf>
+Date:   Sun Mar 1 01:31:17 2026 +0100
+
+    fix(web): fix Tailwind @apply ring opacity for input-field (build was failing)
+    
+    Made-with: Cursor
+
+commit c561739bce2081d7157c5bd7e4d7493e670b2891
+Author: OldMasterAI <2qjckdknjf>
+Date:   Sat Feb 28 21:24:18 2026 +0100
+
+    feat(ui): add executive trust dashboard with indices, causal hints and timeline
+    
+    Made-with: Cursor
+
+commit abed60e860a4be3e1a42c62c766e16c79b8f6b7c
+Author: OldMasterAI <2qjckdknjf>
+Date:   Sat Feb 28 20:35:27 2026 +0100
+
+    feat(ui): add governance/audit dashboard with alerts, explainability, and threshold history
+    
+    Made-with: Cursor
+
+commit 0de5cafccbeb98e328b2fe40fc85034f9dd57565
+Author: OldMasterAI <2qjckdknjf>
+Date:   Sat Feb 28 02:31:42 2026 +0100
+
+    fix: replace leftover raw color in ExecutiveOverviewBlock
+    
+    Made-with: Cursor
+
+commit 3386e81b41b67933c5e62c39e4a27ffc71511aa5
+Author: OldMasterAI <2qjckdknjf>
+Date:   Sat Feb 28 02:25:16 2026 +0100
+
+    chore: motion and accessibility parity
+    
+    Made-with: Cursor
+
+commit 85bef948715eccfda54420b25991c009d880ebe3
+Author: OldMasterAI <2qjckdknjf>
+Date:   Sat Feb 28 02:23:47 2026 +0100
+
+    feat: ios parity invite accept
+    
+    Made-with: Cursor
+
+commit 7537dabcb474de3948d121e073f39a90fb1dba00
+Author: OldMasterAI <2qjckdknjf>
+Date:   Sat Feb 28 02:23:34 2026 +0100
+
+    feat: ios parity smoke
+    
+    Made-with: Cursor
+
+commit b654bb3c1e0c95a11b65f5ccf8a50dd129c11e25
+Author: OldMasterAI <2qjckdknjf>
+Date:   Sat Feb 28 02:23:25 2026 +0100
+
+    feat: ios parity admin
+    
+    Made-with: Cursor
+
+commit 5549cd104a43f324d650e4b9aa35e45476380050
+Author: OldMasterAI <2qjckdknjf>
+Date:   Sat Feb 28 02:19:18 2026 +0100
+
+    feat: ios parity team
+    
+    Made-with: Cursor
+
+commit 6a3d5038dc3bfc59061d8e3f2832a5d9c1bc16f7
+Author: OldMasterAI <2qjckdknjf>
+Date:   Sat Feb 28 02:18:37 2026 +0100
+
+    feat: ios parity project details
+    
+    Made-with: Cursor
+
+commit aa9e8d13da7c69116bb8a0f334c782cc52458d9b
+Author: OldMasterAI <2qjckdknjf>
+Date:   Sat Feb 28 02:17:50 2026 +0100
+
+    feat: ios parity projects list
+    
+    Made-with: Cursor
+
+commit dc98ec80d3fb66d1e97d8081ba12b5f130d54b49
+Author: OldMasterAI <2qjckdknjf>
+Date:   Sat Feb 28 02:17:25 2026 +0100
+
+    feat: ios parity dashboard
+    
+    Made-with: Cursor
+
+commit 24c5e5f2dd3fb607449aee28b609d7b1aa538f77
+Author: OldMasterAI <2qjckdknjf>
+Date:   Sat Feb 28 02:16:16 2026 +0100
+
+    feat: ios parity login
+    
+    Made-with: Cursor
+
+commit 083188dd717aa2081aca4bada98681bba485247d
+Author: OldMasterAI <2qjckdknjf>
+Date:   Sat Feb 28 02:15:32 2026 +0100
+
+    feat: align layout and navigation to ios look and feel
+    
+    Made-with: Cursor
+
+commit 04ccc86e823f26c11662dca3b61542afb7d6a4e6
+Author: OldMasterAI <2qjckdknjf>
+Date:   Sat Feb 28 02:14:06 2026 +0100
+
+    refactor: remove legacy tokens and ban raw tailwind colors
+    
+    Made-with: Cursor
+
+commit ae568bfdcd2884fa04beceba6fd9925701dd7b51
+Author: OldMasterAI <2qjckdknjf>
+Date:   Sat Feb 28 02:09:47 2026 +0100
+
+    feat: rebuild ui components to match ios 1:1
+    
+    Made-with: Cursor
+
+commit c39bf9106e2011d2be43de4992bb4c2e8815291d
+Author: OldMasterAI <2qjckdknjf>
+Date:   Sat Feb 28 02:05:31 2026 +0100
+
+    feat: align web tokens to ios (pixel parity) + add component token layer
+    
+    Made-with: Cursor
+
+commit b78578d3668f32e80aa954e0fafcc06aa6d3d4a4
+Author: OldMasterAI <2qjckdknjf>
+Date:   Sat Feb 28 01:37:12 2026 +0100
+
+    chore: ui polish a11y and cleanup
+    
+    Made-with: Cursor
+
+commit f1780ccc9152f1d7c54c89f970b297e3b85aae25
+Author: OldMasterAI <2qjckdknjf>
+Date:   Sat Feb 28 01:34:34 2026 +0100
+
+    feat: redesign dashboard
+    
+    Made-with: Cursor
+
+commit 3c3fec6ec019bcaa90af835fb106202c9e0ffc19
+Author: OldMasterAI <2qjckdknjf>
+Date:   Sat Feb 28 01:19:28 2026 +0100
+
+    feat: unify app layout and navigation
+    
+    Made-with: Cursor
+
+commit ee2ab63275dc632fd3f20f7be21f36802369b682
+Author: OldMasterAI <2qjckdknjf>
+Date:   Sat Feb 28 01:17:53 2026 +0100
+
+    feat: rebuild core ui components using tokens
+    
+    Made-with: Cursor

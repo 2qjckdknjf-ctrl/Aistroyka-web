@@ -1,0 +1,44 @@
+# Web P1 Data & State Layer — Forensic summary
+
+## What was done
+
+1. **TanStack Query provider + queryClient**
+   - Installed @tanstack/react-query and @tanstack/react-query-devtools (dev).
+   - lib/query/queryClient.ts: single QueryClient with staleTime 30s, gcTime 10m, retry (no retry for 401/403/404, else 2), refetchOnWindowFocus false, refetchOnReconnect true, throwOnError false.
+   - lib/query/QueryProvider.tsx: QueryClientProvider + ReactQueryDevtools in dev/staging.
+   - Wired in app/layout.tsx.
+
+2. **Query keys + engine error normalization**
+   - lib/engine/queryKeys.ts: projects, project(id), ai summary/explain/history (stubs).
+   - lib/engine/normalizeError.ts: normalizeToQueryError(engineError), getEngineError(error) so React Query and UI see a stable error type.
+
+3. **AiActionPanel → useMutation**
+   - Replaced manual useState async with useMutation; mutationFn calls runExecutiveSummary / runExplainRisk / askCopilot with signal from AbortController.
+   - onMutate: clear error/result/requestId; run() creates AbortController and passes signal; on unmount abort.
+   - onSuccess: set request_id and result or error; onError: set EngineError from getEngineError or generic.
+   - P0 behaviors kept: AiErrorBanner, countdown, low-confidence, diagnostics, Ctrl+Enter, a11y.
+
+4. **Projects: useQuery + shared hooks**
+   - GET /api/projects and GET /api/projects/[id] added.
+   - lib/projects/useProjects.ts, useProject.ts (with exported fetchProject for prefetch).
+   - lib/projects/prefetchProject.ts: usePrefetchProject() for link hover.
+   - Projects list page and dashboard recent projects use client components (ProjectsListClient, DashboardRecentProjectsClient) with useProjects + QueryBoundary; project links prefetch on mouseEnter.
+
+5. **QueryBoundary + docs + tests**
+   - lib/query/render.tsx: QueryBoundary (loading/error/empty), mapQueryErrorToUI (uses EngineError when present), emptyAction support.
+   - docs/DATA_LAYER_P1.md: cache policy, query keys, how to add queries/mutations, best practices.
+   - lib/query/queryClient.test.ts: unit tests for retry policy (no retry 401/403/404; retry up to 2 for others).
+
+## How to verify
+
+- Unit: npm run test -- lib/query/queryClient.test.ts lib/engine/client.test.ts
+- E2E: TEST_PROJECT_ID set, npx playwright test tests/e2e/ai-smoke.spec.ts (AI panel behavior unchanged).
+- Manual: Open /projects and /dashboard; list loads via useQuery; open a project (prefetch on hover); run AI Summary/Copilot (useMutation, banner/countdown/request_id as in P0).
+
+## Commits
+
+1) Web P1: add TanStack Query provider + queryClient policies
+2) Web P1: standardize query keys + engine error normalization
+3) Web P1: migrate AiActionPanel to useMutation (+ projects useQuery + QueryBoundary + docs; lint-staged grouped changes)
+
+(Intended 5 commits; 3 were made due to pre-commit hook staging.)

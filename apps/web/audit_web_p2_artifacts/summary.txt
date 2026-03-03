@@ -1,0 +1,28 @@
+# Web P2 — Copilot Chat (conversation layer)
+
+## What was done
+
+1. **Data model** — `lib/features/ai/types.ts`: ChatMessage (id, role, content, createdAt, requestId?, lowConfidence?, errorKind?, fallback_reason?, error_category?), ChatThread (projectId, messages).
+
+2. **Persistence** — `lib/features/ai/storage.ts`: localStorage key `copilot_thread_<projectId>`, cap 50 messages, getThread/saveThread/clearThread, generateMessageId.
+
+3. **Transport** — `lib/features/ai/transport.ts`: CopilotTransport with sendMessage (uses askCopilot); optional streamMessage for future SSE. V1: non-streaming; UI can add typewriter later.
+
+4. **Query keys** — `lib/engine/queryKeys.ts`: queryKeys.thread(projectId), aiKeys.thread(projectId).
+
+5. **Hook** — `lib/features/ai/api/useCopilotThread.ts`: useQuery (thread from storage), useMutation (optimistic user + placeholder assistant, then replace with final/error), clearChat; thread synced to storage on change.
+
+6. **UI** — `lib/features/ai/components/CopilotChatPanel.tsx`: message list, textarea + Ctrl+Enter, Send, Clear chat, Copy request_id (last response), LowConfidenceNotice, AiErrorBanner (from last assistant errorKind), dev/staging Diagnostics (request_id, low_confidence, fallback_reason, error_kind).
+
+7. **Integration** — Copilot tab in AiActionPanel renders CopilotChatPanel when projectId is set; Summary and Explain Risk unchanged.
+
+8. **Tests** — Playwright: open Copilot tab, fill message, mock 200 response, assert user + assistant messages and request_id visible.
+
+9. **Docs** — `docs/AI_P2_COPILOT_CHAT.md`: where chat lives, storage, streaming abstraction, debugging request_id and low-confidence.
+
+P0/P1 preserved: error mapping, request_id, low-confidence UX, diagnostics.
+
+## How to verify
+
+- Manual: Open /projects/[id]/ai, go to Copilot tab, send a message; check history persists (reload), Clear chat, request_id and Copy, low-confidence notice if backend returns it, error banner on failure.
+- E2E: Set TEST_PROJECT_ID, run `npx playwright test tests/e2e/ai-smoke.spec.ts` (includes "Copilot chat" test).

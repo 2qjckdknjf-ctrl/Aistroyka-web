@@ -1,0 +1,109 @@
+{
+  "common": {
+    "appName": "Aistroyka",
+    "cancel": "Cancel",
+    "close": "Close",
+    "retry": "Retry",
+    "ok": "OK",
+    "save": "Save",
+    "delete": "Delete",
+    "clear": "Clear",
+    "loading": "Loading…"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "projects": "Projects",
+    "team": "Team",
+    "portfolio": "Portfolio",
+    "billing": "Billing",
+    "admin": "Admin",
+    "logout": "Log out"
+  },
+  "auth": {
+    "tagline": "AI Construction Intelligence",
+    "login": "Log in",
+    "register": "Register",
+    "email": "Email",
+    "password": "Password",
+    "signIn": "Sign in",
+    "signingIn": "Signing in…",
+    "createAccount": "Create account",
+    "noAccount": "No account?",
+    "alreadyHaveAccount": "Already have an account?",
+    "logIn": "Log in",
+    "registerButton": "Register",
+    "creatingAccount": "Creating account…",
+    "checkEmail": "Check your email to confirm your account.",
+    "forgotPassword": "Forgot password?",
+    "invalidCredentials": "Invalid email or password.",
+    "emailNotConfirmed": "Please confirm your email before signing in.",
+    "defaultError": "Something went wrong. Please try again."
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "signedInAs": "Signed in as",
+    "recentProjects": "Recent projects",
+    "allProjects": "All projects",
+    "noProjectsYet": "No projects yet.",
+    "createOne": "Create one"
+  },
+  "projects": {
+    "title": "Projects",
+    "createProject": "Create project",
+    "open": "Open",
+    "name": "Name",
+    "created": "Created",
+    "action": "Action",
+    "noProjects": "No projects",
+    "noProjectsHint": "Create one using the form above.",
+    "newProject": "New project",
+    "newProjectHint": "Create a project to upload site images and run AI analysis.",
+    "backToProjects": "← Projects",
+    "create": "Create",
+    "creating": "Creating…",
+    "projectNamePlaceholder": "Project name",
+    "nameTooLong": "Project name must be at most 200 characters."
+  },
+  "projectDetail": {
+    "uploadImage": "Upload image",
+    "uploadImageSubtitle": "Add a site image to run AI analysis",
+    "chooseImage": "Choose image",
+    "upload": "Upload",
+    "uploading": "Uploading…",
+    "uploadedAt": "Uploaded",
+    "executiveOverview": "Executive Overview",
+    "executiveOverviewSubtitle": "Completion, health, risk, and delay at a glance",
+    "operations": "Operations",
+    "operationsSubtitle": "Next actions, trend, and latest analysis",
+    "mediaAndAnalysis": "Media & analysis",
+    "mediaAndAnalysisSubtitle": "Images and job status",
+    "noMediaYet": "No media yet. Upload an image above to run AI analysis.",
+    "advanced": "Advanced",
+    "advancedSubtitle": "Evidence, simulation, drift, and persistence",
+    "runAnalysis": "Run analysis",
+    "openResult": "Open result",
+    "showJson": "Show JSON",
+    "hideJson": "Hide JSON",
+    "noAnalysesYet": "No analyses yet. Upload an image and run analysis to see the executive overview.",
+    "evidenceOverview": "Evidence Overview",
+    "decisionSimulation": "Decision Simulation",
+    "aiSystemHealth": "AI System Health / Drift",
+    "riskPersistence": "Cross-analysis / Persistence"
+  },
+  "risk": {
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High"
+  },
+  "health": {
+    "healthy": "Healthy",
+    "moderate": "Moderate",
+    "unstable": "Unstable",
+    "critical": "Critical",
+    "healthScore": "Health Score"
+  },
+  "team":{"title":"Team","subtitle":"Cabinet members and invitations","members":"Members","invitations":"Invitations","invite":"Invite","email":"Email","role":"Role","owner":"Owner","admin":"Admin","member":"Member","viewer":"Viewer","revoke":"Revoke","invitePlaceholder":"email@example.com","inviteSuccess":"Invitation sent. Copy the link and share it.","inviteError":"Invite failed","noMembers":"No members","noInvitations":"No pending invitations","acceptInvite":"Accept invitation","acceptInviteTitle":"Join cabinet","acceptSuccess":"You have been added to the cabinet.","acceptError":"Failed to accept invitation.","copyLink":"Copy link","missingToken":"Missing invitation token","signInToAccept":"Sign in to accept this invitation.","signIn":"Sign in","goToDashboard":"Go to dashboard","accepting":"Accepting…","redirectingToDashboard":"Redirecting to dashboard…","migrationRequiredTitle":"Team features require database migrations","migrationRequiredSteps":"Open Supabase Dashboard → SQL Editor → New query. Copy the contents of scripts/team-migrations.sql from the repo, paste into the query, and click Run. After it completes, refresh this page — the invite form and members list will work.","migrationFileHint":"File: scripts/team-migrations.sql (in the web app root in the repo)."},"errors": {
+    "insufficientRights": "Insufficient rights",
+    "insufficientRightsMessage": "You do not have permission for this action."
+  }
+}

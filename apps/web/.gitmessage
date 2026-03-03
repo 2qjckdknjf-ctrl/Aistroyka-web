@@ -1,0 +1,5 @@
+# Conventional Commits: type(scope): description
+# Types: feat, fix, refactor, chore, docs, test, style
+# Example: feat: add project upload form
+
+type: 

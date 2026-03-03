@@ -1,0 +1,41 @@
+# Web AI P0 Perfect — Forensic summary
+
+## What changed
+
+1. **Request ID (authoritative)**
+   - Engine client always generates requestId before request; sends as X-Request-Id.
+   - Authoritative ID: response header X-Request-Id > body.request_id > generated. Returned from all engine calls and stored in EngineError.requestId.
+   - ai.ts passes response headers into mapToEngineError so Retry-After is parsed.
+   - Unit test: lib/engine/client.test.ts (precedence: header > body > generated).
+
+2. **Error UX**
+   - errors.ts: retryAfterSeconds from Retry-After header; retryable/circuit_open/budget_exceeded/security_blocked as specified.
+   - AiErrorBanner: rate_limited countdown (1s tick), Retry enabled after countdown; circuit_open/timeout/budget_exceeded/security_blocked/unknown messages; request_id + Copy in footer; role="alert".
+   - CopyRequestIdButton: "Copied" for 1.5s, aria-label, focus ring.
+
+3. **Low-confidence**
+   - LowConfidenceNotice: expandable "Why this happened?" text; "Suggest a follow-up question" in Copilot tab (inserts template into textarea, no API call).
+   - AiActionPanel uses LowConfidenceNotice instead of inline badge + text.
+
+4. **Global error boundary**
+   - app/error.tsx uses ErrorState component; in dev, shows request_id from URL ?request_id= if present.
+
+5. **Consistent states and diagnostics**
+   - AiActionPanel: loading = Skeleton; empty = short message; Diagnostics block (dev/staging only): request_id, mode, retrieval_low_confidence, fallback_reason, error_category.
+
+6. **A11y**
+   - Tabs: role="tablist", role="tab", aria-label, aria-selected, focus ring.
+   - Copilot textarea: Ctrl+Enter submit, Enter newline; aria-label, focus ring.
+   - Banners role="alert"; Copy button focus ring and aria-label.
+
+7. **Tests and docs**
+   - client.test.ts: request_id precedence.
+   - ai-smoke.spec.ts: e2e test for 429 + Retry-After (mock), banner and request_id + Copy.
+   - docs/AI_UI_P0.md: request_id precedence, error banner behaviors, retry-after countdown, low-confidence explainer, diagnostics.
+
+## How to verify
+
+- **Unit:** In apps/web: `npm run test -- lib/engine/client.test.ts`
+- **E2E:** Set TEST_PROJECT_ID, then `npx playwright test tests/e2e/ai-smoke.spec.ts`
+- **Manual:** Open project AI page; run Summary/Copilot; trigger 429 (or mock) and check banner + countdown + request_id + Copy; check low-confidence expandable and "Suggest a follow-up question"; check Diagnostics in dev.
+- **Error boundary:** In dev, open a URL that throws and add ?request_id=xxx; confirm error page shows request_id.

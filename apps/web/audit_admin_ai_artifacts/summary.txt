@@ -1,0 +1,42 @@
+# Admin AI Observability — summary
+
+## What was added
+
+1. **Access control**
+   - requireAdmin(supabase): checks tenant_members.role in ('owner', 'admin'); returns allowed + adminTenantIds.
+   - Layout /admin/*: server-side guard; non-admins redirected to default locale root (/).
+   - No cross-tenant data: Edge and UI only expose data for tenants where the user is owner/admin.
+
+2. **Data layer**
+   - Edge: aistroyka-admin-ai (engine repo). Read-only actions with user JWT; admin check via tenant_members; service role used only for tables without RLS (ai_llm_logs, ai_circuit_breakers, ai_slo_daily), always scoped by tenant.
+   - Web: adminAiApi.ts → POST to aistroyka-admin-ai (get_ai_usage_summary, list_ai_security_events, get_ai_breaker_state, get_ai_slo_daily, list_recent_issues, get_request_by_id).
+   - Query keys: adminAiKeys.usage(), security(), breaker(), slo(), recentIssues(), requestById() in lib/engine/queryKeys.ts.
+   - Hooks: useAdminTenants, useAiUsageSummary, useAiSecurityEvents, useAiBreakerState, useAiSloDaily, useRecentIssues, useRequestById.
+
+3. **Routes**
+   - /admin/ai — Overview: KPI cards (requests today, error rate, p95, breaker state, low-confidence rate, budget exceeded), tenant selector, Top recent issues table.
+   - /admin/ai/security — Security events table; filters: range (24h/7d/30d), severity, event_type; collapsible JSON details.
+   - /admin/ai/requests — Request ID explorer: debounced input, then LLM log + retrieval logs + chat messages by request_id.
+
+4. **UI components**
+   - AdminKpiCard, AdminTable, JsonDetails (collapsible), RequestIdPill (copy), RangeFilter.
+   - QueryBoundary used for loading/empty/error.
+
+5. **Docs**
+   - docs/ADMIN_AI_OBSERVABILITY.md: pages, data sources, tables, rights, how to debug by request_id.
+
+6. **Tests**
+   - Playwright: unauthenticated /admin/ai and /admin/ai/requests redirect; admin overview structure when Edge mocked; request_id explorer with mock result.
+
+## How to verify
+
+- **Access:** Log in as a user who is owner or admin of at least one tenant. Open /admin/ai (or /en/admin/ai). You should see the overview. Non-admin or unauthenticated → redirect to locale root.
+- **Overview:** Select tenant; check Requests today, Error rate, p95, Breaker state, Low-confidence rate, Budget exceeded, and Top recent issues table. Data comes from Edge aistroyka-admin-ai (deploy Edge in engine and set SUPABASE_URL/keys).
+- **Security:** /admin/ai/security — set range and filters; table shows created_at, severity, event_type, request_id, details (expand).
+- **Request ID:** /admin/ai/requests — paste a request_id (e.g. from Copilot or security event); see LLM log, retrieval logs, chat messages.
+- **E2E:** In apps/web run: npx playwright test tests/e2e/ai-smoke.spec.ts (describe "Admin AI Observability smoke").
+
+## Required permissions
+
+- tenant_members.role in ('owner', 'admin') for at least one tenant. No project-level admin flag; tenant-scoped only.
+- RLS: no data from other tenants is returned; Edge enforces tenant_id in admin list before querying with service role.

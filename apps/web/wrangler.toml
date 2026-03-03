@@ -1,0 +1,75 @@
+# Cloudflare Workers config for Next.js via @opennextjs/cloudflare
+# Do not put secrets here; use dashboard or .dev.vars (local).
+# Multi-env: default = dev; use --env staging | production for other envs.
+
+name = "aistroyka-web-dev"
+compatibility_date = "2024-12-30"
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
+main = ".open-next/worker.js"
+
+[assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
+
+[[services]]
+binding = "WORKER_SELF_REFERENCE"
+service = "aistroyka-web-dev"
+
+# ----------------------------------------
+# [env.dev] — local/dev Worker (default)
+# ----------------------------------------
+[env.dev]
+name = "aistroyka-web-dev"
+
+[env.dev.assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
+
+[[env.dev.services]]
+binding = "WORKER_SELF_REFERENCE"
+service = "aistroyka-web-dev"
+
+# ----------------------------------------
+# [env.staging] — staging Worker
+# ----------------------------------------
+[env.staging]
+name = "aistroyka-web-staging"
+
+[env.staging.assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
+
+[[env.staging.services]]
+binding = "WORKER_SELF_REFERENCE"
+service = "aistroyka-web-staging"
+
+# ----------------------------------------
+# [env.production] — production Worker
+# ----------------------------------------
+[env.production]
+name = "aistroyka-web-production"
+
+[env.production.assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
+
+# Домен aistroyka.ai: если деплой выдаёт "assigned to another worker", в Dashboard снимите маршрут с другого Worker и задеплоййте снова.
+[[env.production.routes]]
+pattern = "aistroyka.ai"
+zone_name = "aistroyka.ai"
+
+[[env.production.routes]]
+pattern = "aistroyka.ai/*"
+zone_name = "aistroyka.ai"
+
+[[env.production.routes]]
+pattern = "www.aistroyka.ai"
+zone_name = "aistroyka.ai"
+
+[[env.production.routes]]
+pattern = "www.aistroyka.ai/*"
+zone_name = "aistroyka.ai"
+
+[[env.production.services]]
+binding = "WORKER_SELF_REFERENCE"
+service = "aistroyka-web-production"
