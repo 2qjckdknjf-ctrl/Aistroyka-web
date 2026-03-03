@@ -27,6 +27,7 @@ jobs:
 
     steps:
       - name: Check required secrets
+        working-directory: .
         run: |
           if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
             echo "::error::CLOUDFLARE_API_TOKEN is not set. Add it in GitHub → Settings → Secrets and variables → Actions."
@@ -48,10 +49,13 @@ jobs:
           cache-dependency-path: apps/web/package-lock.json
 
       - name: Install dependencies
+        working-directory: apps/web
         run: npm ci --legacy-peer-deps
 
       - name: Build (OpenNext Cloudflare)
+        working-directory: apps/web
         run: npm run cf:build
 
       - name: Deploy to Cloudflare (staging)
+        working-directory: apps/web
         run: npx wrangler deploy --env staging
