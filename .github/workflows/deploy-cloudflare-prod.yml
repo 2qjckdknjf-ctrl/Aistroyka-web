@@ -37,6 +37,17 @@ jobs:
 
       - uses: actions/checkout@v4
 
+      - name: Diagnostics (SHA, Node, lockfile)
+        run: |
+          echo "GITHUB_SHA=$GITHUB_SHA"
+          git log -1 --oneline
+          node -v
+          npm -v
+          echo "--- First lines with wrangler in package-lock.json ---"
+          grep -n '"wrangler"' package-lock.json | head -5
+          echo "--- Resolved wrangler version (node_modules/wrangler) ---"
+          (grep -A 2 '"node_modules/wrangler"' package-lock.json | grep '"version"' || true)
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
