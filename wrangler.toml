@@ -25,21 +25,22 @@ name = "aistroyka-web-production"
 directory = ".open-next/assets"
 binding = "ASSETS"
 
-[[env.production.routes]]
-pattern = "aistroyka.ai"
-zone_name = "aistroyka.ai"
-
-[[env.production.routes]]
-pattern = "aistroyka.ai/*"
-zone_name = "aistroyka.ai"
-
-[[env.production.routes]]
-pattern = "www.aistroyka.ai"
-zone_name = "aistroyka.ai"
-
-[[env.production.routes]]
-pattern = "www.aistroyka.ai/*"
-zone_name = "aistroyka.ai"
+# Temporarily commented to isolate 7003 — revert in follow-up if deploy succeeds
+# [[env.production.routes]]
+# pattern = "aistroyka.ai"
+# zone_name = "aistroyka.ai"
+#
+# [[env.production.routes]]
+# pattern = "aistroyka.ai/*"
+# zone_name = "aistroyka.ai"
+#
+# [[env.production.routes]]
+# pattern = "www.aistroyka.ai"
+# zone_name = "aistroyka.ai"
+#
+# [[env.production.routes]]
+# pattern = "www.aistroyka.ai/*"
+# zone_name = "aistroyka.ai"
 
 [[env.production.services]]
 binding = "WORKER_SELF_REFERENCE"
