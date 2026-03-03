@@ -1,0 +1,31 @@
+# Production health verification run
+
+**Timestamp:** 20260303193258  
+**Script:** scripts/verify-prod-health.sh  
+**Note:** Run immediately after push; CI deploy may not have completed yet.
+
+## Output
+
+```
+GET https://aistroyka.ai/api/health
+HTTP 200
+{
+  "ok": true,
+  "db": "ok",
+  "aiConfigured": false,
+  "openaiConfigured": false,
+  "supabaseReachable": true,
+  "buildStamp": {
+    "sha7": "0e363e4",
+    "buildTime": "2026-03-03 17:29"
+  }
+}
+FAIL: buildStamp.sha7 is still 0e363e4 (old deploy); expected new SHA after push
+Exit: 1
+```
+
+## Interpretation
+
+- Push to origin/main completed (0e363e4..52fb3de). CI workflow was triggered.
+- At the time of this run, production was still serving the previous build (sha7=0e363e4, no serviceRoleConfigured).
+- **Action:** Re-run `scripts/verify-prod-health.sh` after the "Deploy Cloudflare (Production)" workflow completes. Expect: HTTP 200, sha7=52fb3de (or new HEAD), serviceRoleConfigured present, supabaseReachable=true, exit 0.
