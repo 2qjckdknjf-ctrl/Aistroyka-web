@@ -20,7 +20,7 @@
 
 **Current prod commit (sha7):** _______________ (from GitHub Actions last successful run)
 
-**Domain working:** Yes / No  
+**Domain working:** Yes (curl https://aistroyka.ai/dashboard → 308 to /en/dashboard, server: cloudflare).  
 **Routes correct:** aistroyka.ai/* and www.aistroyka.ai/* → aistroyka-web-production (see docs/CLOUDFLARE_DOMAIN_FIX_EVIDENCE.md)  
 **CI green:** Yes / No  
 
