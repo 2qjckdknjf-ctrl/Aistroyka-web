@@ -1,5 +1,6 @@
 # Cloudflare Workers config for Next.js via @opennextjs/cloudflare
-# Do not put secrets here; use dashboard or .dev.vars (local)
+# Do not put secrets here; use dashboard or .dev.vars (local).
+# Multi-env: use --env staging | production. Account from CLOUDFLARE_ACCOUNT_ID in CI.
 
 name = "aistroyka-web"
 compatibility_date = "2024-12-30"
@@ -13,3 +14,47 @@ binding = "ASSETS"
 [[services]]
 binding = "WORKER_SELF_REFERENCE"
 service = "aistroyka-web"
+
+# ----------------------------------------
+# [env.production] — production Worker
+# ----------------------------------------
+[env.production]
+name = "aistroyka-web-production"
+
+[env.production.assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
+
+[[env.production.routes]]
+pattern = "aistroyka.ai"
+zone_name = "aistroyka.ai"
+
+[[env.production.routes]]
+pattern = "aistroyka.ai/*"
+zone_name = "aistroyka.ai"
+
+[[env.production.routes]]
+pattern = "www.aistroyka.ai"
+zone_name = "aistroyka.ai"
+
+[[env.production.routes]]
+pattern = "www.aistroyka.ai/*"
+zone_name = "aistroyka.ai"
+
+[[env.production.services]]
+binding = "WORKER_SELF_REFERENCE"
+service = "aistroyka-web-production"
+
+# ----------------------------------------
+# [env.staging] — staging Worker
+# ----------------------------------------
+[env.staging]
+name = "aistroyka-web-staging"
+
+[env.staging.assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
+
+[[env.staging.services]]
+binding = "WORKER_SELF_REFERENCE"
+service = "aistroyka-web-staging"
