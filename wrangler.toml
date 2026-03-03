@@ -19,6 +19,8 @@ service = "aistroyka-web"
 
 # ----------------------------------------
 # [env.production] — production Worker (custom domain only)
+# Set Worker Variables in Cloudflare Dashboard (Settings → Variables):
+#   NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, NEXT_PUBLIC_APP_URL=https://aistroyka.ai
 # ----------------------------------------
 [env.production]
 name = "aistroyka-web-production"
@@ -50,6 +52,7 @@ service = "aistroyka-web-production"
 
 # ----------------------------------------
 # [env.staging] — staging Worker (workers.dev enabled)
+# Set Worker Variables in Dashboard: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, NEXT_PUBLIC_APP_URL (staging URL)
 # ----------------------------------------
 [env.staging]
 name = "aistroyka-web-staging"
