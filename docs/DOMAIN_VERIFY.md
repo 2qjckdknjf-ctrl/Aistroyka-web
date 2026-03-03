@@ -1,10 +1,10 @@
 # Domain and routing verification (aistroyka.ai)
 
-How to confirm requests hit the Cloudflare Worker and that DNS/routes are correct. No secrets.
+How to confirm requests hit the Cloudflare Worker and that DNS/routes are correct.
 
 ---
 
-## 1. Check routes exist (Cloudflare Worker triggers)
+## 1. Check routes in Cloudflare (Worker triggers)
 
 1. **Cloudflare Dashboard** → **Workers & Pages** → **Workers** → **aistroyka-web-production**.
 2. Open **Triggers** → **Routes**.
@@ -16,53 +16,32 @@ If missing, add them (see **docs/ROUTES_MANUAL_SETUP.md**).
 
 ---
 
-## 2. Verify DNS is in Cloudflare (nameservers)
+## 2. Check DNS and nameservers
 
-1. At your domain registrar, ensure **aistroyka.ai** uses the **nameservers** shown in Cloudflare for that zone (e.g. `xxx.ns.cloudflare.com`, `yyy.ns.cloudflare.com`).
-2. Check propagation:
-   ```bash
-   dig NS aistroyka.ai +short
-   ```
-   You should see Cloudflare NS records.
-3. Zone must be **Active** in Cloudflare (not “Pending nameservers”).
+1. Zone **aistroyka.ai** must be on the same Cloudflare account as the Worker.
+2. At your registrar, **nameservers** for aistroyka.ai must be the ones shown in Cloudflare (e.g. `xxx.ns.cloudflare.com`, `yyy.ns.cloudflare.com`).
+3. In Cloudflare → **Websites** → **aistroyka.ai** → **DNS**: ensure A/AAAA or CNAME for `@` and `www` are **Proxied** (orange cloud) so traffic hits Cloudflare and then the Worker.
 
 ---
 
-## 3. Verify requests hit the Worker
+## 3. Verify by loading endpoints
 
-Call these from a browser or `curl`; they are served by the Worker when routing is correct.
+From a terminal or browser:
 
-### Health (no auth)
+- **Health:**  
+  `curl -sI https://aistroyka.ai/api/health`  
+  Expect **200** and JSON body with `"ok": true`, `requestHost`, `appUrl`.
 
-```bash
-curl -s https://aistroyka.ai/api/health
-```
+- **Auth diag:**  
+  `curl -s https://aistroyka.ai/api/auth/diag`  
+  Expect JSON with `anonKeyPresent`, `supabaseUrlHost`, `appUrl`, `requestHost` (no secrets).
 
-Expected JSON includes `ok: true`, `requestHost` (e.g. `aistroyka.ai`), and `appUrl` if set.
-
-### Auth diag (config check, no secrets)
-
-```bash
-curl -s https://aistroyka.ai/api/auth/diag
-```
-
-Expected: `anonKeyPresent: true`, `supabaseUrlHost` set, `appUrl`: `https://aistroyka.ai`, `requestHost`: `aistroyka.ai` (or `www.aistroyka.ai` when called with that host).
-
-If you get a different host (e.g. workers.dev) or 404, routes or DNS are not pointing at the Worker.
+If you get 5xx or “worker not found”, routes or DNS are wrong. If 200 but `requestHost` is unexpected, host header / routing may be off.
 
 ---
 
 ## 4. Hard refresh and cache
 
 - **Browser:** Cmd+Shift+R (macOS) or Ctrl+Shift+R (Windows/Linux).  
-- If the app or login still looks stale, try a private/incognito window or clear site data for aistroyka.ai.
-
----
-
-## 5. Quick checklist
-
-- [ ] Cloudflare Worker **aistroyka-web-production** has routes for `aistroyka.ai/*` and `www.aistroyka.ai/*`.
-- [ ] Zone **aistroyka.ai** is on the same Cloudflare account and nameservers are set at the registrar.
-- [ ] `curl -s https://aistroyka.ai/api/health` returns `ok: true` and `requestHost`.
-- [ ] `curl -s https://aistroyka.ai/api/auth/diag` shows expected `appUrl` and `anonKeyPresent: true`.
-- [ ] Browser hard refresh when testing login/redirects.
+- Use a private/incognito window if the cache is stubborn.  
+- For API checks, `curl` does not use browser cache.

@@ -8,7 +8,7 @@ BASE_URL="${BASE_URL:-https://aistroyka.ai}"
 echo "=== Health ==="
 health=$(curl -sS "${BASE_URL}/api/health" || true)
 echo "$health"
-if ! echo "$health" | grep -q '"ok":\s*true'; then
+if ! echo "$health" | grep -qE '"ok"[[:space:]]*:[[:space:]]*true'; then
   echo "Health check failed or not JSON with ok:true"
   exit 1
 fi
@@ -17,7 +17,7 @@ echo ""
 echo "=== Auth diag (non-sensitive) ==="
 diag=$(curl -sS "${BASE_URL}/api/auth/diag" || true)
 echo "$diag"
-if ! echo "$diag" | grep -q '"anonKeyPresent":\s*true'; then
+if ! echo "$diag" | grep -qE '"anonKeyPresent"[[:space:]]*:[[:space:]]*true'; then
   echo "anonKeyPresent is not true; set NEXT_PUBLIC_SUPABASE_* in Cloudflare Worker Variables (see docs/CLOUDFLARE_WORKER_VARS.md)"
   exit 1
 fi
