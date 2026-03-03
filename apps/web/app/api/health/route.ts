@@ -1,9 +1,10 @@
 /**
  * Readiness/health check for the unified system (site + engine + AI).
- * GET /api/health → { ok, db, aiConfigured, openaiConfigured, supabaseReachable?, buildStamp?: { sha7, buildTime }, reason? }.
+ * GET /api/health → { ok, db, aiConfigured, openaiConfigured, supabaseReachable?, serviceRoleConfigured?, buildStamp?, reason? }.
  * - aiConfigured: AI_ANALYSIS_URL is set (job processor can call AI).
  * - openaiConfigured: OPENAI_API_KEY is set (in-app /api/ai/analyze-image can run).
  * - supabaseReachable: Supabase URL is reachable (no URL leaked in response).
+ * - serviceRoleConfigured: SUPABASE_SERVICE_ROLE_KEY is set (required for job processing after security hardening).
  * No auth. Used by deploy checks and optional UI hints.
  */
 
@@ -66,12 +67,14 @@ export async function GET() {
   const status = ok ? 200 : 503;
   const sha = process.env.NEXT_PUBLIC_BUILD_SHA ?? "";
   const buildTime = process.env.NEXT_PUBLIC_BUILD_TIME ?? "";
+  const serviceRoleConfigured = Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY?.trim());
   const body: Record<string, unknown> = {
     ok,
     db,
     aiConfigured,
     openaiConfigured,
     supabaseReachable,
+    serviceRoleConfigured,
     buildStamp: sha ? { sha7: sha.slice(0, 7), buildTime } : undefined,
   };
   if (reason) body.reason = reason;
