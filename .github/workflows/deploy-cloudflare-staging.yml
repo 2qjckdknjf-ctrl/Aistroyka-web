@@ -1,5 +1,5 @@
 # Staging deploy: push to develop → build (OpenNext) + deploy to Cloudflare Workers (env.staging).
-# Routes are managed in Cloudflare Dashboard; token does not need zone route permissions.
+# Builds apps/web. Routes are managed in Cloudflare Dashboard.
 # Requires same GitHub secrets: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID.
 
 name: Deploy Cloudflare (Staging)
@@ -17,6 +17,9 @@ jobs:
     name: Build and deploy to staging
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: apps/web
 
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -24,6 +27,7 @@ jobs:
 
     steps:
       - name: Check required secrets
+        working-directory: .
         run: |
           if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
             echo "::error::CLOUDFLARE_API_TOKEN is not set. Add it in GitHub → Settings → Secrets and variables → Actions."
@@ -42,7 +46,7 @@ jobs:
         with:
           node-version: "20"
           cache: "npm"
-          cache-dependency-path: package-lock.json
+          cache-dependency-path: apps/web/package-lock.json
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v1
@@ -63,6 +67,6 @@ jobs:
 
       - name: Post-deploy summary
         run: |
-          echo "Deployed worker: aistroyka-web-staging"
+          echo "Deployed worker: aistroyka-web-staging (apps/web)"
           echo "Commit: $GITHUB_SHA"
           echo "workers.dev URL: see 'Deploy to Cloudflare' step output above"
