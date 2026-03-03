@@ -29,21 +29,20 @@ preview_urls = false
 directory = ".open-next/assets"
 binding = "ASSETS"
 
-[[env.production.routes]]
-pattern = "aistroyka.ai"
-zone_name = "aistroyka.ai"
-
-[[env.production.routes]]
-pattern = "aistroyka.ai/*"
-zone_name = "aistroyka.ai"
-
-[[env.production.routes]]
-pattern = "www.aistroyka.ai"
-zone_name = "aistroyka.ai"
-
-[[env.production.routes]]
-pattern = "www.aistroyka.ai/*"
-zone_name = "aistroyka.ai"
+# Routes managed in Dashboard: Workers & Pages → aistroyka-web-production → Triggers → Routes
+# Add: aistroyka.ai/*, www.aistroyka.ai/*  (see docs/ROUTES_MANUAL_SETUP.md)
+# [[env.production.routes]]
+# pattern = "aistroyka.ai"
+# zone_name = "aistroyka.ai"
+# [[env.production.routes]]
+# pattern = "aistroyka.ai/*"
+# zone_name = "aistroyka.ai"
+# [[env.production.routes]]
+# pattern = "www.aistroyka.ai"
+# zone_name = "aistroyka.ai"
+# [[env.production.routes]]
+# pattern = "www.aistroyka.ai/*"
+# zone_name = "aistroyka.ai"
 
 [[env.production.services]]
 binding = "WORKER_SELF_REFERENCE"
