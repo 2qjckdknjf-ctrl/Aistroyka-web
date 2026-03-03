@@ -45,8 +45,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "npm"
-          cache-dependency-path: apps/web/package-lock.json
+          # Omit cache so setup-node does not require apps/web/package-lock.json (avoids "unable to cache dependencies" when apps/web not in repo).
+          # To enable cache after apps/web is committed: add cache: "npm" and cache-dependency-path: apps/web/package-lock.json
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v1
