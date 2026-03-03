@@ -21,6 +21,26 @@ Type error: Cannot find module '@/i18n/navigation' from ./apps/web/...
 
 ---
 
+## Architectural fix: root tsconfig (so root build can resolve @/)
+
+So that **even when** Cloudflare runs `next build` from repo root (and that build compiles or type-checks files under `apps/web`), the alias `@/` resolves correctly:
+
+**Root `tsconfig.json` was changed:**
+
+- **`compilerOptions.baseUrl`**: `"."`
+- **`compilerOptions.paths`**: `{ "@/*": ["apps/web/*"] }`  
+  → So `@/i18n/navigation` resolves to `apps/web/i18n/navigation.ts`, and any `@/...` in apps/web code resolves under `apps/web/`.
+- **`exclude`**: `node_modules`, `apps/web/audit_*`, `audit_*`, `ios`, `engine`, `archive_*`, `docs`, `reports`, `scripts`, `TestLogs`, `.cursor`  
+  → So the root build does not type-check or include unrelated trees (audit artifacts, ios, etc.).
+
+**Why this fixes the error:**  
+If the runner executes `next build` in the repo root and the build touches files under `apps/web` (e.g. because the app dir points at apps/web or the project includes those files), TypeScript uses the root `tsconfig.json`. With `@/*` → `apps/web/*`, imports like `@/i18n/navigation` resolve to `apps/web/i18n/navigation.ts`, so the `Cannot find module '@/i18n/navigation'` error goes away.
+
+**What we did not do:**  
+We did **not** replace root `app` / `middleware` / `i18n` with symlinks to `apps/web` to “run next build from root but build apps/web”. That led to two copies of Next/React (root vs apps/web `node_modules`) and type/runtime conflicts. The safe approach is: (1) root tsconfig above, and (2) Cloudflare must run **`bun run build`** (so the root script `cd apps/web && npm run cf:build` runs) or use **Root directory = apps/web** and **Build command = `npm run cf:build`**.
+
+---
+
 ## Step 0 — Current Cloudflare platform and config (from repo)
 
 | Item | Location | Purpose |

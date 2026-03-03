@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
@@ -13,8 +14,23 @@
     "jsx": "preserve",
     "incremental": true,
     "plugins": [{ "name": "next" }],
-    "paths": { "@/*": ["./*"] }
+    "paths": { "@/*": ["apps/web/*"] }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    "apps/web/audit_*",
+    "apps/web/audit_*/**",
+    "audit_*",
+    "audit_*/**",
+    "ios",
+    "engine",
+    "archive_*",
+    "exports",
+    "docs",
+    "reports",
+    "scripts",
+    "TestLogs",
+    ".cursor"
+  ]
 }

@@ -1,4 +1,4 @@
-import { BuildStamp } from "../../../components/BuildStamp";
+import { BuildStamp } from "@/components/BuildStamp";
 
 /**
  * Auth layout: login/register. Includes build marker so unauthenticated users
