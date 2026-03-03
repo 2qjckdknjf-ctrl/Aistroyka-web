@@ -4,8 +4,18 @@ import { getPublicEnv, hasSupabaseEnv } from "@/lib/env";
 
 type CookieToSet = { name: string; value: string; options?: Record<string, unknown> };
 
-const ENV_MISSING_MESSAGE =
-  "Missing Supabase env: set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY (e.g. .env.local or Cloudflare build env).";
+function envMissingMessage(): string {
+  const missing: string[] = [];
+  if (typeof process.env.NEXT_PUBLIC_SUPABASE_URL !== "string" || !process.env.NEXT_PUBLIC_SUPABASE_URL) {
+    missing.push("NEXT_PUBLIC_SUPABASE_URL");
+  }
+  if (typeof process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY !== "string" || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    missing.push("NEXT_PUBLIC_SUPABASE_ANON_KEY");
+  }
+  return missing.length
+    ? `Supabase env missing: ${missing.join(", ")}. Set in .env.local or Cloudflare build env.`
+    : "Supabase env missing.";
+}
 
 export async function updateSession(request: NextRequest) {
   const response = NextResponse.next({
@@ -17,12 +27,15 @@ export async function updateSession(request: NextRequest) {
       process.env.NODE_ENV === "development" || process.env.VERCEL_ENV === "preview";
     if (isDevOrPreview) {
       return {
-        response: new NextResponse(ENV_MISSING_MESSAGE, {
+        response: new NextResponse(envMissingMessage(), {
           status: 503,
           headers: { "Content-Type": "text/plain; charset=utf-8" },
         }),
         user: null,
       };
+    }
+    if (process.env.NODE_ENV === "production") {
+      console.error("[auth] updateSession: missing Supabase env in production");
     }
     return { response, user: null };
   }
