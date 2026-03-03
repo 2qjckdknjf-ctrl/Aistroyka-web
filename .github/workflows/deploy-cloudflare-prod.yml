@@ -77,6 +77,16 @@ jobs:
       - name: Build (OpenNext Cloudflare)
         run: npm run cf:build
 
+      - name: Verify build output and app source
+        run: |
+          echo "Build directory: $(pwd)"
+          test -f .open-next/worker.js || (echo "::error::.open-next/worker.js missing" && exit 1)
+          test -d .open-next/assets || (echo "::error::.open-next/assets missing" && exit 1)
+          test -f "app/[locale]/(dashboard)/dashboard/page.tsx" || (echo "::error::dashboard page missing" && exit 1)
+          test -f "app/[locale]/(dashboard)/layout.tsx" || (echo "::error::dashboard layout missing" && exit 1)
+          echo "Worker name in wrangler (production): $(grep -A1 '^\[env.production\]' wrangler.toml | grep '^name =' | sed 's/.*= *//')"
+          echo "Expected: aistroyka-web-production"
+
       - name: Deploy to Cloudflare (production)
         run: npx wrangler deploy --env production --config wrangler.toml
 
