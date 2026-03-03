@@ -9,7 +9,7 @@
 - **Repo:** Single monorepo; two Next.js apps exist:
   - **Root** `app/`, `components/`, `lib/` — simpler app (old dashboard: plain table, no locale, no design tokens).
   - **apps/web** — full app with `[locale]`, design tokens, Nav, Admin, projects, portfolio, team, billing; **this is the enterprise UI**.
-- **Current commit (at report creation):** See "Final commit SHA" at end of this doc (updated after Phase 5).
+- **Current commit (at report creation):** d49021d (see "Final commit SHA" at end).
 - **Recent deploy-related commits:** Production deploy was switched to `apps/web` (feat(deploy): switch production build to apps/web). All workflow/wrangler changes since then target `apps/web`.
 - **Wrangler configs:**
   - **apps/web/wrangler.toml** — used by CI (`working-directory: apps/web`, `--config wrangler.toml`). Defines `[env.production]` with `name = "aistroyka-web-production"`. Routes are commented out (managed in Dashboard).
@@ -105,4 +105,4 @@ If any check fails, re-verify routes (4.1–4.2) and DNS (4.3); then clear brows
 
 ## Final commit SHA
 
-*(Will be filled after Phase 5 push.)*
+**d49021d** — chore(prod): restore report, CI verify step for apps/web build
