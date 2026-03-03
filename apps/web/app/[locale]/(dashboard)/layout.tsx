@@ -23,9 +23,24 @@ export default async function DashboardLayout({
     redirect(`/${locale}/login`);
   }
 
+  const sha =
+    process.env.VERCEL_GIT_COMMIT_SHA ??
+    process.env.GITHUB_SHA ??
+    "local";
+  const shaShort = sha === "local" ? "local" : sha.slice(0, 7);
+  const date = process.env.NEXT_PUBLIC_BUILD_TIME ?? "—";
+
   return (
-    <AppLayout userEmail={user.email ?? undefined}>
-      {children}
-    </AppLayout>
+    <>
+      <AppLayout userEmail={user.email ?? undefined}>
+        {children}
+      </AppLayout>
+      <footer
+        className="mt-auto border-t border-aistroyka-border-subtle py-aistroyka-2 text-center text-aistroyka-caption text-aistroyka-text-tertiary"
+        aria-hidden="true"
+      >
+        Build: {shaShort} / {date}
+      </footer>
+    </>
   );
 }
