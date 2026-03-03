@@ -22,11 +22,7 @@ Evidence for which build is served on **aistroyka.ai** and how to keep productio
 
 ### Current git SHA (main)
 
-*(Fill after push.)*
-
-```
-git rev-parse main
-```
+**08fb1c0** (after Phase 5 commits; run `git rev-parse main` locally to confirm).
 
 ### Last successful "Deploy Cloudflare (Production)" run
 
@@ -102,6 +98,7 @@ Run (optional workers.dev base URL from deploy step output):
 
 ## Deployed commit SHA (final)
 
-*(Update after verifying production.)*
+*(Update after verifying production with scripts/prod-verify.sh and GitHub Actions.)*
 
-**Deployed commit:** _______________
+**Latest commit on main (at report write):** 08fb1c0  
+**Deployed commit (from build marker or Actions):** _______________
