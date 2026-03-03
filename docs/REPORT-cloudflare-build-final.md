@@ -159,6 +159,20 @@ Both must complete without `Cannot find module '@/i18n/navigation'`.
 
 ---
 
+## Bun lockfile (frozen lockfile fix)
+
+**Почему падало:** В CI (Cloudflare или локально) команда `bun install --frozen-lockfile` падала с ошибкой *"lockfile had changes, but lockfile is frozen"* в каталоге **apps/web**. Lockfile `apps/web/bun.lock` был рассинхронизирован с текущим `package.json` (разрешение зависимостей или версия Bun давали другой граф).
+
+**Что обновили:** Выполнен `bun install` (без `--frozen-lockfile`) в **apps/web**; обновлён только **apps/web/bun.lock**. Версии пакетов в `package.json` не меняли.
+
+**Как проверить локально:** Из корня репо или из `apps/web`:
+```bash
+cd apps/web && bun install --frozen-lockfile
+```
+Должен завершиться без ошибок (exit 0). После push шаг install в Cloudflare также должен проходить.
+
+---
+
 ## Step 6 — Proof and verification
 
 ### What the Cloudflare build log must show after the fix
