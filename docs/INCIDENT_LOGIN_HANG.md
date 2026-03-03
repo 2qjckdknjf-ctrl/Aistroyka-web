@@ -9,8 +9,8 @@
 ## 1. Symptoms
 
 - **User flow:** Incognito → `/en/login` → enter email/password → submit.
-- **Observed:** UI hangs with infinite loading spinner; login does not complete.
-- **Known:** `/api/health` returns `supabaseReachable: true`, build sha7 `0e363e4`. Deployed app is `apps/web`.
+- **Observed:** UI hangs with infinite loading spinner; login does not complete (no navigation).
+- **Known:** `/api/health` ok, build sha7 correct, login page renders new UI. After submitting credentials, page hangs.
 
 ---
 
@@ -20,40 +20,42 @@
 
 | File | Role |
 |------|------|
-| `app/[locale]/(auth)/login/page.tsx` | Login page; client form calls `signInWithPassword`, then `router.push(next)` + `router.refresh()` |
-| `lib/supabase/client.ts` | `createClient()` → `createBrowserClient(NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY)` |
-| `lib/supabase/middleware.ts` | `updateSession()` uses `createServerClient`, reads cookies from request, sets cookies on response, returns `getUser()` |
-| `middleware.ts` | Runs `updateSession` then intl; protected routes → redirect to `/{locale}/login` when no user; auth pages with user → redirect to next/dashboard |
+| `app/[locale]/(auth)/login/page.tsx` | Client form: `signInWithPassword` then `router.push(next)` + `router.refresh()` |
+| `lib/supabase/client.ts` | `createBrowserClient(URL, ANON_KEY)` — session stored in cookies by @supabase/ssr |
+| `lib/supabase/middleware.ts` | `updateSession()`: `createServerClient` with request cookies → `getUser()`; writes cookies to response via `setAll` |
+| `middleware.ts` | After `updateSession`: protected + !user → redirect to `/{locale}/login`; auth page + user → redirect to next/dashboard |
 
-### 2.2 Root cause (proven from code)
+### 2.2 Root causes (proven from code)
 
-**Original login handler (simplified):**
+**Cause 1 — Spinner never stops on error/timeout**
 
-```ts
-setLoading(true);
-const { error: err } = await supabase.auth.signInWithPassword({ email, password });
-setLoading(false);
-if (err) { setError(...); return; }
-router.push(next);
-router.refresh();
-```
+- No try/catch: if `signInWithPassword` throws, `setLoading(false)` never ran.
+- No timeout: if the promise never resolved, loading stayed true.
+- No finally: any throw (including in `router.push`/`router.refresh`) left loading true.
 
-- **No try/catch:** If `signInWithPassword` **throws** (e.g. network error, CORS, or client exception), `setLoading(false)` is never run → spinner never stops.
-- **No timeout:** If `signInWithPassword` **never resolves** (e.g. slow/unresponsive network, edge timeout, or Supabase endpoint hanging), the promise never settles → spinner runs indefinitely.
-- **No finally:** Any code path that throws (including in `router.push`/`router.refresh`) leaves `loading === true`.
+**Cause 2 — Post-login navigation hangs (production)**
 
-So the hang is explained by: **the sign-in request either throws or never resolves, and the UI never clears the loading state.**
+- After success we used `router.push(next)` + `router.refresh()`. That is a **client-side** navigation (RSC fetch).
+- On Cloudflare Workers / Edge, the next request (for dashboard) may not reliably receive or use the session cookies set by the browser client immediately after sign-in, or the RSC/redirect response handling can leave the client in a loading state instead of following the redirect.
+- Result: signIn succeeds, but the app appears to hang because the client never completes navigation or the server redirects to login and the client doesn’t follow it visibly.
+
+**Fix for Cause 2:** Use a **full page redirect** after successful login (`window.location.href = targetPath`) so the browser issues a normal document request with the Cookie header. Middleware then sees the session and allows access to the dashboard; no reliance on client router or RSC redirect handling.
 
 ### 2.3 Hypothesis checks
 
 | Hypothesis | Check | Result |
 |------------|--------|--------|
-| **A) Supabase returns error but UI swallows it** | Code only handles `err` from resolved promise. If promise rejects (throw), it was unhandled. | **Partial:** Auth errors returned as `{ error }` are shown; thrown errors were not caught. |
-| **B) Redirect URI / NEXT_PUBLIC_APP_URL mismatch** | `signInWithPassword` does not use redirect URI (used for OAuth). App URL used in middleware (www→apex) and defaults to `https://aistroyka.ai`. | **Not the cause** of hang; would affect OAuth/callback only. |
-| **C) Cookies/session not persisted** | Middleware uses `@supabase/ssr` with request cookies read and response cookies set. Session would affect post-login redirect, not the hang on submit. | **Not the cause** of infinite spinner; hang occurs before redirect. |
-| **D) Redirect loop** | Middleware: unauthenticated + protected → login; authenticated + auth page → dashboard. No loop in logic. | **Not observed**; hang is on login submit, not redirect. |
+| **A) Supabase error swallowed** | Auth `err` was handled; throws were not. | Addressed with try/catch/finally + timeout. |
+| **B) NEXT_PUBLIC_APP_URL** | `lib/app-url.ts`: defaults to `https://aistroyka.ai` when unset. Set in production to `https://aistroyka.ai` (no trailing slash). | Correct for aistroyka.ai. |
+| **C) Session cookie** | Middleware reads `request.cookies`, Supabase server client uses same cookie API. Full page redirect ensures next request sends cookies. | Full-page redirect fixes delivery. |
+| **D) Redirect loop** | Logic: protected && !user → login; auth && user → dashboard. No loop. Middleware sets `X-Auth-Redirect` for debugging. | No loop; header added to verify. |
 
-Conclusion: **The hang is caused by the sign-in promise not completing (timeout or throw) combined with no error handling and no timeout, so the spinner never stops.**
+### 2.4 Diagnostics
+
+- **UI (login page):** Visible line `Login step: idle | submitting | supabase_ok | redirecting | error:<code>`. Identifies stuck stage without DevTools.
+- **Response header:** `X-Auth-Redirect: login` when middleware sends user to login; `X-Auth-Redirect: dashboard` when redirecting authenticated user from login to dashboard; `X-Auth-Redirect: pass` when no auth redirect.
+- **Supabase connectivity:** `GET /api/diag/supabase` returns `{ reachable, latencyMs }` (lightweight HEAD to Supabase origin; no secrets). Use to confirm Supabase is not blocked (CSP, network).
+- **Auth smoke script:** `./scripts/auth-smoke.sh [BASE_URL]` hits `/en/login` (headers), `/api/health`, `/api/diag/supabase` and writes results to `docs/audit/auth-smoke.<timestamp>.txt`.
 
 ---
 
@@ -61,20 +63,23 @@ Conclusion: **The hang is caused by the sign-in promise not completing (timeout 
 
 ### 3.1 Login page (`app/[locale]/(auth)/login/page.tsx`)
 
-1. **Timeout (15s):** `Promise.race([signInWithPassword(...), timeoutPromise])` so the wait is bounded.
-2. **try/catch/finally:**
-   - **try:** race sign-in with timeout; on success handle `err` and redirect; on auth error set message and return.
-   - **catch:** On timeout or any thrown error, set user-facing error (timeout message or `defaultError`).
-   - **finally:** Always `setLoading(false)` so the spinner stops on every path.
-3. **Diagnostic logging (dev only):** `console.info` on completion (duration, ok/error); `console.warn` on catch (timeout or thrown). No secrets.
+1. **Timeout (15s)** + **try/catch/finally** so the spinner always stops and errors are shown.
+2. **Full page redirect after success:** In the browser, use `window.location.href = targetPath` instead of `router.push(next)` + `router.refresh()`. Ensures the next request is a normal document load with cookies, so middleware can read the session and serve the dashboard.
+3. **Visible debug line (no DevTools needed):** UI shows `Login step: idle | submitting | supabase_ok | redirecting | error:timeout | error:auth | error:network | error:unknown` so the stuck stage is identifiable in production.
+4. **Sign-in helper** `signInWithObservability(email, password)` returns `{ ok, stage, durationMs, errorCode?, errorMessage? }`; on error/timeout the UI shows a user-facing message and a **Retry** button; `setLoading(false)` is always called in `finally`.
+5. **Console logs (no secrets):** On unexpected throw, `[login] unexpected throw` is logged.
 
-### 3.2 Register page (`app/[locale]/(auth)/register/page.tsx`)
+### 3.2 Middleware (`middleware.ts`)
 
-- Same pattern: try/catch/finally, 15s timeout, user-facing error on timeout or throw, `setLoading(false)` in finally.
+- **Diagnostic header:** `X-Auth-Redirect: login` when redirecting to login (blocked); `X-Auth-Redirect: dashboard` when redirecting from auth page to dashboard; `X-Auth-Redirect: pass` when not redirecting for auth. Use Network tab to confirm no unexpected redirect to login after successful sign-in.
 
-### 3.3 Build stamp
+### 3.3 Register page
 
-- Auth layout already includes a build stamp footer (`app/[locale]/(auth)/layout.tsx` with `BuildStamp`). No change.
+- Same robustness as login: try/catch/finally, 15s timeout, `setLoading(false)` in finally (already in place).
+
+### 3.4 NEXT_PUBLIC_APP_URL
+
+- Must match production origin exactly: `https://aistroyka.ai` (no trailing slash). Set in Cloudflare Worker vars if needed. Used for www→apex redirect and any OAuth redirectTo.
 
 ---
 
@@ -82,38 +87,46 @@ Conclusion: **The hang is caused by the sign-in promise not completing (timeout 
 
 1. **Incognito login**
    - Open `https://aistroyka.ai/en/login`.
-   - Enter valid credentials → login completes and navigates to dashboard (no infinite loading).
-   - Enter invalid credentials → error message shown, spinner stops.
+   - Watch the **Login step** line: should move `idle` → `submitting` → `supabase_ok` → `redirecting`, then full page navigates to dashboard (no infinite loading).
+   - Enter invalid credentials → error message shown, **Retry** button; step shows `error:auth`; spinner stops.
+   - Simulate timeout (e.g. block Supabase in DevTools) → step shows `error:timeout` or `error:network` within 15s; **Retry** available.
 
-2. **Timeout / network failure**
-   - Simulate slow network (DevTools throttling) or invalid Supabase URL → after ≤15s, timeout (or error) message shown and spinner stops.
+2. **Response headers (Network tab)**
+   - After submitting valid credentials: document request to `/en/dashboard` should return 200 (or 307 to same) with `X-Auth-Redirect: pass`. If you see `X-Auth-Redirect: login` on the dashboard request, session was not seen by middleware.
 
-3. **No redirect loops**
-   - After login, single redirect to dashboard; no repeated login ↔ dashboard redirects.
+3. **Supabase reachability**
+   - `GET /api/diag/supabase` → `{ reachable: true, latencyMs: number }`. If `reachable: false`, check CSP (`connect-src` to `https://*.supabase.co`), network, or firewall.
 
-4. **Console**
-   - No uncaught errors; in dev, expected `[login] signIn completed...` or `[login] signIn failed...`.
+4. **Auth smoke script**
+   - Run `./scripts/auth-smoke.sh https://aistroyka.ai`. Check `docs/audit/auth-smoke.<timestamp>.txt` for login page HTTP code, health JSON, and diag/supabase result.
 
-5. **Production build**
-   - Run `npm run build` (or cf:build) and test login in production build locally or on deploy.
+5. **NEXT_PUBLIC_APP_URL**
+   - Production: set to `https://aistroyka.ai` (no trailing slash) in Cloudflare Worker vars.
+
+6. **Production build**
+   - `npm run build` (or cf:build) in apps/web; test login locally with production build, then deploy and test on aistroyka.ai.
 
 ---
 
 ## 5. If issues persist
 
-- **Still hangs:** Check Network tab for the Supabase auth request (e.g. `.../auth/v1/token?grant_type=password`): status, timing, CORS. Ensure Worker allows requests to Supabase (CSP `connect-src` includes `https://*.supabase.co`).
-- **Session not set after success:** Verify middleware cookie handling and that `updateSession` runs on the next request; check Supabase project URL and anon key match the deployed env.
-- **Redirect to wrong path:** Ensure `next` param and `router.push(next)` use locale-prefixed paths when required; next-intl router handles current locale.
+- **Still hangs:** Check Network for Supabase auth request (e.g. `.../auth/v1/token?grant_type=password`): status, CORS. CSP must include `connect-src ... https://*.supabase.co`.
+- **Session not seen:** After login, request to `/en/dashboard` returns 302 to login and response has `X-Auth-Redirect: login` → cookies not sent or not read. Confirm Worker env has correct `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`; ensure cookie domain/SameSite allow sending on same-origin request.
+- **Wrong path:** `next` should be locale-prefixed when present (e.g. `/en/dashboard`). Full page redirect uses `targetPath` as-is.
 
 ---
 
-## 6. Commit
+## 6. Commit (applied)
 
 ```
-fix(auth): resolve prod login hang and add robust error handling
+fix(auth): eliminate prod login hang with deterministic stages + full redirect
 
-- Login: try/catch/finally, 15s timeout, always clear spinner
-- Register: same pattern for signUp
-- User-facing errors on timeout or thrown; dev-only diagnostic logs
-- RCA: docs/INCIDENT_LOGIN_HANG.md
+- Login: try/catch/finally, 15s timeout; full page redirect after success
+  (window.location.href); signInWithObservability returns ok/stage/durationMs/errorCode
+- Visible UI: Login step (idle|submitting|supabase_ok|redirecting|error:<code>);
+  on error: user message + Retry button; loading cleared in finally
+- GET /api/diag/supabase: reachable + latencyMs (no secrets)
+- scripts/auth-smoke.sh: /en/login, /api/health, /api/diag/supabase → docs/audit/auth-smoke.<ts>.txt
+- Middleware: X-Auth-Redirect (login|dashboard|pass) unchanged
+- RCA: docs/INCIDENT_LOGIN_HANG.md updated
 ```

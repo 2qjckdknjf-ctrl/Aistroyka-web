@@ -9,58 +9,124 @@ import { Input, Button, Alert } from "@/components/ui";
 
 const SIGN_IN_TIMEOUT_MS = 15_000;
 
+export type LoginStep =
+  | "idle"
+  | "submitting"
+  | "supabase_ok"
+  | "redirecting"
+  | "error:timeout"
+  | "error:auth"
+  | "error:network"
+  | "error:unknown";
+
+type SignInResult = {
+  ok: boolean;
+  stage: "supabase_ok" | "error";
+  durationMs: number;
+  errorCode?: string;
+  errorMessage?: string;
+};
+
+async function signInWithObservability(
+  email: string,
+  password: string
+): Promise<SignInResult> {
+  const start = Date.now();
+  const supabase = createClient();
+  const signInPromise = supabase.auth.signInWithPassword({ email, password });
+  const timeoutPromise = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error("timeout")), SIGN_IN_TIMEOUT_MS)
+  );
+  try {
+    const { error } = await Promise.race([signInPromise, timeoutPromise]);
+    const durationMs = Date.now() - start;
+    if (error) {
+      return {
+        ok: false,
+        stage: "error",
+        durationMs,
+        errorCode: "auth",
+        errorMessage: error.message,
+      };
+    }
+    return { ok: true, stage: "supabase_ok", durationMs };
+  } catch (thrown) {
+    const durationMs = Date.now() - start;
+    const isTimeout = thrown instanceof Error && thrown.message === "timeout";
+    const isNetwork =
+      thrown instanceof TypeError && (thrown.message?.includes("fetch") || thrown.message?.includes("network"));
+    return {
+      ok: false,
+      stage: "error",
+      durationMs,
+      errorCode: isTimeout ? "timeout" : isNetwork ? "network" : "unknown",
+      errorMessage: thrown instanceof Error ? thrown.message : String(thrown),
+    };
+  }
+}
+
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get("next") ?? "/dashboard";
   const t = useTranslations("auth");
-  const tCommon = useTranslations("common");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState<LoginStep>("idle");
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function doSignIn() {
     setError(null);
+    setStep("submitting");
     setLoading(true);
-    const start = Date.now();
     try {
-      const supabase = createClient();
-      const signInPromise = supabase.auth.signInWithPassword({ email, password });
-      const timeoutPromise = new Promise<{ error: { message: string } }>((_, reject) =>
-        setTimeout(() => reject(new Error("timeout")), SIGN_IN_TIMEOUT_MS)
-      );
-      const { error: err } = await Promise.race([signInPromise, timeoutPromise]);
-      if (process.env.NODE_ENV === "development") {
-        console.info("[login] signIn completed in", Date.now() - start, "ms", err ? "error" : "ok");
-      }
-      if (err) {
-        const msg = err.message?.toLowerCase() ?? "";
-        if (msg.includes("invalid") && (msg.includes("credentials") || msg.includes("login"))) {
+      const result = await signInWithObservability(email, password);
+      if (!result.ok) {
+        setStep(
+          result.errorCode === "timeout"
+            ? "error:timeout"
+            : result.errorCode === "auth"
+              ? "error:auth"
+              : result.errorCode === "network"
+                ? "error:network"
+                : "error:unknown"
+        );
+        const msg = (result.errorMessage ?? "").toLowerCase();
+        if (result.errorCode === "timeout") {
+          setError("Request timed out. Please check your connection and try again.");
+        } else if (result.errorCode === "auth" && (msg.includes("invalid") || msg.includes("credentials"))) {
           setError(t("invalidCredentials"));
-        } else if (msg.includes("email not confirmed") || msg.includes("confirm your email")) {
+        } else if (result.errorCode === "auth" && (msg.includes("email not confirmed") || msg.includes("confirm"))) {
           setError(t("emailNotConfirmed"));
         } else {
           setError(t("defaultError"));
         }
         return;
       }
-      router.push(next);
+      setStep("supabase_ok");
+      const targetPath = next.startsWith("/") ? next : `/${next}`;
+      setStep("redirecting");
+      if (typeof window !== "undefined") {
+        window.location.href = targetPath;
+        return;
+      }
+      router.push(targetPath);
       router.refresh();
     } catch (thrown) {
-      const isTimeout = thrown instanceof Error && thrown.message === "timeout";
-      if (process.env.NODE_ENV === "development") {
-        console.warn("[login] signIn failed", isTimeout ? "timeout" : thrown);
-      }
-      if (isTimeout) {
-        setError("Request timed out. Please check your connection and try again.");
-      } else {
-        setError(t("defaultError"));
+      setStep("error:unknown");
+      setError(t("defaultError"));
+      if (typeof window !== "undefined") {
+        console.warn("[login] unexpected throw", thrown);
       }
     } finally {
       setLoading(false);
     }
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    doSignIn();
   }
 
   return (
@@ -88,11 +154,26 @@ function LoginForm() {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-            {error && <Alert message={error} style="error" />}
-            <Button type="submit" loading={loading} disabled={loading} className="w-full">
-              {loading ? t("signingIn") : t("signIn")}
-            </Button>
+            {error && (
+              <div className="space-y-2">
+                <Alert message={error} style="error" />
+                <Button type="button" variant="secondary" className="w-full" onClick={() => doSignIn()}>
+                  Retry
+                </Button>
+              </div>
+            )}
+            {!error && (
+              <Button type="submit" loading={loading} disabled={loading} className="w-full">
+                {loading ? t("signingIn") : t("signIn")}
+              </Button>
+            )}
           </form>
+          <p
+            className="mt-aistroyka-4 text-center text-aistroyka-caption text-aistroyka-text-tertiary"
+            aria-live="polite"
+          >
+            Login step: {step}
+          </p>
           <p className="mt-aistroyka-6 text-center text-aistroyka-subheadline text-aistroyka-text-secondary">
             {t("noAccount")}{" "}
             <Link href="/register" className="font-medium text-aistroyka-accent hover:underline focus:outline-none focus:ring-2 focus:ring-aistroyka-accent focus:ring-offset-2 rounded-aistroyka-sm">
