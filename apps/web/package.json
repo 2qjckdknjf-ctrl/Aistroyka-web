@@ -27,7 +27,8 @@
     "cf:dns-setup": "node scripts/cf-dns-setup-aistroyka.mjs",
     "supabase:check-storage": "node scripts/check-supabase-storage.mjs",
     "db:migrate": "node scripts/run-migrations.mjs",
-    "env:setup": "./scripts/ensure-env-local.sh"
+    "env:setup": "./scripts/ensure-env-local.sh",
+    "smoke:auth": "curl -sS http://localhost:3000/api/health/auth"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": "eslint --fix"
