@@ -22,7 +22,7 @@ Evidence for which build is served on **aistroyka.ai** and how to keep productio
 
 ### Current git SHA (main)
 
-**08fb1c0** (after Phase 5 commits; run `git rev-parse main` locally to confirm).
+**975de22** (final push; run `git rev-parse main` locally to confirm).
 
 ### Last successful "Deploy Cloudflare (Production)" run
 
