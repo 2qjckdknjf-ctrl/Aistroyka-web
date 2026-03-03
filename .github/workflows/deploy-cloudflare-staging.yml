@@ -72,7 +72,7 @@ jobs:
         run: npm run cf:build
 
       - name: Deploy to Cloudflare (staging)
-        run: npx wrangler deploy --env staging
+        run: npx wrangler deploy --env staging --config wrangler.toml
 
       - name: Post-deploy summary
         run: |

@@ -53,22 +53,19 @@ name = "aistroyka-web-production"
 directory = ".open-next/assets"
 binding = "ASSETS"
 
-# Домен aistroyka.ai: если деплой выдаёт "assigned to another worker", в Dashboard снимите маршрут с другого Worker и задеплоййте снова.
-[[env.production.routes]]
-pattern = "aistroyka.ai"
-zone_name = "aistroyka.ai"
-
-[[env.production.routes]]
-pattern = "aistroyka.ai/*"
-zone_name = "aistroyka.ai"
-
-[[env.production.routes]]
-pattern = "www.aistroyka.ai"
-zone_name = "aistroyka.ai"
-
-[[env.production.routes]]
-pattern = "www.aistroyka.ai/*"
-zone_name = "aistroyka.ai"
+# Routes are managed manually in Cloudflare Dashboard. CI must not create/update/delete routes (permission 10000).
+# [[env.production.routes]]
+# pattern = "aistroyka.ai"
+# zone_name = "aistroyka.ai"
+# [[env.production.routes]]
+# pattern = "aistroyka.ai/*"
+# zone_name = "aistroyka.ai"
+# [[env.production.routes]]
+# pattern = "www.aistroyka.ai"
+# zone_name = "aistroyka.ai"
+# [[env.production.routes]]
+# pattern = "www.aistroyka.ai/*"
+# zone_name = "aistroyka.ai"
 
 [[env.production.services]]
 binding = "WORKER_SELF_REFERENCE"
