@@ -1,6 +1,6 @@
 # Production deploy: push to main → build (OpenNext) + deploy to Cloudflare Workers (env.production).
+# Routes are managed in Cloudflare Dashboard; token does not need zone route permissions.
 # Requires GitHub secrets: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID.
-# See docs/CICD_FINAL_CHECKLIST.md and docs/CICD_PHASE3_WORKFLOW.md.
 
 name: Deploy Cloudflare (Production)
 
@@ -37,17 +37,6 @@ jobs:
 
       - uses: actions/checkout@v4
 
-      - name: Diagnostics (SHA, Node, lockfile)
-        run: |
-          echo "GITHUB_SHA=$GITHUB_SHA"
-          git log -1 --oneline
-          node -v
-          npm -v
-          echo "--- First lines with wrangler in package-lock.json ---"
-          grep -n '"wrangler"' package-lock.json | head -5
-          echo "--- Resolved wrangler version (node_modules/wrangler) ---"
-          (grep -A 2 '"node_modules/wrangler"' package-lock.json | grep '"version"' || true)
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -71,3 +60,9 @@ jobs:
 
       - name: Deploy to Cloudflare (production)
         run: npx wrangler deploy --env production
+
+      - name: Post-deploy summary
+        run: |
+          echo "Deployed worker: aistroyka-web-production"
+          echo "Commit: $GITHUB_SHA"
+          echo "workers.dev URL: see 'Deploy to Cloudflare' step output above"

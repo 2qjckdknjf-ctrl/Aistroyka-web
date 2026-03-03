@@ -49,10 +49,11 @@ binding = "WORKER_SELF_REFERENCE"
 service = "aistroyka-web-production"
 
 # ----------------------------------------
-# [env.staging] — staging Worker
+# [env.staging] — staging Worker (workers.dev enabled)
 # ----------------------------------------
 [env.staging]
 name = "aistroyka-web-staging"
+workers_dev = true
 
 [env.staging.assets]
 directory = ".open-next/assets"
