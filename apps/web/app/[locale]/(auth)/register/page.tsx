@@ -7,6 +7,8 @@ import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import { Input, Button, Alert } from "@/components/ui";
 
+const SIGN_UP_TIMEOUT_MS = 15_000;
+
 export default function RegisterPage() {
   const router = useRouter();
   const t = useTranslations("auth");
@@ -21,22 +23,32 @@ export default function RegisterPage() {
     setError(null);
     setMessage(null);
     setLoading(true);
-    const supabase = createClient();
-    const { error: err } = await supabase.auth.signUp({ email, password });
-    setLoading(false);
-    if (err) {
-      const msg = err.message?.toLowerCase() ?? "";
-      if (msg.includes("invalid") && (msg.includes("credentials") || msg.includes("login"))) {
-        setError(t("invalidCredentials"));
-      } else if (msg.includes("email not confirmed") || msg.includes("confirm your email")) {
-        setError(t("emailNotConfirmed"));
-      } else {
-        setError(t("defaultError"));
+    try {
+      const supabase = createClient();
+      const signUpPromise = supabase.auth.signUp({ email, password });
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("timeout")), SIGN_UP_TIMEOUT_MS)
+      );
+      const { error: err } = await Promise.race([signUpPromise, timeoutPromise]);
+      if (err) {
+        const msg = err.message?.toLowerCase() ?? "";
+        if (msg.includes("invalid") && (msg.includes("credentials") || msg.includes("login"))) {
+          setError(t("invalidCredentials"));
+        } else if (msg.includes("email not confirmed") || msg.includes("confirm your email")) {
+          setError(t("emailNotConfirmed"));
+        } else {
+          setError(t("defaultError"));
+        }
+        return;
       }
-      return;
+      setMessage(t("checkEmail"));
+      router.refresh();
+    } catch (thrown) {
+      const isTimeout = thrown instanceof Error && thrown.message === "timeout";
+      setError(isTimeout ? "Request timed out. Please check your connection and try again." : t("defaultError"));
+    } finally {
+      setLoading(false);
     }
-    setMessage(t("checkEmail"));
-    router.refresh();
   }
 
   return (

@@ -7,6 +7,8 @@ import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import { Input, Button, Alert } from "@/components/ui";
 
+const SIGN_IN_TIMEOUT_MS = 15_000;
+
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -22,25 +24,43 @@ function LoginForm() {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    const supabase = createClient();
-    const { error: err } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    setLoading(false);
-    if (err) {
-      const msg = err.message?.toLowerCase() ?? "";
-      if (msg.includes("invalid") && (msg.includes("credentials") || msg.includes("login"))) {
-        setError(t("invalidCredentials"));
-      } else if (msg.includes("email not confirmed") || msg.includes("confirm your email")) {
-        setError(t("emailNotConfirmed"));
+    const start = Date.now();
+    try {
+      const supabase = createClient();
+      const signInPromise = supabase.auth.signInWithPassword({ email, password });
+      const timeoutPromise = new Promise<{ error: { message: string } }>((_, reject) =>
+        setTimeout(() => reject(new Error("timeout")), SIGN_IN_TIMEOUT_MS)
+      );
+      const { error: err } = await Promise.race([signInPromise, timeoutPromise]);
+      if (process.env.NODE_ENV === "development") {
+        console.info("[login] signIn completed in", Date.now() - start, "ms", err ? "error" : "ok");
+      }
+      if (err) {
+        const msg = err.message?.toLowerCase() ?? "";
+        if (msg.includes("invalid") && (msg.includes("credentials") || msg.includes("login"))) {
+          setError(t("invalidCredentials"));
+        } else if (msg.includes("email not confirmed") || msg.includes("confirm your email")) {
+          setError(t("emailNotConfirmed"));
+        } else {
+          setError(t("defaultError"));
+        }
+        return;
+      }
+      router.push(next);
+      router.refresh();
+    } catch (thrown) {
+      const isTimeout = thrown instanceof Error && thrown.message === "timeout";
+      if (process.env.NODE_ENV === "development") {
+        console.warn("[login] signIn failed", isTimeout ? "timeout" : thrown);
+      }
+      if (isTimeout) {
+        setError("Request timed out. Please check your connection and try again.");
       } else {
         setError(t("defaultError"));
       }
-      return;
+    } finally {
+      setLoading(false);
     }
-    router.push(next);
-    router.refresh();
   }
 
   return (
