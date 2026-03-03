@@ -161,15 +161,15 @@ Both must complete without `Cannot find module '@/i18n/navigation'`.
 
 ## Bun lockfile (frozen lockfile fix)
 
-**Почему падало:** В CI (Cloudflare или локально) команда `bun install --frozen-lockfile` падала с ошибкой *"lockfile had changes, but lockfile is frozen"* в каталоге **apps/web**. Lockfile `apps/web/bun.lock` был рассинхронизирован с текущим `package.json` (разрешение зависимостей или версия Bun давали другой граф).
+**Почему падало:** В CI (Cloudflare) команда `bun install --frozen-lockfile` падала с ошибкой *"lockfile had changes, but lockfile is frozen"*. Две причины: (1) lockfile был рассинхронизирован с `package.json`; (2) **Cloudflare использует Bun 1.2.15** — lockfile, сгенерированный под Bun 1.3.x, считается изменённым под 1.2.15 (разный формат/разрешение).
 
-**Что обновили:** Выполнен `bun install` (без `--frozen-lockfile`) в **apps/web**; обновлён только **apps/web/bun.lock**. Версии пакетов в `package.json` не меняли.
+**Что обновили:** Lockfile перегенерирован под **Bun 1.2.15** (версия в среде Cloudflare). Локально: установить Bun 1.2.15 (например `BUN_INSTALL=/tmp/bun-1215 curl -fsSL https://bun.sh/install | bash -s "bun-v1.2.15"`), затем в **apps/web** выполнить `PATH="/tmp/bun-1215/bin:$PATH" bun install`. Обновлён только **apps/web/bun.lock**; версии в `package.json` не меняли.
 
-**Как проверить локально:** Из корня репо или из `apps/web`:
+**Как проверить локально (должен быть Bun 1.2.15):**
 ```bash
 cd apps/web && bun install --frozen-lockfile
 ```
-Должен завершиться без ошибок (exit 0). После push шаг install в Cloudflare также должен проходить.
+С Bun 1.2.15 команда должна завершиться без ошибок (exit 0). После push шаг install в Cloudflare также должен проходить.
 
 ---
 
