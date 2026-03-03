@@ -4,9 +4,9 @@ import { Suspense, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Link, useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
-import { createClient } from "@/lib/supabase/client";
 import { hasSupabaseEnv } from "@/lib/env";
 import { Input, Button, Alert } from "@/components/ui";
+import { signInAction } from "./actions";
 
 const SIGN_IN_TIMEOUT_MS = 15_000;
 
@@ -19,86 +19,6 @@ export type LoginStep =
   | "error:auth"
   | "error:network"
   | "error:unknown";
-
-type SignInResult = {
-  ok: boolean;
-  stage: "supabase_ok" | "error";
-  durationMs: number;
-  traceId: string;
-  errorCode?: string;
-  errorMessage?: string;
-  errorName?: string;
-};
-
-function safeString(value: unknown): string {
-  if (value instanceof Error) return value.message;
-  return String(value);
-}
-
-async function signInWithObservability(
-  email: string,
-  password: string,
-  traceId: string
-): Promise<SignInResult> {
-  const start = Date.now();
-  try {
-    const supabase = createClient();
-    const signInPromise = supabase.auth.signInWithPassword({ email, password });
-    const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error("timeout")), SIGN_IN_TIMEOUT_MS)
-    );
-    const { error } = await Promise.race([signInPromise, timeoutPromise]);
-    const durationMs = Date.now() - start;
-    if (error) {
-      if (typeof window !== "undefined") {
-        console.error("[login] auth error", {
-          traceId,
-          errorCode: "auth",
-          message: error.message,
-          durationMs,
-          emailPresent: !!email,
-        });
-      }
-      return {
-        ok: false,
-        stage: "error",
-        durationMs,
-        traceId,
-        errorCode: "auth",
-        errorMessage: error.message,
-      };
-    }
-    return { ok: true, stage: "supabase_ok", durationMs, traceId };
-  } catch (thrown) {
-    const durationMs = Date.now() - start;
-    const isTimeout = thrown instanceof Error && thrown.message === "timeout";
-    const isNetwork =
-      thrown instanceof TypeError &&
-      (safeString(thrown).toLowerCase().includes("fetch") || safeString(thrown).toLowerCase().includes("network"));
-    const errorCode = isTimeout ? "timeout" : isNetwork ? "network" : "unknown";
-    const errorMessage = safeString(thrown);
-    const errorName = thrown instanceof Error ? thrown.name : undefined;
-    if (typeof window !== "undefined") {
-      console.error("[login] signIn failed", {
-        traceId,
-        errorCode,
-        errorMessage,
-        errorName,
-        durationMs,
-        emailPresent: !!email,
-      });
-    }
-    return {
-      ok: false,
-      stage: "error",
-      durationMs,
-      traceId,
-      errorCode,
-      errorMessage,
-      errorName,
-    };
-  }
-}
 
 function LoginForm() {
   const router = useRouter();
@@ -122,40 +42,36 @@ function LoginForm() {
     setLoading(true);
     const traceId = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `t-${Date.now()}`;
     try {
-      const result = await signInWithObservability(email, password, traceId);
+      const timeoutPromise = new Promise<{ ok: false; errorMessage: string }>((resolve) =>
+        setTimeout(
+          () => resolve({ ok: false, errorMessage: "Request timed out. Please check your connection and try again." }),
+          SIGN_IN_TIMEOUT_MS
+        )
+      );
+      const result = await Promise.race([
+        signInAction(email, password, traceId),
+        timeoutPromise,
+      ]);
       if (!result.ok) {
-        setStep(
-          result.errorCode === "timeout"
-            ? "error:timeout"
-            : result.errorCode === "auth"
-              ? "error:auth"
-              : result.errorCode === "network"
-                ? "error:network"
-                : "error:unknown"
-        );
+        const isTimeout = result.errorMessage?.includes("timed out") ?? false;
+        setStep(isTimeout ? "error:timeout" : "error:auth");
         const msg = (result.errorMessage ?? "").toLowerCase();
-        if (result.errorCode === "timeout") {
-          setError("Request timed out. Please check your connection and try again.");
-        } else if (result.errorCode === "auth" && (msg.includes("invalid") || msg.includes("credentials"))) {
+        if (isTimeout) {
+          setError(result.errorMessage ?? "Request timed out.");
+        } else if (msg.includes("invalid") || msg.includes("credentials")) {
           setError(t("invalidCredentials"));
-        } else if (result.errorCode === "auth" && (msg.includes("email not confirmed") || msg.includes("confirm"))) {
+        } else if (msg.includes("email not confirmed") || msg.includes("confirm")) {
           setError(t("emailNotConfirmed"));
-        } else if (result.errorCode === "auth" && result.errorMessage) {
-          setError(result.errorMessage);
         } else if (result.errorMessage && result.errorMessage.length < 200) {
           setError(result.errorMessage);
         } else {
-          setError(t("defaultError") + ` (${result.errorCode ?? "unknown"}, traceId: ${result.traceId})`);
+          setError(t("defaultError") + ` (traceId: ${traceId})`);
         }
         return;
       }
       setStep("supabase_ok");
       const targetPath = next.startsWith("/") ? next : `/${next}`;
       setStep("redirecting");
-      if (typeof window !== "undefined") {
-        window.location.href = targetPath;
-        return;
-      }
       router.push(targetPath);
       router.refresh();
     } catch (thrown) {
