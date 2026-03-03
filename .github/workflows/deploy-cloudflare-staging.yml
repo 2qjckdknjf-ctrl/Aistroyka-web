@@ -45,7 +45,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: false
+          cache: "npm"
+          cache-dependency-path: apps/web/package-lock.json
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v1
