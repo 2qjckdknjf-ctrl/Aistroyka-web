@@ -6,9 +6,9 @@ import { Link, useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { hasSupabaseEnv } from "@/lib/env";
 import { Input, Button, Alert } from "@/components/ui";
-import { signInAction } from "./actions";
 
 const SIGN_IN_TIMEOUT_MS = 15_000;
+const LOGIN_ENDPOINT = "/api/auth/login";
 
 export type LoginStep =
   | "idle"
@@ -41,46 +41,75 @@ function LoginForm() {
     setStep("submitting");
     setLoading(true);
     const traceId = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `t-${Date.now()}`;
+
+    const log = (step: string, status: string, code?: string, message?: string) => {
+      if (typeof window !== "undefined") {
+        console.error("[login]", { traceId, step, status, code, message });
+      }
+    };
+
     try {
-      const timeoutPromise = new Promise<{ ok: false; errorMessage: string }>((resolve) =>
-        setTimeout(
-          () => resolve({ ok: false, errorMessage: "Request timed out. Please check your connection and try again." }),
-          SIGN_IN_TIMEOUT_MS
-        )
-      );
-      const result = await Promise.race([
-        signInAction(email, password, traceId),
-        timeoutPromise,
-      ]);
-      if (!result.ok) {
-        const isTimeout = result.errorMessage?.includes("timed out") ?? false;
-        setStep(isTimeout ? "error:timeout" : "error:auth");
-        const msg = (result.errorMessage ?? "").toLowerCase();
-        if (isTimeout) {
-          setError(result.errorMessage ?? "Request timed out.");
-        } else if (msg.includes("invalid") || msg.includes("credentials")) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), SIGN_IN_TIMEOUT_MS);
+      const res = await fetch(LOGIN_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, traceId }),
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      let data: { ok: boolean; message?: string };
+      try {
+        data = await res.json();
+      } catch {
+        log("parse", "error", "invalid_json");
+        setStep("error:unknown");
+        setError(t("defaultError") + ` (traceId: ${traceId})`);
+        return;
+      }
+
+      if (!res.ok) {
+        const isTimeout = res.status === 408 || (data.message ?? "").toLowerCase().includes("timeout");
+        const isAuth = res.status === 401;
+        setStep(isTimeout ? "error:timeout" : isAuth ? "error:auth" : "error:unknown");
+        log("signIn", "error", isAuth ? "auth" : "server", data.message);
+        const msg = (data.message ?? "").toLowerCase();
+        if (isTimeout || (data.message ?? "").includes("timed out")) {
+          setError(data.message ?? "Request timed out. Please try again.");
+        } else if (isAuth && (msg.includes("invalid") || msg.includes("credentials"))) {
           setError(t("invalidCredentials"));
-        } else if (msg.includes("email not confirmed") || msg.includes("confirm")) {
+        } else if (isAuth && (msg.includes("email not confirmed") || msg.includes("confirm"))) {
           setError(t("emailNotConfirmed"));
-        } else if (result.errorMessage && result.errorMessage.length < 200) {
-          setError(result.errorMessage);
+        } else if (data.message && data.message.length < 200) {
+          setError(data.message);
         } else {
           setError(t("defaultError") + ` (traceId: ${traceId})`);
         }
         return;
       }
+
+      if (!data.ok) {
+        setStep("error:auth");
+        log("signIn", "error", "auth", data.message);
+        setError(data.message && data.message.length < 200 ? data.message : t("defaultError") + ` (traceId: ${traceId})`);
+        return;
+      }
+
       setStep("supabase_ok");
       const targetPath = next.startsWith("/") ? next : `/${next}`;
       setStep("redirecting");
+      log("redirect", "ok");
       router.push(targetPath);
       router.refresh();
     } catch (thrown) {
-      setStep("error:unknown");
+      const isAbort = thrown instanceof Error && thrown.name === "AbortError";
+      setStep(isAbort ? "error:timeout" : "error:unknown");
       const errMsg = thrown instanceof Error ? thrown.message : String(thrown);
-      if (typeof window !== "undefined") {
-        console.error("[login] unexpected throw", { traceId, errorMessage: errMsg, name: thrown instanceof Error ? thrown.name : undefined });
-      }
-      if (errMsg && errMsg.length < 200 && !errMsg.toLowerCase().includes("password")) {
+      log("signIn", "error", isAbort ? "timeout" : "unknown", errMsg);
+      if (isAbort) {
+        setError("Request timed out. Please check your connection and try again.");
+      } else if (errMsg && errMsg.length < 200 && !errMsg.toLowerCase().includes("password")) {
         setError(errMsg);
       } else {
         setError(t("defaultError") + ` (traceId: ${traceId})`);
@@ -105,7 +134,7 @@ function LoginForm() {
           </div>
           {envOk === false && (
             <Alert
-              message="Supabase not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY (e.g. in .env.local or Cloudflare build env)."
+              message="Supabase env missing. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY (e.g. in .env.local or Cloudflare build env)."
               style="error"
               className="mb-aistroyka-4"
             />
