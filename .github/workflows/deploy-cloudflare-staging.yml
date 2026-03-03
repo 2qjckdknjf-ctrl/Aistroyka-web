@@ -68,6 +68,12 @@ jobs:
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
 
+      - name: Set build stamp env
+        working-directory: apps/web
+        run: |
+          echo "NEXT_PUBLIC_BUILD_SHA=${{ github.sha }}" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_BUILD_TIME=$(date -u +%Y-%m-%d\ %H:%M)" >> $GITHUB_ENV
+
       - name: Build (OpenNext Cloudflare)
         run: npm run cf:build
 

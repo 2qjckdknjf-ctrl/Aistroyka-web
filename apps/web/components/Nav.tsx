@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
 import { NavLogout } from "./NavLogout";
+import { BuildStamp } from "./BuildStamp";
 import { routing } from "@/i18n/routing";
 
 const linkKeys = [
@@ -56,6 +57,7 @@ export function Nav({ userEmail }: { userEmail?: string }) {
           </div>
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
+          <BuildStamp />
           <LocaleSwitcher />
           {userEmail && (
             <span className="hidden max-w-[140px] truncate text-aistroyka-subheadline text-aistroyka-text-secondary sm:inline-block md:max-w-[200px]" title={userEmail}>
