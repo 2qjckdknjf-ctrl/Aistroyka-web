@@ -105,4 +105,5 @@ If any check fails, re-verify routes (4.1–4.2) and DNS (4.3); then clear brows
 
 ## Final commit SHA
 
-**d49021d** — chore(prod): restore report, CI verify step for apps/web build
+- **Restore commit:** **d49021d** — chore(prod): restore report, CI verify step for apps/web build  
+- **Report update:** 5679348 — docs: set final commit SHA in PROD_RESTORE_REPORT
