@@ -41,6 +41,15 @@ jobs:
 
       - uses: actions/checkout@v4
 
+      - name: Debug cache-dependency-path presence
+        working-directory: .
+        run: |
+          pwd
+          ls -la
+          ls -la apps || true
+          ls -la apps/web || true
+          ls -la apps/web/package-lock.json || true
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
