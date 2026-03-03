@@ -55,7 +55,7 @@ In **root** `package.json` the following is set:
 - **`cf:build`**: Same, for explicit OpenNext build from root.
 - **`lint`**: Proxied to apps/web so any lint step from root also runs in the app directory.
 
-**Critical:** If the Cloudflare UI "Build command" is set to **`next build`** (or **`npx next build`**), the root package.json is **never** used and you will still see `$ next build` and the TypeScript error. **You must set Build command to `bun run build` or `npm run build`.**
+**Critical:** If the Cloudflare UI "Build command" is set to **`next build`** (or **`npx next build`**), the root package.json is **never** used and you will still see `$ next build` and the TypeScript error. **You must set Build command to `bun run build` or `npm run build`.** After changing this, trigger a new deploy and confirm the log shows `cd apps/web` and `App directory: .../apps/web`.
 
 ---
 
