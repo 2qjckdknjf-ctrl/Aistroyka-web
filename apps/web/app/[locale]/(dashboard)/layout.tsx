@@ -23,12 +23,9 @@ export default async function DashboardLayout({
     redirect(`/${locale}/login`);
   }
 
-  const sha =
-    process.env.GITHUB_SHA ??
-    process.env.VERCEL_GIT_COMMIT_SHA ??
-    "local";
-  const shaShort = sha === "local" ? "local" : sha.slice(0, 7);
-  const date = process.env.NEXT_PUBLIC_BUILD_TIME ?? "—";
+  const sha = process.env.NEXT_PUBLIC_BUILD_SHA ?? "unknown";
+  const shaShort = sha === "unknown" ? "unknown" : sha.slice(0, 7);
+  const buildTime = process.env.NEXT_PUBLIC_BUILD_TIME ?? "unknown";
 
   return (
     <>
@@ -39,7 +36,7 @@ export default async function DashboardLayout({
         className="mt-auto border-t border-aistroyka-border-subtle py-aistroyka-2 text-center text-aistroyka-caption text-aistroyka-text-tertiary"
         aria-hidden="true"
       >
-        Build: {shaShort} / {date}
+        Build: {shaShort} / {buildTime}
       </footer>
     </>
   );
