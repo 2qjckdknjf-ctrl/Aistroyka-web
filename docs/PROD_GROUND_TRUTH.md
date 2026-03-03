@@ -8,7 +8,7 @@
 
 | Item | Value |
 |------|--------|
-| **Current main SHA** | `3821ed4` (run `git rev-parse main` to confirm) |
+| **Current main SHA** | `1d6aafa` (after Phase 1–5 pushes; run `git rev-parse main` to confirm) |
 | **Deployed directory** | **apps/web** |
 | **Production worker name** | **aistroyka-web-production** |
 | **workers.dev URL** | From deploy step output: `https://aistroyka-web-production.<account>.workers.dev` |

@@ -30,6 +30,14 @@
 
 ---
 
+## Post-push verification (automated)
+
+- **Domain redirect:** `curl -sI https://aistroyka.ai/dashboard` → 308 → `/en/dashboard`, `server: cloudflare`. ✓
+- **Health:** `curl -s https://aistroyka.ai/api/health` → `ok: true`, `supabaseReachable: true`. ✓
+- **Build marker / header:** After the deploy for commit **1d6aafa** completes, workers.dev and aistroyka.ai should show "AISTROYKA.AI — AI Command Center" and footer "Build: 1d6aafa / \<time\>". Confirm in browser and tick the checklist above.
+
+---
+
 ## Next steps for design expansion
 
 - Single source of truth: **apps/web** only. All UI changes go in apps/web; CI deploys it to aistroyka-web-production.
