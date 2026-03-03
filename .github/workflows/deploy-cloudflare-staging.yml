@@ -44,6 +44,14 @@ jobs:
           cache: "npm"
           cache-dependency-path: package-lock.json
 
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: "latest"
+
+      - name: Verify bun
+        run: bun --version
+
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
 
