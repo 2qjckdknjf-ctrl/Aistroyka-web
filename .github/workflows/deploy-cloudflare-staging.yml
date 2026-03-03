@@ -91,6 +91,7 @@ jobs:
 
       - name: Post-deploy summary
         run: |
+          SHA7="$(echo ${{ github.sha }} | cut -c1-7)"
           echo "Deployed worker: aistroyka-web-staging (apps/web)"
-          echo "Commit: $GITHUB_SHA"
-          echo "workers.dev URL: see 'Deploy to Cloudflare' step output above"
+          echo "Commit sha7: $SHA7"
+          echo "workers.dev URL: see 'Deploy to Cloudflare (staging)' step output above"

@@ -73,7 +73,7 @@ jobs:
         run: |
           echo "NEXT_PUBLIC_BUILD_SHA=${{ github.sha }}" >> $GITHUB_ENV
           echo "NEXT_PUBLIC_BUILD_TIME=$(date -u +%Y-%m-%d\ %H:%M)" >> $GITHUB_ENV
-          # GITHUB_SHA is always set in Actions; layout uses it for Build: <sha7> / <date>
+          # Layout reads NEXT_PUBLIC_BUILD_SHA and NEXT_PUBLIC_BUILD_TIME only (fallback unknown)
 
       - name: Build (OpenNext Cloudflare)
         run: npm run cf:build
@@ -93,7 +93,29 @@ jobs:
 
       - name: Post-deploy summary
         run: |
+          SHA7="$(echo ${{ github.sha }} | cut -c1-7)"
           echo "Deployed worker: aistroyka-web-production (apps/web)"
-          echo "Commit: $GITHUB_SHA"
-          echo "workers.dev URL: In the 'Deploy to Cloudflare (production)' step above, look for a line like: https://aistroyka-web-production.<account>.workers.dev"
-          echo "Use that URL with scripts/prod-verify.sh to compare domain vs workers.dev build marker."
+          echo "Commit SHA (full): ${{ github.sha }}"
+          echo "Commit sha7: $SHA7"
+          echo "workers.dev URL: In the 'Deploy to Cloudflare (production)' step above, look for: https://aistroyka-web-production.<account>.workers.dev"
+
+      - name: Post-deploy verification (domain build marker)
+        working-directory: .
+        continue-on-error: true
+        run: |
+          SHA7="$(echo ${{ github.sha }} | cut -c1-7)"
+          DOMAIN="https://aistroyka.ai"
+          PASS=0
+          for path in "/en/dashboard" "/dashboard"; do
+            HTML=$(curl -sS -L -m 15 "$DOMAIN$path" 2>/dev/null || true)
+            if echo "$HTML" | grep -q "Build:"; then
+              if echo "$HTML" | grep -q "Build: $SHA7"; then
+                echo "PASS: $DOMAIN$path shows Build: $SHA7"
+                PASS=1
+                break
+              fi
+            fi
+          done
+          if [ "$PASS" -eq 0 ]; then
+            echo "FAIL: Domain did not return dashboard HTML with Build: $SHA7 (may need auth; check workers.dev or browser)"
+          fi
