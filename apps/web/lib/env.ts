@@ -37,3 +37,29 @@ export function hasSupabaseEnv(): boolean {
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   return typeof url === "string" && url.length > 0 && typeof key === "string" && key.length > 0;
 }
+
+/**
+ * Throws with a clear message if public Supabase env is missing.
+ * Use when the app must have auth (e.g. login page, middleware).
+ */
+export function assertSupabasePublicEnv(): void {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const missing: string[] = [];
+  if (typeof url !== "string" || url.length === 0) missing.push("NEXT_PUBLIC_SUPABASE_URL");
+  if (typeof key !== "string" || key.length === 0) missing.push("NEXT_PUBLIC_SUPABASE_ANON_KEY");
+  if (missing.length > 0) {
+    throw new Error(`Supabase env missing: ${missing.join(", ")}. Set in .env.local or Cloudflare build env.`);
+  }
+}
+
+/**
+ * Optional: throw if server-side service role is required and missing.
+ * Use only in server code that needs SUPABASE_SERVICE_ROLE_KEY.
+ */
+export function assertSupabaseServerEnv(): void {
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (typeof key !== "string" || key.length === 0) {
+    throw new Error("Supabase server env missing: SUPABASE_SERVICE_ROLE_KEY.");
+  }
+}
