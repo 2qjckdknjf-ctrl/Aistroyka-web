@@ -1,0 +1,1 @@
+export const IDEMPOTENCY_TTL_HOURS = 24;
