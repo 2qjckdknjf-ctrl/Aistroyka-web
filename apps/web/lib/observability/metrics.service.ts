@@ -30,6 +30,26 @@ export async function getMetricsOverview(
   return (data ?? []) as MetricsOverviewRow[];
 }
 
+/** Get tenant_daily_metrics for multiple tenants (e.g. org overview). Caller must ensure authz (org_admin). */
+export async function getMetricsOverviewForTenantIds(
+  supabase: SupabaseClient,
+  tenantIds: string[],
+  rangeDays: number
+): Promise<MetricsOverviewRow[]> {
+  if (tenantIds.length === 0) return [];
+  const start = new Date();
+  start.setDate(start.getDate() - rangeDays);
+  const startStr = start.toISOString().slice(0, 10);
+  const { data, error } = await supabase
+    .from("tenant_daily_metrics")
+    .select("tenant_id, date, ai_calls, ai_cost_usd, jobs_processed, jobs_failed, uploads, active_workers")
+    .in("tenant_id", tenantIds)
+    .gte("date", startStr)
+    .order("date", { ascending: false });
+  if (error) return [];
+  return (data ?? []) as MetricsOverviewRow[];
+}
+
 /** Get AI usage from ai_usage table for tenant and date range (fallback when tenant_daily_metrics not populated). */
 export async function getAiUsageFromLogs(
   supabase: SupabaseClient,
