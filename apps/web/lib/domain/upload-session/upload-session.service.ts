@@ -5,7 +5,6 @@ import * as repo from "./upload-session.repository";
 import type { UploadSession, UploadSessionPurpose } from "./upload-session.types";
 
 /** Bucket name for media uploads (must exist in Supabase Storage). */
-export /** Bucket name for media uploads (must exist in Supabase Storage). */
 export const UPLOAD_BUCKET = "media";
 
 export async function createUploadSession(
