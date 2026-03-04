@@ -3,10 +3,12 @@ import { runVisionAnalysis } from "@/lib/ai/runVisionAnalysis";
 import { JobPayloadError, JobHandlerError } from "../job.errors";
 import type { Job, JobPayloadAiAnalyzeMedia } from "../job.types";
 import { resolveImageUrl } from "./resolve-image-url";
+import { checkPolicy, recordPolicyDecision } from "@/lib/platform/ai-governance";
+import { getTierForTenant } from "@/lib/platform/subscription/subscription.service";
 
 /**
- * Handler for ai_analyze_media: resolve image URL, run vision analysis, persist result if needed.
- * Idempotent: same job run twice is safe (analysis is read-only for storage in Phase 2).
+ * Handler for ai_analyze_media: policy check, resolve image URL, run vision analysis.
+ * Idempotent: same job run twice is safe.
  */
 export async function handleAiAnalyzeMedia(
   supabase: SupabaseClient,
@@ -15,6 +17,19 @@ export async function handleAiAnalyzeMedia(
   const payload = job.payload as JobPayloadAiAnalyzeMedia;
   if (!payload || typeof payload.report_id !== "string") {
     throw new JobPayloadError("ai_analyze_media requires payload.report_id");
+  }
+
+  const tier = await getTierForTenant(supabase, job.tenant_id);
+  const policyResult = checkPolicy({
+    tenant_id: job.tenant_id,
+    tier: tier as "FREE" | "PRO" | "ENTERPRISE",
+    resource_type: "media",
+    image_count: 1,
+    trace_id: job.trace_id,
+  });
+  await recordPolicyDecision(supabase, job.tenant_id, policyResult.decision, policyResult.rule_hits, job.trace_id);
+  if (policyResult.decision === "block") {
+    throw new JobHandlerError("AI policy blocked", false);
   }
 
   const imageUrl = await resolveImageUrl(supabase, payload);
