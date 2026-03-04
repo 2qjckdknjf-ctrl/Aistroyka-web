@@ -1,0 +1,14 @@
+{
+  "name": "@aistroyka/api-client",
+  "version": "0.1.0",
+  "private": true,
+  "main": "src/client.ts",
+  "types": "src/client.ts",
+  "scripts": {},
+  "dependencies": {
+    "@aistroyka/contracts": "file:../contracts"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}

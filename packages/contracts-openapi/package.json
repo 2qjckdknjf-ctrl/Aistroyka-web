@@ -1,0 +1,17 @@
+{
+  "name": "@aistroyka/contracts-openapi",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "tsx build-openapi.ts",
+    "prebuild": "mkdir -p dist"
+  },
+  "dependencies": {
+    "@aistroyka/contracts": "file:../contracts",
+    "zod-to-json-schema": "^3.23.5"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3"
+  }
+}

@@ -1,0 +1,880 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Aistroyka API",
+    "version": "1.0.0",
+    "description": "API v1 for Aistroyka Construction Intelligence. Auth: Bearer JWT + tenant context."
+  },
+  "servers": [
+    {
+      "url": "https://api.aistroyka.ai",
+      "description": "Production"
+    }
+  ],
+  "paths": {
+    "/api/v1/health": {
+      "get": {
+        "summary": "Health check",
+        "tags": [
+          "Health"
+        ],
+        "responses": {
+          "200": {
+            "description": "Service health",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects": {
+      "get": {
+        "summary": "List projects",
+        "tags": [
+          "Projects"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Projects list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectsListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create project",
+        "tags": [
+          "Projects"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProjectRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateProjectResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/ai/analyze-image": {
+      "post": {
+        "summary": "Analyze construction image",
+        "tags": [
+          "AI"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnalyzeImageRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Analysis result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalyzeImageError"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Quota exceeded"
+          },
+          "429": {
+            "description": "Rate limited"
+          }
+        }
+      }
+    },
+    "/api/v1/worker/tasks/today": {
+      "get": {
+        "summary": "List tasks for today (Worker Lite)",
+        "tags": [
+          "Worker"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tasks list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/worker/sync": {
+      "get": {
+        "summary": "Sync delta (tasks, reports, upload sessions)",
+        "tags": [
+          "Worker"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "since",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "ISO timestamp"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Delta payload"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/media/upload-sessions": {
+      "post": {
+        "summary": "Create upload session",
+        "tags": [
+          "Media"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "purpose": {
+                    "type": "string",
+                    "enum": [
+                      "report_before",
+                      "report_after",
+                      "project_media"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Session with upload_path"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/admin/metrics/overview": {
+      "get": {
+        "summary": "Tenant metrics overview (admin)",
+        "tags": [
+          "Admin"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "range",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "7d",
+                "30d",
+                "90d"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Metrics rows"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/admin/audit-logs": {
+      "get": {
+        "summary": "Audit logs (admin)",
+        "tags": [
+          "Admin"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "range",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "7d",
+                "30d",
+                "90d"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Audit log entries"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/admin/exports": {
+      "post": {
+        "summary": "Start export job",
+        "tags": [
+          "Admin"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "export_type": {
+                    "type": "string",
+                    "enum": [
+                      "reports",
+                      "ai_usage",
+                      "audit_logs"
+                    ]
+                  },
+                  "range_days": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "job_id, status"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/admin/exports/{id}/status": {
+      "get": {
+        "summary": "Export job status",
+        "tags": [
+          "Admin"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "job_id, status, created_at, updated_at"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/api/v1/org/tenants": {
+      "get": {
+        "summary": "List tenants in organization (org admin)",
+        "tags": [
+          "Org"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "description": "Requires x-organization-id header. org_owner or org_admin.",
+        "responses": {
+          "200": {
+            "description": "tenant_ids"
+          },
+          "400": {
+            "description": "Missing x-organization-id"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/org/metrics/overview": {
+      "get": {
+        "summary": "Org-wide metrics (org admin)",
+        "tags": [
+          "Org"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "range",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "7d",
+                "30d",
+                "90d"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Metrics for linked tenants"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HealthResponse": {
+        "$ref": "#/definitions/HealthResponse",
+        "definitions": {
+          "HealthResponse": {
+            "type": "object",
+            "properties": {
+              "ok": {
+                "type": "boolean"
+              },
+              "db": {
+                "type": "string",
+                "enum": [
+                  "ok",
+                  "error"
+                ]
+              },
+              "aiConfigured": {
+                "type": "boolean"
+              },
+              "openaiConfigured": {
+                "type": "boolean"
+              },
+              "supabaseReachable": {
+                "type": "boolean"
+              },
+              "serviceRoleConfigured": {
+                "type": "boolean"
+              },
+              "buildStamp": {
+                "type": "object",
+                "properties": {
+                  "sha7": {
+                    "type": "string"
+                  },
+                  "buildTime": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "sha7",
+                  "buildTime"
+                ],
+                "additionalProperties": false
+              },
+              "reason": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "ok",
+              "db",
+              "aiConfigured",
+              "openaiConfigured"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "AnalyzeImageRequest": {
+        "$ref": "#/definitions/AnalyzeImageRequest",
+        "definitions": {
+          "AnalyzeImageRequest": {
+            "type": "object",
+            "properties": {
+              "image_url": {
+                "type": "string"
+              },
+              "media_id": {
+                "type": "string"
+              },
+              "project_id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "image_url"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "AnalysisResult": {
+        "$ref": "#/definitions/AnalysisResult",
+        "definitions": {
+          "AnalysisResult": {
+            "type": "object",
+            "properties": {
+              "stage": {
+                "type": "string"
+              },
+              "completion_percent": {
+                "type": "number"
+              },
+              "risk_level": {
+                "type": "string",
+                "enum": [
+                  "low",
+                  "medium",
+                  "high"
+                ]
+              },
+              "detected_issues": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "recommendations": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "stage",
+              "completion_percent",
+              "risk_level",
+              "detected_issues",
+              "recommendations"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "AnalyzeImageError": {
+        "$ref": "#/definitions/AnalyzeImageError",
+        "definitions": {
+          "AnalyzeImageError": {
+            "type": "object",
+            "properties": {
+              "error": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "error"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "Project": {
+        "$ref": "#/definitions/Project",
+        "definitions": {
+          "Project": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "created_at": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "created_at"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "ProjectsListResponse": {
+        "$ref": "#/definitions/ProjectsListResponse",
+        "definitions": {
+          "ProjectsListResponse": {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "created_at": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "created_at"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "data"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "CreateProjectRequest": {
+        "$ref": "#/definitions/CreateProjectRequest",
+        "definitions": {
+          "CreateProjectRequest": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              }
+            },
+            "required": [
+              "name"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "CreateProjectResponse": {
+        "$ref": "#/definitions/CreateProjectResponse",
+        "definitions": {
+          "CreateProjectResponse": {
+            "type": "object",
+            "properties": {
+              "success": {
+                "type": "boolean",
+                "enum": [
+                  true
+                ]
+              },
+              "data": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "success",
+              "data"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "TenantMember": {
+        "$ref": "#/definitions/TenantMember",
+        "definitions": {
+          "TenantMember": {
+            "type": "object",
+            "properties": {
+              "user_id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "role": {
+                "type": "string"
+              },
+              "created_at": {
+                "type": "string"
+              },
+              "is_owner": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "user_id",
+              "role",
+              "created_at"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "TenantMembersResponse": {
+        "$ref": "#/definitions/TenantMembersResponse",
+        "definitions": {
+          "TenantMembersResponse": {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "user_id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "role": {
+                      "type": "string"
+                    },
+                    "created_at": {
+                      "type": "string"
+                    },
+                    "is_owner": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "user_id",
+                    "role",
+                    "created_at"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "data"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "SubscriptionTier": {
+        "$ref": "#/definitions/SubscriptionTier",
+        "definitions": {
+          "SubscriptionTier": {
+            "type": "string",
+            "enum": [
+              "FREE",
+              "PRO",
+              "ENTERPRISE"
+            ]
+          }
+        }
+      },
+      "TenantLimits": {
+        "$ref": "#/definitions/TenantLimits",
+        "definitions": {
+          "TenantLimits": {
+            "type": "object",
+            "properties": {
+              "tier": {
+                "type": "string",
+                "enum": [
+                  "FREE",
+                  "PRO",
+                  "ENTERPRISE"
+                ]
+              },
+              "monthly_ai_budget_usd": {
+                "type": "number"
+              },
+              "per_minute_rate_limit_tenant": {
+                "type": "number"
+              },
+              "per_minute_rate_limit_ip": {
+                "type": "number"
+              },
+              "max_projects": {
+                "type": "number"
+              },
+              "max_workers": {
+                "type": "number"
+              },
+              "storage_limit_gb": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "tier",
+              "monthly_ai_budget_usd",
+              "per_minute_rate_limit_tenant",
+              "per_minute_rate_limit_ip",
+              "max_projects",
+              "max_workers",
+              "storage_limit_gb"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ]
+}
