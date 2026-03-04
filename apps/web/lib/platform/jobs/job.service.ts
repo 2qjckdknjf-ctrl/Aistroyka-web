@@ -5,6 +5,7 @@ import * as repo from "./job.repository";
 import type { Job, JobType } from "./job.types";
 import { handleAiAnalyzeMedia } from "./job.handlers/ai-analyze-media";
 import { handleAiAnalyzeReport } from "./job.handlers/ai-analyze-report";
+import { handleExport } from "./job.handlers/export";
 
 export type { Job, JobStatus, JobType } from "./job.types";
 export { JOB_CONFIG } from "./job.config";
@@ -38,6 +39,7 @@ export async function enqueueJob(
 const HANDLERS: Record<JobType, (supabase: SupabaseClient, job: Job) => Promise<void>> = {
   ai_analyze_media: handleAiAnalyzeMedia,
   ai_analyze_report: handleAiAnalyzeReport,
+  export: handleExport,
 };
 
 /**

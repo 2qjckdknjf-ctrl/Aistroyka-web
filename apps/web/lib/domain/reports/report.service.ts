@@ -4,6 +4,7 @@ import { canCreateReport } from "./report.policy";
 import * as repo from "./report.repository";
 import type { Report } from "./report.types";
 import { enqueueJob } from "@/lib/platform/jobs/job.service";
+import { emitAudit } from "@/lib/observability/audit.service";
 
 export async function createReport(
   supabase: SupabaseClient,
@@ -44,6 +45,15 @@ export async function submitReport(
   if (report.status !== "draft") return { ok: false, error: "Report already submitted" };
   const ok = await repo.submit(supabase, reportId, ctx.tenantId);
   if (!ok) return { ok: false, error: "Failed to submit" };
+
+  await emitAudit(supabase, {
+    tenant_id: ctx.tenantId,
+    user_id: ctx.userId,
+    trace_id: traceId ?? null,
+    action: "report_submit",
+    resource_type: "report",
+    resource_id: reportId,
+  });
 
   const jobIds: string[] = [];
   try {

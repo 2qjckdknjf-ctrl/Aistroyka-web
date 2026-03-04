@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError, authorize } from "@/lib/tenant";
 import { getAppUrl } from "@/lib/app-url";
+import { emitAudit } from "@/lib/observability/audit.service";
 
 const INVITE_EXPIRES_DAYS = 7;
 
@@ -48,6 +49,15 @@ export async function POST(request: Request) {
     }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  await emitAudit(supabase, {
+    tenant_id: tenantId,
+    user_id: ctx.userId,
+    action: "invite",
+    resource_type: "tenant_invitation",
+    resource_id: inv.id,
+    details: { email: inv.email, role },
+  });
 
   const baseUrl = getAppUrl();
   const acceptLink = `${baseUrl}/invite/accept?token=${inv.token}`;
