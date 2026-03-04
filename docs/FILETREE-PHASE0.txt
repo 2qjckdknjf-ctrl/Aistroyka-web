@@ -1,0 +1,85 @@
+# Phase 0 — File tree snapshot (relevant paths)
+
+apps/web/lib/config/
+  config.test.ts
+  debug.ts
+  index.ts
+  public.ts
+  server.ts
+
+apps/web/lib/tenant/
+  index.ts
+  tenant.context.ts
+  tenant.guard.ts
+  tenant.guard.test.ts
+  tenant.policy.ts
+  tenant.policy.test.ts
+  tenant.types.ts
+
+apps/web/lib/controllers/
+  health.ts
+
+apps/web/lib/observability/
+  index.ts
+  logger.ts
+  metrics.ts
+  trace.ts
+
+apps/web/app/api/v1/
+  ai/analyze-image/route.ts
+  health/route.ts
+  health/route.test.ts
+  projects/route.ts
+  worker/route.ts
+
+apps/web/app/api/health/
+  route.ts
+  route.test.ts
+
+apps/web/app/api/analysis/process/
+  route.ts
+  route.test.ts
+
+apps/web/app/api/auth/login/
+  route.ts
+
+apps/web/app/api/ai/analyze-image/
+  route.ts
+  route.test.ts
+
+apps/web/app/api/_debug/auth/
+  route.ts
+
+apps/web/app/api/diag/supabase/
+  route.ts
+
+apps/web/app/api/tenant/
+  invite/route.ts
+  members/route.ts
+  (accept-invite, invitations, revoke — unchanged or minor)
+
+apps/web/app/api/projects/
+  route.ts
+
+packages/contracts/
+  src/
+    index.ts
+    api/v1/types.ts
+    schemas/
+      health.schema.ts
+      health.schema.test.ts
+      ai.schema.ts
+      projects.schema.ts
+      tenant.schema.ts
+  package.json
+  tsconfig.json
+
+docs/
+  REPORT-PHASE0-STABILIZATION.md
+  FILETREE-PHASE0.txt
+
+Other modified (refactored to use config/tenant):
+  apps/web/lib/env.ts
+  apps/web/lib/app-url.ts
+  apps/web/lib/supabase/admin.ts
+  apps/web/lib/ai/runOneJob.ts

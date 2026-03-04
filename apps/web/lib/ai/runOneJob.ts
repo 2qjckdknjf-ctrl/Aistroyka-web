@@ -120,11 +120,14 @@ async function markJobFailed(
 /**
  * Process one job: dequeue → claim → AI → complete (or mark failed).
  * Uses RPCs dequeue_job(null, workerId), claim_job_execution(jobId, workerId), complete_analysis_job(...).
+ * Optional traceId is included in job logs when provided (e.g. from request x-request-id).
  */
 export async function processOneJob(
   supabase: SupabaseClient,
-  aiAnalysisUrl: string | undefined
+  aiAnalysisUrl: string | undefined,
+  options?: { traceId?: string }
 ): Promise<ProcessOneJobResult> {
+  const traceId = options?.traceId ?? (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `job-${Date.now()}`);
   if (!aiAnalysisUrl?.trim()) {
     return { ok: false, reason: "no_url", message: "AI_ANALYSIS_URL is not set" };
   }
@@ -212,6 +215,7 @@ export async function processOneJob(
       job_id: jobId,
       status: "completed",
       duration_ms: Date.now() - startMs,
+      trace_id: traceId,
     });
     return { ok: true, jobId, status: "completed" };
   } catch (err) {
@@ -227,6 +231,7 @@ export async function processOneJob(
       status: "failed",
       duration_ms: Date.now() - startMs,
       error_type: errorType,
+      trace_id: traceId,
     });
     return { ok: true, jobId, status: "failed" };
   }

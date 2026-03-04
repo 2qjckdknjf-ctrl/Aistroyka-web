@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { getServerConfig } from "@/lib/config/server";
 import { processOneJob } from "@/lib/ai/runOneJob";
+import { getOrCreateTraceId, logStructured } from "@/lib/observability";
 
 /**
  * Process one analysis job (dequeue → AI → complete).
@@ -10,7 +11,9 @@ import { processOneJob } from "@/lib/ai/runOneJob";
  * Requires AI_ANALYSIS_URL and SUPABASE_SERVICE_ROLE_KEY in env. Authenticated user required.
  * Uses service_role for job RPCs so RLS/EXECUTE revokes on anon/authenticated do not break this route.
  */
-export async function POST() {
+export async function POST(request: Request) {
+  const traceId = getOrCreateTraceId(request);
+  const startMs = Date.now();
   const supabase = await createClient();
   const {
     data: { user },
@@ -32,7 +35,7 @@ export async function POST() {
 
   const aiUrl = getServerConfig().AI_ANALYSIS_URL || undefined;
 
-  const result = await processOneJob(admin, aiUrl);
+  const result = await processOneJob(admin, aiUrl, { traceId });
 
   if (!result.ok) {
     if (result.reason === "no_url") {
@@ -50,6 +53,13 @@ export async function POST() {
     );
   }
 
+  logStructured({
+    event: "analysis_process",
+    traceId,
+    route: "/api/analysis/process",
+    status: 200,
+    duration_ms: Date.now() - startMs,
+  });
   return NextResponse.json({
     ok: true,
     processed: true,

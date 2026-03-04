@@ -8,6 +8,10 @@ vi.mock("@/lib/supabase/server", () => ({
   }),
 }));
 
+vi.mock("@/lib/supabase/admin", () => ({
+  getAdminClient: vi.fn().mockReturnValue({}),
+}));
+
 const mockProcessOneJob = vi.fn();
 vi.mock("@/lib/ai/runOneJob", () => ({ processOneJob: mockProcessOneJob }));
 

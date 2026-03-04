@@ -8,13 +8,15 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { hasSupabaseEnv, getPublicConfig } from "@/lib/config";
+import { getOrCreateTraceId, logStructured } from "@/lib/observability";
 
 type CookieToSet = { name: string; value: string; options?: Record<string, unknown> };
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
-  const traceId = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `t-${Date.now()}`;
+  const traceId = getOrCreateTraceId(request);
+  const startMs = Date.now();
 
   if (!hasSupabaseEnv()) {
     const { getServerConfig } = await import("@/lib/config/server");
@@ -70,6 +72,7 @@ export async function POST(request: NextRequest) {
         message: error.message,
       });
     }
+    logStructured({ event: "auth_login", traceId, route: "/api/auth/login", status: 401, duration_ms: Date.now() - startMs, error_type: "auth" });
     return NextResponse.json(
       { ok: false, message: error.message },
       { status: 401 }
@@ -81,10 +84,10 @@ export async function POST(request: NextRequest) {
     console.error("[login] signIn success", { traceId: clientTraceId, step: "signIn", status: "ok" });
   }
 
+  logStructured({ event: "auth_login", traceId, route: "/api/auth/login", status: 200, duration_ms: Date.now() - startMs });
   const response = NextResponse.json({ ok: true });
   cookiesToSet.forEach((c) => {
     response.cookies.set(c.name, c.value, (c.options as Record<string, unknown>) ?? {});
   });
-
   return response;
 }
