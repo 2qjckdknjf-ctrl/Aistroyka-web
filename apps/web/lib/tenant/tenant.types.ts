@@ -9,6 +9,9 @@ export type TenantRoleDb = "owner" | "admin" | "member" | "viewer";
 
 export type ClientProfile = "web" | "ios_full" | "ios_lite" | "android_full" | "android_lite";
 
+/** Permission keys from RBAC (read, write, create, ...). Populated when context is built with authz. */
+export type PermissionKey = string;
+
 export interface TenantContext {
   tenantId: string;
   userId: string;
@@ -16,6 +19,10 @@ export interface TenantContext {
   subscriptionTier: string;
   clientProfile: ClientProfile;
   traceId: string;
+  /** RBAC permission set (from role). Set when context is resolved with authz. */
+  permissionSet?: Set<PermissionKey>;
+  /** Resource scopes (e.g. tenant:*, project:id:*). Set when context is resolved with authz. */
+  scopes?: string[];
 }
 
 export interface TenantContextAbsent {

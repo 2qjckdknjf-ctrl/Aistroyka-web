@@ -1,8 +1,11 @@
 /**
  * Resolve tenant context from request: auth + tenant_members -> tenantId, role, traceId, client.
+ * When RBAC is available, also loads permissionSet and scopes for the user in the tenant.
  */
 
 import { createClient } from "@/lib/supabase/server";
+import { getPermissionsForContext } from "@/lib/authz/authz.service";
+import { getUserScopes } from "@/lib/authz/authz.repository";
 import type { TenantContextOrAbsent, ClientProfile } from "./tenant.types";
 
 const DEFAULT_CLIENT: ClientProfile = "web";
@@ -44,7 +47,7 @@ export async function getTenantContextFromRequest(request: Request): Promise<Ten
     return { tenantId: null, userId: user.id, role: null, subscriptionTier: null, clientProfile, traceId };
   }
 
-  return {
+  const base = {
     tenantId,
     userId: user.id,
     role,
@@ -52,6 +55,15 @@ export async function getTenantContextFromRequest(request: Request): Promise<Ten
     clientProfile,
     traceId,
   };
+  try {
+    const [permissionSet, scopes] = await Promise.all([
+      getPermissionsForContext(supabase, base),
+      getUserScopes(supabase, tenantId, user.id),
+    ]);
+    return { ...base, permissionSet, scopes };
+  } catch {
+    return base;
+  }
 }
 
 async function getActiveTenantId(supabase: Awaited<ReturnType<typeof createClient>>, userId: string): Promise<string | null> {
