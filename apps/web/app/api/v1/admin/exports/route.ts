@@ -3,13 +3,15 @@ import { createClient } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError, authorize } from "@/lib/tenant";
 import { enqueueJob } from "@/lib/platform/jobs/job.service";
 import { emitAudit } from "@/lib/observability/audit.service";
+import { checkRateLimit } from "@/lib/platform/rate-limit/rate-limit.service";
+import { getAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 
 /**
  * POST /api/v1/admin/exports
  * Body: { export_type: "reports" | "ai_usage" | "audit_logs", range_days?: number }
- * Starts async export job; returns job id for status polling.
+ * Starts async export job; returns job id for status polling. Rate-limited and audited.
  */
 export async function POST(request: Request) {
   const ctx = await getTenantContextFromRequest(request);
@@ -23,6 +25,12 @@ export async function POST(request: Request) {
   }
   if (!authorize(ctx, "admin:read")) {
     return NextResponse.json({ error: "Insufficient rights" }, { status: 403 });
+  }
+  const admin = getAdminClient();
+  if (admin) {
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? request.headers.get("x-real-ip") ?? "unknown";
+    const result = await checkRateLimit(admin, { tenantId: ctx.tenantId, ip, endpoint: "/api/v1/admin/exports" });
+    if (result.limited) return NextResponse.json({ error: result.message }, { status: 429 });
   }
   let body: { export_type?: string; range_days?: number };
   try {

@@ -10,6 +10,8 @@ export const HIGH_RISK_ENDPOINTS = [
 ] as const;
 
 const DEFAULT_IP_LIMIT = 10;
+/** Stricter limit for auth/login to reduce credential stuffing. */
+const LOGIN_IP_LIMIT = 5;
 
 /** Returns null if allowed; error message if rate limited. Use admin client for rate_limit_slots. */
 export async function checkRateLimit(
@@ -19,7 +21,8 @@ export async function checkRateLimit(
   const { tenantId, ip, endpoint } = options;
   const safeEndpoint = endpoint.replace(/[^a-z0-9/_-]/gi, "_");
 
-  let ipLimit = DEFAULT_IP_LIMIT;
+  const isLogin = endpoint === "/api/auth/login";
+  let ipLimit = isLogin ? LOGIN_IP_LIMIT : DEFAULT_IP_LIMIT;
   if (tenantId) {
     const limits = await getLimitsForTenant(supabase, tenantId);
     ipLimit = limits.per_minute_rate_limit_ip;
