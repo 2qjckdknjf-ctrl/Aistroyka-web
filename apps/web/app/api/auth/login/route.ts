@@ -9,6 +9,8 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { hasSupabaseEnv, getPublicConfig } from "@/lib/config";
 import { getOrCreateTraceId, logStructured } from "@/lib/observability";
+import { getAdminClient } from "@/lib/supabase/admin";
+import { checkRateLimit } from "@/lib/platform/rate-limit/rate-limit.service";
 
 type CookieToSet = { name: string; value: string; options?: Record<string, unknown> };
 
@@ -17,6 +19,19 @@ export const dynamic = "force-dynamic";
 export async function POST(request: NextRequest) {
   const traceId = getOrCreateTraceId(request);
   const startMs = Date.now();
+
+  const admin = getAdminClient();
+  if (admin) {
+    try {
+      const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? request.headers.get("x-real-ip") ?? "unknown";
+      const result = await checkRateLimit(admin, { tenantId: null, ip, endpoint: "/api/auth/login" });
+      if (result.limited) {
+        return NextResponse.json({ ok: false, message: result.message }, { status: 429 });
+      }
+    } catch {
+      /* allow on rate-limit check failure */
+    }
+  }
 
   if (!hasSupabaseEnv()) {
     const { getServerConfig } = await import("@/lib/config/server");

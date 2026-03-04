@@ -12,6 +12,8 @@
 
 import { NextResponse } from "next/server";
 import { getTenantContextFromRequest } from "@/lib/tenant";
+import { getAdminClient } from "@/lib/supabase/admin";
+import { checkRateLimit } from "@/lib/platform/rate-limit/rate-limit.service";
 import {
   CONSTRUCTION_VISION_SYSTEM_PROMPT,
   CONSTRUCTION_VISION_USER_MESSAGE,
@@ -141,6 +143,22 @@ export async function POST(request: Request) {
   }
 
   const tenantCtx = await getTenantContextFromRequest(request);
+  const admin = getAdminClient();
+  if (admin) {
+    try {
+      const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? request.headers.get("x-real-ip") ?? "unknown";
+      const result = await checkRateLimit(admin, {
+        tenantId: tenantCtx.tenantId ?? null,
+        ip,
+        endpoint: "/api/v1/ai/analyze-image",
+      });
+      if (result.limited) {
+        return NextResponse.json({ error: result.message }, { status: 429 });
+      }
+    } catch {
+      /* allow on rate-limit check failure (e.g. table missing) */
+    }
+  }
   const startMs = Date.now();
 
   try {
