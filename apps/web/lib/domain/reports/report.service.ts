@@ -5,6 +5,7 @@ import * as repo from "./report.repository";
 import type { Report } from "./report.types";
 import { enqueueJob } from "@/lib/platform/jobs/job.service";
 import { emitAudit } from "@/lib/observability/audit.service";
+import { emitChange } from "@/lib/sync/change-log.repository";
 
 export async function createReport(
   supabase: SupabaseClient,
@@ -53,6 +54,14 @@ export async function submitReport(
     action: "report_submit",
     resource_type: "report",
     resource_id: reportId,
+  });
+  await emitChange(supabase, {
+    tenant_id: ctx.tenantId,
+    resource_type: "report",
+    resource_id: reportId,
+    change_type: "updated",
+    changed_by: ctx.userId,
+    payload: { status: "submitted" },
   });
 
   const jobIds: string[] = [];

@@ -16,4 +16,16 @@ export {
 } from "./schemas/projects.schema";
 export { TenantMemberSchema, TenantMembersResponseSchema } from "./schemas/tenant.schema";
 export { SubscriptionTierSchema, TenantLimitsSchema, type SubscriptionTier, type TenantLimits } from "./schemas/subscription.schema";
+export {
+  SyncBootstrapResponseSchema,
+  SyncChangeEntrySchema,
+  SyncChangesResponseSchema,
+  SyncAckRequestSchema,
+  SyncAckResponseSchema,
+  type SyncBootstrapResponse,
+  type SyncChangeEntry,
+  type SyncChangesResponse,
+  type SyncAckRequest,
+  type SyncAckResponse,
+} from "./schemas/sync.schema";
 export * from "./api/v1/types";
