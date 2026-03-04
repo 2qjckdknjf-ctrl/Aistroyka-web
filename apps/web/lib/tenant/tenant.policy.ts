@@ -23,7 +23,8 @@ export type ResourceAction =
   | "media:read"
   | "analysis:trigger"
   | "reports:read"
-  | "admin:read";
+  | "admin:read"
+  | "jobs:process";
 
 /**
  * Returns true if the tenant context has at least the required role for the action.
@@ -50,6 +51,7 @@ function minRoleForAction(action: ResourceAction): number {
     case "reports:read":
       return ROLE_ORDER.viewer;
     case "admin:read":
+    case "jobs:process":
       return ROLE_ORDER.admin;
     default:
       return 999;

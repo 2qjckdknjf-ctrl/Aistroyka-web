@@ -56,3 +56,21 @@ export async function submit(supabase: SupabaseClient, reportId: string, tenantI
     .eq("status", "draft");
   return !error;
 }
+
+export interface ReportMediaRow {
+  media_id: string | null;
+  upload_session_id: string | null;
+}
+
+export async function listMediaByReportId(
+  supabase: SupabaseClient,
+  reportId: string,
+  _tenantId: string
+): Promise<ReportMediaRow[]> {
+  const { data, error } = await supabase
+    .from("worker_report_media")
+    .select("media_id, upload_session_id")
+    .eq("report_id", reportId);
+  if (error) return [];
+  return (data ?? []) as ReportMediaRow[];
+}

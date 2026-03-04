@@ -24,7 +24,11 @@ export async function POST(request: Request) {
   const reportId = typeof body.report_id === "string" ? body.report_id.trim() : "";
   if (!reportId) return NextResponse.json({ error: "report_id required" }, { status: 400 });
   const supabase = await createClient();
-  const { ok, error } = await submitReport(supabase, ctx, reportId);
+  const { ok, error, jobIds } = await submitReport(supabase, ctx, reportId, ctx.traceId);
   if (!ok) return NextResponse.json({ error }, { status: 403 });
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({
+    reportId,
+    jobIds: jobIds ?? [],
+    status: "queued",
+  });
 }
