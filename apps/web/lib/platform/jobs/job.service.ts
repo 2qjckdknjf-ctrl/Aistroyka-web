@@ -3,6 +3,7 @@ import { nextRunAfter } from "./job.config";
 import { JobError, JobPayloadError } from "./job.errors";
 import * as repo from "./job.repository";
 import type { Job, JobType } from "./job.types";
+import { getQueueAdapter } from "./queue/queue.service";
 import { handleAiAnalyzeMedia } from "./job.handlers/ai-analyze-media";
 import { handleAiAnalyzeReport } from "./job.handlers/ai-analyze-report";
 import { handleExport } from "./job.handlers/export";
@@ -43,7 +44,7 @@ const HANDLERS: Record<JobType, (supabase: SupabaseClient, job: Job) => Promise<
 };
 
 /**
- * Process jobs: claim up to limit, run handlers, mark success/fail/dead, emit events.
+ * Process jobs: claim up to limit, enforce tenant concurrency (try_acquire_job_slot), run handlers, release slot, mark success/fail/dead.
  * Stops when time budget is exceeded. Use admin client.
  */
 export async function processJobs(
@@ -54,6 +55,7 @@ export async function processJobs(
   const limit = Math.min(options.limit ?? 5, 20);
   const budgetMs = options.timeBudgetMs ?? 25_000;
   const start = Date.now();
+  const queue = getQueueAdapter();
 
   const claimed = await repo.claim(admin, workerId, limit, options.tenantId ?? undefined);
   for (const job of claimed) {
@@ -68,18 +70,23 @@ export async function processJobs(
   for (const job of claimed) {
     if (Date.now() - start >= budgetMs) break;
 
-    const handler = HANDLERS[job.type as JobType];
-    if (!handler) {
-      await repo.emitEvent(admin, job.id, "failed", { error_type: "unknown_job_type" });
-      await repo.markDead(admin, job.id, "Unknown job type", "UNKNOWN_TYPE");
-      dead++;
-      processed++;
+    const acquired = await queue.tryAcquireSlot(admin, job.tenant_id);
+    if (!acquired) {
+      await repo.markFailedForRetry(admin, job.id, "Tenant concurrency cap", "CONCURRENCY_CAP", new Date());
       continue;
     }
 
+    const handler = HANDLERS[job.type as JobType];
     try {
+      if (!handler) {
+        await repo.emitEvent(admin, job.id, "failed", { error_type: "unknown_job_type" });
+        await queue.markDead(admin, job.id, "Unknown job type", "UNKNOWN_TYPE");
+        dead++;
+        processed++;
+        continue;
+      }
       await handler(admin, job);
-      await repo.markSuccess(admin, job.id);
+      await queue.markSuccess(admin, job.id);
       await repo.emitEvent(admin, job.id, "success", {});
       success++;
     } catch (e) {
@@ -87,19 +94,19 @@ export async function processJobs(
       const code = e instanceof JobError ? e.code : "JOB_ERROR";
       const retryable = e instanceof JobError ? (e as JobError).retryable : true;
       const attempts = job.attempts + 1;
-
       await repo.emitEvent(admin, job.id, "failed", { error_type: code, message });
-
       if (attempts >= job.max_attempts || !retryable || e instanceof JobPayloadError) {
-        await repo.markDead(admin, job.id, message, code);
+        await queue.markDead(admin, job.id, message, code);
         await repo.emitEvent(admin, job.id, "dead", {});
         dead++;
       } else {
         const runAfter = nextRunAfter(attempts);
-        await repo.markFailedForRetry(admin, job.id, message, code, runAfter);
+        await queue.markFailedForRetry(admin, job.id, message, code, runAfter);
         await repo.emitEvent(admin, job.id, "retry", { run_after: runAfter.toISOString() });
         failed++;
       }
+    } finally {
+      await queue.releaseSlot(admin, job.tenant_id);
     }
     processed++;
   }
