@@ -3,8 +3,9 @@ import { createClient } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { isTenantContextPresent } from "@/lib/tenant/tenant.types";
 import { listProjects, createProject } from "@/lib/domain/projects/project.service";
+import { setLegacyApiHeaders } from "@/lib/api/deprecation-headers";
 
-/** GET /api/projects — list projects for current user (tenant). Uses domain project.service. */
+/** GET /api/projects — list projects (legacy). Prefer GET /api/v1/projects. */
 export async function GET(request: Request) {
   const ctx = await getTenantContextFromRequest(request);
   if (!isTenantContextPresent(ctx)) {
@@ -13,7 +14,10 @@ export async function GET(request: Request) {
   const supabase = await createClient();
   const { data, error } = await listProjects(supabase, ctx);
   if (error) return NextResponse.json({ error }, { status: 403 });
-  return NextResponse.json({ data });
+  const res = NextResponse.json({ data });
+  setLegacyApiHeaders(res.headers);
+  res.headers.set("Link", "</api/v1/projects>; rel=\"successor\"");
+  return res;
 }
 
 /** POST /api/projects — create project. Uses domain project.service. */
@@ -35,5 +39,8 @@ export async function POST(request: Request) {
     const status = result.error.includes("Insufficient") ? 403 : 400;
     return NextResponse.json({ success: false, error: result.error }, { status });
   }
-  return NextResponse.json({ success: true, data: { id: result.id } });
+  const res = NextResponse.json({ success: true, data: { id: result.id } });
+  setLegacyApiHeaders(res.headers);
+  res.headers.set("Link", "</api/v1/projects>; rel=\"successor\"");
+  return res;
 }

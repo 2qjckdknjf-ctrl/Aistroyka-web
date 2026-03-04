@@ -5,11 +5,15 @@
 
 import { NextResponse } from "next/server";
 import { getHealthResponse } from "@/lib/controllers/health";
+import { setLegacyApiHeaders } from "@/lib/api/deprecation-headers";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export async function GET() {
   const { body, status } = await getHealthResponse();
-  return NextResponse.json(body, { status });
+  const res = NextResponse.json(body, { status });
+  setLegacyApiHeaders(res.headers);
+  res.headers.set("Link", "</api/v1/health>; rel=\"successor\"");
+  return res;
 }

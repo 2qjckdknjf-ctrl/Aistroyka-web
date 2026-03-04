@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError, authorize } from "@/lib/tenant";
 import { getAppUrl } from "@/lib/app-url";
 import { emitAudit } from "@/lib/observability/audit.service";
+import { setLegacyApiHeaders } from "@/lib/api/deprecation-headers";
 
 const INVITE_EXPIRES_DAYS = 7;
 
@@ -61,7 +62,9 @@ export async function POST(request: Request) {
 
   const baseUrl = getAppUrl();
   const acceptLink = `${baseUrl}/invite/accept?token=${inv.token}`;
-  return NextResponse.json({
+  const res = NextResponse.json({
     data: { id: inv.id, email: inv.email, role: inv.role, expires_at: inv.expires_at, accept_link: acceptLink },
   });
+  setLegacyApiHeaders(res.headers);
+  return res;
 }
