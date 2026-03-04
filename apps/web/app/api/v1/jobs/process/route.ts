@@ -4,8 +4,11 @@ import { getTenantContextFromRequest, requireTenant, TenantRequiredError, author
 import { getAdminClient } from "@/lib/supabase/admin";
 import { processJobs } from "@/lib/platform/jobs/job.service";
 import { JOB_CONFIG } from "@/lib/platform/jobs/job.config";
+import { checkRateLimit } from "@/lib/platform/rate-limit/rate-limit.service";
 
 export const dynamic = "force-dynamic";
+
+const JOBS_PROCESS_ENDPOINT = "/api/v1/jobs/process";
 
 export async function POST(request: Request) {
   const ctx = await getTenantContextFromRequest(request);
@@ -22,6 +25,21 @@ export async function POST(request: Request) {
   }
 
   const admin = getAdminClient();
+  if (admin) {
+    try {
+      const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? request.headers.get("x-real-ip") ?? "unknown";
+      const result = await checkRateLimit(admin, {
+        tenantId: ctx.tenantId,
+        ip,
+        endpoint: JOBS_PROCESS_ENDPOINT,
+      });
+      if (result.limited) {
+        return NextResponse.json({ error: result.message }, { status: 429 });
+      }
+    } catch {
+      /* allow on rate-limit check failure */
+    }
+  }
   if (!admin) {
     return NextResponse.json({ error: "Job processing not configured" }, { status: 503 });
   }
