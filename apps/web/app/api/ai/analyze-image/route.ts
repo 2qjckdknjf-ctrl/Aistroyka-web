@@ -14,6 +14,8 @@ import { NextResponse } from "next/server";
 import { getTenantContextFromRequest } from "@/lib/tenant";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { checkRateLimit } from "@/lib/platform/rate-limit/rate-limit.service";
+import { checkQuota, recordUsage, estimateVisionCostUsd } from "@/lib/platform/ai-usage/ai-usage.service";
+import { estimateCostUsd } from "@/lib/platform/ai-usage/cost-estimator";
 import {
   CONSTRUCTION_VISION_SYSTEM_PROMPT,
   CONSTRUCTION_VISION_USER_MESSAGE,
@@ -158,6 +160,15 @@ export async function POST(request: Request) {
     } catch {
       /* allow on rate-limit check failure (e.g. table missing) */
     }
+    if (tenantCtx.tenantId) {
+      const quotaMsg = await checkQuota(admin, tenantCtx.tenantId, estimateVisionCostUsd(getServerConfig().OPENAI_VISION_MODEL));
+      if (quotaMsg) {
+        return NextResponse.json(
+          { error: quotaMsg, code: "quota_exceeded" },
+          { status: 402 }
+        );
+      }
+    }
   }
   const startMs = Date.now();
 
@@ -187,7 +198,10 @@ export async function POST(request: Request) {
 
   let res: Response | null = null;
   let lastErrText = "";
-  let successData: { choices?: Array<{ message?: { content?: string } }> } | null = null;
+  let successData: {
+    choices?: Array<{ message?: { content?: string } }>;
+    usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number };
+  } | null = null;
 
   for (let attempt = 0; attempt <= OPENAI_RETRY_ON_5XX; attempt++) {
     const controller = new AbortController();
@@ -253,7 +267,10 @@ export async function POST(request: Request) {
     );
   }
 
-  const data: { choices?: Array<{ message?: { content?: string } }> } = successData;
+  const data = successData as {
+    choices?: Array<{ message?: { content?: string } }>;
+    usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number };
+  };
   const content = data.choices?.[0]?.message?.content?.trim();
   if (!content) {
     logAiEvent({
@@ -292,6 +309,29 @@ export async function POST(request: Request) {
   result = { ...result, risk_level: calibrateRiskLevel(result) };
 
   const durationMs = Date.now() - startMs;
+  if (admin && tenantCtx.tenantId) {
+    try {
+      const u = data.usage;
+      const ti = typeof u?.prompt_tokens === "number" ? u.prompt_tokens : 500;
+      const to = typeof u?.completion_tokens === "number" ? u.completion_tokens : 300;
+      const cost = estimateCostUsd(MODEL, ti, to);
+      await recordUsage(admin, {
+        tenant_id: tenantCtx.tenantId,
+        user_id: tenantCtx.userId ?? null,
+        trace_id: tenantCtx.traceId ?? null,
+        provider: "openai",
+        model: MODEL,
+        tokens_input: ti,
+        tokens_output: to,
+        tokens_total: ti + to,
+        cost_usd: cost,
+        status: "success",
+        duration_ms: durationMs,
+      });
+    } catch {
+      /* do not fail response on usage persistence */
+    }
+  }
   logAiEvent({
     status: "success",
     duration_ms: durationMs,
