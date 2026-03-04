@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "build": "tsx build-openapi.ts",
-    "prebuild": "mkdir -p dist"
+    "prebuild": "mkdir -p dist",
+    "test": "npm run build && node validate-openapi.mjs"
   },
   "dependencies": {
     "@aistroyka/contracts": "file:../contracts",
