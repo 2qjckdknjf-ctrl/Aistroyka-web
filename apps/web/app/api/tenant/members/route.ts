@@ -1,19 +1,22 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getOrCreateTenantForCurrentUser } from "@/lib/api/engine";
-import { hasMinRole } from "@/lib/auth/tenant";
+import { getTenantContextFromRequest, requireTenant, TenantRequiredError, authorize } from "@/lib/tenant";
 
-export async function GET() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const tenantId = await getOrCreateTenantForCurrentUser(supabase);
-  if (!tenantId) return NextResponse.json({ error: "No tenant" }, { status: 403 });
-
-  if (!(await hasMinRole(supabase, tenantId, "admin"))) {
+export async function GET(request: Request) {
+  const ctx = await getTenantContextFromRequest(request);
+  try {
+    requireTenant(ctx);
+  } catch (e) {
+    if (e instanceof TenantRequiredError) {
+      return NextResponse.json({ error: e.message }, { status: e.message.includes("membership") ? 403 : 401 });
+    }
+    throw e;
+  }
+  if (!authorize(ctx, "tenant:invite")) {
     return NextResponse.json({ error: "Insufficient rights" }, { status: 403 });
   }
+  const supabase = await createClient();
+  const tenantId = ctx.tenantId;
 
   const { data: tenantRow } = await supabase
     .from("tenants")

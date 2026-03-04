@@ -1,0 +1,74 @@
+/**
+ * Resolve tenant context from request: auth + tenant_members -> tenantId, role, traceId, client.
+ */
+
+import { createClient } from "@/lib/supabase/server";
+import type { TenantContextOrAbsent, ClientProfile } from "./tenant.types";
+
+const DEFAULT_CLIENT: ClientProfile = "web";
+const CLIENT_VALUES: ClientProfile[] = ["web", "ios_full", "ios_lite", "android_full", "android_lite"];
+
+function parseClient(header: string | null): ClientProfile {
+  const v = header?.toLowerCase().trim();
+  if (v && CLIENT_VALUES.includes(v as ClientProfile)) return v as ClientProfile;
+  return DEFAULT_CLIENT;
+}
+
+function getTraceId(request: Request): string {
+  const id = request.headers.get("x-request-id")?.trim();
+  if (id) return id;
+  return typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `t-${Date.now()}`;
+}
+
+/**
+ * Derives tenant context from the request: user via Supabase server client,
+ * then first tenant_members row for that user. If no user or no membership, returns absent context.
+ */
+export async function getTenantContextFromRequest(request: Request): Promise<TenantContextOrAbsent> {
+  const traceId = getTraceId(request);
+  const clientProfile = parseClient(request.headers.get("x-client"));
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user?.id) {
+    return { tenantId: null, userId: null, role: null, subscriptionTier: null, clientProfile, traceId };
+  }
+
+  const tenantId = await getActiveTenantId(supabase, user.id);
+  if (!tenantId) {
+    return { tenantId: null, userId: user.id, role: null, subscriptionTier: null, clientProfile, traceId };
+  }
+
+  const role = await getRoleInTenant(supabase, tenantId, user.id);
+  if (!role) {
+    return { tenantId: null, userId: user.id, role: null, subscriptionTier: null, clientProfile, traceId };
+  }
+
+  return {
+    tenantId,
+    userId: user.id,
+    role,
+    subscriptionTier: "free",
+    clientProfile,
+    traceId,
+  };
+}
+
+async function getActiveTenantId(supabase: Awaited<ReturnType<typeof createClient>>, userId: string): Promise<string | null> {
+  const { data: ownTenant } = await supabase.from("tenants").select("id").eq("user_id", userId).maybeSingle();
+  if (ownTenant?.id) return ownTenant.id;
+  const { data: member } = await supabase.from("tenant_members").select("tenant_id").eq("user_id", userId).limit(1).maybeSingle();
+  return member?.tenant_id ?? null;
+}
+
+const ROLES = ["owner", "admin", "member", "viewer"] as const;
+type DbRole = (typeof ROLES)[number];
+
+async function getRoleInTenant(supabase: Awaited<ReturnType<typeof createClient>>, tenantId: string, userId: string): Promise<DbRole | null> {
+  const { data: tenant } = await supabase.from("tenants").select("user_id").eq("id", tenantId).maybeSingle();
+  if (tenant?.user_id === userId) return "owner";
+  const { data: member } = await supabase.from("tenant_members").select("role").eq("tenant_id", tenantId).eq("user_id", userId).maybeSingle();
+  const r = member?.role;
+  if (typeof r === "string" && ROLES.includes(r as DbRole)) return r as DbRole;
+  return null;
+}

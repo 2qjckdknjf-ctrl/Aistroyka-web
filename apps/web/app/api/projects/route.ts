@@ -1,9 +1,14 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createProject, listProjectsForUser } from "@/lib/supabase/rpc";
+import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 
 /** GET /api/projects — list projects for current user (tenant). */
-export async function GET() {
+export async function GET(request: Request) {
+  const ctx = await getTenantContextFromRequest(request);
+  if (!ctx.tenantId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   const supabase = await createClient();
   const { data, error } = await listProjectsForUser(supabase);
   if (error) {
@@ -14,6 +19,15 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const ctx = await getTenantContextFromRequest(request);
+  try {
+    requireTenant(ctx);
+  } catch (e) {
+    if (e instanceof TenantRequiredError) {
+      return NextResponse.json({ success: false, error: e.message }, { status: 401 });
+    }
+    throw e;
+  }
   const supabase = await createClient();
   const body = await request.json().catch(() => ({}));
   const name = typeof body.name === "string" ? body.name.trim() : "";
