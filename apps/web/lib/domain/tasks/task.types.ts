@@ -1,7 +1,7 @@
 /** Assignable work item for Worker Lite. */
 export interface Task {
   id: string;
-  project_id: string;
+  project_id?: string | null;
   title: string;
   status: string;
   assigned_to?: string;

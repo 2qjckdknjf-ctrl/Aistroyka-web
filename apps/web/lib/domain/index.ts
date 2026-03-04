@@ -8,3 +8,7 @@ export * from "./reports/report.types";
 export * from "./reports/report.service";
 export * from "./media/media.types";
 export * from "./media/media.service";
+export * from "./worker-day/worker-day.types";
+export * from "./worker-day/worker-day.service";
+export * from "./upload-session/upload-session.types";
+export * from "./upload-session/upload-session.service";
