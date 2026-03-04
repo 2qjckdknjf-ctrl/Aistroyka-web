@@ -1,16 +1,13 @@
 /**
  * Canonical app URL for redirects, auth redirectTo, etc.
  * Set NEXT_PUBLIC_APP_URL in production (e.g. https://aistroyka.ai).
+ * Uses centralized config (lib/config/public).
  */
 
-const raw = typeof process.env.NEXT_PUBLIC_APP_URL === "string"
-  ? process.env.NEXT_PUBLIC_APP_URL.trim()
-  : "";
+import { hasSupabaseEnv, getPublicConfig } from "@/lib/config";
 
 /** Canonical base URL (no trailing slash). Defaults to https://aistroyka.ai when unset. */
 export function getAppUrl(): string {
-  if (raw.length > 0) {
-    return raw.replace(/\/+$/, "");
-  }
-  return "https://aistroyka.ai";
+  if (!hasSupabaseEnv()) return "https://aistroyka.ai";
+  return getPublicConfig().NEXT_PUBLIC_APP_URL;
 }

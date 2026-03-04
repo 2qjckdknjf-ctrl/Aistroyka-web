@@ -1,23 +1,26 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getOrCreateTenantForCurrentUser } from "@/lib/api/engine";
-import { hasMinRole } from "@/lib/auth/tenant";
+import { getTenantContextFromRequest, requireTenant, TenantRequiredError, authorize } from "@/lib/tenant";
+import { getAppUrl } from "@/lib/app-url";
 
 const INVITE_EXPIRES_DAYS = 7;
 
 export async function POST(request: Request) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const tenantId = await getOrCreateTenantForCurrentUser(supabase);
-  if (!tenantId) return NextResponse.json({ error: "No tenant" }, { status: 403 });
-
-  if (!(await hasMinRole(supabase, tenantId, "admin"))) {
+  const ctx = await getTenantContextFromRequest(request);
+  try {
+    requireTenant(ctx);
+  } catch (e) {
+    if (e instanceof TenantRequiredError) {
+      return NextResponse.json({ error: e.message }, { status: e.message.includes("membership") ? 403 : 401 });
+    }
+    throw e;
+  }
+  if (!authorize(ctx, "tenant:invite")) {
     return NextResponse.json({ error: "Insufficient rights" }, { status: 403 });
   }
+  const supabase = await createClient();
+  const tenantId = ctx.tenantId;
+  const user = { id: ctx.userId };
 
   const body = await request.json().catch(() => ({}));
   const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
@@ -33,7 +36,7 @@ export async function POST(request: Request) {
       tenant_id: tenantId,
       email,
       role,
-      created_by: user.id,
+      created_by: ctx.userId,
       expires_at: expiresAt.toISOString(),
     })
     .select("id, token, email, role, expires_at")
@@ -46,7 +49,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
+  const baseUrl = getAppUrl();
   const acceptLink = `${baseUrl}/invite/accept?token=${inv.token}`;
   return NextResponse.json({
     data: { id: inv.id, email: inv.email, role: inv.role, expires_at: inv.expires_at, accept_link: acceptLink },

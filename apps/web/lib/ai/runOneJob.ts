@@ -1,17 +1,14 @@
 /**
  * Process one analysis job: dequeue, claim, call AI endpoint, complete or fail.
  * Used by POST /api/analysis/process so the web app can run the engine without a separate worker.
+ * Timeouts and retries from centralized config (lib/config/server).
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getServerConfig } from "@/lib/config/server";
 import { isAnalysisResult, type AnalysisResult } from "./types";
 
 const VIDEO_NOT_IMPLEMENTED = "Video processing not implemented yet";
-const AI_REQUEST_TIMEOUT_MS = Math.min(
-  120_000,
-  Math.max(30_000, Number(process.env.AI_REQUEST_TIMEOUT_MS) || 90_000)
-);
-const AI_RETRY_ATTEMPTS = Math.min(5, Math.max(1, Number(process.env.AI_RETRY_ATTEMPTS) || 3));
 const AI_RETRY_DELAY_MS = 2000;
 
 export type ProcessOneJobResult =
@@ -28,8 +25,9 @@ function logProcessOneJob(payload: {
   status: "completed" | "failed";
   duration_ms: number;
   error_type?: string;
+  trace_id?: string;
 }) {
-  if (process.env.NODE_ENV === "test") return;
+  if (getServerConfig().NODE_ENV === "test") return;
   console.log(
     JSON.stringify({
       event: "ai_process_one_job",
@@ -47,6 +45,7 @@ async function callAiAnalysis(
   aiUrl: string,
   params: { media_id: string; image_url: string; project_id: string }
 ): Promise<AnalysisResult> {
+  const { AI_REQUEST_TIMEOUT_MS, AI_RETRY_ATTEMPTS } = getServerConfig();
   const baseUrl = aiUrl.replace(/\/$/, "");
   let lastError: Error | null = null;
 

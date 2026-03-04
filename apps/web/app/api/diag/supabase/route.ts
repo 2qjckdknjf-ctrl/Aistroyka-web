@@ -5,7 +5,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { hasSupabaseEnv } from "@/lib/env";
+import { hasSupabaseEnv, getPublicConfig } from "@/lib/config";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -18,7 +18,7 @@ export async function GET() {
     );
   }
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const { NEXT_PUBLIC_SUPABASE_URL: url } = getPublicConfig();
   let origin: string;
   try {
     origin = new URL(url).origin;

@@ -7,20 +7,14 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
-import { hasSupabaseEnv } from "@/lib/env";
+import { hasSupabaseEnv, getPublicConfig, isDebugAuthAllowed } from "@/lib/config";
 
 export const dynamic = "force-dynamic";
-
-function debugAllowed(): boolean {
-  if (process.env.DEBUG_AUTH === "true") return true;
-  if (process.env.NODE_ENV !== "production") return true;
-  return false;
-}
 
 export async function GET() {
   const traceId = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `t-${Date.now()}`;
 
-  if (!debugAllowed()) {
+  if (!isDebugAuthAllowed()) {
     return NextResponse.json({ error: "Not available" }, { status: 404 });
   }
 
@@ -33,8 +27,7 @@ export async function GET() {
   let userId: string | undefined;
 
   if (hasSupabaseEnv()) {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+    const { NEXT_PUBLIC_SUPABASE_URL: url, NEXT_PUBLIC_SUPABASE_ANON_KEY: key } = getPublicConfig();
     const supabase = createServerClient(url, key, {
       cookies: {
         getAll() {

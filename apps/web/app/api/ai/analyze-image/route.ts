@@ -7,9 +7,11 @@
  * - Errors: 400 (bad body), 413 (body too large), 502/504 (OpenAI), 503 (no OPENAI_API_KEY).
  *
  * Used when AI_ANALYSIS_URL points to this app (unified web + iOS). Prompt: @/lib/ai/prompts.
+ * When user is authenticated, tenantId is attached to metrics/logging; traceId always required.
  */
 
 import { NextResponse } from "next/server";
+import { getTenantContextFromRequest } from "@/lib/tenant";
 import {
   CONSTRUCTION_VISION_SYSTEM_PROMPT,
   CONSTRUCTION_VISION_USER_MESSAGE,
@@ -21,13 +23,7 @@ import {
 } from "@/lib/ai/normalize";
 import { calibrateRiskLevel } from "@/lib/ai/riskCalibration";
 import { type AnalysisResult, type RiskLevel } from "@/lib/ai/types";
-
-const MODEL = process.env.OPENAI_VISION_MODEL?.trim() || "gpt-4o";
-const OPENAI_TIMEOUT_MS = Math.min(
-  120_000,
-  Math.max(30_000, Number(process.env.OPENAI_VISION_TIMEOUT_MS) || 85_000)
-);
-const OPENAI_RETRY_ON_5XX = Math.min(3, Math.max(0, Number(process.env.OPENAI_RETRY_ON_5XX) ?? 1));
+import { getServerConfig } from "@/lib/config/server";
 
 function parseRiskLevel(s: string): RiskLevel {
   const v = s?.toLowerCase();
@@ -38,10 +34,12 @@ function parseRiskLevel(s: string): RiskLevel {
 const MAX_IMAGE_URL_LENGTH = 2048;
 const MAX_BODY_BYTES = 100_000;
 
-/** Single JSON log line for aggregators (CloudWatch, Datadog, etc.). No PII. */
+/** Single JSON log line for aggregators. No PII. Optional tenantId when authenticated. */
 function logAiEvent(payload: {
   status: "success" | "failure";
   duration_ms: number;
+  trace_id?: string;
+  tenant_id?: string | null;
   stage?: string;
   risk_level?: string;
   completion_percent?: number;
@@ -49,7 +47,7 @@ function logAiEvent(payload: {
   error?: string;
   http_status?: number;
 }) {
-  if (process.env.NODE_ENV === "test") return;
+  if (getServerConfig().NODE_ENV === "test") return;
   console.log(
     JSON.stringify({
       event: "ai_analyze_image",
@@ -74,7 +72,7 @@ function validateImageUrl(
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
     return { ok: false, error: "image_url must be http or https" };
   }
-  if (process.env.NODE_ENV === "production" && parsed.protocol !== "https:") {
+  if (getServerConfig().NODE_ENV === "production" && parsed.protocol !== "https:") {
     return { ok: false, error: "image_url must be https in production" };
   }
   return { ok: true };
@@ -98,7 +96,7 @@ function normalizeToAnalysisResult(raw: Record<string, unknown>): AnalysisResult
 }
 
 export async function POST(request: Request) {
-  const apiKey = process.env.OPENAI_API_KEY?.trim();
+  const { OPENAI_API_KEY: apiKey, OPENAI_VISION_MODEL: MODEL, OPENAI_VISION_TIMEOUT_MS: OPENAI_TIMEOUT_MS, OPENAI_RETRY_ON_5XX: OPENAI_RETRY_ON_5XX } = getServerConfig();
   if (!apiKey) {
     return NextResponse.json(
       { error: "OPENAI_API_KEY is not configured" },
@@ -142,6 +140,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: urlCheck.error }, { status: 400 });
   }
 
+  const tenantCtx = await getTenantContextFromRequest(request);
   const startMs = Date.now();
 
   try {
@@ -192,7 +191,7 @@ export async function POST(request: Request) {
       }
       lastErrText = await res.text();
       if (res.status < 500 || attempt === OPENAI_RETRY_ON_5XX) {
-        if (process.env.NODE_ENV !== "test") {
+        if (getServerConfig().NODE_ENV !== "test") {
           console.warn("[ai] analyze-image OpenAI error", { status: res.status, duration_ms: Date.now() - startMs });
         }
         return NextResponse.json(
@@ -207,6 +206,8 @@ export async function POST(request: Request) {
         logAiEvent({
           status: "failure",
           duration_ms: Date.now() - startMs,
+          trace_id: tenantCtx.traceId,
+          tenant_id: tenantCtx.tenantId ?? undefined,
           error: "timeout",
           http_status: 504,
         });
@@ -223,6 +224,8 @@ export async function POST(request: Request) {
     logAiEvent({
       status: "failure",
       duration_ms: Date.now() - startMs,
+      trace_id: tenantCtx.traceId,
+      tenant_id: tenantCtx.tenantId ?? undefined,
       error: "OpenAI no data",
       http_status: 502,
     });
@@ -238,6 +241,8 @@ export async function POST(request: Request) {
     logAiEvent({
       status: "failure",
       duration_ms: Date.now() - startMs,
+      trace_id: tenantCtx.traceId,
+      tenant_id: tenantCtx.tenantId ?? undefined,
       error: "Empty response from AI",
       http_status: 502,
     });
@@ -255,6 +260,8 @@ export async function POST(request: Request) {
     logAiEvent({
       status: "failure",
       duration_ms: Date.now() - startMs,
+      trace_id: tenantCtx.traceId,
+      tenant_id: tenantCtx.tenantId ?? undefined,
       error: msg,
       http_status: 502,
     });
@@ -270,6 +277,8 @@ export async function POST(request: Request) {
   logAiEvent({
     status: "success",
     duration_ms: durationMs,
+    trace_id: tenantCtx.traceId,
+    tenant_id: tenantCtx.tenantId ?? undefined,
     stage: result.stage,
     risk_level: result.risk_level,
     completion_percent: result.completion_percent,
@@ -284,6 +293,8 @@ export async function POST(request: Request) {
     logAiEvent({
       status: "failure",
       duration_ms: durationMs,
+      trace_id: tenantCtx.traceId,
+      tenant_id: tenantCtx.tenantId ?? undefined,
       error: message,
       http_status: 500,
     });

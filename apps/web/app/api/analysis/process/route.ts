@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getAdminClient } from "@/lib/supabase/admin";
+import { getServerConfig } from "@/lib/config/server";
 import { processOneJob } from "@/lib/ai/runOneJob";
 
 /**
@@ -29,7 +30,7 @@ export async function POST() {
     );
   }
 
-  const aiUrl = process.env.AI_ANALYSIS_URL?.trim();
+  const aiUrl = getServerConfig().AI_ANALYSIS_URL || undefined;
 
   const result = await processOneJob(admin, aiUrl);
 
