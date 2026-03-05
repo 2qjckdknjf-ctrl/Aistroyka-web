@@ -30,14 +30,14 @@ describe("job.service", () => {
     });
 
     it("returns existing job when enqueue is idempotent (same dedupe_key)", async () => {
-      const existingJob = { id: "j0", tenant_id: "t1", type: "report_submit", status: "queued" };
+      const existingJob = { id: "j0", tenant_id: "t1", type: "ai_analyze_report", status: "queued" };
       vi.mocked(repo.enqueue).mockResolvedValue(existingJob as any);
       vi.mocked(repo.emitEvent).mockResolvedValue();
       const supabase = {} as any;
       const result = await enqueueJob(supabase, {
         tenant_id: "t1",
         user_id: "u1",
-        type: "report_submit",
+        type: "ai_analyze_report",
         payload: { report_id: "r1" },
         trace_id: "trace1",
         dedupe_key: "report-r1-submit",

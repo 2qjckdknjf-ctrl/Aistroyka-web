@@ -62,12 +62,13 @@ export async function finalize(
 ): Promise<boolean> {
   const { data: row } = await supabase
     .from("upload_sessions")
-    .select("id, user_id, status, expires_at")
+    .select("id, user_id, status, expires_at, object_path")
     .eq("id", sessionId)
     .eq("tenant_id", tenantId)
     .maybeSingle();
   if (!row || (row as { user_id: string }).user_id !== userId) return false;
-  const r = row as { status: string; expires_at: string };
+  const r = row as { status: string; expires_at: string; object_path: string | null };
+  if (r.status === "finalized" && r.object_path === payload.object_path) return true;
   if (r.status !== "created" && r.status !== "uploaded") return false;
   if (new Date(r.expires_at) < new Date()) return false;
   const { error } = await supabase

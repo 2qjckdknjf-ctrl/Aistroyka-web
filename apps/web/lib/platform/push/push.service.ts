@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { PushMessageType } from "./push.types";
+import { enqueueJob } from "@/lib/platform/jobs/job.service";
 
 /** Enqueue a push message to outbox. Job processor will send via APNs/FCM (or stub). */
 export async function enqueuePush(
@@ -19,5 +20,13 @@ export async function enqueuePush(
     .select("id")
     .single();
   if (error || !data) return null;
+  await enqueueJob(supabase, {
+    tenant_id: params.tenantId,
+    user_id: null,
+    type: "push_send",
+    payload: {},
+    trace_id: null,
+    dedupe_key: "push_drain",
+  });
   return (data as { id: string }).id;
 }

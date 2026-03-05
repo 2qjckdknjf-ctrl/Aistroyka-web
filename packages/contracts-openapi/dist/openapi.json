@@ -32,6 +32,34 @@
         }
       }
     },
+    "/api/v1/config": {
+      "get": {
+        "summary": "Client config (flags, limits, serverTime, traceId, clientProfile)",
+        "tags": [
+          "Config"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Config payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfigPayload"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized (optional; unauthenticated returns flags off)"
+          }
+        }
+      }
+    },
     "/api/v1/projects": {
       "get": {
         "summary": "List projects",
@@ -1318,6 +1346,57 @@
               "ok",
               "cursor",
               "serverTime"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "ConfigPayload": {
+        "$ref": "#/definitions/ConfigPayload",
+        "definitions": {
+          "ConfigPayload": {
+            "type": "object",
+            "properties": {
+              "flags": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "variant": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "limits": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "number"
+                }
+              },
+              "serverTime": {
+                "type": "string"
+              },
+              "traceId": {
+                "type": "string"
+              },
+              "clientProfile": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "flags",
+              "serverTime",
+              "traceId",
+              "clientProfile"
             ],
             "additionalProperties": false
           }

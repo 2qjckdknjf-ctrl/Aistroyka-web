@@ -63,10 +63,10 @@
 
 ## Env vars reference (Phase 4.1)
 
-| Variable | Stage | Default | Description |
-|----------|-------|---------|-------------|
-| _TBD_ | 1 | — | FCM HTTP v1 |
-| _TBD_ | 2 | — | Finalize verification |
+| Variable   | Stage | Default | Description            |
+|------------|-------|---------|------------------------|
+| _TBD_      | 1     | -       | FCM HTTP v1            |
+| _TBD_      | 2     | -       | Finalize verification  |
 
 ---
 

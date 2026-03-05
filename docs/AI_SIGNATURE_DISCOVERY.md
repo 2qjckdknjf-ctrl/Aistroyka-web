@@ -9,7 +9,7 @@
 ## 1. Backend / engine stack
 
 | Layer | Technology | Location |
-|-------|------------|----------|
+| ------- | ------------ | ---------- |
 | **Database** | Supabase (Postgres) | `engine/Aistroyk/supabase/migrations/*.sql` |
 | **Edge / serverless** | Supabase Edge Functions (Deno) | `engine/Aistroyk/supabase/functions/` |
 | **Cron / jobs** | Supabase (e.g. pg_cron) or external | `resilience-cron`, etc. |
@@ -61,11 +61,13 @@
 ## 3. Current web + iOS state management
 
 ### 3.1 Web
+
 - **Data fetching:** TanStack Query (`useProjects`, `queryKeys.projects`); `/api/projects` and other API routes; `engineFetch` for Edge (AI/copilot).
 - **State:** React state + server state (TanStack Query). No global “AI state” store; no subscription to backend AI events.
 - **Integration point:** New client SDK (e.g. `aiSignature.ts`) to `getCurrentAIState(projectId?)`, `subscribeAIState`, `subscribeAIEvents` backed by Supabase (realtime or poll).
 
 ### 3.2 iOS
+
 - **AI state:** `AIStateEngine` (ObservableObject) in `Core/AI/AIStateEngine.swift`; singleton in `AppContainer`; injected as `.environmentObject(aiStateEngine)`.
 - **Drivers:** `DashboardViewModel` calls `aiStateEngine.transition(to:)` after loading snapshot (e.g. risk_detected if risk ≥ 66, optimization_found if recommendations non-empty, else idle). No backend source of truth; state is derived once per fetch.
 - **Data:** Dashboard snapshot from `AIPredictiveService.fetchSnapshot()` → `AIDataAggregator.fetchRawAggregate()` (projects + analysis jobs/results from Supabase). Portfolio/Reports use their own view models and APIs.
@@ -76,7 +78,7 @@
 ## 4. Integration points (for Phases 1–7)
 
 | Area | Current | Target |
-|------|---------|--------|
+| ------ | --------- | -------- |
 | **Canonical state** | In-memory enum only (iOS) | DB: `ai_state_cache` (project_id, current_state, last_event_id); `ai_events` as source of truth. |
 | **Events** | None | Table `ai_events` (id, project_id, type, severity, title, summary, drivers, sources, created_at, expires_at, origin, status); `ai_event_ack` for user acks. |
 | **Producers** | None (UI-only transitions) | Edge/cron: schedule risk (milestones/tasks), cost overrun (budget/cost_items), optimization (recommendations), milestone achieved (milestones/tasks status). |

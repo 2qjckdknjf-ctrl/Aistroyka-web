@@ -114,4 +114,5 @@ describe("POST /api/ai/analyze-image", () => {
     expect(res.headers.get("Deprecation")).toBe("true");
     expect(res.headers.get("Sunset")).toBeDefined();
   });
+
 });

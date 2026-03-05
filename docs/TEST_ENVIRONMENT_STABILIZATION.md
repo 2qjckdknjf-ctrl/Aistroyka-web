@@ -45,11 +45,13 @@ Unit tests must **never** perform real network requests.
 ## 5. How to Run Tests Safely
 
 1. **Kill hanging dev processes (optional but recommended):**
+
    ```bash
    ./scripts/kill-hanging-dev.sh
    ```
 
 2. **From repo root, install and run tests:**
+
    ```bash
    cd apps/web
    npm install --legacy-peer-deps

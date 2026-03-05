@@ -28,7 +28,7 @@
 ### 0.1 Locations
 
 | Component | Path | Notes |
-|-----------|------|--------|
+| ----------- | ------ | -------- |
 | AIService | `apps/web/lib/platform/ai/ai.service.ts` | Single entry: `analyzeImage(admin, ctx, input)` |
 | Provider Router | `apps/web/lib/platform/ai/providers/provider.router.ts` | Uses OpenAI + Anthropic stub + Gemini stub; circuit breaker integrated |
 | Providers | `provider.openai.ts` (real), `provider.anthropic.stub.ts`, `provider.gemini.stub.ts` | Stubs are **empty files** — exports missing; build may fail until Stage 1 |
@@ -72,7 +72,7 @@
 - **Anthropic:** `provider.anthropic.ts` — `ANTHROPIC_API_KEY`, `ANTHROPIC_VISION_MODEL` (default `claude-sonnet-4-20250514`), Messages API with image URL, timeout 85s, response mapped to `VisionResult`. Missing key → returns null.
 - **Gemini:** `provider.gemini.ts` — `GOOGLE_AI_API_KEY` or `GEMINI_API_KEY`, `GEMINI_VISION_MODEL` (default `gemini-1.5-flash`), fetches image then `generateContent` with inline_data, timeout 85s. Missing key → returns null.
 - **Router:** Uses real providers; on failure calls `recordFailure` and continues only if `isRetryableProviderError(err)` (stops on invalid_input/auth).
-- **Cost estimator:** Anthropic and Gemini model prices added; `getPricePer1k(model)` for claude-* / gemini-* fallbacks.
+- **Cost estimator:** Anthropic and Gemini model prices added; `getPricePer1k(model)` for claude-*/ gemini-* fallbacks.
 - **Route:** 503 when `!isAnyVisionProviderConfigured()` (any of OpenAI/Anthropic/Gemini key set).
 - **Tests:** provider.anthropic.test.ts, provider.gemini.test.ts, provider.errors.test.ts; route test updated for 503 message.
 
@@ -133,7 +133,7 @@
 ## Summary
 
 | Stage | Deliverable |
-|-------|-------------|
+| ----- | ----------- |  
 | 0 | Audit; report skeleton |
 | 1 | Anthropic + Gemini real providers; provider.errors; cost estimator; route 503 from any provider |
 | 2 | Router: tenant preferences, model tier mapping, fallback, circuit breaker; routing tests |

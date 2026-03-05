@@ -29,8 +29,13 @@ const basePath = "/api/v1";
 
 const components: Record<string, unknown> = {};
 
-function addSchema(name: string, schema: import("zod").ZodTypeAny): void {
-  components[name] = zodToJsonSchema(schema, { name, target: "openApi3" });
+// Accept Zod 3 or Zod 4 schemas (contracts may use either depending on resolution).
+// zod-to-json-schema supports both at runtime; its typings expect Zod 3, so we assert when calling.
+function addSchema(name: string, schema: unknown): void {
+  components[name] = zodToJsonSchema(schema as Parameters<typeof zodToJsonSchema>[0], {
+    name,
+    target: "openApi3",
+  });
 }
 
 addSchema("HealthResponse", HealthResponseSchema);
@@ -182,50 +187,6 @@ const openapi = {
         parameters: [
           deviceIdParam,
           { name: "cursor", in: "query", required: true, schema: { type: "integer", format: "int64" }, description: "Cursor from bootstrap or previous changes" },
-          { name: "limit", in: "query", schema: { type: "integer", default: 100 } },
-        ],
-        responses: {
-          "200": { description: "Changes and nextCursor", content: { "application/json": { schema: { $ref: "#/components/schemas/SyncChangesResponse" } } } },
-          "400": { description: "Missing cursor or x-device-id" },
-          "401": { description: "Unauthorized" },
-        },
-      },
-    },
-    [`${basePath}/sync/ack`]: {
-      post: {
-        summary: "Acknowledge device cursor",
-        tags: ["Sync"],
-        security: [{ bearerAuth: [] }],
-        parameters: [deviceIdParam, idempotencyKeyParam],
-        requestBody: { content: { "application/json": { schema: { $ref: "#/components/schemas/SyncAckRequest" } } } },
-        responses: {
-          "200": { description: "Ack ok", content: { "application/json": { schema: { $ref: "#/components/schemas/SyncAckResponse" } } } },
-          "400": { description: "Missing x-device-id or invalid body" },
-          "401": { description: "Unauthorized" },
-        },
-      },
-    },
-    [`${basePath}/sync/bootstrap`]: {
-      get: {
-        summary: "Initial sync snapshot + cursor",
-        tags: ["Sync"],
-        security: [{ bearerAuth: [] }],
-        parameters: [deviceIdParam],
-        responses: {
-          "200": { description: "Snapshot and cursor", content: { "application/json": { schema: { $ref: "#/components/schemas/SyncBootstrapResponse" } } } },
-          "400": { description: "Missing x-device-id" },
-          "401": { description: "Unauthorized" },
-        },
-      },
-    },
-    [`${basePath}/sync/changes`]: {
-      get: {
-        summary: "Delta changes after cursor",
-        tags: ["Sync"],
-        security: [{ bearerAuth: [] }],
-        parameters: [
-          deviceIdParam,
-          { name: "cursor", in: "query", required: true, schema: { type: "integer", format: "int64" } },
           { name: "limit", in: "query", schema: { type: "integer", default: 100 } },
         ],
         responses: {

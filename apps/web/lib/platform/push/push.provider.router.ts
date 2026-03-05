@@ -1,17 +1,15 @@
 /**
  * Resolve push provider by platform. Used by outbox drain job.
- * Android: prefer FCM HTTP v1 (service account) when configured; else legacy FCM_SERVER_KEY.
  */
 
 import type { PushProvider, PushSendParams, PushSendResult } from "./push.provider.types";
 import { getApnsProvider } from "./apns.provider";
-import { getFcmV1Provider } from "./providers/provider.fcm_v1";
 import { getFcmProvider } from "./fcm.provider";
 
 export function getProviderForPlatform(platform: string): PushProvider | null {
   const p = platform?.toLowerCase();
   if (p === "ios") return getApnsProvider();
-  if (p === "android") return getFcmV1Provider() ?? getFcmProvider();
+  if (p === "android") return getFcmProvider();
   return null;
 }
 

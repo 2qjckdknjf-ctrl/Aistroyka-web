@@ -1,5 +1,7 @@
 # API v1 Endpoints and Contracts
 
+<!-- markdownlint-disable MD060 -->
+
 Base path: `/api/v1`. All endpoints that require auth use TenantContext (JWT + tenant membership). Errors return JSON with `error` (and optional `code`).
 
 ---
@@ -50,19 +52,19 @@ All require auth and at least member role for write; viewer for GET tasks/today.
 
 ## Media (upload sessions)
 
-| Method | Endpoint | Body | Response |
-|--------|----------|------|----------|
-| POST | `/api/v1/media/upload-sessions` | `{ "purpose"?: "report_before" \| "report_after" \| "project_media" }` | `{ "data": UploadSession & { upload_path } }` |
-| POST | `/api/v1/media/upload-sessions/:id/finalize` | `{ "object_path": string, "mime_type"?, "size_bytes"? }` | `{ "ok": true }` |
+| Method | Endpoint                                         | Body                                                              | Response                                    |
+| ------ | ------------------------------------------------ | ----------------------------------------------------------------- | ------------------------------------------- |
+| POST   | `/api/v1/media/upload-sessions`                  | `{ "purpose"?: "report_before" \| "report_after" \| "project_media" }` | `{ "data": UploadSession & { upload_path } }` |
+| POST   | `/api/v1/media/upload-sessions/:id/finalize`     | `{ "object_path": string, "mime_type"?, "size_bytes"? }`           | `{ "ok": true }`                            |
 
 ---
 
 ## Worker (base)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/v1/worker` | 501 stub. |
-| POST | `/api/v1/worker` | 501 stub. |
+| Method | Endpoint          | Description   |
+|--------|-------------------|---------------|
+| GET    | `/api/v1/worker`  | 501 stub.     |
+| POST   | `/api/v1/worker`  | 501 stub.     |
 
 ---
 
@@ -75,3 +77,5 @@ All require auth and at least member role for write; viewer for GET tasks/today.
 - **400 Bad Request:** Invalid body or missing required fields.
 
 Error payload: `{ "error": string, "code"?: string }`. Optional `traceId` in logging (not always in response body).
+
+<!-- markdownlint-enable MD060 -->

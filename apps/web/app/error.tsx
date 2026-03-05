@@ -23,10 +23,21 @@ export default function Error({
     if (rid) setRequestIdFromUrl(rid);
   }, []);
 
-  const message =
-    IS_DEV && requestIdFromUrl
-      ? `Something went wrong. Request ID: ${requestIdFromUrl}`
-      : "We couldn’t complete your request. Please try again.";
+  useEffect(() => {
+    if (IS_DEV && typeof window !== "undefined" && error?.message)
+      console.error("[Error boundary]", error.message, error.digest ?? "", error);
+  }, [error]);
+
+  const message = (() => {
+    if (IS_DEV) {
+      if (requestIdFromUrl) return `Something went wrong. Request ID: ${requestIdFromUrl}`;
+      const detail = error?.message?.trim();
+      return detail
+        ? `Error: ${detail}${error?.digest ? ` (digest: ${error.digest})` : ""}`
+        : "We couldn't complete your request. Please try again.";
+    }
+    return "We couldn't complete your request. Please try again.";
+  })();
 
   return (
     <div className="flex min-h-[50vh] flex-col items-center justify-center gap-5 px-4">

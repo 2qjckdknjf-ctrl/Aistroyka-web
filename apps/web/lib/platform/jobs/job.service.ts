@@ -8,6 +8,8 @@ import { handleAiAnalyzeMedia } from "./job.handlers/ai-analyze-media";
 import { handleAiAnalyzeReport } from "./job.handlers/ai-analyze-report";
 import { handleExport } from "./job.handlers/export";
 import { handleRetentionCleanup } from "./job.handlers/retention-cleanup";
+import { handlePushSend } from "./job.handlers/push-send";
+import { handleUploadReconcile } from "./job.handlers/upload-reconcile";
 
 export type { Job, JobStatus, JobType } from "./job.types";
 export { JOB_CONFIG } from "./job.config";
@@ -45,6 +47,8 @@ const HANDLERS: Record<JobType, (supabase: SupabaseClient, job: Job) => Promise<
   ai_analyze_report: handleAiAnalyzeReport,
   export: handleExport,
   retention_cleanup: handleRetentionCleanup,
+  push_send: handlePushSend,
+  upload_reconcile: handleUploadReconcile,
 };
 
 /**
