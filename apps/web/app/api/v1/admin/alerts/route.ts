@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getTenantContextFromRequest, requireTenant, TenantRequiredError, authorize } from "@/lib/tenant";
+import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
+import { requireAdmin } from "@/lib/api/require-admin";
 
 export const dynamic = "force-dynamic";
 
@@ -14,9 +15,8 @@ export async function GET(request: Request) {
     }
     throw e;
   }
-  if (!authorize(ctx, "admin:read")) {
-    return NextResponse.json({ error: "Insufficient rights" }, { status: 403 });
-  }
+  const adminErr = requireAdmin(ctx, "read");
+  if (adminErr) return adminErr;
   const url = new URL(request.url);
   const resolved = url.searchParams.get("resolved");
   const supabase = await createClient();

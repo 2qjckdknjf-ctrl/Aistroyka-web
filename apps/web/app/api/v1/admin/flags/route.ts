@@ -6,7 +6,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getAdminClient } from "@/lib/supabase/admin";
-import { getTenantContextFromRequest, requireTenant, TenantRequiredError, authorize } from "@/lib/tenant";
+import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
+import { requireAdmin } from "@/lib/api/require-admin";
 import { listFlags, upsertFlag } from "@/lib/platform/flags";
 import { emitAudit } from "@/lib/observability/audit.service";
 
@@ -22,9 +23,8 @@ export async function GET(request: Request) {
     }
     throw e;
   }
-  if (!authorize(ctx, "admin:read")) {
-    return NextResponse.json({ error: "Insufficient rights" }, { status: 403 });
-  }
+  const adminErr = requireAdmin(ctx, "read");
+  if (adminErr) return adminErr;
   const admin = getAdminClient();
   if (!admin) return NextResponse.json({ error: "Service unavailable" }, { status: 503 });
   const flags = await listFlags(admin);
@@ -41,9 +41,8 @@ export async function POST(request: Request) {
     }
     throw e;
   }
-  if (!authorize(ctx, "admin:write")) {
-    return NextResponse.json({ error: "Insufficient rights" }, { status: 403 });
-  }
+  const adminErr = requireAdmin(ctx, "write");
+  if (adminErr) return adminErr;
   const admin = getAdminClient();
   if (!admin) return NextResponse.json({ error: "Service unavailable" }, { status: 503 });
   const body = await request.json().catch(() => ({}));

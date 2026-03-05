@@ -4,7 +4,8 @@
 
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabase/admin";
-import { getTenantContextFromRequest, requireTenant, TenantRequiredError, authorize } from "@/lib/tenant";
+import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
+import { requireAdmin } from "@/lib/api/require-admin";
 import { enqueuePush } from "@/lib/platform/push/push.service";
 
 export const dynamic = "force-dynamic";
@@ -17,9 +18,8 @@ export async function POST(request: Request) {
     if (e instanceof TenantRequiredError) return NextResponse.json({ error: e.message }, { status: 401 });
     throw e;
   }
-  if (!authorize(ctx, "admin:read")) {
-    return NextResponse.json({ error: "Insufficient rights" }, { status: 403 });
-  }
+  const adminErr = requireAdmin(ctx, "read");
+  if (adminErr) return adminErr;
   const body = await request.json().catch(() => ({}));
   const userId = typeof body.user_id === "string" ? body.user_id : ctx.userId;
   const platform = body.platform === "ios" || body.platform === "android" ? body.platform : "ios";

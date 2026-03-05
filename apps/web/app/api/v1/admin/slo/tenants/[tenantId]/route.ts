@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getTenantContextFromRequest, requireTenant, TenantRequiredError, authorize } from "@/lib/tenant";
+import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
+import { requireAdmin } from "@/lib/api/require-admin";
 import { getSloDaily } from "@/lib/sre/slo.service";
 
 export const dynamic = "force-dynamic";
@@ -22,9 +23,8 @@ export async function GET(
     }
     throw e;
   }
-  if (!authorize(ctx, "admin:read")) {
-    return NextResponse.json({ error: "Insufficient rights" }, { status: 403 });
-  }
+  const adminErr = requireAdmin(ctx, "read");
+  if (adminErr) return adminErr;
   const { tenantId } = await params;
   if (tenantId !== ctx.tenantId) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });

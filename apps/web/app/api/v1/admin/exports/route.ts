@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getTenantContextFromRequest, requireTenant, TenantRequiredError, authorize } from "@/lib/tenant";
+import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
+import { requireAdmin } from "@/lib/api/require-admin";
 import { enqueueJob } from "@/lib/platform/jobs/job.service";
 import { emitAudit } from "@/lib/observability/audit.service";
 import { checkRateLimit } from "@/lib/platform/rate-limit/rate-limit.service";
@@ -23,9 +24,8 @@ export async function POST(request: Request) {
     }
     throw e;
   }
-  if (!authorize(ctx, "admin:read")) {
-    return NextResponse.json({ error: "Insufficient rights" }, { status: 403 });
-  }
+  const adminErr = requireAdmin(ctx, "read");
+  if (adminErr) return adminErr;
   const admin = getAdminClient();
   if (admin) {
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? request.headers.get("x-real-ip") ?? "unknown";

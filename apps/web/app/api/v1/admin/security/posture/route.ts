@@ -5,7 +5,8 @@
 
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getTenantContextFromRequest, requireTenant, TenantRequiredError, authorize } from "@/lib/tenant";
+import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
+import { requireAdmin } from "@/lib/api/require-admin";
 import { getServerConfig } from "@/lib/config/server";
 
 export const dynamic = "force-dynamic";
@@ -18,9 +19,8 @@ export async function GET(request: Request) {
     if (e instanceof TenantRequiredError) return NextResponse.json({ error: e.message }, { status: 401 });
     throw e;
   }
-  if (!authorize(ctx, "admin:read")) {
-    return NextResponse.json({ error: "Insufficient rights" }, { status: 403 });
-  }
+  const adminErr = requireAdmin(ctx, "read");
+  if (adminErr) return adminErr;
   const config = getServerConfig();
   const debugEnabled = Boolean(
     process.env.DEBUG_AUTH === "true" || process.env.DEBUG_DIAG === "true"

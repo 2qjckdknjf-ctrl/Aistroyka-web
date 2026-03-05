@@ -6,7 +6,8 @@
 
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabase/admin";
-import { getTenantContextFromRequest, requireTenant, TenantRequiredError, authorize } from "@/lib/tenant";
+import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
+import { requireAdmin } from "@/lib/api/require-admin";
 import { setTenantFlag } from "@/lib/platform/flags";
 import { emitAudit } from "@/lib/observability/audit.service";
 
@@ -25,9 +26,8 @@ export async function POST(
     }
     throw e;
   }
-  if (!authorize(ctx, "admin:write")) {
-    return NextResponse.json({ error: "Insufficient rights" }, { status: 403 });
-  }
+  const adminErr = requireAdmin(ctx, "write");
+  if (adminErr) return adminErr;
   const { id: tenantId } = await params;
   if (!tenantId) return NextResponse.json({ error: "Missing tenant id" }, { status: 400 });
   if (tenantId !== ctx.tenantId) {
