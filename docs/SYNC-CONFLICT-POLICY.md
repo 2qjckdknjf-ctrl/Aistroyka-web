@@ -1,36 +1,24 @@
 # Sync conflict policy
 
-Mobile clients sync via cursor-based deltas. Conflict handling is resource-specific.
-
----
+Mobile clients sync via cursor-based deltas. Conflicting updates are resolved as follows.
 
 ## Server-authoritative
 
-- **Task assignments:** Assigned by manager/admin; client must not overwrite. On conflict (e.g. task reassigned while offline), client applies server state.
-- **Approvals / status transitions:** Report submitted, media finalized, job completion — server state wins. Client retries with idempotency key; duplicate requests return cached response.
-
----
+- **Task assignments:** Only server (manager) can assign; worker/contractor cannot change assignment. Last server write wins.
+- **Approvals / status transitions:** Report submit, job status, and other approval flows are server-authoritative. Client sends intent; server applies and emits change_log.
 
 ## Last-write-wins (with version)
 
-- **Draft notes / local edits:** If a resource has a `version` or `updated_at` field, client may send last-write-wins updates. Server accepts if client version is not stale; otherwise returns **409 Conflict** with current server payload so client can merge or replace.
+- **Draft notes / local edits:** If a resource has a `version` (or `updated_at`) field, clients may send updates with that version. Server rejects with **409 Conflict** and returns current server state when version does not match, so the client can merge or overwrite explicitly.
 
----
+## Reject with 409
 
-## Reject conflicting updates (409)
-
-- When the server detects a conflicting update (e.g. resource was modified by another device/user after client's base cursor), respond with **409 Conflict** and body:
-  - `{ "error": "Conflict", "code": "CONFLICT", "conflict": { "resource_type", "resource_id", "server_version" } }`
-- Client should refresh from sync/changes or bootstrap and retry.
-
----
+- When a write would conflict with a prior server state (e.g. "report already submitted", "session already finalized"), the API returns **409 Conflict** with a payload describing the conflict (e.g. `{ "error": "Report already submitted", "code": "conflict", "current_status": "submitted" }`). The client should refresh from sync and retry if appropriate.
 
 ## Idempotency
 
-- All write endpoints support **x-idempotency-key**. Same key returns same response (cached). Use per logical operation to avoid duplicate report submits, finalizes, or ack when retrying.
+- All write endpoints support **x-idempotency-key**. Same key returns the same response without re-applying the mutation. Use per logical operation (e.g. one key per "submit report X") to avoid duplicate work after retries.
 
----
+## Device and cursor
 
-## Device identity
-
-- **x-device-id** is required on sync endpoints (bootstrap, changes, ack). Used to store per-device cursor and to attribute conflicts when needed.
+- **x-device-id** is required on sync endpoints (bootstrap, changes, ack). Each device maintains its own cursor; ack stores the cursor so the next sync can request changes after that point.

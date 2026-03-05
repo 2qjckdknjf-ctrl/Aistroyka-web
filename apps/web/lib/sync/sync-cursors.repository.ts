@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-/** Upsert device cursor (idempotent by tenant, user, device). */
+/** Upsert device cursor. */
 export async function upsertCursor(
   supabase: SupabaseClient,
   tenantId: string,
@@ -8,20 +8,16 @@ export async function upsertCursor(
   deviceId: string,
   cursor: number
 ): Promise<boolean> {
-  const { error } = await supabase.from("sync_cursors").upsert(
-    {
-      tenant_id: tenantId,
-      user_id: userId,
-      device_id: deviceId,
-      cursor,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "tenant_id,user_id,device_id" }
-  );
+  const { error } = await supabase
+    .from("sync_cursors")
+    .upsert(
+      { tenant_id: tenantId, user_id: userId, device_id: deviceId, cursor, updated_at: new Date().toISOString() },
+      { onConflict: "tenant_id,user_id,device_id" }
+    );
   return !error;
 }
 
-/** Get stored cursor for device (0 if none). */
+/** Get cursor for device. */
 export async function getCursor(
   supabase: SupabaseClient,
   tenantId: string,

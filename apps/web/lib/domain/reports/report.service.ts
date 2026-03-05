@@ -15,6 +15,14 @@ export async function createReport(
   if (!canCreateReport(ctx)) return { data: null, error: "Insufficient rights" };
   const data = await repo.create(supabase, ctx.tenantId, ctx.userId, options?.dayId);
   if (!data) return { data: null, error: "Failed to create report" };
+  await emitChange(supabase, {
+    tenant_id: ctx.tenantId,
+    resource_type: "report",
+    resource_id: data.id,
+    change_type: "created",
+    changed_by: ctx.userId,
+    payload: { status: "draft" },
+  });
   return { data, error: "" };
 }
 

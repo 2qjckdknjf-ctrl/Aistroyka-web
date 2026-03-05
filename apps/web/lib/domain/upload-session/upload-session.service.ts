@@ -18,7 +18,7 @@ export async function createUploadSession(
   if (!session) return { data: null, error: "Failed to create session" };
   await emitChange(supabase, {
     tenant_id: ctx.tenantId,
-    resource_type: "upload_session",
+    resource_type: "media",
     resource_id: session.id,
     change_type: "created",
     changed_by: ctx.userId,
@@ -42,7 +42,7 @@ export async function finalizeUploadSession(
   if (ok) {
     await emitChange(supabase, {
       tenant_id: ctx.tenantId,
-      resource_type: "upload_session",
+      resource_type: "media",
       resource_id: sessionId,
       change_type: "updated",
       changed_by: ctx.userId,

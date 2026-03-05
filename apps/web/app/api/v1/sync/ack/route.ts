@@ -9,7 +9,8 @@ const DEVICE_ID_HEADER = "x-device-id";
 
 /**
  * POST /api/v1/sync/ack
- * Body: { cursor: number }. Stores device cursor for this tenant/user/device. Requires x-device-id.
+ * Body: { cursor: number }. Stores device cursor for this tenant/user/device.
+ * Requires x-device-id header.
  */
 export async function POST(request: Request) {
   const deviceId = request.headers.get(DEVICE_ID_HEADER)?.trim();
@@ -25,13 +26,13 @@ export async function POST(request: Request) {
     }
     throw e;
   }
-  let body: { cursor?: number } = {};
+  let body: { cursor?: number };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
-  const cursor = typeof body.cursor === "number" && body.cursor >= 0 ? Math.floor(body.cursor) : 0;
+  const cursor = typeof body?.cursor === "number" ? Math.max(0, Math.floor(body.cursor)) : 0;
   const supabase = await createClient();
   const ok = await upsertCursor(supabase, ctx.tenantId, ctx.userId, deviceId, cursor);
   if (!ok) return NextResponse.json({ error: "Failed to store cursor" }, { status: 500 });

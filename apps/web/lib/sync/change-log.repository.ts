@@ -1,41 +1,78 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { ChangeLogEmitParams, ChangeLogEntry } from "./change-log.types";
+import type { ChangeResourceType, ChangeType } from "./change-log.types";
 
-/** Emit one change_log row. Uses bigserial id as cursor. Best-effort; does not throw. */
-export async function emitChange(supabase: SupabaseClient, params: ChangeLogEmitParams): Promise<void> {
-  try {
-    await supabase.from("change_log").insert({
+export interface EmitChangeParams {
+  tenant_id: string;
+  resource_type: ChangeResourceType;
+  resource_id: string;
+  change_type: ChangeType;
+  changed_by?: string | null;
+  payload?: Record<string, unknown>;
+}
+
+/** Emit one change_log row. Returns new cursor (id) or null on error. */
+export async function emitChange(
+  supabase: SupabaseClient,
+  params: EmitChangeParams
+): Promise<number | null> {
+  const { data, error } = await supabase
+    .from("change_log")
+    .insert({
       tenant_id: params.tenant_id,
       resource_type: params.resource_type,
       resource_id: params.resource_id,
       change_type: params.change_type,
       changed_by: params.changed_by ?? null,
       payload: params.payload ?? {},
-    });
-  } catch {
-    // best-effort
-  }
+    })
+    .select("id")
+    .single();
+  if (error || !data) return null;
+  return (data as { id: number }).id;
 }
 
-/** Fetch changes after cursor for tenant, ordered by id, limit. */
+export type ChangeLogRow = {
+  id: number;
+  tenant_id: string;
+  resource_type: string;
+  resource_id: string;
+  change_type: string;
+  changed_by: string | null;
+  ts: string;
+  payload: Record<string, unknown>;
+};
+
+/** Get changes after cursor for tenant (array form for sync/changes route). */
 export async function getChangesAfter(
   supabase: SupabaseClient,
   tenantId: string,
-  cursor: number,
+  afterCursor: number,
   limit: number
-): Promise<ChangeLogEntry[]> {
+): Promise<ChangeLogRow[]> {
   const { data, error } = await supabase
     .from("change_log")
     .select("id, tenant_id, resource_type, resource_id, change_type, changed_by, ts, payload")
     .eq("tenant_id", tenantId)
-    .gt("id", cursor)
+    .gt("id", afterCursor)
     .order("id", { ascending: true })
-    .limit(Math.min(limit, 500));
-  if (error) return [];
-  return (data ?? []) as ChangeLogEntry[];
+    .limit(limit);
+  if (error || !data) return [];
+  return data as ChangeLogRow[];
 }
 
-/** Get current max cursor (id) for tenant. */
+/** Get changes after cursor for tenant (rows + nextCursor). */
+export async function getChanges(
+  supabase: SupabaseClient,
+  tenantId: string,
+  afterCursor: number,
+  limit: number
+): Promise<{ rows: ChangeLogRow[]; nextCursor: number }> {
+  const rows = await getChangesAfter(supabase, tenantId, afterCursor, limit);
+  const nextCursor = rows.length > 0 ? rows[rows.length - 1].id : afterCursor;
+  return { rows, nextCursor };
+}
+
+/** Get current max cursor for tenant (latest change_log id). */
 export async function getMaxCursor(supabase: SupabaseClient, tenantId: string): Promise<number> {
   const { data, error } = await supabase
     .from("change_log")
