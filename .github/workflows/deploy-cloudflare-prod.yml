@@ -21,6 +21,7 @@ jobs:
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      HUSKY: "0"
 
     steps:
       - name: Check required secrets
@@ -45,10 +46,11 @@ jobs:
       - name: Install dependencies (workspace root)
         run: bun install --frozen-lockfile
 
-      - name: Set build stamp env
+      - name: Set build stamp and app env
         run: |
           echo "NEXT_PUBLIC_BUILD_SHA=${{ github.sha }}" >> $GITHUB_ENV
           echo "NEXT_PUBLIC_BUILD_TIME=$(date -u +%Y-%m-%d\ %H:%M)" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_APP_ENV=production" >> $GITHUB_ENV
 
       - name: Build (OpenNext Cloudflare)
         run: bun run cf:build

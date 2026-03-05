@@ -62,6 +62,7 @@ export async function getHealthResponse(): Promise<{ body: HealthBody; status: n
   const status = ok ? 200 : 503;
   const { sha, buildTime } = getBuildStamp();
   const serviceRoleConfigured = serverConfig.SUPABASE_SERVICE_ROLE_KEY.length > 0;
+  const appEnv = (process.env.NEXT_PUBLIC_APP_ENV ?? "").trim().toLowerCase();
   const body: HealthBody = {
     ok,
     db,
@@ -69,6 +70,7 @@ export async function getHealthResponse(): Promise<{ body: HealthBody; status: n
     openaiConfigured,
     supabaseReachable,
     serviceRoleConfigured,
+    ...(appEnv ? { env: appEnv } : {}),
     buildStamp: sha ? { sha7: sha.slice(0, 7), buildTime } : undefined,
   };
   if (reason) body.reason = reason;

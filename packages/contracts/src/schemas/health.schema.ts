@@ -9,6 +9,7 @@ export const HealthResponseSchema = z.object({
   openaiConfigured: z.boolean(),
   supabaseReachable: z.boolean().optional(),
   serviceRoleConfigured: z.boolean().optional(),
+  env: z.string().optional(),
   buildStamp: BuildStampSchema.optional(),
   reason: z.string().optional(),
   message: z.string().optional(),

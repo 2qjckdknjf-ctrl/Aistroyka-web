@@ -19,16 +19,18 @@
     "cf:secrets": "./scripts/set-cf-secrets.sh",
     "cf:secrets:staging": "./scripts/set-cf-secrets.sh staging",
     "cf:secrets:prod": "./scripts/set-cf-secrets.sh production",
-    "deploy": "npm run cf:build && npm run cf:deploy",
-    "deploy:staging": "npm run cf:build && npm run cf:deploy:staging",
-    "deploy:prod": "npm run cf:build && npm run cf:deploy:prod",
+    "deploy": "bun run cf:build && bun run cf:deploy",
+    "deploy:staging": "bun run cf:build && bun run cf:deploy:staging",
+    "deploy:prod": "bun run cf:build && bun run cf:deploy:prod",
     "supabase:auth-urls": "node scripts/set-supabase-auth-urls.mjs",
     "cf:fix-domain": "node scripts/cf-fix-domain-aistroyka.mjs",
     "cf:dns-setup": "node scripts/cf-dns-setup-aistroyka.mjs",
     "supabase:check-storage": "node scripts/check-supabase-storage.mjs",
     "db:migrate": "node scripts/run-migrations.mjs",
     "env:setup": "./scripts/ensure-env-local.sh",
-    "smoke:auth": "curl -sS http://localhost:3000/api/health/auth"
+    "smoke:auth": "curl -sS http://localhost:3000/api/health/auth",
+    "smoke:staging": "./scripts/smoke-staging.sh",
+    "smoke:prod": "./scripts/smoke-prod.sh"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": "eslint --fix"
@@ -36,6 +38,7 @@
   "dependencies": {
     "@aistroyka/contracts": "file:../../packages/contracts",
     "@supabase/ssr": "^0.5.2",
+    "zod": "^3.23.8",
     "@supabase/supabase-js": "^2.47.10",
     "@tanstack/react-query": "^5.90.21",
     "@tanstack/react-query-devtools": "^5.91.3",

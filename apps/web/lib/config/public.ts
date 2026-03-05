@@ -9,6 +9,8 @@ export interface PublicConfig {
   NEXT_PUBLIC_APP_URL: string;
   NEXT_PUBLIC_BUILD_SHA: string;
   NEXT_PUBLIC_BUILD_TIME: string;
+  /** Set in CI: "production" | "staging" | "" */
+  NEXT_PUBLIC_APP_ENV: string;
 }
 
 /** Client-safe: never throws. Returns empty strings when env is missing (use hasSupabaseEnv() to check). */
@@ -23,6 +25,7 @@ export function getPublicConfig(): PublicConfig {
     NEXT_PUBLIC_APP_URL: appUrl ? appUrl.replace(/\/+$/, "") : "https://aistroyka.ai",
     NEXT_PUBLIC_BUILD_SHA: process.env.NEXT_PUBLIC_BUILD_SHA ?? "",
     NEXT_PUBLIC_BUILD_TIME: process.env.NEXT_PUBLIC_BUILD_TIME ?? "",
+    NEXT_PUBLIC_APP_ENV: (process.env.NEXT_PUBLIC_APP_ENV ?? "").trim().toLowerCase(),
   };
 }
 
