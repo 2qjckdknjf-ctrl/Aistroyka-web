@@ -16,6 +16,25 @@ export async function create(
   return data as Report;
 }
 
+export const BOOTSTRAP_REPORT_COLS = "id, status, created_at, submitted_at" as const;
+
+export async function listForBootstrap(
+  supabase: SupabaseClient,
+  tenantId: string,
+  userId: string,
+  limit: number = 100
+): Promise<{ id: string; status: string; created_at: string; submitted_at: string | null }[]> {
+  const { data, error } = await supabase
+    .from("worker_reports")
+    .select(BOOTSTRAP_REPORT_COLS)
+    .eq("tenant_id", tenantId)
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) return [];
+  return (data ?? []) as { id: string; status: string; created_at: string; submitted_at: string | null }[];
+}
+
 export async function getById(
   supabase: SupabaseClient,
   reportId: string,

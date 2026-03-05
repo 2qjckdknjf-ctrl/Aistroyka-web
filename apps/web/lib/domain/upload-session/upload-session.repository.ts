@@ -19,6 +19,25 @@ export async function create(
   return data as UploadSession;
 }
 
+export const BOOTSTRAP_SESSION_COLS = "id, status, created_at, purpose" as const;
+
+export async function listForBootstrap(
+  supabase: SupabaseClient,
+  tenantId: string,
+  userId: string,
+  limit: number = 100
+): Promise<{ id: string; status: string; created_at: string; purpose: string }[]> {
+  const { data, error } = await supabase
+    .from("upload_sessions")
+    .select(BOOTSTRAP_SESSION_COLS)
+    .eq("tenant_id", tenantId)
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) return [];
+  return (data ?? []) as { id: string; status: string; created_at: string; purpose: string }[];
+}
+
 export async function getById(
   supabase: SupabaseClient,
   sessionId: string,
