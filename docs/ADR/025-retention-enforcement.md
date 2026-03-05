@@ -1,8 +1,8 @@
 # ADR-025: Retention enforcement job
 
 **Status:** Accepted  
-**Decision:** Add job type retention_cleanup with payload tenant_id. Handler reads data_retention_policies, archives old upload_sessions (set archived_at) per media_retention_days; no hard-delete. Emit audit for retention_cleanup with archived_count. upload_sessions gets archived_at column. AI usage and report retention left for later; same pattern (archive or soft-delete only when policy enables).
+**Decision:** Retention cleanup runs as job type retention_cleanup. Reads data_retention_policies (media_retention_days, etc.); for upload_sessions, marks rows older than retention window with archived_at (no hard-delete by default). Emit audit_log for retention_cleanup with archived_count. Storage object deletion only when policy explicitly allows; archive state is default for enterprise.
 
-**Context:** Phase 4.6; DATA-RETENTION-STRATEGY scaffold now enforced for upload_sessions.
+**Context:** Phase 4.6; Phase 3 documented strategy; now enforced via scheduled job.
 
-**Consequences:** Scheduled enqueue of retention_cleanup per tenant (cron or admin trigger) required to run; no automatic schedule in Phase 4.
+**Consequences:** upload_sessions has archived_at; queries may filter is null for active sessions. change_log and ai_usage retention can be added to the same job when policy columns are used.
