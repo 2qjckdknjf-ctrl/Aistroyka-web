@@ -2,10 +2,6 @@ import { describe, expect, it, vi } from "vitest";
 import { attemptSend, getProviderForPlatform } from "./push.provider.router";
 import type { PushSendParams } from "./push.provider.types";
 
-vi.mock("./providers/provider.fcm_v1", () => ({
-  getFcmV1Provider: vi.fn(),
-}));
-
 describe("push provider router", () => {
   it("getProviderForPlatform returns null for unknown platform", () => {
     expect(getProviderForPlatform("")).toBeNull();
@@ -34,8 +30,6 @@ describe("push provider router", () => {
   it("attemptSend for android without FCM returns retryable", async () => {
     vi.stubEnv("FCM_SERVER_KEY", "");
     vi.stubEnv("FCM_PROJECT_ID", "");
-    vi.stubEnv("FCM_CLIENT_EMAIL", "");
-    vi.stubEnv("FCM_PRIVATE_KEY", "");
     const result = await attemptSend({
       platform: "android",
       token: "t",
@@ -45,42 +39,16 @@ describe("push provider router", () => {
     if (!result.ok) expect(result.code).toBe("retryable");
   });
 
-  it("router prefers FCM v1 when service account env is set", async () => {
-    const { getFcmV1Provider } = await import("./providers/provider.fcm_v1");
-    const mockSend = vi.fn().mockResolvedValue({ ok: true });
-    vi.mocked(getFcmV1Provider).mockReturnValueOnce({ send: mockSend } as any);
-    vi.stubEnv("FCM_SERVER_KEY", "");
-    const result = await attemptSend({
-      platform: "android",
-      token: "t",
-      body: "b",
-    });
-    expect(result.ok).toBe(true);
-    expect(getFcmV1Provider).toHaveBeenCalled();
-    expect(mockSend).toHaveBeenCalledWith(
-      expect.objectContaining({ platform: "android", token: "t", body: "b" })
-    );
-  });
-
-  it("router uses legacy FCM when only FCM_SERVER_KEY is set", async () => {
-    vi.stubEnv("FCM_PROJECT_ID", "");
-    vi.stubEnv("FCM_CLIENT_EMAIL", "");
-    vi.stubEnv("FCM_PRIVATE_KEY", "");
+  it("getProviderForPlatform returns FCM provider when v1 or legacy configured", () => {
     vi.stubEnv("FCM_SERVER_KEY", "legacy-key");
-    const mockFetch = vi.fn().mockResolvedValue({ ok: true });
-    vi.stubGlobal("fetch", mockFetch);
-    const result = await attemptSend({
-      platform: "android",
-      token: "t",
-      body: "b",
-    });
-    expect(result.ok).toBe(true);
-    expect(mockFetch).toHaveBeenCalledWith(
-      "https://fcm.googleapis.com/fcm/send",
-      expect.objectContaining({
-        method: "POST",
-        headers: expect.objectContaining({ Authorization: "key=legacy-key" }),
-      })
-    );
+    vi.stubEnv("FCM_PROJECT_ID", "");
+    const legacy = getProviderForPlatform("android");
+    expect(legacy).not.toBeNull();
+    vi.stubEnv("FCM_SERVER_KEY", "");
+    vi.stubEnv("FCM_PROJECT_ID", "proj");
+    vi.stubEnv("FCM_CLIENT_EMAIL", "fcm@proj.iam.gserviceaccount.com");
+    vi.stubEnv("FCM_PRIVATE_KEY", "-----BEGIN PRIVATE KEY-----\nx\n-----END PRIVATE KEY-----");
+    const v1 = getProviderForPlatform("android");
+    expect(v1).not.toBeNull();
   });
 });

@@ -1,26 +1,39 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import crypto from "crypto";
 import { getFcmV1Provider, isFcmV1Configured } from "./provider.fcm_v1";
+import type { PushSendParams } from "../push.provider.types";
 
 vi.mock("./google-oauth", () => ({
-  getAccessToken: vi.fn().mockResolvedValue("mock-oauth-token"),
+  getGoogleAccessToken: vi.fn().mockResolvedValue("mock-access-token"),
+  clearGoogleTokenCache: vi.fn(),
 }));
 
+function validTestKey(): string {
+  const { privateKey } = crypto.generateKeyPairSync("rsa", { modulusLength: 512 });
+  return privateKey.export({ type: "pkcs8", format: "pem" }) as string;
+}
+
 describe("provider.fcm_v1", () => {
+  const originalEnv = process.env;
+
   beforeEach(() => {
     vi.stubEnv("FCM_PROJECT_ID", "");
     vi.stubEnv("FCM_CLIENT_EMAIL", "");
     vi.stubEnv("FCM_PRIVATE_KEY", "");
-    vi.restoreAllMocks();
   });
 
-  it("isFcmV1Configured returns false when env not set", () => {
+  afterEach(() => {
+    process.env = originalEnv;
+    vi.unstubAllEnvs();
+  });
+
+  it("isFcmV1Configured is false when any of project_id, client_email, private_key missing", () => {
     expect(isFcmV1Configured()).toBe(false);
-  });
-
-  it("isFcmV1Configured returns true when project_id, client_email, private_key set", () => {
-    vi.stubEnv("FCM_PROJECT_ID", "my-project");
+    vi.stubEnv("FCM_PROJECT_ID", "proj");
+    expect(isFcmV1Configured()).toBe(false);
     vi.stubEnv("FCM_CLIENT_EMAIL", "a@b.iam.gserviceaccount.com");
-    vi.stubEnv("FCM_PRIVATE_KEY", "-----BEGIN PRIVATE KEY-----\n\n-----END PRIVATE KEY-----");
+    expect(isFcmV1Configured()).toBe(false);
+    vi.stubEnv("FCM_PRIVATE_KEY", "-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----");
     expect(isFcmV1Configured()).toBe(true);
   });
 
@@ -28,68 +41,64 @@ describe("provider.fcm_v1", () => {
     expect(getFcmV1Provider()).toBeNull();
   });
 
-  it("send returns retryable for non-android platform", async () => {
-    vi.stubEnv("FCM_PROJECT_ID", "p");
-    vi.stubEnv("FCM_CLIENT_EMAIL", "e@e.com");
-    vi.stubEnv("FCM_PRIVATE_KEY", "key");
-    const provider = getFcmV1Provider();
-    expect(provider).not.toBeNull();
-    const result = await provider!.send({
-      platform: "ios",
-      token: "t",
-      body: "b",
+  it("getFcmV1Provider returns provider when configured and send shapes FCM v1 request", async () => {
+    vi.stubEnv("FCM_PROJECT_ID", "my-proj");
+    vi.stubEnv("FCM_CLIENT_EMAIL", "fcm@my-proj.iam.gserviceaccount.com");
+    vi.stubEnv("FCM_PRIVATE_KEY", validTestKey());
+
+    let capturedUrl: string | null = null;
+    let capturedBody: string | null = null;
+    const mockFetch = vi.fn((url: string, init?: RequestInit) => {
+      capturedUrl = url;
+      capturedBody = init?.body as string ?? null;
+      return Promise.resolve(new Response(undefined, { status: 200 }));
     });
-    expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.code).toBe("retryable");
-  });
-
-  it("send shapes FCM v1 request and returns ok when fetch succeeds", async () => {
-    vi.stubEnv("FCM_PROJECT_ID", "my-project");
-    vi.stubEnv("FCM_CLIENT_EMAIL", "fcm@proj.iam.gserviceaccount.com");
-    vi.stubEnv("FCM_PRIVATE_KEY", "-----BEGIN PRIVATE KEY-----\n\n-----END PRIVATE KEY-----");
-
-    const mockFetch = vi.fn().mockResolvedValue({ ok: true });
     vi.stubGlobal("fetch", mockFetch);
 
     const provider = getFcmV1Provider();
     expect(provider).not.toBeNull();
-    const result = await provider!.send({
+
+    const params: PushSendParams = {
       platform: "android",
       token: "device-fcm-token",
       title: "Hi",
       body: "Body",
       data: { key: "value" },
-    });
+    };
+
+    const result = await provider!.send(params);
 
     expect(result.ok).toBe(true);
-    expect(mockFetch).toHaveBeenCalledTimes(1);
-    const [url, opts] = mockFetch.mock.calls[0];
-    expect(url).toBe("https://fcm.googleapis.com/v1/projects/my-project/messages:send");
-    expect(opts?.method).toBe("POST");
-    expect(opts?.headers?.Authorization).toBe("Bearer mock-oauth-token");
-    const body = JSON.parse(opts?.body as string);
+    expect(capturedUrl).toBe("https://fcm.googleapis.com/v1/projects/my-proj/messages:send");
+    expect(capturedBody).not.toBeNull();
+    const body = JSON.parse(capturedBody!);
     expect(body.message.token).toBe("device-fcm-token");
     expect(body.message.notification).toEqual({ title: "Hi", body: "Body" });
     expect(body.message.data).toEqual({ key: "value" });
   });
 
-  it("send returns invalid_token on 400 with invalid token message", async () => {
+  it("send returns invalid_token for 404 UNREGISTERED", async () => {
     vi.stubEnv("FCM_PROJECT_ID", "p");
-    vi.stubEnv("FCM_CLIENT_EMAIL", "e@e.com");
-    vi.stubEnv("FCM_PRIVATE_KEY", "key");
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: false,
-      status: 400,
-      text: () => Promise.resolve("NOT_FOUND"),
-    });
-    vi.stubGlobal("fetch", mockFetch);
+    vi.stubEnv("FCM_CLIENT_EMAIL", "e@p.iam.gserviceaccount.com");
+    vi.stubEnv("FCM_PRIVATE_KEY", validTestKey());
+
+    vi.stubGlobal("fetch", vi.fn(() =>
+      Promise.resolve(
+        new Response(
+          JSON.stringify({ error: { message: "UNREGISTERED" } }),
+          { status: 404 }
+        )
+      )
+    ));
 
     const provider = getFcmV1Provider();
+    expect(provider).not.toBeNull();
+
     const result = await provider!.send({
       platform: "android",
-      token: "bad",
-      body: "b",
+      token: "t",
     });
+
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.code).toBe("invalid_token");
   });

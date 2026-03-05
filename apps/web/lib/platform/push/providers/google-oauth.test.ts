@@ -1,22 +1,20 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import crypto from "crypto";
 import {
   buildGoogleJwtAssertion,
-  exchangeJwtForAccessToken,
-  getAccessToken,
-  clearTokenCache,
+  clearGoogleTokenCache,
+  getGoogleAccessToken,
   normalizePrivateKey,
 } from "./google-oauth";
 
-// Minimal valid PEM for RS256 (example; tests will mock or use structure only)
-const FAKE_PEM = `-----BEGIN PRIVATE KEY-----
-MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC7
------END PRIVATE KEY-----`;
+function generateTestKey(): string {
+  const { privateKey } = crypto.generateKeyPairSync("rsa", { modulusLength: 512 });
+  return privateKey.export({ type: "pkcs8", format: "pem" }) as string;
+}
 
 describe("google-oauth", () => {
-  beforeEach(() => {
-    clearTokenCache();
-    vi.restoreAllMocks();
-  });
+  const clientEmail = "fcm@proj.iam.gserviceaccount.com";
+  const privateKeyPem = generateTestKey();
 
   describe("normalizePrivateKey", () => {
     it("replaces literal \\n with newline", () => {
@@ -29,72 +27,98 @@ describe("google-oauth", () => {
   });
 
   describe("buildGoogleJwtAssertion", () => {
-    it("returns null when privateKey is empty", () => {
-      expect(
-        buildGoogleJwtAssertion({ clientEmail: "a@b.iam.gserviceaccount.com", privateKeyPem: "" })
-      ).toBeNull();
+    it("returns null when clientEmail or privateKey missing", () => {
+      expect(buildGoogleJwtAssertion({ clientEmail: "", privateKeyPem })).toBeNull();
+      expect(buildGoogleJwtAssertion({ clientEmail, privateKeyPem: "" })).toBeNull();
     });
-    it("returns a string with three base64url segments when key is valid", () => {
-      const jwt = buildGoogleJwtAssertion({
-        clientEmail: "test@project.iam.gserviceaccount.com",
-        privateKeyPem: FAKE_PEM,
-      });
-      if (!jwt) {
-        // PEM may be invalid for actual signing on this host
-        return;
-      }
-      const parts = jwt.split(".");
-      expect(parts.length).toBe(3);
-      expect(parts[0].length).toBeGreaterThan(0);
-      expect(parts[1].length).toBeGreaterThan(0);
-      expect(parts[2].length).toBeGreaterThan(0);
-      const payloadJson = Buffer.from(
-        parts[1].replace(/-/g, "+").replace(/_/g, "/") + "==".slice(0, (4 - (parts[1].length % 4)) % 4),
-        "base64"
-      ).toString("utf8");
-      const payload = JSON.parse(payloadJson);
-      expect(payload.iss).toBe("test@project.iam.gserviceaccount.com");
-      expect(payload.sub).toBe("test@project.iam.gserviceaccount.com");
+
+    it("returns a three-part JWT string when key is valid", () => {
+      const jwt = buildGoogleJwtAssertion({ clientEmail, privateKeyPem });
+      expect(jwt).not.toBeNull();
+      const parts = (jwt as string).split(".");
+      expect(parts).toHaveLength(3);
+      const payload = JSON.parse(
+        Buffer.from(parts[1]!.replace(/-/g, "+").replace(/_/g, "/"), "base64"
+        ).toString("utf8")
+      );
+      expect(payload.iss).toBe(clientEmail);
+      expect(payload.sub).toBe(clientEmail);
       expect(payload.aud).toBe("https://oauth2.googleapis.com/token");
       expect(typeof payload.iat).toBe("number");
-      expect(typeof payload.exp).toBe("number");
-      expect(payload.exp - payload.iat).toBe(3600);
+      expect(payload.exp).toBe(payload.iat + 3600);
+    });
+
+    it("uses custom tokenUri in aud when provided", () => {
+      const customUri = "https://custom.token.url/token";
+      const jwt = buildGoogleJwtAssertion({
+        clientEmail,
+        privateKeyPem,
+        tokenUri: customUri,
+      });
+      expect(jwt).not.toBeNull();
+      const parts = (jwt as string).split(".");
+      const payload = JSON.parse(
+        Buffer.from(parts[1]!.replace(/-/g, "+").replace(/_/g, "/"), "base64")
+          .toString("utf8")
+      );
+      expect(payload.aud).toBe(customUri);
     });
   });
 
-  describe("exchangeJwtForAccessToken", () => {
-    it("returns null when response is not ok", async () => {
-      vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 401 }));
-      const result = await exchangeJwtForAccessToken({ assertion: "fake.jwt.here" });
-      expect(result).toBeNull();
+  describe("getGoogleAccessToken", () => {
+    it("returns null when fetch fails", async () => {
+      clearGoogleTokenCache();
+      const res = await getGoogleAccessToken({
+        clientEmail,
+        privateKeyPem,
+        fetchFn: () => Promise.resolve(new Response("bad", { status: 400 })),
+      });
+      expect(res).toBeNull();
     });
-    it("returns accessToken and expiresIn when response is ok", async () => {
-      vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({ access_token: "ya29.xxx", expires_in: 3600 }),
-      }));
-      const result = await exchangeJwtForAccessToken({ assertion: "fake.jwt.here" });
-      expect(result).not.toBeNull();
-      expect(result!.accessToken).toBe("ya29.xxx");
-      expect(result!.expiresIn).toBe(3600);
-    });
-  });
 
-  describe("getAccessToken", () => {
-    it("calls fetch when cache is empty", async () => {
-      const mockFetch = vi.fn().mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({ access_token: "token1", expires_in: 3600 }),
+    it("returns access token when fetch returns 200 with access_token", async () => {
+      clearGoogleTokenCache();
+      const token = "ya29.test-token";
+      const res = await getGoogleAccessToken({
+        clientEmail,
+        privateKeyPem,
+        fetchFn: () =>
+          Promise.resolve(
+            new Response(
+              JSON.stringify({ access_token: token, expires_in: 3600 }),
+              { status: 200 }
+            )
+          ),
       });
-      vi.stubGlobal("fetch", mockFetch);
-      const token = await getAccessToken({
-        clientEmail: "a@b.iam.gserviceaccount.com",
-        privateKeyPem: FAKE_PEM,
+      expect(res).toBe(token);
+    });
+
+    it("caches token and returns same on second call without fetch", async () => {
+      clearGoogleTokenCache();
+      let fetchCount = 0;
+      const token = "cached-token";
+      const fetchFn = () => {
+        fetchCount++;
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({ access_token: token, expires_in: 3600 }),
+            { status: 200 }
+          )
+        );
+      };
+      const first = await getGoogleAccessToken({
+        clientEmail,
+        privateKeyPem,
+        fetchFn,
       });
-      if (token) {
-        expect(mockFetch).toHaveBeenCalled();
-        expect(token).toBe("token1");
-      }
+      const second = await getGoogleAccessToken({
+        clientEmail,
+        privateKeyPem,
+        fetchFn,
+      });
+      expect(first).toBe(token);
+      expect(second).toBe(token);
+      expect(fetchCount).toBe(1);
     });
   });
 });
