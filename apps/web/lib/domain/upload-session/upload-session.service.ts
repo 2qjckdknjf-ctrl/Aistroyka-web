@@ -125,5 +125,7 @@ export async function finalizeUploadSession(
       payload: { status: "finalized" },
     });
   }
-  return { ok, error: ok ? "" : "Failed to finalize or session expired" };
+  return ok
+    ? { ok: true as const, error: "" }
+    : { ok: false as const, error: "Failed to finalize or session expired" };
 }

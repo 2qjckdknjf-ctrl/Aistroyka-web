@@ -48,7 +48,7 @@ async function sendFcmV1(params: PushSendParams): Promise<PushSendResult> {
 
   const token = await getGoogleAccessToken({
     clientEmail: config.clientEmail,
-    privateKey: config.privateKey,
+    privateKeyPem: config.privateKey,
     tokenUri: process.env.FCM_TOKEN_URI?.trim() || undefined,
   });
   if (!token) {
