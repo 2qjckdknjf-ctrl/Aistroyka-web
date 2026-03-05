@@ -1,59 +1,39 @@
-# Release flow
+# Release flow (staging → prod)
 
-**Date:** 2026-03-05
-
----
-
-## Branch mapping
-
-| Branch | Environment | Deploy trigger |
-|--------|-------------|----------------|
-| **main** | Production | Push to main → deploy-cloudflare-prod.yml |
-| **develop** | Staging | Push to develop → deploy-cloudflare-staging.yml |
+**Date:** 2026-03-05  
+**Purpose:** Branch-based deploys and smoke checks.
 
 ---
 
-## How to ship changes
+## 1. Branches and deploys
 
-### 1. Feature / fix
-
-- Work on a **feature branch** (e.g. `feature/xyz` or `fix/abc`).
-- Open a PR into **develop** (or main if bypassing staging).
-- CI runs lint, test, and (if configured) cf:build. Fix any failures.
-
-### 2. Deploy to staging
-
-- **Merge** the PR into **develop**.
-- GitHub Actions run **Deploy Cloudflare (Staging)**.
-- Check:
-  - Actions tab: build and deploy steps are green.
-  - Open staging URL (workers.dev or https://staging.aistroyka.ai): login, dashboard, key flows.
-  - Run from repo: `cd apps/web && bun run smoke:staging` (or `npm run smoke:staging`).
-  - Optional: GET https://staging.../api/v1/health → body should include `"env":"staging"` and buildStamp.
-
-### 3. Deploy to production
-
-- When staging is verified, open a PR **develop → main** (or merge develop into main).
-- **Merge to main**.
-- GitHub Actions run **Deploy Cloudflare (Production)**.
-- Check:
-  - Actions tab: deploy step is green.
-  - https://aistroyka.ai and https://aistroyka.ai/api/v1/health respond.
-  - Run: `cd apps/web && bun run smoke:prod`.
-  - Optional: confirm build stamp on dashboard matches the deployed commit.
+| Branch | Triggers | Deploy | Smoke |
+|--------|----------|--------|--------|
+| feature/* | Optional: preview (e.g. workers.dev) | — | Optional |
+| staging | Push/merge | aistroyka-web-staging | smoke:staging |
+| main | Push/merge | aistroyka-web-production | smoke:prod |
 
 ---
 
-## When to use production only
+## 2. Flow
 
-- Hotfix: branch from **main**, fix, PR to **main**. Deploy runs on merge. Prefer also porting the fix to **develop**.
-- Avoid merging untested code straight to main; use staging first when possible.
+1. **Feature work:** On feature/*. Optional: deploy to dev Worker or preview URL; no prod domains.
+2. **Merge to staging:** CI runs `bun install --frozen-lockfile`, `bun run cf:build`, deploy to **aistroyka-web-staging**. Run `bun run smoke:staging` (or CI step) against https://staging.aistroyka.ai.
+3. **Merge to main:** CI runs same build, deploy to **aistroyka-web-production**. Run `bun run smoke:prod` against https://aistroyka.ai. Verify www → 301 to apex, no redirect loops.
 
 ---
 
-## Required checks (recommended)
+## 3. Smoke commands (from repo root)
 
-- In GitHub: **Branch protection** for **main** (and optionally develop):
-  - Require status checks to pass (e.g. “Build and deploy to production” or “Build and deploy to staging” can be optional; at least require “lint/test” or “CI” if you have a separate CI workflow).
-  - Require PR before merge.
-- No mandatory “smoke pass” in CI in this doc; you can add a job that runs `smoke:staging` / `smoke:prod` after deploy if desired.
+- **Prod:** `bun run smoke:prod` — curls https://aistroyka.ai/api/v1/health; expects HTTP 200 or 503 and JSON with `"ok"`.
+- **Staging:** `bun run smoke:staging` — curls https://staging.aistroyka.ai/api/v1/health; expects 200/503 and preferably `"env":"staging"`.
+
+Override base URL: `SMOKE_BASE_URL=https://... bun run smoke:prod` or pass as first arg to the script when run from apps/web.
+
+---
+
+## 4. Rollback
+
+- **Worker:** Dashboard → Workers & Pages → select Worker → Deployments → rollback to previous version.
+- **DNS:** Restore previous records from REPORT-DNS-DOMAINS “before” snapshot.
+- **Redirect rules:** Disable or delete the www → apex rule if needed.
