@@ -19,7 +19,10 @@ export async function getProductivity(
     .eq("tenant_id", tenantId)
     .gte("ts", startStr);
   const rows = (data ?? []) as { event: string; ts: string }[];
-  const byDate = new Map<string, { reports_submitted: number; media_uploaded: number; tasks_completed: number }>();
+  const byDate = new Map<
+    string,
+    { date: string; reports_submitted: number; media_uploaded: number; tasks_completed: number }
+  >();
   for (const r of rows) {
     const date = r.ts.slice(0, 10);
     if (!byDate.has(date)) byDate.set(date, { date, reports_submitted: 0, media_uploaded: 0, tasks_completed: 0 });

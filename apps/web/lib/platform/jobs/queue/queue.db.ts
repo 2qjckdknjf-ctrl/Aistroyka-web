@@ -20,7 +20,7 @@ export const queueDb: IQueueAdapter = {
 
   async claim(admin, workerId, limit, tenantId) {
     const jobs = await repo.claim(admin, workerId, limit, tenantId);
-    return jobs as JobRecord[];
+    return jobs as unknown as JobRecord[];
   },
 
   async tryAcquireSlot(admin, tenantId) {

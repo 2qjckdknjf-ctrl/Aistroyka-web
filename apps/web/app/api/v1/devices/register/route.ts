@@ -25,16 +25,16 @@ export async function POST(request: Request) {
   }
   const admin = getAdminClient();
   if (!admin) return NextResponse.json({ error: "Service unavailable" }, { status: 503 });
-  const { error } = await admin.from("device_tokens").upsert(
-    {
-      tenant_id: ctx.tenantId,
-      user_id: ctx.userId,
-      device_id: deviceId,
-      platform,
-      token,
-    },
-    { onConflict: "tenant_id,user_id,device_id" }
-  );
+  const row = {
+    tenant_id: ctx.tenantId,
+    user_id: ctx.userId,
+    device_id: deviceId,
+    platform,
+    token,
+  };
+  const { error } = await (admin as any).from("device_tokens").upsert(row, {
+    onConflict: "tenant_id,user_id,device_id",
+  });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ success: true });
 }

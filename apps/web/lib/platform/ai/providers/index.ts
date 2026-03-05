@@ -1,6 +1,6 @@
 export * from "./provider.interface";
 export * from "./circuit-breaker";
-export * from "./provider.openai";
-export * from "./provider.anthropic.stub";
-export * from "./provider.gemini.stub";
-export * from "./provider.router";
+export { openaiProvider } from "./provider.openai";
+export { anthropicProvider } from "./provider.anthropic.stub";
+export { geminiProvider } from "./provider.gemini.stub";
+export { invokeVisionWithRouter } from "./provider.router";
