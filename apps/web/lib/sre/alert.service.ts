@@ -1,7 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type AlertSeverity = "info" | "warn" | "critical";
-export type AlertType = "slo_breach" | "quota_spike" | "job_fail_spike";
+export type AlertType =
+  | "slo_breach"
+  | "quota_spike"
+  | "job_fail_spike"
+  | "ai_budget_soft_exceeded"
+  | "ai_budget_exceeded";
 
 export async function createAlert(
   supabase: SupabaseClient,

@@ -14,7 +14,7 @@ import { setLegacyApiHeaders } from "@/lib/api/deprecation-headers";
 import { getTenantContextFromRequest } from "@/lib/tenant";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { checkRateLimit } from "@/lib/platform/rate-limit/rate-limit.service";
-import { checkQuota, estimateMaxVisionCostUsd } from "@/lib/platform/ai-usage/ai-usage.service";
+import { checkQuota, checkBudgetAlert, estimateMaxVisionCostUsd } from "@/lib/platform/ai-usage/ai-usage.service";
 import { analyzeImage, AIPolicyBlockedError, AIVisionFailedError } from "@/lib/platform/ai/ai.service";
 import { getServerConfig, getConfiguredVisionProviders, isAnyVisionProviderConfigured } from "@/lib/config/server";
 
@@ -139,10 +139,11 @@ export async function POST(request: Request) {
       const quotaMsg = await checkQuota(admin, tenantCtx.tenantId, estimatedCost);
       if (quotaMsg) {
         return withLegacyHeaders(NextResponse.json(
-          { error: quotaMsg, code: "quota_exceeded" },
+          { error: quotaMsg, code: "ai_budget_exceeded" },
           { status: 402 }
         ));
       }
+      await checkBudgetAlert(admin, tenantCtx.tenantId, estimatedCost);
     }
   }
 
