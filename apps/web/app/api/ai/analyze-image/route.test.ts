@@ -10,13 +10,16 @@ function jsonRequest(body: object) {
 }
 
 describe("POST /api/ai/analyze-image", () => {
-  it("returns 503 when OPENAI_API_KEY is not set", async () => {
+  it("returns 503 when no vision provider is configured", async () => {
     vi.stubEnv("OPENAI_API_KEY", "");
+    vi.stubEnv("ANTHROPIC_API_KEY", "");
+    vi.stubEnv("GOOGLE_AI_API_KEY", "");
+    vi.stubEnv("GEMINI_API_KEY", "");
     const req = jsonRequest({ image_url: "https://example.com/photo.jpg" });
     const res = await POST(req);
     expect(res.status).toBe(503);
     const data = (await res.json()) as { error?: string };
-    expect(data.error).toContain("OPENAI_API_KEY");
+    expect(data.error).toContain("No AI vision provider is configured");
   });
 
   it("returns 400 for invalid JSON body", async () => {
