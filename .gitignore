@@ -1,17 +1,38 @@
+# Cursor / IDE
+.cursor/
+
 # dependencies
 node_modules
+node_modules/
 .pnp
 .pnp.js
 
 # testing
 coverage
+TestLogs/
+test-results/
+playwright-report/
+apps/web/test-results/
+
+# iOS derived builds
+ios/build/
+ios/ci_derived/
+DerivedData/
+**/DerivedData/
+**/SourcePackages/
+*.xcresult
+
+# archives
+*.zip
 
 # next
 .next
 out
 
-# misc
+# macOS
 .DS_Store
+
+# misc
 *.pem
 
 # debug
