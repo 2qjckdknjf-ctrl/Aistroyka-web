@@ -39,9 +39,16 @@
 
 ---
 
-## Stage 1 — Provider Interfaces + Real Providers (Anthropic + Gemini)
+## Stage 1 — Provider Interfaces + Real Providers (Anthropic + Gemini) ✅
 
-*Placeholder: implement provider interface normalization, Anthropic and Gemini real implementations, optional-by-env, unit tests.*
+- **Provider errors:** `provider.errors.ts` — `ProviderUnavailableError`, `ProviderError`, `isRetryableError()` (for router Stage 2).
+- **Config:** `ANTHROPIC_API_KEY`, `ANTHROPIC_VISION_MODEL`, `GOOGLE_AI_API_KEY` (or `GEMINI_API_KEY`), `GEMINI_VISION_MODEL`; `isAnyVisionProviderConfigured()`.
+- **Anthropic:** `provider.anthropic.ts` — Messages API, image via URL, timeout 85s, normalized `VisionResult`. Missing key → returns null.
+- **Gemini:** `provider.gemini.ts` — fetches image URL → base64, generateContent with `responseMimeType: application/json`. Missing key → null. `toBase64()` works in Node and Edge.
+- **Cost estimator:** Added Claude and Gemini model prices.
+- **Route:** 503 when no vision provider configured (any of OpenAI/Anthropic/Gemini).
+- **Tests:** `provider.anthropic.test.ts`, `provider.gemini.test.ts` — missing key → null, success response parsing, request shape. Stubs removed.
+- **Build/test:** Unit tests 220 passed; Next.js build passed.
 
 ---
 

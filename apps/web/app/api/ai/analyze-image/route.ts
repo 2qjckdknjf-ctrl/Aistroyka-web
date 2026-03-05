@@ -16,7 +16,7 @@ import { getAdminClient } from "@/lib/supabase/admin";
 import { checkRateLimit } from "@/lib/platform/rate-limit/rate-limit.service";
 import { checkQuota, estimateVisionCostUsd } from "@/lib/platform/ai-usage/ai-usage.service";
 import { analyzeImage, AIPolicyBlockedError, AIVisionFailedError } from "@/lib/platform/ai/ai.service";
-import { getServerConfig } from "@/lib/config/server";
+import { getServerConfig, isAnyVisionProviderConfigured } from "@/lib/config/server";
 
 const MAX_IMAGE_URL_LENGTH = 2048;
 const MAX_BODY_BYTES = 100_000;
@@ -70,13 +70,13 @@ function logAiEvent(payload: {
 }
 
 export async function POST(request: Request) {
-  const config = getServerConfig();
-  if (!config.OPENAI_API_KEY?.trim()) {
+  if (!isAnyVisionProviderConfigured()) {
     return withLegacyHeaders(NextResponse.json(
-      { error: "OPENAI_API_KEY is not configured" },
+      { error: "No AI vision provider configured (OPENAI_API_KEY, ANTHROPIC_API_KEY, or GOOGLE_AI_API_KEY)" },
       { status: 503 }
     ));
   }
+  const config = getServerConfig();
 
   const contentLength = request.headers.get("content-length");
   if (
@@ -134,7 +134,7 @@ export async function POST(request: Request) {
       const quotaMsg = await checkQuota(
         admin,
         tenantCtx.tenantId,
-        estimateVisionCostUsd(config.OPENAI_VISION_MODEL)
+        estimateVisionCostUsd(config.OPENAI_VISION_MODEL || "gpt-4o")
       );
       if (quotaMsg) {
         return withLegacyHeaders(NextResponse.json(
@@ -147,7 +147,7 @@ export async function POST(request: Request) {
 
   if (!admin) {
     return withLegacyHeaders(NextResponse.json(
-      { error: "OPENAI_API_KEY is not configured" },
+      { error: "No AI vision provider configured" },
       { status: 503 }
     ));
   }

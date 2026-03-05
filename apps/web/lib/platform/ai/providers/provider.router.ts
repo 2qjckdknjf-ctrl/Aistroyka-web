@@ -5,8 +5,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { canInvoke, recordSuccess, recordFailure } from "./circuit-breaker";
 import { openaiProvider } from "./provider.openai";
-import { anthropicProvider } from "./provider.anthropic.stub";
-import { geminiProvider } from "./provider.gemini.stub";
+import { anthropicProvider } from "./provider.anthropic";
+import { geminiProvider } from "./provider.gemini";
 import type { VisionResult, VisionOptions } from "./provider.interface";
 
 const PROVIDERS = [openaiProvider, anthropicProvider, geminiProvider];
