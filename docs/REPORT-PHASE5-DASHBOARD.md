@@ -110,9 +110,12 @@ Design tokens: `--aistroyka-*` (radius, space, colors, fonts). No Table or Tabs 
 
 ## 3. Workers + time tracking + reports (Stage 3)
 
-*To be filled after implementation.*
+**Done.**
 
-- APIs used / added.
+- **Routes:** `/dashboard/workers` (list), `/dashboard/workers/[userId]/days` (day timeline), `/dashboard/daily-reports` (list), `/dashboard/daily-reports/[id]` (detail).
+- **Read-only APIs added:** `GET /api/v1/workers` (list with last day/report), `GET /api/v1/workers/:userId/days` (day timeline), `GET /api/v1/reports` (list, query: project_id, from, to), `GET /api/v1/reports/:id` (detail with media).
+- **Repos:** `worker-list.repository.ts` (listWorkersWithLastActivity), `report-list.repository.ts` (listReportsForManager).
+- **UI:** Workers table (worker id, last day, day status badge, last report, link to days); Worker days table (date, started, ended, status); Reports table (id, status, created, submitted, view); Report detail (status, created, submitted, media list).
 
 ---
 

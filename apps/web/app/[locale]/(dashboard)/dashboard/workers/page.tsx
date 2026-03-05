@@ -1,18 +1,16 @@
 import { getTranslations } from "next-intl/server";
-import { Card, SectionHeader, EmptyState } from "@/components/ui";
+import { SectionHeader } from "@/components/ui";
+import { DashboardWorkersClient } from "./DashboardWorkersClient";
 
 export default async function WorkersPage() {
   const t = await getTranslations("nav");
   return (
     <>
-      <SectionHeader title={t("workers")} subtitle="Time tracking and daily reports by worker." />
-      <Card>
-        <EmptyState
-          icon={<span className="text-2xl">👷</span>}
-          title="Workers"
-          subtitle="Worker list and day timeline will be built in Stage 3."
-        />
-      </Card>
+      <SectionHeader
+        title={t("workers")}
+        subtitle="Time tracking and last report by worker. Open Days for day timeline."
+      />
+      <DashboardWorkersClient />
     </>
   );
 }
