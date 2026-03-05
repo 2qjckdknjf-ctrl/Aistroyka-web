@@ -1,5 +1,7 @@
 /**
- * Router: select provider by tier + circuit state, invoke with fallback.
+ * Router: tenant-aware provider order, model tier, circuit breaker, fallback.
+ * Provider order from tenant_feature_flags (ai_provider_preference, ai_fallback_enabled).
+ * Model from options.model or model tier (lib/platform/ai/routing/models.ts).
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -9,26 +11,49 @@ import { openaiProvider } from "./provider.openai";
 import { anthropicProvider } from "./provider.anthropic";
 import { geminiProvider } from "./provider.gemini";
 import type { VisionResult, VisionOptions } from "./provider.interface";
+import { getTenantAIPreferences } from "@/lib/platform/ai/routing/tenant-ai-preferences";
+import { modelForProviderAndTier, type ModelTier } from "@/lib/platform/ai/routing/models";
 
 const PROVIDERS = [openaiProvider, anthropicProvider, geminiProvider];
+const PROVIDER_BY_NAME = Object.fromEntries(PROVIDERS.map((p) => [p.name, p]));
 
-/** Select ordered providers for tier (enterprise may prefer different order). Fallback: openai. */
-function providersForTier(_tier: string): typeof PROVIDERS {
-  return PROVIDERS;
+export interface RouterOptions extends VisionOptions {
+  tier?: string;
+  model?: string;
+  tenantId?: string | null;
+  requestId?: string | null;
+}
+
+/** Order providers: preferred first (if set), then rest; if fallback disabled, preferred only. */
+function orderProviders(
+  preference: "openai" | "anthropic" | "gemini" | undefined,
+  fallbackEnabled: boolean
+): typeof PROVIDERS {
+  if (!preference || !PROVIDER_BY_NAME[preference]) {
+    return PROVIDERS;
+  }
+  const preferred = PROVIDER_BY_NAME[preference];
+  const rest = PROVIDERS.filter((p) => p.name !== preference);
+  if (!fallbackEnabled) return [preferred];
+  return [preferred, ...rest];
 }
 
 export async function invokeVisionWithRouter(
   supabase: SupabaseClient,
   imageUrl: string,
-  options: { tier?: string; model?: string } & VisionOptions
+  options: RouterOptions
 ): Promise<VisionResult | null> {
-  const tier = options.tier ?? "free";
-  const ordered = providersForTier(tier);
+  const tenantId = options.tenantId ?? null;
+  const prefs = await getTenantAIPreferences(supabase, tenantId);
+  const ordered = orderProviders(prefs.providerPreference, prefs.fallbackEnabled);
+  const modelTier: ModelTier | undefined = prefs.modelTier;
+
   for (const provider of ordered) {
     if (!(await canInvoke(supabase, provider.name))) continue;
+    const model = options.model ?? modelForProviderAndTier(provider.name, modelTier);
     try {
       const result = await provider.invokeVision(imageUrl, {
-        model: options.model,
+        model,
         maxTokens: options.maxTokens,
       });
       if (result) {

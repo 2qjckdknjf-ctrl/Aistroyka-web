@@ -92,6 +92,7 @@ export async function analyzeImage(
     tier,
     maxTokens: 1024,
     tenantId: ctx.tenantId,
+    requestId: ctx.traceId ?? undefined,
   });
 
   if (!visionResult) {

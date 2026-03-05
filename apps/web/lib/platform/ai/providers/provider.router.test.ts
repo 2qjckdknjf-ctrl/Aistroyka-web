@@ -1,114 +1,134 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const mockCanInvoke = vi.fn();
-const mockRecordSuccess = vi.fn();
-const mockRecordFailure = vi.fn();
-const mockGetTenantAiPreferences = vi.fn();
-const mockOrderProviderNames = vi.fn();
-const openaiInvoke = vi.fn();
-const anthropicInvoke = vi.fn();
-const geminiInvoke = vi.fn();
+const mockInvokeVision = vi.hoisted(() => vi.fn());
+const mockAnthropicInvoke = vi.hoisted(() => vi.fn());
+const mockGeminiInvoke = vi.hoisted(() => vi.fn());
 
-vi.mock("./circuit-breaker", () => ({
-  canInvoke: (...args: unknown[]) => mockCanInvoke(...args),
-  recordSuccess: (...args: unknown[]) => mockRecordSuccess(...args),
-  recordFailure: (...args: unknown[]) => mockRecordFailure(...args),
-}));
 vi.mock("@/lib/platform/ai/routing/tenant-ai-preferences", () => ({
-  getTenantAiPreferences: (...args: unknown[]) => mockGetTenantAiPreferences(...args),
-  orderProviderNames: (...args: unknown[]) => mockOrderProviderNames(...args),
+  getTenantAIPreferences: vi.fn(),
 }));
-vi.mock("@/lib/platform/ai/routing/models", () => ({
-  getModelForProvider: (name: string, _tier: string) => (name === "openai" ? "gpt-4o" : name === "anthropic" ? "claude-3-5-sonnet" : "gemini-1.5-flash"),
+vi.mock("./circuit-breaker", () => ({
+  canInvoke: vi.fn(),
+  recordSuccess: vi.fn(),
+  recordFailure: vi.fn(),
 }));
-vi.mock("./provider.openai", () => ({ openaiProvider: { name: "openai", invokeVision: (...args: unknown[]) => openaiInvoke(...args) } }));
-vi.mock("./provider.anthropic", () => ({ anthropicProvider: { name: "anthropic", invokeVision: (...args: unknown[]) => anthropicInvoke(...args) } }));
-vi.mock("./provider.gemini", () => ({ geminiProvider: { name: "gemini", invokeVision: (...args: unknown[]) => geminiInvoke(...args) } }));
+vi.mock("./provider.openai", () => ({
+  openaiProvider: { name: "openai", invokeVision: mockInvokeVision },
+}));
+vi.mock("./provider.anthropic", () => ({
+  anthropicProvider: { name: "anthropic", invokeVision: mockAnthropicInvoke },
+}));
+vi.mock("./provider.gemini", () => ({
+  geminiProvider: { name: "gemini", invokeVision: mockGeminiInvoke },
+}));
 
-const { invokeVisionWithRouter } = await import("./provider.router");
+import { getTenantAIPreferences } from "@/lib/platform/ai/routing/tenant-ai-preferences";
+import { canInvoke, recordSuccess, recordFailure } from "./circuit-breaker";
+import { invokeVisionWithRouter } from "./provider.router";
+
+const supabase = {} as any;
+
+function makeResult(provider: string, model: string) {
+  return {
+    content: '{"stage":"foundation","completion_percent":50,"risk_level":"medium","detected_issues":[],"recommendations":[]}',
+    usage: { prompt_tokens: 100, completion_tokens: 50, total_tokens: 150 },
+    providerUsed: provider,
+    modelUsed: model,
+  };
+}
 
 describe("provider.router", () => {
-  const supabase = {} as any;
-  const imageUrl = "https://example.com/photo.jpg";
-
   beforeEach(() => {
-    vi.mocked(mockCanInvoke).mockResolvedValue(true);
-    vi.mocked(mockRecordSuccess).mockResolvedValue(undefined);
-    vi.mocked(mockRecordFailure).mockResolvedValue(undefined);
-    vi.mocked(mockGetTenantAiPreferences).mockResolvedValue({ preferredProvider: null, fallbackEnabled: true });
-    vi.mocked(mockOrderProviderNames).mockImplementation((_pref: string | null, def: string[]) => def);
-    openaiInvoke.mockResolvedValue(null);
-    anthropicInvoke.mockResolvedValue(null);
-    geminiInvoke.mockResolvedValue(null);
+    vi.mocked(getTenantAIPreferences).mockResolvedValue({ fallbackEnabled: true });
+    vi.mocked(canInvoke).mockResolvedValue(true);
+    vi.mocked(recordSuccess).mockResolvedValue(undefined);
+    vi.mocked(recordFailure).mockResolvedValue(undefined);
+    mockInvokeVision.mockReset();
+    mockAnthropicInvoke.mockReset();
+    mockGeminiInvoke.mockReset();
   });
 
-  it("chooses preferred provider when set and it returns result", async () => {
-    vi.mocked(mockGetTenantAiPreferences).mockResolvedValue({ preferredProvider: "anthropic", fallbackEnabled: true });
-    vi.mocked(mockOrderProviderNames).mockReturnValue(["anthropic", "openai", "gemini"]);
-    const result = { content: "{}", providerUsed: "anthropic", modelUsed: "claude-3-5-sonnet" };
-    anthropicInvoke.mockResolvedValueOnce(result);
-
-    const out = await invokeVisionWithRouter(supabase, imageUrl, { tier: "free", tenantId: "t1" });
-
-    expect(out).toEqual(result);
-    expect(anthropicInvoke).toHaveBeenCalled();
-    expect(openaiInvoke).not.toHaveBeenCalled();
-    expect(mockRecordSuccess).toHaveBeenCalledWith(supabase, "anthropic");
+  afterEach(() => {
+    vi.clearAllMocks();
   });
 
-  it("skips provider when canInvoke returns false", async () => {
-    vi.mocked(mockCanInvoke).mockImplementation(async (_s, name) => name !== "openai");
-    openaiInvoke.mockResolvedValueOnce({ content: "{}", providerUsed: "openai", modelUsed: "gpt-4o" });
+  it("uses default order (openai, anthropic, gemini) when no tenant preference", async () => {
+    mockInvokeVision.mockResolvedValue(null);
+    mockAnthropicInvoke.mockResolvedValue(makeResult("anthropic", "claude-sonnet-4-20250514"));
 
-    const out = await invokeVisionWithRouter(supabase, imageUrl, { tier: "free" });
+    const result = await invokeVisionWithRouter(supabase, "https://example.com/img.jpg", {
+      tier: "free",
+      maxTokens: 1024,
+    });
 
-    expect(openaiInvoke).not.toHaveBeenCalled();
-    expect(anthropicInvoke).toHaveBeenCalled();
+    expect(result).not.toBeNull();
+    expect(result?.providerUsed).toBe("anthropic");
+    expect(mockInvokeVision).toHaveBeenCalled();
+    expect(mockAnthropicInvoke).toHaveBeenCalled();
+    expect(recordSuccess).toHaveBeenCalledWith(supabase, "anthropic");
   });
 
-  it("falls back to next provider when first fails with retryable error", async () => {
-    vi.mocked(mockOrderProviderNames).mockReturnValue(["openai", "anthropic", "gemini"]);
-    openaiInvoke.mockRejectedValueOnce(new Error("timeout"));
-    const result = { content: "{}", providerUsed: "anthropic", modelUsed: "claude-3-5-sonnet" };
-    anthropicInvoke.mockResolvedValueOnce(result);
+  it("prefers tenant provider when set and uses fallback on failure", async () => {
+    vi.mocked(getTenantAIPreferences).mockResolvedValue({
+      providerPreference: "gemini",
+      fallbackEnabled: true,
+      modelTier: "standard",
+    });
+    mockGeminiInvoke.mockResolvedValue(null);
+    mockInvokeVision.mockResolvedValue(makeResult("openai", "gpt-4o"));
 
-    const out = await invokeVisionWithRouter(supabase, imageUrl, { tier: "free" });
+    const result = await invokeVisionWithRouter(supabase, "https://example.com/img.jpg", {
+      tenantId: "tenant-1",
+      maxTokens: 1024,
+    });
 
-    expect(out).toEqual(result);
-    expect(mockRecordFailure).toHaveBeenCalledWith(supabase, "openai");
-    expect(mockRecordSuccess).toHaveBeenCalledWith(supabase, "anthropic");
+    expect(result).not.toBeNull();
+    expect(result?.providerUsed).toBe("openai");
+    expect(mockGeminiInvoke).toHaveBeenCalled();
+    expect(mockInvokeVision).toHaveBeenCalled();
   });
 
-  it("does not fallback when first fails with non-retryable error (400)", async () => {
-    vi.mocked(mockOrderProviderNames).mockReturnValue(["openai", "anthropic", "gemini"]);
-    openaiInvoke.mockRejectedValueOnce(new Error("400 invalid request"));
-    anthropicInvoke.mockResolvedValueOnce({ content: "{}", providerUsed: "anthropic", modelUsed: "claude" });
+  it("skips provider when circuit breaker says canInvoke false", async () => {
+    vi.mocked(canInvoke).mockImplementation(async (_s, provider) => provider !== "openai");
+    mockAnthropicInvoke.mockResolvedValue(makeResult("anthropic", "claude-sonnet-4-20250514"));
 
-    const out = await invokeVisionWithRouter(supabase, imageUrl, { tier: "free" });
+    const result = await invokeVisionWithRouter(supabase, "https://example.com/img.jpg", {
+      maxTokens: 1024,
+    });
 
-    expect(out).toBeNull();
-    expect(anthropicInvoke).not.toHaveBeenCalled();
-    expect(mockRecordFailure).toHaveBeenCalledWith(supabase, "openai");
+    expect(result?.providerUsed).toBe("anthropic");
+    expect(mockInvokeVision).not.toHaveBeenCalled();
   });
 
-  it("returns null when all providers fail or return null", async () => {
-    openaiInvoke.mockResolvedValue(null);
-    anthropicInvoke.mockResolvedValue(null);
-    geminiInvoke.mockResolvedValue(null);
+  it("returns null when all providers fail with retryable errors", async () => {
+    mockInvokeVision.mockRejectedValue(new Error("timeout"));
+    mockAnthropicInvoke.mockRejectedValue(new Error("rate limit"));
+    mockGeminiInvoke.mockResolvedValue(null);
 
-    const out = await invokeVisionWithRouter(supabase, imageUrl, { tier: "free" });
+    const result = await invokeVisionWithRouter(supabase, "https://example.com/img.jpg", {
+      maxTokens: 1024,
+    });
 
-    expect(out).toBeNull();
-    expect(mockRecordFailure).not.toHaveBeenCalled();
+    expect(result).toBeNull();
+    expect(recordFailure).toHaveBeenCalledWith(supabase, "openai");
+    expect(recordFailure).toHaveBeenCalledWith(supabase, "anthropic");
   });
 
-  it("passes resolved model to provider", async () => {
-    vi.mocked(mockOrderProviderNames).mockReturnValue(["openai", "anthropic", "gemini"]);
-    openaiInvoke.mockResolvedValueOnce({ content: "{}", providerUsed: "openai", modelUsed: "gpt-4o" });
+  it("passes model from model tier when no explicit model", async () => {
+    vi.mocked(getTenantAIPreferences).mockResolvedValue({
+      modelTier: "low",
+      fallbackEnabled: true,
+    });
+    mockInvokeVision.mockResolvedValue(makeResult("openai", "gpt-4o-mini"));
 
-    await invokeVisionWithRouter(supabase, imageUrl, { tier: "pro", maxTokens: 512 });
+    await invokeVisionWithRouter(supabase, "https://example.com/img.jpg", {
+      tenantId: "t1",
+      maxTokens: 512,
+    });
 
-    expect(openaiInvoke).toHaveBeenCalledWith(imageUrl, expect.objectContaining({ maxTokens: 512 }));
-    expect(openaiInvoke.mock.calls[0][1].model).toBe("gpt-4o");
+    expect(mockInvokeVision).toHaveBeenCalledWith(
+      "https://example.com/img.jpg",
+      expect.objectContaining({ model: "gpt-4o-mini", maxTokens: 512 })
+    );
   });
 });
