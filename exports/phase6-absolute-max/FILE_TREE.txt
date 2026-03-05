@@ -1,0 +1,18 @@
+Phase 6 — Key paths
+
+Migrations: apps/web/supabase/migrations/20260309*.sql
+  tenant_data_plane, export_batches, export_rows, privacy_settings, pii_findings
+  baselines_daily, anomalies, upload_sessions alter, device_tokens, push_outbox
+  photo_annotations, photo_comments
+
+Routing: apps/web/lib/platform/routing/
+Exports sinks: apps/web/lib/platform/exports/sinks/
+Privacy: apps/web/lib/platform/privacy/
+Anomaly: apps/web/lib/platform/anomaly/
+Push: apps/web/lib/platform/push/
+
+API: /api/v1/admin/privacy/findings, /api/v1/admin/anomalies
+  /api/v1/devices/register, unregister; /api/v1/admin/push/test
+  /api/v1/media/:mediaId/annotations, annotations/:id, comments, collab
+
+ADRs: 047–066
