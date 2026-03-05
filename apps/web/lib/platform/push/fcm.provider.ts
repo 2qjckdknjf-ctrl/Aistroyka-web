@@ -1,13 +1,18 @@
 /**
- * FCM legacy push provider (server key). Env-gated.
- * Env: FCM_SERVER_KEY. Used when FCM HTTP v1 (service account) is not configured.
- * Router prefers FCM v1 when FCM_PROJECT_ID/FCM_CLIENT_EMAIL/FCM_PRIVATE_KEY are set.
+ * FCM push provider. Prefers HTTP v1 (service account) when configured; falls back to legacy server key.
+ * Env: FCM_PROJECT_ID, FCM_CLIENT_EMAIL, FCM_PRIVATE_KEY (PEM) for v1,
+ * or FCM_SERVER_KEY (legacy). When not configured, returns retryable so outbox drain can retry later.
  */
 
 import type { PushProvider, PushSendParams, PushSendResult } from "./push.provider.types";
+import { getFcmV1Provider, isFcmV1Configured } from "./providers/provider.fcm_v1";
+
+function isFcmLegacyConfigured(): boolean {
+  return Boolean(process.env.FCM_SERVER_KEY?.trim());
+}
 
 function isFcmConfigured(): boolean {
-  return Boolean(process.env.FCM_SERVER_KEY?.trim());
+  return isFcmV1Configured() || isFcmLegacyConfigured();
 }
 
 /** Legacy FCM: send via FCM legacy HTTP API with server key. */
@@ -41,16 +46,20 @@ async function sendFcmLegacy(params: PushSendParams): Promise<PushSendResult> {
   }
 }
 
-const fcmProvider: PushProvider = {
+const legacyFcmProvider: PushProvider = {
   async send(params: PushSendParams): Promise<PushSendResult> {
     if (params.platform !== "android") return { ok: false, code: "retryable", message: "FCM is Android only" };
-    if (!isFcmConfigured()) return { ok: false, code: "retryable", message: "FCM not configured" };
+    if (!isFcmLegacyConfigured()) return { ok: false, code: "retryable", message: "FCM not configured" };
     return sendFcmLegacy(params);
   },
 };
 
+/** Prefer HTTP v1 when service account env is present; else legacy server key. */
 export function getFcmProvider(): PushProvider | null {
-  return isFcmConfigured() ? fcmProvider : null;
+  if (!isFcmConfigured()) return null;
+  const v1 = getFcmV1Provider();
+  if (v1) return v1;
+  return legacyFcmProvider;
 }
 
 export { isFcmConfigured };
