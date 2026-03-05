@@ -1,5 +1,6 @@
 # Cursor / IDE
 .cursor/
+.DS_Store
 
 # dependencies
 node_modules
@@ -22,8 +23,15 @@ DerivedData/
 **/SourcePackages/
 *.xcresult
 
-# archives
+# archives / exports
 *.zip
+archive_*/
+exports/
+
+# large audit artifacts
+audit_artifacts/
+audit_artifacts_*/
+reports/
 
 # next
 .next
@@ -32,7 +40,7 @@ out
 # macOS
 .DS_Store
 
-# misc
+# misc (keep .DS_Store above for visibility)
 *.pem
 
 # debug
