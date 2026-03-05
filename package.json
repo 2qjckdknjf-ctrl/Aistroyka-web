@@ -18,7 +18,9 @@
     "cf:build": "bun run build:contracts && bun run --cwd apps/web cf:build",
     "cf:deploy": "cd apps/web && bun run cf:deploy",
     "lint": "cd apps/web && bun run lint",
-    "test": "cd apps/web && bun run test"
+    "test": "cd apps/web && bun run test",
+    "smoke:prod": "bash apps/web/scripts/smoke-prod.sh",
+    "smoke:staging": "bash apps/web/scripts/smoke-staging.sh"
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.16.4",
