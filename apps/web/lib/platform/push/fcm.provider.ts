@@ -1,19 +1,13 @@
 /**
- * FCM push provider (HTTP v1). Env-gated.
- * Env: FCM_PROJECT_ID, FCM_CLIENT_EMAIL, FCM_PRIVATE_KEY (PEM) for service account,
- * or FCM_SERVER_KEY (legacy) for simple send.
- * When not fully configured, returns retryable so outbox drain can retry later.
+ * FCM legacy push provider (server key). Env-gated.
+ * Env: FCM_SERVER_KEY. Used when FCM HTTP v1 (service account) is not configured.
+ * Router prefers FCM v1 when FCM_PROJECT_ID/FCM_CLIENT_EMAIL/FCM_PRIVATE_KEY are set.
  */
 
 import type { PushProvider, PushSendParams, PushSendResult } from "./push.provider.types";
 
 function isFcmConfigured(): boolean {
-  return Boolean(
-    process.env.FCM_SERVER_KEY?.trim() ||
-      (process.env.FCM_PROJECT_ID?.trim() &&
-        process.env.FCM_CLIENT_EMAIL?.trim() &&
-        process.env.FCM_PRIVATE_KEY?.trim())
-  );
+  return Boolean(process.env.FCM_SERVER_KEY?.trim());
 }
 
 /** Legacy FCM: send via FCM legacy HTTP API with server key. */
