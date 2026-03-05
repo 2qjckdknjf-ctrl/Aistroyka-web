@@ -115,9 +115,11 @@
 
 ---
 
-## Stage 6 — Construction brain alignment
+## Stage 6 — Construction brain alignment (done)
 
-*To be filled after implementation.*
+- **ADR:** `docs/ADR/067-ai-platform-routing-governance.md` — router/policy design, provider selection, model tiers, budget strategy, observability.
+- **Construction brain:** `apps/web/lib/ai/construction-brain/index.ts` — re-exports prompts, normalize (parseJsonFromContent, normalizeStage, sanitizeAnalysisResult, ALLOWED_STAGES), types (AnalysisResult, RiskLevel), riskCalibration. No file moves.
+- **Docs:** `docs/ai/AI_PLATFORM.md` — entrypoints, flow, env vars, tenant preferences, budgets/alerts, observability, troubleshooting.
 
 ---
 
