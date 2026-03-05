@@ -24,6 +24,7 @@ export type ResourceAction =
   | "analysis:trigger"
   | "reports:read"
   | "admin:read"
+  | "admin:write"
   | "jobs:process";
 
 /**
@@ -51,6 +52,7 @@ function minRoleForAction(action: ResourceAction): number {
     case "reports:read":
       return ROLE_ORDER.viewer;
     case "admin:read":
+    case "admin:write":
     case "jobs:process":
       return ROLE_ORDER.admin;
     default:

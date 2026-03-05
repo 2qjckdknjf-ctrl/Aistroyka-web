@@ -28,4 +28,10 @@ export {
   type SyncAckRequest,
   type SyncAckResponse,
 } from "./schemas/sync.schema";
+export {
+  ConfigPayloadSchema,
+  ConfigFlagSchema,
+  type ConfigPayload,
+  type ConfigFlag,
+} from "./schemas/config.schema";
 export * from "./api/v1/types";

@@ -17,6 +17,12 @@ import {
   TenantMembersResponseSchema,
   SubscriptionTierSchema,
   TenantLimitsSchema,
+  SyncBootstrapResponseSchema,
+  SyncChangeEntrySchema,
+  SyncChangesResponseSchema,
+  SyncAckRequestSchema,
+  SyncAckResponseSchema,
+  ConfigPayloadSchema,
 } from "@aistroyka/contracts";
 
 const basePath = "/api/v1";
@@ -39,13 +45,22 @@ addSchema("TenantMember", TenantMemberSchema);
 addSchema("TenantMembersResponse", TenantMembersResponseSchema);
 addSchema("SubscriptionTier", SubscriptionTierSchema);
 addSchema("TenantLimits", TenantLimitsSchema);
+addSchema("SyncBootstrapResponse", SyncBootstrapResponseSchema);
+addSchema("SyncChangeEntry", SyncChangeEntrySchema);
+addSchema("SyncChangesResponse", SyncChangesResponseSchema);
+addSchema("SyncAckRequest", SyncAckRequestSchema);
+addSchema("SyncAckResponse", SyncAckResponseSchema);
+addSchema("ConfigPayload", ConfigPayloadSchema);
+
+const deviceIdParam = { name: "x-device-id", in: "header", required: true, schema: { type: "string" }, description: "Device identifier (required for sync and mobile writes)" };
+const idempotencyKeyParam = { name: "x-idempotency-key", in: "header", required: false, schema: { type: "string" }, description: "Idempotency key for write requests (recommended for mobile)" };
 
 const openapi = {
   openapi: "3.0.3",
   info: {
     title: "Aistroyka API",
     version: "1.0.0",
-    description: "API v1 for Aistroyka Construction Intelligence. Auth: Bearer JWT + tenant context.",
+    description: "API v1 for Aistroyka Construction Intelligence. Auth: Bearer JWT + tenant context. Mobile: send x-device-id on sync and x-idempotency-key on all writes. Errors: 400/401/403/404/409/413/429 with JSON { error?: string }.",
   },
   servers: [{ url: "https://api.aistroyka.ai", description: "Production" }],
   paths: {
@@ -58,6 +73,20 @@ const openapi = {
             description: "Service health",
             content: { "application/json": { schema: { $ref: "#/components/schemas/HealthResponse" } } },
           },
+        },
+      },
+    },
+    [`${basePath}/config`]: {
+      get: {
+        summary: "Client config (flags, limits, serverTime, traceId, clientProfile)",
+        tags: ["Config"],
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": {
+            description: "Config payload",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/ConfigPayload" } } },
+          },
+          "401": { description: "Unauthorized (optional; unauthenticated returns flags off)" },
         },
       },
     },
@@ -130,6 +159,94 @@ const openapi = {
         security: [{ bearerAuth: [] }],
         parameters: [{ name: "since", in: "query", schema: { type: "string", format: "date-time" }, description: "ISO timestamp" }],
         responses: { "200": { description: "Delta payload" }, "401": { description: "Unauthorized" } },
+      },
+    },
+    [`${basePath}/sync/bootstrap`]: {
+      get: {
+        summary: "Initial sync snapshot + cursor",
+        tags: ["Sync"],
+        security: [{ bearerAuth: [] }],
+        parameters: [deviceIdParam],
+        responses: {
+          "200": { description: "Snapshot and cursor", content: { "application/json": { schema: { $ref: "#/components/schemas/SyncBootstrapResponse" } } } },
+          "400": { description: "Missing x-device-id" },
+          "401": { description: "Unauthorized" },
+        },
+      },
+    },
+    [`${basePath}/sync/changes`]: {
+      get: {
+        summary: "Delta changes after cursor",
+        tags: ["Sync"],
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          deviceIdParam,
+          { name: "cursor", in: "query", required: true, schema: { type: "integer", format: "int64" }, description: "Cursor from bootstrap or previous changes" },
+          { name: "limit", in: "query", schema: { type: "integer", default: 100 } },
+        ],
+        responses: {
+          "200": { description: "Changes and nextCursor", content: { "application/json": { schema: { $ref: "#/components/schemas/SyncChangesResponse" } } } },
+          "400": { description: "Missing cursor or x-device-id" },
+          "401": { description: "Unauthorized" },
+        },
+      },
+    },
+    [`${basePath}/sync/ack`]: {
+      post: {
+        summary: "Acknowledge device cursor",
+        tags: ["Sync"],
+        security: [{ bearerAuth: [] }],
+        parameters: [deviceIdParam, idempotencyKeyParam],
+        requestBody: { content: { "application/json": { schema: { $ref: "#/components/schemas/SyncAckRequest" } } } },
+        responses: {
+          "200": { description: "Ack ok", content: { "application/json": { schema: { $ref: "#/components/schemas/SyncAckResponse" } } } },
+          "400": { description: "Missing x-device-id or invalid body" },
+          "401": { description: "Unauthorized" },
+        },
+      },
+    },
+    [`${basePath}/sync/bootstrap`]: {
+      get: {
+        summary: "Initial sync snapshot + cursor",
+        tags: ["Sync"],
+        security: [{ bearerAuth: [] }],
+        parameters: [deviceIdParam],
+        responses: {
+          "200": { description: "Snapshot and cursor", content: { "application/json": { schema: { $ref: "#/components/schemas/SyncBootstrapResponse" } } } },
+          "400": { description: "Missing x-device-id" },
+          "401": { description: "Unauthorized" },
+        },
+      },
+    },
+    [`${basePath}/sync/changes`]: {
+      get: {
+        summary: "Delta changes after cursor",
+        tags: ["Sync"],
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          deviceIdParam,
+          { name: "cursor", in: "query", required: true, schema: { type: "integer", format: "int64" } },
+          { name: "limit", in: "query", schema: { type: "integer", default: 100 } },
+        ],
+        responses: {
+          "200": { description: "Changes and nextCursor", content: { "application/json": { schema: { $ref: "#/components/schemas/SyncChangesResponse" } } } },
+          "400": { description: "Missing cursor or x-device-id" },
+          "401": { description: "Unauthorized" },
+        },
+      },
+    },
+    [`${basePath}/sync/ack`]: {
+      post: {
+        summary: "Acknowledge device cursor",
+        tags: ["Sync"],
+        security: [{ bearerAuth: [] }],
+        parameters: [deviceIdParam, idempotencyKeyParam],
+        requestBody: { content: { "application/json": { schema: { $ref: "#/components/schemas/SyncAckRequest" } } } },
+        responses: {
+          "200": { description: "Ack ok", content: { "application/json": { schema: { $ref: "#/components/schemas/SyncAckResponse" } } } },
+          "400": { description: "Missing x-device-id or invalid body" },
+          "401": { description: "Unauthorized" },
+        },
       },
     },
     [`${basePath}/media/upload-sessions`]: {
