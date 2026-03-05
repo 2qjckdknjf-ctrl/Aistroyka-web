@@ -25,6 +25,7 @@ export type ResourceAction =
   | "reports:read"
   | "admin:read"
   | "admin:write"
+  | "billing:admin"
   | "jobs:process";
 
 /**
@@ -55,6 +56,8 @@ function minRoleForAction(action: ResourceAction): number {
     case "admin:write":
     case "jobs:process":
       return ROLE_ORDER.admin;
+    case "billing:admin":
+      return ROLE_ORDER.owner;
     default:
       return 999;
   }

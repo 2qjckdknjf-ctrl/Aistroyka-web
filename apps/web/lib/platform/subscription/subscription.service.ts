@@ -1,12 +1,19 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getLimitsForTier, DEFAULT_TIER } from "./limits";
 import type { SubscriptionTier, TenantLimits } from "./subscription.types";
+import { getEntitlements, limitsFromEntitlements } from "../billing/entitlements.service";
 
-/** Resolve tenant tier from DB (tenants.plan or subscription table); default FREE. */
+/** Resolve tenant tier: entitlements (source of truth) then tenants.plan; default FREE. */
 export async function getTierForTenant(
   supabase: SupabaseClient,
   tenantId: string
 ): Promise<SubscriptionTier> {
+  const entitlements = await getEntitlements(supabase, tenantId);
+  if (entitlements?.tier) {
+    const t = entitlements.tier.toUpperCase();
+    if (t === "PRO" || t === "ENTERPRISE") return t as SubscriptionTier;
+    return "FREE";
+  }
   const { data, error } = await supabase
     .from("tenants")
     .select("plan")
@@ -18,11 +25,13 @@ export async function getTierForTenant(
   return DEFAULT_TIER;
 }
 
-/** Get full limits for a tenant. Resolves tier then returns limits. */
+/** Get full limits for a tenant. Entitlements override tier defaults. */
 export async function getLimitsForTenant(
   supabase: SupabaseClient,
   tenantId: string
 ): Promise<TenantLimits> {
+  const entitlements = await getEntitlements(supabase, tenantId);
   const tier = await getTierForTenant(supabase, tenantId);
-  return getLimitsForTier(tier);
+  const fallback = getLimitsForTier(tier);
+  return limitsFromEntitlements(entitlements, fallback);
 }
