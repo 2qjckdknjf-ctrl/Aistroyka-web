@@ -7,6 +7,7 @@ import {
   getCachedResponse,
   storeResponse,
 } from "@/lib/platform/idempotency/idempotency.service";
+import { checkRequestBodySize } from "@/lib/api/request-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,8 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const sizeError = checkRequestBodySize(request);
+  if (sizeError) return NextResponse.json({ error: sizeError }, { status: 413 });
   const { id: sessionId } = await params;
   const ctx = await getTenantContextFromRequest(request);
   try {

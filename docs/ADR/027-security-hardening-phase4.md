@@ -1,8 +1,8 @@
 # ADR-027: Security hardening (Phase 4.8)
 
 **Status:** Accepted  
-**Decision:** (1) Media upload request size limit 25MB (Content-Length and file size). (2) Debug/diag endpoints in production require DEBUG_* and request Host in ALLOW_DEBUG_HOSTS. (3) Job process endpoint already protected by tenant + jobs:process scope + rate limit. (4) Login rate-limited and structured-logged; audit_logs not used for login (no tenant pre-auth). (5) CSRF stance documented: same-site cookies; idempotency keys for writes. (6) Security headers centralized in lib/security-headers and verified by unit test.
+**Decision:** Apply strict request body size limit (1 MB) on media-related endpoints (upload-sessions, finalize). Login already has stricter rate limit (Phase 3.7). Job processing endpoint requires authorize(ctx, "jobs:process") and tenant scope. Debug endpoints require DEBUG_* and ALLOW_DEBUG_HOSTS (existing). Document CSRF stance (same-site cookies; no custom token for current same-origin/mobile Bearer usage). Add security headers verification test (expected header names).
 
 **Context:** Phase 4.8 attack surface reduction and abuse mitigation.
 
-**Consequences:** Production debug/diag must set ALLOW_DEBUG_HOSTS explicitly. Large uploads rejected with 413.
+**Consequences:** 413 on oversized media body; debug routes return 404 when not allowed. Security headers are applied in middleware; test documents expectations.
