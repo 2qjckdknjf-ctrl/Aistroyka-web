@@ -1,8 +1,8 @@
-# ADR-026: Data residency foundation (tenant_settings)
+# ADR-026: Data residency foundation
 
 **Status:** Accepted  
-**Decision:** Add `tenant_settings` table with `tenant_id` (PK), `data_residency` (text, e.g. EU/US/default), `created_at`, `updated_at`. Use for governance and documentation only; do not implement multi-database or region routing in Phase 4. Document how to split data later (e.g. per-region DB, routing by tenant_settings.data_residency).
+**Decision:** Add tenant_settings (tenant_id pk, data_residency text, created_at) for metadata only. Values e.g. EU, US, etc. Document how to split later (multi-db or region routing); do not implement multi-db or region routing in Phase 4. Use in governance and docs when referring to tenant preferences.
 
-**Context:** Phase 4.7; enterprise clients may require EU/US data residency; we provide metadata hook without building multi-region infra now.
+**Context:** Phase 4.7 multi-region/data residency; enterprise requirement for future EU/US split.
 
-**Consequences:** Policy engine and runbooks can read data_residency for audit/compliance; actual routing and multi-DB deferred to Phase 5+.
+**Consequences:** Application can read data_residency for display or policy; no routing or replication implemented.
