@@ -13,15 +13,10 @@ Outbox-based push: enqueue to `push_outbox`, drain via `push_send` job. APNS (iO
 
 - **APNS**: `APNS_TEAM_ID`, `APNS_KEY_ID`, `APNS_PRIVATE_KEY` (or `APNS_KEY`), `APNS_BUNDLE_ID`, `APNS_ENV=production|sandbox`. Token-based auth (JWT).
 - **FCM** (Android):
-  - **HTTP v1 (preferred):** `FCM_PROJECT_ID`, `FCM_CLIENT_EMAIL`, `FCM_PRIVATE_KEY` (PEM; env may store with literal `\n`). Optional: `FCM_TOKEN_URI` (default `https://oauth2.googleapis.com/token`). Uses service account OAuth2 JWT; token cached in-memory.
-  - **Legacy:** `FCM_SERVER_KEY`. Used only when HTTP v1 is not configured. Router selects v1 when project_id/client_email/private_key are set, else legacy when `FCM_SERVER_KEY` is set.
-  - If neither is set, provider returns retryable and outbox stays queued for retry.
-
-### Migrating from FCM legacy key to HTTP v1
-
-1. Create a service account in Firebase Console (Project Settings → Service accounts → Generate new private key).
-2. Set `FCM_PROJECT_ID` (Firebase project ID), `FCM_CLIENT_EMAIL` (e.g. `...@...iam.gserviceaccount.com`), `FCM_PRIVATE_KEY` (full PEM; in env vars you may need to escape newlines as `\n`).
-3. Deploy; the router will use HTTP v1. You can remove `FCM_SERVER_KEY` after verifying sends work.
+  - **HTTP v1 (preferred):** `FCM_PROJECT_ID`, `FCM_CLIENT_EMAIL`, `FCM_PRIVATE_KEY` (PEM; env may contain literal `\n` for newlines). Optional: `FCM_TOKEN_URI` (default `https://oauth2.googleapis.com/token`). Uses OAuth2 JWT; token cached in-memory.
+  - **Legacy:** `FCM_SERVER_KEY`. Deprecated; use v1 for new setups.
+  - **Selection:** If v1 env is present (project_id + client_email + private_key), v1 is used; else if `FCM_SERVER_KEY` is set, legacy is used. If neither, provider returns retryable and outbox stays queued for retry.
+  - **Migration from legacy:** Create a service account in Firebase Console → Project Settings → Service accounts → Generate new private key. Set `FCM_PROJECT_ID` (project ID), `FCM_CLIENT_EMAIL` (client_email from JSON), `FCM_PRIVATE_KEY` (private_key from JSON; escape newlines as `\n` if needed). Remove `FCM_SERVER_KEY` after verifying v1 sends.
 
 ## Scheduling
 
