@@ -3,6 +3,7 @@ import createIntlMiddleware from "next-intl/middleware";
 import { updateSession } from "@/lib/supabase/middleware";
 import { getAppUrl } from "@/lib/app-url";
 import { routing } from "@/i18n/routing";
+import { checkLiteAllowList } from "@/lib/api/lite-allow-list";
 
 const intlMiddleware = createIntlMiddleware(routing);
 
@@ -38,9 +39,18 @@ function pathWithoutLocale(pathname: string): { path: string; locale: string } {
 }
 
 export async function middleware(request: NextRequest) {
-  const host = request.headers.get("host") ?? "";
+  const pathname = request.nextUrl.pathname;
   const isProduction = process.env.NODE_ENV === "production";
 
+  if (pathname.startsWith("/api/v1")) {
+    const forbidden = checkLiteAllowList(pathname, request.headers.get("x-client"));
+    if (forbidden) {
+      return NextResponse.json(forbidden.body, { status: 403 });
+    }
+    return NextResponse.next();
+  }
+
+  const host = request.headers.get("host") ?? "";
   if (isProduction && host.startsWith("www.")) {
     const url = request.nextUrl;
     const target = new URL(url.pathname + url.search, getAppUrl());
@@ -48,7 +58,6 @@ export async function middleware(request: NextRequest) {
     return applySecurityHeaders(redirect, isProduction);
   }
 
-  const pathname = request.nextUrl.pathname;
   if (pathname === "/dashboard" || pathname === "/dashboard/") {
     const redir = NextResponse.redirect(new URL("/en/dashboard", request.url), 308);
     return applySecurityHeaders(redir, process.env.NODE_ENV === "production");
@@ -96,5 +105,6 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     "/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/api/v1/:path*",
   ],
 };
