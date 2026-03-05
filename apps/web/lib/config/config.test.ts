@@ -67,12 +67,17 @@ describe("config", () => {
       vi.stubEnv("DEBUG_AUTH", undefined);
       expect(getDebugConfig().debugAuth).toBe(true);
     });
-    it("debugAuth is false in production unless DEBUG_AUTH=true", () => {
+    it("debugAuth is false in production unless DEBUG_AUTH or ENABLE_DIAG_ROUTES", () => {
       vi.stubEnv("NODE_ENV", "production");
       vi.stubEnv("DEBUG_AUTH", "false");
+      vi.stubEnv("ENABLE_DIAG_ROUTES", undefined);
       expect(getDebugConfig().debugAuth).toBe(false);
       vi.stubEnv("DEBUG_AUTH", "true");
       expect(getDebugConfig().debugAuth).toBe(true);
+      vi.stubEnv("DEBUG_AUTH", "false");
+      vi.stubEnv("ENABLE_DIAG_ROUTES", "true");
+      expect(getDebugConfig().debugAuth).toBe(true);
+      expect(getDebugConfig().debugDiag).toBe(true);
     });
   });
 
@@ -93,6 +98,19 @@ describe("config", () => {
       vi.stubEnv("ALLOW_DEBUG_HOSTS", "example.com");
       const req = new Request("https://evil.com/api/_debug/auth", { headers: { host: "evil.com" } });
       expect(isDebugAllowedForRequest(req)).toBe(false);
+    });
+    it("in development with ALLOW_DEBUG_HOSTS set enforces host allowlist", () => {
+      vi.stubEnv("NODE_ENV", "development");
+      vi.stubEnv("ALLOW_DEBUG_HOSTS", "localhost,staging.example.com");
+      const reqOk = new Request("https://localhost/", { headers: { host: "localhost" } });
+      expect(isDebugAllowedForRequest(reqOk)).toBe(true);
+      const reqBad = new Request("https://other.example.com/", { headers: { host: "other.example.com" } });
+      expect(isDebugAllowedForRequest(reqBad)).toBe(false);
+    });
+    it("in development with ALLOW_DEBUG_HOSTS unset returns true (no request)", () => {
+      vi.stubEnv("NODE_ENV", "development");
+      vi.stubEnv("ALLOW_DEBUG_HOSTS", "");
+      expect(isDebugAllowedForRequest(undefined)).toBe(true);
     });
   });
 

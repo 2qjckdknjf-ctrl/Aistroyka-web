@@ -11,25 +11,26 @@ export interface DebugConfig {
 export function getDebugConfig(): DebugConfig {
   const nodeEnv = process.env.NODE_ENV ?? "development";
   const isProduction = nodeEnv === "production";
+  const enableDiagRoutes = process.env.ENABLE_DIAG_ROUTES === "true";
   return {
-    debugAuth: process.env.DEBUG_AUTH === "true" || !isProduction,
-    debugDiag: process.env.DEBUG_DIAG === "true" || !isProduction,
+    debugAuth: process.env.DEBUG_AUTH === "true" || enableDiagRoutes || !isProduction,
+    debugDiag: process.env.DEBUG_DIAG === "true" || enableDiagRoutes || !isProduction,
   };
 }
 
 const MAX_DEBUG_HOST_LENGTH = 256;
 
-/** In production: true only if DEBUG_* is set AND request host is in ALLOW_DEBUG_HOSTS (comma-separated). */
+/**
+ * True only when request host is allowed. When ALLOW_DEBUG_HOSTS is set, enforce it in all
+ * environments (including development/staging). When unset: production => false, non-production => true.
+ */
 export function isDebugAllowedForRequest(request?: Request): boolean {
-  const cfg = getDebugConfig();
+  const allowlist = (process.env.ALLOW_DEBUG_HOSTS ?? "").trim();
   const nodeEnv = process.env.NODE_ENV ?? "development";
   const isProduction = nodeEnv === "production";
-  if (!isProduction) {
-    return true;
-  }
-  const allowlist = process.env.ALLOW_DEBUG_HOSTS ?? "";
-  if (!allowlist.trim()) {
-    return false;
+
+  if (!allowlist) {
+    return !isProduction;
   }
   const host = request?.headers.get("host") ?? "";
   if (!host || host.length > MAX_DEBUG_HOST_LENGTH) {
