@@ -13,6 +13,7 @@ export const queueDb: IQueueAdapter = {
       payload: params.payload,
       trace_id: params.trace_id,
       max_attempts: params.max_attempts,
+      dedupe_key: params.dedupe_key ?? undefined,
     });
     return job as JobRecord | null;
   },

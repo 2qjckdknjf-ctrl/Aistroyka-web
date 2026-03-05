@@ -44,6 +44,7 @@ export interface Job {
   trace_id: string | null;
   created_at: string;
   updated_at: string;
+  dedupe_key?: string | null;
 }
 
 export type JobEventType = "queued" | "locked" | "retry" | "success" | "failed" | "dead";

@@ -8,28 +8,38 @@ export interface EnqueueParams {
   payload: Record<string, unknown>;
   trace_id: string | null;
   max_attempts?: number;
+  dedupe_key?: string | null;
 }
 
-/** Enqueue a job. Use tenant-scoped client from route. */
+/** Enqueue a job. When dedupe_key is set, returns existing job if one exists (idempotent). */
 export async function enqueue(
   supabase: SupabaseClient,
   params: EnqueueParams
 ): Promise<Job | null> {
-  const { data, error } = await supabase
-    .from("jobs")
-    .insert({
-      tenant_id: params.tenant_id,
-      user_id: params.user_id,
-      type: params.type,
-      payload: params.payload,
-      trace_id: params.trace_id,
-      status: "queued",
-      max_attempts: params.max_attempts ?? 5,
-    })
-    .select()
-    .single();
-  if (error || !data) return null;
-  return data as Job;
+  const row = {
+    tenant_id: params.tenant_id,
+    user_id: params.user_id,
+    type: params.type,
+    payload: params.payload,
+    trace_id: params.trace_id,
+    status: "queued",
+    max_attempts: params.max_attempts ?? 5,
+    dedupe_key: params.dedupe_key ?? null,
+  };
+  const { data, error } = await supabase.from("jobs").insert(row).select().single();
+  if (!error && data) return data as Job;
+  if (error?.code === "23505" && params.dedupe_key) {
+    const { data: existing } = await supabase
+      .from("jobs")
+      .select("*")
+      .eq("tenant_id", params.tenant_id)
+      .eq("dedupe_key", params.dedupe_key)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    return existing as Job | null;
+  }
+  return null;
 }
 
 /** Atomically claim up to limit jobs (optionally for one tenant). Use service_role client. */

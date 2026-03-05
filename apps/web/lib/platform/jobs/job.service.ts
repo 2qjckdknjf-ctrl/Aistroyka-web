@@ -19,9 +19,10 @@ export interface EnqueueInput {
   payload: Record<string, unknown>;
   trace_id: string | null;
   max_attempts?: number;
+  dedupe_key?: string | null;
 }
 
-/** Enqueue one job; emits queued event. */
+/** Enqueue one job (idempotent when dedupe_key is set); emits queued event. */
 export async function enqueueJob(
   supabase: SupabaseClient,
   input: EnqueueInput
@@ -33,6 +34,7 @@ export async function enqueueJob(
     payload: input.payload,
     trace_id: input.trace_id,
     max_attempts: input.max_attempts,
+    dedupe_key: input.dedupe_key,
   });
   if (job) await repo.emitEvent(supabase, job.id, "queued", {});
   return job;
