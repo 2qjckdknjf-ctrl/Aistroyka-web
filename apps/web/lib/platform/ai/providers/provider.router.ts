@@ -1,52 +1,34 @@
 /**
- * Router: select provider by tenant preference + tier + circuit state, invoke with fallback.
- * Uses tenant_feature_flags for ai_provider_preference and ai_fallback_enabled.
+ * Router: select provider by tier + circuit state, invoke with fallback.
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { canInvoke, recordSuccess, recordFailure } from "./circuit-breaker";
-import { isRetryableError } from "./provider.errors";
+import { isRetryableProviderError } from "./provider.errors";
 import { openaiProvider } from "./provider.openai";
 import { anthropicProvider } from "./provider.anthropic";
 import { geminiProvider } from "./provider.gemini";
-import { getTenantAiPreferences, orderProviderNames } from "@/lib/platform/ai/routing/tenant-ai-preferences";
-import { getModelForProvider } from "@/lib/platform/ai/routing/models";
 import type { VisionResult, VisionOptions } from "./provider.interface";
 
-const PROVIDERS_BY_NAME: Record<string, { name: string; invokeVision: (url: string, opts?: VisionOptions) => Promise<VisionResult | null> }> = {
-  openai: openaiProvider,
-  anthropic: anthropicProvider,
-  gemini: geminiProvider,
-};
+const PROVIDERS = [openaiProvider, anthropicProvider, geminiProvider];
 
-const DEFAULT_ORDER = ["openai", "anthropic", "gemini"];
-
-export interface RouterOptions extends VisionOptions {
-  tier?: string;
-  model?: string;
-  /** When set, tenant_feature_flags are used for ai_provider_preference and ai_fallback_enabled. */
-  tenantId?: string | null;
+/** Select ordered providers for tier (enterprise may prefer different order). Fallback: openai. */
+function providersForTier(_tier: string): typeof PROVIDERS {
+  return PROVIDERS;
 }
 
 export async function invokeVisionWithRouter(
   supabase: SupabaseClient,
   imageUrl: string,
-  options: RouterOptions
+  options: { tier?: string; model?: string } & VisionOptions
 ): Promise<VisionResult | null> {
-  const tier = (options.tier ?? "free").toLowerCase();
-  const prefs = await getTenantAiPreferences(supabase, options.tenantId ?? null);
-  const names = orderProviderNames(prefs.preferredProvider, DEFAULT_ORDER);
-  const candidateNames = prefs.fallbackEnabled ? names : names.slice(0, 1);
-
-  for (const name of candidateNames) {
-    const provider = PROVIDERS_BY_NAME[name];
-    if (!provider) continue;
+  const tier = options.tier ?? "free";
+  const ordered = providersForTier(tier);
+  for (const provider of ordered) {
     if (!(await canInvoke(supabase, provider.name))) continue;
-
-    const model = options.model ?? getModelForProvider(provider.name, tier);
     try {
       const result = await provider.invokeVision(imageUrl, {
-        model,
+        model: options.model,
         maxTokens: options.maxTokens,
       });
       if (result) {
@@ -55,7 +37,7 @@ export async function invokeVisionWithRouter(
       }
     } catch (err) {
       await recordFailure(supabase, provider.name);
-      if (!isRetryableError(err)) break;
+      if (!isRetryableProviderError(err)) return null;
     }
   }
   return null;
