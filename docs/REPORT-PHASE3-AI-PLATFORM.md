@@ -4,7 +4,7 @@
 **Phase:** AI Platform (multi-provider, routing, governance, observability, construction brain alignment).  
 **Scope:** Platform-level AI hardening and documentation. No UI features. No product expansion.
 
-**Status:** In progress.
+**Status:** Complete.
 
 ---
 
@@ -123,11 +123,35 @@
 
 ---
 
-## Stage 7 — Final verification & report
+## Stage 7 — Final verification & report (done)
 
-*To be filled after verification.*
+- **Verification:** `npm install --legacy-peer-deps`, `npm test --run` (246 tests), `npm run build`, `npm run cf:build` — all passed.
+- **Type fixes:** policy.service (piiResult.rule_hit fallback), ai.service (traceId/userId null coalesce for log payload).
 
 ---
+
+## Summary
+
+| Stage | Deliverable |
+|-------|-------------|
+| 0 | Audit; report skeleton |
+| 1 | Anthropic + Gemini real providers; provider.errors; cost estimator; route 503 from any provider |
+| 2 | Router: tenant preferences, model tier mapping, fallback, circuit breaker; routing tests |
+| 3 | Policy: decisionId, audit, PII strict hook; 403 code ai_policy_denied |
+| 4 | Budget: 402 ai_budget_exceeded; soft alert ai_budget_soft_exceeded |
+| 5 | Structured log ai.invoke; provider health in DB |
+| 6 | ADR-067; construction-brain re-exports; docs/ai/AI_PLATFORM.md |
+
+## Files touched (main)
+
+- **Providers:** provider.errors.ts, provider.anthropic.ts, provider.gemini.ts, provider.router.ts, index.ts; provider.*.test.ts, provider.errors.test.ts, provider.router.test.ts.
+- **Routing:** routing/models.ts, routing/tenant-ai-preferences.ts.
+- **Governance:** policy.types.ts, policy.service.ts, policy.service.test.ts.
+- **Usage/cost:** ai-usage.service.ts, cost-estimator.ts, ai-usage.service.test.ts; alert.service.ts (AlertType).
+- **AI service:** ai.service.ts, ai.service.test.ts.
+- **Route:** app/api/ai/analyze-image/route.ts, route.test.ts.
+- **Construction brain:** lib/ai/construction-brain/index.ts.
+- **Docs:** REPORT-PHASE3-AI-PLATFORM.md, ADR/067-ai-platform-routing-governance.md, docs/ai/AI_PLATFORM.md.
 
 ## Env vars (reference)
 
@@ -136,7 +160,14 @@
 
 ---
 
+## Observability sample (no secrets)
+
+```json
+{"event":"ai.invoke","tenantId":"...","userId":"...","traceId":"...","providerSelected":"openai","modelSelected":"gpt-4o","latencyMs":1200,"costEstUsd":0.005,"tokensIn":500,"tokensOut":300,"policyDecisionId":"...","outcome":"success","ts":"2026-03-05T..."}
+```
+
 ## Follow-ups (post–Phase 3)
 
 - Phase 4: mobile push / offline.
 - Phase 5: dashboard (e.g. provider health, budget usage).
+- Optional: in-process metrics (counters/histograms) when a metrics backend is adopted; log-based metrics can be used until then.

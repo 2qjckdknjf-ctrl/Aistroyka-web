@@ -157,8 +157,8 @@ export async function analyzeImage(
   logAiInvoke({
     event: "ai.invoke",
     tenantId: ctx.tenantId,
-    userId: ctx.userId,
-    traceId: ctx.traceId,
+    userId: ctx.userId ?? null,
+    traceId: ctx.traceId ?? null,
     providerSelected: visionResult.providerUsed,
     modelSelected: visionResult.modelUsed,
     latencyMs: durationMs,

@@ -31,7 +31,7 @@ export async function runPolicy(
     if (!piiResult.allowed) {
       result = {
         decision: "block",
-        rule_hits: [...result.rule_hits, piiResult.rule_hit],
+        rule_hits: [...result.rule_hits, piiResult.rule_hit ?? "pii_strict_block"],
         model_tier: result.model_tier,
       };
     }
