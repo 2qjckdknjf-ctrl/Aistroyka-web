@@ -41,7 +41,10 @@ export async function POST(
     mime_type: typeof body.mime_type === "string" ? body.mime_type : undefined,
     size_bytes: typeof body.size_bytes === "number" ? body.size_bytes : undefined,
   });
-  if (!ok) return NextResponse.json({ error }, { status: 403 });
+  if (!ok) {
+    const status = error === "media_object_missing" ? 400 : 403;
+    return NextResponse.json({ error }, { status });
+  }
   const response = { ok: true };
   await storeLiteIdempotency(request, ctx, ROUTE_KEY, response, 200);
   return NextResponse.json(response);
