@@ -63,6 +63,40 @@ function rawToAnalysisResult(raw: Record<string, unknown>): AnalysisResult {
  * Returns the same AnalysisResult shape as the public API. Throws on policy block or provider failure.
  * When tenantId is null (unauthenticated), policy and usage recording are skipped.
  */
+function logAiInvoke(payload: {
+  event: string;
+  tenantId: string | null;
+  userId: string | null;
+  traceId: string | null;
+  providerSelected: string;
+  modelSelected: string;
+  latencyMs: number;
+  costEstUsd: number;
+  tokensIn: number;
+  tokensOut: number;
+  policyDecisionId?: string | null;
+  outcome: "success" | "failure";
+}) {
+  if (process.env.NODE_ENV === "test") return;
+  console.log(
+    JSON.stringify({
+      event: payload.event,
+      tenantId: payload.tenantId,
+      userId: payload.userId,
+      traceId: payload.traceId,
+      providerSelected: payload.providerSelected,
+      modelSelected: payload.modelSelected,
+      latencyMs: payload.latencyMs,
+      costEstUsd: payload.costEstUsd,
+      tokensIn: payload.tokensIn,
+      tokensOut: payload.tokensOut,
+      policyDecisionId: payload.policyDecisionId ?? null,
+      outcome: payload.outcome,
+      ts: new Date().toISOString(),
+    })
+  );
+}
+
 export async function analyzeImage(
   admin: SupabaseClient,
   ctx: { tenantId: string | null; userId: string | null; subscriptionTier?: string | null; traceId?: string | null },
@@ -70,6 +104,7 @@ export async function analyzeImage(
 ): Promise<AnalysisResult> {
   const startMs = Date.now();
   const tier = ctx.subscriptionTier ?? "free";
+  let policyDecisionId: string | null = null;
 
   if (ctx.tenantId) {
     const policyResult = await runPolicy(
@@ -83,6 +118,7 @@ export async function analyzeImage(
       },
       ctx.traceId ?? null
     );
+    policyDecisionId = policyResult.decisionId ?? null;
 
     if (policyResult.decision === "block") {
       throw new AIPolicyBlockedError("AI policy blocked");
@@ -113,11 +149,27 @@ export async function analyzeImage(
   result = { ...result, risk_level: calibrateRiskLevel(result) };
 
   const durationMs = Date.now() - startMs;
+  const usage = visionResult.usage;
+  const ti = typeof usage?.prompt_tokens === "number" ? usage.prompt_tokens : 500;
+  const to = typeof usage?.completion_tokens === "number" ? usage.completion_tokens : 300;
+  const costEstUsd = estimateCostUsd(visionResult.modelUsed, ti, to);
+
+  logAiInvoke({
+    event: "ai.invoke",
+    tenantId: ctx.tenantId,
+    userId: ctx.userId,
+    traceId: ctx.traceId,
+    providerSelected: visionResult.providerUsed,
+    modelSelected: visionResult.modelUsed,
+    latencyMs: durationMs,
+    costEstUsd,
+    tokensIn: ti,
+    tokensOut: to,
+    policyDecisionId,
+    outcome: "success",
+  });
+
   if (ctx.tenantId) {
-    const usage = visionResult.usage;
-    const ti = typeof usage?.prompt_tokens === "number" ? usage.prompt_tokens : 500;
-    const to = typeof usage?.completion_tokens === "number" ? usage.completion_tokens : 300;
-    const cost = estimateCostUsd(visionResult.modelUsed, ti, to);
     await recordUsage(admin, {
       tenant_id: ctx.tenantId,
       user_id: ctx.userId ?? null,
@@ -127,7 +179,7 @@ export async function analyzeImage(
       tokens_input: ti,
       tokens_output: to,
       tokens_total: ti + to,
-      cost_usd: cost,
+      cost_usd: costEstUsd,
       status: "success",
       duration_ms: durationMs,
     });

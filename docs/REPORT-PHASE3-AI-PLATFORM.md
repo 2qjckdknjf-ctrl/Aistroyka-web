@@ -66,33 +66,52 @@
 
 ---
 
-## Stage 1 — Provider interfaces + real providers
+## Stage 1 — Provider interfaces + real providers (done)
 
-*To be filled after implementation.*
-
----
-
-## Stage 2 — Router: model + provider routing, fallback, tenant overrides
-
-*To be filled after implementation.*
-
----
-
-## Stage 3 — Policy Engine: decisions + audit trail
-
-*To be filled after implementation.*
+- **Provider interface:** `invokeVision(imageUrl, options?)` → `VisionResult | null`; consistent errors via `ProviderRequestError` (timeout, rate_limit, auth, invalid_input, server_error) and `ProviderUnavailableError`; `isRetryableProviderError()` for router.
+- **Anthropic:** `provider.anthropic.ts` — `ANTHROPIC_API_KEY`, `ANTHROPIC_VISION_MODEL` (default `claude-sonnet-4-20250514`), Messages API with image URL, timeout 85s, response mapped to `VisionResult`. Missing key → returns null.
+- **Gemini:** `provider.gemini.ts` — `GOOGLE_AI_API_KEY` or `GEMINI_API_KEY`, `GEMINI_VISION_MODEL` (default `gemini-1.5-flash`), fetches image then `generateContent` with inline_data, timeout 85s. Missing key → returns null.
+- **Router:** Uses real providers; on failure calls `recordFailure` and continues only if `isRetryableProviderError(err)` (stops on invalid_input/auth).
+- **Cost estimator:** Anthropic and Gemini model prices added; `getPricePer1k(model)` for claude-* / gemini-* fallbacks.
+- **Route:** 503 when `!isAnyVisionProviderConfigured()` (any of OpenAI/Anthropic/Gemini key set).
+- **Tests:** provider.anthropic.test.ts, provider.gemini.test.ts, provider.errors.test.ts; route test updated for 503 message.
 
 ---
 
-## Stage 4 — Cost governance: budgets + alerts
+## Stage 2 — Router: model + provider routing, fallback, tenant overrides (done)
 
-*To be filled after implementation.*
+- **Source of truth:** `tenant_feature_flags`: `ai_provider_preference` (variant: openai|anthropic|gemini), `ai_model_tier` (variant: low|standard|high), `ai_fallback_enabled` (enabled: boolean).
+- **routing/models.ts:** `ModelTier` → provider model names (e.g. low→gpt-4o-mini, standard→gpt-4o); `modelForProviderAndTier(provider, tier)`.
+- **routing/tenant-ai-preferences.ts:** `getTenantAIPreferences(supabase, tenantId)` reads flags, returns `{ providerPreference?, modelTier?, fallbackEnabled }`.
+- **Router:** Loads preferences; `orderProviders(preference, fallbackEnabled)` puts preferred first, then rest (or preferred only if fallback disabled); resolves model per provider from tier; passes `tenantId`/`requestId` from AIService; circuit breaker + retryable logic unchanged.
+- **Tests:** provider.router.test.ts — default order, tenant preference + fallback, circuit breaker skip, all fail, model tier passed.
 
 ---
 
-## Stage 5 — Observability
+## Stage 3 — Policy Engine: decisions + audit trail (done)
 
-*To be filled after implementation.*
+- **Decision shape:** `PolicyResult` includes `decisionId` (from `ai_policy_decisions.id`); `recordPolicyDecision` returns inserted id.
+- **Audit:** Every `runPolicy` call persists to `ai_policy_decisions` (tenant_id, trace_id, decision, rule_hits).
+- **PII hook:** When `privacy_settings.pii_mode === "strict"` and `image_url` is set, allow only hosts in `AI_TRUSTED_IMAGE_HOSTS` (comma-separated); else block with rule_hit `pii_strict_untrusted_image_host` or `pii_strict_invalid_image_url`.
+- **AIService:** Passes `image_url` in policy context; on deny throws `AIPolicyBlockedError`; route returns 403 with `code: "ai_policy_denied"`.
+- **Tests:** policy.service.test.ts (allow/block, decisionId, PII strict trusted/untrusted host, recordPolicyDecision).
+
+---
+
+## Stage 4 — Cost governance: budgets + alerts (done)
+
+- **Hard cap:** Existing `checkQuota` uses `monthly_ai_budget_usd` (tier limits); on exceed returns 402 with **code "ai_budget_exceeded"** and creates alert type **ai_budget_exceeded** (critical).
+- **Soft alert:** `checkBudgetAlert(supabase, tenantId, estimatedCostUsd)` — when usage crosses 80% of monthly budget, creates alert type **ai_budget_soft_exceeded** (warn). Called from analyze-image route after checkQuota when allowed.
+- **Alert types:** Extended `AlertType` in `lib/sre/alert.service.ts` with `ai_budget_soft_exceeded`, `ai_budget_exceeded`.
+- **Tests:** ai-usage.service.test.ts updated (mock createAlert; expect message to contain "budget"; checkBudgetAlert under threshold).
+
+---
+
+## Stage 5 — Observability (done)
+
+- **Structured logging:** AIService logs one structured event per successful AI call: `event="ai.invoke"`, `tenantId`, `userId`, `traceId`, `providerSelected`, `modelSelected`, `latencyMs`, `costEstUsd`, `tokensIn`, `tokensOut`, `policyDecisionId`, `outcome`, `ts`. No PII; no image URLs. Skipped when `NODE_ENV=test`.
+- **Provider health:** Circuit breaker already writes to `ai_provider_health`; `canInvoke`/`recordSuccess`/`recordFailure` used by router. Queryable by admin (existing policies).
+- **Metrics:** No in-process counters/histograms in this codebase; metrics.service queries tenant_daily_metrics/ai_usage for dashboards. Structured logs provide the data for future metric pipelines (e.g. log-based metrics in Cloudflare).
 
 ---
 
