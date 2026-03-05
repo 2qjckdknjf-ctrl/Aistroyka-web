@@ -1,0 +1,10 @@
+# Phase 3 — Runtime smoke (local)
+# 2026-03-05
+# Server: npm run start from apps/web (Next.js 14.2.18)
+
+GET /            307 (redirect to locale)
+GET /en/login    200
+GET /api/health  200
+GET /api/v1/health 200
+
+Result: PASS. Key routes and health endpoints respond.

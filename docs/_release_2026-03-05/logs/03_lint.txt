@@ -1,0 +1,9 @@
+
+> AISTROYKA-WEB-CF-CHECK@0.1.0 lint
+> cd apps/web && npm run lint
+
+
+> AISTROYKA-WEB-CF-CHECK@0.1.0 lint
+> next lint
+
+✔ No ESLint warnings or errors

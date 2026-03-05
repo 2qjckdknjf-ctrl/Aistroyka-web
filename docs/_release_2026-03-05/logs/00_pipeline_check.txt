@@ -1,0 +1,20 @@
+# Pipeline check — Vercel-safe
+# 2026-03-05
+
+## Root package.json scripts
+- "build": "cd apps/web && npm run build"  -> delegates to apps/web
+- CONFIRMED: root build runs apps/web build
+
+## apps/web package.json scripts
+- "build": "next build"
+- CONFIRMED: standard Next build (Vercel-compatible)
+
+## ESLint
+- Root .eslintrc.json: extends "next/core-web-vitals"
+- apps/web: uses next lint (eslint-config-next)
+- NOTE: If lint fails with plugin conflict, root should use eslint:recommended + ignorePatterns (per BUILD_STABILIZATION_REPORT).
+
+## OpenNext
+- Not in dependencies (removed in stabilization). cf:build/cf:deploy scripts remain; require re-adding @opennextjs/cloudflare for CF.
+
+RESULT: Pipeline is Vercel-safe. Default build = next build from apps/web.

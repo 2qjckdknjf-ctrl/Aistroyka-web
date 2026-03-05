@@ -1,0 +1,18 @@
+AISTROYKA-WEB-CF-CHECK@0.1.0 /Users/alex/Projects/AISTROYKA
++-- @emnapi/runtime@1.8.1 extraneous
++-- @supabase/ssr@0.5.2
++-- @supabase/supabase-js@2.98.0
++-- @types/node@22.19.13
++-- @types/react-dom@18.3.7
++-- @types/react@18.3.28
++-- autoprefixer@10.4.27
++-- eslint-config-next@14.2.18
++-- eslint@8.57.1
++-- next@14.2.18
++-- postcss@8.5.8
++-- react-dom@18.3.1
++-- react@18.3.1
++-- tailwindcss@3.4.19
++-- typescript@5.9.3
+`-- wrangler@4.70.0
+

@@ -1,0 +1,19 @@
+# Phase 1 — Vercel build attempt
+# 2026-03-05
+
+## vercel link (from repo root)
+Result: Error: No existing credentials found. Please run `vercel login` or pass "--token"
+-> Cannot link without Vercel credentials (user must run vercel login or set VERCEL_TOKEN).
+
+## vercel build (from apps/web)
+Command: cd apps/web && npx vercel build
+Result: Exit 1
+Output: No Project Settings found locally. Run `vercel pull --yes` to retrieve them. In non-interactive mode, set VERCEL_TOKEN for authentication.
+
+## To get npx vercel build green (operator steps)
+1. Run: vercel login
+2. From repo root: npx vercel link (choose existing project or create)
+3. npx vercel pull --yes
+4. cd apps/web && npx vercel build
+
+Vercel production deploy uses same pipeline: Root Directory = apps/web, Build Command = npm run build (next build). So npm run build success is the critical gate; vercel build locally replicates that with Vercel env.

@@ -1,0 +1,108 @@
+=== node npm ===
+v20.20.0
+10.8.2
+=== root package.json ===
+{
+  "name": "AISTROYKA-WEB-CF-CHECK",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "cd apps/web && npm run dev",
+    "build": "cd apps/web && npm run cf:build",
+    "start": "cd apps/web && npm run start",
+    "cf:build": "cd apps/web && npm run cf:build",
+    "cf:deploy": "cd apps/web && npm run cf:deploy",
+    "lint": "cd apps/web && npm run lint"
+  },
+  "dependencies": {
+    "@opennextjs/cloudflare": "^1.16.4",
+    "@supabase/ssr": "^0.5.2",
+    "@supabase/supabase-js": "^2.47.10",
+    "next": "14.2.18",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "14.2.18",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.15",
+    "typescript": "^5.6.3",
+    "wrangler": "^4.67.0"
+  }
+}
+=== apps/web package.json ===
+{
+  "name": "AISTROYKA-WEB-CF-CHECK",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "check:design": "node scripts/check-raw-colors.mjs",
+    "test": "vitest run --maxWorkers=1",
+    "e2e": "playwright test",
+    "prepare": "husky",
+    "cf:build": "opennextjs-cloudflare build --dangerouslyUseUnsupportedNextVersion",
+    "cf:deploy": "wrangler deploy",
+    "cf:deploy:dev": "wrangler deploy --env dev",
+    "cf:deploy:staging": "wrangler deploy --env staging",
+    "cf:deploy:prod": "wrangler deploy --env production",
+    "cf:secrets": "./scripts/set-cf-secrets.sh",
+    "cf:secrets:staging": "./scripts/set-cf-secrets.sh staging",
+    "cf:secrets:prod": "./scripts/set-cf-secrets.sh production",
+    "deploy": "npm run cf:build && npm run cf:deploy",
+    "deploy:staging": "npm run cf:build && npm run cf:deploy:staging",
+    "deploy:prod": "npm run cf:build && npm run cf:deploy:prod",
+    "supabase:auth-urls": "node scripts/set-supabase-auth-urls.mjs",
+    "cf:fix-domain": "node scripts/cf-fix-domain-aistroyka.mjs",
+    "cf:dns-setup": "node scripts/cf-dns-setup-aistroyka.mjs",
+    "supabase:check-storage": "node scripts/check-supabase-storage.mjs",
+    "db:migrate": "node scripts/run-migrations.mjs",
+    "env:setup": "./scripts/ensure-env-local.sh",
+    "smoke:auth": "curl -sS http://localhost:3000/api/health/auth"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": "eslint --fix"
+  },
+  "dependencies": {
+    "@aistroyka/contracts": "file:../../packages/contracts",
+    "@opennextjs/cloudflare": "^1.16.4",
+    "@supabase/ssr": "^0.5.2",
+    "@supabase/supabase-js": "^2.47.10",
+    "@tanstack/react-query": "^5.90.21",
+    "@tanstack/react-query-devtools": "^5.91.3",
+    "next": "14.2.18",
+    "next-intl": "^4.8.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "stripe": "^14.21.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "@types/node": "^22.9.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "14.2.18",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.5.2",
+    "pg": "^8.18.0",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.15",
+    "typescript": "^5.6.3",
+    "vitest": "^4.0.18",
+    "wrangler": "^4.67.0"
+  }
+}
+=== npm ls next @opennextjs/cloudflare @opennextjs/aws ===
+AISTROYKA-WEB-CF-CHECK@0.1.0 /Users/alex/Projects/AISTROYKA
+`-- next@14.2.18
+

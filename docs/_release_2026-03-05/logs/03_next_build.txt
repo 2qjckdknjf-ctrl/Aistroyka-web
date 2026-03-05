@@ -1,0 +1,196 @@
+
+> AISTROYKA-WEB-CF-CHECK@0.1.0 build
+> cd apps/web && npm run build
+
+
+> AISTROYKA-WEB-CF-CHECK@0.1.0 build
+> next build
+
+  ▲ Next.js 14.2.18
+  - Environments: .env.production
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/87) ...
+   Generating static pages (21/87) 
+   Generating static pages (43/87) 
+   Generating static pages (65/87) 
+ ✓ Generating static pages (87/87)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                      Size     First Load JS
+┌ ƒ /                                            164 B          87.3 kB
+├ ƒ /_not-found                                  164 B          87.3 kB
+├ ● /[locale]                                    164 B          87.3 kB
+├   ├ /ru
+├   ├ /en
+├   ├ /es
+├   └ /it
+├ ● /[locale]/admin                              2.91 kB        90.1 kB
+├   ├ /ru/admin
+├   ├ /en/admin
+├   ├ /es/admin
+├   └ /it/admin
+├ ● /[locale]/admin/ai                           2.04 kB         180 kB
+├   ├ /ru/admin/ai
+├   ├ /en/admin/ai
+├   ├ /es/admin/ai
+├   └ /it/admin/ai
+├ ● /[locale]/admin/ai/requests                  3.38 kB         178 kB
+├   ├ /ru/admin/ai/requests
+├   ├ /en/admin/ai/requests
+├   ├ /es/admin/ai/requests
+├   └ /it/admin/ai/requests
+├ ● /[locale]/admin/ai/security                  4.19 kB         179 kB
+├   ├ /ru/admin/ai/security
+├   ├ /en/admin/ai/security
+├   ├ /es/admin/ai/security
+├   └ /it/admin/ai/security
+├ ● /[locale]/admin/governance                   5.2 kB          114 kB
+├   ├ /ru/admin/governance
+├   ├ /en/admin/governance
+├   ├ /es/admin/governance
+├   └ /it/admin/governance
+├ ● /[locale]/admin/system                       2.78 kB         109 kB
+├   ├ /ru/admin/system
+├   ├ /en/admin/system
+├   ├ /es/admin/system
+├   └ /it/admin/system
+├ ● /[locale]/admin/trust                        3.63 kB         113 kB
+├   ├ /ru/admin/trust
+├   ├ /en/admin/trust
+├   ├ /es/admin/trust
+├   └ /it/admin/trust
+├ ● /[locale]/billing                            2.46 kB        89.6 kB
+├   ├ /ru/billing
+├   ├ /en/billing
+├   ├ /es/billing
+├   └ /it/billing
+├ ● /[locale]/dashboard                          2.67 kB         181 kB
+├   ├ /ru/dashboard
+├   ├ /en/dashboard
+├   ├ /es/dashboard
+├   └ /it/dashboard
+├ ● /[locale]/invite/accept                      2.73 kB         166 kB
+├   ├ /ru/invite/accept
+├   ├ /en/invite/accept
+├   ├ /es/invite/accept
+├   └ /it/invite/accept
+├ ● /[locale]/login                              5.9 kB          115 kB
+├   ├ /ru/login
+├   ├ /en/login
+├   ├ /es/login
+├   └ /it/login
+├ ● /[locale]/portfolio                          6.56 kB         113 kB
+├   ├ /ru/portfolio
+├   ├ /en/portfolio
+├   ├ /es/portfolio
+├   └ /it/portfolio
+├ ● /[locale]/projects                           2.96 kB         181 kB
+├   ├ /ru/projects
+├   ├ /en/projects
+├   ├ /es/projects
+├   └ /it/projects
+├ ƒ /[locale]/projects/[id]                      12.4 kB         196 kB
+├ ƒ /[locale]/projects/[id]/ai                   865 B           188 kB
+├ ● /[locale]/projects/new                       4.73 kB         111 kB
+├   ├ /ru/projects/new
+├   ├ /en/projects/new
+├   ├ /es/projects/new
+├   └ /it/projects/new
+├ ● /[locale]/register                           2.92 kB         169 kB
+├   ├ /ru/register
+├   ├ /en/register
+├   ├ /es/register
+├   └ /it/register
+├ ● /[locale]/smoke                              2.06 kB         141 kB
+├   ├ /ru/smoke
+├   ├ /en/smoke
+├   ├ /es/smoke
+├   └ /it/smoke
+├ ● /[locale]/team                               4.08 kB         103 kB
+├   ├ /ru/team
+├   ├ /en/team
+├   ├ /es/team
+├   └ /it/team
+├ ƒ /api/ai/analyze-image                        0 B                0 B
+├ ƒ /api/analysis/process                        0 B                0 B
+├ ƒ /api/auth/login                              0 B                0 B
+├ ƒ /api/diag/supabase                           0 B                0 B
+├ ƒ /api/health                                  0 B                0 B
+├ ƒ /api/health/auth                             0 B                0 B
+├ ƒ /api/projects                                0 B                0 B
+├ ƒ /api/projects/[id]                           0 B                0 B
+├ ƒ /api/projects/[id]/jobs/[jobId]/trigger      0 B                0 B
+├ ƒ /api/projects/[id]/media/[mediaId]/trigger   0 B                0 B
+├ ƒ /api/projects/[id]/poll-status               0 B                0 B
+├ ƒ /api/projects/[id]/upload                    0 B                0 B
+├ ƒ /api/tenant/accept-invite                    0 B                0 B
+├ ƒ /api/tenant/invitations                      0 B                0 B
+├ ƒ /api/tenant/invite                           0 B                0 B
+├ ƒ /api/tenant/members                          0 B                0 B
+├ ƒ /api/tenant/revoke                           0 B                0 B
+├ ƒ /api/v1/admin/ai/usage                       0 B                0 B
+├ ƒ /api/v1/admin/alerts                         0 B                0 B
+├ ƒ /api/v1/admin/analytics/ai-risk              0 B                0 B
+├ ƒ /api/v1/admin/analytics/ops                  0 B                0 B
+├ ƒ /api/v1/admin/analytics/productivity         0 B                0 B
+├ ƒ /api/v1/admin/anomalies                      0 B                0 B
+├ ƒ /api/v1/admin/audit-logs                     0 B                0 B
+├ ƒ /api/v1/admin/exports                        0 B                0 B
+├ ƒ /api/v1/admin/exports/[id]/status            0 B                0 B
+├ ƒ /api/v1/admin/flags                          0 B                0 B
+├ ƒ /api/v1/admin/jobs                           0 B                0 B
+├ ƒ /api/v1/admin/metrics/overview               0 B                0 B
+├ ƒ /api/v1/admin/privacy/findings               0 B                0 B
+├ ƒ /api/v1/admin/push/test                      0 B                0 B
+├ ƒ /api/v1/admin/security/posture               0 B                0 B
+├ ƒ /api/v1/admin/slo/overview                   0 B                0 B
+├ ƒ /api/v1/admin/slo/tenants/[tenantId]         0 B                0 B
+├ ƒ /api/v1/admin/tenants/[id]/flags             0 B                0 B
+├ ƒ /api/v1/ai/analyze-image                     0 B                0 B
+├ ƒ /api/v1/billing/checkout-session             0 B                0 B
+├ ƒ /api/v1/billing/portal                       0 B                0 B
+├ ƒ /api/v1/billing/webhook                      0 B                0 B
+├ ƒ /api/v1/config                               0 B                0 B
+├ ƒ /api/v1/devices/register                     0 B                0 B
+├ ƒ /api/v1/devices/unregister                   0 B                0 B
+├ ƒ /api/v1/health                               0 B                0 B
+├ ƒ /api/v1/jobs/process                         0 B                0 B
+├ ƒ /api/v1/media/[mediaId]/annotations          0 B                0 B
+├ ƒ /api/v1/media/[mediaId]/annotations/[id]     0 B                0 B
+├ ƒ /api/v1/media/[mediaId]/collab               0 B                0 B
+├ ƒ /api/v1/media/[mediaId]/comments             0 B                0 B
+├ ƒ /api/v1/media/upload-sessions                0 B                0 B
+├ ƒ /api/v1/media/upload-sessions/[id]/finalize  0 B                0 B
+├ ƒ /api/v1/org/metrics/overview                 0 B                0 B
+├ ƒ /api/v1/org/tenants                          0 B                0 B
+├ ƒ /api/v1/projects                             0 B                0 B
+├ ƒ /api/v1/reports/[id]/analysis-status         0 B                0 B
+├ ƒ /api/v1/scim/[...path]                       0 B                0 B
+├ ƒ /api/v1/sync/ack                             0 B                0 B
+├ ƒ /api/v1/sync/bootstrap                       0 B                0 B
+├ ƒ /api/v1/sync/changes                         0 B                0 B
+├ ƒ /api/v1/worker                               0 B                0 B
+├ ƒ /api/v1/worker/day/end                       0 B                0 B
+├ ƒ /api/v1/worker/day/start                     0 B                0 B
+├ ƒ /api/v1/worker/report/add-media              0 B                0 B
+├ ƒ /api/v1/worker/report/create                 0 B                0 B
+├ ƒ /api/v1/worker/report/submit                 0 B                0 B
+├ ƒ /api/v1/worker/sync                          0 B                0 B
+├ ƒ /api/v1/worker/tasks/today                   0 B                0 B
+└ ƒ /dashboard                                   164 B          87.3 kB
++ First Load JS shared by all                    87.2 kB
+  ├ chunks/2117-846c99b37bb00f87.js              31.6 kB
+  ├ chunks/fd9d1056-b9ba270ab280532d.js          53.6 kB
+  └ other shared chunks (total)                  1.95 kB
+
+
+ƒ Middleware                                     86.9 kB
+
+●  (SSG)      prerendered as static HTML (uses getStaticProps)
+ƒ  (Dynamic)  server-rendered on demand
+
