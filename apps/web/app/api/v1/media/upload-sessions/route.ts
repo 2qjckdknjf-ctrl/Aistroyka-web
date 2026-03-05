@@ -3,9 +3,11 @@ import { createClient } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { createUploadSession } from "@/lib/domain/upload-session/upload-session.service";
 import { checkRequestBodySize } from "@/lib/api/request-limit";
+import { requireLiteIdempotency, storeLiteIdempotency } from "@/lib/api/lite-idempotency";
 
 export const dynamic = "force-dynamic";
 
+const ROUTE_KEY = "POST /api/v1/media/upload-sessions";
 const PURPOSES = ["report_before", "report_after", "project_media"] as const;
 
 export async function POST(request: Request) {
@@ -20,6 +22,8 @@ export async function POST(request: Request) {
     }
     throw e;
   }
+  const guard = await requireLiteIdempotency(request, ctx, ROUTE_KEY);
+  if (!guard.ok) return guard.response;
   let body: { purpose?: string } = {};
   try {
     body = await request.json().catch(() => ({}));
@@ -32,5 +36,6 @@ export async function POST(request: Request) {
   const supabase = await createClient();
   const { data, error } = await createUploadSession(supabase, ctx, purpose);
   if (error) return NextResponse.json({ error }, { status: 403 });
+  await storeLiteIdempotency(request, ctx, ROUTE_KEY, { data }, 200);
   return NextResponse.json({ data });
 }

@@ -34,7 +34,7 @@ export async function bootstrap(
   const cursor = await getMaxCursor(supabase, ctx.tenantId);
   return {
     data: {
-      tasks: tasks ?? [],
+      tasks: (tasks ?? []) as unknown as BootstrapResult["data"]["tasks"],
       reports,
       uploadSessions,
     },

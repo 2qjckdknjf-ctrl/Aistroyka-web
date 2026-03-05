@@ -2,8 +2,11 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { addMediaToReport } from "@/lib/domain/reports/report.service";
+import { requireLiteIdempotency, storeLiteIdempotency } from "@/lib/api/lite-idempotency";
 
 export const dynamic = "force-dynamic";
+
+const ROUTE_KEY = "POST /api/v1/worker/report/add-media";
 
 export async function POST(request: Request) {
   const ctx = await getTenantContextFromRequest(request);
@@ -15,6 +18,8 @@ export async function POST(request: Request) {
     }
     throw e;
   }
+  const guard = await requireLiteIdempotency(request, ctx, ROUTE_KEY);
+  if (!guard.ok) return guard.response;
   let body: { report_id: string; media_id?: string; upload_session_id?: string } = { report_id: "" };
   try {
     body = await request.json();
@@ -32,5 +37,7 @@ export async function POST(request: Request) {
     uploadSessionId: body.upload_session_id,
   });
   if (!ok) return NextResponse.json({ error }, { status: 403 });
-  return NextResponse.json({ ok: true });
+  const response = { ok: true };
+  await storeLiteIdempotency(request, ctx, ROUTE_KEY, response, 200);
+  return NextResponse.json(response);
 }

@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { analyzeImage, AIPolicyBlockedError, AIVisionFailedError } from "@/lib/platform/ai/ai.service";
 import { JobPayloadError, JobHandlerError } from "../job.errors";
-import type { Job } from "../job.types";
+import type { Job, JobPayloadAiAnalyzeMedia } from "../job.types";
 import { resolveImageUrl } from "./resolve-image-url";
 import { getTierForTenant } from "@/lib/platform/subscription/subscription.service";
 
@@ -13,11 +13,15 @@ export async function handleAiAnalyzeMedia(
   supabase: SupabaseClient,
   job: Job
 ): Promise<void> {
-  const payload = job.payload as { report_id?: string; media_id?: string; upload_session_id?: string };
-  if (!payload || typeof payload.report_id !== "string") {
+  const raw = job.payload as { report_id?: string; media_id?: string; upload_session_id?: string };
+  if (!raw || typeof raw.report_id !== "string") {
     throw new JobPayloadError("ai_analyze_media requires payload.report_id");
   }
-
+  const payload: JobPayloadAiAnalyzeMedia = {
+    report_id: raw.report_id,
+    media_id: raw.media_id,
+    upload_session_id: raw.upload_session_id,
+  };
   const imageUrl = await resolveImageUrl(supabase, payload);
   if (!imageUrl) {
     throw new JobPayloadError("Could not resolve image_url from media_id or upload_session_id");
