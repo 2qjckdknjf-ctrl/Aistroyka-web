@@ -2,7 +2,7 @@
 
 **Project:** AISTROYKA.AI  
 **Phase:** Security hardening, admin/billing completeness, API cleanup, repo hygiene, ops/runbooks.  
-**Status:** In progress.
+**Status:** Complete.
 
 **Non-negotiables:** No v1 API contract breaks; preserve Phase 1 (AIService, SyncService, Lite allow-list, Lite idempotency); admin endpoints consistently protected; billing safe when Stripe not configured; legacy routes thin wrappers with deprecation headers; root /app must not affect build/deploy.
 
@@ -41,85 +41,119 @@
 
 ---
 
-## Stage 1 — Admin security hardening (placeholder)
+## Stage 1 — Admin security hardening (done)
 
-- _Inventory and requireAdmin application._
-- _Diag gate: ENABLE_DIAG_ROUTES or isDiagEnabled()._
-- _Tests: non-admin 403, admin 200; diag disabled => 404/403._
-
----
-
-## Stage 2 — Billing completeness (placeholder)
-
-- _Stripe-not-configured => 503 + stable JSON code._
-- _Webhook: signature verification, raw body, idempotency._
-- _Tests: 503 shape, webhook invalid sig, valid mock._
+- **requireAdmin(ctx, "read" | "write")** in `lib/api/require-admin.ts`; applied to all 18 admin routes. Each route still calls `requireTenant` then `requireAdmin`; 403 with "Insufficient rights" when not admin/owner.
+- **Diag gate:** `lib/config/diag.ts` — `isDiagEnabled()` true when NODE_ENV !== production or ENABLE_DIAG_ROUTES=true. `/api/health/auth` returns 404 when diag disabled. `getDebugConfig()` in debug.ts also honors ENABLE_DIAG_ROUTES for debugAuth/debugDiag in production.
+- **Tests:** require-admin.test.ts (owner/admin pass, member/viewer 403); diag.test.ts (production + ENABLE_DIAG_ROUTES); health/auth route test (404 when diag disabled).
 
 ---
 
-## Stage 3 — Legacy route consolidation (placeholder)
+## Stage 2 — Billing completeness (done)
 
-- _Legacy list: /api/health, /api/ai/analyze-image, /api/projects*, /api/tenant*._
-- _deprecation.ts helper; wrappers with Deprecation header._
-- _Tests: same shape + Deprecation header._
-
----
-
-## Stage 4 — Root /app resolution (placeholder)
-
-- _Proof: build entry apps/web/app._
-- _Option A: move to legacy_app__do_not_use or archive._
-- _Option B: delete only if proven unused._
-- _Doc and verify build._
+- **503 when Stripe not configured:** `lib/platform/billing/billing-responses.ts` exports `BILLING_503_BODY` { error: "service_unavailable", code: "stripe_not_configured" }. Checkout-session and portal return it when `!admin || !isStripeConfigured()`. Webhook returns it when `!admin || !isWebhookConfigured()`.
+- **Webhook:** Already used raw body (`request.text()`), Stripe-Signature verification, and 400 on invalid signature. No logic change; idempotency is inherent in upsert-by-tenant.
+- **Tests:** billing-routes.test.ts (BILLING_503_BODY shape, verifyWebhookEvent returns null when signature missing).
 
 ---
 
-## Stage 5 — Cron / jobs process runbook (placeholder)
+## Stage 3 — Legacy route consolidation (done)
 
-- _Strategy: Cloudflare Cron or external scheduler._
-- _Optional REQUIRE_CRON_SECRET + x-cron-secret._
-- _Runbook: docs/runbooks/JOBS_PROCESSING.md._
-- _Test: cron secret when required._
-
----
-
-## Stage 6 — Final verification and report (placeholder)
-
-- _Commands: install, test, build, cf:build._
-- _Fill all sections; remaining gaps Phase 3/4; security checklist._
+- **Legacy routes:** `/api/health` and `/api/ai/analyze-image` (and existing `/api/projects`, `/api/tenant/invite` with setLegacyApiHeaders). Added deprecation headers to **all** responses from `/api/ai/analyze-image` via `withLegacyHeaders()` using existing `setLegacyApiHeaders` (Deprecation: true, Sunset: 2026-06-01).
+- **Helper:** Existing `lib/api/deprecation-headers.ts` (setLegacyApiHeaders, LEGACY_API_HEADERS). No new deprecation.ts; reused.
+- **Tests:** analyze-image route test includes "includes Deprecation and Sunset headers (legacy route)".
 
 ---
 
-## Files touched (to be filled)
+## Stage 4 — Root /app resolution (done)
 
-- _Per stage._
-
----
-
-## How to verify (to be filled)
-
-- _Commands and expected results._
+- **Proof:** next.config.js and app dir are under apps/web; root package.json only delegates to apps/web. No tsconfig or OpenNext config references root app.
+- **Resolution:** Root `app` moved to **archive/legacy-app** with README stating it must not be used for build/deploy. Git recorded as rename.
+- **Verification:** `npm run build` and `npm run cf:build` pass after move.
 
 ---
 
-## Behavior changes summary (to be filled)
+## Stage 5 — Cron / jobs process runbook (done)
 
-- _Admin/diag gating, billing 503, deprecation headers, cron secret._
+- **Strategy:** Documented in docs/runbooks/JOBS_PROCESSING.md (Cloudflare Cron or external scheduler; schedule 1–5 min; env vars; manual curl; expected responses; troubleshooting).
+- **Optional cron secret:** When `REQUIRE_CRON_SECRET=true`, `lib/api/cron-auth.ts` — `requireCronSecretIfEnabled(request)` returns 403 with code `cron_unauthorized` if `x-cron-secret` missing or does not match `CRON_SECRET`. Applied at top of POST /api/v1/jobs/process.
+- **Tests:** jobs/process/route.test.ts — 403 and code cron_unauthorized when REQUIRE_CRON_SECRET true and header missing or wrong.
+
+---
+
+## Stage 6 — Final verification (done)
+
+- **Commands run:** `npm install --legacy-peer-deps`, `npm test -- --run`, `npm run build`, `npm run cf:build`. All passed (212 tests, build and cf:build successful).
+- **Optional:** `npm run e2e` with app running for Playwright smoke.
+
+---
+
+## Files touched
+
+**New**
+- apps/web/lib/api/require-admin.ts, require-admin.test.ts
+- apps/web/lib/config/diag.ts, diag.test.ts
+- apps/web/lib/platform/billing/billing-responses.ts
+- apps/web/lib/api/cron-auth.ts
+- apps/web/app/api/health/auth/route.test.ts
+- apps/web/app/api/v1/billing/billing-routes.test.ts
+- apps/web/app/api/v1/jobs/process/route.test.ts
+- docs/runbooks/JOBS_PROCESSING.md
+- archive/legacy-app/README.md (and moved app → archive/legacy-app)
+
+**Modified**
+- All 18 apps/web/app/api/v1/admin/**/route.ts (requireAdmin)
+- apps/web/app/api/health/auth/route.ts (isDiagEnabled gate)
+- apps/web/lib/config/debug.ts (ENABLE_DIAG_ROUTES in getDebugConfig)
+- apps/web/lib/config/config.test.ts (ENABLE_DIAG_ROUTES test)
+- apps/web/app/api/v1/billing/checkout-session/route.ts, portal/route.ts, webhook/route.ts (BILLING_503_BODY, isStripeConfigured/isWebhookConfigured)
+- apps/web/app/api/ai/analyze-image/route.ts (withLegacyHeaders on all responses), route.test.ts (Deprecation header test)
+- apps/web/app/api/v1/jobs/process/route.ts (requireCronSecretIfEnabled)
+- Root: app/ removed (moved to archive/legacy-app)
+
+---
+
+## How to verify
+
+```bash
+cd apps/web
+npm install --legacy-peer-deps
+npm test -- --run
+npm run build
+npm run cf:build
+```
+
+Optional: `npm run e2e` with dev server running.
+
+**Expected:** 212 tests pass; build and cf:build complete without errors. No references to root `app` in build.
+
+---
+
+## Behavior changes summary
+
+| Area | Change |
+|------|--------|
+| Admin | All /api/v1/admin/* use requireAdmin(ctx, "read"\|"write"); 403 "Insufficient rights" for non-admin. |
+| Diag | /api/health/auth returns 404 in production unless ENABLE_DIAG_ROUTES=true. _debug and diag/supabase already gated; ENABLE_DIAG_ROUTES now enables them in prod. |
+| Billing | When Stripe or admin not configured, all billing endpoints return 503 with { error: "service_unavailable", code: "stripe_not_configured" }. |
+| Legacy | /api/ai/analyze-image responses include Deprecation: true and Sunset. |
+| Jobs | When REQUIRE_CRON_SECRET=true, POST /api/v1/jobs/process requires x-cron-secret; otherwise 403 with code "cron_unauthorized". |
+| Root app | Root /app moved to archive/legacy-app; build uses only apps/web. |
 
 ---
 
 ## Remaining gaps (Phase 3 / Phase 4)
 
-- _AI multi-provider, construction brain alignment._
-- _Mobile push, offline._
+- **Phase 3:** AI multi-provider tuning, construction brain alignment, further admin/billing feature completeness.
+- **Phase 4:** Mobile push, offline/sync enhancements, additional runbooks.
 
 ---
 
-## Security checklist (to be filled)
+## Security checklist
 
-- [ ] All admin routes require admin scope
-- [ ] Diag/debug gated in production
-- [ ] Billing 503 when Stripe not configured
-- [ ] Webhook signature verified
-- [ ] Legacy routes deprecation headers only
-- [ ] Root app isolated or removed
+- [x] All admin routes require admin scope (requireAdmin)
+- [x] Diag/debug gated in production (ENABLE_DIAG_ROUTES / isDiagEnabled)
+- [x] Billing 503 when Stripe not configured (BILLING_503_BODY)
+- [x] Webhook signature verified (unchanged; already in place)
+- [x] Legacy routes deprecation headers only (no removal)
+- [x] Root app isolated (moved to archive/legacy-app)
