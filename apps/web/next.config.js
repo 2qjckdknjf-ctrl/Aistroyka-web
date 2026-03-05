@@ -5,6 +5,7 @@ const { SECURITY_HEADERS } = require("./lib/security-headers");
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  poweredByHeader: false,
   async headers() {
     return [
       {
