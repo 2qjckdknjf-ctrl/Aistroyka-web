@@ -1,7 +1,7 @@
 /** Job status lifecycle: queued → running → success | failed → (retry) | dead */
 export type JobStatus = "queued" | "running" | "success" | "failed" | "dead";
 
-export type JobType = "ai_analyze_media" | "ai_analyze_report" | "export";
+export type JobType = "ai_analyze_media" | "ai_analyze_report" | "export" | "retention_cleanup";
 
 export interface JobPayloadAiAnalyzeMedia {
   report_id: string;
@@ -21,7 +21,11 @@ export interface JobPayloadExport {
   range_days?: number;
 }
 
-export type JobPayload = JobPayloadAiAnalyzeMedia | JobPayloadAiAnalyzeReport | JobPayloadExport;
+export interface JobPayloadRetentionCleanup {
+  tenant_id: string;
+}
+
+export type JobPayload = JobPayloadAiAnalyzeMedia | JobPayloadAiAnalyzeReport | JobPayloadExport | JobPayloadRetentionCleanup;
 
 export interface Job {
   id: string;

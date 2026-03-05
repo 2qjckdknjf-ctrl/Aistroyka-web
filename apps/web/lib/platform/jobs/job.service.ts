@@ -7,6 +7,7 @@ import { getQueueAdapter } from "./queue/queue.service";
 import { handleAiAnalyzeMedia } from "./job.handlers/ai-analyze-media";
 import { handleAiAnalyzeReport } from "./job.handlers/ai-analyze-report";
 import { handleExport } from "./job.handlers/export";
+import { handleRetentionCleanup } from "./job.handlers/retention-cleanup";
 
 export type { Job, JobStatus, JobType } from "./job.types";
 export { JOB_CONFIG } from "./job.config";
@@ -41,6 +42,7 @@ const HANDLERS: Record<JobType, (supabase: SupabaseClient, job: Job) => Promise<
   ai_analyze_media: handleAiAnalyzeMedia,
   ai_analyze_report: handleAiAnalyzeReport,
   export: handleExport,
+  retention_cleanup: handleRetentionCleanup,
 };
 
 /**
