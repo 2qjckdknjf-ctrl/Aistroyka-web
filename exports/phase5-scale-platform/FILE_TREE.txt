@@ -1,0 +1,31 @@
+Phase 5 — Key paths
+
+Migrations: apps/web/supabase/migrations/
+ 20260308000000_feature_flags.sql
+ 20260308100000_billing_entitlements.sql
+ 20260308200000_identity_sso.sql
+ 20260308300000_ai_provider_health.sql
+ 20260308400000_events_analytics.sql
+ 20260308500000_experiments.sql
+
+Flags: apps/web/lib/platform/flags/
+Flags: apps/web/app/api/v1/config, apps/web/app/api/v1/admin/flags, admin/tenants/[id]/flags
+
+Billing: apps/web/lib/platform/billing/
+Billing: apps/web/app/api/v1/billing/checkout-session, portal, webhook
+
+Identity: apps/web/lib/platform/identity/
+Identity: apps/web/app/api/v1/scim/[...path]
+
+AI providers: apps/web/lib/platform/ai/providers/
+  provider.interface.ts, circuit-breaker.ts, provider.openai.ts, provider.router.ts
+
+Analytics: apps/web/lib/platform/analytics/
+  events.service.ts, analytics.service.ts
+  apps/web/app/api/v1/admin/analytics/productivity, ai-risk, ops
+
+Security: apps/web/app/api/v1/admin/security/posture
+
+Scripts: scripts/smoke-v1.sh, smoke-mobile.sh, smoke-admin.sh
+
+ADRs: 032–046
