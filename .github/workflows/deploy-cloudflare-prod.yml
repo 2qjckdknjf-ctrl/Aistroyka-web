@@ -1,5 +1,5 @@
 # Production deploy: push to main → build (OpenNext) + deploy to Cloudflare Workers (env.production).
-# Builds apps/web (redesigned dashboard). Routes are managed in Cloudflare Dashboard.
+# Single install from repo root: bun install --frozen-lockfile. Build: bun run cf:build.
 # Requires GitHub secrets: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID.
 
 name: Deploy Cloudflare (Production)
@@ -17,9 +17,6 @@ jobs:
     name: Build and deploy to production
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    defaults:
-      run:
-        working-directory: apps/web
 
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -27,7 +24,6 @@ jobs:
 
     steps:
       - name: Check required secrets
-        working-directory: .
         run: |
           if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
             echo "::error::CLOUDFLARE_API_TOKEN is not set. Add it in GitHub → Settings → Secrets and variables → Actions."
@@ -41,44 +37,24 @@ jobs:
 
       - uses: actions/checkout@v4
 
-      - name: Debug repository structure
-        working-directory: .
-        run: |
-          pwd
-          ls -la
-          ls -la apps || true
-          ls -la apps/web || true
-          ls -la apps/web/package-lock.json || true
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-          cache-dependency-path: apps/web/package-lock.json
-
       - name: Setup Bun
         uses: oven-sh/setup-bun@v1
         with:
-          bun-version: "latest"
+          bun-version: "1.2.15"
 
-      - name: Verify bun
-        run: bun --version
-
-      - name: Install dependencies
-        run: npm ci --legacy-peer-deps
+      - name: Install dependencies (workspace root)
+        run: bun install --frozen-lockfile
 
       - name: Set build stamp env
-        working-directory: apps/web
         run: |
           echo "NEXT_PUBLIC_BUILD_SHA=${{ github.sha }}" >> $GITHUB_ENV
           echo "NEXT_PUBLIC_BUILD_TIME=$(date -u +%Y-%m-%d\ %H:%M)" >> $GITHUB_ENV
-          # Layout reads NEXT_PUBLIC_BUILD_SHA and NEXT_PUBLIC_BUILD_TIME only (fallback unknown)
 
       - name: Build (OpenNext Cloudflare)
-        run: npm run cf:build
+        run: bun run cf:build
 
       - name: Verify build output and app source
+        working-directory: apps/web
         run: |
           echo "Build directory: $(pwd)"
           test -f .open-next/worker.js || (echo "::error::.open-next/worker.js missing" && exit 1)
@@ -89,6 +65,7 @@ jobs:
           echo "Expected: aistroyka-web-production"
 
       - name: Deploy to Cloudflare (production)
+        working-directory: apps/web
         run: npx wrangler deploy --env production --config wrangler.toml
 
       - name: Post-deploy summary
@@ -100,7 +77,6 @@ jobs:
           echo "workers.dev URL: In the 'Deploy to Cloudflare (production)' step above, look for: https://aistroyka-web-production.<account>.workers.dev"
 
       - name: Post-deploy verification (domain build marker)
-        working-directory: .
         continue-on-error: true
         run: |
           SHA7="$(echo ${{ github.sha }} | cut -c1-7)"

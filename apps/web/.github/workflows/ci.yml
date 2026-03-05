@@ -1,4 +1,6 @@
-# Minimal CI: lint, test, build on PR to main and push to feature/*
+# Minimal CI: lint, test, cf:build (canonical gates). See docs/operations/BUILD_AND_RELEASE.md.
+# Single install from repo root: bun install --frozen-lockfile.
+
 name: CI
 on:
   pull_request:
@@ -10,15 +12,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
         with:
-          node-version: '20'
-          cache: 'npm'
-      - name: Install
-        run: npm ci --legacy-peer-deps
+          bun-version: "1.2.15"
+
+      - name: Install dependencies (workspace root)
+        run: bun install --frozen-lockfile
+
       - name: Lint
-        run: npm run lint
+        run: bun run lint
+
       - name: Test
-        run: npm run test
-      - name: Build
-        run: npm run build
+        run: bun run test
+
+      - name: Build (cf:build)
+        run: bun run cf:build

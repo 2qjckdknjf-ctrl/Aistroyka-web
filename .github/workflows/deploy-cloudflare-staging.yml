@@ -1,5 +1,5 @@
 # Staging deploy: push to develop → build (OpenNext) + deploy to Cloudflare Workers (env.staging).
-# Builds apps/web. Routes are managed in Cloudflare Dashboard.
+# Single install from repo root: bun install --frozen-lockfile. Build: bun run cf:build.
 # Requires same GitHub secrets: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID.
 
 name: Deploy Cloudflare (Staging)
@@ -17,9 +17,6 @@ jobs:
     name: Build and deploy to staging
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    defaults:
-      run:
-        working-directory: apps/web
 
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -27,7 +24,6 @@ jobs:
 
     steps:
       - name: Check required secrets
-        working-directory: .
         run: |
           if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
             echo "::error::CLOUDFLARE_API_TOKEN is not set. Add it in GitHub → Settings → Secrets and variables → Actions."
@@ -41,43 +37,24 @@ jobs:
 
       - uses: actions/checkout@v4
 
-      - name: Debug repository structure
-        working-directory: .
-        run: |
-          pwd
-          ls -la
-          ls -la apps || true
-          ls -la apps/web || true
-          ls -la apps/web/package-lock.json || true
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-          cache-dependency-path: apps/web/package-lock.json
-
       - name: Setup Bun
         uses: oven-sh/setup-bun@v1
         with:
-          bun-version: "latest"
+          bun-version: "1.2.15"
 
-      - name: Verify bun
-        run: bun --version
-
-      - name: Install dependencies
-        run: npm ci --legacy-peer-deps
+      - name: Install dependencies (workspace root)
+        run: bun install --frozen-lockfile
 
       - name: Set build stamp env
-        working-directory: apps/web
         run: |
           echo "NEXT_PUBLIC_BUILD_SHA=${{ github.sha }}" >> $GITHUB_ENV
           echo "NEXT_PUBLIC_BUILD_TIME=$(date -u +%Y-%m-%d\ %H:%M)" >> $GITHUB_ENV
 
       - name: Build (OpenNext Cloudflare)
-        run: npm run cf:build
+        run: bun run cf:build
 
       - name: Verify build output and app source
+        working-directory: apps/web
         run: |
           echo "Build directory: $(pwd)"
           test -f .open-next/worker.js || (echo "::error::.open-next/worker.js missing" && exit 1)
@@ -87,6 +64,7 @@ jobs:
           echo "Worker name (staging): $(grep -A1 '^\[env.staging\]' wrangler.toml | grep '^name =' | sed 's/.*= *//')"
 
       - name: Deploy to Cloudflare (staging)
+        working-directory: apps/web
         run: npx wrangler deploy --env staging --config wrangler.toml
 
       - name: Post-deploy summary

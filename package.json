@@ -2,7 +2,7 @@
   "name": "AISTROYKA-WEB-CF-CHECK",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "bun@1.1.38",
+  "packageManager": "bun@1.2.15",
   "workspaces": [
     "apps/web",
     "packages/contracts",
@@ -15,7 +15,8 @@
     "start": "cd apps/web && bun run start",
     "cf:build": "cd apps/web && bun run cf:build",
     "cf:deploy": "cd apps/web && bun run cf:deploy",
-    "lint": "cd apps/web && bun run lint"
+    "lint": "cd apps/web && bun run lint",
+    "test": "cd apps/web && bun run test"
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.16.4",
