@@ -1,91 +1,121 @@
 # Phase 3 — AI Platform Report
 
-**Scope:** Multi-provider, routing, governance, observability, construction brain alignment. No UI features. No product expansion. Platform-level AI hardening and documentation only.
+**Project:** AISTROYKA  
+**Phase:** AI Platform (multi-provider, routing, governance, observability, construction brain alignment).  
+**Scope:** Platform-level AI hardening and documentation. No UI features. No product expansion.
 
-**Non-negotiables:** v1 API contracts preserved; Phase 1–2 outcomes intact; AIService single façade; all provider calls via Provider Router + circuit breaker; Policy Engine for all AI requests; production routing; cost governance; observability; tests + build + cf:build per stage; final ADR and this report.
+**Status:** In progress.
 
 ---
 
-## Stage 0 — Audit (Completed)
+## Non-negotiables (verified per stage)
+
+1. `/api/v1/ai/analyze-image` request/response shapes and status codes unchanged.
+2. Phase 1–2 preserved: AIService single entry; Lite allow-list; Lite idempotency; admin security; billing; legacy wrappers.
+3. AIService remains single façade for sync routes and async jobs.
+4. All provider calls via Provider Router + circuit breaker; no direct vendor fetch.
+5. Policy Engine invoked for all AI requests (sync + async); decisions audited.
+6. Production routing: provider/model selection, fallback, per-tenant overrides.
+7. Cost governance: quotas + budgets, per-tenant caps, alert hooks.
+8. Observability: structured logs, audit events, provider health, trace correlation.
+9. After each stage: unit tests + build + cf:build.
+10. End state: this report + ADR for routing/governance.
+
+---
+
+## Stage 0 — Audit (completed)
 
 ### 0.1 Locations
 
 | Component | Path | Notes |
-|-----------|------|------|
-| AIService | `apps/web/lib/platform/ai/ai.service.ts` | Single entry: `analyzeImage()`; calls policy → router → usage. |
-| Provider Router | `apps/web/lib/platform/ai/providers/provider.router.ts` | `invokeVisionWithRouter()`; uses circuit breaker; fixed order openai → anthropic → gemini. |
-| OpenAI provider | `apps/web/lib/platform/ai/providers/provider.openai.ts` | Real: OPENAI_API_KEY, OPENAI_VISION_MODEL, 85s timeout, VisionResult. |
-| Anthropic provider | `apps/web/lib/platform/ai/providers/provider.anthropic.stub.ts` | Stub: returns null. |
-| Gemini provider | `apps/web/lib/platform/ai/providers/provider.gemini.stub.ts` | Stub: returns null. |
-| Circuit breaker | `apps/web/lib/platform/ai/providers/circuit-breaker.ts` | `getCircuitState`, `recordSuccess`, `recordFailure`, `canInvoke`; table `ai_provider_health`. |
-| Policy Engine | `apps/web/lib/platform/ai-governance/policy.service.ts` | `runPolicy`, `checkPolicy`, `recordPolicyDecision`; table `ai_policy_decisions`. |
-| Policy rules | `apps/web/lib/platform/ai-governance/policy.rules.ts` | Tier + image count/size; returns allow/block/degrade. |
-| Usage service | `apps/web/lib/platform/ai-usage/ai-usage.service.ts` | `checkQuota`, `recordUsage`, `estimateVisionCostUsd`; uses `ai_usage` + `tenant_billing_state`. |
-| Cost estimator | `apps/web/lib/platform/ai-usage/cost-estimator.ts` | `estimateCostUsd(model, in, out)`; gpt-4o / gpt-4o-mini only. |
-| Migrations | `apps/web/supabase/migrations/20260308300000_ai_provider_health.sql`, `20260307400000_ai_policy_decisions.sql` | Tables exist. |
+|-----------|------|--------|
+| AIService | `apps/web/lib/platform/ai/ai.service.ts` | Single entry: `analyzeImage(admin, ctx, input)` |
+| Provider Router | `apps/web/lib/platform/ai/providers/provider.router.ts` | Uses OpenAI + Anthropic stub + Gemini stub; circuit breaker integrated |
+| Providers | `provider.openai.ts` (real), `provider.anthropic.stub.ts`, `provider.gemini.stub.ts` | Stubs are **empty files** — exports missing; build may fail until Stage 1 |
+| Provider interface | `apps/web/lib/platform/ai/providers/provider.interface.ts` | `VisionResult`, `VisionOptions`, `AIProvider` |
+| Circuit breaker | `apps/web/lib/platform/ai/providers/circuit-breaker.ts` | `getCircuitState`, `recordSuccess`, `recordFailure`, `canInvoke`; persists to `ai_provider_health` |
+| Policy Engine | `apps/web/lib/platform/ai-governance/policy.service.ts` | `runPolicy`, `recordPolicyDecision` → `ai_policy_decisions` |
+| Policy rules | `apps/web/lib/platform/ai-governance/policy.rules.ts` | Tier/image count/size; returns allow/block/degrade |
+| Usage service | `apps/web/lib/platform/ai-usage/ai-usage.service.ts` | `checkQuota`, `recordUsage`, `estimateVisionCostUsd` |
+| Usage repo | `apps/web/lib/platform/ai-usage/ai-usage.repository.ts` | `ai_usage`, `tenant_billing_state`, getSpentForPeriod, addSpent |
+| Cost estimator | `apps/web/lib/platform/ai-usage/cost-estimator.ts` | OpenAI models only (`gpt-4o`, `gpt-4o-mini`) |
+| Tables | Migrations | `ai_provider_health` (20260308300000), `ai_policy_decisions` (20260307300000 / 20260307400000) |
 
-### 0.2 Gaps (Phase 1–2 vs Phase 3 goals)
+### 0.2 Flow confirmation (Phase 1)
 
-- **Policy:** Already called first in AIService; decisions persisted to `ai_policy_decisions`. Missing: standardized decision object (decisionId, reasons[], piiRisk?, redactions?, policyVersion); minimal PII hook (strict mode / trusted URL) not present.
-- **Router:** No tenant preferences (tenant_settings / tenant_data_plane / tenant_feature_flags). No model tier → model name mapping; no retryable vs non-retryable distinction; no sticky selection per request.
-- **Providers:** Anthropic and Gemini are stubs (return null). No ProviderUnavailable or typed failure; no shared error shapes for router.
-- **Usage/quotas:** checkQuota uses `getLimitsForTenant` → `monthly_ai_budget_usd` and `tenant_billing_state.spent_usd`. No daily budget; no soft/hard split; no alert hooks.
-- **Observability:** Route logs `ai_analyze_image` with status/duration/trace_id/tenant_id; no providerSelected, modelSelected, fallbackCount, costEstUsd, policyDecisionId. No metrics module counters; circuit breaker state in DB but no dedicated admin “provider health” endpoint documented.
-- **Construction brain:** Vision logic in `lib/ai/` (prompts, normalize, types); no single re-export surface.
+- **Route** `POST /api/ai/analyze-image`: validates body, rate limit, **checkQuota** (in route), then `analyzeImage(admin, ctx, { imageUrl, ... })`.
+- **AIService.analyzeImage**: when `ctx.tenantId` → **runPolicy** (evaluate + record to `ai_policy_decisions`); if block → throw `AIPolicyBlockedError`; then **invokeVisionWithRouter**; then normalize; then **recordUsage** (when tenantId).
+- **Router**: `providersForTier(tier)` returns all three providers; for each, `canInvoke(supabase, provider.name)` → invoke → `recordSuccess` or `recordFailure`.
+- **Gaps identified:**
+  - **Quota**: Checked in route only; not in AIService. Job handler does not check quota before calling `analyzeImage` (acceptable if jobs are tenant-scoped and quota enforced at enqueue or route level).
+  - **Policy**: Decision recorded with `tenant_id`, `trace_id`, `decision`, `rule_hits`; no `decisionId` or `policyVersion` in schema yet.
+  - **Router**: No tenant preference source; no model tier mapping; no retryable vs non-retryable; Anthropic/Gemini stubs empty (no-op or broken imports).
+  - **Budget**: Only monthly quota via `getLimitsForTenant` + `tenant_billing_state`; no daily budget, no soft/hard, no alert hooks.
+  - **Observability**: Route logs `ai_analyze_image` with status/duration/trace/tenant; no provider/model/cost in log; no metrics; circuit state in DB but no dedicated admin health endpoint mentioned.
+  - **Cost estimator**: Only OpenAI; need Anthropic/Gemini for Stage 1.
 
-### 0.3 API contract (preserve)
+### 0.3 Report skeleton — stage placeholders
 
-- **Route:** `POST /api/ai/analyze-image` and `POST /api/v1/ai/analyze-image` (re-export). Request: `{ image_url, media_id?, project_id? }`. Response 200: `AnalysisResult` (stage, completion_percent, risk_level, detected_issues, recommendations). Errors: 400, 413, 402 quota, 429 rate limit, 403 policy, 502/504 AI, 503 no key.
-
----
-
-## Stage 1 — Provider Interfaces + Real Providers (Anthropic + Gemini) ✅
-
-- **Provider errors:** `provider.errors.ts` — `ProviderUnavailableError`, `ProviderError`, `isRetryableError()` (for router Stage 2).
-- **Config:** `ANTHROPIC_API_KEY`, `ANTHROPIC_VISION_MODEL`, `GOOGLE_AI_API_KEY` (or `GEMINI_API_KEY`), `GEMINI_VISION_MODEL`; `isAnyVisionProviderConfigured()`.
-- **Anthropic:** `provider.anthropic.ts` — Messages API, image via URL, timeout 85s, normalized `VisionResult`. Missing key → returns null.
-- **Gemini:** `provider.gemini.ts` — fetches image URL → base64, generateContent with `responseMimeType: application/json`. Missing key → null. `toBase64()` works in Node and Edge.
-- **Cost estimator:** Added Claude and Gemini model prices.
-- **Route:** 503 when no vision provider configured (any of OpenAI/Anthropic/Gemini).
-- **Tests:** `provider.anthropic.test.ts`, `provider.gemini.test.ts` — missing key → null, success response parsing, request shape. Stubs removed.
-- **Build/test:** Unit tests 220 passed; Next.js build passed.
+- **Stage 1:** Provider interfaces + real providers (Anthropic, Gemini) — *pending*
+- **Stage 2:** Router: model + provider routing, fallback, tenant overrides — *pending*
+- **Stage 3:** Policy Engine: consistent decisions + audit trail — *pending*
+- **Stage 4:** Cost governance: budgets + alert hooks — *pending*
+- **Stage 5:** Observability: metrics, logs, trace correlation — *pending*
+- **Stage 6:** Construction brain alignment (ADR + docs, re-exports) — *pending*
+- **Stage 7:** Final verification & report — *pending*
 
 ---
 
-## Stage 2 — Router: Model + Provider Routing, Fallback, Tenant Overrides
+## Stage 1 — Provider interfaces + real providers
 
-*Placeholder: tenant preference source (tenant_feature_flags or tenant_data_plane), providerCandidates order, circuit breaker + retryable vs non-retryable, model tier mapping, tests.*
-
----
-
-## Stage 3 — Policy Engine: Consistent Decisions + Audit Trail
-
-*Placeholder: decision object shape, ai_policy_decisions enrichment, minimal PII hook, AIService 403 + code "ai_policy_denied", tests.*
+*To be filled after implementation.*
 
 ---
 
-## Stage 4 — Cost Governance: Budgets + Alert Hooks
+## Stage 2 — Router: model + provider routing, fallback, tenant overrides
 
-*Placeholder: tenant budgets (soft/hard daily/monthly), checkBudget in ai-usage.service, alert type ai_budget_exceeded, tests.*
-
----
-
-## Stage 5 — Observability: Metrics, Logs, Trace Correlation
-
-*Placeholder: structured ai.invoke log, metrics (counters/histograms), provider health reporting, tests.*
+*To be filled after implementation.*
 
 ---
 
-## Stage 6 — Construction Brain Alignment
+## Stage 3 — Policy Engine: decisions + audit trail
 
-*Placeholder: ADR routing/governance, lib/ai/construction-brain re-exports, docs/ai/AI_PLATFORM.md.*
-
----
-
-## Stage 7 — Final Verification & Report
-
-*Placeholder: npm test, build, cf:build; env vars; routing summary; budget keys; observability fields; follow-ups Phase 4/5.*
+*To be filled after implementation.*
 
 ---
 
-*Document generated in Stage 0. Updated after each stage.*
+## Stage 4 — Cost governance: budgets + alerts
+
+*To be filled after implementation.*
+
+---
+
+## Stage 5 — Observability
+
+*To be filled after implementation.*
+
+---
+
+## Stage 6 — Construction brain alignment
+
+*To be filled after implementation.*
+
+---
+
+## Stage 7 — Final verification & report
+
+*To be filled after verification.*
+
+---
+
+## Env vars (reference)
+
+- Existing: `OPENAI_API_KEY`, `OPENAI_VISION_MODEL`, `SUPABASE_SERVICE_ROLE_KEY`, etc.
+- To add (Stage 1): `ANTHROPIC_API_KEY`, `ANTHROPIC_VISION_MODEL`; `GOOGLE_AI_API_KEY` or `GEMINI_API_KEY`, `GEMINI_VISION_MODEL`.
+
+---
+
+## Follow-ups (post–Phase 3)
+
+- Phase 4: mobile push / offline.
+- Phase 5: dashboard (e.g. provider health, budget usage).
