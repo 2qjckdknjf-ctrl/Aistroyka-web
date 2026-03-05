@@ -1,18 +1,20 @@
-export type SubscriptionTierKey = "FREE" | "PRO" | "ENTERPRISE";
-export type AIPolicyDecision = "allow" | "block" | "degrade";
+/** AI governance policy types. */
 
-export interface AIPolicyContext {
+export type PolicyDecision = "allow" | "block" | "degrade";
+
+export type ResourceType = "media" | "report";
+
+export interface PolicyContext {
   tenant_id: string;
-  tier: SubscriptionTierKey;
-  resource_type?: "media" | "report";
+  subscription_tier: string;
+  resource_type?: ResourceType;
   image_count?: number;
   image_size_bytes?: number;
-  trace_id?: string | null;
+  rate_override?: boolean;
 }
 
-export interface AIPolicyResult {
-  decision: AIPolicyDecision;
+export interface PolicyResult {
+  decision: PolicyDecision;
   rule_hits: string[];
-  model_override?: string;
-  redaction_applied?: boolean;
+  model_tier?: "free" | "pro" | "enterprise";
 }

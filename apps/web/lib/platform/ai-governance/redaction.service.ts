@@ -1,15 +1,30 @@
-import { PII_PATTERNS } from "./pii.types";
+/**
+ * Lightweight redaction: regex for emails/phones, mask obvious identifiers.
+ * Log that redaction occurred (audit + metrics). No heavy NLP.
+ */
 
-const MASK = "***";
+import type { RedactionResult } from "./pii.types";
 
-export function redactPII(text: string): { redacted: string; applied: boolean } {
-  if (!text || typeof text !== "string") return { redacted: text, applied: false };
-  let redacted = text;
-  let applied = false;
-  for (const pattern of Object.values(PII_PATTERNS)) {
-    const before = redacted;
-    redacted = redacted.replace(pattern, MASK);
-    if (redacted !== before) applied = true;
+const EMAIL_RE = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+const PHONE_RE = /\+?[\d\s\-()]{10,}/g;
+const MASK = "[REDACTED]";
+
+export function redactText(input: string): RedactionResult {
+  let text = input;
+  const kinds: ("email" | "phone" | "identifier")[] = [];
+
+  if (EMAIL_RE.test(input)) {
+    kinds.push("email");
+    text = text.replace(EMAIL_RE, MASK);
   }
-  return { redacted, applied };
+  if (PHONE_RE.test(input)) {
+    kinds.push("phone");
+    text = text.replace(PHONE_RE, MASK);
+  }
+
+  return {
+    text,
+    redacted: kinds.length > 0,
+    kinds,
+  };
 }

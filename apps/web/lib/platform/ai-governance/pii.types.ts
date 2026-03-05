@@ -1,4 +1,9 @@
-export const PII_PATTERNS = {
-  email: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g,
-  phone: /\+?[\d\s\-()]{10,}/g,
-} as const;
+/** PII/redaction: types for sensitive text detection (placeholder). */
+
+export type PiiKind = "email" | "phone" | "identifier";
+
+export interface RedactionResult {
+  text: string;
+  redacted: boolean;
+  kinds: PiiKind[];
+}

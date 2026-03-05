@@ -1,18 +1,43 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { AIPolicyContext, AIPolicyResult } from "./policy.types";
-import { evaluatePolicy } from "./policy.rules";
-import { getModelForTier } from "./model-routing.service";
+/**
+ * AI governance: run policy, record decision, return allow/block/degrade.
+ */
 
-export function checkPolicy(ctx: AIPolicyContext): AIPolicyResult {
-  const { decision, rule_hits } = evaluatePolicy(ctx);
-  const model_override = getModelForTier(ctx.tier).primary;
-  return {
-    decision,
-    rule_hits,
-    model_override: decision === "allow" ? model_override : undefined,
-  };
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { evaluatePolicy } from "./policy.rules";
+import type { PolicyContext, PolicyResult } from "./policy.types";
+
+export type { PolicyResult, PolicyDecision } from "./policy.types";
+
+/** Run policy and persist decision. Returns result; callers must check result.decision before running AI. */
+export async function runPolicy(
+  supabase: SupabaseClient,
+  ctx: PolicyContext,
+  traceId?: string | null
+): Promise<PolicyResult> {
+  const result = evaluatePolicy(ctx);
+  await recordPolicyDecision(supabase, ctx.tenant_id, result.decision, result.rule_hits, traceId);
+  return result;
 }
 
+/** Synchronous policy check (no persist). Use with recordPolicyDecision after. */
+export function checkPolicy(ctx: {
+  tenant_id: string;
+  tier: string;
+  resource_type?: "media" | "report";
+  image_count?: number;
+  image_size_bytes?: number;
+  trace_id?: string | null;
+}): PolicyResult {
+  return evaluatePolicy({
+    tenant_id: ctx.tenant_id,
+    subscription_tier: ctx.tier,
+    resource_type: ctx.resource_type,
+    image_count: ctx.image_count,
+    image_size_bytes: ctx.image_size_bytes,
+  });
+}
+
+/** Persist policy decision to ai_policy_decisions. */
 export async function recordPolicyDecision(
   supabase: SupabaseClient,
   tenantId: string,
@@ -28,6 +53,6 @@ export async function recordPolicyDecision(
       rule_hits: ruleHits,
     });
   } catch {
-    //
+    /* best-effort */
   }
 }
