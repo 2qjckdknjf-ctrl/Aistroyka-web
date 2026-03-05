@@ -6,98 +6,77 @@
 import type { PushProvider, PushSendParams, PushSendResult } from "../push.provider.types";
 import { getGoogleAccessToken } from "./google-oauth";
 
-const FCM_V1_SEND_URL = (projectId: string) =>
-  `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`;
-
-function getConfig(): {
-  projectId: string;
-  clientEmail: string;
-  privateKey: string;
-} | null {
-  const projectId = process.env.FCM_PROJECT_ID?.trim();
-  const clientEmail = process.env.FCM_CLIENT_EMAIL?.trim();
-  const privateKey = process.env.FCM_PRIVATE_KEY?.trim();
-  if (!projectId || !clientEmail || !privateKey) return null;
-  return { projectId, clientEmail, privateKey };
-}
+const FCM_V1_SEND_URL = "https://fcm.googleapis.com/v1/projects";
 
 export function isFcmV1Configured(): boolean {
-  return getConfig() !== null;
+  return Boolean(
+    process.env.FCM_PROJECT_ID?.trim() &&
+      process.env.FCM_CLIENT_EMAIL?.trim() &&
+      process.env.FCM_PRIVATE_KEY?.trim()
+  );
 }
 
-function mapFcmError(status: number, body: string): PushSendResult {
-  if (status === 400 || status === 404) {
-    if (
-      /INVALID_ARGUMENT|NOT_FOUND|UNREGISTERED|invalid.*registration/i.test(body)
-    ) {
-      return { ok: false, code: "invalid_token", message: body };
-    }
-  }
-  if (status === 401 || status === 403) {
-    return { ok: false, code: "auth_error", message: body };
-  }
-  return { ok: false, code: "retryable", message: body || String(status) };
-}
+/** Send via FCM HTTP v1 messages:send. */
+export async function sendFcmV1(params: PushSendParams): Promise<PushSendResult> {
+  const projectId = process.env.FCM_PROJECT_ID?.trim();
+  if (!projectId) return { ok: false, code: "retryable", message: "FCM project not configured" };
 
-async function sendFcmV1(params: PushSendParams): Promise<PushSendResult> {
-  const config = getConfig();
-  if (!config) return { ok: false, code: "retryable", message: "FCM v1 not configured" };
-  if (params.platform !== "android") {
-    return { ok: false, code: "retryable", message: "FCM is Android only" };
-  }
+  const accessToken = await getGoogleAccessToken();
+  if (!accessToken) return { ok: false, code: "auth_error", message: "Failed to obtain FCM access token" };
 
-  const token = await getGoogleAccessToken({
-    clientEmail: config.clientEmail,
-    privateKeyPem: config.privateKey,
-    tokenUri: process.env.FCM_TOKEN_URI?.trim() || undefined,
-  });
-  if (!token) {
-    return { ok: false, code: "auth_error", message: "Failed to obtain access token" };
-  }
-
-  const message = {
-    message: {
-      token: params.token,
-      notification:
-        params.title || params.body
-          ? { title: params.title ?? "", body: params.body ?? "" }
-          : undefined,
-      data: params.data
-        ? Object.fromEntries(
-            Object.entries(params.data).map(([k, v]) => [k, String(v)])
-          )
+  const url = `${FCM_V1_SEND_URL}/${projectId}/messages:send`;
+  const message: Record<string, unknown> = {
+    token: params.token,
+    notification:
+      params.title || params.body
+        ? { title: params.title ?? "", body: params.body ?? "" }
         : undefined,
-      android: {
-        collapse_key: params.collapseKey ?? undefined,
-        ttl: params.ttlSec ? `${params.ttlSec}s` : undefined,
-      },
-    },
+    data: params.data
+      ? Object.fromEntries(
+          Object.entries(params.data).map(([k, v]) => [k, typeof v === "string" ? v : String(v)])
+        )
+      : undefined,
+    android: {},
   };
+  if (params.collapseKey) (message.android as Record<string, string>)["collapse_key"] = params.collapseKey;
+  if (params.ttlSec != null) (message.android as Record<string, string>)["ttl"] = `${params.ttlSec}s`;
 
-  const url = FCM_V1_SEND_URL(config.projectId);
+  const body = { message };
+
   try {
     const res = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${accessToken}`,
       },
-      body: JSON.stringify(message),
+      body: JSON.stringify(body),
     });
-    if (res.ok) return { ok: true };
     const text = await res.text();
-    return mapFcmError(res.status, text);
+    if (res.ok) return { ok: true };
+
+    if (res.status === 401 || res.status === 403) {
+      return { ok: false, code: "auth_error", message: text || String(res.status) };
+    }
+    if (res.status === 404 || (res.status === 400 && /NOT_FOUND|UNREGISTERED|INVALID_ARGUMENT|invalid.*token/i.test(text))) {
+      return { ok: false, code: "invalid_token", message: text || String(res.status) };
+    }
+    return { ok: false, code: "retryable", message: text || String(res.status) };
   } catch (e) {
-    return {
-      ok: false,
-      code: "retryable",
-      message: e instanceof Error ? e.message : String(e),
-    };
+    return { ok: false, code: "retryable", message: e instanceof Error ? e.message : String(e) };
   }
 }
 
 const fcmV1Provider: PushProvider = {
-  send: sendFcmV1,
+  async send(params: PushSendParams): Promise<PushSendResult> {
+    if (params.platform !== "android") {
+      return { ok: false, code: "retryable", message: "FCM is Android only" };
+    }
+    if (!isFcmV1Configured()) {
+      return { ok: false, code: "retryable", message: "FCM v1 not configured" };
+    }
+    return sendFcmV1(params);
+  },
 };
 
 export function getFcmV1Provider(): PushProvider | null {

@@ -12,10 +12,16 @@
   },
   "nav": {
     "dashboard": "Panel",
+    "overview": "Resumen",
     "projects": "Proyectos",
     "team": "Equipo",
     "portfolio": "Portafolio",
     "billing": "Facturación",
+    "workers": "Trabajadores",
+    "reports": "Informes",
+    "uploads": "Subidas",
+    "devices": "Dispositivos y sincronización",
+    "ai": "IA",
     "admin": "Admin",
     "logout": "Salir"
   },

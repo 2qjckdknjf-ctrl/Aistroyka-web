@@ -1,12 +1,13 @@
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
-import { AppLayout } from "@/components/AppLayout";
+import { DashboardShell } from "@/components/DashboardShell";
+import { requireAdmin } from "@/src/features/admin/auth/requireAdmin";
 import { routing } from "@/i18n/routing";
 
 /**
  * Tenant-aware layout for all authenticated routes.
- * Tenant = current user (auth.uid()); RLS enforces isolation on all data access.
+ * Uses dashboard shell (sidebar + topbar) with RBAC-gated Admin nav.
  */
 export default async function DashboardLayout({
   children,
@@ -23,21 +24,11 @@ export default async function DashboardLayout({
     redirect(`/${locale}/login`);
   }
 
-  const sha = process.env.NEXT_PUBLIC_BUILD_SHA ?? "unknown";
-  const shaShort = sha === "unknown" ? "unknown" : sha.slice(0, 7);
-  const buildTime = process.env.NEXT_PUBLIC_BUILD_TIME ?? "unknown";
+  const { allowed: isAdmin } = await requireAdmin(supabase);
 
   return (
-    <>
-      <AppLayout userEmail={user.email ?? undefined}>
-        {children}
-      </AppLayout>
-      <footer
-        className="mt-auto border-t border-aistroyka-border-subtle py-aistroyka-2 text-center text-aistroyka-caption text-aistroyka-text-tertiary"
-        aria-hidden="true"
-      >
-        Build: {shaShort} / {buildTime}
-      </footer>
-    </>
+    <DashboardShell userEmail={user.email ?? undefined} isAdmin={isAdmin}>
+      {children}
+    </DashboardShell>
   );
 }

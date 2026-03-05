@@ -12,10 +12,16 @@
   },
   "nav": {
     "dashboard": "Dashboard",
+    "overview": "Overview",
     "projects": "Projects",
     "team": "Team",
     "portfolio": "Portfolio",
     "billing": "Billing",
+    "workers": "Workers",
+    "reports": "Reports",
+    "uploads": "Uploads",
+    "devices": "Devices & Sync",
+    "ai": "AI",
     "admin": "Admin",
     "logout": "Log out"
   },

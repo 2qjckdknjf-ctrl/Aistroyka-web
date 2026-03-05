@@ -11,4 +11,6 @@ export { Modal } from "./Modal";
 export { SectionHeader } from "./SectionHeader";
 export { Select } from "./Select";
 export { Skeleton, SkeletonCard } from "./Skeleton";
+export { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "./Table";
+export { Tabs, Tab, TabPanel } from "./Tabs";
 export { Textarea } from "./Textarea";
