@@ -98,10 +98,13 @@ Design tokens: `--aistroyka-*` (radius, space, colors, fonts). No Table or Tabs 
 
 ## 2. Projects (Stage 2)
 
-*To be filled after implementation.*
+**Done.**
 
-- APIs used: `GET /api/v1/projects`, `GET /api/projects/[id]` (or v1 equivalent).
-- Optional: `GET /api/v1/projects/:id/summary`.
+- **Routes:** `/dashboard/projects` (list), `/dashboard/projects/[id]` (detail with overview cards + tabs).
+- **APIs used:** `GET /api/v1/projects` (list), `GET /api/v1/projects/:id` (detail), `GET /api/v1/projects/:id/summary` (read-only counts).
+- **Read-only endpoint added:** `GET /api/v1/projects/:id/summary` — returns `{ activeWorkers, openReports, aiAnalyses }` from `project-summary.repository.ts` (tenant-scoped).
+- **UI:** Table (list with search by name), overview cards (workers, reports, AI, pending uploads), Tabs (Workers, Reports, Uploads, AI) with placeholder content for later stages.
+- **Sidebar:** "Projects" now links to `/dashboard/projects`.
 
 ---
 

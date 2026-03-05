@@ -10,7 +10,7 @@ import { getDashboardNavIncludesAdmin } from "./dashboard-nav.utils";
 
 const SIDEBAR_LINKS = [
   { href: "/dashboard", key: "overview" as const },
-  { href: "/projects", key: "projects" as const },
+  { href: "/dashboard/projects", key: "projects" as const },
   { href: "/dashboard/workers", key: "workers" as const },
   { href: "/dashboard/daily-reports", key: "reports" as const },
   { href: "/dashboard/uploads", key: "uploads" as const },
