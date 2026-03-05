@@ -1,8 +1,13 @@
 /**
  * OpenAI vision provider. Uses OPENAI_API_KEY and OPENAI_VISION_MODEL.
+ * Uses shared prompts from lib/ai/prompts for consistent AnalysisResult shape.
  */
 
 import { getServerConfig } from "@/lib/config/server";
+import {
+  CONSTRUCTION_VISION_SYSTEM_PROMPT,
+  CONSTRUCTION_VISION_USER_MESSAGE,
+} from "@/lib/ai/prompts";
 import type { VisionResult, VisionOptions } from "./provider.interface";
 
 const NAME = "openai";
@@ -15,19 +20,17 @@ export async function invokeVision(
   const apiKey = config.OPENAI_API_KEY?.trim();
   if (!apiKey) return null;
   const model = options?.model ?? config.OPENAI_VISION_MODEL ?? "gpt-4o";
-  const systemPrompt = "You are a construction site analyst. Respond with JSON: stage, completion_percent, risk_level (low|medium|high), detected_issues (array), recommendations (array).";
-  const userContent = "Analyze this construction site image.";
   const body = {
     model,
     response_format: { type: "json_object" as const },
     max_tokens: options?.maxTokens ?? 1024,
     temperature: 0,
     messages: [
-      { role: "system" as const, content: systemPrompt },
+      { role: "system" as const, content: CONSTRUCTION_VISION_SYSTEM_PROMPT },
       {
         role: "user" as const,
         content: [
-          { type: "text" as const, text: userContent },
+          { type: "text" as const, text: CONSTRUCTION_VISION_USER_MESSAGE },
           { type: "image_url" as const, image_url: { url: imageUrl } },
         ],
       },
