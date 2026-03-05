@@ -4,62 +4,21 @@
  * Contract:
  * - Request: POST JSON { image_url (required), media_id?, project_id? }.
  * - Response: 200 with AnalysisResult { stage, completion_percent, risk_level, detected_issues, recommendations }.
- * - Errors: 400 (bad body), 413 (body too large), 502/504 (OpenAI), 503 (no OPENAI_API_KEY).
+ * - Errors: 400 (bad body), 413 (body too large), 402 (quota), 429 (rate limit), 403 (policy block), 502/504 (AI), 503 (no OPENAI_API_KEY).
  *
- * Used when AI_ANALYSIS_URL points to this app (unified web + iOS). Prompt: @/lib/ai/prompts.
- * When user is authenticated, tenantId is attached to metrics/logging; traceId always required.
+ * All AI calls go through AIService (Policy Engine → Provider Router → usage).
  */
 
 import { NextResponse } from "next/server";
 import { getTenantContextFromRequest } from "@/lib/tenant";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { checkRateLimit } from "@/lib/platform/rate-limit/rate-limit.service";
-import { checkQuota, recordUsage, estimateVisionCostUsd } from "@/lib/platform/ai-usage/ai-usage.service";
-import { estimateCostUsd } from "@/lib/platform/ai-usage/cost-estimator";
-import {
-  CONSTRUCTION_VISION_SYSTEM_PROMPT,
-  CONSTRUCTION_VISION_USER_MESSAGE,
-} from "@/lib/ai/prompts";
-import {
-  normalizeStage,
-  parseJsonFromContent,
-  sanitizeAnalysisResult,
-} from "@/lib/ai/normalize";
-import { calibrateRiskLevel } from "@/lib/ai/riskCalibration";
-import { type AnalysisResult, type RiskLevel } from "@/lib/ai/types";
+import { checkQuota, estimateVisionCostUsd } from "@/lib/platform/ai-usage/ai-usage.service";
+import { analyzeImage, AIPolicyBlockedError, AIVisionFailedError } from "@/lib/platform/ai/ai.service";
 import { getServerConfig } from "@/lib/config/server";
-
-function parseRiskLevel(s: string): RiskLevel {
-  const v = s?.toLowerCase();
-  if (v === "low" || v === "medium" || v === "high") return v;
-  return "medium";
-}
 
 const MAX_IMAGE_URL_LENGTH = 2048;
 const MAX_BODY_BYTES = 100_000;
-
-/** Single JSON log line for aggregators. No PII. Optional tenantId when authenticated. */
-function logAiEvent(payload: {
-  status: "success" | "failure";
-  duration_ms: number;
-  trace_id?: string;
-  tenant_id?: string | null;
-  stage?: string;
-  risk_level?: string;
-  completion_percent?: number;
-  issues_count?: number;
-  error?: string;
-  http_status?: number;
-}) {
-  if (getServerConfig().NODE_ENV === "test") return;
-  console.log(
-    JSON.stringify({
-      event: "ai_analyze_image",
-      ...payload,
-      ts: new Date().toISOString(),
-    })
-  );
-}
 
 function validateImageUrl(
   url: string
@@ -82,26 +41,31 @@ function validateImageUrl(
   return { ok: true };
 }
 
-function normalizeToAnalysisResult(raw: Record<string, unknown>): AnalysisResult {
-  return {
-    stage: normalizeStage(typeof raw.stage === "string" ? raw.stage : undefined),
-    completion_percent:
-      typeof raw.completion_percent === "number"
-        ? Math.min(100, Math.max(0, Math.round(raw.completion_percent)))
-        : 0,
-    risk_level: parseRiskLevel(String(raw.risk_level ?? "medium")),
-    detected_issues: Array.isArray(raw.detected_issues)
-      ? (raw.detected_issues as unknown[]).filter((i) => typeof i === "string")
-      : [],
-    recommendations: Array.isArray(raw.recommendations)
-      ? (raw.recommendations as unknown[]).filter((r) => typeof r === "string")
-      : [],
-  };
+function logAiEvent(payload: {
+  status: "success" | "failure";
+  duration_ms: number;
+  trace_id?: string;
+  tenant_id?: string | null;
+  stage?: string;
+  risk_level?: string;
+  completion_percent?: number;
+  issues_count?: number;
+  error?: string;
+  http_status?: number;
+}) {
+  if (getServerConfig().NODE_ENV === "test") return;
+  console.log(
+    JSON.stringify({
+      event: "ai_analyze_image",
+      ...payload,
+      ts: new Date().toISOString(),
+    })
+  );
 }
 
 export async function POST(request: Request) {
-  const { OPENAI_API_KEY: apiKey, OPENAI_VISION_MODEL: MODEL, OPENAI_VISION_TIMEOUT_MS: OPENAI_TIMEOUT_MS, OPENAI_RETRY_ON_5XX: OPENAI_RETRY_ON_5XX } = getServerConfig();
-  if (!apiKey) {
+  const config = getServerConfig();
+  if (!config.OPENAI_API_KEY?.trim()) {
     return NextResponse.json(
       { error: "OPENAI_API_KEY is not configured" },
       { status: 503 }
@@ -161,7 +125,11 @@ export async function POST(request: Request) {
       /* allow on rate-limit check failure (e.g. table missing) */
     }
     if (tenantCtx.tenantId) {
-      const quotaMsg = await checkQuota(admin, tenantCtx.tenantId, estimateVisionCostUsd(getServerConfig().OPENAI_VISION_MODEL));
+      const quotaMsg = await checkQuota(
+        admin,
+        tenantCtx.tenantId,
+        estimateVisionCostUsd(config.OPENAI_VISION_MODEL)
+      );
       if (quotaMsg) {
         return NextResponse.json(
           { error: quotaMsg, code: "quota_exceeded" },
@@ -170,188 +138,74 @@ export async function POST(request: Request) {
       }
     }
   }
+
+  if (!admin) {
+    return NextResponse.json(
+      { error: "OPENAI_API_KEY is not configured" },
+      { status: 503 }
+    );
+  }
+
   const startMs = Date.now();
-
   try {
-  const payload = {
-    model: MODEL,
-    response_format: { type: "json_object" as const },
-    max_tokens: 1024,
-    temperature: 0,
-    messages: [
-      { role: "system" as const, content: CONSTRUCTION_VISION_SYSTEM_PROMPT },
-      {
-        role: "user" as const,
-        content: [
-          {
-            type: "text" as const,
-            text: CONSTRUCTION_VISION_USER_MESSAGE,
-          },
-          {
-            type: "image_url" as const,
-            image_url: { url: imageUrl },
-          },
-        ],
-      },
-    ],
-  };
-
-  let res: Response | null = null;
-  let lastErrText = "";
-  let successData: {
-    choices?: Array<{ message?: { content?: string } }>;
-    usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number };
-  } | null = null;
-
-  for (let attempt = 0; attempt <= OPENAI_RETRY_ON_5XX; attempt++) {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), OPENAI_TIMEOUT_MS);
-    try {
-      res = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify(payload),
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-      if (res.ok) {
-        successData = (await res.json()) as typeof successData;
-        break;
-      }
-      lastErrText = await res.text();
-      if (res.status < 500 || attempt === OPENAI_RETRY_ON_5XX) {
-        if (getServerConfig().NODE_ENV !== "test") {
-          console.warn("[ai] analyze-image OpenAI error", { status: res.status, duration_ms: Date.now() - startMs });
-        }
-        return NextResponse.json(
-          { error: `OpenAI API error: ${res.status} ${lastErrText}` },
-          { status: 502 }
-        );
-      }
-      await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));
-    } catch (e) {
-      clearTimeout(timeoutId);
-      if (e instanceof Error && e.name === "AbortError") {
-        logAiEvent({
-          status: "failure",
-          duration_ms: Date.now() - startMs,
-          trace_id: tenantCtx.traceId,
-          tenant_id: tenantCtx.tenantId ?? undefined,
-          error: "timeout",
-          http_status: 504,
-        });
-        return NextResponse.json(
-          { error: "OpenAI request timed out" },
-          { status: 504 }
-        );
-      }
-      throw e;
-    }
-  }
-
-  if (!successData) {
-    logAiEvent({
-      status: "failure",
-      duration_ms: Date.now() - startMs,
-      trace_id: tenantCtx.traceId,
-      tenant_id: tenantCtx.tenantId ?? undefined,
-      error: "OpenAI no data",
-      http_status: 502,
+    const result = await analyzeImage(admin, {
+      tenantId: tenantCtx.tenantId ?? null,
+      userId: tenantCtx.userId ?? null,
+      subscriptionTier: tenantCtx.subscriptionTier ?? "free",
+      traceId: tenantCtx.traceId ?? null,
+    }, {
+      imageUrl,
+      projectId: body.project_id ?? null,
+      mediaId: body.media_id ?? null,
     });
-    return NextResponse.json(
-      { error: `OpenAI API error: ${res?.status ?? 502} ${lastErrText}` },
-      { status: 502 }
-    );
-  }
 
-  const data = successData as {
-    choices?: Array<{ message?: { content?: string } }>;
-    usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number };
-  };
-  const content = data.choices?.[0]?.message?.content?.trim();
-  if (!content) {
+    const durationMs = Date.now() - startMs;
     logAiEvent({
-      status: "failure",
-      duration_ms: Date.now() - startMs,
-      trace_id: tenantCtx.traceId,
+      status: "success",
+      duration_ms: durationMs,
+      trace_id: tenantCtx.traceId ?? undefined,
       tenant_id: tenantCtx.tenantId ?? undefined,
-      error: "Empty response from AI",
-      http_status: 502,
+      stage: result.stage,
+      risk_level: result.risk_level,
+      completion_percent: result.completion_percent,
+      issues_count: result.detected_issues.length,
     });
-    return NextResponse.json(
-      { error: "Empty response from AI" },
-      { status: 502 }
-    );
-  }
-
-  let parsed: unknown;
-  try {
-    parsed = parseJsonFromContent(content);
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : "AI returned non-JSON";
-    logAiEvent({
-      status: "failure",
-      duration_ms: Date.now() - startMs,
-      trace_id: tenantCtx.traceId,
-      tenant_id: tenantCtx.tenantId ?? undefined,
-      error: msg,
-      http_status: 502,
-    });
-    return NextResponse.json({ error: msg }, { status: 502 });
-  }
-
-  const raw = parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : {};
-  let result = normalizeToAnalysisResult(raw);
-  result = sanitizeAnalysisResult(result);
-  result = { ...result, risk_level: calibrateRiskLevel(result) };
-
-  const durationMs = Date.now() - startMs;
-  if (admin && tenantCtx.tenantId) {
-    try {
-      const u = data.usage;
-      const ti = typeof u?.prompt_tokens === "number" ? u.prompt_tokens : 500;
-      const to = typeof u?.completion_tokens === "number" ? u.completion_tokens : 300;
-      const cost = estimateCostUsd(MODEL, ti, to);
-      await recordUsage(admin, {
-        tenant_id: tenantCtx.tenantId,
-        user_id: tenantCtx.userId ?? null,
-        trace_id: tenantCtx.traceId ?? null,
-        provider: "openai",
-        model: MODEL,
-        tokens_input: ti,
-        tokens_output: to,
-        tokens_total: ti + to,
-        cost_usd: cost,
-        status: "success",
-        duration_ms: durationMs,
-      });
-    } catch {
-      /* do not fail response on usage persistence */
-    }
-  }
-  logAiEvent({
-    status: "success",
-    duration_ms: durationMs,
-    trace_id: tenantCtx.traceId,
-    tenant_id: tenantCtx.tenantId ?? undefined,
-    stage: result.stage,
-    risk_level: result.risk_level,
-    completion_percent: result.completion_percent,
-    issues_count: result.detected_issues.length,
-  });
-  const response = NextResponse.json(result);
-  response.headers.set("X-AI-Duration-Ms", String(durationMs));
-  return response;
+    const response = NextResponse.json(result);
+    response.headers.set("X-AI-Duration-Ms", String(durationMs));
+    return response;
   } catch (err) {
     const durationMs = Date.now() - startMs;
+    if (err instanceof AIPolicyBlockedError) {
+      logAiEvent({
+        status: "failure",
+        duration_ms: durationMs,
+        trace_id: tenantCtx.traceId ?? undefined,
+        tenant_id: tenantCtx.tenantId ?? undefined,
+        error: err.message,
+        http_status: 403,
+      });
+      return NextResponse.json({ error: err.message }, { status: 403 });
+    }
+    if (err instanceof AIVisionFailedError) {
+      const isTimeout = err.message.toLowerCase().includes("timeout");
+      logAiEvent({
+        status: "failure",
+        duration_ms: durationMs,
+        trace_id: tenantCtx.traceId ?? undefined,
+        tenant_id: tenantCtx.tenantId ?? undefined,
+        error: err.message,
+        http_status: isTimeout ? 504 : 502,
+      });
+      return NextResponse.json(
+        { error: err.message },
+        { status: isTimeout ? 504 : 502 }
+      );
+    }
     const message = err instanceof Error ? err.message : "Analysis failed";
     logAiEvent({
       status: "failure",
       duration_ms: durationMs,
-      trace_id: tenantCtx.traceId,
+      trace_id: tenantCtx.traceId ?? undefined,
       tenant_id: tenantCtx.tenantId ?? undefined,
       error: message,
       http_status: 500,
