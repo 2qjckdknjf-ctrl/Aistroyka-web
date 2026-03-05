@@ -104,4 +104,11 @@ describe("POST /api/ai/analyze-image", () => {
     expect(data.error).toMatch(/https|production/);
   });
 
+  it("includes Deprecation and Sunset headers (legacy route)", async () => {
+    vi.stubEnv("OPENAI_API_KEY", "");
+    const req = jsonRequest({ image_url: "https://example.com/photo.jpg" });
+    const res = await POST(req);
+    expect(res.headers.get("Deprecation")).toBe("true");
+    expect(res.headers.get("Sunset")).toBeDefined();
+  });
 });

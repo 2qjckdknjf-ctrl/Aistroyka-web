@@ -10,6 +10,7 @@
  */
 
 import { NextResponse } from "next/server";
+import { setLegacyApiHeaders } from "@/lib/api/deprecation-headers";
 import { getTenantContextFromRequest } from "@/lib/tenant";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { checkRateLimit } from "@/lib/platform/rate-limit/rate-limit.service";
@@ -19,6 +20,11 @@ import { getServerConfig } from "@/lib/config/server";
 
 const MAX_IMAGE_URL_LENGTH = 2048;
 const MAX_BODY_BYTES = 100_000;
+
+function withLegacyHeaders(res: NextResponse): NextResponse {
+  setLegacyApiHeaders(res.headers);
+  return res;
+}
 
 function validateImageUrl(
   url: string
@@ -66,10 +72,10 @@ function logAiEvent(payload: {
 export async function POST(request: Request) {
   const config = getServerConfig();
   if (!config.OPENAI_API_KEY?.trim()) {
-    return NextResponse.json(
+    return withLegacyHeaders(NextResponse.json(
       { error: "OPENAI_API_KEY is not configured" },
       { status: 503 }
-    );
+    ));
   }
 
   const contentLength = request.headers.get("content-length");
@@ -78,34 +84,34 @@ export async function POST(request: Request) {
     contentLength !== "" &&
     Number(contentLength) > MAX_BODY_BYTES
   ) {
-    return NextResponse.json(
+    return withLegacyHeaders(NextResponse.json(
       { error: "Request body too large" },
       { status: 413 }
-    );
+    ));
   }
 
   let body: { media_id?: string; image_url?: string; project_id?: string };
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json(
+    return withLegacyHeaders(NextResponse.json(
       { error: "Invalid JSON body" },
       { status: 400 }
-    );
+    ));
   }
 
   const imageUrl =
     typeof body.image_url === "string" ? body.image_url.trim() : "";
   if (!imageUrl) {
-    return NextResponse.json(
+    return withLegacyHeaders(NextResponse.json(
       { error: "image_url is required" },
       { status: 400 }
-    );
+    ));
   }
 
   const urlCheck = validateImageUrl(imageUrl);
   if (!urlCheck.ok) {
-    return NextResponse.json({ error: urlCheck.error }, { status: 400 });
+    return withLegacyHeaders(NextResponse.json({ error: urlCheck.error }, { status: 400 }));
   }
 
   const tenantCtx = await getTenantContextFromRequest(request);
@@ -119,7 +125,7 @@ export async function POST(request: Request) {
         endpoint: "/api/v1/ai/analyze-image",
       });
       if (result.limited) {
-        return NextResponse.json({ error: result.message }, { status: 429 });
+        return withLegacyHeaders(NextResponse.json({ error: result.message }, { status: 429 }));
       }
     } catch {
       /* allow on rate-limit check failure (e.g. table missing) */
@@ -131,19 +137,19 @@ export async function POST(request: Request) {
         estimateVisionCostUsd(config.OPENAI_VISION_MODEL)
       );
       if (quotaMsg) {
-        return NextResponse.json(
+        return withLegacyHeaders(NextResponse.json(
           { error: quotaMsg, code: "quota_exceeded" },
           { status: 402 }
-        );
+        ));
       }
     }
   }
 
   if (!admin) {
-    return NextResponse.json(
+    return withLegacyHeaders(NextResponse.json(
       { error: "OPENAI_API_KEY is not configured" },
       { status: 503 }
-    );
+    ));
   }
 
   const startMs = Date.now();
@@ -172,7 +178,7 @@ export async function POST(request: Request) {
     });
     const response = NextResponse.json(result);
     response.headers.set("X-AI-Duration-Ms", String(durationMs));
-    return response;
+    return withLegacyHeaders(response);
   } catch (err) {
     const durationMs = Date.now() - startMs;
     if (err instanceof AIPolicyBlockedError) {
@@ -184,7 +190,7 @@ export async function POST(request: Request) {
         error: err.message,
         http_status: 403,
       });
-      return NextResponse.json({ error: err.message }, { status: 403 });
+      return withLegacyHeaders(NextResponse.json({ error: err.message }, { status: 403 }));
     }
     if (err instanceof AIVisionFailedError) {
       const isTimeout = err.message.toLowerCase().includes("timeout");
@@ -196,10 +202,10 @@ export async function POST(request: Request) {
         error: err.message,
         http_status: isTimeout ? 504 : 502,
       });
-      return NextResponse.json(
+      return withLegacyHeaders(NextResponse.json(
         { error: err.message },
         { status: isTimeout ? 504 : 502 }
-      );
+      ));
     }
     const message = err instanceof Error ? err.message : "Analysis failed";
     logAiEvent({
@@ -210,9 +216,9 @@ export async function POST(request: Request) {
       error: message,
       http_status: 500,
     });
-    return NextResponse.json(
+    return withLegacyHeaders(NextResponse.json(
       { error: message },
       { status: 500 }
-    );
+    ));
   }
 }
