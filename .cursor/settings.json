@@ -1,0 +1,21 @@
+{
+  "files.exclude": {
+    "TestLogs": true,
+    "audit_artifacts": true,
+    "audit_artifacts_*": true,
+    "exports": true,
+    "reports": true,
+    "archive_*": true,
+    "ios/build": true,
+    "ios/ci_derived": true
+  },
+  "search.exclude": {
+    "TestLogs": true,
+    "audit_artifacts": true,
+    "exports": true,
+    "reports": true,
+    "archive_*": true,
+    "ios/build": true,
+    "ios/ci_derived": true
+  }
+}
