@@ -7,7 +7,8 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError, authorize } from "@/lib/tenant";
-import { createCheckoutSession } from "@/lib/platform/billing";
+import { createCheckoutSession, isStripeConfigured } from "@/lib/platform/billing";
+import { BILLING_503_BODY } from "@/lib/platform/billing/billing-responses";
 import { emitAudit } from "@/lib/observability/audit.service";
 
 export const dynamic = "force-dynamic";
@@ -32,7 +33,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "success_url and cancel_url required" }, { status: 400 });
   }
   const admin = getAdminClient();
-  if (!admin) return NextResponse.json({ error: "Service unavailable" }, { status: 503 });
+  if (!admin || !isStripeConfigured()) {
+    return NextResponse.json(BILLING_503_BODY, { status: 503 });
+  }
   const result = await createCheckoutSession(admin, {
     tenantId: ctx.tenantId,
     successUrl,

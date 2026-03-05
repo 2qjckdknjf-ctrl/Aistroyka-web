@@ -5,13 +5,16 @@
 
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabase/admin";
-import { verifyWebhookEvent, handleSubscriptionUpdated, handleCheckoutCompleted } from "@/lib/platform/billing/webhooks.handler";
+import { verifyWebhookEvent, handleSubscriptionUpdated, handleCheckoutCompleted, isWebhookConfigured } from "@/lib/platform/billing/webhooks.handler";
+import { BILLING_503_BODY } from "@/lib/platform/billing/billing-responses";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   const admin = getAdminClient();
-  if (!admin) return NextResponse.json({ error: "Unavailable" }, { status: 503 });
+  if (!admin || !isWebhookConfigured()) {
+    return NextResponse.json(BILLING_503_BODY, { status: 503 });
+  }
   const raw = await request.text();
   const sig = request.headers.get("stripe-signature");
   const event = verifyWebhookEvent(raw, sig);
