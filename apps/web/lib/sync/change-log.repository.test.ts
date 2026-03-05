@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { getChanges, getChangesAfter } from "./change-log.repository";
+import { getChanges, getChangesAfter, getMinCursor } from "./change-log.repository";
 
 const mockRows = (ids: number[]) =>
   ids.map((id) => ({
@@ -76,6 +76,42 @@ describe("change-log.repository", () => {
       } as any;
       const result = await getChangesAfter(supabase, "t1", 0, 10);
       expect(result).toEqual([]);
+    });
+  });
+
+  describe("getMinCursor", () => {
+    it("returns min id for tenant", async () => {
+      const supabase = {
+        from: vi.fn(() => ({
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              order: vi.fn(() => ({
+                limit: vi.fn(() => ({
+                  maybeSingle: vi.fn(() => Promise.resolve({ data: { id: 5 }, error: null })),
+                })),
+              })),
+            })),
+          })),
+        })),
+      } as any;
+      const result = await getMinCursor(supabase, "t1");
+      expect(result).toBe(5);
+    });
+
+    it("returns 0 when no rows or error", async () => {
+      const supabase = {
+        from: vi.fn(() => ({
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              order: vi.fn(() => ({
+                limit: vi.fn(() => ({ maybeSingle: vi.fn(() => Promise.resolve({ data: null, error: null })) })),
+              })),
+            })),
+          })),
+        })),
+      } as any;
+      const result = await getMinCursor(supabase, "t1");
+      expect(result).toBe(0);
     });
   });
 });

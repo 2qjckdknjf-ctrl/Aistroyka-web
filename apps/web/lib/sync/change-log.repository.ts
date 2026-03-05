@@ -84,3 +84,16 @@ export async function getMaxCursor(supabase: SupabaseClient, tenantId: string): 
   if (error || !data) return 0;
   return (data as { id: number }).id;
 }
+
+/** Get earliest retained cursor for tenant (min change_log id). Used for retention-bound 409. */
+export async function getMinCursor(supabase: SupabaseClient, tenantId: string): Promise<number> {
+  const { data, error } = await supabase
+    .from("change_log")
+    .select("id")
+    .eq("tenant_id", tenantId)
+    .order("id", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (error || !data) return 0;
+  return (data as { id: number }).id;
+}
