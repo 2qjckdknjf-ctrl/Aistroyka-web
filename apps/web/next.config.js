@@ -1,21 +1,15 @@
 const createNextIntlPlugin = require("next-intl/plugin");
 const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 
+const { SECURITY_HEADERS } = require("./lib/security-headers");
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   async headers() {
     return [
       {
         source: "/:path*",
-        headers: [
-          { key: "X-Content-Type-Options", value: "nosniff" },
-          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-          { key: "X-Frame-Options", value: "DENY" },
-          {
-            key: "Permissions-Policy",
-            value: "camera=(), microphone=(), geolocation=(), interest-cohort=()",
-          },
-        ],
+        headers: [...SECURITY_HEADERS],
       },
     ];
   },

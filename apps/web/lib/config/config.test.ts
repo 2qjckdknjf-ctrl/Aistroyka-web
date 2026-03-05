@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { hasSupabaseEnv, getBuildStamp } from "./public";
 import { getServerConfig, isOpenAIConfigured } from "./server";
-import { getDebugConfig } from "./debug";
+import { getDebugConfig, isDebugAuthAllowed, isDebugAllowedForRequest } from "./debug";
 
 describe("config", () => {
   beforeEach(() => {
@@ -73,6 +73,42 @@ describe("config", () => {
       expect(getDebugConfig().debugAuth).toBe(false);
       vi.stubEnv("DEBUG_AUTH", "true");
       expect(getDebugConfig().debugAuth).toBe(true);
+    });
+  });
+
+  describe("isDebugAllowedForRequest", () => {
+    it("in production with no request returns false", () => {
+      vi.stubEnv("NODE_ENV", "production");
+      vi.stubEnv("ALLOW_DEBUG_HOSTS", "localhost");
+      expect(isDebugAllowedForRequest(undefined)).toBe(false);
+    });
+    it("in production with request host in ALLOW_DEBUG_HOSTS returns true", () => {
+      vi.stubEnv("NODE_ENV", "production");
+      vi.stubEnv("ALLOW_DEBUG_HOSTS", "localhost,example.com");
+      const req = new Request("https://localhost/api/_debug/auth", { headers: { host: "localhost" } });
+      expect(isDebugAllowedForRequest(req)).toBe(true);
+    });
+    it("in production with request host not in ALLOW_DEBUG_HOSTS returns false", () => {
+      vi.stubEnv("NODE_ENV", "production");
+      vi.stubEnv("ALLOW_DEBUG_HOSTS", "example.com");
+      const req = new Request("https://evil.com/api/_debug/auth", { headers: { host: "evil.com" } });
+      expect(isDebugAllowedForRequest(req)).toBe(false);
+    });
+  });
+
+  describe("isDebugAuthAllowed", () => {
+    it("in development returns true without request", () => {
+      vi.stubEnv("NODE_ENV", "development");
+      vi.stubEnv("DEBUG_AUTH", undefined);
+      expect(isDebugAuthAllowed()).toBe(true);
+    });
+    it("in production requires DEBUG_AUTH and host allowlist", () => {
+      vi.stubEnv("NODE_ENV", "production");
+      vi.stubEnv("DEBUG_AUTH", "true");
+      vi.stubEnv("ALLOW_DEBUG_HOSTS", "allowed.example.com");
+      expect(isDebugAuthAllowed()).toBe(false);
+      const req = new Request("https://allowed.example.com/", { headers: { host: "allowed.example.com" } });
+      expect(isDebugAuthAllowed(req)).toBe(true);
     });
   });
 });

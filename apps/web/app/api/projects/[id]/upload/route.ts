@@ -65,12 +65,26 @@ export async function POST(
     );
   }
 
+  const contentLength = request.headers.get("content-length");
+  const maxUploadBytes = 25 * 1024 * 1024; // 25MB
+  if (contentLength && parseInt(contentLength, 10) > maxUploadBytes) {
+    return NextResponse.json(
+      { success: false, error: "Request body too large; max 25MB" },
+      { status: 413 }
+    );
+  }
   const formData = await request.formData();
   const file = formData.get("file") as File | null;
   if (!file || !file.size) {
     return NextResponse.json(
       { success: false, error: "No file provided" },
       { status: 400 }
+    );
+  }
+  if (file.size > maxUploadBytes) {
+    return NextResponse.json(
+      { success: false, error: "File too large; max 25MB" },
+      { status: 413 }
     );
   }
 

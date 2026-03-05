@@ -5,12 +5,15 @@
  */
 
 import { NextResponse } from "next/server";
-import { hasSupabaseEnv, getPublicConfig } from "@/lib/config";
+import { hasSupabaseEnv, getPublicConfig, isDebugDiagAllowed } from "@/lib/config";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export async function GET() {
+export async function GET(request: Request) {
+  if (!isDebugDiagAllowed(request)) {
+    return NextResponse.json({ error: "Not available" }, { status: 404 });
+  }
   if (!hasSupabaseEnv()) {
     return NextResponse.json(
       { reachable: false, latencyMs: 0, error: "missing_supabase_env" },

@@ -11,10 +11,10 @@ import { hasSupabaseEnv, getPublicConfig, isDebugAuthAllowed } from "@/lib/confi
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: Request) {
   const traceId = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `t-${Date.now()}`;
 
-  if (!isDebugAuthAllowed()) {
+  if (!isDebugAuthAllowed(request)) {
     return NextResponse.json({ error: "Not available" }, { status: 404 });
   }
 
