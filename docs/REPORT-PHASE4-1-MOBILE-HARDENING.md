@@ -1,75 +1,63 @@
 # Phase 4.1 — Mobile Reliability Hardening to Production
 
 **Project:** AISTROYKA.AI  
-**Phase:** 4.1 — Mobile Reliability Hardening. No UI work. No product expansion.  
-**Goal:** Improve correctness and ops safety for worker/sync/media/push.
+**Phase:** 4.1 — Mobile Reliability Hardening (no UI, no product expansion).  
+**Status:** In progress.
 
-**Non-negotiables:** No v1 API contract breaks; preserve Phase 1–4 outcomes; env-gated risk; tests per new rule; this report + updated runbooks.
-
----
-
-## Stage 0 — Baseline Checkpoint
-
-### 0.1 Working tree
-
-- **Note:** Baseline recorded with uncommitted changes present. Recommend `git stash` or commit before applying Phase 4.1 changes for a clean history.
-
-### 0.2 Report skeleton
-
-- This document. Placeholders per stage below.
-
-### 0.3 Baseline (tests + cf:build)
-
-- **Vitest:** 269 tests, 58 files passed (apps/web: `npm test -- --run`).
-- **cf:build:** OpenNext Cloudflare build succeeded (`npm run cf:build`). ESLint plugin conflict warning present; build not blocked.
+**Non-negotiables:** No v1 API contract breaks (worker/sync/media/devices); preserve Phase 1–4; env-gated risk; tests per change; runbooks + this report.
 
 ---
 
-## Stage 1 — FCM HTTP v1 (Service Account)
+## Stage 0 — Baseline checkpoint
 
-- **Summary:** _placeholder_
-- **Env vars:** _placeholder_
-- **Migration from legacy:** _placeholder_
-
----
-
-## Stage 2 — Optional Storage Existence Check on Finalize
-
-- **Summary:** _placeholder_
-- **Env flags:** _placeholder_
+- **0.1 Working tree:** Not clean (branch has other changes); report and Phase 4.1 work proceed on current branch.
+- **0.2 Report skeleton:** Created.
+- **0.3 Baseline:** Vitest 269 tests passed (58 files). cf:build: `opennextjs-cloudflare` CLI not installed (npm script invokes it; package not in package.json); documented in Stage 4.
 
 ---
 
-## Stage 3 — Sync Conflict Detection Hardening
+## Stage 1 — FCM HTTP v1 (service account)
 
-- **Summary:** _placeholder_
-- **Retention + device mismatch:** _placeholder_
-
----
-
-## Stage 4 — Build/CI Clarity
-
-- **Canonical checks:** _placeholder_
-- **BUILD_AND_RELEASE.md:** _placeholder_
+- **Goal:** Replace legacy FCM_SERVER_KEY with FCM HTTP v1 auth.
+- **Env vars:** (placeholder)
+- **Migration:** (placeholder)
+- **Tests:** (placeholder)
 
 ---
 
-## Stage 5 — Final Verification
+## Stage 2 — Optional storage existence check on finalize
 
-- **Commands run:** _placeholder_
-- **Smoke / how to verify:** _placeholder_
+- **Goal:** Env-gated verification that object exists before finalize.
+- **Flags:** (placeholder)
+- **Tests:** (placeholder)
+
+---
+
+## Stage 3 — Sync conflict detection hardening
+
+- **Goal:** Retention boundary + device mismatch → 409 with stable contract.
+- **Tests:** (placeholder)
+
+---
+
+## Stage 4 — Build/CI clarity
+
+- **Canonical checks:** (placeholder)
+- **Docs:** (placeholder)
+
+---
+
+## Stage 5 — Final verification
+
+- **Commands run:** (placeholder)
+- **Summary:** (placeholder)
 
 ---
 
 ## Env vars reference (Phase 4.1)
 
-| Variable   | Stage | Default | Description            |
-|------------|-------|---------|------------------------|
-| _TBD_      | 1     | -       | FCM HTTP v1            |
-| _TBD_      | 2     | -       | Finalize verification  |
-
----
+(To be filled in Stage 5.)
 
 ## Runbooks updated
 
-- _PUSH_DELIVERY, MOBILE_UPLOADS, MOBILE_SYNC, BUILD_AND_RELEASE_
+(To be filled in Stage 5.)
