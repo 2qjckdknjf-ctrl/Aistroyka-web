@@ -4,6 +4,16 @@
 
 ---
 
+## One-shot setup (from repo root or apps/web)
+
+```bash
+cd apps/web && bun run setup-staging
+```
+
+This script: creates branch `develop` if missing, runs DNS setup (if `CLOUDFLARE_API_TOKEN` set), uploads secrets to Worker from `.env.staging` if present. Then push: `git push -u origin develop`. See **docs/CLOUDFLARE-BUILD-CANONICAL.md** for Cloudflare Build commands.
+
+---
+
 ## Branch and deploy
 
 - **Branch:** `develop` (push triggers deploy-cloudflare-staging.yml).
@@ -14,19 +24,18 @@
 
 ## Custom domain (staging.aistroyka.ai)
 
-1. In Cloudflare Dashboard → **Workers & Pages** → **aistroyka-web-staging** → **Settings** → **Domains & routes** (or **Triggers**), add custom domain **staging.aistroyka.ai**.
-2. In **DNS** for zone aistroyka.ai, add:
-   - **Type:** CNAME  
-   - **Name:** staging  
-   - **Target:** (value provided by Cloudflare when you add the custom domain to the Worker, e.g. aistroyka-web-staging.workers.dev or the assigned hostname)  
-   - **Proxy:** Proxied (orange) or DNS only as needed; SSL Full (strict) recommended.
-3. Ensure no other Worker or Page uses the same route for staging.aistroyka.ai.
+1. In Cloudflare Dashboard → **Workers & Pages** → **aistroyka-web-staging** → **Settings** → **Domains & routes** (or **Triggers**), add custom domain **staging.aistroyka.ai** (Cloudflare may create the DNS record for you).
+2. **Or** create CNAME via API: from apps/web run `CLOUDFLARE_API_TOKEN=… STAGING_CNAME_TARGET=<target> node scripts/cf-dns-setup-aistroyka.mjs` (use the target shown when adding the custom domain in the Worker).
+3. **Or** in **DNS** for zone aistroyka.ai add manually: Type CNAME, Name staging, Target (from step 1), Proxy on; SSL Full (strict).
+4. Ensure no other Worker or Page uses the same route for staging.aistroyka.ai.
 
 ---
 
 ## Environment variables (staging Worker)
 
-Set in **Workers & Pages → aistroyka-web-staging → Settings → Variables and secrets**.
+**Option A — script:** Create `.env.staging` (or `.env.staging.local`) from `.env.staging.example` with staging values, then run `./scripts/set-cf-secrets.sh staging` from apps/web. This uploads NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, NEXT_PUBLIC_APP_URL, SUPABASE_SERVICE_ROLE_KEY to Worker aistroyka-web-staging.
+
+**Option B — Dashboard:** Set in **Workers & Pages → aistroyka-web-staging → Settings → Variables and secrets**.
 
 **Build-time (if using Cloudflare Build UI):**  
 NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, NEXT_PUBLIC_APP_URL (e.g. https://staging.aistroyka.ai), NEXT_PUBLIC_APP_ENV=staging.  

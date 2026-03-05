@@ -25,6 +25,7 @@
     "supabase:auth-urls": "node scripts/set-supabase-auth-urls.mjs",
     "cf:fix-domain": "node scripts/cf-fix-domain-aistroyka.mjs",
     "cf:dns-setup": "node scripts/cf-dns-setup-aistroyka.mjs",
+    "setup-staging": "./scripts/setup-staging.sh",
     "supabase:check-storage": "node scripts/check-supabase-storage.mjs",
     "db:migrate": "node scripts/run-migrations.mjs",
     "env:setup": "./scripts/ensure-env-local.sh",

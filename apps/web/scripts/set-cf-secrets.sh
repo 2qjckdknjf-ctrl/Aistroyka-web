@@ -9,15 +9,28 @@ cd "$(dirname "$0")/.."
 
 ENV="${1:-dev}"
 ENV_FILE=""
-for f in .env.production.local .env.production; do
-  if [[ -f "$f" ]]; then
-    ENV_FILE="$f"
-    break
-  fi
-done
-
+if [[ "$ENV" == "staging" ]]; then
+  for f in .env.staging.local .env.staging; do
+    if [[ -f "$f" ]]; then
+      ENV_FILE="$f"
+      break
+    fi
+  done
+fi
 if [[ -z "$ENV_FILE" ]]; then
-  echo "No .env.production or .env.production.local found. Copy .env.production.example and fill in values."
+  for f in .env.production.local .env.production; do
+    if [[ -f "$f" ]]; then
+      ENV_FILE="$f"
+      break
+    fi
+  done
+fi
+if [[ -z "$ENV_FILE" ]]; then
+  if [[ "$ENV" == "staging" ]]; then
+    echo "No .env.staging or .env.staging.local found. Copy .env.staging.example and fill in staging values."
+  else
+    echo "No .env.production or .env.production.local found. Copy .env.production.example and fill in values."
+  fi
   exit 1
 fi
 

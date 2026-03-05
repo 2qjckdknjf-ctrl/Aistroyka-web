@@ -102,6 +102,37 @@ async function main() {
     console.log("Запись CNAME www уже есть.");
   }
 
+  const stagingTarget = process.env.STAGING_CNAME_TARGET?.trim();
+  const hasStaging = list.some(
+    (r) => r.type === "CNAME" && (r.name === "staging" || r.name === "staging." + ZONE_NAME)
+  );
+  if (!hasStaging) {
+    if (stagingTarget) {
+      const create = await fetch(`${API}/zones/${zoneId}/dns_records`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          type: "CNAME",
+          name: "staging",
+          content: stagingTarget,
+          proxied: true,
+          ttl: 1,
+        }),
+      });
+      if (!create.ok) {
+        console.error("Create CNAME staging error:", create.status, await create.text());
+        process.exit(1);
+      }
+      console.log("Создана запись: CNAME staging →", stagingTarget, "(proxied)");
+    } else {
+      console.log(
+        "\nStaging: запись CNAME staging не найдена. Добавьте custom domain staging.aistroyka.ai в Worker aistroyka-web-staging (Dashboard), либо задайте STAGING_CNAME_TARGET и перезапустите скрипт."
+      );
+    }
+  } else {
+    console.log("Запись CNAME staging уже есть.");
+  }
+
   console.log("\nГотово. Если домен ещё не открывается — смените NS у регистратора на указанные выше.");
 }
 
