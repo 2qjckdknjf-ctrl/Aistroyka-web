@@ -1,65 +1,89 @@
 /**
- * Google Gemini vision provider. Uses GOOGLE_AI_API_KEY (or GEMINI_API_KEY) and GEMINI_VISION_MODEL.
- * Optional: if key missing, returns null. Fetches image from URL and sends as inline base64.
+ * Google Gemini vision provider. Uses GOOGLE_AI_API_KEY or GEMINI_API_KEY and GEMINI_VISION_MODEL.
+ * Optional: if key missing, returns null (unavailable). Never logs secrets.
+ * Images: fetches imageUrl and sends as inline_data (base64) per Gemini API.
  */
 
-import { getServerConfig } from "@/lib/config/server";
 import {
   CONSTRUCTION_VISION_SYSTEM_PROMPT,
   CONSTRUCTION_VISION_USER_MESSAGE,
 } from "@/lib/ai/prompts";
 import type { VisionResult, VisionOptions } from "./provider.interface";
+import { ProviderRequestError } from "./provider.errors";
 
 const NAME = "gemini";
-const DEFAULT_TIMEOUT_MS = 85_000;
+const DEFAULT_MODEL = "gemini-1.5-flash";
+const TIMEOUT_MS = 85_000;
 const IMAGE_FETCH_TIMEOUT_MS = 15_000;
 
-function toBase64(buf: ArrayBuffer): string {
-  const bytes = new Uint8Array(buf);
-  if (typeof Buffer !== "undefined") return Buffer.from(bytes).toString("base64");
-  let binary = "";
-  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-  return typeof btoa !== "undefined" ? btoa(binary) : "";
+function getConfig(): { apiKey: string; model: string } {
+  const apiKey = (
+    process.env.GOOGLE_AI_API_KEY ??
+    process.env.GEMINI_API_KEY ??
+    ""
+  ).trim();
+  const model =
+    (process.env.GEMINI_VISION_MODEL ?? DEFAULT_MODEL).trim() || DEFAULT_MODEL;
+  return { apiKey, model };
 }
 
 async function fetchImageAsBase64(imageUrl: string): Promise<{ data: string; mimeType: string }> {
   const res = await fetch(imageUrl, {
     signal: AbortSignal.timeout(IMAGE_FETCH_TIMEOUT_MS),
-    headers: { Accept: "image/*" },
   });
-  if (!res.ok) throw new Error(`Image fetch failed: ${res.status}`);
-  const blob = await res.blob();
-  const buf = await blob.arrayBuffer();
-  const base64 = toBase64(buf);
-  const mimeType = blob.type?.startsWith("image/") ? blob.type : "image/jpeg";
+  if (!res.ok) throw new ProviderRequestError(`Image fetch failed: ${res.status}`, "invalid_input");
+  const contentType = res.headers.get("content-type") ?? "";
+  const mimeType = contentType.includes("png")
+    ? "image/png"
+    : contentType.includes("webp")
+      ? "image/webp"
+      : contentType.includes("gif")
+        ? "image/gif"
+        : "image/jpeg";
+  const buf = await res.arrayBuffer();
+  const base64 = Buffer.from(buf).toString("base64");
   return { data: base64, mimeType };
+}
+
+function mapToProviderError(e: unknown, statusCode?: number): ProviderRequestError {
+  if (e instanceof ProviderRequestError) return e;
+  const msg = e instanceof Error ? e.message : "Gemini request failed";
+  if (msg.toLowerCase().includes("timeout") || msg.toLowerCase().includes("aborted"))
+    return new ProviderRequestError(msg, "timeout", statusCode);
+  if (statusCode === 401 || statusCode === 403)
+    return new ProviderRequestError(msg, "auth", statusCode);
+  if (statusCode === 429) return new ProviderRequestError(msg, "rate_limit", statusCode);
+  if (statusCode && statusCode >= 400 && statusCode < 500)
+    return new ProviderRequestError(msg, "invalid_input", statusCode);
+  if (statusCode && statusCode >= 500)
+    return new ProviderRequestError(msg, "server_error", statusCode);
+  return new ProviderRequestError(msg, "unknown", statusCode);
 }
 
 export async function invokeVision(
   imageUrl: string,
   options?: VisionOptions
 ): Promise<VisionResult | null> {
-  const config = getServerConfig();
-  const apiKey = config.GOOGLE_AI_API_KEY?.trim();
+  const { apiKey, model } = getConfig();
   if (!apiKey) return null;
 
-  const model = options?.model ?? config.GEMINI_VISION_MODEL ?? "gemini-1.5-flash";
+  const resolvedModel = options?.model ?? model;
   const maxTokens = options?.maxTokens ?? 1024;
 
-  let imagePayload: { data: string; mimeType: string };
-  try {
-    imagePayload = await fetchImageAsBase64(imageUrl);
-  } catch (e) {
-    throw new Error(`Gemini image fetch: ${e instanceof Error ? e.message : String(e)}`);
-  }
+  const { data: imageBase64, mimeType } = await fetchImageAsBase64(imageUrl);
 
-  const systemPlusUser = `${CONSTRUCTION_VISION_SYSTEM_PROMPT}\n\n${CONSTRUCTION_VISION_USER_MESSAGE}`;
   const body = {
     contents: [
       {
+        role: "user",
         parts: [
-          { inline_data: { mime_type: imagePayload.mimeType, data: imagePayload.data } },
-          { text: systemPlusUser },
+          { text: `${CONSTRUCTION_VISION_SYSTEM_PROMPT}\n\n${CONSTRUCTION_VISION_USER_MESSAGE}` },
+          {
+            inline_data: {
+              mime_type: mimeType,
+              data: imageBase64,
+            },
+          },
         ],
       },
     ],
@@ -70,48 +94,57 @@ export async function invokeVision(
     },
   };
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-    signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
-  });
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(resolvedModel)}:generateContent?key=${encodeURIComponent(apiKey)}`;
 
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Gemini ${res.status}: ${text.slice(0, 200)}`);
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
+  } catch (e) {
+    throw mapToProviderError(e);
   }
 
   const data = (await res.json()) as {
     candidates?: Array<{
       content?: { parts?: Array<{ text?: string }> };
+      finishReason?: string;
     }>;
-    usageMetadata?: {
-      promptTokenCount?: number;
-      candidatesTokenCount?: number;
-      totalTokenCount?: number;
-    };
+    usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number; totalTokenCount?: number };
+    error?: { message?: string; code?: number };
   };
 
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-  if (!text) throw new Error("Empty Gemini response");
+  if (!res.ok) {
+    const msg = data?.error?.message ?? `Gemini ${res.status}`;
+    throw mapToProviderError(new Error(msg), res.status);
+  }
 
-  const um = data.usageMetadata;
+  const text =
+    data.candidates?.[0]?.content?.parts?.find((p) => p.text != null)?.text?.trim();
+  if (!text) throw new ProviderRequestError("Empty Gemini response", "unknown");
+
+  const usage = data.usageMetadata;
+  const promptTokens = usage?.promptTokenCount ?? 0;
+  const completionTokens = usage?.candidatesTokenCount ?? usage?.totalTokenCount ?? 0;
+  const totalTokens = usage?.totalTokenCount ?? promptTokens + completionTokens;
+
   const result: VisionResult = {
     content: text,
-    usage:
-      um != null
-        ? {
-            prompt_tokens: um.promptTokenCount ?? 0,
-            completion_tokens: um.candidatesTokenCount ?? 0,
-            total_tokens: um.totalTokenCount ?? (um.promptTokenCount ?? 0) + (um.candidatesTokenCount ?? 0),
-          }
-        : undefined,
+    usage: {
+      prompt_tokens: promptTokens,
+      completion_tokens: completionTokens,
+      total_tokens: totalTokens,
+    },
     providerUsed: NAME,
-    modelUsed: model,
+    modelUsed: resolvedModel,
   };
   return result;
 }
 
-export const geminiProvider = { name: NAME, invokeVision };
+export const geminiProvider = {
+  name: NAME,
+  invokeVision,
+};

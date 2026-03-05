@@ -4,7 +4,7 @@
  * Contract:
  * - Request: POST JSON { image_url (required), media_id?, project_id? }.
  * - Response: 200 with AnalysisResult { stage, completion_percent, risk_level, detected_issues, recommendations }.
- * - Errors: 400 (bad body), 413 (body too large), 402 (quota), 429 (rate limit), 403 (policy block), 502/504 (AI), 503 (no OPENAI_API_KEY).
+ * - Errors: 400 (bad body), 413 (body too large), 402 (quota), 429 (rate limit), 403 (policy block), 502/504 (AI), 503 (no vision provider configured).
  *
  * All AI calls go through AIService (Policy Engine → Provider Router → usage).
  */
@@ -14,9 +14,9 @@ import { setLegacyApiHeaders } from "@/lib/api/deprecation-headers";
 import { getTenantContextFromRequest } from "@/lib/tenant";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { checkRateLimit } from "@/lib/platform/rate-limit/rate-limit.service";
-import { checkQuota, estimateVisionCostUsd } from "@/lib/platform/ai-usage/ai-usage.service";
+import { checkQuota, estimateMaxVisionCostUsd } from "@/lib/platform/ai-usage/ai-usage.service";
 import { analyzeImage, AIPolicyBlockedError, AIVisionFailedError } from "@/lib/platform/ai/ai.service";
-import { getServerConfig, isAnyVisionProviderConfigured } from "@/lib/config/server";
+import { getServerConfig, getConfiguredVisionProviders, isAnyVisionProviderConfigured } from "@/lib/config/server";
 
 const MAX_IMAGE_URL_LENGTH = 2048;
 const MAX_BODY_BYTES = 100_000;
@@ -70,13 +70,13 @@ function logAiEvent(payload: {
 }
 
 export async function POST(request: Request) {
+  const config = getServerConfig();
   if (!isAnyVisionProviderConfigured()) {
     return withLegacyHeaders(NextResponse.json(
-      { error: "No AI vision provider configured (OPENAI_API_KEY, ANTHROPIC_API_KEY, or GOOGLE_AI_API_KEY)" },
+      { error: "No AI vision provider is configured" },
       { status: 503 }
     ));
   }
-  const config = getServerConfig();
 
   const contentLength = request.headers.get("content-length");
   if (
@@ -122,7 +122,7 @@ export async function POST(request: Request) {
       const result = await checkRateLimit(admin, {
         tenantId: tenantCtx.tenantId ?? null,
         ip,
-        endpoint: "/api/ai/analyze-image",
+        endpoint: "/api/v1/ai/analyze-image",
       });
       if (result.limited) {
         return withLegacyHeaders(NextResponse.json({ error: result.message }, { status: 429 }));
@@ -131,11 +131,12 @@ export async function POST(request: Request) {
       /* allow on rate-limit check failure (e.g. table missing) */
     }
     if (tenantCtx.tenantId) {
-      const quotaMsg = await checkQuota(
-        admin,
-        tenantCtx.tenantId,
-        estimateVisionCostUsd(config.OPENAI_VISION_MODEL || "gpt-4o")
+      const tier = tenantCtx.subscriptionTier ?? "free";
+      const estimatedCost = estimateMaxVisionCostUsd(
+        getConfiguredVisionProviders(),
+        tier
       );
+      const quotaMsg = await checkQuota(admin, tenantCtx.tenantId, estimatedCost);
       if (quotaMsg) {
         return withLegacyHeaders(NextResponse.json(
           { error: quotaMsg, code: "quota_exceeded" },
@@ -147,7 +148,7 @@ export async function POST(request: Request) {
 
   if (!admin) {
     return withLegacyHeaders(NextResponse.json(
-      { error: "No AI vision provider configured" },
+      { error: "No AI vision provider is configured" },
       { status: 503 }
     ));
   }
