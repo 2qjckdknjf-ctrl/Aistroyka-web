@@ -8,22 +8,9 @@ import { checkRateLimit } from "@/lib/platform/rate-limit/rate-limit.service";
 
 export const dynamic = "force-dynamic";
 
-const JOBS_PROCESS_ENDPOINT = "/api/v1/jobs/process";
-const CRON_SECRET_HEADER = "x-cron-secret";
-export const CRON_UNAUTHORIZED_CODE = "cron_unauthorized";
+import { requireCronSecretIfEnabled } from "@/lib/api/cron-auth";
 
-function requireCronSecretIfEnabled(request: Request): NextResponse | null {
-  if (process.env.REQUIRE_CRON_SECRET !== "true") return null;
-  const expected = process.env.CRON_SECRET?.trim();
-  const provided = request.headers.get(CRON_SECRET_HEADER)?.trim();
-  if (!expected || provided !== expected) {
-    return NextResponse.json(
-      { error: "Unauthorized", code: CRON_UNAUTHORIZED_CODE },
-      { status: 403 }
-    );
-  }
-  return null;
-}
+const JOBS_PROCESS_ENDPOINT = "/api/v1/jobs/process";
 
 export async function POST(request: Request) {
   const cronErr = requireCronSecretIfEnabled(request);

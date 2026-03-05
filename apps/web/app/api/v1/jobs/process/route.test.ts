@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { POST, CRON_UNAUTHORIZED_CODE } from "./route";
+import { POST } from "./route";
+import { CRON_UNAUTHORIZED_CODE } from "@/lib/api/cron-auth";
 
 describe("POST /api/v1/jobs/process", () => {
   it("returns 403 with cron_unauthorized when REQUIRE_CRON_SECRET is true and x-cron-secret is missing", async () => {
