@@ -79,6 +79,7 @@ export async function analyzeImage(
         subscription_tier: tier,
         resource_type: "media",
         image_count: 1,
+        image_url: input.imageUrl ?? null,
       },
       ctx.traceId ?? null
     );

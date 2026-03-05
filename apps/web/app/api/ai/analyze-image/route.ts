@@ -191,7 +191,9 @@ export async function POST(request: Request) {
         error: err.message,
         http_status: 403,
       });
-      return withLegacyHeaders(NextResponse.json({ error: err.message }, { status: 403 }));
+      return withLegacyHeaders(
+        NextResponse.json({ error: err.message, code: "ai_policy_denied" }, { status: 403 })
+      );
     }
     if (err instanceof AIVisionFailedError) {
       const isTimeout = err.message.toLowerCase().includes("timeout");
