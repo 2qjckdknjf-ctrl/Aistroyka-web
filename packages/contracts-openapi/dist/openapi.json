@@ -3,7 +3,7 @@
   "info": {
     "title": "Aistroyka API",
     "version": "1.0.0",
-    "description": "API v1 for Aistroyka Construction Intelligence. Auth: Bearer JWT + tenant context."
+    "description": "API v1 for Aistroyka Construction Intelligence. Auth: Bearer JWT + tenant context. Mobile: send x-device-id on sync and x-idempotency-key on all writes. Errors: 400/401/403/404/409/413/429 with JSON { error?: string }."
   },
   "servers": [
     {
@@ -217,6 +217,167 @@
         "responses": {
           "200": {
             "description": "Delta payload"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/sync/bootstrap": {
+      "get": {
+        "summary": "Initial sync snapshot + cursor",
+        "tags": [
+          "Sync"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "x-device-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Device identifier (required for sync and mobile writes)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Snapshot and cursor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncBootstrapResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing x-device-id"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/sync/changes": {
+      "get": {
+        "summary": "Delta changes after cursor",
+        "tags": [
+          "Sync"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "x-device-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Device identifier (required for sync and mobile writes)"
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Changes and nextCursor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncChangesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing cursor or x-device-id"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/sync/ack": {
+      "post": {
+        "summary": "Acknowledge device cursor",
+        "tags": [
+          "Sync"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "x-device-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Device identifier (required for sync and mobile writes)"
+          },
+          {
+            "name": "x-idempotency-key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Idempotency key for write requests (recommended for mobile)"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyncAckRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ack ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncAckResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing x-device-id or invalid body"
           },
           "401": {
             "description": "Unauthorized"
@@ -858,6 +1019,305 @@
               "max_projects",
               "max_workers",
               "storage_limit_gb"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "SyncBootstrapResponse": {
+        "$ref": "#/definitions/SyncBootstrapResponse",
+        "definitions": {
+          "SyncBootstrapResponse": {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "tasks": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "title": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string"
+                        },
+                        "project_id": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "due_date": {
+                          "type": "string"
+                        },
+                        "created_at": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "title",
+                        "status"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "reports": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string"
+                        },
+                        "created_at": {
+                          "type": "string"
+                        },
+                        "submitted_at": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "status",
+                        "created_at"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "uploadSessions": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string"
+                        },
+                        "created_at": {
+                          "type": "string"
+                        },
+                        "purpose": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "status",
+                        "created_at",
+                        "purpose"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "tasks",
+                  "reports",
+                  "uploadSessions"
+                ],
+                "additionalProperties": false
+              },
+              "cursor": {
+                "type": "number"
+              },
+              "serverTime": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "data",
+              "cursor",
+              "serverTime"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "SyncChangeEntry": {
+        "$ref": "#/definitions/SyncChangeEntry",
+        "definitions": {
+          "SyncChangeEntry": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "number"
+              },
+              "tenant_id": {
+                "type": "string"
+              },
+              "resource_type": {
+                "type": "string"
+              },
+              "resource_id": {
+                "type": "string"
+              },
+              "change_type": {
+                "type": "string",
+                "enum": [
+                  "created",
+                  "updated",
+                  "deleted"
+                ]
+              },
+              "changed_by": {
+                "type": "string",
+                "nullable": true
+              },
+              "ts": {
+                "type": "string"
+              },
+              "payload": {
+                "type": "object",
+                "additionalProperties": {}
+              }
+            },
+            "required": [
+              "id",
+              "tenant_id",
+              "resource_type",
+              "resource_id",
+              "change_type",
+              "changed_by",
+              "ts",
+              "payload"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "SyncChangesResponse": {
+        "$ref": "#/definitions/SyncChangesResponse",
+        "definitions": {
+          "SyncChangesResponse": {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "changes": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "number"
+                        },
+                        "tenant_id": {
+                          "type": "string"
+                        },
+                        "resource_type": {
+                          "type": "string"
+                        },
+                        "resource_id": {
+                          "type": "string"
+                        },
+                        "change_type": {
+                          "type": "string",
+                          "enum": [
+                            "created",
+                            "updated",
+                            "deleted"
+                          ]
+                        },
+                        "changed_by": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "ts": {
+                          "type": "string"
+                        },
+                        "payload": {
+                          "type": "object",
+                          "additionalProperties": {}
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "tenant_id",
+                        "resource_type",
+                        "resource_id",
+                        "change_type",
+                        "changed_by",
+                        "ts",
+                        "payload"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "changes"
+                ],
+                "additionalProperties": false
+              },
+              "nextCursor": {
+                "type": "number"
+              },
+              "serverTime": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "data",
+              "nextCursor",
+              "serverTime"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "SyncAckRequest": {
+        "$ref": "#/definitions/SyncAckRequest",
+        "definitions": {
+          "SyncAckRequest": {
+            "type": "object",
+            "properties": {
+              "cursor": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "cursor"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "SyncAckResponse": {
+        "$ref": "#/definitions/SyncAckResponse",
+        "definitions": {
+          "SyncAckResponse": {
+            "type": "object",
+            "properties": {
+              "ok": {
+                "type": "boolean",
+                "enum": [
+                  true
+                ]
+              },
+              "cursor": {
+                "type": "number"
+              },
+              "serverTime": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "ok",
+              "cursor",
+              "serverTime"
             ],
             "additionalProperties": false
           }

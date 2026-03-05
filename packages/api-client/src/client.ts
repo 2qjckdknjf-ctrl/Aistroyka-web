@@ -2,7 +2,7 @@
  * Typed API client for Aistroyka v1. Use with baseUrl and optional getToken (e.g. Supabase session).
  */
 
-import type { HealthResponse, AnalyzeImageRequest, AnalysisResult, Project, ProjectsListResponse } from "./types";
+import type { HealthResponse, AnalyzeImageRequest, AnalysisResult, Project, ProjectsListResponse, SyncBootstrapResponse, SyncChangesResponse, SyncAckRequest, SyncAckResponse } from "./types";
 import { fetcher, type FetcherOptions } from "./fetcher";
 
 const V1 = "/api/v1";
@@ -29,6 +29,15 @@ export function createClient(options: ApiClientOptions) {
           "GET",
           since ? `${V1}/worker/sync?since=${encodeURIComponent(since)}` : `${V1}/worker/sync`
         ),
+    },
+    sync: {
+      bootstrap: () => f<SyncBootstrapResponse>("GET", `${V1}/sync/bootstrap`),
+      changes: (cursor: number, limit?: number) => {
+        const params = new URLSearchParams({ cursor: String(cursor) });
+        if (limit != null) params.set("limit", String(limit));
+        return f<SyncChangesResponse>("GET", `${V1}/sync/changes?${params}`);
+      },
+      ack: (body: SyncAckRequest) => f<SyncAckResponse>("POST", `${V1}/sync/ack`, body),
     },
   };
 }

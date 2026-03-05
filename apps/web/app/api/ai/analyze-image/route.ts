@@ -122,7 +122,7 @@ export async function POST(request: Request) {
       const result = await checkRateLimit(admin, {
         tenantId: tenantCtx.tenantId ?? null,
         ip,
-        endpoint: "/api/v1/ai/analyze-image",
+        endpoint: "/api/ai/analyze-image",
       });
       if (result.limited) {
         return withLegacyHeaders(NextResponse.json({ error: result.message }, { status: 429 }));

@@ -91,6 +91,7 @@ export async function analyzeImage(
   const visionResult = await invokeVisionWithRouter(admin, input.imageUrl, {
     tier,
     maxTokens: 1024,
+    tenantId: ctx.tenantId,
   });
 
   if (!visionResult) {

@@ -90,7 +90,8 @@
 
 ## Files touched
 
-**New**
+### New
+
 - apps/web/lib/api/require-admin.ts, require-admin.test.ts
 - apps/web/lib/config/diag.ts, diag.test.ts
 - apps/web/lib/platform/billing/billing-responses.ts
@@ -101,7 +102,8 @@
 - docs/runbooks/JOBS_PROCESSING.md
 - archive/legacy-app/README.md (and moved app → archive/legacy-app)
 
-**Modified**
+### Modified
+
 - All 18 apps/web/app/api/v1/admin/**/route.ts (requireAdmin)
 - apps/web/app/api/health/auth/route.ts (isDiagEnabled gate)
 - apps/web/lib/config/debug.ts (ENABLE_DIAG_ROUTES in getDebugConfig)
@@ -132,7 +134,7 @@ Optional: `npm run e2e` with dev server running.
 ## Behavior changes summary
 
 | Area | Change |
-|------|--------|
+| ------ | -------- |
 | Admin | All /api/v1/admin/* use requireAdmin(ctx, "read"\|"write"); 403 "Insufficient rights" for non-admin. |
 | Diag | /api/health/auth returns 404 in production unless ENABLE_DIAG_ROUTES=true. _debug and diag/supabase already gated; ENABLE_DIAG_ROUTES now enables them in prod. |
 | Billing | When Stripe or admin not configured, all billing endpoints return 503 with { error: "service_unavailable", code: "stripe_not_configured" }. |

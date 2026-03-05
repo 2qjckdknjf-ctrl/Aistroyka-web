@@ -11,12 +11,12 @@
 ### 0.1 Canonical app entry
 
 - **apps/web** is the deployed application: root `package.json` delegates `dev`, `build`, `start`, `cf:build`, `cf:deploy`, `lint` to `apps/web`.
-- **Root `/app** (at repository root) is legacy/duplicate: contains `api/`, `(auth)/`, `(dashboard)/`, `smoke/`, but the active app is under `apps/web/app` (with `[locale]`, full API tree). Root `app` was not deleted in this phase per instructions.
+- **Root `/app** (at repository root) is legacy/duplicate: contains`api/`,`(auth)/`,`(dashboard)/`,`smoke/`, but the active app is under`apps/web/app` (with `[locale]`, full API tree). Root`app` was not deleted in this phase per instructions.
 
 ### 0.2 Baseline checks (recorded)
 
 | Check | Command | Result |
-|-------|---------|--------|
+| ----- | ------- | ------ |
 | Install | `cd apps/web && npm ci` | **Failed** — ERESOLVE peer dependency conflict (next vs @opennextjs/cloudflare). |
 | Install (fallback) | `cd apps/web && npm install --legacy-peer-deps` | **Passed** |
 | Unit tests | `npm test` | **Passed** — 37 test files, 167 tests. |
@@ -49,7 +49,8 @@
 
 ## 2. Files touched
 
-**New**
+### New
+
 - `apps/web/lib/platform/ai/ai.service.ts` — AIService entry
 - `apps/web/lib/platform/ai/ai.service.test.ts` — AIService tests
 - `apps/web/lib/sync/sync.service.ts` — SyncService.bootstrap
@@ -62,7 +63,8 @@
 - `apps/web/lib/api/lite-idempotency.test.ts` — idempotency tests
 - `apps/web/lib/security-headers.js` — CJS shim (baseline)
 
-**Modified**
+### Modified
+
 - `apps/web/app/api/ai/analyze-image/route.ts` — thin route, uses AIService
 - `apps/web/app/api/v1/ai/analyze-image/route.ts` — re-exports same handler
 - `apps/web/app/api/v1/sync/bootstrap/route.ts` — thin, uses SyncService.bootstrap
@@ -121,7 +123,7 @@ Optional (requires running app): `npm run e2e` for Playwright smoke tests.
 ## 6. Risk checklist and mitigations
 
 | Risk | Mitigation |
-|------|------------|
+| ---- | ---------- |
 | Lite clients break (wrong allow-list) | Allow-list includes all current worker/sync/media/devices/config/auth paths; 403 body is stable for client handling. |
 | Idempotency storage/ttl | Uses existing idempotency service and repo; TTL and key scope (tenant/user/route) unchanged. |
 | Policy/router bypass | All vision flows go through AIService; no direct OpenAI in routes or job handlers. |

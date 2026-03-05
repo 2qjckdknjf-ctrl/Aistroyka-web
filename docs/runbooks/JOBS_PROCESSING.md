@@ -14,7 +14,7 @@ The endpoint requires **tenant context** (authenticated user with tenant) and **
 ## Required env vars
 
 | Variable | Required | Description |
-|----------|----------|-------------|
+| ---------- | ---------- | ------------- |
 | `SUPABASE_SERVICE_ROLE_KEY` | Yes | Backend and job processing use the admin client. |
 | `REQUIRE_CRON_SECRET` | Optional | If `true`, requests must include `x-cron-secret` matching `CRON_SECRET`. |
 | `CRON_SECRET` | When using `REQUIRE_CRON_SECRET` | Shared secret for cron/scheduler calls. |
@@ -27,6 +27,7 @@ The endpoint requires **tenant context** (authenticated user with tenant) and **
 ## How to test manually
 
 1. **With browser/session (admin user):**
+
    ```bash
    curl -X POST "https://<your-host>/api/v1/jobs/process" \
      -H "Cookie: <session-cookie>" \
@@ -34,6 +35,7 @@ The endpoint requires **tenant context** (authenticated user with tenant) and **
    ```
 
 2. **With cron secret (when `REQUIRE_CRON_SECRET=true`):**
+
    ```bash
    curl -X POST "https://<your-host>/api/v1/jobs/process" \
      -H "x-cron-secret: <CRON_SECRET value>" \
@@ -46,7 +48,7 @@ The endpoint requires **tenant context** (authenticated user with tenant) and **
 ## Expected responses
 
 | Status | Meaning |
-|--------|--------|
+| ------ | ------- |
 | 200 | Success. Body: `{ ok: true, processed, success, failed, dead }`. |
 | 401 | Not authenticated (missing or invalid session). |
 | 403 | Not authorized (non-admin) or, when `REQUIRE_CRON_SECRET=true`, missing/invalid `x-cron-secret` (body includes `code: "cron_unauthorized"`). |

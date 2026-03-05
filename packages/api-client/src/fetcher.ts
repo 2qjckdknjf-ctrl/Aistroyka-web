@@ -6,6 +6,10 @@ export interface FetcherOptions {
   baseUrl: string;
   getToken?: () => Promise<string | null>;
   headers?: Record<string, string>;
+  /** Required for sync endpoints; sent as x-device-id */
+  deviceId?: string;
+  /** Optional idempotency key for write requests; sent as x-idempotency-key */
+  idempotencyKey?: string;
 }
 
 export async function fetcher<T>(
@@ -21,6 +25,8 @@ export async function fetcher<T>(
   };
   const token = options.getToken ? await options.getToken() : null;
   if (token) headers.Authorization = `Bearer ${token}`;
+  if (options.deviceId) headers["x-device-id"] = options.deviceId;
+  if (options.idempotencyKey) headers["x-idempotency-key"] = options.idempotencyKey;
 
   const res = await fetch(url, {
     method,

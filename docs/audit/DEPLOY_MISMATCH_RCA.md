@@ -65,7 +65,8 @@
 
 ## 6) Fix applied
 
-1. **Commit created:** `fix(health): expose serviceRoleConfigured in prod health` (SHA: **6bf4d26**; after deploy, buildStamp.sha7 will be **6bf4d26**)  
+1. **Commit created:** `fix(health): expose serviceRoleConfigured in prod health`  
+   After push and deploy, buildStamp.sha7 will match that commit’s SHA (first 7 characters).  
    - Adds `serviceRoleConfigured` to the health response and updates the JSDoc.  
    - File: `apps/web/app/api/health/route.ts`.  
    - RCA: `docs/audit/DEPLOY_MISMATCH_RCA.md`.

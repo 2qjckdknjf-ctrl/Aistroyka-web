@@ -5,4 +5,9 @@ export type {
   AnalysisResult,
   Project,
   ProjectsListResponse,
+  SyncBootstrapResponse,
+  SyncChangeEntry,
+  SyncChangesResponse,
+  SyncAckRequest,
+  SyncAckResponse,
 } from "@aistroyka/contracts";
