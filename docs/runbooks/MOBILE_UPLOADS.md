@@ -43,8 +43,6 @@ An **upload_reconcile** job (scheduled) marks pending sessions (`created`/`uploa
 
 - Session expiry: default 60 minutes (configurable in upload-session repository).
 - Bucket: `media` (see `UPLOAD_BUCKET` in upload-session.service).
-
-### Optional: storage existence check on finalize
-
-- **MEDIA_FINALIZE_VERIFY_OBJECT** (`true` | `false`, default `false`): When `true`, before finalizing the server checks that the object exists in Supabase Storage (HEAD/exists). If the object is missing, finalize returns **400** with `{ "error": "media_object_missing" }`.
-- **MEDIA_FINALIZE_VERIFY_STRICT** (`true` | `false`, default `false`): When `true` and verify is enabled, any storage provider/network error during the check causes finalize to fail with "Storage verification unavailable". When `false`, verification errors are ignored and finalize proceeds (best-effort).
+- **Finalize verification (optional, env-gated):**
+  - `MEDIA_FINALIZE_VERIFY_OBJECT=true` — Before marking session finalized, server checks that the object exists in storage (list). If missing: **400** with `code: "media_object_missing"`. Default: `false`.
+  - `MEDIA_FINALIZE_VERIFY_STRICT=true` — When verification is on and storage check fails (e.g. network/provider error), finalize is blocked with **503** and `code: "storage_unavailable"`. When `false`, finalize proceeds on verification error (best-effort). Default: `false`.

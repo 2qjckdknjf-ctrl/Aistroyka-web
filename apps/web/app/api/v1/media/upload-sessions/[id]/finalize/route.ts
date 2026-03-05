@@ -36,14 +36,22 @@ export async function POST(
   const object_path = typeof body.object_path === "string" ? body.object_path.trim() : "";
   if (!object_path) return NextResponse.json({ error: "object_path required" }, { status: 400 });
   const supabase = await createClient();
-  const { ok, error } = await finalizeUploadSession(supabase, ctx, sessionId, {
+  const result = await finalizeUploadSession(supabase, ctx, sessionId, {
     object_path,
     mime_type: typeof body.mime_type === "string" ? body.mime_type : undefined,
     size_bytes: typeof body.size_bytes === "number" ? body.size_bytes : undefined,
   });
-  if (!ok) {
-    const status = error === "media_object_missing" ? 400 : 403;
-    return NextResponse.json({ error }, { status });
+  if (!result.ok) {
+    const status =
+      result.code === "media_object_missing"
+        ? 400
+        : result.code === "storage_unavailable"
+          ? 503
+          : 403;
+    return NextResponse.json(
+      { error: result.error, ...(result.code ? { code: result.code } : {}) },
+      { status }
+    );
   }
   const response = { ok: true };
   await storeLiteIdempotency(request, ctx, ROUTE_KEY, response, 200);

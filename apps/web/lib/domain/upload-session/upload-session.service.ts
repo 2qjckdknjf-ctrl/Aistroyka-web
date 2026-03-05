@@ -9,36 +9,41 @@ import { emitChange } from "@/lib/sync/change-log.repository";
 export const UPLOAD_BUCKET = "media";
 
 /** Env: when true, finalize verifies object exists in storage before updating session. Default false. */
-function isFinalizeVerifyObjectEnabled(): boolean {
+function getMediaFinalizeVerifyObject(): boolean {
   return process.env.MEDIA_FINALIZE_VERIFY_OBJECT === "true";
 }
-
-/** Env: when true and verify is enabled, storage errors block finalize. Default false. */
-function isFinalizeVerifyStrictEnabled(): boolean {
+/** Env: when true and verify is on, storage provider errors block finalize (503). Default false. */
+function getMediaFinalizeVerifyStrict(): boolean {
   return process.env.MEDIA_FINALIZE_VERIFY_STRICT === "true";
 }
 
-/** Path in bucket (strip bucket prefix from object_path). */
-function pathInBucket(objectPath: string): string {
-  const prefix = `${UPLOAD_BUCKET}/`;
-  return objectPath.startsWith(prefix) ? objectPath.slice(prefix.length) : objectPath;
-}
+export type FinalizeResult =
+  | { ok: true; error: "" }
+  | { ok: false; error: string; code?: "media_object_missing" | "storage_unavailable" };
 
-/**
- * Best-effort check that the object exists in storage. Returns { exists, error }.
- * On provider/network error, error is set; when strict mode is off, caller may still proceed.
- */
-async function verifyStorageObjectExists(
+/** Best-effort check: does the object exist in storage? Returns { exists } or { exists: false, verifyError } on provider/network error. */
+export async function verifyStorageObject(
   supabase: SupabaseClient,
+  bucket: string,
   objectPath: string
-): Promise<{ exists: boolean; error?: string }> {
+): Promise<{ exists: boolean; verifyError?: string }> {
+  const pathInBucket = objectPath.startsWith(`${bucket}/`)
+    ? objectPath.slice(bucket.length + 1)
+    : objectPath;
+  const parts = pathInBucket.split("/").filter(Boolean);
+  if (parts.length === 0) return { exists: false };
+  const folder = parts.length > 1 ? parts.slice(0, -1).join("/") : "";
+  const name = parts[parts.length - 1]!;
   try {
-    const path = pathInBucket(objectPath);
-    const { data: exists, error } = await supabase.storage.from(UPLOAD_BUCKET).exists(path);
-    if (error) return { exists: false, error: error.message };
-    return { exists: exists === true };
+    const { data, error } = await supabase.storage.from(bucket).list(folder);
+    if (error) return { exists: false, verifyError: error.message };
+    const found = (data ?? []).some((f: { name: string }) => f.name === name);
+    return { exists: found };
   } catch (e) {
-    return { exists: false, error: e instanceof Error ? e.message : String(e) };
+    return {
+      exists: false,
+      verifyError: e instanceof Error ? e.message : String(e),
+    };
   }
 }
 
@@ -78,7 +83,7 @@ export async function finalizeUploadSession(
   ctx: TenantContext,
   sessionId: string,
   payload: { object_path: string; mime_type?: string; size_bytes?: number }
-): Promise<{ ok: boolean; error: string }> {
+): Promise<FinalizeResult> {
   if (!canCreateUploadSession(ctx)) return { ok: false, error: "Insufficient rights" };
   const session = await repo.getById(supabase, sessionId, ctx.tenantId);
   if (!session) return { ok: false, error: "Session not found" };
@@ -87,13 +92,25 @@ export async function finalizeUploadSession(
     return { ok: false, error: "object_path must be within session path" };
   }
 
-  if (isFinalizeVerifyObjectEnabled()) {
-    const { exists, error: verifyError } = await verifyStorageObjectExists(supabase, payload.object_path);
-    if (!exists && !verifyError) {
-      return { ok: false, error: "media_object_missing" };
+  if (getMediaFinalizeVerifyObject()) {
+    const verify = await verifyStorageObject(
+      supabase,
+      UPLOAD_BUCKET,
+      payload.object_path
+    );
+    if (!verify.exists && !verify.verifyError) {
+      return {
+        ok: false,
+        error: "Object not found in storage",
+        code: "media_object_missing",
+      };
     }
-    if (verifyError && isFinalizeVerifyStrictEnabled()) {
-      return { ok: false, error: "Storage verification unavailable" };
+    if (verify.verifyError && getMediaFinalizeVerifyStrict()) {
+      return {
+        ok: false,
+        error: "Storage verification failed",
+        code: "storage_unavailable",
+      };
     }
   }
 
