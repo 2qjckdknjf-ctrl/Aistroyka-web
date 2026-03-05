@@ -1,73 +1,75 @@
 # Phase 4.1 — Mobile Reliability Hardening to Production
 
 **Project:** AISTROYKA.AI  
-**Phase:** 4.1 — Mobile Reliability Hardening (no UI, no product expansion).  
-**Goal:** Improve correctness and ops safety; preserve v1 API contracts.
+**Phase:** 4.1 — Mobile Reliability Hardening. No UI work. No product expansion.  
+**Goal:** Improve correctness and ops safety for worker/sync/media/push.
 
-**Non-negotiables:** No breaks to worker/sync/media/devices v1 contracts; preserve Phase 1–4 outcomes; env-gate risky changes; add/extend tests; document and runbooks.
+**Non-negotiables:** No v1 API contract breaks; preserve Phase 1–4 outcomes; env-gated risk; tests per new rule; this report + updated runbooks.
 
 ---
 
-## Baseline (Stage 0)
+## Stage 0 — Baseline Checkpoint
 
-- **Date:** 2025-03-05
-- **Working tree:** Uncommitted changes present at baseline; report and phase commits are additive.
-- **Vitest:** 58 files, 269 tests passed.
-- **cf:build:** Passed (OpenNext Cloudflare build).
+### 0.1 Working tree
+
+- **Note:** Baseline recorded with uncommitted changes present. Recommend `git stash` or commit before applying Phase 4.1 changes for a clean history.
+
+### 0.2 Report skeleton
+
+- This document. Placeholders per stage below.
+
+### 0.3 Baseline (tests + cf:build)
+
+- **Vitest:** 269 tests, 58 files passed (apps/web: `npm test -- --run`).
+- **cf:build:** OpenNext Cloudflare build succeeded (`npm run cf:build`). ESLint plugin conflict warning present; build not blocked.
 
 ---
 
 ## Stage 1 — FCM HTTP v1 (Service Account)
 
-- **Status:** _placeholder_
-- **Env vars added:** _placeholder_
+- **Summary:** _placeholder_
+- **Env vars:** _placeholder_
 - **Migration from legacy:** _placeholder_
-- **Tests:** _placeholder_
 
 ---
 
 ## Stage 2 — Optional Storage Existence Check on Finalize
 
-- **Status:** _placeholder_
-- **Flags:** _placeholder_
-- **Tests:** _placeholder_
-- **Runbook:** _placeholder_
+- **Summary:** _placeholder_
+- **Env flags:** _placeholder_
 
 ---
 
 ## Stage 3 — Sync Conflict Detection Hardening
 
-- **Status:** _placeholder_
-- **Retention boundary:** _placeholder_
-- **Device mismatch:** _placeholder_
-- **Tests:** _placeholder_
+- **Summary:** _placeholder_
+- **Retention + device mismatch:** _placeholder_
 
 ---
 
 ## Stage 4 — Build/CI Clarity
 
-- **Status:** _placeholder_
 - **Canonical checks:** _placeholder_
 - **BUILD_AND_RELEASE.md:** _placeholder_
-- **CI workflow:** _placeholder_
 
 ---
 
 ## Stage 5 — Final Verification
 
 - **Commands run:** _placeholder_
-- **Report finalized:** _placeholder_
+- **Smoke / how to verify:** _placeholder_
 
 ---
 
-## Env Vars Reference (Phase 4.1)
+## Env vars reference (Phase 4.1)
 
-| Variable | Purpose | Default |
-| -------- | ------- | ------- |
-| _TBD_ | _TBD_ | _TBD_ |
+| Variable | Stage | Default | Description |
+|----------|-------|---------|-------------|
+| _TBD_ | 1 | — | FCM HTTP v1 |
+| _TBD_ | 2 | — | Finalize verification |
 
 ---
 
-## How to Verify (Smoke)
+## Runbooks updated
 
-_TBD_
+- _PUSH_DELIVERY, MOBILE_UPLOADS, MOBILE_SYNC, BUILD_AND_RELEASE_
