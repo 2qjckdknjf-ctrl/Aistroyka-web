@@ -14,7 +14,18 @@ import { checkRateLimit } from "@/lib/platform/rate-limit/rate-limit.service";
 
 type CookieToSet = { name: string; value: string; options?: Record<string, unknown> };
 
+const SIGN_IN_TIMEOUT_MS = 25_000;
+
 export const dynamic = "force-dynamic";
+
+function withTimeout<T>(promise: Promise<T>, ms: number, traceId: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`Login timed out after ${ms}ms`)), ms)
+    ),
+  ]);
+}
 
 export async function POST(request: NextRequest) {
   const traceId = getOrCreateTraceId(request);
@@ -24,12 +35,16 @@ export async function POST(request: NextRequest) {
   if (admin) {
     try {
       const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? request.headers.get("x-real-ip") ?? "unknown";
-      const result = await checkRateLimit(admin, { tenantId: null, ip, endpoint: "/api/auth/login" });
+      const result = await withTimeout(
+        checkRateLimit(admin, { tenantId: null, ip, endpoint: "/api/auth/login" }),
+        5_000,
+        traceId
+      );
       if (result.limited) {
         return NextResponse.json({ ok: false, message: result.message }, { status: 429 });
       }
     } catch {
-      /* allow on rate-limit check failure */
+      /* allow on rate-limit check failure so login can proceed */
     }
   }
 
@@ -74,7 +89,21 @@ export async function POST(request: NextRequest) {
     },
   });
 
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  let data: Awaited<ReturnType<typeof supabase.auth.signInWithPassword>>["data"];
+  let error: Awaited<ReturnType<typeof supabase.auth.signInWithPassword>>["error"];
+  try {
+    const result = await withTimeout(
+      supabase.auth.signInWithPassword({ email, password }),
+      SIGN_IN_TIMEOUT_MS,
+      traceId
+    );
+    data = result.data;
+    error = result.error;
+  } catch (timeoutErr) {
+    const msg = timeoutErr instanceof Error ? timeoutErr.message : "Request timed out.";
+    logStructured({ event: "auth_login", traceId, route: "/api/auth/login", status: 408, duration_ms: Date.now() - startMs, error_type: "timeout" });
+    return NextResponse.json({ ok: false, message: msg }, { status: 408 });
+  }
 
   if (error) {
     const { getServerConfig } = await import("@/lib/config/server");

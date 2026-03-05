@@ -11,15 +11,10 @@ export interface PublicConfig {
   NEXT_PUBLIC_BUILD_TIME: string;
 }
 
-const message =
-  "Missing Supabase env: set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY (in .env.local or Cloudflare build env).";
-
+/** Client-safe: never throws. Returns empty strings when env is missing (use hasSupabaseEnv() to check). */
 export function getPublicConfig(): PublicConfig {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (typeof url !== "string" || url.length === 0 || typeof key !== "string" || key.length === 0) {
-    throw new Error(message);
-  }
+  const url = typeof process.env.NEXT_PUBLIC_SUPABASE_URL === "string" ? process.env.NEXT_PUBLIC_SUPABASE_URL.trim() : "";
+  const key = typeof process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY === "string" ? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY : "";
   const appUrl =
     typeof process.env.NEXT_PUBLIC_APP_URL === "string" ? process.env.NEXT_PUBLIC_APP_URL.trim() : "";
   return {

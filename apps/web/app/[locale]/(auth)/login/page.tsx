@@ -2,12 +2,12 @@
 
 import { Suspense, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { Link, useRouter } from "@/i18n/navigation";
-import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
+import { useTranslations, useLocale } from "next-intl";
 import { hasSupabaseEnv } from "@/lib/env";
 import { Input, Button, Alert } from "@/components/ui";
 
-const SIGN_IN_TIMEOUT_MS = 15_000;
+const SIGN_IN_TIMEOUT_MS = 25_000;
 const LOGIN_ENDPOINT = "/api/auth/login";
 
 export type LoginStep =
@@ -21,7 +21,7 @@ export type LoginStep =
   | "error:unknown";
 
 function LoginForm() {
-  const router = useRouter();
+  const locale = useLocale();
   const searchParams = useSearchParams();
   const next = searchParams.get("next") ?? "/dashboard";
   const t = useTranslations("auth");
@@ -98,10 +98,11 @@ function LoginForm() {
 
       setStep("supabase_ok");
       const targetPath = next.startsWith("/") ? next : `/${next}`;
+      const hasLocale = /^\/(ru|en|es|it)(\/|$)/.test(targetPath);
+      const pathWithLocale = hasLocale ? targetPath : `/${locale}${targetPath}`;
       setStep("redirecting");
       log("redirect", "ok");
-      router.push(targetPath);
-      router.refresh();
+      window.location.href = pathWithLocale;
     } catch (thrown) {
       const isAbort = thrown instanceof Error && thrown.name === "AbortError";
       setStep(isAbort ? "error:timeout" : "error:unknown");
@@ -165,17 +166,11 @@ function LoginForm() {
               </div>
             )}
             {!error && (
-              <Button type="submit" loading={loading} disabled={loading || envOk === false} className="w-full">
+              <Button type="submit" loading={loading} disabled={loading || envOk === false} className="w-full" aria-busy={loading}>
                 {loading ? t("signingIn") : t("signIn")}
               </Button>
             )}
           </form>
-          <p
-            className="mt-aistroyka-4 text-center text-aistroyka-caption text-aistroyka-text-tertiary"
-            aria-live="polite"
-          >
-            Login step: {step}
-          </p>
           <p className="mt-aistroyka-6 text-center text-aistroyka-subheadline text-aistroyka-text-secondary">
             {t("noAccount")}{" "}
             <Link href="/register" className="font-medium text-aistroyka-accent hover:underline focus:outline-none focus:ring-2 focus:ring-aistroyka-accent focus:ring-offset-2 rounded-aistroyka-sm">
