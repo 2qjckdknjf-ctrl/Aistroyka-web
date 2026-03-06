@@ -101,3 +101,13 @@ Until deploy + DNS are done, expect non-green:
 2. **Vercel:** Remove aistroyka.ai and www.aistroyka.ai from every project.
 3. **Supabase:** Prod project → Redirect URLs: https://aistroyka.ai/**, https://www.aistroyka.ai/** (if needed). Staging project (if any) → https://staging.aistroyka.ai/**.
 4. **Push:** Merge/release to main (prod) and staging branch (staging); run smoke after deploy.
+
+---
+
+## 8. Lockfile / “lockfile is frozen” in Cloudflare build
+
+If the build fails with **lockfile had changes, but lockfile is frozen** after committing an updated lockfile:
+
+- **Branch:** Cloudflare may be building from **main**. The lockfile fix is on `release/vercel-prod-hardening-2026-03-05`; merge that branch into main (or cherry-pick the lockfile commit) and push so the build uses the new lockfile.
+- **Cache:** In Cloudflare Dashboard → Worker → Builds → open the failed build → **Clear build cache** (if available), then **Retry**.
+- **Check commit:** In the build log, confirm the commit hash includes the “chore(deps): refresh lockfile” commit.
