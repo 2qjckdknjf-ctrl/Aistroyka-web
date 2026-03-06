@@ -12,8 +12,20 @@ const DASHBOARD = `/${LOCALE}/dashboard`;
 const UPLOADS = `${DASHBOARD}/uploads`;
 const DEVICES = `${DASHBOARD}/devices`;
 const AI = `${DASHBOARD}/ai`;
+const ADMIN_JOBS = `/${LOCALE}/admin/jobs`;
 
 test.describe("Cockpit smoke", () => {
+  test("overview loads", async ({ page }) => {
+    await page.goto(DASHBOARD);
+    await page.waitForLoadState("domcontentloaded");
+    const body = await page.textContent("body");
+    expect(body).toBeTruthy();
+    const url = page.url();
+    if (url.includes("/dashboard")) {
+      expect(body!.length).toBeGreaterThan(100);
+    }
+  });
+
   test("dashboard overview loads then navigate to uploads -> table or empty state", async ({
     page,
   }) => {
@@ -70,6 +82,21 @@ test.describe("Cockpit smoke", () => {
     } else {
       const hasEmpty = await page.getByText(/no (request|job)s?|empty/i).count() > 0;
       expect(hasEmpty || body!.length > 100).toBe(true);
+    }
+  });
+
+  test("admin page blocked or redirect for non-admin", async ({ page }) => {
+    await page.goto(ADMIN_JOBS);
+    await page.waitForLoadState("domcontentloaded");
+    const url = page.url();
+    const body = await page.textContent("body");
+    expect(body).toBeTruthy();
+    if (url.includes("/admin/")) {
+      const hasForbidden = await page.getByText(/forbidden|insufficient|access denied|not (allowed|authorized)/i).count() > 0;
+      const hasLogin = await page.getByRole("link", { name: /log in|sign in/i }).count() > 0;
+      expect(hasForbidden || hasLogin || !url.includes("/admin/jobs")).toBe(true);
+    } else {
+      expect(url).toMatch(/\/(en|ru|es|it)(\/|$)/);
     }
   });
 });
