@@ -66,7 +66,7 @@ METRICS_EXTRA=()
 [[ -n "$AUTH" ]] && METRICS_EXTRA+=(-H "Authorization: $AUTH")
 [[ -n "$COOKIE" ]] && METRICS_EXTRA+=(-H "Cookie: $COOKIE")
 code=$(curl -sS -o /tmp/pilot_metrics.json -w "%{http_code}" -m 15 \
-  "${METRICS_EXTRA[@]}" \
+  ${METRICS_EXTRA+"${METRICS_EXTRA[@]}"} \
   "$BASE/api/v1/ops/metrics?from=$FROM&to=$TO" || true)
 if [[ "$code" != "200" ]]; then
   echo "  FAIL: ops/metrics → HTTP $code (set COOKIE or AUTH_HEADER for tenant auth)"
