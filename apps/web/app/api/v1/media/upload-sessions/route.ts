@@ -5,20 +5,23 @@ import { createUploadSession } from "@/lib/domain/upload-session/upload-session.
 import { listForManager } from "@/lib/domain/upload-session/upload-session.repository";
 import { checkRequestBodySize } from "@/lib/api/request-limit";
 import { requireLiteIdempotency, storeLiteIdempotency } from "@/lib/api/lite-idempotency";
+import { withRequestIdAndTiming } from "@/lib/observability";
 
 export const dynamic = "force-dynamic";
 
-const ROUTE_KEY = "POST /api/v1/media/upload-sessions";
+const ROUTE_GET = "GET /api/v1/media/upload-sessions";
+const ROUTE_POST = "POST /api/v1/media/upload-sessions";
 const PURPOSES = ["report_before", "report_after", "project_media"] as const;
 
 /** GET /api/v1/media/upload-sessions — list sessions (tenant-scoped). Query: limit, offset, status, stuck=1 (created/uploaded older than threshold), stuck_hours (optional, default 4). */
 export async function GET(request: Request) {
+  const start = Date.now();
   const ctx = await getTenantContextFromRequest(request);
   try {
     requireTenant(ctx);
   } catch (e) {
     if (e instanceof TenantRequiredError) {
-      return NextResponse.json({ error: e.message }, { status: 401 });
+      return withRequestIdAndTiming(request, NextResponse.json({ error: e.message }, { status: 401 }), { route: ROUTE_GET, method: "GET", duration_ms: Date.now() - start });
     }
     throw e;
   }
@@ -34,23 +37,24 @@ export async function GET(request: Request) {
   const to = url.searchParams.get("to") ?? undefined;
   const supabase = await createClient();
   const { rows, total } = await listForManager(supabase, ctx.tenantId!, { limit, offset, status, stuck, stuckHours, userId, from, to });
-  return NextResponse.json({ data: rows, total });
+  return withRequestIdAndTiming(request, NextResponse.json({ data: rows, total }), { route: ROUTE_GET, method: "GET", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
 }
 
 export async function POST(request: Request) {
+  const start = Date.now();
   const sizeError = checkRequestBodySize(request);
-  if (sizeError) return NextResponse.json({ error: sizeError }, { status: 413 });
+  if (sizeError) return withRequestIdAndTiming(request, NextResponse.json({ error: sizeError }, { status: 413 }), { route: ROUTE_POST, method: "POST", duration_ms: Date.now() - start });
   const ctx = await getTenantContextFromRequest(request);
   try {
     requireTenant(ctx);
   } catch (e) {
     if (e instanceof TenantRequiredError) {
-      return NextResponse.json({ error: e.message }, { status: e.message.includes("membership") ? 403 : 401 });
+      return withRequestIdAndTiming(request, NextResponse.json({ error: e.message }, { status: e.message.includes("membership") ? 403 : 401 }), { route: ROUTE_POST, method: "POST", duration_ms: Date.now() - start });
     }
     throw e;
   }
-  const guard = await requireLiteIdempotency(request, ctx, ROUTE_KEY);
-  if (!guard.ok) return guard.response;
+  const guard = await requireLiteIdempotency(request, ctx, ROUTE_POST);
+  if (!guard.ok) return withRequestIdAndTiming(request, guard.response, { route: ROUTE_POST, method: "POST", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
   let body: { purpose?: string } = {};
   try {
     body = await request.json().catch(() => ({}));
@@ -62,7 +66,7 @@ export async function POST(request: Request) {
     : "project_media";
   const supabase = await createClient();
   const { data, error } = await createUploadSession(supabase, ctx, purpose);
-  if (error) return NextResponse.json({ error }, { status: 403 });
-  await storeLiteIdempotency(request, ctx, ROUTE_KEY, { data }, 200);
-  return NextResponse.json({ data });
+  if (error) return withRequestIdAndTiming(request, NextResponse.json({ error }, { status: 403 }), { route: ROUTE_POST, method: "POST", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
+  await storeLiteIdempotency(request, ctx, ROUTE_POST, { data }, 200);
+  return withRequestIdAndTiming(request, NextResponse.json({ data }), { route: ROUTE_POST, method: "POST", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
 }

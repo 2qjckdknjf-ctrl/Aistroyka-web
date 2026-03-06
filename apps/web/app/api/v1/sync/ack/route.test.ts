@@ -101,6 +101,22 @@ describe("POST /api/v1/sync/ack", () => {
     });
     const res = await POST(req);
     expect(res.status).toBe(200);
+    expect(res.headers.get("x-request-id")).toBeDefined();
+    expect(res.headers.get("x-request-id")!.length).toBeGreaterThan(0);
     expect(syncCursorsRepo.upsertCursor).toHaveBeenCalled();
+  });
+
+  it("echoes x-request-id when provided", async () => {
+    vi.mocked(changeLogRepo.getMinRetainedCursor).mockReturnValue(0);
+    vi.mocked(changeLogRepo.getMaxCursor).mockResolvedValue(100);
+    vi.mocked(syncCursorsRepo.getCursor).mockResolvedValue(0);
+    const req = new Request("https://test/api/v1/sync/ack", {
+      method: "POST",
+      headers: { "x-device-id": "device-1", "x-request-id": "my-request-id", "content-type": "application/json" },
+      body: JSON.stringify({ cursor: 50 }),
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    expect(res.headers.get("x-request-id")).toBe("my-request-id");
   });
 });

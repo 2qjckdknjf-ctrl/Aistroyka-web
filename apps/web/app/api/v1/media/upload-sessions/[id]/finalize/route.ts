@@ -4,6 +4,7 @@ import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from 
 import { finalizeUploadSession } from "@/lib/domain/upload-session/upload-session.service";
 import { checkRequestBodySize } from "@/lib/api/request-limit";
 import { requireLiteIdempotency, storeLiteIdempotency } from "@/lib/api/lite-idempotency";
+import { withRequestIdAndTiming } from "@/lib/observability";
 
 export const dynamic = "force-dynamic";
 
@@ -13,28 +14,29 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const start = Date.now();
   const sizeError = checkRequestBodySize(request);
-  if (sizeError) return NextResponse.json({ error: sizeError }, { status: 413 });
+  if (sizeError) return withRequestIdAndTiming(request, NextResponse.json({ error: sizeError }, { status: 413 }), { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start });
   const { id: sessionId } = await params;
   const ctx = await getTenantContextFromRequest(request);
   try {
     requireTenant(ctx);
   } catch (e) {
     if (e instanceof TenantRequiredError) {
-      return NextResponse.json({ error: e.message }, { status: e.message.includes("membership") ? 403 : 401 });
+      return withRequestIdAndTiming(request, NextResponse.json({ error: e.message }, { status: e.message.includes("membership") ? 403 : 401 }), { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start });
     }
     throw e;
   }
   const guard = await requireLiteIdempotency(request, ctx, ROUTE_KEY);
-  if (!guard.ok) return guard.response;
+  if (!guard.ok) return withRequestIdAndTiming(request, guard.response, { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
   let body: { object_path?: string; mime_type?: string; size_bytes?: number } = {};
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return withRequestIdAndTiming(request, NextResponse.json({ error: "Invalid JSON" }, { status: 400 }), { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
   }
   const object_path = typeof body.object_path === "string" ? body.object_path.trim() : "";
-  if (!object_path) return NextResponse.json({ error: "object_path required" }, { status: 400 });
+  if (!object_path) return withRequestIdAndTiming(request, NextResponse.json({ error: "object_path required" }, { status: 400 }), { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
   const supabase = await createClient();
   const { ok, error } = await finalizeUploadSession(supabase, ctx, sessionId, {
     object_path,
@@ -44,9 +46,9 @@ export async function POST(
   if (!ok) {
     const status =
       error === "media_object_missing" ? 400 : error === "storage_verification_failed" ? 503 : 403;
-    return NextResponse.json({ error, code: error === "media_object_missing" ? error : undefined }, { status });
+    return withRequestIdAndTiming(request, NextResponse.json({ error, code: error === "media_object_missing" ? error : undefined }, { status }), { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
   }
   const response = { ok: true };
   await storeLiteIdempotency(request, ctx, ROUTE_KEY, response, 200);
-  return NextResponse.json(response);
+  return withRequestIdAndTiming(request, NextResponse.json(response), { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
 }

@@ -4,26 +4,29 @@ import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from 
 import { getChangesAfter, getMaxCursor, getMinRetainedCursor } from "@/lib/sync/change-log.repository";
 import { getCursor } from "@/lib/sync/sync-cursors.repository";
 import { syncConflictResponse } from "@/lib/sync/sync-conflict";
+import { withRequestIdAndTiming } from "@/lib/observability";
 
 export const dynamic = "force-dynamic";
 
 const DEVICE_ID_HEADER = "x-device-id";
+const ROUTE_KEY = "GET /api/v1/sync/changes";
 
 /**
  * GET /api/v1/sync/changes?cursor=<n>&limit=<m>
  * Returns deltas after cursor + nextCursor. Requires x-device-id.
  */
 export async function GET(request: Request) {
+  const start = Date.now();
   const deviceId = request.headers.get(DEVICE_ID_HEADER)?.trim();
   if (!deviceId) {
-    return NextResponse.json({ error: "Missing x-device-id header" }, { status: 400 });
+    return withRequestIdAndTiming(request, NextResponse.json({ error: "Missing x-device-id header" }, { status: 400 }), { route: ROUTE_KEY, method: "GET", duration_ms: Date.now() - start });
   }
   const ctx = await getTenantContextFromRequest(request);
   try {
     requireTenant(ctx);
   } catch (e) {
     if (e instanceof TenantRequiredError) {
-      return NextResponse.json({ error: e.message }, { status: e.message.includes("membership") ? 403 : 401 });
+      return withRequestIdAndTiming(request, NextResponse.json({ error: e.message }, { status: e.message.includes("membership") ? 403 : 401 }), { route: ROUTE_KEY, method: "GET", duration_ms: Date.now() - start });
     }
     throw e;
   }
@@ -35,21 +38,21 @@ export async function GET(request: Request) {
   const minRetained = getMinRetainedCursor();
   if (minRetained > 0 && cursor < minRetained) {
     const serverCursor = await getMaxCursor(supabase, tenantId);
-    return syncConflictResponse(serverCursor, true, "retention_window_exceeded");
+    return withRequestIdAndTiming(request, syncConflictResponse(serverCursor, true, "retention_window_exceeded"), { route: ROUTE_KEY, method: "GET", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
   }
   const serverCursor = await getMaxCursor(supabase, tenantId);
   if (cursor > serverCursor) {
-    return syncConflictResponse(serverCursor);
+    return withRequestIdAndTiming(request, syncConflictResponse(serverCursor), { route: ROUTE_KEY, method: "GET", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
   }
   const storedCursor = await getCursor(supabase, tenantId, ctx.userId as string, deviceId);
   if (storedCursor > 0 && cursor < storedCursor) {
-    return syncConflictResponse(serverCursor, false, "device_mismatch");
+    return withRequestIdAndTiming(request, syncConflictResponse(serverCursor, false, "device_mismatch"), { route: ROUTE_KEY, method: "GET", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
   }
   const changes = await getChangesAfter(supabase, ctx.tenantId, cursor, limit);
   const nextCursor = changes.length > 0 ? changes[changes.length - 1].id : cursor;
-  return NextResponse.json({
+  return withRequestIdAndTiming(request, NextResponse.json({
     data: { changes },
     nextCursor,
     serverTime: new Date().toISOString(),
-  });
+  }), { route: ROUTE_KEY, method: "GET", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
 }

@@ -1,31 +1,32 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError, authorize } from "@/lib/tenant";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { processJobs } from "@/lib/platform/jobs/job.service";
 import { JOB_CONFIG } from "@/lib/platform/jobs/job.config";
 import { checkRateLimit } from "@/lib/platform/rate-limit/rate-limit.service";
+import { requireCronSecretIfEnabled } from "@/lib/api/cron-auth";
+import { withRequestIdAndTiming } from "@/lib/observability";
 
 export const dynamic = "force-dynamic";
 
-import { requireCronSecretIfEnabled } from "@/lib/api/cron-auth";
-
-const JOBS_PROCESS_ENDPOINT = "/api/v1/jobs/process";
+const ROUTE_KEY = "POST /api/v1/jobs/process";
+const RATE_LIMIT_ENDPOINT = "/api/v1/jobs/process";
 
 export async function POST(request: Request) {
+  const start = Date.now();
   const cronErr = requireCronSecretIfEnabled(request);
-  if (cronErr) return cronErr;
+  if (cronErr) return withRequestIdAndTiming(request, cronErr, { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start });
   const ctx = await getTenantContextFromRequest(request);
   try {
     requireTenant(ctx);
   } catch (e) {
     if (e instanceof TenantRequiredError) {
-      return NextResponse.json({ error: e.message }, { status: e.message.includes("membership") ? 403 : 401 });
+      return withRequestIdAndTiming(request, NextResponse.json({ error: e.message }, { status: e.message.includes("membership") ? 403 : 401 }), { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start });
     }
     throw e;
   }
   if (!authorize(ctx, "jobs:process")) {
-    return NextResponse.json({ error: "Insufficient rights: owner or admin required" }, { status: 403 });
+    return withRequestIdAndTiming(request, NextResponse.json({ error: "Insufficient rights: owner or admin required" }, { status: 403 }), { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
   }
 
   const admin = getAdminClient();
@@ -35,17 +36,17 @@ export async function POST(request: Request) {
       const result = await checkRateLimit(admin, {
         tenantId: ctx.tenantId,
         ip,
-        endpoint: JOBS_PROCESS_ENDPOINT,
+        endpoint: RATE_LIMIT_ENDPOINT,
       });
       if (result.limited) {
-        return NextResponse.json({ error: result.message }, { status: 429 });
+        return withRequestIdAndTiming(request, NextResponse.json({ error: result.message }, { status: 429 }), { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
       }
     } catch {
       /* allow on rate-limit check failure */
     }
   }
   if (!admin) {
-    return NextResponse.json({ error: "Job processing not configured" }, { status: 503 });
+    return withRequestIdAndTiming(request, NextResponse.json({ error: "Job processing not configured" }, { status: 503 }), { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
   }
 
   const url = new URL(request.url);
@@ -62,11 +63,11 @@ export async function POST(request: Request) {
     timeBudgetMs: JOB_CONFIG.WORKER_TIME_BUDGET_MS,
   });
 
-  return NextResponse.json({
+  return withRequestIdAndTiming(request, NextResponse.json({
     ok: true,
     processed: summary.processed,
     success: summary.success,
     failed: summary.failed,
     dead: summary.dead,
-  });
+  }), { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
 }

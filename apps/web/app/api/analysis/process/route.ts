@@ -3,7 +3,9 @@ import { createClient } from "@/lib/supabase/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { getServerConfig } from "@/lib/config/server";
 import { processOneJob } from "@/lib/ai/runOneJob";
-import { getOrCreateTraceId, logStructured } from "@/lib/observability";
+import { withRequestIdAndTiming } from "@/lib/observability";
+
+const ROUTE_KEY = "POST /api/analysis/process";
 
 /**
  * Process one analysis job (dequeue → AI → complete).
@@ -12,58 +14,50 @@ import { getOrCreateTraceId, logStructured } from "@/lib/observability";
  * Uses service_role for job RPCs so RLS/EXECUTE revokes on anon/authenticated do not break this route.
  */
 export async function POST(request: Request) {
-  const traceId = getOrCreateTraceId(request);
-  const startMs = Date.now();
+  const start = Date.now();
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    return withRequestIdAndTiming(request, NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 }), { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start });
   }
 
   const admin = getAdminClient();
   if (!admin) {
-    return NextResponse.json(
+    return withRequestIdAndTiming(request, NextResponse.json(
       {
         ok: false,
         error: "Job processing requires SUPABASE_SERVICE_ROLE_KEY (server-only). Set in env and redeploy.",
       },
       { status: 503 }
-    );
+    ), { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start, userId: user.id });
   }
 
   const aiUrl = getServerConfig().AI_ANALYSIS_URL || undefined;
-
+  const traceId = request.headers.get("x-request-id")?.trim() || undefined;
   const result = await processOneJob(admin, aiUrl, { traceId });
 
   if (!result.ok) {
     if (result.reason === "no_url") {
-      return NextResponse.json(
+      return withRequestIdAndTiming(request, NextResponse.json(
         { ok: false, error: "AI_ANALYSIS_URL is not configured" },
         { status: 503 }
-      );
+      ), { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start, userId: user.id });
     }
     if (result.reason === "no_job") {
-      return NextResponse.json({ ok: true, processed: false });
+      return withRequestIdAndTiming(request, NextResponse.json({ ok: true, processed: false }), { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start, userId: user.id });
     }
-    return NextResponse.json(
+    return withRequestIdAndTiming(request, NextResponse.json(
       { ok: false, error: result.message ?? "Processing failed" },
       { status: 500 }
-    );
+    ), { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start, userId: user.id });
   }
 
-  logStructured({
-    event: "analysis_process",
-    traceId,
-    route: "/api/analysis/process",
-    status: 200,
-    duration_ms: Date.now() - startMs,
-  });
-  return NextResponse.json({
+  return withRequestIdAndTiming(request, NextResponse.json({
     ok: true,
     processed: true,
     jobId: result.jobId,
     status: result.status,
-  });
+  }), { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start, userId: user.id });
 }

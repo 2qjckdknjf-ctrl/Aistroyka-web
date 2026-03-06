@@ -17,9 +17,11 @@ import { checkRateLimit } from "@/lib/platform/rate-limit/rate-limit.service";
 import { checkQuota, checkBudgetAlert, estimateMaxVisionCostUsd } from "@/lib/platform/ai-usage/ai-usage.service";
 import { analyzeImage, AIPolicyBlockedError, AIVisionFailedError } from "@/lib/platform/ai/ai.service";
 import { getServerConfig, getConfiguredVisionProviders, isAnyVisionProviderConfigured } from "@/lib/config/server";
+import { withRequestIdAndTiming } from "@/lib/observability";
 
 const MAX_IMAGE_URL_LENGTH = 2048;
 const MAX_BODY_BYTES = 100_000;
+const ROUTE_KEY = "POST /api/v1/ai/analyze-image";
 
 function withLegacyHeaders(res: NextResponse): NextResponse {
   setLegacyApiHeaders(res.headers);
@@ -70,48 +72,34 @@ function logAiEvent(payload: {
 }
 
 export async function POST(request: Request) {
-  const config = getServerConfig();
+  const start = Date.now();
+  const wrap = (res: NextResponse, tenantId?: string | null, userId?: string | null) =>
+    withRequestIdAndTiming(request, withLegacyHeaders(res), { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start, tenantId, userId });
+
   if (!isAnyVisionProviderConfigured()) {
-    return withLegacyHeaders(NextResponse.json(
-      { error: "No AI vision provider is configured" },
-      { status: 503 }
-    ));
+    return wrap(NextResponse.json({ error: "No AI vision provider is configured" }, { status: 503 }));
   }
 
   const contentLength = request.headers.get("content-length");
-  if (
-    contentLength !== null &&
-    contentLength !== "" &&
-    Number(contentLength) > MAX_BODY_BYTES
-  ) {
-    return withLegacyHeaders(NextResponse.json(
-      { error: "Request body too large" },
-      { status: 413 }
-    ));
+  if (contentLength !== null && contentLength !== "" && Number(contentLength) > MAX_BODY_BYTES) {
+    return wrap(NextResponse.json({ error: "Request body too large" }, { status: 413 }));
   }
 
   let body: { media_id?: string; image_url?: string; project_id?: string };
   try {
     body = await request.json();
   } catch {
-    return withLegacyHeaders(NextResponse.json(
-      { error: "Invalid JSON body" },
-      { status: 400 }
-    ));
+    return wrap(NextResponse.json({ error: "Invalid JSON body" }, { status: 400 }));
   }
 
-  const imageUrl =
-    typeof body.image_url === "string" ? body.image_url.trim() : "";
+  const imageUrl = typeof body.image_url === "string" ? body.image_url.trim() : "";
   if (!imageUrl) {
-    return withLegacyHeaders(NextResponse.json(
-      { error: "image_url is required" },
-      { status: 400 }
-    ));
+    return wrap(NextResponse.json({ error: "image_url is required" }, { status: 400 }));
   }
 
   const urlCheck = validateImageUrl(imageUrl);
   if (!urlCheck.ok) {
-    return withLegacyHeaders(NextResponse.json({ error: urlCheck.error }, { status: 400 }));
+    return wrap(NextResponse.json({ error: urlCheck.error }, { status: 400 }));
   }
 
   const tenantCtx = await getTenantContextFromRequest(request);
@@ -122,39 +110,29 @@ export async function POST(request: Request) {
       const result = await checkRateLimit(admin, {
         tenantId: tenantCtx.tenantId ?? null,
         ip,
-        endpoint: "/api/v1/ai/analyze-image",
+        endpoint: ROUTE_KEY,
       });
       if (result.limited) {
-        return withLegacyHeaders(NextResponse.json({ error: result.message }, { status: 429 }));
+        return wrap(NextResponse.json({ error: result.message }, { status: 429 }), tenantCtx.tenantId, tenantCtx.userId);
       }
     } catch {
       /* allow on rate-limit check failure (e.g. table missing) */
     }
     if (tenantCtx.tenantId) {
       const tier = tenantCtx.subscriptionTier ?? "free";
-      const estimatedCost = estimateMaxVisionCostUsd(
-        getConfiguredVisionProviders(),
-        tier
-      );
+      const estimatedCost = estimateMaxVisionCostUsd(getConfiguredVisionProviders(), tier);
       const quotaMsg = await checkQuota(admin, tenantCtx.tenantId, estimatedCost);
       if (quotaMsg) {
-        return withLegacyHeaders(NextResponse.json(
-          { error: quotaMsg, code: "ai_budget_exceeded" },
-          { status: 402 }
-        ));
+        return wrap(NextResponse.json({ error: quotaMsg, code: "ai_budget_exceeded" }, { status: 402 }), tenantCtx.tenantId, tenantCtx.userId);
       }
       await checkBudgetAlert(admin, tenantCtx.tenantId, estimatedCost);
     }
   }
 
   if (!admin) {
-    return withLegacyHeaders(NextResponse.json(
-      { error: "No AI vision provider is configured" },
-      { status: 503 }
-    ));
+    return wrap(NextResponse.json({ error: "No AI vision provider is configured" }, { status: 503 }), tenantCtx.tenantId, tenantCtx.userId);
   }
 
-  const startMs = Date.now();
   try {
     const result = await analyzeImage(admin, {
       tenantId: tenantCtx.tenantId ?? null,
@@ -167,7 +145,7 @@ export async function POST(request: Request) {
       mediaId: body.media_id ?? null,
     });
 
-    const durationMs = Date.now() - startMs;
+    const durationMs = Date.now() - start;
     logAiEvent({
       status: "success",
       duration_ms: durationMs,
@@ -180,9 +158,9 @@ export async function POST(request: Request) {
     });
     const response = NextResponse.json(result);
     response.headers.set("X-AI-Duration-Ms", String(durationMs));
-    return withLegacyHeaders(response);
+    return wrap(response, tenantCtx.tenantId, tenantCtx.userId);
   } catch (err) {
-    const durationMs = Date.now() - startMs;
+    const durationMs = Date.now() - start;
     if (err instanceof AIPolicyBlockedError) {
       logAiEvent({
         status: "failure",
@@ -192,9 +170,7 @@ export async function POST(request: Request) {
         error: err.message,
         http_status: 403,
       });
-      return withLegacyHeaders(
-        NextResponse.json({ error: err.message, code: "ai_policy_denied" }, { status: 403 })
-      );
+      return wrap(NextResponse.json({ error: err.message, code: "ai_policy_denied" }, { status: 403 }), tenantCtx.tenantId, tenantCtx.userId);
     }
     if (err instanceof AIVisionFailedError) {
       const isTimeout = err.message.toLowerCase().includes("timeout");
@@ -206,10 +182,7 @@ export async function POST(request: Request) {
         error: err.message,
         http_status: isTimeout ? 504 : 502,
       });
-      return withLegacyHeaders(NextResponse.json(
-        { error: err.message },
-        { status: isTimeout ? 504 : 502 }
-      ));
+      return wrap(NextResponse.json({ error: err.message }, { status: isTimeout ? 504 : 502 }), tenantCtx.tenantId, tenantCtx.userId);
     }
     const message = err instanceof Error ? err.message : "Analysis failed";
     logAiEvent({
@@ -220,9 +193,6 @@ export async function POST(request: Request) {
       error: message,
       http_status: 500,
     });
-    return withLegacyHeaders(NextResponse.json(
-      { error: message },
-      { status: 500 }
-    ));
+    return wrap(NextResponse.json({ error: message }, { status: 500 }), tenantCtx.tenantId, tenantCtx.userId);
   }
 }

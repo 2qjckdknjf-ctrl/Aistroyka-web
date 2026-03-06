@@ -2,8 +2,11 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { getOpsOverview } from "@/lib/ops/ops-overview.repository";
+import { withRequestIdAndTiming } from "@/lib/observability";
 
 export const dynamic = "force-dynamic";
+
+const ROUTE_KEY = "GET /api/v1/ops/overview";
 
 /**
  * GET /api/v1/ops/overview
@@ -11,12 +14,13 @@ export const dynamic = "force-dynamic";
  * Tenant-scoped; any tenant member can read.
  */
 export async function GET(request: Request) {
+  const start = Date.now();
   const ctx = await getTenantContextFromRequest(request);
   try {
     requireTenant(ctx);
   } catch (e) {
     if (e instanceof TenantRequiredError) {
-      return NextResponse.json({ error: e.message }, { status: 401 });
+      return withRequestIdAndTiming(request, NextResponse.json({ error: e.message }, { status: 401 }), { route: ROUTE_KEY, method: "GET", duration_ms: Date.now() - start });
     }
     throw e;
   }
@@ -29,5 +33,5 @@ export async function GET(request: Request) {
 
   const supabase = await createClient();
   const overview = await getOpsOverview(supabase, ctx.tenantId!, { limit, projectId, from, to });
-  return NextResponse.json(overview);
+  return withRequestIdAndTiming(request, NextResponse.json(overview), { route: ROUTE_KEY, method: "GET", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
 }
