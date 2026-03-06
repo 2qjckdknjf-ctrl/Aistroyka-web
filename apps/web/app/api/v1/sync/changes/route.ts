@@ -5,6 +5,7 @@ import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from 
 import { getChangesAfter, getMaxCursor, getMinRetainedCursor } from "@/lib/sync/change-log.repository";
 import { getCursor } from "@/lib/sync/sync-cursors.repository";
 import { syncConflictResponse } from "@/lib/sync/sync-conflict";
+import { recordSyncConflict } from "@/lib/ops/ops-events.repository";
 import { checkRateLimit } from "@/lib/platform/rate-limit/rate-limit.service";
 import { getOrCreateRequestId, logStructured, withRequestIdAndTiming } from "@/lib/observability";
 
@@ -39,7 +40,7 @@ export async function GET(request: Request) {
       const rl = await checkRateLimit(admin, { tenantId: ctx.tenantId, ip, endpoint: "/api/v1/sync/changes" });
       if (rl.limited) return withRequestIdAndTiming(request, NextResponse.json({ error: rl.message }, { status: 429 }), { route: ROUTE_KEY, method: "GET", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
     } catch {
-      /* allow on rate-limit check failure */
+      logStructured({ event: "rate_limit_unavailable", endpoint: "/api/v1/sync/changes", tenant_id: ctx.tenantId, request_id: getOrCreateRequestId(request) });
     }
   }
   const url = new URL(request.url);
@@ -51,20 +52,33 @@ export async function GET(request: Request) {
   if (minRetained > 0 && cursor < minRetained) {
     const serverCursor = await getMaxCursor(supabase, tenantId);
     logStructured({ event: "sync_conflict", hint: "retention_window_exceeded", device_id: deviceId, tenant_id: ctx.tenantId, user_id: ctx.userId, request_id: getOrCreateRequestId(request) });
+    await recordSyncConflict(supabase, tenantId, { hint: "retention_window_exceeded", device_id: deviceId });
     return withRequestIdAndTiming(request, syncConflictResponse(serverCursor, true, "retention_window_exceeded"), { route: ROUTE_KEY, method: "GET", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
   }
   const serverCursor = await getMaxCursor(supabase, tenantId);
   if (cursor > serverCursor) {
     logStructured({ event: "sync_conflict", hint: "cursor_ahead", device_id: deviceId, tenant_id: ctx.tenantId, user_id: ctx.userId, request_id: getOrCreateRequestId(request) });
+    await recordSyncConflict(supabase, tenantId, { hint: "cursor_ahead", device_id: deviceId });
     return withRequestIdAndTiming(request, syncConflictResponse(serverCursor), { route: ROUTE_KEY, method: "GET", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
   }
   const storedCursor = await getCursor(supabase, tenantId, ctx.userId as string, deviceId);
   if (storedCursor > 0 && cursor < storedCursor) {
     logStructured({ event: "sync_conflict", hint: "device_mismatch", device_id: deviceId, tenant_id: ctx.tenantId, user_id: ctx.userId, request_id: getOrCreateRequestId(request) });
+    await recordSyncConflict(supabase, tenantId, { hint: "device_mismatch", device_id: deviceId });
     return withRequestIdAndTiming(request, syncConflictResponse(serverCursor, false, "device_mismatch"), { route: ROUTE_KEY, method: "GET", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
   }
   const changes = await getChangesAfter(supabase, ctx.tenantId, cursor, limit);
   const nextCursor = changes.length > 0 ? changes[changes.length - 1].id : cursor;
+  void Promise.resolve(
+    supabase
+      .from("device_tokens")
+      .update({ last_seen: new Date().toISOString() })
+      .eq("tenant_id", tenantId)
+      .eq("user_id", ctx.userId)
+      .eq("device_id", deviceId)
+  ).catch((err) => {
+    logStructured({ event: "device_last_seen_update_failed", route: ROUTE_KEY, tenant_id: ctx.tenantId, device_id: deviceId, error: String(err), request_id: getOrCreateRequestId(request) });
+  });
   return withRequestIdAndTiming(request, NextResponse.json({
     data: { changes },
     nextCursor,

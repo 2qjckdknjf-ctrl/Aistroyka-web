@@ -6,7 +6,7 @@ import { finalizeUploadSession } from "@/lib/domain/upload-session/upload-sessio
 import { checkRequestBodySize } from "@/lib/api/request-limit";
 import { requireLiteIdempotency, storeLiteIdempotency } from "@/lib/api/lite-idempotency";
 import { checkRateLimit } from "@/lib/platform/rate-limit/rate-limit.service";
-import { withRequestIdAndTiming } from "@/lib/observability";
+import { getOrCreateRequestId, logStructured, withRequestIdAndTiming } from "@/lib/observability";
 
 export const dynamic = "force-dynamic";
 
@@ -36,7 +36,7 @@ export async function POST(
       const rl = await checkRateLimit(admin, { tenantId: ctx.tenantId, ip, endpoint: "/api/v1/media/upload-sessions/:id/finalize" });
       if (rl.limited) return withRequestIdAndTiming(request, NextResponse.json({ error: rl.message }, { status: 429 }), { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
     } catch {
-      /* allow on rate-limit check failure */
+      logStructured({ event: "rate_limit_unavailable", endpoint: "/api/v1/media/upload-sessions/:id/finalize", tenant_id: ctx.tenantId, request_id: getOrCreateRequestId(request) });
     }
   }
   const guard = await requireLiteIdempotency(request, ctx, ROUTE_KEY);

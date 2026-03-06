@@ -115,7 +115,7 @@ export async function POST(request: Request) {
         return wrap(NextResponse.json({ error: result.message }, { status: 429 }), tenantCtx.tenantId, tenantCtx.userId);
       }
     } catch {
-      /* allow on rate-limit check failure (e.g. table missing) */
+      logStructured({ event: "rate_limit_unavailable", endpoint: ROUTE_KEY, tenant_id: tenantCtx.tenantId ?? undefined, request_id: tenantCtx.traceId ?? undefined });
     }
     if (tenantCtx.tenantId) {
       const tier = tenantCtx.subscriptionTier ?? "free";

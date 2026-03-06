@@ -1,7 +1,7 @@
 /** Job status lifecycle: queued → running → success | failed → (retry) | dead */
 export type JobStatus = "queued" | "running" | "success" | "failed" | "dead";
 
-export type JobType = "ai_analyze_media" | "ai_analyze_report" | "export" | "retention_cleanup" | "push_send" | "upload_reconcile";
+export type JobType = "ai_analyze_media" | "ai_analyze_report" | "export" | "retention_cleanup" | "push_send" | "upload_reconcile" | "ops_events_prune";
 
 export interface JobPayloadAiAnalyzeMedia {
   report_id: string;
@@ -33,7 +33,11 @@ export interface JobPayloadUploadReconcile {
   max_age_minutes?: number;
 }
 
-export type JobPayload = JobPayloadAiAnalyzeMedia | JobPayloadAiAnalyzeReport | JobPayloadExport | JobPayloadRetentionCleanup | JobPayloadPushSend | JobPayloadUploadReconcile;
+export interface JobPayloadOpsEventsPrune {
+  retention_days?: number;
+}
+
+export type JobPayload = JobPayloadAiAnalyzeMedia | JobPayloadAiAnalyzeReport | JobPayloadExport | JobPayloadRetentionCleanup | JobPayloadPushSend | JobPayloadUploadReconcile | JobPayloadOpsEventsPrune;
 
 export interface Job {
   id: string;

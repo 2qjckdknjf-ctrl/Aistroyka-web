@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ ok: false, message: result.message }, { status: 429 });
       }
     } catch {
-      /* allow on rate-limit check failure so login can proceed */
+      logStructured({ event: "rate_limit_unavailable", endpoint: "/api/auth/login", tenant_id: null, request_id: traceId });
     }
   }
 

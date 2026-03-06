@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { getCursor, upsertCursor } from "@/lib/sync/sync-cursors.repository";
+import { recordSyncConflict } from "@/lib/ops/ops-events.repository";
 import { getMaxCursor, getMinRetainedCursor } from "@/lib/sync/change-log.repository";
 import { syncConflictResponse } from "@/lib/sync/sync-conflict";
 import { requireLiteIdempotency, storeLiteIdempotency } from "@/lib/api/lite-idempotency";
@@ -41,7 +42,7 @@ export async function POST(request: Request) {
       const rl = await checkRateLimit(admin, { tenantId: ctx.tenantId, ip, endpoint: "/api/v1/sync/ack" });
       if (rl.limited) return withRequestIdAndTiming(request, NextResponse.json({ error: rl.message }, { status: 429 }), { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
     } catch {
-      /* allow on rate-limit check failure */
+      logStructured({ event: "rate_limit_unavailable", endpoint: "/api/v1/sync/ack", tenant_id: ctx.tenantId, request_id: getOrCreateRequestId(request) });
     }
   }
   const guard = await requireLiteIdempotency(request, ctx, ROUTE_KEY);
@@ -59,20 +60,26 @@ export async function POST(request: Request) {
   if (minRetained > 0 && cursor < minRetained) {
     const serverCursor = await getMaxCursor(supabase, tenantId);
     logStructured({ event: "sync_conflict", hint: "retention_window_exceeded", device_id: deviceId, tenant_id: ctx.tenantId, user_id: ctx.userId, request_id: getOrCreateRequestId(request) });
+    await recordSyncConflict(supabase, tenantId, { hint: "retention_window_exceeded", device_id: deviceId });
     return withRequestIdAndTiming(request, syncConflictResponse(serverCursor, true, "retention_window_exceeded"), { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
   }
   const serverCursor = await getMaxCursor(supabase, tenantId);
   if (cursor > serverCursor) {
     logStructured({ event: "sync_conflict", hint: "cursor_ahead", device_id: deviceId, tenant_id: ctx.tenantId, user_id: ctx.userId, request_id: getOrCreateRequestId(request) });
+    await recordSyncConflict(supabase, tenantId, { hint: "cursor_ahead", device_id: deviceId });
     return withRequestIdAndTiming(request, syncConflictResponse(serverCursor), { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
   }
   const storedCursor = await getCursor(supabase, tenantId, ctx.userId as string, deviceId);
   if (storedCursor > 0 && cursor < storedCursor) {
     logStructured({ event: "sync_conflict", hint: "device_mismatch", device_id: deviceId, tenant_id: ctx.tenantId, user_id: ctx.userId, request_id: getOrCreateRequestId(request) });
+    await recordSyncConflict(supabase, tenantId, { hint: "device_mismatch", device_id: deviceId });
     return withRequestIdAndTiming(request, syncConflictResponse(serverCursor, false, "device_mismatch"), { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
   }
   const ok = await upsertCursor(supabase, tenantId, ctx.userId as string, deviceId, cursor);
   if (!ok) return withRequestIdAndTiming(request, NextResponse.json({ error: "Failed to store cursor" }, { status: 500 }), { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
+  void Promise.resolve(
+    supabase.from("device_tokens").update({ last_seen: new Date().toISOString() }).eq("tenant_id", tenantId).eq("user_id", ctx.userId).eq("device_id", deviceId)
+  ).catch(() => {});
   const response = { ok: true, cursor, serverTime: new Date().toISOString() };
   await storeLiteIdempotency(request, ctx, ROUTE_KEY, response, 200);
   return withRequestIdAndTiming(request, NextResponse.json(response), { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });

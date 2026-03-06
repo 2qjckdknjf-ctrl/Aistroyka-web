@@ -76,10 +76,12 @@
 
 Until deploy + DNS are done, expect non-green:
 
-| Target | Command | Result | HTTP / note |
-|--------|---------|--------|-------------|
-| PROD | `bun run smoke:prod` | FAIL | GET https://aistroyka.ai/api/v1/health → 404 (site not deployed or route not attached). |
-| STAGING | `bun run smoke:staging` | FAIL | Could not resolve host: staging.aistroyka.ai (DNS or staging Worker not set). |
+<!-- markdownlint-disable MD060 -->
+| Target   | Command                 | Result  | HTTP / note                                                                                                                                     |
+|----------|-------------------------|---------|-------------------------------------------------------------------------------------------------------------------------------------------------|
+| PROD     | `bun run smoke:prod`    | FAIL    | GET https://aistroyka.ai/api/v1/health → 404 (site not deployed or route not attached).                                                       |
+| STAGING  | `bun run smoke:staging` | FAIL    | Could not resolve host: staging.aistroyka.ai (DNS or staging Worker not set).                                                                   |
+<!-- markdownlint-enable MD060 -->
 
 **After** Dashboard: build green, deploy, custom domains, DNS, redirect rule — re-run and expect: prod 200 or 503 with JSON `ok`; staging 200/503 with `"env":"staging"`.
 
@@ -106,8 +108,8 @@ Until deploy + DNS are done, expect non-green:
 
 ## 8. Lockfile / “lockfile is frozen” in Cloudflare build
 
-If the build fails with **lockfile had changes, but lockfile is frozen** after committing an updated lockfile:
+If the build fails with **lockfile had changes, but lockfile is frozen**:
 
-- **Branch:** Cloudflare may be building from **main**. The lockfile fix is on `release/vercel-prod-hardening-2026-03-05`; merge that branch into main (or cherry-pick the lockfile commit) and push so the build uses the new lockfile.
-- **Cache:** In Cloudflare Dashboard → Worker → Builds → open the failed build → **Clear build cache** (if available), then **Retry**.
-- **Check commit:** In the build log, confirm the commit hash includes the “chore(deps): refresh lockfile” commit.
+- **Cause (cross-platform):** Bun resolves optional dependencies by OS/arch. A lockfile generated on **macOS** can differ from what Bun expects on **Linux** (Cloudflare). So `--frozen-lockfile` on Cloudflare sees "changes" even when the repo lockfile is committed.
+- **Fix — regenerate lockfile on Linux:** Use the workflow **Update lockfile (Linux)** (`.github/workflows/update-lockfile-linux.yml`). In GitHub → Actions → "Update lockfile (Linux)" → **Run workflow**. It checks out **main**, runs `bun install` on `ubuntu-latest` (Bun 1.2.15), and pushes an updated `bun.lock` to main. Then retry the Cloudflare build (and clear build cache if needed).
+- **Also check:** Production branch = **main**, **Root directory** = empty; Build = `bun run cf:build`, Install = `bun install --frozen-lockfile`. Use Bun **1.2.15** in the build environment if configurable.

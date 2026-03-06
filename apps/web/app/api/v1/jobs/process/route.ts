@@ -5,7 +5,7 @@ import { processJobs } from "@/lib/platform/jobs/job.service";
 import { JOB_CONFIG } from "@/lib/platform/jobs/job.config";
 import { checkRateLimit } from "@/lib/platform/rate-limit/rate-limit.service";
 import { requireCronSecretIfEnabled } from "@/lib/api/cron-auth";
-import { withRequestIdAndTiming } from "@/lib/observability";
+import { getOrCreateRequestId, logStructured, withRequestIdAndTiming } from "@/lib/observability";
 
 export const dynamic = "force-dynamic";
 
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
         return withRequestIdAndTiming(request, NextResponse.json({ error: result.message }, { status: 429 }), { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
       }
     } catch {
-      /* allow on rate-limit check failure */
+      logStructured({ event: "rate_limit_unavailable", endpoint: RATE_LIMIT_ENDPOINT, tenant_id: ctx.tenantId, request_id: getOrCreateRequestId(request) });
     }
   }
   if (!admin) {

@@ -11,6 +11,7 @@ import { handleExport } from "./job.handlers/export";
 import { handleRetentionCleanup } from "./job.handlers/retention-cleanup";
 import { handlePushSend } from "./job.handlers/push-send";
 import { handleUploadReconcile } from "./job.handlers/upload-reconcile";
+import { handleOpsEventsPrune } from "./job.handlers/ops-events-prune";
 
 export type { Job, JobStatus, JobType } from "./job.types";
 export { JOB_CONFIG } from "./job.config";
@@ -59,6 +60,7 @@ const HANDLERS: Record<JobType, (supabase: SupabaseClient, job: Job) => Promise<
   retention_cleanup: handleRetentionCleanup,
   push_send: handlePushSend,
   upload_reconcile: handleUploadReconcile,
+  ops_events_prune: handleOpsEventsPrune,
 };
 
 /**

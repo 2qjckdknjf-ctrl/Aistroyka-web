@@ -6,8 +6,9 @@
 
 ## Supported strategy
 
-- **Recommended:** Cloudflare Cron Trigger (or similar) that calls this endpoint on a schedule.
-- **Alternative:** External scheduler (e.g. GitHub Actions, cron job) that sends `POST` requests with auth (tenant session or cron secret).
+- **Recommended (single tick):** Call **POST /api/v1/admin/jobs/cron-tick** on a schedule (e.g. every 1–5 min). It (1) enqueues `upload_reconcile` per tenant and (2) runs job processing. See **docs/operations/CRON_SETUP.md** for Cloudflare/Vercel wiring.
+- **Alternative (two-step):** Call **POST /api/v1/admin/jobs/schedule-reconcile** then **POST /api/v1/jobs/process**.
+- **Jobs only:** Call **POST /api/v1/jobs/process** directly (tenant session or cron secret) if you only need to run the worker without scheduling reconcile.
 
 The endpoint requires **tenant context** (authenticated user with tenant) and **admin scope** (`jobs:process` → role admin or owner). When `REQUIRE_CRON_SECRET` is set, the request must also include a valid `x-cron-secret` header (see below).
 

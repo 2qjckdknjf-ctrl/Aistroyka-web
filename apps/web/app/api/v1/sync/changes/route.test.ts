@@ -3,7 +3,17 @@ import { GET } from "./route";
 import * as changeLogRepo from "@/lib/sync/change-log.repository";
 import * as syncCursorsRepo from "@/lib/sync/sync-cursors.repository";
 
-vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn().mockResolvedValue({}) }));
+vi.mock("@/lib/supabase/server", () => {
+  const chain = () => ({ then: (fn: () => void) => { fn(); return { catch: () => {} }; } });
+  return {
+    createClient: vi.fn().mockResolvedValue({
+      from: () => ({
+        insert: () => chain(),
+        update: () => ({ eq: () => ({ eq: () => ({ eq: () => chain() }) }) }),
+      }),
+    }),
+  };
+});
 vi.mock("@/lib/tenant", () => ({
   getTenantContextFromRequest: vi.fn().mockResolvedValue({
     tenantId: "t1",

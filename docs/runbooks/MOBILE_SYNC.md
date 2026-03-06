@@ -24,10 +24,14 @@ When the client cursor is ahead of the server (e.g. stale or corrupted state), t
 
 - **serverCursor**: Latest change_log id for the tenant. Client must adopt this.
 - **must_bootstrap**: When `true`, client should refetch full state via bootstrap before continuing.
-- **hint** (optional): Specific reason for conflict; same recovery (bootstrap, reset cursor, retry):
-  - Default or generic: "Call bootstrap, reset cursor to serverCursor, then retry changes/ack."
-  - **retention_window_exceeded**: Client cursor is older than the earliest retained change_log id. Client must bootstrap and set cursor to serverCursor.
-  - **device_mismatch**: Client cursor does not match the last cursor stored for this device (e.g. using state from another device). Client must bootstrap and set cursor to serverCursor for this device.
+- **hint** (optional): Machine-readable hint. Values:
+  - `retention_window_exceeded` — Client cursor is below the earliest retained cursor (env `SYNC_MIN_RETAINED_CURSOR`). Client must bootstrap and use `serverCursor`.
+  - `device_mismatch` — Client cursor is behind the stored cursor for this device (e.g. cursor from another device). Client should adopt `serverCursor` and retry ack/changes.
+  - Default (cursor in future): "Call bootstrap, reset cursor to serverCursor, then retry changes/ack."
+
+## Env
+
+- **SYNC_MIN_RETAINED_CURSOR** — Optional. Earliest change_log id retained for the tenant. Client cursors below this get 409 with `hint: retention_window_exceeded`. Omit or `0` to disable.
 
 ## Recovery Flow (on 409)
 

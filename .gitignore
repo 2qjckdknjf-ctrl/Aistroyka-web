@@ -34,7 +34,7 @@ audit_artifacts_*/
 /reports/
 audit_*/
 engine/
-ios/
+# iOS: ignore derived/build only; commit ios/WorkerLite source
 bun.lock.bak
 
 # next

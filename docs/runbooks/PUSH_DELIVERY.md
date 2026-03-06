@@ -12,11 +12,28 @@ Outbox-based push: enqueue to `push_outbox`, drain via `push_send` job. APNS (iO
 ## Provider configuration
 
 - **APNS**: `APNS_TEAM_ID`, `APNS_KEY_ID`, `APNS_PRIVATE_KEY` (or `APNS_KEY`), `APNS_BUNDLE_ID`, `APNS_ENV=production|sandbox`. Token-based auth (JWT).
-- **FCM** (Android):
-  - **HTTP v1 (preferred):** `FCM_PROJECT_ID`, `FCM_CLIENT_EMAIL`, `FCM_PRIVATE_KEY` (PEM; env may contain literal `\n` for newlines). Optional: `FCM_TOKEN_URI` (default `https://oauth2.googleapis.com/token`). Uses OAuth2 JWT; token cached in-memory.
-  - **Legacy:** `FCM_SERVER_KEY`. Deprecated; use v1 for new setups.
-  - **Selection:** If v1 env is present (project_id + client_email + private_key), v1 is used; else if `FCM_SERVER_KEY` is set, legacy is used. If neither, provider returns retryable and outbox stays queued for retry.
-  - **Migration from legacy:** Create a service account in Firebase Console → Project Settings → Service accounts → Generate new private key. Set `FCM_PROJECT_ID` (project ID), `FCM_CLIENT_EMAIL` (client_email from JSON), `FCM_PRIVATE_KEY` (private_key from JSON; escape newlines as `\n` if needed). Remove `FCM_SERVER_KEY` after verifying v1 sends.
+- **FCM**: Prefer **HTTP v1** (service account) when set; otherwise **legacy** server key. If neither is set, provider returns retryable and outbox stays queued for retry.
+
+### FCM HTTP v1 (recommended)
+
+Set these to use FCM HTTP v1 (OAuth2 JWT):
+
+- `FCM_PROJECT_ID` — Firebase project ID.
+- `FCM_CLIENT_EMAIL` — Service account email (e.g. `firebase-adminsdk-xxx@project.iam.gserviceaccount.com`).
+- `FCM_PRIVATE_KEY` — PEM private key (literal `\n` in env is normalized to newline).
+- `FCM_TOKEN_URI` (optional) — Default `https://oauth2.googleapis.com/token`.
+
+Router selects v1 when all of project ID, client email, and private key are present; otherwise falls back to legacy `FCM_SERVER_KEY` if set.
+
+### FCM legacy (server key)
+
+- `FCM_SERVER_KEY` — Legacy server key from Firebase Console. Deprecated by Google; migrate to HTTP v1 when possible.
+
+### Migrating from legacy FCM key to HTTP v1
+
+1. In Firebase Console: Project settings → Service accounts → Generate new private key. Download the JSON.
+2. Set `FCM_PROJECT_ID` to the project ID, `FCM_CLIENT_EMAIL` to `client_email` from the JSON, and `FCM_PRIVATE_KEY` to the `private_key` value (paste as single line with `\n` for newlines, or multi-line in env files that support it).
+3. Deploy; the app prefers v1 when these are set. You can remove `FCM_SERVER_KEY` after verifying sends succeed.
 
 ## Scheduling
 

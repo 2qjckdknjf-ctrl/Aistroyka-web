@@ -57,6 +57,7 @@ export function DashboardDevicesClient() {
     const sp = new URLSearchParams();
     sp.set("limit", String(limit));
     sp.set("offset", String(offset));
+    // FilterBar uses param "status"; API expects query param "platform" (ios/android).
     if (params.status) sp.set("platform", params.status);
     if (params.from) sp.set("from", params.from);
     if (params.to) sp.set("to", params.to);

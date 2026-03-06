@@ -20,7 +20,8 @@
     "lint": "cd apps/web && bun run lint",
     "test": "cd apps/web && bun run test",
     "smoke:prod": "bash apps/web/scripts/smoke-prod.sh",
-    "smoke:staging": "bash apps/web/scripts/smoke-staging.sh"
+    "smoke:staging": "bash apps/web/scripts/smoke-staging.sh",
+    "smoke:pilot": "bash apps/web/scripts/smoke/pilot.sh"
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.16.4",
