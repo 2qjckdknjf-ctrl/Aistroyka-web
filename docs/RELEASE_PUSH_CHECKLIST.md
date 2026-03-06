@@ -81,3 +81,38 @@ cd apps/web
 npm test -- --run
 npm run cf:build
 ```
+
+---
+
+## Release hygiene pass 2 (append)
+
+### 1) Диагностика
+
+```
+## git status -sb
+## release/phase5-2-1...origin/release/phase5-2-1
+ M docs/REPORT-DEPLOY-ENTERPRISE-FINAL-20260305.md
+ M docs/REPORT-PHASE4-1-MOBILE-HARDENING.md
+ M docs/runbooks/MOBILE_SYNC.md
+ M docs/runbooks/MOBILE_UPLOADS.md
+ M docs/runbooks/PUSH_DELIVERY.md
+?? audit_memory_v1_artifacts/
+?? audit_p2_1_artifacts/
+?? audit_web_artifacts/
+?? audit_web_integration/
+?? audit_web_p0_artifacts/
+?? bun.lock.bak
+?? engine/
+?? ios/
+```
+
+```
+## git clean -ndX (would remove ignored)
+Would remove .DS_Store, .cursor/, .next/, node_modules/, apps/web/.next/, .open-next/,
+apps/web/lib/domain/reports/report-list.repository.test.ts, archive_*.zip, exports/, etc.
+```
+
+```
+## git clean -nd (would remove untracked)
+audit_*/, bun.lock.bak, engine/Aistroyk/dist/, engine/Aistroyk/supabase/, ios/
+```

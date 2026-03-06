@@ -28,10 +28,14 @@ DerivedData/
 archive_*/
 exports/
 
-# large audit artifacts
+# large audit artifacts (root-only; do not ignore app/api/.../reports/ or lib/domain/reports/)
 audit_artifacts/
 audit_artifacts_*/
-reports/
+/reports/
+audit_*/
+engine/
+ios/
+bun.lock.bak
 
 # next
 .next
