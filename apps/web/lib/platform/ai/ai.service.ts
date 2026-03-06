@@ -5,6 +5,7 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { logStructured } from "@/lib/observability";
 import { runPolicy } from "@/lib/platform/ai-governance/policy.service";
 import { invokeVisionWithRouter } from "@/lib/platform/ai/providers/provider.router";
 import { recordUsage } from "@/lib/platform/ai-usage/ai-usage.service";
@@ -58,43 +59,28 @@ function rawToAnalysisResult(raw: Record<string, unknown>): AnalysisResult {
   };
 }
 
-/**
- * Run vision analysis through Policy Engine → Provider Router → normalize → usage.
- * Returns the same AnalysisResult shape as the public API. Throws on policy block or provider failure.
- * When tenantId is null (unauthenticated), policy and usage recording are skipped.
- */
-function logAiInvoke(payload: {
-  event: string;
-  tenantId: string | null;
-  userId: string | null;
-  traceId: string | null;
-  providerSelected: string;
-  modelSelected: string;
-  latencyMs: number;
-  costEstUsd: number;
-  tokensIn: number;
-  tokensOut: number;
-  policyDecisionId?: string | null;
-  outcome: "success" | "failure";
+/** Structured AI request telemetry (no secrets). */
+function logAiRequest(payload: {
+  provider: string;
+  model: string;
+  tier: string;
+  latency_ms: number;
+  tokens_in: number;
+  tokens_out: number;
+  estimated_cost: number;
+  policy_decision_id?: string | null;
+  result_status: "success" | "failure";
+  tenant_id?: string | null;
+  user_id?: string | null;
+  request_id?: string | null;
+  error_code?: string;
+  provider_error_type?: "retryable" | "auth" | "invalid_request";
 }) {
   if (process.env.NODE_ENV === "test") return;
-  console.log(
-    JSON.stringify({
-      event: payload.event,
-      tenantId: payload.tenantId,
-      userId: payload.userId,
-      traceId: payload.traceId,
-      providerSelected: payload.providerSelected,
-      modelSelected: payload.modelSelected,
-      latencyMs: payload.latencyMs,
-      costEstUsd: payload.costEstUsd,
-      tokensIn: payload.tokensIn,
-      tokensOut: payload.tokensOut,
-      policyDecisionId: payload.policyDecisionId ?? null,
-      outcome: payload.outcome,
-      ts: new Date().toISOString(),
-    })
-  );
+  logStructured({
+    event: "ai_request",
+    ...payload,
+  });
 }
 
 export async function analyzeImage(
@@ -154,19 +140,19 @@ export async function analyzeImage(
   const to = typeof usage?.completion_tokens === "number" ? usage.completion_tokens : 300;
   const costEstUsd = estimateCostUsd(visionResult.modelUsed, ti, to);
 
-  logAiInvoke({
-    event: "ai.invoke",
-    tenantId: ctx.tenantId,
-    userId: ctx.userId ?? null,
-    traceId: ctx.traceId ?? null,
-    providerSelected: visionResult.providerUsed,
-    modelSelected: visionResult.modelUsed,
-    latencyMs: durationMs,
-    costEstUsd,
-    tokensIn: ti,
-    tokensOut: to,
-    policyDecisionId,
-    outcome: "success",
+  logAiRequest({
+    provider: visionResult.providerUsed,
+    model: visionResult.modelUsed,
+    tier,
+    latency_ms: durationMs,
+    tokens_in: ti,
+    tokens_out: to,
+    estimated_cost: costEstUsd,
+    policy_decision_id: policyDecisionId,
+    result_status: "success",
+    tenant_id: ctx.tenantId,
+    user_id: ctx.userId ?? null,
+    request_id: ctx.traceId ?? null,
   });
 
   if (ctx.tenantId) {

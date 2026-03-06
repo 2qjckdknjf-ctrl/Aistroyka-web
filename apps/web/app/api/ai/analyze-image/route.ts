@@ -17,7 +17,7 @@ import { checkRateLimit } from "@/lib/platform/rate-limit/rate-limit.service";
 import { checkQuota, checkBudgetAlert, estimateMaxVisionCostUsd } from "@/lib/platform/ai-usage/ai-usage.service";
 import { analyzeImage, AIPolicyBlockedError, AIVisionFailedError } from "@/lib/platform/ai/ai.service";
 import { getServerConfig, getConfiguredVisionProviders, isAnyVisionProviderConfigured } from "@/lib/config/server";
-import { withRequestIdAndTiming } from "@/lib/observability";
+import { logStructured, withRequestIdAndTiming } from "@/lib/observability";
 
 const MAX_IMAGE_URL_LENGTH = 2048;
 const MAX_BODY_BYTES = 100_000;
@@ -60,15 +60,14 @@ function logAiEvent(payload: {
   issues_count?: number;
   error?: string;
   http_status?: number;
+  error_code?: string;
+  provider_error_type?: "retryable" | "auth" | "invalid_request";
 }) {
   if (getServerConfig().NODE_ENV === "test") return;
-  console.log(
-    JSON.stringify({
-      event: "ai_analyze_image",
-      ...payload,
-      ts: new Date().toISOString(),
-    })
-  );
+  logStructured({
+    event: "ai_analyze_image",
+    ...payload,
+  });
 }
 
 export async function POST(request: Request) {
@@ -169,6 +168,8 @@ export async function POST(request: Request) {
         tenant_id: tenantCtx.tenantId ?? undefined,
         error: err.message,
         http_status: 403,
+        error_code: "ai_policy_denied",
+        provider_error_type: "auth",
       });
       return wrap(NextResponse.json({ error: err.message, code: "ai_policy_denied" }, { status: 403 }), tenantCtx.tenantId, tenantCtx.userId);
     }
@@ -181,6 +182,8 @@ export async function POST(request: Request) {
         tenant_id: tenantCtx.tenantId ?? undefined,
         error: err.message,
         http_status: isTimeout ? 504 : 502,
+        error_code: isTimeout ? "timeout" : "ai_failure",
+        provider_error_type: isTimeout ? "retryable" : "invalid_request",
       });
       return wrap(NextResponse.json({ error: err.message }, { status: isTimeout ? 504 : 502 }), tenantCtx.tenantId, tenantCtx.userId);
     }
@@ -192,6 +195,8 @@ export async function POST(request: Request) {
       tenant_id: tenantCtx.tenantId ?? undefined,
       error: message,
       http_status: 500,
+      error_code: "unknown",
+      provider_error_type: "invalid_request",
     });
     return wrap(NextResponse.json({ error: message }, { status: 500 }), tenantCtx.tenantId, tenantCtx.userId);
   }
