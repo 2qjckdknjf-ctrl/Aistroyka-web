@@ -23,6 +23,8 @@
     "devices": "Dispositivos y sincronización",
     "ai": "IA",
     "admin": "Admin",
+    "adminPush": "Cola push",
+    "adminJobs": "Trabajos",
     "logout": "Salir"
   },
   "auth": {
@@ -43,7 +45,8 @@
     "forgotPassword": "¿Olvidaste la contraseña?",
     "invalidCredentials": "Correo o contraseña incorrectos.",
     "emailNotConfirmed": "Confirma tu correo antes de entrar.",
-    "defaultError": "Algo salió mal. Inténtalo de nuevo."
+    "defaultError": "Algo salió mal. Inténtalo de nuevo.",
+    "loginStep": "Paso de inicio de sesión"
   },
   "dashboard": {
     "title": "Panel",
@@ -51,7 +54,22 @@
     "recentProjects": "Proyectos recientes",
     "allProjects": "Todos los proyectos",
     "noProjectsYet": "Aún no hay proyectos.",
-    "createOne": "Crear uno"
+    "createOne": "Crear uno",
+    "opsTitle": "Centro de operaciones",
+    "kpiActiveProjects": "Proyectos activos",
+    "kpiActiveWorkersToday": "Trabajadores hoy",
+    "kpiReportsToday": "Informes hoy",
+    "kpiStuckUploads": "Subidas atascadas",
+    "kpiOfflineDevices": "Dispositivos sin conexión",
+    "kpiFailedJobs": "Tareas fallidas (24h)",
+    "queueReportsReview": "Informes pendientes de revisión",
+    "queueStuckUploads": "Subidas > 4h",
+    "queueWorkersOpenShift": "Turnos abiertos",
+    "queueDevicesOffline": "Dispositivos offline > 24h",
+    "queueAiFailures": "AI fallidos (24h)",
+    "queuePushFailures": "Fallos push",
+    "viewAll": "Ver todo",
+    "opsError": "Error al cargar datos de operaciones."
   },
   "projects": {
     "title": "Proyectos",

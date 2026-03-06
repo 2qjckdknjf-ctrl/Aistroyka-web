@@ -23,6 +23,8 @@
     "devices": "Устройства и синхронизация",
     "ai": "ИИ",
     "admin": "Админ",
+    "adminPush": "Очередь push",
+    "adminJobs": "Задачи",
     "logout": "Выйти"
   },
   "auth": {
@@ -43,7 +45,8 @@
     "forgotPassword": "Забыли пароль?",
     "invalidCredentials": "Неверный email или пароль.",
     "emailNotConfirmed": "Подтвердите email перед входом.",
-    "defaultError": "Что-то пошло не так. Попробуйте снова."
+    "defaultError": "Что-то пошло не так. Попробуйте снова.",
+    "loginStep": "Шаг входа"
   },
   "dashboard": {
     "title": "Дашборд",
@@ -51,7 +54,22 @@
     "recentProjects": "Последние проекты",
     "allProjects": "Все проекты",
     "noProjectsYet": "Проектов пока нет.",
-    "createOne": "Создать проект"
+    "createOne": "Создать проект",
+    "opsTitle": "Операционный центр",
+    "kpiActiveProjects": "Активные проекты",
+    "kpiActiveWorkersToday": "Сотрудники сегодня",
+    "kpiReportsToday": "Отчёты сегодня",
+    "kpiStuckUploads": "Зависшие загрузки",
+    "kpiOfflineDevices": "Офлайн устройства",
+    "kpiFailedJobs": "Неудачные задачи (24ч)",
+    "queueReportsReview": "Отчёты на проверку",
+    "queueStuckUploads": "Загрузки > 4ч",
+    "queueWorkersOpenShift": "Смены без закрытия",
+    "queueDevicesOffline": "Устройства офлайн > 24ч",
+    "queueAiFailures": "AI ошибки (24ч)",
+    "queuePushFailures": "Ошибки push",
+    "viewAll": "Все",
+    "opsError": "Не удалось загрузить данные операций."
   },
   "projects": {
     "title": "Проекты",

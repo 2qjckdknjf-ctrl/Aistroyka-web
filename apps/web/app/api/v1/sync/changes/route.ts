@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
-import { getChangesAfter, getMaxCursor, getMinCursor } from "@/lib/sync/change-log.repository";
+import { getChangesAfter, getMaxCursor, getMinRetainedCursor } from "@/lib/sync/change-log.repository";
 import { getCursor } from "@/lib/sync/sync-cursors.repository";
 import { syncConflictResponse } from "@/lib/sync/sync-conflict";
 
@@ -32,18 +32,18 @@ export async function GET(request: Request) {
   const limit = Math.min(500, Math.max(1, parseInt(url.searchParams.get("limit") ?? "100", 10) || 100));
   const supabase = await createClient();
   const tenantId = ctx.tenantId as string;
-  const userId = ctx.userId as string;
+  const minRetained = getMinRetainedCursor();
+  if (minRetained > 0 && cursor < minRetained) {
+    const serverCursor = await getMaxCursor(supabase, tenantId);
+    return syncConflictResponse(serverCursor, true, "retention_window_exceeded");
+  }
   const serverCursor = await getMaxCursor(supabase, tenantId);
   if (cursor > serverCursor) {
     return syncConflictResponse(serverCursor);
   }
-  const minCursor = await getMinCursor(supabase, tenantId);
-  if (minCursor > 0 && cursor < minCursor) {
-    return syncConflictResponse(serverCursor, true, "retention_window_exceeded");
-  }
-  const storedCursor = await getCursor(supabase, tenantId, userId, deviceId);
-  if (cursor !== 0 && storedCursor !== 0 && cursor !== storedCursor) {
-    return syncConflictResponse(serverCursor, true, "device_mismatch");
+  const storedCursor = await getCursor(supabase, tenantId, ctx.userId as string, deviceId);
+  if (storedCursor > 0 && cursor < storedCursor) {
+    return syncConflictResponse(serverCursor, false, "device_mismatch");
   }
   const changes = await getChangesAfter(supabase, ctx.tenantId, cursor, limit);
   const nextCursor = changes.length > 0 ? changes[changes.length - 1].id : cursor;

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { getChanges, getChangesAfter, getMinCursor } from "./change-log.repository";
+import { getChanges, getChangesAfter, getMinRetainedCursor } from "./change-log.repository";
 
 const mockRows = (ids: number[]) =>
   ids.map((id) => ({
@@ -79,39 +79,20 @@ describe("change-log.repository", () => {
     });
   });
 
-  describe("getMinCursor", () => {
-    it("returns min id for tenant", async () => {
-      const supabase = {
-        from: vi.fn(() => ({
-          select: vi.fn(() => ({
-            eq: vi.fn(() => ({
-              order: vi.fn(() => ({
-                limit: vi.fn(() => ({
-                  maybeSingle: vi.fn(() => Promise.resolve({ data: { id: 5 }, error: null })),
-                })),
-              })),
-            })),
-          })),
-        })),
-      } as any;
-      const result = await getMinCursor(supabase, "t1");
-      expect(result).toBe(5);
+  describe("getMinRetainedCursor", () => {
+    it("returns 0 when env unset", () => {
+      vi.stubEnv("SYNC_MIN_RETAINED_CURSOR", "");
+      expect(getMinRetainedCursor()).toBe(0);
     });
-
-    it("returns 0 when no rows or error", async () => {
-      const supabase = {
-        from: vi.fn(() => ({
-          select: vi.fn(() => ({
-            eq: vi.fn(() => ({
-              order: vi.fn(() => ({
-                limit: vi.fn(() => ({ maybeSingle: vi.fn(() => Promise.resolve({ data: null, error: null })) })),
-              })),
-            })),
-          })),
-        })),
-      } as any;
-      const result = await getMinCursor(supabase, "t1");
-      expect(result).toBe(0);
+    it("returns parsed number when env set", () => {
+      vi.stubEnv("SYNC_MIN_RETAINED_CURSOR", "50");
+      expect(getMinRetainedCursor()).toBe(50);
+    });
+    it("returns 0 for invalid or negative", () => {
+      vi.stubEnv("SYNC_MIN_RETAINED_CURSOR", "abc");
+      expect(getMinRetainedCursor()).toBe(0);
+      vi.stubEnv("SYNC_MIN_RETAINED_CURSOR", "-1");
+      expect(getMinRetainedCursor()).toBe(0);
     });
   });
 });

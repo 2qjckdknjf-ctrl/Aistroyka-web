@@ -9,19 +9,20 @@ export interface SyncConflictBody {
   must_bootstrap?: boolean;
 }
 
-const DEFAULT_HINT = "Call bootstrap, reset cursor to serverCursor, then retry changes/ack.";
-
 export function syncConflictResponse(
   serverCursor: number,
   mustBootstrap = true,
   hint?: string
 ): NextResponse {
+  const defaultHint = mustBootstrap
+    ? "Call bootstrap, reset cursor to serverCursor, then retry changes/ack."
+    : undefined;
   const body: SyncConflictBody = {
     error: "conflict",
     code: "sync_conflict",
     serverCursor,
     must_bootstrap: mustBootstrap,
-    hint: hint ?? (mustBootstrap ? DEFAULT_HINT : undefined),
+    hint: hint ?? defaultHint,
   };
   return NextResponse.json(body, { status: 409 });
 }

@@ -4,47 +4,29 @@ import { canCreateUploadSession } from "./upload-session.policy";
 import * as repo from "./upload-session.repository";
 import type { UploadSession, UploadSessionPurpose } from "./upload-session.types";
 import { emitChange } from "@/lib/sync/change-log.repository";
+import { getAdminClient } from "@/lib/supabase/admin";
 
 /** Bucket name for media uploads (must exist in Supabase Storage). */
 export const UPLOAD_BUCKET = "media";
 
-/** Env: when true, finalize verifies object exists in storage before updating session. Default false. */
-function getMediaFinalizeVerifyObject(): boolean {
-  return process.env.MEDIA_FINALIZE_VERIFY_OBJECT === "true";
-}
-/** Env: when true and verify is on, storage provider errors block finalize (503). Default false. */
-function getMediaFinalizeVerifyStrict(): boolean {
-  return process.env.MEDIA_FINALIZE_VERIFY_STRICT === "true";
-}
 
-export type FinalizeResult =
-  | { ok: true; error: "" }
-  | { ok: false; error: string; code?: "media_object_missing" | "storage_unavailable" };
-
-/** Best-effort check: does the object exist in storage? Returns { exists } or { exists: false, verifyError } on provider/network error. */
-export async function verifyStorageObject(
+/**
+ * Best-effort check that the object exists in storage (list parent folder for name).
+ * Returns false on error or if object not found.
+ */
+async function storageObjectExists(
   supabase: SupabaseClient,
   bucket: string,
   objectPath: string
-): Promise<{ exists: boolean; verifyError?: string }> {
-  const pathInBucket = objectPath.startsWith(`${bucket}/`)
-    ? objectPath.slice(bucket.length + 1)
-    : objectPath;
-  const parts = pathInBucket.split("/").filter(Boolean);
-  if (parts.length === 0) return { exists: false };
-  const folder = parts.length > 1 ? parts.slice(0, -1).join("/") : "";
-  const name = parts[parts.length - 1]!;
-  try {
-    const { data, error } = await supabase.storage.from(bucket).list(folder);
-    if (error) return { exists: false, verifyError: error.message };
-    const found = (data ?? []).some((f: { name: string }) => f.name === name);
-    return { exists: found };
-  } catch (e) {
-    return {
-      exists: false,
-      verifyError: e instanceof Error ? e.message : String(e),
-    };
-  }
+): Promise<boolean> {
+  const pathInBucket = objectPath.startsWith(`${bucket}/`) ? objectPath.slice(bucket.length + 1) : objectPath;
+  const hasSlash = pathInBucket.includes("/");
+  const folderPath = hasSlash ? pathInBucket.split("/").slice(0, -1).join("/") : "";
+  const segmentName = hasSlash ? pathInBucket.split("/").pop()! : pathInBucket;
+  const { data, error } = await supabase.storage.from(bucket).list(folderPath, { limit: 1000 });
+  if (error) return false;
+  const items = (data ?? []) as { name: string }[];
+  return items.some((item) => item.name === segmentName);
 }
 
 export async function createUploadSession(
@@ -83,7 +65,7 @@ export async function finalizeUploadSession(
   ctx: TenantContext,
   sessionId: string,
   payload: { object_path: string; mime_type?: string; size_bytes?: number }
-): Promise<FinalizeResult> {
+): Promise<{ ok: boolean; error: string }> {
   if (!canCreateUploadSession(ctx)) return { ok: false, error: "Insufficient rights" };
   const session = await repo.getById(supabase, sessionId, ctx.tenantId);
   if (!session) return { ok: false, error: "Session not found" };
@@ -92,25 +74,18 @@ export async function finalizeUploadSession(
     return { ok: false, error: "object_path must be within session path" };
   }
 
-  if (getMediaFinalizeVerifyObject()) {
-    const verify = await verifyStorageObject(
-      supabase,
-      UPLOAD_BUCKET,
-      payload.object_path
-    );
-    if (!verify.exists && !verify.verifyError) {
-      return {
-        ok: false,
-        error: "Object not found in storage",
-        code: "media_object_missing",
-      };
-    }
-    if (verify.verifyError && getMediaFinalizeVerifyStrict()) {
-      return {
-        ok: false,
-        error: "Storage verification failed",
-        code: "storage_unavailable",
-      };
+  const verifyObject = process.env.MEDIA_FINALIZE_VERIFY_OBJECT === "true";
+  const verifyStrict = process.env.MEDIA_FINALIZE_VERIFY_STRICT === "true";
+  if (verifyObject) {
+    try {
+      const admin = getAdminClient();
+      if (admin) {
+        const exists = await storageObjectExists(admin, UPLOAD_BUCKET, payload.object_path);
+        if (!exists) return { ok: false, error: "media_object_missing" };
+      }
+    } catch {
+      if (verifyStrict) return { ok: false, error: "storage_verification_failed" };
+      // best-effort: proceed with finalize when strict is off
     }
   }
 
@@ -125,7 +100,5 @@ export async function finalizeUploadSession(
       payload: { status: "finalized" },
     });
   }
-  return ok
-    ? { ok: true as const, error: "" }
-    : { ok: false as const, error: "Failed to finalize or session expired" };
+  return { ok, error: ok ? "" : "Failed to finalize or session expired" };
 }

@@ -25,9 +25,10 @@ describe("syncConflictResponse", () => {
   });
 
   it("uses custom hint when provided", async () => {
-    const res = syncConflictResponse(100, true, "retention_window_exceeded");
+    const res = syncConflictResponse(80, true, "retention_window_exceeded");
     expect(res.status).toBe(409);
     const body = await res.json();
     expect(body.hint).toBe("retention_window_exceeded");
+    expect(body.must_bootstrap).toBe(true);
   });
 });

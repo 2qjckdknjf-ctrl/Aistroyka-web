@@ -1,18 +1,18 @@
 /**
  * FCM push provider. Prefers HTTP v1 (service account) when configured; falls back to legacy server key.
- * Env: FCM_PROJECT_ID, FCM_CLIENT_EMAIL, FCM_PRIVATE_KEY (PEM) for v1,
- * or FCM_SERVER_KEY (legacy). When not configured, returns retryable so outbox drain can retry later.
+ * Env: FCM_PROJECT_ID, FCM_CLIENT_EMAIL, FCM_PRIVATE_KEY (PEM) for v1;
+ * or FCM_SERVER_KEY (legacy). Optional: FCM_TOKEN_URI.
  */
 
 import type { PushProvider, PushSendParams, PushSendResult } from "./push.provider.types";
 import { getFcmV1Provider, isFcmV1Configured } from "./providers/provider.fcm_v1";
 
-function isFcmLegacyConfigured(): boolean {
+function isLegacyConfigured(): boolean {
   return Boolean(process.env.FCM_SERVER_KEY?.trim());
 }
 
-function isFcmConfigured(): boolean {
-  return isFcmV1Configured() || isFcmLegacyConfigured();
+export function isFcmConfigured(): boolean {
+  return isFcmV1Configured() || isLegacyConfigured();
 }
 
 /** Legacy FCM: send via FCM legacy HTTP API with server key. */
@@ -46,20 +46,16 @@ async function sendFcmLegacy(params: PushSendParams): Promise<PushSendResult> {
   }
 }
 
-const legacyFcmProvider: PushProvider = {
+const fcmProvider: PushProvider = {
   async send(params: PushSendParams): Promise<PushSendResult> {
     if (params.platform !== "android") return { ok: false, code: "retryable", message: "FCM is Android only" };
-    if (!isFcmLegacyConfigured()) return { ok: false, code: "retryable", message: "FCM not configured" };
+    if (!isFcmConfigured()) return { ok: false, code: "retryable", message: "FCM not configured" };
+    const v1 = getFcmV1Provider();
+    if (v1) return v1.send(params);
     return sendFcmLegacy(params);
   },
 };
 
-/** Prefer HTTP v1 when service account env is present; else legacy server key. */
 export function getFcmProvider(): PushProvider | null {
-  if (!isFcmConfigured()) return null;
-  const v1 = getFcmV1Provider();
-  if (v1) return v1;
-  return legacyFcmProvider;
+  return isFcmConfigured() ? fcmProvider : null;
 }
-
-export { isFcmConfigured };

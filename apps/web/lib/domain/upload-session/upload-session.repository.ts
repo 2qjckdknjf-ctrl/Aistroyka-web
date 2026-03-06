@@ -38,6 +38,48 @@ export async function listForBootstrap(
   return (data ?? []) as { id: string; status: string; created_at: string; purpose: string }[];
 }
 
+const DEFAULT_STUCK_HOURS = 4;
+
+export interface UploadSessionListRow {
+  id: string;
+  tenant_id: string;
+  user_id: string;
+  purpose: string;
+  status: string;
+  created_at: string;
+  expires_at: string;
+}
+
+/** List upload sessions for manager (tenant-scoped, paginated). Optional filter by status, user_id, from, to; stuck = status in (created,uploaded) and created_at older than stuckHours. */
+export async function listForManager(
+  supabase: SupabaseClient,
+  tenantId: string,
+  opts: { limit?: number; offset?: number; status?: string; stuck?: boolean; stuckHours?: number; userId?: string; from?: string; to?: string } = {}
+): Promise<{ rows: UploadSessionListRow[]; total: number }> {
+  const limit = Math.min(opts.limit ?? 50, 100);
+  const offset = opts.offset ?? 0;
+  const stuckHours = Math.max(1, Math.min(168, opts.stuckHours ?? DEFAULT_STUCK_HOURS));
+
+  let query = supabase
+    .from("upload_sessions")
+    .select("id, tenant_id, user_id, purpose, status, created_at, expires_at", { count: "exact" })
+    .eq("tenant_id", tenantId)
+    .order("created_at", { ascending: false });
+
+  if (opts.status) query = query.eq("status", opts.status);
+  if (opts.userId) query = query.eq("user_id", opts.userId);
+  if (opts.from) query = query.gte("created_at", opts.from);
+  if (opts.to) query = query.lte("created_at", opts.to);
+  if (opts.stuck) {
+    const stuckSince = new Date(Date.now() - stuckHours * 60 * 60 * 1000).toISOString();
+    query = query.in("status", ["created", "uploaded"]).lt("created_at", stuckSince);
+  }
+
+  const { data: rows, error, count } = await query.range(offset, offset + limit - 1);
+  if (error) return { rows: [], total: 0 };
+  return { rows: (rows ?? []) as UploadSessionListRow[], total: count ?? 0 };
+}
+
 export async function getById(
   supabase: SupabaseClient,
   sessionId: string,

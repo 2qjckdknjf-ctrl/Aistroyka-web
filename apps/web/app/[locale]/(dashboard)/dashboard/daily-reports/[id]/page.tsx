@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { Link } from "@/i18n/navigation";
-import { Card, SectionHeader, Skeleton, EmptyState, Badge } from "@/components/ui";
+import { Card, SectionHeader, Skeleton, EmptyState, Badge, Button } from "@/components/ui";
 
 interface ReportDetail {
   id: string;
@@ -15,27 +15,51 @@ interface ReportDetail {
   media: { media_id: string | null; upload_session_id: string | null }[];
 }
 
+interface AnalysisStatus {
+  status: string;
+  reportId: string;
+  jobCount: number;
+  summary: { mediaTotal: number; analyzed: number; failed: number } | null;
+}
+
+function CopyIdButton({ id, label = "Copy ID" }: { id: string; label?: string }) {
+  const [copied, setCopied] = useState(false);
+  const copy = () => {
+    navigator.clipboard.writeText(id).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+  return (
+    <Button variant="secondary" onClick={copy} className="text-sm">
+      {copied ? "Copied" : label}
+    </Button>
+  );
+}
+
 export default function ReportDetailPage() {
   const params = useParams();
   const id = params?.id as string | undefined;
   const [data, setData] = useState<ReportDetail | null>(null);
+  const [analysis, setAnalysis] = useState<AnalysisStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
-    fetch(`/api/v1/reports/${id}`, { credentials: "include" })
-      .then((res) => {
-        if (!res.ok) throw new Error(res.statusText);
-        return res.json();
-      })
-      .then((json: { data?: ReportDetail }) => {
-        setData(json.data ?? null);
+    Promise.all([
+      fetch(`/api/v1/reports/${id}`, { credentials: "include" }).then((r) => (r.ok ? r.json() : Promise.reject(new Error("Not found")))),
+      fetch(`/api/v1/reports/${id}/analysis-status`, { credentials: "include" }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+    ])
+      .then(([reportRes, analysisRes]) => {
+        setData((reportRes as { data: ReportDetail }).data ?? null);
+        setAnalysis(analysisRes as AnalysisStatus | null);
         setError(null);
       })
       .catch((e) => {
         setError(e instanceof Error ? e.message : "Failed to load");
         setData(null);
+        setAnalysis(null);
       })
       .finally(() => setLoading(false));
   }, [id]);
@@ -43,7 +67,7 @@ export default function ReportDetailPage() {
   if (!id) {
     return (
       <Card>
-        <p className="text-aistroyka-text-secondary">Missing report id.</p>
+        <p className="text-aistroyka-text-secondary p-4">Missing report id.</p>
       </Card>
     );
   }
@@ -71,21 +95,28 @@ export default function ReportDetailPage() {
 
   return (
     <>
-      <div className="mb-4">
-        <Link
-          href="/dashboard/daily-reports"
-          className="text-aistroyka-subheadline text-aistroyka-accent hover:underline"
-        >
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <Link href="/dashboard/daily-reports" className="text-aistroyka-subheadline text-aistroyka-accent hover:underline">
           ← Reports
         </Link>
+        <CopyIdButton id={data.id} />
+        <span className="text-aistroyka-caption text-aistroyka-text-tertiary" title="Deep link">
+          Report ID: <span className="font-mono">{data.id.slice(0, 8)}…</span>
+        </span>
       </div>
-      <SectionHeader title={`Report ${data.id.slice(0, 8)}…`} subtitle="Detail and media." />
+      <SectionHeader title={`Report ${data.id.slice(0, 8)}…`} subtitle="Detail, media gallery and AI analysis." />
 
       <Card className="mb-4">
         <dl className="grid gap-2 sm:grid-cols-2">
           <div>
             <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Status</dt>
             <dd><Badge variant={data.status === "submitted" ? "success" : "neutral"}>{data.status}</Badge></dd>
+          </div>
+          <div>
+            <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Worker</dt>
+            <dd>
+              <Link href={`/dashboard/workers/${data.user_id}`} className="font-mono text-aistroyka-accent hover:underline">{data.user_id.slice(0, 8)}…</Link>
+            </dd>
           </div>
           <div>
             <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Created</dt>
@@ -103,21 +134,59 @@ export default function ReportDetailPage() {
       </Card>
 
       {data.media?.length ? (
-        <Card>
-          <h3 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary mb-2">Media</h3>
+        <Card className="mb-4">
+          <h3 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary mb-2">Media gallery</h3>
           <ul className="list-disc list-inside text-aistroyka-subheadline text-aistroyka-text-secondary">
             {data.media.map((m, i) => (
               <li key={i}>
-                {m.media_id ? `Media ${m.media_id.slice(0, 8)}…` : m.upload_session_id ? `Session ${m.upload_session_id.slice(0, 8)}…` : "—"}
+                {m.media_id ? (
+                  <Link href={`/projects`} className="text-aistroyka-accent hover:underline font-mono">Media {m.media_id.slice(0, 8)}…</Link>
+                ) : m.upload_session_id ? (
+                  <span className="font-mono">Session {m.upload_session_id.slice(0, 8)}…</span>
+                ) : (
+                  "—"
+                )}
               </li>
             ))}
           </ul>
         </Card>
       ) : (
-        <Card>
-          <p className="text-aistroyka-subheadline text-aistroyka-text-tertiary">No media attached. AI analysis status available via report analysis-status API.</p>
+        <Card className="mb-4">
+          <p className="text-aistroyka-subheadline text-aistroyka-text-tertiary">No media attached.</p>
         </Card>
       )}
+
+      <Card>
+        <h3 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary mb-2">AI analysis</h3>
+        {analysis ? (
+          <dl className="grid gap-2 sm:grid-cols-2">
+            <div>
+              <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Status</dt>
+              <dd>
+                <Badge variant={analysis.status === "success" ? "success" : analysis.status === "failed" ? "danger" : "warning"}>{analysis.status}</Badge>
+              </dd>
+            </div>
+            <div>
+              <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Jobs</dt>
+              <dd className="tabular-nums">{analysis.jobCount}</dd>
+            </div>
+            {analysis.summary && (
+              <>
+                <div>
+                  <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Analyzed</dt>
+                  <dd className="tabular-nums">{analysis.summary.analyzed} / {analysis.summary.mediaTotal}</dd>
+                </div>
+                <div>
+                  <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Failed</dt>
+                  <dd className="tabular-nums">{analysis.summary.failed}</dd>
+                </div>
+              </>
+            )}
+          </dl>
+        ) : (
+          <p className="text-aistroyka-subheadline text-aistroyka-text-tertiary">No AI jobs for this report yet.</p>
+        )}
+      </Card>
     </>
   );
 }

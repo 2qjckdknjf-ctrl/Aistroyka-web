@@ -23,6 +23,8 @@
     "devices": "Devices & Sync",
     "ai": "AI",
     "admin": "Admin",
+    "adminPush": "Push outbox",
+    "adminJobs": "Jobs",
     "logout": "Log out"
   },
   "auth": {
@@ -43,7 +45,8 @@
     "forgotPassword": "Forgot password?",
     "invalidCredentials": "Invalid email or password.",
     "emailNotConfirmed": "Please confirm your email before signing in.",
-    "defaultError": "Something went wrong. Please try again."
+    "defaultError": "Something went wrong. Please try again.",
+    "loginStep": "Login step"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -51,7 +54,22 @@
     "recentProjects": "Recent projects",
     "allProjects": "All projects",
     "noProjectsYet": "No projects yet.",
-    "createOne": "Create one"
+    "createOne": "Create one",
+    "opsTitle": "Operations cockpit",
+    "kpiActiveProjects": "Active projects",
+    "kpiActiveWorkersToday": "Workers today",
+    "kpiReportsToday": "Reports today",
+    "kpiStuckUploads": "Stuck uploads",
+    "kpiOfflineDevices": "Offline devices",
+    "kpiFailedJobs": "Failed jobs (24h)",
+    "queueReportsReview": "Reports needing review",
+    "queueStuckUploads": "Uploads stuck > 4h",
+    "queueWorkersOpenShift": "Workers with open shift",
+    "queueDevicesOffline": "Devices offline > 24h",
+    "queueAiFailures": "AI failed (24h)",
+    "queuePushFailures": "Push failures",
+    "viewAll": "View all",
+    "opsError": "Failed to load operations data."
   },
   "projects": {
     "title": "Projects",

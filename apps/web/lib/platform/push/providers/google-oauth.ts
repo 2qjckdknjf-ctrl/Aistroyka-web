@@ -1,33 +1,30 @@
 /**
- * Google OAuth2 JWT flow for service account (e.g. FCM HTTP v1).
- * Builds JWT assertion, exchanges for access token, caches in-memory with expiry.
+ * Google OAuth2 JWT flow for service accounts (e.g. FCM HTTP v1).
+ * Builds JWT assertion, exchanges for access token, caches with expiry.
+ * No network in tests when fetch is mocked.
  */
 
+import { createPrivateKey, createSign } from "crypto";
+
 const DEFAULT_TOKEN_URI = "https://oauth2.googleapis.com/token";
-const JWT_HEADER = { alg: "RS256", typ: "JWT" };
+const TOKEN_EXPIRY_BUFFER_SEC = 300;
 
-function base64UrlEncode(input: string | Buffer): string {
-  const raw =
-    typeof input === "string" ? Buffer.from(input, "utf8") : input;
-  return raw.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-}
+let cachedToken: string | null = null;
+let cachedExpiry = 0;
 
-/** Normalize private key: env may contain literal \n. */
-export function normalizePrivateKey(value: string): string {
-  return value.replace(/\\n/g, "\n").trim();
+/** Normalize PEM from env: literal \n -> newline. */
+export function normalizePrivateKey(pem: string): string {
+  return pem.replace(/\\n/g, "\n").trim();
 }
 
 /** Build JWT assertion for Google OAuth2 (RS256). */
-export function buildGoogleJwtAssertion(params: {
-  clientEmail: string;
-  privateKeyPem: string;
-  tokenUri?: string;
-}): string | null {
-  const { clientEmail, privateKeyPem } = params;
-  const tokenUri = params.tokenUri?.trim() || DEFAULT_TOKEN_URI;
-  if (!clientEmail || !privateKeyPem) return null;
-
+export function buildGoogleJwt(
+  clientEmail: string,
+  tokenUri: string = DEFAULT_TOKEN_URI,
+  privateKeyPem: string
+): string | null {
   try {
+    const header = { alg: "RS256", typ: "JWT" };
     const now = Math.floor(Date.now() / 1000);
     const payload = {
       iss: clientEmail,
@@ -36,71 +33,68 @@ export function buildGoogleJwtAssertion(params: {
       iat: now,
       exp: now + 3600,
     };
-    const headerB64 = base64UrlEncode(JSON.stringify(JWT_HEADER));
+    const headerB64 = base64UrlEncode(JSON.stringify(header));
     const payloadB64 = base64UrlEncode(JSON.stringify(payload));
     const message = `${headerB64}.${payloadB64}`;
 
-    const crypto = require("crypto");
-    const key = crypto.createPrivateKey({
-      key: normalizePrivateKey(privateKeyPem),
-      format: "pem",
-    });
-    const sign = crypto.createSign("RSA-SHA256");
-    sign.update(message);
-    const derSig = sign.sign(key);
-    const sigB64 = base64UrlEncode(derSig);
+    const pem = normalizePrivateKey(privateKeyPem);
+    const keyObj = createPrivateKey({ key: pem, format: "pem" });
+    const sig = createSign("RSA-SHA256").update(message).sign(keyObj);
+    const sigB64 = sig.toString("base64url");
     return `${message}.${sigB64}`;
   } catch {
     return null;
   }
 }
 
-/** In-memory cache: { token, expiresAtMs }. Best-effort. */
-let cached: { token: string; expiresAtMs: number } | null = null;
+function base64UrlEncode(str: string): string {
+  return Buffer.from(str, "utf8").toString("base64url");
+}
 
-/** Exchange JWT for access token. Uses fetch; caches token until ~5 min before expiry. */
-export async function getGoogleAccessToken(params: {
-  clientEmail: string;
-  privateKeyPem: string;
-  tokenUri?: string;
-  fetchFn?: typeof fetch;
-}): Promise<string | null> {
-  const fetchFn = params.fetchFn ?? fetch;
-  const now = Date.now();
-  if (cached && cached.expiresAtMs > now + 5 * 60 * 1000) {
-    return cached.token;
-  }
-
-  const jwt = buildGoogleJwtAssertion({
-    clientEmail: params.clientEmail,
-    privateKeyPem: params.privateKeyPem,
-    tokenUri: params.tokenUri,
-  });
-  if (!jwt) return null;
-
+/** Exchange JWT for access token. */
+export async function exchangeJwtForToken(
+  jwt: string,
+  tokenUri: string = DEFAULT_TOKEN_URI
+): Promise<{ access_token: string; expires_in: number } | null> {
   const body = new URLSearchParams({
     grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
     assertion: jwt,
   });
-
-  const res = await fetchFn(DEFAULT_TOKEN_URI, {
+  const res = await fetch(tokenUri, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: body.toString(),
   });
   if (!res.ok) return null;
-
   const data = (await res.json()) as { access_token?: string; expires_in?: number };
-  const token = data.access_token;
-  const expiresIn = typeof data.expires_in === "number" ? data.expires_in : 3600;
-  if (token) {
-    cached = { token, expiresAtMs: now + expiresIn * 1000 };
-    return token;
-  }
-  return null;
+  if (!data.access_token) return null;
+  return {
+    access_token: data.access_token,
+    expires_in: typeof data.expires_in === "number" ? data.expires_in : 3600,
+  };
 }
 
-/** Clear cache (e.g. for tests). */
+/** Get access token (cached). Uses env FCM_CLIENT_EMAIL, FCM_PRIVATE_KEY, FCM_TOKEN_URI. */
+export async function getGoogleAccessToken(): Promise<string | null> {
+  const clientEmail = process.env.FCM_CLIENT_EMAIL?.trim();
+  const privateKey = process.env.FCM_PRIVATE_KEY?.trim();
+  const tokenUri = (process.env.FCM_TOKEN_URI?.trim() || DEFAULT_TOKEN_URI).trim();
+  if (!clientEmail || !privateKey) return null;
+
+  const nowSec = Math.floor(Date.now() / 1000);
+  if (cachedToken && cachedExpiry > nowSec + TOKEN_EXPIRY_BUFFER_SEC) return cachedToken;
+
+  const jwt = buildGoogleJwt(clientEmail, tokenUri, privateKey);
+  if (!jwt) return null;
+  const result = await exchangeJwtForToken(jwt, tokenUri);
+  if (!result) return null;
+  cachedToken = result.access_token;
+  cachedExpiry = nowSec + result.expires_in;
+  return cachedToken;
+}
+
+/** Reset cache (for tests). */
 export function clearGoogleTokenCache(): void {
-  cached = null;
+  cachedToken = null;
+  cachedExpiry = 0;
 }

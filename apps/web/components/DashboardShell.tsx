@@ -12,10 +12,15 @@ const SIDEBAR_LINKS = [
   { href: "/dashboard", key: "overview" as const },
   { href: "/dashboard/projects", key: "projects" as const },
   { href: "/dashboard/workers", key: "workers" as const },
-  { href: "/dashboard/daily-reports", key: "reports" as const },
+  { href: "/dashboard/reports", key: "reports" as const },
   { href: "/dashboard/uploads", key: "uploads" as const },
   { href: "/dashboard/devices", key: "devices" as const },
   { href: "/dashboard/ai", key: "ai" as const },
+] as const;
+
+const ADMIN_LINKS = [
+  { href: "/admin/push", key: "adminPush" as const },
+  { href: "/admin/jobs", key: "adminJobs" as const },
 ] as const;
 
 export function DashboardShell({
@@ -79,18 +84,29 @@ export function DashboardShell({
               );
             })}
             {getDashboardNavIncludesAdmin(isAdmin) && (
-              <Link
-                href="/admin"
-                onClick={closeSidebar}
-                className={`flex min-h-aistroyka-touch items-center rounded-[var(--aistroyka-radius-lg)] px-[var(--aistroyka-space-3)] py-[var(--aistroyka-space-2)] text-[var(--aistroyka-font-subheadline)] font-medium transition-colors ${
-                  isActive("/admin")
-                    ? "bg-aistroyka-accent-light text-aistroyka-accent"
-                    : "text-aistroyka-text-secondary hover:bg-aistroyka-surface-raised hover:text-aistroyka-text-primary"
-                }`}
-                aria-current={pathname.startsWith("/admin") ? "page" : undefined}
-              >
-                {t("admin")}
-              </Link>
+              <>
+                <div className="px-3 py-2 text-[var(--aistroyka-font-caption)] font-semibold uppercase tracking-wide text-aistroyka-text-tertiary">
+                  {t("admin")}
+                </div>
+                {ADMIN_LINKS.map(({ href, key }) => {
+                  const active = pathname === href || pathname.startsWith(href + "/");
+                  return (
+                    <Link
+                      key={href}
+                      href={href}
+                      onClick={closeSidebar}
+                      className={`flex min-h-aistroyka-touch items-center rounded-[var(--aistroyka-radius-lg)] px-[var(--aistroyka-space-3)] py-[var(--aistroyka-space-2)] text-[var(--aistroyka-font-subheadline)] font-medium transition-colors ${
+                        active
+                          ? "bg-aistroyka-accent-light text-aistroyka-accent"
+                          : "text-aistroyka-text-secondary hover:bg-aistroyka-surface-raised hover:text-aistroyka-text-primary"
+                      }`}
+                      aria-current={active ? "page" : undefined}
+                    >
+                      {t(key)}
+                    </Link>
+                  );
+                })}
+              </>
             )}
           </nav>
         </div>
@@ -140,7 +156,7 @@ export function DashboardShell({
                 type="search"
                 placeholder="Search…"
                 aria-label="Search"
-                className="hidden w-40 rounded-[var(--aistroyka-radius-md)] border border-aistroyka-border-subtle bg-aistroyka-bg-primary px-2 py-1.5 text-aistroyka-caption text-aistroyka-text-primary placeholder:text-aistroyka-text-tertiary focus:outline-none focus:ring-2 focus:ring-aistroyka-accent sm:block"
+                className="w-32 rounded-[var(--aistroyka-radius-md)] border border-aistroyka-border-subtle bg-aistroyka-bg-primary px-2 py-1.5 text-aistroyka-caption text-aistroyka-text-primary placeholder:text-aistroyka-text-tertiary focus:outline-none focus:ring-2 focus:ring-aistroyka-accent sm:w-40"
               />
             </div>
             <div className="flex items-center gap-2">

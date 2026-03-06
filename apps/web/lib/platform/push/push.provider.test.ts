@@ -30,6 +30,8 @@ describe("push provider router", () => {
   it("attemptSend for android without FCM returns retryable", async () => {
     vi.stubEnv("FCM_SERVER_KEY", "");
     vi.stubEnv("FCM_PROJECT_ID", "");
+    vi.stubEnv("FCM_CLIENT_EMAIL", "");
+    vi.stubEnv("FCM_PRIVATE_KEY", "");
     const result = await attemptSend({
       platform: "android",
       token: "t",
@@ -39,16 +41,21 @@ describe("push provider router", () => {
     if (!result.ok) expect(result.code).toBe("retryable");
   });
 
-  it("getProviderForPlatform returns FCM provider when v1 or legacy configured", () => {
-    vi.stubEnv("FCM_SERVER_KEY", "legacy-key");
-    vi.stubEnv("FCM_PROJECT_ID", "");
-    const legacy = getProviderForPlatform("android");
-    expect(legacy).not.toBeNull();
+  it("prefers FCM v1 when project_id/client_email/private_key set", async () => {
     vi.stubEnv("FCM_SERVER_KEY", "");
     vi.stubEnv("FCM_PROJECT_ID", "proj");
     vi.stubEnv("FCM_CLIENT_EMAIL", "fcm@proj.iam.gserviceaccount.com");
-    vi.stubEnv("FCM_PRIVATE_KEY", "-----BEGIN PRIVATE KEY-----\nx\n-----END PRIVATE KEY-----");
-    const v1 = getProviderForPlatform("android");
-    expect(v1).not.toBeNull();
+    vi.stubEnv("FCM_PRIVATE_KEY", "-----BEGIN PRIVATE KEY-----\nMIIB\n-----END PRIVATE KEY-----");
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, text: () => Promise.resolve("") });
+    globalThis.fetch = fetchMock;
+    const mod = await import("./providers/google-oauth");
+    vi.spyOn(mod, "getGoogleAccessToken").mockResolvedValue("mock-token");
+    const result = await attemptSend({
+      platform: "android",
+      token: "t",
+      body: "b",
+    });
+    expect(result.ok).toBe(true);
+    expect(fetchMock.mock.calls.some((c) => String(c[0]).includes("fcm.googleapis.com/v1"))).toBe(true);
   });
 });

@@ -23,6 +23,8 @@
     "devices": "Dispositivi e sincronizzazione",
     "ai": "IA",
     "admin": "Admin",
+    "adminPush": "Coda push",
+    "adminJobs": "Job",
     "logout": "Esci"
   },
   "auth": {
@@ -43,7 +45,8 @@
     "forgotPassword": "Password dimenticata?",
     "invalidCredentials": "Email o password non corretti.",
     "emailNotConfirmed": "Conferma l'email prima di accedere.",
-    "defaultError": "Qualcosa è andato storto. Riprova."
+    "defaultError": "Qualcosa è andato storto. Riprova.",
+    "loginStep": "Stato accesso"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -51,7 +54,22 @@
     "recentProjects": "Progetti recenti",
     "allProjects": "Tutti i progetti",
     "noProjectsYet": "Nessun progetto ancora.",
-    "createOne": "Creane uno"
+    "createOne": "Creane uno",
+    "opsTitle": "Centro operazioni",
+    "kpiActiveProjects": "Progetti attivi",
+    "kpiActiveWorkersToday": "Lavoratori oggi",
+    "kpiReportsToday": "Report oggi",
+    "kpiStuckUploads": "Upload bloccati",
+    "kpiOfflineDevices": "Dispositivi offline",
+    "kpiFailedJobs": "Job falliti (24h)",
+    "queueReportsReview": "Report in attesa di revisione",
+    "queueStuckUploads": "Upload bloccati > 4h",
+    "queueWorkersOpenShift": "Turni aperti",
+    "queueDevicesOffline": "Dispositivi offline > 24h",
+    "queueAiFailures": "AI falliti (24h)",
+    "queuePushFailures": "Errori push",
+    "viewAll": "Vedi tutti",
+    "opsError": "Impossibile caricare i dati operativi."
   },
   "projects": {
     "title": "Progetti",

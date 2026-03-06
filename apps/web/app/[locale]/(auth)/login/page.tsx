@@ -171,6 +171,13 @@ function LoginForm() {
               </Button>
             )}
           </form>
+          <p
+            className="mt-aistroyka-4 text-center text-aistroyka-caption text-aistroyka-text-tertiary"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            {t("loginStep")}: {step}
+          </p>
           <p className="mt-aistroyka-6 text-center text-aistroyka-subheadline text-aistroyka-text-secondary">
             {t("noAccount")}{" "}
             <Link href="/register" className="font-medium text-aistroyka-accent hover:underline focus:outline-none focus:ring-2 focus:ring-aistroyka-accent focus:ring-offset-2 rounded-aistroyka-sm">

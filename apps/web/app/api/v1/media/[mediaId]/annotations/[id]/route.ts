@@ -50,10 +50,16 @@ export async function PATCH(
   const { data: updated, error } = await supabase
     .from("photo_annotations")
     .update(update)
+    .eq("tenant_id", ctx.tenantId)
+    .eq("media_id", mediaId)
     .eq("id", id)
+    .eq("version", expectedVersion)
     .select("id, type, data, version, updated_at")
     .single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    if (error.code === "PGRST116") return NextResponse.json({ error: "Conflict", detail: "Annotation was modified since If-Match" }, { status: 409 });
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
   const admin = (await import("@/lib/supabase/admin")).getAdminClient();
   if (admin) await emitChange(admin, { tenant_id: ctx.tenantId, resource_type: "media", resource_id: mediaId, change_type: "updated", changed_by: ctx.userId, payload: { annotation_id: id } });
   return NextResponse.json({ data: updated });

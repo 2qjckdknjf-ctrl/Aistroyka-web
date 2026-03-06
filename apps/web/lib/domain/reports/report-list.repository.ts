@@ -11,12 +11,12 @@ export interface ReportListRow {
 }
 
 /**
- * List reports for manager (tenant-scoped). Optional filter by project_id (via worker_day).
+ * List reports for manager (tenant-scoped). Optional filter by project_id (via worker_day), user_id, from, to, q (search by id or user_id prefix/contains).
  */
 export async function listReportsForManager(
   supabase: SupabaseClient,
   tenantId: string,
-  opts: { projectId?: string; from?: string; to?: string; limit?: number } = {}
+  opts: { projectId?: string; userId?: string; from?: string; to?: string; limit?: number; q?: string } = {}
 ): Promise<ReportListRow[]> {
   const limit = opts.limit ?? 50;
   let query = supabase
@@ -24,7 +24,11 @@ export async function listReportsForManager(
     .select("id, user_id, day_id, status, created_at, submitted_at")
     .eq("tenant_id", tenantId)
     .order("created_at", { ascending: false })
-    .limit(limit);
+    .limit(limit * 2);
+
+  if (opts.from) query = query.gte("created_at", opts.from);
+  if (opts.to) query = query.lte("created_at", opts.to);
+  if (opts.userId) query = query.eq("user_id", opts.userId);
 
   const { data: rows } = await query;
   if (!rows?.length) return [];
@@ -49,11 +53,16 @@ export async function listReportsForManager(
   if (opts.projectId) {
     result = result.filter((r) => r.project_id === opts.projectId);
   }
-  if (opts.from) {
-    result = result.filter((r) => r.created_at >= opts.from!);
+  if (opts.q?.trim()) {
+    const q = opts.q.trim().toLowerCase();
+    result = result.filter(
+      (r) =>
+        r.id.toLowerCase().startsWith(q) ||
+        r.id.toLowerCase().includes(q) ||
+        r.user_id.toLowerCase().startsWith(q) ||
+        r.user_id.toLowerCase().includes(q) ||
+        (r.project_id ?? "").toLowerCase().includes(q)
+    );
   }
-  if (opts.to) {
-    result = result.filter((r) => r.created_at <= opts.to!);
-  }
-  return result;
+  return result.slice(0, limit);
 }

@@ -1,0 +1,38 @@
+# One-time or on-demand: regenerate bun.lock on Linux (ubuntu-latest) so that
+# Cloudflare Build (also Linux) can run `bun install --frozen-lockfile` without
+# "lockfile had changes" (cross-platform lockfile issue: macOS vs Linux).
+# Run from Actions tab → Update lockfile (Linux) → Run workflow.
+
+name: Update lockfile (Linux)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: "1.2.15"
+
+      - name: Install and regenerate lockfile
+        run: bun install
+
+      - name: Commit and push if lockfile changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git diff --exit-code bun.lock; then
+            echo "No lockfile changes; already in sync for Linux."
+          else
+            git add bun.lock
+            git commit -m "chore(deps): refresh bun.lock on Linux for Cloudflare frozen-lockfile"
+            git push origin HEAD:main
+          fi

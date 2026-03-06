@@ -24,9 +24,8 @@ export async function GET(
   }
 
   const supabase = await createClient();
-  const report = await getReportById(supabase, reportId, ctx.tenantId);
+  const report = await getReportById(supabase, reportId, ctx.tenantId!);
   if (!report) return NextResponse.json({ error: "Report not found" }, { status: 404 });
-  if (report.user_id !== ctx.userId) return NextResponse.json({ error: "Not your report" }, { status: 403 });
 
   const admin = (await import("@/lib/supabase/admin")).getAdminClient();
   const client = admin ?? supabase;
