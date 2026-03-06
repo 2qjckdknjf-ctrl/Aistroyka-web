@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { logStructured } from "@/lib/observability";
 import { nextRunAfter } from "./job.config";
 import { JobError, JobPayloadError } from "./job.errors";
 import * as repo from "./job.repository";
@@ -38,7 +39,16 @@ export async function enqueueJob(
     max_attempts: input.max_attempts,
     dedupe_key: input.dedupe_key,
   });
-  if (job) await repo.emitEvent(supabase, job.id, "queued", {});
+  if (job) {
+    await repo.emitEvent(supabase, job.id, "queued", {});
+    logStructured({
+      event: "job_enqueued",
+      job_id: job.id,
+      job_type: job.type,
+      tenant_id: job.tenant_id,
+      request_id: input.trace_id ?? undefined,
+    });
+  }
   return job;
 }
 
@@ -84,11 +94,32 @@ export async function processJobs(
       continue;
     }
 
+    const jobStartMs = Date.now();
+    const attempts = job.attempts ?? 0;
+    logStructured({
+      event: "job_started",
+      job_id: job.id,
+      job_type: job.type,
+      tenant_id: job.tenant_id,
+      attempts,
+      request_id: job.trace_id ?? undefined,
+    });
+
     const handler = HANDLERS[job.type as JobType];
     try {
       if (!handler) {
         await repo.emitEvent(admin, job.id, "failed", { error_type: "unknown_job_type" });
         await queue.markDead(admin, job.id, "Unknown job type", "UNKNOWN_TYPE");
+        logStructured({
+          event: "job_failed",
+          job_id: job.id,
+          job_type: job.type,
+          tenant_id: job.tenant_id,
+          attempts: attempts + 1,
+          duration_ms: Date.now() - jobStartMs,
+          retryable: false,
+          error_code: "UNKNOWN_TYPE",
+        });
         dead++;
         processed++;
         continue;
@@ -96,21 +127,50 @@ export async function processJobs(
       await handler(admin, job);
       await queue.markSuccess(admin, job.id);
       await repo.emitEvent(admin, job.id, "success", {});
+      logStructured({
+        event: "job_succeeded",
+        job_id: job.id,
+        job_type: job.type,
+        tenant_id: job.tenant_id,
+        duration_ms: Date.now() - jobStartMs,
+        attempts: attempts + 1,
+      });
       success++;
     } catch (e) {
       const message = e instanceof Error ? e.message : "Handler error";
       const code = e instanceof JobError ? e.code : "JOB_ERROR";
       const retryable = e instanceof JobError ? (e as JobError).retryable : true;
-      const attempts = job.attempts + 1;
+      const attemptCount = attempts + 1;
       await repo.emitEvent(admin, job.id, "failed", { error_type: code, message });
-      if (attempts >= job.max_attempts || !retryable || e instanceof JobPayloadError) {
+      if (attemptCount >= job.max_attempts || !retryable || e instanceof JobPayloadError) {
         await queue.markDead(admin, job.id, message, code);
         await repo.emitEvent(admin, job.id, "dead", {});
+        logStructured({
+          event: "job_failed",
+          job_id: job.id,
+          job_type: job.type,
+          tenant_id: job.tenant_id,
+          attempts: attemptCount,
+          duration_ms: Date.now() - jobStartMs,
+          retryable: false,
+          error_code: code,
+        });
         dead++;
       } else {
-        const runAfter = nextRunAfter(attempts);
+        const runAfter = nextRunAfter(attemptCount);
         await queue.markFailedForRetry(admin, job.id, message, code, runAfter);
         await repo.emitEvent(admin, job.id, "retry", { run_after: runAfter.toISOString() });
+        logStructured({
+          event: "job_failed",
+          job_id: job.id,
+          job_type: job.type,
+          tenant_id: job.tenant_id,
+          attempts: attemptCount,
+          duration_ms: Date.now() - jobStartMs,
+          retryable: true,
+          next_retry_at: runAfter.toISOString(),
+          error_code: code,
+        });
         failed++;
       }
     } finally {

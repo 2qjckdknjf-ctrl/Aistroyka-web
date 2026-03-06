@@ -6,6 +6,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getServerConfig } from "@/lib/config/server";
+import { logStructured } from "@/lib/observability";
 import { isAnalysisResult, type AnalysisResult } from "./types";
 
 const VIDEO_NOT_IMPLEMENTED = "Video processing not implemented yet";
@@ -19,22 +20,21 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-/** Single JSON log line for job completion/failure (parseable by log aggregators). */
-function logProcessOneJob(payload: {
-  job_id: string;
-  status: "completed" | "failed";
-  duration_ms: number;
-  error_type?: string;
-  trace_id?: string;
-}) {
+/** Structured job lifecycle logs (job_started / job_succeeded / job_failed). */
+function logJobLifecycle(
+  event: "job_started" | "job_succeeded" | "job_failed",
+  payload: {
+    job_id: string;
+    duration_ms?: number;
+    attempts?: number;
+    retryable?: boolean;
+    next_retry_at?: string;
+    error_code?: string;
+    request_id?: string;
+  }
+) {
   if (getServerConfig().NODE_ENV === "test") return;
-  console.log(
-    JSON.stringify({
-      event: "ai_process_one_job",
-      ...payload,
-      ts: new Date().toISOString(),
-    })
-  );
+  logStructured({ event, ...payload });
 }
 
 /**
@@ -192,6 +192,7 @@ export async function processOneJob(
   }
 
   const startMs = Date.now();
+  logJobLifecycle("job_started", { job_id: jobId, request_id: traceId });
 
   try {
     const result = await callAiAnalysis(aiAnalysisUrl, {
@@ -211,27 +212,28 @@ export async function processOneJob(
     });
 
     if (completeError) throw completeError;
-    logProcessOneJob({
+    logJobLifecycle("job_succeeded", {
       job_id: jobId,
-      status: "completed",
       duration_ms: Date.now() - startMs,
-      trace_id: traceId,
+      attempts: 1,
+      request_id: traceId,
     });
     return { ok: true, jobId, status: "completed" };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Analysis failed";
-    const errorType = message.toLowerCase().includes("timeout")
+    const errorCode = message.toLowerCase().includes("timeout")
       ? "timeout"
       : message.toLowerCase().includes("ai analysis failed")
         ? "ai_failure"
         : "unknown";
-    await markJobFailed(supabase, jobId, message, errorType);
-    logProcessOneJob({
+    await markJobFailed(supabase, jobId, message, errorCode);
+    logJobLifecycle("job_failed", {
       job_id: jobId,
-      status: "failed",
       duration_ms: Date.now() - startMs,
-      error_type: errorType,
-      trace_id: traceId,
+      attempts: 1,
+      retryable: false,
+      error_code: errorCode,
+      request_id: traceId,
     });
     return { ok: true, jobId, status: "failed" };
   }
