@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getAdminClient } from "@/lib/supabase/admin";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { finalizeUploadSession } from "@/lib/domain/upload-session/upload-session.service";
 import { checkRequestBodySize } from "@/lib/api/request-limit";
 import { requireLiteIdempotency, storeLiteIdempotency } from "@/lib/api/lite-idempotency";
+import { checkRateLimit } from "@/lib/platform/rate-limit/rate-limit.service";
 import { withRequestIdAndTiming } from "@/lib/observability";
 
 export const dynamic = "force-dynamic";
@@ -26,6 +28,16 @@ export async function POST(
       return withRequestIdAndTiming(request, NextResponse.json({ error: e.message }, { status: e.message.includes("membership") ? 403 : 401 }), { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start });
     }
     throw e;
+  }
+  const admin = getAdminClient();
+  if (admin) {
+    try {
+      const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? request.headers.get("x-real-ip") ?? "unknown";
+      const rl = await checkRateLimit(admin, { tenantId: ctx.tenantId, ip, endpoint: "/api/v1/media/upload-sessions/:id/finalize" });
+      if (rl.limited) return withRequestIdAndTiming(request, NextResponse.json({ error: rl.message }, { status: 429 }), { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
+    } catch {
+      /* allow on rate-limit check failure */
+    }
   }
   const guard = await requireLiteIdempotency(request, ctx, ROUTE_KEY);
   if (!guard.ok) return withRequestIdAndTiming(request, guard.response, { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });

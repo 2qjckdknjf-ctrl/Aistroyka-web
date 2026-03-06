@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getAdminClient } from "@/lib/supabase/admin";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { getCursor, upsertCursor } from "@/lib/sync/sync-cursors.repository";
 import { getMaxCursor, getMinRetainedCursor } from "@/lib/sync/change-log.repository";
 import { syncConflictResponse } from "@/lib/sync/sync-conflict";
 import { requireLiteIdempotency, storeLiteIdempotency } from "@/lib/api/lite-idempotency";
+import { checkRateLimit } from "@/lib/platform/rate-limit/rate-limit.service";
 import { getOrCreateRequestId, logStructured, withRequestIdAndTiming } from "@/lib/observability";
 
 export const dynamic = "force-dynamic";
@@ -31,6 +33,16 @@ export async function POST(request: Request) {
       return withRequestIdAndTiming(request, NextResponse.json({ error: e.message }, { status: e.message.includes("membership") ? 403 : 401 }), { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start });
     }
     throw e;
+  }
+  const admin = getAdminClient();
+  if (admin) {
+    try {
+      const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? request.headers.get("x-real-ip") ?? "unknown";
+      const rl = await checkRateLimit(admin, { tenantId: ctx.tenantId, ip, endpoint: "/api/v1/sync/ack" });
+      if (rl.limited) return withRequestIdAndTiming(request, NextResponse.json({ error: rl.message }, { status: 429 }), { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
+    } catch {
+      /* allow on rate-limit check failure */
+    }
   }
   const guard = await requireLiteIdempotency(request, ctx, ROUTE_KEY);
   if (!guard.ok) return withRequestIdAndTiming(request, guard.response, { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });

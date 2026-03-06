@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getAdminClient } from "@/lib/supabase/admin";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { getChangesAfter, getMaxCursor, getMinRetainedCursor } from "@/lib/sync/change-log.repository";
 import { getCursor } from "@/lib/sync/sync-cursors.repository";
 import { syncConflictResponse } from "@/lib/sync/sync-conflict";
+import { checkRateLimit } from "@/lib/platform/rate-limit/rate-limit.service";
 import { getOrCreateRequestId, logStructured, withRequestIdAndTiming } from "@/lib/observability";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +31,16 @@ export async function GET(request: Request) {
       return withRequestIdAndTiming(request, NextResponse.json({ error: e.message }, { status: e.message.includes("membership") ? 403 : 401 }), { route: ROUTE_KEY, method: "GET", duration_ms: Date.now() - start });
     }
     throw e;
+  }
+  const admin = getAdminClient();
+  if (admin) {
+    try {
+      const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? request.headers.get("x-real-ip") ?? "unknown";
+      const rl = await checkRateLimit(admin, { tenantId: ctx.tenantId, ip, endpoint: "/api/v1/sync/changes" });
+      if (rl.limited) return withRequestIdAndTiming(request, NextResponse.json({ error: rl.message }, { status: 429 }), { route: ROUTE_KEY, method: "GET", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
+    } catch {
+      /* allow on rate-limit check failure */
+    }
   }
   const url = new URL(request.url);
   const cursor = Math.max(0, parseInt(url.searchParams.get("cursor") ?? "0", 10) || 0);
