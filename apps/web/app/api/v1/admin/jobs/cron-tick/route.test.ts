@@ -48,5 +48,28 @@ describe("POST /api/v1/admin/jobs/cron-tick", () => {
     const req = new Request("https://x/api/v1/admin/jobs/cron-tick", { method: "POST" });
     const res = await POST(req);
     expect(res.status).toBe(503);
+    const body = await res.json();
+    expect(body.ok).toBe(false);
+    expect(body.error_code).toBe("admin_not_configured");
+  });
+
+  it("returns 503 with error_code when processJobs throws (no 500)", async () => {
+    const admin = {
+      from: vi.fn().mockReturnValue({
+        select: vi.fn().mockResolvedValue({ data: [{ id: "t1" }] }),
+      }),
+    };
+    const { getAdminClient } = await import("@/lib/supabase/admin");
+    const { enqueueJob, processJobs } = await import("@/lib/platform/jobs/job.service");
+    vi.mocked(getAdminClient).mockReturnValue(admin as any);
+    vi.mocked(enqueueJob).mockResolvedValue({ id: "j1" } as any);
+    vi.mocked(processJobs).mockRejectedValue(new Error("DB unavailable"));
+
+    const req = new Request("https://x/api/v1/admin/jobs/cron-tick", { method: "POST" });
+    const res = await POST(req);
+    expect(res.status).toBe(503);
+    const body = await res.json();
+    expect(body.ok).toBe(false);
+    expect(body.error_code).toBe("cron_tick_error");
   });
 });
