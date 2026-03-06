@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { logStructured } from "@/lib/observability";
 import type { TenantContext } from "@/lib/tenant/tenant.types";
 import { canCreateUploadSession } from "./upload-session.policy";
 import * as repo from "./upload-session.repository";
@@ -37,6 +38,13 @@ export async function createUploadSession(
   if (!canCreateUploadSession(ctx)) return { data: null, error: "Insufficient rights" };
   const session = await repo.create(supabase, ctx.tenantId, ctx.userId, purpose);
   if (!session) return { data: null, error: "Failed to create session" };
+  logStructured({
+    event: "upload_session_created",
+    session_id: session.id,
+    tenant_id: ctx.tenantId,
+    user_id: ctx.userId,
+    purpose,
+  });
   await emitChange(supabase, {
     tenant_id: ctx.tenantId,
     resource_type: "media",
@@ -91,6 +99,12 @@ export async function finalizeUploadSession(
 
   const ok = await repo.finalize(supabase, sessionId, ctx.tenantId, ctx.userId, payload);
   if (ok) {
+    logStructured({
+      event: "upload_session_finalized",
+      session_id: sessionId,
+      tenant_id: ctx.tenantId,
+      user_id: ctx.userId,
+    });
     await emitChange(supabase, {
       tenant_id: ctx.tenantId,
       resource_type: "media",

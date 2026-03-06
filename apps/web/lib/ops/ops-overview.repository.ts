@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { logStructured } from "@/lib/observability";
 
 const STUCK_UPLOAD_HOURS = 4;
 
@@ -114,6 +115,14 @@ export async function getOpsOverview(
   const reportsTodayCount = reportsTodayRes.count ?? 0;
   const stuckUploadsCount = stuckUploadsCountRes.count ?? 0;
   const offlineDevices = 0;
+
+  if (stuckUploadsCount > 0) {
+    logStructured({
+      event: "ops_overview_stuck_calculation",
+      tenant_id: tenantId,
+      stuck_uploads_count: stuckUploadsCount,
+    });
+  }
 
   return {
     kpis: {

@@ -4,7 +4,7 @@ import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from 
 import { getChangesAfter, getMaxCursor, getMinRetainedCursor } from "@/lib/sync/change-log.repository";
 import { getCursor } from "@/lib/sync/sync-cursors.repository";
 import { syncConflictResponse } from "@/lib/sync/sync-conflict";
-import { withRequestIdAndTiming } from "@/lib/observability";
+import { getOrCreateRequestId, logStructured, withRequestIdAndTiming } from "@/lib/observability";
 
 export const dynamic = "force-dynamic";
 
@@ -38,14 +38,17 @@ export async function GET(request: Request) {
   const minRetained = getMinRetainedCursor();
   if (minRetained > 0 && cursor < minRetained) {
     const serverCursor = await getMaxCursor(supabase, tenantId);
+    logStructured({ event: "sync_conflict", hint: "retention_window_exceeded", device_id: deviceId, tenant_id: ctx.tenantId, user_id: ctx.userId, request_id: getOrCreateRequestId(request) });
     return withRequestIdAndTiming(request, syncConflictResponse(serverCursor, true, "retention_window_exceeded"), { route: ROUTE_KEY, method: "GET", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
   }
   const serverCursor = await getMaxCursor(supabase, tenantId);
   if (cursor > serverCursor) {
+    logStructured({ event: "sync_conflict", hint: "cursor_ahead", device_id: deviceId, tenant_id: ctx.tenantId, user_id: ctx.userId, request_id: getOrCreateRequestId(request) });
     return withRequestIdAndTiming(request, syncConflictResponse(serverCursor), { route: ROUTE_KEY, method: "GET", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
   }
   const storedCursor = await getCursor(supabase, tenantId, ctx.userId as string, deviceId);
   if (storedCursor > 0 && cursor < storedCursor) {
+    logStructured({ event: "sync_conflict", hint: "device_mismatch", device_id: deviceId, tenant_id: ctx.tenantId, user_id: ctx.userId, request_id: getOrCreateRequestId(request) });
     return withRequestIdAndTiming(request, syncConflictResponse(serverCursor, false, "device_mismatch"), { route: ROUTE_KEY, method: "GET", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
   }
   const changes = await getChangesAfter(supabase, ctx.tenantId, cursor, limit);

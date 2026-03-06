@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { bootstrap } from "@/lib/sync/sync.service";
+import { logStructured } from "@/lib/observability";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +30,16 @@ export async function GET(request: Request) {
   const supabase = await createClient();
   const result = await bootstrap(supabase, ctx as import("@/lib/tenant/tenant.types").TenantContext, {
     deviceId,
+  });
+  logStructured({
+    event: "sync_bootstrap",
+    tenant_id: ctx.tenantId,
+    user_id: ctx.userId,
+    device_id: deviceId,
+    tasks_count: result.data.tasks.length,
+    reports_count: result.data.reports.length,
+    upload_sessions_count: result.data.uploadSessions.length,
+    cursor: result.cursor,
   });
   return NextResponse.json(result);
 }
