@@ -18,7 +18,7 @@ function nextRetryAt(attempts: number): Date {
 export async function handlePushSend(admin: SupabaseClient, _job: Job): Promise<void> {
   const { data: rows } = await admin
     .from("push_outbox")
-    .select("id, tenant_id, user_id, platform, type, payload, attempts")
+    .select("id, tenant_id, user_id, platform, device_id, type, payload, attempts")
     .eq("status", "queued")
     .or("next_retry_at.is.null,next_retry_at.lte." + new Date().toISOString())
     .order("created_at", { ascending: true })
@@ -30,17 +30,20 @@ export async function handlePushSend(admin: SupabaseClient, _job: Job): Promise<
     tenant_id: string;
     user_id: string;
     platform: string;
+    device_id: string | null;
     type: string;
     payload: Record<string, unknown> | null;
     attempts: number;
   }>) {
-    const { data: tokens } = await admin
+    let q = admin
       .from("device_tokens")
       .select("device_id, token")
       .eq("tenant_id", row.tenant_id)
       .eq("user_id", row.user_id)
       .eq("platform", row.platform)
       .is("disabled_at", null);
+    if (row.device_id) q = q.eq("device_id", row.device_id);
+    const { data: tokens } = await q;
     const tokenList = (tokens ?? []) as Array<{ device_id: string; token: string }>;
 
     if (tokenList.length === 0) {

@@ -20,7 +20,7 @@ export async function POST(request: Request) {
   }
   const guard = await requireLiteIdempotency(request, ctx, ROUTE_KEY);
   if (!guard.ok) return guard.response;
-  let body: { day_id?: string } = {};
+  let body: { day_id?: string; task_id?: string } = {};
   try {
     body = await request.json().catch(() => ({}));
   } catch {
@@ -28,8 +28,12 @@ export async function POST(request: Request) {
   }
   const supabase = await createClient();
   const dayId = typeof body.day_id === "string" ? body.day_id.trim() || null : null;
-  const { data, error } = await createReport(supabase, ctx, { dayId });
-  if (error) return NextResponse.json({ error }, { status: 403 });
-  await storeLiteIdempotency(request, ctx, ROUTE_KEY, { data }, 200);
-  return NextResponse.json({ data });
+  const taskId = typeof body.task_id === "string" ? body.task_id.trim() || null : null;
+  const result = await createReport(supabase, ctx, { dayId, taskId });
+  if (result.error) {
+    const status = result.code === "task_invalid" ? 404 : 403;
+    return NextResponse.json({ error: result.error, code: result.code }, { status });
+  }
+  await storeLiteIdempotency(request, ctx, ROUTE_KEY, { data: result.data }, 200);
+  return NextResponse.json({ data: result.data });
 }

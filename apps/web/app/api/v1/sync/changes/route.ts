@@ -81,7 +81,7 @@ export async function GET(request: Request) {
   });
   return withRequestIdAndTiming(request, NextResponse.json({
     data: { changes },
-    nextCursor,
-    serverTime: new Date().toISOString(),
+    next_cursor: nextCursor,
+    server_time: new Date().toISOString(),
   }), { route: ROUTE_KEY, method: "GET", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
 }

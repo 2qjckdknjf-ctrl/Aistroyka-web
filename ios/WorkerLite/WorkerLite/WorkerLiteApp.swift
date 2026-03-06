@@ -2,16 +2,20 @@
 //  WorkerLiteApp.swift
 //  WorkerLite
 //
-//  Created by Aleksandr Potkin on 6.03.26.
+//  Phase 7.1 — Worker Lite iOS MVP. Pilot-ready.
 //
 
 import SwiftUI
 
 @main
 struct WorkerLiteApp: App {
+    @UIApplicationDelegateAdaptor(WorkerLiteAppDelegate.self) var delegate
+    @StateObject private var appState = AppState()
+
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RootView()
+                .environmentObject(appState)
         }
     }
 }

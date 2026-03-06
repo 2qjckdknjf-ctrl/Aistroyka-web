@@ -2,9 +2,9 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { listReportsForManager } from "./report-list.repository";
 
 const baseRows = [
-  { id: "rpt-aaa", user_id: "u1", day_id: "d1", status: "draft", created_at: "2025-01-01T00:00:00Z", submitted_at: null },
-  { id: "rpt-bbb", user_id: "u2", day_id: "d2", status: "submitted", created_at: "2025-01-02T00:00:00Z", submitted_at: "2025-01-02T01:00:00Z" },
-  { id: "rpt-abc", user_id: "u1", day_id: "d1", status: "submitted", created_at: "2025-01-03T00:00:00Z", submitted_at: "2025-01-03T01:00:00Z" },
+  { id: "rpt-aaa", user_id: "u1", day_id: "d1", status: "draft", created_at: "2025-01-01T00:00:00Z", submitted_at: null, task_id: null },
+  { id: "rpt-bbb", user_id: "u2", day_id: "d2", status: "submitted", created_at: "2025-01-02T00:00:00Z", submitted_at: "2025-01-02T01:00:00Z", task_id: null },
+  { id: "rpt-abc", user_id: "u1", day_id: "d1", status: "submitted", created_at: "2025-01-03T00:00:00Z", submitted_at: "2025-01-03T01:00:00Z", task_id: null },
 ];
 
 describe("report-list.repository listReportsForManager", () => {

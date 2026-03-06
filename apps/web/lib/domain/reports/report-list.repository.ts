@@ -8,6 +8,7 @@ export interface ReportListRow {
   created_at: string;
   submitted_at: string | null;
   project_id: string | null;
+  task_id: string | null;
 }
 
 /**
@@ -21,7 +22,7 @@ export async function listReportsForManager(
   const limit = opts.limit ?? 50;
   let query = supabase
     .from("worker_reports")
-    .select("id, user_id, day_id, status, created_at, submitted_at")
+    .select("id, user_id, day_id, status, created_at, submitted_at, task_id")
     .eq("tenant_id", tenantId)
     .order("created_at", { ascending: false })
     .limit(limit * 2);
@@ -45,7 +46,7 @@ export async function listReportsForManager(
     );
   }
 
-  let result: ReportListRow[] = (rows as { id: string; user_id: string; day_id: string | null; status: string; created_at: string; submitted_at: string | null }[]).map((r) => ({
+  let result: ReportListRow[] = (rows as { id: string; user_id: string; day_id: string | null; status: string; created_at: string; submitted_at: string | null; task_id: string | null }[]).map((r) => ({
     ...r,
     project_id: r.day_id ? dayProjectMap[r.day_id] ?? null : null,
   }));

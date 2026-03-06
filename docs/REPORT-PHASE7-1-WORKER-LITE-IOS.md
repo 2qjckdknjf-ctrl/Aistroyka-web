@@ -27,14 +27,14 @@
 
 ### 2.2 Open and run
 
-1. Open: `open ios/WorkerLite.xcodeproj` (from repo root: `ios/WorkerLite.xcodeproj`).
+1. Open: `open ios/WorkerLite/WorkerLite.xcodeproj` (from repo root).
 2. Select scheme **WorkerLite**, choose iPhone simulator or device.
 3. Product → Build (⌘B), then Run (⌘R).
 
 CLI build (optional):
 
 ```bash
-cd ios && xcodebuild -scheme WorkerLite -destination 'generic/platform=iOS Simulator' -configuration Debug build
+cd ios/WorkerLite && xcodebuild -scheme WorkerLite -destination 'generic/platform=iOS Simulator' -configuration Debug build
 ```
 
 ### 2.3 Config

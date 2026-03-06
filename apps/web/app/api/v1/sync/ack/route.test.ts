@@ -53,7 +53,7 @@ describe("POST /api/v1/sync/ack", () => {
     const body = await res.json();
     expect(body).toMatchObject({
       code: "sync_conflict",
-      serverCursor: 100,
+      server_cursor: 100,
       must_bootstrap: true,
       hint: "retention_window_exceeded",
     });
@@ -74,7 +74,7 @@ describe("POST /api/v1/sync/ack", () => {
     const body = await res.json();
     expect(body).toMatchObject({
       code: "sync_conflict",
-      serverCursor: 100,
+      server_cursor: 100,
       hint: "device_mismatch",
     });
     expect(syncCursorsRepo.upsertCursor).not.toHaveBeenCalled();
@@ -94,7 +94,7 @@ describe("POST /api/v1/sync/ack", () => {
     expect(body).toMatchObject({
       error: "conflict",
       code: "sync_conflict",
-      serverCursor: 10,
+      server_cursor: 10,
       must_bootstrap: true,
     });
     expect(syncCursorsRepo.upsertCursor).not.toHaveBeenCalled();

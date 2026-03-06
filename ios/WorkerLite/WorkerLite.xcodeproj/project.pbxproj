@@ -8,12 +8,40 @@
 
 /* Begin PBXBuildFile section */
 		FA747A172F5B2B9E0043EC01 /* WorkerLiteApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA747A162F5B2B9E0043EC01 /* WorkerLiteApp.swift */; };
-		FA747A192F5B2B9E0043EC01 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA747A182F5B2B9E0043EC01 /* ContentView.swift */; };
 		FA747A1B2F5B2BA20043EC01 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FA747A1A2F5B2BA20043EC01 /* Assets.xcassets */; };
 		FA747A1E2F5B2BA20043EC01 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FA747A1D2F5B2BA20043EC01 /* Preview Assets.xcassets */; };
 		FA747A282F5B2BA20043EC01 /* WorkerLiteTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA747A272F5B2BA20043EC01 /* WorkerLiteTests.swift */; };
 		FA747A322F5B2BA30043EC01 /* WorkerLiteUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA747A312F5B2BA30043EC01 /* WorkerLiteUITests.swift */; };
 		FA747A342F5B2BA30043EC01 /* WorkerLiteUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA747A332F5B2BA30043EC01 /* WorkerLiteUITestsLaunchTests.swift */; };
+		FA747B012F5B2B9E0043EC01 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA747B022F5B2B9E0043EC01 /* AppState.swift */; };
+		FA747B032F5B2B9E0043EC01 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA747B042F5B2B9E0043EC01 /* RootView.swift */; };
+		FA747B052F5B2B9E0043EC01 /* APIError.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA747B062F5B2B9E0043EC01 /* APIError.swift */; };
+		FA747B072F5B2B9E0043EC01 /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA747B082F5B2B9E0043EC01 /* Config.swift */; };
+		FA747B092F5B2B9E0043EC01 /* DeviceContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA747B0A2F5B2B9E0043EC01 /* DeviceContext.swift */; };
+		FA747B0B2F5B2B9E0043EC01 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA747B0C2F5B2B9E0043EC01 /* KeychainHelper.swift */; };
+		FA747B0D2F5B2B9E0043EC01 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA747B0E2F5B2B9E0043EC01 /* APIClient.swift */; };
+		FA747B0F2F5B2B9E0043EC01 /* Endpoints.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA747B102F5B2B9E0043EC01 /* Endpoints.swift */; };
+		FA747B112F5B2B9E0043EC01 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA747B122F5B2B9E0043EC01 /* AuthService.swift */; };
+		FA747B132F5B2B9E0043EC01 /* UploadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA747B142F5B2B9E0043EC01 /* UploadManager.swift */; };
+		FA747B152F5B2B9E0043EC01 /* WorkerAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA747B162F5B2B9E0043EC01 /* WorkerAPI.swift */; };
+		FA747B172F5B2B9E0043EC01 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA747B182F5B2B9E0043EC01 /* LoginView.swift */; };
+		FA747B192F5B2B9E0043EC01 /* HomeContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA747B1A2F5B2B9E0043EC01 /* HomeContainerView.swift */; };
+		FA747B1B2F5B2B9E0043EC01 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA747B1C2F5B2B9E0043EC01 /* HomeView.swift */; };
+		FA747B1D2F5B2B9E0043EC01 /* ProjectPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA747B1E2F5B2B9E0043EC01 /* ProjectPickerView.swift */; };
+		FA747B1F2F5B2B9E0043EC01 /* ReportCreateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA747B202F5B2B9E0043EC01 /* ReportCreateView.swift */; };
+		FA747B212F5B2B9E0043EC01 /* ImagePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA747B222F5B2B9E0043EC01 /* ImagePicker.swift */; };
+		FA747B382F5B2BA40043EC01 /* AppStateStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA747B392F5B2BA40043EC01 /* AppStateStore.swift */; };
+		FA747B3A2F5B2BA40043EC01 /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA747B3B2F5B2BA40043EC01 /* NetworkMonitor.swift */; };
+		FA747B3C2F5B2BA40043EC01 /* SyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA747B3D2F5B2BA40043EC01 /* SyncService.swift */; };
+		FA747B402F5B2BA50043EC01 /* Operation.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA747B412F5B2BA50043EC01 /* Operation.swift */; };
+		FA747B422F5B2BA50043EC01 /* OperationQueueStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA747B432F5B2BA50043EC01 /* OperationQueueStore.swift */; };
+		FA747B442F5B2BA50043EC01 /* OperationQueueExecutor.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA747B452F5B2BA50043EC01 /* OperationQueueExecutor.swift */; };
+		FA747B462F5B2BA50043EC01 /* CameraPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA747B472F5B2BA50043EC01 /* CameraPicker.swift */; };
+		FA747B482F5B2BA60043EC01 /* BackgroundUploadService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA747B492F5B2BA60043EC01 /* BackgroundUploadService.swift */; };
+		FA747B4A2F5B2BA60043EC01 /* WorkerLiteAppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA747B4B2F5B2BA60043EC01 /* WorkerLiteAppDelegate.swift */; };
+		FA747B4C2F5B2BA60043EC01 /* TaskDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA747B4D2F5B2BA60043EC01 /* TaskDetailView.swift */; };
+		FA747B502F5B2BA60043EC01 /* PushRegistrationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA747B512F5B2BA60043EC01 /* PushRegistrationService.swift */; };
+		FA747B522F5B2BA60043EC01 /* LocalReminderService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA747B532F5B2BA60043EC01 /* LocalReminderService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -36,7 +64,6 @@
 /* Begin PBXFileReference section */
 		FA747A132F5B2B9E0043EC01 /* WorkerLite.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WorkerLite.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FA747A162F5B2B9E0043EC01 /* WorkerLiteApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerLiteApp.swift; sourceTree = "<group>"; };
-		FA747A182F5B2B9E0043EC01 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		FA747A1A2F5B2BA20043EC01 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		FA747A1D2F5B2BA20043EC01 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		FA747A232F5B2BA20043EC01 /* WorkerLiteTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WorkerLiteTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -44,6 +71,38 @@
 		FA747A2D2F5B2BA30043EC01 /* WorkerLiteUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WorkerLiteUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		FA747A312F5B2BA30043EC01 /* WorkerLiteUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerLiteUITests.swift; sourceTree = "<group>"; };
 		FA747A332F5B2BA30043EC01 /* WorkerLiteUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerLiteUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		FA747B022F5B2B9E0043EC01 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		FA747B042F5B2B9E0043EC01 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		FA747B062F5B2B9E0043EC01 /* APIError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIError.swift; sourceTree = "<group>"; };
+		FA747B082F5B2B9E0043EC01 /* Config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Config.swift; sourceTree = "<group>"; };
+		FA747B0A2F5B2B9E0043EC01 /* DeviceContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceContext.swift; sourceTree = "<group>"; };
+		FA747B0C2F5B2B9E0043EC01 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
+		FA747B0E2F5B2B9E0043EC01 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
+		FA747B102F5B2B9E0043EC01 /* Endpoints.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Endpoints.swift; sourceTree = "<group>"; };
+		FA747B122F5B2B9E0043EC01 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
+		FA747B142F5B2B9E0043EC01 /* UploadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadManager.swift; sourceTree = "<group>"; };
+		FA747B162F5B2B9E0043EC01 /* WorkerAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerAPI.swift; sourceTree = "<group>"; };
+		FA747B182F5B2B9E0043EC01 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
+		FA747B1A2F5B2B9E0043EC01 /* HomeContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeContainerView.swift; sourceTree = "<group>"; };
+		FA747B1C2F5B2B9E0043EC01 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		FA747B1E2F5B2B9E0043EC01 /* ProjectPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectPickerView.swift; sourceTree = "<group>"; };
+		FA747B202F5B2B9E0043EC01 /* ReportCreateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportCreateView.swift; sourceTree = "<group>"; };
+		FA747B222F5B2B9E0043EC01 /* ImagePicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePicker.swift; sourceTree = "<group>"; };
+		FA747B232F5B2B9E0043EC01 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		FA747B392F5B2BA40043EC01 /* AppStateStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStateStore.swift; sourceTree = "<group>"; };
+		FA747B3B2F5B2BA40043EC01 /* NetworkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
+		FA747B3D2F5B2BA40043EC01 /* SyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncService.swift; sourceTree = "<group>"; };
+		FA747B412F5B2BA50043EC01 /* Operation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Operation.swift; sourceTree = "<group>"; };
+		FA747B432F5B2BA50043EC01 /* OperationQueueStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OperationQueueStore.swift; sourceTree = "<group>"; };
+		FA747B452F5B2BA50043EC01 /* OperationQueueExecutor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OperationQueueExecutor.swift; sourceTree = "<group>"; };
+		FA747B472F5B2BA50043EC01 /* CameraPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPicker.swift; sourceTree = "<group>"; };
+		FA747B492F5B2BA60043EC01 /* BackgroundUploadService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundUploadService.swift; sourceTree = "<group>"; };
+		FA747B4B2F5B2BA60043EC01 /* WorkerLiteAppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerLiteAppDelegate.swift; sourceTree = "<group>"; };
+		FA747B4D2F5B2BA60043EC01 /* TaskDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskDetailView.swift; sourceTree = "<group>"; };
+		FA747B4E2F5B2BA60043EC01 /* WorkerLite.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WorkerLite.entitlements; sourceTree = "<group>"; };
+		FA747B512F5B2BA60043EC01 /* PushRegistrationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushRegistrationService.swift; sourceTree = "<group>"; };
+		FA747B532F5B2BA60043EC01 /* LocalReminderService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalReminderService.swift; sourceTree = "<group>"; };
+		FA747B542F5B2BA60043EC02 /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -74,6 +133,7 @@
 		FA747A0A2F5B2B9E0043EC01 = {
 			isa = PBXGroup;
 			children = (
+				FA747B552F5B2BA60043EC02 /* Config */,
 				FA747A152F5B2B9E0043EC01 /* WorkerLite */,
 				FA747A262F5B2BA20043EC01 /* WorkerLiteTests */,
 				FA747A302F5B2BA30043EC01 /* WorkerLiteUITests */,
@@ -95,7 +155,16 @@
 			isa = PBXGroup;
 			children = (
 				FA747A162F5B2B9E0043EC01 /* WorkerLiteApp.swift */,
-				FA747A182F5B2B9E0043EC01 /* ContentView.swift */,
+				FA747B4B2F5B2BA60043EC01 /* WorkerLiteAppDelegate.swift */,
+				FA747B022F5B2B9E0043EC01 /* AppState.swift */,
+				FA747B042F5B2B9E0043EC01 /* RootView.swift */,
+				FA747B242F5B2B9E0043EC01 /* Core */,
+				FA747B252F5B2B9E0043EC01 /* Networking */,
+				FA747B262F5B2B9E0043EC01 /* Services */,
+				FA747B272F5B2B9E0043EC01 /* Views */,
+				FA747B3E2F5B2BA40043EC01 /* Persistence */,
+				FA747B232F5B2B9E0043EC01 /* Info.plist */,
+				FA747B4E2F5B2BA60043EC01 /* WorkerLite.entitlements */,
 				FA747A1A2F5B2BA20043EC01 /* Assets.xcassets */,
 				FA747A1C2F5B2BA20043EC01 /* Preview Content */,
 			);
@@ -125,6 +194,75 @@
 				FA747A332F5B2BA30043EC01 /* WorkerLiteUITestsLaunchTests.swift */,
 			);
 			path = WorkerLiteUITests;
+			sourceTree = "<group>";
+		};
+		FA747B242F5B2B9E0043EC01 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				FA747B062F5B2B9E0043EC01 /* APIError.swift */,
+				FA747B082F5B2B9E0043EC01 /* Config.swift */,
+				FA747B0A2F5B2B9E0043EC01 /* DeviceContext.swift */,
+				FA747B0C2F5B2B9E0043EC01 /* KeychainHelper.swift */,
+				FA747B3B2F5B2BA40043EC01 /* NetworkMonitor.swift */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		FA747B252F5B2B9E0043EC01 /* Networking */ = {
+			isa = PBXGroup;
+			children = (
+				FA747B0E2F5B2B9E0043EC01 /* APIClient.swift */,
+				FA747B102F5B2B9E0043EC01 /* Endpoints.swift */,
+			);
+			path = Networking;
+			sourceTree = "<group>";
+		};
+		FA747B262F5B2B9E0043EC01 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				FA747B122F5B2B9E0043EC01 /* AuthService.swift */,
+				FA747B142F5B2B9E0043EC01 /* UploadManager.swift */,
+				FA747B162F5B2B9E0043EC01 /* WorkerAPI.swift */,
+				FA747B3D2F5B2BA40043EC01 /* SyncService.swift */,
+				FA747B452F5B2BA50043EC01 /* OperationQueueExecutor.swift */,
+				FA747B492F5B2BA60043EC01 /* BackgroundUploadService.swift */,
+				FA747B512F5B2BA60043EC01 /* PushRegistrationService.swift */,
+				FA747B532F5B2BA60043EC01 /* LocalReminderService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		FA747B272F5B2B9E0043EC01 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				FA747B182F5B2B9E0043EC01 /* LoginView.swift */,
+				FA747B1A2F5B2B9E0043EC01 /* HomeContainerView.swift */,
+				FA747B1C2F5B2B9E0043EC01 /* HomeView.swift */,
+				FA747B1E2F5B2B9E0043EC01 /* ProjectPickerView.swift */,
+				FA747B202F5B2B9E0043EC01 /* ReportCreateView.swift */,
+				FA747B4D2F5B2BA60043EC01 /* TaskDetailView.swift */,
+				FA747B222F5B2B9E0043EC01 /* ImagePicker.swift */,
+				FA747B472F5B2BA50043EC01 /* CameraPicker.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		FA747B3E2F5B2BA40043EC01 /* Persistence */ = {
+			isa = PBXGroup;
+			children = (
+				FA747B392F5B2BA40043EC01 /* AppStateStore.swift */,
+				FA747B412F5B2BA50043EC01 /* Operation.swift */,
+				FA747B432F5B2BA50043EC01 /* OperationQueueStore.swift */,
+			);
+			path = Persistence;
+			sourceTree = "<group>";
+		};
+		FA747B552F5B2BA60043EC02 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				FA747B542F5B2BA60043EC02 /* Secrets.xcconfig */,
+			);
+			path = "../Config";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -257,8 +395,36 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				FA747A192F5B2B9E0043EC01 /* ContentView.swift in Sources */,
 				FA747A172F5B2B9E0043EC01 /* WorkerLiteApp.swift in Sources */,
+				FA747B012F5B2B9E0043EC01 /* AppState.swift in Sources */,
+				FA747B032F5B2B9E0043EC01 /* RootView.swift in Sources */,
+				FA747B052F5B2B9E0043EC01 /* APIError.swift in Sources */,
+				FA747B072F5B2B9E0043EC01 /* Config.swift in Sources */,
+				FA747B092F5B2B9E0043EC01 /* DeviceContext.swift in Sources */,
+				FA747B0B2F5B2B9E0043EC01 /* KeychainHelper.swift in Sources */,
+				FA747B0D2F5B2B9E0043EC01 /* APIClient.swift in Sources */,
+				FA747B0F2F5B2B9E0043EC01 /* Endpoints.swift in Sources */,
+				FA747B112F5B2B9E0043EC01 /* AuthService.swift in Sources */,
+				FA747B132F5B2B9E0043EC01 /* UploadManager.swift in Sources */,
+				FA747B152F5B2B9E0043EC01 /* WorkerAPI.swift in Sources */,
+				FA747B172F5B2B9E0043EC01 /* LoginView.swift in Sources */,
+				FA747B192F5B2B9E0043EC01 /* HomeContainerView.swift in Sources */,
+				FA747B1B2F5B2B9E0043EC01 /* HomeView.swift in Sources */,
+				FA747B1D2F5B2B9E0043EC01 /* ProjectPickerView.swift in Sources */,
+				FA747B1F2F5B2B9E0043EC01 /* ReportCreateView.swift in Sources */,
+				FA747B4C2F5B2BA60043EC01 /* TaskDetailView.swift in Sources */,
+				FA747B212F5B2B9E0043EC01 /* ImagePicker.swift in Sources */,
+				FA747B382F5B2BA40043EC01 /* AppStateStore.swift in Sources */,
+				FA747B3A2F5B2BA40043EC01 /* NetworkMonitor.swift in Sources */,
+				FA747B3C2F5B2BA40043EC01 /* SyncService.swift in Sources */,
+				FA747B402F5B2BA50043EC01 /* Operation.swift in Sources */,
+				FA747B422F5B2BA50043EC01 /* OperationQueueStore.swift in Sources */,
+				FA747B442F5B2BA50043EC01 /* OperationQueueExecutor.swift in Sources */,
+				FA747B462F5B2BA50043EC01 /* CameraPicker.swift in Sources */,
+				FA747B482F5B2BA60043EC01 /* BackgroundUploadService.swift in Sources */,
+				FA747B4A2F5B2BA60043EC01 /* WorkerLiteAppDelegate.swift in Sources */,
+				FA747B502F5B2BA60043EC01 /* PushRegistrationService.swift in Sources */,
+				FA747B522F5B2BA60043EC01 /* LocalReminderService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -416,15 +582,19 @@
 		};
 		FA747A382F5B2BA30043EC01 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = FA747B542F5B2BA60043EC02 /* Secrets.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = WorkerLite/WorkerLite.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"WorkerLite/Preview Content\"";
 				DEVELOPMENT_TEAM = 43A4KW5BKB;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = WorkerLite/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -437,6 +607,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = POTA.WorkerLite;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -445,15 +616,18 @@
 		};
 		FA747A392F5B2BA30043EC01 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = FA747B542F5B2BA60043EC02 /* Secrets.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = WorkerLite/WorkerLite.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"WorkerLite/Preview Content\"";
 				DEVELOPMENT_TEAM = 43A4KW5BKB;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = WorkerLite/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 
-/** Deterministic 409 conflict body for sync (changes/ack). */
+/** Deterministic 409 conflict body for sync (changes/ack). Uses snake_case for API consistency. */
 export interface SyncConflictBody {
   error: "conflict";
   code: "sync_conflict";
-  serverCursor: number;
+  server_cursor: number;
   hint?: string;
   must_bootstrap?: boolean;
 }
@@ -15,12 +15,12 @@ export function syncConflictResponse(
   hint?: string
 ): NextResponse {
   const defaultHint = mustBootstrap
-    ? "Call bootstrap, reset cursor to serverCursor, then retry changes/ack."
+    ? "Call bootstrap, reset cursor to server_cursor, then retry changes/ack."
     : undefined;
   const body: SyncConflictBody = {
     error: "conflict",
     code: "sync_conflict",
-    serverCursor,
+    server_cursor: serverCursor,
     must_bootstrap: mustBootstrap,
     hint: hint ?? defaultHint,
   };

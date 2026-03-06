@@ -32,6 +32,11 @@ export interface OpsMetrics {
   ai_failed: number;
   jobs_failed: number;
   push_failed: number;
+  /** Phase 7.6: task compliance */
+  tasks_assigned_today: number;
+  tasks_completed_today: number;
+  tasks_open_today: number;
+  tasks_overdue: number;
 }
 
 export async function getOpsMetrics(
@@ -47,6 +52,7 @@ export async function getOpsMetrics(
   const offlineHours = getDeviceOfflineHours();
   const offlineSince = new Date(Date.now() - offlineHours * 60 * 60 * 1000).toISOString();
 
+  const today = now.slice(0, 10);
   const [
     stuckRes,
     expiredRes,
@@ -55,6 +61,10 @@ export async function getOpsMetrics(
     jobsFailedRes,
     aiFailedRes,
     pushFailedRes,
+    tasksAssignedTodayRes,
+    tasksCompletedTodayRes,
+    tasksOpenTodayRes,
+    tasksOverdueRes,
   ] = await Promise.all([
     supabase
       .from("upload_sessions")
@@ -99,6 +109,31 @@ export async function getOpsMetrics(
       .eq("status", "failed")
       .gte("created_at", from)
       .lte("created_at", to),
+    supabase
+      .from("task_assignments")
+      .select("task_id", { count: "exact", head: true })
+      .eq("tenant_id", tenantId)
+      .gte("assigned_at", today)
+      .lt("assigned_at", today + "T23:59:59.999Z"),
+    supabase
+      .from("worker_tasks")
+      .select("id", { count: "exact", head: true })
+      .eq("tenant_id", tenantId)
+      .eq("status", "done")
+      .gte("updated_at", today)
+      .lt("updated_at", today + "T23:59:59.999Z"),
+    supabase
+      .from("worker_tasks")
+      .select("id", { count: "exact", head: true })
+      .eq("tenant_id", tenantId)
+      .eq("due_date", today)
+      .in("status", ["pending", "in_progress"]),
+    supabase
+      .from("worker_tasks")
+      .select("id", { count: "exact", head: true })
+      .eq("tenant_id", tenantId)
+      .lt("due_date", today)
+      .in("status", ["pending", "in_progress"]),
   ]);
 
   return {
@@ -109,5 +144,9 @@ export async function getOpsMetrics(
     ai_failed: aiFailedRes.count ?? 0,
     jobs_failed: jobsFailedRes.count ?? 0,
     push_failed: pushFailedRes.count ?? 0,
+    tasks_assigned_today: tasksAssignedTodayRes.count ?? 0,
+    tasks_completed_today: tasksCompletedTodayRes.count ?? 0,
+    tasks_open_today: tasksOpenTodayRes.count ?? 0,
+    tasks_overdue: tasksOverdueRes.count ?? 0,
   };
 }

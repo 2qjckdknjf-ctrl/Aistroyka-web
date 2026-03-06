@@ -140,7 +140,7 @@ export default function ReportDetailPage() {
             {data.media.map((m, i) => (
               <li key={i}>
                 {m.media_id ? (
-                  <Link href={`/projects`} className="text-aistroyka-accent hover:underline font-mono">Media {m.media_id.slice(0, 8)}…</Link>
+                  <Link href="/dashboard/uploads" className="text-aistroyka-accent hover:underline font-mono">Media {m.media_id.slice(0, 8)}…</Link>
                 ) : m.upload_session_id ? (
                   <span className="font-mono">Session {m.upload_session_id.slice(0, 8)}…</span>
                 ) : (

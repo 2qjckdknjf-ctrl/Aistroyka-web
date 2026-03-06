@@ -17,11 +17,15 @@ apps/web/test-results/
 
 # iOS derived builds
 ios/build/
+ios/**/build/
 ios/ci_derived/
+ios/**/ci_derived/
+ios/**/DerivedData/
 DerivedData/
 **/DerivedData/
 **/SourcePackages/
 *.xcresult
+ios/Config/Secrets.xcconfig
 
 # archives / exports
 *.zip
@@ -77,3 +81,15 @@ lib/supabase/middleware 2.ts
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# DevOps backup list (extra exclusions)
+.env*
+.idea
+.vscode
+tmp
+*.sqlite
+secrets
+uploads/
+.wrangler
+.turbo
+*.log

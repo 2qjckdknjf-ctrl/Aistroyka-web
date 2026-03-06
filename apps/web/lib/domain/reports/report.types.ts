@@ -6,4 +6,6 @@ export interface Report {
   status: string;
   created_at?: string;
   submitted_at?: string | null;
+  /** Phase 7.6: optional link to worker_tasks */
+  task_id?: string | null;
 }

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi, beforeEach } from "vitest";
 import { GET } from "./route";
 import * as changeLogRepo from "@/lib/sync/change-log.repository";
 import * as syncCursorsRepo from "@/lib/sync/sync-cursors.repository";
@@ -36,6 +36,13 @@ vi.mock("@/lib/sync/sync-cursors.repository", () => ({
 }));
 
 describe("GET /api/v1/sync/changes", () => {
+  beforeEach(() => {
+    vi.mocked(changeLogRepo.getMinRetainedCursor).mockReturnValue(0);
+    vi.mocked(changeLogRepo.getMaxCursor).mockResolvedValue(0);
+    vi.mocked(syncCursorsRepo.getCursor).mockResolvedValue(0);
+    vi.mocked(changeLogRepo.getChangesAfter).mockResolvedValue([]);
+  });
+
   it("returns 409 with sync_conflict when cursor is ahead of server", async () => {
     vi.mocked(changeLogRepo.getMaxCursor).mockResolvedValue(10);
     const req = new Request("https://test/api/v1/sync/changes?cursor=20&limit=50", {
@@ -47,7 +54,7 @@ describe("GET /api/v1/sync/changes", () => {
     expect(body).toMatchObject({
       error: "conflict",
       code: "sync_conflict",
-      serverCursor: 10,
+      server_cursor: 10,
       must_bootstrap: true,
     });
     expect(changeLogRepo.getChangesAfter).not.toHaveBeenCalled();
@@ -64,7 +71,7 @@ describe("GET /api/v1/sync/changes", () => {
     const body = await res.json();
     expect(body).toMatchObject({
       code: "sync_conflict",
-      serverCursor: 100,
+      server_cursor: 100,
       must_bootstrap: true,
       hint: "retention_window_exceeded",
     });
@@ -83,14 +90,13 @@ describe("GET /api/v1/sync/changes", () => {
     const body = await res.json();
     expect(body).toMatchObject({
       code: "sync_conflict",
-      serverCursor: 100,
+      server_cursor: 100,
       hint: "device_mismatch",
     });
     expect(changeLogRepo.getChangesAfter).not.toHaveBeenCalled();
   });
 
   it("returns 200 with changes when cursor is valid", async () => {
-    vi.mocked(changeLogRepo.getMinRetainedCursor).mockReturnValue(0);
     vi.mocked(changeLogRepo.getMaxCursor).mockResolvedValue(100);
     vi.mocked(syncCursorsRepo.getCursor).mockResolvedValue(0);
     vi.mocked(changeLogRepo.getChangesAfter).mockResolvedValue([
@@ -111,7 +117,7 @@ describe("GET /api/v1/sync/changes", () => {
     const res = await GET(req);
     expect(res.status).toBe(200);
     const data = await res.json();
-    expect(data.nextCursor).toBe(5);
+    expect(data.next_cursor).toBe(5);
     expect(data.data.changes).toHaveLength(1);
   });
 });

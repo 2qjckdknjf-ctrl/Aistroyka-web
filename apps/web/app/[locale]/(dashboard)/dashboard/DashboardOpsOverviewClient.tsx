@@ -14,14 +14,21 @@ interface OpsOverviewKpis {
   stuckUploads: number;
   offlineDevices: number;
   failedJobs24h: number;
+  tasks_assigned_today?: number;
+  tasks_completed_today?: number;
+  tasks_open_today?: number;
+  tasks_overdue?: number;
 }
 
 interface OpsOverviewQueues {
   reportsPendingReview: { id: string; status: string; created_at: string }[];
   stuckUploads: { id: string; status: string; created_at: string }[];
   workersOpenShift: { user_id: string; day_date: string }[];
+  workersOpenShiftNoReportToday?: { user_id: string; day_date: string }[];
   pushFailed: { id: string; attempts: number }[];
   aiFailed?: { id: string; status: string; created_at: string }[];
+  tasksOpenToday?: { id: string; title: string; due_date: string }[];
+  tasksOverdue?: { id: string; title: string; due_date: string }[];
 }
 
 interface OpsOverview {
@@ -69,13 +76,18 @@ export function DashboardOpsOverviewClient() {
   }
 
   const { kpis, queues } = data;
-  const kpiCards: { label: string; value: number; borderClass: string }[] = [
+  const today = new Date().toISOString().slice(0, 10);
+  const kpiCards: { label: string; value: number; borderClass: string; href?: string }[] = [
     { label: t("kpiActiveProjects"), value: kpis.activeProjects, borderClass: "border-l-aistroyka-accent" },
     { label: t("kpiActiveWorkersToday"), value: kpis.activeWorkersToday, borderClass: "border-l-aistroyka-info" },
     { label: t("kpiReportsToday"), value: kpis.reportsToday, borderClass: "border-l-aistroyka-success" },
     { label: t("kpiStuckUploads"), value: kpis.stuckUploads, borderClass: "border-l-aistroyka-warning" },
     { label: t("kpiOfflineDevices"), value: kpis.offlineDevices, borderClass: "border-l-aistroyka-warning" },
     { label: t("kpiFailedJobs"), value: kpis.failedJobs24h, borderClass: "border-l-aistroyka-error" },
+    { label: t("kpiTasksAssignedToday"), value: kpis.tasks_assigned_today ?? 0, borderClass: "border-l-aistroyka-info", href: "/dashboard/tasks" },
+    { label: t("kpiTasksCompletedToday"), value: kpis.tasks_completed_today ?? 0, borderClass: "border-l-aistroyka-success", href: `/dashboard/tasks?from=${today}&to=${today}&status=done` },
+    { label: t("kpiTasksOpenToday"), value: kpis.tasks_open_today ?? 0, borderClass: "border-l-aistroyka-warning", href: `/dashboard/tasks?from=${today}&to=${today}` },
+    { label: t("kpiTasksOverdue"), value: kpis.tasks_overdue ?? 0, borderClass: "border-l-aistroyka-error", href: "/dashboard/tasks?status=pending" },
   ];
 
   return (
@@ -84,14 +96,20 @@ export function DashboardOpsOverviewClient() {
         className="mb-aistroyka-6 grid gap-aistroyka-4 sm:grid-cols-2 lg:grid-cols-6"
         aria-label="KPI overview"
       >
-        {kpiCards.map(({ label, value, borderClass }) => (
+        {kpiCards.map(({ label, value, borderClass, href }) => (
           <Card key={label} className={`border-l-4 ${borderClass}`}>
             <p className="text-aistroyka-caption font-medium uppercase tracking-wide text-aistroyka-text-tertiary">
               {label}
             </p>
-            <p className="mt-aistroyka-1 text-aistroyka-title3 font-semibold text-aistroyka-text-primary">
-              {value}
-            </p>
+            {href ? (
+              <Link href={href} className="mt-aistroyka-1 block text-aistroyka-title3 font-semibold text-aistroyka-accent hover:underline">
+                {value}
+              </Link>
+            ) : (
+              <p className="mt-aistroyka-1 text-aistroyka-title3 font-semibold text-aistroyka-text-primary">
+                {value}
+              </p>
+            )}
           </Card>
         ))}
       </section>
@@ -183,6 +201,34 @@ export function DashboardOpsOverviewClient() {
 
         <Card className="p-aistroyka-4">
           <h3 className="text-aistroyka-title3 font-semibold text-aistroyka-text-primary">
+            {t("queueOpenShiftNoReport")}
+          </h3>
+          <ul className="mt-2 space-y-1">
+            {(queues.workersOpenShiftNoReportToday ?? []).length === 0 ? (
+              <li className="text-aistroyka-subheadline text-aistroyka-text-tertiary">—</li>
+            ) : (
+              (queues.workersOpenShiftNoReportToday ?? []).slice(0, 5).map((w) => (
+                <li key={`${w.user_id}-${w.day_date}`}>
+                  <Link
+                    href={`/dashboard/workers/${w.user_id}`}
+                    className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline"
+                  >
+                    {w.user_id.slice(0, 8)}… ({w.day_date})
+                  </Link>
+                </li>
+              ))
+            )}
+          </ul>
+          <Link
+            href="/dashboard/workers"
+            className="mt-2 inline-block text-aistroyka-caption font-medium text-aistroyka-accent hover:underline"
+          >
+            {t("viewAll")} →
+          </Link>
+        </Card>
+
+        <Card className="p-aistroyka-4">
+          <h3 className="text-aistroyka-title3 font-semibold text-aistroyka-text-primary">
             {t("queueAiFailures")}
           </h3>
           <ul className="mt-2 space-y-1">
@@ -203,6 +249,62 @@ export function DashboardOpsOverviewClient() {
           </ul>
           <Link
             href="/dashboard/ai?status=failed"
+            className="mt-2 inline-block text-aistroyka-caption font-medium text-aistroyka-accent hover:underline"
+          >
+            {t("viewAll")} →
+          </Link>
+        </Card>
+
+        <Card className="p-aistroyka-4">
+          <h3 className="text-aistroyka-title3 font-semibold text-aistroyka-text-primary">
+            {t("queueTasksOpenToday")}
+          </h3>
+          <ul className="mt-2 space-y-1">
+            {(queues.tasksOpenToday ?? []).length === 0 ? (
+              <li className="text-aistroyka-subheadline text-aistroyka-text-tertiary">—</li>
+            ) : (
+              (queues.tasksOpenToday ?? []).slice(0, 5).map((task) => (
+                <li key={task.id}>
+                  <Link
+                    href={`/dashboard/tasks/${task.id}`}
+                    className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline"
+                  >
+                    {task.title.slice(0, 30)}{task.title.length > 30 ? "…" : ""}
+                  </Link>
+                </li>
+              ))
+            )}
+          </ul>
+          <Link
+            href={`/dashboard/tasks?from=${today}&to=${today}`}
+            className="mt-2 inline-block text-aistroyka-caption font-medium text-aistroyka-accent hover:underline"
+          >
+            {t("viewAll")} →
+          </Link>
+        </Card>
+
+        <Card className="p-aistroyka-4">
+          <h3 className="text-aistroyka-title3 font-semibold text-aistroyka-text-primary">
+            {t("queueTasksOverdue")}
+          </h3>
+          <ul className="mt-2 space-y-1">
+            {(queues.tasksOverdue ?? []).length === 0 ? (
+              <li className="text-aistroyka-subheadline text-aistroyka-text-tertiary">—</li>
+            ) : (
+              (queues.tasksOverdue ?? []).slice(0, 5).map((task) => (
+                <li key={task.id}>
+                  <Link
+                    href={`/dashboard/tasks/${task.id}`}
+                    className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline"
+                  >
+                    {task.title.slice(0, 30)}{task.title.length > 30 ? "…" : ""} ({task.due_date})
+                  </Link>
+                </li>
+              ))
+            )}
+          </ul>
+          <Link
+            href="/dashboard/tasks?status=pending"
             className="mt-2 inline-block text-aistroyka-caption font-medium text-aistroyka-accent hover:underline"
           >
             {t("viewAll")} →

@@ -65,7 +65,7 @@ jobs:
           exit 1
 
       - name: Run e2e smoke
-        run: cd apps/web && npm run test:e2e -- tests/e2e/cockpit-smoke.spec.ts
+        run: cd apps/web && npm run test:e2e -- tests/e2e/cockpit-smoke.spec.ts tests/e2e/pilot-task-report-smoke.spec.ts
         env:
           CI: true
           PLAYWRIGHT_BASE_URL: http://127.0.0.1:3000

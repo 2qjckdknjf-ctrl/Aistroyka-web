@@ -82,7 +82,7 @@ export function DashboardAIClient() {
         setTotal(0);
       })
       .finally(() => setLoading(false));
-  }, [page, pageSize, params.status, params.from, params.to, params.q]);
+  }, [offset, limit, params.status, params.from, params.to, params.q]);
 
   const filterBar = (
     <div className="mb-4">

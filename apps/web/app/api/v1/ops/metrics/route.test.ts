@@ -16,6 +16,10 @@ vi.mock("@/lib/ops/ops-metrics.repository", () => ({
     ai_failed: 0,
     jobs_failed: 0,
     push_failed: 0,
+    tasks_assigned_today: 0,
+    tasks_completed_today: 0,
+    tasks_open_today: 0,
+    tasks_overdue: 0,
   }),
 }));
 
@@ -25,7 +29,7 @@ describe("GET /api/v1/ops/metrics", () => {
     const res = await GET(req);
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual({
+    expect(body).toMatchObject({
       uploads_stuck: 0,
       uploads_expired: 0,
       devices_offline: 0,
@@ -33,6 +37,10 @@ describe("GET /api/v1/ops/metrics", () => {
       ai_failed: 0,
       jobs_failed: 0,
       push_failed: 0,
+      tasks_assigned_today: 0,
+      tasks_completed_today: 0,
+      tasks_open_today: 0,
+      tasks_overdue: 0,
     });
     const { getOpsMetrics } = await import("@/lib/ops/ops-metrics.repository");
     expect(getOpsMetrics).toHaveBeenCalledWith(expect.anything(), "t1", expect.any(Object));

@@ -36,6 +36,10 @@ describe("getOpsMetrics", () => {
       ai_failed: 0,
       jobs_failed: 0,
       push_failed: 0,
+      tasks_assigned_today: 0,
+      tasks_completed_today: 0,
+      tasks_open_today: 0,
+      tasks_overdue: 0,
     });
   });
 
@@ -85,6 +89,10 @@ describe("getOpsMetrics", () => {
       ai_failed: 0,
       jobs_failed: 0,
       push_failed: 0,
+      tasks_assigned_today: 0,
+      tasks_completed_today: 0,
+      tasks_open_today: 0,
+      tasks_overdue: 0,
     });
   });
 });

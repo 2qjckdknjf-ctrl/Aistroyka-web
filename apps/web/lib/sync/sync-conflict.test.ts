@@ -9,9 +9,9 @@ describe("syncConflictResponse", () => {
     expect(body).toEqual({
       error: "conflict",
       code: "sync_conflict",
-      serverCursor: 100,
+      server_cursor: 100,
       must_bootstrap: true,
-      hint: "Call bootstrap, reset cursor to serverCursor, then retry changes/ack.",
+      hint: "Call bootstrap, reset cursor to server_cursor, then retry changes/ack.",
     });
   });
 
@@ -19,7 +19,7 @@ describe("syncConflictResponse", () => {
     const res = syncConflictResponse(50, false);
     expect(res.status).toBe(409);
     const body = await res.json();
-    expect(body.serverCursor).toBe(50);
+    expect(body.server_cursor).toBe(50);
     expect(body.must_bootstrap).toBe(false);
     expect(body.hint).toBeUndefined();
   });

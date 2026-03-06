@@ -15,8 +15,10 @@ export async function GET(request: Request) {
     }
     throw e;
   }
+  const { searchParams } = new URL(request.url);
+  const projectId = searchParams.get("project_id") ?? undefined;
   const supabase = await createClient();
-  const { data, error } = await listTasksForToday(supabase, ctx);
+  const { data, error } = await listTasksForToday(supabase, ctx, projectId);
   if (error) return NextResponse.json({ error }, { status: 403 });
   return NextResponse.json({ data });
 }
