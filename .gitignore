@@ -37,6 +37,9 @@ reports/
 .next
 out
 
+# workspace packages build output
+packages/contracts/dist
+
 # macOS
 .DS_Store
 
