@@ -9,6 +9,9 @@ export default defineConfig({
     setupFiles: ["./vitest.setup.ts"],
   },
   resolve: {
-    alias: { "@": path.resolve(__dirname, ".") },
+    alias: {
+      "@": path.resolve(__dirname, "."),
+      "@aistroyka/contracts": path.resolve(__dirname, "../../packages/contracts/dist/index.js"),
+    },
   },
 });
