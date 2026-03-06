@@ -16,11 +16,19 @@
 
 ## 2. Before/after (template)
 
-**Before making changes,** in Cloudflare Dashboard → **aistroyka.ai** → **DNS**, export or screenshot:
+### BEFORE STATE (snapshot)
+
+Capture before changes: run from repo root (with `CLOUDFLARE_API_TOKEN` set):
+
+```bash
+node apps/web/scripts/cf-dns-list-aistroyka.mjs
+```
+
+Or in Cloudflare Dashboard → **aistroyka.ai** → **DNS** → export/screenshot. Paste below:
 
 | Type  | Name   | Content        | Proxy | TTL |
 |-------|--------|----------------|-------|-----|
-| (fill from Dashboard) | | | | |
+| (fill from script or Dashboard) | | | | |
 
 **Target state:**
 
@@ -30,6 +38,13 @@
 | CNAME | www    | aistroyka.ai   | Yes   | 1   | Then Redirect Rule: www → apex 301. |
 
 **Rollback:** Restore previous records from your “before” snapshot. Remove Redirect Rule if added.
+
+### Custom domains + Redirect Rule (Dashboard; no plugin API)
+
+- **Production Worker (aistroyka-web-production):** Workers & Pages → Worker → Settings → Domains → add `aistroyka.ai` and `www.aistroyka.ai`.
+- **Staging Worker (aistroyka-web-staging):** add `staging.aistroyka.ai`.
+- **Redirect Rule:** Zone aistroyka.ai → Rules → Redirect Rules → create: When hostname equals `www.aistroyka.ai` → Dynamic redirect to `https://aistroyka.ai` + `http.request.uri.path` (301).
+- **Validation:** `curl -I https://www.aistroyka.ai` → single 301 to `https://aistroyka.ai/`; `curl -I https://aistroyka.ai` → 200 (no loop).
 
 ---
 
