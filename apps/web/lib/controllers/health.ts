@@ -1,8 +1,9 @@
 /**
  * Shared health check logic. Used by GET /api/health and GET /api/v1/health.
+ * Uses URL + anon key only for DB check (no cookies) so it works in Edge/Workers.
  */
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@supabase/supabase-js";
 import { hasSupabaseEnv, getPublicConfig, getBuildStamp } from "@/lib/config";
 import { getServerConfig } from "@/lib/config/server";
 
@@ -31,7 +32,8 @@ export async function getHealthResponse(): Promise<{ body: HealthBody; status: n
   let reason: string | undefined;
   let supabaseReachable = false;
   try {
-    const supabase = await createClient();
+    const { NEXT_PUBLIC_SUPABASE_URL: url, NEXT_PUBLIC_SUPABASE_ANON_KEY: key } = getPublicConfig();
+    const supabase = createClient(url, key, { auth: { persistSession: false } });
     const { error } = await supabase.from("tenants").select("id").limit(1);
     if (error) {
       reason = error.message ?? "db_error";
