@@ -8,6 +8,7 @@ import { isTaskAssignedTo } from "@/lib/domain/task-assignments";
 import { enqueueJob } from "@/lib/platform/jobs/job.service";
 import { emitAudit } from "@/lib/observability/audit.service";
 import { emitChange } from "@/lib/sync/change-log.repository";
+import { notifyTenantManagers } from "@/lib/domain/notifications/manager-notifications.repository";
 
 /** Returns { ok, code? }. code = task_invalid | task_not_assigned when not ok. */
 export async function validateTaskForReportLink(
@@ -99,6 +100,14 @@ export async function submitReport(
     change_type: "updated",
     changed_by: ctx.userId,
     payload: { status: "submitted" },
+  });
+
+  await notifyTenantManagers(supabase, ctx.tenantId, {
+    type: "report_submitted",
+    title: "New report submitted",
+    body: `Report ${reportId.slice(0, 8)}…`,
+    target_type: "report",
+    target_id: reportId,
   });
 
   const jobIds: string[] = [];

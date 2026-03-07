@@ -4,6 +4,8 @@ import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from 
 import { assignTask, getTaskById } from "@/lib/domain/tasks/task.service";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { enqueuePushToUser } from "@/lib/platform/push/push.service";
+import { emitAudit } from "@/lib/observability/audit.service";
+import { notifyTenantManagers } from "@/lib/domain/notifications/manager-notifications.repository";
 import {
   getCachedResponse,
   storeResponse,
@@ -56,17 +58,37 @@ export async function POST(
   const { error } = await assignTask(supabase, ctx, taskId, workerId);
   if (error) return NextResponse.json({ error }, { status: error === "Insufficient rights" ? 403 : 400 });
 
+  if (ctx.tenantId && ctx.userId) {
+    await emitAudit(supabase, {
+      tenant_id: ctx.tenantId,
+      user_id: ctx.userId,
+      trace_id: ctx.traceId ?? null,
+      action: "task_assignment",
+      resource_type: "task",
+      resource_id: taskId,
+      details: { assigned_to: workerId },
+    });
+  }
+
+  const { data: task } = ctx.tenantId ? await getTaskById(supabase, ctx, taskId) : { data: null };
+  if (ctx.tenantId) {
+    await notifyTenantManagers(supabase, ctx.tenantId, {
+      type: "task_assigned",
+      title: "Task assigned",
+      body: task?.title ?? "A task was assigned",
+      target_type: "task",
+      target_id: taskId,
+    });
+  }
+
   const admin = getAdminClient();
-  if (admin && ctx.tenantId) {
-    const { data: task } = await getTaskById(supabase, ctx, taskId);
-    if (task) {
-      await enqueuePushToUser(admin, {
-        tenantId: ctx.tenantId,
-        userId: workerId,
-        type: "task_assigned",
-        payload: { task_id: taskId, project_id: task.project_id ?? undefined },
-      });
-    }
+  if (admin && ctx.tenantId && task) {
+    await enqueuePushToUser(admin, {
+      tenantId: ctx.tenantId,
+      userId: workerId,
+      type: "task_assigned",
+      payload: { task_id: taskId, project_id: task.project_id ?? undefined },
+    });
   }
 
   const payload = { ok: true };
