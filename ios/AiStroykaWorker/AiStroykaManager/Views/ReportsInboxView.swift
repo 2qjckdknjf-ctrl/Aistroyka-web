@@ -6,6 +6,7 @@
 import SwiftUI
 
 struct ReportsInboxView: View {
+    var initialProjectId: String? = nil
     @State private var reports: [ReportListItemDTO] = []
     @State private var projects: [ProjectDTO] = []
     @State private var selectedProjectId: String?
@@ -27,7 +28,10 @@ struct ReportsInboxView: View {
             }
             .navigationTitle("Reports")
             .refreshable { await loadAsync() }
-            .onAppear { load() }
+            .onAppear {
+                if let id = initialProjectId, selectedProjectId == nil { selectedProjectId = id }
+                load()
+            }
         }
     }
 
@@ -124,7 +128,7 @@ struct ReportDetailReviewView: View {
             if isLoading && report == nil && errorMessage == nil {
                 LoadingStateView(message: "Loading report…")
             } else if let err = errorMessage, report == nil {
-                ErrorStateView(message: err, retry: load)
+                ErrorStateView(message: err, retry: { load() })
             } else if let r = report {
                 List {
                     Section("Report") {
@@ -142,6 +146,13 @@ struct ReportDetailReviewView: View {
                                 }
                             }
                         }
+                    }
+                    Section("Review actions") {
+                        Text("Approve / Mark reviewed / Request changes")
+                            .font(.subheadline)
+                        Text("Backend does not yet expose report review write endpoints. Actions will be enabled when available.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
                 }
             } else {

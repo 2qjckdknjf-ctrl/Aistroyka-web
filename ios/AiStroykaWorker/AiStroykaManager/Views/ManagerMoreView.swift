@@ -21,7 +21,7 @@ struct ManagerMoreView: View {
                         ManagerSettingsView()
                     }
                     NavigationLink("Notifications") {
-                        NotificationsPlaceholderView()
+                        NotificationsView()
                     }
                 }
             }
