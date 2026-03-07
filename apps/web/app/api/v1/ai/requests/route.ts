@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClientFromRequest } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
@@ -26,7 +26,7 @@ export async function GET(request: Request) {
   const to = url.searchParams.get("to") ?? undefined;
   const q = url.searchParams.get("q")?.trim();
 
-  const supabase = await createClient();
+  const supabase = await createClientFromRequest(request);
   let query = supabase
     .from("jobs")
     .select("id, type, status, payload, attempts, last_error, created_at, updated_at", { count: "exact" })
