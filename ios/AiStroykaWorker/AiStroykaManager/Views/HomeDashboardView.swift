@@ -66,9 +66,30 @@ struct HomeDashboardView: View {
                     Text("Overdue tasks")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
-                    ForEach(Array(overdue.prefix(5).enumerated()), id: \.offset) { _, t in
-                        Text(t.title ?? t.id ?? "")
-                            .font(.caption)
+                    ForEach(Array(overdue.prefix(5)), id: \.id) { t in
+                        NavigationLink(destination: TaskDetailManagerView(taskId: t.id ?? "")) {
+                            Text(t.title ?? t.id ?? "")
+                                .font(.caption)
+                                .foregroundStyle(.primary)
+                        }
+                    }
+                }
+                .padding()
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(.secondarySystemGroupedBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
+            if let openToday = queues.tasksOpenToday, !openToday.isEmpty {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Due today")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    ForEach(Array(openToday.prefix(5)), id: \.id) { t in
+                        NavigationLink(destination: TaskDetailManagerView(taskId: t.id ?? "")) {
+                            Text(t.title ?? t.id ?? "")
+                                .font(.caption)
+                                .foregroundStyle(.primary)
+                        }
                     }
                 }
                 .padding()
@@ -77,9 +98,22 @@ struct HomeDashboardView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 12))
             }
             if let pending = queues.reportsPendingReview, !pending.isEmpty {
-                Text("\(pending.count) report(s) pending review")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Reports pending review")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    ForEach(Array(pending.prefix(5)), id: \.id) { r in
+                        NavigationLink(destination: ReportDetailReviewView(reportId: r.id ?? "")) {
+                            Text(r.id ?? "")
+                                .font(.caption)
+                                .foregroundStyle(.primary)
+                        }
+                    }
+                }
+                .padding()
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(.secondarySystemGroupedBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
             }
         }
     }
