@@ -1,0 +1,43 @@
+# Deploy pre-built patched bundle (no rebundle). Use after: wrangler deploy --dry-run --outdir .open-next/deploy && node scripts/patch-bundle-require.cjs
+# Same as wrangler.toml but main points to patched bundle for production deploy with --no-bundle.
+
+name = "aistroyka-web-dev"
+compatibility_date = "2024-12-30"
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
+main = ".open-next/worker.js"
+
+[assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
+
+[[services]]
+binding = "WORKER_SELF_REFERENCE"
+service = "aistroyka-web-dev"
+
+[env.dev]
+name = "aistroyka-web-dev"
+[env.dev.assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
+[[env.dev.services]]
+binding = "WORKER_SELF_REFERENCE"
+service = "aistroyka-web-dev"
+
+[env.staging]
+name = "aistroyka-web-staging"
+[env.staging.assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
+[[env.staging.services]]
+binding = "WORKER_SELF_REFERENCE"
+service = "aistroyka-web-staging"
+
+[env.production]
+name = "aistroyka-web-production"
+main = ".open-next/deploy/worker-bootstrap.js"
+[env.production.assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
+[[env.production.services]]
+binding = "WORKER_SELF_REFERENCE"
+service = "aistroyka-web-production"
