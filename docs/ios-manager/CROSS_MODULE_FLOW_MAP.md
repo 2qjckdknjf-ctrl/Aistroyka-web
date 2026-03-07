@@ -14,18 +14,18 @@
 | Tasks list | Task detail | Tap task → TaskDetailManagerView |
 | Task detail | Assign | "Assign to worker" → TaskAssigneePickerView (sheet) |
 | Reports list | Report detail | Tap report → ReportDetailReviewView |
-| Dashboard | (future) | "Needs attention" items could link to task/report; not yet deep-linked |
-| More | Notifications | NotificationsView (device list or empty state) |
+| Dashboard | Task detail | Overdue / due today → TaskDetailManagerView |
+| Dashboard | Report detail | Reports pending review → ReportDetailReviewView |
+| More | Notifications | NotificationsView (inbox list; devices in disclosure) |
 | More | Settings | ManagerSettingsView |
 
-## Unsupported / missing backend
+## Unsupported / future
 
-- **Report detail → Approve/Review:** No backend write; shell only.
-- **Notification → target screen:** No notification payload or inbox; no routing.
-- **Dashboard overdue/reports → task or report:** Could add NavigationLink to task/report by id when backend includes id in ops/overview queues; currently display-only.
+- **Notification tap → target screen:** Inbox has target_type/target_id; iOS marks read on tap; programmatic navigation to task/report from notification row not yet wired (would require coordinator or environment).
+- **Universal links / URL scheme** for web → Manager app handoff.
 
-## Future deep-link opportunities
+## Phase 4 updates
 
-- Push notification payload with task_id or report_id → open TaskDetailManagerView or ReportDetailReviewView.
-- Dashboard "Needs attention" rows as links to task/report when queue items include id.
-- Universal links / URL scheme for web → Manager app handoff.
+- Report detail → Approve / Mark reviewed / Request changes: PATCH /api/v1/reports/:id wired; Manager shows real actions and refreshed state.
+- Notifications: GET /api/v1/notifications inbox; PATCH :id/read; Manager shows inbox list and devices in disclosure.
+- Dashboard overdue, due today, reports pending → NavigationLink to TaskDetailManagerView or ReportDetailReviewView.

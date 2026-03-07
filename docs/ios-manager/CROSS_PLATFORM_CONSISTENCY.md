@@ -57,3 +57,13 @@ Manager app, Worker app, and website operate on the same authoritative domain mo
 - **Client identity:** Manager sends x-client: ios_manager; Worker sends ios_lite. Same backend tenant context; no model divergence.
 - **Role:** Manager allows owner, admin, member (GET /api/v1/me); foreman can be added when backend exposes it. Worker does not use role for worker flows.
 - **AI:** Manager lists AI jobs via GET /api/v1/ai/requests (tenant-scoped); report list still shows analysis_status. GET /api/v1/projects/:id/ai not yet in Manager UI; same backend contract when added.
+
+---
+
+## Phase 4 deltas (2026-03-07)
+
+- **Report states after manager review:** Backend worker_reports now has status in (draft, submitted, approved, reviewed, changes_requested); reviewed_at, reviewed_by, manager_note persisted. PATCH /api/v1/reports/:id (manager only). Web and Manager show same status; Worker submit flow unchanged.
+- **Notifications semantics:** manager_notifications table; GET /api/v1/notifications (inbox), PATCH /api/v1/notifications/:id/read. Producers: report_submitted, task_assigned (one row per tenant manager). Manager iOS shows inbox; Worker does not use this table. Push/device registration unchanged.
+- **Assignment semantics:** POST /api/v1/tasks/:id/assign unchanged; audit_logs now receive task_assignment and report_review. Same tenant safety and role permissions (owner/admin/member).
+- **Audit semantics:** audit_logs persist task_assignment (assign route) and report_review (PATCH report). No PII overexposure; optional GET /api/v1/audit/manager-actions not implemented; admin can use existing listAuditLogs.
+- **Dashboard deep links:** Manager dashboard "Needs attention" (overdue, due today, reports pending) navigates to TaskDetailManagerView or ReportDetailReviewView. Same entity ids; safe fallback if entity deleted.
