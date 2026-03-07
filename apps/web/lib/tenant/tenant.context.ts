@@ -3,9 +3,10 @@
  * When RBAC is available, also loads permissionSet and scopes for the user in the tenant.
  */
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createClientFromRequest, ServiceRoleForbiddenError } from "@/lib/supabase/server";
 import { getPermissionsForContext } from "@/lib/authz/authz.service";
 import { getUserScopes } from "@/lib/authz/authz.repository";
+import { TenantForbiddenError } from "./tenant.guard";
 import type { TenantContextOrAbsent, ClientProfile } from "./tenant.types";
 
 const DEFAULT_CLIENT: ClientProfile = "web";
@@ -31,7 +32,13 @@ export async function getTenantContextFromRequest(request: Request): Promise<Ten
   const traceId = getTraceId(request);
   const clientProfile = parseClient(request.headers.get("x-client"));
 
-  const supabase = await createClient();
+  let supabase: Awaited<ReturnType<typeof createClient>>;
+  try {
+    supabase = await createClientFromRequest(request);
+  } catch (e) {
+    if (e instanceof ServiceRoleForbiddenError) throw new TenantForbiddenError();
+    throw e;
+  }
   const { data: { user } } = await supabase.auth.getUser();
   if (!user?.id) {
     return { tenantId: null, userId: null, role: null, subscriptionTier: null, clientProfile, traceId };

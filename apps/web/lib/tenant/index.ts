@@ -4,6 +4,7 @@ export {
 export {
   requireTenant,
   TenantRequiredError,
+  TenantForbiddenError,
 } from "./tenant.guard";
 export {
   authorize,

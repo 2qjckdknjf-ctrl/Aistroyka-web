@@ -12,6 +12,14 @@ export class TenantRequiredError extends Error {
   }
 }
 
+/** Thrown when request uses service_role JWT (API should return 403). */
+export class TenantForbiddenError extends Error {
+  constructor(message = "Service role JWT not allowed") {
+    super(message);
+    this.name = "TenantForbiddenError";
+  }
+}
+
 /**
  * Throws TenantRequiredError if context is absent. Use in routes that must have an active tenant.
  */

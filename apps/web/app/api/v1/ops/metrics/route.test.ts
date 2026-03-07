@@ -1,11 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
 import { GET } from "./route";
 
-vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn().mockResolvedValue({}) }));
+vi.mock("@/lib/supabase/server", () => ({
+  createClient: vi.fn().mockResolvedValue({}),
+  createClientFromRequest: vi.fn().mockResolvedValue({}),
+}));
 vi.mock("@/lib/tenant", () => ({
   getTenantContextFromRequest: vi.fn().mockResolvedValue({ tenantId: "t1", userId: "u1" }),
   requireTenant: vi.fn(),
   TenantRequiredError: class TenantRequiredError extends Error {},
+  TenantForbiddenError: class TenantForbiddenError extends Error {},
 }));
 vi.mock("@/lib/ops/ops-metrics.repository", () => ({
   getOpsMetrics: vi.fn().mockResolvedValue({
@@ -24,7 +28,7 @@ vi.mock("@/lib/ops/ops-metrics.repository", () => ({
 }));
 
 describe("GET /api/v1/ops/metrics", () => {
-  it("returns metrics shape and tenant-scoped", async () => {
+  it("returns 200 with valid bearer and tenant membership", async () => {
     const req = new Request("https://x/api/v1/ops/metrics");
     const res = await GET(req);
     expect(res.status).toBe(200);
@@ -57,14 +61,48 @@ describe("GET /api/v1/ops/metrics", () => {
     });
   });
 
-  it("returns 401 when tenant required error", async () => {
+  it("returns 401 when no auth (requireTenant throws TenantRequiredError)", async () => {
     const { getTenantContextFromRequest, requireTenant, TenantRequiredError } = await import("@/lib/tenant");
+    vi.mocked(getTenantContextFromRequest).mockResolvedValueOnce({
+      tenantId: null,
+      userId: null,
+      role: null,
+      subscriptionTier: null,
+      clientProfile: "web",
+      traceId: "t",
+    });
     vi.mocked(requireTenant).mockImplementation(() => {
-      throw new TenantRequiredError("no membership");
+      throw new TenantRequiredError("Authentication required");
     });
     const req = new Request("https://x/api/v1/ops/metrics");
     const res = await GET(req);
     expect(res.status).toBe(401);
-    vi.mocked(requireTenant).mockImplementation(() => {});
+    const body = await res.json();
+    expect(body.error).toBe("Authentication required");
+  });
+
+  it("returns 403 when valid bearer but no tenant membership", async () => {
+    const { getTenantContextFromRequest } = await import("@/lib/tenant");
+    vi.mocked(getTenantContextFromRequest).mockResolvedValueOnce({
+      tenantId: null,
+      userId: "u1",
+      role: null,
+      subscriptionTier: null,
+      clientProfile: "web",
+      traceId: "t",
+    });
+    const req = new Request("https://x/api/v1/ops/metrics");
+    const res = await GET(req);
+    expect(res.status).toBe(403);
+    const body = await res.json();
+    expect(body.error).toBe("User has no tenant membership");
+  });
+
+  it("returns 403 when service_role JWT (getTenantContextFromRequest throws TenantForbiddenError)", async () => {
+    const { getTenantContextFromRequest, TenantForbiddenError } = await import("@/lib/tenant");
+    vi.mocked(getTenantContextFromRequest).mockRejectedValueOnce(new TenantForbiddenError());
+    const req = new Request("https://x/api/v1/ops/metrics");
+    const res = await GET(req);
+    expect(res.status).toBe(403);
   });
 });

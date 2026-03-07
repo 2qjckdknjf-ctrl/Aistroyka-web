@@ -7,6 +7,16 @@
 
 ---
 
+## Baseline verification (Stage 0)
+
+| Endpoint | HTTP | Sanitized response |
+|----------|------|--------------------|
+| GET /api/v1/health | 200 | `{"ok":true,"db":"ok","serviceRoleConfigured":true,...}` |
+| POST /api/v1/admin/jobs/cron-tick | 200 | `{"ok":true,"scheduled":0,"processed":0,"tenants":1}` |
+| GET /api/v1/ops/metrics (no auth) | 401 | tenant-scoped; requires Cookie or Authorization |
+
+---
+
 ## Endpoint status (post-deploy)
 
 | Endpoint | HTTP | Result |
@@ -84,3 +94,19 @@ No dynamic require errors observed.
 - One existing user linked to Default tenant for tenant-scoped access.
 
 Smoke user `smoke.manager@example.com` can be created via `scripts/smoke/bootstrap_smoke_user.mjs` (one-time, with service_role in env).
+
+---
+
+## Security hardening (Bearer auth)
+
+- **createClientFromRequest**: when `Authorization: Bearer <token>` is present, uses only that JWT (no cookie fallback). Invalid token → `getUser()` returns null → 401.
+- **service_role JWT**: payload decoded; if `role === "service_role"` → 403 (TenantForbiddenError).
+- **ops/metrics**: no auth → 401; valid Bearer without tenant membership → 403; valid Bearer with membership → 200.
+- Unit tests: `app/api/v1/ops/metrics/route.test.ts` (401 no auth, 403 no membership, 403 service_role, 200 with membership).
+
+---
+
+## How to remove smoke user/tenant
+
+If you created a dedicated smoke tenant: delete it in Supabase Dashboard (SQL or Table Editor).  
+To remove only the smoke user: Supabase Dashboard → Authentication → Users → find `smoke.manager@example.com` → Delete. Then remove the row from `tenant_members` if it referenced a shared tenant.
