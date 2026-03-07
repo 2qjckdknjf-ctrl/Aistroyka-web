@@ -48,3 +48,12 @@ Manager app, Worker app, and website operate on the same authoritative domain mo
 - **Single domain:** Projects, tasks, reports, media, and tenants are defined and stored once; web and both iOS apps use the same API and DTOs where shared.
 - **No parallel APIs:** Manager uses GET /api/v1/projects, tasks, reports (and will use workers, ops); Worker uses worker/* and sync/*. No manager-only backend clones.
 - **Consistency maintained by:** Shared Endpoints.swift DTOs, single APIClient, same Config and auth; backend contract docs and OpenAPI/spec can be added later for formal alignment.
+
+---
+
+## Phase 2 deltas (2026-03-07)
+
+- **Manager now wired:** GET /api/v1/me (role gating), GET /api/v1/ops/overview, GET /api/v1/workers, GET /api/v1/reports/:id, GET /api/v1/tasks/:id, POST /api/v1/tasks, GET /api/v1/ai/requests. Same task statuses, report lifecycle, and media references; Manager reads report detail with media list. Worker unchanged.
+- **Client identity:** Manager sends x-client: ios_manager; Worker sends ios_lite. Same backend tenant context; no model divergence.
+- **Role:** Manager allows owner, admin, member (GET /api/v1/me); foreman can be added when backend exposes it. Worker does not use role for worker flows.
+- **AI:** Manager lists AI jobs via GET /api/v1/ai/requests (tenant-scoped); report list still shows analysis_status. GET /api/v1/projects/:id/ai not yet in Manager UI; same backend contract when added.
