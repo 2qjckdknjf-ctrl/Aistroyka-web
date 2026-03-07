@@ -63,3 +63,25 @@ export async function setEnded(
   if (error || !data) return null;
   return data as WorkerDay;
 }
+
+export async function listDaysForUser(
+  supabase: SupabaseClient,
+  tenantId: string,
+  userId: string,
+  filters: { from?: string; to?: string; limit: number }
+): Promise<WorkerDay[]> {
+  let query = supabase
+    .from("worker_day")
+    .select("id, tenant_id, user_id, day_date, started_at, ended_at, created_at")
+    .eq("tenant_id", tenantId)
+    .eq("user_id", userId)
+    .order("day_date", { ascending: false })
+    .limit(filters.limit);
+
+  if (filters.from) query = query.gte("day_date", filters.from);
+  if (filters.to) query = query.lte("day_date", filters.to);
+
+  const { data, error } = await query;
+  if (error || !data) return [];
+  return data as WorkerDay[];
+}

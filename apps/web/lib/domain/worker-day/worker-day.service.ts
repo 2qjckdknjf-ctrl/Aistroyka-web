@@ -25,3 +25,17 @@ export async function endDay(
   if (!data) return { data: null, error: "Failed to end day" };
   return { data, error: "" };
 }
+
+export async function listDaysForUser(
+  supabase: SupabaseClient,
+  ctx: TenantContext,
+  userId: string,
+  filters: { from?: string; to?: string; limit: number }
+): Promise<{ data: WorkerDay[]; error: string }> {
+  if (!ctx.tenantId) {
+    return { data: [], error: "Unauthorized" };
+  }
+
+  const days = await repo.listDaysForUser(supabase, ctx.tenantId, userId, filters);
+  return { data: days, error: "" };
+}

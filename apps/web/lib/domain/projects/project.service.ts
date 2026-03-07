@@ -36,3 +36,41 @@ export async function createProject(
   if (!project) return { error: "Failed to create project" };
   return { id: project.id };
 }
+
+const PROCESSING_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * Check if project has active AI analysis jobs.
+ */
+export async function hasActiveJobs(
+  supabase: SupabaseClient,
+  ctx: TenantContext,
+  projectId: string
+): Promise<{ hasActiveJobs: boolean; error: string | null }> {
+  if (!canReadProjects(ctx)) {
+    return { hasActiveJobs: false, error: "Insufficient rights" };
+  }
+
+  if (!ctx.tenantId) {
+    return { hasActiveJobs: false, error: "Tenant required" };
+  }
+
+  // Import job repository dynamically to avoid circular dependency
+  const { listJobsByProject } = await import("@/lib/platform/jobs/job.repository");
+  const jobs = await listJobsByProject(supabase, ctx.tenantId, projectId);
+
+  const now = Date.now();
+  const activeJobs = jobs.filter((j) => {
+    if (j.status !== "queued" && j.status !== "running") return false;
+    // Check timeout for running jobs
+    if (j.status === "running" && j.started_at) {
+      const started = new Date(j.started_at).getTime();
+      if (now - started > PROCESSING_TIMEOUT_MS) return false;
+    }
+    // Filter by project_id in payload
+    const payload = j.payload as { project_id?: string } | undefined;
+    return payload?.project_id === projectId;
+  });
+
+  return { hasActiveJobs: activeJobs.length > 0, error: null };
+}

@@ -1,10 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
-import { getProject } from "@/lib/domain/projects/project.service";
-import { listJobsByProject } from "@/lib/platform/jobs/job.repository";
-
-const PROCESSING_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+import { getProject, hasActiveJobs } from "@/lib/domain/projects/project.service";
 
 /**
  * Lightweight poll endpoint for job status.
@@ -37,23 +34,17 @@ export async function GET(
     );
   }
 
-  // Check for active AI analysis jobs for this project
-  const jobs = await listJobsByProject(supabase, ctx.tenantId!, projectId);
-  const now = Date.now();
-  const activeJobs = jobs.filter((j) => {
-    if (j.status !== "queued" && j.status !== "running") return false;
-    // Check timeout for running jobs
-    if (j.status === "running" && j.started_at) {
-      const started = new Date(j.started_at).getTime();
-      if (now - started > PROCESSING_TIMEOUT_MS) return false;
-    }
-    // Filter by project_id in payload
-    const payload = j.payload as { project_id?: string } | undefined;
-    return payload?.project_id === projectId;
-  });
+  // Check for active jobs via service
+  const { hasActiveJobs: active, error: jobsError } = await hasActiveJobs(supabase, ctx, projectId);
+  if (jobsError) {
+    return NextResponse.json(
+      { ok: false, error: { code: "INTERNAL_ERROR", message: jobsError } },
+      { status: 500 }
+    );
+  }
 
   return NextResponse.json({
     ok: true,
-    data: { hasActiveJobs: activeJobs.length > 0 },
+    data: { hasActiveJobs: active },
   });
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
+import { listDaysForUser } from "@/lib/domain/worker-day/worker-day.service";
 
 export const dynamic = "force-dynamic";
 
@@ -28,18 +29,12 @@ export async function GET(
   const limit = Math.min(parseInt(url.searchParams.get("limit") ?? "31", 10) || 31, 90);
 
   const supabase = await createClient();
-  let query = supabase
-    .from("worker_day")
-    .select("id, tenant_id, user_id, day_date, started_at, ended_at, created_at")
-    .eq("tenant_id", ctx.tenantId!)
-    .eq("user_id", userId)
-    .order("day_date", { ascending: false })
-    .limit(limit);
+  const { data, error } = await listDaysForUser(supabase, ctx, userId, { from, to, limit });
 
-  if (from) query = query.gte("day_date", from);
-  if (to) query = query.lte("day_date", to);
+  if (error) {
+    const status = error === "Unauthorized" ? 401 : 500;
+    return NextResponse.json({ error }, { status });
+  }
 
-  const { data, error } = await query;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ data: data ?? [] });
+  return NextResponse.json({ data });
 }
