@@ -67,6 +67,15 @@
 		FA7480282F5B2BA60043EC01 /* Endpoints.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA747B102F5B2B9E0043EC01 /* Endpoints.swift */; };
 		FA7480292F5B2BA60043EC01 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA747B122F5B2B9E0043EC01 /* AuthService.swift */; };
 		FA74802A2F5B2BA60043EC01 /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA747B3B2F5B2BA40043EC01 /* NetworkMonitor.swift */; };
+		FA7480402F5B2BA60043EC01 /* LoadingStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA7480412F5B2BA60043EC01 /* LoadingStateView.swift */; };
+		FA7480422F5B2BA60043EC01 /* EmptyStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA7480432F5B2BA60043EC01 /* EmptyStateView.swift */; };
+		FA7480442F5B2BA60043EC01 /* ErrorStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA7480452F5B2BA60043EC01 /* ErrorStateView.swift */; };
+		FA7480462F5B2BA60043EC01 /* KPICard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA7480472F5B2BA60043EC01 /* KPICard.swift */; };
+		FA7480502F5B2BA60043EC01 /* TeamOverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA7480512F5B2BA60043EC01 /* TeamOverviewView.swift */; };
+		FA7480522F5B2BA60043EC01 /* ReportsInboxView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA7480532F5B2BA60043EC01 /* ReportsInboxView.swift */; };
+		FA7480542F5B2BA60043EC01 /* TasksListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA7480552F5B2BA60043EC01 /* TasksListView.swift */; };
+		FA7480562F5B2BA60043EC01 /* AITabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA7480572F5B2BA60043EC01 /* AITabView.swift */; };
+		FA7480582F5B2BA60043EC01 /* SectionHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA7480592F5B2BA60043EC01 /* SectionHeaderView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -147,6 +156,15 @@
 		FA7480202F5B2BA60043EC01 /* ManagerSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManagerSettingsView.swift; sourceTree = "<group>"; };
 		FA7480222F5B2BA60043EC01 /* NotificationsPlaceholderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsPlaceholderView.swift; sourceTree = "<group>"; };
 		FA74803C2F5B2BA60043EC01 /* ManagerAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManagerAPI.swift; sourceTree = "<group>"; };
+		FA7480412F5B2BA60043EC01 /* LoadingStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingStateView.swift; sourceTree = "<group>"; };
+		FA7480432F5B2BA60043EC01 /* EmptyStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyStateView.swift; sourceTree = "<group>"; };
+		FA7480452F5B2BA60043EC01 /* ErrorStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorStateView.swift; sourceTree = "<group>"; };
+		FA7480472F5B2BA60043EC01 /* KPICard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KPICard.swift; sourceTree = "<group>"; };
+		FA7480512F5B2BA60043EC01 /* TeamOverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeamOverviewView.swift; sourceTree = "<group>"; };
+		FA7480532F5B2BA60043EC01 /* ReportsInboxView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportsInboxView.swift; sourceTree = "<group>"; };
+		FA7480552F5B2BA60043EC01 /* TasksListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TasksListView.swift; sourceTree = "<group>"; };
+		FA7480572F5B2BA60043EC01 /* AITabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AITabView.swift; sourceTree = "<group>"; };
+		FA7480592F5B2BA60043EC01 /* SectionHeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionHeaderView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -210,12 +228,25 @@
 				FA7480032F5B2BA60043EC01 /* AiStroykaManagerApp.swift */,
 				FA7480052F5B2BA60043EC01 /* ManagerSessionState.swift */,
 				FA7480072F5B2BA60043EC01 /* ManagerRootView.swift */,
+				FA7480482F5B2BA60043EC01 /* Design */,
 				FA74803D2F5B2BA60043EC01 /* Services */,
 				FA7480312F5B2BA60043EC01 /* Views */,
 				FA7480082F5B2BA60043EC01 /* Info.plist */,
 				FA74800A2F5B2BA60043EC01 /* Assets.xcassets */,
 			);
 			path = AiStroykaManager;
+			sourceTree = "<group>";
+		};
+		FA7480482F5B2BA60043EC01 /* Design */ = {
+			isa = PBXGroup;
+			children = (
+				FA7480412F5B2BA60043EC01 /* LoadingStateView.swift */,
+				FA7480432F5B2BA60043EC01 /* EmptyStateView.swift */,
+				FA7480452F5B2BA60043EC01 /* ErrorStateView.swift */,
+				FA7480472F5B2BA60043EC01 /* KPICard.swift */,
+				FA7480592F5B2BA60043EC01 /* SectionHeaderView.swift */,
+			);
+			path = Design;
 			sourceTree = "<group>";
 		};
 		FA74803D2F5B2BA60043EC01 /* Services */ = {
@@ -235,9 +266,13 @@
 				FA7480122F5B2BA60043EC01 /* HomeDashboardView.swift */,
 				FA7480142F5B2BA60043EC01 /* ProjectsListView.swift */,
 				FA7480162F5B2BA60043EC01 /* TasksListPlaceholderView.swift */,
+				FA7480552F5B2BA60043EC01 /* TasksListView.swift */,
 				FA7480182F5B2BA60043EC01 /* ReportsInboxPlaceholderView.swift */,
+				FA7480532F5B2BA60043EC01 /* ReportsInboxView.swift */,
 				FA74801A2F5B2BA60043EC01 /* TeamOverviewPlaceholderView.swift */,
+				FA7480512F5B2BA60043EC01 /* TeamOverviewView.swift */,
 				FA74801C2F5B2BA60043EC01 /* AICopilotPlaceholderView.swift */,
+				FA7480572F5B2BA60043EC01 /* AITabView.swift */,
 				FA74801E2F5B2BA60043EC01 /* ManagerMoreView.swift */,
 				FA7480202F5B2BA60043EC01 /* ManagerSettingsView.swift */,
 				FA7480222F5B2BA60043EC01 /* NotificationsPlaceholderView.swift */,
@@ -581,13 +616,22 @@
 				FA7480112F5B2BA60043EC01 /* HomeDashboardView.swift in Sources */,
 				FA7480132F5B2BA60043EC01 /* ProjectsListView.swift in Sources */,
 				FA7480152F5B2BA60043EC01 /* TasksListPlaceholderView.swift in Sources */,
+				FA7480542F5B2BA60043EC01 /* TasksListView.swift in Sources */,
 				FA7480172F5B2BA60043EC01 /* ReportsInboxPlaceholderView.swift in Sources */,
+				FA7480522F5B2BA60043EC01 /* ReportsInboxView.swift in Sources */,
 				FA7480192F5B2BA60043EC01 /* TeamOverviewPlaceholderView.swift in Sources */,
+				FA7480502F5B2BA60043EC01 /* TeamOverviewView.swift in Sources */,
+				FA7480562F5B2BA60043EC01 /* AITabView.swift in Sources */,
+				FA7480582F5B2BA60043EC01 /* SectionHeaderView.swift in Sources */,
 				FA74801B2F5B2BA60043EC01 /* AICopilotPlaceholderView.swift in Sources */,
 				FA74801D2F5B2BA60043EC01 /* ManagerMoreView.swift in Sources */,
 				FA74801F2F5B2BA60043EC01 /* ManagerSettingsView.swift in Sources */,
 				FA7480212F5B2BA60043EC01 /* NotificationsPlaceholderView.swift in Sources */,
 				FA74803B2F5B2BA60043EC01 /* ManagerAPI.swift in Sources */,
+				FA7480402F5B2BA60043EC01 /* LoadingStateView.swift in Sources */,
+				FA7480422F5B2BA60043EC01 /* EmptyStateView.swift in Sources */,
+				FA7480442F5B2BA60043EC01 /* ErrorStateView.swift in Sources */,
+				FA7480462F5B2BA60043EC01 /* KPICard.swift in Sources */,
 				FA7480232F5B2BA60043EC01 /* APIError.swift in Sources */,
 				FA7480242F5B2BA60043EC01 /* Config.swift in Sources */,
 				FA7480252F5B2BA60043EC01 /* DeviceContext.swift in Sources */,

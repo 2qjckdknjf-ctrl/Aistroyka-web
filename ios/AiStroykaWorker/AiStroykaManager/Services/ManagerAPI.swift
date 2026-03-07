@@ -9,6 +9,11 @@ import Foundation
 
 enum ManagerAPI {
 
+    /// GET /api/v1/me — current user tenant + role for role gating.
+    static func me() async throws -> MeResponse {
+        try await APIClient.shared.request(path: "me")
+    }
+
     /// GET /api/v1/projects — list projects (tenant-scoped).
     static func projects() async throws -> [ProjectDTO] {
         let r: ProjectsResponse = try await APIClient.shared.request(path: "projects")
@@ -34,6 +39,60 @@ enum ManagerAPI {
         if let l = limit { components.append("limit=\(l)") }
         let query = components.isEmpty ? "" : "?" + components.joined(separator: "&")
         let r: ReportsListResponse = try await APIClient.shared.request(path: "reports\(query)")
+        return r.data ?? []
+    }
+
+    /// GET /api/v1/ops/overview — KPIs and queues for dashboard.
+    static func opsOverview(limit: Int? = nil, projectId: String? = nil) async throws -> OpsOverviewDTO {
+        var components = [String]()
+        if let l = limit { components.append("limit=\(l)") }
+        if let id = projectId, !id.isEmpty { components.append("project_id=\(id.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? id)") }
+        let query = components.isEmpty ? "" : "?" + components.joined(separator: "&")
+        return try await APIClient.shared.request(path: "ops/overview\(query)")
+    }
+
+    /// GET /api/v1/workers — list workers with last activity (tenant-scoped).
+    static func workers(limit: Int? = nil) async throws -> [WorkerRowDTO] {
+        var path = "workers"
+        if let l = limit { path += "?limit=\(l)" }
+        let r: WorkersListResponse = try await APIClient.shared.request(path: path)
+        return r.data ?? []
+    }
+
+    /// GET /api/v1/reports/:id — report detail with media.
+    static func reportDetail(id: String) async throws -> ReportDetailDTO {
+        let r: ReportDetailResponse = try await APIClient.shared.request(path: "reports/\(id)")
+        guard let data = r.data else { throw APIError(statusCode: nil, code: nil, message: "No data") }
+        return data
+    }
+
+    /// GET /api/v1/tasks/:id — task detail.
+    static func taskDetail(id: String) async throws -> TaskDetailDTO {
+        let r: TaskDetailResponse = try await APIClient.shared.request(path: "tasks/\(id)")
+        guard let data = r.data else { throw APIError(statusCode: nil, code: nil, message: "No data") }
+        return data
+    }
+
+    /// POST /api/v1/tasks — create task.
+    static func createTask(projectId: String, title: String, idempotencyKey: String) async throws -> TaskDetailDTO {
+        struct Body: Encodable {
+            let projectId: String
+            let title: String
+            enum CodingKeys: String, CodingKey { case projectId = "project_id"; case title }
+        }
+        let r: TaskDetailResponse = try await APIClient.shared.request(path: "tasks", method: "POST", body: Body(projectId: projectId, title: title), idempotencyKey: idempotencyKey)
+        guard let data = r.data else { throw APIError(statusCode: nil, code: nil, message: "No data") }
+        return data
+    }
+
+    /// GET /api/v1/ai/requests — list AI jobs (tenant-scoped).
+    static func aiRequests(limit: Int? = nil, offset: Int? = nil, status: String? = nil) async throws -> [AIJobDTO] {
+        var components = [String]()
+        if let l = limit { components.append("limit=\(l)") }
+        if let o = offset { components.append("offset=\(o)") }
+        if let s = status, !s.isEmpty { components.append("status=\(s.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? s)") }
+        let query = components.isEmpty ? "" : "?" + components.joined(separator: "&")
+        let r: AIRequestsResponse = try await APIClient.shared.request(path: "ai/requests\(query)")
         return r.data ?? []
     }
 }
@@ -66,3 +125,135 @@ struct TasksListResponse: Decodable {
     let data: [TaskDTO]?
     let total: Int?
 }
+
+/// GET /api/v1/me returns { data: { tenant_id, user_id, role } }.
+struct MeResponse: Decodable {
+    let data: MeData?
+    struct MeData: Decodable {
+        let tenantId: String?
+        let userId: String?
+        let role: String?
+        enum CodingKeys: String, CodingKey {
+            case tenantId = "tenant_id"
+            case userId = "user_id"
+            case role
+        }
+    }
+}
+
+/// GET /api/v1/ops/overview — kpis + queues.
+struct OpsOverviewDTO: Decodable {
+    let kpis: OpsOverviewKpis?
+    let queues: OpsOverviewQueues?
+    struct OpsOverviewKpis: Decodable {
+        let activeProjects: Int?
+        let activeWorkersToday: Int?
+        let reportsToday: Int?
+        let stuckUploads: Int?
+        let offlineDevices: Int?
+        let failedJobs24h: Int?
+        let tasksAssignedToday: Int?
+        let tasksCompletedToday: Int?
+        let tasksOpenToday: Int?
+        let tasksOverdue: Int?
+        enum CodingKeys: String, CodingKey {
+            case activeProjects
+            case activeWorkersToday
+            case reportsToday
+            case stuckUploads
+            case offlineDevices
+            case failedJobs24h
+            case tasksAssignedToday = "tasks_assigned_today"
+            case tasksCompletedToday = "tasks_completed_today"
+            case tasksOpenToday = "tasks_open_today"
+            case tasksOverdue = "tasks_overdue"
+        }
+    }
+    struct OpsOverviewQueues: Decodable {
+        let reportsPendingReview: [QueueItem]?
+        let tasksOverdue: [TaskQueueItem]?
+    }
+}
+struct QueueItem: Decodable { let id: String?; let status: String?; let createdAt: String?; enum CodingKeys: String, CodingKey { case id; case status; case createdAt = "created_at" } }
+struct TaskQueueItem: Decodable { let id: String?; let title: String?; let dueDate: String?; enum CodingKeys: String, CodingKey { case id; case title; case dueDate = "due_date" } }
+
+/// GET /api/v1/workers — worker row.
+struct WorkerRowDTO: Decodable {
+    let userId: String
+    let lastDayDate: String?
+    let lastStartedAt: String?
+    let lastEndedAt: String?
+    let lastReportSubmittedAt: String?
+    let anomalies: WorkerAnomalies?
+    enum CodingKeys: String, CodingKey {
+        case userId = "user_id"
+        case lastDayDate = "last_day_date"
+        case lastStartedAt = "last_started_at"
+        case lastEndedAt = "last_ended_at"
+        case lastReportSubmittedAt = "last_report_submitted_at"
+        case anomalies
+    }
+}
+struct WorkerAnomalies: Decodable {
+    let openShift: Bool?
+    let overtime: Bool?
+    let noActivity: Bool?
+    enum CodingKeys: String, CodingKey { case openShift = "open_shift"; case overtime; case noActivity = "no_activity" }
+}
+struct WorkersListResponse: Decodable { let data: [WorkerRowDTO]? }
+
+/// GET /api/v1/reports/:id — report detail (spread report + media).
+struct ReportDetailDTO: Decodable {
+    let id: String?
+    let tenantId: String?
+    let userId: String?
+    let taskId: String?
+    let status: String?
+    let createdAt: String?
+    let submittedAt: String?
+    let media: [ReportMediaItem]?
+    enum CodingKeys: String, CodingKey {
+        case id; case tenantId = "tenant_id"; case userId = "user_id"; case taskId = "task_id"
+        case status; case createdAt = "created_at"; case submittedAt = "submitted_at"; case media
+    }
+}
+struct ReportMediaItem: Decodable {
+    let mediaId: String?
+    let uploadSessionId: String?
+    enum CodingKeys: String, CodingKey { case mediaId = "media_id"; case uploadSessionId = "upload_session_id" }
+}
+struct ReportDetailResponse: Decodable { let data: ReportDetailDTO? }
+
+/// GET /api/v1/tasks/:id — task detail.
+struct TaskDetailDTO: Decodable {
+    let id: String?
+    let title: String?
+    let status: String?
+    let projectId: String?
+    let dueDate: String?
+    let assignedTo: String?
+    let reportId: String?
+    let reportStatus: String?
+    enum CodingKeys: String, CodingKey {
+        case id; case title; case status; case projectId = "project_id"; case dueDate = "due_date"
+        case assignedTo = "assigned_to"; case reportId = "report_id"; case reportStatus = "report_status"
+    }
+}
+struct TaskDetailResponse: Decodable { let data: TaskDetailDTO? }
+
+/// GET /api/v1/ai/requests — AI job row.
+struct AIJobDTO: Decodable {
+    let id: String?
+    let type: String?
+    let status: String?
+    let entity: String?
+    let attempts: Int?
+    let lastError: String?
+    let createdAt: String?
+    let updatedAt: String?
+    enum CodingKeys: String, CodingKey {
+        case id; case type; case status; case entity
+        case attempts; case lastError = "last_error"; case createdAt = "created_at"; case updatedAt = "updated_at"
+    }
+}
+struct AIRequestsResponse: Decodable { let data: [AIJobDTO]? }

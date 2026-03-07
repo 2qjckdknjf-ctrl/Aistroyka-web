@@ -16,16 +16,16 @@ struct ManagerTabShell: View {
             ProjectsListView()
                 .tabItem { Label("Projects", systemImage: "folder.fill") }
                 .tag(1)
-            TasksListPlaceholderView()
+            TasksListView()
                 .tabItem { Label("Tasks", systemImage: "checklist") }
                 .tag(2)
-            ReportsInboxPlaceholderView()
+            ReportsInboxView()
                 .tabItem { Label("Reports", systemImage: "doc.text.fill") }
                 .tag(3)
-            TeamOverviewPlaceholderView()
+            TeamOverviewView()
                 .tabItem { Label("Team", systemImage: "person.3.fill") }
                 .tag(4)
-            AICopilotPlaceholderView()
+            AITabView()
                 .tabItem { Label("AI", systemImage: "sparkles") }
                 .tag(5)
             ManagerMoreView()

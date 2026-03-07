@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClientFromRequest } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { getOpsOverview } from "@/lib/ops/ops-overview.repository";
 import { withRequestIdAndTiming } from "@/lib/observability";
@@ -31,7 +31,7 @@ export async function GET(request: Request) {
   const from = url.searchParams.get("from") ?? undefined;
   const to = url.searchParams.get("to") ?? undefined;
 
-  const supabase = await createClient();
+  const supabase = await createClientFromRequest(request);
   const overview = await getOpsOverview(supabase, ctx.tenantId!, { limit, projectId, from, to });
   return withRequestIdAndTiming(request, NextResponse.json(overview), { route: ROUTE_KEY, method: "GET", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
 }
