@@ -6,6 +6,7 @@
 import SwiftUI
 
 struct TasksListView: View {
+    var initialProjectId: String? = nil
     @State private var tasks: [TaskDTO] = []
     @State private var projects: [ProjectDTO] = []
     @State private var selectedProjectId: String?
@@ -33,7 +34,10 @@ struct TasksListView: View {
             .navigationTitle("Tasks")
             .toolbar { ToolbarItem(placement: .primaryAction) { Button("New", systemImage: "plus") { showCreate = true } } }
             .refreshable { await loadAsync() }
-            .onAppear { load() }
+            .onAppear {
+                if let id = initialProjectId, selectedProjectId == nil { selectedProjectId = id }
+                load()
+            }
             .sheet(isPresented: $showCreate) {
                 if let proj = projects.first ?? projects.first(where: { $0.id == selectedProjectId }) {
                     TaskCreateEditView(projectId: proj.id, projectName: proj.name, onDismiss: { showCreate = false; load() })
@@ -132,6 +136,9 @@ struct TaskDetailManagerView: View {
     @State private var task: TaskDetailDTO?
     @State private var isLoading = true
     @State private var errorMessage: String?
+    @State private var showAssignPicker = false
+    @State private var assignError: String?
+    @State private var isAssigning = false
 
     var body: some View {
         Group {
@@ -145,11 +152,41 @@ struct TaskDetailManagerView: View {
                         LabeledContent("Title", value: t.title ?? "—")
                         LabeledContent("Status", value: t.status ?? "—")
                         if let d = t.dueDate { LabeledContent("Due", value: d) }
+                        if let a = t.assignedTo { LabeledContent("Assigned to", value: a) }
                         if let r = t.reportId { LabeledContent("Report", value: r) }
                         if let s = t.reportStatus { LabeledContent("Report status", value: s) }
                     }
+                    Section("Assign") {
+                        Button {
+                            showAssignPicker = true
+                            assignError = nil
+                        } label: {
+                            HStack {
+                                Text("Assign to worker")
+                                if isAssigning { Spacer(); ProgressView() }
+                            }
+                        }
+                        .disabled(isAssigning)
+                        if let err = assignError {
+                            Text(err)
+                                .foregroundStyle(.red)
+                                .font(.caption)
+                        }
+                    }
                 }
                 .navigationTitle(t.title ?? "Task")
+                .refreshable { await loadAsync() }
+                .sheet(isPresented: $showAssignPicker) {
+                    TaskAssigneePickerView(
+                        taskId: taskId,
+                        currentAssignedTo: task?.assignedTo,
+                        onSelect: { workerId in
+                            assign(to: workerId)
+                            showAssignPicker = false
+                        },
+                        onDismiss: { showAssignPicker = false }
+                    )
+                }
             } else {
                 EmptyStateView(title: "Task not found", subtitle: nil)
             }
@@ -160,10 +197,91 @@ struct TaskDetailManagerView: View {
     private func load() {
         errorMessage = nil
         isLoading = true
+        Task { await loadAsync() }
+    }
+
+    private func loadAsync() async {
+        errorMessage = nil
+        isLoading = true
+        defer { isLoading = false }
+        do {
+            task = try await ManagerAPI.taskDetail(id: taskId)
+        } catch let e as APIError {
+            errorMessage = e.message
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func assign(to workerId: String) {
+        assignError = nil
+        isAssigning = true
+        Task {
+            defer { isAssigning = false }
+            do {
+                try await ManagerAPI.assignTask(taskId: taskId, workerId: workerId, idempotencyKey: UUID().uuidString)
+                await loadAsync()
+            } catch let e as APIError {
+                assignError = e.message
+            } catch {
+                assignError = error.localizedDescription
+            }
+        }
+    }
+}
+
+/// Assignee picker sheet: list workers, tap to assign.
+struct TaskAssigneePickerView: View {
+    let taskId: String
+    let currentAssignedTo: String?
+    let onSelect: (String) -> Void
+    let onDismiss: () -> Void
+    @State private var workers: [WorkerRowDTO] = []
+    @State private var isLoading = true
+    @State private var errorMessage: String?
+
+    var body: some View {
+        NavigationStack {
+            Group {
+                if isLoading && workers.isEmpty && errorMessage == nil {
+                    LoadingStateView(message: "Loading workers…")
+                } else if let err = errorMessage, workers.isEmpty {
+                    ErrorStateView(message: err, retry: { load() })
+                } else if workers.isEmpty {
+                    EmptyStateView(title: "No workers", subtitle: "Team members will appear here.")
+                } else {
+                    List(workers, id: \.userId) { w in
+                        Button {
+                            onSelect(w.userId)
+                        } label: {
+                            HStack {
+                                Text(w.userId)
+                                    .font(.subheadline)
+                                if w.userId == currentAssignedTo {
+                                    Spacer()
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundStyle(.green)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Assign to")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { onDismiss() } }
+            }
+            .onAppear { load() }
+        }
+    }
+
+    private func load() {
+        errorMessage = nil
+        isLoading = true
         Task {
             defer { isLoading = false }
             do {
-                task = try await ManagerAPI.taskDetail(id: taskId)
+                workers = try await ManagerAPI.workers(limit: 200)
             } catch let e as APIError {
                 errorMessage = e.message
             } catch {

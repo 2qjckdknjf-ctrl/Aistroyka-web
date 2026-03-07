@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClientFromRequest } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { assignTask, getTaskById } from "@/lib/domain/tasks/task.service";
 import { getAdminClient } from "@/lib/supabase/admin";
@@ -52,7 +52,7 @@ export async function POST(
   const workerId = (body.worker_id ?? body.assignee_id)?.trim();
   if (!workerId) return NextResponse.json({ error: "worker_id or assignee_id required" }, { status: 400 });
 
-  const supabase = await createClient();
+  const supabase = await createClientFromRequest(request);
   const { error } = await assignTask(supabase, ctx, taskId, workerId);
   if (error) return NextResponse.json({ error }, { status: error === "Insufficient rights" ? 403 : 400 });
 
