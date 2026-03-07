@@ -8,12 +8,28 @@
 #   CRON_SECRET=xxx BASE_URL=... ./scripts/smoke/pilot_launch.sh          # cron-tick when REQUIRE_CRON_SECRET=true
 #   COOKIE="sb-...=..." BASE_URL=... ./scripts/smoke/pilot_launch.sh      # ops/metrics tenant-scoped (session cookie)
 #   AUTH_HEADER="Bearer <token>" BASE_URL=... ./scripts/smoke/pilot_launch.sh  # or use Authorization header for metrics
+#   SMOKE_EMAIL=... SMOKE_PASSWORD=... with SUPABASE_URL + SUPABASE_ANON_KEY (or NEXT_PUBLIC_*) => optional token for metrics (no secrets printed)
 set -euo pipefail
 BASE="${BASE_URL:-http://localhost:3000}"
 CRON="${CRON_SECRET:-}"
 AUTH="${AUTH_HEADER:-}"
 COOKIE="${COOKIE:-}"
 FAIL=0
+
+# Optional: obtain Bearer token for ops/metrics when COOKIE/AUTH_HEADER not set (env-only; do not log credentials)
+if [[ -z "$AUTH" && -z "$COOKIE" ]]; then
+  SUPA_URL="${SUPABASE_URL:-${NEXT_PUBLIC_SUPABASE_URL:-}}"
+  SUPA_KEY="${SUPABASE_ANON_KEY:-${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}}"
+  if [[ -n "${SMOKE_EMAIL:-}" && -n "${SMOKE_PASSWORD:-}" && -n "$SUPA_URL" && -n "$SUPA_KEY" ]]; then
+    TOKEN_RESP=$(curl -sS -m 15 -X POST "${SUPA_URL}/auth/v1/token?grant_type=password" \
+      -H "Content-Type: application/json" -H "apikey: $SUPA_KEY" \
+      --data-binary "{\"email\":\"${SMOKE_EMAIL}\",\"password\":\"${SMOKE_PASSWORD}\"}" 2>/dev/null || true)
+    if command -v jq &>/dev/null; then
+      TOKEN=$(printf '%s' "$TOKEN_RESP" | jq -r '.access_token // empty' 2>/dev/null)
+      [[ -n "$TOKEN" ]] && AUTH="Bearer $TOKEN"
+    fi
+  fi
+fi
 
 # Default from/to: last 7 days to today (portable date)
 TO=$(date -u +%Y-%m-%d)
