@@ -66,6 +66,22 @@ enum ManagerAPI {
         return data
     }
 
+    /// PATCH /api/v1/reports/:id — manager review (approved / reviewed / changes_requested). Optional manager_note.
+    static func reportReview(reportId: String, status: String, managerNote: String?) async throws -> ReportDetailDTO {
+        struct Body: Encodable {
+            let status: String
+            let managerNote: String?
+            enum CodingKeys: String, CodingKey { case status; case managerNote = "manager_note" }
+        }
+        let r: ReportDetailResponse = try await APIClient.shared.request(
+            path: "reports/\(reportId)",
+            method: "PATCH",
+            body: Body(status: status, managerNote: managerNote)
+        )
+        guard let data = r.data else { throw APIError(statusCode: nil, code: nil, message: "No data") }
+        return data
+    }
+
     /// GET /api/v1/tasks/:id — task detail.
     static func taskDetail(id: String) async throws -> TaskDetailDTO {
         let r: TaskDetailResponse = try await APIClient.shared.request(path: "tasks/\(id)")
@@ -138,6 +154,21 @@ enum ManagerAPI {
         let query = components.isEmpty ? "" : "?" + components.joined(separator: "&")
         let r: DevicesListResponse = try await APIClient.shared.request(path: "devices\(query)")
         return r.data ?? []
+    }
+
+    /// GET /api/v1/notifications — manager inbox (tenant-scoped). Paginated.
+    static func notifications(limit: Int? = nil, offset: Int? = nil) async throws -> (items: [NotificationInboxItemDTO], total: Int) {
+        var components = [String]()
+        if let l = limit { components.append("limit=\(l)") }
+        if let o = offset { components.append("offset=\(o)") }
+        let query = components.isEmpty ? "" : "?" + components.joined(separator: "&")
+        let r: NotificationsListResponse = try await APIClient.shared.request(path: "notifications\(query)")
+        return (r.data ?? [], r.total ?? 0)
+    }
+
+    /// PATCH /api/v1/notifications/:id/read — mark as read.
+    static func markNotificationRead(id: String) async throws {
+        let _: MarkReadResponse = try await APIClient.shared.request(path: "notifications/\(id)/read", method: "PATCH")
     }
 }
 
@@ -216,6 +247,7 @@ struct OpsOverviewDTO: Decodable {
     struct OpsOverviewQueues: Decodable {
         let reportsPendingReview: [QueueItem]?
         let tasksOverdue: [TaskQueueItem]?
+        let tasksOpenToday: [TaskQueueItem]?
     }
 }
 struct QueueItem: Decodable { let id: String?; let status: String?; let createdAt: String?; enum CodingKeys: String, CodingKey { case id; case status; case createdAt = "created_at" } }
@@ -246,7 +278,7 @@ struct WorkerAnomalies: Decodable {
 }
 struct WorkersListResponse: Decodable { let data: [WorkerRowDTO]? }
 
-/// GET /api/v1/reports/:id — report detail (spread report + media).
+/// GET /api/v1/reports/:id — report detail (spread report + media). PATCH returns same shape with reviewed_*.
 struct ReportDetailDTO: Decodable {
     let id: String?
     let tenantId: String?
@@ -255,10 +287,15 @@ struct ReportDetailDTO: Decodable {
     let status: String?
     let createdAt: String?
     let submittedAt: String?
+    let reviewedAt: String?
+    let reviewedBy: String?
+    let managerNote: String?
     let media: [ReportMediaItem]?
     enum CodingKeys: String, CodingKey {
         case id; case tenantId = "tenant_id"; case userId = "user_id"; case taskId = "task_id"
-        case status; case createdAt = "created_at"; case submittedAt = "submitted_at"; case media
+        case status; case createdAt = "created_at"; case submittedAt = "submitted_at"
+        case reviewedAt = "reviewed_at"; case reviewedBy = "reviewed_by"; case managerNote = "manager_note"
+        case media
     }
 }
 struct ReportMediaItem: Decodable {
@@ -329,6 +366,25 @@ struct DeviceRowDTO: Decodable {
     }
 }
 struct DevicesListResponse: Decodable { let data: [DeviceRowDTO]?; let total: Int? }
+
+/// GET /api/v1/notifications — inbox item.
+struct NotificationInboxItemDTO: Decodable {
+    let id: String
+    let type: String?
+    let title: String?
+    let body: String?
+    let createdAt: String?
+    let readAt: String?
+    let targetType: String?
+    let targetId: String?
+    enum CodingKeys: String, CodingKey {
+        case id; case type; case title; case body
+        case createdAt = "created_at"; case readAt = "read_at"
+        case targetType = "target_type"; case targetId = "target_id"
+    }
+}
+struct NotificationsListResponse: Decodable { let data: [NotificationInboxItemDTO]?; let total: Int? }
+struct MarkReadResponse: Decodable { let ok: Bool? }
 
 /// GET /api/v1/ai/requests — AI job row.
 struct AIJobDTO: Decodable {

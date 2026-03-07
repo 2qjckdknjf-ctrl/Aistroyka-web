@@ -122,6 +122,9 @@ struct ReportDetailReviewView: View {
     @State private var report: ReportDetailDTO?
     @State private var isLoading = true
     @State private var errorMessage: String?
+    @State private var reviewActionLoading = false
+    @State private var reviewActionError: String?
+    @State private var managerNoteText = ""
 
     var body: some View {
         Group {
@@ -133,9 +136,13 @@ struct ReportDetailReviewView: View {
                 List {
                     Section("Report") {
                         LabeledContent("ID", value: r.id ?? reportId)
-                        LabeledContent("Status", value: r.status ?? "—")
+                        LabeledContent("Status", value: statusLabel(r.status ?? ""))
                         if let c = r.createdAt { LabeledContent("Created", value: formatDate(c)) }
                         if let s = r.submittedAt { LabeledContent("Submitted", value: formatDate(s)) }
+                        if let ra = r.reviewedAt { LabeledContent("Reviewed at", value: formatDate(ra)) }
+                        if let note = r.managerNote, !note.isEmpty {
+                            LabeledContent("Manager note", value: note)
+                        }
                     }
                     if let media = r.media, !media.isEmpty {
                         Section("Media (\(media.count))") {
@@ -147,14 +154,40 @@ struct ReportDetailReviewView: View {
                             }
                         }
                     }
-                    Section("Review actions") {
-                        Text("Approve / Mark reviewed / Request changes")
-                            .font(.subheadline)
-                        Text("Backend does not yet expose report review write endpoints. Actions will be enabled when available.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                    if r.status?.lowercased() == "submitted" {
+                        Section("Review actions") {
+                            if reviewActionLoading {
+                                HStack {
+                                    ProgressView()
+                                    Text("Submitting…")
+                                        .font(.subheadline)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                            if let err = reviewActionError {
+                                Text(err)
+                                    .font(.caption)
+                                    .foregroundStyle(.red)
+                            }
+                            TextField("Note (optional)", text: $managerNoteText, axis: .vertical)
+                                .lineLimit(2...4)
+                                .disabled(reviewActionLoading)
+                            Button("Approve") { submitReview(status: "approved") }
+                                .disabled(reviewActionLoading)
+                            Button("Mark reviewed") { submitReview(status: "reviewed") }
+                                .disabled(reviewActionLoading)
+                            Button("Request changes") { submitReview(status: "changes_requested") }
+                                .disabled(reviewActionLoading)
+                        }
+                    } else if !isReviewStatus(r.status) {
+                        Section("Review") {
+                            Text("Report is not in submitted state; no review actions available.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 }
+                .refreshable { await loadAsync() }
             } else {
                 EmptyStateView(title: "Report not found", subtitle: nil)
             }
@@ -163,18 +196,48 @@ struct ReportDetailReviewView: View {
         .onAppear { load() }
     }
 
+    private func isReviewStatus(_ s: String?) -> Bool {
+        guard let s = s?.lowercased() else { return false }
+        return s == "approved" || s == "reviewed" || s == "changes_requested"
+    }
+
+    private func statusLabel(_ s: String) -> String {
+        if s.isEmpty { return "—" }
+        return s.prefix(1).uppercased() + s.dropFirst().lowercased().replacingOccurrences(of: "_", with: " ")
+    }
+
+    private func submitReview(status: String) {
+        reviewActionError = nil
+        reviewActionLoading = true
+        Task {
+            defer { reviewActionLoading = false }
+            do {
+                let note = managerNoteText.trimmingCharacters(in: .whitespacesAndNewlines)
+                report = try await ManagerAPI.reportReview(reportId: reportId, status: status, managerNote: note.isEmpty ? nil : note)
+            } catch let e as APIError {
+                reviewActionError = e.message
+            } catch {
+                reviewActionError = error.localizedDescription
+            }
+        }
+    }
+
     private func load() {
         errorMessage = nil
         isLoading = true
-        Task {
-            defer { isLoading = false }
-            do {
-                report = try await ManagerAPI.reportDetail(id: reportId)
-            } catch let e as APIError {
-                errorMessage = e.message
-            } catch {
-                errorMessage = error.localizedDescription
-            }
+        Task { await loadAsync() }
+    }
+
+    private func loadAsync() async {
+        errorMessage = nil
+        isLoading = true
+        defer { isLoading = false }
+        do {
+            report = try await ManagerAPI.reportDetail(id: reportId)
+        } catch let e as APIError {
+            errorMessage = e.message
+        } catch {
+            errorMessage = error.localizedDescription
         }
     }
 
