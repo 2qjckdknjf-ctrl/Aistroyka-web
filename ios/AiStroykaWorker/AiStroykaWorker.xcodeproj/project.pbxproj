@@ -76,6 +76,8 @@
 		FA7480542F5B2BA60043EC01 /* TasksListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA7480552F5B2BA60043EC01 /* TasksListView.swift */; };
 		FA7480562F5B2BA60043EC01 /* AITabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA7480572F5B2BA60043EC01 /* AITabView.swift */; };
 		FA7480582F5B2BA60043EC01 /* SectionHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA7480592F5B2BA60043EC01 /* SectionHeaderView.swift */; };
+		FA74805A2F5B2BA60043EC01 /* ProjectDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA74805B2F5B2BA60043EC01 /* ProjectDetailView.swift */; };
+		FA74805C2F5B2BA60043EC01 /* NotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA74805D2F5B2BA60043EC01 /* NotificationsView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -165,6 +167,8 @@
 		FA7480552F5B2BA60043EC01 /* TasksListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TasksListView.swift; sourceTree = "<group>"; };
 		FA7480572F5B2BA60043EC01 /* AITabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AITabView.swift; sourceTree = "<group>"; };
 		FA7480592F5B2BA60043EC01 /* SectionHeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionHeaderView.swift; sourceTree = "<group>"; };
+		FA74805B2F5B2BA60043EC01 /* ProjectDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectDetailView.swift; sourceTree = "<group>"; };
+		FA74805D2F5B2BA60043EC01 /* NotificationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -265,6 +269,7 @@
 				FA7480102F5B2BA60043EC01 /* ManagerTabShell.swift */,
 				FA7480122F5B2BA60043EC01 /* HomeDashboardView.swift */,
 				FA7480142F5B2BA60043EC01 /* ProjectsListView.swift */,
+				FA74805B2F5B2BA60043EC01 /* ProjectDetailView.swift */,
 				FA7480162F5B2BA60043EC01 /* TasksListPlaceholderView.swift */,
 				FA7480552F5B2BA60043EC01 /* TasksListView.swift */,
 				FA7480182F5B2BA60043EC01 /* ReportsInboxPlaceholderView.swift */,
@@ -276,6 +281,7 @@
 				FA74801E2F5B2BA60043EC01 /* ManagerMoreView.swift */,
 				FA7480202F5B2BA60043EC01 /* ManagerSettingsView.swift */,
 				FA7480222F5B2BA60043EC01 /* NotificationsPlaceholderView.swift */,
+				FA74805D2F5B2BA60043EC01 /* NotificationsView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -623,6 +629,8 @@
 				FA7480502F5B2BA60043EC01 /* TeamOverviewView.swift in Sources */,
 				FA7480562F5B2BA60043EC01 /* AITabView.swift in Sources */,
 				FA7480582F5B2BA60043EC01 /* SectionHeaderView.swift in Sources */,
+				FA74805A2F5B2BA60043EC01 /* ProjectDetailView.swift in Sources */,
+				FA74805C2F5B2BA60043EC01 /* NotificationsView.swift in Sources */,
 				FA74801B2F5B2BA60043EC01 /* AICopilotPlaceholderView.swift in Sources */,
 				FA74801D2F5B2BA60043EC01 /* ManagerMoreView.swift in Sources */,
 				FA74801F2F5B2BA60043EC01 /* ManagerSettingsView.swift in Sources */,

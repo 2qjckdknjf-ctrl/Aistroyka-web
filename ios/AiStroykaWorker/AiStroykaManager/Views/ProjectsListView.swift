@@ -31,7 +31,7 @@ struct ProjectsListView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
                     List(projects, id: \.id) { p in
-                        NavigationLink(destination: ProjectDetailPlaceholderView(projectId: p.id, name: p.name ?? "Project")) {
+                        NavigationLink(destination: ProjectDetailView(projectId: p.id, projectName: p.name)) {
                             Text(p.name ?? p.id)
                         }
                     }

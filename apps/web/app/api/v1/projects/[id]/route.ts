@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClientFromRequest } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { getProject } from "@/lib/domain/projects/project.service";
 
@@ -23,7 +23,7 @@ export async function GET(
     throw e;
   }
 
-  const supabase = await createClient();
+  const supabase = await createClientFromRequest(request);
   const { data, error } = await getProject(supabase, ctx, id);
   if (error) {
     const status = error === "Insufficient rights" ? 403 : 500;

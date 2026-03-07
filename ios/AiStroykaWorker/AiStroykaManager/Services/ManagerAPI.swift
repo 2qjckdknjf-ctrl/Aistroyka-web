@@ -95,6 +95,50 @@ enum ManagerAPI {
         let r: AIRequestsResponse = try await APIClient.shared.request(path: "ai/requests\(query)")
         return r.data ?? []
     }
+
+    /// GET /api/v1/projects/:id — project detail.
+    static func projectDetail(id: String) async throws -> ProjectDetailDTO {
+        let r: ProjectDetailResponse = try await APIClient.shared.request(path: "projects/\(id)")
+        guard let data = r.data else { throw APIError(statusCode: nil, code: nil, message: "No data") }
+        return data
+    }
+
+    /// GET /api/v1/projects/:id/summary — project summary counts.
+    static func projectSummary(projectId: String) async throws -> ProjectSummaryDTO {
+        let r: ProjectSummaryResponse = try await APIClient.shared.request(path: "projects/\(projectId)/summary")
+        guard let data = r.data else { throw APIError(statusCode: nil, code: nil, message: "No data") }
+        return data
+    }
+
+    /// GET /api/v1/projects/:id/ai — AI analysis jobs for project (media-scoped).
+    static func projectAi(projectId: String, limit: Int? = nil, offset: Int? = nil) async throws -> [ProjectAIRowDTO] {
+        var path = "projects/\(projectId)/ai"
+        var components = [String]()
+        if let l = limit { components.append("limit=\(l)") }
+        if let o = offset { components.append("offset=\(o)") }
+        if !components.isEmpty { path += "?" + components.joined(separator: "&") }
+        let r: ProjectAIResponse = try await APIClient.shared.request(path: path)
+        return r.data ?? []
+    }
+
+    /// POST /api/v1/tasks/:id/assign — assign task to worker.
+    static func assignTask(taskId: String, workerId: String, idempotencyKey: String) async throws {
+        struct Body: Encodable {
+            let workerId: String
+            enum CodingKeys: String, CodingKey { case workerId = "worker_id" }
+        }
+        let _: AssignTaskResponse = try await APIClient.shared.request(path: "tasks/\(taskId)/assign", method: "POST", body: Body(workerId: workerId), idempotencyKey: idempotencyKey)
+    }
+
+    /// GET /api/v1/devices — list devices for tenant (no push tokens). May require admin in some deployments.
+    static func devices(limit: Int? = nil, offset: Int? = nil) async throws -> [DeviceRowDTO] {
+        var components = [String]()
+        if let l = limit { components.append("limit=\(l)") }
+        if let o = offset { components.append("offset=\(o)") }
+        let query = components.isEmpty ? "" : "?" + components.joined(separator: "&")
+        let r: DevicesListResponse = try await APIClient.shared.request(path: "devices\(query)")
+        return r.data ?? []
+    }
 }
 
 // MARK: - Manager-specific DTOs (backend contract)
@@ -240,6 +284,51 @@ struct TaskDetailDTO: Decodable {
     }
 }
 struct TaskDetailResponse: Decodable { let data: TaskDetailDTO? }
+
+/// GET /api/v1/projects/:id — project detail.
+struct ProjectDetailDTO: Decodable {
+    let id: String
+    let name: String?
+    let tenantId: String?
+    let createdAt: String?
+    enum CodingKeys: String, CodingKey { case id; case name; case tenantId = "tenant_id"; case createdAt = "created_at" }
+}
+struct ProjectDetailResponse: Decodable { let data: ProjectDetailDTO? }
+
+/// GET /api/v1/projects/:id/summary — summary counts (backend returns camelCase).
+struct ProjectSummaryDTO: Decodable {
+    let activeWorkers: Int?
+    let openReports: Int?
+    let aiAnalyses: Int?
+}
+struct ProjectSummaryResponse: Decodable { let data: ProjectSummaryDTO? }
+
+/// GET /api/v1/projects/:id/ai — project AI row (analysis_jobs).
+struct ProjectAIRowDTO: Decodable {
+    let id: String?
+    let mediaId: String?
+    let status: String?
+    let createdAt: String?
+    enum CodingKeys: String, CodingKey { case id; case mediaId = "media_id"; case status; case createdAt = "created_at" }
+}
+struct ProjectAIResponse: Decodable { let data: [ProjectAIRowDTO]? }
+
+/// POST /api/v1/tasks/:id/assign — response { ok: true }.
+struct AssignTaskResponse: Decodable { let ok: Bool? }
+
+/// GET /api/v1/devices — device row (no tokens).
+struct DeviceRowDTO: Decodable {
+    let userId: String?
+    let deviceId: String?
+    let platform: String?
+    let createdAt: String?
+    let disabledAt: String?
+    enum CodingKeys: String, CodingKey {
+        case userId = "user_id"; case deviceId = "device_id"; case platform
+        case createdAt = "created_at"; case disabledAt = "disabled_at"
+    }
+}
+struct DevicesListResponse: Decodable { let data: [DeviceRowDTO]?; let total: Int? }
 
 /// GET /api/v1/ai/requests — AI job row.
 struct AIJobDTO: Decodable {
