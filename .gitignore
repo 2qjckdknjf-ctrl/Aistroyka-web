@@ -63,6 +63,13 @@ build-server-ts-head.log
 # env
 .env
 .env.local
+apps/web/.env.local
+
+# local Supabase (no secrets committed)
+supabase/.temp
+supabase/.env
+apps/web/supabase/.temp
+apps/web/supabase/.env
 .env.development.local
 .env.test.local
 .env.production.local
