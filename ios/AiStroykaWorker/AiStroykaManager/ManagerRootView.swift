@@ -19,9 +19,10 @@ struct ManagerRootView: View {
             }
         }
         .onAppear {
-            sessionState.checkSession()
             Task {
+                await APIClient.shared.setClientProfile("ios_manager")
                 await APIClient.shared.setTokenProvider { await AuthService.shared.getAccessToken() }
+                sessionState.checkSession()
             }
         }
     }

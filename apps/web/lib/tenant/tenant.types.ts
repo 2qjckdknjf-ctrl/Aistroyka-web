@@ -7,7 +7,7 @@
 export type TenantRoleSpec = "OWNER" | "MANAGER" | "WORKER" | "CONTRACTOR";
 export type TenantRoleDb = "owner" | "admin" | "member" | "viewer";
 
-export type ClientProfile = "web" | "ios_full" | "ios_lite" | "android_full" | "android_lite";
+export type ClientProfile = "web" | "ios_full" | "ios_lite" | "ios_manager" | "android_full" | "android_lite";
 
 /** Permission keys from RBAC (read, write, create, ...). Populated when context is built with authz. */
 export type PermissionKey = string;

@@ -9,13 +9,19 @@ actor APIClient {
     static let shared = APIClient()
     private let session: URLSession
     private var tokenProvider: (() async -> String?)?
-    
+    /// x-client header value. Set at app bootstrap; Worker uses "ios_lite", Manager uses "ios_manager".
+    private var clientProfile: String = "ios_lite"
+
     init(session: URLSession = .shared) {
         self.session = session
     }
-    
+
     func setTokenProvider(_ provider: @escaping () async -> String?) {
         tokenProvider = provider
+    }
+
+    func setClientProfile(_ profile: String) {
+        clientProfile = profile
     }
     
     func request<T: Decodable>(
@@ -30,7 +36,7 @@ actor APIClient {
         var request = URLRequest(url: url)
         request.httpMethod = method
         request.setValue(DeviceContext.deviceId, forHTTPHeaderField: "x-device-id")
-        request.setValue("ios_lite", forHTTPHeaderField: "x-client")
+        request.setValue(clientProfile, forHTTPHeaderField: "x-client")
         if let key = idempotencyKey {
             request.setValue(key, forHTTPHeaderField: "x-idempotency-key")
         }
@@ -72,7 +78,7 @@ actor APIClient {
         var request = URLRequest(url: url)
         request.httpMethod = method
         request.setValue(DeviceContext.deviceId, forHTTPHeaderField: "x-device-id")
-        request.setValue("ios_lite", forHTTPHeaderField: "x-client")
+        request.setValue(clientProfile, forHTTPHeaderField: "x-client")
         if let token = await tokenProvider?() {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }

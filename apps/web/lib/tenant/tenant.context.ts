@@ -10,7 +10,7 @@ import { TenantForbiddenError } from "./tenant.guard";
 import type { TenantContextOrAbsent, ClientProfile } from "./tenant.types";
 
 const DEFAULT_CLIENT: ClientProfile = "web";
-const CLIENT_VALUES: ClientProfile[] = ["web", "ios_full", "ios_lite", "android_full", "android_lite"];
+const CLIENT_VALUES: ClientProfile[] = ["web", "ios_full", "ios_lite", "ios_manager", "android_full", "android_lite"];
 
 function parseClient(header: string | null): ClientProfile {
   const v = header?.toLowerCase().trim();
