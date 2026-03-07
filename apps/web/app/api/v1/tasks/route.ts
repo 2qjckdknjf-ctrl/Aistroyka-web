@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClientFromRequest } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { listTasks, createTask } from "@/lib/domain/tasks/task.service";
 import { getAdminClient } from "@/lib/supabase/admin";
@@ -36,7 +36,7 @@ export async function GET(request: Request) {
   const limit = Math.min(parseInt(url.searchParams.get("limit") ?? "50", 10) || 50, 100);
   const offset = Math.max(0, parseInt(url.searchParams.get("offset") ?? "0", 10) || 0);
 
-  const supabase = await createClient();
+  const supabase = await createClientFromRequest(request);
   const { data, total, error } = await listTasks(supabase, ctx, {
     project_id,
     from,
@@ -94,7 +94,7 @@ export async function POST(request: Request) {
     report_required: typeof body.report_required === "boolean" ? body.report_required : undefined,
   };
 
-  const supabase = await createClient();
+  const supabase = await createClientFromRequest(request);
   const { data, error } = await createTask(supabase, ctx, input);
   if (error) return NextResponse.json({ error }, { status: error === "Insufficient rights" ? 403 : 400 });
   if (!data) return NextResponse.json({ error: "Create failed" }, { status: 500 });

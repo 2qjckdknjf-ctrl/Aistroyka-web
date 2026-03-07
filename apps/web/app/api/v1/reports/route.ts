@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClientFromRequest } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { listReportsForManager } from "@/lib/domain/reports/report-list.repository";
 
@@ -26,7 +26,7 @@ export async function GET(request: Request) {
   const q = url.searchParams.get("q") ?? undefined;
   const limit = Math.min(parseInt(url.searchParams.get("limit") ?? "50", 10) || 50, 200);
 
-  const supabase = await createClient();
+  const supabase = await createClientFromRequest(request);
   let data = await listReportsForManager(supabase, ctx.tenantId!, {
     projectId,
     userId,

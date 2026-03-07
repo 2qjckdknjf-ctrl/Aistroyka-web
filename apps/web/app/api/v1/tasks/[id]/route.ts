@@ -33,7 +33,7 @@ export async function GET(
     throw e;
   }
 
-  const supabase = await createClient();
+  const supabase = await createClientFromRequest(request);
   const { data, error } = await getTaskById(supabase, ctx, id);
   if (error) return NextResponse.json({ error }, { status: error === "Insufficient rights" ? 403 : 404 });
   if (!data) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -84,7 +84,7 @@ export async function PATCH(
     input.required_photos = body.required_photos as UpdateTaskInput["required_photos"];
   if (typeof body.report_required === "boolean") input.report_required = body.report_required;
 
-  const supabase = await createClient();
+  const supabase = await createClientFromRequest(request);
   const { data, error } = await updateTask(supabase, ctx, id, input);
   if (error) return NextResponse.json({ error }, { status: error === "Insufficient rights" ? 403 : 404 });
   if (!data) return NextResponse.json({ error: "Not found" }, { status: 404 });
