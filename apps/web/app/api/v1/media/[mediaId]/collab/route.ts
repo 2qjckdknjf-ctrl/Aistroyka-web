@@ -5,6 +5,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
+import { getMediaCollab } from "@/lib/domain/media/media-collab.service";
 
 export const dynamic = "force-dynamic";
 
@@ -21,15 +22,18 @@ export async function GET(
   }
   const { mediaId } = await params;
   if (!mediaId) return NextResponse.json({ error: "Missing mediaId" }, { status: 400 });
+
   const supabase = await createClient();
-  const [annRes, comRes] = await Promise.all([
-    supabase.from("photo_annotations").select("id, type, data, version, author_user_id, created_at, updated_at").eq("tenant_id", ctx.tenantId).eq("media_id", mediaId).order("created_at"),
-    supabase.from("photo_comments").select("id, body, author_user_id, created_at").eq("tenant_id", ctx.tenantId).eq("media_id", mediaId).order("created_at"),
-  ]);
-  return NextResponse.json({
-    data: {
-      annotations: annRes.data ?? [],
-      comments: comRes.data ?? [],
-    },
-  });
+  const { data, error } = await getMediaCollab(supabase, ctx, mediaId);
+
+  if (error) {
+    const status = error === "Unauthorized" ? 401 : 400;
+    return NextResponse.json({ error }, { status });
+  }
+
+  if (!data) {
+    return NextResponse.json({ error: "Media collaboration data not found" }, { status: 404 });
+  }
+
+  return NextResponse.json({ data });
 }
