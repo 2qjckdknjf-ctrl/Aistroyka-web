@@ -43,6 +43,9 @@ export async function listForBootstrap(
   return (data ?? []) as { id: string; status: string; created_at: string; submitted_at: string | null }[];
 }
 
+const REPORT_SELECT =
+  "id, tenant_id, user_id, day_id, status, created_at, submitted_at, task_id, reviewed_at, reviewed_by, manager_note";
+
 export async function getById(
   supabase: SupabaseClient,
   reportId: string,
@@ -50,7 +53,7 @@ export async function getById(
 ): Promise<Report | null> {
   const { data, error } = await supabase
     .from("worker_reports")
-    .select("id, tenant_id, user_id, day_id, status, created_at, submitted_at, task_id")
+    .select(REPORT_SELECT)
     .eq("id", reportId)
     .eq("tenant_id", tenantId)
     .maybeSingle();
@@ -89,6 +92,47 @@ export async function submit(
     .eq("tenant_id", tenantId)
     .eq("status", "draft");
   return !error;
+}
+
+export type ReportReviewStatus = "approved" | "reviewed" | "changes_requested";
+
+export interface UpdateReportReviewInput {
+  status: ReportReviewStatus;
+  manager_note?: string | null;
+}
+
+/** Manager review: only from submitted. Sets reviewed_at, reviewed_by, manager_note. */
+export async function updateReview(
+  supabase: SupabaseClient,
+  reportId: string,
+  tenantId: string,
+  reviewerId: string,
+  input: UpdateReportReviewInput
+): Promise<Report | null> {
+  const { data: existing } = await supabase
+    .from("worker_reports")
+    .select("id, status")
+    .eq("id", reportId)
+    .eq("tenant_id", tenantId)
+    .eq("status", "submitted")
+    .maybeSingle();
+  if (!existing) return null;
+
+  const updates: Record<string, unknown> = {
+    status: input.status,
+    reviewed_at: new Date().toISOString(),
+    reviewed_by: reviewerId,
+    manager_note: input.manager_note ?? null,
+  };
+  const { data, error } = await supabase
+    .from("worker_reports")
+    .update(updates)
+    .eq("id", reportId)
+    .eq("tenant_id", tenantId)
+    .select(REPORT_SELECT)
+    .single();
+  if (error || !data) return null;
+  return data as Report;
 }
 
 

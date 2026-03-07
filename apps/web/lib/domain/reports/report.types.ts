@@ -8,4 +8,8 @@ export interface Report {
   submitted_at?: string | null;
   /** Phase 7.6: optional link to worker_tasks */
   task_id?: string | null;
+  /** Phase 4: manager review */
+  reviewed_at?: string | null;
+  reviewed_by?: string | null;
+  manager_note?: string | null;
 }

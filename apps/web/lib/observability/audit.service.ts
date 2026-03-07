@@ -6,6 +6,7 @@ export type AuditAction =
   | "role_change"
   | "task_assignment"
   | "report_submit"
+  | "report_review"
   | "media_finalize"
   | "ai_analysis_complete"
   | "export";
