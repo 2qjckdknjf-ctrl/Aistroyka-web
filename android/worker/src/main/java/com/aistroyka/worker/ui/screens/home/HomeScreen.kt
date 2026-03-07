@@ -17,6 +17,8 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val isShiftActive by viewModel.isShiftActive.collectAsState()
+    val pendingCount by viewModel.pendingCount.collectAsState()
     
     LaunchedEffect(Unit) {
         viewModel.loadData()
@@ -38,23 +40,61 @@ fun HomeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // Pending operations indicator
+            if (pendingCount > 0) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Pending: $pendingCount operations")
+                    }
+                }
+            }
+            
             // Shift management
             Card(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
-                    modifier = Modifier.padding(16.dp)
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
                         text = "Shift",
                         style = MaterialTheme.typography.titleLarge
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
                     
-                    if (uiState.isShiftActive) {
-                        Text("Shift started: ${uiState.shiftStartTime}")
+                    if (isShiftActive) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Shift in progress",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            if (uiState.shiftStartTime != null) {
+                                Text(
+                                    text = "Started: ${uiState.shiftStartTime}",
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                        }
                         Spacer(modifier = Modifier.height(8.dp))
                         Button(
                             onClick = { viewModel.endShift() },
@@ -73,17 +113,34 @@ fun HomeScreen(
                 }
             }
             
-            Spacer(modifier = Modifier.height(16.dp))
-            
             // Today's tasks
             Text(
                 text = "Today's Tasks",
                 style = MaterialTheme.typography.titleLarge
             )
-            Spacer(modifier = Modifier.height(8.dp))
             
             if (uiState.isLoading) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            } else if (uiState.tasks.isEmpty()) {
+                Card(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "No tasks for today",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
             } else {
                 uiState.tasks.forEach { task ->
                     Card(
@@ -99,9 +156,11 @@ fun HomeScreen(
                                 text = task.title,
                                 style = MaterialTheme.typography.titleMedium
                             )
+                            Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 text = "Status: ${task.status}",
-                                style = MaterialTheme.typography.bodySmall
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
@@ -116,6 +175,14 @@ fun HomeScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Create Report")
+            }
+            
+            uiState.errorMessage?.let { error ->
+                Text(
+                    text = error,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
+                )
             }
         }
     }

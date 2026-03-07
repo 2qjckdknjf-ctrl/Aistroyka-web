@@ -103,24 +103,48 @@ fun ManagerNavigation(
             composable(ManagerScreen.Projects.route) {
                 ProjectsScreen(
                     onProjectClick = { projectId ->
-                        // Navigate to project detail
+                        navController.navigate("project_detail/$projectId")
                     }
+                )
+            }
+            
+            composable("project_detail/{projectId}") { backStackEntry ->
+                val projectId = backStackEntry.arguments?.getString("projectId") ?: ""
+                com.aistroyka.manager.ui.screens.projects.ProjectDetailScreen(
+                    projectId = projectId,
+                    onBack = { navController.popBackStack() }
                 )
             }
             
             composable(ManagerScreen.Tasks.route) {
                 TasksScreen(
                     onTaskClick = { taskId ->
-                        // Navigate to task detail
+                        navController.navigate("task_detail/$taskId")
                     }
+                )
+            }
+            
+            composable("task_detail/{taskId}") { backStackEntry ->
+                val taskId = backStackEntry.arguments?.getString("taskId") ?: ""
+                com.aistroyka.manager.ui.screens.tasks.TaskDetailScreen(
+                    taskId = taskId,
+                    onBack = { navController.popBackStack() }
                 )
             }
             
             composable(ManagerScreen.Reports.route) {
                 ReportsScreen(
                     onReportClick = { reportId ->
-                        // Navigate to report detail
+                        navController.navigate("report_detail/$reportId")
                     }
+                )
+            }
+            
+            composable("report_detail/{reportId}") { backStackEntry ->
+                val reportId = backStackEntry.arguments?.getString("reportId") ?: ""
+                ReportDetailScreen(
+                    reportId = reportId,
+                    onBack = { navController.popBackStack() }
                 )
             }
             
