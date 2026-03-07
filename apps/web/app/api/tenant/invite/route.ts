@@ -1,11 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError, authorize } from "@/lib/tenant";
-import { getAppUrl } from "@/lib/app-url";
-import { emitAudit } from "@/lib/observability/audit.service";
+import { inviteMember } from "@/lib/domain/tenants/tenant.service";
 import { setLegacyApiHeaders } from "@/lib/api/deprecation-headers";
-
-const INVITE_EXPIRES_DAYS = 7;
 
 export async function POST(request: Request) {
   const ctx = await getTenantContextFromRequest(request);
@@ -20,51 +17,24 @@ export async function POST(request: Request) {
   if (!authorize(ctx, "tenant:invite")) {
     return NextResponse.json({ error: "Insufficient rights" }, { status: 403 });
   }
-  const supabase = await createClient();
-  const tenantId = ctx.tenantId;
-  const user = { id: ctx.userId };
 
   const body = await request.json().catch(() => ({}));
   const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
   const role = ["admin", "member", "viewer"].includes(body.role) ? body.role : "member";
-  if (!email) return NextResponse.json({ error: "email is required" }, { status: 400 });
 
-  const expiresAt = new Date();
-  expiresAt.setDate(expiresAt.getDate() + INVITE_EXPIRES_DAYS);
-
-  const { data: inv, error } = await supabase
-    .from("tenant_invitations")
-    .insert({
-      tenant_id: tenantId,
-      email,
-      role,
-      created_by: ctx.userId,
-      expires_at: expiresAt.toISOString(),
-    })
-    .select("id, token, email, role, expires_at")
-    .single();
+  const supabase = await createClient();
+  const { data, error } = await inviteMember(supabase, ctx, { email, role });
 
   if (error) {
-    if (error.code === "23505") {
-      return NextResponse.json({ error: "Invitation for this email already exists" }, { status: 409 });
-    }
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const status = error === "Unauthorized" ? 401 : error.includes("required") ? 400 : error.includes("already exists") ? 409 : 500;
+    return NextResponse.json({ error }, { status });
   }
 
-  await emitAudit(supabase, {
-    tenant_id: tenantId,
-    user_id: ctx.userId,
-    action: "invite",
-    resource_type: "tenant_invitation",
-    resource_id: inv.id,
-    details: { email: inv.email, role },
-  });
+  if (!data) {
+    return NextResponse.json({ error: "Failed to create invitation" }, { status: 500 });
+  }
 
-  const baseUrl = getAppUrl();
-  const acceptLink = `${baseUrl}/invite/accept?token=${inv.token}`;
-  const res = NextResponse.json({
-    data: { id: inv.id, email: inv.email, role: inv.role, expires_at: inv.expires_at, accept_link: acceptLink },
-  });
+  const res = NextResponse.json({ data });
   setLegacyApiHeaders(res.headers);
   return res;
 }

@@ -1,26 +1,33 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getOrCreateTenantForCurrentUser } from "@/lib/api/engine";
-import { hasMinRole } from "@/lib/auth/tenant";
+import { getTenantContextFromRequest, requireTenant, TenantRequiredError, authorize } from "@/lib/tenant";
+import { listInvitations } from "@/lib/domain/tenants/tenant.service";
 
-export async function GET() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const tenantId = await getOrCreateTenantForCurrentUser(supabase);
-  if (!tenantId) return NextResponse.json({ error: "No tenant" }, { status: 403 });
-
-  if (!(await hasMinRole(supabase, tenantId, "admin"))) {
+export async function GET(request: Request) {
+  const ctx = await getTenantContextFromRequest(request);
+  try {
+    requireTenant(ctx);
+  } catch (e) {
+    if (e instanceof TenantRequiredError) {
+      return NextResponse.json({ error: e.message }, { status: e.message.includes("membership") ? 403 : 401 });
+    }
+    throw e;
+  }
+  if (!authorize(ctx, "tenant:invite")) {
     return NextResponse.json({ error: "Insufficient rights" }, { status: 403 });
   }
 
-  const { data: rows } = await supabase
-    .from("tenant_invitations")
-    .select("id, email, role, expires_at, created_at")
-    .eq("tenant_id", tenantId)
-    .gt("expires_at", new Date().toISOString())
-    .order("created_at", { ascending: false });
+  const supabase = await createClient();
+  const { data, error } = await listInvitations(supabase, ctx);
 
-  return NextResponse.json({ data: rows ?? [] });
+  if (error) {
+    const status = error === "Unauthorized" ? 401 : 400;
+    return NextResponse.json({ error }, { status });
+  }
+
+  // Filter out expired invitations
+  const now = new Date().toISOString();
+  const active = data.filter((inv) => inv.expires_at > now);
+
+  return NextResponse.json({ data: active });
 }

@@ -102,3 +102,16 @@ export async function addMember(
     { onConflict: "tenant_id,user_id" }
   );
 }
+
+export async function removeMember(
+  supabase: SupabaseClient,
+  tenantId: string,
+  userId: string
+): Promise<boolean> {
+  const { error } = await supabase
+    .from("tenant_members")
+    .delete()
+    .eq("tenant_id", tenantId)
+    .eq("user_id", userId);
+  return !error;
+}
