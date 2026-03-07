@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
+import { getAIRequest } from "@/lib/platform/ai/ai-request.service";
+import * as jobRepo from "@/lib/platform/jobs/job.repository";
 
 export const dynamic = "force-dynamic";
-
-const AI_JOB_TYPES = ["ai_analyze_media", "ai_analyze_report"];
 
 /** GET /api/v1/ai/requests/:id — single AI job detail (tenant-scoped). */
 export async function GET(
@@ -25,32 +25,36 @@ export async function GET(
   }
 
   const supabase = await createClient();
-  const { data: row, error } = await supabase
-    .from("jobs")
-    .select("*")
-    .eq("id", id)
-    .eq("tenant_id", ctx.tenantId!)
-    .maybeSingle();
+  const { data: aiRequest, error } = await getAIRequest(supabase, ctx, id);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  if (!row) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (error) {
+    const status = error === "Unauthorized" ? 401 : error === "Not found" || error === "Not an AI request" ? 404 : 500;
+    return NextResponse.json({ error }, { status });
+  }
 
-  const r = row as { type: string; payload?: unknown };
-  if (!AI_JOB_TYPES.includes(r.type)) return NextResponse.json({ error: "Not an AI request" }, { status: 404 });
+  if (!aiRequest) {
+    return NextResponse.json({ error: "AI request not found" }, { status: 404 });
+  }
+
+  // Get full job details for response
+  const job = await jobRepo.getById(supabase, id);
+  if (!job) {
+    return NextResponse.json({ error: "Job not found" }, { status: 404 });
+  }
 
   return NextResponse.json({
     data: {
-      id: (row as { id: string }).id,
-      type: (row as { type: string }).type,
-      status: (row as { status: string }).status,
-      payload: (row as { payload?: unknown }).payload,
-      attempts: (row as { attempts: number }).attempts,
-      max_attempts: (row as { max_attempts: number }).max_attempts,
-      last_error: (row as { last_error?: string | null }).last_error ?? null,
-      last_error_type: (row as { last_error_type?: string | null }).last_error_type ?? null,
-      trace_id: (row as { trace_id?: string | null }).trace_id ?? null,
-      created_at: (row as { created_at: string }).created_at,
-      updated_at: (row as { updated_at: string }).updated_at,
+      id: job.id,
+      type: job.type,
+      status: job.status,
+      payload: job.payload,
+      attempts: job.attempts,
+      max_attempts: job.max_attempts,
+      last_error: job.last_error ?? null,
+      last_error_type: job.last_error_type ?? null,
+      trace_id: job.trace_id ?? null,
+      created_at: job.created_at,
+      updated_at: job.updated_at,
     },
   });
 }

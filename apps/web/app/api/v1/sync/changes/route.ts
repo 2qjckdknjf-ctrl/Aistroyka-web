@@ -8,6 +8,7 @@ import { syncConflictResponse } from "@/lib/sync/sync-conflict";
 import { recordSyncConflict } from "@/lib/ops/ops-events.repository";
 import { checkRateLimit } from "@/lib/platform/rate-limit/rate-limit.service";
 import { getOrCreateRequestId, logStructured, withRequestIdAndTiming } from "@/lib/observability";
+import { updateDeviceLastSeen } from "@/lib/domain/devices/device.service";
 
 export const dynamic = "force-dynamic";
 
@@ -69,14 +70,8 @@ export async function GET(request: Request) {
   }
   const changes = await getChangesAfter(supabase, ctx.tenantId, cursor, limit);
   const nextCursor = changes.length > 0 ? changes[changes.length - 1].id : cursor;
-  void Promise.resolve(
-    supabase
-      .from("device_tokens")
-      .update({ last_seen: new Date().toISOString() })
-      .eq("tenant_id", tenantId)
-      .eq("user_id", ctx.userId)
-      .eq("device_id", deviceId)
-  ).catch((err) => {
+  // Update device last seen (best-effort, non-blocking)
+  void Promise.resolve(updateDeviceLastSeen(supabase, ctx, deviceId)).catch((err) => {
     logStructured({ event: "device_last_seen_update_failed", route: ROUTE_KEY, tenant_id: ctx.tenantId, device_id: deviceId, error: String(err), request_id: getOrCreateRequestId(request) });
   });
   return withRequestIdAndTiming(request, NextResponse.json({

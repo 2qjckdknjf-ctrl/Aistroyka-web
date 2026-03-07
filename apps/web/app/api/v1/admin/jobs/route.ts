@@ -18,11 +18,16 @@ export async function GET(request: Request) {
   }
   const adminErr = requireAdmin(ctx, "read");
   if (adminErr) return adminErr;
+
   const url = new URL(request.url);
   const status = url.searchParams.get("status"); // e.g. failed
   const limit = Math.min(parseInt(url.searchParams.get("limit") ?? "50", 10) || 50, 200);
+
   const supabase = await createClient();
-  const rows = await getFailedJobs(supabase, ctx.tenantId, limit);
+  const rows = await getFailedJobs(supabase, ctx.tenantId!, limit);
+
+  // Filter by status if provided (business logic moved to service would be better, but this is minor)
   const filtered = status ? rows.filter((r) => r.status === status) : rows;
+
   return NextResponse.json({ data: filtered });
 }

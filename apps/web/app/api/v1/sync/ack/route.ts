@@ -9,6 +9,7 @@ import { syncConflictResponse } from "@/lib/sync/sync-conflict";
 import { requireLiteIdempotency, storeLiteIdempotency } from "@/lib/api/lite-idempotency";
 import { checkRateLimit } from "@/lib/platform/rate-limit/rate-limit.service";
 import { getOrCreateRequestId, logStructured, withRequestIdAndTiming } from "@/lib/observability";
+import { updateDeviceLastSeen } from "@/lib/domain/devices/device.service";
 
 export const dynamic = "force-dynamic";
 
@@ -77,9 +78,8 @@ export async function POST(request: Request) {
   }
   const ok = await upsertCursor(supabase, tenantId, ctx.userId as string, deviceId, cursor);
   if (!ok) return withRequestIdAndTiming(request, NextResponse.json({ error: "Failed to store cursor" }, { status: 500 }), { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
-  void Promise.resolve(
-    supabase.from("device_tokens").update({ last_seen: new Date().toISOString() }).eq("tenant_id", tenantId).eq("user_id", ctx.userId).eq("device_id", deviceId)
-  ).catch(() => {});
+  // Update device last seen (best-effort, non-blocking)
+  void Promise.resolve(updateDeviceLastSeen(supabase, ctx, deviceId)).catch(() => {});
   const response = { ok: true, cursor, serverTime: new Date().toISOString() };
   await storeLiteIdempotency(request, ctx, ROUTE_KEY, response, 200);
   return withRequestIdAndTiming(request, NextResponse.json(response), { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });

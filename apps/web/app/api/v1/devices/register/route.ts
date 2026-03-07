@@ -3,8 +3,9 @@
  */
 
 import { NextResponse } from "next/server";
-import { getAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
+import { registerDevice } from "@/lib/domain/devices/device.service";
 
 export const dynamic = "force-dynamic";
 
@@ -20,21 +21,14 @@ export async function POST(request: Request) {
   const deviceId = typeof body.device_id === "string" ? body.device_id.trim() : "";
   const platform = body.platform === "ios" || body.platform === "android" ? body.platform : "";
   const token = typeof body.token === "string" ? body.token.trim() : "";
-  if (!deviceId || !platform || !token) {
-    return NextResponse.json({ error: "device_id, platform (ios|android), and token required" }, { status: 400 });
+  
+  const supabase = await createClient();
+  const result = await registerDevice(supabase, ctx, deviceId, platform, token);
+  
+  if (!result.success) {
+    const status = result.error === "Unauthorized" ? 401 : result.error?.includes("required") ? 400 : 500;
+    return NextResponse.json({ error: result.error }, { status });
   }
-  const admin = getAdminClient();
-  if (!admin) return NextResponse.json({ error: "Service unavailable" }, { status: 503 });
-  const row = {
-    tenant_id: ctx.tenantId,
-    user_id: ctx.userId,
-    device_id: deviceId,
-    platform,
-    token,
-  };
-  const { error } = await (admin as any).from("device_tokens").upsert(row, {
-    onConflict: "tenant_id,user_id,device_id",
-  });
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  
   return NextResponse.json({ success: true });
 }

@@ -116,3 +116,30 @@ export async function finalizeUploadSession(
   }
   return { ok, error: ok ? "" : "Failed to finalize or session expired" };
 }
+
+export interface ListUploadSessionsFilters {
+  limit: number;
+  offset: number;
+  status?: string;
+  stuck?: boolean;
+  stuckHours?: number;
+  userId?: string;
+  from?: string;
+  to?: string;
+}
+
+/**
+ * List upload sessions for manager.
+ */
+export async function listUploadSessions(
+  supabase: SupabaseClient,
+  ctx: TenantContext,
+  filters: ListUploadSessionsFilters
+): Promise<{ data: UploadSession[]; total: number; error: string }> {
+  if (!ctx.tenantId) {
+    return { data: [], total: 0, error: "Unauthorized" };
+  }
+
+  const { rows, total } = await repo.listForManager(supabase, ctx.tenantId, filters);
+  return { data: rows, total, error: "" };
+}

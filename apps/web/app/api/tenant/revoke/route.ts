@@ -1,25 +1,24 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getOrCreateTenantForCurrentUser } from "@/lib/api/engine";
-import { hasMinRole, getRoleInTenant } from "@/lib/auth/tenant";
+import { getTenantContextFromRequest, requireTenant, TenantRequiredError, authorize } from "@/lib/tenant";
+import { revokeMembership } from "@/lib/domain/tenants/tenant.service";
+import * as repo from "@/lib/domain/tenants/tenant.repository";
+import { getRoleInTenant } from "@/lib/auth/tenant";
 
 /** POST: revoke member. Body: { user_id: string }. Admin+ can revoke; cannot revoke owner. */
 export async function POST(request: Request) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const ctx = await getTenantContextFromRequest(request);
+  try {
+    requireTenant(ctx);
+  } catch (e) {
+    if (e instanceof TenantRequiredError) {
+      return NextResponse.json({ error: e.message }, { status: e.message.includes("membership") ? 403 : 401 });
+    }
+    throw e;
   }
 
-  const tenantId = await getOrCreateTenantForCurrentUser(supabase);
-  if (!tenantId) {
-    return NextResponse.json({ error: "No tenant" }, { status: 403 });
-  }
-
-  const canRevoke = await hasMinRole(supabase, tenantId, "admin");
-  if (!canRevoke) {
+  // Check authorization
+  if (!authorize(ctx, "tenant:invite")) {
     return NextResponse.json({ error: "Insufficient rights" }, { status: 403 });
   }
 
@@ -29,34 +28,23 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "user_id is required" }, { status: 400 });
   }
 
-  const { data: tenant } = await supabase
-    .from("tenants")
-    .select("user_id")
-    .eq("id", tenantId)
-    .single();
-  if (tenant?.user_id === targetUserId) {
-    return NextResponse.json({ error: "Cannot revoke owner" }, { status: 400 });
-  }
-
-  const { data: targetMember } = await supabase
-    .from("tenant_members")
-    .select("role")
-    .eq("tenant_id", tenantId)
-    .eq("user_id", targetUserId)
-    .maybeSingle();
-  const myRole = await getRoleInTenant(supabase, tenantId);
-  if (targetMember?.role === "admin" && myRole !== "owner") {
+  // Additional check: only owner can revoke admin
+  const supabase = await createClient();
+  const targetRole = await repo.getMemberRole(supabase, ctx.tenantId!, targetUserId);
+  const myRole = await getRoleInTenant(supabase, ctx.tenantId!);
+  if (targetRole === "admin" && myRole !== "owner") {
     return NextResponse.json({ error: "Only owner can revoke an admin" }, { status: 403 });
   }
 
-  const { error } = await supabase
-    .from("tenant_members")
-    .delete()
-    .eq("tenant_id", tenantId)
-    .eq("user_id", targetUserId);
+  const { ok, error } = await revokeMembership(supabase, ctx, targetUserId);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const status = error === "Unauthorized" ? 401 : error === "Insufficient rights" ? 403 : error.includes("Cannot revoke") ? 400 : 500;
+    return NextResponse.json({ error }, { status });
+  }
+
+  if (!ok) {
+    return NextResponse.json({ error: "Failed to revoke membership" }, { status: 500 });
   }
 
   return NextResponse.json({ data: { ok: true } });

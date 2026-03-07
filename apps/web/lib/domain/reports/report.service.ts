@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { TenantContext } from "@/lib/tenant/tenant.types";
-import { canCreateReport } from "./report.policy";
+import { canCreateReport, canReadReports } from "./report.policy";
 import * as repo from "./report.repository";
 import type { Report } from "./report.types";
 import * as taskRepo from "@/lib/domain/tasks/task.repository";
@@ -8,6 +8,7 @@ import { isTaskAssignedTo } from "@/lib/domain/task-assignments";
 import { enqueueJob } from "@/lib/platform/jobs/job.service";
 import { emitAudit } from "@/lib/observability/audit.service";
 import { emitChange } from "@/lib/sync/change-log.repository";
+import * as jobRepo from "@/lib/platform/jobs/job.repository";
 
 /** Returns { ok, code? }. code = task_invalid | task_not_assigned when not ok. */
 export async function validateTaskForReportLink(
@@ -133,4 +134,89 @@ export async function submitReport(
     /* enqueue best-effort; still return success with whatever jobIds we have */
   }
   return { ok: true, error: "", jobIds };
+}
+
+export type AnalysisStatus = "queued" | "running" | "success" | "failed";
+
+export interface AnalysisStatusResult {
+  status: AnalysisStatus;
+  reportId: string;
+  jobCount: number;
+  summary: {
+    mediaTotal: number;
+    analyzed: number;
+    failed: number;
+  } | null;
+}
+
+/**
+ * Get analysis status for a report.
+ */
+export async function getAnalysisStatus(
+  supabase: SupabaseClient,
+  ctx: TenantContext,
+  reportId: string
+): Promise<{ data: AnalysisStatusResult | null; error: string }> {
+  if (!canReadReports(ctx)) {
+    return { data: null, error: "Insufficient rights" };
+  }
+
+  if (!ctx.tenantId) {
+    return { data: null, error: "Tenant required" };
+  }
+
+  // Get report to verify it exists and belongs to tenant
+  const report = await repo.getById(supabase, reportId, ctx.tenantId);
+  if (!report) {
+    return { data: null, error: "Report not found" };
+  }
+
+  // Get jobs for this report
+  const admin = (await import("@/lib/supabase/admin")).getAdminClient();
+  const client = admin ?? supabase;
+  const list = await jobRepo.listJobsByReportId(client, reportId, ctx.tenantId);
+
+  if (list.length === 0) {
+    return {
+      data: {
+        status: "queued" as AnalysisStatus,
+        reportId,
+        jobCount: 0,
+        summary: null,
+      },
+      error: "",
+    };
+  }
+
+  // Aggregate status
+  const byStatus: Record<string, number> = {};
+  for (const j of list) {
+    byStatus[j.status] = (byStatus[j.status] ?? 0) + 1;
+  }
+
+  let status: AnalysisStatus = "queued";
+  if (byStatus.running) status = "running";
+  else if (byStatus.queued) status = "queued";
+  else if (byStatus.dead || byStatus.failed) status = "failed";
+  else if (byStatus.success) status = "success";
+
+  const mediaTotal = list.filter((j) => j.type === "ai_analyze_media").length;
+  const successCount = byStatus.success ?? 0;
+
+  return {
+    data: {
+      status,
+      reportId,
+      jobCount: list.length,
+      summary:
+        status === "success" || status === "failed"
+          ? {
+              mediaTotal,
+              analyzed: successCount,
+              failed: (byStatus.failed ?? 0) + (byStatus.dead ?? 0),
+            }
+          : null,
+    },
+    error: "",
+  };
 }

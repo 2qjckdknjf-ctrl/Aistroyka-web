@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
-import { createUploadSession } from "@/lib/domain/upload-session/upload-session.service";
-import { listForManager } from "@/lib/domain/upload-session/upload-session.repository";
+import { createUploadSession, listUploadSessions } from "@/lib/domain/upload-session/upload-session.service";
 import { checkRequestBodySize } from "@/lib/api/request-limit";
 import { requireLiteIdempotency, storeLiteIdempotency } from "@/lib/api/lite-idempotency";
 import { withRequestIdAndTiming } from "@/lib/observability";
@@ -35,9 +34,25 @@ export async function GET(request: Request) {
   const userId = url.searchParams.get("user_id") ?? url.searchParams.get("worker_id") ?? undefined;
   const from = url.searchParams.get("from") ?? undefined;
   const to = url.searchParams.get("to") ?? undefined;
+
   const supabase = await createClient();
-  const { rows, total } = await listForManager(supabase, ctx.tenantId!, { limit, offset, status, stuck, stuckHours, userId, from, to });
-  return withRequestIdAndTiming(request, NextResponse.json({ data: rows, total }), { route: ROUTE_GET, method: "GET", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
+  const { data, total, error } = await listUploadSessions(supabase, ctx, {
+    limit,
+    offset,
+    status,
+    stuck,
+    stuckHours,
+    userId,
+    from,
+    to,
+  });
+
+  if (error) {
+    const status = error === "Unauthorized" ? 401 : 500;
+    return withRequestIdAndTiming(request, NextResponse.json({ error }, { status }), { route: ROUTE_GET, method: "GET", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
+  }
+
+  return withRequestIdAndTiming(request, NextResponse.json({ data, total }), { route: ROUTE_GET, method: "GET", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
 }
 
 export async function POST(request: Request) {

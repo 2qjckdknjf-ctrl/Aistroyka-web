@@ -6,7 +6,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
-import { emitChange } from "@/lib/sync/change-log.repository";
+import { createComment } from "@/lib/domain/media/comment.service";
 
 export const dynamic = "force-dynamic";
 
@@ -23,22 +23,21 @@ export async function POST(
   }
   const { mediaId } = await params;
   if (!mediaId) return NextResponse.json({ error: "Missing mediaId" }, { status: 400 });
+  
   const body = await request.json().catch(() => ({}));
   const bodyText = typeof body.body === "string" ? body.body.trim() : "";
-  if (!bodyText) return NextResponse.json({ error: "body required" }, { status: 400 });
+  
   const supabase = await createClient();
-  const { data: row, error } = await supabase
-    .from("photo_comments")
-    .insert({
-      tenant_id: ctx.tenantId,
-      media_id: mediaId,
-      author_user_id: ctx.userId,
-      body: bodyText,
-    })
-    .select("id, body, author_user_id, created_at")
-    .single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  const admin = (await import("@/lib/supabase/admin")).getAdminClient();
-  if (admin) await emitChange(admin, { tenant_id: ctx.tenantId, resource_type: "media", resource_id: mediaId, change_type: "updated", changed_by: ctx.userId, payload: { comment_id: (row as { id: string }).id } });
-  return NextResponse.json({ data: row });
+  const { data: comment, error } = await createComment(supabase, ctx, mediaId, bodyText);
+  
+  if (error) {
+    const status = error === "Unauthorized" ? 401 : error.includes("required") ? 400 : 500;
+    return NextResponse.json({ error }, { status });
+  }
+  
+  if (!comment) {
+    return NextResponse.json({ error: "Failed to create comment" }, { status: 500 });
+  }
+  
+  return NextResponse.json({ data: comment });
 }

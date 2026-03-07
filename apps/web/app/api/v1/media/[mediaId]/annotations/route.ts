@@ -5,7 +5,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
-import { emitChange } from "@/lib/sync/change-log.repository";
+import { createAnnotation } from "@/lib/domain/media/annotation.service";
 
 export const dynamic = "force-dynamic";
 
@@ -22,25 +22,22 @@ export async function POST(
   }
   const { mediaId } = await params;
   if (!mediaId) return NextResponse.json({ error: "Missing mediaId" }, { status: 400 });
+  
   const body = await request.json().catch(() => ({}));
   const type = typeof body.type === "string" ? body.type.trim() : "";
   const data = body.data && typeof body.data === "object" ? body.data : {};
-  if (!type) return NextResponse.json({ error: "type required" }, { status: 400 });
+  
   const supabase = await createClient();
-  const { data: row, error } = await supabase
-    .from("photo_annotations")
-    .insert({
-      tenant_id: ctx.tenantId,
-      media_id: mediaId,
-      author_user_id: ctx.userId,
-      type,
-      data,
-      version: 1,
-    })
-    .select("id, type, data, version, created_at")
-    .single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  const admin = (await import("@/lib/supabase/admin")).getAdminClient();
-  if (admin) await emitChange(admin, { tenant_id: ctx.tenantId, resource_type: "media", resource_id: mediaId, change_type: "updated", changed_by: ctx.userId, payload: { annotation_id: (row as { id: string }).id } });
-  return NextResponse.json({ data: row });
+  const { data: annotation, error } = await createAnnotation(supabase, ctx, mediaId, type, data);
+  
+  if (error) {
+    const status = error === "Unauthorized" ? 401 : error.includes("required") ? 400 : 500;
+    return NextResponse.json({ error }, { status });
+  }
+  
+  if (!annotation) {
+    return NextResponse.json({ error: "Failed to create annotation" }, { status: 500 });
+  }
+  
+  return NextResponse.json({ data: annotation });
 }

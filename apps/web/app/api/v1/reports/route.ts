@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
-import { listReportsForManager } from "@/lib/domain/reports/report-list.repository";
+import { listReportsWithMetadata } from "@/lib/domain/reports/report-list.service";
 
 export const dynamic = "force-dynamic";
 
@@ -27,51 +27,19 @@ export async function GET(request: Request) {
   const limit = Math.min(parseInt(url.searchParams.get("limit") ?? "50", 10) || 50, 200);
 
   const supabase = await createClient();
-  let data = await listReportsForManager(supabase, ctx.tenantId!, {
+  const { data, error } = await listReportsWithMetadata(supabase, ctx, {
     projectId,
     userId,
     from,
     to,
     limit,
     q,
+    statusFilter,
   });
-  if (statusFilter) data = data.filter((r) => r.status === statusFilter);
 
-  const reportIds = data.map((r) => r.id);
-  if (reportIds.length === 0) return NextResponse.json({ data: data.map((r) => ({ ...r, media_count: 0, analysis_status: "none" as const })) });
-
-  const [mediaRes, jobsRes] = await Promise.all([
-    supabase.from("worker_report_media").select("report_id").in("report_id", reportIds),
-    supabase
-      .from("jobs")
-      .select("status, payload")
-      .eq("tenant_id", ctx.tenantId!)
-      .or("type.eq.ai_analyze_report,type.eq.ai_analyze_media")
-      .limit(1000),
-  ]);
-
-  const mediaCountByReport: Record<string, number> = {};
-  for (const r of data) mediaCountByReport[r.id] = 0;
-  for (const row of (mediaRes.data ?? []) as { report_id: string }[]) {
-    if (mediaCountByReport[row.report_id] !== undefined) mediaCountByReport[row.report_id]++;
+  if (error) {
+    return NextResponse.json({ error }, { status: error === "Insufficient rights" ? 403 : 400 });
   }
 
-  const jobs = (jobsRes.data ?? []) as { status: string; payload?: { report_id?: string } }[];
-  const statusByReport: Record<string, "queued" | "running" | "success" | "failed"> = {};
-  for (const r of data) statusByReport[r.id] = "queued";
-  for (const j of jobs) {
-    const rid = j.payload?.report_id;
-    if (!rid || statusByReport[rid] === undefined) continue;
-    if (j.status === "running") statusByReport[rid] = "running";
-    else if (j.status === "success" && statusByReport[rid] !== "running") statusByReport[rid] = "success";
-    else if ((j.status === "failed" || j.status === "dead") && statusByReport[rid] !== "running" && statusByReport[rid] !== "success")
-      statusByReport[rid] = "failed";
-  }
-
-  const enriched = data.map((r) => ({
-    ...r,
-    media_count: mediaCountByReport[r.id] ?? 0,
-    analysis_status: statusByReport[r.id] ?? ("none" as const),
-  }));
-  return NextResponse.json({ data: enriched });
+  return NextResponse.json({ data });
 }
