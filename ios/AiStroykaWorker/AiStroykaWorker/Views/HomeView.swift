@@ -17,6 +17,7 @@ struct HomeView: View {
     @State private var resumeDraftReportId: String?
     @State private var todayTasks: [TaskDTO] = []
     @State private var tasksLoading = false
+    @State private var showDiagnostics = false
 
     private var shiftStarted: Bool { store.state.shift.isStarted }
     private var dayId: String? { store.state.shift.dayId }
@@ -104,10 +105,23 @@ struct HomeView: View {
                     navigateToNewReport = true
                 }
                 Spacer()
+                Button("Support") { showDiagnostics = true }
+                    .foregroundColor(.secondary)
                 Button("Sign out", action: onLogout)
                     .foregroundColor(.secondary)
             }
             .padding()
+            .sheet(isPresented: $showDiagnostics) {
+                NavigationStack {
+                    DiagnosticsView()
+                        .environmentObject(appState)
+                        .toolbar {
+                            ToolbarItem(placement: .cancellationAction) {
+                                Button("Done") { showDiagnostics = false }
+                            }
+                        }
+                }
+            }
             .navigationDestination(isPresented: $navigateToNewReport) {
                 ReportCreateView(
                     projectId: project.id,
