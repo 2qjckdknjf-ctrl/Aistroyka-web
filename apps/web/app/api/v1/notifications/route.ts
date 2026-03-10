@@ -2,17 +2,25 @@ import { NextResponse } from "next/server";
 import { createClientFromRequest } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError, TenantForbiddenError } from "@/lib/tenant";
 import { listForUser } from "@/lib/domain/notifications/manager-notifications.repository";
+import { withRequestIdAndTiming } from "@/lib/observability";
 
 export const dynamic = "force-dynamic";
 
+const ROUTE_KEY = "GET /api/v1/notifications";
+
 /** GET /api/v1/notifications — manager inbox (tenant-scoped, for current user). Query: limit, offset. */
 export async function GET(request: Request) {
+  const start = Date.now();
   let ctx: Awaited<ReturnType<typeof getTenantContextFromRequest>>;
   try {
     ctx = await getTenantContextFromRequest(request);
   } catch (e) {
     if (e instanceof TenantForbiddenError) {
-      return NextResponse.json({ error: e.message }, { status: 403 });
+      return withRequestIdAndTiming(request, NextResponse.json({ error: e.message }, { status: 403 }), {
+        route: ROUTE_KEY,
+        method: "GET",
+        duration_ms: Date.now() - start,
+      });
     }
     throw e;
   }
@@ -20,12 +28,20 @@ export async function GET(request: Request) {
     requireTenant(ctx);
   } catch (e) {
     if (e instanceof TenantRequiredError) {
-      return NextResponse.json({ error: e.message }, { status: 401 });
+      return withRequestIdAndTiming(request, NextResponse.json({ error: e.message }, { status: 401 }), {
+        route: ROUTE_KEY,
+        method: "GET",
+        duration_ms: Date.now() - start,
+      });
     }
     throw e;
   }
   if (!ctx.tenantId || !ctx.userId) {
-    return NextResponse.json({ error: "Tenant and user required" }, { status: 403 });
+    return withRequestIdAndTiming(request, NextResponse.json({ error: "Tenant and user required" }, { status: 403 }), {
+      route: ROUTE_KEY,
+      method: "GET",
+      duration_ms: Date.now() - start,
+    });
   }
 
   const url = new URL(request.url);
@@ -35,7 +51,7 @@ export async function GET(request: Request) {
   const supabase = await createClientFromRequest(request);
   const { data, total } = await listForUser(supabase, ctx.tenantId, ctx.userId, { limit, offset });
 
-  return NextResponse.json({
+  const body = {
     data: data.map((row) => ({
       id: row.id,
       type: row.type,
@@ -47,5 +63,13 @@ export async function GET(request: Request) {
       target_id: row.target_id ?? undefined,
     })),
     total,
+  };
+  const res = NextResponse.json(body, { status: 200 });
+  return withRequestIdAndTiming(request, res, {
+    route: ROUTE_KEY,
+    method: "GET",
+    duration_ms: Date.now() - start,
+    tenantId: ctx.tenantId,
+    userId: ctx.userId,
   });
 }

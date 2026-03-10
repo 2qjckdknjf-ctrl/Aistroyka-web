@@ -11,6 +11,7 @@ import {
   storeResponse,
   IDEMPOTENCY_HEADER,
 } from "@/lib/platform/idempotency/idempotency.service";
+import { withRequestIdAndTiming } from "@/lib/observability";
 
 export const dynamic = "force-dynamic";
 
@@ -22,26 +23,45 @@ export async function POST(
   request: Request,
   context: { params: Promise<{ id: string }> }
 ) {
+  const start = Date.now();
   const { id: taskId } = await context.params;
-  if (!taskId) return NextResponse.json({ error: "Missing task id" }, { status: 400 });
+  const routeKey = ROUTE_KEY_PREFIX + (taskId ?? "") + ROUTE_KEY_SUFFIX;
+  if (!taskId) {
+    return withRequestIdAndTiming(request, NextResponse.json({ error: "Missing task id" }, { status: 400 }), {
+      route: routeKey,
+      method: "POST",
+      duration_ms: Date.now() - start,
+    });
+  }
 
   const ctx = await getTenantContextFromRequest(request);
   try {
     requireTenant(ctx);
   } catch (e) {
     if (e instanceof TenantRequiredError) {
-      return NextResponse.json({ error: e.message }, { status: 401 });
+      return withRequestIdAndTiming(request, NextResponse.json({ error: e.message }, { status: 401 }), {
+        route: routeKey,
+        method: "POST",
+        duration_ms: Date.now() - start,
+      });
     }
     throw e;
   }
 
   const idempotencyKey = request.headers.get(IDEMPOTENCY_HEADER)?.trim();
-  const routeKey = ROUTE_KEY_PREFIX + taskId + ROUTE_KEY_SUFFIX;
   if (idempotencyKey && ctx.tenantId && ctx.userId) {
     const admin = getAdminClient();
     if (admin) {
       const cached = await getCachedResponse(admin, idempotencyKey, ctx.tenantId, ctx.userId, routeKey);
-      if (cached) return NextResponse.json(cached.response as object, { status: cached.statusCode });
+      if (cached) {
+        return withRequestIdAndTiming(request, NextResponse.json(cached.response as object, { status: cached.statusCode }), {
+          route: routeKey,
+          method: "POST",
+          duration_ms: Date.now() - start,
+          tenantId: ctx.tenantId,
+          userId: ctx.userId,
+        });
+      }
     }
   }
 
@@ -49,14 +69,36 @@ export async function POST(
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return withRequestIdAndTiming(request, NextResponse.json({ error: "Invalid JSON" }, { status: 400 }), {
+      route: routeKey,
+      method: "POST",
+      duration_ms: Date.now() - start,
+      tenantId: ctx.tenantId,
+      userId: ctx.userId,
+    });
   }
   const workerId = (body.worker_id ?? body.assignee_id)?.trim();
-  if (!workerId) return NextResponse.json({ error: "worker_id or assignee_id required" }, { status: 400 });
+  if (!workerId) {
+    return withRequestIdAndTiming(request, NextResponse.json({ error: "worker_id or assignee_id required" }, { status: 400 }), {
+      route: routeKey,
+      method: "POST",
+      duration_ms: Date.now() - start,
+      tenantId: ctx.tenantId,
+      userId: ctx.userId,
+    });
+  }
 
   const supabase = await createClientFromRequest(request);
   const { error } = await assignTask(supabase, ctx, taskId, workerId);
-  if (error) return NextResponse.json({ error }, { status: error === "Insufficient rights" ? 403 : 400 });
+  if (error) {
+    return withRequestIdAndTiming(request, NextResponse.json({ error }, { status: error === "Insufficient rights" ? 403 : 400 }), {
+      route: routeKey,
+      method: "POST",
+      duration_ms: Date.now() - start,
+      tenantId: ctx.tenantId,
+      userId: ctx.userId,
+    });
+  }
 
   if (ctx.tenantId && ctx.userId) {
     await emitAudit(supabase, {
@@ -97,5 +139,11 @@ export async function POST(
     const adminClient = getAdminClient();
     if (adminClient) await storeResponse(adminClient, idempotencyKey, ctx.tenantId, ctx.userId, routeKey, payload, 200);
   }
-  return res;
+  return withRequestIdAndTiming(request, res, {
+    route: routeKey,
+    method: "POST",
+    duration_ms: Date.now() - start,
+    tenantId: ctx.tenantId,
+    userId: ctx.userId,
+  });
 }
