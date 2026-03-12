@@ -1,38 +1,41 @@
-# Отчёт: исправление Vercel build — tsc: command not found
+# Отчёт: исправление Vercel build — tsc (TypeScript compiler)
 
-## 1. Root cause
+## 1. Почему `npx tsc` оказался неправильным решением
 
-При сборке на Vercel команда `@aistroyka/contracts@0.1.0 build` выполняла `tsc -p tsconfig.json`. В CI окружении при вызове `npm run --prefix packages/contracts build` бинарь `tsc` не оказывался в `PATH`:
+- В CI/Vercel при вызове `npx tsc` пакет **TypeScript** не оказывался в дереве `node_modules`, доступном для этого вызова (из‑за hoisting в npm workspaces).
+- В такой ситуации `npx` не находит локальный `typescript` и пытается установить пакет по имени команды: **`tsc`** — это отдельный npm-пакет (например `tsc@2.0.4`), а не TypeScript compiler.
+- В результате Vercel выводил: *"The following package was not found and will be installed: tsc@2.0.4 — This is not the tsc command you are looking for"*.
+- Вывод: использовать `npx tsc` в скрипте сборки в этом окружении нельзя — нужен явно установленный TypeScript и обычный вызов `tsc`.
 
-- TypeScript объявлен в `packages/contracts` в `devDependencies` и при npm workspaces может быть установлен только в корне (`node_modules`), а не в `packages/contracts/node_modules`.
-- При запуске скрипта через `npm run --prefix packages/contracts build` в PATH добавляется только `packages/contracts/node_modules/.bin`. Если `tsc` там нет (из‑за hoisting), команда `tsc` не находится → `tsc: command not found`.
+## 2. Где объявлен TypeScript и какой build script используется
 
-Локально ошибка не воспроизводилась, потому что в локальной среде `tsc` мог быть доступен (например, глобально или из другого пути).
+- **TypeScript объявлен** в `packages/contracts/package.json` в **devDependencies**: `"typescript": "^5.6.3"`. Пакет contracts самодостаточен для сборки.
+- **Build script** в `packages/contracts`: снова обычный вызов компилятора:
+  - `"build": "tsc -p tsconfig.json"`  
+  (без `npx`).
 
-## 2. Где не хватало доступности TypeScript
-
-- **Пакет:** `packages/contracts`.
-- **Проблема:** не «не хватало» зависимости (typescript уже в devDependencies), а способ вызова: скрипт вызывал `tsc` по имени, полагаясь на PATH. В CI PATH при `--prefix` не гарантирует наличие бинаря из корневого `node_modules`.
+Чтобы в CI при `npm run --prefix packages/contracts build` в PATH был именно этот `tsc`, перед сборкой выполняется установка зависимостей **внутри** пакета contracts (см. п. 4).
 
 ## 3. Изменённые файлы
 
 | Файл | Изменение |
 |------|-----------|
-| `packages/contracts/package.json` | В скрипте `build`: `"tsc -p tsconfig.json"` заменён на `"npx tsc -p tsconfig.json"`. |
+| `packages/contracts/package.json` | Скрипт `build`: возвращён к `"tsc -p tsconfig.json"` (убрано `npx tsc`). |
+| `package.json` (root) | Скрипт `build:contracts:npm`: перед `npm run --prefix packages/contracts build` добавлен шаг `npm install --prefix packages/contracts`. |
 
-Зависимости не менялись: `typescript` остаётся в `devDependencies` пакета `contracts`.
+## 4. Почему это правильно для Vercel/CI
 
-## 4. Почему Vercel теперь соберёт contracts
+- При `npm install` в корне монорепо зависимости workspace-пакетов часто поднимаются (hoisting) в корневой `node_modules`. Тогда в `packages/contracts/node_modules/.bin` может не быть `tsc`, и при `npm run --prefix packages/contracts build` команда `tsc` не находится.
+- Решение: перед сборкой contracts выполнять **`npm install --prefix packages/contracts`**. Это устанавливает зависимости пакета `packages/contracts` в его собственный `node_modules`, в том числе `typescript` и бинарь `tsc` в `packages/contracts/node_modules/.bin`.
+- При следующем шаге `npm run --prefix packages/contracts build` npm добавляет этот `.bin` в PATH, и выполняется **реальный** TypeScript compiler из зависимости `typescript`, а не сторонний пакет `tsc`.
+- Без хардкода путей, без `npx tsc`, с явной зависимостью на TypeScript в пакете, который собирается — поведение предсказуемо и подходит для production и CI.
 
-- `npx tsc` ищет бинарь в дереве `node_modules` текущего пакета и выше (в т.ч. в корне воркспейса), а не только в PATH.
-- После `npm install` в корне TypeScript устанавливается (в корень или в `packages/contracts`), и `npx tsc` в контексте `packages/contracts` его находит.
-- Решение стандартное для npm-скриптов в монорепо и не требует хаков, лишних зависимостей или копирования файлов.
+## 5. Результаты локальной проверки
 
-## 5. Локальная проверка
+Из корня репозитория выполнено:
 
-Выполнено из корня репозитория:
+1. **`npm install`** — успешно.
+2. **`npm run build:contracts:npm`** — успешно: clean → `npm install --prefix packages/contracts` (добавлены пакеты в `packages/contracts/node_modules`) → `tsc -p tsconfig.json`.
+3. **`npm run build:web:npm`** — успешно: prebuild собирает contracts тем же способом, затем Next.js build завершается без ошибок.
 
-1. `npm run build:contracts:npm` — успешно (clean + build с `npx tsc -p tsconfig.json`).
-2. `npm run build:web:npm` — успешно (prebuild собирает contracts, затем Next.js build).
-
-Итог: сборка contracts и полный build (contracts + web) проходят локально; на Vercel ожидается такой же результат при том же `npm install` и `npm run build:contracts:npm` / `npm run build:web:npm`.
+Итог: сборка contracts и полный сценарий (contracts + web) проходят локально; на Vercel при том же порядке команд (`npm install` в корне, затем `build:contracts:npm` и `build:web:npm`) ожидается корректная работа с установленным TypeScript и обычным `tsc`.
