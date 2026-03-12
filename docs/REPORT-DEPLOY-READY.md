@@ -9,11 +9,12 @@
 
 - **Тип:** монорепо (npm workspaces). Next.js-приложение — в **`apps/web`**.
 - **Root для Vercel:** в настройках проекта задать **Root Directory = `apps/web`**. Сборка и установка зависимостей выполняются из корня репозитория за счёт `apps/web/vercel.json`:
-  - `installCommand`: `cd ../.. && npm install`
-  - `buildCommand`: `cd ../.. && npm run build`
+  - `installCommand`: `cd ../.. && npm install && npm run build:contracts:npm`
+  - `buildCommand`: `cd ../.. && npm run build:contracts:npm && npm run build:web:npm`
 - **Цепочка сборки:**
-  1. `npm install` (в корне) — ставит зависимости корня и workspace (`apps/web`, `packages/contracts`, и др.).
-  2. `npm run build` → `build:contracts` (сборка `packages/contracts`) и `build:web` (Next.js в `apps/web`).
+  1. `npm install` (в корне) — ставит зависимости корня и workspace.
+  2. `npm run build:contracts:npm` — сборка `packages/contracts` (TypeScript с `--include=dev`).
+  3. `npm run build:web:npm` — prebuild собирает contracts при необходимости, затем `next build` в `apps/web`. На Vercel (`VERCEL=1`) Next собирается без адаптера OpenNext/Cloudflare (см. [REPORT-VERCEL-CLOUDFLARE-SEPARATION.md](./REPORT-VERCEL-CLOUDFLARE-SEPARATION.md)).
 - **Framework:** Next.js 15 (App Router), next-intl, Supabase SSR. Middleware: локали, защита маршрутов, Supabase session, security headers. API routes в `apps/web/app/api/`.
 - **Output:** Next.js по умолчанию выдаёт `.next` в `apps/web`; при необходимости используется `output: "standalone"` (для self-host; Vercel использует свой runtime).
 

@@ -18,11 +18,15 @@ const nextConfig = {
   },
 };
 
-try {
-  const { initOpenNextCloudflareForDev } = require("@opennextjs/cloudflare");
-  initOpenNextCloudflareForDev();
-} catch {
-  // @opennextjs/cloudflare not installed or not needed (e.g. plain next build)
+const isVercelDeploy =
+  process.env.VERCEL === "1" || process.env.DEPLOY_TARGET === "vercel";
+if (!isVercelDeploy) {
+  try {
+    const { initOpenNextCloudflareForDev } = require("@opennextjs/cloudflare");
+    initOpenNextCloudflareForDev();
+  } catch {
+    // @opennextjs/cloudflare not installed or not needed
+  }
 }
 
 module.exports = nextConfig;

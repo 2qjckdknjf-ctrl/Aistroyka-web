@@ -23,6 +23,7 @@
   - `installCommand`: `cd ../.. && npm install && npm run build:contracts:npm`
   - `buildCommand`: `cd ../.. && npm run build:contracts:npm && npm run build:web:npm`
 - В Vercel часто задают `NODE_ENV=production`; при этом `npm install` по умолчанию не ставит devDependencies. Сборка contracts требует TypeScript (в devDependencies), поэтому в скрипте `build:contracts:npm` для установки в `packages/contracts` используется `npm install --prefix packages/contracts --include=dev`.
+- **Vercel vs Cloudflare:** при сборке на Vercel платформа автоматически выставляет `VERCEL=1`. В `apps/web/next.config.js` при `VERCEL=1` адаптер OpenNext/Cloudflare не подключается — сборка идёт как обычный Next.js, без зависимости от wrangler. Подробнее: [REPORT-VERCEL-CLOUDFLARE-SEPARATION.md](./REPORT-VERCEL-CLOUDFLARE-SEPARATION.md).
 
 В интерфейсе Vercel лучше оставить **Override** для Install/Build пустым, чтобы использовались команды из `vercel.json`. Если задаёте вручную:
 
@@ -79,3 +80,4 @@
 
 - [ENVIRONMENT-VARIABLES.md](./ENVIRONMENT-VARIABLES.md) — полный список переменных.
 - [PRODUCTION-CHECKLIST.md](./PRODUCTION-CHECKLIST.md) — проверки перед и после публикации.
+- [REPORT-VERCEL-CLOUDFLARE-SEPARATION.md](./REPORT-VERCEL-CLOUDFLARE-SEPARATION.md) — разделение Vercel и Cloudflare deploy, что проверить после деплоя.

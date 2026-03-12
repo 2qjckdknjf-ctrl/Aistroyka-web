@@ -29,11 +29,17 @@ const nextConfig = {
   },
 };
 
-try {
-  const { initOpenNextCloudflareForDev } = require("@opennextjs/cloudflare");
-  initOpenNextCloudflareForDev();
-} catch {
-  // @opennextjs/cloudflare not installed or not needed (e.g. plain next build)
+// Vercel build: plain Next.js, no Cloudflare adapter (avoids wrangler dependency).
+// Cloudflare/OpenNext path: init only when not deploying to Vercel.
+const isVercelDeploy =
+  process.env.VERCEL === "1" || process.env.DEPLOY_TARGET === "vercel";
+if (!isVercelDeploy) {
+  try {
+    const { initOpenNextCloudflareForDev } = require("@opennextjs/cloudflare");
+    initOpenNextCloudflareForDev();
+  } catch {
+    // @opennextjs/cloudflare not installed or not needed (e.g. plain next build)
+  }
 }
 
 module.exports = withNextIntl(nextConfig);
