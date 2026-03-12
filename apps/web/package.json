@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "cd ../.. && npm run build:contracts:npm",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",

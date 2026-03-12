@@ -14,7 +14,7 @@
   "sideEffects": false,
   "scripts": {
     "clean": "rm -rf dist",
-    "build": "bun x tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json",
     "test": "vitest run"
   },
   "dependencies": {
