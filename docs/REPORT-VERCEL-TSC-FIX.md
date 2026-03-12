@@ -1,41 +1,54 @@
 # Отчёт: исправление Vercel build — tsc (TypeScript compiler)
 
-## 1. Почему `npx tsc` оказался неправильным решением
+## 1. Root cause
 
-- В CI/Vercel при вызове `npx tsc` пакет **TypeScript** не оказывался в дереве `node_modules`, доступном для этого вызова (из‑за hoisting в npm workspaces).
-- В такой ситуации `npx` не находит локальный `typescript` и пытается установить пакет по имени команды: **`tsc`** — это отдельный npm-пакет (например `tsc@2.0.4`), а не TypeScript compiler.
-- В результате Vercel выводил: *"The following package was not found and will be installed: tsc@2.0.4 — This is not the tsc command you are looking for"*.
-- Вывод: использовать `npx tsc` в скрипте сборки в этом окружении нельзя — нужен явно установленный TypeScript и обычный вызов `tsc`.
+Реальная причина падения сборки contracts на Vercel:
 
-## 2. Где объявлен TypeScript и какой build script используется
+- **TypeScript** объявлен в `packages/contracts/package.json` в **devDependencies** (`"typescript": "^5.6.3"`).
+- В CI/Vercel при сборке часто выставлен **NODE_ENV=production** (или Vercel по умолчанию ведёт себя как production). В этом режиме **`npm install` не устанавливает devDependencies** (см. документацию npm).
+- В результате при выполнении `npm install --prefix packages/contracts` без явного указания типа зависимостей devDependencies пропускаются → пакет `typescript` не ставится → в `packages/contracts/node_modules/.bin` нет `tsc`.
+- Скрипт сборки `tsc -p tsconfig.json` тогда закономерно падает: **`sh: line 1: tsc: command not found`**.
 
-- **TypeScript объявлен** в `packages/contracts/package.json` в **devDependencies**: `"typescript": "^5.6.3"`. Пакет contracts самодостаточен для сборки.
-- **Build script** в `packages/contracts`: снова обычный вызов компилятора:
-  - `"build": "tsc -p tsconfig.json"`  
-  (без `npx`).
+Исправление — явно включить devDependencies при установке зависимостей пакета contracts в скрипте, используемом в CI/Vercel.
 
-Чтобы в CI при `npm run --prefix packages/contracts build` в PATH был именно этот `tsc`, перед сборкой выполняется установка зависимостей **внутри** пакета contracts (см. п. 4).
+---
 
-## 3. Изменённые файлы
+## 2. Почему предыдущие фиксы не устраняли проблему полностью
 
-| Файл | Изменение |
-|------|-----------|
-| `packages/contracts/package.json` | Скрипт `build`: возвращён к `"tsc -p tsconfig.json"` (убрано `npx tsc`). |
-| `package.json` (root) | Скрипт `build:contracts:npm`: перед `npm run --prefix packages/contracts build` добавлен шаг `npm install --prefix packages/contracts`. |
+- **Первый фикс (npx tsc):** при отсутствии локального `typescript` в дереве `node_modules` npx подтягивал **другой** npm-пакет — `tsc` (не компилятор TypeScript), что давало сообщение *"This is not the tsc command you are looking for"*. Проблему с отсутствием devDependencies не решал.
+- **Второй фикс (npm install --prefix packages/contracts):** добавлял установку зависимостей в пакет contracts перед build, но не указывал **включение devDependencies**. В окружении с NODE_ENV=production devDependencies по-прежнему не ставились, и `tsc` оставался недоступен.
 
-## 4. Почему это правильно для Vercel/CI
+Оба подхода не учитывали семантику **production install**, при которой npm намеренно не ставит devDependencies.
 
-- При `npm install` в корне монорепо зависимости workspace-пакетов часто поднимаются (hoisting) в корневой `node_modules`. Тогда в `packages/contracts/node_modules/.bin` может не быть `tsc`, и при `npm run --prefix packages/contracts build` команда `tsc` не находится.
-- Решение: перед сборкой contracts выполнять **`npm install --prefix packages/contracts`**. Это устанавливает зависимости пакета `packages/contracts` в его собственный `node_modules`, в том числе `typescript` и бинарь `tsc` в `packages/contracts/node_modules/.bin`.
-- При следующем шаге `npm run --prefix packages/contracts build` npm добавляет этот `.bin` в PATH, и выполняется **реальный** TypeScript compiler из зависимости `typescript`, а не сторонний пакет `tsc`.
-- Без хардкода путей, без `npx tsc`, с явной зависимостью на TypeScript в пакете, который собирается — поведение предсказуемо и подходит для production и CI.
+---
+
+## 3. Где объявлен TypeScript и какой install flag добавлен
+
+- **Где объявлен:** в **`packages/contracts/package.json`** в **devDependencies**: `"typescript": "^5.6.3"`. Перенос в dependencies не делался — TypeScript нужен только для сборки.
+- **Build script** в packages/contracts: `"build": "tsc -p tsconfig.json"` (обычный вызов компилятора, без npx).
+- **Добавленный флаг:** при установке зависимостей для пакета contracts в root-скрипте используется:
+  - **`npm install --prefix packages/contracts --include=dev`**
+- Полный скрипт `build:contracts:npm` в root `package.json`:
+  - `npm run --prefix packages/contracts clean && npm install --prefix packages/contracts --include=dev && npm run --prefix packages/contracts build`
+
+---
+
+## 4. Почему это корректно для npm/Vercel
+
+- **`--include=dev`** — штатный флаг npm: явно включает devDependencies при установке, даже если NODE_ENV=production или окружение ведёт себя как production. Документация npm: при production devDependencies по умолчанию опускаются; `--include=dev` отменяет это для данного вызова.
+- Один вызов `npm install --prefix packages/contracts --include=dev` гарантирует установку и dependencies, и devDependencies пакета contracts, в том числе `typescript` и бинарь `tsc` в `packages/contracts/node_modules/.bin`. Следующий шаг `npm run --prefix packages/contracts build` выполняется с этим PATH, и команда `tsc` находит нужный компилятор.
+- Решение не меняет структуру монорепо, не добавляет npx-обходы и не хардкодит пути; исправляется только семантика install в CI/Vercel.
+
+В **docs/DEPLOY-VERCEL.md** добавлено пояснение: при заданном в Vercel `NODE_ENV=production` обычный `npm install` не ставит devDependencies; для сборки contracts скрипт `build:contracts:npm` явно использует `--include=dev` при установке в `packages/contracts`.
+
+---
 
 ## 5. Результаты локальной проверки
 
 Из корня репозитория выполнено:
 
-1. **`npm install`** — успешно.
-2. **`npm run build:contracts:npm`** — успешно: clean → `npm install --prefix packages/contracts` (добавлены пакеты в `packages/contracts/node_modules`) → `tsc -p tsconfig.json`.
-3. **`npm run build:web:npm`** — успешно: prebuild собирает contracts тем же способом, затем Next.js build завершается без ошибок.
+1. **Обычный прогон:** `rm -rf packages/contracts/node_modules packages/contracts/dist && npm run build:contracts:npm` — успешно (clean → install с `--include=dev` → `tsc -p tsconfig.json`).
+2. **Production-like:** `rm -rf packages/contracts/node_modules packages/contracts/dist && NODE_ENV=production npm run build:contracts:npm` — успешно; с флагом `--include=dev` devDependencies устанавливаются и при NODE_ENV=production, `tsc` доступен, сборка contracts проходит.
+3. **Полный build:** `npm run build:web:npm` — успешно (prebuild собирает contracts тем же скриптом, затем Next.js build).
 
-Итог: сборка contracts и полный сценарий (contracts + web) проходят локально; на Vercel при том же порядке команд (`npm install` в корне, затем `build:contracts:npm` и `build:web:npm`) ожидается корректная работа с установленным TypeScript и обычным `tsc`.
+Итог: сборка contracts и полный сценарий (contracts + web) проходят локально и в production-like режиме; на Vercel при том же `build:contracts:npm` (с `--include=dev`) ожидается корректная установка TypeScript и успешный запуск `tsc`.

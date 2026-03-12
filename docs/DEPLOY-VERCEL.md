@@ -22,6 +22,7 @@
 - **Install** и **Build** заданы в `apps/web/vercel.json` (из корня репо собирается contracts, затем web):
   - `installCommand`: `cd ../.. && npm install && npm run build:contracts:npm`
   - `buildCommand`: `cd ../.. && npm run build:contracts:npm && npm run build:web:npm`
+- В Vercel часто задают `NODE_ENV=production`; при этом `npm install` по умолчанию не ставит devDependencies. Сборка contracts требует TypeScript (в devDependencies), поэтому в скрипте `build:contracts:npm` для установки в `packages/contracts` используется `npm install --prefix packages/contracts --include=dev`.
 
 В интерфейсе Vercel лучше оставить **Override** для Install/Build пустым, чтобы использовались команды из `vercel.json`. Если задаёте вручную:
 
