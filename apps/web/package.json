@@ -13,7 +13,7 @@
     "e2e": "playwright test",
     "test:e2e": "playwright test",
     "postinstall": "node scripts/link-next-if-workspace.cjs",
-    "prepare": "husky",
+    "prepare": "node scripts/prepare.cjs",
     "cf:build": "NEXT_PRIVATE_STANDALONE=true NEXT_PRIVATE_OUTPUT_TRACE_ROOT=$(pwd)/../.. next build && node scripts/fix-standalone-for-opennext.cjs && node scripts/ensure-styled-jsx-dist.cjs && opennextjs-cloudflare build --skipNextBuild --dangerouslyUseUnsupportedNextVersion && node scripts/patch-worker-bypass-api-middleware.cjs && node scripts/patch-server-handler-require-middleware-manifest.cjs",
     "cf:deploy": "wrangler deploy",
     "cf:deploy:dev": "wrangler deploy --env dev",
