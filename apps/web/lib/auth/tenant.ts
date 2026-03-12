@@ -8,6 +8,7 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getSessionUser } from "@/lib/supabase/server";
 
 export type TenantRole = "owner" | "admin" | "member" | "viewer";
 
@@ -31,9 +32,7 @@ export async function getRoleInTenant(
   tenantId: string
 ): Promise<TenantRole | null> {
   try {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await getSessionUser(supabase);
     if (!user?.id) return null;
 
     const { data: tenant, error: tenantError } = await supabase

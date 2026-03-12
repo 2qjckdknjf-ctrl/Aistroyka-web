@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Shared
 
 /// Stores push token and registers with API when user is logged in. Token is never logged or displayed.
 enum PushRegistrationService {

@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
 import { NavLogout } from "./NavLogout";
 import { BuildStamp } from "./BuildStamp";
+import { Logo } from "@/components/brand/Logo";
 import { routing } from "@/i18n/routing";
 import { getDashboardNavIncludesAdmin } from "./dashboard-nav.utils";
 
@@ -17,6 +18,7 @@ const SIDEBAR_LINKS = [
   { href: "/dashboard/uploads", key: "uploads" as const },
   { href: "/dashboard/devices", key: "devices" as const },
   { href: "/dashboard/ai", key: "ai" as const },
+  { href: "/dashboard/alerts", key: "alerts" as const },
 ] as const;
 
 const ADMIN_LINKS = [
@@ -57,13 +59,7 @@ export function DashboardShell({
       >
         <div className="flex h-full flex-col pt-[var(--aistroyka-space-4)]">
           <div className="px-[var(--aistroyka-space-4)] pb-[var(--aistroyka-space-3)]">
-            <Link
-              href="/dashboard"
-              className="text-aistroyka-title3 font-semibold tracking-tight text-aistroyka-text-primary"
-              onClick={closeSidebar}
-            >
-              Aistroyka
-            </Link>
+            <Logo href="/dashboard" height={26} className="block" onClick={closeSidebar} />
           </div>
           <nav className="flex-1 space-y-0.5 px-[var(--aistroyka-space-2)]" aria-label="Main">
             {SIDEBAR_LINKS.map(({ href, key }) => {

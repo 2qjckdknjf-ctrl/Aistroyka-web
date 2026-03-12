@@ -3,15 +3,14 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getSessionUser } from "@/lib/supabase/server";
 import * as repo from "./tenant.repository";
 import type { Tenant } from "./tenant.types";
 
 export async function getOrCreateTenantForUser(
   supabase: SupabaseClient
 ): Promise<string | null> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getSessionUser(supabase);
   if (!user?.id) return null;
 
   const own = await repo.getTenantByUserId(supabase, user.id);
@@ -20,7 +19,7 @@ export async function getOrCreateTenantForUser(
   const member = await repo.getFirstMembership(supabase, user.id);
   if (member?.tenant_id) return member.tenant_id;
 
-  const name = user.user_metadata?.name ?? user.email ?? "Personal";
+  const name = user.email ?? "Personal";
   const created = await repo.createTenant(supabase, { name, user_id: user.id });
   if (created?.id) {
     await repo.addMember(supabase, created.id, user.id, "owner");

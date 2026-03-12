@@ -8,6 +8,7 @@
 
 import UIKit
 import UserNotifications
+import Shared
 
 /// Notification name for in-app handling of push payload (userInfo: type, task_id, etc.).
 extension Notification.Name {

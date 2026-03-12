@@ -1,3 +1,4 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
@@ -44,6 +45,40 @@ export async function createClientFromRequest(request: Request) {
     });
   }
   return createClient();
+}
+
+/**
+ * Get current user from Supabase auth without throwing.
+ * Use in Server Components/layouts/API to avoid crashes when getUser() fails or returns null data.
+ */
+export async function getSessionUser(supabase: SupabaseClient): Promise<{ id: string; email?: string } | null> {
+  try {
+    const res = await supabase.auth.getUser();
+    const user = res?.data?.user ?? null;
+    return user ? { id: user.id, email: user.email ?? undefined } : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Get current session from Supabase auth without throwing.
+ * Use when only session/token is needed (e.g. API calls that need access_token).
+ */
+export async function safeGetSession(
+  supabase: SupabaseClient
+): Promise<{ access_token: string; user: { id: string; email?: string } } | null> {
+  try {
+    const res = await supabase.auth.getSession();
+    const session = res?.data?.session ?? null;
+    if (!session?.access_token || !session?.user?.id) return null;
+    return {
+      access_token: session.access_token,
+      user: { id: session.user.id, email: session.user.email ?? undefined },
+    };
+  } catch {
+    return null;
+  }
 }
 
 export async function createClient() {

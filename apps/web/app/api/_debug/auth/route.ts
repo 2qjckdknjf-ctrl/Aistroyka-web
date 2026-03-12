@@ -6,8 +6,7 @@
 
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { createServerClient } from "@supabase/ssr";
-import { hasSupabaseEnv, getPublicConfig, isDebugAuthAllowed } from "@/lib/config";
+import { hasSupabaseEnv, isDebugAuthAllowed } from "@/lib/config";
 
 export const dynamic = "force-dynamic";
 
@@ -27,20 +26,9 @@ export async function GET(request: Request) {
   let userId: string | undefined;
 
   if (hasSupabaseEnv()) {
-    const { NEXT_PUBLIC_SUPABASE_URL: url, NEXT_PUBLIC_SUPABASE_ANON_KEY: key } = getPublicConfig();
-    const supabase = createServerClient(url, key, {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-        setAll() {
-          // read-only debug: do not set cookies
-        },
-      },
-    });
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const { createClient, getSessionUser } = await import("@/lib/supabase/server");
+    const supabase = await createClient();
+    const user = await getSessionUser(supabase);
     hasSupabaseUser = !!user;
     if (user?.id) userId = user.id;
   }

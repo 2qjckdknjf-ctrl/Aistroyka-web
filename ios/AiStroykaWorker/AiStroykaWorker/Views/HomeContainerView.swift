@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import Shared
 
 struct HomeContainerView: View {
     @EnvironmentObject var appState: AppState
@@ -40,7 +41,7 @@ struct HomeContainerView: View {
             loadProjects()
             restoreSelectedProject()
         }
-        .onChange(of: selectedProject?.id) { _, new in
+        .onChange(of: selectedProject?.id) { new in
             if let id = new { saveSelectedProjectId(id) }
         }
     }

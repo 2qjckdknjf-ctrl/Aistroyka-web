@@ -1,4 +1,4 @@
-import { getTranslations, getLocale } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
 import { getOrCreateTenantForCurrentUser } from "@/lib/api/engine";
 import { hasMinRole } from "@/lib/auth/tenant";
@@ -7,7 +7,6 @@ import { ProjectsListClient } from "./ProjectsListClient";
 
 export default async function ProjectsPage() {
   const t = await getTranslations("projects");
-  const locale = await getLocale();
   const supabase = await createClient();
   const tenantId = await getOrCreateTenantForCurrentUser(supabase);
   const canCreate = tenantId ? await hasMinRole(supabase, tenantId, "member") : false;
@@ -21,8 +20,6 @@ export default async function ProjectsPage() {
         {canCreate && <CreateProjectForm />}
       </div>
       <ProjectsListClient
-        t={t}
-        locale={locale}
         canCreate={canCreate}
         createForm={
           <div className="mt-aistroyka-2">

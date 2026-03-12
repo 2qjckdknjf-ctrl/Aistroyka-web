@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import Shared
 
 /// High-level API for AiStroyka Worker endpoints. All writes use idempotency keys.
 enum WorkerAPI {

@@ -14,7 +14,13 @@ export function useAiSecurityEvents(
     queryKey: adminAiKeys.security(tenantId ?? "", range, filters),
     queryFn: async () => {
       const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
+      let session: { access_token?: string } | null = null;
+      try {
+        const res = await supabase.auth.getSession();
+        session = res?.data?.session ?? null;
+      } catch {
+        // fallthrough
+      }
       const getAuthToken = async () => session?.access_token ?? null;
       return listAiSecurityEvents(
         tenantId!,

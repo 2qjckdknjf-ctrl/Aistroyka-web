@@ -1,5 +1,0 @@
-// Copy to Config/Secrets.xcconfig (or set in Scheme → Run → Arguments → Environment)
-// Do not commit real values. Add Secrets.xcconfig to .gitignore if needed.
-BASE_URL = https://your-api.example.com
-SUPABASE_URL = https://vthfrxehrursfloevnlp.supabase.co
-SUPABASE_ANON_KEY = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0aGZyeGVocnVyc2Zsb2V2bmxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzMDYzODIsImV4cCI6MjA4Njg4MjM4Mn0.sihdkAmP8aWvA_Y_xvLbh_ALuIy-IoX-kBuGBWjK560

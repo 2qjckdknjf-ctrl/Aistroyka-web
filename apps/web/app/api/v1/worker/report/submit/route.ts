@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClientFromRequest } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { submitReport } from "@/lib/domain/reports/report.service";
 import { requireLiteIdempotency, storeLiteIdempotency } from "@/lib/api/lite-idempotency";
@@ -57,7 +57,7 @@ export async function POST(request: Request) {
     });
   }
   const taskId = typeof body.task_id === "string" ? body.task_id.trim() || undefined : undefined;
-  const supabase = await createClient();
+  const supabase = await createClientFromRequest(request);
   const result = await submitReport(supabase, ctx, reportId, ctx.traceId, { taskId });
   if (!result.ok) {
     const status = result.code === "task_invalid" ? 404 : 403;

@@ -72,9 +72,8 @@ export async function middleware(request: NextRequest) {
   const pathnameForLoc = request.nextUrl.pathname;
   const { path: pathWithoutLoc, locale } = pathWithoutLocale(pathnameForLoc);
 
-  const isProtected =
-    pathWithoutLoc === "/" ||
-    PROTECTED_PREFIXES.some((p) => pathWithoutLoc.startsWith(p));
+  // Locale root "/" and public paths (features, pricing, etc.) are NOT protected
+  const isProtected = PROTECTED_PREFIXES.some((p) => pathWithoutLoc.startsWith(p));
   const isAuthPage = AUTH_PREFIXES.some((p) => pathWithoutLoc.startsWith(p));
 
   if (isProtected && !user) {
@@ -96,7 +95,7 @@ export async function middleware(request: NextRequest) {
 
   sessionResponse.headers.forEach((v, k) => res.headers.set(k, v));
   res.headers.set("X-Auth-Redirect", "pass");
-  if (isProtected || pathWithoutLoc === "/" || isAuthPage) {
+  if (isProtected || isAuthPage) {
     res.headers.set("Cache-Control", "private, no-store, max-age=0, must-revalidate");
   }
   return applySecurityHeaders(res, isProduction);

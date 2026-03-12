@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { Link } from "@/i18n/navigation";
 import { getTranslations } from "next-intl/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getSessionUser } from "@/lib/supabase/server";
 import { getProjectById } from "@/lib/supabase/rpc";
 import { UploadMediaForm } from "../UploadMediaForm";
 import { ProjectPollingSection } from "../ProjectPollingSection";
@@ -39,9 +39,7 @@ export default async function ProjectPage({
   const t = await getTranslations("projectDetail");
   const tProjects = await getTranslations("projects");
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getSessionUser(supabase);
   if (!user) notFound();
 
   const { data: project } = await getProjectById(supabase, id);

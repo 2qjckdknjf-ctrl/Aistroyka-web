@@ -1,0 +1,42 @@
+name: Snapshot Backup
+
+on:
+  schedule:
+    - cron: '0 */5 * * *'   # каждые 5 часов
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Create snapshot branch
+        run: |
+          DATE=$(date -u +'%Y-%m-%d')
+          BRANCH="snapshots/$DATE"
+          git checkout -B "$BRANCH"
+
+      - name: Create snapshot commit
+        run: |
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "backup: snapshot $(date -u +'%Y-%m-%d %H:%M UTC')"
+          fi
+
+      - name: Push snapshot branch
+        run: |
+          git push origin HEAD --force

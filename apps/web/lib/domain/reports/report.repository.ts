@@ -129,6 +129,7 @@ export async function updateReview(
     .update(updates)
     .eq("id", reportId)
     .eq("tenant_id", tenantId)
+    .eq("status", "submitted")
     .select(REPORT_SELECT)
     .single();
   if (error || !data) return null;

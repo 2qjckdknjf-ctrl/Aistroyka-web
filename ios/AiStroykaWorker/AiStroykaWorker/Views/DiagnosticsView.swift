@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Shared
 
 struct DiagnosticsView: View {
     @EnvironmentObject var appState: AppState

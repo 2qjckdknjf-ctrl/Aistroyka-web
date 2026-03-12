@@ -7,6 +7,7 @@
 
 import Foundation
 import UIKit
+import Shared
 
 @MainActor
 final class OperationQueueExecutor: ObservableObject {

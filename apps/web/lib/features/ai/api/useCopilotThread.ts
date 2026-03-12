@@ -37,7 +37,13 @@ export function useCopilotThread(projectId: string | null) {
       if (!projectId) return [];
       const { createClient } = await import("@/lib/supabase/client");
       const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
+      let session: { access_token?: string } | null = null;
+      try {
+        const res = await supabase.auth.getSession();
+        session = res?.data?.session ?? null;
+      } catch {
+        // fallthrough
+      }
       const getAuthToken = async () => session?.access_token ?? null;
       return listThreads(projectId, getAuthToken);
     },
@@ -60,7 +66,13 @@ export function useCopilotThread(projectId: string | null) {
       if (!activeThreadId) return null;
       const { createClient } = await import("@/lib/supabase/client");
       const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
+      let session: { access_token?: string } | null = null;
+      try {
+        const res = await supabase.auth.getSession();
+        session = res?.data?.session ?? null;
+      } catch {
+        // fallthrough
+      }
       const getAuthToken = async () => session?.access_token ?? null;
       return getThread(activeThreadId, getAuthToken);
     },
@@ -108,7 +120,13 @@ export function useCopilotThread(projectId: string | null) {
       if (!projectId) return null;
       const { createClient } = await import("@/lib/supabase/client");
       const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
+      let session: { access_token?: string } | null = null;
+      try {
+        const res = await supabase.auth.getSession();
+        session = res?.data?.session ?? null;
+      } catch {
+        // fallthrough
+      }
       const getAuthToken = async () => session?.access_token ?? null;
       if (activeThreadId) {
         await archiveThread(activeThreadId, getAuthToken);

@@ -7,6 +7,7 @@
 
 import SwiftUI
 import UIKit
+import Shared
 
 struct CameraPicker: UIViewControllerRepresentable {
     @Binding var image: UIImage?

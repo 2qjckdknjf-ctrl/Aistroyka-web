@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Shared
 
 struct TaskDetailView: View {
     let task: TaskDTO

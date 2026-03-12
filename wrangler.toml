@@ -1,6 +1,11 @@
 # Cloudflare Workers config for Next.js via @opennextjs/cloudflare
 # Do not put secrets here; use dashboard or .dev.vars (local).
 # Multi-env: use --env staging | production.
+#
+# NOT USED FOR PRODUCTION DEPLOY. Worker artifact is built only under apps/web.
+# Production deploy must run from apps/web so .open-next/worker.js resolves.
+# Use: cd apps/web && npx wrangler deploy --env production --config wrangler.toml
+# Or from root: bun run cf:deploy:prod
 
 account_id = "864f04d729c24f574a228558b40d7b82"
 

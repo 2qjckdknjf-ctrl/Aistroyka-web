@@ -19,6 +19,7 @@ import {
   TableCell,
   TablePagination,
 } from "@/components/ui";
+import { ProjectIntelligenceClient } from "./ProjectIntelligenceClient";
 
 const PAGE_SIZE = 10;
 
@@ -198,6 +199,9 @@ export function DashboardProjectDetailClient({ projectId }: { projectId: string 
           <Tab id="tab-ai" selected={activeTab === "ai"} onSelect={() => setActiveTab("ai")} aria-controls="panel-ai">
             AI
           </Tab>
+          <Tab id="tab-intelligence" selected={activeTab === "intelligence"} onSelect={() => setActiveTab("intelligence")} aria-controls="panel-intelligence">
+            Intelligence
+          </Tab>
         </Tabs>
 
         <TabPanel id="panel-workers" selected={activeTab === "workers"} aria-labelledby="tab-workers">
@@ -228,6 +232,9 @@ export function DashboardProjectDetailClient({ projectId }: { projectId: string 
             page={aiPage}
             onPageChange={setAiPage}
           />
+        </TabPanel>
+        <TabPanel id="panel-intelligence" selected={activeTab === "intelligence"} aria-labelledby="tab-intelligence">
+          <ProjectIntelligenceClient projectId={projectId} />
         </TabPanel>
       </Card>
     </>

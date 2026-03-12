@@ -3,6 +3,8 @@
 **Date:** 2026-03-06  
 **Scope:** Offline queue, deterministic idempotency, camera, sync UX. Backend v1 unchanged.
 
+> **Rename (2026-03):** App is now **AiStroyka Worker**; project `ios/AiStroykaWorker`, scheme **AiStroykaWorker**. See `docs/IOS_FULL_RENAME_WORKERLITE_TO_AISTROYKAWORKER.md`.
+
 ---
 
 ## 1. Summary
@@ -28,11 +30,11 @@ Same as Phase 7.2: `ios/Config/Secrets.xcconfig` with `BASE_URL`, `SUPABASE_URL`
 ## 3. How to run
 
 ```bash
-open ios/WorkerLite/WorkerLite.xcodeproj
-# Scheme WorkerLite → Run (device or simulator)
+open ios/AiStroykaWorker/AiStroykaWorker.xcodeproj
+# Scheme AiStroykaWorker → Run (device or simulator)
 
 # CLI build:
-cd ios/WorkerLite && xcodebuild -scheme WorkerLite -destination 'generic/platform=iOS Simulator' build
+cd ios/AiStroykaWorker && xcodebuild -scheme AiStroykaWorker -destination 'generic/platform=iOS Simulator' build
 ```
 
 ---
@@ -69,7 +71,7 @@ After a full flow (shift → report → 2 photos → submit):
 
 ## 7. Gates
 
-- **iOS:** `cd ios/WorkerLite && xcodebuild -scheme WorkerLite -destination 'generic/platform=iOS Simulator' build` — **pass**
+- **iOS:** `cd ios/AiStroykaWorker && xcodebuild -scheme AiStroykaWorker -destination 'generic/platform=iOS Simulator' build` — **pass**
 - **Web:** `cd apps/web && bun run test -- --run && bun run cf:build` — **pass**
 
 ---
@@ -79,7 +81,7 @@ After a full flow (shift → report → 2 photos → submit):
 | Step | Action |
 |------|--------|
 | Config | Copy `Config.example.xcconfig` → `Secrets.xcconfig`; set BASE_URL, SUPABASE_*; do not commit. |
-| Build | Open WorkerLite.xcodeproj → WorkerLite scheme → Build & Run. |
+| Build | Open AiStroykaWorker.xcodeproj → AiStroykaWorker scheme → Build & Run. |
 | Pilot | Login → Start shift (queued) → New report → Create report → Before/After (Take photo or Library) → Submit. |
 | Offline | Start shift → Airplane on → End shift (queued) → Kill app → Relaunch → Airplane off → queue runs. |
 | Cockpit | Check `/dashboard/reports`, `/dashboard/uploads`, `/api/v1/ops/overview`. |

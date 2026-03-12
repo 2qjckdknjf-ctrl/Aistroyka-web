@@ -10,9 +10,30 @@ const plusJakarta = Plus_Jakarta_Sans({
   display: "swap",
 });
 
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://aistroyka.ai";
+
 export const metadata: Metadata = {
-  title: "Aistroyka",
-  description: "AI Construction Intelligence",
+  metadataBase: new URL(baseUrl),
+  title: {
+    default: "Aistroyka — AI Construction Intelligence",
+    template: "%s | Aistroyka",
+  },
+  description: "AI Construction Intelligence — control progress, risks, and quality on site.",
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "/",
+    siteName: "Aistroyka",
+    title: "Aistroyka — AI Construction Intelligence",
+    description: "AI-powered construction intelligence platform: projects, tasks, daily reports, photo evidence, and AI analytics.",
+    images: [{ url: "/brand/aistroyka-logo.svg", width: 140, height: 32, alt: "Aistroyka" }],
+  },
+  icons: {
+    icon: [
+      { url: "/brand/aistroyka-icon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "any" },
+    ],
+  },
 };
 
 export const viewport: Viewport = {

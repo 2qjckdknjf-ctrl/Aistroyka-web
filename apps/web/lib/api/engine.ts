@@ -25,9 +25,8 @@ export async function getOrCreateTenantForCurrentUser(
   supabase: SupabaseClient
 ): Promise<string | null> {
   try {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const res = await supabase.auth.getUser();
+    const user = res?.data?.user ?? null;
     if (!user?.id) return null;
 
     const { data: ownTenant, error: e1 } = await supabase

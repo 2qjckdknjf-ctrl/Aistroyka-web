@@ -12,7 +12,13 @@ export function useAdminTenants() {
     queryKey: ["admin", "tenants"],
     queryFn: async (): Promise<AdminTenant[]> => {
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
+      let user: { id: string } | null = null;
+      try {
+        const res = await supabase.auth.getUser();
+        user = res?.data?.user ?? null;
+      } catch {
+        return [];
+      }
       if (!user) return [];
       const { data: memberships } = await supabase
         .from("tenant_members")

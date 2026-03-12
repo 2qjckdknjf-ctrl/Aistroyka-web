@@ -4,8 +4,10 @@
 //
 
 import SwiftUI
+import Shared
 
 struct HomeView: View {
+    @EnvironmentObject var appState: AppState
     let project: ProjectDTO
     let onLogout: () -> Void
     @ObservedObject private var store = AppStateStoreManager.shared

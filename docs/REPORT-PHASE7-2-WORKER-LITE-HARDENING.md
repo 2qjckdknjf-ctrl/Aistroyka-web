@@ -3,13 +3,15 @@
 **Date:** 2026-03-06  
 **Scope:** Offline-first reliability, persistent state, sync client, upload diagnostics, UX for field use. Backend v1 contracts unchanged.
 
+> **Rename (2026-03):** App is now **AiStroyka Worker**; project `ios/AiStroykaWorker`, scheme **AiStroykaWorker**. Persistence dir: `Application Support/AiStroykaWorker/`. See `docs/IOS_FULL_RENAME_WORKERLITE_TO_AISTROYKAWORKER.md`.
+
 ---
 
 ## 1. Summary
 
 Phase 7.2 adds production-grade reliability to the Phase 7.1 Worker Lite iOS app:
 
-- **Persistent app state:** Shift (dayId, startedAt, endedAt), selected project, draft report id, pending uploads, and sync cursor are stored in `Application Support/WorkerLite/app_state.json` and survive relaunch.
+- **Persistent app state:** Shift (dayId, startedAt, endedAt), selected project, draft report id, pending uploads, and sync cursor are stored in `Application Support/AiStroykaWorker/app_state.json` and survive relaunch.
 - **Sync client:** `SyncService` implements bootstrap → changes → ack with persisted cursor; on 409 `sync_conflict` with `must_bootstrap: true` it runs bootstrap and retries. Stable idempotency key per cursor for ack.
 - **Resume UX:** Home shows "Pending uploads: N" and "Resume uploads" when there are pending items; resume opens report with draft id so the user can retry.
 - **Storage diagnostics:** 401/403 from Supabase Storage show: "Storage policy denied. Check Supabase RLS for bucket media and tenant path."
@@ -32,14 +34,14 @@ Phase 7.2 adds production-grade reliability to the Phase 7.1 Worker Lite iOS app
 
 ## 3. How to run (iOS)
 
-1. Open: `open ios/WorkerLite/WorkerLite.xcodeproj`
-2. Select scheme **WorkerLite**, choose an iPhone simulator or device.
+1. Open: `open ios/AiStroykaWorker/AiStroykaWorker.xcodeproj`
+2. Select scheme **AiStroykaWorker**, choose an iPhone simulator or device.
 3. Product → Build (⌘B), then Run (⌘R).
 
 CLI build:
 
 ```bash
-cd ios/WorkerLite && xcodebuild -scheme WorkerLite -destination 'generic/platform=iOS Simulator' -configuration Debug build
+cd ios/AiStroykaWorker && xcodebuild -scheme AiStroykaWorker -destination 'generic/platform=iOS Simulator' -configuration Debug build
 ```
 
 ---
@@ -86,7 +88,7 @@ BASE_URL=... AUTH_HEADER="Bearer <token>" bash apps/web/scripts/smoke/pilot.sh
 
 ## 8. Gates
 
-- **iOS:** `cd ios/WorkerLite && xcodebuild -scheme WorkerLite -destination 'generic/platform=iOS Simulator' -configuration Debug build` — **pass**
+- **iOS:** `cd ios/AiStroykaWorker && xcodebuild -scheme AiStroykaWorker -destination 'generic/platform=iOS Simulator' -configuration Debug build` — **pass**
 - **Web tests:** `cd apps/web && bun run test -- --run` — **pass**
 - **Web build:** `cd apps/web && bun run cf:build` — **pass**
 

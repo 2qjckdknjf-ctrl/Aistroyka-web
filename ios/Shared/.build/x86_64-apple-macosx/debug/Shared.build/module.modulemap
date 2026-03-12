@@ -1,0 +1,4 @@
+module Shared {
+    header "/Users/alex/Projects/AISTROYKA/ios/Shared/.build/x86_64-apple-macosx/debug/Shared.build/Shared-Swift.h"
+    requires objc
+}

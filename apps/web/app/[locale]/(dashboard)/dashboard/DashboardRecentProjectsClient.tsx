@@ -1,26 +1,21 @@
 "use client";
 
+import { useTranslations, useLocale } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { useProjects } from "@/lib/projects/useProjects";
 import { usePrefetchProject } from "@/lib/projects/prefetchProject";
 import { QueryBoundary } from "@/lib/query/render";
 import { Card } from "@/components/ui";
 import { Button } from "@/components/ui";
+import { DemoProjectCard } from "@/components/onboarding";
 import type { ProjectRow } from "@/lib/supabase/rpc";
 
 const RECENT_LIMIT = 10;
 
-export interface DashboardRecentProjectsClientProps {
-  t: (key: string) => string;
-  tProjects: (key: string) => string;
-  locale: string;
-}
-
-export function DashboardRecentProjectsClient({
-  t,
-  tProjects,
-  locale,
-}: DashboardRecentProjectsClientProps) {
+export function DashboardRecentProjectsClient() {
+  const t = useTranslations("dashboard");
+  const tProjects = useTranslations("projects");
+  const locale = useLocale();
   const query = useProjects();
   const prefetchProject = usePrefetchProject();
   return (
@@ -93,17 +88,14 @@ export function DashboardRecentProjectsClient({
             </div>
           </Card>
         ) : (
-          <Card>
-            <div className="flex flex-col items-center justify-center gap-4 py-8 text-center">
-              <p className="text-aistroyka-font-subheadline font-semibold text-aistroyka-text-primary">
-                {t("noProjectsYet")}
-              </p>
-              <p className="text-aistroyka-text-secondary">{t("createOne")}</p>
+          <>
+            <DemoProjectCard />
+            <div className="mt-4 flex justify-center">
               <Link href="/projects/new">
                 <Button variant="primary">{t("createOne")}</Button>
               </Link>
             </div>
-          </Card>
+          </>
         );
       }}
     </QueryBoundary>

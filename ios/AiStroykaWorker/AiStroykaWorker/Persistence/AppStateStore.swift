@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Shared
 
 struct ShiftState: Codable, Equatable {
     var dayId: String?

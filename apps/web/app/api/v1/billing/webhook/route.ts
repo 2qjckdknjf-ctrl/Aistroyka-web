@@ -19,6 +19,18 @@ export async function POST(request: Request) {
   const sig = request.headers.get("stripe-signature");
   const event = verifyWebhookEvent(raw, sig);
   if (!event) return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
+
+  const { data: existing } = await (admin as any).from("processed_stripe_events").select("event_id").eq("event_id", event.id).maybeSingle();
+  if (existing) {
+    return NextResponse.json({ received: true });
+  }
+  const { error: insertErr } = await (admin as any).from("processed_stripe_events").insert({ event_id: event.id });
+  if (insertErr) {
+    const conflict = insertErr.code === "23505";
+    if (conflict) return NextResponse.json({ received: true });
+    return NextResponse.json({ error: "Processing failed" }, { status: 500 });
+  }
+
   try {
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as { id: string; customer: string | null; client_reference_id: string | null };

@@ -165,3 +165,18 @@ After setting `SUPABASE_SERVICE_ROLE_KEY` (see Stage 1) and redeploying:
 | pilot_launch.sh | GREEN | After secret + smoke user + AUTH_HEADER |
 
 **Deploy version (this run):** 1b86937e-82a2-4877-8947-e7794d7eb3e7
+
+---
+
+## Final status (before SUPABASE_SERVICE_ROLE_KEY is set)
+
+| Check | Result |
+|-------|--------|
+| GET /api/v1/health | 200, `serviceRoleConfigured: false` |
+| POST /api/v1/admin/jobs/cron-tick | 503, `admin_not_configured` |
+| GET /api/v1/ops/metrics | 401 without Bearer (expected) |
+| pilot_launch.sh | Not run (needs secret + smoke user) |
+| Dynamic require error | Not reproduced |
+| Commit | fa37d145 (pushed to release/phase5-2-1) |
+
+**Blocker:** Set `SUPABASE_SERVICE_ROLE_KEY` in production (see Stage 1); then run `bun run deploy:prod` again so the Worker gets the secret. After that, health will show `serviceRoleConfigured: true` and cron-tick will return 200.

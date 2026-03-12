@@ -4,6 +4,7 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getSessionUser } from "@/lib/supabase/server";
 import { getOrCreateTenantForCurrentUser, createAnalysisJob } from "@/lib/api/engine";
 import { hasMinRole } from "@/lib/auth/tenant";
 
@@ -14,9 +15,7 @@ export async function createProject(
   supabase: SupabaseClient,
   name: string
 ): Promise<{ id: string } | { error: string }> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getSessionUser(supabase);
   if (!user) return { error: "Unauthorized" };
 
   const tenantId = await getOrCreateTenantForCurrentUser(supabase);
@@ -40,9 +39,7 @@ export async function listProjectsForUser(
   supabase: SupabaseClient
 ): Promise<{ data: ProjectRow[] | null; error: string | null }> {
   try {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await getSessionUser(supabase);
     if (!user) return { data: null, error: "Unauthorized" };
 
     const tenantId = await getOrCreateTenantForCurrentUser(supabase);
@@ -96,9 +93,7 @@ export async function triggerAnalysisForMedia(
   projectId: string,
   mediaId: string
 ): Promise<{ jobId: string } | { error: string }> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getSessionUser(supabase);
   if (!user) return { error: "Unauthorized" };
 
   const { data: project } = await getProjectById(supabase, projectId);

@@ -3,11 +3,13 @@
 **Date:** 2026-03-06  
 **Scope:** Runnable iOS Worker Lite app (SwiftUI): auth, project picker, shift, report, 2 photos (before/after), upload flow, submit. Backend contracts unchanged.
 
+> **Rename (2026-03):** The app is now branded **AiStroyka Worker**; project path is `ios/AiStroykaWorker`, scheme **AiStroykaWorker**. See `docs/IOS_FULL_RENAME_WORKERLITE_TO_AISTROYKAWORKER.md`.
+
 ---
 
 ## 1. Summary
 
-- **iOS app:** Implemented under `ios/WorkerLite` with Xcode project `ios/WorkerLite.xcodeproj`. SwiftUI, iOS 17+.
+- **iOS app:** Implemented under `ios/AiStroykaWorker` (formerly `ios/WorkerLite`) with Xcode project `ios/AiStroykaWorker/AiStroykaWorker.xcodeproj`. SwiftUI, iOS 17+. Display name: **AiStroyka Worker**.
 - **Flow:** Login (Supabase email/password) → Project picker (or auto-select if one) → Home (Start/End shift, New report) → Create report → Add before/after photos (picker) → Upload (session → Storage → finalize → add-media) → Submit.
 - **Headers:** All requests send `x-device-id`; all writes send `x-idempotency-key`. Bearer token from Supabase session.
 - **Backend:** No API changes; uses Phase 7.0 endpoints and upload contract.
@@ -34,7 +36,7 @@
 CLI build (optional):
 
 ```bash
-cd ios/WorkerLite && xcodebuild -scheme WorkerLite -destination 'generic/platform=iOS Simulator' -configuration Debug build
+cd ios/AiStroykaWorker && xcodebuild -scheme AiStroykaWorker -destination 'generic/platform=iOS Simulator' -configuration Debug build
 ```
 
 ### 2.3 Config

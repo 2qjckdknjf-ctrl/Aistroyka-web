@@ -22,7 +22,8 @@ function AcceptInviteContent() {
       return;
     }
     const supabase = createClient();
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then((res) => {
+      const session = res?.data?.session ?? null;
       if (!session) {
         setStatus("need_login");
         return;

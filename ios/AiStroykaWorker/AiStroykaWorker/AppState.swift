@@ -5,6 +5,7 @@
 
 import Foundation
 import SwiftUI
+import Shared
 
 @MainActor
 final class AppState: ObservableObject {

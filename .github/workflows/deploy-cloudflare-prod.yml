@@ -66,9 +66,23 @@ jobs:
           echo "Worker name in wrangler (production): $(grep -A1 '^\[env.production\]' wrangler.toml | grep '^name =' | sed 's/.*= *//')"
           echo "Expected: aistroyka-web-production"
 
-      - name: Deploy to Cloudflare (production)
+      # Production uses patched bundle so top-level __require in wrangler output stubs
+      # middleware-manifest (avoids "Dynamic require of middleware-manifest.json" 500). See docs/runtime-fix.
+      - name: Build deploy bundle (dry-run) and patch __require
         working-directory: apps/web
-        run: npx wrangler deploy --env production --config wrangler.toml
+        run: |
+          npx wrangler deploy --env production --dry-run --outdir .open-next/deploy
+          node scripts/patch-bundle-require.cjs
+      - name: Verify patched bundle (middleware-manifest stub present)
+        working-directory: apps/web
+        run: |
+          grep -q 'x.includes("middleware") && x.includes("manifest")' .open-next/deploy/worker-bootstrap.js || (echo "::error::Patch not applied: middleware-manifest stub missing in deploy bundle" && exit 1)
+          echo "Patched bundle verified."
+      - name: Deploy to Cloudflare (production, patched bundle)
+        working-directory: apps/web
+        env:
+          OPEN_NEXT_DEPLOY: "true"
+        run: npx wrangler deploy --env production --no-bundle --config wrangler.deploy.toml
 
       - name: Post-deploy summary
         run: |
@@ -78,9 +92,15 @@ jobs:
           echo "Commit sha7: $SHA7"
           echo "workers.dev URL: In the 'Deploy to Cloudflare (production)' step above, look for: https://aistroyka-web-production.<account>.workers.dev"
 
-      - name: Post-deploy verification (domain build marker)
+      - name: Post-deploy verification (/api/v1/health and domain)
         continue-on-error: true
         run: |
+          HEALTH=$(curl -sS -o /dev/null -w "%{http_code}" -m 10 "https://aistroyka.ai/api/v1/health" 2>/dev/null || echo "000")
+          if [ "$HEALTH" = "200" ]; then
+            echo "PASS: /api/v1/health returned 200"
+          else
+            echo "NOTE: /api/v1/health returned $HEALTH (expected 200 after runtime-fix)"
+          fi
           SHA7="$(echo ${{ github.sha }} | cut -c1-7)"
           DOMAIN="https://aistroyka.ai"
           PASS=0
@@ -97,3 +117,5 @@ jobs:
           if [ "$PASS" -eq 0 ]; then
             echo "FAIL: Domain did not return dashboard HTML with Build: $SHA7 (may need auth; check workers.dev or browser)"
           fi
+          echo "---"
+          echo "Runtime fix: production deploy uses patched bundle (see docs/runtime-fix). /api/v1/health and cron-tick should return 200."

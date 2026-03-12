@@ -25,14 +25,26 @@ const replacement = `            // Bypass middleware for /api/v1/* (avoids midd
             if (url.pathname.startsWith("/api/v1/")) {
                 reqOrResp = request;
             } else {
+                const { handler: middlewareHandler } = await import("./middleware/handler.mjs");
                 reqOrResp = await middlewareHandler(request, env, ctx);
             }`;
 
 if (code.includes(marker)) {
   code = code.replace(marker, replacement);
+} else if (code.includes(alreadyBypassMarker) && code.includes("reqOrResp = await middlewareHandler")) {
+  code = code.replace(
+    "reqOrResp = await middlewareHandler(request, env, ctx);",
+    "const { handler: middlewareHandler } = await import(\"./middleware/handler.mjs\");\n                reqOrResp = await middlewareHandler(request, env, ctx);"
+  );
 } else if (!code.includes(alreadyBypassMarker)) {
   console.warn("patch-worker-bypass-api-middleware: bypass marker not found in worker.js (format may have changed), skip");
 }
+
+// Remove top-level import of middleware so it is only loaded for non-API requests (avoids middleware-manifest require at Worker init)
+code = code.replace(
+  /import \{ handler as middlewareHandler \} from "\.\/middleware\/handler\.mjs";\n/g,
+  "// middleware loaded dynamically for non-API paths only\n"
+);
 
 // Stub global require for middleware-manifest so server handler does not throw (nodejs_compat uses global require)
 const stubRequireMarker = "return runWithCloudflareRequestContext(request, env, ctx, async () => {\n            const response = maybeGetSkewProtectionResponse(request);";

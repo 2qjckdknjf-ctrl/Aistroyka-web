@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getSessionUser } from "@/lib/supabase/server";
 import { getOrCreateTenantForCurrentUser } from "@/lib/api/engine";
 import { hasMinRole } from "@/lib/auth/tenant";
 import { TeamPageClient } from "./TeamPageClient";
@@ -9,9 +9,7 @@ import { Card, Alert } from "@/components/ui";
 export default async function TeamPage() {
   const t = await getTranslations("team");
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getSessionUser(supabase);
   if (!user) redirect("/login");
 
   const tenantId = await getOrCreateTenantForCurrentUser(supabase);

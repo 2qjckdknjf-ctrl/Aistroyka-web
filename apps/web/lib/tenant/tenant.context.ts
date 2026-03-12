@@ -39,7 +39,13 @@ export async function getTenantContextFromRequest(request: Request): Promise<Ten
     if (e instanceof ServiceRoleForbiddenError) throw new TenantForbiddenError();
     throw e;
   }
-  const { data: { user } } = await supabase.auth.getUser();
+  let user: { id: string } | null = null;
+  try {
+    const res = await supabase.auth.getUser();
+    user = res?.data?.user ?? null;
+  } catch {
+    return { tenantId: null, userId: null, role: null, subscriptionTier: null, clientProfile, traceId };
+  }
   if (!user?.id) {
     return { tenantId: null, userId: null, role: null, subscriptionTier: null, clientProfile, traceId };
   }

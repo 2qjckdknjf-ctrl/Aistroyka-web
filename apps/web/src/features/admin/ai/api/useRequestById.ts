@@ -10,7 +10,13 @@ export function useRequestById(requestId: string | null, tenantId?: string | nul
     queryKey: adminAiKeys.requestById(requestId ?? ""),
     queryFn: async () => {
       const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
+      let session: { access_token?: string } | null = null;
+      try {
+        const res = await supabase.auth.getSession();
+        session = res?.data?.session ?? null;
+      } catch {
+        // fallthrough
+      }
       const getAuthToken = async () => session?.access_token ?? null;
       return getRequestById(requestId!, tenantId ?? undefined, getAuthToken);
     },

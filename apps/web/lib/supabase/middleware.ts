@@ -61,9 +61,13 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  let user: { id: string; email?: string } | null = null;
+  try {
+    const res = await supabase.auth.getUser();
+    user = res?.data?.user ?? null;
+  } catch {
+    // getUser() can throw in Edge or when auth server fails; do not crash middleware
+  }
 
   return { response, user };
 }

@@ -3,6 +3,8 @@
 **Date:** 2026-03-06  
 **Scope:** Background uploads, full report pipeline via operation queue, durable storage. Backend v1 unchanged.
 
+> **Rename (2026-03):** App is now **AiStroyka Worker**; project `ios/AiStroykaWorker`, scheme **AiStroykaWorker**. App delegate is `AiStroykaWorkerAppDelegate`; background URLSession identifier remains `com.aistroyka.workerlite.uploads`. See `docs/IOS_FULL_RENAME_WORKERLITE_TO_AISTROYKAWORKER.md`.
+
 ---
 
 ## 1. Summary
@@ -63,8 +65,8 @@ Same as Phase 7.3: `ios/Config/Secrets.xcconfig` (BASE_URL, SUPABASE_URL, SUPABA
 
 ## 4. Gates
 
-- **iOS:** `cd ios/WorkerLite && xcodebuild -scheme WorkerLite -destination 'generic/platform=iOS Simulator' build`
-- **iOS tests:** `xcodebuild -scheme WorkerLite -destination 'id=<simulator-id>' -only-testing:WorkerLiteTests test`
+- **iOS:** `cd ios/AiStroykaWorker && xcodebuild -scheme AiStroykaWorker -destination 'generic/platform=iOS Simulator' build`
+- **iOS tests:** `xcodebuild -scheme AiStroykaWorker -destination 'id=<simulator-id>' -only-testing:AiStroykaWorkerTests test`
 - **Web:** `cd apps/web && bun run test -- --run && bun run cf:build`
 
 ---

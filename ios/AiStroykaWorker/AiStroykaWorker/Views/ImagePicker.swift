@@ -5,6 +5,7 @@
 
 import SwiftUI
 import PhotosUI
+import Shared
 
 struct ImagePicker: UIViewControllerRepresentable {
     @Binding var image: UIImage?

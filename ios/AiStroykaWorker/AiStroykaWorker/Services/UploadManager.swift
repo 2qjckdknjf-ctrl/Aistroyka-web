@@ -5,6 +5,7 @@
 
 import Foundation
 import UIKit
+import Shared
 
 enum UploadPhase: String {
     case queued

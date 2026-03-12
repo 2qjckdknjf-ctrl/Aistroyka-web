@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getSessionUser } from "@/lib/supabase/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { getProjectById } from "@/lib/supabase/rpc";
 import { createAnalysisJob, MEDIA_BUCKET } from "@/lib/api/engine";
@@ -39,9 +39,7 @@ export async function POST(
 ) {
   const { id: projectId } = await params;
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getSessionUser(supabase);
   if (!user) {
     return NextResponse.json(
       { success: false, error: "Unauthorized" },

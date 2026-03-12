@@ -35,6 +35,10 @@ service = "aistroyka-web-staging"
 [env.production]
 name = "aistroyka-web-production"
 main = ".open-next/deploy/worker-bootstrap.js"
+
+[env.production.vars]
+NEXT_PUBLIC_SUPABASE_URL = "https://vthfrxehrursfloevnlp.supabase.co"
+
 [env.production.assets]
 directory = ".open-next/assets"
 binding = "ASSETS"

@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import Shared
 
 struct RootView: View {
     @EnvironmentObject var appState: AppState
@@ -23,7 +24,7 @@ struct RootView: View {
             }
             if appState.isLoggedIn { PushRegistrationService.registerIfNeeded() }
         }
-        .onChange(of: appState.isLoggedIn) { _, loggedIn in
+        .onChange(of: appState.isLoggedIn) { loggedIn in
             if loggedIn { PushRegistrationService.registerIfNeeded() }
         }
     }

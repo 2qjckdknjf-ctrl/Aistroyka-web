@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClientFromRequest } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { getTaskById, updateTask } from "@/lib/domain/tasks/task.service";
 import { getAdminClient } from "@/lib/supabase/admin";

@@ -7,6 +7,7 @@
 
 import Foundation
 import UIKit
+import Shared
 
 private let kBackgroundSessionIdentifier = "com.aistroyka.workerlite.uploads"
 

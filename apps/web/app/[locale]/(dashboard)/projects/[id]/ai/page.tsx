@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getSessionUser } from "@/lib/supabase/server";
 import { getProjectById } from "@/lib/supabase/rpc";
 import { AiActionPanel } from "@/components/ai/AiActionPanel";
 import { ProjectAIHeaderClient } from "./ProjectAIHeaderClient";
@@ -13,7 +13,7 @@ export default async function ProjectAiPage({
 }) {
   const { id } = await params;
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSessionUser(supabase);
   if (!user) notFound();
 
   const { data: project } = await getProjectById(supabase, id);

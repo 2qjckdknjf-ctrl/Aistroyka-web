@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import Shared
 
 struct ProjectPickerView: View {
     let projects: [ProjectDTO]

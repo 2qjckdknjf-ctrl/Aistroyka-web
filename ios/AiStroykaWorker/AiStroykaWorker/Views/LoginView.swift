@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import Shared
 
 struct LoginView: View {
     @EnvironmentObject var appState: AppState

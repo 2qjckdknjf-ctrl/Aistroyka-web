@@ -1,5 +1,5 @@
 import { Link } from "@/i18n/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getSessionUser } from "@/lib/supabase/server";
 import { listProjectsForUser } from "@/lib/supabase/rpc";
 import {
   getProjectMetrics,
@@ -12,9 +12,7 @@ import { Card } from "@/components/ui";
 
 export default async function PortfolioPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getSessionUser(supabase);
   if (!user) return null;
 
   const { data: projectsData } = await listProjectsForUser(supabase);

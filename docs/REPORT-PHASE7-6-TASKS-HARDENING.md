@@ -81,7 +81,7 @@
 5. Push: assign/update enqueues outbox via `enqueuePushToUser`; worker receives and can refresh list (Stage 6: iOS banner/refresh).
 6. Ops metrics (GET /api/v1/ops/metrics) and overview (GET /api/v1/ops/overview) return tasks_* KPIs and tasksOpenToday/tasksOverdue queues; dashboard KPI cards link to /dashboard/tasks with filters.
 7. E2E smoke: add Playwright spec (manager login → create task → assign → verify list; API-level worker report with task_id; manager sees link) — Stage 7.
-8. iOS build: `cd ios/WorkerLite && xcodebuild -scheme WorkerLite -destination 'platform=iOS Simulator,name=iPhone 15' build`.
+8. iOS build: `cd ios/AiStroykaWorker && xcodebuild -scheme AiStroykaWorker -destination 'platform=iOS Simulator,name=iPhone 15' build`.
 
 ---
 

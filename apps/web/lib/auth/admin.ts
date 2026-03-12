@@ -4,6 +4,7 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getSessionUser } from "@/lib/supabase/server";
 
 const ADMIN_EMAILS_KEY = "ADMIN_EMAILS";
 
@@ -21,9 +22,7 @@ function getAdminEmails(): string[] {
  * Call from server (page/layout/route) only.
  */
 export async function isAdmin(supabase: SupabaseClient): Promise<boolean> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getSessionUser(supabase);
   if (!user?.email) return false;
   const allowlist = getAdminEmails();
   if (allowlist.length === 0) return false;

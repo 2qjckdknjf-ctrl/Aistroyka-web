@@ -17,11 +17,14 @@
     "start": "cd apps/web && bun run start",
     "cf:build": "bun run build:contracts && bun run --cwd apps/web cf:build",
     "cf:deploy": "cd apps/web && bun run cf:deploy",
+    "cf:deploy:staging": "cd apps/web && npx wrangler deploy --env staging --config wrangler.toml",
+    "cf:deploy:prod": "cd apps/web && npx wrangler deploy --env production --dry-run --outdir .open-next/deploy && node scripts/patch-bundle-require.cjs && OPEN_NEXT_DEPLOY=true npx wrangler deploy --env production --no-bundle --config wrangler.deploy.toml",
     "lint": "cd apps/web && bun run lint",
     "test": "cd apps/web && bun run test",
     "smoke:prod": "bash apps/web/scripts/smoke-prod.sh",
     "smoke:staging": "bash apps/web/scripts/smoke-staging.sh",
-    "smoke:pilot": "bash apps/web/scripts/smoke/pilot.sh"
+    "smoke:pilot": "bash apps/web/scripts/smoke/pilot.sh",
+    "release:check": "node scripts/release-readiness-check.mjs"
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.16.4",

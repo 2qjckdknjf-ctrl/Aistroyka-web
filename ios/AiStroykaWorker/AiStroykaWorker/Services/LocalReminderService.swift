@@ -7,6 +7,7 @@
 
 import Foundation
 import UserNotifications
+import Shared
 
 enum LocalReminderService {
     private static let afterPhotoDelayHours: Double = 2

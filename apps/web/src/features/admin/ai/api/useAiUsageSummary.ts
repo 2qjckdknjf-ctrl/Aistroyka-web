@@ -10,7 +10,13 @@ export function useAiUsageSummary(tenantId: string | null, range: { from: string
     queryKey: adminAiKeys.usage(tenantId ?? "", range),
     queryFn: async () => {
       const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
+      let session: { access_token?: string } | null = null;
+      try {
+        const res = await supabase.auth.getSession();
+        session = res?.data?.session ?? null;
+      } catch {
+        // fallthrough
+      }
       const getAuthToken = async () => session?.access_token ?? null;
       return getAiUsageSummary(tenantId!, range, getAuthToken);
     },

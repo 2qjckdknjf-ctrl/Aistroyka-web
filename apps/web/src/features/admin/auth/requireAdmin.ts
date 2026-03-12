@@ -18,11 +18,16 @@ export interface RequireAdminResult {
  * Use in server layout/route for /admin to redirect non-admins.
  */
 export async function requireAdmin(supabase: SupabaseClient): Promise<RequireAdminResult> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const empty = { allowed: false, adminTenantIds: [] as string[] };
+  let user: { id: string } | null = null;
+  try {
+    const res = await supabase.auth.getUser();
+    user = res?.data?.user ?? null;
+  } catch {
+    return empty;
+  }
   if (!user) {
-    return { allowed: false, adminTenantIds: [] };
+    return empty;
   }
 
   const { data: memberships, error } = await supabase

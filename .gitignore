@@ -26,6 +26,8 @@ DerivedData/
 **/SourcePackages/
 *.xcresult
 ios/Config/Secrets.xcconfig
+**/xcuserdata/
+*.xcuserstate
 
 # archives / exports
 *.zip
@@ -35,6 +37,7 @@ exports/
 # large audit artifacts (root-only; do not ignore app/api/.../reports/ or lib/domain/reports/)
 audit_artifacts/
 audit_artifacts_*/
+artifacts/
 /reports/
 audit_*/
 engine/
@@ -53,6 +56,8 @@ packages/contracts/dist
 
 # misc (keep .DS_Store above for visibility)
 *.pem
+*.key
+*.p12
 
 # debug
 npm-debug.log*
@@ -96,6 +101,7 @@ next-env.d.ts
 tmp
 *.sqlite
 secrets
+secrets/
 uploads/
 .wrangler
 .turbo

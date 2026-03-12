@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Shared
 
 struct ReportCreateView: View {
     let projectId: String
@@ -33,6 +34,13 @@ struct ReportCreateView: View {
 
     private var store: AppStateStoreManager { AppStateStoreManager.shared }
 
+    private var canSubmitReport: Bool {
+        guard let beforeId = beforeItemId, let afterId = afterItemId else { return false }
+        let beforeDone = opStore.operation(id: attachMediaOpId(photoItemId: beforeId))?.state == .succeeded
+        let afterDone = opStore.operation(id: attachMediaOpId(photoItemId: afterId))?.state == .succeeded
+        return beforeDone && afterDone
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             if let title = taskTitle, !title.isEmpty {
@@ -55,9 +63,7 @@ struct ReportCreateView: View {
                         if let id = afterItemId { photoStatusRow(photoItemId: id, label: "After") }
                     }
                 }
-                let beforeAttachDone = beforeItemId.flatMap { opStore.operation(id: attachMediaOpId(photoItemId: $0)) }?.state == .succeeded
-                let afterAttachDone = afterItemId.flatMap { opStore.operation(id: attachMediaOpId(photoItemId: $0)) }?.state == .succeeded
-                if beforeAttachDone && afterAttachDone && beforeItemId != nil && afterItemId != nil {
+                if canSubmitReport {
                     Button("Submit report") { enqueueSubmitReport() }
                         .disabled(submitEnqueued)
                 }
@@ -88,7 +94,7 @@ struct ReportCreateView: View {
                 store.save { $0.draftReportId = draft }
             }
         }
-        .onChange(of: opStore.operations) { _, _ in
+        .onChange(of: opStore.operations) { _ in
             if let did = draftId {
                 reportId = opStore.operation(id: createReportOpId(draftId: did))?.resultReportId
                 if opStore.operation(id: submitReportOpId(draftId: did))?.state == .succeeded {
@@ -97,11 +103,11 @@ struct ReportCreateView: View {
                 }
             }
         }
-        .onChange(of: beforeImage) { _, new in
+        .onChange(of: beforeImage) { new in
             guard let img = new, draftId != nil, beforeItemId == nil else { return }
             addPhoto(purpose: "report_before", image: img) { beforeItemId = $0 }
         }
-        .onChange(of: afterImage) { _, new in
+        .onChange(of: afterImage) { new in
             guard let img = new, draftId != nil, afterItemId == nil else { return }
             addPhoto(purpose: "report_after", image: img) { afterItemId = $0 }
         }

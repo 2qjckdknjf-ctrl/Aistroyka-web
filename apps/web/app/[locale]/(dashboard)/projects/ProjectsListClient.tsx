@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { useTranslations, useLocale } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { useProjects } from "@/lib/projects/useProjects";
 import { usePrefetchProject } from "@/lib/projects/prefetchProject";
@@ -18,18 +19,16 @@ function riskScoreColorClass(score: number): string {
 }
 
 export interface ProjectsListClientProps {
-  t: (key: string) => string;
-  locale: string;
   canCreate: boolean;
   createForm: React.ReactNode;
 }
 
 export function ProjectsListClient({
-  t,
-  locale,
   canCreate,
   createForm,
 }: ProjectsListClientProps) {
+  const t = useTranslations("projects");
+  const locale = useLocale();
   const query = useProjects();
   const prefetchProject = usePrefetchProject();
   const projectIdsWithRisk = useProjectIdsWithActiveRisk();

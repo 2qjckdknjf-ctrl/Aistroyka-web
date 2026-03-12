@@ -65,6 +65,8 @@ jobs:
           test -f "app/[locale]/(dashboard)/layout.tsx" || (echo "::error::dashboard layout missing" && exit 1)
           echo "Worker name (staging): $(grep -A1 '^\[env.staging\]' wrangler.toml | grep '^name =' | sed 's/.*= *//')"
 
+      # Deploy must run from apps/web so wrangler uses apps/web/wrangler.toml
+      # and entrypoint worker-bootstrap.js + .open-next/worker.js resolve (see docs/deploy-fix).
       - name: Deploy to Cloudflare (staging)
         working-directory: apps/web
         run: npx wrangler deploy --env staging --config wrangler.toml

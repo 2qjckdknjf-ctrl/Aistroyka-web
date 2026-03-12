@@ -1,0 +1,284 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		MGR001 /* AiStroykaManagerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR101; };
+		MGR002 /* ManagerSessionState.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR102; };
+		MGR003 /* ManagerRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR103; };
+		MGR004 /* ManagerAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR104; };
+		MGR005 /* EmptyStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR105; };
+		MGR006 /* ErrorStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR106; };
+		MGR007 /* KPICard.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR107; };
+		MGR008 /* LoadingStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR108; };
+		MGR009 /* SectionHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR109; };
+		MGR010 /* ManagerLoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR110; };
+		MGR011 /* ManagerTabShell.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR111; };
+		MGR012 /* ManagerUnauthorizedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR112; };
+		MGR013 /* HomeDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR113; };
+		MGR014 /* ProjectsListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR114; };
+		MGR015 /* ProjectDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR115; };
+		MGR016 /* TasksListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR116; };
+		MGR017 /* TasksListPlaceholderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR117; };
+		MGR018 /* ReportsInboxView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR118; };
+		MGR019 /* ReportsInboxPlaceholderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR119; };
+		MGR020 /* TeamOverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR120; };
+		MGR021 /* TeamOverviewPlaceholderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR121; };
+		MGR022 /* AICopilotPlaceholderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR122; };
+		MGR023 /* AITabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR123; };
+		MGR024 /* ManagerMoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR124; };
+		MGR025 /* ManagerSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR125; };
+		MGR026 /* NotificationsPlaceholderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR126; };
+		MGR027 /* NotificationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR127; };
+		MGR028 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = MGR128; };
+		MGR029 /* Shared in Frameworks */ = {isa = PBXBuildFile; productRef = MGR130; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		MGR100 /* AiStroykaManager.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AiStroykaManager.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		MGR101 /* AiStroykaManagerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AiStroykaManagerApp.swift; sourceTree = "<group>"; };
+		MGR102 /* ManagerSessionState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManagerSessionState.swift; sourceTree = "<group>"; };
+		MGR103 /* ManagerRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManagerRootView.swift; sourceTree = "<group>"; };
+		MGR104 /* ManagerAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManagerAPI.swift; sourceTree = "<group>"; };
+		MGR105 /* EmptyStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyStateView.swift; sourceTree = "<group>"; };
+		MGR106 /* ErrorStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorStateView.swift; sourceTree = "<group>"; };
+		MGR107 /* KPICard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KPICard.swift; sourceTree = "<group>"; };
+		MGR108 /* LoadingStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingStateView.swift; sourceTree = "<group>"; };
+		MGR109 /* SectionHeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionHeaderView.swift; sourceTree = "<group>"; };
+		MGR110 /* ManagerLoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManagerLoginView.swift; sourceTree = "<group>"; };
+		MGR111 /* ManagerTabShell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManagerTabShell.swift; sourceTree = "<group>"; };
+		MGR112 /* ManagerUnauthorizedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManagerUnauthorizedView.swift; sourceTree = "<group>"; };
+		MGR113 /* HomeDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeDashboardView.swift; sourceTree = "<group>"; };
+		MGR114 /* ProjectsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectsListView.swift; sourceTree = "<group>"; };
+		MGR115 /* ProjectDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectDetailView.swift; sourceTree = "<group>"; };
+		MGR116 /* TasksListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TasksListView.swift; sourceTree = "<group>"; };
+		MGR117 /* TasksListPlaceholderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TasksListPlaceholderView.swift; sourceTree = "<group>"; };
+		MGR118 /* ReportsInboxView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportsInboxView.swift; sourceTree = "<group>"; };
+		MGR119 /* ReportsInboxPlaceholderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportsInboxPlaceholderView.swift; sourceTree = "<group>"; };
+		MGR120 /* TeamOverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeamOverviewView.swift; sourceTree = "<group>"; };
+		MGR121 /* TeamOverviewPlaceholderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeamOverviewPlaceholderView.swift; sourceTree = "<group>"; };
+		MGR122 /* AICopilotPlaceholderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AICopilotPlaceholderView.swift; sourceTree = "<group>"; };
+		MGR123 /* AITabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AITabView.swift; sourceTree = "<group>"; };
+		MGR124 /* ManagerMoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManagerMoreView.swift; sourceTree = "<group>"; };
+		MGR125 /* ManagerSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManagerSettingsView.swift; sourceTree = "<group>"; };
+		MGR126 /* NotificationsPlaceholderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsPlaceholderView.swift; sourceTree = "<group>"; };
+		MGR127 /* NotificationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsView.swift; sourceTree = "<group>"; };
+		MGR128 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		MGR129 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		MGR1CFG /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = ../Config/Secrets.xcconfig; sourceTree = SOURCE_ROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		MGR031 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = ( MGR029 );
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		MGR041 /* AiStroykaManager */ = {
+			isa = PBXGroup;
+			children = ( MGR101, MGR102, MGR103, MGR051S, MGR051D, MGR051V, MGR129, MGR128 );
+			path = AiStroykaManager;
+			sourceTree = "<group>";
+		};
+		MGR051S /* Services */ = {
+			isa = PBXGroup;
+			children = ( MGR104 );
+			path = Services;
+			sourceTree = "<group>";
+		};
+		MGR051D /* Design */ = {
+			isa = PBXGroup;
+			children = ( MGR105, MGR106, MGR107, MGR108, MGR109 );
+			path = Design;
+			sourceTree = "<group>";
+		};
+		MGR051V /* Views */ = {
+			isa = PBXGroup;
+			children = ( MGR110, MGR111, MGR112, MGR113, MGR114, MGR115, MGR116, MGR117, MGR118, MGR119, MGR120, MGR121, MGR122, MGR123, MGR124, MGR125, MGR126, MGR127 );
+			path = Views;
+			sourceTree = "<group>";
+		};
+		MGR061 /* Products */ = {
+			isa = PBXGroup;
+			children = ( MGR100 );
+			name = Products;
+			sourceTree = "<group>";
+		};
+		MGRRoot /* Root */ = {
+			isa = PBXGroup;
+			children = ( MGR041, MGR061 );
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		MGR131 /* AiStroykaManager */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = MGR141;
+			buildPhases = ( MGR030, MGR031, MGR032 );
+			buildRules = ();
+			dependencies = ();
+			name = AiStroykaManager;
+			packageProductDependencies = ( MGR130 );
+			productName = AiStroykaManager;
+			productReference = MGR100;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		MGR071 /* Project object */ = {
+			isa = PBXProject;
+			buildConfigurationList = MGR081;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = ( en, Base );
+			mainGroup = MGRRoot;
+			packageReferences = ( MGR129Pkg );
+			productRefGroup = MGR061;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = ( MGR131 );
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		MGR032 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = ( MGR028 );
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		MGR030 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = ( MGR001, MGR002, MGR003, MGR004, MGR005, MGR006, MGR007, MGR008, MGR009, MGR010, MGR011, MGR012, MGR013, MGR014, MGR015, MGR016, MGR017, MGR018, MGR019, MGR020, MGR021, MGR022, MGR023, MGR024, MGR025, MGR026, MGR027 );
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		MGR091 /* Debug (Project) */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = MGR1CFG /* Secrets.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = ( "DEBUG=1", "$(inherited)" );
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MTL_ENABLE_DEBUG_MODE = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		MGR092 /* Release (Project) */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = MGR1CFG /* Secrets.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MTL_ENABLE_DEBUG_MODE = NO;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		MGR151 /* Debug (Target) */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = AiStroykaManager/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = ( "$(inherited)", "@executable_path/Frameworks" );
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = ai.aistroyka.manager;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		MGR161 /* Release (Target) */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = AiStroykaManager/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = ( "$(inherited)", "@executable_path/Frameworks" );
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = ai.aistroyka.manager;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		MGR081 /* Project config list */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = ( MGR091, MGR092 );
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		MGR141 /* Target config list */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = ( MGR151, MGR161 );
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		MGR129Pkg /* Shared */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../Shared;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		MGR130 /* Shared */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = Shared;
+			package = MGR129Pkg;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = MGR071;
+}
