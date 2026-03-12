@@ -12,7 +12,7 @@
   "scripts": {
     "dev": "cd apps/web && bun run dev",
     "build:contracts": "bun run --cwd packages/contracts clean && bun run --cwd packages/contracts build",
-    "build:contracts:npm": "npm run --prefix packages/contracts clean && npm run --prefix packages/contracts build",
+    "build:contracts:npm": "npm run --prefix packages/contracts clean && npm install --prefix packages/contracts && npm run --prefix packages/contracts build",
     "build:web": "bun run --cwd apps/web build",
     "build:web:npm": "npm run --prefix apps/web build",
     "build": "bun run build:contracts && bun run build:web",
