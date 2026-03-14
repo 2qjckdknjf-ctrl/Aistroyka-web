@@ -1,12 +1,18 @@
 import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Inter, Space_Grotesk } from "next/font/google";
 import { QueryProvider } from "@/lib/query/QueryProvider";
 import "./globals.css";
 
-const plusJakarta = Plus_Jakarta_Sans({
+const inter = Inter({
   subsets: ["latin", "cyrillic-ext"],
-  variable: "--font-sans",
+  variable: "--font-body",
+  display: "swap",
+});
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-heading",
   display: "swap",
 });
 
@@ -18,7 +24,8 @@ export const metadata: Metadata = {
     default: "Aistroyka — AI Construction Intelligence",
     template: "%s | Aistroyka",
   },
-  description: "AI Construction Intelligence — control progress, risks, and quality on site.",
+  description: "AI Construction Intelligence — control progress, risks, and quality on site. AI construction platform, construction intelligence, AI project management.",
+  keywords: ["AI construction platform", "construction intelligence", "AI project management", "construction analytics", "construction AI"],
   openGraph: {
     type: "website",
     locale: "en_US",
@@ -26,12 +33,12 @@ export const metadata: Metadata = {
     siteName: "Aistroyka",
     title: "Aistroyka — AI Construction Intelligence",
     description: "AI-powered construction intelligence platform: projects, tasks, daily reports, photo evidence, and AI analytics.",
-    images: [{ url: "/brand/aistroyka-logo.svg", width: 140, height: 32, alt: "Aistroyka" }],
+    images: [{ url: "/brand/aistroyka-logo.png", width: 140, height: 40, alt: "AISTROYKA" }],
   },
   icons: {
     icon: [
-      { url: "/brand/aistroyka-icon.svg", type: "image/svg+xml" },
       { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
     ],
   },
 };
@@ -40,7 +47,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
-  themeColor: "#6342C4",
+  themeColor: "#0B0F19",
 };
 
 const LOCALES = ["ru", "en", "es", "it"] as const;
@@ -57,7 +64,7 @@ export default async function RootLayout({
     : "ru";
 
   return (
-    <html lang={lang} className={plusJakarta.variable}>
+    <html lang={lang} className={`${inter.variable} ${spaceGrotesk.variable}`}>
       <body className="min-h-screen font-sans antialiased [padding-bottom:env(safe-area-inset-bottom)]">
         <QueryProvider>{children}</QueryProvider>
       </body>

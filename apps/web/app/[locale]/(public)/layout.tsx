@@ -13,7 +13,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
     "@type": "Organization",
     name: "Aistroyka",
     url: baseUrl,
-    logo: `${baseUrl}/brand/aistroyka-logo.svg`,
+    logo: `${baseUrl}/brand/aistroyka-logo.png`,
     description: "AI Construction Intelligence — control progress, risks, and quality on site.",
   };
   const softwareSchema = {
@@ -24,11 +24,11 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
     operatingSystem: "Web, iOS",
     description: "AI-powered construction intelligence platform: projects, tasks, daily reports, photo evidence, and AI analytics.",
     url: baseUrl,
-    image: `${baseUrl}/brand/aistroyka-logo.svg`,
+    image: `${baseUrl}/brand/aistroyka-logo.png`,
   };
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col bg-[var(--bg-main)]" style={{ background: "linear-gradient(180deg, #0B0F19 0%, #05070d 100%)" }}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}

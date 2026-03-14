@@ -1,6 +1,8 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "@/i18n/navigation";
+import { getResourceHref } from "@/lib/intelligence/resource-links";
 import {
   ProjectHealthPanel,
   RiskList,
@@ -10,6 +12,7 @@ import {
   SummaryCard,
   RecommendationList,
   CopilotSummaryPanel,
+  ManagerActionView,
   type ProjectIntelligenceData,
 } from "@/components/intelligence";
 import { Card, Skeleton, ErrorState } from "@/components/ui";
@@ -59,16 +62,32 @@ export function ProjectIntelligenceClient({ projectId }: { projectId: string }) 
     );
   }
 
-  const { health, insights, riskOverview, evidenceCoverage, reportingDiscipline, executiveSummary, recommendations } = data;
+  const {
+    health,
+    insights,
+    riskOverview,
+    evidenceCoverage,
+    reportingDiscipline,
+    executiveSummary,
+    recommendations,
+    projectHealthScore,
+    executiveProjectSummary,
+    missingEvidenceInsights,
+    topRiskInsights,
+  } = data;
+
+  const healthToShow = projectHealthScore ?? health;
+  const summaryToShow = executiveProjectSummary ?? executiveSummary;
 
   return (
     <section className="space-y-6" aria-label="Project intelligence">
+      <ManagerActionView data={data} projectId={projectId} />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <ProjectHealthPanel health={health} emptyMessage="No health data" />
-        {executiveSummary && (
-          <SummaryCard summary={executiveSummary} />
+        <ProjectHealthPanel health={healthToShow} emptyMessage="No health data" />
+        {summaryToShow && (
+          <SummaryCard summary={summaryToShow} />
         )}
-        {!executiveSummary && (
+        {!summaryToShow && (
           <IntelligenceCard title="Executive summary">
             <p className="text-aistroyka-subheadline text-aistroyka-text-tertiary">
               No summary available
@@ -97,6 +116,97 @@ export function ProjectIntelligenceClient({ projectId }: { projectId: string }) 
           emptyMessage="No reporting issues"
         />
       </div>
+
+      {missingEvidenceInsights && missingEvidenceInsights.length > 0 && (
+        <IntelligenceCard title="Missing evidence" aria-label="Missing evidence insights">
+          <ul className="space-y-3">
+            {missingEvidenceInsights.slice(0, 5).map((me) => {
+              const ref = me.evidenceReferences?.[0];
+              const href = ref
+                ? getResourceHref(ref.resourceType, ref.resourceId, projectId)
+                : null;
+              return (
+                <li key={me.id} className="flex flex-col gap-0.5">
+                  <span className="text-aistroyka-subheadline font-medium text-aistroyka-text-primary">
+                    {me.title}
+                  </span>
+                  <p className="text-aistroyka-caption text-aistroyka-text-secondary">
+                    {me.explanation}
+                  </p>
+                  <p className="text-xs text-aistroyka-text-tertiary">
+                    {me.recommendedAction}
+                  </p>
+                  {me.missingDataDisclaimer && (
+                    <p className="text-xs text-amber-600 dark:text-amber-400">
+                      {me.missingDataDisclaimer}
+                    </p>
+                  )}
+                  {href && (
+                    <Link
+                      href={href}
+                      className="mt-1 inline-block text-sm font-medium text-aistroyka-accent hover:underline"
+                    >
+                      Open related →
+                    </Link>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </IntelligenceCard>
+      )}
+
+      {topRiskInsights && topRiskInsights.length > 0 && (
+        <IntelligenceCard title="Top risks (ranked)" aria-label="Top risk insights">
+          <ul className="space-y-3">
+            {topRiskInsights.slice(0, 5).map((r) => {
+              const ref = r.evidenceReferences?.[0];
+              const href = ref
+                ? getResourceHref(ref.resourceType, ref.resourceId, projectId)
+                : null;
+              return (
+                <li key={r.id} className="flex flex-col gap-0.5">
+                  <span className="text-aistroyka-subheadline font-medium text-aistroyka-text-primary">
+                    #{r.rank} {r.title}
+                  </span>
+                  <p className="text-aistroyka-caption text-aistroyka-text-secondary">
+                    {r.explanation}
+                  </p>
+                  <p className="text-xs text-aistroyka-text-tertiary">
+                    {r.recommendedAction}
+                  </p>
+                  {r.missingDataDisclaimer && (
+                    <p className="text-xs text-amber-600 dark:text-amber-400">
+                      {r.missingDataDisclaimer}
+                    </p>
+                  )}
+                  {href && (
+                    <Link
+                      href={href}
+                      className="mt-1 inline-block text-sm font-medium text-aistroyka-accent hover:underline"
+                    >
+                      Open related →
+                    </Link>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </IntelligenceCard>
+      )}
+
+      {projectHealthScore?.factorContributions && projectHealthScore.factorContributions.length > 0 && (
+        <IntelligenceCard title="Health score factors" aria-label="Health score breakdown">
+          <ul className="space-y-2 text-sm">
+            {projectHealthScore.factorContributions.map((f, i) => (
+              <li key={i}>
+                <span className="font-medium">{f.factor}:</span>{" "}
+                <span className="text-aistroyka-text-secondary">{f.explanation}</span>
+              </li>
+            ))}
+          </ul>
+        </IntelligenceCard>
+      )}
 
       {insights.length > 0 && (
         <IntelligenceCard title="Manager insights" aria-label="Manager insights">

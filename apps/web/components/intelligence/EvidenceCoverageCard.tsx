@@ -1,5 +1,6 @@
 "use client";
 
+import { Link } from "@/i18n/navigation";
 import type { EvidenceSignalData } from "./types";
 import { IntelligenceCard } from "./IntelligenceCard";
 import { SeverityBadge } from "./SeverityBadge";
@@ -32,6 +33,14 @@ export function EvidenceCoverageCard({
               <p className="text-aistroyka-subheadline text-aistroyka-text-secondary">
                 {s.message}
               </p>
+              {s.taskId && (
+                <Link
+                  href={`/dashboard/tasks/${s.taskId}`}
+                  className="mt-0.5 inline-block text-sm font-medium text-aistroyka-accent hover:underline"
+                >
+                  Open task →
+                </Link>
+              )}
             </li>
           ))}
         </ul>

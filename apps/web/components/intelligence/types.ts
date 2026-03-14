@@ -88,6 +88,73 @@ export interface ActionRecommendationData {
   description?: string;
   priority: SignalSeverity;
   at: string;
+  relatedResourceType?: string;
+  relatedResourceId?: string;
+}
+
+export interface MissingEvidenceInsightData {
+  id: string;
+  projectId: string;
+  type: string;
+  severity: SignalSeverity;
+  title: string;
+  explanation: string;
+  evidenceReferences: { resourceType: string; resourceId: string }[];
+  confidence: string;
+  contributingFactors: string[];
+  recommendedAction: string;
+  missingDataDisclaimer?: string;
+  at: string;
+}
+
+export interface TopRiskInsightData {
+  id: string;
+  projectId: string;
+  rank: number;
+  severity: SignalSeverity;
+  title: string;
+  description: string;
+  source: string;
+  explanation: string;
+  evidenceReferences: { resourceType: string; resourceId: string }[];
+  confidence: string;
+  contributingFactors: string[];
+  recommendedAction: string;
+  missingDataDisclaimer?: string;
+  at: string;
+}
+
+export interface ProjectHealthScoreData {
+  projectId: string;
+  tenantId: string;
+  at: string;
+  score: number;
+  label: string;
+  factorContributions: { factor: string; impact: number; explanation: string }[];
+  blockers: string[];
+  missingData: string[];
+  delayIndicators: string[];
+  confidence: string;
+  missingDataDisclaimer?: string;
+}
+
+export interface ExecutiveProjectSummaryData {
+  projectId: string;
+  tenantId: string;
+  at: string;
+  headline: string;
+  summary: string;
+  healthLabel: string;
+  healthScore: number;
+  recentProgress: string[];
+  atRisk: string[];
+  missingEvidence: string[];
+  requiresAttention: string[];
+  topRisks: string[];
+  recommendedActions: string[];
+  metrics: { label: string; value: string }[];
+  dataSufficiency: string;
+  missingDataDisclaimer?: string;
 }
 
 export interface ProjectIntelligenceData {
@@ -98,6 +165,10 @@ export interface ProjectIntelligenceData {
   reportingDiscipline: { signals: ReportSignalData[] };
   executiveSummary?: ExecutiveSummaryData;
   recommendations: ActionRecommendationData[];
+  missingEvidenceInsights?: MissingEvidenceInsightData[];
+  topRiskInsights?: TopRiskInsightData[];
+  executiveProjectSummary?: ExecutiveProjectSummaryData;
+  projectHealthScore?: ProjectHealthScoreData;
 }
 
 export interface AlertItemData {

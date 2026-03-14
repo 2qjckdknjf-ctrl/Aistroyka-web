@@ -1,9 +1,13 @@
 "use client";
 
-import type { ExecutiveSummaryData } from "./types";
+import type { ExecutiveSummaryData, ExecutiveProjectSummaryData } from "./types";
 import { IntelligenceCard } from "./IntelligenceCard";
 
-export function SummaryCard({ summary }: { summary: ExecutiveSummaryData }) {
+export function SummaryCard({
+  summary,
+}: {
+  summary: ExecutiveSummaryData | ExecutiveProjectSummaryData;
+}) {
   return (
     <IntelligenceCard title="Executive summary" aria-label="Executive summary">
       <p className="text-aistroyka-subheadline font-medium text-aistroyka-text-primary">

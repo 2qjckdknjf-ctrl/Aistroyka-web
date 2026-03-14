@@ -1,5 +1,6 @@
 "use client";
 
+import { Link } from "@/i18n/navigation";
 import { computeProjection } from "@/lib/intelligence/projection";
 import { computeGovernance } from "@/lib/intelligence/governance";
 import { computeStrategicRisk } from "@/lib/intelligence/strategicRisk";
@@ -27,10 +28,12 @@ export function NextActions({
   history,
   latestAnalysis,
   previousSnapshot,
+  projectId,
 }: {
   history: AnalysisSnapshot[];
   latestAnalysis: AiAnalysis | null;
   previousSnapshot: PreviousSnapshot | null;
+  projectId?: string;
 }) {
   if (history.length === 0) {
     return (
@@ -146,6 +149,14 @@ export function NextActions({
           </li>
         ))}
       </ul>
+      {projectId && (
+        <Link
+          href={`/dashboard/projects/${projectId}?tab=intelligence`}
+          className="mt-4 inline-block text-sm font-medium text-aistroyka-accent hover:underline"
+        >
+          Open project intelligence →
+        </Link>
+      )}
     </div>
   );
 }

@@ -23,3 +23,7 @@ export { Tabs, Tab, TabPanel } from "./Tabs";
 export { Textarea } from "./Textarea";
 export { Toast } from "./Toast";
 export type { ToastProps, ToastVariant } from "./Toast";
+export { AIInsightCard } from "./AIInsightCard";
+export { StatCard } from "./StatCard";
+export { Panel } from "./Panel";
+export { Icon } from "./Icon";

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { DashboardProjectDetailClient } from "./DashboardProjectDetailClient";
 
@@ -8,5 +9,9 @@ export default async function DashboardProjectDetailPage({
 }) {
   const { id } = await params;
   if (!id) notFound();
-  return <DashboardProjectDetailClient projectId={id} />;
+  return (
+    <Suspense fallback={<div className="animate-pulse h-32 rounded bg-aistroyka-surface-muted" />}>
+      <DashboardProjectDetailClient projectId={id} />
+    </Suspense>
+  );
 }

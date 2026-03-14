@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@/i18n/navigation";
 import {
@@ -20,6 +21,7 @@ import {
   TablePagination,
 } from "@/components/ui";
 import { ProjectIntelligenceClient } from "./ProjectIntelligenceClient";
+import { ProjectSchedulePanel } from "./ProjectSchedulePanel";
 
 const PAGE_SIZE = 10;
 
@@ -87,7 +89,16 @@ async function fetchProjectAi(projectId: string, page: number): Promise<{ data: 
 }
 
 export function DashboardProjectDetailClient({ projectId }: { projectId: string }) {
-  const [activeTab, setActiveTab] = useState("workers");
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const [activeTab, setActiveTab] = useState(
+    tabParam === "intelligence" ? "intelligence" : tabParam === "schedule" ? "schedule" : "workers"
+  );
+
+  useEffect(() => {
+    if (tabParam === "intelligence") setActiveTab("intelligence");
+    else if (tabParam === "schedule") setActiveTab("schedule");
+  }, [tabParam]);
   const [workersPage, setWorkersPage] = useState(1);
   const [reportsPage, setReportsPage] = useState(1);
   const [uploadsPage, setUploadsPage] = useState(1);
@@ -202,6 +213,9 @@ export function DashboardProjectDetailClient({ projectId }: { projectId: string 
           <Tab id="tab-intelligence" selected={activeTab === "intelligence"} onSelect={() => setActiveTab("intelligence")} aria-controls="panel-intelligence">
             Intelligence
           </Tab>
+          <Tab id="tab-schedule" selected={activeTab === "schedule"} onSelect={() => setActiveTab("schedule")} aria-controls="panel-schedule">
+            Schedule
+          </Tab>
         </Tabs>
 
         <TabPanel id="panel-workers" selected={activeTab === "workers"} aria-labelledby="tab-workers">
@@ -235,6 +249,9 @@ export function DashboardProjectDetailClient({ projectId }: { projectId: string 
         </TabPanel>
         <TabPanel id="panel-intelligence" selected={activeTab === "intelligence"} aria-labelledby="tab-intelligence">
           <ProjectIntelligenceClient projectId={projectId} />
+        </TabPanel>
+        <TabPanel id="panel-schedule" selected={activeTab === "schedule"} aria-labelledby="tab-schedule">
+          <ProjectSchedulePanel projectId={projectId} />
         </TabPanel>
       </Card>
     </>

@@ -11,6 +11,7 @@ export type {
   ProjectIntelligenceData,
   AlertItemData,
 } from "./types";
+export { ManagerActionView } from "./ManagerActionView";
 export { SeverityBadge } from "./SeverityBadge";
 export { IntelligenceCard } from "./IntelligenceCard";
 export { SummaryCard } from "./SummaryCard";

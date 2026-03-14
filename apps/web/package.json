@@ -43,15 +43,17 @@
   "dependencies": {
     "@aistroyka/contracts": "file:../../packages/contracts",
     "@supabase/ssr": "^0.5.2",
-    "zod": "^3.23.8",
     "@supabase/supabase-js": "^2.47.10",
     "@tanstack/react-query": "^5.90.21",
     "@tanstack/react-query-devtools": "^5.91.3",
+    "framer-motion": "^12.36.0",
+    "lucide-react": "^0.577.0",
     "next": "^15.1.0",
     "next-intl": "^4.8.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "stripe": "^14.21.0"
+    "stripe": "^14.21.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@playwright/test": "^1.49.0",

@@ -1,10 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 
-const LOGO_SRC = "/brand/aistroyka-logo.svg";
-const ICON_SRC = "/brand/aistroyka-icon.svg";
+const LOGO_SRC = "/brand/aistroyka-logo.png";
+const ICON_SRC = "/brand/aistroyka-icon.png";
 const LOGO_ALT = "Aistroyka";
 
 type LogoProps = {

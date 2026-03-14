@@ -35,9 +35,10 @@ export function PublicHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)]/95 backdrop-blur supports-[backdrop-filter]:bg-[var(--aistroyka-surface)]/90">
+    <header className="sticky top-0 z-50 h-16 border-b border-[var(--border-main)] bg-[var(--bg-main)]/80 backdrop-blur-md supports-[backdrop-filter]:bg-[var(--bg-main)]/70">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-        <Logo href="/" height={28} className="min-w-0" priority />
+        <Logo href="/" height={40} className="min-w-0 shrink-0 hidden sm:block" priority />
+        <Logo href="/" height={24} className="min-w-0 shrink-0 sm:hidden" priority />
 
         <nav className="hidden items-center gap-1 md:flex" aria-label="Main">
           {PRIMARY_NAV.map(({ href, key }) => {
@@ -46,10 +47,10 @@ export function PublicHeader() {
               <Link
                 key={href}
                 href={href}
-                className={`rounded-[var(--aistroyka-radius-lg)] px-3 py-2 text-[var(--aistroyka-font-subheadline)] font-medium transition-colors ${
+                className={`rounded-[var(--radius-main)] px-3 py-2 text-[var(--aistroyka-font-subheadline)] font-medium transition-colors ${
                   isActive
-                    ? "bg-[var(--aistroyka-accent-light)] text-[var(--aistroyka-accent)]"
-                    : "text-[var(--aistroyka-text-secondary)] hover:bg-[var(--aistroyka-surface-raised)] hover:text-[var(--aistroyka-text-primary)]"
+                    ? "bg-[var(--aistroyka-accent-light)] text-[var(--ai-yellow)]"
+                    : "text-[var(--text-muted)] hover:bg-white/5 hover:text-[var(--text-main)]"
                 }`}
               >
                 {t(key)}
@@ -75,7 +76,7 @@ export function PublicHeader() {
 
         <button
           type="button"
-          className="inline-flex min-h-[var(--aistroyka-touch-min)] min-w-[var(--aistroyka-touch-min)] items-center justify-center rounded-[var(--aistroyka-radius-lg)] text-[var(--aistroyka-text-primary)] hover:bg-[var(--aistroyka-surface-raised)] md:hidden"
+          className="inline-flex min-h-[var(--aistroyka-touch-min)] min-w-[var(--aistroyka-touch-min)] items-center justify-center rounded-[var(--radius-main)] text-[var(--text-main)] hover:bg-white/5 md:hidden"
           aria-expanded={mobileMenuOpen}
           aria-controls="mobile-menu"
           onClick={() => setMobileMenuOpen((v) => !v)}
@@ -93,7 +94,7 @@ export function PublicHeader() {
 
       <div
         id="mobile-menu"
-        className={`border-t border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] md:hidden ${mobileMenuOpen ? "block" : "hidden"}`}
+        className={`border-t border-[var(--border-main)] bg-[var(--bg-card)] md:hidden ${mobileMenuOpen ? "block" : "hidden"}`}
         aria-hidden={!mobileMenuOpen}
       >
         <nav className="flex flex-col gap-0.5 px-4 py-4" aria-label="Main mobile">
@@ -101,18 +102,18 @@ export function PublicHeader() {
             <Link
               key={href}
               href={href}
-              className="rounded-[var(--aistroyka-radius-lg)] px-3 py-3 text-[var(--aistroyka-font-subheadline)] font-medium text-[var(--aistroyka-text-primary)] hover:bg-[var(--aistroyka-surface-raised)]"
+              className="rounded-[var(--radius-main)] px-3 py-3 text-[var(--aistroyka-font-subheadline)] font-medium text-[var(--text-main)] hover:bg-white/5"
               onClick={() => setMobileMenuOpen(false)}
             >
               {t(key)}
             </Link>
           ))}
-          <p className="mt-3 text-[var(--aistroyka-font-caption)] text-[var(--aistroyka-text-tertiary)]">More</p>
+          <p className="mt-3 text-[var(--aistroyka-font-caption)] text-[var(--text-muted)]">More</p>
           {SECONDARY_NAV.map(({ href, key }) => (
             <Link
               key={href}
               href={href}
-              className="rounded-[var(--aistroyka-radius-lg)] px-3 py-2 text-[var(--aistroyka-font-footnote)] text-[var(--aistroyka-text-secondary)] hover:bg-[var(--aistroyka-surface-raised)]"
+              className="rounded-[var(--radius-main)] px-3 py-2 text-[var(--aistroyka-font-footnote)] text-[var(--text-muted)] hover:bg-white/5"
               onClick={() => setMobileMenuOpen(false)}
             >
               {t(key)}
@@ -121,7 +122,7 @@ export function PublicHeader() {
           <div className="mt-2 flex flex-col gap-2 border-t border-[var(--aistroyka-border-subtle)] pt-4">
             <Link
               href="/contact"
-              className="rounded-[var(--aistroyka-radius-lg)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] px-4 py-3 text-center text-[var(--aistroyka-font-subheadline)] font-semibold"
+              className="rounded-[var(--radius-main)] border border-[var(--border-main)] bg-transparent px-4 py-3 text-center text-[var(--aistroyka-font-subheadline)] font-semibold"
               onClick={() => setMobileMenuOpen(false)}
             >
               {t("requestDemo")}

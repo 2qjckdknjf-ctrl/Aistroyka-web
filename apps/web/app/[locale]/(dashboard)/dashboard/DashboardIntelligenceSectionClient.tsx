@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@/i18n/navigation";
 import { AlertFeed, type AlertItemData } from "@/components/intelligence";
 import { Card, Skeleton, ErrorState } from "@/components/ui";
+import { DashboardPriorityActionsClient } from "./DashboardPriorityActionsClient";
 
 async function fetchAlerts(): Promise<AlertItemData[]> {
   const res = await fetch("/api/v1/alerts?limit=10", { credentials: "include" });
@@ -32,18 +33,7 @@ export function DashboardIntelligenceSectionClient() {
           Open a project → Intelligence tab
         </Link>
       </div>
-      <Card className="p-4">
-        <p className="text-aistroyka-subheadline text-aistroyka-text-secondary">
-          View project health, risks, evidence coverage, reporting discipline, and AI recommendations in the{" "}
-          <strong>Intelligence</strong> tab on any project page.
-        </p>
-        <Link
-          href="/dashboard/projects"
-          className="mt-3 inline-block text-aistroyka-caption font-medium text-aistroyka-accent hover:underline"
-        >
-          Go to projects →
-        </Link>
-      </Card>
+      <DashboardPriorityActionsClient />
       <div className="grid gap-4 lg:grid-cols-2">
         {isError ? (
           <ErrorState message="Failed to load alerts" onRetry={() => refetch()} />

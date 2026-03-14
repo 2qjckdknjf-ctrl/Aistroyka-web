@@ -5,6 +5,19 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --ai-white: #ffffff;
+    --ai-yellow: #F5C518;
+    --ai-pink: #F29CB2;
+    --ai-dark: #0B0F19;
+    --bg-main: #0B0F19;
+    --bg-card: #1F2937;
+    --text-main: #F9FAFB;
+    --text-muted: #9CA3AF;
+    --border-main: #2B3648;
+    --radius-main: 12px;
+  }
+
   body {
     @apply bg-[var(--aistroyka-bg-primary)] text-[var(--aistroyka-text-primary)] antialiased;
   }
@@ -49,8 +62,23 @@
     opacity: 0.1;
   }
 }
+
+/* Hero gradient glow */
+@keyframes hero-glow {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
 @layer utilities {
   .animate-ai-signal-pulse {
     animation: ai-signal-pulse 2s ease-in-out infinite;
+  }
+  .animate-hero-glow {
+    animation: hero-glow 4s ease-in-out infinite;
   }
 }

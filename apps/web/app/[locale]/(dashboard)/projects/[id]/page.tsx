@@ -378,6 +378,7 @@ export default async function ProjectPage({
             history={analysisHistory}
             latestAnalysis={latestAnalysis}
             previousSnapshot={previousSnapshotForStrategic}
+            projectId={id}
           />
           <TrendSummaryBlock
             hasVelocity={proj.hasVelocity}

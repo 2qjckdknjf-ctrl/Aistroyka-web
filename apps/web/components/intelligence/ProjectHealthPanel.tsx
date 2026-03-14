@@ -1,9 +1,9 @@
 "use client";
 
-import type { ProjectHealthData } from "./types";
+import type { ProjectHealthData, ProjectHealthScoreData } from "./types";
 import { IntelligenceCard } from "./IntelligenceCard";
 
-const LABEL_CLASS: Record<ProjectHealthData["label"], string> = {
+const LABEL_CLASS: Record<string, string> = {
   healthy: "text-aistroyka-success",
   moderate: "text-amber-600 dark:text-amber-400",
   unstable: "text-amber-700 dark:text-amber-300",
@@ -14,7 +14,7 @@ export function ProjectHealthPanel({
   health,
   emptyMessage = "Health not available",
 }: {
-  health?: ProjectHealthData | null;
+  health?: ProjectHealthData | ProjectHealthScoreData | null;
   emptyMessage?: string;
 }) {
   if (!health) {

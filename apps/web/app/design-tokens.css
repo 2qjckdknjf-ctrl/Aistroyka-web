@@ -1,32 +1,44 @@
 /**
- * Aistroyka Design Tokens — 1:1 with iOS (see docs/ios-ui-source-of-truth.md).
+ * Aistroyka Design Tokens — Modern AI SaaS dark theme
  * Use via Tailwind or var(--aistroyka-*). No hardcoded colors in components.
  */
 
 :root {
-  /* —— Brand (iOS ColorTokens) —— */
-  --aistroyka-accent: #7342d9;
-  --aistroyka-accent-hover: #6147c7;
-  --aistroyka-accent-pressed: #5238b8;
-  --aistroyka-accent-disabled: #b9a5e8; /* accent at 50% opacity equivalent */
+  /* —— AI SaaS palette (design system) —— */
+  --ai-white: #ffffff;
+  --ai-yellow: #F5C518;
+  --ai-pink: #F29CB2;
+  --ai-dark: #0B0F19;
+  --bg-main: #0B0F19;
+  --bg-card: #1F2937;
+  --text-main: #F9FAFB;
+  --text-muted: #9CA3AF;
+  --border-main: #2B3648;
+  --radius-main: 12px;
 
-  /* —— Surfaces (branded) —— */
-  --aistroyka-bg-branded: #0d142e;
-  --aistroyka-bg-branded-surface: #1a1f42;
+  /* —— Brand (construction yellow accent) —— */
+  --aistroyka-accent: #F5C518;
+  --aistroyka-accent-hover: #e6b80a;
+  --aistroyka-accent-pressed: #d4a90a;
+  --aistroyka-accent-disabled: rgba(245, 197, 24, 0.5);
+
+  /* —— Surfaces (branded / dark) —— */
+  --aistroyka-bg-branded: #0B0F19;
+  --aistroyka-bg-branded-surface: #111827;
 
   /* —— Surfaces (app / system) —— */
-  --aistroyka-bg-primary: #f2f2f7;
-  --aistroyka-bg-secondary: #ffffff;
-  --aistroyka-surface: #ffffff;
-  --aistroyka-surface-raised: #f2f2f7;
-  --aistroyka-surface-muted: #e5e5ea;
+  --aistroyka-bg-primary: #0B0F19;
+  --aistroyka-bg-secondary: #111827;
+  --aistroyka-surface: #1F2937;
+  --aistroyka-surface-raised: #111827;
+  --aistroyka-surface-muted: #2B3648;
 
   /* —— Text —— */
-  --aistroyka-text-primary: #000000;
-  --aistroyka-text-secondary: rgba(60, 60, 67, 0.6);
-  --aistroyka-text-tertiary: rgba(60, 60, 67, 0.5);
-  --aistroyka-text-inverse: #ffffff;
-  --aistroyka-text-on-branded: rgba(255, 255, 255, 0.82);
+  --aistroyka-text-primary: #F9FAFB;
+  --aistroyka-text-secondary: #9CA3AF;
+  --aistroyka-text-tertiary: #6B7280;
+  --aistroyka-text-inverse: #0B0F19;
+  --aistroyka-text-on-branded: rgba(249, 250, 251, 0.95);
 
   /* —— Semantic —— */
   --aistroyka-success: #34c759;
@@ -35,13 +47,13 @@
   --aistroyka-info: #007aff;
 
   /* —— Borders —— */
-  --aistroyka-border-subtle: rgba(60, 60, 67, 0.29);
-  --aistroyka-border-strong: #38383a;
+  --aistroyka-border-subtle: #2B3648;
+  --aistroyka-border-strong: #374151;
 
-  /* —— Focus (iOS interactiveFocus = accent) —— */
+  /* —— Focus —— */
   --aistroyka-focus: var(--aistroyka-accent);
-  /* Light tint for active nav / selected state */
-  --aistroyka-accent-light: #ede9fc;
+  /* Tint for active nav / selected state */
+  --aistroyka-accent-light: rgba(245, 197, 24, 0.15);
 
   /* —— Typography (iOS scale → rem @ 16px) —— */
   --aistroyka-font-large: 2.125rem;      /* largeTitle 34pt */
@@ -82,11 +94,12 @@
   --aistroyka-radius-xxl: 20px;
   --aistroyka-radius-card: 16px;
 
-  /* —— Elevation (iOS e1–e4) —— */
-  --aistroyka-shadow-e1: 0 2px 4px rgba(0, 0, 0, 0.08);
-  --aistroyka-shadow-e2: 0 4px 8px rgba(0, 0, 0, 0.12);
-  --aistroyka-shadow-e3: 0 8px 16px rgba(0, 0, 0, 0.16);
-  --aistroyka-shadow-e4: 0 12px 24px rgba(0, 0, 0, 0.2);
+  /* —— Elevation (dark theme) —— */
+  --aistroyka-shadow-e1: 0 2px 4px rgba(0, 0, 0, 0.3);
+  --aistroyka-shadow-e2: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --aistroyka-shadow-e3: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --aistroyka-shadow-e4: 0 12px 32px rgba(0, 0, 0, 0.6);
+  --aistroyka-shadow-glow: 0 0 40px rgba(245, 197, 24, 0.15);
   --aistroyka-e1-stroke-opacity: 0.12;
   --aistroyka-e2-stroke-opacity: 0.18;
   --aistroyka-e1-tint-opacity: 0.02;
@@ -135,8 +148,8 @@
   --aistroyka-card-shadow-e1: var(--aistroyka-shadow-e1);
   --aistroyka-card-shadow-e2: var(--aistroyka-shadow-e2);
   --aistroyka-card-padding: var(--aistroyka-space-4);
-  --aistroyka-card-border-e1: rgba(60, 60, 67, 0.12);
-  --aistroyka-card-border-e2: rgba(60, 60, 67, 0.18);
+  --aistroyka-card-border-e1: rgba(43, 54, 72, 0.8);
+  --aistroyka-card-border-e2: rgba(55, 65, 81, 0.9);
 
   /* Input */
   --aistroyka-input-bg: var(--aistroyka-surface);

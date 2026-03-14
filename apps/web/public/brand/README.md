@@ -1,6 +1,7 @@
 # Brand assets
 
-- **aistroyka-logo.svg** — Full wordmark logo (used in header and dashboard sidebar).
-- **aistroyka-icon.svg** — Icon version for favicon and collapsed sidebar.
+- **aistroyka-logo.png** — Full logo (hard hat + wordmark). Used in header and dashboard sidebar.
+- **aistroyka-icon.png** — Icon version for collapsed sidebar and favicon source.
+- **aistroyka-logo.svg**, **aistroyka-icon.svg** — Legacy SVG placeholders (not used by Logo component).
 
-To use the official PNG logo, place `aistroyka-logo.png` here and update `components/brand/Logo.tsx` to use `/brand/aistroyka-logo.png` (and optionally add a favicon.ico in `public/` for legacy browsers).
+See `docs/BRAND_ASSETS.md` for full documentation.
