@@ -38,6 +38,8 @@ main = ".open-next/deploy/worker-bootstrap.js"
 
 [env.production.vars]
 NEXT_PUBLIC_SUPABASE_URL = "https://vthfrxehrursfloevnlp.supabase.co"
+# Required at runtime for health, middleware, auth. Set NEXT_PUBLIC_SUPABASE_ANON_KEY in Dashboard (secret).
+NEXT_PUBLIC_APP_URL = "https://aistroyka.ai"
 
 [env.production.assets]
 directory = ".open-next/assets"

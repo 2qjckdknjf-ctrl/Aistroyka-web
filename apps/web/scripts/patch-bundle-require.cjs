@@ -33,17 +33,21 @@ const replacement =
   throw Error('Dynamic require of "' + x + '" is not supported');
 };`;
 
-if (!code.includes(original)) {
-  // Minified variant
-  const minOriginal = 'var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require : typeof Proxy !== "undefined" ? new Proxy(x, { get: (a, b) => (typeof require !== "undefined" ? require : a)[b] }) : x)(function(x) { if (typeof require !== "undefined") return require.apply(this, arguments); throw Error(\'Dynamic require of "\' + x + \'" is not supported\'); });';
-  if (code.includes(minOriginal)) {
-    code = code.replace(minOriginal, replacement.replace(/\n/g, " "));
-  } else {
-    console.warn("patch-bundle-require: __require pattern not found in bundle, skip");
-    process.exit(0);
-  }
-} else {
+const replacementOneLine = replacement.replace(/\n/g, " ");
+// Minified variant (single space)
+const minOriginal = 'var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require : typeof Proxy !== "undefined" ? new Proxy(x, { get: (a, b) => (typeof require !== "undefined" ? require : a)[b] }) : x)(function(x) { if (typeof require !== "undefined") return require.apply(this, arguments); throw Error(\'Dynamic require of "\' + x + \'" is not supported\'); });';
+// Minified with two spaces after "{" and "get:" (wrangler 4.x sometimes emits this)
+const minOriginal2 = 'var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require : typeof Proxy !== "undefined" ? new Proxy(x, {  get: (a, b) => (typeof require !== "undefined" ? require : a)[b]}) : x)(function(x) {  if (typeof require !== "undefined") return require.apply(this, arguments);  throw Error(\'Dynamic require of "\' + x + \'" is not supported\');});';
+
+if (code.includes(original)) {
   code = code.replace(original, replacement);
+} else if (code.includes(minOriginal)) {
+  code = code.replace(minOriginal, replacementOneLine);
+} else if (code.includes(minOriginal2)) {
+  code = code.replace(minOriginal2, replacementOneLine);
+} else {
+  console.warn("patch-bundle-require: __require pattern not found in bundle, skip");
+  process.exit(0);
 }
 
 fs.writeFileSync(bundlePath, code, "utf8");

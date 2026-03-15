@@ -53,6 +53,7 @@ name = "aistroyka-web-production"
 # Supabase project URL (same as JWT issuer). Anon key: set via Dashboard or wrangler secret put.
 [env.production.vars]
 NEXT_PUBLIC_SUPABASE_URL = "https://vthfrxehrursfloevnlp.supabase.co"
+NEXT_PUBLIC_APP_URL = "https://aistroyka.ai"
 
 [env.production.assets]
 directory = ".open-next/assets"
