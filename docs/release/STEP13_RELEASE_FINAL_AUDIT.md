@@ -8,8 +8,8 @@
 
 | # | Question | Answer |
 |---|----------|--------|
-| 1 | Local repo state clean and committed | **YES** (after reconciliation commit) |
-| 2 | Required changes pushed | **YES** (after push to origin/ops/external-setup-attempt) |
+| 1 | Local repo state clean and committed | **YES** — Step 13 + release scope committed (ec446ba6) |
+| 2 | Required changes pushed | **YES** — pushed to origin/ops/external-setup-attempt |
 | 3 | Vercel production branch correct | **TBD** — verify in Vercel Dashboard; if production tracks `main`, either merge to main or set production to `ops/external-setup-attempt` |
 | 4 | Production deployment updated | **TBD** — confirm after push that production deploy ran and succeeded |
 | 5 | Live site reflects intended code | **TBD** — confirm after deployment; depends on 3 and 4 |
