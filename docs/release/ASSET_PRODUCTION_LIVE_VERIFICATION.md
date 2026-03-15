@@ -36,12 +36,14 @@ Also confirm the homepage still shows the new design and the header logo is visi
 
 ## Results (fill after redeploy)
 
+First re-check ~6 min after push c9bed9e9: logo/icon/favicon still 404. Confirm workflow success in Actions, then re-run curl checks.
+
 | Check | Result |
 |-------|--------|
-| Homepage 200 (or 307→200) | |
-| Logo 200 | |
-| Icon 200 | |
-| Favicon 200 | |
-| New design visible | |
+| Homepage 200 (or 307→200) | 307 (OK) |
+| Logo 200 | 404 at re-check |
+| Icon 200 | 404 at re-check |
+| Favicon 200 | 404 at re-check |
+| New design visible | Yes |
 
-**Brand assets live:** YES / NO
+**Brand assets live:** NO (re-verify after confirmed successful deploy).
