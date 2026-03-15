@@ -9,6 +9,9 @@ export type AuditAction =
   | "report_review"
   | "media_finalize"
   | "ai_analysis_complete"
+  | "ai_copilot_stream_complete"
+  | "ai_copilot_stream_error"
+  | "ai_copilot_non_stream_complete"
   | "export";
 
 export interface AuditEmitParams {
@@ -48,6 +51,46 @@ export interface AuditLogRow {
   resource_id: string | null;
   details: Record<string, unknown>;
   created_at: string;
+}
+
+/** Safe AI runtime metadata for audit_logs. No prompts, secrets, or raw context. */
+export interface AiRuntimeAuditDetails {
+  request_id: string;
+  route: string;
+  latency_ms: number;
+  output_type: "copilot" | "intelligence" | "vision";
+  streaming?: boolean;
+  fallback_triggered?: boolean;
+  fallback_reason?: string;
+  provider?: string;
+  error_kind?: string;
+  retryable?: boolean;
+  context_tokens_estimated?: number;
+  context_trim_applied?: boolean;
+  build_sha7?: string;
+}
+
+/** Emit AI runtime event to audit_logs. Best-effort; does not throw. */
+export async function emitAiRuntimeAudit(
+  supabase: SupabaseClient,
+  params: {
+    tenant_id: string;
+    user_id?: string | null;
+    trace_id?: string | null;
+    project_id?: string | null;
+    action: "ai_copilot_stream_complete" | "ai_copilot_stream_error" | "ai_copilot_non_stream_complete";
+    details: AiRuntimeAuditDetails;
+  }
+): Promise<void> {
+  await emitAudit(supabase, {
+    tenant_id: params.tenant_id,
+    user_id: params.user_id ?? null,
+    trace_id: params.trace_id ?? null,
+    action: params.action,
+    resource_type: "ai_runtime",
+    resource_id: params.project_id ?? null,
+    details: { ...params.details },
+  });
 }
 
 /** List audit logs for tenant in range (admin only). */

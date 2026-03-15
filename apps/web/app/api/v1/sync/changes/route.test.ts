@@ -105,7 +105,7 @@ describe("GET /api/v1/sync/changes", () => {
         tenant_id: "t1",
         resource_type: "report",
         resource_id: "r1",
-        change_type: "upsert",
+        change_type: "created",
         changed_by: null,
         ts: "2024-01-01T00:00:00Z",
         payload: {},

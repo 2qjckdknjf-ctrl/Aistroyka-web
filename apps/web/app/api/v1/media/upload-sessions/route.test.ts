@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { GET } from "./route";
+import { GET, POST } from "./route";
 
 const mockRows = [
   {
@@ -38,6 +38,24 @@ vi.mock("@/lib/domain/upload-session/upload-session.repository", () => ({
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn().mockResolvedValue({}),
+}));
+
+const createUploadSession = vi.fn().mockResolvedValue({ data: { id: "s1", upload_path: "path" }, error: null });
+vi.mock("@/lib/domain/upload-session/upload-session.service", () => ({
+  createUploadSession: (...args: unknown[]) => createUploadSession(...args),
+}));
+
+vi.mock("@/lib/api/lite-idempotency", () => ({
+  requireLiteIdempotency: vi.fn().mockResolvedValue({ ok: true }),
+  storeLiteIdempotency: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("@/lib/observability", () => ({
+  withRequestIdAndTiming: vi.fn((_req, res: Response) => res),
+}));
+
+vi.mock("@/lib/api/request-limit", () => ({
+  checkRequestBodySize: vi.fn().mockReturnValue(null),
 }));
 
 describe("GET /api/v1/media/upload-sessions", () => {
@@ -89,5 +107,46 @@ describe("GET /api/v1/media/upload-sessions", () => {
       "t1",
       expect.not.objectContaining({ stuck: true })
     );
+  });
+});
+
+describe("POST /api/v1/media/upload-sessions", () => {
+  it("creates session with default purpose when body empty", async () => {
+    createUploadSession.mockResolvedValueOnce({ data: { id: "s1", upload_path: "path" }, error: null });
+    const res = await POST(
+      new Request("https://test/api/v1/media/upload-sessions", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: "{}",
+      })
+    );
+    expect(res.status).toBe(200);
+    expect(createUploadSession).toHaveBeenCalledWith(expect.anything(), expect.anything(), "project_media");
+  });
+
+  it("creates session with purpose when valid", async () => {
+    createUploadSession.mockResolvedValueOnce({ data: { id: "s1", upload_path: "path" }, error: null });
+    const res = await POST(
+      new Request("https://test/api/v1/media/upload-sessions", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ purpose: "report_before" }),
+      })
+    );
+    expect(res.status).toBe(200);
+    expect(createUploadSession).toHaveBeenCalledWith(expect.anything(), expect.anything(), "report_before");
+  });
+
+  it("defaults to project_media when purpose invalid", async () => {
+    createUploadSession.mockResolvedValueOnce({ data: { id: "s1", upload_path: "path" }, error: null });
+    const res = await POST(
+      new Request("https://test/api/v1/media/upload-sessions", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ purpose: "invalid_purpose" }),
+      })
+    );
+    expect(res.status).toBe(200);
+    expect(createUploadSession).toHaveBeenCalledWith(expect.anything(), expect.anything(), "project_media");
   });
 });

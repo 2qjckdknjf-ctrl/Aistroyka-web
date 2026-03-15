@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { addMediaToReport } from "@/lib/domain/reports/report.service";
 import { requireLiteIdempotency, storeLiteIdempotency } from "@/lib/api/lite-idempotency";
+import { WorkerReportAddMediaRequestSchema } from "@aistroyka/contracts";
 
 export const dynamic = "force-dynamic";
 
@@ -20,21 +21,22 @@ export async function POST(request: Request) {
   }
   const guard = await requireLiteIdempotency(request, ctx, ROUTE_KEY);
   if (!guard.ok) return guard.response;
-  let body: { report_id: string; media_id?: string; upload_session_id?: string } = { report_id: "" };
+  let rawBody: unknown;
   try {
-    body = await request.json();
+    rawBody = await request.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
-  const reportId = typeof body.report_id === "string" ? body.report_id.trim() : "";
-  if (!reportId) return NextResponse.json({ error: "report_id required" }, { status: 400 });
-  if (!body.media_id && !body.upload_session_id) {
-    return NextResponse.json({ error: "media_id or upload_session_id required" }, { status: 400 });
+  const parsed = WorkerReportAddMediaRequestSchema.safeParse(rawBody);
+  if (!parsed.success) {
+    const msg = parsed.error.flatten().formErrors[0] ?? Object.values(parsed.error.flatten().fieldErrors).flat()[0] ?? "Invalid request body";
+    return NextResponse.json({ error: msg }, { status: 400 });
   }
+  const { report_id: reportId, media_id: mediaId, upload_session_id: uploadSessionId } = parsed.data;
   const supabase = await createClient();
   const { ok, error } = await addMediaToReport(supabase, ctx, reportId, {
-    mediaId: body.media_id,
-    uploadSessionId: body.upload_session_id,
+    mediaId,
+    uploadSessionId,
   });
   if (!ok) return NextResponse.json({ error }, { status: 403 });
   const response = { ok: true };

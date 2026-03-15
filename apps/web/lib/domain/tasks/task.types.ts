@@ -10,6 +10,7 @@ export interface Task {
   status: string;
   assigned_to?: string | null;
   due_date?: string | null;
+  milestone_id?: string | null;
   required_photos?: RequiredPhotos | null;
   report_required?: boolean;
   created_at?: string;
@@ -25,6 +26,7 @@ export interface CreateTaskInput {
   title: string;
   description?: string | null;
   due_at?: string | null;
+  milestone_id?: string | null;
   required_photos?: RequiredPhotos | null;
   report_required?: boolean;
 }
@@ -34,6 +36,7 @@ export interface UpdateTaskInput {
   title?: string;
   description?: string | null;
   due_at?: string | null;
+  milestone_id?: string | null;
   status?: string;
   required_photos?: RequiredPhotos | null;
   report_required?: boolean;

@@ -8,7 +8,13 @@ describe("getResourceHref", () => {
 
   it("returns report route for report resource", () => {
     expect(getResourceHref("report", "report-456")).toBe(
-      "/dashboard/daily-reports/report-456"
+      "/dashboard/reports/report-456"
+    );
+  });
+
+  it("returns approvals page for reports_pending", () => {
+    expect(getResourceHref("reports_pending", "list")).toBe(
+      "/dashboard/approvals"
     );
   });
 
@@ -36,6 +42,32 @@ describe("getResourceHref", () => {
     expect(getResourceHref("project_milestone", "m1", "proj-abc")).toBe(
       "/dashboard/projects/proj-abc?tab=schedule"
     );
+  });
+
+  it("returns project documents tab for documents resource", () => {
+    expect(getResourceHref("documents", "proj-xyz")).toBe(
+      "/dashboard/projects/proj-xyz?tab=documents"
+    );
+  });
+
+  it("returns null for documents when resourceId empty", () => {
+    expect(getResourceHref("documents", "")).toBeNull();
+  });
+
+  it("returns project costs tab for costs resource", () => {
+    expect(getResourceHref("costs", "proj-xyz")).toBe(
+      "/dashboard/projects/proj-xyz?tab=costs"
+    );
+  });
+
+  it("returns project costs tab for project_budget resource", () => {
+    expect(getResourceHref("project_budget", "proj-abc")).toBe(
+      "/dashboard/projects/proj-abc?tab=costs"
+    );
+  });
+
+  it("returns null for costs when resourceId empty", () => {
+    expect(getResourceHref("costs", "")).toBeNull();
   });
 
   it("returns null for unknown resource type", () => {

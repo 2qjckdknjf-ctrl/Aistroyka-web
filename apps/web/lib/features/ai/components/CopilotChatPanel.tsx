@@ -62,10 +62,15 @@ export function CopilotChatPanel({
   const [input, setInput] = useState("");
   const listRef = useRef<HTMLDivElement>(null);
   const [lastMemoryMeta, setLastMemoryMeta] = useState<{ summaryUsed?: boolean; chunksCount?: number }>({});
+  const [streamingContent, setStreamingContent] = useState("");
+  const abortRef = useRef<AbortController | null>(null);
   const ctx = decisionContext ?? DEFAULT_CONTEXT;
 
   const { thread, threadId, sendMessageMutation, clearChat, clearChatMutation } = useCopilotThread(projectId);
   const messages = thread?.messages ?? [];
+  const displayMessages = streamingContent
+    ? [...messages, { id: "_streaming", role: "assistant" as const, content: streamingContent }]
+    : messages;
   const lastAssistant = [...messages].reverse().find((m) => m.role === "assistant");
   const lastRequestId = lastAssistant?.requestId;
   const lastLowConfidence = lastAssistant?.lowConfidence;
@@ -108,24 +113,43 @@ export function CopilotChatPanel({
     }
   }, [threadId, getAuthTokenStable, refreshRequestPending, summaryQuery]);
 
+  const handleCancel = useCallback(() => {
+    if (abortRef.current) {
+      abortRef.current.abort();
+      abortRef.current = null;
+    }
+    setStreamingContent("");
+  }, []);
+
   const handleSend = useCallback(() => {
     const text = input.trim();
     if (!text || sendMessageMutation.isPending) return;
+    setStreamingContent("");
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
     sendMessageMutation
       .mutateAsync({
         message: text,
         decisionContext: ctx,
         getAuthToken,
         locale: locale ?? null,
+        signal: ctrl.signal,
+        onToken: (delta) => setStreamingContent((s) => s + delta),
       })
       .then((data) => {
         setInput("");
+        setStreamingContent("");
         setLastMemoryMeta({
           summaryUsed: data.memory_summary_used,
           chunksCount: data.memory_chunks_count,
         });
       })
-      .catch(() => {});
+      .catch(() => {
+        setStreamingContent("");
+      })
+      .finally(() => {
+        abortRef.current = null;
+      });
   }, [input, ctx, getAuthToken, tenantId, locale, sendMessageMutation]);
 
   const isPending = sendMessageMutation.isPending;
@@ -185,7 +209,7 @@ export function CopilotChatPanel({
             Ask a question about risk or next steps. History is saved on the server.
           </p>
         )}
-        {messages.map((m) => (
+        {displayMessages.map((m) => (
           <div
             key={m.id}
             className={`rounded-lg px-3 py-2 text-sm ${
@@ -195,7 +219,7 @@ export function CopilotChatPanel({
             }`}
           >
             <p className="whitespace-pre-wrap">{m.content}</p>
-            {m.role === "assistant" && m.requestId && (
+            {m.role === "assistant" && "requestId" in m && m.requestId && (
               <p className="mt-1 text-xs text-aistroyka-text-tertiary">ID: {m.requestId}</p>
             )}
           </div>
@@ -235,9 +259,16 @@ export function CopilotChatPanel({
           aria-label="Chat message"
           disabled={isPending}
         />
-        <Button onClick={handleSend} disabled={isPending || !input.trim()} loading={isPending}>
-          Send
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={handleSend} disabled={isPending || !input.trim()} loading={isPending}>
+            Send
+          </Button>
+          {isPending && (
+            <Button type="button" variant="secondary" onClick={handleCancel}>
+              Cancel
+            </Button>
+          )}
+        </div>
       </div>
 
       {IS_DEV_OR_STAGING && (lastRequestId || lastAssistant || lastMemoryMeta.chunksCount != null || lastMemoryMeta.summaryUsed) && (

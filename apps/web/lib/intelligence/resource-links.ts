@@ -12,7 +12,9 @@ export function getResourceHref(
     case "task":
       return `/dashboard/tasks/${resourceId}`;
     case "report":
-      return `/dashboard/daily-reports/${resourceId}`;
+      return `/dashboard/reports/${resourceId}`;
+    case "reports_pending":
+      return "/dashboard/approvals";
     case "project":
       return `/dashboard/projects/${resourceId}`;
     case "worker_day":
@@ -21,6 +23,11 @@ export function getResourceHref(
       return projectId ? `/dashboard/projects/${projectId}` : null;
     case "project_milestone":
       return projectId ? `/dashboard/projects/${projectId}?tab=schedule` : null;
+    case "documents":
+      return resourceId ? `/dashboard/projects/${resourceId}?tab=documents` : null;
+    case "costs":
+    case "project_budget":
+      return resourceId ? `/dashboard/projects/${resourceId}?tab=costs` : null;
     default:
       return null;
   }

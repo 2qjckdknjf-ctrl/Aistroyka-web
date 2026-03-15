@@ -8,7 +8,7 @@ import { emitAudit } from "@/lib/observability/audit.service";
 
 export const dynamic = "force-dynamic";
 
-const REVIEW_STATUSES: ReportReviewStatus[] = ["approved", "reviewed", "changes_requested"];
+const REVIEW_STATUSES: ReportReviewStatus[] = ["approved", "rejected", "changes_requested"];
 
 /** GET /api/v1/reports/:id — report detail with media (tenant-scoped). */
 export async function GET(
@@ -44,7 +44,7 @@ export async function GET(
   return NextResponse.json({ data: { ...report, media } });
 }
 
-/** PATCH /api/v1/reports/:id — manager review (approve / reviewed / changes_requested). Tenant-scoped, role-restricted. */
+/** PATCH /api/v1/reports/:id — manager review (approve / reject / changes_requested). Tenant-scoped, role-restricted. */
 export async function PATCH(
   request: Request,
   context: { params: Promise<{ id: string }> }
@@ -86,7 +86,7 @@ export async function PATCH(
   const manager_note = body.manager_note !== undefined ? (typeof body.manager_note === "string" ? body.manager_note : null) : undefined;
   if (!status || !REVIEW_STATUSES.includes(status as ReportReviewStatus)) {
     return NextResponse.json(
-      { error: "status required: one of approved, reviewed, changes_requested" },
+      { error: "status required: one of approved, rejected, changes_requested" },
       { status: 400 }
     );
   }

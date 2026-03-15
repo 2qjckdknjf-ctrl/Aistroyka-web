@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { createReport } from "@/lib/domain/reports/report.service";
 import { requireLiteIdempotency, storeLiteIdempotency } from "@/lib/api/lite-idempotency";
+import { WorkerReportCreateRequestSchema } from "@aistroyka/contracts";
 
 export const dynamic = "force-dynamic";
 
@@ -20,12 +21,14 @@ export async function POST(request: Request) {
   }
   const guard = await requireLiteIdempotency(request, ctx, ROUTE_KEY);
   if (!guard.ok) return guard.response;
-  let body: { day_id?: string; task_id?: string } = {};
+  let rawBody: unknown;
   try {
-    body = await request.json().catch(() => ({}));
+    rawBody = await request.json().catch(() => ({}));
   } catch {
-    /* empty body ok */
+    rawBody = {};
   }
+  const parsed = WorkerReportCreateRequestSchema.safeParse(rawBody);
+  const body = parsed.success ? parsed.data : {};
   const supabase = await createClient();
   const dayId = typeof body.day_id === "string" ? body.day_id.trim() || null : null;
   const taskId = typeof body.task_id === "string" ? body.task_id.trim() || null : null;

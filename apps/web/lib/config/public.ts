@@ -35,10 +35,16 @@ export function hasSupabaseEnv(): boolean {
   return typeof url === "string" && url.length > 0 && typeof key === "string" && key.length > 0;
 }
 
-/** Build stamp (no throw). Safe to call without Supabase env. */
+/**
+ * Build stamp (no throw). Safe to call without Supabase env.
+ * SHA: NEXT_PUBLIC_BUILD_SHA → VERCEL_GIT_COMMIT_SHA → GITHUB_SHA → "".
+ * buildTime: NEXT_PUBLIC_BUILD_TIME only.
+ */
 export function getBuildStamp(): { sha: string; buildTime: string } {
-  return {
-    sha: process.env.NEXT_PUBLIC_BUILD_SHA ?? "",
-    buildTime: process.env.NEXT_PUBLIC_BUILD_TIME ?? "",
-  };
+  const sha =
+    (process.env.NEXT_PUBLIC_BUILD_SHA ?? "").trim() ||
+    (process.env.VERCEL_GIT_COMMIT_SHA ?? "").trim() ||
+    (process.env.GITHUB_SHA ?? "").trim();
+  const buildTime = (process.env.NEXT_PUBLIC_BUILD_TIME ?? "").trim();
+  return { sha, buildTime };
 }

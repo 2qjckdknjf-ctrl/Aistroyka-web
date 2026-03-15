@@ -1,13 +1,12 @@
 /**
  * Top risk aggregation: produces ranked TopRiskInsight with explainable structure.
- * Uses RiskSignal, TaskSignal, EvidenceSignal; no invented data.
+ * Uses RiskSignal only (risk-intelligence already aggregates task, evidence, report, schedule, milestone, cost).
+ * No invented data.
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { TopRiskInsight } from "../domain/intelligence-output.types";
 import { getRiskSignals } from "./risk-intelligence.service";
-import { getTaskSignals } from "../mappers/task-signals.mapper";
-import { getEvidenceSignals } from "./evidence-intelligence.service";
 
 function nextId(): string {
   return `risk-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -23,11 +22,7 @@ export async function getTopRiskInsights(
 ): Promise<TopRiskInsight[]> {
   const at = new Date().toISOString();
 
-  const [riskSignals, taskSignals, evidenceSignals] = await Promise.all([
-    getRiskSignals(supabase, projectId, tenantId),
-    getTaskSignals(supabase, projectId, tenantId),
-    getEvidenceSignals(supabase, projectId, tenantId),
-  ]);
+  const riskSignals = await getRiskSignals(supabase, projectId, tenantId);
 
   const insights: TopRiskInsight[] = [];
 

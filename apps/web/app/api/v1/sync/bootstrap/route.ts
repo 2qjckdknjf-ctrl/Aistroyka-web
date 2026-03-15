@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { bootstrap } from "@/lib/sync/sync.service";
 import { logStructured } from "@/lib/observability";
+import { SyncBootstrapResponseSchema } from "@aistroyka/contracts";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +32,11 @@ export async function GET(request: Request) {
   const result = await bootstrap(supabase, ctx as import("@/lib/tenant/tenant.types").TenantContext, {
     deviceId,
   });
+  const validated = SyncBootstrapResponseSchema.safeParse(result);
+  if (!validated.success) {
+    logStructured({ event: "sync_bootstrap_validation_failed", tenant_id: ctx.tenantId, error: validated.error.flatten() });
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+  }
   logStructured({
     event: "sync_bootstrap",
     tenant_id: ctx.tenantId,
@@ -41,5 +47,5 @@ export async function GET(request: Request) {
     upload_sessions_count: result.data.uploadSessions.length,
     cursor: result.cursor,
   });
-  return NextResponse.json(result);
+  return NextResponse.json(validated.data);
 }

@@ -75,14 +75,19 @@ export async function submitReport(
   const report = await repo.getById(supabase, reportId, ctx.tenantId);
   if (!report) return { ok: false, error: "Report not found" };
   if (report.user_id !== ctx.userId) return { ok: false, error: "Not your report" };
-  if (report.status !== "draft") return { ok: false, error: "Report already submitted" };
+  if (report.status !== "draft" && report.status !== "changes_requested") {
+    return { ok: false, error: "Report already submitted" };
+  }
   let taskId: string | null | undefined = report.task_id ?? undefined;
   if (taskId === undefined && options?.taskId != null && options.taskId !== "") {
     const v = await validateTaskForReportLink(supabase, ctx.tenantId, options.taskId, ctx.userId);
     if (!v.ok) return { ok: false, error: v.code, code: v.code };
     taskId = options.taskId;
   }
-  const ok = await repo.submit(supabase, reportId, ctx.tenantId, taskId ?? undefined);
+  const ok =
+    report.status === "changes_requested"
+      ? await repo.resubmit(supabase, reportId, ctx.tenantId, taskId ?? undefined)
+      : await repo.submit(supabase, reportId, ctx.tenantId, taskId ?? undefined);
   if (!ok) return { ok: false, error: "Failed to submit" };
 
   await emitAudit(supabase, {

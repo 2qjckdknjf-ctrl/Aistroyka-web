@@ -4,7 +4,7 @@
  */
 
 import { createClient } from "@supabase/supabase-js";
-import { hasSupabaseEnv, getPublicConfig } from "@/lib/config";
+import { hasSupabaseEnv, getPublicConfig, getBuildStamp } from "@/lib/config";
 import { getServerConfig, isOpenAIConfigured, isAiJobConfigured } from "@/lib/config/server";
 
 export type ServiceStatus = "ok" | "degraded" | "error" | "unavailable";
@@ -12,6 +12,7 @@ export type ServiceStatus = "ok" | "degraded" | "error" | "unavailable";
 export interface SystemHealthResult {
   status: "ok" | "degraded" | "error";
   timestamp: string;
+  buildStamp?: { sha7: string; buildTime: string };
   services: {
     database: ServiceStatus;
     ai_brain: ServiceStatus;
@@ -81,5 +82,8 @@ export async function getSystemHealth(): Promise<SystemHealthResult> {
   const status: "ok" | "degraded" | "error" =
     hasError ? "error" : hasUnavailable ? "degraded" : "ok";
 
-  return { status, timestamp, services };
+  const { sha, buildTime } = getBuildStamp();
+  const buildStamp = sha ? { sha7: sha.slice(0, 7), buildTime } : undefined;
+
+  return { status, timestamp, ...(buildStamp && { buildStamp }), services };
 }

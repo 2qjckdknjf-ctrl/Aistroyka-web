@@ -8,3 +8,10 @@ export {
   type ErrorSeverity,
   type CaptureExceptionContext,
 } from "./error-tracking";
+export {
+  logCopilotStreamComplete,
+  logCopilotStreamError,
+  logIntelligenceComplete,
+  logIntelligenceError,
+  type AIErrorKind,
+} from "./ai-telemetry";

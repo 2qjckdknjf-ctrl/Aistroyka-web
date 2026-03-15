@@ -4,6 +4,7 @@ import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from 
 import { submitReport } from "@/lib/domain/reports/report.service";
 import { requireLiteIdempotency, storeLiteIdempotency } from "@/lib/api/lite-idempotency";
 import { withRequestIdAndTiming } from "@/lib/observability";
+import { WorkerReportSubmitRequestSchema } from "@aistroyka/contracts";
 
 export const dynamic = "force-dynamic";
 
@@ -34,9 +35,9 @@ export async function POST(request: Request) {
       userId: ctx.userId,
     });
   }
-  let body: { report_id: string; task_id?: string } = { report_id: "" };
+  let rawBody: unknown;
   try {
-    body = await request.json();
+    rawBody = await request.json();
   } catch {
     return withRequestIdAndTiming(request, NextResponse.json({ error: "Invalid JSON" }, { status: 400 }), {
       route: ROUTE_KEY,
@@ -46,9 +47,10 @@ export async function POST(request: Request) {
       userId: ctx.userId,
     });
   }
-  const reportId = typeof body.report_id === "string" ? body.report_id.trim() : "";
-  if (!reportId) {
-    return withRequestIdAndTiming(request, NextResponse.json({ error: "report_id required" }, { status: 400 }), {
+  const parsed = WorkerReportSubmitRequestSchema.safeParse(rawBody);
+  if (!parsed.success) {
+    const msg = parsed.error.flatten().formErrors[0] ?? parsed.error.flatten().fieldErrors.report_id?.[0] ?? "Invalid request body";
+    return withRequestIdAndTiming(request, NextResponse.json({ error: msg }, { status: 400 }), {
       route: ROUTE_KEY,
       method: "POST",
       duration_ms: Date.now() - start,
@@ -56,9 +58,9 @@ export async function POST(request: Request) {
       userId: ctx.userId,
     });
   }
-  const taskId = typeof body.task_id === "string" ? body.task_id.trim() || undefined : undefined;
+  const { report_id: reportId, task_id: taskId } = parsed.data;
   const supabase = await createClientFromRequest(request);
-  const result = await submitReport(supabase, ctx, reportId, ctx.traceId, { taskId });
+  const result = await submitReport(supabase, ctx, reportId, ctx.traceId, { taskId: taskId?.trim() || undefined });
   if (!result.ok) {
     const status = result.code === "task_invalid" ? 404 : 403;
     return withRequestIdAndTiming(

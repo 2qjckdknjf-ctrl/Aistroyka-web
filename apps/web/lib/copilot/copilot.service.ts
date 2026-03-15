@@ -8,6 +8,7 @@ import type { ILLMAdapter } from "@/lib/ai-brain/types";
 import { buildCopilotContext } from "./copilot.context-builder";
 import { buildPrompt } from "./copilot.prompt-builder";
 import { parseCopilotOutput, toCopilotResponse } from "./copilot.output-parser";
+import { applyBriefContextBudget, DEFAULT_CONTEXT_BUDGET } from "./context-budget";
 import {
   nullCopilotProvider,
   createAdapterCopilotProvider,
@@ -43,7 +44,9 @@ export async function runCopilot(
     return toCopilotResponse(useCase, parsed, "deterministic");
   }
 
-  const prompt = buildPrompt(useCase, context);
+  const budgeted = applyBriefContextBudget(context, DEFAULT_CONTEXT_BUDGET.maxTotalTokens);
+  const contextForPrompt = { ...context, ...budgeted };
+  const prompt = buildPrompt(useCase, contextForPrompt);
   const provider = resolveProvider(options);
 
   let result: { raw: string; structured?: Record<string, unknown> };
@@ -51,7 +54,8 @@ export async function runCopilot(
 
   if (provider.isAvailable()) {
     try {
-      result = await provider.generateFromPrompt(prompt, useCase, context);
+      const contextForProvider = { ...context, ...budgeted };
+      result = await provider.generateFromPrompt(prompt, useCase, contextForProvider);
       source = "llm";
     } catch {
       result = deterministicFallback(useCase, context);

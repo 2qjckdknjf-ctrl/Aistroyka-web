@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { getAdminClient } from "@/lib/supabase/admin";
 
 const ContactSchema = z.object({
   name: z.string().min(1, "Name is required").max(200),
@@ -12,7 +13,7 @@ export type ContactBody = z.infer<typeof ContactSchema>;
 
 /**
  * POST /api/contact — public contact/demo form submission.
- * Validates input; does not persist by default (add DB or email integration as needed).
+ * Validates input and persists to contact_leads table.
  */
 export async function POST(request: Request) {
   try {
@@ -25,9 +26,24 @@ export async function POST(request: Request) {
     }
     const { name, email, company, message } = parsed.data;
 
-    // TODO: persist to DB, send email, or forward to CRM. For now we only validate and return success.
-    if (process.env.NODE_ENV !== "production") {
-      console.info("[contact]", { name, email, company, messageLength: message.length });
+    const supabase = getAdminClient();
+    if (!supabase) {
+      return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
+    }
+    // contact_leads table (migration 20260307000000); add to Database type after migration apply
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase as any).from("contact_leads").insert({
+      name,
+      email,
+      company: company || null,
+      message,
+    });
+
+    if (error) {
+      if (process.env.NODE_ENV !== "production") {
+        console.error("[contact] persist error", error);
+      }
+      return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
     }
 
     return NextResponse.json({ ok: true });

@@ -7,6 +7,7 @@ import { checkRequestBodySize } from "@/lib/api/request-limit";
 import { requireLiteIdempotency, storeLiteIdempotency } from "@/lib/api/lite-idempotency";
 import { checkRateLimit } from "@/lib/platform/rate-limit/rate-limit.service";
 import { getOrCreateRequestId, logStructured, withRequestIdAndTiming } from "@/lib/observability";
+import { FinalizeUploadSessionRequestSchema } from "@aistroyka/contracts";
 
 export const dynamic = "force-dynamic";
 
@@ -41,19 +42,22 @@ export async function POST(
   }
   const guard = await requireLiteIdempotency(request, ctx, ROUTE_KEY);
   if (!guard.ok) return withRequestIdAndTiming(request, guard.response, { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
-  let body: { object_path?: string; mime_type?: string; size_bytes?: number } = {};
+  let rawBody: unknown;
   try {
-    body = await request.json();
+    rawBody = await request.json();
   } catch {
     return withRequestIdAndTiming(request, NextResponse.json({ error: "Invalid JSON" }, { status: 400 }), { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
   }
-  const object_path = typeof body.object_path === "string" ? body.object_path.trim() : "";
-  if (!object_path) return withRequestIdAndTiming(request, NextResponse.json({ error: "object_path required" }, { status: 400 }), { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
+  const parsed = FinalizeUploadSessionRequestSchema.safeParse(rawBody);
+  if (!parsed.success) {
+    const msg = parsed.error.flatten().formErrors[0] ?? parsed.error.flatten().fieldErrors.object_path?.[0] ?? "object_path required";
+    return withRequestIdAndTiming(request, NextResponse.json({ error: msg }, { status: 400 }), { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
+  }
   const supabase = await createClient();
   const { ok, error } = await finalizeUploadSession(supabase, ctx, sessionId, {
-    object_path,
-    mime_type: typeof body.mime_type === "string" ? body.mime_type : undefined,
-    size_bytes: typeof body.size_bytes === "number" ? body.size_bytes : undefined,
+    object_path: parsed.data.object_path,
+    mime_type: parsed.data.mime_type,
+    size_bytes: parsed.data.size_bytes,
   });
   if (!ok) {
     const status =

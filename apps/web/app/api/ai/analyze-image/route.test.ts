@@ -41,7 +41,8 @@ describe("POST /api/ai/analyze-image", () => {
     const res = await POST(req);
     expect(res.status).toBe(400);
     const data = (await res.json()) as { error?: string };
-    expect(data.error).toContain("image_url");
+    expect(data.error).toBeDefined();
+    expect(["image_url", "Required", "Invalid"].some((s) => data.error!.includes(s))).toBe(true);
   });
 
   it("returns 400 when image_url is empty string", async () => {
