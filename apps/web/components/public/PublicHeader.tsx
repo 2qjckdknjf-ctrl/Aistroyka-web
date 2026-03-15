@@ -37,8 +37,8 @@ export function PublicHeader() {
   return (
     <header className="sticky top-0 z-50 h-16 border-b border-[var(--border-main)] bg-[var(--bg-main)]/80 backdrop-blur-md supports-[backdrop-filter]:bg-[var(--bg-main)]/70">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-        <Logo href="/" height={40} className="min-w-0 shrink-0 hidden sm:block" priority />
-        <Logo href="/" height={24} className="min-w-0 shrink-0 sm:hidden" priority />
+        <Logo href="/" variant="wordmark" height={40} className="min-w-0 shrink-0 hidden sm:block" priority />
+        <Logo href="/" variant="wordmark" height={24} className="min-w-0 shrink-0 sm:hidden" priority />
 
         <nav className="hidden items-center gap-1 md:flex" aria-label="Main">
           {PRIMARY_NAV.map(({ href, key }) => {

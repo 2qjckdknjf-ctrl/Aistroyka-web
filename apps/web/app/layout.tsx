@@ -33,13 +33,14 @@ export const metadata: Metadata = {
     siteName: "Aistroyka",
     title: "Aistroyka — AI Construction Intelligence",
     description: "AI-powered construction intelligence platform: projects, tasks, daily reports, photo evidence, and AI analytics.",
-    images: [{ url: "/brand/aistroyka-logo.png", width: 140, height: 40, alt: "AISTROYKA" }],
+    images: [{ url: "/brand/social/aistroyka-og.png", width: 1200, height: 630, alt: "AISTROYKA" }],
   },
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
       { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
     ],
+    apple: "/apple-touch-icon.png",
   },
 };
 
