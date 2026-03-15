@@ -83,6 +83,7 @@ export async function PATCH(
   if (body.required_photos && typeof body.required_photos === "object" && !Array.isArray(body.required_photos))
     input.required_photos = body.required_photos as UpdateTaskInput["required_photos"];
   if (typeof body.report_required === "boolean") input.report_required = body.report_required;
+  if (body.milestone_id !== undefined) input.milestone_id = typeof body.milestone_id === "string" ? body.milestone_id : null;
 
   const supabase = await createClientFromRequest(request);
   const { data, error } = await updateTask(supabase, ctx, id, input);

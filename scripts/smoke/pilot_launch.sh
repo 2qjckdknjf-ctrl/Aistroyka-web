@@ -41,6 +41,20 @@ fi
 
 echo "Pilot launch smoke: $BASE (from=$FROM to=$TO)"
 
+# 0) Health (no auth) — must pass
+code=$(curl -sS -o /tmp/pilot_health.json -w "%{http_code}" -m 15 "$BASE/api/v1/health" || true)
+if [[ "$code" != "200" && "$code" != "503" ]]; then
+  echo "  FAIL: GET /api/v1/health → HTTP $code"
+  FAIL=1
+else
+  if grep -q '"ok"' /tmp/pilot_health.json 2>/dev/null; then
+    echo "  PASS: health"
+  else
+    echo "  FAIL: health response missing ok"
+    FAIL=1
+  fi
+fi
+
 # 1) POST /api/v1/admin/jobs/cron-tick (x-cron-secret when CRON_SECRET set or when required by server)
 if [[ -n "$CRON" ]]; then
   code=$(curl -sS -o /tmp/pilot_cron.json -w "%{http_code}" -m 30 -X POST \

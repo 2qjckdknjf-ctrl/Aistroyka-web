@@ -8,6 +8,7 @@ import { syncConflictResponse } from "@/lib/sync/sync-conflict";
 import { recordSyncConflict } from "@/lib/ops/ops-events.repository";
 import { checkRateLimit } from "@/lib/platform/rate-limit/rate-limit.service";
 import { getOrCreateRequestId, logStructured, withRequestIdAndTiming } from "@/lib/observability";
+import { SyncChangesResponseSchema } from "@aistroyka/contracts";
 
 export const dynamic = "force-dynamic";
 
@@ -79,9 +80,15 @@ export async function GET(request: Request) {
   ).catch((err) => {
     logStructured({ event: "device_last_seen_update_failed", route: ROUTE_KEY, tenant_id: ctx.tenantId, device_id: deviceId, error: String(err), request_id: getOrCreateRequestId(request) });
   });
-  return withRequestIdAndTiming(request, NextResponse.json({
+  const responseBody = {
     data: { changes },
     next_cursor: nextCursor,
     server_time: new Date().toISOString(),
-  }), { route: ROUTE_KEY, method: "GET", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
+  };
+  const validated = SyncChangesResponseSchema.safeParse(responseBody);
+  if (!validated.success) {
+    logStructured({ event: "sync_changes_validation_failed", tenant_id: ctx.tenantId, error: validated.error.flatten() });
+    return withRequestIdAndTiming(request, NextResponse.json({ error: "Internal error" }, { status: 500 }), { route: ROUTE_KEY, method: "GET", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
+  }
+  return withRequestIdAndTiming(request, NextResponse.json(validated.data), { route: ROUTE_KEY, method: "GET", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
 }

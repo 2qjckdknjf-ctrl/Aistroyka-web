@@ -87,6 +87,7 @@ export async function POST(request: Request) {
     title,
     description: typeof body.description === "string" ? body.description : undefined,
     due_at: typeof body.due_at === "string" ? body.due_at : undefined,
+    milestone_id: typeof body.milestone_id === "string" ? body.milestone_id : undefined,
     required_photos:
       body.required_photos && typeof body.required_photos === "object" && !Array.isArray(body.required_photos)
         ? (body.required_photos as CreateTaskInput["required_photos"])

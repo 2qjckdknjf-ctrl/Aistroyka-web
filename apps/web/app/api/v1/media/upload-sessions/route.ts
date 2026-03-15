@@ -6,12 +6,12 @@ import { listForManager } from "@/lib/domain/upload-session/upload-session.repos
 import { checkRequestBodySize } from "@/lib/api/request-limit";
 import { requireLiteIdempotency, storeLiteIdempotency } from "@/lib/api/lite-idempotency";
 import { withRequestIdAndTiming } from "@/lib/observability";
+import { CreateUploadSessionRequestSchema } from "@aistroyka/contracts";
 
 export const dynamic = "force-dynamic";
 
 const ROUTE_GET = "GET /api/v1/media/upload-sessions";
 const ROUTE_POST = "POST /api/v1/media/upload-sessions";
-const PURPOSES = ["report_before", "report_after", "project_media"] as const;
 
 /** GET /api/v1/media/upload-sessions — list sessions (tenant-scoped). Query: limit, offset, status, stuck=1 (created/uploaded older than threshold), stuck_hours (optional, default 4). */
 export async function GET(request: Request) {
@@ -55,15 +55,14 @@ export async function POST(request: Request) {
   }
   const guard = await requireLiteIdempotency(request, ctx, ROUTE_POST);
   if (!guard.ok) return withRequestIdAndTiming(request, guard.response, { route: ROUTE_POST, method: "POST", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
-  let body: { purpose?: string } = {};
+  let rawBody: unknown;
   try {
-    body = await request.json().catch(() => ({}));
+    rawBody = await request.json().catch(() => ({}));
   } catch {
-    /* empty ok */
+    rawBody = {};
   }
-  const purpose = typeof body.purpose === "string" && PURPOSES.includes(body.purpose as typeof PURPOSES[number])
-    ? (body.purpose as typeof PURPOSES[number])
-    : "project_media";
+  const parsed = CreateUploadSessionRequestSchema.safeParse(rawBody);
+  const purpose = parsed.success && parsed.data.purpose ? parsed.data.purpose : "project_media";
   const supabase = await createClient();
   const { data, error } = await createUploadSession(supabase, ctx, purpose);
   if (error) return withRequestIdAndTiming(request, NextResponse.json({ error }, { status: 403 }), { route: ROUTE_POST, method: "POST", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });

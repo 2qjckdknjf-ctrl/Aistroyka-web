@@ -143,6 +143,149 @@ export async function sendChatMessage(
   return data;
 }
 
+export interface StreamCallbacks {
+  onToken: (delta: string) => void;
+  onDone: (result: { thread_id: string; request_id: string; final_text: string }) => void;
+  onError: (err: { request_id: string; retryable: boolean; message: string }) => void;
+}
+
+/**
+ * Try streaming first; fall back to sendChatMessage on 503 or parse failure.
+ */
+export async function sendChatMessageStream(
+  projectId: string,
+  getAuthToken: () => Promise<string | null>,
+  params: {
+    thread_id?: string | null;
+    user_text: string;
+    decision_context: DecisionContextPayload;
+    locale?: string | null;
+    signal?: AbortSignal | null;
+  },
+  callbacks: StreamCallbacks
+): Promise<SendChatMessageResult> {
+  const token = await getAuthToken();
+  const url = `/api/v1/projects/${projectId}/copilot/chat/stream`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({
+      thread_id: params.thread_id ?? null,
+      user_text: params.user_text,
+      decision_context: params.decision_context,
+      locale: params.locale ?? null,
+    }),
+    signal: params.signal ?? undefined,
+  });
+
+  if (res.status === 503 && res.headers.get("X-Stream-Status") === "unavailable") {
+    return sendChatMessage(projectId, getAuthToken, params);
+  }
+
+  if (!res.ok) {
+    const data = (await res.json().catch(() => ({}))) as { request_id?: string };
+    callbacks.onError({
+      request_id: data.request_id ?? "",
+      retryable: res.status >= 500,
+      message: "Stream request failed",
+    });
+    throw new Error("Stream request failed");
+  }
+
+  const reader = res.body?.getReader();
+  if (!reader) {
+    return sendChatMessage(projectId, getAuthToken, params);
+  }
+
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let requestId = "";
+  let threadId = "";
+  let finalText = "";
+  let currentEvent = "";
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() ?? "";
+
+      for (const line of lines) {
+        if (line.startsWith("event: ")) {
+          currentEvent = line.slice(7).trim();
+          continue;
+        }
+        if (line.startsWith("data: ")) {
+          const dataStr = line.slice(6);
+          let data: unknown;
+          try {
+            data = JSON.parse(dataStr);
+          } catch {
+            continue;
+          }
+          const obj = data as Record<string, unknown>;
+          if (obj.request_id) requestId = String(obj.request_id);
+          if (obj.thread_id) threadId = String(obj.thread_id);
+
+          if (currentEvent === "meta") {
+            continue;
+          }
+          if (currentEvent === "token" && obj.delta != null) {
+            const delta = String(obj.delta);
+            finalText += delta;
+            callbacks.onToken(delta);
+          }
+          if (currentEvent === "done" && obj.final_text != null) {
+            finalText = String(obj.final_text);
+            callbacks.onDone({ thread_id: threadId, request_id: requestId, final_text: finalText });
+            return {
+              ok: true,
+              thread_id: threadId,
+              request_id: requestId,
+              assistant_content: finalText,
+              low_confidence: false,
+              fallback_reason: null,
+              error_category: null,
+            };
+          }
+          if (currentEvent === "error" && obj.retryable != null) {
+            callbacks.onError({
+              request_id: requestId,
+              retryable: Boolean(obj.retryable),
+              message: String(obj.message ?? "Error"),
+            });
+            throw new Error(String(obj.message ?? "Stream error"));
+          }
+        }
+      }
+    }
+  } catch (e) {
+    if (e instanceof Error && e.name === "AbortError") throw e;
+    callbacks.onError({
+      request_id: requestId,
+      retryable: true,
+      message: "Stream parse failed",
+    });
+    return sendChatMessage(projectId, getAuthToken, params);
+  }
+
+  callbacks.onDone({ thread_id: threadId, request_id: requestId, final_text: finalText });
+  return {
+    ok: true,
+    thread_id: threadId,
+    request_id: requestId,
+    assistant_content: finalText,
+    low_confidence: false,
+    fallback_reason: null,
+    error_category: null,
+  };
+}
+
 export interface ThreadSummaryRow {
   thread_id: string;
   summary: string;

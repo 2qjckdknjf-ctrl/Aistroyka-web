@@ -38,12 +38,13 @@ export const SyncChangeEntrySchema = z.object({
   payload: z.record(z.unknown()),
 });
 
+/** API response shape (snake_case). Matches GET /api/v1/sync/changes output. */
 export const SyncChangesResponseSchema = z.object({
   data: z.object({
     changes: z.array(SyncChangeEntrySchema),
   }),
-  nextCursor: z.number(),
-  serverTime: z.string(),
+  next_cursor: z.number(),
+  server_time: z.string(),
 });
 
 export const SyncAckRequestSchema = z.object({

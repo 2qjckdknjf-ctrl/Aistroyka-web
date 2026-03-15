@@ -17,7 +17,7 @@
 ## Fix
 
 - **What changed:** (1) Root cause documented; (2) Minimal fix: trigger a fresh production deploy from current main so the new asset bundle (with brand and favicon) is uploaded. (3) Added `workflow_dispatch` to the deploy workflow so deploy can be re-run manually without a new push.
-- **Redeployed:** YES. Commit c9bed9e9 (workflow_dispatch + these docs) was pushed to origin/main; "Deploy Cloudflare (Production)" runs on push to main. Confirm in GitHub Actions that the run for c9bed9e9 completed successfully. If it failed (e.g. tests, migration check), fix and re-run or push again. Then re-verify live URLs.
+- **Redeployed:** Not yet. To complete closure: merge the branch that contains this fix (and the workflow_dispatch) to main and push, or run "Deploy Cloudflare (Production)" from the Actions tab after that merge. Then re-verify live URLs.
 
 ## Live verify (pre-redeploy)
 
@@ -33,7 +33,7 @@
 
 ## Final verdict
 
-- **Brand assets live:** NO. A fresh deploy was triggered (push c9bed9e9 to main). At re-check (~6 min after push), asset URLs still returned 404. Either the workflow was still running or had not yet propagated. Operator must: (1) Confirm in GitHub Actions that the run for c9bed9e9 completed successfully. (2) Re-run the curl checks in ASSET_PRODUCTION_LIVE_VERIFICATION.md. (3) If all return 200, set brand assets live = YES. (4) If deploy succeeded but URLs still 404, investigate Cloudflare asset upload/binding or purge cache.
+- **Brand assets live:** NO (until a fresh production deploy is run and live verification shows logo, icon, and favicon all returning 200).
 
 ## Files created
 

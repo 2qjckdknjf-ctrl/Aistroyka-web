@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { Link } from "@/i18n/navigation";
 import { Card, SectionHeader, Skeleton, EmptyState, Badge, Button } from "@/components/ui";
+import { ReportApprovalCard } from "@/components/approvals";
 
 interface ReportDetail {
   id: string;
@@ -12,6 +13,9 @@ interface ReportDetail {
   status: string;
   created_at: string;
   submitted_at: string | null;
+  reviewed_at?: string | null;
+  reviewed_by?: string | null;
+  manager_note?: string | null;
   media: { media_id: string | null; upload_session_id: string | null }[];
 }
 
@@ -44,6 +48,14 @@ export default function ReportDetailPage() {
   const [analysis, setAnalysis] = useState<AnalysisStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  function refetch() {
+    if (!id) return;
+    fetch(`/api/v1/reports/${id}`, { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error("Not found"))))
+      .then((res) => setData((res as { data: ReportDetail }).data ?? null))
+      .catch(() => setData(null));
+  }
 
   useEffect(() => {
     if (!id) return;
@@ -110,7 +122,21 @@ export default function ReportDetailPage() {
         <dl className="grid gap-2 sm:grid-cols-2">
           <div>
             <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Status</dt>
-            <dd><Badge variant={data.status === "submitted" ? "success" : "neutral"}>{data.status}</Badge></dd>
+            <dd>
+              <Badge
+                variant={
+                  data.status === "approved"
+                    ? "success"
+                    : data.status === "submitted"
+                      ? "warning"
+                      : data.status === "changes_requested" || data.status === "rejected"
+                        ? "danger"
+                        : "neutral"
+                }
+              >
+                {data.status}
+              </Badge>
+            </dd>
           </div>
           <div>
             <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Worker</dt>
@@ -130,7 +156,36 @@ export default function ReportDetailPage() {
             <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Media attachments</dt>
             <dd>{data.media?.length ?? 0}</dd>
           </div>
+          {data.reviewed_at && (
+            <>
+              <div>
+                <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Reviewed at</dt>
+                <dd className="tabular-nums">{new Date(data.reviewed_at).toLocaleString()}</dd>
+              </div>
+              <div>
+                <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Reviewed by</dt>
+                <dd className="font-mono text-sm">{data.reviewed_by?.slice(0, 8) ?? "—"}…</dd>
+              </div>
+            </>
+          )}
         </dl>
+        {data.status === "submitted" && (
+          <div className="mt-4 pt-4 border-t border-aistroyka-border">
+            {data.reviewed_at && (
+              <p className="text-aistroyka-caption text-amber-600 mb-2">
+                Resubmitted after changes were requested.
+              </p>
+            )}
+            <h3 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary mb-2">Manager approval</h3>
+            <ReportApprovalCard reportId={data.id} onSuccess={refetch} />
+          </div>
+        )}
+        {data.manager_note && (
+          <div className="mt-4 pt-4 border-t border-aistroyka-border">
+            <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Manager note</dt>
+            <dd className="text-aistroyka-subheadline text-aistroyka-text-secondary mt-1">{data.manager_note}</dd>
+          </div>
+        )}
       </Card>
 
       {data.media?.length ? (

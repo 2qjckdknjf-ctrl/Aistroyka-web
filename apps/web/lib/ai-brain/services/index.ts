@@ -4,3 +4,7 @@ export { getEvidenceSignals } from "./evidence-intelligence.service";
 export { getRiskSignals, getRiskOverview } from "./risk-intelligence.service";
 export { getExecutiveSummary } from "./executive-summary.service";
 export { getActionRecommendations } from "./recommendation-engine.service";
+export { getMissingEvidenceInsights } from "./missing-evidence.service";
+export { getTopRiskInsights } from "./top-risks.service";
+export { getExecutiveProjectSummary } from "./executive-summary-v2.service";
+export { getProjectHealthScore } from "./project-health-v2.service";

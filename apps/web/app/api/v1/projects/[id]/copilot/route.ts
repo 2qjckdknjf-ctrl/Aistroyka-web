@@ -1,6 +1,7 @@
 /**
  * GET /api/v1/projects/:id/copilot — Copilot brief for a project.
  * Query: useCase (e.g. generateManagerBrief, detectTopRisks).
+ * Fallback: deterministicFallback when provider unavailable or throws.
  */
 
 import { NextResponse } from "next/server";
@@ -16,8 +17,17 @@ import {
   generateManagerBrief,
   generateExecutiveBrief,
 } from "@/lib/copilot";
+import { logCopilotNonStreamComplete } from "@/lib/observability/ai-telemetry";
+import { emitAiRuntimeAudit } from "@/lib/observability/audit.service";
+import { getBuildStamp } from "@/lib/config";
 
 export const dynamic = "force-dynamic";
+
+function generateRequestId(): string {
+  return typeof crypto !== "undefined" && crypto.randomUUID
+    ? crypto.randomUUID()
+    : `req_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+}
 
 const USE_CASES = [
   "summarizeProjectStatus",
@@ -60,6 +70,9 @@ export async function GET(
   }
 
   const tenantId = ctx.tenantId!;
+  const requestId = request.headers.get("X-Request-Id")?.trim() || generateRequestId();
+  const startMs = Date.now();
+
   let result;
   switch (useCase) {
     case "summarizeProjectStatus":
@@ -86,5 +99,47 @@ export async function GET(
     default:
       result = await generateManagerBrief(supabase, id, tenantId);
   }
-  return NextResponse.json({ data: result });
+
+  const fallbackTriggered = result.source === "deterministic";
+  const fallbackReason = fallbackTriggered ? "provider_unavailable_or_error" : undefined;
+  const latencyMs = Date.now() - startMs;
+  logCopilotNonStreamComplete({
+    request_id: requestId,
+    route: "GET /api/v1/projects/:id/copilot",
+    tenant_id: tenantId,
+    project_id: id,
+    user_id: ctx.userId ?? undefined,
+    latency_ms: latencyMs,
+    output_type: "copilot",
+    streaming: false,
+    fallback_triggered: fallbackTriggered,
+    fallback_reason: fallbackReason ?? undefined,
+    fallback_target_path: fallbackTriggered ? "deterministicFallback" : undefined,
+    use_case: useCase,
+    provider: fallbackTriggered ? "none" : "openai",
+  });
+  const { sha } = getBuildStamp();
+  void emitAiRuntimeAudit(supabase, {
+    tenant_id: tenantId,
+    user_id: ctx.userId ?? null,
+    trace_id: requestId,
+    project_id: id,
+    action: "ai_copilot_non_stream_complete",
+    details: {
+      request_id: requestId,
+      route: "GET /api/v1/projects/:id/copilot",
+      latency_ms: latencyMs,
+      output_type: "copilot",
+      streaming: false,
+      fallback_triggered: fallbackTriggered,
+      fallback_reason: fallbackReason ?? undefined,
+      provider: fallbackTriggered ? "none" : "openai",
+      ...(sha && { build_sha7: sha.slice(0, 7) }),
+    },
+  });
+
+  return NextResponse.json(
+    { data: result },
+    { headers: { "X-Request-Id": requestId } }
+  );
 }

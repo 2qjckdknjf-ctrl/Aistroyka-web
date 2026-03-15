@@ -34,4 +34,22 @@ export {
   type ConfigPayload,
   type ConfigFlag,
 } from "./schemas/config.schema";
+export {
+  WorkerReportSubmitRequestSchema,
+  WorkerReportCreateRequestSchema,
+  WorkerReportAddMediaRequestSchema,
+  DeviceRegisterRequestSchema,
+  DeviceUnregisterRequestSchema,
+  WorkerDayStartRequestSchema,
+  WorkerDayEndRequestSchema,
+  CreateUploadSessionRequestSchema,
+  FinalizeUploadSessionRequestSchema,
+  type WorkerReportSubmitRequest,
+  type WorkerReportCreateRequest,
+  type WorkerReportAddMediaRequest,
+  type DeviceRegisterRequest,
+  type DeviceUnregisterRequest,
+  type CreateUploadSessionRequest,
+  type FinalizeUploadSessionRequest,
+} from "./schemas/worker.schema";
 export * from "./api/v1/types";

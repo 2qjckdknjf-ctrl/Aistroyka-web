@@ -26,9 +26,9 @@ export async function buildProjectSnapshot(
     .eq("tenant_id", tenantId);
   const tasks = (taskRows ?? []) as { id: string; status: string; due_date: string | null }[];
   const overdueTaskCount = tasks.filter(
-    (t) => t.status !== "completed" && t.due_date && t.due_date < today
+    (t) => t.status !== "done" && t.due_date && t.due_date < today
   ).length;
-  const completedTaskCount = tasks.filter((t) => t.status === "completed").length;
+  const completedTaskCount = tasks.filter((t) => t.status === "done").length;
 
   const { count: mediaCount } = await supabase
     .from("media")

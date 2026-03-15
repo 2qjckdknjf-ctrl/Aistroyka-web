@@ -62,7 +62,7 @@ export interface EvidenceSignal {
   projectId: string;
   taskId?: string;
   reportId?: string;
-  type: "missing" | "partial" | "complete" | "before_after_gap";
+  type: "missing" | "partial" | "complete" | "before_after_gap" | "stale";
   severity: SignalSeverity;
   required?: number;
   actual?: number;
@@ -70,10 +70,24 @@ export interface EvidenceSignal {
   at: string;
 }
 
+/** Canonical union of risk signal sources. Extend this when adding new sources. */
+export type RiskSignalSource =
+  | "ai_analysis"
+  | "blocked"
+  | "budget_overrun"
+  | "cost_pressure"
+  | "delay"
+  | "missing_evidence"
+  | "manual"
+  | "milestone_overdue"
+  | "overdue"
+  | "report_quality"
+  | "schedule_pressure";
+
 /** Aggregated risk signal. */
 export interface RiskSignal {
   projectId: string;
-  source: "ai_analysis" | "delay" | "missing_evidence" | "overdue" | "manual";
+  source: RiskSignalSource;
   severity: SignalSeverity;
   title: string;
   description?: string;

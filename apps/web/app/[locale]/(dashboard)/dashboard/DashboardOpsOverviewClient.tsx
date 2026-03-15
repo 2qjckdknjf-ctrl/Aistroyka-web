@@ -136,7 +136,7 @@ export function DashboardOpsOverviewClient() {
             )}
           </ul>
           <Link
-            href="/dashboard/reports?status=submitted"
+            href="/dashboard/approvals"
             className="mt-2 inline-block text-aistroyka-caption font-medium text-aistroyka-accent hover:underline"
           >
             {t("viewAll")} →

@@ -4,6 +4,7 @@ import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from 
 import { isTenantContextPresent } from "@/lib/tenant/tenant.types";
 import { listProjects, createProject } from "@/lib/domain/projects/project.service";
 import { setLegacyApiHeaders } from "@/lib/api/deprecation-headers";
+import { CreateProjectRequestSchema } from "@aistroyka/contracts";
 
 /** GET /api/projects — list projects (legacy). Prefer GET /api/v1/projects. */
 export async function GET(request: Request) {
@@ -31,10 +32,19 @@ export async function POST(request: Request) {
     }
     throw e;
   }
+  let rawBody: unknown;
+  try {
+    rawBody = await request.json();
+  } catch {
+    rawBody = {};
+  }
+  const parsed = CreateProjectRequestSchema.safeParse(rawBody);
+  if (!parsed.success) {
+    const msg = parsed.error.flatten().formErrors[0] ?? parsed.error.flatten().fieldErrors.name?.[0] ?? "name required (1-200 chars)";
+    return NextResponse.json({ success: false, error: msg }, { status: 400 });
+  }
   const supabase = await createClient();
-  const body = await request.json().catch(() => ({}));
-  const name = typeof body.name === "string" ? body.name.trim() : "";
-  const result = await createProject(supabase, ctx, name);
+  const result = await createProject(supabase, ctx, parsed.data.name);
   if ("error" in result) {
     const status = result.error.includes("Insufficient") ? 403 : 400;
     return NextResponse.json({ success: false, error: result.error }, { status });

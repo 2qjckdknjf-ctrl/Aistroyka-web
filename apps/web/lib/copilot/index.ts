@@ -15,6 +15,17 @@ export {
 } from "./copilot.provider";
 export { deterministicFallback } from "./copilot.fallback";
 export {
+  applyContextBudget,
+  applyBriefContextBudget,
+  estimateTokens,
+  truncateToTokens,
+  DEFAULT_CONTEXT_BUDGET,
+  type ContextBudgetConfig,
+  type ContextBudgetMeta,
+  type BudgetedChatContext,
+  type BudgetedBriefContext,
+} from "./context-budget";
+export {
   runCopilot,
   summarizeProjectStatus,
   summarizeDailyReports,

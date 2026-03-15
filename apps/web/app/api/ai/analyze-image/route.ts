@@ -18,6 +18,7 @@ import { checkQuota, checkBudgetAlert, estimateMaxVisionCostUsd } from "@/lib/pl
 import { analyzeImage, AIPolicyBlockedError, AIVisionFailedError } from "@/lib/platform/ai/ai.service";
 import { getServerConfig, getConfiguredVisionProviders, isAnyVisionProviderConfigured } from "@/lib/config/server";
 import { logStructured, withRequestIdAndTiming } from "@/lib/observability";
+import { AnalyzeImageRequestSchema, AnalysisResultSchema } from "@aistroyka/contracts";
 
 const MAX_IMAGE_URL_LENGTH = 2048;
 const MAX_BODY_BYTES = 100_000;
@@ -84,18 +85,20 @@ export async function POST(request: Request) {
     return wrap(NextResponse.json({ error: "Request body too large" }, { status: 413 }));
   }
 
-  let body: { media_id?: string; image_url?: string; project_id?: string };
+  let rawBody: unknown;
   try {
-    body = await request.json();
+    rawBody = await request.json();
   } catch {
     return wrap(NextResponse.json({ error: "Invalid JSON body" }, { status: 400 }));
   }
 
-  const imageUrl = typeof body.image_url === "string" ? body.image_url.trim() : "";
-  if (!imageUrl) {
-    return wrap(NextResponse.json({ error: "image_url is required" }, { status: 400 }));
+  const parsed = AnalyzeImageRequestSchema.safeParse(rawBody);
+  if (!parsed.success) {
+    const msg = parsed.error.flatten().formErrors[0] ?? parsed.error.flatten().fieldErrors.image_url?.[0] ?? "Invalid request body";
+    return wrap(NextResponse.json({ error: msg }, { status: 400 }));
   }
 
+  const imageUrl = parsed.data.image_url.trim();
   const urlCheck = validateImageUrl(imageUrl);
   if (!urlCheck.ok) {
     return wrap(NextResponse.json({ error: urlCheck.error }, { status: 400 }));
@@ -140,8 +143,8 @@ export async function POST(request: Request) {
       traceId: tenantCtx.traceId ?? null,
     }, {
       imageUrl,
-      projectId: body.project_id ?? null,
-      mediaId: body.media_id ?? null,
+      projectId: parsed.data.project_id ?? null,
+      mediaId: parsed.data.media_id ?? null,
     });
 
     const durationMs = Date.now() - start;
@@ -155,7 +158,9 @@ export async function POST(request: Request) {
       completion_percent: result.completion_percent,
       issues_count: result.detected_issues.length,
     });
-    const response = NextResponse.json(result);
+    const validated = AnalysisResultSchema.safeParse(result);
+    const bodyToReturn = validated.success ? validated.data : result;
+    const response = NextResponse.json(bodyToReturn);
     response.headers.set("X-AI-Duration-Ms", String(durationMs));
     return wrap(response, tenantCtx.tenantId, tenantCtx.userId);
   } catch (err) {

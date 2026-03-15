@@ -12,3 +12,7 @@ export * from "./worker-day/worker-day.types";
 export * from "./worker-day/worker-day.service";
 export * from "./upload-session/upload-session.types";
 export * from "./upload-session/upload-session.service";
+export * from "./documents/document.types";
+export * from "./documents/document.service";
+export * from "./costs/cost.types";
+export * from "./costs/cost.service";

@@ -94,7 +94,25 @@ export async function submit(
   return !error;
 }
 
-export type ReportReviewStatus = "approved" | "reviewed" | "changes_requested";
+/** Resubmit after changes_requested. Keeps reviewed_at/reviewed_by/manager_note for history. */
+export async function resubmit(
+  supabase: SupabaseClient,
+  reportId: string,
+  tenantId: string,
+  taskId?: string | null
+): Promise<boolean> {
+  const updates: Record<string, unknown> = { status: "submitted", submitted_at: new Date().toISOString() };
+  if (taskId != null && taskId !== "") (updates as Record<string, unknown>).task_id = taskId;
+  const { error } = await supabase
+    .from("worker_reports")
+    .update(updates)
+    .eq("id", reportId)
+    .eq("tenant_id", tenantId)
+    .eq("status", "changes_requested");
+  return !error;
+}
+
+export type ReportReviewStatus = "approved" | "rejected" | "changes_requested";
 
 export interface UpdateReportReviewInput {
   status: ReportReviewStatus;

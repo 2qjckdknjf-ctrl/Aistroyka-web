@@ -15,6 +15,7 @@ const SIDEBAR_LINKS = [
   { href: "/dashboard/tasks", key: "tasks" as const },
   { href: "/dashboard/workers", key: "workers" as const },
   { href: "/dashboard/reports", key: "reports" as const },
+  { href: "/dashboard/approvals", key: "approvals" as const },
   { href: "/dashboard/uploads", key: "uploads" as const },
   { href: "/dashboard/devices", key: "devices" as const },
   { href: "/dashboard/ai", key: "ai" as const },

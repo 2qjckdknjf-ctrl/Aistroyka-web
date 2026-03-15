@@ -57,7 +57,7 @@ export function buildPriorityItems(data: OpsOverviewForPriority): PriorityItem[]
     items.push({
       id: `report-${r.id}`,
       title: `Report ${r.id.slice(0, 8)}…`,
-      reason: "Pending review",
+      reason: "Pending approval",
       href: `/dashboard/reports/${r.id}`,
       priority: "medium",
     });

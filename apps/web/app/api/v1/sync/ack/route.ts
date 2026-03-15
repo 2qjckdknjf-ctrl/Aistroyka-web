@@ -9,6 +9,7 @@ import { syncConflictResponse } from "@/lib/sync/sync-conflict";
 import { requireLiteIdempotency, storeLiteIdempotency } from "@/lib/api/lite-idempotency";
 import { checkRateLimit } from "@/lib/platform/rate-limit/rate-limit.service";
 import { getOrCreateRequestId, logStructured, withRequestIdAndTiming } from "@/lib/observability";
+import { SyncAckRequestSchema } from "@aistroyka/contracts";
 
 export const dynamic = "force-dynamic";
 
@@ -47,13 +48,18 @@ export async function POST(request: Request) {
   }
   const guard = await requireLiteIdempotency(request, ctx, ROUTE_KEY);
   if (!guard.ok) return withRequestIdAndTiming(request, guard.response, { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
-  let body: { cursor?: number };
+  let rawBody: unknown;
   try {
-    body = await request.json();
+    rawBody = await request.json();
   } catch {
     return withRequestIdAndTiming(request, NextResponse.json({ error: "Invalid JSON" }, { status: 400 }), { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
   }
-  const cursor = typeof body?.cursor === "number" ? Math.max(0, Math.floor(body.cursor)) : 0;
+  const parsed = SyncAckRequestSchema.safeParse(rawBody);
+  if (!parsed.success) {
+    const msg = parsed.error.flatten().formErrors[0] ?? parsed.error.flatten().fieldErrors.cursor?.[0] ?? "cursor required (number >= 0)";
+    return withRequestIdAndTiming(request, NextResponse.json({ error: msg }, { status: 400 }), { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
+  }
+  const cursor = parsed.data.cursor;
   const supabase = await createClient();
   const tenantId = ctx.tenantId as string;
   const minRetained = getMinRetainedCursor();

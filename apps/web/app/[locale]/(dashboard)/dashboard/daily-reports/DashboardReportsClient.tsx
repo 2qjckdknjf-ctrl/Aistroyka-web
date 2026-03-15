@@ -46,8 +46,12 @@ function formatAge(dateStr: string): string {
 
 const DEFAULT_REPORTS_BASE = "/dashboard/daily-reports";
 const REPORT_STATUS_OPTIONS = [
+  { value: "", label: "All" },
+  { value: "submitted", label: "Pending approval" },
   { value: "draft", label: "Draft" },
-  { value: "submitted", label: "Submitted" },
+  { value: "approved", label: "Approved" },
+  { value: "rejected", label: "Rejected" },
+  { value: "changes_requested", label: "Changes requested" },
 ];
 
 export function DashboardReportsClient({ basePath = DEFAULT_REPORTS_BASE }: { basePath?: string }) {
@@ -190,7 +194,19 @@ export function DashboardReportsClient({ basePath = DEFAULT_REPORTS_BASE }: { ba
                 </Link>
               </TableCell>
               <TableCell>
-                <Badge variant={r.status === "submitted" ? "success" : "neutral"}>{r.status}</Badge>
+                <Badge
+                  variant={
+                    r.status === "approved"
+                      ? "success"
+                      : r.status === "submitted"
+                        ? "warning"
+                        : r.status === "changes_requested" || r.status === "rejected"
+                          ? "danger"
+                          : "neutral"
+                  }
+                >
+                  {r.status}
+                </Badge>
               </TableCell>
               <TableCell>
                 <Link href={`/dashboard/workers/${r.user_id}`} className="font-mono text-aistroyka-caption text-aistroyka-accent hover:underline" title={r.user_id}>

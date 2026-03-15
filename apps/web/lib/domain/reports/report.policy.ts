@@ -7,7 +7,7 @@ export function canCreateReport(ctx: TenantContext): boolean {
   return (ROLE_ORDER[ctx.role] ?? 0) >= ROLE_ORDER.member;
 }
 
-/** Manager/admin: approve, mark reviewed, request changes on reports. */
+/** Manager/admin: approve, reject, or request changes on reports. */
 export function canReviewReport(ctx: TenantContext): boolean {
   return canManageProjects(ctx);
 }

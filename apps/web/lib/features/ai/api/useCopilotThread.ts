@@ -12,6 +12,7 @@ import {
   createThread,
   archiveThread,
   sendChatMessage,
+  sendChatMessageStream,
   type ServerMessageRow,
 } from "./chatApi";
 
@@ -95,14 +96,28 @@ export function useCopilotThread(projectId: string | null) {
       getAuthToken: () => Promise<string | null>;
       locale: string | null;
       signal?: AbortSignal | null;
+      onToken?: (delta: string) => void;
     }) => {
       if (!projectId) throw new Error("No projectId");
-      return sendChatMessage(projectId, variables.getAuthToken, {
+      const params = {
         thread_id: activeThreadId,
         user_text: variables.message.trim(),
         decision_context: variables.decisionContext,
         locale: variables.locale ?? null,
-      });
+      };
+      if (variables.onToken) {
+        return sendChatMessageStream(
+          projectId,
+          variables.getAuthToken,
+          { ...params, signal: variables.signal ?? null },
+          {
+            onToken: variables.onToken,
+            onDone: () => {},
+            onError: () => {},
+          }
+        );
+      }
+      return sendChatMessage(projectId, variables.getAuthToken, params);
     },
     onSuccess: (data, _variables) => {
       if (data.thread_id && !activeThreadId) {

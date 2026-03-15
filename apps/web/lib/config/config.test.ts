@@ -25,15 +25,31 @@ describe("config", () => {
   });
 
   describe("getBuildStamp", () => {
-    it("returns empty strings when env not set", () => {
-      vi.stubEnv("NEXT_PUBLIC_BUILD_SHA", undefined);
-      vi.stubEnv("NEXT_PUBLIC_BUILD_TIME", undefined);
+    it("returns empty strings when no sha env set", () => {
+      vi.stubEnv("NEXT_PUBLIC_BUILD_SHA", "");
+      vi.stubEnv("VERCEL_GIT_COMMIT_SHA", "");
+      vi.stubEnv("GITHUB_SHA", "");
+      vi.stubEnv("NEXT_PUBLIC_BUILD_TIME", "");
       expect(getBuildStamp()).toEqual({ sha: "", buildTime: "" });
     });
-    it("returns env values when set", () => {
+    it("returns NEXT_PUBLIC_BUILD_SHA when set", () => {
       vi.stubEnv("NEXT_PUBLIC_BUILD_SHA", "abc1234");
       vi.stubEnv("NEXT_PUBLIC_BUILD_TIME", "2025-01-01T00:00:00Z");
       expect(getBuildStamp()).toEqual({ sha: "abc1234", buildTime: "2025-01-01T00:00:00Z" });
+    });
+    it("falls back to VERCEL_GIT_COMMIT_SHA when NEXT_PUBLIC_BUILD_SHA empty", () => {
+      vi.stubEnv("NEXT_PUBLIC_BUILD_SHA", "");
+      vi.stubEnv("VERCEL_GIT_COMMIT_SHA", "vercel123");
+      vi.stubEnv("GITHUB_SHA", "");
+      vi.stubEnv("NEXT_PUBLIC_BUILD_TIME", "");
+      expect(getBuildStamp()).toEqual({ sha: "vercel123", buildTime: "" });
+    });
+    it("falls back to GITHUB_SHA when both NEXT_PUBLIC and VERCEL empty", () => {
+      vi.stubEnv("NEXT_PUBLIC_BUILD_SHA", "");
+      vi.stubEnv("VERCEL_GIT_COMMIT_SHA", "");
+      vi.stubEnv("GITHUB_SHA", "github456");
+      vi.stubEnv("NEXT_PUBLIC_BUILD_TIME", "");
+      expect(getBuildStamp()).toEqual({ sha: "github456", buildTime: "" });
     });
   });
 

@@ -3,7 +3,7 @@ import { getAssignedTaskIds } from "@/lib/domain/task-assignments";
 import type { Task, CreateTaskInput, UpdateTaskInput } from "./task.types";
 
 const TASK_SELECT =
-  "id, project_id, title, description, status, assigned_to, due_date, required_photos, report_required, created_at, updated_at";
+  "id, project_id, title, description, status, assigned_to, due_date, milestone_id, required_photos, report_required, created_at, updated_at";
 
 /**
  * List tasks assigned to user: worker_tasks.assigned_to = user OR task in task_assignments.
@@ -92,6 +92,7 @@ export async function create(
       title: input.title,
       description: input.description ?? null,
       due_date: dueDate,
+      milestone_id: input.milestone_id ?? null,
       status: "pending",
       required_photos: input.required_photos ?? {},
       report_required: input.report_required ?? true,
@@ -152,7 +153,7 @@ export async function list(
   const offset = Math.max(0, filters.offset ?? 0);
   let q = supabase
     .from("worker_tasks")
-    .select("id, project_id, title, description, status, assigned_to, due_date, required_photos, report_required, created_at, updated_at", { count: "exact" })
+    .select("id, project_id, title, description, status, assigned_to, due_date, milestone_id, required_photos, report_required, created_at, updated_at", { count: "exact" })
     .eq("tenant_id", tenantId)
     .order("due_date", { ascending: true, nullsFirst: false })
     .order("created_at", { ascending: false })

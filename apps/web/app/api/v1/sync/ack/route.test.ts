@@ -116,6 +116,32 @@ describe("POST /api/v1/sync/ack", () => {
     expect(syncCursorsRepo.upsertCursor).toHaveBeenCalled();
   });
 
+  it("returns 400 when body missing cursor", async () => {
+    vi.mocked(syncCursorsRepo.upsertCursor).mockClear();
+    const req = new Request("https://test/api/v1/sync/ack", {
+      method: "POST",
+      headers: { "x-device-id": "device-1", "content-type": "application/json" },
+      body: JSON.stringify({}),
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body).toHaveProperty("error");
+    expect(syncCursorsRepo.upsertCursor).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 when cursor is not a number", async () => {
+    vi.mocked(syncCursorsRepo.upsertCursor).mockClear();
+    const req = new Request("https://test/api/v1/sync/ack", {
+      method: "POST",
+      headers: { "x-device-id": "device-1", "content-type": "application/json" },
+      body: JSON.stringify({ cursor: "invalid" }),
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+    expect(syncCursorsRepo.upsertCursor).not.toHaveBeenCalled();
+  });
+
   it("echoes x-request-id when provided", async () => {
     vi.mocked(changeLogRepo.getMinRetainedCursor).mockReturnValue(0);
     vi.mocked(changeLogRepo.getMaxCursor).mockResolvedValue(100);

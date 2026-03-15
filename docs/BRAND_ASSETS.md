@@ -1,68 +1,32 @@
-# Brand Assets
+# Brand assets — AISTROYKA
 
-Official AISTROYKA.AI logo and icon assets for consistent branding across the platform.
+Canonical locations and usage. Source of truth: approved brand kit (transparent v2).
 
-## Location
+## Canonical files
 
-All web brand assets live in:
+| Asset | Path | Use |
+|-------|------|-----|
+| Full logo (helmet + wordmark) | `apps/web/public/brand/logo/aistroyka-logo-full.png` (.svg) | Hero, auth, expanded sidebar, OG |
+| Convenience full logo | `apps/web/public/brand/aistroyka-logo.png` (.svg) | Same; used by Logo component for non-wordmark. |
+| Helmet only | `apps/web/public/brand/helmet/aistroyka-helmet.png` (.svg) | App icon, collapsed sidebar, favicon source. |
+| Icon (square, for favicon/collapsed) | `apps/web/public/brand/aistroyka-icon.png` | Favicon, collapsed sidebar, app icon. |
+| Wordmark only | `apps/web/public/brand/wordmark/aistroyka-wordmark.png` (.svg) | Website header when space allows. |
+| Open Graph / social | `apps/web/public/brand/social/aistroyka-og.png` | og:image, twitter:image. |
+| Favicon | `apps/web/public/favicon.ico` | Browser tab. |
+| Favicon 32px | `apps/web/public/favicon-32x32.png` | PWA / high-DPI. |
+| Apple touch icon | `apps/web/public/apple-touch-icon.png` | iOS home screen. |
 
-```
-apps/web/public/brand/
-```
+## Where each asset is used
 
-## Files
+- **Header (public site):** wordmark (`/brand/wordmark/aistroyka-wordmark.png`) — desktop 40px height, mobile 24px.
+- **Hero / landing:** full logo (`/brand/aistroyka-logo.png`).
+- **Dashboard sidebar:** full logo (`/brand/aistroyka-logo.png`).
+- **Dashboard collapsed / topbar icon:** helmet/icon (`/brand/aistroyka-icon.png`).
+- **Auth (login/register):** full logo above card title.
+- **Metadata / OG:** `brand/social/aistroyka-og.png` for social; root metadata icons point to favicon, favicon-32x32, apple-touch-icon.
 
-| File | Description | Usage |
-|------|-------------|-------|
-| `aistroyka-logo.png` | Full logo (hard hat + wordmark) | Website header, dashboard sidebar, Open Graph, structured data |
-| `aistroyka-icon.png` | Icon version (same as logo, for square contexts) | Collapsed sidebar, favicon source |
+## Update procedure
 
-## Favicon
-
-Favicon files are in `apps/web/public/`:
-
-- `favicon.ico` — Legacy browsers
-- `favicon-32x32.png` — Modern browsers, 32×32 PNG
-
-## Where the Logo Appears
-
-### Web
-
-- **Public site header** — `components/public/PublicHeader.tsx` — Left side, links to `/`
-- **Dashboard sidebar** — `components/DashboardShell.tsx` — Top of sidebar, links to `/dashboard`
-- **Metadata** — `app/layout.tsx` — Open Graph image, favicon
-- **Structured data** — `app/[locale]/(public)/layout.tsx` — Organization and SoftwareApplication schema
-
-### iOS
-
-- **Manager** — `ManagerLoginView`, `HomeDashboardView` (toolbar), LaunchScreen (Info.plist)
-- **Worker** — `LoginView`, LaunchScreen (Info.plist)
-- **Asset catalog** — `Assets.xcassets/AppLogo.imageset/` in each app
-
-### Android
-
-- **Manager** — `ManagerApp.kt` — Main screen
-- **Worker** — `WorkerApp.kt` — Main screen
-- **Drawable** — `res/drawable/aistroyka_logo.png` in each app
-
-## How to Update
-
-1. Replace `aistroyka-logo.png` and/or `aistroyka-icon.png` in `apps/web/public/brand/`.
-2. Regenerate favicon if needed:
-   ```bash
-   cd apps/web/public
-   sips -z 32 32 -s format png brand/aistroyka-logo.png --out favicon-32x32.png
-   npx to-ico favicon-32x32.png -o favicon.ico
-   ```
-3. For iOS: copy the new logo to both apps’ `Assets.xcassets/AppLogo.imageset/` and replace `aistroyka-logo.png`.
-4. For Android: copy to `res/drawable/aistroyka_logo.png` in both Manager and Worker.
-
-## Design Consistency
-
-- **Header logo height:** 32–40px (desktop), 20–24px (mobile)
-- **Sidebar logo height:** 24–32px
-- **Mobile:** 20–24px
-
-## Dark Mode
-
-The current logo (light elements on dark blue) works on both light and dark backgrounds. If a light-background variant is needed, add `aistroyka-logo-dark.png` and update `components/brand/Logo.tsx` to switch based on theme.
+1. Replace files in `apps/web/public/brand/` (and subdirs) and `apps/web/public/favicon*`, `apple-touch-icon.png` with new approved assets. Do not change filenames that are referenced in code or CI.
+2. CI expects `brand/aistroyka-logo.png` and `brand/aistroyka-icon.png` under build output; keep these paths.
+3. Run `bun run cf:build` and verify `.open-next/assets/brand/` contains logo and icon.
