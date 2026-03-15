@@ -5,6 +5,17 @@
 
 ---
 
+## ⚠️ Correct path (do NOT blind replay)
+
+1. **Inspect:** Run `supabase migration list` (or query `supabase_migrations.schema_migrations`) to compare local vs remote.
+2. **Repair if drift:** Use `supabase migration repair` when history is out of sync.
+3. **Apply only missing:** Use `supabase db push` (or targeted apply) — do NOT replay all migrations blindly against an existing DB.
+4. **Verify:** Check `project_cost_items` exists if using cost features.
+
+See `docs/db/STEP13_MIGRATION_GOVERNANCE_SAFEGUARDS.md` for full governance.
+
+---
+
 ## Order (chronological by filename)
 
 Migrations live in `apps/web/supabase/migrations/`. Apply in this order (oldest first):
@@ -57,7 +68,19 @@ Migrations live in `apps/web/supabase/migrations/`. Apply in this order (oldest 
 20260306670000_report_review_manager.sql
 20260306680000_manager_notifications.sql
 20260306900000_stripe_webhook_idempotency.sql
+20260307000000_contact_leads.sql
+20260307100000_project_risks.sql
+20260307200000_project_milestones.sql
+20260307300000_report_reject_semantics.sql
+20260307400000_project_documents.sql
+20260307500000_project_cost_items.sql
 ```
+
+---
+
+## Step 13 — Budget/Cost layer
+
+**20260307500000_project_cost_items.sql** — Creates `project_cost_items` for budget/cost tracking. Required for cost features (project Costs tab, costs API, cost signals). Apply before using cost features.
 
 ---
 
@@ -94,3 +117,11 @@ SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'pub
 ```
 
 Expected: `true` if 20260306900000 was applied.
+
+For Step 13 cost layer:
+
+```sql
+SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'project_cost_items');
+```
+
+Expected: `true` if 20260307500000 was applied.

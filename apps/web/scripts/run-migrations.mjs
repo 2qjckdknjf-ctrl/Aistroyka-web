@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 /**
- * Применяет миграции из engine/Aistroyk/supabase/migrations к базе Supabase.
- * Нужна строка подключения к БД (Session mode или Direct).
+ * Applies migrations from apps/web/supabase/migrations to Supabase.
+ * Requires DB connection string (Session mode or Direct).
  *
- * Запуск из apps/web:
- *   SUPABASE_DB_URL='postgresql://postgres.[ref]:[PASSWORD]@...' npm run db:migrate
+ * Run from repo root or apps/web:
+ *   cd apps/web && SUPABASE_DB_URL='postgresql://postgres.[ref]:[PASSWORD]@...' npm run db:migrate
  *
- * SUPABASE_DB_URL взять в Supabase Dashboard → Project Settings → Database → Connection string (URI).
- * Пароль — тот, что задавали при создании проекта (или смените в Database → Reset password).
+ * SUPABASE_DB_URL from Supabase Dashboard → Project Settings → Database → Connection string (URI).
+ * Optional: RUN_MIGRATIONS_FROM=20260307500000_project_cost_items.sql to apply from a specific file onward.
  */
 
 import pg from "pg";
@@ -46,7 +46,7 @@ if (!dbUrl) {
   process.exit(1);
 }
 
-const migrationsDir = path.resolve(__dirname, "../../../engine/Aistroyk/supabase/migrations");
+const migrationsDir = path.resolve(__dirname, "../supabase/migrations");
 if (!fs.existsSync(migrationsDir)) {
   console.error("Папка миграций не найдена:", migrationsDir);
   process.exit(1);

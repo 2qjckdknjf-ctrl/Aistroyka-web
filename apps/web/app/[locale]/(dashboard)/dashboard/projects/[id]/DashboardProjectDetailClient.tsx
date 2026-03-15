@@ -22,6 +22,8 @@ import {
 } from "@/components/ui";
 import { ProjectIntelligenceClient } from "./ProjectIntelligenceClient";
 import { ProjectSchedulePanel } from "./ProjectSchedulePanel";
+import { ProjectDocumentsPanel } from "./ProjectDocumentsPanel";
+import { ProjectCostsPanel } from "./ProjectCostsPanel";
 
 const PAGE_SIZE = 10;
 
@@ -92,12 +94,22 @@ export function DashboardProjectDetailClient({ projectId }: { projectId: string 
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab");
   const [activeTab, setActiveTab] = useState(
-    tabParam === "intelligence" ? "intelligence" : tabParam === "schedule" ? "schedule" : "workers"
+    tabParam === "intelligence"
+      ? "intelligence"
+      : tabParam === "schedule"
+        ? "schedule"
+        : tabParam === "documents"
+          ? "documents"
+          : tabParam === "costs"
+            ? "costs"
+            : "workers"
   );
 
   useEffect(() => {
     if (tabParam === "intelligence") setActiveTab("intelligence");
     else if (tabParam === "schedule") setActiveTab("schedule");
+    else if (tabParam === "documents") setActiveTab("documents");
+    else if (tabParam === "costs") setActiveTab("costs");
   }, [tabParam]);
   const [workersPage, setWorkersPage] = useState(1);
   const [reportsPage, setReportsPage] = useState(1);
@@ -216,6 +228,12 @@ export function DashboardProjectDetailClient({ projectId }: { projectId: string 
           <Tab id="tab-schedule" selected={activeTab === "schedule"} onSelect={() => setActiveTab("schedule")} aria-controls="panel-schedule">
             Schedule
           </Tab>
+          <Tab id="tab-documents" selected={activeTab === "documents"} onSelect={() => setActiveTab("documents")} aria-controls="panel-documents">
+            Documents
+          </Tab>
+          <Tab id="tab-costs" selected={activeTab === "costs"} onSelect={() => setActiveTab("costs")} aria-controls="panel-costs">
+            Costs
+          </Tab>
         </Tabs>
 
         <TabPanel id="panel-workers" selected={activeTab === "workers"} aria-labelledby="tab-workers">
@@ -252,6 +270,12 @@ export function DashboardProjectDetailClient({ projectId }: { projectId: string 
         </TabPanel>
         <TabPanel id="panel-schedule" selected={activeTab === "schedule"} aria-labelledby="tab-schedule">
           <ProjectSchedulePanel projectId={projectId} />
+        </TabPanel>
+        <TabPanel id="panel-documents" selected={activeTab === "documents"} aria-labelledby="tab-documents">
+          <ProjectDocumentsPanel projectId={projectId} />
+        </TabPanel>
+        <TabPanel id="panel-costs" selected={activeTab === "costs"} aria-labelledby="tab-costs">
+          <ProjectCostsPanel projectId={projectId} />
         </TabPanel>
       </Card>
     </>
