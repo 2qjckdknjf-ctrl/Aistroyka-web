@@ -9,10 +9,10 @@
 
 | Run type | Executed | Evidence |
 |----------|----------|----------|
-| Staging workflow run | **Partial** | Run **23236902939** (2026-03-18): dry-run **FAIL** (history mismatch). Run **23239004913** (2026-03-18): dry-run **PASS**, **apply FAIL** (schema drift: existing policy). Use `ref=main` for staging so `scripts/release/` exists. |
+| Staging workflow run | **YES** | Run **23239792676** (2026-03-18): full **success** after history repair + idempotent migrations. **ref=main**, **target=staging**. |
 | Production workflow run | **NO** | — |
 
-**Current A1 blocker (staging):** **Schema drift** during apply. Migration history mismatch for the two remote-only versions was repaired (`20260311181941`, `20260314215938` → reverted), dry-run now passes, but **apply fails** because `tenant_members_select_own` policy already exists (SQLSTATE 42710). Full evidence and CLI output summary: `docs/closure/A1_STAGING_MIGRATION_MISMATCH_AUDIT.md` §10.
+**Staging A1 path:** Closed for apply workflow. Evidence: `A1_STAGING_MIGRATION_MISMATCH_AUDIT.md` §10–11; commit `106e7233`.
 
 **Blocker for automated live run (historical):** Where GitHub/gh secrets are unavailable, staging runs cannot be triggered from automation alone.
 
@@ -58,19 +58,19 @@ After the first successful **staging** run, an operator should fill the evidence
 6. Paste or summarize the **Post-apply summary** step output (Target, Ref, Commit, Actor).
 7. Update this file: set "Staging workflow run" to **YES** and fill the evidence table.
 
-### Evidence table (fill after first successful staging run)
+### Evidence table (staging success 2026-03-18)
 
 | Field | Value |
 |-------|--------|
-| Workflow run ID | *(e.g. 123456789012345678)* |
-| Run URL | *(e.g. https://github.com/OWNER/REPO/actions/runs/...)* |
-| Commit SHA | *(full SHA)* |
-| Branch / ref | *(e.g. develop)* |
+| Workflow run ID | 23239792676 |
+| Run URL | https://github.com/2qjckdknjf-ctrl/Aistroyka-web/actions/runs/23239792676 |
+| Commit SHA | 106e7233… (main) |
+| Branch / ref | main |
 | Target | staging |
 | Migration sanity | PASSED |
 | Migration list ran | YES |
-| Dry-run ran | YES |
-| Db push result | no-op / applied N migrations |
+| Dry-run ran | YES (PASS) |
+| Db push result | aligned / no pending after local CLI push |
 | Final status | success |
 
 ---

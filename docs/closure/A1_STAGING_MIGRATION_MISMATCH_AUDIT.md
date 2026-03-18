@@ -146,10 +146,9 @@ Same features, **different timestamps**; remote versions are **after** local max
 | Audit (local list + remote SQL + MCP) | **Done** |
 | `supabase link` / `migration list` | **Done** (token sourced from `apps/web/.env.local`) |
 | `supabase migration repair` (2 versions) | **Done** — both remote-only versions repaired to `reverted` |
-| `supabase db push --dry-run` | **Done** — lists 53 pending migrations; no history mismatch after repair |
-| `supabase db push` | **FAILED** — schema drift (policy already exists), see §10 |
-
-After an operator completes §6, update `docs/closure/A1_MIGRATION_APPLY_LIVE_EVIDENCE.md` with the new workflow run id, dry-run/db push outcome, and final status.
+| `supabase db push --dry-run` | **Done** |
+| `supabase db push` | **Done** — after idempotent migration fixes (§11); staging local/remote aligned |
+| GitHub staging workflow | **SUCCESS** — run `23239792676` (commit `106e7233`), `target=staging`, `ref=main` |
 
 ---
 
@@ -215,10 +214,24 @@ Run from `apps/web` with token sourced from `apps/web/.env.local`:
 - **Both:** none
 - **Local-only:** unchanged (53)
 
-### 10.4 Apply blocker (schema drift)
+### 10.4 Apply blocker (schema drift) — resolved
 
-`supabase db push` fails with:
+Initial `db push` failed on duplicate RLS policies/triggers where staging already had partial schema. **Resolution (2026-03-18):** targeted idempotency in migrations only where push failed:
 
-- `ERROR: policy "tenant_members_select_own" for table "tenant_members" already exists (SQLSTATE 42710)`
+- `DROP POLICY IF EXISTS` before `CREATE POLICY` (base tenants/projects, duplicate ai_policy/slo migrations, stripe, milestones, cost items).
+- `push_outbox`: conditional `ALTER` in `20260306150000` when table missing; `device_id` on create + `ADD COLUMN IF NOT EXISTS` in `20260306610000`.
+- `DROP TRIGGER IF EXISTS` before trigger on `project_cost_items`.
 
-This is **not** a migration-history mismatch anymore; it is **schema state drift** between the live staging database and the canonical migration chain. Per safety rules, no further blind repair was performed.
+Then full `supabase db push --linked --yes` succeeded; `migration list` shows **Local = Remote** for all 53 versions.
+
+---
+
+## 11. GitHub Actions evidence (staging)
+
+| Field | Value |
+|-------|--------|
+| Run ID | **23239792676** |
+| URL | https://github.com/2qjckdknjf-ctrl/Aistroyka-web/actions/runs/23239792676 |
+| Commit | `106e7233` |
+| Result | **success** (dry-run + apply; db push no-op / already aligned) |
+| Workflow change | `supabase db push --yes` and `db push --dry-run --yes` for non-interactive CI |

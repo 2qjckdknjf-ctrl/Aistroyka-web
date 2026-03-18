@@ -56,19 +56,17 @@ Workflow validation is **complete** by inspection and runbook alignment.
 
 | Run type | Executed | Evidence / blocker |
 |----------|----------|--------------------|
-| Staging workflow run | **Partial** | Workflow now reaches apply; **blocked** by schema drift (existing RLS policy) during `supabase db push`. History mismatch for remote-only versions was repaired to `reverted`; see `A1_STAGING_MIGRATION_MISMATCH_AUDIT.md` §10 and run `23239004913`. |
+| Staging workflow run | **YES** | Run **23239792676**: success. Staging history repaired + migrations made idempotent for drift; full chain applied locally then CI green. |
 | Production workflow run | **NO** | Not attempted. |
 
-**Blocker for full staging success (current):** `supabase db push` fails because policy `tenant_members_select_own` on `public.tenant_members` already exists (SQLSTATE 42710). This indicates staging schema drift vs the canonical migration chain. Do not blind-repair beyond the two known versions; resolve drift explicitly (e.g. align policy creation to be idempotent, or reconcile existing policy definition) before re-running apply.
+**Staging:** Migration history mismatch resolved; schema drift resolved via idempotent `DROP POLICY` / `push_outbox` ordering / `DROP TRIGGER` in affected migration files only. See `A1_STAGING_MIGRATION_MISMATCH_AUDIT.md` §10–11.
 
 ---
 
 ## 5. Exact blocker summary
 
-- **Staging dry-run / db push:** Migration history mismatch (documented audit + CASE B repair path). Not a workflow defect.
-- **GitHub environment enforcement proof:** May still require operator verification in Settings (Environments, protection rules).
-
-Repo workflow and scripts are aligned; staging repair требует CLI с токеном. **2026-03-18:** токен в терминале пользователя ≠ env агента Cursor — см. `A1_STAGING_MIGRATION_MISMATCH_AUDIT.md` §9.2; либо `.env.local` с `SUPABASE_ACCESS_TOKEN`, либо ручной прогон §9 + `gh workflow run`.
+- **Staging apply path:** **Unblocked** (2026-03-18). Remaining A1 items outside this thread: production environment protection verification if required.
+- **Workflow:** `apply-migrations.yml` uses `supabase db push --yes` / `--dry-run --yes` for non-interactive runs.
 
 ---
 
@@ -76,7 +74,7 @@ Repo workflow and scripts are aligned; staging repair требует CLI с то
 
 | Item | Change |
 |------|--------|
-| `.github/workflows/apply-migrations.yml` | workflow_dispatch only; target (staging \| production); environment from target; migration sanity → install CLI → link → migration list → **dry-run** → apply (db push); log boundaries for dry-run and apply; no echo of secrets. |
+| `.github/workflows/apply-migrations.yml` | As above + `supabase db push --dry-run --yes` and `supabase db push --yes` (non-interactive). |
 | `scripts/release/apply-migrations.sh` | Unchanged from A1 initial closure: preflight check-migrations, then db push; runbook reference. |
 
 ---
