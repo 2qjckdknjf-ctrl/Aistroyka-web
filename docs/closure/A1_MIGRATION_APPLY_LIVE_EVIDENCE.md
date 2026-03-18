@@ -12,7 +12,7 @@
 | Staging workflow run | **Partial** | Run **23236902939** (2026-03-18): secrets → checkout → sanity → Supabase CLI → link → preflight **PASS**; **dry-run FAIL** (migration history mismatch). Use `ref=main` for staging so `scripts/release/` exists. |
 | Production workflow run | **NO** | — |
 
-**Current A1 blocker (staging):** Remote `schema_migrations` has two versions **not present** in repo (`20260311181941`, `20260314215938`); repo has 53 canonical files with no overlap. Full audit and **CASE B** repair steps: `docs/closure/A1_STAGING_MIGRATION_MISMATCH_AUDIT.md`. After `supabase migration repair --status reverted` for those two versions and a successful `db push` (operator, with `SUPABASE_ACCESS_TOKEN`), re-run the workflow and fill the evidence table below.
+**Current A1 blocker (staging):** Remote `schema_migrations` has two versions **not present** in repo (`20260311181941`, `20260314215938`); repo has 53 canonical files with no overlap. Full audit and **CASE B** repair steps: `docs/closure/A1_STAGING_MIGRATION_MISMATCH_AUDIT.md` (§9 operator commands with `--linked`). **2026-03-18:** End-to-end completion from Cursor was **blocked** — no `SUPABASE_ACCESS_TOKEN` in the agent shell, so repair / local `db push` / post-repair workflow re-run were **not performed**. Operator must run §9 locally, then `gh workflow run apply-migrations.yml -r main -f target=staging -f ref=main`, then fill the evidence table below.
 
 **Blocker for automated live run (historical):** Where GitHub/gh secrets are unavailable, staging runs cannot be triggered from automation alone.
 

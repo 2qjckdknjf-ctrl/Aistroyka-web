@@ -147,3 +147,35 @@ Same features, **different timestamps**; remote versions are **after** local max
 | `supabase migration repair` / `db push` | **Not run here** — `SUPABASE_ACCESS_TOKEN` not available in this environment; requires operator machine or CI with staging token |
 
 After an operator completes §6, update `docs/closure/A1_MIGRATION_APPLY_LIVE_EVIDENCE.md` with the new workflow run id, dry-run/db push outcome, and final status.
+
+---
+
+## 9. Operator command sequence (with `--linked`)
+
+Run from `apps/web` after `export SUPABASE_ACCESS_TOKEN=<personal access token>` (Account → Access Tokens):
+
+```bash
+cd apps/web
+supabase link --project-ref vthfrxehrursfloevnlp
+supabase migration list
+supabase migration repair 20260311181941 --status reverted --linked
+supabase migration repair 20260314215938 --status reverted --linked
+supabase migration list
+supabase db push --dry-run --linked
+supabase db push --linked
+```
+
+Then from repo root:
+
+```bash
+gh workflow run apply-migrations.yml -r main -f target=staging -f ref=main
+```
+
+### 9.1 Agent attempt (2026-03-18)
+
+| Step | Result |
+|------|--------|
+| Shell `SUPABASE_ACCESS_TOKEN` | **Not set** — repair / `db push` / `migration list` via CLI **not executed** |
+| GitHub `gh` | Authenticated on operator machine in some sessions; **irrelevant until CLI path completes** |
+
+**Exact blocker:** Staging mismatch resolution requires a **Supabase personal access token** in the shell. Cursor/agent execution environment had **no** token; no blind DB changes were made.
