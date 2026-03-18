@@ -52,7 +52,7 @@ jobs:
           ref: ${{ github.event.inputs.ref || (github.event.inputs.target == 'production' && 'main' || 'develop') }}
 
       - name: Migration sanity check
-        run: bash scripts/release/check-migrations.sh
+        run: bash "$GITHUB_WORKSPACE/scripts/release/check-migrations.sh"
 
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
