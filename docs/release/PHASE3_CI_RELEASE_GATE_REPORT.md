@@ -1,67 +1,75 @@
-# Phase 3 CI Release Gate Report — AISTROYKA
+# Phase 3 / A2 — CI Release Gate Report — AISTROYKA
 
-**Date:** 2026-03-14
-
----
-
-## 1. Workflows Touched
-
-| Workflow | Branch | Purpose |
-|----------|--------|---------|
-| `.github/workflows/deploy-cloudflare-prod.yml` | main | Production deploy |
-| `.github/workflows/deploy-cloudflare-staging.yml` | develop | Staging deploy |
+**Date:** 2026-03-18 (A2 automatic post-deploy smoke)
 
 ---
 
-## 2. Release Gate Steps (Order)
+## 1. Workflows inspected
 
-Both workflows now run, **before build**, in this order:
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| `.github/workflows/deploy-cloudflare-prod.yml` | push to main, workflow_dispatch | Production deploy → **blocking** pilot smoke |
+| `.github/workflows/deploy-cloudflare-staging.yml` | push to develop | Staging deploy → **blocking** pilot smoke |
+| `.github/workflows/pilot-smoke.yml` | `workflow_call` only | Reusable smoke job (not `workflow_run`) |
+| `.github/workflows/apply-migrations.yml` | workflow_dispatch | Supabase migrations (A1) |
 
-1. **Check required secrets** — CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID
-2. **Checkout**
-3. **Setup Bun** (1.2.15)
-4. **Install dependencies** — `bun install --frozen-lockfile`
-5. **Migration sanity check** — `bash scripts/release/check-migrations.sh`
-6. **Run tests** — `bun run test`
-7. **Set build stamp and app env**
-8. **Build** — `bun run cf:build`
-9. **Verify build output**
-10. **Deploy** (Cloudflare Workers)
+**Deploy → smoke pattern:** Job `deploy` completes (wrangler deploy). Job `pilot-smoke` runs with `needs: deploy` and **fails the workflow** if `scripts/smoke/pilot_launch.sh` exits non-zero. Smoke does **not** use `workflow_run` as the primary gate (that would run after the deploy workflow already finished green).
 
----
+**Prod deploy job steps:** Secrets → Checkout → Bun → Install → Build → Verify output → Patch bundle → Deploy → Summary.
 
-## 3. What Is Enforced Now
+**Staging deploy job steps:** Secrets → Checkout → Bun → Install → Build → Verify → Deploy → Summary.
 
-| Check | Enforced | Failure behavior |
-|-------|----------|------------------|
-| Secrets present | Yes | Fail fast |
-| Migration sanity (no future-dated, no duplicates, strict order) | Yes | Fail before build |
-| Tests | Yes | Fail before build |
-| Production build | Yes | Fail before deploy |
-| Build output verification | Yes | Fail before deploy |
-| Deploy | Yes | Job fails on deploy error |
+**Not in deploy workflows:** Migration sanity and full test suite before build (separate decision).
 
 ---
 
-## 4. What Still Requires Manual Approval
+## 2. Current release path
 
-- **Deploy trigger:** Push to main (prod) or develop (staging) — no manual gate; deploy runs automatically on push.
-- **Pilot smoke after deploy:** Not run in CI. Run manually: `BASE_URL=https://aistroyka.ai npm run smoke:pilot` (see PHASE3_PILOT_SMOKE_USAGE.md).
-- **Migration apply:** Not run in CI. Migrations must be applied to Supabase separately (e.g. `supabase db push` or equivalent).
-- **Rollback:** Manual; no automated rollback.
-
----
-
-## 5. Artifacts and Logging
-
-- All steps run in a single job; logs are visible in GitHub Actions.
-- No secrets are logged (CLOUDFLARE_* checked for presence only).
-- Post-deploy verification (prod) runs with `continue-on-error: true` so deploy success is not blocked by transient health-check failures.
+1. **Code:** Push to `develop` (staging) or `main` (prod).
+2. **CI:** Build + deploy to Cloudflare; then **automatic blocking smoke** against public BASE_URL.
+3. **Migrations:** Separate workflow or manual (A1).
+4. **Manual smoke (fallback / extra):** Operators may still run `npm run smoke:pilot` locally or against another URL for debugging.
 
 ---
 
-## 6. Migration Sanity Script
+## 3. What is enforced automatically
 
-- **Path:** `scripts/release/check-migrations.sh`
-- **Behavior:** Validates migration filenames in `apps/web/supabase/migrations/` — no future-dated, no duplicate timestamps, strict ascending order.
-- **Does not:** Apply migrations or connect to database.
+| Check | Where | Failure behavior |
+|-------|--------|------------------|
+| Cloudflare secrets, build, deploy | `deploy` job | Workflow fails before smoke |
+| **Pilot smoke** (health, config, cron-tick, ops/metrics) | `pilot-smoke` job after deploy | **Workflow fails**; deploy already reached Cloudflare (operator must fix smoke or rollback app) |
+| Bearer JWT present for smoke | `pilot-smoke.yml` verify step | Fails if `pilot_smoke_bearer` secret empty |
+
+**BASE_URL (fixed in workflow):**
+
+| Environment | URL |
+|-------------|-----|
+| Staging | `https://staging.aistroyka.ai` |
+| Production | `https://aistroyka.ai` |
+
+---
+
+## 4. What remains manual
+
+- **GitHub secrets for smoke:** `PILOT_SMOKE_BEARER_STAGING`, `PILOT_SMOKE_BEARER_PRODUCTION` (Supabase JWT, tenant user). If unset or empty, smoke job fails until configured. Optional: `CRON_SECRET` for cron-tick when `REQUIRE_CRON_SECRET=true`.
+- **Migration apply, rollback, pre-deploy tests** — unchanged.
+
+---
+
+## 5. Smoke targets (real endpoints)
+
+| Target | Path | Auth |
+|--------|------|------|
+| Health | `GET /api/v1/health` | None |
+| Config | `GET /api/v1/config` | None |
+| Cron | `POST /api/v1/admin/jobs/cron-tick` | `x-cron-secret` if required |
+| Ops/metrics | `GET /api/v1/ops/metrics` | `Authorization: Bearer <JWT>` from CI secret |
+
+---
+
+## 6. Scripts
+
+- **Engine:** `scripts/smoke/pilot_launch.sh`
+- **Reusable workflow:** `.github/workflows/pilot-smoke.yml`
+
+See `docs/release/PHASE3_PILOT_SMOKE_USAGE.md` for secrets and operator commands.

@@ -1,51 +1,44 @@
-# Phase 3 Release Hardening Summary — AISTROYKA
+# Phase 3 / A2 — Release Hardening Summary — AISTROYKA
 
-**Date:** 2026-03-14
+**Date:** 2026-03-18
 
 ---
 
-## 1. What Changed
+## 1. What changed (A2 follow-up)
 
 | Area | Change |
 |------|--------|
-| **Migration safety** | Added `scripts/release/check-migrations.sh`; no migrations renamed (none future-dated) |
-| **CI release gate** | Added migration sanity check + test steps to prod and staging deploy workflows; deploy blocked if either fails |
-| **Pilot smoke** | Added health check to `scripts/smoke/pilot_launch.sh`; updated `npm run smoke:pilot` to use it |
-| **Docs** | Created PHASE3_MIGRATION_SAFETY_REPORT, PHASE3_CI_RELEASE_GATE_REPORT, PHASE3_PILOT_SMOKE_USAGE, PHASE3_RELEASE_CHECKLIST |
+| **Automatic smoke gate** | After deploy, job `pilot-smoke` runs `scripts/smoke/pilot_launch.sh` via reusable workflow `pilot-smoke.yml`. **Blocking** — workflow fails if smoke fails. |
+| **Design** | `workflow_call` from deploy workflows — same workflow run, `needs: deploy`. **Not** primary `workflow_run` (would not block deploy job). |
+| **Secrets** | `PILOT_SMOKE_BEARER_STAGING`, `PILOT_SMOKE_BEARER_PRODUCTION`; optional `CRON_SECRET`. |
 
 ---
 
-## 2. What Is Now Enforced
+## 2. What is enforced
 
-- **Migration sanity:** No future-dated migrations, no duplicate timestamps, strict ordering
-- **Tests:** Must pass before build
-- **Build:** Must succeed before deploy
-- **Pilot smoke:** One-command script; run manually after deploy (not in CI)
+- Build + deploy (unchanged)
+- **Post-deploy pilot smoke:** health, config, cron-tick, ops/metrics (with CI JWT)
 
 ---
 
-## 3. What Remains Manual
+## 3. What remains manual
 
-- Pilot smoke after deploy
-- Migration apply to Supabase (CI does not run `supabase db push`)
-- Rollback (revert + push, or manual wrangler deploy)
-- Env/config verification before release
-
----
-
-## 4. Top Remaining Release Risks
-
-1. **Migration apply not in CI** — Migrations must be applied separately; drift between code and DB possible if forgotten.
-2. **Pilot smoke not a hard gate** — Post-deploy smoke is manual; a broken deploy could go unnoticed until manual check.
-3. **No automated rollback** — Rollback requires manual revert or wrangler deploy.
-4. **Secrets/config** — Env vars and CRON_SECRET must be correct in production; no automated validation.
+- Creating and rotating **pilot JWT** secrets in GitHub
+- Migration apply, rollback, pre-deploy test/migration gates (if not added elsewhere)
+- If staging URL is not `staging.aistroyka.ai`, workflow `base_url` must be edited
 
 ---
 
-## 5. Validation Performed (2026-03-14)
+## 4. Top remaining risks
 
-- `bun install --frozen-lockfile` — OK
-- `bash scripts/release/check-migrations.sh` — PASSED (47 migrations)
-- `bun run test` — 371 tests passed
-- `bun run cf:build` — OK
-- `bash scripts/smoke/pilot_launch.sh` (localhost) — Expected fail (no server); script exits 1 correctly
+1. **Deploy succeeds, smoke fails** — New code may already be live; workflow red until smoke green or rollback.
+2. **JWT expiry** — Short-lived tokens break CI until secret updated; prefer stable service user or rotation runbook.
+3. **Cron without CRON_SECRET** — If prod requires secret and it is unset, cron-tick step fails smoke.
+
+---
+
+## 5. Validation (structural)
+
+- Workflow YAML parses; `pilot-smoke` has `needs: deploy` on both deploy workflows.
+- `scripts/smoke/pilot_launch.sh` unchanged as execution engine.
+- Live CI run not verified in this change (requires repo secrets and push).

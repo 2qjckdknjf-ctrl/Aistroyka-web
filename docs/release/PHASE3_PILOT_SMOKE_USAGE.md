@@ -1,79 +1,83 @@
-# Phase 3 Pilot Smoke Usage — AISTROYKA
+# Phase 3 / A2 — Pilot Smoke Usage — AISTROYKA
 
-**Date:** 2026-03-14
+**Date:** 2026-03-18
 
 ---
 
-## 1. Exact Command to Run
+## 1. Automatic gate (GitHub Actions)
+
+After each successful **deploy** job, workflows call `.github/workflows/pilot-smoke.yml`:
+
+| Deploy workflow | BASE_URL | Bearer secret (repository) |
+|-----------------|----------|----------------------------|
+| `deploy-cloudflare-staging.yml` | `https://staging.aistroyka.ai` | `PILOT_SMOKE_BEARER_STAGING` |
+| `deploy-cloudflare-prod.yml` | `https://aistroyka.ai` | `PILOT_SMOKE_BEARER_PRODUCTION` |
+
+**Required repository secrets**
+
+| Secret | Purpose |
+|--------|---------|
+| `PILOT_SMOKE_BEARER_STAGING` | Supabase **access_token** (JWT only, no `Bearer ` prefix) for a user that belongs to a tenant on **staging** |
+| `PILOT_SMOKE_BEARER_PRODUCTION` | Same for **production** |
+
+**Optional**
+
+| Secret | When |
+|--------|------|
+| `CRON_SECRET` | Passed as `x-cron-secret` when production/staging has `REQUIRE_CRON_SECRET=true` |
+
+If bearer secrets are missing or empty, the smoke job fails with a clear error. **No secret values are echoed** in logs.
+
+---
+
+## 2. Manual / operator command
 
 ```bash
 BASE_URL=https://aistroyka.ai npm run smoke:pilot
 ```
 
-Or directly:
+Or: `bash scripts/smoke/pilot_launch.sh`
 
-```bash
-BASE_URL=https://aistroyka.ai bash scripts/smoke/pilot_launch.sh
-```
+Same env vars as before: `BASE_URL`, optional `CRON_SECRET`, `AUTH_HEADER` or `COOKIE` or `SMOKE_EMAIL`/`SMOKE_PASSWORD` for ops/metrics.
 
 ---
 
-## 2. Required Env Vars
+## 3. Endpoints checked
 
-| Variable | Required | Default | Notes |
-|----------|----------|---------|-------|
-| BASE_URL | No | http://localhost:3000 | Target base URL (no trailing slash) |
-| CRON_SECRET | No | — | Set when REQUIRE_CRON_SECRET=true on server; enables cron-tick check |
-| AUTH_HEADER | No | — | Bearer token for ops/metrics (tenant-scoped) |
-| COOKIE | No | — | Session cookie for ops/metrics (alternative to AUTH_HEADER) |
-| SMOKE_EMAIL, SMOKE_PASSWORD | No | — | Optional: auto-obtain token for ops/metrics if SUPABASE_URL + SUPABASE_ANON_KEY set |
-
----
-
-## 3. Endpoints Checked
-
-| Endpoint | Method | Auth | Notes |
-|----------|--------|------|-------|
-| /api/v1/health | GET | None | Must return 200 or 503 with `"ok"` in body |
-| /api/v1/admin/jobs/cron-tick | POST | x-cron-secret (optional) | Pilot-critical; 403 if CRON_SECRET required but not set |
-| /api/v1/ops/metrics | GET | Cookie or Authorization | Tenant-scoped; requires auth for 200 |
+| Endpoint | Method | Auth |
+|----------|--------|------|
+| /api/v1/health | GET | None |
+| /api/v1/config | GET | None |
+| /api/v1/admin/jobs/cron-tick | POST | x-cron-secret if configured |
+| /api/v1/ops/metrics | GET | Bearer (CI: from secrets; manual: AUTH_HEADER) |
 
 ---
 
-## 4. Expected Output (Success)
+## 4. Obtaining a JWT for CI secrets
 
-```
-Pilot launch smoke: https://aistroyka.ai (from=2026-03-07 to=2026-03-14)
-  PASS: health
-  PASS: cron-tick
-  PASS: ops/metrics
-  Counters: uploads_stuck=... uploads_expired=... ...
-  pilot_launch done
-```
+Use a dedicated pilot/service user with tenant membership. Example (run locally, **do not commit**):
+
+1. Password grant or dashboard session → copy `access_token` from Supabase Auth.
+2. Store **only the JWT string** in `PILOT_SMOKE_BEARER_STAGING` / `_PRODUCTION`.
+3. Rotate if the user password changes or token expires (short-lived tokens may require periodic refresh — prefer long-lived service user or refresh automation outside this doc).
 
 ---
 
-## 5. What to Do on Failure
+## 5. On failure
 
-| Failure | Action |
-|---------|--------|
-| FAIL: health → HTTP 5xx/4xx | Check app is running; check Cloudflare Workers / domain routing |
-| FAIL: cron-tick 403 | Set CRON_SECRET when REQUIRE_CRON_SECRET=true |
-| FAIL: ops/metrics → HTTP 401/403 | Set COOKIE or AUTH_HEADER for tenant auth |
-| Script exits 1 | At least one check failed; fix the failing endpoint before considering release complete |
+| Automatic (CI) | Action |
+|----------------|--------|
+| Smoke fails after deploy | App may already be live; fix endpoint or secrets, re-run failed job or push empty commit after fix |
+| Bearer empty | Add or fix repository secrets |
 
----
-
-## 6. Local / Staging
-
-```bash
-BASE_URL=http://localhost:3000 npm run smoke:pilot
-BASE_URL=https://staging.aistroyka.ai npm run smoke:pilot
-```
+| Manual | Action |
+|--------|--------|
+| ops/metrics 401/403 | Set `AUTH_HEADER` or credentials per §2 |
 
 ---
 
-## 7. Script Location
+## 6. Script locations
 
-- **Canonical:** `scripts/smoke/pilot_launch.sh` (repo root)
-- **npm script:** `npm run smoke:pilot` → invokes above
+- `scripts/smoke/pilot_launch.sh`
+- `scripts/release/smoke-gate.sh` → same script
+- `npm run smoke:pilot`

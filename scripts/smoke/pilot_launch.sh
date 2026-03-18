@@ -55,6 +55,15 @@ else
   fi
 fi
 
+# 0b) Config (worker-critical, no auth) — must return 200
+code=$(curl -sS -o /tmp/pilot_config.json -w "%{http_code}" -m 10 "$BASE/api/v1/config" || true)
+if [[ "$code" != "200" ]]; then
+  echo "  FAIL: GET /api/v1/config → HTTP $code"
+  FAIL=1
+else
+  echo "  PASS: config"
+fi
+
 # 1) POST /api/v1/admin/jobs/cron-tick (x-cron-secret when CRON_SECRET set or when required by server)
 if [[ -n "$CRON" ]]; then
   code=$(curl -sS -o /tmp/pilot_cron.json -w "%{http_code}" -m 30 -X POST \

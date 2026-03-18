@@ -1,67 +1,61 @@
-# Phase 3 Release Checklist — AISTROYKA
+# Phase 3 / A2 — Release Checklist — AISTROYKA
 
-**Date:** 2026-03-14
-
----
-
-## Pre-Release
-
-- [ ] CI green on target branch (main for prod, develop for staging)
-- [ ] Migration sanity: `bash scripts/release/check-migrations.sh` passes
-- [ ] Tests pass: `bun run test`
-- [ ] Build passes: `bun run cf:build`
-- [ ] Env vars documented and set (see docs/ENVIRONMENT-VARIABLES.md)
+**Date:** 2026-03-18
 
 ---
 
-## Migration Checks
+## Before first deploy with automatic smoke
 
-- [ ] New migrations (if any) applied to target Supabase project
-- [ ] Migration `20260307500000_project_cost_items.sql` applied if using cost features (Step 13)
-- [ ] No future-dated migration filenames
-- [ ] Migration order sane (check-migrations.sh)
-
----
-
-## Env / Config
-
-- [ ] NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY set for target
-- [ ] CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID in GitHub Secrets (for CI deploy)
-- [ ] CRON_SECRET set if REQUIRE_CRON_SECRET=true (for cron-tick)
+- [ ] Repository secrets: `PILOT_SMOKE_BEARER_STAGING`, `PILOT_SMOKE_BEARER_PRODUCTION` (Supabase JWTs; see PHASE3_PILOT_SMOKE_USAGE.md)
+- [ ] If `REQUIRE_CRON_SECRET=true` on target: `CRON_SECRET` in GitHub Actions secrets
+- [ ] Staging public URL matches workflow (`https://staging.aistroyka.ai`) or update workflow if your staging domain differs
 
 ---
 
-## Deploy Step
+## Pre-release
 
-- [ ] Push to main (prod) or develop (staging)
-- [ ] GitHub Actions deploy job completes
-- [ ] No deploy errors in logs
-
----
-
-## Smoke Step
-
-- [ ] Run: `BASE_URL=https://aistroyka.ai npm run smoke:pilot` (prod) or `BASE_URL=https://staging.aistroyka.ai npm run smoke:pilot` (staging)
-- [ ] Health, cron-tick, ops/metrics pass (or skip where auth not available)
-- [ ] Exit code 0
+- [ ] CI green on target branch
+- [ ] Migration sanity / tests as you require (not in deploy workflow by default)
+- [ ] Build passes locally if needed: `bun run cf:build`
+- [ ] Env documented: docs/ENVIRONMENT-VARIABLES.md
 
 ---
 
-## Rollback Note
+## Migration checks
 
-- No automated rollback. To rollback: revert commit, push; CI will deploy previous build. Or redeploy a prior commit manually via wrangler.
-
----
-
-## Post-Release Monitoring
-
-- [ ] /api/v1/health returns 200
-- [ ] Dashboard loads for pilot tenants
-- [ ] iOS Worker can reach backend (if pilot uses iOS)
+- [ ] Migrations applied (A1 workflow or `supabase db push`) before relying on new schema
 
 ---
 
-## Scope Notes (Phase 3)
+## Deploy step
 
-- **Android is NOT a product gate** for this release phase. Android apps are placeholder-only; do not block release on Android parity.
-- **iOS depends on backend correctness**, not Android parity. Backend health, cron-tick, and ops endpoints are the pilot-critical surface.
+- [ ] Push to `develop` (staging) or `main` (prod)
+- [ ] **Deploy job** completes (Cloudflare)
+- [ ] **Pilot smoke job** completes — workflow is red until smoke passes
+
+---
+
+## Smoke (automatic + manual)
+
+- **Automatic:** Blocking job after deploy (no extra action if secrets are set).
+- **Manual (optional):** `BASE_URL=... npm run smoke:pilot` for extra checks or debugging.
+
+---
+
+## Rollback
+
+No automated rollback. Revert + push, or wrangler deploy prior artifact. If deploy succeeded but smoke failed, app may already serve new code.
+
+---
+
+## Post-release
+
+- [ ] Monitor `/api/v1/health`
+- [ ] Pilot tenants / iOS Worker as applicable
+
+---
+
+## Scope
+
+- **Android** — not a release gate for this phase.
+- **iOS** — depends on backend; not Android parity.

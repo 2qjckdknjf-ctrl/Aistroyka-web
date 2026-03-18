@@ -77,3 +77,13 @@ jobs:
           echo "Deployed worker: aistroyka-web-staging (apps/web)"
           echo "Commit sha7: $SHA7"
           echo "workers.dev URL: see 'Deploy to Cloudflare (staging)' step output above"
+
+  pilot-smoke:
+    name: Post-deploy pilot smoke (blocking)
+    needs: deploy
+    uses: ./.github/workflows/pilot-smoke.yml
+    with:
+      base_url: https://staging.aistroyka.ai
+    secrets:
+      pilot_smoke_bearer: ${{ secrets.PILOT_SMOKE_BEARER_STAGING }}
+      cron_secret: ${{ secrets.CRON_SECRET }}

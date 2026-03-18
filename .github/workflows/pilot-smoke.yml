@@ -1,0 +1,43 @@
+# Reusable blocking post-deploy pilot smoke. Called from deploy workflows (not workflow_run).
+# Requires repository secrets — see docs/release/PHASE3_PILOT_SMOKE_USAGE.md
+
+name: Pilot smoke (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      base_url:
+        description: "Public base URL (no trailing slash), e.g. https://staging.aistroyka.ai"
+        required: true
+        type: string
+    secrets:
+      pilot_smoke_bearer:
+        description: "Supabase JWT for a user with tenant membership (ops/metrics). No Bearer prefix."
+        required: true
+      cron_secret:
+        description: "Optional; x-cron-secret when REQUIRE_CRON_SECRET=true on target"
+        required: false
+
+jobs:
+  smoke:
+    name: Post-deploy pilot smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify pilot_smoke_bearer is non-empty
+        env:
+          B: ${{ secrets.pilot_smoke_bearer }}
+        run: |
+          if [ -z "$B" ]; then
+            echo "::error::Secret pilot_smoke_bearer is empty. Add the matching repository secret (PILOT_SMOKE_BEARER_STAGING or PILOT_SMOKE_BEARER_PRODUCTION) with a Supabase JWT. See docs/release/PHASE3_PILOT_SMOKE_USAGE.md"
+            exit 1
+          fi
+
+      - name: Run pilot_launch.sh
+        env:
+          BASE_URL: ${{ inputs.base_url }}
+          AUTH_HEADER: Bearer ${{ secrets.pilot_smoke_bearer }}
+          CRON_SECRET: ${{ secrets.cron_secret }}
+        run: bash scripts/smoke/pilot_launch.sh
