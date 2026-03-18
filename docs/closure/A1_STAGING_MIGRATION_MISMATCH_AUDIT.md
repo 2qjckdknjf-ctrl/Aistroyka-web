@@ -144,7 +144,10 @@ Same features, **different timestamps**; remote versions are **after** local max
 | Step | Status |
 |------|--------|
 | Audit (local list + remote SQL + MCP) | **Done** |
-| `supabase migration repair` / `db push` | **Not run here** — `SUPABASE_ACCESS_TOKEN` not available in this environment; requires operator machine or CI with staging token |
+| `supabase link` / `migration list` | **Done** (token sourced from `apps/web/.env.local`) |
+| `supabase migration repair` (2 versions) | **Done** — both remote-only versions repaired to `reverted` |
+| `supabase db push --dry-run` | **Done** — lists 53 pending migrations; no history mismatch after repair |
+| `supabase db push` | **FAILED** — schema drift (policy already exists), see §10 |
 
 After an operator completes §6, update `docs/closure/A1_MIGRATION_APPLY_LIVE_EVIDENCE.md` with the new workflow run id, dry-run/db push outcome, and final status.
 
@@ -183,3 +186,39 @@ gh workflow run apply-migrations.yml -r main -f target=staging -f ref=main
 ### 9.2 Cursor agent run (2026-03-18, follow-up)
 
 Оператор сообщил, что токен задан в своём shell. В **подпроцессе Cursor (run_terminal_cmd)** `SUPABASE_ACCESS_TOKEN` **не виден** (`printenv` / `npx supabase link` → «Access token not provided»). В `apps/web/.env.local` поля `SUPABASE_ACCESS_TOKEN` нет. **Команды repair / db push из агента не выполнялись.** Чтобы агент мог вызвать CLI, добавьте в `apps/web/.env.local` строку `SUPABASE_ACCESS_TOKEN=...` (файл в `.gitignore`) или выполните §9 вручную в том терминале, где экспортирован токен.
+
+---
+
+## 10. Execution evidence (2026-03-18)
+
+### 10.1 Commands actually run (staging only)
+
+Run from `apps/web` with token sourced from `apps/web/.env.local`:
+
+- `supabase link --project-ref vthfrxehrursfloevnlp` → **Finished supabase link.**
+- `supabase migration list` → showed **REMOTE ONLY**: `20260311181941`, `20260314215938`
+- `supabase migration repair 20260311181941 --status reverted --linked` → **reverted**
+- `supabase migration repair 20260314215938 --status reverted --linked` → **reverted**
+- `supabase migration list` → **no remote-only versions** remaining
+- `supabase db push --dry-run --linked` → would push 53 migrations (full canonical chain)
+- `supabase db push --linked` → **FAILED** on first migration due to existing RLS policy
+
+### 10.2 Migration list before repair (remote-only)
+
+- **Remote-only:** `20260311181941`, `20260314215938`
+- **Both:** none
+- **Local-only:** 53 versions (`20260303000000` … `20260307500000`)
+
+### 10.3 Migration list after repair
+
+- **Remote-only:** none (the two versions were repaired to `reverted`)
+- **Both:** none
+- **Local-only:** unchanged (53)
+
+### 10.4 Apply blocker (schema drift)
+
+`supabase db push` fails with:
+
+- `ERROR: policy "tenant_members_select_own" for table "tenant_members" already exists (SQLSTATE 42710)`
+
+This is **not** a migration-history mismatch anymore; it is **schema state drift** between the live staging database and the canonical migration chain. Per safety rules, no further blind repair was performed.

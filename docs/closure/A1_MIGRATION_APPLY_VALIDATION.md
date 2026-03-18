@@ -56,10 +56,10 @@ Workflow validation is **complete** by inspection and runbook alignment.
 
 | Run type | Executed | Evidence / blocker |
 |----------|----------|--------------------|
-| Staging workflow run | **Partial** | Workflow reaches dry-run; **blocked** by staging migration history mismatch until operator runs CLI repair per `A1_STAGING_MIGRATION_MISMATCH_AUDIT.md`. |
+| Staging workflow run | **Partial** | Workflow now reaches apply; **blocked** by schema drift (existing RLS policy) during `supabase db push`. History mismatch for remote-only versions was repaired to `reverted`; see `A1_STAGING_MIGRATION_MISMATCH_AUDIT.md` §10 and run `23239004913`. |
 | Production workflow run | **NO** | Not attempted. |
 
-**Blocker for full staging success:** Staging DB `schema_migrations` lists `20260311181941` and `20260314215938`; repo has neither file (canonical equivalents: `20260306900000`, `20260307500000`). See `docs/closure/A1_STAGING_MIGRATION_MISMATCH_AUDIT.md` for LOCAL ONLY / REMOTE ONLY / BOTH and official `migration repair` steps.
+**Blocker for full staging success (current):** `supabase db push` fails because policy `tenant_members_select_own` on `public.tenant_members` already exists (SQLSTATE 42710). This indicates staging schema drift vs the canonical migration chain. Do not blind-repair beyond the two known versions; resolve drift explicitly (e.g. align policy creation to be idempotent, or reconcile existing policy definition) before re-running apply.
 
 ---
 

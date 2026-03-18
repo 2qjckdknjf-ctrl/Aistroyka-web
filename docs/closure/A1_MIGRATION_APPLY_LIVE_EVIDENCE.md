@@ -9,10 +9,10 @@
 
 | Run type | Executed | Evidence |
 |----------|----------|----------|
-| Staging workflow run | **Partial** | Run **23236902939** (2026-03-18): secrets → checkout → sanity → Supabase CLI → link → preflight **PASS**; **dry-run FAIL** (migration history mismatch). Use `ref=main` for staging so `scripts/release/` exists. |
+| Staging workflow run | **Partial** | Run **23236902939** (2026-03-18): dry-run **FAIL** (history mismatch). Run **23239004913** (2026-03-18): dry-run **PASS**, **apply FAIL** (schema drift: existing policy). Use `ref=main` for staging so `scripts/release/` exists. |
 | Production workflow run | **NO** | — |
 
-**Current A1 blocker (staging):** Remote `schema_migrations` has two versions **not present** in repo (`20260311181941`, `20260314215938`); repo has 53 canonical files with no overlap. Full audit and **CASE B** repair steps: `docs/closure/A1_STAGING_MIGRATION_MISMATCH_AUDIT.md` (§9 operator commands with `--linked`). **2026-03-18:** End-to-end from Cursor **still blocked**: токен в **личном** shell оператора не попадает в **env процесса агента**; без `SUPABASE_ACCESS_TOKEN` в `.env.local` (apps/web) или ручного прогона §9 — repair / `db push` / новый зелёный workflow run из агента **не выполнялись**.
+**Current A1 blocker (staging):** **Schema drift** during apply. Migration history mismatch for the two remote-only versions was repaired (`20260311181941`, `20260314215938` → reverted), dry-run now passes, but **apply fails** because `tenant_members_select_own` policy already exists (SQLSTATE 42710). Full evidence and CLI output summary: `docs/closure/A1_STAGING_MIGRATION_MISMATCH_AUDIT.md` §10.
 
 **Blocker for automated live run (historical):** Where GitHub/gh secrets are unavailable, staging runs cannot be triggered from automation alone.
 
