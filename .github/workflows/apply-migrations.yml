@@ -51,16 +51,13 @@ jobs:
         with:
           ref: ${{ github.event.inputs.ref || (github.event.inputs.target == 'production' && 'main' || 'develop') }}
 
-      - name: Setup Supabase CLI
-        uses: supabase/setup-cli@v1
-        with:
-        version: latest
       - name: Migration sanity check
         run: bash scripts/release/check-migrations.sh
+
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
         with:
-        version: latest 
+          version: latest
 
       - name: Link Supabase project
         working-directory: apps/web
