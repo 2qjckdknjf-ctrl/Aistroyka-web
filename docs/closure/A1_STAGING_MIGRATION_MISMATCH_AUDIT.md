@@ -179,3 +179,7 @@ gh workflow run apply-migrations.yml -r main -f target=staging -f ref=main
 | GitHub `gh` | Authenticated on operator machine in some sessions; **irrelevant until CLI path completes** |
 
 **Exact blocker:** Staging mismatch resolution requires a **Supabase personal access token** in the shell. Cursor/agent execution environment had **no** token; no blind DB changes were made.
+
+### 9.2 Cursor agent run (2026-03-18, follow-up)
+
+Оператор сообщил, что токен задан в своём shell. В **подпроцессе Cursor (run_terminal_cmd)** `SUPABASE_ACCESS_TOKEN` **не виден** (`printenv` / `npx supabase link` → «Access token not provided»). В `apps/web/.env.local` поля `SUPABASE_ACCESS_TOKEN` нет. **Команды repair / db push из агента не выполнялись.** Чтобы агент мог вызвать CLI, добавьте в `apps/web/.env.local` строку `SUPABASE_ACCESS_TOKEN=...` (файл в `.gitignore`) или выполните §9 вручную в том терминале, где экспортирован токен.

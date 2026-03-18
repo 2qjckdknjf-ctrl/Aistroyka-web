@@ -68,7 +68,7 @@ Workflow validation is **complete** by inspection and runbook alignment.
 - **Staging dry-run / db push:** Migration history mismatch (documented audit + CASE B repair path). Not a workflow defect.
 - **GitHub environment enforcement proof:** May still require operator verification in Settings (Environments, protection rules).
 
-Repo workflow and scripts are aligned; remaining work is **Supabase CLI on staging** (personal access token in shell — **required**; absent in Cursor agent env 2026-03-18) per `A1_STAGING_MIGRATION_MISMATCH_AUDIT.md` §9, then re-run Actions.
+Repo workflow and scripts are aligned; staging repair требует CLI с токеном. **2026-03-18:** токен в терминале пользователя ≠ env агента Cursor — см. `A1_STAGING_MIGRATION_MISMATCH_AUDIT.md` §9.2; либо `.env.local` с `SUPABASE_ACCESS_TOKEN`, либо ручной прогон §9 + `gh workflow run`.
 
 ---
 
