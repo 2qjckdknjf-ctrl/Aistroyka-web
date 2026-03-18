@@ -9,7 +9,7 @@
 
 | Run type | Executed | Evidence |
 |----------|----------|----------|
-| Staging workflow run | **YES** | Run **23239792676** (2026-03-18): full **success** after history repair + idempotent migrations. **ref=main**, **target=staging**. |
+| Staging workflow run | **YES** | **23239792676** (apply fix) and **23239866842** (docs commit `44ce72d4`): both **success**, `ref=main`, `target=staging`. |
 | Production workflow run | **NO** | — |
 
 **Staging A1 path:** Closed for apply workflow. Evidence: `A1_STAGING_MIGRATION_MISMATCH_AUDIT.md` §10–11; commit `106e7233`.
@@ -62,9 +62,9 @@ After the first successful **staging** run, an operator should fill the evidence
 
 | Field | Value |
 |-------|--------|
-| Workflow run ID | 23239792676 |
-| Run URL | https://github.com/2qjckdknjf-ctrl/Aistroyka-web/actions/runs/23239792676 |
-| Commit SHA | 106e7233… (main) |
+| Workflow run ID | 23239866842 (latest green) |
+| Run URL | https://github.com/2qjckdknjf-ctrl/Aistroyka-web/actions/runs/23239866842 |
+| Commit SHA | 44ce72d4 (main) |
 | Branch / ref | main |
 | Target | staging |
 | Migration sanity | PASSED |

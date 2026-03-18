@@ -230,8 +230,8 @@ Then full `supabase db push --linked --yes` succeeded; `migration list` shows **
 
 | Field | Value |
 |-------|--------|
-| Run ID | **23239792676** |
-| URL | https://github.com/2qjckdknjf-ctrl/Aistroyka-web/actions/runs/23239792676 |
-| Commit | `106e7233` |
-| Result | **success** (dry-run + apply; db push no-op / already aligned) |
+| Run ID | **23239866842** (also **23239792676** on migration fix commit) |
+| URL | https://github.com/2qjckdknjf-ctrl/Aistroyka-web/actions/runs/23239866842 |
+| Commit | `44ce72d4` / `106e7233` |
+| Result | **success** (dry-run + apply; no pending migrations) |
 | Workflow change | `supabase db push --yes` and `db push --dry-run --yes` for non-interactive CI |
