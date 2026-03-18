@@ -10,6 +10,8 @@ comment on table public.processed_stripe_events is 'Stripe webhook event ids alr
 
 alter table public.processed_stripe_events enable row level security;
 
+drop policy if exists processed_stripe_events_service_role on public.processed_stripe_events;
+
 -- Only service role (backend) can access this table.
 create policy processed_stripe_events_service_role on public.processed_stripe_events
   for all using (auth.role() = 'service_role');

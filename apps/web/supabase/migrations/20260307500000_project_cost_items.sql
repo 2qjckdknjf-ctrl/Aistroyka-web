@@ -23,6 +23,7 @@ create index if not exists idx_project_cost_items_tenant on public.project_cost_
 create index if not exists idx_project_cost_items_milestone on public.project_cost_items(milestone_id) where milestone_id is not null;
 
 alter table public.project_cost_items enable row level security;
+drop policy if exists project_cost_items_tenant on public.project_cost_items;
 create policy project_cost_items_tenant on public.project_cost_items for all using (
   tenant_id in (select tenant_id from public.tenant_members where user_id = auth.uid())
   or tenant_id in (select id from public.tenants where user_id = auth.uid())
@@ -35,6 +36,7 @@ begin
   return new;
 end;
 $$ language plpgsql;
+drop trigger if exists project_cost_items_updated_at on public.project_cost_items;
 create trigger project_cost_items_updated_at before update on public.project_cost_items
   for each row execute function public.set_project_cost_items_updated_at();
 

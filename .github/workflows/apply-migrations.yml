@@ -83,7 +83,7 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |
           echo "--- DRY RUN: migrations that would be applied (no DB changes) ---"
-          supabase db push --dry-run
+          supabase db push --dry-run --yes
           echo "--- END DRY RUN ---"
 
       - name: Apply migrations (db push)
@@ -92,7 +92,7 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |
           echo "--- APPLY BOUNDARY: real db push below ---"
-          supabase db push
+          supabase db push --yes
           echo "--- APPLY COMPLETE ---"
 
       - name: Post-apply summary

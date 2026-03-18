@@ -20,6 +20,8 @@ create index if not exists idx_project_milestones_target on public.project_miles
 
 alter table public.project_milestones enable row level security;
 
+drop policy if exists project_milestones_tenant on public.project_milestones;
+
 create policy project_milestones_tenant on public.project_milestones for all using (
   tenant_id in (select tenant_id from public.tenant_members where user_id = auth.uid())
   or tenant_id in (select id from public.tenants where user_id = auth.uid())

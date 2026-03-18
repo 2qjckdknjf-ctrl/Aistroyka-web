@@ -10,6 +10,9 @@ create table if not exists public.tenants (
 );
 create unique index if not exists idx_tenants_user_id on public.tenants(user_id) where user_id is not null;
 alter table public.tenants enable row level security;
+drop policy if exists "tenants_select_own_or_member" on public.tenants;
+drop policy if exists "tenants_insert_service" on public.tenants;
+drop policy if exists "tenants_update_service" on public.tenants;
 create policy "tenants_select_own_or_member" on public.tenants for select using (
   id in (select tenant_id from public.tenant_members where user_id = auth.uid()) or user_id = auth.uid()
 );
@@ -27,6 +30,9 @@ create table if not exists public.tenant_members (
 create index if not exists idx_tenant_members_tenant_id on public.tenant_members(tenant_id);
 create index if not exists idx_tenant_members_user_id on public.tenant_members(user_id);
 alter table public.tenant_members enable row level security;
+drop policy if exists "tenant_members_select_own" on public.tenant_members;
+drop policy if exists "tenant_members_insert_service" on public.tenant_members;
+drop policy if exists "tenant_members_update_service" on public.tenant_members;
 create policy "tenant_members_select_own" on public.tenant_members for select using (
   tenant_id in (select tenant_id from public.tenant_members where user_id = auth.uid()) or user_id = auth.uid()
 );
@@ -41,6 +47,9 @@ create table if not exists public.projects (
 );
 create index if not exists idx_projects_tenant_id on public.projects(tenant_id);
 alter table public.projects enable row level security;
+drop policy if exists "projects_tenant" on public.projects;
+drop policy if exists "projects_insert_service" on public.projects;
+drop policy if exists "projects_update_service" on public.projects;
 create policy "projects_tenant" on public.projects for all using (
   tenant_id in (select tenant_id from public.tenant_members where user_id = auth.uid())
   or tenant_id in (select id from public.tenants where user_id = auth.uid())

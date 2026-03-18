@@ -13,6 +13,9 @@ create index if not exists idx_ai_policy_decisions_tenant_created on public.ai_p
 
 alter table public.ai_policy_decisions enable row level security;
 
+drop policy if exists ai_policy_decisions_tenant on public.ai_policy_decisions;
+drop policy if exists ai_policy_decisions_insert on public.ai_policy_decisions;
+
 create policy ai_policy_decisions_tenant on public.ai_policy_decisions for select using (
   tenant_id in (select tenant_id from public.tenant_members where user_id = auth.uid())
 );

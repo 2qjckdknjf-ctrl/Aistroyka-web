@@ -26,8 +26,12 @@ create table if not exists public.push_outbox (
   payload jsonb,
   status text not null default 'queued' check (status in ('queued', 'sent', 'failed')),
   attempts int not null default 0,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  device_id text
 );
+
+alter table public.push_outbox add column if not exists device_id text;
+comment on column public.push_outbox.device_id is 'When set, push_send delivers only to this device; enables one row per device and (task_id, user_id, device_id, type) dedupe.';
 
 create index if not exists idx_push_outbox_status on public.push_outbox(status) where status = 'queued';
 

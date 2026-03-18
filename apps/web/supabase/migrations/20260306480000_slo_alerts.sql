@@ -26,6 +26,9 @@ create index if not exists idx_alerts_unresolved on public.alerts(tenant_id, res
 alter table public.slo_daily enable row level security;
 alter table public.alerts enable row level security;
 
+drop policy if exists slo_daily_admin on public.slo_daily;
+drop policy if exists alerts_admin on public.alerts;
+
 create policy slo_daily_admin on public.slo_daily for select using (
   tenant_id in (select tenant_id from public.tenant_members where user_id = auth.uid() and role in ('owner','admin'))
 );
