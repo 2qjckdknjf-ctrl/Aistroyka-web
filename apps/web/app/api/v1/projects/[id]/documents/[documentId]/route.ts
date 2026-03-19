@@ -92,8 +92,12 @@ export async function PATCH(
     milestone_id: typeof body.milestone_id === "string" ? body.milestone_id : undefined,
   });
 
-  if (error && error !== "Document not found" && error !== "Project not found")
+  if (error && error !== "Document not found" && error !== "Project not found") {
+    if (error === "invalid_status_transition" || error === "invalid_object_path_update") {
+      return NextResponse.json({ error }, { status: 400 });
+    }
     return NextResponse.json({ error }, { status: 403 });
+  }
   if (error === "Document not found" || error === "Project not found")
     return NextResponse.json({ error }, { status: 404 });
   if (!data) return NextResponse.json({ error: "Update failed" }, { status: 500 });

@@ -92,6 +92,22 @@ describe("context-budget", () => {
       );
       expect(result.meta.context_tokens_estimated).toBeGreaterThan(0);
     });
+
+    it("uses historical summary (chat stream inline shape) and reports summary_used", () => {
+      const historicalSummary = "Earlier conversation (2 messages): user: Hello | assistant: Hi there";
+      const result = applyContextBudget({
+        summary: historicalSummary,
+        memoryChunks: [],
+        recentMessages: [
+          { role: "user", content: "Last user" },
+          { role: "assistant", content: "Last assistant" },
+        ],
+        currentUserMessage: "Current question",
+      });
+      expect(result.summary).toBe(historicalSummary);
+      expect(result.meta.summary_used).toBeGreaterThan(0);
+      expect(result.meta.memory_chunks_count).toBe(0);
+    });
   });
 
   describe("applyBriefContextBudget", () => {

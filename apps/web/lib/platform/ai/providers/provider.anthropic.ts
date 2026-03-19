@@ -46,16 +46,18 @@ export async function invokeVision(
 
   const resolvedModel = options?.model ?? model;
   const maxTokens = options?.maxTokens ?? 1024;
+  const systemPrompt = options?.systemPrompt ?? CONSTRUCTION_VISION_SYSTEM_PROMPT;
+  const userMessage = options?.userMessage ?? CONSTRUCTION_VISION_USER_MESSAGE;
 
   const body = {
     model: resolvedModel,
     max_tokens: maxTokens,
-    system: CONSTRUCTION_VISION_SYSTEM_PROMPT,
+    system: systemPrompt,
     messages: [
       {
         role: "user" as const,
         content: [
-          { type: "text" as const, text: CONSTRUCTION_VISION_USER_MESSAGE },
+          { type: "text" as const, text: userMessage },
           {
             type: "image" as const,
             source: { type: "url" as const, url: imageUrl },

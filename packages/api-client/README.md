@@ -1,6 +1,8 @@
 # @aistroyka/api-client
 
-Minimal typed TypeScript client for Aistroyka API v1. Reference implementation for web; mobile teams can generate Swift/Kotlin from OpenAPI (see repo docs).
+**Role:** Optional TypeScript SDK for **external** API consumers and reference usage. The `apps/web` app does **not** depend on this package at runtime (see `docs/architecture/CORE_B4_PACKAGE_NAMING_ALIGNMENT.md`).
+
+Minimal typed TypeScript client for Aistroyka API v1. Mobile teams can generate Swift/Kotlin from OpenAPI (see repo docs).
 
 ## Usage
 

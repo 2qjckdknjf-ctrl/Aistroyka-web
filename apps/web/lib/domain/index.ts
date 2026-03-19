@@ -16,3 +16,5 @@ export * from "./documents/document.types";
 export * from "./documents/document.service";
 export * from "./costs/cost.types";
 export * from "./costs/cost.service";
+export * from "./estimate/estimate.types";
+export * from "./estimate/estimate.service";

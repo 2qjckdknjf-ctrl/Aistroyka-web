@@ -10,6 +10,7 @@
     "lint": "next lint",
     "check:design": "node scripts/check-raw-colors.mjs",
     "test": "vitest run --maxWorkers=1",
+    "test:manager-layer": "bun test lib/dashboard/alert-destinations.test.ts lib/dashboard/priority-actions.test.ts lib/intelligence/next-action-href.test.ts",
     "e2e": "playwright test",
     "test:e2e": "playwright test",
     "postinstall": "node scripts/link-next-if-workspace.cjs",

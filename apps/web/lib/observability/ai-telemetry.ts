@@ -1,8 +1,10 @@
 /**
- * Phase 8 — AI route telemetry. Safe metadata only; no prompts/secrets.
+ * Phase 8 — AI route telemetry. Safe metadata only; no prompts/secrets/raw user text.
  */
 
+import { getBuildStamp } from "@/lib/config/public";
 import { logStructured } from "./logger";
+import type { IntelligenceDiagnosticsPayload } from "./intelligence-diagnostics";
 
 export type AIErrorKind =
   | "auth_failure"
@@ -20,6 +22,13 @@ export type AIErrorKind =
   | "cancellation"
   | "unknown_internal_error";
 
+export type CopilotStreamLifecycle =
+  | "stream_started"
+  | "first_token"
+  | "stream_completed"
+  | "stream_error"
+  | "stream_cancelled";
+
 export interface AITelemetryBase {
   request_id: string;
   route: string;
@@ -28,6 +37,9 @@ export interface AITelemetryBase {
   user_id?: string | null;
   latency_ms: number;
   output_type: "copilot" | "intelligence" | "vision";
+  /** Release correlation (optional) */
+  build_sha7?: string;
+  app_env?: string;
 }
 
 export interface CopilotStreamTelemetry extends AITelemetryBase {
@@ -42,6 +54,8 @@ export interface CopilotStreamTelemetry extends AITelemetryBase {
   cancellation_detected?: boolean;
   error_kind?: AIErrorKind | null;
   retryable?: boolean;
+  /** Ms from stream start to first model token */
+  first_token_ms?: number | null;
 }
 
 export interface IntelligenceTelemetry extends AITelemetryBase {
@@ -50,6 +64,7 @@ export interface IntelligenceTelemetry extends AITelemetryBase {
   health_score?: number;
   insights_count?: number;
   missing_data_disclaimer?: boolean;
+  intelligence_diagnostics?: IntelligenceDiagnosticsPayload;
 }
 
 export interface VisionTelemetry extends AITelemetryBase {
@@ -57,6 +72,37 @@ export interface VisionTelemetry extends AITelemetryBase {
   provider?: string;
   result_status: "success" | "failure";
   error_kind?: AIErrorKind | null;
+  media_id?: string | null;
+}
+
+const LIFECYCLE_EVENTS: Record<CopilotStreamLifecycle, string> = {
+  stream_started: "ai_copilot_stream_started",
+  first_token: "ai_copilot_stream_first_token",
+  stream_completed: "ai_copilot_stream_finished",
+  stream_error: "ai_copilot_stream_failed",
+  stream_cancelled: "ai_copilot_stream_cancelled",
+};
+
+export function logCopilotStreamLifecycle(
+  phase: CopilotStreamLifecycle,
+  payload: {
+    request_id: string;
+    route: string;
+    tenant_id?: string | null;
+    project_id?: string | null;
+    latency_ms?: number;
+    error_kind?: AIErrorKind;
+    retryable?: boolean;
+    first_token_ms?: number;
+    build_sha7?: string;
+    app_env?: string;
+  }
+): void {
+  logStructured({
+    event: LIFECYCLE_EVENTS[phase],
+    stream_phase: phase,
+    ...payload,
+  });
 }
 
 export function logCopilotStreamComplete(payload: CopilotStreamTelemetry): void {
@@ -74,6 +120,8 @@ export function logCopilotStreamError(payload: {
   latency_ms: number;
   error_kind: AIErrorKind;
   retryable: boolean;
+  build_sha7?: string;
+  app_env?: string;
 }): void {
   logStructured({
     event: "ai_copilot_stream_error",
@@ -95,6 +143,8 @@ export function logIntelligenceError(payload: {
   project_id?: string | null;
   latency_ms: number;
   error_kind: AIErrorKind;
+  build_sha7?: string;
+  app_env?: string;
 }): void {
   logStructured({
     event: "ai_intelligence_error",
@@ -116,6 +166,43 @@ export interface CopilotNonStreamTelemetry extends AITelemetryBase {
 export function logCopilotNonStreamComplete(payload: CopilotNonStreamTelemetry): void {
   logStructured({
     event: "ai_copilot_non_stream_complete",
+    ...payload,
+  });
+}
+
+export function logVisionAnalyzeComplete(payload: VisionTelemetry): void {
+  logStructured({
+    event: "ai_vision_analyze_complete",
+    ...payload,
+  });
+}
+
+/** Build / environment fields for release correlation (safe for logs). */
+export function getAiReleaseCorrelation(): { build_sha7?: string; app_env?: string } {
+  const { sha } = getBuildStamp();
+  const appEnv =
+    (typeof process.env.NEXT_PUBLIC_APP_ENV === "string" && process.env.NEXT_PUBLIC_APP_ENV.trim()) ||
+    process.env.NODE_ENV ||
+    "";
+  return {
+    ...(sha && { build_sha7: sha.slice(0, 7) }),
+    ...(appEnv && { app_env: appEnv }),
+  };
+}
+
+export function logVisionAnalyzeError(payload: {
+  request_id: string;
+  route: string;
+  tenant_id?: string | null;
+  project_id?: string | null;
+  latency_ms: number;
+  error_kind: AIErrorKind;
+  http_status?: number;
+  build_sha7?: string;
+  app_env?: string;
+}): void {
+  logStructured({
+    event: "ai_vision_analyze_error",
     ...payload,
   });
 }

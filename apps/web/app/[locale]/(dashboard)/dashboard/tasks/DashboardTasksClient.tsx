@@ -73,6 +73,7 @@ export function DashboardTasksClient() {
   const fetchTasks = useCallback(() => {
     const qs = new URLSearchParams();
     if (params.project_id) qs.set("project_id", params.project_id);
+    if (params.worker_id) qs.set("assigned_to", params.worker_id);
     if (params.from) qs.set("from", params.from);
     if (params.to) qs.set("to", params.to);
     if (params.status) qs.set("status", params.status);
@@ -97,12 +98,19 @@ export function DashboardTasksClient() {
         setTotal(0);
       })
       .finally(() => setLoading(false));
-  }, [params.project_id, params.from, params.to, params.status, params.q, params.page, params.pageSize]);
+  }, [params.project_id, params.worker_id, params.from, params.to, params.status, params.q, params.page, params.pageSize]);
 
   useEffect(() => {
     fetch("/api/v1/projects", { credentials: "include" })
       .then((r) => (r.ok ? r.json() : { data: [] }))
       .then((json: { data?: { id: string; name: string }[] }) => setProjects(json.data ?? []));
+  }, []);
+
+  const [workersForFilter, setWorkersForFilter] = useState<{ user_id: string }[]>([]);
+  useEffect(() => {
+    fetch("/api/v1/workers", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : { data: [] }))
+      .then((json: { data?: { user_id: string }[] }) => setWorkersForFilter(json.data ?? []));
   }, []);
 
   useEffect(() => {
@@ -208,8 +216,9 @@ export function DashboardTasksClient() {
     <>
       <FilterBar
         projects={projects}
+        workers={workersForFilter}
         showProject={true}
-        showWorker={false}
+        showWorker={true}
         showDateRange={true}
         showStatus={true}
         statusOptions={STATUS_OPTIONS}

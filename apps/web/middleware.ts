@@ -1,7 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import createIntlMiddleware from "next-intl/middleware";
 import { updateSession } from "@/lib/supabase/middleware";
-import { getAppUrl } from "@/lib/app-url";
 import { routing } from "@/i18n/routing";
 import { checkLiteAllowList } from "@/lib/api/lite-allow-list";
 
@@ -50,13 +49,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const host = request.headers.get("host") ?? "";
-  if (isProduction && host.startsWith("www.")) {
-    const url = request.nextUrl;
-    const target = new URL(url.pathname + url.search, getAppUrl());
-    const redirect = NextResponse.redirect(target, 308);
-    return applySecurityHeaders(redirect, isProduction);
-  }
+  // Domain canonicalization (www vs apex) is handled only by Vercel Domains; no host-based redirects here.
 
   if (pathname === "/dashboard" || pathname === "/dashboard/") {
     const redir = NextResponse.redirect(new URL("/en/dashboard", request.url), 308);

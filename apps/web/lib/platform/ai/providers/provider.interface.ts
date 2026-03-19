@@ -12,6 +12,10 @@ export interface VisionResult {
 export interface VisionOptions {
   model?: string;
   maxTokens?: number;
+  /** Override system prompt (e.g. cost-estimate vision). */
+  systemPrompt?: string;
+  /** Override user message (e.g. cost-estimate vision). */
+  userMessage?: string;
 }
 
 export type AIProvider = {

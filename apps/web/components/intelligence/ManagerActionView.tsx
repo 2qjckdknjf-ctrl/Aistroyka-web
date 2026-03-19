@@ -119,10 +119,11 @@ export function ManagerActionView({
         aria-label="Manager actions"
       >
         <h3 className="text-base font-semibold text-aistroyka-text-primary">
-          What needs attention
+          Intelligence actions
         </h3>
         <p className="mt-2 text-sm text-aistroyka-text-secondary">
-          Nothing urgent. Continue monitoring.
+          No prioritized intelligence items yet (missing evidence, risks, or recommendations). This is
+          separate from the Operations queue on the dashboard home.
         </p>
         <Link
           href={`/dashboard/projects/${projectId}`}
@@ -169,7 +170,7 @@ export function ManagerActionView({
                 href={a.href}
                 className="mt-1.5 inline-block text-sm font-medium text-aistroyka-accent hover:underline"
               >
-                Open →
+                Act →
               </Link>
             )}
           </li>

@@ -1,5 +1,5 @@
 /**
- * AISTROYKA Design System — Color palette
+ * Aistroyka design system — color palette
  * Modern AI SaaS: dark theme with construction yellow accent
  */
 

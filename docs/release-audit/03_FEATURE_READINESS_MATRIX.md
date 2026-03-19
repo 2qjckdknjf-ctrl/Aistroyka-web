@@ -52,8 +52,8 @@
 
 | Subsystem | Status | Evidence | Risk | Release decision | Remediation |
 |-----------|--------|----------|------|------------------|-------------|
-| Manager app (iOS) | READY_WITH_RISK | AiStroykaWorker, Views/Services; git shows active changes | Medium | Pilot | Validate against prod API |
-| Worker Lite (iOS) | PARTIAL | WorkerLite → AiStroykaWorker rename in progress; deleted files in git | High | No pilot until rename stable | Complete rename, smoke test |
+| Manager app (iOS/Android) | READY_WITH_RISK | **AiStroykaManager**; Views/Services under ios/android; git may show active changes | Medium | Pilot | Validate against prod API |
+| Worker app (iOS/Android) | READY_WITH_RISK | **AiStroykaWorker** is canonical field-worker app; legacy **WorkerLite** tree is historical (removed from repo) | Medium | Pilot | Smoke on AiStroykaWorker against prod API |
 | Auth | READY_WITH_RISK | Session persistence via Supabase; x-client ios_lite/ios_manager | Medium | Validate token refresh on app resume | — |
 | Sync | READY | v1/sync/bootstrap, changes, ack | Low | Ship | — |
 | Offline assumptions | UNKNOWN_REQUIRES_RUNTIME_VALIDATION | No offline queue audited in this run | Medium | Document expected behavior | — |

@@ -20,17 +20,19 @@ export async function invokeVision(
   const apiKey = config.OPENAI_API_KEY?.trim();
   if (!apiKey) return null;
   const model = options?.model ?? config.OPENAI_VISION_MODEL ?? "gpt-4o";
+  const systemPrompt = options?.systemPrompt ?? CONSTRUCTION_VISION_SYSTEM_PROMPT;
+  const userMessage = options?.userMessage ?? CONSTRUCTION_VISION_USER_MESSAGE;
   const body = {
     model,
     response_format: { type: "json_object" as const },
     max_tokens: options?.maxTokens ?? 1024,
     temperature: 0,
     messages: [
-      { role: "system" as const, content: CONSTRUCTION_VISION_SYSTEM_PROMPT },
+      { role: "system" as const, content: systemPrompt },
       {
         role: "user" as const,
         content: [
-          { type: "text" as const, text: CONSTRUCTION_VISION_USER_MESSAGE },
+          { type: "text" as const, text: userMessage },
           { type: "image_url" as const, image_url: { url: imageUrl } },
         ],
       },

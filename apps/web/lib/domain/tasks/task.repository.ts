@@ -131,6 +131,7 @@ export async function update(
 /** List tasks for manager (tenant-scoped, optional filters). */
 export interface ListTasksFilters {
   project_id?: string;
+  assigned_to?: string;
   from?: string;
   to?: string;
   status?: string;
@@ -151,6 +152,12 @@ export async function list(
 ): Promise<ListTasksResult> {
   const limit = Math.min(filters.limit ?? 50, 100);
   const offset = Math.max(0, filters.offset ?? 0);
+  const assignedToUserId = filters.assigned_to?.trim();
+  let assignedIds: string[] = [];
+  if (assignedToUserId) {
+    assignedIds = await getAssignedTaskIds(supabase, tenantId, assignedToUserId);
+  }
+
   let q = supabase
     .from("worker_tasks")
     .select("id, project_id, title, description, status, assigned_to, due_date, milestone_id, required_photos, report_required, created_at, updated_at", { count: "exact" })
@@ -159,6 +166,13 @@ export async function list(
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
   if (filters.project_id?.trim()) q = q.eq("project_id", filters.project_id.trim());
+  if (assignedToUserId) {
+    if (assignedIds.length > 0) {
+      q = q.or(`assigned_to.eq.${assignedToUserId},id.in.(${assignedIds.join(",")})`);
+    } else {
+      q = q.eq("assigned_to", assignedToUserId);
+    }
+  }
   if (filters.from?.trim()) q = q.gte("due_date", filters.from.trim().slice(0, 10));
   if (filters.to?.trim()) q = q.lte("due_date", filters.to.trim().slice(0, 10));
   if (filters.status?.trim()) q = q.eq("status", filters.status.trim());

@@ -24,6 +24,7 @@ import { ProjectIntelligenceClient } from "./ProjectIntelligenceClient";
 import { ProjectSchedulePanel } from "./ProjectSchedulePanel";
 import { ProjectDocumentsPanel } from "./ProjectDocumentsPanel";
 import { ProjectCostsPanel } from "./ProjectCostsPanel";
+import { ProjectEstimatePanel } from "./ProjectEstimatePanel";
 
 const PAGE_SIZE = 10;
 
@@ -63,6 +64,15 @@ async function fetchProjectWorkers(projectId: string, page: number): Promise<{ d
   return res.json();
 }
 
+async function fetchProjectContractors(projectId: string, page: number): Promise<{ data: { user_id: string; role: string; status: string; created_at: string }[]; total: number }> {
+  const res = await fetch(
+    `/api/v1/projects/${projectId}/workers?role=contractor&limit=${PAGE_SIZE}&offset=${(page - 1) * PAGE_SIZE}`,
+    { credentials: "include" }
+  );
+  if (!res.ok) return { data: [], total: 0 };
+  return res.json();
+}
+
 async function fetchProjectReports(projectId: string, page: number): Promise<{ data: { id: string; user_id: string; status: string; created_at: string; submitted_at: string | null }[]; total: number }> {
   const res = await fetch(
     `/api/v1/projects/${projectId}/reports?limit=${PAGE_SIZE}&offset=${(page - 1) * PAGE_SIZE}`,
@@ -94,24 +104,31 @@ export function DashboardProjectDetailClient({ projectId }: { projectId: string 
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab");
   const [activeTab, setActiveTab] = useState(
-    tabParam === "intelligence"
-      ? "intelligence"
-      : tabParam === "schedule"
-        ? "schedule"
-        : tabParam === "documents"
-          ? "documents"
-          : tabParam === "costs"
-            ? "costs"
-            : "workers"
+    tabParam === "contractors"
+      ? "contractors"
+      : tabParam === "intelligence"
+        ? "intelligence"
+        : tabParam === "schedule"
+          ? "schedule"
+          : tabParam === "documents"
+            ? "documents"
+            : tabParam === "costs"
+              ? "costs"
+              : tabParam === "estimate"
+                ? "estimate"
+                : "workers"
   );
 
   useEffect(() => {
-    if (tabParam === "intelligence") setActiveTab("intelligence");
+    if (tabParam === "contractors") setActiveTab("contractors");
+    else if (tabParam === "intelligence") setActiveTab("intelligence");
     else if (tabParam === "schedule") setActiveTab("schedule");
     else if (tabParam === "documents") setActiveTab("documents");
     else if (tabParam === "costs") setActiveTab("costs");
+    else if (tabParam === "estimate") setActiveTab("estimate");
   }, [tabParam]);
   const [workersPage, setWorkersPage] = useState(1);
+  const [contractorsPage, setContractorsPage] = useState(1);
   const [reportsPage, setReportsPage] = useState(1);
   const [uploadsPage, setUploadsPage] = useState(1);
   const [aiPage, setAiPage] = useState(1);
@@ -130,6 +147,11 @@ export function DashboardProjectDetailClient({ projectId }: { projectId: string 
     queryKey: ["project-workers", projectId, workersPage],
     queryFn: () => fetchProjectWorkers(projectId, workersPage),
     enabled: !!projectId && activeTab === "workers",
+  });
+  const contractorsQuery = useQuery({
+    queryKey: ["project-contractors", projectId, contractorsPage],
+    queryFn: () => fetchProjectContractors(projectId, contractorsPage),
+    enabled: !!projectId && activeTab === "contractors",
   });
   const reportsQuery = useQuery({
     queryKey: ["project-reports", projectId, reportsPage],
@@ -213,6 +235,9 @@ export function DashboardProjectDetailClient({ projectId }: { projectId: string 
           <Tab id="tab-workers" selected={activeTab === "workers"} onSelect={() => setActiveTab("workers")} aria-controls="panel-workers">
             Workers
           </Tab>
+          <Tab id="tab-contractors" selected={activeTab === "contractors"} onSelect={() => setActiveTab("contractors")} aria-controls="panel-contractors">
+            Contractors
+          </Tab>
           <Tab id="tab-reports" selected={activeTab === "reports"} onSelect={() => setActiveTab("reports")} aria-controls="panel-reports">
             Reports
           </Tab>
@@ -234,6 +259,9 @@ export function DashboardProjectDetailClient({ projectId }: { projectId: string 
           <Tab id="tab-costs" selected={activeTab === "costs"} onSelect={() => setActiveTab("costs")} aria-controls="panel-costs">
             Costs
           </Tab>
+          <Tab id="tab-estimate" selected={activeTab === "estimate"} onSelect={() => setActiveTab("estimate")} aria-controls="panel-estimate">
+            Estimate
+          </Tab>
         </Tabs>
 
         <TabPanel id="panel-workers" selected={activeTab === "workers"} aria-labelledby="tab-workers">
@@ -242,6 +270,14 @@ export function DashboardProjectDetailClient({ projectId }: { projectId: string 
             query={workersQuery}
             page={workersPage}
             onPageChange={setWorkersPage}
+          />
+        </TabPanel>
+        <TabPanel id="panel-contractors" selected={activeTab === "contractors"} aria-labelledby="tab-contractors">
+          <ProjectContractorsPanel
+            projectId={projectId}
+            query={contractorsQuery}
+            page={contractorsPage}
+            onPageChange={setContractorsPage}
           />
         </TabPanel>
         <TabPanel id="panel-reports" selected={activeTab === "reports"} aria-labelledby="tab-reports">
@@ -276,6 +312,9 @@ export function DashboardProjectDetailClient({ projectId }: { projectId: string 
         </TabPanel>
         <TabPanel id="panel-costs" selected={activeTab === "costs"} aria-labelledby="tab-costs">
           <ProjectCostsPanel projectId={projectId} />
+        </TabPanel>
+        <TabPanel id="panel-estimate" selected={activeTab === "estimate"} aria-labelledby="tab-estimate">
+          <ProjectEstimatePanel projectId={projectId} />
         </TabPanel>
       </Card>
     </>
@@ -321,6 +360,75 @@ function ProjectWorkersPanel({
               <TableCell>{r.role}</TableCell>
               <TableCell>{r.status}</TableCell>
               <TableCell>{new Date(r.created_at).toLocaleDateString()}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+      <TablePagination
+        page={page}
+        pageSize={PAGE_SIZE}
+        totalCount={total}
+        onPageChange={onPageChange}
+      />
+    </div>
+  );
+}
+
+function ProjectContractorsPanel({
+  projectId,
+  query,
+  page,
+  onPageChange,
+}: {
+  projectId: string;
+  query: { data?: { data: { user_id: string; role: string; status: string; created_at: string }[]; total: number }; isPending: boolean; isError: boolean };
+  page: number;
+  onPageChange: (p: number) => void;
+}) {
+  if (query.isPending) return <Skeleton className="h-48" />;
+  if (query.isError) return <p className="text-aistroyka-text-secondary p-4">Failed to load contractors.</p>;
+  const { data: rows = [], total } = query.data ?? { data: [], total: 0 };
+  if (rows.length === 0 && total === 0) {
+    return (
+      <EmptyState
+        icon={<span className="text-2xl">📋</span>}
+        title="Contractors"
+        subtitle="No contractors on this project. Add members with role “contractor” in project workers."
+      />
+    );
+  }
+  return (
+    <div className="p-4">
+      <p className="text-aistroyka-caption text-aistroyka-text-secondary mb-3">
+        Project members with role <strong>contractor</strong>. Use links to view profile or tasks assigned to each.
+      </p>
+      <Table aria-label="Project contractors">
+        <TableHead>
+          <TableRow>
+            <TableHeaderCell>Contractor</TableHeaderCell>
+            <TableHeaderCell>Status</TableHeaderCell>
+            <TableHeaderCell>Created</TableHeaderCell>
+            <TableHeaderCell>Actions</TableHeaderCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {rows.map((r) => (
+            <TableRow key={r.user_id}>
+              <TableCell>
+                <Link href={`/dashboard/workers/${r.user_id}`} className="text-aistroyka-accent hover:underline font-mono text-sm">
+                  {r.user_id.slice(0, 8)}…
+                </Link>
+              </TableCell>
+              <TableCell>{r.status}</TableCell>
+              <TableCell>{new Date(r.created_at).toLocaleDateString()}</TableCell>
+              <TableCell>
+                <Link
+                  href={`/dashboard/tasks?worker_id=${encodeURIComponent(r.user_id)}&project_id=${encodeURIComponent(projectId)}`}
+                  className="text-aistroyka-caption text-aistroyka-accent hover:underline"
+                >
+                  View tasks
+                </Link>
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>

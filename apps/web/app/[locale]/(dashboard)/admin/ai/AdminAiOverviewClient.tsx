@@ -11,6 +11,7 @@ import { useAiUsageSummary } from "@/src/features/admin/ai/api/useAiUsageSummary
 import { useAiBreakerState } from "@/src/features/admin/ai/api/useAiBreakerState";
 import { useRecentIssues } from "@/src/features/admin/ai/api/useRecentIssues";
 import type { RecentIssueRow } from "@/src/features/admin/ai/api/adminAiApi";
+import { AdminAiRuntimePanel } from "./AdminAiRuntimePanel";
 
 function todayRange(): { from: string; to: string } {
   const to = new Date();
@@ -162,6 +163,8 @@ export function AdminAiOverviewClient() {
               )}
             </QueryBoundary>
           </section>
+
+          <AdminAiRuntimePanel tenantId={tenantId} />
         </>
       ) : null}
     </>

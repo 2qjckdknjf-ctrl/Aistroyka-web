@@ -15,9 +15,13 @@ import {
   type ChatContextInput,
 } from "@/lib/copilot/context-budget";
 import type { DecisionContextPayload } from "@/lib/engine/types";
-import { logCopilotStreamComplete, logCopilotStreamError } from "@/lib/observability/ai-telemetry";
+import {
+  logCopilotStreamComplete,
+  logCopilotStreamError,
+  logCopilotStreamLifecycle,
+  getAiReleaseCorrelation,
+} from "@/lib/observability/ai-telemetry";
 import { emitAiRuntimeAudit } from "@/lib/observability/audit.service";
-import { getBuildStamp } from "@/lib/config";
 
 export const dynamic = "force-dynamic";
 
@@ -248,8 +252,24 @@ export async function POST(
       });
 
       const abortCtrl = new AbortController();
-      const timeoutId = setTimeout(() => abortCtrl.abort(), 60_000);
+      let streamTimedOut = false;
+      const timeoutId = setTimeout(() => {
+        streamTimedOut = true;
+        abortCtrl.abort();
+      }, 60_000);
       request.signal?.addEventListener("abort", () => abortCtrl.abort());
+
+      const rel = getAiReleaseCorrelation();
+      logCopilotStreamLifecycle("stream_started", {
+        request_id: requestId,
+        route: "POST /api/v1/projects/:id/copilot/chat/stream",
+        tenant_id: tenantId,
+        project_id: projectId,
+        latency_ms: 0,
+        ...rel,
+      });
+
+      let firstTokenMs: number | null = null;
 
       try {
         const res = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -271,6 +291,16 @@ export async function POST(
           await res.text();
           const errorKind = res.status === 429 ? "rate_limit" : res.status === 504 ? "provider_timeout" : "provider_unavailable";
           const latencyMs = Date.now() - streamStartMs;
+          logCopilotStreamLifecycle("stream_error", {
+            request_id: requestId,
+            route: "POST /api/v1/projects/:id/copilot/chat/stream",
+            tenant_id: tenantId,
+            project_id: projectId,
+            latency_ms: latencyMs,
+            error_kind: errorKind,
+            retryable: res.status >= 500,
+            ...rel,
+          });
           logCopilotStreamError({
             request_id: requestId,
             route: "POST /api/v1/projects/:id/copilot/chat/stream",
@@ -279,6 +309,7 @@ export async function POST(
             latency_ms: latencyMs,
             error_kind: errorKind,
             retryable: res.status >= 500,
+            ...rel,
           });
           void emitAiRuntimeAudit(supabase, {
             tenant_id: tenantId,
@@ -293,6 +324,7 @@ export async function POST(
               output_type: "copilot",
               error_kind: errorKind,
               retryable: res.status >= 500,
+              ...rel,
             },
           });
           send("error", {
@@ -308,6 +340,16 @@ export async function POST(
         const reader = res.body?.getReader();
         if (!reader) {
           const latencyMs = Date.now() - streamStartMs;
+          logCopilotStreamLifecycle("stream_error", {
+            request_id: requestId,
+            route: "POST /api/v1/projects/:id/copilot/chat/stream",
+            tenant_id: tenantId,
+            project_id: projectId,
+            latency_ms: latencyMs,
+            error_kind: "stream_transport_failure",
+            retryable: true,
+            ...rel,
+          });
           logCopilotStreamError({
             request_id: requestId,
             route: "POST /api/v1/projects/:id/copilot/chat/stream",
@@ -316,6 +358,7 @@ export async function POST(
             latency_ms: latencyMs,
             error_kind: "stream_transport_failure",
             retryable: true,
+            ...rel,
           });
           void emitAiRuntimeAudit(supabase, {
             tenant_id: tenantId,
@@ -330,6 +373,7 @@ export async function POST(
               output_type: "copilot",
               error_kind: "stream_transport_failure",
               retryable: true,
+              ...rel,
             },
           });
           send("error", {
@@ -361,6 +405,18 @@ export async function POST(
                 const parsed = JSON.parse(data) as { choices?: Array<{ delta?: { content?: string } }> };
                 const delta = parsed.choices?.[0]?.delta?.content;
                 if (delta) {
+                  if (firstTokenMs === null) {
+                    firstTokenMs = Date.now() - streamStartMs;
+                    logCopilotStreamLifecycle("first_token", {
+                      request_id: requestId,
+                      route: "POST /api/v1/projects/:id/copilot/chat/stream",
+                      tenant_id: tenantId,
+                      project_id: projectId,
+                      latency_ms: firstTokenMs,
+                      first_token_ms: firstTokenMs,
+                      ...rel,
+                    });
+                  }
                   fullText += delta;
                   send("token", { delta });
                 }
@@ -411,6 +467,15 @@ export async function POST(
           context_trim_applied: budgeted.meta.context_trim_applied,
         });
         const latencyMs = Date.now() - streamStartMs;
+        logCopilotStreamLifecycle("stream_completed", {
+          request_id: requestId,
+          route: "POST /api/v1/projects/:id/copilot/chat/stream",
+          tenant_id: tenantId,
+          project_id: projectId,
+          latency_ms: latencyMs,
+          first_token_ms: firstTokenMs ?? undefined,
+          ...rel,
+        });
         logCopilotStreamComplete({
           request_id: requestId,
           route: "POST /api/v1/projects/:id/copilot/chat/stream",
@@ -426,8 +491,9 @@ export async function POST(
           memory_chunks_count: budgeted.meta.memory_chunks_count,
           summary_used: budgeted.meta.summary_used,
           provider: "openai",
+          first_token_ms: firstTokenMs,
+          ...rel,
         });
-        const { sha } = getBuildStamp();
         void emitAiRuntimeAudit(supabase, {
           tenant_id: tenantId,
           user_id: userId || null,
@@ -443,14 +509,34 @@ export async function POST(
             provider: "openai",
             context_tokens_estimated: budgeted.meta.context_tokens_estimated,
             context_trim_applied: budgeted.meta.context_trim_applied,
-            ...(sha && { build_sha7: sha.slice(0, 7) }),
+            first_token_ms: firstTokenMs,
+            ...rel,
           },
         });
       } catch (e) {
         const err = e as Error;
-        const isAbort = err.name === "AbortError" || err.message?.includes("timed out");
-        const errorKind = isAbort ? "cancellation" : "unknown_internal_error";
+        const isAbort = err.name === "AbortError" || err.message?.includes("aborted");
+        const clientGone = Boolean(request.signal?.aborted);
+        const errorKind =
+          isAbort && streamTimedOut && !clientGone
+            ? "provider_timeout"
+            : isAbort && clientGone
+              ? "cancellation"
+              : isAbort
+                ? "cancellation"
+                : "unknown_internal_error";
         const latencyMs = Date.now() - streamStartMs;
+        const life = errorKind === "cancellation" ? "stream_cancelled" : "stream_error";
+        logCopilotStreamLifecycle(life, {
+          request_id: requestId,
+          route: "POST /api/v1/projects/:id/copilot/chat/stream",
+          tenant_id: tenantId,
+          project_id: projectId,
+          latency_ms: latencyMs,
+          error_kind: errorKind,
+          retryable: errorKind === "provider_timeout",
+          ...rel,
+        });
         logCopilotStreamError({
           request_id: requestId,
           route: "POST /api/v1/projects/:id/copilot/chat/stream",
@@ -458,7 +544,8 @@ export async function POST(
           project_id: projectId,
           latency_ms: latencyMs,
           error_kind: errorKind,
-          retryable: isAbort,
+          retryable: errorKind === "provider_timeout",
+          ...rel,
         });
         void emitAiRuntimeAudit(supabase, {
           tenant_id: tenantId,
@@ -472,14 +559,15 @@ export async function POST(
             latency_ms: latencyMs,
             output_type: "copilot",
             error_kind: errorKind,
-            retryable: isAbort,
+            retryable: errorKind === "provider_timeout",
+            ...rel,
           },
         });
         send("error", {
           request_id: requestId,
-          retryable: isAbort,
+          retryable: errorKind === "provider_timeout",
           message: "Something went wrong",
-          kind: isAbort ? "timeout" : "unknown",
+          kind: errorKind === "provider_timeout" ? "timeout" : errorKind === "cancellation" ? "cancelled" : "unknown",
         });
 
         try {
@@ -490,7 +578,7 @@ export async function POST(
             role: "assistant",
             content: "Sorry, I encountered an error. Please try again.",
             request_id: requestId,
-            error_kind: isAbort ? "timeout" : "unknown",
+            error_kind: errorKind === "provider_timeout" ? "timeout" : errorKind === "cancellation" ? "cancelled" : "unknown",
           });
         } catch {
           // best-effort

@@ -89,7 +89,7 @@ export function DashboardApprovalsClient() {
               href={`/dashboard/reports/${r.id}`}
               className="flex flex-wrap items-center justify-between gap-2 p-4 hover:bg-aistroyka-surface-raised transition-colors"
             >
-              <div className="flex items-center gap-2 min-w-0">
+              <div className="flex flex-wrap items-center gap-2 min-w-0">
                 <span className="font-mono text-aistroyka-caption text-aistroyka-accent truncate">
                   {r.id.slice(0, 8)}…
                 </span>
@@ -97,6 +97,11 @@ export function DashboardApprovalsClient() {
                 <span className="text-aistroyka-caption text-aistroyka-text-tertiary">
                   Worker {r.user_id.slice(0, 8)}…
                 </span>
+                {r.project_id && (
+                  <span className="text-aistroyka-caption text-aistroyka-text-tertiary">
+                    · Project {r.project_id.slice(0, 8)}…
+                  </span>
+                )}
               </div>
               <span className="text-aistroyka-caption text-aistroyka-text-tertiary tabular-nums">
                 {r.submitted_at ? formatAge(r.submitted_at) : "—"}

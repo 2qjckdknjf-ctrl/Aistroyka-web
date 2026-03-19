@@ -11,6 +11,9 @@ vi.mock("@/lib/tenant", () => ({
   TenantRequiredError: class TenantRequiredError extends Error {},
   TenantForbiddenError: class TenantForbiddenError extends Error {},
 }));
+vi.mock("@/lib/config/public", () => ({
+  getBuildStamp: vi.fn().mockReturnValue({ sha: "abc1234", buildTime: "2026-03-01T00:00:00Z" }),
+}));
 vi.mock("@/lib/ops/ops-metrics.repository", () => ({
   getOpsMetrics: vi.fn().mockResolvedValue({
     uploads_stuck: 0,
@@ -45,6 +48,11 @@ describe("GET /api/v1/ops/metrics", () => {
       tasks_completed_today: 0,
       tasks_open_today: 0,
       tasks_overdue: 0,
+    });
+    expect(body.correlation).toBeDefined();
+    expect(body.correlation).toMatchObject({
+      build_sha: "abc1234",
+      build_time: "2026-03-01T00:00:00Z",
     });
     const { getOpsMetrics } = await import("@/lib/ops/ops-metrics.repository");
     expect(getOpsMetrics).toHaveBeenCalledWith(expect.anything(), "t1", expect.any(Object));

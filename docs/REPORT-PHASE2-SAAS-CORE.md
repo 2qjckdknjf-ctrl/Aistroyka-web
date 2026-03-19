@@ -1,6 +1,6 @@
 # Phase 2 — SaaS Core Completion and Cleanup
 
-**Project:** AISTROYKA.AI  
+**Project:** Aistroyka  
 **Phase:** Security hardening, admin/billing completeness, API cleanup, repo hygiene, ops/runbooks.  
 **Status:** Complete.
 

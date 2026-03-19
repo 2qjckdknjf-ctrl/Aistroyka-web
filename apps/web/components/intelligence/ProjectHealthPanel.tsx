@@ -53,6 +53,12 @@ export function ProjectHealthPanel({
           Delays: {health.delayIndicators.join(", ")}
         </p>
       )}
+      {"confidence" in health && health.confidence && (
+        <p className="mt-2 text-xs text-aistroyka-text-tertiary">Confidence: {health.confidence}</p>
+      )}
+      {"missingDataDisclaimer" in health && health.missingDataDisclaimer && (
+        <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">{health.missingDataDisclaimer}</p>
+      )}
     </IntelligenceCard>
   );
 }

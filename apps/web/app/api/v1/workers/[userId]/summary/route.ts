@@ -23,27 +23,35 @@ export async function GET(
   }
 
   const supabase = await createClient();
-  const { data: reportRows, count: reportsCount } = await supabase
-    .from("worker_reports")
-    .select("id", { count: "exact" })
-    .eq("tenant_id", ctx.tenantId!)
-    .eq("user_id", userId)
-    .limit(5000);
+  const today = new Date().toISOString().slice(0, 10);
+  const [reportRes, contractorRes, tasksRes, overdueRes, pendingReviewRes] = await Promise.all([
+    supabase.from("worker_reports").select("id", { count: "exact" }).eq("tenant_id", ctx.tenantId!).eq("user_id", userId).limit(5000),
+    supabase.from("project_members").select("user_id").eq("tenant_id", ctx.tenantId!).eq("user_id", userId).eq("role", "contractor").eq("status", "active").limit(1),
+    supabase.from("worker_tasks").select("id", { count: "exact" }).eq("tenant_id", ctx.tenantId!).eq("assigned_to", userId).in("status", ["pending", "in_progress"]),
+    supabase.from("worker_tasks").select("id", { count: "exact" }).eq("tenant_id", ctx.tenantId!).eq("assigned_to", userId).lt("due_date", today).in("status", ["pending", "in_progress"]),
+    supabase.from("worker_reports").select("id", { count: "exact" }).eq("tenant_id", ctx.tenantId!).eq("user_id", userId).in("status", ["submitted", "changes_requested"]).limit(5000),
+  ]);
 
-  const ids = (reportRows ?? []).map((r) => (r as { id: string }).id);
+  const ids = (reportRes.data ?? []).map((r) => (r as { id: string }).id);
   let mediaCount = 0;
   if (ids.length > 0) {
-    const { count } = await supabase
-      .from("worker_report_media")
-      .select("id", { count: "exact", head: true })
-      .in("report_id", ids);
+    const { count } = await supabase.from("worker_report_media").select("id", { count: "exact", head: true }).in("report_id", ids);
     mediaCount = count ?? 0;
   }
 
+  const is_contractor = (contractorRes.data ?? []).length > 0;
+  const tasks_assigned = tasksRes.count ?? 0;
+  const tasks_overdue = overdueRes.count ?? 0;
+  const reports_pending_review = pendingReviewRes.count ?? 0;
+
   return NextResponse.json({
     data: {
-      reports_count: reportsCount ?? 0,
+      reports_count: reportRes.count ?? 0,
       media_count: mediaCount,
+      is_contractor: is_contractor,
+      tasks_assigned,
+      tasks_overdue,
+      reports_pending_review,
     },
   });
 }

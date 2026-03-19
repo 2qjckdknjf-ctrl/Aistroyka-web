@@ -28,6 +28,7 @@ export interface ProjectBudgetSummary {
   tenant_id: string;
   planned_total: number;
   actual_total: number;
+  variance_amount: number;
   currency: string;
   over_budget: boolean;
   item_count: number;

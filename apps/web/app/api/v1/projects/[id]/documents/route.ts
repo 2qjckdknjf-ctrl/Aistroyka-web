@@ -34,8 +34,12 @@ export async function GET(
 
   const supabase = await createClientFromRequest(request);
   const { data, error } = await listDocuments(supabase, ctx, projectId);
-  if (error && error !== "Project not found")
+  if (error && error !== "Project not found") {
+    if (error === "status must be draft on create") {
+      return NextResponse.json({ error }, { status: 400 });
+    }
     return NextResponse.json({ error }, { status: 403 });
+  }
   if (error === "Project not found") return NextResponse.json({ error }, { status: 404 });
   return NextResponse.json({ data });
 }

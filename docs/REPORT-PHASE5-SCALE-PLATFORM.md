@@ -1,6 +1,6 @@
 # Phase 5 — Maximum SaaS at Scale: Report
 
-**Project:** AISTROYKA.AI  
+**Project:** Aistroyka  
 **Stack:** Next.js 14 + OpenNext + Cloudflare Workers + Supabase + OpenAI  
 
 ---

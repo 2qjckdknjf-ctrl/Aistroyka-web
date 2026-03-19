@@ -17,7 +17,9 @@ import {
   Input,
   Textarea,
 } from "@/components/ui";
+import { Link } from "@/i18n/navigation";
 import { getPublicConfig } from "@/lib/config/public";
+import { DocumentApprovalHistory } from "@/components/approvals";
 
 const MEDIA_BUCKET = "media";
 const MAX_UPLOAD_MB = 25;
@@ -173,6 +175,7 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
   const [uploadDocId, setUploadDocId] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [historyDocId, setHistoryDocId] = useState<string | null>(null);
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const uploadTargetRef = useRef<string | null>(null);
 
@@ -229,6 +232,7 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
 
   const rows = query.data ?? [];
   const milestones = milestonesQuery.data ?? [];
+  const pendingDocs = rows.filter((d) => d.status === "under_review");
 
   return (
     <div className="p-4">
@@ -267,6 +271,34 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
         </Button>
       </div>
 
+      {pendingDocs.length > 0 && (
+        <div className="mb-4 rounded-lg border border-aistroyka-border-subtle bg-aistroyka-surface-muted p-3 flex flex-wrap items-center justify-between gap-2">
+          <div className="min-w-[220px]">
+            <p className="text-sm font-medium text-aistroyka-text-primary">
+              {pendingDocs.length} document(s) pending review
+            </p>
+            <p className="text-xs text-aistroyka-text-tertiary mt-1">
+              These are in governance state `under_review`. Use Approve / Reject to complete the
+              review cycle.
+            </p>
+          </div>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              const first = pendingDocs[0];
+              if (!first) return;
+              document.getElementById(`document-${first.id}`)?.scrollIntoView({
+                behavior: "smooth",
+                block: "start",
+              });
+            }}
+          >
+            Jump to pending →
+          </Button>
+        </div>
+      )}
+
       {rows.length === 0 ? (
         <EmptyState
           icon={<span className="text-2xl">📄</span>}
@@ -294,14 +326,18 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
           <TableBody>
             {rows.map((doc) => {
               const url = fileUrl(doc.object_path);
-              const canChangeStatus =
-                ["uploaded", "under_review"].includes(doc.status) && !updatingId;
               const canUpload = doc.status === "draft" && !uploadMutation.isPending;
               const isUploading = uploadDocId === doc.id && uploadMutation.isPending;
+              const canSubmitForReview = doc.status === "uploaded" && updatingId !== doc.id;
+              const canReview = doc.status === "under_review" && updatingId !== doc.id;
 
               return (
                 <TableRow key={doc.id}>
-                  <TableCell className="font-medium">{doc.title}</TableCell>
+                  <TableCell className="font-medium">
+                    <div id={`document-${doc.id}`} className="scroll-mt-24">
+                      {doc.title}
+                    </div>
+                  </TableCell>
                   <TableCell>{typeLabel(doc.type)}</TableCell>
                   <TableCell>
                     <span
@@ -347,46 +383,90 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
                     )}
                   </TableCell>
                   <TableCell className="text-aistroyka-text-secondary text-sm">
-                    {doc.milestone_id
-                      ? (milestones.find((m) => m.id === doc.milestone_id)?.title ?? doc.milestone_id.slice(0, 8) + "…")
-                      : "—"}
+                    {doc.milestone_id ? (
+                      <>
+                        {milestones.find((m) => m.id === doc.milestone_id)?.title ??
+                          doc.milestone_id.slice(0, 8) + "…"}
+                      </>
+                    ) : doc.report_id ? (
+                      <Link
+                        href={`/dashboard/reports/${doc.report_id}`}
+                        className="text-aistroyka-accent hover:underline font-medium"
+                      >
+                        Report {doc.report_id.slice(0, 8)}…
+                      </Link>
+                    ) : doc.task_id ? (
+                      <Link
+                        href={`/dashboard/tasks/${doc.task_id}`}
+                        className="text-aistroyka-accent hover:underline font-medium"
+                      >
+                        Task {doc.task_id.slice(0, 8)}…
+                      </Link>
+                    ) : (
+                      "—"
+                    )}
                   </TableCell>
                   <TableCell className="text-aistroyka-text-secondary text-sm">
                     {new Date(doc.created_at).toLocaleDateString()}
                   </TableCell>
                   <TableCell>
-                    {canChangeStatus ? (
-                      <Select
-                        value={doc.status}
-                        onChange={(e) => {
-                          const v = e.target.value;
-                          if (v && v !== doc.status)
-                            updateMutation.mutate({ documentId: doc.id, body: { status: v } });
-                        }}
-                        disabled={updatingId === doc.id}
-                        className="max-w-[160px]"
-                      >
-                        <option value="under_review">Submit for review</option>
-                        <option value="approved">Approve</option>
-                        <option value="rejected">Reject</option>
-                      </Select>
-                    ) : doc.status === "uploaded" ? (
+                    <div className="flex flex-wrap gap-2 items-center">
+                      {canSubmitForReview ? (
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() =>
+                            updateMutation.mutate({
+                              documentId: doc.id,
+                              body: { status: "under_review" },
+                            })
+                          }
+                          disabled={updatingId === doc.id}
+                        >
+                          Submit for review
+                        </Button>
+                      ) : canReview ? (
+                        <>
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={() =>
+                              updateMutation.mutate({
+                                documentId: doc.id,
+                                body: { status: "approved" },
+                              })
+                            }
+                            disabled={updatingId === doc.id}
+                          >
+                            Approve
+                          </Button>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() =>
+                              updateMutation.mutate({
+                                documentId: doc.id,
+                                body: { status: "rejected" },
+                              })
+                            }
+                            disabled={updatingId === doc.id}
+                          >
+                            Reject
+                          </Button>
+                        </>
+                      ) : (
+                        <span className="text-aistroyka-text-tertiary text-sm">—</span>
+                      )}
+
                       <Button
                         variant="secondary"
                         size="sm"
-                        onClick={() =>
-                          updateMutation.mutate({
-                            documentId: doc.id,
-                            body: { status: "under_review" },
-                          })
-                        }
-                        disabled={updatingId === doc.id}
+                        onClick={() => setHistoryDocId(doc.id)}
+                        disabled={uploadMutation.isPending}
                       >
-                        Submit for review
+                        History
                       </Button>
-                    ) : (
-                      <span className="text-aistroyka-text-tertiary text-sm">—</span>
-                    )}
+                    </div>
                   </TableCell>
                 </TableRow>
               );
@@ -394,6 +474,16 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
           </TableBody>
         </Table>
       )}
+
+      <Modal
+        open={historyDocId !== null}
+        onClose={() => setHistoryDocId(null)}
+        title="Document approval history"
+      >
+        {historyDocId ? (
+          <DocumentApprovalHistory projectId={projectId} documentId={historyDocId} />
+        ) : null}
+      </Modal>
 
       <CreateDocumentModal
         open={createOpen}

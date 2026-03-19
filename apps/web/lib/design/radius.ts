@@ -1,5 +1,5 @@
 /**
- * AISTROYKA Design System — Border radius
+ * Aistroyka design system — border radius
  */
 
 export const radius = {

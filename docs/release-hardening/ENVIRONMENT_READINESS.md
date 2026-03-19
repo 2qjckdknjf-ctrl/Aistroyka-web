@@ -2,6 +2,8 @@
 
 **Purpose:** Ensure production and pilot deployments have correct, safe environment configuration.
 
+**Product naming (B4):** Platform is **Aistroyka** (see `docs/architecture/CORE_B4_CANONICAL_NAMING.md`). Env var names and worker names in keys are technical identifiers and are not renamed here.
+
 ## Validation script
 
 From **repo root**:
@@ -45,7 +47,7 @@ App code should read config via:
 - `@/lib/config` — getPublicConfig, getServerConfig, getDebugConfig, hasSupabaseEnv, isOpenAIConfigured, etc.
 - `@/lib/config/release-env` — validateReleaseEnv() for startup or script use.
 
-No ad-hoc `process.env` for app config outside `lib/config`.
+Prefer `@/lib/config` for app config. Direct `process.env` outside it is allowed only for debug/UI, infra/bootstrap glue, and provider adapters; new business logic should use config helpers. See `apps/web/lib/config/index.ts` and `docs/architecture/CORE_B2_2_ENV_GOVERNANCE_AUDIT.md`.
 
 ## Example .env files
 

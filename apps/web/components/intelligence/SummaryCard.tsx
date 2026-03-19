@@ -28,6 +28,12 @@ export function SummaryCard({
           Recommended: {summary.recommendedActions.slice(0, 3).join(" • ")}
         </p>
       )}
+      {"dataSufficiency" in summary && summary.dataSufficiency && summary.dataSufficiency !== "sufficient" && (
+        <p className="mt-2 text-xs text-aistroyka-text-tertiary">Data: {summary.dataSufficiency}</p>
+      )}
+      {"missingDataDisclaimer" in summary && summary.missingDataDisclaimer && (
+        <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">{summary.missingDataDisclaimer}</p>
+      )}
     </IntelligenceCard>
   );
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { emitAudit, emitAiRuntimeAudit, listAuditLogs } from "./audit.service";
+import { emitAudit, emitAiRuntimeAudit, listAuditLogs, listAuditLogsForResource } from "./audit.service";
 
 describe("audit.service", () => {
   beforeEach(() => {
@@ -60,5 +60,29 @@ describe("audit.service", () => {
     } as any;
     const rows = await listAuditLogs(supabase, "t", 30);
     expect(rows).toEqual([]);
+  });
+
+  it("listAuditLogsForResource filters by resource_type and resource_id", async () => {
+    const rows = [
+      { id: "1", action: "report_submit", resource_type: "report", resource_id: "r1", created_at: "2026-01-01T00:00:00Z", details: {} },
+      { id: "2", action: "report_review", resource_type: "report", resource_id: "r1", created_at: "2026-01-02T00:00:00Z", details: { status: "approved" } },
+    ];
+    const supabase = {
+      from: () => ({
+        select: () => ({
+          eq: (col: string, val: unknown) => ({
+            eq: (c2: string, v2: unknown) => ({
+              eq: (c3: string, v3: unknown) => ({
+                order: () => ({ limit: () => Promise.resolve({ data: rows, error: null }) }),
+              }),
+            }),
+          }),
+        }),
+      }),
+    } as any;
+    const result = await listAuditLogsForResource(supabase, "t", "report", "r1", 50);
+    expect(result).toHaveLength(2);
+    expect(result[0].action).toBe("report_submit");
+    expect(result[1].action).toBe("report_review");
   });
 });

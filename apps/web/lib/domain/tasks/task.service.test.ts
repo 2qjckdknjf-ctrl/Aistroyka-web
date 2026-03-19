@@ -138,6 +138,12 @@ describe("task.service", () => {
       expect(result.data).toHaveLength(1);
       expect(result.total).toBe(1);
     });
+    it("passes assigned_to filter to repository for contractor-scoped list", async () => {
+      vi.mocked(taskPolicy.canManageTasks).mockReturnValue(true);
+      vi.mocked(taskRepo.list).mockResolvedValue({ data: [], total: 0 });
+      await listTasks(supabase, ctx, { assigned_to: "contractor-user-id" });
+      expect(taskRepo.list).toHaveBeenCalledWith(supabase, "t1", { assigned_to: "contractor-user-id" });
+    });
   });
 
   describe("getTaskById", () => {

@@ -30,13 +30,15 @@ export async function POST(request: Request) {
     if (!supabase) {
       return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
     }
-    // contact_leads table (migration 20260307000000); add to Database type after migration apply
+    // contact_leads: migration 20260307000000 + 20260319000000 (status, source, notes)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error } = await (supabase as any).from("contact_leads").insert({
       name,
       email,
       company: company || null,
       message,
+      source: "contact_form",
+      status: "new",
     });
 
     if (error) {

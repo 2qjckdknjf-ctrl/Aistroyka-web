@@ -34,10 +34,18 @@ export async function GET(
   const url = new URL(request.url);
   const limit = Math.min(parseInt(url.searchParams.get("limit") ?? "50", 10) || 50, 100);
   const offset = Math.max(0, parseInt(url.searchParams.get("offset") ?? "0", 10) || 0);
+  const roleFilter = url.searchParams.get("role")?.trim();
 
   const { rows, total } = await listProjectWorkers(supabase, ctx.tenantId!, projectId, {
-    limit,
-    offset,
+    limit: roleFilter ? 500 : limit,
+    offset: roleFilter ? 0 : offset,
   });
-  return NextResponse.json({ data: rows, total });
+  let data = rows;
+  let totalCount = total;
+  if (roleFilter && (roleFilter === "contractor" || roleFilter === "worker" || roleFilter === "manager")) {
+    const filtered = rows.filter((r) => r.role === roleFilter);
+    totalCount = filtered.length;
+    data = filtered.slice(offset, offset + limit);
+  }
+  return NextResponse.json({ data, total: totalCount });
 }

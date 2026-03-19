@@ -11,6 +11,7 @@ import {
   type ActionItem,
   type ActionableSignals,
 } from "@/lib/intelligence/actionItems";
+import { getNextActionHref, getNextActionCtaLabel } from "@/lib/intelligence/next-action-href";
 import { validateAnalysisResult } from "@/lib/api/validateAnalysisResult";
 import type { AnalysisSnapshot } from "@/lib/intelligence/metrics";
 import type { AiAnalysis } from "@/lib/types";
@@ -38,12 +39,15 @@ export function NextActions({
   if (history.length === 0) {
     return (
       <div className="rounded-lg border border-aistroyka-border-subtle bg-white p-4 sm:p-6">
-        <div className="text-base font-semibold text-aistroyka-text-primary">Next Actions</div>
+        <div className="text-base font-semibold text-aistroyka-text-primary">
+          Next actions (from AI analyses)
+        </div>
         <p className="mt-2 text-sm text-aistroyka-warning">
-          Need more analyses to produce actions.
+          Not enough analysis history yet — actions appear after repeated AI runs.
         </p>
         <p className="mt-1 text-sm text-aistroyka-text-secondary">
-          Upload more images and run AI analysis to get prioritized next steps.
+          Upload media and run analysis; this list is separate from the dashboard Operations queue and
+          tenant alerts.
         </p>
       </div>
     );
@@ -126,7 +130,13 @@ export function NextActions({
 
   return (
     <div className="rounded-lg border border-aistroyka-border-subtle bg-white p-4 sm:p-6">
-      <div className="text-base font-semibold text-aistroyka-text-primary">Next Actions</div>
+      <div className="text-base font-semibold text-aistroyka-text-primary">
+        Next actions (from AI analyses)
+      </div>
+      <p className="mt-1 text-xs text-aistroyka-text-tertiary">
+        Derived from this project&apos;s analysis history — use links to open the right tab on the
+        dashboard project view.
+      </p>
       <ul className="mt-4 space-y-0">
         {actions.map((action, idx) => (
           <li
@@ -146,15 +156,23 @@ export function NextActions({
             <p className="mt-1 text-xs text-aistroyka-text-tertiary">
               Next: {action.next_step}
             </p>
+            {projectId && (
+              <Link
+                href={getNextActionHref(projectId, action.title)}
+                className="mt-2 inline-block text-sm font-medium text-aistroyka-accent hover:underline"
+              >
+                {getNextActionCtaLabel(action.title)} →
+              </Link>
+            )}
           </li>
         ))}
       </ul>
       {projectId && (
         <Link
           href={`/dashboard/projects/${projectId}?tab=intelligence`}
-          className="mt-4 inline-block text-sm font-medium text-aistroyka-accent hover:underline"
+          className="mt-4 inline-block text-sm text-aistroyka-text-secondary hover:text-aistroyka-accent hover:underline"
         >
-          Open project intelligence →
+          Full intelligence tab →
         </Link>
       )}
     </div>

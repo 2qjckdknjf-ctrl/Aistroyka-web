@@ -5,6 +5,7 @@ import { OnboardingGate } from "@/components/onboarding";
 import { GetStartedPanel, FirstValueBanner } from "@/components/onboarding";
 import { DashboardOpsOverviewClient } from "./DashboardOpsOverviewClient";
 import { DashboardRecentProjectsClient } from "./DashboardRecentProjectsClient";
+import { DashboardAIOperatingCenterClient } from "./DashboardAIOperatingCenterClient";
 import { DashboardIntelligenceSectionClient } from "./DashboardIntelligenceSectionClient";
 
 const FALLBACK_T: (key: string) => string = (k) => k;
@@ -46,6 +47,9 @@ export default async function DashboardPage() {
           <GetStartedPanel />
         </section>
         <DashboardOpsOverviewClient />
+        <section className="mt-aistroyka-8">
+          <DashboardAIOperatingCenterClient />
+        </section>
         <section className="mt-aistroyka-8">
           <div className="mb-aistroyka-4 flex flex-col gap-aistroyka-3 sm:flex-row sm:items-center sm:justify-between">
             <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">

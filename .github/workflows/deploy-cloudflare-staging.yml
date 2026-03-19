@@ -1,6 +1,6 @@
 # Staging deploy: push to develop → build (OpenNext) + deploy to Cloudflare Workers (env.staging).
 # Single install from repo root: bun install --frozen-lockfile. Build: bun run cf:build.
-# Requires same GitHub secrets: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID.
+# Requires GitHub secrets: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, PILOT_SMOKE_BEARER_STAGING; optional CRON_SECRET.
 
 name: Deploy Cloudflare (Staging)
 
@@ -24,19 +24,10 @@ jobs:
       HUSKY: "0"
 
     steps:
-      - name: Check required secrets
-        run: |
-          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
-            echo "::error::CLOUDFLARE_API_TOKEN is not set. Add it in GitHub → Settings → Secrets and variables → Actions."
-            exit 1
-          fi
-          if [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
-            echo "::error::CLOUDFLARE_ACCOUNT_ID is not set. Add it in GitHub → Settings → Secrets and variables → Actions."
-            exit 1
-          fi
-          echo "Required secrets are set."
-
       - uses: actions/checkout@v4
+
+      - name: Check env/config (deploy-staging)
+        run: bash scripts/release/check-env-config.sh deploy-staging
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v1
@@ -78,12 +69,22 @@ jobs:
           echo "Commit sha7: $SHA7"
           echo "workers.dev URL: see 'Deploy to Cloudflare (staging)' step output above"
 
+      - name: Verify pilot smoke secret (staging)
+        env:
+          B: ${{ secrets.PILOT_SMOKE_BEARER_STAGING }}
+        run: |
+          if [ -z "$B" ]; then
+            echo "::error::Secret PILOT_SMOKE_BEARER_STAGING is empty or not configured"
+            exit 1
+          fi
+
   pilot-smoke:
     name: Post-deploy pilot smoke (blocking)
     needs: deploy
     uses: ./.github/workflows/pilot-smoke.yml
     with:
       base_url: https://staging.aistroyka.ai
+    # IDE may warn "Context access might be invalid" for repository secrets — false positive (vscode-github-actions #533).
     secrets:
       pilot_smoke_bearer: ${{ secrets.PILOT_SMOKE_BEARER_STAGING }}
       cron_secret: ${{ secrets.CRON_SECRET }}

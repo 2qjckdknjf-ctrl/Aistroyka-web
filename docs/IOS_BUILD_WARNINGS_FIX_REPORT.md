@@ -1,7 +1,9 @@
-# iOS Build Warnings Fix Report — WorkerLite
+# iOS Build Warnings Fix Report — WorkerLite (legacy)
+
+> **Historical:** Describes the old **WorkerLite** iOS tree (no longer in repo). Canonical field-worker app: **AiStroykaWorker**. Do not use as current build instructions.
 
 **Date:** 2025-03-06  
-**Target:** WorkerLite (iOS)  
+**Target:** WorkerLite (iOS), legacy only  
 **Scope:** Technical cleanup only — no business logic, API, or architecture changes.
 
 ---

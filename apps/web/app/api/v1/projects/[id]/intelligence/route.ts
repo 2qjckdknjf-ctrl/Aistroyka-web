@@ -8,7 +8,14 @@ import { createClientFromRequest } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { getProject } from "@/lib/domain/projects/project.service";
 import { getOrCreateRequestId, addRequestIdToResponse } from "@/lib/observability/trace";
-import { logIntelligenceComplete, logIntelligenceError } from "@/lib/observability/ai-telemetry";
+import {
+  logIntelligenceComplete,
+  logIntelligenceError,
+  getAiReleaseCorrelation,
+} from "@/lib/observability/ai-telemetry";
+import { buildIntelligenceDiagnosticsPayload } from "@/lib/observability/intelligence-diagnostics";
+import { emitAiRuntimeAudit } from "@/lib/observability/audit.service";
+import { buildManagerOperationalContext } from "@/lib/operations/manager-intelligence-operational";
 import { getManagerInsights, getExecutiveSummaryForProject } from "@/lib/ai-brain/use-cases";
 import {
   getRiskOverviewForProject,
@@ -42,12 +49,14 @@ export async function GET(
     requireTenant(ctx);
   } catch (e) {
     if (e instanceof TenantRequiredError) {
+      const rel = getAiReleaseCorrelation();
       logIntelligenceError({
         request_id: requestId,
         route: "GET /api/v1/projects/:id/intelligence",
         tenant_id: ctx.tenantId,
         latency_ms: Date.now() - startMs,
         error_kind: "auth_failure",
+        ...rel,
       });
       return addRequestIdToResponse(NextResponse.json({ error: e.message }, { status: 401 }), requestId);
     }
@@ -65,6 +74,7 @@ export async function GET(
       project_id: id,
       latency_ms: Date.now() - startMs,
       error_kind: status === 403 ? "tenant_failure" : "validation_failure",
+      ...getAiReleaseCorrelation(),
     });
     return addRequestIdToResponse(NextResponse.json({ error: projectError ?? "Not found" }, { status }), requestId);
   }
@@ -98,6 +108,7 @@ export async function GET(
     getProjectHealthScore(supabase, id, tenantId),
   ]);
   } catch (e) {
+    const rel = getAiReleaseCorrelation();
     logIntelligenceError({
       request_id: requestId,
       route: "GET /api/v1/projects/:id/intelligence",
@@ -105,6 +116,22 @@ export async function GET(
       project_id: id,
       latency_ms: Date.now() - startMs,
       error_kind: "unknown_internal_error",
+      ...rel,
+    });
+    void emitAiRuntimeAudit(supabase, {
+      tenant_id: tenantId,
+      user_id: ctx.userId ?? null,
+      trace_id: requestId,
+      project_id: id,
+      action: "ai_intelligence_error",
+      details: {
+        request_id: requestId,
+        route: "GET /api/v1/projects/:id/intelligence",
+        latency_ms: Date.now() - startMs,
+        output_type: "intelligence",
+        error_kind: "unknown_internal_error",
+        ...rel,
+      },
     });
     const res = NextResponse.json({ error: "Intelligence computation failed" }, { status: 503 });
     return addRequestIdToResponse(res, requestId);
@@ -120,6 +147,16 @@ export async function GET(
     (executiveProjectSummary?.missingDataDisclaimer != null) ||
     (projectHealthScore?.missingDataDisclaimer != null);
 
+  const rel = getAiReleaseCorrelation();
+  const intelligenceDiagnostics = buildIntelligenceDiagnosticsPayload({
+    executiveProjectSummary,
+    projectHealthScore,
+    riskOverview,
+    missingEvidenceInsightsCount: missingEvidenceInsights?.length ?? 0,
+    topRiskInsightsCount: topRiskInsights?.length ?? 0,
+    managerInsightsCount: insights?.length ?? 0,
+  });
+
   logIntelligenceComplete({
     request_id: requestId,
     route: "GET /api/v1/projects/:id/intelligence",
@@ -132,6 +169,35 @@ export async function GET(
     health_score: healthScore,
     insights_count: insightsCount,
     missing_data_disclaimer: missingDataDisclaimer,
+    intelligence_diagnostics: intelligenceDiagnostics,
+    ...rel,
+  });
+
+  void emitAiRuntimeAudit(supabase, {
+    tenant_id: tenantId,
+    user_id: ctx.userId ?? null,
+    trace_id: requestId,
+    project_id: id,
+    action: "ai_intelligence_complete",
+    details: {
+      request_id: requestId,
+      route: "GET /api/v1/projects/:id/intelligence",
+      latency_ms: Date.now() - startMs,
+      output_type: "intelligence",
+      insights_count: insightsCount,
+      intelligence_diagnostics: intelligenceDiagnostics as unknown as Record<string, unknown>,
+      ...rel,
+    },
+  });
+
+  const operational = buildManagerOperationalContext({
+    requestId,
+    executiveProjectSummary,
+    projectHealthScore,
+    riskOverview: riskOverview ?? { high: 0, medium: 0, low: 0 },
+    recommendations: recommendations ?? [],
+    missingEvidenceInsights: missingEvidenceInsights ?? [],
+    topRiskInsights: topRiskInsights ?? [],
   });
 
   const response = NextResponse.json({
@@ -147,6 +213,7 @@ export async function GET(
       topRiskInsights: topRiskInsights ?? [],
       executiveProjectSummary: executiveProjectSummary ?? undefined,
       projectHealthScore: projectHealthScore ?? undefined,
+      operational,
     },
   });
   return addRequestIdToResponse(response, requestId);

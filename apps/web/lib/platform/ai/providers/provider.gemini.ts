@@ -72,12 +72,15 @@ export async function invokeVision(
 
   const { data: imageBase64, mimeType } = await fetchImageAsBase64(imageUrl);
 
+  const systemPrompt = options?.systemPrompt ?? CONSTRUCTION_VISION_SYSTEM_PROMPT;
+  const userMessage = options?.userMessage ?? CONSTRUCTION_VISION_USER_MESSAGE;
+
   const body = {
     contents: [
       {
         role: "user",
         parts: [
-          { text: `${CONSTRUCTION_VISION_SYSTEM_PROMPT}\n\n${CONSTRUCTION_VISION_USER_MESSAGE}` },
+          { text: `${systemPrompt}\n\n${userMessage}` },
           {
             inline_data: {
               mime_type: mimeType,

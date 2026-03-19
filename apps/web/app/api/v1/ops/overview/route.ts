@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClientFromRequest } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { getOpsOverview } from "@/lib/ops/ops-overview.repository";
+import { getBuildStamp } from "@/lib/config/public";
 import { withRequestIdAndTiming } from "@/lib/observability";
 
 export const dynamic = "force-dynamic";
@@ -33,5 +34,17 @@ export async function GET(request: Request) {
 
   const supabase = await createClientFromRequest(request);
   const overview = await getOpsOverview(supabase, ctx.tenantId!, { limit, projectId, from, to });
-  return withRequestIdAndTiming(request, NextResponse.json(overview), { route: ROUTE_KEY, method: "GET", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
+  const stamp = getBuildStamp();
+  return withRequestIdAndTiming(
+    request,
+    NextResponse.json({
+      ...overview,
+      correlation: {
+        build_sha: stamp.sha ? stamp.sha.slice(0, 7) : null,
+        build_time: stamp.buildTime || null,
+        app_env: process.env.NEXT_PUBLIC_APP_ENV ?? process.env.NODE_ENV ?? null,
+      },
+    }),
+    { route: ROUTE_KEY, method: "GET", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId }
+  );
 }

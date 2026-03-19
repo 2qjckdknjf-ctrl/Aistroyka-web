@@ -1,6 +1,7 @@
 {
   "name": "@aistroyka/api-client",
   "version": "0.1.0",
+  "description": "Optional TypeScript SDK for external API consumers; not used by apps/web at runtime.",
   "private": true,
   "main": "src/client.ts",
   "types": "src/client.ts",

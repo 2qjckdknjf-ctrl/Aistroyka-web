@@ -6,7 +6,7 @@ import { queryKeys } from "@/lib/engine/queryKeys";
 export type ProjectDetail = { id: string; name: string; tenant_id: string };
 
 export async function fetchProject(projectId: string): Promise<ProjectDetail | null> {
-  const res = await fetch(`/api/projects/${projectId}`, { credentials: "include" });
+  const res = await fetch(`/api/v1/projects/${projectId}`, { credentials: "include" });
   if (res.status === 404) return null;
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));

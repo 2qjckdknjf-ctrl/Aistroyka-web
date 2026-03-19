@@ -1,14 +1,17 @@
-# Phase 3 / A2 — Release Checklist — AISTROYKA
+# Phase 3 — Release Checklist — AISTROYKA
 
-**Date:** 2026-03-18
+**Date:** 2026-03-18 (A3 recovery docs linked)
+
+**Recovery / rollback:** `PHASE3_ROLLBACK_RUNBOOK.md` · `PHASE3_RECOVERY_DECISION_MATRIX.md` · `PHASE3_INCIDENT_TRIAGE.md` · `PHASE3_ROLLBACK_REALITY_AUDIT.md`
 
 ---
 
 ## Before first deploy with automatic smoke
 
-- [ ] Repository secrets: `PILOT_SMOKE_BEARER_STAGING`, `PILOT_SMOKE_BEARER_PRODUCTION` (Supabase JWTs; see PHASE3_PILOT_SMOKE_USAGE.md)
+- [ ] Repository secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` (deploy); `PILOT_SMOKE_BEARER_STAGING`, `PILOT_SMOKE_BEARER_PRODUCTION` (Supabase JWTs; see PHASE3_PILOT_SMOKE_USAGE.md)
 - [ ] If `REQUIRE_CRON_SECRET=true` on target: `CRON_SECRET` in GitHub Actions secrets
 - [ ] Staging public URL matches workflow (`https://staging.aistroyka.ai`) or update workflow if your staging domain differs
+- [ ] **Env/config gate:** Deploy and migration workflows run `scripts/release/check-env-config.sh` after checkout; they fail fast if required secrets are not set (see PHASE3_ENV_CONFIG_RUNBOOK.md).
 
 ---
 
@@ -42,9 +45,9 @@
 
 ---
 
-## Rollback
+## Rollback / incident
 
-No automated rollback. Revert + push, or wrangler deploy prior artifact. If deploy succeeded but smoke failed, app may already serve new code.
+Follow **`PHASE3_ROLLBACK_RUNBOOK.md`**. Summary: no automated worker rollback — use **git revert + push** or prod **workflow_dispatch** with `ref` to a known-good SHA; smoke failure means new code may already be live. DB: fix-forward or Supabase PITR/backup — not auto-downgrade (see matrix + `docs/security/backup-restore.md`).
 
 ---
 

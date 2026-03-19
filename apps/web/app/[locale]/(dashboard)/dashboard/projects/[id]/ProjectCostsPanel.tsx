@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Skeleton,
@@ -35,6 +35,7 @@ interface ProjectBudgetSummary {
   project_id: string;
   planned_total: number;
   actual_total: number;
+  variance_amount?: number;
   currency: string;
   over_budget: boolean;
   item_count: number;
@@ -53,13 +54,32 @@ async function fetchCosts(projectId: string): Promise<{
   const res = await fetch(`/api/v1/projects/${projectId}/costs`, {
     credentials: "include",
   });
-  if (!res.ok) return { items: [], summary: { project_id: projectId, planned_total: 0, actual_total: 0, currency: "RUB", over_budget: false, item_count: 0 } };
+  if (!res.ok) return { items: [], summary: { project_id: projectId, planned_total: 0, actual_total: 0, variance_amount: 0, currency: "RUB", over_budget: false, item_count: 0 } };
   const json = await res.json();
   const d = json.data ?? {};
   return {
     items: d.items ?? [],
-    summary: d.summary ?? { project_id: projectId, planned_total: 0, actual_total: 0, currency: "RUB", over_budget: false, item_count: 0 },
+    summary: d.summary ?? { project_id: projectId, planned_total: 0, actual_total: 0, variance_amount: 0, currency: "RUB", over_budget: false, item_count: 0 },
   };
+}
+
+async function updateCostItem(
+  projectId: string,
+  costItemId: string,
+  body: { category?: string; title?: string; planned_amount?: number; actual_amount?: number; status?: string; currency?: string; notes?: string; milestone_id?: string }
+): Promise<ProjectCostItem> {
+  const res = await fetch(`/api/v1/projects/${projectId}/costs/${costItemId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const j = await res.json().catch(() => ({}));
+    throw new Error((j as { error?: string }).error ?? "Update failed");
+  }
+  const json = await res.json();
+  return json.data;
 }
 
 async function fetchMilestones(projectId: string): Promise<Milestone[]> {
@@ -111,6 +131,7 @@ function statusLabel(status: string): string {
 export function ProjectCostsPanel({ projectId }: { projectId: string }) {
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<ProjectCostItem | null>(null);
 
   const createMutation = useMutation({
     mutationFn: (body: { category: string; title: string; planned_amount: number; actual_amount?: number; milestone_id?: string }) =>
@@ -118,6 +139,15 @@ export function ProjectCostsPanel({ projectId }: { projectId: string }) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["project-costs", projectId] });
       setCreateOpen(false);
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ costItemId, body }: { costItemId: string; body: Parameters<typeof updateCostItem>[2] }) =>
+      updateCostItem(projectId, costItemId, body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["project-costs", projectId] });
+      setEditingItem(null);
     },
   });
 
@@ -140,8 +170,9 @@ export function ProjectCostsPanel({ projectId }: { projectId: string }) {
 
   const { items, summary } = query.data ?? {
     items: [],
-    summary: { project_id: projectId, planned_total: 0, actual_total: 0, currency: "RUB", over_budget: false, item_count: 0 },
+    summary: { project_id: projectId, planned_total: 0, actual_total: 0, variance_amount: 0, currency: "RUB", over_budget: false, item_count: 0 },
   };
+  const hasBudgetNoActuals = summary.item_count > 0 && summary.actual_total === 0 && summary.planned_total > 0;
   const milestones = milestonesQuery.data ?? [];
 
   return (
@@ -183,12 +214,21 @@ export function ProjectCostsPanel({ projectId }: { projectId: string }) {
             Status
           </p>
           <p className="mt-1 text-aistroyka-title3 font-semibold">
-            {summary.over_budget ? (
+            {summary.item_count === 0 ? (
+              <span className="text-aistroyka-text-tertiary">No budget configured</span>
+            ) : summary.over_budget ? (
               <span className="text-aistroyka-error">Over budget</span>
+            ) : hasBudgetNoActuals ? (
+              <span className="text-aistroyka-text-secondary">No actuals yet</span>
             ) : (
               <span className="text-aistroyka-success">On budget</span>
             )}
           </p>
+          {summary.item_count > 0 && summary.variance_amount !== undefined && summary.variance_amount !== 0 && (
+            <p className="mt-0.5 text-aistroyka-caption text-aistroyka-text-secondary">
+              Variance: {summary.variance_amount > 0 ? "+" : ""}{formatAmount(summary.variance_amount, summary.currency)}
+            </p>
+          )}
         </Card>
         <Card className="border-l-4 border-l-aistroyka-text-tertiary">
           <p className="text-aistroyka-caption font-medium uppercase tracking-wide text-aistroyka-text-tertiary">
@@ -222,6 +262,7 @@ export function ProjectCostsPanel({ projectId }: { projectId: string }) {
               <TableHeaderCell>Status</TableHeaderCell>
               <TableHeaderCell>Linked to</TableHeaderCell>
               <TableHeaderCell>Created</TableHeaderCell>
+              <TableHeaderCell>Actions</TableHeaderCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -252,6 +293,17 @@ export function ProjectCostsPanel({ projectId }: { projectId: string }) {
                   <TableCell className="text-aistroyka-text-secondary text-sm">
                     {new Date(item.created_at).toLocaleDateString()}
                   </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => setEditingItem(item)}
+                      className="text-xs"
+                      aria-label={`Edit ${item.title}`}
+                    >
+                      Edit
+                    </Button>
+                  </TableCell>
                 </TableRow>
               );
             })}
@@ -275,7 +327,165 @@ export function ProjectCostsPanel({ projectId }: { projectId: string }) {
             : null
         }
       />
+      {editingItem && (
+        <EditCostItemModal
+          open={!!editingItem}
+          onClose={() => {
+            setEditingItem(null);
+            updateMutation.reset();
+          }}
+          projectId={projectId}
+          item={editingItem}
+          milestones={milestones}
+          onSubmit={(body) => updateMutation.mutate({ costItemId: editingItem.id, body })}
+          isSubmitting={updateMutation.isPending}
+          error={
+            updateMutation.isError && updateMutation.error instanceof Error
+              ? updateMutation.error.message
+              : null
+          }
+        />
+      )}
     </div>
+  );
+}
+
+const COST_STATUSES = ["planned", "committed", "incurred", "approved", "archived"] as const;
+
+function EditCostItemModal({
+  open,
+  onClose,
+  projectId,
+  item,
+  milestones,
+  onSubmit,
+  isSubmitting,
+  error,
+}: {
+  open: boolean;
+  onClose: () => void;
+  projectId: string;
+  item: ProjectCostItem;
+  milestones: Milestone[];
+  onSubmit: (body: { category?: string; title?: string; planned_amount?: number; actual_amount?: number; status?: string; currency?: string; notes?: string; milestone_id?: string }) => void;
+  isSubmitting: boolean;
+  error: string | null;
+}) {
+  const [category, setCategory] = useState(item.category);
+  const [title, setTitle] = useState(item.title);
+  const [plannedAmount, setPlannedAmount] = useState(String(item.planned_amount));
+  const [actualAmount, setActualAmount] = useState(String(item.actual_amount));
+  const [status, setStatus] = useState(item.status);
+  const [milestoneId, setMilestoneId] = useState(item.milestone_id ?? "");
+
+  useEffect(() => {
+    setCategory(item.category);
+    setTitle(item.title);
+    setPlannedAmount(String(item.planned_amount));
+    setActualAmount(String(item.actual_amount));
+    setStatus(item.status);
+    setMilestoneId(item.milestone_id ?? "");
+  }, [item.id, item.category, item.title, item.planned_amount, item.actual_amount, item.status, item.milestone_id]);
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const t = title.trim();
+    const planned = parseFloat(plannedAmount);
+    const actual = actualAmount === "" ? undefined : parseFloat(actualAmount);
+    if (!t) return;
+    if (isNaN(planned) || planned < 0) return;
+    if (actual !== undefined && (isNaN(actual) || actual < 0)) return;
+    onSubmit({
+      category,
+      title: t,
+      planned_amount: planned,
+      actual_amount: actual,
+      status,
+      milestone_id: milestoneId || undefined,
+    });
+  }
+
+  if (!open) return null;
+
+  return (
+    <Modal open={open} onClose={onClose} title="Edit cost item">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <Input
+          id="edit-cost-title"
+          label="Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="e.g. Materials for phase 1"
+          required
+          disabled={isSubmitting}
+        />
+        <div>
+          <label htmlFor="edit-cost-category" className="mb-1.5 block text-[var(--aistroyka-font-subheadline)] font-medium text-aistroyka-text-primary">
+            Category
+          </label>
+          <Select id="edit-cost-category" value={category} onChange={(e) => setCategory(e.target.value)} disabled={isSubmitting}>
+            <option value="materials">Materials</option>
+            <option value="labor">Labor</option>
+            <option value="equipment">Equipment</option>
+            <option value="services">Services</option>
+            <option value="other">Other</option>
+          </Select>
+        </div>
+        <Input
+          id="edit-cost-planned"
+          label="Planned amount"
+          type="number"
+          min={0}
+          step="0.01"
+          value={plannedAmount}
+          onChange={(e) => setPlannedAmount(e.target.value)}
+          required
+          disabled={isSubmitting}
+        />
+        <Input
+          id="edit-cost-actual"
+          label="Actual amount"
+          type="number"
+          min={0}
+          step="0.01"
+          value={actualAmount}
+          onChange={(e) => setActualAmount(e.target.value)}
+          disabled={isSubmitting}
+        />
+        <div>
+          <label htmlFor="edit-cost-status" className="mb-1.5 block text-[var(--aistroyka-font-subheadline)] font-medium text-aistroyka-text-primary">
+            Status
+          </label>
+          <Select id="edit-cost-status" value={status} onChange={(e) => setStatus(e.target.value)} disabled={isSubmitting}>
+            {COST_STATUSES.map((s) => (
+              <option key={s} value={s}>{statusLabel(s)}</option>
+            ))}
+          </Select>
+        </div>
+        {milestones.length > 0 && (
+          <div>
+            <label htmlFor="edit-cost-milestone" className="mb-1.5 block text-[var(--aistroyka-font-subheadline)] font-medium text-aistroyka-text-primary">
+              Link to milestone (optional)
+            </label>
+            <Select id="edit-cost-milestone" value={milestoneId} onChange={(e) => setMilestoneId(e.target.value)} disabled={isSubmitting}>
+              <option value="">None</option>
+              {milestones.map((m) => (
+                <option key={m.id} value={m.id}>{m.title} ({m.target_date})</option>
+              ))}
+            </Select>
+          </div>
+        )}
+        {error && (
+          <p className="text-sm text-aistroyka-error" role="alert">{error}</p>
+        )}
+        <div className="flex gap-2 justify-end pt-2">
+          <Button type="button" variant="secondary" onClick={onClose} disabled={isSubmitting}>Cancel</Button>
+          <Button type="submit" variant="primary" disabled={isSubmitting || !title.trim() || isNaN(parseFloat(plannedAmount)) || parseFloat(plannedAmount) < 0}>
+            {isSubmitting ? "Saving…" : "Save"}
+          </Button>
+        </div>
+      </form>
+    </Modal>
   );
 }
 

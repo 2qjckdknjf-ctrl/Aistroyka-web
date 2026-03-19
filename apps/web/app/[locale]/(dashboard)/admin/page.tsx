@@ -51,6 +51,7 @@ export default async function AdminPage() {
           All jobs across projects. No actions available.
         </p>
         <p className="mt-aistroyka-3 flex flex-wrap gap-aistroyka-4">
+          <a href="/admin/leads" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">Contact leads →</a>
           <a href="/admin/governance" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">AI Governance & Audit →</a>
           <a href="/admin/trust" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">AI Trust Dashboard →</a>
         </p>

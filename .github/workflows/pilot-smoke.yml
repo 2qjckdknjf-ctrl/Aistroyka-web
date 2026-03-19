@@ -26,6 +26,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Check env/config (pilot-smoke)
+        env:
+          BASE_URL: ${{ inputs.base_url }}
+        run: bash scripts/release/check-env-config.sh pilot-smoke
+
       - name: Verify pilot_smoke_bearer is non-empty
         env:
           B: ${{ secrets.pilot_smoke_bearer }}

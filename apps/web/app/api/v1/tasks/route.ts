@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
 const ROUTE_KEY = "GET /api/v1/tasks";
 const POST_ROUTE_KEY = "POST /api/v1/tasks";
 
-/** GET /api/v1/tasks — list tasks (manager, tenant-scoped). Query: project_id, from, to, status, q, limit, offset. */
+/** GET /api/v1/tasks — list tasks (manager, tenant-scoped). Query: project_id, assigned_to, from, to, status, q, limit, offset. */
 export async function GET(request: Request) {
   const ctx = await getTenantContextFromRequest(request);
   try {
@@ -29,6 +29,7 @@ export async function GET(request: Request) {
 
   const url = new URL(request.url);
   const project_id = url.searchParams.get("project_id") ?? undefined;
+  const assigned_to = url.searchParams.get("assigned_to") ?? undefined;
   const from = url.searchParams.get("from") ?? undefined;
   const to = url.searchParams.get("to") ?? undefined;
   const status = url.searchParams.get("status") ?? undefined;
@@ -39,6 +40,7 @@ export async function GET(request: Request) {
   const supabase = await createClientFromRequest(request);
   const { data, total, error } = await listTasks(supabase, ctx, {
     project_id,
+    assigned_to,
     from,
     to,
     status,

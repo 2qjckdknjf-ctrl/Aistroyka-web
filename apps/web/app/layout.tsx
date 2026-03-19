@@ -16,7 +16,7 @@ const spaceGrotesk = Space_Grotesk({
   display: "swap",
 });
 
-const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://aistroyka.ai";
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.aistroyka.ai";
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
@@ -58,11 +58,16 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const headersList = await headers();
-  const locale = headersList.get("x-next-intl-locale") ?? "ru";
-  const lang = LOCALES.includes(locale as (typeof LOCALES)[number])
-    ? locale
-    : "ru";
+  let lang: (typeof LOCALES)[number] = "ru";
+  try {
+    const headersList = await headers();
+    const locale = headersList.get("x-next-intl-locale") ?? "ru";
+    lang = LOCALES.includes(locale as (typeof LOCALES)[number])
+      ? (locale as (typeof LOCALES)[number])
+      : "ru";
+  } catch {
+    // headers() can throw in Edge/Workers; keep default locale (see dashboard layout)
+  }
 
   return (
     <html lang={lang} className={`${inter.variable} ${spaceGrotesk.variable}`}>

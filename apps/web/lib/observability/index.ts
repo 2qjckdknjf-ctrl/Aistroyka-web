@@ -11,7 +11,12 @@ export {
 export {
   logCopilotStreamComplete,
   logCopilotStreamError,
+  logCopilotStreamLifecycle,
+  logCopilotNonStreamComplete,
   logIntelligenceComplete,
   logIntelligenceError,
+  logVisionAnalyzeComplete,
+  logVisionAnalyzeError,
+  getAiReleaseCorrelation,
   type AIErrorKind,
 } from "./ai-telemetry";

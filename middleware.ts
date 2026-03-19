@@ -1,20 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
-import { getAppUrl } from "@/lib/app-url";
 
 const PROTECTED_PREFIXES = ["/dashboard", "/projects", "/billing", "/admin"];
 const AUTH_PREFIXES = ["/login", "/register"];
 
 export async function middleware(request: NextRequest) {
-  const host = request.headers.get("host") ?? "";
-  const isProduction = process.env.NODE_ENV === "production";
-
-  // www -> apex canonical redirect (production only; avoids loops by redirecting only when host starts with "www.")
-  if (isProduction && host.startsWith("www.")) {
-    const url = request.nextUrl;
-    const target = new URL(url.pathname + url.search, getAppUrl());
-    return NextResponse.redirect(target, 308);
-  }
+  // Domain canonicalization is handled only by Vercel Domains; no host-based redirects here.
 
   const { pathname } = request.nextUrl;
   const { response, user } = await updateSession(request);

@@ -52,6 +52,7 @@ export async function GET(
         tenant_id: ctx.tenantId!,
         planned_total: 0,
         actual_total: 0,
+        variance_amount: 0,
         currency: "RUB",
         over_budget: false,
         item_count: 0,

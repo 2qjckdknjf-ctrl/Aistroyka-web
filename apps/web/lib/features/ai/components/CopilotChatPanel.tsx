@@ -158,7 +158,7 @@ export function CopilotChatPanel({
     <div className="flex flex-col rounded-lg border border-aistroyka-border-subtle bg-aistroyka-surface p-4">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-aistroyka-font-title3 font-semibold text-aistroyka-text-primary">
-          Chat
+          Copilot chat
         </h3>
         <div className="flex flex-wrap items-center gap-2">
           <Button

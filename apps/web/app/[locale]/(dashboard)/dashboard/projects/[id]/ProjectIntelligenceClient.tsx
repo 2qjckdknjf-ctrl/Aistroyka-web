@@ -13,20 +13,73 @@ import {
   RecommendationList,
   CopilotSummaryPanel,
   ManagerActionView,
+  IntelligenceOperationalBanner,
   type ProjectIntelligenceData,
 } from "@/components/intelligence";
 import { Card, Skeleton, ErrorState } from "@/components/ui";
+
+class IntelligenceFetchError extends Error {
+  status: number;
+  requestId: string | null;
+  constructor(message: string, status: number, requestId: string | null) {
+    super(message);
+    this.name = "IntelligenceFetchError";
+    this.status = status;
+    this.requestId = requestId;
+  }
+}
 
 async function fetchIntelligence(projectId: string): Promise<ProjectIntelligenceData> {
   const res = await fetch(`/api/v1/projects/${projectId}/intelligence`, {
     credentials: "include",
   });
+  const requestId = res.headers.get("x-request-id");
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.error ?? "Failed to load intelligence");
+    throw new IntelligenceFetchError(
+      typeof err.error === "string" ? err.error : "Failed to load intelligence",
+      res.status,
+      requestId
+    );
   }
   const json = await res.json();
   return json.data;
+}
+
+function intelligenceErrorMessage(err: unknown): { title: string; hint: string; ref: string | null } {
+  if (err instanceof IntelligenceFetchError) {
+    if (err.status === 401) {
+      return {
+        title: "Session required",
+        hint: "Sign in again to view project intelligence.",
+        ref: err.requestId,
+      };
+    }
+    if (err.status === 403) {
+      return {
+        title: "No access",
+        hint: "You don't have permission to view intelligence for this project (tenant or role).",
+        ref: err.requestId,
+      };
+    }
+    if (err.status === 503) {
+      return {
+        title: "Intelligence temporarily unavailable",
+        hint: "Computation or upstream data failed — this is usually a product/runtime issue, not missing project data. Retry shortly; contact admin if it persists.",
+        ref: err.requestId,
+      };
+    }
+    return {
+      title: err.message,
+      hint: "If this persists, share the reference ID with your administrator.",
+      ref: err.requestId,
+    };
+  }
+  return {
+    title: err instanceof Error ? err.message : "Intelligence unavailable",
+    hint: "Try again. Contact support if the problem continues.",
+    ref: null,
+  };
 }
 
 export function ProjectIntelligenceClient({ projectId }: { projectId: string }) {
@@ -38,11 +91,19 @@ export function ProjectIntelligenceClient({ projectId }: { projectId: string }) 
   });
 
   if (isError) {
+    const { title, hint, ref } = intelligenceErrorMessage(error);
     return (
-      <ErrorState
-        message={error instanceof Error ? error.message : "Intelligence unavailable"}
-        onRetry={() => refetch()}
-      />
+      <section className="space-y-4" aria-label="Intelligence error">
+        <ErrorState message={title} onRetry={() => refetch()} />
+        <Card className="border-l-4 border-l-aistroyka-info bg-aistroyka-surface-raised">
+          <p className="text-sm text-aistroyka-text-secondary">{hint}</p>
+          {ref && (
+            <p className="mt-2 text-xs font-mono text-aistroyka-text-tertiary">
+              Reference for admin: {ref}
+            </p>
+          )}
+        </Card>
+      </section>
     );
   }
 
@@ -55,8 +116,12 @@ export function ProjectIntelligenceClient({ projectId }: { projectId: string }) 
           <Skeleton className="h-4 w-3/4 mt-2" />
         </Card>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Card><Skeleton className="h-24" /></Card>
-          <Card><Skeleton className="h-24" /></Card>
+          <Card>
+            <Skeleton className="h-24" />
+          </Card>
+          <Card>
+            <Skeleton className="h-24" />
+          </Card>
         </div>
       </section>
     );
@@ -74,6 +139,7 @@ export function ProjectIntelligenceClient({ projectId }: { projectId: string }) 
     executiveProjectSummary,
     missingEvidenceInsights,
     topRiskInsights,
+    operational,
   } = data;
 
   const healthToShow = projectHealthScore ?? health;
@@ -81,16 +147,15 @@ export function ProjectIntelligenceClient({ projectId }: { projectId: string }) 
 
   return (
     <section className="space-y-6" aria-label="Project intelligence">
+      {operational && <IntelligenceOperationalBanner operational={operational} />}
       <ManagerActionView data={data} projectId={projectId} />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <ProjectHealthPanel health={healthToShow} emptyMessage="No health data" />
-        {summaryToShow && (
-          <SummaryCard summary={summaryToShow} />
-        )}
+        <ProjectHealthPanel health={healthToShow} emptyMessage="No health data yet" />
+        {summaryToShow && <SummaryCard summary={summaryToShow} />}
         {!summaryToShow && (
           <IntelligenceCard title="Executive summary">
             <p className="text-aistroyka-subheadline text-aistroyka-text-tertiary">
-              No summary available
+              No summary yet — add tasks and daily reports so the model can summarize progress.
             </p>
           </IntelligenceCard>
         )}
@@ -101,20 +166,14 @@ export function ProjectIntelligenceClient({ projectId }: { projectId: string }) 
             <span className="font-medium text-aistroyka-info">Low: {riskOverview.low}</span>
           </div>
           <div className="mt-3">
-            <RiskList risks={riskOverview.signals} maxItems={3} emptyMessage="No risks" />
+            <RiskList risks={riskOverview.signals} maxItems={3} emptyMessage="No risks flagged" />
           </div>
         </IntelligenceCard>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <EvidenceCoverageCard
-          signals={evidenceCoverage.signals}
-          emptyMessage="No evidence gaps"
-        />
-        <ReportingDisciplineCard
-          signals={reportingDiscipline.signals}
-          emptyMessage="No reporting issues"
-        />
+        <EvidenceCoverageCard signals={evidenceCoverage.signals} emptyMessage="No evidence gaps flagged" />
+        <ReportingDisciplineCard signals={reportingDiscipline.signals} emptyMessage="No reporting gaps flagged" />
       </div>
 
       {missingEvidenceInsights && missingEvidenceInsights.length > 0 && (
@@ -122,24 +181,16 @@ export function ProjectIntelligenceClient({ projectId }: { projectId: string }) 
           <ul className="space-y-3">
             {missingEvidenceInsights.slice(0, 5).map((me) => {
               const ref = me.evidenceReferences?.[0];
-              const href = ref
-                ? getResourceHref(ref.resourceType, ref.resourceId, projectId)
-                : null;
+              const href = ref ? getResourceHref(ref.resourceType, ref.resourceId, projectId) : null;
               return (
                 <li key={me.id} className="flex flex-col gap-0.5">
                   <span className="text-aistroyka-subheadline font-medium text-aistroyka-text-primary">
                     {me.title}
                   </span>
-                  <p className="text-aistroyka-caption text-aistroyka-text-secondary">
-                    {me.explanation}
-                  </p>
-                  <p className="text-xs text-aistroyka-text-tertiary">
-                    {me.recommendedAction}
-                  </p>
+                  <p className="text-aistroyka-caption text-aistroyka-text-secondary">{me.explanation}</p>
+                  <p className="text-xs text-aistroyka-text-tertiary">{me.recommendedAction}</p>
                   {me.missingDataDisclaimer && (
-                    <p className="text-xs text-amber-600 dark:text-amber-400">
-                      {me.missingDataDisclaimer}
-                    </p>
+                    <p className="text-xs text-amber-600 dark:text-amber-400">{me.missingDataDisclaimer}</p>
                   )}
                   {href && (
                     <Link
@@ -161,24 +212,16 @@ export function ProjectIntelligenceClient({ projectId }: { projectId: string }) 
           <ul className="space-y-3">
             {topRiskInsights.slice(0, 5).map((r) => {
               const ref = r.evidenceReferences?.[0];
-              const href = ref
-                ? getResourceHref(ref.resourceType, ref.resourceId, projectId)
-                : null;
+              const href = ref ? getResourceHref(ref.resourceType, ref.resourceId, projectId) : null;
               return (
                 <li key={r.id} className="flex flex-col gap-0.5">
                   <span className="text-aistroyka-subheadline font-medium text-aistroyka-text-primary">
                     #{r.rank} {r.title}
                   </span>
-                  <p className="text-aistroyka-caption text-aistroyka-text-secondary">
-                    {r.explanation}
-                  </p>
-                  <p className="text-xs text-aistroyka-text-tertiary">
-                    {r.recommendedAction}
-                  </p>
+                  <p className="text-aistroyka-caption text-aistroyka-text-secondary">{r.explanation}</p>
+                  <p className="text-xs text-aistroyka-text-tertiary">{r.recommendedAction}</p>
                   {r.missingDataDisclaimer && (
-                    <p className="text-xs text-amber-600 dark:text-amber-400">
-                      {r.missingDataDisclaimer}
-                    </p>
+                    <p className="text-xs text-amber-600 dark:text-amber-400">{r.missingDataDisclaimer}</p>
                   )}
                   {href && (
                     <Link
@@ -216,19 +259,14 @@ export function ProjectIntelligenceClient({ projectId }: { projectId: string }) 
                 <span className="text-aistroyka-subheadline font-medium text-aistroyka-text-primary">
                   {i.title}
                 </span>
-                <p className="text-aistroyka-caption text-aistroyka-text-secondary">
-                  {i.body}
-                </p>
+                <p className="text-aistroyka-caption text-aistroyka-text-secondary">{i.body}</p>
               </li>
             ))}
           </ul>
         </IntelligenceCard>
       )}
 
-      <RecommendationList
-        recommendations={recommendations}
-        emptyMessage="No recommended actions"
-      />
+      <RecommendationList recommendations={recommendations} emptyMessage="No recommended actions yet" />
 
       <CopilotSummaryPanel projectId={projectId} />
     </section>

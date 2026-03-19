@@ -157,6 +157,17 @@ export interface ExecutiveProjectSummaryData {
   missingDataDisclaimer?: string;
 }
 
+/** Step 9 — manager trust / actionability (from API operational block). */
+export interface ManagerOperationalContextData {
+  state: "healthy" | "partial_data" | "insufficient_data" | "low_confidence_health";
+  trust_band: "high" | "medium" | "low";
+  trust_summary: string;
+  disclaimers: string[];
+  why_bullets: string[];
+  next_step_hints: string[];
+  request_id: string;
+}
+
 export interface ProjectIntelligenceData {
   health?: ProjectHealthData;
   insights: ManagerInsightData[];
@@ -169,6 +180,7 @@ export interface ProjectIntelligenceData {
   topRiskInsights?: TopRiskInsightData[];
   executiveProjectSummary?: ExecutiveProjectSummaryData;
   projectHealthScore?: ProjectHealthScoreData;
+  operational?: ManagerOperationalContextData;
 }
 
 export interface AlertItemData {

@@ -19,6 +19,10 @@ export default function AdminAiPage() {
           <Link href="/admin/ai/requests" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">
             Request ID explorer →
           </Link>
+          <span className="text-aistroyka-text-tertiary">·</span>
+          <span className="text-aistroyka-subheadline text-aistroyka-text-secondary">
+            Below: route-level AI audit rollup (copilot, intelligence, vision).
+          </span>
         </p>
       </Card>
       <AdminAiOverviewClient />

@@ -1,6 +1,7 @@
 /**
- * Public (build-time / client-safe) config.
- * NEXT_PUBLIC_* only. Use getPublicConfig() or hasSupabaseEnv(); no direct process.env elsewhere.
+ * Public (build-time / client-safe) config — NEXT_PUBLIC_* only.
+ * Prefer getPublicConfig() / hasSupabaseEnv() for app code; this file is the single reader for those vars.
+ * (See lib/config/index.ts for the full env governance model.)
  */
 
 export interface PublicConfig {
@@ -22,7 +23,7 @@ export function getPublicConfig(): PublicConfig {
   return {
     NEXT_PUBLIC_SUPABASE_URL: url,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: key,
-    NEXT_PUBLIC_APP_URL: appUrl ? appUrl.replace(/\/+$/, "") : "https://aistroyka.ai",
+    NEXT_PUBLIC_APP_URL: appUrl ? appUrl.replace(/\/+$/, "") : "https://www.aistroyka.ai",
     NEXT_PUBLIC_BUILD_SHA: process.env.NEXT_PUBLIC_BUILD_SHA ?? "",
     NEXT_PUBLIC_BUILD_TIME: process.env.NEXT_PUBLIC_BUILD_TIME ?? "",
     NEXT_PUBLIC_APP_ENV: (process.env.NEXT_PUBLIC_APP_ENV ?? "").trim().toLowerCase(),

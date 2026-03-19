@@ -17,9 +17,8 @@ import {
   generateManagerBrief,
   generateExecutiveBrief,
 } from "@/lib/copilot";
-import { logCopilotNonStreamComplete } from "@/lib/observability/ai-telemetry";
+import { logCopilotNonStreamComplete, getAiReleaseCorrelation } from "@/lib/observability/ai-telemetry";
 import { emitAiRuntimeAudit } from "@/lib/observability/audit.service";
-import { getBuildStamp } from "@/lib/config";
 
 export const dynamic = "force-dynamic";
 
@@ -103,6 +102,7 @@ export async function GET(
   const fallbackTriggered = result.source === "deterministic";
   const fallbackReason = fallbackTriggered ? "provider_unavailable_or_error" : undefined;
   const latencyMs = Date.now() - startMs;
+  const rel = getAiReleaseCorrelation();
   logCopilotNonStreamComplete({
     request_id: requestId,
     route: "GET /api/v1/projects/:id/copilot",
@@ -117,8 +117,8 @@ export async function GET(
     fallback_target_path: fallbackTriggered ? "deterministicFallback" : undefined,
     use_case: useCase,
     provider: fallbackTriggered ? "none" : "openai",
+    ...rel,
   });
-  const { sha } = getBuildStamp();
   void emitAiRuntimeAudit(supabase, {
     tenant_id: tenantId,
     user_id: ctx.userId ?? null,
@@ -134,7 +134,7 @@ export async function GET(
       fallback_triggered: fallbackTriggered,
       fallback_reason: fallbackReason ?? undefined,
       provider: fallbackTriggered ? "none" : "openai",
-      ...(sha && { build_sha7: sha.slice(0, 7) }),
+      ...rel,
     },
   });
 

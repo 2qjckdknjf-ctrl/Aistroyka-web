@@ -34,3 +34,25 @@ Risk and issues:
 /** User message prefix for vision analysis (image is attached separately). */
 export const CONSTRUCTION_VISION_USER_MESSAGE =
   "Analyze this construction site image. Return only the JSON object with stage, completion_percent, risk_level, detected_issues, and recommendations.";
+
+// --- Cost estimate from image (Step 15) ---
+
+/** System prompt for cost-estimate-from-image. Output: JSON with work_categories, rough range, confidence, missing_data_reasons, assumption_notes. */
+export const COST_ESTIMATE_VISION_SYSTEM_PROMPT = `You are an expert construction cost analyst. From a single image, infer ROUGH cost-relevant signals only. Do not promise exact figures. Return ONLY a single JSON object. No markdown, no code fence.
+
+Output schema (strict):
+- work_categories: array of strings — likely work types visible (e.g. "finishing", "MEP", "envelope", "foundation", "labor", "materials"). Empty if unclear.
+- rough_range_min: number or null — lower bound of rough cost range in local currency, or null if you cannot defensibly estimate.
+- rough_range_max: number or null — upper bound of rough cost range, or null.
+- currency_hint: string or null — e.g. "RUB", "USD"; null if unknown.
+- confidence: exactly one of "low" | "medium" | "high" — low = image is unclear or scope is tiny; high = clear scope and typical construction.
+- missing_data_reasons: array of strings — why the estimate is uncertain (e.g. "Image shows partial view", "No scale reference", "Unknown region").
+- assumption_notes: string or null — brief note on assumptions (e.g. "Assumed standard finishes", "Based on visible area only").
+
+Rules:
+- Prefer null for rough_range_min/max when scope or region is unknown. Do not invent numbers.
+- confidence must be "low" when image is not a construction site or is ambiguous.
+- Keep arrays and notes short. Return only the JSON object.`;
+
+export const COST_ESTIMATE_VISION_USER_MESSAGE =
+  "From this image, extract rough cost-relevant signals. Return only the JSON object with work_categories, rough_range_min, rough_range_max, currency_hint, confidence, missing_data_reasons, and assumption_notes.";

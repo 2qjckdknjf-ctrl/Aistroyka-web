@@ -25,7 +25,7 @@
 - **Domain layer:** Tasks, reports, projects, upload-session, worker-day, notifications have repository + service split; tenant_id scoping in repositories.
 - **AI path:** Vision analysis goes through `runVisionAnalysis` → AIService.analyzeImage → provider router; policy engine and usage recording present.
 - **Jobs:** Job processing in `lib/platform/jobs` (job.service, handlers); cron-tick uses requireCronSecretIfEnabled; jobs/process is tenant + authorize("jobs:process").
-- **Config:** Centralized in lib/config (public, server, debug); no raw process.env for app config outside.
+- **Config:** `lib/config` is the canonical env declaration/validation (public, server, debug). Some `process.env` reads remain in middleware, providers, and glue per B2.2; new code should prefer `lib/config` helpers.
 
 ### Weak areas / violations
 

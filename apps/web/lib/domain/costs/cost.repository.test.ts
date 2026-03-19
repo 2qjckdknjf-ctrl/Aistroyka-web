@@ -124,6 +124,7 @@ describe("cost.repository", () => {
       expect(result).not.toBeNull();
       expect(result!.planned_total).toBe(3000);
       expect(result!.actual_total).toBe(2600);
+      expect(result!.variance_amount).toBe(-400);
       expect(result!.over_budget).toBe(false);
       expect(result!.item_count).toBe(2);
     });
@@ -145,6 +146,7 @@ describe("cost.repository", () => {
       });
       const result = await getBudgetSummary(supabase, "proj-1", "tenant-1");
       expect(result!.over_budget).toBe(true);
+      expect(result!.variance_amount).toBe(500);
     });
   });
 

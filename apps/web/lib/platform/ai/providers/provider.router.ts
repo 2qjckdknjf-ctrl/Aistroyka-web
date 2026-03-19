@@ -55,6 +55,8 @@ export async function invokeVisionWithRouter(
       const result = await provider.invokeVision(imageUrl, {
         model,
         maxTokens: options.maxTokens,
+        systemPrompt: options.systemPrompt,
+        userMessage: options.userMessage,
       });
       if (result) {
         await recordSuccess(supabase, provider.name);

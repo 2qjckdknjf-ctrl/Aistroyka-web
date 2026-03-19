@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { Link } from "@/i18n/navigation";
 import { Card, SectionHeader, Skeleton, EmptyState, Badge, Button } from "@/components/ui";
-import { ReportApprovalCard } from "@/components/approvals";
+import { ReportApprovalCard, ReportApprovalHistory } from "@/components/approvals";
 
 interface ReportDetail {
   id: string;
@@ -187,6 +187,7 @@ export default function ReportDetailPage() {
             <dd className="text-aistroyka-subheadline text-aistroyka-text-secondary mt-1">{data.manager_note}</dd>
           </div>
         )}
+        <ReportApprovalHistory reportId={data.id} />
       </Card>
 
       {data.media?.length ? (

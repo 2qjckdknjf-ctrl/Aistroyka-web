@@ -1,6 +1,10 @@
-# Phase 3 / A2 — CI Release Gate Report — AISTROYKA
+# Phase 3 — CI Release Gate Report — AISTROYKA
 
-**Date:** 2026-03-18 (A2 automatic post-deploy smoke)
+**Date:** 2026-03-19
+
+**A4 env/config gate:** Before build/deploy, each workflow runs `scripts/release/check-env-config.sh` (after checkout). Deploy-staging and deploy-production require `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`. Migrations require `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`. Pilot-smoke validates `BASE_URL` format. What remains external: GitHub secret values, Cloudflare Worker vars (e.g. `NEXT_PUBLIC_SUPABASE_ANON_KEY`). Biggest config risk: production Worker missing ANON_KEY (see PHASE3_ENV_CONFIG_INVENTORY.md §7).
+
+**A3 recovery:** When deploy or smoke fails, see **`PHASE3_ROLLBACK_RUNBOOK.md`**, **`PHASE3_RECOVERY_DECISION_MATRIX.md`**, **`PHASE3_ROLLBACK_REALITY_AUDIT.md`**.
 
 ---
 
@@ -36,6 +40,7 @@
 
 | Check | Where | Failure behavior |
 |-------|--------|------------------|
+| **Env/config gate** | First steps after checkout in deploy, migrations, pilot-smoke | Fails fast if required secrets (CLOUDFLARE_*, SUPABASE_* for migrations) or BASE_URL format (pilot-smoke) invalid; see `scripts/release/check-env-config.sh` |
 | Cloudflare secrets, build, deploy | `deploy` job | Workflow fails before smoke |
 | **Pilot smoke** (health, config, cron-tick, ops/metrics) | `pilot-smoke` job after deploy | **Workflow fails**; deploy already reached Cloudflare (operator must fix smoke or rollback app) |
 | Bearer JWT present for smoke | `pilot-smoke.yml` verify step | Fails if `pilot_smoke_bearer` secret empty |
@@ -49,9 +54,10 @@
 
 ---
 
-## 4. What remains manual
+## 4. What remains manual / external
 
 - **GitHub secrets for smoke:** `PILOT_SMOKE_BEARER_STAGING`, `PILOT_SMOKE_BEARER_PRODUCTION` (Supabase JWT, tenant user). If unset or empty, smoke job fails until configured. Optional: `CRON_SECRET` for cron-tick when `REQUIRE_CRON_SECRET=true`.
+- **Cloudflare Worker runtime:** `NEXT_PUBLIC_SUPABASE_ANON_KEY` and other Worker vars/secrets — must be set in Cloudflare Dashboard; not verified by CI (biggest config risk: missing ANON_KEY in production).
 - **Migration apply, rollback, pre-deploy tests** — unchanged.
 
 ---
@@ -73,3 +79,10 @@
 - **Reusable workflow:** `.github/workflows/pilot-smoke.yml`
 
 See `docs/release/PHASE3_PILOT_SMOKE_USAGE.md` for secrets and operator commands.
+
+---
+
+## 7. Recovery context (A3)
+
+- **Smoke red after green deploy:** Worker already updated; recovery is **operational** (revert web / fix secrets / hotfix), not “undo deploy” in CI.
+- **Full picture:** `PHASE3_ROLLBACK_REALITY_AUDIT.md`, `PHASE3_INCIDENT_TRIAGE.md`.

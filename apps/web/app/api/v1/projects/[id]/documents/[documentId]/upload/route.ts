@@ -8,7 +8,8 @@ import { createClientFromRequest } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { canManageProjects } from "@/lib/tenant/tenant.policy";
 import { getById as getProjectById } from "@/lib/domain/projects/project.repository";
-import { getById as getDocumentById, update } from "@/lib/domain/documents/document.repository";
+import { getById as getDocumentById } from "@/lib/domain/documents/document.repository";
+import { updateDocument } from "@/lib/domain/documents/document.service";
 import { MEDIA_BUCKET } from "@/lib/api/engine";
 
 export const dynamic = "force-dynamic";
@@ -43,6 +44,8 @@ export async function POST(
   const doc = await getDocumentById(supabase, documentId, ctx.tenantId);
   if (!doc || doc.project_id !== projectId)
     return NextResponse.json({ error: "Document not found" }, { status: 404 });
+  if (doc.status !== "draft")
+    return NextResponse.json({ error: "Document must be in draft to upload" }, { status: 400 });
 
   const contentLength = request.headers.get("content-length");
   if (contentLength && parseInt(contentLength, 10) > MAX_UPLOAD_BYTES)
@@ -65,13 +68,14 @@ export async function POST(
   if (uploadError)
     return NextResponse.json({ error: uploadError.message ?? "Upload failed" }, { status: 500 });
 
-  const updated = await update(supabase, documentId, ctx.tenantId, {
+  const updatedResult = await updateDocument(supabase, ctx, documentId, projectId, {
     object_path: objectPath,
     status: "uploaded",
   });
 
-  if (!updated)
+  if (updatedResult.error || !updatedResult.data)
     return NextResponse.json({ error: "Failed to update document" }, { status: 500 });
+  const updated = updatedResult.data;
 
   const { data: { publicUrl } } = supabase.storage.from(MEDIA_BUCKET).getPublicUrl(objectPath);
 

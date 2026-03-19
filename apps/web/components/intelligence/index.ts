@@ -9,8 +9,10 @@ export type {
   ExecutiveSummaryData,
   ActionRecommendationData,
   ProjectIntelligenceData,
+  ManagerOperationalContextData,
   AlertItemData,
 } from "./types";
+export { IntelligenceOperationalBanner } from "./IntelligenceOperationalBanner";
 export { ManagerActionView } from "./ManagerActionView";
 export { SeverityBadge } from "./SeverityBadge";
 export { IntelligenceCard } from "./IntelligenceCard";

@@ -114,12 +114,14 @@ export async function getBudgetSummary(
   const currency = rows[0]?.currency ?? "RUB";
   const planned_total = rows.reduce((s, r) => s + Number(r.planned_amount ?? 0), 0);
   const actual_total = rows.reduce((s, r) => s + Number(r.actual_amount ?? 0), 0);
+  const variance_amount = actual_total - planned_total;
 
   return {
     project_id: projectId,
     tenant_id: tenantId,
     planned_total,
     actual_total,
+    variance_amount,
     currency,
     over_budget: actual_total > planned_total,
     item_count: rows.length,

@@ -25,7 +25,8 @@
     "smoke:prod": "bash apps/web/scripts/smoke-prod.sh",
     "smoke:staging": "bash apps/web/scripts/smoke-staging.sh",
     "smoke:pilot": "bash scripts/smoke/pilot_launch.sh",
-    "release:check": "node scripts/release-readiness-check.mjs"
+    "release:check": "node scripts/release-readiness-check.mjs",
+    "postinstall": "node scripts/ensure-swc-native.cjs"
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.16.4",
@@ -46,5 +47,8 @@
     "tailwindcss": "^3.4.15",
     "typescript": "^5.6.3",
     "wrangler": "^4.67.0"
+  },
+  "optionalDependencies": {
+    "@next/swc-darwin-x64": "^15.5.12"
   }
 }

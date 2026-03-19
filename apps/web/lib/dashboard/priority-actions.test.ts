@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildPriorityItems } from "./priority-actions";
+import { buildPriorityItems, hasOpsData } from "./priority-actions";
 
 describe("buildPriorityItems", () => {
   it("returns empty when no queues have items", () => {
@@ -15,6 +15,7 @@ describe("buildPriorityItems", () => {
       },
     };
     expect(buildPriorityItems(data)).toEqual([]);
+    expect(hasOpsData(data)).toBe(false);
   });
 
   it("adds overdue tasks with correct href", () => {
@@ -33,10 +34,11 @@ describe("buildPriorityItems", () => {
     expect(items).toHaveLength(1);
     expect(items[0]).toMatchObject({
       title: "Install wiring",
-      reason: "Overdue task",
+      reason: "Task past due date",
       href: "/dashboard/tasks/task-1",
       priority: "high",
     });
+    expect(items[0]).not.toHaveProperty("sortKey");
   });
 
   it("adds stuck uploads when kpis.stuckUploads > 0", () => {
@@ -54,9 +56,28 @@ describe("buildPriorityItems", () => {
     const items = buildPriorityItems(data);
     expect(items).toHaveLength(1);
     expect(items[0]).toMatchObject({
-      title: "3 stuck upload(s)",
+      title: "3 upload(s) stuck >4h",
       href: "/dashboard/uploads?stuck=1",
+      priority: "medium",
     });
+  });
+
+  it("orders overdue before AI failed (both high)", () => {
+    const data = {
+      kpis: { tasks_overdue: 1, stuckUploads: 0, failedJobs24h: 2 },
+      queues: {
+        tasksOverdue: [{ id: "t1", title: "Overdue task", due_date: "2025-01-01" }],
+        tasksOpenToday: [],
+        reportsPendingReview: [],
+        workersOpenShiftNoReportToday: [],
+        stuckUploads: [],
+        aiFailed: [],
+      },
+    };
+    const items = buildPriorityItems(data);
+    expect(items[0].id).toBe("overdue-t1");
+    expect(items[1].id).toBe("ai-failed");
+    expect(items[1].priority).toBe("high");
   });
 
   it("limits to 7 items", () => {
