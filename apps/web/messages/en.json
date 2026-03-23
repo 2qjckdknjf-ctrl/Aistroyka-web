@@ -516,6 +516,38 @@
       "cta": "Become a partner"
     }
   },
+  "billingPage": {
+    "title": "Billing",
+    "subtitle": "Read-only. No actions.",
+    "plan": "Plan",
+    "status": "Status",
+    "periodEnd": "Period end",
+    "emptyTitle": "No billing records",
+    "emptySubtitle": "Billing data will appear here when available."
+  },
+  "portfolioPage": {
+    "backToProjects": "← Projects",
+    "title": "Portfolio",
+    "emptySubtitle": "No projects. Create projects and run analyses to see portfolio intelligence."
+  },
+  "notificationsPage": {
+    "title": "Notifications",
+    "subtitle": "Workflow events: issues, documents, reports, tasks.",
+    "markAllRead": "Mark all as read",
+    "emptyTitle": "No notifications",
+    "emptySubtitle": "New workflow events will appear here.",
+    "tableAria": "Notifications",
+    "colTitle": "Title",
+    "colDate": "Date",
+    "colStatus": "Status",
+    "colAction": "Action",
+    "read": "Read",
+    "unread": "Unread",
+    "markRead": "Mark read",
+    "view": "View →",
+    "loadFailed": "Failed to load notifications",
+    "unknownError": "Unknown error"
+  },
   "errors": {
     "insufficientRights": "Insufficient rights",
     "insufficientRightsMessage": "You do not have permission for this action."

@@ -192,6 +192,38 @@
     "footer": { "product": "Prodotto", "company": "Azienda", "legal": "Legale", "contact": "Contatti" },
     "form": { "name": "Nome", "email": "Email", "company": "Azienda", "message": "Messaggio", "send": "Invia", "sending": "Invio…", "success": "Messaggio inviato. Ti risponderemo presto.", "error": "Qualcosa è andato storto. Riprova." }
   },
+  "billingPage": {
+    "title": "Fatturazione",
+    "subtitle": "Sola lettura. Nessuna azione.",
+    "plan": "Piano",
+    "status": "Stato",
+    "periodEnd": "Fine periodo",
+    "emptyTitle": "Nessuna voce di fatturazione",
+    "emptySubtitle": "I dati compariranno qui quando saranno disponibili."
+  },
+  "portfolioPage": {
+    "backToProjects": "← Progetti",
+    "title": "Portafoglio",
+    "emptySubtitle": "Nessun progetto. Crea progetti ed esegui analisi per vedere l'intelligence di portafoglio."
+  },
+  "notificationsPage": {
+    "title": "Notifiche",
+    "subtitle": "Eventi di flusso: segnalazioni, documenti, rapporti, attività.",
+    "markAllRead": "Segna tutte come lette",
+    "emptyTitle": "Nessuna notifica",
+    "emptySubtitle": "I nuovi eventi compariranno qui.",
+    "tableAria": "Notifiche",
+    "colTitle": "Titolo",
+    "colDate": "Data",
+    "colStatus": "Stato",
+    "colAction": "Azione",
+    "read": "Letta",
+    "unread": "Non letta",
+    "markRead": "Segna letta",
+    "view": "Apri →",
+    "loadFailed": "Impossibile caricare le notifiche",
+    "unknownError": "Errore sconosciuto"
+  },
   "errors": {
     "insufficientRights": "Permessi insufficienti",
     "insufficientRightsMessage": "Non hai i permessi per questa azione."

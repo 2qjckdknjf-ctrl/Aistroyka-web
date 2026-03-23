@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { createClient, getSessionUser } from "@/lib/supabase/server";
 import { listProjectsForUser } from "@/lib/supabase/rpc";
@@ -11,6 +12,7 @@ import { PortfolioOverview } from "./PortfolioOverview";
 import { Card } from "@/components/ui";
 
 export default async function PortfolioPage() {
+  const t = await getTranslations("portfolioPage");
   const supabase = await createClient();
   const user = await getSessionUser(supabase);
   if (!user) return null;
@@ -23,9 +25,9 @@ export default async function PortfolioPage() {
     return (
       <>
         <Card className="border-l-4 border-l-aistroyka-accent">
-          <h1 className="text-aistroyka-title2 font-bold tracking-tight text-aistroyka-text-primary sm:text-aistroyka-title">Portfolio</h1>
+          <h1 className="text-aistroyka-title2 font-bold tracking-tight text-aistroyka-text-primary sm:text-aistroyka-title">{t("title")}</h1>
           <p className="mt-aistroyka-2 text-aistroyka-subheadline text-aistroyka-text-secondary">
-            No projects. Create projects and run analyses to see portfolio intelligence.
+            {t("emptySubtitle")}
           </p>
         </Card>
       </>
@@ -104,10 +106,10 @@ export default async function PortfolioPage() {
   return (
     <>
       <Link href="/projects" className="mb-aistroyka-6 inline-block text-aistroyka-subheadline font-medium text-aistroyka-text-secondary hover:text-aistroyka-accent focus:outline-none focus:ring-2 focus:ring-aistroyka-accent focus:ring-offset-2 rounded-aistroyka-md">
-        ← Projects
+        {t("backToProjects")}
       </Link>
       <Card className="mb-aistroyka-8 border-l-4 border-l-aistroyka-accent">
-        <h1 className="text-aistroyka-title2 font-bold tracking-tight text-aistroyka-text-primary sm:text-aistroyka-title">Portfolio</h1>
+        <h1 className="text-aistroyka-title2 font-bold tracking-tight text-aistroyka-text-primary sm:text-aistroyka-title">{t("title")}</h1>
       </Card>
       <PortfolioOverview portfolio={portfolio} />
     </>

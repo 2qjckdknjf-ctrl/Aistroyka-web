@@ -1,9 +1,11 @@
+import { getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
 import { Card } from "@/components/ui";
 import { EmptyState } from "@/components/ui";
 
 /** Read-only. If table public.billing exists with (id, plan, status, current_period_end), rows are shown; else empty state. */
 export default async function BillingPage() {
+  const t = await getTranslations("billingPage");
   const supabase = await createClient();
   const { data: rows } = await supabase
     .from("billing")
@@ -16,9 +18,9 @@ export default async function BillingPage() {
     <>
       <Card className="mb-aistroyka-8 border-l-4 border-l-aistroyka-accent">
         <h1 className="text-aistroyka-title2 font-bold tracking-tight text-aistroyka-text-primary sm:text-aistroyka-title">
-          Billing
+          {t("title")}
         </h1>
-        <p className="mt-aistroyka-1 text-aistroyka-subheadline text-aistroyka-text-secondary">Read-only. No actions.</p>
+        <p className="mt-aistroyka-1 text-aistroyka-subheadline text-aistroyka-text-secondary">{t("subtitle")}</p>
       </Card>
       {list.length > 0 ? (
         <Card className="overflow-hidden p-0">
@@ -26,9 +28,9 @@ export default async function BillingPage() {
             <table className="w-full min-w-[260px] text-left text-aistroyka-subheadline">
               <thead>
                 <tr className="border-b border-aistroyka-border-subtle bg-aistroyka-surface-raised">
-                  <th className="table-cell font-semibold text-aistroyka-text-primary">Plan</th>
-                  <th className="table-cell font-semibold text-aistroyka-text-primary">Status</th>
-                  <th className="table-cell font-semibold text-aistroyka-text-primary">Period end</th>
+                  <th className="table-cell font-semibold text-aistroyka-text-primary">{t("plan")}</th>
+                  <th className="table-cell font-semibold text-aistroyka-text-primary">{t("status")}</th>
+                  <th className="table-cell font-semibold text-aistroyka-text-primary">{t("periodEnd")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -56,8 +58,8 @@ export default async function BillingPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
               </svg>
             }
-            title="No billing records"
-            subtitle="Billing data will appear here when available."
+            title={t("emptyTitle")}
+            subtitle={t("emptySubtitle")}
           />
         </Card>
       )}

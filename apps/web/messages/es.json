@@ -192,6 +192,38 @@
     "footer": { "product": "Producto", "company": "Empresa", "legal": "Legal", "contact": "Contacto" },
     "form": { "name": "Nombre", "email": "Email", "company": "Empresa", "message": "Mensaje", "send": "Enviar", "sending": "Enviando…", "success": "Mensaje enviado. Te responderemos pronto.", "error": "Algo falló. Inténtalo de nuevo." }
   },
+  "billingPage": {
+    "title": "Facturación",
+    "subtitle": "Solo lectura. Sin acciones.",
+    "plan": "Plan",
+    "status": "Estado",
+    "periodEnd": "Fin del periodo",
+    "emptyTitle": "Sin registros de facturación",
+    "emptySubtitle": "Los datos aparecerán aquí cuando estén disponibles."
+  },
+  "portfolioPage": {
+    "backToProjects": "← Proyectos",
+    "title": "Cartera",
+    "emptySubtitle": "No hay proyectos. Crea proyectos y ejecuta análisis para ver la inteligencia de cartera."
+  },
+  "notificationsPage": {
+    "title": "Notificaciones",
+    "subtitle": "Eventos del flujo: incidencias, documentos, informes, tareas.",
+    "markAllRead": "Marcar todo como leído",
+    "emptyTitle": "Sin notificaciones",
+    "emptySubtitle": "Los nuevos eventos aparecerán aquí.",
+    "tableAria": "Notificaciones",
+    "colTitle": "Título",
+    "colDate": "Fecha",
+    "colStatus": "Estado",
+    "colAction": "Acción",
+    "read": "Leído",
+    "unread": "No leído",
+    "markRead": "Marcar leído",
+    "view": "Ver →",
+    "loadFailed": "No se pudieron cargar las notificaciones",
+    "unknownError": "Error desconocido"
+  },
   "errors": {
     "insufficientRights": "Permisos insuficientes",
     "insufficientRightsMessage": "No tienes permiso para esta acción."
