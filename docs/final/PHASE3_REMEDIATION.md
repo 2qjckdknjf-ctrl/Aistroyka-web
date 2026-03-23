@@ -21,6 +21,10 @@ Apply via the approved GitHub workflow (or `supabase db push` against the correc
 2. `curl -sS "$BASE_URL/api/v1/health"` — expect **200**, `ok: true`, `db: "ok"` when anon + RLS are consistent.
 3. Optional: re-run `scripts/smoke/pilot_launch.sh` with required secrets after deploy.
 
+## Production probe (engineering)
+
+**2026-03-23** — `curl -sSL https://aistroyka.ai/api/v1/health` (follow redirects) still returned `ok: false` with Postgres policy error citing **infinite recursion** on `tenant_members`. **Conclusion:** remote DB has not yet picked up `20260323110000_tenant_members_rls_break_recursion` (and likely `20260323000000` ordering still pending ops confirmation).
+
 ## Contract note
 
 Health continues to mean: Supabase reachable with **anon** key and a trivial `tenants` read succeeds under RLS. If the product later requires a stricter probe (e.g. service role only), that needs an explicit contract change and board sign-off per [PHASE3_LIVE_POST_AUDIT.md](./PHASE3_LIVE_POST_AUDIT.md).
