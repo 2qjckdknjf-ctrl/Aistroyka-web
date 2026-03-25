@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClientFromRequest } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { listTasksForToday } from "@/lib/domain/tasks/task.service";
 import { getOrCreateTraceId } from "@/lib/observability";
@@ -25,7 +25,7 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const since = url.searchParams.get("since"); // ISO timestamp; optional
 
-  const supabase = await createClient();
+  const supabase = await createClientFromRequest(request);
   const { data: tasks } = await listTasksForToday(supabase, ctx);
 
   const { data: reports } = await supabase

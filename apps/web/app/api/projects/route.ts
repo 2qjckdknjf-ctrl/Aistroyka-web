@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClientFromRequest } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { isTenantContextPresent } from "@/lib/tenant/tenant.types";
 import { listProjects, createProject } from "@/lib/domain/projects/project.service";
@@ -12,7 +12,7 @@ export async function GET(request: Request) {
   if (!isTenantContextPresent(ctx)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const supabase = await createClient();
+  const supabase = await createClientFromRequest(request);
   const { data, error } = await listProjects(supabase, ctx);
   if (error) return NextResponse.json({ error }, { status: 403 });
   const res = NextResponse.json({ data });
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     const msg = parsed.error.flatten().formErrors[0] ?? parsed.error.flatten().fieldErrors.name?.[0] ?? "name required (1-200 chars)";
     return NextResponse.json({ success: false, error: msg }, { status: 400 });
   }
-  const supabase = await createClient();
+  const supabase = await createClientFromRequest(request);
   const result = await createProject(supabase, ctx, parsed.data.name);
   if ("error" in result) {
     const status = result.error.includes("Insufficient") ? 403 : 400;

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClientFromRequest } from "@/lib/supabase/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { finalizeUploadSession } from "@/lib/domain/upload-session/upload-session.service";
@@ -53,7 +53,7 @@ export async function POST(
     const msg = parsed.error.flatten().formErrors[0] ?? parsed.error.flatten().fieldErrors.object_path?.[0] ?? "object_path required";
     return withRequestIdAndTiming(request, NextResponse.json({ error: msg }, { status: 400 }), { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
   }
-  const supabase = await createClient();
+  const supabase = await createClientFromRequest(request);
   const { ok, error } = await finalizeUploadSession(supabase, ctx, sessionId, {
     object_path: parsed.data.object_path,
     mime_type: parsed.data.mime_type,

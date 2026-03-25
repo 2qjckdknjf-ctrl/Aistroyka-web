@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClientFromRequest } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { addMediaToReport } from "@/lib/domain/reports/report.service";
 import { requireLiteIdempotency, storeLiteIdempotency } from "@/lib/api/lite-idempotency";
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: msg }, { status: 400 });
   }
   const { report_id: reportId, media_id: mediaId, upload_session_id: uploadSessionId } = parsed.data;
-  const supabase = await createClient();
+  const supabase = await createClientFromRequest(request);
   const { ok, error } = await addMediaToReport(supabase, ctx, reportId, {
     mediaId,
     uploadSessionId,
