@@ -11,7 +11,9 @@ function isLiteClient(header: string | null): boolean {
 }
 
 /** Allowed path prefixes or exact paths for lite clients. */
-function isPathAllowed(pathname: string): boolean {
+function isPathAllowed(pathname: string, method: string): boolean {
+  // Worker/iOS+Android lite apps list tenant projects (tenant-scoped; same as dashboard read).
+  if (pathname === "/api/v1/projects" && method === "GET") return true;
   if (pathname === "/api/v1/config") return true;
   if (pathname.startsWith("/api/v1/worker")) return true;
   if (pathname.startsWith("/api/v1/sync")) return true;
@@ -28,10 +30,12 @@ function isPathAllowed(pathname: string): boolean {
  */
 export function checkLiteAllowList(
   pathname: string,
+  method: string,
   xClient: string | null
 ): { status: 403; body: { error: string; code: string } } | null {
   if (!isLiteClient(xClient)) return null;
-  if (pathname.startsWith("/api/v1") && !isPathAllowed(pathname)) {
+  const m = (method || "GET").toUpperCase();
+  if (pathname.startsWith("/api/v1") && !isPathAllowed(pathname, m)) {
     return {
       status: 403,
       body: { error: "forbidden", code: "lite_client_path_forbidden" },

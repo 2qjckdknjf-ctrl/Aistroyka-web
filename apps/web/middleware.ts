@@ -3,6 +3,7 @@ import createIntlMiddleware from "next-intl/middleware";
 import { updateSession } from "@/lib/supabase/middleware";
 import { routing } from "@/i18n/routing";
 import { checkLiteAllowList } from "@/lib/api/lite-allow-list";
+import { resolvePostAuthEntry } from "@/lib/entry/entry-routing";
 
 const intlMiddleware = createIntlMiddleware(routing);
 
@@ -42,7 +43,7 @@ export async function middleware(request: NextRequest) {
   const isProduction = process.env.NODE_ENV === "production";
 
   if (pathname.startsWith("/api/v1")) {
-    const forbidden = checkLiteAllowList(pathname, request.headers.get("x-client"));
+    const forbidden = checkLiteAllowList(pathname, request.method, request.headers.get("x-client"));
     if (forbidden) {
       return NextResponse.json(forbidden.body, { status: 403 });
     }
@@ -78,8 +79,9 @@ export async function middleware(request: NextRequest) {
     return applySecurityHeaders(redir, isProduction);
   }
   if (isAuthPage && user) {
-    const next = request.nextUrl.searchParams.get("next") ?? `/${locale}/dashboard`;
-    const nextUrl = next.startsWith("/") ? new URL(next, request.url) : new URL(`/${locale}/dashboard`, request.url);
+    const next = request.nextUrl.searchParams.get("next") ?? undefined;
+    const { path } = resolvePostAuthEntry({ locale, next, baseUrl: request.url });
+    const nextUrl = new URL(path, request.url);
     const redir = NextResponse.redirect(nextUrl);
     sessionResponse.headers.forEach((v, k) => redir.headers.set(k, v));
     redir.headers.set("X-Auth-Redirect", "dashboard");
