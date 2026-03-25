@@ -21,6 +21,7 @@ struct LoginView: View {
             Text("AiStroyka Worker")
                 .font(.title)
             TextField("Email", text: $email)
+                .accessibilityIdentifier("pilot_worker_email")
                 .textContentType(.emailAddress)
                 .autocapitalization(.none)
                 .textInputAutocapitalization(.never)
@@ -30,7 +31,10 @@ struct LoginView: View {
                 .padding()
                 .background(Color(.systemGray6))
                 .cornerRadius(8)
-            SecureField("Password", text: $password)
+            #if DEBUG
+            // Maestro cannot reliably fill SecureField on Simulator; use TextField in Debug for STAGE 4 pilot automation only.
+            TextField("Password", text: $password)
+                .accessibilityIdentifier("pilot_worker_password")
                 .textContentType(.password)
                 .focused($focusedField, equals: .password)
                 .submitLabel(.go)
@@ -38,6 +42,17 @@ struct LoginView: View {
                 .padding()
                 .background(Color(.systemGray6))
                 .cornerRadius(8)
+            #else
+            SecureField("Password", text: $password)
+                .accessibilityIdentifier("pilot_worker_password")
+                .textContentType(.password)
+                .focused($focusedField, equals: .password)
+                .submitLabel(.go)
+                .onSubmit { startSignIn() }
+                .padding()
+                .background(Color(.systemGray6))
+                .cornerRadius(8)
+            #endif
             if let msg = errorMessage {
                 Text(msg)
                     .font(.caption)
@@ -51,6 +66,7 @@ struct LoginView: View {
                     Text("Sign In")
                 }
             }
+            .accessibilityIdentifier("pilot_worker_sign_in")
             .frame(maxWidth: .infinity)
             .padding()
             .background(email.isEmpty || password.isEmpty ? Color.gray : Color.accentColor)

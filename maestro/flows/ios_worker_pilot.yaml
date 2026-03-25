@@ -1,0 +1,67 @@
+# AiStroyka Worker (iOS Simulator) — login → new report → before/after photos → submit
+# Reinstall app from Xcode if pilot_* ids fail (accessibility identifiers must match current build).
+appId: ai.aistroyka.worker
+---
+- launchApp
+- runFlow:
+    when:
+      visible:
+        id: pilot_worker_email
+    commands:
+      - tapOn:
+          id: pilot_worker_email
+      - inputText: ${SMOKE_EMAIL}
+      - tapOn:
+          id: pilot_worker_password
+      - inputText: ${SMOKE_PASSWORD}
+      - tapOn:
+          text: "AiStroyka Worker"
+      - tapOn:
+          id: pilot_worker_sign_in
+# Multiple projects → picker list; select seeded pilot project (same as Android seed).
+- tapOn:
+    text: "STAGE4 Pilot Project"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: pilot_worker_new_report
+    timeout: 180000
+- addMedia:
+    - ../assets/pilot.png
+- tapOn:
+    id: pilot_worker_new_report
+- extendedWaitUntil:
+    visible:
+      id: pilot_worker_create_report
+    timeout: 30000
+- tapOn:
+    id: pilot_worker_create_report
+- tapOn:
+    id: pilot_worker_before_photo
+- tapOn: "Choose from library"
+- tapOn:
+    id: "PXGGridLayout-Info"
+    index: 0
+    optional: true
+- tapOn:
+    text: "Photo, .*"
+    index: 0
+    optional: true
+- tapOn:
+    id: pilot_worker_after_photo
+- tapOn: "Choose from library"
+- tapOn:
+    id: "PXGGridLayout-Info"
+    index: 0
+    optional: true
+- tapOn:
+    text: "Photo, .*"
+    index: 0
+    optional: true
+# Attach pipeline can take several minutes on Simulator (operation queue + uploads).
+- extendedWaitUntil:
+    visible:
+      id: pilot_worker_submit_report
+    timeout: 600000
+- tapOn:
+    id: pilot_worker_submit_report

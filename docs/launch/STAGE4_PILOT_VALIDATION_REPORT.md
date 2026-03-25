@@ -10,7 +10,7 @@
 
 ## Executive outcome
 
-**STAGE 4 is NOT closed** as a **full** program: the **lite allow-list** fix is **deployed to production** and **`GET /api/v1/projects`** with **`x-client: android_lite`** returns **200** with pilot data, but **device-level Maestro evidence** (report UUID + Manager review captured in this session) is **still outstanding** — this host has **no Java 17+** for Maestro 2.x (JDK 14 only; `brew install openjdk@17` blocked by an existing brew lock).
+**STAGE 4 is NOT closed** as a **full** program: production **lite GET** is **verified**; **Maestro** now runs with **JDK 17** (`/usr/local/opt/openjdk@17/...`). **iOS Worker** Maestro reached **draft report + queued photo pipeline** but **did not** capture **submit + Manager review** in this session (upload operations remained **queued** on Simulator after **10+ min**; **Android** flows **not** run — **no** emulator online).
 
 **Deploy (2026-03-25):**
 
@@ -32,9 +32,17 @@
 
 **Tests / build (local):** `vitest` `lib/api/lite-allow-list.test.ts` — **13 passed**; `npm run cf:build` in `apps/web` — **success** before local deploy attempt.
 
-**Maestro (this session):** **Not run** — **Java 17+** required; emulator **emulator-5554** was available.
+**Maestro + iOS Worker (2026-03-25 follow-up):**
 
-**Prior session:** Maestro had reached login/home; Worker list was empty (seed + lite blockers). With production fixed, **re-run Maestro** on a JDK **17+** host to capture report IDs.
+| Item | Result |
+|------|--------|
+| **JDK** | `JAVA_HOME` / `MAESTRO_JAVA_HOME` = `/usr/local/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home` — **Maestro 2.3.0** runs |
+| **iOS Worker flow** | **PARTIAL** — login (conditional), **STAGE4 Pilot Project** picker tap, **New report** → **Create report** → before/after **Choose from library**; **Submit report** **not** reached — UI showed **Before: queued** / **After: queued**; **`pilot_worker_submit_report`** **not** visible within **600s** wait |
+| **Evidence** | Maestro debug: `maestro/output/ios_worker.log`; screenshot draft prefix **879DD187…** (full UUID not surfaced before timeout) |
+| **iOS fixes applied** | `Shared/Config.swift` — load host **Info.plist** from disk + normalize `\/` in URLs from xcconfig; **DEBUG** `LoginView` uses **TextField** for password (Maestro cannot fill **SecureField** reliably on Simulator); `AuthService` trims Supabase URL |
+| **Android Worker/Manager** | **Not executed** — `adb devices` empty (emulator not started / offline) |
+
+**Prior session:** lite list + seed blockers resolved in production.
 
 **Authenticated smoke:** **PASS** — `ops/metrics` **200**, **`pilot_launch.sh` exit 0** (after DB fix below).
 

@@ -26,7 +26,8 @@ public actor AuthService {
     }
 
     public func signIn(email: String, password: String) async throws {
-        let base = Config.supabaseURL.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        let raw = Config.supabaseURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        let base = raw.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
         guard !base.isEmpty,
               let url = URL(string: "\(base)/auth/v1/token?grant_type=password"),
               url.scheme != nil, url.host != nil else {
