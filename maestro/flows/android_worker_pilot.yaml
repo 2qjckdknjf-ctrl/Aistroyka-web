@@ -1,0 +1,80 @@
+# AiStroyka Worker (Android) — login → create report → photo → submit
+# Run from repo root. Requires debug build with pilot testTags.
+appId: ai.aistroyka.worker
+---
+- clearState
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: pilot_worker_email
+    timeout: 45000
+- tapOn:
+    id: pilot_worker_email
+- inputText: ${SMOKE_EMAIL}
+# Blur email so the next inputText targets password (Compose focus).
+- hideKeyboard
+- tapOn:
+    id: pilot_worker_password
+- inputText: ${SMOKE_PASSWORD}
+- hideKeyboard
+- tapOn:
+    id: pilot_worker_sign_in
+- extendedWaitUntil:
+    visible: "Projects"
+    timeout: 90000
+# Bootstrap can lag after cold login; refresh loads project_members-backed list.
+- tapOn:
+    text: "Refresh config / projects"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: pilot_worker_project_row_0
+    timeout: 120000
+- tapOn:
+    id: pilot_worker_project_row_0
+- tapOn:
+    id: pilot_worker_create_report
+# createReport can exceed 45s on cold network; draft screen confirms navigation.
+- extendedWaitUntil:
+    visible: "Draft report"
+    timeout: 120000
+- extendedWaitUntil:
+    visible: "Choose photo"
+    timeout: 60000
+- addMedia:
+    - ../assets/pilot.png
+- tapOn:
+    id: pilot_worker_choose_photo
+- runFlow:
+    when:
+      visible: "Allow"
+    commands:
+      - tapOn: "Allow"
+# API 30 emulator: legacy picker / Documents UI — resource ids vary; try common taps.
+- tapOn:
+    text: "Photos"
+    optional: true
+- tapOn:
+    text: "Gallery"
+    optional: true
+- tapOn:
+    id: "com.google.android.providers.media.module:id/icon_thumbnail"
+    optional: true
+- tapOn:
+    id: "com.google.android.documentsui:id/thumbnail"
+    optional: true
+- tapOn:
+    point: "50%, 42%"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: pilot_worker_submit_report
+    timeout: 120000
+- tapOn:
+    id: pilot_worker_submit_report
+- extendedWaitUntil:
+    visible:
+      id: pilot_worker_back_home
+    timeout: 120000
+- tapOn:
+    id: pilot_worker_back_home

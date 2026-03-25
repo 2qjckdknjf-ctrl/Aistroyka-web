@@ -46,10 +46,27 @@ export async function listReportsForManager(
     );
   }
 
-  let result: ReportListRow[] = (rows as { id: string; user_id: string; day_id: string | null; status: string; created_at: string; submitted_at: string | null; task_id: string | null }[]).map((r) => ({
-    ...r,
-    project_id: r.day_id ? dayProjectMap[r.day_id] ?? null : null,
-  }));
+  const taskIds = Array.from(
+    new Set((rows as { task_id: string | null }[]).map((r) => r.task_id).filter(Boolean))
+  ) as string[];
+  let taskProjectMap: Record<string, string> = {};
+  if (taskIds.length > 0) {
+    const { data: taskRows } = await supabase
+      .from("worker_tasks")
+      .select("id, project_id")
+      .eq("tenant_id", tenantId)
+      .in("id", taskIds);
+    taskProjectMap = Object.fromEntries(
+      ((taskRows ?? []) as { id: string; project_id: string | null }[]).map((t) => [t.id, t.project_id ?? ""])
+    );
+  }
+
+  let result: ReportListRow[] = (rows as { id: string; user_id: string; day_id: string | null; status: string; created_at: string; submitted_at: string | null; task_id: string | null }[]).map((r) => {
+    const fromDay = r.day_id ? dayProjectMap[r.day_id] ?? null : null;
+    const fromTask = r.task_id ? taskProjectMap[r.task_id] ?? null : null;
+    const project_id = fromDay ?? fromTask ?? null;
+    return { ...r, project_id };
+  });
 
   if (opts.projectId) {
     result = result.filter((r) => r.project_id === opts.projectId);
