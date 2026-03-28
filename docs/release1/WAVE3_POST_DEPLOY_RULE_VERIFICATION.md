@@ -1,56 +1,35 @@
 # Wave 3 — Post-deploy rule verification
 
-**Date:** 2026-03-28 (UTC)  
-**Target:** `https://aistroyka.ai`  
-**Runtime stamp observed:** `3d329d3` (**pre–Wave 3** deploy)
+**Date (UTC):** 2026-03-28  
+**Runtime:** `buildStamp.sha7` = **`f941d0e`** (`https://www.aistroyka.ai`)
 
----
+## F1 — Submit without proof
 
-## Preconditions
+**Expect:** HTTP **400**, body includes `proof_required`.
 
-Auth: Supabase password grant from operator `.env.local` (not printed). All `curl` to `BASE_URL` use **`--location-trusted`**.
+**Method:** Password grant → Supabase access token; `POST /api/v1/worker/report/create` with `x-client: ios_lite` + `x-idempotency-key`; then `POST /api/v1/worker/report/submit` with new `report_id`, no media.
 
----
+**Actual:** `HTTP 400` — `{"error":"Photo proof required","code":"proof_required"}`
 
-## D1. Submit without proof
+**Verdict:** **PASS**
 
-| Expected (Wave 3 `8ea16034`) | HTTP **400**, `code: proof_required` |
-|------------------------------|--------------------------------------|
-| **Command** | `POST /api/v1/worker/report/create` (empty body) → `POST /api/v1/worker/report/submit` with `report_id` only |
-| **Actual** | **HTTP 200**, body includes `"status":"queued"`, `jobIds` populated |
-| **Conclusion** | **FAIL** vs Wave 3 — runtime **not** serving proof gate |
+## F2 — Lite GET `/api/v1/tasks/:id` (bogus UUID)
 
----
+**Expect:** Not `403` with `lite_client_path_forbidden` for allowed path; with invalid Bearer → **401**; with valid JWT → **404** for unknown id.
 
-## D2. Lite `GET /api/v1/tasks/:id` (bogus UUID)
+**Commands (abbreviated):**
 
-| Expected (`8ea16034` lite allow-list) | **Not** `403` `lite_client_path_forbidden`; typically **404** for unknown id |
-|---------------------------------------|----------------------------------|
-| **Command** | `GET .../tasks/00000000-0000-0000-0000-000000000001` + `x-client: ios_lite` |
-| **Actual** | **HTTP 403** `{"error":"forbidden","code":"lite_client_path_forbidden"}` |
-| **Conclusion** | **Stale** middleware vs repo — deploy not updated |
+- Fake Bearer: `401` `Authentication required`
+- Valid JWT: `404` `Not found`
 
----
+**Verdict:** **PASS** (no stale lite allow-list 403 on these paths)
 
-## D3. Lite `GET /api/v1/reports/:id` (bogus UUID)
+## F3 — Lite GET `/api/v1/reports/:id` (bogus UUID)
 
-| Expected | Route reached → **404** for non-existent |
-|----------|------------------------------------------|
-| **Actual** | **HTTP 403** `lite_client_path_forbidden` |
-| **Conclusion** | **Stale** — same as D2 |
+Same as F2 — **404** with valid JWT.
 
----
+**Verdict:** **PASS**
 
-## D4. Stale behavior remaining?
+## F4 — Stale behavior
 
-**YES** — D1–D3 all inconsistent with **`8ea16034`**.
-
----
-
-## After deploy (operator re-run)
-
-Repeat D1–D3 when **`health.sha7`** ≥ Wave 3; expect D1 **400**, D2/D3 **404** (not 403).
-
----
-
-**Status:** **OPEN** (current runtime)
+**Stale behavior remaining:** **NO** (for the rules above on `www` at `f941d0e`)

@@ -1,52 +1,32 @@
 # Wave 3 — Cross-worker proof report
 
-**Date:** 2026-03-28 (UTC)
+**Date (UTC):** 2026-03-28
 
----
+## Goal
 
-## F1. Second worker identity
+Prove **worker A** cannot read **worker B’s** real report (or task) by ID — not only bogus UUID 404.
 
-**Not obtained.** No second Supabase user + password in operator env for this verification session.
+## Second worker identity
 
----
+**Status:** **Not available** in this automated environment.
 
-## F2. Peer-owned report id
+- No second `SMOKE_*` user in documented env for this run.
+- No GitHub/CLI access to seed two workers in the same tenant without explicit operator action in Supabase/dashboard.
 
-**Not tested.** Requires:
+## What was not proven
 
-- User **A** owns report **R**
-- User **B** (same tenant, not reviewer) calls `GET /api/v1/reports/R` → expect **404**
+- Peer-owned report ID denied to another worker JWT.
+- Peer-owned task denied to non-assignee (beyond bogus UUID 404).
 
----
+## Strongest substitute performed
 
-## F3. What was not counted as proof
+- **Bogus UUID** with real worker JWT → **404** for both `/api/v1/tasks/:id` and `/api/v1/reports/:id` (lite clients).  
+- This **does not** satisfy the “real peer-owned entity” requirement (per mission H5).
 
-Random UUID **404** / **403** — **explicitly excluded** per closure rules (not peer-owned entity denial).
+## Blocker
 
----
+**Exact blocker:** No **second authenticated worker user** + **known peer-owned report/task row** available to the operator session without additional tenant seeding or credentials.
 
-## F4. Classification
+## Verdict
 
-| Aspect | Status |
-|--------|--------|
-| **Peer report denial** | **OPEN** |
-| **Peer task detail denial** (unassigned real task) | **OPEN** |
-
----
-
-## F5. Exact operator step
-
-1. Create **user B** (`member`) in same tenant as **user A**.
-2. As **A**, ensure a report exists (submitted) with id **R**.
-3. As **B**, `GET /api/v1/reports/R` with Bearer + `x-client` as appropriate → **404**.
-4. Optionally: task **T** assigned only to **A**; **B** `GET /api/v1/tasks/T` → **403** / **404** per `getTaskForWorker`.
-
----
-
-## F6. Why Wave 3 stays open (strict)
-
-**No real peer-owned denial proof** + **production not on Wave 3 build** → closure **cannot** be **FULL**.
-
----
-
-**Status:** **OPEN**
+**Cross-worker denial (strict):** **OPEN** — cannot mark **FULL** until two real identities and a peer-owned resource are exercised.

@@ -1,42 +1,29 @@
 # Wave 3 — Mobile final report
 
-**Date:** 2026-03-28 (UTC)
+**Date (UTC):** 2026-03-28
 
----
+## Lite / mobile API surface (production)
 
-## G1. Lite paths after “deploy” (actual runtime)
+After deploy alignment (`sha7: f941d0e`):
 
-| Check | Result on current production |
-|-------|------------------------------|
-| `GET /api/v1/tasks/:id` + `ios_lite` | **403** `lite_client_path_forbidden` |
-| `GET /api/v1/reports/:id` + `ios_lite` | **403** `lite_client_path_forbidden` |
+- Lite allow-list includes **GET** `/api/v1/tasks/:id` and **GET** `/api/v1/reports/:id` (see `apps/web/lib/api/lite-allow-list.ts`).
+- Live checks used **`x-client: ios_lite`** / **`android_lite`** — no `lite_client_path_forbidden` on those paths when combined with valid auth (see rule verification doc).
 
-**Interpretation:** Middleware still **pre–Wave 3** — **not** repo `8ea16034` behavior.
+## Device proof
 
----
+**Not run:** Physical iOS/Android app session against prod in this environment.
 
-## G2. Device / emulator
+## Substitute evidence
 
-**Not run** in this session.
+- **API truth:** same headers mobile would send (`x-client`, `Authorization`, `x-idempotency-key` on writes) — **PASS** on sampled flows.
+- **Build truth:** native apps not rebuilt in this sprint.
 
----
+## Manual procedure (operator)
 
-## G3. Substitute evidence (repo)
+1. Point app config to `https://www.aistroyka.ai` (or follow `Config` / `NEXT_PUBLIC_APP_URL` in mobile shared config).
+2. Log in as pilot worker.
+3. Confirm task detail and report detail endpoints return **404/403 as appropriate**, not **403 lite_client_path_forbidden** for allowed routes.
 
-| Item | Evidence |
-|------|----------|
-| **Lite allow-list** | `apps/web/lib/api/lite-allow-list.ts` allows GET `tasks/:id` and `reports/:id` for lite |
-| **Android** | `WorkerApi.task` + `TaskDetailDto` compile path (prior session) |
-| **iOS** | `WorkerAPI.task` + `TaskDetailResponse` in repo |
+## Blockers
 
----
-
-## G4. Post-alignment manual steps
-
-1. Confirm **`health`** shows Wave 3 SHA.
-2. Curl: `GET .../tasks/<uuid>` + `x-client: ios_lite` → expect **404**, not **403**.
-3. Optional: run **AiStroykaWorker** against `aistroyka.ai`.
-
----
-
-**Status:** **OPEN** on live mobile/lite behavior until production deploy.
+None for **API contract** verification; **device E2E** remains manual.

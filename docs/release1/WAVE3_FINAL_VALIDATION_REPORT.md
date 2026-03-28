@@ -1,36 +1,28 @@
 # Wave 3 — Final validation report
 
-**Date:** 2026-03-28 (UTC)
+**Date (UTC):** 2026-03-28
 
----
+## Code changed in closure sprint
 
-## Scope
+- `apps/web/lib/domain/reports/report.repository.ts`
+- `apps/web/lib/domain/notifications/manager-notifications.repository.ts`
 
-No **new application code** in this closure sprint — **documentation + verification** only.
+## Tests
 
----
+| Scope | Command | Result |
+|-------|---------|--------|
+| Manager notifications | `npm run test -- --run lib/domain/notifications/manager-notifications.repository.test.ts` | **13 passed** |
 
-## Vitest (`apps/web`)
+## Build
 
-| Command | Result |
-|---------|--------|
-| `cd apps/web && npx vitest run` | **182** files, **1117** tests — **PASS** |
-| Exit code | **0** |
+| Scope | Command | Result |
+|-------|---------|--------|
+| Monorepo web | `npm run build` (from repo root) | **Passed** (prior to push; same tree as export fix) |
 
----
+## Focused production checks
 
-## Production build / cf:build
+- `GET /api/v1/health` — `sha7` aligned
+- Worker create + submit without proof — `400 proof_required`
+- Lite GET bogus id — `404` with valid JWT
 
-**Not run** in this session (no code changes requiring a new bundle proof).
-
----
-
-## Focused areas (repo already covered by tests)
-
-- `report.service` proof gate + task-link tests  
-- `lite-allow-list` tests  
-- `task.service` `getTaskForWorker` tests  
-
----
-
-**Status:** **Repo test gate GREEN**; **live** gate **RED** until deploy (see deploy alignment report).
+**No unrelated refactors** were introduced.
