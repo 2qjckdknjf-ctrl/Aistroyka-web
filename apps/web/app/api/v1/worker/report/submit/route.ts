@@ -62,7 +62,8 @@ export async function POST(request: Request) {
   const supabase = await createClientFromRequest(request);
   const result = await submitReport(supabase, ctx, reportId, ctx.traceId, { taskId: taskId?.trim() || undefined });
   if (!result.ok) {
-    const status = result.code === "task_invalid" ? 404 : 403;
+    const status =
+      result.code === "task_invalid" ? 404 : result.code === "proof_required" ? 400 : 403;
     return withRequestIdAndTiming(
       request,
       NextResponse.json({ error: result.error, code: result.code }, { status }),

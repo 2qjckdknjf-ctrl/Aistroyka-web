@@ -3,12 +3,19 @@
 # Calls cron-tick (with x-cron-secret when CRON_SECRET set), ops/metrics (with from/to), prints key counters.
 # Exits non-zero if any endpoint fails.
 #
+# ops/metrics auth (tenant-scoped): server accepts Supabase *user* JWT (access_token) or browser session Cookie.
+# Do NOT use: service_role JWT (rejected), Supabase CLI PAT / non-JWT tokens (401).
+# AUTH_HEADER must include the Bearer prefix, e.g. AUTH_HEADER="Bearer eyJ..."
+# Full operator guide: docs/launch/STAGE4_BLOCKER_RESOLUTION_AUTH_AND_PILOT_PREP.md
+#
 # Usage:
 #   BASE_URL=http://localhost:3000 ./scripts/smoke/pilot_launch.sh
 #   CRON_SECRET=xxx BASE_URL=... ./scripts/smoke/pilot_launch.sh          # cron-tick when REQUIRE_CRON_SECRET=true
 #   COOKIE="sb-...=..." BASE_URL=... ./scripts/smoke/pilot_launch.sh      # ops/metrics tenant-scoped (session cookie)
-#   AUTH_HEADER="Bearer <token>" BASE_URL=... ./scripts/smoke/pilot_launch.sh  # or use Authorization header for metrics
+#   AUTH_HEADER="Bearer <token>" BASE_URL=... ./scripts/smoke/pilot_launch.sh  # Supabase user access_token JWT
 #   SMOKE_EMAIL=... SMOKE_PASSWORD=... with SUPABASE_URL + SUPABASE_ANON_KEY (or NEXT_PUBLIC_*) => optional token for metrics (no secrets printed)
+# Metrics uses Authorization or Cookie; apex→www redirect must keep credentials: --location-trusted (curl drops Authorization on cross-host redirect with -L alone).
+# Same rule applies to any authenticated curl to BASE_URL (e.g. worker/tasks, tasks/:id, reports/:id): use curl --location-trusted or a fixed canonical host.
 set -euo pipefail
 BASE="${BASE_URL:-http://localhost:3000}"
 CRON="${CRON_SECRET:-}"
@@ -21,7 +28,7 @@ if [[ -z "$AUTH" && -z "$COOKIE" ]]; then
   SUPA_URL="${SUPABASE_URL:-${NEXT_PUBLIC_SUPABASE_URL:-}}"
   SUPA_KEY="${SUPABASE_ANON_KEY:-${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}}"
   if [[ -n "${SMOKE_EMAIL:-}" && -n "${SMOKE_PASSWORD:-}" && -n "$SUPA_URL" && -n "$SUPA_KEY" ]]; then
-    TOKEN_RESP=$(curl -sS -m 15 -X POST "${SUPA_URL}/auth/v1/token?grant_type=password" \
+    TOKEN_RESP=$(curl -sSL -m 15 -X POST "${SUPA_URL}/auth/v1/token?grant_type=password" \
       -H "Content-Type: application/json" -H "apikey: $SUPA_KEY" \
       --data-binary "{\"email\":\"${SMOKE_EMAIL}\",\"password\":\"${SMOKE_PASSWORD}\"}" 2>/dev/null || true)
     if command -v jq &>/dev/null; then
@@ -42,7 +49,7 @@ fi
 echo "Pilot launch smoke: $BASE (from=$FROM to=$TO)"
 
 # 0) Health (no auth) — must pass
-code=$(curl -sS -o /tmp/pilot_health.json -w "%{http_code}" -m 15 "$BASE/api/v1/health" || true)
+code=$(curl -sSL -o /tmp/pilot_health.json -w "%{http_code}" -m 15 "$BASE/api/v1/health" || true)
 if [[ "$code" != "200" && "$code" != "503" ]]; then
   echo "  FAIL: GET /api/v1/health → HTTP $code"
   FAIL=1
@@ -56,7 +63,7 @@ else
 fi
 
 # 0b) Config (worker-critical, no auth) — must return 200
-code=$(curl -sS -o /tmp/pilot_config.json -w "%{http_code}" -m 10 "$BASE/api/v1/config" || true)
+code=$(curl -sSL -o /tmp/pilot_config.json -w "%{http_code}" -m 10 "$BASE/api/v1/config" || true)
 if [[ "$code" != "200" ]]; then
   echo "  FAIL: GET /api/v1/config → HTTP $code"
   FAIL=1
@@ -66,7 +73,7 @@ fi
 
 # 1) POST /api/v1/admin/jobs/cron-tick (x-cron-secret when CRON_SECRET set or when required by server)
 if [[ -n "$CRON" ]]; then
-  code=$(curl -sS -o /tmp/pilot_cron.json -w "%{http_code}" -m 30 -X POST \
+  code=$(curl -sSL -o /tmp/pilot_cron.json -w "%{http_code}" -m 30 -X POST \
     -H "Content-Type: application/json" -H "x-cron-secret: $CRON" \
     "$BASE/api/v1/admin/jobs/cron-tick" || true)
   if [[ "$code" == "200" ]]; then
@@ -81,7 +88,7 @@ if [[ -n "$CRON" ]]; then
     FAIL=1
   fi
 else
-  code=$(curl -sS -o /tmp/pilot_cron.json -w "%{http_code}" -m 30 -X POST \
+  code=$(curl -sSL -o /tmp/pilot_cron.json -w "%{http_code}" -m 30 -X POST \
     -H "Content-Type: application/json" \
     "$BASE/api/v1/admin/jobs/cron-tick" || true)
   if [[ "$code" == "200" ]]; then
@@ -104,11 +111,21 @@ fi
 METRICS_EXTRA=()
 [[ -n "$AUTH" ]] && METRICS_EXTRA+=(-H "Authorization: $AUTH")
 [[ -n "$COOKIE" ]] && METRICS_EXTRA+=(-H "Cookie: $COOKIE")
-code=$(curl -sS -o /tmp/pilot_metrics.json -w "%{http_code}" -m 15 \
+code=$(curl -sSL --location-trusted -o /tmp/pilot_metrics.json -w "%{http_code}" -m 15 \
   ${METRICS_EXTRA+"${METRICS_EXTRA[@]}"} \
   "$BASE/api/v1/ops/metrics?from=$FROM&to=$TO" || true)
 if [[ "$code" != "200" ]]; then
-  echo "  FAIL: ops/metrics → HTTP $code (set COOKIE or AUTH_HEADER for tenant auth)"
+  ERR_HINT=""
+  if command -v jq &>/dev/null; then
+    ERR_HINT=$(jq -r '.error // empty' /tmp/pilot_metrics.json 2>/dev/null | tr -d '\n' || true)
+  fi
+  if [[ "$code" == "401" && -z "$AUTH" && -z "$COOKIE" ]]; then
+    echo "  FAIL: ops/metrics → HTTP $code (set COOKIE or AUTH_HEADER, or SMOKE_EMAIL+SMOKE_PASSWORD+Supabase keys)"
+  elif [[ "$code" == "403" && -n "$ERR_HINT" ]]; then
+    echo "  FAIL: ops/metrics → HTTP $code ($ERR_HINT)"
+  else
+    echo "  FAIL: ops/metrics → HTTP $code (set COOKIE or AUTH_HEADER for tenant auth${ERR_HINT:+ — $ERR_HINT})"
+  fi
   FAIL=1
 else
   echo "  PASS: ops/metrics"

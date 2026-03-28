@@ -12,6 +12,10 @@ function isLiteClient(header: string | null): boolean {
 
 /** Allowed path prefixes or exact paths for lite clients. */
 function isPathAllowed(pathname: string, method: string): boolean {
+  const m = (method || "GET").toUpperCase();
+  // Wave 3: worker task detail + own-report read — RBAC enforced in route handlers; lite middleware only gates surface area.
+  if (m === "GET" && /^\/api\/v1\/tasks\/[^/]+$/.test(pathname)) return true;
+  if (m === "GET" && /^\/api\/v1\/reports\/[^/]+$/.test(pathname)) return true;
   // Worker/iOS+Android lite apps list tenant projects (tenant-scoped; same as dashboard read).
   if (pathname === "/api/v1/projects" && method === "GET") return true;
   if (pathname === "/api/v1/config") return true;

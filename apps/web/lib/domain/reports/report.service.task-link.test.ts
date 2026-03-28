@@ -126,5 +126,25 @@ describe("report.service task link", () => {
       expect(result.code).toBe("task_not_assigned");
       expect(repo.submit).not.toHaveBeenCalled();
     });
+
+    it("returns proof_required when report has no media rows", async () => {
+      vi.mocked(repo.getById).mockResolvedValue({
+        id: "rpt-1",
+        tenant_id: tenantId,
+        user_id: userId,
+        day_id: null,
+        status: "draft",
+        created_at: "2025-01-01T00:00:00Z",
+        submitted_at: null,
+        task_id: "task-1",
+      } as any);
+      vi.mocked(repo.listMediaByReportId).mockResolvedValue([]);
+      const supabase = {} as any;
+      const ctx = { tenantId, userId, role: "member" } as any;
+      const result = await submitReport(supabase, ctx, "rpt-1", null, {});
+      expect(result.ok).toBe(false);
+      expect(result.code).toBe("proof_required");
+      expect(repo.submit).not.toHaveBeenCalled();
+    });
   });
 });

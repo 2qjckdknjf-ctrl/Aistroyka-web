@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClientFromRequest } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
-import { getTaskById, updateTask } from "@/lib/domain/tasks/task.service";
+import { getTaskById, getTaskForWorker, updateTask } from "@/lib/domain/tasks/task.service";
+import { canManageTasks } from "@/lib/domain/tasks/task.policy";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { enqueuePushToUser } from "@/lib/platform/push/push.service";
 import {
@@ -15,7 +16,7 @@ export const dynamic = "force-dynamic";
 
 const PATCH_ROUTE_KEY = "PATCH /api/v1/tasks/:id";
 
-/** GET /api/v1/tasks/:id — task detail with linked report (manager). */
+/** GET /api/v1/tasks/:id — task detail with linked report (manager) or assigned worker/viewer. */
 export async function GET(
   request: Request,
   context: { params: Promise<{ id: string }> }
@@ -34,8 +35,23 @@ export async function GET(
   }
 
   const supabase = await createClientFromRequest(request);
-  const { data, error } = await getTaskById(supabase, ctx, id);
-  if (error) return NextResponse.json({ error }, { status: error === "Insufficient rights" ? 403 : 404 });
+  if (canManageTasks(ctx)) {
+    const { data, error } = await getTaskById(supabase, ctx, id);
+    if (error) return NextResponse.json({ error }, { status: error === "Insufficient rights" ? 403 : 404 });
+    if (!data) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json({ data });
+  }
+
+  const { data, error, code } = await getTaskForWorker(supabase, ctx, id);
+  if (error) {
+    const status =
+      error === "Insufficient rights"
+        ? 403
+        : code === "task_not_assigned"
+          ? 403
+          : 404;
+    return NextResponse.json({ error, ...(code ? { code } : {}) }, { status });
+  }
   if (!data) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json({ data });
 }

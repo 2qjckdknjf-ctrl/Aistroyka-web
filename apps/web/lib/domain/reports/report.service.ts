@@ -8,7 +8,7 @@ import { isTaskAssignedTo } from "@/lib/domain/task-assignments";
 import { enqueueJob } from "@/lib/platform/jobs/job.service";
 import { emitAudit } from "@/lib/observability/audit.service";
 import { emitChange } from "@/lib/sync/change-log.repository";
-import { notifyTenantManagers } from "@/lib/domain/notifications/manager-notifications.repository";
+import { notifyProjectManagers, notifyTenantManagers } from "@/lib/domain/notifications/manager-notifications.repository";
 
 /** Returns { ok, code? }. code = task_invalid | task_not_assigned when not ok. */
 export async function validateTaskForReportLink(
@@ -84,6 +84,13 @@ export async function submitReport(
     if (!v.ok) return { ok: false, error: v.code, code: v.code };
     taskId = options.taskId;
   }
+
+  const mediaRows = await repo.listMediaByReportId(supabase, reportId, ctx.tenantId);
+  const hasPhotoProof = mediaRows.some((r) => Boolean(r.media_id || r.upload_session_id));
+  if (!hasPhotoProof) {
+    return { ok: false, error: "Photo proof required", code: "proof_required" };
+  }
+
   const ok =
     report.status === "changes_requested"
       ? await repo.resubmit(supabase, reportId, ctx.tenantId, taskId ?? undefined)
@@ -107,13 +114,20 @@ export async function submitReport(
     payload: { status: "submitted" },
   });
 
-  await notifyTenantManagers(supabase, ctx.tenantId, {
-    type: "report_submitted",
+  const projectId = await repo.getProjectIdForReport(supabase, ctx.tenantId, report);
+  const input = {
+    type: "report_submitted" as const,
     title: "New report submitted",
     body: `Report ${reportId.slice(0, 8)}…`,
-    target_type: "report",
+    target_type: "report" as const,
     target_id: reportId,
-  });
+    project_id: projectId,
+  };
+  if (projectId) {
+    await notifyProjectManagers(supabase, ctx.tenantId, projectId, input);
+  } else {
+    await notifyTenantManagers(supabase, ctx.tenantId, input);
+  }
 
   const jobIds: string[] = [];
   try {
@@ -126,7 +140,6 @@ export async function submitReport(
     });
     if (reportJob) jobIds.push(reportJob.id);
 
-    const mediaRows = await repo.listMediaByReportId(supabase, reportId, ctx.tenantId);
     for (const row of mediaRows) {
       if (row.media_id || row.upload_session_id) {
         const mediaJob = await enqueueJob(supabase, {

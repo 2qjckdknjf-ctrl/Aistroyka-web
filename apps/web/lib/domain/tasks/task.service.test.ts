@@ -9,10 +9,16 @@ import {
   assignTask,
   listTasks,
   getTaskById,
+  getTaskForWorker,
 } from "./task.service";
+import * as reportService from "@/lib/domain/reports/report.service";
 
 vi.mock("@/lib/domain/task-assignments", () => ({
   getAssignedTaskIds: vi.fn().mockResolvedValue([]),
+}));
+
+vi.mock("@/lib/domain/reports/report.service", () => ({
+  validateTaskForReportLink: vi.fn(),
 }));
 
 vi.mock("./task.repository", () => ({
@@ -158,6 +164,33 @@ describe("task.service", () => {
       const task = { id: "task1", title: "T", status: "pending" };
       vi.mocked(taskRepo.getByIdWithReports).mockResolvedValue(task as any);
       const result = await getTaskById(supabase, ctx, "task1");
+      expect(result.error).toBe("");
+      expect(result.data).toEqual(task);
+    });
+  });
+
+  describe("getTaskForWorker", () => {
+    it("returns error when canReadTasks is false", async () => {
+      vi.mocked(taskPolicy.canReadTasks).mockReturnValue(false);
+      const result = await getTaskForWorker(supabase, ctx, "task1");
+      expect(result.error).toBe("Insufficient rights");
+      expect(result.data).toBeNull();
+    });
+
+    it("returns error when task not assigned to user", async () => {
+      vi.mocked(taskPolicy.canReadTasks).mockReturnValue(true);
+      vi.mocked(reportService.validateTaskForReportLink).mockResolvedValue({ ok: false, code: "task_not_assigned" });
+      const result = await getTaskForWorker(supabase, ctx, "task1");
+      expect(result.code).toBe("task_not_assigned");
+      expect(result.data).toBeNull();
+    });
+
+    it("returns task when assigned", async () => {
+      vi.mocked(taskPolicy.canReadTasks).mockReturnValue(true);
+      vi.mocked(reportService.validateTaskForReportLink).mockResolvedValue({ ok: true });
+      const task = { id: "task1", title: "T", status: "pending" };
+      vi.mocked(taskRepo.getByIdWithReports).mockResolvedValue(task as any);
+      const result = await getTaskForWorker(supabase, ctx, "task1");
       expect(result.error).toBe("");
       expect(result.data).toEqual(task);
     });

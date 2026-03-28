@@ -52,10 +52,14 @@ describe("checkLiteAllowList", () => {
     expect(checkLiteAllowList("/api/v1/reports/abc-123/analysis-status", "GET", "ios_lite")).toBeNull();
   });
 
-  it("returns 403 for lite on /api/v1/reports without analysis-status", () => {
-    const r = checkLiteAllowList("/api/v1/reports/abc", "GET", "ios_lite");
-    expect(r).not.toBeNull();
-    expect(r!.status).toBe(403);
+  it("returns null for lite GET /api/v1/reports/:id (worker read scope enforced in route)", () => {
+    expect(checkLiteAllowList("/api/v1/reports/abc", "GET", "ios_lite")).toBeNull();
+    expect(checkLiteAllowList("/api/v1/reports/abc", "PATCH", "ios_lite")).not.toBeNull();
+  });
+
+  it("returns null for lite GET /api/v1/tasks/:id (worker task detail)", () => {
+    expect(checkLiteAllowList("/api/v1/tasks/task-uuid-1", "GET", "ios_lite")).toBeNull();
+    expect(checkLiteAllowList("/api/v1/tasks/task-uuid-1", "PATCH", "ios_lite")).not.toBeNull();
   });
 
   it("returns null for lite client on /api/v1/devices/*", () => {

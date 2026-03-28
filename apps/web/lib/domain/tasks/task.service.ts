@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { TenantContext } from "@/lib/tenant/tenant.types";
+import { validateTaskForReportLink } from "@/lib/domain/reports/report.service";
 import { canReadTasks, canManageTasks } from "./task.policy";
 import * as repo from "./task.repository";
 import type { Task, CreateTaskInput, UpdateTaskInput } from "./task.types";
@@ -77,4 +78,24 @@ export async function getTaskById(
   if (!ctx.tenantId) return { data: null, error: "Tenant required" };
   const task = await repo.getByIdWithReports(supabase, taskId, ctx.tenantId);
   return { data: task ?? null, error: task ? "" : "Not found" };
+}
+
+/** Worker (or any tenant member): task detail only when the task is assigned to the current user. */
+export async function getTaskForWorker(
+  supabase: SupabaseClient,
+  ctx: TenantContext,
+  taskId: string
+): Promise<{ data: Task | null; error: string; code?: string }> {
+  if (!canReadTasks(ctx)) return { data: null, error: "Insufficient rights" };
+  if (!ctx.tenantId) return { data: null, error: "Tenant required" };
+  const v = await validateTaskForReportLink(supabase, ctx.tenantId, taskId, ctx.userId);
+  if (!v.ok) {
+    return {
+      data: null,
+      error: v.code === "task_not_assigned" ? "Task not assigned" : "Not found",
+      code: v.code,
+    };
+  }
+  const task = await repo.getByIdWithReports(supabase, taskId, ctx.tenantId);
+  return task ? { data: task, error: "" } : { data: null, error: "Not found" };
 }

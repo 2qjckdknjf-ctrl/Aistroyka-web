@@ -40,6 +40,10 @@ export async function GET(
   const report = await reportRepo.getById(supabase, id, ctx.tenantId!);
   if (!report) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
+  if (!canReviewReport(ctx) && report.user_id !== ctx.userId) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   const media = await reportRepo.listMediaByReportId(supabase, id, ctx.tenantId!);
   return NextResponse.json({ data: { ...report, media } });
 }
