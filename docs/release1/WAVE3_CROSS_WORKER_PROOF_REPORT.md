@@ -1,52 +1,52 @@
 # Wave 3 — Cross-worker proof report
 
-**Date:** 2026-03-28
+**Date:** 2026-03-28 (UTC)
 
 ---
 
-## Requirement
+## F1. Second worker identity
 
-Deny **worker B** reading **worker A**’s report by ID (real peer-owned row), not only random UUID **404**.
-
----
-
-## E1. Second worker identity
-
-| Item | Status |
-|------|--------|
-| **Supabase user** for worker B | **Not** available in repo / env for this session. |
-| **Tenant membership** aligned with pilot tenant | **Not** provisioned here. |
+**Not obtained.** No second Supabase user + password in operator env for this verification session.
 
 ---
 
-## E2. Peer-owned entity
+## F2. Peer-owned report id
 
-| Item | Status |
-|------|--------|
-| **Report id** owned by user A while authenticated as user B | **Not** tested — requires two users + at least one submitted report. |
+**Not tested.** Requires:
 
----
-
-## E3. What was proven instead
-
-| Check | Result |
-|-------|--------|
-| Random UUID `GET /reports/1111…` | **404** (as non-owner) — **weak** substitute for peer denial. |
+- User **A** owns report **R**
+- User **B** (same tenant, not reviewer) calls `GET /api/v1/reports/R` → expect **404**
 
 ---
 
-## Operator steps to close this gap
+## F3. What was not counted as proof
 
-1. Create **user B** (member) in same tenant as **user A**.
-2. Create/submit report as **A**; capture `report_id`.
-3. Sign in as **B**; `GET /api/v1/reports/{report_id}` → expect **404** (non-reviewer).
+Random UUID **404** / **403** — **explicitly excluded** per closure rules (not peer-owned entity denial).
 
 ---
 
-**Status:** **OPEN** — **real cross-worker denial not proven.**
+## F4. Classification
+
+| Aspect | Status |
+|--------|--------|
+| **Peer report denial** | **OPEN** |
+| **Peer task detail denial** (unassigned real task) | **OPEN** |
 
 ---
 
-## Impact on Wave 3 closure
+## F5. Exact operator step
 
-Per strict rules: **closure cannot be FULL** without this proof **unless** explicitly waived by process (not done here).
+1. Create **user B** (`member`) in same tenant as **user A**.
+2. As **A**, ensure a report exists (submitted) with id **R**.
+3. As **B**, `GET /api/v1/reports/R` with Bearer + `x-client` as appropriate → **404**.
+4. Optionally: task **T** assigned only to **A**; **B** `GET /api/v1/tasks/T` → **403** / **404** per `getTaskForWorker`.
+
+---
+
+## F6. Why Wave 3 stays open (strict)
+
+**No real peer-owned denial proof** + **production not on Wave 3 build** → closure **cannot** be **FULL**.
+
+---
+
+**Status:** **OPEN**

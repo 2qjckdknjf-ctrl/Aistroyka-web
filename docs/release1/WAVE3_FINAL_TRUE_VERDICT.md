@@ -1,45 +1,51 @@
 # Wave 3 — Final true verdict
 
-**Date:** 2026-03-28
+**Date:** 2026-03-28 (UTC)
 
 ---
 
-## What changed in this sprint
+## `WAVE3_LIVE_CLOSED`
 
-1. **Identified** that Wave 3 behavior differed from production because changes were **not** on **`origin/main`** (local-only / unpushed state vs **misleading** `buildStamp` match on old commit).
-2. **Committed** and **pushed** **`8ea16034`** with **only** Wave 3 web + smoke files (10 files).
-3. **Polled** `https://aistroyka.ai/api/v1/health` — **`buildStamp.sha7`** remained **`3d329d3`** for **~10+ minutes** → **no observable production rollout** in-session.
+**NO**
 
 ---
 
-## What is true now
+## Proven live (this sprint)
 
-| Statement | True? |
-|-----------|-------|
-| **`main` contains Wave 3 rules** | **YES** (`8ea16034`) |
-| **Production serves `8ea1603` build** | **NOT VERIFIED** (health still old `sha7`) |
-| **Submit without proof blocked live** | **NOT VERIFIED** on new build |
-| **Lite GET tasks/reports unblocked** | **NOT VERIFIED** on new build |
-| **Real positive E2E path** | **NO** |
-| **Real cross-worker denial** | **NO** |
+| Fact | Evidence |
+|------|----------|
+| **`main` contains Wave 3** | `8ea16034` + docs `b17589b8` on **`origin/main`** |
+| **Production still old** | `GET /api/v1/health` → `buildStamp.sha7` = **`3d329d3`** (2026-03-28T18:43:23Z) |
+| **Submit without proof still accepted** | **HTTP 200** + `queued` on live `POST /worker/report/submit` without media |
+| **Lite paths still pre-Wave 3** | **403** `lite_client_path_forbidden` for `GET` tasks/reports with `ios_lite` |
+| **Vitest** | **1117** passed locally |
 
 ---
 
-## Wave 3 live-closed?
+## What was fixed (repo vs last time)
 
-**NO.**
+**Nothing new in this sprint** — **documentation** and **repeat live probes** only. Deploy gap is **operational**, not a missing commit.
+
+---
+
+## What remains open
+
+1. **Production deploy** to artifact containing **`8ea16034`** (see **`WAVE3_DEPLOY_PATH_TRUTH.md`** — likely **Cloudflare** `wrangler` production env, and/or **Vercel** if domain is routed there).
+2. **Post-deploy** smoke + rule re-verification.
+3. **Real** positive path (assigned task + proof + submit).
+4. **Real** cross-worker denial (two users + peer report id).
 
 ---
 
 ## Wave 4 allowed?
 
-**NO.**
+**NO**
 
 ---
 
-## Next operator actions (minimum)
+## Single operator checklist (minimum)
 
-1. **Vercel:** Confirm deployment for **`8ea16034`** (or redeploy / fix Git integration).
-2. **Health:** Re-check **`buildStamp`**; if stuck on old SHA, inspect **build embedding** (`apps/web` release env / CI inject).
-3. **Re-run** `WAVE3_POST_DEPLOY_RULE_VERIFICATION.md` curls.
-4. **Provision** second user + peer report for **cross-worker** proof **or** accept formal waiver (out of scope here).
+1. Confirm **which edge** serves **aistroyka.ai** (Cloudflare Worker vs Vercel).
+2. **Deploy** latest **`main`** using the **canonical** project command (`deploy:prod` / Vercel Redeploy).
+3. Poll **`/api/v1/health`** until **`sha7`** reflects new build.
+4. Re-run **`WAVE3_POST_DEPLOY_RULE_VERIFICATION.md`** checks.

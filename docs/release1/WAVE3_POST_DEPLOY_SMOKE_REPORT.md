@@ -1,41 +1,37 @@
 # Wave 3 — Post-deploy smoke report
 
-**Date:** 2026-03-28
+**Date:** 2026-03-28 (UTC)
 
 ---
 
 ## Preconditions
 
-Post-deploy smoke for **Wave 3 behavior** is meaningful only after production serves build **`8ea1603`** (or later from `main`).
+**Post-deploy smoke** (Wave 3–meaningful) requires **deploy alignment** first (`health` shows **`8ea1603`** or newer `main`).
 
-At documentation time, **`GET /api/v1/health`** still reported **`sha7: 3d329d3`**.
+**Current:** **`health.sha7` = `3d329d3`** → **post-deploy smoke not executed** as a Wave 3 completion gate.
 
 ---
 
-## Command (canonical)
+## Canonical command (when aligned)
 
 ```bash
-cd /path/to/AISTROYKA
-set -a; [ -f apps/web/.env.local ] && . apps/web/.env.local; [ -f .env.local ] && . .env.local; set +a
+set -a
+[ -f apps/web/.env.local ] && . apps/web/.env.local
+[ -f .env.local ] && . .env.local
+set +a
 export BASE_URL="${BASE_URL:-https://aistroyka.ai}"
 ./scripts/smoke/pilot_launch.sh
 ```
 
 ---
 
-## Result (this session, after push)
+## Result (this session)
 
-| Step | Result |
+| Item | Status |
 |------|--------|
-| Script executed | **Not re-run** after push (deploy SHA unchanged on health). |
-| **Expected after deploy** | Same as prior: health, config, cron, ops/metrics **PASS** with valid auth. |
+| **Executed after Wave 3 SHA** | **NO** — blocker: runtime not aligned |
+| **Prior pilot smoke** (historical) | **PASS** when env + auth correct — **not** a substitute for post-Wave-3-deploy proof |
 
 ---
 
-## Wave 3 relation
-
-`pilot_launch.sh` does **not** assert `proof_required` or lite `tasks`/`reports` paths — **supplement** with `WAVE3_POST_DEPLOY_RULE_VERIFICATION.md` checks.
-
----
-
-**Status:** **PENDING** new production build — **not** a post-deploy smoke **PASS** for Wave 3–specific rules yet.
+**Status:** **NOT RUN** (blocked on deploy alignment)

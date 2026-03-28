@@ -1,66 +1,56 @@
-# Wave 3 — Post-deploy rule verification (checklist)
+# Wave 3 — Post-deploy rule verification
 
-**Date:** 2026-03-28  
-**Prerequisite:** `GET /api/v1/health` → `buildStamp.sha7` = **`8ea1603`** (or newer `main`).
-
----
-
-## C1. Submit without proof
-
-**Expected:** `POST /api/v1/worker/report/submit` → **HTTP 400**, body includes `code: proof_required` (or `error` text).
-
-**Procedure:**
-
-```bash
-# After password grant → TOKEN; use --location-trusted on all app API calls
-curl -sSL --location-trusted -X POST "$BASE/api/v1/worker/report/create" \
-  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -H "x-idempotency-key: $(openssl rand -hex 8)" \
-  -d '{}' 
-# capture data.id as RID
-
-curl -sSL --location-trusted -X POST "$BASE/api/v1/worker/report/submit" \
-  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -H "x-idempotency-key: $(openssl rand -hex 8)" \
-  -d "{\"report_id\":\"$RID\"}"
-```
-
-**Pre-deploy observation (still `sha7=3d329d3`):** submit without media → **HTTP 200** (incorrect vs Wave 3).
-
-**Post-deploy:** **Not re-verified** — health stamp unchanged in session.
+**Date:** 2026-03-28 (UTC)  
+**Target:** `https://aistroyka.ai`  
+**Runtime stamp observed:** `3d329d3` (**pre–Wave 3** deploy)
 
 ---
 
-## C2. Lite `GET /api/v1/tasks/:id`
+## Preconditions
 
-**Expected:** **Not** `403` `lite_client_path_forbidden` for valid GET path; **404** for non-existent id.
-
-```bash
-curl -sSL --location-trusted -H "Authorization: Bearer $TOKEN" \
-  -H "x-client: ios_lite" -H "x-device-id: test" \
-  "$BASE/api/v1/tasks/00000000-0000-0000-0000-000000000001"
-```
-
-**Pre-deploy:** **403** forbidden (old middleware).
-
-**Post-deploy:** **Pending.**
+Auth: Supabase password grant from operator `.env.local` (not printed). All `curl` to `BASE_URL` use **`--location-trusted`**.
 
 ---
 
-## C3. Lite `GET /api/v1/reports/:id`
+## D1. Submit without proof
 
-**Expected:** **404** for random id; **200** for own report id.
-
-**Pre-deploy:** random id → **403** (blocked at middleware).
-
-**Post-deploy:** **Pending.**
-
----
-
-## C4. Submit with proof (full chain)
-
-**Expected:** create upload session → storage upload → finalize → `add-media` → submit → **200** with coherent `jobIds`.
-
-**Status:** **Not executed** in this session (requires storage + binary upload).
+| Expected (Wave 3 `8ea16034`) | HTTP **400**, `code: proof_required` |
+|------------------------------|--------------------------------------|
+| **Command** | `POST /api/v1/worker/report/create` (empty body) → `POST /api/v1/worker/report/submit` with `report_id` only |
+| **Actual** | **HTTP 200**, body includes `"status":"queued"`, `jobIds` populated |
+| **Conclusion** | **FAIL** vs Wave 3 — runtime **not** serving proof gate |
 
 ---
 
-**Overall:** **OPEN** until deploy SHA updates **and** commands re-run.
+## D2. Lite `GET /api/v1/tasks/:id` (bogus UUID)
+
+| Expected (`8ea16034` lite allow-list) | **Not** `403` `lite_client_path_forbidden`; typically **404** for unknown id |
+|---------------------------------------|----------------------------------|
+| **Command** | `GET .../tasks/00000000-0000-0000-0000-000000000001` + `x-client: ios_lite` |
+| **Actual** | **HTTP 403** `{"error":"forbidden","code":"lite_client_path_forbidden"}` |
+| **Conclusion** | **Stale** middleware vs repo — deploy not updated |
+
+---
+
+## D3. Lite `GET /api/v1/reports/:id` (bogus UUID)
+
+| Expected | Route reached → **404** for non-existent |
+|----------|------------------------------------------|
+| **Actual** | **HTTP 403** `lite_client_path_forbidden` |
+| **Conclusion** | **Stale** — same as D2 |
+
+---
+
+## D4. Stale behavior remaining?
+
+**YES** — D1–D3 all inconsistent with **`8ea16034`**.
+
+---
+
+## After deploy (operator re-run)
+
+Repeat D1–D3 when **`health.sha7`** ≥ Wave 3; expect D1 **400**, D2/D3 **404** (not 403).
+
+---
+
+**Status:** **OPEN** (current runtime)
