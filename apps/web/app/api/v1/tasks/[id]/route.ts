@@ -3,6 +3,7 @@ import { createClientFromRequest } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { getTaskById, getTaskForWorker, updateTask } from "@/lib/domain/tasks/task.service";
 import { canManageTasks } from "@/lib/domain/tasks/task.policy";
+import { isLiteWorkerClient } from "@/lib/tenant/client-profile";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { enqueuePushToUser } from "@/lib/platform/push/push.service";
 import {
@@ -35,7 +36,8 @@ export async function GET(
   }
 
   const supabase = await createClientFromRequest(request);
-  if (canManageTasks(ctx)) {
+  // Lite field workers always use worker RBAC (assigned/unassigned), not tenant-wide manager task view.
+  if (!isLiteWorkerClient(ctx) && canManageTasks(ctx)) {
     const { data, error } = await getTaskById(supabase, ctx, id);
     if (error) return NextResponse.json({ error }, { status: error === "Insufficient rights" ? 403 : 404 });
     if (!data) return NextResponse.json({ error: "Not found" }, { status: 404 });

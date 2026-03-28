@@ -3,6 +3,7 @@ import { createClientFromRequest } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError, TenantForbiddenError } from "@/lib/tenant";
 import * as reportRepo from "@/lib/domain/reports/report.repository";
 import { canReviewReport } from "@/lib/domain/reports/report.policy";
+import { isLiteWorkerClient } from "@/lib/tenant/client-profile";
 import type { ReportReviewStatus } from "@/lib/domain/reports/report.repository";
 import { emitAudit } from "@/lib/observability/audit.service";
 
@@ -40,7 +41,12 @@ export async function GET(
   const report = await reportRepo.getById(supabase, id, ctx.tenantId!);
   if (!report) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  if (!canReviewReport(ctx) && report.user_id !== ctx.userId) {
+  // Lite field workers: only own report (peer isolation). Dashboard / manager clients keep tenant-wide read for reviewers.
+  if (isLiteWorkerClient(ctx)) {
+    if (report.user_id !== ctx.userId) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+  } else if (!canReviewReport(ctx) && report.user_id !== ctx.userId) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
