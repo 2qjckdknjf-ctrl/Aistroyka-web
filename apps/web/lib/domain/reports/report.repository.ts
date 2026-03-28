@@ -112,6 +112,33 @@ export async function resubmit(
   return !error;
 }
 
+/** Resolve project_id for a report (from task_id or day_id). */
+export async function getProjectIdForReport(
+  supabase: SupabaseClient,
+  tenantId: string,
+  report: { task_id?: string | null; day_id?: string | null }
+): Promise<string | null> {
+  if (report.task_id) {
+    const { data } = await supabase
+      .from("worker_tasks")
+      .select("project_id")
+      .eq("id", report.task_id)
+      .eq("tenant_id", tenantId)
+      .maybeSingle();
+    if ((data as { project_id?: string } | null)?.project_id) return (data as { project_id: string }).project_id;
+  }
+  if (report.day_id) {
+    const { data } = await supabase
+      .from("worker_day")
+      .select("project_id")
+      .eq("id", report.day_id)
+      .eq("tenant_id", tenantId)
+      .maybeSingle();
+    if ((data as { project_id?: string } | null)?.project_id) return (data as { project_id: string }).project_id;
+  }
+  return null;
+}
+
 export type ReportReviewStatus = "approved" | "rejected" | "changes_requested";
 
 export interface UpdateReportReviewInput {
