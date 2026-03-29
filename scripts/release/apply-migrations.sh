@@ -11,5 +11,6 @@ if ! command -v supabase &>/dev/null; then
   exit 1
 fi
 echo "Applying migrations from $WEB_DIR/supabase/migrations..."
-supabase db push
+# --include-all: required when remote history has gaps (see docs/product/WAVE4_STEP7_DRIFT_RESOLUTION_DECISION.md).
+supabase db push --include-all
 echo "Migrations applied successfully."
