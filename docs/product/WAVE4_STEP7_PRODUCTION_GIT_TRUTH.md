@@ -26,3 +26,7 @@ Commit **`fc710fe6`** contains **only** Wave 4 Step 7 rollout / migration unbloc
 ## A4 — Push
 
 **Pushed:** `main` → `origin/main` successfully after commit.
+
+## A5 — Follow-up (production evidence docs)
+
+**Commit:** `94e94afc` — adds `WAVE4_STEP7_PRODUCTION_*.md` evidence pack; **pushed** to `origin/main`.
