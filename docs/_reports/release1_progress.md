@@ -12,7 +12,7 @@
 | 3 Bun / lockfile | **Done** | Root `build`, `lint`, `test` use `bun`; `package-lock.json` removed. |
 | 3b PR CI | **Done** | `.github/workflows/ci-check.yml`: on PRs to `main`/`master` — `bun install --frozen-lockfile`, `bun run lint`, `bun run test`, `bun run cf:build`. README documents merge gate. |
 | 4 Cloudflare | **Done (direct staging worker cutover)** | Updated staging CI deploy path to patched `--no-bundle` rollout and fixed `wrangler.deploy.toml` for staging bootstrap entry + staging vars. Route `staging.aistroyka.ai/*` now points to `aistroyka-web-staging` (no `hiair` proxy). Health shows `buildStamp.sha7=b347ab5` from the latest staging deploy. |
-| 5 Mobile | **Partial** | Android: `assembleRelease` previously OK; added `WorkerAppLaunchInstrumentedTest` + `connectedDebugAndroidTest` compile path. iOS Worker: `createUploadSession` now **requires** server `upload_path` (no client path fallback). **Maestro / device E2E vs staging:** not run here. |
+| 5 Mobile | **Partial** | Android: on-demand instrumented CI workflow now passes (`Android Instrumented Smoke`, run `24105905807`) with emulator + `:AiStroykaWorker:connectedDebugAndroidTest`. iOS Worker: `createUploadSession` now **requires** server `upload_path` (no client path fallback). **Maestro / device E2E vs staging:** not run here. |
 | 5b Crashlytics / push | **Pending** | Requires Firebase (Android), APNs keys, FCM setup — blocked on org credentials and Gradle/Xcode plugin wiring. Tracked in AGENTS.md. |
 | 6 AI RPC / schema | **Done (repo + live)** | Live Supabase (`vthfrxehrursfloevnlp`) now has migration `20260411120000_release1_analysis_engine` applied via MCP (tables/RPCs + `projects.user_id`) and follow-up hardening `20260407195000_release1_trigger_analysis_permissions` (service-role only execute for `trigger_analysis`). |
 | 7 Docs | **Done** | `docs/launch/Release1.md`, this file, README PR section, AGENTS.md CI + mobile observability note. |
@@ -77,12 +77,19 @@
   - `GET https://staging.aistroyka.ai/ru/login` => `200`.
   - `GET https://staging.aistroyka.ai/api/v1/projects` (without auth) => `401` (expected).
 
+## Verification run (cloud, 2026-04-07, Android instrumented CI)
+
+- Workflow: `.github/workflows/android-instrumented-smoke.yml` (manual, `workflow_dispatch`).
+- First runs failed and were remediated in-repo:
+  - emulator startup timeout / instability;
+  - AGP 7.4 Kotlin DSL incompatibility (`packaging` -> `packagingOptions`);
+  - JVM target mismatch (`compileDebugJavaWithJavac` 1.8 vs Kotlin 11) in `shared` and app modules.
+- Final validation: run `24105905807` => **success** (`AiStroykaWorker connectedDebugAndroidTest` green, 3m33s).
+
 ## Pending / blockers
 
-1. **Staging pilot-smoke secret:** set `PILOT_SMOKE_BEARER_STAGING` in GitHub Actions secrets to unblock final workflow success and `pilot-smoke.yml` execution.
-2. **End-to-end AI workflow:** Create project → upload media → trigger analysis → `POST /api/v1/analysis/process` (with `AI_ANALYSIS_URL` + service role) → confirm job completion — **not run** in this session (needs live env).
-3. **Crashlytics + APNs/FCM:** Configure in Firebase / Apple Developer and add Gradle (`google-services.json`) / Xcode capabilities when keys are available.
-4. **Instrumented tests on CI:** Added on-demand workflow `.github/workflows/android-instrumented-smoke.yml` (emulator + `:AiStroykaWorker:connectedDebugAndroidTest`). It is manual (`workflow_dispatch`) and does not slow default PR gate.
+1. **End-to-end AI workflow:** Create project → upload media → trigger analysis → `POST /api/v1/analysis/process` (with `AI_ANALYSIS_URL` + service role) → confirm job completion — **not run** in this session (needs live env + AI engine endpoint).
+2. **Crashlytics + APNs/FCM:** Configure in Firebase / Apple Developer and add Gradle (`google-services.json`) / Xcode capabilities when keys are available.
 
 ## Follow-ups (optional)
 
