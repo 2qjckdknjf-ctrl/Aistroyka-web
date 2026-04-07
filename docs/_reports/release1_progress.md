@@ -86,9 +86,23 @@
   - JVM target mismatch (`compileDebugJavaWithJavac` 1.8 vs Kotlin 11) in `shared` and app modules.
 - Final validation: run `24105905807` => **success** (`AiStroykaWorker connectedDebugAndroidTest` green, 3m33s).
 
+## Verification run (cloud, 2026-04-07, staging redeploy + AI E2E gate)
+
+- Staging deploy rerun on `main`: run `24106627305` => **success** (deploy + post-deploy pilot-smoke green).
+- Pilot-smoke auth fix: refreshed `PILOT_SMOKE_BEARER_STAGING` as raw JWT (workflow injects `Bearer` prefix itself).
+- Added v1 route compatibility on `main`:
+  - `/api/v1/auth/login` -> existing login handler;
+  - `/api/v1/analysis/process` -> existing process handler.
+- E2E verification (staging):
+  - `POST /api/v1/auth/login` => `200`
+  - `POST /api/v1/projects` => `200`
+  - media + analysis job created (service-role seed path)
+  - `POST /api/v1/analysis/process` => `503` with `{\"ok\":false,\"error\":\"AI_ANALYSIS_URL is not configured\"}`.
+- Conclusion: API chain works up to AI engine call; remaining blocker is external env wiring (`AI_ANALYSIS_URL`).
+
 ## Pending / blockers
 
-1. **End-to-end AI workflow:** Create project → upload media → trigger analysis → `POST /api/v1/analysis/process` (with `AI_ANALYSIS_URL` + service role) → confirm job completion — **not run** in this session (needs live env + AI engine endpoint).
+1. **AI engine endpoint env:** set `AI_ANALYSIS_URL` in staging/prod runtime env and redeploy; current `POST /api/v1/analysis/process` returns `503 AI_ANALYSIS_URL is not configured`.
 2. **Crashlytics + APNs/FCM:** Configure in Firebase / Apple Developer and add Gradle (`google-services.json`) / Xcode capabilities when keys are available.
 
 ## Follow-ups (optional)
