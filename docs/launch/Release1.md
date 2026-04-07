@@ -30,6 +30,7 @@
 - **Cloud check (2026-04-07, finalized):** direct staging cutover completed. Route `staging.aistroyka.ai/*` points to `aistroyka-web-staging` (no `hiair` proxy). Smoke checks: `/api/v1/health` => 200 (`buildStamp.sha7=b347ab5`), `/ru/login` => 200, unauthenticated `/api/v1/projects` => 401.
 - **Remaining CI blocker:** staging workflow still ends red until GitHub secret `PILOT_SMOKE_BEARER_STAGING` is configured; deploy itself succeeds before this secret gate.
 - **Removed:** `apps/web/vercel.json`. **Removed GitHub workflows:** root `ci.yml`, `apply-migrations.yml`, `snapshot-backup.yml`, `update-lockfile-linux.yml`, and nested `apps/web/.github/workflows/*`. **Added:** `ci-check.yml` (PR validation). **Kept:** `deploy-cloudflare-prod.yml`, `deploy-cloudflare-staging.yml`, `pilot-smoke.yml`.
+- **Android instrumented CI (on-demand):** `.github/workflows/android-instrumented-smoke.yml` runs `:AiStroykaWorker:connectedDebugAndroidTest` on emulator (`workflow_dispatch`) to validate Activity launch + Compose mount smoke in CI without making PR gate heavier.
 
 ## Mobile (scope check)
 
