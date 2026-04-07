@@ -111,11 +111,12 @@
   - `POST /api/v1/analysis/process` => `200`, `{ ok: true, processed: true, ... }`
   - job is consumed, but final status can be `failed` when AI provider is absent.
 - Current terminal error in processed job:
-  - `AI analysis failed: 503 {"error":"No AI vision provider is configured", ...}`
+  - `AI analysis failed: 502 {"error":"All AI providers failed or are unavailable", ...}`
+  - direct provider probe: OpenAI returns `429 You exceeded your current quota`.
 
 ## Pending / blockers
 
-1. **AI provider secret:** configure at least one vision provider key in Cloudflare runtime (e.g. `OPENAI_API_KEY`, or `ANTHROPIC_API_KEY` / `GOOGLE_AI_API_KEY`), then redeploy; otherwise analyze step ends with provider `503`.
+1. **AI provider quota/billing:** provider key is configured in runtime, but OpenAI currently returns `429 quota exceeded`; top up/enable billing (or provide another provider key with available quota) to get `completed` analysis jobs.
 2. **Crashlytics + APNs/FCM:** Configure in Firebase / Apple Developer and add Gradle (`google-services.json`) / Xcode capabilities when keys are available.
 
 ## Follow-ups (optional)
