@@ -98,11 +98,24 @@
   - `POST /api/v1/projects` => `200`
   - media + analysis job created (service-role seed path)
   - `POST /api/v1/analysis/process` => `503` with `{\"ok\":false,\"error\":\"AI_ANALYSIS_URL is not configured\"}`.
-- Conclusion: API chain works up to AI engine call; remaining blocker is external env wiring (`AI_ANALYSIS_URL`).
+- Conclusion (at that point): API chain reached process route but stopped on missing `AI_ANALYSIS_URL` (resolved later in this report).
+
+## Verification run (cloud, 2026-04-07, AI URL wired + processing execution)
+
+- Added `AI_ANALYSIS_URL` to `apps/web/wrangler.deploy.toml` for both `env.staging` and `env.production`:
+  - staging -> `https://staging.aistroyka.ai/api/ai/analyze-image`
+  - production -> `https://aistroyka.ai/api/ai/analyze-image`
+- Staging deploy run `24106960458` => **success**.
+- Fixed processing runtime incompatibility: `processOneJob` now uses nullable `worker_id` (avoids live FK drift on `analysis_jobs.worker_id`); deploy run `24107209947` => **success**.
+- End-to-end check after deploy:
+  - `POST /api/v1/analysis/process` => `200`, `{ ok: true, processed: true, ... }`
+  - job is consumed, but final status can be `failed` when AI provider is absent.
+- Current terminal error in processed job:
+  - `AI analysis failed: 503 {"error":"No AI vision provider is configured", ...}`
 
 ## Pending / blockers
 
-1. **AI engine endpoint env:** set `AI_ANALYSIS_URL` in staging/prod runtime env and redeploy; current `POST /api/v1/analysis/process` returns `503 AI_ANALYSIS_URL is not configured`.
+1. **AI provider secret:** configure at least one vision provider key in Cloudflare runtime (e.g. `OPENAI_API_KEY`, or `ANTHROPIC_API_KEY` / `GOOGLE_AI_API_KEY`), then redeploy; otherwise analyze step ends with provider `503`.
 2. **Crashlytics + APNs/FCM:** Configure in Firebase / Apple Developer and add Gradle (`google-services.json`) / Xcode capabilities when keys are available.
 
 ## Follow-ups (optional)
