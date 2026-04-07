@@ -132,7 +132,9 @@ export async function processOneJob(
     return { ok: false, reason: "no_url", message: "AI_ANALYSIS_URL is not set" };
   }
 
-  const workerId = crypto.randomUUID();
+  // Keep worker_id nullable to stay compatible with live DBs that may enforce
+  // a FK to a workers table not seeded by web-session users.
+  const workerId: string | null = null;
 
   const { data: jobRow, error: dequeueError } = await supabase.rpc("dequeue_job", {
     p_region_id: null,
