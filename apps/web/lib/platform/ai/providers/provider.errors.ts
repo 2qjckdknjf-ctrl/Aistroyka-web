@@ -36,8 +36,8 @@ export class ProviderRequestError extends Error {
 export function isRetryableProviderError(err: unknown): boolean {
   if (err instanceof ProviderUnavailableError) return false;
   if (err instanceof ProviderRequestError) {
-    if (err.code === "invalid_input" || err.code === "auth") return false;
-    return true; // timeout, rate_limit, server_error → retry with fallback
+    if (err.code === "invalid_input") return false;
+    return true; // timeout, rate_limit, auth, server_error → fallback to next provider
   }
   return true; // unknown errors: allow fallback
 }

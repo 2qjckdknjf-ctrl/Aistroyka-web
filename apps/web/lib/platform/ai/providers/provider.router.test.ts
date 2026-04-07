@@ -24,6 +24,7 @@ vi.mock("./provider.gemini", () => ({
 
 import { getTenantAIPreferences } from "@/lib/platform/ai/routing/tenant-ai-preferences";
 import { canInvoke, recordSuccess, recordFailure } from "./circuit-breaker";
+import { ProviderRequestError } from "./provider.errors";
 import { invokeVisionWithRouter } from "./provider.router";
 
 const supabase = {} as any;
@@ -112,6 +113,24 @@ describe("provider.router", () => {
     expect(result).toBeNull();
     expect(recordFailure).toHaveBeenCalledWith(supabase, "openai");
     expect(recordFailure).toHaveBeenCalledWith(supabase, "anthropic");
+  });
+
+  it("falls back when preferred provider returns auth error", async () => {
+    mockInvokeVision.mockRejectedValue(
+      new ProviderRequestError("OpenAI unauthorized", "auth", 401)
+    );
+    mockAnthropicInvoke.mockResolvedValue(
+      makeResult("anthropic", "claude-sonnet-4-20250514")
+    );
+
+    const result = await invokeVisionWithRouter(supabase, "https://example.com/img.jpg", {
+      maxTokens: 1024,
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.providerUsed).toBe("anthropic");
+    expect(recordFailure).toHaveBeenCalledWith(supabase, "openai");
+    expect(recordSuccess).toHaveBeenCalledWith(supabase, "anthropic");
   });
 
   it("passes model from model tier when no explicit model", async () => {
