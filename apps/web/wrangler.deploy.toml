@@ -25,6 +25,7 @@ service = "aistroyka-web-dev"
 
 [env.staging]
 name = "aistroyka-web-staging"
+main = ".open-next/deploy/worker-bootstrap.js"
 [env.staging.assets]
 directory = ".open-next/assets"
 binding = "ASSETS"
