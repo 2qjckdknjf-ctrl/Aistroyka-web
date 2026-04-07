@@ -82,7 +82,7 @@
 1. **Staging pilot-smoke secret:** set `PILOT_SMOKE_BEARER_STAGING` in GitHub Actions secrets to unblock final workflow success and `pilot-smoke.yml` execution.
 2. **End-to-end AI workflow:** Create project → upload media → trigger analysis → `POST /api/v1/analysis/process` (with `AI_ANALYSIS_URL` + service role) → confirm job completion — **not run** in this session (needs live env).
 3. **Crashlytics + APNs/FCM:** Configure in Firebase / Apple Developer and add Gradle (`google-services.json`) / Xcode capabilities when keys are available.
-4. **Instrumented tests on CI:** Add a job with an Android emulator or run `connectedDebugAndroidTest` only on demand; current CI Check does not run Android.
+4. **Instrumented tests on CI:** Added on-demand workflow `.github/workflows/android-instrumented-smoke.yml` (emulator + `:AiStroykaWorker:connectedDebugAndroidTest`). It is manual (`workflow_dispatch`) and does not slow default PR gate.
 
 ## Follow-ups (optional)
 
