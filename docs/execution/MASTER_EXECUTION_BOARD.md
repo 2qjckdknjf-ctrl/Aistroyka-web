@@ -19,7 +19,7 @@
 | Phase 2 — Documents / Acts / Contracts Closure | CLOSED | Staging runtime matrix now proves manager document loops (`request_changes -> resubmit -> approve` and `reject`) with approval-history evidence. | Phase 1 |
 | Phase 3 — Budget / Cost Live Activation | CLOSED | Costs, change-orders, and commercial manager loops are runtime-proven on staging with transition and signal evidence. | Phase 2 |
 | Phase 4 — Product Truth Hardening | CLOSED | Smoke auth hardening is runtime-proven on staging, including failure-injection pass with invalid static bearer and fallback token mint recovery. | Phase 3 |
-| Phase 5 — Copilot / AI Interaction Hardening | OPEN | Sequencing gate unlocked after Phase 4 closure. | Phase 4 |
+| Phase 5 — Copilot / AI Interaction Hardening | IN_PROGRESS | Slice 1 complete: ai_analyze_media pending-image jobs now retry instead of dead-lettering; phase-wide hardening scope remains open. | Phase 4 |
 | Phase 6 — Procurement / Supply Layer | BLOCKED | Not yet solved in current product and intentionally out of current phase scope. | Phase 5 |
 | Phase 7 — Change Management / Contract Memory | BLOCKED | Change-order surface exists partially; full phase depends on prior domain closure order. | Phase 6 |
 | Phase 8 — Quality / Defect Management | BLOCKED | Defect entities exist partially, but phase-level closure sequence not reached. | Phase 7 |
