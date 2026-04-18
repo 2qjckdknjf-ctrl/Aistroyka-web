@@ -93,7 +93,7 @@ Observed sample:
 
 ### Flow E — repeatable SLO gate (operator script)
 
-1. Run `scripts/smoke/ai_phase5_gate.sh` with the same auth patterns as pilot smoke (`AUTH_HEADER` or minted Supabase password grant).
+1. Run `scripts/smoke/ai_phase5_gate.sh` with the same auth patterns as pilot smoke (`AUTH_HEADER` or minted Supabase password grant). When `SMOKE_EMAIL`/`SMOKE_PASSWORD` are set, the script **prefers a fresh password-grant user JWT** for tenant-gated routes (copilot stream), even if `AUTH_HEADER` is present.
 2. Script asserts:
    - `POST /api/v1/ai/analyze-image` returns `200` with JSON matching `AnalysisResult` shape (full or fallback).
    - Optional: `INCLUDE_STREAM=1` + `PROJECT_ID` asserts copilot stream ends with `event: done`.

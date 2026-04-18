@@ -40,6 +40,16 @@ if [[ -z "$AUTH" && -z "$COOKIE" ]]; then
   fi
 fi
 
+# Tenant-gated routes (e.g. copilot stream) require a user JWT that passes supabase.auth.getUser().
+# When smoke credentials exist, prefer a fresh password-grant token over a static bearer that may
+# be metrics-only or stale (analyze-image can still return 200 fallback without a resolved user).
+if [[ -z "$COOKIE" && -n "${SMOKE_EMAIL:-}" && -n "${SMOKE_PASSWORD:-}" ]]; then
+  MUSER="$(mint_smoke_token_if_possible || true)"
+  if [[ -n "$MUSER" ]]; then
+    AUTH="$MUSER"
+  fi
+fi
+
 if [[ -z "$AUTH" && -z "$COOKIE" ]]; then
   echo "ai_phase5_gate: need AUTH_HEADER, COOKIE, or SMOKE_EMAIL+SMOKE_PASSWORD+SUPABASE_URL+SUPABASE_ANON_KEY" >&2
   exit 2
@@ -96,7 +106,7 @@ if [[ "$INCLUDE_STREAM" == "1" ]]; then
     -X POST "$BASE/api/v1/projects/$PROJECT_ID/copilot/chat/stream" \
     --data-binary '{"thread_id":null,"user_text":"ping","decision_context":{"overall_risk":0.1,"confidence":0.5,"top_risk_factors":[],"projected_delay_date":null,"velocity_trend":"unknown","anomalies":[],"aggregated_at":"2026-04-18T00:00:00.000Z"},"locale":null}' \
     >"$STREAM_TMP" || true
-  if ! grep -q '^event: done$' "$STREAM_TMP"; then
+  if ! tr -d '\r' <"$STREAM_TMP" | grep -q '^event: done$'; then
     echo "ai_phase5_gate: copilot stream missing terminal done event" >&2
     head -c 600 "$STREAM_TMP" >&2 || true
     exit 1
