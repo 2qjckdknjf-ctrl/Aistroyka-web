@@ -1,6 +1,6 @@
 # Current Phase Status
 
-**Timestamp:** 2026-04-18 (Phase 5 slice 2 runtime-proven)
+**Timestamp:** 2026-04-18 (Phase 5 slice 2 runtime-proven + slice 3 test/SLO gate added)
 **Current phase:** `Phase 5 — Copilot / AI Interaction Hardening`
 
 ## Objective
@@ -19,9 +19,10 @@ Completed so far:
 - Copilot stream persistence hardening.
 - Copilot stream deterministic fallback hardening.
 - Vision analyze deterministic fallback hardening (provider outage no longer hard-fails as 502).
+- Unit tests + `scripts/smoke/ai_phase5_gate.sh` for repeatable AI interaction checks.
 
 Remaining:
-- broader copilot/AI SLO closure gates (error budgets, sustained provider health strategy, long-run validation window).
+- broader copilot/AI SLO closure gates (error budgets, sustained provider health strategy, long-run validation window; optional CI wiring for `ai_phase5_gate`).
 
 ## Latest Verdict
 

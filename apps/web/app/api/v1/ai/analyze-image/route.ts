@@ -4,7 +4,8 @@
  * Contract:
  * - Request: POST JSON { image_url (required), media_id?, project_id? }.
  * - Response: 200 with AnalysisResult { stage, completion_percent, risk_level, detected_issues, recommendations }.
- * - Errors: 400 (bad body), 413 (body too large), 402 (quota), 429 (rate limit), 403 (policy block), 502/504 (AI), 503 (no vision provider configured).
+ * - Degraded success: 200 deterministic AnalysisResult when vision routers fail but `AI_VISION_DETERMINISTIC_FALLBACK` is enabled (default); `X-AI-Fallback-Reason` header set.
+ * - Errors: 400 (bad body), 413 (body too large), 402 (quota), 429 (rate limit), 403 (policy block), 502/504 (AI when fallback disabled), 503 (no vision provider configured).
  *
  * All AI calls go through AIService (Policy Engine → Provider Router → usage).
  * Phase 8: vision telemetry + audit (no image URLs or prompts in logs).

@@ -9,6 +9,8 @@
 - Added deterministic tests for retryability classification.
 - Runtime-proven behavior on staging with MCP-backed verification.
 - Restored copilot stream persistence path by introducing missing chat tables and applying migration on staging.
+- Hardened copilot stream and vision analyze against provider outages via deterministic fallbacks with explicit telemetry and client-safe SSE completion.
+- Added `scripts/smoke/ai_phase5_gate.sh` plus focused unit tests for vision fallback behavior.
 
 ## Closure verdict
 
@@ -16,4 +18,4 @@
 
 ## Exact blocker to phase closure
 
-- Remaining Phase 5 scope (copilot stream resilience and broader AI interaction hardening) is not yet fully validated and closed.
+- Sustained SLO closure: scheduled or CI-integrated `ai_phase5_gate` runs, multi-provider health strategy, and deeper structured-output governance are not yet fully validated and closed.

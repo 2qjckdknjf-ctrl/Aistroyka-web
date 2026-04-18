@@ -90,3 +90,10 @@ Observed sample:
   - `completion_percent = 0`
   - `risk_level = medium`
   - actionable deterministic recommendations present.
+
+### Flow E — repeatable SLO gate (operator script)
+
+1. Run `scripts/smoke/ai_phase5_gate.sh` with the same auth patterns as pilot smoke (`AUTH_HEADER` or minted Supabase password grant).
+2. Script asserts:
+   - `POST /api/v1/ai/analyze-image` returns `200` with JSON matching `AnalysisResult` shape (full or fallback).
+   - Optional: `INCLUDE_STREAM=1` + `PROJECT_ID` asserts copilot stream ends with `event: done`.

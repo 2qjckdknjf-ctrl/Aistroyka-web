@@ -23,3 +23,29 @@
 ## Validation verdict (current)
 
 - **PASS**.
+
+---
+
+## Slice 2 — Provider fallback + SLO gate script
+
+### Repo-level verification
+
+- `bun run --cwd apps/web test "app/api/v1/ai/analyze-image/route.fallback.test.ts" "app/api/v1/ai/analyze-image/route.test.ts"` → PASS
+
+### Deployment verification
+
+- [Run 24605486283](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/actions/runs/24605486283) — PASS (vision fallback path on staging)
+- [Run 24605147102](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/actions/runs/24605147102) — PASS (copilot stream fallback contract)
+
+### Runtime verification (staging)
+
+- `POST /api/v1/ai/analyze-image` with authenticated user: HTTP `200`, `X-AI-Fallback-Reason: provider_unavailable`, valid `AnalysisResult` JSON body.
+- `POST /api/v1/projects/{id}/copilot/chat/stream`: SSE sequence `meta` → `done` with `fallback_reason` when provider unavailable (client-safe).
+
+### Operational repeatability
+
+- Added `scripts/smoke/ai_phase5_gate.sh` for operator-driven re-checks (auth same patterns as pilot smoke).
+
+### Validation verdict (slice 2)
+
+- **PASS**.

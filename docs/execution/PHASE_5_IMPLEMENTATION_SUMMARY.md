@@ -47,6 +47,13 @@
    - guard:
      - `AI_VISION_DETERMINISTIC_FALLBACK` controls fallback mode (`true` by default).
 
+7. Regression tests for vision fallback path:
+   - file: `apps/web/app/api/v1/ai/analyze-image/route.fallback.test.ts`
+
+8. Operator SLO gate script (repeatable staging/local checks):
+   - file: `scripts/smoke/ai_phase5_gate.sh`
+   - documents: `apps/web/.env.example` (`AI_VISION_DETERMINISTIC_FALLBACK`)
+
 ## Deployment evidence
 
 - Staging deploy run:
