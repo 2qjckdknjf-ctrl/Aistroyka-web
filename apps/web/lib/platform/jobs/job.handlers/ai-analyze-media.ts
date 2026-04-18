@@ -24,6 +24,27 @@ export async function handleAiAnalyzeMedia(
   };
   const imageUrl = await resolveImageUrl(supabase, payload);
   if (!imageUrl) {
+    if (payload.upload_session_id) {
+      const { data: session } = await supabase
+        .from("upload_sessions")
+        .select("status")
+        .eq("id", payload.upload_session_id)
+        .maybeSingle();
+      const status = (session as { status?: string } | null)?.status;
+      if (status === "created" || status === "uploaded") {
+        throw new JobHandlerError("Image URL not ready yet (upload session pending)", true);
+      }
+    }
+    if (payload.media_id) {
+      const { data: media } = await supabase
+        .from("media")
+        .select("id, file_url")
+        .eq("id", payload.media_id)
+        .maybeSingle();
+      if (media && !(media as { file_url?: string | null }).file_url) {
+        throw new JobHandlerError("Image URL not ready yet (media row pending file_url)", true);
+      }
+    }
     throw new JobPayloadError("Could not resolve image_url from media_id or upload_session_id");
   }
 
