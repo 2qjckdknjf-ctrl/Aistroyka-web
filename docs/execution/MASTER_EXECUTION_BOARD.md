@@ -18,7 +18,7 @@
 | Phase 1 — Approvals Layer Closure | CLOSED | Unified approvals queue + report quick actions + runtime matrix validated; Phase 1 closure criteria satisfied. | Phase 0 |
 | Phase 2 — Documents / Acts / Contracts Closure | CLOSED | Staging runtime matrix now proves manager document loops (`request_changes -> resubmit -> approve` and `reject`) with approval-history evidence. | Phase 1 |
 | Phase 3 — Budget / Cost Live Activation | CLOSED | Costs, change-orders, and commercial manager loops are runtime-proven on staging with transition and signal evidence. | Phase 2 |
-| Phase 4 — Product Truth Hardening | OPEN | Sequencing gate unlocked after Phase 3 closure; pending hardening work on release/runtime truth consistency. | Phase 3 |
+| Phase 4 — Product Truth Hardening | OPEN | Slice 1 implemented (smoke auth fallback logic), but closure still blocked by missing staging fallback secrets for `ops/metrics` smoke auth. | Phase 3 |
 | Phase 5 — Copilot / AI Interaction Hardening | BLOCKED | AI routes exist, but scope is gated by foundational workflow/runtime closure order. | Phase 4 |
 | Phase 6 — Procurement / Supply Layer | BLOCKED | Not yet solved in current product and intentionally out of current phase scope. | Phase 5 |
 | Phase 7 — Change Management / Contract Memory | BLOCKED | Change-order surface exists partially; full phase depends on prior domain closure order. | Phase 6 |

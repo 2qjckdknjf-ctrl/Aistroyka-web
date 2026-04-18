@@ -13,8 +13,14 @@ Harden product truth across active loops after Phase 0-3 closures:
 
 ## Current Blocker
 
-No blocker for entering Phase 4.  
-Known cross-phase operational debt remains in smoke auth context (`ops/metrics` token mode), to be handled in Phase 4 hardening.
+Phase 4 hardening is blocked on operational secret configuration for smoke auth fallback:
+
+- `PILOT_SMOKE_EMAIL_STAGING`
+- `PILOT_SMOKE_PASSWORD_STAGING`
+- `NEXT_PUBLIC_SUPABASE_URL_STAGING`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY_STAGING`
+
+Without these, fallback token minting cannot run and blocking smoke still fails on `ops/metrics` (`401`).
 
 ## Latest Verdict
 
@@ -30,3 +36,4 @@ Start `Phase 4` inventory/model with explicit release/runtime truth gates and cl
 ## Is Movement Allowed?
 
 - **From Phase 3 to next phase:** `YES`.
+- **Phase 4 closure verdict:** `NO` (in progress).
