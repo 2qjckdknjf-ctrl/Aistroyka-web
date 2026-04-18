@@ -1,0 +1,95 @@
+import { describe, expect, it, vi } from "vitest";
+import {
+  getChangeOrderDetail,
+  listChangeOrders,
+  transitionChangeOrder,
+  updateChangeOrderContent,
+} from "./change-orders.service";
+import * as repo from "./change-orders.repository";
+import * as policy from "./change-orders.policy";
+
+vi.mock("./change-orders.repository", () => ({
+  insertChangeOrder: vi.fn(),
+  listByProject: vi.fn(),
+  getById: vi.fn(),
+  updateChangeOrder: vi.fn(),
+  listEvents: vi.fn(),
+  insertEvent: vi.fn(),
+  listForTimeline: vi.fn(),
+}));
+
+vi.mock("./change-orders.policy", () => ({
+  canManageChangeOrders: vi.fn(),
+  canReadChangeOrders: vi.fn(),
+}));
+
+describe("change-orders.service", () => {
+  const ctx = { tenantId: "t1", userId: "u1", role: "owner" } as never;
+  const supabase = {} as never;
+
+  it("listChangeOrders excludes draft for non-manager", async () => {
+    vi.mocked(policy.canReadChangeOrders).mockResolvedValue(true);
+    vi.mocked(policy.canManageChangeOrders).mockResolvedValue(false);
+    vi.mocked(repo.listByProject).mockResolvedValue([]);
+    await listChangeOrders(supabase, ctx, "p1");
+    expect(repo.listByProject).toHaveBeenCalledWith(supabase, "p1", "t1", { excludeDraft: true });
+  });
+
+  it("getChangeOrderDetail hides draft from stakeholder", async () => {
+    vi.mocked(policy.canReadChangeOrders).mockResolvedValue(true);
+    vi.mocked(policy.canManageChangeOrders).mockResolvedValue(false);
+    vi.mocked(repo.getById).mockResolvedValue({
+      id: "c1",
+      project_id: "p1",
+      tenant_id: "t1",
+      status: "draft",
+      title: "X",
+      kind: "other",
+      description: null,
+      schedule_impact_level: "none",
+      budget_impact_level: "none",
+      schedule_impact_summary: null,
+      budget_impact_summary: null,
+      schedule_delta_days: null,
+      budget_delta_amount: null,
+      linked_discussion_id: null,
+      linked_document_id: null,
+      linked_request_id: null,
+      linked_milestone_id: null,
+      created_by: "u2",
+      implemented_at: null,
+      implemented_by: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+      updated_at: "2026-01-01T00:00:00.000Z",
+    } as never);
+    const r = await getChangeOrderDetail(supabase, ctx, "p1", "c1");
+    expect(r.data).toBeNull();
+    expect(r.error).toBe("Not found");
+  });
+
+  it("transitionChangeOrder rejects invalid transition", async () => {
+    vi.mocked(policy.canManageChangeOrders).mockResolvedValue(true);
+    vi.mocked(repo.getById).mockResolvedValue({
+      id: "c1",
+      project_id: "p1",
+      tenant_id: "t1",
+      status: "draft",
+    } as never);
+    const r = await transitionChangeOrder(supabase, ctx, "p1", "c1", "implemented");
+    expect(r.ok).toBe(false);
+    expect(repo.updateChangeOrder).not.toHaveBeenCalled();
+  });
+
+  it("updateChangeOrderContent rejects when locked", async () => {
+    vi.mocked(policy.canManageChangeOrders).mockResolvedValue(true);
+    vi.mocked(repo.getById).mockResolvedValue({
+      id: "c1",
+      project_id: "p1",
+      tenant_id: "t1",
+      status: "approved",
+    } as never);
+    const r = await updateChangeOrderContent(supabase, ctx, "p1", "c1", { title: "x" });
+    expect(r.ok).toBe(false);
+    expect(r.error).toContain("locked");
+  });
+});

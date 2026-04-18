@@ -23,6 +23,14 @@ export type ProjectCostItemStatus =
   | "approved"
   | "archived";
 
+/** Explainable pressure signal (no ML / forecasts). */
+export interface CostPressureSignal {
+  id: string;
+  severity: "warning" | "critical";
+  /** Plain language, manager-safe. */
+  reason: string;
+}
+
 export interface ProjectBudgetSummary {
   project_id: string;
   tenant_id: string;
@@ -32,6 +40,16 @@ export interface ProjectBudgetSummary {
   currency: string;
   over_budget: boolean;
   item_count: number;
+  /** actual_total / planned_total when planned_total > 0; else 0. */
+  utilization_ratio: number;
+  /** True when not over_budget but actual ≥ 90% of planned (project-level). */
+  nearing_budget_limit: boolean;
+  /** Non-archived lines where actual > planned. */
+  item_overrun_count: number;
+  /** Subset of overruns that have milestone_id set. */
+  milestone_linked_overrun_count: number;
+  /** Derived list for API and UI. */
+  signals: CostPressureSignal[];
 }
 
 export interface CreateCostItemInput {
