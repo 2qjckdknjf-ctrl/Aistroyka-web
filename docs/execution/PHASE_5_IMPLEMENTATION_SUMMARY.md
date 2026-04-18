@@ -65,3 +65,5 @@
   - [Run 24605486283](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/actions/runs/24605486283) — PASS.
 - Post–Workers Paid upgrade (bundle size unblocked):
   - [Run 24615810358](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/actions/runs/24615810358) — PASS (build + deploy + blocking pilot smoke).
+- Staging workflow non-blocking `ai-phase5-gate` job + script auth fix (password-grant preferred when smoke creds present):
+  - [Run 24616054744](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/actions/runs/24616054744) — PASS (includes AI gate step).
