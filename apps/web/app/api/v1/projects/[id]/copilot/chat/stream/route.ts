@@ -101,9 +101,6 @@ export async function POST(
   }
 
   const supabase = await createClientFromRequest(request);
-  if (ctx.role === "stakeholder") {
-    return NextResponse.json({ error: "Insufficient rights" }, { status: 403 });
-  }
   const { data: project, error: projectError } = await getProject(supabase, ctx, projectId);
   if (projectError || !project) {
     const status = projectError === "Insufficient rights" ? 403 : 404;
