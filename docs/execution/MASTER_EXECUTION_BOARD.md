@@ -1,6 +1,6 @@
 # AISTROYKA — Master Execution Board
 
-**Last updated:** 2026-04-18  
+**Last updated:** 2026-04-18 (staging deploy unblocked: Workers Paid)  
 **Authority:** This board supersedes stale phase reports where current repository evidence conflicts.
 
 ## Status Model

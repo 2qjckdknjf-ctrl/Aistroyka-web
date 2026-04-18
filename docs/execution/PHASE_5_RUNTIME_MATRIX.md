@@ -97,3 +97,8 @@ Observed sample:
 2. Script asserts:
    - `POST /api/v1/ai/analyze-image` returns `200` with JSON matching `AnalysisResult` shape (full or fallback).
    - Optional: `INCLUDE_STREAM=1` + `PROJECT_ID` asserts copilot stream ends with `event: done`.
+
+### Flow F — release pipeline after Workers Paid (bundle size)
+
+1. Prior failure: Cloudflare `10027` / Worker exceeded **3 MiB** on Workers Free ([Run 24606077934](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/actions/runs/24606077934)).
+2. After account **Workers Paid** upgrade: full staging pipeline **PASS**, including `wrangler deploy` and blocking pilot smoke ([Run 24615810358](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/actions/runs/24615810358)).

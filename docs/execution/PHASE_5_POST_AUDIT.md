@@ -11,7 +11,7 @@
 
 ### P1
 
-1. **Deploy / platform:** staging `wrangler deploy` may fail with Cloudflare API `10027` when the bundled Worker exceeds the **3 MiB** limit on the current Workers plan (observed: [Run 24606077934](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/actions/runs/24606077934)). Mitigation: paid Workers plan (up to 10 MiB) or bundle-size reduction — not an application-logic defect.
+1. ~~**Deploy / platform:** Workers Free **3 MiB** script limit causing `10027` on staging deploy~~ **Resolved:** account upgraded to **Workers Paid** (10 MB script limit). Verified green deploy + blocking pilot smoke: [Run 24615810358](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/actions/runs/24615810358). Historical failure record: [Run 24606077934](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/actions/runs/24606077934).
 2. Historical `dead` AI media jobs caused by pre-fix behavior remain in data history and may require optional operational replay policy.
 3. ~~`POST /api/v1/ai/analyze-image` hard 502 on provider outage~~ **Mitigated (slice 2):** deterministic fallback (`200` + `X-AI-Fallback-Reason`) when `AI_VISION_DETERMINISTIC_FALLBACK` is enabled (default). True multi-provider routing health remains an operational concern.
 

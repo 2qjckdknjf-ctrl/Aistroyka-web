@@ -63,3 +63,5 @@
   - [Run 24605147102](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/actions/runs/24605147102) — PASS.
 - Vision fallback deploy run:
   - [Run 24605486283](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/actions/runs/24605486283) — PASS.
+- Post–Workers Paid upgrade (bundle size unblocked):
+  - [Run 24615810358](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/actions/runs/24615810358) — PASS (build + deploy + blocking pilot smoke).
