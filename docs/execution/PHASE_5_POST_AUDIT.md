@@ -18,7 +18,7 @@
 ### P2
 
 1. Copilot stream persistence + deterministic fallback are in place; sustained SLO proof (multi-day error budgets, provider drill cadence) is still pending.
-2. `scripts/smoke/ai_phase5_gate.sh` is optional CI wiring — not yet integrated into default deploy workflows.
+2. `scripts/smoke/ai_phase5_gate.sh` is wired as a **non-blocking** job on staging deploy (`.github/workflows/deploy-cloudflare-staging.yml` → `ai-phase5-gate`); production deploy workflow unchanged.
 
 ## Phase 5 closure verdict (current)
 
