@@ -461,12 +461,6 @@ export async function POST(
               ...rel,
             },
           });
-          send("error", {
-            request_id: requestId,
-            retryable: res.status >= 500,
-            message: "Provider error",
-            kind: "provider_error",
-          });
           await completeWithFallback(
             errorKind === "provider_timeout" ? "provider_timeout" : "provider_unavailable"
           );
@@ -511,12 +505,6 @@ export async function POST(
               retryable: true,
               ...rel,
             },
-          });
-          send("error", {
-            request_id: requestId,
-            retryable: true,
-            message: "No response body",
-            kind: "provider_error",
           });
           await completeWithFallback("stream_transport_failure");
           return;
@@ -672,19 +660,18 @@ export async function POST(
             ...rel,
           },
         });
-        send("error", {
-          request_id: requestId,
-          retryable: errorKind === "provider_timeout",
-          message: "Something went wrong",
-          kind: errorKind === "provider_timeout" ? "timeout" : errorKind === "cancellation" ? "cancelled" : "unknown",
-        });
-
         if (errorKind !== "cancellation") {
           await completeWithFallback(
             errorKind === "provider_timeout" ? "provider_timeout" : "unknown_internal_error"
           );
           return;
         }
+        send("error", {
+          request_id: requestId,
+          retryable: false,
+          message: "Request was cancelled",
+          kind: "cancelled",
+        });
       } finally {
         clearTimeout(timeoutId);
         controller.close();
