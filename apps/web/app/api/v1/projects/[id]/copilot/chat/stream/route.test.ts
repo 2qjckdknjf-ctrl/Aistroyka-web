@@ -69,7 +69,7 @@ vi.mock("@/lib/tenant", () => ({
 }));
 
 vi.mock("@/lib/domain/projects/project.service", () => ({
-  getProject: vi.fn().mockResolvedValue({
+  getProjectForInternalWorkspace: vi.fn().mockResolvedValue({
     data: { id: "p1", name: "Project" },
     error: null,
   }),
@@ -87,8 +87,8 @@ describe("POST /api/v1/projects/:id/copilot/chat/stream", () => {
     vi.clearAllMocks();
     const { isOpenAIConfigured } = await import("@/lib/config/server");
     vi.mocked(isOpenAIConfigured).mockReturnValue(true);
-    const { getProject } = await import("@/lib/domain/projects/project.service");
-    vi.mocked(getProject).mockResolvedValue({
+    const { getProjectForInternalWorkspace } = await import("@/lib/domain/projects/project.service");
+    vi.mocked(getProjectForInternalWorkspace).mockResolvedValue({
       data: { id: "p1", name: "Project" },
       error: null,
     });
@@ -185,5 +185,39 @@ describe("POST /api/v1/projects/:id/copilot/chat/stream", () => {
     expect(res.headers.get("Content-Type")).toBe("text/event-stream");
     expect(res.headers.get("Cache-Control")).toBe("no-cache");
     expect(res.body).toBeInstanceOf(ReadableStream);
+  });
+
+  it("falls back to deterministic done event when provider returns non-OK", async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      text: vi.fn().mockResolvedValue("provider down"),
+    } as unknown as Response);
+
+    const req = new Request("https://x/api/v1/projects/p1/copilot/chat/stream", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        thread_id: null,
+        user_text: "Need next action",
+        decision_context: {
+          overall_risk: 0.6,
+          confidence: 0.8,
+          top_risk_factors: [],
+          projected_delay_date: null,
+          velocity_trend: "unknown",
+          anomalies: [],
+          aggregated_at: new Date().toISOString(),
+        },
+        locale: null,
+      }),
+    });
+
+    const res = await POST(req, { params: Promise.resolve({ id: "p1" }) });
+    expect(res.status).toBe(200);
+    const body = await res.text();
+    expect(body).toContain("event: done");
+    expect(body).toContain("fallback_reason");
+    expect(body).toContain("provider_unavailable");
   });
 });

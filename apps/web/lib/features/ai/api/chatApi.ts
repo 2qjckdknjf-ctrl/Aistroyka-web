@@ -205,6 +205,7 @@ export async function sendChatMessageStream(
   let requestId = "";
   let threadId = "";
   let finalText = "";
+  let fallbackReason: string | null = null;
   let currentEvent = "";
 
   try {
@@ -242,6 +243,8 @@ export async function sendChatMessageStream(
           }
           if (currentEvent === "done" && obj.final_text != null) {
             finalText = String(obj.final_text);
+            fallbackReason =
+              typeof obj.fallback_reason === "string" ? String(obj.fallback_reason) : null;
             callbacks.onDone({ thread_id: threadId, request_id: requestId, final_text: finalText });
             return {
               ok: true,
@@ -249,7 +252,7 @@ export async function sendChatMessageStream(
               request_id: requestId,
               assistant_content: finalText,
               low_confidence: false,
-              fallback_reason: null,
+              fallback_reason: fallbackReason,
               error_category: null,
             };
           }
@@ -281,7 +284,7 @@ export async function sendChatMessageStream(
     request_id: requestId,
     assistant_content: finalText,
     low_confidence: false,
-    fallback_reason: null,
+    fallback_reason: fallbackReason,
     error_category: null,
   };
 }
