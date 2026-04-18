@@ -1,6 +1,6 @@
 # Current Phase Status
 
-**Timestamp:** 2026-04-18 (Phase 5 slices runtime-proven)
+**Timestamp:** 2026-04-18 (Phase 5 slice 2 runtime-proven)
 **Current phase:** `Phase 5 — Copilot / AI Interaction Hardening`
 
 ## Objective
@@ -17,9 +17,11 @@ Phase 5 is not blocked, but not yet fully closed.
 Completed so far:
 - AI media retry hardening.
 - Copilot stream persistence hardening.
+- Copilot stream deterministic fallback hardening.
+- Vision analyze deterministic fallback hardening (provider outage no longer hard-fails as 502).
 
 Remaining:
-- provider reliability / failover hardening for vision path (`/api/v1/ai/analyze-image`) and broader copilot SLO gates.
+- broader copilot/AI SLO closure gates (error budgets, sustained provider health strategy, long-run validation window).
 
 ## Latest Verdict
 
@@ -28,11 +30,11 @@ Remaining:
 - **Phase 2 closure verdict:** `YES` (runtime-proven on staging for manager loop).
 - **Phase 3 closure verdict:** `YES` (budget/cost activation runtime-proven on staging).
 - **Phase 4 closure verdict:** `YES` (release/runtime smoke auth hardening runtime-proven).
-- **Phase 5 closure verdict:** `NO` (in progress; slice 1 complete).
+- **Phase 5 closure verdict:** `NO` (in progress; slices 1-2 complete, final closure gates still open).
 
 ## Next Action
 
-Continue Phase 5 slices: copilot stream resilience and broader AI interaction hardening gates.
+Continue Phase 5: finalize SLO-level reliability gates and closure evidence across repeated runtime windows.
 
 ## Is Movement Allowed?
 

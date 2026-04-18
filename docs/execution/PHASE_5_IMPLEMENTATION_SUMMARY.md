@@ -24,8 +24,35 @@
    - creates `ai_chat_threads` + `ai_chat_messages` with tenant RLS for stream route persistence.
    - migration was applied to staging via Supabase MCP.
 
+5. Hardened Copilot stream provider-failure behavior:
+   - file: `apps/web/app/api/v1/projects/[id]/copilot/chat/stream/route.ts`
+   - new behavior:
+     - when provider is unavailable/timeout/transport-failure, stream emits deterministic `done` fallback payload instead of terminating with fatal SSE path,
+     - fallback is persisted in chat history,
+     - telemetry/audit marks fallback invocation.
+   - client compatibility:
+     - fallback path now emits terminal `done` for parser-safe consumption.
+   - transport parser updates:
+     - file: `apps/web/lib/features/ai/api/chatApi.ts`
+     - stream parser now propagates `fallback_reason` from `done` payload.
+   - tests:
+     - file: `apps/web/app/api/v1/projects/[id]/copilot/chat/stream/route.test.ts`
+     - asserts deterministic `done` fallback event on provider non-OK.
+
+6. Hardened vision analyze provider-failure behavior:
+   - file: `apps/web/app/api/v1/ai/analyze-image/route.ts`
+   - new behavior:
+     - on `AIVisionFailedError` (provider unavailable/timeout), endpoint can return deterministic structured analysis fallback (`200`) with `X-AI-Fallback-Reason`,
+     - fallback execution is explicit in telemetry/audit (`fallback_invoked`).
+   - guard:
+     - `AI_VISION_DETERMINISTIC_FALLBACK` controls fallback mode (`true` by default).
+
 ## Deployment evidence
 
 - Staging deploy run:
   - [Run 24604034163](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/actions/runs/24604034163)
   - build + blocking smoke: PASS.
+- Stream fallback deploy runs:
+  - [Run 24605147102](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/actions/runs/24605147102) — PASS.
+- Vision fallback deploy run:
+  - [Run 24605486283](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/actions/runs/24605486283) — PASS.

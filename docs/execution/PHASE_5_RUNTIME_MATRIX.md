@@ -9,6 +9,8 @@ Prove key Phase 5 runtime hardening outcomes:
 
 1. Pending-image AI media jobs are retried instead of dead-lettered.
 2. Copilot stream route can create/persist chat threads in staging.
+3. Copilot stream degrades to deterministic fallback instead of hard SSE failure when provider is unavailable.
+4. Vision analyze endpoint degrades to deterministic structured result instead of 502 on provider outage.
 
 ## Runtime procedure
 
@@ -51,6 +53,40 @@ Observed post-fix sample:
 
 ## Runtime verdict (slices completed)
 
-- **PASS** for both:
+- **PASS** for all validated slices:
   - pending-image retry hardening,
-  - copilot stream persistence hardening.
+  - copilot stream persistence hardening,
+  - copilot stream deterministic fallback hardening,
+  - vision analyze deterministic fallback hardening.
+
+### Flow C — copilot stream provider fallback event contract
+
+1. Triggered `POST /api/v1/projects/{id}/copilot/chat/stream` on staging where provider path returned unavailable state.
+2. Verified SSE output no longer terminates with hard `error` event:
+   - stream emits `meta`, then terminal `done`.
+3. Verified `done` payload carries:
+   - `fallback_reason = provider_unavailable`
+   - deterministic fallback text,
+   - persisted `assistant_message_id`.
+
+Observed sample:
+
+- `request_id = 1de4d246-e602-43a3-92de-4ab9dc63f4b8`
+- `thread_id = 7c297617-f0be-48a7-84ae-23c64ce14aca`
+- SSE sequence: `meta -> done` (no blocking transport error for client parser).
+
+### Flow D — vision analyze provider fallback
+
+1. Triggered `POST /api/v1/ai/analyze-image` on staging with authenticated tenant user and valid image URL.
+2. Provider layer remained unavailable in runtime.
+3. Endpoint returned deterministic fallback payload with HTTP `200` (instead of prior `502`), plus explicit fallback response header.
+
+Observed sample:
+
+- `status = 200`
+- `x-ai-fallback-reason = provider_unavailable`
+- Body:
+  - `stage = unknown`
+  - `completion_percent = 0`
+  - `risk_level = medium`
+  - actionable deterministic recommendations present.
