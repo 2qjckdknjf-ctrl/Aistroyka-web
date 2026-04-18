@@ -11,12 +11,7 @@
 
 ### P1
 
-1. Operational secrets for fallback smoke auth are not configured:
-   - `PILOT_SMOKE_EMAIL_STAGING`
-   - `PILOT_SMOKE_PASSWORD_STAGING`
-   - `NEXT_PUBLIC_SUPABASE_URL_STAGING`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY_STAGING`
-2. Static bearer currently used by smoke does not satisfy tenant auth for `ops/metrics` (runtime `401`).
+1. Static smoke bearer can still expire over time; fallback path is now active and validated, but operators should keep both static bearer and fallback creds maintained.
 
 ### P2
 
@@ -24,8 +19,8 @@
 
 ## Phase 4 closure verdict (current)
 
-- **NO** (hardening loop not fully closed yet).
+- **YES** (hardening loop closed for current scope).
 
 ## Required next action
 
-- Configure the fallback secret set for staging and rerun deploy+smoke on branch ref.
+- Move to next phase while preserving periodic bearer rotation hygiene.

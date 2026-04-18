@@ -12,17 +12,20 @@
 - Staging deploy runs:
   - [24603384705](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/actions/runs/24603384705)
   - [24603462240](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/actions/runs/24603462240)
-- Build/deploy job passes.
-- Blocking smoke remains red on tenant metrics auth.
+  - [24603643210](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/actions/runs/24603643210)
+  - [24603699130](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/actions/runs/24603699130)
+- Build/deploy job passes in all runs.
+- Blocking smoke passes after secret remediation.
 
 ## Functional validation result
 
 Implemented behavior is correct:
 
 1. Branch-ref reusable workflow version is used when run with `--ref`.
-2. Fallback secret plumbing is present end-to-end in workflow env.
-3. Fallback cannot execute without non-empty smoke credential secrets.
+2. MCP was used to obtain Supabase project URL + publishable key and mint a fresh tenant user JWT for smoke.
+3. Fallback secret plumbing is present end-to-end in workflow env and now configured.
+4. Failure-injection check passed: smoke succeeds with intentionally invalid static bearer, proving fallback token mint + retry.
 
 ## Verdict
 
-- **NO (slice not fully closed)** due to missing operational secret configuration, not code regression.
+- **YES (slice closed)**.

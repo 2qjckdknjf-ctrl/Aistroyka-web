@@ -1,17 +1,18 @@
 # Phase 4 — Closure Summary
 
 **Date:** 2026-04-18  
-**Status:** `IN_PROGRESS`
+**Status:** `CLOSED`
 
-## Value unlocked so far
+## Value unlocked
 
-- Smoke auth hardening path exists in code and workflows.
-- Branch-ref validation confirms hardening assets execute from target branch.
+- Smoke auth hardening path exists in code/workflows and is runtime-proven.
+- Branch-ref validation confirmed target-branch workflow usage.
+- Failure-injection run confirms `ops/metrics` smoke survives stale/invalid static bearer via fallback token mint.
 
 ## Closure verdict
 
-- **Is Phase 4 closed enough to move forward?** `NO`.
+- **Is Phase 4 closed enough to move forward?** `YES`.
 
-## Exact blocker
+## Next allowed phase
 
-- Runtime fallback path requires non-empty staging smoke credential secrets; currently absent, so `ops/metrics` remains `401` in blocking smoke job.
+- `Phase 5 — Copilot / AI Interaction Hardening`
