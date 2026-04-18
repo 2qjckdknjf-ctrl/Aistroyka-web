@@ -17,6 +17,18 @@ on:
       cron_secret:
         description: "Optional; x-cron-secret when REQUIRE_CRON_SECRET=true on target"
         required: false
+      smoke_email:
+        description: "Optional; smoke user email for runtime token fallback."
+        required: false
+      smoke_password:
+        description: "Optional; smoke user password for runtime token fallback."
+        required: false
+      supabase_url:
+        description: "Optional; Supabase URL used with smoke credentials for token fallback."
+        required: false
+      supabase_anon_key:
+        description: "Optional; Supabase anon key used with smoke credentials for token fallback."
+        required: false
 
 jobs:
   smoke:
@@ -45,4 +57,8 @@ jobs:
           BASE_URL: ${{ inputs.base_url }}
           AUTH_HEADER: Bearer ${{ secrets.pilot_smoke_bearer }}
           CRON_SECRET: ${{ secrets.cron_secret }}
+          SMOKE_EMAIL: ${{ secrets.smoke_email }}
+          SMOKE_PASSWORD: ${{ secrets.smoke_password }}
+          SUPABASE_URL: ${{ secrets.supabase_url }}
+          SUPABASE_ANON_KEY: ${{ secrets.supabase_anon_key }}
         run: bash scripts/smoke/pilot_launch.sh

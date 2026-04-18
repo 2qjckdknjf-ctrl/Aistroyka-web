@@ -1,6 +1,6 @@
 # Production deploy: push to main → build (OpenNext) + deploy to Cloudflare Workers (env.production).
 # Single install from repo root: bun install --frozen-lockfile. Build: bun run cf:build.
-# Requires GitHub secrets: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, PILOT_SMOKE_BEARER_PRODUCTION; optional CRON_SECRET.
+# Requires GitHub secrets: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, PILOT_SMOKE_BEARER_PRODUCTION; optional CRON_SECRET and smoke fallback creds.
 
 name: Deploy Cloudflare (Production)
 
@@ -110,3 +110,7 @@ jobs:
     secrets:
       pilot_smoke_bearer: ${{ secrets.PILOT_SMOKE_BEARER_PRODUCTION }}
       cron_secret: ${{ secrets.CRON_SECRET }}
+      smoke_email: ${{ secrets.PILOT_SMOKE_EMAIL_PRODUCTION }}
+      smoke_password: ${{ secrets.PILOT_SMOKE_PASSWORD_PRODUCTION }}
+      supabase_url: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_PRODUCTION }}
+      supabase_anon_key: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_PRODUCTION }}

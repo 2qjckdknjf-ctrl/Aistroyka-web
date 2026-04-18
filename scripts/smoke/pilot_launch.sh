@@ -24,7 +24,7 @@ COOKIE="${COOKIE:-}"
 FAIL=0
 
 # Optional: obtain Bearer token for ops/metrics when COOKIE/AUTH_HEADER not set (env-only; do not log credentials)
-if [[ -z "$AUTH" && -z "$COOKIE" ]]; then
+mint_smoke_token_if_possible() {
   SUPA_URL="${SUPABASE_URL:-${NEXT_PUBLIC_SUPABASE_URL:-}}"
   SUPA_KEY="${SUPABASE_ANON_KEY:-${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}}"
   if [[ -n "${SMOKE_EMAIL:-}" && -n "${SMOKE_PASSWORD:-}" && -n "$SUPA_URL" && -n "$SUPA_KEY" ]]; then
@@ -33,8 +33,15 @@ if [[ -z "$AUTH" && -z "$COOKIE" ]]; then
       --data-binary "{\"email\":\"${SMOKE_EMAIL}\",\"password\":\"${SMOKE_PASSWORD}\"}" 2>/dev/null || true)
     if command -v jq &>/dev/null; then
       TOKEN=$(printf '%s' "$TOKEN_RESP" | jq -r '.access_token // empty' 2>/dev/null)
-      [[ -n "$TOKEN" ]] && AUTH="Bearer $TOKEN"
+      [[ -n "$TOKEN" ]] && echo "Bearer $TOKEN"
     fi
+  fi
+}
+
+if [[ -z "$AUTH" && -z "$COOKIE" ]]; then
+  MINTED="$(mint_smoke_token_if_possible || true)"
+  if [[ -n "$MINTED" ]]; then
+    AUTH="$MINTED"
   fi
 fi
 
@@ -108,12 +115,25 @@ else
 fi
 
 # 2) GET /api/v1/ops/metrics?from=&to= (tenant-scoped; requires Cookie or Authorization)
-METRICS_EXTRA=()
-[[ -n "$AUTH" ]] && METRICS_EXTRA+=(-H "Authorization: $AUTH")
-[[ -n "$COOKIE" ]] && METRICS_EXTRA+=(-H "Cookie: $COOKIE")
-code=$(curl -sSL --location-trusted -o /tmp/pilot_metrics.json -w "%{http_code}" -m 15 \
-  ${METRICS_EXTRA+"${METRICS_EXTRA[@]}"} \
-  "$BASE/api/v1/ops/metrics?from=$FROM&to=$TO" || true)
+fetch_metrics() {
+  local auth_header="$1"
+  local cookie_header="$2"
+  local extra=()
+  [[ -n "$auth_header" ]] && extra+=(-H "Authorization: $auth_header")
+  [[ -n "$cookie_header" ]] && extra+=(-H "Cookie: $cookie_header")
+  curl -sSL --location-trusted -o /tmp/pilot_metrics.json -w "%{http_code}" -m 15 \
+    ${extra+"${extra[@]}"} \
+    "$BASE/api/v1/ops/metrics?from=$FROM&to=$TO" || true
+}
+
+code="$(fetch_metrics "$AUTH" "$COOKIE")"
+if [[ "$code" == "401" && -n "$AUTH" && -z "$COOKIE" ]]; then
+  MINTED="$(mint_smoke_token_if_possible || true)"
+  if [[ -n "$MINTED" && "$MINTED" != "$AUTH" ]]; then
+    AUTH="$MINTED"
+    code="$(fetch_metrics "$AUTH" "$COOKIE")"
+  fi
+fi
 if [[ "$code" != "200" ]]; then
   ERR_HINT=""
   if command -v jq &>/dev/null; then
