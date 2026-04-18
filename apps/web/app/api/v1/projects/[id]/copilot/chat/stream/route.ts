@@ -7,7 +7,7 @@
 import { NextResponse } from "next/server";
 import { createClientFromRequest } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
-import { getProjectForInternalWorkspace } from "@/lib/domain/projects/project.service";
+import { getProject } from "@/lib/domain/projects/project.service";
 import { getServerConfig, isOpenAIConfigured } from "@/lib/config/server";
 import {
   applyContextBudget,
@@ -101,7 +101,10 @@ export async function POST(
   }
 
   const supabase = await createClientFromRequest(request);
-  const { data: project, error: projectError } = await getProjectForInternalWorkspace(supabase, ctx, projectId);
+  if (ctx.role === "stakeholder") {
+    return NextResponse.json({ error: "Insufficient rights" }, { status: 403 });
+  }
+  const { data: project, error: projectError } = await getProject(supabase, ctx, projectId);
   if (projectError || !project) {
     const status = projectError === "Insufficient rights" ? 403 : 404;
     return NextResponse.json({ error: projectError ?? "Not found" }, { status });

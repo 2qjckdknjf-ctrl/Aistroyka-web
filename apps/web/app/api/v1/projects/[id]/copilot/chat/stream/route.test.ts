@@ -69,7 +69,7 @@ vi.mock("@/lib/tenant", () => ({
 }));
 
 vi.mock("@/lib/domain/projects/project.service", () => ({
-  getProjectForInternalWorkspace: vi.fn().mockResolvedValue({
+  getProject: vi.fn().mockResolvedValue({
     data: { id: "p1", name: "Project" },
     error: null,
   }),
@@ -87,8 +87,8 @@ describe("POST /api/v1/projects/:id/copilot/chat/stream", () => {
     vi.clearAllMocks();
     const { isOpenAIConfigured } = await import("@/lib/config/server");
     vi.mocked(isOpenAIConfigured).mockReturnValue(true);
-    const { getProjectForInternalWorkspace } = await import("@/lib/domain/projects/project.service");
-    vi.mocked(getProjectForInternalWorkspace).mockResolvedValue({
+    const { getProject } = await import("@/lib/domain/projects/project.service");
+    vi.mocked(getProject).mockResolvedValue({
       data: { id: "p1", name: "Project" },
       error: null,
     });
