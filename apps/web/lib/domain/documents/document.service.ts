@@ -3,13 +3,16 @@ import type { TenantContext } from "@/lib/tenant/tenant.types";
 import { canReadProjects, canManageProjects } from "@/lib/tenant/tenant.policy";
 import { getById as getProjectById } from "@/lib/domain/projects/project.repository";
 import { emitAudit } from "@/lib/observability/audit.service";
+import { notifyProjectOwners } from "@/lib/domain/notifications/manager-notifications.repository";
 import * as repo from "./document.repository";
 import type {
   ProjectDocument,
+  ProjectDocumentStatus,
   CreateDocumentInput,
   UpdateDocumentInput,
 } from "./document.types";
 import { validateDocumentStatusTransition } from "./document.policy";
+import { insertDocumentEvent, type ProjectDocumentEventType } from "./document-event.repository";
 
 export async function listDocuments(
   supabase: SupabaseClient,
@@ -74,7 +77,9 @@ export async function createDocument(
     ...input,
     title: trimmed,
   });
-  return data ? { data, error: "" } : { data: null, error: "Create failed" };
+  if (!data) return { data: null, error: "Create failed" };
+  await insertDocumentEvent(supabase, ctx.tenantId, data.id, "created", ctx.userId, null);
+  return { data, error: "" };
 }
 
 export async function updateDocument(
@@ -106,7 +111,23 @@ export async function updateDocument(
     if (!v.ok) return { data: null, error: v.reason };
   }
 
-  const data = await repo.update(supabase, documentId, ctx.tenantId, input);
+  const reviewOutcomes: ProjectDocumentStatus[] = [
+    "approved",
+    "rejected",
+    "changes_requested",
+  ];
+  const isManagerReviewTransition =
+    statusFrom === "under_review" &&
+    input.status !== undefined &&
+    input.status !== existing.status &&
+    reviewOutcomes.includes(input.status);
+
+  const inputForRepo: UpdateDocumentInput =
+    isManagerReviewTransition && input.decided_by === undefined && ctx.userId
+      ? { ...input, decided_by: ctx.userId }
+      : input;
+
+  const data = await repo.update(supabase, documentId, ctx.tenantId, inputForRepo);
   if (!data) return { data: null, error: "Update failed" };
 
   // Audit only status transitions (governance events).
@@ -115,8 +136,10 @@ export async function updateDocument(
     if (statusFrom === "draft" && statusTo === "uploaded") action = "document_upload";
     else if (statusFrom === "uploaded" && statusTo === "under_review")
       action = "document_submit_for_review";
-    else if (statusFrom === "under_review" && (statusTo === "approved" || statusTo === "rejected"))
+    else if (statusFrom === "under_review" && (statusTo === "approved" || statusTo === "rejected" || statusTo === "changes_requested"))
       action = "document_review";
+    else if (statusFrom === "changes_requested" && (statusTo === "uploaded" || statusTo === "under_review"))
+      action = "document_resubmit";
     else if (statusTo === "archived") action = "document_archive";
 
     if (action) {
@@ -129,8 +152,58 @@ export async function updateDocument(
         resource_id: documentId,
         details: { from: statusFrom, to: statusTo, type: existing.type, project_id: projectId },
       });
+      const eventType = mapAuditActionToDocumentEvent(action, statusTo);
+      if (eventType && ctx.userId) {
+        const note =
+          action === "document_review"
+            ? (input.decision_comment ?? inputForRepo.decision_comment ?? null)
+            : null;
+        await insertDocumentEvent(supabase, ctx.tenantId!, documentId, eventType, ctx.userId, note);
+      }
+      if (action === "document_submit_for_review") {
+        await notifyProjectOwners(supabase, ctx.tenantId!, projectId, {
+          type: "document_under_review",
+          title: "Document submitted for review",
+          body: existing.title,
+          target_type: "document",
+          target_id: documentId,
+          project_id: projectId,
+        });
+      } else if (action === "document_resubmit") {
+        await notifyProjectOwners(supabase, ctx.tenantId!, projectId, {
+          type: "document_resubmitted",
+          title: "Document resubmitted for review",
+          body: existing.title,
+          target_type: "document",
+          target_id: documentId,
+          project_id: projectId,
+        });
+      }
     }
   }
 
   return { data, error: "" };
+}
+
+function mapAuditActionToDocumentEvent(
+  action: string,
+  statusTo: ProjectDocumentStatus
+): ProjectDocumentEventType | null {
+  switch (action) {
+    case "document_upload":
+      return "file_uploaded";
+    case "document_submit_for_review":
+      return "submitted_for_review";
+    case "document_review":
+      if (statusTo === "approved") return "approved";
+      if (statusTo === "rejected") return "rejected";
+      if (statusTo === "changes_requested") return "changes_requested";
+      return null;
+    case "document_resubmit":
+      return "resubmitted";
+    case "document_archive":
+      return "archived";
+    default:
+      return null;
+  }
 }

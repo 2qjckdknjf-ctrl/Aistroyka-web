@@ -6,7 +6,7 @@ import type {
 } from "./document.types";
 
 const DOCUMENT_SELECT =
-  "id, tenant_id, project_id, type, title, description, status, object_path, created_by, report_id, task_id, milestone_id, created_at, updated_at";
+  "id, tenant_id, project_id, type, title, description, status, client_visible, object_path, created_by, report_id, task_id, milestone_id, decision_comment, decided_by, created_at, updated_at";
 
 export async function listByProject(
   supabase: SupabaseClient,
@@ -76,10 +76,14 @@ export async function update(
   if (input.description !== undefined)
     payload.description = input.description?.trim() || null;
   if (input.status !== undefined) payload.status = input.status;
+  if (input.client_visible !== undefined) payload.client_visible = input.client_visible;
   if (input.object_path !== undefined) payload.object_path = input.object_path;
   if (input.report_id !== undefined) payload.report_id = input.report_id;
   if (input.task_id !== undefined) payload.task_id = input.task_id;
   if (input.milestone_id !== undefined) payload.milestone_id = input.milestone_id;
+  if (input.decision_comment !== undefined)
+    payload.decision_comment = input.decision_comment?.trim() || null;
+  if (input.decided_by !== undefined) payload.decided_by = input.decided_by;
 
   if (Object.keys(payload).length === 0) {
     return getById(supabase, documentId, tenantId);

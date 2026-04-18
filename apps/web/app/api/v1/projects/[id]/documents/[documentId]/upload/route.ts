@@ -11,6 +11,7 @@ import { getById as getProjectById } from "@/lib/domain/projects/project.reposit
 import { getById as getDocumentById } from "@/lib/domain/documents/document.repository";
 import { updateDocument } from "@/lib/domain/documents/document.service";
 import { MEDIA_BUCKET } from "@/lib/api/engine";
+import { buildDocumentUploadObjectPath } from "@/lib/domain/documents/document-upload-path";
 
 export const dynamic = "force-dynamic";
 
@@ -59,7 +60,12 @@ export async function POST(
     return NextResponse.json({ error: "File too large; max 25MB" }, { status: 413 });
 
   const ext = file.name.split(".").pop() || "bin";
-  const objectPath = `${projectId}/documents/${crypto.randomUUID()}.${ext}`;
+  const objectPath = buildDocumentUploadObjectPath(
+    ctx.tenantId,
+    projectId,
+    ext,
+    crypto.randomUUID()
+  );
 
   const { error: uploadError } = await supabase.storage
     .from(MEDIA_BUCKET)
@@ -73,8 +79,10 @@ export async function POST(
     status: "uploaded",
   });
 
-  if (updatedResult.error || !updatedResult.data)
+  if (updatedResult.error || !updatedResult.data) {
+    await supabase.storage.from(MEDIA_BUCKET).remove([objectPath]);
     return NextResponse.json({ error: "Failed to update document" }, { status: 500 });
+  }
   const updated = updatedResult.data;
 
   const { data: { publicUrl } } = supabase.storage.from(MEDIA_BUCKET).getPublicUrl(objectPath);
