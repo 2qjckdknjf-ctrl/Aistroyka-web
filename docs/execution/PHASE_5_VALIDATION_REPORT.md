@@ -1,7 +1,7 @@
 # Phase 5 — Validation Report (Slice 1)
 
 **Date:** 2026-04-18  
-**Scope:** AI media-job retry hardening for pending image URL states.
+**Scope:** AI interaction hardening slices (media retry + copilot stream persistence).
 
 ## Repo-level verification
 
@@ -17,7 +17,9 @@
 
 - Supabase MCP was used to inject controlled pending-state data and inspect queue outcomes.
 - Pending upload-session scenario remained retryable (`queued` + `JOB_HANDLER_ERROR`) after cron processing.
+- Supabase MCP migration apply was used to add missing copilot chat persistence tables.
+- Copilot stream route moved from `503 Failed to create thread` to `200` SSE with persisted `thread_id`.
 
-## Validation verdict (slice 1)
+## Validation verdict (current)
 
 - **PASS**.

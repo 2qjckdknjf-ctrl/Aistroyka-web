@@ -1,6 +1,6 @@
 # Current Phase Status
 
-**Timestamp:** 2026-04-18 (Phase 5 slice 1 runtime-proven)
+**Timestamp:** 2026-04-18 (Phase 5 slices runtime-proven)
 **Current phase:** `Phase 5 — Copilot / AI Interaction Hardening`
 
 ## Objective
@@ -14,7 +14,12 @@ Harden product truth across active loops after Phase 0-3 closures:
 ## Current Blocker
 
 Phase 5 is not blocked, but not yet fully closed.
-Slice 1 (AI media retry hardening) is done; remaining AI interaction hardening slices are still open.
+Completed so far:
+- AI media retry hardening.
+- Copilot stream persistence hardening.
+
+Remaining:
+- provider reliability / failover hardening for vision path (`/api/v1/ai/analyze-image`) and broader copilot SLO gates.
 
 ## Latest Verdict
 

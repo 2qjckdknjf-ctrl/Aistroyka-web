@@ -5,9 +5,14 @@
 
 ## Goal
 
-Prove that pending-image AI media jobs are retried instead of dead-lettered.
+Prove key Phase 5 runtime hardening outcomes:
+
+1. Pending-image AI media jobs are retried instead of dead-lettered.
+2. Copilot stream route can create/persist chat threads in staging.
 
 ## Runtime procedure
+
+### Flow A — ai_analyze_media pending URL retry
 
 1. Inserted synthetic `upload_sessions` row with status `uploaded` via Supabase MCP.
 2. Inserted synthetic `jobs` row (`type=ai_analyze_media`) referencing that upload session.
@@ -29,6 +34,23 @@ Cleanup:
 
 - Synthetic job and upload-session rows were removed after validation.
 
-## Runtime verdict (slice 1)
+### Flow B — copilot chat stream persistence
 
-- **PASS** for pending-image retry hardening.
+1. Runtime probe before fix:
+   - `POST /api/v1/projects/{id}/copilot/chat/stream` returned `503` with `Failed to create thread`.
+2. Applied MCP migration for missing chat persistence tables:
+   - `ai_chat_threads`
+   - `ai_chat_messages`
+3. Runtime probe after migration:
+   - same endpoint returns `200` SSE with `meta` event and a valid `thread_id`.
+
+Observed post-fix sample:
+
+- `thread_id = 3442c6a3-6674-4610-98b3-57bceee8acd6`
+- route no longer fails on thread creation path.
+
+## Runtime verdict (slices completed)
+
+- **PASS** for both:
+  - pending-image retry hardening,
+  - copilot stream persistence hardening.
