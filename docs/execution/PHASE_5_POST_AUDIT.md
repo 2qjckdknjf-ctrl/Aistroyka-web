@@ -26,4 +26,5 @@
 
 ## Required next action
 
-- Run `scripts/smoke/ai_phase5_gate.sh` on a schedule (or wire into CI) and extend Phase 5 governance (output validation depth, sustained provider drills) until closure criteria are met.
+- ~~Run `scripts/smoke/ai_phase5_gate.sh` on a schedule~~ **Done:** `.github/workflows/ai-phase5-slo-schedule.yml` runs daily **06:00 UTC** against `https://staging.aistroyka.ai` (plus `workflow_dispatch`). Uses the same secrets as post-deploy staging gate (`PILOT_SMOKE_*_STAGING`, Supabase staging URL/anon key, optional `PILOT_SMOKE_PROJECT_ID_STAGING`).
+- Still open: extend Phase 5 governance (output validation depth, sustained provider drills, multi-day error budgets) until closure criteria are met.

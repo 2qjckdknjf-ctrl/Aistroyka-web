@@ -6,7 +6,9 @@
 
 ## 1. Automatic gate (GitHub Actions)
 
-After each successful **deploy** job, workflows call `.github/workflows/pilot-smoke.yml`:
+After each successful **deploy** job, workflows call `.github/workflows/pilot-smoke.yml`.
+
+**Scheduled AI gate (staging):** `.github/workflows/ai-phase5-slo-schedule.yml` runs `scripts/smoke/ai_phase5_gate.sh` daily (06:00 UTC) and on manual dispatch, using the same staging secrets as the post-deploy `ai-phase5-gate` job.
 
 | Deploy workflow | BASE_URL | Bearer secret (repository) |
 |-----------------|----------|----------------------------|

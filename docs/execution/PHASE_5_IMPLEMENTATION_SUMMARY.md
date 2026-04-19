@@ -54,6 +54,7 @@
    - file: `scripts/smoke/ai_phase5_gate.sh`
    - documents: `apps/web/.env.example` (`AI_VISION_DETERMINISTIC_FALLBACK`)
    - CI: non-blocking `ai-phase5-gate` in `deploy-cloudflare-staging.yml` (stream uses `PILOT_SMOKE_PROJECT_ID_STAGING` or default STAGE4 pilot `PROJECT_ID`) and mirror job in `deploy-cloudflare-prod.yml` (stream only if repository secret `PILOT_SMOKE_PROJECT_ID_PRODUCTION` is set).
+   - Scheduled staging probe: `.github/workflows/ai-phase5-slo-schedule.yml` (daily 06:00 UTC + `workflow_dispatch`).
 
 ## Deployment evidence
 
