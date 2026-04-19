@@ -33,11 +33,19 @@ export function validateDocumentStatusTransition(
     return { ok: false, reason: "invalid_status_transition" };
   }
 
-  // under_review -> approved | rejected | archived
+  // under_review -> approved | rejected | changes_requested | archived
   if (from === "under_review") {
-    if (to === "approved" || to === "rejected") return { ok: true };
+    if (to === "approved" || to === "rejected" || to === "changes_requested")
+      return { ok: true };
     if (to === "archived") return { ok: true };
     if (to === "under_review") return { ok: true };
+    return { ok: false, reason: "invalid_status_transition" };
+  }
+
+  // changes_requested -> uploaded | under_review (manager resubmits)
+  if (from === "changes_requested") {
+    if (to === "uploaded" || to === "under_review") return { ok: true };
+    if (to === "archived") return { ok: true };
     return { ok: false, reason: "invalid_status_transition" };
   }
 

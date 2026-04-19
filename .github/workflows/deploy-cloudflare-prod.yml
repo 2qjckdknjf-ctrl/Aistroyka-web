@@ -1,6 +1,7 @@
 # Production deploy: push to main → build (OpenNext) + deploy to Cloudflare Workers (env.production).
 # Single install from repo root: bun install --frozen-lockfile. Build: bun run cf:build.
-# Requires GitHub secrets: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, PILOT_SMOKE_BEARER_PRODUCTION; optional CRON_SECRET.
+# Requires GitHub secrets: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, PILOT_SMOKE_BEARER_PRODUCTION; optional CRON_SECRET and smoke fallback creds.
+# Optional non-blocking: ai-phase5-gate (see PILOT_SMOKE_PROJECT_ID_PRODUCTION for stream probe).
 
 name: Deploy Cloudflare (Production)
 
@@ -110,3 +111,34 @@ jobs:
     secrets:
       pilot_smoke_bearer: ${{ secrets.PILOT_SMOKE_BEARER_PRODUCTION }}
       cron_secret: ${{ secrets.CRON_SECRET }}
+      smoke_email: ${{ secrets.PILOT_SMOKE_EMAIL_PRODUCTION }}
+      smoke_password: ${{ secrets.PILOT_SMOKE_PASSWORD_PRODUCTION }}
+      supabase_url: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_PRODUCTION }}
+      supabase_anon_key: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_PRODUCTION }}
+
+  ai-phase5-gate:
+    name: Post-deploy AI Phase 5 gate (non-blocking)
+    needs: pilot-smoke
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref || github.ref }}
+
+      - name: Run ai_phase5_gate.sh
+        env:
+          BASE_URL: https://aistroyka.ai
+          AUTH_HEADER: Bearer ${{ secrets.PILOT_SMOKE_BEARER_PRODUCTION }}
+          SMOKE_EMAIL: ${{ secrets.PILOT_SMOKE_EMAIL_PRODUCTION }}
+          SMOKE_PASSWORD: ${{ secrets.PILOT_SMOKE_PASSWORD_PRODUCTION }}
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_PRODUCTION }}
+          SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_PRODUCTION }}
+          PROJECT_ID: ${{ secrets.PILOT_SMOKE_PROJECT_ID_PRODUCTION }}
+        run: |
+          if [ -n "$PROJECT_ID" ]; then
+            export INCLUDE_STREAM=1
+          else
+            export INCLUDE_STREAM=0
+          fi
+          bash scripts/smoke/ai_phase5_gate.sh

@@ -56,6 +56,11 @@ export async function GET(
         currency: "RUB",
         over_budget: false,
         item_count: 0,
+        utilization_ratio: 0,
+        nearing_budget_limit: false,
+        item_overrun_count: 0,
+        milestone_linked_overrun_count: 0,
+        signals: [],
       },
     },
   });

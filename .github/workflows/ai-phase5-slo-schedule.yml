@@ -1,0 +1,34 @@
+# Phase 5 — recurring staging probe (analyze-image + optional copilot stream).
+# Surfaces regressions between deploys; does not deploy or mutate infra.
+name: AI Phase 5 SLO (staging)
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: ai-phase5-slo-staging
+  cancel-in-progress: false
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run ai_phase5_gate.sh
+        env:
+          BASE_URL: https://staging.aistroyka.ai
+          AUTH_HEADER: Bearer ${{ secrets.PILOT_SMOKE_BEARER_STAGING }}
+          SMOKE_EMAIL: ${{ secrets.PILOT_SMOKE_EMAIL_STAGING }}
+          SMOKE_PASSWORD: ${{ secrets.PILOT_SMOKE_PASSWORD_STAGING }}
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_STAGING }}
+          SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_STAGING }}
+          INCLUDE_STREAM: "1"
+          PROJECT_ID_STAGING_OVERRIDE: ${{ secrets.PILOT_SMOKE_PROJECT_ID_STAGING }}
+        run: |
+          export PROJECT_ID="${PROJECT_ID_STAGING_OVERRIDE:-a0000003-0000-4000-8000-000000000001}"
+          unset PROJECT_ID_STAGING_OVERRIDE
+          bash scripts/smoke/ai_phase5_gate.sh

@@ -55,8 +55,9 @@ describe("GET /api/v1/admin/ops/diagnostics", () => {
     const res = await GET(req);
     expect(res.status).toBe(200);
     const body = await res.json();
+    // route truncates stamp.sha to 7 chars (see diagnostics route)
     expect(body.correlation).toMatchObject({
-      build_sha: "deadbeef",
+      build_sha: "deadbee",
       build_time: "2026-03-15T12:00:00Z",
     });
     expect(body.ops_metrics).toBeDefined();

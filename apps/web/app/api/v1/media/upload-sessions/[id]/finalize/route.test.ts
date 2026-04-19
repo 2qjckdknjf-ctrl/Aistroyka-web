@@ -21,6 +21,7 @@ vi.mock("@/lib/tenant", () => ({
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn().mockResolvedValue({}),
+  createClientFromRequest: vi.fn().mockResolvedValue({}),
 }));
 
 vi.mock("@/lib/supabase/admin", () => ({

@@ -45,6 +45,32 @@ function formatDecisionContext(ctx: DecisionContextPayload): string {
   return parts.join(". ");
 }
 
+function buildDeterministicFallbackText(
+  userText: string,
+  ctx: DecisionContextPayload,
+  reason: string
+): string {
+  const riskPercent = Math.round((ctx.overall_risk ?? 0) * 100);
+  const confidencePercent = Math.round((ctx.confidence ?? 0) * 100);
+  const topRisk = ctx.top_risk_factors?.[0]?.name ?? null;
+  const delayPart = ctx.projected_delay_date ? `Potential delay date: ${ctx.projected_delay_date}.` : "";
+  const riskPart = topRisk ? `Primary risk now: ${topRisk}.` : "No single dominant risk was detected.";
+  return [
+    "Copilot is temporarily in fallback mode due to provider availability.",
+    `Latest project signal: risk ${riskPercent}% with confidence ${confidencePercent}%.`,
+    riskPart,
+    delayPart,
+    `Your request was: \"${userText.slice(0, 240)}\"${userText.length > 240 ? "..." : ""}.`,
+    "Recommended immediate actions:",
+    "1) Re-check blocking tasks and overdue approvals in the project board.",
+    "2) Confirm latest field evidence is attached to the current report cycle.",
+    "3) Retry this chat shortly for full model-assisted guidance.",
+    `Fallback reason: ${reason}.`,
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
 interface StreamRequestBody {
   thread_id?: string | null;
   user_text: string;
@@ -271,6 +297,114 @@ export async function POST(
 
       let firstTokenMs: number | null = null;
 
+      const persistAssistantMessage = async (
+        content: string,
+        errorKind: string | null = null
+      ): Promise<string | null> => {
+        try {
+          const { data: inserted } = await supabase
+            .from("ai_chat_messages")
+            .insert({
+              tenant_id: tenantId,
+              project_id: projectId,
+              thread_id: threadId,
+              role: "assistant",
+              content,
+              request_id: requestId,
+              error_kind: errorKind,
+            })
+            .select("id")
+            .single();
+          return inserted?.id ?? null;
+        } catch {
+          return null;
+        }
+      };
+
+      const touchThread = async (): Promise<void> => {
+        try {
+          await supabase
+            .from("ai_chat_threads")
+            .update({
+              updated_at: new Date().toISOString(),
+              last_message_at: new Date().toISOString(),
+            })
+            .eq("id", threadId);
+        } catch {
+          // best-effort
+        }
+      };
+
+      const completeWithFallback = async (
+        fallbackReason:
+          | "provider_unavailable"
+          | "provider_timeout"
+          | "stream_transport_failure"
+          | "unknown_internal_error"
+      ): Promise<void> => {
+        const fallbackText = buildDeterministicFallbackText(userText, decisionContext, fallbackReason);
+        const assistantMessageId = await persistAssistantMessage(fallbackText, "fallback_invoked");
+        await touchThread();
+        send("done", {
+          request_id: requestId,
+          thread_id: threadId,
+          final_text: fallbackText,
+          assistant_message_id: assistantMessageId,
+          context_tokens_estimated: budgeted.meta.context_tokens_estimated,
+          context_trim_applied: budgeted.meta.context_trim_applied,
+          fallback_reason: fallbackReason,
+        });
+        const latencyMs = Date.now() - streamStartMs;
+        logCopilotStreamLifecycle("stream_completed", {
+          request_id: requestId,
+          route: "POST /api/v1/projects/:id/copilot/chat/stream",
+          tenant_id: tenantId,
+          project_id: projectId,
+          latency_ms: latencyMs,
+          first_token_ms: firstTokenMs ?? undefined,
+          ...rel,
+        });
+        logCopilotStreamComplete({
+          request_id: requestId,
+          route: "POST /api/v1/projects/:id/copilot/chat/stream",
+          tenant_id: tenantId,
+          project_id: projectId,
+          user_id: userId || undefined,
+          latency_ms: latencyMs,
+          output_type: "copilot",
+          streaming: true,
+          context_tokens_estimated: budgeted.meta.context_tokens_estimated,
+          context_trim_applied: budgeted.meta.context_trim_applied,
+          memory_used: budgeted.meta.memory_used,
+          memory_chunks_count: budgeted.meta.memory_chunks_count,
+          summary_used: budgeted.meta.summary_used,
+          provider: "none",
+          first_token_ms: firstTokenMs,
+          error_kind: "fallback_invoked",
+          retryable:
+            fallbackReason === "provider_timeout" || fallbackReason === "stream_transport_failure",
+          ...rel,
+        });
+        void emitAiRuntimeAudit(supabase, {
+          tenant_id: tenantId,
+          user_id: userId || null,
+          trace_id: requestId,
+          project_id: projectId,
+          action: "ai_copilot_stream_complete",
+          details: {
+            request_id: requestId,
+            route: "POST /api/v1/projects/:id/copilot/chat/stream",
+            latency_ms: latencyMs,
+            output_type: "copilot",
+            streaming: true,
+            provider: "none",
+            fallback_triggered: true,
+            fallback_reason: fallbackReason,
+            ...rel,
+          },
+        });
+      };
+
       try {
         const res = await fetch("https://api.openai.com/v1/chat/completions", {
           method: "POST",
@@ -327,13 +461,9 @@ export async function POST(
               ...rel,
             },
           });
-          send("error", {
-            request_id: requestId,
-            retryable: res.status >= 500,
-            message: "Provider error",
-            kind: "provider_error",
-          });
-          controller.close();
+          await completeWithFallback(
+            errorKind === "provider_timeout" ? "provider_timeout" : "provider_unavailable"
+          );
           return;
         }
 
@@ -376,13 +506,7 @@ export async function POST(
               ...rel,
             },
           });
-          send("error", {
-            request_id: requestId,
-            retryable: true,
-            message: "No response body",
-            kind: "provider_error",
-          });
-          controller.close();
+          await completeWithFallback("stream_transport_failure");
           return;
         }
 
@@ -427,36 +551,8 @@ export async function POST(
           }
         }
 
-        let assistantMessageId: string | null = null;
-        try {
-          const { data: inserted } = await supabase
-            .from("ai_chat_messages")
-            .insert({
-              tenant_id: tenantId,
-              project_id: projectId,
-              thread_id: threadId,
-              role: "assistant",
-              content: fullText,
-              request_id: requestId,
-            })
-            .select("id")
-            .single();
-          assistantMessageId = inserted?.id ?? null;
-        } catch {
-          // log but don't fail stream
-        }
-
-        try {
-          await supabase
-            .from("ai_chat_threads")
-            .update({
-              updated_at: new Date().toISOString(),
-              last_message_at: new Date().toISOString(),
-            })
-            .eq("id", threadId);
-        } catch {
-          // best-effort
-        }
+        const assistantMessageId = await persistAssistantMessage(fullText);
+        await touchThread();
 
         send("done", {
           request_id: requestId,
@@ -465,6 +561,7 @@ export async function POST(
           assistant_message_id: assistantMessageId,
           context_tokens_estimated: budgeted.meta.context_tokens_estimated,
           context_trim_applied: budgeted.meta.context_trim_applied,
+          fallback_reason: null,
         });
         const latencyMs = Date.now() - streamStartMs;
         logCopilotStreamLifecycle("stream_completed", {
@@ -563,26 +660,18 @@ export async function POST(
             ...rel,
           },
         });
+        if (errorKind !== "cancellation") {
+          await completeWithFallback(
+            errorKind === "provider_timeout" ? "provider_timeout" : "unknown_internal_error"
+          );
+          return;
+        }
         send("error", {
           request_id: requestId,
-          retryable: errorKind === "provider_timeout",
-          message: "Something went wrong",
-          kind: errorKind === "provider_timeout" ? "timeout" : errorKind === "cancellation" ? "cancelled" : "unknown",
+          retryable: false,
+          message: "Request was cancelled",
+          kind: "cancelled",
         });
-
-        try {
-          await supabase.from("ai_chat_messages").insert({
-            tenant_id: tenantId,
-            project_id: projectId,
-            thread_id: threadId,
-            role: "assistant",
-            content: "Sorry, I encountered an error. Please try again.",
-            request_id: requestId,
-            error_kind: errorKind === "provider_timeout" ? "timeout" : errorKind === "cancellation" ? "cancelled" : "unknown",
-          });
-        } catch {
-          // best-effort
-        }
       } finally {
         clearTimeout(timeoutId);
         controller.close();

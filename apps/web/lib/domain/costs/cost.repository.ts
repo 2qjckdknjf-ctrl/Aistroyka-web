@@ -5,6 +5,7 @@ import type {
   UpdateCostItemInput,
   ProjectBudgetSummary,
 } from "./cost.types";
+import { buildCostPressureSignals } from "./cost-signals";
 
 const COST_ITEM_SELECT =
   "id, tenant_id, project_id, category, title, planned_amount, actual_amount, currency, status, notes, milestone_id, created_by, created_at, updated_at";
@@ -104,28 +105,58 @@ export async function getBudgetSummary(
 ): Promise<ProjectBudgetSummary | null> {
   const { data, error } = await supabase
     .from("project_cost_items")
-    .select("planned_amount, actual_amount, currency")
+    .select("planned_amount, actual_amount, currency, status, milestone_id")
     .eq("project_id", projectId)
     .eq("tenant_id", tenantId)
     .neq("status", "archived");
   if (error) return null;
 
-  const rows = (data ?? []) as { planned_amount: number; actual_amount: number; currency: string }[];
+  const rows = (data ?? []) as {
+    planned_amount: number;
+    actual_amount: number;
+    currency: string;
+    milestone_id: string | null;
+  }[];
   const currency = rows[0]?.currency ?? "RUB";
-  const planned_total = rows.reduce((s, r) => s + Number(r.planned_amount ?? 0), 0);
-  const actual_total = rows.reduce((s, r) => s + Number(r.actual_amount ?? 0), 0);
-  const variance_amount = actual_total - planned_total;
+  let planned_total = 0;
+  let actual_total = 0;
+  let item_overrun_count = 0;
+  let milestone_linked_overrun_count = 0;
 
-  return {
+  for (const r of rows) {
+    const p = Number(r.planned_amount ?? 0);
+    const a = Number(r.actual_amount ?? 0);
+    planned_total += p;
+    actual_total += a;
+    if (a > p) {
+      item_overrun_count += 1;
+      if (r.milestone_id) milestone_linked_overrun_count += 1;
+    }
+  }
+
+  const variance_amount = actual_total - planned_total;
+  const over_budget = actual_total > planned_total;
+  const utilization_ratio =
+    planned_total > 0 ? actual_total / planned_total : 0;
+  const nearing_budget_limit =
+    planned_total > 0 && !over_budget && actual_total >= 0.9 * planned_total;
+
+  const base: ProjectBudgetSummary = {
     project_id: projectId,
     tenant_id: tenantId,
     planned_total,
     actual_total,
     variance_amount,
     currency,
-    over_budget: actual_total > planned_total,
+    over_budget,
     item_count: rows.length,
+    utilization_ratio,
+    nearing_budget_limit,
+    item_overrun_count,
+    milestone_linked_overrun_count,
+    signals: [],
   };
+  return { ...base, signals: buildCostPressureSignals(base) };
 }
 
 function normalizeCostItem(row: Record<string, unknown>): Record<string, unknown> {
