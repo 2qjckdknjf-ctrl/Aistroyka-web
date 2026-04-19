@@ -38,6 +38,7 @@ vi.mock("@/lib/domain/upload-session/upload-session.repository", () => ({
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn().mockResolvedValue({}),
+  createClientFromRequest: vi.fn().mockResolvedValue({}),
 }));
 
 const createUploadSession = vi.fn().mockResolvedValue({ data: { id: "s1", upload_path: "path" }, error: null });

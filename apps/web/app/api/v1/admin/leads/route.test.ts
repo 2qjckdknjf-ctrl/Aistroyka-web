@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { GET } from "./route";
 
 vi.mock("@/lib/tenant", () => ({
