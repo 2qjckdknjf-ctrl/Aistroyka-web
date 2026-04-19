@@ -45,6 +45,15 @@ if [[ -z "$AUTH" && -z "$COOKIE" ]]; then
   fi
 fi
 
+# Tenant routes (e.g. ops/metrics) need a user JWT that passes getUser(). When password grant is
+# configured, prefer it over a static pilot bearer (may be stale or not a full user session).
+if [[ -z "$COOKIE" && -n "${SMOKE_EMAIL:-}" && -n "${SMOKE_PASSWORD:-}" ]]; then
+  MUSER="$(mint_smoke_token_if_possible || true)"
+  if [[ -n "$MUSER" ]]; then
+    AUTH="$MUSER"
+  fi
+fi
+
 # Default from/to: last 7 days to today (portable date)
 TO=$(date -u +%Y-%m-%d)
 if date -u -v-7d +%Y-%m-%d &>/dev/null; then
@@ -143,6 +152,12 @@ if [[ "$code" != "200" ]]; then
     echo "  FAIL: ops/metrics → HTTP $code (set COOKIE or AUTH_HEADER, or SMOKE_EMAIL+SMOKE_PASSWORD+Supabase keys)"
   elif [[ "$code" == "403" && -n "$ERR_HINT" ]]; then
     echo "  FAIL: ops/metrics → HTTP $code ($ERR_HINT)"
+  elif [[ "$code" == "401" ]]; then
+    EXTRA=""
+    if [[ -z "${SMOKE_EMAIL:-}" || -z "${SMOKE_PASSWORD:-}" ]]; then
+      EXTRA=" Add optional PILOT_SMOKE_EMAIL_* + PILOT_SMOKE_PASSWORD_* and Supabase URL/anon secrets so CI can mint a user JWT, or rotate PILOT_SMOKE_BEARER_* to a valid user access_token (see docs/release/PHASE3_PILOT_SMOKE_USAGE.md)."
+    fi
+    echo "  FAIL: ops/metrics → HTTP $code (tenant auth rejected${ERR_HINT:+ — $ERR_HINT}).$EXTRA"
   else
     echo "  FAIL: ops/metrics → HTTP $code (set COOKIE or AUTH_HEADER for tenant auth${ERR_HINT:+ — $ERR_HINT})"
   fi
