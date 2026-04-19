@@ -137,6 +137,9 @@ jobs:
           SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_STAGING }}
           SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_STAGING }}
           INCLUDE_STREAM: "1"
-          # Staging fixture project (STAGE4 Pilot Project); not a secret — used only for stream probe.
-          PROJECT_ID: a0000003-0000-4000-8000-000000000001
-        run: bash scripts/smoke/ai_phase5_gate.sh
+          PROJECT_ID_STAGING_OVERRIDE: ${{ secrets.PILOT_SMOKE_PROJECT_ID_STAGING }}
+        run: |
+          # Default: STAGE4 Pilot Project fixture (stream probe target).
+          export PROJECT_ID="${PROJECT_ID_STAGING_OVERRIDE:-a0000003-0000-4000-8000-000000000001}"
+          unset PROJECT_ID_STAGING_OVERRIDE
+          bash scripts/smoke/ai_phase5_gate.sh
