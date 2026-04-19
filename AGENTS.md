@@ -1,7 +1,3 @@
-# AGENTS.md — Aistroyka
-
-**Naming (B4):** Primary product/platform name in prose is **Aistroyka** (domain **aistroyka.ai**). Mobile apps: **AiStroykaManager**, **AiStroykaWorker**. **WorkerLite** / Worker Lite are legacy or archival only—not primary naming. Root `package.json` field `AISTROYKA-WEB-CF-CHECK` is an internal npm workspace name, not the brand. Authoritative: `docs/architecture/CORE_B4_CANONICAL_NAMING.md`.
-
 ## Learned User Preferences
 
 - Do not use destructive git operations: no force push, no reset --hard, no history rewrite.
@@ -10,18 +6,19 @@
 - Do not break existing dashboard, auth flows, middleware, or tenant logic when adding features.
 - Do not commit secrets, .env files with real values, tokens, or build artifacts; use .gitignore and example files.
 - Prefer adding new work in isolation (new components, routes, docs) rather than refactoring existing flows unnecessarily.
-- For deploy, config, and user-scoped closure phases (A1, A2, A3, A4, B1–B4, etc.): stay on that phase until the user explicitly widens scope; do not jump to the next gate or unrelated work.
+- For deploy, config, and user-scoped closure phases (A1, A2, A3, A4, B1–B4, etc.): stay on that phase until the user explicitly widens scope; continue execution without unnecessary pauses; do not jump to unrelated work.
 - Write reports and documentation into docs/ (and phase-specific subdirs like docs/mobile-rebuild/, docs/mobile-config/).
-- Prefer clean architecture and explicit structure over patchwork or legacy naming.
 - For mobile: do not merge Manager and Worker into one app; keep shared logic in Shared; do not use WorkerLite as primary product name.
 - Do not invent or fake success (e.g. fake build results); document real blockers and missing values.
 - When config values may exist in repo: search first (env examples, docs, scripts); do not ask for values that are already there; do not hardcode fake placeholders if real values exist.
+- Prefer end-to-end execution with minimal handoff when requested ("do it yourself" workflow).
+- Default to Russian-language communication when the user requests it.
 
 ## Learned Workspace Facts
 
 - Aistroyka is a monorepo; web application lives in apps/web (Next.js, App Router).
-- Root build: from repo root run npm install and npm run build (builds packages/contracts then apps/web).
-- For Vercel deploy use Root Directory apps/web; install and build run from repo root via vercel.json.
+- Root build: from repo root run `bun install` and `bun run build` (builds packages/contracts then apps/web).
+- Production deploy path: **Cloudflare Workers** (`apps/web/wrangler.toml`, OpenNext). Use `bun run cf:build` then Wrangler deploy (see `docs/launch/Release1.md`).
 - iOS apps are AiStroykaManager and AiStroykaWorker; shared code lives in ios/Shared; WorkerLite is deprecated as the primary product name.
 - Android apps are AiStroykaManager and AiStroykaWorker with android/shared; structure mirrors iOS.
 - Local iOS config: ios/Config/Secrets.xcconfig (gitignored) and Secrets.xcconfig.example; both apps use the same xcconfig.
@@ -29,5 +26,5 @@
 - API routes live under apps/web/app/api/; tenant and auth logic are central and should not be changed without necessity.
 - Docs and phase reports go under docs/ and subdirs (e.g. docs/mobile-rebuild/, docs/deploy-fix/, docs/pilot-launch/).
 - Environment variables for production are documented in docs/ENVIRONMENT-VARIABLES.md; required: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, NEXT_PUBLIC_APP_URL.
-- Supabase migration apply uses workflow_dispatch (apply-migrations.yml); GitHub Actions should install the CLI via the official supabase/setup-cli action, not ad-hoc global npm installs.
-- Post-deploy pilot smoke is enforced as a blocking job in the same deploy workflow (or a reusable workflow called from it), not as a separate workflow_run primary gate.
+- Supabase migrations live under `apps/web/supabase/migrations/`; apply via Supabase CLI / dashboard (the repo previously shipped `apply-migrations.yml` — removed in Release 1 cleanup; re-add if you need GitHub-driven apply).
+- PR merge gate: GitHub **CI Check** (`.github/workflows/ci-check.yml`) runs `bun install`, lint, tests, and `cf:build` on each pull request.

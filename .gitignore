@@ -8,6 +8,12 @@ node_modules/
 .pnp
 .pnp.js
 
+# Maestro pilot logs (local)
+maestro/output/
+
+# Google Drive Desktop sync temp fragments (do not commit)
+.tmp.driveupload/
+
 # testing
 coverage
 TestLogs/
