@@ -33,8 +33,8 @@ describe("provider.errors", () => {
       expect(isRetryableProviderError(new ProviderRequestError("Bad", "invalid_input"))).toBe(false);
     });
 
-    it("returns false for auth", () => {
-      expect(isRetryableProviderError(new ProviderRequestError("Unauthorized", "auth", 401))).toBe(false);
+    it("returns true for auth (router may fallback to next provider)", () => {
+      expect(isRetryableProviderError(new ProviderRequestError("Unauthorized", "auth", 401))).toBe(true);
     });
 
     it("returns true for timeout", () => {
