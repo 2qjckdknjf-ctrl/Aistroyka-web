@@ -27,8 +27,8 @@ After each successful **deploy** job, workflows call `.github/workflows/pilot-sm
 | Secret | When |
 |--------|------|
 | `CRON_SECRET` | Passed as `x-cron-secret` when production/staging has `REQUIRE_CRON_SECRET=true` |
-| `PILOT_SMOKE_EMAIL_STAGING` / `PILOT_SMOKE_PASSWORD_STAGING` | With `NEXT_PUBLIC_SUPABASE_URL_STAGING` + `NEXT_PUBLIC_SUPABASE_ANON_KEY_STAGING`: fallback token mint for `pilot-smoke` and `ai_phase5_gate` |
-| `PILOT_SMOKE_EMAIL_PRODUCTION` / `PILOT_SMOKE_PASSWORD_PRODUCTION` | Same pair for **production** (`NEXT_PUBLIC_SUPABASE_URL_PRODUCTION` + `NEXT_PUBLIC_SUPABASE_ANON_KEY_PRODUCTION`) |
+| `PILOT_SMOKE_EMAIL_STAGING` / `PILOT_SMOKE_PASSWORD_STAGING` | With `NEXT_PUBLIC_SUPABASE_URL_STAGING` + `NEXT_PUBLIC_SUPABASE_ANON_KEY_STAGING`: password-grant mint for `pilot-smoke` / `ai_phase5_gate`. When all four are set, **`pilot_launch.sh` prefers this user JWT** over `PILOT_SMOKE_BEARER_*` for tenant routes (avoids stale or non-user bearer 401 on `ops/metrics`). |
+| `PILOT_SMOKE_EMAIL_PRODUCTION` / `PILOT_SMOKE_PASSWORD_PRODUCTION` | Same for **production** (`NEXT_PUBLIC_SUPABASE_URL_PRODUCTION` + `NEXT_PUBLIC_SUPABASE_ANON_KEY_PRODUCTION`); preferred over bearer when set. |
 | `PILOT_SMOKE_PROJECT_ID_STAGING` | If set, overrides the staging pilot **project UUID** for **`ai-phase5-gate`** stream probe. If unset, defaults to the STAGE4 fixture `a0000003-0000-4000-8000-000000000001`. |
 | `PILOT_SMOKE_PROJECT_ID_PRODUCTION` | If set, production post-deploy **`ai-phase5-gate`** also probes `POST /api/v1/projects/:id/copilot/chat/stream` (must be a project UUID visible to the smoke user in **production** DB). If unset, the gate still runs **`/api/v1/ai/analyze-image`** only. |
 
