@@ -6,6 +6,11 @@ android {
     namespace = "ai.aistroyka.shared"
     compileSdk = 34
     defaultConfig { minSdk = 26 }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+    kotlinOptions { jvmTarget = "11" }
 }
 dependencies {
     implementation("androidx.core:core-ktx:1.12.0")
