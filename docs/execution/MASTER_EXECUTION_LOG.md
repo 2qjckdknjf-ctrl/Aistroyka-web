@@ -97,3 +97,14 @@
 - **Step13 final verification:** `/api/v1/projects/:id/costs` => `GET 200`, `POST 201`, `PATCH 200`.
 - **Result:** Step11 CLOSED, Step13 CLOSED, pilot readiness transitions to YES.
 
+### Continuation Pass 5 — Main Merge + Production Final Green
+
+- **Main integration:** PR `#9` merged to `main` (`41bc67c4`) with Step11/13 closure package.
+- **Production deploy retry path:** initial run `24780375957` failed only at blocking pilot-smoke due to stale production smoke bearer token; rotated `PILOT_SMOKE_BEARER_PRODUCTION`.
+- **Hardening fix:** PR `#10` merged to `main` (`a8f8ee01`) to prevent `ai_phase5_gate` false non-zero exit in cleanup trap.
+- **Production final run:** `24780939297` => SUCCESS across all jobs:
+  - Build/deploy PASS
+  - Pilot smoke (blocking) PASS
+  - AI Phase 5 gate (non-blocking) PASS
+- **Result:** operational plan closure achieved end-to-end (staging + production truth aligned).
+

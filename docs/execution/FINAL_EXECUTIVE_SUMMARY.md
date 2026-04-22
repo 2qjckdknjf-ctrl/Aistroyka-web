@@ -22,6 +22,10 @@ No remaining partially-closed items in the Step11/12/13 scope.
   - `/api/v1/approvals/pending` returns `401` unauthenticated and `200` authenticated.
 - Step 13 is now runtime-verified on staging after shipping SHA `b2b316df`:
   - `/api/v1/projects/:id/costs` supports authenticated `GET`/`POST`/`PATCH` successfully.
+- Production deploy pipeline is green on main SHA `a8f8ee01`:
+  - `Build and deploy to production` PASS
+  - `Post-deploy pilot smoke (blocking)` PASS
+  - `Post-deploy AI Phase 5 gate (non-blocking)` PASS
 
 ## Final Program Signals
 
@@ -32,7 +36,7 @@ No remaining partially-closed items in the Step11/12/13 scope.
 
 ## Immediate Next Operator Runbook
 
-1. Keep staging smoke checks in deploy pipeline and monitor regression signals.
-2. Curate/segment the large dirty working tree before release packaging.
+1. Keep staging and production smoke checks in deploy pipelines and monitor regression signals.
+2. Curate/segment the large dirty working tree before future release packaging work.
 3. Continue env-governance debt cleanup (`process.env` concentration) as non-blocking hardening.
 
