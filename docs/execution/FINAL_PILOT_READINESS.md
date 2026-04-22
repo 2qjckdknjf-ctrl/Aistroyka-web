@@ -2,12 +2,14 @@
 
 ## Verdict
 
-**PILOT READINESS: NO**
+**PILOT READINESS: YES**
 
-## Why NO (Strict)
+## Why YES (Strict)
 
-- Step 13 still fails at live staging runtime write step (`POST /costs` => `Create failed`) despite authenticated owner context and healthy DB baseline.
-- Step 11 staging parity for unified approvals endpoint is not closed.
+- Step 11 staging parity is closed:
+  - `/api/v1/approvals/pending` => `401` unauthenticated, `200` authenticated.
+- Step 12 manager document loop is live-verified on staging (`create/upload/review/approve/history`).
+- Step 13 cost write loop is live-verified on staging (`GET`/`POST`/`PATCH` successful after shipped fix).
 
 ## What Is Ready
 
@@ -17,7 +19,5 @@
 
 ## Minimum Actions To Flip To YES
 
-1. Deploy staging parity for current repo runtime (Cloudflare token/account required).
-2. Re-run authenticated Step 13 live verification and capture successful create/update outputs.
-3. Verify `/api/v1/approvals/pending` on staging returns unauthenticated `401` and authenticated queue payload.
+Already achieved in this pass.
 

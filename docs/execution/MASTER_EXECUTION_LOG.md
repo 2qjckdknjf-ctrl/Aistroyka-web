@@ -89,3 +89,11 @@
   - Step13 `POST /api/v1/projects/:id/costs` => `403 {"error":"Create failed"}`
 - **Conclusion:** server path is operational, but does not include pending local Step11/Step13 fixes until they are shipped to remote.
 
+### Continuation Pass 4 — Shipped Closure
+
+- **Commit/push:** `b2b316df` (approvals queue route/service + Step13 cost create guard + execution evidence updates).
+- **Deploy:** `Deploy Cloudflare (Staging)` run `24779302464` => SUCCESS on `b2b316df`.
+- **Step11 final verification:** `/api/v1/approvals/pending` => `401` unauthenticated, `200` authenticated.
+- **Step13 final verification:** `/api/v1/projects/:id/costs` => `GET 200`, `POST 201`, `PATCH 200`.
+- **Result:** Step11 CLOSED, Step13 CLOSED, pilot readiness transitions to YES.
+

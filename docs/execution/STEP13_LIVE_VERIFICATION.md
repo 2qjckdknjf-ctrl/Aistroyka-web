@@ -25,24 +25,22 @@
    - patched `cost.repository.create` to avoid `NaN` for omitted `actual_amount`
    - `bun run --cwd apps/web test lib/domain/costs` => PASS
    - `bun run --cwd apps/web build` => PASS
+9. Final deploy + runtime proof:
+   - deploy `24779302464` on SHA `b2b316df4c866c58840629c3c75fb1098c8d671b` => SUCCESS
+   - staging authenticated runtime:
+     - `GET /api/v1/projects/:id/costs` => `200`
+     - `POST /api/v1/projects/:id/costs` => `201`
+     - `PATCH /api/v1/projects/:id/costs/:costId` => `200`
 
 ## Interpretation
 
 - Route exists and is reachable in staging and production path.
 - DB migration/table truth is present in connected live Supabase.
-- Cost create failure on staging is now narrowed to runtime/deploy parity of shipped SHA; repo-level fix exists and is validated locally.
+- Step 13 activation is now closed with shipped runtime proof.
 
 ## Exact Operator Commands For Final Live Closure
 
-1. Deploy updated runtime to staging with valid Cloudflare credentials:
-
-```bash
-CLOUDFLARE_API_TOKEN="<token>" \
-CLOUDFLARE_ACCOUNT_ID="<account-id>" \
-bun run cf:deploy:staging
-```
-
-2. Re-run authenticated runtime verification:
+Final closure already achieved in this pass. Re-run command (optional regression probe):
 
 ```bash
 STEP13_VERIFY_BASE_URL="https://staging.aistroyka.ai" \
@@ -52,6 +50,5 @@ NEXT_PUBLIC_SUPABASE_URL="<supabase-url>" \
 NEXT_PUBLIC_SUPABASE_ANON_KEY="<anon-key>" \
 node apps/web/scripts/verify-cost-runtime.mjs
 ```
-
-Expected result: successful GET + POST + PATCH responses and non-empty updated summary fields.
+Expected result: successful GET + POST + PATCH responses and updated summary fields.
 

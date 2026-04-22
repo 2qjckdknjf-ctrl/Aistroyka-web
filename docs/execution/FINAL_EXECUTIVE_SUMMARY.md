@@ -12,27 +12,27 @@ Execution advanced from baseline truth refresh through Step 13/12/11/B2.2 closur
 
 ## What Is Partially Closed
 
-- Step 13 is implemented and runtime-reachable, but staging cost-create parity is still failing (`Create failed`) and blocks final closure.
-- Step 11 has production-path endpoint availability but staging parity gap remains.
+No remaining partially-closed items in the Step11/12/13 scope.
 
 ## New Runtime Closure Evidence
 
 - Step 12 is now live-verified on staging under authenticated owner context:
   - document create, upload, review transition, approve, and approval-history retrieval all succeeded.
-- Staging deploy drift is confirmed by workflow evidence:
-  - latest successful staging deploy run uses SHA `d74657e`, while current local runtime closure fixes are newer/unshipped.
+- Step 11 is now runtime-verified on staging after shipping SHA `b2b316df`:
+  - `/api/v1/approvals/pending` returns `401` unauthenticated and `200` authenticated.
+- Step 13 is now runtime-verified on staging after shipping SHA `b2b316df`:
+  - `/api/v1/projects/:id/costs` supports authenticated `GET`/`POST`/`PATCH` successfully.
 
 ## Final Program Signals
 
 - REPO STATUS: GREEN
-- LIVE STATUS: YELLOW
-- PILOT READINESS: NO
+- LIVE STATUS: GREEN
+- PILOT READINESS: YES
 - ANDROID STATUS: DEFERRED
 
 ## Immediate Next Operator Runbook
 
-1. Export `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` and deploy staging runtime from current branch.
-2. Re-run Step 13 script-based verification (`verify-cost-runtime.mjs`) against staging and confirm GET+POST+PATCH success.
-3. Re-run staging approvals probe (`/api/v1/approvals/pending`) with and without auth; confirm parity (`401` unauth, valid payload with auth).
-4. Recompute readiness verdict (expected transition to YES when Step 11+13 pass).
+1. Keep staging smoke checks in deploy pipeline and monitor regression signals.
+2. Curate/segment the large dirty working tree before release packaging.
+3. Continue env-governance debt cleanup (`process.env` concentration) as non-blocking hardening.
 

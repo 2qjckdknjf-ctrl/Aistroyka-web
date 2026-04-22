@@ -37,15 +37,18 @@ Close the gap between repo-complete cost layer and live runtime/database truth.
 
 - **DB schema truth:** confirmed.
 - **Runtime route truth:** confirmed.
-- **Manager cost write loop on staging runtime:** failing at API create step with `Create failed` despite direct DB insert success under same identity.
+- **Manager cost write loop on staging runtime:** confirmed end-to-end after shipping fix:
+  - `GET /costs` => `200`
+  - `POST /costs` => `201`
+  - `PATCH /costs/:id` => `200`
 
 ## What Remains
 
-- Single blocker: deploy/runtime parity fix for Step 13 cost create path in staging (and then re-verify create/update loop).
+- No remaining Step 13 blocker.
 
 ## Closure Verdict
 
-**NO** (external blocker only).
+**YES**.
 
-Blocker is explicit and isolated: deploy/runtime parity action is needed to ship current local Step13 fix; local direct deploy is blocked by absent Cloudflare token.
+Final closure evidence: staging deploy run `24779302464` on SHA `b2b316df` plus authenticated runtime create/update verification.
 

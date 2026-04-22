@@ -13,17 +13,16 @@ Assess closure truth after semantics + queue surface validation.
 
 ## Remaining Gap
 
-- Staging deployment/runtime parity is not closed for `/api/v1/approvals/pending` (404).
+- No remaining meaningful gap for Step 11.
 
 ## Closure Verdict
 
-**NO**
+**YES**
 
-## Exact Blocker
+## Final Proof
 
-External deployment/runtime parity action required for staging environment:
-
-- ship a commit containing unified approvals queue endpoint and client wiring (current remote branch deploy does not include the route),
-- verify endpoint returns `401` unauthenticated and valid queue data authenticated.
-- local direct deploy path is currently blocked by missing `CLOUDFLARE_API_TOKEN` in this environment.
+- Deploy run `24779302464` on SHA `b2b316df` succeeded.
+- Staging endpoint behavior is correct:
+  - unauthenticated => `401`
+  - authenticated => `200`
 

@@ -26,10 +26,12 @@ Close approval semantics and manager workload surface as an operational loop.
 
 ## What Remains
 
-- Staging runtime mismatch (`/api/v1/approvals/pending` returns `404` on staging while production path returns `401`).
-- Verified deploy-state evidence: latest successful staging deploy run (`24616054744`) is pinned to old SHA `d74657e`, which does not contain current approvals queue route in repository history.
+- No remaining runtime mismatch.
+- Final live proof on staging (run `24779302464`, SHA `b2b316df`):
+  - unauthenticated `GET /api/v1/approvals/pending` => `401`
+  - authenticated `GET /api/v1/approvals/pending?limit=10` => `200`
 
 ## Closure Verdict
 
-**NO** (single deployment/runtime parity blocker).
+**YES**.
 
