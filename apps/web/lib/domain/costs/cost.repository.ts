@@ -52,8 +52,12 @@ export async function create(
       project_id: input.project_id,
       category: input.category?.trim() || "other",
       title: input.title.trim(),
-      planned_amount: Number(input.planned_amount) ?? 0,
-      actual_amount: Number(input.actual_amount) ?? 0,
+      planned_amount: Number(input.planned_amount),
+      // Keep write payload numeric and deterministic; Number(undefined) becomes NaN and can break insert.
+      actual_amount:
+        input.actual_amount === undefined
+          ? 0
+          : Number(input.actual_amount),
       currency: input.currency?.trim() || "RUB",
       status: input.status ?? "planned",
       notes: input.notes?.trim() || null,

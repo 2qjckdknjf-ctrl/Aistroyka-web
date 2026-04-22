@@ -2,6 +2,7 @@
 /**
  * Step 13 runtime verification: cost API under authenticated context.
  * Requires: STEP13_VERIFY_EMAIL, STEP13_VERIFY_PASSWORD, BASE_URL (default http://localhost:3000)
+ * Optional: STEP13_VERIFY_PROJECT_ID (if omitted, script picks first project from /api/v1/projects)
  * Do not commit credentials. Run: BASE_URL=http://localhost:3000 STEP13_VERIFY_EMAIL=... STEP13_VERIFY_PASSWORD=... node scripts/verify-cost-runtime.mjs
  */
 import { createClient } from "@supabase/supabase-js";
@@ -12,7 +13,7 @@ const PASSWORD = process.env.STEP13_VERIFY_PASSWORD;
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-const PROJECT_ID = "00a104f9-b6b0-4604-84ef-71dabd9e8f54";
+const PROJECT_ID = process.env.STEP13_VERIFY_PROJECT_ID?.trim() || null;
 
 async function main() {
   if (!EMAIL || !PASSWORD) {
@@ -34,8 +35,11 @@ async function main() {
   const token = auth.session.access_token;
   const headers = { Authorization: `Bearer ${token}` };
 
+  const resolvedProjectId = await resolveProjectId(headers);
+  console.log("Using project:", resolvedProjectId);
+
   // GET costs
-  const getRes = await fetch(`${BASE_URL}/api/v1/projects/${PROJECT_ID}/costs`, { headers });
+  const getRes = await fetch(`${BASE_URL}/api/v1/projects/${resolvedProjectId}/costs`, { headers });
   if (!getRes.ok) {
     console.error("GET costs failed:", getRes.status, await getRes.text());
     process.exit(1);
@@ -46,7 +50,7 @@ async function main() {
   console.log("GET costs OK:", { itemCount: items.length, planned_total: summary.planned_total, actual_total: summary.actual_total });
 
   // POST create
-  const createRes = await fetch(`${BASE_URL}/api/v1/projects/${PROJECT_ID}/costs`, {
+  const createRes = await fetch(`${BASE_URL}/api/v1/projects/${resolvedProjectId}/costs`, {
     method: "POST",
     headers: { ...headers, "Content-Type": "application/json" },
     body: JSON.stringify({ category: "other", title: "Runtime verification test", planned_amount: 100 }),
@@ -64,7 +68,7 @@ async function main() {
   console.log("POST create OK:", createdId);
 
   // PATCH update
-  const patchRes = await fetch(`${BASE_URL}/api/v1/projects/${PROJECT_ID}/costs/${createdId}`, {
+  const patchRes = await fetch(`${BASE_URL}/api/v1/projects/${resolvedProjectId}/costs/${createdId}`, {
     method: "PATCH",
     headers: { ...headers, "Content-Type": "application/json" },
     body: JSON.stringify({ actual_amount: 50 }),
@@ -76,7 +80,7 @@ async function main() {
   console.log("PATCH update OK");
 
   // GET again to verify summary refresh
-  const getRes2 = await fetch(`${BASE_URL}/api/v1/projects/${PROJECT_ID}/costs`, { headers });
+  const getRes2 = await fetch(`${BASE_URL}/api/v1/projects/${resolvedProjectId}/costs`, { headers });
   if (!getRes2.ok) {
     console.error("GET costs (2) failed:", getRes2.status);
     process.exit(1);
@@ -92,3 +96,18 @@ main().catch((e) => {
   console.error(e);
   process.exit(1);
 });
+
+async function resolveProjectId(headers) {
+  if (PROJECT_ID) return PROJECT_ID;
+
+  const projectsRes = await fetch(`${BASE_URL}/api/v1/projects`, { headers });
+  if (!projectsRes.ok) {
+    throw new Error(`GET projects failed: ${projectsRes.status} ${await projectsRes.text()}`);
+  }
+  const projectsJson = await projectsRes.json();
+  const projects = projectsJson?.data ?? [];
+  if (!Array.isArray(projects) || projects.length === 0 || !projects[0]?.id) {
+    throw new Error("No projects available for authenticated user; set STEP13_VERIFY_PROJECT_ID explicitly.");
+  }
+  return projects[0].id;
+}
