@@ -4,17 +4,19 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@/i18n/navigation";
 import { Card, Skeleton, EmptyState, Badge } from "@/components/ui";
 
-interface ReportRow {
+interface PendingApprovalRow {
+  kind: "report" | "document";
   id: string;
-  user_id: string;
   status: string;
-  created_at: string;
-  submitted_at: string | null;
+  pending_at: string;
   project_id: string | null;
+  worker_id?: string;
+  title?: string;
+  document_type?: "document" | "act" | "contract";
 }
 
-async function fetchPendingReports(): Promise<ReportRow[]> {
-  const res = await fetch("/api/v1/reports?status=submitted&limit=50", {
+async function fetchPendingApprovals(): Promise<PendingApprovalRow[]> {
+  const res = await fetch("/api/v1/approvals/pending?limit=50", {
     credentials: "include",
   });
   if (!res.ok) return [];
@@ -35,9 +37,9 @@ function formatAge(dateStr: string): string {
 }
 
 export function DashboardApprovalsClient() {
-  const { data: reports, isPending, isError } = useQuery({
+  const { data: items, isPending, isError } = useQuery({
     queryKey: ["approvals-pending"],
-    queryFn: fetchPendingReports,
+    queryFn: fetchPendingApprovals,
     staleTime: 30 * 1000,
   });
 
@@ -57,7 +59,7 @@ export function DashboardApprovalsClient() {
     );
   }
 
-  if (!reports?.length) {
+  if (!items?.length) {
     return (
       <Card>
         <EmptyState
@@ -78,33 +80,46 @@ export function DashboardApprovalsClient() {
     <Card className="p-0 overflow-hidden">
       <div className="p-4 border-b border-aistroyka-border">
         <p className="text-aistroyka-subheadline text-aistroyka-text-secondary">
-          <strong className="text-aistroyka-text-primary">{reports.length}</strong> report
-          {reports.length !== 1 ? "s" : ""} awaiting approval. Oldest first.
+          <strong className="text-aistroyka-text-primary">{items.length}</strong> item
+          {items.length !== 1 ? "s" : ""} awaiting approval. Oldest first.
         </p>
       </div>
       <ul className="divide-y divide-aistroyka-border">
-        {reports.map((r) => (
-          <li key={r.id}>
+        {items.map((item) => (
+          <li key={`${item.kind}:${item.id}`}>
             <Link
-              href={`/dashboard/reports/${r.id}`}
+              href={
+                item.kind === "report"
+                  ? `/dashboard/reports/${item.id}`
+                  : `/dashboard/projects/${item.project_id ?? ""}?tab=documents`
+              }
               className="flex flex-wrap items-center justify-between gap-2 p-4 hover:bg-aistroyka-surface-raised transition-colors"
             >
               <div className="flex flex-wrap items-center gap-2 min-w-0">
                 <span className="font-mono text-aistroyka-caption text-aistroyka-accent truncate">
-                  {r.id.slice(0, 8)}…
+                  {item.id.slice(0, 8)}…
                 </span>
-                <Badge variant="warning">Pending</Badge>
-                <span className="text-aistroyka-caption text-aistroyka-text-tertiary">
-                  Worker {r.user_id.slice(0, 8)}…
-                </span>
-                {r.project_id && (
+                <Badge variant="warning">
+                  {item.kind === "report" ? "Report review" : "Document review"}
+                </Badge>
+                {item.kind === "report" && item.worker_id ? (
                   <span className="text-aistroyka-caption text-aistroyka-text-tertiary">
-                    · Project {r.project_id.slice(0, 8)}…
+                    Worker {item.worker_id.slice(0, 8)}…
+                  </span>
+                ) : null}
+                {item.kind === "document" && item.title ? (
+                  <span className="text-aistroyka-caption text-aistroyka-text-tertiary truncate max-w-[260px]">
+                    {item.title}
+                  </span>
+                ) : null}
+                {item.project_id && (
+                  <span className="text-aistroyka-caption text-aistroyka-text-tertiary">
+                    · Project {item.project_id.slice(0, 8)}…
                   </span>
                 )}
               </div>
               <span className="text-aistroyka-caption text-aistroyka-text-tertiary tabular-nums">
-                {r.submitted_at ? formatAge(r.submitted_at) : "—"}
+                {item.pending_at ? formatAge(item.pending_at) : "—"}
               </span>
             </Link>
           </li>
