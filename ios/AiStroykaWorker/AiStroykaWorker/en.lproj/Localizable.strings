@@ -1,0 +1,27 @@
+/* AiStroyka Worker — English */
+"worker_app_title" = "AiStroyka Worker";
+"worker_email_placeholder" = "Email";
+"worker_password_placeholder" = "Password";
+"worker_sign_in" = "Sign In";
+"worker_no_projects" = "No projects";
+"worker_pending" = "Pending: %lld";
+"worker_pause_queue" = "Pause queue";
+"worker_resume_queue" = "Resume queue";
+"worker_pending_uploads" = "Pending uploads: %lld";
+"worker_resume_uploads" = "Resume uploads";
+"worker_shift_in_progress" = "Shift in progress";
+"worker_shift_not_started" = "Shift not started";
+"worker_start_shift" = "Start shift";
+"worker_end_shift" = "End shift";
+"worker_loading_tasks" = "Loading tasks…";
+"worker_todays_tasks" = "Today's tasks";
+"worker_new_report" = "New report";
+"worker_support" = "Support";
+"worker_sign_out" = "Sign out";
+"worker_done" = "Done";
+"sync_status_idle" = "Sync";
+"sync_status_synced" = "Synced";
+"sync_status_syncing" = "Syncing…";
+"sync_status_bootstrap" = "Bootstrap";
+"sync_status_offline" = "Offline";
+"sync_status_error" = "Error";

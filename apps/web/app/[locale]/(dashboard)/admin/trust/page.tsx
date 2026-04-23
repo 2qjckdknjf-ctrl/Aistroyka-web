@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Card, SectionHeader, EmptyState } from "@/components/ui";
@@ -21,6 +22,7 @@ type TrustDailyRow = {
 };
 
 export default async function TrustDashboardPage() {
+  const tPage = await getTranslations("dashboardPageMeta");
   const supabase = await createClient();
 
   const [latestRes, timelineRes, hintsRes] = await Promise.all([
@@ -72,7 +74,7 @@ export default async function TrustDashboardPage() {
       </section>
 
       <section className="mb-aistroyka-8">
-        <SectionHeader title="Indices" />
+        <SectionHeader title={tPage("trustIndicesTitle")} />
         <IndicesCards latest={latest} />
       </section>
 
@@ -84,7 +86,7 @@ export default async function TrustDashboardPage() {
       </section>
 
       <section className="mb-aistroyka-8">
-        <SectionHeader title="Trust Timeline (30/90 days)" />
+        <SectionHeader title={tPage("trustTimelineTitle")} />
         <TrustTimeline timeline={timeline} />
       </section>
 

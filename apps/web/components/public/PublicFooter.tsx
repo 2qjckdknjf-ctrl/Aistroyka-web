@@ -47,9 +47,9 @@ export function PublicFooter() {
           <div>
             <Link
               href="/"
-              className="font-heading text-[var(--aistroyka-font-title3)] font-semibold text-[var(--text-main)]"
+              className="font-heading text-[var(--aistroyka-font-title3)] font-semibold uppercase tracking-[0.14em] text-aistroyka-accent"
             >
-              Aistroyka
+              AISTROYKA
             </Link>
             <p className="mt-2 text-[var(--aistroyka-font-footnote)] text-[var(--text-muted)]">
               AI Construction Intelligence

@@ -4,11 +4,12 @@ import { AdminJobsClient } from "./AdminJobsClient";
 
 export default async function AdminJobsPage() {
   const t = await getTranslations("nav");
+  const tPage = await getTranslations("dashboardPageMeta");
   return (
     <>
       <SectionHeader
         title={t("adminJobs")}
-        subtitle="Failed and dead jobs (admin only). Filter by status."
+        subtitle={tPage("adminJobsSubtitle")}
       />
       <AdminJobsClient />
     </>

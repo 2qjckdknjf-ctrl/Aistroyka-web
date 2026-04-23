@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Skeleton,
@@ -129,6 +130,7 @@ function statusLabel(status: string): string {
 }
 
 export function ProjectCostsPanel({ projectId }: { projectId: string }) {
+  const tDetail = useTranslations("dashboardDetail");
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<ProjectCostItem | null>(null);
@@ -165,7 +167,7 @@ export function ProjectCostsPanel({ projectId }: { projectId: string }) {
   if (query.isPending) return <Skeleton className="h-48" />;
   if (query.isError)
     return (
-      <p className="text-aistroyka-text-secondary p-4">Failed to load costs.</p>
+      <p className="text-aistroyka-text-secondary p-4">{tDetail("failedLoadCosts")}</p>
     );
 
   const { items, summary } = query.data ?? {
@@ -215,13 +217,13 @@ export function ProjectCostsPanel({ projectId }: { projectId: string }) {
           </p>
           <p className="mt-1 text-aistroyka-title3 font-semibold">
             {summary.item_count === 0 ? (
-              <span className="text-aistroyka-text-tertiary">No budget configured</span>
+              <span className="text-aistroyka-text-tertiary">{tDetail("noBudgetConfigured")}</span>
             ) : summary.over_budget ? (
-              <span className="text-aistroyka-error">Over budget</span>
+              <span className="text-aistroyka-error">{tDetail("overBudget")}</span>
             ) : hasBudgetNoActuals ? (
-              <span className="text-aistroyka-text-secondary">No actuals yet</span>
+              <span className="text-aistroyka-text-secondary">{tDetail("noActualsYet")}</span>
             ) : (
-              <span className="text-aistroyka-success">On budget</span>
+              <span className="text-aistroyka-success">{tDetail("onBudget")}</span>
             )}
           </p>
           {summary.item_count > 0 && summary.variance_amount !== undefined && summary.variance_amount !== 0 && (
@@ -255,14 +257,14 @@ export function ProjectCostsPanel({ projectId }: { projectId: string }) {
         <Table aria-label="Project cost items">
           <TableHead>
             <TableRow>
-              <TableHeaderCell>Title</TableHeaderCell>
-              <TableHeaderCell>Category</TableHeaderCell>
-              <TableHeaderCell>Planned</TableHeaderCell>
-              <TableHeaderCell>Actual</TableHeaderCell>
-              <TableHeaderCell>Status</TableHeaderCell>
-              <TableHeaderCell>Linked to</TableHeaderCell>
-              <TableHeaderCell>Created</TableHeaderCell>
-              <TableHeaderCell>Actions</TableHeaderCell>
+              <TableHeaderCell>{tDetail("title")}</TableHeaderCell>
+              <TableHeaderCell>{tDetail("category")}</TableHeaderCell>
+              <TableHeaderCell>{tDetail("planned")}</TableHeaderCell>
+              <TableHeaderCell>{tDetail("actual")}</TableHeaderCell>
+              <TableHeaderCell>{tDetail("status")}</TableHeaderCell>
+              <TableHeaderCell>{tDetail("linkedTo")}</TableHeaderCell>
+              <TableHeaderCell>{tDetail("created")}</TableHeaderCell>
+              <TableHeaderCell>{tDetail("actions")}</TableHeaderCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -371,6 +373,7 @@ function EditCostItemModal({
   isSubmitting: boolean;
   error: string | null;
 }) {
+  const tDetail = useTranslations("dashboardDetail");
   const [category, setCategory] = useState(item.category);
   const [title, setTitle] = useState(item.title);
   const [plannedAmount, setPlannedAmount] = useState(String(item.planned_amount));
@@ -424,11 +427,11 @@ function EditCostItemModal({
             Category
           </label>
           <Select id="edit-cost-category" value={category} onChange={(e) => setCategory(e.target.value)} disabled={isSubmitting}>
-            <option value="materials">Materials</option>
-            <option value="labor">Labor</option>
-            <option value="equipment">Equipment</option>
-            <option value="services">Services</option>
-            <option value="other">Other</option>
+            <option value="materials">{tDetail("materials")}</option>
+            <option value="labor">{tDetail("labor")}</option>
+            <option value="equipment">{tDetail("equipment")}</option>
+            <option value="services">{tDetail("services")}</option>
+            <option value="other">{tDetail("other")}</option>
           </Select>
         </div>
         <Input
@@ -468,7 +471,7 @@ function EditCostItemModal({
               Link to milestone (optional)
             </label>
             <Select id="edit-cost-milestone" value={milestoneId} onChange={(e) => setMilestoneId(e.target.value)} disabled={isSubmitting}>
-              <option value="">None</option>
+              <option value="">{tDetail("none")}</option>
               {milestones.map((m) => (
                 <option key={m.id} value={m.id}>{m.title} ({m.target_date})</option>
               ))}
@@ -479,7 +482,7 @@ function EditCostItemModal({
           <p className="text-sm text-aistroyka-error" role="alert">{error}</p>
         )}
         <div className="flex gap-2 justify-end pt-2">
-          <Button type="button" variant="secondary" onClick={onClose} disabled={isSubmitting}>Cancel</Button>
+          <Button type="button" variant="secondary" onClick={onClose} disabled={isSubmitting}>{tDetail("cancel")}</Button>
           <Button type="submit" variant="primary" disabled={isSubmitting || !title.trim() || isNaN(parseFloat(plannedAmount)) || parseFloat(plannedAmount) < 0}>
             {isSubmitting ? "Saving…" : "Save"}
           </Button>
@@ -506,6 +509,7 @@ function CreateCostItemModal({
   isSubmitting: boolean;
   error: string | null;
 }) {
+  const tDetail = useTranslations("dashboardDetail");
   const [category, setCategory] = useState<string>("other");
   const [title, setTitle] = useState("");
   const [plannedAmount, setPlannedAmount] = useState("");
@@ -546,11 +550,11 @@ function CreateCostItemModal({
             Category
           </label>
           <Select id="cost-category" value={category} onChange={(e) => setCategory(e.target.value)} disabled={isSubmitting}>
-            <option value="materials">Materials</option>
-            <option value="labor">Labor</option>
-            <option value="equipment">Equipment</option>
-            <option value="services">Services</option>
-            <option value="other">Other</option>
+            <option value="materials">{tDetail("materials")}</option>
+            <option value="labor">{tDetail("labor")}</option>
+            <option value="equipment">{tDetail("equipment")}</option>
+            <option value="services">{tDetail("services")}</option>
+            <option value="other">{tDetail("other")}</option>
           </Select>
         </div>
         <Input
@@ -582,7 +586,7 @@ function CreateCostItemModal({
               Link to milestone (optional)
             </label>
             <Select id="cost-milestone" value={milestoneId} onChange={(e) => setMilestoneId(e.target.value)} disabled={isSubmitting}>
-              <option value="">None</option>
+              <option value="">{tDetail("none")}</option>
               {milestones.map((m) => (
                 <option key={m.id} value={m.id}>
                   {m.title} ({m.target_date})

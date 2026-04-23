@@ -76,3 +76,8 @@ export function canManageProjects(ctx: TenantContext): boolean {
 export function canReadProjects(ctx: TenantContext): boolean {
   return authorize(ctx, "project:read");
 }
+
+/** Portal-only stakeholder must not access internal workspace flows. */
+export function isPortalOnlyStakeholderRole(ctx: TenantContext): boolean {
+  return ctx.role === "stakeholder";
+}

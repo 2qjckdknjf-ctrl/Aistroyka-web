@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import {
   Table,
@@ -41,6 +42,7 @@ interface AIRequestRow {
 }
 
 export function DashboardAIClient() {
+  const tDetail = useTranslations("dashboardDetail");
   const { params, setParam } = useFilterParams();
   const [data, setData] = useState<AIRequestRow[] | null>(null);
   const [total, setTotal] = useState(0);
@@ -137,8 +139,8 @@ export function DashboardAIClient() {
         <Card>
           <EmptyState
             icon={<span className="text-2xl">🤖</span>}
-            title="No AI requests"
-            subtitle="AI analysis jobs will appear here when reports or media are analyzed."
+            title={tDetail("noAiRequests")}
+            subtitle={tDetail("aiRequestsAppear")}
           />
         </Card>
       </>
@@ -150,18 +152,18 @@ export function DashboardAIClient() {
       {filterBar}
       <Card className="p-0 overflow-hidden">
         <div className="p-2 flex justify-end">
-          <Button variant="secondary" onClick={exportCsv} className="text-sm">Export CSV</Button>
+          <Button variant="secondary" onClick={exportCsv} className="text-sm">{tDetail("exportCsv")}</Button>
         </div>
-        <Table aria-label="AI requests">
+        <Table aria-label={tDetail("aiRequests")}>
         <TableHead>
           <TableRow>
             <TableHeaderCell>ID</TableHeaderCell>
-            <TableHeaderCell>Type</TableHeaderCell>
-            <TableHeaderCell>Status</TableHeaderCell>
-            <TableHeaderCell>Entity</TableHeaderCell>
-            <TableHeaderCell>Attempts</TableHeaderCell>
-            <TableHeaderCell>Created</TableHeaderCell>
-            <TableHeaderCell>Action</TableHeaderCell>
+            <TableHeaderCell>{tDetail("type")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("status")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("entity")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("attempts")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("created")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("action")}</TableHeaderCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -178,7 +180,7 @@ export function DashboardAIClient() {
                 {new Date(r.created_at).toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" })}
               </TableCell>
               <TableCell>
-                <Link href={`/dashboard/ai/${r.id}`} className="font-medium text-aistroyka-accent hover:underline">View</Link>
+                <Link href={`/dashboard/ai/${r.id}`} className="font-medium text-aistroyka-accent hover:underline">{tDetail("view")}</Link>
               </TableCell>
             </TableRow>
           ))}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Card, Skeleton, EmptyState, Badge } from "@/components/ui";
 
@@ -37,6 +38,7 @@ function formatAge(dateStr: string): string {
 }
 
 export function DashboardApprovalsClient() {
+  const tDetail = useTranslations("dashboardDetail");
   const { data: items, isPending, isError } = useQuery({
     queryKey: ["approvals-pending"],
     queryFn: fetchPendingApprovals,
@@ -54,7 +56,7 @@ export function DashboardApprovalsClient() {
   if (isError) {
     return (
       <Card>
-        <p className="text-aistroyka-text-secondary p-4">Failed to load pending approvals.</p>
+        <p className="text-aistroyka-text-secondary p-4">{tDetail("failedLoadPendingApprovals")}</p>
       </Card>
     );
   }
@@ -64,11 +66,11 @@ export function DashboardApprovalsClient() {
       <Card>
         <EmptyState
           icon={<span className="text-2xl">✓</span>}
-          title="No pending approvals"
-          subtitle="All reports have been reviewed. New submissions will appear here."
+          title={tDetail("noPendingApprovals")}
+          subtitle={tDetail("allReportsReviewed")}
           action={
             <Link href="/dashboard/reports" className="text-aistroyka-accent hover:underline">
-              View all reports →
+              {tDetail("viewAllReportsArrow")}
             </Link>
           }
         />
@@ -80,8 +82,7 @@ export function DashboardApprovalsClient() {
     <Card className="p-0 overflow-hidden">
       <div className="p-4 border-b border-aistroyka-border">
         <p className="text-aistroyka-subheadline text-aistroyka-text-secondary">
-          <strong className="text-aistroyka-text-primary">{items.length}</strong> item
-          {items.length !== 1 ? "s" : ""} awaiting approval. Oldest first.
+          <strong className="text-aistroyka-text-primary">{items.length}</strong> {tDetail("itemsAwaitingApproval")}
         </p>
       </div>
       <ul className="divide-y divide-aistroyka-border">
@@ -100,11 +101,11 @@ export function DashboardApprovalsClient() {
                   {item.id.slice(0, 8)}…
                 </span>
                 <Badge variant="warning">
-                  {item.kind === "report" ? "Report review" : "Document review"}
+                  {item.kind === "report" ? tDetail("reportReview") : tDetail("documentReview")}
                 </Badge>
                 {item.kind === "report" && item.worker_id ? (
                   <span className="text-aistroyka-caption text-aistroyka-text-tertiary">
-                    Worker {item.worker_id.slice(0, 8)}…
+                    {tDetail("worker")} {item.worker_id.slice(0, 8)}…
                   </span>
                 ) : null}
                 {item.kind === "document" && item.title ? (
@@ -114,7 +115,7 @@ export function DashboardApprovalsClient() {
                 ) : null}
                 {item.project_id && (
                   <span className="text-aistroyka-caption text-aistroyka-text-tertiary">
-                    · Project {item.project_id.slice(0, 8)}…
+                    · {tDetail("project")} {item.project_id.slice(0, 8)}…
                   </span>
                 )}
               </div>
@@ -130,7 +131,7 @@ export function DashboardApprovalsClient() {
           href="/dashboard/reports"
           className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline"
         >
-          View all reports →
+          {tDetail("viewAllReportsArrow")}
         </Link>
       </div>
     </Card>

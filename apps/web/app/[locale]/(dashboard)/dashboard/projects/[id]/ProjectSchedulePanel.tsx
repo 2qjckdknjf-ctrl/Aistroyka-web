@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@/i18n/navigation";
 import { Card, Skeleton, EmptyState, Button } from "@/components/ui";
@@ -35,6 +36,7 @@ function statusBadge(status: string, targetDate: string): string {
 }
 
 export function ProjectSchedulePanel({ projectId }: { projectId: string }) {
+  const tDetail = useTranslations("dashboardDetail");
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState("");
   const [targetDate, setTargetDate] = useState("");
@@ -49,7 +51,7 @@ export function ProjectSchedulePanel({ projectId }: { projectId: string }) {
   });
 
   if (isPending) return <Skeleton className="h-48" />;
-  if (isError) return <p className="text-aistroyka-text-secondary p-4">Failed to load milestones.</p>;
+  if (isError) return <p className="text-aistroyka-text-secondary p-4">{tDetail("failedLoadMilestones")}</p>;
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -78,11 +80,11 @@ export function ProjectSchedulePanel({ projectId }: { projectId: string }) {
       <div className="p-4">
         <EmptyState
           icon={<span className="text-2xl">📅</span>}
-          title="Schedule"
-          subtitle="No milestones yet. Create milestones to track delivery checkpoints."
+          title={tDetail("schedule")}
+          subtitle={tDetail("noMilestonesYet")}
         />
         <Button variant="secondary" className="mt-4" onClick={() => setShowForm(true)}>
-          Add milestone
+          {tDetail("addMilestone")}
         </Button>
       </div>
     );
@@ -91,10 +93,10 @@ export function ProjectSchedulePanel({ projectId }: { projectId: string }) {
   return (
     <div className="p-4 space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-base font-semibold text-aistroyka-text-primary">Milestones</h3>
+        <h3 className="text-base font-semibold text-aistroyka-text-primary">{tDetail("milestones")}</h3>
         {!showForm ? (
           <Button variant="secondary" size="sm" onClick={() => setShowForm(true)}>
-            Add milestone
+            {tDetail("addMilestone")}
           </Button>
         ) : null}
       </div>
@@ -102,7 +104,7 @@ export function ProjectSchedulePanel({ projectId }: { projectId: string }) {
         <form onSubmit={handleCreate} className="rounded-lg border border-aistroyka-border-subtle p-4 space-y-3">
           <input
             type="text"
-            placeholder="Milestone title"
+            placeholder={tDetail("milestoneTitle")}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             className="w-full rounded border border-aistroyka-border-subtle px-3 py-2 text-sm"
@@ -115,10 +117,10 @@ export function ProjectSchedulePanel({ projectId }: { projectId: string }) {
           />
           <div className="flex gap-2">
             <Button type="submit" variant="primary" disabled={submitting || !title.trim() || !targetDate}>
-              Create
+              {tDetail("create")}
             </Button>
             <Button type="button" variant="secondary" onClick={() => { setShowForm(false); setTitle(""); setTargetDate(""); }}>
-              Cancel
+              {tDetail("cancel")}
             </Button>
           </div>
         </form>
@@ -146,7 +148,7 @@ export function ProjectSchedulePanel({ projectId }: { projectId: string }) {
                 <p className="mt-1 text-sm text-aistroyka-text-secondary">
                   Target: {new Date(m.target_date).toLocaleDateString()}
                   {overdue && (
-                    <span className="ml-2 text-aistroyka-error font-medium">Overdue</span>
+                    <span className="ml-2 text-aistroyka-error font-medium">{tDetail("overdue")}</span>
                   )}
                 </p>
                 {m.description && (
@@ -156,7 +158,7 @@ export function ProjectSchedulePanel({ projectId }: { projectId: string }) {
                   href={`/dashboard/tasks?project_id=${m.project_id}`}
                   className="mt-2 inline-block text-sm font-medium text-aistroyka-accent hover:underline"
                 >
-                  View project tasks →
+                  {tDetail("viewProjectTasks")}
                 </Link>
               </li>
             );

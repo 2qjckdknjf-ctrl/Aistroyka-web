@@ -6,12 +6,11 @@
 - Do not break existing dashboard, auth flows, middleware, or tenant logic when adding features.
 - Do not commit secrets, .env files with real values, tokens, or build artifacts; use .gitignore and example files.
 - Prefer adding new work in isolation (new components, routes, docs) rather than refactoring existing flows unnecessarily.
-- For deploy, config, and user-scoped closure phases (A1, A2, A3, A4, B1–B4, etc.): stay on that phase until the user explicitly widens scope; continue execution without unnecessary pauses; do not jump to unrelated work.
 - Write reports and documentation into docs/ (and phase-specific subdirs like docs/mobile-rebuild/, docs/mobile-config/).
 - For mobile: do not merge Manager and Worker into one app; keep shared logic in Shared; do not use WorkerLite as primary product name.
 - Do not invent or fake success (e.g. fake build results); document real blockers and missing values.
 - When config values may exist in repo: search first (env examples, docs, scripts); do not ask for values that are already there; do not hardcode fake placeholders if real values exist.
-- Prefer end-to-end execution with minimal handoff when requested ("do it yourself" workflow).
+- Prefer end-to-end execution with minimal handoff when requested ("do it yourself" workflow); when asked to continue by plan, keep moving autonomously without unnecessary pause/checkpoint questions.
 - Default to Russian-language communication when the user requests it.
 
 ## Learned Workspace Facts

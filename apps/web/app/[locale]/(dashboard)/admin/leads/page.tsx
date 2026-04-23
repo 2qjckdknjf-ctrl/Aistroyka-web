@@ -1,21 +1,23 @@
+import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { SectionHeader } from "@/components/ui";
 import { AdminLeadsClient } from "./AdminLeadsClient";
 
 export const dynamic = "force-dynamic";
 
-export default function AdminLeadsPage() {
+export default async function AdminLeadsPage() {
+  const tPage = await getTranslations("dashboardPageMeta");
   return (
     <>
       <Link
         href="/admin"
         className="mb-aistroyka-6 inline-block text-aistroyka-subheadline font-medium text-aistroyka-text-secondary hover:text-aistroyka-accent"
       >
-        ← Admin
+        {tPage("backToAdmin")}
       </Link>
       <SectionHeader
-        title="Contact leads"
-        subtitle="Incoming requests from the public contact form. View and update status."
+        title={tPage("contactLeadsTitle")}
+        subtitle={tPage("contactLeadsSubtitle")}
       />
       <AdminLeadsClient />
     </>

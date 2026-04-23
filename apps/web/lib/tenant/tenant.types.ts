@@ -5,7 +5,7 @@
  */
 
 export type TenantRoleSpec = "OWNER" | "MANAGER" | "WORKER" | "CONTRACTOR";
-export type TenantRoleDb = "owner" | "admin" | "member" | "viewer";
+export type TenantRoleDb = "owner" | "admin" | "member" | "viewer" | "stakeholder";
 
 export type ClientProfile = "web" | "ios_full" | "ios_lite" | "ios_manager" | "android_full" | "android_lite";
 

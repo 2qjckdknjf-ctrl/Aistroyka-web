@@ -1,70 +1,56 @@
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
-import Image from "next/image";
 
 export async function PublicHomeContent() {
   const t = await getTranslations("public.home");
   const tMetrics = await getTranslations("public.homeMetrics");
+  const tNav = await getTranslations("public.nav");
 
   const MOCK_METRICS = { projects: "500+", reports: "12K+", insights: "8K+", photos: "45K+" };
 
   return (
     <>
       {/* Hero */}
-      <section className="relative overflow-hidden px-4 py-20 sm:px-6 sm:py-24 lg:px-8 lg:py-28" style={{ background: "linear-gradient(180deg, #0B0F19 0%, #05070d 100%)" }}>
-        {/* Animated gradient glow behind logo */}
-        <div
-          className="animate-hero-glow pointer-events-none absolute left-1/2 top-32 -translate-x-1/2 w-[400px] h-[200px] rounded-full blur-3xl"
-          style={{ background: "radial-gradient(ellipse, rgba(245,197,24,0.25) 0%, transparent 70%)" }}
-          aria-hidden
-        />
-        <div className="relative mx-auto max-w-4xl text-center">
-          <div className="mb-8 flex justify-center">
-            <Image
-              src="/brand/aistroyka-logo.png"
-              alt="AISTROYKA"
-              width={180}
-              height={60}
-              className="h-14 w-auto sm:h-16"
-              priority
-              unoptimized
-            />
-          </div>
-          <h1 className="font-heading text-[var(--aistroyka-font-large)] font-bold tracking-tight text-[var(--text-main)] sm:text-4xl lg:text-5xl">
-            AI that understands construction.
-          </h1>
-          <p className="mt-4 text-lg text-[var(--text-muted)] sm:text-xl">
-            {t("heroSubtitle")}
-          </p>
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-            <Link href="/contact" className="btn-primary">
-              Start Project
-            </Link>
-            <Link href="/ai-demo" className="inline-flex min-h-[var(--aistroyka-touch-min)] items-center justify-center rounded-[var(--radius-main)] border border-[var(--border-main)] bg-white/5 px-6 py-2.5 text-[var(--aistroyka-font-headline)] font-semibold text-[var(--text-main)] transition-colors hover:bg-white/10">
-              View Demo
-            </Link>
-            <Link
-              href="/login"
-              className="inline-flex min-h-[var(--aistroyka-touch-min)] items-center justify-center rounded-[var(--radius-main)] border border-[var(--border-main)] bg-transparent px-6 py-2.5 text-[var(--aistroyka-font-headline)] font-semibold text-[var(--text-main)] transition-colors hover:bg-white/5"
-            >
-              {t("ctaLogin")}
-            </Link>
-          </div>
+      <section className="relative overflow-hidden px-4 pb-24 pt-20 sm:px-6 lg:px-8">
+        <div aria-hidden className="pointer-events-none absolute inset-0">
+          <div className="absolute -left-24 top-12 h-80 w-80 rounded-full bg-[var(--aistroyka-neural-core)] opacity-20 blur-3xl animate-neural-pulse" />
+          <div className="absolute -right-28 bottom-4 h-96 w-96 rounded-full bg-[var(--aistroyka-neural-accent)] opacity-20 blur-3xl animate-neural-drift" />
         </div>
-        {/* Product preview strip */}
-        <div className="relative mx-auto mt-14 max-w-5xl px-4">
-          <div className="grid gap-4 sm:grid-cols-3">
-            <Link href="/projects-showcase" className="block rounded-[var(--radius-main)] border border-[var(--border-main)] bg-white/5 p-6 text-center transition hover:bg-white/10 hover:border-[var(--ai-yellow)]/30">
-              <span className="text-[var(--aistroyka-font-subheadline)] font-medium text-[var(--text-main)]">Dashboard</span>
-              <p className="mt-1 text-[var(--aistroyka-font-caption)] text-[var(--text-muted)]">Projects, tasks, KPIs</p>
+
+        <div className="public-shell relative mx-auto max-w-6xl rounded-[var(--aistroyka-radius-xxl)] px-6 py-12 sm:px-10 sm:py-16">
+          <div className="max-w-3xl">
+            <div className="public-badge mb-6 inline-flex rounded-full px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em]">
+              Neural Construction Control
+            </div>
+            <h1 className="font-heading text-4xl font-semibold uppercase tracking-[0.06em] text-aistroyka-text-primary sm:text-5xl lg:text-6xl">
+              <span className="text-aistroyka-accent">AISTROYKA</span>{" "}
+              <span className="text-aistroyka-text-primary">AI Construction Intelligence</span>
+            </h1>
+            <p className="mt-6 max-w-2xl text-[var(--aistroyka-font-headline)] text-aistroyka-text-secondary sm:text-xl">
+              {t("heroSubtitle")}
+            </p>
+            <div className="mt-10 flex flex-wrap gap-3">
+              <Link href="/contact" className="btn-primary">
+                {tNav("requestDemo")}
+              </Link>
+              <Link href="/ai-demo" className="btn-secondary">
+                {tNav("aiDemo")}
+              </Link>
+            </div>
+          </div>
+
+          <div className="mt-12 grid gap-4 sm:grid-cols-3">
+            <Link href="/projects-showcase" className="public-card-motion rounded-[var(--aistroyka-radius-xl)] border border-aistroyka-border-subtle bg-aistroyka-surface px-5 py-4">
+              <div className="text-sm font-semibold uppercase tracking-[0.12em] text-aistroyka-accent">Dashboard</div>
+              <p className="mt-2 text-sm text-aistroyka-text-secondary">Projects, tasks, KPIs</p>
             </Link>
-            <Link href="/ai-demo" className="block rounded-[var(--radius-main)] border border-[var(--border-main)] bg-white/5 p-6 text-center transition hover:bg-white/10 hover:border-[var(--ai-yellow)]/30">
-              <span className="text-[var(--aistroyka-font-subheadline)] font-medium text-[var(--text-main)]">AI insights</span>
-              <p className="mt-1 text-[var(--aistroyka-font-caption)] text-[var(--text-muted)]">Progress, risks, delays</p>
+            <Link href="/ai-construction-control" className="public-card-motion rounded-[var(--aistroyka-radius-xl)] border border-aistroyka-border-subtle bg-aistroyka-surface px-5 py-4">
+              <div className="text-sm font-semibold uppercase tracking-[0.12em] text-aistroyka-accent">AI insights</div>
+              <p className="mt-2 text-sm text-aistroyka-text-secondary">Progress, risks, delays</p>
             </Link>
-            <Link href="/mobile" className="block rounded-[var(--radius-main)] border border-[var(--border-main)] bg-white/5 p-6 text-center transition hover:bg-white/10 hover:border-[var(--ai-yellow)]/30">
-              <span className="text-[var(--aistroyka-font-subheadline)] font-medium text-[var(--text-main)]">Mobile</span>
-              <p className="mt-1 text-[var(--aistroyka-font-caption)] text-[var(--text-muted)]">Reports, evidence</p>
+            <Link href="/mobile" className="public-card-motion rounded-[var(--aistroyka-radius-xl)] border border-aistroyka-border-subtle bg-aistroyka-surface px-5 py-4">
+              <div className="text-sm font-semibold uppercase tracking-[0.12em] text-aistroyka-accent">Mobile</div>
+              <p className="mt-2 text-sm text-aistroyka-text-secondary">Reports, evidence</p>
             </Link>
           </div>
         </div>

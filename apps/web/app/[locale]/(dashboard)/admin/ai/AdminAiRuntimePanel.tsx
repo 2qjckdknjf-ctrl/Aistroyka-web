@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
 import { Card, SectionHeader, Skeleton } from "@/components/ui";
 import { RequestIdPill } from "@/src/features/admin/components/RequestIdPill";
@@ -43,6 +44,7 @@ async function fetchAiRuntime(hours: number): Promise<AiRuntimeResponse> {
 }
 
 export function AdminAiRuntimePanel({ tenantId }: { tenantId: string | null }) {
+  const tPage = useTranslations("dashboardPageMeta");
   const [hours, setHours] = useState(72);
   const q = useQuery({
     queryKey: ["admin-ai-runtime", tenantId, hours],
@@ -53,10 +55,10 @@ export function AdminAiRuntimePanel({ tenantId }: { tenantId: string | null }) {
   if (!tenantId) return null;
 
   return (
-    <section className="mt-8" aria-label="AI runtime routes and errors">
+    <section className="mt-8" aria-label={tPage("aiRuntimeAria")}>
       <SectionHeader
-        title="AI runtime (routes & failures)"
-        subtitle="Tenant-scoped audit rollup. Use trace_id to match server logs. Not a full observability platform — focused drilldown."
+        title={tPage("aiRuntimeTitle")}
+        subtitle={tPage("aiRuntimeSubtitle")}
       />
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <label className="text-sm text-aistroyka-text-secondary">

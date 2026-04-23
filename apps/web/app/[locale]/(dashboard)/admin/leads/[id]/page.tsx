@@ -1,12 +1,14 @@
+import { getTranslations } from "next-intl/server";
 import { SectionHeader } from "@/components/ui";
 import { AdminLeadDetailClient } from "./AdminLeadDetailClient";
 
 export const dynamic = "force-dynamic";
 
-export default function AdminLeadDetailPage() {
+export default async function AdminLeadDetailPage() {
+  const tPage = await getTranslations("dashboardPageMeta");
   return (
     <>
-      <SectionHeader title="Lead detail" subtitle="View and update status and notes." />
+      <SectionHeader title={tPage("leadDetailTitle")} subtitle={tPage("leadDetailSubtitle")} />
       <AdminLeadDetailClient />
     </>
   );

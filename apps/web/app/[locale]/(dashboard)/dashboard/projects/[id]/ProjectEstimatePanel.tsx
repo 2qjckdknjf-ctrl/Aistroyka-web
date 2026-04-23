@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, Skeleton, EmptyState, Button, Input } from "@/components/ui";
 
@@ -66,6 +67,7 @@ async function runEstimateFromImage(
 }
 
 export function ProjectEstimatePanel({ projectId }: { projectId: string }) {
+  const tDetail = useTranslations("dashboardDetail");
   const queryClient = useQueryClient();
   const [imageUrl, setImageUrl] = useState("");
 
@@ -113,7 +115,7 @@ export function ProjectEstimatePanel({ projectId }: { projectId: string }) {
 
       {budget && (
         <Card className="border-l-4 border-l-aistroyka-info">
-          <h3 className="font-medium text-aistroyka-text-primary">Recorded budget</h3>
+          <h3 className="font-medium text-aistroyka-text-primary">{tDetail("recordedBudget")}</h3>
           <p className="text-aistroyka-caption text-aistroyka-text-tertiary mt-1">
             From cost items (planned vs actual)
           </p>
@@ -145,7 +147,7 @@ export function ProjectEstimatePanel({ projectId }: { projectId: string }) {
 
       {latest && (
         <Card className="border-l-4 border-l-aistroyka-accent">
-          <h3 className="font-medium text-aistroyka-text-primary">Latest estimate (AI)</h3>
+          <h3 className="font-medium text-aistroyka-text-primary">{tDetail("latestEstimateAi")}</h3>
           <p className="text-aistroyka-caption text-aistroyka-text-tertiary mt-1">
             Source: {latest.source_type}
             {latest.created_at && (
@@ -191,7 +193,7 @@ export function ProjectEstimatePanel({ projectId }: { projectId: string }) {
       )}
 
       <Card>
-        <h3 className="font-medium text-aistroyka-text-primary">Estimate from image</h3>
+        <h3 className="font-medium text-aistroyka-text-primary">{tDetail("estimateFromImage")}</h3>
         <p className="text-aistroyka-caption text-aistroyka-text-tertiary mt-1">
           Enter a publicly accessible image URL (construction site, drawing, or photo). The AI will return a rough cost range and confidence.
         </p>
@@ -208,7 +210,7 @@ export function ProjectEstimatePanel({ projectId }: { projectId: string }) {
             onClick={() => fromImageMutation.mutate()}
             disabled={!imageUrl.trim() || fromImageMutation.isPending}
           >
-            {fromImageMutation.isPending ? "Running…" : "Run cost estimate"}
+            {fromImageMutation.isPending ? tDetail("running") : tDetail("runCostEstimate")}
           </Button>
         </div>
         {fromImageMutation.isError && (
@@ -222,7 +224,7 @@ export function ProjectEstimatePanel({ projectId }: { projectId: string }) {
 
       {docs.length > 0 && (
         <Card>
-          <h3 className="font-medium text-aistroyka-text-primary">Source documents</h3>
+          <h3 className="font-medium text-aistroyka-text-primary">{tDetail("sourceDocuments")}</h3>
           <p className="text-aistroyka-caption text-aistroyka-text-tertiary mt-1">
             Project documents that can be used for future estimate inputs (content extraction not yet supported).
           </p>

@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
 import { JobStatusBadge } from "../projects/JobStatusBadge";
 import { AISystemHealth } from "./AISystemHealth";
@@ -15,6 +16,7 @@ type JobRow = {
 };
 
 export default async function AdminPage() {
+  const tPage = await getTranslations("dashboardPageMeta");
   const supabase = await createClient();
   const { data: jobs } = await supabase
     .from("analysis_jobs")
@@ -58,12 +60,12 @@ export default async function AdminPage() {
       </Card>
 
       <section className="mb-aistroyka-8">
-        <SectionHeader title="AI System Health" />
+        <SectionHeader title={tPage("aiSystemHealthTitle")} />
         <AISystemHealth result={calibrationResult} />
       </section>
 
       <section>
-        <SectionHeader title="Jobs" />
+        <SectionHeader title={tPage("jobsTitle")} />
         {jobs && jobs.length > 0 ? (
           <Card className="overflow-hidden p-0">
             <div className="overflow-x-auto">

@@ -1,0 +1,41 @@
+{
+  "fileKey": "9VZATZgip9N7Vv17JmzOwz",
+  "note": "Offline prepared mappings. Apply via add_code_connect_map when Figma Code Connect is available.",
+  "mappings": [
+    {
+      "figmaNodeId": "13:11",
+      "figmaComponentName": "Button",
+      "source": "apps/web/components/ui/Button.tsx",
+      "componentName": "Button",
+      "label": "React"
+    },
+    {
+      "figmaNodeId": "13:12",
+      "figmaComponentName": "Input/state=default,size=md",
+      "source": "apps/web/components/ui/Input.tsx",
+      "componentName": "Input",
+      "label": "React"
+    },
+    {
+      "figmaNodeId": "13:16",
+      "figmaComponentName": "Card/variant=default",
+      "source": "apps/web/components/ui/Card.tsx",
+      "componentName": "Card",
+      "label": "React"
+    },
+    {
+      "figmaNodeId": "13:19",
+      "figmaComponentName": "Badge/variant=neutral",
+      "source": "apps/web/components/ui/Badge.tsx",
+      "componentName": "Badge",
+      "label": "React"
+    },
+    {
+      "figmaNodeId": "13:21",
+      "figmaComponentName": "Alert/variant=warning",
+      "source": "apps/web/components/ui/Alert.tsx",
+      "componentName": "Alert",
+      "label": "React"
+    }
+  ]
+}

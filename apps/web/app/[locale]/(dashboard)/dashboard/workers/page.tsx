@@ -4,11 +4,12 @@ import { DashboardWorkersClient } from "./DashboardWorkersClient";
 
 export default async function WorkersPage() {
   const t = await getTranslations("nav");
+  const tPage = await getTranslations("dashboardPageMeta");
   return (
     <>
       <SectionHeader
         title={t("workers")}
-        subtitle="Time tracking and last report by worker. Open Days for day timeline."
+        subtitle={tPage("workersSubtitle")}
       />
       <DashboardWorkersClient />
     </>

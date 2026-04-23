@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import {
   Table,
@@ -27,6 +28,7 @@ interface WorkerRow {
 }
 
 export function DashboardWorkersClient() {
+  const tDetail = useTranslations("dashboardDetail");
   const [data, setData] = useState<WorkerRow[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -69,8 +71,8 @@ export function DashboardWorkersClient() {
       <Card>
         <EmptyState
           icon={<span className="text-2xl">👷</span>}
-          title="No workers yet"
-          subtitle="Worker day and report data will appear here once workers use the app."
+          title={tDetail("noWorkersYet")}
+          subtitle={tDetail("workerDayDataAppears")}
         />
       </Card>
     );
@@ -94,17 +96,17 @@ export function DashboardWorkersClient() {
   return (
     <Card className="p-0 overflow-hidden">
       <div className="p-2 flex justify-end">
-        <Button variant="secondary" onClick={exportCsv} className="text-sm">Export CSV</Button>
+        <Button variant="secondary" onClick={exportCsv} className="text-sm">{tDetail("exportCsv")}</Button>
       </div>
-      <Table aria-label="Workers">
+      <Table aria-label={tDetail("workers")}>
         <TableHead>
           <TableRow>
-            <TableHeaderCell>Worker (ID)</TableHeaderCell>
-            <TableHeaderCell>Last day</TableHeaderCell>
-            <TableHeaderCell>Day status</TableHeaderCell>
-            <TableHeaderCell>Anomalies</TableHeaderCell>
-            <TableHeaderCell>Last report</TableHeaderCell>
-            <TableHeaderCell>Action</TableHeaderCell>
+            <TableHeaderCell>{tDetail("workerId")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("lastDay")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("dayStatus")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("anomalies")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("lastReport")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("action")}</TableHeaderCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -114,16 +116,16 @@ export function DashboardWorkersClient() {
                 <Link href={`/dashboard/workers/${encodeURIComponent(w.user_id)}`} className="font-mono text-aistroyka-caption text-aistroyka-accent hover:underline truncate max-w-[120px] block" title={w.user_id}>
                   {w.user_id.slice(0, 8)}…
                 </Link>
-                <Button variant="secondary" className="mt-1 text-xs py-0 px-1" onClick={() => copyWorkerId(w.user_id)}>Copy ID</Button>
+                <Button variant="secondary" className="mt-1 text-xs py-0 px-1" onClick={() => copyWorkerId(w.user_id)}>{tDetail("copyId")}</Button>
               </TableCell>
               <TableCell className="text-aistroyka-text-secondary tabular-nums">
                 {w.last_day_date ?? "—"}
               </TableCell>
               <TableCell>
                 {w.last_started_at && w.last_ended_at ? (
-                  <Badge variant="success">Ended</Badge>
+                  <Badge variant="success">{tDetail("ended")}</Badge>
                 ) : w.last_started_at ? (
-                  <Badge variant="warning">Started</Badge>
+                  <Badge variant="warning">{tDetail("started")}</Badge>
                 ) : (
                   "—"
                 )}
@@ -131,9 +133,9 @@ export function DashboardWorkersClient() {
               <TableCell>
                 {w.anomalies && (w.anomalies.open_shift || w.anomalies.overtime || w.anomalies.no_activity) ? (
                   <span className="flex flex-wrap gap-1">
-                    {w.anomalies.open_shift && <Badge variant="warning">Open shift</Badge>}
-                    {w.anomalies.overtime && <Badge variant="warning">Overtime</Badge>}
-                    {w.anomalies.no_activity && <Badge variant="danger">No activity</Badge>}
+                    {w.anomalies.open_shift && <Badge variant="warning">{tDetail("openShift")}</Badge>}
+                    {w.anomalies.overtime && <Badge variant="warning">{tDetail("overtime")}</Badge>}
+                    {w.anomalies.no_activity && <Badge variant="danger">{tDetail("noActivity")}</Badge>}
                   </span>
                 ) : (
                   "—"
@@ -152,14 +154,14 @@ export function DashboardWorkersClient() {
                   href={`/dashboard/workers/${encodeURIComponent(w.user_id)}`}
                   className="font-medium text-aistroyka-accent hover:underline focus:outline-none focus:ring-2 focus:ring-aistroyka-accent focus:ring-offset-2 rounded"
                 >
-                  View
+                  {tDetail("view")}
                 </Link>
                 {" · "}
                 <Link
                   href={`/dashboard/workers/${encodeURIComponent(w.user_id)}/days`}
                   className="font-medium text-aistroyka-accent hover:underline focus:outline-none focus:ring-2 focus:ring-aistroyka-accent focus:ring-offset-2 rounded"
                 >
-                  Days
+                  {tDetail("days")}
                 </Link>
               </TableCell>
             </TableRow>

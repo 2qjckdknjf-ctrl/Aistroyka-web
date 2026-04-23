@@ -11,13 +11,14 @@ export default async function DashboardTaskDetailPage({
 }) {
   const { id } = await params;
   const t = await getTranslations("nav");
+  const tPage = await getTranslations("dashboardPageMeta");
   if (!id) notFound();
   return (
     <>
       <div className="mb-4 flex items-center justify-between">
-        <SectionHeader title={t("tasks")} subtitle="Task detail" />
+        <SectionHeader title={t("tasks")} subtitle={tPage("taskDetailSubtitle")} />
         <Link href="/dashboard/tasks" className="text-aistroyka-accent hover:underline">
-          ← Back to tasks
+          {tPage("backToTasks")}
         </Link>
       </div>
       <DashboardTaskDetailClient taskId={id} />

@@ -4,9 +4,10 @@ import { DashboardDevicesClient } from "./DashboardDevicesClient";
 
 export default async function DevicesPage() {
   const t = await getTranslations("nav");
+  const tPage = await getTranslations("dashboardPageMeta");
   return (
     <>
-      <SectionHeader title={t("devices")} subtitle="Registered devices (push tokens). Health: active or disabled." />
+      <SectionHeader title={t("devices")} subtitle={tPage("devicesSubtitle")} />
       <DashboardDevicesClient />
     </>
   );

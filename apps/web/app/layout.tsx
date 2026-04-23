@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
-import { Inter, Space_Grotesk } from "next/font/google";
+import { Exo_2, Inter } from "next/font/google";
 import { QueryProvider } from "@/lib/query/QueryProvider";
 import "./globals.css";
 
@@ -10,8 +10,8 @@ const inter = Inter({
   display: "swap",
 });
 
-const spaceGrotesk = Space_Grotesk({
-  subsets: ["latin"],
+const exo2 = Exo_2({
+  subsets: ["latin", "cyrillic-ext"],
   variable: "--font-heading",
   display: "swap",
 });
@@ -70,7 +70,7 @@ export default async function RootLayout({
   }
 
   return (
-    <html lang={lang} className={`${inter.variable} ${spaceGrotesk.variable}`}>
+    <html lang={lang} className={`${inter.variable} ${exo2.variable}`}>
       <body className="min-h-screen font-sans antialiased [padding-bottom:env(safe-area-inset-bottom)]">
         <QueryProvider>{children}</QueryProvider>
       </body>

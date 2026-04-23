@@ -1,0 +1,161 @@
+package ai.aistroyka.shared
+
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import java.util.concurrent.TimeUnit
+
+/**
+ * Worker endpoints matching iOS [WorkerAPI] and `/api/v1` routes.
+ */
+object WorkerApi {
+    private val uploadHttp = OkHttpClient.Builder()
+        .connectTimeout(45, TimeUnit.SECONDS)
+        .readTimeout(120, TimeUnit.SECONDS)
+        .writeTimeout(120, TimeUnit.SECONDS)
+        .build()
+
+    suspend fun config(): ConfigResponse = ApiClient.request("config")
+
+    suspend fun projects(): List<ProjectDto> {
+        val r: ProjectsResponse = ApiClient.request("projects")
+        return r.data.orEmpty()
+    }
+
+    suspend fun tasksToday(projectId: String?): List<TaskDto> {
+        val q = if (!projectId.isNullOrBlank()) "?project_id=${java.net.URLEncoder.encode(projectId, Charsets.UTF_8.name())}" else ""
+        val r: TasksTodayResponse = ApiClient.request("worker/tasks/today$q")
+        return r.data.orEmpty()
+    }
+
+    /** GET /api/v1/tasks/:id — detail when assigned to current worker (or manager). Uses [TaskDetailResponse] from ManagerDtos. */
+    suspend fun task(taskId: String): TaskDetailDto {
+        val r: TaskDetailResponse = ApiClient.request("tasks/${taskId.trim()}")
+        return r.data ?: throw ApiError(null, null, "No task in response")
+    }
+
+    suspend fun createReport(dayId: String?, taskId: String?, idempotencyKey: String): String {
+        val body = ReportCreateBody(dayId = dayId, taskId = taskId)
+        val json = ApiClient.json.encodeToString(ReportCreateBody.serializer(), body)
+        val r: ReportCreateResponse = ApiClient.request(
+            path = "worker/report/create",
+            method = "POST",
+            jsonBody = json,
+            idempotencyKey = idempotencyKey
+        )
+        val id = r.data?.id ?: throw ApiError(null, null, "No report id in response")
+        return id
+    }
+
+    suspend fun createUploadSession(purpose: String, idempotencyKey: String): Pair<String, String> {
+        val body = CreateUploadSessionBody(purpose = purpose)
+        val json = ApiClient.json.encodeToString(CreateUploadSessionBody.serializer(), body)
+        val r: UploadSessionResponse = ApiClient.request(
+            path = "media/upload-sessions",
+            method = "POST",
+            jsonBody = json,
+            idempotencyKey = idempotencyKey
+        )
+        val data = r.data ?: throw ApiError(null, null, "No session data")
+        val path = data.uploadPath ?: "media/${data.id}"
+        return data.id to path
+    }
+
+    suspend fun finalizeUploadSession(
+        sessionId: String,
+        objectPath: String,
+        mimeType: String?,
+        sizeBytes: Int?,
+        idempotencyKey: String,
+    ) {
+        val body = FinalizeUploadBody(
+            objectPath = objectPath,
+            mimeType = mimeType,
+            sizeBytes = sizeBytes
+        )
+        val json = ApiClient.json.encodeToString(FinalizeUploadBody.serializer(), body)
+        ApiClient.requestVoid(
+            path = "media/upload-sessions/$sessionId/finalize",
+            method = "POST",
+            jsonBody = json,
+            idempotencyKey = idempotencyKey
+        )
+    }
+
+    suspend fun addMedia(reportId: String, uploadSessionId: String, idempotencyKey: String) {
+        val body = AddMediaBody(reportId = reportId, uploadSessionId = uploadSessionId)
+        val json = ApiClient.json.encodeToString(AddMediaBody.serializer(), body)
+        ApiClient.requestVoid(
+            path = "worker/report/add-media",
+            method = "POST",
+            jsonBody = json,
+            idempotencyKey = idempotencyKey
+        )
+    }
+
+    suspend fun submitReport(reportId: String, taskId: String?, idempotencyKey: String) {
+        val json = buildSubmitReportJson(reportId, taskId)
+        ApiClient.requestVoid(
+            path = "worker/report/submit",
+            method = "POST",
+            jsonBody = json,
+            idempotencyKey = idempotencyKey
+        )
+    }
+
+    /**
+     * POST binary to Supabase Storage `media` bucket (same as iOS [UploadManager.uploadToSupabaseStorage]).
+     * [pathInBucket] is the object key inside the bucket (no `media/` prefix).
+     */
+    suspend fun uploadToSupabaseStorage(data: ByteArray, pathInBucket: String) = withContext(Dispatchers.IO) {
+        val base = AppRuntime.supabaseUrl.trimEnd('/')
+        if (base.isBlank()) throw ApiError(null, null, "Supabase URL not configured")
+        val token = SessionStore.getAccessToken()
+            ?: throw ApiError(null, null, "Not signed in")
+        val url = "$base/storage/v1/object/media/$pathInBucket"
+        val req = Request.Builder()
+            .url(url)
+            .post(data.toRequestBody("image/jpeg".toMediaType()))
+            .header("Authorization", "Bearer $token")
+            .header("apikey", AppRuntime.supabaseAnonKey)
+            .header("Content-Type", "image/jpeg")
+            .build()
+        val res = uploadHttp.newCall(req).execute()
+        if (!res.isSuccessful) {
+            val msg = if (res.code == 401 || res.code == 403) {
+                "Storage policy denied. Check Supabase RLS for bucket media and tenant path."
+            } else {
+                "Storage upload failed (HTTP ${res.code})"
+            }
+            throw ApiError(res.code, null, msg)
+        }
+    }
+
+    @Serializable
+    private data class ReportCreateBody(
+        @SerialName("day_id") val dayId: String? = null,
+        @SerialName("task_id") val taskId: String? = null,
+    )
+
+    @Serializable
+    private data class CreateUploadSessionBody(val purpose: String)
+
+    @Serializable
+    private data class FinalizeUploadBody(
+        @SerialName("object_path") val objectPath: String,
+        @SerialName("mime_type") val mimeType: String? = null,
+        @SerialName("size_bytes") val sizeBytes: Int? = null,
+    )
+
+    @Serializable
+    private data class AddMediaBody(
+        @SerialName("report_id") val reportId: String,
+        @SerialName("upload_session_id") val uploadSessionId: String,
+    )
+
+}

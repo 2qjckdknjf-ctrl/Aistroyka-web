@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { QueryBoundary } from "@/lib/query/render";
 import { SectionHeader } from "@/components/ui";
 import { AdminKpiCard } from "@/src/features/admin/components/AdminKpiCard";
@@ -21,6 +22,7 @@ function todayRange(): { from: string; to: string } {
 }
 
 export function AdminAiOverviewClient() {
+  const tPage = useTranslations("dashboardPageMeta");
   const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
   const tenantsQuery = useAdminTenants();
   const range = useMemo(() => todayRange(), []);
@@ -136,7 +138,7 @@ export function AdminAiOverviewClient() {
           </section>
 
           <section>
-            <SectionHeader title="Top recent issues" />
+            <SectionHeader title={tPage("topRecentIssuesTitle")} />
             <QueryBoundary
               query={issuesQuery}
               emptyCondition={(d) => !d?.length}

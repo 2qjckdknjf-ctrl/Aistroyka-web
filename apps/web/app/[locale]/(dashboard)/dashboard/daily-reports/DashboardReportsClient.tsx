@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import {
   Table,
@@ -55,6 +56,7 @@ const REPORT_STATUS_OPTIONS = [
 ];
 
 export function DashboardReportsClient({ basePath = DEFAULT_REPORTS_BASE }: { basePath?: string }) {
+  const tDetail = useTranslations("dashboardDetail");
   const { params, setParam } = useFilterParams();
   const [data, setData] = useState<ReportRow[] | null>(null);
   const [loading, setLoading] = useState(true);
@@ -130,8 +132,8 @@ export function DashboardReportsClient({ basePath = DEFAULT_REPORTS_BASE }: { ba
       <Card>
         <EmptyState
           icon={<span className="text-2xl">📋</span>}
-          title="No reports yet"
-          subtitle="Daily reports will appear here once workers submit them."
+          title={tDetail("noReportsYet")}
+          subtitle={tDetail("dailyReportsAppear")}
         />
       </Card>
     );
@@ -164,25 +166,25 @@ export function DashboardReportsClient({ basePath = DEFAULT_REPORTS_BASE }: { ba
           showStatus={true}
           statusOptions={REPORT_STATUS_OPTIONS}
           showSearch={true}
-          searchPlaceholder="Report or worker ID…"
+          searchPlaceholder={tDetail("searchReportOrWorker")}
           showSavedViews={true}
         />
       </div>
       <Card className="p-0 overflow-hidden">
         <div className="p-2 flex justify-end">
-          <Button variant="secondary" onClick={exportCsv} className="text-sm">Export CSV</Button>
+          <Button variant="secondary" onClick={exportCsv} className="text-sm">{tDetail("exportCsv")}</Button>
         </div>
-        <Table aria-label="Reports">
+        <Table aria-label={tDetail("reports")}>
         <TableHead>
           <TableRow>
-            <TableHeaderCell>Report</TableHeaderCell>
-            <TableHeaderCell>Status</TableHeaderCell>
-            <TableHeaderCell>Worker</TableHeaderCell>
-            <TableHeaderCell>Project</TableHeaderCell>
+            <TableHeaderCell>{tDetail("report")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("status")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("worker")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("project")}</TableHeaderCell>
             <TableHeaderCell>AI</TableHeaderCell>
-            <TableHeaderCell>Media</TableHeaderCell>
-            <TableHeaderCell>Age</TableHeaderCell>
-            <TableHeaderCell>Action</TableHeaderCell>
+            <TableHeaderCell>{tDetail("media")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("age")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("action")}</TableHeaderCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -233,7 +235,7 @@ export function DashboardReportsClient({ basePath = DEFAULT_REPORTS_BASE }: { ba
               <TableCell className="text-aistroyka-text-secondary tabular-nums">{formatAge(r.created_at)}</TableCell>
               <TableCell>
                 <Link href={`${basePath}/${r.id}`} className="font-medium text-aistroyka-accent hover:underline focus:outline-none focus:ring-2 focus:ring-aistroyka-accent focus:ring-offset-2 rounded">
-                  View
+                  {tDetail("view")}
                 </Link>
               </TableCell>
             </TableRow>

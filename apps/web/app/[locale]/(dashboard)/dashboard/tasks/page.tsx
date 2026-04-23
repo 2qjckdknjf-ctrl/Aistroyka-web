@@ -4,11 +4,12 @@ import { DashboardTasksClient } from "./DashboardTasksClient";
 
 export default async function DashboardTasksPage() {
   const t = await getTranslations("nav");
+  const tPage = await getTranslations("dashboardPageMeta");
   return (
     <>
       <SectionHeader
         title={t("tasks")}
-        subtitle="Create and assign tasks. Filter by project, status, or date."
+        subtitle={tPage("tasksSubtitle")}
       />
       <DashboardTasksClient />
     </>

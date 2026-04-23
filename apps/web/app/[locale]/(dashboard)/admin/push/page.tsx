@@ -4,11 +4,12 @@ import { AdminPushOutboxClient } from "./AdminPushOutboxClient";
 
 export default async function AdminPushPage() {
   const t = await getTranslations("nav");
+  const tPage = await getTranslations("dashboardPageMeta");
   return (
     <>
       <SectionHeader
         title={t("adminPush")}
-        subtitle="Push notification outbox: queued, sent, and failed entries (admin only)."
+        subtitle={tPage("adminPushSubtitle")}
       />
       <AdminPushOutboxClient />
     </>

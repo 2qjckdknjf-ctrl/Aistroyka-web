@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Skeleton,
@@ -170,6 +171,7 @@ function typeLabel(type: string): string {
 }
 
 export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
+  const tDetail = useTranslations("dashboardDetail");
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
   const [uploadDocId, setUploadDocId] = useState<string | null>(null);
@@ -227,7 +229,7 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
   if (query.isPending) return <Skeleton className="h-48" />;
   if (query.isError)
     return (
-      <p className="text-aistroyka-text-secondary p-4">Failed to load documents.</p>
+      <p className="text-aistroyka-text-secondary p-4">{tDetail("failedLoadDocuments")}</p>
     );
 
   const rows = query.data ?? [];
@@ -314,13 +316,13 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
         <Table aria-label="Project documents">
           <TableHead>
             <TableRow>
-              <TableHeaderCell>Title</TableHeaderCell>
-              <TableHeaderCell>Type</TableHeaderCell>
-              <TableHeaderCell>Status</TableHeaderCell>
-              <TableHeaderCell>File</TableHeaderCell>
-              <TableHeaderCell>Linked to</TableHeaderCell>
-              <TableHeaderCell>Created</TableHeaderCell>
-              <TableHeaderCell>Actions</TableHeaderCell>
+              <TableHeaderCell>{tDetail("title")}</TableHeaderCell>
+              <TableHeaderCell>{tDetail("type")}</TableHeaderCell>
+              <TableHeaderCell>{tDetail("status")}</TableHeaderCell>
+              <TableHeaderCell>{tDetail("file")}</TableHeaderCell>
+              <TableHeaderCell>{tDetail("linkedTo")}</TableHeaderCell>
+              <TableHeaderCell>{tDetail("created")}</TableHeaderCell>
+              <TableHeaderCell>{tDetail("actions")}</TableHeaderCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -522,6 +524,7 @@ function CreateDocumentModal({
   isSubmitting: boolean;
   error: string | null;
 }) {
+  const tDetail = useTranslations("dashboardDetail");
   const [type, setType] = useState<string>("document");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -567,9 +570,9 @@ function CreateDocumentModal({
             onChange={(e) => setType(e.target.value)}
             disabled={isSubmitting}
           >
-            <option value="document">Document</option>
-            <option value="act">Act</option>
-            <option value="contract">Contract</option>
+            <option value="document">{tDetail("document")}</option>
+            <option value="act">{tDetail("act")}</option>
+            <option value="contract">{tDetail("contract")}</option>
           </Select>
         </div>
         <Textarea
@@ -595,7 +598,7 @@ function CreateDocumentModal({
               onChange={(e) => setMilestoneId(e.target.value)}
               disabled={isSubmitting}
             >
-              <option value="">None</option>
+              <option value="">{tDetail("none")}</option>
               {milestones.map((m) => (
                 <option key={m.id} value={m.id}>
                   {m.title} ({m.target_date})

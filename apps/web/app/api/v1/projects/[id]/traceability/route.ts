@@ -1,0 +1,43 @@
+/**
+ * GET /api/v1/projects/:id/traceability — curated audit / traceability read model (internal workspace).
+ */
+
+import { NextResponse } from "next/server";
+import { createClientFromRequest } from "@/lib/supabase/server";
+import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
+import { getProjectForInternalWorkspace } from "@/lib/domain/projects/project.service";
+import { getProjectTraceability } from "@/lib/domain/traceability/traceability.repository";
+
+export const dynamic = "force-dynamic";
+
+export async function GET(
+  request: Request,
+  context: { params: Promise<{ id: string }> }
+) {
+  const { id: projectId } = await context.params;
+  if (!projectId) return NextResponse.json({ error: "Missing project id" }, { status: 400 });
+
+  const ctx = await getTenantContextFromRequest(request);
+  try {
+    requireTenant(ctx);
+  } catch (e) {
+    if (e instanceof TenantRequiredError) {
+      return NextResponse.json({ error: e.message }, { status: 401 });
+    }
+    throw e;
+  }
+
+  const url = new URL(request.url);
+  const limitParam = url.searchParams.get("limit");
+  const limit = limitParam ? Math.min(Math.max(1, parseInt(limitParam, 10) || 80), 200) : 80;
+
+  const supabase = await createClientFromRequest(request);
+  const { data: project, error: projectError } = await getProjectForInternalWorkspace(supabase, ctx, projectId);
+  if (projectError || !project) {
+    const status = projectError === "Insufficient rights" ? 403 : 404;
+    return NextResponse.json({ error: projectError ?? "Not found" }, { status });
+  }
+
+  const data = await getProjectTraceability(supabase, projectId, ctx.tenantId!, limit);
+  return NextResponse.json({ data });
+}

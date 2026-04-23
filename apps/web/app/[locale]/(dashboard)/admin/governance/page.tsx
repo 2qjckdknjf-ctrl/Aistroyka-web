@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Card, SectionHeader, EmptyState, SkeletonCard } from "@/components/ui";
@@ -31,6 +32,7 @@ type ThresholdHistoryRow = {
 };
 
 export default async function AIGovernancePage() {
+  const tPage = await getTranslations("dashboardPageMeta");
   const supabase = await createClient();
 
   const [eventsRes, historyRes, latestCalRes] = await Promise.all([
@@ -87,12 +89,12 @@ export default async function AIGovernancePage() {
       </section>
 
       <section className="mb-aistroyka-8">
-        <SectionHeader title="Audit Timeline (last 90 days)" />
+        <SectionHeader title={tPage("governanceAuditTimelineTitle")} />
         <AuditTimeline events={events} />
       </section>
 
       <section className="mb-aistroyka-8">
-        <SectionHeader title="Threshold History" />
+        <SectionHeader title={tPage("thresholdHistoryTitle")} />
         <ThresholdHistory history={history} />
       </section>
     </main>

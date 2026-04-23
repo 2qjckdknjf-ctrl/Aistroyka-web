@@ -48,3 +48,26 @@ export async function createAnalysisJobRpc(
   if (!row?.id) throw new Error("create_analysis_job returned no row");
   return row;
 }
+
+interface TriggerAnalysisJobParams {
+  p_job_id: string;
+}
+
+interface TriggeredAnalysisJobRow {
+  id: string;
+  status: string;
+}
+
+/** Trigger existing analysis job execution via trigger_analysis RPC. */
+export async function triggerAnalysisJobRpc(
+  supabase: SupabaseClient,
+  params: TriggerAnalysisJobParams
+): Promise<TriggeredAnalysisJobRow> {
+  const { data, error } = await supabase.rpc("trigger_analysis", {
+    p_job_id: params.p_job_id,
+  });
+  if (error) throw error;
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row?.id) throw new Error("trigger_analysis returned no row");
+  return row as TriggeredAnalysisJobRow;
+}

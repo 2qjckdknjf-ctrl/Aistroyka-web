@@ -1,6 +1,8 @@
-# Environment Variables — Aistroyka (Vercel / Production)
+# Environment Variables — Aistroyka (Production Runtime)
 
-Список переменных окружения для production-деплоя (Vercel и др.). Не коммитить реальные значения; задавать в Vercel Dashboard → Project → Settings → Environment Variables.
+Список переменных окружения для production-деплоя. Не коммитить реальные значения.
+Каноничный runtime в текущем репо: Cloudflare Workers (через `wrangler`/GitHub workflows).
+Vercel может встречаться как исторический/дополнительный путь и доменный редирект.
 
 ---
 
@@ -91,13 +93,21 @@
 
 ---
 
-## Где задавать в Vercel
+## Где задавать в production
+
+При Cloudflare Workers:
+
+1. Runtime vars (`NEXT_PUBLIC_*` и др.) задаются в `wrangler.toml`/`wrangler.deploy.toml` для нужного env.
+2. Секреты задаются через `wrangler secret put` или через GitHub Actions secrets для deploy workflows.
+3. После изменения переменных требуется новый deploy.
+
+При использовании Vercel (legacy/fallback окружения):
 
 1. Vercel Dashboard → выбранный проект → **Settings** → **Environment Variables**.
 2. Добавить каждую переменную, выбрать окружения: **Production**, **Preview** (по желанию).
 3. Секреты (ключи, пароли) помечать как **Sensitive** (скрыты в логах).
 
-После изменения переменных пересобрать деплой (Redeploy).
+После изменения переменных пересобрать деплой (Redeploy/Deploy).
 
 ---
 

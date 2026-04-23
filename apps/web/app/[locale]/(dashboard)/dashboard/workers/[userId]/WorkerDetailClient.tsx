@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Card, Skeleton } from "@/components/ui";
 
@@ -21,6 +22,7 @@ async function fetchWorkerSummary(userId: string): Promise<WorkerSummary> {
 }
 
 export function WorkerDetailClient({ userId }: { userId: string }) {
+  const tDetail = useTranslations("dashboardDetail");
   const { data, isPending } = useQuery({
     queryKey: ["worker-summary", userId],
     queryFn: () => fetchWorkerSummary(userId),
@@ -40,35 +42,35 @@ export function WorkerDetailClient({ userId }: { userId: string }) {
       {is_contractor && (
         <p className="mb-3">
           <span className="inline-flex items-center rounded-full bg-aistroyka-surface px-2.5 py-0.5 text-aistroyka-caption font-medium text-aistroyka-accent ring-1 ring-aistroyka-border-subtle">
-            Contractor
+            {tDetail("contractor")}
           </span>
         </p>
       )}
       <dl className="grid gap-3 sm:grid-cols-2">
         <div>
-          <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Reports created</dt>
+          <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("reportsCreated")}</dt>
           <dd className="text-aistroyka-title3 font-semibold tabular-nums">{reports_count}</dd>
         </div>
         <div>
-          <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Media count</dt>
+          <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("mediaCount")}</dt>
           <dd className="text-aistroyka-title3 font-semibold tabular-nums">{media_count}</dd>
         </div>
         <div>
-          <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Tasks assigned</dt>
+          <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("tasksAssigned")}</dt>
           <dd className="text-aistroyka-title3 font-semibold tabular-nums">{tasks_assigned}</dd>
         </div>
         <div>
-          <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Tasks overdue</dt>
+          <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("tasksOverdue")}</dt>
           <dd className="text-aistroyka-title3 font-semibold tabular-nums">{tasks_overdue}</dd>
         </div>
         <div>
-          <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Reports pending review</dt>
+          <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("reportsPendingReview")}</dt>
           <dd className="text-aistroyka-title3 font-semibold tabular-nums">{reports_pending_review}</dd>
         </div>
       </dl>
       <p className="mt-3 text-aistroyka-caption text-aistroyka-text-secondary">
-        <Link href={`/dashboard/tasks?worker_id=${encodeURIComponent(userId)}`} className="text-aistroyka-accent hover:underline mr-2">Tasks assigned to this worker</Link>
-        · <Link href="/dashboard/daily-reports" className="text-aistroyka-accent hover:underline">View all reports</Link> to see this worker&apos;s submissions.
+        <Link href={`/dashboard/tasks?worker_id=${encodeURIComponent(userId)}`} className="text-aistroyka-accent hover:underline mr-2">{tDetail("tasksForWorkerLink")}</Link>
+        · <Link href="/dashboard/daily-reports" className="text-aistroyka-accent hover:underline">{tDetail("viewAllReportsLink")}</Link> {tDetail("workerSubmissionsSuffix")}
       </p>
     </Card>
   );
