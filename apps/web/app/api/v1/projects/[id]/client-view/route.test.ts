@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { GET } from "./route";
 import * as clientPortalService from "@/lib/domain/client-portal/client-portal.service";
+import * as tenant from "@/lib/tenant";
 
 vi.mock("@/lib/supabase/server", () => ({
   createClientFromRequest: vi.fn().mockResolvedValue({}),
@@ -64,5 +65,35 @@ describe("GET /api/v1/projects/:id/client-view", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.data.project.name).toBe("X");
+  });
+
+  it("passes stakeholder tenant context to client-view service after requireTenant", async () => {
+    const stakeholderCtx = {
+      tenantId: "t1",
+      userId: "stakeholder-user",
+      role: "stakeholder",
+      subscriptionTier: "free",
+      clientProfile: "web",
+      traceId: "trace1",
+    } as const;
+    vi.mocked(tenant.getTenantContextFromRequest).mockResolvedValue(stakeholderCtx);
+    vi.mocked(clientPortalService.getClientProjectView).mockResolvedValue({
+      data: {
+        project: { id: "p1", name: "Stakeholder View" },
+        progress: { tasks_done: 0, tasks_total: 0 },
+        milestones: [],
+        documents: [],
+        decisions: [],
+        budget: null,
+      },
+      error: "",
+    });
+
+    const req = new Request("https://test/api/v1/projects/p1/client-view");
+    const res = await GET(req, { params: Promise.resolve({ id: "p1" }) });
+
+    expect(res.status).toBe(200);
+    expect(tenant.requireTenant).toHaveBeenCalledWith(stakeholderCtx);
+    expect(clientPortalService.getClientProjectView).toHaveBeenCalledWith(expect.anything(), stakeholderCtx, "p1");
   });
 });

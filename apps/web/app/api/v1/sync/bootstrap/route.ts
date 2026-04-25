@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClientFromRequest } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { bootstrap } from "@/lib/sync/sync.service";
 import { logStructured } from "@/lib/observability";
@@ -28,7 +28,7 @@ export async function GET(request: Request) {
     }
     throw e;
   }
-  const supabase = await createClient();
+  const supabase = await createClientFromRequest(request);
   const result = await bootstrap(supabase, ctx as import("@/lib/tenant/tenant.types").TenantContext, {
     deviceId,
   });
