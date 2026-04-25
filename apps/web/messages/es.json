@@ -237,6 +237,7 @@
     "dailyReportsSubtitle": "Lista de informes diarios con filtros por proyecto y fecha.",
     "aiSubtitle": "Lista de trabajos de análisis IA con detalle por ID de solicitud.",
     "devicesSubtitle": "Dispositivos registrados y estado de tokens push.",
+    "uploadsSubtitle": "Cola de sesiones de subida con estado, propietario y tiempos.",
     "adminPushSubtitle": "Bandeja de salida push con entradas en cola, enviadas y fallidas.",
     "adminJobsSubtitle": "Trabajos fallidos y muertos con filtro por estado.",
     "taskDetailSubtitle": "Detalle de la tarea y estado actual de ejecución.",

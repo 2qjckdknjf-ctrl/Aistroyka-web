@@ -237,6 +237,7 @@
     "dailyReportsSubtitle": "Lista report giornalieri con filtri per progetto e data.",
     "aiSubtitle": "Elenco job di analisi IA con dettaglio per ID richiesta.",
     "devicesSubtitle": "Dispositivi registrati e stato dei token push.",
+    "uploadsSubtitle": "Coda delle sessioni di caricamento con stato, proprietario e tempi.",
     "adminPushSubtitle": "Outbox notifiche push con elementi in coda, inviati e falliti.",
     "adminJobsSubtitle": "Job falliti e dead con filtro per stato.",
     "taskDetailSubtitle": "Dettaglio attività e stato di esecuzione corrente.",

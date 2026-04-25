@@ -1,13 +1,15 @@
 import { getTranslations } from "next-intl/server";
 import { SectionHeader } from "@/components/ui";
-import { DashboardUploadsClient } from "./DashboardUploadsClient";
+import { UploadsDashboardClient } from "../UploadsDashboardClient";
 
 export default async function UploadsPage() {
   const t = await getTranslations("nav");
+  const tPage = await getTranslations("dashboardPageMeta");
+
   return (
     <>
-      <SectionHeader title={t("uploads")} subtitle="Upload sessions: status, owner, age. Filter by status or stuck &gt;4h." />
-      <DashboardUploadsClient />
+      <SectionHeader title={t("uploads")} subtitle={tPage("uploadsSubtitle")} />
+      <UploadsDashboardClient />
     </>
   );
 }

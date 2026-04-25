@@ -561,6 +561,7 @@
     "dailyReportsSubtitle": "Daily reports list with project and date controls.",
     "aiSubtitle": "AI analysis jobs list with detail by request ID.",
     "devicesSubtitle": "Registered devices and push token health.",
+    "uploadsSubtitle": "Upload sessions queue with status, owner, and timing.",
     "adminPushSubtitle": "Push notification outbox with queued, sent, and failed entries.",
     "adminJobsSubtitle": "Failed and dead jobs with status filtering.",
     "taskDetailSubtitle": "Task details and current execution status.",
