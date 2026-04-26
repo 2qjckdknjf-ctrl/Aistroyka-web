@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Card, Badge, Skeleton, EmptyState } from "@/components/ui";
 import { blockingBadgeClass, defectStatusBadgeClass, formatStatusLabel } from "../../../statusBadgeStyles";
@@ -30,6 +31,7 @@ async function fetchDetail(projectId: string, defectId: string): Promise<PublicD
 }
 
 export function ClientPortalDefectDetailClient({ projectId, defectId }: { projectId: string; defectId: string }) {
+  const tDetail = useTranslations("dashboardDetail");
   const q = useQuery({
     queryKey: ["project-defect", projectId, defectId],
     queryFn: () => fetchDetail(projectId, defectId),
@@ -48,7 +50,7 @@ export function ClientPortalDefectDetailClient({ projectId, defectId }: { projec
       <Card>
         <EmptyState
           icon={<span className="text-2xl">📌</span>}
-          title="Item unavailable"
+          title={tDetail("itemUnavailable")}
           subtitle={q.error instanceof Error ? q.error.message : ""}
         />
       </Card>
@@ -60,28 +62,28 @@ export function ClientPortalDefectDetailClient({ projectId, defectId }: { projec
   return (
     <div className="space-y-4">
       <Link href={`/dashboard/projects/${projectId}/client/defects`} className="text-aistroyka-accent hover:underline text-sm font-medium">
-        ← Punch list
+        {tDetail("backToPunchList")}
       </Link>
       <Card className="p-4">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <h1 className="text-aistroyka-title3 font-semibold">{d.title}</h1>
           <div className="flex flex-wrap gap-2">
-            {d.is_blocking ? <Badge className={blockingBadgeClass}>Blocking</Badge> : null}
+            {d.is_blocking ? <Badge className={blockingBadgeClass}>{tDetail("blocking")}</Badge> : null}
             <Badge className={defectStatusBadgeClass(d.status)}>{formatStatusLabel(d.status)}</Badge>
           </div>
         </div>
         {d.description ? <p className="mt-3 text-sm whitespace-pre-wrap">{d.description}</p> : null}
-        {d.has_assignee ? <p className="mt-2 text-xs text-aistroyka-text-tertiary">Assigned to your project team.</p> : null}
+        {d.has_assignee ? <p className="mt-2 text-xs text-aistroyka-text-tertiary">{tDetail("assignedToYourProjectTeam")}</p> : null}
         {d.due_date ? (
-          <p className="mt-2 text-sm text-aistroyka-text-secondary">Target: {new Date(d.due_date).toLocaleDateString()}</p>
+          <p className="mt-2 text-sm text-aistroyka-text-secondary">{tDetail("target")} {new Date(d.due_date).toLocaleDateString()}</p>
         ) : null}
         {d.resolution_note ? (
           <p className="mt-4 rounded border border-aistroyka-border-subtle bg-aistroyka-surface-muted/40 p-3 text-sm">
-            <span className="font-medium">Resolution:</span> {d.resolution_note}
+            <span className="font-medium">{tDetail("resolution")}:</span> {d.resolution_note}
           </p>
         ) : null}
         {d.resolved_at ? (
-          <p className="mt-2 text-xs text-aistroyka-text-tertiary">Resolved {new Date(d.resolved_at).toLocaleString()}</p>
+          <p className="mt-2 text-xs text-aistroyka-text-tertiary">{tDetail("resolved")} {new Date(d.resolved_at).toLocaleString()}</p>
         ) : null}
       </Card>
     </div>

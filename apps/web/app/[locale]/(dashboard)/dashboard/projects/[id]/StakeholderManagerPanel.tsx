@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, Button, Badge } from "@/components/ui";
 
@@ -38,6 +39,7 @@ async function fetchDelivery(projectId: string): Promise<DeliveryRow[]> {
 }
 
 export function StakeholderManagerPanel({ projectId }: { projectId: string }) {
+  const tDetail = useTranslations("dashboardDetail");
   const queryClient = useQueryClient();
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"client_viewer" | "client_decision_maker">("client_viewer");
@@ -118,39 +120,38 @@ export function StakeholderManagerPanel({ projectId }: { projectId: string }) {
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <h3 className="text-aistroyka-caption font-semibold uppercase tracking-wide text-aistroyka-text-tertiary">
-            External stakeholders
+            {tDetail("externalStakeholders")}
           </h3>
           <p className="mt-1 text-sm text-aistroyka-text-secondary">
-            Invite clients by email. They join as workspace viewers and get project-scoped portal access — not full team
-            membership.
+            {tDetail("externalStakeholdersHint")}
           </p>
         </div>
         <Button type="button" size="sm" variant="secondary" onClick={() => setOpen((o) => !o)}>
-          {open ? "Close" : "Invite"}
+          {open ? tDetail("close") : tDetail("invite")}
         </Button>
       </div>
 
       {open ? (
         <div className="mt-4 space-y-3 rounded-lg border border-aistroyka-border-subtle p-3">
           <div>
-            <label className="text-xs font-medium text-aistroyka-text-secondary">Email</label>
+            <label className="text-xs font-medium text-aistroyka-text-secondary">{tDetail("email")}</label>
             <input
               className="mt-1 w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="client@company.com"
+              placeholder={tDetail("clientEmailPlaceholder")}
             />
           </div>
           <div>
-            <label className="text-xs font-medium text-aistroyka-text-secondary">Role</label>
+            <label className="text-xs font-medium text-aistroyka-text-secondary">{tDetail("role")}</label>
             <select
               className="mt-1 w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
               value={role}
               onChange={(e) => setRole(e.target.value as "client_viewer" | "client_decision_maker")}
             >
-              <option value="client_viewer">Viewer (portal + read-only requests)</option>
-              <option value="client_decision_maker">Decision-maker (can respond to requests)</option>
+              <option value="client_viewer">{tDetail("viewerPortalReadOnly")}</option>
+              <option value="client_decision_maker">{tDetail("decisionMakerRespond")}</option>
             </select>
           </div>
           {inviteMutation.isError && inviteMutation.error instanceof Error ? (
@@ -165,18 +166,17 @@ export function StakeholderManagerPanel({ projectId }: { projectId: string }) {
             disabled={!email.includes("@")}
             onClick={() => inviteMutation.mutate()}
           >
-            Send invite
+            {tDetail("sendInvite")}
           </Button>
           <p className="text-xs text-aistroyka-text-tertiary">
-            An email is sent when possible (if outbound email is configured). You can resend from the list below for
-            pending invites.
+            {tDetail("inviteEmailHint")}
           </p>
         </div>
       ) : null}
 
       {lastInvitePath ? (
         <p className="mt-2 text-xs text-aistroyka-text-secondary break-all">
-          Share:{" "}
+          {tDetail("share")}{" "}
           <span className="font-mono text-aistroyka-accent">
             {origin}
             {lastInvitePath}
@@ -185,11 +185,11 @@ export function StakeholderManagerPanel({ projectId }: { projectId: string }) {
       ) : null}
 
       {listQuery.isPending ? (
-        <p className="mt-3 text-sm text-aistroyka-text-tertiary">Loading…</p>
+        <p className="mt-3 text-sm text-aistroyka-text-tertiary">{tDetail("loading")}</p>
       ) : (
         <ul className="mt-3 space-y-2">
           {(listQuery.data ?? []).length === 0 ? (
-            <li className="text-sm text-aistroyka-text-tertiary">No stakeholders yet.</li>
+            <li className="text-sm text-aistroyka-text-tertiary">{tDetail("noStakeholdersYet")}</li>
           ) : (
             (listQuery.data ?? []).map((r) => (
               <li
@@ -199,7 +199,7 @@ export function StakeholderManagerPanel({ projectId }: { projectId: string }) {
                 <div>
                   <span className="font-medium">{r.email}</span>
                   <span className="ml-2 text-aistroyka-text-tertiary">
-                    {r.stakeholder_role === "client_decision_maker" ? "Decision-maker" : "Viewer"} · {r.status}
+                    {r.stakeholder_role === "client_decision_maker" ? tDetail("decisionMaker") : tDetail("viewer")} · {r.status}
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -212,7 +212,7 @@ export function StakeholderManagerPanel({ projectId }: { projectId: string }) {
                       disabled={resendMutation.isPending}
                       onClick={() => resendMutation.mutate(r.id)}
                     >
-                      Resend invite
+                      {tDetail("resendInvite")}
                     </Button>
                   ) : null}
                   {r.status !== "revoked" ? (
@@ -223,7 +223,7 @@ export function StakeholderManagerPanel({ projectId }: { projectId: string }) {
                       disabled={revokeMutation.isPending}
                       onClick={() => revokeMutation.mutate(r.id)}
                     >
-                      Revoke
+                      {tDetail("revoke")}
                     </Button>
                   ) : null}
                 </div>
@@ -235,16 +235,15 @@ export function StakeholderManagerPanel({ projectId }: { projectId: string }) {
 
       <div className="mt-6 border-t border-aistroyka-border-subtle pt-4">
         <h4 className="text-aistroyka-caption font-semibold uppercase tracking-wide text-aistroyka-text-tertiary">
-          Delivery log (stakeholder notifications)
+          {tDetail("deliveryLogStakeholderNotifications")}
         </h4>
         <p className="mt-1 text-xs text-aistroyka-text-tertiary">
-          Recent emails and in-app deliveries for this project. Automated reminders run on the platform cron (typically
-          daily).
+          {tDetail("deliveryLogHint")}
         </p>
         {deliveryQuery.isPending ? (
-          <p className="mt-2 text-sm text-aistroyka-text-tertiary">Loading…</p>
+          <p className="mt-2 text-sm text-aistroyka-text-tertiary">{tDetail("loading")}</p>
         ) : (deliveryQuery.data ?? []).length === 0 ? (
-          <p className="mt-2 text-sm text-aistroyka-text-tertiary">No delivery rows yet.</p>
+          <p className="mt-2 text-sm text-aistroyka-text-tertiary">{tDetail("noDeliveryRowsYet")}</p>
         ) : (
           <ul className="mt-2 max-h-56 space-y-1 overflow-y-auto text-xs">
             {(deliveryQuery.data ?? []).map((d) => (
