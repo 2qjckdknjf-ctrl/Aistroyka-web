@@ -128,7 +128,7 @@ export function AdminPushOutboxClient() {
           <Table aria-label={tDetail("pushOutbox")}>
             <TableHead>
               <TableRow>
-                <TableHeaderCell>ID</TableHeaderCell>
+                <TableHeaderCell>{tDetail("id")}</TableHeaderCell>
                 <TableHeaderCell>{tDetail("user")}</TableHeaderCell>
                 <TableHeaderCell>{tDetail("platform")}</TableHeaderCell>
                 <TableHeaderCell>{tDetail("type")}</TableHeaderCell>

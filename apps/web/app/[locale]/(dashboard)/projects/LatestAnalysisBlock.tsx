@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Card } from "@/components/ui-lite";
 
 const MAX_ISSUES = 3;
@@ -20,11 +21,12 @@ export function LatestAnalysisBlock({
   recommendations: string[];
   hasData: boolean;
 }) {
+  const tDetail = useTranslations("dashboardDetail");
   if (!hasData) {
     return (
       <Card>
         <p className="text-sm text-aistroyka-text-secondary">
-          No completed analysis yet. Run analysis to see stage, issues, and recommendations.
+          {tDetail("noCompletedAnalysisLatestBlock")}
         </p>
       </Card>
     );
@@ -37,21 +39,21 @@ export function LatestAnalysisBlock({
     <Card>
       <div className="mb-3 grid gap-2 text-sm sm:grid-cols-3">
         <div>
-          <span className="text-aistroyka-text-tertiary">Stage:</span>{" "}
+          <span className="text-aistroyka-text-tertiary">{tDetail("stage")}:</span>{" "}
           <span className="font-medium text-aistroyka-text-primary">{stage ?? "—"}</span>
         </div>
         <div>
-          <span className="text-aistroyka-text-tertiary">Completion:</span>{" "}
+          <span className="text-aistroyka-text-tertiary">{tDetail("completion")}:</span>{" "}
           <span className="font-medium text-aistroyka-text-primary">{completionPercent}%</span>
         </div>
         <div>
-          <span className="text-aistroyka-text-tertiary">Risk:</span>{" "}
+          <span className="text-aistroyka-text-tertiary">{tDetail("risk")}:</span>{" "}
           <span className="font-medium text-aistroyka-text-primary capitalize">{riskLevel}</span>
         </div>
       </div>
       {issues.length > 0 ? (
         <div className="mt-2">
-          <span className="text-sm text-aistroyka-text-tertiary">Key issues:</span>
+          <span className="text-sm text-aistroyka-text-tertiary">{tDetail("keyIssues")}:</span>
           <ul className="mt-1 list-inside list-disc text-sm text-aistroyka-text-primary">
             {issues.map((i, idx) => (
               <li key={`${idx}-${i.slice(0, 40)}`}>{i}</li>
@@ -61,7 +63,7 @@ export function LatestAnalysisBlock({
       ) : null}
       {recs.length > 0 ? (
         <div className="mt-2">
-          <span className="text-sm text-aistroyka-text-tertiary">Key recommendations:</span>
+          <span className="text-sm text-aistroyka-text-tertiary">{tDetail("keyRecommendations")}:</span>
           <ul className="mt-1 list-inside list-disc text-sm text-aistroyka-text-primary">
             {recs.map((r, idx) => (
               <li key={`${idx}-${r.slice(0, 40)}`}>{r}</li>

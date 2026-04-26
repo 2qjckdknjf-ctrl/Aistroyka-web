@@ -13,7 +13,7 @@ export default defineConfig({
     screenshot: process.env.AUDIT_ARTIFACT_DIR ? "only-on-failure" : "off",
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
-  webServer: process.env.CI
+  webServer: process.env.CI || process.env.PLAYWRIGHT_SKIP_WEB_SERVER
     ? undefined
     : {
         command: "npm run dev",

@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { getResourceHref } from "@/lib/intelligence/resource-links";
 import {
@@ -83,6 +84,7 @@ function intelligenceErrorMessage(err: unknown): { title: string; hint: string; 
 }
 
 export function ProjectIntelligenceClient({ projectId }: { projectId: string }) {
+  const tDetail = useTranslations("dashboardDetail");
   const { data, isPending, isError, error, refetch } = useQuery({
     queryKey: ["project-intelligence", projectId],
     queryFn: () => fetchIntelligence(projectId),
@@ -93,13 +95,13 @@ export function ProjectIntelligenceClient({ projectId }: { projectId: string }) 
   if (isError) {
     const { title, hint, ref } = intelligenceErrorMessage(error);
     return (
-      <section className="space-y-4" aria-label="Intelligence error">
+      <section className="space-y-4" aria-label={tDetail("intelligenceError")}>
         <ErrorState message={title} onRetry={() => refetch()} />
         <Card className="border-l-4 border-l-aistroyka-info bg-aistroyka-surface-raised">
           <p className="text-sm text-aistroyka-text-secondary">{hint}</p>
           {ref && (
             <p className="mt-2 text-xs font-mono text-aistroyka-text-tertiary">
-              Reference for admin: {ref}
+              {tDetail("referenceForAdmin")}: {ref}
             </p>
           )}
         </Card>
@@ -109,7 +111,7 @@ export function ProjectIntelligenceClient({ projectId }: { projectId: string }) 
 
   if (isPending || !data) {
     return (
-      <section className="space-y-4" aria-label="Intelligence loading">
+      <section className="space-y-4" aria-label={tDetail("intelligenceLoading")}>
         <Card>
           <Skeleton className="h-6 w-48 mb-3" />
           <Skeleton className="h-4 w-full" />
@@ -146,38 +148,38 @@ export function ProjectIntelligenceClient({ projectId }: { projectId: string }) 
   const summaryToShow = executiveProjectSummary ?? executiveSummary;
 
   return (
-    <section className="space-y-6" aria-label="Project intelligence">
+    <section className="space-y-6" aria-label={tDetail("projectIntelligence")}>
       {operational && <IntelligenceOperationalBanner operational={operational} />}
       <ManagerActionView data={data} projectId={projectId} />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <ProjectHealthPanel health={healthToShow} emptyMessage="No health data yet" />
+        <ProjectHealthPanel health={healthToShow} emptyMessage={tDetail("noHealthDataYet")} />
         {summaryToShow && <SummaryCard summary={summaryToShow} />}
         {!summaryToShow && (
-          <IntelligenceCard title="Executive summary">
+          <IntelligenceCard title={tDetail("executiveSummary")}>
             <p className="text-aistroyka-subheadline text-aistroyka-text-tertiary">
-              No summary yet — add tasks and daily reports so the model can summarize progress.
+              {tDetail("noSummaryAddTasksReports")}
             </p>
           </IntelligenceCard>
         )}
-        <IntelligenceCard title="Risk radar" aria-label="Risk overview">
+        <IntelligenceCard title={tDetail("riskRadar")} aria-label={tDetail("riskOverview")}>
           <div className="flex flex-wrap gap-2 text-aistroyka-caption">
-            <span className="font-medium text-aistroyka-error">High: {riskOverview.high}</span>
-            <span className="font-medium text-amber-600">Medium: {riskOverview.medium}</span>
-            <span className="font-medium text-aistroyka-info">Low: {riskOverview.low}</span>
+            <span className="font-medium text-aistroyka-error">{tDetail("highLabel")} {riskOverview.high}</span>
+            <span className="font-medium text-amber-600">{tDetail("mediumLabel")} {riskOverview.medium}</span>
+            <span className="font-medium text-aistroyka-info">{tDetail("lowLabel")} {riskOverview.low}</span>
           </div>
           <div className="mt-3">
-            <RiskList risks={riskOverview.signals} maxItems={3} emptyMessage="No risks flagged" />
+            <RiskList risks={riskOverview.signals} maxItems={3} emptyMessage={tDetail("noRisksFlagged")} />
           </div>
         </IntelligenceCard>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <EvidenceCoverageCard signals={evidenceCoverage.signals} emptyMessage="No evidence gaps flagged" />
-        <ReportingDisciplineCard signals={reportingDiscipline.signals} emptyMessage="No reporting gaps flagged" />
+        <EvidenceCoverageCard signals={evidenceCoverage.signals} emptyMessage={tDetail("noEvidenceGaps")} />
+        <ReportingDisciplineCard signals={reportingDiscipline.signals} emptyMessage={tDetail("noReportingGaps")} />
       </div>
 
       {missingEvidenceInsights && missingEvidenceInsights.length > 0 && (
-        <IntelligenceCard title="Missing evidence" aria-label="Missing evidence insights">
+        <IntelligenceCard title={tDetail("missingEvidence")} aria-label={tDetail("missingEvidenceInsights")}>
           <ul className="space-y-3">
             {missingEvidenceInsights.slice(0, 5).map((me) => {
               const ref = me.evidenceReferences?.[0];
@@ -197,7 +199,7 @@ export function ProjectIntelligenceClient({ projectId }: { projectId: string }) 
                       href={href}
                       className="mt-1 inline-block text-sm font-medium text-aistroyka-accent hover:underline"
                     >
-                      Open related →
+                      {tDetail("openRelated")}
                     </Link>
                   )}
                 </li>
@@ -208,7 +210,7 @@ export function ProjectIntelligenceClient({ projectId }: { projectId: string }) 
       )}
 
       {topRiskInsights && topRiskInsights.length > 0 && (
-        <IntelligenceCard title="Top risks (ranked)" aria-label="Top risk insights">
+        <IntelligenceCard title={tDetail("topRisksRanked")} aria-label={tDetail("topRiskInsights")}>
           <ul className="space-y-3">
             {topRiskInsights.slice(0, 5).map((r) => {
               const ref = r.evidenceReferences?.[0];
@@ -228,7 +230,7 @@ export function ProjectIntelligenceClient({ projectId }: { projectId: string }) 
                       href={href}
                       className="mt-1 inline-block text-sm font-medium text-aistroyka-accent hover:underline"
                     >
-                      Open related →
+                      {tDetail("openRelated")}
                     </Link>
                   )}
                 </li>
@@ -239,7 +241,7 @@ export function ProjectIntelligenceClient({ projectId }: { projectId: string }) 
       )}
 
       {projectHealthScore?.factorContributions && projectHealthScore.factorContributions.length > 0 && (
-        <IntelligenceCard title="Health score factors" aria-label="Health score breakdown">
+        <IntelligenceCard title={tDetail("healthScoreFactors")} aria-label={tDetail("healthScoreBreakdown")}>
           <ul className="space-y-2 text-sm">
             {projectHealthScore.factorContributions.map((f, i) => (
               <li key={i}>
@@ -252,7 +254,7 @@ export function ProjectIntelligenceClient({ projectId }: { projectId: string }) 
       )}
 
       {insights.length > 0 && (
-        <IntelligenceCard title="Manager insights" aria-label="Manager insights">
+        <IntelligenceCard title={tDetail("managerInsights")} aria-label={tDetail("managerInsights")}>
           <ul className="space-y-2">
             {insights.slice(0, 5).map((i) => (
               <li key={i.id} className="flex flex-col gap-0.5">
@@ -266,7 +268,7 @@ export function ProjectIntelligenceClient({ projectId }: { projectId: string }) 
         </IntelligenceCard>
       )}
 
-      <RecommendationList recommendations={recommendations} emptyMessage="No recommended actions yet" />
+      <RecommendationList recommendations={recommendations} emptyMessage={tDetail("noRecommendedActionsYet")} />
 
       <CopilotSummaryPanel projectId={projectId} />
     </section>

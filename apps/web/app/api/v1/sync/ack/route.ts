@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClientFromRequest } from "@/lib/supabase/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { getCursor, upsertCursor } from "@/lib/sync/sync-cursors.repository";
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
     return withRequestIdAndTiming(request, NextResponse.json({ error: msg }, { status: 400 }), { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
   }
   const cursor = parsed.data.cursor;
-  const supabase = await createClient();
+  const supabase = await createClientFromRequest(request);
   const tenantId = ctx.tenantId as string;
   const minRetained = getMinRetainedCursor();
   if (minRetained > 0 && cursor < minRetained) {

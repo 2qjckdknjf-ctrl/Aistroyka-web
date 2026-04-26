@@ -60,10 +60,10 @@ export function AdminAiSecurityClient() {
                 className="rounded border border-aistroyka-border-subtle bg-aistroyka-surface-raised px-2 py-1 text-aistroyka-subheadline"
               >
                 <option value="">{tDetail("allSeverity")}</option>
-                <option value="low">low</option>
-                <option value="medium">medium</option>
-                <option value="high">high</option>
-                <option value="critical">critical</option>
+                <option value="low">{tDetail("low")}</option>
+                <option value="medium">{tDetail("medium")}</option>
+                <option value="high">{tDetail("high")}</option>
+                <option value="critical">{tDetail("critical")}</option>
               </select>
               <input
                 type="text"

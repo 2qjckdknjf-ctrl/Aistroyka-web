@@ -59,24 +59,23 @@ export function DashboardPriorityActionsClient() {
   const items = buildPriorityItems(data);
 
   return (
-    <Card className="p-4" aria-label="Operations queue">
+    <Card className="p-4" aria-label={t("operationsQueueAria")}>
       <h3 className="text-base font-semibold text-aistroyka-text-primary">
-        Operations queue
+        {t("operationsQueueTitle")}
       </h3>
       <p className="mt-1 text-xs text-aistroyka-text-tertiary">
-        Tasks, reports, uploads, and AI jobs — not project intelligence (see per-project Intelligence tab).
+        {t("operationsQueueHint")}
       </p>
       {items.length === 0 ? (
         <>
           <p className="mt-2 text-sm text-aistroyka-text-secondary">
-            No operational queue items. This is not a project health score — check Intelligence on each
-            project if you need AI-derived risks.
+            {t("noOperationalQueueItems")}
           </p>
           <Link
             href="/dashboard/projects"
             className="mt-2 inline-block text-sm font-medium text-aistroyka-accent hover:underline"
           >
-            Browse projects →
+            {t("browseProjectsArrow")}
           </Link>
         </>
       ) : (
@@ -100,7 +99,7 @@ export function DashboardPriorityActionsClient() {
                   href={item.href}
                   className="text-sm font-medium text-aistroyka-accent hover:underline"
                 >
-                  Act →
+                  {t("actArrow")}
                 </Link>
               </div>
               <p className="mt-0.5 text-xs text-aistroyka-text-tertiary">

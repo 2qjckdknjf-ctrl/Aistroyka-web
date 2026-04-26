@@ -52,21 +52,21 @@ export function AdminAiRequestsClient() {
                 <Card>
                   <h2 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">{tDetail("llmLog")}</h2>
                   <dl className="mt-2 grid gap-1 text-aistroyka-caption sm:grid-cols-2">
-                    <dt className="text-aistroyka-text-tertiary">mode</dt>
+                    <dt className="text-aistroyka-text-tertiary">{tDetail("mode")}</dt>
                     <dd>{data.llm.mode}</dd>
-                    <dt className="text-aistroyka-text-tertiary">total_ms</dt>
+                    <dt className="text-aistroyka-text-tertiary">{tDetail("totalMs")}</dt>
                     <dd>{data.llm.total_ms ?? data.llm.latency_ms ?? "—"}</dd>
-                    <dt className="text-aistroyka-text-tertiary">tokens_used</dt>
+                    <dt className="text-aistroyka-text-tertiary">{tDetail("tokensUsed")}</dt>
                     <dd>{data.llm.tokens_used}</dd>
-                    <dt className="text-aistroyka-text-tertiary">fallback_reason</dt>
+                    <dt className="text-aistroyka-text-tertiary">{tDetail("fallbackReason")}</dt>
                     <dd>{data.llm.fallback_reason ?? "—"}</dd>
-                    <dt className="text-aistroyka-text-tertiary">error_category</dt>
+                    <dt className="text-aistroyka-text-tertiary">{tDetail("errorCategory")}</dt>
                     <dd>{data.llm.error_category ?? "—"}</dd>
-                    <dt className="text-aistroyka-text-tertiary">groundedness_passed</dt>
+                    <dt className="text-aistroyka-text-tertiary">{tDetail("groundednessPassed")}</dt>
                     <dd>{String(data.llm.groundedness_passed)}</dd>
-                    <dt className="text-aistroyka-text-tertiary">injection_detected</dt>
+                    <dt className="text-aistroyka-text-tertiary">{tDetail("injectionDetected")}</dt>
                     <dd>{String(data.llm.injection_detected)}</dd>
-                    <dt className="text-aistroyka-text-tertiary">security_blocked</dt>
+                    <dt className="text-aistroyka-text-tertiary">{tDetail("securityBlocked")}</dt>
                     <dd>{String(data.llm.security_blocked)}</dd>
                   </dl>
                 </Card>
@@ -94,7 +94,7 @@ export function AdminAiRequestsClient() {
                     {data.chat_messages.map((m) => (
                       <li key={m.id}>
                         <span className="font-medium">{m.role}</span>: {m.content.slice(0, 100)}
-                        {m.content.length > 100 ? "…" : ""} {m.low_confidence ? "(low confidence)" : ""}
+                        {m.content.length > 100 ? "…" : ""} {m.low_confidence ? `(${tDetail("lowConfidence")})` : ""}
                       </li>
                     ))}
                   </ul>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { computeProjection } from "@/lib/intelligence/projection";
 import { computeGovernance } from "@/lib/intelligence/governance";
 import {
@@ -24,10 +25,11 @@ export function StrategicRiskOverview({
   latestAnalysis: AiAnalysis | null;
   previousSnapshot: PreviousSnapshot | null;
 }) {
+  const tDetail = useTranslations("dashboardDetail");
   if (history.length === 0 && !latestAnalysis) {
     return (
       <div className="card text-sm text-aistroyka-text-secondary">
-        Strategic Risk Overview: No analyses yet. Run analyses to see risk index.
+        {tDetail("strategicRiskOverviewEmpty")}
       </div>
     );
   }
@@ -75,17 +77,23 @@ export function StrategicRiskOverview({
       : result.classification === "Watch"
         ? "text-aistroyka-warning"
         : "text-red-700";
+  const classificationLabel =
+    result.classification === "Stable"
+      ? tDetail("stable")
+      : result.classification === "Watch"
+        ? tDetail("watch")
+        : tDetail("critical");
 
   return (
     <div className="card text-sm">
-      <div className="font-semibold text-aistroyka-text-primary">Strategic Risk Overview</div>
+      <div className="font-semibold text-aistroyka-text-primary">{tDetail("strategicRiskOverview")}</div>
       <div className="mt-3 grid gap-x-4 gap-y-1 text-aistroyka-text-primary sm:grid-cols-2">
-        <div><span className="text-aistroyka-text-tertiary">Risk Index:</span> {result.strategicRiskIndex}</div>
-        <div><span className="text-aistroyka-text-tertiary">Risk Classification:</span> <span className={classificationClass}>{result.classification}</span></div>
+        <div><span className="text-aistroyka-text-tertiary">{tDetail("riskIndex")}:</span> {result.strategicRiskIndex}</div>
+        <div><span className="text-aistroyka-text-tertiary">{tDetail("riskClassification")}:</span> <span className={classificationClass}>{classificationLabel}</span></div>
       </div>
       {result.activeDrivers.length > 0 && (
         <div className="mt-3">
-          <span className="text-aistroyka-text-tertiary">Active Drivers:</span>
+          <span className="text-aistroyka-text-tertiary">{tDetail("activeDrivers")}:</span>
           <ul className="mt-1 list-inside list-disc text-aistroyka-text-primary">{result.activeDrivers.map((d) => <li key={d}>{d}</li>)}</ul>
         </div>
       )}

@@ -57,6 +57,7 @@ export default async function DashboardPage() {
             </h2>
             <Link
               href="/dashboard/projects"
+              data-testid="cta.dashboard.projects.viewAll"
               className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline focus:outline-none focus:ring-2 focus:ring-aistroyka-accent focus:ring-offset-2 rounded-aistroyka-md"
             >
               {t("allProjects")} →

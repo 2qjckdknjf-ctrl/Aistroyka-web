@@ -20,11 +20,11 @@ export async function PublicHomeContent() {
         <div className="public-shell relative mx-auto max-w-6xl rounded-[var(--aistroyka-radius-xxl)] px-6 py-12 sm:px-10 sm:py-16">
           <div className="max-w-3xl">
             <div className="public-badge mb-6 inline-flex rounded-full px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em]">
-              Neural Construction Control
+              {t("neuralConstructionControl")}
             </div>
             <h1 className="font-heading text-4xl font-semibold uppercase tracking-[0.06em] text-aistroyka-text-primary sm:text-5xl lg:text-6xl">
               <span className="text-aistroyka-accent">AISTROYKA</span>{" "}
-              <span className="text-aistroyka-text-primary">AI Construction Intelligence</span>
+              <span className="text-aistroyka-text-primary">{t("heroTitle")}</span>
             </h1>
             <p className="mt-6 max-w-2xl text-[var(--aistroyka-font-headline)] text-aistroyka-text-secondary sm:text-xl">
               {t("heroSubtitle")}
@@ -41,16 +41,16 @@ export async function PublicHomeContent() {
 
           <div className="mt-12 grid gap-4 sm:grid-cols-3">
             <Link href="/projects-showcase" className="public-card-motion rounded-[var(--aistroyka-radius-xl)] border border-aistroyka-border-subtle bg-aistroyka-surface px-5 py-4">
-              <div className="text-sm font-semibold uppercase tracking-[0.12em] text-aistroyka-accent">Dashboard</div>
-              <p className="mt-2 text-sm text-aistroyka-text-secondary">Projects, tasks, KPIs</p>
+              <div className="text-sm font-semibold uppercase tracking-[0.12em] text-aistroyka-accent">{t("heroCardDashboardTitle")}</div>
+              <p className="mt-2 text-sm text-aistroyka-text-secondary">{t("heroCardDashboardSubtitle")}</p>
             </Link>
             <Link href="/ai-construction-control" className="public-card-motion rounded-[var(--aistroyka-radius-xl)] border border-aistroyka-border-subtle bg-aistroyka-surface px-5 py-4">
-              <div className="text-sm font-semibold uppercase tracking-[0.12em] text-aistroyka-accent">AI insights</div>
-              <p className="mt-2 text-sm text-aistroyka-text-secondary">Progress, risks, delays</p>
+              <div className="text-sm font-semibold uppercase tracking-[0.12em] text-aistroyka-accent">{t("heroCardAiTitle")}</div>
+              <p className="mt-2 text-sm text-aistroyka-text-secondary">{t("heroCardAiSubtitle")}</p>
             </Link>
             <Link href="/mobile" className="public-card-motion rounded-[var(--aistroyka-radius-xl)] border border-aistroyka-border-subtle bg-aistroyka-surface px-5 py-4">
-              <div className="text-sm font-semibold uppercase tracking-[0.12em] text-aistroyka-accent">Mobile</div>
-              <p className="mt-2 text-sm text-aistroyka-text-secondary">Reports, evidence</p>
+              <div className="text-sm font-semibold uppercase tracking-[0.12em] text-aistroyka-accent">{t("heroCardMobileTitle")}</div>
+              <p className="mt-2 text-sm text-aistroyka-text-secondary">{t("heroCardMobileSubtitle")}</p>
             </Link>
           </div>
         </div>
@@ -130,10 +130,10 @@ export async function PublicHomeContent() {
                   {t(`modules.${key}`)}
                 </div>
                 <p className="mt-2 text-[var(--aistroyka-font-footnote)] text-[var(--text-muted)]">
-                  {key === "projectManagement" && "Projects, structure, and progress at a glance."}
-                  {key === "tasks" && "Assign, track, and complete tasks with deadlines."}
-                  {key === "dailyReports" && "Daily reports from the field with evidence."}
-                  {key === "photoVideo" && "Photo and video evidence linked to tasks and reports."}
+                  {key === "projectManagement" && t("moduleDescProjectManagement")}
+                  {key === "tasks" && t("moduleDescTasks")}
+                  {key === "dailyReports" && t("moduleDescDailyReports")}
+                  {key === "photoVideo" && t("moduleDescPhotoVideo")}
                 </p>
               </div>
             ))}
@@ -149,21 +149,21 @@ export async function PublicHomeContent() {
           </h2>
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             <div className="card p-6">
-              <div className="font-semibold text-[var(--aistroyka-text-primary)]">Developer / GC</div>
+              <div className="font-semibold text-[var(--aistroyka-text-primary)]">{t("roleDeveloperGcTitle")}</div>
               <p className="mt-2 text-[var(--aistroyka-font-footnote)] text-[var(--aistroyka-text-secondary)]">
-                Full visibility, risk and delay control, AI insights.
+                {t("roleDeveloperGcBody")}
               </p>
             </div>
             <div className="rounded-[var(--radius-main)] border border-[var(--border-main)] bg-[var(--bg-main)] p-6">
-              <div className="font-semibold text-[var(--text-main)]">Project manager</div>
+              <div className="font-semibold text-[var(--text-main)]">{t("roleProjectManagerTitle")}</div>
               <p className="mt-2 text-[var(--aistroyka-font-footnote)] text-[var(--text-muted)]">
-                Tasks, reports, dashboards, and team coordination.
+                {t("roleProjectManagerBody")}
               </p>
             </div>
             <div className="rounded-[var(--radius-main)] border border-[var(--border-main)] bg-[var(--bg-main)] p-6">
-              <div className="font-semibold text-[var(--text-main)]">Field teams</div>
+              <div className="font-semibold text-[var(--text-main)]">{t("roleFieldTeamsTitle")}</div>
               <p className="mt-2 text-[var(--aistroyka-font-footnote)] text-[var(--text-muted)]">
-                Mobile reporting, photo evidence, quick task execution.
+                {t("roleFieldTeamsBody")}
               </p>
             </div>
           </div>
@@ -183,7 +183,7 @@ export async function PublicHomeContent() {
             href="/ai-construction-control"
             className="mt-6 inline-flex min-h-[var(--aistroyka-touch-min)] items-center justify-center rounded-[var(--radius-main)] bg-[var(--ai-yellow)] px-6 py-2.5 text-[var(--aistroyka-font-headline)] font-semibold text-[var(--ai-dark)] hover:bg-[var(--aistroyka-accent-hover)]"
           >
-            Learn more
+            {t("learnMore")}
           </Link>
         </div>
       </section>
@@ -198,7 +198,7 @@ export async function PublicHomeContent() {
             {t("mobileSubtitle")}
           </p>
           <Link href="/mobile" className="btn-primary mt-6">
-            Mobile
+            {t("mobileCta")}
           </Link>
         </div>
       </section>

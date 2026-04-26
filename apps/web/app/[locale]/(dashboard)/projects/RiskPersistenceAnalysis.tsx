@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { computeProjection } from "@/lib/intelligence/projection";
 import { computeGovernance } from "@/lib/intelligence/governance";
 import { computeStrategicRisk } from "@/lib/intelligence/strategicRisk";
@@ -22,10 +23,11 @@ export function RiskPersistenceAnalysis({
   latestAnalysis: AiAnalysis | null;
   previousSnapshot: PreviousSnapshot | null;
 }) {
+  const tDetail = useTranslations("dashboardDetail");
   if (history.length < 2) {
     return (
       <div className="rounded-lg border border-aistroyka-border-subtle bg-aistroyka-surface-raised p-4 text-sm text-aistroyka-text-secondary sm:p-6">
-        Risk Persistence Analysis: Need at least 2 analyses to compute duration and slowdown.
+        {tDetail("riskPersistenceAnalysisEmpty")}
       </div>
     );
   }
@@ -69,34 +71,34 @@ export function RiskPersistenceAnalysis({
 
   return (
     <div className="rounded-lg border border-aistroyka-border-subtle bg-aistroyka-surface-raised p-4 text-sm sm:p-6">
-      <div className="font-medium text-aistroyka-text-primary">Risk Persistence Analysis</div>
+      <div className="font-medium text-aistroyka-text-primary">{tDetail("riskPersistenceAnalysis")}</div>
       <div className="mt-4 grid gap-2 text-aistroyka-text-primary sm:grid-cols-2">
         <div>
-          <span className="text-aistroyka-text-tertiary">Risk duration:</span>{" "}
+          <span className="text-aistroyka-text-tertiary">{tDetail("riskDuration")}:</span>{" "}
           {timeWeighted.persistentHighRisk
-            ? `${timeWeighted.riskDurationDays.toFixed(0)} days`
+            ? tDetail("daysCount", { count: timeWeighted.riskDurationDays.toFixed(0) })
             : "—"}
         </div>
         <div>
-          <span className="text-aistroyka-text-tertiary">Slowdown duration:</span>{" "}
+          <span className="text-aistroyka-text-tertiary">{tDetail("slowdownDuration")}:</span>{" "}
           {timeWeighted.persistentSlowdown
-            ? `${timeWeighted.slowdownDurationIntervals} intervals`
+            ? tDetail("intervalsCount", { count: timeWeighted.slowdownDurationIntervals })
             : "—"}
         </div>
         <div>
-          <span className="text-aistroyka-text-tertiary">Escalation flag:</span>{" "}
-          {timeWeighted.escalationFlag ? "Yes" : "No"}
+          <span className="text-aistroyka-text-tertiary">{tDetail("escalationFlag")}:</span>{" "}
+          {timeWeighted.escalationFlag ? tDetail("yes") : tDetail("no")}
         </div>
         {timeWeighted.escalationFlag && (
           <div>
-            <span className="text-aistroyka-text-tertiary">Time-weighted risk index:</span>{" "}
+            <span className="text-aistroyka-text-tertiary">{tDetail("timeWeightedRiskIndex")}:</span>{" "}
             {timeWeighted.adjustedStrategicRiskIndex}
           </div>
         )}
         {timeWeighted.healthAdjustment !== 0 && (
           <div>
-            <span className="text-aistroyka-text-tertiary">Health adjustment:</span>{" "}
-            {timeWeighted.healthAdjustment} (extended issue duration)
+            <span className="text-aistroyka-text-tertiary">{tDetail("healthAdjustment")}:</span>{" "}
+            {timeWeighted.healthAdjustment} ({tDetail("extendedIssueDuration")})
           </div>
         )}
       </div>

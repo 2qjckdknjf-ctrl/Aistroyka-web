@@ -63,7 +63,7 @@ export default async function AIGovernancePage() {
     <main
       id="ai_governance_dashboard"
       className="mx-auto max-w-4xl px-aistroyka-4 py-aistroyka-8"
-      aria-label="AI Governance and Audit"
+      aria-label={tDetail("aiGovernanceAndAudit")}
     >
       <Link
         href="/admin"

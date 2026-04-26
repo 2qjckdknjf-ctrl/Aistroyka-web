@@ -58,8 +58,8 @@ export function TrustTimeline({ timeline }: { timeline: Point[] }) {
             value={metric}
             onChange={(e) => setMetric(e.target.value as "ati" | "gri")}
           >
-            <option value="ati">ATI</option>
-            <option value="gri">GRI</option>
+            <option value="ati">{tDetail("ati")}</option>
+            <option value="gri">{tDetail("gri")}</option>
           </select>
         </label>
       </div>

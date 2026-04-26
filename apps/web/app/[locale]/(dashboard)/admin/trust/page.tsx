@@ -23,6 +23,7 @@ type TrustDailyRow = {
 
 export default async function TrustDashboardPage() {
   const tPage = await getTranslations("dashboardPageMeta");
+  const tDetail = await getTranslations("dashboardDetail");
   const supabase = await createClient();
 
   const [latestRes, timelineRes, hintsRes] = await Promise.all([
@@ -52,20 +53,20 @@ export default async function TrustDashboardPage() {
     <main
       id="ai_trust_dashboard"
       className="mx-auto max-w-4xl px-aistroyka-4 py-aistroyka-8"
-      aria-label="AI Trust Dashboard"
+      aria-label={tDetail("aiTrustDashboard")}
     >
       <Link
         href="/admin"
         className="mb-aistroyka-6 inline-block text-aistroyka-subheadline font-medium text-aistroyka-text-secondary hover:text-aistroyka-accent"
       >
-        ← Admin
+        {tDetail("backToAdminShort")}
       </Link>
       <div className="mb-aistroyka-8 border-l-4 border-l-aistroyka-accent pl-aistroyka-4">
         <h1 className="text-aistroyka-title2 font-bold tracking-tight text-aistroyka-text-primary sm:text-aistroyka-title">
-          Doverie k AI
+          {tDetail("aiTrustTitle")}
         </h1>
         <p className="mt-aistroyka-1 text-aistroyka-subheadline text-aistroyka-text-secondary">
-          AI Trust Index, Meta-Stability, Governance Risk, and causal hints. No PII.
+          {tDetail("aiTrustSubtitle")}
         </p>
       </div>
 
@@ -80,7 +81,7 @@ export default async function TrustDashboardPage() {
 
       <section id="ai_causal_hints" className="mb-aistroyka-8" aria-labelledby="causal-hints-heading">
         <h2 id="causal-hints-heading" className="mb-aistroyka-2 text-[var(--aistroyka-font-title3)] font-semibold text-aistroyka-text-primary">
-          Causal Hints
+          {tDetail("causalHints")}
         </h2>
         <CausalHints hints={latest?.causal_hints ?? hints.slice(0, 5)} />
       </section>

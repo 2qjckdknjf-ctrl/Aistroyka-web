@@ -32,6 +32,7 @@ export function AdminBillingPilotClient({
   initialWorkspaces: BillingPilotWorkspaceSummary[];
 }) {
   const tPage = useTranslations("dashboardPageMeta");
+  const tDetail = useTranslations("dashboardDetail");
   const [workspaces] = useState(initialWorkspaces);
   const [lookupId, setLookupId] = useState("");
   const [diagnostics, setDiagnostics] = useState<WorkspaceDiagnostics | null>(null);
@@ -46,10 +47,10 @@ export function AdminBillingPilotClient({
     try {
       const res = await fetch(`/api/v1/admin/billing/workspace-status?workspaceId=${encodeURIComponent(workspaceId)}`);
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Failed to fetch");
+      if (!res.ok) throw new Error(data.error ?? tDetail("failedToFetch"));
       setDiagnostics(data);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Unknown error");
+      setError(e instanceof Error ? e.message : tDetail("unknownError"));
     } finally {
       setLoading(false);
     }
@@ -66,10 +67,10 @@ export function AdminBillingPilotClient({
         body: JSON.stringify({ workspaceId }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Failed");
-      setActionResult(`Processed: ${data.processed}, Failed: ${data.failed}, Noop: ${data.noop}`);
+      if (!res.ok) throw new Error(data.error ?? tDetail("failed"));
+      setActionResult(`${tDetail("processed")}: ${data.processed}, ${tDetail("failed")}: ${data.failed}, ${tDetail("noop")}: ${data.noop}`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Unknown error");
+      setError(e instanceof Error ? e.message : tDetail("unknownError"));
     } finally {
       setLoading(false);
     }
@@ -86,10 +87,10 @@ export function AdminBillingPilotClient({
         body: JSON.stringify({ workspaceId }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Failed");
-      setActionResult("Workspace added to pilot");
+      if (!res.ok) throw new Error(data.error ?? tDetail("failed"));
+      setActionResult(tDetail("workspaceAddedToPilot"));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Unknown error");
+      setError(e instanceof Error ? e.message : tDetail("unknownError"));
     } finally {
       setLoading(false);
     }
@@ -102,10 +103,10 @@ export function AdminBillingPilotClient({
     try {
       const res = await fetch(`/api/v1/admin/billing/pilot-workspaces/${workspaceId}`, { method: "DELETE" });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Failed");
-      setActionResult("Workspace removed from pilot");
+      if (!res.ok) throw new Error(data.error ?? tDetail("failed"));
+      setActionResult(tDetail("workspaceRemovedFromPilot"));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Unknown error");
+      setError(e instanceof Error ? e.message : tDetail("unknownError"));
     } finally {
       setLoading(false);
     }
@@ -119,7 +120,7 @@ export function AdminBillingPilotClient({
           <div className="flex flex-wrap gap-aistroyka-4">
             <input
               type="text"
-              placeholder="Workspace UUID"
+              placeholder={tDetail("workspaceUuid")}
               value={lookupId}
               onChange={(e) => setLookupId(e.target.value)}
               className="flex-1 min-w-[200px] rounded border border-aistroyka-border-subtle px-aistroyka-3 py-aistroyka-2 text-aistroyka-subheadline"
@@ -130,7 +131,7 @@ export function AdminBillingPilotClient({
               disabled={loading || !lookupId.trim()}
               className="rounded bg-aistroyka-accent px-aistroyka-4 py-aistroyka-2 text-sm font-medium text-white disabled:opacity-50"
             >
-              Lookup
+              {tDetail("lookup")}
             </button>
           </div>
           {error && <p className="mt-aistroyka-2 text-aistroyka-error text-sm">{error}</p>}
@@ -145,13 +146,13 @@ export function AdminBillingPilotClient({
             {diagnostics.executionStatus && (
               <div className="mb-aistroyka-4 rounded border border-aistroyka-border-subtle bg-aistroyka-surface-raised px-aistroyka-4 py-aistroyka-3">
                 <div className="flex flex-wrap items-center gap-aistroyka-2">
-                  <span className="font-semibold text-aistroyka-text-primary">E2E stage:</span>
+                  <span className="font-semibold text-aistroyka-text-primary">{tDetail("e2eStage")}:</span>
                   <code className="rounded bg-aistroyka-surface px-aistroyka-1 py-aistroyka-0.5 text-sm">
                     {diagnostics.executionStatus.stage}
                   </code>
                   {diagnostics.executionStatus.isSandbox && (
                     <span className="rounded bg-aistroyka-accent/20 px-aistroyka-1.5 py-aistroyka-0.5 text-xs font-medium text-aistroyka-accent">
-                      Sandbox
+                      {tDetail("sandbox")}
                     </span>
                   )}
                 </div>
@@ -162,29 +163,29 @@ export function AdminBillingPilotClient({
                 )}
                 {diagnostics.executionStatus.attentionReasons.length > 0 && (
                   <p className="mt-aistroyka-1 text-sm text-aistroyka-error">
-                    Attention: {diagnostics.executionStatus.attentionReasons.join(", ")}
+                    {tDetail("attention")}: {diagnostics.executionStatus.attentionReasons.join(", ")}
                   </p>
                 )}
               </div>
             )}
             <dl className="grid grid-cols-1 gap-aistroyka-2 sm:grid-cols-2">
-              <dt className="font-medium text-aistroyka-text-secondary">Mode</dt>
+              <dt className="font-medium text-aistroyka-text-secondary">{tDetail("mode")}</dt>
               <dd>{diagnostics.mode}</dd>
-              <dt className="font-medium text-aistroyka-text-secondary">Reason</dt>
+              <dt className="font-medium text-aistroyka-text-secondary">{tDetail("reason")}</dt>
               <dd>{diagnostics.reason}</dd>
-              <dt className="font-medium text-aistroyka-text-secondary">Live checkout</dt>
-              <dd>{diagnostics.liveCheckoutEligible ? "Yes" : "No"}</dd>
-              <dt className="font-medium text-aistroyka-text-secondary">Webhook processing</dt>
-              <dd>{diagnostics.webhookProcessingEligible ? "Yes" : "No"}</dd>
-              <dt className="font-medium text-aistroyka-text-secondary">Latest checkout</dt>
+              <dt className="font-medium text-aistroyka-text-secondary">{tDetail("liveCheckout")}</dt>
+              <dd>{diagnostics.liveCheckoutEligible ? tDetail("yes") : tDetail("no")}</dd>
+              <dt className="font-medium text-aistroyka-text-secondary">{tDetail("webhookProcessing")}</dt>
+              <dd>{diagnostics.webhookProcessingEligible ? tDetail("yes") : tDetail("no")}</dd>
+              <dt className="font-medium text-aistroyka-text-secondary">{tDetail("latestCheckout")}</dt>
               <dd>{diagnostics.latestCheckout ? `${diagnostics.latestCheckout.status} (${diagnostics.latestCheckout.id.slice(0, 8)}…)` : "—"}</dd>
-              <dt className="font-medium text-aistroyka-text-secondary">Subscription</dt>
+              <dt className="font-medium text-aistroyka-text-secondary">{tDetail("subscription")}</dt>
               <dd>{diagnostics.currentSubscription ? diagnostics.currentSubscription.status : "—"}</dd>
-              <dt className="font-medium text-aistroyka-text-secondary">Event counts</dt>
+              <dt className="font-medium text-aistroyka-text-secondary">{tDetail("eventCounts")}</dt>
               <dd>P: {diagnostics.eventCounts.pending} / Pr: {diagnostics.eventCounts.processed} / F: {diagnostics.eventCounts.failed} / S: {diagnostics.eventCounts.skipped}</dd>
               {diagnostics.lastFailureReason && (
                 <>
-                  <dt className="font-medium text-aistroyka-text-secondary">Last failure</dt>
+                  <dt className="font-medium text-aistroyka-text-secondary">{tDetail("lastFailure")}</dt>
                   <dd className="text-aistroyka-error text-sm">{diagnostics.lastFailureReason}</dd>
                 </>
               )}
@@ -196,7 +197,7 @@ export function AdminBillingPilotClient({
                 disabled={loading}
                 className="rounded border border-aistroyka-border-subtle px-aistroyka-3 py-aistroyka-1 text-sm disabled:opacity-50"
               >
-                Reprocess events
+                {tDetail("reprocessEvents")}
               </button>
               {diagnostics.inPilotCohort ? (
                 <button
@@ -205,7 +206,7 @@ export function AdminBillingPilotClient({
                   disabled={loading}
                   className="rounded border border-aistroyka-error px-aistroyka-3 py-aistroyka-1 text-sm text-aistroyka-error disabled:opacity-50"
                 >
-                  Remove from pilot
+                  {tDetail("removeFromPilot")}
                 </button>
               ) : (
                 <button
@@ -214,7 +215,7 @@ export function AdminBillingPilotClient({
                   disabled={loading}
                   className="rounded border border-aistroyka-accent px-aistroyka-3 py-aistroyka-1 text-sm text-aistroyka-accent disabled:opacity-50"
                 >
-                  Add to pilot
+                  {tDetail("addToPilot")}
                 </button>
               )}
             </div>
@@ -230,10 +231,10 @@ export function AdminBillingPilotClient({
               <table className="w-full min-w-[320px] text-left text-aistroyka-subheadline">
                 <thead>
                   <tr className="border-b border-aistroyka-border-subtle bg-aistroyka-surface-raised">
-                    <th className="table-cell font-semibold text-aistroyka-text-primary">Workspace ID</th>
-                    <th className="table-cell font-semibold text-aistroyka-text-primary">Source</th>
-                    <th className="table-cell font-semibold text-aistroyka-text-primary">Live</th>
-                    <th className="table-cell font-semibold text-aistroyka-text-primary">Webhook</th>
+                    <th className="table-cell font-semibold text-aistroyka-text-primary">{tDetail("workspaceId")}</th>
+                    <th className="table-cell font-semibold text-aistroyka-text-primary">{tDetail("source")}</th>
+                    <th className="table-cell font-semibold text-aistroyka-text-primary">{tDetail("live")}</th>
+                    <th className="table-cell font-semibold text-aistroyka-text-primary">{tDetail("webhook")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -253,8 +254,8 @@ export function AdminBillingPilotClient({
           <Card>
             <EmptyState
               icon={<span className="text-2xl">📋</span>}
-              title="No pilot workspaces"
-              subtitle="Add via POST /api/v1/admin/billing/pilot-workspaces or BILLING_PILOT_WORKSPACE_IDS env."
+              title={tDetail("noPilotWorkspaces")}
+              subtitle={tDetail("addPilotWorkspacesHint")}
             />
           </Card>
         )}

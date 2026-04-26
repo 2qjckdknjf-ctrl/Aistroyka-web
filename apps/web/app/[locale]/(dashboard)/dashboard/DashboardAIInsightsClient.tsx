@@ -24,7 +24,7 @@ export function DashboardAIInsightsClient() {
     <StructuralGridActivation state={state} highlight={state === "analyzing" || state === "risk_detected"}>
       <Card className="relative overflow-hidden border-l-4 border-l-transparent">
         <div className="flex items-start gap-3">
-          <div className="flex shrink-0 items-center pt-0.5" title="AI Signal indicates active intelligence insights.">
+          <div className="flex shrink-0 items-center pt-0.5" title={tDetail("aiSignalHint")}>
             <AISignalLine state={state} totalScore={score ?? undefined} />
           </div>
           <div className="min-w-0 flex-1">
@@ -34,7 +34,7 @@ export function DashboardAIInsightsClient() {
               </h2>
               {!riskLoading && score !== null && (
                 <span className="flex items-center gap-2 text-aistroyka-subheadline">
-                  <span className="tabular-nums text-aistroyka-title3 font-bold text-aistroyka-text-primary" title="Portfolio AI Risk Score (0–100)">
+                  <span className="tabular-nums text-aistroyka-title3 font-bold text-aistroyka-text-primary" title={tDetail("portfolioAiRiskScoreHint")}>
                     {score}
                   </span>
                   <span className="text-aistroyka-text-tertiary" aria-label={`Trend: ${trend}`}>

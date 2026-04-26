@@ -5,13 +5,15 @@ import * as syncCursorsRepo from "@/lib/sync/sync-cursors.repository";
 
 vi.mock("@/lib/supabase/server", () => {
   const chain = () => ({ then: (fn: () => void) => { fn(); return { catch: () => {} }; } });
-  return {
-    createClient: vi.fn().mockResolvedValue({
-      from: () => ({
-        insert: () => chain(),
-        update: () => ({ eq: () => ({ eq: () => ({ eq: () => chain() }) }) }),
-      }),
+  const supabase = {
+    from: () => ({
+      insert: () => chain(),
+      update: () => ({ eq: () => ({ eq: () => ({ eq: () => chain() }) }) }),
     }),
+  };
+  return {
+    createClient: vi.fn().mockResolvedValue(supabase),
+    createClientFromRequest: vi.fn().mockResolvedValue(supabase),
   };
 });
 vi.mock("@/lib/tenant", () => ({

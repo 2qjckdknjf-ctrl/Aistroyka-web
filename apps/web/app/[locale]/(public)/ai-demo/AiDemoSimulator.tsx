@@ -4,11 +4,11 @@ import { useState, useRef } from "react";
 import { useTranslations } from "next-intl";
 
 const MOCK_RESULTS = {
-  detectedElements: ["Foundation", "Walls", "Framing", "Roof structure", "MEP rough-in"],
-  progressAnalysis: "Estimated completion: 67%. On track vs baseline.",
-  riskDetection: "2 medium: weather delay possible; 1 low: material lead time.",
-  delayPrediction: "Estimated delay: 0–3 days if current pace holds.",
-  aiSummary: "Site progress is consistent with schedule. Recommend reinforcing waterproofing checks before next phase.",
+  detectedElements: ["foundation", "walls", "framing", "roofStructure", "mepRoughIn"] as const,
+  progressAnalysis: "mockProgressAnalysis",
+  riskDetection: "mockRiskDetection",
+  delayPrediction: "mockDelayPrediction",
+  aiSummary: "mockAiSummary",
 };
 
 export function AiDemoSimulator() {
@@ -59,17 +59,17 @@ export function AiDemoSimulator() {
             {previewUrl && step !== "upload" ? (
               <img
                 src={previewUrl}
-                alt="Preview"
+                alt={t("previewAlt")}
                 className="max-h-[200px] w-full object-contain object-center"
               />
             ) : (
               <span className="text-[var(--aistroyka-text-secondary)]">
-                {step === "analyzing" ? "Analyzing…" : "Click or drop a photo"}
+                {step === "analyzing" ? t("analyzing") : t("clickOrDropPhoto")}
               </span>
             )}
           </button>
           <p className="mt-2 text-[var(--aistroyka-font-caption)] text-[var(--aistroyka-text-tertiary)]">
-            Demo uses mock AI output. No data is sent to the server.
+            {t("demoUsesMockOutput")}
           </p>
         </div>
         <div className="space-y-4">
@@ -85,7 +85,7 @@ export function AiDemoSimulator() {
                       key={el}
                       className="rounded-[var(--aistroyka-radius-sm)] bg-[var(--aistroyka-accent-light)] px-2 py-1 text-[var(--aistroyka-font-footnote)] text-[var(--aistroyka-accent)]"
                     >
-                      {el}
+                      {t(el)}
                     </li>
                   ))}
                 </ul>
@@ -95,7 +95,7 @@ export function AiDemoSimulator() {
                   {t("progressAnalysis")}
                 </h4>
                 <p className="mt-1 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-primary)]">
-                  {MOCK_RESULTS.progressAnalysis}
+                  {t(MOCK_RESULTS.progressAnalysis)}
                 </p>
               </div>
               <div>
@@ -103,7 +103,7 @@ export function AiDemoSimulator() {
                   {t("riskDetection")}
                 </h4>
                 <p className="mt-1 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-primary)]">
-                  {MOCK_RESULTS.riskDetection}
+                  {t(MOCK_RESULTS.riskDetection)}
                 </p>
               </div>
               <div>
@@ -111,7 +111,7 @@ export function AiDemoSimulator() {
                   {t("delayPrediction")}
                 </h4>
                 <p className="mt-1 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-primary)]">
-                  {MOCK_RESULTS.delayPrediction}
+                  {t(MOCK_RESULTS.delayPrediction)}
                 </p>
               </div>
               <div>
@@ -119,21 +119,21 @@ export function AiDemoSimulator() {
                   {t("aiSummary")}
                 </h4>
                 <p className="mt-1 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-primary)]">
-                  {MOCK_RESULTS.aiSummary}
+                  {t(MOCK_RESULTS.aiSummary)}
                 </p>
               </div>
               <button type="button" onClick={handleTryDemo} className="btn-secondary mt-2 text-sm">
-                Try another photo
+                {t("tryAnotherPhoto")}
               </button>
             </>
           )}
           {step === "upload" && (
             <p className="text-[var(--aistroyka-text-secondary)]">
-              Upload a construction site photo to see mock AI analysis results.
+              {t("uploadPhotoHint")}
             </p>
           )}
           {step === "analyzing" && (
-            <p className="text-[var(--aistroyka-text-secondary)]">Running analysis…</p>
+            <p className="text-[var(--aistroyka-text-secondary)]">{t("runningAnalysis")}</p>
           )}
         </div>
       </div>

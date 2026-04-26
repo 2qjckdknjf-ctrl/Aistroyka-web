@@ -120,7 +120,7 @@ export function AdminJobsClient() {
           <Table aria-label={tDetail("failedJobs")}>
             <TableHead>
               <TableRow>
-                <TableHeaderCell>ID</TableHeaderCell>
+                <TableHeaderCell>{tDetail("id")}</TableHeaderCell>
                 <TableHeaderCell>{tDetail("type")}</TableHeaderCell>
                 <TableHeaderCell>{tDetail("status")}</TableHeaderCell>
                 <TableHeaderCell>{tDetail("lastError")}</TableHeaderCell>

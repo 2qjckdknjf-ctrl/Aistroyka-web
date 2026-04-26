@@ -22,14 +22,6 @@ import { useFilterParams } from "@/lib/cockpit/useFilterParams";
 import { parseTablePagination } from "@/lib/cockpit/useTablePagination";
 import { exportTableToCsv } from "@/lib/cockpit/csvExport";
 
-const AI_STATUS_OPTIONS = [
-  { value: "queued", label: "Queued" },
-  { value: "running", label: "Running" },
-  { value: "success", label: "Success" },
-  { value: "failed", label: "Failed" },
-  { value: "dead", label: "Dead" },
-];
-
 interface AIRequestRow {
   id: string;
   type: string;
@@ -43,6 +35,13 @@ interface AIRequestRow {
 
 export function DashboardAIClient() {
   const tDetail = useTranslations("dashboardDetail");
+  const aiStatusOptions = [
+    { value: "queued", label: tDetail("queued") },
+    { value: "running", label: tDetail("running") },
+    { value: "success", label: tDetail("success") },
+    { value: "failed", label: tDetail("failed") },
+    { value: "dead", label: tDetail("dead") },
+  ];
   const { params, setParam } = useFilterParams();
   const [data, setData] = useState<AIRequestRow[] | null>(null);
   const [total, setTotal] = useState(0);
@@ -79,7 +78,7 @@ export function DashboardAIClient() {
         setError(null);
       })
       .catch((e) => {
-        setError(e instanceof Error ? e.message : "Failed to load");
+        setError(e instanceof Error ? e.message : tDetail("failedLoad"));
         setData([]);
         setTotal(0);
       })
@@ -95,16 +94,16 @@ export function DashboardAIClient() {
         showWorker={false}
         showDateRange={true}
         showStatus={true}
-        statusOptions={AI_STATUS_OPTIONS}
+        statusOptions={aiStatusOptions}
         showSearch={true}
-        searchPlaceholder="Request or entity ID…"
+        searchPlaceholder={tDetail("requestOrEntityId")}
         showSavedViews={false}
       />
     </div>
   );
 
   const exportCsv = () => {
-    const headers = ["ID", "Type", "Status", "Entity", "Attempts", "Created"];
+    const headers = [tDetail("id"), tDetail("type"), tDetail("status"), tDetail("entity"), tDetail("attempts"), tDetail("created")];
     const rows = (data ?? []).slice(0, 500).map((r) => [
       r.id,
       r.type,
@@ -157,7 +156,7 @@ export function DashboardAIClient() {
         <Table aria-label={tDetail("aiRequests")}>
         <TableHead>
           <TableRow>
-            <TableHeaderCell>ID</TableHeaderCell>
+            <TableHeaderCell>{tDetail("id")}</TableHeaderCell>
             <TableHeaderCell>{tDetail("type")}</TableHeaderCell>
             <TableHeaderCell>{tDetail("status")}</TableHeaderCell>
             <TableHeaderCell>{tDetail("entity")}</TableHeaderCell>

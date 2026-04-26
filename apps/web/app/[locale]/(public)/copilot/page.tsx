@@ -65,7 +65,7 @@ export default async function CopilotPage({ params }: Props) {
 
       <section className="mt-16">
         <h2 className="text-[var(--aistroyka-font-title3)] font-semibold text-[var(--aistroyka-text-primary)]">
-          Mock assistant UI
+          {t("mockAssistantUi")}
         </h2>
         <div className="mt-4">
           <CopilotMockUI />

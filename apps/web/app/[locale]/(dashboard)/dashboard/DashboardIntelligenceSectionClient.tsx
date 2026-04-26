@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { AlertFeed, type AlertItemData } from "@/components/intelligence";
 import { Card, Skeleton, ErrorState } from "@/components/ui";
@@ -14,6 +15,7 @@ async function fetchAlerts(): Promise<AlertItemData[]> {
 }
 
 export function DashboardIntelligenceSectionClient() {
+  const t = useTranslations("dashboard");
   const { data: alerts, isPending, isError, refetch } = useQuery({
     queryKey: ["dashboard-alerts"],
     queryFn: fetchAlerts,
@@ -21,22 +23,22 @@ export function DashboardIntelligenceSectionClient() {
   });
 
   return (
-    <section className="mt-8 space-y-4" aria-label="Intelligence and alerts">
+    <section className="mt-8 space-y-4" aria-label={t("intelligenceAndAlertsAria")}>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">
-          Intelligence &amp; Alerts
+          {t("intelligenceAndAlertsTitle")}
         </h2>
         <Link
           href="/dashboard/projects"
           className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline"
         >
-          Open a project → Intelligence tab
+          {t("openProjectIntelligenceTab")}
         </Link>
       </div>
       <DashboardPriorityActionsClient />
       <div className="grid gap-4 lg:grid-cols-2">
         {isError ? (
-          <ErrorState message="Failed to load alerts" onRetry={() => refetch()} />
+          <ErrorState message={t("failedLoadAlerts")} onRetry={() => refetch()} />
         ) : isPending ? (
           <Card>
             <Skeleton className="h-6 w-32 mb-3" />
@@ -44,7 +46,7 @@ export function DashboardIntelligenceSectionClient() {
             <Skeleton className="h-4 w-2/3 mt-2" />
           </Card>
         ) : (
-          <AlertFeed alerts={alerts ?? []} emptyMessage="No alerts" />
+          <AlertFeed alerts={alerts ?? []} emptyMessage={t("noAlerts")} />
         )}
       </div>
     </section>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Card } from "@/components/ui";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui";
@@ -16,6 +17,7 @@ type Event = {
 };
 
 export function GovernanceAlerts({ events }: { events: Event[] }) {
+  const tDetail = useTranslations("dashboardDetail");
   const [pending, setPending] = useState<Set<string>>(new Set());
 
   const handleAck = async (id: string) => {
@@ -40,8 +42,8 @@ export function GovernanceAlerts({ events }: { events: Event[] }) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           }
-          title="No active alerts"
-          subtitle="Unacknowledged governance events will appear here."
+          title={tDetail("noActiveAlerts")}
+          subtitle={tDetail("unacknowledgedGovernanceEventsHint")}
         />
       </Card>
     );
@@ -73,9 +75,9 @@ export function GovernanceAlerts({ events }: { events: Event[] }) {
               size="sm"
               disabled={pending.has(ev.id)}
               onClick={() => handleAck(ev.id)}
-              aria-label={`Отметить просмотрено: ${ev.event_type}`}
+              aria-label={`${tDetail("markReviewed")}: ${ev.event_type}`}
             >
-              {pending.has(ev.id) ? "…" : "Отметить просмотрено"}
+              {pending.has(ev.id) ? "…" : tDetail("markReviewed")}
             </Button>
           </li>
         ))}

@@ -64,7 +64,7 @@ export function DashboardOpsOverviewClient() {
 
   if (isPending || !data) {
     return (
-      <section className="mb-aistroyka-6 grid gap-aistroyka-4 sm:grid-cols-2 lg:grid-cols-6" aria-label="KPI overview">
+      <section className="mb-aistroyka-6 grid gap-aistroyka-4 sm:grid-cols-2 lg:grid-cols-6" aria-label={t("kpiOverviewAria")}>
         {Array.from({ length: 6 }).map((_, i) => (
           <Card key={i} className="p-aistroyka-4">
             <Skeleton className="h-4 w-24 mb-2" />
@@ -94,7 +94,7 @@ export function DashboardOpsOverviewClient() {
     <>
       <section
         className="mb-aistroyka-6 grid gap-aistroyka-4 sm:grid-cols-2 lg:grid-cols-6"
-        aria-label="KPI overview"
+        aria-label={t("kpiOverviewAria")}
       >
         {kpiCards.map(({ label, value, borderClass, href }) => (
           <Card key={label} className={`border-l-4 ${borderClass}`}>
@@ -114,7 +114,7 @@ export function DashboardOpsOverviewClient() {
         ))}
       </section>
 
-      <section className="grid gap-aistroyka-4 sm:grid-cols-2 lg:grid-cols-3" aria-label="Queues">
+      <section className="grid gap-aistroyka-4 sm:grid-cols-2 lg:grid-cols-3" aria-label={t("queuesAria")}>
         <Card className="p-aistroyka-4">
           <h3 className="text-aistroyka-title3 font-semibold text-aistroyka-text-primary">
             {t("queueReportsReview")}

@@ -51,7 +51,7 @@ export default async function AdminSystemPage() {
           <h2 className="mb-aistroyka-4 text-aistroyka-headline font-semibold text-aistroyka-text-primary">{tDetail("aiStability")}</h2>
           <div className="card">
             <dl className="grid gap-aistroyka-3 text-aistroyka-subheadline sm:grid-cols-2">
-              <div><dt className="text-aistroyka-text-tertiary">analysis_success_rate</dt><dd className="font-medium text-aistroyka-text-primary">{t.analysis_success_rate.toFixed(1)}%</dd></div>
+              <div><dt className="text-aistroyka-text-tertiary">{tDetail("analysisSuccessRate")}</dt><dd className="font-medium text-aistroyka-text-primary">{t.analysis_success_rate.toFixed(1)}%</dd></div>
               <div><dt className="text-aistroyka-text-tertiary">{tDetail("avgAnalysisDuration")}</dt><dd className="font-medium text-aistroyka-text-primary">{t.avg_analysis_duration_seconds.toFixed(1)}s</dd></div>
               <div><dt className="text-aistroyka-text-tertiary">{tDetail("retryRate")}</dt><dd className="font-medium text-aistroyka-text-primary">{t.retry_rate.toFixed(1)}%</dd></div>
             </dl>

@@ -70,6 +70,7 @@ export function DashboardShell({
                   key={href}
                   href={href}
                   onClick={closeSidebar}
+                  data-testid={key === "projects" ? "cta.dashboard.nav.projects" : undefined}
                   className={`flex min-h-aistroyka-touch items-center rounded-[var(--aistroyka-radius-lg)] px-[var(--aistroyka-space-3)] py-[var(--aistroyka-space-2)] text-[var(--aistroyka-font-subheadline)] font-medium transition-colors ${
                     active
                       ? "bg-aistroyka-accent-light text-aistroyka-accent"
