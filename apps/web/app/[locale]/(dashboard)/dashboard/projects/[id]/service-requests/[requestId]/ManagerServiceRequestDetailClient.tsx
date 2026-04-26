@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@/i18n/navigation";
 import { Card, Button, Badge, Skeleton, EmptyState } from "@/components/ui";
@@ -52,6 +53,7 @@ async function fetchDetail(projectId: string, requestId: string): Promise<Detail
 }
 
 export function ManagerServiceRequestDetailClient({ projectId, requestId }: { projectId: string; requestId: string }) {
+  const tDetail = useTranslations("dashboardDetail");
   const queryClient = useQueryClient();
   const [toStatus, setToStatus] = useState("");
   const [note, setNote] = useState("");
@@ -149,7 +151,7 @@ export function ManagerServiceRequestDetailClient({ projectId, requestId }: { pr
       <Card>
         <EmptyState
           icon={<span className="text-2xl">🛠️</span>}
-          title="Request unavailable"
+          title={tDetail("requestUnavailable")}
           subtitle={q.error instanceof Error ? q.error.message : ""}
         />
       </Card>
@@ -164,7 +166,7 @@ export function ManagerServiceRequestDetailClient({ projectId, requestId }: { pr
   return (
     <div className="space-y-6">
       <Link href={`/dashboard/projects/${projectId}?tab=aftercare`} className="text-aistroyka-accent hover:underline text-sm">
-        ← Aftercare
+        {tDetail("backToAftercare")}
       </Link>
       <Card className="p-4">
         <div className="flex flex-wrap items-start justify-between gap-2">
@@ -172,14 +174,14 @@ export function ManagerServiceRequestDetailClient({ projectId, requestId }: { pr
           <Badge className={serviceRequestStatusBadgeClass(row.status)}>{formatStatusLabel(row.status)}</Badge>
         </div>
         <p className="mt-1 text-xs text-aistroyka-text-tertiary">
-          Created by {row.created_by.slice(0, 8)}…
-          {row.linked_handover_id ? " · Linked to handover record" : ""}
+          {tDetail("createdBy")} {row.created_by.slice(0, 8)}…
+          {row.linked_handover_id ? ` · ${tDetail("linkedToHandoverRecord")}` : ""}
         </p>
       </Card>
 
       {editable ? (
         <Card className="p-4 space-y-3">
-          <h2 className="font-semibold">Edit</h2>
+          <h2 className="font-semibold">{tDetail("edit")}</h2>
           <input
             className="w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
             value={title}
@@ -192,20 +194,20 @@ export function ManagerServiceRequestDetailClient({ projectId, requestId }: { pr
             onChange={(e) => setDescription(e.target.value)}
           />
           <label className="block text-xs text-aistroyka-text-secondary">
-            Warranty / coverage
+            {tDetail("warrantyCoverage")}
             <select
               className="mt-1 w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
               value={coverage}
               onChange={(e) => setCoverage(e.target.value)}
             >
-              <option value="warranty_review_needed">Warranty — needs review</option>
-              <option value="warranty_covered">Warranty covered</option>
-              <option value="not_warranty">Not warranty / commercial</option>
+              <option value="warranty_review_needed">{tDetail("warrantyNeedsReview")}</option>
+              <option value="warranty_covered">{tDetail("warrantyCovered")}</option>
+              <option value="not_warranty">{tDetail("notWarrantyCommercial")}</option>
             </select>
           </label>
           <input
             className="w-full font-mono text-sm rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2"
-            placeholder="Assignee user id (optional)"
+            placeholder={tDetail("assigneeUserIdOptional")}
             value={assignedTo}
             onChange={(e) => setAssignedTo(e.target.value)}
           />
@@ -217,18 +219,18 @@ export function ManagerServiceRequestDetailClient({ projectId, requestId }: { pr
           />
           <input
             className="w-full font-mono text-sm rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2"
-            placeholder="Linked punch list defect id (optional)"
+            placeholder={tDetail("linkedPunchListDefectIdOptional")}
             value={linkedDefect}
             onChange={(e) => setLinkedDefect(e.target.value)}
           />
           <input
             className="w-full font-mono text-sm rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2"
-            placeholder="Linked discussion id (optional)"
+            placeholder={tDetail("linkedDiscussionIdOptional")}
             value={linkedDiscussion}
             onChange={(e) => setLinkedDiscussion(e.target.value)}
           />
           <Button type="button" size="sm" onClick={() => patchMutation.mutate()} disabled={patchMutation.isPending}>
-            Save
+            {tDetail("save")}
           </Button>
         </Card>
       ) : (
@@ -236,7 +238,7 @@ export function ManagerServiceRequestDetailClient({ projectId, requestId }: { pr
           {row.description ? <p className="text-sm whitespace-pre-wrap">{row.description}</p> : null}
           {row.resolution_note ? (
             <p className="mt-2 text-sm">
-              <span className="font-medium">Resolution:</span> {row.resolution_note}
+              <span className="font-medium">{tDetail("resolution")}:</span> {row.resolution_note}
             </p>
           ) : null}
         </Card>
@@ -244,7 +246,7 @@ export function ManagerServiceRequestDetailClient({ projectId, requestId }: { pr
 
       {options.length > 0 && editable ? (
         <Card className="p-4 space-y-3">
-          <h2 className="font-semibold">Transition</h2>
+          <h2 className="font-semibold">{tDetail("transition")}</h2>
           <select
             className="w-full max-w-md rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
             value={toStatus}
@@ -260,14 +262,14 @@ export function ManagerServiceRequestDetailClient({ projectId, requestId }: { pr
             <textarea
               className="w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
               rows={2}
-              placeholder="Resolution note (required)"
+              placeholder={tDetail("resolutionNoteRequired")}
               value={resolutionNote}
               onChange={(e) => setResolutionNote(e.target.value)}
             />
           ) : null}
           <input
             className="w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
-            placeholder={closingWithoutResolve ? "Closure note (required)" : "Internal note (optional)"}
+            placeholder={closingWithoutResolve ? tDetail("closureNoteRequired") : tDetail("internalNoteOptional")}
             value={note}
             onChange={(e) => setNote(e.target.value)}
           />
@@ -282,13 +284,13 @@ export function ManagerServiceRequestDetailClient({ projectId, requestId }: { pr
             }
             onClick={() => transitionMutation.mutate()}
           >
-            {transitionMutation.isPending ? "Applying…" : "Apply"}
+            {transitionMutation.isPending ? tDetail("applying") : tDetail("apply")}
           </Button>
         </Card>
       ) : null}
 
       <Card className="p-4">
-        <h2 className="font-semibold">History</h2>
+        <h2 className="font-semibold">{tDetail("history")}</h2>
         <ul className="mt-2 space-y-2 text-sm">
           {row.events.map((e) => (
             <li key={e.id} className="rounded border border-aistroyka-border-subtle p-2">

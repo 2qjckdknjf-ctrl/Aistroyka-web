@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@/i18n/navigation";
 import { Card, Button, Badge, Skeleton, EmptyState } from "@/components/ui";
@@ -46,6 +47,7 @@ export function ManagerDiscussionDetailClient({
   projectId: string;
   discussionId: string;
 }) {
+  const tDetail = useTranslations("dashboardDetail");
   const queryClient = useQueryClient();
   const [body, setBody] = useState("");
   const [kind, setKind] = useState<"question" | "clarification" | "feedback">("question");
@@ -131,7 +133,7 @@ export function ManagerDiscussionDetailClient({
       <Card>
         <EmptyState
           icon={<span className="text-2xl">💬</span>}
-          title="Discussion unavailable"
+          title={tDetail("discussionUnavailable")}
           subtitle={q.error instanceof Error ? q.error.message : ""}
         />
       </Card>
@@ -144,24 +146,24 @@ export function ManagerDiscussionDetailClient({
   return (
     <div className="space-y-6">
       <Link href={`/dashboard/projects/${projectId}`} className="text-aistroyka-subheadline text-aistroyka-accent hover:underline">
-        ← Project
+        {tDetail("backToProject")}
       </Link>
       <Card className="p-4">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <h1 className="text-aistroyka-title3 font-semibold">{d.title}</h1>
           <Badge className={discussionStatusBadgeClass(d.status)}>{formatStatusLabel(d.status)}</Badge>
         </div>
-        <p className="mt-1 text-xs text-aistroyka-text-tertiary">Created by user {d.created_by.slice(0, 8)}…</p>
+        <p className="mt-1 text-xs text-aistroyka-text-tertiary">{tDetail("createdByUser")} {d.created_by.slice(0, 8)}…</p>
         {d.context ? <p className="mt-3 text-sm whitespace-pre-wrap">{d.context}</p> : null}
       </Card>
 
       <Card className="p-4">
-        <h2 className="font-semibold">History</h2>
+        <h2 className="font-semibold">{tDetail("history")}</h2>
         <ul className="mt-3 space-y-2 text-sm">
           {d.entries.map((e) => (
             <li key={e.id} className="rounded border border-aistroyka-border-subtle p-2">
               <span className="text-xs text-aistroyka-text-tertiary">
-                {e.entry_kind} · author {e.author_user_id.slice(0, 8)}…
+                {e.entry_kind} · {tDetail("author")} {e.author_user_id.slice(0, 8)}…
               </span>
               <p className="mt-1 whitespace-pre-wrap">{e.body}</p>
             </li>
@@ -172,15 +174,15 @@ export function ManagerDiscussionDetailClient({
       {open ? (
         <>
           <Card className="p-4">
-            <h2 className="font-semibold">Add update</h2>
+            <h2 className="font-semibold">{tDetail("addUpdate")}</h2>
             <select
               className="mt-2 w-full max-w-md rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
               value={kind}
               onChange={(e) => setKind(e.target.value as typeof kind)}
             >
-              <option value="question">Question</option>
-              <option value="clarification">Clarification</option>
-              <option value="feedback">Feedback</option>
+              <option value="question">{tDetail("question")}</option>
+              <option value="clarification">{tDetail("clarification")}</option>
+              <option value="feedback">{tDetail("feedback")}</option>
             </select>
             <textarea
               className="mt-2 w-full rounded border border-aistroyka-border-subtle p-2 text-sm"
@@ -196,16 +198,16 @@ export function ManagerDiscussionDetailClient({
               disabled={body.trim().length < 1}
               onClick={() => addMutation.mutate()}
             >
-              Post update
+              {tDetail("postUpdate")}
             </Button>
           </Card>
 
           <Card className="p-4 border-l-4 border-l-aistroyka-success">
-            <h2 className="font-semibold">Resolve</h2>
+            <h2 className="font-semibold">{tDetail("resolve")}</h2>
             <textarea
               className="mt-2 w-full rounded border border-aistroyka-border-subtle p-2 text-sm"
               rows={2}
-              placeholder="Short resolution summary (visible to client)"
+              placeholder={tDetail("shortResolutionSummary")}
               value={resolution}
               onChange={(e) => setResolution(e.target.value)}
             />
@@ -217,12 +219,12 @@ export function ManagerDiscussionDetailClient({
               disabled={resolution.trim().length < 1}
               onClick={() => resolveMutation.mutate()}
             >
-              Mark resolved
+              {tDetail("markResolved")}
             </Button>
           </Card>
 
           <Button type="button" variant="ghost" size="sm" loading={closeMutation.isPending} onClick={() => closeMutation.mutate()}>
-            Close without resolution
+            {tDetail("closeWithoutResolution")}
           </Button>
         </>
       ) : null}
