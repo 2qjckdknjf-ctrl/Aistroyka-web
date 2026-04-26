@@ -116,6 +116,16 @@ jobs:
       supabase_url: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_STAGING }}
       supabase_anon_key: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_STAGING }}
 
+  # Playwright pilot (buttons + sync + core) against staging; requires PILOT_E2E_* secrets. Non-blocking so missing secrets or UI flakiness do not fail deploy.
+  pilot-e2e-audit:
+    name: Post-deploy Playwright pilot E2E (optional)
+    needs: pilot-smoke
+    continue-on-error: true
+    uses: ./.github/workflows/pilot-e2e-audit.yml
+    secrets: inherit
+    with:
+      locale: en
+
   # Phase 5: optional AI interaction probe (analyze-image + copilot stream terminal done).
   # Non-blocking: AI provider flakiness must not fail the deploy pipeline.
   ai-phase5-gate:

@@ -4,6 +4,7 @@
 #   PILOT_E2E_EMAIL      — tenant user email
 #   PILOT_E2E_PASSWORD   — tenant user password
 # Optional secret: PILOT_E2E_PROJECT_ID (otherwise first project from API).
+# Called manually or from deploy workflows via workflow_call (secrets: inherit).
 name: Pilot E2E audit (manual)
 
 on:
@@ -14,6 +15,13 @@ on:
         required: false
         default: "en"
         type: string
+  workflow_call:
+    inputs:
+      locale:
+        description: "E2E_LOCALE"
+        type: string
+        required: false
+        default: "en"
 
 jobs:
   pilot-e2e:
