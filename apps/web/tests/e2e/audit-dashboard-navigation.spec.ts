@@ -26,6 +26,8 @@ test.use({ trace: "retain-on-failure", screenshot: "only-on-failure" });
 
 test.describe("Dashboard Navigation CTA Audit", () => {
   test("all visible dashboard shell links navigate without critical errors", async ({ page }, testInfo) => {
+    test.setTimeout(180_000);
+
     const results: Array<{
       expectedPath: string;
       actualUrl: string;

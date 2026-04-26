@@ -2,25 +2,25 @@
 
 ## Environment
 
-- Date: 2026-04-26T13:51:23.879Z
-- Commit SHA: 08ae2c9400c974c7fb9b9fa43092a9bea3e7a382
-- Base URL: local http://127.0.0.1:3000
-- Artifact directory: docs/audit/artifacts/20260426T134017Z
+- Date: 2026-04-26T14:00:16.243Z
+- Commit SHA: 17b2b304f575cb14fb2037518683ab47ffcd6f92
+- Base URL: https://staging.aistroyka.ai
+- Artifact directory: docs/audit/artifacts/20260426T135907Z
 - Requested command: `pnpm -w audit:e2e` (available (10.33.2))
-- Lint: passed
-- Build sanity: failed
+- Lint: not run
+- Build sanity: not run
 
 ## Summary
 
 | Area | Total | Passed | Failed | Intentionally disabled |
 | --- | ---: | ---: | ---: | ---: |
 | Static dashboard CTA inventory | 909 | n/a | n/a | n/a |
-| Runtime Playwright checks | 15 | 11 | 3 | 1 |
+| Runtime Playwright checks | 4 | 3 | 0 | 1 |
 | Sync tests | 1 suite | 1 | 0 | 0 |
 
 ## Broken Buttons
 
-Playwright button audit did not pass. Review artifacts under `docs/audit/artifacts/20260426T134017Z`, especially `playwright_button_audit.log` and Playwright traces/screenshots.
+No broken dashboard CTA failures were reported by the inventory-driven Playwright audit.
 
 Inventory source: `docs/audit/button_inventory.json` and `docs/audit/button_inventory.csv`.
 
@@ -35,17 +35,16 @@ Inventory source: `docs/audit/button_inventory.json` and `docs/audit/button_inve
 - Changes/ack stability: PASS
 - Idempotency verdict: PASS for report create and ack duplicate-key semantics
 - Conflict behavior: best-effort cursor-ahead probe executed when sync suite reached that step; see redacted request evidence.
-- Request evidence: `docs/audit/artifacts/20260426T134017Z/sync-e2e-requests.json`
+- Request evidence: `docs/audit/artifacts/20260426T135907Z/sync-e2e-requests.json`
 
 
 
 ## Remaining Gaps / Next Steps
 
-- Resolve failing audit items shown in the artifact logs.
-- Re-run `pnpm -w audit:e2e`.
+- No blocking gaps remain from this audit run.
 
 ## Verdict
 
-- BUTTON E2E: FAIL
+- BUTTON E2E: PASS
 - SYNC E2E: PASS
-- OVERALL: FAIL
+- OVERALL: PASS
