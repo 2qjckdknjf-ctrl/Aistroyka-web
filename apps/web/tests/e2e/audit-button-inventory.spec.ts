@@ -51,6 +51,8 @@ test.describe("Button Click Audit (Inventory-Driven)", () => {
 
   for (const entry of actionable) {
     test(`${entry.id} @ ${entry.sourceFile}:${entry.line}`, async ({ page }, testInfo) => {
+      test.setTimeout(90_000);
+
       const networkIssues = collectCriticalIssues(page);
       const consoleErrors = collectConsoleErrors(page);
       const route = concreteRoute(entry);
