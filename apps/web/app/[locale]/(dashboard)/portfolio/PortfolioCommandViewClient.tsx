@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { getResourceHref } from "@/lib/intelligence/resource-links";
 import { Card, Skeleton, ErrorState } from "@/components/ui";
@@ -68,6 +69,7 @@ async function fetchPortfolioSummary(): Promise<PortfolioSummaryData> {
 }
 
 export function PortfolioCommandViewClient() {
+  const tDetail = useTranslations("dashboardDetail");
   const { data, isPending, isError, error, refetch } = useQuery({
     queryKey: ["portfolio-summary"],
     queryFn: fetchPortfolioSummary,
@@ -77,7 +79,7 @@ export function PortfolioCommandViewClient() {
   if (isError) {
     return (
       <ErrorState
-        message={error instanceof Error ? error.message : "Failed to load portfolio"}
+        message={error instanceof Error ? error.message : tDetail("failedLoadPortfolio")}
         onRetry={() => refetch()}
       />
     );
@@ -117,16 +119,16 @@ export function PortfolioCommandViewClient() {
     <div className="space-y-6">
       {totalProjects > limitedTo && (
         <p className="text-aistroyka-caption text-aistroyka-text-tertiary">
-          Showing first {limitedTo} of {totalProjects} projects.
+          {tDetail("showingFirst")} {limitedTo} {tDetail("of")} {totalProjects} {tDetail("projectsDot")}
         </p>
       )}
 
       {governanceOpenCount > 0 && (
         <Card className="border-l-4 border-l-aistroyka-warning p-4 bg-aistroyka-surface">
           <p className="text-sm text-aistroyka-text-primary">
-            <strong>{governanceOpenCount}</strong> open governance case(s)
+            <strong>{governanceOpenCount}</strong> {tDetail("openGovernanceCases")}
             {governanceCriticalOpenCount > 0
-              ? ` — ${governanceCriticalOpenCount} critical`
+              ? ` — ${governanceCriticalOpenCount} ${tDetail("criticalLower")}`
               : ""}
             .
           </p>
@@ -134,7 +136,7 @@ export function PortfolioCommandViewClient() {
             href="/dashboard/governance"
             className="mt-2 inline-block text-sm font-medium text-aistroyka-accent hover:underline"
           >
-            Review governance →
+            {tDetail("reviewGovernance")}
           </Link>
         </Card>
       )}
@@ -142,44 +144,44 @@ export function PortfolioCommandViewClient() {
       {commercialOverdueCount > 0 && (
         <Card className="border-l-4 border-l-aistroyka-error p-4 bg-aistroyka-surface">
           <p className="text-sm text-aistroyka-text-primary">
-            <strong>{commercialOverdueCount}</strong> commercial billing line(s) overdue or unpaid past due date
+            <strong>{commercialOverdueCount}</strong> {tDetail("commercialBillingLinesOverdue")}
             {commercialOpenUnpaidCount > commercialOverdueCount
-              ? ` — ${commercialOpenUnpaidCount} open unpaid total`
+              ? ` — ${commercialOpenUnpaidCount} ${tDetail("openUnpaidTotal")}`
               : ""}
             .
           </p>
           <p className="mt-1 text-xs text-aistroyka-text-tertiary">
-            Open a project&apos;s Commercial tab to record payment or issue follow-up.
+            {tDetail("openProjectCommercialTabHint")}
           </p>
         </Card>
       )}
 
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-label="Portfolio Health Overview">
-        <IntelligenceCard title="Portfolio health" aria-label="Portfolio health distribution">
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-label={tDetail("portfolioHealthOverview")}>
+        <IntelligenceCard title={tDetail("portfolioHealth")} aria-label={tDetail("portfolioHealthDistribution")}>
           <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-aistroyka-subheadline">
-            <dt className="text-aistroyka-text-tertiary">Healthy</dt>
+            <dt className="text-aistroyka-text-tertiary">{tDetail("healthy")}</dt>
             <dd className="font-medium text-aistroyka-success">{distribution.healthy}</dd>
-            <dt className="text-aistroyka-text-tertiary">Moderate</dt>
+            <dt className="text-aistroyka-text-tertiary">{tDetail("moderate")}</dt>
             <dd className="font-medium text-aistroyka-warning">{distribution.moderate}</dd>
-            <dt className="text-aistroyka-text-tertiary">Unstable</dt>
+            <dt className="text-aistroyka-text-tertiary">{tDetail("unstable")}</dt>
             <dd className="font-medium text-aistroyka-warning">{distribution.unstable}</dd>
-            <dt className="text-aistroyka-text-tertiary">Critical</dt>
+            <dt className="text-aistroyka-text-tertiary">{tDetail("critical")}</dt>
             <dd className="font-medium text-aistroyka-error">{distribution.critical}</dd>
-            <dt className="text-aistroyka-text-tertiary">Low confidence / no data</dt>
+            <dt className="text-aistroyka-text-tertiary">{tDetail("lowConfidenceNoData")}</dt>
             <dd className="font-medium text-aistroyka-text-tertiary">{lowConfidenceCount}</dd>
           </dl>
           <Link
             href="/dashboard/projects"
             className="mt-2 inline-block text-aistroyka-caption font-medium text-aistroyka-accent hover:underline"
           >
-            Open projects →
+            {tDetail("openProjectsArrow")}
           </Link>
         </IntelligenceCard>
 
-        <IntelligenceCard title="Projects requiring attention" aria-label="Projects requiring attention">
+        <IntelligenceCard title={tDetail("projectsRequiringAttention")} aria-label={tDetail("projectsRequiringAttention")}>
           {attentionProjects.length === 0 ? (
             <p className="text-aistroyka-subheadline text-aistroyka-text-tertiary">
-              No projects requiring immediate attention.
+              {tDetail("noProjectsRequiringImmediateAttention")}
             </p>
           ) : (
             <ul className="space-y-2">
@@ -200,13 +202,13 @@ export function PortfolioCommandViewClient() {
             href="/dashboard/projects"
             className="mt-2 inline-block text-aistroyka-caption font-medium text-aistroyka-accent hover:underline"
           >
-            All projects →
+            {tDetail("allProjectsArrow")}
           </Link>
         </IntelligenceCard>
 
-        <IntelligenceCard title="Portfolio risk radar" aria-label="Portfolio risks">
+        <IntelligenceCard title={tDetail("portfolioRiskRadar")} aria-label={tDetail("portfolioRisks")}>
           {portfolioRisks.length === 0 ? (
-            <p className="text-aistroyka-subheadline text-aistroyka-text-tertiary">No risks flagged across portfolio.</p>
+            <p className="text-aistroyka-subheadline text-aistroyka-text-tertiary">{tDetail("noRisksAcrossPortfolio")}</p>
           ) : (
             <ul className="space-y-2">
               {portfolioRisks.slice(0, 5).map((r, i) => (
@@ -224,15 +226,15 @@ export function PortfolioCommandViewClient() {
           )}
         </IntelligenceCard>
 
-        <IntelligenceCard title="Evidence / confidence coverage" aria-label="Evidence and confidence">
+        <IntelligenceCard title={tDetail("evidenceConfidenceCoverage")} aria-label={tDetail("evidenceAndConfidence")}>
           {evidenceGapProjects.length === 0 && lowConfidenceCount === 0 ? (
             <p className="text-aistroyka-subheadline text-aistroyka-text-tertiary">
-              No evidence gaps or low-confidence projects.
+              {tDetail("noEvidenceGapsOrLowConfidenceProjects")}
             </p>
           ) : (
             <>
               <p className="text-aistroyka-caption text-aistroyka-text-secondary">
-                {evidenceGapProjects.length} project(s) with evidence gaps. {lowConfidenceCount} low-confidence or no data.
+                {evidenceGapProjects.length} {tDetail("projectsWithEvidenceGaps")} {lowConfidenceCount} {tDetail("lowConfidenceOrNoData")}
               </p>
               <ul className="mt-2 space-y-1">
                 {evidenceGapProjects.slice(0, 3).map((p) => (
@@ -241,7 +243,7 @@ export function PortfolioCommandViewClient() {
                       href={`/dashboard/projects/${p.id}?tab=intelligence`}
                       className="text-sm font-medium text-aistroyka-accent hover:underline"
                     >
-                      {p.name} ({p.evidenceGapCount + p.missingEvidenceCount} gaps)
+                      {p.name} ({p.evidenceGapCount + p.missingEvidenceCount} {tDetail("gaps")})
                     </Link>
                   </li>
                 ))}
@@ -250,10 +252,10 @@ export function PortfolioCommandViewClient() {
           )}
         </IntelligenceCard>
 
-        <IntelligenceCard title="Budget pressure" aria-label="Budget pressure">
+        <IntelligenceCard title={tDetail("budgetPressure")} aria-label={tDetail("budgetPressure")}>
           {budgetPressure.length === 0 ? (
             <p className="text-aistroyka-subheadline text-aistroyka-text-tertiary">
-              No over-budget or high-variance projects.
+              {tDetail("noOverBudgetOrHighVarianceProjects")}
             </p>
           ) : (
             <ul className="space-y-2">
@@ -267,12 +269,12 @@ export function PortfolioCommandViewClient() {
                   </Link>
                   {b.overBudget && (
                     <span className="rounded bg-aistroyka-error/20 px-1.5 py-0.5 text-xs text-aistroyka-error">
-                      Over budget
+                      {tDetail("overBudget")}
                     </span>
                   )}
                   {b.varianceAmount !== 0 && (
                     <span className="text-xs text-aistroyka-text-tertiary">
-                      Variance: {b.varianceAmount > 0 ? "+" : ""}{b.varianceAmount}
+                      {tDetail("variance")}: {b.varianceAmount > 0 ? "+" : ""}{b.varianceAmount}
                     </span>
                   )}
                 </li>
@@ -281,9 +283,9 @@ export function PortfolioCommandViewClient() {
           )}
         </IntelligenceCard>
 
-        <IntelligenceCard title="Recommended portfolio actions" aria-label="Recommended actions">
+        <IntelligenceCard title={tDetail("recommendedPortfolioActions")} aria-label={tDetail("recommendedActions")}>
           {recommendedActions.length === 0 ? (
-            <p className="text-aistroyka-subheadline text-aistroyka-text-tertiary">No recommended actions.</p>
+            <p className="text-aistroyka-subheadline text-aistroyka-text-tertiary">{tDetail("noRecommendedActions")}</p>
           ) : (
             <ul className="space-y-2">
               {recommendedActions.map((a, i) => {

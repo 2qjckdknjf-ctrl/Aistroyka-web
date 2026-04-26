@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useTranslations } from "next-intl";
 import { Card } from "@/components/ui";
 import { EmptyState } from "@/components/ui";
 
 type Point = { day: string; ai_trust_index: number; governance_risk_index: number; meta_stability_index: number };
 
 export function TrustTimeline({ timeline }: { timeline: Point[] }) {
+  const tDetail = useTranslations("dashboardDetail");
   const [days, setDays] = useState(30);
   const [metric, setMetric] = useState<"ati" | "gri">("ati");
 
@@ -23,8 +25,8 @@ export function TrustTimeline({ timeline }: { timeline: Point[] }) {
       <Card>
         <EmptyState
           icon={<span className="text-aistroyka-text-tertiary text-2xl">—</span>}
-          title="No trust timeline"
-          subtitle="Need 7+ days of history. Run trust_aggregate_daily."
+          title={tDetail("noTrustTimeline")}
+          subtitle={tDetail("needSevenDaysTrustHistory")}
         />
       </Card>
     )
@@ -39,7 +41,7 @@ export function TrustTimeline({ timeline }: { timeline: Point[] }) {
     <Card>
       <div className="mb-aistroyka-4 flex flex-wrap gap-aistroyka-3">
         <label className="flex items-center gap-2 text-aistroyka-subheadline text-aistroyka-text-secondary">
-          <span>Days</span>
+          <span>{tDetail("days")}</span>
           <select
             className="rounded border border-aistroyka-border-subtle bg-aistroyka-surface px-2 py-1 text-aistroyka-callout"
             value={days}
@@ -50,7 +52,7 @@ export function TrustTimeline({ timeline }: { timeline: Point[] }) {
           </select>
         </label>
         <label className="flex items-center gap-2 text-aistroyka-subheadline text-aistroyka-text-secondary">
-          <span>Metric</span>
+          <span>{tDetail("metric")}</span>
           <select
             className="rounded border border-aistroyka-border-subtle bg-aistroyka-surface px-2 py-1 text-aistroyka-callout"
             value={metric}
@@ -76,7 +78,7 @@ export function TrustTimeline({ timeline }: { timeline: Point[] }) {
         })}
       </div>
       <p className="mt-2 text-aistroyka-caption text-aistroyka-text-tertiary">
-        {metric === "ati" ? "AI Trust Index" : "Governance Risk Index"} over last {filtered.length} days.
+        {metric === "ati" ? tDetail("aiTrustIndex") : tDetail("governanceRiskIndex")} {tDetail("overLastDays", { count: filtered.length })}
       </p>
     </Card>
   )

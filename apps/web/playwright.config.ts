@@ -9,7 +9,8 @@ export default defineConfig({
   reporter: "list",
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000",
-    trace: "on-first-retry",
+    trace: process.env.AUDIT_ARTIFACT_DIR ? "retain-on-failure" : "on-first-retry",
+    screenshot: process.env.AUDIT_ARTIFACT_DIR ? "only-on-failure" : "off",
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: process.env.CI

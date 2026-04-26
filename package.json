@@ -22,6 +22,7 @@
     "cf:deploy:prod": "cd apps/web && bunx wrangler deploy --env production --dry-run --outdir .open-next/deploy && node scripts/patch-bundle-require.cjs && OPEN_NEXT_DEPLOY=true bunx wrangler deploy --env production --no-bundle --config wrangler.deploy.toml",
     "lint": "bun run --cwd apps/web lint",
     "test": "bun run build:contracts && bun run --cwd apps/web test",
+    "audit:e2e": "bash scripts/audit/run_e2e_audit.sh",
     "smoke:prod": "bash apps/web/scripts/smoke-prod.sh",
     "smoke:staging": "bash apps/web/scripts/smoke-staging.sh",
     "smoke:pilot": "bash scripts/smoke/pilot_launch.sh",

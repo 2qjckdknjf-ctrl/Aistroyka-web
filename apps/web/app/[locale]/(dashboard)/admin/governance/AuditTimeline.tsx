@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useTranslations } from "next-intl";
 import { Card } from "@/components/ui";
 import { EmptyState } from "@/components/ui";
 
@@ -16,6 +17,7 @@ const EVENT_TYPES = ["regime_shift", "threshold_update", "drift_alert", "smoothi
 const SEVERITIES = ["info", "warning", "critical", "all"] as const;
 
 export function AuditTimeline({ events }: { events: Event[] }) {
+  const tDetail = useTranslations("dashboardDetail");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [severityFilter, setSeverityFilter] = useState<string>("all");
   const [days, setDays] = useState(90);
@@ -44,8 +46,8 @@ export function AuditTimeline({ events }: { events: Event[] }) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           }
-          title="No events yet"
-          subtitle="Governance events will appear here after the daily pipeline runs."
+          title={tDetail("noEventsYet")}
+          subtitle={tDetail("governanceEventsAppear")}
         />
       </Card>
     );
@@ -61,7 +63,7 @@ export function AuditTimeline({ events }: { events: Event[] }) {
     <Card>
       <div className="mb-aistroyka-4 flex flex-wrap gap-aistroyka-3">
         <label className="flex items-center gap-2 text-aistroyka-subheadline text-aistroyka-text-secondary">
-          <span>Type</span>
+          <span>{tDetail("type")}</span>
           <select
             className="rounded-aistroyka-md border border-aistroyka-border-subtle bg-aistroyka-surface px-2 py-1 text-aistroyka-callout"
             value={typeFilter}
@@ -73,7 +75,7 @@ export function AuditTimeline({ events }: { events: Event[] }) {
           </select>
         </label>
         <label className="flex items-center gap-2 text-aistroyka-subheadline text-aistroyka-text-secondary">
-          <span>Severity</span>
+          <span>{tDetail("severity")}</span>
           <select
             className="rounded-aistroyka-md border border-aistroyka-border-subtle bg-aistroyka-surface px-2 py-1 text-aistroyka-callout"
             value={severityFilter}
@@ -85,7 +87,7 @@ export function AuditTimeline({ events }: { events: Event[] }) {
           </select>
         </label>
         <label className="flex items-center gap-2 text-aistroyka-subheadline text-aistroyka-text-secondary">
-          <span>Days</span>
+          <span>{tDetail("days")}</span>
           <select
             className="rounded-aistroyka-md border border-aistroyka-border-subtle bg-aistroyka-surface px-2 py-1 text-aistroyka-callout"
             value={days}
@@ -109,7 +111,7 @@ export function AuditTimeline({ events }: { events: Event[] }) {
         ))}
       </ul>
       {filtered.length > 100 && (
-        <p className="mt-2 text-aistroyka-caption text-aistroyka-text-tertiary">Showing first 100 of {filtered.length}.</p>
+        <p className="mt-2 text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("showingFirst")} 100 {tDetail("of")} {filtered.length}.</p>
       )}
     </Card>
   );

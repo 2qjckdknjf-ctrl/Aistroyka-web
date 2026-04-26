@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import {
   type CalibrationResult,
   type CalibrationStatus,
@@ -16,11 +17,12 @@ function statusClass(s: CalibrationStatus): string {
 }
 
 export function AISystemHealth({ result }: { result: CalibrationResult | null }) {
+  const tDetail = useTranslations("dashboardDetail");
   if (result == null) {
     return (
       <div className="card text-sm text-aistroyka-text-secondary">
-        <div className="font-semibold text-aistroyka-text-primary">AI System Health</div>
-        <p className="mt-2">No analysis data yet. Run analyses to see drift metrics.</p>
+        <div className="font-semibold text-aistroyka-text-primary">{tDetail("aiSystemHealth")}</div>
+        <p className="mt-2">{tDetail("noAnalysisDataYet")}</p>
       </div>
     );
   }
@@ -29,21 +31,21 @@ export function AISystemHealth({ result }: { result: CalibrationResult | null })
 
   return (
     <div className="card text-sm">
-      <div className="font-semibold text-aistroyka-text-primary">AI System Health</div>
+      <div className="font-semibold text-aistroyka-text-primary">{tDetail("aiSystemHealth")}</div>
       <div className="mt-3 grid gap-x-4 gap-y-1 text-aistroyka-text-primary sm:grid-cols-2">
-        <div><span className="text-aistroyka-text-tertiary">Stability Index:</span> {stabilityIndex}</div>
-        <div><span className="text-aistroyka-text-tertiary">Status:</span> <span className={statusClass(status)}>{status}</span></div>
+        <div><span className="text-aistroyka-text-tertiary">{tDetail("stabilityIndex")}:</span> {stabilityIndex}</div>
+        <div><span className="text-aistroyka-text-tertiary">{tDetail("status")}:</span> <span className={statusClass(status)}>{status}</span></div>
       </div>
       <div className="mt-3">
-        <span className="text-aistroyka-text-tertiary">Drift indicators:</span>
+        <span className="text-aistroyka-text-tertiary">{tDetail("driftIndicators")}:</span>
         <ul className="mt-1 list-inside list-disc text-aistroyka-text-secondary">
-          <li>Avg confidence: {driftMetrics.avgConfidence.toFixed(1)}</li>
-          <li>Suspicious: {driftMetrics.percentSuspicious.toFixed(0)}%</li>
-          <li>Inconsistent: {driftMetrics.percentInconsistent.toFixed(0)}%</li>
-          <li>Anomaly frequency: {driftMetrics.anomalyFrequency.toFixed(0)}%</li>
-          <li>Contradiction frequency: {driftMetrics.contradictionFrequency.toFixed(0)}%</li>
+          <li>{tDetail("avgConfidence")}: {driftMetrics.avgConfidence.toFixed(1)}</li>
+          <li>{tDetail("suspicious")}: {driftMetrics.percentSuspicious.toFixed(0)}%</li>
+          <li>{tDetail("inconsistent")}: {driftMetrics.percentInconsistent.toFixed(0)}%</li>
+          <li>{tDetail("anomalyFrequency")}: {driftMetrics.anomalyFrequency.toFixed(0)}%</li>
+          <li>{tDetail("contradictionFrequency")}: {driftMetrics.contradictionFrequency.toFixed(0)}%</li>
         </ul>
-        <p className="mt-2 text-xs text-aistroyka-text-tertiary">Based on last {driftMetrics.sampleSize} analyses.</p>
+        <p className="mt-2 text-xs text-aistroyka-text-tertiary">{tDetail("basedOnLastAnalyses", { count: driftMetrics.sampleSize })}</p>
       </div>
     </div>
   );

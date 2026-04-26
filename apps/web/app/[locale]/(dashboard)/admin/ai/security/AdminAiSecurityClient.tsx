@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { QueryBoundary } from "@/lib/query/render";
 import { AdminTable } from "@/src/features/admin/components/AdminTable";
 import { JsonDetails } from "@/src/features/admin/components/JsonDetails";
@@ -11,6 +12,7 @@ import { useAiSecurityEvents } from "@/src/features/admin/ai/api/useAiSecurityEv
 import type { SecurityEventRow } from "@/src/features/admin/ai/api/adminAiApi";
 
 export function AdminAiSecurityClient() {
+  const tDetail = useTranslations("dashboardDetail");
   const [rangePreset, setRangePreset] = useState<RangePreset>("7d");
   const [range, setRange] = useState(() => rangeToDates("7d"));
   const [severity, setSeverity] = useState<string>("");
@@ -33,12 +35,12 @@ export function AdminAiSecurityClient() {
 
   return (
     <>
-      <QueryBoundary query={tenantsQuery} emptyCondition={(d) => !d?.length} emptyTitle="No admin tenants">
+      <QueryBoundary query={tenantsQuery} emptyCondition={(d) => !d?.length} emptyTitle={tDetail("noAdminTenants")}>
         {() => (
           <>
             {tenants.length > 1 ? (
               <div className="mb-4 flex flex-wrap items-center gap-2">
-                <span className="text-aistroyka-subheadline text-aistroyka-text-secondary">Tenant:</span>
+                <span className="text-aistroyka-subheadline text-aistroyka-text-secondary">{tDetail("tenant")}:</span>
                 <select
                   value={tenantId ?? ""}
                   onChange={(e) => setSelectedTenantId(e.target.value || null)}
@@ -57,7 +59,7 @@ export function AdminAiSecurityClient() {
                 onChange={(e) => setSeverity(e.target.value)}
                 className="rounded border border-aistroyka-border-subtle bg-aistroyka-surface-raised px-2 py-1 text-aistroyka-subheadline"
               >
-                <option value="">All severity</option>
+                <option value="">{tDetail("allSeverity")}</option>
                 <option value="low">low</option>
                 <option value="medium">medium</option>
                 <option value="high">high</option>
@@ -65,21 +67,21 @@ export function AdminAiSecurityClient() {
               </select>
               <input
                 type="text"
-                placeholder="Event type filter"
+                placeholder={tDetail("eventTypeFilter")}
                 value={eventType}
                 onChange={(e) => setEventType(e.target.value)}
                 className="rounded border border-aistroyka-border-subtle bg-aistroyka-surface-raised px-2 py-1 text-aistroyka-subheadline"
               />
             </div>
-            <QueryBoundary query={eventsQuery} emptyCondition={(d) => !d?.length} emptyTitle="No security events">
+            <QueryBoundary query={eventsQuery} emptyCondition={(d) => !d?.length} emptyTitle={tDetail("noSecurityEvents")}>
               {(events) => (
                 <AdminTable<SecurityEventRow>
                   columns={[
-                    { key: "created_at", label: "Time" },
-                    { key: "severity", label: "Severity" },
-                    { key: "event_type", label: "Event type" },
-                    { key: "request_id", label: "Request ID" },
-                    { key: "details", label: "Details" },
+                    { key: "created_at", label: tDetail("time") },
+                    { key: "severity", label: tDetail("severity") },
+                    { key: "event_type", label: tDetail("eventType") },
+                    { key: "request_id", label: tDetail("requestId") },
+                    { key: "details", label: tDetail("details") },
                   ]}
                   rows={events}
                   keyFn={(r) => r.id}

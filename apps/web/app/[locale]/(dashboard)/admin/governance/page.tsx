@@ -33,6 +33,7 @@ type ThresholdHistoryRow = {
 
 export default async function AIGovernancePage() {
   const tPage = await getTranslations("dashboardPageMeta");
+  const tDetail = await getTranslations("dashboardDetail");
   const supabase = await createClient();
 
   const [eventsRes, historyRes, latestCalRes] = await Promise.all([
@@ -68,14 +69,14 @@ export default async function AIGovernancePage() {
         href="/admin"
         className="mb-aistroyka-6 inline-block text-aistroyka-subheadline font-medium text-aistroyka-text-secondary hover:text-aistroyka-accent"
       >
-        ← Admin
+        {tPage("backToAdmin")}
       </Link>
       <div className="mb-aistroyka-8 border-l-4 border-l-aistroyka-accent pl-aistroyka-4">
         <h1 className="text-aistroyka-title2 font-bold tracking-tight text-aistroyka-text-primary sm:text-aistroyka-title">
-          AI Governance
+          {tDetail("aiGovernance")}
         </h1>
         <p className="mt-aistroyka-1 text-aistroyka-subheadline text-aistroyka-text-secondary">
-          Calibration, regime detection, drift alerts, and audit timeline. No PII.
+          {tDetail("aiGovernanceSubtitle")}
         </p>
       </div>
 
@@ -84,7 +85,7 @@ export default async function AIGovernancePage() {
       </section>
 
       <section id="ai_governance_alerts" className="mb-aistroyka-8">
-        <h2 id="alerts-heading" className="mb-aistroyka-2 text-[var(--aistroyka-font-title3)] font-semibold text-aistroyka-text-primary">Active Alerts</h2>
+        <h2 id="alerts-heading" className="mb-aistroyka-2 text-[var(--aistroyka-font-title3)] font-semibold text-aistroyka-text-primary">{tDetail("activeAlerts")}</h2>
         <GovernanceAlerts events={events.filter((e) => !e.is_acknowledged)} />
       </section>
 
