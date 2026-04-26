@@ -89,5 +89,5 @@ apps/web/src/features/admin/components/RequestIdPill.tsx
 **Дальше (бэклог)**
 
 - По желанию: привязать `pilot-e2e-audit` к расписанию или post-deploy (сейчас только `workflow_dispatch`).
-- Расширить `data-testid="cta.*"` на остальные пункты сайдбара — потребуется **строковый литерал** в JSX на каждый пункт или доработка `generate_button_inventory.mjs` под шаблонные строки.
+- ~~Расширить инвентарь сайдбара~~: `generate_button_inventory.mjs` синтетически разворачивает `SIDEBAR_LINKS` / `ADMIN_LINKS` в стабильные `cta.dashboard.nav.*` (без дублирования JSX-литералов).
 - Опционально: генератор инвентаря на `ts-morph` рядом с `generate_button_inventory.mjs`, без дублирования полей JSON.

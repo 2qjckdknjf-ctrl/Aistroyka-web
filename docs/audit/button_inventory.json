@@ -4130,6 +4130,96 @@
     "notes": "fallback text scan"
   },
   {
+    "id": "cta.dashboard.nav.overview",
+    "kind": "Link",
+    "labelText": "",
+    "pageRoute": "dashboard-shared",
+    "target": "/dashboard",
+    "sourceFile": "apps/web/components/DashboardShell.tsx",
+    "line": 12,
+    "notes": "synthetic from SIDEBAR_LINKS (use literal data-testid in JSX when you need AST-only inventory)"
+  },
+  {
+    "id": "cta.dashboard.nav.tasks",
+    "kind": "Link",
+    "labelText": "",
+    "pageRoute": "dashboard-shared",
+    "target": "/dashboard/tasks",
+    "sourceFile": "apps/web/components/DashboardShell.tsx",
+    "line": 14,
+    "notes": "synthetic from SIDEBAR_LINKS (use literal data-testid in JSX when you need AST-only inventory)"
+  },
+  {
+    "id": "cta.dashboard.nav.workers",
+    "kind": "Link",
+    "labelText": "",
+    "pageRoute": "dashboard-shared",
+    "target": "/dashboard/workers",
+    "sourceFile": "apps/web/components/DashboardShell.tsx",
+    "line": 15,
+    "notes": "synthetic from SIDEBAR_LINKS (use literal data-testid in JSX when you need AST-only inventory)"
+  },
+  {
+    "id": "cta.dashboard.nav.reports",
+    "kind": "Link",
+    "labelText": "",
+    "pageRoute": "dashboard-shared",
+    "target": "/dashboard/reports",
+    "sourceFile": "apps/web/components/DashboardShell.tsx",
+    "line": 16,
+    "notes": "synthetic from SIDEBAR_LINKS (use literal data-testid in JSX when you need AST-only inventory)"
+  },
+  {
+    "id": "cta.dashboard.nav.approvals",
+    "kind": "Link",
+    "labelText": "",
+    "pageRoute": "dashboard-shared",
+    "target": "/dashboard/approvals",
+    "sourceFile": "apps/web/components/DashboardShell.tsx",
+    "line": 17,
+    "notes": "synthetic from SIDEBAR_LINKS (use literal data-testid in JSX when you need AST-only inventory)"
+  },
+  {
+    "id": "cta.dashboard.nav.uploads",
+    "kind": "Link",
+    "labelText": "",
+    "pageRoute": "dashboard-shared",
+    "target": "/dashboard/uploads",
+    "sourceFile": "apps/web/components/DashboardShell.tsx",
+    "line": 18,
+    "notes": "synthetic from SIDEBAR_LINKS (use literal data-testid in JSX when you need AST-only inventory)"
+  },
+  {
+    "id": "cta.dashboard.nav.devices",
+    "kind": "Link",
+    "labelText": "",
+    "pageRoute": "dashboard-shared",
+    "target": "/dashboard/devices",
+    "sourceFile": "apps/web/components/DashboardShell.tsx",
+    "line": 19,
+    "notes": "synthetic from SIDEBAR_LINKS (use literal data-testid in JSX when you need AST-only inventory)"
+  },
+  {
+    "id": "cta.dashboard.nav.ai",
+    "kind": "Link",
+    "labelText": "",
+    "pageRoute": "dashboard-shared",
+    "target": "/dashboard/ai",
+    "sourceFile": "apps/web/components/DashboardShell.tsx",
+    "line": 20,
+    "notes": "synthetic from SIDEBAR_LINKS (use literal data-testid in JSX when you need AST-only inventory)"
+  },
+  {
+    "id": "cta.dashboard.nav.alerts",
+    "kind": "Link",
+    "labelText": "",
+    "pageRoute": "dashboard-shared",
+    "target": "/dashboard/alerts",
+    "sourceFile": "apps/web/components/DashboardShell.tsx",
+    "line": 21,
+    "notes": "synthetic from SIDEBAR_LINKS (use literal data-testid in JSX when you need AST-only inventory)"
+  },
+  {
     "id": "generated.apps.web.components.DashboardShell.tsx.fallback.63",
     "kind": "button",
     "labelText": "",

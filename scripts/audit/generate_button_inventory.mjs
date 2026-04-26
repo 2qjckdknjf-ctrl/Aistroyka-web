@@ -112,6 +112,71 @@ function addEntry(entry) {
   entries.push(entry);
 }
 
+function hasInventoryId(id) {
+  return entries.some((e) => e.id === id);
+}
+
+/**
+ * DashboardShell maps nav by `key` but only some items use string-literal data-testid in JSX.
+ * Emit stable cta.dashboard.nav.* rows from SIDEBAR_LINKS / ADMIN_LINKS so audits can target them.
+ */
+function addDashboardShellSyntheticNav(rel, text) {
+  if (!rel.endsWith(`components${path.sep}DashboardShell.tsx`)) return;
+
+  const navMatch = text.match(/const SIDEBAR_LINKS = (\[[\s\S]*?\]\s*as const)/);
+  if (navMatch) {
+    const inner = navMatch[1];
+    const re = /\{\s*href:\s*"([^"]+)",\s*key:\s*"(\w+)"\s+as const\s*\}/g;
+    let m;
+    while ((m = re.exec(inner))) {
+      const href = m[1];
+      const key = m[2];
+      const id = `cta.dashboard.nav.${key}`;
+      if (hasInventoryId(id)) continue;
+      const line = text.slice(0, navMatch.index + m.index).split("\n").length;
+      addEntry({
+        id,
+        kind: "Link",
+        labelText: "",
+        pageRoute: "dashboard-shared",
+        target: href,
+        sourceFile: rel,
+        line,
+        notes: "synthetic from SIDEBAR_LINKS (use literal data-testid in JSX when you need AST-only inventory)",
+      });
+    }
+  }
+
+  const adminMatch = text.match(/const ADMIN_LINKS = (\[[\s\S]*?\]\s*as const)/);
+  if (adminMatch) {
+    const inner = adminMatch[1];
+    const re = /\{\s*href:\s*"([^"]+)",\s*key:\s*"(\w+)"\s+as const\s*\}/g;
+    let m;
+    while ((m = re.exec(inner))) {
+      const href = m[1];
+      const key = m[2];
+      const id =
+        key === "adminPush"
+          ? "cta.dashboard.nav.admin.push"
+          : key === "adminJobs"
+            ? "cta.dashboard.nav.admin.jobs"
+            : `cta.dashboard.nav.admin.${key}`;
+      if (hasInventoryId(id)) continue;
+      const line = text.slice(0, adminMatch.index + m.index).split("\n").length;
+      addEntry({
+        id,
+        kind: "Link",
+        labelText: "",
+        pageRoute: "dashboard-shared",
+        target: href,
+        sourceFile: rel,
+        line,
+        notes: "synthetic from ADMIN_LINKS",
+      });
+    }
+  }
+}
+
 for (const absPath of files) {
   const rel = path.relative(root, absPath);
   const text = fs.readFileSync(absPath, "utf8");
@@ -184,6 +249,7 @@ for (const absPath of files) {
   }
 
   visit(sf);
+  addDashboardShellSyntheticNav(rel, text);
 
   for (const token of ["data-testid=", "onClick=", "href=", "router.push(", "Link href"]) {
     let idx = text.indexOf(token);

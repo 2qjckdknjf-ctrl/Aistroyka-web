@@ -500,6 +500,15 @@ generated.apps.web.components.approvals.ReportApprovalCard.tsx.fallback.69,butto
 generated.apps.web.components.brand.Logo.tsx.40,Link,LOGO_ALT,dashboard-shared,href,apps/web/components/brand/Logo.tsx,40,generated id; no data-testid
 generated.apps.web.components.cockpit.FilterBar.tsx.198,button,tDetail(saveCurrent),dashboard-shared,saveCurrentView,apps/web/components/cockpit/FilterBar.tsx,198,generated id; no data-testid
 generated.apps.web.components.cockpit.FilterBar.tsx.fallback.200,button,,dashboard-shared,onClick=,apps/web/components/cockpit/FilterBar.tsx,200,fallback text scan
+cta.dashboard.nav.overview,Link,,dashboard-shared,/dashboard,apps/web/components/DashboardShell.tsx,12,synthetic from SIDEBAR_LINKS (use literal data-testid in JSX when you need AST-only inventory)
+cta.dashboard.nav.tasks,Link,,dashboard-shared,/dashboard/tasks,apps/web/components/DashboardShell.tsx,14,synthetic from SIDEBAR_LINKS (use literal data-testid in JSX when you need AST-only inventory)
+cta.dashboard.nav.workers,Link,,dashboard-shared,/dashboard/workers,apps/web/components/DashboardShell.tsx,15,synthetic from SIDEBAR_LINKS (use literal data-testid in JSX when you need AST-only inventory)
+cta.dashboard.nav.reports,Link,,dashboard-shared,/dashboard/reports,apps/web/components/DashboardShell.tsx,16,synthetic from SIDEBAR_LINKS (use literal data-testid in JSX when you need AST-only inventory)
+cta.dashboard.nav.approvals,Link,,dashboard-shared,/dashboard/approvals,apps/web/components/DashboardShell.tsx,17,synthetic from SIDEBAR_LINKS (use literal data-testid in JSX when you need AST-only inventory)
+cta.dashboard.nav.uploads,Link,,dashboard-shared,/dashboard/uploads,apps/web/components/DashboardShell.tsx,18,synthetic from SIDEBAR_LINKS (use literal data-testid in JSX when you need AST-only inventory)
+cta.dashboard.nav.devices,Link,,dashboard-shared,/dashboard/devices,apps/web/components/DashboardShell.tsx,19,synthetic from SIDEBAR_LINKS (use literal data-testid in JSX when you need AST-only inventory)
+cta.dashboard.nav.ai,Link,,dashboard-shared,/dashboard/ai,apps/web/components/DashboardShell.tsx,20,synthetic from SIDEBAR_LINKS (use literal data-testid in JSX when you need AST-only inventory)
+cta.dashboard.nav.alerts,Link,,dashboard-shared,/dashboard/alerts,apps/web/components/DashboardShell.tsx,21,synthetic from SIDEBAR_LINKS (use literal data-testid in JSX when you need AST-only inventory)
 generated.apps.web.components.DashboardShell.tsx.fallback.63,button,,dashboard-shared,onClick=,apps/web/components/DashboardShell.tsx,63,fallback text scan
 cta.dashboard.nav.projects,Link,t(key),dashboard-shared,href,apps/web/components/DashboardShell.tsx,69,
 generated.apps.web.components.DashboardShell.tsx.fallback.71,Link,,dashboard-shared,href=,apps/web/components/DashboardShell.tsx,71,fallback text scan
