@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { Card, Badge, Skeleton, ErrorState } from "@/components/ui";
 import { recurringRuleStateBadgeClass } from "./statusBadgeStyles";
 
@@ -25,6 +26,7 @@ async function fetchRules(): Promise<{ rules: RuleRow[]; canToggle: boolean }> {
 }
 
 export function RecurringOperationsPanel() {
+  const tDetail = useTranslations("dashboardDetail");
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ["recurring-operations", "rules"], queryFn: fetchRules });
 
@@ -63,14 +65,13 @@ export function RecurringOperationsPanel() {
 
   return (
     <Card className="p-4 border border-aistroyka-border-subtle">
-      <h2 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">Recurring operations</h2>
+      <h2 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">{tDetail("recurringOperations")}</h2>
       <p className="mt-1 text-sm text-aistroyka-text-secondary">
-        Finite scheduled checks (cron). When conditions still apply, managers get in-app notifications and matching rows
-        appear in your inbox for seven days after each run. This is not a custom workflow builder.
+        {tDetail("recurringOperationsHint")}
       </p>
       {rules.length === 0 ? (
         <p className="mt-3 text-sm text-aistroyka-text-tertiary">
-          No rules yet — they are created on the next successful cron tick for your workspace.
+          {tDetail("noRulesYet")}
         </p>
       ) : (
         <ul className="mt-4 space-y-3">
@@ -82,15 +83,15 @@ export function RecurringOperationsPanel() {
               <div>
                 <p className="font-medium text-aistroyka-text-primary">{formatKind(r.rule_kind)}</p>
                 <p className="text-aistroyka-text-tertiary text-xs mt-0.5">
-                  Cadence: {formatCadence(r)} · Last fired: {r.last_fired_at ? r.last_fired_at.slice(0, 16) : "—"} · Next due:{" "}
+                  {tDetail("cadence")} {formatCadence(r)} · {tDetail("lastFired")} {r.last_fired_at ? r.last_fired_at.slice(0, 16) : "—"} · {tDetail("nextDue")}{" "}
                   {r.next_due_at ? r.next_due_at.slice(0, 16) : "—"}
                 </p>
               </div>
               <div className="flex items-center gap-2">
                 {r.active ? (
-                  <Badge className={recurringRuleStateBadgeClass(true)}>Active</Badge>
+                  <Badge className={recurringRuleStateBadgeClass(true)}>{tDetail("active")}</Badge>
                 ) : (
-                  <Badge className={recurringRuleStateBadgeClass(false)}>Off</Badge>
+                  <Badge className={recurringRuleStateBadgeClass(false)}>{tDetail("off")}</Badge>
                 )}
                 {canToggle ? (
                   <button
@@ -99,7 +100,7 @@ export function RecurringOperationsPanel() {
                     disabled={toggle.isPending}
                     onClick={() => toggle.mutate({ id: r.id, active: !r.active })}
                   >
-                    {r.active ? "Turn off" : "Turn on"}
+                    {r.active ? tDetail("turnOff") : tDetail("turnOn")}
                   </button>
                 ) : null}
               </div>

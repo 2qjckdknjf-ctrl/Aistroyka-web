@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, Badge, Button } from "@/components/ui";
 import type { ClientRequestKind, ClientRequestManager } from "@/lib/domain/client-requests/client-requests.types";
@@ -15,15 +16,8 @@ async function fetchRequests(projectId: string): Promise<ClientRequestManager[]>
   return json.data ?? [];
 }
 
-const KIND_OPTIONS: { value: ClientRequestKind; label: string }[] = [
-  { value: "approve_or_reject", label: "Approve or reject" },
-  { value: "feedback", label: "Feedback (text)" },
-  { value: "acknowledge", label: "Acknowledge" },
-  { value: "choice", label: "Choose an option" },
-  { value: "document_review", label: "Document review" },
-];
-
 export function ClientRequestsManagerPanel({ projectId }: { projectId: string }) {
+  const tDetail = useTranslations("dashboardDetail");
   const queryClient = useQueryClient();
   const [openForm, setOpenForm] = useState(false);
   const [title, setTitle] = useState("");
@@ -33,6 +27,13 @@ export function ClientRequestsManagerPanel({ projectId }: { projectId: string })
   const [choiceLines, setChoiceLines] = useState("Option A\nOption B");
   const [linkType, setLinkType] = useState<"" | "document" | "milestone">("");
   const [linkId, setLinkId] = useState("");
+  const KIND_OPTIONS: { value: ClientRequestKind; label: string }[] = [
+    { value: "approve_or_reject", label: tDetail("requestKindApproveReject") },
+    { value: "feedback", label: tDetail("requestKindFeedback") },
+    { value: "acknowledge", label: tDetail("requestKindAcknowledge") },
+    { value: "choice", label: tDetail("requestKindChoice") },
+    { value: "document_review", label: tDetail("requestKindDocumentReview") },
+  ];
 
   const listQuery = useQuery({
     queryKey: ["client-requests", projectId],
@@ -107,41 +108,41 @@ export function ClientRequestsManagerPanel({ projectId }: { projectId: string })
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <h3 className="text-aistroyka-caption font-semibold uppercase tracking-wide text-aistroyka-text-tertiary">
-            Client requests
+            {tDetail("clientRequests")}
           </h3>
           <p className="mt-1 text-sm text-aistroyka-text-secondary">
-            Create explicit, tracked asks for the project owner (customer). Not chat — finite actions with history.
+            {tDetail("clientRequestsHint")}
           </p>
         </div>
         <Button type="button" size="sm" variant="secondary" onClick={() => setOpenForm((o) => !o)}>
-          {openForm ? "Close form" : "New request"}
+          {openForm ? tDetail("closeForm") : tDetail("newRequest")}
         </Button>
       </div>
 
       {openForm ? (
         <div className="mt-4 space-y-3 rounded-lg border border-aistroyka-border-subtle p-3">
           <div>
-            <label className="text-xs font-medium text-aistroyka-text-secondary">Title</label>
+            <label className="text-xs font-medium text-aistroyka-text-secondary">{tDetail("title")}</label>
             <input
               className="mt-1 w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Short title"
+              placeholder={tDetail("shortTitle")}
             />
           </div>
           <div>
-            <label className="text-xs font-medium text-aistroyka-text-secondary">Instructions</label>
+            <label className="text-xs font-medium text-aistroyka-text-secondary">{tDetail("instructions")}</label>
             <textarea
               className="mt-1 w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
               rows={3}
               value={instructions}
               onChange={(e) => setInstructions(e.target.value)}
-              placeholder="What you need from the client"
+              placeholder={tDetail("whatNeedFromClient")}
             />
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <label className="text-xs font-medium text-aistroyka-text-secondary">Kind</label>
+              <label className="text-xs font-medium text-aistroyka-text-secondary">{tDetail("kind")}</label>
               <select
                 className="mt-1 w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
                 value={kind}
@@ -155,20 +156,20 @@ export function ClientRequestsManagerPanel({ projectId }: { projectId: string })
               </select>
             </div>
             <div>
-              <label className="text-xs font-medium text-aistroyka-text-secondary">Mode</label>
+              <label className="text-xs font-medium text-aistroyka-text-secondary">{tDetail("mode")}</label>
               <select
                 className="mt-1 w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
                 value={actionMode}
                 onChange={(e) => setActionMode(e.target.value as "action_required" | "info_only")}
               >
-                <option value="action_required">Action required</option>
-                <option value="info_only">Information only</option>
+                <option value="action_required">{tDetail("actionRequired")}</option>
+                <option value="info_only">{tDetail("informationOnly")}</option>
               </select>
             </div>
           </div>
           {kind === "choice" ? (
             <div>
-              <label className="text-xs font-medium text-aistroyka-text-secondary">Options (one per line)</label>
+              <label className="text-xs font-medium text-aistroyka-text-secondary">{tDetail("optionsOnePerLine")}</label>
               <textarea
                 className="mt-1 w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm font-mono"
                 rows={4}
@@ -179,19 +180,19 @@ export function ClientRequestsManagerPanel({ projectId }: { projectId: string })
           ) : null}
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <label className="text-xs font-medium text-aistroyka-text-secondary">Link type (optional)</label>
+              <label className="text-xs font-medium text-aistroyka-text-secondary">{tDetail("linkTypeOptional")}</label>
               <select
                 className="mt-1 w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
                 value={linkType}
                 onChange={(e) => setLinkType(e.target.value as "" | "document" | "milestone")}
               >
-                <option value="">None</option>
-                <option value="document">Document</option>
-                <option value="milestone">Milestone</option>
+                <option value="">{tDetail("none")}</option>
+                <option value="document">{tDetail("document")}</option>
+                <option value="milestone">{tDetail("milestone")}</option>
               </select>
             </div>
             <div>
-              <label className="text-xs font-medium text-aistroyka-text-secondary">Linked entity id</label>
+              <label className="text-xs font-medium text-aistroyka-text-secondary">{tDetail("linkedEntityId")}</label>
               <input
                 className="mt-1 w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm font-mono"
                 value={linkId}
@@ -213,19 +214,19 @@ export function ClientRequestsManagerPanel({ projectId }: { projectId: string })
             disabled={title.trim().length < 1}
             onClick={() => createMutation.mutate()}
           >
-            Create request
+            {tDetail("createRequest")}
           </Button>
         </div>
       ) : null}
 
       {listQuery.isPending ? (
-        <p className="mt-3 text-sm text-aistroyka-text-tertiary">Loading…</p>
+        <p className="mt-3 text-sm text-aistroyka-text-tertiary">{tDetail("loading")}</p>
       ) : listQuery.isError ? (
-        <p className="mt-3 text-sm text-aistroyka-error">Could not load requests.</p>
+        <p className="mt-3 text-sm text-aistroyka-error">{tDetail("couldNotLoadRequests")}</p>
       ) : (
         <ul className="mt-3 space-y-2">
           {(listQuery.data ?? []).length === 0 ? (
-            <li className="text-sm text-aistroyka-text-tertiary">No requests yet.</li>
+            <li className="text-sm text-aistroyka-text-tertiary">{tDetail("noRequestsYet")}</li>
           ) : (
             (listQuery.data ?? []).map((r: ClientRequestManager) => (
               <li
@@ -248,7 +249,7 @@ export function ClientRequestsManagerPanel({ projectId }: { projectId: string })
                       disabled={patchMutation.isPending}
                       onClick={() => patchMutation.mutate({ requestId: r.id, status: "completed" })}
                     >
-                      Mark complete
+                      {tDetail("markComplete")}
                     </Button>
                   ) : null}
                   {r.status === "open" || r.status === "responded" ? (
@@ -259,7 +260,7 @@ export function ClientRequestsManagerPanel({ projectId }: { projectId: string })
                       disabled={patchMutation.isPending}
                       onClick={() => patchMutation.mutate({ requestId: r.id, status: "cancelled" })}
                     >
-                      Cancel
+                      {tDetail("cancel")}
                     </Button>
                   ) : null}
                   {r.status === "responded" ? (
@@ -270,7 +271,7 @@ export function ClientRequestsManagerPanel({ projectId }: { projectId: string })
                       disabled={patchMutation.isPending}
                       onClick={() => patchMutation.mutate({ requestId: r.id, status: "completed" })}
                     >
-                      Complete
+                      {tDetail("complete")}
                     </Button>
                   ) : null}
                 </div>

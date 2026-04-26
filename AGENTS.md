@@ -17,7 +17,7 @@
 
 - Aistroyka is a monorepo; web application lives in apps/web (Next.js, App Router).
 - Root build: from repo root run `bun install` and `bun run build` (builds packages/contracts then apps/web).
-- Production deploy path: **Cloudflare Workers** (`apps/web/wrangler.toml`, OpenNext). Use `bun run cf:build` then Wrangler deploy (see `docs/launch/Release1.md`).
+- Production runtime and DNS ownership is **Cloudflare Workers** (`apps/web/wrangler.toml`, OpenNext); use `bun run cf:build` then Wrangler deploy, and verify apex/www routes through Cloudflare when making production readiness claims.
 - iOS apps are AiStroykaManager and AiStroykaWorker; shared code lives in ios/Shared; WorkerLite is deprecated as the primary product name.
 - Android apps are AiStroykaManager and AiStroykaWorker with android/shared; structure mirrors iOS.
 - Local iOS config: ios/Config/Secrets.xcconfig (gitignored) and Secrets.xcconfig.example; both apps use the same xcconfig.

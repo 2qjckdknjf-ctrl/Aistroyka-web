@@ -65,6 +65,7 @@ STREAM_TMP=""
 cleanup() {
   rm -f "$TMPHDR" "$TMPBODY"
   [[ -n "${STREAM_TMP:-}" ]] && rm -f "$STREAM_TMP"
+  return 0
 }
 trap cleanup EXIT
 

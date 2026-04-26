@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { Card, Button, Badge } from "@/components/ui";
 
 type Item = {
@@ -21,6 +22,7 @@ async function fetchNotifications(projectId: string): Promise<{ data: Item[]; un
 }
 
 export function ClientPortalNotificationsSection({ projectId }: { projectId: string }) {
+  const tDetail = useTranslations("dashboardDetail");
   const queryClient = useQueryClient();
   const q = useQuery({
     queryKey: ["stakeholder-notifications", projectId],
@@ -43,7 +45,7 @@ export function ClientPortalNotificationsSection({ projectId }: { projectId: str
   if (q.isPending) {
     return (
       <Card className="p-4">
-        <p className="text-sm text-aistroyka-text-tertiary">Loading updates…</p>
+        <p className="text-sm text-aistroyka-text-tertiary">{tDetail("loadingUpdates")}</p>
       </Card>
     );
   }
@@ -62,9 +64,9 @@ export function ClientPortalNotificationsSection({ projectId }: { projectId: str
   return (
     <Card className="p-4 border-l-4 border-l-aistroyka-info">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="font-semibold text-aistroyka-text-primary">Updates for you</h3>
+        <h3 className="font-semibold text-aistroyka-text-primary">{tDetail("updatesForYou")}</h3>
         {unread > 0 ? (
-          <Badge className="bg-aistroyka-info/15 text-aistroyka-info">{unread} new</Badge>
+          <Badge className="bg-aistroyka-info/15 text-aistroyka-info">{unread} {tDetail("new")}</Badge>
         ) : null}
       </div>
       <ul className="mt-3 space-y-3">
@@ -89,7 +91,7 @@ export function ClientPortalNotificationsSection({ projectId }: { projectId: str
                 loading={markRead.isPending}
                 onClick={() => markRead.mutate(n.id)}
               >
-                Mark as read
+                {tDetail("markAsRead")}
               </Button>
             ) : null}
           </li>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { StakeholderActivityBlock } from "@/components/projects/StakeholderActivityBlock";
 
 async function fetchPortalActivity(projectId: string) {
@@ -13,6 +14,7 @@ async function fetchPortalActivity(projectId: string) {
 }
 
 export function ClientPortalActivitySection({ projectId }: { projectId: string }) {
+  const tDetail = useTranslations("dashboardDetail");
   const q = useQuery({
     queryKey: ["stakeholder-activity", projectId, "portal"],
     queryFn: () => fetchPortalActivity(projectId),
@@ -22,7 +24,7 @@ export function ClientPortalActivitySection({ projectId }: { projectId: string }
   if (q.isPending) {
     return (
       <div className="rounded-lg border border-aistroyka-border-subtle bg-aistroyka-surface p-4">
-        <p className="text-sm text-aistroyka-text-tertiary">Loading activity…</p>
+        <p className="text-sm text-aistroyka-text-tertiary">{tDetail("loadingActivity")}</p>
       </div>
     );
   }
@@ -34,8 +36,8 @@ export function ClientPortalActivitySection({ projectId }: { projectId: string }
   return (
     <StakeholderActivityBlock
       items={q.data ?? []}
-      title="Activity"
-      emptyMessage="No activity to show yet."
+      title={tDetail("activity")}
+      emptyMessage={tDetail("noActivityYet")}
       maxItems={25}
     />
   );
