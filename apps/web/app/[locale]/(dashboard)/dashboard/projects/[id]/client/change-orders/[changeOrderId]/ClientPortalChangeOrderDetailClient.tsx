@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Card, Badge, Skeleton, EmptyState } from "@/components/ui";
 import { changeOrderStatusBadgeClass, formatStatusLabel } from "../../../statusBadgeStyles";
@@ -52,6 +53,7 @@ export function ClientPortalChangeOrderDetailClient({
   projectId: string;
   changeOrderId: string;
 }) {
+  const tDetail = useTranslations("dashboardDetail");
   const q = useQuery({
     queryKey: ["change-order", projectId, changeOrderId],
     queryFn: () => fetchDetail(projectId, changeOrderId),
@@ -70,7 +72,7 @@ export function ClientPortalChangeOrderDetailClient({
       <Card>
         <EmptyState
           icon={<span className="text-2xl">📋</span>}
-          title="Change order unavailable"
+          title={tDetail("changeOrderUnavailable")}
           subtitle={q.error instanceof Error ? q.error.message : ""}
         />
       </Card>
@@ -85,7 +87,7 @@ export function ClientPortalChangeOrderDetailClient({
         href={`/dashboard/projects/${projectId}/client/change-orders`}
         className="text-aistroyka-accent hover:underline text-sm font-medium"
       >
-        ← Change orders
+        {tDetail("backToChangeOrders")}
       </Link>
       <Card className="p-4">
         <div className="flex flex-wrap items-start justify-between gap-2">
@@ -97,46 +99,46 @@ export function ClientPortalChangeOrderDetailClient({
 
       {d.description ? (
         <Card className="p-4">
-          <h2 className="font-semibold">What changed</h2>
+          <h2 className="font-semibold">{tDetail("whatChanged")}</h2>
           <p className="mt-2 text-sm whitespace-pre-wrap">{d.description}</p>
         </Card>
       ) : null}
 
       <Card className="p-4">
-        <h2 className="font-semibold">Impact</h2>
+        <h2 className="font-semibold">{tDetail("impact")}</h2>
         <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
           <div>
-            <dt className="text-aistroyka-text-tertiary">Schedule</dt>
+            <dt className="text-aistroyka-text-tertiary">{tDetail("schedule")}</dt>
             <dd>{d.schedule_impact_level.replace(/_/g, " ")}</dd>
             {d.schedule_impact_summary ? <dd className="mt-1 text-aistroyka-text-secondary">{d.schedule_impact_summary}</dd> : null}
             {d.schedule_delta_days != null ? (
-              <dd className="mt-1 text-aistroyka-text-secondary">About {d.schedule_delta_days} days</dd>
+              <dd className="mt-1 text-aistroyka-text-secondary">{tDetail("aboutDays")} {d.schedule_delta_days} {tDetail("days")}</dd>
             ) : null}
           </div>
           <div>
-            <dt className="text-aistroyka-text-tertiary">Budget</dt>
+            <dt className="text-aistroyka-text-tertiary">{tDetail("budget")}</dt>
             <dd>{d.budget_impact_level.replace(/_/g, " ")}</dd>
             {d.budget_impact_summary ? <dd className="mt-1 text-aistroyka-text-secondary">{d.budget_impact_summary}</dd> : null}
             {d.budget_delta_amount != null ? (
-              <dd className="mt-1 text-aistroyka-text-secondary">Indicative delta: {d.budget_delta_amount}</dd>
+              <dd className="mt-1 text-aistroyka-text-secondary">{tDetail("indicativeDelta")} {d.budget_delta_amount}</dd>
             ) : null}
           </div>
         </dl>
         {(d.has_linked_discussion || d.has_linked_document || d.has_linked_request || d.has_linked_milestone) && (
           <p className="mt-4 text-xs text-aistroyka-text-tertiary">
-            This change is linked to other project records (details available to your project team).
+            {tDetail("changeLinkedToRecords")}
           </p>
         )}
       </Card>
 
       {d.implemented_at ? (
         <p className="text-sm text-aistroyka-text-secondary">
-          Marked implemented {new Date(d.implemented_at).toLocaleString()}
+          {tDetail("markedImplemented")} {new Date(d.implemented_at).toLocaleString()}
         </p>
       ) : null}
 
       <Card className="p-4">
-        <h2 className="font-semibold">Status history</h2>
+        <h2 className="font-semibold">{tDetail("statusHistory")}</h2>
         <ul className="mt-3 space-y-2 text-sm">
           {d.events.map((e) => (
             <li key={e.id} className="rounded border border-aistroyka-border-subtle p-2">

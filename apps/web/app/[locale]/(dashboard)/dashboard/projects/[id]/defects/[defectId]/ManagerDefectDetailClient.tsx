@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@/i18n/navigation";
 import { Card, Button, Badge, Skeleton, EmptyState } from "@/components/ui";
@@ -53,6 +54,7 @@ async function fetchDetail(projectId: string, defectId: string): Promise<Detail>
 }
 
 export function ManagerDefectDetailClient({ projectId, defectId }: { projectId: string; defectId: string }) {
+  const tDetail = useTranslations("dashboardDetail");
   const queryClient = useQueryClient();
   const [toStatus, setToStatus] = useState("");
   const [note, setNote] = useState("");
@@ -142,7 +144,7 @@ export function ManagerDefectDetailClient({ projectId, defectId }: { projectId: 
       <Card>
         <EmptyState
           icon={<span className="text-2xl">📌</span>}
-          title="Defect unavailable"
+          title={tDetail("defectUnavailable")}
           subtitle={q.error instanceof Error ? q.error.message : ""}
         />
       </Card>
@@ -156,7 +158,7 @@ export function ManagerDefectDetailClient({ projectId, defectId }: { projectId: 
   return (
     <div className="space-y-6">
       <Link href={`/dashboard/projects/${projectId}?tab=defects`} className="text-aistroyka-accent hover:underline text-sm">
-        ← Punch list
+        {tDetail("backToPunchList")}
       </Link>
       <Card className="p-4">
         <div className="flex flex-wrap items-start justify-between gap-2">
@@ -164,13 +166,13 @@ export function ManagerDefectDetailClient({ projectId, defectId }: { projectId: 
           <Badge className={defectStatusBadgeClass(row.status)}>{formatStatusLabel(row.status)}</Badge>
         </div>
         <p className="mt-1 text-xs text-aistroyka-text-tertiary">
-          Created by {row.created_by.slice(0, 8)}… {row.is_blocking ? "· Blocking handover" : ""}
+          {tDetail("createdBy")} {row.created_by.slice(0, 8)}… {row.is_blocking ? `· ${tDetail("blockingHandover")}` : ""}
         </p>
       </Card>
 
       {editable ? (
         <Card className="p-4 space-y-3">
-          <h2 className="font-semibold">Edit</h2>
+          <h2 className="font-semibold">{tDetail("edit")}</h2>
           <input
             className="w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
             value={title}
@@ -184,7 +186,7 @@ export function ManagerDefectDetailClient({ projectId, defectId }: { projectId: 
           />
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={blocking} onChange={(e) => setBlocking(e.target.checked)} />
-            Blocks handover
+            {tDetail("blocksHandover")}
           </label>
           <input
             type="date"
@@ -193,7 +195,7 @@ export function ManagerDefectDetailClient({ projectId, defectId }: { projectId: 
             onChange={(e) => setDue(e.target.value)}
           />
           <Button type="button" size="sm" onClick={() => patchMutation.mutate()} disabled={patchMutation.isPending}>
-            Save
+            {tDetail("save")}
           </Button>
         </Card>
       ) : (
@@ -201,7 +203,7 @@ export function ManagerDefectDetailClient({ projectId, defectId }: { projectId: 
           {row.description ? <p className="text-sm whitespace-pre-wrap">{row.description}</p> : null}
           {row.resolution_note ? (
             <p className="mt-2 text-sm">
-              <span className="font-medium">Resolution:</span> {row.resolution_note}
+              <span className="font-medium">{tDetail("resolution")}:</span> {row.resolution_note}
             </p>
           ) : null}
         </Card>
@@ -209,7 +211,7 @@ export function ManagerDefectDetailClient({ projectId, defectId }: { projectId: 
 
       {options.length > 0 && editable ? (
         <Card className="p-4 space-y-3">
-          <h2 className="font-semibold">Transition</h2>
+          <h2 className="font-semibold">{tDetail("transition")}</h2>
           <select
             className="w-full max-w-md rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
             value={toStatus}
@@ -225,14 +227,14 @@ export function ManagerDefectDetailClient({ projectId, defectId }: { projectId: 
             <textarea
               className="w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
               rows={2}
-              placeholder="Resolution note (required)"
+              placeholder={tDetail("resolutionNoteRequired")}
               value={resolutionNote}
               onChange={(e) => setResolutionNote(e.target.value)}
             />
           ) : null}
           <input
             className="w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
-            placeholder="Internal note (optional)"
+            placeholder={tDetail("internalNoteOptional")}
             value={note}
             onChange={(e) => setNote(e.target.value)}
           />
@@ -242,13 +244,13 @@ export function ManagerDefectDetailClient({ projectId, defectId }: { projectId: 
             disabled={!toStatus || transitionMutation.isPending || (toStatus === "resolved" && !resolutionNote.trim())}
             onClick={() => transitionMutation.mutate()}
           >
-            {transitionMutation.isPending ? "Applying…" : "Apply"}
+            {transitionMutation.isPending ? tDetail("applying") : tDetail("apply")}
           </Button>
         </Card>
       ) : null}
 
       <Card className="p-4">
-        <h2 className="font-semibold">History</h2>
+        <h2 className="font-semibold">{tDetail("history")}</h2>
         <ul className="mt-2 space-y-2 text-sm">
           {row.events.map((e) => (
             <li key={e.id} className="rounded border border-aistroyka-border-subtle p-2">

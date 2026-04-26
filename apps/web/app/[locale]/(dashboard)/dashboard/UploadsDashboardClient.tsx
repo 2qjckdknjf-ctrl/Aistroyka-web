@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import {
   Badge,
@@ -19,13 +20,6 @@ import { FilterBar } from "@/components/cockpit/FilterBar";
 import { useFilterParams } from "@/lib/cockpit/useFilterParams";
 import { parseTablePagination } from "@/lib/cockpit/useTablePagination";
 import { Link } from "@/i18n/navigation";
-
-const UPLOAD_STATUS_OPTIONS = [
-  { value: "created", label: "Created" },
-  { value: "uploaded", label: "Uploaded" },
-  { value: "finalized", label: "Finalized" },
-  { value: "expired", label: "Expired" },
-];
 
 interface UploadSessionRow {
   id: string;
@@ -62,27 +56,34 @@ function statusVariant(status: string): "success" | "warning" | "danger" | "neut
   }
 }
 
-function purposeLabel(purpose: string): string {
+function purposeLabel(purpose: string, tDetail: ReturnType<typeof useTranslations>): string {
   switch (purpose) {
     case "report_before":
-      return "Report before";
+      return tDetail("reportBefore");
     case "report_after":
-      return "Report after";
+      return tDetail("reportAfter");
     case "project_media":
-      return "Project media";
+      return tDetail("projectMedia");
     default:
       return purpose || "—";
   }
 }
 
-function referenceLabel(row: UploadSessionRow): string {
-  if (row.report_id) return `Report ${row.report_id.slice(0, 8)}…`;
-  if (row.task_id) return `Task ${row.task_id.slice(0, 8)}…`;
-  if (row.project_id) return `Project ${row.project_id.slice(0, 8)}…`;
+function referenceLabel(row: UploadSessionRow, tDetail: ReturnType<typeof useTranslations>): string {
+  if (row.report_id) return `${tDetail("report")} ${row.report_id.slice(0, 8)}…`;
+  if (row.task_id) return `${tDetail("task")} ${row.task_id.slice(0, 8)}…`;
+  if (row.project_id) return `${tDetail("project")} ${row.project_id.slice(0, 8)}…`;
   return "—";
 }
 
 export function UploadsDashboardClient() {
+  const tDetail = useTranslations("dashboardDetail");
+  const UPLOAD_STATUS_OPTIONS = [
+    { value: "created", label: tDetail("created") },
+    { value: "uploaded", label: tDetail("uploaded") },
+    { value: "finalized", label: tDetail("finalized") },
+    { value: "expired", label: tDetail("expired") },
+  ];
   const { params, setParam } = useFilterParams();
   const searchParams = useSearchParams();
   const [data, setData] = useState<UploadSessionRow[] | null>(null);
@@ -106,7 +107,7 @@ export function UploadsDashboardClient() {
 
     fetch(`/api/v1/media/upload-sessions?${sp}`, { credentials: "include" })
       .then((res) => {
-        if (!res.ok) throw new Error(res.statusText || "Failed to load upload sessions");
+        if (!res.ok) throw new Error(res.statusText || tDetail("failedLoadUploadSessions"));
         return res.json();
       })
       .then((json: { data?: UploadSessionRow[]; total?: number }) => {
@@ -115,7 +116,7 @@ export function UploadsDashboardClient() {
         setError(null);
       })
       .catch((e) => {
-        setError(e instanceof Error ? e.message : "Failed to load upload sessions");
+        setError(e instanceof Error ? e.message : tDetail("failedLoadUploadSessions"));
         setData([]);
         setTotal(0);
       })
@@ -167,11 +168,11 @@ export function UploadsDashboardClient() {
         <Card>
           <EmptyState
             icon={<span className="text-2xl">⇧</span>}
-            title={stuck ? "No stuck upload sessions" : "No upload sessions"}
+            title={stuck ? tDetail("noStuckUploadSessions") : tDetail("noUploadSessions")}
             subtitle={
               stuck
-                ? "Upload sessions older than the stuck threshold will appear here."
-                : "Worker and manager upload sessions will appear here when media is created."
+                ? tDetail("stuckUploadSessionsAppear")
+                : tDetail("uploadSessionsAppear")
             }
           />
         </Card>
@@ -185,24 +186,24 @@ export function UploadsDashboardClient() {
       {stuck && (
         <Card className="mb-4 border-l-4 border-l-aistroyka-warning">
           <p className="text-aistroyka-subheadline font-medium text-aistroyka-text-primary">
-            Showing stuck upload sessions
+              {tDetail("showingStuckUploadSessions")}
           </p>
           <p className="mt-1 text-aistroyka-caption text-aistroyka-text-secondary">
-            Clear the URL filter to return to all upload sessions.
+              {tDetail("clearUrlFilterUploadSessions")}
           </p>
         </Card>
       )}
       <Card className="overflow-hidden p-0">
-        <Table aria-label="Upload sessions">
+        <Table aria-label={tDetail("uploadSessions")}>
           <TableHead>
             <TableRow>
-              <TableHeaderCell>Session</TableHeaderCell>
-              <TableHeaderCell>Status</TableHeaderCell>
-              <TableHeaderCell>Purpose</TableHeaderCell>
-              <TableHeaderCell>Worker</TableHeaderCell>
-              <TableHeaderCell>Reference</TableHeaderCell>
-              <TableHeaderCell>Created</TableHeaderCell>
-              <TableHeaderCell>Updated / expires</TableHeaderCell>
+              <TableHeaderCell>{tDetail("session")}</TableHeaderCell>
+              <TableHeaderCell>{tDetail("status")}</TableHeaderCell>
+              <TableHeaderCell>{tDetail("purpose")}</TableHeaderCell>
+              <TableHeaderCell>{tDetail("worker")}</TableHeaderCell>
+              <TableHeaderCell>{tDetail("reference")}</TableHeaderCell>
+              <TableHeaderCell>{tDetail("created")}</TableHeaderCell>
+              <TableHeaderCell>{tDetail("updatedOrExpires")}</TableHeaderCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -216,7 +217,7 @@ export function UploadsDashboardClient() {
                 <TableCell>
                   <Badge variant={statusVariant(row.status)}>{row.status}</Badge>
                 </TableCell>
-                <TableCell>{purposeLabel(row.purpose)}</TableCell>
+                <TableCell>{purposeLabel(row.purpose, tDetail)}</TableCell>
                 <TableCell>
                   <Link
                     href={`/dashboard/workers/${row.user_id}`}
@@ -227,7 +228,7 @@ export function UploadsDashboardClient() {
                   </Link>
                 </TableCell>
                 <TableCell className="font-mono text-aistroyka-caption text-aistroyka-text-secondary">
-                  {referenceLabel(row)}
+                  {referenceLabel(row, tDetail)}
                 </TableCell>
                 <TableCell className="tabular-nums text-aistroyka-text-secondary">
                   {formatDate(row.created_at)}

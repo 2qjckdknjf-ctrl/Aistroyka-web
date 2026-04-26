@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@/i18n/navigation";
 import { Card, Button, Badge, Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui";
@@ -23,6 +24,7 @@ async function fetchList(projectId: string): Promise<Row[]> {
 }
 
 export function DefectsProjectTab({ projectId }: { projectId: string }) {
+  const tDetail = useTranslations("dashboardDetail");
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -72,47 +74,47 @@ export function DefectsProjectTab({ projectId }: { projectId: string }) {
   return (
     <div className="space-y-4 p-4">
       <p className="text-sm text-aistroyka-text-secondary">
-        Punch list / snags — construction defects, not a company-wide bug tracker. Blocking items affect handover readiness.
+        {tDetail("defectsProjectHint")}
       </p>
       <div className="flex flex-wrap gap-2">
         <Button type="button" size="sm" variant="secondary" onClick={() => setOpen((o) => !o)}>
-          {open ? "Close" : "Add item"}
+          {open ? tDetail("close") : tDetail("addItem")}
         </Button>
       </div>
       {open ? (
         <Card className="p-3 space-y-2">
           <input
             className="w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
-            placeholder="Title"
+            placeholder={tDetail("title")}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
           />
           <textarea
             className="w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
             rows={2}
-            placeholder="Description"
+            placeholder={tDetail("description")}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={blocking} onChange={(e) => setBlocking(e.target.checked)} />
-            Blocks handover until resolved
+            {tDetail("blocksHandoverUntilResolved")}
           </label>
           <Button type="button" size="sm" disabled={!title.trim() || createMutation.isPending} onClick={() => createMutation.mutate()}>
-            {createMutation.isPending ? "Saving…" : "Create"}
+            {createMutation.isPending ? tDetail("saving") : tDetail("create")}
           </Button>
         </Card>
       ) : null}
 
-      {listQuery.isPending ? <p className="text-sm text-aistroyka-text-secondary">Loading…</p> : null}
+      {listQuery.isPending ? <p className="text-sm text-aistroyka-text-secondary">{tDetail("loading")}</p> : null}
 
       <Table>
         <TableHead>
           <TableRow>
-            <TableHeaderCell>Title</TableHeaderCell>
-            <TableHeaderCell>Status</TableHeaderCell>
-            <TableHeaderCell>Blocking</TableHeaderCell>
-            <TableHeaderCell>Due</TableHeaderCell>
+            <TableHeaderCell>{tDetail("title")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("status")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("blocking")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("due")}</TableHeaderCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -127,7 +129,7 @@ export function DefectsProjectTab({ projectId }: { projectId: string }) {
                 <Badge className={defectStatusBadgeClass(r.status)}>{formatStatusLabel(r.status)}</Badge>
               </TableCell>
               <TableCell>
-                {r.is_blocking ? <Badge className={blockingBadgeClass}>Blocking</Badge> : <span>No</span>}
+                {r.is_blocking ? <Badge className={blockingBadgeClass}>{tDetail("blocking")}</Badge> : <span>{tDetail("no")}</span>}
               </TableCell>
               <TableCell>{r.due_date ? new Date(r.due_date).toLocaleDateString() : "—"}</TableCell>
             </TableRow>
@@ -135,7 +137,7 @@ export function DefectsProjectTab({ projectId }: { projectId: string }) {
         </TableBody>
       </Table>
       {rows.length === 0 && !listQuery.isPending ? (
-        <p className="text-sm text-aistroyka-text-secondary">No punch list items yet.</p>
+        <p className="text-sm text-aistroyka-text-secondary">{tDetail("noPunchListItemsYet")}</p>
       ) : null}
     </div>
   );

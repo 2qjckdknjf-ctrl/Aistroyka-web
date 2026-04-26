@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Card, Badge, Skeleton, EmptyState } from "@/components/ui";
 import { formatStatusLabel, serviceRequestStatusBadgeClass } from "../../../statusBadgeStyles";
@@ -20,10 +21,10 @@ type PublicDetail = {
   linked_discussion_id: string | null;
 };
 
-function coverageLabel(c: string): string {
-  if (c === "warranty_covered") return "Treated as warranty-covered";
-  if (c === "not_warranty") return "Not under warranty (commercial / other)";
-  return "Warranty coverage under review";
+function coverageLabel(c: string, tDetail: ReturnType<typeof useTranslations>): string {
+  if (c === "warranty_covered") return tDetail("treatedAsWarrantyCovered");
+  if (c === "not_warranty") return tDetail("notUnderWarranty");
+  return tDetail("warrantyCoverageUnderReview");
 }
 
 async function fetchDetail(projectId: string, requestId: string): Promise<PublicDetail> {
@@ -43,6 +44,7 @@ export function ClientPortalServiceRequestDetailClient({
   projectId: string;
   requestId: string;
 }) {
+  const tDetail = useTranslations("dashboardDetail");
   const q = useQuery({
     queryKey: ["project-service-request", projectId, requestId, "portal"],
     queryFn: () => fetchDetail(projectId, requestId),
@@ -61,7 +63,7 @@ export function ClientPortalServiceRequestDetailClient({
       <Card>
         <EmptyState
           icon={<span className="text-2xl">🛠️</span>}
-          title="Request unavailable"
+          title={tDetail("requestUnavailable")}
           subtitle={q.error instanceof Error ? q.error.message : ""}
         />
       </Card>
@@ -76,17 +78,17 @@ export function ClientPortalServiceRequestDetailClient({
         href={`/dashboard/projects/${projectId}/client/service-requests`}
         className="text-aistroyka-accent hover:underline text-sm font-medium"
       >
-        ← Aftercare
+        {tDetail("backToAftercare")}
       </Link>
       <Card className="p-4">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <h1 className="text-aistroyka-title3 font-semibold">{d.title}</h1>
           <Badge className={serviceRequestStatusBadgeClass(d.status)}>{formatStatusLabel(d.status)}</Badge>
         </div>
-        <p className="mt-2 text-sm text-aistroyka-text-secondary">{coverageLabel(d.coverage_type)}</p>
+        <p className="mt-2 text-sm text-aistroyka-text-secondary">{coverageLabel(d.coverage_type, tDetail)}</p>
         {d.description ? <p className="mt-3 text-sm whitespace-pre-wrap">{d.description}</p> : null}
         {d.due_date ? (
-          <p className="mt-2 text-sm text-aistroyka-text-secondary">Target date: {new Date(d.due_date).toLocaleDateString()}</p>
+          <p className="mt-2 text-sm text-aistroyka-text-secondary">{tDetail("targetDate")} {new Date(d.due_date).toLocaleDateString()}</p>
         ) : null}
         {d.linked_defect_id ? (
           <p className="mt-3 text-sm">
@@ -94,7 +96,7 @@ export function ClientPortalServiceRequestDetailClient({
               href={`/dashboard/projects/${projectId}/client/defects/${d.linked_defect_id}`}
               className="text-aistroyka-accent hover:underline"
             >
-              Related punch list item →
+              {tDetail("relatedPunchListItem")}
             </Link>
           </p>
         ) : null}
@@ -104,17 +106,17 @@ export function ClientPortalServiceRequestDetailClient({
               href={`/dashboard/projects/${projectId}/client/discussions/${d.linked_discussion_id}`}
               className="text-aistroyka-accent hover:underline"
             >
-              Related discussion →
+              {tDetail("relatedDiscussion")}
             </Link>
           </p>
         ) : null}
         {d.resolution_note ? (
           <p className="mt-4 rounded border border-aistroyka-border-subtle bg-aistroyka-surface-muted/40 p-3 text-sm">
-            <span className="font-medium">Outcome:</span> {d.resolution_note}
+            <span className="font-medium">{tDetail("outcome")}:</span> {d.resolution_note}
           </p>
         ) : null}
         {d.resolved_at ? (
-          <p className="mt-2 text-xs text-aistroyka-text-tertiary">Updated {new Date(d.resolved_at).toLocaleString()}</p>
+          <p className="mt-2 text-xs text-aistroyka-text-tertiary">{tDetail("updated")} {new Date(d.resolved_at).toLocaleString()}</p>
         ) : null}
       </Card>
     </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@/i18n/navigation";
 import { Card, Button, Badge } from "@/components/ui";
@@ -21,6 +22,7 @@ async function fetchList(projectId: string): Promise<Row[]> {
 }
 
 export function StakeholderDiscussionsManagerPanel({ projectId }: { projectId: string }) {
+  const tDetail = useTranslations("dashboardDetail");
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -67,49 +69,49 @@ export function StakeholderDiscussionsManagerPanel({ projectId }: { projectId: s
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <h3 className="text-aistroyka-caption font-semibold uppercase tracking-wide text-aistroyka-text-tertiary">
-            Discussions &amp; resolution
+            {tDetail("discussionsResolution")}
           </h3>
           <p className="mt-1 text-sm text-aistroyka-text-secondary">
-            Structured threads with outcomes — not chat. Use for clarifications and decisions with the client.
+            {tDetail("discussionsResolutionHint")}
           </p>
         </div>
         <Button type="button" size="sm" variant="secondary" onClick={() => setOpen((o) => !o)}>
-          {open ? "Close" : "New discussion"}
+          {open ? tDetail("close") : tDetail("newDiscussion")}
         </Button>
       </div>
 
       {open ? (
         <div className="mt-4 space-y-3 rounded-lg border border-aistroyka-border-subtle p-3">
           <div>
-            <label className="text-xs font-medium text-aistroyka-text-secondary">Kind</label>
+            <label className="text-xs font-medium text-aistroyka-text-secondary">{tDetail("kind")}</label>
             <select
               className="mt-1 w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
               value={kind}
               onChange={(e) => setKind(e.target.value as typeof kind)}
             >
-              <option value="general">General</option>
-              <option value="document_clarification">Document clarification</option>
-              <option value="milestone_decision">Milestone decision</option>
-              <option value="request_followup">Request follow-up</option>
+              <option value="general">{tDetail("general")}</option>
+              <option value="document_clarification">{tDetail("documentClarification")}</option>
+              <option value="milestone_decision">{tDetail("milestoneDecision")}</option>
+              <option value="request_followup">{tDetail("requestFollowUp")}</option>
             </select>
           </div>
           <div>
-            <label className="text-xs font-medium text-aistroyka-text-secondary">Title</label>
+            <label className="text-xs font-medium text-aistroyka-text-secondary">{tDetail("title")}</label>
             <input
               className="mt-1 w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Short topic"
+              placeholder={tDetail("shortTopic")}
             />
           </div>
           <div>
-            <label className="text-xs font-medium text-aistroyka-text-secondary">Context (optional)</label>
+            <label className="text-xs font-medium text-aistroyka-text-secondary">{tDetail("contextOptional")}</label>
             <textarea
               className="mt-1 w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
               rows={3}
               value={context}
               onChange={(e) => setContext(e.target.value)}
-              placeholder="What needs to be decided or clarified?"
+              placeholder={tDetail("whatNeedsDecidedOrClarified")}
             />
           </div>
           {createMutation.isError && createMutation.error instanceof Error ? (
@@ -124,17 +126,17 @@ export function StakeholderDiscussionsManagerPanel({ projectId }: { projectId: s
             disabled={title.trim().length < 1}
             onClick={() => createMutation.mutate()}
           >
-            Create &amp; notify client
+            {tDetail("createAndNotifyClient")}
           </Button>
         </div>
       ) : null}
 
       {listQuery.isPending ? (
-        <p className="mt-3 text-sm text-aistroyka-text-tertiary">Loading…</p>
+        <p className="mt-3 text-sm text-aistroyka-text-tertiary">{tDetail("loading")}</p>
       ) : (
         <ul className="mt-3 space-y-2">
           {(listQuery.data ?? []).length === 0 ? (
-            <li className="text-sm text-aistroyka-text-tertiary">No discussions yet.</li>
+            <li className="text-sm text-aistroyka-text-tertiary">{tDetail("noDiscussionsYet")}</li>
           ) : (
             (listQuery.data ?? []).map((r) => (
               <li

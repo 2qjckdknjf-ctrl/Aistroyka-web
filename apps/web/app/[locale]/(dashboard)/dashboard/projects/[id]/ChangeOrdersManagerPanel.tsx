@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@/i18n/navigation";
 import { Card, Button, Badge } from "@/components/ui";
@@ -22,6 +23,7 @@ async function fetchList(projectId: string): Promise<Row[]> {
 }
 
 export function ChangeOrdersManagerPanel({ projectId }: { projectId: string }) {
+  const tDetail = useTranslations("dashboardDetail");
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -81,55 +83,55 @@ export function ChangeOrdersManagerPanel({ projectId }: { projectId: string }) {
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <h3 className="text-aistroyka-caption font-semibold uppercase tracking-wide text-aistroyka-text-tertiary">
-            Change orders &amp; variations
+            {tDetail("changeOrdersVariations")}
           </h3>
           <p className="mt-1 text-sm text-aistroyka-text-secondary">
-            Formal change-control — scope, schedule, and cost impact. Not accounting or legal automation.
+            {tDetail("changeOrdersManagerHint")}
           </p>
         </div>
         <Button type="button" size="sm" variant="secondary" onClick={() => setOpen((o) => !o)}>
-          {open ? "Close" : "New change order"}
+          {open ? tDetail("close") : tDetail("newChangeOrder")}
         </Button>
       </div>
 
       {open ? (
         <div className="mt-4 space-y-3 rounded-lg border border-aistroyka-border-subtle p-3">
           <div>
-            <label className="text-xs font-medium text-aistroyka-text-secondary">Kind</label>
+            <label className="text-xs font-medium text-aistroyka-text-secondary">{tDetail("kind")}</label>
             <select
               className="mt-1 w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
               value={kind}
               onChange={(e) => setKind(e.target.value as typeof kind)}
             >
-              <option value="owner_variation">Owner-requested variation</option>
-              <option value="manager_proposed">Manager-proposed change</option>
-              <option value="document_linked">Linked to a document</option>
-              <option value="decision_derived">From a decision / discussion</option>
-              <option value="other">Other</option>
+              <option value="owner_variation">{tDetail("ownerRequestedVariation")}</option>
+              <option value="manager_proposed">{tDetail("managerProposedChange")}</option>
+              <option value="document_linked">{tDetail("linkedToDocument")}</option>
+              <option value="decision_derived">{tDetail("fromDecisionOrDiscussion")}</option>
+              <option value="other">{tDetail("other")}</option>
             </select>
           </div>
           <div>
-            <label className="text-xs font-medium text-aistroyka-text-secondary">Initial status</label>
+            <label className="text-xs font-medium text-aistroyka-text-secondary">{tDetail("initialStatus")}</label>
             <select
               className="mt-1 w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
               value={initialStatus}
               onChange={(e) => setInitialStatus(e.target.value as typeof initialStatus)}
             >
-              <option value="draft">Draft (internal)</option>
-              <option value="proposed">Proposed (visible to client when shared)</option>
+              <option value="draft">{tDetail("draftInternal")}</option>
+              <option value="proposed">{tDetail("proposedVisibleToClient")}</option>
             </select>
           </div>
           <div>
-            <label className="text-xs font-medium text-aistroyka-text-secondary">Title</label>
+            <label className="text-xs font-medium text-aistroyka-text-secondary">{tDetail("title")}</label>
             <input
               className="mt-1 w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Short description of the change"
+              placeholder={tDetail("shortDescriptionOfChange")}
             />
           </div>
           <div>
-            <label className="text-xs font-medium text-aistroyka-text-secondary">Rationale</label>
+            <label className="text-xs font-medium text-aistroyka-text-secondary">{tDetail("rationale")}</label>
             <textarea
               className="mt-1 w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
               rows={3}
@@ -139,34 +141,34 @@ export function ChangeOrdersManagerPanel({ projectId }: { projectId: string }) {
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <label className="text-xs font-medium text-aistroyka-text-secondary">Schedule impact</label>
+              <label className="text-xs font-medium text-aistroyka-text-secondary">{tDetail("scheduleImpact")}</label>
               <select
                 className="mt-1 w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
                 value={scheduleLevel}
                 onChange={(e) => setScheduleLevel(e.target.value as typeof scheduleLevel)}
               >
-                <option value="none">No change</option>
-                <option value="minor_shift">Minor shift</option>
-                <option value="deadline_shift">Deadline shift</option>
-                <option value="major_shift">Major shift</option>
+                <option value="none">{tDetail("noChange")}</option>
+                <option value="minor_shift">{tDetail("minorShift")}</option>
+                <option value="deadline_shift">{tDetail("deadlineShift")}</option>
+                <option value="major_shift">{tDetail("majorShift")}</option>
               </select>
             </div>
             <div>
-              <label className="text-xs font-medium text-aistroyka-text-secondary">Budget impact</label>
+              <label className="text-xs font-medium text-aistroyka-text-secondary">{tDetail("budgetImpact")}</label>
               <select
                 className="mt-1 w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
                 value={budgetLevel}
                 onChange={(e) => setBudgetLevel(e.target.value as typeof budgetLevel)}
               >
-                <option value="none">No change</option>
-                <option value="minor_increase">Minor increase</option>
-                <option value="major_increase">Major increase</option>
-                <option value="tbd">TBD</option>
+                <option value="none">{tDetail("noChange")}</option>
+                <option value="minor_increase">{tDetail("minorIncrease")}</option>
+                <option value="major_increase">{tDetail("majorIncrease")}</option>
+                <option value="tbd">{tDetail("tbd")}</option>
               </select>
             </div>
           </div>
           <div>
-            <label className="text-xs font-medium text-aistroyka-text-secondary">Schedule impact notes (optional)</label>
+            <label className="text-xs font-medium text-aistroyka-text-secondary">{tDetail("scheduleImpactNotesOptional")}</label>
             <input
               className="mt-1 w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
               value={scheduleSummary}
@@ -174,7 +176,7 @@ export function ChangeOrdersManagerPanel({ projectId }: { projectId: string }) {
             />
           </div>
           <div>
-            <label className="text-xs font-medium text-aistroyka-text-secondary">Budget impact notes (optional)</label>
+            <label className="text-xs font-medium text-aistroyka-text-secondary">{tDetail("budgetImpactNotesOptional")}</label>
             <input
               className="mt-1 w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
               value={budgetSummary}
@@ -187,20 +189,20 @@ export function ChangeOrdersManagerPanel({ projectId }: { projectId: string }) {
             disabled={!title.trim() || createMutation.isPending}
             onClick={() => createMutation.mutate()}
           >
-            {createMutation.isPending ? "Creating…" : "Create"}
+            {createMutation.isPending ? tDetail("creating") : tDetail("create")}
           </Button>
           {createMutation.isError ? (
             <p className="text-sm text-aistroyka-error">
-              {createMutation.error instanceof Error ? createMutation.error.message : "Error"}
+              {createMutation.error instanceof Error ? createMutation.error.message : tDetail("error")}
             </p>
           ) : null}
         </div>
       ) : null}
 
       <div className="mt-4 space-y-2">
-        {listQuery.isPending ? <p className="text-sm text-aistroyka-text-secondary">Loading…</p> : null}
+        {listQuery.isPending ? <p className="text-sm text-aistroyka-text-secondary">{tDetail("loading")}</p> : null}
         {listQuery.data?.length === 0 ? (
-          <p className="text-sm text-aistroyka-text-secondary">No change orders yet.</p>
+          <p className="text-sm text-aistroyka-text-secondary">{tDetail("noChangeOrdersYet")}</p>
         ) : null}
         {listQuery.data?.map((r) => (
           <div
@@ -215,7 +217,7 @@ export function ChangeOrdersManagerPanel({ projectId }: { projectId: string }) {
                 {r.title}
               </Link>
               <p className="text-xs text-aistroyka-text-tertiary">
-                {r.kind.replace(/_/g, " ")} · updated {new Date(r.updated_at).toLocaleString()}
+                {r.kind.replace(/_/g, " ")} · {tDetail("updated")} {new Date(r.updated_at).toLocaleString()}
               </p>
             </div>
             <Badge className={changeOrderStatusBadgeClass(r.status)}>{formatStatusLabel(r.status)}</Badge>

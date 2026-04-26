@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@/i18n/navigation";
 import { Card, Button, Badge, Skeleton, EmptyState } from "@/components/ui";
@@ -69,6 +70,7 @@ export function ManagerChangeOrderDetailClient({
   projectId: string;
   changeOrderId: string;
 }) {
+  const tDetail = useTranslations("dashboardDetail");
   const queryClient = useQueryClient();
   const [toStatus, setToStatus] = useState("");
   const [note, setNote] = useState("");
@@ -168,7 +170,7 @@ export function ManagerChangeOrderDetailClient({
       <Card>
         <EmptyState
           icon={<span className="text-2xl">📋</span>}
-          title="Change order unavailable"
+          title={tDetail("changeOrderUnavailable")}
           subtitle={q.error instanceof Error ? q.error.message : ""}
         />
       </Card>
@@ -181,7 +183,7 @@ export function ManagerChangeOrderDetailClient({
   return (
     <div className="space-y-6">
       <Link href={`/dashboard/projects/${projectId}`} className="text-aistroyka-subheadline text-aistroyka-accent hover:underline">
-        ← Project
+        {tDetail("backToProject")}
       </Link>
       <Card className="p-4">
         <div className="flex flex-wrap items-start justify-between gap-2">
@@ -189,15 +191,15 @@ export function ManagerChangeOrderDetailClient({
           <Badge className={changeOrderStatusBadgeClass(row.status)}>{formatStatusLabel(row.status)}</Badge>
         </div>
         <p className="mt-1 text-xs text-aistroyka-text-tertiary">
-          Kind: {row.kind.replace(/_/g, " ")} · Created by {row.created_by.slice(0, 8)}…
+          {tDetail("kind")}: {row.kind.replace(/_/g, " ")} · {tDetail("createdBy")} {row.created_by.slice(0, 8)}…
         </p>
       </Card>
 
       {editable ? (
         <Card className="p-4 space-y-3">
-          <h2 className="font-semibold">Edit details</h2>
+          <h2 className="font-semibold">{tDetail("editDetails")}</h2>
           <div>
-            <label className="text-xs font-medium text-aistroyka-text-secondary">Title</label>
+            <label className="text-xs font-medium text-aistroyka-text-secondary">{tDetail("title")}</label>
             <input
               className="mt-1 w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
               value={title}
@@ -205,7 +207,7 @@ export function ManagerChangeOrderDetailClient({
             />
           </div>
           <div>
-            <label className="text-xs font-medium text-aistroyka-text-secondary">Rationale</label>
+            <label className="text-xs font-medium text-aistroyka-text-secondary">{tDetail("rationale")}</label>
             <textarea
               className="mt-1 w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
               rows={3}
@@ -215,34 +217,34 @@ export function ManagerChangeOrderDetailClient({
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <label className="text-xs font-medium text-aistroyka-text-secondary">Schedule impact level</label>
+              <label className="text-xs font-medium text-aistroyka-text-secondary">{tDetail("scheduleImpactLevel")}</label>
               <select
                 className="mt-1 w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
                 value={scheduleLevel}
                 onChange={(e) => setScheduleLevel(e.target.value)}
               >
-                <option value="none">No change</option>
-                <option value="minor_shift">Minor shift</option>
-                <option value="deadline_shift">Deadline shift</option>
-                <option value="major_shift">Major shift</option>
+                <option value="none">{tDetail("noChange")}</option>
+                <option value="minor_shift">{tDetail("minorShift")}</option>
+                <option value="deadline_shift">{tDetail("deadlineShift")}</option>
+                <option value="major_shift">{tDetail("majorShift")}</option>
               </select>
             </div>
             <div>
-              <label className="text-xs font-medium text-aistroyka-text-secondary">Budget impact level</label>
+              <label className="text-xs font-medium text-aistroyka-text-secondary">{tDetail("budgetImpactLevel")}</label>
               <select
                 className="mt-1 w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
                 value={budgetLevel}
                 onChange={(e) => setBudgetLevel(e.target.value)}
               >
-                <option value="none">No change</option>
-                <option value="minor_increase">Minor increase</option>
-                <option value="major_increase">Major increase</option>
-                <option value="tbd">TBD</option>
+                <option value="none">{tDetail("noChange")}</option>
+                <option value="minor_increase">{tDetail("minorIncrease")}</option>
+                <option value="major_increase">{tDetail("majorIncrease")}</option>
+                <option value="tbd">{tDetail("tbd")}</option>
               </select>
             </div>
           </div>
           <div>
-            <label className="text-xs font-medium text-aistroyka-text-secondary">Schedule notes</label>
+            <label className="text-xs font-medium text-aistroyka-text-secondary">{tDetail("scheduleNotes")}</label>
             <input
               className="mt-1 w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
               value={scheduleSummary}
@@ -250,7 +252,7 @@ export function ManagerChangeOrderDetailClient({
             />
           </div>
           <div>
-            <label className="text-xs font-medium text-aistroyka-text-secondary">Budget notes</label>
+            <label className="text-xs font-medium text-aistroyka-text-secondary">{tDetail("budgetNotes")}</label>
             <input
               className="mt-1 w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
               value={budgetSummary}
@@ -259,7 +261,7 @@ export function ManagerChangeOrderDetailClient({
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <label className="text-xs font-medium text-aistroyka-text-secondary">Schedule delta (days)</label>
+              <label className="text-xs font-medium text-aistroyka-text-secondary">{tDetail("scheduleDeltaDays")}</label>
               <input
                 className="mt-1 w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
                 value={scheduleDays}
@@ -268,7 +270,7 @@ export function ManagerChangeOrderDetailClient({
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-aistroyka-text-secondary">Budget delta (amount)</label>
+              <label className="text-xs font-medium text-aistroyka-text-secondary">{tDetail("budgetDeltaAmount")}</label>
               <input
                 className="mt-1 w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
                 value={budgetAmt}
@@ -278,31 +280,31 @@ export function ManagerChangeOrderDetailClient({
             </div>
           </div>
           <Button type="button" size="sm" onClick={() => patchMutation.mutate()} disabled={patchMutation.isPending}>
-            {patchMutation.isPending ? "Saving…" : "Save changes"}
+            {patchMutation.isPending ? tDetail("saving") : tDetail("saveChanges")}
           </Button>
         </Card>
       ) : (
         <Card className="p-4">
-          <h2 className="font-semibold">Summary</h2>
+          <h2 className="font-semibold">{tDetail("summary")}</h2>
           {row.description ? <p className="mt-2 text-sm whitespace-pre-wrap">{row.description}</p> : null}
           <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
             <div>
-              <dt className="text-aistroyka-text-tertiary">Schedule impact</dt>
+              <dt className="text-aistroyka-text-tertiary">{tDetail("scheduleImpact")}</dt>
               <dd>{row.schedule_impact_level.replace(/_/g, " ")}</dd>
             </div>
             <div>
-              <dt className="text-aistroyka-text-tertiary">Budget impact</dt>
+              <dt className="text-aistroyka-text-tertiary">{tDetail("budgetImpact")}</dt>
               <dd>{row.budget_impact_level.replace(/_/g, " ")}</dd>
             </div>
             {row.schedule_impact_summary ? (
               <div className="sm:col-span-2">
-                <dt className="text-aistroyka-text-tertiary">Schedule notes</dt>
+                <dt className="text-aistroyka-text-tertiary">{tDetail("scheduleNotes")}</dt>
                 <dd>{row.schedule_impact_summary}</dd>
               </div>
             ) : null}
             {row.budget_impact_summary ? (
               <div className="sm:col-span-2">
-                <dt className="text-aistroyka-text-tertiary">Budget notes</dt>
+                <dt className="text-aistroyka-text-tertiary">{tDetail("budgetNotes")}</dt>
                 <dd>{row.budget_impact_summary}</dd>
               </div>
             ) : null}
@@ -312,7 +314,7 @@ export function ManagerChangeOrderDetailClient({
 
       {options.length > 0 ? (
         <Card className="p-4 space-y-3">
-          <h2 className="font-semibold">Status transition</h2>
+          <h2 className="font-semibold">{tDetail("statusTransition")}</h2>
           <select
             className="w-full max-w-md rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
             value={toStatus}
@@ -325,7 +327,7 @@ export function ManagerChangeOrderDetailClient({
             ))}
           </select>
           <div>
-            <label className="text-xs font-medium text-aistroyka-text-secondary">Note (optional, audit)</label>
+            <label className="text-xs font-medium text-aistroyka-text-secondary">{tDetail("noteOptionalAudit")}</label>
             <input
               className="mt-1 w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
               value={note}
@@ -338,18 +340,18 @@ export function ManagerChangeOrderDetailClient({
             onClick={() => transitionMutation.mutate()}
             disabled={!toStatus || transitionMutation.isPending}
           >
-            {transitionMutation.isPending ? "Applying…" : "Apply transition"}
+            {transitionMutation.isPending ? tDetail("applying") : tDetail("applyTransition")}
           </Button>
           {transitionMutation.isError ? (
             <p className="text-sm text-aistroyka-error">
-              {transitionMutation.error instanceof Error ? transitionMutation.error.message : "Error"}
+              {transitionMutation.error instanceof Error ? transitionMutation.error.message : tDetail("error")}
             </p>
           ) : null}
         </Card>
       ) : null}
 
       <Card className="p-4">
-        <h2 className="font-semibold">History</h2>
+        <h2 className="font-semibold">{tDetail("history")}</h2>
         <ul className="mt-3 space-y-2 text-sm">
           {row.events.map((e) => (
             <li key={e.id} className="rounded border border-aistroyka-border-subtle p-2">

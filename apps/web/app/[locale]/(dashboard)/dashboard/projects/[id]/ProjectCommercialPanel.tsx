@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Skeleton,
@@ -27,14 +28,6 @@ async function fetchItems(projectId: string): Promise<CommercialItemRow[]> {
   return j.data ?? [];
 }
 
-const KINDS: { value: CommercialItemKind; label: string }[] = [
-  { value: "invoice", label: "Invoice" },
-  { value: "expected_revenue", label: "Expected revenue" },
-  { value: "deposit", label: "Deposit" },
-  { value: "credit_note", label: "Credit / adjustment" },
-  { value: "other", label: "Other" },
-];
-
 const STATUSES: CommercialItemStatus[] = [
   "draft",
   "issued",
@@ -60,6 +53,14 @@ function statusLabel(s: CommercialItemStatus, row: CommercialItemRow): string {
 }
 
 export function ProjectCommercialPanel({ projectId }: { projectId: string }) {
+  const tDetail = useTranslations("dashboardDetail");
+  const KINDS: { value: CommercialItemKind; label: string }[] = [
+    { value: "invoice", label: tDetail("invoice") },
+    { value: "expected_revenue", label: tDetail("expectedRevenue") },
+    { value: "deposit", label: tDetail("deposit") },
+    { value: "credit_note", label: tDetail("creditAdjustment") },
+    { value: "other", label: tDetail("other") },
+  ];
   const qc = useQueryClient();
   const [creating, setCreating] = useState(false);
   const [kind, setKind] = useState<CommercialItemKind>("invoice");
@@ -123,7 +124,7 @@ export function ProjectCommercialPanel({ projectId }: { projectId: string }) {
   });
 
   if (q.isPending) return <Skeleton className="h-48 m-4" />;
-  if (q.isError) return <p className="p-4 text-aistroyka-error">Failed to load commercial items.</p>;
+  if (q.isError) return <p className="p-4 text-aistroyka-error">{tDetail("failedLoadCommercialItems")}</p>;
 
   const rows = q.data ?? [];
 
@@ -131,22 +132,22 @@ export function ProjectCommercialPanel({ projectId }: { projectId: string }) {
     <div className="space-y-4 p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h3 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">Commercial &amp; billing</h3>
+          <h3 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">{tDetail("commercialBilling")}</h3>
           <p className="text-sm text-aistroyka-text-secondary">
-            Invoices and billing lines — not accounting. Track issue → payment and link change orders when relevant.
+            {tDetail("commercialBillingHint")}
           </p>
         </div>
         <Button type="button" variant="secondary" onClick={() => setCreating(!creating)}>
-          {creating ? "Close form" : "Add line"}
+          {creating ? tDetail("closeForm") : tDetail("addLine")}
         </Button>
       </div>
 
       {creating ? (
         <Card className="p-4 border border-aistroyka-border-subtle">
-          <p className="text-aistroyka-caption font-semibold uppercase text-aistroyka-text-tertiary mb-3">New commercial line</p>
+          <p className="text-aistroyka-caption font-semibold uppercase text-aistroyka-text-tertiary mb-3">{tDetail("newCommercialLine")}</p>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <label className="block text-sm">
-              <span className="text-aistroyka-text-tertiary">Kind</span>
+              <span className="text-aistroyka-text-tertiary">{tDetail("kind")}</span>
               <Select value={kind} onChange={(e) => setKind(e.target.value as CommercialItemKind)} className="mt-1 w-full">
                 {KINDS.map((k) => (
                   <option key={k.value} value={k.value}>
@@ -156,11 +157,11 @@ export function ProjectCommercialPanel({ projectId }: { projectId: string }) {
               </Select>
             </label>
             <label className="block text-sm sm:col-span-2">
-              <span className="text-aistroyka-text-tertiary">Title</span>
-              <Input value={title} onChange={(e) => setTitle(e.target.value)} className="mt-1" placeholder="e.g. Progress invoice #3" />
+              <span className="text-aistroyka-text-tertiary">{tDetail("title")}</span>
+              <Input value={title} onChange={(e) => setTitle(e.target.value)} className="mt-1" placeholder={tDetail("progressInvoiceExample")} />
             </label>
             <label className="block text-sm">
-              <span className="text-aistroyka-text-tertiary">Amount</span>
+              <span className="text-aistroyka-text-tertiary">{tDetail("amount")}</span>
               <Input
                 type="number"
                 step="0.01"
@@ -170,11 +171,11 @@ export function ProjectCommercialPanel({ projectId }: { projectId: string }) {
               />
             </label>
             <label className="block text-sm">
-              <span className="text-aistroyka-text-tertiary">Currency</span>
+              <span className="text-aistroyka-text-tertiary">{tDetail("currency")}</span>
               <Input value={currency} onChange={(e) => setCurrency(e.target.value)} className="mt-1" />
             </label>
             <label className="block text-sm">
-              <span className="text-aistroyka-text-tertiary">Due date</span>
+              <span className="text-aistroyka-text-tertiary">{tDetail("dueDate")}</span>
               <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="mt-1" />
             </label>
           </div>
@@ -187,7 +188,7 @@ export function ProjectCommercialPanel({ projectId }: { projectId: string }) {
             disabled={!title.trim() || !amount || createMut.isPending}
             onClick={() => createMut.mutate()}
           >
-            {createMut.isPending ? "Saving…" : "Create draft"}
+            {createMut.isPending ? tDetail("saving") : tDetail("createDraft")}
           </Button>
         </Card>
       ) : null}
@@ -195,19 +196,19 @@ export function ProjectCommercialPanel({ projectId }: { projectId: string }) {
       {rows.length === 0 ? (
         <EmptyState
           icon={<span className="text-2xl">📄</span>}
-          title="No commercial lines"
-          subtitle="Add billing or expected revenue lines to track payment status against this project."
+          title={tDetail("noCommercialLines")}
+          subtitle={tDetail("addBillingOrRevenueLines")}
         />
       ) : (
-        <Table aria-label="Commercial items">
+        <Table aria-label={tDetail("commercialItems")}>
           <TableHead>
             <TableRow>
-              <TableHeaderCell>Title</TableHeaderCell>
-              <TableHeaderCell>Kind</TableHeaderCell>
-              <TableHeaderCell>Amount</TableHeaderCell>
-              <TableHeaderCell>Due</TableHeaderCell>
-              <TableHeaderCell>Status</TableHeaderCell>
-              <TableHeaderCell>Next action</TableHeaderCell>
+              <TableHeaderCell>{tDetail("title")}</TableHeaderCell>
+              <TableHeaderCell>{tDetail("kind")}</TableHeaderCell>
+              <TableHeaderCell>{tDetail("amount")}</TableHeaderCell>
+              <TableHeaderCell>{tDetail("due")}</TableHeaderCell>
+              <TableHeaderCell>{tDetail("status")}</TableHeaderCell>
+              <TableHeaderCell>{tDetail("nextAction")}</TableHeaderCell>
             </TableRow>
           </TableHead>
           <TableBody>

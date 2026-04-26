@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@/i18n/navigation";
 import { Card, Button, Badge, Skeleton, EmptyState } from "@/components/ui";
@@ -38,6 +39,7 @@ export function ClientPortalDiscussionDetailClient({
   projectId: string;
   discussionId: string;
 }) {
+  const tDetail = useTranslations("dashboardDetail");
   const queryClient = useQueryClient();
   const [body, setBody] = useState("");
   const [kind, setKind] = useState<"feedback" | "clarification" | "option_selected">("feedback");
@@ -82,8 +84,8 @@ export function ClientPortalDiscussionDetailClient({
       <Card>
         <EmptyState
           icon={<span className="text-2xl">💬</span>}
-          title="Discussion unavailable"
-          subtitle={q.error instanceof Error ? q.error.message : "You may not have access."}
+          title={tDetail("discussionUnavailable")}
+          subtitle={q.error instanceof Error ? q.error.message : tDetail("accessDeniedHint")}
         />
       </Card>
     );
@@ -98,7 +100,7 @@ export function ClientPortalDiscussionDetailClient({
         href={`/dashboard/projects/${projectId}/client/discussions`}
         className="text-aistroyka-subheadline text-aistroyka-accent hover:underline"
       >
-        ← All discussions
+        {tDetail("backToAllDiscussions")}
       </Link>
 
       <Card className="p-4">
@@ -110,17 +112,17 @@ export function ClientPortalDiscussionDetailClient({
         {d.context ? <p className="mt-3 text-sm text-aistroyka-text-secondary whitespace-pre-wrap">{d.context}</p> : null}
         {d.resolution_summary ? (
           <div className="mt-4 rounded border border-aistroyka-success/30 bg-aistroyka-success/5 p-3">
-            <p className="text-xs font-medium uppercase text-aistroyka-success">Resolution</p>
+            <p className="text-xs font-medium uppercase text-aistroyka-success">{tDetail("resolution")}</p>
             <p className="mt-1 text-sm text-aistroyka-text-primary whitespace-pre-wrap">{d.resolution_summary}</p>
           </div>
         ) : null}
       </Card>
 
       <Card className="p-4">
-        <h2 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">Updates</h2>
+        <h2 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">{tDetail("updates")}</h2>
         <ul className="mt-3 space-y-3">
           {d.entries.length === 0 ? (
-            <li className="text-sm text-aistroyka-text-tertiary">No updates yet.</li>
+            <li className="text-sm text-aistroyka-text-tertiary">{tDetail("noUpdatesYet")}</li>
           ) : (
             d.entries.map((e) => (
               <li key={e.id} className="rounded border border-aistroyka-border-subtle p-3 text-sm">
@@ -134,20 +136,20 @@ export function ClientPortalDiscussionDetailClient({
 
       {canRespond ? (
         <Card className="p-4 border-l-4 border-l-aistroyka-warning">
-          <h2 className="font-semibold text-aistroyka-text-primary">Your response</h2>
+          <h2 className="font-semibold text-aistroyka-text-primary">{tDetail("yourResponseTitle")}</h2>
           <p className="mt-1 text-xs text-aistroyka-text-tertiary">
-            Use a short update. This is not a chat — one clear response at a time helps everyone stay aligned.
+            {tDetail("yourResponseHint")}
           </p>
           <div className="mt-3">
-            <label className="text-xs font-medium text-aistroyka-text-secondary">Type</label>
+            <label className="text-xs font-medium text-aistroyka-text-secondary">{tDetail("type")}</label>
             <select
               className="mt-1 w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
               value={kind}
               onChange={(e) => setKind(e.target.value as typeof kind)}
             >
-              <option value="feedback">Feedback</option>
-              <option value="clarification">Clarification</option>
-              <option value="option_selected">Option selected</option>
+              <option value="feedback">{tDetail("requestKindFeedback")}</option>
+              <option value="clarification">{tDetail("clarification")}</option>
+              <option value="option_selected">{tDetail("optionSelected")}</option>
             </select>
           </div>
           <textarea
@@ -155,7 +157,7 @@ export function ClientPortalDiscussionDetailClient({
             rows={4}
             value={body}
             onChange={(e) => setBody(e.target.value)}
-            placeholder="Your structured response…"
+            placeholder={tDetail("yourStructuredResponse")}
           />
           {addMutation.isError && addMutation.error instanceof Error ? (
             <p className="mt-2 text-sm text-aistroyka-error">{addMutation.error.message}</p>
@@ -168,14 +170,14 @@ export function ClientPortalDiscussionDetailClient({
             disabled={body.trim().length < 1}
             onClick={() => addMutation.mutate()}
           >
-            Submit response
+            {tDetail("submitResponse")}
           </Button>
         </Card>
       ) : (
         <p className="text-sm text-aistroyka-text-tertiary">
           {d.status === "resolved" || d.status === "closed"
-            ? "This discussion is closed."
-            : "Waiting for your team — you will be able to respond when it is your turn."}
+            ? tDetail("discussionClosed")
+            : tDetail("waitingForYourTeam")}
         </p>
       )}
     </div>

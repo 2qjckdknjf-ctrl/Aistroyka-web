@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, Badge, Button } from "@/components/ui";
 import type { ClientRequestPublic } from "@/lib/domain/client-requests/client-requests.types";
@@ -19,6 +20,7 @@ export function ClientPortalRequestsSection({
   requests: ClientRequestPublic[];
   canRespondToRequests: boolean;
 }) {
+  const tDetail = useTranslations("dashboardDetail");
   const queryClient = useQueryClient();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [feedbackText, setFeedbackText] = useState("");
@@ -62,9 +64,9 @@ export function ClientPortalRequestsSection({
 
   return (
     <Card className="p-4 border-l-4 border-l-aistroyka-info">
-      <h3 className="font-semibold text-aistroyka-text-primary">Requests from your project team</h3>
+      <h3 className="font-semibold text-aistroyka-text-primary">{tDetail("requestsFromYourProjectTeam")}</h3>
       <p className="mt-1 text-sm text-aistroyka-text-secondary">
-        Respond to explicit items below. This is not a chat — each request is tracked.
+        {tDetail("requestsFromTeamHint")}
       </p>
       <ul className="mt-4 space-y-4">
         {requests.map((r) => (
@@ -73,14 +75,14 @@ export function ClientPortalRequestsSection({
               <div>
                 <p className="font-medium text-aistroyka-text-primary">{r.title}</p>
                 <p className="text-xs text-aistroyka-text-tertiary mt-1">
-                  {kindLabel(r.kind)} · {r.action_mode === "info_only" ? "Information" : "Action required"}
+                  {kindLabel(r.kind)} · {r.action_mode === "info_only" ? tDetail("information") : tDetail("actionRequired")}
                 </p>
                 {r.instructions ? (
                   <p className="mt-2 text-sm text-aistroyka-text-secondary whitespace-pre-wrap">{r.instructions}</p>
                 ) : null}
                 {r.linked_entity_type ? (
                   <p className="mt-1 text-xs text-aistroyka-text-tertiary">
-                    Linked: {r.linked_entity_type}
+                    {tDetail("linked")}: {r.linked_entity_type}
                     {r.linked_entity_id ? ` · ${r.linked_entity_id.slice(0, 8)}…` : ""}
                   </p>
                 ) : null}
@@ -106,7 +108,7 @@ export function ClientPortalRequestsSection({
                           respondMutation.mutate({ requestId: r.id, body: { decision: "approve", note: note || null } })
                         }
                       >
-                        Approve
+                        {tDetail("approve")}
                       </Button>
                       <Button
                         type="button"
@@ -117,13 +119,13 @@ export function ClientPortalRequestsSection({
                           respondMutation.mutate({ requestId: r.id, body: { decision: "reject", note: note || null } })
                         }
                       >
-                        Reject
+                        {tDetail("reject")}
                       </Button>
                     </div>
                   ) : null}
                   {r.kind === "feedback" ? (
                     <div>
-                      <label className="text-xs font-medium text-aistroyka-text-secondary">Your feedback</label>
+                      <label className="text-xs font-medium text-aistroyka-text-secondary">{tDetail("yourFeedback")}</label>
                       <textarea
                         className="mt-1 w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
                         rows={3}
@@ -142,7 +144,7 @@ export function ClientPortalRequestsSection({
                           })
                         }
                       >
-                        Submit feedback
+                        {tDetail("submitFeedback")}
                       </Button>
                     </div>
                   ) : null}
@@ -155,7 +157,7 @@ export function ClientPortalRequestsSection({
                         respondMutation.mutate({ requestId: r.id, body: { acknowledged: true, note: note || null } })
                       }
                     >
-                      I acknowledge
+                      {tDetail("iAcknowledge")}
                     </Button>
                   ) : null}
                   {r.kind === "choice" && r.choice_options ? (
@@ -182,7 +184,7 @@ export function ClientPortalRequestsSection({
                           })
                         }
                       >
-                        Submit choice
+                        {tDetail("submitChoice")}
                       </Button>
                     </div>
                   ) : null}
@@ -198,40 +200,40 @@ export function ClientPortalRequestsSection({
                         })
                       }
                     >
-                      Confirm review
+                      {tDetail("confirmReview")}
                     </Button>
                   ) : null}
                   <div>
-                    <label className="text-xs text-aistroyka-text-tertiary">Optional note</label>
+                    <label className="text-xs text-aistroyka-text-tertiary">{tDetail("optionalNote")}</label>
                     <input
                       type="text"
                       className="mt-1 w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
                       value={note}
                       onChange={(e) => setNote(e.target.value)}
-                      placeholder="Add a short note"
+                      placeholder={tDetail("addShortNote")}
                     />
                   </div>
                   <Button type="button" variant="ghost" size="sm" onClick={() => setExpandedId(null)}>
-                    Cancel
+                    {tDetail("cancel")}
                   </Button>
                 </div>
               ) : (
                 <Button type="button" size="sm" className="mt-3" onClick={() => setExpandedId(r.id)}>
-                  Respond
+                  {tDetail("respond")}
                 </Button>
               )
             ) : null}
 
             {r.status !== "open" && r.response_value ? (
               <p className="mt-2 text-xs text-aistroyka-text-tertiary">
-                Your response: {r.response_value}
+                {tDetail("yourResponse")} {r.response_value}
                 {r.response_note ? ` — ${r.response_note}` : ""}
               </p>
             ) : null}
 
             {respondMutation.isError && expandedId === r.id ? (
               <p className="mt-2 text-sm text-aistroyka-error" role="alert">
-                {respondMutation.error instanceof Error ? respondMutation.error.message : "Error"}
+                {respondMutation.error instanceof Error ? respondMutation.error.message : tDetail("error")}
               </p>
             ) : null}
           </li>

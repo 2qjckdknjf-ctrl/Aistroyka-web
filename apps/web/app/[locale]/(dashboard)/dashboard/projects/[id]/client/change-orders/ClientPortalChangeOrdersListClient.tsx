@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Card, Badge, Skeleton, EmptyState } from "@/components/ui";
 import { changeOrderStatusBadgeClass, formatStatusLabel } from "../../statusBadgeStyles";
@@ -21,6 +22,7 @@ async function fetchList(projectId: string): Promise<Row[]> {
 }
 
 export function ClientPortalChangeOrdersListClient({ projectId }: { projectId: string }) {
+  const tDetail = useTranslations("dashboardDetail");
   const q = useQuery({
     queryKey: ["change-orders", projectId],
     queryFn: () => fetchList(projectId),
@@ -39,7 +41,7 @@ export function ClientPortalChangeOrdersListClient({ projectId }: { projectId: s
       <Card>
         <EmptyState
           icon={<span className="text-2xl">📋</span>}
-          title="Could not load change orders"
+          title={tDetail("couldNotLoadChangeOrders")}
           subtitle={q.error instanceof Error ? q.error.message : ""}
         />
       </Card>
@@ -51,15 +53,15 @@ export function ClientPortalChangeOrdersListClient({ projectId }: { projectId: s
   return (
     <div className="space-y-4">
       <Link href={`/dashboard/projects/${projectId}/client`} className="text-aistroyka-accent hover:underline text-sm font-medium">
-        ← Client portal
+        {tDetail("backToClientPortal")}
       </Link>
       <Card className="p-4">
-        <h1 className="text-aistroyka-title3 font-semibold">Change orders</h1>
+        <h1 className="text-aistroyka-title3 font-semibold">{tDetail("changeOrders")}</h1>
         <p className="mt-1 text-sm text-aistroyka-text-secondary">
-          Formal changes to scope, schedule, and cost — shared with you when relevant.
+          {tDetail("changeOrdersClientHint")}
         </p>
         {rows.length === 0 ? (
-          <p className="mt-4 text-sm text-aistroyka-text-secondary">No change orders shared yet.</p>
+          <p className="mt-4 text-sm text-aistroyka-text-secondary">{tDetail("noChangeOrdersSharedYet")}</p>
         ) : (
           <ul className="mt-4 space-y-2">
             {rows.map((r) => (
@@ -73,7 +75,7 @@ export function ClientPortalChangeOrdersListClient({ projectId }: { projectId: s
                     <Badge className={changeOrderStatusBadgeClass(r.status)}>{formatStatusLabel(r.status)}</Badge>
                   </div>
                   <p className="mt-1 text-xs text-aistroyka-text-tertiary">
-                    Updated {new Date(r.updated_at).toLocaleString()}
+                    {tDetail("updated")} {new Date(r.updated_at).toLocaleString()}
                   </p>
                 </Link>
               </li>

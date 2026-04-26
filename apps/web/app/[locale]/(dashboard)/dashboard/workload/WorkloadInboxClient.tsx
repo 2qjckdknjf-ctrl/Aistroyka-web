@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@/i18n/navigation";
 import { Card, Badge, Skeleton, ErrorState, Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui";
@@ -27,6 +28,7 @@ function filterPri(items: WorkloadItem[], f: "all" | "urgent" | "high" | "normal
 }
 
 export function WorkloadInboxClient() {
+  const tDetail = useTranslations("dashboardDetail");
   const [priorityFilter, setPriorityFilter] = useState<"all" | "urgent" | "high" | "normal">("all");
 
   const mgr = useQuery({
@@ -53,7 +55,7 @@ export function WorkloadInboxClient() {
   if (err) {
     return (
       <ErrorState
-        message={err instanceof Error ? err.message : "Failed to load inbox"}
+        message={err instanceof Error ? err.message : tDetail("failedLoadInbox")}
         onRetry={() => {
           mgr.refetch();
           lead.refetch();
@@ -74,7 +76,7 @@ export function WorkloadInboxClient() {
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap items-center gap-2 text-sm">
-        <span className="text-aistroyka-text-secondary">Filter:</span>
+        <span className="text-aistroyka-text-secondary">{tDetail("filter")}:</span>
         {(["all", "urgent", "high", "normal"] as const).map((f) => (
           <button
             key={f}
@@ -82,31 +84,39 @@ export function WorkloadInboxClient() {
             className={`rounded px-2 py-1 capitalize ${priorityFilter === f ? "bg-aistroyka-surface-raised font-medium" : "text-aistroyka-text-tertiary"}`}
             onClick={() => setPriorityFilter(f)}
           >
-            {f}
+            {tDetail(f)}
           </button>
         ))}
       </div>
 
-      <section aria-label="Manager execution inbox">
-        <h2 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary mb-2">Execution inbox</h2>
+      <section aria-label={tDetail("managerExecutionInbox")}>
+        <h2 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary mb-2">{tDetail("executionInbox")}</h2>
         <p className="text-sm text-aistroyka-text-secondary mb-3">
-          Approvals, schedule, costs, handover, punch list, aftercare — grounded in live project data.
+          {tDetail("executionInboxHint")}
         </p>
-        <WorkloadTable items={managerItems} empty="Nothing needs your attention in this filter." />
+        <WorkloadTable items={managerItems} empty={tDetail("nothingNeedsAttentionFilter")} tDetail={tDetail} />
       </section>
 
       {leadershipItems.length > 0 ? (
-        <section aria-label="Leadership portfolio signals">
-          <h2 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary mb-2">Portfolio — critical</h2>
-          <p className="text-sm text-aistroyka-text-secondary mb-3">Projects in a critical portfolio state (owner/admin).</p>
-          <WorkloadTable items={leadershipItems} empty="No critical portfolio projects." />
+        <section aria-label={tDetail("leadershipPortfolioSignals")}>
+          <h2 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary mb-2">{tDetail("portfolioCritical")}</h2>
+          <p className="text-sm text-aistroyka-text-secondary mb-3">{tDetail("criticalPortfolioStateHint")}</p>
+          <WorkloadTable items={leadershipItems} empty={tDetail("noCriticalPortfolioProjects")} tDetail={tDetail} />
         </section>
       ) : null}
     </div>
   );
 }
 
-function WorkloadTable({ items, empty }: { items: WorkloadItem[]; empty: string }) {
+function WorkloadTable({
+  items,
+  empty,
+  tDetail,
+}: {
+  items: WorkloadItem[];
+  empty: string;
+  tDetail: ReturnType<typeof useTranslations>;
+}) {
   if (items.length === 0) {
     return <p className="text-sm text-aistroyka-text-tertiary">{empty}</p>;
   }
@@ -114,10 +124,10 @@ function WorkloadTable({ items, empty }: { items: WorkloadItem[]; empty: string 
     <Table>
       <TableHead>
         <TableRow>
-          <TableHeaderCell>Priority</TableHeaderCell>
-          <TableHeaderCell>Item</TableHeaderCell>
-          <TableHeaderCell>Project</TableHeaderCell>
-          <TableHeaderCell>Action</TableHeaderCell>
+          <TableHeaderCell>{tDetail("priority")}</TableHeaderCell>
+          <TableHeaderCell>{tDetail("item")}</TableHeaderCell>
+          <TableHeaderCell>{tDetail("project")}</TableHeaderCell>
+          <TableHeaderCell>{tDetail("action")}</TableHeaderCell>
         </TableRow>
       </TableHead>
       <TableBody>
@@ -128,10 +138,10 @@ function WorkloadTable({ items, empty }: { items: WorkloadItem[]; empty: string 
               <p className="font-medium text-aistroyka-text-primary">{w.title}</p>
               <p className="text-xs text-aistroyka-text-tertiary mt-0.5">{w.reason}</p>
             </TableCell>
-            <TableCell>{w.project_name ?? "—"}</TableCell>
+              <TableCell>{w.project_name ?? "—"}</TableCell>
             <TableCell>
               <Link href={w.action_url} className="text-aistroyka-accent hover:underline text-sm font-medium">
-                Open →
+                  {tDetail("openArrow")}
               </Link>
             </TableCell>
           </TableRow>

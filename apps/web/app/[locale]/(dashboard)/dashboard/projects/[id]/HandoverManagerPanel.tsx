@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { useState } from "react";
 import { Card, Button, Badge } from "@/components/ui";
@@ -30,13 +31,8 @@ async function fetchHandover(projectId: string): Promise<ManagerPayload> {
   return j.data;
 }
 
-const NEXT_LABEL: Record<string, string> = {
-  in_progress: "Mark ready for handover",
-  handover_ready: "Record handover to client",
-  handed_over: "Mark project completed",
-};
-
 export function HandoverManagerPanel({ projectId }: { projectId: string }) {
+  const tDetail = useTranslations("dashboardDetail");
   const queryClient = useQueryClient();
   const [note, setNote] = useState("");
 
@@ -70,7 +66,7 @@ export function HandoverManagerPanel({ projectId }: { projectId: string }) {
   if (q.isPending) {
     return (
       <Card className="border-l-4 border-l-aistroyka-success p-4">
-        <p className="text-sm text-aistroyka-text-secondary">Loading handover…</p>
+        <p className="text-sm text-aistroyka-text-secondary">{tDetail("loadingHandover")}</p>
       </Card>
     );
   }
@@ -78,12 +74,17 @@ export function HandoverManagerPanel({ projectId }: { projectId: string }) {
   if (q.isError) {
     return (
       <Card className="border-l-4 border-l-aistroyka-success p-4">
-        <p className="text-sm text-aistroyka-error">{q.error instanceof Error ? q.error.message : "Error"}</p>
+        <p className="text-sm text-aistroyka-error">{q.error instanceof Error ? q.error.message : tDetail("error")}</p>
       </Card>
     );
   }
 
   const { handover, readiness } = q.data!;
+  const NEXT_LABEL: Record<string, string> = {
+    in_progress: tDetail("markReadyForHandover"),
+    handover_ready: tDetail("recordHandoverToClient"),
+    handed_over: tDetail("markProjectCompleted"),
+  };
   const nextStatus =
     handover.status === "in_progress"
       ? "handover_ready"
@@ -98,10 +99,10 @@ export function HandoverManagerPanel({ projectId }: { projectId: string }) {
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <h3 className="text-aistroyka-caption font-semibold uppercase tracking-wide text-aistroyka-text-tertiary">
-            Handover &amp; completion
+            {tDetail("handoverCompletion")}
           </h3>
           <p className="mt-1 text-sm text-aistroyka-text-secondary">
-            Readiness is computed from milestones, documents, change orders, discussions, and open requests — not a generic checklist app.
+            {tDetail("handoverManagerHint")}
           </p>
         </div>
         <Badge className={handoverStatusBadgeClass(handover.status)}>{formatStatusLabel(handover.status)}</Badge>
@@ -109,7 +110,7 @@ export function HandoverManagerPanel({ projectId }: { projectId: string }) {
 
       {!readiness.ready ? (
         <div className="mt-4 rounded-lg border border-aistroyka-warning/40 bg-aistroyka-warning/10 p-3">
-          <p className="text-sm font-medium text-aistroyka-warning">Blocked — resolve before advancing</p>
+          <p className="text-sm font-medium text-aistroyka-warning">{tDetail("blockedResolveBeforeAdvancing")}</p>
           <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-aistroyka-text-secondary">
             {readiness.blockers.map((b) => (
               <li key={b.code}>
@@ -119,7 +120,7 @@ export function HandoverManagerPanel({ projectId }: { projectId: string }) {
                   <>
                     {" "}
                     <Link href={b.href} className="text-aistroyka-accent hover:underline">
-                      Open
+                      {tDetail("open")}
                     </Link>
                   </>
                 ) : null}
@@ -128,20 +129,20 @@ export function HandoverManagerPanel({ projectId }: { projectId: string }) {
           </ul>
         </div>
       ) : (
-        <p className="mt-3 text-sm text-aistroyka-success">No blocking items detected for handover.</p>
+        <p className="mt-3 text-sm text-aistroyka-success">{tDetail("noBlockingItemsForHandover")}</p>
       )}
 
       {nextStatus ? (
         <div className="mt-4 space-y-2 rounded-lg border border-aistroyka-border-subtle p-3">
           {(nextStatus === "handed_over" || nextStatus === "completed") && (
             <div>
-              <label className="text-xs font-medium text-aistroyka-text-secondary">Note (optional, shared with client when handed over)</label>
+              <label className="text-xs font-medium text-aistroyka-text-secondary">{tDetail("noteOptionalSharedWithClient")}</label>
               <textarea
                 className="mt-1 w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
                 rows={2}
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                placeholder="Short summary for the client record"
+                placeholder={tDetail("shortSummaryForClientRecord")}
               />
             </div>
           )}
@@ -151,16 +152,16 @@ export function HandoverManagerPanel({ projectId }: { projectId: string }) {
             disabled={transition.isPending || (!readiness.ready && (nextStatus === "handover_ready" || nextStatus === "handed_over"))}
             onClick={() => transition.mutate(nextStatus)}
           >
-            {transition.isPending ? "Applying…" : NEXT_LABEL[handover.status] ?? "Advance"}
+            {transition.isPending ? tDetail("applying") : NEXT_LABEL[handover.status] ?? tDetail("advance")}
           </Button>
           {transition.isError ? (
             <p className="text-sm text-aistroyka-error">
-              {transition.error instanceof Error ? transition.error.message : "Error"}
+              {transition.error instanceof Error ? transition.error.message : tDetail("error")}
             </p>
           ) : null}
         </div>
       ) : (
-        <p className="mt-3 text-sm text-aistroyka-text-tertiary">This project is marked completed.</p>
+        <p className="mt-3 text-sm text-aistroyka-text-tertiary">{tDetail("projectMarkedCompleted")}</p>
       )}
     </Card>
   );
