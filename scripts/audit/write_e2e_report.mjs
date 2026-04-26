@@ -60,7 +60,10 @@ function parsePlaywrightSummary(log) {
   const start = log.indexOf('{\n  "config"');
   if (start < 0) return { total: 0, passed: 0, failed: 0, skipped: 0 };
   try {
-    const parsed = JSON.parse(log.slice(start));
+    const endMarker = "\nStep failed:";
+    const end = log.indexOf(endMarker, start);
+    const jsonText = end > start ? log.slice(start, end).trim() : log.slice(start).trim();
+    const parsed = JSON.parse(jsonText);
     const stats = parsed.stats ?? {};
     return {
       total: Number(stats.expected ?? 0) + Number(stats.unexpected ?? 0) + Number(stats.skipped ?? 0) + Number(stats.flaky ?? 0),

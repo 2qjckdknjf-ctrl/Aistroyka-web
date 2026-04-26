@@ -26,6 +26,7 @@ async function fetchList(projectId: string): Promise<Row[]> {
 
 export function ClientPortalDiscussionsListClient({ projectId }: { projectId: string }) {
   const tPage = useTranslations("dashboardPageMeta");
+  const tDetail = useTranslations("dashboardDetail");
   const q = useQuery({
     queryKey: ["stakeholder-discussions", projectId],
     queryFn: () => fetchList(projectId),
@@ -44,8 +45,8 @@ export function ClientPortalDiscussionsListClient({ projectId }: { projectId: st
       <Card>
         <EmptyState
           icon={<span className="text-2xl">💬</span>}
-          title="Unable to load discussions"
-          subtitle={q.error instanceof Error ? q.error.message : "Try again later."}
+          title={tDetail("unableToLoadDiscussions")}
+          subtitle={q.error instanceof Error ? q.error.message : tDetail("tryAgainLater")}
         />
       </Card>
     );
@@ -60,7 +61,7 @@ export function ClientPortalDiscussionsListClient({ projectId }: { projectId: st
           href={`/dashboard/projects/${projectId}/client`}
           className="text-aistroyka-subheadline text-aistroyka-accent hover:underline"
         >
-          ← Client portal
+          {tDetail("backToClientPortal")}
         </Link>
       </div>
       <SectionHeader title={tPage("discussionsTitle")} subtitle={tPage("discussionsSubtitle")} />

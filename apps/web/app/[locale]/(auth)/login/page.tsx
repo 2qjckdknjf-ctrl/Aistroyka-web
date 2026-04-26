@@ -131,7 +131,7 @@ function LoginForm() {
       <div className="w-full max-w-[400px]">
         <div className="card-elevated">
           <div className="mb-aistroyka-4 flex justify-center">
-            <Image src="/brand/aistroyka-logo.png" alt="Aistroyka" width={140} height={48} className="h-12 w-auto object-contain" unoptimized />
+            <Image src="/brand/aistroyka-logo.png" alt={t("tagline")} width={140} height={48} className="h-12 w-auto object-contain" unoptimized />
           </div>
           <div className="mb-aistroyka-6 text-center sm:mb-aistroyka-8">
             <h1 className="text-aistroyka-title2 font-bold tracking-tight text-aistroyka-text-primary sm:text-aistroyka-title">{t("login")}</h1>

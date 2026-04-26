@@ -25,12 +25,19 @@ const navTargets = [
 test.use({ trace: "retain-on-failure", screenshot: "only-on-failure" });
 
 test.describe("Dashboard Navigation CTA Audit", () => {
-  test.beforeEach(async ({ page }) => {
-    await loginIfConfigured(page);
-  });
+  test("all visible dashboard shell links navigate without critical errors", async ({ page }, testInfo) => {
+    const results: Array<{
+      expectedPath: string;
+      actualUrl: string;
+      networkIssues: string[];
+      consoleErrors: string[];
+    }> = [];
+    const allNetworkIssues: string[] = [];
+    const allConsoleErrors: string[] = [];
 
-  for (const target of navTargets) {
-    test(`${target.path}`, async ({ page }, testInfo) => {
+    await loginIfConfigured(page);
+
+    for (const target of navTargets) {
       const networkIssues = collectCriticalIssues(page);
       const consoleErrors = collectConsoleErrors(page);
       const expectedPath = `/${auditLocale}${target.path}`;
@@ -45,17 +52,20 @@ test.describe("Dashboard Navigation CTA Audit", () => {
       await page.waitForLoadState("domcontentloaded");
       await expect(page).toHaveURL(new RegExp(`${escapeRegExp(expectedPath)}(?:$|[?#])`));
 
-      await attachJson(testInfo, "nav-cta-result", {
+      results.push({
         expectedPath,
         actualUrl: page.url(),
         networkIssues,
         consoleErrors,
       });
+      allNetworkIssues.push(...networkIssues.map((issue) => `${target.path}: ${issue}`));
+      allConsoleErrors.push(...consoleErrors.map((issue) => `${target.path}: ${issue}`));
+    }
 
-      expect(networkIssues).toEqual([]);
-      expect(consoleErrors).toEqual([]);
-    });
-  }
+    await attachJson(testInfo, "nav-cta-results", results);
+    expect(allNetworkIssues).toEqual([]);
+    expect(allConsoleErrors).toEqual([]);
+  });
 });
 
 function escapeRegExp(value: string) {

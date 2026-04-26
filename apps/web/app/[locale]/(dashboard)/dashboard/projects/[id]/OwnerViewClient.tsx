@@ -314,15 +314,15 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
       <Card>
         <EmptyState
           icon={<span className="text-2xl">⚠️</span>}
-          title="Project not found"
+          title={tDetail("projectNotFound")}
           subtitle={
             projectQuery.error instanceof Error
               ? projectQuery.error.message
-              : "You may not have access to this project."
+              : tDetail("youMayNotHaveAccess")
           }
           action={
             <Link href="/dashboard/projects" className="text-aistroyka-accent hover:underline">
-              ← Back to projects
+              {tDetail("backToProjects")}
             </Link>
           }
         />
@@ -343,11 +343,11 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
           href={`/dashboard/projects/${projectId}`}
           className="text-aistroyka-subheadline text-aistroyka-accent hover:underline"
         >
-          ← Project detail
+          {tDetail("backToProject")}
         </Link>
         <span className="text-aistroyka-text-tertiary">|</span>
         <Link href="/dashboard/projects" className="text-aistroyka-subheadline text-aistroyka-accent hover:underline">
-          All projects
+          {tDetail("allProjects")}
         </Link>
       </div>
       <SectionHeader title={project.name} subtitle={tPage("ownerViewSubtitle")} />
@@ -364,8 +364,8 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
       <div className="mb-6">
         <ProjectAttentionBlock
           summary={attention}
-          title="Your attention"
-          emptyMessage="Nothing requiring your action."
+          title={tDetail("yourAttention")}
+          emptyMessage={tDetail("nothingRequiringYourAction")}
         />
       </div>
 
@@ -377,8 +377,8 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
         ) : pendingDecisions.length === 0 ? (
           <EmptyState
             icon={<span className="text-2xl">📋</span>}
-            title="No documents awaiting approval"
-            subtitle="Documents under review will appear here."
+            title={tDetail("noDocumentsAwaitingApproval")}
+            subtitle={tDetail("documentsUnderReviewAppear")}
           />
         ) : (
           <div className="p-4">
@@ -405,13 +405,13 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
       </Card>
 
       {/* Summary cards */}
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 mb-6" aria-label="Project summary">
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 mb-6" aria-label={tDetail("projectSummary")}>
         <Card className="border-l-4 border-l-aistroyka-accent">
           <p className="text-aistroyka-caption font-medium uppercase tracking-wide text-aistroyka-text-tertiary">{tDetail("tasks")}</p>
           <p className="mt-1 text-aistroyka-title3 font-semibold text-aistroyka-text-primary">
             {summary.tasksDone ?? 0} / {summary.tasksTotal ?? 0}
           </p>
-          <p className="text-xs text-aistroyka-text-tertiary">({summary.tasksInProgress ?? 0} in progress)</p>
+          <p className="text-xs text-aistroyka-text-tertiary">({summary.tasksInProgress ?? 0} {tDetail("inProgress")})</p>
         </Card>
         <Card className="border-l-4 border-l-aistroyka-info">
           <p className="text-aistroyka-caption font-medium uppercase tracking-wide text-aistroyka-text-tertiary">{tDetail("milestones")}</p>
@@ -439,14 +439,14 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
       <div className="mb-6 space-y-6">
         <StakeholderActivityBlock
           items={stakeholderActivityQuery.data ?? []}
-          title="Client & portal activity"
-          emptyMessage="No client or portal activity yet."
+          title={tDetail("clientPortalActivity")}
+          emptyMessage={tDetail("noClientPortalActivityYet")}
           maxItems={10}
         />
         <ProjectTimelineBlock
           items={timeline}
-          title="Project operations"
-          emptyMessage="No activity yet."
+          title={tDetail("projectOperations")}
+          emptyMessage={tDetail("noActivityYet")}
           maxItems={10}
         />
       </div>
@@ -459,8 +459,8 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
         ) : milestones.length === 0 ? (
           <EmptyState
             icon={<span className="text-2xl">📅</span>}
-            title="No milestones"
-            subtitle="Milestones will appear here when added to the project."
+            title={tDetail("noMilestones")}
+            subtitle={tDetail("milestonesAppearWhenAdded")}
           />
         ) : (
           <div className="p-4">
@@ -470,7 +470,7 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
                   <div>
                     <p className="font-medium text-aistroyka-text-primary">{m.title}</p>
                     <p className="text-xs text-aistroyka-text-tertiary">
-                      Target: {new Date(m.target_date).toLocaleDateString()} · {m.status}
+                      {tDetail("target")}: {new Date(m.target_date).toLocaleDateString()} · {m.status}
                     </p>
                   </div>
                   <Badge className={taskStatusBadgeClass(m.status)}>
@@ -491,12 +491,12 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
         ) : issues.length === 0 ? (
           <EmptyState
             icon={<span className="text-2xl">✅</span>}
-            title="No open issues"
-            subtitle="All issues are resolved or closed."
+            title={tDetail("noOpenIssues")}
+            subtitle={tDetail("allIssuesResolvedOrClosed")}
           />
         ) : (
           <div className="p-4">
-            <Table aria-label="Open issues">
+            <Table aria-label={tDetail("openIssues")}>
               <TableHead>
                 <TableRow>
                   <TableHeaderCell>{tDetail("title")}</TableHeaderCell>
@@ -555,7 +555,7 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
               <Textarea
                 value={decisionComment}
                 onChange={(e) => setDecisionComment(e.target.value)}
-                placeholder="Add a short comment or reason..."
+                placeholder={tDetail("addShortCommentOrReason")}
                 rows={3}
                 className="mt-1 w-full"
               />
@@ -575,7 +575,7 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
                 }
                 disabled={decisionMutation.isPending}
               >
-                Approve
+                {tDetail("approve")}
               </Button>
               <Button
                 variant="secondary"
@@ -588,7 +588,7 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
                 }
                 disabled={decisionMutation.isPending}
               >
-                Reject
+                {tDetail("reject")}
               </Button>
               <Button
                 variant="secondary"
@@ -601,7 +601,7 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
                 }
                 disabled={decisionMutation.isPending}
               >
-                Request changes
+                {tDetail("requestChanges")}
               </Button>
               <Button
                 variant="ghost"
@@ -612,7 +612,7 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
                 }}
                 disabled={decisionMutation.isPending}
               >
-                Cancel
+                {tDetail("cancel")}
               </Button>
             </div>
           </div>
@@ -627,12 +627,12 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
         ) : reports.length === 0 ? (
           <EmptyState
             icon={<span className="text-2xl">📋</span>}
-            title="No reports"
-            subtitle="Reports will appear here when submitted."
+            title={tDetail("noReports")}
+            subtitle={tDetail("reportsAppearWhenSubmitted")}
           />
         ) : (
           <div className="p-4">
-            <Table aria-label="Recent reports">
+            <Table aria-label={tDetail("recentReports")}>
               <TableHead>
                 <TableRow>
                   <TableHeaderCell>{tDetail("report")}</TableHeaderCell>
@@ -672,8 +672,8 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
         ) : media.length === 0 ? (
           <EmptyState
             icon={<span className="text-2xl">📷</span>}
-            title="No photos"
-            subtitle="Photos from reports will appear here."
+            title={tDetail("noPhotos")}
+            subtitle={tDetail("photosFromReportsAppear")}
           />
         ) : (
           <div className="p-4">

@@ -124,7 +124,7 @@ export default function ReportDetailPage() {
           {tDetail("reports")}
         </Link>
         <CopyIdButton id={data.id} label={tDetail("copyId")} copiedLabel={tDetail("copied")} />
-        <span className="text-aistroyka-caption text-aistroyka-text-tertiary" title="Deep link">
+        <span className="text-aistroyka-caption text-aistroyka-text-tertiary" title={tDetail("deepLink")}>
           {tDetail("reportIdLabel")} <span className="font-mono">{data.id.slice(0, 8)}…</span>
         </span>
       </div>

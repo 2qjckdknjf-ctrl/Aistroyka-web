@@ -46,11 +46,11 @@ export function ClientPortalViewClient({ projectId }: { projectId: string }) {
       <Card>
         <EmptyState
           icon={<span className="text-2xl">🔒</span>}
-          title="Client portal unavailable"
-          subtitle={query.error instanceof Error ? query.error.message : "You may not have access or the portal is not enabled."}
+          title={tDetail("clientPortalUnavailable")}
+          subtitle={query.error instanceof Error ? query.error.message : tDetail("youMayNotHaveAccessOrPortalDisabled")}
           action={
             <Link href={`/dashboard/projects/${projectId}`} className="text-aistroyka-accent hover:underline">
-              ← Back to project
+              {tDetail("backToProject")}
             </Link>
           }
         />
@@ -67,7 +67,7 @@ export function ClientPortalViewClient({ projectId }: { projectId: string }) {
           href={`/dashboard/projects/${projectId}`}
           className="text-aistroyka-subheadline text-aistroyka-accent hover:underline"
         >
-          ← Project overview
+          {tDetail("backToProjectOverview")}
         </Link>
       </div>
       <SectionHeader title={d.project.name} subtitle={tPage("clientViewSubtitle")} />

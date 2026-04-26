@@ -1402,7 +1402,7 @@
   {
     "id": "generated.apps.web.app.locale.dashboard.dashboard.projects.id.client.ClientPortalViewClient.tsx.52",
     "kind": "Link",
-    "labelText": "← Back to project",
+    "labelText": "tDetail(backToProject)",
     "pageRoute": "/{locale}/dashboard/projects/:id/client",
     "target": "`/dashboard/projects/${projectId}`",
     "sourceFile": "apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/client/ClientPortalViewClient.tsx",
@@ -1412,7 +1412,7 @@
   {
     "id": "generated.apps.web.app.locale.dashboard.dashboard.projects.id.client.ClientPortalViewClient.tsx.66",
     "kind": "Link",
-    "labelText": "← Project overview",
+    "labelText": "tDetail(backToProjectOverview)",
     "pageRoute": "/{locale}/dashboard/projects/:id/client",
     "target": "`/dashboard/projects/${projectId}`",
     "sourceFile": "apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/client/ClientPortalViewClient.tsx",
@@ -1560,23 +1560,23 @@
     "notes": "fallback text scan"
   },
   {
-    "id": "generated.apps.web.app.locale.dashboard.dashboard.projects.id.client.discussions.ClientPortalDiscussionsListClient.tsx.59",
+    "id": "generated.apps.web.app.locale.dashboard.dashboard.projects.id.client.discussions.ClientPortalDiscussionsListClient.tsx.60",
     "kind": "Link",
-    "labelText": "← Client portal",
+    "labelText": "tDetail(backToClientPortal)",
     "pageRoute": "/{locale}/dashboard/projects/:id/client/discussions",
     "target": "`/dashboard/projects/${projectId}/client`",
     "sourceFile": "apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/client/discussions/ClientPortalDiscussionsListClient.tsx",
-    "line": 59,
+    "line": 60,
     "notes": "generated id; no data-testid"
   },
   {
-    "id": "generated.apps.web.app.locale.dashboard.dashboard.projects.id.client.discussions.ClientPortalDiscussionsListClient.tsx.76",
+    "id": "generated.apps.web.app.locale.dashboard.dashboard.projects.id.client.discussions.ClientPortalDiscussionsListClient.tsx.77",
     "kind": "Link",
     "labelText": "r.title",
     "pageRoute": "/{locale}/dashboard/projects/:id/client/discussions",
     "target": "`/dashboard/projects/${projectId}/client/discussions/${r.id}`",
     "sourceFile": "apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/client/discussions/ClientPortalDiscussionsListClient.tsx",
-    "line": 76,
+    "line": 77,
     "notes": "generated id; no data-testid"
   },
   {
@@ -1752,7 +1752,7 @@
   {
     "id": "generated.apps.web.app.locale.dashboard.dashboard.projects.id.DashboardProjectDetailClient.tsx.196",
     "kind": "Link",
-    "labelText": "← Back to projects",
+    "labelText": "tDetail(backToProjects)",
     "pageRoute": "/{locale}/dashboard/projects/:id",
     "target": "/dashboard/projects",
     "sourceFile": "apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/DashboardProjectDetailClient.tsx",
@@ -1762,7 +1762,7 @@
   {
     "id": "generated.apps.web.app.locale.dashboard.dashboard.projects.id.DashboardProjectDetailClient.tsx.208",
     "kind": "Link",
-    "labelText": "← Projects",
+    "labelText": "tDetail(projects)",
     "pageRoute": "/{locale}/dashboard/projects/:id",
     "target": "/dashboard/projects",
     "sourceFile": "apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/DashboardProjectDetailClient.tsx",
@@ -1992,7 +1992,7 @@
   {
     "id": "generated.apps.web.app.locale.dashboard.dashboard.projects.id.OwnerViewClient.tsx.324",
     "kind": "Link",
-    "labelText": "← Back to projects",
+    "labelText": "tDetail(backToProjects)",
     "pageRoute": "/{locale}/dashboard/projects/:id",
     "target": "/dashboard/projects",
     "sourceFile": "apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/OwnerViewClient.tsx",
@@ -2002,7 +2002,7 @@
   {
     "id": "generated.apps.web.app.locale.dashboard.dashboard.projects.id.OwnerViewClient.tsx.342",
     "kind": "Link",
-    "labelText": "← Project detail",
+    "labelText": "tDetail(backToProject)",
     "pageRoute": "/{locale}/dashboard/projects/:id",
     "target": "`/dashboard/projects/${projectId}`",
     "sourceFile": "apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/OwnerViewClient.tsx",
@@ -2012,7 +2012,7 @@
   {
     "id": "generated.apps.web.app.locale.dashboard.dashboard.projects.id.OwnerViewClient.tsx.349",
     "kind": "Link",
-    "labelText": "All projects",
+    "labelText": "tDetail(allProjects)",
     "pageRoute": "/{locale}/dashboard/projects/:id",
     "target": "/dashboard/projects",
     "sourceFile": "apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/OwnerViewClient.tsx",
@@ -2052,7 +2052,7 @@
   {
     "id": "generated.apps.web.app.locale.dashboard.dashboard.projects.id.OwnerViewClient.tsx.567",
     "kind": "button",
-    "labelText": "Approve",
+    "labelText": "tDetail(approve)",
     "pageRoute": "/{locale}/dashboard/projects/:id",
     "target": "() =>\n                  decisionMutation.mutate({\n                    documentId: decisionDoc.id,\n                    action: \"approve\",\n                    comment: decisionComment || undefined,\n                  })",
     "sourceFile": "apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/OwnerViewClient.tsx",
@@ -2072,7 +2072,7 @@
   {
     "id": "generated.apps.web.app.locale.dashboard.dashboard.projects.id.OwnerViewClient.tsx.580",
     "kind": "button",
-    "labelText": "Reject",
+    "labelText": "tDetail(reject)",
     "pageRoute": "/{locale}/dashboard/projects/:id",
     "target": "() =>\n                  decisionMutation.mutate({\n                    documentId: decisionDoc.id,\n                    action: \"reject\",\n                    comment: decisionComment || undefined,\n                  })",
     "sourceFile": "apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/OwnerViewClient.tsx",
@@ -2092,7 +2092,7 @@
   {
     "id": "generated.apps.web.app.locale.dashboard.dashboard.projects.id.OwnerViewClient.tsx.593",
     "kind": "button",
-    "labelText": "Request changes",
+    "labelText": "tDetail(requestChanges)",
     "pageRoute": "/{locale}/dashboard/projects/:id",
     "target": "() =>\n                  decisionMutation.mutate({\n                    documentId: decisionDoc.id,\n                    action: \"request_changes\",\n                    comment: decisionComment || undefined,\n                  })",
     "sourceFile": "apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/OwnerViewClient.tsx",
@@ -2112,7 +2112,7 @@
   {
     "id": "generated.apps.web.app.locale.dashboard.dashboard.projects.id.OwnerViewClient.tsx.606",
     "kind": "button",
-    "labelText": "Cancel",
+    "labelText": "tDetail(cancel)",
     "pageRoute": "/{locale}/dashboard/projects/:id",
     "target": "() => {\n                  setDecisionDoc(null);\n                  setDecisionComment(\"\");\n                  setDecisionError(null);\n                }",
     "sourceFile": "apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/OwnerViewClient.tsx",
@@ -2192,7 +2192,7 @@
   {
     "id": "generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectCostsPanel.tsx.186",
     "kind": "iconButton",
-    "labelText": "Add cost item",
+    "labelText": "tDetail(addCostItem)",
     "pageRoute": "/{locale}/dashboard/projects/:id",
     "target": "() => setCreateOpen(true)",
     "sourceFile": "apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectCostsPanel.tsx",
@@ -2212,7 +2212,7 @@
   {
     "id": "generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectCostsPanel.tsx.251",
     "kind": "button",
-    "labelText": "Add cost item",
+    "labelText": "tDetail(addCostItem)",
     "pageRoute": "/{locale}/dashboard/projects/:id",
     "target": "() => setCreateOpen(true)",
     "sourceFile": "apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectCostsPanel.tsx",
@@ -2252,7 +2252,7 @@
   {
     "id": "generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectCostsPanel.tsx.486",
     "kind": "formSubmit",
-    "labelText": "isSubmitting ? Saving… : Save",
+    "labelText": "isSubmitting ? tDetail(saving) : tDetail(save)",
     "pageRoute": "/{locale}/dashboard/projects/:id",
     "target": "form submit",
     "sourceFile": "apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectCostsPanel.tsx",
@@ -2262,7 +2262,7 @@
   {
     "id": "generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectCostsPanel.tsx.604",
     "kind": "button",
-    "labelText": "Cancel",
+    "labelText": "tDetail(cancel)",
     "pageRoute": "/{locale}/dashboard/projects/:id",
     "target": "onClose",
     "sourceFile": "apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectCostsPanel.tsx",
@@ -2272,7 +2272,7 @@
   {
     "id": "generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectCostsPanel.tsx.607",
     "kind": "formSubmit",
-    "labelText": "isSubmitting ? Adding… : Add",
+    "labelText": "isSubmitting ? tDetail(adding) : tDetail(add)",
     "pageRoute": "/{locale}/dashboard/projects/:id",
     "target": "form submit",
     "sourceFile": "apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectCostsPanel.tsx",
@@ -2282,7 +2282,7 @@
   {
     "id": "generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectDocumentsPanel.tsx.266",
     "kind": "iconButton",
-    "labelText": "Create document",
+    "labelText": "tDetail(createDocument)",
     "pageRoute": "/{locale}/dashboard/projects/:id",
     "target": "() => setCreateOpen(true)",
     "sourceFile": "apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectDocumentsPanel.tsx",
@@ -2322,7 +2322,7 @@
   {
     "id": "generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectDocumentsPanel.tsx.310",
     "kind": "button",
-    "labelText": "Create document",
+    "labelText": "tDetail(createDocument)",
     "pageRoute": "/{locale}/dashboard/projects/:id",
     "target": "() => setCreateOpen(true)",
     "sourceFile": "apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectDocumentsPanel.tsx",
@@ -2462,7 +2462,7 @@
   {
     "id": "generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectDocumentsPanel.tsx.616",
     "kind": "button",
-    "labelText": "Cancel",
+    "labelText": "tDetail(cancel)",
     "pageRoute": "/{locale}/dashboard/projects/:id",
     "target": "onClose",
     "sourceFile": "apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectDocumentsPanel.tsx",
@@ -2472,7 +2472,7 @@
   {
     "id": "generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectDocumentsPanel.tsx.619",
     "kind": "formSubmit",
-    "labelText": "isSubmitting ? Creating… : Create",
+    "labelText": "isSubmitting ? tDetail(creating) : tDetail(create)",
     "pageRoute": "/{locale}/dashboard/projects/:id",
     "target": "form submit",
     "sourceFile": "apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectDocumentsPanel.tsx",

@@ -125,7 +125,7 @@ export function ProjectSchedulePanel({ projectId }: { projectId: string }) {
           </div>
         </form>
       )}
-      <ul className="space-y-3" aria-label="Project milestones">
+      <ul className="space-y-3" aria-label={tDetail("projectMilestones")}>
         {milestones
           .sort((a, b) => a.target_date.localeCompare(b.target_date))
           .map((m) => {
@@ -146,7 +146,7 @@ export function ProjectSchedulePanel({ projectId }: { projectId: string }) {
                   </span>
                 </div>
                 <p className="mt-1 text-sm text-aistroyka-text-secondary">
-                  Target: {new Date(m.target_date).toLocaleDateString()}
+                  {tDetail("target")}: {new Date(m.target_date).toLocaleDateString()}
                   {overdue && (
                     <span className="ml-2 text-aistroyka-error font-medium">{tDetail("overdue")}</span>
                   )}

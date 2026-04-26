@@ -197,7 +197,7 @@ export function ClientRequestsManagerPanel({ projectId }: { projectId: string })
                 className="mt-1 w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm font-mono"
                 value={linkId}
                 onChange={(e) => setLinkId(e.target.value)}
-                placeholder="UUID"
+                placeholder={tDetail("uuid")}
                 disabled={!linkType}
               />
             </div>

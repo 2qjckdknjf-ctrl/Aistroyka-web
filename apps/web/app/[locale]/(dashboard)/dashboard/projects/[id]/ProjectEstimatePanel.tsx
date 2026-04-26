@@ -110,29 +110,29 @@ export function ProjectEstimatePanel({ projectId }: { projectId: string }) {
   return (
     <div className="p-4 space-y-6">
       <p className="text-aistroyka-text-secondary text-sm">
-        Rough cost intelligence from images and recorded budget. Not a precise or legally binding estimate.
+        {tDetail("roughCostIntelligenceHint")}
       </p>
 
       {budget && (
         <Card className="border-l-4 border-l-aistroyka-info">
           <h3 className="font-medium text-aistroyka-text-primary">{tDetail("recordedBudget")}</h3>
           <p className="text-aistroyka-caption text-aistroyka-text-tertiary mt-1">
-            From cost items (planned vs actual)
+            {tDetail("fromCostItemsPlannedVsActual")}
           </p>
           <div className="mt-2 grid gap-2 sm:grid-cols-2">
             <span>
-              Planned: {budget.planned_total.toLocaleString()} {budget.currency}
+              {tDetail("planned")}: {budget.planned_total.toLocaleString()} {budget.currency}
             </span>
             <span>
-              Actual: {budget.actual_total.toLocaleString()} {budget.currency}
+              {tDetail("actual")}: {budget.actual_total.toLocaleString()} {budget.currency}
             </span>
             {budget.variance_amount !== 0 && (
               <span>
-                Variance: {budget.variance_amount > 0 ? "+" : ""}
+                {tDetail("variance")}: {budget.variance_amount > 0 ? "+" : ""}
                 {budget.variance_amount.toLocaleString()} {budget.currency}
               </span>
             )}
-            <span>{budget.over_budget ? "Over budget" : "On budget"}</span>
+            <span>{budget.over_budget ? tDetail("overBudget") : tDetail("onBudget")}</span>
           </div>
         </Card>
       )}
@@ -140,7 +140,7 @@ export function ProjectEstimatePanel({ projectId }: { projectId: string }) {
       {!budget && (
         <Card className="border-l-4 border-l-aistroyka-warning">
           <p className="text-aistroyka-text-secondary">
-            No recorded budget yet. Add cost items in the Costs tab to compare with AI estimates.
+            {tDetail("noRecordedBudgetYetHint")}
           </p>
         </Card>
       )}
@@ -149,7 +149,7 @@ export function ProjectEstimatePanel({ projectId }: { projectId: string }) {
         <Card className="border-l-4 border-l-aistroyka-accent">
           <h3 className="font-medium text-aistroyka-text-primary">{tDetail("latestEstimateAi")}</h3>
           <p className="text-aistroyka-caption text-aistroyka-text-tertiary mt-1">
-            Source: {latest.source_type}
+            {tDetail("source")}: {latest.source_type}
             {latest.created_at && (
               <> · {new Date(latest.created_at).toLocaleString()}</>
             )}
@@ -157,25 +157,25 @@ export function ProjectEstimatePanel({ projectId }: { projectId: string }) {
           <div className="mt-2 space-y-1">
             {latest.rough_range_min != null && latest.rough_range_max != null && (
               <p>
-                Rough range: {latest.rough_range_min.toLocaleString()} –{" "}
+                {tDetail("roughRange")}: {latest.rough_range_min.toLocaleString()} –{" "}
                 {latest.rough_range_max.toLocaleString()}{" "}
                 {latest.currency_hint ?? ""}
               </p>
             )}
             <p>
-              Confidence: <strong>{latest.confidence}</strong>
+              {tDetail("confidence")}: <strong>{latest.confidence}</strong>
             </p>
             {latest.work_categories?.length ? (
-              <p>Work categories: {latest.work_categories.join(", ")}</p>
+              <p>{tDetail("workCategories")}: {latest.work_categories.join(", ")}</p>
             ) : null}
             {latest.missing_data_reasons?.length ? (
               <p className="text-aistroyka-text-secondary text-sm">
-                Missing / uncertain: {latest.missing_data_reasons.join("; ")}
+                {tDetail("missingOrUncertain")}: {latest.missing_data_reasons.join("; ")}
               </p>
             ) : null}
             {latest.assumption_notes && (
               <p className="text-aistroyka-text-secondary text-sm">
-                Assumptions: {latest.assumption_notes}
+                {tDetail("assumptions")}: {latest.assumption_notes}
               </p>
             )}
           </div>
@@ -186,8 +186,8 @@ export function ProjectEstimatePanel({ projectId }: { projectId: string }) {
         <Card>
           <EmptyState
             icon={<span className="text-2xl">📐</span>}
-            title="No AI estimate yet"
-            subtitle="Paste an image URL below and run cost estimate to get a rough range from this image."
+            title={tDetail("noAiEstimateYet")}
+            subtitle={tDetail("pasteImageUrlHint")}
           />
         </Card>
       )}
@@ -195,16 +195,16 @@ export function ProjectEstimatePanel({ projectId }: { projectId: string }) {
       <Card>
         <h3 className="font-medium text-aistroyka-text-primary">{tDetail("estimateFromImage")}</h3>
         <p className="text-aistroyka-caption text-aistroyka-text-tertiary mt-1">
-          Enter a publicly accessible image URL (construction site, drawing, or photo). The AI will return a rough cost range and confidence.
+          {tDetail("publicImageUrlHint")}
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
           <Input
             type="url"
-            placeholder="https://…"
+            placeholder={tDetail("httpsPlaceholder")}
             value={imageUrl}
             onChange={(e) => setImageUrl(e.target.value)}
             className="min-w-[280px]"
-            aria-label="Image URL"
+            aria-label={tDetail("imageUrl")}
           />
           <Button
             onClick={() => fromImageMutation.mutate()}
@@ -217,7 +217,7 @@ export function ProjectEstimatePanel({ projectId }: { projectId: string }) {
           <p className="mt-2 text-sm text-red-600">
             {fromImageMutation.error instanceof Error
               ? fromImageMutation.error.message
-              : "Request failed"}
+              : tDetail("requestFailed")}
           </p>
         )}
       </Card>
@@ -226,7 +226,7 @@ export function ProjectEstimatePanel({ projectId }: { projectId: string }) {
         <Card>
           <h3 className="font-medium text-aistroyka-text-primary">{tDetail("sourceDocuments")}</h3>
           <p className="text-aistroyka-caption text-aistroyka-text-tertiary mt-1">
-            Project documents that can be used for future estimate inputs (content extraction not yet supported).
+            {tDetail("sourceDocumentsHint")}
           </p>
           <ul className="mt-2 list-disc list-inside text-sm text-aistroyka-text-secondary">
             {docs.map((d) => (

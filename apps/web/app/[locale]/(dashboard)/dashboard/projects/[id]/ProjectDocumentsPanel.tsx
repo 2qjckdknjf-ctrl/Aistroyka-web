@@ -257,19 +257,19 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
           setUploadDocId(targetId);
           uploadMutation.mutate({ documentId: targetId, file: f });
         }}
-        aria-label="Upload file"
+        aria-label={tDetail("uploadFile")}
       />
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-aistroyka-title3 font-semibold text-aistroyka-text-primary">
-          Project documents
+          {tDetail("projectDocuments")}
         </h3>
         <Button
           variant="primary"
           size="sm"
           onClick={() => setCreateOpen(true)}
-          aria-label="Create document"
+          aria-label={tDetail("createDocument")}
         >
-          Create document
+          {tDetail("createDocument")}
         </Button>
       </div>
 
@@ -304,16 +304,16 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
       {rows.length === 0 ? (
         <EmptyState
           icon={<span className="text-2xl">📄</span>}
-          title="No documents yet"
-          subtitle="Create a document (act, contract, or generic) and upload a file. Then submit for review and approve or reject."
+          title={tDetail("noDocumentsYet")}
+          subtitle={tDetail("createDocumentHint")}
           action={
             <Button variant="primary" size="sm" onClick={() => setCreateOpen(true)}>
-              Create document
+              {tDetail("createDocument")}
             </Button>
           }
         />
       ) : (
-        <Table aria-label="Project documents">
+        <Table aria-label={tDetail("projectDocuments")}>
           <TableHead>
             <TableRow>
               <TableHeaderCell>{tDetail("title")}</TableHeaderCell>
@@ -480,7 +480,7 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
       <Modal
         open={historyDocId !== null}
         onClose={() => setHistoryDocId(null)}
-        title="Document approval history"
+        title={tDetail("documentApprovalHistory")}
       >
         {historyDocId ? (
           <DocumentApprovalHistory projectId={projectId} documentId={historyDocId} />
@@ -545,14 +545,14 @@ function CreateDocumentModal({
   if (!open) return null;
 
   return (
-    <Modal open={open} onClose={onClose} title="Create document">
+    <Modal open={open} onClose={onClose} title={tDetail("createDocument")}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
           id="doc-title"
           label="Title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="e.g. Work completion act #1"
+          placeholder={tDetail("workCompletionActExample")}
           required
           disabled={isSubmitting}
           error={!title.trim() && error ? error : undefined}
@@ -580,7 +580,7 @@ function CreateDocumentModal({
           label="Description (optional)"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="Brief description or notes"
+          placeholder={tDetail("briefDescriptionOrNotes")}
           disabled={isSubmitting}
           rows={2}
         />
@@ -590,7 +590,7 @@ function CreateDocumentModal({
               htmlFor="doc-milestone"
               className="mb-1.5 block text-[var(--aistroyka-font-subheadline)] font-medium text-aistroyka-text-primary"
             >
-              Link to milestone (optional)
+              {tDetail("linkToMilestoneOptional")}
             </label>
             <Select
               id="doc-milestone"
@@ -614,10 +614,10 @@ function CreateDocumentModal({
         )}
         <div className="flex gap-2 justify-end pt-2">
           <Button type="button" variant="secondary" onClick={onClose} disabled={isSubmitting}>
-            Cancel
+            {tDetail("cancel")}
           </Button>
           <Button type="submit" variant="primary" disabled={isSubmitting || !title.trim()}>
-            {isSubmitting ? "Creating…" : "Create"}
+            {isSubmitting ? tDetail("creating") : tDetail("create")}
           </Button>
         </div>
       </form>
