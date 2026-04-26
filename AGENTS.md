@@ -21,9 +21,9 @@
 - iOS apps are AiStroykaManager and AiStroykaWorker; shared code lives in ios/Shared; WorkerLite is deprecated as the primary product name.
 - Android apps are AiStroykaManager and AiStroykaWorker with android/shared; structure mirrors iOS.
 - Local iOS config: ios/Config/Secrets.xcconfig (gitignored) and Secrets.xcconfig.example; both apps use the same xcconfig.
-- Public site and dashboard coexist; locale routes under [locale]; public pages under (public), dashboard under (dashboard).
-- API routes live under apps/web/app/api/; tenant and auth logic are central and should not be changed without necessity.
-- Docs and phase reports go under docs/ and subdirs (e.g. docs/mobile-rebuild/, docs/deploy-fix/, docs/pilot-launch/).
+- Public site and dashboard coexist; locale routes under [locale]; public pages under (public), dashboard under (dashboard); web i18n uses next-intl message files for en/ru/es/it.
+- API routes live under apps/web/app/api/; treat /api/v1/* as canonical, and do not change tenant/auth logic without necessity.
+- Docs and phase reports go under docs/ and subdirs (e.g. docs/audit/, docs/final/, docs/mobile-rebuild/, docs/deploy-fix/, docs/pilot-launch/).
 - Environment variables for production are documented in docs/ENVIRONMENT-VARIABLES.md; required: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, NEXT_PUBLIC_APP_URL.
 - Supabase migrations live under `apps/web/supabase/migrations/`; apply via Supabase CLI / dashboard (the repo previously shipped `apply-migrations.yml` — removed in Release 1 cleanup; re-add if you need GitHub-driven apply).
 - PR merge gate: GitHub **CI Check** (`.github/workflows/ci-check.yml`) runs `bun install`, lint, tests, and `cf:build` on each pull request.

@@ -2,13 +2,13 @@
 
 ## Environment
 
-- Date: 2026-04-26T14:00:16.243Z
-- Commit SHA: 17b2b304f575cb14fb2037518683ab47ffcd6f92
-- Base URL: https://staging.aistroyka.ai
-- Artifact directory: docs/audit/artifacts/20260426T135907Z
+- Date: 2026-04-26T14:15:12.258Z
+- Commit SHA: e3abb52eba27693ec7346648fc2cd7b5c6cea87d
+- Base URL: http://127.0.0.1:3107
+- Artifact directory: docs/audit/artifacts/20260426T140706Z
 - Requested command: `pnpm -w audit:e2e` (available (10.33.2))
-- Lint: not run
-- Build sanity: not run
+- Lint: passed
+- Build sanity: passed
 
 ## Summary
 
@@ -35,7 +35,7 @@ Inventory source: `docs/audit/button_inventory.json` and `docs/audit/button_inve
 - Changes/ack stability: PASS
 - Idempotency verdict: PASS for report create and ack duplicate-key semantics
 - Conflict behavior: best-effort cursor-ahead probe executed when sync suite reached that step; see redacted request evidence.
-- Request evidence: `docs/audit/artifacts/20260426T135907Z/sync-e2e-requests.json`
+- Request evidence: `docs/audit/artifacts/20260426T140706Z/sync-e2e-requests.json`
 
 
 
