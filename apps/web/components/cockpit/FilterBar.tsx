@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { useFilterParams } from "@/lib/cockpit/useFilterParams";
 import { DateRangePicker } from "@/components/ui";
 import { getSavedViews, saveView, deleteSavedView, type SavedView } from "@/lib/cockpit/savedViews";
@@ -27,9 +28,10 @@ export function FilterBar({
   showStatus = false,
   statusOptions = [],
   showSearch = true,
-  searchPlaceholder = "Search…",
+  searchPlaceholder,
   showSavedViews = true,
 }: FilterBarProps) {
+  const tDetail = useTranslations("dashboardDetail");
   const { params, setParam, setParams } = useFilterParams();
   const [searchInput, setSearchInput] = useState(params.q);
   const [savedViews, setSavedViews] = useState<SavedView[]>([]);
@@ -65,7 +67,7 @@ export function FilterBar({
   }, [setParams]);
 
   const saveCurrentView = useCallback(() => {
-    const name = window.prompt("Name this view");
+    const name = window.prompt(tDetail("nameThisView"));
     if (!name?.trim()) return;
     const current = {
       project_id: params.project_id,
@@ -79,7 +81,7 @@ export function FilterBar({
     };
     saveView(name.trim(), current);
     setSavedViews(getSavedViews());
-  }, [params]);
+  }, [params, tDetail]);
 
   const setPreset = useCallback((preset: "7d" | "30d" | "90d") => {
     const to = new Date();
@@ -97,15 +99,15 @@ export function FilterBar({
     <div className="flex flex-wrap items-center gap-3 rounded-[var(--aistroyka-radius-card)] border border-aistroyka-border-subtle bg-aistroyka-surface px-4 py-3">
       {showProject && (
         <div className="flex flex-col gap-1">
-          <label htmlFor="filter-project" className="text-aistroyka-caption text-aistroyka-text-tertiary">Project</label>
+          <label htmlFor="filter-project" className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("project")}</label>
           <select
             id="filter-project"
-            aria-label="Filter by project"
+            aria-label={tDetail("filterByProject")}
             value={params.project_id}
             onChange={(e) => setParam("project_id", e.target.value)}
             className="min-w-[140px] rounded-[var(--aistroyka-radius-md)] border border-aistroyka-border-subtle bg-aistroyka-bg-primary px-2 py-1.5 text-aistroyka-caption text-aistroyka-text-primary focus:outline-none focus:ring-2 focus:ring-aistroyka-accent"
           >
-            <option value="">All projects</option>
+            <option value="">{tDetail("allProjects")}</option>
             {projects.map((p) => (
               <option key={p.id} value={p.id}>{p.name}</option>
             ))}
@@ -114,15 +116,15 @@ export function FilterBar({
       )}
       {showWorker && workers.length > 0 && (
         <div className="flex flex-col gap-1">
-          <label htmlFor="filter-worker" className="text-aistroyka-caption text-aistroyka-text-tertiary">Worker</label>
+          <label htmlFor="filter-worker" className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("worker")}</label>
           <select
             id="filter-worker"
-            aria-label="Filter by worker"
+            aria-label={tDetail("filterByWorker")}
             value={params.worker_id}
             onChange={(e) => setParam("worker_id", e.target.value)}
             className="min-w-[140px] rounded-[var(--aistroyka-radius-md)] border border-aistroyka-border-subtle bg-aistroyka-bg-primary px-2 py-1.5 text-aistroyka-caption text-aistroyka-text-primary focus:outline-none focus:ring-2 focus:ring-aistroyka-accent"
           >
-            <option value="">All workers</option>
+            <option value="">{tDetail("allWorkers")}</option>
             {workers.map((w) => (
               <option key={w.user_id} value={w.user_id}>{w.user_id.slice(0, 8)}…</option>
             ))}
@@ -131,7 +133,7 @@ export function FilterBar({
       )}
       {showDateRange && (
         <div className="flex flex-col gap-1">
-          <span className="text-aistroyka-caption text-aistroyka-text-tertiary">Date range</span>
+          <span className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("dateRange")}</span>
           <DateRangePicker
             from={params.from}
             to={params.to}
@@ -143,15 +145,15 @@ export function FilterBar({
       )}
       {showStatus && statusOptions.length > 0 && (
         <div className="flex flex-col gap-1">
-          <label htmlFor="filter-status" className="text-aistroyka-caption text-aistroyka-text-tertiary">Status</label>
+          <label htmlFor="filter-status" className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("status")}</label>
           <select
             id="filter-status"
-            aria-label="Filter by status"
+            aria-label={tDetail("filterByStatus")}
             value={params.status}
             onChange={(e) => setParam("status", e.target.value)}
             className="min-w-[100px] rounded-[var(--aistroyka-radius-md)] border border-aistroyka-border-subtle bg-aistroyka-bg-primary px-2 py-1.5 text-aistroyka-caption text-aistroyka-text-primary focus:outline-none focus:ring-2 focus:ring-aistroyka-accent"
           >
-            <option value="">All</option>
+            <option value="">{tDetail("all")}</option>
             {statusOptions.map((o) => (
               <option key={o.value} value={o.value}>{o.label}</option>
             ))}
@@ -160,12 +162,12 @@ export function FilterBar({
       )}
       {showSearch && (
         <div className="flex flex-col gap-1">
-          <label htmlFor="filter-search" className="text-aistroyka-caption text-aistroyka-text-tertiary">Search</label>
+          <label htmlFor="filter-search" className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("search")}</label>
           <input
             id="filter-search"
             type="search"
-            placeholder={searchPlaceholder}
-            aria-label="Search"
+            placeholder={searchPlaceholder ?? tDetail("searchPlaceholder")}
+            aria-label={tDetail("search")}
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             className="min-w-[160px] rounded-[var(--aistroyka-radius-md)] border border-aistroyka-border-subtle bg-aistroyka-bg-primary px-2 py-1.5 text-aistroyka-caption text-aistroyka-text-primary placeholder:text-aistroyka-text-tertiary focus:outline-none focus:ring-2 focus:ring-aistroyka-accent"
@@ -174,10 +176,10 @@ export function FilterBar({
       )}
       {showSavedViews && (
         <div className="flex flex-col gap-1">
-          <span className="text-aistroyka-caption text-aistroyka-text-tertiary">Saved views</span>
+          <span className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("savedViews")}</span>
           <div className="flex gap-2">
             <select
-              aria-label="Apply saved view"
+              aria-label={tDetail("applySavedView")}
               value=""
               onChange={(e) => {
                 const id = e.target.value;
@@ -188,7 +190,7 @@ export function FilterBar({
               }}
               className="min-w-[120px] rounded-[var(--aistroyka-radius-md)] border border-aistroyka-border-subtle bg-aistroyka-bg-primary px-2 py-1.5 text-aistroyka-caption text-aistroyka-text-primary focus:outline-none focus:ring-2 focus:ring-aistroyka-accent"
             >
-              <option value="">Apply view…</option>
+              <option value="">{tDetail("applyView")}</option>
               {savedViews.map((v) => (
                 <option key={v.id} value={v.id}>{v.name}</option>
               ))}
@@ -198,7 +200,7 @@ export function FilterBar({
               onClick={saveCurrentView}
               className="rounded-[var(--aistroyka-radius-md)] border border-aistroyka-border-subtle bg-aistroyka-surface-raised px-2 py-1.5 text-aistroyka-caption font-medium text-aistroyka-text-primary hover:bg-aistroyka-surface focus:outline-none focus:ring-2 focus:ring-aistroyka-accent"
             >
-              Save current
+              {tDetail("saveCurrent")}
             </button>
           </div>
         </div>

@@ -132,29 +132,29 @@ export function DashboardShell({
                 className="flex min-h-aistroyka-touch min-w-aistroyka-touch items-center justify-center rounded-[var(--aistroyka-radius-lg)] text-aistroyka-text-secondary hover:bg-aistroyka-surface-raised focus:outline-none focus:ring-2 focus:ring-aistroyka-accent md:hidden"
                 aria-expanded={sidebarOpen}
                 aria-controls="dashboard-sidebar"
-                aria-label={sidebarOpen ? "Close menu" : "Open menu"}
+                aria-label={sidebarOpen ? t("closeMenu") : t("openMenu")}
               >
                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               </button>
               <span className="text-aistroyka-subheadline text-aistroyka-text-tertiary" aria-hidden>
-                Workspace
+                {t("workspace")}
               </span>
               <select
-                aria-label="Date range"
+                aria-label={t("dateRange")}
                 value={dateRange}
                 onChange={(e) => setDateRange(e.target.value)}
                 className="rounded-[var(--aistroyka-radius-md)] border border-aistroyka-border-subtle bg-aistroyka-bg-primary px-2 py-1.5 text-aistroyka-caption text-aistroyka-text-primary focus:outline-none focus:ring-2 focus:ring-aistroyka-accent"
               >
-                <option value="7d">Last 7 days</option>
-                <option value="30d">Last 30 days</option>
-                <option value="90d">Last 90 days</option>
+                <option value="7d">{t("last7Days")}</option>
+                <option value="30d">{t("last30Days")}</option>
+                <option value="90d">{t("last90Days")}</option>
               </select>
               <input
                 type="search"
-                placeholder="Search…"
-                aria-label="Search"
+                placeholder={t("searchPlaceholder")}
+                aria-label={t("search")}
                 className="w-32 rounded-[var(--aistroyka-radius-md)] border border-aistroyka-border-subtle bg-aistroyka-bg-primary px-2 py-1.5 text-aistroyka-caption text-aistroyka-text-primary placeholder:text-aistroyka-text-tertiary focus:outline-none focus:ring-2 focus:ring-aistroyka-accent sm:w-40"
               />
             </div>

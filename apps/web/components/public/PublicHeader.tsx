@@ -84,7 +84,7 @@ export function PublicHeader() {
           aria-controls="mobile-menu"
           onClick={() => setMobileMenuOpen((v) => !v)}
         >
-          <span className="sr-only">{mobileMenuOpen ? "Close menu" : "Open menu"}</span>
+          <span className="sr-only">{mobileMenuOpen ? t("closeMenu") : t("openMenu")}</span>
           <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
             {mobileMenuOpen ? (
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -111,7 +111,7 @@ export function PublicHeader() {
               {t(key)}
             </Link>
           ))}
-          <p className="mt-3 text-[var(--aistroyka-font-caption)] text-aistroyka-text-secondary">More</p>
+          <p className="mt-3 text-[var(--aistroyka-font-caption)] text-aistroyka-text-secondary">{t("more")}</p>
           {SECONDARY_NAV.map(({ href, key }) => (
             <Link
               key={href}
