@@ -35,10 +35,10 @@ export function PublicHeader() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-aistroyka-border-subtle bg-aistroyka-bg-primary py-3 backdrop-blur-md">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 rounded-[var(--aistroyka-radius-xl)] border border-aistroyka-border-subtle bg-aistroyka-bg-secondary px-4 py-2 shadow-[var(--aistroyka-shadow-e1)] sm:px-6 lg:px-8">
+      <div className="mx-auto flex min-w-0 max-w-7xl items-center justify-between gap-2 rounded-[var(--aistroyka-radius-xl)] border border-aistroyka-border-subtle bg-aistroyka-bg-secondary px-3 py-2 shadow-[var(--aistroyka-shadow-e1)] sm:gap-4 sm:px-6 lg:px-8">
         <Link
           href="/"
-          className="font-heading text-[var(--aistroyka-font-title3)] font-semibold uppercase tracking-[0.14em] text-aistroyka-accent"
+          className="shrink-0 font-heading text-[var(--aistroyka-font-title3)] font-semibold uppercase tracking-[0.14em] text-aistroyka-accent"
         >
           AISTROYKA
         </Link>
@@ -62,17 +62,11 @@ export function PublicHeader() {
           })}
         </nav>
 
-        <div className="hidden items-center gap-2 md:flex">
-          <Link
-            href="/contact"
-            className="btn-secondary"
-          >
+        <div className="hidden min-w-0 flex-wrap items-center justify-end gap-2 md:flex">
+          <Link href="/contact" className="btn-secondary">
             {t("requestDemo")}
           </Link>
-          <Link
-            href="/login"
-            className="btn-primary"
-          >
+          <Link href="/login" className="btn-primary">
             {t("login")}
           </Link>
         </div>

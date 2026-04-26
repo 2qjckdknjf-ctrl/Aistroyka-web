@@ -53,7 +53,7 @@ export function Button({
       type={type}
       disabled={isDisabled}
       onClick={onClick}
-      className={`inline-flex items-center justify-center rounded-[var(--aistroyka-radius-lg)] transition-[transform,opacity] duration-[var(--aistroyka-duration-button)] motion-reduce:transition-none active:scale-[0.97] active:opacity-[var(--aistroyka-opacity-pressed)] motion-reduce:active:scale-100 motion-reduce:active:opacity-100 disabled:pointer-events-none ${variantClasses[variant]} ${isIcon ? "" : sizeClasses[size]} ${className}`.trim()}
+      className={`inline-flex items-center justify-center rounded-[var(--aistroyka-radius-lg)] transition-[transform,opacity] duration-[var(--aistroyka-duration-button)] motion-reduce:transition-none active:scale-[0.97] active:opacity-[var(--aistroyka-opacity-pressed)] motion-reduce:active:scale-100 motion-reduce:active:opacity-100 disabled:pointer-events-none ${isIcon ? "" : "max-w-full whitespace-normal break-words text-center"} ${variantClasses[variant]} ${isIcon ? "" : sizeClasses[size]} ${className}`.trim()}
       aria-busy={loading}
       aria-label={ariaLabel}
       {...rest}

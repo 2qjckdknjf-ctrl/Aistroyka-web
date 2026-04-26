@@ -144,7 +144,7 @@ export function DashboardShell({
         {/* Topbar */}
         <header className="sticky top-0 z-20 border-b border-aistroyka-border-subtle bg-aistroyka-surface">
           <div className="flex flex-wrap items-center justify-between gap-2 px-[var(--aistroyka-space-4)] py-[var(--aistroyka-space-3)]">
-            <div className="flex items-center gap-3">
+            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 sm:gap-3">
               <button
                 type="button"
                 onClick={() => setSidebarOpen((v) => !v)}
@@ -174,10 +174,10 @@ export function DashboardShell({
                 type="search"
                 placeholder={t("searchPlaceholder")}
                 aria-label={t("search")}
-                className="w-32 rounded-[var(--aistroyka-radius-md)] border border-aistroyka-border-subtle bg-aistroyka-bg-primary px-2 py-1.5 text-aistroyka-caption text-aistroyka-text-primary placeholder:text-aistroyka-text-tertiary focus:outline-none focus:ring-2 focus:ring-aistroyka-accent sm:w-40"
+                className="min-w-0 flex-1 basis-[7.5rem] rounded-[var(--aistroyka-radius-md)] border border-aistroyka-border-subtle bg-aistroyka-bg-primary px-2 py-1.5 text-aistroyka-caption text-aistroyka-text-primary placeholder:text-aistroyka-text-tertiary focus:outline-none focus:ring-2 focus:ring-aistroyka-accent sm:w-40 sm:flex-none sm:basis-auto"
               />
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex min-w-0 shrink-0 flex-wrap items-center justify-end gap-2">
               <BuildStamp />
               <LocaleSwitcher />
               {userEmail && (
@@ -194,7 +194,7 @@ export function DashboardShell({
         </header>
 
         <div className="flex flex-1 flex-col min-h-0">
-          <main className="flex-1 mx-auto w-full max-w-6xl px-[var(--aistroyka-space-4)] py-[var(--aistroyka-space-6)]">
+          <main className="mx-auto min-w-0 w-full max-w-6xl flex-1 px-[var(--aistroyka-space-4)] py-[var(--aistroyka-space-6)]">
             {children}
           </main>
           <footer

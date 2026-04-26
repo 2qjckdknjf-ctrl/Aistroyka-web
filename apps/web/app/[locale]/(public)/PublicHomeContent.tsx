@@ -17,34 +17,34 @@ export async function PublicHomeContent() {
           <div className="absolute -right-28 bottom-4 h-96 w-96 rounded-full bg-[var(--aistroyka-neural-accent)] opacity-20 blur-3xl animate-neural-drift" />
         </div>
 
-        <div className="public-shell relative mx-auto max-w-6xl rounded-[var(--aistroyka-radius-xxl)] px-6 py-12 sm:px-10 sm:py-16">
-          <div className="max-w-3xl">
-            <div className="public-badge mb-6 inline-flex rounded-full px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em]">
+        <div className="public-shell relative mx-auto max-w-6xl min-w-0 rounded-[var(--aistroyka-radius-xxl)] px-4 py-10 sm:px-10 sm:py-16">
+          <div className="max-w-3xl min-w-0">
+            <div className="public-badge mb-6 inline-flex max-w-full flex-wrap rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] sm:px-4 sm:tracking-[0.16em]">
               {t("neuralConstructionControl")}
             </div>
-            <h1 className="font-heading text-4xl font-semibold uppercase tracking-[0.06em] text-aistroyka-text-primary sm:text-5xl lg:text-6xl">
+            <h1 className="text-balance font-heading text-3xl font-semibold uppercase tracking-[0.04em] text-aistroyka-text-primary sm:text-5xl sm:tracking-[0.06em] lg:text-6xl">
               <span className="text-aistroyka-accent">AISTROYKA</span>{" "}
               <span className="text-aistroyka-text-primary">{t("heroTitle")}</span>
             </h1>
-            <p className="mt-6 max-w-2xl text-[var(--aistroyka-font-headline)] text-aistroyka-text-secondary sm:text-xl">
+            <p className="mt-6 max-w-2xl text-pretty text-[var(--aistroyka-font-headline)] text-aistroyka-text-secondary sm:text-xl">
               {t("heroSubtitle")}
             </p>
             <div className="mt-10 flex flex-wrap gap-3">
-              <Link href="/contact" className="btn-primary">
+              <Link href="/contact" className="btn-primary min-w-0 flex-1 basis-[min(100%,14rem)] sm:flex-none sm:basis-auto">
                 {tNav("requestDemo")}
               </Link>
-              <Link href="/ai-demo" className="btn-secondary">
+              <Link href="/ai-demo" className="btn-secondary min-w-0 flex-1 basis-[min(100%,14rem)] sm:flex-none sm:basis-auto">
                 {tNav("aiDemo")}
               </Link>
             </div>
           </div>
 
-          <div className="mt-12 grid gap-4 sm:grid-cols-3">
-            <Link href="/projects-showcase" className="public-card-motion rounded-[var(--aistroyka-radius-xl)] border border-aistroyka-border-subtle bg-aistroyka-surface px-5 py-4">
+          <div className="mt-12 grid min-w-0 gap-4 sm:grid-cols-3">
+            <Link href="/projects-showcase" className="public-card-motion min-w-0 rounded-[var(--aistroyka-radius-xl)] border border-aistroyka-border-subtle bg-aistroyka-surface px-4 py-4 sm:px-5">
               <div className="text-sm font-semibold uppercase tracking-[0.12em] text-aistroyka-accent">{t("heroCardDashboardTitle")}</div>
               <p className="mt-2 text-sm text-aistroyka-text-secondary">{t("heroCardDashboardSubtitle")}</p>
             </Link>
-            <Link href="/ai-construction-control" className="public-card-motion rounded-[var(--aistroyka-radius-xl)] border border-aistroyka-border-subtle bg-aistroyka-surface px-5 py-4">
+            <Link href="/ai-construction-control" className="public-card-motion min-w-0 rounded-[var(--aistroyka-radius-xl)] border border-aistroyka-border-subtle bg-aistroyka-surface px-4 py-4 sm:px-5">
               <div className="text-sm font-semibold uppercase tracking-[0.12em] text-aistroyka-accent">{t("heroCardAiTitle")}</div>
               <p className="mt-2 text-sm text-aistroyka-text-secondary">{t("heroCardAiSubtitle")}</p>
             </Link>
@@ -181,7 +181,7 @@ export async function PublicHomeContent() {
           </p>
           <Link
             href="/ai-construction-control"
-            className="mt-6 inline-flex min-h-[var(--aistroyka-touch-min)] items-center justify-center rounded-[var(--radius-main)] bg-[var(--ai-yellow)] px-6 py-2.5 text-[var(--aistroyka-font-headline)] font-semibold text-[var(--ai-dark)] hover:bg-[var(--aistroyka-accent-hover)]"
+            className="mt-6 inline-flex max-w-full min-h-[var(--aistroyka-touch-min)] min-w-0 items-center justify-center whitespace-normal break-words rounded-[var(--radius-main)] bg-[var(--ai-yellow)] px-4 py-2.5 text-center text-[var(--aistroyka-font-headline)] font-semibold text-[var(--ai-dark)] hover:bg-[var(--aistroyka-accent-hover)] sm:px-6"
           >
             {t("learnMore")}
           </Link>
@@ -197,7 +197,7 @@ export async function PublicHomeContent() {
           <p className="mt-3 text-[var(--aistroyka-font-body)] text-[var(--text-muted)]">
             {t("mobileSubtitle")}
           </p>
-          <Link href="/mobile" className="btn-primary mt-6">
+          <Link href="/mobile" className="btn-primary mx-auto mt-6 inline-flex max-w-full">
             {t("mobileCta")}
           </Link>
         </div>
@@ -212,7 +212,7 @@ export async function PublicHomeContent() {
           <p className="mt-3 text-[var(--aistroyka-font-body)] text-[var(--text-muted)]">
             {t("pricingTeaserSubtitle")}
           </p>
-          <Link href="/pricing" className="btn-primary mt-6">
+          <Link href="/pricing" className="btn-primary mx-auto mt-6 inline-flex max-w-full">
             {t("pricingTeaserTitle")}
           </Link>
         </div>
@@ -229,7 +229,7 @@ export async function PublicHomeContent() {
           </p>
           <Link
             href="/contact"
-            className="mt-6 inline-flex min-h-[var(--aistroyka-touch-min)] items-center justify-center rounded-[var(--radius-main)] bg-[var(--ai-yellow)] px-8 py-3 text-[var(--aistroyka-font-headline)] font-semibold text-[var(--ai-dark)] hover:bg-[var(--aistroyka-accent-hover)]"
+            className="mt-6 inline-flex max-w-full min-h-[var(--aistroyka-touch-min)] min-w-0 items-center justify-center whitespace-normal break-words rounded-[var(--radius-main)] bg-[var(--ai-yellow)] px-4 py-3 text-center text-[var(--aistroyka-font-headline)] font-semibold text-[var(--ai-dark)] hover:bg-[var(--aistroyka-accent-hover)] sm:px-8"
           >
             {t("finalCtaButton")}
           </Link>

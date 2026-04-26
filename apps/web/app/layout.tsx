@@ -70,8 +70,8 @@ export default async function RootLayout({
   }
 
   return (
-    <html lang={lang} className={`${inter.variable} ${exo2.variable}`}>
-      <body className="min-h-screen font-sans antialiased [padding-bottom:env(safe-area-inset-bottom)]">
+    <html lang={lang} className={`${inter.variable} ${exo2.variable} overflow-x-clip`}>
+      <body className="min-h-screen min-w-0 font-sans antialiased [padding-bottom:env(safe-area-inset-bottom)] [padding-left:env(safe-area-inset-left)] [padding-right:env(safe-area-inset-right)]">
         <QueryProvider>{children}</QueryProvider>
       </body>
     </html>
