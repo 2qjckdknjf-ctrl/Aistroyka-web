@@ -83,9 +83,11 @@ apps/web/src/features/admin/components/RequestIdPill.tsx
 - `apps/web`: скрипт `e2e:pilot` для быстрого прогона трёх спек без полного `e2e`.
 - `dashboard-button-audit`: список CTA через `loadActionableCtas()` из `_helpers/button-inventory`.
 - `sync-contract`: единый путь `sync-contract.log`, заголовок в `beforeAll`, строка в `afterEach` по каждому тесту.
+- GitHub Actions: **`.github/workflows/pilot-e2e-audit.yml`** — ручной запуск Playwright pilot на `PILOT_E2E_BASE_URL` + логин-секреты (см. комментарии в workflow).
+- `DashboardShell`: литеральные `data-testid` для **admin push / admin jobs** (совместимо со статическим AST-инвентарём).
 
 **Дальше (бэклог)**
 
-- Прогон `bun run audit:pilot` в CI со staging `PLAYWRIGHT_BASE_URL` + секреты (без коммита `.env.pilot`).
-- Расширить `data-testid="cta.*"` на остальные критичные сценарии (сохранение проекта, submit отчёта, approvals).
+- По желанию: привязать `pilot-e2e-audit` к расписанию или post-deploy (сейчас только `workflow_dispatch`).
+- Расширить `data-testid="cta.*"` на остальные пункты сайдбара — потребуется **строковый литерал** в JSX на каждый пункт или доработка `generate_button_inventory.mjs` под шаблонные строки.
 - Опционально: генератор инвентаря на `ts-morph` рядом с `generate_button_inventory.mjs`, без дублирования полей JSON.

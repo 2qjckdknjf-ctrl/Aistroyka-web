@@ -89,21 +89,40 @@ export function DashboardShell({
                 </div>
                 {ADMIN_LINKS.map(({ href, key }) => {
                   const active = pathname === href || pathname.startsWith(href + "/");
-                  return (
-                    <Link
-                      key={href}
-                      href={href}
-                      onClick={closeSidebar}
-                      className={`flex min-h-aistroyka-touch items-center rounded-[var(--aistroyka-radius-lg)] px-[var(--aistroyka-space-3)] py-[var(--aistroyka-space-2)] text-[var(--aistroyka-font-subheadline)] font-medium transition-colors ${
-                        active
-                          ? "bg-aistroyka-accent-light text-aistroyka-accent"
-                          : "text-aistroyka-text-secondary hover:bg-aistroyka-surface-raised hover:text-aistroyka-text-primary"
-                      }`}
-                      aria-current={active ? "page" : undefined}
-                    >
-                      {t(key)}
-                    </Link>
-                  );
+                  const className = `flex min-h-aistroyka-touch items-center rounded-[var(--aistroyka-radius-lg)] px-[var(--aistroyka-space-3)] py-[var(--aistroyka-space-2)] text-[var(--aistroyka-font-subheadline)] font-medium transition-colors ${
+                    active
+                      ? "bg-aistroyka-accent-light text-aistroyka-accent"
+                      : "text-aistroyka-text-secondary hover:bg-aistroyka-surface-raised hover:text-aistroyka-text-primary"
+                  }`;
+                  if (key === "adminPush") {
+                    return (
+                      <Link
+                        key={href}
+                        href={href}
+                        onClick={closeSidebar}
+                        data-testid="cta.dashboard.nav.admin.push"
+                        className={className}
+                        aria-current={active ? "page" : undefined}
+                      >
+                        {t(key)}
+                      </Link>
+                    );
+                  }
+                  if (key === "adminJobs") {
+                    return (
+                      <Link
+                        key={href}
+                        href={href}
+                        onClick={closeSidebar}
+                        data-testid="cta.dashboard.nav.admin.jobs"
+                        className={className}
+                        aria-current={active ? "page" : undefined}
+                      >
+                        {t(key)}
+                      </Link>
+                    );
+                  }
+                  return null;
                 })}
               </>
             )}

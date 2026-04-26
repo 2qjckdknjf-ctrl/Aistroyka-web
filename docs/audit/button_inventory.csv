@@ -271,58 +271,58 @@ generated.apps.web.app.locale.dashboard.dashboard.projects.id.OwnerViewClient.ts
 generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectCommercialPanel.tsx.140,button,creating ? tDetail(closeForm) : tDetail(addLine),/{locale}/dashboard/projects/:id,() => setCreating(!creating),apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectCommercialPanel.tsx,140,generated id; no data-testid
 generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectCommercialPanel.tsx.185,button,createMut.isPending ? tDetail(saving) : tDetail(createDraft),/{locale}/dashboard/projects/:id,() => createMut.mutate(),apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectCommercialPanel.tsx,185,generated id; no data-testid
 generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectCommercialPanel.tsx.fallback.189,button,,/{locale}/dashboard/projects/:id,onClick=,apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectCommercialPanel.tsx,189,fallback text scan
-generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectCostsPanel.tsx.186,iconButton,tDetail(addCostItem),/{locale}/dashboard/projects/:id,() => setCreateOpen(true),apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectCostsPanel.tsx,186,generated id; no data-testid
-generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectCostsPanel.tsx.fallback.189,button,,/{locale}/dashboard/projects/:id,onClick=,apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectCostsPanel.tsx,189,fallback text scan
-generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectCostsPanel.tsx.251,button,tDetail(addCostItem),/{locale}/dashboard/projects/:id,() => setCreateOpen(true),apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectCostsPanel.tsx,251,generated id; no data-testid
-generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectCostsPanel.tsx.299,iconButton,Edit $item.title,/{locale}/dashboard/projects/:id,() => setEditingItem(item),apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectCostsPanel.tsx,299,generated id; no data-testid
-generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectCostsPanel.tsx.fallback.302,button,,/{locale}/dashboard/projects/:id,onClick=,apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectCostsPanel.tsx,302,fallback text scan
-generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectCostsPanel.tsx.485,button,tDetail(cancel),/{locale}/dashboard/projects/:id,onClose,apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectCostsPanel.tsx,485,generated id; no data-testid
-generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectCostsPanel.tsx.486,formSubmit,isSubmitting ? tDetail(saving) : tDetail(save),/{locale}/dashboard/projects/:id,form submit,apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectCostsPanel.tsx,486,generated id; no data-testid
-generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectCostsPanel.tsx.604,button,tDetail(cancel),/{locale}/dashboard/projects/:id,onClose,apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectCostsPanel.tsx,604,generated id; no data-testid
-generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectCostsPanel.tsx.607,formSubmit,isSubmitting ? tDetail(adding) : tDetail(add),/{locale}/dashboard/projects/:id,form submit,apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectCostsPanel.tsx,607,generated id; no data-testid
-generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectDocumentsPanel.tsx.266,iconButton,tDetail(createDocument),/{locale}/dashboard/projects/:id,() => setCreateOpen(true),apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectDocumentsPanel.tsx,266,generated id; no data-testid
-generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectDocumentsPanel.tsx.fallback.269,button,,/{locale}/dashboard/projects/:id,onClick=,apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectDocumentsPanel.tsx,269,fallback text scan
-generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectDocumentsPanel.tsx.287,button,Jump to pending →,/{locale}/dashboard/projects/:id,"() => {
+generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectCostsPanel.tsx.193,iconButton,tDetail(addCostItem),/{locale}/dashboard/projects/:id,() => setCreateOpen(true),apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectCostsPanel.tsx,193,generated id; no data-testid
+generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectCostsPanel.tsx.fallback.196,button,,/{locale}/dashboard/projects/:id,onClick=,apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectCostsPanel.tsx,196,fallback text scan
+generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectCostsPanel.tsx.258,button,tDetail(addCostItem),/{locale}/dashboard/projects/:id,() => setCreateOpen(true),apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectCostsPanel.tsx,258,generated id; no data-testid
+generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectCostsPanel.tsx.306,iconButton,$tDetail(edit) $item.title,/{locale}/dashboard/projects/:id,() => setEditingItem(item),apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectCostsPanel.tsx,306,generated id; no data-testid
+generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectCostsPanel.tsx.fallback.309,button,,/{locale}/dashboard/projects/:id,onClick=,apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectCostsPanel.tsx,309,fallback text scan
+generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectCostsPanel.tsx.492,button,tDetail(cancel),/{locale}/dashboard/projects/:id,onClose,apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectCostsPanel.tsx,492,generated id; no data-testid
+generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectCostsPanel.tsx.493,formSubmit,isSubmitting ? tDetail(saving) : tDetail(save),/{locale}/dashboard/projects/:id,form submit,apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectCostsPanel.tsx,493,generated id; no data-testid
+generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectCostsPanel.tsx.611,button,tDetail(cancel),/{locale}/dashboard/projects/:id,onClose,apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectCostsPanel.tsx,611,generated id; no data-testid
+generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectCostsPanel.tsx.614,formSubmit,isSubmitting ? tDetail(adding) : tDetail(add),/{locale}/dashboard/projects/:id,form submit,apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectCostsPanel.tsx,614,generated id; no data-testid
+generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectDocumentsPanel.tsx.279,iconButton,tDetail(createDocument),/{locale}/dashboard/projects/:id,() => setCreateOpen(true),apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectDocumentsPanel.tsx,279,generated id; no data-testid
+generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectDocumentsPanel.tsx.fallback.282,button,,/{locale}/dashboard/projects/:id,onClick=,apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectDocumentsPanel.tsx,282,fallback text scan
+generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectDocumentsPanel.tsx.299,button,tDetail(jumpToPendingArrow),/{locale}/dashboard/projects/:id,"() => {
               const first = pendingDocs[0];
               if (!first) return;
               document.getElementById(`document-${first.id}`)?.scrollIntoView({
                 behavior: ""smooth"",
                 block: ""start"",
               });
-            }",apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectDocumentsPanel.tsx,287,generated id; no data-testid
-generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectDocumentsPanel.tsx.fallback.290,button,,/{locale}/dashboard/projects/:id,onClick=,apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectDocumentsPanel.tsx,290,fallback text scan
-generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectDocumentsPanel.tsx.310,button,tDetail(createDocument),/{locale}/dashboard/projects/:id,() => setCreateOpen(true),apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectDocumentsPanel.tsx,310,generated id; no data-testid
-generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectDocumentsPanel.tsx.355,Link,Open,/{locale}/dashboard/projects/:id,url,apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectDocumentsPanel.tsx,355,generated id; no data-testid
-generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectDocumentsPanel.tsx.364,button,isUploading ? Uploading… : Upload file,/{locale}/dashboard/projects/:id,"() => {
+            }",apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectDocumentsPanel.tsx,299,generated id; no data-testid
+generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectDocumentsPanel.tsx.fallback.302,button,,/{locale}/dashboard/projects/:id,onClick=,apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectDocumentsPanel.tsx,302,fallback text scan
+generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectDocumentsPanel.tsx.322,button,tDetail(createDocument),/{locale}/dashboard/projects/:id,() => setCreateOpen(true),apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectDocumentsPanel.tsx,322,generated id; no data-testid
+generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectDocumentsPanel.tsx.367,Link,tDetail(open),/{locale}/dashboard/projects/:id,url,apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectDocumentsPanel.tsx,367,generated id; no data-testid
+generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectDocumentsPanel.tsx.376,button,isUploading ? tDetail(uploading) : tDetail(uploadFile),/{locale}/dashboard/projects/:id,"() => {
                           uploadTargetRef.current = doc.id;
                           uploadInputRef.current?.click();
-                        }",apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectDocumentsPanel.tsx,364,generated id; no data-testid
-generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectDocumentsPanel.tsx.fallback.366,button,,/{locale}/dashboard/projects/:id,onClick=,apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectDocumentsPanel.tsx,366,fallback text scan
-generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectDocumentsPanel.tsx.394,Link,"Report doc.report_id.slice(0, 8) …",/{locale}/dashboard/projects/:id,`/dashboard/reports/${doc.report_id}`,apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectDocumentsPanel.tsx,394,generated id; no data-testid
-generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectDocumentsPanel.tsx.401,Link,"Task doc.task_id.slice(0, 8) …",/{locale}/dashboard/projects/:id,`/dashboard/tasks/${doc.task_id}`,apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectDocumentsPanel.tsx,401,generated id; no data-testid
-generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectDocumentsPanel.tsx.417,button,Submit for review,/{locale}/dashboard/projects/:id,"() =>
+                        }",apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectDocumentsPanel.tsx,376,generated id; no data-testid
+generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectDocumentsPanel.tsx.fallback.378,button,,/{locale}/dashboard/projects/:id,onClick=,apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectDocumentsPanel.tsx,378,fallback text scan
+generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectDocumentsPanel.tsx.409,Link,"tDetail(report) doc.report_id.slice(0, 8) …",/{locale}/dashboard/projects/:id,`/dashboard/reports/${doc.report_id}`,apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectDocumentsPanel.tsx,409,generated id; no data-testid
+generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectDocumentsPanel.tsx.416,Link,"tDetail(task) doc.task_id.slice(0, 8) …",/{locale}/dashboard/projects/:id,`/dashboard/tasks/${doc.task_id}`,apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectDocumentsPanel.tsx,416,generated id; no data-testid
+generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectDocumentsPanel.tsx.432,button,tDetail(submitForReview),/{locale}/dashboard/projects/:id,"() =>
                             updateMutation.mutate({
                               documentId: doc.id,
                               body: { status: ""under_review"" },
-                            })",apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectDocumentsPanel.tsx,417,generated id; no data-testid
-generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectDocumentsPanel.tsx.fallback.420,button,,/{locale}/dashboard/projects/:id,onClick=,apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectDocumentsPanel.tsx,420,fallback text scan
-generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectDocumentsPanel.tsx.432,button,Approve,/{locale}/dashboard/projects/:id,"() =>
+                            })",apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectDocumentsPanel.tsx,432,generated id; no data-testid
+generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectDocumentsPanel.tsx.fallback.435,button,,/{locale}/dashboard/projects/:id,onClick=,apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectDocumentsPanel.tsx,435,fallback text scan
+generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectDocumentsPanel.tsx.447,button,tDetail(approve),/{locale}/dashboard/projects/:id,"() =>
                               updateMutation.mutate({
                                 documentId: doc.id,
                                 body: { status: ""approved"" },
-                              })",apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectDocumentsPanel.tsx,432,generated id; no data-testid
-generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectDocumentsPanel.tsx.fallback.435,button,,/{locale}/dashboard/projects/:id,onClick=,apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectDocumentsPanel.tsx,435,fallback text scan
-generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectDocumentsPanel.tsx.445,button,Reject,/{locale}/dashboard/projects/:id,"() =>
+                              })",apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectDocumentsPanel.tsx,447,generated id; no data-testid
+generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectDocumentsPanel.tsx.fallback.450,button,,/{locale}/dashboard/projects/:id,onClick=,apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectDocumentsPanel.tsx,450,fallback text scan
+generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectDocumentsPanel.tsx.460,button,tDetail(reject),/{locale}/dashboard/projects/:id,"() =>
                               updateMutation.mutate({
                                 documentId: doc.id,
                                 body: { status: ""rejected"" },
-                              })",apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectDocumentsPanel.tsx,445,generated id; no data-testid
-generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectDocumentsPanel.tsx.fallback.448,button,,/{locale}/dashboard/projects/:id,onClick=,apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectDocumentsPanel.tsx,448,fallback text scan
-generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectDocumentsPanel.tsx.463,button,History,/{locale}/dashboard/projects/:id,() => setHistoryDocId(doc.id),apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectDocumentsPanel.tsx,463,generated id; no data-testid
-generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectDocumentsPanel.tsx.fallback.466,button,,/{locale}/dashboard/projects/:id,onClick=,apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectDocumentsPanel.tsx,466,fallback text scan
-generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectDocumentsPanel.tsx.616,button,tDetail(cancel),/{locale}/dashboard/projects/:id,onClose,apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectDocumentsPanel.tsx,616,generated id; no data-testid
-generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectDocumentsPanel.tsx.619,formSubmit,isSubmitting ? tDetail(creating) : tDetail(create),/{locale}/dashboard/projects/:id,form submit,apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectDocumentsPanel.tsx,619,generated id; no data-testid
-generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectEstimatePanel.tsx.209,button,fromImageMutation.isPending ? tDetail(running) : tDetail(runCostEstimate),/{locale}/dashboard/projects/:id,() => fromImageMutation.mutate(),apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectEstimatePanel.tsx,209,generated id; no data-testid
+                              })",apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectDocumentsPanel.tsx,460,generated id; no data-testid
+generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectDocumentsPanel.tsx.fallback.463,button,,/{locale}/dashboard/projects/:id,onClick=,apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectDocumentsPanel.tsx,463,fallback text scan
+generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectDocumentsPanel.tsx.478,button,tDetail(history),/{locale}/dashboard/projects/:id,() => setHistoryDocId(doc.id),apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectDocumentsPanel.tsx,478,generated id; no data-testid
+generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectDocumentsPanel.tsx.fallback.481,button,,/{locale}/dashboard/projects/:id,onClick=,apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectDocumentsPanel.tsx,481,fallback text scan
+generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectDocumentsPanel.tsx.631,button,tDetail(cancel),/{locale}/dashboard/projects/:id,onClose,apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectDocumentsPanel.tsx,631,generated id; no data-testid
+generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectDocumentsPanel.tsx.634,formSubmit,isSubmitting ? tDetail(creating) : tDetail(create),/{locale}/dashboard/projects/:id,form submit,apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectDocumentsPanel.tsx,634,generated id; no data-testid
+generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectEstimatePanel.tsx.222,button,fromImageMutation.isPending ? tDetail(running) : tDetail(runCostEstimate),/{locale}/dashboard/projects/:id,() => fromImageMutation.mutate(),apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectEstimatePanel.tsx,222,generated id; no data-testid
 generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectIntelligenceClient.tsx.198,Link,tDetail(openRelated),/{locale}/dashboard/projects/:id,href,apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectIntelligenceClient.tsx,198,generated id; no data-testid
 generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectIntelligenceClient.tsx.229,Link,tDetail(openRelated),/{locale}/dashboard/projects/:id,href,apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectIntelligenceClient.tsx,229,generated id; no data-testid
 generated.apps.web.app.locale.dashboard.dashboard.projects.id.ProjectIssuesPanel.tsx.105,button,tDetail(createIssue),/{locale}/dashboard/projects/:id,() => setShowCreate(true),apps/web/app/[locale]/(dashboard)/dashboard/projects/[id]/ProjectIssuesPanel.tsx,105,generated id; no data-testid
@@ -478,48 +478,52 @@ generated.apps.web.app.locale.dashboard.team.TeamPageClient.tsx.132,formSubmit,l
 generated.apps.web.app.locale.dashboard.team.TeamPageClient.tsx.138,button,t(copyLink),/{locale}/team,copyLink,apps/web/app/[locale]/(dashboard)/team/TeamPageClient.tsx,138,generated id; no data-testid
 generated.apps.web.app.locale.dashboard.team.TeamPageClient.tsx.160,button,revoking === m.user_id ? … : t(revoke),/{locale}/team,() => handleRevoke(m.user_id),apps/web/app/[locale]/(dashboard)/team/TeamPageClient.tsx,160,generated id; no data-testid
 generated.apps.web.app.locale.dashboard.team.TeamPageClient.tsx.fallback.162,button,,/{locale}/team,onClick=,apps/web/app/[locale]/(dashboard)/team/TeamPageClient.tsx,162,fallback text scan
-generated.apps.web.components.ai.AiActionPanel.tsx.194,iconButton,Executive summary,dashboard-shared,() => setTab(t),apps/web/components/ai/AiActionPanel.tsx,194,generated id; no data-testid
-generated.apps.web.components.ai.AiActionPanel.tsx.fallback.200,button,,dashboard-shared,onClick=,apps/web/components/ai/AiActionPanel.tsx,200,fallback text scan
-generated.apps.web.components.ai.AiActionPanel.tsx.246,button,isPending ? Running… : Run,dashboard-shared,run,apps/web/components/ai/AiActionPanel.tsx,246,generated id; no data-testid
-generated.apps.web.components.ai.AiErrorBanner.tsx.56,button,Retry,dashboard-shared,onRetry,apps/web/components/ai/AiErrorBanner.tsx,56,generated id; no data-testid
-generated.apps.web.components.ai.AiErrorBanner.tsx.fallback.58,button,,dashboard-shared,onClick=,apps/web/components/ai/AiErrorBanner.tsx,58,fallback text scan
+generated.apps.web.components.ai.AiActionPanel.tsx.195,iconButton,t === summary ? tDetail(executiveSummary) : t === explain_risk ? tDetail(explainRisk) : tDetail(copilotChat),dashboard-shared,() => setTab(t),apps/web/components/ai/AiActionPanel.tsx,195,generated id; no data-testid
+generated.apps.web.components.ai.AiActionPanel.tsx.fallback.207,button,,dashboard-shared,onClick=,apps/web/components/ai/AiActionPanel.tsx,207,fallback text scan
+generated.apps.web.components.ai.AiActionPanel.tsx.253,button,isPending ? tDetail(running) : tDetail(run),dashboard-shared,run,apps/web/components/ai/AiActionPanel.tsx,253,generated id; no data-testid
+generated.apps.web.components.ai.AiErrorBanner.tsx.58,button,tDetail(retry),dashboard-shared,onRetry,apps/web/components/ai/AiErrorBanner.tsx,58,generated id; no data-testid
+generated.apps.web.components.ai.AiErrorBanner.tsx.fallback.60,button,,dashboard-shared,onClick=,apps/web/components/ai/AiErrorBanner.tsx,60,fallback text scan
 generated.apps.web.components.ai.AiStatusBanner.tsx.21,button,Retry,dashboard-shared,onRetry,apps/web/components/ai/AiStatusBanner.tsx,21,generated id; no data-testid
 generated.apps.web.components.ai.AiStatusBanner.tsx.fallback.23,button,,dashboard-shared,onClick=,apps/web/components/ai/AiStatusBanner.tsx,23,fallback text scan
-generated.apps.web.components.ai.CopyRequestIdButton.tsx.21,iconButton,Copied,dashboard-shared,handleCopy,apps/web/components/ai/CopyRequestIdButton.tsx,21,generated id; no data-testid
-generated.apps.web.components.ai.CopyRequestIdButton.tsx.fallback.23,button,,dashboard-shared,onClick=,apps/web/components/ai/CopyRequestIdButton.tsx,23,fallback text scan
-generated.apps.web.components.ai.LowConfidenceNotice.tsx.27,button,expanded ? Hide : Why this happened?,dashboard-shared,() => setExpanded((e) => !e),apps/web/components/ai/LowConfidenceNotice.tsx,27,generated id; no data-testid
-generated.apps.web.components.ai.LowConfidenceNotice.tsx.fallback.29,button,,dashboard-shared,onClick=,apps/web/components/ai/LowConfidenceNotice.tsx,29,fallback text scan
-generated.apps.web.components.ai.LowConfidenceNotice.tsx.37,button,Suggest a follow-up question,dashboard-shared,() => onSuggestFollowUp(FOLLOW_UP_TEMPLATE),apps/web/components/ai/LowConfidenceNotice.tsx,37,generated id; no data-testid
-generated.apps.web.components.ai.LowConfidenceNotice.tsx.fallback.39,button,,dashboard-shared,onClick=,apps/web/components/ai/LowConfidenceNotice.tsx,39,fallback text scan
-generated.apps.web.components.approvals.ReportApprovalCard.tsx.48,button,Approve,dashboard-shared,"() => handleReview(""approved"")",apps/web/components/approvals/ReportApprovalCard.tsx,48,generated id; no data-testid
-generated.apps.web.components.approvals.ReportApprovalCard.tsx.fallback.51,button,,dashboard-shared,onClick=,apps/web/components/approvals/ReportApprovalCard.tsx,51,fallback text scan
-generated.apps.web.components.approvals.ReportApprovalCard.tsx.56,button,Reject,dashboard-shared,"() => handleReview(""rejected"")",apps/web/components/approvals/ReportApprovalCard.tsx,56,generated id; no data-testid
-generated.apps.web.components.approvals.ReportApprovalCard.tsx.fallback.59,button,,dashboard-shared,onClick=,apps/web/components/approvals/ReportApprovalCard.tsx,59,fallback text scan
-generated.apps.web.components.approvals.ReportApprovalCard.tsx.64,button,Request changes,dashboard-shared,"() => handleReview(""changes_requested"")",apps/web/components/approvals/ReportApprovalCard.tsx,64,generated id; no data-testid
-generated.apps.web.components.approvals.ReportApprovalCard.tsx.fallback.67,button,,dashboard-shared,onClick=,apps/web/components/approvals/ReportApprovalCard.tsx,67,fallback text scan
+generated.apps.web.components.ai.CopyRequestIdButton.tsx.24,iconButton,copied ? tCommon(copied) : tDetail(copyRequestId),dashboard-shared,handleCopy,apps/web/components/ai/CopyRequestIdButton.tsx,24,generated id; no data-testid
+generated.apps.web.components.ai.CopyRequestIdButton.tsx.fallback.26,button,,dashboard-shared,onClick=,apps/web/components/ai/CopyRequestIdButton.tsx,26,fallback text scan
+generated.apps.web.components.ai.LowConfidenceNotice.tsx.24,button,expanded ? tDetail(hide) : tDetail(whyThisHappened),dashboard-shared,() => setExpanded((e) => !e),apps/web/components/ai/LowConfidenceNotice.tsx,24,generated id; no data-testid
+generated.apps.web.components.ai.LowConfidenceNotice.tsx.fallback.26,button,,dashboard-shared,onClick=,apps/web/components/ai/LowConfidenceNotice.tsx,26,fallback text scan
+generated.apps.web.components.ai.LowConfidenceNotice.tsx.34,button,tDetail(suggestFollowUpQuestion),dashboard-shared,"() => onSuggestFollowUp(tDetail(""followUpTemplate""))",apps/web/components/ai/LowConfidenceNotice.tsx,34,generated id; no data-testid
+generated.apps.web.components.ai.LowConfidenceNotice.tsx.fallback.36,button,,dashboard-shared,onClick=,apps/web/components/ai/LowConfidenceNotice.tsx,36,fallback text scan
+generated.apps.web.components.approvals.ReportApprovalCard.tsx.50,button,tDetail(approve),dashboard-shared,"() => handleReview(""approved"")",apps/web/components/approvals/ReportApprovalCard.tsx,50,generated id; no data-testid
+generated.apps.web.components.approvals.ReportApprovalCard.tsx.fallback.53,button,,dashboard-shared,onClick=,apps/web/components/approvals/ReportApprovalCard.tsx,53,fallback text scan
+generated.apps.web.components.approvals.ReportApprovalCard.tsx.58,button,tDetail(reject),dashboard-shared,"() => handleReview(""rejected"")",apps/web/components/approvals/ReportApprovalCard.tsx,58,generated id; no data-testid
+generated.apps.web.components.approvals.ReportApprovalCard.tsx.fallback.61,button,,dashboard-shared,onClick=,apps/web/components/approvals/ReportApprovalCard.tsx,61,fallback text scan
+generated.apps.web.components.approvals.ReportApprovalCard.tsx.66,button,tDetail(requestChanges),dashboard-shared,"() => handleReview(""changes_requested"")",apps/web/components/approvals/ReportApprovalCard.tsx,66,generated id; no data-testid
+generated.apps.web.components.approvals.ReportApprovalCard.tsx.fallback.69,button,,dashboard-shared,onClick=,apps/web/components/approvals/ReportApprovalCard.tsx,69,fallback text scan
 generated.apps.web.components.brand.Logo.tsx.40,Link,LOGO_ALT,dashboard-shared,href,apps/web/components/brand/Logo.tsx,40,generated id; no data-testid
-generated.apps.web.components.cockpit.FilterBar.tsx.196,button,Save current,dashboard-shared,saveCurrentView,apps/web/components/cockpit/FilterBar.tsx,196,generated id; no data-testid
-generated.apps.web.components.cockpit.FilterBar.tsx.fallback.198,button,,dashboard-shared,onClick=,apps/web/components/cockpit/FilterBar.tsx,198,fallback text scan
+generated.apps.web.components.cockpit.FilterBar.tsx.198,button,tDetail(saveCurrent),dashboard-shared,saveCurrentView,apps/web/components/cockpit/FilterBar.tsx,198,generated id; no data-testid
+generated.apps.web.components.cockpit.FilterBar.tsx.fallback.200,button,,dashboard-shared,onClick=,apps/web/components/cockpit/FilterBar.tsx,200,fallback text scan
 generated.apps.web.components.DashboardShell.tsx.fallback.63,button,,dashboard-shared,onClick=,apps/web/components/DashboardShell.tsx,63,fallback text scan
 cta.dashboard.nav.projects,Link,t(key),dashboard-shared,href,apps/web/components/DashboardShell.tsx,69,
 generated.apps.web.components.DashboardShell.tsx.fallback.71,Link,,dashboard-shared,href=,apps/web/components/DashboardShell.tsx,71,fallback text scan
 generated.apps.web.components.DashboardShell.tsx.fallback.73,button,,dashboard-shared,data-testid=,apps/web/components/DashboardShell.tsx,73,fallback text scan
-generated.apps.web.components.DashboardShell.tsx.93,Link,t(key),dashboard-shared,href,apps/web/components/DashboardShell.tsx,93,generated id; no data-testid
-generated.apps.web.components.DashboardShell.tsx.fallback.96,button,,dashboard-shared,onClick=,apps/web/components/DashboardShell.tsx,96,fallback text scan
-generated.apps.web.components.DashboardShell.tsx.116,button,,dashboard-shared,closeSidebar,apps/web/components/DashboardShell.tsx,116,generated id; no data-testid
-generated.apps.web.components.DashboardShell.tsx.fallback.120,button,,dashboard-shared,onClick=,apps/web/components/DashboardShell.tsx,120,fallback text scan
-generated.apps.web.components.DashboardShell.tsx.129,iconButton,Close menu,dashboard-shared,() => setSidebarOpen((v) => !v),apps/web/components/DashboardShell.tsx,129,generated id; no data-testid
-generated.apps.web.components.DashboardShell.tsx.fallback.131,button,,dashboard-shared,onClick=,apps/web/components/DashboardShell.tsx,131,fallback text scan
-generated.apps.web.components.DashboardShell.tsx.198,Link,loc,dashboard-shared,pathname,apps/web/components/DashboardShell.tsx,198,generated id; no data-testid
-generated.apps.web.components.DashboardShell.tsx.fallback.200,Link,,dashboard-shared,href=,apps/web/components/DashboardShell.tsx,200,fallback text scan
-generated.apps.web.components.intelligence.AlertFeed.tsx.50,Link,d.contextLabel →,dashboard-shared,d.contextHref,apps/web/components/intelligence/AlertFeed.tsx,50,generated id; no data-testid
-generated.apps.web.components.intelligence.AlertFeed.tsx.57,Link,d.contextHref ? d.anchoredListLabel : Open on alerts list →,dashboard-shared,d.anchoredListHref,apps/web/components/intelligence/AlertFeed.tsx,57,generated id; no data-testid
-generated.apps.web.components.intelligence.CopilotSummaryPanel.tsx.71,button,"uc.replace(/([A-Z])/g,  $1).trim()",dashboard-shared,() => setUseCase(uc),apps/web/components/intelligence/CopilotSummaryPanel.tsx,71,generated id; no data-testid
-generated.apps.web.components.intelligence.CopilotSummaryPanel.tsx.fallback.74,button,,dashboard-shared,onClick=,apps/web/components/intelligence/CopilotSummaryPanel.tsx,74,fallback text scan
-generated.apps.web.components.intelligence.EvidenceCoverageCard.tsx.37,Link,Open task →,dashboard-shared,`/dashboard/tasks/${s.taskId}`,apps/web/components/intelligence/EvidenceCoverageCard.tsx,37,generated id; no data-testid
-generated.apps.web.components.intelligence.IntelligenceOperationalBanner.tsx.58,button,copied ? Copied : Copy full ID for admin,dashboard-shared,copyRef,apps/web/components/intelligence/IntelligenceOperationalBanner.tsx,58,generated id; no data-testid
-generated.apps.web.components.intelligence.IntelligenceOperationalBanner.tsx.fallback.60,button,,dashboard-shared,onClick=,apps/web/components/intelligence/IntelligenceOperationalBanner.tsx,60,fallback text scan
-generated.apps.web.components.intelligence.ManagerActionView.tsx.router-push.35,button,,dashboard-shared,"router.push({
+cta.dashboard.nav.admin.push,Link,t(key),dashboard-shared,href,apps/web/components/DashboardShell.tsx,99,
+generated.apps.web.components.DashboardShell.tsx.fallback.101,Link,,dashboard-shared,href=,apps/web/components/DashboardShell.tsx,101,fallback text scan
+generated.apps.web.components.DashboardShell.tsx.fallback.103,button,,dashboard-shared,data-testid=,apps/web/components/DashboardShell.tsx,103,fallback text scan
+cta.dashboard.nav.admin.jobs,Link,t(key),dashboard-shared,href,apps/web/components/DashboardShell.tsx,113,
+generated.apps.web.components.DashboardShell.tsx.fallback.115,Link,,dashboard-shared,href=,apps/web/components/DashboardShell.tsx,115,fallback text scan
+generated.apps.web.components.DashboardShell.tsx.fallback.117,button,,dashboard-shared,data-testid=,apps/web/components/DashboardShell.tsx,117,fallback text scan
+generated.apps.web.components.DashboardShell.tsx.135,button,,dashboard-shared,closeSidebar,apps/web/components/DashboardShell.tsx,135,generated id; no data-testid
+generated.apps.web.components.DashboardShell.tsx.fallback.139,button,,dashboard-shared,onClick=,apps/web/components/DashboardShell.tsx,139,fallback text scan
+generated.apps.web.components.DashboardShell.tsx.148,iconButton,sidebarOpen ? t(closeMenu) : t(openMenu),dashboard-shared,() => setSidebarOpen((v) => !v),apps/web/components/DashboardShell.tsx,148,generated id; no data-testid
+generated.apps.web.components.DashboardShell.tsx.fallback.150,button,,dashboard-shared,onClick=,apps/web/components/DashboardShell.tsx,150,fallback text scan
+generated.apps.web.components.DashboardShell.tsx.217,Link,loc,dashboard-shared,pathname,apps/web/components/DashboardShell.tsx,217,generated id; no data-testid
+generated.apps.web.components.DashboardShell.tsx.fallback.219,Link,,dashboard-shared,href=,apps/web/components/DashboardShell.tsx,219,fallback text scan
+generated.apps.web.components.intelligence.AlertFeed.tsx.53,Link,d.contextLabel →,dashboard-shared,d.contextHref,apps/web/components/intelligence/AlertFeed.tsx,53,generated id; no data-testid
+generated.apps.web.components.intelligence.AlertFeed.tsx.60,Link,d.contextHref ? d.anchoredListLabel : tDetail(openOnAlertsList),dashboard-shared,d.anchoredListHref,apps/web/components/intelligence/AlertFeed.tsx,60,generated id; no data-testid
+generated.apps.web.components.intelligence.CopilotSummaryPanel.tsx.81,button,useCaseLabel[uc],dashboard-shared,() => setUseCase(uc),apps/web/components/intelligence/CopilotSummaryPanel.tsx,81,generated id; no data-testid
+generated.apps.web.components.intelligence.CopilotSummaryPanel.tsx.fallback.84,button,,dashboard-shared,onClick=,apps/web/components/intelligence/CopilotSummaryPanel.tsx,84,fallback text scan
+generated.apps.web.components.intelligence.EvidenceCoverageCard.tsx.40,Link,tDetail(openTask),dashboard-shared,`/dashboard/tasks/${s.taskId}`,apps/web/components/intelligence/EvidenceCoverageCard.tsx,40,generated id; no data-testid
+generated.apps.web.components.intelligence.IntelligenceOperationalBanner.tsx.47,button,copied ? tDetail(copied) : tDetail(copyFullIdForAdmin),dashboard-shared,copyRef,apps/web/components/intelligence/IntelligenceOperationalBanner.tsx,47,generated id; no data-testid
+generated.apps.web.components.intelligence.IntelligenceOperationalBanner.tsx.fallback.49,button,,dashboard-shared,onClick=,apps/web/components/intelligence/IntelligenceOperationalBanner.tsx,49,fallback text scan
+generated.apps.web.components.intelligence.ManagerActionView.tsx.router-push.36,button,,dashboard-shared,"router.push({
       id: me.id,
       title: me.title,
       reason: me.explanation,
@@ -528,8 +532,8 @@ generated.apps.web.components.intelligence.ManagerActionView.tsx.router-push.35,
       href,
       projectId,
       nextStep: me.recommendedAction,
-    })",apps/web/components/intelligence/ManagerActionView.tsx,35,fallback router.push call; source CTA may be nearby
-generated.apps.web.components.intelligence.ManagerActionView.tsx.router-push.52,button,,dashboard-shared,"router.push({
+    })",apps/web/components/intelligence/ManagerActionView.tsx,36,fallback router.push call; source CTA may be nearby
+generated.apps.web.components.intelligence.ManagerActionView.tsx.router-push.53,button,,dashboard-shared,"router.push({
       id: r.id,
       title: `#${r.rank} ${r.title}`,
       reason: r.explanation,
@@ -538,8 +542,8 @@ generated.apps.web.components.intelligence.ManagerActionView.tsx.router-push.52,
       href,
       projectId,
       nextStep: r.recommendedAction,
-    })",apps/web/components/intelligence/ManagerActionView.tsx,52,fallback router.push call; source CTA may be nearby
-generated.apps.web.components.intelligence.ManagerActionView.tsx.router-push.69,button,,dashboard-shared,"router.push({
+    })",apps/web/components/intelligence/ManagerActionView.tsx,53,fallback router.push call; source CTA may be nearby
+generated.apps.web.components.intelligence.ManagerActionView.tsx.router-push.70,button,,dashboard-shared,"router.push({
       id: rec.id,
       title: rec.title,
       reason: rec.description ?? rec.title,
@@ -547,25 +551,25 @@ generated.apps.web.components.intelligence.ManagerActionView.tsx.router-push.69,
       priority: rec.priority,
       href,
       projectId: rec.projectId,
-    })",apps/web/components/intelligence/ManagerActionView.tsx,69,fallback router.push call; source CTA may be nearby
-generated.apps.web.components.intelligence.ManagerActionView.tsx.router-push.83,button,,dashboard-shared,"router.push({
+    })",apps/web/components/intelligence/ManagerActionView.tsx,70,fallback router.push call; source CTA may be nearby
+generated.apps.web.components.intelligence.ManagerActionView.tsx.router-push.84,button,,dashboard-shared,"router.push({
         id: `exec-${i}`,
         title: execActions[i],
-        reason: ""From executive summary"",
+        reason: ""FROM_EXECUTIVE_SUMMARY"",
         source: ""executive"",
         priority: ""medium"",
         href: `/dashboard/projects/${projectId}`,
         projectId,
-      })",apps/web/components/intelligence/ManagerActionView.tsx,83,fallback router.push call; source CTA may be nearby
-generated.apps.web.components.intelligence.ManagerActionView.tsx.128,Link,View project →,dashboard-shared,`/dashboard/projects/${projectId}`,apps/web/components/intelligence/ManagerActionView.tsx,128,generated id; no data-testid
-generated.apps.web.components.intelligence.ManagerActionView.tsx.169,Link,Act →,dashboard-shared,a.href,apps/web/components/intelligence/ManagerActionView.tsx,169,generated id; no data-testid
-generated.apps.web.components.intelligence.RecommendationList.tsx.47,Link,Open →,dashboard-shared,href,apps/web/components/intelligence/RecommendationList.tsx,47,generated id; no data-testid
-generated.apps.web.components.intelligence.RiskList.tsx.45,Link,Open related →,dashboard-shared,href,apps/web/components/intelligence/RiskList.tsx,45,generated id; no data-testid
+      })",apps/web/components/intelligence/ManagerActionView.tsx,84,fallback router.push call; source CTA may be nearby
+generated.apps.web.components.intelligence.ManagerActionView.tsx.129,Link,tDetail(viewProjectArrow),dashboard-shared,`/dashboard/projects/${projectId}`,apps/web/components/intelligence/ManagerActionView.tsx,129,generated id; no data-testid
+generated.apps.web.components.intelligence.ManagerActionView.tsx.170,Link,tDetail(actArrow),dashboard-shared,a.href,apps/web/components/intelligence/ManagerActionView.tsx,170,generated id; no data-testid
+generated.apps.web.components.intelligence.RecommendationList.tsx.50,Link,tDetail(openRelated),dashboard-shared,href,apps/web/components/intelligence/RecommendationList.tsx,50,generated id; no data-testid
+generated.apps.web.components.intelligence.RiskList.tsx.48,Link,tDetail(openRelated),dashboard-shared,href,apps/web/components/intelligence/RiskList.tsx,48,generated id; no data-testid
 generated.apps.web.components.Nav.tsx.30,Link,Aistroyka,dashboard-shared,/dashboard,apps/web/components/Nav.tsx,30,generated id; no data-testid
 generated.apps.web.components.Nav.tsx.fallback.33,button,,dashboard-shared,onClick=,apps/web/components/Nav.tsx,33,fallback text scan
 generated.apps.web.components.Nav.tsx.43,Link,t(key),dashboard-shared,href,apps/web/components/Nav.tsx,43,generated id; no data-testid
 generated.apps.web.components.Nav.tsx.fallback.45,Link,,dashboard-shared,href=,apps/web/components/Nav.tsx,45,fallback text scan
-generated.apps.web.components.Nav.tsx.68,iconButton,Close menu,dashboard-shared,() => setMobileOpen((v) => !v),apps/web/components/Nav.tsx,68,generated id; no data-testid
+generated.apps.web.components.Nav.tsx.68,iconButton,mobileOpen ? t(closeMenu) : t(openMenu),dashboard-shared,() => setMobileOpen((v) => !v),apps/web/components/Nav.tsx,68,generated id; no data-testid
 generated.apps.web.components.Nav.tsx.fallback.70,button,,dashboard-shared,onClick=,apps/web/components/Nav.tsx,70,fallback text scan
 generated.apps.web.components.Nav.tsx.101,Link,t(key),dashboard-shared,href,apps/web/components/Nav.tsx,101,generated id; no data-testid
 generated.apps.web.components.Nav.tsx.fallback.103,button,,dashboard-shared,onClick=,apps/web/components/Nav.tsx,103,fallback text scan
@@ -614,11 +618,11 @@ generated.apps.web.components.plan.fit.AvailableWithHigherPlans.tsx.50,Link,item
 generated.apps.web.components.plan.fit.CurrentPlanSurface.tsx.74,Link,Review available plans,dashboard-shared,targetRoute,apps/web/components/plan-fit/CurrentPlanSurface.tsx,74,generated id; no data-testid
 generated.apps.web.components.plan.fit.FeatureUpgradePromptCard.tsx.27,Link,ctaLabel,dashboard-shared,ctaTargetRoute,apps/web/components/plan-fit/FeatureUpgradePromptCard.tsx,27,generated id; no data-testid
 generated.apps.web.components.plan.fit.InlineUpgradeHint.tsx.36,Link,ctaLabel,dashboard-shared,ctaTargetRoute,apps/web/components/plan-fit/InlineUpgradeHint.tsx,36,generated id; no data-testid
-generated.apps.web.components.plan.fit.PlanBadge.tsx.19,Link,View plan and limits,dashboard-shared,/billing,apps/web/components/plan-fit/PlanBadge.tsx,19,generated id; no data-testid
+generated.apps.web.components.plan.fit.PlanBadge.tsx.21,Link,tDetail(viewPlanAndLimits),dashboard-shared,/billing,apps/web/components/plan-fit/PlanBadge.tsx,21,generated id; no data-testid
 generated.apps.web.components.projects.ProjectAttentionBlock.tsx.50,Link,,dashboard-shared,item.route,apps/web/components/projects/ProjectAttentionBlock.tsx,50,generated id; no data-testid
 generated.apps.web.components.projects.ProjectTimelineBlock.tsx.54,Link,item.description && ( <p className=mt-0.5 text-xs text-aistroyka-text-secondary> item.description </p> ),dashboard-shared,item.targetUrl ?? `/dashboard/projects/${item.projectId}`,apps/web/components/projects/ProjectTimelineBlock.tsx,54,generated id; no data-testid
 generated.apps.web.components.projects.ProjectTraceabilityBlock.tsx.66,Link,item.summary ? ( <p className=mt-0.5 text-xs text-aistroyka-text-secondary>item.summary</p> ) : null item.reasonNote ? ( <p className=mt-1 text-xs text-aistroyk,dashboard-shared,"item.targetUrl ?? ""#""",apps/web/components/projects/ProjectTraceabilityBlock.tsx,66,generated id; no data-testid
-generated.apps.web.components.projects.StakeholderActivityBlock.tsx.66,Link,item.description ? ( <p className=mt-0.5 text-xs text-aistroyka-text-secondary>item.description</p> ) : null item.actionNeeded ? ( <p className=mt-1 text-xs fon,dashboard-shared,item.targetUrl ?? `/dashboard/projects/${item.projectId}/client`,apps/web/components/projects/StakeholderActivityBlock.tsx,66,generated id; no data-testid
+generated.apps.web.components.projects.StakeholderActivityBlock.tsx.70,Link,item.description ? ( <p className=mt-0.5 text-xs text-aistroyka-text-secondary>item.description</p> ) : null item.actionNeeded ? ( <p className=mt-1 text-xs fon,dashboard-shared,item.targetUrl ?? `/dashboard/projects/${item.projectId}/client`,apps/web/components/projects/StakeholderActivityBlock.tsx,70,generated id; no data-testid
 generated.apps.web.components.public.PublicFooter.tsx.48,Link,AISTROYKA,dashboard-shared,/,apps/web/components/public/PublicFooter.tsx,48,generated id; no data-testid
 generated.apps.web.components.public.PublicFooter.tsx.65,Link,t(key),dashboard-shared,href,apps/web/components/public/PublicFooter.tsx,65,generated id; no data-testid
 generated.apps.web.components.public.PublicFooter.tsx.82,Link,t(key),dashboard-shared,href,apps/web/components/public/PublicFooter.tsx,82,generated id; no data-testid
@@ -641,14 +645,14 @@ generated.apps.web.components.public.PublicHeader.tsx.126,Link,t(requestDemo),da
 generated.apps.web.components.public.PublicHeader.tsx.fallback.129,button,,dashboard-shared,onClick=,apps/web/components/public/PublicHeader.tsx,129,fallback text scan
 generated.apps.web.components.public.PublicHeader.tsx.133,Link,t(login),dashboard-shared,/login,apps/web/components/public/PublicHeader.tsx,133,generated id; no data-testid
 generated.apps.web.components.public.PublicHeader.tsx.fallback.136,button,,dashboard-shared,onClick=,apps/web/components/public/PublicHeader.tsx,136,fallback text scan
-generated.apps.web.components.ui.Alert.tsx.84,iconButton,Dismiss,dashboard-shared,onDismiss,apps/web/components/ui/Alert.tsx,84,generated id; no data-testid
-generated.apps.web.components.ui.Alert.tsx.fallback.86,button,,dashboard-shared,onClick=,apps/web/components/ui/Alert.tsx,86,fallback text scan
+generated.apps.web.components.ui.Alert.tsx.86,iconButton,tCommon(dismiss),dashboard-shared,onDismiss,apps/web/components/ui/Alert.tsx,86,generated id; no data-testid
+generated.apps.web.components.ui.Alert.tsx.fallback.88,button,,dashboard-shared,onClick=,apps/web/components/ui/Alert.tsx,88,fallback text scan
 generated.apps.web.components.ui.Button.tsx.52,iconButton,ariaLabel,dashboard-shared,onClick,apps/web/components/ui/Button.tsx,52,generated id; no data-testid
 generated.apps.web.components.ui.Button.tsx.fallback.55,button,,dashboard-shared,onClick=,apps/web/components/ui/Button.tsx,55,fallback text scan
-generated.apps.web.components.ui.Chip.tsx.36,iconButton,Remove,dashboard-shared,onRemove,apps/web/components/ui/Chip.tsx,36,generated id; no data-testid
-generated.apps.web.components.ui.Chip.tsx.fallback.38,button,,dashboard-shared,onClick=,apps/web/components/ui/Chip.tsx,38,fallback text scan
-generated.apps.web.components.ui.DateRangePicker.tsx.27,button,preset === 7d ? 7 days : preset === 30d ? 30 days : 90 days,dashboard-shared,() => onPreset(preset),apps/web/components/ui/DateRangePicker.tsx,27,generated id; no data-testid
-generated.apps.web.components.ui.DateRangePicker.tsx.fallback.30,button,,dashboard-shared,onClick=,apps/web/components/ui/DateRangePicker.tsx,30,fallback text scan
+generated.apps.web.components.ui.Chip.tsx.38,iconButton,tCommon(remove),dashboard-shared,onRemove,apps/web/components/ui/Chip.tsx,38,generated id; no data-testid
+generated.apps.web.components.ui.Chip.tsx.fallback.40,button,,dashboard-shared,onClick=,apps/web/components/ui/Chip.tsx,40,fallback text scan
+generated.apps.web.components.ui.DateRangePicker.tsx.30,button,preset === 7d ? tDetail(sevenDays) : preset === 30d ? tDetail(thirtyDays) : tDetail(ninetyDays),dashboard-shared,() => onPreset(preset),apps/web/components/ui/DateRangePicker.tsx,30,generated id; no data-testid
+generated.apps.web.components.ui.DateRangePicker.tsx.fallback.33,button,,dashboard-shared,onClick=,apps/web/components/ui/DateRangePicker.tsx,33,fallback text scan
 generated.apps.web.components.ui.DropdownMenu.tsx.39,iconButton,ariaLabel,dashboard-shared,() => setOpen((v) => !v),apps/web/components/ui/DropdownMenu.tsx,39,generated id; no data-testid
 generated.apps.web.components.ui.DropdownMenu.tsx.fallback.41,button,,dashboard-shared,onClick=,apps/web/components/ui/DropdownMenu.tsx,41,fallback text scan
 generated.apps.web.components.ui.DropdownMenu.tsx.58,button,item.label,dashboard-shared,"() => {
@@ -657,13 +661,13 @@ generated.apps.web.components.ui.DropdownMenu.tsx.58,button,item.label,dashboard
                 }",apps/web/components/ui/DropdownMenu.tsx,58,generated id; no data-testid
 generated.apps.web.components.ui.DropdownMenu.tsx.fallback.61,button,,dashboard-shared,onClick=,apps/web/components/ui/DropdownMenu.tsx,61,fallback text scan
 generated.apps.web.components.ui.ErrorState.tsx.37,button,Retry,dashboard-shared,onRetry,apps/web/components/ui/ErrorState.tsx,37,generated id; no data-testid
-generated.apps.web.components.ui.Modal.tsx.fallback.28,button,,dashboard-shared,onClick=,apps/web/components/ui/Modal.tsx,28,fallback text scan
-generated.apps.web.components.ui.Modal.tsx.37,iconButton,Close,dashboard-shared,onClose,apps/web/components/ui/Modal.tsx,37,generated id; no data-testid
-generated.apps.web.components.ui.Modal.tsx.fallback.39,button,,dashboard-shared,onClick=,apps/web/components/ui/Modal.tsx,39,fallback text scan
-generated.apps.web.components.ui.TablePagination.tsx.54,iconButton,Previous page,dashboard-shared,() => onPageChange(page - 1),apps/web/components/ui/TablePagination.tsx,54,generated id; no data-testid
-generated.apps.web.components.ui.TablePagination.tsx.fallback.56,button,,dashboard-shared,onClick=,apps/web/components/ui/TablePagination.tsx,56,fallback text scan
-generated.apps.web.components.ui.TablePagination.tsx.66,iconButton,Next page,dashboard-shared,() => onPageChange(page + 1),apps/web/components/ui/TablePagination.tsx,66,generated id; no data-testid
-generated.apps.web.components.ui.TablePagination.tsx.fallback.68,button,,dashboard-shared,onClick=,apps/web/components/ui/TablePagination.tsx,68,fallback text scan
+generated.apps.web.components.ui.Modal.tsx.fallback.30,button,,dashboard-shared,onClick=,apps/web/components/ui/Modal.tsx,30,fallback text scan
+generated.apps.web.components.ui.Modal.tsx.39,iconButton,tCommon(close),dashboard-shared,onClose,apps/web/components/ui/Modal.tsx,39,generated id; no data-testid
+generated.apps.web.components.ui.Modal.tsx.fallback.41,button,,dashboard-shared,onClick=,apps/web/components/ui/Modal.tsx,41,fallback text scan
+generated.apps.web.components.ui.TablePagination.tsx.55,iconButton,tDetail(previousPage),dashboard-shared,() => onPageChange(page - 1),apps/web/components/ui/TablePagination.tsx,55,generated id; no data-testid
+generated.apps.web.components.ui.TablePagination.tsx.fallback.57,button,,dashboard-shared,onClick=,apps/web/components/ui/TablePagination.tsx,57,fallback text scan
+generated.apps.web.components.ui.TablePagination.tsx.67,iconButton,tDetail(nextPage),dashboard-shared,() => onPageChange(page + 1),apps/web/components/ui/TablePagination.tsx,67,generated id; no data-testid
+generated.apps.web.components.ui.TablePagination.tsx.fallback.69,button,,dashboard-shared,onClick=,apps/web/components/ui/TablePagination.tsx,69,fallback text scan
 generated.apps.web.components.ui.Tabs.tsx.39,button,children,dashboard-shared,onSelect,apps/web/components/ui/Tabs.tsx,39,generated id; no data-testid
 generated.apps.web.components.ui.Tabs.tsx.fallback.46,button,,dashboard-shared,onClick=,apps/web/components/ui/Tabs.tsx,46,fallback text scan
 generated.apps.web.lib.ai.brain.mappers.task.signals.mapper.ts.router-push.60,button,,dashboard-shared,"router.push({
