@@ -1,6 +1,7 @@
 "use client";
 
 import { useAIState, useProjectRisk } from "@/lib/features/ai/useAIState";
+import { useTranslations } from "next-intl";
 import { AISignalLine } from "@/components/ai/AISignalLine";
 import { StructuralGridActivation } from "@/components/ai/StructuralGridActivation";
 import { Card } from "@/components/ui";
@@ -11,6 +12,7 @@ import { Card } from "@/components/ui";
  * Portfolio AI Risk Score (v1) with trend.
  */
 export function DashboardAIInsightsClient() {
+  const tDetail = useTranslations("dashboardDetail");
   const { state, lastEvent, isLoading } = useAIState(null);
   const { risk, trend, isLoading: riskLoading } = useProjectRisk(null);
 
@@ -28,7 +30,7 @@ export function DashboardAIInsightsClient() {
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">
-                AI Insights
+                {tDetail("aiInsights")}
               </h2>
               {!riskLoading && score !== null && (
                 <span className="flex items-center gap-2 text-aistroyka-subheadline">
@@ -42,14 +44,14 @@ export function DashboardAIInsightsClient() {
               )}
             </div>
             {isLoading ? (
-              <p className="mt-1 text-aistroyka-subheadline text-aistroyka-text-tertiary">Loading…</p>
+              <p className="mt-1 text-aistroyka-subheadline text-aistroyka-text-tertiary">{tDetail("loading")}</p>
             ) : (
               <p className="mt-1 text-aistroyka-subheadline text-aistroyka-text-secondary">
-                {state === "idle" && "No active insights."}
-                {state === "analyzing" && "AI is analyzing."}
-                {state === "risk_detected" && (lastEvent?.title ?? "Risk detected.")}
-                {state === "optimization_found" && (lastEvent?.title ?? "Optimization available.")}
-                {state === "milestone_achieved" && (lastEvent?.title ?? "Milestone achieved.")}
+                {state === "idle" && tDetail("noActiveInsights")}
+                {state === "analyzing" && tDetail("aiIsAnalyzing")}
+                {state === "risk_detected" && (lastEvent?.title ?? tDetail("riskDetected"))}
+                {state === "optimization_found" && (lastEvent?.title ?? tDetail("optimizationAvailable"))}
+                {state === "milestone_achieved" && (lastEvent?.title ?? tDetail("milestoneAchieved"))}
               </p>
             )}
           </div>

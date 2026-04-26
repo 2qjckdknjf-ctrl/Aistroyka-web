@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@/i18n/navigation";
 import { Card, Button, Badge, Skeleton, EmptyState, Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui";
@@ -15,10 +16,10 @@ type Row = {
   updated_at: string;
 };
 
-function coverageLabel(c: string): string {
-  if (c === "warranty_covered") return "Warranty";
-  if (c === "not_warranty") return "Not warranty";
-  return "Under review";
+function coverageLabel(c: string, tDetail: ReturnType<typeof useTranslations>): string {
+  if (c === "warranty_covered") return tDetail("warranty");
+  if (c === "not_warranty") return tDetail("notWarranty");
+  return tDetail("underReview");
 }
 
 async function fetchList(projectId: string): Promise<Row[]> {
@@ -29,6 +30,7 @@ async function fetchList(projectId: string): Promise<Row[]> {
 }
 
 export function ClientPortalServiceRequestsListClient({ projectId }: { projectId: string }) {
+  const tDetail = useTranslations("dashboardDetail");
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -77,7 +79,7 @@ export function ClientPortalServiceRequestsListClient({ projectId }: { projectId
       <Card>
         <EmptyState
           icon={<span className="text-2xl">🛠️</span>}
-          title="Could not load aftercare"
+          title={tDetail("couldNotLoadAftercare")}
           subtitle={q.error instanceof Error ? q.error.message : ""}
         />
       </Card>
@@ -89,35 +91,35 @@ export function ClientPortalServiceRequestsListClient({ projectId }: { projectId
   return (
     <div className="space-y-4">
       <Link href={`/dashboard/projects/${projectId}/client`} className="text-aistroyka-accent hover:underline text-sm font-medium">
-        ← Client view
+        {tDetail("backToClientView")}
       </Link>
       <Card className="p-4">
-        <h1 className="text-aistroyka-title3 font-semibold">Aftercare & warranty</h1>
+        <h1 className="text-aistroyka-title3 font-semibold">{tDetail("aftercareWarranty")}</h1>
         <p className="mt-1 text-sm text-aistroyka-text-secondary">
-          Report issues after handover. Your team will classify warranty coverage and keep you updated — not a generic ticket queue.
+          {tDetail("aftercareClientHint")}
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
           <Button type="button" size="sm" variant="secondary" onClick={() => setOpen((o) => !o)}>
-            {open ? "Cancel" : "Report an issue"}
+            {open ? tDetail("cancel") : tDetail("reportAnIssue")}
           </Button>
         </div>
         {open ? (
           <div className="mt-4 space-y-2 rounded border border-aistroyka-border-subtle p-3">
             <input
               className="w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
-              placeholder="Short title"
+              placeholder={tDetail("shortTitle")}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
             />
             <textarea
               className="w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
               rows={3}
-              placeholder="What should the team look at?"
+              placeholder={tDetail("whatShouldTeamLookAt")}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
             <Button type="button" size="sm" disabled={!title.trim() || createMutation.isPending} onClick={() => createMutation.mutate()}>
-              {createMutation.isPending ? "Submitting…" : "Submit"}
+              {createMutation.isPending ? tDetail("submitting") : tDetail("submit")}
             </Button>
             {createMutation.isError ? (
               <p className="text-xs text-aistroyka-error">{(createMutation.error as Error).message}</p>
@@ -129,9 +131,9 @@ export function ClientPortalServiceRequestsListClient({ projectId }: { projectId
       <Table>
         <TableHead>
           <TableRow>
-            <TableHeaderCell>Title</TableHeaderCell>
-            <TableHeaderCell>Status</TableHeaderCell>
-            <TableHeaderCell>Coverage</TableHeaderCell>
+            <TableHeaderCell>{tDetail("title")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("status")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("coverage")}</TableHeaderCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -148,12 +150,12 @@ export function ClientPortalServiceRequestsListClient({ projectId }: { projectId
               <TableCell>
                 <Badge className={`${serviceRequestStatusBadgeClass(r.status)} font-normal`}>{formatStatusLabel(r.status)}</Badge>
               </TableCell>
-              <TableCell>{coverageLabel(r.coverage_type)}</TableCell>
+              <TableCell>{coverageLabel(r.coverage_type, tDetail)}</TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
-      {rows.length === 0 ? <p className="text-sm text-aistroyka-text-secondary">No aftercare requests yet.</p> : null}
+      {rows.length === 0 ? <p className="text-sm text-aistroyka-text-secondary">{tDetail("noAftercareRequestsYet")}</p> : null}
     </div>
   );
 }
