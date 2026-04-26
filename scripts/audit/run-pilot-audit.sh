@@ -81,8 +81,13 @@ echo "==> Playwright pilot suite (apps/web)"
 ) >"$ARTIFACT_DIR/playwright_pilot.log" 2>&1
 mark_step playwright $?
 
+if [[ -d "${PLAYWRIGHT_TEST_DIR:-}" ]]; then
+  echo "==> copy Playwright output to playwright-traces/"
+  ( cp -R "$PLAYWRIGHT_TEST_DIR/." "$ARTIFACT_DIR/playwright-traces/" ) 2>/dev/null || true
+fi
+
 echo "==> write pilot reports"
-node "$ROOT_DIR/scripts/audit/write_pilot_reports.mjs" || true
+AUDIT_ARTIFACT_DIR="$ARTIFACT_DIR" node "$ROOT_DIR/scripts/audit/write_pilot_reports.mjs" || true
 
 echo "==> Pilot audit complete (exit $AUDIT_EXIT)"
 exit "$AUDIT_EXIT"

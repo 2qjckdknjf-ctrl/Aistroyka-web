@@ -17,7 +17,7 @@ function statusFromCode(code) {
 }
 
 function allStepsPresent() {
-  const required = ["test", "build", "button_inventory", "smoke_pilot", "playwright"];
+  const required = ["install", "test", "build", "button_inventory", "smoke_pilot", "playwright"];
   return required.every((n) => readCode(n) !== null);
 }
 
@@ -29,6 +29,7 @@ function safeExec(command) {
   }
 }
 
+const install = statusFromCode(readCode("install"));
 const test = statusFromCode(readCode("test"));
 const build = statusFromCode(readCode("build"));
 const smoke = statusFromCode(readCode("smoke_pilot"));
@@ -45,7 +46,7 @@ const sha = safeExec("git rev-parse HEAD");
 const when = new Date().toISOString();
 
 const stepsOk =
-  [test, build, inventory, smoke, playwright].every((s) => s === "PASS") && allStepsPresent();
+  [install, test, build, inventory, smoke, playwright].every((s) => s === "PASS") && allStepsPresent();
 const overall = stepsOk ? "PASS" : "FAIL";
 
 const projectState = `# PROJECT_STATE (Pilot Audit)
@@ -60,11 +61,12 @@ const projectState = `# PROJECT_STATE (Pilot Audit)
 
 | Area | Status | Evidence |
 |------|--------|----------|
+| Dependencies (\`bun install\` when needed) | **${install}** | ${logRef("bun_install.log")} |
 | Unit / Vitest (root \`bun run test\`) | **${test}** | ${logRef("unit_test.log")} |
 | Production build (root \`bun run build\`) | **${build}** | ${logRef("build.log")} |
 | Static button inventory gen | **${inventory}** | ${logRef("button_inventory.log")}, \`docs/audit/button_inventory.json\` |
 | Smoke \`smoke:pilot\` | **${smoke}** | ${logRef("pilot_smoke.log")} |
-| Playwright pilot suite (buttons + sync + core) | **${playwright}** | ${logRef("playwright_pilot.log")}, ${relArtifactPath ? `\`${relArtifactPath}/playwright-test-output/\`` : "_(pilot audit not run)_"} |
+| Playwright pilot suite (buttons + sync + core) | **${playwright}** | ${logRef("playwright_pilot.log")}, ${relArtifactPath ? `\`${relArtifactPath}/playwright-test-output/\`, \`${relArtifactPath}/playwright-traces/\`` : "_(pilot audit not run)_"} |
 | Buttons E2E (inventory-driven) | **${playwright === "PASS" ? "PASS" : "FAIL / NOT VERIFIED"}** | same as Playwright |
 | Sync contract E2E | **${playwright === "PASS" ? "PASS" : "FAIL / NOT VERIFIED"}** | ${relArtifactPath ? `\`${relArtifactPath}/sync-logs/sync-contract.log\` (if present)` : "_(pilot audit not run)_"} |
 | Core flow E2E | **${playwright === "PASS" ? "PASS" : "FAIL / NOT VERIFIED"}** | Playwright traces |
@@ -93,6 +95,7 @@ const e2eReport = `# E2E Audit Report (Pilot)
 
 | Step | Status |
 |------|--------|
+| install | ${install} |
 | test | ${test} |
 | build | ${build} |
 | button_inventory | ${inventory} |

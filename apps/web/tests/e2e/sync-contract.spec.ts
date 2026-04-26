@@ -6,12 +6,12 @@ import { e2eLocale } from "./_helpers/routes";
 const device1 = process.env.E2E_DEVICE_ID || "e2e-device-1";
 const device2 = process.env.E2E_DEVICE_ID_2 || "e2e-device-2";
 
-function artifactSyncLogDir() {
-  const dir = process.env.AUDIT_ARTIFACT_DIR
+function syncContractLogPath() {
+  const base = process.env.AUDIT_ARTIFACT_DIR
     ? path.join(process.env.AUDIT_ARTIFACT_DIR, "sync-logs")
     : path.join(process.cwd(), "../../docs/audit/artifacts/local/sync-logs");
-  fs.mkdirSync(dir, { recursive: true });
-  return path.join(dir, "sync-contract.log");
+  fs.mkdirSync(base, { recursive: true });
+  return path.join(base, "sync-contract.log");
 }
 
 function redact(line: string) {
@@ -78,9 +78,7 @@ test.describe("Sync contract (API)", () => {
   });
 
   test("7.4 ack idempotency (lite client)", async ({ page }) => {
-    const logFile = artifactSyncLogDir();
-    fs.writeFileSync(logFile, "");
-
+    const logFile = syncContractLogPath();
     const boot = await page.request.get("/api/v1/sync/bootstrap", {
       headers: { "x-device-id": device1, "x-client": "ios_lite" },
     });
@@ -104,7 +102,7 @@ test.describe("Sync contract (API)", () => {
   });
 
   test("7.5 409 conflict recovery (future cursor)", async ({ page }) => {
-    const logFile = artifactSyncLogDir();
+    const logFile = syncContractLogPath();
     const boot = await page.request.get("/api/v1/sync/bootstrap", {
       headers: { "x-device-id": device1 },
     });

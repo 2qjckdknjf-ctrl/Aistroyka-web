@@ -5,29 +5,14 @@ import {
   collectConsoleErrors,
   collectCriticalIssues,
 } from "./audit-helpers";
-import { buildRouteMap, e2eLocale, loadJsonInventory, resolveProjectId } from "./_helpers/routes";
+import { type ButtonInventoryEntry, loadActionableCtas } from "./_helpers/button-inventory";
+import { buildRouteMap, e2eLocale, resolveProjectId } from "./_helpers/routes";
 
-type InventoryEntry = {
-  id: string;
-  kind: string;
-  labelText: string;
-  pageRoute: string;
-  target: string;
-  sourceFile: string;
-  line: number;
-  notes: string;
-};
-
-const rawInventory = loadJsonInventory<InventoryEntry>();
-
-const actionable = rawInventory
-  .filter((entry) => entry.id.startsWith("cta."))
-  .filter((entry) => entry.pageRoute.startsWith("/{locale}/dashboard") || entry.pageRoute === "dashboard-shared")
-  .slice(0, Number(process.env.E2E_BUTTON_AUDIT_LIMIT || 60));
+const actionable = loadActionableCtas(Number(process.env.E2E_BUTTON_AUDIT_LIMIT || 60));
 
 test.use({ trace: "retain-on-failure", screenshot: "only-on-failure" });
 
-async function concreteRoute(entry: InventoryEntry, projectId: string) {
+async function concreteRoute(entry: ButtonInventoryEntry, projectId: string) {
   const route = entry.pageRoute === "dashboard-shared" ? "/{locale}/dashboard" : entry.pageRoute;
   return route
     .replace("{locale}", e2eLocale)

@@ -71,3 +71,21 @@ apps/web/src/features/admin/components/RequestIdPill.tsx
 ## Uncommitted workspace note
 
 `git status` at audit start may show additional modified files not listed above; they are **not** part of `baseline..HEAD` until committed.
+
+---
+
+## План доработки (pilot audit) — статус
+
+**Сделано в этой итерации**
+
+- Отчёт `write_pilot_reports`: учёт шага `install`, ссылки на `bun_install.log`, `playwright-traces/`, явный `AUDIT_ARTIFACT_DIR` при вызове из `run-pilot-audit.sh`.
+- После Playwright: копирование `PLAYWRIGHT_TEST_DIR` → `artifacts/<ts>/playwright-traces/`.
+- `apps/web`: скрипт `e2e:pilot` для быстрого прогона трёх спек без полного `e2e`.
+- `dashboard-button-audit`: список CTA через `loadActionableCtas()` из `_helpers/button-inventory`.
+- `sync-contract`: единый путь `sync-contract.log`, заголовок в `beforeAll`, строка в `afterEach` по каждому тесту.
+
+**Дальше (бэклог)**
+
+- Прогон `bun run audit:pilot` в CI со staging `PLAYWRIGHT_BASE_URL` + секреты (без коммита `.env.pilot`).
+- Расширить `data-testid="cta.*"` на остальные критичные сценарии (сохранение проекта, submit отчёта, approvals).
+- Опционально: генератор инвентаря на `ts-morph` рядом с `generate_button_inventory.mjs`, без дублирования полей JSON.
