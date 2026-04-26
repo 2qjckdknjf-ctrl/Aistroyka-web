@@ -111,6 +111,21 @@ Vercel может встречаться как исторический/доп�
 
 ---
 
+## GitHub Actions: Playwright pilot E2E (опционально)
+
+Репозиторные **Actions secrets** (Settings → Secrets and variables → Actions), если нужен ручной или post-deploy прогон `.github/workflows/pilot-e2e-audit.yml`:
+
+| Secret | Описание |
+|--------|----------|
+| `PILOT_E2E_BASE_URL` | Базовый URL без trailing slash, например `https://staging.aistroyka.ai`. |
+| `PILOT_E2E_EMAIL` | Email пользователя для логина в браузерных тестах. |
+| `PILOT_E2E_PASSWORD` | Пароль. |
+| `PILOT_E2E_PROJECT_ID` | Опционально: UUID проекта; иначе берётся первый из API после входа. |
+
+После `pilot-smoke` workflow **Deploy Cloudflare (Staging)** может вызывать тот же аудит с `continue-on-error: true`, поэтому отсутствие секретов не блокирует деплой, но шаг завершится ошибкой до установки зависимостей.
+
+---
+
 ## Проверка готовности
 
 Из корня репозитория (с установленными зависимостями):
