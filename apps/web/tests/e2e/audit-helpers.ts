@@ -2,7 +2,7 @@ import { expect, type Page, type TestInfo } from "@playwright/test";
 import fs from "node:fs";
 import path from "node:path";
 
-export const auditLocale = process.env.E2E_LOCALE || "ru";
+export const auditLocale = process.env.E2E_LOCALE || "en";
 export const auditArtifactDir = process.env.AUDIT_ARTIFACT_DIR || path.join(process.cwd(), "../../docs/audit/artifacts/local");
 
 export type NetworkIssue = {

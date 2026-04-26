@@ -58,7 +58,7 @@ export function PlanFitOnboardingShell({
 
   if (nextStep === "collect_plan_fit_input") {
     return (
-      <section className="mx-auto max-w-2xl px-4 py-8" aria-label="Plan-fit onboarding">
+      <section className="mx-auto max-w-2xl px-4 py-8" aria-label={t("ariaOnboarding")}>
         <div className="mb-8 text-center">
           <h1 className="text-aistroyka-title font-bold text-aistroyka-text-primary">
             {t("welcomeTitle")}
@@ -82,7 +82,7 @@ export function PlanFitOnboardingShell({
     latestRecommendation
   ) {
     return (
-      <section className="mx-auto max-w-2xl px-4 py-8" aria-label="Plan-fit onboarding">
+      <section className="mx-auto max-w-2xl px-4 py-8" aria-label={t("ariaOnboarding")}>
         <div className="mb-8 text-center">
           <h1 className="text-aistroyka-title font-bold text-aistroyka-text-primary">
             {t("reviewTitle")}
@@ -108,7 +108,7 @@ export function PlanFitOnboardingShell({
 
   if (nextStep === "continue_workspace_setup" && selectedPlanState) {
     return (
-      <section className="mx-auto max-w-2xl px-4 py-8" aria-label="Plan-fit onboarding">
+      <section className="mx-auto max-w-2xl px-4 py-8" aria-label={t("ariaOnboarding")}>
         <div className="mb-8 text-center">
           <h1 className="text-aistroyka-title font-bold text-aistroyka-text-primary">
             {t("continueSetupTitle")}
@@ -124,7 +124,7 @@ export function PlanFitOnboardingShell({
 
   if (nextStep === "open_dashboard") {
     return (
-      <section className="mx-auto max-w-2xl px-4 py-8" aria-label="Plan-fit onboarding">
+      <section className="mx-auto max-w-2xl px-4 py-8" aria-label={t("ariaOnboarding")}>
         <div className="mb-8 text-center">
           <h1 className="text-aistroyka-title font-bold text-aistroyka-text-primary">
             {t("openDashboard")}
@@ -137,7 +137,7 @@ export function PlanFitOnboardingShell({
 
   if (nextStep === "resolve_inconsistent_state") {
     return (
-      <section className="mx-auto max-w-2xl px-4 py-8" aria-label="Plan-fit onboarding">
+      <section className="mx-auto max-w-2xl px-4 py-8" aria-label={t("ariaOnboarding")}>
         <InconsistentStateScreen onRetry={doRefetch} />
       </section>
     );

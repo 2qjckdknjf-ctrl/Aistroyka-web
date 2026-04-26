@@ -104,6 +104,9 @@ next-env.d.ts
 # DevOps backup list (extra exclusions)
 .env*
 !.env.e2e.example
+!.env.pilot.example
+.env.pilot
+apps/web/tests/e2e/_state/
 .idea
 .vscode
 tmp

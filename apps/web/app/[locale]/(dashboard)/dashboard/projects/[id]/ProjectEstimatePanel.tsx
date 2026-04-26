@@ -46,7 +46,7 @@ interface EstimateSummary {
 
 async function fetchEstimateSummary(projectId: string): Promise<EstimateSummary> {
   const res = await fetch(`/api/v1/projects/${projectId}/estimate`, { credentials: "include" });
-  if (!res.ok) throw new Error("Failed to load estimate summary");
+  if (!res.ok) throw new Error("FAILED_LOAD_ESTIMATE_SUMMARY");
   const json = await res.json();
   return json.data;
 }
@@ -62,8 +62,19 @@ async function runEstimateFromImage(
     body: JSON.stringify({ image_url: imageUrl }),
   });
   const json = await res.json();
-  if (!res.ok) throw new Error((json as { error?: string }).error ?? "Estimate failed");
+  if (!res.ok) throw new Error((json as { error?: string }).error ?? "ESTIMATE_FAILED");
   return json.data;
+}
+
+function formatEstimateError(message: string, tDetail: (key: string) => string): string {
+  switch (message) {
+    case "FAILED_LOAD_ESTIMATE_SUMMARY":
+      return tDetail("failedLoadEstimateSummary");
+    case "ESTIMATE_FAILED":
+      return tDetail("estimateFailed");
+    default:
+      return message;
+  }
 }
 
 export function ProjectEstimatePanel({ projectId }: { projectId: string }) {
@@ -97,7 +108,9 @@ export function ProjectEstimatePanel({ projectId }: { projectId: string }) {
     return (
       <div className="p-4">
         <p className="text-aistroyka-text-secondary">
-          {error instanceof Error ? error.message : "Failed to load cost intelligence."}
+          {error instanceof Error
+            ? formatEstimateError(error.message, tDetail)
+            : tDetail("failedLoadCostIntelligence")}
         </p>
       </div>
     );
@@ -216,8 +229,8 @@ export function ProjectEstimatePanel({ projectId }: { projectId: string }) {
         {fromImageMutation.isError && (
           <p className="mt-2 text-sm text-red-600">
             {fromImageMutation.error instanceof Error
-              ? fromImageMutation.error.message
-              : tDetail("requestFailed")}
+              ? formatEstimateError(fromImageMutation.error.message, tDetail)
+              : tDetail("estimateFailed")}
           </p>
         )}
       </Card>

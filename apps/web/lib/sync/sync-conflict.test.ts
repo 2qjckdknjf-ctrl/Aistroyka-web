@@ -10,6 +10,7 @@ describe("syncConflictResponse", () => {
       error: "conflict",
       code: "sync_conflict",
       server_cursor: 100,
+      serverCursor: 100,
       must_bootstrap: true,
       hint: "Call bootstrap, reset cursor to server_cursor, then retry changes/ack.",
     });

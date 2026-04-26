@@ -1,100 +1,46 @@
-# AISTROYKA E2E Audit - System Under Test Map
+# System Under Test (SUT) — Pilot E2E Audit
 
-Date: 2026-04-26
+Short factual map derived from `docs/SYSTEM_REPOSITORY_MAP.md`, `docs/runbooks/MOBILE_SYNC.md`, `docs/ADR/020-sync-engine-offline-first.md`, root/apps `package.json`, and `apps/web/playwright.config.ts`.
 
-## Repository And Tooling
+## Monorepo & package manager
 
-- Repository root: `/Users/alex/Projects/AISTROYKA`
-- Native package manager: Bun (`packageManager: bun@1.2.15`)
-- Requested audit entrypoint: `pnpm -w audit:e2e`
-- Workspaces declared in root `package.json`: `apps/web`, `packages/contracts`
-- Turbo: not present (`turbo.json` not found)
-- Existing Playwright config: `apps/web/playwright.config.ts`
+- Root `package.json`: `packageManager` is **bun@1.2.15**; workspaces: `apps/web`, `packages/contracts`.
+- Root `test`: `bun run build:contracts && bun run --cwd apps/web test` (Vitest in `apps/web`).
+- Root `build`: contracts then `apps/web` Next build.
+- Canonical web app: **`apps/web`** (Next.js 15 App Router, `[locale]`, route groups like `(dashboard)` are not URL segments).
 
-## Applications And Packages
+## Playwright E2E
 
-- Web/dashboard app: `apps/web` (Next.js App Router, locale segment under `app/[locale]`)
-- API runtime: Next.js route handlers under `apps/web/app/api`; Cloudflare/OpenNext deployment config is present in `apps/web`
-- Contracts package: `packages/contracts`
-- Additional packages present but outside the root workspace declaration: `packages/api-client`, `packages/contracts-openapi`
+- Config: `apps/web/playwright.config.ts` — `testDir: ./tests/e2e`, `baseURL` from **`PLAYWRIGHT_BASE_URL`** (default `http://localhost:3000`).
+- Today: `webServer` is disabled when `CI` or `PLAYWRIGHT_SKIP_WEB_SERVER` is set; otherwise starts **`npm run dev`** (pilot audit prefers **bun** — see `playwright.config.ts` after audit script lands).
+- Traces/screenshots honor **`AUDIT_ARTIFACT_DIR`** when set.
 
-## Auth For E2E
+## API surface (audit scope)
 
-- Browser login page: `apps/web/app/[locale]/(auth)/login/page.tsx`
-- Login endpoint: `POST /api/auth/login`
-- Canonical v1 login alias: `POST /api/v1/auth/login`
-- Login body: `{ "email": string, "password": string, "traceId"?: string }`
-- Successful login sets Supabase `sb-*` cookies; browser E2E should prefer the real login flow.
-- API E2E can use either Supabase session cookies or a user Bearer JWT. Service-role JWTs are not valid for user-scoped API context and must not be committed.
-- Required env for audit credentials: `E2E_USER_EMAIL`, `E2E_USER_PASSWORD`. Optional Supabase password-grant token minting can use `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` if available.
+- **Canonical:** `/api/v1/*` (health, config, projects, sync, worker, media, devices, billing, admin, etc.). See `docs/SYSTEM_REPOSITORY_MAP.md` §3.
+- **Legacy (still present):** `/api/auth/login`, `/api/projects`, etc. E2E login for cookie session uses **`POST /api/auth/login`** (also mirrored at `POST /api/v1/auth/login` if present).
+- **Sync (v1):** `GET /api/v1/sync/bootstrap`, `GET /api/v1/sync/changes`, `POST /api/v1/sync/ack`. All require **`x-device-id`**. Without it, handlers return **400** with `Missing x-device-id header` (not 200).
+- **409 conflict:** body includes `error`, `code`, `server_cursor`, **`serverCursor`** (alias), `must_bootstrap`, optional `hint`. Recovery: bootstrap, adopt cursor, retry changes/ack (see runbook).
+- **Lite idempotency:** `x-client: ios_lite|android_lite` requires **`x-idempotency-key`** on mutating routes including ack; dashboard/browser clients without lite `x-client` are not forced to send idempotency keys.
 
-## Canonical Sync Endpoints
+## Worker / core flow (v1)
 
-All sync tests must use canonical `/api/v1/*` routes.
+- Day: `POST /api/v1/worker/day/start|end`.
+- Reports: `POST /api/v1/worker/report/create|add-media|submit`.
+- Media: `/api/v1/media/upload-sessions` (+ finalize) as needed.
+- Reference: `docs/SYSTEM_REPOSITORY_MAP.md` §3.
 
-- `GET /api/v1/sync/bootstrap` in `apps/web/app/api/v1/sync/bootstrap/route.ts`
-- `GET /api/v1/sync/changes?cursor=<n>&limit=<m>` in `apps/web/app/api/v1/sync/changes/route.ts`
-- `POST /api/v1/sync/ack` in `apps/web/app/api/v1/sync/ack/route.ts`
+## Dashboard URL shape
 
-Required headers:
+- Locale prefix: `/{locale}/...` under `apps/web/app/[locale]/(dashboard)/dashboard/**`.
+- Examples: `/{locale}/dashboard`, `/{locale}/dashboard/projects`, `/{locale}/dashboard/projects/[id]`, uploads, devices, AI, tasks, etc.
 
-- `x-device-id`: required for bootstrap, changes, and ack.
-- `Authorization: Bearer <user access_token>` or valid Supabase session cookies.
-- `x-client`: optional; lite clients (`ios_lite`, `android_lite`) trigger lite idempotency policy.
-- `x-idempotency-key`: required for lite client mutating routes, including `POST /api/v1/sync/ack`.
-- `x-request-id`: optional request correlation.
+## Smoke scripts (how invoked today)
 
-## Worker-Critical Routes
+- **Root `smoke:pilot`:** `bash scripts/smoke/pilot_launch.sh` — checks `GET /api/v1/health`, `GET /api/v1/config`, optional `POST /api/v1/admin/jobs/cron-tick`, tenant `GET /api/v1/ops/metrics` (needs `COOKIE`, `AUTH_HEADER`, or `SMOKE_EMAIL`+`SMOKE_PASSWORD`+Supabase URL/anon key per script header comments). Env: `BASE_URL` / `BASE_URL` default `http://localhost:3000`.
+- **Root `smoke:staging` / `smoke:prod`:** `bash apps/web/scripts/smoke-staging.sh` and `bash apps/web/scripts/smoke-prod.sh` (or `bun run smoke:staging` from `apps/web`).
+- **Existing E2E audit (separate from `audit:pilot`):** `bun run audit:e2e` → `scripts/audit/run_e2e_audit.sh` (inventory gen, lint, build, local server optional, Playwright subset, `node --test` sync mjs, report).
 
-- `GET /api/v1/worker`
-- `POST /api/v1/devices/register`
-- `POST /api/v1/devices/unregister`
-- `POST /api/v1/worker/day/start`
-- `POST /api/v1/worker/day/end`
-- `POST /api/v1/worker/report/create`
-- `POST /api/v1/worker/report/add-media`
-- `POST /api/v1/worker/report/submit`
-- `GET|POST /api/v1/media/upload-sessions`
-- `POST /api/v1/media/upload-sessions/[id]/finalize`
-- `POST /api/v1/worker/sync`
+## ADR-020 (sync)
 
-Contract schemas:
-
-- `packages/contracts/src/schemas/sync.schema.ts`
-- `packages/contracts/src/schemas/worker.schema.ts`
-
-## Dashboard Surfaces To Cover
-
-All dashboard routes are locale-prefixed. Default audit locale is `ru` via `E2E_LOCALE`.
-
-- `/{locale}/dashboard` - dashboard landing (`apps/web/app/[locale]/(dashboard)/dashboard/page.tsx`)
-- `/{locale}/dashboard/projects` - dashboard projects list
-- `/{locale}/dashboard/projects/[id]` - dashboard project detail
-- `/{locale}/dashboard/tasks`
-- `/{locale}/dashboard/workers`
-- `/{locale}/dashboard/reports`
-- `/{locale}/dashboard/daily-reports`
-- `/{locale}/dashboard/approvals`
-- `/{locale}/dashboard/uploads`
-- `/{locale}/dashboard/devices`
-- `/{locale}/dashboard/ai`
-- `/{locale}/dashboard/alerts`
-- `/{locale}/dashboard/workload`
-- `/{locale}/dashboard/notifications`
-- `/{locale}/portfolio`
-- `/{locale}/billing`
-
-Approvals/documents/budget surfaces:
-
-- Approvals queue: `/{locale}/dashboard/approvals`
-- Report approval details: `/{locale}/dashboard/reports/[id]`, `/{locale}/dashboard/daily-reports/[id]`
-- Documents: project-scoped `ProjectDocumentsPanel` and `/api/v1/projects/[id]/documents`
-- Budget-adjacent surfaces: portfolio, change orders, estimates, review pack, billing
-
-## Existing Test Coverage
-
-- `apps/web/tests/e2e/cockpit-smoke.spec.ts`
-- `apps/web/tests/e2e/pilot-task-report-smoke.spec.ts`
-- `apps/web/tests/e2e/ai-smoke.spec.ts`
-
-Current gaps: no complete dashboard CTA inventory, no inventory-driven click audit, and no bootstrap/changes/ack sync E2E chain.
+- Cursor + `change_log`; bootstrap snapshot + deltas + ack; 409 conflicts; idempotency for lite writes; retention implications documented in ADR.

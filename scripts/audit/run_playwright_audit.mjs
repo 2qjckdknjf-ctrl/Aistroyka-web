@@ -21,7 +21,7 @@ const result = spawnSync(
     "test",
     "tests/e2e/audit-dashboard-smoke.spec.ts",
     "tests/e2e/audit-dashboard-navigation.spec.ts",
-    "tests/e2e/audit-button-inventory.spec.ts",
+    "tests/e2e/dashboard-button-audit.spec.ts",
     "--config=playwright.config.ts",
     "--output",
     env.PLAYWRIGHT_TEST_DIR,

@@ -1,50 +1,42 @@
-# E2E Audit Report
+# E2E Audit Report (Pilot)
 
-## Environment
-
-- Date: 2026-04-26T14:15:12.258Z
-- Commit SHA: e3abb52eba27693ec7346648fc2cd7b5c6cea87d
-- Base URL: http://127.0.0.1:3107
-- Artifact directory: docs/audit/artifacts/20260426T140706Z
-- Requested command: `pnpm -w audit:e2e` (available (10.33.2))
-- Lint: passed
-- Build sanity: passed
+- Generated: 2026-04-26T21:14:12.902Z
+- Commit: `547b594f5410f8056b7583bd085dedf5a5fc1887`
+- Artifact directory: _(no timestamped artifact dir yet — run `bun run audit:pilot`)_
 
 ## Summary
 
-| Area | Total | Passed | Failed | Intentionally disabled |
-| --- | ---: | ---: | ---: | ---: |
-| Static dashboard CTA inventory | 909 | n/a | n/a | n/a |
-| Runtime Playwright checks | 4 | 3 | 0 | 1 |
-| Sync tests | 1 suite | 1 | 0 | 0 |
+| Step | Status |
+|------|--------|
+| test | NOT RUN |
+| build | NOT RUN |
+| button_inventory | NOT RUN |
+| smoke:pilot | NOT RUN |
+| playwright pilot | NOT RUN |
 
-## Broken Buttons
+## Broken buttons / UI audit
 
-No broken dashboard CTA failures were reported by the inventory-driven Playwright audit.
+See Playwright output and traces under artifact dir. Search for `Error:` / failed expectations in `playwright_pilot.log`.
 
-Inventory source: `docs/audit/button_inventory.json` and `docs/audit/button_inventory.csv`.
+## Sync contract
 
-### Fixed Audit Infrastructure Issues
+See `tests/e2e/sync-contract.spec.ts` and redacted sync log under the timestamped artifact dir when generated.
 
-- Root cause: Playwright rejected `test.use({ trace, screenshot })` inside `describe` blocks. Fix: moved audit trace/screenshot settings to top-level test scope/config.
-- Root cause: the runner stopped before report generation on failures. Fix: each step now records status, always writes the report, and exits non-zero after report generation when failures remain.
+## Core flow
 
-## Sync Findings
+See `tests/e2e/core-flow.spec.ts`. If credentials or tenant data are missing, tests document NOT VERIFIED.
 
-- Bootstrap shape verdict: PASS
-- Changes/ack stability: PASS
-- Idempotency verdict: PASS for report create and ack duplicate-key semantics
-- Conflict behavior: best-effort cursor-ahead probe executed when sync suite reached that step; see redacted request evidence.
-- Request evidence: `docs/audit/artifacts/20260426T140706Z/sync-e2e-requests.json`
+## Log excerpt (Playwright)
 
+```
 
+```
 
-## Remaining Gaps / Next Steps
+## Final verdict (explicit)
 
-- No blocking gaps remain from this audit run.
+- **BUTTONS_E2E:** FAIL
+- **SYNC_E2E:** FAIL
+- **CORE_FLOW_E2E:** FAIL
+- **OVERALL_PILOT_READY:** FAIL
 
-## Verdict
-
-- BUTTON E2E: PASS
-- SYNC E2E: PASS
-- OVERALL: PASS
+Note: pilot Playwright is one suite exit code; for independent area verdicts, inspect `playwright_pilot.log` per spec file.

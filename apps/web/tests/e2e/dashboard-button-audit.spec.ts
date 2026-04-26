@@ -1,13 +1,11 @@
 import { expect, test } from "@playwright/test";
-import fs from "node:fs";
 import path from "node:path";
 import {
   attachJson,
-  auditLocale,
   collectConsoleErrors,
   collectCriticalIssues,
-  loginIfConfigured,
 } from "./audit-helpers";
+import { buildRouteMap, e2eLocale, loadJsonInventory, resolveProjectId } from "./_helpers/routes";
 
 type InventoryEntry = {
   id: string;
@@ -20,10 +18,7 @@ type InventoryEntry = {
   notes: string;
 };
 
-const inventoryPath = path.join(process.cwd(), "../../docs/audit/button_inventory.json");
-const rawInventory = fs.existsSync(inventoryPath)
-  ? (JSON.parse(fs.readFileSync(inventoryPath, "utf8")) as InventoryEntry[])
-  : [];
+const rawInventory = loadJsonInventory<InventoryEntry>();
 
 const actionable = rawInventory
   .filter((entry) => entry.id.startsWith("cta."))
@@ -32,30 +27,27 @@ const actionable = rawInventory
 
 test.use({ trace: "retain-on-failure", screenshot: "only-on-failure" });
 
-function concreteRoute(entry: InventoryEntry) {
-  const projectId = process.env.E2E_PROJECT_ID || "missing-project-id";
+async function concreteRoute(entry: InventoryEntry, projectId: string) {
   const route = entry.pageRoute === "dashboard-shared" ? "/{locale}/dashboard" : entry.pageRoute;
   return route
-    .replace("{locale}", auditLocale)
+    .replace("{locale}", e2eLocale)
     .replace(":id", projectId)
     .replace(":projectId", projectId)
     .replace(/:([A-Za-z0-9_]+)/g, "missing-$1");
 }
 
-test.describe("Button Click Audit (Inventory-Driven)", () => {
-  test.skip(actionable.length === 0, "No stable cta.* selectors were present in the generated inventory");
-
-  test.beforeEach(async ({ page }) => {
-    await loginIfConfigured(page);
-  });
+test.describe("Dashboard button audit (inventory-driven)", () => {
+  test.skip(actionable.length === 0, "No stable cta.* entries in docs/audit/button_inventory.json");
 
   for (const entry of actionable) {
-    test(`${entry.id} @ ${entry.sourceFile}:${entry.line}`, async ({ page }, testInfo) => {
+    test(`${entry.id} @ ${entry.sourceFile}:${entry.line}`, async ({ page, request }, testInfo) => {
       test.setTimeout(90_000);
+      const projectId = await resolveProjectId(request, process.env.E2E_PROJECT_ID);
+      const routes = buildRouteMap(projectId);
 
       const networkIssues = collectCriticalIssues(page);
       const consoleErrors = collectConsoleErrors(page);
-      const route = concreteRoute(entry);
+      const route = await concreteRoute(entry, projectId);
 
       if (route.includes("missing-")) {
         test.skip(true, `Dynamic route requires env data: ${route}`);
@@ -79,7 +71,15 @@ test.describe("Button Click Audit (Inventory-Driven)", () => {
 
       const first = locator.first();
       if (await first.isDisabled().catch(() => false)) {
-        await attachJson(testInfo, "disabled-cta", entry);
+        const reason = await page
+          .getByText(/required|upgrade|permission|unavailable|soon/i)
+          .first()
+          .textContent()
+          .catch(() => "");
+        if (!reason) {
+          test.skip(true, `Disabled CTA without visible reason: ${entry.id}`);
+        }
+        await attachJson(testInfo, "disabled-cta", { entry, reason });
         return;
       }
 
@@ -106,6 +106,12 @@ test.describe("Button Click Audit (Inventory-Driven)", () => {
         .locator('[role="dialog"], [aria-modal="true"], dialog, [data-state="open"]')
         .count();
 
+      const artifactRoot = process.env.AUDIT_ARTIFACT_DIR || path.join(process.cwd(), "../../docs/audit/artifacts/local");
+      if (networkIssues.length || consoleErrors.length) {
+        const safe = testInfo.title.replace(/[^a-z0-9]+/gi, "_");
+        await page.screenshot({ path: path.join(artifactRoot, "screenshots", `${safe}.png`) }).catch(() => {});
+      }
+
       await attachJson(testInfo, "cta-result", {
         entry,
         beforeUrl,
@@ -121,6 +127,7 @@ test.describe("Button Click Audit (Inventory-Driven)", () => {
         modalOrDialogCount,
         networkIssues,
         consoleErrors,
+        routesHint: routes.dashboard,
       });
 
       const mutationOk = mutation ? mutation.status() >= 200 && mutation.status() < 300 : false;

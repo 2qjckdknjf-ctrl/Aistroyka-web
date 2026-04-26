@@ -85,7 +85,7 @@ async function createDocument(
   });
   if (!res.ok) {
     const j = await res.json().catch(() => ({}));
-    throw new Error((j as { error?: string }).error ?? "Create failed");
+    throw new Error((j as { error?: string }).error ?? "CREATE_FAILED");
   }
   const json = await res.json();
   return json.data;
@@ -105,7 +105,7 @@ async function uploadDocumentFile(
   });
   if (!res.ok) {
     const j = await res.json().catch(() => ({}));
-    throw new Error((j as { error?: string }).error ?? "Upload failed");
+    throw new Error((j as { error?: string }).error ?? "UPLOAD_FAILED");
   }
   const json = await res.json();
   return json.data;
@@ -124,7 +124,7 @@ async function updateDocument(
   });
   if (!res.ok) {
     const j = await res.json().catch(() => ({}));
-    throw new Error((j as { error?: string }).error ?? "Update failed");
+    throw new Error((j as { error?: string }).error ?? "UPDATE_FAILED");
   }
   const json = await res.json();
   return json.data;
@@ -147,26 +147,39 @@ function statusBadgeClass(status: string): string {
   }
 }
 
-function statusLabel(status: string): string {
+function statusLabel(status: string, tDetail: (key: string) => string): string {
   const map: Record<string, string> = {
-    draft: "Draft",
-    uploaded: "Uploaded",
-    under_review: "Under review",
-    approved: "Approved",
-    rejected: "Rejected",
-    archived: "Archived",
+    draft: tDetail("draft"),
+    uploaded: tDetail("uploaded"),
+    under_review: tDetail("underReview"),
+    approved: tDetail("approved"),
+    rejected: tDetail("rejected"),
+    archived: tDetail("archived"),
   };
   return map[status] ?? status.replace("_", " ");
 }
 
-function typeLabel(type: string): string {
+function typeLabel(type: string, tDetail: (key: string) => string): string {
   switch (type) {
     case "act":
-      return "Act";
+      return tDetail("act");
     case "contract":
-      return "Contract";
+      return tDetail("contract");
     default:
-      return "Document";
+      return tDetail("document");
+  }
+}
+
+function formatDocumentError(message: string, tDetail: (key: string) => string): string {
+  switch (message) {
+    case "CREATE_FAILED":
+      return `${tDetail("failed")}: ${tDetail("createDocument")}`;
+    case "UPDATE_FAILED":
+      return tDetail("updateFailed");
+    case "UPLOAD_FAILED":
+      return tDetail("uploadFailed");
+    default:
+      return message;
   }
 }
 
@@ -211,7 +224,7 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
       if (uploadInputRef.current) uploadInputRef.current.value = "";
     },
     onError: (err) => {
-      setUploadError(err instanceof Error ? err.message : "Upload failed");
+      setUploadError(err instanceof Error ? err.message : "UPLOAD_FAILED");
       if (uploadInputRef.current) uploadInputRef.current.value = "";
     },
   });
@@ -250,7 +263,7 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
           e.target.value = "";
           if (f.size > MAX_UPLOAD_MB * 1024 * 1024) {
             setUploadDocId(targetId);
-            setUploadError(`File too large. Max ${MAX_UPLOAD_MB}MB.`);
+            setUploadError(`${tDetail("fileTooLargeMax")} ${MAX_UPLOAD_MB}MB.`);
             return;
           }
           setUploadError(null);
@@ -277,11 +290,10 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
         <div className="mb-4 rounded-lg border border-aistroyka-border-subtle bg-aistroyka-surface-muted p-3 flex flex-wrap items-center justify-between gap-2">
           <div className="min-w-[220px]">
             <p className="text-sm font-medium text-aistroyka-text-primary">
-              {pendingDocs.length} document(s) pending review
+              {pendingDocs.length} {tDetail("documentsPendingReview")}
             </p>
             <p className="text-xs text-aistroyka-text-tertiary mt-1">
-              These are in governance state `under_review`. Use Approve / Reject to complete the
-              review cycle.
+              {tDetail("governanceUnderReviewHint")}
             </p>
           </div>
           <Button
@@ -296,7 +308,7 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
               });
             }}
           >
-            Jump to pending →
+            {tDetail("jumpToPendingArrow")}
           </Button>
         </div>
       )}
@@ -340,14 +352,14 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
                       {doc.title}
                     </div>
                   </TableCell>
-                  <TableCell>{typeLabel(doc.type)}</TableCell>
+                  <TableCell>{typeLabel(doc.type, tDetail)}</TableCell>
                   <TableCell>
                     <span
                       className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${statusBadgeClass(
                         doc.status
                       )}`}
                     >
-                      {statusLabel(doc.status)}
+                      {statusLabel(doc.status, tDetail)}
                     </span>
                   </TableCell>
                   <TableCell>
@@ -358,7 +370,7 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
                         rel="noopener noreferrer"
                         className="text-aistroyka-accent hover:underline text-sm"
                       >
-                        Open
+                        {tDetail("open")}
                       </a>
                     ) : canUpload ? (
                       <button
@@ -370,17 +382,20 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
                         disabled={isUploading}
                         className="text-aistroyka-accent hover:underline text-sm text-left disabled:opacity-50"
                       >
-                        {isUploading ? "Uploading…" : "Upload file"}
+                        {isUploading ? tDetail("uploading") : tDetail("uploadFile")}
                       </button>
                     ) : (
                       <span className="text-aistroyka-text-tertiary text-sm">—</span>
                     )}
                     {uploadDocId === doc.id && (uploadMutation.isError || uploadError) && (
                       <p className="text-xs text-aistroyka-error mt-0.5" role="alert">
-                        {uploadError ??
-                          (uploadMutation.error instanceof Error
-                            ? uploadMutation.error.message
-                            : "Upload failed")}
+                        {formatDocumentError(
+                          uploadError ??
+                            (uploadMutation.error instanceof Error
+                              ? uploadMutation.error.message
+                              : "UPLOAD_FAILED"),
+                          tDetail
+                        )}
                       </p>
                     )}
                   </TableCell>
@@ -395,14 +410,14 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
                         href={`/dashboard/reports/${doc.report_id}`}
                         className="text-aistroyka-accent hover:underline font-medium"
                       >
-                        Report {doc.report_id.slice(0, 8)}…
+                        {tDetail("report")} {doc.report_id.slice(0, 8)}…
                       </Link>
                     ) : doc.task_id ? (
                       <Link
                         href={`/dashboard/tasks/${doc.task_id}`}
                         className="text-aistroyka-accent hover:underline font-medium"
                       >
-                        Task {doc.task_id.slice(0, 8)}…
+                        {tDetail("task")} {doc.task_id.slice(0, 8)}…
                       </Link>
                     ) : (
                       "—"
@@ -425,7 +440,7 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
                           }
                           disabled={updatingId === doc.id}
                         >
-                          Submit for review
+                          {tDetail("submitForReview")}
                         </Button>
                       ) : canReview ? (
                         <>
@@ -440,7 +455,7 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
                             }
                             disabled={updatingId === doc.id}
                           >
-                            Approve
+                            {tDetail("approve")}
                           </Button>
                           <Button
                             variant="secondary"
@@ -453,7 +468,7 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
                             }
                             disabled={updatingId === doc.id}
                           >
-                            Reject
+                            {tDetail("reject")}
                           </Button>
                         </>
                       ) : (
@@ -466,7 +481,7 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
                         onClick={() => setHistoryDocId(doc.id)}
                         disabled={uploadMutation.isPending}
                       >
-                        History
+                        {tDetail("history")}
                       </Button>
                     </div>
                   </TableCell>
@@ -499,7 +514,7 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
         isSubmitting={createMutation.isPending}
         error={
           createMutation.isError && createMutation.error instanceof Error
-            ? createMutation.error.message
+            ? formatDocumentError(createMutation.error.message, tDetail)
             : null
         }
       />
@@ -549,7 +564,7 @@ function CreateDocumentModal({
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
           id="doc-title"
-          label="Title"
+          label={tDetail("title")}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder={tDetail("workCompletionActExample")}
@@ -562,7 +577,7 @@ function CreateDocumentModal({
             htmlFor="doc-type"
             className="mb-1.5 block text-[var(--aistroyka-font-subheadline)] font-medium text-aistroyka-text-primary"
           >
-            Type
+            {tDetail("type")}
           </label>
           <Select
             id="doc-type"
@@ -577,7 +592,7 @@ function CreateDocumentModal({
         </div>
         <Textarea
           id="doc-description"
-          label="Description (optional)"
+          label={tDetail("descriptionOptional")}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder={tDetail("briefDescriptionOrNotes")}

@@ -114,19 +114,26 @@ function formatAmount(amount: number, currency: string): string {
   return `${amount.toLocaleString("ru-RU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })} ${currency}`;
 }
 
-function categoryLabel(cat: string): string {
+function categoryLabel(cat: string, tDetail: (key: string) => string): string {
   const map: Record<string, string> = {
-    materials: "Materials",
-    labor: "Labor",
-    equipment: "Equipment",
-    services: "Services",
-    other: "Other",
+    materials: tDetail("materials"),
+    labor: tDetail("labor"),
+    equipment: tDetail("equipment"),
+    services: tDetail("services"),
+    other: tDetail("other"),
   };
   return map[cat] ?? cat;
 }
 
-function statusLabel(status: string): string {
-  return status.replace("_", " ");
+function statusLabel(status: string, tDetail: (key: string) => string): string {
+  const map: Record<string, string> = {
+    planned: tDetail("planned"),
+    committed: tDetail("committed"),
+    incurred: tDetail("incurred"),
+    approved: tDetail("approved"),
+    archived: tDetail("archived"),
+  };
+  return map[status] ?? status.replace("_", " ");
 }
 
 export function ProjectCostsPanel({ projectId }: { projectId: string }) {
@@ -273,7 +280,7 @@ export function ProjectCostsPanel({ projectId }: { projectId: string }) {
               return (
                 <TableRow key={item.id}>
                   <TableCell className="font-medium">{item.title}</TableCell>
-                  <TableCell>{categoryLabel(item.category)}</TableCell>
+                  <TableCell>{categoryLabel(item.category, tDetail)}</TableCell>
                   <TableCell className="text-aistroyka-text-secondary">
                     {formatAmount(item.planned_amount, item.currency)}
                   </TableCell>
@@ -284,7 +291,7 @@ export function ProjectCostsPanel({ projectId }: { projectId: string }) {
                   </TableCell>
                   <TableCell>
                     <span className="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-aistroyka-text-tertiary/20 text-aistroyka-text-tertiary">
-                      {statusLabel(item.status)}
+                      {statusLabel(item.status, tDetail)}
                     </span>
                   </TableCell>
                   <TableCell className="text-aistroyka-text-secondary text-sm">
@@ -301,9 +308,9 @@ export function ProjectCostsPanel({ projectId }: { projectId: string }) {
                       size="sm"
                       onClick={() => setEditingItem(item)}
                       className="text-xs"
-                      aria-label={`Edit ${item.title}`}
+                      aria-label={`${tDetail("edit")} ${item.title}`}
                     >
-                      Edit
+                      {tDetail("edit")}
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -461,7 +468,7 @@ function EditCostItemModal({
           </label>
           <Select id="edit-cost-status" value={status} onChange={(e) => setStatus(e.target.value)} disabled={isSubmitting}>
             {COST_STATUSES.map((s) => (
-              <option key={s} value={s}>{statusLabel(s)}</option>
+              <option key={s} value={s}>{statusLabel(s, tDetail)}</option>
             ))}
           </Select>
         </div>

@@ -173,17 +173,15 @@ test("Sync Contract & Behavior", async (t) => {
     assert.deepEqual(ackB.json, ackA.json);
   });
 
-  await t.test("conflict simulation best effort", async () => {
+  await t.test("conflict simulation (future cursor, same device)", async () => {
     const ahead = cursor + 1_000_000;
-    const out = await api("GET", `/api/v1/sync/changes?cursor=${ahead}&limit=25`, token, undefined, {
-      "x-device-id": `${deviceId}-conflict`,
-    });
-    assert.ok([200, 409].includes(out.res.status), `conflict probe returned ${out.res.status}`);
-    if (out.res.status === 200) {
-      assert.ok(out.json.data, "conflict probe 200 response missing data");
-    } else {
-      assert.ok(out.json.error || out.json.code || out.json.serverCursor !== undefined, "conflict response missing deterministic signal");
-    }
+    const out = await api("GET", `/api/v1/sync/changes?cursor=${ahead}&limit=25`, token);
+    assert.equal(out.res.status, 409, `expected 409 sync_conflict for future cursor, got ${out.res.status}`);
+    assert.equal(out.json.error, "conflict");
+    assert.equal(out.json.code, "sync_conflict");
+    const sc = out.json.server_cursor ?? out.json.serverCursor;
+    assert.equal(typeof sc, "number");
+    assert.equal(out.json.must_bootstrap, true);
   });
 
   await writeEvidence("sync-e2e-requests", requests);

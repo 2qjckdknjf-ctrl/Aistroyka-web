@@ -26,6 +26,7 @@
     "smoke:prod": "bash apps/web/scripts/smoke-prod.sh",
     "smoke:staging": "bash apps/web/scripts/smoke-staging.sh",
     "smoke:pilot": "bash scripts/smoke/pilot_launch.sh",
+    "audit:pilot": "bash scripts/audit/run-pilot-audit.sh",
     "release:check": "node scripts/release-readiness-check.mjs",
     "postinstall": "node scripts/ensure-swc-native.cjs"
   },

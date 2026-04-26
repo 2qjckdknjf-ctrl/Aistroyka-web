@@ -16,13 +16,14 @@ When the client cursor is ahead of the server (e.g. stale or corrupted state), t
 {
   "error": "conflict",
   "code": "sync_conflict",
+  "server_cursor": 42,
   "serverCursor": 42,
   "must_bootstrap": true,
-  "hint": "Call bootstrap, reset cursor to serverCursor, then retry changes/ack."
+  "hint": "Call bootstrap, reset cursor to server_cursor (or serverCursor), then retry changes/ack."
 }
 ```
 
-- **serverCursor**: Latest change_log id for the tenant. Client must adopt this.
+- **server_cursor** (canonical) / **serverCursor** (alias): Latest change_log id for the tenant. Client must adopt this.
 - **must_bootstrap**: When `true`, client should refetch full state via bootstrap before continuing.
 - **hint** (optional): Machine-readable hint. Values:
   - `retention_window_exceeded` — Client cursor is below the earliest retained cursor (env `SYNC_MIN_RETAINED_CURSOR`). Client must bootstrap and use `serverCursor`.
