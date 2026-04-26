@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button, Textarea } from "@/components/ui";
 
 interface ReportApprovalCardProps {
@@ -9,6 +10,7 @@ interface ReportApprovalCardProps {
 }
 
 export function ReportApprovalCard({ reportId, onSuccess }: ReportApprovalCardProps) {
+  const tDetail = useTranslations("dashboardDetail");
   const [status, setStatus] = useState<"idle" | "loading">("idle");
   const [note, setNote] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +34,7 @@ export function ReportApprovalCard({ reportId, onSuccess }: ReportApprovalCardPr
       }
       onSuccess();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
+      setError(e instanceof Error ? e.message : tDetail("failed"));
     } finally {
       setStatus("idle");
     }
@@ -41,7 +43,7 @@ export function ReportApprovalCard({ reportId, onSuccess }: ReportApprovalCardPr
   return (
     <div className="space-y-3">
       <p className="text-aistroyka-subheadline text-aistroyka-text-secondary">
-        Approve, reject, or request changes.
+        {tDetail("approveRejectOrRequestChanges")}
       </p>
       {error && <p className="text-sm text-aistroyka-error">{error}</p>}
       <div className="flex flex-wrap gap-2">
@@ -51,7 +53,7 @@ export function ReportApprovalCard({ reportId, onSuccess }: ReportApprovalCardPr
           onClick={() => handleReview("approved")}
           disabled={status === "loading"}
         >
-          Approve
+          {tDetail("approve")}
         </Button>
         <Button
           variant="secondary"
@@ -59,7 +61,7 @@ export function ReportApprovalCard({ reportId, onSuccess }: ReportApprovalCardPr
           onClick={() => handleReview("rejected")}
           disabled={status === "loading"}
         >
-          Reject
+          {tDetail("reject")}
         </Button>
         <Button
           variant="secondary"
@@ -67,17 +69,17 @@ export function ReportApprovalCard({ reportId, onSuccess }: ReportApprovalCardPr
           onClick={() => handleReview("changes_requested")}
           disabled={status === "loading"}
         >
-          Request changes
+          {tDetail("requestChanges")}
         </Button>
       </div>
       <div>
         <label className="text-aistroyka-caption text-aistroyka-text-tertiary block mb-1">
-          Note (optional, recommended for &quot;Request changes&quot;)
+          {tDetail("noteOptionalForRequestChanges")}
         </label>
         <Textarea
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          placeholder="Add a note for the worker..."
+          placeholder={tDetail("addNoteForWorker")}
           rows={2}
           className="max-w-md"
         />

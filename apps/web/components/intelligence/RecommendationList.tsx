@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { getResourceHref } from "@/lib/intelligence/resource-links";
 import type { ActionRecommendationData } from "./types";
@@ -8,19 +9,21 @@ import { SeverityBadge } from "./SeverityBadge";
 
 export function RecommendationList({
   recommendations,
-  emptyMessage = "No recommended actions",
+  emptyMessage,
 }: {
   recommendations: ActionRecommendationData[];
   emptyMessage?: string;
 }) {
+  const tDetail = useTranslations("dashboardDetail");
+  const resolvedEmptyMessage = emptyMessage ?? tDetail("noRecommendedActionsYet");
   return (
-    <IntelligenceCard title="Recommended actions" aria-label="Recommended actions">
+    <IntelligenceCard title={tDetail("recommendedActions")} aria-label={tDetail("recommendedActions")}>
       {recommendations.length === 0 ? (
         <p className="text-aistroyka-subheadline text-aistroyka-text-tertiary">
-          {emptyMessage}
+          {resolvedEmptyMessage}
         </p>
       ) : (
-        <ul className="space-y-2" aria-label="Recommendations">
+        <ul className="space-y-2" aria-label={tDetail("recommendations")}>
           {recommendations.slice(0, 5).map((r) => {
             const resolvedHref =
               r.relatedResourceType && r.relatedResourceId
@@ -48,7 +51,7 @@ export function RecommendationList({
                   href={href}
                   className="mt-0.5 inline-block text-sm font-medium text-aistroyka-accent hover:underline"
                 >
-                  Open →
+                  {tDetail("openRelated")}
                 </Link>
               </li>
             );

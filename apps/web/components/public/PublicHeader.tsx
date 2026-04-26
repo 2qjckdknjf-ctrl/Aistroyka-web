@@ -43,7 +43,7 @@ export function PublicHeader() {
           AISTROYKA
         </Link>
 
-        <nav className="hidden items-center gap-1 md:flex" aria-label="Main">
+        <nav className="hidden items-center gap-1 md:flex" aria-label={t("main")}>
           {PRIMARY_NAV.map(({ href, key }) => {
             const isActive = pathname === href || pathname.startsWith(href + "/");
             return (
@@ -100,7 +100,7 @@ export function PublicHeader() {
         className={`mx-auto mt-2 max-w-7xl rounded-[var(--aistroyka-radius-xl)] border border-aistroyka-border-subtle bg-aistroyka-surface md:hidden ${mobileMenuOpen ? "block" : "hidden"}`}
         aria-hidden={!mobileMenuOpen}
       >
-        <nav className="flex flex-col gap-0.5 px-4 py-4" aria-label="Main mobile">
+        <nav className="flex flex-col gap-0.5 px-4 py-4" aria-label={t("mainMobile")}>
           {PRIMARY_NAV.map(({ href, key }) => (
             <Link
               key={href}

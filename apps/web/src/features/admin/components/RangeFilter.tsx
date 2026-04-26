@@ -1,12 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 export type RangePreset = "24h" | "7d" | "30d";
-
-const PRESETS: { value: RangePreset; label: string }[] = [
-  { value: "24h", label: "24h" },
-  { value: "7d", label: "7 days" },
-  { value: "30d", label: "30 days" },
-];
 
 function rangeToDates(preset: RangePreset): { from: string; to: string } {
   const to = new Date();
@@ -27,9 +22,15 @@ export function RangeFilter({
   value: RangePreset;
   onChange: (preset: RangePreset, range: { from: string; to: string }) => void;
 }) {
+  const tDetail = useTranslations("dashboardDetail");
+  const PRESETS: { value: RangePreset; label: string }[] = [
+    { value: "24h", label: "24h" },
+    { value: "7d", label: tDetail("sevenDays") },
+    { value: "30d", label: tDetail("thirtyDays") },
+  ];
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <span className="text-aistroyka-subheadline text-aistroyka-text-secondary">Range:</span>
+      <span className="text-aistroyka-subheadline text-aistroyka-text-secondary">{tDetail("range")}:</span>
       {PRESETS.map((p) => (
         <button
           key={p.value}

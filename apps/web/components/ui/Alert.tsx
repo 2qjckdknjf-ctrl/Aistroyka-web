@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useTranslations } from "next-intl";
 
 type Style = "error" | "success" | "warning" | "info";
 
@@ -71,6 +72,7 @@ export function Alert({
   onDismiss?: () => void;
   className?: string;
 }) {
+  const tCommon = useTranslations("common");
   return (
     <div
       role="alert"
@@ -85,7 +87,7 @@ export function Alert({
           type="button"
           onClick={onDismiss}
           className="shrink-0 rounded p-1 text-aistroyka-text-secondary hover:opacity-70 focus:outline-none focus:ring-2 focus:ring-aistroyka-accent focus:ring-offset-2"
-          aria-label="Dismiss"
+          aria-label={tCommon("dismiss")}
         >
           <svg
             className="h-5 w-5"

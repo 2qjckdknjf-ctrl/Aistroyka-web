@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useTranslations } from "next-intl";
 
 type ChipVariant = "neutral" | "success" | "warning" | "danger" | "info";
 
@@ -25,6 +26,7 @@ export function Chip({
   className?: string;
   "aria-label"?: string;
 }) {
+  const tCommon = useTranslations("common");
   return (
     <span
       className={`inline-flex items-center gap-1 rounded-full px-[var(--aistroyka-space-3)] py-[var(--aistroyka-space-2)] text-[var(--aistroyka-font-caption)] font-medium ${variantClasses[variant]} ${className}`.trim()}
@@ -37,7 +39,7 @@ export function Chip({
           type="button"
           onClick={onRemove}
           className="ml-0.5 rounded p-0.5 hover:bg-black/10 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-aistroyka-accent"
-          aria-label="Remove"
+          aria-label={tCommon("remove")}
         >
           <span aria-hidden>×</span>
         </button>

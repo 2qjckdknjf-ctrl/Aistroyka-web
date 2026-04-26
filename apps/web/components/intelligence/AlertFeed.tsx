@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { getAlertDestinations } from "@/lib/dashboard/alert-destinations";
 import type { AlertItemData } from "./types";
@@ -13,19 +14,21 @@ function severityClass(s: string): string {
 
 export function AlertFeed({
   alerts,
-  emptyMessage = "No alerts",
+  emptyMessage,
 }: {
   alerts: AlertItemData[];
   emptyMessage?: string;
 }) {
+  const tDetail = useTranslations("dashboardDetail");
+  const resolvedEmptyMessage = emptyMessage ?? tDetail("noAlerts");
   return (
-    <IntelligenceCard title="Tenant alerts" aria-label="Alerts feed">
+    <IntelligenceCard title={tDetail("tenantAlerts")} aria-label={tDetail("alertsFeed")}>
       {alerts.length === 0 ? (
         <p className="text-aistroyka-subheadline text-aistroyka-text-tertiary">
-          {emptyMessage}
+          {resolvedEmptyMessage}
         </p>
       ) : (
-        <ul className="space-y-2" aria-label="Alert list">
+        <ul className="space-y-2" aria-label={tDetail("alertList")}>
           {alerts.slice(0, 10).map((a) => {
             const d = getAlertDestinations(a.id, a.type);
             return (
@@ -42,7 +45,7 @@ export function AlertFeed({
                   {" · "}
                   {new Date(a.created_at).toLocaleString()}
                   {d.linkage === "list_anchor_only" && (
-                    <span className="ml-1 text-aistroyka-text-tertiary"> · list-only routing</span>
+                    <span className="ml-1 text-aistroyka-text-tertiary"> · {tDetail("listOnlyRouting")}</span>
                   )}
                 </p>
                 <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
@@ -62,7 +65,7 @@ export function AlertFeed({
                         : "font-medium text-aistroyka-accent"
                     }`}
                   >
-                    {d.contextHref ? d.anchoredListLabel : "Open on alerts list →"}
+                    {d.contextHref ? d.anchoredListLabel : tDetail("openOnAlertsList")}
                   </Link>
                 </div>
                 {d.honestyNote && (

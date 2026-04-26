@@ -1,8 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 export function RequestIdPill({ requestId, showCopy = true }: { requestId: string; showCopy?: boolean }) {
+  const tCommon = useTranslations("common");
+  const tDetail = useTranslations("dashboardDetail");
   const [copied, setCopied] = useState(false);
   const short = requestId.length > 12 ? requestId.slice(0, 8) + "…" : requestId;
 
@@ -21,9 +24,9 @@ export function RequestIdPill({ requestId, showCopy = true }: { requestId: strin
           type="button"
           onClick={copy}
           className="text-aistroyka-accent hover:underline"
-          title="Copy request ID"
+          title={tDetail("copyRequestId")}
         >
-          {copied ? "Copied" : "Copy"}
+          {copied ? tCommon("copied") : tCommon("copy")}
         </button>
       ) : null}
     </span>

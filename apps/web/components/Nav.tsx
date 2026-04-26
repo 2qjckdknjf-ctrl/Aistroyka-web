@@ -24,7 +24,7 @@ export function Nav({ userEmail }: { userEmail?: string }) {
   const closeMobile = useCallback(() => setMobileOpen(false), []);
 
   return (
-    <nav className="border-b border-aistroyka-border-subtle bg-aistroyka-surface" role="navigation" aria-label="Main">
+    <nav className="border-b border-aistroyka-border-subtle bg-aistroyka-surface" role="navigation" aria-label={t("main")}>
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-aistroyka-3 px-aistroyka-4 py-aistroyka-4">
         <div className="flex min-h-aistroyka-touch items-center gap-aistroyka-4 md:gap-aistroyka-8">
           <Link
@@ -71,7 +71,7 @@ export function Nav({ userEmail }: { userEmail?: string }) {
             className="flex min-h-aistroyka-touch min-w-aistroyka-touch shrink-0 items-center justify-center rounded-aistroyka-lg text-aistroyka-text-secondary hover:bg-aistroyka-surface-raised hover:text-aistroyka-text-primary focus:outline-none focus:ring-2 focus:ring-aistroyka-accent focus:ring-offset-2 md:hidden"
             aria-expanded={mobileOpen}
             aria-controls="nav-menu-mobile"
-            aria-label={mobileOpen ? "Close menu" : "Open menu"}
+            aria-label={mobileOpen ? t("closeMenu") : t("openMenu")}
           >
             {mobileOpen ? (
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>

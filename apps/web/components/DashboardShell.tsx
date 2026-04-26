@@ -56,13 +56,13 @@ export function DashboardShell({
         className={`fixed inset-y-0 left-0 z-40 w-56 border-r border-aistroyka-border-subtle bg-aistroyka-surface transition-transform md:static md:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
-        aria-label="Dashboard navigation"
+        aria-label={t("dashboardNavigation")}
       >
         <div className="flex h-full flex-col pt-[var(--aistroyka-space-4)]">
           <div className="px-[var(--aistroyka-space-4)] pb-[var(--aistroyka-space-3)]">
             <Logo href="/dashboard" height={26} className="block" onClick={closeSidebar} />
           </div>
-          <nav className="flex-1 space-y-0.5 px-[var(--aistroyka-space-2)]" aria-label="Main">
+          <nav className="flex-1 space-y-0.5 px-[var(--aistroyka-space-2)]" aria-label={t("main")}>
             {SIDEBAR_LINKS.map(({ href, key }) => {
               const active = isActive(href);
               return (
