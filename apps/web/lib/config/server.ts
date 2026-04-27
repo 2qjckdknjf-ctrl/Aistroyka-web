@@ -8,6 +8,10 @@ export interface ServerConfig {
   OPENAI_VISION_MODEL: string;
   OPENAI_VISION_TIMEOUT_MS: number;
   OPENAI_RETRY_ON_5XX: number;
+  /** Copilot text (non-stream + stream first hop). */
+  OPENAI_COPILOT_MODEL: string;
+  OPENAI_COPILOT_TIMEOUT_MS: number;
+  OPENAI_COPILOT_MAX_RETRIES: number;
   AI_ANALYSIS_URL: string;
   AI_REQUEST_TIMEOUT_MS: number;
   AI_RETRY_ATTEMPTS: number;
@@ -21,12 +25,21 @@ function numEnv(name: string, defaultVal: number, min: number, max: number): num
   return Math.min(max, Math.max(min, v));
 }
 
+function intEnv(name: string, defaultVal: number, min: number, max: number): number {
+  const v = Math.floor(Number(process.env[name]));
+  if (!Number.isFinite(v)) return defaultVal;
+  return Math.min(max, Math.max(min, v));
+}
+
 export function getServerConfig(): ServerConfig {
   return {
     OPENAI_API_KEY: (process.env.OPENAI_API_KEY ?? "").trim(),
     OPENAI_VISION_MODEL: (process.env.OPENAI_VISION_MODEL ?? "gpt-4o").trim() || "gpt-4o",
     OPENAI_VISION_TIMEOUT_MS: numEnv("OPENAI_VISION_TIMEOUT_MS", 85_000, 30_000, 120_000),
     OPENAI_RETRY_ON_5XX: Math.min(3, Math.max(0, Number(process.env.OPENAI_RETRY_ON_5XX) ?? 1)),
+    OPENAI_COPILOT_MODEL: (process.env.OPENAI_COPILOT_MODEL ?? "gpt-4o-mini").trim() || "gpt-4o-mini",
+    OPENAI_COPILOT_TIMEOUT_MS: numEnv("OPENAI_COPILOT_TIMEOUT_MS", 60_000, 15_000, 120_000),
+    OPENAI_COPILOT_MAX_RETRIES: intEnv("OPENAI_COPILOT_MAX_RETRIES", 2, 0, 5),
     AI_ANALYSIS_URL: (process.env.AI_ANALYSIS_URL ?? "").trim(),
     AI_REQUEST_TIMEOUT_MS: numEnv("AI_REQUEST_TIMEOUT_MS", 90_000, 30_000, 120_000),
     AI_RETRY_ATTEMPTS: Math.min(5, Math.max(1, Number(process.env.AI_RETRY_ATTEMPTS) || 3)),

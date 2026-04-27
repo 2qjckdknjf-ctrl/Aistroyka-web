@@ -11,6 +11,8 @@ import { getAdminClient } from "@/lib/supabase/admin";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { getProject } from "@/lib/domain/projects/project.service";
 import { getServerConfig, isOpenAIConfigured } from "@/lib/config/server";
+import { fetchWithOpenAiRetry } from "@/lib/platform/ai/openai-http-retry";
+import { OPENAI_CHAT_COMPLETIONS_URL } from "@/lib/platform/ai/openai-chat-completion";
 import { gateCopilotLlmRequest, COPILOT_STREAM_ESTIMATE_USD } from "@/lib/copilot/copilot-ai-gate";
 import { recordUsage, checkBudgetAlert } from "@/lib/platform/ai-usage/ai-usage.service";
 import { estimateCostUsd } from "@/lib/platform/ai-usage/cost-estimator";
@@ -333,7 +335,7 @@ export async function POST(
 
   const config = getServerConfig();
   const apiKey = config.OPENAI_API_KEY;
-  const model = (process.env.OPENAI_COPILOT_MODEL ?? "gpt-4o-mini").trim() || "gpt-4o-mini";
+  const model = config.OPENAI_COPILOT_MODEL;
 
   const streamStartMs = Date.now();
   const stream = new ReadableStream({
@@ -483,21 +485,29 @@ export async function POST(
       };
 
       try {
-        const res = await fetch("https://api.openai.com/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${apiKey}`,
-          },
-          body: JSON.stringify({
-            model,
-            messages: openaiMessages,
-            stream: true,
-            stream_options: { include_usage: true },
-            max_tokens: 1024,
+        const res = await fetchWithOpenAiRetry(
+          OPENAI_CHAT_COMPLETIONS_URL,
+          (signal) => ({
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${apiKey}`,
+            },
+            body: JSON.stringify({
+              model,
+              messages: openaiMessages,
+              stream: true,
+              stream_options: { include_usage: true },
+              max_tokens: 1024,
+            }),
+            signal,
           }),
-          signal: abortCtrl.signal,
-        });
+          {
+            maxRetries: config.OPENAI_COPILOT_MAX_RETRIES,
+            timeoutMs: config.OPENAI_COPILOT_TIMEOUT_MS,
+            outerSignal: abortCtrl.signal,
+          }
+        );
 
         if (!res.ok) {
           await res.text();

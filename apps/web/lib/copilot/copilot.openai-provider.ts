@@ -1,20 +1,20 @@
 /**
  * OpenAI-backed ICopilotProvider for non-streaming Copilot briefs.
- * Uses chat completions + JSON object mode; records usage via optional callback.
+ * Uses shared chat completion client (retries, timeout, JSON mode); records usage via optional callback.
  */
 
 import { getServerConfig } from "@/lib/config/server";
 import { estimateCostUsd } from "@/lib/platform/ai-usage/cost-estimator";
+import { completeOpenAiChatJson } from "@/lib/platform/ai/openai-chat-completion";
 import type { CopilotUseCase } from "./copilot.types";
 import type { CopilotContextData } from "./copilot.context-builder";
 import type { ICopilotProvider, CopilotProviderResult } from "./copilot.provider";
-
-const OPENAI_CHAT_URL = "https://api.openai.com/v1/chat/completions";
 
 export interface OpenAiCopilotProviderOptions {
   apiKey: string;
   model?: string;
   timeoutMs?: number;
+  maxRetries?: number;
   onUsage?: (payload: {
     model: string;
     promptTokens: number;
@@ -38,98 +38,63 @@ function jsonSystemPreamble(useCase: CopilotUseCase): string {
 }
 
 export function createOpenAiCopilotProvider(opts: OpenAiCopilotProviderOptions): ICopilotProvider {
-  const model = (opts.model ?? process.env.OPENAI_COPILOT_MODEL ?? "gpt-4o-mini").trim() || "gpt-4o-mini";
-  const timeoutMs = opts.timeoutMs ?? 55_000;
+  const cfg = getServerConfig();
+  const model = (opts.model ?? cfg.OPENAI_COPILOT_MODEL).trim() || "gpt-4o-mini";
+  const timeoutMs = opts.timeoutMs ?? cfg.OPENAI_COPILOT_TIMEOUT_MS;
+  const maxRetries = opts.maxRetries ?? cfg.OPENAI_COPILOT_MAX_RETRIES;
 
   return {
     isAvailable: () => opts.apiKey.length > 0,
     async generateFromPrompt(prompt, useCase, context): Promise<CopilotProviderResult> {
-      const start = Date.now();
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), timeoutMs);
-
-      try {
-        const res = await fetch(OPENAI_CHAT_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${opts.apiKey}`,
+      const out = await completeOpenAiChatJson({
+        apiKey: opts.apiKey,
+        model,
+        messages: [
+          { role: "system", content: jsonSystemPreamble(useCase) },
+          {
+            role: "user",
+            content: [
+              `projectId=${context.projectId}`,
+              `tenantId=${context.tenantId}`,
+              "",
+              prompt,
+            ].join("\n"),
           },
-          body: JSON.stringify({
-            model,
-            response_format: { type: "json_object" },
-            messages: [
-              { role: "system", content: jsonSystemPreamble(useCase) },
-              {
-                role: "user",
-                content: [
-                  `projectId=${context.projectId}`,
-                  `tenantId=${context.tenantId}`,
-                  "",
-                  prompt,
-                ].join("\n"),
-              },
-            ],
-            max_tokens: 1200,
-            temperature: 0.3,
-          }),
-          signal: controller.signal,
-        });
+        ],
+        maxTokens: 1200,
+        temperature: 0.3,
+        responseFormatJsonObject: true,
+        timeoutMs,
+        maxRetries,
+      });
 
-        const durationMs = Date.now() - start;
-        const bodyText = await res.text();
+      const pt = out.usage.prompt_tokens;
+      const ct = out.usage.completion_tokens;
+      const costUsd = estimateCostUsd(model, pt, ct);
 
-        if (!res.ok) {
-          throw new Error(`openai_copilot_http_${res.status}: ${bodyText.slice(0, 200)}`);
-        }
+      await opts.onUsage?.({
+        model,
+        promptTokens: pt,
+        completionTokens: ct,
+        durationMs: out.durationMs,
+        costUsd,
+      });
 
-        const parsedBody = JSON.parse(bodyText) as {
-          choices?: Array<{ message?: { content?: string } }>;
-          usage?: { prompt_tokens?: number; completion_tokens?: number };
-        };
-        const content = parsedBody.choices?.[0]?.message?.content;
-        if (!content || typeof content !== "string") {
-          throw new Error("openai_copilot_empty_content");
-        }
-
-        let structured: Record<string, unknown>;
-        try {
-          structured = JSON.parse(content) as Record<string, unknown>;
-        } catch {
-          throw new Error("openai_copilot_non_json");
-        }
-
-        const pt = typeof parsedBody.usage?.prompt_tokens === "number" ? parsedBody.usage.prompt_tokens : 0;
-        const ct =
-          typeof parsedBody.usage?.completion_tokens === "number" ? parsedBody.usage.completion_tokens : 0;
-        const costUsd = estimateCostUsd(model, pt, ct);
-
-        await opts.onUsage?.({
+      return {
+        raw: out.rawContent,
+        structured: out.structured,
+        usageMeta: {
           model,
           promptTokens: pt,
           completionTokens: ct,
-          durationMs,
-          costUsd,
-        });
-
-        return {
-          raw: content,
-          structured,
-          usageMeta: {
-            model,
-            promptTokens: pt,
-            completionTokens: ct,
-            durationMs,
-          },
-        };
-      } finally {
-        clearTimeout(timer);
-      }
+          durationMs: out.durationMs,
+        },
+      };
     },
   };
 }
 
-/** Factory using server env (OPENAI_API_KEY, optional OPENAI_COPILOT_MODEL). */
+/** Factory using server env (OPENAI_API_KEY, copilot model/timeout/retries). */
 export function createOpenAiCopilotProviderFromEnv(
   onUsage?: OpenAiCopilotProviderOptions["onUsage"]
 ): ICopilotProvider | null {
