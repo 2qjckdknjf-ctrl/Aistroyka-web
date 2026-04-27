@@ -30,6 +30,17 @@ function applySecurityHeaders(res: NextResponse, isProduction: boolean): NextRes
   return res;
 }
 
+/** Preserves multiple Supabase auth cookies; `headers.set("set-cookie")` would drop duplicates. */
+function mergeSupabaseSessionIntoResponse(sessionResponse: NextResponse, target: NextResponse): void {
+  for (const c of sessionResponse.cookies.getAll()) {
+    target.cookies.set(c.name, c.value, c as never);
+  }
+  sessionResponse.headers.forEach((value, key) => {
+    if (key.toLowerCase() === "set-cookie") return;
+    target.headers.set(key, value);
+  });
+}
+
 function pathWithoutLocale(pathname: string): { path: string; locale: string } {
   const match = pathname.match(/^\/(ru|en|es|it)(?=\/|$)/);
   if (match) {
@@ -69,7 +80,7 @@ export async function middleware(request: NextRequest) {
       return applySecurityHeaders(denied, isProduction);
     }
     const res = NextResponse.next();
-    sessionResponse.headers.forEach((v, k) => res.headers.set(k, v));
+    mergeSupabaseSessionIntoResponse(sessionResponse, res);
     return applySecurityHeaders(res, isProduction);
   }
 
@@ -115,7 +126,7 @@ export async function middleware(request: NextRequest) {
     const loginUrl = new URL(`/${locale}/login`, request.url);
     loginUrl.searchParams.set("next", pathnameForLoc);
     const redir = NextResponse.redirect(loginUrl);
-    sessionResponse.headers.forEach((v, k) => redir.headers.set(k, v));
+    mergeSupabaseSessionIntoResponse(sessionResponse, redir);
     redir.headers.set("X-Auth-Redirect", "login");
     return applySecurityHeaders(redir, isProduction);
   }
@@ -124,12 +135,12 @@ export async function middleware(request: NextRequest) {
     const { path } = resolvePostAuthEntry({ locale, next, baseUrl: request.url });
     const nextUrl = new URL(path, request.url);
     const redir = NextResponse.redirect(nextUrl);
-    sessionResponse.headers.forEach((v, k) => redir.headers.set(k, v));
+    mergeSupabaseSessionIntoResponse(sessionResponse, redir);
     redir.headers.set("X-Auth-Redirect", "dashboard");
     return applySecurityHeaders(redir, isProduction);
   }
 
-  sessionResponse.headers.forEach((v, k) => res.headers.set(k, v));
+  mergeSupabaseSessionIntoResponse(sessionResponse, res);
   res.headers.set("X-Auth-Redirect", "pass");
   if (isProtected || isAuthPage) {
     res.headers.set("Cache-Control", "private, no-store, max-age=0, must-revalidate");
