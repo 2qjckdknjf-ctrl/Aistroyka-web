@@ -64,7 +64,9 @@ TMPBODY=$(mktemp)
 STREAM_TMP=""
 cleanup() {
   rm -f "$TMPHDR" "$TMPBODY"
-  [[ -n "${STREAM_TMP:-}" ]] && rm -f "$STREAM_TMP"
+  if [[ -n "${STREAM_TMP:-}" ]]; then
+    rm -f "$STREAM_TMP"
+  fi
   return 0
 }
 trap cleanup EXIT

@@ -11,6 +11,7 @@
 
 - Live DB (Supabase) has required Step11/12/13 schema/migrations.
 - Production path (`aistroyka.ai` -> `www`) returns auth-protected responses (`401`) for Step11/12/13 key routes.
+- Production deployment pipeline is fully green on latest main run (`24780939297`), including blocking pilot smoke and non-blocking AI Phase 5 gate.
 - Staging Step 11 queue parity is closed (`/api/v1/approvals/pending` => `401` unauth, `200` auth).
 - Authenticated Step 12 E2E proof is executed on staging (create/upload/review/approve/history).
 - Step 13 staging cost write-path is closed (`GET` => `200`, `POST` => `201`, `PATCH` => `200`).
