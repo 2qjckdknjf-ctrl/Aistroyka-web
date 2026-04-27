@@ -28,6 +28,7 @@ export function ProjectsListClient({
   createForm,
 }: ProjectsListClientProps) {
   const t = useTranslations("projects");
+  const tDetail = useTranslations("dashboardDetail");
   const locale = useLocale();
   const query = useProjects();
   const prefetchProject = usePrefetchProject();
@@ -60,7 +61,7 @@ export function ProjectsListClient({
             <table className="w-full min-w-[260px] text-left text-aistroyka-subheadline">
               <thead>
                 <tr className="border-b border-aistroyka-border-subtle bg-aistroyka-surface-raised">
-                  <th className="table-cell w-6 py-2 pr-0" aria-label="AI Signal" />
+                  <th className="table-cell w-6 py-2 pr-0" aria-label={tDetail("aiSignal")} />
                   <th className="table-cell font-semibold text-aistroyka-text-primary">
                     {t("name")}
                   </th>
@@ -68,7 +69,7 @@ export function ProjectsListClient({
                     {t("created")}
                   </th>
                   <th className="table-cell w-14 font-semibold text-aistroyka-text-primary">
-                    Risk
+                    {tDetail("risk")}
                   </th>
                   <th className="table-cell font-semibold text-aistroyka-text-primary">
                     {t("action")}
@@ -87,7 +88,7 @@ export function ProjectsListClient({
                   >
                     <td className="table-cell w-6 py-2 pr-0 align-middle">
                       {(hasRisk || riskScore != null) && (
-                        <span title="AI Signal indicates active intelligence insights.">
+                        <span title={tDetail("aiSignalHint")}>
                           <AISignalLine state={hasRisk ? "risk_detected" : "idle"} totalScore={riskScore ?? undefined} />
                         </span>
                       )}
@@ -100,7 +101,7 @@ export function ProjectsListClient({
                     </td>
                     <td className="table-cell w-14 tabular-nums">
                       {riskScore !== null ? (
-                        <span className={`font-medium ${riskScoreColorClass(riskScore)}`} title="AI Risk Score 0–100">
+                        <span className={`font-medium ${riskScoreColorClass(riskScore)}`} title={tDetail("aiRiskScoreRangeHint")}>
                           {riskScore}
                         </span>
                       ) : (

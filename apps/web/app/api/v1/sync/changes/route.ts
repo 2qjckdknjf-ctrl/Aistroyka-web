@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClientFromRequest } from "@/lib/supabase/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { getChangesAfter, getMaxCursor, getMinRetainedCursor } from "@/lib/sync/change-log.repository";
@@ -47,7 +47,7 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const cursor = Math.max(0, parseInt(url.searchParams.get("cursor") ?? "0", 10) || 0);
   const limit = Math.min(500, Math.max(1, parseInt(url.searchParams.get("limit") ?? "100", 10) || 100));
-  const supabase = await createClient();
+  const supabase = await createClientFromRequest(request);
   const tenantId = ctx.tenantId as string;
   const minRetained = getMinRetainedCursor();
   if (minRetained > 0 && cursor < minRetained) {

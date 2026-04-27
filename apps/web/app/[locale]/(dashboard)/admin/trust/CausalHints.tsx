@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui";
 import { EmptyState } from "@/components/ui";
+import { useTranslations } from "next-intl";
 
 type Hint = {
   hint_type?: string;
@@ -10,13 +11,14 @@ type Hint = {
 };
 
 export function CausalHints({ hints }: { hints: Hint[] }) {
+  const tDetail = useTranslations("dashboardDetail");
   if (!hints.length) {
     return (
       <Card>
         <EmptyState
           icon={<span className="text-aistroyka-text-tertiary text-2xl">?</span>}
-          title="No causal hints"
-          subtitle="Hints appear when governance events link to org/portfolio signals."
+          title={tDetail("noCausalHints")}
+          subtitle={tDetail("causalHintsAppearHint")}
         />
       </Card>
     );
@@ -36,11 +38,11 @@ export function CausalHints({ hints }: { hints: Hint[] }) {
             <span className={`inline-block rounded px-2 py-0.5 text-aistroyka-caption font-medium ${severityClass[h.severity] ?? severityClass.info}`}>
               {h.severity}
             </span>
-            <span className="ml-2 text-aistroyka-caption text-aistroyka-text-tertiary">{h.hint_type ?? "hint"}</span>
+            <span className="ml-2 text-aistroyka-caption text-aistroyka-text-tertiary">{h.hint_type ?? tDetail("hint")}</span>
             {h.confidence != null && (
               <span className="ml-2 text-aistroyka-caption text-aistroyka-text-tertiary">{(h.confidence * 100).toFixed(0)}%</span>
             )}
-            <p className="mt-1 text-aistroyka-subheadline text-aistroyka-text-primary">{h.summary ?? "—"}</p>
+            <p className="mt-1 text-aistroyka-subheadline text-aistroyka-text-primary">{h.summary ?? tDetail("noneSymbol")}</p>
           </li>
         ))}
       </ul>

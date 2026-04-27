@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import type { ProjectHealthData, ProjectHealthScoreData } from "./types";
 import { IntelligenceCard } from "./IntelligenceCard";
 
@@ -12,22 +13,24 @@ const LABEL_CLASS: Record<string, string> = {
 
 export function ProjectHealthPanel({
   health,
-  emptyMessage = "Health not available",
+  emptyMessage,
 }: {
   health?: ProjectHealthData | ProjectHealthScoreData | null;
   emptyMessage?: string;
 }) {
+  const tDetail = useTranslations("dashboardDetail");
+  const resolvedEmptyMessage = emptyMessage ?? tDetail("healthNotAvailable");
   if (!health) {
     return (
-      <IntelligenceCard title="Project health" aria-label="Project health">
+      <IntelligenceCard title={tDetail("projectHealth")} aria-label={tDetail("projectHealth")}>
         <p className="text-aistroyka-subheadline text-aistroyka-text-tertiary">
-          {emptyMessage}
+          {resolvedEmptyMessage}
         </p>
       </IntelligenceCard>
     );
   }
   return (
-    <IntelligenceCard title="Project health" aria-label="Project health">
+    <IntelligenceCard title={tDetail("projectHealth")} aria-label={tDetail("projectHealth")}>
       <div className="flex flex-wrap items-baseline gap-3">
         <span className="text-aistroyka-title3 font-bold tabular-nums text-aistroyka-text-primary">
           {health.score}
@@ -45,16 +48,16 @@ export function ProjectHealthPanel({
       )}
       {health.missingData.length > 0 && (
         <p className="mt-2 text-aistroyka-caption text-aistroyka-text-secondary">
-          Missing: {health.missingData.join(", ")}
+          {tDetail("missing")}: {health.missingData.join(", ")}
         </p>
       )}
       {health.delayIndicators.length > 0 && (
         <p className="mt-1 text-aistroyka-caption text-aistroyka-text-tertiary">
-          Delays: {health.delayIndicators.join(", ")}
+          {tDetail("delays")}: {health.delayIndicators.join(", ")}
         </p>
       )}
       {"confidence" in health && health.confidence && (
-        <p className="mt-2 text-xs text-aistroyka-text-tertiary">Confidence: {health.confidence}</p>
+        <p className="mt-2 text-xs text-aistroyka-text-tertiary">{tDetail("confidence")}: {health.confidence}</p>
       )}
       {"missingDataDisclaimer" in health && health.missingDataDisclaimer && (
         <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">{health.missingDataDisclaimer}</p>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import {
   Table,
@@ -32,29 +33,30 @@ interface ReportRow {
   analysis_status?: "none" | "queued" | "running" | "success" | "failed";
 }
 
-function formatAge(dateStr: string): string {
+function formatAge(dateStr: string, t: (key: string, values?: Record<string, string | number | Date>) => string): string {
   const d = new Date(dateStr);
   const now = new Date();
   const diffMs = now.getTime() - d.getTime();
   const diffM = Math.floor(diffMs / 60000);
   const diffH = Math.floor(diffMs / 3600000);
   const diffD = Math.floor(diffMs / 86400000);
-  if (diffM < 60) return `${diffM}m ago`;
-  if (diffH < 24) return `${diffH}h ago`;
-  return `${diffD}d ago`;
+  if (diffM < 60) return t("minutesAgoShort", { count: diffM });
+  if (diffH < 24) return t("hoursAgoShort", { count: diffH });
+  return t("daysAgoShort", { count: diffD });
 }
 
 const DEFAULT_REPORTS_BASE = "/dashboard/daily-reports";
-const REPORT_STATUS_OPTIONS = [
-  { value: "", label: "All" },
-  { value: "submitted", label: "Pending approval" },
-  { value: "draft", label: "Draft" },
-  { value: "approved", label: "Approved" },
-  { value: "rejected", label: "Rejected" },
-  { value: "changes_requested", label: "Changes requested" },
-];
 
 export function DashboardReportsClient({ basePath = DEFAULT_REPORTS_BASE }: { basePath?: string }) {
+  const tDetail = useTranslations("dashboardDetail");
+  const reportStatusOptions = [
+    { value: "", label: tDetail("all") },
+    { value: "submitted", label: tDetail("pendingApproval") },
+    { value: "draft", label: tDetail("draft") },
+    { value: "approved", label: tDetail("approved") },
+    { value: "rejected", label: tDetail("rejected") },
+    { value: "changes_requested", label: tDetail("changesRequested") },
+  ];
   const { params, setParam } = useFilterParams();
   const [data, setData] = useState<ReportRow[] | null>(null);
   const [loading, setLoading] = useState(true);
@@ -96,7 +98,7 @@ export function DashboardReportsClient({ basePath = DEFAULT_REPORTS_BASE }: { ba
         setError(null);
       })
       .catch((e) => {
-        setError(e instanceof Error ? e.message : "Failed to load");
+        setError(e instanceof Error ? e.message : tDetail("failedLoad"));
         setData([]);
       })
       .finally(() => setLoading(false));
@@ -130,15 +132,15 @@ export function DashboardReportsClient({ basePath = DEFAULT_REPORTS_BASE }: { ba
       <Card>
         <EmptyState
           icon={<span className="text-2xl">📋</span>}
-          title="No reports yet"
-          subtitle="Daily reports will appear here once workers submit them."
+          title={tDetail("noReportsYet")}
+          subtitle={tDetail("dailyReportsAppear")}
         />
       </Card>
     );
   }
 
   const exportCsv = () => {
-    const headers = ["Report ID", "Status", "Worker", "Project", "AI", "Media", "Age", "Created"];
+    const headers = [tDetail("reportId"), tDetail("status"), tDetail("worker"), tDetail("project"), tDetail("ai"), tDetail("media"), tDetail("age"), tDetail("created")];
     const rows = data.slice(0, 500).map((r) => [
       r.id,
       r.status,
@@ -146,7 +148,7 @@ export function DashboardReportsClient({ basePath = DEFAULT_REPORTS_BASE }: { ba
       r.project_id ?? "",
       r.analysis_status ?? "",
       String(r.media_count ?? 0),
-      formatAge(r.created_at),
+      formatAge(r.created_at, tDetail),
       new Date(r.created_at).toISOString(),
     ]);
     exportTableToCsv(headers, rows, "reports.csv");
@@ -162,27 +164,27 @@ export function DashboardReportsClient({ basePath = DEFAULT_REPORTS_BASE }: { ba
           showWorker={true}
           showDateRange={true}
           showStatus={true}
-          statusOptions={REPORT_STATUS_OPTIONS}
+          statusOptions={reportStatusOptions}
           showSearch={true}
-          searchPlaceholder="Report or worker ID…"
+          searchPlaceholder={tDetail("searchReportOrWorker")}
           showSavedViews={true}
         />
       </div>
       <Card className="p-0 overflow-hidden">
         <div className="p-2 flex justify-end">
-          <Button variant="secondary" onClick={exportCsv} className="text-sm">Export CSV</Button>
+          <Button variant="secondary" onClick={exportCsv} className="text-sm">{tDetail("exportCsv")}</Button>
         </div>
-        <Table aria-label="Reports">
+        <Table aria-label={tDetail("reports")}>
         <TableHead>
           <TableRow>
-            <TableHeaderCell>Report</TableHeaderCell>
-            <TableHeaderCell>Status</TableHeaderCell>
-            <TableHeaderCell>Worker</TableHeaderCell>
-            <TableHeaderCell>Project</TableHeaderCell>
-            <TableHeaderCell>AI</TableHeaderCell>
-            <TableHeaderCell>Media</TableHeaderCell>
-            <TableHeaderCell>Age</TableHeaderCell>
-            <TableHeaderCell>Action</TableHeaderCell>
+            <TableHeaderCell>{tDetail("report")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("status")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("worker")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("project")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("ai")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("media")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("age")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("action")}</TableHeaderCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -230,10 +232,10 @@ export function DashboardReportsClient({ basePath = DEFAULT_REPORTS_BASE }: { ba
                 )}
               </TableCell>
               <TableCell className="tabular-nums">{r.media_count ?? 0}</TableCell>
-              <TableCell className="text-aistroyka-text-secondary tabular-nums">{formatAge(r.created_at)}</TableCell>
+              <TableCell className="text-aistroyka-text-secondary tabular-nums">{formatAge(r.created_at, tDetail)}</TableCell>
               <TableCell>
                 <Link href={`${basePath}/${r.id}`} className="font-medium text-aistroyka-accent hover:underline focus:outline-none focus:ring-2 focus:ring-aistroyka-accent focus:ring-offset-2 rounded">
-                  View
+                  {tDetail("view")}
                 </Link>
               </TableCell>
             </TableRow>

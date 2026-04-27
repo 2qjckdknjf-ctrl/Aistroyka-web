@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { Link } from "@/i18n/navigation";
 import { Card, SectionHeader, Skeleton, EmptyState, Badge, Button } from "@/components/ui";
@@ -19,7 +20,15 @@ interface AIDetail {
   updated_at: string;
 }
 
-function CopyIdButton({ id }: { id: string }) {
+function CopyIdButton({
+  id,
+  label = "Copy ID",
+  copiedLabel = "Copied",
+}: {
+  id: string;
+  label?: string;
+  copiedLabel?: string;
+}) {
   const [copied, setCopied] = useState(false);
   const copy = () => {
     navigator.clipboard.writeText(id).then(() => {
@@ -29,12 +38,15 @@ function CopyIdButton({ id }: { id: string }) {
   };
   return (
     <Button variant="secondary" onClick={copy} className="text-sm">
-      {copied ? "Copied" : "Copy ID"}
+      {copied ? copiedLabel : label}
     </Button>
   );
 }
 
 export default function AIRequestDetailPage() {
+  const tNav = useTranslations("nav");
+  const tPage = useTranslations("dashboardPageMeta");
+  const tDetail = useTranslations("dashboardDetail");
   const params = useParams();
   const id = params?.id as string | undefined;
   const [data, setData] = useState<AIDetail | null>(null);
@@ -62,7 +74,7 @@ export default function AIRequestDetailPage() {
   if (!id) {
     return (
       <Card>
-        <p className="text-aistroyka-text-secondary p-4">Missing request id.</p>
+        <p className="text-aistroyka-text-secondary p-4">{tDetail("missingRequestId")}</p>
       </Card>
     );
   }
@@ -80,9 +92,9 @@ export default function AIRequestDetailPage() {
       <Card>
         <EmptyState
           icon={<span className="text-2xl">⚠️</span>}
-          title="Request not found"
-          subtitle={error ?? "You may not have access."}
-          action={<Link href="/dashboard/ai" className="text-aistroyka-accent hover:underline">← Back to AI</Link>}
+          title={tDetail("requestNotFound")}
+          subtitle={error ?? tDetail("accessDeniedHint")}
+          action={<Link href="/dashboard/ai" className="text-aistroyka-accent hover:underline">{tDetail("backToAi")}</Link>}
         />
       </Card>
     );
@@ -91,35 +103,38 @@ export default function AIRequestDetailPage() {
   return (
     <>
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <Link href="/dashboard/ai" className="text-aistroyka-subheadline text-aistroyka-accent hover:underline">← AI</Link>
-        <CopyIdButton id={data.id} />
+        <Link href="/dashboard/ai" className="text-aistroyka-subheadline text-aistroyka-accent hover:underline">{tDetail("aiShort")}</Link>
+        <CopyIdButton id={data.id} label={tDetail("copyId")} copiedLabel={tDetail("copied")} />
       </div>
-      <SectionHeader title={`AI request ${data.id.slice(0, 8)}…`} subtitle="Job detail: payload, errors, metadata." />
+      <SectionHeader
+        title={`${tNav("ai")} ${data.id.slice(0, 8)}…`}
+        subtitle={tPage("aiRequestDetailSubtitle")}
+      />
 
       <Card className="mb-4">
         <dl className="grid gap-2 sm:grid-cols-2">
           <div>
-            <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Type</dt>
+            <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("type")}</dt>
             <dd>{data.type}</dd>
           </div>
           <div>
-            <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Status</dt>
+            <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("status")}</dt>
             <dd><Badge variant={data.status === "success" ? "success" : data.status === "failed" || data.status === "dead" ? "danger" : "warning"}>{data.status}</Badge></dd>
           </div>
           <div>
-            <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Attempts</dt>
+            <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("attempts")}</dt>
             <dd className="tabular-nums">{data.attempts} / {data.max_attempts}</dd>
           </div>
           <div>
-            <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Trace ID</dt>
+            <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("traceId")}</dt>
             <dd className="font-mono text-sm">{data.trace_id ?? "—"}</dd>
           </div>
           <div>
-            <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Created</dt>
+            <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("created")}</dt>
             <dd className="tabular-nums">{new Date(data.created_at).toLocaleString()}</dd>
           </div>
           <div>
-            <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Updated</dt>
+            <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("updated")}</dt>
             <dd className="tabular-nums">{new Date(data.updated_at).toLocaleString()}</dd>
           </div>
         </dl>
@@ -127,14 +142,14 @@ export default function AIRequestDetailPage() {
 
       {data.last_error && (
         <Card className="mb-4 border-l-4 border-l-aistroyka-error">
-          <h3 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary mb-2">Error</h3>
+          <h3 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary mb-2">{tDetail("error")}</h3>
           <p className="text-aistroyka-subheadline text-aistroyka-text-secondary font-mono whitespace-pre-wrap">{data.last_error}</p>
           {data.last_error_type && <p className="mt-1 text-aistroyka-caption text-aistroyka-text-tertiary">{data.last_error_type}</p>}
         </Card>
       )}
 
       <Card>
-        <h3 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary mb-2">Payload / decision metadata</h3>
+        <h3 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary mb-2">{tDetail("payloadMetadata")}</h3>
         <pre className="text-aistroyka-caption font-mono bg-aistroyka-surface-muted p-4 rounded overflow-x-auto whitespace-pre-wrap">
           {JSON.stringify(data.payload ?? {}, null, 2)}
         </pre>

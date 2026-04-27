@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui-lite";
 
 type HealthClassification = "Healthy" | "Moderate" | "Unstable" | "Critical";
@@ -24,8 +25,10 @@ function strategicBadgeVariant(c: StrategicClassification): "success" | "warning
   return "neutral";
 }
 
-function delayLabel(p: DelayProbability): string {
-  return p.charAt(0).toUpperCase() + p.slice(1);
+function delayLabel(p: DelayProbability, tDetail: (key: string) => string): string {
+  if (p === "high") return tDetail("high");
+  if (p === "medium") return tDetail("medium");
+  return tDetail("low");
 }
 
 export function ExecutiveOverviewBlock({
@@ -47,11 +50,12 @@ export function ExecutiveOverviewBlock({
   executiveSummary: string;
   hasData: boolean;
 }) {
+  const tDetail = useTranslations("dashboardDetail");
   if (!hasData) {
     return (
       <div className="rounded-lg border border-aistroyka-border-subtle bg-white p-4 sm:p-6">
         <p className="text-sm text-aistroyka-text-secondary">
-          No analyses yet. Upload an image and run analysis to see the executive overview.
+          {tDetail("executiveOverviewEmpty")}
         </p>
       </div>
     );
@@ -69,7 +73,7 @@ export function ExecutiveOverviewBlock({
           <span className="text-3xl font-semibold tracking-tight text-aistroyka-text-primary sm:text-4xl">
             {healthScore}
           </span>
-          <span className="text-lg font-medium text-aistroyka-text-tertiary sm:text-xl">Health Score</span>
+          <span className="text-lg font-medium text-aistroyka-text-tertiary sm:text-xl">{tDetail("healthScore")}</span>
           <Badge variant={badgeVariant} className="px-2.5 py-1 font-semibold">
             {healthClassification}
           </Badge>
@@ -77,7 +81,7 @@ export function ExecutiveOverviewBlock({
         {/* Secondary: Strategic Risk */}
         <div className="flex flex-wrap items-center gap-3 text-sm">
           <div>
-            <span className="text-aistroyka-text-tertiary">Strategic Risk </span>
+            <span className="text-aistroyka-text-tertiary">{tDetail("strategicRisk")} </span>
             <span className="font-semibold text-aistroyka-text-primary">{strategicRiskIndex}</span>
             <Badge variant={strategicBadgeVariant(strategicClassification)} className="ml-1.5">
               {strategicClassification}
@@ -85,20 +89,20 @@ export function ExecutiveOverviewBlock({
           </div>
           <span className="text-aistroyka-text-tertiary">|</span>
           <div>
-            <span className="text-aistroyka-text-tertiary">Delay </span>
+            <span className="text-aistroyka-text-tertiary">{tDetail("delay")} </span>
             <Badge
               variant={
                 delayProbability === "high" ? "danger" : delayProbability === "medium" ? "warning" : "neutral"
               }
             >
-              {delayLabel(delayProbability)}
+              {delayLabel(delayProbability, tDetail)}
             </Badge>
           </div>
         </div>
       </div>
       {/* Contextual: Completion */}
       <div className="mt-4 flex items-center gap-2 text-sm text-aistroyka-text-secondary">
-        <span>Completion</span>
+        <span>{tDetail("completion")}</span>
         <span className="font-medium text-aistroyka-text-primary">{completionPercent}%</span>
       </div>
       {executiveSummary ? (

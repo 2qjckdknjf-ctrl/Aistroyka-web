@@ -19,6 +19,7 @@ export default async function WorkflowsPage({ params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("public.workflows");
+  const tNav = await getTranslations("public.nav");
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
@@ -31,7 +32,7 @@ export default async function WorkflowsPage({ params }: Props) {
 
       <section className="mt-12">
         <h2 className="text-[var(--aistroyka-font-title2)] font-semibold text-[var(--aistroyka-text-primary)]">
-          Workflow examples
+          {t("examplesTitle")}
         </h2>
         <div className="mt-6 space-y-4">
           {EXAMPLES.map((key) => (
@@ -67,7 +68,7 @@ export default async function WorkflowsPage({ params }: Props) {
       </section>
 
       <section className="mt-12 flex justify-center">
-        <Link href="/contact" className="btn-primary">Request demo</Link>
+        <Link href="/contact" className="btn-primary">{tNav("requestDemo")}</Link>
       </section>
     </div>
   );

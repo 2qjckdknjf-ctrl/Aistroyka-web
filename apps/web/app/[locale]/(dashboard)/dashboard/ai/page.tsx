@@ -4,9 +4,10 @@ import { DashboardAIClient } from "./DashboardAIClient";
 
 export default async function AIPage() {
   const t = await getTranslations("nav");
+  const tPage = await getTranslations("dashboardPageMeta");
   return (
     <>
-      <SectionHeader title={t("ai")} subtitle="AI analysis jobs: list and detail by request ID." />
+      <SectionHeader title={t("ai")} subtitle={tPage("aiSubtitle")} />
       <DashboardAIClient />
     </>
   );

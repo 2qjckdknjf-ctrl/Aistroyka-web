@@ -1,3 +1,6 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import { Card } from "@/components/ui";
 import { EmptyState } from "@/components/ui";
 
@@ -12,6 +15,7 @@ type Row = {
 };
 
 export function ThresholdHistory({ history }: { history: Row[] }) {
+  const tDetail = useTranslations("dashboardDetail");
   if (history.length === 0) {
     return (
       <Card>
@@ -21,8 +25,8 @@ export function ThresholdHistory({ history }: { history: Row[] }) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
           }
-          title="No threshold history"
-          subtitle="Threshold history will appear after the daily pipeline runs with calibration."
+          title={tDetail("noThresholdHistory")}
+          subtitle={tDetail("thresholdHistoryAppears")}
         />
       </Card>
     );
@@ -39,8 +43,8 @@ export function ThresholdHistory({ history }: { history: Row[] }) {
         <table className="w-full min-w-[320px] text-left text-aistroyka-subheadline">
           <thead>
             <tr className="border-b border-aistroyka-border-subtle bg-aistroyka-surface-raised">
-              <th className="table-cell font-semibold text-aistroyka-text-primary p-aistroyka-3">Date</th>
-              <th className="table-cell font-semibold text-aistroyka-text-primary p-aistroyka-3">Version</th>
+              <th className="table-cell font-semibold text-aistroyka-text-primary p-aistroyka-3">{tDetail("date")}</th>
+              <th className="table-cell font-semibold text-aistroyka-text-primary p-aistroyka-3">{tDetail("version")}</th>
               <th className="table-cell font-semibold text-aistroyka-text-primary p-aistroyka-3">α</th>
               {keys.map((k) => (
                 <th key={k} className="table-cell font-semibold text-aistroyka-text-primary p-aistroyka-3">
@@ -78,7 +82,7 @@ export function ThresholdHistory({ history }: { history: Row[] }) {
       </div>
       {keyLabel && (
         <p className="p-aistroyka-3 text-aistroyka-caption text-aistroyka-text-tertiary">
-          Key threshold for trend: <strong>{keyLabel}</strong>. Last 5 calibrations.
+          {tDetail("keyThresholdForTrend")} <strong>{keyLabel}</strong>. {tDetail("lastFiveCalibrations")}
         </p>
       )}
     </Card>

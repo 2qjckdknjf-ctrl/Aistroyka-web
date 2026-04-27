@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { OnboardingWizard } from "./OnboardingWizard";
 import { Skeleton } from "@/components/ui";
 
@@ -17,6 +18,7 @@ async function fetchActivationStatus(): Promise<{
  * Renders onboarding wizard when user has no projects; otherwise renders children.
  */
 export function OnboardingGate({ children }: { children: React.ReactNode }) {
+  const t = useTranslations("onboarding");
   const { data, isPending } = useQuery({
     queryKey: ["activation-status"],
     queryFn: fetchActivationStatus,
@@ -33,13 +35,13 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
 
   if (data?.showOnboarding) {
     return (
-      <section className="mx-auto max-w-2xl px-4 py-8" aria-label="Onboarding">
+      <section className="mx-auto max-w-2xl px-4 py-8" aria-label={t("onboarding")}>
         <div className="mb-8 text-center">
           <h1 className="text-aistroyka-title font-bold text-aistroyka-text-primary">
-            Welcome to Aistroyka
+            {t("welcomeToAistroyka")}
           </h1>
           <p className="mt-2 text-aistroyka-subheadline text-aistroyka-text-secondary">
-            Complete these steps to get started.
+            {t("completeStepsToGetStarted")}
           </p>
         </div>
         <OnboardingWizard />

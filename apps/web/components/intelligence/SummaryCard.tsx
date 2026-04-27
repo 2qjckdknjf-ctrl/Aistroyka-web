@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import type { ExecutiveSummaryData, ExecutiveProjectSummaryData } from "./types";
 import { IntelligenceCard } from "./IntelligenceCard";
 
@@ -8,8 +9,9 @@ export function SummaryCard({
 }: {
   summary: ExecutiveSummaryData | ExecutiveProjectSummaryData;
 }) {
+  const tDetail = useTranslations("dashboardDetail");
   return (
-    <IntelligenceCard title="Executive summary" aria-label="Executive summary">
+    <IntelligenceCard title={tDetail("executiveSummary")} aria-label={tDetail("executiveSummary")}>
       <p className="text-aistroyka-subheadline font-medium text-aistroyka-text-primary">
         {summary.headline}
       </p>
@@ -25,11 +27,11 @@ export function SummaryCard({
       )}
       {summary.recommendedActions.length > 0 && (
         <p className="mt-3 text-aistroyka-caption font-medium text-aistroyka-accent">
-          Recommended: {summary.recommendedActions.slice(0, 3).join(" • ")}
+          {tDetail("recommended")}: {summary.recommendedActions.slice(0, 3).join(" • ")}
         </p>
       )}
       {"dataSufficiency" in summary && summary.dataSufficiency && summary.dataSufficiency !== "sufficient" && (
-        <p className="mt-2 text-xs text-aistroyka-text-tertiary">Data: {summary.dataSufficiency}</p>
+        <p className="mt-2 text-xs text-aistroyka-text-tertiary">{tDetail("data")}: {summary.dataSufficiency}</p>
       )}
       {"missingDataDisclaimer" in summary && summary.missingDataDisclaimer && (
         <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">{summary.missingDataDisclaimer}</p>

@@ -93,7 +93,7 @@ export function MediaAnalysisRow({
 
       {job?.error_message && (
         <p className="mt-2 text-sm text-aistroyka-error" role="alert">
-          Error: {job.error_message}
+          {t("error")}: {job.error_message}
         </p>
       )}
 
@@ -119,7 +119,7 @@ export function MediaAnalysisRow({
               onClick={() => onResumePolling()}
               className="min-h-[36px] rounded-lg border border-aistroyka-warning bg-aistroyka-surface px-3 py-2 text-sm text-aistroyka-warning hover:bg-aistroyka-warning/20"
             >
-              Resume polling
+              {t("resumePolling")}
             </button>
           )}
         </div>
@@ -147,10 +147,10 @@ export function MediaAnalysisRow({
                 {labelDisplay}
               </span>
               <span className="text-xs text-aistroyka-text-tertiary">
-                Confidence: {gov.confidenceScore}
+                {t("confidence")}: {gov.confidenceScore}
               </span>
             </div>
-            <p className="mb-2 text-xs font-medium text-aistroyka-text-tertiary">Result (JSON)</p>
+            <p className="mb-2 text-xs font-medium text-aistroyka-text-tertiary">{t("resultJson")}</p>
             <pre className="min-w-0 overflow-x-auto rounded-lg bg-aistroyka-surface-muted p-4 text-xs text-aistroyka-text-primary">
               {JSON.stringify(validationOutcome.data, null, 2)}
             </pre>
@@ -160,7 +160,7 @@ export function MediaAnalysisRow({
 
       {analysis && state === "invalid_result" && validationOutcome && !validationOutcome.success && (
         <div className="mt-4 rounded-lg border border-aistroyka-warning/50 bg-aistroyka-warning/20 p-4 text-sm">
-          <p className="font-medium text-aistroyka-warning">Invalid result structure</p>
+          <p className="font-medium text-aistroyka-warning">{t("invalidResultStructure")}</p>
           <p className="mt-1 text-aistroyka-warning">{validationOutcome.error}</p>
           {validationOutcome.details && (
             <p className="mt-1 font-mono text-xs text-aistroyka-warning">

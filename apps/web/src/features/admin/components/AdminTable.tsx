@@ -1,13 +1,14 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useTranslations } from "next-intl";
 
 export function AdminTable<R>({
   columns,
   rows,
   keyFn,
   renderCell,
-  emptyMessage = "No rows",
+  emptyMessage,
 }: {
   columns: { key: string; label: string }[];
   rows: R[];
@@ -15,10 +16,12 @@ export function AdminTable<R>({
   renderCell: (row: R, columnKey: string) => ReactNode;
   emptyMessage?: string;
 }) {
+  const tDetail = useTranslations("dashboardDetail");
+  const resolvedEmptyMessage = emptyMessage ?? tDetail("noRows");
   if (rows.length === 0) {
     return (
       <div className="rounded border border-aistroyka-border-subtle bg-aistroyka-surface-raised/30 p-6 text-center text-aistroyka-subheadline text-aistroyka-text-secondary">
-        {emptyMessage}
+        {resolvedEmptyMessage}
       </div>
     );
   }

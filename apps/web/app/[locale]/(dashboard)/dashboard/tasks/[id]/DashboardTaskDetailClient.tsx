@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import {
   Card,
@@ -39,6 +40,7 @@ function statusVariant(s: string): "neutral" | "success" | "warning" | "danger" 
 }
 
 export function DashboardTaskDetailClient({ taskId }: { taskId: string }) {
+  const tDetail = useTranslations("dashboardDetail");
   const [task, setTask] = useState<TaskDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -147,15 +149,15 @@ export function DashboardTaskDetailClient({ taskId }: { taskId: string }) {
             {(task.status === "pending" || task.status === "in_progress") && (
               <>
                 <Button variant="secondary" size="sm" onClick={() => patchStatus("done")}>
-                  Mark done
+                  {tDetail("markDone")}
                 </Button>
                 <Button variant="secondary" size="sm" onClick={() => patchStatus("cancelled")}>
-                  Cancel task
+                  {tDetail("cancelTask")}
                 </Button>
               </>
             )}
             <Button variant="secondary" size="sm" onClick={() => setAssignOpen(true)}>
-              {task.assigned_to ? "Reassign" : "Assign"}
+              {task.assigned_to ? tDetail("reassign") : tDetail("assign")}
             </Button>
           </div>
         </div>
@@ -164,7 +166,7 @@ export function DashboardTaskDetailClient({ taskId }: { taskId: string }) {
         ) : null}
         <dl className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-aistroyka-caption">
           <div>
-            <dt className="text-aistroyka-text-tertiary">Project</dt>
+            <dt className="text-aistroyka-text-tertiary">{tDetail("project")}</dt>
             <dd>
               {task.project_id ? (
                 <Link href={`/dashboard/projects/${task.project_id}`} className="text-aistroyka-accent hover:underline">
@@ -176,27 +178,27 @@ export function DashboardTaskDetailClient({ taskId }: { taskId: string }) {
             </dd>
           </div>
           <div>
-            <dt className="text-aistroyka-text-tertiary">Assigned</dt>
+            <dt className="text-aistroyka-text-tertiary">{tDetail("assigned")}</dt>
             <dd>
               {task.assigned_to ? (
                 <Link href={`/dashboard/workers/${task.assigned_to}`} className="text-aistroyka-accent hover:underline">
                   {task.assigned_to}
                 </Link>
               ) : (
-                "Unassigned"
+                tDetail("unassigned")
               )}
             </dd>
           </div>
           <div>
-            <dt className="text-aistroyka-text-tertiary">Due</dt>
+            <dt className="text-aistroyka-text-tertiary">{tDetail("due")}</dt>
             <dd>{task.due_date ? new Date(task.due_date).toLocaleDateString() : "—"}</dd>
           </div>
           <div>
-            <dt className="text-aistroyka-text-tertiary">Linked report</dt>
+            <dt className="text-aistroyka-text-tertiary">{tDetail("linkedReport")}</dt>
             <dd>
               {task.report_id ? (
                 <Link href={`/dashboard/daily-reports/${task.report_id}`} className="text-aistroyka-accent hover:underline">
-                  View report ({task.report_status ?? ""})
+                  {tDetail("viewReport")} ({task.report_status ?? ""})
                 </Link>
               ) : (
                 "—"
@@ -207,10 +209,10 @@ export function DashboardTaskDetailClient({ taskId }: { taskId: string }) {
       </Card>
 
       {assignOpen && (
-        <Modal open={true} title="Assign task" onClose={() => setAssignOpen(false)}>
+        <Modal open={true} title={tDetail("assignTask")} onClose={() => setAssignOpen(false)}>
           <div className="space-y-3">
             <Select value={assigningWorkerId} onChange={(e) => setAssigningWorkerId(e.target.value)}>
-              <option value="">Select worker</option>
+              <option value="">{tDetail("selectWorker")}</option>
               {workers.map((w) => (
                 <option key={w.user_id} value={w.user_id}>
                   {w.user_id.slice(0, 8)}…
@@ -219,10 +221,10 @@ export function DashboardTaskDetailClient({ taskId }: { taskId: string }) {
             </Select>
             <div className="mt-4 flex justify-end gap-2">
               <Button variant="secondary" onClick={() => setAssignOpen(false)}>
-                Cancel
+                {tDetail("cancel")}
               </Button>
               <Button onClick={handleAssign} disabled={!assigningWorkerId}>
-                Assign
+                {tDetail("assign")}
               </Button>
             </div>
           </div>

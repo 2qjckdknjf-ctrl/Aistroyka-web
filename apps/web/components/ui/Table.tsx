@@ -62,12 +62,17 @@ export function TableHeaderCell({
 export function TableCell({
   children,
   className = "",
+  colSpan,
 }: {
   children: ReactNode;
   className?: string;
+  colSpan?: number;
 }) {
   return (
-    <td className={`px-[var(--aistroyka-space-4)] py-[var(--aistroyka-space-3)] text-aistroyka-text-primary ${className}`.trim()}>
+    <td
+      colSpan={colSpan}
+      className={`px-[var(--aistroyka-space-4)] py-[var(--aistroyka-space-3)] text-aistroyka-text-primary ${className}`.trim()}
+    >
       {children}
     </td>
   );

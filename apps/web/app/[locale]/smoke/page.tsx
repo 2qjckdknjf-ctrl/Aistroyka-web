@@ -3,11 +3,13 @@
 /* DEV ONLY: Smoke test for Supabase connectivity. Remove or protect before production. */
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { callRPC, AppError } from "@/lib/rpc";
 import { hasSupabaseEnv } from "@/lib/env";
 
 export default function SmokePage() {
+  const t = useTranslations("smoke");
   const [sessionResult, setSessionResult] = useState<string>("");
   const [rpcName, setRpcName] = useState("");
   const [rpcParamsJson, setRpcParamsJson] = useState("{}");
@@ -21,17 +23,17 @@ export default function SmokePage() {
       const supabase = getSupabaseBrowser();
       const { data, error } = await supabase.auth.getSession();
       setSessionResult(
-        error ? `Error: ${error.message}` : JSON.stringify(data, null, 2)
+        error ? `${t("error")}: ${error.message}` : JSON.stringify(data, null, 2)
       );
     } catch (e) {
-      setSessionResult(`Throw: ${e instanceof Error ? e.message : String(e)}`);
+      setSessionResult(`${t("throw")}: ${e instanceof Error ? e.message : String(e)}`);
     }
   }
 
   async function handlePingRPC() {
     const name = rpcName.trim();
     if (!name) {
-      setRpcResult("Enter an RPC name.");
+      setRpcResult(t("enterRpcName"));
       return;
     }
     setRpcLoading(true);
@@ -41,12 +43,12 @@ export default function SmokePage() {
       try {
         params = JSON.parse(rpcParamsJson || "{}") as Record<string, unknown>;
       } catch {
-        setRpcResult("Invalid JSON params.");
+        setRpcResult(t("invalidJsonParams"));
         setRpcLoading(false);
         return;
       }
       const data = await callRPC<unknown>(name, Object.keys(params).length > 0 ? params : undefined);
-      setRpcResult(`Success: ${JSON.stringify(data, null, 2)}`);
+      setRpcResult(`${t("success")}: ${JSON.stringify(data, null, 2)}`);
     } catch (e) {
       const msg =
         e instanceof AppError
@@ -54,7 +56,7 @@ export default function SmokePage() {
           : e instanceof Error
             ? e.message
             : String(e);
-      setRpcResult(`Error: ${msg}`);
+      setRpcResult(`${t("error")}: ${msg}`);
     } finally {
       setRpcLoading(false);
     }
@@ -63,23 +65,23 @@ export default function SmokePage() {
   return (
     <main className="mx-auto max-w-2xl px-aistroyka-4 py-aistroyka-8">
       <div className="card mb-aistroyka-8 border-l-4 border-l-aistroyka-error">
-        <h1 className="text-aistroyka-title2 font-bold tracking-tight text-aistroyka-error sm:text-aistroyka-title">DEV ONLY — Smoke test</h1>
+        <h1 className="text-aistroyka-title2 font-bold tracking-tight text-aistroyka-error sm:text-aistroyka-title">{t("devOnlySmokeTest")}</h1>
         <p className="mt-aistroyka-1 text-aistroyka-subheadline text-aistroyka-text-secondary">
-          Verify Supabase env and connectivity. Remove or protect this route before production.
+          {t("verifyEnvAndConnectivity")}
         </p>
       </div>
 
       <section className="card mb-aistroyka-6">
-        <h2 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">Supabase env</h2>
+        <h2 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">{t("supabaseEnv")}</h2>
         <p className="mt-aistroyka-2 text-aistroyka-subheadline text-aistroyka-text-secondary">
-          {envOk ? "OK — NEXT_PUBLIC_SUPABASE_URL and ANON_KEY set." : "Missing — set .env.local (see .env.local.example)."}
+          {envOk ? t("envOk") : t("envMissing")}
         </p>
       </section>
 
       <section className="card mb-aistroyka-6">
-        <h2 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">Check session</h2>
+        <h2 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">{t("checkSession")}</h2>
         <button type="button" onClick={handleCheckSession} className="btn-secondary mt-aistroyka-3">
-          Check session
+          {t("checkSession")}
         </button>
         {sessionResult && (
           <pre className="mt-aistroyka-3 overflow-auto rounded-card-sm border border-aistroyka-border-subtle bg-aistroyka-surface-raised p-aistroyka-3 text-aistroyka-caption text-aistroyka-text-primary">
@@ -89,27 +91,27 @@ export default function SmokePage() {
       </section>
 
       <section className="card">
-        <h2 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">Ping RPC</h2>
+        <h2 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">{t("pingRpc")}</h2>
         <p className="mt-aistroyka-1 text-aistroyka-caption text-aistroyka-text-secondary">
-          Enter an existing RPC name and optional JSON params, then click to call.
+          {t("pingRpcHint")}
         </p>
         <div className="mt-aistroyka-3 flex flex-col gap-aistroyka-3">
           <input
             type="text"
-            placeholder="RPC name"
+            placeholder={t("rpcName")}
             value={rpcName}
             onChange={(e) => setRpcName(e.target.value)}
             className="input-field"
           />
           <input
             type="text"
-            placeholder='Params JSON e.g. {"id": "..."}'
+            placeholder={t("paramsJsonExample")}
             value={rpcParamsJson}
             onChange={(e) => setRpcParamsJson(e.target.value)}
             className="input-field font-mono"
           />
           <button type="button" onClick={handlePingRPC} disabled={rpcLoading} className="btn-primary w-fit disabled:opacity-50">
-            {rpcLoading ? "Calling…" : "Call RPC"}
+            {rpcLoading ? t("calling") : t("callRpc")}
           </button>
         </div>
         {rpcResult && (

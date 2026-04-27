@@ -4,11 +4,12 @@ import { DashboardProjectsListClient } from "./DashboardProjectsListClient";
 
 export default async function DashboardProjectsPage() {
   const t = await getTranslations("nav");
+  const tPage = await getTranslations("dashboardPageMeta");
   return (
     <>
       <SectionHeader
         title={t("projects")}
-        subtitle="List and open projects. Use search to filter by name."
+        subtitle={tPage("projectsSubtitle")}
       />
       <DashboardProjectsListClient />
     </>

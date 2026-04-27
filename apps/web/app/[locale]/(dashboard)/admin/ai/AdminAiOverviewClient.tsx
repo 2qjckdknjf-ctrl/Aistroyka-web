@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { QueryBoundary } from "@/lib/query/render";
 import { SectionHeader } from "@/components/ui";
 import { AdminKpiCard } from "@/src/features/admin/components/AdminKpiCard";
@@ -21,6 +22,8 @@ function todayRange(): { from: string; to: string } {
 }
 
 export function AdminAiOverviewClient() {
+  const tPage = useTranslations("dashboardPageMeta");
+  const tDetail = useTranslations("dashboardDetail");
   const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
   const tenantsQuery = useAdminTenants();
   const range = useMemo(() => todayRange(), []);
@@ -42,14 +45,14 @@ export function AdminAiOverviewClient() {
       <QueryBoundary
         query={tenantsQuery}
         emptyCondition={(d) => !d?.length}
-        emptyTitle="No admin tenants"
-        emptySubtitle="You must be owner or admin of at least one tenant to view AI observability."
+        emptyTitle={tDetail("noAdminTenants")}
+        emptySubtitle={tDetail("needAdminTenantForObservability")}
       >
         {() => (
           <section className="mb-6">
             {tenants.length > 1 ? (
               <div className="mb-4 flex flex-wrap items-center gap-2">
-                <span className="text-aistroyka-subheadline text-aistroyka-text-secondary">Tenant:</span>
+                <span className="text-aistroyka-subheadline text-aistroyka-text-secondary">{tDetail("tenant")}:</span>
                 <select
                   value={tenantId ?? ""}
                   onChange={(e) => setSelectedTenantId(e.target.value || null)}
@@ -73,26 +76,26 @@ export function AdminAiOverviewClient() {
             <QueryBoundary query={usageQuery} emptyCondition={(d) => d == null}>
               {(usage) => (
                 <>
-                  <AdminKpiCard title="Requests today" value={usage.requests} />
+                  <AdminKpiCard title={tDetail("requestsToday")} value={usage.requests} />
                   <AdminKpiCard
-                    title="Error rate today"
+                    title={tDetail("errorRateToday")}
                     value={usage.requests > 0 ? `${(usage.error_rate * 100).toFixed(1)}%` : "—"}
                     variant={usage.error_rate > 0.1 ? "error" : "default"}
                   />
                   <AdminKpiCard
-                    title="p95 latency (ms)"
+                    title={tDetail("p95LatencyMs")}
                     value={usage.p95_ms ?? "—"}
                   />
                   <AdminKpiCard
-                    title="Memory used rate"
+                    title={tDetail("memoryUsedRate")}
                     value={usage.memory_used_rate != null ? `${(usage.memory_used_rate * 100).toFixed(1)}%` : "—"}
                   />
                   <AdminKpiCard
-                    title="Memory summary rate"
+                    title={tDetail("memorySummaryRate")}
                     value={usage.memory_summary_used_rate != null ? `${(usage.memory_summary_used_rate * 100).toFixed(1)}%` : "—"}
                   />
                   <AdminKpiCard
-                    title="Summaries stale (threads)"
+                    title={tDetail("summariesStaleThreads")}
                     value={usage.summaries_freshness_stale_count ?? 0}
                     variant={(usage.summaries_freshness_stale_count ?? 0) > 0 ? "warning" : "default"}
                   />
@@ -105,7 +108,7 @@ export function AdminAiOverviewClient() {
                 const state = copilot?.state ?? "—";
                 return (
                   <AdminKpiCard
-                    title="Breaker state"
+                    title={tDetail("breakerState")}
                     value={state}
                     variant={state === "open" ? "error" : state === "half_open" ? "warning" : "default"}
                   />
@@ -115,7 +118,7 @@ export function AdminAiOverviewClient() {
             <QueryBoundary query={usageQuery} emptyCondition={(d) => d == null}>
               {(usage) => (
                 <AdminKpiCard
-                  title="Low-confidence rate (retrieval)"
+                    title={tDetail("lowConfidenceRateRetrieval")}
                   value={
                     usage.retrieval_low_confidence_rate != null
                       ? `${(usage.retrieval_low_confidence_rate * 100).toFixed(1)}%`
@@ -127,7 +130,7 @@ export function AdminAiOverviewClient() {
             <QueryBoundary query={usageQuery} emptyCondition={(d) => d == null}>
               {(usage) => (
                 <AdminKpiCard
-                  title="Budget exceeded (today)"
+                    title={tDetail("budgetExceededToday")}
                   value={usage.budget_exceeded_count}
                   variant={usage.budget_exceeded_count > 0 ? "warning" : "default"}
                 />
@@ -136,19 +139,19 @@ export function AdminAiOverviewClient() {
           </section>
 
           <section>
-            <SectionHeader title="Top recent issues" />
+            <SectionHeader title={tPage("topRecentIssuesTitle")} />
             <QueryBoundary
               query={issuesQuery}
               emptyCondition={(d) => !d?.length}
-              emptyTitle="No recent issues"
+              emptyTitle={tDetail("noRecentIssues")}
             >
               {(issues) => (
                 <AdminTable<RecentIssueRow>
                   columns={[
-                    { key: "timestamp", label: "Time" },
-                    { key: "event_type", label: "Event" },
-                    { key: "tenant_id", label: "Tenant" },
-                    { key: "request_id", label: "Request ID" },
+                    { key: "timestamp", label: tDetail("time") },
+                    { key: "event_type", label: tDetail("event") },
+                    { key: "tenant_id", label: tDetail("tenant") },
+                    { key: "request_id", label: tDetail("requestId") },
                   ]}
                   rows={issues}
                   keyFn={(r) => `${r.timestamp}-${r.event_type}-${r.request_id ?? ""}`}

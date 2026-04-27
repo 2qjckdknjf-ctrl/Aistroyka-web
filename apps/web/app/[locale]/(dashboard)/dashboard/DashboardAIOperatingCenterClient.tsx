@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@/i18n/navigation";
 import { getResourceHref } from "@/lib/intelligence/resource-links";
@@ -50,6 +51,7 @@ async function fetchOpsOverview(): Promise<OpsOverview> {
 }
 
 function TeamProductivityCard({ ops }: { ops: OpsOverview }) {
+  const tDetail = useTranslations("dashboardDetail");
   const k = ops.kpis;
   const q = ops.queues;
   const hasOverdue = (k.tasks_overdue ?? 0) > 0 || (q.tasksOverdue ?? []).length > 0;
@@ -58,12 +60,12 @@ function TeamProductivityCard({ ops }: { ops: OpsOverview }) {
   const noReport = (q.workersOpenShiftNoReportToday ?? []).length;
 
   return (
-    <IntelligenceCard title="Team productivity" aria-label="Team productivity">
+    <IntelligenceCard title={tDetail("teamProductivity")} aria-label={tDetail("teamProductivity")}>
       <p className="text-aistroyka-caption text-aistroyka-text-tertiary mb-3">
-        Tasks, reports, and workers — tenant-wide. No pseudo-score; grounded in real data.
+        {tDetail("teamProductivityHint")}
       </p>
       <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-aistroyka-subheadline">
-        <dt className="text-aistroyka-text-tertiary">Tasks overdue</dt>
+        <dt className="text-aistroyka-text-tertiary">{tDetail("tasksOverdue")}</dt>
         <dd>
           <Link
             href="/dashboard/tasks?status=pending"
@@ -72,7 +74,7 @@ function TeamProductivityCard({ ops }: { ops: OpsOverview }) {
             {k.tasks_overdue ?? 0}
           </Link>
         </dd>
-        <dt className="text-aistroyka-text-tertiary">Open today</dt>
+        <dt className="text-aistroyka-text-tertiary">{tDetail("openToday")}</dt>
         <dd>
           <Link
             href="/dashboard/tasks"
@@ -81,7 +83,7 @@ function TeamProductivityCard({ ops }: { ops: OpsOverview }) {
             {k.tasks_open_today ?? 0}
           </Link>
         </dd>
-        <dt className="text-aistroyka-text-tertiary">Reports pending review</dt>
+        <dt className="text-aistroyka-text-tertiary">{tDetail("reportsPendingReview")}</dt>
         <dd>
           <Link
             href="/dashboard/approvals"
@@ -90,7 +92,7 @@ function TeamProductivityCard({ ops }: { ops: OpsOverview }) {
             {pendingReports}
           </Link>
         </dd>
-        <dt className="text-aistroyka-text-tertiary">Shift open, no report today</dt>
+        <dt className="text-aistroyka-text-tertiary">{tDetail("shiftOpenNoReportToday")}</dt>
         <dd>{noReport}</dd>
       </dl>
       {(hasOverdue || hasOpenToday) && (
@@ -101,7 +103,7 @@ function TeamProductivityCard({ ops }: { ops: OpsOverview }) {
                 href={`/dashboard/tasks/${t.id}`}
                 className="text-aistroyka-accent hover:underline"
               >
-                Overdue: {t.title.slice(0, 35)}{t.title.length > 35 ? "…" : ""}
+                {tDetail("overduePrefix")} {t.title.slice(0, 35)}{t.title.length > 35 ? "…" : ""}
               </Link>
             </li>
           ))}
@@ -111,7 +113,7 @@ function TeamProductivityCard({ ops }: { ops: OpsOverview }) {
                 href={`/dashboard/tasks/${t.id}`}
                 className="text-aistroyka-accent hover:underline"
               >
-                Due today: {t.title.slice(0, 30)}{t.title.length > 30 ? "…" : ""}
+                {tDetail("dueTodayPrefix")} {t.title.slice(0, 30)}{t.title.length > 30 ? "…" : ""}
               </Link>
             </li>
           ))}
@@ -121,13 +123,14 @@ function TeamProductivityCard({ ops }: { ops: OpsOverview }) {
         href="/dashboard/tasks"
         className="mt-3 inline-block text-aistroyka-caption font-medium text-aistroyka-accent hover:underline"
       >
-        View all tasks →
+        {tDetail("viewAllTasksArrow")}
       </Link>
     </IntelligenceCard>
   );
 }
 
 export function DashboardAIOperatingCenterClient() {
+  const tDetail = useTranslations("dashboardDetail");
   const projectsQuery = useProjects();
   const projects = projectsQuery.data ?? [];
   const firstProjectId = projects[0]?.id ?? null;
@@ -159,18 +162,18 @@ export function DashboardAIOperatingCenterClient() {
   const noProject = !effectiveFocus || projects.length === 0;
 
   const emptyIntelligenceMessage = noProject
-    ? "Select a project to see health, risks, and evidence."
-    : "No health data yet. Open project Intelligence for details.";
+    ? tDetail("selectProjectForIntelligence")
+    : tDetail("noHealthDataYet");
 
   return (
-    <section className="space-y-4" aria-label="AI Operating Center">
+    <section className="space-y-4" aria-label={tDetail("aiOperatingCenter")}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">
-          AI Operating Center
+          {tDetail("aiOperatingCenter")}
         </h2>
         {projects.length > 1 && (
           <label className="flex items-center gap-2 text-aistroyka-subheadline">
-            <span className="text-aistroyka-text-tertiary">Focus project:</span>
+            <span className="text-aistroyka-text-tertiary">{tDetail("focusProject")}</span>
             <select
               value={effectiveFocus ?? ""}
               onChange={(e) => setFocusProjectId(e.target.value || null)}
@@ -189,7 +192,7 @@ export function DashboardAIOperatingCenterClient() {
             href={`/dashboard/projects/${effectiveFocus}?tab=intelligence`}
             className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline"
           >
-            Open full Intelligence →
+            {tDetail("openFullIntelligence")}
           </Link>
         )}
       </div>
@@ -197,20 +200,20 @@ export function DashboardAIOperatingCenterClient() {
       {noProject && (
         <Card className="border-l-4 border-l-aistroyka-info p-4">
           <p className="text-aistroyka-subheadline text-aistroyka-text-secondary">
-            Create or open a project to see Project Health, Risk Radar, AI Insights, and Evidence Coverage here.
+            {tDetail("createOrOpenProjectHint")}
           </p>
           <Link
             href="/dashboard/projects"
             className="mt-2 inline-block font-medium text-aistroyka-accent hover:underline"
           >
-            Browse projects →
+            {tDetail("browseProjectsArrow")}
           </Link>
         </Card>
       )}
 
       {!noProject && intelligenceQuery.isError && (
         <ErrorState
-          message={intelligenceQuery.error instanceof Error ? intelligenceQuery.error.message : "Failed to load intelligence"}
+          message={intelligenceQuery.error instanceof Error ? intelligenceQuery.error.message : tDetail("failedLoadIntelligence")}
           onRetry={() => intelligenceQuery.refetch()}
         />
       )}
@@ -234,13 +237,13 @@ export function DashboardAIOperatingCenterClient() {
             emptyMessage={emptyIntelligenceMessage}
           />
 
-          <IntelligenceCard title="Risk radar" aria-label="Risk overview">
+          <IntelligenceCard title={tDetail("riskRadar")} aria-label={tDetail("riskOverview")}>
             {data?.riskOverview ? (
               <>
                 <div className="flex flex-wrap gap-2 text-aistroyka-caption">
-                  <span className="font-medium text-aistroyka-error">High: {data.riskOverview.high}</span>
-                  <span className="font-medium text-amber-600">Medium: {data.riskOverview.medium}</span>
-                  <span className="font-medium text-aistroyka-info">Low: {data.riskOverview.low}</span>
+                  <span className="font-medium text-aistroyka-error">{tDetail("highLabel")} {data.riskOverview.high}</span>
+                  <span className="font-medium text-amber-600">{tDetail("mediumLabel")} {data.riskOverview.medium}</span>
+                  <span className="font-medium text-aistroyka-info">{tDetail("lowLabel")} {data.riskOverview.low}</span>
                 </div>
                 <div className="mt-3">
                   <RiskList
@@ -248,8 +251,8 @@ export function DashboardAIOperatingCenterClient() {
                     maxItems={3}
                     emptyMessage={
                       (data.topRiskInsights?.length ?? 0) > 0
-                        ? "See ranked risks below"
-                        : "No risks flagged"
+                        ? tDetail("seeRankedRisksBelow")
+                        : tDetail("noRisksFlagged")
                     }
                   />
                 </div>
@@ -271,7 +274,7 @@ export function DashboardAIOperatingCenterClient() {
                           )}
                           {href && (
                             <Link href={href} className="text-sm font-medium text-aistroyka-accent hover:underline">
-                              Open related →
+                              {tDetail("openRelated")}
                             </Link>
                           )}
                         </li>
@@ -283,27 +286,27 @@ export function DashboardAIOperatingCenterClient() {
                   href={effectiveFocus ? `/dashboard/projects/${effectiveFocus}?tab=intelligence` : "#"}
                   className="mt-2 inline-block text-aistroyka-caption font-medium text-aistroyka-accent hover:underline"
                 >
-                  Full Risk Radar →
+                  {tDetail("fullRiskRadar")}
                 </Link>
               </>
             ) : (
-              <p className="text-aistroyka-subheadline text-aistroyka-text-tertiary">No risk data yet.</p>
+              <p className="text-aistroyka-subheadline text-aistroyka-text-tertiary">{tDetail("noRiskDataYet")}</p>
             )}
           </IntelligenceCard>
 
           {data?.executiveProjectSummary || data?.executiveSummary ? (
             <SummaryCard summary={data.executiveProjectSummary ?? data.executiveSummary!} />
           ) : (
-            <IntelligenceCard title="AI Insights" aria-label="AI Insights">
+            <IntelligenceCard title={tDetail("aiInsights")} aria-label={tDetail("aiInsights")}>
               <p className="text-aistroyka-subheadline text-aistroyka-text-tertiary">
-                No summary yet — add tasks and daily reports so the model can summarize progress.
+                {tDetail("noSummaryYet")}
               </p>
               {effectiveFocus && (
                 <Link
                   href={`/dashboard/projects/${effectiveFocus}?tab=intelligence`}
                   className="mt-2 inline-block text-sm font-medium text-aistroyka-accent hover:underline"
                 >
-                  Open Intelligence →
+                  {tDetail("openIntelligence")}
                 </Link>
               )}
             </IntelligenceCard>
@@ -311,7 +314,7 @@ export function DashboardAIOperatingCenterClient() {
 
           <EvidenceCoverageCard
             signals={data?.evidenceCoverage?.signals ?? []}
-            emptyMessage="No evidence gaps flagged"
+            emptyMessage={tDetail("noEvidenceGaps")}
           />
 
           {ops ? <TeamProductivityCard ops={ops} /> : (

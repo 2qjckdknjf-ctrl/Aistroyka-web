@@ -1,6 +1,7 @@
 "use client";
 
 import { Link } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 import { getResourceHref } from "@/lib/intelligence/resource-links";
 import type {
   ProjectIntelligenceData,
@@ -83,7 +84,7 @@ function buildActions(data: ProjectIntelligenceData, projectId: string): Manager
       actions.push({
         id: `exec-${i}`,
         title: execActions[i],
-        reason: "From executive summary",
+        reason: "FROM_EXECUTIVE_SUMMARY",
         source: "executive",
         priority: "medium",
         href: `/dashboard/projects/${projectId}`,
@@ -110,26 +111,26 @@ export function ManagerActionView({
   data: ProjectIntelligenceData;
   projectId: string;
 }) {
+  const tDetail = useTranslations("dashboardDetail");
   const actions = buildActions(data, projectId);
 
   if (actions.length === 0) {
     return (
       <section
         className="rounded-lg border border-aistroyka-border-subtle bg-white p-4"
-        aria-label="Manager actions"
+        aria-label={tDetail("managerActions")}
       >
         <h3 className="text-base font-semibold text-aistroyka-text-primary">
-          Intelligence actions
+          {tDetail("intelligenceActions")}
         </h3>
         <p className="mt-2 text-sm text-aistroyka-text-secondary">
-          No prioritized intelligence items yet (missing evidence, risks, or recommendations). This is
-          separate from the Operations queue on the dashboard home.
+          {tDetail("noPrioritizedIntelligenceItems")}
         </p>
         <Link
           href={`/dashboard/projects/${projectId}`}
           className="mt-2 inline-block text-sm font-medium text-aistroyka-accent hover:underline"
         >
-          View project →
+          {tDetail("viewProjectArrow")}
         </Link>
       </section>
     );
@@ -138,10 +139,10 @@ export function ManagerActionView({
   return (
     <section
       className="rounded-lg border border-aistroyka-border-subtle bg-white p-4"
-      aria-label="Manager actions"
+      aria-label={tDetail("managerActions")}
     >
       <h3 className="text-base font-semibold text-aistroyka-text-primary mb-3">
-        What needs attention
+        {tDetail("whatNeedsAttention")}
       </h3>
       <ul className="space-y-2">
         {actions.map((a) => (
@@ -154,15 +155,15 @@ export function ManagerActionView({
                 {a.title}
               </span>
               <span className="text-xs text-aistroyka-text-tertiary">
-                {a.source.replace("_", " ")}
+                {tDetail(`managerActionSource_${a.source}`)}
               </span>
             </div>
             <p className="mt-0.5 text-sm text-aistroyka-text-secondary">
-              {a.reason}
+              {a.reason === "FROM_EXECUTIVE_SUMMARY" ? tDetail("fromExecutiveSummary") : a.reason}
             </p>
             {a.nextStep && (
               <p className="mt-0.5 text-xs text-aistroyka-text-tertiary">
-                Next: {a.nextStep}
+                {tDetail("next")}: {a.nextStep}
               </p>
             )}
             {a.href && (
@@ -170,7 +171,7 @@ export function ManagerActionView({
                 href={a.href}
                 className="mt-1.5 inline-block text-sm font-medium text-aistroyka-accent hover:underline"
               >
-                Act →
+                {tDetail("actArrow")}
               </Link>
             )}
           </li>

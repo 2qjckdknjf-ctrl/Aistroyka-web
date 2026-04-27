@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { computeProjection } from "@/lib/intelligence/projection";
 import { computeGovernance } from "@/lib/intelligence/governance";
 import { computeStrategicRisk } from "@/lib/intelligence/strategicRisk";
@@ -31,11 +32,11 @@ export function ConstructionHealthOverview({
   previousSnapshot: PreviousSnapshot | null;
   healthAdjustment?: number;
 }) {
+  const tDetail = useTranslations("dashboardDetail");
   if (history.length === 0 && !latestAnalysis) {
     return (
       <div className="card text-sm text-aistroyka-text-secondary">
-        Construction Health Overview: No analyses yet. Run analyses to see
-        health score.
+        {tDetail("constructionHealthOverviewEmpty")}
       </div>
     );
   }
@@ -97,10 +98,10 @@ export function ConstructionHealthOverview({
 
   return (
     <div className="card text-sm">
-      <div className="font-semibold text-aistroyka-text-primary">Construction Health Overview</div>
+      <div className="font-semibold text-aistroyka-text-primary">{tDetail("constructionHealthOverview")}</div>
       <div className="mt-3 grid gap-x-4 gap-y-1 text-aistroyka-text-primary sm:grid-cols-2">
         <div>
-          <span className="text-aistroyka-text-tertiary">Health Score:</span> {adjustedScore}
+          <span className="text-aistroyka-text-tertiary">{tDetail("healthScore")}:</span> {adjustedScore}
           {healthAdjustment !== 0 && (
             <span className="ml-1 text-xs text-aistroyka-text-tertiary">
               (base {healthResult.healthScore}{healthAdjustment < 0 ? ` ${healthAdjustment}` : ` +${healthAdjustment}`})
@@ -108,7 +109,7 @@ export function ConstructionHealthOverview({
           )}
         </div>
         <div>
-          <span className="text-aistroyka-text-tertiary">Classification:</span> <span className={classificationClass}>{displayClassification}</span>
+          <span className="text-aistroyka-text-tertiary">{tDetail("classification")}:</span> <span className={classificationClass}>{displayClassification}</span>
         </div>
       </div>
       <p className="mt-3 max-w-prose text-aistroyka-text-primary leading-relaxed">{healthResult.executiveSummary}</p>

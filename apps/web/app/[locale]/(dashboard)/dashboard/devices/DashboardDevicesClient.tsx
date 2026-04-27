@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import {
   Table,
@@ -21,12 +22,6 @@ import { useFilterParams } from "@/lib/cockpit/useFilterParams";
 import { parseTablePagination } from "@/lib/cockpit/useTablePagination";
 import { exportTableToCsv } from "@/lib/cockpit/csvExport";
 
-const DEVICE_PLATFORM_OPTIONS = [
-  { value: "ios", label: "iOS" },
-  { value: "android", label: "Android" },
-  { value: "web", label: "Web" },
-];
-
 interface DeviceRow {
   user_id: string;
   device_id: string;
@@ -36,6 +31,12 @@ interface DeviceRow {
 }
 
 export function DashboardDevicesClient() {
+  const tDetail = useTranslations("dashboardDetail");
+  const DEVICE_PLATFORM_OPTIONS = [
+    { value: "ios", label: tDetail("ios") },
+    { value: "android", label: tDetail("android") },
+    { value: "web", label: tDetail("web") },
+  ];
   const { params, setParam } = useFilterParams();
   const [data, setData] = useState<DeviceRow[] | null>(null);
   const [total, setTotal] = useState(0);
@@ -72,7 +73,7 @@ export function DashboardDevicesClient() {
         setError(null);
       })
       .catch((e) => {
-        setError(e instanceof Error ? e.message : "Failed to load");
+        setError(e instanceof Error ? e.message : tDetail("failedLoadDevices"));
         setData([]);
         setTotal(0);
       })
@@ -96,7 +97,7 @@ export function DashboardDevicesClient() {
   );
 
   const exportCsv = () => {
-    const headers = ["Device ID", "Platform", "User ID", "Created", "Disabled"];
+    const headers = [tDetail("deviceId"), tDetail("platform"), tDetail("userId"), tDetail("created"), tDetail("disabled")];
     const rows = (data ?? []).map((r) => [
       r.device_id,
       r.platform,
@@ -130,8 +131,8 @@ export function DashboardDevicesClient() {
         <Card>
           <EmptyState
             icon={<span className="text-2xl">📱</span>}
-            title="No devices"
-            subtitle="Registered devices will appear here (push tokens)."
+            title={tDetail("noDevices")}
+            subtitle={tDetail("registeredDevicesAppear")}
           />
         </Card>
       </>
@@ -143,17 +144,17 @@ export function DashboardDevicesClient() {
       {filterBar}
       <Card className="p-0 overflow-hidden">
         <div className="p-2 flex justify-end">
-          <Button variant="secondary" onClick={exportCsv} className="text-sm">Export CSV</Button>
+          <Button variant="secondary" onClick={exportCsv} className="text-sm">{tDetail("exportCsv")}</Button>
         </div>
-        <Table aria-label="Devices">
+        <Table aria-label={tDetail("devices")}>
         <TableHead>
           <TableRow>
-            <TableHeaderCell>Device ID</TableHeaderCell>
-            <TableHeaderCell>Platform</TableHeaderCell>
-            <TableHeaderCell>Owner</TableHeaderCell>
-            <TableHeaderCell>Registered</TableHeaderCell>
-            <TableHeaderCell>Last seen</TableHeaderCell>
-            <TableHeaderCell>Health</TableHeaderCell>
+            <TableHeaderCell>{tDetail("deviceId")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("platform")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("owner")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("registered")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("lastSeen")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("health")}</TableHeaderCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -170,9 +171,9 @@ export function DashboardDevicesClient() {
               <TableCell className="text-aistroyka-text-tertiary">—</TableCell>
               <TableCell>
                 {r.disabled_at ? (
-                  <Badge variant="danger">Disabled</Badge>
+                  <Badge variant="danger">{tDetail("disabled")}</Badge>
                 ) : (
-                  <Badge variant="success">Active</Badge>
+                  <Badge variant="success">{tDetail("active")}</Badge>
                 )}
               </TableCell>
             </TableRow>

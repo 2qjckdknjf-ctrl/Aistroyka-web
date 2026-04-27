@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { Link } from "@/i18n/navigation";
 import {
@@ -25,6 +26,7 @@ interface DayRow {
 }
 
 export default function WorkerDaysPage() {
+  const tDetail = useTranslations("dashboardDetail");
   const params = useParams();
   const userId = params?.userId as string | undefined;
   const [data, setData] = useState<DayRow[] | null>(null);
@@ -54,7 +56,7 @@ export default function WorkerDaysPage() {
   if (!userId) {
     return (
       <Card>
-        <p className="text-aistroyka-text-secondary">Missing worker.</p>
+        <p className="text-aistroyka-text-secondary">{tDetail("missingWorker")}</p>
       </Card>
     );
   }
@@ -82,32 +84,32 @@ export default function WorkerDaysPage() {
           href="/dashboard/workers"
           className="text-aistroyka-subheadline text-aistroyka-accent hover:underline"
         >
-          ← Workers
+          {tDetail("workers")}
         </Link>
       </div>
       <h1 className="text-aistroyka-title3 font-bold text-aistroyka-text-primary mb-2">
-        Day timeline
+        {tDetail("dayTimeline")}
       </h1>
       <p className="text-aistroyka-subheadline text-aistroyka-text-secondary mb-4">
-        Worker {userId.slice(0, 8)}… — last 31 days
+        {tDetail("worker")} {userId.slice(0, 8)}… — {tDetail("last31Days")}
       </p>
       {!data?.length ? (
         <Card>
           <EmptyState
             icon={<span className="text-2xl">📅</span>}
-            title="No days"
-            subtitle="No day records for this worker in the selected range."
+            title={tDetail("noDays")}
+            subtitle={tDetail("noDayRecords")}
           />
         </Card>
       ) : (
         <Card className="p-0 overflow-hidden">
-          <Table aria-label="Worker days">
+          <Table aria-label={tDetail("workerDays")}>
             <TableHead>
               <TableRow>
-                <TableHeaderCell>Date</TableHeaderCell>
-                <TableHeaderCell>Started</TableHeaderCell>
-                <TableHeaderCell>Ended</TableHeaderCell>
-                <TableHeaderCell>Status</TableHeaderCell>
+                <TableHeaderCell>{tDetail("date")}</TableHeaderCell>
+                <TableHeaderCell>{tDetail("started")}</TableHeaderCell>
+                <TableHeaderCell>{tDetail("ended")}</TableHeaderCell>
+                <TableHeaderCell>{tDetail("status")}</TableHeaderCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -126,9 +128,9 @@ export default function WorkerDaysPage() {
                   </TableCell>
                   <TableCell>
                     {d.started_at && d.ended_at ? (
-                      <Badge variant="success">Ended</Badge>
+                      <Badge variant="success">{tDetail("ended")}</Badge>
                     ) : d.started_at ? (
-                      <Badge variant="warning">Started</Badge>
+                      <Badge variant="warning">{tDetail("started")}</Badge>
                     ) : (
                       "—"
                     )}

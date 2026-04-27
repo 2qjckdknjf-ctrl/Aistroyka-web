@@ -1,0 +1,21 @@
+appId: ai.aistroyka.worker
+---
+- clearState
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: pilot_worker_email
+    timeout: 45000
+- tapOn:
+    id: pilot_worker_email
+- inputText: ${SMOKE_EMAIL}
+- hideKeyboard
+- tapOn:
+    id: pilot_worker_password
+- inputText: ${SMOKE_PASSWORD}
+- hideKeyboard
+- tapOn:
+    id: pilot_worker_sign_in
+- extendedWaitUntil:
+    visible: "Projects"
+    timeout: 180000

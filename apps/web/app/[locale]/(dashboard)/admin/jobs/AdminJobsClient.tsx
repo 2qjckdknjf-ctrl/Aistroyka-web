@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import {
   Card,
   Table,
@@ -26,6 +27,7 @@ interface JobRow {
 }
 
 export function AdminJobsClient() {
+  const tDetail = useTranslations("dashboardDetail");
   const [data, setData] = useState<JobRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -49,7 +51,7 @@ export function AdminJobsClient() {
         setError(null);
       })
       .catch((e) => {
-        setError(e instanceof Error ? e.message : "Failed to load");
+        setError(e instanceof Error ? e.message : tDetail("failedLoad"));
         setAllJobs([]);
       })
       .finally(() => setLoading(false));
@@ -76,7 +78,7 @@ export function AdminJobsClient() {
   }
 
   const exportCsv = () => {
-    const headers = ["ID", "Type", "Status", "Last error", "Created"];
+    const headers = ["ID", tDetail("type"), tDetail("status"), tDetail("lastError"), tDetail("created")];
     const rows = allJobs.slice(0, 500).map((r) => [
       r.id,
       r.type,
@@ -90,18 +92,18 @@ export function AdminJobsClient() {
   return (
     <Card className="p-0 overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-aistroyka-border-subtle px-4 py-3">
-        <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">Failed jobs</h2>
+        <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">{tDetail("failedJobs")}</h2>
         <div className="flex items-center gap-2">
-          <Button variant="secondary" onClick={exportCsv} className="text-sm">Export CSV</Button>
+          <Button variant="secondary" onClick={exportCsv} className="text-sm">{tDetail("exportCsv")}</Button>
           <select
-          aria-label="Filter by status"
+          aria-label={tDetail("filterByStatus")}
           value={statusFilter}
           onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
           className="rounded-[var(--aistroyka-radius-md)] border border-aistroyka-border-subtle bg-aistroyka-bg-primary px-2 py-1.5 text-aistroyka-caption"
         >
-          <option value="">All (failed/dead)</option>
-          <option value="failed">Failed</option>
-          <option value="dead">Dead</option>
+          <option value="">{tDetail("allFailedDead")}</option>
+          <option value="failed">{tDetail("failed")}</option>
+          <option value="dead">{tDetail("dead")}</option>
         </select>
         </div>
       </div>
@@ -109,20 +111,20 @@ export function AdminJobsClient() {
         <div className="p-8">
           <EmptyState
             icon={<span className="text-2xl">✓</span>}
-            title="No failed jobs"
-            subtitle="No failed or dead jobs in the queue."
+            title={tDetail("noFailedJobs")}
+            subtitle={tDetail("noFailedOrDeadJobs")}
           />
         </div>
       ) : (
         <>
-          <Table aria-label="Failed jobs">
+          <Table aria-label={tDetail("failedJobs")}>
             <TableHead>
               <TableRow>
-                <TableHeaderCell>ID</TableHeaderCell>
-                <TableHeaderCell>Type</TableHeaderCell>
-                <TableHeaderCell>Status</TableHeaderCell>
-                <TableHeaderCell>Last error</TableHeaderCell>
-                <TableHeaderCell>Created</TableHeaderCell>
+                <TableHeaderCell>{tDetail("id")}</TableHeaderCell>
+                <TableHeaderCell>{tDetail("type")}</TableHeaderCell>
+                <TableHeaderCell>{tDetail("status")}</TableHeaderCell>
+                <TableHeaderCell>{tDetail("lastError")}</TableHeaderCell>
+                <TableHeaderCell>{tDetail("created")}</TableHeaderCell>
               </TableRow>
             </TableHead>
             <TableBody>

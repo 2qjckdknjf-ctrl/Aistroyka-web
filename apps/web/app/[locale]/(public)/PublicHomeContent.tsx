@@ -1,70 +1,56 @@
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
-import Image from "next/image";
 
 export async function PublicHomeContent() {
   const t = await getTranslations("public.home");
   const tMetrics = await getTranslations("public.homeMetrics");
+  const tNav = await getTranslations("public.nav");
 
   const MOCK_METRICS = { projects: "500+", reports: "12K+", insights: "8K+", photos: "45K+" };
 
   return (
     <>
       {/* Hero */}
-      <section className="relative overflow-hidden px-4 py-20 sm:px-6 sm:py-24 lg:px-8 lg:py-28" style={{ background: "linear-gradient(180deg, #0B0F19 0%, #05070d 100%)" }}>
-        {/* Animated gradient glow behind logo */}
-        <div
-          className="animate-hero-glow pointer-events-none absolute left-1/2 top-32 -translate-x-1/2 w-[400px] h-[200px] rounded-full blur-3xl"
-          style={{ background: "radial-gradient(ellipse, rgba(245,197,24,0.25) 0%, transparent 70%)" }}
-          aria-hidden
-        />
-        <div className="relative mx-auto max-w-4xl text-center">
-          <div className="mb-8 flex justify-center">
-            <Image
-              src="/brand/aistroyka-logo.png"
-              alt="AISTROYKA"
-              width={180}
-              height={60}
-              className="h-14 w-auto sm:h-16"
-              priority
-              unoptimized
-            />
-          </div>
-          <h1 className="font-heading text-[var(--aistroyka-font-large)] font-bold tracking-tight text-[var(--text-main)] sm:text-4xl lg:text-5xl">
-            AI that understands construction.
-          </h1>
-          <p className="mt-4 text-lg text-[var(--text-muted)] sm:text-xl">
-            {t("heroSubtitle")}
-          </p>
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-            <Link href="/contact" className="btn-primary">
-              Start Project
-            </Link>
-            <Link href="/ai-demo" className="inline-flex min-h-[var(--aistroyka-touch-min)] items-center justify-center rounded-[var(--radius-main)] border border-[var(--border-main)] bg-white/5 px-6 py-2.5 text-[var(--aistroyka-font-headline)] font-semibold text-[var(--text-main)] transition-colors hover:bg-white/10">
-              View Demo
-            </Link>
-            <Link
-              href="/login"
-              className="inline-flex min-h-[var(--aistroyka-touch-min)] items-center justify-center rounded-[var(--radius-main)] border border-[var(--border-main)] bg-transparent px-6 py-2.5 text-[var(--aistroyka-font-headline)] font-semibold text-[var(--text-main)] transition-colors hover:bg-white/5"
-            >
-              {t("ctaLogin")}
-            </Link>
-          </div>
+      <section className="relative overflow-hidden px-4 pb-24 pt-20 sm:px-6 lg:px-8">
+        <div aria-hidden className="pointer-events-none absolute inset-0">
+          <div className="absolute -left-24 top-12 h-80 w-80 rounded-full bg-[var(--aistroyka-neural-core)] opacity-20 blur-3xl animate-neural-pulse" />
+          <div className="absolute -right-28 bottom-4 h-96 w-96 rounded-full bg-[var(--aistroyka-neural-accent)] opacity-20 blur-3xl animate-neural-drift" />
         </div>
-        {/* Product preview strip */}
-        <div className="relative mx-auto mt-14 max-w-5xl px-4">
-          <div className="grid gap-4 sm:grid-cols-3">
-            <Link href="/projects-showcase" className="block rounded-[var(--radius-main)] border border-[var(--border-main)] bg-white/5 p-6 text-center transition hover:bg-white/10 hover:border-[var(--ai-yellow)]/30">
-              <span className="text-[var(--aistroyka-font-subheadline)] font-medium text-[var(--text-main)]">Dashboard</span>
-              <p className="mt-1 text-[var(--aistroyka-font-caption)] text-[var(--text-muted)]">Projects, tasks, KPIs</p>
+
+        <div className="public-shell relative mx-auto max-w-6xl min-w-0 rounded-[var(--aistroyka-radius-xxl)] px-4 py-10 sm:px-10 sm:py-16">
+          <div className="max-w-3xl min-w-0">
+            <div className="public-badge mb-6 inline-flex max-w-full flex-wrap rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] sm:px-4 sm:tracking-[0.16em]">
+              {t("neuralConstructionControl")}
+            </div>
+            <h1 className="text-balance font-heading text-3xl font-semibold uppercase tracking-[0.04em] text-aistroyka-text-primary sm:text-5xl sm:tracking-[0.06em] lg:text-6xl">
+              <span className="text-aistroyka-accent">AISTROYKA</span>{" "}
+              <span className="text-aistroyka-text-primary">{t("heroTitle")}</span>
+            </h1>
+            <p className="mt-6 max-w-2xl text-pretty text-[var(--aistroyka-font-headline)] text-aistroyka-text-secondary sm:text-xl">
+              {t("heroSubtitle")}
+            </p>
+            <div className="mt-10 flex flex-wrap gap-3">
+              <Link href="/contact" className="btn-primary min-w-0 flex-1 basis-[min(100%,14rem)] sm:flex-none sm:basis-auto">
+                {tNav("requestDemo")}
+              </Link>
+              <Link href="/ai-demo" className="btn-secondary min-w-0 flex-1 basis-[min(100%,14rem)] sm:flex-none sm:basis-auto">
+                {tNav("aiDemo")}
+              </Link>
+            </div>
+          </div>
+
+          <div className="mt-12 grid min-w-0 gap-4 sm:grid-cols-3">
+            <Link href="/projects-showcase" className="public-card-motion min-w-0 rounded-[var(--aistroyka-radius-xl)] border border-aistroyka-border-subtle bg-aistroyka-surface px-4 py-4 sm:px-5">
+              <div className="text-sm font-semibold uppercase tracking-[0.12em] text-aistroyka-accent">{t("heroCardDashboardTitle")}</div>
+              <p className="mt-2 text-sm text-aistroyka-text-secondary">{t("heroCardDashboardSubtitle")}</p>
             </Link>
-            <Link href="/ai-demo" className="block rounded-[var(--radius-main)] border border-[var(--border-main)] bg-white/5 p-6 text-center transition hover:bg-white/10 hover:border-[var(--ai-yellow)]/30">
-              <span className="text-[var(--aistroyka-font-subheadline)] font-medium text-[var(--text-main)]">AI insights</span>
-              <p className="mt-1 text-[var(--aistroyka-font-caption)] text-[var(--text-muted)]">Progress, risks, delays</p>
+            <Link href="/ai-construction-control" className="public-card-motion min-w-0 rounded-[var(--aistroyka-radius-xl)] border border-aistroyka-border-subtle bg-aistroyka-surface px-4 py-4 sm:px-5">
+              <div className="text-sm font-semibold uppercase tracking-[0.12em] text-aistroyka-accent">{t("heroCardAiTitle")}</div>
+              <p className="mt-2 text-sm text-aistroyka-text-secondary">{t("heroCardAiSubtitle")}</p>
             </Link>
-            <Link href="/mobile" className="block rounded-[var(--radius-main)] border border-[var(--border-main)] bg-white/5 p-6 text-center transition hover:bg-white/10 hover:border-[var(--ai-yellow)]/30">
-              <span className="text-[var(--aistroyka-font-subheadline)] font-medium text-[var(--text-main)]">Mobile</span>
-              <p className="mt-1 text-[var(--aistroyka-font-caption)] text-[var(--text-muted)]">Reports, evidence</p>
+            <Link href="/mobile" className="public-card-motion min-w-0 rounded-[var(--aistroyka-radius-xl)] border border-aistroyka-border-subtle bg-aistroyka-surface px-4 py-4 sm:px-5">
+              <div className="text-sm font-semibold uppercase tracking-[0.12em] text-aistroyka-accent">{t("heroCardMobileTitle")}</div>
+              <p className="mt-2 text-sm text-aistroyka-text-secondary">{t("heroCardMobileSubtitle")}</p>
             </Link>
           </div>
         </div>
@@ -144,10 +130,10 @@ export async function PublicHomeContent() {
                   {t(`modules.${key}`)}
                 </div>
                 <p className="mt-2 text-[var(--aistroyka-font-footnote)] text-[var(--text-muted)]">
-                  {key === "projectManagement" && "Projects, structure, and progress at a glance."}
-                  {key === "tasks" && "Assign, track, and complete tasks with deadlines."}
-                  {key === "dailyReports" && "Daily reports from the field with evidence."}
-                  {key === "photoVideo" && "Photo and video evidence linked to tasks and reports."}
+                  {key === "projectManagement" && t("moduleDescProjectManagement")}
+                  {key === "tasks" && t("moduleDescTasks")}
+                  {key === "dailyReports" && t("moduleDescDailyReports")}
+                  {key === "photoVideo" && t("moduleDescPhotoVideo")}
                 </p>
               </div>
             ))}
@@ -163,21 +149,21 @@ export async function PublicHomeContent() {
           </h2>
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             <div className="card p-6">
-              <div className="font-semibold text-[var(--aistroyka-text-primary)]">Developer / GC</div>
+              <div className="font-semibold text-[var(--aistroyka-text-primary)]">{t("roleDeveloperGcTitle")}</div>
               <p className="mt-2 text-[var(--aistroyka-font-footnote)] text-[var(--aistroyka-text-secondary)]">
-                Full visibility, risk and delay control, AI insights.
+                {t("roleDeveloperGcBody")}
               </p>
             </div>
             <div className="rounded-[var(--radius-main)] border border-[var(--border-main)] bg-[var(--bg-main)] p-6">
-              <div className="font-semibold text-[var(--text-main)]">Project manager</div>
+              <div className="font-semibold text-[var(--text-main)]">{t("roleProjectManagerTitle")}</div>
               <p className="mt-2 text-[var(--aistroyka-font-footnote)] text-[var(--text-muted)]">
-                Tasks, reports, dashboards, and team coordination.
+                {t("roleProjectManagerBody")}
               </p>
             </div>
             <div className="rounded-[var(--radius-main)] border border-[var(--border-main)] bg-[var(--bg-main)] p-6">
-              <div className="font-semibold text-[var(--text-main)]">Field teams</div>
+              <div className="font-semibold text-[var(--text-main)]">{t("roleFieldTeamsTitle")}</div>
               <p className="mt-2 text-[var(--aistroyka-font-footnote)] text-[var(--text-muted)]">
-                Mobile reporting, photo evidence, quick task execution.
+                {t("roleFieldTeamsBody")}
               </p>
             </div>
           </div>
@@ -195,9 +181,9 @@ export async function PublicHomeContent() {
           </p>
           <Link
             href="/ai-construction-control"
-            className="mt-6 inline-flex min-h-[var(--aistroyka-touch-min)] items-center justify-center rounded-[var(--radius-main)] bg-[var(--ai-yellow)] px-6 py-2.5 text-[var(--aistroyka-font-headline)] font-semibold text-[var(--ai-dark)] hover:bg-[var(--aistroyka-accent-hover)]"
+            className="mt-6 inline-flex max-w-full min-h-[var(--aistroyka-touch-min)] min-w-0 items-center justify-center whitespace-normal break-words rounded-[var(--radius-main)] bg-[var(--ai-yellow)] px-4 py-2.5 text-center text-[var(--aistroyka-font-headline)] font-semibold text-[var(--ai-dark)] hover:bg-[var(--aistroyka-accent-hover)] sm:px-6"
           >
-            Learn more
+            {t("learnMore")}
           </Link>
         </div>
       </section>
@@ -211,8 +197,8 @@ export async function PublicHomeContent() {
           <p className="mt-3 text-[var(--aistroyka-font-body)] text-[var(--text-muted)]">
             {t("mobileSubtitle")}
           </p>
-          <Link href="/mobile" className="btn-primary mt-6">
-            Mobile
+          <Link href="/mobile" className="btn-primary mx-auto mt-6 inline-flex max-w-full">
+            {t("mobileCta")}
           </Link>
         </div>
       </section>
@@ -226,7 +212,7 @@ export async function PublicHomeContent() {
           <p className="mt-3 text-[var(--aistroyka-font-body)] text-[var(--text-muted)]">
             {t("pricingTeaserSubtitle")}
           </p>
-          <Link href="/pricing" className="btn-primary mt-6">
+          <Link href="/pricing" className="btn-primary mx-auto mt-6 inline-flex max-w-full">
             {t("pricingTeaserTitle")}
           </Link>
         </div>
@@ -243,7 +229,7 @@ export async function PublicHomeContent() {
           </p>
           <Link
             href="/contact"
-            className="mt-6 inline-flex min-h-[var(--aistroyka-touch-min)] items-center justify-center rounded-[var(--radius-main)] bg-[var(--ai-yellow)] px-8 py-3 text-[var(--aistroyka-font-headline)] font-semibold text-[var(--ai-dark)] hover:bg-[var(--aistroyka-accent-hover)]"
+            className="mt-6 inline-flex max-w-full min-h-[var(--aistroyka-touch-min)] min-w-0 items-center justify-center whitespace-normal break-words rounded-[var(--radius-main)] bg-[var(--ai-yellow)] px-4 py-3 text-center text-[var(--aistroyka-font-headline)] font-semibold text-[var(--ai-dark)] hover:bg-[var(--aistroyka-accent-hover)] sm:px-8"
           >
             {t("finalCtaButton")}
           </Link>

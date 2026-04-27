@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 
-/** Deterministic 409 conflict body for sync (changes/ack). Uses snake_case for API consistency. */
+/** Deterministic 409 conflict body for sync (changes/ack). Primary: server_cursor; serverCursor alias for clients/runbooks. */
 export interface SyncConflictBody {
   error: "conflict";
   code: "sync_conflict";
   server_cursor: number;
+  /** Alias of server_cursor (mobile runbook / older clients). */
+  serverCursor: number;
   hint?: string;
   must_bootstrap?: boolean;
 }
@@ -21,6 +23,7 @@ export function syncConflictResponse(
     error: "conflict",
     code: "sync_conflict",
     server_cursor: serverCursor,
+    serverCursor: serverCursor,
     must_bootstrap: mustBootstrap,
     hint: hint ?? defaultHint,
   };

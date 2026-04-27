@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useMutation } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { runExecutiveSummary, runExplainRisk, askCopilot } from "@/lib/engine/ai";
@@ -62,6 +62,7 @@ export function AiActionPanel({
   showRequestId = IS_DEV_OR_STAGING,
 }: AiActionPanelProps) {
   const localeFromHook = useLocale();
+  const tDetail = useTranslations("dashboardDetail");
   const effectiveLocale = locale != null ? locale : localeFromHook;
   const [tab, setTab] = useState<TabId>("summary");
   const [copilotQuestion, setCopilotQuestion] = useState("");
@@ -106,7 +107,7 @@ export function AiActionPanel({
           kind: "unknown",
           status: 0,
           requestId: "",
-          message: "Enter a question for Copilot.",
+          message: tDetail("enterQuestionForCopilot"),
           retryable: false,
         });
       }
@@ -142,7 +143,7 @@ export function AiActionPanel({
           kind: "unknown",
           status: (err as Error & { status?: number }).status ?? 0,
           requestId: "",
-          message: err instanceof Error ? err.message : "Request failed.",
+          message: err instanceof Error ? err.message : tDetail("requestFailed"),
           retryable: false,
         });
     },
@@ -163,7 +164,7 @@ export function AiActionPanel({
         kind: "unknown",
         status: 0,
         requestId: "",
-        message: "Enter a question for Copilot.",
+        message: tDetail("enterQuestionForCopilot"),
         retryable: false,
       });
       return;
@@ -175,7 +176,7 @@ export function AiActionPanel({
       copilotQuestion,
       signal: ctrl.signal,
     });
-  }, [tab, copilotQuestion, mutation]);
+  }, [tab, copilotQuestion, mutation, tDetail]);
 
   const isPending = mutation.isPending;
   const lowConfidence =
@@ -185,7 +186,7 @@ export function AiActionPanel({
   return (
     <div className="rounded-lg border border-aistroyka-border-subtle bg-aistroyka-surface p-4">
       <h3 className="mb-3 text-aistroyka-font-title3 font-semibold text-aistroyka-text-primary">
-        AI Copilot
+        {tDetail("aiCopilot")}
       </h3>
 
       {/* Tabs */}
@@ -195,7 +196,13 @@ export function AiActionPanel({
             key={t}
             type="button"
             role="tab"
-            aria-label={t === "summary" ? "Executive summary" : t === "explain_risk" ? "Explain risk" : "Copilot chat"}
+            aria-label={
+              t === "summary"
+                ? tDetail("executiveSummary")
+                : t === "explain_risk"
+                  ? tDetail("explainRisk")
+                  : tDetail("copilotChat")
+            }
             aria-selected={tab === t}
             onClick={() => setTab(t)}
             className={`min-h-[36px] px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-aistroyka-accent focus:ring-offset-2 ${
@@ -204,7 +211,7 @@ export function AiActionPanel({
                 : "text-aistroyka-text-secondary hover:text-aistroyka-text-primary"
             }`}
           >
-            {t === "summary" ? "Summary" : t === "explain_risk" ? "Explain Risk" : "Copilot"}
+            {t === "summary" ? tDetail("summary") : t === "explain_risk" ? tDetail("explainRisk") : tDetail("copilot")}
           </button>
         ))}
       </div>
@@ -221,7 +228,7 @@ export function AiActionPanel({
           {tab === "explain_risk" && (
             <div className="mb-4">
               <label htmlFor="copilot-question" className="mb-1 block text-sm text-aistroyka-text-secondary">
-                Question
+                {tDetail("question")}
               </label>
               <textarea
                 id="copilot-question"
@@ -234,17 +241,17 @@ export function AiActionPanel({
                     run();
                   }
                 }}
-                placeholder="Ask about risk or next steps... (Ctrl+Enter to submit)"
+                placeholder={tDetail("askAboutRiskOrNextStepsHint")}
                 rows={2}
                 className="w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-primary px-3 py-2 text-sm text-aistroyka-text-primary placeholder:text-aistroyka-text-tertiary focus:outline-none focus:ring-2 focus:ring-aistroyka-accent focus:ring-offset-2"
-                aria-label="Copilot question"
+                aria-label={tDetail("copilotQuestion")}
               />
             </div>
           )}
 
           <div className="mb-4 flex flex-wrap items-center gap-2">
             <Button onClick={run} disabled={isPending} loading={isPending}>
-              {isPending ? "Running…" : "Run"}
+              {isPending ? tDetail("running") : tDetail("run")}
             </Button>
             {showRequestId && requestId && <CopyRequestIdButton requestId={requestId} />}
           </div>
@@ -263,7 +270,7 @@ export function AiActionPanel({
 
       {!isPending && !result && !error && (
         <div className="rounded border border-aistroyka-border-subtle bg-aistroyka-surface-muted/50 p-4 text-center text-sm text-aistroyka-text-tertiary">
-          Run AI to see summary, risk explanation, or ask a question.
+          {tDetail("runAiToSeeSummaryRiskOrAsk")}
         </div>
       )}
 
@@ -286,7 +293,7 @@ export function AiActionPanel({
           )}
           {result.recommended_actions && result.recommended_actions.length > 0 && (
             <p className="text-sm text-aistroyka-text-secondary">
-              <span className="font-medium">Recommended:</span>{" "}
+              <span className="font-medium">{tDetail("recommended")}:</span>{" "}
               {result.recommended_actions.join("; ")}
             </p>
           )}
@@ -296,7 +303,7 @@ export function AiActionPanel({
       {IS_DEV_OR_STAGING && (requestId || result || error) && (
         <details className="mt-4 rounded border border-aistroyka-border-subtle bg-aistroyka-surface-muted/30 p-3 text-xs">
           <summary className="cursor-pointer font-medium text-aistroyka-text-secondary">
-            Diagnostics
+            {tDetail("diagnostics")}
           </summary>
           <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-2 gap-y-1 font-mono text-aistroyka-text-tertiary">
             <dt>request_id</dt>

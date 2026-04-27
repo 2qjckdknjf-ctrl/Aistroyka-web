@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AiStroyka Worker</string>
+    <string name="worker_topbar_title">AiStroyka Worker</string>
+    <string name="action_sign_out">Выйти</string>
+    <string name="login_prompt">Вход в аккаунт исполнителя</string>
+    <string name="label_email">Почта</string>
+    <string name="label_password">Пароль</string>
+    <string name="action_sign_in">Войти</string>
+    <string name="action_dismiss">Скрыть</string>
+    <string name="projects_heading">Объекты</string>
+    <string name="projects_empty">Нет объектов. Обновите после настройки доступа.</string>
+    <string name="tasks_today_heading">Задачи на сегодня (необязательно)</string>
+    <string name="task_none">Без задачи</string>
+    <string name="action_create_report_photo">Создать отчёт и добавить фото</string>
+    <string name="action_refresh_config">Обновить конфиг / объекты</string>
+    <string name="report_draft_title">Черновик отчёта</string>
+    <string name="report_id_line">Отчёт: %1$s</string>
+    <string name="action_choose_photo">Выбрать фото</string>
+    <string name="photo_selected">Выбрано: %1$s</string>
+    <string name="action_submit_report">Отправить отчёт</string>
+    <string name="action_back_home">На главную</string>
+    <string name="action_cancel_flow">Отмена (сбросить)</string>
+</resources>

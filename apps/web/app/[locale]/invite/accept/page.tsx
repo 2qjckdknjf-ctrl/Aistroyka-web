@@ -65,9 +65,9 @@ function AcceptInviteContent() {
       <main className="mx-auto max-w-md px-aistroyka-4 py-aistroyka-8">
         <div className="card-elevated text-center">
           <h1 className="text-aistroyka-title2 font-bold text-aistroyka-text-primary">{t("acceptInviteTitle")}</h1>
-          <p className="mt-aistroyka-2 text-aistroyka-subheadline text-aistroyka-text-secondary">Sign in to accept this invitation.</p>
+          <p className="mt-aistroyka-2 text-aistroyka-subheadline text-aistroyka-text-secondary">{t("signInToAccept")}</p>
           <Link href={loginUrl} className="btn-primary mt-aistroyka-6 inline-block">
-            Sign in
+            {t("signIn")}
           </Link>
         </div>
       </main>

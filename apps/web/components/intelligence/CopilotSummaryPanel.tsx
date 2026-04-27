@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
 import { IntelligenceCard } from "./IntelligenceCard";
-import { Card, Skeleton, ErrorState } from "@/components/ui";
+import { Skeleton } from "@/components/ui";
 
 type UseCase = "generateManagerBrief" | "generateExecutiveBrief" | "detectTopRisks" | "findMissingEvidence" | "identifyBlockedTasks" | "summarizeProjectStatus";
 
@@ -26,15 +27,16 @@ async function fetchCopilotBrief(projectId: string, useCase: UseCase): Promise<C
   );
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.error ?? "Failed to load brief");
+    throw new Error(err.error ?? "FAILED_LOAD_BRIEF");
   }
   const json = await res.json();
   return json.data;
 }
 
 export function CopilotSummaryPanel({ projectId }: { projectId: string }) {
+  const tDetail = useTranslations("dashboardDetail");
   const [useCase, setUseCase] = useState<UseCase>("generateManagerBrief");
-  const { data, isPending, isError, error, refetch } = useQuery<CopilotResponse>({
+  const { data, isPending, isError } = useQuery<CopilotResponse>({
     queryKey: ["copilot-brief", projectId, useCase],
     queryFn: () => fetchCopilotBrief(projectId, useCase),
     enabled: !!projectId,
@@ -50,13 +52,21 @@ export function CopilotSummaryPanel({ projectId }: { projectId: string }) {
     (data?.blockedTasks?.length ? data.blockedTasks.join(". ") : null);
 
   const showDemoMode = !isPending && (isError || !brief);
+  const useCaseLabel: Record<UseCase, string> = {
+    generateManagerBrief: tDetail("generateManagerBrief"),
+    generateExecutiveBrief: tDetail("generateExecutiveBrief"),
+    detectTopRisks: tDetail("detectTopRisks"),
+    findMissingEvidence: tDetail("findMissingEvidence"),
+    identifyBlockedTasks: tDetail("identifyBlockedTasks"),
+    summarizeProjectStatus: tDetail("summarizeProjectStatus"),
+  };
 
-  const DEMO_SUMMARY = "Project is on track. Foundation phase at 85% completion. Key milestones met; one task pending photo evidence.";
-  const DEMO_RISKS = ["Delayed material delivery may impact schedule", "Missing evidence for completed task T-102"];
-  const DEMO_RECOMMENDATIONS = ["Upload before/after photos for completed tasks", "Confirm delivery date with supplier"];
+  const DEMO_SUMMARY = tDetail("demoSummary");
+  const DEMO_RISKS = [tDetail("demoRisk1"), tDetail("demoRisk2")];
+  const DEMO_RECOMMENDATIONS = [tDetail("demoRecommendation1"), tDetail("demoRecommendation2")];
 
   return (
-    <IntelligenceCard title="Copilot brief" aria-label="Copilot summary">
+    <IntelligenceCard title={tDetail("copilotBrief")} aria-label={tDetail("copilotSummary")}>
       <div className="mb-3 flex flex-wrap gap-2">
         {(
           [
@@ -78,25 +88,19 @@ export function CopilotSummaryPanel({ projectId }: { projectId: string }) {
                 : "border-aistroyka-border-subtle text-aistroyka-text-secondary hover:bg-aistroyka-surface-raised"
             }`}
           >
-            {uc.replace(/([A-Z])/g, " $1").trim()}
+            {useCaseLabel[uc]}
           </button>
         ))}
       </div>
-      {isError && !showDemoMode && (
-        <ErrorState
-          message="Brief unavailable"
-          onRetry={() => void (refetch as () => Promise<unknown>)()}
-        />
-      )}
       {isPending && <Skeleton className="h-20 w-full" />}
       {showDemoMode && (
         <div className="space-y-3 text-aistroyka-subheadline" data-demo-mode>
           <p className="text-aistroyka-caption font-medium uppercase tracking-wide text-aistroyka-text-tertiary">
-            Sample insights (no data yet)
+            {tDetail("sampleInsightsNoDataYet")}
           </p>
           <p className="text-aistroyka-text-primary">{DEMO_SUMMARY}</p>
           <div>
-            <span className="font-medium text-aistroyka-text-primary">Top risks: </span>
+            <span className="font-medium text-aistroyka-text-primary">{tDetail("topRisks")}: </span>
             <ul className="mt-1 list-inside list-disc text-aistroyka-text-secondary">
               {DEMO_RISKS.map((r, i) => (
                 <li key={i}>{r}</li>
@@ -104,7 +108,7 @@ export function CopilotSummaryPanel({ projectId }: { projectId: string }) {
             </ul>
           </div>
           <div>
-            <span className="font-medium text-aistroyka-text-primary">Recommendations: </span>
+            <span className="font-medium text-aistroyka-text-primary">{tDetail("recommendations")}: </span>
             <ul className="mt-1 list-inside list-disc text-aistroyka-text-secondary">
               {DEMO_RECOMMENDATIONS.map((r, i) => (
                 <li key={i}>{r}</li>
@@ -119,12 +123,12 @@ export function CopilotSummaryPanel({ projectId }: { projectId: string }) {
             {brief}
           </p>
           <p className="mt-2 text-aistroyka-caption text-aistroyka-text-tertiary">
-            Source: {data.source} · {new Date(data.at).toLocaleString()}
+            {tDetail("source")}: {data.source} · {new Date(data.at).toLocaleString()}
           </p>
         </>
       )}
       {!isPending && !isError && data && !brief && !showDemoMode && (
-        <p className="text-aistroyka-subheadline text-aistroyka-text-tertiary">No brief content</p>
+        <p className="text-aistroyka-subheadline text-aistroyka-text-tertiary">{tDetail("noBriefContent")}</p>
       )}
     </IntelligenceCard>
   );

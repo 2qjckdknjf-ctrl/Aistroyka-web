@@ -6,8 +6,10 @@ const FALLBACK_T = (k: string) => k;
 
 export default async function ApprovalsPage() {
   let t = FALLBACK_T;
+  let tNav = FALLBACK_T;
   try {
     t = (await getTranslations("dashboard")) as (key: string) => string;
+    tNav = (await getTranslations("nav")) as (key: string) => string;
   } catch {
     // i18n fallback
   }
@@ -15,8 +17,8 @@ export default async function ApprovalsPage() {
   return (
     <>
       <SectionHeader
-        title="Approvals"
-        subtitle="Review and approve pending reports. Oldest first."
+        title={tNav("approvals")}
+        subtitle={t("approvalsSubtitle")}
       />
       <DashboardApprovalsClient />
     </>

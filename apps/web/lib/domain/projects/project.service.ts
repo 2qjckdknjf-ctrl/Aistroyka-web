@@ -23,6 +23,18 @@ export async function getProject(
   return { data, error: null };
 }
 
+/**
+ * Internal workspace project resolver.
+ * Explicit alias used by multiple manager/internal routes and tests.
+ */
+export async function getProjectForInternalWorkspace(
+  supabase: SupabaseClient,
+  ctx: TenantContext,
+  projectId: string
+): Promise<{ data: Project | null; error: string | null }> {
+  return getProject(supabase, ctx, projectId);
+}
+
 export async function createProject(
   supabase: SupabaseClient,
   ctx: TenantContext,

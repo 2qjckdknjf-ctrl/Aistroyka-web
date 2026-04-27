@@ -1,0 +1,93 @@
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
+import { Card, SectionHeader, Skeleton, EmptyState, Badge } from "@/components/ui";
+import { discussionStatusBadgeClass, formatStatusLabel } from "../../statusBadgeStyles";
+
+type Row = {
+  id: string;
+  kind: string;
+  status: string;
+  title: string;
+  updated_at: string;
+};
+
+async function fetchList(projectId: string): Promise<Row[]> {
+  const res = await fetch(`/api/v1/projects/${projectId}/stakeholder-discussions`, { credentials: "include" });
+  if (!res.ok) {
+    const j = await res.json().catch(() => ({}));
+    throw new Error((j as { error?: string }).error ?? "Failed to load");
+  }
+  const j = await res.json();
+  return j.data ?? [];
+}
+
+export function ClientPortalDiscussionsListClient({ projectId }: { projectId: string }) {
+  const tPage = useTranslations("dashboardPageMeta");
+  const tDetail = useTranslations("dashboardDetail");
+  const q = useQuery({
+    queryKey: ["stakeholder-discussions", projectId],
+    queryFn: () => fetchList(projectId),
+  });
+
+  if (q.isPending) {
+    return (
+      <Card>
+        <Skeleton className="h-40" />
+      </Card>
+    );
+  }
+
+  if (q.isError) {
+    return (
+      <Card>
+        <EmptyState
+          icon={<span className="text-2xl">💬</span>}
+          title={tDetail("unableToLoadDiscussions")}
+          subtitle={q.error instanceof Error ? q.error.message : tDetail("tryAgainLater")}
+        />
+      </Card>
+    );
+  }
+
+  const rows = q.data ?? [];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center gap-3">
+        <Link
+          href={`/dashboard/projects/${projectId}/client`}
+          className="text-aistroyka-subheadline text-aistroyka-accent hover:underline"
+        >
+          {tDetail("backToClientPortal")}
+        </Link>
+      </div>
+      <SectionHeader title={tPage("discussionsTitle")} subtitle={tPage("discussionsSubtitle")} />
+
+      <Card className="p-4">
+        {rows.length === 0 ? (
+          <p className="text-sm text-aistroyka-text-secondary">{tPage("noOpenDiscussions")}</p>
+        ) : (
+          <ul className="space-y-3">
+            {rows.map((r) => (
+              <li key={r.id} className="rounded border border-aistroyka-border-subtle p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <Link
+                    href={`/dashboard/projects/${projectId}/client/discussions/${r.id}`}
+                    className="font-medium text-aistroyka-accent hover:underline"
+                  >
+                    {r.title}
+                  </Link>
+                  <Badge className={discussionStatusBadgeClass(r.status)}>{formatStatusLabel(r.status)}</Badge>
+                </div>
+                <p className="mt-1 text-xs text-aistroyka-text-tertiary capitalize">{r.kind.replace(/_/g, " ")}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+    </div>
+  );
+}

@@ -1,24 +1,27 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import type { ReportSignalData } from "./types";
 import { IntelligenceCard } from "./IntelligenceCard";
 import { SeverityBadge } from "./SeverityBadge";
 
 export function ReportingDisciplineCard({
   signals,
-  emptyMessage = "No reporting issues",
+  emptyMessage,
 }: {
   signals: ReportSignalData[];
   emptyMessage?: string;
 }) {
+  const tDetail = useTranslations("dashboardDetail");
+  const resolvedEmptyMessage = emptyMessage ?? tDetail("noReportingIssues");
   return (
-    <IntelligenceCard title="Reporting discipline" aria-label="Reporting discipline">
+    <IntelligenceCard title={tDetail("reportingDiscipline")} aria-label={tDetail("reportingDiscipline")}>
       {signals.length === 0 ? (
         <p className="text-aistroyka-subheadline text-aistroyka-text-tertiary">
-          {emptyMessage}
+          {resolvedEmptyMessage}
         </p>
       ) : (
-        <ul className="space-y-2" aria-label="Report signals">
+        <ul className="space-y-2" aria-label={tDetail("reportSignals")}>
           {signals.slice(0, 5).map((s, i) => (
             <li key={s.at + (s.dayId ?? "") + i} className="flex flex-col gap-1">
               <div className="flex flex-wrap items-center gap-2">

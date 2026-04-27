@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Skeleton,
@@ -113,22 +114,30 @@ function formatAmount(amount: number, currency: string): string {
   return `${amount.toLocaleString("ru-RU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })} ${currency}`;
 }
 
-function categoryLabel(cat: string): string {
+function categoryLabel(cat: string, tDetail: (key: string) => string): string {
   const map: Record<string, string> = {
-    materials: "Materials",
-    labor: "Labor",
-    equipment: "Equipment",
-    services: "Services",
-    other: "Other",
+    materials: tDetail("materials"),
+    labor: tDetail("labor"),
+    equipment: tDetail("equipment"),
+    services: tDetail("services"),
+    other: tDetail("other"),
   };
   return map[cat] ?? cat;
 }
 
-function statusLabel(status: string): string {
-  return status.replace("_", " ");
+function statusLabel(status: string, tDetail: (key: string) => string): string {
+  const map: Record<string, string> = {
+    planned: tDetail("planned"),
+    committed: tDetail("committed"),
+    incurred: tDetail("incurred"),
+    approved: tDetail("approved"),
+    archived: tDetail("archived"),
+  };
+  return map[status] ?? status.replace("_", " ");
 }
 
 export function ProjectCostsPanel({ projectId }: { projectId: string }) {
+  const tDetail = useTranslations("dashboardDetail");
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<ProjectCostItem | null>(null);
@@ -165,7 +174,7 @@ export function ProjectCostsPanel({ projectId }: { projectId: string }) {
   if (query.isPending) return <Skeleton className="h-48" />;
   if (query.isError)
     return (
-      <p className="text-aistroyka-text-secondary p-4">Failed to load costs.</p>
+      <p className="text-aistroyka-text-secondary p-4">{tDetail("failedLoadCosts")}</p>
     );
 
   const { items, summary } = query.data ?? {
@@ -179,21 +188,21 @@ export function ProjectCostsPanel({ projectId }: { projectId: string }) {
     <div className="p-4 space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-aistroyka-title3 font-semibold text-aistroyka-text-primary">
-          Budget & costs
+          {tDetail("budgetAndCosts")}
         </h3>
         <Button
           variant="primary"
           size="sm"
           onClick={() => setCreateOpen(true)}
-          aria-label="Add cost item"
+          aria-label={tDetail("addCostItem")}
         >
-          Add cost item
+          {tDetail("addCostItem")}
         </Button>
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="border-l-4 border-l-aistroyka-accent">
           <p className="text-aistroyka-caption font-medium uppercase tracking-wide text-aistroyka-text-tertiary">
-            Planned total
+            {tDetail("plannedTotal")}
           </p>
           <p className="mt-1 text-aistroyka-title3 font-semibold text-aistroyka-text-primary">
             {formatAmount(summary.planned_total, summary.currency)}
@@ -201,7 +210,7 @@ export function ProjectCostsPanel({ projectId }: { projectId: string }) {
         </Card>
         <Card className="border-l-4 border-l-aistroyka-info">
           <p className="text-aistroyka-caption font-medium uppercase tracking-wide text-aistroyka-text-tertiary">
-            Actual total
+            {tDetail("actualTotal")}
           </p>
           <p className="mt-1 text-aistroyka-title3 font-semibold text-aistroyka-text-primary">
             {formatAmount(summary.actual_total, summary.currency)}
@@ -211,28 +220,28 @@ export function ProjectCostsPanel({ projectId }: { projectId: string }) {
           className={`border-l-4 ${summary.over_budget ? "border-l-aistroyka-error" : "border-l-aistroyka-success"}`}
         >
           <p className="text-aistroyka-caption font-medium uppercase tracking-wide text-aistroyka-text-tertiary">
-            Status
+            {tDetail("status")}
           </p>
           <p className="mt-1 text-aistroyka-title3 font-semibold">
             {summary.item_count === 0 ? (
-              <span className="text-aistroyka-text-tertiary">No budget configured</span>
+              <span className="text-aistroyka-text-tertiary">{tDetail("noBudgetConfigured")}</span>
             ) : summary.over_budget ? (
-              <span className="text-aistroyka-error">Over budget</span>
+              <span className="text-aistroyka-error">{tDetail("overBudget")}</span>
             ) : hasBudgetNoActuals ? (
-              <span className="text-aistroyka-text-secondary">No actuals yet</span>
+              <span className="text-aistroyka-text-secondary">{tDetail("noActualsYet")}</span>
             ) : (
-              <span className="text-aistroyka-success">On budget</span>
+              <span className="text-aistroyka-success">{tDetail("onBudget")}</span>
             )}
           </p>
           {summary.item_count > 0 && summary.variance_amount !== undefined && summary.variance_amount !== 0 && (
             <p className="mt-0.5 text-aistroyka-caption text-aistroyka-text-secondary">
-              Variance: {summary.variance_amount > 0 ? "+" : ""}{formatAmount(summary.variance_amount, summary.currency)}
+              {tDetail("variance")}: {summary.variance_amount > 0 ? "+" : ""}{formatAmount(summary.variance_amount, summary.currency)}
             </p>
           )}
         </Card>
         <Card className="border-l-4 border-l-aistroyka-text-tertiary">
           <p className="text-aistroyka-caption font-medium uppercase tracking-wide text-aistroyka-text-tertiary">
-            Cost items
+            {tDetail("costItems")}
           </p>
           <p className="mt-1 text-aistroyka-title3 font-semibold text-aistroyka-text-primary">
             {summary.item_count}
@@ -243,26 +252,26 @@ export function ProjectCostsPanel({ projectId }: { projectId: string }) {
       {items.length === 0 ? (
         <EmptyState
           icon={<span className="text-2xl">💰</span>}
-          title="No cost items yet"
-          subtitle="Add cost items to track planned vs actual spending."
+          title={tDetail("noCostItemsYet")}
+          subtitle={tDetail("addCostItemsHint")}
           action={
             <Button variant="primary" size="sm" onClick={() => setCreateOpen(true)}>
-              Add cost item
+              {tDetail("addCostItem")}
             </Button>
           }
         />
       ) : (
-        <Table aria-label="Project cost items">
+        <Table aria-label={tDetail("projectCostItems")}>
           <TableHead>
             <TableRow>
-              <TableHeaderCell>Title</TableHeaderCell>
-              <TableHeaderCell>Category</TableHeaderCell>
-              <TableHeaderCell>Planned</TableHeaderCell>
-              <TableHeaderCell>Actual</TableHeaderCell>
-              <TableHeaderCell>Status</TableHeaderCell>
-              <TableHeaderCell>Linked to</TableHeaderCell>
-              <TableHeaderCell>Created</TableHeaderCell>
-              <TableHeaderCell>Actions</TableHeaderCell>
+              <TableHeaderCell>{tDetail("title")}</TableHeaderCell>
+              <TableHeaderCell>{tDetail("category")}</TableHeaderCell>
+              <TableHeaderCell>{tDetail("planned")}</TableHeaderCell>
+              <TableHeaderCell>{tDetail("actual")}</TableHeaderCell>
+              <TableHeaderCell>{tDetail("status")}</TableHeaderCell>
+              <TableHeaderCell>{tDetail("linkedTo")}</TableHeaderCell>
+              <TableHeaderCell>{tDetail("created")}</TableHeaderCell>
+              <TableHeaderCell>{tDetail("actions")}</TableHeaderCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -271,7 +280,7 @@ export function ProjectCostsPanel({ projectId }: { projectId: string }) {
               return (
                 <TableRow key={item.id}>
                   <TableCell className="font-medium">{item.title}</TableCell>
-                  <TableCell>{categoryLabel(item.category)}</TableCell>
+                  <TableCell>{categoryLabel(item.category, tDetail)}</TableCell>
                   <TableCell className="text-aistroyka-text-secondary">
                     {formatAmount(item.planned_amount, item.currency)}
                   </TableCell>
@@ -282,7 +291,7 @@ export function ProjectCostsPanel({ projectId }: { projectId: string }) {
                   </TableCell>
                   <TableCell>
                     <span className="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-aistroyka-text-tertiary/20 text-aistroyka-text-tertiary">
-                      {statusLabel(item.status)}
+                      {statusLabel(item.status, tDetail)}
                     </span>
                   </TableCell>
                   <TableCell className="text-aistroyka-text-secondary text-sm">
@@ -299,9 +308,9 @@ export function ProjectCostsPanel({ projectId }: { projectId: string }) {
                       size="sm"
                       onClick={() => setEditingItem(item)}
                       className="text-xs"
-                      aria-label={`Edit ${item.title}`}
+                      aria-label={`${tDetail("edit")} ${item.title}`}
                     >
-                      Edit
+                      {tDetail("edit")}
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -371,6 +380,7 @@ function EditCostItemModal({
   isSubmitting: boolean;
   error: string | null;
 }) {
+  const tDetail = useTranslations("dashboardDetail");
   const [category, setCategory] = useState(item.category);
   const [title, setTitle] = useState(item.title);
   const [plannedAmount, setPlannedAmount] = useState(String(item.planned_amount));
@@ -408,32 +418,32 @@ function EditCostItemModal({
   if (!open) return null;
 
   return (
-    <Modal open={open} onClose={onClose} title="Edit cost item">
+    <Modal open={open} onClose={onClose} title={tDetail("editCostItem")}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
           id="edit-cost-title"
-          label="Title"
+          label={tDetail("title")}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="e.g. Materials for phase 1"
+          placeholder={tDetail("materialsForPhaseExample")}
           required
           disabled={isSubmitting}
         />
         <div>
           <label htmlFor="edit-cost-category" className="mb-1.5 block text-[var(--aistroyka-font-subheadline)] font-medium text-aistroyka-text-primary">
-            Category
+            {tDetail("category")}
           </label>
           <Select id="edit-cost-category" value={category} onChange={(e) => setCategory(e.target.value)} disabled={isSubmitting}>
-            <option value="materials">Materials</option>
-            <option value="labor">Labor</option>
-            <option value="equipment">Equipment</option>
-            <option value="services">Services</option>
-            <option value="other">Other</option>
+            <option value="materials">{tDetail("materials")}</option>
+            <option value="labor">{tDetail("labor")}</option>
+            <option value="equipment">{tDetail("equipment")}</option>
+            <option value="services">{tDetail("services")}</option>
+            <option value="other">{tDetail("other")}</option>
           </Select>
         </div>
         <Input
           id="edit-cost-planned"
-          label="Planned amount"
+          label={tDetail("plannedAmount")}
           type="number"
           min={0}
           step="0.01"
@@ -444,7 +454,7 @@ function EditCostItemModal({
         />
         <Input
           id="edit-cost-actual"
-          label="Actual amount"
+          label={tDetail("actualAmount")}
           type="number"
           min={0}
           step="0.01"
@@ -454,21 +464,21 @@ function EditCostItemModal({
         />
         <div>
           <label htmlFor="edit-cost-status" className="mb-1.5 block text-[var(--aistroyka-font-subheadline)] font-medium text-aistroyka-text-primary">
-            Status
+            {tDetail("status")}
           </label>
           <Select id="edit-cost-status" value={status} onChange={(e) => setStatus(e.target.value)} disabled={isSubmitting}>
             {COST_STATUSES.map((s) => (
-              <option key={s} value={s}>{statusLabel(s)}</option>
+              <option key={s} value={s}>{statusLabel(s, tDetail)}</option>
             ))}
           </Select>
         </div>
         {milestones.length > 0 && (
           <div>
             <label htmlFor="edit-cost-milestone" className="mb-1.5 block text-[var(--aistroyka-font-subheadline)] font-medium text-aistroyka-text-primary">
-              Link to milestone (optional)
+              {tDetail("linkToMilestoneOptional")}
             </label>
             <Select id="edit-cost-milestone" value={milestoneId} onChange={(e) => setMilestoneId(e.target.value)} disabled={isSubmitting}>
-              <option value="">None</option>
+              <option value="">{tDetail("none")}</option>
               {milestones.map((m) => (
                 <option key={m.id} value={m.id}>{m.title} ({m.target_date})</option>
               ))}
@@ -479,9 +489,9 @@ function EditCostItemModal({
           <p className="text-sm text-aistroyka-error" role="alert">{error}</p>
         )}
         <div className="flex gap-2 justify-end pt-2">
-          <Button type="button" variant="secondary" onClick={onClose} disabled={isSubmitting}>Cancel</Button>
+          <Button type="button" variant="secondary" onClick={onClose} disabled={isSubmitting}>{tDetail("cancel")}</Button>
           <Button type="submit" variant="primary" disabled={isSubmitting || !title.trim() || isNaN(parseFloat(plannedAmount)) || parseFloat(plannedAmount) < 0}>
-            {isSubmitting ? "Saving…" : "Save"}
+            {isSubmitting ? tDetail("saving") : tDetail("save")}
           </Button>
         </div>
       </form>
@@ -506,6 +516,7 @@ function CreateCostItemModal({
   isSubmitting: boolean;
   error: string | null;
 }) {
+  const tDetail = useTranslations("dashboardDetail");
   const [category, setCategory] = useState<string>("other");
   const [title, setTitle] = useState("");
   const [plannedAmount, setPlannedAmount] = useState("");
@@ -530,32 +541,32 @@ function CreateCostItemModal({
   if (!open) return null;
 
   return (
-    <Modal open={open} onClose={onClose} title="Add cost item">
+    <Modal open={open} onClose={onClose} title={tDetail("addCostItem")}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
           id="cost-title"
-          label="Title"
+          label={tDetail("title")}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="e.g. Materials for phase 1"
+          placeholder={tDetail("materialsForPhaseExample")}
           required
           disabled={isSubmitting}
         />
         <div>
           <label htmlFor="cost-category" className="mb-1.5 block text-[var(--aistroyka-font-subheadline)] font-medium text-aistroyka-text-primary">
-            Category
+            {tDetail("category")}
           </label>
           <Select id="cost-category" value={category} onChange={(e) => setCategory(e.target.value)} disabled={isSubmitting}>
-            <option value="materials">Materials</option>
-            <option value="labor">Labor</option>
-            <option value="equipment">Equipment</option>
-            <option value="services">Services</option>
-            <option value="other">Other</option>
+            <option value="materials">{tDetail("materials")}</option>
+            <option value="labor">{tDetail("labor")}</option>
+            <option value="equipment">{tDetail("equipment")}</option>
+            <option value="services">{tDetail("services")}</option>
+            <option value="other">{tDetail("other")}</option>
           </Select>
         </div>
         <Input
           id="cost-planned"
-          label="Planned amount"
+          label={tDetail("plannedAmount")}
           type="number"
           min={0}
           step="0.01"
@@ -567,7 +578,7 @@ function CreateCostItemModal({
         />
         <Input
           id="cost-actual"
-          label="Actual amount (optional)"
+          label={tDetail("actualAmountOptional")}
           type="number"
           min={0}
           step="0.01"
@@ -579,10 +590,10 @@ function CreateCostItemModal({
         {milestones.length > 0 && (
           <div>
             <label htmlFor="cost-milestone" className="mb-1.5 block text-[var(--aistroyka-font-subheadline)] font-medium text-aistroyka-text-primary">
-              Link to milestone (optional)
+              {tDetail("linkToMilestoneOptional")}
             </label>
             <Select id="cost-milestone" value={milestoneId} onChange={(e) => setMilestoneId(e.target.value)} disabled={isSubmitting}>
-              <option value="">None</option>
+              <option value="">{tDetail("none")}</option>
               {milestones.map((m) => (
                 <option key={m.id} value={m.id}>
                   {m.title} ({m.target_date})
@@ -598,10 +609,10 @@ function CreateCostItemModal({
         )}
         <div className="flex gap-2 justify-end pt-2">
           <Button type="button" variant="secondary" onClick={onClose} disabled={isSubmitting}>
-            Cancel
+            {tDetail("cancel")}
           </Button>
           <Button type="submit" variant="primary" disabled={isSubmitting || !title.trim() || isNaN(parseFloat(plannedAmount)) || parseFloat(plannedAmount) < 0}>
-            {isSubmitting ? "Adding…" : "Add"}
+            {isSubmitting ? tDetail("adding") : tDetail("add")}
           </Button>
         </div>
       </form>

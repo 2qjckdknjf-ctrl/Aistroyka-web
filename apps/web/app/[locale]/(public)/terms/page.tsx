@@ -29,19 +29,19 @@ export default async function TermsPage({ params }: Props) {
       </p>
       <div className="prose prose-neutral mt-8 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-primary)]">
         <p className="text-[var(--aistroyka-text-secondary)]">
-          <strong>Placeholder — legal content.</strong> This page is intended for your final Terms of Service. Replace this block with your legal copy. Last updated: {new Date().toISOString().slice(0, 10)}.
+          <strong>{t("placeholderStrong")}</strong> {t("placeholderBody")} {t("lastUpdated")}: {new Date().toISOString().slice(0, 10)}.
         </p>
-        <h2 className="mt-8 text-[var(--aistroyka-font-title3)] font-semibold">1. Acceptance</h2>
+        <h2 className="mt-8 text-[var(--aistroyka-font-title3)] font-semibold">{t("section1Title")}</h2>
         <p className="text-[var(--aistroyka-text-secondary)]">
-          By using Aistroyka you agree to these terms and our Privacy Policy.
+          {t("section1Body")}
         </p>
-        <h2 className="mt-8 text-[var(--aistroyka-font-title3)] font-semibold">2. Use of service</h2>
+        <h2 className="mt-8 text-[var(--aistroyka-font-title3)] font-semibold">{t("section2Title")}</h2>
         <p className="text-[var(--aistroyka-text-secondary)]">
-          You must use the service in compliance with applicable law and not misuse or abuse the platform or other users.
+          {t("section2Body")}
         </p>
-        <h2 className="mt-8 text-[var(--aistroyka-font-title3)] font-semibold">3. Contact</h2>
+        <h2 className="mt-8 text-[var(--aistroyka-font-title3)] font-semibold">{t("section3Title")}</h2>
         <p className="text-[var(--aistroyka-text-secondary)]">
-          For terms-related inquiries, use the Contact page.
+          {t("section3Body")}
         </p>
       </div>
     </div>

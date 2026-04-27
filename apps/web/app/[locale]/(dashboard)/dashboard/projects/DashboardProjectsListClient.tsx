@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import {
   Table,
@@ -26,6 +27,7 @@ interface ProjectRow {
 }
 
 export function DashboardProjectsListClient() {
+  const tDetail = useTranslations("dashboardDetail");
   const { params, setParam } = useFilterParams();
   const [data, setData] = useState<ProjectRow[] | null>(null);
   const [loading, setLoading] = useState(true);
@@ -109,32 +111,32 @@ export function DashboardProjectsListClient() {
       </div>
       <Card className="p-0 overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-aistroyka-border-subtle px-4 py-3">
-          <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">Projects</h2>
+          <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">{tDetail("projects")}</h2>
           <button
             type="button"
             onClick={handleExportCsv}
             disabled={pageData.length === 0}
             className="rounded-[var(--aistroyka-radius-md)] border border-aistroyka-border-subtle bg-aistroyka-surface-raised px-3 py-1.5 text-aistroyka-caption font-medium text-aistroyka-text-primary hover:bg-aistroyka-surface focus:outline-none focus:ring-2 focus:ring-aistroyka-accent disabled:opacity-50"
           >
-            Export CSV
+            {tDetail("exportCsv")}
           </button>
         </div>
         {filtered.length === 0 ? (
           <div className="p-8">
             <EmptyState
               icon={<span className="text-2xl">📁</span>}
-              title={data?.length ? "No matching projects" : "No projects yet"}
-              subtitle={data?.length ? "Adjust filters or search." : "Create a project to get started."}
+              title={data?.length ? tDetail("noMatchingProjects") : tDetail("noProjectsYet")}
+              subtitle={data?.length ? tDetail("adjustFiltersOrSearch") : tDetail("createProjectToStart")}
             />
           </div>
         ) : (
           <>
-            <Table aria-label="Projects">
+            <Table aria-label={tDetail("projects")}>
               <TableHead>
                 <TableRow>
-                  <TableHeaderCell>Name</TableHeaderCell>
-                  <TableHeaderCell>Created</TableHeaderCell>
-                  <TableHeaderCell>Action</TableHeaderCell>
+                  <TableHeaderCell>{tDetail("name")}</TableHeaderCell>
+                  <TableHeaderCell>{tDetail("created")}</TableHeaderCell>
+                  <TableHeaderCell>{tDetail("action")}</TableHeaderCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -155,7 +157,7 @@ export function DashboardProjectsListClient() {
                         href={`/dashboard/projects/${p.id}`}
                         className="font-medium text-aistroyka-accent hover:underline focus:outline-none focus:ring-2 focus:ring-aistroyka-accent focus:ring-offset-2 rounded"
                       >
-                        Open
+                        {tDetail("open")}
                       </Link>
                     </TableCell>
                   </TableRow>

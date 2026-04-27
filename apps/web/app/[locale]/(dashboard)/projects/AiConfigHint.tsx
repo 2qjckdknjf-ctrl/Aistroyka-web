@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 
 /**
  * When there are active jobs, check if AI is configured. If not, show a short hint.
  */
 export function AiConfigHint({ showWhenActive }: { showWhenActive: boolean }) {
+  const tDetail = useTranslations("dashboardDetail");
   const [aiConfigured, setAiConfigured] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -34,11 +36,11 @@ export function AiConfigHint({ showWhenActive }: { showWhenActive: boolean }) {
       className="mb-4 rounded-aistroyka-lg border border-aistroyka-warning/50 bg-aistroyka-warning/20 px-4 py-3 text-sm text-aistroyka-text-primary"
       role="status"
     >
-      <p className="font-medium">AI analysis is not configured</p>
+      <p className="font-medium">{tDetail("aiAnalysisNotConfigured")}</p>
       <p className="mt-1 text-aistroyka-warning">
-        Set <code className="rounded bg-aistroyka-warning/20 px-1">AI_ANALYSIS_URL</code>{" "}
-        (e.g. to this app’s <code className="rounded bg-aistroyka-warning/20 px-1">/api/ai/analyze-image</code>) and{" "}
-        <code className="rounded bg-aistroyka-warning/20 px-1">OPENAI_API_KEY</code> in your environment so jobs can complete.
+        {tDetail("aiConfigHintPrefix")} <code className="rounded bg-aistroyka-warning/20 px-1">AI_ANALYSIS_URL</code>{" "}
+        {tDetail("aiConfigHintMiddle")} <code className="rounded bg-aistroyka-warning/20 px-1">/api/ai/analyze-image</code>) {tDetail("and")}{" "}
+        <code className="rounded bg-aistroyka-warning/20 px-1">OPENAI_API_KEY</code> {tDetail("aiConfigHintSuffix")}
       </p>
     </div>
   );

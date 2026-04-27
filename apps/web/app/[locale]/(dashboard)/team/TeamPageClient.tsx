@@ -46,7 +46,7 @@ export function TeamPageClient({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data.error ?? "Invite failed");
+        setError(data.error ?? t("inviteError"));
         return;
       }
       setMessage(t("inviteSuccess"));
@@ -69,7 +69,7 @@ export function TeamPageClient({
         body: JSON.stringify({ user_id: userId }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) setError(data.error ?? "Failed");
+      if (!res.ok) setError(data.error ?? t("inviteError"));
       else router.refresh();
     } finally {
       setRevoking(null);
@@ -79,7 +79,7 @@ export function TeamPageClient({
   function copyLink() {
     if (inviteLink) {
       navigator.clipboard.writeText(inviteLink);
-      setMessage("Link copied.");
+      setMessage(t("copyLink"));
     }
   }
 
@@ -98,7 +98,7 @@ export function TeamPageClient({
         <section className={`card ${inviteDisabled ? "opacity-75" : ""}`}>
           <h2 className="text-lg font-semibold text-aistroyka-text-primary">{t("invite")}</h2>
           {inviteDisabled && (
-            <p className="mt-2 text-sm text-aistroyka-warning">Apply the database migrations (see message above) to enable invitations.</p>
+            <p className="mt-2 text-sm text-aistroyka-warning">{t("migrationRequiredTitle")}</p>
           )}
           <form onSubmit={handleInvite} className="mt-4 flex flex-wrap items-end gap-3">
             <div className="min-w-[200px] flex-1">
@@ -187,7 +187,7 @@ export function TeamPageClient({
                   <span className="text-sm text-aistroyka-text-primary">{inv.email}</span>
                   <span className="text-sm text-aistroyka-text-secondary">{roleLabel(inv.role)}</span>
                   <span className="text-xs text-aistroyka-text-tertiary">
-                    expires {new Date(inv.expires_at).toLocaleDateString()}
+                    {new Date(inv.expires_at).toLocaleDateString()}
                   </span>
                 </li>
               ))}

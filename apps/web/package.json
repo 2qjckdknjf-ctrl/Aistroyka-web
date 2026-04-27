@@ -12,6 +12,7 @@
     "test": "vitest run --maxWorkers=1",
     "test:manager-layer": "bun test lib/dashboard/alert-destinations.test.ts lib/dashboard/priority-actions.test.ts lib/intelligence/next-action-href.test.ts",
     "e2e": "playwright test",
+    "e2e:pilot": "playwright test tests/e2e/dashboard-button-audit.spec.ts tests/e2e/sync-contract.spec.ts tests/e2e/core-flow.spec.ts",
     "test:e2e": "playwright test",
     "postinstall": "node scripts/link-next-if-workspace.cjs",
     "prepare": "node scripts/prepare.cjs",

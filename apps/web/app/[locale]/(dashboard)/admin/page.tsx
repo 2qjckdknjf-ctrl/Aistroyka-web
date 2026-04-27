@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
 import { JobStatusBadge } from "../projects/JobStatusBadge";
 import { AISystemHealth } from "./AISystemHealth";
@@ -15,6 +16,8 @@ type JobRow = {
 };
 
 export default async function AdminPage() {
+  const tPage = await getTranslations("dashboardPageMeta");
+  const tDetail = await getTranslations("dashboardDetail");
   const supabase = await createClient();
   const { data: jobs } = await supabase
     .from("analysis_jobs")
@@ -45,36 +48,36 @@ export default async function AdminPage() {
     <>
       <Card className="mb-aistroyka-8 border-l-4 border-l-aistroyka-accent">
         <h1 className="text-aistroyka-title2 font-bold tracking-tight text-aistroyka-text-primary sm:text-aistroyka-title">
-          Admin — Jobs (read-only)
+          {tDetail("adminJobsReadOnly")}
         </h1>
         <p className="mt-aistroyka-1 text-aistroyka-subheadline text-aistroyka-text-secondary">
-          All jobs across projects. No actions available.
+          {tDetail("allJobsAcrossProjectsNoActions")}
         </p>
         <p className="mt-aistroyka-3 flex flex-wrap gap-aistroyka-4">
-          <a href="/admin/leads" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">Contact leads →</a>
-          <a href="/admin/governance" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">AI Governance & Audit →</a>
-          <a href="/admin/trust" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">AI Trust Dashboard →</a>
+          <a href="/admin/leads" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">{tDetail("contactLeadsArrow")}</a>
+          <a href="/admin/governance" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">{tDetail("aiGovernanceAuditArrow")}</a>
+          <a href="/admin/trust" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">{tDetail("aiTrustDashboardArrow")}</a>
         </p>
       </Card>
 
       <section className="mb-aistroyka-8">
-        <SectionHeader title="AI System Health" />
+        <SectionHeader title={tPage("aiSystemHealthTitle")} />
         <AISystemHealth result={calibrationResult} />
       </section>
 
       <section>
-        <SectionHeader title="Jobs" />
+        <SectionHeader title={tPage("jobsTitle")} />
         {jobs && jobs.length > 0 ? (
           <Card className="overflow-hidden p-0">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[320px] text-left text-aistroyka-subheadline">
                 <thead>
                   <tr className="border-b border-aistroyka-border-subtle bg-aistroyka-surface-raised">
-                    <th className="table-cell font-semibold text-aistroyka-text-primary">Job ID</th>
-                    <th className="table-cell font-semibold text-aistroyka-text-primary">Project ID</th>
-                    <th className="table-cell font-semibold text-aistroyka-text-primary">Status</th>
-                    <th className="table-cell font-semibold text-aistroyka-text-primary">Started</th>
-                    <th className="table-cell font-semibold text-aistroyka-text-primary">Error</th>
+                    <th className="table-cell font-semibold text-aistroyka-text-primary">{tDetail("jobId")}</th>
+                    <th className="table-cell font-semibold text-aistroyka-text-primary">{tDetail("projectId")}</th>
+                    <th className="table-cell font-semibold text-aistroyka-text-primary">{tDetail("status")}</th>
+                    <th className="table-cell font-semibold text-aistroyka-text-primary">{tDetail("started")}</th>
+                    <th className="table-cell font-semibold text-aistroyka-text-primary">{tDetail("error")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -104,8 +107,8 @@ export default async function AdminPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
               }
-              title="No jobs yet"
-              subtitle="Analysis jobs will appear here."
+              title={tDetail("noJobsYet")}
+              subtitle={tDetail("analysisJobsAppearHere")}
             />
           </Card>
         )}

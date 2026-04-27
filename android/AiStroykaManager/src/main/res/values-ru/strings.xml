@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AiStroyka Manager</string>
+    <string name="manager_topbar_title">AiStroyka Manager</string>
+    <string name="action_sign_out">Выйти</string>
+    <string name="manager_login_prompt">Вход для руководителя</string>
+    <string name="label_email">Почта</string>
+    <string name="label_password">Пароль</string>
+    <string name="action_sign_in">Войти</string>
+    <string name="action_dismiss">Скрыть</string>
+    <string name="manager_project_filter">Фильтр по проекту</string>
+    <string name="manager_all_projects">Все проекты</string>
+    <string name="manager_reports_inbox">Входящие отчёты</string>
+    <string name="action_refresh">Обновить</string>
+    <string name="manager_home">Главная</string>
+    <string name="manager_reports_title">Отчёты</string>
+    <string name="manager_submitted_only">Только отправленные</string>
+    <string name="manager_report_row_status">Статус: %1$s · Медиа: %2$d</string>
+    <string name="manager_report_row_ai">ИИ: %1$s</string>
+    <string name="manager_no_report">Нет отчёта</string>
+    <string name="action_back">Назад</string>
+    <string name="manager_report_title">Отчёт %1$s</string>
+    <string name="label_status">Статус</string>
+    <string name="manager_status_line">Статус: %1$s</string>
+    <string name="label_submitted">Отправлен</string>
+    <string name="manager_submitted_line">Отправлен: %1$s</string>
+    <string name="label_reviewed">Проверен</string>
+    <string name="manager_reviewed_line">Проверен: %1$s</string>
+    <string name="label_manager_note">Заметка руководителя</string>
+    <string name="manager_note_line">Заметка: %1$s</string>
+    <string name="manager_ai_analysis_jobs">Задачи ИИ-анализа</string>
+    <string name="manager_pipeline_line">Конвейер: %1$s · задач: %2$d</string>
+    <string name="manager_media_jobs_line">Медиа: %1$d · обработано: %2$d · ошибок: %3$d</string>
+    <string name="manager_no_analysis_status">Статус анализа не загружен.</string>
+    <string name="manager_media">Медиа</string>
+    <string name="manager_no_media_rows">В отчёте нет строк медиа.</string>
+    <string name="manager_note_optional">Заметка руководителя (необязательно)</string>
+    <string name="manager_approve">Утвердить</string>
+    <string name="manager_reject">Отклонить</string>
+    <string name="manager_request_changes">Запросить правки</string>
+    <string name="manager_review_only_submitted">Действия проверки доступны только для статуса «отправлен».</string>
+    <string name="content_desc_report_media">Медиа отчёта</string>
+    <string name="manager_media_id_line">Медиа: %1$s · сессия: %2$s</string>
+    <string name="manager_no_preview_url">Нет URL превью (получите через список медиа проекта).</string>
+</resources>

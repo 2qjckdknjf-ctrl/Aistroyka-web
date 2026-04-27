@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import {
   Card,
@@ -37,14 +38,6 @@ interface TaskRow {
   created_at?: string;
 }
 
-const STATUS_OPTIONS = [
-  { value: "", label: "All" },
-  { value: "pending", label: "Pending" },
-  { value: "in_progress", label: "In progress" },
-  { value: "done", label: "Done" },
-  { value: "cancelled", label: "Cancelled" },
-];
-
 function statusVariant(s: string): "neutral" | "success" | "warning" | "danger" {
   switch (s) {
     case "done":
@@ -59,7 +52,15 @@ function statusVariant(s: string): "neutral" | "success" | "warning" | "danger" 
 }
 
 export function DashboardTasksClient() {
+  const tDetail = useTranslations("dashboardDetail");
   const { params, setParam } = useFilterParams();
+  const STATUS_OPTIONS = [
+    { value: "", label: tDetail("all") },
+    { value: "pending", label: tDetail("pending") },
+    { value: "in_progress", label: tDetail("inProgress") },
+    { value: "done", label: tDetail("done") },
+    { value: "cancelled", label: tDetail("cancelled") },
+  ];
   const [data, setData] = useState<TaskRow[]>([]);
   const [total, setTotal] = useState(0);
   const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
@@ -223,18 +224,18 @@ export function DashboardTasksClient() {
         showStatus={true}
         statusOptions={STATUS_OPTIONS}
         showSearch={true}
-        searchPlaceholder="Search tasks…"
+        searchPlaceholder={tDetail("searchTasks")}
         showSavedViews={false}
       />
       <Card className="p-0 overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-aistroyka-border-subtle px-4 py-3">
-          <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">Tasks</h2>
+          <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">{tDetail("tasks")}</h2>
           <div className="flex items-center gap-2">
             <Button variant="secondary" onClick={exportCsv} className="text-sm">
-              Export CSV
+              {tDetail("exportCsv")}
             </Button>
             <Button onClick={() => setCreateOpen(true)} className="text-sm">
-              Create task
+              {tDetail("createTask")}
             </Button>
           </div>
         </div>
@@ -246,22 +247,22 @@ export function DashboardTasksClient() {
           <div className="p-8">
             <EmptyState
               icon={<span className="text-2xl">📋</span>}
-              title="No tasks"
-              subtitle="Create a task or adjust filters."
+              title={tDetail("noTasks")}
+              subtitle={tDetail("createTaskOrAdjustFilters")}
             />
           </div>
         ) : (
           <>
-            <Table aria-label="Tasks">
+            <Table aria-label={tDetail("tasks")}>
               <TableHead>
                 <TableRow>
-                  <TableHeaderCell>Title</TableHeaderCell>
-                  <TableHeaderCell>Project</TableHeaderCell>
-                  <TableHeaderCell>Status</TableHeaderCell>
-                  <TableHeaderCell>Assigned</TableHeaderCell>
-                  <TableHeaderCell>Due</TableHeaderCell>
-                  <TableHeaderCell>Report</TableHeaderCell>
-                  <TableHeaderCell>Actions</TableHeaderCell>
+                  <TableHeaderCell>{tDetail("title")}</TableHeaderCell>
+                  <TableHeaderCell>{tDetail("project")}</TableHeaderCell>
+                  <TableHeaderCell>{tDetail("status")}</TableHeaderCell>
+                  <TableHeaderCell>{tDetail("assigned")}</TableHeaderCell>
+                  <TableHeaderCell>{tDetail("due")}</TableHeaderCell>
+                  <TableHeaderCell>{tDetail("report")}</TableHeaderCell>
+                  <TableHeaderCell>{tDetail("actions")}</TableHeaderCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -292,6 +293,7 @@ export function DashboardTasksClient() {
                       ) : (
                         <Button variant="secondary" size="sm" onClick={() => setAssignTaskId(r.id)} className="text-xs">
                           Assign
+                          
                         </Button>
                       )}
                     </TableCell>
@@ -301,7 +303,7 @@ export function DashboardTasksClient() {
                     <TableCell>
                       {r.report_id ? (
                         <Link href={`/dashboard/daily-reports/${r.report_id}`} className="text-aistroyka-caption text-aistroyka-accent hover:underline">
-                          Report
+                          {tDetail("report")}
                         </Link>
                       ) : (
                         "—"
@@ -311,16 +313,17 @@ export function DashboardTasksClient() {
                       {r.status === "pending" || r.status === "in_progress" ? (
                         <>
                           <Button variant="secondary" size="sm" onClick={() => patchStatus(r.id, "done")} className="mr-1 text-xs">
-                            Done
+                            {tDetail("done")}
                           </Button>
                           <Button variant="secondary" size="sm" onClick={() => patchStatus(r.id, "cancelled")} className="text-xs">
-                            Cancel
+                            {tDetail("cancel")}
                           </Button>
                         </>
                       ) : null}
                       {!r.assigned_to && (
                         <Button variant="secondary" size="sm" onClick={() => setAssignTaskId(r.id)} className="ml-1 text-xs">
                           Assign
+                          
                         </Button>
                       )}
                     </TableCell>
@@ -344,14 +347,14 @@ export function DashboardTasksClient() {
       </Card>
 
       {createOpen && (
-        <Modal open={true} title="Create task" onClose={() => setCreateOpen(false)}>
+        <Modal open={true} title={tDetail("createTask")} onClose={() => setCreateOpen(false)}>
           <form onSubmit={handleCreate}>
             <div className="space-y-3">
               <label className="block text-aistroyka-caption font-medium text-aistroyka-text-secondary">
-                Project
+                {tDetail("project")}
               </label>
               <Select name="project_id" required>
-                <option value="">Select project</option>
+                <option value="">{tDetail("selectProject")}</option>
                 {projects.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.name}
@@ -359,28 +362,28 @@ export function DashboardTasksClient() {
                 ))}
               </Select>
               <label className="block text-aistroyka-caption font-medium text-aistroyka-text-secondary">
-                Title
+                {tDetail("title")}
               </label>
-              <Input name="title" required placeholder="Task title" />
+              <Input name="title" required placeholder={tDetail("taskTitle")} />
             </div>
             <div className="mt-4 flex justify-end gap-2">
               <Button type="button" variant="secondary" onClick={() => setCreateOpen(false)}>
-                Cancel
+                {tDetail("cancel")}
               </Button>
-              <Button type="submit">Create</Button>
+              <Button type="submit">{tDetail("create")}</Button>
             </div>
           </form>
         </Modal>
       )}
 
       {assignTaskId && (
-        <Modal open={true} title="Assign task" onClose={() => setAssignTaskId(null)}>
+        <Modal open={true} title={tDetail("assignTask")} onClose={() => setAssignTaskId(null)}>
           <div className="space-y-3">
             <label className="block text-aistroyka-caption font-medium text-aistroyka-text-secondary">
-              Worker
+              {tDetail("worker")}
             </label>
             <Select value={assigningWorkerId} onChange={(e) => setAssigningWorkerId(e.target.value)}>
-              <option value="">Select worker</option>
+              <option value="">{tDetail("selectWorker")}</option>
               {workers.map((w) => (
                 <option key={w.user_id} value={w.user_id}>
                   {w.user_id.slice(0, 8)}…
@@ -389,10 +392,10 @@ export function DashboardTasksClient() {
             </Select>
             <div className="mt-4 flex justify-end gap-2">
               <Button variant="secondary" onClick={() => setAssignTaskId(null)}>
-                Cancel
+                {tDetail("cancel")}
               </Button>
               <Button onClick={handleAssign} disabled={!assigningWorkerId}>
-                Assign
+                {tDetail("assign")}
               </Button>
             </div>
           </div>

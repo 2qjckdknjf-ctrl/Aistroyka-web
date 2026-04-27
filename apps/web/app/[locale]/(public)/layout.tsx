@@ -38,7 +38,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
         dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareSchema) }}
       />
       <PublicHeader />
-      <main className="flex-1">{children}</main>
+      <main className="min-w-0 flex-1">{children}</main>
       <PublicFooter />
     </div>
   );

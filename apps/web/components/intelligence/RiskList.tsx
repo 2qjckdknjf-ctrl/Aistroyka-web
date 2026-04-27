@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { getResourceHref } from "@/lib/intelligence/resource-links";
 import type { RiskSignalData } from "./types";
@@ -8,21 +9,23 @@ import { SeverityBadge } from "./SeverityBadge";
 export function RiskList({
   risks,
   maxItems = 5,
-  emptyMessage = "No risk signals",
+  emptyMessage,
 }: {
   risks: RiskSignalData[];
   maxItems?: number;
   emptyMessage?: string;
 }) {
+  const tDetail = useTranslations("dashboardDetail");
+  const resolvedEmptyMessage = emptyMessage ?? tDetail("noRiskSignals");
   if (risks.length === 0) {
     return (
       <p className="text-aistroyka-subheadline text-aistroyka-text-tertiary">
-        {emptyMessage}
+        {resolvedEmptyMessage}
       </p>
     );
   }
   return (
-    <ul className="space-y-2" aria-label="Risk list">
+    <ul className="space-y-2" aria-label={tDetail("riskList")}>
       {risks.slice(0, maxItems).map((r, i) => {
         const href =
           r.resourceType && r.resourceId
@@ -46,7 +49,7 @@ export function RiskList({
                 href={href}
                 className="mt-0.5 inline-block text-sm font-medium text-aistroyka-accent hover:underline"
               >
-                Open related →
+                {tDetail("openRelated")}
               </Link>
             )}
           </li>

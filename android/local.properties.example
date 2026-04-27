@@ -1,0 +1,11 @@
+# Copy to local.properties (gitignored). Android Studio usually creates sdk.dir only.
+# For Worker/Manager Supabase sign-in, add the same values as web / iOS Secrets.xcconfig:
+#
+# SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+# SUPABASE_ANON_KEY=eyJ...
+#
+# Or set SUPABASE_URL and SUPABASE_ANON_KEY in the environment when running Gradle.
+#
+# Optional override: BASE_URL=https://www.aistroyka.ai (default in build.gradle.kts; use www to avoid apex redirects during API calls)
+
+sdk.dir=/path/to/Android/sdk

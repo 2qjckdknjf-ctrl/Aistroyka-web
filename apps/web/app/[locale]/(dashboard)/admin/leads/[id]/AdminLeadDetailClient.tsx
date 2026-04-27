@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { Link } from "@/i18n/navigation";
 import { Card, Badge, Button, Textarea } from "@/components/ui";
@@ -20,6 +21,7 @@ type Lead = {
 const STATUS_OPTIONS = ["new", "reviewed", "contacted", "archived"] as const;
 
 export function AdminLeadDetailClient() {
+  const tDetail = useTranslations("dashboardDetail");
   const params = useParams();
   const id = params?.id as string | undefined;
   const [lead, setLead] = useState<Lead | null>(null);
@@ -44,7 +46,7 @@ export function AdminLeadDetailClient() {
         setError(null);
       })
       .catch((e) => {
-        setError(e instanceof Error ? e.message : "Failed to load");
+        setError(e instanceof Error ? e.message : tDetail("failedLoad"));
         setLead(null);
       })
       .finally(() => setLoading(false));
@@ -67,7 +69,7 @@ export function AdminLeadDetailClient() {
       body: JSON.stringify(body),
     })
       .then((res) => {
-        if (!res.ok) throw new Error("Update failed");
+        if (!res.ok) throw new Error(tDetail("updateFailed"));
         return res.json();
       })
       .then((json: { data: Lead }) => {
@@ -75,14 +77,14 @@ export function AdminLeadDetailClient() {
         setStatus(json.data.status);
         setNotes(json.data.notes ?? "");
       })
-      .catch(() => setError("Update failed"))
+      .catch(() => setError(tDetail("updateFailed")))
       .finally(() => setSaving(false));
   };
 
   if (!id) {
     return (
       <Card>
-        <p className="text-aistroyka-text-secondary">Missing lead id.</p>
+        <p className="text-aistroyka-text-secondary">{tDetail("missingLeadId")}</p>
       </Card>
     );
   }
@@ -92,7 +94,7 @@ export function AdminLeadDetailClient() {
       <Card>
         <p className="text-aistroyka-text-secondary">{error}</p>
         <Link href="/admin/leads" className="mt-4 inline-block text-aistroyka-accent hover:underline">
-          ← Back to leads
+          {tDetail("backToLeads")}
         </Link>
       </Card>
     );
@@ -112,7 +114,7 @@ export function AdminLeadDetailClient() {
         href="/admin/leads"
         className="inline-block text-aistroyka-subheadline font-medium text-aistroyka-text-secondary hover:text-aistroyka-accent"
       >
-        ← Back to leads
+        {tDetail("backToLeads")}
       </Link>
 
       <Card className="p-6">
@@ -133,16 +135,16 @@ export function AdminLeadDetailClient() {
         </div>
 
         <div className="mt-6 border-t border-aistroyka-border-subtle pt-6">
-          <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">Message</h2>
+          <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">{tDetail("message")}</h2>
           <p className="mt-2 whitespace-pre-wrap text-aistroyka-body text-aistroyka-text-secondary">{lead.message}</p>
         </div>
 
         <div className="mt-6 border-t border-aistroyka-border-subtle pt-6">
-          <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">Status & notes</h2>
+          <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">{tDetail("statusAndNotes")}</h2>
           <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-end sm:gap-6">
             <div className="min-w-[140px]">
               <label htmlFor="lead-status" className="mb-1 block text-aistroyka-caption font-medium text-aistroyka-text-secondary">
-                Status
+                {tDetail("status")}
               </label>
               <select
                 id="lead-status"
@@ -159,7 +161,7 @@ export function AdminLeadDetailClient() {
             </div>
             <div className="flex-1">
               <label htmlFor="lead-notes" className="mb-1 block text-aistroyka-caption font-medium text-aistroyka-text-secondary">
-                Notes (internal)
+                {tDetail("notesInternal")}
               </label>
               <Textarea
                 id="lead-notes"
@@ -167,11 +169,11 @@ export function AdminLeadDetailClient() {
                 onChange={(e) => setNotes(e.target.value)}
                 rows={3}
                 className="w-full"
-                placeholder="Optional notes…"
+                placeholder={tDetail("optionalNotes")}
               />
             </div>
             <Button onClick={handleSave} loading={saving} disabled={saving}>
-              Save
+              {tDetail("save")}
             </Button>
           </div>
         </div>

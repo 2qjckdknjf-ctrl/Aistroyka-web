@@ -74,6 +74,7 @@ build-server-ts-head.log
 # env
 .env
 .env.local
+.env.e2e
 apps/web/.env.local
 
 # local Supabase (no secrets committed)
@@ -102,6 +103,10 @@ next-env.d.ts
 
 # DevOps backup list (extra exclusions)
 .env*
+!.env.e2e.example
+!.env.pilot.example
+.env.pilot
+apps/web/tests/e2e/_state/
 .idea
 .vscode
 tmp

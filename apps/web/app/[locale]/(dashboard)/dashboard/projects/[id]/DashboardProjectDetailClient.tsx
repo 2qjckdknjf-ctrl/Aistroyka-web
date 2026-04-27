@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@/i18n/navigation";
@@ -101,6 +102,8 @@ async function fetchProjectAi(projectId: string, page: number): Promise<{ data: 
 }
 
 export function DashboardProjectDetailClient({ projectId }: { projectId: string }) {
+  const tPage = useTranslations("dashboardPageMeta");
+  const tDetail = useTranslations("dashboardDetail");
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab");
   const [activeTab, setActiveTab] = useState(
@@ -187,11 +190,11 @@ export function DashboardProjectDetailClient({ projectId }: { projectId: string 
       <Card>
         <EmptyState
           icon={<span className="text-2xl">⚠️</span>}
-          title="Project not found"
-          subtitle={projectQuery.error instanceof Error ? projectQuery.error.message : "You may not have access to this project."}
+          title={tDetail("projectNotFound")}
+          subtitle={projectQuery.error instanceof Error ? projectQuery.error.message : tDetail("youMayNotHaveAccess")}
           action={
             <Link href="/dashboard/projects" className="text-aistroyka-accent hover:underline">
-              ← Back to projects
+              {tDetail("backToProjects")}
             </Link>
           }
         />
@@ -206,61 +209,61 @@ export function DashboardProjectDetailClient({ projectId }: { projectId: string 
           href="/dashboard/projects"
           className="text-aistroyka-subheadline text-aistroyka-accent hover:underline focus:outline-none focus:ring-2 focus:ring-aistroyka-accent focus:ring-offset-2 rounded"
         >
-          ← Projects
+          {tDetail("projects")}
         </Link>
       </div>
-      <SectionHeader title={project.name} subtitle="Project overview and tabs." />
+      <SectionHeader title={project.name} subtitle={tPage("projectOverviewSubtitle")} />
 
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6" aria-label="Project summary">
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6" aria-label={tDetail("projectSummary")}>
         <Card className="border-l-4 border-l-aistroyka-accent">
-          <p className="text-aistroyka-caption font-medium uppercase tracking-wide text-aistroyka-text-tertiary">Active workers</p>
+          <p className="text-aistroyka-caption font-medium uppercase tracking-wide text-aistroyka-text-tertiary">{tDetail("activeWorkers")}</p>
           <p className="mt-1 text-aistroyka-title3 font-semibold text-aistroyka-text-primary">{summary.activeWorkers}</p>
         </Card>
         <Card className="border-l-4 border-l-aistroyka-info">
-          <p className="text-aistroyka-caption font-medium uppercase tracking-wide text-aistroyka-text-tertiary">Open reports</p>
+          <p className="text-aistroyka-caption font-medium uppercase tracking-wide text-aistroyka-text-tertiary">{tDetail("openReports")}</p>
           <p className="mt-1 text-aistroyka-title3 font-semibold text-aistroyka-text-primary">{summary.openReports}</p>
         </Card>
         <Card className="border-l-4 border-l-aistroyka-success">
-          <p className="text-aistroyka-caption font-medium uppercase tracking-wide text-aistroyka-text-tertiary">AI analyses</p>
+          <p className="text-aistroyka-caption font-medium uppercase tracking-wide text-aistroyka-text-tertiary">{tDetail("aiAnalyses")}</p>
           <p className="mt-1 text-aistroyka-title3 font-semibold text-aistroyka-text-primary">{summary.aiAnalyses}</p>
         </Card>
         <Card className="border-l-4 border-l-aistroyka-warning">
-          <p className="text-aistroyka-caption font-medium uppercase tracking-wide text-aistroyka-text-tertiary">Pending uploads</p>
+          <p className="text-aistroyka-caption font-medium uppercase tracking-wide text-aistroyka-text-tertiary">{tDetail("pendingUploads")}</p>
           <p className="mt-1 text-aistroyka-title3 font-semibold text-aistroyka-text-primary">—</p>
         </Card>
       </section>
 
       <Card>
-        <Tabs aria-label="Project sections">
+        <Tabs aria-label={tDetail("projectSections")}>
           <Tab id="tab-workers" selected={activeTab === "workers"} onSelect={() => setActiveTab("workers")} aria-controls="panel-workers">
-            Workers
+            {tDetail("workers")}
           </Tab>
           <Tab id="tab-contractors" selected={activeTab === "contractors"} onSelect={() => setActiveTab("contractors")} aria-controls="panel-contractors">
-            Contractors
+            {tDetail("contractors")}
           </Tab>
           <Tab id="tab-reports" selected={activeTab === "reports"} onSelect={() => setActiveTab("reports")} aria-controls="panel-reports">
-            Reports
+            {tDetail("reports")}
           </Tab>
           <Tab id="tab-uploads" selected={activeTab === "uploads"} onSelect={() => setActiveTab("uploads")} aria-controls="panel-uploads">
-            Uploads
+            {tDetail("uploads")}
           </Tab>
           <Tab id="tab-ai" selected={activeTab === "ai"} onSelect={() => setActiveTab("ai")} aria-controls="panel-ai">
-            AI
+            {tDetail("ai")}
           </Tab>
           <Tab id="tab-intelligence" selected={activeTab === "intelligence"} onSelect={() => setActiveTab("intelligence")} aria-controls="panel-intelligence">
-            Intelligence
+            {tDetail("intelligence")}
           </Tab>
           <Tab id="tab-schedule" selected={activeTab === "schedule"} onSelect={() => setActiveTab("schedule")} aria-controls="panel-schedule">
-            Schedule
+            {tDetail("schedule")}
           </Tab>
           <Tab id="tab-documents" selected={activeTab === "documents"} onSelect={() => setActiveTab("documents")} aria-controls="panel-documents">
-            Documents
+            {tDetail("documents")}
           </Tab>
           <Tab id="tab-costs" selected={activeTab === "costs"} onSelect={() => setActiveTab("costs")} aria-controls="panel-costs">
-            Costs
+            {tDetail("costs")}
           </Tab>
           <Tab id="tab-estimate" selected={activeTab === "estimate"} onSelect={() => setActiveTab("estimate")} aria-controls="panel-estimate">
-            Estimate
+            {tDetail("estimate")}
           </Tab>
         </Tabs>
 
@@ -332,21 +335,22 @@ function ProjectWorkersPanel({
   page: number;
   onPageChange: (p: number) => void;
 }) {
+  const tDetail = useTranslations("dashboardDetail");
   if (query.isPending) return <Skeleton className="h-48" />;
-  if (query.isError) return <p className="text-aistroyka-text-secondary p-4">Failed to load workers.</p>;
+  if (query.isError) return <p className="text-aistroyka-text-secondary p-4">{tDetail("failedLoadWorkers")}</p>;
   const { data: rows = [], total } = query.data ?? { data: [], total: 0 };
   if (rows.length === 0 && total === 0) {
-    return <EmptyState icon={<span className="text-2xl">👷</span>} title="Workers" subtitle="No project members yet." />;
+    return <EmptyState icon={<span className="text-2xl">👷</span>} title={tDetail("workers")} subtitle={tDetail("noProjectMembersYet")} />;
   }
   return (
     <div className="p-4">
-      <Table aria-label="Project workers">
+      <Table aria-label={tDetail("projectWorkers")}>
         <TableHead>
           <TableRow>
-            <TableHeaderCell>User ID</TableHeaderCell>
-            <TableHeaderCell>Role</TableHeaderCell>
-            <TableHeaderCell>Status</TableHeaderCell>
-            <TableHeaderCell>Created</TableHeaderCell>
+            <TableHeaderCell>{tDetail("userId")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("role")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("status")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("created")}</TableHeaderCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -385,30 +389,31 @@ function ProjectContractorsPanel({
   page: number;
   onPageChange: (p: number) => void;
 }) {
+  const tDetail = useTranslations("dashboardDetail");
   if (query.isPending) return <Skeleton className="h-48" />;
-  if (query.isError) return <p className="text-aistroyka-text-secondary p-4">Failed to load contractors.</p>;
+  if (query.isError) return <p className="text-aistroyka-text-secondary p-4">{tDetail("failedLoadContractors")}</p>;
   const { data: rows = [], total } = query.data ?? { data: [], total: 0 };
   if (rows.length === 0 && total === 0) {
     return (
       <EmptyState
         icon={<span className="text-2xl">📋</span>}
-        title="Contractors"
-        subtitle="No contractors on this project. Add members with role “contractor” in project workers."
+        title={tDetail("contractors")}
+        subtitle={tDetail("noContractorsInProject")}
       />
     );
   }
   return (
     <div className="p-4">
       <p className="text-aistroyka-caption text-aistroyka-text-secondary mb-3">
-        Project members with role <strong>contractor</strong>. Use links to view profile or tasks assigned to each.
+        {tDetail("contractorsHintPrefix")} <strong>{tDetail("contractor").toLowerCase()}</strong>. {tDetail("contractorsHintSuffix")}
       </p>
-      <Table aria-label="Project contractors">
+      <Table aria-label={tDetail("projectContractors")}>
         <TableHead>
           <TableRow>
-            <TableHeaderCell>Contractor</TableHeaderCell>
-            <TableHeaderCell>Status</TableHeaderCell>
-            <TableHeaderCell>Created</TableHeaderCell>
-            <TableHeaderCell>Actions</TableHeaderCell>
+            <TableHeaderCell>{tDetail("contractor")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("status")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("created")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("actions")}</TableHeaderCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -426,7 +431,7 @@ function ProjectContractorsPanel({
                   href={`/dashboard/tasks?worker_id=${encodeURIComponent(r.user_id)}&project_id=${encodeURIComponent(projectId)}`}
                   className="text-aistroyka-caption text-aistroyka-accent hover:underline"
                 >
-                  View tasks
+                  {tDetail("viewTasks")}
                 </Link>
               </TableCell>
             </TableRow>
@@ -452,21 +457,22 @@ function ProjectReportsPanel({
   page: number;
   onPageChange: (p: number) => void;
 }) {
+  const tDetail = useTranslations("dashboardDetail");
   if (query.isPending) return <Skeleton className="h-48" />;
-  if (query.isError) return <p className="text-aistroyka-text-secondary p-4">Failed to load reports.</p>;
+  if (query.isError) return <p className="text-aistroyka-text-secondary p-4">{tDetail("failedLoadReports")}</p>;
   const { data: rows = [], total } = query.data ?? { data: [], total: 0 };
   if (rows.length === 0 && total === 0) {
-    return <EmptyState icon={<span className="text-2xl">📋</span>} title="Reports" subtitle="No reports for this project yet." />;
+    return <EmptyState icon={<span className="text-2xl">📋</span>} title={tDetail("reports")} subtitle={tDetail("noReportsForProjectYet")} />;
   }
   return (
     <div className="p-4">
-      <Table aria-label="Project reports">
+      <Table aria-label={tDetail("projectReports")}>
         <TableHead>
           <TableRow>
-            <TableHeaderCell>Report</TableHeaderCell>
-            <TableHeaderCell>Worker</TableHeaderCell>
-            <TableHeaderCell>Status</TableHeaderCell>
-            <TableHeaderCell>Created</TableHeaderCell>
+            <TableHeaderCell>{tDetail("report")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("worker")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("status")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("created")}</TableHeaderCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -502,21 +508,22 @@ function ProjectUploadsPanel({
   page: number;
   onPageChange: (p: number) => void;
 }) {
+  const tDetail = useTranslations("dashboardDetail");
   if (query.isPending) return <Skeleton className="h-48" />;
-  if (query.isError) return <p className="text-aistroyka-text-secondary p-4">Failed to load uploads.</p>;
+  if (query.isError) return <p className="text-aistroyka-text-secondary p-4">{tDetail("failedLoadUploads")}</p>;
   const { data: rows = [], total } = query.data ?? { data: [], total: 0 };
   if (rows.length === 0 && total === 0) {
-    return <EmptyState icon={<span className="text-2xl">📤</span>} title="Uploads" subtitle="No upload sessions linked to this project yet." />;
+    return <EmptyState icon={<span className="text-2xl">📤</span>} title={tDetail("uploads")} subtitle={tDetail("noUploadSessionsForProjectYet")} />;
   }
   return (
     <div className="p-4">
-      <Table aria-label="Project uploads">
+      <Table aria-label={tDetail("projectUploads")}>
         <TableHead>
           <TableRow>
-            <TableHeaderCell>Session</TableHeaderCell>
-            <TableHeaderCell>User</TableHeaderCell>
-            <TableHeaderCell>Status</TableHeaderCell>
-            <TableHeaderCell>Created</TableHeaderCell>
+            <TableHeaderCell>{tDetail("session")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("user")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("status")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("created")}</TableHeaderCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -548,21 +555,22 @@ function ProjectAiPanel({
   page: number;
   onPageChange: (p: number) => void;
 }) {
+  const tDetail = useTranslations("dashboardDetail");
   if (query.isPending) return <Skeleton className="h-48" />;
-  if (query.isError) return <p className="text-aistroyka-text-secondary p-4">Failed to load AI jobs.</p>;
+  if (query.isError) return <p className="text-aistroyka-text-secondary p-4">{tDetail("failedLoadAiJobs")}</p>;
   const { data: rows = [], total } = query.data ?? { data: [], total: 0 };
   if (rows.length === 0 && total === 0) {
-    return <EmptyState icon={<span className="text-2xl">🤖</span>} title="AI" subtitle="No AI analysis jobs for this project yet." />;
+    return <EmptyState icon={<span className="text-2xl">🤖</span>} title={tDetail("ai")} subtitle={tDetail("noAiJobsForProjectYet")} />;
   }
   return (
     <div className="p-4">
-      <Table aria-label="Project AI jobs">
+      <Table aria-label={tDetail("projectAiJobs")}>
         <TableHead>
           <TableRow>
-            <TableHeaderCell>Job ID</TableHeaderCell>
-            <TableHeaderCell>Media</TableHeaderCell>
-            <TableHeaderCell>Status</TableHeaderCell>
-            <TableHeaderCell>Created</TableHeaderCell>
+            <TableHeaderCell>{tDetail("jobId")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("media")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("status")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("created")}</TableHeaderCell>
           </TableRow>
         </TableHead>
         <TableBody>

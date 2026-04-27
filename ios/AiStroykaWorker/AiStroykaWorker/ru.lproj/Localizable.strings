@@ -1,0 +1,27 @@
+/* AiStroyka Worker — Russian */
+"worker_app_title" = "AiStroyka Worker";
+"worker_email_placeholder" = "Почта";
+"worker_password_placeholder" = "Пароль";
+"worker_sign_in" = "Войти";
+"worker_no_projects" = "Нет объектов";
+"worker_pending" = "В очереди: %lld";
+"worker_pause_queue" = "Пауза очереди";
+"worker_resume_queue" = "Возобновить";
+"worker_pending_uploads" = "Загрузки в очереди: %lld";
+"worker_resume_uploads" = "Продолжить загрузки";
+"worker_shift_in_progress" = "Смена начата";
+"worker_shift_not_started" = "Смена не начата";
+"worker_start_shift" = "Начать смену";
+"worker_end_shift" = "Завершить смену";
+"worker_loading_tasks" = "Загрузка задач…";
+"worker_todays_tasks" = "Задачи на сегодня";
+"worker_new_report" = "Новый отчёт";
+"worker_support" = "Поддержка";
+"worker_sign_out" = "Выйти";
+"worker_done" = "Готово";
+"sync_status_idle" = "Синхр.";
+"sync_status_synced" = "Синхр.";
+"sync_status_syncing" = "Синхронизация…";
+"sync_status_bootstrap" = "Загрузка";
+"sync_status_offline" = "Офлайн";
+"sync_status_error" = "Ошибка";

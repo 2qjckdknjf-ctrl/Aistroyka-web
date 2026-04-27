@@ -1,6 +1,8 @@
-# Environment Variables — Aistroyka (Vercel / Production)
+# Environment Variables — Aistroyka (Production Runtime)
 
-Список переменных окружения для production-деплоя (Vercel и др.). Не коммитить реальные значения; задавать в Vercel Dashboard → Project → Settings → Environment Variables.
+Список переменных окружения для production-деплоя. Не коммитить реальные значения.
+Каноничный runtime в текущем репо: Cloudflare Workers (через `wrangler`/GitHub workflows).
+Vercel может встречаться как исторический/дополнительный путь и доменный редирект.
 
 ---
 
@@ -91,13 +93,36 @@
 
 ---
 
-## Где задавать в Vercel
+## Где задавать в production
+
+При Cloudflare Workers:
+
+1. Runtime vars (`NEXT_PUBLIC_*` и др.) задаются в `wrangler.toml`/`wrangler.deploy.toml` для нужного env.
+2. Секреты задаются через `wrangler secret put` или через GitHub Actions secrets для deploy workflows.
+3. После изменения переменных требуется новый deploy.
+
+При использовании Vercel (legacy/fallback окружения):
 
 1. Vercel Dashboard → выбранный проект → **Settings** → **Environment Variables**.
 2. Добавить каждую переменную, выбрать окружения: **Production**, **Preview** (по желанию).
 3. Секреты (ключи, пароли) помечать как **Sensitive** (скрыты в логах).
 
-После изменения переменных пересобрать деплой (Redeploy).
+После изменения переменных пересобрать деплой (Redeploy/Deploy).
+
+---
+
+## GitHub Actions: Playwright pilot E2E (опционально)
+
+Репозиторные **Actions secrets** (Settings → Secrets and variables → Actions), если нужен ручной или post-deploy прогон `.github/workflows/pilot-e2e-audit.yml`:
+
+| Secret | Описание |
+|--------|----------|
+| `PILOT_E2E_BASE_URL` | Базовый URL без trailing slash, например `https://staging.aistroyka.ai`. |
+| `PILOT_E2E_EMAIL` | Email пользователя для логина в браузерных тестах. |
+| `PILOT_E2E_PASSWORD` | Пароль. |
+| `PILOT_E2E_PROJECT_ID` | Опционально: UUID проекта; иначе берётся первый из API после входа. |
+
+После `pilot-smoke` workflow **Deploy Cloudflare (Staging)** может вызывать тот же аудит с `continue-on-error: true`, поэтому отсутствие секретов не блокирует деплой, но шаг завершится ошибкой до установки зависимостей.
 
 ---
 

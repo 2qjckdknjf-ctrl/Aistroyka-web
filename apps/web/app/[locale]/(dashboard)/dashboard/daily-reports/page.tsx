@@ -4,11 +4,12 @@ import { DashboardReportsClient } from "./DashboardReportsClient";
 
 export default async function DailyReportsPage() {
   const t = await getTranslations("nav");
+  const tPage = await getTranslations("dashboardPageMeta");
   return (
     <>
       <SectionHeader
         title={t("reports")}
-        subtitle="Daily reports list. Filter by project or date in a later iteration."
+        subtitle={tPage("dailyReportsSubtitle")}
       />
       <DashboardReportsClient />
     </>

@@ -37,6 +37,7 @@ export default async function ProjectPage({
 }) {
   const { id } = await params;
   const t = await getTranslations("projectDetail");
+  const tPage = await getTranslations("dashboardPageMeta");
   const tProjects = await getTranslations("projects");
   const supabase = await createClient();
   const user = await getSessionUser(supabase);
@@ -331,7 +332,7 @@ export default async function ProjectPage({
       {/* AI Copilot */}
       <section className="mb-aistroyka-8">
         <SectionHeader
-          title="AI Copilot"
+          title={tPage("aiCopilotTitle")}
           subtitle={t("executiveOverviewSubtitle")}
         />
         <AiActionPanel

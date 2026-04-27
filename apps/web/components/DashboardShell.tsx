@@ -56,13 +56,13 @@ export function DashboardShell({
         className={`fixed inset-y-0 left-0 z-40 w-56 border-r border-aistroyka-border-subtle bg-aistroyka-surface transition-transform md:static md:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
-        aria-label="Dashboard navigation"
+        aria-label={t("dashboardNavigation")}
       >
         <div className="flex h-full flex-col pt-[var(--aistroyka-space-4)]">
           <div className="px-[var(--aistroyka-space-4)] pb-[var(--aistroyka-space-3)]">
             <Logo href="/dashboard" height={26} className="block" onClick={closeSidebar} />
           </div>
-          <nav className="flex-1 space-y-0.5 px-[var(--aistroyka-space-2)]" aria-label="Main">
+          <nav className="flex-1 space-y-0.5 px-[var(--aistroyka-space-2)]" aria-label={t("main")}>
             {SIDEBAR_LINKS.map(({ href, key }) => {
               const active = isActive(href);
               return (
@@ -70,6 +70,7 @@ export function DashboardShell({
                   key={href}
                   href={href}
                   onClick={closeSidebar}
+                  data-testid={key === "projects" ? "cta.dashboard.nav.projects" : undefined}
                   className={`flex min-h-aistroyka-touch items-center rounded-[var(--aistroyka-radius-lg)] px-[var(--aistroyka-space-3)] py-[var(--aistroyka-space-2)] text-[var(--aistroyka-font-subheadline)] font-medium transition-colors ${
                     active
                       ? "bg-aistroyka-accent-light text-aistroyka-accent"
@@ -88,21 +89,40 @@ export function DashboardShell({
                 </div>
                 {ADMIN_LINKS.map(({ href, key }) => {
                   const active = pathname === href || pathname.startsWith(href + "/");
-                  return (
-                    <Link
-                      key={href}
-                      href={href}
-                      onClick={closeSidebar}
-                      className={`flex min-h-aistroyka-touch items-center rounded-[var(--aistroyka-radius-lg)] px-[var(--aistroyka-space-3)] py-[var(--aistroyka-space-2)] text-[var(--aistroyka-font-subheadline)] font-medium transition-colors ${
-                        active
-                          ? "bg-aistroyka-accent-light text-aistroyka-accent"
-                          : "text-aistroyka-text-secondary hover:bg-aistroyka-surface-raised hover:text-aistroyka-text-primary"
-                      }`}
-                      aria-current={active ? "page" : undefined}
-                    >
-                      {t(key)}
-                    </Link>
-                  );
+                  const className = `flex min-h-aistroyka-touch items-center rounded-[var(--aistroyka-radius-lg)] px-[var(--aistroyka-space-3)] py-[var(--aistroyka-space-2)] text-[var(--aistroyka-font-subheadline)] font-medium transition-colors ${
+                    active
+                      ? "bg-aistroyka-accent-light text-aistroyka-accent"
+                      : "text-aistroyka-text-secondary hover:bg-aistroyka-surface-raised hover:text-aistroyka-text-primary"
+                  }`;
+                  if (key === "adminPush") {
+                    return (
+                      <Link
+                        key={href}
+                        href={href}
+                        onClick={closeSidebar}
+                        data-testid="cta.dashboard.nav.admin.push"
+                        className={className}
+                        aria-current={active ? "page" : undefined}
+                      >
+                        {t(key)}
+                      </Link>
+                    );
+                  }
+                  if (key === "adminJobs") {
+                    return (
+                      <Link
+                        key={href}
+                        href={href}
+                        onClick={closeSidebar}
+                        data-testid="cta.dashboard.nav.admin.jobs"
+                        className={className}
+                        aria-current={active ? "page" : undefined}
+                      >
+                        {t(key)}
+                      </Link>
+                    );
+                  }
+                  return null;
                 })}
               </>
             )}
@@ -124,40 +144,40 @@ export function DashboardShell({
         {/* Topbar */}
         <header className="sticky top-0 z-20 border-b border-aistroyka-border-subtle bg-aistroyka-surface">
           <div className="flex flex-wrap items-center justify-between gap-2 px-[var(--aistroyka-space-4)] py-[var(--aistroyka-space-3)]">
-            <div className="flex items-center gap-3">
+            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 sm:gap-3">
               <button
                 type="button"
                 onClick={() => setSidebarOpen((v) => !v)}
                 className="flex min-h-aistroyka-touch min-w-aistroyka-touch items-center justify-center rounded-[var(--aistroyka-radius-lg)] text-aistroyka-text-secondary hover:bg-aistroyka-surface-raised focus:outline-none focus:ring-2 focus:ring-aistroyka-accent md:hidden"
                 aria-expanded={sidebarOpen}
                 aria-controls="dashboard-sidebar"
-                aria-label={sidebarOpen ? "Close menu" : "Open menu"}
+                aria-label={sidebarOpen ? t("closeMenu") : t("openMenu")}
               >
                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               </button>
               <span className="text-aistroyka-subheadline text-aistroyka-text-tertiary" aria-hidden>
-                Workspace
+                {t("workspace")}
               </span>
               <select
-                aria-label="Date range"
+                aria-label={t("dateRange")}
                 value={dateRange}
                 onChange={(e) => setDateRange(e.target.value)}
                 className="rounded-[var(--aistroyka-radius-md)] border border-aistroyka-border-subtle bg-aistroyka-bg-primary px-2 py-1.5 text-aistroyka-caption text-aistroyka-text-primary focus:outline-none focus:ring-2 focus:ring-aistroyka-accent"
               >
-                <option value="7d">Last 7 days</option>
-                <option value="30d">Last 30 days</option>
-                <option value="90d">Last 90 days</option>
+                <option value="7d">{t("last7Days")}</option>
+                <option value="30d">{t("last30Days")}</option>
+                <option value="90d">{t("last90Days")}</option>
               </select>
               <input
                 type="search"
-                placeholder="Search…"
-                aria-label="Search"
-                className="w-32 rounded-[var(--aistroyka-radius-md)] border border-aistroyka-border-subtle bg-aistroyka-bg-primary px-2 py-1.5 text-aistroyka-caption text-aistroyka-text-primary placeholder:text-aistroyka-text-tertiary focus:outline-none focus:ring-2 focus:ring-aistroyka-accent sm:w-40"
+                placeholder={t("searchPlaceholder")}
+                aria-label={t("search")}
+                className="min-w-0 flex-1 basis-[7.5rem] rounded-[var(--aistroyka-radius-md)] border border-aistroyka-border-subtle bg-aistroyka-bg-primary px-2 py-1.5 text-aistroyka-caption text-aistroyka-text-primary placeholder:text-aistroyka-text-tertiary focus:outline-none focus:ring-2 focus:ring-aistroyka-accent sm:w-40 sm:flex-none sm:basis-auto"
               />
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex min-w-0 shrink-0 flex-wrap items-center justify-end gap-2">
               <BuildStamp />
               <LocaleSwitcher />
               {userEmail && (
@@ -174,7 +194,7 @@ export function DashboardShell({
         </header>
 
         <div className="flex flex-1 flex-col min-h-0">
-          <main className="flex-1 mx-auto w-full max-w-6xl px-[var(--aistroyka-space-4)] py-[var(--aistroyka-space-6)]">
+          <main className="mx-auto min-w-0 w-full max-w-6xl flex-1 px-[var(--aistroyka-space-4)] py-[var(--aistroyka-space-6)]">
             {children}
           </main>
           <footer

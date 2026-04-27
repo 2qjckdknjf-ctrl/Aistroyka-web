@@ -1,14 +1,15 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Card } from "@/components/ui-lite";
 import type { VelocityTrend, RiskTrajectory } from "@/lib/intelligence/projection";
 
-function formatVelocityTrend(t: VelocityTrend): string {
-  return t === "up" ? "Up" : t === "down" ? "Down" : "Stable";
+function formatVelocityTrend(t: VelocityTrend, tDetail: (key: string) => string): string {
+  return t === "up" ? tDetail("up") : t === "down" ? tDetail("down") : tDetail("stable");
 }
 
-function formatRiskTrajectory(t: RiskTrajectory): string {
-  return t === "rising" ? "Rising" : t === "falling" ? "Falling" : "Stable";
+function formatRiskTrajectory(t: RiskTrajectory, tDetail: (key: string) => string): string {
+  return t === "rising" ? tDetail("rising") : t === "falling" ? tDetail("falling") : tDetail("stable");
 }
 
 export function TrendSummaryBlock({
@@ -24,11 +25,12 @@ export function TrendSummaryBlock({
   delayProbability: "low" | "medium" | "high";
   lastDeltaSummary: string | null;
 }) {
+  const tDetail = useTranslations("dashboardDetail");
   if (!hasVelocity) {
     return (
       <Card>
         <p className="text-sm text-aistroyka-text-secondary">
-          Add at least two analyses to see velocity and trend summary.
+          {tDetail("addAtLeastTwoAnalysesTrendSummary")}
         </p>
       </Card>
     );
@@ -38,21 +40,21 @@ export function TrendSummaryBlock({
     <Card>
       <div className="grid gap-2 text-sm sm:grid-cols-3">
         <div>
-          <span className="text-aistroyka-text-tertiary">Velocity trend:</span>{" "}
+          <span className="text-aistroyka-text-tertiary">{tDetail("velocityTrend")}:</span>{" "}
           <span className="font-medium text-aistroyka-text-primary">
-            {formatVelocityTrend(velocityTrend)}
+            {formatVelocityTrend(velocityTrend, tDetail)}
           </span>
         </div>
         <div>
-          <span className="text-aistroyka-text-tertiary">Risk trajectory:</span>{" "}
+          <span className="text-aistroyka-text-tertiary">{tDetail("riskTrajectory")}:</span>{" "}
           <span className="font-medium text-aistroyka-text-primary">
-            {formatRiskTrajectory(riskTrajectory)}
+            {formatRiskTrajectory(riskTrajectory, tDetail)}
           </span>
         </div>
         <div>
-          <span className="text-aistroyka-text-tertiary">Delay probability:</span>{" "}
+          <span className="text-aistroyka-text-tertiary">{tDetail("delayProbability")}:</span>{" "}
           <span className="font-medium text-aistroyka-text-primary">
-            {delayProbability.charAt(0).toUpperCase() + delayProbability.slice(1)}
+            {delayProbability === "high" ? tDetail("high") : delayProbability === "medium" ? tDetail("medium") : tDetail("low")}
           </span>
         </div>
       </div>

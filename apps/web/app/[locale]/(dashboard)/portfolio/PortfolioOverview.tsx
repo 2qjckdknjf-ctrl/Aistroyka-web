@@ -1,6 +1,7 @@
 "use client";
 
 import { Link } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 import type { PortfolioResult } from "@/lib/intelligence/portfolio";
 
 function classificationClass(c: string): string {
@@ -18,28 +19,36 @@ export function PortfolioOverview({
 }: {
   portfolio: PortfolioResult;
 }) {
+  const t = useTranslations("portfolioPage");
   const { distribution, rankedProjects, summary } = portfolio;
+  const classificationLabel = (value: string) => {
+    if (value === "Healthy") return t("healthy");
+    if (value === "Moderate") return t("moderate");
+    if (value === "Unstable") return t("unstable");
+    if (value === "Critical") return t("critical");
+    return value;
+  };
 
   return (
     <div className="space-y-6">
       <section className="card text-sm">
-        <h2 className="font-semibold text-aistroyka-text-primary">Portfolio Overview</h2>
+        <h2 className="font-semibold text-aistroyka-text-primary">{t("overviewTitle")}</h2>
         <div className="mt-3">
-          <span className="text-aistroyka-text-tertiary">Distribution:</span>
+          <span className="text-aistroyka-text-tertiary">{t("distribution")}</span>
           <ul className="mt-1 list-inside list-disc text-aistroyka-text-primary">
-            <li>Healthy: {distribution.percentHealthy.toFixed(0)}%</li>
-            <li>Moderate: {distribution.percentModerate.toFixed(0)}%</li>
-            <li>Unstable: {distribution.percentUnstable.toFixed(0)}%</li>
-            <li>Critical: {distribution.percentCritical.toFixed(0)}%</li>
+            <li>{t("healthy")}: {distribution.percentHealthy.toFixed(0)}%</li>
+            <li>{t("moderate")}: {distribution.percentModerate.toFixed(0)}%</li>
+            <li>{t("unstable")}: {distribution.percentUnstable.toFixed(0)}%</li>
+            <li>{t("critical")}: {distribution.percentCritical.toFixed(0)}%</li>
           </ul>
         </div>
         <p className="mt-3 text-aistroyka-text-primary leading-relaxed">{summary}</p>
       </section>
 
       <section className="card text-sm">
-        <h2 className="font-semibold text-aistroyka-text-primary">Ranked projects</h2>
+        <h2 className="font-semibold text-aistroyka-text-primary">{t("rankedProjectsTitle")}</h2>
         <p className="mt-1 text-xs text-aistroyka-text-tertiary">
-          Sorted by risk (strategic risk index, delay probability, health score).
+          {t("rankedProjectsHint")}
         </p>
         {rankedProjects.length > 0 ? (
           <ul className="mt-3 space-y-2">
@@ -48,19 +57,19 @@ export function PortfolioOverview({
                 <Link href={`/projects/${p.projectId}`} className="font-medium text-aistroyka-text-primary hover:text-aistroyka-accent">
                   {p.projectName}
                 </Link>
-                <span className={classificationClass(p.healthClassification)}>{p.healthClassification}</span>
-                <span className="text-aistroyka-text-tertiary">Health {p.healthScore} · Risk {p.strategicRiskIndex}</span>
+                <span className={classificationClass(p.healthClassification)}>{classificationLabel(p.healthClassification)}</span>
+                <span className="text-aistroyka-text-tertiary">{t("healthRisk", { health: p.healthScore, risk: p.strategicRiskIndex })}</span>
                 {p.delayProbabilityHigh && (
-                  <span className="rounded-card-sm bg-aistroyka-warning/20 px-1.5 py-0.5 text-xs text-aistroyka-warning">Delay high</span>
+                  <span className="rounded-card-sm bg-aistroyka-warning/20 px-1.5 py-0.5 text-xs text-aistroyka-warning">{t("delayHigh")}</span>
                 )}
                 {p.portfolioOutlier && (
-                  <span className="rounded-card-sm bg-aistroyka-error/20 px-1.5 py-0.5 text-xs text-aistroyka-error">Portfolio outlier</span>
+                  <span className="rounded-card-sm bg-aistroyka-error/20 px-1.5 py-0.5 text-xs text-aistroyka-error">{t("portfolioOutlier")}</span>
                 )}
               </li>
             ))}
           </ul>
         ) : (
-          <p className="mt-3 text-aistroyka-text-tertiary">No projects to rank.</p>
+          <p className="mt-3 text-aistroyka-text-tertiary">{t("noProjectsToRank")}</p>
         )}
       </section>
     </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { Link } from "@/i18n/navigation";
 import { Card, SectionHeader, Skeleton, EmptyState, Badge, Button } from "@/components/ui";
@@ -26,7 +27,15 @@ interface AnalysisStatus {
   summary: { mediaTotal: number; analyzed: number; failed: number } | null;
 }
 
-function CopyIdButton({ id, label = "Copy ID" }: { id: string; label?: string }) {
+function CopyIdButton({
+  id,
+  label = "Copy ID",
+  copiedLabel = "Copied",
+}: {
+  id: string;
+  label?: string;
+  copiedLabel?: string;
+}) {
   const [copied, setCopied] = useState(false);
   const copy = () => {
     navigator.clipboard.writeText(id).then(() => {
@@ -36,12 +45,14 @@ function CopyIdButton({ id, label = "Copy ID" }: { id: string; label?: string })
   };
   return (
     <Button variant="secondary" onClick={copy} className="text-sm">
-      {copied ? "Copied" : label}
+      {copied ? copiedLabel : label}
     </Button>
   );
 }
 
 export default function ReportDetailPage() {
+  const tPage = useTranslations("dashboardPageMeta");
+  const tDetail = useTranslations("dashboardDetail");
   const params = useParams();
   const id = params?.id as string | undefined;
   const [data, setData] = useState<ReportDetail | null>(null);
@@ -79,7 +90,7 @@ export default function ReportDetailPage() {
   if (!id) {
     return (
       <Card>
-        <p className="text-aistroyka-text-secondary p-4">Missing report id.</p>
+        <p className="text-aistroyka-text-secondary p-4">{tDetail("missingReportId")}</p>
       </Card>
     );
   }
@@ -97,9 +108,9 @@ export default function ReportDetailPage() {
       <Card>
         <EmptyState
           icon={<span className="text-2xl">⚠️</span>}
-          title="Report not found"
-          subtitle={error ?? "You may not have access."}
-          action={<Link href="/dashboard/daily-reports" className="text-aistroyka-accent hover:underline">← Back to reports</Link>}
+          title={tDetail("reportNotFound")}
+          subtitle={error ?? tDetail("accessDeniedHint")}
+          action={<Link href="/dashboard/daily-reports" className="text-aistroyka-accent hover:underline">{tDetail("backToReports")}</Link>}
         />
       </Card>
     );
@@ -109,19 +120,22 @@ export default function ReportDetailPage() {
     <>
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <Link href="/dashboard/daily-reports" className="text-aistroyka-subheadline text-aistroyka-accent hover:underline">
-          ← Reports
+          {tDetail("reports")}
         </Link>
-        <CopyIdButton id={data.id} />
-        <span className="text-aistroyka-caption text-aistroyka-text-tertiary" title="Deep link">
-          Report ID: <span className="font-mono">{data.id.slice(0, 8)}…</span>
+        <CopyIdButton id={data.id} label={tDetail("copyId")} copiedLabel={tDetail("copied")} />
+        <span className="text-aistroyka-caption text-aistroyka-text-tertiary" title={tDetail("deepLink")}>
+          {tDetail("reportIdLabel")} <span className="font-mono">{data.id.slice(0, 8)}…</span>
         </span>
       </div>
-      <SectionHeader title={`Report ${data.id.slice(0, 8)}…`} subtitle="Detail, media gallery and AI analysis." />
+      <SectionHeader
+        title={`Report ${data.id.slice(0, 8)}…`}
+        subtitle={tPage("reportDetailSubtitle")}
+      />
 
       <Card className="mb-4">
         <dl className="grid gap-2 sm:grid-cols-2">
           <div>
-            <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Status</dt>
+            <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("status")}</dt>
             <dd>
               <Badge
                 variant={
@@ -139,31 +153,31 @@ export default function ReportDetailPage() {
             </dd>
           </div>
           <div>
-            <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Worker</dt>
+            <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("worker")}</dt>
             <dd>
               <Link href={`/dashboard/workers/${data.user_id}`} className="font-mono text-aistroyka-accent hover:underline">{data.user_id.slice(0, 8)}…</Link>
             </dd>
           </div>
           <div>
-            <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Created</dt>
+            <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("created")}</dt>
             <dd className="tabular-nums">{new Date(data.created_at).toLocaleString()}</dd>
           </div>
           <div>
-            <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Submitted</dt>
+            <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("submitted")}</dt>
             <dd className="tabular-nums">{data.submitted_at ? new Date(data.submitted_at).toLocaleString() : "—"}</dd>
           </div>
           <div>
-            <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Media attachments</dt>
+            <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("mediaAttachments")}</dt>
             <dd>{data.media?.length ?? 0}</dd>
           </div>
           {data.reviewed_at && (
             <>
               <div>
-                <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Reviewed at</dt>
+                <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("reviewedAt")}</dt>
                 <dd className="tabular-nums">{new Date(data.reviewed_at).toLocaleString()}</dd>
               </div>
               <div>
-                <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Reviewed by</dt>
+                <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("reviewedBy")}</dt>
                 <dd className="font-mono text-sm">{data.reviewed_by?.slice(0, 8) ?? "—"}…</dd>
               </div>
             </>
@@ -173,16 +187,16 @@ export default function ReportDetailPage() {
           <div className="mt-4 pt-4 border-t border-aistroyka-border">
             {data.reviewed_at && (
               <p className="text-aistroyka-caption text-amber-600 mb-2">
-                Resubmitted after changes were requested.
+                {tDetail("resubmittedHint")}
               </p>
             )}
-            <h3 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary mb-2">Manager approval</h3>
+            <h3 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary mb-2">{tDetail("managerApproval")}</h3>
             <ReportApprovalCard reportId={data.id} onSuccess={refetch} />
           </div>
         )}
         {data.manager_note && (
           <div className="mt-4 pt-4 border-t border-aistroyka-border">
-            <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Manager note</dt>
+            <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("managerNote")}</dt>
             <dd className="text-aistroyka-subheadline text-aistroyka-text-secondary mt-1">{data.manager_note}</dd>
           </div>
         )}
@@ -190,14 +204,14 @@ export default function ReportDetailPage() {
 
       {data.media?.length ? (
         <Card className="mb-4">
-          <h3 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary mb-2">Media gallery</h3>
+          <h3 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary mb-2">{tDetail("mediaGallery")}</h3>
           <ul className="list-disc list-inside text-aistroyka-subheadline text-aistroyka-text-secondary">
             {data.media.map((m, i) => (
               <li key={i}>
                 {m.media_id ? (
-                  <Link href="/dashboard/uploads" className="text-aistroyka-accent hover:underline font-mono">Media {m.media_id.slice(0, 8)}…</Link>
+                  <Link href="/dashboard/uploads" className="text-aistroyka-accent hover:underline font-mono">{tDetail("media")} {m.media_id.slice(0, 8)}…</Link>
                 ) : m.upload_session_id ? (
-                  <span className="font-mono">Session {m.upload_session_id.slice(0, 8)}…</span>
+                  <span className="font-mono">{tDetail("session")} {m.upload_session_id.slice(0, 8)}…</span>
                 ) : (
                   "—"
                 )}
@@ -207,39 +221,39 @@ export default function ReportDetailPage() {
         </Card>
       ) : (
         <Card className="mb-4">
-          <p className="text-aistroyka-subheadline text-aistroyka-text-tertiary">No media attached.</p>
+          <p className="text-aistroyka-subheadline text-aistroyka-text-tertiary">{tDetail("noMediaAttached")}</p>
         </Card>
       )}
 
       <Card>
-        <h3 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary mb-2">AI analysis</h3>
+        <h3 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary mb-2">{tDetail("aiAnalysis")}</h3>
         {analysis ? (
           <dl className="grid gap-2 sm:grid-cols-2">
             <div>
-              <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Status</dt>
+              <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("status")}</dt>
               <dd>
                 <Badge variant={analysis.status === "success" ? "success" : analysis.status === "failed" ? "danger" : "warning"}>{analysis.status}</Badge>
               </dd>
             </div>
             <div>
-              <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Jobs</dt>
+              <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("jobs")}</dt>
               <dd className="tabular-nums">{analysis.jobCount}</dd>
             </div>
             {analysis.summary && (
               <>
                 <div>
-                  <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Analyzed</dt>
+                  <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("analyzed")}</dt>
                   <dd className="tabular-nums">{analysis.summary.analyzed} / {analysis.summary.mediaTotal}</dd>
                 </div>
                 <div>
-                  <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Failed</dt>
+                  <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("failed")}</dt>
                   <dd className="tabular-nums">{analysis.summary.failed}</dd>
                 </div>
               </>
             )}
           </dl>
         ) : (
-          <p className="text-aistroyka-subheadline text-aistroyka-text-tertiary">No AI jobs for this report yet.</p>
+          <p className="text-aistroyka-subheadline text-aistroyka-text-tertiary">{tDetail("noAiJobsYet")}</p>
         )}
       </Card>
     </>

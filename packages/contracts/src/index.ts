@@ -52,4 +52,12 @@ export {
   type CreateUploadSessionRequest,
   type FinalizeUploadSessionRequest,
 } from "./schemas/worker.schema";
+export {
+  PlanCodeSchema,
+  AddOnCodeSchema,
+  EntitlementLimitsSchema,
+  type PlanCode,
+  type AddOnCode,
+  type EntitlementLimits,
+} from "./schemas/plan-fit.schema";
 export * from "./api/v1/types";

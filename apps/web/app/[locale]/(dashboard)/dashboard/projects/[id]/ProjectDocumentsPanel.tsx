@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Skeleton,
@@ -84,7 +85,7 @@ async function createDocument(
   });
   if (!res.ok) {
     const j = await res.json().catch(() => ({}));
-    throw new Error((j as { error?: string }).error ?? "Create failed");
+    throw new Error((j as { error?: string }).error ?? "CREATE_FAILED");
   }
   const json = await res.json();
   return json.data;
@@ -104,7 +105,7 @@ async function uploadDocumentFile(
   });
   if (!res.ok) {
     const j = await res.json().catch(() => ({}));
-    throw new Error((j as { error?: string }).error ?? "Upload failed");
+    throw new Error((j as { error?: string }).error ?? "UPLOAD_FAILED");
   }
   const json = await res.json();
   return json.data;
@@ -123,7 +124,7 @@ async function updateDocument(
   });
   if (!res.ok) {
     const j = await res.json().catch(() => ({}));
-    throw new Error((j as { error?: string }).error ?? "Update failed");
+    throw new Error((j as { error?: string }).error ?? "UPDATE_FAILED");
   }
   const json = await res.json();
   return json.data;
@@ -146,30 +147,44 @@ function statusBadgeClass(status: string): string {
   }
 }
 
-function statusLabel(status: string): string {
+function statusLabel(status: string, tDetail: (key: string) => string): string {
   const map: Record<string, string> = {
-    draft: "Draft",
-    uploaded: "Uploaded",
-    under_review: "Under review",
-    approved: "Approved",
-    rejected: "Rejected",
-    archived: "Archived",
+    draft: tDetail("draft"),
+    uploaded: tDetail("uploaded"),
+    under_review: tDetail("underReview"),
+    approved: tDetail("approved"),
+    rejected: tDetail("rejected"),
+    archived: tDetail("archived"),
   };
   return map[status] ?? status.replace("_", " ");
 }
 
-function typeLabel(type: string): string {
+function typeLabel(type: string, tDetail: (key: string) => string): string {
   switch (type) {
     case "act":
-      return "Act";
+      return tDetail("act");
     case "contract":
-      return "Contract";
+      return tDetail("contract");
     default:
-      return "Document";
+      return tDetail("document");
+  }
+}
+
+function formatDocumentError(message: string, tDetail: (key: string) => string): string {
+  switch (message) {
+    case "CREATE_FAILED":
+      return `${tDetail("failed")}: ${tDetail("createDocument")}`;
+    case "UPDATE_FAILED":
+      return tDetail("updateFailed");
+    case "UPLOAD_FAILED":
+      return tDetail("uploadFailed");
+    default:
+      return message;
   }
 }
 
 export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
+  const tDetail = useTranslations("dashboardDetail");
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
   const [uploadDocId, setUploadDocId] = useState<string | null>(null);
@@ -209,7 +224,7 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
       if (uploadInputRef.current) uploadInputRef.current.value = "";
     },
     onError: (err) => {
-      setUploadError(err instanceof Error ? err.message : "Upload failed");
+      setUploadError(err instanceof Error ? err.message : "UPLOAD_FAILED");
       if (uploadInputRef.current) uploadInputRef.current.value = "";
     },
   });
@@ -227,7 +242,7 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
   if (query.isPending) return <Skeleton className="h-48" />;
   if (query.isError)
     return (
-      <p className="text-aistroyka-text-secondary p-4">Failed to load documents.</p>
+      <p className="text-aistroyka-text-secondary p-4">{tDetail("failedLoadDocuments")}</p>
     );
 
   const rows = query.data ?? [];
@@ -248,26 +263,26 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
           e.target.value = "";
           if (f.size > MAX_UPLOAD_MB * 1024 * 1024) {
             setUploadDocId(targetId);
-            setUploadError(`File too large. Max ${MAX_UPLOAD_MB}MB.`);
+            setUploadError(`${tDetail("fileTooLargeMax")} ${MAX_UPLOAD_MB}MB.`);
             return;
           }
           setUploadError(null);
           setUploadDocId(targetId);
           uploadMutation.mutate({ documentId: targetId, file: f });
         }}
-        aria-label="Upload file"
+        aria-label={tDetail("uploadFile")}
       />
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-aistroyka-title3 font-semibold text-aistroyka-text-primary">
-          Project documents
+          {tDetail("projectDocuments")}
         </h3>
         <Button
           variant="primary"
           size="sm"
           onClick={() => setCreateOpen(true)}
-          aria-label="Create document"
+          aria-label={tDetail("createDocument")}
         >
-          Create document
+          {tDetail("createDocument")}
         </Button>
       </div>
 
@@ -275,11 +290,10 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
         <div className="mb-4 rounded-lg border border-aistroyka-border-subtle bg-aistroyka-surface-muted p-3 flex flex-wrap items-center justify-between gap-2">
           <div className="min-w-[220px]">
             <p className="text-sm font-medium text-aistroyka-text-primary">
-              {pendingDocs.length} document(s) pending review
+              {pendingDocs.length} {tDetail("documentsPendingReview")}
             </p>
             <p className="text-xs text-aistroyka-text-tertiary mt-1">
-              These are in governance state `under_review`. Use Approve / Reject to complete the
-              review cycle.
+              {tDetail("governanceUnderReviewHint")}
             </p>
           </div>
           <Button
@@ -294,7 +308,7 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
               });
             }}
           >
-            Jump to pending →
+            {tDetail("jumpToPendingArrow")}
           </Button>
         </div>
       )}
@@ -302,25 +316,25 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
       {rows.length === 0 ? (
         <EmptyState
           icon={<span className="text-2xl">📄</span>}
-          title="No documents yet"
-          subtitle="Create a document (act, contract, or generic) and upload a file. Then submit for review and approve or reject."
+          title={tDetail("noDocumentsYet")}
+          subtitle={tDetail("createDocumentHint")}
           action={
             <Button variant="primary" size="sm" onClick={() => setCreateOpen(true)}>
-              Create document
+              {tDetail("createDocument")}
             </Button>
           }
         />
       ) : (
-        <Table aria-label="Project documents">
+        <Table aria-label={tDetail("projectDocuments")}>
           <TableHead>
             <TableRow>
-              <TableHeaderCell>Title</TableHeaderCell>
-              <TableHeaderCell>Type</TableHeaderCell>
-              <TableHeaderCell>Status</TableHeaderCell>
-              <TableHeaderCell>File</TableHeaderCell>
-              <TableHeaderCell>Linked to</TableHeaderCell>
-              <TableHeaderCell>Created</TableHeaderCell>
-              <TableHeaderCell>Actions</TableHeaderCell>
+              <TableHeaderCell>{tDetail("title")}</TableHeaderCell>
+              <TableHeaderCell>{tDetail("type")}</TableHeaderCell>
+              <TableHeaderCell>{tDetail("status")}</TableHeaderCell>
+              <TableHeaderCell>{tDetail("file")}</TableHeaderCell>
+              <TableHeaderCell>{tDetail("linkedTo")}</TableHeaderCell>
+              <TableHeaderCell>{tDetail("created")}</TableHeaderCell>
+              <TableHeaderCell>{tDetail("actions")}</TableHeaderCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -338,14 +352,14 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
                       {doc.title}
                     </div>
                   </TableCell>
-                  <TableCell>{typeLabel(doc.type)}</TableCell>
+                  <TableCell>{typeLabel(doc.type, tDetail)}</TableCell>
                   <TableCell>
                     <span
                       className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${statusBadgeClass(
                         doc.status
                       )}`}
                     >
-                      {statusLabel(doc.status)}
+                      {statusLabel(doc.status, tDetail)}
                     </span>
                   </TableCell>
                   <TableCell>
@@ -356,7 +370,7 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
                         rel="noopener noreferrer"
                         className="text-aistroyka-accent hover:underline text-sm"
                       >
-                        Open
+                        {tDetail("open")}
                       </a>
                     ) : canUpload ? (
                       <button
@@ -368,17 +382,20 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
                         disabled={isUploading}
                         className="text-aistroyka-accent hover:underline text-sm text-left disabled:opacity-50"
                       >
-                        {isUploading ? "Uploading…" : "Upload file"}
+                        {isUploading ? tDetail("uploading") : tDetail("uploadFile")}
                       </button>
                     ) : (
                       <span className="text-aistroyka-text-tertiary text-sm">—</span>
                     )}
                     {uploadDocId === doc.id && (uploadMutation.isError || uploadError) && (
                       <p className="text-xs text-aistroyka-error mt-0.5" role="alert">
-                        {uploadError ??
-                          (uploadMutation.error instanceof Error
-                            ? uploadMutation.error.message
-                            : "Upload failed")}
+                        {formatDocumentError(
+                          uploadError ??
+                            (uploadMutation.error instanceof Error
+                              ? uploadMutation.error.message
+                              : "UPLOAD_FAILED"),
+                          tDetail
+                        )}
                       </p>
                     )}
                   </TableCell>
@@ -393,14 +410,14 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
                         href={`/dashboard/reports/${doc.report_id}`}
                         className="text-aistroyka-accent hover:underline font-medium"
                       >
-                        Report {doc.report_id.slice(0, 8)}…
+                        {tDetail("report")} {doc.report_id.slice(0, 8)}…
                       </Link>
                     ) : doc.task_id ? (
                       <Link
                         href={`/dashboard/tasks/${doc.task_id}`}
                         className="text-aistroyka-accent hover:underline font-medium"
                       >
-                        Task {doc.task_id.slice(0, 8)}…
+                        {tDetail("task")} {doc.task_id.slice(0, 8)}…
                       </Link>
                     ) : (
                       "—"
@@ -423,7 +440,7 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
                           }
                           disabled={updatingId === doc.id}
                         >
-                          Submit for review
+                          {tDetail("submitForReview")}
                         </Button>
                       ) : canReview ? (
                         <>
@@ -438,7 +455,7 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
                             }
                             disabled={updatingId === doc.id}
                           >
-                            Approve
+                            {tDetail("approve")}
                           </Button>
                           <Button
                             variant="secondary"
@@ -451,7 +468,7 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
                             }
                             disabled={updatingId === doc.id}
                           >
-                            Reject
+                            {tDetail("reject")}
                           </Button>
                         </>
                       ) : (
@@ -464,7 +481,7 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
                         onClick={() => setHistoryDocId(doc.id)}
                         disabled={uploadMutation.isPending}
                       >
-                        History
+                        {tDetail("history")}
                       </Button>
                     </div>
                   </TableCell>
@@ -478,7 +495,7 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
       <Modal
         open={historyDocId !== null}
         onClose={() => setHistoryDocId(null)}
-        title="Document approval history"
+        title={tDetail("documentApprovalHistory")}
       >
         {historyDocId ? (
           <DocumentApprovalHistory projectId={projectId} documentId={historyDocId} />
@@ -497,7 +514,7 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
         isSubmitting={createMutation.isPending}
         error={
           createMutation.isError && createMutation.error instanceof Error
-            ? createMutation.error.message
+            ? formatDocumentError(createMutation.error.message, tDetail)
             : null
         }
       />
@@ -522,6 +539,7 @@ function CreateDocumentModal({
   isSubmitting: boolean;
   error: string | null;
 }) {
+  const tDetail = useTranslations("dashboardDetail");
   const [type, setType] = useState<string>("document");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -542,14 +560,14 @@ function CreateDocumentModal({
   if (!open) return null;
 
   return (
-    <Modal open={open} onClose={onClose} title="Create document">
+    <Modal open={open} onClose={onClose} title={tDetail("createDocument")}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
           id="doc-title"
-          label="Title"
+          label={tDetail("title")}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="e.g. Work completion act #1"
+          placeholder={tDetail("workCompletionActExample")}
           required
           disabled={isSubmitting}
           error={!title.trim() && error ? error : undefined}
@@ -559,7 +577,7 @@ function CreateDocumentModal({
             htmlFor="doc-type"
             className="mb-1.5 block text-[var(--aistroyka-font-subheadline)] font-medium text-aistroyka-text-primary"
           >
-            Type
+            {tDetail("type")}
           </label>
           <Select
             id="doc-type"
@@ -567,17 +585,17 @@ function CreateDocumentModal({
             onChange={(e) => setType(e.target.value)}
             disabled={isSubmitting}
           >
-            <option value="document">Document</option>
-            <option value="act">Act</option>
-            <option value="contract">Contract</option>
+            <option value="document">{tDetail("document")}</option>
+            <option value="act">{tDetail("act")}</option>
+            <option value="contract">{tDetail("contract")}</option>
           </Select>
         </div>
         <Textarea
           id="doc-description"
-          label="Description (optional)"
+          label={tDetail("descriptionOptional")}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="Brief description or notes"
+          placeholder={tDetail("briefDescriptionOrNotes")}
           disabled={isSubmitting}
           rows={2}
         />
@@ -587,7 +605,7 @@ function CreateDocumentModal({
               htmlFor="doc-milestone"
               className="mb-1.5 block text-[var(--aistroyka-font-subheadline)] font-medium text-aistroyka-text-primary"
             >
-              Link to milestone (optional)
+              {tDetail("linkToMilestoneOptional")}
             </label>
             <Select
               id="doc-milestone"
@@ -595,7 +613,7 @@ function CreateDocumentModal({
               onChange={(e) => setMilestoneId(e.target.value)}
               disabled={isSubmitting}
             >
-              <option value="">None</option>
+              <option value="">{tDetail("none")}</option>
               {milestones.map((m) => (
                 <option key={m.id} value={m.id}>
                   {m.title} ({m.target_date})
@@ -611,10 +629,10 @@ function CreateDocumentModal({
         )}
         <div className="flex gap-2 justify-end pt-2">
           <Button type="button" variant="secondary" onClick={onClose} disabled={isSubmitting}>
-            Cancel
+            {tDetail("cancel")}
           </Button>
           <Button type="submit" variant="primary" disabled={isSubmitting || !title.trim()}>
-            {isSubmitting ? "Creating…" : "Create"}
+            {isSubmitting ? tDetail("creating") : tDetail("create")}
           </Button>
         </div>
       </form>

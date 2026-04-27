@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { createClient, getSessionUser } from "@/lib/supabase/server";
 import { getProjectById } from "@/lib/supabase/rpc";
@@ -12,6 +13,7 @@ export default async function ProjectAiPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const t = await getTranslations("dashboardPageMeta");
   const supabase = await createClient();
   const user = await getSessionUser(supabase);
   if (!user) notFound();
@@ -81,8 +83,8 @@ export default async function ProjectAiPage({
 
       <section className="mb-aistroyka-8">
         <SectionHeader
-          title="AI Copilot"
-          subtitle="Get AI summary, explain risk, or ask a question."
+          title={t("aiCopilotTitle")}
+          subtitle={t("aiCopilotSubtitle")}
         />
         <AiActionPanel
           decisionContext={decisionContext}

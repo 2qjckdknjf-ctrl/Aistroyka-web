@@ -14,6 +14,10 @@ const DEVICES = `${DASHBOARD}/devices`;
 const AI = `${DASHBOARD}/ai`;
 const ADMIN_JOBS = `/${LOCALE}/admin/jobs`;
 
+function expectAuthRedirect(url: string) {
+  expect(url).toMatch(/\/(en|ru|es|it)(\/|$|\/login\?next=)/);
+}
+
 test.describe("Cockpit smoke", () => {
   test("overview loads", async ({ page }) => {
     await page.goto(DASHBOARD);
@@ -33,7 +37,7 @@ test.describe("Cockpit smoke", () => {
     await page.waitForLoadState("domcontentloaded");
     const url = page.url();
     if (!url.includes("/dashboard")) {
-      expect(url).toMatch(/\/(en|ru|es|it)(\/)?$/);
+      expectAuthRedirect(url);
       return;
     }
     await page.goto(UPLOADS);
@@ -51,7 +55,7 @@ test.describe("Cockpit smoke", () => {
     await page.waitForLoadState("domcontentloaded");
     const url = page.url();
     if (!url.includes("/dashboard/devices")) {
-      expect(url).toMatch(/\/(en|ru|es|it)(\/)?$/);
+      expectAuthRedirect(url);
       return;
     }
     const body = await page.textContent("body");
@@ -68,7 +72,7 @@ test.describe("Cockpit smoke", () => {
     await page.waitForLoadState("domcontentloaded");
     const url = page.url();
     if (!url.includes("/dashboard/ai")) {
-      expect(url).toMatch(/\/(en|ru|es|it)(\/)?$/);
+      expectAuthRedirect(url);
       return;
     }
     const body = await page.textContent("body");

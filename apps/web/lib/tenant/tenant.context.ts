@@ -86,7 +86,7 @@ async function getActiveTenantId(supabase: Awaited<ReturnType<typeof createClien
   return member?.tenant_id ?? null;
 }
 
-const ROLES = ["owner", "admin", "member", "viewer"] as const;
+const ROLES = ["owner", "admin", "member", "viewer", "stakeholder"] as const;
 type DbRole = (typeof ROLES)[number];
 
 async function getRoleInTenant(supabase: Awaited<ReturnType<typeof createClient>>, tenantId: string, userId: string): Promise<DbRole | null> {

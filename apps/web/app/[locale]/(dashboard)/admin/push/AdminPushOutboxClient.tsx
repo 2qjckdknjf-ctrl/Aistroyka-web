@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import {
   Card,
   Table,
@@ -31,6 +32,7 @@ interface OutboxRow {
 }
 
 export function AdminPushOutboxClient() {
+  const tDetail = useTranslations("dashboardDetail");
   const [data, setData] = useState<OutboxRow[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -55,7 +57,7 @@ export function AdminPushOutboxClient() {
         setError(null);
       })
       .catch((e) => {
-        setError(e instanceof Error ? e.message : "Failed to load");
+        setError(e instanceof Error ? e.message : tDetail("failedLoad"));
         setData([]);
         setTotal(0);
       })
@@ -79,7 +81,7 @@ export function AdminPushOutboxClient() {
   }
 
   const exportCsv = () => {
-    const headers = ["ID", "User", "Platform", "Type", "Status", "Attempts", "Last error", "Next retry", "Created"];
+    const headers = ["ID", tDetail("user"), tDetail("platform"), tDetail("type"), tDetail("status"), tDetail("attempts"), tDetail("lastError"), tDetail("nextRetry"), tDetail("created")];
     const rows = data.slice(0, 500).map((r) => [
       r.id,
       r.user_id,
@@ -97,19 +99,19 @@ export function AdminPushOutboxClient() {
   return (
     <Card className="p-0 overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-aistroyka-border-subtle px-4 py-3">
-        <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">Push outbox</h2>
+        <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">{tDetail("pushOutbox")}</h2>
         <div className="flex items-center gap-2">
-          <Button variant="secondary" onClick={exportCsv} className="text-sm">Export CSV</Button>
+          <Button variant="secondary" onClick={exportCsv} className="text-sm">{tDetail("exportCsv")}</Button>
           <select
-          aria-label="Filter by status"
+          aria-label={tDetail("filterByStatus")}
           value={statusFilter}
           onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
           className="rounded-[var(--aistroyka-radius-md)] border border-aistroyka-border-subtle bg-aistroyka-bg-primary px-2 py-1.5 text-aistroyka-caption"
         >
-          <option value="">All</option>
-          <option value="queued">Queued</option>
-          <option value="sent">Sent</option>
-          <option value="failed">Failed</option>
+          <option value="">{tDetail("all")}</option>
+          <option value="queued">{tDetail("queued")}</option>
+          <option value="sent">{tDetail("sent")}</option>
+          <option value="failed">{tDetail("failed")}</option>
         </select>
         </div>
       </div>
@@ -117,24 +119,24 @@ export function AdminPushOutboxClient() {
         <div className="p-8">
           <EmptyState
             icon={<span className="text-2xl">📤</span>}
-            title="No outbox entries"
-            subtitle="Push notifications will appear here when queued."
+            title={tDetail("noOutboxEntries")}
+            subtitle={tDetail("pushNotificationsAppearQueued")}
           />
         </div>
       ) : (
         <>
-          <Table aria-label="Push outbox">
+          <Table aria-label={tDetail("pushOutbox")}>
             <TableHead>
               <TableRow>
-                <TableHeaderCell>ID</TableHeaderCell>
-                <TableHeaderCell>User</TableHeaderCell>
-                <TableHeaderCell>Platform</TableHeaderCell>
-                <TableHeaderCell>Type</TableHeaderCell>
-                <TableHeaderCell>Status</TableHeaderCell>
-                <TableHeaderCell>Attempts</TableHeaderCell>
-                <TableHeaderCell>Last error</TableHeaderCell>
-                <TableHeaderCell>Next retry</TableHeaderCell>
-                <TableHeaderCell>Created</TableHeaderCell>
+                <TableHeaderCell>{tDetail("id")}</TableHeaderCell>
+                <TableHeaderCell>{tDetail("user")}</TableHeaderCell>
+                <TableHeaderCell>{tDetail("platform")}</TableHeaderCell>
+                <TableHeaderCell>{tDetail("type")}</TableHeaderCell>
+                <TableHeaderCell>{tDetail("status")}</TableHeaderCell>
+                <TableHeaderCell>{tDetail("attempts")}</TableHeaderCell>
+                <TableHeaderCell>{tDetail("lastError")}</TableHeaderCell>
+                <TableHeaderCell>{tDetail("nextRetry")}</TableHeaderCell>
+                <TableHeaderCell>{tDetail("created")}</TableHeaderCell>
               </TableRow>
             </TableHead>
             <TableBody>

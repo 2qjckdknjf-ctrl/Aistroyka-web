@@ -1,27 +1,16 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import type { ManagerOperationalContextData } from "./types";
 import { Card } from "@/components/ui";
-
-const STATE_LABEL: Record<ManagerOperationalContextData["state"], string> = {
-  healthy: "Data coverage: good",
-  partial_data: "Data coverage: partial",
-  insufficient_data: "Data coverage: thin",
-  low_confidence_health: "Health model: lower confidence",
-};
-
-const TRUST_BADGE: Record<ManagerOperationalContextData["trust_band"], string> = {
-  high: "Trust: high",
-  medium: "Trust: medium — verify key calls",
-  low: "Trust: low — gather more field data",
-};
 
 export function IntelligenceOperationalBanner({
   operational,
 }: {
   operational: ManagerOperationalContextData;
 }) {
+  const tDetail = useTranslations("dashboardDetail");
   const [copied, setCopied] = useState(false);
   const copyRef = useCallback(() => {
     void navigator.clipboard?.writeText(operational.request_id).then(() => {
@@ -34,7 +23,7 @@ export function IntelligenceOperationalBanner({
     operational.state !== "healthy" || operational.trust_band !== "high";
 
   return (
-    <section aria-label="Intelligence reliability and next steps">
+    <section aria-label={tDetail("intelligenceReliabilityAndNextSteps")}>
     <Card
       className={
         isAttention
@@ -45,22 +34,22 @@ export function IntelligenceOperationalBanner({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">
-            {STATE_LABEL[operational.state]}
+            {tDetail(`operationalState_${operational.state}`)}
             <span className="mx-2 text-aistroyka-text-tertiary">·</span>
-            <span className="font-medium">{TRUST_BADGE[operational.trust_band]}</span>
+            <span className="font-medium">{tDetail(`trustBand_${operational.trust_band}`)}</span>
           </p>
           <p className="mt-1 text-sm text-aistroyka-text-secondary">{operational.trust_summary}</p>
         </div>
         <div className="flex flex-col items-end gap-1 shrink-0">
           <p className="text-xs text-aistroyka-text-tertiary font-mono">
-            Ref: {operational.request_id.slice(0, 8)}…
+            {tDetail("refLabel")}: {operational.request_id.slice(0, 8)}…
           </p>
           <button
             type="button"
             onClick={copyRef}
             className="text-xs font-medium text-aistroyka-accent hover:underline"
           >
-            {copied ? "Copied" : "Copy full ID for admin"}
+            {copied ? tDetail("copied") : tDetail("copyFullIdForAdmin")}
           </button>
         </div>
       </div>
@@ -76,7 +65,7 @@ export function IntelligenceOperationalBanner({
       {operational.why_bullets.length > 0 && (
         <div className="mt-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-aistroyka-text-tertiary">
-            Why you&apos;re seeing this
+            {tDetail("whyYouAreSeeingThis")}
           </p>
           <ul className="mt-1 list-disc pl-5 text-sm text-aistroyka-text-secondary space-y-1">
             {operational.why_bullets.map((b, i) => (
@@ -89,7 +78,7 @@ export function IntelligenceOperationalBanner({
       {operational.next_step_hints.length > 0 && (
         <div className="mt-3 border-t border-aistroyka-border-subtle pt-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-aistroyka-text-tertiary">
-            Suggested next steps
+            {tDetail("suggestedNextSteps")}
           </p>
           <ol className="mt-1 list-decimal pl-5 text-sm text-aistroyka-text-primary space-y-1">
             {operational.next_step_hints.map((h, i) => (

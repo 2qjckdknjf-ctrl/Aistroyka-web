@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import {
   Card,
@@ -25,6 +26,7 @@ const STATUS_VARIANT: Record<string, "neutral" | "success" | "warning" | "danger
 };
 
 export function AdminLeadsClient() {
+  const tDetail = useTranslations("dashboardDetail");
   const [data, setData] = useState<LeadRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +48,7 @@ export function AdminLeadsClient() {
         setError(null);
       })
       .catch((e) => {
-        setError(e instanceof Error ? e.message : "Failed to load");
+        setError(e instanceof Error ? e.message : tDetail("failedLoad"));
         setData([]);
       })
       .finally(() => setLoading(false));
@@ -75,9 +77,9 @@ export function AdminLeadsClient() {
   return (
     <Card className="p-0 overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-aistroyka-border-subtle px-4 py-3">
-        <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">Contact leads</h2>
+        <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">{tDetail("contactLeads")}</h2>
         <select
-          aria-label="Filter by status"
+          aria-label={tDetail("filterByStatus")}
           value={statusFilter}
           onChange={(e) => {
             setStatusFilter(e.target.value);
@@ -85,32 +87,32 @@ export function AdminLeadsClient() {
           }}
           className="rounded-[var(--aistroyka-radius-md)] border border-aistroyka-border-subtle bg-aistroyka-bg-primary px-2 py-1.5 text-aistroyka-caption"
         >
-          <option value="">All statuses</option>
-          <option value="new">New</option>
-          <option value="reviewed">Reviewed</option>
-          <option value="contacted">Contacted</option>
-          <option value="archived">Archived</option>
+          <option value="">{tDetail("allStatuses")}</option>
+          <option value="new">{tDetail("new")}</option>
+          <option value="reviewed">{tDetail("reviewed")}</option>
+          <option value="contacted">{tDetail("contacted")}</option>
+          <option value="archived">{tDetail("archived")}</option>
         </select>
       </div>
       {pageData.length === 0 ? (
         <div className="p-8">
           <EmptyState
             icon={<span className="text-2xl">📋</span>}
-            title="No leads"
-            subtitle="Contact form submissions will appear here."
+            title={tDetail("noLeads")}
+            subtitle={tDetail("contactFormSubmissionsAppear")}
           />
         </div>
       ) : (
         <>
-          <Table aria-label="Leads">
+          <Table aria-label={tDetail("leads")}>
             <TableHead>
               <TableRow>
-                <TableHeaderCell>Date</TableHeaderCell>
-                <TableHeaderCell>Name</TableHeaderCell>
-                <TableHeaderCell>Email</TableHeaderCell>
-                <TableHeaderCell>Company</TableHeaderCell>
-                <TableHeaderCell>Status</TableHeaderCell>
-                <TableHeaderCell className="w-0">Actions</TableHeaderCell>
+                <TableHeaderCell>{tDetail("date")}</TableHeaderCell>
+                <TableHeaderCell>{tDetail("name")}</TableHeaderCell>
+                <TableHeaderCell>{tDetail("email")}</TableHeaderCell>
+                <TableHeaderCell>{tDetail("company")}</TableHeaderCell>
+                <TableHeaderCell>{tDetail("status")}</TableHeaderCell>
+                <TableHeaderCell className="w-0">{tDetail("actions")}</TableHeaderCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -130,7 +132,7 @@ export function AdminLeadsClient() {
                       href={`/admin/leads/${row.id}`}
                       className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline"
                     >
-                      View
+                      {tDetail("view")}
                     </Link>
                   </TableCell>
                 </TableRow>

@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Link, usePathname } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
-import { Logo } from "@/components/brand/Logo";
 
 const PRIMARY_NAV = [
   { href: "/platform", key: "platform" as const },
@@ -35,22 +34,26 @@ export function PublicHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 h-16 border-b border-[var(--border-main)] bg-[var(--bg-main)]/80 backdrop-blur-md supports-[backdrop-filter]:bg-[var(--bg-main)]/70">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-        <Logo href="/" variant="wordmark" height={40} className="min-w-0 shrink-0 hidden sm:block" priority />
-        <Logo href="/" variant="wordmark" height={24} className="min-w-0 shrink-0 sm:hidden" priority />
+    <header className="sticky top-0 z-50 border-b border-aistroyka-border-subtle bg-aistroyka-bg-primary py-3 backdrop-blur-md">
+      <div className="mx-auto flex min-w-0 max-w-7xl items-center justify-between gap-2 rounded-[var(--aistroyka-radius-xl)] border border-aistroyka-border-subtle bg-aistroyka-bg-secondary px-3 py-2 shadow-[var(--aistroyka-shadow-e1)] sm:gap-4 sm:px-6 lg:px-8">
+        <Link
+          href="/"
+          className="shrink-0 font-heading text-[var(--aistroyka-font-title3)] font-semibold uppercase tracking-[0.14em] text-aistroyka-accent"
+        >
+          AISTROYKA
+        </Link>
 
-        <nav className="hidden items-center gap-1 md:flex" aria-label="Main">
+        <nav className="hidden items-center gap-1 md:flex" aria-label={t("main")}>
           {PRIMARY_NAV.map(({ href, key }) => {
             const isActive = pathname === href || pathname.startsWith(href + "/");
             return (
               <Link
                 key={href}
                 href={href}
-                className={`rounded-[var(--radius-main)] px-3 py-2 text-[var(--aistroyka-font-subheadline)] font-medium transition-colors ${
+                className={`rounded-[var(--aistroyka-radius-lg)] px-3 py-2 text-[var(--aistroyka-font-subheadline)] font-medium transition-colors ${
                   isActive
-                    ? "bg-[var(--aistroyka-accent-light)] text-[var(--ai-yellow)]"
-                    : "text-[var(--text-muted)] hover:bg-white/5 hover:text-[var(--text-main)]"
+                    ? "bg-[var(--aistroyka-accent-light)] text-aistroyka-accent"
+                    : "text-aistroyka-text-secondary hover:bg-aistroyka-surface-raised hover:text-aistroyka-text-primary"
                 }`}
               >
                 {t(key)}
@@ -59,29 +62,23 @@ export function PublicHeader() {
           })}
         </nav>
 
-        <div className="hidden items-center gap-2 md:flex">
-          <Link
-            href="/contact"
-            className="inline-flex min-h-[var(--aistroyka-touch-min)] items-center justify-center rounded-[var(--aistroyka-radius-lg)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] px-4 py-2.5 text-[var(--aistroyka-font-subheadline)] font-semibold text-[var(--aistroyka-text-primary)] transition-colors hover:bg-[var(--aistroyka-surface-raised)]"
-          >
+        <div className="hidden min-w-0 flex-wrap items-center justify-end gap-2 md:flex">
+          <Link href="/contact" className="btn-secondary">
             {t("requestDemo")}
           </Link>
-          <Link
-            href="/login"
-            className="btn-primary"
-          >
+          <Link href="/login" className="btn-primary">
             {t("login")}
           </Link>
         </div>
 
         <button
           type="button"
-          className="inline-flex min-h-[var(--aistroyka-touch-min)] min-w-[var(--aistroyka-touch-min)] items-center justify-center rounded-[var(--radius-main)] text-[var(--text-main)] hover:bg-white/5 md:hidden"
+          className="inline-flex min-h-[var(--aistroyka-touch-min)] min-w-[var(--aistroyka-touch-min)] items-center justify-center rounded-[var(--aistroyka-radius-lg)] text-aistroyka-text-primary hover:bg-aistroyka-surface-raised md:hidden"
           aria-expanded={mobileMenuOpen}
           aria-controls="mobile-menu"
           onClick={() => setMobileMenuOpen((v) => !v)}
         >
-          <span className="sr-only">{mobileMenuOpen ? "Close menu" : "Open menu"}</span>
+          <span className="sr-only">{mobileMenuOpen ? t("closeMenu") : t("openMenu")}</span>
           <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
             {mobileMenuOpen ? (
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -94,35 +91,35 @@ export function PublicHeader() {
 
       <div
         id="mobile-menu"
-        className={`border-t border-[var(--border-main)] bg-[var(--bg-card)] md:hidden ${mobileMenuOpen ? "block" : "hidden"}`}
+        className={`mx-auto mt-2 max-w-7xl rounded-[var(--aistroyka-radius-xl)] border border-aistroyka-border-subtle bg-aistroyka-surface md:hidden ${mobileMenuOpen ? "block" : "hidden"}`}
         aria-hidden={!mobileMenuOpen}
       >
-        <nav className="flex flex-col gap-0.5 px-4 py-4" aria-label="Main mobile">
+        <nav className="flex flex-col gap-0.5 px-4 py-4" aria-label={t("mainMobile")}>
           {PRIMARY_NAV.map(({ href, key }) => (
             <Link
               key={href}
               href={href}
-              className="rounded-[var(--radius-main)] px-3 py-3 text-[var(--aistroyka-font-subheadline)] font-medium text-[var(--text-main)] hover:bg-white/5"
+              className="rounded-[var(--aistroyka-radius-lg)] px-3 py-3 text-[var(--aistroyka-font-subheadline)] font-medium text-aistroyka-text-primary hover:bg-aistroyka-surface-raised"
               onClick={() => setMobileMenuOpen(false)}
             >
               {t(key)}
             </Link>
           ))}
-          <p className="mt-3 text-[var(--aistroyka-font-caption)] text-[var(--text-muted)]">More</p>
+          <p className="mt-3 text-[var(--aistroyka-font-caption)] text-aistroyka-text-secondary">{t("more")}</p>
           {SECONDARY_NAV.map(({ href, key }) => (
             <Link
               key={href}
               href={href}
-              className="rounded-[var(--radius-main)] px-3 py-2 text-[var(--aistroyka-font-footnote)] text-[var(--text-muted)] hover:bg-white/5"
+              className="rounded-[var(--aistroyka-radius-lg)] px-3 py-2 text-[var(--aistroyka-font-footnote)] text-aistroyka-text-secondary hover:bg-aistroyka-surface-raised"
               onClick={() => setMobileMenuOpen(false)}
             >
               {t(key)}
             </Link>
           ))}
-          <div className="mt-2 flex flex-col gap-2 border-t border-[var(--aistroyka-border-subtle)] pt-4">
+          <div className="mt-2 flex flex-col gap-2 border-t border-aistroyka-border-subtle pt-4">
             <Link
               href="/contact"
-              className="rounded-[var(--radius-main)] border border-[var(--border-main)] bg-transparent px-4 py-3 text-center text-[var(--aistroyka-font-subheadline)] font-semibold"
+              className="rounded-[var(--aistroyka-radius-lg)] border border-aistroyka-border-subtle bg-transparent px-4 py-3 text-center text-[var(--aistroyka-font-subheadline)] font-semibold text-aistroyka-text-primary hover:bg-aistroyka-surface-raised"
               onClick={() => setMobileMenuOpen(false)}
             >
               {t("requestDemo")}

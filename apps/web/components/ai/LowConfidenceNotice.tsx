@@ -1,11 +1,7 @@
 "use client";
 
 import { useState } from "react";
-
-const WHY_TEXT =
-  "AI had limited project context for this answer. Consider clarifying your question or adding more data to the project.";
-
-const FOLLOW_UP_TEMPLATE = "Can you elaborate on the main risks and suggested next steps?";
+import { useTranslations } from "next-intl";
 
 export function LowConfidenceNotice({
   onSuggestFollowUp,
@@ -13,6 +9,7 @@ export function LowConfidenceNotice({
   /** Called with template text to insert into Copilot textarea (e.g. setCopilotQuestion). */
   onSuggestFollowUp?: (text: string) => void;
 }) {
+  const tDetail = useTranslations("dashboardDetail");
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -22,7 +19,7 @@ export function LowConfidenceNotice({
           className="inline-flex items-center rounded bg-aistroyka-warning/20 px-2 py-0.5 text-xs font-medium text-aistroyka-warning"
           role="status"
         >
-          Limited context
+          {tDetail("limitedContext")}
         </span>
         <button
           type="button"
@@ -31,15 +28,15 @@ export function LowConfidenceNotice({
           aria-expanded={expanded}
           aria-controls="low-confidence-details"
         >
-          {expanded ? "Hide" : "Why this happened?"}
+          {expanded ? tDetail("hide") : tDetail("whyThisHappened")}
         </button>
         {onSuggestFollowUp && (
           <button
             type="button"
-            onClick={() => onSuggestFollowUp(FOLLOW_UP_TEMPLATE)}
+            onClick={() => onSuggestFollowUp(tDetail("followUpTemplate"))}
             className="rounded border border-aistroyka-border-subtle bg-aistroyka-surface px-2 py-1 text-xs font-medium text-aistroyka-text-secondary hover:bg-aistroyka-surface-muted focus:outline-none focus:ring-2 focus:ring-aistroyka-accent focus:ring-offset-2"
           >
-            Suggest a follow-up question
+            {tDetail("suggestFollowUpQuestion")}
           </button>
         )}
       </div>
@@ -48,9 +45,9 @@ export function LowConfidenceNotice({
           id="low-confidence-details"
           className="mt-2 text-aistroyka-text-secondary"
           role="region"
-          aria-label="Explanation"
+          aria-label={tDetail("explanation")}
         >
-          {WHY_TEXT}
+          {tDetail("limitedContextReason")}
         </p>
       )}
     </div>

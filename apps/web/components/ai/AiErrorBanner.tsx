@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import type { EngineError } from "@/lib/engine/errors";
 import { CopyRequestIdButton } from "./CopyRequestIdButton";
 
@@ -11,6 +12,7 @@ export function AiErrorBanner({
   error: EngineError;
   onRetry?: () => void;
 }) {
+  const tDetail = useTranslations("dashboardDetail");
   const [countdown, setCountdown] = useState(
     error.kind === "rate_limited" && error.retryAfterSeconds != null ? error.retryAfterSeconds : 0
   );
@@ -29,14 +31,14 @@ export function AiErrorBanner({
   const canRetry = error.retryable && onRetry && (error.kind !== "rate_limited" || countdown <= 0);
 
   const kindMessages: Record<EngineError["kind"], string | null> = {
-    rate_limited: "Rate limit exceeded. Try again when the countdown reaches zero.",
-    circuit_open: "AI service is temporarily limited. It will auto-recover in about 60 seconds.",
-    timeout: "Request timed out. Try again.",
+    rate_limited: tDetail("rateLimitExceededHint"),
+    circuit_open: tDetail("aiServiceTemporarilyLimited"),
+    timeout: tDetail("requestTimedOutTryAgain"),
     budget_exceeded:
-      "Token budget exceeded for this period. Contact your administrator or wait for the next period.",
-    security_blocked: "Response was blocked by security policy. Please rephrase your request.",
-    unauthorized: "Unauthorized. Please sign in again.",
-    unknown: error.requestId ? "Something went wrong. See request ID below for support." : "Something went wrong.",
+      tDetail("tokenBudgetExceededHint"),
+    security_blocked: tDetail("responseBlockedBySecurity"),
+    unauthorized: tDetail("unauthorizedSignInAgain"),
+    unknown: error.requestId ? tDetail("somethingWentWrongSeeRequestId") : tDetail("somethingWentWrong"),
   };
 
   const mainMessage = kindMessages[error.kind] ?? error.message;
@@ -49,7 +51,7 @@ export function AiErrorBanner({
       <p className="font-medium text-aistroyka-text-primary">{mainMessage}</p>
       {error.kind === "rate_limited" && countdown > 0 && (
         <p className="mt-2 text-aistroyka-text-secondary" aria-live="polite">
-          Retry available in {countdown}s
+          {tDetail("retryAvailableIn")} {countdown}s
         </p>
       )}
       {canRetry && (
@@ -58,16 +60,16 @@ export function AiErrorBanner({
           onClick={onRetry}
           className="mt-2 min-h-[36px] rounded border border-aistroyka-warning bg-aistroyka-surface px-3 py-2 text-sm text-aistroyka-warning hover:bg-aistroyka-warning/20 focus:outline-none focus:ring-2 focus:ring-aistroyka-accent focus:ring-offset-2"
         >
-          Retry
+          {tDetail("retry")}
         </button>
       )}
       {error.kind === "budget_exceeded" && (
         <p className="mt-2 text-xs text-aistroyka-text-tertiary">
-          You can check usage or contact support when available.
+          {tDetail("checkUsageOrContactSupport")}
         </p>
       )}
       <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-aistroyka-border-subtle pt-3">
-        <span className="text-xs text-aistroyka-text-tertiary">Request ID:</span>
+        <span className="text-xs text-aistroyka-text-tertiary">{tDetail("requestId")}:</span>
         {error.requestId ? (
           <CopyRequestIdButton requestId={error.requestId} />
         ) : (

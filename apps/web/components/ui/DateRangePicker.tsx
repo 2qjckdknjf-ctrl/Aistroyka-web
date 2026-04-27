@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 export type DateRangePreset = "7d" | "30d" | "90d";
 
 export interface DateRangePickerProps {
@@ -19,8 +21,9 @@ export function DateRangePicker({
   onPreset,
   "aria-label": ariaLabel,
 }: DateRangePickerProps) {
+  const tDetail = useTranslations("dashboardDetail");
   return (
-    <div className="flex flex-wrap items-center gap-2" role="group" aria-label={ariaLabel ?? "Date range"}>
+    <div className="flex flex-wrap items-center gap-2" role="group" aria-label={ariaLabel ?? tDetail("dateRange")}>
       {onPreset && (
         <div className="flex gap-1 rounded-[var(--aistroyka-radius-lg)] border border-aistroyka-border-subtle bg-aistroyka-surface-raised p-0.5">
           {(["7d", "30d", "90d"] as DateRangePreset[]).map((preset) => (
@@ -30,12 +33,12 @@ export function DateRangePicker({
               onClick={() => onPreset(preset)}
               className="rounded-[var(--aistroyka-radius-md)] px-2 py-1 text-[var(--aistroyka-font-caption)] font-medium text-aistroyka-text-secondary transition-colors hover:bg-aistroyka-surface hover:text-aistroyka-text-primary focus:outline-none focus:ring-2 focus:ring-aistroyka-accent"
             >
-              {preset === "7d" ? "7 days" : preset === "30d" ? "30 days" : "90 days"}
+              {preset === "7d" ? tDetail("sevenDays") : preset === "30d" ? tDetail("thirtyDays") : tDetail("ninetyDays")}
             </button>
           ))}
         </div>
       )}
-      <label className="sr-only">From</label>
+      <label className="sr-only">{tDetail("from")}</label>
       <input
         type="date"
         value={from}
@@ -43,7 +46,7 @@ export function DateRangePicker({
         className="rounded-[var(--aistroyka-radius-md)] border border-aistroyka-border-subtle bg-aistroyka-bg-primary px-2 py-1.5 text-[var(--aistroyka-font-caption)] text-aistroyka-text-primary focus:outline-none focus:ring-2 focus:ring-aistroyka-accent"
       />
       <span className="text-aistroyka-text-tertiary">–</span>
-      <label className="sr-only">To</label>
+      <label className="sr-only">{tDetail("to")}</label>
       <input
         type="date"
         value={to}
