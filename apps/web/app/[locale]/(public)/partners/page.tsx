@@ -21,7 +21,7 @@ export default async function PartnersPage({ params }: Props) {
   const t = await getTranslations("public.partners");
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+    <div className="mx-auto min-w-0 max-w-5xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
       <section className="text-center">
         <h1 className="text-[var(--aistroyka-font-title)] font-bold text-[var(--aistroyka-text-primary)]">
           {t("title")}
@@ -62,7 +62,9 @@ export default async function PartnersPage({ params }: Props) {
       </section>
 
       <section className="mt-12 flex justify-center">
-        <Link href="/contact" className="btn-primary">{t("cta")}</Link>
+        <Link href="/contact" className="btn-primary max-w-full">
+          {t("cta")}
+        </Link>
       </section>
     </div>
   );

@@ -4,6 +4,7 @@ import { updateSession } from "@/lib/supabase/middleware";
 import { routing } from "@/i18n/routing";
 import { checkLiteAllowList } from "@/lib/api/lite-allow-list";
 import { resolvePostAuthEntry } from "@/lib/entry/entry-routing";
+import { gateOwnerRequest } from "@/lib/platform-owner/middleware-owner-gate";
 
 const intlMiddleware = createIntlMiddleware(routing);
 
@@ -41,12 +42,38 @@ function pathWithoutLocale(pathname: string): { path: string; locale: string } {
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const isProduction = process.env.NODE_ENV === "production";
+  const pathWithoutLocEarly = pathWithoutLocale(pathname).path;
+  const isOwnerPage = pathWithoutLocEarly.startsWith("/owner");
+  const isOwnerApi = pathname.startsWith("/api/v1/owner");
 
   if (pathname.startsWith("/api/v1")) {
     const forbidden = checkLiteAllowList(pathname, request.method, request.headers.get("x-client"));
     if (forbidden) {
       return NextResponse.json(forbidden.body, { status: 403 });
     }
+  }
+
+  if (isOwnerApi) {
+    const { response: sessionResponse, user } = await updateSession(request);
+    if (sessionResponse.status === 503) {
+      return applySecurityHeaders(sessionResponse, isProduction);
+    }
+    const denied = await gateOwnerRequest({
+      request,
+      sessionResponse,
+      user,
+      pathname,
+      isApi: true,
+    });
+    if (denied) {
+      return applySecurityHeaders(denied, isProduction);
+    }
+    const res = NextResponse.next();
+    sessionResponse.headers.forEach((v, k) => res.headers.set(k, v));
+    return applySecurityHeaders(res, isProduction);
+  }
+
+  if (pathname.startsWith("/api/v1")) {
     return NextResponse.next();
   }
 
@@ -61,6 +88,20 @@ export async function middleware(request: NextRequest) {
   if (sessionResponse.status === 503) {
     return applySecurityHeaders(sessionResponse, process.env.NODE_ENV === "production");
   }
+
+  if (isOwnerPage) {
+    const denied = await gateOwnerRequest({
+      request,
+      sessionResponse,
+      user,
+      pathname,
+      isApi: false,
+    });
+    if (denied) {
+      return applySecurityHeaders(denied, isProduction);
+    }
+  }
+
   let res = await intlMiddleware(request);
 
   const pathnameForLoc = request.nextUrl.pathname;
