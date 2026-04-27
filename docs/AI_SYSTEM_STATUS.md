@@ -44,7 +44,7 @@ Same gate (higher `COPILOT_STREAM_ESTIMATE_USD`) → thread + messages → OpenA
 | Single vision entry | **Yes.** `analyzeImage` only; routes/jobs do not call providers directly. |
 | Provider abstraction + router | **Yes.** Used by `analyzeImage`. |
 | Policy on vision | **Yes.** When tenant context is present. |
-| Text/chat multi-provider router | **No.** Copilot text uses OpenAI HTTP directly (aligned model via `OPENAI_COPILOT_MODEL`). |
+| Text/chat multi-provider router | **No.** Copilot uses OpenAI chat completions with shared retry/timeout (`lib/platform/ai/openai-http-retry.ts`, `openai-chat-completion.ts`). |
 
 ---
 

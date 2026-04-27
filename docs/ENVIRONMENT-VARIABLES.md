@@ -77,6 +77,9 @@ Vercel может встречаться как исторический/доп�
 | `NEXT_PUBLIC_APP_ENV` | Метка окружения для клиента, например `production` или `staging`. |
 | `LOG_LEVEL` | Уровень логов: `info`, `debug`, `warn`, `error`. |
 | `OPENAI_VISION_MODEL` | Модель vision (по умолчанию `gpt-4o`). |
+| `OPENAI_COPILOT_MODEL` | Модель для Copilot (текст / SSE), по умолчанию `gpt-4o-mini`. |
+| `OPENAI_COPILOT_TIMEOUT_MS` | Таймаут одной попытки HTTP к OpenAI для Copilot (15 000–120 000, по умолчанию 60 000). |
+| `OPENAI_COPILOT_MAX_RETRIES` | Число **дополнительных** повторов при 429/5xx для Copilot (0–5, по умолчанию 2). |
 | `WEBHOOK_INCOMING_SECRET` | Секрет для входящих webhooks (если используется). |
 
 ---

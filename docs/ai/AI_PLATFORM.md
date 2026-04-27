@@ -19,7 +19,7 @@ Platform-level AI: entrypoints, policy, routing, providers, budgets, observabili
 
 ## Enabling providers
 
-- **OpenAI:** `OPENAI_API_KEY`, `OPENAI_VISION_MODEL` (default gpt-4o).
+- **OpenAI:** `OPENAI_API_KEY`, `OPENAI_VISION_MODEL` (default gpt-4o). Copilot text/stream: `OPENAI_COPILOT_MODEL` (default `gpt-4o-mini`), `OPENAI_COPILOT_TIMEOUT_MS`, `OPENAI_COPILOT_MAX_RETRIES` (retries on transient HTTP errors).
 - **Anthropic:** `ANTHROPIC_API_KEY`, `ANTHROPIC_VISION_MODEL` (default claude-sonnet-4-20250514).
 - **Gemini:** `GOOGLE_AI_API_KEY` or `GEMINI_API_KEY`, `GEMINI_VISION_MODEL` (default gemini-1.5-flash).
 

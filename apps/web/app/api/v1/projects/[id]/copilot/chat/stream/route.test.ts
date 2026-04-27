@@ -92,6 +92,9 @@ vi.mock("@/lib/platform/ai-usage/ai-usage.service", () => ({
 vi.mock("@/lib/config/server", () => ({
   getServerConfig: vi.fn().mockReturnValue({
     OPENAI_API_KEY: "sk-test",
+    OPENAI_COPILOT_MODEL: "gpt-4o-mini",
+    OPENAI_COPILOT_TIMEOUT_MS: 60_000,
+    OPENAI_COPILOT_MAX_RETRIES: 0,
   }),
   isOpenAIConfigured: vi.fn().mockReturnValue(true),
 }));

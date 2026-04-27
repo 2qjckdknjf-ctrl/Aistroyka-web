@@ -1,4 +1,22 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+
+vi.mock("@/lib/config/server", () => ({
+  getServerConfig: vi.fn(() => ({
+    OPENAI_API_KEY: "sk-env",
+    OPENAI_COPILOT_MODEL: "gpt-4o-mini",
+    OPENAI_COPILOT_TIMEOUT_MS: 55_000,
+    OPENAI_COPILOT_MAX_RETRIES: 2,
+    OPENAI_VISION_MODEL: "gpt-4o",
+    OPENAI_VISION_TIMEOUT_MS: 85_000,
+    OPENAI_RETRY_ON_5XX: 1,
+    AI_ANALYSIS_URL: "",
+    AI_REQUEST_TIMEOUT_MS: 90_000,
+    AI_RETRY_ATTEMPTS: 3,
+    SUPABASE_SERVICE_ROLE_KEY: "",
+    NODE_ENV: "test",
+  })),
+}));
+
 import { createOpenAiCopilotProvider } from "./copilot.openai-provider";
 
 describe("createOpenAiCopilotProvider", () => {

@@ -29,7 +29,7 @@ export function isTransientOpenAiHttpStatus(status: number): boolean {
 }
 
 function backoffMs(attempt: number, response: Response): number {
-  const raw = response.headers.get("retry-after");
+  const raw = response.headers?.get?.("retry-after");
   if (raw) {
     const sec = Number.parseFloat(raw);
     if (Number.isFinite(sec) && sec > 0) {
@@ -89,7 +89,7 @@ export async function fetchWithOpenAiRetry(
     if (!isTransientOpenAiHttpStatus(last.status) || attempt === options.maxRetries) {
       return last;
     }
-    await new Promise((r) => setTimeout(r, backoffMs(attempt, last)));
+    await new Promise((r) => setTimeout(r, backoffMs(attempt, last!)));
   }
 
   return last!;
