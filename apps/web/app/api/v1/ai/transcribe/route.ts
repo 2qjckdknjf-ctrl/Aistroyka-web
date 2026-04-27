@@ -8,10 +8,11 @@ import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from 
 import { getAdminClient } from "@/lib/supabase/admin";
 import { createClientFromRequest } from "@/lib/supabase/server";
 import { getServerConfig, isOpenAIConfigured } from "@/lib/config/server";
-import { gateCopilotLlmRequest } from "@/lib/copilot/copilot-ai-gate";
+import { gateTenantAiRequest } from "@/lib/copilot/copilot-ai-gate";
+import { inferAudioMimeFromBytes } from "@/lib/platform/ai/audio-sniff";
 import { estimateTranscriptionCostUsd, estimateTranscriptionQuotaReserveUsd } from "@/lib/platform/ai-usage/cost-estimator";
 import { recordUsage, checkBudgetAlert } from "@/lib/platform/ai-usage/ai-usage.service";
-import { transcribeOpenAiAudio } from "@/lib/platform/ai/openai-transcription";
+import { normalizeWhisperLanguage, transcribeOpenAiAudio } from "@/lib/platform/ai/openai-transcription";
 import { getOrCreateRequestId } from "@/lib/observability";
 import { emitAiRuntimeAudit } from "@/lib/observability/audit.service";
 import { logStructured } from "@/lib/observability";
@@ -20,6 +21,9 @@ export const dynamic = "force-dynamic";
 
 const ROUTE_KEY = "POST /api/v1/ai/transcribe";
 const MAX_AUDIO_BYTES = 25 * 1024 * 1024;
+/** Reject absurd multipart bodies before buffering (rough bound; multipart has overhead). */
+const MAX_REQUEST_BYTES = MAX_AUDIO_BYTES + 512 * 1024;
+const MIN_AUDIO_BYTES = 32;
 
 const ALLOWED_AUDIO_TYPES = new Set([
   "audio/webm",
@@ -36,16 +40,24 @@ const ALLOWED_AUDIO_TYPES = new Set([
   "application/ogg",
 ]);
 
-function whisperLanguageHint(locale: string | null | undefined): string | null {
-  const t = locale?.trim().toLowerCase();
-  if (!t) return null;
-  const m = /^([a-z]{2})(-[a-z0-9]+)?$/i.exec(t);
-  return m ? m[1] : null;
+function isLikelyUuid(s: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(s.trim());
 }
 
 export async function POST(request: Request) {
   const requestId = getOrCreateRequestId(request);
   const start = Date.now();
+
+  const contentLength = request.headers.get("content-length");
+  if (contentLength !== null && contentLength !== "") {
+    const n = Number(contentLength);
+    if (Number.isFinite(n) && n > MAX_REQUEST_BYTES) {
+      return NextResponse.json(
+        { error: "Request body too large", request_id: requestId },
+        { status: 413, headers: { "X-Request-Id": requestId } }
+      );
+    }
+  }
 
   if (!isOpenAIConfigured()) {
     return NextResponse.json(
@@ -78,7 +90,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const gate = await gateCopilotLlmRequest(admin, {
+  const gate = await gateTenantAiRequest(admin, {
     tenantId,
     userId: ctx.userId ?? null,
     subscriptionTier: ctx.subscriptionTier ?? null,
@@ -112,16 +124,24 @@ export async function POST(request: Request) {
   if (fileEntry.size > MAX_AUDIO_BYTES) {
     return NextResponse.json({ error: "Audio file too large (max 25 MB)", request_id: requestId }, { status: 413 });
   }
+  if (fileEntry.size < MIN_AUDIO_BYTES) {
+    return NextResponse.json({ error: "Audio file too small", request_id: requestId }, { status: 400 });
+  }
 
-  const mime = (fileEntry.type ?? "").trim().toLowerCase();
-  if (mime && !ALLOWED_AUDIO_TYPES.has(mime)) {
+  const rawMime = (fileEntry.type ?? "").trim().toLowerCase();
+  const treatMimeAsUnknown =
+    !rawMime || rawMime === "application/octet-stream" || rawMime === "binary/octet-stream";
+  const mimeFromClient = treatMimeAsUnknown ? "" : rawMime;
+  if (mimeFromClient && !ALLOWED_AUDIO_TYPES.has(mimeFromClient)) {
     return NextResponse.json(
-      { error: `Unsupported audio type: ${mime}`, request_id: requestId },
+      { error: `Unsupported audio type: ${mimeFromClient}`, request_id: requestId },
       { status: 415 }
     );
   }
 
-  const localeHint = whisperLanguageHint(form.get("locale")?.toString() ?? null);
+  const localeHint = normalizeWhisperLanguage(form.get("locale")?.toString() ?? null);
+  const projectIdRaw = form.get("project_id")?.toString()?.trim() ?? "";
+  const projectId = projectIdRaw && isLikelyUuid(projectIdRaw) ? projectIdRaw : null;
 
   let bytes: Uint8Array;
   try {
@@ -129,6 +149,20 @@ export async function POST(request: Request) {
     bytes = new Uint8Array(buf);
   } catch {
     return NextResponse.json({ error: "Failed to read audio", request_id: requestId }, { status: 400 });
+  }
+
+  const effectiveMime =
+    mimeFromClient || inferAudioMimeFromBytes(bytes.subarray(0, Math.min(bytes.length, 128))) || "";
+  if (!effectiveMime || !ALLOWED_AUDIO_TYPES.has(effectiveMime)) {
+    return NextResponse.json(
+      {
+        error: effectiveMime
+          ? `Unsupported audio type: ${effectiveMime}`
+          : "Could not determine audio format; set file type or send a standard WebM/Ogg/WAV/MP3/MP4 clip",
+        request_id: requestId,
+      },
+      { status: 415 }
+    );
   }
 
   const cfg = getServerConfig();
@@ -140,7 +174,7 @@ export async function POST(request: Request) {
       model,
       audioBytes: bytes,
       filename: fileEntry.name.replace(/[^\w.\-]+/g, "_").slice(0, 120) || "audio.webm",
-      mimeType: mime || "audio/webm",
+      mimeType: effectiveMime,
       language: localeHint,
       timeoutMs: cfg.OPENAI_TRANSCRIPTION_TIMEOUT_MS,
       maxRetries: cfg.OPENAI_TRANSCRIPTION_MAX_RETRIES,
@@ -179,6 +213,7 @@ export async function POST(request: Request) {
       tenant_id: tenantId,
       user_id: ctx.userId ?? null,
       trace_id: requestId,
+      project_id: projectId,
       action: "ai_transcription_complete",
       details: {
         request_id: requestId,
@@ -214,6 +249,7 @@ export async function POST(request: Request) {
       tenant_id: tenantId,
       user_id: ctx.userId ?? null,
       trace_id: requestId,
+      project_id: projectId,
       action: "ai_transcription_error",
       details: {
         request_id: requestId,

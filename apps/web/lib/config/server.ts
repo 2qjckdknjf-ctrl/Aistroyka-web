@@ -84,3 +84,8 @@ export function getConfiguredVisionProviders(): ("openai" | "anthropic" | "gemin
 export function isAnyVisionProviderConfigured(): boolean {
   return getConfiguredVisionProviders().length > 0;
 }
+
+/** Gemini (GOOGLE_AI_API_KEY / GEMINI_API_KEY) — required for video daily-work analysis. */
+export function isGeminiConfigured(): boolean {
+  return (process.env.GOOGLE_AI_API_KEY ?? process.env.GEMINI_API_KEY ?? "").trim().length > 0;
+}

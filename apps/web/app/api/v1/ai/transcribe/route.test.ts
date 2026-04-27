@@ -10,7 +10,7 @@ vi.mock("@/lib/supabase/admin", () => ({
 }));
 
 vi.mock("@/lib/copilot/copilot-ai-gate", () => ({
-  gateCopilotLlmRequest: vi.fn().mockResolvedValue({ ok: true }),
+  gateTenantAiRequest: vi.fn().mockResolvedValue({ ok: true }),
 }));
 
 vi.mock("@/lib/platform/ai-usage/ai-usage.service", () => ({
@@ -42,6 +42,12 @@ vi.mock("@/lib/tenant", () => ({
   TenantRequiredError: class extends Error {},
 }));
 
+function minWebmPayload(): Uint8Array {
+  const b = new Uint8Array(40);
+  b.set([0x1a, 0x45, 0xdf, 0xa3]);
+  return b;
+}
+
 describe("POST /api/v1/ai/transcribe", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -53,6 +59,18 @@ describe("POST /api/v1/ai/transcribe", () => {
     );
   });
 
+  it("returns 413 when Content-Length exceeds bound", async () => {
+    const max = 25 * 1024 * 1024 + 512 * 1024 + 1;
+    const fd = new FormData();
+    const req = new Request("https://x/api/v1/ai/transcribe", {
+      method: "POST",
+      headers: { "content-length": String(max) },
+      body: fd,
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(413);
+  });
+
   it("returns 400 when file field missing", async () => {
     const fd = new FormData();
     const req = new Request("https://x/api/v1/ai/transcribe", { method: "POST", body: fd });
@@ -61,7 +79,7 @@ describe("POST /api/v1/ai/transcribe", () => {
   });
 
   it("returns 200 with text when file present", async () => {
-    const file = new File([new Uint8Array([1, 2, 3])], "clip.webm", { type: "audio/webm" });
+    const file = new File([minWebmPayload()], "clip.webm", { type: "audio/webm" });
     const fd = new FormData();
     fd.append("file", file);
     fd.append("locale", "en");
@@ -70,5 +88,14 @@ describe("POST /api/v1/ai/transcribe", () => {
     expect(res.status).toBe(200);
     const j = (await res.json()) as { data: { text: string } };
     expect(j.data.text).toBe("hello site");
+  });
+
+  it("infers WebM when file type is empty", async () => {
+    const file = new File([minWebmPayload()], "clip.bin", { type: "" });
+    const fd = new FormData();
+    fd.append("file", file);
+    const req = new Request("https://x/api/v1/ai/transcribe", { method: "POST", body: fd });
+    const res = await POST(req);
+    expect(res.status).toBe(200);
   });
 });

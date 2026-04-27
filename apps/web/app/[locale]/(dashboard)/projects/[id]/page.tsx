@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server";
 import { createClient, getSessionUser } from "@/lib/supabase/server";
 import { getProjectById } from "@/lib/supabase/rpc";
 import { UploadMediaForm } from "../UploadMediaForm";
+import { ProjectVideoDailyAnalysisPanel } from "../ProjectVideoDailyAnalysisPanel";
 import { ProjectPollingSection } from "../ProjectPollingSection";
 import { ExecutiveOverviewBlock } from "../ExecutiveOverviewBlock";
 import { TrendSummaryBlock } from "../TrendSummaryBlock";
@@ -365,6 +366,14 @@ export default async function ProjectPage({
         <SectionHeader title={t("uploadImage")} subtitle={t("uploadImageSubtitle")} />
         <Card>
           <UploadMediaForm projectId={id} />
+        </Card>
+      </section>
+
+      {/* Video — daily work summary (Gemini) */}
+      <section className="mb-aistroyka-8">
+        <SectionHeader title={t("videoDailyTitle")} subtitle={t("videoDailySubtitle")} />
+        <Card>
+          <ProjectVideoDailyAnalysisPanel projectId={id} />
         </Card>
       </section>
 

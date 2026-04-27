@@ -12,8 +12,9 @@ describe("rate-limit", () => {
     });
   });
   describe("HIGH_RISK_ENDPOINTS", () => {
-    it("includes analyze-image, report submit, login", () => {
+    it("includes analyze-image, analyze-video-daily, report submit, login", () => {
       expect(HIGH_RISK_ENDPOINTS).toContain("/api/v1/ai/analyze-image");
+      expect(HIGH_RISK_ENDPOINTS).toContain("/api/v1/ai/analyze-video-daily");
       expect(HIGH_RISK_ENDPOINTS).toContain("/api/auth/login");
     });
   });

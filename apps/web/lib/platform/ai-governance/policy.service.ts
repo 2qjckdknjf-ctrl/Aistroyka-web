@@ -26,14 +26,18 @@ export async function runPolicy(
   traceId?: string | null
 ): Promise<PolicyResult> {
   let result = evaluatePolicy(ctx);
-  if (result.decision === "allow" && ctx.image_url) {
-    const piiResult = await checkPiiImageUrl(supabase, ctx.tenant_id, ctx.image_url);
-    if (!piiResult.allowed) {
-      result = {
-        decision: "block",
-        rule_hits: [...result.rule_hits, piiResult.rule_hit ?? "pii_strict_block"],
-        model_tier: result.model_tier,
-      };
+  if (result.decision === "allow") {
+    for (const mediaUrl of [ctx.image_url, ctx.video_url]) {
+      if (!mediaUrl) continue;
+      const piiResult = await checkPiiMediaUrl(supabase, ctx.tenant_id, mediaUrl);
+      if (!piiResult.allowed) {
+        result = {
+          decision: "block",
+          rule_hits: [...result.rule_hits, piiResult.rule_hit ?? "pii_strict_block"],
+          model_tier: result.model_tier,
+        };
+        break;
+      }
     }
   }
   const decisionId = await recordPolicyDecision(
@@ -46,17 +50,17 @@ export async function runPolicy(
   return { ...result, decisionId };
 }
 
-/** Minimal PII hook: strict mode + untrusted image host => block. */
-async function checkPiiImageUrl(
+/** Minimal PII hook: strict mode + untrusted media URL host => block. */
+async function checkPiiMediaUrl(
   supabase: SupabaseClient,
   tenantId: string,
-  imageUrl: string
+  mediaUrl: string
 ): Promise<{ allowed: boolean; rule_hit?: string }> {
   const settings = await getPrivacySettings(supabase, tenantId);
   if (!settings || settings.pii_mode !== "strict") return { allowed: true };
   let host: string;
   try {
-    host = new URL(imageUrl).hostname.toLowerCase();
+    host = new URL(mediaUrl).hostname.toLowerCase();
   } catch {
     return { allowed: false, rule_hit: "pii_strict_invalid_image_url" };
   }
@@ -73,6 +77,7 @@ export function checkPolicy(ctx: {
   resource_type?: "media" | "report";
   image_count?: number;
   image_size_bytes?: number;
+  video_size_bytes?: number | null;
   trace_id?: string | null;
 }): PolicyResult {
   return evaluatePolicy({
@@ -81,6 +86,7 @@ export function checkPolicy(ctx: {
     resource_type: ctx.resource_type,
     image_count: ctx.image_count,
     image_size_bytes: ctx.image_size_bytes,
+    video_size_bytes: ctx.video_size_bytes ?? undefined,
   });
 }
 

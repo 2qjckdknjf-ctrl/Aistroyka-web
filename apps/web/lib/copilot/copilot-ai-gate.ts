@@ -96,3 +96,6 @@ export async function gateCopilotLlmRequest(
 
   return { ok: true };
 }
+
+/** Alias: same checks for any tenant-scoped OpenAI text/voice call (Copilot, transcribe, …). */
+export const gateTenantAiRequest = gateCopilotLlmRequest;

@@ -1,10 +1,24 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fetchWithOpenAiRetry } from "./openai-http-retry";
-import { transcribeOpenAiAudio } from "./openai-transcription";
+import { normalizeWhisperLanguage, transcribeOpenAiAudio } from "./openai-transcription";
 
 vi.mock("./openai-http-retry", () => ({
   fetchWithOpenAiRetry: vi.fn(),
 }));
+
+describe("normalizeWhisperLanguage", () => {
+  it("maps BCP-47 to ISO-639-1 base", () => {
+    expect(normalizeWhisperLanguage("ru-RU")).toBe("ru");
+    expect(normalizeWhisperLanguage("en_US")).toBe("en");
+    expect(normalizeWhisperLanguage("  FR-ca  ")).toBe("fr");
+  });
+
+  it("returns null for invalid hints", () => {
+    expect(normalizeWhisperLanguage(null)).toBeNull();
+    expect(normalizeWhisperLanguage("")).toBeNull();
+    expect(normalizeWhisperLanguage("toolongcode")).toBeNull();
+  });
+});
 
 describe("transcribeOpenAiAudio", () => {
   beforeEach(() => {
@@ -54,7 +68,7 @@ describe("transcribeOpenAiAudio", () => {
     vi.mocked(fetchWithOpenAiRetry).mockImplementationOnce(async (_url, getInit) => {
       const init = getInit(new AbortController().signal);
       const form = init.body as FormData;
-      expect(form.get("language")).toBeNull();
+      expect(form.get("language")).toBe("ru");
       return new Response(JSON.stringify({ text: "ok", duration: 1 }), { status: 200 });
     });
 

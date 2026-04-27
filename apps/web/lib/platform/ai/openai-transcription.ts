@@ -6,6 +6,14 @@ import { fetchWithOpenAiRetry } from "./openai-http-retry";
 
 export const OPENAI_AUDIO_TRANSCRIPTIONS_URL = "https://api.openai.com/v1/audio/transcriptions";
 
+/** ISO-639-1 two-letter code for Whisper `language` (from `en`, `en-US`, etc.). */
+export function normalizeWhisperLanguage(raw: string | null | undefined): string | null {
+  const t = raw?.trim().toLowerCase();
+  if (!t) return null;
+  const m = /^([a-z]{2})(?:[-_][a-z0-9]+)?$/i.exec(t);
+  return m ? m[1]!.toLowerCase() : null;
+}
+
 export interface TranscribeOpenAiAudioInput {
   apiKey: string;
   model: string;
@@ -43,8 +51,8 @@ export async function transcribeOpenAiAudio(
       form.append("file", blob, input.filename || "audio.webm");
       form.append("model", input.model);
       form.append("response_format", "verbose_json");
-      const lang = input.language?.trim().toLowerCase();
-      if (lang && /^[a-z]{2}$/.test(lang)) {
+      const lang = normalizeWhisperLanguage(input.language);
+      if (lang) {
         form.append("language", lang);
       }
       return {
