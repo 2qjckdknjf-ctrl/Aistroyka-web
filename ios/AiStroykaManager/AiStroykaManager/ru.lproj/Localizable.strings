@@ -32,11 +32,11 @@
 "mgr_notifications" = "Уведомления";
 "mgr_err_no_tenant_context" = "Нет контекста тенанта.";
 "mgr_err_no_team_membership" = "Вы не состоите ни в одной команде.";
-"mgr_err_role_not_allowed" = "Manager app доступен владельцам, админам и тимлидам. Ваша роль (%@) не имеет доступа.";
+"mgr_err_role_not_allowed" = "Приложение Manager доступно владельцам, администраторам и тимлидам. Ваша роль (%@) не имеет доступа.";
 "mgr_err_session_expired" = "Сессия истекла. Войдите снова.";
 "mgr_active_workers" = "Активные сотрудники";
 "mgr_ai_analyses" = "ИИ-анализы";
-"mgr_ai_copilot_placeholder" = "AI Copilot — проектный ИИ и инсайты";
+"mgr_ai_copilot_placeholder" = "ИИ-копилот — проектный ИИ и инсайты";
 "mgr_ai_project_title_fmt" = "ИИ — %@";
 "mgr_all" = "Все";
 "mgr_all_projects" = "Все проекты";
@@ -148,10 +148,10 @@
 "mgr_task_title_placeholder" = "Название задачи";
 "mgr_tasks_placeholder" = "Список/доска задач — GET /api/v1/tasks";
 "mgr_team_placeholder" = "Команда — GET /api/v1/workers";
-"mgr_tenant_id" = "Tenant ID";
+"mgr_tenant_id" = "ID тенанта";
 "mgr_title" = "Название";
 "mgr_title_section" = "Название";
 "mgr_unknown" = "Неизвестно";
-"mgr_user_id" = "User ID";
+"mgr_user_id" = "ID пользователя";
 "mgr_worker" = "Сотрудник";
 "mgr_worker_section" = "Сотрудник";
