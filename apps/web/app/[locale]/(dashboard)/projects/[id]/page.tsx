@@ -303,7 +303,18 @@ export default async function ProjectPage({
 
   const lastDeltaSummary =
     proj.hasVelocity && proj.lastVelocity != null
-      ? `Last velocity: ${proj.lastVelocity >= 0 ? "+" : ""}${proj.lastVelocity.toFixed(1)}%/day. ${proj.forecastDate ? `Forecast: ${proj.forecastDate}` : ""}`
+      ? [
+          t("lastVelocitySummary", {
+            velocity: `${proj.lastVelocity >= 0 ? "+" : ""}${proj.lastVelocity.toFixed(1)}%/day`,
+          }),
+          proj.forecastDate
+            ? t("forecastSummary", {
+                date: proj.forecastDate,
+              })
+            : "",
+        ]
+          .filter(Boolean)
+          .join(" ")
       : null;
 
   const decisionContext = buildDecisionContextFromProject(

@@ -155,3 +155,4 @@
 "mgr_user_id" = "ID пользователя";
 "mgr_worker" = "Сотрудник";
 "mgr_worker_section" = "Сотрудник";
+"mgr_empty_default_title" = "Пока здесь пусто";

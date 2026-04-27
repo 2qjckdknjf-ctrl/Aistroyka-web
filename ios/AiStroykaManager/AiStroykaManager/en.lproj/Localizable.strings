@@ -155,3 +155,4 @@
 "mgr_user_id" = "User ID";
 "mgr_worker" = "Worker";
 "mgr_worker_section" = "Worker";
+"mgr_empty_default_title" = "Nothing here yet";

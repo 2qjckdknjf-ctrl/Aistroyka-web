@@ -13,7 +13,7 @@ struct ManagerUnauthorizedView: View {
     var body: some View {
         VStack(spacing: 24) {
             Image(systemName: "person.crop.circle.badge.minus")
-                .font(.system(size: 60))
+                .font(.largeTitle)
                 .foregroundStyle(.secondary)
             Text(NSLocalizedString("mgr_unauthorized", comment: ""))
                 .font(.title2)

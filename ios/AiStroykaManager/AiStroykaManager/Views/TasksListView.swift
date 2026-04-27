@@ -179,7 +179,7 @@ struct TaskDetailManagerView: View {
                         }
                     }
                 }
-                .navigationTitle(t.title ?? "Task")
+                .navigationTitle(t.title ?? NSLocalizedString("mgr_task_section", comment: ""))
                 .refreshable { await loadAsync() }
                 .sheet(isPresented: $showAssignPicker) {
                     TaskAssigneePickerView(

@@ -153,10 +153,15 @@ export function ClientPortalViewClient({ projectId }: { projectId: string }) {
           {(d.handover.handed_over_at || d.handover.completed_at) && (
             <p className="mt-2 text-xs text-aistroyka-text-tertiary">
               {d.handover.handed_over_at
-                ? `Handover recorded ${new Date(d.handover.handed_over_at).toLocaleString()}`
+                ? tDetail("handoverRecordedAt", {
+                    datetime: new Date(d.handover.handed_over_at).toLocaleString(),
+                  })
                 : null}
+              {d.handover.handed_over_at && d.handover.completed_at ? ` ${tDetail("dotSeparator")} ` : null}
               {d.handover.completed_at
-                ? ` · Completed ${new Date(d.handover.completed_at).toLocaleString()}`
+                ? tDetail("completedAt", {
+                    datetime: new Date(d.handover.completed_at).toLocaleString(),
+                  })
                 : null}
             </p>
           )}
@@ -192,7 +197,7 @@ export function ClientPortalViewClient({ projectId }: { projectId: string }) {
             {d.decisions.map((x) => (
               <li key={x.id} className="flex flex-wrap items-center gap-2 text-sm">
                 <Badge className="bg-aistroyka-warning/20 text-aistroyka-warning">
-                  {x.kind === "changes_requested" ? "Update requested" : "Review"}
+                  {x.kind === "changes_requested" ? tDetail("updateRequested") : tDetail("review")}
                 </Badge>
                 <span className="text-aistroyka-text-primary">{x.title}</span>
                 <span className="text-aistroyka-text-tertiary">({x.type})</span>
@@ -200,10 +205,10 @@ export function ClientPortalViewClient({ projectId }: { projectId: string }) {
             ))}
           </ul>
           <p className="mt-3 text-xs text-aistroyka-text-tertiary">
-            Use the owner decision flow from your team — this list shows items that need your attention.
+            {tDetail("ownerDecisionFlowHint")}
           </p>
           <Link href={`/dashboard/projects/${projectId}/owner`} className="mt-2 inline-block text-sm text-aistroyka-accent hover:underline">
-            Open owner workspace →
+            {tDetail("openOwnerWorkspace")}
           </Link>
         </Card>
       )}

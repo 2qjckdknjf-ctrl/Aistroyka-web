@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@/i18n/navigation";
@@ -181,7 +181,7 @@ async function submitDecision(
   );
   if (!res.ok) {
     const j = await res.json().catch(() => ({}));
-    throw new Error((j as { error?: string }).error ?? "Decision failed");
+    throw new Error((j as { error?: string }).error ?? "decision_failed");
   }
   const json = await res.json();
   return json;
@@ -217,6 +217,9 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
   const [decisionDoc, setDecisionDoc] = useState<Document | null>(null);
   const [decisionComment, setDecisionComment] = useState("");
   const [decisionError, setDecisionError] = useState<string | null>(null);
+  const [decisionSearch, setDecisionSearch] = useState("");
+  const [decisionTypeFilter, setDecisionTypeFilter] = useState("all");
+  const [decisionSort, setDecisionSort] = useState<"oldest" | "newest">("oldest");
 
   const decisionMutation = useMutation({
     mutationFn: ({
@@ -238,7 +241,11 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
       setDecisionError(null);
     },
     onError: (err) => {
-      setDecisionError(err instanceof Error ? err.message : "Decision failed");
+      if (err instanceof Error && err.message !== "decision_failed") {
+        setDecisionError(err.message);
+        return;
+      }
+      setDecisionError(tDetail("decisionFailed"));
     },
   });
 
@@ -336,6 +343,43 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
   const reports = reportsQuery.data?.data ?? [];
   const media = mediaQuery.data ?? [];
 
+  const decisionTypes = useMemo(
+    () => Array.from(new Set(pendingDecisions.map((d) => d.type).filter(Boolean))).sort(),
+    [pendingDecisions]
+  );
+
+  const oldestPendingDecision = useMemo(
+    () =>
+      [...pendingDecisions].sort(
+        (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      )[0] ?? null,
+    [pendingDecisions]
+  );
+
+  const filteredPendingDecisions = useMemo(() => {
+    const base = [...pendingDecisions].sort((a, b) => {
+      const left = new Date(a.created_at).getTime();
+      const right = new Date(b.created_at).getTime();
+      return decisionSort === "oldest" ? left - right : right - left;
+    });
+
+    const normalizedQuery = decisionSearch.trim().toLowerCase();
+    return base.filter((d) => {
+      if (decisionTypeFilter !== "all" && d.type !== decisionTypeFilter) return false;
+      if (!normalizedQuery) return true;
+      return (
+        d.title.toLowerCase().includes(normalizedQuery) ||
+        d.type.toLowerCase().includes(normalizedQuery)
+      );
+    });
+  }, [pendingDecisions, decisionSort, decisionTypeFilter, decisionSearch]);
+
+  function openDecision(document: Document): void {
+    setDecisionDoc(document);
+    setDecisionComment("");
+    setDecisionError(null);
+  }
+
   return (
     <>
       <div className="mb-4 flex flex-wrap items-center gap-3">
@@ -382,24 +426,69 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
           />
         ) : (
           <div className="p-4">
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => oldestPendingDecision && openDecision(oldestPendingDecision)}
+                disabled={!oldestPendingDecision}
+                className="rounded border border-aistroyka-border-subtle px-3 py-1.5 text-xs font-medium text-aistroyka-text-primary transition-colors hover:border-aistroyka-accent hover:bg-aistroyka-surface-raised disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {tDetail("reviewOldest")}
+              </button>
+              <span className="text-xs text-aistroyka-text-tertiary">
+                {tDetail("decisionQueueSummary", { count: pendingDecisions.length })}
+              </span>
+            </div>
+            <div className="mb-4 grid gap-2 sm:grid-cols-3">
+              <input
+                value={decisionSearch}
+                onChange={(e) => setDecisionSearch(e.target.value)}
+                placeholder={tDetail("decisionQueueSearchPlaceholder")}
+                className="w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-primary px-3 py-2 text-sm text-aistroyka-text-primary outline-none focus:border-aistroyka-accent"
+              />
+              <select
+                value={decisionTypeFilter}
+                onChange={(e) => setDecisionTypeFilter(e.target.value)}
+                className="w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-primary px-3 py-2 text-sm text-aistroyka-text-primary outline-none focus:border-aistroyka-accent"
+              >
+                <option value="all">{tDetail("decisionQueueTypeAll")}</option>
+                {decisionTypes.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={decisionSort}
+                onChange={(e) => setDecisionSort(e.target.value as "oldest" | "newest")}
+                className="w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-primary px-3 py-2 text-sm text-aistroyka-text-primary outline-none focus:border-aistroyka-accent"
+              >
+                <option value="oldest">{tDetail("decisionQueueSortOldest")}</option>
+                <option value="newest">{tDetail("decisionQueueSortNewest")}</option>
+              </select>
+            </div>
             <ul className="space-y-2">
-              {pendingDecisions.map((d) => (
+              {filteredPendingDecisions.map((d) => (
                 <li key={d.id}>
                   <button
                     type="button"
-                    onClick={() => {
-                      setDecisionDoc(d);
-                      setDecisionComment("");
-                      setDecisionError(null);
-                    }}
+                    onClick={() => openDecision(d)}
                     className="w-full flex items-center justify-between rounded border border-aistroyka-border-subtle p-3 text-left hover:border-aistroyka-accent hover:bg-aistroyka-surface-raised transition-colors"
                   >
-                    <span className="font-medium">{d.title}</span>
+                    <span>
+                      <span className="font-medium">{d.title}</span>
+                      <span className="mt-1 block text-xs text-aistroyka-text-tertiary">
+                        {new Date(d.created_at).toLocaleDateString()}
+                      </span>
+                    </span>
                     <Badge variant="warning">{d.type}</Badge>
                   </button>
                 </li>
               ))}
             </ul>
+            {filteredPendingDecisions.length === 0 && (
+              <p className="mt-3 text-sm text-aistroyka-text-secondary">{tDetail("decisionQueueFilteredEmpty")}</p>
+            )}
           </div>
         )}
       </Card>
@@ -531,11 +620,14 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
               setDecisionError(null);
             }
           }}
-          title={`Decision: ${decisionDoc.title}`}
+          title={tDetail("decisionModalTitle", { title: decisionDoc.title })}
         >
           <div className="space-y-4">
             <p className="text-sm text-aistroyka-text-secondary">
-              Type: {decisionDoc.type} · Created {new Date(decisionDoc.created_at).toLocaleDateString()}
+              {tDetail("decisionMetaLine", {
+                type: decisionDoc.type,
+                date: new Date(decisionDoc.created_at).toLocaleDateString(),
+              })}
             </p>
             {decisionDoc.description && (
               <p className="text-sm text-aistroyka-text-primary">{decisionDoc.description}</p>
@@ -547,7 +639,7 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
                 rel="noopener noreferrer"
                 className="text-aistroyka-accent hover:underline text-sm block"
               >
-                Open file →
+                {tDetail("openFileArrow")}
               </a>
             )}
             <label className="block">
