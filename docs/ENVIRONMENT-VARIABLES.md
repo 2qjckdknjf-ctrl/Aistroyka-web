@@ -80,6 +80,9 @@ Vercel может встречаться как исторический/доп�
 | `OPENAI_COPILOT_MODEL` | Модель для Copilot (текст / SSE), по умолчанию `gpt-4o-mini`. |
 | `OPENAI_COPILOT_TIMEOUT_MS` | Таймаут одной попытки HTTP к OpenAI для Copilot (15 000–120 000, по умолчанию 60 000). |
 | `OPENAI_COPILOT_MAX_RETRIES` | Число **дополнительных** повторов при 429/5xx для Copilot (0–5, по умолчанию 2). |
+| `OPENAI_TRANSCRIPTION_MODEL` | Модель Whisper (по умолчанию `whisper-1`). |
+| `OPENAI_TRANSCRIPTION_TIMEOUT_MS` | Таймаут запроса транскрибации (30 000–180 000, по умолчанию 120 000). |
+| `OPENAI_TRANSCRIPTION_MAX_RETRIES` | Доп. попытки при 429/5xx для транскрибации (0–5, по умолчанию 1). |
 | `WEBHOOK_INCOMING_SECRET` | Секрет для входящих webhooks (если используется). |
 
 ---

@@ -8,7 +8,8 @@ Platform-level AI: entrypoints, policy, routing, providers, budgets, observabili
   - `POST /api/ai/analyze-image` and `POST /api/v1/ai/analyze-image`
   - Job handler `ai_analyze_media`
 - **Construction brain** (`apps/web/lib/ai/construction-brain/index.ts`): Re-exports prompts, normalize, types, riskCalibration for vision/analysis.
-- **Copilot (text):** `GET /api/v1/projects/:id/copilot` and `POST …/copilot/chat/stream` use `gateCopilotLlmRequest` (rate limit, quota reserve, policy) and `recordUsage` after OpenAI success. Streaming requires service role (`getAdminClient`) for billing persistence.
+- **Copilot (text):** `GET /api/v1/projects/:id/copilot` and `POST …/copilot/chat/stream` use `gateCopilotLlmRequest` (rate limit, quota reserve, policy) and `recordUsage` after OpenAI success. Streaming requires service role (`getAdminClient`) for billing persistence. Stream body may include `locale` (e.g. `en`, `ru`) to steer reply language.
+- **Speech-to-text:** `POST /api/v1/ai/transcribe` — multipart `file` or `audio` (≤25 MB), optional `locale` for Whisper language hint; same gate + `recordUsage` (cost from `verbose_json.duration` or byte-size fallback). Uses `OPENAI_TRANSCRIPTION_*` env and `lib/platform/ai/openai-transcription.ts`.
 
 ## Flow
 

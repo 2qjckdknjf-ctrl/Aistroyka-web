@@ -304,4 +304,41 @@ describe("POST /api/v1/projects/:id/copilot/chat/stream", () => {
     expect(body).toContain("fallback_reason");
     expect(body).toContain("provider_unavailable");
   });
+
+  it("injects locale hint into system prompt when locale is provided", async () => {
+    let capturedPayload: Record<string, unknown> | null = null;
+    global.fetch = vi.fn().mockImplementation(async (_url, init?: RequestInit) => {
+      capturedPayload = JSON.parse(String(init?.body ?? "{}")) as Record<string, unknown>;
+      return {
+        ok: false,
+        status: 503,
+        text: vi.fn().mockResolvedValue("provider down"),
+      } as unknown as Response;
+    });
+
+    const req = new Request("https://x/api/v1/projects/p1/copilot/chat/stream", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        thread_id: null,
+        user_text: "Privet",
+        decision_context: {
+          overall_risk: 0.4,
+          confidence: 0.8,
+          top_risk_factors: [],
+          projected_delay_date: null,
+          velocity_trend: "unknown",
+          anomalies: [],
+          aggregated_at: new Date().toISOString(),
+        },
+        locale: "ru",
+      }),
+    });
+
+    const res = await POST(req, { params: Promise.resolve({ id: "p1" }) });
+    expect(res.status).toBe(200);
+    const messages = (capturedPayload?.messages as Array<{ role?: string; content?: string }>) ?? [];
+    const system = messages.find((m) => m.role === "system")?.content ?? "";
+    expect(system).toContain("User interface language: ru");
+  });
 });

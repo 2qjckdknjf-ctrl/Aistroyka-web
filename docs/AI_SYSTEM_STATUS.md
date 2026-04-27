@@ -19,7 +19,8 @@ _Last aligned with repo: 2026-04._
 | Policy | `apps/web/lib/platform/ai-governance/policy.service.ts` | `runPolicy` + PII image host rules when applicable. |
 | Jobs | `apps/web/lib/platform/jobs/job.handlers/ai-analyze-media.ts` | Uses `analyzeImage`. |
 | Copilot brief (GET) | `apps/web/app/api/v1/projects/[id]/copilot/route.ts` | `gateCopilotLlmRequest` → OpenAI JSON brief → `recordUsage` (via provider callback). |
-| Copilot stream (POST) | `apps/web/app/api/v1/projects/[id]/copilot/chat/stream/route.ts` | Requires admin client; same gate; OpenAI SSE with `stream_options.include_usage`; `recordCopilotStreamUsage`. |
+| Copilot stream (POST) | `apps/web/app/api/v1/projects/[id]/copilot/chat/stream/route.ts` | Requires admin client; same gate; OpenAI SSE with `stream_options.include_usage`; `recordCopilotStreamUsage`; optional `locale` in JSON body. |
+| Transcribe (POST) | `apps/web/app/api/v1/ai/transcribe/route.ts` | Multipart audio → OpenAI Whisper `verbose_json`; gate + usage; max 25 MB. |
 | Copilot gate | `apps/web/lib/copilot/copilot-ai-gate.ts` | Rate limit, quota reserve, policy; `estimatedCostUsd` for brief vs stream. |
 
 ---

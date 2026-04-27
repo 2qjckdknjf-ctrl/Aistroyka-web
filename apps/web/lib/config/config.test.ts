@@ -79,6 +79,12 @@ describe("config", () => {
       vi.stubEnv("OPENAI_COPILOT_TIMEOUT_MS", "200000");
       expect(getServerConfig().OPENAI_COPILOT_TIMEOUT_MS).toBe(120_000);
     });
+    it("clamps OPENAI_TRANSCRIPTION_TIMEOUT_MS between 30k and 180k", () => {
+      vi.stubEnv("OPENAI_TRANSCRIPTION_TIMEOUT_MS", "10000");
+      expect(getServerConfig().OPENAI_TRANSCRIPTION_TIMEOUT_MS).toBe(30_000);
+      vi.stubEnv("OPENAI_TRANSCRIPTION_TIMEOUT_MS", "300000");
+      expect(getServerConfig().OPENAI_TRANSCRIPTION_TIMEOUT_MS).toBe(180_000);
+    });
   });
 
   describe("isOpenAIConfigured", () => {

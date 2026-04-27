@@ -127,6 +127,14 @@ function sseEvent(name: string, data: unknown): string {
   return `event: ${name}\ndata: ${JSON.stringify(data)}\n\n`;
 }
 
+/** Optional UI locale from client (next-intl) to align reply language. */
+function streamLocaleLine(locale: string | null | undefined): string {
+  const t = locale?.trim().toLowerCase();
+  if (!t) return "";
+  if (!/^[a-z]{2}(-[a-z0-9]+)?$/i.test(t)) return "";
+  return `\nUser interface language: ${t}. Answer in this language unless the user explicitly switches language.`;
+}
+
 export async function POST(
   request: Request,
   context: { params: Promise<{ id: string }> }
@@ -322,7 +330,9 @@ export async function POST(
   const budgeted = applyContextBudget(contextInput, DEFAULT_CONTEXT_BUDGET);
   const ctxStr = formatDecisionContext(decisionContext);
 
-  const systemPrompt = `You are a construction project assistant. Use the provided context to answer. Be concise and actionable. Do not invent numbers or facts not in the context.`;
+  const systemPrompt =
+    `You are a construction project assistant. Use the provided context to answer. Be concise and actionable. Do not invent numbers or facts not in the context.` +
+    streamLocaleLine(body.locale);
   const contextBlock = budgeted.summary
     ? `Context: ${budgeted.summary}\n\nProject context: ${ctxStr}`
     : `Project context: ${ctxStr}`;
