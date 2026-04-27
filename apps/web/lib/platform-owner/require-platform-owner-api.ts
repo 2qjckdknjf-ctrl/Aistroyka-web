@@ -9,6 +9,7 @@ import { getAdminClient } from "@/lib/supabase/admin";
 import { getRequestClientIp, isIpBlockedByOwnerAllowlist } from "./client-ip";
 import { OWNER_STEP_UP_HEADER } from "./constants";
 import type { PlatformOwnerRole } from "./constants";
+import { OWNER_RATE_LIMIT_ALREADY_APPLIED_HEADER } from "./constants";
 import { isOwnerApiSecretRequired } from "./owner-gate-policy";
 import {
   assertOwnerHttpMethodForRole,
@@ -309,22 +310,25 @@ export async function requirePlatformOwnerApi(
     }
   }
 
-  const admin = getAdminClient();
-  const rl = await assertOwnerRateLimit(admin, {
-    userId: user.id,
-    clientIp,
-    surface: "owner_api",
-  });
-  if (!rl.ok) {
-    logOwnerGateEvent({
-      outcome: "deny",
-      reason: "rate_limited",
-      path: pathname,
+  const middlewareRateLimitApplied = request.headers.get(OWNER_RATE_LIMIT_ALREADY_APPLIED_HEADER) === "1";
+  if (!middlewareRateLimitApplied) {
+    const admin = getAdminClient();
+    const rl = await assertOwnerRateLimit(admin, {
       userId: user.id,
       clientIp,
-      isApi,
+      surface: "owner_api",
     });
-    return { ok: false, response: rl.response };
+    if (!rl.ok) {
+      logOwnerGateEvent({
+        outcome: "deny",
+        reason: "rate_limited",
+        path: pathname,
+        userId: user.id,
+        clientIp,
+        isApi,
+      });
+      return { ok: false, response: rl.response };
+    }
   }
 
   logOwnerGateEvent({
@@ -336,6 +340,7 @@ export async function requirePlatformOwnerApi(
     role,
   });
 
+  const admin = getAdminClient();
   await insertPlatformOwnerAudit(admin, {
     user_id: user.id,
     action: `owner_api_${method}`,

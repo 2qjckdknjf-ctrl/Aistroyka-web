@@ -1,6 +1,8 @@
 # AI System Status
 
-**Scope:** AIService, provider integration, image analysis, OpenAI config, governance, job pipeline.
+**Scope:** Vision (`analyzeImage`), provider router, governance, usage, jobs, Copilot (non-stream + stream).
+
+_Last aligned with repo: 2026-04._
 
 ---
 
@@ -8,27 +10,30 @@
 
 | Component | Location | Role |
 |-----------|----------|------|
-| analyze-image route | app/api/ai/analyze-image/route.ts | Entry for sync image analysis; calls OpenAI directly. |
-| runVisionAnalysis | lib/ai/runVisionAnalysis.ts | Shared vision logic; calls OpenAI directly; used by job handlers. |
-| Provider Router | lib/platform/ai/providers/provider.router.ts | invokeVisionWithRouter; circuit breaker + fallback. |
-| OpenAI provider | lib/platform/ai/providers/provider.openai.ts | Implements vision interface. |
-| Anthropic / Gemini | provider.anthropic.stub.ts, provider.gemini.stub.ts | Stubs. |
-| Circuit breaker | lib/platform/ai/providers/circuit-breaker.ts | canInvoke, recordSuccess, recordFailure; table ai_provider_health. |
-| AI usage | lib/platform/ai-usage/ai-usage.service.ts | checkQuota, recordUsage, estimateVisionCostUsd; table ai_usage. |
-| Policy engine | lib/platform/ai-governance/policy.service.ts | Policy checks (e.g. PII, allow/deny). |
-| Job handlers | lib/platform/jobs/job.handlers/ai-analyze-media.ts, ai-analyze-report.ts | Enqueue/run async AI; use runVisionAnalysis. |
+| **AIService** | `apps/web/lib/platform/ai/ai.service.ts` | `analyzeImage`: policy → `invokeVisionWithRouter` → normalize → `recordUsage`. |
+| analyze-image routes | `apps/web/app/api/v1/ai/analyze-image/route.ts`, `apps/web/app/api/ai/analyze-image/route.ts` | Rate limit, quota, then `analyzeImage(admin, …)`. |
+| `runVisionAnalysis` | `apps/web/lib/ai/runVisionAnalysis.ts` | Thin wrapper → `analyzeImage` (jobs + legacy). |
+| Provider router | `apps/web/lib/platform/ai/providers/provider.router.ts` | Tenant prefs, circuit breaker, fallback across providers. |
+| OpenAI / Anthropic / Gemini | `provider.openai.ts`, `provider.anthropic.ts`, `provider.gemini.ts` | Vision implementations (keys optional per provider). |
+| AI usage | `apps/web/lib/platform/ai-usage/ai-usage.service.ts` | `checkQuota`, `recordUsage`, budget alerts. |
+| Policy | `apps/web/lib/platform/ai-governance/policy.service.ts` | `runPolicy` + PII image host rules when applicable. |
+| Jobs | `apps/web/lib/platform/jobs/job.handlers/ai-analyze-media.ts` | Uses `analyzeImage`. |
+| Copilot brief (GET) | `apps/web/app/api/v1/projects/[id]/copilot/route.ts` | `gateCopilotLlmRequest` → OpenAI JSON brief → `recordUsage` (via provider callback). |
+| Copilot stream (POST) | `apps/web/app/api/v1/projects/[id]/copilot/chat/stream/route.ts` | Requires admin client; same gate; OpenAI SSE with `stream_options.include_usage`; `recordCopilotStreamUsage`. |
+| Copilot gate | `apps/web/lib/copilot/copilot-ai-gate.ts` | Rate limit, quota reserve, policy; `estimatedCostUsd` for brief vs stream. |
 
 ---
 
 ## 2. Data Flow (Current)
 
-**Sync (analyze-image):**  
-Request → rate-limit, quota → `fetch(openai.com)` in route → normalize, calibrate → recordUsage → response.  
-**Policy Engine and Provider Router are not in the path.**
+**Vision (sync routes + jobs):**  
+Request → rate-limit, quota (routes) → **`analyzeImage`** → `runPolicy` (when `tenantId`) → **`invokeVisionWithRouter`** → parse/normalize → **`recordUsage`** (when `tenantId`).
 
-**Async (job):**  
-Job claimed → handler loads payload → runVisionAnalysis(imageUrl) → OpenAI direct → result stored; usage can be recorded.  
-**Provider Router and circuit breaker not used.**
+**Copilot GET:**  
+`gateCopilotLlmRequest` (rate limit, quota, policy) → `runCopilot` + OpenAI provider → usage callback → JSON response.
+
+**Copilot POST stream:**  
+Same gate (higher `COPILOT_STREAM_ESTIMATE_USD`) → thread + messages → OpenAI streaming with usage chunk → **`recordCopilotStreamUsage`** (best-effort).
 
 ---
 
@@ -36,10 +41,10 @@ Job claimed → handler loads payload → runVisionAnalysis(imageUrl) → OpenAI
 
 | Aspect | Status |
 |--------|--------|
-| Single entry (AIService) | **No.** Route and runVisionAnalysis both call OpenAI. |
-| Provider abstraction | **Yes.** provider.interface, provider.openai, stubs; router exists. |
-| Router usage | **No.** Route and runVisionAnalysis do not call invokeVisionWithRouter. |
-| Policy engine usage | **No.** Not invoked by analyze-image or runVisionAnalysis. |
+| Single vision entry | **Yes.** `analyzeImage` only; routes/jobs do not call providers directly. |
+| Provider abstraction + router | **Yes.** Used by `analyzeImage`. |
+| Policy on vision | **Yes.** When tenant context is present. |
+| Text/chat multi-provider router | **No.** Copilot text uses OpenAI HTTP directly (aligned model via `OPENAI_COPILOT_MODEL`). |
 
 ---
 
@@ -47,10 +52,9 @@ Job claimed → handler loads payload → runVisionAnalysis(imageUrl) → OpenAI
 
 | Mechanism | Status |
 |-----------|--------|
-| Quota check (tenant) | **Yes.** checkQuota before calling OpenAI in route. |
-| Usage recording | **Yes.** recordUsage in route and in runVisionAnalysis (when recordUsageWithAdmin passed). |
-| Cost estimation | **Yes.** estimateCostUsd, estimateVisionCostUsd in ai-usage. |
-| Rate limit (tenant/IP) | **Yes.** checkRateLimit in route. |
+| Quota check (tenant) | **Yes.** Vision routes, Copilot GET/stream (reserved estimate before call). |
+| Usage recording | **Yes.** Vision after success; Copilot non-stream in provider callback; stream after completion (tokens from stream or heuristic). |
+| Rate limit | **Yes.** Vision routes; Copilot gate. |
 
 ---
 
@@ -58,24 +62,22 @@ Job claimed → handler loads payload → runVisionAnalysis(imageUrl) → OpenAI
 
 | Aspect | Status |
 |--------|--------|
-| Retry on 5xx | **Yes.** OPENAI_RETRY_ON_5XX in route. |
-| Timeout | **Yes.** OPENAI_VISION_TIMEOUT_MS, AbortController. |
-| Circuit breaker | **Implemented but unused** in main AI path (router uses it). |
-| Fallback provider | **Implemented in router** but router not used by route/handlers. |
+| Vision retries / timeout | Route-level + provider timeouts; router fallback across providers. |
+| Circuit breaker | **Used** via `invokeVisionWithRouter`. |
+| Copilot stream | Timeout abort; deterministic fallback on provider errors; **503** if service role missing (`ai_admin_unavailable`). |
 
 ---
 
 ## 6. Rate Limits and Quotas
 
-- **Rate limit:** Applied in route via checkRateLimit (tenant + IP + endpoint).
-- **Quota:** checkQuota (tenant) before call; 402 and code "quota_exceeded" returned.
-- **Tables:** rate_limit_slots, ai_usage, tenant_billing_state (from migrations).
+- **Rate limit:** `checkRateLimit` on vision routes and inside `gateCopilotLlmRequest`.
+- **Quota:** `checkQuota` before LLM; 402 with `ai_budget_exceeded` where enforced.
+- **Tables:** `rate_limit_slots`, `ai_usage`, `tenant_billing_state` (see migrations).
 
 ---
 
-## 7. Gaps and Recommendations
+## 7. Remaining Gaps
 
-1. **Governance bypass:** All AI calls should go through AIService → Policy Engine → Provider Router. **Action:** Add AIService (or VisionService) that uses policy.service and provider.router; route and job handlers call only this service.
-2. **Circuit breaker unused:** Router + circuit breaker exist but are not in the call path. **Action:** Use router in the new AIService so circuit breaker and multi-provider fallback apply.
-3. **Stubs:** Anthropic and Gemini are stubs; production multi-provider requires real implementations and config.
-4. **Construction brain / vision modules:** Guardrails mention apps/web/lib/ai/construction-brain/ and lib/ai/vision/; current code is lib/ai (vision, prompts, normalize) and lib/intelligence (dashboard). Align naming or docs if “construction brain” is a product term.
+1. **Copilot text routing:** Unify OpenAI chat calls behind a small text router (optional Anthropic/Gemini) mirroring vision router patterns.
+2. **Stream without service role:** Streaming returns **503** if `getAdminClient()` is null so usage cannot be persisted; local/dev must set `SUPABASE_SERVICE_ROLE_KEY` for streaming.
+3. **Docs / product naming:** “Construction brain” vs `lib/ai` paths — keep product language in docs only if needed.

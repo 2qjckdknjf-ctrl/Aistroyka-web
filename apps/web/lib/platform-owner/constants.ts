@@ -4,6 +4,8 @@ export const PLATFORM_OWNER_ROLES = ["OWNER", "OWNER_READONLY", "OWNER_OPERATOR"
 export type PlatformOwnerRole = (typeof PLATFORM_OWNER_ROLES)[number];
 
 export const OWNER_SECRET_HEADER = "x-owner-key";
+/** Middleware marker to avoid double-counting owner API rate limits in handlers. */
+export const OWNER_RATE_LIMIT_ALREADY_APPLIED_HEADER = "x-owner-rate-limit-applied";
 
 /** HMAC step-up for critical owner mutations (see owner-step-up.ts). */
 export const OWNER_STEP_UP_HEADER = "x-owner-step-up";
