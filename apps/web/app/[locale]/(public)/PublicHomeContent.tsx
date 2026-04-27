@@ -48,7 +48,7 @@ export async function PublicHomeContent() {
               <div className="text-sm font-semibold uppercase tracking-[0.12em] text-aistroyka-accent">{t("heroCardAiTitle")}</div>
               <p className="mt-2 text-sm text-aistroyka-text-secondary">{t("heroCardAiSubtitle")}</p>
             </Link>
-            <Link href="/mobile" className="public-card-motion rounded-[var(--aistroyka-radius-xl)] border border-aistroyka-border-subtle bg-aistroyka-surface px-5 py-4">
+            <Link href="/mobile" className="public-card-motion min-w-0 rounded-[var(--aistroyka-radius-xl)] border border-aistroyka-border-subtle bg-aistroyka-surface px-4 py-4 sm:px-5">
               <div className="text-sm font-semibold uppercase tracking-[0.12em] text-aistroyka-accent">{t("heroCardMobileTitle")}</div>
               <p className="mt-2 text-sm text-aistroyka-text-secondary">{t("heroCardMobileSubtitle")}</p>
             </Link>
