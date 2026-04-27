@@ -4,6 +4,7 @@ import { updateSession } from "@/lib/supabase/middleware";
 import { routing } from "@/i18n/routing";
 import { checkLiteAllowList } from "@/lib/api/lite-allow-list";
 import { resolvePostAuthEntry } from "@/lib/entry/entry-routing";
+import { OWNER_RATE_LIMIT_ALREADY_APPLIED_HEADER } from "@/lib/platform-owner/constants";
 import { gateOwnerRequest } from "@/lib/platform-owner/middleware-owner-gate";
 
 const intlMiddleware = createIntlMiddleware(routing);
@@ -79,7 +80,9 @@ export async function middleware(request: NextRequest) {
     if (denied) {
       return applySecurityHeaders(denied, isProduction);
     }
-    const res = NextResponse.next();
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set(OWNER_RATE_LIMIT_ALREADY_APPLIED_HEADER, "1");
+    const res = NextResponse.next({ request: { headers: requestHeaders } });
     mergeSupabaseSessionIntoResponse(sessionResponse, res);
     return applySecurityHeaders(res, isProduction);
   }

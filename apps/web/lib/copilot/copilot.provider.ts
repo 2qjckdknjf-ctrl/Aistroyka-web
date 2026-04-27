@@ -10,6 +10,13 @@ import type { ILLMAdapter } from "@/lib/ai-brain/types";
 export interface CopilotProviderResult {
   raw: string;
   structured?: Record<string, unknown>;
+  /** Populated by OpenAI provider for billing when wired by the route. */
+  usageMeta?: {
+    model: string;
+    promptTokens: number;
+    completionTokens: number;
+    durationMs: number;
+  };
 }
 
 /** Provider interface: generates from prompt + context. Implement with real LLM or mock. */
@@ -30,18 +37,14 @@ export const nullCopilotProvider: ICopilotProvider = {
   },
 };
 
-/** Wraps legacy ILLMAdapter: uses context only (prompt ignored), calls generateBrief. */
+/** Wraps ILLMAdapter for ICopilotProvider (prompt + use case forwarded). */
 export function createAdapterCopilotProvider(llm: ILLMAdapter): ICopilotProvider {
   return {
     isAvailable: () => llm.isAvailable(),
-    async generateFromPrompt(_prompt, _useCase, context) {
-      const result = await llm.generateBrief({
+    async generateFromPrompt(prompt, useCase, context) {
+      const result = await llm.generateFromPrompt(prompt, useCase, {
         projectId: context.projectId,
         tenantId: context.tenantId,
-        reportsSummary: context.reportSummary,
-        risksSummary: context.riskSummary,
-        tasksSummary: context.taskSummary,
-        evidenceSummary: context.evidenceSummary,
       });
       return {
         raw: result.raw ?? result.summary ?? "",
