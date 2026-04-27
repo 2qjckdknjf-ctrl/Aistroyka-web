@@ -84,10 +84,13 @@ apps/web/src/features/admin/components/RequestIdPill.tsx
 - `dashboard-button-audit`: список CTA через `loadActionableCtas()` из `_helpers/button-inventory`.
 - `sync-contract`: единый путь `sync-contract.log`, заголовок в `beforeAll`, строка в `afterEach` по каждому тесту.
 - GitHub Actions: **`.github/workflows/pilot-e2e-audit.yml`** — ручной запуск Playwright pilot на `PILOT_E2E_BASE_URL` + логин-секреты (см. комментарии в workflow).
+- Post-deploy staging: **`.github/workflows/deploy-cloudflare-staging.yml`** вызывает тот же reusable workflow после `pilot-smoke` с `continue-on-error: true` и `with.locale: en`; список секретов — **`docs/ENVIRONMENT-VARIABLES.md`** (раздел GitHub Actions / pilot E2E).
 - `DashboardShell`: литеральные `data-testid` для **admin push / admin jobs** (совместимо со статическим AST-инвентарём).
 
 **Дальше (бэклог)**
 
-- По желанию: привязать `pilot-e2e-audit` к расписанию или post-deploy (сейчас только `workflow_dispatch`).
+- ~~Post-deploy `pilot-e2e-audit` после staging~~: см. выше (`workflow_call` + `workflow_dispatch`).
+- По желанию: **`on: schedule`** для `pilot-e2e-audit` (ночной прогон против staging) — отдельно от деплоя.
 - ~~Расширить инвентарь сайдбара~~: `generate_button_inventory.mjs` синтетически разворачивает `SIDEBAR_LINKS` / `ADMIN_LINKS` в стабильные `cta.dashboard.nav.*` (без дублирования JSX-литералов).
 - Опционально: генератор инвентаря на `ts-morph` рядом с `generate_button_inventory.mjs`, без дублирования полей JSON.
+- **Следующий шаг для зелёного `PROJECT_STATE` / артефактов:** скопировать **`.env.pilot.example` → `.env.pilot`**, заполнить **`E2E_EMAIL` / `E2E_PASSWORD`** (и при необходимости поля для `smoke:pilot`), затем с корня **`bun run audit:pilot`** (обновит `docs/audit/PROJECT_STATE.md`, `E2E_AUDIT_REPORT.md`, `docs/audit/artifacts/<ts>/`).
