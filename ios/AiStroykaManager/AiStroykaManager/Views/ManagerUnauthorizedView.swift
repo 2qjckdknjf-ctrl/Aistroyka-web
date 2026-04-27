@@ -15,14 +15,14 @@ struct ManagerUnauthorizedView: View {
             Image(systemName: "person.crop.circle.badge.minus")
                 .font(.system(size: 60))
                 .foregroundStyle(.secondary)
-            Text("Not authorized")
+            Text(NSLocalizedString("mgr_unauthorized", comment: ""))
                 .font(.title2)
                 .fontWeight(.semibold)
             Text(message)
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
                 .padding(.horizontal)
-            Button("Sign out") {
+            Button(NSLocalizedString("mgr_sign_out", comment: "")) {
                 Task { await sessionState.signOut() }
             }
             .buttonStyle(.borderedProminent)

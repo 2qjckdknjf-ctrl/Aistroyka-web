@@ -22,10 +22,10 @@ struct NotificationsView: View {
     var body: some View {
         Group {
             if isLoading && items.isEmpty && errorMessage == nil {
-                LoadingStateView(message: "Loading…")
+                LoadingStateView(message: NSLocalizedString("mgr_loading", comment: ""))
             } else if let err = errorMessage, items.isEmpty {
                 VStack(spacing: 12) {
-                    Text("Notifications")
+                    Text(NSLocalizedString("mgr_notifications", comment: ""))
                         .font(.headline)
                     Text(err)
                         .font(.subheadline)
@@ -46,21 +46,21 @@ struct NotificationsView: View {
                         }
                     } header: {
                         if total > 0 {
-                            Text("Inbox (\(items.count) of \(total))")
+                            Text(String(format: NSLocalizedString("mgr_inbox_count_fmt", comment: ""), items.count, total))
                         } else {
-                            Text("Inbox")
+                            Text(NSLocalizedString("mgr_inbox", comment: ""))
                         }
                     }
                     if items.isEmpty && !isLoading {
-                        Text("No notifications yet. You’ll see report and task updates here.")
+                        Text(NSLocalizedString("mgr_no_notifications_subtitle", comment: ""))
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                             .listRowBackground(Color.clear)
                     }
                     Section {
-                        DisclosureGroup("Registered devices", isExpanded: $showDevices) {
+                        DisclosureGroup(NSLocalizedString("mgr_registered_devices", comment: ""), isExpanded: $showDevices) {
                             if devices.isEmpty && !showDevices { } else if devices.isEmpty {
-                                Text("No devices or API unavailable.")
+                                Text(NSLocalizedString("mgr_no_devices_subtitle", comment: ""))
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             } else {
@@ -90,7 +90,7 @@ struct NotificationsView: View {
                 }
             }
         }
-        .navigationTitle("Notifications")
+        .navigationTitle(NSLocalizedString("mgr_notifications", comment: ""))
         .refreshable { await loadAsync() }
         .onAppear { load() }
     }
@@ -167,7 +167,7 @@ struct NotificationRowView: View {
                     .frame(width: 8, height: 8)
                     .overlay(Circle().stroke(Color.accentColor.opacity(0.5), lineWidth: 1))
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(item.title ?? "Notification")
+                    Text(item.title ?? NSLocalizedString("mgr_notification", comment: ""))
                         .font(.subheadline)
                         .fontWeight(item.readAt == nil ? .medium : .regular)
                         .foregroundStyle(.primary)

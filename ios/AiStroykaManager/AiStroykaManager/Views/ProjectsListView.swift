@@ -15,19 +15,19 @@ struct ProjectsListView: View {
         NavigationStack {
             Group {
                 if isLoading {
-                    ProgressView("Loading projects…")
+                    ProgressView(NSLocalizedString("mgr_loading_projects", comment: ""))
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if let err = errorMessage {
                     VStack(spacing: 12) {
                         Text(err)
                             .foregroundStyle(.red)
                             .multilineTextAlignment(.center)
-                        Button("Retry") { load() }
+                        Button(NSLocalizedString("mgr_retry", comment: "")) { load() }
                     }
                     .padding()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if projects.isEmpty {
-                    Text("No projects yet")
+                    Text(NSLocalizedString("mgr_no_projects_yet", comment: ""))
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
@@ -38,7 +38,7 @@ struct ProjectsListView: View {
                     }
                 }
             }
-            .navigationTitle("Projects")
+            .navigationTitle(NSLocalizedString("mgr_tab_projects", comment: ""))
             .onAppear { load() }
         }
     }
@@ -65,8 +65,8 @@ struct ProjectDetailPlaceholderView: View {
 
     var body: some View {
         List {
-            Text("Project: \(name)")
-            Text("ID: \(projectId)")
+            Text(String(format: NSLocalizedString("mgr_project_fmt", comment: ""), name))
+            Text(String(format: NSLocalizedString("mgr_id_fmt", comment: ""), projectId))
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }

@@ -10,10 +10,10 @@ struct AICopilotPlaceholderView: View {
     var body: some View {
         NavigationStack {
             List {
-                Text("AI Copilot — project AI and insights")
+                Text(NSLocalizedString("mgr_ai_copilot_placeholder", comment: ""))
                     .foregroundStyle(.secondary)
             }
-            .navigationTitle("AI")
+            .navigationTitle(NSLocalizedString("mgr_tab_ai", comment: ""))
         }
     }
 }

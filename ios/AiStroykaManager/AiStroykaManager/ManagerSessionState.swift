@@ -11,10 +11,14 @@ final class ManagerSessionState: ObservableObject {
     @Published var isLoggedIn = false
     @Published var isAuthorizedRole = false
     @Published var roleFailureMessage: String?
+    private var sessionCheckTask: Task<Void, Never>?
 
     func checkSession() {
-        Task {
+        sessionCheckTask?.cancel()
+        sessionCheckTask = Task { [weak self] in
+            guard let self else { return }
             let session = await AuthService.shared.currentSession()
+            guard !Task.isCancelled else { return }
             isLoggedIn = session != nil
             if isLoggedIn {
                 await checkRole()
@@ -31,12 +35,12 @@ final class ManagerSessionState: ObservableObject {
             let r = try await ManagerAPI.me()
             guard let data = r.data else {
                 isAuthorizedRole = false
-                roleFailureMessage = "No tenant context."
+                roleFailureMessage = NSLocalizedString("mgr_err_no_tenant_context", comment: "")
                 return
             }
             guard let role = data.role?.lowercased(), !role.isEmpty else {
                 isAuthorizedRole = false
-                roleFailureMessage = "You are not a member of any team."
+                roleFailureMessage = NSLocalizedString("mgr_err_no_team_membership", comment: "")
                 return
             }
             let allowed: Set<String> = ["owner", "admin", "member"]
@@ -45,12 +49,13 @@ final class ManagerSessionState: ObservableObject {
                 roleFailureMessage = nil
             } else {
                 isAuthorizedRole = false
-                roleFailureMessage = "Manager app is for owners, admins, and team leads. Your role (\(role)) does not have access."
+                let template = NSLocalizedString("mgr_err_role_not_allowed", comment: "")
+                roleFailureMessage = String(format: template, role)
             }
         } catch let e as APIError {
             if e.statusCode == 401 {
                 isAuthorizedRole = false
-                roleFailureMessage = "Session expired. Please sign in again."
+                roleFailureMessage = NSLocalizedString("mgr_err_session_expired", comment: "")
             } else {
                 isAuthorizedRole = false
                 roleFailureMessage = e.message
@@ -62,6 +67,7 @@ final class ManagerSessionState: ObservableObject {
     }
 
     func signOut() async {
+        sessionCheckTask?.cancel()
         await AuthService.shared.signOut()
         isLoggedIn = false
         isAuthorizedRole = false

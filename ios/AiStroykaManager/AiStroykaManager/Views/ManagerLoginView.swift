@@ -12,15 +12,19 @@ struct ManagerLoginView: View {
     @State private var password = ""
     @State private var errorMessage: String?
     @State private var isLoading = false
+    
+    private var signInButtonTitle: String {
+        isLoading ? NSLocalizedString("mgr_signing_in", comment: "") : NSLocalizedString("mgr_sign_in", comment: "")
+    }
 
     var body: some View {
         NavigationStack {
             Form {
                 Section {
-                    TextField("Email", text: $email)
+                    TextField(NSLocalizedString("mgr_email_placeholder", comment: ""), text: $email)
                         .textContentType(.emailAddress)
                         .autocapitalization(.none)
-                    SecureField("Password", text: $password)
+                    SecureField(NSLocalizedString("mgr_password_placeholder", comment: ""), text: $password)
                         .textContentType(.password)
                 }
                 if let err = errorMessage {
@@ -33,14 +37,14 @@ struct ManagerLoginView: View {
                     Button(action: signIn) {
                         HStack {
                             if isLoading { ProgressView().scaleEffect(0.8) }
-                            Text(isLoading ? "Signing in…" : "Sign in")
+                            Text(signInButtonTitle)
                         }
                         .frame(maxWidth: .infinity)
                     }
                     .disabled(isLoading || email.isEmpty || password.isEmpty)
                 }
             }
-            .navigationTitle("AiStroyka Manager")
+            .navigationTitle(NSLocalizedString("mgr_nav_title", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
         }
     }

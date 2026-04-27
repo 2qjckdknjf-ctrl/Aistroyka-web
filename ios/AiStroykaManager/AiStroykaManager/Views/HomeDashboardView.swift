@@ -15,7 +15,7 @@ struct HomeDashboardView: View {
         NavigationStack {
             Group {
                 if isLoading && overview == nil {
-                    LoadingStateView(message: "Loading dashboard…")
+                    LoadingStateView(message: NSLocalizedString("mgr_loading_dashboard", comment: ""))
                 } else if let err = errorMessage, overview == nil {
                     ErrorStateView(message: err, retry: { load() })
                 } else {
@@ -23,7 +23,7 @@ struct HomeDashboardView: View {
                 }
             }
             .background(Color(.systemGroupedBackground))
-            .navigationTitle("Home")
+            .navigationTitle(NSLocalizedString("mgr_nav_home", comment: ""))
             .refreshable { await loadAsync() }
             .onAppear { load() }
         }
@@ -45,26 +45,26 @@ struct HomeDashboardView: View {
 
     private func kpiSection(_ kpis: OpsOverviewDTO.OpsOverviewKpis) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Overview")
+            Text(NSLocalizedString("mgr_overview", comment: ""))
                 .font(.headline)
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                KPICard(title: "Active projects", value: "\(kpis.activeProjects ?? 0)")
-                KPICard(title: "Workers today", value: "\(kpis.activeWorkersToday ?? 0)")
-                KPICard(title: "Reports today", value: "\(kpis.reportsToday ?? 0)")
-                KPICard(title: "Overdue tasks", value: "\(kpis.tasksOverdue ?? 0)")
-                KPICard(title: "Open today", value: "\(kpis.tasksOpenToday ?? 0)")
-                KPICard(title: "Stuck uploads", value: "\(kpis.stuckUploads ?? 0)")
+                KPICard(title: NSLocalizedString("mgr_kpi_active_projects", comment: ""), value: "\(kpis.activeProjects ?? 0)")
+                KPICard(title: NSLocalizedString("mgr_kpi_workers_today", comment: ""), value: "\(kpis.activeWorkersToday ?? 0)")
+                KPICard(title: NSLocalizedString("mgr_kpi_reports_today", comment: ""), value: "\(kpis.reportsToday ?? 0)")
+                KPICard(title: NSLocalizedString("mgr_kpi_overdue_tasks", comment: ""), value: "\(kpis.tasksOverdue ?? 0)")
+                KPICard(title: NSLocalizedString("mgr_kpi_open_today", comment: ""), value: "\(kpis.tasksOpenToday ?? 0)")
+                KPICard(title: NSLocalizedString("mgr_kpi_stuck_uploads", comment: ""), value: "\(kpis.stuckUploads ?? 0)")
             }
         }
     }
 
     private func queuesSection(_ queues: OpsOverviewDTO.OpsOverviewQueues) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Needs attention")
+            Text(NSLocalizedString("mgr_needs_attention", comment: ""))
                 .font(.headline)
             if let overdue = queues.tasksOverdue, !overdue.isEmpty {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("Overdue tasks")
+                    Text(NSLocalizedString("mgr_overdue_tasks", comment: ""))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                     ForEach(Array(overdue.prefix(5)), id: \.id) { t in
@@ -82,7 +82,7 @@ struct HomeDashboardView: View {
             }
             if let openToday = queues.tasksOpenToday, !openToday.isEmpty {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("Due today")
+                    Text(NSLocalizedString("mgr_due_today", comment: ""))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                     ForEach(Array(openToday.prefix(5)), id: \.id) { t in
@@ -100,7 +100,7 @@ struct HomeDashboardView: View {
             }
             if let pending = queues.reportsPendingReview, !pending.isEmpty {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("Reports pending review")
+                    Text(NSLocalizedString("mgr_reports_pending", comment: ""))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                     ForEach(Array(pending.prefix(5)), id: \.id) { r in

@@ -20,11 +20,14 @@ struct TasksListView: View {
         NavigationStack {
             Group {
                 if isLoading && tasks.isEmpty && errorMessage == nil {
-                    LoadingStateView(message: "Loading tasks…")
+                    LoadingStateView(message: NSLocalizedString("mgr_loading_tasks", comment: ""))
                 } else if let err = errorMessage, tasks.isEmpty {
                     ErrorStateView(message: err, retry: { load() })
                 } else if tasks.isEmpty {
-                    EmptyStateView(title: "No tasks", subtitle: "Create a task or change filters.")
+                    EmptyStateView(
+                        title: NSLocalizedString("mgr_no_tasks_title", comment: ""),
+                        subtitle: NSLocalizedString("mgr_no_tasks_subtitle", comment: "")
+                    )
                         .overlay(alignment: .bottom) {
                             createButton
                         }
@@ -32,8 +35,8 @@ struct TasksListView: View {
                     listContent
                 }
             }
-            .navigationTitle("Tasks")
-            .toolbar { ToolbarItem(placement: .primaryAction) { Button("New", systemImage: "plus") { showCreate = true } } }
+            .navigationTitle(NSLocalizedString("mgr_tab_tasks", comment: ""))
+            .toolbar { ToolbarItem(placement: .primaryAction) { Button(NSLocalizedString("mgr_new", comment: ""), systemImage: "plus") { showCreate = true } } }
             .refreshable { await loadAsync() }
             .onAppear {
                 if let id = initialProjectId, selectedProjectId == nil { selectedProjectId = id }
@@ -43,8 +46,8 @@ struct TasksListView: View {
                 if let proj = projects.first ?? projects.first(where: { $0.id == selectedProjectId }) {
                     TaskCreateEditView(projectId: proj.id, projectName: proj.name, onDismiss: { showCreate = false; load() })
                 } else {
-                    Text("Load projects first")
-                        .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Close") { showCreate = false } } }
+                    Text(NSLocalizedString("mgr_load_projects_first", comment: ""))
+                        .toolbar { ToolbarItem(placement: .cancellationAction) { Button(NSLocalizedString("mgr_close", comment: "")) { showCreate = false } } }
                 }
             }
         }
@@ -64,16 +67,16 @@ struct TasksListView: View {
     private var filtersBar: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                FilterChip(title: "All projects", selected: selectedProjectId == nil) { selectedProjectId = nil; load() }
+                FilterChip(title: NSLocalizedString("mgr_all_projects", comment: ""), selected: selectedProjectId == nil) { selectedProjectId = nil; load() }
                 ForEach(projects.prefix(5), id: \.id) { p in
                     FilterChip(title: p.name ?? p.id, selected: selectedProjectId == p.id) {
                         selectedProjectId = p.id
                         load()
                     }
                 }
-                FilterChip(title: "All status", selected: statusFilter == nil) { statusFilter = nil; load() }
-                FilterChip(title: "Pending", selected: statusFilter == "pending") { statusFilter = "pending"; load() }
-                FilterChip(title: "Done", selected: statusFilter == "done") { statusFilter = "done"; load() }
+                FilterChip(title: NSLocalizedString("mgr_all_status", comment: ""), selected: statusFilter == nil) { statusFilter = nil; load() }
+                FilterChip(title: NSLocalizedString("mgr_status_pending", comment: ""), selected: statusFilter == "pending") { statusFilter = "pending"; load() }
+                FilterChip(title: NSLocalizedString("mgr_status_done", comment: ""), selected: statusFilter == "done") { statusFilter = "done"; load() }
             }
             .padding(.horizontal)
         }
@@ -82,7 +85,7 @@ struct TasksListView: View {
     }
 
     private var createButton: some View {
-        Button("New task") { showCreate = true }
+        Button(NSLocalizedString("mgr_new_task", comment: "")) { showCreate = true }
             .buttonStyle(.borderedProminent)
             .padding()
     }
@@ -122,7 +125,7 @@ struct TaskRowView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 if let d = task.dueDate {
-                    Text("Due: \(d)")
+                    Text(String(format: NSLocalizedString("mgr_due_fmt", comment: ""), d))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -145,26 +148,26 @@ struct TaskDetailManagerView: View {
     var body: some View {
         Group {
             if isLoading && task == nil && errorMessage == nil {
-                LoadingStateView(message: "Loading task…")
+                LoadingStateView(message: NSLocalizedString("mgr_loading_task", comment: ""))
             } else if let err = errorMessage, task == nil {
                 ErrorStateView(message: err, retry: { load() })
             } else if let t = task {
                 List {
-                    Section("Task") {
-                        LabeledContent("Title", value: t.title ?? "—")
-                        LabeledContent("Status", value: t.status ?? "—")
-                        if let d = t.dueDate { LabeledContent("Due", value: d) }
-                        if let a = t.assignedTo { LabeledContent("Assigned to", value: a) }
-                        if let r = t.reportId { LabeledContent("Report", value: r) }
-                        if let s = t.reportStatus { LabeledContent("Report status", value: s) }
+                    Section(NSLocalizedString("mgr_task_section", comment: "")) {
+                        LabeledContent(NSLocalizedString("mgr_title", comment: ""), value: t.title ?? "—")
+                        LabeledContent(NSLocalizedString("mgr_status", comment: ""), value: t.status ?? "—")
+                        if let d = t.dueDate { LabeledContent(NSLocalizedString("mgr_due", comment: ""), value: d) }
+                        if let a = t.assignedTo { LabeledContent(NSLocalizedString("mgr_assigned_to", comment: ""), value: a) }
+                        if let r = t.reportId { LabeledContent(NSLocalizedString("mgr_report", comment: ""), value: r) }
+                        if let s = t.reportStatus { LabeledContent(NSLocalizedString("mgr_report_status", comment: ""), value: s) }
                     }
-                    Section("Assign") {
+                    Section(NSLocalizedString("mgr_assign_section", comment: "")) {
                         Button {
                             showAssignPicker = true
                             assignError = nil
                         } label: {
                             HStack {
-                                Text("Assign to worker")
+                                Text(NSLocalizedString("mgr_assign_to_worker", comment: ""))
                                 if isAssigning { Spacer(); ProgressView() }
                             }
                         }
@@ -190,7 +193,7 @@ struct TaskDetailManagerView: View {
                     )
                 }
             } else {
-                EmptyStateView(title: "Task not found", subtitle: nil)
+                EmptyStateView(title: NSLocalizedString("mgr_task_not_found", comment: ""), subtitle: nil)
             }
         }
         .onAppear { load() }
@@ -224,7 +227,7 @@ struct TaskDetailManagerView: View {
             do {
                 try await ManagerAPI.assignTask(taskId: taskId, workerId: workerId, idempotencyKey: UUID().uuidString)
                 await loadAsync()
-                assignSuccessMessage = "Assigned"
+                assignSuccessMessage = NSLocalizedString("mgr_assigned", comment: "")
                 Task { @MainActor in
                     try? await Task.sleep(nanoseconds: 2_500_000_000)
                     assignSuccessMessage = nil
@@ -252,11 +255,14 @@ struct TaskAssigneePickerView: View {
         NavigationStack {
             Group {
                 if isLoading && workers.isEmpty && errorMessage == nil {
-                    LoadingStateView(message: "Loading workers…")
+                    LoadingStateView(message: NSLocalizedString("mgr_loading_workers", comment: ""))
                 } else if let err = errorMessage, workers.isEmpty {
                     ErrorStateView(message: err, retry: { load() })
                 } else if workers.isEmpty {
-                    EmptyStateView(title: "No workers", subtitle: "Team members will appear here.")
+                    EmptyStateView(
+                        title: NSLocalizedString("mgr_no_workers_short_title", comment: ""),
+                        subtitle: NSLocalizedString("mgr_no_workers_short_subtitle", comment: "")
+                    )
                 } else {
                     List(workers, id: \.userId) { w in
                         Button {
@@ -285,9 +291,9 @@ struct TaskAssigneePickerView: View {
                     }
                 }
             }
-            .navigationTitle("Assign to")
+            .navigationTitle(NSLocalizedString("mgr_assign_to", comment: ""))
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { onDismiss() } }
+                ToolbarItem(placement: .cancellationAction) { Button(NSLocalizedString("mgr_cancel", comment: "")) { onDismiss() } }
             }
             .onAppear { load() }
         }
@@ -315,10 +321,10 @@ struct TaskAssigneePickerView: View {
 
     private func workerSubtitle(_ w: WorkerRowDTO) -> String? {
         if let s = w.lastReportSubmittedAt, !s.isEmpty {
-            return "Last report: " + shortDate(s)
+            return String(format: NSLocalizedString("mgr_last_report_fmt", comment: ""), shortDate(s))
         }
         if let d = w.lastDayDate, !d.isEmpty {
-            return "Last day: " + d
+            return String(format: NSLocalizedString("mgr_last_day_fmt", comment: ""), d)
         }
         return nil
     }
@@ -344,11 +350,11 @@ struct TaskCreateEditView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Project") {
+                Section(NSLocalizedString("mgr_project_section", comment: "")) {
                     Text(projectName ?? projectId)
                 }
-                Section("Title") {
-                    TextField("Task title", text: $title)
+                Section(NSLocalizedString("mgr_title_section", comment: "")) {
+                    TextField(NSLocalizedString("mgr_task_title_placeholder", comment: ""), text: $title)
                 }
                 if let err = errorMessage {
                     Section {
@@ -357,11 +363,11 @@ struct TaskCreateEditView: View {
                     }
                 }
             }
-            .navigationTitle("New task")
+            .navigationTitle(NSLocalizedString("mgr_new_task", comment: ""))
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { onDismiss() } }
+                ToolbarItem(placement: .cancellationAction) { Button(NSLocalizedString("mgr_cancel", comment: "")) { onDismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Create") { submit() }
+                    Button(NSLocalizedString("mgr_create", comment: "")) { submit() }
                         .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty || isSubmitting)
                 }
             }

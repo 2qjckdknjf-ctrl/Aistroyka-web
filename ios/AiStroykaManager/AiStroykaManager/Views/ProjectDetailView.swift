@@ -19,43 +19,43 @@ struct ProjectDetailView: View {
     var body: some View {
         Group {
             if isLoading && project == nil && errorMessage == nil {
-                LoadingStateView(message: "Loading project…")
+                LoadingStateView(message: NSLocalizedString("mgr_loading_project", comment: ""))
             } else if let err = errorMessage, project == nil {
                 ErrorStateView(message: err, retry: { load() })
             } else if let p = project {
                 content(project: p)
             } else {
-                EmptyStateView(title: "Project not found", subtitle: nil)
+                EmptyStateView(title: NSLocalizedString("mgr_project_not_found", comment: ""), subtitle: nil)
             }
         }
-        .navigationTitle(project?.name ?? projectName ?? "Project")
+        .navigationTitle(project?.name ?? projectName ?? NSLocalizedString("mgr_project", comment: ""))
         .refreshable { await loadAsync() }
         .onAppear { load() }
     }
 
     private func content(project p: ProjectDetailDTO) -> some View {
         List {
-            Section("Project") {
-                LabeledContent("Name", value: p.name ?? "—")
-                LabeledContent("ID", value: p.id)
-                if let c = p.createdAt { LabeledContent("Created", value: formatDate(c)) }
+            Section(NSLocalizedString("mgr_project_section", comment: "")) {
+                LabeledContent(NSLocalizedString("mgr_name", comment: ""), value: p.name ?? "—")
+                LabeledContent(NSLocalizedString("mgr_id", comment: ""), value: p.id)
+                if let c = p.createdAt { LabeledContent(NSLocalizedString("mgr_created", comment: ""), value: formatDate(c)) }
             }
             if let s = summary {
-                Section("Summary") {
-                    if let n = s.activeWorkers { LabeledContent("Active workers", value: "\(n)") }
-                    if let n = s.openReports { LabeledContent("Open reports", value: "\(n)") }
-                    if let n = s.aiAnalyses { LabeledContent("AI analyses", value: "\(n)") }
+                Section(NSLocalizedString("mgr_summary_section", comment: "")) {
+                    if let n = s.activeWorkers { LabeledContent(NSLocalizedString("mgr_active_workers", comment: ""), value: "\(n)") }
+                    if let n = s.openReports { LabeledContent(NSLocalizedString("mgr_open_reports", comment: ""), value: "\(n)") }
+                    if let n = s.aiAnalyses { LabeledContent(NSLocalizedString("mgr_ai_analyses", comment: ""), value: "\(n)") }
                 }
             }
-            Section("Quick links") {
+            Section(NSLocalizedString("mgr_quick_links_section", comment: "")) {
                 NavigationLink(destination: TasksListForProjectView(projectId: projectId)) {
-                    Label("Tasks", systemImage: "checklist")
+                    Label(NSLocalizedString("mgr_tab_tasks", comment: ""), systemImage: "checklist")
                 }
                 NavigationLink(destination: ReportsInboxForProjectView(projectId: projectId)) {
-                    Label("Reports", systemImage: "doc.text")
+                    Label(NSLocalizedString("mgr_tab_reports", comment: ""), systemImage: "doc.text")
                 }
-                NavigationLink(destination: ProjectAIView(projectId: projectId, projectName: p.name ?? "Project")) {
-                    Label("AI", systemImage: "sparkles")
+                NavigationLink(destination: ProjectAIView(projectId: projectId, projectName: p.name ?? NSLocalizedString("mgr_project", comment: ""))) {
+                    Label(NSLocalizedString("mgr_tab_ai", comment: ""), systemImage: "sparkles")
                 }
             }
         }
@@ -104,18 +104,21 @@ struct ProjectAIView: View {
     var body: some View {
         Group {
             if isLoading && jobs.isEmpty && errorMessage == nil {
-                LoadingStateView(message: "Loading AI jobs…")
+                LoadingStateView(message: NSLocalizedString("mgr_loading_ai_jobs", comment: ""))
             } else if let err = errorMessage, jobs.isEmpty {
                 ErrorStateView(message: err, retry: { load() })
             } else if jobs.isEmpty {
-                EmptyStateView(title: "No AI jobs", subtitle: "Analysis jobs for this project will appear here.")
+                EmptyStateView(
+                    title: NSLocalizedString("mgr_no_ai_jobs_title", comment: ""),
+                    subtitle: NSLocalizedString("mgr_no_ai_jobs_project_subtitle", comment: "")
+                )
             } else {
                 List(Array(jobs.enumerated()), id: \.offset) { _, job in
                     ProjectAIRowView(job: job)
                 }
             }
         }
-        .navigationTitle("AI — \(projectName)")
+        .navigationTitle(String(format: NSLocalizedString("mgr_ai_project_title_fmt", comment: ""), projectName))
         .refreshable { await loadAsync() }
         .onAppear { load() }
     }
@@ -147,7 +150,7 @@ struct ProjectAIRowView: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(job.status ?? "—")
                 .font(.subheadline)
-            if let m = job.mediaId { Text("Media: \(m)").font(.caption).foregroundStyle(.secondary) }
+            if let m = job.mediaId { Text(String(format: NSLocalizedString("mgr_media_fmt", comment: ""), m)).font(.caption).foregroundStyle(.secondary) }
             if let c = job.createdAt { Text(formatDate(c)).font(.caption2).foregroundStyle(.tertiary) }
         }
         .padding(.vertical, 4)
@@ -173,11 +176,14 @@ struct TasksListForProjectView: View {
     var body: some View {
         Group {
             if isLoading && tasks.isEmpty && errorMessage == nil {
-                LoadingStateView(message: "Loading tasks…")
+                LoadingStateView(message: NSLocalizedString("mgr_loading_tasks", comment: ""))
             } else if let err = errorMessage, tasks.isEmpty {
                 ErrorStateView(message: err, retry: { load() })
             } else if tasks.isEmpty {
-                EmptyStateView(title: "No tasks", subtitle: "Create tasks from the Tasks tab.")
+                EmptyStateView(
+                    title: NSLocalizedString("mgr_no_tasks_title", comment: ""),
+                    subtitle: NSLocalizedString("mgr_no_tasks_from_tab_subtitle", comment: "")
+                )
             } else {
                 List(tasks, id: \.id) { t in
                     NavigationLink(destination: TaskDetailManagerView(taskId: t.id)) {
@@ -186,7 +192,7 @@ struct TasksListForProjectView: View {
                 }
             }
         }
-        .navigationTitle("Tasks")
+        .navigationTitle(NSLocalizedString("mgr_tab_tasks", comment: ""))
         .refreshable { await loadAsync() }
         .onAppear { load() }
     }
@@ -221,11 +227,14 @@ struct ReportsInboxForProjectView: View {
     var body: some View {
         Group {
             if isLoading && reports.isEmpty && errorMessage == nil {
-                LoadingStateView(message: "Loading reports…")
+                LoadingStateView(message: NSLocalizedString("mgr_loading_reports", comment: ""))
             } else if let err = errorMessage, reports.isEmpty {
                 ErrorStateView(message: err, retry: { load() })
             } else if reports.isEmpty {
-                EmptyStateView(title: "No reports", subtitle: "Field reports for this project will appear here.")
+                EmptyStateView(
+                    title: NSLocalizedString("mgr_no_reports_title", comment: ""),
+                    subtitle: NSLocalizedString("mgr_no_reports_project_subtitle", comment: "")
+                )
             } else {
                 List(reports, id: \.id) { r in
                     NavigationLink(destination: ReportDetailReviewView(reportId: r.id)) {
@@ -234,7 +243,7 @@ struct ReportsInboxForProjectView: View {
                 }
             }
         }
-        .navigationTitle("Reports")
+        .navigationTitle(NSLocalizedString("mgr_tab_reports", comment: ""))
         .refreshable { await loadAsync() }
         .onAppear { load() }
     }

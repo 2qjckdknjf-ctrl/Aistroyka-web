@@ -10,10 +10,10 @@ struct ReportsInboxPlaceholderView: View {
     var body: some View {
         NavigationStack {
             List {
-                Text("Reports inbox — GET /api/v1/reports")
+                Text(NSLocalizedString("mgr_reports_placeholder", comment: ""))
                     .foregroundStyle(.secondary)
             }
-            .navigationTitle("Reports")
+            .navigationTitle(NSLocalizedString("mgr_tab_reports", comment: ""))
         }
     }
 }
