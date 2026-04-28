@@ -44,6 +44,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -118,6 +119,7 @@ private fun LoginScreen(vm: ManagerViewModel) {
             value = state.password,
             onValueChange = { vm.setPassword(it) },
             label = { Text(stringResource(R.string.label_password)) },
+            visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier
                 .fillMaxWidth()
                 .pilotAutomatorTag("pilot_manager_password"),
