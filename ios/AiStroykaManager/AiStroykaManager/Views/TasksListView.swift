@@ -194,7 +194,7 @@ struct TaskDetailManagerView: View {
                 EmptyStateView(title: NSLocalizedString("mgr_task_not_found", comment: ""), subtitle: nil)
             }
         }
-        .onAppear { load() }
+        .onAppear { loadIfNeeded() }
     }
 
     private func load() {
@@ -203,37 +203,33 @@ struct TaskDetailManagerView: View {
         Task { await loadAsync() }
     }
 
+    private func loadIfNeeded() {
+        guard shouldLoadInitially(item: task, errorMessage: errorMessage) else { return }
+        load()
+    }
+
     private func loadAsync() async {
-        errorMessage = nil
-        isLoading = true
-        defer { isLoading = false }
-        do {
+        await runManagerLoad(isLoading: &isLoading, errorMessage: &errorMessage) {
             task = try await ManagerAPI.taskDetail(id: taskId)
-        } catch let e as APIError {
-            errorMessage = e.message
-        } catch {
-            errorMessage = error.localizedDescription
         }
     }
 
     private func assign(to workerId: String) {
-        assignError = nil
         assignSuccessMessage = nil
-        isAssigning = true
         Task {
-            defer { isAssigning = false }
-            do {
+            let success = await runManagerAction(
+                isLoading: &isAssigning,
+                errorMessage: &assignError
+            ) {
                 try await ManagerAPI.assignTask(taskId: taskId, workerId: workerId, idempotencyKey: UUID().uuidString)
                 await loadAsync()
+            }
+            if success {
                 assignSuccessMessage = NSLocalizedString("mgr_assigned", comment: "")
                 Task { @MainActor in
                     try? await Task.sleep(nanoseconds: 2_500_000_000)
                     assignSuccessMessage = nil
                 }
-            } catch let e as APIError {
-                assignError = e.message
-            } catch {
-                assignError = error.localizedDescription
             }
         }
     }
@@ -293,22 +289,24 @@ struct TaskAssigneePickerView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button(NSLocalizedString("mgr_cancel", comment: "")) { onDismiss() } }
             }
-            .onAppear { load() }
+            .onAppear { loadIfNeeded() }
         }
     }
 
     private func load() {
         errorMessage = nil
         isLoading = true
-        Task {
-            defer { isLoading = false }
-            do {
+        Task { await loadAsync() }
+    }
+
+    private func loadIfNeeded() {
+        guard shouldLoadInitially(items: workers, errorMessage: errorMessage) else { return }
+        load()
+    }
+
+    private func loadAsync() async {
+        await runManagerLoad(isLoading: &isLoading, errorMessage: &errorMessage) {
                 workers = try await ManagerAPI.workers(limit: 200)
-            } catch let e as APIError {
-                errorMessage = e.message
-            } catch {
-                errorMessage = error.localizedDescription
-            }
         }
     }
 
@@ -375,17 +373,15 @@ struct TaskCreateEditView: View {
     private func submit() {
         let t = title.trimmingCharacters(in: .whitespaces)
         guard !t.isEmpty else { return }
-        errorMessage = nil
-        isSubmitting = true
         Task {
-            defer { isSubmitting = false }
-            do {
+            let success = await runManagerAction(
+                isLoading: &isSubmitting,
+                errorMessage: &errorMessage
+            ) {
                 _ = try await ManagerAPI.createTask(projectId: projectId, title: t, idempotencyKey: UUID().uuidString)
+            }
+            if success {
                 onDismiss()
-            } catch let e as APIError {
-                errorMessage = e.message
-            } catch {
-                errorMessage = error.localizedDescription
             }
         }
     }

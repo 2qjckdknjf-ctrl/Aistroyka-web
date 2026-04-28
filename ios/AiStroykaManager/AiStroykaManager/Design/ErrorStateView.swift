@@ -48,6 +48,27 @@ func runManagerLoad(
     }
 }
 
+@MainActor
+@discardableResult
+func runManagerAction(
+    isLoading: inout Bool,
+    errorMessage: inout String?,
+    operation: () async throws -> Void
+) async -> Bool {
+    errorMessage = nil
+    isLoading = true
+    defer { isLoading = false }
+    do {
+        try await operation()
+        return true
+    } catch let apiError as APIError {
+        errorMessage = apiError.message
+    } catch {
+        errorMessage = error.localizedDescription
+    }
+    return false
+}
+
 func shouldLoadInitially<T>(items: [T], errorMessage: String?) -> Bool {
     items.isEmpty && errorMessage == nil
 }

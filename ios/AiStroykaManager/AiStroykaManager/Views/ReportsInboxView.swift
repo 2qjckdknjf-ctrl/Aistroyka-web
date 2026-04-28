@@ -195,7 +195,7 @@ struct ReportDetailReviewView: View {
             }
         }
         .navigationTitle(NSLocalizedString("mgr_report", comment: ""))
-        .onAppear { load() }
+        .onAppear { loadIfNeeded() }
     }
 
     private func isReviewStatus(_ s: String?) -> Bool {
@@ -209,17 +209,16 @@ struct ReportDetailReviewView: View {
     }
 
     private func submitReview(status: String) {
-        reviewActionError = nil
-        reviewActionLoading = true
         Task {
-            defer { reviewActionLoading = false }
-            do {
+            let success = await runManagerAction(
+                isLoading: &reviewActionLoading,
+                errorMessage: &reviewActionError
+            ) {
                 let note = managerNoteText.trimmingCharacters(in: .whitespacesAndNewlines)
                 report = try await ManagerAPI.reportReview(reportId: reportId, status: status, managerNote: note.isEmpty ? nil : note)
-            } catch let e as APIError {
-                reviewActionError = e.message
-            } catch {
-                reviewActionError = error.localizedDescription
+            }
+            if success {
+                managerNoteText = ""
             }
         }
     }
@@ -230,16 +229,14 @@ struct ReportDetailReviewView: View {
         Task { await loadAsync() }
     }
 
+    private func loadIfNeeded() {
+        guard shouldLoadInitially(item: report, errorMessage: errorMessage) else { return }
+        load()
+    }
+
     private func loadAsync() async {
-        errorMessage = nil
-        isLoading = true
-        defer { isLoading = false }
-        do {
+        await runManagerLoad(isLoading: &isLoading, errorMessage: &errorMessage) {
             report = try await ManagerAPI.reportDetail(id: reportId)
-        } catch let e as APIError {
-            errorMessage = e.message
-        } catch {
-            errorMessage = error.localizedDescription
         }
     }
 

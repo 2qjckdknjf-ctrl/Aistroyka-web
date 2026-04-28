@@ -88,24 +88,17 @@ struct ManagerLoginView: View {
             errorMessage = NSLocalizedString("mgr_err_offline_signin", comment: "")
             return
         }
-        isLoading = true
-        Task {
+        Task { @MainActor in
+            errorMessage = nil
+            isLoading = true
+            defer { isLoading = false }
             do {
                 try await AuthService.shared.signIn(email: emailTrimmed, password: passwordTrimmed)
-                await MainActor.run {
-                    sessionState.checkSession()
-                }
-            } catch let e as APIError {
-                await MainActor.run {
-                    errorMessage = e.message
-                }
+                sessionState.checkSession()
+            } catch let apiError as APIError {
+                errorMessage = apiError.message
             } catch {
-                await MainActor.run {
-                    errorMessage = error.localizedDescription
-                }
-            }
-            await MainActor.run {
-                isLoading = false
+                errorMessage = error.localizedDescription
             }
         }
     }
