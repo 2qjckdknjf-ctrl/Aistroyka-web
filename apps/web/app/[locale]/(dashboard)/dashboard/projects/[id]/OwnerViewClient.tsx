@@ -122,6 +122,13 @@ const EMPTY_MEDIA: Media[] = [];
 
 type BulkDecisionAction = "approve" | "reject" | "request_changes";
 const MAX_BULK_DECISION_ITEMS = 20;
+const BULK_UNDO_WINDOW_MS = 8000;
+
+type ScheduledBulkAction = {
+  action: BulkDecisionAction;
+  documentIds: string[];
+  runAtMs: number;
+};
 
 async function fetchProject(projectId: string): Promise<Project> {
   const res = await fetch(`/api/v1/projects/${projectId}`, { credentials: "include" });
@@ -261,6 +268,8 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
   const [bulkDecisionError, setBulkDecisionError] = useState<string | null>(null);
   const [bulkDecisionFailures, setBulkDecisionFailures] = useState<Array<{ document_id: string; error: string }>>([]);
   const [pendingBulkAction, setPendingBulkAction] = useState<BulkDecisionAction | null>(null);
+  const [scheduledBulkAction, setScheduledBulkAction] = useState<ScheduledBulkAction | null>(null);
+  const [bulkUndoNowMs, setBulkUndoNowMs] = useState<number>(Date.now());
 
   const decisionMutation = useMutation({
     mutationFn: ({
@@ -465,11 +474,36 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
 
   const hiddenSelectedCount = Math.max(0, selectedDecisionIds.length - selectedFilteredCount);
   const bulkSelectionOverLimit = selectedDecisionIds.length > MAX_BULK_DECISION_ITEMS;
+  const scheduledBulkCountdownSeconds = useMemo(() => {
+    if (!scheduledBulkAction) return 0;
+    return Math.max(0, Math.ceil((scheduledBulkAction.runAtMs - bulkUndoNowMs) / 1000));
+  }, [scheduledBulkAction, bulkUndoNowMs]);
 
   useEffect(() => {
     const alive = new Set(pendingDecisions.map((d) => d.id));
     setSelectedDecisionIds((prev) => prev.filter((id) => alive.has(id)));
   }, [pendingDecisions]);
+
+  useEffect(() => {
+    if (!scheduledBulkAction) return;
+    const tick = window.setInterval(() => {
+      setBulkUndoNowMs(Date.now());
+    }, 250);
+    return () => window.clearInterval(tick);
+  }, [scheduledBulkAction]);
+
+  useEffect(() => {
+    if (!scheduledBulkAction) return;
+    if (bulkDecisionMutation.isPending) return;
+    if (scheduledBulkAction.runAtMs > bulkUndoNowMs) return;
+    setBulkDecisionError(null);
+    setBulkDecisionFailures([]);
+    bulkDecisionMutation.mutate({
+      documentIds: scheduledBulkAction.documentIds,
+      action: scheduledBulkAction.action,
+    });
+    setScheduledBulkAction(null);
+  }, [scheduledBulkAction, bulkUndoNowMs, bulkDecisionMutation]);
 
   if (loading && !project) {
     return (
@@ -589,6 +623,10 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
 
   function runBulkDecision(action: BulkDecisionAction): void {
     if (selectedDecisionIds.length === 0 || bulkDecisionMutation.isPending) return;
+    if (scheduledBulkAction) {
+      setBulkDecisionError(tDetail("bulkUndoInProgress"));
+      return;
+    }
     if (bulkSelectionOverLimit) {
       setBulkDecisionError(
         tDetail("bulkSelectionLimitExceeded", { max: MAX_BULK_DECISION_ITEMS })
@@ -606,9 +644,12 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
       return;
     }
     setBulkDecisionError(null);
-    bulkDecisionMutation.mutate({
-      documentIds: selectedDecisionDocs.map((d) => d.id),
+    setBulkDecisionFailures([]);
+    setPendingBulkAction(null);
+    setScheduledBulkAction({
       action: pendingBulkAction,
+      documentIds: selectedDecisionDocs.map((d) => d.id),
+      runAtMs: Date.now() + BULK_UNDO_WINDOW_MS,
     });
   }
 
@@ -621,9 +662,25 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
           ? tDetail("bulkRequestChanges")
           : "";
 
+  const scheduledBulkActionLabel =
+    scheduledBulkAction?.action === "approve"
+      ? tDetail("bulkApprove")
+      : scheduledBulkAction?.action === "reject"
+        ? tDetail("bulkReject")
+        : scheduledBulkAction?.action === "request_changes"
+          ? tDetail("bulkRequestChanges")
+          : "";
+
   function closeBulkConfirm(): void {
     if (bulkDecisionMutation.isPending) return;
     setPendingBulkAction(null);
+  }
+
+  function undoScheduledBulkAction(): void {
+    if (!scheduledBulkAction) return;
+    setScheduledBulkAction(null);
+    setBulkDecisionError(null);
+    setBulkDecisionFailures([]);
   }
 
   return (
@@ -737,7 +794,12 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
               <button
                 type="button"
                 onClick={() => runBulkDecision("approve")}
-                disabled={selectedDecisionIds.length === 0 || bulkDecisionMutation.isPending || bulkSelectionOverLimit}
+                disabled={
+                  selectedDecisionIds.length === 0 ||
+                  bulkDecisionMutation.isPending ||
+                  bulkSelectionOverLimit ||
+                  !!scheduledBulkAction
+                }
                 className="rounded border border-aistroyka-border-subtle px-3 py-1.5 text-xs font-medium text-aistroyka-text-primary transition-colors hover:border-aistroyka-accent hover:bg-aistroyka-surface-raised disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {bulkDecisionMutation.isPending ? tDetail("bulkProcessing") : tDetail("bulkApprove")}
@@ -745,7 +807,12 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
               <button
                 type="button"
                 onClick={() => runBulkDecision("reject")}
-                disabled={selectedDecisionIds.length === 0 || bulkDecisionMutation.isPending || bulkSelectionOverLimit}
+                disabled={
+                  selectedDecisionIds.length === 0 ||
+                  bulkDecisionMutation.isPending ||
+                  bulkSelectionOverLimit ||
+                  !!scheduledBulkAction
+                }
                 className="rounded border border-aistroyka-border-subtle px-3 py-1.5 text-xs font-medium text-aistroyka-text-primary transition-colors hover:border-aistroyka-accent hover:bg-aistroyka-surface-raised disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {bulkDecisionMutation.isPending ? tDetail("bulkProcessing") : tDetail("bulkReject")}
@@ -753,7 +820,12 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
               <button
                 type="button"
                 onClick={() => runBulkDecision("request_changes")}
-                disabled={selectedDecisionIds.length === 0 || bulkDecisionMutation.isPending || bulkSelectionOverLimit}
+                disabled={
+                  selectedDecisionIds.length === 0 ||
+                  bulkDecisionMutation.isPending ||
+                  bulkSelectionOverLimit ||
+                  !!scheduledBulkAction
+                }
                 className="rounded border border-aistroyka-border-subtle px-3 py-1.5 text-xs font-medium text-aistroyka-text-primary transition-colors hover:border-aistroyka-accent hover:bg-aistroyka-surface-raised disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {bulkDecisionMutation.isPending ? tDetail("bulkProcessing") : tDetail("bulkRequestChanges")}
@@ -867,6 +939,23 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
                     ))}
                   </ul>
                 )}
+              </div>
+            )}
+            {scheduledBulkAction && (
+              <div className="mb-3 flex flex-wrap items-center gap-2 rounded border border-aistroyka-border-subtle bg-aistroyka-surface-raised p-3">
+                <p className="text-sm text-aistroyka-text-primary">
+                  {tDetail("bulkUndoWindowMessage", {
+                    action: scheduledBulkActionLabel,
+                    seconds: scheduledBulkCountdownSeconds,
+                  })}
+                </p>
+                <button
+                  type="button"
+                  onClick={undoScheduledBulkAction}
+                  className="rounded border border-aistroyka-border-subtle px-2 py-1 text-xs text-aistroyka-text-secondary transition-colors hover:border-aistroyka-accent hover:text-aistroyka-text-primary"
+                >
+                  {tDetail("bulkUndoAction")}
+                </button>
               </div>
             )}
             <ul className="space-y-2">

@@ -21,17 +21,26 @@ const PLAN_PRICE_ENV_KEYS = {
 
 type CheckoutPlanKey = keyof typeof PLAN_PRICE_ENV_KEYS;
 
-function resolvePriceIdFromRequestBody(body: Record<string, unknown>): string | undefined {
+function resolvePriceIdFromRequestBody(body: Record<string, unknown>): {
+  priceId?: string;
+  requestedPlanKey?: string;
+  planEnvMissing?: boolean;
+} {
   if (typeof body.price_id === "string" && body.price_id.trim().length > 0) {
-    return body.price_id.trim();
+    return { priceId: body.price_id.trim() };
   }
 
-  if (typeof body.plan_key !== "string") return undefined;
+  if (typeof body.plan_key !== "string") return {};
   const planKey = body.plan_key.trim().toLowerCase() as CheckoutPlanKey;
   const envKey = PLAN_PRICE_ENV_KEYS[planKey];
-  if (!envKey) return undefined;
+  if (!envKey) return { requestedPlanKey: planKey };
   const envValue = process.env[envKey];
-  return typeof envValue === "string" && envValue.trim().length > 0 ? envValue.trim() : undefined;
+  const priceId = typeof envValue === "string" && envValue.trim().length > 0 ? envValue.trim() : undefined;
+  return {
+    priceId,
+    requestedPlanKey: planKey,
+    planEnvMissing: !priceId,
+  };
 }
 
 export async function POST(request: Request) {
@@ -53,7 +62,16 @@ export async function POST(request: Request) {
   if (!successUrl || !cancelUrl) {
     return NextResponse.json({ error: "success_url and cancel_url required" }, { status: 400 });
   }
-  const priceId = resolvePriceIdFromRequestBody(body as Record<string, unknown>);
+  const priceInput = resolvePriceIdFromRequestBody(body as Record<string, unknown>);
+  if (priceInput.requestedPlanKey && priceInput.planEnvMissing) {
+    return NextResponse.json(
+      {
+        error: `Price for plan_key '${priceInput.requestedPlanKey}' is not configured`,
+      },
+      { status: 400 }
+    );
+  }
+  const priceId = priceInput.priceId;
   const admin = getAdminClient();
   if (!admin || !isStripeConfigured()) {
     return NextResponse.json(BILLING_503_BODY, { status: 503 });

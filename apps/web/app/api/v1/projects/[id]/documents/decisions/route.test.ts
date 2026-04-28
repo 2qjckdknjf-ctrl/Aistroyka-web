@@ -70,6 +70,44 @@ describe("POST /api/v1/projects/:id/documents/decisions", () => {
     });
     const res = await POST(req, { params: Promise.resolve({ id: "p1" }) });
     expect(res.status).toBe(400);
+    await expect(res.json()).resolves.toMatchObject({
+      error: "document_ids must be valid uuid values",
+    });
+  });
+
+  it("returns 400 when document_ids become empty after trim/filter", async () => {
+    const req = new Request("https://x/api/v1/projects/p1/documents/decisions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "approve",
+        document_ids: ["   ", ""],
+      }),
+    });
+    const res = await POST(req, { params: Promise.resolve({ id: "p1" }) });
+    expect(res.status).toBe(400);
+    await expect(res.json()).resolves.toMatchObject({
+      error: "document_ids required",
+    });
+  });
+
+  it("returns 400 when list contains valid and invalid uuid values", async () => {
+    const req = new Request("https://x/api/v1/projects/p1/documents/decisions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "approve",
+        document_ids: [
+          "11111111-1111-4111-8111-111111111111",
+          "bad-id",
+        ],
+      }),
+    });
+    const res = await POST(req, { params: Promise.resolve({ id: "p1" }) });
+    expect(res.status).toBe(400);
+    await expect(res.json()).resolves.toMatchObject({
+      error: "document_ids must be valid uuid values",
+    });
   });
 
   it("calls rpc and returns aggregate result with deduped ids and per-item failures", async () => {
@@ -130,10 +168,20 @@ describe("POST /api/v1/projects/:id/documents/decisions", () => {
     const req = new Request("https://x/api/v1/projects/p1/documents/decisions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "approve", document_ids: [id1] }),
+      body: JSON.stringify({ action: "approve", document_ids: [` ${id1} `, id1] }),
     });
     const res = await POST(req, { params: Promise.resolve({ id: "p1" }) });
     expect(res.status).toBe(409);
+    expect(mockSupabase.rpc).toHaveBeenCalledWith("owner_bulk_decide_documents", {
+      p_project_id: "p1",
+      p_tenant_id: "t1",
+      p_action: "approve",
+      p_document_ids: [id1],
+      p_comment: null,
+    });
+    await expect(res.json()).resolves.toMatchObject({
+      error: "Selection changed. Reload and retry.",
+    });
   });
 
   it("returns 403 on forbidden rpc error", async () => {
@@ -149,6 +197,9 @@ describe("POST /api/v1/projects/:id/documents/decisions", () => {
     });
     const res = await POST(req, { params: Promise.resolve({ id: "p1" }) });
     expect(res.status).toBe(403);
+    await expect(res.json()).resolves.toMatchObject({
+      error: "Insufficient rights",
+    });
   });
 
   it("returns 401 on not authenticated rpc error", async () => {
@@ -164,5 +215,8 @@ describe("POST /api/v1/projects/:id/documents/decisions", () => {
     });
     const res = await POST(req, { params: Promise.resolve({ id: "p1" }) });
     expect(res.status).toBe(401);
+    await expect(res.json()).resolves.toMatchObject({
+      error: "Unauthorized",
+    });
   });
 });
