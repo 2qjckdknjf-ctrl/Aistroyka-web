@@ -918,6 +918,7 @@
     "selectedItemsCount": "Selezionati: {count}",
     "selectDecision": "Seleziona decisione",
     "bulkDecisionFailed": "Azione massiva non riuscita.",
+    "bulkDecisionPartialFailed": "Applicati {succeeded} su {total}. Falliti: {failed}. Riprova per gli elementi rimanenti.",
     "bulkConfirmTitle": "Conferma azione massiva",
     "bulkConfirmMessage": "Applicare \"{action}\" a {count} elemento/i?",
     "bulkConfirmSelectedListTitle": "Elementi selezionati",

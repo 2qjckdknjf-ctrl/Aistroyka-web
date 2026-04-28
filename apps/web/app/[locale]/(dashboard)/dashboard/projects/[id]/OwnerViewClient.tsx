@@ -105,6 +105,15 @@ interface Media {
   uploaded_at?: string;
 }
 
+interface BulkDecisionResult {
+  action: BulkDecisionAction;
+  total: number;
+  succeeded_count: number;
+  failed_count: number;
+  succeeded_ids: string[];
+  failed: Array<{ document_id: string; error: string }>;
+}
+
 const EMPTY_MILESTONES: Milestone[] = [];
 const EMPTY_ISSUES: Issue[] = [];
 const EMPTY_DOCUMENTS: Document[] = [];
@@ -195,6 +204,26 @@ async function submitDecision(
   return json;
 }
 
+async function submitBulkDecision(
+  projectId: string,
+  documentIds: string[],
+  action: BulkDecisionAction
+): Promise<BulkDecisionResult> {
+  const res = await fetch(`/api/v1/projects/${projectId}/documents/decisions`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ action, document_ids: documentIds }),
+  });
+  if (!res.ok) {
+    const j = await res.json().catch(() => ({}));
+    throw new Error((j as { error?: string }).error ?? "decision_failed");
+  }
+  const json = (await res.json()) as { data?: BulkDecisionResult };
+  if (!json.data) throw new Error("decision_failed");
+  return json.data;
+}
+
 function documentFileUrl(objectPath: string | null | undefined): string | null {
   if (!objectPath) return null;
   const base = (getPublicConfig().NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/$/, "");
@@ -261,20 +290,28 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
   });
 
   const bulkDecisionMutation = useMutation({
-    mutationFn: async (input: { documentIds: string[]; action: BulkDecisionAction }) => {
-      for (const documentId of input.documentIds) {
-        await submitDecision(projectId, documentId, input.action);
-      }
-    },
-    onSuccess: () => {
+    mutationFn: async (input: { documentIds: string[]; action: BulkDecisionAction }) =>
+      submitBulkDecision(projectId, input.documentIds, input.action),
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["project-documents", projectId] });
       queryClient.invalidateQueries({ queryKey: ["project-summary", projectId] });
       queryClient.invalidateQueries({ queryKey: ["project-attention", projectId] });
       queryClient.invalidateQueries({ queryKey: ["project-timeline", projectId] });
-      setSelectedDecisionIds([]);
-      setBulkDecisionError(null);
       setPendingBulkAction(null);
-      if (decisionDoc && selectedDecisionIds.includes(decisionDoc.id)) {
+      if (result.failed_count === 0) {
+        setSelectedDecisionIds([]);
+        setBulkDecisionError(null);
+      } else {
+        setSelectedDecisionIds(result.failed.map((row) => row.document_id));
+        setBulkDecisionError(
+          tDetail("bulkDecisionPartialFailed", {
+            total: result.total,
+            succeeded: result.succeeded_count,
+            failed: result.failed_count,
+          })
+        );
+      }
+      if (decisionDoc && result.succeeded_ids.includes(decisionDoc.id)) {
         setDecisionDoc(null);
         setDecisionComment("");
         setDecisionError(null);

@@ -29,3 +29,29 @@ struct ErrorStateView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
+
+@MainActor
+func runManagerLoad(
+    isLoading: inout Bool,
+    errorMessage: inout String?,
+    operation: () async throws -> Void
+) async {
+    errorMessage = nil
+    isLoading = true
+    defer { isLoading = false }
+    do {
+        try await operation()
+    } catch let apiError as APIError {
+        errorMessage = apiError.message
+    } catch {
+        errorMessage = error.localizedDescription
+    }
+}
+
+func shouldLoadInitially<T>(items: [T], errorMessage: String?) -> Bool {
+    items.isEmpty && errorMessage == nil
+}
+
+func shouldLoadInitially<T>(item: T?, errorMessage: String?) -> Bool {
+    item == nil && errorMessage == nil
+}

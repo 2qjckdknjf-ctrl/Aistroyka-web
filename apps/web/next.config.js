@@ -9,6 +9,11 @@ const nextConfig = {
   poweredByHeader: false,
   output: "standalone",
   outputFileTracingRoot: path.join(__dirname, "../.."),
+  // Serialize prerender/export workers — default (4) has caused intermittent
+  // ENOENT on .next/build-manifest.json, pages-manifest.json, and export/*.html renames.
+  experimental: {
+    cpus: 1,
+  },
   transpilePackages: ["@aistroyka/contracts"],
   webpack: (config, { isServer }) => {
     // Resolve zod from app context when bundling @aistroyka/contracts (monorepo workspace)
