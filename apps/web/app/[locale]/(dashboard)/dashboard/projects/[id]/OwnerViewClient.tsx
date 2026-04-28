@@ -259,6 +259,7 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
   const [decisionSort, setDecisionSort] = useState<"oldest" | "newest">("oldest");
   const [selectedDecisionIds, setSelectedDecisionIds] = useState<string[]>([]);
   const [bulkDecisionError, setBulkDecisionError] = useState<string | null>(null);
+  const [bulkDecisionFailures, setBulkDecisionFailures] = useState<Array<{ document_id: string; error: string }>>([]);
   const [pendingBulkAction, setPendingBulkAction] = useState<BulkDecisionAction | null>(null);
 
   const decisionMutation = useMutation({
@@ -301,8 +302,10 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
       if (result.failed_count === 0) {
         setSelectedDecisionIds([]);
         setBulkDecisionError(null);
+        setBulkDecisionFailures([]);
       } else {
         setSelectedDecisionIds(result.failed.map((row) => row.document_id));
+        setBulkDecisionFailures(result.failed);
         setBulkDecisionError(
           tDetail("bulkDecisionPartialFailed", {
             total: result.total,
@@ -318,6 +321,7 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
       }
     },
     onError: (err) => {
+      setBulkDecisionFailures([]);
       if (err instanceof Error && err.message !== "decision_failed") {
         setBulkDecisionError(err.message);
         return;
@@ -517,6 +521,7 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
 
   function clearDecisionSelection(): void {
     setSelectedDecisionIds([]);
+    setBulkDecisionFailures([]);
   }
 
   function toggleSelectVisibleDecisions(): void {
@@ -590,6 +595,7 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
       );
       return;
     }
+    setBulkDecisionFailures([]);
     setPendingBulkAction(action);
   }
 
@@ -847,7 +853,21 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
               ))}
             </div>
             {bulkDecisionError && (
-              <p className="mb-3 text-sm text-aistroyka-error">{bulkDecisionError}</p>
+              <div className="mb-3 space-y-2">
+                <p className="text-sm text-aistroyka-error">{bulkDecisionError}</p>
+                {bulkDecisionFailures.length > 0 && (
+                  <ul className="space-y-1">
+                    {bulkDecisionFailures.slice(0, 5).map((row) => (
+                      <li key={`${row.document_id}:${row.error}`} className="text-xs text-aistroyka-error">
+                        {tDetail("bulkFailureLine", {
+                          id: row.document_id.slice(0, 8),
+                          reason: row.error,
+                        })}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             )}
             <ul className="space-y-2">
               {filteredPendingDecisions.map((d) => (

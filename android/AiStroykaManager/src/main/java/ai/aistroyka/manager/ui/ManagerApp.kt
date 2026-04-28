@@ -332,7 +332,10 @@ private fun DetailScreen(vm: ManagerViewModel) {
                 Text(it, color = MaterialTheme.colorScheme.error)
                 Spacer(Modifier.height(8.dp))
             }
-            Text(stringResource(R.string.manager_report_title, detail.id), style = MaterialTheme.typography.titleLarge)
+            Text(
+                stringResource(R.string.manager_report_title, detail.id ?: "—"),
+                style = MaterialTheme.typography.titleLarge
+            )
             Text(stringResource(R.string.manager_status_line, detail.status ?: "—"), style = MaterialTheme.typography.bodyMedium)
             detail.submittedAt?.let { Text(stringResource(R.string.manager_submitted_line, it), style = MaterialTheme.typography.bodySmall) }
             detail.reviewedAt?.let { Text(stringResource(R.string.manager_reviewed_line, it), style = MaterialTheme.typography.bodySmall) }

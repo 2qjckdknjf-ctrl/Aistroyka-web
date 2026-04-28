@@ -1,9 +1,11 @@
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { createClient, getSessionUser } from "@/lib/supabase/server";
+import { getAdminClient } from "@/lib/supabase/admin";
 import { DashboardShell } from "@/components/DashboardShell";
 import { requireAdmin } from "@/src/features/admin/auth/requireAdmin";
 import { routing } from "@/i18n/routing";
+import { getActiveSubscriptionStateForUser } from "@/lib/platform/billing/subscription-gate";
 
 /**
  * Tenant-aware layout for all authenticated routes.
@@ -49,6 +51,20 @@ export default async function DashboardLayout({
         console.info("[dashboard layout] no user, redirecting to login");
       }
       redirect(`/${locale}/login`);
+    }
+
+    try {
+      const admin = getAdminClient();
+      if (admin) {
+        const subscriptionState = await getActiveSubscriptionStateForUser(admin, user.id);
+        if (subscriptionState.tenantId && !subscriptionState.hasActiveSubscription) {
+          redirect(`/${locale}/subscribe`);
+        }
+      }
+    } catch (e) {
+      if (process.env.NODE_ENV !== "production") {
+        console.error("[dashboard layout] subscription gate failed", e instanceof Error ? e.message : String(e));
+      }
     }
 
     let isAdmin = false;

@@ -105,7 +105,7 @@ export function DashboardProjectDetailClient({ projectId }: { projectId: string 
   const tPage = useTranslations("dashboardPageMeta");
   const tDetail = useTranslations("dashboardDetail");
   const searchParams = useSearchParams();
-  const tabParam = searchParams.get("tab");
+  const tabParam = searchParams?.get("tab");
   const [activeTab, setActiveTab] = useState(
     tabParam === "contractors"
       ? "contractors"

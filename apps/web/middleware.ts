@@ -9,7 +9,7 @@ import { gateOwnerRequest } from "@/lib/platform-owner/middleware-owner-gate";
 
 const intlMiddleware = createIntlMiddleware(routing);
 
-const PROTECTED_PREFIXES = ["/dashboard", "/projects", "/billing", "/admin", "/portfolio"];
+const PROTECTED_PREFIXES = ["/dashboard", "/projects", "/billing", "/admin", "/portfolio", "/subscribe"];
 const AUTH_PREFIXES = ["/login", "/register"];
 const LOCALES = ["ru", "en", "es", "it"];
 
@@ -135,11 +135,14 @@ export async function middleware(request: NextRequest) {
   }
   if (isAuthPage && user) {
     const next = request.nextUrl.searchParams.get("next") ?? undefined;
-    const { path } = resolvePostAuthEntry({ locale, next, baseUrl: request.url });
+    const hasExplicitNext = typeof next === "string" && next.trim().length > 0;
+    const { path } = hasExplicitNext
+      ? resolvePostAuthEntry({ locale, next, baseUrl: request.url })
+      : { path: `/${locale}/subscribe` };
     const nextUrl = new URL(path, request.url);
     const redir = NextResponse.redirect(nextUrl);
     mergeSupabaseSessionIntoResponse(sessionResponse, redir);
-    redir.headers.set("X-Auth-Redirect", "dashboard");
+    redir.headers.set("X-Auth-Redirect", "subscribe");
     return applySecurityHeaders(redir, isProduction);
   }
 

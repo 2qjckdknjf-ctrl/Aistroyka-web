@@ -673,6 +673,34 @@
       "error": "Algo falló. Inténtalo de nuevo."
     }
   },
+  "subscriptionOnboarding": {
+    "title": "Elige un plan para activar tu workspace",
+    "subtitle": "Después de confirmar el pago, te enviaremos al dashboard para configurarlo.",
+    "status": "Estado de suscripción: {status}",
+    "checkoutSuccess": "Pago recibido. Esperamos la confirmación final de la suscripción.",
+    "checkingStatus": "Comprobando el estado de la suscripción cada pocos segundos…",
+    "checkoutCancel": "El pago fue cancelado. Elige un plan para continuar.",
+    "checkoutButton": "Continuar al pago",
+    "checkoutLoading": "Redirigiendo…",
+    "openDashboard": "Abrir dashboard",
+    "plans": {
+      "starter": {
+        "title": "Starter",
+        "description": "Para equipos pequeños que comienzan."
+      },
+      "business": {
+        "title": "Business",
+        "description": "Para equipos en crecimiento y varios proyectos."
+      },
+      "enterprise": {
+        "title": "Enterprise",
+        "description": "Para organizaciones grandes y necesidades personalizadas."
+      }
+    },
+    "errors": {
+      "generic": "No se pudo iniciar el checkout. Inténtalo de nuevo."
+    }
+  },
   "smoke": {
     "error": "Error",
     "throw": "Throw",
@@ -919,6 +947,7 @@
     "selectDecision": "Seleccionar decisión",
     "bulkDecisionFailed": "La acción masiva falló.",
     "bulkDecisionPartialFailed": "Se aplicaron {succeeded} de {total}. Fallaron: {failed}. Reintenta los elementos restantes.",
+    "bulkFailureLine": "Doc {id}: {reason}",
     "bulkConfirmTitle": "Confirmar acción masiva",
     "bulkConfirmMessage": "¿Aplicar \"{action}\" a {count} elemento(s)?",
     "bulkConfirmSelectedListTitle": "Elementos seleccionados",

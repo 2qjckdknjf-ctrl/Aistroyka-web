@@ -677,6 +677,34 @@
       "cta": "Become a partner"
     }
   },
+  "subscriptionOnboarding": {
+    "title": "Choose a plan to activate your workspace",
+    "subtitle": "After payment is confirmed, you will be redirected to the dashboard setup.",
+    "status": "Subscription status: {status}",
+    "checkoutSuccess": "Payment was received. We are waiting for subscription confirmation from billing.",
+    "checkingStatus": "Checking subscription status every few seconds…",
+    "checkoutCancel": "Checkout was canceled. Select a plan to continue.",
+    "checkoutButton": "Continue to checkout",
+    "checkoutLoading": "Redirecting…",
+    "openDashboard": "Open dashboard",
+    "plans": {
+      "starter": {
+        "title": "Starter",
+        "description": "For small teams getting started."
+      },
+      "business": {
+        "title": "Business",
+        "description": "For growing teams and multiple projects."
+      },
+      "enterprise": {
+        "title": "Enterprise",
+        "description": "For large organizations and custom needs."
+      }
+    },
+    "errors": {
+      "generic": "Unable to start checkout. Please try again."
+    }
+  },
   "smoke": {
     "error": "Error",
     "throw": "Throw",
@@ -923,6 +951,7 @@
     "selectDecision": "Select decision",
     "bulkDecisionFailed": "Bulk action failed.",
     "bulkDecisionPartialFailed": "Applied {succeeded} of {total}. Failed: {failed}. Retry the remaining items.",
+    "bulkFailureLine": "Doc {id}: {reason}",
     "bulkConfirmTitle": "Confirm bulk action",
     "bulkConfirmMessage": "Apply \"{action}\" to {count} item(s)?",
     "bulkConfirmSelectedListTitle": "Selected items",

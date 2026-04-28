@@ -92,7 +92,7 @@ export function UploadsDashboardClient() {
   const [error, setError] = useState<string | null>(null);
 
   const { page, pageSize, offset, limit } = parseTablePagination(params);
-  const stuck = searchParams.get("stuck") === "1" || searchParams.get("stuck") === "true";
+  const stuck = searchParams?.get("stuck") === "1" || searchParams?.get("stuck") === "true";
 
   useEffect(() => {
     setLoading(true);

@@ -3,19 +3,28 @@ const createNextIntlPlugin = require("next-intl/plugin");
 const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 
 const { SECURITY_HEADERS } = require("./lib/security-headers");
+// Standalone tracing is required for Cloudflare/OpenNext builds only.
+// Keeping default local/CI build non-standalone avoids flaky trace ENOENTs.
+const isStandaloneOutput =
+  process.env.NEXT_PRIVATE_STANDALONE === "true" ||
+  process.env.NEXT_PRIVATE_STANDALONE === "1";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   poweredByHeader: false,
-  output: "standalone",
-  outputFileTracingRoot: path.join(__dirname, "../.."),
-  // Serialize prerender/export workers — default (4) has caused intermittent
-  // ENOENT on .next/build-manifest.json, pages-manifest.json, and export/*.html renames.
-  experimental: {
-    cpus: 1,
-  },
+  ...(isStandaloneOutput
+    ? {
+        output: "standalone",
+        outputFileTracingRoot: path.join(__dirname, "../.."),
+      }
+    : {}),
   transpilePackages: ["@aistroyka/contracts"],
-  webpack: (config, { isServer }) => {
+  webpack: (config, { dev }) => {
+    // Avoid PackFileCacheStrategy / manifest races seen on production `next build`
+    // (ENOENT on `.next/build-manifest.json` right after "Compiled successfully").
+    if (!dev) {
+      config.cache = false;
+    }
     // Resolve zod from app context when bundling @aistroyka/contracts (monorepo workspace)
     const zodPath = path.dirname(require.resolve("zod/package.json", { paths: [__dirname] }));
     config.resolve.alias = {
