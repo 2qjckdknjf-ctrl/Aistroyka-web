@@ -30,7 +30,7 @@ struct ProjectDetailView: View {
         }
         .navigationTitle(project?.name ?? projectName ?? NSLocalizedString("mgr_project", comment: ""))
         .refreshable { await loadAsync() }
-        .onAppear { load() }
+        .onAppear { loadIfNeeded() }
     }
 
     private func content(project p: ProjectDetailDTO) -> some View {
@@ -67,19 +67,17 @@ struct ProjectDetailView: View {
         Task { await loadAsync() }
     }
 
+    private func loadIfNeeded() {
+        guard shouldLoadInitially(item: project, errorMessage: errorMessage) else { return }
+        load()
+    }
+
     private func loadAsync() async {
-        errorMessage = nil
-        isLoading = true
-        defer { isLoading = false }
-        do {
+        await runManagerLoad(isLoading: &isLoading, errorMessage: &errorMessage) {
             async let projectTask = ManagerAPI.projectDetail(id: projectId)
             async let summaryTask = ManagerAPI.projectSummary(projectId: projectId)
             project = try await projectTask
             summary = try await summaryTask
-        } catch let e as APIError {
-            errorMessage = e.message
-        } catch {
-            errorMessage = error.localizedDescription
         }
     }
 
@@ -120,7 +118,7 @@ struct ProjectAIView: View {
         }
         .navigationTitle(String(format: NSLocalizedString("mgr_ai_project_title_fmt", comment: ""), projectName))
         .refreshable { await loadAsync() }
-        .onAppear { load() }
+        .onAppear { loadIfNeeded() }
     }
 
     private func load() {
@@ -129,16 +127,14 @@ struct ProjectAIView: View {
         Task { await loadAsync() }
     }
 
+    private func loadIfNeeded() {
+        guard shouldLoadInitially(items: jobs, errorMessage: errorMessage) else { return }
+        load()
+    }
+
     private func loadAsync() async {
-        errorMessage = nil
-        isLoading = true
-        defer { isLoading = false }
-        do {
+        await runManagerLoad(isLoading: &isLoading, errorMessage: &errorMessage) {
             jobs = try await ManagerAPI.projectAi(projectId: projectId, limit: 50)
-        } catch let e as APIError {
-            errorMessage = e.message
-        } catch {
-            errorMessage = error.localizedDescription
         }
     }
 }
@@ -194,7 +190,7 @@ struct TasksListForProjectView: View {
         }
         .navigationTitle(NSLocalizedString("mgr_tab_tasks", comment: ""))
         .refreshable { await loadAsync() }
-        .onAppear { load() }
+        .onAppear { loadIfNeeded() }
     }
 
     private func load() {
@@ -203,16 +199,14 @@ struct TasksListForProjectView: View {
         Task { await loadAsync() }
     }
 
+    private func loadIfNeeded() {
+        guard shouldLoadInitially(items: tasks, errorMessage: errorMessage) else { return }
+        load()
+    }
+
     private func loadAsync() async {
-        errorMessage = nil
-        isLoading = true
-        defer { isLoading = false }
-        do {
+        await runManagerLoad(isLoading: &isLoading, errorMessage: &errorMessage) {
             tasks = try await ManagerAPI.tasks(projectId: projectId, limit: 100)
-        } catch let e as APIError {
-            errorMessage = e.message
-        } catch {
-            errorMessage = error.localizedDescription
         }
     }
 }
@@ -245,7 +239,7 @@ struct ReportsInboxForProjectView: View {
         }
         .navigationTitle(NSLocalizedString("mgr_tab_reports", comment: ""))
         .refreshable { await loadAsync() }
-        .onAppear { load() }
+        .onAppear { loadIfNeeded() }
     }
 
     private func load() {
@@ -254,16 +248,14 @@ struct ReportsInboxForProjectView: View {
         Task { await loadAsync() }
     }
 
+    private func loadIfNeeded() {
+        guard shouldLoadInitially(items: reports, errorMessage: errorMessage) else { return }
+        load()
+    }
+
     private func loadAsync() async {
-        errorMessage = nil
-        isLoading = true
-        defer { isLoading = false }
-        do {
+        await runManagerLoad(isLoading: &isLoading, errorMessage: &errorMessage) {
             reports = try await ManagerAPI.reports(projectId: projectId, limit: 100)
-        } catch let e as APIError {
-            errorMessage = e.message
-        } catch {
-            errorMessage = error.localizedDescription
         }
     }
 }
