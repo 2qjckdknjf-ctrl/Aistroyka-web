@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@/i18n/navigation";
@@ -105,6 +105,8 @@ interface Media {
   file_url: string;
   uploaded_at?: string;
 }
+
+type BulkDecisionAction = "approve" | "reject" | "request_changes";
 
 async function fetchProject(projectId: string): Promise<Project> {
   const res = await fetch(`/api/v1/projects/${projectId}`, { credentials: "include" });
@@ -220,6 +222,9 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
   const [decisionSearch, setDecisionSearch] = useState("");
   const [decisionTypeFilter, setDecisionTypeFilter] = useState("all");
   const [decisionSort, setDecisionSort] = useState<"oldest" | "newest">("oldest");
+  const [selectedDecisionIds, setSelectedDecisionIds] = useState<string[]>([]);
+  const [bulkDecisionError, setBulkDecisionError] = useState<string | null>(null);
+  const [pendingBulkAction, setPendingBulkAction] = useState<BulkDecisionAction | null>(null);
 
   const decisionMutation = useMutation({
     mutationFn: ({
@@ -246,6 +251,35 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
         return;
       }
       setDecisionError(tDetail("decisionFailed"));
+    },
+  });
+
+  const bulkDecisionMutation = useMutation({
+    mutationFn: async (input: { documentIds: string[]; action: BulkDecisionAction }) => {
+      for (const documentId of input.documentIds) {
+        await submitDecision(projectId, documentId, input.action);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["project-documents", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["project-summary", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["project-attention", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["project-timeline", projectId] });
+      setSelectedDecisionIds([]);
+      setBulkDecisionError(null);
+      setPendingBulkAction(null);
+      if (decisionDoc && selectedDecisionIds.includes(decisionDoc.id)) {
+        setDecisionDoc(null);
+        setDecisionComment("");
+        setDecisionError(null);
+      }
+    },
+    onError: (err) => {
+      if (err instanceof Error && err.message !== "decision_failed") {
+        setBulkDecisionError(err.message);
+        return;
+      }
+      setBulkDecisionError(tDetail("bulkDecisionFailed"));
     },
   });
 
@@ -374,10 +408,67 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
     });
   }, [pendingDecisions, decisionSort, decisionTypeFilter, decisionSearch]);
 
+  const filteredDecisionIds = useMemo(
+    () => filteredPendingDecisions.map((d) => d.id),
+    [filteredPendingDecisions]
+  );
+
+  const selectedFilteredCount = useMemo(
+    () => selectedDecisionIds.filter((id) => filteredDecisionIds.includes(id)).length,
+    [selectedDecisionIds, filteredDecisionIds]
+  );
+
+  useEffect(() => {
+    const alive = new Set(pendingDecisions.map((d) => d.id));
+    setSelectedDecisionIds((prev) => prev.filter((id) => alive.has(id)));
+  }, [pendingDecisions]);
+
   function openDecision(document: Document): void {
     setDecisionDoc(document);
     setDecisionComment("");
     setDecisionError(null);
+  }
+
+  function toggleDecisionSelection(documentId: string): void {
+    setSelectedDecisionIds((prev) =>
+      prev.includes(documentId) ? prev.filter((id) => id !== documentId) : [...prev, documentId]
+    );
+  }
+
+  function selectAllFilteredDecisions(): void {
+    setSelectedDecisionIds((prev) => {
+      const merged = new Set([...prev, ...filteredDecisionIds]);
+      return Array.from(merged);
+    });
+  }
+
+  function clearDecisionSelection(): void {
+    setSelectedDecisionIds([]);
+  }
+
+  function runBulkDecision(action: BulkDecisionAction): void {
+    if (selectedDecisionIds.length === 0 || bulkDecisionMutation.isPending) return;
+    setPendingBulkAction(action);
+  }
+
+  function executeBulkDecision(): void {
+    if (!pendingBulkAction || selectedDecisionIds.length === 0 || bulkDecisionMutation.isPending) return;
+    setBulkDecisionError(null);
+    bulkDecisionMutation.mutate({ documentIds: selectedDecisionIds, action: pendingBulkAction });
+  }
+
+  const pendingBulkActionLabel =
+    pendingBulkAction === "approve"
+      ? tDetail("bulkApprove")
+      : pendingBulkAction === "reject"
+        ? tDetail("bulkReject")
+        : pendingBulkAction === "request_changes"
+          ? tDetail("bulkRequestChanges")
+          : "";
+
+  function closeBulkConfirm(): void {
+    if (bulkDecisionMutation.isPending) return;
+    setPendingBulkAction(null);
   }
 
   return (
@@ -439,6 +530,51 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
                 {tDetail("decisionQueueSummary", { count: pendingDecisions.length })}
               </span>
             </div>
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={selectAllFilteredDecisions}
+                disabled={filteredPendingDecisions.length === 0 || bulkDecisionMutation.isPending}
+                className="rounded border border-aistroyka-border-subtle px-3 py-1.5 text-xs font-medium text-aistroyka-text-primary transition-colors hover:border-aistroyka-accent hover:bg-aistroyka-surface-raised disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {tDetail("selectAllFiltered")}
+              </button>
+              <button
+                type="button"
+                onClick={clearDecisionSelection}
+                disabled={selectedDecisionIds.length === 0 || bulkDecisionMutation.isPending}
+                className="rounded border border-aistroyka-border-subtle px-3 py-1.5 text-xs font-medium text-aistroyka-text-primary transition-colors hover:border-aistroyka-accent hover:bg-aistroyka-surface-raised disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {tDetail("clearSelection")}
+              </button>
+              <button
+                type="button"
+                onClick={() => runBulkDecision("approve")}
+                disabled={selectedDecisionIds.length === 0 || bulkDecisionMutation.isPending}
+                className="rounded border border-aistroyka-border-subtle px-3 py-1.5 text-xs font-medium text-aistroyka-text-primary transition-colors hover:border-aistroyka-accent hover:bg-aistroyka-surface-raised disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {bulkDecisionMutation.isPending ? tDetail("bulkProcessing") : tDetail("bulkApprove")}
+              </button>
+              <button
+                type="button"
+                onClick={() => runBulkDecision("reject")}
+                disabled={selectedDecisionIds.length === 0 || bulkDecisionMutation.isPending}
+                className="rounded border border-aistroyka-border-subtle px-3 py-1.5 text-xs font-medium text-aistroyka-text-primary transition-colors hover:border-aistroyka-accent hover:bg-aistroyka-surface-raised disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {bulkDecisionMutation.isPending ? tDetail("bulkProcessing") : tDetail("bulkReject")}
+              </button>
+              <button
+                type="button"
+                onClick={() => runBulkDecision("request_changes")}
+                disabled={selectedDecisionIds.length === 0 || bulkDecisionMutation.isPending}
+                className="rounded border border-aistroyka-border-subtle px-3 py-1.5 text-xs font-medium text-aistroyka-text-primary transition-colors hover:border-aistroyka-accent hover:bg-aistroyka-surface-raised disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {bulkDecisionMutation.isPending ? tDetail("bulkProcessing") : tDetail("bulkRequestChanges")}
+              </button>
+              <span className="text-xs text-aistroyka-text-tertiary">
+                {tDetail("selectedItemsCount", { count: selectedFilteredCount })}
+              </span>
+            </div>
             <div className="mb-4 grid gap-2 sm:grid-cols-3">
               <input
                 value={decisionSearch}
@@ -467,22 +603,35 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
                 <option value="newest">{tDetail("decisionQueueSortNewest")}</option>
               </select>
             </div>
+            {bulkDecisionError && (
+              <p className="mb-3 text-sm text-aistroyka-error">{bulkDecisionError}</p>
+            )}
             <ul className="space-y-2">
               {filteredPendingDecisions.map((d) => (
                 <li key={d.id}>
-                  <button
-                    type="button"
-                    onClick={() => openDecision(d)}
-                    className="w-full flex items-center justify-between rounded border border-aistroyka-border-subtle p-3 text-left hover:border-aistroyka-accent hover:bg-aistroyka-surface-raised transition-colors"
-                  >
-                    <span>
-                      <span className="font-medium">{d.title}</span>
-                      <span className="mt-1 block text-xs text-aistroyka-text-tertiary">
-                        {new Date(d.created_at).toLocaleDateString()}
+                  <div className="w-full flex items-start gap-2 rounded border border-aistroyka-border-subtle p-3 hover:border-aistroyka-accent transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={selectedDecisionIds.includes(d.id)}
+                      onChange={() => toggleDecisionSelection(d.id)}
+                      disabled={bulkDecisionMutation.isPending}
+                      className="mt-1 h-4 w-4 rounded border-aistroyka-border-subtle accent-aistroyka-accent"
+                      aria-label={tDetail("selectDecision")}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => openDecision(d)}
+                      className="flex-1 flex items-center justify-between text-left hover:text-aistroyka-accent"
+                    >
+                      <span>
+                        <span className="font-medium">{d.title}</span>
+                        <span className="mt-1 block text-xs text-aistroyka-text-tertiary">
+                          {new Date(d.created_at).toLocaleDateString()}
+                        </span>
                       </span>
-                    </span>
-                    <Badge variant="warning">{d.type}</Badge>
-                  </button>
+                      <Badge variant="warning">{d.type}</Badge>
+                    </button>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -703,6 +852,38 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
                   setDecisionError(null);
                 }}
                 disabled={decisionMutation.isPending}
+              >
+                {tDetail("cancel")}
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+      {pendingBulkAction && (
+        <Modal
+          open={!!pendingBulkAction}
+          onClose={closeBulkConfirm}
+          title={tDetail("bulkConfirmTitle")}
+        >
+          <div className="space-y-4">
+            <p className="text-sm text-aistroyka-text-secondary">
+              {tDetail("bulkConfirmMessage", {
+                action: pendingBulkActionLabel,
+                count: selectedDecisionIds.length,
+              })}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="primary"
+                onClick={executeBulkDecision}
+                disabled={bulkDecisionMutation.isPending}
+              >
+                {bulkDecisionMutation.isPending ? tDetail("bulkProcessing") : tDetail("bulkConfirmProceed")}
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={closeBulkConfirm}
+                disabled={bulkDecisionMutation.isPending}
               >
                 {tDetail("cancel")}
               </Button>
