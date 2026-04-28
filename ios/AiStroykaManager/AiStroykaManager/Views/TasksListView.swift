@@ -40,7 +40,7 @@ struct TasksListView: View {
             .refreshable { await loadAsync() }
             .onAppear {
                 if let id = initialProjectId, selectedProjectId == nil { selectedProjectId = id }
-                load()
+                loadIfNeeded()
             }
             .sheet(isPresented: $showCreate) {
                 if let proj = projects.first ?? projects.first(where: { $0.id == selectedProjectId }) {
@@ -96,19 +96,17 @@ struct TasksListView: View {
         Task { await loadAsync() }
     }
 
+    private func loadIfNeeded() {
+        guard shouldLoadInitially(items: tasks, errorMessage: errorMessage) else { return }
+        load()
+    }
+
     private func loadAsync() async {
-        errorMessage = nil
-        isLoading = true
-        defer { isLoading = false }
-        do {
+        await runManagerLoad(isLoading: &isLoading, errorMessage: &errorMessage) {
             async let tasksTask = ManagerAPI.tasks(projectId: selectedProjectId, status: statusFilter, limit: 100)
             async let projectsTask = ManagerAPI.projects()
             tasks = try await tasksTask
             if projects.isEmpty { projects = try await projectsTask }
-        } catch let e as APIError {
-            errorMessage = e.message
-        } catch {
-            errorMessage = error.localizedDescription
         }
     }
 }

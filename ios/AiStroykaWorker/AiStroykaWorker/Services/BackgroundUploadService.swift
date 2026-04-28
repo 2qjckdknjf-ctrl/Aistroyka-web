@@ -68,13 +68,18 @@ private final class UploadTaskMappingStore {
         guard let data = try? encoder.encode(stringKeyed) else { return }
         let temp = url.deletingLastPathComponent().appendingPathComponent(UUID().uuidString + ".tmp")
         try? data.write(to: temp)
-        _ = try? fileManager.replaceItemAt(url, withItemAt: temp)
-        try? fileManager.removeItem(at: temp)
+        if fileManager.fileExists(atPath: url.path) {
+            _ = try? fileManager.replaceItemAt(url, withItemAt: temp)
+            try? fileManager.removeItem(at: temp)
+        } else {
+            try? fileManager.moveItem(at: temp, to: url)
+        }
     }
 }
 
 final class BackgroundUploadService: NSObject {
     static let shared = BackgroundUploadService()
+    private let maxAttempts = 8
 
     private let mappingStore = UploadTaskMappingStore()
     private var session: URLSession!
@@ -156,12 +161,30 @@ final class BackgroundUploadService: NSObject {
             cleanupFile(operationId: operationId)
             return
         }
-        let attempt = op.attemptCount + 1
-        opStore.update(id: operationId) {
-            $0.state = .queued
-            $0.attemptCount = attempt
-            $0.lastErrorMessage = message
-            $0.nextAttemptAt = Self.nextAttemptDate(attempt: attempt)
+        if retryable {
+            let attempt = op.attemptCount + 1
+            if attempt >= maxAttempts {
+                opStore.update(id: operationId) {
+                    $0.state = .failed_permanent
+                    $0.attemptCount = attempt
+                    $0.lastErrorMessage = "Max attempts (\(maxAttempts)) reached. Retry from app. Last error: \(message)"
+                    $0.nextAttemptAt = nil
+                }
+            } else {
+                opStore.update(id: operationId) {
+                    $0.state = .queued
+                    $0.attemptCount = attempt
+                    $0.lastErrorMessage = message
+                    $0.nextAttemptAt = Self.nextAttemptDate(attempt: attempt)
+                }
+            }
+        } else {
+            opStore.update(id: operationId) {
+                $0.state = .failed_permanent
+                $0.attemptCount = op.attemptCount + 1
+                $0.lastErrorMessage = message
+                $0.nextAttemptAt = nil
+            }
         }
         mappingStore.remove(taskIdentifier: taskId)
         cleanupFile(operationId: operationId)

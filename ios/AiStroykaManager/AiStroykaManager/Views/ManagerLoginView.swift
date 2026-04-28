@@ -8,11 +8,19 @@ import Shared
 
 struct ManagerLoginView: View {
     @EnvironmentObject var sessionState: ManagerSessionState
+    @StateObject private var networkMonitor = NetworkMonitor.shared
+    @FocusState private var focusedField: Field?
     @State private var email = ""
     @State private var password = ""
     @State private var errorMessage: String?
     @State private var isLoading = false
     
+    private enum Field { case email, password }
+
+    private var effectiveErrorMessage: String? {
+        errorMessage ?? sessionState.authErrorMessage
+    }
+
     private var signInButtonTitle: String {
         isLoading ? NSLocalizedString("mgr_signing_in", comment: "") : NSLocalizedString("mgr_sign_in", comment: "")
     }
@@ -23,11 +31,26 @@ struct ManagerLoginView: View {
                 Section {
                     TextField(NSLocalizedString("mgr_email_placeholder", comment: ""), text: $email)
                         .textContentType(.emailAddress)
+                        .keyboardType(.emailAddress)
                         .autocapitalization(.none)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled(true)
+                        .focused($focusedField, equals: .email)
+                        .submitLabel(.next)
+                        .onSubmit { focusedField = .password }
                     SecureField(NSLocalizedString("mgr_password_placeholder", comment: ""), text: $password)
                         .textContentType(.password)
+                        .focused($focusedField, equals: .password)
+                        .submitLabel(.go)
+                        .onSubmit { signIn() }
                 }
-                if let err = errorMessage {
+                if !networkMonitor.isConnected {
+                    Section {
+                        Text(NSLocalizedString("mgr_err_offline_signin", comment: ""))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                if let err = effectiveErrorMessage {
                     Section {
                         Text(err)
                             .foregroundStyle(.red)
@@ -41,7 +64,7 @@ struct ManagerLoginView: View {
                         }
                         .frame(maxWidth: .infinity)
                     }
-                    .disabled(isLoading || email.isEmpty || password.isEmpty)
+                    .disabled(isLoading || email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || password.isEmpty || !networkMonitor.isConnected)
                 }
             }
             .navigationTitle(NSLocalizedString("mgr_nav_title", comment: ""))
@@ -50,18 +73,40 @@ struct ManagerLoginView: View {
     }
 
     private func signIn() {
+        focusedField = nil
+        sessionState.clearAuthError()
         errorMessage = nil
+        let emailTrimmed = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        let passwordTrimmed = password.trimmingCharacters(in: .whitespacesAndNewlines)
+        email = emailTrimmed
+        password = passwordTrimmed
+        guard !emailTrimmed.isEmpty, !passwordTrimmed.isEmpty else {
+            errorMessage = NSLocalizedString("mgr_err_empty_credentials", comment: "")
+            return
+        }
+        guard networkMonitor.isConnected else {
+            errorMessage = NSLocalizedString("mgr_err_offline_signin", comment: "")
+            return
+        }
         isLoading = true
         Task {
             do {
-                try await AuthService.shared.signIn(email: email, password: password)
-                sessionState.checkSession()
+                try await AuthService.shared.signIn(email: emailTrimmed, password: passwordTrimmed)
+                await MainActor.run {
+                    sessionState.checkSession()
+                }
             } catch let e as APIError {
-                errorMessage = e.message
+                await MainActor.run {
+                    errorMessage = e.message
+                }
             } catch {
-                errorMessage = error.localizedDescription
+                await MainActor.run {
+                    errorMessage = error.localizedDescription
+                }
             }
-            isLoading = false
+            await MainActor.run {
+                isLoading = false
+            }
         }
     }
 }

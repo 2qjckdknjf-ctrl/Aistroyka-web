@@ -25,7 +25,6 @@ import {
   statusLabel,
   statusBadgeClass,
 } from "@/lib/domain/projects/project-status.service";
-import type { ProjectStatus } from "@/lib/domain/projects/project-status.types";
 import { ProjectAttentionBlock } from "@/components/projects/ProjectAttentionBlock";
 import { ProjectTimelineBlock } from "@/components/projects/ProjectTimelineBlock";
 import { StakeholderActivityBlock } from "@/components/projects/StakeholderActivityBlock";
@@ -106,7 +105,14 @@ interface Media {
   uploaded_at?: string;
 }
 
+const EMPTY_MILESTONES: Milestone[] = [];
+const EMPTY_ISSUES: Issue[] = [];
+const EMPTY_DOCUMENTS: Document[] = [];
+const EMPTY_REPORTS: Report[] = [];
+const EMPTY_MEDIA: Media[] = [];
+
 type BulkDecisionAction = "approve" | "reject" | "request_changes";
+const MAX_BULK_DECISION_ITEMS = 20;
 
 async function fetchProject(projectId: string): Promise<Project> {
   const res = await fetch(`/api/v1/projects/${projectId}`, { credentials: "include" });
@@ -342,45 +348,26 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
   const error = projectQuery.isError || projectQuery.error;
   const projectStatus = summary.projectStatus ?? "active";
 
-  if (loading && !project) {
-    return (
-      <Card>
-        <Skeleton lines={6} />
-      </Card>
-    );
-  }
-
-  if (error || !project) {
-    return (
-      <Card>
-        <EmptyState
-          icon={<span className="text-2xl">⚠️</span>}
-          title={tDetail("projectNotFound")}
-          subtitle={
-            projectQuery.error instanceof Error
-              ? projectQuery.error.message
-              : tDetail("youMayNotHaveAccess")
-          }
-          action={
-            <Link href="/dashboard/projects" className="text-aistroyka-accent hover:underline">
-              {tDetail("backToProjects")}
-            </Link>
-          }
-        />
-      </Card>
-    );
-  }
-
-  const milestones = milestonesQuery.data ?? [];
-  const issues = issuesQuery.data ?? [];
-  const pendingDecisions = documentsQuery.data ?? [];
-  const reports = reportsQuery.data?.data ?? [];
-  const media = mediaQuery.data ?? [];
+  const milestones = milestonesQuery.data ?? EMPTY_MILESTONES;
+  const issues = issuesQuery.data ?? EMPTY_ISSUES;
+  const pendingDecisions = documentsQuery.data ?? EMPTY_DOCUMENTS;
+  const reports = reportsQuery.data?.data ?? EMPTY_REPORTS;
+  const media = mediaQuery.data ?? EMPTY_MEDIA;
 
   const decisionTypes = useMemo(
     () => Array.from(new Set(pendingDecisions.map((d) => d.type).filter(Boolean))).sort(),
     [pendingDecisions]
   );
+  const topDecisionTypes = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const d of pendingDecisions) {
+      counts.set(d.type, (counts.get(d.type) ?? 0) + 1);
+    }
+    return Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([type]) => type);
+  }, [pendingDecisions]);
 
   const oldestPendingDecision = useMemo(
     () =>
@@ -417,11 +404,60 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
     () => selectedDecisionIds.filter((id) => filteredDecisionIds.includes(id)).length,
     [selectedDecisionIds, filteredDecisionIds]
   );
+  const allVisibleSelected =
+    filteredDecisionIds.length > 0 && selectedFilteredCount === filteredDecisionIds.length;
+
+  const selectedDecisionDocs = useMemo(() => {
+    const selectedSet = new Set(selectedDecisionIds);
+    return pendingDecisions.filter((d) => selectedSet.has(d.id));
+  }, [pendingDecisions, selectedDecisionIds]);
+
+  const selectedDecisionTypeCounts = useMemo(() => {
+    const acc = new Map<string, number>();
+    for (const d of selectedDecisionDocs) {
+      acc.set(d.type, (acc.get(d.type) ?? 0) + 1);
+    }
+    return Array.from(acc.entries())
+      .sort(([aType], [bType]) => aType.localeCompare(bType))
+      .map(([type, count]) => ({ type, count }));
+  }, [selectedDecisionDocs]);
+
+  const hiddenSelectedCount = Math.max(0, selectedDecisionIds.length - selectedFilteredCount);
+  const bulkSelectionOverLimit = selectedDecisionIds.length > MAX_BULK_DECISION_ITEMS;
 
   useEffect(() => {
     const alive = new Set(pendingDecisions.map((d) => d.id));
     setSelectedDecisionIds((prev) => prev.filter((id) => alive.has(id)));
   }, [pendingDecisions]);
+
+  if (loading && !project) {
+    return (
+      <Card>
+        <Skeleton lines={6} />
+      </Card>
+    );
+  }
+
+  if (error || !project) {
+    return (
+      <Card>
+        <EmptyState
+          icon={<span className="text-2xl">⚠️</span>}
+          title={tDetail("projectNotFound")}
+          subtitle={
+            projectQuery.error instanceof Error
+              ? projectQuery.error.message
+              : tDetail("youMayNotHaveAccess")
+          }
+          action={
+            <Link href="/dashboard/projects" className="text-aistroyka-accent hover:underline">
+              {tDetail("backToProjects")}
+            </Link>
+          }
+        />
+      </Card>
+    );
+  }
 
   function openDecision(document: Document): void {
     setDecisionDoc(document);
@@ -446,15 +482,91 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
     setSelectedDecisionIds([]);
   }
 
+  function toggleSelectVisibleDecisions(): void {
+    setSelectedDecisionIds((prev) => {
+      const visibleSet = new Set(filteredDecisionIds);
+      if (allVisibleSelected) {
+        return prev.filter((id) => !visibleSet.has(id));
+      }
+      const merged = new Set([...prev, ...filteredDecisionIds]);
+      return Array.from(merged);
+    });
+  }
+
+  function selectUpToLimitFromVisible(): void {
+    const visibleTop = filteredPendingDecisions
+      .slice(0, MAX_BULK_DECISION_ITEMS)
+      .map((d) => d.id);
+    setSelectedDecisionIds(visibleTop);
+  }
+
+  function selectOldestUpToLimitFromVisible(): void {
+    const oldestVisible = [...filteredPendingDecisions]
+      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+      .slice(0, MAX_BULK_DECISION_ITEMS)
+      .map((d) => d.id);
+    setSelectedDecisionIds(oldestVisible);
+  }
+
+  function trimSelectionToLimit(): void {
+    const ordered = [...selectedDecisionDocs]
+      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+      .slice(0, MAX_BULK_DECISION_ITEMS)
+      .map((d) => d.id);
+    setSelectedDecisionIds(ordered);
+  }
+
+  function clearDecisionFilters(): void {
+    setDecisionSearch("");
+    setDecisionTypeFilter("all");
+    setDecisionSort("oldest");
+  }
+
+  function applyQuickDecisionPreset(preset: "all" | "oldest" | "newest" | "type", type?: string): void {
+    setDecisionSearch("");
+    if (preset === "all") {
+      setDecisionTypeFilter("all");
+      setDecisionSort("oldest");
+      return;
+    }
+    if (preset === "oldest") {
+      setDecisionTypeFilter("all");
+      setDecisionSort("oldest");
+      return;
+    }
+    if (preset === "newest") {
+      setDecisionTypeFilter("all");
+      setDecisionSort("newest");
+      return;
+    }
+    if (preset === "type" && type) {
+      setDecisionTypeFilter(type);
+      setDecisionSort("oldest");
+    }
+  }
+
   function runBulkDecision(action: BulkDecisionAction): void {
     if (selectedDecisionIds.length === 0 || bulkDecisionMutation.isPending) return;
+    if (bulkSelectionOverLimit) {
+      setBulkDecisionError(
+        tDetail("bulkSelectionLimitExceeded", { max: MAX_BULK_DECISION_ITEMS })
+      );
+      return;
+    }
     setPendingBulkAction(action);
   }
 
   function executeBulkDecision(): void {
     if (!pendingBulkAction || selectedDecisionIds.length === 0 || bulkDecisionMutation.isPending) return;
+    if (selectedDecisionDocs.length !== selectedDecisionIds.length) {
+      setBulkDecisionError(tDetail("bulkSelectionOutOfSync"));
+      return;
+    }
     setBulkDecisionError(null);
-    bulkDecisionMutation.mutate({ documentIds: selectedDecisionIds, action: pendingBulkAction });
+    bulkDecisionMutation.mutate({
+      documentIds: selectedDecisionDocs.map((d) => d.id),
+      action: pendingBulkAction,
+    });
   }
 
   const pendingBulkActionLabel =
@@ -530,6 +642,14 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
                 {tDetail("decisionQueueSummary", { count: pendingDecisions.length })}
               </span>
             </div>
+            <p className="mb-3 text-xs text-aistroyka-text-tertiary">
+              {tDetail("decisionQueueStatsLine", {
+                total: pendingDecisions.length,
+                visible: filteredPendingDecisions.length,
+                selected: selectedDecisionIds.length,
+                hidden: hiddenSelectedCount,
+              })}
+            </p>
             <div className="mb-3 flex flex-wrap items-center gap-2">
               <button
                 type="button"
@@ -538,6 +658,30 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
                 className="rounded border border-aistroyka-border-subtle px-3 py-1.5 text-xs font-medium text-aistroyka-text-primary transition-colors hover:border-aistroyka-accent hover:bg-aistroyka-surface-raised disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {tDetail("selectAllFiltered")}
+              </button>
+              <button
+                type="button"
+                onClick={toggleSelectVisibleDecisions}
+                disabled={filteredPendingDecisions.length === 0 || bulkDecisionMutation.isPending}
+                className="rounded border border-aistroyka-border-subtle px-3 py-1.5 text-xs font-medium text-aistroyka-text-primary transition-colors hover:border-aistroyka-accent hover:bg-aistroyka-surface-raised disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {allVisibleSelected ? tDetail("deselectVisible") : tDetail("selectVisible")}
+              </button>
+              <button
+                type="button"
+                onClick={selectUpToLimitFromVisible}
+                disabled={filteredPendingDecisions.length === 0 || bulkDecisionMutation.isPending}
+                className="rounded border border-aistroyka-border-subtle px-3 py-1.5 text-xs font-medium text-aistroyka-text-primary transition-colors hover:border-aistroyka-accent hover:bg-aistroyka-surface-raised disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {tDetail("selectUpToLimit", { max: MAX_BULK_DECISION_ITEMS })}
+              </button>
+              <button
+                type="button"
+                onClick={selectOldestUpToLimitFromVisible}
+                disabled={filteredPendingDecisions.length === 0 || bulkDecisionMutation.isPending}
+                className="rounded border border-aistroyka-border-subtle px-3 py-1.5 text-xs font-medium text-aistroyka-text-primary transition-colors hover:border-aistroyka-accent hover:bg-aistroyka-surface-raised disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {tDetail("selectOldestUpToLimit", { max: MAX_BULK_DECISION_ITEMS })}
               </button>
               <button
                 type="button"
@@ -550,7 +694,7 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
               <button
                 type="button"
                 onClick={() => runBulkDecision("approve")}
-                disabled={selectedDecisionIds.length === 0 || bulkDecisionMutation.isPending}
+                disabled={selectedDecisionIds.length === 0 || bulkDecisionMutation.isPending || bulkSelectionOverLimit}
                 className="rounded border border-aistroyka-border-subtle px-3 py-1.5 text-xs font-medium text-aistroyka-text-primary transition-colors hover:border-aistroyka-accent hover:bg-aistroyka-surface-raised disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {bulkDecisionMutation.isPending ? tDetail("bulkProcessing") : tDetail("bulkApprove")}
@@ -558,7 +702,7 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
               <button
                 type="button"
                 onClick={() => runBulkDecision("reject")}
-                disabled={selectedDecisionIds.length === 0 || bulkDecisionMutation.isPending}
+                disabled={selectedDecisionIds.length === 0 || bulkDecisionMutation.isPending || bulkSelectionOverLimit}
                 className="rounded border border-aistroyka-border-subtle px-3 py-1.5 text-xs font-medium text-aistroyka-text-primary transition-colors hover:border-aistroyka-accent hover:bg-aistroyka-surface-raised disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {bulkDecisionMutation.isPending ? tDetail("bulkProcessing") : tDetail("bulkReject")}
@@ -566,15 +710,43 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
               <button
                 type="button"
                 onClick={() => runBulkDecision("request_changes")}
-                disabled={selectedDecisionIds.length === 0 || bulkDecisionMutation.isPending}
+                disabled={selectedDecisionIds.length === 0 || bulkDecisionMutation.isPending || bulkSelectionOverLimit}
                 className="rounded border border-aistroyka-border-subtle px-3 py-1.5 text-xs font-medium text-aistroyka-text-primary transition-colors hover:border-aistroyka-accent hover:bg-aistroyka-surface-raised disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {bulkDecisionMutation.isPending ? tDetail("bulkProcessing") : tDetail("bulkRequestChanges")}
               </button>
               <span className="text-xs text-aistroyka-text-tertiary">
-                {tDetail("selectedItemsCount", { count: selectedFilteredCount })}
+                {tDetail("selectedItemsCount", { count: selectedDecisionIds.length })}
               </span>
             </div>
+            {hiddenSelectedCount > 0 && (
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                <p className="text-xs text-aistroyka-text-tertiary">
+                  {tDetail("hiddenSelectedItemsHint", { count: hiddenSelectedCount })}
+                </p>
+                <button
+                  type="button"
+                  onClick={clearDecisionFilters}
+                  className="rounded border border-aistroyka-border-subtle px-2 py-1 text-xs text-aistroyka-text-secondary transition-colors hover:border-aistroyka-accent hover:text-aistroyka-text-primary"
+                >
+                  {tDetail("clearDecisionFilters")}
+                </button>
+              </div>
+            )}
+            {bulkSelectionOverLimit && (
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                <p className="text-xs text-aistroyka-warning">
+                  {tDetail("bulkSelectionLimitExceeded", { max: MAX_BULK_DECISION_ITEMS })}
+                </p>
+                <button
+                  type="button"
+                  onClick={trimSelectionToLimit}
+                  className="rounded border border-aistroyka-border-subtle px-2 py-1 text-xs text-aistroyka-text-secondary transition-colors hover:border-aistroyka-accent hover:text-aistroyka-text-primary"
+                >
+                  {tDetail("trimSelectionToLimit", { max: MAX_BULK_DECISION_ITEMS })}
+                </button>
+              </div>
+            )}
             <div className="mb-4 grid gap-2 sm:grid-cols-3">
               <input
                 value={decisionSearch}
@@ -602,6 +774,40 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
                 <option value="oldest">{tDetail("decisionQueueSortOldest")}</option>
                 <option value="newest">{tDetail("decisionQueueSortNewest")}</option>
               </select>
+            </div>
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <span className="text-xs text-aistroyka-text-tertiary">{tDetail("decisionQuickPresetsLabel")}</span>
+              <button
+                type="button"
+                onClick={() => applyQuickDecisionPreset("all")}
+                className="rounded border border-aistroyka-border-subtle px-2 py-1 text-xs text-aistroyka-text-secondary transition-colors hover:border-aistroyka-accent hover:text-aistroyka-text-primary"
+              >
+                {tDetail("decisionPresetAll")}
+              </button>
+              <button
+                type="button"
+                onClick={() => applyQuickDecisionPreset("oldest")}
+                className="rounded border border-aistroyka-border-subtle px-2 py-1 text-xs text-aistroyka-text-secondary transition-colors hover:border-aistroyka-accent hover:text-aistroyka-text-primary"
+              >
+                {tDetail("decisionPresetOldest")}
+              </button>
+              <button
+                type="button"
+                onClick={() => applyQuickDecisionPreset("newest")}
+                className="rounded border border-aistroyka-border-subtle px-2 py-1 text-xs text-aistroyka-text-secondary transition-colors hover:border-aistroyka-accent hover:text-aistroyka-text-primary"
+              >
+                {tDetail("decisionPresetNewest")}
+              </button>
+              {topDecisionTypes.map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => applyQuickDecisionPreset("type", type)}
+                  className="rounded border border-aistroyka-border-subtle px-2 py-1 text-xs text-aistroyka-text-secondary transition-colors hover:border-aistroyka-accent hover:text-aistroyka-text-primary"
+                >
+                  {tDetail("decisionPresetType", { type })}
+                </button>
+              ))}
             </div>
             {bulkDecisionError && (
               <p className="mb-3 text-sm text-aistroyka-error">{bulkDecisionError}</p>
@@ -872,6 +1078,50 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
                 count: selectedDecisionIds.length,
               })}
             </p>
+            {selectedDecisionDocs.length > 0 && (
+              <div className="rounded border border-aistroyka-border-subtle bg-aistroyka-bg-primary p-3">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-aistroyka-text-tertiary">
+                  {tDetail("bulkConfirmSelectedListTitle")}
+                </p>
+                {selectedDecisionTypeCounts.length > 0 && (
+                  <div className="mb-3">
+                    <p className="text-xs font-medium text-aistroyka-text-tertiary">
+                      {tDetail("bulkConfirmTypeBreakdownTitle")}
+                    </p>
+                    <ul className="mt-1 space-y-0.5">
+                      {selectedDecisionTypeCounts.slice(0, 8).map((row) => (
+                        <li key={row.type} className="text-xs text-aistroyka-text-tertiary">
+                          {tDetail("bulkConfirmTypeCountLine", { type: row.type, count: row.count })}
+                        </li>
+                      ))}
+                    </ul>
+                    {selectedDecisionTypeCounts.length > 8 && (
+                      <p className="mt-1 text-xs text-aistroyka-text-tertiary">
+                        {tDetail("bulkConfirmTypeBreakdownTruncated", { count: selectedDecisionTypeCounts.length - 8 })}
+                      </p>
+                    )}
+                  </div>
+                )}
+                <ul className="space-y-1">
+                  {selectedDecisionDocs.slice(0, 6).map((d) => (
+                    <li key={d.id}>
+                      <p className="text-sm text-aistroyka-text-secondary">{d.title}</p>
+                      <p className="text-xs text-aistroyka-text-tertiary">
+                        {tDetail("bulkConfirmSelectedItemMeta", {
+                          type: d.type,
+                          date: new Date(d.created_at).toLocaleDateString(),
+                        })}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+                {selectedDecisionDocs.length > 6 && (
+                  <p className="mt-2 text-xs text-aistroyka-text-tertiary">
+                    {tDetail("selectedItemsCount", { count: selectedDecisionDocs.length })}
+                  </p>
+                )}
+              </div>
+            )}
             <div className="flex flex-wrap gap-2">
               <Button
                 variant="primary"

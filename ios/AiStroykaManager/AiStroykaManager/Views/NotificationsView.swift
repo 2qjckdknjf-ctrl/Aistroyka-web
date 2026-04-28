@@ -24,16 +24,12 @@ struct NotificationsView: View {
             if isLoading && items.isEmpty && errorMessage == nil {
                 LoadingStateView(message: NSLocalizedString("mgr_loading", comment: ""))
             } else if let err = errorMessage, items.isEmpty {
-                VStack(spacing: 12) {
-                    Text(NSLocalizedString("mgr_notifications", comment: ""))
-                        .font(.headline)
-                    Text(err)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-                .padding()
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                ErrorStateView(message: err, retry: { load() })
+            } else if items.isEmpty {
+                EmptyStateView(
+                    title: NSLocalizedString("mgr_inbox", comment: ""),
+                    subtitle: NSLocalizedString("mgr_no_notifications_subtitle", comment: "")
+                )
             } else {
                 List {
                     Section {
@@ -50,12 +46,6 @@ struct NotificationsView: View {
                         } else {
                             Text(NSLocalizedString("mgr_inbox", comment: ""))
                         }
-                    }
-                    if items.isEmpty && !isLoading {
-                        Text(NSLocalizedString("mgr_no_notifications_subtitle", comment: ""))
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .listRowBackground(Color.clear)
                     }
                     Section {
                         DisclosureGroup(NSLocalizedString("mgr_registered_devices", comment: ""), isExpanded: $showDevices) {
@@ -92,7 +82,7 @@ struct NotificationsView: View {
         }
         .navigationTitle(NSLocalizedString("mgr_notifications", comment: ""))
         .refreshable { await loadAsync() }
-        .onAppear { load() }
+        .onAppear { loadIfNeeded() }
     }
 
     private func load() {
@@ -101,18 +91,16 @@ struct NotificationsView: View {
         Task { await loadAsync() }
     }
 
+    private func loadIfNeeded() {
+        guard shouldLoadInitially(items: items, errorMessage: errorMessage) else { return }
+        load()
+    }
+
     private func loadAsync() async {
-        errorMessage = nil
-        isLoading = true
-        defer { isLoading = false }
-        do {
+        await runManagerLoad(isLoading: &isLoading, errorMessage: &errorMessage) {
             let result = try await ManagerAPI.notifications(limit: 50, offset: 0)
             items = result.items
             total = result.total
-        } catch let e as APIError {
-            errorMessage = e.message
-        } catch {
-            errorMessage = error.localizedDescription
         }
     }
 
@@ -159,7 +147,6 @@ struct NotificationRowView: View {
     var body: some View {
         Button(action: {
             onTap()
-            onMarkRead()
         }) {
             HStack(alignment: .top, spacing: 10) {
                 Circle()

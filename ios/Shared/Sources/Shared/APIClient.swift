@@ -5,6 +5,10 @@
 
 import Foundation
 
+public extension Notification.Name {
+    static let apiClientDidReceiveUnauthorized = Notification.Name("apiClientDidReceiveUnauthorized")
+}
+
 public actor APIClient {
     public static let shared = APIClient()
     private let session: URLSession
@@ -53,6 +57,9 @@ public actor APIClient {
         let http = response as? HTTPURLResponse
 
         if let code = http?.statusCode, code >= 400 {
+            if code == 401 {
+                notifyUnauthorizedIfNeeded()
+            }
             throw APIError.from(data: data, response: response)
         }
 
@@ -84,7 +91,22 @@ public actor APIClient {
         }
         let (data, response) = try await session.data(for: request)
         let code = (response as? HTTPURLResponse)?.statusCode ?? 0
+        if code == 401 {
+            notifyUnauthorizedIfNeeded()
+        }
         return (data, code)
+    }
+
+    private func notifyUnauthorizedIfNeeded() {
+        guard clientProfile == "ios_manager" else { return }
+        let profile = clientProfile
+        Task { @MainActor in
+            NotificationCenter.default.post(
+                name: .apiClientDidReceiveUnauthorized,
+                object: nil,
+                userInfo: ["clientProfile": profile]
+            )
+        }
     }
 }
 

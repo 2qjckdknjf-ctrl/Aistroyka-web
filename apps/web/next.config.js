@@ -33,7 +33,10 @@ const nextConfig = {
 // Cloudflare/OpenNext path: init only when not deploying to Vercel.
 const isVercelDeploy =
   process.env.VERCEL === "1" || process.env.DEPLOY_TARGET === "vercel";
-if (!isVercelDeploy) {
+// initOpenNextCloudflareForDev is for `next dev` only (Wrangler proxy + vm patch).
+// Running it during `next build` can race with the compiler and yield ENOENT on
+// `.next/server/pages-manifest.json` and similar artifacts.
+if (!isVercelDeploy && process.env.NODE_ENV === "development") {
   try {
     const { initOpenNextCloudflareForDev } = require("@opennextjs/cloudflare");
     initOpenNextCloudflareForDev();

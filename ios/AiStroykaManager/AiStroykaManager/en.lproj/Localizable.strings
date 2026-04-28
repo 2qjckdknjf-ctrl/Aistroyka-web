@@ -34,6 +34,8 @@
 "mgr_err_no_team_membership" = "You are not a member of any team.";
 "mgr_err_role_not_allowed" = "Manager app is for owners, admins, and team leads. Your role (%@) does not have access.";
 "mgr_err_session_expired" = "Session expired. Please sign in again.";
+"mgr_err_offline_signin" = "No internet connection. Sign in is unavailable offline.";
+"mgr_err_empty_credentials" = "Enter email and password.";
 "mgr_active_workers" = "Active workers";
 "mgr_ai_analyses" = "AI analyses";
 "mgr_ai_copilot_placeholder" = "AI Copilot — project AI and insights";

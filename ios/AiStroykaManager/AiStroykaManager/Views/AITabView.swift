@@ -33,7 +33,7 @@ struct AITabView: View {
             }
             .navigationTitle(NSLocalizedString("mgr_tab_ai", comment: ""))
             .refreshable { await loadAsync() }
-            .onAppear { load() }
+            .onAppear { loadIfNeeded() }
         }
     }
 
@@ -43,16 +43,14 @@ struct AITabView: View {
         Task { await loadAsync() }
     }
 
+    private func loadIfNeeded() {
+        guard shouldLoadInitially(items: jobs, errorMessage: errorMessage) else { return }
+        load()
+    }
+
     private func loadAsync() async {
-        errorMessage = nil
-        isLoading = true
-        defer { isLoading = false }
-        do {
+        await runManagerLoad(isLoading: &isLoading, errorMessage: &errorMessage) {
             jobs = try await ManagerAPI.aiRequests(limit: 100)
-        } catch let e as APIError {
-            errorMessage = e.message
-        } catch {
-            errorMessage = error.localizedDescription
         }
     }
 }

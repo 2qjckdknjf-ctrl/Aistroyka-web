@@ -33,7 +33,7 @@ struct TeamOverviewView: View {
             }
             .navigationTitle(NSLocalizedString("mgr_tab_team", comment: ""))
             .refreshable { await loadAsync() }
-            .onAppear { load() }
+            .onAppear { loadIfNeeded() }
         }
     }
 
@@ -43,16 +43,14 @@ struct TeamOverviewView: View {
         Task { await loadAsync() }
     }
 
+    private func loadIfNeeded() {
+        guard shouldLoadInitially(items: workers, errorMessage: errorMessage) else { return }
+        load()
+    }
+
     private func loadAsync() async {
-        errorMessage = nil
-        isLoading = true
-        defer { isLoading = false }
-        do {
+        await runManagerLoad(isLoading: &isLoading, errorMessage: &errorMessage) {
             workers = try await ManagerAPI.workers(limit: 200)
-        } catch let e as APIError {
-            errorMessage = e.message
-        } catch {
-            errorMessage = error.localizedDescription
         }
     }
 }

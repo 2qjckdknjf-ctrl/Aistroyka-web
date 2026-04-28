@@ -25,7 +25,7 @@ struct HomeDashboardView: View {
             .background(Color(.systemGroupedBackground))
             .navigationTitle(NSLocalizedString("mgr_nav_home", comment: ""))
             .refreshable { await loadAsync() }
-            .onAppear { load() }
+            .onAppear { loadIfNeeded() }
         }
     }
 
@@ -123,16 +123,14 @@ struct HomeDashboardView: View {
         Task { await loadAsync() }
     }
 
+    private func loadIfNeeded() {
+        guard shouldLoadInitially(item: overview, errorMessage: errorMessage) else { return }
+        load()
+    }
+
     private func loadAsync() async {
-        isLoading = true
-        errorMessage = nil
-        do {
+        await runManagerLoad(isLoading: &isLoading, errorMessage: &errorMessage) {
             overview = try await ManagerAPI.opsOverview()
-        } catch let e as APIError {
-            errorMessage = e.message
-        } catch {
-            errorMessage = error.localizedDescription
         }
-        isLoading = false
     }
 }

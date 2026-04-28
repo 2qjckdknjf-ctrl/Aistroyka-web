@@ -34,6 +34,8 @@
 "mgr_err_no_team_membership" = "Вы не состоите ни в одной команде.";
 "mgr_err_role_not_allowed" = "Приложение Manager доступно владельцам, администраторам и тимлидам. Ваша роль (%@) не имеет доступа.";
 "mgr_err_session_expired" = "Сессия истекла. Войдите снова.";
+"mgr_err_offline_signin" = "Нет подключения к интернету. Вход офлайн недоступен.";
+"mgr_err_empty_credentials" = "Введите почту и пароль.";
 "mgr_active_workers" = "Активные сотрудники";
 "mgr_ai_analyses" = "ИИ-анализы";
 "mgr_ai_copilot_placeholder" = "ИИ-копилот — проектный ИИ и инсайты";

@@ -15,21 +15,14 @@ struct ProjectsListView: View {
         NavigationStack {
             Group {
                 if isLoading {
-                    ProgressView(NSLocalizedString("mgr_loading_projects", comment: ""))
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    LoadingStateView(message: NSLocalizedString("mgr_loading_projects", comment: ""))
                 } else if let err = errorMessage {
-                    VStack(spacing: 12) {
-                        Text(err)
-                            .foregroundStyle(.red)
-                            .multilineTextAlignment(.center)
-                        Button(NSLocalizedString("mgr_retry", comment: "")) { load() }
-                    }
-                    .padding()
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    ErrorStateView(message: err, retry: { load() })
                 } else if projects.isEmpty {
-                    Text(NSLocalizedString("mgr_no_projects_yet", comment: ""))
-                        .foregroundStyle(.secondary)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    EmptyStateView(
+                        title: NSLocalizedString("mgr_no_projects_yet", comment: ""),
+                        subtitle: nil
+                    )
                 } else {
                     List(projects, id: \.id) { p in
                         NavigationLink(destination: ProjectDetailView(projectId: p.id, projectName: p.name)) {
@@ -39,22 +32,25 @@ struct ProjectsListView: View {
                 }
             }
             .navigationTitle(NSLocalizedString("mgr_tab_projects", comment: ""))
-            .onAppear { load() }
+            .refreshable { await loadAsync() }
+            .onAppear { loadIfNeeded() }
         }
     }
 
     private func load() {
         errorMessage = nil
         isLoading = true
-        Task {
-            do {
-                projects = try await ManagerAPI.projects()
-            } catch let e as APIError {
-                errorMessage = e.message
-            } catch {
-                errorMessage = error.localizedDescription
-            }
-            isLoading = false
+        Task { await loadAsync() }
+    }
+
+    private func loadIfNeeded() {
+        guard shouldLoadInitially(items: projects, errorMessage: errorMessage) else { return }
+        load()
+    }
+
+    private func loadAsync() async {
+        await runManagerLoad(isLoading: &isLoading, errorMessage: &errorMessage) {
+            projects = try await ManagerAPI.projects()
         }
     }
 }

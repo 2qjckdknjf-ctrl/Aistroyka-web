@@ -133,7 +133,7 @@ final class AppStateStoreManager: ObservableObject {
         let fm = FileManager.default
         let dir = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
         let subdir = dir?.appendingPathComponent("AiStroykaWorker", isDirectory: true)
-        let file = (url ?? subdir?.appendingPathComponent("app_state.json"))!
+        guard let file = url ?? subdir?.appendingPathComponent("app_state.json") else { return nil }
         guard fm.fileExists(atPath: file.path),
               let data = try? Data(contentsOf: file) else { return nil }
         let decoder = JSONDecoder()
@@ -167,7 +167,12 @@ final class AppStateStoreManager: ObservableObject {
             let temp = url.deletingLastPathComponent().appendingPathComponent(UUID().uuidString + ".tmp")
             do {
                 try data.write(to: temp)
-                _ = try? self.fileManager.replaceItemAt(url, withItemAt: temp)
+                if self.fileManager.fileExists(atPath: url.path) {
+                    _ = try? self.fileManager.replaceItemAt(url, withItemAt: temp)
+                    try? self.fileManager.removeItem(at: temp)
+                } else {
+                    try? self.fileManager.moveItem(at: temp, to: url)
+                }
             } catch {
                 try? self.fileManager.removeItem(at: temp)
             }

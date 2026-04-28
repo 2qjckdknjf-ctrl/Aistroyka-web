@@ -22,6 +22,12 @@ struct ManagerUnauthorizedView: View {
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
                 .padding(.horizontal)
+            if sessionState.canRetryRoleCheck {
+                Button(NSLocalizedString("mgr_retry", comment: "")) {
+                    sessionState.checkSession()
+                }
+                .buttonStyle(.bordered)
+            }
             Button(NSLocalizedString("mgr_sign_out", comment: "")) {
                 Task { await sessionState.signOut() }
             }
