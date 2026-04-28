@@ -78,6 +78,34 @@ describe("POST /api/v1/ai/transcribe", () => {
     expect(res.status).toBe(400);
   });
 
+  it("returns 400 when audio payload is too small", async () => {
+    const tiny = new File([new Uint8Array([1, 2, 3])], "tiny.webm", { type: "audio/webm" });
+    const fd = new FormData();
+    fd.append("file", tiny);
+    const req = new Request("https://x/api/v1/ai/transcribe", { method: "POST", body: fd });
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 415 for explicitly unsupported mime type", async () => {
+    const bad = new File([minWebmPayload()], "clip.bin", { type: "application/pdf" });
+    const fd = new FormData();
+    fd.append("file", bad);
+    const req = new Request("https://x/api/v1/ai/transcribe", { method: "POST", body: fd });
+    const res = await POST(req);
+    expect(res.status).toBe(415);
+  });
+
+  it("returns 415 when mime is empty and sniff cannot infer audio format", async () => {
+    const unknown = new Uint8Array(64).fill(0x7f);
+    const file = new File([unknown], "clip.bin", { type: "" });
+    const fd = new FormData();
+    fd.append("file", file);
+    const req = new Request("https://x/api/v1/ai/transcribe", { method: "POST", body: fd });
+    const res = await POST(req);
+    expect(res.status).toBe(415);
+  });
+
   it("returns 200 with text when file present", async () => {
     const file = new File([minWebmPayload()], "clip.webm", { type: "audio/webm" });
     const fd = new FormData();

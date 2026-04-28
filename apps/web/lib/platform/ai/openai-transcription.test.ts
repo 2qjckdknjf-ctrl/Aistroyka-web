@@ -46,7 +46,7 @@ describe("transcribeOpenAiAudio", () => {
     expect(result.durationMs).toBeGreaterThanOrEqual(0);
   });
 
-  it("adds language field only for valid 2-letter locale hint", async () => {
+  it("normalizes locale hint and omits invalid language field", async () => {
     vi.mocked(fetchWithOpenAiRetry).mockImplementationOnce(async (_url, getInit) => {
       const init = getInit(new AbortController().signal);
       const form = init.body as FormData;
@@ -68,7 +68,7 @@ describe("transcribeOpenAiAudio", () => {
     vi.mocked(fetchWithOpenAiRetry).mockImplementationOnce(async (_url, getInit) => {
       const init = getInit(new AbortController().signal);
       const form = init.body as FormData;
-      expect(form.get("language")).toBe("ru");
+      expect(form.get("language")).toBeNull();
       return new Response(JSON.stringify({ text: "ok", duration: 1 }), { status: 200 });
     });
 
@@ -78,7 +78,7 @@ describe("transcribeOpenAiAudio", () => {
       audioBytes: new Uint8Array([1]),
       filename: "clip.wav",
       mimeType: "audio/wav",
-      language: "ru-RU",
+      language: "invalid-lang-tag",
       timeoutMs: 30_000,
       maxRetries: 0,
     });
