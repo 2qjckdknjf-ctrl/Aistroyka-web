@@ -12,10 +12,11 @@ const isStandaloneOutput =
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   poweredByHeader: false,
+  // Keep root tracing context stable in monorepo even for non-standalone builds.
+  outputFileTracingRoot: path.join(__dirname, "../.."),
   ...(isStandaloneOutput
     ? {
         output: "standalone",
-        outputFileTracingRoot: path.join(__dirname, "../.."),
       }
     : {}),
   transpilePackages: ["@aistroyka/contracts"],

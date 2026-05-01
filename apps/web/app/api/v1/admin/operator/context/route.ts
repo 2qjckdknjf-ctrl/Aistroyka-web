@@ -26,7 +26,7 @@ export async function GET(request: Request) {
     data: {
       tenant_id: ctx.tenantId,
       user_id: ctx.userId,
-      role: ctx.membership.role,
+      role: ctx.role,
     },
   });
 }
