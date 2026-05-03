@@ -216,10 +216,34 @@ struct ReportCreateView: View {
     }
 
     private func retryPhotoChain(photoItemId: String) {
-        opStore.update(id: createSessionOpId(photoItemId: photoItemId)) { $0.state = .queued; $0.nextAttemptAt = nil }
-        opStore.update(id: uploadBinaryOpId(photoItemId: photoItemId)) { $0.state = .queued; $0.nextAttemptAt = nil }
-        opStore.update(id: finalizeOpId(photoItemId: photoItemId)) { $0.state = .queued; $0.nextAttemptAt = nil }
-        opStore.update(id: attachMediaOpId(photoItemId: photoItemId)) { $0.state = .queued; $0.nextAttemptAt = nil }
+        opStore.update(id: createSessionOpId(photoItemId: photoItemId)) {
+            $0.state = .queued
+            $0.nextAttemptAt = nil
+            $0.attemptCount = 0
+            $0.lastErrorCode = nil
+            $0.lastErrorMessage = nil
+        }
+        opStore.update(id: uploadBinaryOpId(photoItemId: photoItemId)) {
+            $0.state = .queued
+            $0.nextAttemptAt = nil
+            $0.attemptCount = 0
+            $0.lastErrorCode = nil
+            $0.lastErrorMessage = nil
+        }
+        opStore.update(id: finalizeOpId(photoItemId: photoItemId)) {
+            $0.state = .queued
+            $0.nextAttemptAt = nil
+            $0.attemptCount = 0
+            $0.lastErrorCode = nil
+            $0.lastErrorMessage = nil
+        }
+        opStore.update(id: attachMediaOpId(photoItemId: photoItemId)) {
+            $0.state = .queued
+            $0.nextAttemptAt = nil
+            $0.attemptCount = 0
+            $0.lastErrorCode = nil
+            $0.lastErrorMessage = nil
+        }
         OperationQueueExecutor.shared.runLoop()
     }
 

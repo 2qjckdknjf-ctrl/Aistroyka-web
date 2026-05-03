@@ -11,6 +11,10 @@ export interface PolicyContext {
   image_count?: number;
   image_size_bytes?: number;
   image_url?: string | null;
+  /** Site video URL (same PII host rules as image_url when strict). */
+  video_url?: string | null;
+  /** Fetched video byte length for tier caps. */
+  video_size_bytes?: number | null;
   rate_override?: boolean;
 }
 

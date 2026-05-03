@@ -29,7 +29,11 @@ export default function RegisterPage() {
       const timeoutPromise = new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error("timeout")), SIGN_UP_TIMEOUT_MS)
       );
-      const { error: err } = await Promise.race([signUpPromise, timeoutPromise]);
+      const signUpResult = (await Promise.race([
+        signUpPromise,
+        timeoutPromise,
+      ])) as Awaited<ReturnType<typeof supabase.auth.signUp>>;
+      const err = signUpResult.error;
       if (err) {
         const msg = err.message?.toLowerCase() ?? "";
         if (msg.includes("invalid") && (msg.includes("credentials") || msg.includes("login"))) {
@@ -39,6 +43,10 @@ export default function RegisterPage() {
         } else {
           setError(t("defaultError"));
         }
+        return;
+      }
+      if (signUpResult.data.session) {
+        router.push("/subscribe");
         return;
       }
       setMessage(t("checkEmail"));

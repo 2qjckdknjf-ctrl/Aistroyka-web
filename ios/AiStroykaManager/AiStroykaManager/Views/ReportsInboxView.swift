@@ -18,20 +18,23 @@ struct ReportsInboxView: View {
         NavigationStack {
             Group {
                 if isLoading && reports.isEmpty && errorMessage == nil {
-                    LoadingStateView(message: "Loading reports…")
+                    LoadingStateView(message: NSLocalizedString("mgr_loading_reports", comment: ""))
                 } else if let err = errorMessage, reports.isEmpty {
                     ErrorStateView(message: err, retry: { load() })
                 } else if reports.isEmpty {
-                    EmptyStateView(title: "No reports", subtitle: "Field reports will appear here.")
+                    EmptyStateView(
+                        title: NSLocalizedString("mgr_no_reports_title", comment: ""),
+                        subtitle: NSLocalizedString("mgr_no_reports_subtitle", comment: "")
+                    )
                 } else {
                     listContent
                 }
             }
-            .navigationTitle("Reports")
+            .navigationTitle(NSLocalizedString("mgr_tab_reports", comment: ""))
             .refreshable { await loadAsync() }
             .onAppear {
                 if let id = initialProjectId, selectedProjectId == nil { selectedProjectId = id }
-                load()
+                loadIfNeeded()
             }
         }
     }
@@ -41,7 +44,7 @@ struct ReportsInboxView: View {
             if !projects.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
-                        FilterChip(title: "All", selected: selectedProjectId == nil) { selectedProjectId = nil; load() }
+                        FilterChip(title: NSLocalizedString("mgr_all", comment: ""), selected: selectedProjectId == nil) { selectedProjectId = nil; load() }
                         ForEach(projects, id: \.id) { p in
                             FilterChip(title: p.name ?? p.id, selected: selectedProjectId == p.id) {
                                 selectedProjectId = p.id
@@ -68,19 +71,17 @@ struct ReportsInboxView: View {
         Task { await loadAsync() }
     }
 
+    private func loadIfNeeded() {
+        guard shouldLoadInitially(items: reports, errorMessage: errorMessage) else { return }
+        load()
+    }
+
     private func loadAsync() async {
-        errorMessage = nil
-        isLoading = true
-        defer { isLoading = false }
-        do {
+        await runManagerLoad(isLoading: &isLoading, errorMessage: &errorMessage) {
             async let reportsTask = ManagerAPI.reports(projectId: selectedProjectId, limit: 100)
             async let projectsTask = ManagerAPI.projects()
             reports = try await reportsTask
             projects = try await projectsTask
-        } catch let e as APIError {
-            errorMessage = e.message
-        } catch {
-            errorMessage = error.localizedDescription
         }
     }
 }
@@ -98,13 +99,13 @@ struct ReportRowView: View {
                     .font(.subheadline)
                 Spacer()
                 if let n = report.mediaCount, n > 0 {
-                    Text("\(n) photo(s)")
+                    Text(String(format: NSLocalizedString("mgr_photos_count_fmt", comment: ""), n))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
             }
             if let a = report.analysisStatus, !a.isEmpty {
-                Text("Analysis: \(a)")
+                Text(String(format: NSLocalizedString("mgr_analysis_fmt", comment: ""), a))
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }
@@ -113,7 +114,7 @@ struct ReportRowView: View {
     }
 
     private func statusLabel(_ s: String) -> String {
-        if s.isEmpty { return "Unknown" }
+        if s.isEmpty { return NSLocalizedString("mgr_unknown", comment: "") }
         return s.prefix(1).uppercased() + s.dropFirst().lowercased()
     }
 }
@@ -130,37 +131,37 @@ struct ReportDetailReviewView: View {
     var body: some View {
         Group {
             if isLoading && report == nil && errorMessage == nil {
-                LoadingStateView(message: "Loading report…")
+                LoadingStateView(message: NSLocalizedString("mgr_loading_report", comment: ""))
             } else if let err = errorMessage, report == nil {
                 ErrorStateView(message: err, retry: { load() })
             } else if let r = report {
                 List {
-                    Section("Report") {
-                        LabeledContent("ID", value: r.id ?? reportId)
-                        LabeledContent("Status", value: statusLabel(r.status ?? ""))
-                        if let c = r.createdAt { LabeledContent("Created", value: formatDate(c)) }
-                        if let s = r.submittedAt { LabeledContent("Submitted", value: formatDate(s)) }
-                        if let ra = r.reviewedAt { LabeledContent("Reviewed at", value: formatDate(ra)) }
+                    Section(NSLocalizedString("mgr_report_section", comment: "")) {
+                        LabeledContent(NSLocalizedString("mgr_id", comment: ""), value: r.id ?? reportId)
+                        LabeledContent(NSLocalizedString("mgr_status", comment: ""), value: statusLabel(r.status ?? ""))
+                        if let c = r.createdAt { LabeledContent(NSLocalizedString("mgr_created", comment: ""), value: formatDate(c)) }
+                        if let s = r.submittedAt { LabeledContent(NSLocalizedString("mgr_submitted", comment: ""), value: formatDate(s)) }
+                        if let ra = r.reviewedAt { LabeledContent(NSLocalizedString("mgr_reviewed_at", comment: ""), value: formatDate(ra)) }
                         if let note = r.managerNote, !note.isEmpty {
-                            LabeledContent("Manager note", value: note)
+                            LabeledContent(NSLocalizedString("mgr_manager_note", comment: ""), value: note)
                         }
                     }
                     if let media = r.media, !media.isEmpty {
-                        Section("Media (\(media.count))") {
+                        Section(String(format: NSLocalizedString("mgr_media_count_fmt", comment: ""), media.count)) {
                             ForEach(Array(media.enumerated()), id: \.offset) { _, m in
                                 HStack {
-                                    Text("Item \(m.mediaId ?? m.uploadSessionId ?? "?")")
+                                    Text(String(format: NSLocalizedString("mgr_item_fmt", comment: ""), m.mediaId ?? m.uploadSessionId ?? "?"))
                                         .font(.caption)
                                 }
                             }
                         }
                     }
                     if r.status?.lowercased() == "submitted" {
-                        Section("Review actions") {
+                        Section(NSLocalizedString("mgr_review_actions_section", comment: "")) {
                             if reviewActionLoading {
                                 HStack {
                                     ProgressView()
-                                    Text("Submitting…")
+                                    Text(NSLocalizedString("mgr_submitting", comment: ""))
                                         .font(.subheadline)
                                         .foregroundStyle(.secondary)
                                 }
@@ -170,19 +171,19 @@ struct ReportDetailReviewView: View {
                                     .font(.caption)
                                     .foregroundStyle(.red)
                             }
-                            TextField("Note (optional)", text: $managerNoteText, axis: .vertical)
+                            TextField(NSLocalizedString("mgr_note_optional", comment: ""), text: $managerNoteText, axis: .vertical)
                                 .lineLimit(2...4)
                                 .disabled(reviewActionLoading)
-                            Button("Approve") { submitReview(status: "approved") }
+                            Button(NSLocalizedString("mgr_approve", comment: "")) { submitReview(status: "approved") }
                                 .disabled(reviewActionLoading)
-                            Button("Mark reviewed") { submitReview(status: "reviewed") }
+                            Button(NSLocalizedString("mgr_mark_reviewed", comment: "")) { submitReview(status: "reviewed") }
                                 .disabled(reviewActionLoading)
-                            Button("Request changes") { submitReview(status: "changes_requested") }
+                            Button(NSLocalizedString("mgr_request_changes", comment: "")) { submitReview(status: "changes_requested") }
                                 .disabled(reviewActionLoading)
                         }
                     } else if !isReviewStatus(r.status) {
-                        Section("Review") {
-                            Text("Report is not in submitted state; no review actions available.")
+                        Section(NSLocalizedString("mgr_review_section", comment: "")) {
+                            Text(NSLocalizedString("mgr_report_not_submitted", comment: ""))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -190,11 +191,11 @@ struct ReportDetailReviewView: View {
                 }
                 .refreshable { await loadAsync() }
             } else {
-                EmptyStateView(title: "Report not found", subtitle: nil)
+                EmptyStateView(title: NSLocalizedString("mgr_report_not_found", comment: ""), subtitle: nil)
             }
         }
-        .navigationTitle("Report")
-        .onAppear { load() }
+        .navigationTitle(NSLocalizedString("mgr_report", comment: ""))
+        .onAppear { loadIfNeeded() }
     }
 
     private func isReviewStatus(_ s: String?) -> Bool {
@@ -208,17 +209,16 @@ struct ReportDetailReviewView: View {
     }
 
     private func submitReview(status: String) {
-        reviewActionError = nil
-        reviewActionLoading = true
         Task {
-            defer { reviewActionLoading = false }
-            do {
+            let success = await runManagerAction(
+                isLoading: &reviewActionLoading,
+                errorMessage: &reviewActionError
+            ) {
                 let note = managerNoteText.trimmingCharacters(in: .whitespacesAndNewlines)
                 report = try await ManagerAPI.reportReview(reportId: reportId, status: status, managerNote: note.isEmpty ? nil : note)
-            } catch let e as APIError {
-                reviewActionError = e.message
-            } catch {
-                reviewActionError = error.localizedDescription
+            }
+            if success {
+                managerNoteText = ""
             }
         }
     }
@@ -229,16 +229,14 @@ struct ReportDetailReviewView: View {
         Task { await loadAsync() }
     }
 
+    private func loadIfNeeded() {
+        guard shouldLoadInitially(item: report, errorMessage: errorMessage) else { return }
+        load()
+    }
+
     private func loadAsync() async {
-        errorMessage = nil
-        isLoading = true
-        defer { isLoading = false }
-        do {
+        await runManagerLoad(isLoading: &isLoading, errorMessage: &errorMessage) {
             report = try await ManagerAPI.reportDetail(id: reportId)
-        } catch let e as APIError {
-            errorMessage = e.message
-        } catch {
-            errorMessage = error.localizedDescription
         }
     }
 

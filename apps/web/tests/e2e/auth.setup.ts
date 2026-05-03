@@ -20,7 +20,10 @@ setup("authenticate", async ({ page }) => {
     throw new Error(`Auth setup login failed: ${login.status()} ${body.slice(0, 500)}`);
   }
 
-  await page.goto(`${baseURL}/${e2eLocale}/dashboard`);
+  await page.goto(`${baseURL}/${e2eLocale}/dashboard`, {
+    waitUntil: "domcontentloaded",
+    timeout: 60_000,
+  });
   await expect(page).toHaveURL(new RegExp(`/${e2eLocale}/dashboard`));
   await page.context().storageState({ path: authFile });
 });

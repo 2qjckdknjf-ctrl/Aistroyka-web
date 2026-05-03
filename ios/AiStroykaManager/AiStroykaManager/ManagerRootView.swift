@@ -11,7 +11,9 @@ struct ManagerRootView: View {
 
     var body: some View {
         Group {
-            if !sessionState.isLoggedIn {
+            if sessionState.isCheckingSession {
+                LoadingStateView()
+            } else if !sessionState.isLoggedIn {
                 ManagerLoginView()
             } else if !sessionState.isAuthorizedRole, let msg = sessionState.roleFailureMessage {
                 ManagerUnauthorizedView(message: msg)

@@ -118,9 +118,12 @@ final class UploadManager: ObservableObject {
         let base = Config.supabaseURL.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
         let urlString = "\(base)/storage/v1/object/media/\(path)"
         guard let url = URL(string: urlString) else { throw APIError(statusCode: nil, code: nil, message: "Invalid storage URL") }
+        guard let token = await AuthService.shared.getAccessToken(), !token.isEmpty else {
+            throw APIError(statusCode: 401, code: "AUTH_REQUIRED", message: "Missing auth token for storage upload")
+        }
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
-        request.setValue("Bearer \(await AuthService.shared.getAccessToken() ?? "")", forHTTPHeaderField: "Authorization")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.setValue(Config.supabaseAnonKey, forHTTPHeaderField: "apikey")
         request.setValue("image/jpeg", forHTTPHeaderField: "Content-Type")
         request.httpBody = data

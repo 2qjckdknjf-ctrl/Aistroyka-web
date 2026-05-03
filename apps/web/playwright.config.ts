@@ -9,6 +9,8 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: 1,
+  /** Cold Next dev + first API compile can exceed 30s; sync/core tests set their own where needed. */
+  timeout: 90_000,
   reporter: "list",
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000",
@@ -48,5 +50,6 @@ export default defineConfig({
           command: "bun run dev",
           url: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000",
           reuseExistingServer: !process.env.CI,
+          timeout: 300_000,
         },
 });

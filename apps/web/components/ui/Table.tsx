@@ -11,7 +11,7 @@ export function Table({
 }) {
   return (
     <div className={`overflow-x-auto rounded-[var(--aistroyka-radius-card)] border border-aistroyka-border-subtle ${className}`.trim()}>
-      <table className="w-full min-w-[400px] border-collapse text-left text-aistroyka-subheadline" aria-label={ariaLabel}>
+      <table className="w-full min-w-[320px] border-collapse text-left text-aistroyka-subheadline" aria-label={ariaLabel}>
         {children}
       </table>
     </div>

@@ -36,7 +36,7 @@ export interface AITelemetryBase {
   project_id?: string | null;
   user_id?: string | null;
   latency_ms: number;
-  output_type: "copilot" | "intelligence" | "vision";
+  output_type: "copilot" | "intelligence" | "vision" | "video_daily";
   /** Release correlation (optional) */
   build_sha7?: string;
   app_env?: string;
@@ -68,7 +68,7 @@ export interface IntelligenceTelemetry extends AITelemetryBase {
 }
 
 export interface VisionTelemetry extends AITelemetryBase {
-  output_type: "vision";
+  output_type: "vision" | "video_daily";
   provider?: string;
   result_status: "success" | "failure";
   error_kind?: AIErrorKind | null;

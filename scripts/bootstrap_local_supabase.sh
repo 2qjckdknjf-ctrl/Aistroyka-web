@@ -37,7 +37,11 @@ fi
 
 echo "=== Starting Supabase ==="
 START_OUT=$(supabase start 2>&1) || true
-echo "$START_OUT" | head -80
+# Never print raw keys/tokens to terminal scrollback.
+echo "$START_OUT" \
+  | sed -E 's/(anon key:[[:space:]]*).+/\1<redacted>/' \
+  | sed -E 's/(service_role key:[[:space:]]*).+/\1<redacted>/' \
+  | sed -n '1,80p'
 if ! echo "$START_OUT" | grep -q "API URL"; then
   echo "WARN: supabase start may have failed or already running. Check output above."
 fi
@@ -140,8 +144,14 @@ echo "=== Bootstrap complete ==="
 echo "BASE_URL=http://localhost:3000 (or 3001 if 3000 busy)"
 echo "To run smoke:"
 if [[ -n "$ACCESS_TOKEN" ]]; then
-  echo "  export AUTH_HEADER=\"Authorization: Bearer ${ACCESS_TOKEN}\""
-  echo "  BASE_URL=http://localhost:3000 AUTH_HEADER=\"Authorization: Bearer ${ACCESS_TOKEN}\" ./scripts/smoke/pilot_launch.sh"
+  echo "  Access token minted successfully (not printed for safety)."
+  echo "  Use either:"
+  echo "    1) export SMOKE_EMAIL=\"${SMOKE_MANAGER_EMAIL}\""
+  echo "       export SMOKE_PASSWORD=\"<your-password-used-during-bootstrap>\""
+  echo "       export NEXT_PUBLIC_SUPABASE_URL=\"<from apps/web/.env.local>\""
+  echo "       export NEXT_PUBLIC_SUPABASE_ANON_KEY=\"<from apps/web/.env.local>\""
+  echo "       BASE_URL=http://localhost:3000 ./scripts/smoke/pilot_launch.sh"
+  echo "    2) or set AUTH_HEADER manually with your own token source."
 else
   echo "  export SMOKE_EMAIL=\"${SMOKE_MANAGER_EMAIL}\" SMOKE_PASSWORD=\"<redacted>\""
   echo "  BASE_URL=... AUTH_HEADER=... or SMOKE_EMAIL/SMOKE_PASSWORD with NEXT_PUBLIC_* set in env"

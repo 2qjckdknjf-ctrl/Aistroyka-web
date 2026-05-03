@@ -2,6 +2,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { TenantContext } from "@/lib/tenant/tenant.types";
 import { canReadProjects, canManageProjects } from "@/lib/tenant/tenant.policy";
 import { getById as getProjectById } from "@/lib/domain/projects/project.repository";
+import { getById as getReportById, getProjectIdForReport } from "@/lib/domain/reports/report.repository";
+import { getById as getTaskById } from "@/lib/domain/tasks/task.repository";
+import { getById as getMilestoneById } from "@/lib/domain/milestones/milestone.repository";
 import { emitAudit } from "@/lib/observability/audit.service";
 import { notifyProjectOwners } from "@/lib/domain/notifications/manager-notifications.repository";
 import * as repo from "./document.repository";
@@ -73,6 +76,14 @@ export async function createDocument(
     return { data: null, error: "status must be draft on create" };
   }
 
+  const linkageError = await validateDocumentLinkages(
+    supabase,
+    ctx.tenantId,
+    input.project_id,
+    input
+  );
+  if (linkageError) return { data: null, error: linkageError };
+
   const data = await repo.create(supabase, ctx.tenantId, ctx.userId, {
     ...input,
     title: trimmed,
@@ -95,6 +106,14 @@ export async function updateDocument(
   const existing = await repo.getById(supabase, documentId, ctx.tenantId);
   if (!existing || existing.project_id !== projectId)
     return { data: null, error: "Document not found" };
+
+  const linkageError = await validateDocumentLinkages(
+    supabase,
+    ctx.tenantId,
+    projectId,
+    input
+  );
+  if (linkageError) return { data: null, error: linkageError };
 
   const statusFrom = existing.status;
   const statusTo = input.status !== undefined ? input.status : existing.status;
@@ -134,7 +153,10 @@ export async function updateDocument(
   if (statusFrom !== statusTo) {
     let action: string | null = null;
     if (statusFrom === "draft" && statusTo === "uploaded") action = "document_upload";
-    else if (statusFrom === "uploaded" && statusTo === "under_review")
+    else if (
+      (statusFrom === "uploaded" || statusFrom === "draft" || statusFrom === "changes_requested") &&
+      statusTo === "under_review"
+    )
       action = "document_submit_for_review";
     else if (statusFrom === "under_review" && (statusTo === "approved" || statusTo === "rejected" || statusTo === "changes_requested"))
       action = "document_review";
@@ -183,6 +205,32 @@ export async function updateDocument(
   }
 
   return { data, error: "" };
+}
+
+async function validateDocumentLinkages(
+  supabase: SupabaseClient,
+  tenantId: string,
+  projectId: string,
+  input: Pick<UpdateDocumentInput, "report_id" | "task_id" | "milestone_id">
+): Promise<string> {
+  if (input.task_id !== undefined && input.task_id !== null && input.task_id.trim() !== "") {
+    const task = await getTaskById(supabase, input.task_id, tenantId);
+    if (!task || task.project_id !== projectId) return "invalid_task_linkage";
+  }
+
+  if (input.milestone_id !== undefined && input.milestone_id !== null && input.milestone_id.trim() !== "") {
+    const milestone = await getMilestoneById(supabase, input.milestone_id, tenantId);
+    if (!milestone || milestone.project_id !== projectId) return "invalid_milestone_linkage";
+  }
+
+  if (input.report_id !== undefined && input.report_id !== null && input.report_id.trim() !== "") {
+    const report = await getReportById(supabase, input.report_id, tenantId);
+    if (!report) return "invalid_report_linkage";
+    const reportProjectId = await getProjectIdForReport(supabase, tenantId, report);
+    if (!reportProjectId || reportProjectId !== projectId) return "invalid_report_linkage";
+  }
+
+  return "";
 }
 
 function mapAuditActionToDocumentEvent(

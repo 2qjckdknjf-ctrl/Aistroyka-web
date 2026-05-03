@@ -13,6 +13,36 @@ import { emitAudit } from "@/lib/observability/audit.service";
 
 export const dynamic = "force-dynamic";
 
+const PLAN_PRICE_ENV_KEYS = {
+  starter: "STRIPE_PRICE_STARTER",
+  business: "STRIPE_PRICE_BUSINESS",
+  enterprise: "STRIPE_PRICE_ENTERPRISE",
+} as const;
+
+type CheckoutPlanKey = keyof typeof PLAN_PRICE_ENV_KEYS;
+
+function resolvePriceIdFromRequestBody(body: Record<string, unknown>): {
+  priceId?: string;
+  requestedPlanKey?: string;
+  planEnvMissing?: boolean;
+} {
+  if (typeof body.price_id === "string" && body.price_id.trim().length > 0) {
+    return { priceId: body.price_id.trim() };
+  }
+
+  if (typeof body.plan_key !== "string") return {};
+  const planKey = body.plan_key.trim().toLowerCase() as CheckoutPlanKey;
+  const envKey = PLAN_PRICE_ENV_KEYS[planKey];
+  if (!envKey) return { requestedPlanKey: planKey };
+  const envValue = process.env[envKey];
+  const priceId = typeof envValue === "string" && envValue.trim().length > 0 ? envValue.trim() : undefined;
+  return {
+    priceId,
+    requestedPlanKey: planKey,
+    planEnvMissing: !priceId,
+  };
+}
+
 export async function POST(request: Request) {
   const ctx = await getTenantContextFromRequest(request);
   try {
@@ -32,6 +62,16 @@ export async function POST(request: Request) {
   if (!successUrl || !cancelUrl) {
     return NextResponse.json({ error: "success_url and cancel_url required" }, { status: 400 });
   }
+  const priceInput = resolvePriceIdFromRequestBody(body as Record<string, unknown>);
+  if (priceInput.requestedPlanKey && priceInput.planEnvMissing) {
+    return NextResponse.json(
+      {
+        error: `Price for plan_key '${priceInput.requestedPlanKey}' is not configured`,
+      },
+      { status: 400 }
+    );
+  }
+  const priceId = priceInput.priceId;
   const admin = getAdminClient();
   if (!admin || !isStripeConfigured()) {
     return NextResponse.json(BILLING_503_BODY, { status: 503 });
@@ -40,7 +80,7 @@ export async function POST(request: Request) {
     tenantId: ctx.tenantId,
     successUrl,
     cancelUrl,
-    priceId: typeof body.price_id === "string" ? body.price_id : undefined,
+    priceId,
     customerEmail: typeof body.customer_email === "string" ? body.customer_email : undefined,
   });
   if (result.error && !result.url) {

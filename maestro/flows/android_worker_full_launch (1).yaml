@@ -1,0 +1,81 @@
+# Full launch proof: Worker (Android) with REAL attach-photo rule.
+# Requires: `./gradlew -PpilotRealSubmit=true :AiStroykaWorker:installDebug` so PILOT_ALLOW_SUBMIT_WITHOUT_PHOTO=false.
+appId: ai.aistroyka.worker
+---
+- clearState
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: pilot_worker_email
+    timeout: 45000
+- tapOn:
+    id: pilot_worker_email
+- inputText: ${SMOKE_EMAIL}
+- hideKeyboard
+- tapOn:
+    id: pilot_worker_password
+- inputText: ${SMOKE_PASSWORD}
+- hideKeyboard
+- tapOn:
+    id: pilot_worker_sign_in
+- extendedWaitUntil:
+    visible: "Projects"
+    timeout: 90000
+- tapOn:
+    text: "Refresh config / projects"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: pilot_worker_project_row_0
+    timeout: 120000
+- tapOn:
+    id: pilot_worker_project_row_0
+- tapOn:
+    id: pilot_worker_create_report
+- extendedWaitUntil:
+    visible: "Draft report"
+    timeout: 120000
+- addMedia:
+    - ../assets/pilot.png
+- tapOn:
+    id: pilot_worker_choose_photo
+- runFlow:
+    when:
+      visible: "Allow"
+    commands:
+      - tapOn: "Allow"
+- tapOn:
+    text: "Photos"
+    optional: true
+- tapOn:
+    text: "Gallery"
+    optional: true
+- tapOn:
+    id: "com.google.android.providers.media.module:id/icon_thumbnail"
+    optional: true
+- tapOn:
+    id: "com.google.android.documentsui:id/thumbnail"
+    optional: true
+- tapOn:
+    point: "50%, 42%"
+    optional: true
+# Upload pipeline sets pipelineStatus to "Photo attached." before enabling Submit.
+- extendedWaitUntil:
+    visible: "Photo attached."
+    timeout: 300000
+- extendedWaitUntil:
+    visible:
+      id: pilot_worker_submit_report
+    timeout: 60000
+- tapOn:
+    id: pilot_worker_submit_report
+- extendedWaitUntil:
+    visible:
+      id: pilot_worker_submit_success
+    timeout: 120000
+- extendedWaitUntil:
+    visible:
+      id: pilot_worker_back_home
+    timeout: 30000
+- tapOn:
+    id: pilot_worker_back_home

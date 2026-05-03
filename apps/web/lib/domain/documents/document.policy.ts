@@ -19,10 +19,11 @@ export function validateDocumentStatusTransition(
     return { ok: false, reason: "invalid_status_transition" };
   }
 
-  // draft -> uploaded only (file must exist)
+  // draft -> uploaded | under_review | archived
   if (from === "draft") {
     if (to === "uploaded") return { ok: true };
-    // draft -> under_review/approved/rejected is not allowed (requires upload)
+    if (to === "under_review") return { ok: true };
+    if (to === "archived") return { ok: true };
     return { ok: false, reason: "invalid_status_transition" };
   }
 

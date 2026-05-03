@@ -1,7 +1,13 @@
 import path from "node:path";
 import fs from "node:fs";
 
-export const e2eLocale = process.env.E2E_LOCALE || "en";
+/** Align with `i18n/routing` defaultLocale so auth + routes match without extra env. */
+export const e2eLocale = process.env.E2E_LOCALE || "ru";
+
+/** Base URL for Playwright `request` / absolute API paths (matches `playwright.config` use.baseURL). */
+export function e2eBaseURL(): string {
+  return (process.env.PLAYWRIGHT_BASE_URL ?? process.env.E2E_BASE_URL ?? "http://localhost:3000").replace(/\/$/, "");
+}
 
 export function dashboardUrl(suffix: string) {
   const clean = suffix.startsWith("/") ? suffix : `/${suffix}`;

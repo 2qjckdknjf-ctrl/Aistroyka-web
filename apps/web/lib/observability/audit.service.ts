@@ -16,6 +16,10 @@ export type AuditAction =
   | "ai_intelligence_error"
   | "ai_vision_analyze_complete"
   | "ai_vision_analyze_error"
+  | "ai_video_daily_complete"
+  | "ai_video_daily_error"
+  | "ai_transcription_complete"
+  | "ai_transcription_error"
   | "export";
 
 export type AiRuntimeAuditAction =
@@ -25,7 +29,11 @@ export type AiRuntimeAuditAction =
   | "ai_intelligence_complete"
   | "ai_intelligence_error"
   | "ai_vision_analyze_complete"
-  | "ai_vision_analyze_error";
+  | "ai_vision_analyze_error"
+  | "ai_video_daily_complete"
+  | "ai_video_daily_error"
+  | "ai_transcription_complete"
+  | "ai_transcription_error";
 
 export interface AuditEmitParams {
   tenant_id: string;
@@ -71,7 +79,7 @@ export interface AiRuntimeAuditDetails {
   request_id: string;
   route: string;
   latency_ms: number;
-  output_type: "copilot" | "intelligence" | "vision";
+  output_type: "copilot" | "intelligence" | "vision" | "video_daily" | "transcription";
   streaming?: boolean;
   fallback_triggered?: boolean;
   fallback_reason?: string;

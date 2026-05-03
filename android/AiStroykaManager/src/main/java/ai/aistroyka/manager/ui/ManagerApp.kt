@@ -1,5 +1,6 @@
 package ai.aistroyka.manager.ui
 
+import ai.aistroyka.manager.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -40,8 +41,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import ai.aistroyka.manager.ManagerViewModel
@@ -61,10 +65,10 @@ fun ManagerApp() {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("AiStroyka Manager") },
+                title = { Text(stringResource(R.string.manager_topbar_title)) },
                 actions = {
                     if (state.screen != "login") {
-                        TextButton(onClick = { vm.logout() }) { Text("Sign out") }
+                        TextButton(onClick = { vm.logout() }) { Text(stringResource(R.string.action_sign_out)) }
                     }
                 }
             )
@@ -98,12 +102,12 @@ private fun LoginScreen(vm: ManagerViewModel) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Manager sign-in", style = MaterialTheme.typography.bodyLarge)
+        Text(stringResource(R.string.manager_login_prompt), style = MaterialTheme.typography.bodyLarge)
         Spacer(Modifier.height(16.dp))
         OutlinedTextField(
             value = state.email,
             onValueChange = { vm.setEmail(it) },
-            label = { Text("Email") },
+            label = { Text(stringResource(R.string.label_email)) },
             modifier = Modifier
                 .fillMaxWidth()
                 .pilotAutomatorTag("pilot_manager_email"),
@@ -114,7 +118,8 @@ private fun LoginScreen(vm: ManagerViewModel) {
         OutlinedTextField(
             value = state.password,
             onValueChange = { vm.setPassword(it) },
-            label = { Text("Password") },
+            label = { Text(stringResource(R.string.label_password)) },
+            visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier
                 .fillMaxWidth()
                 .pilotAutomatorTag("pilot_manager_password"),
@@ -126,27 +131,20 @@ private fun LoginScreen(vm: ManagerViewModel) {
             Text(it, color = MaterialTheme.colorScheme.error)
             Spacer(Modifier.height(8.dp))
         }
-        Row(
+        Button(
+            onClick = { vm.login() },
+            enabled = !state.busy,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(48.dp)
-                .clip(RoundedCornerShape(4.dp))
-                .background(
-                    if (state.busy) MaterialTheme.colorScheme.surfaceVariant
-                    else MaterialTheme.colorScheme.primary
-                )
-                .clickable(enabled = !state.busy) { vm.login() }
-                .pilotAutomatorTag("pilot_manager_sign_in"),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
+                .pilotAutomatorTag("pilot_manager_sign_in")
         ) {
             if (state.busy) {
                 CircularProgressIndicator(
                     Modifier.size(24.dp),
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.onPrimary
                 )
             } else {
-                Text("Sign in", color = MaterialTheme.colorScheme.onPrimary)
+                Text(stringResource(R.string.action_sign_in))
             }
         }
     }
@@ -167,21 +165,31 @@ private fun HomeScreen(vm: ManagerViewModel) {
         Spacer(Modifier.height(16.dp))
         state.banner?.let {
             Text(it, color = MaterialTheme.colorScheme.error)
-            TextButton(onClick = { vm.clearBanner() }) { Text("Dismiss") }
+            TextButton(onClick = { vm.clearBanner() }) { Text(stringResource(R.string.action_dismiss)) }
             Spacer(Modifier.height(8.dp))
         }
-        Text("Project filter", style = MaterialTheme.typography.labelLarge)
+        Text(stringResource(R.string.manager_project_filter), style = MaterialTheme.typography.labelLarge)
         Spacer(Modifier.height(8.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { vm.selectProject(null) },
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             RadioButton(
                 selected = state.selectedProjectId == null,
                 onClick = { vm.selectProject(null) }
             )
-            Text("All projects", Modifier.padding(start = 8.dp))
+            Text(stringResource(R.string.manager_all_projects), Modifier.padding(start = 8.dp))
         }
         state.projects.forEach { p ->
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                androidx.compose.material3.RadioButton(
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { vm.selectProject(p.id) },
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                RadioButton(
                     selected = state.selectedProjectId == p.id,
                     onClick = { vm.selectProject(p.id) }
                 )
@@ -196,11 +204,11 @@ private fun HomeScreen(vm: ManagerViewModel) {
                 .fillMaxWidth()
                 .pilotAutomatorTag("pilot_manager_reports_inbox")
         ) {
-            Text("Reports inbox")
+            Text(stringResource(R.string.manager_reports_inbox))
         }
         Spacer(Modifier.height(12.dp))
         TextButton(onClick = { vm.refreshBootstrap() }, enabled = !state.busy) {
-            Text("Refresh")
+            Text(stringResource(R.string.action_refresh))
         }
     }
 }
@@ -216,15 +224,15 @@ private fun ReportsScreen(vm: ManagerViewModel) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            TextButton(onClick = { vm.backToHome() }) { Text("Home") }
-            Text("Reports", style = MaterialTheme.typography.titleLarge)
+            TextButton(onClick = { vm.backToHome() }) { Text(stringResource(R.string.manager_home)) }
+            Text(stringResource(R.string.manager_reports_title), style = MaterialTheme.typography.titleLarge)
             Spacer(Modifier.size(48.dp))
         }
         Row(
             Modifier.padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Submitted only", modifier = Modifier.weight(1f))
+            Text(stringResource(R.string.manager_submitted_only), modifier = Modifier.weight(1f))
             Switch(
                 checked = state.reportsFilterSubmittedOnly,
                 onCheckedChange = {
@@ -239,7 +247,7 @@ private fun ReportsScreen(vm: ManagerViewModel) {
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier.padding(16.dp)
             )
-            TextButton(onClick = { vm.clearBanner() }) { Text("Dismiss") }
+            TextButton(onClick = { vm.clearBanner() }) { Text(stringResource(R.string.action_dismiss)) }
         }
         if (state.busy && state.reports.isEmpty()) {
             BoxCentered { CircularProgressIndicator() }
@@ -262,13 +270,18 @@ private fun ReportsScreen(vm: ManagerViewModel) {
                             elevation = CardDefaults.cardElevation(2.dp)
                         ) {
                             Column(Modifier.padding(12.dp)) {
-                                Text(r.id, style = MaterialTheme.typography.titleSmall)
                                 Text(
-                                    "Status: ${r.status ?: "—"} · Media: ${r.mediaCount ?: 0}",
+                                    r.id,
+                                    style = MaterialTheme.typography.titleSmall,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Text(
+                                    stringResource(R.string.manager_report_row_status, r.status ?: "—", r.mediaCount ?: 0),
                                     style = MaterialTheme.typography.bodySmall
                                 )
                                 r.analysisStatus?.let { s ->
-                                    Text("AI: $s", style = MaterialTheme.typography.bodySmall)
+                                    Text(stringResource(R.string.manager_report_row_ai, s), style = MaterialTheme.typography.bodySmall)
                                 }
                             }
                         }
@@ -299,14 +312,14 @@ private fun DetailScreen(vm: ManagerViewModel) {
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            TextButton(onClick = { vm.backToReports() }) { Text("Back") }
+            TextButton(onClick = { vm.backToReports() }) { Text(stringResource(R.string.action_back)) }
         }
         if (state.busy && detail == null) {
             BoxCentered { CircularProgressIndicator() }
             return
         }
         if (detail == null) {
-            Text("No report", Modifier.padding(16.dp))
+            Text(stringResource(R.string.manager_no_report), Modifier.padding(16.dp))
             return
         }
         Column(
@@ -319,27 +332,30 @@ private fun DetailScreen(vm: ManagerViewModel) {
                 Text(it, color = MaterialTheme.colorScheme.error)
                 Spacer(Modifier.height(8.dp))
             }
-            Text("Report ${detail.id}", style = MaterialTheme.typography.titleLarge)
-            Text("Status: ${detail.status ?: "—"}", style = MaterialTheme.typography.bodyMedium)
-            detail.submittedAt?.let { Text("Submitted: $it", style = MaterialTheme.typography.bodySmall) }
-            detail.reviewedAt?.let { Text("Reviewed: $it", style = MaterialTheme.typography.bodySmall) }
-            detail.managerNote?.let { Text("Manager note: $it", style = MaterialTheme.typography.bodySmall) }
+            Text(
+                stringResource(R.string.manager_report_title, detail.id ?: "—"),
+                style = MaterialTheme.typography.titleLarge
+            )
+            Text(stringResource(R.string.manager_status_line, detail.status ?: "—"), style = MaterialTheme.typography.bodyMedium)
+            detail.submittedAt?.let { Text(stringResource(R.string.manager_submitted_line, it), style = MaterialTheme.typography.bodySmall) }
+            detail.reviewedAt?.let { Text(stringResource(R.string.manager_reviewed_line, it), style = MaterialTheme.typography.bodySmall) }
+            detail.managerNote?.let { Text(stringResource(R.string.manager_note_line, it), style = MaterialTheme.typography.bodySmall) }
             Spacer(Modifier.height(16.dp))
-            Text("AI analysis jobs", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.manager_ai_analysis_jobs), style = MaterialTheme.typography.titleMedium)
             state.analysisStatus?.let { a ->
-                Text("Pipeline: ${a.status} · jobs: ${a.jobCount ?: 0}", style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(R.string.manager_pipeline_line, a.status, a.jobCount ?: 0), style = MaterialTheme.typography.bodyMedium)
                 a.summary?.let { s ->
                     Text(
-                        "Media jobs: ${s.mediaTotal ?: 0} · analyzed: ${s.analyzed ?: 0} · failed: ${s.failed ?: 0}",
+                        stringResource(R.string.manager_media_jobs_line, s.mediaTotal ?: 0, s.analyzed ?: 0, s.failed ?: 0),
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
-            } ?: Text("No analysis status loaded.", style = MaterialTheme.typography.bodySmall)
+            } ?: Text(stringResource(R.string.manager_no_analysis_status), style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(16.dp))
-            Text("Media", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.manager_media), style = MaterialTheme.typography.titleMedium)
             val media = detail.media.orEmpty()
             if (media.isEmpty()) {
-                Text("No media rows on report.", style = MaterialTheme.typography.bodySmall)
+                Text(stringResource(R.string.manager_no_media_rows), style = MaterialTheme.typography.bodySmall)
             } else {
                 media.forEach { m ->
                     MediaRow(m, state.mediaPreviewUrls)
@@ -349,7 +365,7 @@ private fun DetailScreen(vm: ManagerViewModel) {
             Spacer(Modifier.height(24.dp))
             val canReview = detail.status == "submitted"
             if (canReview) {
-                Text("Manager note (optional)", style = MaterialTheme.typography.labelLarge)
+                Text(stringResource(R.string.manager_note_optional), style = MaterialTheme.typography.labelLarge)
                 OutlinedTextField(
                     value = state.reviewNote,
                     onValueChange = { vm.setReviewNote(it) },
@@ -367,22 +383,22 @@ private fun DetailScreen(vm: ManagerViewModel) {
                         modifier = Modifier
                             .weight(1f)
                             .pilotAutomatorTag("pilot_manager_approve")
-                    ) { Text("Approve") }
+                    ) { Text(stringResource(R.string.manager_approve)) }
                     Button(
                         onClick = { vm.submitReview("rejected") },
                         enabled = !state.busy,
                         modifier = Modifier.weight(1f)
-                    ) { Text("Reject") }
+                    ) { Text(stringResource(R.string.manager_reject)) }
                 }
                 Spacer(Modifier.height(8.dp))
                 Button(
                     onClick = { vm.submitReview("changes_requested") },
                     enabled = !state.busy,
                     modifier = Modifier.fillMaxWidth()
-                ) { Text("Request changes") }
+                ) { Text(stringResource(R.string.manager_request_changes)) }
             } else {
                 Text(
-                    "Review actions are only available when status is submitted.",
+                    stringResource(R.string.manager_review_only_submitted),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -405,14 +421,11 @@ private fun MediaRow(item: ReportMediaItemDto, urlById: Map<String, String>) {
     val url = mid?.let { urlById[it] }
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(8.dp)) {
-            Text(
-                "Media id: ${mid ?: "—"} · session: ${item.uploadSessionId ?: "—"}",
-                style = MaterialTheme.typography.bodySmall
-            )
+            Text(stringResource(R.string.manager_media_id_line, mid ?: "—", item.uploadSessionId ?: "—"), style = MaterialTheme.typography.bodySmall)
             if (url != null) {
                 AsyncImage(
                     model = url,
-                    contentDescription = "Report media",
+                    contentDescription = stringResource(R.string.content_desc_report_media),
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(220.dp),
@@ -420,7 +433,7 @@ private fun MediaRow(item: ReportMediaItemDto, urlById: Map<String, String>) {
                 )
             } else {
                 Text(
-                    "No preview URL (resolve via project media list when project is known).",
+                    stringResource(R.string.manager_no_preview_url),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

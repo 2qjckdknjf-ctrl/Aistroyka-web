@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server";
 import { createClient, getSessionUser } from "@/lib/supabase/server";
 import { getProjectById } from "@/lib/supabase/rpc";
 import { UploadMediaForm } from "../UploadMediaForm";
+import { ProjectVideoDailyAnalysisPanel } from "../ProjectVideoDailyAnalysisPanel";
 import { ProjectPollingSection } from "../ProjectPollingSection";
 import { ExecutiveOverviewBlock } from "../ExecutiveOverviewBlock";
 import { TrendSummaryBlock } from "../TrendSummaryBlock";
@@ -302,7 +303,18 @@ export default async function ProjectPage({
 
   const lastDeltaSummary =
     proj.hasVelocity && proj.lastVelocity != null
-      ? `Last velocity: ${proj.lastVelocity >= 0 ? "+" : ""}${proj.lastVelocity.toFixed(1)}%/day. ${proj.forecastDate ? `Forecast: ${proj.forecastDate}` : ""}`
+      ? [
+          t("lastVelocitySummary", {
+            velocity: `${proj.lastVelocity >= 0 ? "+" : ""}${proj.lastVelocity.toFixed(1)}%/day`,
+          }),
+          proj.forecastDate
+            ? t("forecastSummary", {
+                date: proj.forecastDate,
+              })
+            : "",
+        ]
+          .filter(Boolean)
+          .join(" ")
       : null;
 
   const decisionContext = buildDecisionContextFromProject(
@@ -365,6 +377,14 @@ export default async function ProjectPage({
         <SectionHeader title={t("uploadImage")} subtitle={t("uploadImageSubtitle")} />
         <Card>
           <UploadMediaForm projectId={id} />
+        </Card>
+      </section>
+
+      {/* Video — daily work summary (Gemini) */}
+      <section className="mb-aistroyka-8">
+        <SectionHeader title={t("videoDailyTitle")} subtitle={t("videoDailySubtitle")} />
+        <Card>
+          <ProjectVideoDailyAnalysisPanel projectId={id} />
         </Card>
       </section>
 

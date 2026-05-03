@@ -22,7 +22,7 @@ export default async function WorkflowsPage({ params }: Props) {
   const tNav = await getTranslations("public.nav");
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+    <div className="mx-auto min-w-0 max-w-5xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
       <section className="text-center">
         <h1 className="text-[var(--aistroyka-font-title)] font-bold text-[var(--aistroyka-text-primary)]">
           {t("title")}
@@ -68,7 +68,9 @@ export default async function WorkflowsPage({ params }: Props) {
       </section>
 
       <section className="mt-12 flex justify-center">
-        <Link href="/contact" className="btn-primary">{tNav("requestDemo")}</Link>
+        <Link href="/contact" className="btn-primary max-w-full">
+          {tNav("requestDemo")}
+        </Link>
       </section>
     </div>
   );

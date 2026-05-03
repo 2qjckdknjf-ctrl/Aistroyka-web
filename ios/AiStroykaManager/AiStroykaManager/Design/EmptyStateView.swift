@@ -7,7 +7,7 @@ import SwiftUI
 import Shared
 
 struct EmptyStateView: View {
-    var title: String = "Nothing here yet"
+    var title: String = NSLocalizedString("mgr_empty_default_title", comment: "")
     var subtitle: String?
     var actionTitle: String?
     var action: (() -> Void)?
@@ -15,7 +15,7 @@ struct EmptyStateView: View {
     var body: some View {
         VStack(spacing: 12) {
             Image(systemName: "tray")
-                .font(.system(size: 40))
+                .font(.largeTitle)
                 .foregroundStyle(.tertiary)
             Text(title)
                 .font(.headline)

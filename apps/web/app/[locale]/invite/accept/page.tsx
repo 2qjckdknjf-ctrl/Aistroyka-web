@@ -11,7 +11,7 @@ function AcceptInviteContent() {
   const tCommon = useTranslations("common");
   const router = useRouter();
   const searchParams = useSearchParams();
-  const token = searchParams.get("token");
+  const token = searchParams?.get("token");
   const [status, setStatus] = useState<"loading" | "need_login" | "accepting" | "success" | "error">("loading");
   const [errorMessage, setErrorMessage] = useState<string>("");
 

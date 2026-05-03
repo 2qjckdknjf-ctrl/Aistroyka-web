@@ -1,4 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">AiStroyka Worker</string>
+    <string name="worker_topbar_title">AiStroyka Worker</string>
+    <string name="action_sign_out">Sign out</string>
+    <string name="login_prompt">Sign in to your worker account</string>
+    <string name="label_email">Email</string>
+    <string name="label_password">Password</string>
+    <string name="action_sign_in">Sign in</string>
+    <string name="action_dismiss">Dismiss</string>
+    <string name="projects_heading">Projects</string>
+    <string name="projects_empty">No projects yet. Refresh after access is configured.</string>
+    <string name="tasks_today_heading">Tasks for today (optional)</string>
+    <string name="task_none">No task</string>
+    <string name="action_create_report_photo">Create report and add photo</string>
+    <string name="action_refresh_config">Refresh config / projects</string>
+    <string name="report_draft_title">Report draft</string>
+    <string name="report_id_line">Report: %1$s</string>
+    <string name="action_choose_photo">Choose photo</string>
+    <string name="photo_selected">Selected: %1$s</string>
+    <string name="action_submit_report">Submit report</string>
+    <string name="action_back_home">Back home</string>
+    <string name="action_cancel_flow">Cancel (reset)</string>
 </resources>

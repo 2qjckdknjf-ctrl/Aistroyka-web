@@ -45,9 +45,9 @@ Vercel может встречаться как исторический/доп�
 | `OPENAI_API_KEY` | Ключ OpenAI для vision/analysis. |
 | `AI_ANALYSIS_URL` | Опционально: URL in-app AI endpoint (по умолчанию `NEXT_PUBLIC_APP_URL` + `/api/ai/analyze-image`). |
 | `ANTHROPIC_API_KEY` | Опционально: альтернативный vision-провайдер. |
-| `GOOGLE_AI_API_KEY` / `GEMINI_API_KEY` | Опционально: Google AI. |
+| `GOOGLE_AI_API_KEY` / `GEMINI_API_KEY` | Опционально: Google AI (Gemini vision и **обязательно** для `POST /api/v1/ai/analyze-video-daily`). |
 
-Хотя бы один из `OPENAI_API_KEY` или `AI_ANALYSIS_URL` нужен для полноценной работы AI.
+Хотя бы один из `OPENAI_API_KEY` или `AI_ANALYSIS_URL` нужен для полноценной работы классического анализа изображений; **видео «работа за день»** дополнительно требует ключ Gemini (см. выше).
 
 ---
 
@@ -77,6 +77,14 @@ Vercel может встречаться как исторический/доп�
 | `NEXT_PUBLIC_APP_ENV` | Метка окружения для клиента, например `production` или `staging`. |
 | `LOG_LEVEL` | Уровень логов: `info`, `debug`, `warn`, `error`. |
 | `OPENAI_VISION_MODEL` | Модель vision (по умолчанию `gpt-4o`). |
+| `OPENAI_COPILOT_MODEL` | Модель для Copilot (текст / SSE), по умолчанию `gpt-4o-mini`. |
+| `OPENAI_COPILOT_TIMEOUT_MS` | Таймаут одной попытки HTTP к OpenAI для Copilot (15 000–120 000, по умолчанию 60 000). |
+| `OPENAI_COPILOT_MAX_RETRIES` | Число **дополнительных** повторов при 429/5xx для Copilot (0–5, по умолчанию 2). |
+| `OPENAI_TRANSCRIPTION_MODEL` | Модель Whisper (по умолчанию `whisper-1`). |
+| `OPENAI_TRANSCRIPTION_TIMEOUT_MS` | Таймаут запроса транскрибации (30 000–180 000, по умолчанию 120 000). |
+| `OPENAI_TRANSCRIPTION_MAX_RETRIES` | Доп. попытки при 429/5xx для транскрибации (0–5, по умолчанию 1). |
+| `GEMINI_VIDEO_MODEL` | Модель Gemini для анализа видео «работа за день» (по умолчанию — `GEMINI_VISION_MODEL` или `gemini-1.5-flash`). |
+| `GEMINI_VIDEO_FETCH_MAX_BYTES` | Верхняя граница размера скачиваемого ролика на один запрос (байты); не выше лимита тарифа и этого значения (в коде по умолчанию ~45 MiB). |
 | `WEBHOOK_INCOMING_SECRET` | Секрет для входящих webhooks (если используется). |
 
 ---

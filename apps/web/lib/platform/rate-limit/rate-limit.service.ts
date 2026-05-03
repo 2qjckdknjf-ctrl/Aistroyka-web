@@ -4,6 +4,7 @@ import { rateLimitKey, checkAndIncrement } from "./rate-limit.store";
 
 export const HIGH_RISK_ENDPOINTS = [
   "/api/v1/ai/analyze-image",
+  "/api/v1/ai/analyze-video-daily",
   "/api/v1/worker/report/submit",
   "/api/v1/jobs/process",
   "/api/auth/login",
