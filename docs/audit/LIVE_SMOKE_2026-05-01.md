@@ -2,48 +2,61 @@
 
 ## Scope
 
-- Run existing smoke flow against production URL:
-  - health
-  - config
-  - cron tick
-  - auth-sensitive metrics endpoint
+- Run existing smoke script against both production and staging:
+  - `health`
+  - `config`
+  - safe jobs endpoint (`admin/jobs/cron-tick`)
+  - auth-sensitive endpoint (`ops/metrics`)
 
-## Executed command
+## Executed commands
 
 ```bash
 BASE_URL="https://aistroyka.ai" scripts/smoke/pilot_launch.sh
+BASE_URL="https://staging.aistroyka.ai" scripts/smoke/pilot_launch.sh
 ```
 
 ## Output summary
 
+Production (`https://aistroyka.ai`):
 - `PASS: health`
 - `PASS: config`
 - `PASS: cron-tick (no secret)`
 - `FAIL: ops/metrics → HTTP 401 (set COOKIE or AUTH_HEADER, or SMOKE_EMAIL+SMOKE_PASSWORD+Supabase keys)`
+- Exit code: `1`
 
-Script exit code: `1` (expected when any required check fails).
+Staging (`https://staging.aistroyka.ai`):
+- `PASS: health`
+- `PASS: config`
+- `PASS: cron-tick (no secret)`
+- `FAIL: ops/metrics → HTTP 401 (set COOKIE or AUTH_HEADER, or SMOKE_EMAIL+SMOKE_PASSWORD+Supabase keys)`
+- Exit code: `1`
 
 ## Findings
 
-- Public/safe checks passed.
-- Auth-sensitive endpoint failed due to missing auth/session material in runtime environment.
+- Non-auth smoke checks passed on both environments.
+- Auth-sensitive smoke checks are not verifiable without tenant user auth material.
 
-## Blockers
+## External blockers
 
 - Missing one of:
-  - `AUTH_HEADER` (valid user Bearer JWT),
-  - `COOKIE` (valid session cookie),
-  - `SMOKE_EMAIL` + `SMOKE_PASSWORD` + Supabase URL/anon key to mint token.
+  - `AUTH_HEADER="Bearer <valid_user_access_token>"`
+  - `COOKIE="<valid_session_cookie>"`
+  - `SMOKE_EMAIL` + `SMOKE_PASSWORD` + (`SUPABASE_URL`/`NEXT_PUBLIC_SUPABASE_URL`) + (`SUPABASE_ANON_KEY`/`NEXT_PUBLIC_SUPABASE_ANON_KEY`)
 
-## Exact operator command (authenticated smoke)
+## Operator command to close blocker
 
 ```bash
 BASE_URL="https://aistroyka.ai" \
 AUTH_HEADER="Bearer <valid_user_access_token>" \
-CRON_SECRET="<secret_if_required_by_env>" \
+CRON_SECRET="<secret_if_required>" \
+scripts/smoke/pilot_launch.sh
+
+BASE_URL="https://staging.aistroyka.ai" \
+AUTH_HEADER="Bearer <valid_user_access_token>" \
+CRON_SECRET="<secret_if_required>" \
 scripts/smoke/pilot_launch.sh
 ```
 
 ## Verdict
 
-- Smoke verification: **FAIL / BLOCKED (missing auth credentials for protected checks)**.
+- **Smoke: BLOCKED** (safe checks PASS, auth-sensitive checks not verified)

@@ -1,52 +1,56 @@
 # Live Environment Final Verdict (2026-05-01)
 
-## Check matrix
+## Final status matrix
 
 - Supabase live: **BLOCKED**
 - production health: **PASS**
-- system route auth: **BLOCKED (partial)**
-- smoke: **FAIL/BLOCKED**
+- system route auth: **BLOCKED**
+- smoke: **BLOCKED**
 - documents live: **BLOCKED**
 - costs live: **BLOCKED**
-- production-ready: **PARTIAL**
-- pilot-ready: **PARTIAL**
+- production-ready: **NO**
+- pilot-ready: **NO**
 
-## Evidence summary
+## Evidence references
 
-1. Production health endpoint
-   - `GET https://aistroyka.ai/api/v1/health` -> HTTP 200, `ok=true`.
-   - `buildStamp.sha7 = e509f53`, `buildStamp.buildTime = 2026-04-27 10:49`.
-   - Current branch head in this workspace: `e89b4854` (deployed prod is behind local head).
+- `docs/audit/LIVE_SUPABASE_VERIFICATION_2026-05-01.md`
+- `docs/audit/LIVE_DEPLOY_TRUTH_2026-05-01.md`
+- `docs/audit/LIVE_SYSTEM_ROUTE_AUTH_2026-05-01.md`
+- `docs/audit/LIVE_SMOKE_2026-05-01.md`
+- `docs/audit/LIVE_DOCUMENTS_COSTS_VERIFICATION_2026-05-01.md`
 
-2. System route protection
-   - No key: HTTP 401.
-   - Wrong key: HTTP 401.
-   - Correct key path: blocked (`SYSTEM_API_KEY` missing in env).
+## Key proven facts
 
-3. Smoke
-   - `scripts/smoke/pilot_launch.sh` against production:
-     - health/config/cron tick passed,
-     - auth-sensitive metrics failed with HTTP 401 due to missing auth credentials.
+1. Production and staging health are live:
+   - `https://aistroyka.ai/api/v1/health` -> HTTP `200`, `buildStamp.sha7="e509f53"`, `buildStamp.buildTime="2026-04-27 10:49"`
+   - `https://staging.aistroyka.ai/api/v1/health` -> HTTP `200`, `buildStamp.sha7="e3abb52"`, `buildStamp.buildTime="2026-04-26 14:08"`
+   - Current local head: `7178c6bb` (both deployed envs behind local HEAD).
 
-4. Supabase
-   - `supabase projects list` blocked due to missing `SUPABASE_ACCESS_TOKEN`.
-   - No `SUPABASE_PROJECT_REF` provided; link/migration list/dry-run not executable.
+2. `/api/system/*` unauthorized path is protected:
+   - no key: HTTP `401`
+   - wrong key: HTTP `401`
+   - positive path with real key remains unverified (missing `SYSTEM_API_KEY`).
 
-5. Documents/Costs live routes
-   - Anonymous checks return 401 (protection works).
-   - Authenticated tenant checks blocked (no user JWT/session in current environment).
+3. Smoke script executes on both production and staging:
+   - health/config/cron-tick: PASS
+   - auth-sensitive `ops/metrics`: HTTP `401` without tenant auth.
 
-## Remaining external blockers (exact)
+4. Documents/cost routes are protected from anonymous access on both envs (HTTP `401`), but authenticated positive paths are unverified.
 
-1. Missing `SUPABASE_ACCESS_TOKEN`
-2. Missing `SUPABASE_PROJECT_REF`
-3. Missing `SYSTEM_API_KEY`
-4. Missing valid tenant user auth material for smoke and documents/cost checks
+5. Supabase live migration checks did not run due to missing Supabase credentials.
 
-## Exact next operator actions
+## Exact remaining external blockers
+
+1. `SUPABASE_ACCESS_TOKEN` missing
+2. `SUPABASE_PROJECT_REF` missing
+3. `SYSTEM_API_KEY` missing
+4. Tenant auth material missing for protected live checks (`AUTH_HEADER` or `COOKIE`)
+5. Approved staging tenant/project context missing for mutation-safe verification
+
+## Operator closeout commands
 
 ```bash
-# Supabase live verification
+# 1) Supabase live migration verification
 export SUPABASE_ACCESS_TOKEN="<supabase_pat>"
 export SUPABASE_PROJECT_REF="<target_project_ref>"
 supabase projects list
@@ -54,28 +58,22 @@ supabase link --project-ref "$SUPABASE_PROJECT_REF" --yes
 supabase migration list
 supabase db push --dry-run --linked
 
-# System route positive-path auth verification
+# 2) /api/system/* positive-path verification
 export SYSTEM_API_KEY="<real_system_api_key>"
 curl -i https://aistroyka.ai/api/system/health -H "X-System-Key: $SYSTEM_API_KEY"
+curl -i https://aistroyka.ai/api/system/metrics -H "X-System-Key: $SYSTEM_API_KEY"
 
-# Authenticated production smoke
-BASE_URL="https://aistroyka.ai" \
-AUTH_HEADER="Bearer <tenant_user_jwt>" \
-CRON_SECRET="<secret_if_required>" \
-scripts/smoke/pilot_launch.sh
+# 3) Authenticated smoke on production and staging
+export AUTH_HEADER="Bearer <tenant_user_jwt>"
+BASE_URL="https://aistroyka.ai" scripts/smoke/pilot_launch.sh
+BASE_URL="https://staging.aistroyka.ai" scripts/smoke/pilot_launch.sh
 
-# Documents and costs live verification (read-only first)
-export BASE_URL="https://aistroyka.ai"
-export AUTH_HEADER="Bearer <tenant_manager_user_jwt>"
+# 4) Documents/costs authenticated read checks
 export PROJECT_ID="<existing_project_id>"
-curl -i "$BASE_URL/api/v1/projects/$PROJECT_ID/documents" -H "Authorization: $AUTH_HEADER"
-curl -i "$BASE_URL/api/v1/projects/$PROJECT_ID/costs" -H "Authorization: $AUTH_HEADER"
+curl -i "https://aistroyka.ai/api/v1/projects/$PROJECT_ID/documents" -H "Authorization: $AUTH_HEADER"
+curl -i "https://aistroyka.ai/api/v1/projects/$PROJECT_ID/costs" -H "Authorization: $AUTH_HEADER"
 ```
 
-## Final statement
+## Final verdict
 
-Local repository quality gates remain green, and production health endpoint is reachable.  
-However, full closure of external P1 verification blockers is **not possible** in this session due to missing live credentials/secrets.  
-Therefore:
-- production-ready: **PARTIAL**
-- pilot-ready: **PARTIAL**
+External P1 verification blockers are **partially reduced** (negative-path protections and deploy truth proven), but **not closed** due to missing live secrets/auth context.

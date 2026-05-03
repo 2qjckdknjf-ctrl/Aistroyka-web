@@ -2,44 +2,50 @@
 
 ## Scope
 
-- Verify live Supabase access and migration state.
+- Validate live Supabase migration history and dry-run readiness.
 - Required checks:
   - `supabase projects list`
-  - `supabase link --project-ref <target_ref>`
+  - `supabase link --project-ref <target_ref> --yes`
   - `supabase migration list`
   - `supabase db push --dry-run --linked`
-  - live table presence validation.
+  - required live tables presence:
+    - `project_documents`
+    - `project_cost_items`
+    - `project_milestones`
+    - `worker_reports`
+    - `worker_tasks`
+    - `media`
+    - `upload_sessions`
+    - `audit_logs`
 
 ## Executed checks
 
 1. `supabase --version`
-   - Result: `2.75.0` (installed).
-   - Note: CLI reported newer version available (`2.95.4`).
+   - Output: `2.75.0` (CLI installed).
 
-2. `supabase projects list`
-   - Result: **FAIL / BLOCKED**
+2. Environment availability check
+   - `SUPABASE_ACCESS_TOKEN`: **UNSET**
+   - `SUPABASE_PROJECT_REF`: **UNSET**
+
+3. `supabase projects list`
+   - Output: **BLOCKED**
    - Error:
      - `Access token not provided. Supply an access token by running supabase login or setting the SUPABASE_ACCESS_TOKEN environment variable.`
 
-3. Environment presence check
-   - `SUPABASE_ACCESS_TOKEN`: **not set**
-   - `SUPABASE_PROJECT_REF`: **not set**
+## Live verification result
 
-## Live verification status
+- `supabase projects list`: **BLOCKED**
+- `supabase link --project-ref <target_ref> --yes`: **BLOCKED** (no project ref)
+- `supabase migration list`: **BLOCKED**
+- `supabase db push --dry-run --linked`: **BLOCKED**
+- Required table checks on linked live DB: **BLOCKED**
 
-- Supabase live project listing: **BLOCKED**
-- Supabase link to target project: **BLOCKED**
-- Migration history (`supabase migration list`): **BLOCKED**
-- Target dry-run (`supabase db push --dry-run --linked`): **BLOCKED**
-- Live required-table verification: **BLOCKED**
+## Exact external blockers
 
-## Blocker details
+- Missing secret: `SUPABASE_ACCESS_TOKEN`
+- Missing target ref: `SUPABASE_PROJECT_REF`
 
-- Missing required credentials in current session:
-  - `SUPABASE_ACCESS_TOKEN`
-  - `SUPABASE_PROJECT_REF`
-
-## Exact operator commands (once secrets are available)
+## Operator commands to close blocker
 
 ```bash
 export SUPABASE_ACCESS_TOKEN="<supabase_pat>"
@@ -49,11 +55,8 @@ supabase projects list
 supabase link --project-ref "$SUPABASE_PROJECT_REF" --yes
 supabase migration list
 supabase db push --dry-run --linked
-```
 
-Optional (table presence sanity after linking, non-destructive):
-
-```bash
+# Non-destructive live table existence check
 supabase db query "
 select to_regclass('public.project_documents') as project_documents,
        to_regclass('public.project_cost_items') as project_cost_items,
@@ -68,4 +71,4 @@ select to_regclass('public.project_documents') as project_documents,
 
 ## Verdict
 
-- **Supabase live verification: BLOCKED (credentials missing).**
+- **Supabase live: BLOCKED**
