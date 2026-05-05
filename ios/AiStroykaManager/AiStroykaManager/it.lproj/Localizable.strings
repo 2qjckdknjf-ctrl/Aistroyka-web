@@ -1,0 +1,8 @@
+"mgr_start_title" = "Partenza senza dubbi";
+"mgr_start_progress_fmt" = "Progresso avvio: %d/%d passaggi completati";
+"mgr_start_step_1" = "Apri la coda progetto e conferma le approvazioni in attesa.";
+"mgr_start_step_2" = "Rivedi i report con evidenze incomplete e assegna follow-up.";
+"mgr_start_step_3" = "Monitora gli insight AI e chiudi prima i rischi alti.";
+"mgr_ai_hints_title" = "Suggerimenti AI per i prossimi passi";
+"mgr_ai_hint_1" = "Se aumentano i task in ritardo, riequilibra i responsabili oggi.";
+"mgr_ai_hint_2" = "Se i report sono in ritardo, scala i blocchi nel canale team.";

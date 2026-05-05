@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="worker_guide_title">Bienvenido a AiStroyka Worker</string>
+    <string name="worker_guide_subtitle">Guía rápida de primer inicio para reportes en campo.</string>
+    <string name="worker_guide_step_1">Inicia sesión con tu cuenta de trabajador asignada.</string>
+    <string name="worker_guide_step_2">Crea un informe y adjunta una foto clara del sitio.</string>
+    <string name="worker_guide_step_3">Envía el informe para que el manager lo revise rápido.</string>
+    <string name="worker_guide_start">Empezar a trabajar</string>
+    <string name="worker_start_title">Inicio sin dudas</string>
+    <string name="worker_start_progress_fmt">Progreso de inicio: %1$d/%2$d pasos completados</string>
+    <string name="worker_start_step_1">Inicia turno y confirma las tareas asignadas para hoy.</string>
+    <string name="worker_start_step_2">Crea un informe diario claro con evidencia fotográfica.</string>
+    <string name="worker_start_step_3">Envía el informe y resuelve rápido el feedback del manager.</string>
+    <string name="worker_ai_hints_title">Sugerencias de IA para los siguientes pasos</string>
+    <string name="worker_ai_hint_1">Si hay cargas pendientes, reanuda la cola antes de terminar el turno.</string>
+    <string name="worker_ai_hint_2">Si el estado de una tarea no está claro, añade foto y nota corta.</string>
+</resources>

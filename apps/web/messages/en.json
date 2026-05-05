@@ -40,6 +40,7 @@
     "last90Days": "Last 90 days",
     "search": "Search",
     "searchPlaceholder": "Search…",
+    "helpCenter": "Help center",
     "dashboardNavigation": "Dashboard navigation",
     "main": "Main"
   },
@@ -129,6 +130,97 @@
     "onboarding": "Onboarding",
     "welcomeToAistroyka": "Welcome to Aistroyka",
     "completeStepsToGetStarted": "Complete these steps to get started."
+  },
+  "helpCenter": {
+    "title": "Project guide and knowledge base",
+    "subtitle": "Use this multilingual guide to onboard teams and answer daily project questions.",
+    "roleHint": "Recommendations for role: {role}",
+    "bestAnswerTitle": "Best answer for your query",
+    "recommended": "Recommended",
+    "roles": {
+      "manager": "Manager",
+      "admin": "Admin",
+      "client": "Client",
+      "owner": "Owner"
+    },
+    "launch": {
+      "title": "Start without doubts",
+      "loading": "Checking startup progress…",
+      "progress": "Startup progress: {completed}/{total} steps complete.",
+      "roleApplied": "Guidance adapted for role: {role}",
+      "rolePlanTitle": "Your first 3 actions by role",
+      "aiHintsTitle": "AI hints for next steps",
+      "goToHint": "Open recommended section →",
+      "openHelp": "Open full guide",
+      "doNow": "Do now",
+      "review": "Review",
+      "stepLabels": {
+        "createProject": "Create first project",
+        "inviteTeam": "Invite your team",
+        "addTask": "Create first task",
+        "uploadReport": "Submit first daily report",
+        "viewAi": "Open AI insights"
+      }
+    },
+    "searchLabel": "Search in help center",
+    "searchPlaceholder": "Search by topic, action, or module…",
+    "searching": "Searching in knowledge base…",
+    "relatedTitle": "Related materials",
+    "noResults": "No matching materials. Try another phrase or open a related section.",
+    "openSection": "Open section →",
+    "guide": {
+      "title": "Welcome to Aistroyka",
+      "subtitle": "A quick first-run guide to help your team start correctly.",
+      "step1": "Open the dashboard and review operational priorities for today.",
+      "step2": "Create or open a project and add tasks, reports, and evidence.",
+      "step3": "Use AI and alerts to detect risks early and assign follow-up actions.",
+      "openHelp": "Open help center",
+      "startWorking": "Start working"
+    },
+    "articles": {
+      "gettingStarted": {
+        "title": "Getting started in 15 minutes",
+        "summary": "Launch your first workspace flow from dashboard to actionable queue.",
+        "point1": "Review KPI blocks and queue cards on the dashboard home.",
+        "point2": "Check approvals and unresolved items before adding new work.",
+        "point3": "Use date filters to focus on current sprint or reporting period."
+      },
+      "projectSetup": {
+        "title": "Project setup and structure",
+        "summary": "Build a clear project structure so reporting and AI stay reliable.",
+        "point1": "Create project scope, milestones, and baseline budget lines.",
+        "point2": "Invite internal team roles and external stakeholders separately.",
+        "point3": "Keep documents, change orders, and decisions linked to records."
+      },
+      "dailyWork": {
+        "title": "Daily execution and reporting",
+        "summary": "Run day-to-day operations with traceable tasks and evidence.",
+        "point1": "Assign tasks by project and monitor due or overdue statuses.",
+        "point2": "Collect daily reports with media so field progress is visible.",
+        "point3": "Use approvals flow to close the loop on submitted work."
+      },
+      "aiIntelligence": {
+        "title": "AI intelligence and risk control",
+        "summary": "Use AI as decision support, then validate and execute in workflow.",
+        "point1": "Open project Intelligence to review risk radar and evidence gaps.",
+        "point2": "Investigate alerts and failure patterns before they escalate.",
+        "point3": "Turn recommendations into tasks with clear owners and deadlines."
+      },
+      "clientCollaboration": {
+        "title": "Client collaboration and governance",
+        "summary": "Coordinate discussions, approvals, and governance with full audit trail.",
+        "point1": "Track client requests as structured records, not chat messages.",
+        "point2": "Use discussions and change orders for formal decision cycles.",
+        "point3": "Review governance cases when risks affect multiple projects."
+      },
+      "mobileApps": {
+        "title": "Manager and Worker mobile apps",
+        "summary": "Connect field execution with dashboard control in real time.",
+        "point1": "Manager app focuses on review queues and approval actions.",
+        "point2": "Worker app focuses on report creation, photo upload, and submission.",
+        "point3": "Keep users signed in with correct roles to sync project context."
+      }
+    }
   },
   "projects": {
     "title": "Projects",

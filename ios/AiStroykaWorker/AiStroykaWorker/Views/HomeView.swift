@@ -20,6 +20,8 @@ struct HomeView: View {
     @State private var todayTasks: [TaskDTO] = []
     @State private var tasksLoading = false
     @State private var showDiagnostics = false
+    @State private var activationStatus: WorkerActivationStatusDTO?
+    @State private var helpHints: [WorkerHelpHintDTO] = []
 
     private var shiftStarted: Bool { store.state.shift.isStarted }
     private var dayId: String? { store.state.shift.dayId }
@@ -27,6 +29,7 @@ struct HomeView: View {
     var body: some View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 16) {
+                workerStartGuidanceCard
                 let pending = opStore.pendingCount()
                 if pending > 0 {
                     HStack {
@@ -136,6 +139,7 @@ struct HomeView: View {
         }
         .onAppear {
             loadTodayTasks()
+            loadHelpHints()
             OperationQueueExecutor.shared.runLoop()
             if syncService.status == .idle || syncService.status == .offline {
                 syncService.runSyncIfOnline()
@@ -149,6 +153,55 @@ struct HomeView: View {
             default: break
             }
         }
+    }
+
+    private var workerStartGuidanceCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(NSLocalizedString("worker_start_title", comment: ""))
+                .font(.headline)
+            Text(
+                String(
+                    format: NSLocalizedString("worker_start_progress_fmt", comment: ""),
+                    completedLaunchSteps,
+                    totalLaunchSteps
+                )
+            )
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+            Text("\(launchDone(activationStatus?.getStarted?.addTask) ? "✓" : "○") \(NSLocalizedString("worker_start_step_1", comment: ""))")
+                .font(.subheadline)
+            Text("\(launchDone(activationStatus?.getStarted?.uploadReport) ? "✓" : "○") \(NSLocalizedString("worker_start_step_2", comment: ""))")
+                .font(.subheadline)
+            Text("\(launchDone(activationStatus?.getStarted?.viewAi) ? "✓" : "○") \(NSLocalizedString("worker_start_step_3", comment: ""))")
+                .font(.subheadline)
+
+            Text(NSLocalizedString("worker_ai_hints_title", comment: ""))
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .padding(.top, 4)
+            if helpHints.isEmpty {
+                Text("• \(NSLocalizedString("worker_ai_hint_1", comment: ""))")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Text("• \(NSLocalizedString("worker_ai_hint_2", comment: ""))")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } else {
+                ForEach(Array(helpHints.prefix(2).enumerated()), id: \.offset) { _, hint in
+                    Text("• \(hint.title)")
+                        .font(.caption)
+                    if !hint.reason.isEmpty {
+                        Text(hint.reason)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+        }
+        .padding()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.orange.opacity(0.12))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
     private var syncStatusLabel: String {
@@ -259,5 +312,46 @@ struct HomeView: View {
                 }
             }
         }
+    }
+
+    private func loadHelpHints() {
+        Task {
+            let activation = try? await WorkerAPI.activationStatus()
+            await MainActor.run {
+                activationStatus = activation
+            }
+            guard let getStarted = activation?.getStarted else {
+                await MainActor.run { helpHints = [] }
+                return
+            }
+            let hints = (try? await WorkerAPI.helpHints(
+                locale: supportedHelpLocale(),
+                role: "manager",
+                getStarted: getStarted
+            )) ?? []
+            await MainActor.run {
+                helpHints = hints
+            }
+        }
+    }
+
+    private var completedLaunchSteps: Int {
+        [
+            activationStatus?.getStarted?.createProject,
+            activationStatus?.getStarted?.inviteTeam,
+            activationStatus?.getStarted?.addTask,
+            activationStatus?.getStarted?.uploadReport,
+            activationStatus?.getStarted?.viewAi,
+        ].filter { $0 == true }.count
+    }
+
+    private var totalLaunchSteps: Int { 5 }
+
+    private func launchDone(_ value: Bool?) -> Bool { value == true }
+
+    private func supportedHelpLocale() -> String {
+        let preferred = Locale.preferredLanguages.first ?? "en"
+        let language = String(preferred.prefix(2)).lowercased()
+        return ["ru", "es", "it"].contains(language) ? language : "en"
     }
 }

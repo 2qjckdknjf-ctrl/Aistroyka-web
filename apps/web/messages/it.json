@@ -40,6 +40,7 @@
     "last90Days": "Ultimi 90 giorni",
     "search": "Cerca",
     "searchPlaceholder": "Cerca…",
+    "helpCenter": "Centro assistenza",
     "dashboardNavigation": "Navigazione dashboard",
     "main": "Principale"
   },
@@ -85,6 +86,97 @@
     "onboarding": "Onboarding",
     "welcomeToAistroyka": "Benvenuto in Aistroyka",
     "completeStepsToGetStarted": "Completa questi passaggi per iniziare."
+  },
+  "helpCenter": {
+    "title": "Guida progetto e base di conoscenza",
+    "subtitle": "Guida multilingue per onboarding e domande operative sui progetti.",
+    "roleHint": "Raccomandazioni per ruolo: {role}",
+    "bestAnswerTitle": "Migliore risposta per la tua ricerca",
+    "recommended": "Consigliato",
+    "roles": {
+      "manager": "Manager",
+      "admin": "Admin",
+      "client": "Cliente",
+      "owner": "Proprietario"
+    },
+    "launch": {
+      "title": "Partenza senza dubbi",
+      "loading": "Verifica del progresso di avvio…",
+      "progress": "Progresso avvio: {completed}/{total} passaggi completati.",
+      "roleApplied": "Indicazioni adattate al ruolo: {role}",
+      "rolePlanTitle": "Le tue prime 3 azioni per ruolo",
+      "aiHintsTitle": "Suggerimenti AI per i prossimi passi",
+      "goToHint": "Apri sezione consigliata →",
+      "openHelp": "Apri guida completa",
+      "doNow": "Fallo ora",
+      "review": "Rivedi",
+      "stepLabels": {
+        "createProject": "Crea il primo progetto",
+        "inviteTeam": "Invita il team",
+        "addTask": "Crea la prima attività",
+        "uploadReport": "Invia il primo report giornaliero",
+        "viewAi": "Apri insight AI"
+      }
+    },
+    "searchLabel": "Cerca nel centro assistenza",
+    "searchPlaceholder": "Cerca per tema, azione o modulo…",
+    "searching": "Ricerca nella base di conoscenza…",
+    "relatedTitle": "Materiali correlati",
+    "noResults": "Nessun risultato. Prova con un'altra frase o apri una sezione correlata.",
+    "openSection": "Apri sezione →",
+    "guide": {
+      "title": "Benvenuto in Aistroyka",
+      "subtitle": "Una guida rapida al primo avvio per partire nel modo corretto.",
+      "step1": "Apri la dashboard e controlla le priorità operative del giorno.",
+      "step2": "Crea o apri un progetto e aggiungi task, report ed evidenze.",
+      "step3": "Usa AI e alert per rilevare rischi in anticipo e assegnare azioni.",
+      "openHelp": "Apri centro assistenza",
+      "startWorking": "Inizia a lavorare"
+    },
+    "articles": {
+      "gettingStarted": {
+        "title": "Avvio in 15 minuti",
+        "summary": "Attiva il primo flusso operativo dalla dashboard alle azioni concrete.",
+        "point1": "Controlla KPI e code operative nella home dashboard.",
+        "point2": "Chiudi approvazioni pendenti prima di aprire nuovo lavoro.",
+        "point3": "Usa i filtri data per concentrarti sulla finestra corrente."
+      },
+      "projectSetup": {
+        "title": "Setup e struttura progetto",
+        "summary": "Costruisci una struttura chiara per report affidabili e AI stabile.",
+        "point1": "Definisci milestone, budget e perimetro operativo.",
+        "point2": "Gestisci separatamente team interno e stakeholder esterni.",
+        "point3": "Collega documenti, change order e decisioni ai record."
+      },
+      "dailyWork": {
+        "title": "Esecuzione quotidiana e reporting",
+        "summary": "Gestisci l'operatività con task tracciabili ed evidenze sul campo.",
+        "point1": "Assegna task per progetto e monitora scadenze e ritardi.",
+        "point2": "Raccogli report giornalieri con foto/video dal cantiere.",
+        "point3": "Usa il flusso approvazioni per chiudere il ciclo operativo."
+      },
+      "aiIntelligence": {
+        "title": "AI intelligence e controllo rischi",
+        "summary": "Usa l'IA come supporto decisionale e trasforma insight in azioni.",
+        "point1": "Apri Intelligence progetto per risk radar e gap evidenze.",
+        "point2": "Analizza alert e failure pattern prima dell'escalation.",
+        "point3": "Converti raccomandazioni IA in task con owner e deadline."
+      },
+      "clientCollaboration": {
+        "title": "Collaborazione cliente e governance",
+        "summary": "Gestisci richieste e decisioni con storico verificabile.",
+        "point1": "Traccia le richieste cliente come record strutturati, non chat.",
+        "point2": "Usa discussioni e change order per decisioni formali.",
+        "point3": "Apri casi governance quando il rischio è trasversale."
+      },
+      "mobileApps": {
+        "title": "App mobile Manager e Worker",
+        "summary": "Collega l'esecuzione in campo al controllo in dashboard.",
+        "point1": "Manager app: coda revisioni, approvazioni e decisioni.",
+        "point2": "Worker app: creazione report, upload foto e invio.",
+        "point3": "Mantieni ruoli e sessioni corretti per una sincronizzazione affidabile."
+      }
+    }
   },
   "dashboard": {
     "title": "Dashboard",

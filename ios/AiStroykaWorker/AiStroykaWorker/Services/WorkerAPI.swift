@@ -179,6 +179,56 @@ enum WorkerAPI {
             idempotencyKey: idempotencyKey
         )
     }
+
+    /// GET /api/v1/activation/status — onboarding/checklist progress.
+    static func activationStatus() async throws -> WorkerActivationStatusDTO {
+        try await APIClient.shared.request(path: "activation/status")
+    }
+
+    /// POST /api/v1/help/hints — localized hints for next steps.
+    static func helpHints(locale: String, role: String, getStarted: WorkerGetStartedStatusDTO?) async throws -> [WorkerHelpHintDTO] {
+        struct Body: Encodable {
+            let locale: String
+            let role: String
+            let getStarted: WorkerGetStartedStatusDTO?
+        }
+        let r: WorkerHelpHintsResponseDTO = try await APIClient.shared.request(
+            path: "help/hints",
+            method: "POST",
+            body: Body(locale: locale, role: role, getStarted: getStarted)
+        )
+        return r.hints ?? []
+    }
 }
 
 private struct EmptyBody: Encodable {}
+
+struct WorkerActivationStatusDTO: Decodable {
+    let projectCount: Int?
+    let hasInvited: Bool?
+    let taskCount: Int?
+    let reportCount: Int?
+    let hasAiInsight: Bool?
+    let showOnboarding: Bool?
+    let getStarted: WorkerGetStartedStatusDTO?
+}
+
+struct WorkerGetStartedStatusDTO: Codable {
+    let createProject: Bool?
+    let inviteTeam: Bool?
+    let addTask: Bool?
+    let uploadReport: Bool?
+    let viewAi: Bool?
+}
+
+struct WorkerHelpHintDTO: Decodable {
+    let step: String
+    let title: String
+    let reason: String
+    let action: String
+    let href: String
+}
+
+struct WorkerHelpHintsResponseDTO: Decodable {
+    let hints: [WorkerHelpHintDTO]?
+}

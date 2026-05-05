@@ -1,0 +1,8 @@
+"mgr_start_title" = "Inicio sin dudas";
+"mgr_start_progress_fmt" = "Progreso de inicio: %d/%d pasos completados";
+"mgr_start_step_1" = "Abre la cola del proyecto y confirma aprobaciones pendientes.";
+"mgr_start_step_2" = "Revisa informes con evidencia incompleta y asigna seguimiento.";
+"mgr_start_step_3" = "Supervisa insights de IA y cierra primero riesgos altos.";
+"mgr_ai_hints_title" = "Sugerencias de IA para los siguientes pasos";
+"mgr_ai_hint_1" = "Si crecen tareas vencidas, reequilibra responsables hoy.";
+"mgr_ai_hint_2" = "Si hay retrasos en informes, escala bloqueos en el canal del equipo.";

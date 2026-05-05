@@ -1,0 +1,8 @@
+"worker_start_title" = "Partenza senza dubbi";
+"worker_start_progress_fmt" = "Progresso avvio: %d/%d passaggi completati";
+"worker_start_step_1" = "Avvia il turno e conferma i task assegnati per oggi.";
+"worker_start_step_2" = "Crea un report giornaliero chiaro con evidenze fotografiche.";
+"worker_start_step_3" = "Invia il report e risolvi rapidamente il feedback del manager.";
+"worker_ai_hints_title" = "Suggerimenti AI per i prossimi passi";
+"worker_ai_hint_1" = "Se ci sono upload in coda, riprendi la coda prima di fine turno.";
+"worker_ai_hint_2" = "Se lo stato del task non e chiaro, aggiungi foto e nota breve.";

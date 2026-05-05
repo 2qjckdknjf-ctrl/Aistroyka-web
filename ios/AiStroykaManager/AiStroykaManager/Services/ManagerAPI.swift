@@ -171,6 +171,26 @@ enum ManagerAPI {
     static func markNotificationRead(id: String) async throws {
         let _: MarkReadResponse = try await APIClient.shared.request(path: "notifications/\(id)/read", method: "PATCH")
     }
+
+    /// GET /api/v1/activation/status — onboarding/checklist progress.
+    static func activationStatus() async throws -> ActivationStatusDTO {
+        try await APIClient.shared.request(path: "activation/status")
+    }
+
+    /// POST /api/v1/help/hints — role/locale-aware hints for next steps.
+    static func helpHints(locale: String, role: String, getStarted: GetStartedStatusDTO?) async throws -> [HelpHintDTO] {
+        struct Body: Encodable {
+            let locale: String
+            let role: String
+            let getStarted: GetStartedStatusDTO?
+        }
+        let r: HelpHintsResponseDTO = try await APIClient.shared.request(
+            path: "help/hints",
+            method: "POST",
+            body: Body(locale: locale, role: role, getStarted: getStarted)
+        )
+        return r.hints ?? []
+    }
 }
 
 // MARK: - Manager-specific DTOs (backend contract)
@@ -403,3 +423,35 @@ struct AIJobDTO: Decodable {
     }
 }
 struct AIRequestsResponse: Decodable { let data: [AIJobDTO]? }
+
+// MARK: - Help/Activation DTOs
+
+struct ActivationStatusDTO: Decodable {
+    let projectCount: Int?
+    let hasInvited: Bool?
+    let taskCount: Int?
+    let reportCount: Int?
+    let hasAiInsight: Bool?
+    let showOnboarding: Bool?
+    let getStarted: GetStartedStatusDTO?
+}
+
+struct GetStartedStatusDTO: Codable {
+    let createProject: Bool?
+    let inviteTeam: Bool?
+    let addTask: Bool?
+    let uploadReport: Bool?
+    let viewAi: Bool?
+}
+
+struct HelpHintDTO: Decodable {
+    let step: String
+    let title: String
+    let reason: String
+    let action: String
+    let href: String
+}
+
+struct HelpHintsResponseDTO: Decodable {
+    let hints: [HelpHintDTO]?
+}

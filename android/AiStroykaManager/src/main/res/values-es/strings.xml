@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="manager_guide_title">Bienvenido a AiStroyka Manager</string>
+    <string name="manager_guide_subtitle">Guía rápida de primer inicio para control del proyecto.</string>
+    <string name="manager_guide_step_1">Revisa colas operativas y aprobaciones pendientes.</string>
+    <string name="manager_guide_step_2">Abre un proyecto, revisa informes y valida evidencias.</string>
+    <string name="manager_guide_step_3">Usa estados de IA para priorizar acciones del manager.</string>
+    <string name="manager_guide_start">Empezar a trabajar</string>
+    <string name="manager_start_title">Inicio sin dudas</string>
+    <string name="manager_start_progress_fmt">Progreso de inicio: %1$d/%2$d pasos completados</string>
+    <string name="manager_start_step_1">Abre la cola del proyecto y confirma aprobaciones pendientes.</string>
+    <string name="manager_start_step_2">Revisa informes con evidencia incompleta y asigna seguimiento.</string>
+    <string name="manager_start_step_3">Supervisa insights de IA y cierra primero riesgos altos.</string>
+    <string name="manager_ai_hints_title">Sugerencias de IA para los siguientes pasos</string>
+    <string name="manager_ai_hint_1">Si crecen tareas vencidas, reequilibra responsables hoy.</string>
+    <string name="manager_ai_hint_2">Si hay retrasos en informes, escala bloqueos en el canal del equipo.</string>
+</resources>

@@ -1,0 +1,8 @@
+"worker_start_title" = "Inicio sin dudas";
+"worker_start_progress_fmt" = "Progreso de inicio: %d/%d pasos completados";
+"worker_start_step_1" = "Inicia turno y confirma las tareas asignadas para hoy.";
+"worker_start_step_2" = "Crea un informe diario claro con evidencia fotográfica.";
+"worker_start_step_3" = "Envía el informe y resuelve rápido el feedback del manager.";
+"worker_ai_hints_title" = "Sugerencias de IA para los siguientes pasos";
+"worker_ai_hint_1" = "Si hay cargas pendientes, reanuda la cola antes de terminar el turno.";
+"worker_ai_hint_2" = "Si el estado de una tarea no está claro, añade foto y nota corta.";

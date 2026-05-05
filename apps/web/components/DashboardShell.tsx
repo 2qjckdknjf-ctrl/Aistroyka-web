@@ -8,6 +8,7 @@ import { BuildStamp } from "./BuildStamp";
 import { Logo } from "@/components/brand/Logo";
 import { routing } from "@/i18n/routing";
 import { getDashboardNavIncludesAdmin } from "./dashboard-nav.utils";
+import { FirstLaunchGuide, LaunchConfidenceBanner } from "@/components/onboarding";
 
 const SIDEBAR_LINKS = [
   { href: "/dashboard", key: "overview" as const },
@@ -20,6 +21,7 @@ const SIDEBAR_LINKS = [
   { href: "/dashboard/devices", key: "devices" as const },
   { href: "/dashboard/ai", key: "ai" as const },
   { href: "/dashboard/alerts", key: "alerts" as const },
+  { href: "/dashboard/help", key: "helpCenter" as const },
 ] as const;
 
 const ADMIN_LINKS = [
@@ -141,6 +143,7 @@ export function DashboardShell({
       )}
 
       <div className="flex flex-1 flex-col min-w-0">
+        <FirstLaunchGuide />
         {/* Topbar */}
         <header className="sticky top-0 z-20 border-b border-aistroyka-border-subtle bg-aistroyka-surface">
           <div className="flex flex-wrap items-center justify-between gap-2 px-[var(--aistroyka-space-4)] py-[var(--aistroyka-space-3)]">
@@ -195,6 +198,7 @@ export function DashboardShell({
 
         <div className="flex flex-1 flex-col min-h-0">
           <main className="mx-auto min-w-0 w-full max-w-6xl flex-1 px-[var(--aistroyka-space-4)] py-[var(--aistroyka-space-6)]">
+            <LaunchConfidenceBanner />
             {children}
           </main>
           <footer

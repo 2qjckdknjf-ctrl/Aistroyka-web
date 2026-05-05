@@ -4,6 +4,7 @@ import ai.aistroyka.manager.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -35,11 +36,16 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
@@ -49,8 +55,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import ai.aistroyka.manager.ManagerViewModel
+import ai.aistroyka.shared.GetStartedDto
+import ai.aistroyka.shared.HelpHintDto
 import ai.aistroyka.shared.ReportMediaItemDto
 import coil.compose.AsyncImage
+
+private const val MANAGER_PREFS = "aistroyka_manager_prefs"
+private const val MANAGER_FIRST_LAUNCH_KEY = "first_launch_guide_seen"
 
 @OptIn(ExperimentalComposeUiApi::class)
 private fun Modifier.pilotAutomatorTag(tag: String): Modifier =
@@ -61,31 +72,87 @@ private fun Modifier.pilotAutomatorTag(tag: String): Modifier =
 fun ManagerApp() {
     val vm: ManagerViewModel = viewModel()
     val state by vm.state.collectAsState()
+    val context = LocalContext.current
+    val prefs = remember { context.getSharedPreferences(MANAGER_PREFS, 0) }
+    var showGuide by rememberSaveable { mutableStateOf(!prefs.getBoolean(MANAGER_FIRST_LAUNCH_KEY, false)) }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.manager_topbar_title)) },
-                actions = {
-                    if (state.screen != "login") {
-                        TextButton(onClick = { vm.logout() }) { Text(stringResource(R.string.action_sign_out)) }
+    AiStroykaManagerTheme {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(R.string.manager_topbar_title)) },
+                    actions = {
+                        if (state.screen != "login") {
+                            TextButton(onClick = { vm.logout() }) { Text(stringResource(R.string.action_sign_out)) }
+                        }
+                    }
+                )
+            }
+        ) { padding ->
+            Surface(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                color = MaterialTheme.colorScheme.background
+            ) {
+                Box(Modifier.fillMaxSize()) {
+                    when (state.screen) {
+                        "login" -> LoginScreen(vm)
+                        "home" -> HomeScreen(vm)
+                        "reports" -> ReportsScreen(vm)
+                        "detail" -> DetailScreen(vm)
+                        else -> LoginScreen(vm)
+                    }
+                    if (showGuide) {
+                        FirstLaunchGuide(
+                            onDismiss = {
+                                prefs.edit().putBoolean(MANAGER_FIRST_LAUNCH_KEY, true).apply()
+                                showGuide = false
+                            }
+                        )
                     }
                 }
-            )
+            }
         }
-    ) { padding ->
-        Surface(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
-            color = MaterialTheme.colorScheme.background
+    }
+}
+
+@Composable
+private fun FirstLaunchGuide(onDismiss: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.55f))
+            .padding(20.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Card(
+            shape = RoundedCornerShape(20.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
-            when (state.screen) {
-                "login" -> LoginScreen(vm)
-                "home" -> HomeScreen(vm)
-                "reports" -> ReportsScreen(vm)
-                "detail" -> DetailScreen(vm)
-                else -> LoginScreen(vm)
+            Column(
+                modifier = Modifier.padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.manager_guide_title),
+                    style = MaterialTheme.typography.titleLarge
+                )
+                Text(
+                    text = stringResource(R.string.manager_guide_subtitle),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(text = "1. ${stringResource(R.string.manager_guide_step_1)}")
+                Text(text = "2. ${stringResource(R.string.manager_guide_step_2)}")
+                Text(text = "3. ${stringResource(R.string.manager_guide_step_3)}")
+                Button(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = onDismiss
+                ) {
+                    Text(stringResource(R.string.manager_guide_start))
+                }
             }
         }
     }
@@ -163,6 +230,11 @@ private fun HomeScreen(vm: ManagerViewModel) {
         Spacer(Modifier.height(8.dp))
         state.opsPendingLine?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
         Spacer(Modifier.height(16.dp))
+        StartGuidanceCard(
+            getStarted = state.getStarted,
+            hints = state.helpHints,
+        )
+        Spacer(Modifier.height(16.dp))
         state.banner?.let {
             Text(it, color = MaterialTheme.colorScheme.error)
             TextButton(onClick = { vm.clearBanner() }) { Text(stringResource(R.string.action_dismiss)) }
@@ -209,6 +281,81 @@ private fun HomeScreen(vm: ManagerViewModel) {
         Spacer(Modifier.height(12.dp))
         TextButton(onClick = { vm.refreshBootstrap() }, enabled = !state.busy) {
             Text(stringResource(R.string.action_refresh))
+        }
+    }
+}
+
+@Composable
+private fun StartGuidanceCard(
+    getStarted: GetStartedDto?,
+    hints: List<HelpHintDto>,
+) {
+    val completed = listOf(
+        getStarted?.createProject,
+        getStarted?.inviteTeam,
+        getStarted?.addTask,
+        getStarted?.uploadReport,
+        getStarted?.viewAi,
+    ).count { it == true }
+    val total = 5
+
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(
+                text = stringResource(R.string.manager_start_title),
+                style = MaterialTheme.typography.titleSmall
+            )
+            Text(
+                text = stringResource(R.string.manager_start_progress_fmt, completed, total),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                text = "${if (getStarted?.createProject == true) "✓" else "○"} ${stringResource(R.string.manager_start_step_1)}",
+                style = MaterialTheme.typography.bodySmall
+            )
+            Text(
+                text = "${if (getStarted?.inviteTeam == true) "✓" else "○"} ${stringResource(R.string.manager_start_step_2)}",
+                style = MaterialTheme.typography.bodySmall
+            )
+            Text(
+                text = "${if (getStarted?.addTask == true) "✓" else "○"} ${stringResource(R.string.manager_start_step_3)}",
+                style = MaterialTheme.typography.bodySmall
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = stringResource(R.string.manager_ai_hints_title),
+                style = MaterialTheme.typography.labelLarge
+            )
+            if (hints.isNotEmpty()) {
+                hints.take(2).forEach { hint ->
+                    Text(
+                        text = "\u2022 ${hint.title}",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    if (hint.reason.isNotBlank()) {
+                        Text(
+                            text = hint.reason,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            } else {
+                Text(
+                    text = "\u2022 ${stringResource(R.string.manager_ai_hint_1)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = "\u2022 ${stringResource(R.string.manager_ai_hint_2)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }
