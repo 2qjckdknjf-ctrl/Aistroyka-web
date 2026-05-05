@@ -9,6 +9,7 @@ import { Logo } from "@/components/brand/Logo";
 import { routing } from "@/i18n/routing";
 import { getDashboardNavIncludesAdmin } from "./dashboard-nav.utils";
 import { FirstLaunchGuide, LaunchConfidenceBanner } from "@/components/onboarding";
+import { AIGuidePanel } from "@/components/help/AIGuidePanel";
 
 const SIDEBAR_LINKS = [
   { href: "/dashboard", key: "overview" as const },
@@ -144,6 +145,7 @@ export function DashboardShell({
 
       <div className="flex flex-1 flex-col min-w-0">
         <FirstLaunchGuide />
+        <AIGuidePanel />
         {/* Topbar */}
         <header className="sticky top-0 z-20 border-b border-aistroyka-border-subtle bg-aistroyka-surface">
           <div className="flex flex-wrap items-center justify-between gap-2 px-[var(--aistroyka-space-4)] py-[var(--aistroyka-space-3)]">

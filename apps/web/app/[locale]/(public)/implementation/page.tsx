@@ -38,7 +38,7 @@ export default async function ImplementationPage({ params }: Props) {
               key={key}
               className="flex gap-4 rounded-[var(--aistroyka-radius-card)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] p-4"
             >
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--aistroyka-accent)] text-[var(--aistroyka-font-footnote)] font-semibold text-white">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--aistroyka-accent)] text-[var(--aistroyka-font-footnote)] font-semibold text-aistroyka-text-inverse">
                 {i + 1}
               </span>
               <span className="text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-primary)]">

@@ -191,6 +191,39 @@ enum ManagerAPI {
         )
         return r.hints ?? []
     }
+
+    /// POST /api/v1/help/assistant — luxury guide with context, confidence and risks.
+    static func helpAssistant(
+        query: String,
+        locale: String,
+        role: String,
+        pathname: String,
+        activation: ActivationStatusDTO?
+    ) async throws -> HelpAssistantResponseDTO {
+        struct Body: Encodable {
+            let query: String
+            let locale: String
+            let role: String
+            let pathname: String
+            let getStarted: GetStartedStatusDTO?
+            let projectCount: Int?
+            let taskCount: Int?
+            let reportCount: Int?
+            let hasAiInsight: Bool?
+        }
+        let body = Body(
+            query: query,
+            locale: locale,
+            role: role,
+            pathname: pathname,
+            getStarted: activation?.getStarted,
+            projectCount: activation?.projectCount,
+            taskCount: activation?.taskCount,
+            reportCount: activation?.reportCount,
+            hasAiInsight: activation?.hasAiInsight
+        )
+        return try await APIClient.shared.request(path: "help/assistant", method: "POST", body: body)
+    }
 }
 
 // MARK: - Manager-specific DTOs (backend contract)
@@ -454,4 +487,19 @@ struct HelpHintDTO: Decodable {
 
 struct HelpHintsResponseDTO: Decodable {
     let hints: [HelpHintDTO]?
+}
+
+struct HelpAssistantRiskSignalDTO: Decodable {
+    let id: String
+    let title: String
+    let detail: String
+    let severity: String
+    let href: String
+}
+
+struct HelpAssistantResponseDTO: Decodable {
+    let summary: String
+    let answer: String
+    let riskSignals: [HelpAssistantRiskSignalDTO]?
+    let confidence: Int?
 }

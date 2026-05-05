@@ -48,6 +48,8 @@
     <string name="manager_ai_hints_title">ИИ-подсказки на следующие шаги</string>
     <string name="manager_ai_hint_1">Если растёт просрочка, перераспределите ответственных сегодня.</string>
     <string name="manager_ai_hint_2">Если отчёты задерживаются, эскалируйте блокеры в командный канал.</string>
+    <string name="manager_ai_guide_confidence_fmt">Уверенность ИИ-гайда: %1$d%%</string>
+    <string name="manager_ai_risk_signals_title">Сигналы риска</string>
     <string name="manager_note_optional">Заметка руководителя (необязательно)</string>
     <string name="manager_approve">Утвердить</string>
     <string name="manager_reject">Отклонить</string>

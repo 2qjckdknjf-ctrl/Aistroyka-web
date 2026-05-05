@@ -118,6 +118,35 @@
         "viewAi": "Apri insight AI"
       }
     },
+    "aiGuide": {
+      "open": "Guida AI",
+      "close": "Chiudi guida",
+      "title": "Guida AI per il tuo flusso",
+      "subtitle": "Fai una domanda in linguaggio naturale e ottieni azioni prioritarie.",
+      "inputLabel": "Chiedi alla guida AI",
+      "inputPlaceholder": "Cosa devo fare adesso in questo modulo?",
+      "ask": "Ottieni guida",
+      "loading": "Analisi del contesto…",
+      "openHelpCenter": "Apri centro assistenza",
+      "actionsTitle": "Azioni prioritarie",
+      "followUpTitle": "Direzioni correlate",
+      "doNow": "Fallo ora →",
+      "priorityHigh": "Alta",
+      "priorityMedium": "Media",
+      "prompt1": "Qual e la prima cosa da fare oggi?",
+      "prompt2": "Dove sono ora i rischi principali del progetto?",
+      "prompt3": "Come chiudo piu rapidamente le approvazioni pendenti?",
+      "defaultQuery": "Il mio contesto attuale",
+      "confidence": "Confidenza: {value}%",
+      "riskSignalsTitle": "Segnali di rischio",
+      "recentTitle": "Snapshot recenti della guida",
+      "roles": {
+        "manager": "Manager",
+        "admin": "Admin",
+        "client": "Cliente",
+        "owner": "Proprietario"
+      }
+    },
     "searchLabel": "Cerca nel centro assistenza",
     "searchPlaceholder": "Cerca per tema, azione o modulo…",
     "searching": "Ricerca nella base di conoscenza…",

@@ -162,6 +162,35 @@
         "viewAi": "Open AI insights"
       }
     },
+    "aiGuide": {
+      "open": "AI Guide",
+      "close": "Close guide",
+      "title": "AI Guide for your workflow",
+      "subtitle": "Ask in plain language and get prioritized next actions.",
+      "inputLabel": "Ask AI guide",
+      "inputPlaceholder": "What should I do right now in this module?",
+      "ask": "Get guidance",
+      "loading": "Analyzing context…",
+      "openHelpCenter": "Open help center",
+      "actionsTitle": "Priority actions",
+      "followUpTitle": "Related directions",
+      "doNow": "Do now →",
+      "priorityHigh": "High",
+      "priorityMedium": "Medium",
+      "prompt1": "What should I do first today?",
+      "prompt2": "Where are the biggest project risks now?",
+      "prompt3": "How do I close pending approvals faster?",
+      "defaultQuery": "My current context",
+      "confidence": "Confidence: {value}%",
+      "riskSignalsTitle": "Risk signals",
+      "recentTitle": "Recent guide snapshots",
+      "roles": {
+        "manager": "Manager",
+        "admin": "Admin",
+        "client": "Client",
+        "owner": "Owner"
+      }
+    },
     "searchLabel": "Search in help center",
     "searchPlaceholder": "Search by topic, action, or module…",
     "searching": "Searching in knowledge base…",

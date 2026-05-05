@@ -3,6 +3,7 @@ package ai.aistroyka.worker.ui
 import ai.aistroyka.worker.R
 import ai.aistroyka.shared.GetStartedDto
 import ai.aistroyka.shared.HelpApi
+import ai.aistroyka.shared.HelpAssistantRiskSignalDto
 import ai.aistroyka.shared.HelpHintDto
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -43,6 +44,9 @@ fun WorkerApp() {
     var showGuide by rememberSaveable { mutableStateOf(!prefs.getBoolean(WORKER_FIRST_LAUNCH_KEY, false)) }
     var getStarted by remember { mutableStateOf<GetStartedDto?>(null) }
     var hints by remember { mutableStateOf<List<HelpHintDto>>(emptyList()) }
+    var guideSummary by remember { mutableStateOf<String?>(null) }
+    var guideConfidence by remember { mutableStateOf<Int?>(null) }
+    var guideRiskSignals by remember { mutableStateOf<List<HelpAssistantRiskSignalDto>>(emptyList()) }
 
     LaunchedEffect(Unit) {
         val activation = try {
@@ -64,6 +68,24 @@ fun WorkerApp() {
         } else {
             emptyList()
         }
+        val assistant = try {
+            HelpApi.helpAssistant(
+                query = "",
+                locale = supportedHelpLocale(),
+                role = "manager",
+                pathname = "/worker",
+                getStarted = activation?.getStarted,
+                projectCount = activation?.projectCount,
+                taskCount = activation?.taskCount,
+                reportCount = activation?.reportCount,
+                hasAiInsight = activation?.hasAiInsight,
+            )
+        } catch (_: Exception) {
+            null
+        }
+        guideSummary = assistant?.summary
+        guideConfidence = assistant?.confidence
+        guideRiskSignals = assistant?.riskSignals.orEmpty()
     }
 
     AiStroykaWorkerTheme {
@@ -82,6 +104,9 @@ fun WorkerApp() {
                     WorkerStartGuidanceCard(
                         getStarted = getStarted,
                         hints = hints,
+                        guideSummary = guideSummary,
+                        guideConfidence = guideConfidence,
+                        guideRiskSignals = guideRiskSignals,
                     )
                 }
             }
@@ -142,6 +167,9 @@ fun WorkerApp() {
 private fun WorkerStartGuidanceCard(
     getStarted: GetStartedDto?,
     hints: List<HelpHintDto>,
+    guideSummary: String?,
+    guideConfidence: Int?,
+    guideRiskSignals: List<HelpAssistantRiskSignalDto>,
 ) {
     val completed = listOf(
         getStarted?.createProject,
@@ -183,6 +211,19 @@ private fun WorkerStartGuidanceCard(
                 text = stringResource(R.string.worker_ai_hints_title),
                 style = MaterialTheme.typography.labelLarge
             )
+            if (!guideSummary.isNullOrBlank()) {
+                Text(
+                    text = guideSummary,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            if (guideConfidence != null) {
+                Text(
+                    text = stringResource(R.string.worker_ai_guide_confidence_fmt, guideConfidence),
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
             if (hints.isNotEmpty()) {
                 hints.take(2).forEach { hint ->
                     Text(
@@ -208,6 +249,24 @@ private fun WorkerStartGuidanceCard(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+            }
+            if (guideRiskSignals.isNotEmpty()) {
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = stringResource(R.string.worker_ai_risk_signals_title),
+                    style = MaterialTheme.typography.labelLarge
+                )
+                guideRiskSignals.take(2).forEach { signal ->
+                    Text(
+                        text = "\u2022 ${signal.title}",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    Text(
+                        text = signal.detail,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
     }

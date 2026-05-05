@@ -6,3 +6,5 @@
 "worker_ai_hints_title" = "Suggerimenti AI per i prossimi passi";
 "worker_ai_hint_1" = "Se ci sono upload in coda, riprendi la coda prima di fine turno.";
 "worker_ai_hint_2" = "Se lo stato del task non e chiaro, aggiungi foto e nota breve.";
+"worker_ai_guide_confidence_fmt" = "Confidenza guida AI: %d%%";
+"worker_ai_risk_signals_title" = "Segnali di rischio";

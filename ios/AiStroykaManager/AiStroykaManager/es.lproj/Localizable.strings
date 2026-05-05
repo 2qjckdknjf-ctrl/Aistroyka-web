@@ -6,3 +6,5 @@
 "mgr_ai_hints_title" = "Sugerencias de IA para los siguientes pasos";
 "mgr_ai_hint_1" = "Si crecen tareas vencidas, reequilibra responsables hoy.";
 "mgr_ai_hint_2" = "Si hay retrasos en informes, escala bloqueos en el canal del equipo.";
+"mgr_ai_guide_confidence_fmt" = "Confianza de la guía IA: %d%%";
+"mgr_ai_risk_signals_title" = "Señales de riesgo";

@@ -38,6 +38,7 @@
 
 - Production runtime returns 500 for system endpoints.
 - Missing `SYSTEM_API_KEY` in operator session for positive auth check.
+- GitHub repo secret inventory does not currently list `SYSTEM_API_KEY`, increasing likelihood of runtime key mismatch/missing propagation.
 
 ## Final verdict
 

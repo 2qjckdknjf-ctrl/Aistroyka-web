@@ -118,3 +118,4 @@ Blocking factors:
 - Live Supabase verification blocked by missing credentials/ref
 - Budget live verification blocked by missing credentials/auth
 - iOS runtime E2E blocked by missing runtime credentials/evidence
+- Repo secret inventory (GitHub) does not list `SYSTEM_API_KEY` or `SUPABASE_SERVICE_ROLE_KEY`

@@ -10,6 +10,9 @@ struct HomeDashboardView: View {
     @State private var overview: OpsOverviewDTO?
     @State private var activationStatus: ActivationStatusDTO?
     @State private var helpHints: [HelpHintDTO] = []
+    @State private var guideSummary: String?
+    @State private var guideConfidence: Int?
+    @State private var guideRiskSignals: [HelpAssistantRiskSignalDTO] = []
     @State private var isLoading = true
     @State private var errorMessage: String?
 
@@ -71,6 +74,20 @@ struct HomeDashboardView: View {
                 .font(.subheadline)
                 .fontWeight(.semibold)
                 .padding(.top, 4)
+            if let guideSummary, !guideSummary.isEmpty {
+                Text(guideSummary)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            if let guideConfidence {
+                Text(
+                    String(
+                        format: NSLocalizedString("mgr_ai_guide_confidence_fmt", comment: ""),
+                        guideConfidence
+                    )
+                )
+                .font(.caption)
+            }
             if helpHints.isEmpty {
                 Text("• \(NSLocalizedString("mgr_ai_hint_1", comment: ""))")
                     .font(.caption)
@@ -87,6 +104,19 @@ struct HomeDashboardView: View {
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
+                }
+            }
+            if !guideRiskSignals.isEmpty {
+                Text(NSLocalizedString("mgr_ai_risk_signals_title", comment: ""))
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .padding(.top, 2)
+                ForEach(Array(guideRiskSignals.prefix(2).enumerated()), id: \.offset) { _, signal in
+                    Text("• \(signal.title)")
+                        .font(.caption)
+                    Text(signal.detail)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
                 }
             }
         }
@@ -195,6 +225,16 @@ struct HomeDashboardView: View {
             } else {
                 helpHints = []
             }
+            let assistant = try? await ManagerAPI.helpAssistant(
+                query: "",
+                locale: supportedHelpLocale(),
+                role: "manager",
+                pathname: "/dashboard",
+                activation: activation
+            )
+            guideSummary = assistant?.summary
+            guideConfidence = assistant?.confidence
+            guideRiskSignals = assistant?.riskSignals ?? []
         }
     }
 

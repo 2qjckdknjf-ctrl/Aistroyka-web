@@ -199,6 +199,38 @@ enum WorkerAPI {
         )
         return r.hints ?? []
     }
+
+    static func helpAssistant(
+        query: String,
+        locale: String,
+        role: String,
+        pathname: String,
+        activation: WorkerActivationStatusDTO?
+    ) async throws -> WorkerHelpAssistantResponseDTO {
+        struct Body: Encodable {
+            let query: String
+            let locale: String
+            let role: String
+            let pathname: String
+            let getStarted: WorkerGetStartedStatusDTO?
+            let projectCount: Int?
+            let taskCount: Int?
+            let reportCount: Int?
+            let hasAiInsight: Bool?
+        }
+        let body = Body(
+            query: query,
+            locale: locale,
+            role: role,
+            pathname: pathname,
+            getStarted: activation?.getStarted,
+            projectCount: activation?.projectCount,
+            taskCount: activation?.taskCount,
+            reportCount: activation?.reportCount,
+            hasAiInsight: activation?.hasAiInsight
+        )
+        return try await APIClient.shared.request(path: "help/assistant", method: "POST", body: body)
+    }
 }
 
 private struct EmptyBody: Encodable {}
@@ -231,4 +263,19 @@ struct WorkerHelpHintDTO: Decodable {
 
 struct WorkerHelpHintsResponseDTO: Decodable {
     let hints: [WorkerHelpHintDTO]?
+}
+
+struct WorkerHelpAssistantRiskSignalDTO: Decodable {
+    let id: String
+    let title: String
+    let detail: String
+    let severity: String
+    let href: String
+}
+
+struct WorkerHelpAssistantResponseDTO: Decodable {
+    let summary: String
+    let answer: String
+    let riskSignals: [WorkerHelpAssistantRiskSignalDTO]?
+    let confidence: Int?
 }

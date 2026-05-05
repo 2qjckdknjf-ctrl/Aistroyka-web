@@ -14,4 +14,6 @@
     <string name="worker_ai_hints_title">Sugerencias de IA para los siguientes pasos</string>
     <string name="worker_ai_hint_1">Si hay cargas pendientes, reanuda la cola antes de terminar el turno.</string>
     <string name="worker_ai_hint_2">Si el estado de una tarea no está claro, añade foto y nota corta.</string>
+    <string name="worker_ai_guide_confidence_fmt">Confianza de la guía IA: %1$d%%</string>
+    <string name="worker_ai_risk_signals_title">Señales de riesgo</string>
 </resources>

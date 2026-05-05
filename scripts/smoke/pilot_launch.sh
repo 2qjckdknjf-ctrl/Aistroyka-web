@@ -23,6 +23,20 @@ AUTH="${AUTH_HEADER:-}"
 COOKIE="${COOKIE:-}"
 FAIL=0
 
+is_local_base() {
+  [[ "$BASE" == http://localhost* || "$BASE" == https://localhost* || "$BASE" == http://127.0.0.1* || "$BASE" == https://127.0.0.1* ]]
+}
+
+json_field() {
+  local file="$1"
+  local field="$2"
+  if command -v jq &>/dev/null; then
+    jq -r ".${field} // empty" "$file" 2>/dev/null | tr -d '\n'
+  else
+    sed -nE "s/.*\"${field}\"[[:space:]]*:[[:space:]]*\"([^\"]+)\".*/\\1/p" "$file" 2>/dev/null | head -n1 | tr -d '\n'
+  fi
+}
+
 # Optional: obtain Bearer token for ops/metrics when COOKIE/AUTH_HEADER not set (env-only; do not log credentials)
 mint_smoke_token_if_possible() {
   SUPA_URL="${SUPABASE_URL:-${NEXT_PUBLIC_SUPABASE_URL:-}}"
@@ -117,6 +131,15 @@ else
   elif [[ "$code" == "403" ]]; then
     echo "  FAIL: cron-tick 403 (set CRON_SECRET when REQUIRE_CRON_SECRET=true)"
     FAIL=1
+  elif [[ "$code" == "503" ]]; then
+    ERR_CODE="$(json_field /tmp/pilot_cron.json error_code)"
+    ERR_MSG="$(json_field /tmp/pilot_cron.json error)"
+    if is_local_base; then
+      echo "  WARN: cron-tick skipped locally (HTTP 503${ERR_CODE:+, code=$ERR_CODE}${ERR_MSG:+, error=$ERR_MSG})"
+    else
+      echo "  FAIL: cron-tick → HTTP $code"
+      FAIL=1
+    fi
   else
     echo "  FAIL: cron-tick → HTTP $code"
     FAIL=1

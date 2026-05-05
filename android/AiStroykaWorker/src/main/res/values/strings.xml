@@ -35,4 +35,6 @@
     <string name="worker_ai_hints_title">AI hints for next steps</string>
     <string name="worker_ai_hint_1">If uploads are pending, resume queue before shift end.</string>
     <string name="worker_ai_hint_2">If task status is unclear, add photo and short note in report.</string>
+    <string name="worker_ai_guide_confidence_fmt">AI guide confidence: %1$d%%</string>
+    <string name="worker_ai_risk_signals_title">Risk signals</string>
 </resources>

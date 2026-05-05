@@ -27,6 +27,36 @@ object HelpApi {
         )
         return response.hints.orEmpty()
     }
+
+    suspend fun helpAssistant(
+        query: String,
+        locale: String,
+        role: String,
+        pathname: String,
+        getStarted: GetStartedDto?,
+        projectCount: Int?,
+        taskCount: Int?,
+        reportCount: Int?,
+        hasAiInsight: Boolean?,
+    ): HelpAssistantResponseDto {
+        val body = HelpAssistantRequest(
+            query = query,
+            locale = locale,
+            role = role,
+            pathname = pathname,
+            getStarted = getStarted,
+            projectCount = projectCount,
+            taskCount = taskCount,
+            reportCount = reportCount,
+            hasAiInsight = hasAiInsight,
+        )
+        val json = ApiClient.json.encodeToString(HelpAssistantRequest.serializer(), body)
+        return ApiClient.request(
+            path = "help/assistant",
+            method = "POST",
+            jsonBody = json,
+        )
+    }
 }
 
 @Serializable
@@ -68,4 +98,45 @@ private data class HelpHintsRequest(
 @Serializable
 private data class HelpHintsResponse(
     val hints: List<HelpHintDto>? = null,
+)
+
+@Serializable
+data class HelpAssistantActionDto(
+    val id: String,
+    val title: String,
+    val reason: String,
+    val href: String,
+    val priority: String,
+)
+
+@Serializable
+data class HelpAssistantRiskSignalDto(
+    val id: String,
+    val title: String,
+    val detail: String,
+    val severity: String,
+    val href: String,
+)
+
+@Serializable
+data class HelpAssistantResponseDto(
+    val summary: String,
+    val answer: String,
+    val actions: List<HelpAssistantActionDto>? = null,
+    val riskSignals: List<HelpAssistantRiskSignalDto>? = null,
+    val followUps: List<String>? = null,
+    val confidence: Int? = null,
+)
+
+@Serializable
+private data class HelpAssistantRequest(
+    val query: String,
+    val locale: String,
+    val role: String,
+    val pathname: String,
+    val getStarted: GetStartedDto? = null,
+    val projectCount: Int? = null,
+    val taskCount: Int? = null,
+    val reportCount: Int? = null,
+    val hasAiInsight: Boolean? = null,
 )

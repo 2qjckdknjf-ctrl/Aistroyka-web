@@ -22,6 +22,9 @@ struct HomeView: View {
     @State private var showDiagnostics = false
     @State private var activationStatus: WorkerActivationStatusDTO?
     @State private var helpHints: [WorkerHelpHintDTO] = []
+    @State private var guideSummary: String?
+    @State private var guideConfidence: Int?
+    @State private var guideRiskSignals: [WorkerHelpAssistantRiskSignalDTO] = []
 
     private var shiftStarted: Bool { store.state.shift.isStarted }
     private var dayId: String? { store.state.shift.dayId }
@@ -179,6 +182,20 @@ struct HomeView: View {
                 .font(.subheadline)
                 .fontWeight(.semibold)
                 .padding(.top, 4)
+            if let guideSummary, !guideSummary.isEmpty {
+                Text(guideSummary)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            if let guideConfidence {
+                Text(
+                    String(
+                        format: NSLocalizedString("worker_ai_guide_confidence_fmt", comment: ""),
+                        guideConfidence
+                    )
+                )
+                .font(.caption)
+            }
             if helpHints.isEmpty {
                 Text("• \(NSLocalizedString("worker_ai_hint_1", comment: ""))")
                     .font(.caption)
@@ -195,6 +212,19 @@ struct HomeView: View {
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
+                }
+            }
+            if !guideRiskSignals.isEmpty {
+                Text(NSLocalizedString("worker_ai_risk_signals_title", comment: ""))
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .padding(.top, 2)
+                ForEach(Array(guideRiskSignals.prefix(2).enumerated()), id: \.offset) { _, signal in
+                    Text("• \(signal.title)")
+                        .font(.caption)
+                    Text(signal.detail)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
                 }
             }
         }
@@ -329,8 +359,18 @@ struct HomeView: View {
                 role: "manager",
                 getStarted: getStarted
             )) ?? []
+            let assistant = try? await WorkerAPI.helpAssistant(
+                query: "",
+                locale: supportedHelpLocale(),
+                role: "manager",
+                pathname: "/worker",
+                activation: activation
+            )
             await MainActor.run {
                 helpHints = hints
+                guideSummary = assistant?.summary
+                guideConfidence = assistant?.confidence
+                guideRiskSignals = assistant?.riskSignals ?? []
             }
         }
     }

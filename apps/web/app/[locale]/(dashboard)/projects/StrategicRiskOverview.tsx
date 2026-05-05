@@ -73,10 +73,10 @@ export function StrategicRiskOverview({
 
   const classificationClass =
     result.classification === "Stable"
-      ? "text-emerald-700"
+      ? "text-aistroyka-success"
       : result.classification === "Watch"
         ? "text-aistroyka-warning"
-        : "text-red-700";
+        : "text-aistroyka-error";
   const classificationLabel =
     result.classification === "Stable"
       ? tDetail("stable")

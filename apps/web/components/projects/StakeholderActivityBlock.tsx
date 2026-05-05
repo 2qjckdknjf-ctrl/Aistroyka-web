@@ -70,7 +70,7 @@ export function StakeholderActivityBlock({
             <Link
               href={item.targetUrl ?? `/dashboard/projects/${item.projectId}/client`}
               className={`block p-4 hover:bg-aistroyka-surface-raised transition-colors ${
-                item.actionNeeded ? "border-l-4 border-l-amber-500 bg-amber-500/5" : ""
+                item.actionNeeded ? "border-l-4 border-l-aistroyka-warning bg-aistroyka-warning/10" : ""
               }`}
             >
               <p className="text-sm font-medium text-aistroyka-text-primary">{item.title}</p>
@@ -78,7 +78,7 @@ export function StakeholderActivityBlock({
                 <p className="mt-0.5 text-xs text-aistroyka-text-secondary">{item.description}</p>
               ) : null}
               {item.actionNeeded ? (
-                <p className="mt-1 text-xs font-medium text-amber-700 dark:text-amber-400">{tDetail("actionNeeded")}</p>
+                <p className="mt-1 text-xs font-medium text-aistroyka-warning">{tDetail("actionNeeded")}</p>
               ) : null}
               <p className="mt-1 text-xs text-aistroyka-text-tertiary">{formatRelativeTime(item.occurredAt, tDetail)}</p>
             </Link>

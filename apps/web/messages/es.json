@@ -118,6 +118,35 @@
         "viewAi": "Abrir insights de IA"
       }
     },
+    "aiGuide": {
+      "open": "Guía IA",
+      "close": "Cerrar guía",
+      "title": "Guía IA para tu flujo",
+      "subtitle": "Pregunta en lenguaje natural y recibe acciones priorizadas.",
+      "inputLabel": "Pregunta a la guía IA",
+      "inputPlaceholder": "¿Qué debo hacer ahora mismo en este módulo?",
+      "ask": "Obtener guía",
+      "loading": "Analizando contexto…",
+      "openHelpCenter": "Abrir centro de ayuda",
+      "actionsTitle": "Acciones prioritarias",
+      "followUpTitle": "Direcciones relacionadas",
+      "doNow": "Hacer ahora →",
+      "priorityHigh": "Alta",
+      "priorityMedium": "Media",
+      "prompt1": "¿Qué debo hacer primero hoy?",
+      "prompt2": "¿Dónde están los mayores riesgos del proyecto ahora?",
+      "prompt3": "¿Cómo cierro más rápido aprobaciones pendientes?",
+      "defaultQuery": "Mi contexto actual",
+      "confidence": "Confianza: {value}%",
+      "riskSignalsTitle": "Señales de riesgo",
+      "recentTitle": "Instantáneas recientes de la guía",
+      "roles": {
+        "manager": "Manager",
+        "admin": "Administrador",
+        "client": "Cliente",
+        "owner": "Propietario"
+      }
+    },
     "searchLabel": "Buscar en el centro de ayuda",
     "searchPlaceholder": "Busca por tema, acción o módulo…",
     "searching": "Buscando en la base de conocimiento…",

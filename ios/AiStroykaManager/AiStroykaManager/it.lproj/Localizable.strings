@@ -6,3 +6,5 @@
 "mgr_ai_hints_title" = "Suggerimenti AI per i prossimi passi";
 "mgr_ai_hint_1" = "Se aumentano i task in ritardo, riequilibra i responsabili oggi.";
 "mgr_ai_hint_2" = "Se i report sono in ritardo, scala i blocchi nel canale team.";
+"mgr_ai_guide_confidence_fmt" = "Confidenza guida AI: %d%%";
+"mgr_ai_risk_signals_title" = "Segnali di rischio";

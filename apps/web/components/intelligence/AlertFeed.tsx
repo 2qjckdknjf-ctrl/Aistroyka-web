@@ -8,7 +8,7 @@ import { IntelligenceCard } from "./IntelligenceCard";
 
 function severityClass(s: string): string {
   if (s === "critical") return "border-l-aistroyka-error";
-  if (s === "warn") return "border-l-amber-500";
+  if (s === "warn") return "border-l-aistroyka-warning";
   return "border-l-aistroyka-info";
 }
 

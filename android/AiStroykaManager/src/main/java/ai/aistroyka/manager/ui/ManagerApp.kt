@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import ai.aistroyka.manager.ManagerViewModel
 import ai.aistroyka.shared.GetStartedDto
+import ai.aistroyka.shared.HelpAssistantRiskSignalDto
 import ai.aistroyka.shared.HelpHintDto
 import ai.aistroyka.shared.ReportMediaItemDto
 import coil.compose.AsyncImage
@@ -233,6 +234,9 @@ private fun HomeScreen(vm: ManagerViewModel) {
         StartGuidanceCard(
             getStarted = state.getStarted,
             hints = state.helpHints,
+            guideSummary = state.guideSummary,
+            guideConfidence = state.guideConfidence,
+            guideRiskSignals = state.guideRiskSignals,
         )
         Spacer(Modifier.height(16.dp))
         state.banner?.let {
@@ -289,6 +293,9 @@ private fun HomeScreen(vm: ManagerViewModel) {
 private fun StartGuidanceCard(
     getStarted: GetStartedDto?,
     hints: List<HelpHintDto>,
+    guideSummary: String?,
+    guideConfidence: Int?,
+    guideRiskSignals: List<HelpAssistantRiskSignalDto>,
 ) {
     val completed = listOf(
         getStarted?.createProject,
@@ -330,6 +337,19 @@ private fun StartGuidanceCard(
                 text = stringResource(R.string.manager_ai_hints_title),
                 style = MaterialTheme.typography.labelLarge
             )
+            if (!guideSummary.isNullOrBlank()) {
+                Text(
+                    text = guideSummary,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            if (guideConfidence != null) {
+                Text(
+                    text = stringResource(R.string.manager_ai_guide_confidence_fmt, guideConfidence),
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
             if (hints.isNotEmpty()) {
                 hints.take(2).forEach { hint ->
                     Text(
@@ -355,6 +375,24 @@ private fun StartGuidanceCard(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+            }
+            if (guideRiskSignals.isNotEmpty()) {
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = stringResource(R.string.manager_ai_risk_signals_title),
+                    style = MaterialTheme.typography.labelLarge
+                )
+                guideRiskSignals.take(2).forEach { signal ->
+                    Text(
+                        text = "\u2022 ${signal.title}",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    Text(
+                        text = signal.detail,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
     }

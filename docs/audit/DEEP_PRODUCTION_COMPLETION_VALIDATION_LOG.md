@@ -18,6 +18,59 @@ N/A
 ---
 
 ## Command
+`gh auth status`
+
+## Result
+PASS
+
+## Summary
+GitHub CLI authentication is active for account `2qjckdknjf-ctrl` with `repo` and `workflow` scopes.
+
+## Fix Applied
+N/A
+
+## Rerun Result
+N/A
+
+---
+
+## Command
+`gh secret list --repo 2qjckdknjf-ctrl/Aistroyka-web`
+
+## Result
+PASS
+
+## Summary
+Repository secret names were listed. Relevant findings:
+- Present: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `NEXT_PUBLIC_SUPABASE_*`, pilot smoke secrets.
+- Not present in repo secrets list: `SYSTEM_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`.
+
+## Fix Applied
+Captured as blocker evidence in final reports/runbook.
+
+## Rerun Result
+N/A
+
+---
+
+## Command
+`gh variable list --repo 2qjckdknjf-ctrl/Aistroyka-web`
+
+## Result
+PASS
+
+## Summary
+No repository-level variables found.
+
+## Fix Applied
+N/A
+
+## Rerun Result
+N/A
+
+---
+
+## Command
 `bunx tsc -p apps/web/tsconfig.json --noEmit`
 
 ## Result

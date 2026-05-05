@@ -48,6 +48,8 @@
     <string name="manager_ai_hints_title">AI hints for next steps</string>
     <string name="manager_ai_hint_1">If overdue tasks grow, rebalance owners today.</string>
     <string name="manager_ai_hint_2">If reports are delayed, escalate blockers in team channel.</string>
+    <string name="manager_ai_guide_confidence_fmt">AI guide confidence: %1$d%%</string>
+    <string name="manager_ai_risk_signals_title">Risk signals</string>
     <string name="manager_note_optional">Manager note (optional)</string>
     <string name="manager_approve">Approve</string>
     <string name="manager_reject">Reject</string>

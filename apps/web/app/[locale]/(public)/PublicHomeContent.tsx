@@ -171,7 +171,7 @@ export async function PublicHomeContent() {
       </section>
 
       {/* AI Construction Control */}
-      <section className="bg-[var(--bg-main)] px-4 py-16 sm:px-6 sm:py-20 lg:px-8" style={{ background: "linear-gradient(180deg, #0B0F19 0%, #05070d 100%)" }}>
+      <section className="bg-aistroyka-bg-primary px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
         <div className="mx-auto min-w-0 max-w-4xl text-center">
           <h2 className="font-heading text-[var(--aistroyka-font-title2)] font-semibold text-[var(--text-main)]">
             {t("aiSectionTitle")}
@@ -179,10 +179,7 @@ export async function PublicHomeContent() {
           <p className="mt-3 text-[var(--text-muted)]">
             {t("aiSectionSubtitle")}
           </p>
-          <Link
-            href="/ai-construction-control"
-            className="mt-6 inline-flex max-w-full min-h-[var(--aistroyka-touch-min)] min-w-0 items-center justify-center whitespace-normal break-words rounded-[var(--radius-main)] bg-[var(--ai-yellow)] px-4 py-2.5 text-center text-[var(--aistroyka-font-headline)] font-semibold text-[var(--ai-dark)] hover:bg-[var(--aistroyka-accent-hover)] sm:px-6"
-          >
+          <Link href="/ai-construction-control" className="btn-primary mt-6 inline-flex max-w-full sm:px-6">
             {t("learnMore")}
           </Link>
         </div>
@@ -219,7 +216,7 @@ export async function PublicHomeContent() {
       </section>
 
       {/* Final CTA */}
-      <section className="px-4 py-16 sm:px-6 sm:py-20 lg:px-8" style={{ background: "linear-gradient(180deg, #0B0F19 0%, #05070d 100%)" }}>
+      <section className="bg-aistroyka-bg-primary px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
         <div className="mx-auto min-w-0 max-w-3xl text-center">
           <h2 className="font-heading text-[var(--aistroyka-font-title2)] font-semibold text-[var(--text-main)]">
             {t("finalCtaTitle")}
@@ -227,10 +224,7 @@ export async function PublicHomeContent() {
           <p className="mt-3 text-[var(--text-muted)]">
             {t("finalCtaSubtitle")}
           </p>
-          <Link
-            href="/contact"
-            className="mt-6 inline-flex max-w-full min-h-[var(--aistroyka-touch-min)] min-w-0 items-center justify-center whitespace-normal break-words rounded-[var(--radius-main)] bg-[var(--ai-yellow)] px-4 py-3 text-center text-[var(--aistroyka-font-headline)] font-semibold text-[var(--ai-dark)] hover:bg-[var(--aistroyka-accent-hover)] sm:px-8"
-          >
+          <Link href="/contact" className="btn-primary mt-6 inline-flex max-w-full sm:px-8">
             {t("finalCtaButton")}
           </Link>
         </div>

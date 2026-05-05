@@ -6,12 +6,12 @@ import type { PortfolioResult } from "@/lib/intelligence/portfolio";
 
 function classificationClass(c: string): string {
   return c === "Healthy"
-    ? "text-emerald-700"
+    ? "text-aistroyka-success"
     : c === "Moderate"
-      ? "text-blue-700"
+      ? "text-aistroyka-info"
       : c === "Unstable"
-        ? "text-amber-700"
-        : "text-red-700";
+        ? "text-aistroyka-warning"
+        : "text-aistroyka-error";
 }
 
 export function PortfolioOverview({

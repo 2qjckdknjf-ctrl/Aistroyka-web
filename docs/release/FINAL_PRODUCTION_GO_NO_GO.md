@@ -54,6 +54,9 @@ Roadmap created: YES (`docs/audit/LEGACY_API_DEPRECATION_ROADMAP.md`)
 - Missing staging tenant auth material for full smoke.
 - Missing iOS runtime credentials/evidence.
 - Legacy API removal still requires traffic telemetry before safe deletions.
+- CI secret inventory gap for runtime auth:
+  - `SYSTEM_API_KEY` not present in repo secrets list.
+  - `SUPABASE_SERVICE_ROLE_KEY` not present in repo secrets list.
 
 ## 11) Final decision
 

@@ -7,6 +7,7 @@ import ai.aistroyka.shared.ApiError
 import ai.aistroyka.shared.AuthService
 import ai.aistroyka.shared.GetStartedDto
 import ai.aistroyka.shared.HelpApi
+import ai.aistroyka.shared.HelpAssistantRiskSignalDto
 import ai.aistroyka.shared.HelpHintDto
 import ai.aistroyka.shared.ManagerApi
 import ai.aistroyka.shared.ProjectDto
@@ -38,6 +39,9 @@ data class ManagerUiState(
     val analysisStatus: ReportAnalysisStatusDto? = null,
     val getStarted: GetStartedDto? = null,
     val helpHints: List<HelpHintDto> = emptyList(),
+    val guideSummary: String? = null,
+    val guideConfidence: Int? = null,
+    val guideRiskSignals: List<HelpAssistantRiskSignalDto> = emptyList(),
     /** media row id -> preview URL from `GET projects/:id/media` */
     val mediaPreviewUrls: Map<String, String> = emptyMap(),
     val reviewNote: String = "",
@@ -130,6 +134,21 @@ class ManagerViewModel(application: Application) : AndroidViewModel(application)
                 } else {
                     emptyList()
                 }
+                val assistant = try {
+                    HelpApi.helpAssistant(
+                        query = "",
+                        locale = locale,
+                        role = role,
+                        pathname = "/dashboard",
+                        getStarted = activationStatus?.getStarted,
+                        projectCount = activationStatus?.projectCount,
+                        taskCount = activationStatus?.taskCount,
+                        reportCount = activationStatus?.reportCount,
+                        hasAiInsight = activationStatus?.hasAiInsight,
+                    )
+                } catch (_: Exception) {
+                    null
+                }
                 _state.update {
                     it.copy(
                         busy = false,
@@ -139,6 +158,9 @@ class ManagerViewModel(application: Application) : AndroidViewModel(application)
                         opsPendingLine = opsLine,
                         getStarted = activationStatus?.getStarted,
                         helpHints = helpHints,
+                        guideSummary = assistant?.summary,
+                        guideConfidence = assistant?.confidence,
+                        guideRiskSignals = assistant?.riskSignals.orEmpty(),
                     )
                 }
             } catch (e: ApiError) {

@@ -27,8 +27,8 @@ export function IntelligenceOperationalBanner({
     <Card
       className={
         isAttention
-          ? "border-l-4 border-l-amber-500 bg-amber-50/40 dark:bg-amber-950/20"
-          : "border-l-4 border-l-emerald-600/60 bg-emerald-50/30 dark:bg-emerald-950/15"
+          ? "border-l-4 border-l-aistroyka-warning bg-aistroyka-warning/10"
+          : "border-l-4 border-l-aistroyka-success bg-aistroyka-success/10"
       }
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -55,7 +55,7 @@ export function IntelligenceOperationalBanner({
       </div>
 
       {operational.disclaimers.length > 0 && (
-        <ul className="mt-3 list-disc pl-5 text-sm text-amber-800 dark:text-amber-200 space-y-1">
+        <ul className="mt-3 list-disc pl-5 text-sm text-aistroyka-warning space-y-1">
           {operational.disclaimers.map((d, i) => (
             <li key={i}>{d}</li>
           ))}

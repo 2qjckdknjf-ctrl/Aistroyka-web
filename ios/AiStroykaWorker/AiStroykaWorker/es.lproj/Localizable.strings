@@ -6,3 +6,5 @@
 "worker_ai_hints_title" = "Sugerencias de IA para los siguientes pasos";
 "worker_ai_hint_1" = "Si hay cargas pendientes, reanuda la cola antes de terminar el turno.";
 "worker_ai_hint_2" = "Si el estado de una tarea no está claro, añade foto y nota corta.";
+"worker_ai_guide_confidence_fmt" = "Confianza de la guía IA: %d%%";
+"worker_ai_risk_signals_title" = "Señales de riesgo";

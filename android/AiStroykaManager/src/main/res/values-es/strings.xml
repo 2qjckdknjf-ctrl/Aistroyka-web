@@ -14,4 +14,6 @@
     <string name="manager_ai_hints_title">Sugerencias de IA para los siguientes pasos</string>
     <string name="manager_ai_hint_1">Si crecen tareas vencidas, reequilibra responsables hoy.</string>
     <string name="manager_ai_hint_2">Si hay retrasos en informes, escala bloqueos en el canal del equipo.</string>
+    <string name="manager_ai_guide_confidence_fmt">Confianza de la guía IA: %1$d%%</string>
+    <string name="manager_ai_risk_signals_title">Señales de riesgo</string>
 </resources>

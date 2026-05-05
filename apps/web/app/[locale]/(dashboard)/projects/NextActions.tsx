@@ -117,15 +117,15 @@ export function NextActions({
   const actions = computeActionItems(signals);
 
   function priorityIndicator(p: ActionItem["priority"]): string {
-    if (p === "P0") return "border-l-red-500 bg-aistroyka-error/10/30";
-    if (p === "P1") return "border-l-amber-500 bg-aistroyka-warning/20/30";
-    return "border-l-slate-300 bg-aistroyka-surface-raised/50";
+    if (p === "P0") return "border-l-aistroyka-error bg-aistroyka-error/10";
+    if (p === "P1") return "border-l-aistroyka-warning bg-aistroyka-warning/10";
+    return "border-l-aistroyka-border-strong bg-aistroyka-surface-raised/50";
   }
 
   function priorityBadgeClass(p: ActionItem["priority"]): string {
     if (p === "P0") return "bg-aistroyka-error/20 text-aistroyka-error border-aistroyka-error/50 font-semibold";
     if (p === "P1") return "bg-aistroyka-warning/20 text-aistroyka-warning border-aistroyka-warning/50 font-semibold";
-    return "bg-slate-100 text-aistroyka-text-primary border-aistroyka-border-subtle";
+    return "bg-aistroyka-surface-raised text-aistroyka-text-primary border-aistroyka-border-subtle";
   }
 
   return (

@@ -6,7 +6,7 @@
 :root {
   /* —— AI SaaS palette (design system) —— */
   --ai-white: #ffffff;
-  --ai-yellow: #FFC400;
+  --ai-yellow: #F5C518;
   --ai-pink: #F29CB2;
   --ai-dark: #0B0F19;
   --bg-main: #0B0F19;
@@ -17,7 +17,7 @@
   --radius-main: 12px;
 
   /* —— Brand (construction yellow accent) —— */
-  --aistroyka-accent: #FFC400;
+  --aistroyka-accent: #F5C518;
   --aistroyka-accent-hover: #ffd54f;
   --aistroyka-accent-pressed: #e2ab00;
   --aistroyka-accent-disabled: rgba(255, 196, 0, 0.45);

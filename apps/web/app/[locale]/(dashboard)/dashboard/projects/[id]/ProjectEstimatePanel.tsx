@@ -227,7 +227,7 @@ export function ProjectEstimatePanel({ projectId }: { projectId: string }) {
           </Button>
         </div>
         {fromImageMutation.isError && (
-          <p className="mt-2 text-sm text-red-600">
+          <p className="mt-2 text-sm text-aistroyka-error">
             {fromImageMutation.error instanceof Error
               ? formatEstimateError(fromImageMutation.error.message, tDetail)
               : tDetail("estimateFailed")}
