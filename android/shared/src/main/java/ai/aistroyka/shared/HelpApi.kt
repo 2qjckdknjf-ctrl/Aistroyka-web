@@ -57,6 +57,26 @@ object HelpApi {
             jsonBody = json,
         )
     }
+
+    suspend fun helpAssistantEvent(
+        type: String,
+        locale: String,
+        role: String,
+        pathname: String,
+    ) {
+        val body = HelpAssistantEventRequest(
+            type = type,
+            locale = locale,
+            role = role,
+            pathname = pathname,
+        )
+        val json = ApiClient.json.encodeToString(HelpAssistantEventRequest.serializer(), body)
+        ApiClient.requestVoid(
+            path = "help/assistant/events",
+            method = "POST",
+            jsonBody = json,
+        )
+    }
 }
 
 @Serializable
@@ -139,4 +159,12 @@ private data class HelpAssistantRequest(
     val taskCount: Int? = null,
     val reportCount: Int? = null,
     val hasAiInsight: Boolean? = null,
+)
+
+@Serializable
+private data class HelpAssistantEventRequest(
+    val type: String,
+    val locale: String,
+    val role: String,
+    val pathname: String,
 )

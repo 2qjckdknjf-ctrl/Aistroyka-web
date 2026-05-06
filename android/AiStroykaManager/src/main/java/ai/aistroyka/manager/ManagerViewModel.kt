@@ -149,6 +149,15 @@ class ManagerViewModel(application: Application) : AndroidViewModel(application)
                 } catch (_: Exception) {
                     null
                 }
+                try {
+                    HelpApi.helpAssistantEvent(
+                        type = "open",
+                        locale = locale,
+                        role = role,
+                        pathname = "/dashboard",
+                    )
+                } catch (_: Exception) {
+                }
                 _state.update {
                     it.copy(
                         busy = false,

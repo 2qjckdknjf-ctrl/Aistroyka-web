@@ -366,6 +366,12 @@ struct HomeView: View {
                 pathname: "/worker",
                 activation: activation
             )
+            await WorkerAPI.helpAssistantEvent(
+                type: "open",
+                locale: supportedHelpLocale(),
+                role: "manager",
+                pathname: "/worker"
+            )
             await MainActor.run {
                 helpHints = hints
                 guideSummary = assistant?.summary

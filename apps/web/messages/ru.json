@@ -140,6 +140,11 @@
       "confidence": "Уверенность: {value}%",
       "riskSignalsTitle": "Сигналы риска",
       "recentTitle": "Недавние снимки гайда",
+      "metricsTitle": "Метрики гайда (7д)",
+      "metricOpens": "Открытия: {value}",
+      "metricAsks": "Запросы: {value}",
+      "metricClicks": "Клики по действиям: {value}",
+      "metricCompletion": "Завершение: {value}%",
       "roles": {
         "manager": "Менеджер",
         "admin": "Администратор",

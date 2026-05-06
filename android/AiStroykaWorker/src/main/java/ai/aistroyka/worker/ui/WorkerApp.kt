@@ -83,6 +83,15 @@ fun WorkerApp() {
         } catch (_: Exception) {
             null
         }
+        try {
+            HelpApi.helpAssistantEvent(
+                type = "open",
+                locale = supportedHelpLocale(),
+                role = "manager",
+                pathname = "/worker",
+            )
+        } catch (_: Exception) {
+        }
         guideSummary = assistant?.summary
         guideConfidence = assistant?.confidence
         guideRiskSignals = assistant?.riskSignals.orEmpty()

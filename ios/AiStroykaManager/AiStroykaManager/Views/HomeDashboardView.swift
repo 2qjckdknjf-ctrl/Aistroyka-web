@@ -232,6 +232,12 @@ struct HomeDashboardView: View {
                 pathname: "/dashboard",
                 activation: activation
             )
+            await ManagerAPI.helpAssistantEvent(
+                type: "open",
+                locale: supportedHelpLocale(),
+                role: "manager",
+                pathname: "/dashboard"
+            )
             guideSummary = assistant?.summary
             guideConfidence = assistant?.confidence
             guideRiskSignals = assistant?.riskSignals ?? []

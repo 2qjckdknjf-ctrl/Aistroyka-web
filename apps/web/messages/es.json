@@ -140,6 +140,11 @@
       "confidence": "Confianza: {value}%",
       "riskSignalsTitle": "Señales de riesgo",
       "recentTitle": "Instantáneas recientes de la guía",
+      "metricsTitle": "Métricas de la guía (7d)",
+      "metricOpens": "Aperturas: {value}",
+      "metricAsks": "Consultas: {value}",
+      "metricClicks": "Clics en acciones: {value}",
+      "metricCompletion": "Finalización: {value}%",
       "roles": {
         "manager": "Manager",
         "admin": "Administrador",

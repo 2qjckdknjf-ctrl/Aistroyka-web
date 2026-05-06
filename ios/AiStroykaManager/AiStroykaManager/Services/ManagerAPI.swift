@@ -224,6 +224,20 @@ enum ManagerAPI {
         )
         return try await APIClient.shared.request(path: "help/assistant", method: "POST", body: body)
     }
+
+    static func helpAssistantEvent(type: String, locale: String, role: String, pathname: String) async {
+        struct Body: Encodable {
+            let type: String
+            let locale: String
+            let role: String
+            let pathname: String
+        }
+        _ = try? await APIClient.shared.request(
+            path: "help/assistant/events",
+            method: "POST",
+            body: Body(type: type, locale: locale, role: role, pathname: pathname)
+        ) as HelpAssistantEventAckDTO
+    }
 }
 
 // MARK: - Manager-specific DTOs (backend contract)
@@ -502,4 +516,8 @@ struct HelpAssistantResponseDTO: Decodable {
     let answer: String
     let riskSignals: [HelpAssistantRiskSignalDTO]?
     let confidence: Int?
+}
+
+struct HelpAssistantEventAckDTO: Decodable {
+    let ok: Bool?
 }

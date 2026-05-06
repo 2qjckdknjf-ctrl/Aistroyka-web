@@ -184,6 +184,11 @@
       "confidence": "Confidence: {value}%",
       "riskSignalsTitle": "Risk signals",
       "recentTitle": "Recent guide snapshots",
+      "metricsTitle": "Guide metrics (7d)",
+      "metricOpens": "Opens: {value}",
+      "metricAsks": "Asks: {value}",
+      "metricClicks": "Action clicks: {value}",
+      "metricCompletion": "Completion: {value}%",
       "roles": {
         "manager": "Manager",
         "admin": "Admin",
