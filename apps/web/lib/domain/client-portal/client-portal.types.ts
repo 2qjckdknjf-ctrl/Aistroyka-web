@@ -27,6 +27,20 @@ export interface ClientDecisionItem {
   kind: ClientDecisionKind;
 }
 
+export interface ClientCommercialItem {
+  id: string;
+  kind: "invoice" | "expected_revenue" | "deposit" | "credit_note" | "other";
+  title: string;
+  description: string | null;
+  amount: number;
+  currency: string;
+  due_date: string | null;
+  status: "issued" | "due" | "overdue" | "paid";
+  linked_change_order_id: string | null;
+  linked_document_id: string | null;
+  updated_at: string;
+}
+
 /** Assembled read model for project owners when portal is enabled. */
 export interface ClientProjectView {
   project: { id: string; name: string };
@@ -39,6 +53,8 @@ export interface ClientProjectView {
   decisions: ClientDecisionItem[];
   /** Explicit manager-created requests (Wave 4 Step 6); excludes cancelled. */
   client_requests: ClientRequestPublic[];
+  /** Customer-facing commercial/payment records only; no internal costs or event actors. */
+  commercial_items: ClientCommercialItem[];
   /** Wave 4 Step 7: external stakeholder roles may be view-only. */
   capabilities: {
     can_respond_to_requests: boolean;

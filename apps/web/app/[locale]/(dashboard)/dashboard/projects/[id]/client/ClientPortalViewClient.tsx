@@ -82,6 +82,33 @@ export function ClientPortalViewClient({ projectId }: { projectId: string }) {
         canRespondToRequests={d.capabilities.can_respond_to_requests}
       />
 
+      <Card className="p-4 border-l-4 border-l-aistroyka-success">
+        <h3 className="font-semibold text-aistroyka-text-primary">{tDetail("commercialItems")}</h3>
+        <p className="mt-1 text-sm text-aistroyka-text-secondary">
+          {tDetail("commercialItemsHint")}
+        </p>
+        {d.commercial_items.length === 0 ? (
+          <p className="mt-3 text-sm text-aistroyka-text-secondary">{tDetail("noCommercialItemsShared")}</p>
+        ) : (
+          <ul className="mt-3 space-y-2">
+            {d.commercial_items.slice(0, 5).map((item) => (
+              <li key={item.id} className="rounded border border-aistroyka-border-subtle p-3 text-sm">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <span className="font-medium text-aistroyka-text-primary">{item.title}</span>
+                  <span className="text-aistroyka-text-secondary">
+                    {item.amount.toLocaleString()} {item.currency}
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-aistroyka-text-tertiary">
+                  {statusLabel(item.kind)} · {statusLabel(item.status)}
+                  {item.due_date ? ` · ${new Date(item.due_date).toLocaleDateString()}` : ""}
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+
       <ClientPortalActivitySection projectId={projectId} />
 
       <Card className="p-4 border-l-4 border-l-aistroyka-info">

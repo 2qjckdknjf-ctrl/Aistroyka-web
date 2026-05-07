@@ -48,6 +48,23 @@ const policy = await import("./client-portal.policy");
 const supabase = {} as SupabaseClient;
 const ctx = { tenantId: "t1", userId: "u1", role: "member" as const };
 
+function createSupabaseWithCommercialRows(rows: unknown[] = []) {
+  const builder = {
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    in: vi.fn().mockReturnThis(),
+    order: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockResolvedValue({ data: rows, error: null }),
+  };
+  return {
+    from: vi.fn((table: string) => {
+      if (table === "project_commercial_items") return builder;
+      return builder;
+    }),
+    __builder: builder,
+  } as unknown as SupabaseClient & { __builder: typeof builder };
+}
+
 describe("client-portal.service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -101,11 +118,30 @@ describe("client-portal.service", () => {
       ] as any);
       vi.mocked(crRepo.listByProject).mockResolvedValue([]);
 
-      const { data, error } = await getClientProjectView(supabase, ctx, "p1");
+      const supabaseWithCommercial = createSupabaseWithCommercialRows([
+        {
+          id: "ci1",
+          kind: "invoice",
+          title: "Payment milestone",
+          description: "Customer-facing payment",
+          amount: "1200",
+          currency: "RUB",
+          due_date: "2026-06-01",
+          status: "issued",
+          linked_change_order_id: null,
+          linked_document_id: "d1",
+          created_by: "internal-user",
+          updated_at: "2026-01-02",
+        },
+      ]);
+
+      const { data, error } = await getClientProjectView(supabaseWithCommercial, ctx, "p1");
       expect(error).toBe("");
       expect(data?.project.name).toBe("Build");
       expect(data?.milestones).toHaveLength(1);
       expect(data?.decisions).toHaveLength(1);
+      expect(data?.commercial_items).toHaveLength(1);
+      expect(data?.commercial_items[0].amount).toBe(1200);
       expect(data?.client_requests).toEqual([]);
       expect(data?.capabilities.can_respond_to_requests).toBe(true);
       const json = JSON.stringify(data);
@@ -114,6 +150,8 @@ describe("client-portal.service", () => {
       expect(json).not.toContain("planned_total");
       expect(json).not.toContain("actual_total");
       expect(json).not.toContain("over_budget");
+      expect(json).not.toContain("created_by");
+      expect(json).not.toContain("internal-user");
     });
   });
 
