@@ -297,22 +297,26 @@ PASS: production smoke (https://aistroyka.ai)
 
 ## Phase 0 Production Truth Verdict
 
-Production SHA known: YES, `62a1659`
+Production SHA known: YES, `3fda021`
 
-Staging SHA known: YES, `e3abb52`
+Staging SHA known: YES, `3fda021`
 
-Production/GitHub HEAD aligned: YES, production `62a1659` matches local HEAD commit `62a165937bb8d5d5791dbbc0db926c855ea0f752`.
+Production/GitHub HEAD aligned: YES, production `3fda021` matches remediation commit `3fda0212c158135a76e8b08d6692887031d1c1ba`.
 
-Staging/GitHub HEAD aligned: NO, staging remains `e3abb52`.
+Staging/GitHub HEAD aligned: YES, staging `3fda021` matches remediation commit `3fda0212c158135a76e8b08d6692887031d1c1ba`.
 
 Production smoke known: YES, PASS
 
+Staging smoke known: YES, PASS
+
 Customer finance isolation remediated: YES
 
-Cloudflare deploy access available: YES via GitHub Actions; local Wrangler token still lacks publish/tail permissions.
+Cloudflare deploy access available: YES via GitHub Actions.
 
-Production deploy completed in latest recheck: YES
+Production deploy completed in latest recheck: YES, run `25483838863`
 
-Verdict: NOT CLOSED until the local finance-isolation code remediation is committed/pushed/deployed and staging is aligned or explicitly accepted as older.
+Staging deploy completed in latest recheck: YES, run `25483668533`
 
-PHASE 0 CLOSED: NO
+Verdict: CLOSED
+
+PHASE 0 CLOSED: YES

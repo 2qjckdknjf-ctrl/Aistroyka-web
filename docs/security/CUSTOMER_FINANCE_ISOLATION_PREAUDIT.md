@@ -271,14 +271,14 @@ Customer finance isolation remediated in code and live Supabase: YES
 
 Production runtime health verified: YES
 
-Production deploy completed in latest recheck: YES, via GitHub Actions run `25481116848`
+Production deploy completed in latest recheck: YES, via GitHub Actions run `25483838863`
 
-Finance-isolation code deployed to production: NO, local changes are not committed/pushed.
+Finance-isolation code deployed to production: YES, production build `3fda021 / 2026-05-07 08:06`.
 
-Staging workflow blocker found and locally fixed: YES, `.github/workflows/deploy-cloudflare-staging.yml` no longer uses unsupported `continue-on-error` with a reusable workflow job in the working tree.
+Staging workflow blocker found and fixed: YES, `.github/workflows/deploy-cloudflare-staging.yml` no longer uses unsupported `continue-on-error` with a reusable workflow job.
 
-Staging workflow fix active in GitHub: NO, local workflow change is not committed/pushed.
+Staging workflow fix active in GitHub: YES, staging deploy run `25483668533` succeeded.
 
-Verdict: PASS FOR LIVE SUPABASE ISOLATION, PHASE 0 STILL NOT CLOSED UNTIL CODE/WORKFLOW REMEDIATION IS DEPLOYED
+Verdict: PASS
 
-PHASE 0 CLOSED: NO
+PHASE 0 CLOSED: YES

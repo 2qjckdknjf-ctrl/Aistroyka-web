@@ -233,8 +233,10 @@ All Supabase security advisors clean: NO
 
 Production runtime health verified: YES
 
-Finance-isolation code deployed to production: NO
+Finance-isolation code deployed to production: YES, production build `3fda021 / 2026-05-07 08:06`
 
-Verdict: NOT CLOSED
+Finance-isolation code deployed to staging: YES, staging build `3fda021 / 2026-05-07 08:02`
 
-PHASE 0 CLOSED: NO
+Verdict: CLOSED for Phase 0. Broader Supabase advisor backlog remains tracked as non-Phase-0 hardening work.
+
+PHASE 0 CLOSED: YES

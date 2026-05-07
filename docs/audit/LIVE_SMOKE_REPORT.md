@@ -261,6 +261,12 @@ Customer finance isolation revalidation known: YES, PASS
 
 Production deploy completed in latest recheck: YES
 
-Verdict: NOT CLOSED until finance-isolation code remediation is deployed and staging alignment is resolved.
+Staging deploy completed in latest recheck: YES
 
-PHASE 0 CLOSED: NO
+Production build stamp: `3fda021 / 2026-05-07 08:06`
+
+Staging build stamp: `3fda021 / 2026-05-07 08:02`
+
+Verdict: CLOSED
+
+PHASE 0 CLOSED: YES
