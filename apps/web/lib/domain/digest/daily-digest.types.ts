@@ -2,6 +2,12 @@ export type DailyDigestAudience = "manager" | "owner";
 
 export type DailyDigestSeverity = "info" | "warning" | "critical";
 
+/** next-intl `getTranslations('dailyDigest')` callback shape */
+export type DailyDigestTranslate = (
+  key: string,
+  values?: Record<string, string | number | Date>
+) => string;
+
 export interface DailyDigestLine {
   id: string;
   text: string;

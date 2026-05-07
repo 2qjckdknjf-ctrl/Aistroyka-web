@@ -5,7 +5,7 @@ import { getClientProjectView } from "@/lib/domain/client-portal/client-portal.s
 import { getProjectSummary, type ProjectSummary } from "@/lib/domain/projects/project-summary.repository";
 import * as projectRepo from "@/lib/domain/projects/project.repository";
 import { canManageProjects } from "@/lib/tenant/tenant.policy";
-import type { DailyDigestLine, DailyDigestPayload } from "./daily-digest.types";
+import type { DailyDigestLine, DailyDigestPayload, DailyDigestTranslate } from "./daily-digest.types";
 
 const SEVERITY_RANK: Record<DailyDigestLine["severity"], number> = {
   critical: 0,
@@ -23,7 +23,8 @@ export function sortDigestLines(lines: DailyDigestLine[]): DailyDigestLine[] {
 export function buildManagerDigestLinesFromSummary(
   projectId: string,
   projectName: string,
-  summary: ProjectSummary
+  summary: ProjectSummary,
+  t: DailyDigestTranslate
 ): DailyDigestLine[] {
   const base = `/dashboard/projects/${projectId}`;
   const lines: DailyDigestLine[] = [];
@@ -32,7 +33,12 @@ export function buildManagerDigestLinesFromSummary(
     lines.push({
       id: `mgr:${projectId}:progress`,
       severity: "info",
-      text: `${projectName}: ${summary.tasksDone}/${summary.tasksTotal} tasks completed; ${summary.tasksInProgress} in progress.`,
+      text: t("mgrLine_progress", {
+        projectName,
+        done: summary.tasksDone,
+        total: summary.tasksTotal,
+        inProgress: summary.tasksInProgress,
+      }),
       href: base,
     });
   }
@@ -41,14 +47,14 @@ export function buildManagerDigestLinesFromSummary(
     lines.push({
       id: `mgr:${projectId}:budget_over`,
       severity: "critical",
-      text: `${projectName}: internal budget signals show actual above planned — review internal costs.`,
+      text: t("mgrLine_budget_over", { projectName }),
       href: `${base}?tab=costs`,
     });
   } else if (summary.budgetNearingLimit) {
     lines.push({
       id: `mgr:${projectId}:budget_near`,
       severity: "warning",
-      text: `${projectName}: internal spend is near the planned ceiling — confirm cost control.`,
+      text: t("mgrLine_budget_near", { projectName }),
       href: `${base}?tab=costs`,
     });
   }
@@ -57,7 +63,7 @@ export function buildManagerDigestLinesFromSummary(
     lines.push({
       id: `mgr:${projectId}:milestones`,
       severity: summary.overdueMilestonesCount > 2 ? "critical" : "warning",
-      text: `${projectName}: ${summary.overdueMilestonesCount} active milestone(s) past target date.`,
+      text: t("mgrLine_milestones", { projectName, count: summary.overdueMilestonesCount }),
       href: `${base}?tab=schedule`,
     });
   }
@@ -66,7 +72,7 @@ export function buildManagerDigestLinesFromSummary(
     lines.push({
       id: `mgr:${projectId}:reports`,
       severity: "warning",
-      text: `${projectName}: ${summary.pendingReportApprovalsCount} field report(s) awaiting review.`,
+      text: t("mgrLine_reports", { projectName, count: summary.pendingReportApprovalsCount }),
       href: `/dashboard/approvals`,
     });
   }
@@ -75,7 +81,7 @@ export function buildManagerDigestLinesFromSummary(
     lines.push({
       id: `mgr:${projectId}:documents`,
       severity: "warning",
-      text: `${projectName}: ${summary.pendingDecisionsCount} document(s) in review queue.`,
+      text: t("mgrLine_documents", { projectName, count: summary.pendingDecisionsCount }),
       href: `${base}?tab=documents`,
     });
   }
@@ -84,7 +90,7 @@ export function buildManagerDigestLinesFromSummary(
     lines.push({
       id: `mgr:${projectId}:issues`,
       severity: "warning",
-      text: `${projectName}: ${summary.openIssuesCount} open issue(s) not resolved.`,
+      text: t("mgrLine_issues", { projectName, count: summary.openIssuesCount }),
       href: base,
     });
   }
@@ -93,7 +99,7 @@ export function buildManagerDigestLinesFromSummary(
     lines.push({
       id: `mgr:${projectId}:commercial`,
       severity: "warning",
-      text: `${projectName}: ${summary.commercialOverdueCount} commercial record(s) overdue or need follow-up.`,
+      text: t("mgrLine_commercial", { projectName, count: summary.commercialOverdueCount }),
       href: `${base}?tab=estimate`,
     });
   }
@@ -105,7 +111,11 @@ export function buildManagerDigestLinesFromSummary(
  * Customer-facing digest lines — only data already exposed in ClientProjectView.
  * No internal budget, planned/actual cost, margin, or internal overrun wording.
  */
-export function buildOwnerDigestLinesFromClientView(view: ClientProjectView): DailyDigestLine[] {
+export function buildOwnerDigestLinesFromClientView(
+  view: ClientProjectView,
+  t: DailyDigestTranslate,
+  locale: string
+): DailyDigestLine[] {
   const { project, progress, milestones, decisions, client_requests, handover } = view;
   const projectId = project.id;
   const base = `/dashboard/projects/${projectId}/client`;
@@ -115,7 +125,11 @@ export function buildOwnerDigestLinesFromClientView(view: ClientProjectView): Da
     lines.push({
       id: `own:${projectId}:progress`,
       severity: "info",
-      text: `Progress: ${progress.tasks_done}/${progress.tasks_total} tasks marked complete for ${project.name}.`,
+      text: t("ownLine_progress", {
+        done: progress.tasks_done,
+        total: progress.tasks_total,
+        projectName: project.name,
+      }),
       href: base,
     });
   }
@@ -127,7 +141,7 @@ export function buildOwnerDigestLinesFromClientView(view: ClientProjectView): Da
     lines.push({
       id: `own:${projectId}:requests`,
       severity: actionOpen.length > 2 ? "warning" : "info",
-      text: `You have ${actionOpen.length} open item(s) awaiting your response or approval.`,
+      text: t("ownLine_requests", { count: actionOpen.length }),
       href: base,
     });
   }
@@ -136,7 +150,7 @@ export function buildOwnerDigestLinesFromClientView(view: ClientProjectView): Da
     lines.push({
       id: `own:${projectId}:decisions`,
       severity: "warning",
-      text: `${decisions.length} shared document(s) need your review or follow-up.`,
+      text: t("ownLine_decisions", { count: decisions.length }),
       href: base,
     });
   }
@@ -151,11 +165,14 @@ export function buildOwnerDigestLinesFromClientView(view: ClientProjectView): Da
     .sort((a, b) => String(a.target_date).localeCompare(String(b.target_date)))
     .slice(0, 2);
 
+  const dateFmt = (iso: string) =>
+    new Date(iso).toLocaleDateString(locale, { year: "numeric", month: "short", day: "numeric" });
+
   for (const m of upcoming) {
     lines.push({
       id: `own:${projectId}:ms:${m.id}`,
       severity: "info",
-      text: `Upcoming milestone: ${m.title} · ${new Date(m.target_date).toLocaleDateString()}.`,
+      text: t("ownLine_milestone", { title: m.title, date: dateFmt(m.target_date) }),
       href: base,
     });
   }
@@ -172,7 +189,7 @@ export function buildOwnerDigestLinesFromClientView(view: ClientProjectView): Da
     lines.push({
       id: `own:${projectId}:commercial`,
       severity: "warning",
-      text: `${commercialAttention.length} estimate or commercial approval(s) are past the agreed follow-up date.`,
+      text: t("ownLine_commercial", { count: commercialAttention.length }),
       href: base,
     });
   }
@@ -181,7 +198,7 @@ export function buildOwnerDigestLinesFromClientView(view: ClientProjectView): Da
     lines.push({
       id: `own:${projectId}:handover`,
       severity: "info",
-      text: `Handover preparation is in progress for ${project.name}.`,
+      text: t("ownLine_handover", { projectName: project.name }),
       href: base,
     });
   }
@@ -201,16 +218,17 @@ export async function buildManagerProjectDailyDigest(
   supabase: SupabaseClient,
   ctx: TenantContext,
   projectId: string,
-  projectName: string
+  projectName: string,
+  t: DailyDigestTranslate
 ): Promise<DailyDigestPayload> {
   if (!ctx.tenantId) {
     throw new Error("Tenant required");
   }
   const summary = await getProjectSummary(supabase, projectId, ctx.tenantId);
-  const lines = buildManagerDigestLinesFromSummary(projectId, projectName, summary);
+  const lines = buildManagerDigestLinesFromSummary(projectId, projectName, summary, t);
   return {
     audience: "manager",
-    headline: `Daily control — ${projectName}`,
+    headline: t("mgrHeadline_project", { projectName }),
     generated_at: new Date().toISOString(),
     project_id: projectId,
     project_name: projectName,
@@ -221,17 +239,19 @@ export async function buildManagerProjectDailyDigest(
 export async function buildOwnerProjectDailyDigest(
   supabase: SupabaseClient,
   ctx: TenantContext,
-  projectId: string
+  projectId: string,
+  t: DailyDigestTranslate,
+  locale: string
 ): Promise<{ data: DailyDigestPayload | null; error: string }> {
   const { data: view, error } = await getClientProjectView(supabase, ctx, projectId);
   if (error || !view) {
     return { data: null, error: error || "Not available" };
   }
-  const lines = buildOwnerDigestLinesFromClientView(view);
+  const lines = buildOwnerDigestLinesFromClientView(view, t, locale);
   return {
     data: {
       audience: "owner",
-      headline: `Your project today — ${view.project.name}`,
+      headline: t("ownHeadline", { projectName: view.project.name }),
       generated_at: new Date().toISOString(),
       project_id: view.project.id,
       project_name: view.project.name,
@@ -252,7 +272,8 @@ export interface PortfolioManagerDailyDigest {
 
 export async function buildManagerPortfolioDailyDigest(
   supabase: SupabaseClient,
-  ctx: TenantContext
+  ctx: TenantContext,
+  t: DailyDigestTranslate
 ): Promise<PortfolioManagerDailyDigest | null> {
   if (!ctx.tenantId || !ctx.userId || !canManageProjects(ctx)) return null;
 
@@ -262,7 +283,7 @@ export async function buildManagerPortfolioDailyDigest(
 
   for (const p of projects) {
     const summary = await getProjectSummary(supabase, p.id, tenantId);
-    const lines = buildManagerDigestLinesFromSummary(p.id, p.name, summary);
+    const lines = buildManagerDigestLinesFromSummary(p.id, p.name, summary, t);
     for (const line of lines) {
       merged.push({
         ...line,
@@ -274,7 +295,7 @@ export async function buildManagerPortfolioDailyDigest(
 
   const sorted = sortDigestLines(merged);
   return {
-    headline: "Daily control snapshot",
+    headline: t("mgrHeadline_portfolio"),
     generated_at: new Date().toISOString(),
     lines: sorted.slice(0, MAX_PORTFOLIO_LINES),
   };

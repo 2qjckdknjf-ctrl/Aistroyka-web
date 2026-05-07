@@ -1,8 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { DefectEventRow, DefectListItem, DefectRow, DefectStatus } from "./defects.types";
+import type { DefectEventRow, DefectListItem, DefectRow, DefectSeverity, DefectStatus } from "./defects.types";
 
 const ROW =
-  "id, tenant_id, project_id, title, description, status, is_blocking, assigned_to, due_date, resolution_note, resolved_at, resolved_by, linked_milestone_id, linked_document_id, linked_discussion_id, linked_request_id, created_by, created_at, updated_at";
+  "id, tenant_id, project_id, title, description, status, is_blocking, assigned_to, due_date, resolution_note, resolved_at, resolved_by, linked_milestone_id, linked_document_id, linked_discussion_id, linked_request_id, severity, photo_before_report_media_id, photo_after_report_media_id, created_by, created_at, updated_at";
 
 export async function insertDefect(
   supabase: SupabaseClient,
@@ -96,6 +96,9 @@ export async function updateDefect(
     linked_document_id: string | null;
     linked_discussion_id: string | null;
     linked_request_id: string | null;
+    severity: DefectSeverity | null;
+    photo_before_report_media_id: string | null;
+    photo_after_report_media_id: string | null;
   }>
 ): Promise<boolean> {
   const { error } = await supabase

@@ -1,5 +1,8 @@
 export type DefectStatus = "open" | "in_progress" | "ready_for_verification" | "resolved" | "closed";
 
+/** Optional punch-list severity tier (commercial / operational; not internal finance). */
+export type DefectSeverity = "low" | "medium" | "high" | "critical";
+
 export interface DefectRow {
   id: string;
   tenant_id: string;
@@ -17,6 +20,9 @@ export interface DefectRow {
   linked_document_id: string | null;
   linked_discussion_id: string | null;
   linked_request_id: string | null;
+  severity: DefectSeverity | null;
+  photo_before_report_media_id: string | null;
+  photo_after_report_media_id: string | null;
   created_by: string;
   created_at: string;
   updated_at: string;

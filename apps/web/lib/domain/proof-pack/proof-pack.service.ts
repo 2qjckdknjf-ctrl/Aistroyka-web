@@ -19,10 +19,19 @@ function mediaCategory(media: Media): ProofMediaCategory {
   return "other";
 }
 
+/** Public token surface: only media that reads as site/customer evidence. */
+function includeMediaInPublicProof(m: Media): boolean {
+  const t = (m.type ?? "").toLowerCase();
+  if (!t.trim()) return false;
+  if (/(internal|private|confidential|worker_only|manager_only)/.test(t)) return false;
+  return /(before|after|progress|photo|image|evidence|completion|walkthrough|site)/.test(t);
+}
+
 export async function buildProjectProofPack(
   supabase: SupabaseClient,
   tenantId: string,
-  projectId: string
+  projectId: string,
+  opts?: { audience?: "manager" | "public" }
 ): Promise<ProjectProofPack | null> {
   const project = await projectRepo.getById(supabase, projectId, tenantId);
   if (!project) return null;
@@ -78,6 +87,10 @@ export async function buildProjectProofPack(
       status: row.status,
     }));
 
+  const audience = opts?.audience ?? "manager";
+  const mediaForPack =
+    audience === "public" ? media.filter(includeMediaInPublicProof) : media;
+
   return {
     generated_at: new Date().toISOString(),
     project: { id: project.id, name: project.name },
@@ -85,7 +98,7 @@ export async function buildProjectProofPack(
       tasks_done: summary.tasksDone,
       tasks_total: summary.tasksTotal,
     },
-    media: media.map((item) => ({
+    media: mediaForPack.map((item) => ({
       id: item.id,
       category: mediaCategory(item),
       file_url: item.file_url,
@@ -121,7 +134,7 @@ export async function getManagerProofPack(
 ): Promise<{ data: ProjectProofPack | null; error: string }> {
   if (!ctx.tenantId || !ctx.userId) return { data: null, error: "Tenant required" };
   if (!canReadProjects(ctx)) return { data: null, error: "Insufficient rights" };
-  const pack = await buildProjectProofPack(supabase, ctx.tenantId, projectId);
+  const pack = await buildProjectProofPack(supabase, ctx.tenantId, projectId, { audience: "manager" });
   return pack ? { data: pack, error: "" } : { data: null, error: "Project not found" };
 }
 
@@ -157,6 +170,7 @@ export async function createProofPackShare(
   };
 }
 
+/** Call from API with service_role client — anon cannot read proof_pack_shares or pack sources under RLS. */
 export async function getProofPackByToken(
   supabase: SupabaseClient,
   token: string
@@ -171,6 +185,30 @@ export async function getProofPackByToken(
   if (data.expires_at && new Date(data.expires_at).getTime() < Date.now()) {
     return { data: null, error: "Share expired" };
   }
-  const pack = await buildProjectProofPack(supabase, data.tenant_id, data.project_id);
+  const pack = await buildProjectProofPack(supabase, data.tenant_id, data.project_id, {
+    audience: "public",
+  });
   return pack ? { data: pack, error: "" } : { data: null, error: "Not found" };
+}
+
+export async function revokeProofPackShare(
+  supabase: SupabaseClient,
+  ctx: TenantContext,
+  projectId: string,
+  token: string
+): Promise<{ ok: boolean; error: string }> {
+  if (!ctx.tenantId || !ctx.userId) return { ok: false, error: "Tenant required" };
+  if (!canManageProjects(ctx)) return { ok: false, error: "Insufficient rights" };
+  const now = new Date().toISOString();
+  const { data: rows, error } = await supabase
+    .from("proof_pack_shares")
+    .update({ revoked_at: now })
+    .eq("tenant_id", ctx.tenantId)
+    .eq("project_id", projectId)
+    .eq("token", token)
+    .is("revoked_at", null)
+    .select("id");
+  if (error) return { ok: false, error: error.message };
+  if (!rows?.length) return { ok: false, error: "Share not found or already revoked" };
+  return { ok: true, error: "" };
 }
