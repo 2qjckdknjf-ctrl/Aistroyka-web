@@ -52,7 +52,12 @@ jobs:
           echo "NEXT_PUBLIC_BUILD_TIME=$(date -u +%Y-%m-%d\ %H:%M)" >> $GITHUB_ENV
           echo "NEXT_PUBLIC_APP_ENV=staging" >> $GITHUB_ENV
 
+      # NEXT_PUBLIC_* must exist at next build time — they are inlined into the client bundle.
       - name: Build (OpenNext Cloudflare)
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://vthfrxehrursfloevnlp.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_STAGING }}
+          NEXT_PUBLIC_APP_URL: https://staging.aistroyka.ai
         run: bun run cf:build
 
       - name: Verify build output and app source
