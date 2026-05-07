@@ -248,7 +248,16 @@
     "failedLoadAlerts": "No se pudieron cargar las alertas",
     "noAlerts": "Sin alertas",
     "kpiOverviewAria": "Resumen KPI",
-    "queuesAria": "Colas"
+    "queuesAria": "Colas",
+    "managerActionsAria": "Qué requiere atención hoy",
+    "managerActionsTitle": "Qué requiere atención hoy",
+    "managerActionsHint": "Feed solo para managers con señales reales de proyectos, calendario, aprobaciones, documentos, costes y entrega.",
+    "managerActionsFailed": "No se pudieron cargar las acciones del manager.",
+    "managerActionsEmpty": "No hay acciones urgentes para el manager ahora.",
+    "managerActionsOpen": "Abrir →",
+    "managerActionsCritical": "Crítico",
+    "managerActionsHigh": "Alto",
+    "managerActionsInternalOnly": "Señal financiera interna solo para manager"
   },
   "projects": {
     "title": "Proyectos",

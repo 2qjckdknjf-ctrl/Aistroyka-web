@@ -248,7 +248,16 @@
     "failedLoadAlerts": "Не удалось загрузить алерты",
     "noAlerts": "Алертов нет",
     "kpiOverviewAria": "Обзор KPI",
-    "queuesAria": "Очереди"
+    "queuesAria": "Очереди",
+    "managerActionsAria": "Что требует внимания сегодня",
+    "managerActionsTitle": "Что требует внимания сегодня",
+    "managerActionsHint": "Manager-only очередь действий из реальных сигналов проектов, сроков, согласований, документов, затрат и передачи.",
+    "managerActionsFailed": "Не удалось загрузить действия менеджера.",
+    "managerActionsEmpty": "Срочных действий для менеджера сейчас нет.",
+    "managerActionsOpen": "Открыть →",
+    "managerActionsCritical": "Критично",
+    "managerActionsHigh": "Высокий",
+    "managerActionsInternalOnly": "Внутренний финансовый сигнал только для менеджера"
   },
   "projects": {
     "title": "Проекты",

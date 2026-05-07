@@ -4,6 +4,7 @@ import { createClient, getSessionUser } from "@/lib/supabase/server";
 import { OnboardingGate } from "@/components/onboarding";
 import { GetStartedPanel, FirstValueBanner } from "@/components/onboarding";
 import { DashboardOpsOverviewClient } from "./DashboardOpsOverviewClient";
+import { DashboardManagerActionsClient } from "./DashboardManagerActionsClient";
 import { DashboardRecentProjectsClient } from "./DashboardRecentProjectsClient";
 import { DashboardAIOperatingCenterClient } from "./DashboardAIOperatingCenterClient";
 import { DashboardIntelligenceSectionClient } from "./DashboardIntelligenceSectionClient";
@@ -47,6 +48,9 @@ export default async function DashboardPage() {
           <GetStartedPanel />
         </section>
         <DashboardOpsOverviewClient />
+        <section className="mt-aistroyka-8">
+          <DashboardManagerActionsClient />
+        </section>
         <section className="mt-aistroyka-8">
           <DashboardAIOperatingCenterClient />
         </section>

@@ -107,7 +107,16 @@
     "failedLoadAlerts": "Failed to load alerts",
     "noAlerts": "No alerts",
     "kpiOverviewAria": "KPI overview",
-    "queuesAria": "Queues"
+    "queuesAria": "Queues",
+    "managerActionsAria": "What needs attention today",
+    "managerActionsTitle": "What needs attention today",
+    "managerActionsHint": "A manager-only action feed from real project, schedule, approval, document, cost, and handover signals.",
+    "managerActionsFailed": "Failed to load manager actions.",
+    "managerActionsEmpty": "No urgent manager actions right now.",
+    "managerActionsOpen": "Open →",
+    "managerActionsCritical": "Critical",
+    "managerActionsHigh": "High",
+    "managerActionsInternalOnly": "Internal manager-only finance signal"
   },
   "onboarding": {
     "step": "Step",
