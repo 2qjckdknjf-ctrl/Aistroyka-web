@@ -44,12 +44,14 @@ POST /api/v1/projects/:id/change-orders/:changeOrderId/transition
 
 Added:
 
+Portal aliases (customer namespace):
+
 ```text
-POST /api/v1/projects/:id/change-orders/:changeOrderId/send
-POST /api/v1/projects/:id/change-orders/:changeOrderId/respond
+GET /api/v1/portal/projects/:id/change-orders
+POST /api/v1/portal/projects/:id/change-orders/:changeOrderId/respond
 ```
 
-## Audit Trail
+Stakeholder list/detail include **customer_amount_delta** and **currency** only — never `budget_delta_amount`, `budget_impact_level`, or `internal_cost_item_id`.
 
 All state changes continue to use `project_change_order_events`.
 

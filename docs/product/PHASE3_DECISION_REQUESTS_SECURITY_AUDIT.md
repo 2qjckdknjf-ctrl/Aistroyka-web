@@ -1,55 +1,44 @@
-# Phase 3 Decision Requests Security Audit
+# Phase 3 — Decision requests (security audit)
 
-Date: 2026-05-07
+**Scope:** Manager vs stakeholder access to decision/client requests, finance isolation, audit visibility.  
+**Date:** 2026-05-07
 
-Roadmap phase: 3 - Decision Requests
+## Threat model (abbrev.)
 
-## Access Control
+- **T1** Stakeholder reads another tenant’s requests or manager-only fields.  
+- **T2** Stakeholder receives internal actor IDs or internal cost data via API or history.  
+- **T3** Customer-visible amount used to smuggle internal cost narrative.  
+- **T4** Unauthenticated or wrong-role access to create/cancel/complete.
 
-Manager APIs require internal project management permissions through the existing client request policy.
+## Controls
 
-Customer-safe APIs use the customer portal access policy:
+| Area | Control |
+|------|---------|
+| Tenant / project scope | All queries filter `tenant_id`; project id validated on row. |
+| Manager-only actions | `createClientRequest`, `patchClientRequestByManager`, list with `viewer: manager` require `canManageClientRequests`. |
+| Stakeholder read/respond | `canStakeholderAccessClientRequests` / `canRespondToClientRequests` (portal + membership). |
+| Public shape | `rowToPublic` omits `requested_by`, `responded_by`, `cancelled_by`, `completed_by`. |
+| History | `getClientRequest(..., "manager")` returns `project_client_request_events`; stakeholder path does **not** return history. |
+| Commercial fields | `customer_visible_amount` only with `estimate_approval` or `cost_change_customer_facing` — enforced in service. |
 
-- project owner membership, or
-- active project stakeholder,
-- with `client_portal_enabled = true`.
+## API surface
 
-## Finance Isolation
+- Manager: `/api/v1/projects/:id/decision-requests`, `/decision-requests/:requestId`.  
+- Portal respond alias: `/api/v1/portal/projects/:id/decisions/:requestId/respond`.  
+- No exposure of `project_cost_items` or internal budget APIs on these routes.
 
-Decision requests may expose a customer-facing amount only for:
+## Tests / evidence
 
-- `estimate_approval`
-- `cost_change_customer_facing`
+- `app/api/v1/projects/[id]/decision-requests/route.test.ts` (list/create).  
+- `app/api/v1/portal/projects/[id]/decisions/[requestId]/respond/route.test.ts` (delegation).  
+- `client-requests.service.test.ts` (policy + public strip).  
+- Stakeholder / portal route tests (Phase 2) reuse client-view gates.
 
-Forbidden data remains excluded:
+## Findings
 
-- internal actual costs
-- margin
-- internal overrun
-- subcontractor costs
-- internal cost item details
-- internal budget pressure
+- **None blocking** for Phase 3 closure.  
+- **Residual:** Event payloads may contain `response_value` (e.g. approve/reject, choice index, or customer feedback text) — intended for **manager-only** audit via `history`; not returned on stakeholder `getClientRequest`.
 
-## Audit Trail
+## Verdict
 
-Decision request changes are recorded in `project_client_request_events`.
-
-Manager view may include actor ids for audit. Customer-safe view strips internal user ids through `rowToPublic`.
-
-## Owner Namespace Note
-
-This repo reserves `/owner` and `/api/v1/owner/*` for platform owner controls. Customer decision APIs therefore use project-scoped customer-safe aliases instead of `/api/v1/owner/*`.
-
-## Validation
-
-Actual result:
-
-```text
-Focused: 4 test files passed, 14 tests passed
-Full validation: PHASE3_FULL_STATUS test=0 build=0 cfbuild=0
-```
-
-## Phase 3 Verdict
-
-PHASE 3 CLOSED: YES
-
+**Accept for Phase 3** — roles enforced, customer view remains finance-safe, audit trail available to managers.

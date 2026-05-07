@@ -36,7 +36,7 @@ export function ClientPortalRequestsSection({
   const respondMutation = useMutation({
     mutationFn: async (args: { requestId: string; body: Record<string, unknown> }) => {
       const res = await fetch(
-        `/api/v1/projects/${projectId}/client-requests/${args.requestId}/respond`,
+        `/api/v1/portal/projects/${projectId}/decisions/${args.requestId}/respond`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

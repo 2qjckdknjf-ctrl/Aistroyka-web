@@ -1,4 +1,5 @@
 import type { ClientRequestPublic } from "@/lib/domain/client-requests/client-requests.types";
+import type { CustomerEstimatePublic } from "@/lib/domain/customer-estimates/customer-estimates.types";
 
 /** Customer-safe milestone (no internal description). */
 export interface ClientVisibleMilestone {
@@ -37,6 +38,8 @@ export interface ClientProjectView {
   milestones: ClientVisibleMilestone[];
   documents: ClientVisibleDocument[];
   decisions: ClientDecisionItem[];
+  /** Customer-facing estimate proposals (status sent+). */
+  customer_estimates: CustomerEstimatePublic[];
   /** Explicit manager-created requests (Wave 4 Step 6); excludes cancelled. */
   client_requests: ClientRequestPublic[];
   /** Wave 4 Step 7: external stakeholder roles may be view-only. */

@@ -1,65 +1,31 @@
-# Phase 3 Decision Requests UI Report
+# Phase 3 — Decision requests (UI)
 
-Date: 2026-05-07
+**Date:** 2026-05-07
 
-Roadmap phase: 3 - Decision Requests
+## Manager — project detail
 
-## Manager UI
+- **Tab:** “Decisions” on `DashboardProjectDetailClient` (`?tab=decisions`).
+- **Panel:** `ProjectDecisionsPanel.tsx`
+  - Lists all requests via `GET /api/v1/projects/:id/decision-requests?status=all`.
+  - **Create:** form posts to `POST /api/v1/projects/:id/decision-requests` (canonical `type` + `title` + optional `description`, `due_at`, customer amount for `estimate_approval`).
+  - **Overdue:** badge when `status === open`, `due_at` in the past.
+  - Link to **customer portal** subtree (`/dashboard/projects/:id/client`).
 
-Added the existing decision request manager panel to the project detail page as a first-class `Decisions` tab.
+## Customer / stakeholder
 
-Route:
+- Existing **client portal** surfaces (`ClientPortalRequestsSection`, etc.) show open requests and collect responses.
+- **Respond URL (canonical portal path):** `POST /api/v1/portal/projects/:projectId/decisions/:requestId/respond` (same handler as `client-requests/.../respond`).
 
-```text
-/dashboard/projects/[id]?tab=decisions
-```
+## Manager workload / Daily Control Center
 
-Managers can:
+- `buildManagerWorkload` aggregates open `action_required` client requests per project.
+- If any open request has `due_at` in the past → **urgent**, title “Overdue customer decisions”, `due_state: overdue`, action URL `...?tab=decisions`.
 
-- create customer decision requests
-- choose finite response mechanics
-- link to documents or milestones
-- mark info-only requests complete
-- cancel open/responded requests
-- see request status in a real persisted list
+## i18n
 
-## Customer UI
+- Keys under `dashboardDetail.decisionRequests*` in `en`, `ru`, `es`, `it`.
 
-The existing customer portal request section remains the customer response surface:
+## Gaps / follow-ups (non-blocking)
 
-```text
-/dashboard/projects/[id]/client
-```
-
-Customers can respond to:
-
-- approve/reject requests
-- feedback requests
-- acknowledgements
-- choices
-- document reviews
-
-## Manager Daily Control Integration
-
-Open customer decision requests now feed manager workload as:
-
-```text
-kind: client_request_action
-action_url: /dashboard/projects/:id?tab=decisions
-```
-
-This is mapped into Manager Daily Control Center as `customer_decision_pending`.
-
-## Validation
-
-Actual result:
-
-```text
-Focused: 4 test files passed, 14 tests passed
-PHASE3_FULL_STATUS test=0 build=0 cfbuild=0
-```
-
-## Phase 3 Verdict
-
-PHASE 3 CLOSED: YES
-
+- Rich linking UI (pick document/milestone inline) can extend the create form; API already supports `linked_entity_*`.
+- Stakeholder-facing dedicated `/portal/projects/[id]` hub (vs dashboard client subtree) remains a Phase 2 optional follow-up.

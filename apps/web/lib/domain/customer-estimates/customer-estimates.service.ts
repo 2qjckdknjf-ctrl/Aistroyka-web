@@ -8,6 +8,7 @@ import type {
   CustomerEstimatePublic,
   CustomerEstimateRow,
   CustomerEstimateStatus,
+  PatchCustomerEstimateInput,
 } from "./customer-estimates.types";
 
 const ROW_SELECT =
@@ -33,6 +34,71 @@ function toPublic(row: CustomerEstimateRow): CustomerEstimatePublic {
 
 async function canManageEstimate(ctx: TenantContext): Promise<boolean> {
   return !!ctx.tenantId && !!ctx.userId && canManageProjects(ctx);
+}
+
+export async function patchCustomerEstimate(
+  supabase: SupabaseClient,
+  ctx: TenantContext,
+  projectId: string,
+  estimateId: string,
+  patch: PatchCustomerEstimateInput
+): Promise<{ data: CustomerEstimateRow | null; error: string }> {
+  if (!ctx.tenantId || !ctx.userId) return { data: null, error: "Tenant required" };
+  if (!(await canManageEstimate(ctx))) return { data: null, error: "Insufficient rights" };
+
+  const { data: existing } = await supabase
+    .from("customer_estimates")
+    .select(ROW_SELECT)
+    .eq("tenant_id", ctx.tenantId)
+    .eq("project_id", projectId)
+    .eq("id", estimateId)
+    .maybeSingle();
+  const row = existing as CustomerEstimateRow | null;
+  if (!row) return { data: null, error: "Not found" };
+
+  if (patch.status === "cancelled") {
+    if (row.status !== "draft") return { data: null, error: "Only draft estimates can be cancelled" };
+    const { data, error } = await supabase
+      .from("customer_estimates")
+      .update({ status: "cancelled" })
+      .eq("id", estimateId)
+      .eq("tenant_id", ctx.tenantId)
+      .select(ROW_SELECT)
+      .single();
+    if (error || !data) return { data: null, error: error?.message ?? "Update failed" };
+    return { data: data as CustomerEstimateRow, error: "" };
+  }
+
+  if (row.status !== "draft") return { data: null, error: "Only draft estimates can be edited" };
+
+  const updates: Record<string, string | number | null> = {};
+  if (patch.title !== undefined) {
+    const t = patch.title.trim();
+    if (!t) return { data: null, error: "title cannot be empty" };
+    updates.title = t;
+  }
+  if (patch.description !== undefined) updates.description = patch.description?.trim() || null;
+  if (patch.total_amount !== undefined) {
+    if (!Number.isFinite(patch.total_amount) || patch.total_amount < 0) {
+      return { data: null, error: "Invalid total_amount" };
+    }
+    updates.total_amount = patch.total_amount;
+  }
+  if (patch.currency !== undefined) updates.currency = patch.currency.trim() || "RUB";
+  if (patch.valid_until !== undefined) updates.valid_until = patch.valid_until;
+  if (patch.linked_document_id !== undefined) updates.linked_document_id = patch.linked_document_id;
+
+  if (Object.keys(updates).length === 0) return { data: row, error: "" };
+
+  const { data, error } = await supabase
+    .from("customer_estimates")
+    .update(updates)
+    .eq("id", estimateId)
+    .eq("tenant_id", ctx.tenantId)
+    .select(ROW_SELECT)
+    .single();
+  if (error || !data) return { data: null, error: error?.message ?? "Update failed" };
+  return { data: data as CustomerEstimateRow, error: "" };
 }
 
 export async function createCustomerEstimate(
@@ -160,7 +226,11 @@ export async function respondToCustomerEstimate(
   if (row.status !== "sent") return { data: null, error: "Estimate is not awaiting response" };
 
   if (row.linked_decision_request_id) {
-    await respondToClientRequest(supabase, ctx, projectId, row.linked_decision_request_id, { decision, note });
+    const dec = await respondToClientRequest(supabase, ctx, projectId, row.linked_decision_request_id, {
+      decision,
+      note,
+    });
+    if (dec.error || !dec.data) return { data: null, error: dec.error || "Decision respond failed" };
   }
 
   const nextStatus: CustomerEstimateStatus = decision === "approve" ? "approved" : "rejected";

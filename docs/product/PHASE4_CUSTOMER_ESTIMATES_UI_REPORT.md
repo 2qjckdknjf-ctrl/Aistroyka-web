@@ -1,40 +1,25 @@
 # Phase 4 Customer Estimates UI Report
 
-Date: 2026-05-07
+Date: 2026-05-07 (updated)
 
 Roadmap phase: 4 - Customer Estimates / Commercial Approvals
 
 ## Manager UI
 
-Added `CustomerEstimatesManagerPanel` to the project Estimate tab.
-
-Managers can:
-
-- create customer-facing estimate drafts,
-- set title, description, total amount, currency, valid-until date,
-- send draft estimates for customer approval.
-
-The panel is visually separated from the existing internal/AI estimate analysis and labels the flow as customer-facing proposals.
+- **`CustomerEstimatesManagerPanel`** is embedded at the top of the project **Estimate** tab (`ProjectEstimatePanel`), above internal/AI cost intelligence — clearly separated copy.
+- Managers can: create draft, **edit draft** (PATCH), **cancel draft**, send for approval (creates linked `estimate_approval` decision request), optional linked document id, validity date.
+- Strings use `dashboardDetail.customerEstimates*` (en / ru / es / it).
 
 ## Customer UI
 
-Customer portal already displays customer-facing commercial/payment records. Approved estimates are materialized into `project_commercial_items` with customer-visible status `issued`, so they appear in the customer portal commercial section.
+- **`ClientProjectView`** now includes `customer_estimates` from `listCustomerEstimates(..., "customer")` (sent+ statuses).
+- **`ClientPortalCustomerEstimatesSection`** on the client portal home lists estimates and, when `status === sent` and `can_respond_to_requests`, provides approve/reject with optional note via `POST /api/v1/projects/:id/estimates/:estimateId/respond`.
+- Approved flows still materialize customer-facing commercial lines per existing `respondToCustomerEstimate` logic.
 
-## Validation
+## APIs (manager)
 
-Focused:
-
-```text
-PHASE4_FOCUSED_STATUS focused=0 lint=0
-```
-
-Full validation:
-
-```text
-PHASE4_FULL_STATUS test=0 build=0 cfbuild=0
-```
+- `PATCH /api/v1/projects/:id/estimates/:estimateId` — draft field edits or `status: cancelled` from draft.
 
 ## Phase 4 Verdict
 
-PHASE 4 CLOSED: YES
-
+**PHASE 4 CLOSED: YES** — manager + customer surfaces aligned with customer-finance-safe roadmap.

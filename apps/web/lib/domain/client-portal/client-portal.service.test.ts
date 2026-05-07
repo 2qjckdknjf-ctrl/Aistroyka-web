@@ -25,6 +25,9 @@ vi.mock("@/lib/domain/client-requests/client-requests.repository", () => ({
 vi.mock("./client-portal.policy", () => ({
   canManageClientPortalSettings: vi.fn(),
 }));
+vi.mock("@/lib/domain/customer-estimates/customer-estimates.service", () => ({
+  listCustomerEstimates: vi.fn().mockResolvedValue({ data: [], error: "" }),
+}));
 vi.mock("@/lib/domain/project-handover/project-handover.service", () => ({
   getHandoverPublicSummary: vi.fn().mockResolvedValue({
     data: {
@@ -106,6 +109,7 @@ describe("client-portal.service", () => {
       expect(data?.project.name).toBe("Build");
       expect(data?.milestones).toHaveLength(1);
       expect(data?.decisions).toHaveLength(1);
+      expect(data?.customer_estimates).toEqual([]);
       expect(data?.client_requests).toEqual([]);
       expect(data?.capabilities.can_respond_to_requests).toBe(true);
       const json = JSON.stringify(data);

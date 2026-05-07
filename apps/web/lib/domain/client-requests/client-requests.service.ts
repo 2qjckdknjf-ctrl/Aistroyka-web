@@ -194,7 +194,7 @@ export async function createClientRequest(
     request_id: row.id,
     actor_user_id: ctx.userId,
     event_type: "created",
-    payload: { kind: row.kind, action_mode: row.action_mode },
+    payload: { kind: row.kind, action_mode: row.action_mode, decision_type: row.decision_type ?? null },
   });
 
   return { data: rowToManager(row), error: "" };
@@ -359,7 +359,7 @@ export async function respondToClientRequest(
     request_id: requestId,
     actor_user_id: ctx.userId,
     event_type: "responded",
-    payload: { kind: row.kind },
+    payload: { kind: row.kind, response_value: validated.value },
   });
 
   return { data: rowToPublic(updated), error: "" };
@@ -394,7 +394,7 @@ export async function patchClientRequestByManager(
       request_id: requestId,
       actor_user_id: ctx.userId,
       event_type: "cancelled",
-      payload: {},
+      payload: { prior_status: row.status },
     });
     return { data: rowToManager(updated), error: "" };
   }
@@ -413,7 +413,7 @@ export async function patchClientRequestByManager(
       request_id: requestId,
       actor_user_id: ctx.userId,
       event_type: "completed",
-      payload: {},
+      payload: { prior_status: row.status },
     });
     return { data: rowToManager(updated), error: "" };
   }

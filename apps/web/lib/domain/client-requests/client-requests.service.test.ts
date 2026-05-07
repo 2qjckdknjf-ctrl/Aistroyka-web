@@ -123,7 +123,13 @@ describe("client-requests.service", () => {
     });
     expect(error).toBe("");
     expect(data?.title).toBe("Need text");
-    expect(repo.insertEvent).toHaveBeenCalled();
+    expect(repo.insertEvent).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        event_type: "created",
+        payload: expect.objectContaining({ kind: "feedback", decision_type: null }),
+      })
+    );
   });
 
   it("respondToClientRequest sets status responded", async () => {
@@ -139,6 +145,13 @@ describe("client-requests.service", () => {
     });
     expect(error).toBe("");
     expect(data?.status).toBe("responded");
+    expect(repo.insertEvent).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        event_type: "responded",
+        payload: expect.objectContaining({ response_value: "approve" }),
+      })
+    );
   });
 
   it("respondToClientRequest rejects info_only", async () => {

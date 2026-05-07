@@ -64,20 +64,25 @@ async function clientRequestsOpenGrouped(
   supabase: SupabaseClient,
   tenantId: string,
   projectIds: string[]
-): Promise<Map<string, { id: string; title: string }[]>> {
-  const map = new Map<string, { id: string; title: string }[]>();
+): Promise<Map<string, { id: string; title: string; due_at: string | null }[]>> {
+  const map = new Map<string, { id: string; title: string; due_at: string | null }[]>();
   if (projectIds.length === 0) return map;
   const { data, error } = await supabase
     .from("project_client_requests")
-    .select("id, project_id, title")
+    .select("id, project_id, title, due_at")
     .eq("tenant_id", tenantId)
     .in("project_id", projectIds)
     .eq("status", "open")
     .eq("action_mode", "action_required");
   if (error) return map;
-  for (const row of (data ?? []) as { id: string; project_id: string; title: string }[]) {
+  for (const row of (data ?? []) as {
+    id: string;
+    project_id: string;
+    title: string;
+    due_at: string | null;
+  }[]) {
     const list = map.get(row.project_id) ?? [];
-    list.push({ id: row.id, title: row.title });
+    list.push({ id: row.id, title: row.title, due_at: row.due_at });
     map.set(row.project_id, list);
   }
   return map;
@@ -319,20 +324,27 @@ export async function buildManagerWorkload(
     }
 
     if (clientReqs.length > 0) {
+      const now = Date.now();
+      const overdueReqs = clientReqs.filter((r) => r.due_at && new Date(r.due_at).getTime() < now);
+      const hasOverdue = overdueReqs.length > 0;
       items.push({
         id: `manager:client_decisions:${p.id}`,
         audience: "manager",
         kind: "client_request_action",
-        priority: pri,
-        title: `Customer decisions pending — ${p.name}`,
-        reason: `${clientReqs.length} customer decision request(s) are still open.`,
+        priority: hasOverdue ? "urgent" : pri,
+        title: hasOverdue
+          ? `Overdue customer decisions — ${p.name}`
+          : `Customer decisions pending — ${p.name}`,
+        reason: hasOverdue
+          ? `${overdueReqs.length} decision request(s) past due · ${clientReqs.length} open total.`
+          : `${clientReqs.length} customer decision request(s) are still open.`,
         project_id: p.id,
         project_name: p.name,
         linked_entity_type: "client_request",
-        linked_entity_id: clientReqs[0].id,
+        linked_entity_id: (overdueReqs[0] ?? clientReqs[0]).id,
         action_url: `${base}?tab=decisions`,
-        due_state: "waiting_on_team",
-        status_bucket: statusBucketFor(pri),
+        due_state: hasOverdue ? "overdue" : "waiting_on_team",
+        status_bucket: hasOverdue ? "risk" : statusBucketFor(pri),
       });
     }
 

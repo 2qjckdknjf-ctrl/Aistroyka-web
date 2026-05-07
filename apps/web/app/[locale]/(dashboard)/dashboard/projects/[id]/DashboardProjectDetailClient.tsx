@@ -26,6 +26,7 @@ import { ProjectSchedulePanel } from "./ProjectSchedulePanel";
 import { ProjectDocumentsPanel } from "./ProjectDocumentsPanel";
 import { ProjectCostsPanel } from "./ProjectCostsPanel";
 import { ProjectEstimatePanel } from "./ProjectEstimatePanel";
+import { ProjectDecisionsPanel } from "./ProjectDecisionsPanel";
 
 const PAGE_SIZE = 10;
 
@@ -119,7 +120,9 @@ export function DashboardProjectDetailClient({ projectId }: { projectId: string 
               ? "costs"
               : tabParam === "estimate"
                 ? "estimate"
-                : "workers"
+                : tabParam === "decisions"
+                  ? "decisions"
+                  : "workers"
   );
 
   useEffect(() => {
@@ -129,6 +132,7 @@ export function DashboardProjectDetailClient({ projectId }: { projectId: string 
     else if (tabParam === "documents") setActiveTab("documents");
     else if (tabParam === "costs") setActiveTab("costs");
     else if (tabParam === "estimate") setActiveTab("estimate");
+    else if (tabParam === "decisions") setActiveTab("decisions");
   }, [tabParam]);
   const [workersPage, setWorkersPage] = useState(1);
   const [contractorsPage, setContractorsPage] = useState(1);
@@ -259,6 +263,9 @@ export function DashboardProjectDetailClient({ projectId }: { projectId: string 
           <Tab id="tab-documents" selected={activeTab === "documents"} onSelect={() => setActiveTab("documents")} aria-controls="panel-documents">
             {tDetail("documents")}
           </Tab>
+          <Tab id="tab-decisions" selected={activeTab === "decisions"} onSelect={() => setActiveTab("decisions")} aria-controls="panel-decisions">
+            {tDetail("decisions")}
+          </Tab>
           <Tab id="tab-costs" selected={activeTab === "costs"} onSelect={() => setActiveTab("costs")} aria-controls="panel-costs">
             {tDetail("costs")}
           </Tab>
@@ -312,6 +319,9 @@ export function DashboardProjectDetailClient({ projectId }: { projectId: string 
         </TabPanel>
         <TabPanel id="panel-documents" selected={activeTab === "documents"} aria-labelledby="tab-documents">
           <ProjectDocumentsPanel projectId={projectId} />
+        </TabPanel>
+        <TabPanel id="panel-decisions" selected={activeTab === "decisions"} aria-labelledby="tab-decisions">
+          <ProjectDecisionsPanel projectId={projectId} />
         </TabPanel>
         <TabPanel id="panel-costs" selected={activeTab === "costs"} aria-labelledby="tab-costs">
           <ProjectCostsPanel projectId={projectId} />

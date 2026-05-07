@@ -36,9 +36,12 @@ Customer:
 ```text
 GET /api/v1/projects/:id/estimates
 POST /api/v1/projects/:id/estimates
+PATCH /api/v1/projects/:id/estimates/:estimateId
 POST /api/v1/projects/:id/estimates/:estimateId/send
 POST /api/v1/projects/:id/estimates/:estimateId/respond
 ```
+
+`PATCH` is manager-only: edit fields while `status = draft`, or set `status: cancelled` from `draft` only.
 
 Customer-safe listing uses:
 

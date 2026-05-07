@@ -55,6 +55,7 @@ describe("daily-digest.service", () => {
       ],
       documents: [],
       decisions: [{ id: "d1", title: "Spec", type: "pdf", kind: "document_review_needed" }],
+      customer_estimates: [],
       client_requests: [
         {
           id: "r1",

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { createCustomerEstimate, sendCustomerEstimate } from "./customer-estimates.service";
+import { createCustomerEstimate, sendCustomerEstimate, patchCustomerEstimate, respondToCustomerEstimate } from "./customer-estimates.service";
 import * as tenantPolicy from "@/lib/tenant/tenant.policy";
 import * as clientRequests from "@/lib/domain/client-requests/client-requests.service";
 
@@ -114,5 +114,68 @@ describe("customer-estimates.service", () => {
         customer_visible_amount: 1000,
       })
     );
+  });
+
+  it("patchCustomerEstimate allows editing draft only", async () => {
+    const row = {
+      id: "e1",
+      tenant_id: "t1",
+      project_id: "p1",
+      title: "Proposal",
+      description: null,
+      status: "sent",
+      total_amount: 1000,
+      currency: "RUB",
+      valid_until: null,
+      created_by: "u1",
+      sent_to_customer_at: "now",
+      approved_by_customer_at: null,
+      rejected_by_customer_at: null,
+      customer_note: null,
+      linked_document_id: null,
+      linked_decision_request_id: "d1",
+      created_at: "now",
+      updated_at: "now",
+    };
+    const builder = chain(row);
+    builder.maybeSingle.mockResolvedValue({ data: row, error: null });
+    const supabase = { from: vi.fn(() => builder) } as unknown as SupabaseClient;
+
+    const res = await patchCustomerEstimate(supabase, ctx, "p1", "e1", { title: "Nope" });
+
+    expect(res.data).toBeNull();
+    expect(res.error).toMatch(/draft/i);
+  });
+
+  it("respondToCustomerEstimate fails when linked decision respond fails", async () => {
+    const row = {
+      id: "e1",
+      tenant_id: "t1",
+      project_id: "p1",
+      title: "Proposal",
+      description: null,
+      status: "sent",
+      total_amount: 1000,
+      currency: "RUB",
+      valid_until: null,
+      created_by: "u1",
+      sent_to_customer_at: "now",
+      approved_by_customer_at: null,
+      rejected_by_customer_at: null,
+      customer_note: null,
+      linked_document_id: null,
+      linked_decision_request_id: "d1",
+      created_at: "now",
+      updated_at: "now",
+    };
+    const builder = chain(row);
+    builder.maybeSingle.mockResolvedValue({ data: row, error: null });
+    const supabase = { from: vi.fn(() => builder) } as unknown as SupabaseClient;
+    vi.mocked(clientRequests.respondToClientRequest).mockResolvedValue({ data: null, error: "Not open" });
+
+    const res = await respondToCustomerEstimate(supabase, ctx, "p1", "e1", "approve", null);
+
+    expect(res.data).toBeNull();
+    expect(res.error).toBeTruthy();
   });
 });

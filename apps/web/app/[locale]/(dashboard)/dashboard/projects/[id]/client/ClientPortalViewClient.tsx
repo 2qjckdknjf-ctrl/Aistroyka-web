@@ -8,6 +8,7 @@ import type { ClientProjectView } from "@/lib/domain/client-portal/client-portal
 import { ClientPortalActivitySection } from "./ClientPortalActivitySection";
 import { ClientPortalNotificationsSection } from "./ClientPortalNotificationsSection";
 import { ClientPortalRequestsSection } from "./ClientPortalRequestsSection";
+import { ClientPortalCustomerEstimatesSection } from "./ClientPortalCustomerEstimatesSection";
 import { ClientPortalWorkloadSection } from "./ClientPortalWorkloadSection";
 
 async function fetchClientView(projectId: string): Promise<ClientProjectView> {
@@ -75,6 +76,12 @@ export function ClientPortalViewClient({ projectId }: { projectId: string }) {
       <ClientPortalNotificationsSection projectId={projectId} />
 
       <ClientPortalWorkloadSection projectId={projectId} />
+
+      <ClientPortalCustomerEstimatesSection
+        projectId={projectId}
+        estimates={d.customer_estimates}
+        canRespond={d.capabilities.can_respond_to_requests}
+      />
 
       <ClientPortalRequestsSection
         projectId={projectId}
@@ -194,8 +201,8 @@ export function ClientPortalViewClient({ projectId }: { projectId: string }) {
           <p className="mt-3 text-xs text-aistroyka-text-tertiary">
             {tDetail("ownerDecisionFlowHint")}
           </p>
-          <Link href={`/dashboard/projects/${projectId}/owner`} className="mt-2 inline-block text-sm text-aistroyka-accent hover:underline">
-            {tDetail("openOwnerWorkspace")}
+          <Link href={`/dashboard/projects/${projectId}/client`} className="mt-2 inline-block text-sm text-aistroyka-accent hover:underline">
+            {tDetail("openClientPortalHome")}
           </Link>
         </Card>
       )}

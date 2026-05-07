@@ -56,6 +56,9 @@ function toPublicDetail(row: ChangeOrderRow, events: import("./change-orders.typ
     schedule_impact_level: row.schedule_impact_level,
     schedule_impact_summary: row.schedule_impact_summary,
     schedule_delta_days: row.schedule_delta_days,
+    customer_amount_delta:
+      row.customer_amount_delta != null ? Number(row.customer_amount_delta) : null,
+    currency: row.currency ?? "RUB",
     has_linked_discussion: row.linked_discussion_id != null,
     has_linked_document: row.linked_document_id != null,
     has_linked_request: row.linked_request_id != null,
@@ -95,6 +98,9 @@ export async function listChangeOrders(
         status: row.status,
         title: row.title,
         updated_at: row.updated_at,
+        customer_amount_delta:
+          row.customer_amount_delta != null ? Number(row.customer_amount_delta) : null,
+        currency: row.currency ?? "RUB",
       })),
       error: "",
     };
@@ -223,6 +229,9 @@ export async function createChangeOrder(
       title: row.title,
       schedule_impact_level: row.schedule_impact_level,
       budget_impact_level: row.budget_impact_level,
+      customer_amount_delta:
+        row.customer_amount_delta != null ? Number(row.customer_amount_delta) : null,
+      currency: row.currency ?? "RUB",
       updated_at: row.updated_at,
     },
     error: "",
@@ -373,11 +382,12 @@ export async function respondToChangeOrderByCustomer(
   }
 
   const now = new Date().toISOString();
-  const ok = await repo.updateChangeOrder(supabase, changeOrderId, ctx.tenantId, {
-    status: toStatus,
-    approved_by_customer: ctx.userId,
-    approved_at: now,
-  });
+  const approvalPatch =
+    decision === "approve"
+      ? { status: toStatus, approved_by_customer: ctx.userId, approved_at: now }
+      : { status: toStatus, approved_by_customer: null as string | null, approved_at: null as string | null };
+
+  const ok = await repo.updateChangeOrder(supabase, changeOrderId, ctx.tenantId, approvalPatch);
   if (!ok) return { data: null, error: "Update failed" };
 
   await repo.insertEvent(supabase, {

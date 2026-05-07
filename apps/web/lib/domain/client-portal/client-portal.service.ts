@@ -12,6 +12,8 @@ import { canManageClientPortalSettings } from "./client-portal.policy";
 import type { ClientProjectView } from "./client-portal.types";
 import * as crRepo from "@/lib/domain/client-requests/client-requests.repository";
 import { rowToPublic as clientRequestToPublic } from "@/lib/domain/client-requests/client-requests.service";
+import { listCustomerEstimates } from "@/lib/domain/customer-estimates/customer-estimates.service";
+import type { CustomerEstimatePublic } from "@/lib/domain/customer-estimates/customer-estimates.types";
 import { getHandoverPublicSummary } from "@/lib/domain/project-handover/project-handover.service";
 
 /**
@@ -31,10 +33,11 @@ export async function getClientProjectView(
     return { data: null, error: "Insufficient rights" };
   }
 
-  const [summary, milestones, documents] = await Promise.all([
+  const [summary, milestones, documents, estimatesRes] = await Promise.all([
     getProjectSummary(supabase, projectId, ctx.tenantId),
     milestoneRepo.listByProject(supabase, projectId, ctx.tenantId),
     docRepo.listByProject(supabase, projectId, ctx.tenantId),
+    listCustomerEstimates(supabase, ctx, projectId, "customer"),
   ]);
 
   const visibleMilestones = milestones.filter(
@@ -62,6 +65,10 @@ export async function getClientProjectView(
 
   const can_respond_to_requests = await canRespondToClientRequests(supabase, ctx, projectId);
 
+  const customer_estimates: CustomerEstimatePublic[] = estimatesRes.error
+    ? []
+    : (estimatesRes.data as CustomerEstimatePublic[]);
+
   const handoverRes = await getHandoverPublicSummary(supabase, ctx, projectId);
   const handover = handoverRes.error ? null : handoverRes.data;
 
@@ -86,6 +93,7 @@ export async function getClientProjectView(
         updated_at: d.updated_at,
       })),
       decisions,
+      customer_estimates,
       client_requests,
       capabilities: { can_respond_to_requests },
       handover,

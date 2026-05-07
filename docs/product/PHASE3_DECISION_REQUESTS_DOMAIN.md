@@ -1,110 +1,52 @@
-# Phase 3 Decision Requests Domain
+# Phase 3 — Decision requests (domain)
 
-Date: 2026-05-07
+**Phase:** 3 — Decision requests  
+**Date:** 2026-05-07  
+**Status:** Implemented on `project_client_requests` (+ events), not a separate `decision_requests` table.
 
-Roadmap phase: 3 - Decision Requests
+## Intent
 
-## Domain Decision
+Move customer decisions (approvals, choices, Q&A, document review) into a structured workflow with explicit types, priorities, due dates, and an audit trail—without exposing internal company finances.
 
-The repo already has a shipped, auditable customer decision workflow:
+## Storage model
 
-```text
-project_client_requests
-project_client_request_events
-```
+| Concept | Table | Notes |
+|--------|--------|--------|
+| Request / “decision” | `project_client_requests` | Canonical row: `kind`, `action_mode`, `status`, `decision_type`, `due_at`, optional `customer_visible_amount` / currency (only for commercial-facing types). |
+| Audit log | `project_client_request_events` | Append-only events: `created`, `responded`, `cancelled`, `completed` (see event audit). |
 
-Phase 3 formalizes this as the canonical Decision Requests domain instead of creating a duplicate table. The table has been extended with roadmap fields:
+**Statuses in product** (differs from early roadmap sketch): `open` → `responded` → `completed` (manager), or `cancelled`; not `pending/approved/answered` literals.
 
-- `decision_type`
-- `priority`
-- `assigned_to`
-- `due_at`
-- `decided_at`
-- `decision_note`
-- `customer_visible_amount`
-- `customer_visible_currency`
+**Decision types** (`decision_type`): `design_choice`, `material_choice`, `estimate_approval`, `cost_change_customer_facing`, `schedule_change`, `document_approval`, `work_acceptance`, `general_question`, `other`.
 
-## Canonical Types
+**Kind mapping** (`kind`): drives validation for stakeholder response (`approve_or_reject`, `feedback`, `acknowledge`, `choice`, `document_review`) — see `decision-requests.adapter.ts`.
 
-Supported `decision_type` values:
+## Customer-visible amount rule
 
-- `design_choice`
-- `material_choice`
-- `estimate_approval`
-- `cost_change_customer_facing`
-- `schedule_change`
-- `document_approval`
-- `work_acceptance`
-- `general_question`
-- `other`
+- Allowed only when `decision_type` is `estimate_approval` or `cost_change_customer_facing`.
+- Enforced in `createClientRequest`; aligns with meg roadmap §705–715 (no internal costs, margin, or cost items).
 
-Existing response mechanics remain finite and validated through:
+## Service API (domain)
 
-- approve/reject
-- feedback
-- acknowledge
-- choice
-- document review
+| Operation | Function | Notes |
+|-----------|----------|--------|
+| Create | `createClientRequest` | Manager; validates links to document/milestone; writes `created` event. |
+| List | `listClientRequests` | `viewer: manager \| stakeholder`; status filter. |
+| Get + history | `getClientRequest` | Manager gets `history` (events); stakeholder gets public shape only. |
+| Respond | `respondToClientRequest` | Stakeholder; `responded` event with payload details. |
+| Manager patch | `patchClientRequestByManager` | `completed` / `cancelled` + events. |
 
-## APIs
+## HTTP mapping (canonical)
 
-Manager:
+| Roadmap name | Implementation |
+|--------------|----------------|
+| `POST/GET .../decision-requests` | `/api/v1/projects/:id/decision-requests` |
+| `PATCH .../decision-requests/:requestId` | `/api/v1/projects/:id/decision-requests/:requestId` |
+| Owner `GET .../decisions` | `GET /api/v1/portal/projects/:id/decisions` (+ client view read model) |
+| Owner `POST .../decisions/:id/respond` | `POST /api/v1/portal/projects/:id/decisions/:requestId/respond` (alias of `client-requests/.../respond`) |
 
-```text
-GET /api/v1/projects/:id/decision-requests
-POST /api/v1/projects/:id/decision-requests
-GET /api/v1/projects/:id/decision-requests/:requestId
-PATCH /api/v1/projects/:id/decision-requests/:requestId
-```
+## References
 
-Customer-safe aliases in this repo:
-
-```text
-GET /api/v1/projects/:id/decisions
-POST /api/v1/projects/:id/decisions/:requestId/respond
-```
-
-The roadmap's `/api/v1/owner/*` naming is intentionally not used because `/owner` is already the platform owner cabinet in this codebase.
-
-## Customer Visible Amount Rule
-
-`customer_visible_amount` is allowed only for:
-
-- `estimate_approval`
-- `cost_change_customer_facing`
-
-It is never derived from internal `project_cost_items`, actual cost, margin, subcontractor cost, or internal budget pressure.
-
-## Audit Trail
-
-State changes are recorded in:
-
-```text
-project_client_request_events
-```
-
-Events include:
-
-- `created`
-- `responded`
-- `completed`
-- `cancelled`
-- `updated`
-
-## Validation
-
-Actual result:
-
-```text
-Focused: 4 test files passed, 14 tests passed
-Lint: No ESLint warnings or errors
-Full tests: 251 test files passed, 1368 tests passed
-Build: PASS
-Cloudflare build: PASS
-PHASE3_FULL_STATUS test=0 build=0 cfbuild=0
-```
-
-## Phase 3 Verdict
-
-PHASE 3 CLOSED: YES
-
+- `apps/web/lib/domain/client-requests/*`
+- `apps/web/lib/domain/decision-requests/decision-requests.adapter.ts`
+- Audit details: `docs/audit/PHASE3_CLIENT_REQUEST_EVENTS_AUDIT.md`

@@ -52,3 +52,14 @@ export interface CreateCustomerEstimateInput {
   valid_until?: string | null;
   linked_document_id?: string | null;
 }
+
+/** Manager-only patch. Draft-only for field edits; `status: cancelled` only from `draft`. */
+export interface PatchCustomerEstimateInput {
+  title?: string;
+  description?: string | null;
+  total_amount?: number;
+  currency?: string;
+  valid_until?: string | null;
+  linked_document_id?: string | null;
+  status?: "cancelled";
+}

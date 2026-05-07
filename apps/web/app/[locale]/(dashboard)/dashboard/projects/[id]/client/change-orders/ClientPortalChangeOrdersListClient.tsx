@@ -12,10 +12,12 @@ type Row = {
   status: string;
   title: string;
   updated_at: string;
+  customer_amount_delta?: number | null;
+  currency?: string;
 };
 
 async function fetchList(projectId: string): Promise<Row[]> {
-  const res = await fetch(`/api/v1/projects/${projectId}/change-orders`, { credentials: "include" });
+  const res = await fetch(`/api/v1/portal/projects/${projectId}/change-orders`, { credentials: "include" });
   if (!res.ok) throw new Error("Failed to load");
   const j = await res.json();
   return j.data ?? [];
@@ -24,7 +26,7 @@ async function fetchList(projectId: string): Promise<Row[]> {
 export function ClientPortalChangeOrdersListClient({ projectId }: { projectId: string }) {
   const tDetail = useTranslations("dashboardDetail");
   const q = useQuery({
-    queryKey: ["change-orders", projectId],
+    queryKey: ["portal-change-orders", projectId],
     queryFn: () => fetchList(projectId),
   });
 
@@ -74,6 +76,14 @@ export function ClientPortalChangeOrdersListClient({ projectId }: { projectId: s
                     <span className="font-medium text-aistroyka-text-primary">{r.title}</span>
                     <Badge className={changeOrderStatusBadgeClass(r.status)}>{formatStatusLabel(r.status)}</Badge>
                   </div>
+                  {r.customer_amount_delta != null && Number(r.customer_amount_delta) > 0 ? (
+                    <p className="mt-1 text-sm text-aistroyka-text-primary">
+                      {tDetail("changeOrderCustomerCommercialLine", {
+                        amount: Number(r.customer_amount_delta).toLocaleString(),
+                        currency: r.currency ?? "",
+                      })}
+                    </p>
+                  ) : null}
                   <p className="mt-1 text-xs text-aistroyka-text-tertiary">
                     {tDetail("updated")} {new Date(r.updated_at).toLocaleString()}
                   </p>
