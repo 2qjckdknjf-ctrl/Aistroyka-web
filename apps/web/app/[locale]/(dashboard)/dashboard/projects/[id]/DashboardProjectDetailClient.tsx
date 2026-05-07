@@ -26,6 +26,7 @@ import { ProjectSchedulePanel } from "./ProjectSchedulePanel";
 import { ProjectDocumentsPanel } from "./ProjectDocumentsPanel";
 import { ProjectCostsPanel } from "./ProjectCostsPanel";
 import { ProjectEstimatePanel } from "./ProjectEstimatePanel";
+import { ClientRequestsManagerPanel } from "./ClientRequestsManagerPanel";
 
 const PAGE_SIZE = 10;
 
@@ -119,7 +120,9 @@ export function DashboardProjectDetailClient({ projectId }: { projectId: string 
               ? "costs"
               : tabParam === "estimate"
                 ? "estimate"
-                : "workers"
+                : tabParam === "decisions"
+                  ? "decisions"
+                  : "workers"
   );
 
   useEffect(() => {
@@ -129,6 +132,7 @@ export function DashboardProjectDetailClient({ projectId }: { projectId: string 
     else if (tabParam === "documents") setActiveTab("documents");
     else if (tabParam === "costs") setActiveTab("costs");
     else if (tabParam === "estimate") setActiveTab("estimate");
+    else if (tabParam === "decisions") setActiveTab("decisions");
   }, [tabParam]);
   const [workersPage, setWorkersPage] = useState(1);
   const [contractorsPage, setContractorsPage] = useState(1);
@@ -265,6 +269,9 @@ export function DashboardProjectDetailClient({ projectId }: { projectId: string 
           <Tab id="tab-estimate" selected={activeTab === "estimate"} onSelect={() => setActiveTab("estimate")} aria-controls="panel-estimate">
             {tDetail("estimate")}
           </Tab>
+          <Tab id="tab-decisions" selected={activeTab === "decisions"} onSelect={() => setActiveTab("decisions")} aria-controls="panel-decisions">
+            {tDetail("decisions")}
+          </Tab>
         </Tabs>
 
         <TabPanel id="panel-workers" selected={activeTab === "workers"} aria-labelledby="tab-workers">
@@ -318,6 +325,9 @@ export function DashboardProjectDetailClient({ projectId }: { projectId: string 
         </TabPanel>
         <TabPanel id="panel-estimate" selected={activeTab === "estimate"} aria-labelledby="tab-estimate">
           <ProjectEstimatePanel projectId={projectId} />
+        </TabPanel>
+        <TabPanel id="panel-decisions" selected={activeTab === "decisions"} aria-labelledby="tab-decisions">
+          <ClientRequestsManagerPanel projectId={projectId} />
         </TabPanel>
       </Card>
     </>

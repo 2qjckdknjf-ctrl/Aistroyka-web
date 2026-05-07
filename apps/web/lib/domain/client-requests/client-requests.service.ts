@@ -12,6 +12,7 @@ import type {
   ClientRequestManager,
   ClientRequestPublic,
   CreateClientRequestInput,
+  DecisionRequestType,
   ManagerPatchClientRequest,
   ProjectClientRequestRow,
   RespondToClientRequestInput,
@@ -33,9 +34,16 @@ export function rowToPublic(r: ProjectClientRequestRow): ClientRequestPublic {
     status: r.status,
     title: r.title,
     instructions: r.instructions,
+    decision_type: r.decision_type,
+    priority: r.priority,
     choice_options: normalizeChoiceOptions(r.choice_options),
     linked_entity_type: r.linked_entity_type,
     linked_entity_id: r.linked_entity_id,
+    due_at: r.due_at,
+    decided_at: r.decided_at,
+    decision_note: r.decision_note,
+    customer_visible_amount: r.customer_visible_amount,
+    customer_visible_currency: r.customer_visible_currency,
     requested_at: r.requested_at,
     responded_at: r.responded_at,
     response_value: r.response_value,
@@ -96,6 +104,22 @@ const KINDS: CreateClientRequestInput["kind"][] = [
   "document_review",
 ];
 
+const DECISION_TYPES: DecisionRequestType[] = [
+  "design_choice",
+  "material_choice",
+  "estimate_approval",
+  "cost_change_customer_facing",
+  "schedule_change",
+  "document_approval",
+  "work_acceptance",
+  "general_question",
+  "other",
+];
+
+function canExposeCustomerAmount(type: DecisionRequestType | null | undefined): boolean {
+  return type === "estimate_approval" || type === "cost_change_customer_facing";
+}
+
 export async function createClientRequest(
   supabase: SupabaseClient,
   ctx: TenantContext,
@@ -107,9 +131,25 @@ export async function createClientRequest(
     return { data: null, error: "Insufficient rights" };
   }
   if (!input.kind || !KINDS.includes(input.kind)) return { data: null, error: "Invalid kind" };
+  if (input.decision_type && !DECISION_TYPES.includes(input.decision_type)) {
+    return { data: null, error: "Invalid decision_type" };
+  }
   const title = input.title?.trim() ?? "";
   if (title.length < 1) return { data: null, error: "Title required" };
   const action_mode = input.action_mode ?? "action_required";
+  const priority = input.priority ?? "medium";
+  if (!["low", "medium", "high", "critical"].includes(priority)) {
+    return { data: null, error: "Invalid priority" };
+  }
+  const amount = input.customer_visible_amount ?? null;
+  if (amount != null) {
+    if (!canExposeCustomerAmount(input.decision_type)) {
+      return { data: null, error: "customer_visible_amount requires customer-facing estimate/change decision type" };
+    }
+    if (!Number.isFinite(amount) || amount < 0) {
+      return { data: null, error: "Invalid customer_visible_amount" };
+    }
+  }
   const choice_options = normalizeChoiceOptions(input.choice_options);
   if (input.kind === "choice" && (!choice_options || choice_options.length < 2)) {
     return { data: null, error: "choice requires at least two options" };
@@ -134,9 +174,15 @@ export async function createClientRequest(
     action_mode,
     title,
     instructions: input.instructions?.trim() ?? null,
+    decision_type: input.decision_type ?? null,
+    priority,
     choice_options: input.kind === "choice" ? choice_options : null,
     linked_entity_type: input.linked_entity_type ?? null,
     linked_entity_id: input.linked_entity_id ?? null,
+    assigned_to: input.assigned_to ?? null,
+    due_at: input.due_at ?? null,
+    customer_visible_amount: amount,
+    customer_visible_currency: amount != null ? (input.customer_visible_currency ?? "RUB") : null,
     requested_by: ctx.userId,
   });
   if (!row) return { data: null, error: "Create failed" };
@@ -147,7 +193,7 @@ export async function createClientRequest(
     request_id: row.id,
     actor_user_id: ctx.userId,
     event_type: "created",
-    payload: { kind: row.kind, action_mode: row.action_mode },
+    payload: { kind: row.kind, action_mode: row.action_mode, decision_type: row.decision_type },
   });
 
   return { data: rowToManager(row), error: "" };
@@ -303,6 +349,8 @@ export async function respondToClientRequest(
     responded_by: ctx.userId,
     response_value: validated.value,
     response_note: validated.note,
+    decided_at: new Date().toISOString(),
+    decision_note: validated.note,
   });
   if (!updated) return { data: null, error: "Update failed" };
 

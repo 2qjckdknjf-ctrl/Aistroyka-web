@@ -1729,6 +1729,7 @@
     "intelligence": "Intelligence",
     "costs": "Затраты",
     "estimate": "Оценка",
+    "decisions": "Решения",
     "noProjectMembersYet": "У проекта пока нет участников.",
     "projectWorkers": "Участники проекта",
     "noContractorsInProject": "В этом проекте нет подрядчиков. Добавьте участников с ролью contractor в составе проекта.",

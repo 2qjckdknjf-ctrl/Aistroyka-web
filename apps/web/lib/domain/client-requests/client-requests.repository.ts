@@ -9,7 +9,7 @@ import type {
 } from "./client-requests.types";
 
 const ROW_SELECT =
-  "id, tenant_id, project_id, kind, action_mode, status, title, instructions, choice_options, linked_entity_type, linked_entity_id, requested_by, requested_at, responded_at, responded_by, response_value, response_note, cancelled_at, cancelled_by, completed_at, completed_by, created_at, updated_at";
+  "id, tenant_id, project_id, kind, action_mode, status, title, instructions, decision_type, priority, choice_options, linked_entity_type, linked_entity_id, assigned_to, due_at, decided_at, decision_note, customer_visible_amount, customer_visible_currency, requested_by, requested_at, responded_at, responded_by, response_value, response_note, cancelled_at, cancelled_by, completed_at, completed_by, created_at, updated_at";
 
 export async function insertRequest(
   supabase: SupabaseClient,
@@ -20,9 +20,15 @@ export async function insertRequest(
     action_mode: ClientRequestActionMode;
     title: string;
     instructions: string | null;
+    decision_type: import("./client-requests.types").DecisionRequestType | null;
+    priority: import("./client-requests.types").DecisionRequestPriority;
     choice_options: unknown;
     linked_entity_type: "document" | "milestone" | null;
     linked_entity_id: string | null;
+    assigned_to: string | null;
+    due_at: string | null;
+    customer_visible_amount: number | null;
+    customer_visible_currency: string | null;
     requested_by: string;
   }
 ): Promise<ProjectClientRequestRow | null> {
@@ -36,9 +42,15 @@ export async function insertRequest(
       status: "open",
       title: row.title.trim(),
       instructions: row.instructions?.trim() || null,
+      decision_type: row.decision_type,
+      priority: row.priority,
       choice_options: row.choice_options ?? null,
       linked_entity_type: row.linked_entity_type,
       linked_entity_id: row.linked_entity_id,
+      assigned_to: row.assigned_to,
+      due_at: row.due_at,
+      customer_visible_amount: row.customer_visible_amount,
+      customer_visible_currency: row.customer_visible_currency,
       requested_by: row.requested_by,
     })
     .select(ROW_SELECT)
@@ -92,6 +104,8 @@ export async function updateRequest(
     responded_by: string | null;
     response_value: string | null;
     response_note: string | null;
+    decided_at: string | null;
+    decision_note: string | null;
     completed_at: string | null;
     completed_by: string | null;
     cancelled_at: string | null;

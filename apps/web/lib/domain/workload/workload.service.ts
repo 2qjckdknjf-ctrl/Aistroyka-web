@@ -171,9 +171,10 @@ export async function buildManagerWorkload(
   const tenantId = ctx.tenantId;
   const projectIds = projects.map((p) => p.id);
 
-  const [discMgr, aftercareMap] = await Promise.all([
+  const [discMgr, aftercareMap, clientReqMap] = await Promise.all([
     discussionsGrouped(supabase, tenantId, projectIds, "awaiting_manager"),
     aftercareCountsByProject(supabase, tenantId, projectIds),
+    clientRequestsOpenGrouped(supabase, tenantId, projectIds),
   ]);
 
   const items: WorkloadItem[] = [];
@@ -214,6 +215,7 @@ export async function buildManagerWorkload(
     const blockers = handover.blockers;
     const blockingDefects = countBlocker(blockers, "blocking_punch_defects");
     const aftercareN = aftercareMap.get(p.id) ?? 0;
+    const clientReqs = clientReqMap.get(p.id) ?? [];
 
     const sig = {
       blockingDefects,
@@ -311,6 +313,24 @@ export async function buildManagerWorkload(
         linked_entity_type: null,
         linked_entity_id: null,
         action_url: `${base}?tab=aftercare`,
+        due_state: "waiting_on_team",
+        status_bucket: statusBucketFor(pri),
+      });
+    }
+
+    if (clientReqs.length > 0) {
+      items.push({
+        id: `manager:client_decisions:${p.id}`,
+        audience: "manager",
+        kind: "client_request_action",
+        priority: pri,
+        title: `Customer decisions pending — ${p.name}`,
+        reason: `${clientReqs.length} customer decision request(s) are still open.`,
+        project_id: p.id,
+        project_name: p.name,
+        linked_entity_type: "client_request",
+        linked_entity_id: clientReqs[0].id,
+        action_url: `${base}?tab=decisions`,
         due_state: "waiting_on_team",
         status_bucket: statusBucketFor(pri),
       });

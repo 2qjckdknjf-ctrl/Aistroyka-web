@@ -45,9 +45,17 @@ function baseRow(over: Partial<ProjectClientRequestRow> = {}): ProjectClientRequ
     status: "open",
     title: "T",
     instructions: null,
+    decision_type: null,
+    priority: "medium",
     choice_options: null,
     linked_entity_type: null,
     linked_entity_id: null,
+    assigned_to: null,
+    due_at: null,
+    decided_at: null,
+    decision_note: null,
+    customer_visible_amount: null,
+    customer_visible_currency: null,
     requested_by: "mgr",
     requested_at: "2026-01-01",
     responded_at: null,
@@ -103,6 +111,19 @@ describe("client-requests.service", () => {
     expect(error).toBe("");
     expect(data?.title).toBe("Need text");
     expect(repo.insertEvent).toHaveBeenCalled();
+  });
+
+  it("createClientRequest rejects customer amount for non-commercial decision types", async () => {
+    vi.mocked(policy.canManageClientRequests).mockResolvedValue(true);
+    const { data, error } = await createClientRequest(supabase, ctx, "p1", {
+      kind: "feedback",
+      decision_type: "general_question",
+      title: "Question",
+      customer_visible_amount: 100,
+      customer_visible_currency: "RUB",
+    });
+    expect(data).toBeNull();
+    expect(error).toContain("customer_visible_amount");
   });
 
   it("respondToClientRequest sets status responded", async () => {

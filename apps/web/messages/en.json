@@ -2010,6 +2010,7 @@
     "intelligence": "Intelligence",
     "costs": "Costs",
     "estimate": "Estimate",
+    "decisions": "Decisions",
     "noProjectMembersYet": "No project members yet.",
     "projectWorkers": "Project workers",
     "noContractorsInProject": "No contractors on this project. Add members with role contractor in project workers.",

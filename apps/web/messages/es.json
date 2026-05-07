@@ -1729,6 +1729,7 @@
     "intelligence": "Intelligence",
     "costs": "Costes",
     "estimate": "Estimación",
+    "decisions": "Decisiones",
     "noProjectMembersYet": "Aún no hay miembros en el proyecto.",
     "projectWorkers": "Trabajadores del proyecto",
     "noContractorsInProject": "No hay contratistas en este proyecto. Añade miembros con rol contractor en trabajadores del proyecto.",
