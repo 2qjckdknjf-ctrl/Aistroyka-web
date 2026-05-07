@@ -1179,6 +1179,7 @@
     "file": "File",
     "linkedTo": "Collegato a",
     "document": "Documento",
+    "commercialAmount": "Importo commerciale",
     "act": "Verbale",
     "contract": "Contratto",
     "none": "Nessuno",

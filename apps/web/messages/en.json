@@ -1183,6 +1183,7 @@
     "file": "File",
     "linkedTo": "Linked to",
     "document": "Document",
+    "commercialAmount": "Commercial amount",
     "act": "Act",
     "contract": "Contract",
     "none": "None",

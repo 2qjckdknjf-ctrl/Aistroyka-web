@@ -89,17 +89,24 @@ describe("change-orders.service", () => {
       title: "X",
       kind: "other",
       description: null,
+      reason: null,
       schedule_impact_level: "minor_shift",
       budget_impact_level: "major_increase",
       schedule_impact_summary: "Customer-safe schedule note",
       budget_impact_summary: "Internal budget note",
       schedule_delta_days: 2,
       budget_delta_amount: 1000,
+      customer_amount_delta: 1500,
+      currency: "RUB",
       linked_discussion_id: null,
       linked_document_id: null,
       linked_request_id: null,
       linked_milestone_id: null,
+      linked_customer_estimate_id: null,
+      internal_cost_item_id: "internal-cost-1",
       created_by: "u2",
+      approved_by_customer: null,
+      approved_at: null,
       implemented_at: null,
       implemented_by: null,
       created_at: "2026-01-01T00:00:00.000Z",
@@ -114,6 +121,8 @@ describe("change-orders.service", () => {
     expect(json).not.toContain("budget_impact_summary");
     expect(json).not.toContain("budget_delta_amount");
     expect(json).not.toContain("Internal budget note");
+    expect(json).not.toContain("internal_cost_item_id");
+    expect(json).toContain("customer_amount_delta");
   });
 
   it("transitionChangeOrder rejects invalid transition", async () => {

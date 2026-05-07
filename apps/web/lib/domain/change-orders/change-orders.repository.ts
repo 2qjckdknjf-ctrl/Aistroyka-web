@@ -10,7 +10,7 @@ import type {
 } from "./change-orders.types";
 
 const ROW_SELECT =
-  "id, tenant_id, project_id, kind, status, title, description, schedule_impact_level, budget_impact_level, schedule_impact_summary, budget_impact_summary, schedule_delta_days, budget_delta_amount, linked_discussion_id, linked_document_id, linked_request_id, linked_milestone_id, created_by, implemented_at, implemented_by, created_at, updated_at";
+  "id, tenant_id, project_id, kind, status, title, description, reason, schedule_impact_level, budget_impact_level, schedule_impact_summary, budget_impact_summary, schedule_delta_days, budget_delta_amount, customer_amount_delta, currency, linked_discussion_id, linked_document_id, linked_request_id, linked_milestone_id, linked_customer_estimate_id, internal_cost_item_id, created_by, approved_by_customer, approved_at, implemented_at, implemented_by, created_at, updated_at";
 
 export async function insertChangeOrder(
   supabase: SupabaseClient,
@@ -21,16 +21,21 @@ export async function insertChangeOrder(
     status: ChangeOrderStatus;
     title: string;
     description: string | null;
+    reason: string | null;
     schedule_impact_level: ScheduleImpactLevel;
     budget_impact_level: BudgetImpactLevel;
     schedule_impact_summary: string | null;
     budget_impact_summary: string | null;
     schedule_delta_days: number | null;
     budget_delta_amount: number | null;
+    customer_amount_delta: number | null;
+    currency: string;
     linked_discussion_id: string | null;
     linked_document_id: string | null;
     linked_request_id: string | null;
     linked_milestone_id: string | null;
+    linked_customer_estimate_id: string | null;
+    internal_cost_item_id: string | null;
     created_by: string;
   }
 ): Promise<ChangeOrderRow | null> {
@@ -43,16 +48,21 @@ export async function insertChangeOrder(
       status: row.status,
       title: row.title.trim(),
       description: row.description?.trim() || null,
+      reason: row.reason?.trim() || null,
       schedule_impact_level: row.schedule_impact_level,
       budget_impact_level: row.budget_impact_level,
       schedule_impact_summary: row.schedule_impact_summary?.trim() || null,
       budget_impact_summary: row.budget_impact_summary?.trim() || null,
       schedule_delta_days: row.schedule_delta_days,
       budget_delta_amount: row.budget_delta_amount,
+      customer_amount_delta: row.customer_amount_delta,
+      currency: row.currency,
       linked_discussion_id: row.linked_discussion_id,
       linked_document_id: row.linked_document_id,
       linked_request_id: row.linked_request_id,
       linked_milestone_id: row.linked_milestone_id,
+      linked_customer_estimate_id: row.linked_customer_estimate_id,
+      internal_cost_item_id: row.internal_cost_item_id,
       created_by: row.created_by,
     })
     .select(ROW_SELECT)
@@ -71,7 +81,7 @@ export async function listByProject(
   let q = supabase
     .from("project_change_orders")
     .select(
-      "id, kind, status, title, schedule_impact_level, budget_impact_level, updated_at"
+      "id, kind, status, title, schedule_impact_level, budget_impact_level, customer_amount_delta, currency, updated_at"
     )
     .eq("project_id", projectId)
     .eq("tenant_id", tenantId)
@@ -107,6 +117,7 @@ export async function updateChangeOrder(
   patch: Partial<{
     title: string;
     description: string | null;
+    reason: string | null;
     kind: ChangeOrderKind;
     schedule_impact_level: ScheduleImpactLevel;
     budget_impact_level: BudgetImpactLevel;
@@ -114,11 +125,17 @@ export async function updateChangeOrder(
     budget_impact_summary: string | null;
     schedule_delta_days: number | null;
     budget_delta_amount: number | null;
+    customer_amount_delta: number | null;
+    currency: string;
     linked_discussion_id: string | null;
     linked_document_id: string | null;
     linked_request_id: string | null;
     linked_milestone_id: string | null;
+    linked_customer_estimate_id: string | null;
+    internal_cost_item_id: string | null;
     status: ChangeOrderStatus;
+    approved_by_customer: string | null;
+    approved_at: string | null;
     implemented_at: string | null;
     implemented_by: string | null;
   }>

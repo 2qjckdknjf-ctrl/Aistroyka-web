@@ -20,14 +20,18 @@ type PublicDetail = {
   status: string;
   title: string;
   description: string | null;
+  reason: string | null;
   schedule_impact_level: string;
   schedule_impact_summary: string | null;
   schedule_delta_days: number | null;
+  customer_amount_delta: number | null;
+  currency: string;
   has_linked_discussion: boolean;
   has_linked_document: boolean;
   has_linked_request: boolean;
   has_linked_milestone: boolean;
   implemented_at: string | null;
+  approved_at: string | null;
   created_at: string;
   updated_at: string;
   events: Event[];
@@ -112,6 +116,12 @@ export function ClientPortalChangeOrderDetailClient({
               <dd className="mt-1 text-aistroyka-text-secondary">{tDetail("aboutDays")} {d.schedule_delta_days} {tDetail("days")}</dd>
             ) : null}
           </div>
+          {d.customer_amount_delta != null ? (
+            <div>
+              <dt className="text-aistroyka-text-tertiary">{tDetail("commercialAmount")}</dt>
+              <dd>{d.customer_amount_delta.toLocaleString()} {d.currency}</dd>
+            </div>
+          ) : null}
         </dl>
         {(d.has_linked_discussion || d.has_linked_document || d.has_linked_request || d.has_linked_milestone) && (
           <p className="mt-4 text-xs text-aistroyka-text-tertiary">
