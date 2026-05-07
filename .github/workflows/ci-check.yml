@@ -33,5 +33,10 @@ jobs:
       - name: Test
         run: bun run test
 
+      # Bake NEXT_PUBLIC_* into the OpenNext bundle (same requirement as deploy workflows).
       - name: Cloudflare bundle (no deploy)
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://vthfrxehrursfloevnlp.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_STAGING }}
+          NEXT_PUBLIC_APP_URL: https://staging.aistroyka.ai
         run: bun run cf:build
