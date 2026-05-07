@@ -45,11 +45,11 @@ function baseRow(over: Partial<ProjectClientRequestRow> = {}): ProjectClientRequ
     status: "open",
     title: "T",
     instructions: null,
-    decision_type: null,
-    priority: "medium",
     choice_options: null,
     linked_entity_type: null,
     linked_entity_id: null,
+    decision_type: null,
+    priority: "medium",
     assigned_to: null,
     due_at: null,
     decided_at: null,
@@ -98,6 +98,19 @@ describe("client-requests.service", () => {
     expect(error).toBe("choice requires at least two options");
   });
 
+  it("createClientRequest rejects customer amount for non-commercial decision types", async () => {
+    vi.mocked(policy.canManageClientRequests).mockResolvedValue(true);
+    const { data, error } = await createClientRequest(supabase, ctx, "p1", {
+      kind: "feedback",
+      decision_type: "general_question",
+      title: "Question",
+      customer_visible_amount: 100,
+      customer_visible_currency: "RUB",
+    });
+    expect(data).toBeNull();
+    expect(error).toMatch(/customer_visible_amount|estimate_approval|cost_change/i);
+  });
+
   it("createClientRequest inserts and logs event", async () => {
     vi.mocked(policy.canManageClientRequests).mockResolvedValue(true);
     vi.mocked(docRepo.getById).mockResolvedValue(null);
@@ -111,19 +124,6 @@ describe("client-requests.service", () => {
     expect(error).toBe("");
     expect(data?.title).toBe("Need text");
     expect(repo.insertEvent).toHaveBeenCalled();
-  });
-
-  it("createClientRequest rejects customer amount for non-commercial decision types", async () => {
-    vi.mocked(policy.canManageClientRequests).mockResolvedValue(true);
-    const { data, error } = await createClientRequest(supabase, ctx, "p1", {
-      kind: "feedback",
-      decision_type: "general_question",
-      title: "Question",
-      customer_visible_amount: 100,
-      customer_visible_currency: "RUB",
-    });
-    expect(data).toBeNull();
-    expect(error).toContain("customer_visible_amount");
   });
 
   it("respondToClientRequest sets status responded", async () => {

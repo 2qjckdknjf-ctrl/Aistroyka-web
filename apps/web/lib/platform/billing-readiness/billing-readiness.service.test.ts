@@ -54,6 +54,24 @@ vi.mock("./billing-pilot.repository", () => ({
   isWorkspaceInPilotCohortSync: vi.fn(),
 }));
 
+/** Avoid real Stripe HTTP when Step 18 enables live checkout (network can hang). */
+vi.mock("stripe", () => ({
+  default: class StripeMock {
+    checkout = {
+      sessions: {
+        create: vi.fn().mockResolvedValue({
+          url: "https://checkout.stripe.test/cs_test_mock",
+          id: "cs_test_mock",
+        }),
+      },
+    };
+    constructor(_key: string, _opts?: unknown) {
+      void _key;
+      void _opts;
+    }
+  },
+}));
+
 const {
   createBillingCheckoutSession,
   getCurrentBillingSubscription,

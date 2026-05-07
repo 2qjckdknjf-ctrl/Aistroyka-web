@@ -53,18 +53,14 @@ function toPublicDetail(row: ChangeOrderRow, events: import("./change-orders.typ
     status: row.status,
     title: row.title,
     description: row.description,
-    reason: row.reason,
     schedule_impact_level: row.schedule_impact_level,
     schedule_impact_summary: row.schedule_impact_summary,
     schedule_delta_days: row.schedule_delta_days,
-    customer_amount_delta: row.customer_amount_delta,
-    currency: row.currency,
     has_linked_discussion: row.linked_discussion_id != null,
     has_linked_document: row.linked_document_id != null,
     has_linked_request: row.linked_request_id != null,
     has_linked_milestone: row.linked_milestone_id != null,
     implemented_at: row.implemented_at,
-    approved_at: row.approved_at,
     created_at: row.created_at,
     updated_at: row.updated_at,
     events: events.map((e) => ({
@@ -98,8 +94,6 @@ export async function listChangeOrders(
         kind: row.kind,
         status: row.status,
         title: row.title,
-        customer_amount_delta: row.customer_amount_delta,
-        currency: row.currency,
         updated_at: row.updated_at,
       })),
       error: "",
@@ -198,7 +192,7 @@ export async function createChangeOrder(
     schedule_delta_days: input.schedule_delta_days ?? null,
     budget_delta_amount: input.budget_delta_amount ?? null,
     customer_amount_delta: input.customer_amount_delta ?? null,
-    currency: input.currency?.trim() || "RUB",
+    currency: (input.currency?.trim() || "RUB"),
     linked_discussion_id: input.linked_discussion_id ?? null,
     linked_document_id: input.linked_document_id ?? null,
     linked_request_id: input.linked_request_id ?? null,
@@ -229,8 +223,6 @@ export async function createChangeOrder(
       title: row.title,
       schedule_impact_level: row.schedule_impact_level,
       budget_impact_level: row.budget_impact_level,
-      customer_amount_delta: row.customer_amount_delta,
-      currency: row.currency,
       updated_at: row.updated_at,
     },
     error: "",
@@ -294,12 +286,17 @@ export async function updateChangeOrderContent(
   if (input.schedule_delta_days !== undefined) patch.schedule_delta_days = input.schedule_delta_days;
   if (input.budget_delta_amount !== undefined) patch.budget_delta_amount = input.budget_delta_amount;
   if (input.customer_amount_delta !== undefined) patch.customer_amount_delta = input.customer_amount_delta;
-  if (input.currency !== undefined) patch.currency = input.currency;
+  if (input.currency !== undefined) {
+    const c = input.currency.trim();
+    if (c.length < 1) return { ok: false, error: "Currency required" };
+    patch.currency = c;
+  }
   if (input.linked_discussion_id !== undefined) patch.linked_discussion_id = input.linked_discussion_id;
   if (input.linked_document_id !== undefined) patch.linked_document_id = input.linked_document_id;
   if (input.linked_request_id !== undefined) patch.linked_request_id = input.linked_request_id;
   if (input.linked_milestone_id !== undefined) patch.linked_milestone_id = input.linked_milestone_id;
-  if (input.linked_customer_estimate_id !== undefined) patch.linked_customer_estimate_id = input.linked_customer_estimate_id;
+  if (input.linked_customer_estimate_id !== undefined)
+    patch.linked_customer_estimate_id = input.linked_customer_estimate_id;
   if (input.internal_cost_item_id !== undefined) patch.internal_cost_item_id = input.internal_cost_item_id;
 
   const ok = await repo.updateChangeOrder(supabase, changeOrderId, ctx.tenantId, patch);
@@ -347,6 +344,10 @@ export async function transitionChangeOrder(
   return { ok: true, error: "" };
 }
 
+/**
+ * Portal stakeholder approves or rejects a change order awaiting customer decision.
+ * Managers must use {@link transitionChangeOrder} instead.
+ */
 export async function respondToChangeOrderByCustomer(
   supabase: SupabaseClient,
   ctx: TenantContext,
@@ -355,44 +356,42 @@ export async function respondToChangeOrderByCustomer(
   decision: "approve" | "reject"
 ): Promise<{ data: ChangeOrderPublicDetail | null; error: string }> {
   if (!ctx.tenantId || !ctx.userId) return { data: null, error: "Tenant required" };
-  if (!(await canReadChangeOrders(supabase, ctx, projectId))) return { data: null, error: "Insufficient rights" };
+  if (!(await canReadChangeOrders(supabase, ctx, projectId))) {
+    return { data: null, error: "Insufficient rights" };
+  }
+  if (await canManageChangeOrders(supabase, ctx, projectId)) {
+    return { data: null, error: "Insufficient rights" };
+  }
   const row = await repo.getById(supabase, changeOrderId, ctx.tenantId);
   if (!row || row.project_id !== projectId) return { data: null, error: "Not found" };
-  if (row.status !== "proposed" && row.status !== "under_review") {
-    return { data: null, error: "Change order is not awaiting customer response" };
+  if (row.status === "draft") return { data: null, error: "Not found" };
+
+  const from = row.status;
+  const toStatus: ChangeOrderStatus = decision === "approve" ? "approved" : "rejected";
+  if (!allowedNext(from, toStatus)) {
+    return { data: null, error: "Customer response not allowed for this status" };
   }
-  const next: ChangeOrderStatus = decision === "approve" ? "approved" : "rejected";
+
   const now = new Date().toISOString();
   const ok = await repo.updateChangeOrder(supabase, changeOrderId, ctx.tenantId, {
-    status: next,
-    approved_by_customer: decision === "approve" ? ctx.userId : null,
-    approved_at: decision === "approve" ? now : null,
+    status: toStatus,
+    approved_by_customer: ctx.userId,
+    approved_at: now,
   });
   if (!ok) return { data: null, error: "Update failed" };
+
   await repo.insertEvent(supabase, {
     tenant_id: ctx.tenantId,
     project_id: projectId,
     change_order_id: changeOrderId,
-    from_status: row.status,
-    to_status: next,
+    from_status: from,
+    to_status: toStatus,
     actor_user_id: ctx.userId,
-    note: null,
+    note: decision === "approve" ? "Customer approved" : "Customer rejected",
   });
-  if (decision === "approve" && row.customer_amount_delta != null) {
-    await supabase.from("project_commercial_items").insert({
-      tenant_id: ctx.tenantId,
-      project_id: projectId,
-      kind: "expected_revenue",
-      title: row.title,
-      description: row.description,
-      amount: row.customer_amount_delta,
-      currency: row.currency,
-      status: "issued",
-      linked_change_order_id: row.id,
-      linked_document_id: row.linked_document_id,
-      created_by: row.created_by,
-    });
-  }
-  const updated = await repo.getById(supabase, changeOrderId, ctx.tenantId);
-  return updated ? { data: toPublicDetail(updated, await repo.listEvents(supabase, changeOrderId, ctx.tenantId)), error: "" } : { data: null, error: "Not found" };
+
+  const fresh = await repo.getById(supabase, changeOrderId, ctx.tenantId);
+  if (!fresh) return { data: null, error: "Not found" };
+  const events = await repo.listEvents(supabase, changeOrderId, ctx.tenantId);
+  return { data: toPublicDetail(fresh, events), error: "" };
 }

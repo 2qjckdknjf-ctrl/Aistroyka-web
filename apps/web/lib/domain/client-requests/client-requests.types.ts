@@ -6,7 +6,7 @@ export type ClientRequestKind =
   | "choice"
   | "document_review";
 
-export type DecisionRequestType =
+export type ClientRequestDecisionType =
   | "design_choice"
   | "material_choice"
   | "estimate_approval"
@@ -17,7 +17,10 @@ export type DecisionRequestType =
   | "general_question"
   | "other";
 
-export type DecisionRequestPriority = "low" | "medium" | "high" | "critical";
+/** @deprecated Use ClientRequestDecisionType (Phase 3 column `decision_type`). */
+export type DecisionRequestType = ClientRequestDecisionType;
+
+export type ClientRequestPriority = "low" | "medium" | "high" | "critical";
 
 export type ClientRequestActionMode = "action_required" | "info_only";
 
@@ -34,11 +37,11 @@ export interface ProjectClientRequestRow {
   status: ClientRequestStatus;
   title: string;
   instructions: string | null;
-  decision_type: DecisionRequestType | null;
-  priority: DecisionRequestPriority;
   choice_options: unknown;
   linked_entity_type: "document" | "milestone" | null;
   linked_entity_id: string | null;
+  decision_type: ClientRequestDecisionType | null;
+  priority: ClientRequestPriority;
   assigned_to: string | null;
   due_at: string | null;
   decided_at: string | null;
@@ -78,14 +81,12 @@ export interface ClientRequestPublic {
   status: ClientRequestStatus;
   title: string;
   instructions: string | null;
-  decision_type: DecisionRequestType | null;
-  priority: DecisionRequestPriority;
   choice_options: string[] | null;
   linked_entity_type: "document" | "milestone" | null;
   linked_entity_id: string | null;
+  decision_type: ClientRequestDecisionType | null;
+  priority: ClientRequestPriority;
   due_at: string | null;
-  decided_at: string | null;
-  decision_note: string | null;
   customer_visible_amount: number | null;
   customer_visible_currency: string | null;
   requested_at: string;
@@ -118,15 +119,15 @@ export interface CreateClientRequestInput {
   action_mode?: ClientRequestActionMode;
   title: string;
   instructions?: string | null;
-  decision_type?: DecisionRequestType | null;
-  priority?: DecisionRequestPriority;
   choice_options?: string[] | null;
   linked_entity_type?: "document" | "milestone" | null;
   linked_entity_id?: string | null;
-  assigned_to?: string | null;
-  due_at?: string | null;
+  decision_type?: ClientRequestDecisionType | null;
+  priority?: ClientRequestPriority;
   customer_visible_amount?: number | null;
   customer_visible_currency?: string | null;
+  due_at?: string | null;
+  assigned_to?: string | null;
 }
 
 export interface RespondToClientRequestInput {

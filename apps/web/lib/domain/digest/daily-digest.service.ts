@@ -106,7 +106,7 @@ export function buildManagerDigestLinesFromSummary(
  * No internal budget, planned/actual cost, margin, or internal overrun wording.
  */
 export function buildOwnerDigestLinesFromClientView(view: ClientProjectView): DailyDigestLine[] {
-  const { project, progress, milestones, decisions, client_requests, commercial_items, handover } = view;
+  const { project, progress, milestones, decisions, client_requests, handover } = view;
   const projectId = project.id;
   const base = `/dashboard/projects/${projectId}/client`;
   const lines: DailyDigestLine[] = [];
@@ -160,12 +160,19 @@ export function buildOwnerDigestLinesFromClientView(view: ClientProjectView): Da
     });
   }
 
-  const commercialAttention = commercial_items.filter((c) => c.status === "due" || c.status === "overdue");
+  const nowIso = new Date().toISOString();
+  const commercialAttention = client_requests.filter(
+    (r) =>
+      r.status === "open" &&
+      (r.decision_type === "estimate_approval" || r.decision_type === "cost_change_customer_facing") &&
+      r.due_at != null &&
+      r.due_at < nowIso
+  );
   if (commercialAttention.length > 0) {
     lines.push({
       id: `own:${projectId}:commercial`,
       severity: "warning",
-      text: `${commercialAttention.length} shared commercial record(s) need attention (due or overdue).`,
+      text: `${commercialAttention.length} estimate or commercial approval(s) are past the agreed follow-up date.`,
       href: base,
     });
   }
