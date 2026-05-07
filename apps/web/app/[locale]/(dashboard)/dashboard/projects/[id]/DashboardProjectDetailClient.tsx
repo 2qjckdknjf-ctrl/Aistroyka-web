@@ -27,6 +27,7 @@ import { ProjectDocumentsPanel } from "./ProjectDocumentsPanel";
 import { ProjectCostsPanel } from "./ProjectCostsPanel";
 import { ProjectEstimatePanel } from "./ProjectEstimatePanel";
 import { ClientRequestsManagerPanel } from "./ClientRequestsManagerPanel";
+import { CustomerEstimatesManagerPanel } from "./CustomerEstimatesManagerPanel";
 
 const PAGE_SIZE = 10;
 
@@ -324,7 +325,10 @@ export function DashboardProjectDetailClient({ projectId }: { projectId: string 
           <ProjectCostsPanel projectId={projectId} />
         </TabPanel>
         <TabPanel id="panel-estimate" selected={activeTab === "estimate"} aria-labelledby="tab-estimate">
-          <ProjectEstimatePanel projectId={projectId} />
+          <div className="space-y-4">
+            <CustomerEstimatesManagerPanel projectId={projectId} />
+            <ProjectEstimatePanel projectId={projectId} />
+          </div>
         </TabPanel>
         <TabPanel id="panel-decisions" selected={activeTab === "decisions"} aria-labelledby="tab-decisions">
           <ClientRequestsManagerPanel projectId={projectId} />
