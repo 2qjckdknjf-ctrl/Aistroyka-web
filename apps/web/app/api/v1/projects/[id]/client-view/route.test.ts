@@ -56,7 +56,9 @@ describe("GET /api/v1/projects/:id/client-view", () => {
         milestones: [],
         documents: [],
         decisions: [],
-        budget: null,
+        client_requests: [],
+        capabilities: { can_respond_to_requests: false },
+        handover: null,
       },
       error: "",
     });
@@ -84,7 +86,9 @@ describe("GET /api/v1/projects/:id/client-view", () => {
         milestones: [],
         documents: [],
         decisions: [],
-        budget: null,
+        client_requests: [],
+        capabilities: { can_respond_to_requests: false },
+        handover: null,
       },
       error: "",
     });

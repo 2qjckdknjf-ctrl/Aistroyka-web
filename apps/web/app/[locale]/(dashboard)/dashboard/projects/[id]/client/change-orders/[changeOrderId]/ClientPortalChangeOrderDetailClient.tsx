@@ -21,11 +21,8 @@ type PublicDetail = {
   title: string;
   description: string | null;
   schedule_impact_level: string;
-  budget_impact_level: string;
   schedule_impact_summary: string | null;
-  budget_impact_summary: string | null;
   schedule_delta_days: number | null;
-  budget_delta_amount: number | null;
   has_linked_discussion: boolean;
   has_linked_document: boolean;
   has_linked_request: boolean;
@@ -113,14 +110,6 @@ export function ClientPortalChangeOrderDetailClient({
             {d.schedule_impact_summary ? <dd className="mt-1 text-aistroyka-text-secondary">{d.schedule_impact_summary}</dd> : null}
             {d.schedule_delta_days != null ? (
               <dd className="mt-1 text-aistroyka-text-secondary">{tDetail("aboutDays")} {d.schedule_delta_days} {tDetail("days")}</dd>
-            ) : null}
-          </div>
-          <div>
-            <dt className="text-aistroyka-text-tertiary">{tDetail("budget")}</dt>
-            <dd>{d.budget_impact_level.replace(/_/g, " ")}</dd>
-            {d.budget_impact_summary ? <dd className="mt-1 text-aistroyka-text-secondary">{d.budget_impact_summary}</dd> : null}
-            {d.budget_delta_amount != null ? (
-              <dd className="mt-1 text-aistroyka-text-secondary">{tDetail("indicativeDelta")} {d.budget_delta_amount}</dd>
             ) : null}
           </div>
         </dl>

@@ -7,6 +7,7 @@ import type {
   ChangeOrderKind,
   ChangeOrderListItem,
   ChangeOrderPublicDetail,
+  ChangeOrderPublicListItem,
   ChangeOrderRow,
   ChangeOrderStatus,
   BudgetImpactLevel,
@@ -53,11 +54,8 @@ function toPublicDetail(row: ChangeOrderRow, events: import("./change-orders.typ
     title: row.title,
     description: row.description,
     schedule_impact_level: row.schedule_impact_level,
-    budget_impact_level: row.budget_impact_level,
     schedule_impact_summary: row.schedule_impact_summary,
-    budget_impact_summary: row.budget_impact_summary,
     schedule_delta_days: row.schedule_delta_days,
-    budget_delta_amount: row.budget_delta_amount,
     has_linked_discussion: row.linked_discussion_id != null,
     has_linked_document: row.linked_document_id != null,
     has_linked_request: row.linked_request_id != null,
@@ -80,7 +78,7 @@ export async function listChangeOrders(
   supabase: SupabaseClient,
   ctx: TenantContext,
   projectId: string
-): Promise<{ data: ChangeOrderListItem[] | null; error: string }> {
+): Promise<{ data: Array<ChangeOrderListItem | ChangeOrderPublicListItem> | null; error: string }> {
   if (!ctx.tenantId || !ctx.userId) return { data: null, error: "Tenant required" };
   if (!(await canReadChangeOrders(supabase, ctx, projectId))) {
     return { data: null, error: "Insufficient rights" };
@@ -89,6 +87,18 @@ export async function listChangeOrders(
   const rows = await repo.listByProject(supabase, projectId, ctx.tenantId, {
     excludeDraft: !isMgr,
   });
+  if (!isMgr) {
+    return {
+      data: rows.map((row) => ({
+        id: row.id,
+        kind: row.kind,
+        status: row.status,
+        title: row.title,
+        updated_at: row.updated_at,
+      })),
+      error: "",
+    };
+  }
   return { data: rows, error: "" };
 }
 

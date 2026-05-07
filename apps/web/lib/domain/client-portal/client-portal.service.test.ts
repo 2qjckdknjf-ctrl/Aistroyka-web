@@ -13,9 +13,6 @@ vi.mock("@/lib/domain/projects/project.repository", () => ({
 vi.mock("@/lib/domain/projects/project-summary.repository", () => ({
   getProjectSummary: vi.fn(),
 }));
-vi.mock("@/lib/domain/costs/cost.repository", () => ({
-  getBudgetSummary: vi.fn(),
-}));
 vi.mock("@/lib/domain/milestones/milestone.repository", () => ({
   listByProject: vi.fn(),
 }));
@@ -43,7 +40,6 @@ vi.mock("@/lib/domain/project-handover/project-handover.service", () => ({
 const stakeholdersPolicy = await import("@/lib/domain/stakeholders/stakeholders.policy");
 const projectRepo = await import("@/lib/domain/projects/project.repository");
 const projectSummary = await import("@/lib/domain/projects/project-summary.repository");
-const costRepo = await import("@/lib/domain/costs/cost.repository");
 const milestoneRepo = await import("@/lib/domain/milestones/milestone.repository");
 const docRepo = await import("@/lib/domain/documents/document.repository");
 const crRepo = await import("@/lib/domain/client-requests/client-requests.repository");
@@ -79,7 +75,6 @@ describe("client-portal.service", () => {
         name: "Build",
         tenant_id: "t1",
         client_portal_enabled: true,
-        client_show_budget_summary: true,
       } as any);
       vi.mocked(projectSummary.getProjectSummary).mockResolvedValue({
         tasksDone: 2,
@@ -104,12 +99,6 @@ describe("client-portal.service", () => {
           client_visible: true,
         },
       ] as any);
-      vi.mocked(costRepo.getBudgetSummary).mockResolvedValue({
-        planned_total: 100,
-        actual_total: 80,
-        currency: "RUB",
-        over_budget: false,
-      } as any);
       vi.mocked(crRepo.listByProject).mockResolvedValue([]);
 
       const { data, error } = await getClientProjectView(supabase, ctx, "p1");
@@ -117,12 +106,14 @@ describe("client-portal.service", () => {
       expect(data?.project.name).toBe("Build");
       expect(data?.milestones).toHaveLength(1);
       expect(data?.decisions).toHaveLength(1);
-      expect(data?.budget?.planned_total).toBe(100);
       expect(data?.client_requests).toEqual([]);
       expect(data?.capabilities.can_respond_to_requests).toBe(true);
       const json = JSON.stringify(data);
       expect(json).not.toContain("object_path");
       expect(json).not.toContain("decision_comment");
+      expect(json).not.toContain("planned_total");
+      expect(json).not.toContain("actual_total");
+      expect(json).not.toContain("over_budget");
     });
   });
 
@@ -143,7 +134,6 @@ describe("client-portal.service", () => {
         name: "X",
         tenant_id: "t1",
         client_portal_enabled: true,
-        client_show_budget_summary: false,
       } as any);
       const { data, error } = await updateClientPortalSettings(supabase, ctx, "p1", {
         client_portal_enabled: true,

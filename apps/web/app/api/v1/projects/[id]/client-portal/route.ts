@@ -49,11 +49,8 @@ export async function PATCH(
 
   const input: {
     client_portal_enabled?: boolean;
-    client_show_budget_summary?: boolean;
   } = {};
   if (typeof body.client_portal_enabled === "boolean") input.client_portal_enabled = body.client_portal_enabled;
-  if (typeof body.client_show_budget_summary === "boolean")
-    input.client_show_budget_summary = body.client_show_budget_summary;
 
   if (Object.keys(input).length === 0) {
     return NextResponse.json({ error: "No valid fields" }, { status: 400 });

@@ -175,19 +175,6 @@ export function ClientPortalViewClient({ projectId }: { projectId: string }) {
             {d.progress.tasks_done} / {d.progress.tasks_total} {tDetail("completed")}
           </p>
         </Card>
-        {d.budget && (
-          <Card className="p-4 border-l-4 border-l-aistroyka-success">
-            <p className="text-aistroyka-caption font-medium uppercase text-aistroyka-text-tertiary">{tDetail("budgetSummary")}</p>
-            <p className="mt-1 text-aistroyka-title3 font-semibold">
-              {d.budget.actual_total.toLocaleString()} / {d.budget.planned_total.toLocaleString()} {d.budget.currency}
-            </p>
-            {d.budget.over_budget ? (
-              <p className="mt-1 text-sm text-aistroyka-error">{tDetail("overPlannedTotal")}</p>
-            ) : (
-              <p className="mt-1 text-sm text-aistroyka-text-tertiary">{tDetail("withinPlannedTotal")}</p>
-            )}
-          </Card>
-        )}
       </div>
 
       {d.decisions.length > 0 && (

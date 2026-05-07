@@ -6,7 +6,6 @@ import {
 } from "@/lib/domain/stakeholders/stakeholders.policy";
 import * as projectRepo from "@/lib/domain/projects/project.repository";
 import { getProjectSummary } from "@/lib/domain/projects/project-summary.repository";
-import { getBudgetSummary } from "@/lib/domain/costs/cost.repository";
 import * as milestoneRepo from "@/lib/domain/milestones/milestone.repository";
 import * as docRepo from "@/lib/domain/documents/document.repository";
 import { canManageClientPortalSettings } from "./client-portal.policy";
@@ -55,19 +54,6 @@ export async function getClientProjectView(
           : ("document_review_needed" as const),
     }));
 
-  let budget: ClientProjectView["budget"] = null;
-  if (project.client_show_budget_summary) {
-    const b = await getBudgetSummary(supabase, projectId, ctx.tenantId);
-    if (b) {
-      budget = {
-        planned_total: b.planned_total,
-        actual_total: b.actual_total,
-        currency: b.currency,
-        over_budget: b.over_budget,
-      };
-    }
-  }
-
   const requestRows = await crRepo.listByProject(supabase, projectId, ctx.tenantId, { status: "all" });
   const client_requests = requestRows
     .filter((r) => r.status !== "cancelled")
@@ -100,7 +86,6 @@ export async function getClientProjectView(
         updated_at: d.updated_at,
       })),
       decisions,
-      budget,
       client_requests,
       capabilities: { can_respond_to_requests },
       handover,
@@ -113,8 +98,8 @@ export async function updateClientPortalSettings(
   supabase: SupabaseClient,
   ctx: TenantContext,
   projectId: string,
-  input: { client_portal_enabled?: boolean; client_show_budget_summary?: boolean }
-): Promise<{ data: { client_portal_enabled: boolean; client_show_budget_summary: boolean } | null; error: string }> {
+  input: { client_portal_enabled?: boolean }
+): Promise<{ data: { client_portal_enabled: boolean } | null; error: string }> {
   if (!(await canManageClientPortalSettings(supabase, ctx, projectId))) {
     return { data: null, error: "Insufficient rights" };
   }
@@ -126,7 +111,6 @@ export async function updateClientPortalSettings(
   return {
     data: {
       client_portal_enabled: updated.client_portal_enabled ?? false,
-      client_show_budget_summary: updated.client_show_budget_summary ?? false,
     },
     error: "",
   };

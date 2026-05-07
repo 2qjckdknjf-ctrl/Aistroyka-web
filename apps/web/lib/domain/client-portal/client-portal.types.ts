@@ -27,13 +27,6 @@ export interface ClientDecisionItem {
   kind: ClientDecisionKind;
 }
 
-export interface ClientBudgetSummary {
-  planned_total: number;
-  actual_total: number;
-  currency: string;
-  over_budget: boolean;
-}
-
 /** Assembled read model for project owners when portal is enabled. */
 export interface ClientProjectView {
   project: { id: string; name: string };
@@ -44,7 +37,6 @@ export interface ClientProjectView {
   milestones: ClientVisibleMilestone[];
   documents: ClientVisibleDocument[];
   decisions: ClientDecisionItem[];
-  budget: ClientBudgetSummary | null;
   /** Explicit manager-created requests (Wave 4 Step 6); excludes cancelled. */
   client_requests: ClientRequestPublic[];
   /** Wave 4 Step 7: external stakeholder roles may be view-only. */

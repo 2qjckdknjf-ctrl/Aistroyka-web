@@ -53,6 +53,15 @@ export interface ChangeOrderListItem {
   updated_at: string;
 }
 
+/** Portal-safe list row: no internal budget or finance signal fields. */
+export interface ChangeOrderPublicListItem {
+  id: string;
+  kind: ChangeOrderKind;
+  status: ChangeOrderStatus;
+  title: string;
+  updated_at: string;
+}
+
 export interface ChangeOrderEventRow {
   id: string;
   change_order_id: string;
@@ -85,11 +94,8 @@ export interface ChangeOrderPublicDetail {
   title: string;
   description: string | null;
   schedule_impact_level: ScheduleImpactLevel;
-  budget_impact_level: BudgetImpactLevel;
   schedule_impact_summary: string | null;
-  budget_impact_summary: string | null;
   schedule_delta_days: number | null;
-  budget_delta_amount: number | null;
   has_linked_discussion: boolean;
   has_linked_document: boolean;
   has_linked_request: boolean;
