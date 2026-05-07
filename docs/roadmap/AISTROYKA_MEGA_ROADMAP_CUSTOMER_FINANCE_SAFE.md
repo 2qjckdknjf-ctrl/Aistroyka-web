@@ -1284,17 +1284,15 @@ docs/security/PHASE7_DIGEST_FINANCE_ISOLATION_AUDIT.md
 
 Support final defect tracking and acceptance.
 
+## Implementation note (repo)
+
+Punch list / defects are modeled as **`public.project_defects`** (migration `20260404120000_project_defects.sql`), not a separate `punch_items` table. Status vocabulary differs slightly from the sketch below (`ready_for_verification`, `resolved`, `closed` vs `ready_for_review`, `accepted`, etc.). Follow-up migrations may add roadmap fields — e.g. optional severity and before/after photo links to **`worker_report_media`** (`20260507193000_project_defects_severity_and_photos.sql`).
+
 ## Tasks
 
 ### 8.1 Domain model
 
-Add:
-
-```sql
-punch_items
-```
-
-Fields:
+Roadmap shorthand `punch_items` maps to **`public.project_defects`**. Comparable fields:
 
 ```text
 id
@@ -1305,9 +1303,9 @@ description
 status
 severity
 assigned_to
-due_at
-photo_before_id
-photo_after_id
+due_date (date column)
+photo_before_report_media_id  (references worker_report_media; roadmap “before” evidence)
+photo_after_report_media_id  (references worker_report_media; roadmap “after” evidence)
 accepted_by
 accepted_at
 created_at
@@ -1365,6 +1363,11 @@ docs/product/PHASE8_PUNCH_LIST_REPORT.md
 ---
 
 # PHASE 9 — HANDOVER PACK
+
+## Implementation note (repo, Phase 9 v1)
+
+- Readiness blockers: `computeHandoverReadiness` / `computeHandoverReadinessFromSummary` (`handover-readiness.ts`).
+- **Customer handover pack** (preview + print): `GET /api/v1/projects/:id/handover/pack`, domain `handover-pack.service.ts`, UI `/dashboard/projects/:id/handover/pack`. Browser print is the initial export surface; PDF optional later.
 
 ## Goal
 

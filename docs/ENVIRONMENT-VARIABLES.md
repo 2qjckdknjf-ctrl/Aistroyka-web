@@ -23,7 +23,7 @@ Vercel может встречаться как исторический/доп�
 
 | Variable | Описание |
 |----------|----------|
-| `SUPABASE_SERVICE_ROLE_KEY` | Service role key из Supabase (секрет). Нужен для server-side операций, cron, admin. |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service role key из Supabase (секрет). Нужен для server-side операций, cron, admin и **публичных ссылок Proof Pack** (`GET /api/v1/share/proof/:token`), иначе маршрут вернёт 503. |
 
 В production при отсутствии ключа часть функций будет ограничена (предупреждение в логах).
 
