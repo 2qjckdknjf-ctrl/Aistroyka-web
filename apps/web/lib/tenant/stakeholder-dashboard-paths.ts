@@ -9,6 +9,16 @@ export function redirectIfStakeholderBlockedPath(
   locale: string,
   requestUrl: string
 ): NextResponse | null {
+  if (pathWithoutLocale === "/portal" || pathWithoutLocale === "/portal/") {
+    return NextResponse.redirect(new URL(`/${locale}/portal/projects`, requestUrl));
+  }
+
+  const portalAllowed =
+    pathWithoutLocale === "/portal/projects" || /^\/portal\/projects\//.test(pathWithoutLocale);
+  if (pathWithoutLocale.startsWith("/portal") && !portalAllowed) {
+    return NextResponse.redirect(new URL(`/${locale}/portal/projects`, requestUrl));
+  }
+
   if (pathWithoutLocale === "/dashboard" || pathWithoutLocale === "/dashboard/") {
     return NextResponse.redirect(new URL(`/${locale}/dashboard/projects`, requestUrl));
   }

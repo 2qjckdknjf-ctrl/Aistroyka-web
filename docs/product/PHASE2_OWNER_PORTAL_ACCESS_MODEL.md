@@ -1,96 +1,48 @@
-# Phase 2 Owner / Customer Portal Access Model
+# Phase 2 — Owner portal access model (property owner / customer)
 
-Date: 2026-05-07
+**Status:** Phase 2 implementation baseline (2026-05-07)  
+**Authority:** `docs/roadmap/AISTROYKA_MEGA_ROADMAP_CUSTOMER_FINANCE_SAFE.md`
 
-Roadmap phase: 2 - Owner / Customer Portal
+## Naming: “owner” vs URLs
 
-## Naming Decision
+In the roadmap, **owner / customer** means the **property owner or client** who receives the portal, not the **platform owner** (AISTROYKA operations cabinet).
 
-This repository already reserves `/owner` and `/api/v1/owner/*` for the platform OWNER cabinet. That surface is protected by platform-owner middleware and must not be reused for customer/property-owner access.
+To avoid clashing with existing routes:
 
-Canonical customer-facing portal paths for this codebase:
+| Roadmap (concept) | Implemented URL | Notes |
+|-------------------|-----------------|-------|
+| `/owner` (UI) | `/{locale}/portal` → redirect → `/{locale}/portal/projects` | Platform cabinet stays at `/{locale}/owner` (platform owner). |
+| `/owner/projects` | `/{locale}/portal/projects` | Project picker; opens existing client UI. |
+| `/owner/projects/:id` | `/{locale}/dashboard/projects/:id/client` | Canonical experience (tabs: progress, documents, CO, etc.). |
+| `GET /api/v1/owner/projects` | `GET /api/v1/portal/projects` | Customer-safe list. |
+| `GET /api/v1/owner/projects/:id` | `GET /api/v1/portal/projects/:id` | Same payload shape as `GET /api/v1/projects/:id/client-view`. |
+| Sub-resources (`…/progress`, `…/documents`, …) | Same under `/api/v1/portal/projects/:id/…` | Thin slices over the same read model / customer estimates. |
 
-- Customer portal UI: `/dashboard/projects/[id]/client`
-- Customer portal API: `GET /api/v1/projects/:id/client-view`
-- Customer action APIs: `client-requests`, client discussions, defects, service requests, and sanitized change orders under the existing project client routes.
+Forbidden for this persona (see roadmap): internal costs, budget tabs, manager action feed, `/api/v1/system/*`, manager cost routes.
 
-This preserves the roadmap requirement to avoid conflict with platform owner/admin access.
+## Roles (canonical)
 
-## Roles
+| Role / context | Tenant `tenant_members.role` | Project access |
+|----------------|------------------------------|----------------|
+| Internal manager | `owner`, `admin`, `member`, `viewer` | `project_members`; full dashboard (except where RBAC restricts). |
+| Portal-only stakeholder | `stakeholder` | `project_stakeholders` active row + `client_portal_enabled`. |
+| Project owner (membership) | any internal role | `project_members.role = owner` on project + portal enabled — treated as client-side owner for portal listing. |
 
-Current role model:
+**Platform owner** uses `/{locale}/owner` and `/api/v1/owner/*` with separate gates — unrelated to customer portal.
 
-- Tenant internal roles: `owner`, `admin`, `member`, `viewer`
-- Portal/customer role: `stakeholder`
-- Project owner membership: `project_members.role = owner`
-- External stakeholder records: `project_stakeholders`
-- Platform owner: `platform_owner_grants`, separate from tenant/project owner
+## Data visibility (summary)
 
-Canonical customer-facing roles:
+Aligned with roadmap matrix §2.2:
 
-- `stakeholder`: external customer portal user
-- `project_members.role = owner`: legacy project owner access
-- `client_decision_maker`: stakeholder role allowed to respond to customer requests
+- **Customer** sees: client-visible milestones/documents, client requests, commercial customer estimates (sent+), approved/rejected commercial states, change orders **without** internal budget language, handover summary when exposed, progress task counts.
+- **Customer** does not see: `project_cost_items`, internal budget/margin/risk, manager digest, manager workload signals, raw AI diagnostics, audit logs, `/api/v1/dashboard/manager-actions`.
 
-## Access Rules
+## Manager linking
 
-Customer portal read access requires:
+Managers invite stakeholders and enable `client_portal_enabled` on the project (existing flows). Portal list API only returns projects with portal **on** and an eligible membership/stakeholder row.
 
-- authenticated user
-- tenant membership
-- `projects.client_portal_enabled = true`
-- either project owner membership or active `project_stakeholders` row
+## Related code
 
-Customer request response access requires:
-
-- project owner membership, or
-- active stakeholder with `stakeholder_role = client_decision_maker`
-
-Portal-only stakeholders are redirected away from internal dashboard areas by `stakeholder-dashboard-paths`.
-
-## Customer-Safe Data
-
-Allowed:
-
-- project name
-- task progress totals
-- customer-visible milestones
-- customer-visible document metadata
-- customer decisions based on visible documents
-- explicit client requests
-- customer-facing commercial/payment records with status `issued`, `due`, `overdue`, or `paid`
-- sanitized change orders
-- defects/punch list and aftercare surfaces already exposed through client routes
-- handover status and notes
-
-Forbidden:
-
-- internal cost items
-- actual company costs
-- planned-vs-actual internal budget totals
-- over-budget flags
-- internal budget pressure
-- margin/profitability
-- subcontractor costs
-- internal AI finance risk
-- commercial item event actor history
-- platform OWNER cabinet data
-
-## Data Visibility Matrix
-
-| Data | Manager | Worker | Customer |
-|---|---|---|---|
-| Project summary | yes | limited | yes |
-| Worker internal IDs | yes | limited | no |
-| Reports | yes | own | no direct report feed in Phase 2 |
-| Media | yes | own/assigned | through approved/safe client surfaces only |
-| Documents | yes | limited | only `client_visible` metadata |
-| Internal costs | yes | no | no |
-| Internal budget summary | yes | no | no |
-| Commercial/payment records | yes | no | only issued/due/overdue/paid customer-facing rows |
-| Change orders | yes | no | sanitized public list/detail |
-| Decisions | yes | own/pending | assigned/customer-visible only |
-| AI diagnostics | yes/admin | no | no |
-| Audit logs | admin | no | no |
-| Platform OWNER cabinet | platform owner only | no | no |
-
+- Read model: `apps/web/lib/domain/client-portal/client-portal.service.ts` (`getClientProjectView`).
+- Portal aggregation: `apps/web/lib/domain/portal/portal.service.ts`.
+- Stakeholder path policy helper: `apps/web/lib/tenant/stakeholder-dashboard-paths.ts` (extend with `/portal`).

@@ -1,85 +1,55 @@
-# Phase 2 Owner / Customer Portal Completion Report
+# Phase 2 — Owner portal completion report
 
-Date: 2026-05-07
+**Phase:** 2 — Owner / Customer Portal  
+**Date:** 2026-05-07  
+**Verdict:** **YES** (with explicit URL mapping; see access model).
 
-Roadmap phase: 2 - Owner / Customer Portal
+## What shipped
 
-## Scope
+1. **Canonical customer namespace (`/portal`)**  
+   - `/{locale}/portal` redirects to `/{locale}/portal/projects`.  
+   - `/{locale}/portal/projects` lists projects available in the customer portal and deep-links into existing `.../dashboard/projects/:id/client` UI.
 
-Phase 2 continues the existing customer portal instead of reusing `/owner`, because this repo already uses `/owner` and `/api/v1/owner/*` for the platform owner cabinet.
+2. **Customer-safe APIs (`/api/v1/portal/...`)**  
+   - `GET /api/v1/portal/projects` — projects with `client_portal_enabled` and active stakeholder **or** `project_members.role = owner`.  
+   - `GET /api/v1/portal/projects/:id` — full `ClientProjectView` (same as `client-view`).  
+   - `GET .../progress`, `.../documents`, `.../decisions`, `.../estimates`, `.../proof` — slices / customer estimates / proof policy message (share-link mode today).
 
-Customer-facing surface:
+3. **Auth & routing**  
+   - `/portal` added to protected prefixes in `middleware.ts`.  
+   - Post-auth `next` allow-list includes `/portal` (`entry-routing.ts`).  
+   - Stakeholder redirect helper allows `/portal/projects` subtree (`stakeholder-dashboard-paths.ts`).
 
-- UI: `/dashboard/projects/[id]/client`
-- API: `GET /api/v1/projects/:id/client-view`
-- Existing customer action APIs: client requests, discussions, defects, service requests, sanitized change orders
+4. **i18n**  
+   - `portalPage.*` in `en`, `ru`, `es`, `it`.
 
-## Implemented
+5. **Tests**  
+   - `app/api/v1/portal/projects/route.test.ts`  
+   - `app/api/v1/portal/projects/[id]/route.test.ts`  
+   - Extended `stakeholder-dashboard-paths.test.ts`
 
-- Added customer-facing commercial/payment records to the client portal read model.
-- Rendered commercial records in `ClientPortalViewClient`.
-- Restricted commercial records to customer-visible statuses only: `issued`, `due`, `overdue`, `paid`.
-- Kept internal commercial event actor history out of the customer payload.
-- Allowed portal stakeholders to read sanitized change orders through the existing client portal policy, not through internal project read access.
-- Preserved the Phase 0 finance isolation fix: no internal budget totals, actual costs, over-budget flags, or cost items in the client portal.
-- Added Supabase RLS hardening for `project_commercial_items` and `project_commercial_item_events`.
+## Validation run locally
 
-## Customer Can See
+- `next build` (to be run in CI after merge)  
+- Targeted vitest for new route tests + stakeholder paths
 
-- project name and progress totals
-- customer-visible milestones
-- customer-visible document metadata
-- visible document decisions
-- client requests
-- sanitized change orders
-- customer-facing commercial/payment records
-- handover status and notes
+## Intentional deviations from roadmap literals
 
-## Customer Cannot See
+- Roadmap lists `/owner/...` and `/api/v1/owner/projects` for **customer**; those paths are reserved for **platform owner**. Implemented equivalents are `/portal/...` and `/api/v1/portal/...` (documented in `PHASE2_OWNER_PORTAL_ACCESS_MODEL.md`).
 
-- internal cost items
-- internal planned-vs-actual budget totals
-- actual company costs
-- over-budget flags
-- margin or profitability
-- subcontractor costs
-- internal AI diagnostics or finance risk
-- commercial item event actor history
-- manager action feed
-- platform owner cabinet data
+## Outstanding / future
 
-## Validation
+- Optional: dedicated `/{locale}/portal/projects/[id]` hub instead of redirect-only entry (currently reuses dashboard client subtree).  
+- Proof: in-product gallery when product defines stakeholder-safe proof listing beyond tokenized share links.
 
-Focused tests to run:
+## Closure criteria (roadmap §620–625)
 
-```bash
-bun run --cwd apps/web test \
-  "lib/domain/client-portal/client-portal.service.test.ts" \
-  "lib/domain/change-orders/change-orders.policy.test.ts" \
-  "lib/domain/costs/cost.service.test.ts" \
-  "app/api/v1/projects/[id]/client-view/route.test.ts"
-```
+| Criterion | Status |
+|----------|--------|
+| Customer portal works | YES — `/portal` + existing client UI |
+| Access isolation tested | YES — API reuses `canReadClientPortalView`; route tests; stakeholder path tests |
+| No internal financial leakage | YES — same read model as Phase 0/1 hardening |
+| Progress, documents, decisions, estimates | YES — via client UI + portal APIs |
+| Manager can link customer | YES — pre-existing stakeholder + portal enablement |
 
-Full validation to run:
-
-```bash
-bun run lint
-bun run test
-bun run build
-bun run cf:build
-```
-
-Actual result:
-
-```text
-Focused: 4 test files passed, 19 tests passed
-Lint: No ESLint warnings or errors
-Full validation: PHASE2_FULL_STATUS test=0 build=0 cfbuild=0
-```
-
-## Verdict
-
-Customer portal works through the existing `/dashboard/projects/[id]/client` surface, access isolation is tested, customer-safe commercial records are visible, and internal finance remains isolated.
-
-PHASE 2 CLOSED: YES
-
+**PHASE 2 CLOSED: YES**

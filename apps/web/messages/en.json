@@ -44,6 +44,13 @@
     "dashboardNavigation": "Dashboard navigation",
     "main": "Main"
   },
+  "portalPage": {
+    "title": "Your projects",
+    "subtitle": "Customer portal — progress, documents, and approvals your builder shares with you.",
+    "loadError": "Could not load projects.",
+    "empty": "No projects with an active customer portal yet.",
+    "openPortal": "Open portal"
+  },
   "auth": {
     "tagline": "AI Construction Intelligence",
     "login": "Log in",

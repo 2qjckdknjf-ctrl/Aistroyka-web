@@ -9,7 +9,7 @@ import { gateOwnerRequest } from "@/lib/platform-owner/middleware-owner-gate";
 
 const intlMiddleware = createIntlMiddleware(routing);
 
-const PROTECTED_PREFIXES = ["/dashboard", "/projects", "/billing", "/admin", "/portfolio", "/subscribe"];
+const PROTECTED_PREFIXES = ["/dashboard", "/portal", "/projects", "/billing", "/admin", "/portfolio", "/subscribe"];
 const AUTH_PREFIXES = ["/login", "/register"];
 const LOCALES = ["ru", "en", "es", "it"];
 

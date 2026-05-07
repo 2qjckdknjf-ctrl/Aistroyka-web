@@ -44,6 +44,13 @@
     "dashboardNavigation": "Navigazione dashboard",
     "main": "Principale"
   },
+  "portalPage": {
+    "title": "I tuoi progetti",
+    "subtitle": "Portale cliente — avanzamento, documenti e approvazioni condivise dall'impresa.",
+    "loadError": "Impossibile caricare i progetti.",
+    "empty": "Non ci sono ancora progetti con portale cliente attivo.",
+    "openPortal": "Apri portale"
+  },
   "auth": {
     "tagline": "Intelligenza per l'edilizia con IA",
     "login": "Accedi",

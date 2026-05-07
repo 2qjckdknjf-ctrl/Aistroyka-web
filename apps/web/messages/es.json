@@ -44,6 +44,13 @@
     "dashboardNavigation": "Navegación del panel",
     "main": "Principal"
   },
+  "portalPage": {
+    "title": "Sus proyectos",
+    "subtitle": "Portal del cliente: avance, documentos y aprobaciones que comparte su constructor.",
+    "loadError": "No se pudieron cargar los proyectos.",
+    "empty": "Aún no hay proyectos con un portal de cliente activo.",
+    "openPortal": "Abrir portal"
+  },
   "auth": {
     "tagline": "Inteligencia de construcción con IA",
     "login": "Iniciar sesión",
