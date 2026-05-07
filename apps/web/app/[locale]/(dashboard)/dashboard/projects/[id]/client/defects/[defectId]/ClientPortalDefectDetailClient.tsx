@@ -4,7 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Card, Badge, Skeleton, EmptyState } from "@/components/ui";
-import { blockingBadgeClass, defectStatusBadgeClass, formatStatusLabel } from "../../../statusBadgeStyles";
+import { blockingBadgeClass, defectStatusBadgeClass } from "../../../statusBadgeStyles";
+import { formatPortalStatus } from "@/lib/i18n/portal-status-labels";
 
 type PublicDetail = {
   id: string;
@@ -32,6 +33,7 @@ async function fetchDetail(projectId: string, defectId: string): Promise<PublicD
 
 export function ClientPortalDefectDetailClient({ projectId, defectId }: { projectId: string; defectId: string }) {
   const tDetail = useTranslations("dashboardDetail");
+  const tPortal = useTranslations("portalStatus");
   const q = useQuery({
     queryKey: ["project-defect", projectId, defectId],
     queryFn: () => fetchDetail(projectId, defectId),
@@ -69,7 +71,7 @@ export function ClientPortalDefectDetailClient({ projectId, defectId }: { projec
           <h1 className="text-aistroyka-title3 font-semibold">{d.title}</h1>
           <div className="flex flex-wrap gap-2">
             {d.is_blocking ? <Badge className={blockingBadgeClass}>{tDetail("blocking")}</Badge> : null}
-            <Badge className={defectStatusBadgeClass(d.status)}>{formatStatusLabel(d.status)}</Badge>
+            <Badge className={defectStatusBadgeClass(d.status)}>{formatPortalStatus(d.status, "defect", tPortal)}</Badge>
           </div>
         </div>
         {d.description ? <p className="mt-3 text-sm whitespace-pre-wrap">{d.description}</p> : null}

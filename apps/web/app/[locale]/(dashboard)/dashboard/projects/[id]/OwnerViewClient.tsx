@@ -30,7 +30,8 @@ import { ProjectTimelineBlock } from "@/components/projects/ProjectTimelineBlock
 import { StakeholderActivityBlock } from "@/components/projects/StakeholderActivityBlock";
 import type { ProjectAttentionSummary } from "@/lib/domain/projects/project-attention.types";
 import type { TimelineItem } from "@/lib/domain/projects/project-timeline.types";
-import { formatStatusLabel, taskStatusBadgeClass } from "../../statusBadgeStyles";
+import { formatPortalStatus } from "@/lib/i18n/portal-status-labels";
+import { taskStatusBadgeClass } from "../../statusBadgeStyles";
 import { reportStatusBadgeClass } from "../../reports/reportStatusStyles";
 import { issueStatusBadgeClass } from "./statusBadgeStyles";
 
@@ -257,6 +258,7 @@ async function fetchMedia(projectId: string): Promise<Media[]> {
 export function OwnerViewClient({ projectId }: { projectId: string }) {
   const tPage = useTranslations("dashboardPageMeta");
   const tDetail = useTranslations("dashboardDetail");
+  const tPortal = useTranslations("portalStatus");
   const queryClient = useQueryClient();
   const [decisionDoc, setDecisionDoc] = useState<Document | null>(null);
   const [decisionComment, setDecisionComment] = useState("");
@@ -1060,11 +1062,12 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
                   <div>
                     <p className="font-medium text-aistroyka-text-primary">{m.title}</p>
                     <p className="text-xs text-aistroyka-text-tertiary">
-                      {tDetail("target")}: {new Date(m.target_date).toLocaleDateString()} · {m.status}
+                      {tDetail("target")}: {new Date(m.target_date).toLocaleDateString()} ·{" "}
+                      {formatPortalStatus(m.status, "milestone", tPortal)}
                     </p>
                   </div>
                   <Badge className={taskStatusBadgeClass(m.status)}>
-                    {formatStatusLabel(m.status)}
+                    {formatPortalStatus(m.status, "milestone", tPortal)}
                   </Badge>
                 </li>
               ))}
@@ -1099,7 +1102,7 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
                   <TableRow key={i.id}>
                     <TableCell>{i.title}</TableCell>
                     <TableCell>
-                      <Badge className={issueStatusBadgeClass(i.status)}>{formatStatusLabel(i.status)}</Badge>
+                      <Badge className={issueStatusBadgeClass(i.status)}>{formatPortalStatus(i.status, "issue", tPortal)}</Badge>
                     </TableCell>
                     <TableCell>{new Date(i.created_at).toLocaleDateString()}</TableCell>
                   </TableRow>
@@ -1318,7 +1321,7 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
                       </Link>
                     </TableCell>
                     <TableCell>
-                      <Badge className={reportStatusBadgeClass(r.status)}>{formatStatusLabel(r.status)}</Badge>
+                      <Badge className={reportStatusBadgeClass(r.status)}>{formatPortalStatus(r.status, "report", tPortal)}</Badge>
                     </TableCell>
                     <TableCell>
                       {r.submitted_at

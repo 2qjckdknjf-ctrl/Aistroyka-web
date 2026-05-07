@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui";
 import type { CustomerEstimatePublic } from "@/lib/domain/customer-estimates/customer-estimates.types";
+import { formatPortalStatus } from "@/lib/i18n/portal-status-labels";
 
 export function ClientPortalCustomerEstimatesSection({
   projectId,
@@ -16,6 +17,7 @@ export function ClientPortalCustomerEstimatesSection({
   canRespond: boolean;
 }) {
   const t = useTranslations("dashboardDetail");
+  const tPortal = useTranslations("portalStatus");
   const queryClient = useQueryClient();
   const [notes, setNotes] = useState<Record<string, string>>({});
 
@@ -66,7 +68,9 @@ export function ClientPortalCustomerEstimatesSection({
                 currency: e.currency,
               })}
             </p>
-            <p className="mt-1 text-xs text-aistroyka-text-tertiary capitalize">{e.status}</p>
+            <p className="mt-1 text-xs text-aistroyka-text-tertiary">
+              {formatPortalStatus(e.status, "customerEstimate", tPortal)}
+            </p>
             {e.status === "sent" && canRespond ? (
               <div className="mt-3 space-y-2">
                 <textarea

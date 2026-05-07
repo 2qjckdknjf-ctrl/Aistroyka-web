@@ -3,6 +3,7 @@
  */
 
 import { NextResponse } from "next/server";
+import { getTranslations } from "next-intl/server";
 import { createClientFromRequest } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { canManageProjects } from "@/lib/tenant/tenant.policy";
@@ -11,6 +12,8 @@ import {
   buildManagerProjectDailyDigest,
   buildOwnerProjectDailyDigest,
 } from "@/lib/domain/digest/daily-digest.service";
+import type { DailyDigestTranslate } from "@/lib/domain/digest/daily-digest.types";
+import { resolveRequestLocale } from "@/lib/i18n/resolve-request-locale";
 
 export const dynamic = "force-dynamic";
 
@@ -29,19 +32,22 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
   const url = new URL(request.url);
   const audience = url.searchParams.get("audience") === "owner" ? "owner" : "manager";
   const supabase = await createClientFromRequest(request);
+  const locale = resolveRequestLocale(request);
+  const tNs = await getTranslations({ locale, namespace: "dailyDigest" });
+  const t: DailyDigestTranslate = (key, values) => tNs(key as never, values as never);
 
   if (audience === "manager") {
     if (!canManageProjects(ctx)) {
       return NextResponse.json({ error: "Manager access required" }, { status: 403 });
     }
     const { data: project, error } = await getProject(supabase, ctx, projectId);
-  if (error) return NextResponse.json({ error }, { status: 403 });
-  if (!project) return NextResponse.json({ error: "Project not found" }, { status: 404 });
-    const data = await buildManagerProjectDailyDigest(supabase, ctx, projectId, project.name);
+    if (error) return NextResponse.json({ error }, { status: 403 });
+    if (!project) return NextResponse.json({ error: "Project not found" }, { status: 404 });
+    const data = await buildManagerProjectDailyDigest(supabase, ctx, projectId, project.name, t);
     return NextResponse.json({ data });
   }
 
-  const { data, error } = await buildOwnerProjectDailyDigest(supabase, ctx, projectId);
+  const { data, error } = await buildOwnerProjectDailyDigest(supabase, ctx, projectId, t, locale);
   if (error === "Insufficient rights") return NextResponse.json({ error }, { status: 403 });
   if (error === "Project not found") return NextResponse.json({ error }, { status: 404 });
   if (!data) {

@@ -4,7 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Card, Badge, Skeleton, EmptyState } from "@/components/ui";
-import { formatStatusLabel, serviceRequestStatusBadgeClass } from "../../../statusBadgeStyles";
+import { serviceRequestStatusBadgeClass } from "../../../statusBadgeStyles";
+import { formatPortalStatus } from "@/lib/i18n/portal-status-labels";
 
 type PublicDetail = {
   id: string;
@@ -45,6 +46,7 @@ export function ClientPortalServiceRequestDetailClient({
   requestId: string;
 }) {
   const tDetail = useTranslations("dashboardDetail");
+  const tPortal = useTranslations("portalStatus");
   const q = useQuery({
     queryKey: ["project-service-request", projectId, requestId, "portal"],
     queryFn: () => fetchDetail(projectId, requestId),
@@ -83,7 +85,7 @@ export function ClientPortalServiceRequestDetailClient({
       <Card className="p-4">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <h1 className="text-aistroyka-title3 font-semibold">{d.title}</h1>
-          <Badge className={serviceRequestStatusBadgeClass(d.status)}>{formatStatusLabel(d.status)}</Badge>
+          <Badge className={serviceRequestStatusBadgeClass(d.status)}>{formatPortalStatus(d.status, "serviceRequest", tPortal)}</Badge>
         </div>
         <p className="mt-2 text-sm text-aistroyka-text-secondary">{coverageLabel(d.coverage_type, tDetail)}</p>
         {d.description ? <p className="mt-3 text-sm whitespace-pre-wrap">{d.description}</p> : null}

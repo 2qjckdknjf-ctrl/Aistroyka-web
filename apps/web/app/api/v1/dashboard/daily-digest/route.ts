@@ -3,10 +3,13 @@
  */
 
 import { NextResponse } from "next/server";
+import { getTranslations } from "next-intl/server";
 import { createClientFromRequest } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { canManageProjects } from "@/lib/tenant/tenant.policy";
 import { buildManagerPortfolioDailyDigest } from "@/lib/domain/digest/daily-digest.service";
+import type { DailyDigestTranslate } from "@/lib/domain/digest/daily-digest.types";
+import { resolveRequestLocale } from "@/lib/i18n/resolve-request-locale";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +27,10 @@ export async function GET(request: Request) {
   }
 
   const supabase = await createClientFromRequest(request);
-  const data = await buildManagerPortfolioDailyDigest(supabase, ctx);
+  const locale = resolveRequestLocale(request);
+  const tNs = await getTranslations({ locale, namespace: "dailyDigest" });
+  const t: DailyDigestTranslate = (key, values) => tNs(key as never, values as never);
+  const data = await buildManagerPortfolioDailyDigest(supabase, ctx, t);
   if (!data) {
     return NextResponse.json({ error: "Unable to build digest" }, { status: 403 });
   }

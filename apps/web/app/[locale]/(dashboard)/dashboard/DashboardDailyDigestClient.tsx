@@ -1,9 +1,10 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Card, Skeleton, ErrorState } from "@/components/ui";
+import { translateApiError } from "@/lib/i18n/api-error-messages";
 
 type PortfolioDigest = {
   headline: string;
@@ -11,12 +12,16 @@ type PortfolioDigest = {
   lines: Array<{ id: string; text: string; severity: string; href?: string }>;
 };
 
-async function fetchPortfolioDigest(): Promise<PortfolioDigest | null> {
-  const res = await fetch("/api/v1/dashboard/daily-digest", { credentials: "include" });
+async function fetchPortfolioDigest(
+  locale: string,
+  tErr: (key: string, values?: Record<string, string | number | Date>) => string
+): Promise<PortfolioDigest | null> {
+  const qs = new URLSearchParams({ locale });
+  const res = await fetch(`/api/v1/dashboard/daily-digest?${qs.toString()}`, { credentials: "include" });
   if (res.status === 403) return null;
   if (!res.ok) {
     const j = (await res.json().catch(() => ({}))) as { error?: string };
-    throw new Error(j.error ?? "Failed to load digest");
+    throw new Error(translateApiError(j.error, tErr));
   }
   const json = (await res.json()) as { data: PortfolioDigest };
   return json.data;
@@ -29,10 +34,12 @@ function lineBorderClass(severity: string) {
 }
 
 export function DashboardDailyDigestClient() {
+  const locale = useLocale();
   const t = useTranslations("dashboard");
+  const tApi = useTranslations("apiErrors");
   const { data, isPending, isError, error, refetch } = useQuery({
-    queryKey: ["dashboard-daily-digest"],
-    queryFn: fetchPortfolioDigest,
+    queryKey: ["dashboard-daily-digest", locale],
+    queryFn: () => fetchPortfolioDigest(locale, tApi),
     staleTime: 120 * 1000,
   });
 

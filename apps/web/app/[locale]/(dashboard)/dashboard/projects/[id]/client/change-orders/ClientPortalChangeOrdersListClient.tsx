@@ -4,7 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Card, Badge, Skeleton, EmptyState } from "@/components/ui";
-import { changeOrderStatusBadgeClass, formatStatusLabel } from "../../statusBadgeStyles";
+import { changeOrderStatusBadgeClass } from "../../statusBadgeStyles";
+import { formatPortalStatus } from "@/lib/i18n/portal-status-labels";
 
 type Row = {
   id: string;
@@ -25,6 +26,7 @@ async function fetchList(projectId: string): Promise<Row[]> {
 
 export function ClientPortalChangeOrdersListClient({ projectId }: { projectId: string }) {
   const tDetail = useTranslations("dashboardDetail");
+  const tPortal = useTranslations("portalStatus");
   const q = useQuery({
     queryKey: ["portal-change-orders", projectId],
     queryFn: () => fetchList(projectId),
@@ -74,7 +76,7 @@ export function ClientPortalChangeOrdersListClient({ projectId }: { projectId: s
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="font-medium text-aistroyka-text-primary">{r.title}</span>
-                    <Badge className={changeOrderStatusBadgeClass(r.status)}>{formatStatusLabel(r.status)}</Badge>
+                    <Badge className={changeOrderStatusBadgeClass(r.status)}>{formatPortalStatus(r.status, "changeOrder", tPortal)}</Badge>
                   </div>
                   {r.customer_amount_delta != null && Number(r.customer_amount_delta) > 0 ? (
                     <p className="mt-1 text-sm text-aistroyka-text-primary">

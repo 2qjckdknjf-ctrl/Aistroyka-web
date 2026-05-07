@@ -4,7 +4,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Card, Badge, Skeleton, EmptyState, Button } from "@/components/ui";
-import { changeOrderStatusBadgeClass, formatStatusLabel } from "../../../statusBadgeStyles";
+import { changeOrderStatusBadgeClass } from "../../../statusBadgeStyles";
+import { formatPortalStatus } from "@/lib/i18n/portal-status-labels";
 
 type Event = {
   id: string;
@@ -53,6 +54,7 @@ export function ClientPortalChangeOrderDetailClient({
   changeOrderId: string;
 }) {
   const tDetail = useTranslations("dashboardDetail");
+  const tPortal = useTranslations("portalStatus");
   const queryClient = useQueryClient();
   const q = useQuery({
     queryKey: ["portal-change-order", projectId, changeOrderId],
@@ -115,7 +117,7 @@ export function ClientPortalChangeOrderDetailClient({
       <Card className="p-4">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <h1 className="text-aistroyka-title3 font-semibold">{d.title}</h1>
-          <Badge className={changeOrderStatusBadgeClass(d.status)}>{formatStatusLabel(d.status)}</Badge>
+          <Badge className={changeOrderStatusBadgeClass(d.status)}>{formatPortalStatus(d.status, "changeOrder", tPortal)}</Badge>
         </div>
         <p className="mt-1 text-xs text-aistroyka-text-tertiary">{d.kind.replace(/_/g, " ")}</p>
       </Card>

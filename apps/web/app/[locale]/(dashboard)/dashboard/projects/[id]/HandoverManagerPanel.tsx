@@ -5,7 +5,8 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { useState } from "react";
 import { Card, Button, Badge } from "@/components/ui";
-import { formatStatusLabel, handoverStatusBadgeClass } from "./statusBadgeStyles";
+import { handoverStatusBadgeClass } from "./statusBadgeStyles";
+import { formatPortalStatus } from "@/lib/i18n/portal-status-labels";
 
 type Blocker = {
   code: string;
@@ -33,6 +34,7 @@ async function fetchHandover(projectId: string): Promise<ManagerPayload> {
 
 export function HandoverManagerPanel({ projectId }: { projectId: string }) {
   const tDetail = useTranslations("dashboardDetail");
+  const tPortal = useTranslations("portalStatus");
   const queryClient = useQueryClient();
   const [note, setNote] = useState("");
 
@@ -105,8 +107,14 @@ export function HandoverManagerPanel({ projectId }: { projectId: string }) {
             {tDetail("handoverManagerHint")}
           </p>
         </div>
-        <Badge className={handoverStatusBadgeClass(handover.status)}>{formatStatusLabel(handover.status)}</Badge>
+        <Badge className={handoverStatusBadgeClass(handover.status)}>{formatPortalStatus(handover.status, "handover", tPortal)}</Badge>
       </div>
+
+      <p className="mt-3 text-sm">
+        <Link href={`/dashboard/projects/${projectId}/handover/pack`} className="font-medium text-aistroyka-accent hover:underline">
+          {tDetail("handoverPackPreviewLink")}
+        </Link>
+      </p>
 
       {!readiness.ready ? (
         <div className="mt-4 rounded-lg border border-aistroyka-warning/40 bg-aistroyka-warning/10 p-3">

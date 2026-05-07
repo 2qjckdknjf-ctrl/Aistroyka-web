@@ -21,6 +21,9 @@ import {
 import { Link } from "@/i18n/navigation";
 import { getPublicConfig } from "@/lib/config/public";
 import { DocumentApprovalHistory } from "@/components/approvals";
+import { ProjectProofPackPanel } from "./ProjectProofPackPanel";
+import { formatPortalStatus } from "@/lib/i18n/portal-status-labels";
+import { translateApiError } from "@/lib/i18n/api-error-messages";
 
 const MEDIA_BUCKET = "media";
 const MAX_UPLOAD_MB = 25;
@@ -199,18 +202,6 @@ function statusBadgeClass(status: string): string {
   }
 }
 
-function statusLabel(status: string, tDetail: (key: string) => string): string {
-  const map: Record<string, string> = {
-    draft: tDetail("draft"),
-    uploaded: tDetail("uploaded"),
-    under_review: tDetail("underReview"),
-    approved: tDetail("approved"),
-    rejected: tDetail("rejected"),
-    archived: tDetail("archived"),
-  };
-  return map[status] ?? status.replace("_", " ");
-}
-
 function typeLabel(type: string, tDetail: (key: string) => string): string {
   switch (type) {
     case "act":
@@ -222,7 +213,11 @@ function typeLabel(type: string, tDetail: (key: string) => string): string {
   }
 }
 
-function formatDocumentError(message: string, tDetail: (key: string) => string): string {
+function formatDocumentError(
+  message: string,
+  tDetail: (key: string) => string,
+  tApi: (key: string) => string
+): string {
   switch (message) {
     case "CREATE_FAILED":
       return `${tDetail("failed")}: ${tDetail("createDocument")}`;
@@ -235,14 +230,16 @@ function formatDocumentError(message: string, tDetail: (key: string) => string):
     case "invalid_task_linkage":
     case "invalid_report_linkage":
     case "invalid_milestone_linkage":
-      return "Invalid linkage. Select entities from the same project.";
+      return tApi("invalidEntityLinkage");
     default:
-      return message;
+      return translateApiError(message, tApi);
   }
 }
 
 export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
   const tDetail = useTranslations("dashboardDetail");
+  const tPortal = useTranslations("portalStatus");
+  const tApi = useTranslations("apiErrors");
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
   const [uploadDocId, setUploadDocId] = useState<string | null>(null);
@@ -348,6 +345,7 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
 
   return (
     <div className="p-4">
+      <ProjectProofPackPanel projectId={projectId} />
       <input
         ref={uploadInputRef}
         type="file"
@@ -467,7 +465,7 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
                         doc.status
                       )}`}
                     >
-                      {statusLabel(doc.status, tDetail)}
+                      {formatPortalStatus(doc.status, "document", tPortal)}
                     </span>
                   </TableCell>
                   <TableCell>
@@ -509,7 +507,8 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
                             (uploadMutation.error instanceof Error
                               ? uploadMutation.error.message
                               : "UPLOAD_FAILED"),
-                          tDetail
+                          tDetail,
+                          tApi
                         )}
                       </p>
                     )}
@@ -616,7 +615,7 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
                     </div>
                     {updateErrorById[doc.id] ? (
                       <p className="mt-1 text-xs text-aistroyka-error" role="alert">
-                        {formatDocumentError(updateErrorById[doc.id], tDetail)}
+                        {formatDocumentError(updateErrorById[doc.id], tDetail, tApi)}
                       </p>
                     ) : null}
                     {doc.decision_comment ? (
@@ -655,7 +654,7 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
         isSubmitting={createMutation.isPending}
         error={
           createMutation.isError && createMutation.error instanceof Error
-            ? formatDocumentError(createMutation.error.message, tDetail)
+            ? formatDocumentError(createMutation.error.message, tDetail, tApi)
             : null
         }
       />
@@ -785,7 +784,7 @@ function CreateDocumentModal({
             <option value="">{tDetail("none")}</option>
             {reports.map((report) => (
               <option key={report.id} value={report.id}>
-                {report.id.slice(0, 8)}… ({statusLabel(report.status, tDetail)})
+                {report.id.slice(0, 8)}… ({formatPortalStatus(report.status, "report", tPortal)})
               </option>
             ))}
           </Select>

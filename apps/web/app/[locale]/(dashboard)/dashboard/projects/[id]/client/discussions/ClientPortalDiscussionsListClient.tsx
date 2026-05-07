@@ -4,7 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Card, SectionHeader, Skeleton, EmptyState, Badge } from "@/components/ui";
-import { discussionStatusBadgeClass, formatStatusLabel } from "../../statusBadgeStyles";
+import { discussionStatusBadgeClass } from "../../statusBadgeStyles";
+import { formatPortalStatus } from "@/lib/i18n/portal-status-labels";
 
 type Row = {
   id: string;
@@ -27,6 +28,7 @@ async function fetchList(projectId: string): Promise<Row[]> {
 export function ClientPortalDiscussionsListClient({ projectId }: { projectId: string }) {
   const tPage = useTranslations("dashboardPageMeta");
   const tDetail = useTranslations("dashboardDetail");
+  const tPortal = useTranslations("portalStatus");
   const q = useQuery({
     queryKey: ["stakeholder-discussions", projectId],
     queryFn: () => fetchList(projectId),
@@ -80,7 +82,7 @@ export function ClientPortalDiscussionsListClient({ projectId }: { projectId: st
                   >
                     {r.title}
                   </Link>
-                  <Badge className={discussionStatusBadgeClass(r.status)}>{formatStatusLabel(r.status)}</Badge>
+                  <Badge className={discussionStatusBadgeClass(r.status)}>{formatPortalStatus(r.status, "discussion", tPortal)}</Badge>
                 </div>
                 <p className="mt-1 text-xs text-aistroyka-text-tertiary capitalize">{r.kind.replace(/_/g, " ")}</p>
               </li>

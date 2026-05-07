@@ -5,32 +5,43 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Card, SectionHeader, Skeleton, EmptyState, Badge } from "@/components/ui";
 import type { ClientProjectView } from "@/lib/domain/client-portal/client-portal.types";
+import { translateApiError } from "@/lib/i18n/api-error-messages";
+import { formatPortalStatus } from "@/lib/i18n/portal-status-labels";
 import { ClientPortalActivitySection } from "./ClientPortalActivitySection";
 import { ClientPortalNotificationsSection } from "./ClientPortalNotificationsSection";
 import { ClientPortalRequestsSection } from "./ClientPortalRequestsSection";
 import { ClientPortalCustomerEstimatesSection } from "./ClientPortalCustomerEstimatesSection";
 import { ClientPortalWorkloadSection } from "./ClientPortalWorkloadSection";
 
-async function fetchClientView(projectId: string): Promise<ClientProjectView> {
+async function fetchClientView(projectId: string, tErr: (k: string) => string): Promise<ClientProjectView> {
   const res = await fetch(`/api/v1/projects/${projectId}/client-view`, { credentials: "include" });
   if (!res.ok) {
     const j = await res.json().catch(() => ({}));
-    throw new Error((j as { error?: string }).error ?? "Failed to load");
+    throw new Error(translateApiError((j as { error?: string }).error, tErr));
   }
   const json = await res.json();
   return json.data;
 }
 
-function statusLabel(s: string): string {
-  return s.replace(/_/g, " ");
+function documentTypeLabel(type: string, tDetail: (key: string) => string): string {
+  switch (type) {
+    case "act":
+      return tDetail("act");
+    case "contract":
+      return tDetail("contract");
+    default:
+      return tDetail("document");
+  }
 }
 
 export function ClientPortalViewClient({ projectId }: { projectId: string }) {
   const tPage = useTranslations("dashboardPageMeta");
   const tDetail = useTranslations("dashboardDetail");
+  const tPortal = useTranslations("portalStatus");
+  const tApi = useTranslations("apiErrors");
   const query = useQuery({
     queryKey: ["client-project-view", projectId],
-    queryFn: () => fetchClientView(projectId),
+    queryFn: () => fetchClientView(projectId, tApi),
     enabled: !!projectId,
   });
 
@@ -172,6 +183,12 @@ export function ClientPortalViewClient({ projectId }: { projectId: string }) {
                 : null}
             </p>
           )}
+          <Link
+            href={`/dashboard/projects/${projectId}/handover/pack`}
+            className="mt-3 inline-block text-sm font-medium text-aistroyka-accent hover:underline"
+          >
+            {tDetail("handoverPackPreviewLink")}
+          </Link>
         </Card>
       ) : null}
 
@@ -217,7 +234,7 @@ export function ClientPortalViewClient({ projectId }: { projectId: string }) {
               <li key={m.id} className="flex flex-wrap justify-between gap-2 text-sm border-b border-aistroyka-border-subtle pb-2">
                 <span className="font-medium text-aistroyka-text-primary">{m.title}</span>
                 <span className="text-aistroyka-text-secondary">
-                  {new Date(m.target_date).toLocaleDateString()} · {statusLabel(m.status)}
+                  {new Date(m.target_date).toLocaleDateString()} · {formatPortalStatus(m.status, "milestone", tPortal)}
                 </span>
               </li>
             ))}
@@ -234,8 +251,8 @@ export function ClientPortalViewClient({ projectId }: { projectId: string }) {
             {d.documents.map((doc) => (
               <li key={doc.id} className="flex flex-wrap justify-between gap-2 text-sm border-b border-aistroyka-border-subtle pb-2">
                 <span className="font-medium text-aistroyka-text-primary">{doc.title}</span>
-                <span className="text-aistroyka-text-secondary capitalize">
-                  {doc.type} · {statusLabel(doc.status)}
+                <span className="text-aistroyka-text-secondary">
+                  {documentTypeLabel(doc.type, tDetail)} · {formatPortalStatus(doc.status, "document", tPortal)}
                 </span>
               </li>
             ))}

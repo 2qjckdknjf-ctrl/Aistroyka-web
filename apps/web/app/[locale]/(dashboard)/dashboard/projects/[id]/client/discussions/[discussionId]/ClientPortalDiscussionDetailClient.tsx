@@ -5,7 +5,8 @@ import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@/i18n/navigation";
 import { Card, Button, Badge, Skeleton, EmptyState } from "@/components/ui";
-import { discussionStatusBadgeClass, formatStatusLabel } from "../../../statusBadgeStyles";
+import { discussionStatusBadgeClass } from "../../../statusBadgeStyles";
+import { formatPortalStatus } from "@/lib/i18n/portal-status-labels";
 
 type Entry = { id: string; entry_kind: string; body: string; created_at: string };
 
@@ -40,6 +41,7 @@ export function ClientPortalDiscussionDetailClient({
   discussionId: string;
 }) {
   const tDetail = useTranslations("dashboardDetail");
+  const tPortal = useTranslations("portalStatus");
   const queryClient = useQueryClient();
   const [body, setBody] = useState("");
   const [kind, setKind] = useState<"feedback" | "clarification" | "option_selected">("feedback");
@@ -106,7 +108,7 @@ export function ClientPortalDiscussionDetailClient({
       <Card className="p-4">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <h1 className="text-aistroyka-title3 font-semibold text-aistroyka-text-primary">{d.title}</h1>
-          <Badge className={discussionStatusBadgeClass(d.status)}>{formatStatusLabel(d.status)}</Badge>
+          <Badge className={discussionStatusBadgeClass(d.status)}>{formatPortalStatus(d.status, "discussion", tPortal)}</Badge>
         </div>
         <p className="mt-1 text-xs capitalize text-aistroyka-text-tertiary">{d.kind.replace(/_/g, " ")}</p>
         {d.context ? <p className="mt-3 text-sm text-aistroyka-text-secondary whitespace-pre-wrap">{d.context}</p> : null}

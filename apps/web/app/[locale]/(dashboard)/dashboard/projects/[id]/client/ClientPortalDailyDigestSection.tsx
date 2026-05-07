@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Card, Skeleton } from "@/components/ui";
 
@@ -11,8 +11,9 @@ type DigestPayload = {
   lines: Array<{ id: string; text: string; severity: string; href?: string }>;
 };
 
-async function fetchOwnerDigest(projectId: string): Promise<DigestPayload> {
-  const res = await fetch(`/api/v1/projects/${projectId}/daily-digest?audience=owner`, {
+async function fetchOwnerDigest(projectId: string, locale: string): Promise<DigestPayload> {
+  const qs = new URLSearchParams({ audience: "owner", locale });
+  const res = await fetch(`/api/v1/projects/${projectId}/daily-digest?${qs.toString()}`, {
     credentials: "include",
   });
   if (!res.ok) {
@@ -30,10 +31,11 @@ function lineBorderClass(severity: string) {
 }
 
 export function ClientPortalDailyDigestSection({ projectId }: { projectId: string }) {
+  const locale = useLocale();
   const t = useTranslations("dashboardDetail");
   const query = useQuery({
-    queryKey: ["daily-digest", "owner", projectId],
-    queryFn: () => fetchOwnerDigest(projectId),
+    queryKey: ["daily-digest", "owner", projectId, locale],
+    queryFn: () => fetchOwnerDigest(projectId, locale),
     enabled: !!projectId,
   });
 
