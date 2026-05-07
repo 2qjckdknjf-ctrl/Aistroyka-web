@@ -116,7 +116,13 @@
     "managerActionsOpen": "Open →",
     "managerActionsCritical": "Critical",
     "managerActionsHigh": "High",
-    "managerActionsInternalOnly": "Internal manager-only finance signal"
+    "managerActionsInternalOnly": "Internal manager-only finance signal",
+    "dailyDigestAria": "Daily control digest",
+    "dailyDigestTitle": "Daily control digest",
+    "dailyDigestHint": "Automatic snapshot from live project signals (manager view; may reference internal budget pressure).",
+    "dailyDigestFailed": "Failed to load daily digest.",
+    "dailyDigestEmpty": "No digest lines yet. When projects have schedule, approval, or cost signals, they will appear here.",
+    "dailyDigestOpen": "Open →"
   },
   "onboarding": {
     "step": "Step",
@@ -263,6 +269,64 @@
         "point2": "Worker app focuses on report creation, photo upload, and submission.",
         "point3": "Keep users signed in with correct roles to sync project context."
       }
+    }
+  },
+  "adminAiGuide": {
+    "pageTitle": "AI Guide Analytics",
+    "pageSubtitle": "Adoption and execution quality for the in-product AI Guide (open, ask, click-through, completion).",
+    "filterRange": "Range",
+    "filterArea": "Area",
+    "exportCsv": "Export CSV",
+    "loading": "Loading analytics…",
+    "loadError": "Failed to load AI Guide analytics",
+    "unknownError": "Unknown analytics error",
+    "kpiOpens": "Opens",
+    "kpiAsks": "Asks",
+    "kpiQuickPrompts": "Quick prompts",
+    "kpiActionClicks": "Action clicks",
+    "kpiEngagementRate": "Engagement rate",
+    "kpiCompletionRate": "Completion rate",
+    "sectionDailyTrend": "Daily trend",
+    "dailyTrendHint": "Total interactions per day in {range} ({area}).",
+    "sectionByRole": "By role",
+    "sectionByLocale": "By locale",
+    "sectionByModuleArea": "By module area",
+    "sectionConversion": "Ask to Click conversion by role",
+    "sectionTopActions": "Top actions",
+    "topActionsHint": "Most clicked recommendations and risk signals.",
+    "emptyEvents": "No telemetry events in this range.",
+    "emptyRole": "No role data yet.",
+    "emptyLocale": "No locale data yet.",
+    "emptyArea": "No module data yet.",
+    "emptyConversion": "No conversion data yet.",
+    "emptyTopActions": "No clicked actions in this range.",
+    "colRole": "Role",
+    "colAsks": "Asks",
+    "colClicks": "Clicks",
+    "colCompletion": "Completion",
+    "colAction": "Action",
+    "colHref": "Href",
+    "colClicksCount": "Clicks",
+    "dayTotal": "{total} total ({opens} open / {asks} ask / {prompts} prompt / {clicks} click)",
+    "roles": {
+      "manager": "Manager",
+      "admin": "Admin",
+      "client": "Client",
+      "owner": "Owner",
+      "worker": "Worker"
+    },
+    "areas": {
+      "all": "All",
+      "dashboard": "Dashboard",
+      "projects": "Projects",
+      "reports": "Reports",
+      "ai": "AI",
+      "other": "Other"
+    },
+    "ranges": {
+      "7d": "7d",
+      "30d": "30d",
+      "90d": "90d"
     }
   },
   "projects": {
@@ -1021,6 +1085,10 @@
     "commercialItems": "Commercial items",
     "commercialItemsHint": "Customer-facing invoices, deposits, payment milestones, and approved commercial records only.",
     "noCommercialItemsShared": "No commercial items shared yet.",
+    "clientDailyDigestTitle": "Today's summary",
+    "clientDailyDigestHint": "A short, customer-safe overview of progress, milestones, and items needing your attention. No internal company finances.",
+    "clientDailyDigestEmpty": "You are up to date — no highlighted items right now.",
+    "clientDailyDigestOpen": "View →",
     "budgetSummary": "Budget (summary)",
     "overPlannedTotal": "Over planned total",
     "withinPlannedTotal": "Within planned total",

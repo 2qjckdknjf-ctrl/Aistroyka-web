@@ -87,7 +87,7 @@ fun WorkerApp() {
             HelpApi.helpAssistantEvent(
                 type = "open",
                 locale = supportedHelpLocale(),
-                role = "manager",
+                role = "worker",
                 pathname = "/worker",
             )
         } catch (_: Exception) {

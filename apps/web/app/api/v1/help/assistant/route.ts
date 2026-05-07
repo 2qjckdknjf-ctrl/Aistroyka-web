@@ -118,6 +118,7 @@ function normalizeLocale(locale?: string): HelpLocale {
 }
 
 function normalizeRole(role?: string): LaunchRole {
+  if (role === "worker") return "manager";
   return KNOWN_ROLES.has(role as LaunchRole) ? (role as LaunchRole) : "manager";
 }
 

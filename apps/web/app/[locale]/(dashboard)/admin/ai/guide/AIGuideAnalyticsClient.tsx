@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Card, Button } from "@/components/ui";
 
 type AnalyticsResponse = {
@@ -52,11 +53,48 @@ function MiniBar({ value, max }: { value: number; max: number }) {
 }
 
 export function AIGuideAnalyticsClient() {
+  const t = useTranslations("adminAiGuide");
   const [range, setRange] = useState<Range>("7d");
   const [area, setArea] = useState<Area>("all");
   const [data, setData] = useState<AnalyticsResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  function formatRole(role: string): string {
+    switch (role) {
+      case "manager":
+        return t("roles.manager");
+      case "admin":
+        return t("roles.admin");
+      case "client":
+        return t("roles.client");
+      case "owner":
+        return t("roles.owner");
+      case "worker":
+        return t("roles.worker");
+      default:
+        return role;
+    }
+  }
+
+  function formatAreaKey(areaKey: string): string {
+    switch (areaKey) {
+      case "all":
+        return t("areas.all");
+      case "dashboard":
+        return t("areas.dashboard");
+      case "projects":
+        return t("areas.projects");
+      case "reports":
+        return t("areas.reports");
+      case "ai":
+        return t("areas.ai");
+      case "other":
+        return t("areas.other");
+      default:
+        return areaKey;
+    }
+  }
 
   useEffect(() => {
     let alive = true;
@@ -67,7 +105,7 @@ export function AIGuideAnalyticsClient() {
       .then(async (res) => {
         if (!res.ok) {
           const body = (await res.json().catch(() => ({}))) as { error?: string };
-          throw new Error(body.error ?? "Failed to load AI Guide analytics");
+          throw new Error(body.error ?? t("loadError"));
         }
         return (await res.json()) as AnalyticsResponse;
       })
@@ -77,7 +115,7 @@ export function AIGuideAnalyticsClient() {
       })
       .catch((e: unknown) => {
         if (!alive) return;
-        setError(e instanceof Error ? e.message : "Unknown analytics error");
+        setError(e instanceof Error ? e.message : t("unknownError"));
       })
       .finally(() => {
         if (!alive) return;
@@ -160,48 +198,48 @@ export function AIGuideAnalyticsClient() {
     <section className="space-y-6">
       <Card className="p-4">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-aistroyka-subheadline text-aistroyka-text-secondary">Range:</span>
+          <span className="text-aistroyka-subheadline text-aistroyka-text-secondary">{t("filterRange")}:</span>
           {RANGES.map((r) => (
             <Button key={r} variant={r === range ? "primary" : "secondary"} size="sm" onClick={() => setRange(r)}>
-              {r}
+              {t(`ranges.${r}`)}
             </Button>
           ))}
-          <span className="ml-2 text-aistroyka-subheadline text-aistroyka-text-secondary">Area:</span>
+          <span className="ml-2 text-aistroyka-subheadline text-aistroyka-text-secondary">{t("filterArea")}:</span>
           {AREA_OPTIONS.map((item) => (
             <Button key={item} variant={item === area ? "primary" : "secondary"} size="sm" onClick={() => setArea(item)}>
-              {item}
+              {t(`areas.${item}`)}
             </Button>
           ))}
           <div className="ml-auto">
             <Button variant="ghost" size="sm" onClick={downloadCsv}>
-              Export CSV
+              {t("exportCsv")}
             </Button>
           </div>
         </div>
       </Card>
 
-      {loading ? <Card className="p-4 text-aistroyka-text-secondary">Loading analytics...</Card> : null}
+      {loading ? <Card className="p-4 text-aistroyka-text-secondary">{t("loading")}</Card> : null}
       {error ? <Card className="border-aistroyka-danger/40 p-4 text-aistroyka-danger">{error}</Card> : null}
 
       {data ? (
         <>
           <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <Kpi title="Opens" value={data.totals.opens} />
-            <Kpi title="Asks" value={data.totals.asks} />
-            <Kpi title="Quick prompts" value={data.totals.quickPrompts} />
-            <Kpi title="Action clicks" value={data.totals.actionClicks} />
-            <Kpi title="Engagement rate" value={`${data.totals.engagementRate}%`} />
-            <Kpi title="Completion rate" value={`${data.totals.completionRate}%`} />
+            <Kpi title={t("kpiOpens")} value={data.totals.opens} />
+            <Kpi title={t("kpiAsks")} value={data.totals.asks} />
+            <Kpi title={t("kpiQuickPrompts")} value={data.totals.quickPrompts} />
+            <Kpi title={t("kpiActionClicks")} value={data.totals.actionClicks} />
+            <Kpi title={t("kpiEngagementRate")} value={`${data.totals.engagementRate}%`} />
+            <Kpi title={t("kpiCompletionRate")} value={`${data.totals.completionRate}%`} />
           </section>
 
           <Card className="p-4">
-            <h2 className="text-aistroyka-title3 font-semibold text-aistroyka-text-primary">Daily trend</h2>
+            <h2 className="text-aistroyka-title3 font-semibold text-aistroyka-text-primary">{t("sectionDailyTrend")}</h2>
             <p className="mt-1 text-aistroyka-caption text-aistroyka-text-secondary">
-              Total interactions per day in {data.range} ({data.area}).
+              {t("dailyTrendHint", { range: data.range, area: formatAreaKey(data.area) })}
             </p>
             <div className="mt-4 space-y-3">
               {data.byDay.length === 0 ? (
-                <p className="text-aistroyka-subheadline text-aistroyka-text-secondary">No telemetry events in this range.</p>
+                <p className="text-aistroyka-subheadline text-aistroyka-text-secondary">{t("emptyEvents")}</p>
               ) : (
                 data.byDay.map((row) => {
                   const total = row.opens + row.asks + row.quickPrompts + row.actionClicks;
@@ -210,7 +248,13 @@ export function AIGuideAnalyticsClient() {
                       <div className="flex items-center justify-between text-aistroyka-caption">
                         <span className="text-aistroyka-text-secondary">{row.date}</span>
                         <span className="font-medium text-aistroyka-text-primary">
-                          {total} total ({row.opens} open / {row.asks} ask / {row.quickPrompts} prompt / {row.actionClicks} click)
+                          {t("dayTotal", {
+                            total,
+                            opens: row.opens,
+                            asks: row.asks,
+                            prompts: row.quickPrompts,
+                            clicks: row.actionClicks,
+                          })}
                         </span>
                       </div>
                       <MiniBar value={total} max={maxDayTotal} />
@@ -223,15 +267,15 @@ export function AIGuideAnalyticsClient() {
 
           <section className="grid gap-4 lg:grid-cols-2">
             <Card className="p-4">
-              <h2 className="text-aistroyka-title3 font-semibold text-aistroyka-text-primary">By role</h2>
+              <h2 className="text-aistroyka-title3 font-semibold text-aistroyka-text-primary">{t("sectionByRole")}</h2>
               <div className="mt-4 space-y-3">
                 {data.byRole.length === 0 ? (
-                  <p className="text-aistroyka-subheadline text-aistroyka-text-secondary">No role data yet.</p>
+                  <p className="text-aistroyka-subheadline text-aistroyka-text-secondary">{t("emptyRole")}</p>
                 ) : (
                   data.byRole.map((row) => (
                     <div key={row.role} className="space-y-1">
                       <div className="flex items-center justify-between text-aistroyka-caption">
-                        <span className="uppercase tracking-wide text-aistroyka-text-secondary">{row.role}</span>
+                        <span className="uppercase tracking-wide text-aistroyka-text-secondary">{formatRole(row.role)}</span>
                         <span className="font-medium text-aistroyka-text-primary">{row.count}</span>
                       </div>
                       <MiniBar value={row.count} max={maxRoleCount} />
@@ -242,10 +286,10 @@ export function AIGuideAnalyticsClient() {
             </Card>
 
             <Card className="p-4">
-              <h2 className="text-aistroyka-title3 font-semibold text-aistroyka-text-primary">By locale</h2>
+              <h2 className="text-aistroyka-title3 font-semibold text-aistroyka-text-primary">{t("sectionByLocale")}</h2>
               <div className="mt-4 space-y-3">
                 {data.byLocale.length === 0 ? (
-                  <p className="text-aistroyka-subheadline text-aistroyka-text-secondary">No locale data yet.</p>
+                  <p className="text-aistroyka-subheadline text-aistroyka-text-secondary">{t("emptyLocale")}</p>
                 ) : (
                   data.byLocale.map((row) => (
                     <div key={row.locale} className="space-y-1">
@@ -263,15 +307,15 @@ export function AIGuideAnalyticsClient() {
 
           <section className="grid gap-4 lg:grid-cols-2">
             <Card className="p-4">
-              <h2 className="text-aistroyka-title3 font-semibold text-aistroyka-text-primary">By module area</h2>
+              <h2 className="text-aistroyka-title3 font-semibold text-aistroyka-text-primary">{t("sectionByModuleArea")}</h2>
               <div className="mt-4 space-y-3">
                 {data.byArea.length === 0 ? (
-                  <p className="text-aistroyka-subheadline text-aistroyka-text-secondary">No module data yet.</p>
+                  <p className="text-aistroyka-subheadline text-aistroyka-text-secondary">{t("emptyArea")}</p>
                 ) : (
                   data.byArea.map((row) => (
                     <div key={row.area} className="space-y-1">
                       <div className="flex items-center justify-between text-aistroyka-caption">
-                        <span className="uppercase tracking-wide text-aistroyka-text-secondary">{row.area}</span>
+                        <span className="uppercase tracking-wide text-aistroyka-text-secondary">{formatAreaKey(row.area)}</span>
                         <span className="font-medium text-aistroyka-text-primary">{row.count}</span>
                       </div>
                       <MiniBar value={row.count} max={maxAreaCount} />
@@ -282,28 +326,28 @@ export function AIGuideAnalyticsClient() {
             </Card>
 
             <Card className="p-4">
-              <h2 className="text-aistroyka-title3 font-semibold text-aistroyka-text-primary">Ask to Click conversion by role</h2>
+              <h2 className="text-aistroyka-title3 font-semibold text-aistroyka-text-primary">{t("sectionConversion")}</h2>
               <div className="mt-4 overflow-x-auto">
                 <table className="w-full min-w-[440px] text-left">
                   <thead>
                     <tr className="border-b border-aistroyka-border-subtle text-aistroyka-caption text-aistroyka-text-secondary">
-                      <th className="px-2 py-2">Role</th>
-                      <th className="px-2 py-2 text-right">Asks</th>
-                      <th className="px-2 py-2 text-right">Clicks</th>
-                      <th className="px-2 py-2 text-right">Completion</th>
+                      <th className="px-2 py-2">{t("colRole")}</th>
+                      <th className="px-2 py-2 text-right">{t("colAsks")}</th>
+                      <th className="px-2 py-2 text-right">{t("colClicks")}</th>
+                      <th className="px-2 py-2 text-right">{t("colCompletion")}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {data.byRoleConversion.length === 0 ? (
                       <tr>
                         <td colSpan={4} className="px-2 py-4 text-aistroyka-subheadline text-aistroyka-text-secondary">
-                          No conversion data yet.
+                          {t("emptyConversion")}
                         </td>
                       </tr>
                     ) : (
                       data.byRoleConversion.map((row) => (
                         <tr key={row.role} className="border-b border-aistroyka-border-subtle/60">
-                          <td className="px-2 py-2 font-medium text-aistroyka-text-primary">{row.role}</td>
+                          <td className="px-2 py-2 font-medium text-aistroyka-text-primary">{formatRole(row.role)}</td>
                           <td className="px-2 py-2 text-right text-aistroyka-text-secondary">{row.asks}</td>
                           <td className="px-2 py-2 text-right text-aistroyka-text-secondary">{row.actionClicks}</td>
                           <td className="px-2 py-2 text-right font-semibold text-aistroyka-text-primary">{row.completionRate}%</td>
@@ -317,24 +361,22 @@ export function AIGuideAnalyticsClient() {
           </section>
 
           <Card className="p-4">
-            <h2 className="text-aistroyka-title3 font-semibold text-aistroyka-text-primary">Top actions</h2>
-            <p className="mt-1 text-aistroyka-caption text-aistroyka-text-secondary">
-              Most clicked recommendations and risk signals.
-            </p>
+            <h2 className="text-aistroyka-title3 font-semibold text-aistroyka-text-primary">{t("sectionTopActions")}</h2>
+            <p className="mt-1 text-aistroyka-caption text-aistroyka-text-secondary">{t("topActionsHint")}</p>
             <div className="mt-4 overflow-x-auto">
               <table className="w-full min-w-[560px] text-left">
                 <thead>
                   <tr className="border-b border-aistroyka-border-subtle text-aistroyka-caption text-aistroyka-text-secondary">
-                    <th className="px-2 py-2">Action</th>
-                    <th className="px-2 py-2">Href</th>
-                    <th className="px-2 py-2 text-right">Clicks</th>
+                    <th className="px-2 py-2">{t("colAction")}</th>
+                    <th className="px-2 py-2">{t("colHref")}</th>
+                    <th className="px-2 py-2 text-right">{t("colClicksCount")}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {data.topActions.length === 0 ? (
                     <tr>
                       <td colSpan={3} className="px-2 py-4 text-aistroyka-subheadline text-aistroyka-text-secondary">
-                        No clicked actions in this range.
+                        {t("emptyTopActions")}
                       </td>
                     </tr>
                   ) : (
@@ -355,4 +397,3 @@ export function AIGuideAnalyticsClient() {
     </section>
   );
 }
-

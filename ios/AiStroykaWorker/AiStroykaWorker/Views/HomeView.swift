@@ -369,7 +369,7 @@ struct HomeView: View {
             await WorkerAPI.helpAssistantEvent(
                 type: "open",
                 locale: supportedHelpLocale(),
-                role: "manager",
+                role: "worker",
                 pathname: "/worker"
             )
             await MainActor.run {

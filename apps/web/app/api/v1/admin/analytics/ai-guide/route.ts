@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 type EventRow = {
   event_type: "open" | "ask" | "quick_prompt" | "action_click";
-  role: "manager" | "admin" | "client" | "owner";
+  role: "manager" | "admin" | "client" | "owner" | "worker";
   locale: "en" | "ru" | "es" | "it";
   pathname: string;
   payload: Record<string, unknown> | null;

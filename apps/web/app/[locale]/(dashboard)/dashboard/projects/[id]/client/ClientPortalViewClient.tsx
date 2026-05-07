@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Card, SectionHeader, Skeleton, EmptyState, Badge } from "@/components/ui";
 import type { ClientProjectView } from "@/lib/domain/client-portal/client-portal.types";
+import { ClientPortalDailyDigestSection } from "./ClientPortalDailyDigestSection";
 import { ClientPortalActivitySection } from "./ClientPortalActivitySection";
 import { ClientPortalNotificationsSection } from "./ClientPortalNotificationsSection";
 import { ClientPortalRequestsSection } from "./ClientPortalRequestsSection";
@@ -71,6 +72,8 @@ export function ClientPortalViewClient({ projectId }: { projectId: string }) {
         </Link>
       </div>
       <SectionHeader title={d.project.name} subtitle={tPage("clientViewSubtitle")} />
+
+      <ClientPortalDailyDigestSection projectId={projectId} />
 
       <ClientPortalNotificationsSection projectId={projectId} />
 

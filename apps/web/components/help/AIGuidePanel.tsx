@@ -155,7 +155,7 @@ export function AIGuidePanel() {
     [locale, pathname, role],
   );
 
-  const runGuide = useCallback(async (rawQuery: string) => {
+  const runGuide = useCallback(async (rawQuery: string, telemetry?: "open" | "ask" | "quick_prompt") => {
     setLoading(true);
     try {
       const res = await fetch("/api/v1/help/assistant", {
@@ -177,9 +177,16 @@ export function AIGuidePanel() {
       });
       if (!res.ok) return;
       const json = (await res.json()) as GuideResponse;
-      setResponse(json);
       setHistory((prev) => [{ query: rawQuery || t("defaultQuery"), summary: json.summary }, ...prev].slice(0, 4));
-      void sendEvent(rawQuery ? "ask" : "open", { query: rawQuery || "default" });
+      const kind = telemetry ?? (rawQuery.trim() ? "ask" : "open");
+      if (kind === "quick_prompt") {
+        void sendEvent("quick_prompt", { prompt: rawQuery });
+      } else if (kind === "ask") {
+        void sendEvent("ask", { query: rawQuery });
+      } else {
+        void sendEvent("open", { query: rawQuery || "default" });
+      }
+      setResponse(json);
     } finally {
       setLoading(false);
     }
@@ -245,8 +252,7 @@ export function AIGuidePanel() {
                 type="button"
                 onClick={() => {
                   setQuery(prompt);
-                  void runGuide(prompt);
-                  void sendEvent("quick_prompt", { prompt });
+                  void runGuide(prompt, "quick_prompt");
                 }}
                 className="rounded-full border border-aistroyka-border-subtle px-2.5 py-1 text-aistroyka-caption text-aistroyka-text-secondary hover:bg-aistroyka-surface-raised"
               >
