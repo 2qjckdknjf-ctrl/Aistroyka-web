@@ -34,6 +34,7 @@ E2E/staging/production criteria unchanged: **conditional / not fully closed** un
 
 ## Exact next actions (operators)
 
+0. **Preflight:** `bun run smoke:pilot:check` (add `--strict` in CI/scripts to fail fast if `ops/metrics` auth is missing).
 1. Set `E2E_EMAIL`, `E2E_PASSWORD` (see `apps/web/tests/e2e/_helpers/auth.ts`, `.env.pilot.example`).
 2. Run `bun run --cwd apps/web e2e:pilot` against a running app (`PLAYWRIGHT_BASE_URL`).
 3. Run staging and production smoke per `docs/release/FINAL_RELEASE_CHECKLIST.md`; record results under `docs/audit/`.
