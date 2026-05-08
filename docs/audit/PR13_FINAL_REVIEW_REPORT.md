@@ -10,15 +10,15 @@
 | Item | Value |
 |------|--------|
 | Branch | `chore/deep-production-completion` |
-| HEAD (at report update) | `7a9b4c41` |
+| PR branch tip | See GitHub PR #13 “last commit” or run `git rev-parse HEAD` after `git pull` (this doc is updated in the same push series as `POST_MERGE_PR13_OPERATOR_RUNBOOK.md`). |
 | `git status` | **clean** (no uncommitted changes) |
 
 Recent history:
 
 ```text
+859957b9 docs: PR13 report — final HEAD for PR tip
 7a9b4c41 docs: PR13 report — sync HEAD SHA
 c4918a54 docs: PR13 report — HEAD after merge-ready doc commit
-22d29d78 docs: PR #13 merge-ready confirmation, post-merge operator runbook
 ```
 
 ## 2. GitHub PR state (CLI)
@@ -29,7 +29,7 @@ Captured via `gh pr view 13 --json …` on 2026-05-08:
 |-------|--------|
 | URL | https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/13 |
 | `state` | OPEN |
-| `isDraft` | **true** at time of capture — run `gh pr ready 13` to publish for review (or use GitHub UI) |
+| `isDraft` | **false** (marked ready via `gh pr ready 13` on 2026-05-08; re-check PR if new commits land) |
 | `mergeStateStatus` | **UNSTABLE** (e.g. external checks still pending — Vercel contexts were `PENDING`) |
 | `baseRefName` | `main` |
 | `headRefName` | `chore/deep-production-completion` |
