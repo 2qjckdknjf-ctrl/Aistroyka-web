@@ -21,21 +21,22 @@ export default async function PricingPage({ params }: Props) {
   const t = await getTranslations("public.pricing");
 
   const plans = [
-    { key: "starter" as const, desc: "For small teams getting started." },
-    { key: "business" as const, desc: "For growing teams and multiple projects." },
-    { key: "enterprise" as const, desc: "For large organizations and custom needs." },
+    { key: "starter" as const, descKey: "starterDesc" as const },
+    { key: "pro" as const, descKey: "proDesc" as const },
+    { key: "business" as const, descKey: "businessDesc" as const },
+    { key: "enterprise" as const, descKey: "enterpriseDesc" as const },
   ] as const;
 
   return (
-    <div className="mx-auto min-w-0 max-w-4xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+    <div className="mx-auto min-w-0 max-w-6xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
       <h1 className="text-[var(--aistroyka-font-title)] font-bold text-[var(--aistroyka-text-primary)]">
         {t("title")}
       </h1>
       <p className="mt-4 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-secondary)]">
         {t("metaDescription")}
       </p>
-      <div className="mt-12 grid min-w-0 gap-8 sm:grid-cols-3">
-        {plans.map(({ key, desc }) => (
+      <div className="mt-12 grid min-w-0 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+        {plans.map(({ key, descKey }) => (
           <div
             key={key}
             className="card min-w-0 rounded-[var(--aistroyka-radius-card)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] p-6 shadow-[var(--aistroyka-shadow-e1)]"
@@ -44,7 +45,7 @@ export default async function PricingPage({ params }: Props) {
               {t(key)}
             </h2>
             <p className="mt-2 text-[var(--aistroyka-font-footnote)] text-[var(--aistroyka-text-secondary)]">
-              {desc}
+              {t(descKey)}
             </p>
             <div className="mt-4 flex min-w-0 flex-wrap gap-2">
               <Link href="/contact" className="btn-secondary min-w-0 flex-1 text-sm sm:flex-none sm:basis-auto">

@@ -1508,6 +1508,7 @@ They can include:
 ```text
 docs/integrations/PHASE10_TELEGRAM_BOT_DESIGN.md
 docs/integrations/PHASE10_TELEGRAM_SECURITY_MODEL.md
+docs/product/PHASE10_TELEGRAM_REPORT.md
 ```
 
 ## Done criteria
@@ -1582,6 +1583,8 @@ Directory:
 ```text
 docs/product/PHASE11_CONTRACTOR_DIRECTORY_REPORT.md
 ```
+
+(Implementation: `tenant_contractor_profiles`, `/api/v1/contractors/directory`, dashboard `/dashboard/contractors`.)
 
 ## Done criteria
 

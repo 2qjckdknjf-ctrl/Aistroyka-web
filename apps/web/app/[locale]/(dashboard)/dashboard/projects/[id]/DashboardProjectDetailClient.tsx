@@ -27,6 +27,7 @@ import { ProjectDocumentsPanel } from "./ProjectDocumentsPanel";
 import { ProjectCostsPanel } from "./ProjectCostsPanel";
 import { ProjectEstimatePanel } from "./ProjectEstimatePanel";
 import { ProjectDecisionsPanel } from "./ProjectDecisionsPanel";
+import { TelegramConnectCard } from "@/components/integrations/TelegramConnectCard";
 
 const PAGE_SIZE = 10;
 
@@ -236,6 +237,8 @@ export function DashboardProjectDetailClient({ projectId }: { projectId: string 
           <p className="mt-1 text-aistroyka-title3 font-semibold text-aistroyka-text-primary">—</p>
         </Card>
       </section>
+
+      <TelegramConnectCard className="mb-6" />
 
       <Card>
         <Tabs aria-label={tDetail("projectSections")}>

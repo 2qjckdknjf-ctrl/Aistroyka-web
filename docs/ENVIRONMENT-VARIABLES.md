@@ -70,6 +70,16 @@ Vercel может встречаться как исторический/доп�
 
 ---
 
+## Telegram (опционально, Phase 10)
+
+| Variable | Описание |
+|----------|----------|
+| `TELEGRAM_BOT_TOKEN` | Токен бота (`@BotFather`). Нужен для исходящих сообщений и приёма webhook. |
+| `TELEGRAM_BOT_USERNAME` | Имя бота **без** `@` — для deep link `https://t.me/...`. |
+| `TELEGRAM_WEBHOOK_SECRET` | Секрет `secret_token` при `setWebhook`; в **production** обязателен (иначе webhook отвечает 503). Заголовок входящих запросов: `X-Telegram-Bot-Api-Secret-Token`. |
+
+---
+
 ## Дополнительные (опционально)
 
 | Variable | Описание |

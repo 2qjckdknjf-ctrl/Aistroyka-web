@@ -11,6 +11,16 @@ export async function listByTenant(supabase: SupabaseClient, tenantId: string): 
   return (data ?? []) as Project[];
 }
 
+/** Count projects in tenant (all rows; no archive flag on projects table). */
+export async function countByTenant(supabase: SupabaseClient, tenantId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from("projects")
+    .select("id", { count: "exact", head: true })
+    .eq("tenant_id", tenantId);
+  if (error || count == null) return 0;
+  return count;
+}
+
 export async function getById(supabase: SupabaseClient, projectId: string, tenantId: string): Promise<Project | null> {
   const { data, error } = await supabase
     .from("projects")

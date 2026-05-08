@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { TenantContext } from "@/lib/tenant/tenant.types";
+import { getLimitsForTenant } from "@/lib/platform/subscription/subscription.service";
 import { canReadProjects, canManageProjects } from "./project.policy";
 import * as repo from "./project.repository";
 import type { Project } from "./project.types";
@@ -44,6 +45,13 @@ export async function createProject(
   const trimmed = name.trim();
   if (!trimmed) return { error: "name is required" };
   if (trimmed.length > 200) return { error: "Project name must be at most 200 characters" };
+  const limits = await getLimitsForTenant(supabase, ctx.tenantId);
+  const projectCount = await repo.countByTenant(supabase, ctx.tenantId);
+  if (projectCount >= limits.max_projects) {
+    return {
+      error: "Insufficient quota: project limit reached for your plan. Upgrade your subscription or contact sales.",
+    };
+  }
   const project = await repo.create(supabase, ctx.tenantId, trimmed);
   if (!project) return { error: "Failed to create project" };
   return { id: project.id };

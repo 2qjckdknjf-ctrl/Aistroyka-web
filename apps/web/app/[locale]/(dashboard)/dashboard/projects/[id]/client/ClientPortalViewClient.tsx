@@ -12,6 +12,7 @@ import { ClientPortalNotificationsSection } from "./ClientPortalNotificationsSec
 import { ClientPortalRequestsSection } from "./ClientPortalRequestsSection";
 import { ClientPortalCustomerEstimatesSection } from "./ClientPortalCustomerEstimatesSection";
 import { ClientPortalWorkloadSection } from "./ClientPortalWorkloadSection";
+import { TelegramConnectCard } from "@/components/integrations/TelegramConnectCard";
 
 async function fetchClientView(projectId: string, tErr: (k: string) => string): Promise<ClientProjectView> {
   const res = await fetch(`/api/v1/projects/${projectId}/client-view`, { credentials: "include" });
@@ -85,6 +86,8 @@ export function ClientPortalViewClient({ projectId }: { projectId: string }) {
       <SectionHeader title={d.project.name} subtitle={tPage("clientViewSubtitle")} />
 
       <ClientPortalNotificationsSection projectId={projectId} />
+
+      <TelegramConnectCard />
 
       <ClientPortalWorkloadSection projectId={projectId} />
 

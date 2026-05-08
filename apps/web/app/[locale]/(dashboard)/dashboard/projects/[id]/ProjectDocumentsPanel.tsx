@@ -710,6 +710,7 @@ function CreateDocumentModal({
   error: string | null;
 }) {
   const tDetail = useTranslations("dashboardDetail");
+  const tPortal = useTranslations("portalStatus");
   const [type, setType] = useState<string>("document");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");

@@ -14,6 +14,7 @@ import {
 } from "@/lib/tenant";
 import { canManageClientRequests } from "@/lib/domain/client-requests/client-requests.policy";
 import { emitClientRequestCreatedForStakeholders } from "@/lib/domain/stakeholder-notifications/stakeholder-notifications.emit";
+import { emitTelegramForNewClientRequest } from "@/lib/platform/telegram/telegram-notifications.emit";
 import { getAdminClient } from "@/lib/supabase/admin";
 import {
   createClientRequest,
@@ -129,6 +130,11 @@ export async function POST(
       requestId: data.id,
       title: data.title,
       instructions: data.instructions ?? null,
+    });
+    await emitTelegramForNewClientRequest(admin, {
+      tenantId: ctx.tenantId,
+      projectId,
+      title: data.title,
     });
   }
 
