@@ -7,7 +7,7 @@
 
 ## 2. Revision
 
-Validation executed on working tree **after** `11dc501b` (AGENTS.md continual-learning). Documentation updates below are committed together as the PR #13 merge-readiness doc pass.
+Validation executed on working tree **after** `11dc501b` (AGENTS.md continual-learning). Documentation commit for this pass: **`171b2c9c`** (`chore/deep-production-completion`).
 
 ## 1. Validation results
 
