@@ -10,7 +10,8 @@
 - For mobile: do not merge Manager and Worker into one app; keep shared logic in Shared; do not use WorkerLite as primary product name.
 - Do not invent or fake success (e.g. fake build results); document real blockers and missing values.
 - When config values may exist in repo: search first (env examples, docs, scripts); do not ask for values that are already there; do not hardcode fake placeholders if real values exist.
-- Prefer end-to-end execution with minimal handoff when requested ("do it yourself"); when the user signals continuing by plan, without pausing, or in any language (e.g. keep going, proceed, don’t stop, «делай» / «без остановки» / «делай дальше» / «по плану», etc.), continue in focused passes without duplicating unrelated changes, chain subtasks (validate, fix failures, then proceed) without optional checkpoint prompts unless blocked or scope is unclear.
+- Prefer end-to-end execution when asked ("do it yourself"); on continue signals («делай», keep going, по плану, etc.) chain focused work: validate, fix failures, proceed—no extra checkpoints unless blocked or unclear scope.
+- Product sequencing and customer-finance boundaries: follow `docs/roadmap/AISTROYKA_MEGA_ROADMAP_CUSTOMER_FINANCE_SAFE.md`; never expose internal contractor financial state on customer/owner/stakeholder surfaces except designed customer-facing commercial artifacts (see `docs/security/*` isolation audits).
 - Default to Russian-language communication when the user requests it.
 
 ## Learned Workspace Facts

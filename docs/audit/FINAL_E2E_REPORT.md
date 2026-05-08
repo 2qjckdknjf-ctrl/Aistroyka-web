@@ -1,7 +1,7 @@
 # Final E2E report (Phase 13)
 
 **Roadmap:** Phase 13 — § 13.3 E2E  
-**Date:** 2026-05-07
+**Date:** 2026-05-07 (body); **verification log updated:** 2026-05-08  
 
 ## Objective
 
@@ -46,7 +46,19 @@ Document **minimum end-to-end flows** required before serious sales and map them
 | `bun run e2e:pilot` (`apps/web`, Playwright with auto `next dev`) | **NOT PASS** — setup failed: missing `E2E_EMAIL` / `E2E_PASSWORD` (or `E2E_USER_*` / `SMOKE_PASSWORD`). **Expected** without `.env` credentials. |
 | `bun run build` / `bun run cf:build` (root) | **PASS** (2026-05-08); `cf:build` used exported `NEXT_PUBLIC_*` per CI pattern. |
 
-**To reproduce pilot green:** export credentials per `apps/web/tests/e2e/_helpers/auth.ts` and `.env.pilot.example` / `AGENTS.md`, then `bun run --cwd apps/web e2e:pilot` against a reachable `PLAYWRIGHT_BASE_URL` (default `http://localhost:3000`). CI/staging: use workflow secrets `PILOT_E2E_*`.
+**Exact commands**
+
+```bash
+# From repo root after copying .env.pilot.example → .env.pilot and filling auth:
+cd apps/web
+export PLAYWRIGHT_BASE_URL="${PLAYWRIGHT_BASE_URL:-http://localhost:3000}"
+export E2E_EMAIL="..." E2E_PASSWORD="..."
+bun run e2e:pilot
+```
+
+Or with auto dev server (slow cold start): omit `PLAYWRIGHT_SKIP_WEB_SERVER` so `playwright.config.ts` can run `bun run dev` unless `CI=1`.
+
+**To reproduce pilot green:** set vars per `apps/web/tests/e2e/_helpers/auth.ts` and `.env.pilot.example`. CI/staging: workflow `pilot-e2e-audit.yml` uses secrets `PILOT_E2E_BASE_URL`, `PILOT_E2E_EMAIL`, `PILOT_E2E_PASSWORD` (optional `PILOT_E2E_PROJECT_ID`).
 
 ## Current verdict
 

@@ -15,17 +15,16 @@
 | Customer finance isolation green | **REPO SCOPE YES** | Matrix + tests in `docs/security/FINAL_CUSTOMER_FINANCE_ISOLATION_AUDIT.md`; extend on new routes |
 | Clear launch checklist | **YES** | `docs/release/FINAL_RELEASE_CHECKLIST.md` + FINAL audit pack |
 
-## Repository validation (executed locally, 2026-05-08)
+## Repository validation — PR #13 merge-readiness (2026-05-08)
 
 | Command | Result |
 |---------|--------|
-| `bun run test` | **PASS** (1401 tests) |
 | `bun run lint` | **PASS** |
+| `bun run test` | **PASS** — 263 files, 1401 tests |
 | `bun run build` | **PASS** |
-| `bun run cf:build` | **PASS** (with `NEXT_PUBLIC_*` set for bundle parity with CI pattern) |
-| `bun run e2e:pilot` | **NOT PASS** — missing E2E credentials in environment |
+| `bun run cf:build` | **PASS** (local; `NEXT_PUBLIC_*` exported per CI parity) |
 
-## Overall verdict
+E2E/staging/production criteria unchanged: **conditional / not fully closed** until credentialed Playwright and operator smoke evidence.
 
 **CONDITIONAL — NOT FULLY CLOSED** against the strict mega-roadmap checklist because **staging/production smoke** and **credential-backed E2E** were not executed in this environment.
 

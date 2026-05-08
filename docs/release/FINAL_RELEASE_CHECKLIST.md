@@ -1,5 +1,16 @@
 # Final Release Checklist (Audit Pass 2026-05-01)
 
+## Operator smoke (staging / production)
+
+When credentials and tenant auth context are available:
+
+```bash
+BASE_URL=https://staging.aistroyka.ai bash scripts/smoke/pilot_launch.sh
+BASE_URL=https://aistroyka.ai bash scripts/smoke/pilot_launch.sh
+```
+
+Use `AUTH_HEADER`, `COOKIE`, or `SMOKE_EMAIL`/`SMOKE_PASSWORD` as documented in `scripts/smoke/pilot_launch.sh` — `ops/metrics` requires a **Supabase user JWT** or session cookie (not service_role).
+
 ## Code Health Gates
 
 **Last repo verification (developer machine, 2026-05-08):** `bun run test`, `bun run lint`, `bun run build`, and `bun run cf:build` (with `NEXT_PUBLIC_*` exported) all **passed**. Pilot Playwright run blocked on missing `E2E_EMAIL`/`E2E_PASSWORD` — see `docs/product/PHASE13_ROADMAP_CLOSURE.md`.

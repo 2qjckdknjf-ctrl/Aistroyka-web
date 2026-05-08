@@ -1,5 +1,26 @@
 # Final Production Go / No-Go
 
+## PR #13 — repository merge gates only (2026-05-08)
+
+Local validation on branch `chore/deep-production-completion` for **merge readiness** (does **not** assert live staging/production health):
+
+| Gate | Result |
+|------|--------|
+| Lint | PASS |
+| Tests | PASS (263 files / 1401 tests) |
+| `bun run build` | PASS |
+| `bun run cf:build` | PASS (with `NEXT_PUBLIC_*` at build time) |
+
+**Interpretation:** sufficient to **merge PR #13** after GitHub **CI Check** is green. **Not** a production go-live sign-off.
+
+---
+
+## Historical snapshot (below)
+
+Sections **1–11** below are an **older captured state** (dated ~2026-05-01 in section headers / evidence). They are **not invalidated** by the PR #13 repo pass; live endpoints must be re-verified before changing production verdict.
+
+---
+
 ## 1) Local validation
 
 - Typecheck: PASS

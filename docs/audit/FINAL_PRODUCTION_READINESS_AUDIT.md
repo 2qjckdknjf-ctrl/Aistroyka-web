@@ -1,7 +1,7 @@
 # Final production readiness audit (Phase 13)
 
 **Roadmap:** `docs/roadmap/AISTROYKA_MEGA_ROADMAP_CUSTOMER_FINANCE_SAFE.md` — § Phase 13  
-**Date:** 2026-05-07  
+**Date:** 2026-05-07 (updated 2026-05-08 for PR #13 merge-readiness pass)  
 **Scope:** Repository and workflow readiness before serious sales. Live go/no-go still requires operator-run smoke on secured environments.
 
 ## 1. CI and build
@@ -62,7 +62,9 @@
 | `bun run lint` (root → `apps/web`) | **PASS** |
 | `bun run build` (root) | **PASS** |
 | `bun run cf:build` (root) | **PASS** — local run with `NEXT_PUBLIC_*` set (CI uses repo secrets for anon key) |
-| `bun run e2e:pilot` (`apps/web`) | **Skipped / fail** — no `E2E_EMAIL`+`E2E_PASSWORD` in environment (see `FINAL_E2E_REPORT.md`) |
+| `bun run e2e:pilot` (`apps/web`) | **BLOCKED** — missing `E2E_EMAIL` + `E2E_PASSWORD` (2026-05-08 re-check); see `FINAL_E2E_REPORT.md` |
+
+**PR #13 merge readiness:** repository gates above match **CI Check** sequence (`bun install` in CI only; local `bun run lint` / `test` / `build` / `cf:build` green). **Remaining:** GitHub PR **CI job** must pass on the branch; staging/production smoke still operator-blocked.
 
 Closure: see **`docs/product/PHASE13_ROADMAP_CLOSURE.md`** (Phase 13 **conditional** until live smoke + credentialed E2E).
 

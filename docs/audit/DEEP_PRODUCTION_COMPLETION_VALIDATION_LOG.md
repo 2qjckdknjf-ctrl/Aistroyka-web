@@ -591,3 +591,39 @@ N/A
 
 ## Rerun Result
 N/A
+
+---
+
+## Command (PR #13 merge-readiness, 2026-05-08)
+
+`bun run lint && bun run test && bun run build && NEXT_PUBLIC_SUPABASE_URL=… NEXT_PUBLIC_SUPABASE_ANON_KEY=… NEXT_PUBLIC_APP_URL=… bun run cf:build`
+
+## Result
+PASS (lint; 263 test files / 1401 tests; Next build; OpenNext CF bundle)
+
+## Summary
+PR #13 finalization local gates aligned with `.github/workflows/ci-check.yml` (`bun install` omitted locally; CI runs frozen install). `cf:build` used exported `NEXT_PUBLIC_*` for bundle parity.
+
+## Fix Applied
+N/A
+
+## Rerun Result
+N/A
+
+---
+
+## Command
+
+`PLAYWRIGHT_SKIP_WEB_SERVER=1 bun run --cwd apps/web e2e:pilot`
+
+## Result
+FAIL (auth setup — missing `E2E_EMAIL` / `E2E_PASSWORD`)
+
+## Summary
+Credential-blocked; expected in clean dev env.
+
+## Fix Applied
+N/A
+
+## Rerun Result
+N/A

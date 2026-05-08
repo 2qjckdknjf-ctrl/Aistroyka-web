@@ -1,7 +1,7 @@
 # Final customer finance isolation audit (Phase 13)
 
 **Roadmap:** Phase 13 — § 13.4 Customer finance isolation tests  
-**Date:** 2026-05-07  
+**Date:** 2026-05-07 (isolation matrix); **PR #13 pass:** 2026-05-08  
 **Rule:** Owner / customer must never see internal financial state of the construction company (mega-roadmap).
 
 ## Required negative guarantees (mapping)
@@ -28,6 +28,15 @@
 
 - **P0:** None open from this isolation matrix for **covered** routes; any **new** API must add a deny test if it exposes totals, SKU costs, or margin.
 - **P1:** Extend route-level tests for **every** `/api/v1/projects/:id/*` cost-adjacent path (commercial items, internal jobs) on a case-by-case basis.
+
+## PR #13 static review (2026-05-08)
+
+- **Portal API surface** (`apps/web/app/api/v1/portal/**`): no matches for internal cost field patterns in route code (grep).
+- **Telegram notifications** (`lib/platform/telegram/**`): copy intentionally “without cost/margin data” per `telegram-notifications.emit.ts`.
+- **Client portal / proof-pack / handover domains:** no dangerous field tokens in customer-shaping layers beyond tests that assert negatives (digest, proof-pack).
+- **Costs API:** `GET`/`POST` `/api/v1/projects/:id/costs` deny tests for portal/stakeholder context remain in `app/api/v1/projects/[id]/costs/route.test.ts`.
+
+**Verdict (this pass):** no new customer-facing finance leaks detected in the audited paths; keep **P1** route coverage when adding cost-adjacent endpoints.
 
 ## Verdict
 
