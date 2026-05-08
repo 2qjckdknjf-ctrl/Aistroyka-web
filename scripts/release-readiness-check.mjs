@@ -29,6 +29,7 @@ function loadEnv() {
   };
   tryLoad(resolve(appsWeb, ".env.local"));
   tryLoad(resolve(appsWeb, ".env"));
+  tryLoad(resolve(root, ".env.pilot"));
 }
 
 loadEnv();
@@ -112,7 +113,26 @@ const ai = getEnv("OPENAI_API_KEY") || getEnv("ANTHROPIC_API_KEY") || getEnv("GO
 if (ai.length > 0) pass("ai_config", "At least one AI provider key set");
 else warn("ai_config", "No AI key set (optional for minimal run)");
 
-// 9. Push
+// 9b. Phase 13 — live gates (WARN only; no secrets logged)
+const supaUrl = getEnv("SUPABASE_URL") || getEnv("NEXT_PUBLIC_SUPABASE_URL");
+const supaAnon = getEnv("SUPABASE_ANON_KEY") || getEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY");
+const hasMetricsAuth =
+  getEnv("AUTH_HEADER").startsWith("Bearer ") ||
+  getEnv("COOKIE").length > 0 ||
+  (getEnv("SMOKE_EMAIL").length > 0 &&
+    getEnv("SMOKE_PASSWORD").length > 0 &&
+    supaUrl.length > 0 &&
+    supaAnon.length > 0);
+if (hasMetricsAuth) pass("pilot_metrics_auth", "ops/metrics auth path present (header, cookie, or smoke+supabase)");
+else warn("pilot_metrics_auth", "Missing AUTH_HEADER/COOKIE or SMOKE_EMAIL+SMOKE_PASSWORD+Supabase URL+anon — full pilot_launch.sh will 401 on ops/metrics");
+
+if (getEnv("E2E_EMAIL").length > 0 && getEnv("E2E_PASSWORD").length > 0) pass("e2e_pilot_creds", "E2E_EMAIL and E2E_PASSWORD set");
+else warn("e2e_pilot_creds", "E2E pilot blocked without E2E_EMAIL/E2E_PASSWORD (see .env.pilot.example)");
+
+if (getEnv("SUPABASE_ACCESS_TOKEN").length > 0) pass("supabase_cli_token", "SUPABASE_ACCESS_TOKEN set");
+else warn("supabase_cli_token", "Live Supabase CLI checks blocked without SUPABASE_ACCESS_TOKEN");
+
+// 10. Push
 const pushFcm = getEnv("FCM_PROJECT_ID") && getEnv("FCM_CLIENT_EMAIL") && getEnv("FCM_PRIVATE_KEY");
 const pushApns = getEnv("APNS_KEY") && getEnv("APNS_KEY_ID") && getEnv("APNS_TEAM_ID") && getEnv("APNS_BUNDLE_ID");
 if (pushFcm || pushApns) pass("push_config", "Push (FCM or APNS) set");
@@ -148,6 +168,7 @@ ${checks.map((c) => `| ${c.name} | ${c.status} | ${c.message} |`).join("\n")}
 
 - If FAIL: fix failing checks (env, debug, cron).
 - If PASS_WITH_WARNINGS: optional features not configured; acceptable for minimal pilot.
+- Phase 13 live gates: run \`bun run smoke:pilot:check\` before \`smoke:pilot\`; set E2E and smoke auth per \`docs/product/PHASE13_ROADMAP_CLOSURE.md\`.
 - Run \`node scripts/validate-release-env.mjs\` for full env report.
 `;
 

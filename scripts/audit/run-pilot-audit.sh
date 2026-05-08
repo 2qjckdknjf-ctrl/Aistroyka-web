@@ -56,6 +56,10 @@ echo "==> button inventory (static)"
 ( cd "$ROOT_DIR" && node scripts/audit/generate_button_inventory.mjs ) >"$ARTIFACT_DIR/button_inventory.log" 2>&1
 mark_step button_inventory $?
 
+echo "==> pilot preflight (smoke:pilot:check, no --strict)"
+( cd "$ROOT_DIR" && bun run smoke:pilot:check ) >"$ARTIFACT_DIR/pilot_preflight.log" 2>&1 || true
+cat "$ARTIFACT_DIR/pilot_preflight.log"
+
 echo "==> smoke:pilot"
 ( cd "$ROOT_DIR" && bun run smoke:pilot ) >"$ARTIFACT_DIR/pilot_smoke.log" 2>&1
 mark_step smoke_pilot $?
