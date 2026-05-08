@@ -1660,6 +1660,7 @@ Phrase customer-side value as:
 ```text
 docs/business/PHASE12_PACKAGING_AND_PRICING.md
 docs/product/PHASE12_PLAN_LIMITS_IMPLEMENTATION.md
+docs/product/PHASE12_ROADMAP_CLOSURE.md
 ```
 
 ## Done criteria
