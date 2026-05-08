@@ -1747,7 +1747,10 @@ docs/audit/FINAL_PRODUCTION_READINESS_AUDIT.md
 docs/audit/FINAL_SECURITY_AUDIT.md
 docs/audit/FINAL_E2E_REPORT.md
 docs/security/FINAL_CUSTOMER_FINANCE_ISOLATION_AUDIT.md
+docs/product/PHASE13_ROADMAP_CLOSURE.md
 ```
+
+**Note:** There is no separate **Phase 14** product chapter in this file. Section **14** is the Cursor execution template; **§15** is the strategic verdict. Closure of Phase 13 against live criteria is recorded in `PHASE13_ROADMAP_CLOSURE.md` and operator smoke logs.
 
 ## Done criteria
 

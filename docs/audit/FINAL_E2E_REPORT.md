@@ -44,6 +44,7 @@ Document **minimum end-to-end flows** required before serious sales and map them
 | `bun run test` (repo root: contracts build + `apps/web` Vitest) | **PASS** — 263 files, 1401 tests |
 | `bun run lint` (repo root) | **PASS** — no ESLint warnings or errors |
 | `bun run e2e:pilot` (`apps/web`, Playwright with auto `next dev`) | **NOT PASS** — setup failed: missing `E2E_EMAIL` / `E2E_PASSWORD` (or `E2E_USER_*` / `SMOKE_PASSWORD`). **Expected** without `.env` credentials. |
+| `bun run build` / `bun run cf:build` (root) | **PASS** (2026-05-08); `cf:build` used exported `NEXT_PUBLIC_*` per CI pattern. |
 
 **To reproduce pilot green:** export credentials per `apps/web/tests/e2e/_helpers/auth.ts` and `.env.pilot.example` / `AGENTS.md`, then `bun run --cwd apps/web e2e:pilot` against a reachable `PLAYWRIGHT_BASE_URL` (default `http://localhost:3000`). CI/staging: use workflow secrets `PILOT_E2E_*`.
 

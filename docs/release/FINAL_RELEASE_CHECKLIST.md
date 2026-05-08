@@ -2,6 +2,8 @@
 
 ## Code Health Gates
 
+**Last repo verification (developer machine, 2026-05-08):** `bun run test`, `bun run lint`, `bun run build`, and `bun run cf:build` (with `NEXT_PUBLIC_*` exported) all **passed**. Pilot Playwright run blocked on missing `E2E_EMAIL`/`E2E_PASSWORD` — see `docs/product/PHASE13_ROADMAP_CLOSURE.md`.
+
 - [x] `bun install --frozen-lockfile`
 - [x] Typecheck (`bunx tsc -p apps/web/tsconfig.json --noEmit`)
 - [x] Lint (`bun run lint`)

@@ -60,7 +60,11 @@
 |-------|--------|
 | `bun run test` (root) | **PASS** — 1401 Vitest tests |
 | `bun run lint` (root → `apps/web`) | **PASS** |
+| `bun run build` (root) | **PASS** |
+| `bun run cf:build` (root) | **PASS** — local run with `NEXT_PUBLIC_*` set (CI uses repo secrets for anon key) |
 | `bun run e2e:pilot` (`apps/web`) | **Skipped / fail** — no `E2E_EMAIL`+`E2E_PASSWORD` in environment (see `FINAL_E2E_REPORT.md`) |
+
+Closure: see **`docs/product/PHASE13_ROADMAP_CLOSURE.md`** (Phase 13 **conditional** until live smoke + credentialed E2E).
 
 ## Verdict
 
