@@ -42,6 +42,10 @@
 - **P0:** None identified in static audit.
 - **P1:** Manual pen-test / third-party audit not in scope of this file; recommend before **serious** enterprise sales.
 
+## Live snapshot (non-authoritative, 2026-05-07)
+
+- Public **`GET /api/v1/health`** returned **200** on staging and production hosts (curl-only). Full auth-bound checks and system-route posture are tracked in smoke/system audit files — this doc does not upgrade to “production secure” on that basis alone.
+
 ## References
 
 - `docs/security/threat-model.md`, `data-flow.md`

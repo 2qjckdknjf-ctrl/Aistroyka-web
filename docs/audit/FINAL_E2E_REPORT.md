@@ -1,7 +1,7 @@
 # Final E2E report (Phase 13)
 
 **Roadmap:** Phase 13 — § 13.3 E2E  
-**Date:** 2026-05-07 (body); **verification log updated:** 2026-05-08  
+**Date:** 2026-05-07 (body); **verification log updated:** 2026-05-08 / **2026-05-07 live/doc refresh**  
 
 ## Objective
 
@@ -45,6 +45,8 @@ Document **minimum end-to-end flows** required before serious sales and map them
 | `bun run lint` (repo root) | **PASS** — no ESLint warnings or errors |
 | `bun run e2e:pilot` (`apps/web`, Playwright with auto `next dev`) | **NOT PASS** — setup failed: missing `E2E_EMAIL` / `E2E_PASSWORD` (or `E2E_USER_*` / `SMOKE_PASSWORD`). **Expected** without `.env` credentials. |
 | `bun run build` / `bun run cf:build` (root) | **PASS** (2026-05-08); `cf:build` used exported `NEXT_PUBLIC_*` per CI pattern. |
+
+- **Public health (curl):** `GET /api/v1/health` → **200** on staging, apex, and `www` (2026-05-07) — sanity only; **not** E2E or full smoke.
 
 **Exact commands**
 

@@ -13,6 +13,8 @@ Use `AUTH_HEADER`, `COOKIE`, or `SMOKE_EMAIL`/`SMOKE_PASSWORD` as documented in 
 
 ## Code Health Gates
 
+**Last unauthenticated curl + smoke (2026-05-07):** `GET /api/v1/health` → **200** (staging, apex, `www`). `pilot_launch.sh` **partial**: `health` / `config` / `cron-tick` **PASS**; **`ops/metrics` → 401** until auth env is set — see `docs/audit/LIVE_SMOKE_FINAL_VERIFICATION.md`.
+
 **Last repo verification (developer machine, 2026-05-08):** `bun run test`, `bun run lint`, `bun run build`, and `bun run cf:build` (with `NEXT_PUBLIC_*` exported) all **passed**. Pilot Playwright run blocked on missing `E2E_EMAIL`/`E2E_PASSWORD` — see `docs/product/PHASE13_ROADMAP_CLOSURE.md`.
 
 - [x] `bun install --frozen-lockfile`

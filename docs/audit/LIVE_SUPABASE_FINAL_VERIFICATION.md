@@ -11,14 +11,12 @@
 - `apps/web/supabase/migrations/20260307500000_project_cost_items.sql`
 - `apps/web/supabase/migrations/20260411120000_release1_analysis_engine.sql`
 
-## Commands run
+## Commands run (2026-05-07 refresh)
 
-- `supabase --version`
-- `supabase projects list`
-- `supabase link --project-ref "$SUPABASE_PROJECT_REF"`
-- `supabase migration list`
-- `supabase db push --dry-run --linked`
-- migration grep for required tables in `apps/web/supabase/migrations`
+- `supabase --version` → `2.75.0` (PASS)
+- `supabase projects list` → **Access token not provided** (`SUPABASE_ACCESS_TOKEN` / `supabase login` not available in this shell)
+- Not run (blocked by above): `supabase link --project-ref "$SUPABASE_PROJECT_REF"`, `supabase migration list`, `supabase db push --dry-run --linked`
+- Migration grep for required tables in `apps/web/supabase/migrations` (repo inventory only)
 
 ## Result
 

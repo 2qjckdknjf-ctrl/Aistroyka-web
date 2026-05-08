@@ -41,9 +41,11 @@ Production `/api/system/health` and `/api/v1/system/health` return HTTP 500 for 
 
 ## 4) Live smoke
 
-FAIL  
-- Staging: partial pass (health/config/cron), fail on `ops/metrics` 401 without tenant auth context.
-- Production: key smoke endpoints return 500.
+**PARTIAL / operator-blocked (2026-05-07 refresh)**  
+- Staging and production **`pilot_launch.sh`** (no auth): **PASS** `health`, `config`, `cron-tick`; **FAIL** `ops/metrics` → **401** (needs `COOKIE` / `AUTH_HEADER` / smoke email + Supabase public env per script).
+- Public **`GET /api/v1/health`**: **200** on staging, apex, and `www` (2026-05-07 curl).
+
+**Not a production go/no-go PASS** until credentialed smoke (and E2E where required) is green and recorded.
 
 ## 5) Documents workflow
 
@@ -66,8 +68,8 @@ Roadmap created: YES (`docs/audit/LEGACY_API_DEPRECATION_ROADMAP.md`)
 
 ## 9) Remaining P0
 
-- Production runtime 500 on smoke-critical endpoints.
-- Production system route checks return 500 (auth/security verification not healthy enough for release).
+**Updated 2026-05-07:** `pilot_launch.sh` against production **without auth** now **PASS**es `health`, `config`, and `cron-tick`; **`ops/metrics` still needs tenant auth** (401). Public **`GET /api/v1/health`** returns **200** on apex and `www`.  
+**Still blocking a production GO:** credentialed full smoke, E2E, and (separately) legacy **system** route health if those remain 500 without valid `SYSTEM_API_KEY` — see `LIVE_SMOKE_FINAL_VERIFICATION.md` and `DEEP_PRODUCTION_COMPLETION_VALIDATION_LOG.md` for exact commands.
 
 ## 10) Remaining P1
 

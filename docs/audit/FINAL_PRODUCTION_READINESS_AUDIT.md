@@ -1,7 +1,7 @@
 # Final production readiness audit (Phase 13)
 
 **Roadmap:** `docs/roadmap/AISTROYKA_MEGA_ROADMAP_CUSTOMER_FINANCE_SAFE.md` — § Phase 13  
-**Date:** 2026-05-07 (updated 2026-05-08 for PR #13 merge-readiness pass)  
+**Date:** 2026-05-07 (updated 2026-05-08 for PR #13 merge-readiness pass; **live smoke note:** 2026-05-07)  
 **Scope:** Repository and workflow readiness before serious sales. Live go/no-go still requires operator-run smoke on secured environments.
 
 ## 1. CI and build
@@ -54,15 +54,18 @@
 - **P0:** None recorded in this audit for **code location** of blockers; live **credential/regression** P0s only appear during secured runs.
 - **P1:** Multi-lockfile inference warnings (noted in `PHASE13_RELEASE_OPS_REPORT.md`); observability/error-budget not fully specified.
 
-## Verification log (2026-05-08)
+## Verification log (2026-05-08 / 2026-05-07)
 
 | Check | Result |
 |-------|--------|
 | `bun run test` (root) | **PASS** — 1401 Vitest tests |
 | `bun run lint` (root → `apps/web`) | **PASS** |
-| `bun run build` (root) | **PASS** |
+| `bun run build` (root) | **PASS** (if `build` + `cf:build` race left a bad `apps/web/.next`, `rm -rf apps/web/.next` then rebuild — see validation log) |
 | `bun run cf:build` (root) | **PASS** — local run with `NEXT_PUBLIC_*` set (CI uses repo secrets for anon key) |
 | `bun run e2e:pilot` (`apps/web`) | **BLOCKED** — missing `E2E_EMAIL` + `E2E_PASSWORD` (2026-05-08 re-check); see `FINAL_E2E_REPORT.md` |
+| `pilot_launch.sh` staging/prod (no auth) | **PARTIAL** — `health` / `config` / `cron-tick` **PASS**; `ops/metrics` **401** (2026-05-07) |
+| `GET /api/v1/health` staging + prod apex/www | **200** (2026-05-07 curl) |
+| Supabase CLI live | **BLOCKED** — no `SUPABASE_ACCESS_TOKEN` in shell (`LIVE_SUPABASE_FINAL_VERIFICATION.md`) |
 
 **PR #13 merge readiness:** repository gates above match **CI Check** sequence (`bun install` in CI only; local `bun run lint` / `test` / `build` / `cf:build` green). **Remaining:** GitHub PR **CI job** must pass on the branch; staging/production smoke still operator-blocked.
 

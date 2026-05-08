@@ -38,8 +38,8 @@
 - **Client portal / proof-pack / handover domains:** no dangerous field tokens in customer-shaping layers beyond tests that assert negatives (digest, proof-pack).
 - **Costs API:** `GET`/`POST` `/api/v1/projects/:id/costs` deny tests for portal/stakeholder context remain in `app/api/v1/projects/[id]/costs/route.test.ts`.
 
-**Verdict (this pass):** no new customer-facing finance leaks detected in the audited paths; keep **P1** route coverage when adding cost-adjacent endpoints.
+## Extended sweep (2026-05-07)
 
-## Verdict
+Repo-wide `apps/web` TypeScript grep for cost/finance tokens surfaced hits in **internal** surfaces (e.g. `ProjectCostsPanel`, `/api/v1/projects/:id/costs`, `change-orders` `internal_cost_item_id`, `cost-signals`, manager actions). Customer-facing shaping layers (`portal`, `share`, digest owner path, proof-pack, telegram emit) remain aligned with prior PASS; digest/proof tests continue to assert absence of internal finance phrases in owner-facing output.
 
 **PASS (with continuous regression discipline)** — structural boundaries and targeted tests are in place; Phase 13 **closure in production** still requires green E2E/pilot on a live environment (see `FINAL_E2E_REPORT.md`).

@@ -627,3 +627,100 @@ N/A
 
 ## Rerun Result
 N/A
+
+---
+
+## Command (PR #13 closure documentation pass, 2026-05-07)
+
+Parallel `bun run build` + `bun run cf:build` (race)
+
+## Result
+FAIL then PASS
+
+## Summary
+Concurrent Next.js export and OpenNext packaging can corrupt `apps/web/.next` (e.g. `MODULE_NOT_FOUND` during `/500` export; `ENOENT` on `500.html` rename during `cf:build`).
+
+## Fix Applied
+`rm -rf apps/web/.next` then run **`bun run build`** and **`bun run cf:build`** **sequentially** with `NEXT_PUBLIC_*` set for CF bundle parity.
+
+## Rerun Result
+PASS (both commands)
+
+---
+
+## Command
+
+`curl -sS -o /dev/null -w '%{http_code}\n'` for:
+
+- `https://staging.aistroyka.ai/api/v1/health`
+- `https://aistroyka.ai/api/v1/health`
+- `https://www.aistroyka.ai/api/v1/health`
+
+## Result
+PASS
+
+## Summary
+All returned HTTP **200** (2026-05-07).
+
+## Fix Applied
+N/A
+
+## Rerun Result
+N/A
+
+---
+
+## Command
+
+`BASE_URL=https://staging.aistroyka.ai bash scripts/smoke/pilot_launch.sh`  
+`BASE_URL=https://aistroyka.ai bash scripts/smoke/pilot_launch.sh`  
+(no `AUTH_HEADER` / `COOKIE` / smoke Supabase env)
+
+## Result
+FAIL (script exit 1)
+
+## Summary
+Both environments: **PASS** health, config, cron-tick; **FAIL** ops/metrics → **401**. Staging and production behaved the same on 2026-05-07.
+
+## Fix Applied
+N/A — requires operator auth inputs for full PASS.
+
+## Rerun Result
+N/A
+
+---
+
+## Command
+
+`gh pr view 13 --json mergeStateStatus,statusCheckRollup`  
+`gh pr checks 13`
+
+## Result
+PASS
+
+## Summary
+Snapshot 2026-05-07: **`mergeStateStatus`: CLEAN**; CI Check / Cloudflare Workers / Vercel contexts **pass** on rollup.
+
+## Fix Applied
+N/A
+
+## Rerun Result
+N/A
+
+---
+
+## Command
+
+Repo-wide grep under `apps/web` for internal-finance tokens (`project_cost_items`, `planned_amount`, `actual_amount`, `budget_pressure`, `margin`, etc.) — triage vs customer surfaces
+
+## Result
+PASS (triage)
+
+## Summary
+Hits map to manager/internal UI, costs API, change-order internal IDs, AI cost-signals, digest negative tests/comments, Telegram “no finance” documentation — no new customer-route leak identified in this pass. See `FINAL_CUSTOMER_FINANCE_ISOLATION_AUDIT.md` for scoped portal/share evidence.
+
+## Fix Applied
+N/A
+
+## Rerun Result
+N/A
