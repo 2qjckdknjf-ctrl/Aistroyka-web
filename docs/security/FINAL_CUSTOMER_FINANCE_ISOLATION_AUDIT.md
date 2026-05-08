@@ -31,6 +31,8 @@
 
 ## PR #13 static review (2026-05-08)
 
+**Repeat sweep (merge-readiness):** targeted grep across `portal`, `share`, `client-portal`, `customer-estimates`, `proof-pack`, `digest`, `project-handover`, `telegram` showed no internal-finance field emissions in route/service code; only comments and test assertions that **forbid** those tokens.
+
 - **Portal API surface** (`apps/web/app/api/v1/portal/**`): no matches for internal cost field patterns in route code (grep).
 - **Telegram notifications** (`lib/platform/telegram/**`): copy intentionally “without cost/margin data” per `telegram-notifications.emit.ts`.
 - **Client portal / proof-pack / handover domains:** no dangerous field tokens in customer-shaping layers beyond tests that assert negatives (digest, proof-pack).

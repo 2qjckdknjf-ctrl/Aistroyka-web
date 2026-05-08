@@ -2,77 +2,88 @@
 
 **Repository:** `2qjckdknjf-ctrl/Aistroyka-web`  
 **Branch:** `chore/deep-production-completion`  
-**PR:** #13 (draft)  
-**Report date:** 2026-05-08
+**PR:** #13  
+**Report updated:** 2026-05-08 (merge-readiness confirmation pass)
 
-## 2. Revision
+## 1. Branch, commit, working tree
 
-Validation executed on working tree **after** `11dc501b` (AGENTS.md continual-learning). Documentation commit for this pass: **`171b2c9c`** (`chore/deep-production-completion`).
+| Item | Value |
+|------|--------|
+| Branch | `chore/deep-production-completion` |
+| HEAD (at report update) | `06377022` |
+| `git status` | **clean** (no uncommitted changes) |
 
-## 1. Validation results
+Recent history:
 
-| Gate | Result | Notes |
-|------|--------|--------|
-| `bun run lint` | **PASS** | Next ESLint |
-| `bun run test` | **PASS** | 263 files, 1401 Vitest tests |
-| `bun run build` | **PASS** | contracts + `apps/web` |
-| `bun run cf:build` | **PASS** | `NEXT_PUBLIC_*` exported locally (CI uses `secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_STAGING` + staging URLs) |
-| `e2e:pilot` | **BLOCKED** | Missing `E2E_EMAIL` / `E2E_PASSWORD` |
-| Staging smoke | **NOT RUN** | Operator / secrets |
-| Production smoke | **NOT RUN** | Operator / secrets |
+```text
+06377022 docs: PR13 review report — reference validation commit SHA
+171b2c9c docs: PR #13 merge-readiness — validation log, audits, AGENTS finance rule
+11dc501b chore: update AGENTS.md from continual-learning
+```
 
-**CI parity:** `.github/workflows/ci-check.yml` runs `bun install --frozen-lockfile`, `lint`, `test`, `cf:build` with `NEXT_PUBLIC_*` — local run matches aside from install step (assumed satisfied if lockfile unchanged).
+## 2. GitHub PR state (CLI)
 
-## 2. Customer finance isolation verdict
+Captured via `gh pr view 13 --json …` on 2026-05-08:
 
-**Repo-scoped static audit (2026-05-08):** `portal` routes, client-portal / proof-pack / handover shaping layers, and Telegram notification intent reviewed (grep + code comments). Costs API deny tests present. **No new leaks found** in audited paths.
+| Field | Value |
+|-------|--------|
+| URL | https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/13 |
+| `state` | OPEN |
+| `isDraft` | **true** at time of capture — run `gh pr ready 13` to publish for review (or use GitHub UI) |
+| `mergeStateStatus` | **UNSTABLE** (e.g. external checks still pending — Vercel contexts were `PENDING`) |
+| `baseRefName` | `main` |
+| `headRefName` | `chore/deep-production-completion` |
 
-**Verdict:** **PASS** for covered surfaces with **PARTIAL** residual risk (any new cost-adjacent route needs explicit review — see `FINAL_CUSTOMER_FINANCE_ISOLATION_AUDIT.md` P1).
+**CI Check** (`check` job): **SUCCESS** (completed 2026-05-08 per rollup).
 
-## 3. Repository hygiene
+**Note:** Merge button may stay blocked until all required checks pass (e.g. Vercel). That does not negate repo validation below.
 
-- **Working tree:** clean before this doc commit (only intentional edits below).
-- **Duplicate ` (1)` files:** still present in repo (e.g. `stakeholder-dashboard-paths (1).test.ts`). Canonical imports use non-`(1)` paths; duplicates are **tech debt** — not removed in PR #13 to avoid scope/risk.
+## 3. Validation results (local, repo root)
 
-## 4. Phase / audit document inventory
+| Command | Result | When |
+|---------|--------|------|
+| `bun run lint` | **PASS** | 2026-05-08 |
+| `bun run test` | **PASS** — 263 files, 1401 tests | 2026-05-08 |
+| `bun run build` | **PASS** | 2026-05-08 |
+| `bun run cf:build` | **PASS** | 2026-05-08 (`NEXT_PUBLIC_*` exported for bundle parity with CI) |
+| `bun run --cwd apps/web e2e:pilot` | **BLOCKED** | Missing `E2E_EMAIL` / `E2E_PASSWORD` (see `apps/web/tests/e2e/_helpers/auth.ts`, `.env.pilot.example`) |
+| Staging smoke | **BLOCKED** | Not run — needs `BASE_URL` + tenant JWT/cookie or smoke env (see `scripts/smoke/pilot_launch.sh`) |
+| Production smoke | **BLOCKED** | Not run — operator-only; do not run until merge/deploy path is agreed |
 
-Required roadmap and phase reports from mega-roadmap **exist** under `docs/product/`, `docs/business/`, `docs/ai/`, `docs/security/`, `docs/audit/`, `docs/release/` (spot-checked list in Mission § STEP 6). **No document was rewritten to claim CLOSED** where validation is missing; `PHASE13_ROADMAP_CLOSURE.md` remains **CONDITIONAL**.
+**CI parity:** `.github/workflows/ci-check.yml` — `bun install --frozen-lockfile`, `lint`, `test`, `cf:build` with `NEXT_PUBLIC_*`.
 
-## 5. Files changed in this final pass
+## 4. Customer finance isolation (targeted grep)
 
-- `AGENTS.md` — roadmap + customer-finance boundary preference
-- `docs/product/PHASE13_ROADMAP_CLOSURE.md` — PR #13 validation table
-- `docs/audit/FINAL_PRODUCTION_READINESS_AUDIT.md` — e2e wording, merge-readiness note
-- `docs/audit/FINAL_E2E_REPORT.md` — exact env / commands
-- `docs/security/FINAL_CUSTOMER_FINANCE_ISOLATION_AUDIT.md` — PR #13 static review
-- `docs/audit/DEEP_PRODUCTION_COMPLETION_VALIDATION_LOG.md` — command log append
-- `docs/release/FINAL_RELEASE_CHECKLIST.md` — staging/prod smoke command block
-- `docs/release/FINAL_PRODUCTION_GO_NO_GO.md` — PR #13 merge-gate banner + historical disclaimer
-- `docs/audit/PR13_FINAL_REVIEW_REPORT.md` — this file
+Searched under: `app/api/v1/portal`, `app/api/v1/share`, `lib/domain/client-portal`, `lib/domain/customer-estimates`, `lib/domain/proof-pack`, `lib/domain/digest`, `lib/domain/project-handover`, `lib/platform/telegram` for internal-finance tokens (`project_cost_items`, `actual_amount`, `planned_amount`, overrun/budget/margin/profitability/subcontractor/labor cost patterns).
+
+**Findings:** only **safe** occurrences — comments (“no margin data”), **owner-digest** negative assertions in `daily-digest.service.ts` / tests, **customer-estimates** / **proof-pack** tests asserting absence of finance fields. **No customer-facing route code** in these paths was observed to emit internal cost shapes in this pass.
+
+**Stance:** portal must not use internal costs — **costs API** remains internal-role gated; deny tests: `app/api/v1/projects/[id]/costs/route.test.ts`, domain `cost.service.test.ts` (stakeholder).
+
+## 5. Repository hygiene
+
+- No `.env` / secrets staged; working tree clean after last push.
+- Duplicate ` (1)` files remain **tech debt** (not removed in this PR).
 
 ## 6. Remaining blockers
 
-1. **GitHub CI Check** must run green on PR #13 after push.
-2. **Playwright pilot** needs `E2E_EMAIL` + `E2E_PASSWORD` (+ running app or CI secrets).
-3. **Staging/production** `pilot_launch.sh` with real tenant JWT/cookie — not executed here.
-4. **Duplicate ` (1)` files** — optional cleanup follow-up.
+1. **E2E** — credential-blocked locally; optional CI: `PILOT_E2E_*` secrets + `pilot-e2e-audit.yml`.
+2. **Staging/production smoke** — operator-blocked; requires valid tenant auth for `ops/metrics` (see pilot script header).
+3. **GitHub merge** — wait until **all required** status checks green if branch protection requires Vercel etc.
 
-## 7. Readiness (honest)
+## 7. Production / roadmap
 
-| Question | Answer |
-|----------|--------|
-| Leave **draft** PR? | **Yes** until CI green and reviewer sign-off; then mark ready. |
-| **Merge** PR #13? | **CONDITIONAL YES** — merge after CI green + review; not a production launch. |
-| **Production** ready? | **NO** (live smoke / go-no-go still operator-dependent per `FINAL_PRODUCTION_GO_NO_GO.md` historical sections). |
+- **Production go-live:** **not** claimed; smoke not run.
+- **Mega-roadmap Phase 13:** **CONDITIONAL** until E2E + live smoke evidence updates `PHASE13_ROADMAP_CLOSURE.md`.
 
 ---
 
 ## STRICT FINAL VERDICT FORMAT
 
 PR #13 READY FOR REVIEW: **YES**  
-PR #13 READY TO MERGE: **CONDITIONAL** (after green CI Check + human review)  
-CUSTOMER FINANCE ISOLATION: **PASS** (repo audit scope; continuous discipline required)  
+PR #13 READY TO MERGE: **YES**, after final human review and **all required** GitHub checks green (address **UNSTABLE** / pending externals if merge is blocked)  
+CUSTOMER FINANCE ISOLATION: **PASS** (repo scope; maintain discipline on new routes)  
 E2E: **BLOCKED**  
 STAGING SMOKE: **BLOCKED**  
 PRODUCTION SMOKE: **BLOCKED**  
-FINAL ROADMAP STATUS: **CONDITIONAL** (Phase 13 mega-roadmap criteria: live E2E/smoke not proven here)
+FINAL ROADMAP STATUS: **CONDITIONAL**
