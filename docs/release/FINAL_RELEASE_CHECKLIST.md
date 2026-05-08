@@ -2,6 +2,8 @@
 
 ## Operator smoke (staging / production)
 
+**Preflight (no credentials printed):** from repo root run `bun run smoke:pilot:check` (or `bash scripts/smoke/check_pilot_prereqs.sh`). Use `--strict` to fail if `ops/metrics` auth inputs are missing.
+
 When credentials and tenant auth context are available:
 
 ```bash

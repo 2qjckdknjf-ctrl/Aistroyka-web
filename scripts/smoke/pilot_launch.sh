@@ -8,6 +8,8 @@
 # AUTH_HEADER must include the Bearer prefix, e.g. AUTH_HEADER="Bearer eyJ..."
 # Full operator guide: docs/launch/STAGE4_BLOCKER_RESOLUTION_AUTH_AND_PILOT_PREP.md
 #
+# Preflight (no network): from repo root — `bun run smoke:pilot:check` (optional `--strict` for metrics auth).
+#
 # Usage:
 #   BASE_URL=http://localhost:3000 ./scripts/smoke/pilot_launch.sh
 #   CRON_SECRET=xxx BASE_URL=... ./scripts/smoke/pilot_launch.sh          # cron-tick when REQUIRE_CRON_SECRET=true

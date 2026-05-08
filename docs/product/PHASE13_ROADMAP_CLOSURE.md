@@ -39,6 +39,18 @@ E2E/staging/production criteria unchanged: **conditional / not fully closed** un
 3. Run staging and production smoke per `docs/release/FINAL_RELEASE_CHECKLIST.md`; record results under `docs/audit/`.
 4. When all checklist boxes are satisfied, re-issue this document as **YES / CLOSED**.
 
+## Что осталось по роудмапу §13 (кратко)
+
+| Критерий | Статус | Что сделать |
+|----------|--------|-------------|
+| CI / lint / test / build / cf:build | Зелёно в репо | Держать зелёным при мерже |
+| §13.4 изоляция финансов | PASS в объёме репозитория | При новых API — deny-тесты |
+| Полный staging/production smoke | **BLOCKED** без JWT/сессии | `bun run smoke:pilot:check`, затем `pilot_launch.sh` с `AUTH_HEADER` / `COOKIE` / SMOKE+* |
+| Core E2E (§13.3) | **BLOCKED** без кредов | `E2E_EMAIL` / `E2E_PASSWORD` + `PLAYWRIGHT_BASE_URL` → `bun run --cwd apps/web e2e:pilot` |
+| Live Supabase | **BLOCKED** без токена | `SUPABASE_ACCESS_TOKEN`, `supabase link` |
+
+**Закрытие Phase 13 по роудмапу (DONE criteria):** возможно только после зелёных credentialed E2E + полного smoke + зафиксированного evidence в `docs/audit/` — см. `FINAL_RELEASE_CHECKLIST.md`.
+
 ## References
 
 - `docs/audit/FINAL_PRODUCTION_READINESS_AUDIT.md`
