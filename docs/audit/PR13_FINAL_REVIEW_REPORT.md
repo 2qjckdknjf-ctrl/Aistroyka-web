@@ -10,15 +10,15 @@
 | Item | Value |
 |------|--------|
 | Branch | `chore/deep-production-completion` |
-| HEAD (at report update) | `06377022` |
+| HEAD (at report update) | `22d29d78` |
 | `git status` | **clean** (no uncommitted changes) |
 
 Recent history:
 
 ```text
+22d29d78 docs: PR #13 merge-ready confirmation, post-merge operator runbook
 06377022 docs: PR13 review report — reference validation commit SHA
 171b2c9c docs: PR #13 merge-readiness — validation log, audits, AGENTS finance rule
-11dc501b chore: update AGENTS.md from continual-learning
 ```
 
 ## 2. GitHub PR state (CLI)
