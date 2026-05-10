@@ -44,6 +44,12 @@ Repo-wide `apps/web` TypeScript grep for cost/finance tokens surfaced hits in **
 
 ## Live stakeholder sanity (2026-05-09)
 
-**BLOCKED** — No manual owner/stakeholder browser session on `/{locale}/portal/projects` and no portal-scoped **live** API crawl (costs `403`, portal JSON shape, proof share) was executed this pass. **Manager E2E pilot PASS does not substitute** stakeholder-only visibility proof.
+**BLOCKED** — do **not** mark **PASS** until all steps below are satisfied.
 
-**PASS (with continuous regression discipline)** — structural boundaries and targeted tests are in place; **live** stakeholder crawl and **live** Supabase CLI verification remain open (`PHASE13_ROADMAP_CLOSURE.md`).
+1. **Account:** a real **`stakeholder`** user (invited client). **`SMOKE_*` / tenant `owner`** on staging returns `role: owner` from `GET /api/v1/me` and does **not** substitute a portal-only check.
+2. **Portal API deploy:** on **staging** and **production**, an authenticated `GET /api/v1/portal/projects` currently returns **HTML 404** (Next not-found page), while `GET /api/v1/projects` and owner `GET /api/v1/projects/:id/costs` return **200**. So `app/api/v1/portal/**` routes are **missing on the deployed Worker bundle** or the deploy is **stale** — **redeploy** the current OpenNext/Cloudflare build and re-check until `/api/v1/portal/projects` returns **200 JSON**.
+3. **After deploy + credentials:** run `bash scripts/verify/stakeholder_finance_sanity.sh` with `STAKEHOLDER_SMOKE_EMAIL`, `STAKEHOLDER_SMOKE_PASSWORD` (optional `STAKEHOLDER_FINANCE_BASE_URL` — see `apps/web/.env.local.example`). Expect: `role=stakeholder`, `portal/projects` **200** JSON, `GET/POST .../costs` → **403**, portal project JSON must not expose internal cost keys.
+
+**Repo/route tests** for cost isolation: **PASS**. **Live** stakeholder sanity: **BLOCKED** until steps 2–3.
+
+**PASS (with continuous regression discipline)** — code-level boundaries and tests hold; **live** stakeholder verification follows the checklist above.

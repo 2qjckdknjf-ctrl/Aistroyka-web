@@ -11,7 +11,7 @@
 | Live Supabase hosted DB (MCP: tables + migrations) | **PASS** — 2026-05-09 (`LIVE_SUPABASE_FINAL_VERIFICATION.md`) |
 | Live Supabase CLI (management API) | **BLOCKED** — PAT / `supabase login` needed for `projects list` locally |
 | E2E pilot | **PASS** — `e2e:pilot` vs staging, 2026-05-09 (`FINAL_E2E_REPORT.md`) |
-| Customer finance live stakeholder crawl | **BLOCKED** — manual portal session not executed |
+| Customer finance live stakeholder crawl | **BLOCKED** — portal API **404** on live + script `scripts/verify/stakeholder_finance_sanity.sh` needs `STAKEHOLDER_SMOKE_*` after redeploy |
 | System routes unauth sample | **PASS** (401/503 JSON, not 500) |
 
 **Production go-live:** **CONDITIONAL** — smoke + E2E + **live DB schema (MCP)** OK; **stakeholder finance crawl** still open.

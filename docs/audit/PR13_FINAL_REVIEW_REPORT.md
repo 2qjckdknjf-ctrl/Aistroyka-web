@@ -71,11 +71,11 @@ Positive-key path **not** tested (no `SYSTEM_API_KEY` exercise).
 PR #13 READY FOR REVIEW: **YES**  
 PR #13 READY TO MERGE: **CONDITIONAL** — **unrelated** dirty paths (mobile/help/i18n) still present; land audit/E2E-related commits separately from those files; keep CI green  
 CUSTOMER FINANCE ISOLATION: **PASS** (repo scope)  
-CUSTOMER FINANCE LIVE SANITY: **BLOCKED** (no stakeholder portal session / portal-token API crawl this pass)  
+CUSTOMER FINANCE LIVE SANITY: **BLOCKED** — `/api/v1/portal/projects` → **404** on live hosts (2026-05-09 probe); no `STAKEHOLDER_SMOKE_*` in env; see `FINAL_CUSTOMER_FINANCE_ISOLATION_AUDIT.md` + `scripts/verify/stakeholder_finance_sanity.sh`  
 E2E: **PASS** (`e2e:pilot` vs staging, 2026-05-09)  
 STAGING SMOKE: **PASS**  
 PRODUCTION SMOKE: **PASS**  
-LIVE SUPABASE: **PASS** — live **tables + applied migrations** verified via MCP `user-supabase` (2026-05-09); **local CLI** `projects list` still **Unauthorized** until Account PAT (optional convenience)  
+LIVE SUPABASE: **PASS** (MCP tables/migrations, 2026-05-09); local CLI `supabase projects list` **BLOCKED** until valid Account PAT  
 SYSTEM ROUTE SECURITY: **PASS** (unauth responses controlled 401/503, no secret body observed)  
 FINAL ROADMAP STATUS: **CONDITIONAL** — **customer finance live sanity** not PASS  
 PRODUCTION GO-LIVE: **CONDITIONAL** — smoke + E2E + **live DB schema** OK; **no stakeholder live crawl**
