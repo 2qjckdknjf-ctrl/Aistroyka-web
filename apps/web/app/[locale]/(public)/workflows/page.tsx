@@ -12,7 +12,7 @@ const BENEFITS = ["b1", "b2", "b3", "b4"] as const;
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "public.workflows" });
-  return { title: `${t("title")} | Aistroyka`, description: t("metaDescription") };
+  return { title: t("title"), description: t("metaDescription") };
 }
 
 export default async function WorkflowsPage({ params }: Props) {

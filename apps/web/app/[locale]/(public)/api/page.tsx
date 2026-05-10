@@ -11,7 +11,7 @@ const AVAILABLE = ["av1", "av2", "av3", "av4", "av5", "av6", "av7"] as const;
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "public.api" });
-  return { title: `${t("title")} | Aistroyka`, description: t("metaDescription") };
+  return { title: t("title"), description: t("metaDescription") };
 }
 
 export default async function ApiPage({ params }: Props) {

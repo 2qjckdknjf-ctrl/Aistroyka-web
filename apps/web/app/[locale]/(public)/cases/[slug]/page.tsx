@@ -45,11 +45,11 @@ type Props = { params: Promise<{ locale: string; slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, slug } = await params;
-  if (!CASE_SLUGS.includes(slug as (typeof CASE_SLUGS)[number])) return { title: "Case | Aistroyka" };
+  if (!CASE_SLUGS.includes(slug as (typeof CASE_SLUGS)[number])) return { title: "Case" };
   const t = await getTranslations({ locale, namespace: "public.cases" });
   const titleKey = slug as (typeof CASE_SLUGS)[number];
   return {
-    title: `${t(titleKey)} | Aistroyka`,
+    title: t(titleKey),
     description: t("metaDescription"),
   };
 }

@@ -11,7 +11,7 @@ const PHASES = ["phase1", "phase2", "phase3", "phase4", "phase5", "phase6"] as c
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "public.implementation" });
-  return { title: `${t("title")} | Aistroyka`, description: t("metaDescription") };
+  return { title: t("title"), description: t("metaDescription") };
 }
 
 export default async function ImplementationPage({ params }: Props) {
