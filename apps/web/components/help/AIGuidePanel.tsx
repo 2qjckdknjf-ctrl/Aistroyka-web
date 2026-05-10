@@ -282,7 +282,9 @@ export function AIGuidePanel() {
                     <p className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">{signal.title}</p>
                     <span
                       className={`rounded-full px-2 py-0.5 text-aistroyka-caption ${
-                        signal.severity === "high" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"
+                        signal.severity === "high"
+                          ? "bg-aistroyka-error/10 text-aistroyka-error"
+                          : "bg-aistroyka-warning/10 text-aistroyka-warning"
                       }`}
                     >
                       {signal.severity === "high" ? t("priorityHigh") : t("priorityMedium")}
@@ -311,7 +313,7 @@ export function AIGuidePanel() {
                     <span
                       className={`rounded-full px-2 py-0.5 text-aistroyka-caption ${
                         action.priority === "high"
-                          ? "bg-red-100 text-red-700"
+                          ? "bg-aistroyka-error/10 text-aistroyka-error"
                           : "bg-aistroyka-surface-raised text-aistroyka-text-tertiary"
                       }`}
                     >

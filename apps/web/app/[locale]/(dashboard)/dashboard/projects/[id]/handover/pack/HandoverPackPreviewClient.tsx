@@ -81,7 +81,7 @@ export function HandoverPackPreviewClient({ projectId }: { projectId: string }) 
         <h1 className="text-xl font-bold">
           {t("handoverPackPageTitle")} — {pack.project.name}
         </h1>
-        <p className="text-sm text-gray-600">{pack.generated_at.slice(0, 16)} UTC</p>
+        <p className="text-sm text-aistroyka-text-secondary">{pack.generated_at.slice(0, 16)} UTC</p>
       </div>
 
       {isManager ? (
