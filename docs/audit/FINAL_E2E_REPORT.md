@@ -1,7 +1,7 @@
 # Final E2E report (Phase 13)
 
 **Roadmap:** Phase 13 — § 13.3 E2E  
-**Date:** 2026-05-07 (body); **verification log updated:** 2026-05-08 / **2026-05-07 live/doc refresh**  
+**Date:** 2026-05-07 (body); **verification log updated:** **2026-05-09** (staging pilot PASS)
 
 ## Objective
 
@@ -37,14 +37,61 @@ Document **minimum end-to-end flows** required before serious sales and map them
 
 ## Verification log (local developer run)
 
+**Date:** 2026-05-09 (staging, `PLAYWRIGHT_BASE_URL=https://staging.aistroyka.ai`, `PLAYWRIGHT_SKIP_WEB_SERVER=1`, credentials from `apps/web/.env.local`)
+
+| Command | Result |
+|---------|--------|
+| `bun run e2e:pilot` / Playwright pilot (`dashboard-button-audit`, `sync-contract`, `core-flow`) | **PASS** — exit **0**; **12** passed, **10** skipped (inventory / preconditions), **0** failed |
+
+**Exact command**
+
+```bash
+cd apps/web
+set -a && [ -f .env.local ] && . ./.env.local && set +a
+export PLAYWRIGHT_SKIP_WEB_SERVER=1
+export PLAYWRIGHT_BASE_URL="https://staging.aistroyka.ai"
+bun run e2e:pilot
+```
+
+---
+
+## Verification log (historical — 2026-05-08 pre-fix FAIL)
+
+**Date:** 2026-05-08 (staging, `PLAYWRIGHT_BASE_URL=https://staging.aistroyka.ai`, `PLAYWRIGHT_SKIP_WEB_SERVER=1`)
+
+| Command | Result |
+|---------|--------|
+| `bun run test` (repo root) | **PASS** — 263 files, 1401 tests (same day pre-run) |
+| `bun run lint` (repo root) | **PASS** |
+| Playwright pilot subset (same files as `e2e:pilot`) | **FAIL** — **22** tests scheduled; **9** PASS (`sync-contract.spec.ts` + setup); **1** FAIL `core-flow.spec.ts` (no report signal on project page); **3** FAIL `dashboard-button-audit.spec.ts` (timeouts: `div[aria-hidden=true].absolute.inset-0` intercepts clicks on nav CTAs); **9** skipped (inventory / preconditions). Exit code **1**. |
+
+**Repo fixes after this run (2026-05-08, re-verify on staging)**
+
+1. **`auth.setup.ts`:** persist `localStorage` key `aistroyka:first-launch-guide:v1` before `storageState`, so **FirstLaunchGuide** `Modal` does not block pointer events during inventory-driven CTA clicks.
+2. **`core-flow.spec.ts`:** assert on **`/dashboard/daily-reports`** (tenant-wide list) instead of the project detail default tab; widen Russian copy match (`отчет`, `черновик`) for default `E2E_LOCALE=ru`.
+
+**Failure classes (pre-fix)**
+
+1. **core-flow:** Project overview default tab is **Workers**, not Reports; Russian UI did not match `/report|draft/` only; daily-reports is the stable manager-visible surface for new drafts.
+2. **dashboard-button-audit:** **FirstLaunchGuide** modal backdrop blocked clicks when `localStorage` was empty in captured `storageState`.
+
+**Exact command (repro)**
+
+```bash
+cd apps/web
+export PLAYWRIGHT_SKIP_WEB_SERVER=1
+export PLAYWRIGHT_BASE_URL="https://staging.aistroyka.ai"
+# Credentials: E2E_EMAIL/E2E_PASSWORD or SMOKE_EMAIL/SMOKE_PASSWORD per _helpers/auth.ts
+bunx playwright test tests/e2e/dashboard-button-audit.spec.ts tests/e2e/sync-contract.spec.ts tests/e2e/core-flow.spec.ts --config=playwright.config.ts --reporter=list
+```
+
+## Verification log (earlier local developer run — credential-blocked)
+
 **Date:** 2026-05-08 (America/Los_Angeles, machine local)
 
 | Command | Result |
 |---------|--------|
-| `bun run test` (repo root: contracts build + `apps/web` Vitest) | **PASS** — 263 files, 1401 tests |
-| `bun run lint` (repo root) | **PASS** — no ESLint warnings or errors |
 | `bun run e2e:pilot` (`apps/web`, Playwright with auto `next dev`) | **NOT PASS** — setup failed: missing `E2E_EMAIL` / `E2E_PASSWORD` (or `E2E_USER_*` / `SMOKE_PASSWORD`). **Expected** without `.env` credentials. |
-| `bun run build` / `bun run cf:build` (root) | **PASS** (2026-05-08); `cf:build` used exported `NEXT_PUBLIC_*` per CI pattern. |
 
 - **Public health (curl):** `GET /api/v1/health` → **200** on staging, apex, and `www` (2026-05-07) — sanity only; **not** E2E or full smoke.
 
@@ -64,8 +111,8 @@ Or with auto dev server (slow cold start): omit `PLAYWRIGHT_SKIP_WEB_SERVER` so 
 
 ## Current verdict
 
-- **Repository:** E2E **capacity exists** (Playwright + pilot workflows); **unit/lint gates verified green** on 2026-05-08.  
-- **Pass/fail:** Full **browser** pilot is **credential-blocked** in the log above; record staging/production results separately in `docs/audit/` (e.g. `LIVE_SMOKE_*.md`) or CI artifacts.
+- **Staging E2E pilot (2026-05-09):** **PASS** — `e2e:pilot` green against `https://staging.aistroyka.ai` (`12` passed, `10` skipped).
+- **Historical (2026-05-08):** **FAIL** before `auth.setup.ts` / `core-flow.spec.ts` fixes; see table above.
 
 ## Gaps
 

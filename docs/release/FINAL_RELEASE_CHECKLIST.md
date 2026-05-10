@@ -2,6 +2,8 @@
 
 ## Operator smoke (staging / production)
 
+**2026-05-08:** With password-grant or JWT env as documented in `scripts/smoke/pilot_launch.sh`, **full** pilot smoke **PASS** on `https://staging.aistroyka.ai` and `https://aistroyka.ai` (health, config, cron-tick, ops/metrics). Without auth, `ops/metrics` remains **401** by design.
+
 **Preflight (no credentials printed):** from repo root run `bun run smoke:pilot:check` (or `bash scripts/smoke/check_pilot_prereqs.sh`). Use `--strict` to fail if `ops/metrics` auth inputs are missing.
 
 When credentials and tenant auth context are available:
@@ -15,9 +17,9 @@ Use `AUTH_HEADER`, `COOKIE`, or `SMOKE_EMAIL`/`SMOKE_PASSWORD` as documented in 
 
 ## Code Health Gates
 
-**Last unauthenticated curl + smoke (2026-05-07):** `GET /api/v1/health` → **200** (staging, apex, `www`). `pilot_launch.sh` **partial**: `health` / `config` / `cron-tick` **PASS**; **`ops/metrics` → 401** until auth env is set — see `docs/audit/LIVE_SMOKE_FINAL_VERIFICATION.md`.
+**Last credentialed smoke (2026-05-08):** full `pilot_launch.sh` **PASS** staging + production when `ops/metrics` auth inputs are set per `scripts/smoke/pilot_launch.sh`.
 
-**Last repo verification (developer machine, 2026-05-08):** `bun run test`, `bun run lint`, `bun run build`, and `bun run cf:build` (with `NEXT_PUBLIC_*` exported) all **passed**. Pilot Playwright run blocked on missing `E2E_EMAIL`/`E2E_PASSWORD` — see `docs/product/PHASE13_ROADMAP_CLOSURE.md`.
+**Last Playwright pilot:** **PENDING re-run** after FirstLaunchGuide + core-flow fixes (`FINAL_E2E_REPORT.md`).
 
 - [x] `bun install --frozen-lockfile`
 - [x] Typecheck (`bunx tsc -p apps/web/tsconfig.json --noEmit`)
@@ -46,8 +48,8 @@ Use `AUTH_HEADER`, `COOKIE`, or `SMOKE_EMAIL`/`SMOKE_PASSWORD` as documented in 
 - [x] Middleware and tenant guard audit
 - [x] Shell smoke scripts syntax validated
 - [x] CI/deploy workflow presence verified
-- [ ] Live staging smoke with real secrets executed
-- [ ] Live production smoke with real secrets executed
+- [x] Live staging smoke with real secrets executed (**2026-05-08** credentialed run; repeat after material deploys)
+- [x] Live production smoke with real secrets executed (**2026-05-08** credentialed run; repeat after material deploys)
 
 ## Pre-Deploy Operator Commands
 

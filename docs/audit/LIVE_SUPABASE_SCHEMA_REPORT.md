@@ -1,12 +1,14 @@
 # Live Supabase Schema Report
 
-Date: 2026-05-07
+> **2026-05-09:** Re-verified via Cursor MCP `user-supabase`: `list_tables` + `list_migrations` on project `https://vthfrxehrursfloevnlp.supabase.co`. Local CLI **`supabase projects list`** may still return **Unauthorized** until `SUPABASE_ACCESS_TOKEN` is a real **Account PAT** (see `apps/web/.env.local.example`).
+
+Date: 2026-05-07 (first report); **live refresh 2026-05-09** (MCP)
 
 Phase: 0 - Live Truth Verification
 
 Supabase project URL: `https://vthfrxehrursfloevnlp.supabase.co`
 
-Verdict: REQUIRED TABLES PRESENT, CUSTOMER FINANCE RLS FIXED, PRODUCTION HEALTH VERIFIED
+Verdict: REQUIRED TABLES PRESENT (2026-05-09 MCP `list_tables`), MIGRATIONS CHAIN PRESENT (`list_migrations`)
 
 ## Live Project Evidence
 
@@ -20,9 +22,23 @@ https://vthfrxehrursfloevnlp.supabase.co
 
 This matches `NEXT_PUBLIC_SUPABASE_URL` in `apps/web/wrangler.toml` and `apps/web/wrangler.deploy.toml`.
 
-## Required Table Presence
+## 2026-05-09 — compact MCP table check (roadmap + core)
 
-Read-only SQL executed:
+The following **`public`** tables were reported **present** by MCP `list_tables` on 2026-05-09 (not an exhaustive list of all tables):
+
+| Group | Tables |
+|-------|--------|
+| Core | `tenants`, `tenant_members`, `projects`, `project_members`, `worker_tasks`, `worker_reports`, `media`, `upload_sessions`, `project_documents`, `project_cost_items`, `project_milestones`, `audit_logs` |
+| Roadmap | `project_client_requests`, `project_client_request_events`, `customer_estimates`, `customer_estimate_items`, `project_change_orders`, `project_change_order_events`, `proof_pack_shares`, `project_defects`, `project_defect_events`, `project_handover`, `project_handover_events`, `project_commercial_items`, `tenant_contractor_profiles` |
+| Telegram | `telegram_link_tokens`, `user_telegram_links`, `telegram_delivery_audit` |
+
+**Advisory (MCP):** 11 tables have **RLS disabled** (e.g. some `ai_*` catalog / `roles` / `permissions`). Address in a dedicated RLS/policy task — not part of this schema-presence verification.
+
+Tail of applied migration versions (2026-05-09 `list_migrations`) includes: `phase6_proof_pack_shares`, `phase10_telegram_integration`, `phase11_tenant_contractor_profiles`, `20260508052004_project_defects_severity_and_photos`, etc.
+
+
+> **Historical (earlier session):** The SQL + result table below are from a prior read-only check; **2026-05-09** truth for presence is the MCP `list_tables` summary above.
+
 
 ```sql
 select required.table_name, (t.table_name is not null) as present, coalesce(c.relrowsecurity, false) as rls_enabled

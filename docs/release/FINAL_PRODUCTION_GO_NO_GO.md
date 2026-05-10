@@ -1,6 +1,22 @@
 # Final Production Go / No-Go
 
-## PR #13 — repository merge gates only (2026-05-08)
+## Executive snapshot (2026-05-08 live + repo)
+
+| Gate | Status |
+|------|--------|
+| Local lint / test / build / cf:build | **PASS** (branch `chore/deep-production-completion`) |
+| CI (PR #13) | **PASS** (per `gh pr checks` snapshot) |
+| `GET /api/v1/health` staging + prod apex/www | **200** |
+| Full `pilot_launch.sh` staging + prod (with tenant auth) | **PASS** (see `LIVE_SMOKE_FINAL_VERIFICATION.md`) |
+| Live Supabase hosted DB (MCP: tables + migrations) | **PASS** — 2026-05-09 (`LIVE_SUPABASE_FINAL_VERIFICATION.md`) |
+| Live Supabase CLI (management API) | **BLOCKED** — PAT / `supabase login` needed for `projects list` locally |
+| E2E pilot | **PASS** — `e2e:pilot` vs staging, 2026-05-09 (`FINAL_E2E_REPORT.md`) |
+| Customer finance live stakeholder crawl | **BLOCKED** — manual portal session not executed |
+| System routes unauth sample | **PASS** (401/503 JSON, not 500) |
+
+**Production go-live:** **CONDITIONAL** — smoke + E2E + **live DB schema (MCP)** OK; **stakeholder finance crawl** still open.
+
+---
 
 Local validation on branch `chore/deep-production-completion` for **merge readiness** (does **not** assert live staging/production health):
 

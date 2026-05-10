@@ -25,5 +25,13 @@ setup("authenticate", async ({ page }) => {
     timeout: 60_000,
   });
   await expect(page).toHaveURL(new RegExp(`/${e2eLocale}/dashboard`));
+  // Dismiss first-launch modal overlay so inventory/CTA tests are not pointer-blocked (Modal backdrop).
+  await page.evaluate(() => {
+    try {
+      localStorage.setItem("aistroyka:first-launch-guide:v1", "1");
+    } catch {
+      /* ignore */
+    }
+  });
   await page.context().storageState({ path: authFile });
 });

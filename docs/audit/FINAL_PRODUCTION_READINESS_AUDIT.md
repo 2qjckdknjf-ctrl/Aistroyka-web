@@ -1,7 +1,8 @@
 # Final production readiness audit (Phase 13)
 
 **Roadmap:** `docs/roadmap/AISTROYKA_MEGA_ROADMAP_CUSTOMER_FINANCE_SAFE.md` — § Phase 13  
-**Date:** 2026-05-07 (updated 2026-05-08 for PR #13 merge-readiness pass; **live smoke note:** 2026-05-07)  
+**Date:** 2026-05-07 (updated **2026-05-08** live verification sprint)
+
 **Scope:** Repository and workflow readiness before serious sales. Live go/no-go still requires operator-run smoke on secured environments.
 
 ## 1. CI and build
@@ -29,7 +30,7 @@
 | Scripts | `scripts/smoke/pilot_launch.sh`, `apps/web/scripts/smoke-prod.sh`, `bun run audit:pilot` (per `AGENTS.md`) |
 | E2E | Playwright under `apps/web/tests/e2e` |
 
-**Status:** **PROCESS READY** — automated proof is environment-dependent.
+**Status:** **Green for scripted smoke (2026-05-08)** — full `pilot_launch.sh` **PASS** on staging and production with tenant auth. **E2E** still **FAIL** on subset (`FINAL_E2E_REPORT.md`).
 
 ## 4. Observability (roadmap 13.2)
 
@@ -54,26 +55,24 @@
 - **P0:** None recorded in this audit for **code location** of blockers; live **credential/regression** P0s only appear during secured runs.
 - **P1:** Multi-lockfile inference warnings (noted in `PHASE13_RELEASE_OPS_REPORT.md`); observability/error-budget not fully specified.
 
-## Verification log (2026-05-08 / 2026-05-07)
+## Verification log (2026-05-08 live sprint)
 
 | Check | Result |
 |-------|--------|
-| `bun run test` (root) | **PASS** — 1401 Vitest tests |
-| `bun run lint` (root → `apps/web`) | **PASS** |
-| `bun run build` (root) | **PASS** (if `build` + `cf:build` race left a bad `apps/web/.next`, `rm -rf apps/web/.next` then rebuild — see validation log) |
-| `bun run cf:build` (root) | **PASS** — local run with `NEXT_PUBLIC_*` set (CI uses repo secrets for anon key) |
-| `bun run e2e:pilot` (`apps/web`) | **BLOCKED** — missing `E2E_EMAIL` + `E2E_PASSWORD` (2026-05-08 re-check); see `FINAL_E2E_REPORT.md` |
-| `pilot_launch.sh` staging/prod (no auth) | **PARTIAL** — `health` / `config` / `cron-tick` **PASS**; `ops/metrics` **401** (2026-05-07) |
-| `GET /api/v1/health` staging + prod apex/www | **200** (2026-05-07 curl) |
-| Supabase CLI live | **BLOCKED** — no `SUPABASE_ACCESS_TOKEN` in shell (`LIVE_SUPABASE_FINAL_VERIFICATION.md`) |
+| `bun run test` (root) | **PASS** — 1401 tests |
+| `bun run lint` | **PASS** |
+| `bun run build` / `bun run cf:build` | **PASS** |
+| `pilot_launch.sh` staging (auth) | **PASS** |
+| `pilot_launch.sh` production (auth) | **PASS** |
+| `GET /api/v1/health` staging + prod | **200** |
+| Playwright pilot (staging) | **FAIL** |
+| `supabase projects list` | **BLOCKED** — Unauthorized |
 
-**PR #13 merge readiness:** repository gates above match **CI Check** sequence (`bun install` in CI only; local `bun run lint` / `test` / `build` / `cf:build` green). **Remaining:** GitHub PR **CI job** must pass on the branch; staging/production smoke still operator-blocked.
-
-Closure: see **`docs/product/PHASE13_ROADMAP_CLOSURE.md`** (Phase 13 **conditional** until live smoke + credentialed E2E).
+**Phase 13 closure:** **CONDITIONAL** (`PHASE13_ROADMAP_CLOSURE.md`) until E2E + Supabase CLI + optional live customer sanity.
 
 ## Verdict
 
-**READY FOR HARDENING / PILOT** — repository unit + lint gates verified; **Playwright pilot** requires secured credentials. **Final “production smoke green”** remains operator-recorded after staging/production runs.
+**SMOKE / HEALTH GREEN** on staging and production for **2026-05-08** pilot script. **E2E** and **live Supabase CLI** **not** closure-complete. **Production go-live** remains **operator decision** with open **P1** E2E items.
 
 ## References
 

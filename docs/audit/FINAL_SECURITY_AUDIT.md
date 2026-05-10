@@ -27,10 +27,10 @@
 
 ## 4. System and admin routes
 
-- System routes audited historically in live reports under `docs/audit/LIVE_SYSTEM_ROUTE_*`.
-- Platform-owner gates must not be weakened when adding features.
+- **2026-05-08 curl:** `GET /api/v1/system/health` — staging **503** JSON `system_routes_require_auth`; production **401** JSON `X-System-Key required`. **Not** uncontrolled **500** with stack traces in sampled responses.
+- Historical audits: `docs/audit/LIVE_SYSTEM_ROUTE_*`.
 
-**Verdict:** **VERIFY ON CHANGE** — no blanket “all routes audited” claim.
+**Verdict:** **PASS** for sampled unauthenticated policy behavior — no secret material in body; positive-key path not exercised.
 
 ## 5. RLS verification
 
@@ -42,9 +42,11 @@
 - **P0:** None identified in static audit.
 - **P1:** Manual pen-test / third-party audit not in scope of this file; recommend before **serious** enterprise sales.
 
-## Live snapshot (non-authoritative, 2026-05-07)
+## Live snapshot (2026-05-08)
 
-- Public **`GET /api/v1/health`** returned **200** on staging and production hosts (curl-only). Full auth-bound checks and system-route posture are tracked in smoke/system audit files — this doc does not upgrade to “production secure” on that basis alone.
+- **`/api/v1/health`:** **200** staging + production (apex/www); body reports `supabaseReachable`, `serviceRoleConfigured`.
+- **`/api/v1/system/health`:** **503/401** JSON policy without secrets (see §4).
+- **E2E:** pilot was **FAIL** on 2026-05-08; **FirstLaunchGuide** overlay + **core-flow** route/assertions addressed in repo — **retest** before claiming regression closure.
 
 ## References
 

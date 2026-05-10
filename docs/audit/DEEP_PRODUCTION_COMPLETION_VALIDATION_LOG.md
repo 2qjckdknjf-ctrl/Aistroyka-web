@@ -724,3 +724,46 @@ N/A
 
 ## Rerun Result
 N/A
+
+---
+
+## Command (system routes live sample, 2026-05-08)
+
+`curl -i` for:
+
+- `https://staging.aistroyka.ai/api/v1/system/health`
+- `https://aistroyka.ai/api/v1/system/health`
+- `https://aistroyka.ai/api/system/health`
+
+## Result
+PASS (policy responses)
+
+## Summary
+Staging **503** JSON `system_routes_require_auth`; production **401** JSON `X-System-Key required` — controlled JSON in this sample (not unhandled **500** HTML).
+
+## Fix Applied
+N/A (verification only)
+
+## Rerun Result
+N/A
+
+---
+
+## Change (Playwright pilot harness, 2026-05-08)
+
+Files:
+
+- `apps/web/tests/e2e/auth.setup.ts` — persist `aistroyka:first-launch-guide:v1` in `localStorage` before `storageState` capture (avoid FirstLaunchGuide `Modal` blocking clicks).
+- `apps/web/tests/e2e/core-flow.spec.ts` — open `/dashboard/daily-reports` after API create; broaden Russian matchers for default `E2E_LOCALE=ru`.
+
+## Result
+PENDING — full staging `e2e:pilot` not re-executed in a shell without `PLAYWRIGHT_BASE_URL` + reachable app (localhost **ECONNREFUSED** in automation attempt).
+
+## Summary
+Operator re-run: `PLAYWRIGHT_SKIP_WEB_SERVER=1 PLAYWRIGHT_BASE_URL=https://staging.aistroyka.ai bun run --cwd apps/web e2e:pilot` with `E2E_EMAIL`/`E2E_PASSWORD` or `SMOKE_*` per `_helpers/auth.ts`.
+
+## Fix Applied
+Test-only harness adjustments (no product feature work).
+
+## Rerun Result
+Pending operator/staging run.

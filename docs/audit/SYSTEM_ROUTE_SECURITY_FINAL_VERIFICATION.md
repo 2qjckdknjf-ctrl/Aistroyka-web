@@ -7,39 +7,36 @@
 - `apps/web/app/api/system/health/route.ts`
 - `apps/web/app/api/v1/system/health/route.ts`
 
-## Commands run
+## Commands run (2026-05-08)
 
-- `curl -i "https://aistroyka.ai/api/system/health"`
-- `curl -i "https://aistroyka.ai/api/system/health" -H "X-System-Key: WRONG_KEY"`
+- `curl -i "https://staging.aistroyka.ai/api/v1/system/health"`
 - `curl -i "https://aistroyka.ai/api/v1/system/health"`
-- `curl -i "https://staging.aistroyka.ai/api/system/health"`
-- `curl -i "https://staging.aistroyka.ai/api/system/health" -H "X-System-Key: WRONG_KEY"`
-- environment presence check for `SYSTEM_API_KEY`
+- `curl -i "https://aistroyka.ai/api/system/health"`
+- Environment presence check: `SYSTEM_API_KEY` in operator shell typically **UNSET** during doc runs
 
 ## Result
 
-- Production no-key: HTTP 500
-- Production wrong-key: HTTP 500
-- Production v1 no-key: HTTP 500
-- Staging no-key/wrong-key: HTTP 503 with explicit auth policy block payload
-- `SYSTEM_API_KEY` in current shell: UNSET
+| Check | Outcome |
+|-------|---------|
+| Staging unauthenticated v1 | **503** JSON `system_routes_require_auth` |
+| Production unauthenticated v1 | **401** JSON `X-System-Key required` |
+| Production legacy `/api/system/health` | **401** JSON `X-System-Key required` |
+| Secret leakage in sampled bodies | **None** observed |
 
 ## Proof summary
 
-- No-key and wrong-key production checks did not expose a real system health JSON payload (returned generic 500 body).
-- However, production behavior is not healthy/policy-clean (500 instead of explicit auth guard response), and positive-key auth path cannot be proven without a valid `SYSTEM_API_KEY`.
-- Staging behavior confirms guard logic path works when runtime is healthy.
+- Policy responses match guard intent: **do not** return system health JSON without key when key is required.
+- Staging returns **503** when deployment treats system routes as unavailable without configured production key — still a **controlled** JSON shape.
 
 ## Changes made
 
-- Verification-only updates and documentation.
+- Documentation refresh only (no route weakening).
 
 ## Remaining blockers
 
-- Production runtime returns 500 for system endpoints.
-- Missing `SYSTEM_API_KEY` in operator session for positive auth check.
-- GitHub repo secret inventory does not currently list `SYSTEM_API_KEY`, increasing likelihood of runtime key mismatch/missing propagation.
+- **Positive verification** with a valid `SYSTEM_API_KEY` header (operator action).
+- Repo secret inventory may not list `SYSTEM_API_KEY`; ensure production/staging env parity with product expectations.
 
 ## Final verdict
 
-FAIL
+**PASS** for **sampled unauthenticated** live checks (2026-05-08). **BLOCKED** for full positive-key proof without operator key material.

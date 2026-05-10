@@ -42,4 +42,8 @@
 
 Repo-wide `apps/web` TypeScript grep for cost/finance tokens surfaced hits in **internal** surfaces (e.g. `ProjectCostsPanel`, `/api/v1/projects/:id/costs`, `change-orders` `internal_cost_item_id`, `cost-signals`, manager actions). Customer-facing shaping layers (`portal`, `share`, digest owner path, proof-pack, telegram emit) remain aligned with prior PASS; digest/proof tests continue to assert absence of internal finance phrases in owner-facing output.
 
-**PASS (with continuous regression discipline)** — structural boundaries and targeted tests are in place; Phase 13 **closure in production** still requires green E2E/pilot on a live environment (see `FINAL_E2E_REPORT.md`).
+## Live stakeholder sanity (2026-05-09)
+
+**BLOCKED** — No manual owner/stakeholder browser session on `/{locale}/portal/projects` and no portal-scoped **live** API crawl (costs `403`, portal JSON shape, proof share) was executed this pass. **Manager E2E pilot PASS does not substitute** stakeholder-only visibility proof.
+
+**PASS (with continuous regression discipline)** — structural boundaries and targeted tests are in place; **live** stakeholder crawl and **live** Supabase CLI verification remain open (`PHASE13_ROADMAP_CLOSURE.md`).

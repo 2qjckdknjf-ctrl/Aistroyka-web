@@ -1,5 +1,16 @@
 # Live Smoke Report
 
+## 2026-05-08 — `pilot_launch.sh` full verification (staging + production)
+
+**Verdict:** **PASS** (both hosts, exit code 0).
+
+- Staging: `BASE_URL=https://staging.aistroyka.ai bash scripts/smoke/pilot_launch.sh`
+- Production: `BASE_URL=https://aistroyka.ai bash scripts/smoke/pilot_launch.sh`
+
+All steps green: `health`, `config`, `cron-tick`, `ops/metrics` (tenant auth via password grant + Supabase public env). Exact env keys: `docs/audit/LIVE_VERIFICATION_CREDENTIALS_MATRIX.md`. Details: `docs/audit/LIVE_SMOKE_FINAL_VERIFICATION.md`.
+
+---
+
 Date: 2026-05-07
 
 Phase: 0 - Live Truth Verification
