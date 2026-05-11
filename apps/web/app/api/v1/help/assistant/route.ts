@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { HELP_KNOWLEDGE_BASE, type HelpLocale } from "@/lib/help/help-knowledge";
+import { HELP_KNOWLEDGE_BASE, keywordsMatchBlob, type HelpLocale } from "@/lib/help/help-knowledge";
 import { LAUNCH_STEPS, type LaunchRole, type LaunchStepKey } from "@/lib/help/launch-steps";
 
 type AssistantRequest = {
@@ -86,6 +86,13 @@ const DEFAULT_ANSWER: Record<HelpLocale, string> = {
   it: "Inizia dai blocchi ad alto rischio, poi completa i prossimi passi di avvio e verifica la qualità delle evidenze nei report.",
 };
 
+const RISK_NO_AI_DETAIL: Record<HelpLocale, string> = {
+  en: "AI checks are not yet embedded into the current decision loop.",
+  ru: "ИИ-проверка ещё не встроена в текущий цикл принятия решений.",
+  es: "Las comprobaciones de IA aún no están integradas en el ciclo actual de decisiones.",
+  it: "I controlli AI non sono ancora integrati nel ciclo decisionale attuale.",
+};
+
 const CONTEXT_HINTS: Record<HelpLocale, Record<string, string>> = {
   en: {
     projects: "You are in project workspace context.",
@@ -96,8 +103,8 @@ const CONTEXT_HINTS: Record<HelpLocale, Record<string, string>> = {
   ru: {
     projects: "Вы находитесь в контексте управления проектами.",
     reports: "Вы находитесь в контексте отчётности и согласований.",
-    ai: "Вы находитесь в контексте AI intelligence.",
-    dashboard: "Вы находитесь в контексте операционного центра.",
+    ai: "Вы в контексте ИИ-аналитики.",
+    dashboard: "Вы в контексте операционного центра (главная панель).",
   },
   es: {
     projects: "Estás en contexto de gestión de proyectos.",
@@ -128,7 +135,7 @@ function rankKnowledge(query: string, locale: HelpLocale, role: LaunchRole) {
   const words = normalized.split(/\s+/).filter(Boolean);
 
   return HELP_KNOWLEDGE_BASE.map((entry) => {
-    const text = `${entry.title[locale]} ${entry.summary[locale]} ${entry.answer[locale]} ${entry.keywords.join(" ")}`.toLowerCase();
+    const text = `${entry.title[locale]} ${entry.summary[locale]} ${entry.answer[locale]} ${keywordsMatchBlob(entry, locale)}`.toLowerCase();
     const tokenScore = words.reduce((sum, word) => (text.includes(word) ? sum + 1 : sum), 0);
     const roleScore = entry.roles.includes("all") || entry.roles.includes(role) ? 2 : 0;
     return { entry, score: tokenScore * 2 + roleScore };
@@ -193,10 +200,7 @@ function buildRiskSignals(locale: HelpLocale, payload: AssistantRequest): Assist
     signals.push({
       id: "risk-no-ai",
       title: STEP_LABELS[locale].viewAi,
-      detail:
-        locale === "ru"
-          ? "ИИ-проверка ещё не встроена в текущий цикл принятия решений."
-          : "AI checks are not yet embedded into the current decision loop.",
+      detail: RISK_NO_AI_DETAIL[locale],
       severity: "medium",
       href: "/dashboard/ai",
     });

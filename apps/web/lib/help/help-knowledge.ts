@@ -8,23 +8,45 @@ export type HelpKnowledgeEntry = {
   id: string;
   href: string;
   roles: Array<HelpRole | "all">;
-  keywords: string[];
+  /** Keywords per locale for search ranking; English is always merged at query time as a fallback. */
+  keywords: Record<HelpLocale, string[]>;
   title: LocalizedText;
   summary: LocalizedText;
   answer: LocalizedText;
 };
+
+/** Lowercase blob of locale keywords plus English (deduped) for token matching. */
+export function keywordsMatchBlob(entry: HelpKnowledgeEntry, locale: HelpLocale): string {
+  const primary = entry.keywords[locale] ?? [];
+  const english = entry.keywords.en;
+  const seen = new Set<string>();
+  const parts: string[] = [];
+  for (const w of [...primary, ...english]) {
+    const k = w.toLowerCase();
+    if (!seen.has(k)) {
+      seen.add(k);
+      parts.push(w);
+    }
+  }
+  return parts.join(" ").toLowerCase();
+}
 
 export const HELP_KNOWLEDGE_BASE: HelpKnowledgeEntry[] = [
   {
     id: "kb-getting-started",
     href: "/dashboard",
     roles: ["all"],
-    keywords: ["start", "first", "setup", "onboarding", "dashboard", "kpi"],
+    keywords: {
+      en: ["start", "first", "setup", "onboarding", "dashboard", "kpi", "queue", "home", "priority", "overview", "control", "center"],
+      ru: ["старт", "начало", "первый", "настройка", "онбординг", "дашборд", "панель", "главная", "kpi", "очередь", "приоритет", "обзор", "операционн", "центр"],
+      es: ["inicio", "empezar", "primero", "configuración", "panel", "kpi", "cola", "casa", "prioridad", "resumen", "centro", "control"],
+      it: ["inizio", "partenza", "primo", "configurazione", "dashboard", "pannello", "home", "kpi", "coda", "priorità", "panoramica", "centro"],
+    },
     title: {
       en: "Start with dashboard priorities",
-      ru: "Начните с приоритетов dashboard",
+      ru: "Начните с приоритетов главной панели",
       es: "Empieza por prioridades del panel",
-      it: "Inizia dalle priorità dashboard",
+      it: "Inizia dalle priorità della dashboard",
     },
     summary: {
       en: "Check KPI and queues first, then open action items.",
@@ -34,16 +56,21 @@ export const HELP_KNOWLEDGE_BASE: HelpKnowledgeEntry[] = [
     },
     answer: {
       en: "Open dashboard home, review queue cards and pending approvals, then drill down into items that are overdue or blocked.",
-      ru: "Откройте главную dashboard, проверьте карточки очередей и ожидающие согласования, затем разберите просроченные и заблокированные элементы.",
+      ru: "Откройте главную страницу дашборда, проверьте карточки очередей и ожидающие согласования, затем разберите просроченные и заблокированные элементы.",
       es: "Abre la página principal del panel, revisa colas y aprobaciones pendientes, y después entra en elementos vencidos o bloqueados.",
-      it: "Apri la home dashboard, controlla code e approvazioni pendenti, poi entra negli elementi in ritardo o bloccati.",
+      it: "Apri la home della dashboard, controlla code e approvazioni pendenti, poi entra negli elementi in ritardo o bloccati.",
     },
   },
   {
     id: "kb-project-setup",
     href: "/dashboard/projects",
     roles: ["manager", "admin", "owner"],
-    keywords: ["project", "milestone", "budget", "structure", "team", "roles"],
+    keywords: {
+      en: ["project", "milestone", "budget", "structure", "team", "roles", "scope", "setup", "plan"],
+      ru: ["проект", "этап", "веха", "бюджет", "структура", "команда", "роли", "объём", "настройка", "план"],
+      es: ["proyecto", "hito", "presupuesto", "estructura", "equipo", "roles", "alcance", "configuración", "plan"],
+      it: ["progetto", "milestone", "budget", "struttura", "team", "ruoli", "perimetro", "setup", "piano"],
+    },
     title: {
       en: "Set up project structure",
       ru: "Настройте структуру проекта",
@@ -67,7 +94,12 @@ export const HELP_KNOWLEDGE_BASE: HelpKnowledgeEntry[] = [
     id: "kb-daily-reporting",
     href: "/dashboard/daily-reports",
     roles: ["manager", "admin"],
-    keywords: ["report", "daily", "evidence", "photo", "approve", "submission"],
+    keywords: {
+      en: ["report", "daily", "evidence", "photo", "approve", "submission", "field", "review"],
+      ru: ["отчёт", "ежедневн", "доказательств", "фото", "согласован", "отправк", "полев", "проверк"],
+      es: ["informe", "diario", "evidencia", "foto", "aprobar", "envío", "campo", "revisión"],
+      it: ["report", "giornaliero", "evidenza", "foto", "approva", "invio", "cantiere", "revisione"],
+    },
     title: {
       en: "Run daily reporting loop",
       ru: "Ведите ежедневный цикл отчётности",
@@ -91,7 +123,12 @@ export const HELP_KNOWLEDGE_BASE: HelpKnowledgeEntry[] = [
     id: "kb-ai-risk",
     href: "/dashboard/ai",
     roles: ["all"],
-    keywords: ["ai", "risk", "intelligence", "alerts", "recommendation", "insight"],
+    keywords: {
+      en: ["ai", "risk", "intelligence", "alerts", "recommendation", "insight", "ml", "model"],
+      ru: ["ии", "искусственн", "риск", "интеллект", "алерт", "рекомендац", "инсайт", "аналитик"],
+      es: ["ia", "inteligencia", "riesgo", "alertas", "recomendación", "insight", "análisis"],
+      it: ["ai", "ia", "rischio", "intelligence", "alert", "raccomandazione", "insight", "analisi"],
+    },
     title: {
       en: "Use AI for risk control",
       ru: "Используйте ИИ для контроля рисков",
@@ -106,7 +143,7 @@ export const HELP_KNOWLEDGE_BASE: HelpKnowledgeEntry[] = [
     },
     answer: {
       en: "Open AI and project Intelligence views, investigate top risks and evidence gaps, then assign follow-up tasks with owners and deadlines.",
-      ru: "Откройте AI и Intelligence проекта, проверьте ключевые риски и пробелы доказательств, затем назначьте follow-up задачи с владельцами и сроками.",
+      ru: "Откройте раздел ИИ и Intelligence проекта, проверьте ключевые риски и пробелы доказательств, затем назначьте задачи с владельцами и сроками.",
       es: "Abre AI e Intelligence del proyecto, revisa riesgos y gaps de evidencia, y asigna tareas de seguimiento con responsable y fecha.",
       it: "Apri AI e Intelligence progetto, verifica rischi e gap evidenze, poi assegna task di follow-up con owner e deadline.",
     },
@@ -115,7 +152,12 @@ export const HELP_KNOWLEDGE_BASE: HelpKnowledgeEntry[] = [
     id: "kb-client-governance",
     href: "/dashboard/notifications",
     roles: ["manager", "admin", "client", "owner"],
-    keywords: ["client", "governance", "discussion", "request", "decision", "approval"],
+    keywords: {
+      en: ["client", "governance", "discussion", "request", "decision", "approval", "stakeholder", "audit"],
+      ru: ["клиент", "управлен", "governance", "обсужден", "запрос", "решени", "согласован", "стейкхолдер", "аудит"],
+      es: ["cliente", "gobernanza", "discusión", "solicitud", "decisión", "aprobación", "interesado", "auditoría"],
+      it: ["cliente", "governance", "discussione", "richiesta", "decisione", "approvazione", "stakeholder", "audit"],
+    },
     title: {
       en: "Manage client collaboration",
       ru: "Управляйте взаимодействием с клиентом",
@@ -136,4 +178,3 @@ export const HELP_KNOWLEDGE_BASE: HelpKnowledgeEntry[] = [
     },
   },
 ];
-

@@ -287,7 +287,8 @@
       "manager": "Manager",
       "admin": "Admin",
       "client": "Cliente",
-      "owner": "Proprietario"
+      "owner": "Proprietario",
+      "worker": "Operatore"
     },
     "launch": {
       "title": "Partenza senza dubbi",
@@ -323,9 +324,9 @@
       "doNow": "Fallo ora →",
       "priorityHigh": "Alta",
       "priorityMedium": "Media",
-      "prompt1": "Qual e la prima cosa da fare oggi?",
+      "prompt1": "Qual è la prima cosa da fare oggi?",
       "prompt2": "Dove sono ora i rischi principali del progetto?",
-      "prompt3": "Come chiudo piu rapidamente le approvazioni pendenti?",
+      "prompt3": "Come chiudo più rapidamente le approvazioni pendenti?",
       "defaultQuery": "Il mio contesto attuale",
       "confidence": "Confidenza: {value}%",
       "riskSignalsTitle": "Segnali di rischio",
@@ -339,7 +340,8 @@
         "manager": "Manager",
         "admin": "Admin",
         "client": "Cliente",
-        "owner": "Proprietario"
+        "owner": "Proprietario",
+        "worker": "Operatore"
       }
     },
     "searchLabel": "Cerca nel centro assistenza",
@@ -1254,6 +1256,24 @@
     "thresholdHistoryTitle": "Storico soglie"
   },
   "dashboardDetail": {
+    "dateRange": "Intervallo date",
+    "search": "Cerca",
+    "searchPlaceholder": "Cerca…",
+    "sevenDays": "7 giorni",
+    "thirtyDays": "30 giorni",
+    "ninetyDays": "90 giorni",
+    "from": "Da",
+    "to": "A",
+    "filterByProject": "Filtra per progetto",
+    "filterByWorker": "Filtra per operatore",
+    "filterByStatus": "Filtra per stato",
+    "allProjects": "Tutti i progetti",
+    "allWorkers": "Tutti gli operatori",
+    "savedViews": "Viste salvate",
+    "applySavedView": "Applica vista salvata",
+    "applyView": "Applica vista…",
+    "saveCurrent": "Salva vista attuale",
+    "nameThisView": "Nome di questa vista",
     "missingReportId": "ID report mancante.",
     "reportNotFound": "Report non trovato",
     "accessDeniedHint": "Potresti non avere accesso.",
@@ -2554,7 +2574,7 @@
   },
   "governancePage": {
     "listSubtitle": "Governance ed escalation trasversali tra progetti attivi.",
-    "listDescription": "Casi di governance cross-project per decisioni del management ed escalation che impattano piu progetti.",
+    "listDescription": "Casi di governance cross-project per decisioni del management ed escalation che impattano più progetti.",
     "detailTitle": "Caso di governance",
     "detailSubtitle": "Stato escalation, decisione richiesta e progetti coinvolti.",
     "newCase": "Nuovo caso",

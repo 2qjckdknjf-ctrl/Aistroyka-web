@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { getAdminClient } from "@/lib/supabase/admin";
+import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
@@ -28,8 +27,15 @@ export async function GET(request: Request) {
   const to = url.searchParams.get("to") ?? undefined;
   const q = url.searchParams.get("q")?.trim();
 
-  const supabase = getAdminClient() ?? await createClient();
-  let query = supabase
+  const admin = getAdminClient();
+  if (!admin) {
+    return NextResponse.json(
+      { error: "Device list temporarily unavailable (server configuration)." },
+      { status: 503 },
+    );
+  }
+
+  let query = admin
     .from("device_tokens")
     .select(DEVICE_LIST_COLS)
     .eq("tenant_id", ctx.tenantId!)
@@ -52,7 +58,7 @@ export async function GET(request: Request) {
     );
   }
 
-  let countQuery = supabase
+  let countQuery = admin
     .from("device_tokens")
     .select("device_id", { count: "exact", head: true })
     .eq("tenant_id", ctx.tenantId!);

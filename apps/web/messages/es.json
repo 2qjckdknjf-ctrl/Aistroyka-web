@@ -287,7 +287,8 @@
       "manager": "Manager",
       "admin": "Administrador",
       "client": "Cliente",
-      "owner": "Propietario"
+      "owner": "Propietario",
+      "worker": "Operario"
     },
     "launch": {
       "title": "Inicio sin dudas",
@@ -339,7 +340,8 @@
         "manager": "Manager",
         "admin": "Administrador",
         "client": "Cliente",
-        "owner": "Propietario"
+        "owner": "Propietario",
+        "worker": "Operario"
       }
     },
     "searchLabel": "Buscar en el centro de ayuda",
@@ -1254,6 +1256,24 @@
     "thresholdHistoryTitle": "Historial de umbrales"
   },
   "dashboardDetail": {
+    "dateRange": "Rango de fechas",
+    "search": "Buscar",
+    "searchPlaceholder": "Buscar…",
+    "sevenDays": "7 días",
+    "thirtyDays": "30 días",
+    "ninetyDays": "90 días",
+    "from": "Desde",
+    "to": "Hasta",
+    "filterByProject": "Filtrar por proyecto",
+    "filterByWorker": "Filtrar por trabajador",
+    "filterByStatus": "Filtrar por estado",
+    "allProjects": "Todos los proyectos",
+    "allWorkers": "Todos los trabajadores",
+    "savedViews": "Vistas guardadas",
+    "applySavedView": "Aplicar vista guardada",
+    "applyView": "Aplicar vista…",
+    "saveCurrent": "Guardar vista actual",
+    "nameThisView": "Nombre de esta vista",
     "missingReportId": "Falta el ID del informe.",
     "reportNotFound": "Informe no encontrado",
     "accessDeniedHint": "Puede que no tengas acceso.",

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { HELP_KNOWLEDGE_BASE, type HelpLocale } from "@/lib/help/help-knowledge";
+import { HELP_KNOWLEDGE_BASE, keywordsMatchBlob, type HelpLocale } from "@/lib/help/help-knowledge";
 import type { HelpRole } from "@/lib/help/help-catalog";
 
 type HelpQueryRequest = {
@@ -31,7 +31,7 @@ export async function POST(request: Request) {
   const words = query.toLowerCase().split(/\s+/).filter(Boolean);
 
   const ranked = HELP_KNOWLEDGE_BASE.map((item) => {
-    const text = `${item.title[locale]} ${item.summary[locale]} ${item.answer[locale]} ${item.keywords.join(" ")}`.toLowerCase();
+    const text = `${item.title[locale]} ${item.summary[locale]} ${item.answer[locale]} ${keywordsMatchBlob(item, locale)}`.toLowerCase();
     const matches = words.reduce((sum, word) => (text.includes(word) ? sum + 1 : sum), 0);
     const roleBonus = item.roles.includes("all") || item.roles.includes(role) ? 1 : 0;
     const score = matches * 2 + roleBonus;

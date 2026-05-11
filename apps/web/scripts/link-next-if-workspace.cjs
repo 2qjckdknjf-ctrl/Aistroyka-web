@@ -15,7 +15,9 @@ const rootHasShared = fs.existsSync(path.join(rootNext, "dist", "shared"));
 
 if (!localHasShared && rootHasShared && fs.existsSync(rootNext)) {
   try {
-    fs.rmSync(localNext, { recursive: true });
+    if (fs.existsSync(localNext)) {
+      fs.rmSync(localNext, { recursive: true, force: true });
+    }
     fs.symlinkSync(path.relative(path.dirname(localNext), rootNext), localNext);
     console.log("[apps/web] Linked next to root (monorepo full package).");
   } catch (e) {

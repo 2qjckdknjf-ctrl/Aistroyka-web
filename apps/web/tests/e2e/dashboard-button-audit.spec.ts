@@ -1,9 +1,10 @@
 import { expect, test } from "@playwright/test";
 import path from "node:path";
 import {
+  attachApiIssueTracking,
+  attachConsoleErrorTracking,
   attachJson,
-  collectConsoleErrors,
-  collectCriticalIssues,
+  formatNetworkIssue,
 } from "./audit-helpers";
 import { type ButtonInventoryEntry, loadActionableCtas } from "./_helpers/button-inventory";
 import { buildRouteMap, e2eLocale, resolveProjectId } from "./_helpers/routes";
@@ -30,8 +31,8 @@ test.describe("Dashboard button audit (inventory-driven)", () => {
       const projectId = await resolveProjectId(request, process.env.E2E_PROJECT_ID);
       const routes = buildRouteMap(projectId);
 
-      const networkIssues = collectCriticalIssues(page);
-      const consoleErrors = collectConsoleErrors(page);
+      const apiIssues = attachApiIssueTracking(page);
+      const consoleIssues = attachConsoleErrorTracking(page);
       const route = await concreteRoute(entry, projectId);
 
       if (route.includes("missing-")) {
@@ -87,6 +88,9 @@ test.describe("Dashboard button audit (inventory-driven)", () => {
       const mutation = await mutationPromise;
       const sideEffect = await popupOrDownload;
       const afterUrl = page.url();
+
+      const networkIssues = apiIssues.drain().map(formatNetworkIssue);
+      const consoleErrors = consoleIssues.drain();
       const modalOrDialogCount = await page
         .locator('[role="dialog"], [aria-modal="true"], dialog, [data-state="open"]')
         .count();

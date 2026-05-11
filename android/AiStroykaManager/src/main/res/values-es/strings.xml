@@ -1,5 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="app_name">AiStroyka Manager</string>
+    <string name="manager_topbar_title">AiStroyka Manager</string>
+    <string name="action_sign_out">Cerrar sesión</string>
+    <string name="manager_login_prompt">Acceso de manager</string>
+    <string name="label_email">Correo</string>
+    <string name="label_password">Contraseña</string>
+    <string name="action_sign_in">Iniciar sesión</string>
+    <string name="action_dismiss">Descartar</string>
+    <string name="manager_project_filter">Filtro de proyecto</string>
+    <string name="manager_all_projects">Todos los proyectos</string>
+    <string name="manager_reports_inbox">Bandeja de informes</string>
+    <string name="action_refresh">Actualizar</string>
+    <string name="manager_home">Inicio</string>
+    <string name="manager_reports_title">Informes</string>
+    <string name="manager_submitted_only">Solo enviados</string>
+    <string name="manager_report_row_status">Estado: %1$s · Medios: %2$d</string>
+    <string name="manager_report_row_ai">IA: %1$s</string>
+    <string name="manager_no_report">Sin informe</string>
+    <string name="action_back">Atrás</string>
+    <string name="manager_report_title">Informe %1$s</string>
+    <string name="label_status">Estado</string>
+    <string name="manager_status_line">Estado: %1$s</string>
+    <string name="label_submitted">Enviado</string>
+    <string name="manager_submitted_line">Enviado: %1$s</string>
+    <string name="label_reviewed">Revisado</string>
+    <string name="manager_reviewed_line">Revisado: %1$s</string>
+    <string name="label_manager_note">Nota del manager</string>
+    <string name="manager_note_line">Nota: %1$s</string>
+    <string name="manager_ai_analysis_jobs">Trabajos de análisis IA</string>
+    <string name="manager_pipeline_line">Canal: %1$s · trabajos: %2$d</string>
+    <string name="manager_media_jobs_line">Medios: %1$d · analizados: %2$d · fallidos: %3$d</string>
+    <string name="manager_no_analysis_status">Estado de análisis no cargado.</string>
+    <string name="manager_media">Medios</string>
+    <string name="manager_no_media_rows">No hay filas de medios en el informe.</string>
     <string name="manager_guide_title">Bienvenido a AiStroyka Manager</string>
     <string name="manager_guide_subtitle">Guía rápida de primer inicio para control del proyecto.</string>
     <string name="manager_guide_step_1">Revisa colas operativas y aprobaciones pendientes.</string>
@@ -16,4 +50,12 @@
     <string name="manager_ai_hint_2">Si hay retrasos en informes, escala bloqueos en el canal del equipo.</string>
     <string name="manager_ai_guide_confidence_fmt">Confianza de la guía IA: %1$d%%</string>
     <string name="manager_ai_risk_signals_title">Señales de riesgo</string>
+    <string name="manager_note_optional">Nota del manager (opcional)</string>
+    <string name="manager_approve">Aprobar</string>
+    <string name="manager_reject">Rechazar</string>
+    <string name="manager_request_changes">Solicitar cambios</string>
+    <string name="manager_review_only_submitted">Las acciones de revisión solo están disponibles cuando el estado es enviado.</string>
+    <string name="content_desc_report_media">Medios del informe</string>
+    <string name="manager_media_id_line">Medio: %1$s · sesión: %2$s</string>
+    <string name="manager_no_preview_url">Sin URL de vista previa (resuélvelo desde la lista de medios del proyecto).</string>
 </resources>
