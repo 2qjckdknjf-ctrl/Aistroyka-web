@@ -21,17 +21,14 @@ const nextConfig = {
     : {}),
   transpilePackages: ["@aistroyka/contracts"],
   webpack: (config, { dev }) => {
-    // Avoid PackFileCacheStrategy / manifest races seen on production `next build`
-    // (ENOENT on `.next/build-manifest.json` right after "Compiled successfully").
-    if (!dev) {
+    // Plain `next build`: disable webpack disk cache (PackFileCacheStrategy races).
+    // Standalone (`cf:build`): keep defaults so pages/app manifests emit reliably.
+    if (!dev && !isStandaloneOutput) {
       config.cache = false;
     }
-    // Resolve zod from app context when bundling @aistroyka/contracts (monorepo workspace)
-    const zodPath = path.dirname(require.resolve("zod/package.json", { paths: [__dirname] }));
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      zod: zodPath,
-    };
+    // Do not set `config.resolve.alias` from `{ ...config.resolve.alias }` — Next 15 may use an
+    // array for internal aliases (`private-next-pages/*`); spreading breaks builds.
+    // Zod resolves via apps/web package.json for `@aistroyka/contracts`.
     return config;
   },
   async headers() {
