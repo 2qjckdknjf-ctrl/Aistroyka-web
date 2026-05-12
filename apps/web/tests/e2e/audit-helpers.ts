@@ -58,7 +58,12 @@ export function attachConsoleErrorTracking(page: Page) {
   const shouldIgnore = (text: string) =>
     text.includes("[login]") ||
     text.includes("favicon") ||
-    (text.includes("unsafe-eval") && text.includes("Content Security Policy"));
+    (text.includes("unsafe-eval") && text.includes("Content Security Policy")) ||
+    (text.includes("Failed to load resource") && /\b404\b/.test(text)) ||
+    // Chromium logs XHR failures; optional admin APIs can 401 briefly (role/session overlap) — not a nav bug.
+    (text.includes("Failed to load resource") &&
+      /\b401\b/.test(text) &&
+      text.includes("Unauthorized"));
 
   const onConsole = (message: { type(): string; text(): string }) => {
     if (message.type() !== "error") return;

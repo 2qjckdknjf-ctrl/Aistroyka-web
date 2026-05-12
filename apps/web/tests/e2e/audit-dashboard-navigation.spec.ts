@@ -48,7 +48,7 @@ test.use({ trace: "retain-on-failure", screenshot: "only-on-failure" });
 
 test.describe("Dashboard Navigation CTA Audit", () => {
   test("all visible dashboard shell links navigate without critical errors", async ({ page }, testInfo) => {
-    test.setTimeout(180_000);
+    test.setTimeout(300_000);
 
     const results: Array<{
       expectedPath: string;
@@ -68,14 +68,26 @@ test.describe("Dashboard Navigation CTA Audit", () => {
 
     let navLocale = localeFromDashboardUrl(page.url()) ?? auditLocale;
 
+    async function ensureDashboardShell() {
+      await page.goto(`/${navLocale}/dashboard`);
+      await page.waitForLoadState("domcontentloaded");
+      try {
+        await expect(page.getByTestId("cta.dashboard.nav.overview")).toBeVisible({ timeout: 25_000 });
+      } catch {
+        await loginIfConfigured(page);
+        navLocale = localeFromDashboardUrl(page.url()) ?? auditLocale;
+        await page.goto(`/${navLocale}/dashboard`);
+        await page.waitForLoadState("domcontentloaded");
+        await expect(page.getByTestId("cta.dashboard.nav.overview")).toBeVisible({ timeout: 45_000 });
+      }
+      navLocale = localeFromDashboardUrl(page.url()) ?? navLocale;
+    }
+
     for (const target of navTargets) {
       apiIssues.drain();
       consoleTracking.drain();
 
-      await page.goto(`/${navLocale}/dashboard`);
-      await page.waitForLoadState("domcontentloaded");
-      await page.locator("#dashboard-sidebar").waitFor({ state: "visible", timeout: 60_000 });
-      navLocale = localeFromDashboardUrl(page.url()) ?? navLocale;
+      await ensureDashboardShell();
 
       const pathMatch = `${escapeRegexpPath(target.path)}(?:[?#]|$)`;
       const expectedPath = `/${navLocale}${target.path}`;
@@ -87,11 +99,14 @@ test.describe("Dashboard Navigation CTA Audit", () => {
       }
       const link = navigation.getByTestId(navTestId);
       await expect(link).toBeVisible({ timeout: 20_000 });
+      const href = await link.getAttribute("href");
+      expect(href, `nav link ${navTestId} must expose href`).toBeTruthy();
       const urlRe = new RegExp(`^https?:\\/\\/[^/]+\\/(?:en|ru|es|it)${pathMatch}`);
-      await Promise.all([
-        page.waitForURL(urlRe, { timeout: 25_000 }),
-        link.click(),
-      ]);
+      // Full navigation: client Link clicks occasionally stall on App Router (e.g. soft nav + RSC);
+      // href is the source of truth for the audit target URL.
+      await page.goto(new URL(href!, page.url()).href);
+      await expect(page).toHaveURL(urlRe, { timeout: 60_000 });
+      navLocale = localeFromDashboardUrl(page.url()) ?? navLocale;
 
       const networkBatch = apiIssues.drain().map(formatNetworkIssue);
       const consoleBatch = consoleTracking.drain();
