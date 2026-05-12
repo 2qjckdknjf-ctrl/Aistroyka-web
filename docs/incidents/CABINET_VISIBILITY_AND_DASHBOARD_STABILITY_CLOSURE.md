@@ -2,71 +2,108 @@
 
 **Scope:** Web app only (`apps/web`). No mobile changes.
 
+**PR tip (closure commit):** `bac6079853c826a1c8a202875a09735b5db6840b`
+
 ---
 
 ## What was broken
 
-1. **Public entry to the cabinet:** Marketing users could not reliably discover the dashboard from the public shell; the cabinet needed an explicit CTA with stable routing to `/dashboard` (locale handled by i18n routing).
-2. **Post-auth routing:** Authenticated visits to `/login` or `/register` could be steered toward `/subscribe` instead of the canonical post-auth resolver, so users perceived the cabinet as “gone” after signing in.
-3. **Subscription gate vs pilots:** With `SUBSCRIPTION_GATE_DASHBOARD` enforced, tenants that were in a **billing pilot cohort** but had no paid Stripe row were redirected from the dashboard to `/subscribe`, which felt like losing the cabinet even when pilot access was intentional.
-4. **Proof of routing:** CI was green but there was no lightweight, repo-local check for public → dashboard paths and health.
+1. **Public entry to the cabinet:** Marketing users could not reliably discover the dashboard from the public shell; the cabinet needed an explicit CTA with stable routing into the dashboard locale tree.
+2. **Post-auth routing:** Authenticated visits to `/login` or `/register` could fall through to unwanted destinations (historically perceived as `/subscribe`-first), so the cabinet looked “gone” after sign-in when `next` was absent.
+3. **Subscription gate vs pilots:** With `SUBSCRIPTION_GATE_DASHBOARD` enforced, pilot cohort tenants without a paid Stripe row could be bounced from dashboard to `/subscribe`.
+4. **Proof of routing:** Policy tests and curl smoke existed locally; merge gate additionally needed lint, tests, and Cloudflare/OpenNext bundle on the same HEAD.
 
 ---
 
-## What was fixed
+## What was fixed (closure checklist)
 
-| Area | Change |
-|------|--------|
-| **Public header** | Explicit cabinet CTA on desktop and mobile: `href="/dashboard"`, copy from `public.nav.cabinet` (ru/en/es/it). |
-| **Middleware** | For `isAuthPage && user`, redirect target is **only** `resolvePostAuthEntry({ locale, next, baseUrl: request.url })`. Missing or invalid `next` resolves to `/{locale}/dashboard`. Response header `X-Auth-Redirect` is `post-auth-entry` for that branch. Guests on protected routes still get `/{locale}/login?next=<pathname>`. |
-| **Subscription gate** | `getActiveSubscriptionStateForUser` exposes `hasDashboardAccess` = paid/trial billing **or** billing pilot cohort (`billing_pilot_workspaces` / `BILLING_PILOT_WORKSPACE_IDS`). `(dashboard)/layout` redirects to `/subscribe` only when gate is enforced **and** tenant exists **and** `!hasDashboardAccess`. `/subscribe` sends users with dashboard access back to the dashboard. |
-| **UX when blocked** | `?dashboard_access=require_subscription` continues to surface `dashboardAccessNotice` on the subscribe onboarding screen (localized). |
-| **Tests + smoke** | Policy tests (`cabinet-dashboard-routing.policy.test.ts`), `subscription-gate` tests, `entry-routing` tests; script `scripts/smoke/dashboard_cabinet_smoke.sh` plus embedded manual checklist. |
-| **Docs** | `docs/ENVIRONMENT-VARIABLES.md` updated for gate + pilot cohort behavior. |
+### PublicHeader
+
+- **Desktop:** explicit **`/dashboard`** CTA (locale via i18n `Link`): `href="/dashboard"`, copy `public.nav.cabinet` (ru/en/es/it).
+- **Mobile:** same CTA inside the collapsible nav.
+
+### Middleware
+
+- **`isAuthPage && user`:** redirect target is **`resolvePostAuthEntry({ locale, next, baseUrl: request.url })` only**.
+- **`next` absent or unsafe:** resolves to **`/{locale}/dashboard`** (no **`/subscribe`** fallback on auth pages).
+- **Response diagnostic:** **`X-Auth-Redirect: post-auth-entry`** on that redirect branch.
+- **Guests:** protected routes (`/dashboard`, `/portal`, …) → **`/{locale}/login?next=<pathname>`** (preserves localized path).
+
+### Subscription gate
+
+- **`getActiveSubscriptionStateForUser`** returns **`hasDashboardAccess`** = subscribed/trialing/paid-tier **OR** billing pilot cohort (`billing_pilot_workspaces` **or** **`BILLING_PILOT_WORKSPACE_IDS`**).
+- **`SUBSCRIPTION_GATE_DASHBOARD`** still supports **`off` / `pilot` / `bypass`** to disable the layout redirect wholesale (staging/operators).
+- **`(dashboard)/layout`:** redirects to **`/subscribe?dashboard_access=require_subscription`** only when gate enforced **and** **`tenantId`** present **and** **`!hasDashboardAccess`**.
+- **`/subscribe`:** redirects to dashboard when **`tenantId && hasDashboardAccess`**.
+- **Blocked UX:** localized **`dashboardAccessNotice`** when **`dashboard_access=require_subscription`**.
+
+### Tests / smoke / docs
+
+- Policy tests (`cabinet-dashboard-routing.policy.test.ts`), **`subscription-gate`** tests; **`scripts/smoke/dashboard_cabinet_smoke.sh`** + manual checklist comments.
+- **`docs/ENVIRONMENT-VARIABLES.md`:** billing gate + pilot cohort behavior.
 
 ---
 
-## Redirect matrix (before → after)
+## Redirect matrix (authoritative narrative)
+
+Canonical flows after this closure:
+
+| Flow | Behavior |
+|------|-----------|
+| **Unauthenticated `/dashboard`** | Middleware issues **308** to **`/en/dashboard`** (apex alias). Then **`/en/dashboard`** is protected → **`/en/login?next=/en/dashboard`**. |
+| **Unauthenticated localized dashboard** | **`/{locale}/dashboard`** → **`/{locale}/login?next=/{locale}/dashboard`** (middleware `pathnameForLoc` preserved). |
+| **Authenticated `/login` without `next`** | **`resolvePostAuthEntry`** → **`/{locale}/dashboard`**. |
+| **Authenticated `/login` with safe `next`** | Sanitized **`next`** (same-origin, allowed prefixes) → that path (**`explicit_next`**). |
+| **Dashboard, gate enforced, no billing, pilot cohort** | **`hasDashboardAccess` true** → **no** redirect to **`/subscribe`**. |
+| **Dashboard, gate enforced, tenant, no billing, not pilot/bypass/trial/active** | Redirect **`/{locale}/subscribe?dashboard_access=require_subscription`**. |
+
+---
+
+## Redirect matrix (before → after, summary)
 
 | User / route | Before (problem state) | After (closed behavior) |
-|--------------|----------------------|--------------------------|
-| Guest `GET /{locale}/dashboard` | Redirect login + `next` (unchanged expectation) | Same: `/{locale}/login?next=<path>` |
-| Auth `GET /{locale}/login` (no `next`) | Fallback could send users to `/subscribe` | `resolvePostAuthEntry` → `/{locale}/dashboard` |
-| Auth `GET /{locale}/login?next=/en/projects/…` | Variable | Same safe `next` when sanitized |
-| Tenant, enforce gate, **no** billing **not** pilot | Redirect `/subscribe` | Same (by design) |
-| Tenant, enforce gate, pilot cohort env/DB | Often treated like “no subscription” → subscribe | **`hasDashboardAccess` true** → stay in dashboard |
-| Tenant + `SUBSCRIPTION_GATE_DASHBOARD=off|pilot|bypass` | No server redirect from layout | Same |
+|--------------|------------------------|--------------------------|
+| Guest `GET /{locale}/dashboard` | Login + `next` expected | **`/{locale}/login?next=<path>`** |
+| Auth `GET /{locale}/login` (no `next`) | Risk of **`/subscribe`‑style sink | **`resolvePostAuthEntry` → `/{locale}/dashboard`** |
+| Auth with safe **`next`** | Variable | Resolved safe internal path |
+| Tenant, enforced, pilot cohort DB/env | Often treated unpaid → **`/subscribe`** | **`hasDashboardAccess`** → dashboard |
+| Tenant + **`SUBSCRIPTION_GATE_DASHBOARD=off|pilot|bypass`** | Gate off | Layout does not redirect to subscribe |
 
 ---
 
-## Validation evidence
+## CI evidence (merge gate — PR #13 HEAD)
 
-Commands run from repository root (`/Users/alex/Projects/AISTROYKA`), in order:
+Recorded against commit **`bac6079853c826a1c8a202875a09735b5db6840b`**:
 
-1. `bun run lint`
-2. `bun run test`
-3. `bun run cf:build`
+| Check | Result | Notes |
+|-------|--------|--------|
+| **GitHub Actions — workflow “CI Check” job `check`** | **PASS** | Lint + tests + build pipeline per `.github/workflows/ci-check.yml`; run **`25717427195`**, conclusion **`success`**. Link: https://github.com/2qjckdknjf-ctrl/Aistroyka-web/actions/runs/25717427195 |
+| **Workers Builds — `Workers Builds: aistroyka-web-production`** | **PASS** | Cloudflare/OpenNext bundle gate for this PR HEAD. |
 
-### Results (2026-05-12, local)
+**Related (non-merge-gate deploy checks):** Vercel previews may finish independently (e.g. secondary project rows); cabinet closure is gated on **`check`** + **Workers Builds** above.
 
-- **Lint:** `bun run lint` — success (Next.js ESLint, no warnings).
-- **Tests:** `bun run test` — success (266 files, 1414 tests, Vitest).
-- **Cloudflare/OpenNext:** `bun run cf:build` — success (OpenNext bundle written to `apps/web/.open-next/worker.js`).
+### Local parity (already run on closure branch)
+
+From repo root: **`bun run lint`**, **`bun run test`**, **`bun run cf:build`** — all succeeded during development verification.
 
 ---
 
-## Lightweight smoke script
+## Lightweight smoke script (operators)
 
 ```bash
-BASE_URL=http://localhost:3000 bash scripts/smoke/dashboard_cabinet_smoke.sh
+BASE_URL=https://<staging-or-production> bash scripts/smoke/dashboard_cabinet_smoke.sh
 ```
 
-Covers HTTP probes: `/dashboard`, `/ru/dashboard`, `/en/dashboard`, `/api/v1/health`. The script comments list the manual **public → `/dashboard` → login → `/…/dashboard** checklist for environments where auth cookies are needed.
+Probes **`/dashboard`**, **`/ru/dashboard`**, **`/en/dashboard`**, **`/api/v1/health`**. Scripted checks do not carry Supabase cookies; full **public → `/dashboard` → login → localized dashboard** must be exercised in a browser once merged.
 
 ---
 
-## Final verdict
+## Verdict
 
-**CLOSED.**
+| Gate | Status |
+|------|--------|
+| **Implementation (code / tests)** | **CLOSED** — behavior and policy tests documented above |
+| **CI on HEAD SHA** | **PASSED** — see table |
+| **Production / staging proof** | **OPEN** — **remaining:** merge PR #13 (`chore/deep-production-completion`) + **operator Cloudflare live smoke** (URLs + checklist in smoke script comments) |
 
-Rationale: public cabinet CTA and post-auth entry routing are deterministic and tested; pilots are distinguished from unpaid non-pilot tenants at the dashboard gate without removing enforcement for the latter; subscribe explains blocked access where applicable; lint, unit tests, and `cf:build` complete successfully.
+**Summary:** Repo and CI gates for this closure are satisfied at **`bac60798…`**; operational sign-off awaits merge and authenticated live smoke against the deployed Worker host.
