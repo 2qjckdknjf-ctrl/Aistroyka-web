@@ -2,7 +2,8 @@
 
 **Scope:** Web app only (`apps/web`). No mobile changes.
 
-**PR tip (closure commit):** `bac6079853c826a1c8a202875a09735b5db6840b`
+**Implementation commit (routing/gate/tests):** `bac6079853c826a1c8a202875a09735b5db6840b`  
+**Documentation tip (this closure report / CI re-run):** `999891d7` on branch `chore/deep-production-completion` (docs-only delta after implementation).
 
 ---
 
@@ -71,9 +72,9 @@ Canonical flows after this closure:
 
 ---
 
-## CI evidence (merge gate — PR #13 HEAD)
+## CI evidence (merge gate — implementation SHA `bac60798…`)
 
-Recorded against commit **`bac6079853c826a1c8a202875a09735b5db6840b`**:
+Evidence below was recorded when **PR #13** HEAD matched **`bac6079853c826a1c8a202875a09735b5db6840b`** (routing/gate/tests). A follow-up **documentation-only** commit may re-trigger the same workflow on a new SHA without changing product code.
 
 | Check | Result | Notes |
 |-------|--------|--------|
