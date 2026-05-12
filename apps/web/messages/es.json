@@ -234,6 +234,16 @@
     "forbidden": "Acceso denegado.",
     "invalidEntityLinkage": "Vínculo no válido. Seleccione elementos del mismo proyecto."
   },
+  "activation": {
+    "getStartedTitle": "Empieza con AISTROYKA",
+    "createProject": "Crear proyecto",
+    "inviteTeam": "Invitar al equipo",
+    "addFirstTask": "Añadir la primera tarea",
+    "uploadFirstReport": "Subir el primer informe",
+    "viewAiInsights": "Ver información de IA",
+    "firstReportSubmitted": "Primer informe enviado. Consulta el análisis de IA: estado del proyecto, principales riesgos y recomendaciones.",
+    "openAiInsights": "Abrir información de IA →"
+  },
   "auth": {
     "tagline": "Inteligencia de construcción con IA",
     "login": "Iniciar sesión",
@@ -487,7 +497,7 @@
     "queueWorkersOpenShift": "Turnos abiertos",
     "queueOpenShiftNoReport": "Turno abierto, sin reporte hoy",
     "queueDevicesOffline": "Dispositivos offline > 24h",
-    "queueAiFailures": "AI fallidos (24h)",
+    "queueAiFailures": "Errores de IA (24h)",
     "queuePushFailures": "Fallos push",
     "viewAll": "Ver todo",
     "opsError": "Error al cargar datos de operaciones.",

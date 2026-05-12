@@ -234,6 +234,16 @@
     "forbidden": "Access denied.",
     "invalidEntityLinkage": "Invalid linkage. Select items from the same project."
   },
+  "activation": {
+    "getStartedTitle": "Get started with AISTROYKA",
+    "createProject": "Create project",
+    "inviteTeam": "Invite team",
+    "addFirstTask": "Add first task",
+    "uploadFirstReport": "Upload first report",
+    "viewAiInsights": "View AI insights",
+    "firstReportSubmitted": "First report submitted. View AI analysis: project health, top risks, and recommendations.",
+    "openAiInsights": "Open AI insights →"
+  },
   "auth": {
     "tagline": "AI Construction Intelligence",
     "login": "Log in",
@@ -278,9 +288,9 @@
     "queueTasksOverdue": "Overdue tasks",
     "queueStuckUploads": "Uploads stuck > 4h",
     "queueWorkersOpenShift": "Workers with open shift",
-    "queueOpenShiftNoReport": "Open shift, no report today",
+    "queueOpenShiftNoReport": "Open shifts without report",
     "queueDevicesOffline": "Devices offline > 24h",
-    "queueAiFailures": "AI failed (24h)",
+    "queueAiFailures": "AI errors (24h)",
     "queuePushFailures": "Push failures",
     "viewAll": "View all",
     "opsError": "Failed to load operations data.",

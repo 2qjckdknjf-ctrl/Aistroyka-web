@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@/i18n/navigation";
 import { Card, Skeleton } from "@/components/ui";
@@ -19,15 +20,16 @@ async function fetchStatus(): Promise<{ getStarted: GetStarted; projectCount: nu
   return { getStarted: json.getStarted ?? {}, projectCount: json.projectCount ?? 0 };
 }
 
-const ITEMS: { key: keyof GetStarted; href: string; labelKey: string }[] = [
-  { key: "createProject", href: "/projects/new", labelKey: "createProject" },
-  { key: "inviteTeam", href: "/team", labelKey: "inviteTeam" },
-  { key: "addTask", href: "/dashboard/tasks", labelKey: "addTask" },
-  { key: "uploadReport", href: "/dashboard/reports", labelKey: "uploadReport" },
-  { key: "viewAi", href: "/dashboard/projects", labelKey: "viewAi" },
+const ITEMS: { key: keyof GetStarted; href: string; messageKey: "createProject" | "inviteTeam" | "addFirstTask" | "uploadFirstReport" | "viewAiInsights" }[] = [
+  { key: "createProject", href: "/projects/new", messageKey: "createProject" },
+  { key: "inviteTeam", href: "/team", messageKey: "inviteTeam" },
+  { key: "addTask", href: "/dashboard/tasks", messageKey: "addFirstTask" },
+  { key: "uploadReport", href: "/dashboard/reports", messageKey: "uploadFirstReport" },
+  { key: "viewAi", href: "/dashboard/projects", messageKey: "viewAiInsights" },
 ];
 
 export function GetStartedPanel() {
+  const t = useTranslations("activation");
   const { data, isPending } = useQuery({
     queryKey: ["activation-status"],
     queryFn: fetchStatus,
@@ -51,10 +53,10 @@ export function GetStartedPanel() {
   return (
     <Card className="p-4">
       <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary mb-3">
-        Get started with Aistroyka
+        {t("getStartedTitle")}
       </h2>
       <ul className="space-y-2">
-        {ITEMS.map(({ key, href, labelKey }) => (
+        {ITEMS.map(({ key, href, messageKey }) => (
           <li key={key} className="flex items-center gap-3">
             <span
               className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-medium ${
@@ -67,20 +69,10 @@ export function GetStartedPanel() {
               {gs[key] ? "✓" : "—"}
             </span>
             {gs[key] ? (
-              <span className="text-aistroyka-subheadline text-aistroyka-text-secondary">
-                {labelKey === "createProject" && "Create project"}
-                {labelKey === "inviteTeam" && "Invite team"}
-                {labelKey === "addTask" && "Add first task"}
-                {labelKey === "uploadReport" && "Upload first report"}
-                {labelKey === "viewAi" && "View AI insights"}
-              </span>
+              <span className="text-aistroyka-subheadline text-aistroyka-text-secondary">{t(messageKey)}</span>
             ) : (
               <Link href={href} className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">
-                {labelKey === "createProject" && "Create project"}
-                {labelKey === "inviteTeam" && "Invite team"}
-                {labelKey === "addTask" && "Add first task"}
-                {labelKey === "uploadReport" && "Upload first report"}
-                {labelKey === "viewAi" && "View AI insights"}
+                {t(messageKey)}
               </Link>
             )}
           </li>

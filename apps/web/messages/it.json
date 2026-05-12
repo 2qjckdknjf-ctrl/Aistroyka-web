@@ -234,6 +234,16 @@
     "forbidden": "Accesso negato.",
     "invalidEntityLinkage": "Collegamento non valido. Seleziona elementi dello stesso progetto."
   },
+  "activation": {
+    "getStartedTitle": "Inizia con AISTROYKA",
+    "createProject": "Crea progetto",
+    "inviteTeam": "Invita il team",
+    "addFirstTask": "Aggiungi la prima attività",
+    "uploadFirstReport": "Carica il primo rapporto",
+    "viewAiInsights": "Vedi insights IA",
+    "firstReportSubmitted": "Primo rapporto inviato. Apri l'analisi IA: stato del progetto, rischi principali e raccomandazioni.",
+    "openAiInsights": "Apri insights IA →"
+  },
   "auth": {
     "tagline": "Intelligenza per l'edilizia con IA",
     "login": "Accedi",
@@ -485,9 +495,9 @@
     "queueReportsReview": "Report in attesa di revisione",
     "queueStuckUploads": "Upload bloccati > 4h",
     "queueWorkersOpenShift": "Turni aperti",
-    "queueOpenShiftNoReport": "Turno aperto, nessun report oggi",
+    "queueOpenShiftNoReport": "Turni aperti senza rapporto",
     "queueDevicesOffline": "Dispositivi offline > 24h",
-    "queueAiFailures": "AI falliti (24h)",
+    "queueAiFailures": "Errori IA (24h)",
     "queuePushFailures": "Errori push",
     "viewAll": "Vedi tutti",
     "opsError": "Impossibile caricare i dati operativi.",
