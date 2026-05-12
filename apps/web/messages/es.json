@@ -648,6 +648,7 @@
       "faq": "FAQ",
       "privacy": "Privacidad",
       "terms": "Términos",
+      "cabinet": "Panel",
       "requestDemo": "Solicitar demo",
       "login": "Entrar",
       "tryPlatform": "Probar plataforma",
@@ -1078,6 +1079,7 @@
   "subscriptionOnboarding": {
     "title": "Elige un plan para activar tu workspace",
     "subtitle": "Después de confirmar el pago, te enviaremos al dashboard para configurarlo.",
+    "dashboardAccessNotice": "Te redirigimos aquí porque el acceso al panel requiere una suscripción activa o un piloto aprobado. Elige un plan abajo o contacta con soporte si tu acceso ya debería estar activo.",
     "status": "Estado de suscripción: {status}",
     "checkoutSuccess": "Pago recibido. Esperamos la confirmación final de la suscripción.",
     "checkingStatus": "Comprobando el estado de la suscripción cada pocos segundos…",

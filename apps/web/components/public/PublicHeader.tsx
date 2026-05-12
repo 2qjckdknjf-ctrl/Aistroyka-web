@@ -63,6 +63,12 @@ export function PublicHeader() {
           <Link href="/contact" className="btn-secondary">
             {t("requestDemo")}
           </Link>
+          <Link
+            href="/dashboard"
+            className="rounded-[var(--aistroyka-radius-lg)] px-3 py-2 text-[var(--aistroyka-font-subheadline)] font-medium text-aistroyka-text-secondary hover:bg-aistroyka-surface-raised hover:text-aistroyka-text-primary"
+          >
+            {t("cabinet")}
+          </Link>
           <Link href="/login" className="btn-primary">
             {t("login")}
           </Link>
@@ -120,6 +126,13 @@ export function PublicHeader() {
               onClick={() => setMobileMenuOpen(false)}
             >
               {t("requestDemo")}
+            </Link>
+            <Link
+              href="/dashboard"
+              className="rounded-[var(--aistroyka-radius-lg)] px-4 py-3 text-center text-[var(--aistroyka-font-subheadline)] font-semibold text-aistroyka-text-secondary hover:bg-aistroyka-surface-raised"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              {t("cabinet")}
             </Link>
             <Link
               href="/login"

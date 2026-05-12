@@ -646,6 +646,7 @@
       "faq": "FAQ",
       "privacy": "Privacy",
       "terms": "Terms",
+      "cabinet": "Dashboard",
       "requestDemo": "Request Demo",
       "login": "Log in",
       "tryPlatform": "Try platform",
@@ -1076,6 +1077,7 @@
   "subscriptionOnboarding": {
     "title": "Choose a plan to activate your workspace",
     "subtitle": "After payment is confirmed, you will be redirected to the dashboard setup.",
+    "dashboardAccessNotice": "You were redirected because opening the cabinet requires an active subscription or an approved pilot/workspace. Choose a plan below, or contact support if your access should already be active.",
     "status": "Subscription status: {status}",
     "checkoutSuccess": "Payment was received. We are waiting for subscription confirmation from billing.",
     "checkingStatus": "Checking subscription status every few seconds…",

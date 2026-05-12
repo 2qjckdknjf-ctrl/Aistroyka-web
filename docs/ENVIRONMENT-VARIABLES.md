@@ -55,6 +55,7 @@ Vercel может встречаться как исторический/доп�
 
 | Variable | Описание |
 |----------|----------|
+| `SUBSCRIPTION_GATE_DASHBOARD` | Server-only. `enforce`/`on` (или не задано) — при неактивном биллинге редирект с dashboard на `/subscribe`, **если** у tenant нет иного доступа. Доступ в кабинет без платной подписки: tenant в `billing_pilot_workspaces` или в allowlist env `BILLING_PILOT_WORKSPACE_IDS`; плюс стандартно Stripe `active`/`trialing` и tier PRO/ENTERPRISE. `off`, `pilot` или `bypass` — не применять редирект на subscribe вообще (staging/pilot; задавать явно в Workers). |
 | `STRIPE_SECRET_KEY` | Секретный ключ Stripe. |
 | `STRIPE_WEBHOOK_SECRET` | Webhook signing secret для Stripe. |
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Публичный ключ Stripe для клиента. |

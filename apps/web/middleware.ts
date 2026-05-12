@@ -135,14 +135,11 @@ export async function middleware(request: NextRequest) {
   }
   if (isAuthPage && user) {
     const next = request.nextUrl.searchParams.get("next") ?? undefined;
-    const hasExplicitNext = typeof next === "string" && next.trim().length > 0;
-    const { path } = hasExplicitNext
-      ? resolvePostAuthEntry({ locale, next, baseUrl: request.url })
-      : { path: `/${locale}/subscribe` };
+    const { path } = resolvePostAuthEntry({ locale, next, baseUrl: request.url });
     const nextUrl = new URL(path, request.url);
     const redir = NextResponse.redirect(nextUrl);
     mergeSupabaseSessionIntoResponse(sessionResponse, redir);
-    redir.headers.set("X-Auth-Redirect", "subscribe");
+    redir.headers.set("X-Auth-Redirect", "post-auth-entry");
     return applySecurityHeaders(redir, isProduction);
   }
 

@@ -648,6 +648,7 @@
       "faq": "FAQ",
       "privacy": "Privacy",
       "terms": "Termini",
+      "cabinet": "Dashboard",
       "requestDemo": "Richiedi demo",
       "login": "Accedi",
       "tryPlatform": "Prova la piattaforma",
@@ -1078,6 +1079,7 @@
   "subscriptionOnboarding": {
     "title": "Scegli un piano per attivare il workspace",
     "subtitle": "Dopo la conferma del pagamento verrai reindirizzato alla dashboard di configurazione.",
+    "dashboardAccessNotice": "Sei stato reindirizzato qui perché l'accesso alla dashboard richiede un abbonamento attivo o un pilota approvato. Scegli un piano qui sotto o contatta il supporto se l'accesso dovrebbe già essere attivo.",
     "status": "Stato abbonamento: {status}",
     "checkoutSuccess": "Pagamento ricevuto. Attendiamo la conferma finale dell'abbonamento.",
     "checkingStatus": "Verifichiamo lo stato dell'abbonamento ogni pochi secondi…",
