@@ -2532,6 +2532,8 @@
     "retry": "Retry",
     "checkUsageOrContactSupport": "You can check usage or contact support when available.",
     "healthNotAvailable": "Health not available",
+    "projectHealth": "Project health",
+    "data": "Data",
     "missing": "Missing",
     "delays": "Delays",
     "confidence": "Confidence",
