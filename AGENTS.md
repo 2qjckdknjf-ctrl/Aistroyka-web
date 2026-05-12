@@ -3,7 +3,7 @@
 - Do not use destructive git operations: no force push, no reset --hard, no history rewrite.
 - Do not delete or remove things without explicit necessity.
 - Run an audit or check state before performing risky or irreversible actions; prefer running automated tests for the code paths you change unless the task calls for a broader suite.
-- Do not break existing dashboard, auth flows, middleware, tenant logic, or platform-owner access gates when adding features.
+- Do not break existing dashboard, auth flows, middleware, tenant logic, or platform-owner access gates when adding features; keep a clear public path into the dashboard when the product exposes a cabinet entry, and avoid unexplained post-auth redirects to subscribe or billing when users expect the locale dashboard (pilot and test access should not feel like the cabinet vanished).
 - Do not commit secrets, .env files with real values, tokens, or build artifacts; use .gitignore and example files.
 - Prefer new work as isolated additions (components, routes, docs) over broad refactors; put reports and documentation under docs/ and phase subdirs (e.g. docs/mobile-rebuild/, docs/audit/).
 - Keep dashboard and public UI copy aligned with the active page locale (next-intl) and consistent product terminology; default to Russian when the user requests Russian; when changing user-visible strings, update en/ru/es/it message bundles and matching Android/iOS resources together.
@@ -17,7 +17,7 @@
 
 - Aistroyka is a monorepo; web application lives in apps/web (Next.js, App Router).
 - Root build: from repo root run `bun install` and `bun run build` (builds packages/contracts then apps/web).
-- Production runtime and DNS ownership is **Cloudflare Workers** (`apps/web/wrangler.toml`, OpenNext); use `bun run cf:build` then Wrangler deploy, and verify apex/www routes through Cloudflare when making production readiness claims. Do not run `bun run build` and `bun run cf:build` in parallel—concurrent Next/OpenNext work can corrupt `apps/web/.next`; run sequentially or remove `apps/web/.next` before retrying.
+- Production runtime and DNS ownership is **Cloudflare Workers** (`apps/web/wrangler.toml`, OpenNext); use `bun run cf:build` then Wrangler deploy, and verify apex/www routes through Cloudflare when making production readiness claims. Do not run `bun run build` and `bun run cf:build` in parallel—concurrent Next/OpenNext work can corrupt `apps/web/.next`; run sequentially or remove `apps/web/.next` before retrying. Web UI is App Router under `apps/web/app` (no `pages/` tree); root-level error UI uses `app/global-error.tsx`—reintroducing `pages/*` (for example a custom 500 page) can destabilize standalone or OpenNext builds, so validate with `cf:build` before relying on it.
 - iOS: AiStroykaManager and AiStroykaWorker (shared in ios/Shared); Android mirrors (android/shared); WorkerLite is deprecated as the primary product name.
 - Local iOS config: ios/Config/Secrets.xcconfig (gitignored) and Secrets.xcconfig.example; both apps use the same xcconfig.
 - Public site and dashboard coexist; locale routes under [locale]; public pages under (public), dashboard under (dashboard); web i18n uses next-intl message files for en/ru/es/it.
