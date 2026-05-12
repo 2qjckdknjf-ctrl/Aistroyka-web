@@ -125,11 +125,54 @@ jobs:
   pilot-e2e-audit:
     name: Post-deploy Playwright pilot E2E (optional)
     needs: pilot-smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
     continue-on-error: true
-    uses: ./.github/workflows/pilot-e2e-audit.yml
-    secrets: inherit
-    with:
-      locale: en
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref || github.ref }}
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2.15
+
+      - name: Require pilot E2E secrets
+        env:
+          BASE: ${{ secrets.PILOT_E2E_BASE_URL }}
+          EMAIL: ${{ secrets.PILOT_E2E_EMAIL }}
+          PASS: ${{ secrets.PILOT_E2E_PASSWORD }}
+        run: |
+          if [ -z "$BASE" ] || [ -z "$EMAIL" ] || [ -z "$PASS" ]; then
+            echo "::error::Set repository secrets PILOT_E2E_BASE_URL, PILOT_E2E_EMAIL, PILOT_E2E_PASSWORD (see workflow header comments)."
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build contracts (Playwright specs may import types)
+        run: bun run build:contracts
+
+      - name: Install Playwright Chromium
+        working-directory: apps/web
+        run: bunx playwright install --with-deps chromium
+
+      - name: Run pilot E2E suite
+        working-directory: apps/web
+        env:
+          PLAYWRIGHT_BASE_URL: ${{ secrets.PILOT_E2E_BASE_URL }}
+          PLAYWRIGHT_SKIP_WEB_SERVER: "1"
+          E2E_EMAIL: ${{ secrets.PILOT_E2E_EMAIL }}
+          E2E_PASSWORD: ${{ secrets.PILOT_E2E_PASSWORD }}
+          E2E_USER_EMAIL: ${{ secrets.PILOT_E2E_EMAIL }}
+          E2E_USER_PASSWORD: ${{ secrets.PILOT_E2E_PASSWORD }}
+          E2E_LOCALE: en
+          E2E_PROJECT_ID: ${{ secrets.PILOT_E2E_PROJECT_ID }}
+          E2E_DEVICE_ID: "ci-pilot-device-1"
+          E2E_DEVICE_ID_2: "ci-pilot-device-2"
+        run: bun run e2e:pilot
 
   # Phase 5: optional AI interaction probe (analyze-image + copilot stream terminal done).
   # Non-blocking: AI provider flakiness must not fail the deploy pipeline.

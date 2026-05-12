@@ -89,12 +89,12 @@ export function ConstructionHealthOverview({
   const displayClassification = healthAdjustment !== 0 ? classificationFromScore(adjustedScore) : healthResult.classification;
   const classificationClass =
     displayClassification === "Healthy"
-      ? "text-emerald-700"
+      ? "text-aistroyka-success"
       : displayClassification === "Moderate"
-        ? "text-blue-700"
+        ? "text-aistroyka-info"
         : displayClassification === "Unstable"
           ? "text-aistroyka-warning"
-          : "text-red-700";
+          : "text-aistroyka-error";
 
   return (
     <div className="card text-sm">

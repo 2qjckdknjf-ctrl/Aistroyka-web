@@ -21,4 +21,20 @@
     <string name="action_submit_report">Отправить отчёт</string>
     <string name="action_back_home">На главную</string>
     <string name="action_cancel_flow">Отмена (сбросить)</string>
+    <string name="worker_guide_title">Добро пожаловать в AiStroyka Worker</string>
+    <string name="worker_guide_subtitle">Короткий стартовый гайд для полевой отчётности.</string>
+    <string name="worker_guide_step_1">Войдите под назначенным аккаунтом исполнителя.</string>
+    <string name="worker_guide_step_2">Создайте отчёт и прикрепите чёткое фото с площадки.</string>
+    <string name="worker_guide_step_3">Отправьте отчёт, чтобы менеджер быстро его проверил.</string>
+    <string name="worker_guide_start">Начать работу</string>
+    <string name="worker_start_title">Старт без сомнений</string>
+    <string name="worker_start_progress_fmt">Прогресс запуска: выполнено %1$d/%2$d шагов</string>
+    <string name="worker_start_step_1">Начните смену и проверьте назначенные задачи на сегодня.</string>
+    <string name="worker_start_step_2">Создайте понятный ежедневный отчёт с фото-доказательствами.</string>
+    <string name="worker_start_step_3">Отправьте отчёт и быстро закройте обратную связь менеджера.</string>
+    <string name="worker_ai_hints_title">ИИ-подсказки на следующие шаги</string>
+    <string name="worker_ai_hint_1">Если есть очередь загрузок, возобновите её до конца смены.</string>
+    <string name="worker_ai_hint_2">Если статус задачи неясен, добавьте фото и короткую заметку в отчёт.</string>
+    <string name="worker_ai_guide_confidence_fmt">Уверенность ИИ-гайда: %1$d%%</string>
+    <string name="worker_ai_risk_signals_title">Сигналы риска</string>
 </resources>

@@ -5,7 +5,8 @@ import { useTranslations } from "next-intl";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, Badge, Button } from "@/components/ui";
 import type { ClientRequestPublic } from "@/lib/domain/client-requests/client-requests.types";
-import { clientRequestStatusBadgeClass, formatStatusLabel } from "../statusBadgeStyles";
+import { clientRequestStatusBadgeClass } from "../statusBadgeStyles";
+import { formatPortalStatus } from "@/lib/i18n/portal-status-labels";
 
 function kindLabel(k: string): string {
   return k.replace(/_/g, " ");
@@ -21,6 +22,7 @@ export function ClientPortalRequestsSection({
   canRespondToRequests: boolean;
 }) {
   const tDetail = useTranslations("dashboardDetail");
+  const tPortal = useTranslations("portalStatus");
   const queryClient = useQueryClient();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [feedbackText, setFeedbackText] = useState("");
@@ -36,7 +38,7 @@ export function ClientPortalRequestsSection({
   const respondMutation = useMutation({
     mutationFn: async (args: { requestId: string; body: Record<string, unknown> }) => {
       const res = await fetch(
-        `/api/v1/projects/${projectId}/client-requests/${args.requestId}/respond`,
+        `/api/v1/portal/projects/${projectId}/decisions/${args.requestId}/respond`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -90,7 +92,7 @@ export function ClientPortalRequestsSection({
               <Badge
                 className={clientRequestStatusBadgeClass(r.status)}
               >
-                {formatStatusLabel(r.status)}
+                {formatPortalStatus(r.status, "clientRequest", tPortal)}
               </Badge>
             </div>
 

@@ -12,10 +12,10 @@ function healthStatusStyles(c: HealthClassification): {
   tint: string;
   badgeVariant: "success" | "warning" | "danger" | "neutral";
 } {
-  if (c === "Healthy") return { bar: "border-l-emerald-500", tint: "bg-emerald-50/50", badgeVariant: "success" };
-  if (c === "Moderate") return { bar: "border-l-amber-500", tint: "bg-aistroyka-warning/20/40", badgeVariant: "warning" };
-  if (c === "Unstable" || c === "Critical") return { bar: "border-l-red-500", tint: "bg-aistroyka-error/10/40", badgeVariant: "danger" };
-  return { bar: "border-l-slate-300", tint: "bg-aistroyka-surface-raised/50", badgeVariant: "neutral" };
+  if (c === "Healthy") return { bar: "border-l-aistroyka-success", tint: "bg-aistroyka-success/10", badgeVariant: "success" };
+  if (c === "Moderate") return { bar: "border-l-aistroyka-warning", tint: "bg-aistroyka-warning/10", badgeVariant: "warning" };
+  if (c === "Unstable" || c === "Critical") return { bar: "border-l-aistroyka-error", tint: "bg-aistroyka-error/10", badgeVariant: "danger" };
+  return { bar: "border-l-aistroyka-border-strong", tint: "bg-aistroyka-surface-raised/50", badgeVariant: "neutral" };
 }
 
 function strategicBadgeVariant(c: StrategicClassification): "success" | "warning" | "danger" | "neutral" {

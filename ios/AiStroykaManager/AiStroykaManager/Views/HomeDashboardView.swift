@@ -8,6 +8,11 @@ import Shared
 
 struct HomeDashboardView: View {
     @State private var overview: OpsOverviewDTO?
+    @State private var activationStatus: ActivationStatusDTO?
+    @State private var helpHints: [HelpHintDTO] = []
+    @State private var guideSummary: String?
+    @State private var guideConfidence: Int?
+    @State private var guideRiskSignals: [HelpAssistantRiskSignalDTO] = []
     @State private var isLoading = true
     @State private var errorMessage: String?
 
@@ -32,6 +37,7 @@ struct HomeDashboardView: View {
     private var content: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
+                managerStartGuidanceCard
                 if let kpis = overview?.kpis {
                     kpiSection(kpis)
                 }
@@ -41,6 +47,83 @@ struct HomeDashboardView: View {
             }
             .padding()
         }
+    }
+
+    private var managerStartGuidanceCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(NSLocalizedString("mgr_start_title", comment: ""))
+                .font(.headline)
+            Text(
+                String(
+                    format: NSLocalizedString("mgr_start_progress_fmt", comment: ""),
+                    completedLaunchSteps,
+                    totalLaunchSteps
+                )
+            )
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+
+            Text("\(launchDone(activationStatus?.getStarted?.createProject) ? "✓" : "○") \(NSLocalizedString("mgr_start_step_1", comment: ""))")
+                .font(.subheadline)
+            Text("\(launchDone(activationStatus?.getStarted?.inviteTeam) ? "✓" : "○") \(NSLocalizedString("mgr_start_step_2", comment: ""))")
+                .font(.subheadline)
+            Text("\(launchDone(activationStatus?.getStarted?.addTask) ? "✓" : "○") \(NSLocalizedString("mgr_start_step_3", comment: ""))")
+                .font(.subheadline)
+
+            Text(NSLocalizedString("mgr_ai_hints_title", comment: ""))
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .padding(.top, 4)
+            if let guideSummary, !guideSummary.isEmpty {
+                Text(guideSummary)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            if let guideConfidence {
+                Text(
+                    String(
+                        format: NSLocalizedString("mgr_ai_guide_confidence_fmt", comment: ""),
+                        guideConfidence
+                    )
+                )
+                .font(.caption)
+            }
+            if helpHints.isEmpty {
+                Text("• \(NSLocalizedString("mgr_ai_hint_1", comment: ""))")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Text("• \(NSLocalizedString("mgr_ai_hint_2", comment: ""))")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } else {
+                ForEach(Array(helpHints.prefix(2).enumerated()), id: \.offset) { _, hint in
+                    Text("• \(hint.title)")
+                        .font(.caption)
+                    if !hint.reason.isEmpty {
+                        Text(hint.reason)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            if !guideRiskSignals.isEmpty {
+                Text(NSLocalizedString("mgr_ai_risk_signals_title", comment: ""))
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .padding(.top, 2)
+                ForEach(Array(guideRiskSignals.prefix(2).enumerated()), id: \.offset) { _, signal in
+                    Text("• \(signal.title)")
+                        .font(.caption)
+                    Text(signal.detail)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+        .padding()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(.secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
     private func kpiSection(_ kpis: OpsOverviewDTO.OpsOverviewKpis) -> some View {
@@ -131,6 +214,53 @@ struct HomeDashboardView: View {
     private func loadAsync() async {
         await runManagerLoad(isLoading: &isLoading, errorMessage: &errorMessage) {
             overview = try await ManagerAPI.opsOverview()
+            let activation = try? await ManagerAPI.activationStatus()
+            activationStatus = activation
+            if let getStarted = activation?.getStarted {
+                helpHints = (try? await ManagerAPI.helpHints(
+                    locale: supportedHelpLocale(),
+                    role: "manager",
+                    getStarted: getStarted
+                )) ?? []
+            } else {
+                helpHints = []
+            }
+            let assistant = try? await ManagerAPI.helpAssistant(
+                query: "",
+                locale: supportedHelpLocale(),
+                role: "manager",
+                pathname: "/dashboard",
+                activation: activation
+            )
+            await ManagerAPI.helpAssistantEvent(
+                type: "open",
+                locale: supportedHelpLocale(),
+                role: "manager",
+                pathname: "/dashboard"
+            )
+            guideSummary = assistant?.summary
+            guideConfidence = assistant?.confidence
+            guideRiskSignals = assistant?.riskSignals ?? []
         }
+    }
+
+    private var completedLaunchSteps: Int {
+        [
+            activationStatus?.getStarted?.createProject,
+            activationStatus?.getStarted?.inviteTeam,
+            activationStatus?.getStarted?.addTask,
+            activationStatus?.getStarted?.uploadReport,
+            activationStatus?.getStarted?.viewAi,
+        ].filter { $0 == true }.count
+    }
+
+    private var totalLaunchSteps: Int { 5 }
+
+    private func launchDone(_ value: Bool?) -> Bool { value == true }
+
+    private func supportedHelpLocale() -> String {
+        let preferred = Locale.preferredLanguages.first ?? "en"
+        let language = String(preferred.prefix(2)).lowercased()
+        return ["ru", "es", "it"].contains(language) ? language : "en"
     }
 }

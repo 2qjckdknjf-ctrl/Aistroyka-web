@@ -53,7 +53,7 @@ describe("PATCH /api/v1/projects/:id/client-portal", () => {
 
   it("returns data on success", async () => {
     vi.mocked(clientPortalService.updateClientPortalSettings).mockResolvedValue({
-      data: { client_portal_enabled: true, client_show_budget_summary: false },
+      data: { client_portal_enabled: true },
       error: "",
     });
     const req = new Request("https://test/api/v1/projects/p1/client-portal", {
@@ -65,5 +65,16 @@ describe("PATCH /api/v1/projects/:id/client-portal", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.data.client_portal_enabled).toBe(true);
+  });
+
+  it("rejects customer budget visibility updates", async () => {
+    const req = new Request("https://test/api/v1/projects/p1/client-portal", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ client_show_budget_summary: true }),
+    });
+    const res = await PATCH(req, { params: Promise.resolve({ id: "p1" }) });
+    expect(res.status).toBe(400);
+    expect(clientPortalService.updateClientPortalSettings).not.toHaveBeenCalled();
   });
 });

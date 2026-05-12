@@ -21,4 +21,20 @@
     <string name="action_submit_report">Submit report</string>
     <string name="action_back_home">Back home</string>
     <string name="action_cancel_flow">Cancel (reset)</string>
+    <string name="worker_guide_title">Welcome to AiStroyka Worker</string>
+    <string name="worker_guide_subtitle">Quick first-run guide for field reporting.</string>
+    <string name="worker_guide_step_1">Sign in with your assigned worker account.</string>
+    <string name="worker_guide_step_2">Create a report and attach a clear site photo.</string>
+    <string name="worker_guide_step_3">Submit the report so managers can review it quickly.</string>
+    <string name="worker_guide_start">Start working</string>
+    <string name="worker_start_title">Start without doubts</string>
+    <string name="worker_start_progress_fmt">Startup progress: %1$d/%2$d steps complete</string>
+    <string name="worker_start_step_1">Start shift and confirm today\'s assigned tasks.</string>
+    <string name="worker_start_step_2">Create a clear daily report with photo evidence.</string>
+    <string name="worker_start_step_3">Submit report and resolve manager feedback quickly.</string>
+    <string name="worker_ai_hints_title">AI hints for next steps</string>
+    <string name="worker_ai_hint_1">If uploads are pending, resume queue before shift end.</string>
+    <string name="worker_ai_hint_2">If task status is unclear, add photo and short note in report.</string>
+    <string name="worker_ai_guide_confidence_fmt">AI guide confidence: %1$d%%</string>
+    <string name="worker_ai_risk_signals_title">Risk signals</string>
 </resources>

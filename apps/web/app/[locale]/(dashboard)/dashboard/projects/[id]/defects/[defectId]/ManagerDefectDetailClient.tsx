@@ -5,7 +5,8 @@ import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@/i18n/navigation";
 import { Card, Button, Badge, Skeleton, EmptyState } from "@/components/ui";
-import { defectStatusBadgeClass, formatStatusLabel } from "../../statusBadgeStyles";
+import { defectStatusBadgeClass } from "../../statusBadgeStyles";
+import { formatPortalStatus } from "@/lib/i18n/portal-status-labels";
 
 type Event = {
   id: string;
@@ -55,6 +56,7 @@ async function fetchDetail(projectId: string, defectId: string): Promise<Detail>
 
 export function ManagerDefectDetailClient({ projectId, defectId }: { projectId: string; defectId: string }) {
   const tDetail = useTranslations("dashboardDetail");
+  const tPortal = useTranslations("portalStatus");
   const queryClient = useQueryClient();
   const [toStatus, setToStatus] = useState("");
   const [note, setNote] = useState("");
@@ -163,7 +165,7 @@ export function ManagerDefectDetailClient({ projectId, defectId }: { projectId: 
       <Card className="p-4">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <h1 className="text-aistroyka-title3 font-semibold">{row.title}</h1>
-          <Badge className={defectStatusBadgeClass(row.status)}>{formatStatusLabel(row.status)}</Badge>
+          <Badge className={defectStatusBadgeClass(row.status)}>{formatPortalStatus(row.status, "defect", tPortal)}</Badge>
         </div>
         <p className="mt-1 text-xs text-aistroyka-text-tertiary">
           {tDetail("createdBy")} {row.created_by.slice(0, 8)}… {row.is_blocking ? `· ${tDetail("blockingHandover")}` : ""}

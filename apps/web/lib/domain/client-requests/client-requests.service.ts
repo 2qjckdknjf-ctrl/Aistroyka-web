@@ -16,6 +16,8 @@ import type {
   ProjectClientRequestRow,
   RespondToClientRequestInput,
   ClientRequestEventPublic,
+  ClientRequestDecisionType,
+  ClientRequestPriority,
 } from "./client-requests.types";
 
 function normalizeChoiceOptions(raw: unknown): string[] | null {
@@ -36,6 +38,12 @@ export function rowToPublic(r: ProjectClientRequestRow): ClientRequestPublic {
     choice_options: normalizeChoiceOptions(r.choice_options),
     linked_entity_type: r.linked_entity_type,
     linked_entity_id: r.linked_entity_id,
+    decision_type: r.decision_type,
+    priority: r.priority,
+    due_at: r.due_at,
+    customer_visible_amount:
+      r.customer_visible_amount != null ? Number(r.customer_visible_amount) : null,
+    customer_visible_currency: r.customer_visible_currency,
     requested_at: r.requested_at,
     responded_at: r.responded_at,
     response_value: r.response_value,
@@ -96,6 +104,20 @@ const KINDS: CreateClientRequestInput["kind"][] = [
   "document_review",
 ];
 
+const DECISION_TYPES: ClientRequestDecisionType[] = [
+  "design_choice",
+  "material_choice",
+  "estimate_approval",
+  "cost_change_customer_facing",
+  "schedule_change",
+  "document_approval",
+  "work_acceptance",
+  "general_question",
+  "other",
+];
+
+const PRIORITIES: ClientRequestPriority[] = ["low", "medium", "high", "critical"];
+
 export async function createClientRequest(
   supabase: SupabaseClient,
   ctx: TenantContext,
@@ -118,6 +140,25 @@ export async function createClientRequest(
     return { data: null, error: "choice_options only valid for kind choice" };
   }
 
+  if (input.decision_type != null && !DECISION_TYPES.includes(input.decision_type)) {
+    return { data: null, error: "Invalid decision_type" };
+  }
+  const priority: ClientRequestPriority = input.priority ?? "medium";
+  if (!PRIORITIES.includes(priority)) return { data: null, error: "Invalid priority" };
+
+  const customerAmt = input.customer_visible_amount;
+  if (customerAmt != null) {
+    if (!Number.isFinite(customerAmt) || customerAmt < 0) {
+      return { data: null, error: "Invalid customer_visible_amount" };
+    }
+    if (input.decision_type !== "estimate_approval" && input.decision_type !== "cost_change_customer_facing") {
+      return {
+        data: null,
+        error: "customer_visible_amount requires estimate_approval or cost_change_customer_facing decision_type",
+      };
+    }
+  }
+
   const linked = await validateLinkedEntity(
     supabase,
     ctx.tenantId,
@@ -137,6 +178,12 @@ export async function createClientRequest(
     choice_options: input.kind === "choice" ? choice_options : null,
     linked_entity_type: input.linked_entity_type ?? null,
     linked_entity_id: input.linked_entity_id ?? null,
+    decision_type: input.decision_type ?? null,
+    priority,
+    assigned_to: input.assigned_to ?? null,
+    due_at: input.due_at ?? null,
+    customer_visible_amount: customerAmt ?? null,
+    customer_visible_currency: input.customer_visible_currency?.trim() || null,
     requested_by: ctx.userId,
   });
   if (!row) return { data: null, error: "Create failed" };
@@ -147,7 +194,7 @@ export async function createClientRequest(
     request_id: row.id,
     actor_user_id: ctx.userId,
     event_type: "created",
-    payload: { kind: row.kind, action_mode: row.action_mode },
+    payload: { kind: row.kind, action_mode: row.action_mode, decision_type: row.decision_type ?? null },
   });
 
   return { data: rowToManager(row), error: "" };
@@ -312,7 +359,7 @@ export async function respondToClientRequest(
     request_id: requestId,
     actor_user_id: ctx.userId,
     event_type: "responded",
-    payload: { kind: row.kind },
+    payload: { kind: row.kind, response_value: validated.value },
   });
 
   return { data: rowToPublic(updated), error: "" };
@@ -347,7 +394,7 @@ export async function patchClientRequestByManager(
       request_id: requestId,
       actor_user_id: ctx.userId,
       event_type: "cancelled",
-      payload: {},
+      payload: { prior_status: row.status },
     });
     return { data: rowToManager(updated), error: "" };
   }
@@ -366,7 +413,7 @@ export async function patchClientRequestByManager(
       request_id: requestId,
       actor_user_id: ctx.userId,
       event_type: "completed",
-      payload: {},
+      payload: { prior_status: row.status },
     });
     return { data: rowToManager(updated), error: "" };
   }

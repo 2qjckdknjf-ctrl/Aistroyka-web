@@ -5,6 +5,10 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import ai.aistroyka.shared.ApiError
 import ai.aistroyka.shared.AuthService
+import ai.aistroyka.shared.GetStartedDto
+import ai.aistroyka.shared.HelpApi
+import ai.aistroyka.shared.HelpAssistantRiskSignalDto
+import ai.aistroyka.shared.HelpHintDto
 import ai.aistroyka.shared.ManagerApi
 import ai.aistroyka.shared.ProjectDto
 import ai.aistroyka.shared.ReportAnalysisStatusDto
@@ -16,6 +20,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 data class ManagerUiState(
     val email: String = "",
@@ -32,6 +37,11 @@ data class ManagerUiState(
     val selectedReportId: String? = null,
     val reportDetail: ReportDetailDto? = null,
     val analysisStatus: ReportAnalysisStatusDto? = null,
+    val getStarted: GetStartedDto? = null,
+    val helpHints: List<HelpHintDto> = emptyList(),
+    val guideSummary: String? = null,
+    val guideConfidence: Int? = null,
+    val guideRiskSignals: List<HelpAssistantRiskSignalDto> = emptyList(),
     /** media row id -> preview URL from `GET projects/:id/media` */
     val mediaPreviewUrls: Map<String, String> = emptyMap(),
     val reviewNote: String = "",
@@ -104,6 +114,50 @@ class ManagerViewModel(application: Application) : AndroidViewModel(application)
                 val pending = overview?.queues?.reportsPendingReview?.size ?: 0
                 val opsLine = "Reports pending review (ops queue): $pending"
                 val first = projects.firstOrNull()?.id
+                val role = mapHelpRole(me?.role)
+                val locale = supportedHelpLocale()
+                val activationStatus = try {
+                    HelpApi.activationStatus()
+                } catch (_: Exception) {
+                    null
+                }
+                val helpHints = if (activationStatus?.getStarted != null) {
+                    try {
+                        HelpApi.helpHints(
+                            locale = locale,
+                            role = role,
+                            getStarted = activationStatus.getStarted
+                        )
+                    } catch (_: Exception) {
+                        emptyList()
+                    }
+                } else {
+                    emptyList()
+                }
+                val assistant = try {
+                    HelpApi.helpAssistant(
+                        query = "",
+                        locale = locale,
+                        role = role,
+                        pathname = "/dashboard",
+                        getStarted = activationStatus?.getStarted,
+                        projectCount = activationStatus?.projectCount,
+                        taskCount = activationStatus?.taskCount,
+                        reportCount = activationStatus?.reportCount,
+                        hasAiInsight = activationStatus?.hasAiInsight,
+                    )
+                } catch (_: Exception) {
+                    null
+                }
+                try {
+                    HelpApi.helpAssistantEvent(
+                        type = "open",
+                        locale = locale,
+                        role = role,
+                        pathname = "/dashboard",
+                    )
+                } catch (_: Exception) {
+                }
                 _state.update {
                     it.copy(
                         busy = false,
@@ -111,6 +165,11 @@ class ManagerViewModel(application: Application) : AndroidViewModel(application)
                         projects = projects,
                         selectedProjectId = it.selectedProjectId ?: first,
                         opsPendingLine = opsLine,
+                        getStarted = activationStatus?.getStarted,
+                        helpHints = helpHints,
+                        guideSummary = assistant?.summary,
+                        guideConfidence = assistant?.confidence,
+                        guideRiskSignals = assistant?.riskSignals.orEmpty(),
                     )
                 }
             } catch (e: ApiError) {
@@ -256,6 +315,23 @@ class ManagerViewModel(application: Application) : AndroidViewModel(application)
             } catch (e: Exception) {
                 _state.update { it.copy(busy = false, banner = e.message ?: "Review failed") }
             }
+        }
+    }
+
+    private fun mapHelpRole(role: String?): String {
+        return when (role?.lowercase(Locale.ROOT)) {
+            "admin" -> "admin"
+            "client" -> "client"
+            "owner" -> "owner"
+            else -> "manager"
+        }
+    }
+
+    private fun supportedHelpLocale(): String {
+        val language = Locale.getDefault().language.lowercase(Locale.ROOT)
+        return when (language) {
+            "ru", "es", "it" -> language
+            else -> "en"
         }
     }
 }

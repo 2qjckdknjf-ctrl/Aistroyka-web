@@ -34,7 +34,7 @@ export function SummaryCard({
         <p className="mt-2 text-xs text-aistroyka-text-tertiary">{tDetail("data")}: {summary.dataSufficiency}</p>
       )}
       {"missingDataDisclaimer" in summary && summary.missingDataDisclaimer && (
-        <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">{summary.missingDataDisclaimer}</p>
+        <p className="mt-2 text-xs text-aistroyka-warning">{summary.missingDataDisclaimer}</p>
       )}
     </IntelligenceCard>
   );

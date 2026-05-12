@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, Skeleton, EmptyState, Button, Input } from "@/components/ui";
+import { CustomerEstimatesManagerPanel } from "./CustomerEstimatesManagerPanel";
 
 interface BudgetSummary {
   planned_total: number;
@@ -122,6 +123,7 @@ export function ProjectEstimatePanel({ projectId }: { projectId: string }) {
 
   return (
     <div className="p-4 space-y-6">
+      <CustomerEstimatesManagerPanel projectId={projectId} />
       <p className="text-aistroyka-text-secondary text-sm">
         {tDetail("roughCostIntelligenceHint")}
       </p>
@@ -227,7 +229,7 @@ export function ProjectEstimatePanel({ projectId }: { projectId: string }) {
           </Button>
         </div>
         {fromImageMutation.isError && (
-          <p className="mt-2 text-sm text-red-600">
+          <p className="mt-2 text-sm text-aistroyka-error">
             {fromImageMutation.error instanceof Error
               ? formatEstimateError(fromImageMutation.error.message, tDetail)
               : tDetail("estimateFailed")}

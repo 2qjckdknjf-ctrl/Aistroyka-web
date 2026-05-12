@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { TenantContext } from "@/lib/tenant/tenant.types";
 import { canManageProjects, canReadProjects } from "@/lib/tenant/tenant.policy";
+import { canReadClientPortalView } from "@/lib/domain/stakeholders/stakeholders.policy";
 
 export async function canManageChangeOrders(
   supabase: SupabaseClient,
@@ -17,7 +18,7 @@ export async function canReadChangeOrders(
   ctx: TenantContext,
   projectId: string
 ): Promise<boolean> {
-  void supabase;
-  void projectId;
-  return !!ctx.tenantId && !!ctx.userId && canReadProjects(ctx);
+  if (!ctx.tenantId || !ctx.userId) return false;
+  if (canReadProjects(ctx)) return true;
+  return canReadClientPortalView(supabase, ctx, projectId);
 }

@@ -179,6 +179,121 @@ enum WorkerAPI {
             idempotencyKey: idempotencyKey
         )
     }
+
+    /// GET /api/v1/activation/status — onboarding/checklist progress.
+    static func activationStatus() async throws -> WorkerActivationStatusDTO {
+        try await APIClient.shared.request(path: "activation/status")
+    }
+
+    /// POST /api/v1/help/hints — localized hints for next steps.
+    static func helpHints(locale: String, role: String, getStarted: WorkerGetStartedStatusDTO?) async throws -> [WorkerHelpHintDTO] {
+        struct Body: Encodable {
+            let locale: String
+            let role: String
+            let getStarted: WorkerGetStartedStatusDTO?
+        }
+        let r: WorkerHelpHintsResponseDTO = try await APIClient.shared.request(
+            path: "help/hints",
+            method: "POST",
+            body: Body(locale: locale, role: role, getStarted: getStarted)
+        )
+        return r.hints ?? []
+    }
+
+    static func helpAssistant(
+        query: String,
+        locale: String,
+        role: String,
+        pathname: String,
+        activation: WorkerActivationStatusDTO?
+    ) async throws -> WorkerHelpAssistantResponseDTO {
+        struct Body: Encodable {
+            let query: String
+            let locale: String
+            let role: String
+            let pathname: String
+            let getStarted: WorkerGetStartedStatusDTO?
+            let projectCount: Int?
+            let taskCount: Int?
+            let reportCount: Int?
+            let hasAiInsight: Bool?
+        }
+        let body = Body(
+            query: query,
+            locale: locale,
+            role: role,
+            pathname: pathname,
+            getStarted: activation?.getStarted,
+            projectCount: activation?.projectCount,
+            taskCount: activation?.taskCount,
+            reportCount: activation?.reportCount,
+            hasAiInsight: activation?.hasAiInsight
+        )
+        return try await APIClient.shared.request(path: "help/assistant", method: "POST", body: body)
+    }
+
+    static func helpAssistantEvent(type: String, locale: String, role: String, pathname: String) async {
+        struct Body: Encodable {
+            let type: String
+            let locale: String
+            let role: String
+            let pathname: String
+        }
+        _ = try? await APIClient.shared.request(
+            path: "help/assistant/events",
+            method: "POST",
+            body: Body(type: type, locale: locale, role: role, pathname: pathname)
+        ) as WorkerHelpAssistantEventAckDTO
+    }
 }
 
 private struct EmptyBody: Encodable {}
+
+struct WorkerActivationStatusDTO: Decodable {
+    let projectCount: Int?
+    let hasInvited: Bool?
+    let taskCount: Int?
+    let reportCount: Int?
+    let hasAiInsight: Bool?
+    let showOnboarding: Bool?
+    let getStarted: WorkerGetStartedStatusDTO?
+}
+
+struct WorkerGetStartedStatusDTO: Codable {
+    let createProject: Bool?
+    let inviteTeam: Bool?
+    let addTask: Bool?
+    let uploadReport: Bool?
+    let viewAi: Bool?
+}
+
+struct WorkerHelpHintDTO: Decodable {
+    let step: String
+    let title: String
+    let reason: String
+    let action: String
+    let href: String
+}
+
+struct WorkerHelpHintsResponseDTO: Decodable {
+    let hints: [WorkerHelpHintDTO]?
+}
+
+struct WorkerHelpAssistantRiskSignalDTO: Decodable {
+    let id: String
+    let title: String
+    let detail: String
+    let severity: String
+    let href: String
+}
+
+struct WorkerHelpAssistantResponseDTO: Decodable {
+    let summary: String
+    let answer: String
+    let riskSignals: [WorkerHelpAssistantRiskSignalDTO]?
+    let confidence: Int?
+}
+
+struct WorkerHelpAssistantEventAckDTO: Decodable {
+    let ok: Bool?
+}

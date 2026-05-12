@@ -6,8 +6,8 @@ import { IntelligenceCard } from "./IntelligenceCard";
 
 const LABEL_CLASS: Record<string, string> = {
   healthy: "text-aistroyka-success",
-  moderate: "text-amber-600 dark:text-amber-400",
-  unstable: "text-amber-700 dark:text-amber-300",
+  moderate: "text-aistroyka-warning",
+  unstable: "text-aistroyka-warning",
   critical: "text-aistroyka-error",
 };
 
@@ -60,7 +60,7 @@ export function ProjectHealthPanel({
         <p className="mt-2 text-xs text-aistroyka-text-tertiary">{tDetail("confidence")}: {health.confidence}</p>
       )}
       {"missingDataDisclaimer" in health && health.missingDataDisclaimer && (
-        <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">{health.missingDataDisclaimer}</p>
+        <p className="mt-2 text-xs text-aistroyka-warning">{health.missingDataDisclaimer}</p>
       )}
     </IntelligenceCard>
   );

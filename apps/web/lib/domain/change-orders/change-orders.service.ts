@@ -7,6 +7,7 @@ import type {
   ChangeOrderKind,
   ChangeOrderListItem,
   ChangeOrderPublicDetail,
+  ChangeOrderPublicListItem,
   ChangeOrderRow,
   ChangeOrderStatus,
   BudgetImpactLevel,
@@ -53,11 +54,11 @@ function toPublicDetail(row: ChangeOrderRow, events: import("./change-orders.typ
     title: row.title,
     description: row.description,
     schedule_impact_level: row.schedule_impact_level,
-    budget_impact_level: row.budget_impact_level,
     schedule_impact_summary: row.schedule_impact_summary,
-    budget_impact_summary: row.budget_impact_summary,
     schedule_delta_days: row.schedule_delta_days,
-    budget_delta_amount: row.budget_delta_amount,
+    customer_amount_delta:
+      row.customer_amount_delta != null ? Number(row.customer_amount_delta) : null,
+    currency: row.currency ?? "RUB",
     has_linked_discussion: row.linked_discussion_id != null,
     has_linked_document: row.linked_document_id != null,
     has_linked_request: row.linked_request_id != null,
@@ -80,7 +81,7 @@ export async function listChangeOrders(
   supabase: SupabaseClient,
   ctx: TenantContext,
   projectId: string
-): Promise<{ data: ChangeOrderListItem[] | null; error: string }> {
+): Promise<{ data: Array<ChangeOrderListItem | ChangeOrderPublicListItem> | null; error: string }> {
   if (!ctx.tenantId || !ctx.userId) return { data: null, error: "Tenant required" };
   if (!(await canReadChangeOrders(supabase, ctx, projectId))) {
     return { data: null, error: "Insufficient rights" };
@@ -89,6 +90,21 @@ export async function listChangeOrders(
   const rows = await repo.listByProject(supabase, projectId, ctx.tenantId, {
     excludeDraft: !isMgr,
   });
+  if (!isMgr) {
+    return {
+      data: rows.map((row) => ({
+        id: row.id,
+        kind: row.kind,
+        status: row.status,
+        title: row.title,
+        updated_at: row.updated_at,
+        customer_amount_delta:
+          row.customer_amount_delta != null ? Number(row.customer_amount_delta) : null,
+        currency: row.currency ?? "RUB",
+      })),
+      error: "",
+    };
+  }
   return { data: rows, error: "" };
 }
 
@@ -127,6 +143,7 @@ export async function createChangeOrder(
     kind: ChangeOrderKind;
     title: string;
     description?: string | null;
+    reason?: string | null;
     initial_status?: ChangeOrderStatus;
     schedule_impact_level?: ScheduleImpactLevel;
     budget_impact_level?: BudgetImpactLevel;
@@ -134,10 +151,14 @@ export async function createChangeOrder(
     budget_impact_summary?: string | null;
     schedule_delta_days?: number | null;
     budget_delta_amount?: number | null;
+    customer_amount_delta?: number | null;
+    currency?: string | null;
     linked_discussion_id?: string | null;
     linked_document_id?: string | null;
     linked_request_id?: string | null;
     linked_milestone_id?: string | null;
+    linked_customer_estimate_id?: string | null;
+    internal_cost_item_id?: string | null;
   }
 ): Promise<{ data: ChangeOrderListItem | null; error: string }> {
   if (!ctx.tenantId || !ctx.userId) return { data: null, error: "Tenant required" };
@@ -169,16 +190,21 @@ export async function createChangeOrder(
     status,
     title,
     description: input.description ?? null,
+    reason: input.reason ?? null,
     schedule_impact_level: sch as ScheduleImpactLevel,
     budget_impact_level: bud as BudgetImpactLevel,
     schedule_impact_summary: input.schedule_impact_summary ?? null,
     budget_impact_summary: input.budget_impact_summary ?? null,
     schedule_delta_days: input.schedule_delta_days ?? null,
     budget_delta_amount: input.budget_delta_amount ?? null,
+    customer_amount_delta: input.customer_amount_delta ?? null,
+    currency: (input.currency?.trim() || "RUB"),
     linked_discussion_id: input.linked_discussion_id ?? null,
     linked_document_id: input.linked_document_id ?? null,
     linked_request_id: input.linked_request_id ?? null,
     linked_milestone_id: input.linked_milestone_id ?? null,
+    linked_customer_estimate_id: input.linked_customer_estimate_id ?? null,
+    internal_cost_item_id: input.internal_cost_item_id ?? null,
     created_by: ctx.userId,
   });
   if (!row) return { data: null, error: "Create failed" };
@@ -203,6 +229,9 @@ export async function createChangeOrder(
       title: row.title,
       schedule_impact_level: row.schedule_impact_level,
       budget_impact_level: row.budget_impact_level,
+      customer_amount_delta:
+        row.customer_amount_delta != null ? Number(row.customer_amount_delta) : null,
+      currency: row.currency ?? "RUB",
       updated_at: row.updated_at,
     },
     error: "",
@@ -219,6 +248,7 @@ export async function updateChangeOrderContent(
   input: Partial<{
     title: string;
     description: string | null;
+    reason: string | null;
     kind: ChangeOrderKind;
     schedule_impact_level: ScheduleImpactLevel;
     budget_impact_level: BudgetImpactLevel;
@@ -226,10 +256,14 @@ export async function updateChangeOrderContent(
     budget_impact_summary: string | null;
     schedule_delta_days: number | null;
     budget_delta_amount: number | null;
+    customer_amount_delta: number | null;
+    currency: string;
     linked_discussion_id: string | null;
     linked_document_id: string | null;
     linked_request_id: string | null;
     linked_milestone_id: string | null;
+    linked_customer_estimate_id: string | null;
+    internal_cost_item_id: string | null;
   }>
 ): Promise<{ ok: boolean; error: string }> {
   if (!ctx.tenantId || !ctx.userId) return { ok: false, error: "Tenant required" };
@@ -249,6 +283,7 @@ export async function updateChangeOrderContent(
     patch.title = t;
   }
   if (input.description !== undefined) patch.description = input.description;
+  if (input.reason !== undefined) patch.reason = input.reason;
   if (input.kind !== undefined) {
     if (!KINDS.includes(input.kind)) return { ok: false, error: "Invalid kind" };
     patch.kind = input.kind;
@@ -259,10 +294,19 @@ export async function updateChangeOrderContent(
   if (input.budget_impact_summary !== undefined) patch.budget_impact_summary = input.budget_impact_summary;
   if (input.schedule_delta_days !== undefined) patch.schedule_delta_days = input.schedule_delta_days;
   if (input.budget_delta_amount !== undefined) patch.budget_delta_amount = input.budget_delta_amount;
+  if (input.customer_amount_delta !== undefined) patch.customer_amount_delta = input.customer_amount_delta;
+  if (input.currency !== undefined) {
+    const c = input.currency.trim();
+    if (c.length < 1) return { ok: false, error: "Currency required" };
+    patch.currency = c;
+  }
   if (input.linked_discussion_id !== undefined) patch.linked_discussion_id = input.linked_discussion_id;
   if (input.linked_document_id !== undefined) patch.linked_document_id = input.linked_document_id;
   if (input.linked_request_id !== undefined) patch.linked_request_id = input.linked_request_id;
   if (input.linked_milestone_id !== undefined) patch.linked_milestone_id = input.linked_milestone_id;
+  if (input.linked_customer_estimate_id !== undefined)
+    patch.linked_customer_estimate_id = input.linked_customer_estimate_id;
+  if (input.internal_cost_item_id !== undefined) patch.internal_cost_item_id = input.internal_cost_item_id;
 
   const ok = await repo.updateChangeOrder(supabase, changeOrderId, ctx.tenantId, patch);
   return ok ? { ok: true, error: "" } : { ok: false, error: "Update failed" };
@@ -307,4 +351,57 @@ export async function transitionChangeOrder(
   });
 
   return { ok: true, error: "" };
+}
+
+/**
+ * Portal stakeholder approves or rejects a change order awaiting customer decision.
+ * Managers must use {@link transitionChangeOrder} instead.
+ */
+export async function respondToChangeOrderByCustomer(
+  supabase: SupabaseClient,
+  ctx: TenantContext,
+  projectId: string,
+  changeOrderId: string,
+  decision: "approve" | "reject"
+): Promise<{ data: ChangeOrderPublicDetail | null; error: string }> {
+  if (!ctx.tenantId || !ctx.userId) return { data: null, error: "Tenant required" };
+  if (!(await canReadChangeOrders(supabase, ctx, projectId))) {
+    return { data: null, error: "Insufficient rights" };
+  }
+  if (await canManageChangeOrders(supabase, ctx, projectId)) {
+    return { data: null, error: "Insufficient rights" };
+  }
+  const row = await repo.getById(supabase, changeOrderId, ctx.tenantId);
+  if (!row || row.project_id !== projectId) return { data: null, error: "Not found" };
+  if (row.status === "draft") return { data: null, error: "Not found" };
+
+  const from = row.status;
+  const toStatus: ChangeOrderStatus = decision === "approve" ? "approved" : "rejected";
+  if (!allowedNext(from, toStatus)) {
+    return { data: null, error: "Customer response not allowed for this status" };
+  }
+
+  const now = new Date().toISOString();
+  const approvalPatch =
+    decision === "approve"
+      ? { status: toStatus, approved_by_customer: ctx.userId, approved_at: now }
+      : { status: toStatus, approved_by_customer: null as string | null, approved_at: null as string | null };
+
+  const ok = await repo.updateChangeOrder(supabase, changeOrderId, ctx.tenantId, approvalPatch);
+  if (!ok) return { data: null, error: "Update failed" };
+
+  await repo.insertEvent(supabase, {
+    tenant_id: ctx.tenantId,
+    project_id: projectId,
+    change_order_id: changeOrderId,
+    from_status: from,
+    to_status: toStatus,
+    actor_user_id: ctx.userId,
+    note: decision === "approve" ? "Customer approved" : "Customer rejected",
+  });
+
+  const fresh = await repo.getById(supabase, changeOrderId, ctx.tenantId);
+  if (!fresh) return { data: null, error: "Not found" };
+  const events = await repo.listEvents(supabase, changeOrderId, ctx.tenantId);
+  return { data: toPublicDetail(fresh, events), error: "" };
 }

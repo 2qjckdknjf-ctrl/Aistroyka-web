@@ -28,7 +28,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-[var(--bg-main)]" style={{ background: "linear-gradient(180deg, #0B0F19 0%, #05070d 100%)" }}>
+    <div className="flex min-h-screen flex-col bg-aistroyka-bg-primary">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}

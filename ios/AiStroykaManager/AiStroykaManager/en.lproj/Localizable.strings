@@ -158,3 +158,13 @@
 "mgr_worker" = "Worker";
 "mgr_worker_section" = "Worker";
 "mgr_empty_default_title" = "Nothing here yet";
+"mgr_start_title" = "Start without doubts";
+"mgr_start_progress_fmt" = "Startup progress: %d/%d steps complete";
+"mgr_start_step_1" = "Open project queue and confirm pending approvals.";
+"mgr_start_step_2" = "Review reports with missing evidence and assign follow-up tasks.";
+"mgr_start_step_3" = "Track AI insights and close high-risk items first.";
+"mgr_ai_hints_title" = "AI hints for next steps";
+"mgr_ai_hint_1" = "If overdue tasks grow, rebalance owners today.";
+"mgr_ai_hint_2" = "If reports are delayed, escalate blockers in team channel.";
+"mgr_ai_guide_confidence_fmt" = "AI guide confidence: %d%%";
+"mgr_ai_risk_signals_title" = "Risk signals";

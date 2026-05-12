@@ -12,7 +12,7 @@ const READINESS = ["r1", "r2", "r3", "r4"] as const;
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "public.enterprise" });
-  return { title: `${t("title")} | Aistroyka`, description: t("metaDescription") };
+  return { title: t("title"), description: t("metaDescription") };
 }
 
 export default async function EnterprisePage({ params }: Props) {

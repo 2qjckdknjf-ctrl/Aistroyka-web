@@ -1,0 +1,41 @@
+/**
+ * GET /api/v1/portal/projects/:id/estimates — customer-facing estimates only.
+ */
+
+import { NextResponse } from "next/server";
+import { createClientFromRequest } from "@/lib/supabase/server";
+import {
+  getTenantContextFromRequest,
+  requireTenant,
+  TenantRequiredError,
+  TenantForbiddenError,
+} from "@/lib/tenant";
+import { getPortalProjectEstimates } from "@/lib/domain/portal/portal.service";
+
+export const dynamic = "force-dynamic";
+
+export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
+  const { id: projectId } = await context.params;
+  if (!projectId) return NextResponse.json({ error: "Missing project id" }, { status: 400 });
+
+  let ctx: Awaited<ReturnType<typeof getTenantContextFromRequest>>;
+  try {
+    ctx = await getTenantContextFromRequest(request);
+  } catch (e) {
+    if (e instanceof TenantForbiddenError) return NextResponse.json({ error: e.message }, { status: 403 });
+    throw e;
+  }
+  try {
+    requireTenant(ctx);
+  } catch (e) {
+    if (e instanceof TenantRequiredError) return NextResponse.json({ error: e.message }, { status: 401 });
+    throw e;
+  }
+
+  const supabase = await createClientFromRequest(request);
+  const { data, error } = await getPortalProjectEstimates(supabase, ctx, projectId);
+  if (error === "Insufficient rights") return NextResponse.json({ error }, { status: 403 });
+  if (error === "Tenant required") return NextResponse.json({ error }, { status: 401 });
+  if (error) return NextResponse.json({ error }, { status: 400 });
+  return NextResponse.json({ data: data ?? [] });
+}

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Link, usePathname } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
+import { Logo } from "@/components/brand/Logo";
 
 const PRIMARY_NAV = [
   { href: "/platform", key: "platform" as const },
@@ -36,12 +37,8 @@ export function PublicHeader() {
   return (
     <header className="sticky top-0 z-50 border-b border-aistroyka-border-subtle bg-aistroyka-bg-primary py-3 backdrop-blur-md">
       <div className="mx-auto flex min-w-0 max-w-7xl items-center justify-between gap-2 rounded-[var(--aistroyka-radius-xl)] border border-aistroyka-border-subtle bg-aistroyka-bg-secondary px-3 py-2 shadow-[var(--aistroyka-shadow-e1)] sm:gap-4 sm:px-6 lg:px-8">
-        <Link
-          href="/"
-          className="shrink-0 font-heading text-[var(--aistroyka-font-title3)] font-semibold uppercase tracking-[0.14em] text-aistroyka-accent"
-        >
-          AISTROYKA
-        </Link>
+        <Logo href="/" variant="wordmark" height={40} className="hidden sm:inline-flex" />
+        <Logo href="/" variant="icon" className="inline-flex sm:hidden" />
 
         <nav className="hidden items-center gap-1 md:flex" aria-label={t("main")}>
           {PRIMARY_NAV.map(({ href, key }) => {
@@ -65,6 +62,12 @@ export function PublicHeader() {
         <div className="hidden min-w-0 flex-wrap items-center justify-end gap-2 md:flex">
           <Link href="/contact" className="btn-secondary">
             {t("requestDemo")}
+          </Link>
+          <Link
+            href="/dashboard"
+            className="rounded-[var(--aistroyka-radius-lg)] px-3 py-2 text-[var(--aistroyka-font-subheadline)] font-medium text-aistroyka-text-secondary hover:bg-aistroyka-surface-raised hover:text-aistroyka-text-primary"
+          >
+            {t("cabinet")}
           </Link>
           <Link href="/login" className="btn-primary">
             {t("login")}
@@ -123,6 +126,13 @@ export function PublicHeader() {
               onClick={() => setMobileMenuOpen(false)}
             >
               {t("requestDemo")}
+            </Link>
+            <Link
+              href="/dashboard"
+              className="rounded-[var(--aistroyka-radius-lg)] px-4 py-3 text-center text-[var(--aistroyka-font-subheadline)] font-semibold text-aistroyka-text-secondary hover:bg-aistroyka-surface-raised"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              {t("cabinet")}
             </Link>
             <Link
               href="/login"

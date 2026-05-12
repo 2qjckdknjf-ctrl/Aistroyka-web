@@ -75,6 +75,19 @@ describe("cost.service", () => {
       expect(error).toBe("Insufficient rights");
       expect(data).toEqual([]);
     });
+
+    it("rejects portal/customer roles from internal cost items", async () => {
+      vi.mocked(tenantPolicy.canReadProjects).mockReturnValue(false);
+      const stakeholderCtx = {
+        tenantId: "tenant-1",
+        userId: "stakeholder-1",
+        role: "stakeholder" as const,
+      };
+      const { data, error } = await listCostItems(supabase, stakeholderCtx as never, "proj-1");
+      expect(error).toBe("Insufficient rights");
+      expect(data).toEqual([]);
+      expect(costRepo.listByProject).not.toHaveBeenCalled();
+    });
   });
 
   describe("getBudgetSummary", () => {

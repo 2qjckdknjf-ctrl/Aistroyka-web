@@ -20,6 +20,21 @@ describe("redirectIfStakeholderBlockedPath", () => {
     expect(redirectIfStakeholderBlockedPath("/dashboard/stakeholder-invite", "en", base)).toBeNull();
   });
 
+  it("allows portal projects list and nested paths", () => {
+    expect(redirectIfStakeholderBlockedPath("/portal/projects", "en", base)).toBeNull();
+    expect(redirectIfStakeholderBlockedPath("/portal/projects/p1/extra", "en", base)).toBeNull();
+  });
+
+  it("redirects portal root to portal projects", () => {
+    const r = redirectIfStakeholderBlockedPath("/portal", "en", base);
+    expect(r?.headers.get("location")).toBe("https://app.example.com/en/portal/projects");
+  });
+
+  it("redirects unknown portal paths to portal projects", () => {
+    const r = redirectIfStakeholderBlockedPath("/portal/other", "en", base);
+    expect(r?.headers.get("location")).toBe("https://app.example.com/en/portal/projects");
+  });
+
   it("blocks internal dashboard routes", () => {
     const r = redirectIfStakeholderBlockedPath("/dashboard/tasks", "en", base);
     expect(r?.headers.get("location")).toBe("https://app.example.com/en/dashboard/projects");

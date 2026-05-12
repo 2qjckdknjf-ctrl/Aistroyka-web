@@ -6,14 +6,15 @@
 import SwiftUI
 
 enum WorkerSemanticColors {
-    static let inputSurface = Color(.systemGray6)
+    static let pageBackground = Color(red: 11.0 / 255.0, green: 15.0 / 255.0, blue: 25.0 / 255.0)
+    static let inputSurface = Color(red: 31.0 / 255.0, green: 41.0 / 255.0, blue: 55.0 / 255.0)
     static let primary = Color.accentColor
     static let onPrimary = Color.white
-    static let primaryDisabled = Color.gray
-    static let success = Color.green
-    static let warning = Color.orange
+    static let primaryDisabled = Color(red: 156.0 / 255.0, green: 163.0 / 255.0, blue: 175.0 / 255.0)
+    static let success = Color(red: 52.0 / 255.0, green: 199.0 / 255.0, blue: 89.0 / 255.0)
+    static let warning = Color(red: 255.0 / 255.0, green: 149.0 / 255.0, blue: 0.0 / 255.0)
     static let warningSurface = Color.orange.opacity(0.15)
-    static let info = Color.blue
-    static let error = Color.red
-    static let neutral = Color.gray
+    static let info = Color(red: 59.0 / 255.0, green: 130.0 / 255.0, blue: 246.0 / 255.0)
+    static let error = Color(red: 255.0 / 255.0, green: 59.0 / 255.0, blue: 48.0 / 255.0)
+    static let neutral = Color(red: 156.0 / 255.0, green: 163.0 / 255.0, blue: 175.0 / 255.0)
 }

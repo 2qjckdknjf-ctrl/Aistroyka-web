@@ -1,7 +1,3 @@
-export function formatStatusLabel(status: string): string {
-  return status.replace(/_/g, " ");
-}
-
 const NEUTRAL_BADGE = "bg-aistroyka-text-tertiary/15 text-aistroyka-text-secondary";
 
 export function changeOrderStatusBadgeClass(status: string): string {

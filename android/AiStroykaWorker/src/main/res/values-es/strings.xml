@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AiStroyka Worker</string>
+    <string name="worker_topbar_title">AiStroyka Worker</string>
+    <string name="action_sign_out">Cerrar sesión</string>
+    <string name="login_prompt">Inicia sesión con tu cuenta de operario</string>
+    <string name="label_email">Correo</string>
+    <string name="label_password">Contraseña</string>
+    <string name="action_sign_in">Iniciar sesión</string>
+    <string name="action_dismiss">Descartar</string>
+    <string name="projects_heading">Proyectos</string>
+    <string name="projects_empty">Aún no hay proyectos. Actualiza cuando el acceso esté configurado.</string>
+    <string name="tasks_today_heading">Tareas de hoy (opcional)</string>
+    <string name="task_none">Sin tarea</string>
+    <string name="action_create_report_photo">Crear informe y añadir foto</string>
+    <string name="action_refresh_config">Actualizar configuración / proyectos</string>
+    <string name="report_draft_title">Borrador de informe</string>
+    <string name="report_id_line">Informe: %1$s</string>
+    <string name="action_choose_photo">Elegir foto</string>
+    <string name="photo_selected">Seleccionado: %1$s</string>
+    <string name="action_submit_report">Enviar informe</string>
+    <string name="action_back_home">Volver al inicio</string>
+    <string name="action_cancel_flow">Cancelar (restablecer)</string>
+    <string name="worker_guide_title">Bienvenido a AiStroyka Worker</string>
+    <string name="worker_guide_subtitle">Guía rápida de primer inicio para informes en campo.</string>
+    <string name="worker_guide_step_1">Inicia sesión con tu cuenta de operario asignada.</string>
+    <string name="worker_guide_step_2">Crea un informe y adjunta una foto clara del sitio.</string>
+    <string name="worker_guide_step_3">Envía el informe para que el manager lo revise rápido.</string>
+    <string name="worker_guide_start">Empezar a trabajar</string>
+    <string name="worker_start_title">Inicio sin dudas</string>
+    <string name="worker_start_progress_fmt">Progreso de inicio: %1$d/%2$d pasos completados</string>
+    <string name="worker_start_step_1">Inicia turno y confirma las tareas asignadas para hoy.</string>
+    <string name="worker_start_step_2">Crea un informe diario claro con evidencia fotográfica.</string>
+    <string name="worker_start_step_3">Envía el informe y resuelve rápido el feedback del manager.</string>
+    <string name="worker_ai_hints_title">Sugerencias de IA para los siguientes pasos</string>
+    <string name="worker_ai_hint_1">Si hay cargas pendientes, reanuda la cola antes de terminar el turno.</string>
+    <string name="worker_ai_hint_2">Si el estado de una tarea no está claro, añade foto y nota corta al informe.</string>
+    <string name="worker_ai_guide_confidence_fmt">Confianza de la guía IA: %1$d%%</string>
+    <string name="worker_ai_risk_signals_title">Señales de riesgo</string>
+</resources>

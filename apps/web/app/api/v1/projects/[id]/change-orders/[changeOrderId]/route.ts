@@ -79,6 +79,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   const { ok, error } = await updateChangeOrderContent(supabase, ctx, projectId, changeOrderId, {
     title: typeof body.title === "string" ? body.title : undefined,
     description: body.description === undefined ? undefined : typeof body.description === "string" ? body.description : null,
+    reason: body.reason === undefined ? undefined : typeof body.reason === "string" ? body.reason : null,
     kind: body.kind as ChangeOrderKind | undefined,
     schedule_impact_level: body.schedule_impact_level as never,
     budget_impact_level: body.budget_impact_level as never,
@@ -96,6 +97,8 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
           : null,
     schedule_delta_days: numOrNull(body.schedule_delta_days),
     budget_delta_amount: numOrNull(body.budget_delta_amount),
+    customer_amount_delta: numOrNull(body.customer_amount_delta),
+    currency: body.currency === undefined ? undefined : typeof body.currency === "string" ? body.currency : "RUB",
     linked_discussion_id:
       body.linked_discussion_id === undefined
         ? undefined
@@ -119,6 +122,18 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
         ? undefined
         : typeof body.linked_milestone_id === "string"
           ? body.linked_milestone_id
+          : null,
+    linked_customer_estimate_id:
+      body.linked_customer_estimate_id === undefined
+        ? undefined
+        : typeof body.linked_customer_estimate_id === "string"
+          ? body.linked_customer_estimate_id
+          : null,
+    internal_cost_item_id:
+      body.internal_cost_item_id === undefined
+        ? undefined
+        : typeof body.internal_cost_item_id === "string"
+          ? body.internal_cost_item_id
           : null,
   });
   if (error === "Insufficient rights") return NextResponse.json({ error }, { status: 403 });

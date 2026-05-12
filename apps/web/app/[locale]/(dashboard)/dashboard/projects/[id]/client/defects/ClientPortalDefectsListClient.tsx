@@ -5,7 +5,8 @@ import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@/i18n/navigation";
 import { Card, Button, Badge, Skeleton, EmptyState } from "@/components/ui";
-import { blockingBadgeClass, defectStatusBadgeClass, formatStatusLabel } from "../../statusBadgeStyles";
+import { blockingBadgeClass, defectStatusBadgeClass } from "../../statusBadgeStyles";
+import { formatPortalStatus } from "@/lib/i18n/portal-status-labels";
 
 type Row = {
   id: string;
@@ -25,6 +26,7 @@ async function fetchList(projectId: string): Promise<Row[]> {
 
 export function ClientPortalDefectsListClient({ projectId }: { projectId: string }) {
   const tDetail = useTranslations("dashboardDetail");
+  const tPortal = useTranslations("portalStatus");
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -132,7 +134,7 @@ export function ClientPortalDefectsListClient({ projectId }: { projectId: string
                 <span className="font-medium text-aistroyka-text-primary">{r.title}</span>
                 <span className="flex flex-wrap items-center gap-2">
                   {r.is_blocking ? <Badge className={blockingBadgeClass}>{tDetail("blocking")}</Badge> : null}
-                  <Badge className={defectStatusBadgeClass(r.status)}>{formatStatusLabel(r.status)}</Badge>
+                  <Badge className={defectStatusBadgeClass(r.status)}>{formatPortalStatus(r.status, "defect", tPortal)}</Badge>
                 </span>
               </Link>
             </li>

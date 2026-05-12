@@ -100,7 +100,7 @@ function buildActions(data: ProjectIntelligenceData, projectId: string): Manager
 
 function priorityClass(p: "high" | "medium" | "low"): string {
   if (p === "high") return "border-l-aistroyka-error bg-aistroyka-error/5";
-  if (p === "medium") return "border-l-amber-500 bg-amber-500/5";
+  if (p === "medium") return "border-l-aistroyka-warning bg-aistroyka-warning/10";
   return "border-l-aistroyka-info bg-aistroyka-info/5";
 }
 

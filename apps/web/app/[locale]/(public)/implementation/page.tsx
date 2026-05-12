@@ -11,7 +11,7 @@ const PHASES = ["phase1", "phase2", "phase3", "phase4", "phase5", "phase6"] as c
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "public.implementation" });
-  return { title: `${t("title")} | Aistroyka`, description: t("metaDescription") };
+  return { title: t("title"), description: t("metaDescription") };
 }
 
 export default async function ImplementationPage({ params }: Props) {
@@ -38,7 +38,7 @@ export default async function ImplementationPage({ params }: Props) {
               key={key}
               className="flex gap-4 rounded-[var(--aistroyka-radius-card)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] p-4"
             >
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--aistroyka-accent)] text-[var(--aistroyka-font-footnote)] font-semibold text-white">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--aistroyka-accent)] text-[var(--aistroyka-font-footnote)] font-semibold text-aistroyka-text-inverse">
                 {i + 1}
               </span>
               <span className="text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-primary)]">

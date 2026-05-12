@@ -23,7 +23,7 @@ Vercel может встречаться как исторический/доп�
 
 | Variable | Описание |
 |----------|----------|
-| `SUPABASE_SERVICE_ROLE_KEY` | Service role key из Supabase (секрет). Нужен для server-side операций, cron, admin. |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service role key из Supabase (секрет). Нужен для server-side операций, cron, admin и **публичных ссылок Proof Pack** (`GET /api/v1/share/proof/:token`), иначе маршрут вернёт 503. |
 
 В production при отсутствии ключа часть функций будет ограничена (предупреждение в логах).
 
@@ -55,6 +55,7 @@ Vercel может встречаться как исторический/доп�
 
 | Variable | Описание |
 |----------|----------|
+| `SUBSCRIPTION_GATE_DASHBOARD` | Server-only. `enforce`/`on` (или не задано) — при неактивном биллинге редирект с dashboard на `/subscribe`, **если** у tenant нет иного доступа. Доступ в кабинет без платной подписки: tenant в `billing_pilot_workspaces` или в allowlist env `BILLING_PILOT_WORKSPACE_IDS`; плюс стандартно Stripe `active`/`trialing` и tier PRO/ENTERPRISE. `off`, `pilot` или `bypass` — не применять редирект на subscribe вообще (staging/pilot; задавать явно в Workers). |
 | `STRIPE_SECRET_KEY` | Секретный ключ Stripe. |
 | `STRIPE_WEBHOOK_SECRET` | Webhook signing secret для Stripe. |
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Публичный ключ Stripe для клиента. |
@@ -67,6 +68,16 @@ Vercel может встречаться как исторический/доп�
 |----------|----------|
 | `FCM_PROJECT_ID`, `FCM_CLIENT_EMAIL`, `FCM_PRIVATE_KEY`, `FCM_TOKEN_URI` | FCM (Android). |
 | `APNS_KEY`, `APNS_KEY_ID`, `APNS_TEAM_ID`, `APNS_BUNDLE_ID` | APNS (iOS). |
+
+---
+
+## Telegram (опционально, Phase 10)
+
+| Variable | Описание |
+|----------|----------|
+| `TELEGRAM_BOT_TOKEN` | Токен бота (`@BotFather`). Нужен для исходящих сообщений и приёма webhook. |
+| `TELEGRAM_BOT_USERNAME` | Имя бота **без** `@` — для deep link `https://t.me/...`. |
+| `TELEGRAM_WEBHOOK_SECRET` | Секрет `secret_token` при `setWebhook`; в **production** обязателен (иначе webhook отвечает 503). Заголовок входящих запросов: `X-Telegram-Bot-Api-Secret-Token`. |
 
 ---
 

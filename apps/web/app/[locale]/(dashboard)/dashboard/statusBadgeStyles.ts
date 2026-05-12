@@ -1,7 +1,3 @@
-export function formatStatusLabel(status: string): string {
-  return status.replace(/_/g, " ");
-}
-
 export function taskStatusBadgeClass(status: string): string {
   switch (status) {
     case "done":

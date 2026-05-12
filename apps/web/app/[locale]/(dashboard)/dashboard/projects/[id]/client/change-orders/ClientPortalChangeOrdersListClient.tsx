@@ -4,7 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Card, Badge, Skeleton, EmptyState } from "@/components/ui";
-import { changeOrderStatusBadgeClass, formatStatusLabel } from "../../statusBadgeStyles";
+import { changeOrderStatusBadgeClass } from "../../statusBadgeStyles";
+import { formatPortalStatus } from "@/lib/i18n/portal-status-labels";
 
 type Row = {
   id: string;
@@ -12,10 +13,12 @@ type Row = {
   status: string;
   title: string;
   updated_at: string;
+  customer_amount_delta?: number | null;
+  currency?: string;
 };
 
 async function fetchList(projectId: string): Promise<Row[]> {
-  const res = await fetch(`/api/v1/projects/${projectId}/change-orders`, { credentials: "include" });
+  const res = await fetch(`/api/v1/portal/projects/${projectId}/change-orders`, { credentials: "include" });
   if (!res.ok) throw new Error("Failed to load");
   const j = await res.json();
   return j.data ?? [];
@@ -23,8 +26,9 @@ async function fetchList(projectId: string): Promise<Row[]> {
 
 export function ClientPortalChangeOrdersListClient({ projectId }: { projectId: string }) {
   const tDetail = useTranslations("dashboardDetail");
+  const tPortal = useTranslations("portalStatus");
   const q = useQuery({
-    queryKey: ["change-orders", projectId],
+    queryKey: ["portal-change-orders", projectId],
     queryFn: () => fetchList(projectId),
   });
 
@@ -72,8 +76,16 @@ export function ClientPortalChangeOrdersListClient({ projectId }: { projectId: s
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="font-medium text-aistroyka-text-primary">{r.title}</span>
-                    <Badge className={changeOrderStatusBadgeClass(r.status)}>{formatStatusLabel(r.status)}</Badge>
+                    <Badge className={changeOrderStatusBadgeClass(r.status)}>{formatPortalStatus(r.status, "changeOrder", tPortal)}</Badge>
                   </div>
+                  {r.customer_amount_delta != null && Number(r.customer_amount_delta) > 0 ? (
+                    <p className="mt-1 text-sm text-aistroyka-text-primary">
+                      {tDetail("changeOrderCustomerCommercialLine", {
+                        amount: Number(r.customer_amount_delta).toLocaleString(),
+                        currency: r.currency ?? "",
+                      })}
+                    </p>
+                  ) : null}
                   <p className="mt-1 text-xs text-aistroyka-text-tertiary">
                     {tDetail("updated")} {new Date(r.updated_at).toLocaleString()}
                   </p>

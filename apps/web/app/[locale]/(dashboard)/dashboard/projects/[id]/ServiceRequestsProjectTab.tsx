@@ -5,7 +5,8 @@ import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@/i18n/navigation";
 import { Card, Button, Badge, Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui";
-import { formatStatusLabel, serviceRequestStatusBadgeClass } from "./statusBadgeStyles";
+import { serviceRequestStatusBadgeClass } from "./statusBadgeStyles";
+import { formatPortalStatus } from "@/lib/i18n/portal-status-labels";
 
 type Row = {
   id: string;
@@ -31,6 +32,7 @@ async function fetchList(projectId: string): Promise<Row[]> {
 
 export function ServiceRequestsProjectTab({ projectId }: { projectId: string }) {
   const tDetail = useTranslations("dashboardDetail");
+  const tPortal = useTranslations("portalStatus");
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -148,7 +150,7 @@ export function ServiceRequestsProjectTab({ projectId }: { projectId: string }) 
                 </Link>
               </TableCell>
               <TableCell>
-                <Badge className={`${serviceRequestStatusBadgeClass(r.status)} font-normal`}>{formatStatusLabel(r.status)}</Badge>
+                <Badge className={`${serviceRequestStatusBadgeClass(r.status)} font-normal`}>{formatPortalStatus(r.status, "serviceRequest", tPortal)}</Badge>
               </TableCell>
               <TableCell>{coverageLabel(r.coverage_type, tDetail)}</TableCell>
               <TableCell>{r.due_date ? new Date(r.due_date).toLocaleDateString() : "—"}</TableCell>

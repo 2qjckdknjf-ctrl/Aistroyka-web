@@ -186,7 +186,7 @@ export default function ReportDetailPage() {
         {data.status === "submitted" && (
           <div className="mt-4 pt-4 border-t border-aistroyka-border">
             {data.reviewed_at && (
-              <p className="text-aistroyka-caption text-amber-600 mb-2">
+              <p className="text-aistroyka-caption text-aistroyka-warning mb-2">
                 {tDetail("resubmittedHint")}
               </p>
             )}

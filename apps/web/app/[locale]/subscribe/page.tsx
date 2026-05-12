@@ -7,13 +7,15 @@ import { getActiveSubscriptionStateForUser } from "@/lib/platform/billing/subscr
 
 type Props = {
   params: Promise<{ locale: string }>;
-  searchParams?: Promise<{ checkout?: string }>;
+  searchParams?: Promise<{ checkout?: string; dashboard_access?: string }>;
 };
 
 export default async function SubscribePage({ params, searchParams }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const checkout = (await searchParams)?.checkout ?? "";
+  const sp = (await searchParams) ?? {};
+  const checkout = sp.checkout ?? "";
+  const showDashboardAccessNotice = sp.dashboard_access === "require_subscription";
   const checkoutState = checkout === "success" ? "success" : checkout === "cancel" ? "cancel" : "idle";
 
   const supabase = await createClient();
@@ -24,16 +26,18 @@ export default async function SubscribePage({ params, searchParams }: Props) {
 
   const admin = getAdminClient();
   let hasActiveSubscription = false;
+  let hasDashboardAccess = false;
   let billingStatus: string | null = null;
   let tenantId: string | null = null;
   if (admin) {
     const state = await getActiveSubscriptionStateForUser(admin, user.id);
     hasActiveSubscription = state.hasActiveSubscription;
+    hasDashboardAccess = state.hasDashboardAccess;
     billingStatus = state.billingStatus;
     tenantId = state.tenantId;
   }
 
-  if (tenantId && hasActiveSubscription) {
+  if (tenantId && hasDashboardAccess) {
     redirect(`/${locale}/dashboard`);
   }
 
@@ -43,6 +47,7 @@ export default async function SubscribePage({ params, searchParams }: Props) {
       hasActiveSubscription={hasActiveSubscription}
       billingStatus={billingStatus}
       checkoutState={checkoutState}
+      showDashboardAccessNotice={showDashboardAccessNotice}
     />
   );
 }

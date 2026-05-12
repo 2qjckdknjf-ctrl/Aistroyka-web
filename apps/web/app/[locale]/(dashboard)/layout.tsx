@@ -5,7 +5,10 @@ import { getAdminClient } from "@/lib/supabase/admin";
 import { DashboardShell } from "@/components/DashboardShell";
 import { requireAdmin } from "@/src/features/admin/auth/requireAdmin";
 import { routing } from "@/i18n/routing";
-import { getActiveSubscriptionStateForUser } from "@/lib/platform/billing/subscription-gate";
+import {
+  getActiveSubscriptionStateForUser,
+  isDashboardSubscriptionGateEnforced,
+} from "@/lib/platform/billing/subscription-gate";
 
 /**
  * Tenant-aware layout for all authenticated routes.
@@ -57,8 +60,12 @@ export default async function DashboardLayout({
       const admin = getAdminClient();
       if (admin) {
         const subscriptionState = await getActiveSubscriptionStateForUser(admin, user.id);
-        if (subscriptionState.tenantId && !subscriptionState.hasActiveSubscription) {
-          redirect(`/${locale}/subscribe`);
+        if (
+          isDashboardSubscriptionGateEnforced() &&
+          subscriptionState.tenantId &&
+          !subscriptionState.hasDashboardAccess
+        ) {
+          redirect(`/${locale}/subscribe?dashboard_access=require_subscription`);
         }
       }
     } catch (e) {

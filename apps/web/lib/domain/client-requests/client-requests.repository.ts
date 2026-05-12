@@ -6,10 +6,12 @@ import type {
   ClientRequestActionMode,
   ClientRequestStatus,
   ClientRequestEventType,
+  ClientRequestDecisionType,
+  ClientRequestPriority,
 } from "./client-requests.types";
 
 const ROW_SELECT =
-  "id, tenant_id, project_id, kind, action_mode, status, title, instructions, choice_options, linked_entity_type, linked_entity_id, requested_by, requested_at, responded_at, responded_by, response_value, response_note, cancelled_at, cancelled_by, completed_at, completed_by, created_at, updated_at";
+  "id, tenant_id, project_id, kind, action_mode, status, title, instructions, choice_options, linked_entity_type, linked_entity_id, decision_type, priority, assigned_to, due_at, decided_at, decision_note, customer_visible_amount, customer_visible_currency, requested_by, requested_at, responded_at, responded_by, response_value, response_note, cancelled_at, cancelled_by, completed_at, completed_by, created_at, updated_at";
 
 export async function insertRequest(
   supabase: SupabaseClient,
@@ -23,6 +25,12 @@ export async function insertRequest(
     choice_options: unknown;
     linked_entity_type: "document" | "milestone" | null;
     linked_entity_id: string | null;
+    decision_type: ClientRequestDecisionType | null;
+    priority: ClientRequestPriority;
+    assigned_to: string | null;
+    due_at: string | null;
+    customer_visible_amount: number | null;
+    customer_visible_currency: string | null;
     requested_by: string;
   }
 ): Promise<ProjectClientRequestRow | null> {
@@ -39,6 +47,12 @@ export async function insertRequest(
       choice_options: row.choice_options ?? null,
       linked_entity_type: row.linked_entity_type,
       linked_entity_id: row.linked_entity_id,
+      decision_type: row.decision_type,
+      priority: row.priority,
+      assigned_to: row.assigned_to,
+      due_at: row.due_at,
+      customer_visible_amount: row.customer_visible_amount,
+      customer_visible_currency: row.customer_visible_currency?.trim() || null,
       requested_by: row.requested_by,
     })
     .select(ROW_SELECT)

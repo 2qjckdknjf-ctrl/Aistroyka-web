@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AiStroyka Worker</string>
+    <string name="worker_topbar_title">AiStroyka Worker</string>
+    <string name="action_sign_out">Esci</string>
+    <string name="login_prompt">Accedi con il tuo account operatore</string>
+    <string name="label_email">Email</string>
+    <string name="label_password">Password</string>
+    <string name="action_sign_in">Accedi</string>
+    <string name="action_dismiss">Ignora</string>
+    <string name="projects_heading">Progetti</string>
+    <string name="projects_empty">Ancora nessun progetto. Aggiorna dopo la configurazione dell\'accesso.</string>
+    <string name="tasks_today_heading">Attività di oggi (opzionale)</string>
+    <string name="task_none">Nessuna attività</string>
+    <string name="action_create_report_photo">Crea report e aggiungi foto</string>
+    <string name="action_refresh_config">Aggiorna config / progetti</string>
+    <string name="report_draft_title">Bozza report</string>
+    <string name="report_id_line">Report: %1$s</string>
+    <string name="action_choose_photo">Scegli foto</string>
+    <string name="photo_selected">Selezionato: %1$s</string>
+    <string name="action_submit_report">Invia report</string>
+    <string name="action_back_home">Torna alla home</string>
+    <string name="action_cancel_flow">Annulla (reset)</string>
+    <string name="worker_guide_title">Benvenuto in AiStroyka Worker</string>
+    <string name="worker_guide_subtitle">Guida rapida al primo avvio per i report dal campo.</string>
+    <string name="worker_guide_step_1">Accedi con il tuo account operatore assegnato.</string>
+    <string name="worker_guide_step_2">Crea un report e allega una foto chiara del cantiere.</string>
+    <string name="worker_guide_step_3">Invia il report così il manager può revisionarlo rapidamente.</string>
+    <string name="worker_guide_start">Inizia a lavorare</string>
+    <string name="worker_start_title">Partenza senza dubbi</string>
+    <string name="worker_start_progress_fmt">Progresso avvio: %1$d/%2$d passaggi completati</string>
+    <string name="worker_start_step_1">Avvia il turno e conferma le attività assegnate per oggi.</string>
+    <string name="worker_start_step_2">Crea un report giornaliero chiaro con evidenze fotografiche.</string>
+    <string name="worker_start_step_3">Invia il report e risolvi rapidamente il feedback del manager.</string>
+    <string name="worker_ai_hints_title">Suggerimenti IA per i prossimi passi</string>
+    <string name="worker_ai_hint_1">Se ci sono upload in coda, riprendi la coda prima di fine turno.</string>
+    <string name="worker_ai_hint_2">Se lo stato dell\'attività non è chiaro, aggiungi foto e nota breve nel report.</string>
+    <string name="worker_ai_guide_confidence_fmt">Confidenza guida IA: %1$d%%</string>
+    <string name="worker_ai_risk_signals_title">Segnali di rischio</string>
+</resources>

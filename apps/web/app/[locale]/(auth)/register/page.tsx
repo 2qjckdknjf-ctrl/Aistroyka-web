@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useRouter } from "@/i18n/navigation";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
@@ -63,6 +64,9 @@ export default function RegisterPage() {
     <div className="flex min-h-[100dvh] min-h-screen items-center justify-center bg-aistroyka-bg-primary px-aistroyka-4 py-aistroyka-8 sm:py-aistroyka-12">
       <div className="w-full max-w-[400px]">
         <div className="card-elevated">
+          <div className="mb-aistroyka-4 flex justify-center">
+            <Image src="/brand/aistroyka-logo.png" alt={t("tagline")} width={140} height={48} className="h-12 w-auto object-contain" unoptimized />
+          </div>
           <div className="mb-aistroyka-6 text-center sm:mb-aistroyka-8">
             <h1 className="text-aistroyka-title2 font-bold tracking-tight text-aistroyka-text-primary sm:text-aistroyka-title">{t("register")}</h1>
             <p className="mt-aistroyka-1 text-aistroyka-subheadline text-aistroyka-text-secondary">{t("tagline")}</p>

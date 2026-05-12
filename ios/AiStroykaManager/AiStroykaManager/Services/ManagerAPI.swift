@@ -171,6 +171,73 @@ enum ManagerAPI {
     static func markNotificationRead(id: String) async throws {
         let _: MarkReadResponse = try await APIClient.shared.request(path: "notifications/\(id)/read", method: "PATCH")
     }
+
+    /// GET /api/v1/activation/status — onboarding/checklist progress.
+    static func activationStatus() async throws -> ActivationStatusDTO {
+        try await APIClient.shared.request(path: "activation/status")
+    }
+
+    /// POST /api/v1/help/hints — role/locale-aware hints for next steps.
+    static func helpHints(locale: String, role: String, getStarted: GetStartedStatusDTO?) async throws -> [HelpHintDTO] {
+        struct Body: Encodable {
+            let locale: String
+            let role: String
+            let getStarted: GetStartedStatusDTO?
+        }
+        let r: HelpHintsResponseDTO = try await APIClient.shared.request(
+            path: "help/hints",
+            method: "POST",
+            body: Body(locale: locale, role: role, getStarted: getStarted)
+        )
+        return r.hints ?? []
+    }
+
+    /// POST /api/v1/help/assistant — luxury guide with context, confidence and risks.
+    static func helpAssistant(
+        query: String,
+        locale: String,
+        role: String,
+        pathname: String,
+        activation: ActivationStatusDTO?
+    ) async throws -> HelpAssistantResponseDTO {
+        struct Body: Encodable {
+            let query: String
+            let locale: String
+            let role: String
+            let pathname: String
+            let getStarted: GetStartedStatusDTO?
+            let projectCount: Int?
+            let taskCount: Int?
+            let reportCount: Int?
+            let hasAiInsight: Bool?
+        }
+        let body = Body(
+            query: query,
+            locale: locale,
+            role: role,
+            pathname: pathname,
+            getStarted: activation?.getStarted,
+            projectCount: activation?.projectCount,
+            taskCount: activation?.taskCount,
+            reportCount: activation?.reportCount,
+            hasAiInsight: activation?.hasAiInsight
+        )
+        return try await APIClient.shared.request(path: "help/assistant", method: "POST", body: body)
+    }
+
+    static func helpAssistantEvent(type: String, locale: String, role: String, pathname: String) async {
+        struct Body: Encodable {
+            let type: String
+            let locale: String
+            let role: String
+            let pathname: String
+        }
+        _ = try? await APIClient.shared.request(
+            path: "help/assistant/events",
+            method: "POST",
+            body: Body(type: type, locale: locale, role: role, pathname: pathname)
+        ) as HelpAssistantEventAckDTO
+    }
 }
 
 // MARK: - Manager-specific DTOs (backend contract)
@@ -403,3 +470,54 @@ struct AIJobDTO: Decodable {
     }
 }
 struct AIRequestsResponse: Decodable { let data: [AIJobDTO]? }
+
+// MARK: - Help/Activation DTOs
+
+struct ActivationStatusDTO: Decodable {
+    let projectCount: Int?
+    let hasInvited: Bool?
+    let taskCount: Int?
+    let reportCount: Int?
+    let hasAiInsight: Bool?
+    let showOnboarding: Bool?
+    let getStarted: GetStartedStatusDTO?
+}
+
+struct GetStartedStatusDTO: Codable {
+    let createProject: Bool?
+    let inviteTeam: Bool?
+    let addTask: Bool?
+    let uploadReport: Bool?
+    let viewAi: Bool?
+}
+
+struct HelpHintDTO: Decodable {
+    let step: String
+    let title: String
+    let reason: String
+    let action: String
+    let href: String
+}
+
+struct HelpHintsResponseDTO: Decodable {
+    let hints: [HelpHintDTO]?
+}
+
+struct HelpAssistantRiskSignalDTO: Decodable {
+    let id: String
+    let title: String
+    let detail: String
+    let severity: String
+    let href: String
+}
+
+struct HelpAssistantResponseDTO: Decodable {
+    let summary: String
+    let answer: String
+    let riskSignals: [HelpAssistantRiskSignalDTO]?
+    let confidence: Int?
+}
+
+struct HelpAssistantEventAckDTO: Decodable {
+    let ok: Bool?
+}

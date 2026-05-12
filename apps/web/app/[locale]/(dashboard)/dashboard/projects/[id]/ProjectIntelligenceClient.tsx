@@ -164,7 +164,7 @@ export function ProjectIntelligenceClient({ projectId }: { projectId: string }) 
         <IntelligenceCard title={tDetail("riskRadar")} aria-label={tDetail("riskOverview")}>
           <div className="flex flex-wrap gap-2 text-aistroyka-caption">
             <span className="font-medium text-aistroyka-error">{tDetail("highLabel")} {riskOverview.high}</span>
-            <span className="font-medium text-amber-600">{tDetail("mediumLabel")} {riskOverview.medium}</span>
+            <span className="font-medium text-aistroyka-warning">{tDetail("mediumLabel")} {riskOverview.medium}</span>
             <span className="font-medium text-aistroyka-info">{tDetail("lowLabel")} {riskOverview.low}</span>
           </div>
           <div className="mt-3">
@@ -192,7 +192,7 @@ export function ProjectIntelligenceClient({ projectId }: { projectId: string }) 
                   <p className="text-aistroyka-caption text-aistroyka-text-secondary">{me.explanation}</p>
                   <p className="text-xs text-aistroyka-text-tertiary">{me.recommendedAction}</p>
                   {me.missingDataDisclaimer && (
-                    <p className="text-xs text-amber-600 dark:text-amber-400">{me.missingDataDisclaimer}</p>
+                    <p className="text-xs text-aistroyka-warning">{me.missingDataDisclaimer}</p>
                   )}
                   {href && (
                     <Link
@@ -223,7 +223,7 @@ export function ProjectIntelligenceClient({ projectId }: { projectId: string }) 
                   <p className="text-aistroyka-caption text-aistroyka-text-secondary">{r.explanation}</p>
                   <p className="text-xs text-aistroyka-text-tertiary">{r.recommendedAction}</p>
                   {r.missingDataDisclaimer && (
-                    <p className="text-xs text-amber-600 dark:text-amber-400">{r.missingDataDisclaimer}</p>
+                    <p className="text-xs text-aistroyka-warning">{r.missingDataDisclaimer}</p>
                   )}
                   {href && (
                     <Link

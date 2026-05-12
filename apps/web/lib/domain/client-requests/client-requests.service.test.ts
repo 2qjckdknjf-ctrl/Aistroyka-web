@@ -48,6 +48,14 @@ function baseRow(over: Partial<ProjectClientRequestRow> = {}): ProjectClientRequ
     choice_options: null,
     linked_entity_type: null,
     linked_entity_id: null,
+    decision_type: null,
+    priority: "medium",
+    assigned_to: null,
+    due_at: null,
+    decided_at: null,
+    decision_note: null,
+    customer_visible_amount: null,
+    customer_visible_currency: null,
     requested_by: "mgr",
     requested_at: "2026-01-01",
     responded_at: null,
@@ -90,6 +98,19 @@ describe("client-requests.service", () => {
     expect(error).toBe("choice requires at least two options");
   });
 
+  it("createClientRequest rejects customer amount for non-commercial decision types", async () => {
+    vi.mocked(policy.canManageClientRequests).mockResolvedValue(true);
+    const { data, error } = await createClientRequest(supabase, ctx, "p1", {
+      kind: "feedback",
+      decision_type: "general_question",
+      title: "Question",
+      customer_visible_amount: 100,
+      customer_visible_currency: "RUB",
+    });
+    expect(data).toBeNull();
+    expect(error).toMatch(/customer_visible_amount|estimate_approval|cost_change/i);
+  });
+
   it("createClientRequest inserts and logs event", async () => {
     vi.mocked(policy.canManageClientRequests).mockResolvedValue(true);
     vi.mocked(docRepo.getById).mockResolvedValue(null);
@@ -102,7 +123,13 @@ describe("client-requests.service", () => {
     });
     expect(error).toBe("");
     expect(data?.title).toBe("Need text");
-    expect(repo.insertEvent).toHaveBeenCalled();
+    expect(repo.insertEvent).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        event_type: "created",
+        payload: expect.objectContaining({ kind: "feedback", decision_type: null }),
+      })
+    );
   });
 
   it("respondToClientRequest sets status responded", async () => {
@@ -118,6 +145,13 @@ describe("client-requests.service", () => {
     });
     expect(error).toBe("");
     expect(data?.status).toBe("responded");
+    expect(repo.insertEvent).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        event_type: "responded",
+        payload: expect.objectContaining({ response_value: "approve" }),
+      })
+    );
   });
 
   it("respondToClientRequest rejects info_only", async () => {

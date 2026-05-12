@@ -39,11 +39,11 @@ type Props = { params: Promise<{ locale: string; slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, slug } = await params;
-  if (!DOC_SLUGS.includes(slug as (typeof DOC_SLUGS)[number])) return { title: "Docs | Aistroyka" };
+  if (!DOC_SLUGS.includes(slug as (typeof DOC_SLUGS)[number])) return { title: "Docs" };
   const t = await getTranslations({ locale, namespace: "public.docs" });
   const titleKey = DOC_TITLE_KEYS[slug as (typeof DOC_SLUGS)[number]];
   return {
-    title: `${t(titleKey)} | Aistroyka Docs`,
+    title: { absolute: `${t(titleKey)} | Aistroyka Docs` },
     description: t("metaDescription"),
   };
 }

@@ -32,7 +32,7 @@ function statusBadge(status: string, targetDate: string): string {
   if (status === "done") return "bg-aistroyka-success/20 text-aistroyka-success";
   if (status === "cancelled") return "bg-aistroyka-text-tertiary/20 text-aistroyka-text-tertiary";
   if (targetDate < today()) return "bg-aistroyka-error/20 text-aistroyka-error";
-  return "bg-amber-500/20 text-amber-600";
+  return "bg-aistroyka-warning/20 text-aistroyka-warning";
 }
 
 export function ProjectSchedulePanel({ projectId }: { projectId: string }) {

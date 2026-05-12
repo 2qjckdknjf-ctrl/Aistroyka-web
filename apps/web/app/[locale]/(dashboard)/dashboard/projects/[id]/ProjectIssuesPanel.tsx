@@ -20,7 +20,8 @@ import {
   Textarea,
   Select,
 } from "@/components/ui";
-import { formatStatusLabel, issueStatusBadgeClass } from "./statusBadgeStyles";
+import { issueStatusBadgeClass } from "./statusBadgeStyles";
+import { formatPortalStatus } from "@/lib/i18n/portal-status-labels";
 
 interface Issue {
   id: string;
@@ -40,6 +41,7 @@ export function ProjectIssuesPanel({
   query: { data?: Issue[]; isPending: boolean; isError: boolean };
 }) {
   const tDetail = useTranslations("dashboardDetail");
+  const tPortal = useTranslations("portalStatus");
   const queryClient = useQueryClient();
   const [showCreate, setShowCreate] = useState(false);
   const [title, setTitle] = useState("");
@@ -136,7 +138,7 @@ export function ProjectIssuesPanel({
                 )}
               </TableCell>
               <TableCell>
-                <Badge className={issueStatusBadgeClass(i.status)}>{formatStatusLabel(i.status)}</Badge>
+                <Badge className={issueStatusBadgeClass(i.status)}>{formatPortalStatus(i.status, "issue", tPortal)}</Badge>
               </TableCell>
               <TableCell className="text-aistroyka-text-secondary">
                 {new Date(i.created_at).toLocaleDateString()}

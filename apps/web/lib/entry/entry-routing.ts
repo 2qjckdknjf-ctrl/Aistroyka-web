@@ -17,6 +17,7 @@ const DEFAULT_LOCALE = routing.defaultLocale;
 /** Allowed path prefixes for next param (without leading locale). Must be internal app routes. */
 const SAFE_PATH_PREFIXES = [
   "/dashboard",
+  "/portal",
   "/projects",
   "/portfolio",
   "/team",

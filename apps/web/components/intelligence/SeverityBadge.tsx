@@ -4,7 +4,7 @@ import type { SignalSeverity } from "./types";
 
 const SEVERITY_CLASS: Record<SignalSeverity, string> = {
   low: "bg-aistroyka-info/15 text-aistroyka-info border-aistroyka-info/30",
-  medium: "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30",
+  medium: "bg-aistroyka-warning/20 text-aistroyka-warning border-aistroyka-warning/50",
   high: "bg-aistroyka-error/15 text-aistroyka-error border-aistroyka-error/30",
 };
 

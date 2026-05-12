@@ -242,7 +242,7 @@ export function DashboardAIOperatingCenterClient() {
               <>
                 <div className="flex flex-wrap gap-2 text-aistroyka-caption">
                   <span className="font-medium text-aistroyka-error">{tDetail("highLabel")} {data.riskOverview.high}</span>
-                  <span className="font-medium text-amber-600">{tDetail("mediumLabel")} {data.riskOverview.medium}</span>
+                  <span className="font-medium text-aistroyka-warning">{tDetail("mediumLabel")} {data.riskOverview.medium}</span>
                   <span className="font-medium text-aistroyka-info">{tDetail("lowLabel")} {data.riskOverview.low}</span>
                 </div>
                 <div className="mt-3">
@@ -270,7 +270,7 @@ export function DashboardAIOperatingCenterClient() {
                           </span>
                           <p className="text-xs text-aistroyka-text-tertiary">{r.recommendedAction}</p>
                           {r.missingDataDisclaimer && (
-                            <p className="text-xs text-amber-600 dark:text-amber-400">{r.missingDataDisclaimer}</p>
+                            <p className="text-xs text-aistroyka-warning">{r.missingDataDisclaimer}</p>
                           )}
                           {href && (
                             <Link href={href} className="text-sm font-medium text-aistroyka-accent hover:underline">

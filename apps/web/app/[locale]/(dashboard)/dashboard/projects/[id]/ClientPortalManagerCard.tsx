@@ -8,18 +8,15 @@ import { Card } from "@/components/ui";
 export function ClientPortalManagerCard({
   projectId,
   initialEnabled,
-  initialBudget,
 }: {
   projectId: string;
   initialEnabled: boolean;
-  initialBudget: boolean;
 }) {
   const queryClient = useQueryClient();
   const [enabled, setEnabled] = useState(initialEnabled);
-  const [budget, setBudget] = useState(initialBudget);
 
   const mutation = useMutation({
-    mutationFn: async (body: { client_portal_enabled?: boolean; client_show_budget_summary?: boolean }) => {
+    mutationFn: async (body: { client_portal_enabled?: boolean }) => {
       const res = await fetch(`/api/v1/projects/${projectId}/client-portal`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -30,11 +27,10 @@ export function ClientPortalManagerCard({
         const j = await res.json().catch(() => ({}));
         throw new Error((j as { error?: string }).error ?? "Update failed");
       }
-      return res.json() as Promise<{ data: { client_portal_enabled: boolean; client_show_budget_summary: boolean } }>;
+      return res.json() as Promise<{ data: { client_portal_enabled: boolean } }>;
     },
     onSuccess: (json) => {
       setEnabled(json.data.client_portal_enabled);
-      setBudget(json.data.client_show_budget_summary);
       queryClient.invalidateQueries({ queryKey: ["project", projectId] });
     },
   });
@@ -57,15 +53,6 @@ export function ClientPortalManagerCard({
             onChange={(e) => mutation.mutate({ client_portal_enabled: e.target.checked })}
           />
           Enable client portal
-        </label>
-        <label className="flex items-center gap-2 text-sm text-aistroyka-text-primary">
-          <input
-            type="checkbox"
-            checked={budget}
-            disabled={mutation.isPending || !enabled}
-            onChange={(e) => mutation.mutate({ client_show_budget_summary: e.target.checked })}
-          />
-          Show high-level budget (totals only)
         </label>
       </div>
       {enabled && (

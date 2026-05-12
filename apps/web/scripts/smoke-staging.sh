@@ -15,5 +15,12 @@ if echo "$body" | grep -q '"env":"staging"'; then
 else
   echo "WARN: health response may not include env=staging (OK if workers.dev only)"
 fi
+# Customer portal API must hit Route Handlers (JSON), not fall through to app not-found (HTML).
+portal_ct=$(curl -sS -o /dev/null -w "%{content_type}" -m 15 "$BASE/api/v1/portal/projects")
+if [[ "$portal_ct" == text/html* ]]; then
+  echo "FAIL: GET $BASE/api/v1/portal/projects returned HTML ($portal_ct) — route missing from deploy bundle or misrouted"
+  exit 1
+fi
+echo "PASS: portal projects API is not HTML ($portal_ct)"
 echo "PASS: staging smoke ($BASE)"
 exit 0

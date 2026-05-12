@@ -1,10 +1,11 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { Card, Badge, Skeleton, EmptyState } from "@/components/ui";
-import { changeOrderStatusBadgeClass, formatStatusLabel } from "../../../statusBadgeStyles";
+import { Card, Badge, Skeleton, EmptyState, Button } from "@/components/ui";
+import { changeOrderStatusBadgeClass } from "../../../statusBadgeStyles";
+import { formatPortalStatus } from "@/lib/i18n/portal-status-labels";
 
 type Event = {
   id: string;
@@ -21,11 +22,10 @@ type PublicDetail = {
   title: string;
   description: string | null;
   schedule_impact_level: string;
-  budget_impact_level: string;
   schedule_impact_summary: string | null;
-  budget_impact_summary: string | null;
   schedule_delta_days: number | null;
-  budget_delta_amount: number | null;
+  customer_amount_delta: number | null;
+  currency: string;
   has_linked_discussion: boolean;
   has_linked_document: boolean;
   has_linked_request: boolean;
@@ -37,7 +37,7 @@ type PublicDetail = {
 };
 
 async function fetchDetail(projectId: string, changeOrderId: string): Promise<PublicDetail> {
-  const res = await fetch(`/api/v1/projects/${projectId}/change-orders/${changeOrderId}`, { credentials: "include" });
+  const res = await fetch(`/api/v1/portal/projects/${projectId}/change-orders/${changeOrderId}`, { credentials: "include" });
   if (!res.ok) {
     const j = await res.json().catch(() => ({}));
     throw new Error((j as { error?: string }).error ?? "Failed to load");
@@ -54,9 +54,34 @@ export function ClientPortalChangeOrderDetailClient({
   changeOrderId: string;
 }) {
   const tDetail = useTranslations("dashboardDetail");
+  const tPortal = useTranslations("portalStatus");
+  const queryClient = useQueryClient();
   const q = useQuery({
-    queryKey: ["change-order", projectId, changeOrderId],
+    queryKey: ["portal-change-order", projectId, changeOrderId],
     queryFn: () => fetchDetail(projectId, changeOrderId),
+  });
+
+  const respondMutation = useMutation({
+    mutationFn: async (decision: "approve" | "reject") => {
+      const res = await fetch(
+        `/api/v1/portal/projects/${projectId}/change-orders/${changeOrderId}/respond`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ decision }),
+        }
+      );
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        throw new Error((j as { error?: string }).error ?? "Failed");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["portal-change-order", projectId, changeOrderId] });
+      queryClient.invalidateQueries({ queryKey: ["portal-change-orders", projectId] });
+    },
   });
 
   if (q.isPending) {
@@ -92,7 +117,7 @@ export function ClientPortalChangeOrderDetailClient({
       <Card className="p-4">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <h1 className="text-aistroyka-title3 font-semibold">{d.title}</h1>
-          <Badge className={changeOrderStatusBadgeClass(d.status)}>{formatStatusLabel(d.status)}</Badge>
+          <Badge className={changeOrderStatusBadgeClass(d.status)}>{formatPortalStatus(d.status, "changeOrder", tPortal)}</Badge>
         </div>
         <p className="mt-1 text-xs text-aistroyka-text-tertiary">{d.kind.replace(/_/g, " ")}</p>
       </Card>
@@ -104,6 +129,48 @@ export function ClientPortalChangeOrderDetailClient({
         </Card>
       ) : null}
 
+      {d.customer_amount_delta != null && Number(d.customer_amount_delta) > 0 ? (
+        <Card className="p-4 border-l-4 border-l-aistroyka-accent">
+          <h2 className="font-semibold">{tDetail("changeOrderCustomerCommercialLabel")}</h2>
+          <p className="mt-2 text-aistroyka-title3 font-semibold text-aistroyka-text-primary">
+            {tDetail("changeOrderCustomerCommercialLine", {
+              amount: Number(d.customer_amount_delta).toLocaleString(),
+              currency: d.currency,
+            })}
+          </p>
+          <p className="mt-1 text-xs text-aistroyka-text-tertiary">{tDetail("changeOrderCustomerCommercialHint")}</p>
+        </Card>
+      ) : null}
+
+      {(d.status === "proposed" || d.status === "under_review") && (
+        <Card className="p-4 border-l-4 border-l-aistroyka-warning">
+          <p className="text-sm text-aistroyka-text-secondary">{tDetail("changeOrderDecisionNeeded")}</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant="primary"
+              disabled={respondMutation.isPending}
+              onClick={() => respondMutation.mutate("approve")}
+            >
+              {tDetail("changeOrderApproveForCustomer")}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              disabled={respondMutation.isPending}
+              onClick={() => respondMutation.mutate("reject")}
+            >
+              {tDetail("changeOrderRejectForCustomer")}
+            </Button>
+          </div>
+          {respondMutation.isError ? (
+            <p className="mt-2 text-sm text-aistroyka-error">{(respondMutation.error as Error).message}</p>
+          ) : null}
+        </Card>
+      )}
+
       <Card className="p-4">
         <h2 className="font-semibold">{tDetail("impact")}</h2>
         <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
@@ -113,14 +180,6 @@ export function ClientPortalChangeOrderDetailClient({
             {d.schedule_impact_summary ? <dd className="mt-1 text-aistroyka-text-secondary">{d.schedule_impact_summary}</dd> : null}
             {d.schedule_delta_days != null ? (
               <dd className="mt-1 text-aistroyka-text-secondary">{tDetail("aboutDays")} {d.schedule_delta_days} {tDetail("days")}</dd>
-            ) : null}
-          </div>
-          <div>
-            <dt className="text-aistroyka-text-tertiary">{tDetail("budget")}</dt>
-            <dd>{d.budget_impact_level.replace(/_/g, " ")}</dd>
-            {d.budget_impact_summary ? <dd className="mt-1 text-aistroyka-text-secondary">{d.budget_impact_summary}</dd> : null}
-            {d.budget_delta_amount != null ? (
-              <dd className="mt-1 text-aistroyka-text-secondary">{tDetail("indicativeDelta")} {d.budget_delta_amount}</dd>
             ) : null}
           </div>
         </dl>

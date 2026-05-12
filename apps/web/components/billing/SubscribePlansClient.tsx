@@ -13,6 +13,7 @@ type Props = {
   hasActiveSubscription: boolean;
   billingStatus: string | null;
   checkoutState: "idle" | "success" | "cancel";
+  showDashboardAccessNotice?: boolean;
 };
 
 export function SubscribePlansClient({
@@ -20,6 +21,7 @@ export function SubscribePlansClient({
   hasActiveSubscription,
   billingStatus,
   checkoutState,
+  showDashboardAccessNotice = false,
 }: Props) {
   const router = useRouter();
   const t = useTranslations("subscriptionOnboarding");
@@ -91,6 +93,11 @@ export function SubscribePlansClient({
         <p className="mt-2 text-aistroyka-subheadline text-aistroyka-text-secondary">
           {t("subtitle")}
         </p>
+        {showDashboardAccessNotice ? (
+          <p className="mt-4 text-aistroyka-subheadline text-aistroyka-text-primary">
+            {t("dashboardAccessNotice")}
+          </p>
+        ) : null}
         <p className="mt-3 text-aistroyka-caption text-aistroyka-text-tertiary">
           {t("status", { status: billingStatus ?? "none" })}
         </p>

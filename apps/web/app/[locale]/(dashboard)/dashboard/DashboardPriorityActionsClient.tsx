@@ -87,7 +87,7 @@ export function DashboardPriorityActionsClient() {
                 item.priority === "high"
                   ? "border-l-aistroyka-error bg-aistroyka-error/5"
                   : item.priority === "medium"
-                    ? "border-l-amber-500 bg-amber-500/5"
+                    ? "border-l-aistroyka-warning bg-aistroyka-warning/10"
                     : "border-l-aistroyka-info bg-aistroyka-info/5"
               }`}
             >

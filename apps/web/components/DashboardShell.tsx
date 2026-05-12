@@ -8,18 +8,22 @@ import { BuildStamp } from "./BuildStamp";
 import { Logo } from "@/components/brand/Logo";
 import { routing } from "@/i18n/routing";
 import { getDashboardNavIncludesAdmin } from "./dashboard-nav.utils";
+import { FirstLaunchGuide, LaunchConfidenceBanner } from "@/components/onboarding";
+import { AIGuidePanel } from "@/components/help/AIGuidePanel";
 
 const SIDEBAR_LINKS = [
   { href: "/dashboard", key: "overview" as const },
   { href: "/dashboard/projects", key: "projects" as const },
   { href: "/dashboard/tasks", key: "tasks" as const },
   { href: "/dashboard/workers", key: "workers" as const },
+  { href: "/dashboard/contractors", key: "contractors" as const },
   { href: "/dashboard/reports", key: "reports" as const },
   { href: "/dashboard/approvals", key: "approvals" as const },
   { href: "/dashboard/uploads", key: "uploads" as const },
   { href: "/dashboard/devices", key: "devices" as const },
   { href: "/dashboard/ai", key: "ai" as const },
   { href: "/dashboard/alerts", key: "alerts" as const },
+  { href: "/dashboard/help", key: "helpCenter" as const },
 ] as const;
 
 const ADMIN_LINKS = [
@@ -70,7 +74,7 @@ export function DashboardShell({
                   key={href}
                   href={href}
                   onClick={closeSidebar}
-                  data-testid={key === "projects" ? "cta.dashboard.nav.projects" : undefined}
+                  data-testid={`cta.dashboard.nav.${key}`}
                   className={`flex min-h-aistroyka-touch items-center rounded-[var(--aistroyka-radius-lg)] px-[var(--aistroyka-space-3)] py-[var(--aistroyka-space-2)] text-[var(--aistroyka-font-subheadline)] font-medium transition-colors ${
                     active
                       ? "bg-aistroyka-accent-light text-aistroyka-accent"
@@ -141,6 +145,8 @@ export function DashboardShell({
       )}
 
       <div className="flex flex-1 flex-col min-w-0">
+        <FirstLaunchGuide />
+        <AIGuidePanel />
         {/* Topbar */}
         <header className="sticky top-0 z-20 border-b border-aistroyka-border-subtle bg-aistroyka-surface">
           <div className="flex flex-wrap items-center justify-between gap-2 px-[var(--aistroyka-space-4)] py-[var(--aistroyka-space-3)]">
@@ -195,6 +201,7 @@ export function DashboardShell({
 
         <div className="flex flex-1 flex-col min-h-0">
           <main className="mx-auto min-w-0 w-full max-w-6xl flex-1 px-[var(--aistroyka-space-4)] py-[var(--aistroyka-space-6)]">
+            <LaunchConfidenceBanner />
             {children}
           </main>
           <footer
