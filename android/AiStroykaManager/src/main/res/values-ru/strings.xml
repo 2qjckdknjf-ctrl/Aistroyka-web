@@ -59,4 +59,15 @@
     <string name="manager_media_id_line">Медиа: %1$s · сессия: %2$s</string>
     <string name="manager_no_preview_url">Нет URL превью (получите через список медиа проекта).</string>
     <string name="manager_note_required_reject_or_changes">Чтобы отклонить или запросить правки, добавьте комментарий.</string>
+    <string name="manager_error_enter_credentials">Введите почту и пароль.</string>
+    <string name="manager_error_sign_in_failed">Не удалось войти.</string>
+    <string name="manager_me_summary_role_fmt">Роль: %1$s</string>
+    <string name="manager_me_summary_tenant_fmt">Тенант: %1$s…</string>
+    <string name="manager_me_summary_signed_in">Вход выполнен</string>
+    <string name="manager_ops_pending_fmt">Отчётов в очереди на проверку: %1$d</string>
+    <string name="manager_error_bootstrap_failed">Не удалось загрузить стартовые данные.</string>
+    <string name="manager_error_load_reports_failed">Не удалось загрузить отчёты.</string>
+    <string name="manager_error_load_failed">Ошибка загрузки.</string>
+    <string name="manager_action_review_saved_fmt">Проверка сохранена: %1$s</string>
+    <string name="manager_error_review_failed">Не удалось сохранить проверку.</string>
 </resources>

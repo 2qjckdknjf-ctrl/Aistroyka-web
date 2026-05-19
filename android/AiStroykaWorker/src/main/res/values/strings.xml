@@ -56,4 +56,26 @@
     <string name="worker_sync_section_title">Sync</string>
     <string name="worker_sync_status_fmt">Status: %1$s · cursor: %2$d</string>
     <string name="worker_sync_now">Sync now</string>
+    <string name="worker_error_enter_credentials">Enter email and password.</string>
+    <string name="worker_error_sign_in_failed">Sign-in failed.</string>
+    <string name="worker_error_bootstrap_failed">Bootstrap failed.</string>
+    <string name="worker_sync_conflict_fmt">Sync conflict (cursor %1$d)</string>
+    <string name="worker_sync_offline">Offline</string>
+    <string name="worker_sync_failed">Sync failed</string>
+    <string name="worker_error_open_report_failed">Could not open report.</string>
+    <string name="worker_error_start_shift_failed">Could not start shift.</string>
+    <string name="worker_error_start_shift_before_report">Start your shift before creating a report.</string>
+    <string name="worker_pipeline_add_photos_then_submit">Add before and after photos, then submit.</string>
+    <string name="worker_error_create_report_failed">Create report failed.</string>
+    <string name="worker_error_no_image_selected">No image selected.</string>
+    <string name="worker_error_no_active_report">No active report.</string>
+    <string name="worker_error_photos_already_attached">Before and after photos are already attached.</string>
+    <string name="worker_error_upload_failed">Upload failed.</string>
+    <string name="worker_error_decode_image">Could not decode image.</string>
+    <string name="worker_error_no_report_id">No report id.</string>
+    <string name="worker_error_no_existing_evidence">No existing evidence found for this report.</string>
+    <string name="worker_error_attach_before_after">Attach both before and after photos (or enable pilot flag).</string>
+    <string name="worker_done_resubmitted">Report resubmitted successfully.</string>
+    <string name="worker_done_submitted">Report submitted successfully.</string>
+    <string name="worker_error_submit_failed">Submit failed.</string>
 </resources>

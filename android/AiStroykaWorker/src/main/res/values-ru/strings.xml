@@ -56,4 +56,26 @@
     <string name="worker_sync_section_title">Синхронизация</string>
     <string name="worker_sync_status_fmt">Статус: %1$s · курсор: %2$d</string>
     <string name="worker_sync_now">Синхронизировать</string>
+    <string name="worker_error_enter_credentials">Введите почту и пароль.</string>
+    <string name="worker_error_sign_in_failed">Не удалось войти.</string>
+    <string name="worker_error_bootstrap_failed">Не удалось загрузить стартовые данные.</string>
+    <string name="worker_sync_conflict_fmt">Конфликт синхронизации (курсор %1$d)</string>
+    <string name="worker_sync_offline">Офлайн</string>
+    <string name="worker_sync_failed">Сбой синхронизации</string>
+    <string name="worker_error_open_report_failed">Не удалось открыть отчёт.</string>
+    <string name="worker_error_start_shift_failed">Не удалось начать смену.</string>
+    <string name="worker_error_start_shift_before_report">Начните смену перед созданием отчёта.</string>
+    <string name="worker_pipeline_add_photos_then_submit">Добавьте фото «до» и «после», затем отправьте отчёт.</string>
+    <string name="worker_error_create_report_failed">Не удалось создать отчёт.</string>
+    <string name="worker_error_no_image_selected">Изображение не выбрано.</string>
+    <string name="worker_error_no_active_report">Нет активного отчёта.</string>
+    <string name="worker_error_photos_already_attached">Фото «до» и «после» уже добавлены.</string>
+    <string name="worker_error_upload_failed">Ошибка загрузки.</string>
+    <string name="worker_error_decode_image">Не удалось обработать изображение.</string>
+    <string name="worker_error_no_report_id">Идентификатор отчёта не найден.</string>
+    <string name="worker_error_no_existing_evidence">Для этого отчёта не найдено доказательств.</string>
+    <string name="worker_error_attach_before_after">Добавьте фото «до» и «после» (или включите pilot-флаг).</string>
+    <string name="worker_done_resubmitted">Отчёт успешно отправлен повторно.</string>
+    <string name="worker_done_submitted">Отчёт успешно отправлен.</string>
+    <string name="worker_error_submit_failed">Не удалось отправить отчёт.</string>
 </resources>

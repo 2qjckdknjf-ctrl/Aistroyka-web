@@ -10,6 +10,7 @@
 - Added worker feedback status list (`worker/sync`) and report-detail loading (`reports/:id`) with a dedicated **resubmit** flow for `changes_requested` including manager note + re-submit action.
 - Added basic sync cycle in app (`sync/bootstrap` → `sync/changes` → `sync/ack`) with visible sync status/cursor and manual “Sync now” action.
 - Added `401` handling hardening: unauthorized API responses now trigger session clear (`AuthService.signOut()`), shift-day reset, and return user to login state instead of leaving stale in-app state.
+- Localized critical runtime worker messages (login/bootstrap/report/submit/sync errors and confirmations) via Android string resources across `en/ru/es/it`.
 
 ## Still missing vs iOS / spec
 

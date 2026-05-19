@@ -56,4 +56,26 @@
     <string name="worker_sync_section_title">Sincronización</string>
     <string name="worker_sync_status_fmt">Estado: %1$s · cursor: %2$d</string>
     <string name="worker_sync_now">Sincronizar ahora</string>
+    <string name="worker_error_enter_credentials">Introduce correo y contraseña.</string>
+    <string name="worker_error_sign_in_failed">Error al iniciar sesión.</string>
+    <string name="worker_error_bootstrap_failed">Error al cargar datos iniciales.</string>
+    <string name="worker_sync_conflict_fmt">Conflicto de sincronización (cursor %1$d)</string>
+    <string name="worker_sync_offline">Sin conexión</string>
+    <string name="worker_sync_failed">Sincronización fallida</string>
+    <string name="worker_error_open_report_failed">No se pudo abrir el informe.</string>
+    <string name="worker_error_start_shift_failed">No se pudo iniciar el turno.</string>
+    <string name="worker_error_start_shift_before_report">Inicia tu turno antes de crear un informe.</string>
+    <string name="worker_pipeline_add_photos_then_submit">Añade fotos de antes y después, luego envía.</string>
+    <string name="worker_error_create_report_failed">Error al crear el informe.</string>
+    <string name="worker_error_no_image_selected">No se seleccionó imagen.</string>
+    <string name="worker_error_no_active_report">No hay informe activo.</string>
+    <string name="worker_error_photos_already_attached">Las fotos de antes y después ya están adjuntas.</string>
+    <string name="worker_error_upload_failed">Carga fallida.</string>
+    <string name="worker_error_decode_image">No se pudo procesar la imagen.</string>
+    <string name="worker_error_no_report_id">Falta el id del informe.</string>
+    <string name="worker_error_no_existing_evidence">No hay evidencias existentes para este informe.</string>
+    <string name="worker_error_attach_before_after">Adjunta fotos de antes y después (o habilita el flag piloto).</string>
+    <string name="worker_done_resubmitted">Informe reenviado correctamente.</string>
+    <string name="worker_done_submitted">Informe enviado correctamente.</string>
+    <string name="worker_error_submit_failed">Error al enviar el informe.</string>
 </resources>

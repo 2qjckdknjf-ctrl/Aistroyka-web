@@ -57,6 +57,7 @@ data class WorkerUiState(
 )
 
 class WorkerViewModel(application: Application) : AndroidViewModel(application) {
+    private val app: Application = getApplication()
 
     private val shiftPrefs = application.getSharedPreferences("aistroyka_worker_shift", Application.MODE_PRIVATE)
     private val syncPrefs = application.getSharedPreferences("aistroyka_worker_sync", Application.MODE_PRIVATE)
@@ -85,7 +86,7 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
         val email = _state.value.email.trim()
         val password = _state.value.password
         if (email.isEmpty() || password.isEmpty()) {
-            _state.update { it.copy(banner = "Enter email and password") }
+            _state.update { it.copy(banner = app.getString(R.string.worker_error_enter_credentials)) }
             return
         }
         viewModelScope.launch {
@@ -98,7 +99,7 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
             } catch (e: ApiError) {
                 handleApiError(e)
             } catch (e: Exception) {
-                _state.update { it.copy(busy = false, banner = e.message ?: "Sign-in failed") }
+                _state.update { it.copy(busy = false, banner = e.message ?: app.getString(R.string.worker_error_sign_in_failed)) }
             }
         }
     }
@@ -145,7 +146,7 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
             } catch (e: ApiError) {
                 handleApiError(e)
             } catch (e: Exception) {
-                _state.update { it.copy(busy = false, banner = e.message ?: "Bootstrap failed") }
+                _state.update { it.copy(busy = false, banner = e.message ?: app.getString(R.string.worker_error_bootstrap_failed)) }
             }
         }
     }
@@ -213,7 +214,7 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
                     _state.update {
                         it.copy(
                             syncStatus = "needs_bootstrap",
-                            syncError = "Sync conflict (cursor ${e.serverCursor})",
+                            syncError = app.getString(R.string.worker_sync_conflict_fmt, e.serverCursor),
                             syncCursor = cursor,
                         )
                     }
@@ -236,7 +237,7 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
                     _state.update {
                         it.copy(
                             syncStatus = if (offline) "offline" else "error",
-                            syncError = e.message ?: if (offline) "Offline" else "Sync failed",
+                            syncError = e.message ?: if (offline) app.getString(R.string.worker_sync_offline) else app.getString(R.string.worker_sync_failed),
                             syncCursor = cursor,
                         )
                     }
@@ -272,7 +273,7 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
             } catch (e: ApiError) {
                 handleApiError(e)
             } catch (e: Exception) {
-                _state.update { it.copy(busy = false, banner = e.message ?: "Could not open report", screen = "home") }
+                _state.update { it.copy(busy = false, banner = e.message ?: app.getString(R.string.worker_error_open_report_failed), screen = "home") }
             }
         }
     }
@@ -289,7 +290,7 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
             } catch (e: ApiError) {
                 handleApiError(e)
             } catch (e: Exception) {
-                _state.update { it.copy(busy = false, banner = e.message ?: "Could not start shift") }
+                _state.update { it.copy(busy = false, banner = e.message ?: app.getString(R.string.worker_error_start_shift_failed)) }
             }
         }
     }
@@ -322,7 +323,7 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
     fun startNewReport() {
         val dayId = _state.value.shiftDayId
         if (dayId.isNullOrBlank()) {
-            _state.update { it.copy(banner = "Start your shift before creating a report.") }
+            _state.update { it.copy(banner = app.getString(R.string.worker_error_start_shift_before_report)) }
             return
         }
         val taskId = _state.value.selectedTaskId?.trim()?.takeIf { it.isNotEmpty() }
@@ -354,13 +355,13 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
                         busy = false,
                         screen = "report",
                         activeReportId = id,
-                        pipelineStatus = "Add before and after photos, then submit.",
+                        pipelineStatus = app.getString(R.string.worker_pipeline_add_photos_then_submit),
                     )
                 }
             } catch (e: ApiError) {
                 handleApiError(e)
             } catch (e: Exception) {
-                _state.update { it.copy(busy = false, banner = e.message ?: "Create report failed") }
+                _state.update { it.copy(busy = false, banner = e.message ?: app.getString(R.string.worker_error_create_report_failed)) }
             }
         }
     }
@@ -385,7 +386,7 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
 
     fun onPhotoPicked(uri: Uri?) {
         if (uri == null) {
-            _state.update { it.copy(photoLabel = null, banner = "No image selected") }
+            _state.update { it.copy(photoLabel = null, banner = app.getString(R.string.worker_error_no_image_selected)) }
             return
         }
         _state.update { it.copy(photoLabel = uri.toString(), banner = null) }
@@ -395,14 +396,14 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
     private fun runUploadPipeline(uri: Uri) {
         val reportId = _state.value.activeReportId
         if (reportId == null) {
-            _state.update { it.copy(banner = "No active report") }
+            _state.update { it.copy(banner = app.getString(R.string.worker_error_no_active_report)) }
             return
         }
         val purpose = when {
             !_state.value.beforePhotoAttached -> "report_before"
             !_state.value.afterPhotoAttached -> "report_after"
             else -> {
-                _state.update { it.copy(banner = "Before and after photos are already attached.") }
+                _state.update { it.copy(banner = app.getString(R.string.worker_error_photos_already_attached)) }
                 return
             }
         }
@@ -455,7 +456,7 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
                     it.copy(
                         busy = false,
                         pipelineStatus = "Failed",
-                        banner = e.message ?: "Upload failed",
+                        banner = e.message ?: app.getString(R.string.worker_error_upload_failed),
                     )
                 }
             }
@@ -466,7 +467,7 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
         val ctx = getApplication<Application>().contentResolver
         val bmp = ctx.openInputStream(uri).use { stream ->
             BitmapFactory.decodeStream(stream)
-        } ?: throw IllegalStateException("Could not decode image")
+        } ?: throw IllegalStateException(app.getString(R.string.worker_error_decode_image))
         val scaled = scaleDown(bmp, 2048)
         val out = ByteArrayOutputStream()
         scaled.compress(Bitmap.CompressFormat.JPEG, 85, out)
@@ -487,7 +488,7 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
     fun submitReport() {
         val isResubmit = _state.value.screen == "resubmit"
         val reportId = (_state.value.activeReportId ?: _state.value.selectedFeedbackReportId) ?: run {
-            _state.update { it.copy(submitMessage = "No report id") }
+            _state.update { it.copy(submitMessage = app.getString(R.string.worker_error_no_report_id)) }
             return
         }
         val hasExistingEvidence = _state.value.selectedFeedbackDetail?.media?.isNotEmpty() == true
@@ -501,9 +502,9 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
             _state.update {
                 it.copy(
                     submitMessage = if (isResubmit) {
-                        "No existing evidence found for this report."
+                        app.getString(R.string.worker_error_no_existing_evidence)
                     } else {
-                        "Attach both before and after photos (or enable pilot flag)."
+                        app.getString(R.string.worker_error_attach_before_after)
                     }
                 )
             }
@@ -528,9 +529,9 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
                     it.copy(
                         busy = false,
                         doneMessage = if (isResubmit) {
-                            "Report resubmitted successfully."
+                            app.getString(R.string.worker_done_resubmitted)
                         } else {
-                            "Report submitted successfully."
+                            app.getString(R.string.worker_done_submitted)
                         },
                         submitMessage = null,
                     )
@@ -544,7 +545,7 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
                     _state.update { it.copy(busy = false, submitMessage = e.message) }
                 }
             } catch (e: Exception) {
-                _state.update { it.copy(busy = false, submitMessage = e.message ?: "Submit failed") }
+                _state.update { it.copy(busy = false, submitMessage = e.message ?: app.getString(R.string.worker_error_submit_failed)) }
             }
         }
     }

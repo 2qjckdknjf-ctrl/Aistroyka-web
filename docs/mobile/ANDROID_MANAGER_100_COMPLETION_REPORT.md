@@ -8,6 +8,7 @@
 - `ClientProfile` + `parseClient` now includes **`android_manager`** (previously parsed as **`web`**). **`isLiteWorkerClient`** excludes manager profiles.
 - Enforced review parity with iOS: **reject** and **request changes** now require a manager note in Android Manager; validation error is shown inline before API call.
 - Hardened auth-expiry path: `401` API errors now clear session and reset UI state to login to avoid stale unauthorized manager sessions.
+- Localized critical manager runtime messages (auth/bootstrap/reports/review banners and action confirmations) through `en/ru/es/it` string bundles.
 
 ## Gaps
 

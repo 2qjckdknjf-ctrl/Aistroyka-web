@@ -50,6 +50,7 @@ data class ManagerUiState(
 )
 
 class ManagerViewModel(application: Application) : AndroidViewModel(application) {
+    private val app: Application = getApplication()
 
     private val _state = MutableStateFlow(ManagerUiState())
     val state: StateFlow<ManagerUiState> = _state.asStateFlow()
@@ -73,7 +74,7 @@ class ManagerViewModel(application: Application) : AndroidViewModel(application)
         val email = _state.value.email.trim()
         val password = _state.value.password
         if (email.isEmpty() || password.isEmpty()) {
-            _state.update { it.copy(banner = "Enter email and password") }
+            _state.update { it.copy(banner = app.getString(R.string.manager_error_enter_credentials)) }
             return
         }
         viewModelScope.launch {
@@ -85,7 +86,7 @@ class ManagerViewModel(application: Application) : AndroidViewModel(application)
             } catch (e: ApiError) {
                 handleApiError(e)
             } catch (e: Exception) {
-                _state.update { it.copy(busy = false, banner = e.message ?: "Sign-in failed") }
+                _state.update { it.copy(busy = false, banner = e.message ?: app.getString(R.string.manager_error_sign_in_failed)) }
             }
         }
     }
@@ -104,16 +105,16 @@ class ManagerViewModel(application: Application) : AndroidViewModel(application)
                 val me = ManagerApi.me().data
                 val projects = ManagerApi.projects()
                 val meSummary = listOfNotNull(
-                    me?.role?.let { r -> "Role: $r" },
-                    me?.tenantId?.let { t -> "Tenant: ${t.take(8)}…" }
-                ).joinToString(" · ").ifEmpty { "Signed in" }
+                    me?.role?.let { r -> app.getString(R.string.manager_me_summary_role_fmt, r) },
+                    me?.tenantId?.let { t -> app.getString(R.string.manager_me_summary_tenant_fmt, t.take(8)) }
+                ).joinToString(" · ").ifEmpty { app.getString(R.string.manager_me_summary_signed_in) }
                 val overview = try {
                     ManagerApi.opsOverview(limit = 15, projectId = _state.value.selectedProjectId)
                 } catch (_: Exception) {
                     null
                 }
                 val pending = overview?.queues?.reportsPendingReview?.size ?: 0
-                val opsLine = "Reports pending review (ops queue): $pending"
+                val opsLine = app.getString(R.string.manager_ops_pending_fmt, pending)
                 val first = projects.firstOrNull()?.id
                 val role = mapHelpRole(me?.role)
                 val locale = supportedHelpLocale()
@@ -176,7 +177,7 @@ class ManagerViewModel(application: Application) : AndroidViewModel(application)
             } catch (e: ApiError) {
                 handleApiError(e)
             } catch (e: Exception) {
-                _state.update { it.copy(busy = false, banner = e.message ?: "Bootstrap failed") }
+                _state.update { it.copy(busy = false, banner = e.message ?: app.getString(R.string.manager_error_bootstrap_failed)) }
             }
         }
     }
@@ -221,7 +222,7 @@ class ManagerViewModel(application: Application) : AndroidViewModel(application)
             } catch (e: ApiError) {
                 handleApiError(e)
             } catch (e: Exception) {
-                _state.update { it.copy(busy = false, banner = e.message ?: "Failed to load reports") }
+                _state.update { it.copy(busy = false, banner = e.message ?: app.getString(R.string.manager_error_load_reports_failed)) }
             }
         }
     }
@@ -280,7 +281,7 @@ class ManagerViewModel(application: Application) : AndroidViewModel(application)
             } catch (e: ApiError) {
                 handleApiError(e)
             } catch (e: Exception) {
-                _state.update { it.copy(busy = false, banner = e.message ?: "Load failed") }
+                _state.update { it.copy(busy = false, banner = e.message ?: app.getString(R.string.manager_error_load_failed)) }
             }
         }
     }
@@ -330,13 +331,13 @@ class ManagerViewModel(application: Application) : AndroidViewModel(application)
                         busy = false,
                         reportDetail = updated,
                         reports = refreshed,
-                        actionMessage = "Review saved: $status",
+                        actionMessage = app.getString(R.string.manager_action_review_saved_fmt, status),
                     )
                 }
             } catch (e: ApiError) {
                 handleApiError(e)
             } catch (e: Exception) {
-                _state.update { it.copy(busy = false, banner = e.message ?: "Review failed") }
+                _state.update { it.copy(busy = false, banner = e.message ?: app.getString(R.string.manager_error_review_failed)) }
             }
         }
     }

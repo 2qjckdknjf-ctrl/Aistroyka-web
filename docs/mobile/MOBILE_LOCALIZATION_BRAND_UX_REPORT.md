@@ -10,15 +10,16 @@
 
 | Locale | iOS Worker | iOS Manager | Android Worker | Android Manager |
 |--------|------------|-------------|------------------|-----------------|
-| en | OK | OK | OK (new shift/photo keys) | Partial |
-| ru | OK | OK | OK for new keys | Partial |
-| es | Present | Present | **Falls back** on new keys | Partial |
-| it | Present | Present | **Falls back** on new keys | Partial |
+| en | OK | OK | OK | OK |
+| ru | OK | OK | OK | OK |
+| es | Present | Present | Present (critical runtime messages localized) | Present (critical runtime messages localized) |
+| it | Present | Present | Present (critical runtime messages localized) | Present (critical runtime messages localized) |
 
 ## Raw technical messages
 
-- Some Android ViewModel banners still English-only (**P1**).
+- Android Worker/Manager critical runtime banners and action messages moved to string resources (`en/ru/es/it`) for login/bootstrap/report/review errors and confirmations.
+- Remaining non-localized surfaces are mostly backend-provided dynamic messages and status codes from API payloads.
 
 ## Verdict
 
-**NOT COMPLETE**
+**PARTIALLY COMPLETE** — major Android hardcoded English leakage reduced; full semantic localization of server-originated error payloads remains open.
