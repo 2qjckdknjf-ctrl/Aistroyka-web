@@ -12,6 +12,7 @@
 - Added `401` handling hardening: unauthorized API responses now trigger session clear (`AuthService.signOut()`), shift-day reset, and return user to login state instead of leaving stale in-app state.
 - Localized critical runtime worker messages (login/bootstrap/report/submit/sync errors and confirmations) via Android string resources across `en/ru/es/it`.
 - Added API error UX mapping for `403/404/409/5xx` and `lite_client_path_forbidden` to localized user-facing messages.
+- Localized visible report status labels in Worker UI (feedback list/detail) instead of raw backend status keys.
 
 ## Still missing vs iOS / spec
 

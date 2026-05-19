@@ -462,7 +462,11 @@ private fun ReportsScreen(vm: ManagerViewModel) {
                                     overflow = TextOverflow.Ellipsis
                                 )
                                 Text(
-                                    stringResource(R.string.manager_report_row_status, r.status ?: "—", r.mediaCount ?: 0),
+                                    stringResource(
+                                        R.string.manager_report_row_status,
+                                        managerStatusLabel(r.status),
+                                        r.mediaCount ?: 0
+                                    ),
                                     style = MaterialTheme.typography.bodySmall
                                 )
                                 r.analysisStatus?.let { s ->
@@ -521,7 +525,7 @@ private fun DetailScreen(vm: ManagerViewModel) {
                 stringResource(R.string.manager_report_title, detail.id ?: "—"),
                 style = MaterialTheme.typography.titleLarge
             )
-            Text(stringResource(R.string.manager_status_line, detail.status ?: "—"), style = MaterialTheme.typography.bodyMedium)
+            Text(stringResource(R.string.manager_status_line, managerStatusLabel(detail.status)), style = MaterialTheme.typography.bodyMedium)
             detail.submittedAt?.let { Text(stringResource(R.string.manager_submitted_line, it), style = MaterialTheme.typography.bodySmall) }
             detail.reviewedAt?.let { Text(stringResource(R.string.manager_reviewed_line, it), style = MaterialTheme.typography.bodySmall) }
             detail.managerNote?.let { Text(stringResource(R.string.manager_note_line, it), style = MaterialTheme.typography.bodySmall) }
@@ -632,5 +636,17 @@ private fun MediaRow(item: ReportMediaItemDto, urlById: Map<String, String>) {
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun managerStatusLabel(status: String?): String {
+    return when (status?.lowercase()) {
+        "submitted" -> stringResource(R.string.manager_status_submitted)
+        "approved" -> stringResource(R.string.manager_status_approved)
+        "rejected" -> stringResource(R.string.manager_status_rejected)
+        "changes_requested" -> stringResource(R.string.manager_status_changes_requested)
+        "open" -> stringResource(R.string.manager_status_open)
+        else -> status ?: stringResource(R.string.manager_status_unknown)
     }
 }

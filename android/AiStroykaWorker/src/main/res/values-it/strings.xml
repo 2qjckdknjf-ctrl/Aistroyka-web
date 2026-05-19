@@ -89,4 +89,10 @@
     <string name="worker_api_task_invalid">L\'attività selezionata non è valida.</string>
     <string name="worker_api_task_not_assigned">Questa attività non è assegnata a te.</string>
     <string name="worker_api_sync_conflict">Conflitto di sincronizzazione rilevato. Aggiorna e riprova.</string>
+    <string name="worker_status_submitted">inviato</string>
+    <string name="worker_status_approved">approvato</string>
+    <string name="worker_status_rejected">rifiutato</string>
+    <string name="worker_status_changes_requested">modifiche richieste</string>
+    <string name="worker_status_open">aperto</string>
+    <string name="worker_status_unknown">sconosciuto</string>
 </resources>

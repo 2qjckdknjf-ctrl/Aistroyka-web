@@ -89,4 +89,10 @@
     <string name="worker_api_task_invalid">Selected task is invalid.</string>
     <string name="worker_api_task_not_assigned">This task is not assigned to you.</string>
     <string name="worker_api_sync_conflict">Sync conflict detected. Refresh and retry sync.</string>
+    <string name="worker_status_submitted">submitted</string>
+    <string name="worker_status_approved">approved</string>
+    <string name="worker_status_rejected">rejected</string>
+    <string name="worker_status_changes_requested">changes requested</string>
+    <string name="worker_status_open">open</string>
+    <string name="worker_status_unknown">unknown</string>
 </resources>

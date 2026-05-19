@@ -79,4 +79,10 @@
     <string name="manager_api_request_failed">Request failed. Please try again.</string>
     <string name="manager_api_note_required">Manager note is required for this action.</string>
     <string name="manager_api_sync_conflict">Sync conflict detected. Refresh and retry.</string>
+    <string name="manager_status_submitted">submitted</string>
+    <string name="manager_status_approved">approved</string>
+    <string name="manager_status_rejected">rejected</string>
+    <string name="manager_status_changes_requested">changes requested</string>
+    <string name="manager_status_open">open</string>
+    <string name="manager_status_unknown">unknown</string>
 </resources>

@@ -10,7 +10,7 @@
 ## Logging
 
 - iOS: `SafeLog` discipline; do not log Bearer tokens.  
-- Android: audit `Log` usage (**P2**).
+- Android: targeted audit shows no `android.util.Log` / `Log.*` usage in current mobile Kotlin sources.
 
 ## API isolation
 
@@ -28,4 +28,4 @@
 
 ## Verdict
 
-**Pilot acceptable with P2 follow-ups** (targeted Android logging audit + release permission verification).
+**Pilot acceptable with P2 follow-ups** (release permission verification + broader runtime log policy checks in future features).

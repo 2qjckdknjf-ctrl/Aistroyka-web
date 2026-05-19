@@ -89,4 +89,10 @@
     <string name="worker_api_task_invalid">Выбрана некорректная задача.</string>
     <string name="worker_api_task_not_assigned">Эта задача не назначена вам.</string>
     <string name="worker_api_sync_conflict">Обнаружен конфликт синхронизации. Обновите и повторите синхронизацию.</string>
+    <string name="worker_status_submitted">отправлен</string>
+    <string name="worker_status_approved">утверждён</string>
+    <string name="worker_status_rejected">отклонён</string>
+    <string name="worker_status_changes_requested">нужны правки</string>
+    <string name="worker_status_open">открыт</string>
+    <string name="worker_status_unknown">неизвестно</string>
 </resources>

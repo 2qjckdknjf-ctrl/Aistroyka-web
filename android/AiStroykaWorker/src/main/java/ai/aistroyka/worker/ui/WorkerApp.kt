@@ -296,13 +296,14 @@ private fun WorkerHomeScaffold(
             } else {
                 feedback.forEach { report ->
                     val shortId = if (report.id.length > 8) report.id.substring(0, 8) else report.id
+                    val statusLabel = workerStatusLabel(report.status)
                     TextButton(
                         onClick = {
                             if (report.status == "changes_requested") vm.openResubmit(report.id)
                         }
                     ) {
                         Text(
-                            text = "${shortId} • ${report.status}",
+                            text = "${shortId} • $statusLabel",
                             color = if (report.status == "changes_requested") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                         )
                     }
@@ -371,7 +372,7 @@ private fun WorkerResubmitScreen(vm: WorkerViewModel, state: WorkerUiState) {
             } else {
                 val shortId = if (detail.id.length > 8) detail.id.substring(0, 8) else detail.id
                 Text(stringResource(R.string.worker_report_id_line_short, shortId))
-                Text(stringResource(R.string.worker_report_status_line, detail.status))
+                Text(stringResource(R.string.worker_report_status_line, workerStatusLabel(detail.status)))
                 val managerNote = detail.managerNote
                 if (!managerNote.isNullOrBlank()) {
                     Text(stringResource(R.string.worker_manager_note_title), style = MaterialTheme.typography.titleSmall)
@@ -619,5 +620,17 @@ private fun supportedHelpLocale(): String {
     return when (language) {
         "ru", "es", "it" -> language
         else -> "en"
+    }
+}
+
+@Composable
+private fun workerStatusLabel(status: String?): String {
+    return when (status?.lowercase(Locale.ROOT)) {
+        "submitted" -> stringResource(R.string.worker_status_submitted)
+        "approved" -> stringResource(R.string.worker_status_approved)
+        "rejected" -> stringResource(R.string.worker_status_rejected)
+        "changes_requested" -> stringResource(R.string.worker_status_changes_requested)
+        "open" -> stringResource(R.string.worker_status_open)
+        else -> status ?: stringResource(R.string.worker_status_unknown)
     }
 }

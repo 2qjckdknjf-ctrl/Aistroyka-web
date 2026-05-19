@@ -89,4 +89,10 @@
     <string name="worker_api_task_invalid">La tarea seleccionada no es válida.</string>
     <string name="worker_api_task_not_assigned">Esta tarea no está asignada a ti.</string>
     <string name="worker_api_sync_conflict">Se detectó conflicto de sincronización. Actualiza y reintenta.</string>
+    <string name="worker_status_submitted">enviado</string>
+    <string name="worker_status_approved">aprobado</string>
+    <string name="worker_status_rejected">rechazado</string>
+    <string name="worker_status_changes_requested">cambios solicitados</string>
+    <string name="worker_status_open">abierto</string>
+    <string name="worker_status_unknown">desconocido</string>
 </resources>

@@ -79,4 +79,10 @@
     <string name="manager_api_request_failed">La solicitud falló. Inténtalo de nuevo.</string>
     <string name="manager_api_note_required">La nota del manager es obligatoria para esta acción.</string>
     <string name="manager_api_sync_conflict">Se detectó conflicto de sincronización. Actualiza y reintenta.</string>
+    <string name="manager_status_submitted">enviado</string>
+    <string name="manager_status_approved">aprobado</string>
+    <string name="manager_status_rejected">rechazado</string>
+    <string name="manager_status_changes_requested">cambios solicitados</string>
+    <string name="manager_status_open">abierto</string>
+    <string name="manager_status_unknown">desconocido</string>
 </resources>

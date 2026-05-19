@@ -79,4 +79,10 @@
     <string name="manager_api_request_failed">Запрос не выполнен. Попробуйте снова.</string>
     <string name="manager_api_note_required">Для этого действия необходим комментарий менеджера.</string>
     <string name="manager_api_sync_conflict">Обнаружен конфликт синхронизации. Обновите и повторите.</string>
+    <string name="manager_status_submitted">отправлен</string>
+    <string name="manager_status_approved">утверждён</string>
+    <string name="manager_status_rejected">отклонён</string>
+    <string name="manager_status_changes_requested">нужны правки</string>
+    <string name="manager_status_open">открыт</string>
+    <string name="manager_status_unknown">неизвестно</string>
 </resources>
