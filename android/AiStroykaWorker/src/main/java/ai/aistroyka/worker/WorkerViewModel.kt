@@ -96,7 +96,7 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
                 refreshBootstrap()
                 PushRegistrationService.registerIfNeeded()
             } catch (e: ApiError) {
-                _state.update { it.copy(busy = false, banner = e.message) }
+                handleApiError(e)
             } catch (e: Exception) {
                 _state.update { it.copy(busy = false, banner = e.message ?: "Sign-in failed") }
             }
@@ -143,7 +143,7 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
                 refreshFeedbackReports()
                 runSync()
             } catch (e: ApiError) {
-                _state.update { it.copy(busy = false, banner = e.message) }
+                handleApiError(e)
             } catch (e: Exception) {
                 _state.update { it.copy(busy = false, banner = e.message ?: "Bootstrap failed") }
             }
@@ -219,12 +219,16 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
                     }
                     break
                 } catch (e: ApiError) {
-                    _state.update {
-                        it.copy(
-                            syncStatus = "error",
-                            syncError = e.message,
-                            syncCursor = cursor,
-                        )
+                    if (e.isUnauthorized) {
+                        handleApiError(e)
+                    } else {
+                        _state.update {
+                            it.copy(
+                                syncStatus = "error",
+                                syncError = e.message,
+                                syncCursor = cursor,
+                            )
+                        }
                     }
                     break
                 } catch (e: Exception) {
@@ -266,7 +270,7 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
                     )
                 }
             } catch (e: ApiError) {
-                _state.update { it.copy(busy = false, banner = e.message, screen = "home") }
+                handleApiError(e)
             } catch (e: Exception) {
                 _state.update { it.copy(busy = false, banner = e.message ?: "Could not open report", screen = "home") }
             }
@@ -283,7 +287,7 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
                 _state.update { it.copy(busy = false, shiftDayId = day) }
                 loadTasksForSelection()
             } catch (e: ApiError) {
-                _state.update { it.copy(busy = false, banner = e.message) }
+                handleApiError(e)
             } catch (e: Exception) {
                 _state.update { it.copy(busy = false, banner = e.message ?: "Could not start shift") }
             }
@@ -354,7 +358,7 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
                     )
                 }
             } catch (e: ApiError) {
-                _state.update { it.copy(busy = false, banner = e.message) }
+                handleApiError(e)
             } catch (e: Exception) {
                 _state.update { it.copy(busy = false, banner = e.message ?: "Create report failed") }
             }
@@ -444,13 +448,8 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
                     )
                 }
             } catch (e: ApiError) {
-                _state.update {
-                    it.copy(
-                        busy = false,
-                        pipelineStatus = "Failed",
-                        banner = e.message,
-                    )
-                }
+                handleApiError(e)
+                _state.update { it.copy(pipelineStatus = "Failed") }
             } catch (e: Exception) {
                 _state.update {
                     it.copy(
@@ -539,7 +538,11 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
                 runSync()
                 refreshFeedbackReports()
             } catch (e: ApiError) {
-                _state.update { it.copy(busy = false, submitMessage = e.message) }
+                if (e.isUnauthorized) {
+                    handleApiError(e)
+                } else {
+                    _state.update { it.copy(busy = false, submitMessage = e.message) }
+                }
             } catch (e: Exception) {
                 _state.update { it.copy(busy = false, submitMessage = e.message ?: "Submit failed") }
             }
@@ -569,5 +572,16 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
     private fun saveCursor(cursor: Int) {
         syncPrefs.edit().putInt("cursor", cursor).apply()
         _state.update { it.copy(syncCursor = cursor) }
+    }
+
+    private suspend fun handleApiError(e: ApiError) {
+        val message = e.message
+        if (e.isUnauthorized) {
+            AuthService.signOut()
+            shiftPrefs.edit().remove("shift_day_id").apply()
+            _state.value = WorkerUiState(banner = message)
+            return
+        }
+        _state.update { it.copy(busy = false, banner = message) }
     }
 }

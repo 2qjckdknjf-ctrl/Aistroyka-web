@@ -1,7 +1,7 @@
 # Mobile E2E — worker ↔ manager system test
 
 **Date:** 2026-05-19  
-**Status:** **NOT EXECUTED** in this session (no pilot credentials injected; no report IDs captured).
+**Status:** **NOT EXECUTED** in this session (pilot credentials/env missing; no report IDs captured).
 
 ## Intended scenario (from spec)
 
@@ -29,4 +29,10 @@
 
 ## Blocker
 
-Requires `E2E_*` / pilot env and manual or Playwright/mobile harness — out of scope for the automated build-only pass documented here.
+- `bun run smoke:pilot:check --strict` fails in current environment:
+  - `BASE_URL` unset for smoke run,
+  - missing tenant auth path (`AUTH_HEADER`/`COOKIE`/`SMOKE_*`),
+  - missing `E2E_EMAIL`/`E2E_PASSWORD`,
+  - `PLAYWRIGHT_BASE_URL` unset,
+  - missing `SUPABASE_ACCESS_TOKEN` for CLI-linked flows.
+- Without these prerequisites, the 19-step worker↔manager real E2E cannot be executed and evidenced in this session.

@@ -83,7 +83,7 @@ class ManagerViewModel(application: Application) : AndroidViewModel(application)
                 _state.update { it.copy(busy = false, screen = "home") }
                 refreshBootstrap()
             } catch (e: ApiError) {
-                _state.update { it.copy(busy = false, banner = e.message) }
+                handleApiError(e)
             } catch (e: Exception) {
                 _state.update { it.copy(busy = false, banner = e.message ?: "Sign-in failed") }
             }
@@ -174,7 +174,7 @@ class ManagerViewModel(application: Application) : AndroidViewModel(application)
                     )
                 }
             } catch (e: ApiError) {
-                _state.update { it.copy(busy = false, banner = e.message) }
+                handleApiError(e)
             } catch (e: Exception) {
                 _state.update { it.copy(busy = false, banner = e.message ?: "Bootstrap failed") }
             }
@@ -219,7 +219,7 @@ class ManagerViewModel(application: Application) : AndroidViewModel(application)
                 )
                 _state.update { it.copy(busy = false, reports = list) }
             } catch (e: ApiError) {
-                _state.update { it.copy(busy = false, banner = e.message) }
+                handleApiError(e)
             } catch (e: Exception) {
                 _state.update { it.copy(busy = false, banner = e.message ?: "Failed to load reports") }
             }
@@ -278,7 +278,7 @@ class ManagerViewModel(application: Application) : AndroidViewModel(application)
                     )
                 }
             } catch (e: ApiError) {
-                _state.update { it.copy(busy = false, banner = e.message) }
+                handleApiError(e)
             } catch (e: Exception) {
                 _state.update { it.copy(busy = false, banner = e.message ?: "Load failed") }
             }
@@ -334,7 +334,7 @@ class ManagerViewModel(application: Application) : AndroidViewModel(application)
                     )
                 }
             } catch (e: ApiError) {
-                _state.update { it.copy(busy = false, banner = e.message) }
+                handleApiError(e)
             } catch (e: Exception) {
                 _state.update { it.copy(busy = false, banner = e.message ?: "Review failed") }
             }
@@ -356,5 +356,15 @@ class ManagerViewModel(application: Application) : AndroidViewModel(application)
             "ru", "es", "it" -> language
             else -> "en"
         }
+    }
+
+    private suspend fun handleApiError(e: ApiError) {
+        val message = e.message
+        if (e.isUnauthorized) {
+            AuthService.signOut()
+            _state.value = ManagerUiState(banner = message)
+            return
+        }
+        _state.update { it.copy(busy = false, banner = message) }
     }
 }

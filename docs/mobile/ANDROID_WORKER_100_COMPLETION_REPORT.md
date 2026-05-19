@@ -9,6 +9,7 @@
 - Shift start/end API calls; report create with **before + after** upload purposes; worker note on submit; `x-client: android_worker`.
 - Added worker feedback status list (`worker/sync`) and report-detail loading (`reports/:id`) with a dedicated **resubmit** flow for `changes_requested` including manager note + re-submit action.
 - Added basic sync cycle in app (`sync/bootstrap` → `sync/changes` → `sync/ack`) with visible sync status/cursor and manual “Sync now” action.
+- Added `401` handling hardening: unauthorized API responses now trigger session clear (`AuthService.signOut()`), shift-day reset, and return user to login state instead of leaving stale in-app state.
 
 ## Still missing vs iOS / spec
 
@@ -18,4 +19,4 @@
 
 ## Validation
 
-- `:AiStroykaWorker:assembleDebug` → **SUCCEEDED**.
+- `:AiStroykaWorker:assembleDebug` → **SUCCEEDED** (latest rerun after 401 hardening).

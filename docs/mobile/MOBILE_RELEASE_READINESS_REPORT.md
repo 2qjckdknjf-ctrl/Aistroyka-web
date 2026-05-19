@@ -19,5 +19,14 @@
 |------|--------|
 | applicationId | `ai.aistroyka.worker` / manager module equivalent. |
 | versionCode / versionName | Worker `1` / `1.0.0` — bump policy TBD. |
-| Release signing | **Document only** — no keystore in repo (correct). |
+| Release build | **PASS** — `:AiStroykaWorker:assembleRelease` and `:AiStroykaManager:assembleRelease` succeeded. |
+| Release signing | **Document only** — no keystore in repo (correct), signing for store delivery still external. |
 | Play checklist | **Open** |
+
+## Notes from latest run
+
+- Initial release attempt failed with `Java heap space` during dex/resource merge.
+- Added Gradle JVM tuning in `android/gradle.properties`:
+  - `org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8`
+  - `kotlin.daemon.jvm.options=-Xmx2g`
+- After tuning, Android release assembly succeeded for both apps.

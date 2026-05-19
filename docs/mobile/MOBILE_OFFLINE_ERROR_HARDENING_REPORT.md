@@ -12,10 +12,11 @@
 
 - **No** durable offline queue; failures surface in banner/pipeline text; user must retry manually.
 - **Shift + photos** now require network for API + Supabase storage (same as iOS without queue).
+- **401 handling hardened:** unauthorized responses now clear session and return to login (prevents stale app state after token expiry).
 
 ## Android / iOS Manager
 
-- Standard error banners; no systematic torture test in this session.
+- Standard error banners; Android Manager now also auto-resets to login on `401`; no systematic torture test in this session.
 
 ## Verdict
 
