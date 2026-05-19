@@ -1,7 +1,26 @@
 # Deployment source of truth (operators)
 
-**Last updated:** 2026-05-19  
-**Applies to:** AISTROYKA web (`apps/web`), GitHub repo **Aistroyka-web**
+**Last updated:** 2026-05-19 (full audit: `docs/incidents/DEPLOY_TOPOLOGY_RCA_AND_FIX.md`)  
+**Applies to:** AISTROYKA web (`apps/web`), GitHub repo **Aistroyka-web** (`git@github.com:2qjckdknjf-ctrl/Aistroyka-web.git`)
+
+---
+
+## Production source of truth (memorize)
+
+| | |
+|--|--|
+| **Runtime** | **Cloudflare Workers** + OpenNext (`cf:build` + Wrangler) |
+| **Deploy workflow** | `.github/workflows/deploy-cloudflare-prod.yml` — **Deploy Cloudflare (Production)** |
+| **Post-deploy gate** | **Post-deploy pilot smoke** (blocking) against `https://aistroyka.ai` |
+| **Fast prod check** | `curl -i https://aistroyka.ai/api/v1/health` |
+
+**Staging source of truth:** `.github/workflows/deploy-cloudflare-staging.yml` → worker **`aistroyka-web-staging`** → `https://staging.aistroyka.ai`.
+
+### Ignore for “is production ready?”
+
+- **Vercel** deployment rows (Canceled / Queued / Building / Ready), especially on duplicate projects (`aistroyka-web`, `aistroyka-web-web`, `aistroyka-web-web-v7jq`)
+- **Vercel preview** noise from docs/mobile/experiment branches
+- **Staging workflow** failures triggered from **`main`** or non-`develop` branches (staging is **`develop`**-driven)
 
 ---
 
@@ -103,19 +122,57 @@ gh run list --workflow "Deploy Cloudflare (Staging)" --limit 5
 gh run list --workflow "CI Check" --limit 5
 ```
 
+### Local OpenNext bundle (developer / release engineer)
+
+Run **sequentially** (do **not** run `bun run build` / `next build` and `cf:build` in parallel — risk of corrupting `apps/web/.next`):
+
+```bash
+bun install --frozen-lockfile
+bun run build:contracts
+bun run --cwd apps/web build    # requires apps/web/.env.local or exported NEXT_PUBLIC_* at build time
+bun run cf:build                # from repo root; OpenNext worker bundle
+```
+
+If builds behave oddly after experiments: `rm -rf apps/web/.next apps/web/.open-next` and rerun **in order**.
+
 ---
 
 ## Manual UI checks (when automating hit limits)
 
-| Platform | Where to look |
-|----------|----------------|
-| **GitHub** | **Settings → Branches** — classic branch protection / required status checks |
-| **GitHub** | **Settings → Rules → Rulesets** — repo rulesets |
-| **GitHub** | **Organization** rules (org admin) — not visible via all API tokens |
-| **Vercel** | **Project → Settings → Git** — auto-deploy, connected repo |
-| **Cloudflare** | **Workers & Pages** → worker **aistroyka-web-production** → routes, custom domains, logs |
+### GitHub — branch protection and required checks
 
-**Remove** any **required** GitHub status check that is **only** from the Vercel GitHub App if production is exclusively Cloudflare — exact context names vary (e.g. `Vercel`, `Vercel Preview`, project slug).
+1. Open the repository on GitHub: **https://github.com/2qjckdknjf-ctrl/Aistroyka-web**
+2. **Settings → Branches**  
+   - Inspect **Branch protection rules** for **`main`** (and any release branches).  
+   - Under **Require status checks to pass**, **remove** any **Vercel**-origin contexts if production is Cloudflare-only (names vary: `Vercel`, `Vercel Preview`, project slug, etc.).  
+   - **Keep** **`CI Check`** (and any org-mandated checks you intend).
+3. **Settings → Rules → Rulesets**  
+   - Inspect **Repository rulesets**; confirm none **require** Vercel-only statuses.
+4. **Organization** (if applicable, org owners only)  
+   - **Organization → Settings → Rules → Rulesets** (or org **Branch protection** policies) — same **Vercel** rule: do not require for merge if Cloudflare is canonical.
+
+**API snapshot (non-admin token):** `GET /repos/.../branches/main/protection` may return **404** (“not protected”) and `GET /repos/.../rulesets` may return **`[]`** — that does **not** prove org-level rules are absent. **Always confirm in UI.**
+
+### Vercel — reduce duplicate-project noise
+
+**Path:** **Vercel Dashboard → Project → Settings → Git →** disconnect repo **or** disable automatic deployments → **Save**.
+
+Repeat for: **`aistroyka-web`**, **`aistroyka-web-web`**, **`aistroyka-web-web-v7jq`** (prefer **disable** over **delete**).
+
+### Cloudflare — manual route verification
+
+**Repo note:** `apps/web/wrangler.toml` documents that **`[[env.production.routes]]` are commented** — **routes are managed in the Cloudflare Dashboard**, not committed as Wrangler routes.
+
+**UI path:**
+
+1. **Cloudflare Dashboard → Workers & Pages**
+2. Select worker **`aistroyka-web-production`**
+3. **Settings / Triggers / Routes / Custom domains** (exact labels vary in dashboard versions)
+4. Confirm **`aistroyka.ai`** and **`www.aistroyka.ai`** (and `/*` patterns as appropriate) route to this Worker.
+
+**Staging:** repeat for **`aistroyka-web-staging`** vs `https://staging.aistroyka.ai`.
+
+**Do not** change routes in this pass unless **health** or **pilot smoke** proves mis-routing.
 
 ---
 

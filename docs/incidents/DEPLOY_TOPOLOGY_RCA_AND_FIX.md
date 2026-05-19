@@ -1,211 +1,212 @@
-# Deploy topology: root cause (confusion) and fix — RCA
+# Deploy topology: RCA, audit, and operator closure
 
-**Date:** 2026-05-19 (audit refresh)  
-**Role:** Release engineering / deployment topology  
-**Scope:** Clarify canonical runtime (Cloudflare Workers + OpenNext), demote Vercel to non-authoritative, and document operator actions. **No application code changes** were required.
-
----
-
-## 0. MCP / plugin verification summary (what was actually used)
-
-This Cursor workspace registers **Vercel** and **Cloudflare** MCP servers with **only** a `mcp_auth` tool in the tool manifest (no `list_projects`, `list_deployments`, Workers introspection, or write APIs exposed to the agent). **Those servers were not used to mutate or read live Vercel/Cloudflare accounts.**
-
-| System | Tooling used | Result |
-|--------|----------------|--------|
-| **GitHub** | No GitHub MCP in `mcps/`; **`gh` CLI** + REST via `gh api` | Branch protection, rulesets, workflow runs |
-| **Vercel** | MCP **not operational** (auth-only stub) | **No** project/deployment listing; **manual** dashboard steps documented |
-| **Cloudflare** | MCP **not operational** (auth-only stub) | Worker/routes validated via **HTTP** + workflow docs |
-| **Supabase** | **Not used** | No DB/deploy/env fault proven; no migrations |
+**Repository:** `2qjckdknjf-ctrl/Aistroyka-web`  
+**Audit timestamp (UTC):** `2026-05-19T06:03:07Z` (cursor); health re-checked during same session.  
+**Scope:** Canonical Cloudflare production/staging, GitHub Actions, Vercel demotion, local `cf:build`, smoke. **No application code changes** in this audit cycle unless a failure was proven (none was).
 
 ---
 
-## 1. What was failing visually
+## Executive summary
 
-**Symptom:** Operators saw **no single “source of truth”** for deploy status:
-
-- **Vercel** showed deployments in states such as **CANCELED**, **QUEUED**, **BUILDING**, **READY**, often across **multiple projects** with similar names. That reads like production is broken or “stuck,” even when the real production path is healthy.
-- **GitHub** may show **Vercel-provided commit statuses** alongside **GitHub Actions** (e.g. **CI Check**, **Deploy Cloudflare …**). Without a documented rule, reviewers merge based on the wrong row.
-- **Perception:** “Red / yellow Vercel === failed prod deploy.”
-
-**Important:** This is primarily **UX and governance confusion**, not evidence that Cloudflare production failed.
-
----
-
-## 2. Did Cloudflare production actually fail?
-
-**No.** For run **25718254206** (“Merge PR #13…”), GitHub Actions reports:
-
-| Job | Outcome |
-|-----|---------|
-| Build and deploy to production | **success** |
-| Post-deploy pilot smoke (blocking) | **success** |
-| Post-deploy AI Phase 5 gate (non-blocking) | **success** |
-
-### 2.1 Workflow run samples (`gh` CLI, 2026-05-19)
-
-**Deploy Cloudflare (Production)** — latest lines:
-
-- Multiple **`completed` / `success`** on `main` pushes (e.g. runs **25718558308**, **25718471621**, **25718254206**).
-- One older **`workflow_dispatch`** failure (**25507056496**) — historical; **not** contradicting current green path.
-
-**Deploy Cloudflare (Staging)** — latest lines:
-
-- Mostly **`success`** on `workflow_dispatch` from feature branches.
-- One **`failure`** on `main` push (**25506747821**) — staging is intended for **`develop`**; push to `main` can fail early by design/config — **not** used as production signal.
-
-**CI Check** — latest lines:
-
-- Mostly **`success`** on PRs; one **`cancelled`** run (concurrency) — normal noise; trust **latest green** on the PR head.
+- **Production** is served from **Cloudflare Workers** (`server: cloudflare` on health). Latest **`main`** deploy workflow runs are **green**; live **`/api/v1/health`** is **200** with **`ok: true`** and **`buildStamp`**.
+- **PR CI** is **Cloudflare-oriented** (`cf:build`); **no workflow deploys to Vercel**.
+- **Vercel** remains **non-canonical**; duplicate projects require **manual** dashboard cleanup (MCP in this environment has **no** Vercel operational tools).
+- **GitHub** REST: **`main`** classic branch protection **404**; repo **rulesets** `[]`. **Org-level** rules are **not** verified via API.
+- **Local validation:** `bun install --frozen-lockfile`, `bun run build:contracts`, `bun run --cwd apps/web build`, `bun run cf:build` **all succeeded** (logs under `artifacts/deploy/*.log`; `artifacts/` is **gitignored**).
+- **Smoke:** `dashboard_cabinet_smoke.sh` against production **PASS**; **`pilot_launch.sh`** without tenant credentials **fails at `ops/metrics` (401)** — **expected**; full pilot requires secrets (CI has them).
 
 ---
 
-## 3. Live HTTP validation (Cloudflare)
+## MCP / plugin capabilities (this Cursor workspace)
 
-**Executed:** `curl -i` against production health.
-
-| URL | HTTP | `server` | `ok` | `buildStamp` |
-|-----|------|----------|------|--------------|
-| `https://aistroyka.ai/api/v1/health` | **200** | **cloudflare** | **true** | **present** (`sha7`, `buildTime`) |
-| `https://www.aistroyka.ai/api/v1/health` | **200** | **cloudflare** | **true** | **present** (same body as apex at audit time) |
-
-**No new production workflow dispatch** was triggered: recent production runs are green and health is OK.
+| Server | Tools observed in `mcps/` manifest | Used for this audit |
+|--------|-------------------------------------|---------------------|
+| **GitHub** | No dedicated GitHub MCP package listed | **`gh` CLI** (`run list`, `api`) |
+| **Vercel** (`plugin-vercel-vercel`) | **`mcp_auth` only** | **Not used** — cannot list/disable projects |
+| **Cloudflare** (builds/bindings plugins) | **`mcp_auth` only** | **Not used** — cannot list Workers/routes |
+| **Supabase** | Many tools | **Not used** — health showed `db: ok`; no DB work |
 
 ---
 
-## 4. Canonical deploy topology (repository truth)
+## Repository deploy audit — current verification
 
-### 4.1 Production
+### Workflows (`.github/workflows/`)
 
-- **Workflow:** `.github/workflows/deploy-cloudflare-prod.yml` — **Deploy Cloudflare (Production)**  
-- **Trigger:** Push to `main` and `workflow_dispatch` (optional `ref`).  
-- **Build:** `bun run cf:build` (OpenNext), patched deploy bundle, `wrangler deploy` to production env (**expected worker name `aistroyka-web-production`** per workflow comments).  
-- **Blocking post-check:** reusable **pilot-smoke** against `https://aistroyka.ai`.  
-- **Non-blocking:** AI Phase 5 gate (`continue-on-error: true`).
+Eight workflows present: `deploy-cloudflare-prod.yml`, `deploy-cloudflare-staging.yml`, `ci-check.yml`, `pilot-smoke.yml`, `pilot-e2e-audit.yml`, `ai-phase5-slo-schedule.yml`, `ios-ui-smoke.yml`, `android-instrumented-smoke.yml`.
 
-### 4.2 Staging
+| Question | Answer |
+|----------|--------|
+| **Production deploy Cloudflare-only?** | **Yes.** `deploy-cloudflare-prod.yml`: `bun run cf:build`, Wrangler production deploy, blocking `pilot-smoke` to `https://aistroyka.ai`. |
+| **Staging deploy Cloudflare-only?** | **Yes.** `deploy-cloudflare-staging.yml`: same pattern for staging URL / worker. |
+| **PR CI uses `cf:build`?** | **Yes.** `ci-check.yml` ends with `bun run cf:build` (staging-flavored `NEXT_PUBLIC_APP_URL` for bundle bake). |
+| **Any workflow deploy to Vercel?** | **No** — ripgrep in `.github/workflows` finds **no** `vercel` / `Vercel`. |
+| **Vercel config legacy/optional?** | **Yes.** Only **`apps/web/vercel.json`** (install/build for optional Vercel target). No root `vercel.json`. **`.vercel/`** not in repo. |
+| **Worker names in repo** | `apps/web/wrangler.toml`: **`aistroyka-web-production`**, **`aistroyka-web-staging`**, `aistroyka-web-dev`. Comments state **routes are dashboard-managed** (not committed in `wrangler.toml`). |
 
-- **Workflow:** `.github/workflows/deploy-cloudflare-staging.yml` — **Deploy Cloudflare (Staging)**  
-- **Trigger:** Push to **`develop`** and `workflow_dispatch`.  
-- **Target:** Staging worker (**expected name `aistroyka-web-staging`**) + `https://staging.aistroyka.ai`.
+### `package.json` scripts
 
-### 4.3 PR merge gate (GitHub Actions in repo)
+- **Root:** `cf:build`, `cf:deploy:prod`, Wrangler — **no Vercel CLI**.
+- **`apps/web`:** `cf:build`, `cf:deploy`, `wrangler` — **no Vercel CLI**.
 
-- **Workflow:** `.github/workflows/ci-check.yml` — **CI Check**  
-- **Contents:** `bun install`, `i18n:check`, `lint`, `test`, **`bun run cf:build`** (Cloudflare bundle, **no deploy**).  
-- **There is no Vercel deploy or `vercel` CLI** in this workflow.
+### Conflicting docs
 
-**Root `package.json`:** scripts center on `cf:build`, `cf:deploy:*`, Wrangler — **no Vercel CLI scripts**.  
-**`apps/web/package.json`:** `cf:build`, `cf:deploy`, `wrangler` — **no Vercel CLI scripts**.
-
-**Conclusion:** **Production and staging deploy use Cloudflare only** in GitHub Actions. **PR CI validates Cloudflare bundle via `cf:build` only.** **Vercel is not required** for canonical production.
+Historical docs still mention Vercel (e.g. `docs/RELEASE_VERCEL_PROD_*`, `docs/final/PRODUCTION_CLOUDFLARE_ROUTE_ALIGNMENT_REPORT.md`). **Canonical operator truth** for 2026-05-19 is this file + `docs/runbooks/DEPLOYMENT_SOURCE_OF_TRUTH.md` + `AGENTS.md` / `docs/ENVIRONMENT-VARIABLES.md` (Cloudflare-first). **No broad doc sweep performed** (out of scope for minimal diff); older files are **archival context**.
 
 ---
 
-## 5. Vercel in the repo (non-canonical artifacts)
+## Live production health validation
 
-| Item | Notes |
-|------|--------|
-| `apps/web/vercel.json` | Present: monorepo `installCommand` / `buildCommand` for an **optional** Vercel build. **Does not** define canonical production. |
-| `.github/workflows/*` | **No** `vercel` references (ripgrep). |
-| `.vercel/` | **Not** checked in (expected). |
+**Commands (sanitized body — no secrets):**
 
-### 5.1 Non-canonical Vercel project names (operator cleanup list)
+```bash
+curl -i https://aistroyka.ai/api/v1/health
+curl -i https://www.aistroyka.ai/api/v1/health
+curl -I https://aistroyka.ai
+curl -I https://www.aistroyka.ai
+```
 
-Reported duplicates / noise sources:
+**Results (audit session):**
+
+| Host | Path | HTTP | Notes |
+|------|------|------|--------|
+| `aistroyka.ai` | `/api/v1/health` | **200** | `server: cloudflare`; body `"ok":true`, `"env":"production"`, **`buildStamp`** `sha7` **2982562**, `buildTime` **2026-05-12 06:55** |
+| `www.aistroyka.ai` | `/api/v1/health` | **200** | Same JSON as apex |
+| `aistroyka.ai` | `/` | **307** | `location: /ru`, `server: cloudflare` — locale routing |
+| `www.aistroyka.ai` | `/` | **307** | Same pattern |
+
+**Verdict:** **PASS** — health OK on apex and www; Cloudflare serving; **no** Vercel headers observed.
+
+---
+
+## GitHub Actions validation
+
+**Commands:**
+
+```bash
+gh run list --workflow "Deploy Cloudflare (Production)" --limit 10
+gh run list --workflow "Deploy Cloudflare (Staging)" --limit 10
+gh run list --workflow "CI Check" --limit 10
+```
+
+**Production (`Deploy Cloudflare (Production)`):**
+
+- **Latest on `main`:** **success** (e.g. **25718558308**, **25718471621**, **25718254206**).
+- **Historical failures** (May 7): **25506751069** — deploy job **succeeded**; **post-deploy pilot smoke** failed with **`GET /api/v1/health → HTTP 500`** (transient/bad deploy era; **not** current state).
+- **25507056496** — `workflow_dispatch` **failure** (investigation truncated in logs; **stale** vs current green `main`).
+
+**Staging (`Deploy Cloudflare (Staging)`):**
+
+- **Many `workflow_dispatch` successes** from feature branch.
+- **Failures** include: **`main` push** (**25506747821**, 0s) — staging is intended for **`develop`**, not **`main`**; other **0s** failures on non-`develop` pushes — **ignore as production signals**.
+
+**CI Check:**
+
+- Recent PR runs predominantly **success**; occasional **`cancelled`** (concurrency) — use **latest conclusion for the PR head**.
+
+**New production deploy:** **Not triggered** — latest prod green + health green + no code change requirement.
+
+---
+
+## Branch protection / rulesets / required checks
+
+**Commands:**
+
+```bash
+gh api repos/2qjckdknjf-ctrl/Aistroyka-web/branches/main/protection
+gh api repos/2qjckdknjf-ctrl/Aistroyka-web/rulesets
+```
+
+**Results:**
+
+- **`main` protection:** **404** — `"Branch not protected"`.
+- **Rulesets:** **`[]`**.
+
+**Verdict:** **GITHUB REQUIRED CHECKS CLEAN: API CLEAN, UI/ORG CONFIRM REQUIRED**
+
+Trusted engineering checks (by design): **CI Check** (PRs); **Deploy Cloudflare (Production)** + **Post-deploy pilot smoke** (post-merge `main`). Ignore **Vercel** UI for prod readiness.
+
+---
+
+## Vercel duplicate / non-canonical projects
+
+**Names to treat as noise until disabled:**
 
 1. `aistroyka-web`  
 2. `aistroyka-web-web`  
 3. `aistroyka-web-web-v7jq`
 
-**MCP did not list deployments** (see §0). Operators should in **Vercel Dashboard** → each **Project** → **Settings** → **Git**:
+**VERCEL AUTO-DEPLOY DISABLED:** **MANUAL REQUIRED** (no operational Vercel MCP tools here).
 
-- **Disable automatic Git deployments** and/or **Disconnect** Git, **or** leave one project as **preview-only**.
-
-**Do not delete** projects without owner approval; **prefer disable/disconnect.**
+**Manual path:** Vercel Dashboard → **Project** → **Settings** → **Git** → **Disconnect** or disable **automatic deployments** → **Save** (repeat per project). **Do not delete** projects without owner approval.
 
 ---
 
-## 6. GitHub branch protection / required checks
+## Cloudflare route / Worker validation
 
-### 6.1 Trusted checks (engineering meaning)
+**MCP:** No Worker/route read tools in manifest → **HTTP + repo config only.**
 
-| Trust | Name / workflow | When it applies |
-|-------|-----------------|-----------------|
-| **Trust** | **CI Check** | **PRs** to `main` — lint, tests, i18n, `cf:build`. |
-| **Trust** | **Deploy Cloudflare (Production)** | After merge to **`main`** — deploy + **blocking** pilot smoke. |
-| **Trust** | **Deploy Cloudflare (Staging)** | **`develop`** / manual — deploy + **blocking** pilot smoke. |
-| **Trust (job)** | **Post-deploy pilot smoke** | Part of deploy workflows above — **blocking** gate for that deploy. |
+**Repo:** `apps/web/wrangler.toml` — `[env.production] name = "aistroyka-web-production"`; **routes commented** with note: *routes managed manually in Cloudflare Dashboard*.
 
-### 6.2 Ignore for production readiness
-
-| Ignore | Reason |
-|--------|--------|
-| Vercel UI deployment rows (Canceled/Queued/etc.) on duplicate projects | **Non-canonical** for prod |
-| Optional / informational Vercel GitHub statuses | Unless explicitly made **required** — remove from required if so |
-| Staging workflow failures triggered from wrong branch (e.g. `main`) | Staging source branch is **`develop`** |
-
-### 6.3 API snapshot (`gh api`, 2026-05-19)
-
-- `GET .../branches/main/protection` → **404** `"Branch not protected"` (classic protection **not** reported for `main`, or not visible to token).
-- `GET .../rulesets` → **`[]`**.
-
-**Org-level rulesets** are **not** verified here (need org admin / UI).
-
-**Operator must still confirm** in **GitHub UI**: **Settings → Branches** and **Settings → Rules → Rulesets**, and any **organization** rules, that **no Vercel-only context is required** for merge.
+**Manual UI:** Cloudflare Dashboard → **Workers & Pages** → **`aistroyka-web-production`** → **Triggers / Routes / Custom domains** — confirm **`aistroyka.ai`** and **`www.aistroyka.ai`** attach to this worker. **No dashboard change** made in this audit (health already proves routing works).
 
 ---
 
-## 7. What changed vs previous commits
+## Local build / `cf:build` validation
 
-| Area | Change |
-|------|--------|
-| **Product code** | **None** |
-| **Repo docs** | This file + `docs/runbooks/DEPLOYMENT_SOURCE_OF_TRUTH.md` created/updated |
-| **Vercel / GitHub settings via MCP** | **None** (no write-capable MCP tools available in workspace) |
+**Host:** developer machine running audit. **Sequential** order (no parallel `build` + `cf:build`). Logs: `artifacts/deploy/` (gitignored).
 
----
+| Step | Command | Exit |
+|------|---------|------|
+| Install | `bun install --frozen-lockfile` | **0** |
+| Contracts | `bun run build:contracts` | **0** |
+| Next build | `bun run --cwd apps/web build` | **0** (used existing `apps/web/.env.local` for Next — local file, not committed) |
+| OpenNext | `bun run cf:build` | **0** (OpenNext logged *Skipping Next.js build* after prior Next artifact — **intended** when last `next build` is fresh) |
 
-## 8. Operator actions still required (manual)
-
-1. **Vercel:** For `aistroyka-web`, `aistroyka-web-web`, `aistroyka-web-web-v7jq` — **Settings → Git** → disable auto-deploy or disconnect; confirm no production custom domains on Vercel if Cloudflare owns apex/www (`docs/REPORT-DNS-DOMAINS-20260305.md`).  
-2. **GitHub:** Confirm **required status checks** in UI/org rules — remove **Vercel** contexts from **required** if present.  
-3. **Cloudflare (optional sanity):** Dashboard → **aistroyka-web-production** → routes/domains match `aistroyka.ai` / `www`.
+**Verdict:** **LOCAL CF BUILD: PASS**
 
 ---
 
-## 9. Final verdict tables
+## Smoke validation
 
-### 9.1 Executive verdict (prior format)
+| Script | Command | Result |
+|--------|---------|--------|
+| `dashboard_cabinet_smoke.sh` | `BASE_URL=https://aistroyka.ai bash scripts/smoke/dashboard_cabinet_smoke.sh` | **PASS** — `/api/v1/health` **200**; dashboard paths return redirects as expected |
+| `pilot_launch.sh` | `BASE_URL=https://aistroyka.ai bash scripts/smoke/pilot_launch.sh` (no `AUTH_HEADER` / cookie / smoke user env) | **PARTIAL FAIL** — health + config + cron **PASS**; **`ops/metrics` → 401** (needs tenant JWT — see script comments / CI secrets) |
 
-| Verdict | Value |
-|---------|--------|
-| **CLOUDFLARE PRODUCTION** | **PASS** |
-| **VERCEL** | **NON-CANONICAL** |
-| **GITHUB REQUIRED CHECKS CLEAN** | **API CLEAN, UI CONFIRM REQUIRED** |
-| **DEPLOY INCIDENT CLOSED** | **YES** *(production verified; Vercel demoted in docs; manual UI cleanup documented)* |
+**Verdict:** **SMOKE: PARTIAL** — unauthenticated path OK; **full pilot** matches **CI** when secrets exist.
 
-### 9.2 Extended verdict (mandatory closure checklist)
+---
+
+## Final verdict tables
+
+### Core
 
 | Item | Verdict |
 |------|---------|
 | **CLOUDFLARE PRODUCTION** | **PASS** |
-| **HEALTH ENDPOINT** | **PASS** (apex + `www`, 200, `ok`, `server: cloudflare`, `buildStamp`) |
+| **HEALTH ENDPOINT (apex)** | **PASS** |
+| **WWW HEALTH ENDPOINT** | **PASS** |
+| **PRODUCTION WORKFLOW (latest `main`)** | **PASS** |
+| **CI CHECK (recent PRs)** | **PASS** |
+| **LOCAL CF BUILD** | **PASS** |
+| **SMOKE** | **PARTIAL** (pilot_launch needs auth for metrics) |
 | **VERCEL** | **NON-CANONICAL** |
-| **VERCEL AUTO-DEPLOY DISABLED** | **MANUAL REQUIRED** *(MCP could not; operator uses Vercel UI)* |
-| **GITHUB REQUIRED CHECKS CLEAN** | **API CLEAN, UI CONFIRM REQUIRED** |
+| **VERCEL AUTO-DEPLOY DISABLED** | **MANUAL REQUIRED** |
+| **GITHUB REQUIRED CHECKS CLEAN** | **API CLEAN, UI/ORG CONFIRM REQUIRED** |
 | **PRODUCT CODE CHANGED** | **NO** |
-| **DEPLOY INCIDENT CLOSED** | **YES** |
+| **DEPLOY INCIDENT CLOSED** | **YES** *(prod + CI verified; confusion documented; manual cleanup remains)* |
+| **DEPLOY TOPOLOGY CLEANUP 100% CLOSED** | **NO** *(Vercel auto-deploy + optional org GitHub rules still operator-owned)* |
 
 ---
 
-## 10. References
+## References
 
-- `docs/runbooks/DEPLOYMENT_SOURCE_OF_TRUTH.md` — operator runbook  
+- `docs/runbooks/DEPLOYMENT_SOURCE_OF_TRUTH.md`  
 - `.github/workflows/deploy-cloudflare-prod.yml`  
 - `.github/workflows/deploy-cloudflare-staging.yml`  
 - `.github/workflows/ci-check.yml`  
-- `apps/web/vercel.json`  
-- `AGENTS.md`  
+- `apps/web/wrangler.toml`  
+- `scripts/smoke/dashboard_cabinet_smoke.sh`, `scripts/smoke/pilot_launch.sh`  
 
 ---
 
