@@ -86,3 +86,23 @@ Not present in current repo secrets list (may be optional depending on workflow 
 
 Chosen path: **CASE A — checkout branch/ref problem**  
 Reason: latest deploy failure with full logs fails directly at checkout due invalid ref resolution in the deploy path.
+
+## 6) Rerun Evidence After Fix
+
+Triggered workflow:
+- `Deploy Cloudflare (Staging)`
+- Run ID: `26122362951`
+- Branch: `docs/pr13-release-closure`
+- Event: `workflow_dispatch`
+- Input ref: `main`
+
+Proof points from logs:
+- `Validate deploy ref` step succeeded with `DEPLOY_REF: main`
+- Log line: `Resolved deploy ref: main`
+- `actions/checkout@v4` executed with `ref: main` and succeeded
+- Deploy step `Deploy to Cloudflare (staging, patched bundle)` succeeded
+- Blocking reusable smoke job succeeded: `Post-deploy pilot smoke (blocking)`
+
+Final run conclusion:
+- Workflow conclusion: `success`
+- Note: optional job `Post-deploy Playwright pilot E2E (optional)` failed at secrets check (`Require pilot E2E secrets`) but is configured with `continue-on-error: true`, so it did not block deploy completion.
