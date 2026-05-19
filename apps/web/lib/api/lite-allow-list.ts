@@ -25,6 +25,11 @@ function isPathAllowed(pathname: string, method: string): boolean {
   if (pathname.startsWith("/api/v1/devices")) return true;
   if (pathname.startsWith("/api/v1/auth")) return true;
   if (/^\/api\/v1\/reports\/[^/]+\/analysis-status$/.test(pathname)) return true;
+  // Worker home intelligence: checklist + localized hints (same routes as web; lite still needs allow-list entry).
+  if (pathname === "/api/v1/activation/status" && m === "GET") return true;
+  if (pathname === "/api/v1/help/hints" && m === "POST") return true;
+  if (pathname === "/api/v1/help/assistant" && m === "POST") return true;
+  if (pathname === "/api/v1/help/assistant/events" && m === "POST") return true;
   return false;
 }
 
