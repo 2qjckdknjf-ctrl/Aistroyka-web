@@ -14,7 +14,7 @@ Pull requests that change files under `ios/` (except **`ios/**/*.md` only** — 
 
 **Scripts** (same Simulator pick logic as CI):
 
-- `ios/scripts/ci-pick-iphone-simulator-udid.sh` — prints a UDID for `xcodebuild -destination "id=..."`.
+- `ios/scripts/ci-pick-iphone-simulator-udid.sh` — prints a UDID for `xcodebuild -destination "id=..."`. Prefers simulators whose **device name** starts with `iPhone` (skips renamed entries such as "HiAir Fresh iPhone 15" so logs don’t look like the wrong product; the built app is still the Xcode scheme).
 - `ios/scripts/run-ios-uitest-smoke-local.sh` — runs both UITest smoke targets (uses your Xcode signing). To mimic CI signing:  
   `CI_SIGNING_HACK=1 bash ios/scripts/run-ios-uitest-smoke-local.sh`
 

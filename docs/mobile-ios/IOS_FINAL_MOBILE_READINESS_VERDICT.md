@@ -20,8 +20,8 @@ This document tracks **overall** readiness against the iOS product completion ro
 | 6 | Evidence hardening | **CLOSED** — `IOS_EVIDENCE_SYSTEM_REPORT.md` (URL contract, Manager + Worker preview, signed-URL gap explicit) |
 | 7 | Intelligence surfaces | **CLOSED** — `IOS_MOBILE_INTELLIGENCE_REPORT.md`; Worker `activation`/`help` lite allow-list fix |
 | 8 | Documents / budget minimal | **CLOSED** — `IOS_DOCUMENTS_BUDGET_MINIMAL.md` (scope boundary + isolation; no iOS doc/finance UI) |
-| 9 | E2E validation | **PARTIAL** — UITest smoke targets (`WorkerSmokeUITests`, `ManagerSmokeUITests`) + `.github/workflows/ios-ui-smoke.yml`; **`IOS_E2E_VALIDATION_REPORT.md`** TBD |
-| 10 | TestFlight pilot | **NOT CLOSED** — `IOS_TESTFLIGHT_PILOT_REPORT.md` TBD |
+| 9 | E2E validation | **PARTIAL** — `IOS_E2E_VALIDATION_REPORT.md` (Layer A = UITest/CI; **Layer B staging checklist** still to be logged) |
+| 10 | TestFlight pilot | **PARTIAL** — `IOS_TESTFLIGHT_PILOT_REPORT.md` (**runbook**; uploads / Beta Review **TBD**) |
 
 ---
 
@@ -29,14 +29,15 @@ This document tracks **overall** readiness against the iOS product completion ro
 
 ### **NOT PRODUCT-READY**
 
-**Summary:** Both apps **build** (Debug, generic iOS Simulator, 2026-05-19). Core **real** API integration exists (auth, worker reporting pipeline, manager review with reject/changes + note rules, resubmit UI, onboarding). **Gaps:** recorded **E2E proof**, **evidence URL** verification on target backend, **UITest depth**, **offline stress**, **TestFlight** closure.
+**Summary:** Phases 0–8 have closure docs; Phase 9–10 are **partial** until **Layer B** staging logs and a **TestFlight** cycle are recorded. Simulator/UI and API integration baselines exist; org execution remains.
 
 ---
 
 ## Next mandatory action
 
-1. **Phase 9** — author `IOS_E2E_VALIDATION_REPORT.md` with **logged** staging runs (evidence URLs, review, resubmit, **Worker help card**); expand UITest beyond login smoke if CI capacity allows.  
-2. Do **not** claim overall product-ready until Phase 9–10 closure matches mission §16.
+1. **Phase 9 (Layer B)** — run the checklist in `IOS_E2E_VALIDATION_REPORT.md` and append **dated** results.  
+2. **Phase 10** — follow `IOS_TESTFLIGHT_PILOT_REPORT.md` (Archive, TestFlight, pilot log table).  
+3. Do **not** claim overall product-ready until pilot evidence matches mission §16.
 
 ---
 
@@ -51,6 +52,8 @@ This document tracks **overall** readiness against the iOS product completion ro
 | Evidence system (Phase 6) | `docs/mobile-ios/IOS_EVIDENCE_SYSTEM_REPORT.md` |
 | Intelligence surfaces (Phase 7) | `docs/mobile-ios/IOS_MOBILE_INTELLIGENCE_REPORT.md` |
 | Documents / budget boundary (Phase 8) | `docs/mobile-ios/IOS_DOCUMENTS_BUDGET_MINIMAL.md` |
+| E2E validation (Phase 9) | `docs/mobile-ios/IOS_E2E_VALIDATION_REPORT.md` |
+| TestFlight pilot (Phase 10) | `docs/mobile-ios/IOS_TESTFLIGHT_PILOT_REPORT.md` |
 
 ---
 
