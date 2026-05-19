@@ -1,6 +1,6 @@
 # Deployment source of truth (operators)
 
-**Last updated:** 2026-05-19 (full audit: `docs/incidents/DEPLOY_TOPOLOGY_RCA_AND_FIX.md`)  
+**Last updated:** 2026-05-19 (closure: `docs/incidents/DEPLOY_TOPOLOGY_CLEANUP_100_CLOSURE.md`)  
 **Applies to:** AISTROYKA web (`apps/web`), GitHub repo **Aistroyka-web** (`git@github.com:2qjckdknjf-ctrl/Aistroyka-web.git`)
 
 ---
@@ -178,6 +178,7 @@ Repeat for: **`aistroyka-web`**, **`aistroyka-web-web`**, **`aistroyka-web-web-v
 
 ## Related documents
 
+- **Initiative closure (100% engineering sign-off):** `docs/incidents/DEPLOY_TOPOLOGY_CLEANUP_100_CLOSURE.md`
 - Incident / RCA: `docs/incidents/DEPLOY_TOPOLOGY_RCA_AND_FIX.md`
 - DNS notes: `docs/REPORT-DNS-DOMAINS-20260305.md`
 - Env vars: `docs/ENVIRONMENT-VARIABLES.md`

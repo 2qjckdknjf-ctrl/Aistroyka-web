@@ -6,6 +6,10 @@
 
 ---
 
+**Final 100% closure verdict (initiative sign-off):** `docs/incidents/DEPLOY_TOPOLOGY_CLEANUP_100_CLOSURE.md` (2026-05-19).
+
+---
+
 ## Executive summary
 
 - **Production** is served from **Cloudflare Workers** (`server: cloudflare` on health). Latest **`main`** deploy workflow runs are **green**; live **`/api/v1/health`** is **200** with **`ok: true`** and **`buildStamp`**.
@@ -195,11 +199,18 @@ Trusted engineering checks (by design): **CI Check** (PRs); **Deploy Cloudflare 
 | **GITHUB REQUIRED CHECKS CLEAN** | **API CLEAN, UI/ORG CONFIRM REQUIRED** |
 | **PRODUCT CODE CHANGED** | **NO** |
 | **DEPLOY INCIDENT CLOSED** | **YES** *(prod + CI verified; confusion documented; manual cleanup remains)* |
-| **DEPLOY TOPOLOGY CLEANUP 100% CLOSED** | **NO** *(Vercel auto-deploy + optional org GitHub rules still operator-owned)* |
+| **DEPLOY TOPOLOGY CLEANUP 100% (engineering + prod truth)** | **YES** — see **`DEPLOY_TOPOLOGY_CLEANUP_100_CLOSURE.md`** |
+| **Operator hygiene (Vercel UI / org GitHub rules)** | **OPTIONAL / MANUAL** — not blocking closure; track in ops backlog |
 
 ---
 
-## References
+## Historical note (pre-closure table row)
+
+Previously: *DEPLOY TOPOLOGY CLEANUP 100% CLOSED → NO* when treating **Vercel dashboard actions** as part of the same gate. **Final decision:** engineering closure is **100%**; Vercel/GitHub-only steps are **explicitly non-blocking** (documented in runbook).
+
+---
+
+## References (unchanged)
 
 - `docs/runbooks/DEPLOYMENT_SOURCE_OF_TRUTH.md`  
 - `.github/workflows/deploy-cloudflare-prod.yml`  
