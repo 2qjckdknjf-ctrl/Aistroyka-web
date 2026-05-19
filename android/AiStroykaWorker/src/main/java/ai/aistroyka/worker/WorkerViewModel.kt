@@ -408,12 +408,18 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
             }
         }
         viewModelScope.launch {
-            _state.update { it.copy(busy = true, pipelineStatus = "Preparing…", submitMessage = null) }
+            _state.update {
+                it.copy(
+                    busy = true,
+                    pipelineStatus = app.getString(R.string.worker_pipeline_preparing),
+                    submitMessage = null,
+                )
+            }
             try {
                 val jpeg = compressJpeg(uri)
                 val suffix = if (purpose == "report_before") "before" else "after"
                 val filename = "${reportId.take(8)}-$suffix.jpg"
-                _state.update { it.copy(pipelineStatus = "Creating upload session…") }
+                _state.update { it.copy(pipelineStatus = app.getString(R.string.worker_pipeline_creating_upload_session)) }
                 val keyCreate = DeviceContext.newIdempotencyKey()
                 val (sessionId, uploadPath) = WorkerApi.createUploadSession(
                     purpose = purpose,
@@ -422,9 +428,9 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
                 val pathInBucket = if (uploadPath.startsWith("media/")) uploadPath.removePrefix("media/") else uploadPath
                 val storagePath = "$pathInBucket/$filename"
                 val objectPath = "media/$storagePath"
-                _state.update { it.copy(pipelineStatus = "Uploading to storage…") }
+                _state.update { it.copy(pipelineStatus = app.getString(R.string.worker_pipeline_uploading_to_storage)) }
                 WorkerApi.uploadToSupabaseStorage(jpeg, storagePath)
-                _state.update { it.copy(pipelineStatus = "Finalizing session…") }
+                _state.update { it.copy(pipelineStatus = app.getString(R.string.worker_pipeline_finalizing_session)) }
                 WorkerApi.finalizeUploadSession(
                     sessionId = sessionId,
                     objectPath = objectPath,
@@ -432,7 +438,7 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
                     sizeBytes = jpeg.size,
                     idempotencyKey = DeviceContext.newIdempotencyKey(),
                 )
-                _state.update { it.copy(pipelineStatus = "Linking media to report…") }
+                _state.update { it.copy(pipelineStatus = app.getString(R.string.worker_pipeline_linking_media)) }
                 WorkerApi.addMedia(
                     reportId = reportId,
                     uploadSessionId = sessionId,
@@ -441,21 +447,26 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
                 _state.update {
                     val nowBefore = it.beforePhotoAttached || purpose == "report_before"
                     val nowAfter = it.afterPhotoAttached || purpose == "report_after"
+                    val savedMessage = if (purpose == "report_before") {
+                        app.getString(R.string.worker_pipeline_saved_before)
+                    } else {
+                        app.getString(R.string.worker_pipeline_saved_after)
+                    }
                     it.copy(
                         busy = false,
-                        pipelineStatus = "Saved ($suffix).",
+                        pipelineStatus = savedMessage,
                         beforePhotoAttached = nowBefore,
                         afterPhotoAttached = nowAfter,
                     )
                 }
             } catch (e: ApiError) {
                 handleApiError(e)
-                _state.update { it.copy(pipelineStatus = "Failed") }
+                _state.update { it.copy(pipelineStatus = app.getString(R.string.worker_pipeline_failed)) }
             } catch (e: Exception) {
                 _state.update {
                     it.copy(
                         busy = false,
-                        pipelineStatus = "Failed",
+                        pipelineStatus = app.getString(R.string.worker_pipeline_failed),
                         banner = e.message ?: app.getString(R.string.worker_error_upload_failed),
                     )
                 }

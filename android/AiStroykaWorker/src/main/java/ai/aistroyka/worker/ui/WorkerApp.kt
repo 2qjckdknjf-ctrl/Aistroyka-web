@@ -312,7 +312,7 @@ private fun WorkerHomeScaffold(
 
             Text(stringResource(R.string.worker_sync_section_title), style = MaterialTheme.typography.titleSmall)
             Text(
-                text = stringResource(R.string.worker_sync_status_fmt, state.syncStatus, state.syncCursor),
+                text = stringResource(R.string.worker_sync_status_fmt, workerSyncStatusLabel(state.syncStatus), state.syncCursor),
                 style = MaterialTheme.typography.bodySmall
             )
             if (!state.syncError.isNullOrBlank()) {
@@ -632,5 +632,18 @@ private fun workerStatusLabel(status: String?): String {
         "changes_requested" -> stringResource(R.string.worker_status_changes_requested)
         "open" -> stringResource(R.string.worker_status_open)
         else -> status ?: stringResource(R.string.worker_status_unknown)
+    }
+}
+
+@Composable
+private fun workerSyncStatusLabel(status: String): String {
+    return when (status.lowercase(Locale.ROOT)) {
+        "idle" -> stringResource(R.string.worker_sync_state_idle)
+        "syncing" -> stringResource(R.string.worker_sync_state_syncing)
+        "synced" -> stringResource(R.string.worker_sync_state_synced)
+        "needs_bootstrap" -> stringResource(R.string.worker_sync_state_needs_bootstrap)
+        "offline" -> stringResource(R.string.worker_sync_state_offline)
+        "error" -> stringResource(R.string.worker_sync_state_error)
+        else -> status
     }
 }

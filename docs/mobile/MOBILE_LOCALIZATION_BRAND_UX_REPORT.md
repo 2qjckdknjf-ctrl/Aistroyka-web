@@ -20,6 +20,7 @@
 - Android Worker/Manager critical runtime banners and action messages moved to string resources (`en/ru/es/it`) for login/bootstrap/report/review errors and confirmations.
 - Android Worker/Manager now also map common API statuses (`401/403/404/409/5xx`) and `lite_client_path_forbidden` to localized UX messages.
 - Worker/Manager report status labels in UI (`submitted/approved/rejected/changes_requested/open`) now render localized text instead of raw backend status keys.
+- Worker sync/pipeline progress states are now localized in-app (`idle/syncing/synced/offline/error` and upload pipeline phases) instead of raw internal labels.
 - Remaining non-localized surfaces are mostly backend-provided dynamic payload text outside known status/code mappings.
 
 ## Verdict

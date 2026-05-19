@@ -95,4 +95,18 @@
     <string name="worker_status_changes_requested">cambios solicitados</string>
     <string name="worker_status_open">abierto</string>
     <string name="worker_status_unknown">desconocido</string>
+    <string name="worker_sync_state_idle">en espera</string>
+    <string name="worker_sync_state_syncing">sincronizando</string>
+    <string name="worker_sync_state_synced">sincronizado</string>
+    <string name="worker_sync_state_needs_bootstrap">requiere bootstrap</string>
+    <string name="worker_sync_state_offline">sin conexión</string>
+    <string name="worker_sync_state_error">error</string>
+    <string name="worker_pipeline_preparing">Preparando…</string>
+    <string name="worker_pipeline_creating_upload_session">Creando sesión de carga…</string>
+    <string name="worker_pipeline_uploading_to_storage">Subiendo al almacenamiento…</string>
+    <string name="worker_pipeline_finalizing_session">Finalizando sesión…</string>
+    <string name="worker_pipeline_linking_media">Vinculando medios al informe…</string>
+    <string name="worker_pipeline_saved_before">Guardado (antes).</string>
+    <string name="worker_pipeline_saved_after">Guardado (después).</string>
+    <string name="worker_pipeline_failed">Falló</string>
 </resources>

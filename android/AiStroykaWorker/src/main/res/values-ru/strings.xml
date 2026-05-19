@@ -95,4 +95,18 @@
     <string name="worker_status_changes_requested">нужны правки</string>
     <string name="worker_status_open">открыт</string>
     <string name="worker_status_unknown">неизвестно</string>
+    <string name="worker_sync_state_idle">ожидание</string>
+    <string name="worker_sync_state_syncing">синхронизация</string>
+    <string name="worker_sync_state_synced">синхронизировано</string>
+    <string name="worker_sync_state_needs_bootstrap">нужен bootstrap</string>
+    <string name="worker_sync_state_offline">офлайн</string>
+    <string name="worker_sync_state_error">ошибка</string>
+    <string name="worker_pipeline_preparing">Подготовка…</string>
+    <string name="worker_pipeline_creating_upload_session">Создание сессии загрузки…</string>
+    <string name="worker_pipeline_uploading_to_storage">Загрузка в хранилище…</string>
+    <string name="worker_pipeline_finalizing_session">Завершение сессии…</string>
+    <string name="worker_pipeline_linking_media">Привязка медиа к отчёту…</string>
+    <string name="worker_pipeline_saved_before">Сохранено (до).</string>
+    <string name="worker_pipeline_saved_after">Сохранено (после).</string>
+    <string name="worker_pipeline_failed">Сбой</string>
 </resources>

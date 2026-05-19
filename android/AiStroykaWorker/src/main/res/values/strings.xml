@@ -95,4 +95,18 @@
     <string name="worker_status_changes_requested">changes requested</string>
     <string name="worker_status_open">open</string>
     <string name="worker_status_unknown">unknown</string>
+    <string name="worker_sync_state_idle">idle</string>
+    <string name="worker_sync_state_syncing">syncing</string>
+    <string name="worker_sync_state_synced">synced</string>
+    <string name="worker_sync_state_needs_bootstrap">needs bootstrap</string>
+    <string name="worker_sync_state_offline">offline</string>
+    <string name="worker_sync_state_error">error</string>
+    <string name="worker_pipeline_preparing">Preparing…</string>
+    <string name="worker_pipeline_creating_upload_session">Creating upload session…</string>
+    <string name="worker_pipeline_uploading_to_storage">Uploading to storage…</string>
+    <string name="worker_pipeline_finalizing_session">Finalizing session…</string>
+    <string name="worker_pipeline_linking_media">Linking media to report…</string>
+    <string name="worker_pipeline_saved_before">Saved (before).</string>
+    <string name="worker_pipeline_saved_after">Saved (after).</string>
+    <string name="worker_pipeline_failed">Failed</string>
 </resources>

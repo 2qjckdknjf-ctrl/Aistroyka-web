@@ -13,6 +13,7 @@
 - Localized critical runtime worker messages (login/bootstrap/report/submit/sync errors and confirmations) via Android string resources across `en/ru/es/it`.
 - Added API error UX mapping for `403/404/409/5xx` and `lite_client_path_forbidden` to localized user-facing messages.
 - Localized visible report status labels in Worker UI (feedback list/detail) instead of raw backend status keys.
+- Localized sync state and upload pipeline progress texts in Worker UI (`idle/syncing/synced/offline/error`, preparing/upload/finalize/link/saved/failed).
 
 ## Still missing vs iOS / spec
 
