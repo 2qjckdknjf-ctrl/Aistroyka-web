@@ -18,4 +18,4 @@ Pull requests that change files under `ios/` (except **`ios/**/*.md` only** — 
 - `ios/scripts/run-ios-uitest-smoke-local.sh` — runs both UITest smoke targets (uses your Xcode signing). To mimic CI signing:  
   `CI_SIGNING_HACK=1 bash ios/scripts/run-ios-uitest-smoke-local.sh`
 
-See also `docs/runbooks/MOBILE_OFFLINE_QUEUE.md` (Worker offline queue vs sync).
+See also `docs/runbooks/MOBILE_OFFLINE_QUEUE.md` (Worker offline queue vs sync). Staging/pilot checklists: `docs/mobile-ios/manual-smoke/`.

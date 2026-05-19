@@ -5,6 +5,8 @@
 
 This document tracks **overall** readiness against the iOS product completion roadmap (Phases 0–10). It is **not** a substitute for per-phase closure reports.
 
+**Execution snapshot:** Phase **0–8** have written closures in `docs/mobile-ios/`. Phases **9–10** have runbooks (`IOS_E2E_VALIDATION_REPORT.md`, `IOS_TESTFLIGHT_PILOT_REPORT.md`); **operator work** (Layer B logs, TestFlight binary) is **out of repo**.
+
 ---
 
 ## Roadmap phase rollup
@@ -45,9 +47,9 @@ This document tracks **overall** readiness against the iOS product completion ro
 
 | Artifact | Path |
 |----------|------|
-| Worker build log | `artifacts/mobile-ios/worker-build.log` |
-| Manager build log | `artifacts/mobile-ios/manager-build.log` |
-| Manual smoke templates | `artifacts/mobile-ios/worker-smoke.md`, `manager-smoke.md` |
+| Worker build log (local, optional) | `artifacts/mobile-ios/worker-build.log` (often gitignored) |
+| Manager build log (local, optional) | `artifacts/mobile-ios/manager-build.log` |
+| Manual smoke templates | `docs/mobile-ios/manual-smoke/worker-smoke.md`, `manager-smoke.md` |
 | Resubmit flow (Phase 5) | `docs/mobile-ios/IOS_RESUBMIT_FLOW_REPORT.md` |
 | Evidence system (Phase 6) | `docs/mobile-ios/IOS_EVIDENCE_SYSTEM_REPORT.md` |
 | Intelligence surfaces (Phase 7) | `docs/mobile-ios/IOS_MOBILE_INTELLIGENCE_REPORT.md` |

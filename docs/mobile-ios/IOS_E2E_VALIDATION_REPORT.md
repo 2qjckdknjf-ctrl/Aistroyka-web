@@ -46,6 +46,8 @@ See `ios/README.md`.
 
 ## Layer B — Staging / pilot checklist (append results)
 
+Printable short lists: `docs/mobile-ios/manual-smoke/worker-smoke.md`, `manager-smoke.md`.
+
 Use a **pilot tenant** and record: **date**, **app build** (git SHA or Xcode build), **API base URL**, **test accounts** (roles), **pass/fail**, **notes** (screenshot path optional).
 
 | # | Step | Worker | Manager | Result / link |
