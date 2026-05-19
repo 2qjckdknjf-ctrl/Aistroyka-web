@@ -43,4 +43,17 @@
     <string name="worker_end_shift">End shift</string>
     <string name="worker_report_note_label">Note for manager (optional)</string>
     <string name="worker_photo_status_fmt">Before photo: %1$s · After photo: %2$s</string>
+    <string name="worker_feedback_section_title">Manager feedback</string>
+    <string name="worker_feedback_empty">No manager decisions yet.</string>
+    <string name="worker_resubmit_title">Resubmit report</string>
+    <string name="worker_loading_report">Loading report…</string>
+    <string name="worker_report_id_line_short">Report: %1$s</string>
+    <string name="worker_report_status_line">Status: %1$s</string>
+    <string name="worker_manager_note_title">Manager note</string>
+    <string name="worker_resubmit_hint">Submit again after applying manager comments. Existing evidence will be reused.</string>
+    <string name="worker_resubmit_note_label">What did you change?</string>
+    <string name="worker_submit_again">Submit again</string>
+    <string name="worker_sync_section_title">Sync</string>
+    <string name="worker_sync_status_fmt">Status: %1$s · cursor: %2$d</string>
+    <string name="worker_sync_now">Sync now</string>
 </resources>

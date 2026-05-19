@@ -11,7 +11,10 @@ import ai.aistroyka.shared.AuthService
 import ai.aistroyka.shared.DeviceContext
 import ai.aistroyka.shared.ProjectDto
 import ai.aistroyka.shared.PushRegistrationService
+import ai.aistroyka.shared.WorkerReportDetailData
+import ai.aistroyka.shared.WorkerSyncReportRow
 import ai.aistroyka.shared.SessionStore
+import ai.aistroyka.shared.SyncConflictError
 import ai.aistroyka.shared.TaskDto
 import ai.aistroyka.shared.WorkerApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,7 +29,7 @@ import java.time.format.DateTimeFormatter
 data class WorkerUiState(
     val email: String = "",
     val password: String = "",
-    /** login | home | report */
+    /** login | home | report | resubmit */
     val screen: String = "login",
     val busy: Boolean = false,
     val banner: String? = null,
@@ -35,6 +38,12 @@ data class WorkerUiState(
     val selectedProjectId: String? = null,
     val tasks: List<TaskDto> = emptyList(),
     val selectedTaskId: String? = null,
+    val feedbackReports: List<WorkerSyncReportRow> = emptyList(),
+    val selectedFeedbackReportId: String? = null,
+    val selectedFeedbackDetail: WorkerReportDetailData? = null,
+    val syncStatus: String = "idle",
+    val syncCursor: Int = 0,
+    val syncError: String? = null,
     /** Local shift id (yyyyMMdd), same contract as iOS `todayDayId`. */
     val shiftDayId: String? = null,
     val activeReportId: String? = null,
@@ -50,10 +59,12 @@ data class WorkerUiState(
 class WorkerViewModel(application: Application) : AndroidViewModel(application) {
 
     private val shiftPrefs = application.getSharedPreferences("aistroyka_worker_shift", Application.MODE_PRIVATE)
+    private val syncPrefs = application.getSharedPreferences("aistroyka_worker_sync", Application.MODE_PRIVATE)
 
     private val _state = MutableStateFlow(
         WorkerUiState(
             shiftDayId = shiftPrefs.getString("shift_day_id", null)?.takeIf { it.isNotBlank() },
+            syncCursor = syncPrefs.getInt("cursor", 0),
         ),
     )
     val state: StateFlow<WorkerUiState> = _state.asStateFlow()
@@ -129,6 +140,8 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
                     )
                 }
                 loadTasksForSelection()
+                refreshFeedbackReports()
+                runSync()
             } catch (e: ApiError) {
                 _state.update { it.copy(busy = false, banner = e.message) }
             } catch (e: Exception) {
@@ -144,6 +157,120 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
 
     fun selectTask(id: String?) {
         _state.update { it.copy(selectedTaskId = id) }
+    }
+
+    fun refreshFeedbackReports() {
+        viewModelScope.launch {
+            try {
+                val reports = WorkerApi.workerSync()
+                _state.update {
+                    it.copy(
+                        feedbackReports = reports,
+                    )
+                }
+            } catch (_: Exception) {
+                _state.update { it.copy(feedbackReports = emptyList()) }
+            }
+        }
+    }
+
+    fun runSync() {
+        viewModelScope.launch {
+            var cursor = _state.value.syncCursor
+            var needsBootstrap = (cursor == 0)
+            _state.update { it.copy(syncStatus = "syncing", syncError = null) }
+
+            while (true) {
+                try {
+                    if (needsBootstrap) {
+                        val bootstrap = WorkerApi.syncBootstrap()
+                        cursor = bootstrap.cursor ?: 0
+                        saveCursor(cursor)
+                        needsBootstrap = false
+                    }
+
+                    val changes = WorkerApi.syncChanges(cursor = cursor, limit = 100)
+                    val nextCursor = changes.nextCursor ?: cursor
+                    WorkerApi.syncAck(
+                        cursor = nextCursor,
+                        idempotencyKey = "sync-ack-${DeviceContext.deviceId}-$nextCursor"
+                    )
+                    saveCursor(nextCursor)
+                    cursor = nextCursor
+
+                    if (changes.data?.changes.isNullOrEmpty()) {
+                        _state.update { it.copy(syncStatus = "synced", syncCursor = cursor, syncError = null) }
+                        refreshFeedbackReports()
+                        break
+                    }
+                } catch (e: SyncConflictError) {
+                    if (e.mustBootstrap) {
+                        cursor = e.serverCursor
+                        saveCursor(cursor)
+                        needsBootstrap = true
+                        continue
+                    }
+                    _state.update {
+                        it.copy(
+                            syncStatus = "needs_bootstrap",
+                            syncError = "Sync conflict (cursor ${e.serverCursor})",
+                            syncCursor = cursor,
+                        )
+                    }
+                    break
+                } catch (e: ApiError) {
+                    _state.update {
+                        it.copy(
+                            syncStatus = "error",
+                            syncError = e.message,
+                            syncCursor = cursor,
+                        )
+                    }
+                    break
+                } catch (e: Exception) {
+                    val offline = (e.message ?: "").contains("Unable to resolve host", ignoreCase = true)
+                    _state.update {
+                        it.copy(
+                            syncStatus = if (offline) "offline" else "error",
+                            syncError = e.message ?: if (offline) "Offline" else "Sync failed",
+                            syncCursor = cursor,
+                        )
+                    }
+                    break
+                }
+            }
+        }
+    }
+
+    fun openResubmit(reportId: String) {
+        viewModelScope.launch {
+            _state.update {
+                it.copy(
+                    busy = true,
+                    banner = null,
+                    screen = "resubmit",
+                    selectedFeedbackReportId = reportId,
+                    selectedFeedbackDetail = null,
+                    submitMessage = null,
+                    doneMessage = null,
+                )
+            }
+            try {
+                val detail = WorkerApi.reportDetail(reportId)
+                _state.update {
+                    it.copy(
+                        busy = false,
+                        selectedFeedbackDetail = detail,
+                        pipelineStatus = null,
+                        workerNote = detail.workerNote.orEmpty(),
+                    )
+                }
+            } catch (e: ApiError) {
+                _state.update { it.copy(busy = false, banner = e.message, screen = "home") }
+            } catch (e: Exception) {
+                _state.update { it.copy(busy = false, banner = e.message ?: "Could not open report", screen = "home") }
+            }
+        }
     }
 
     fun startShift() {
@@ -201,6 +328,8 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
                     busy = true,
                     banner = null,
                     activeReportId = null,
+                    selectedFeedbackReportId = null,
+                    selectedFeedbackDetail = null,
                     photoLabel = null,
                     pipelineStatus = null,
                     beforePhotoAttached = false,
@@ -237,6 +366,8 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
             it.copy(
                 screen = "home",
                 activeReportId = null,
+                selectedFeedbackReportId = null,
+                selectedFeedbackDetail = null,
                 photoLabel = null,
                 pipelineStatus = null,
                 beforePhotoAttached = false,
@@ -355,18 +486,35 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun submitReport() {
-        val reportId = _state.value.activeReportId ?: run {
+        val isResubmit = _state.value.screen == "resubmit"
+        val reportId = (_state.value.activeReportId ?: _state.value.selectedFeedbackReportId) ?: run {
             _state.update { it.copy(submitMessage = "No report id") }
             return
         }
-        val proofOk =
-             BuildConfig.PILOT_ALLOW_SUBMIT_WITHOUT_PHOTO ||
+        val hasExistingEvidence = _state.value.selectedFeedbackDetail?.media?.isNotEmpty() == true
+        val proofOk = if (isResubmit) {
+            hasExistingEvidence
+        } else {
+            BuildConfig.PILOT_ALLOW_SUBMIT_WITHOUT_PHOTO ||
                 (_state.value.beforePhotoAttached && _state.value.afterPhotoAttached)
+        }
         if (!proofOk) {
-            _state.update { it.copy(submitMessage = "Attach both before and after photos (or enable pilot flag).") }
+            _state.update {
+                it.copy(
+                    submitMessage = if (isResubmit) {
+                        "No existing evidence found for this report."
+                    } else {
+                        "Attach both before and after photos (or enable pilot flag)."
+                    }
+                )
+            }
             return
         }
-        val taskId = _state.value.selectedTaskId?.trim()?.takeIf { it.isNotEmpty() }
+        val taskId = if (isResubmit) {
+            _state.value.selectedFeedbackDetail?.taskId?.trim()?.takeIf { it.isNotEmpty() }
+        } else {
+            _state.value.selectedTaskId?.trim()?.takeIf { it.isNotEmpty() }
+        }
         val note = _state.value.workerNote.trim().takeIf { it.isNotEmpty() }
         viewModelScope.launch {
             _state.update { it.copy(busy = true, submitMessage = null) }
@@ -380,10 +528,16 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
                 _state.update {
                     it.copy(
                         busy = false,
-                        doneMessage = "Report submitted successfully.",
+                        doneMessage = if (isResubmit) {
+                            "Report resubmitted successfully."
+                        } else {
+                            "Report submitted successfully."
+                        },
                         submitMessage = null,
                     )
                 }
+                runSync()
+                refreshFeedbackReports()
             } catch (e: ApiError) {
                 _state.update { it.copy(busy = false, submitMessage = e.message) }
             } catch (e: Exception) {
@@ -393,7 +547,16 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun dismissDone() {
-        _state.update { it.copy(doneMessage = null, screen = "home", activeReportId = null) }
+        _state.update {
+            it.copy(
+                doneMessage = null,
+                screen = "home",
+                activeReportId = null,
+                selectedFeedbackReportId = null,
+                selectedFeedbackDetail = null,
+            )
+        }
+        refreshFeedbackReports()
     }
 
     fun clearBanner() {
@@ -402,4 +565,9 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
 
     private fun todayDayId(): String =
         LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE)
+
+    private fun saveCursor(cursor: Int) {
+        syncPrefs.edit().putInt("cursor", cursor).apply()
+        _state.update { it.copy(syncCursor = cursor) }
+    }
 }

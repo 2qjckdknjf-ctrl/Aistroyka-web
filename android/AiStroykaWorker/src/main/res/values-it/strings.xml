@@ -37,4 +37,23 @@
     <string name="worker_ai_hint_2">Se lo stato dell\'attività non è chiaro, aggiungi foto e nota breve nel report.</string>
     <string name="worker_ai_guide_confidence_fmt">Confidenza guida IA: %1$d%%</string>
     <string name="worker_ai_risk_signals_title">Segnali di rischio</string>
+    <string name="worker_shift_in_progress">Turno avviato</string>
+    <string name="worker_shift_not_started">Turno non avviato</string>
+    <string name="worker_start_shift">Avvia turno</string>
+    <string name="worker_end_shift">Termina turno</string>
+    <string name="worker_report_note_label">Nota per il manager (opzionale)</string>
+    <string name="worker_photo_status_fmt">Foto prima: %1$s · Foto dopo: %2$s</string>
+    <string name="worker_feedback_section_title">Feedback del manager</string>
+    <string name="worker_feedback_empty">Ancora nessuna decisione del manager.</string>
+    <string name="worker_resubmit_title">Reinvia report</string>
+    <string name="worker_loading_report">Caricamento report…</string>
+    <string name="worker_report_id_line_short">Report: %1$s</string>
+    <string name="worker_report_status_line">Stato: %1$s</string>
+    <string name="worker_manager_note_title">Nota del manager</string>
+    <string name="worker_resubmit_hint">Reinvia dopo aver applicato i commenti del manager. Le evidenze esistenti vengono riutilizzate.</string>
+    <string name="worker_resubmit_note_label">Cosa hai cambiato?</string>
+    <string name="worker_submit_again">Invia di nuovo</string>
+    <string name="worker_sync_section_title">Sincronizzazione</string>
+    <string name="worker_sync_status_fmt">Stato: %1$s · cursore: %2$d</string>
+    <string name="worker_sync_now">Sincronizza ora</string>
 </resources>

@@ -92,4 +92,29 @@ object ApiClient {
             throw ApiError.fromHttp(res.code, bodyStr)
         }
     }
+
+    internal suspend fun requestDataAndStatus(
+        path: String,
+        method: String = "GET",
+        jsonBody: String? = null,
+    ): Pair<String, Int> = withContext(Dispatchers.IO) {
+        val root = AppRuntime.apiV1Root
+        val trimmed = path.trimStart('/')
+        val url = "$root/$trimmed"
+        val token = SessionStore.getAccessToken()
+        val builder = Request.Builder()
+            .url(url)
+            .method(method, jsonBody?.toRequestBody("application/json".toMediaType()))
+            .header("x-device-id", DeviceContext.deviceId)
+            .header("x-client", AppRuntime.apiClientProfile)
+        if (!token.isNullOrBlank()) {
+            builder.header("Authorization", "Bearer $token")
+        }
+        if (jsonBody != null) {
+            builder.header("Content-Type", "application/json")
+        }
+        val res = http.newCall(builder.build()).execute()
+        val bodyStr = res.body?.string().orEmpty()
+        bodyStr to res.code
+    }
 }

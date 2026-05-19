@@ -154,6 +154,51 @@ object WorkerApi {
         )
     }
 
+    /** GET /api/v1/worker/sync — recent reports for signed-in worker (status feed incl. changes_requested/approved). */
+    suspend fun workerSync(): List<WorkerSyncReportRow> {
+        val env: WorkerSyncEnvelope = ApiClient.request("worker/sync")
+        return env.data?.reports.orEmpty()
+    }
+
+    /** GET /api/v1/reports/:id — own report detail with manager note and media metadata. */
+    suspend fun reportDetail(id: String): WorkerReportDetailData {
+        val env: WorkerReportDetailEnvelope = ApiClient.request("reports/${id.trim()}")
+        return env.data ?: throw ApiError(null, null, "No report data")
+    }
+
+    suspend fun syncBootstrap(): SyncBootstrapResponse {
+        return ApiClient.request("sync/bootstrap")
+    }
+
+    /**
+     * On 409 returns [SyncConflictError] with mustBootstrap/serverCursor.
+     */
+    suspend fun syncChanges(cursor: Int, limit: Int = 100): SyncChangesResponse {
+        val (body, code) = ApiClient.requestDataAndStatus("sync/changes?cursor=$cursor&limit=$limit")
+        if (code == 409) {
+            val conflict = try {
+                ApiClient.json.decodeFromString(SyncConflictBody.serializer(), body)
+            } catch (_: Exception) {
+                throw ApiError(code, null, body.ifBlank { "Sync conflict" })
+            }
+            throw SyncConflictError(conflict)
+        }
+        if (code >= 400) {
+            throw ApiError.fromHttp(code, body)
+        }
+        return ApiClient.json.decodeFromString(SyncChangesResponse.serializer(), body)
+    }
+
+    suspend fun syncAck(cursor: Int, idempotencyKey: String) {
+        val body = """{"cursor":$cursor}"""
+        ApiClient.requestVoid(
+            path = "sync/ack",
+            method = "POST",
+            jsonBody = body,
+            idempotencyKey = idempotencyKey
+        )
+    }
+
     /**
      * POST binary to Supabase Storage `media` bucket (same as iOS [UploadManager.uploadToSupabaseStorage]).
      * [pathInBucket] is the object key inside the bucket (no `media/` prefix).

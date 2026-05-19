@@ -123,6 +123,7 @@ fun WorkerApp() {
             when (state.screen) {
                 "login" -> WorkerLoginScreen(vm, state)
                 "report" -> WorkerReportScreen(vm, state)
+                "resubmit" -> WorkerResubmitScreen(vm, state)
                 else -> WorkerHomeScaffold(
                     vm = vm,
                     state = state,
@@ -286,11 +287,49 @@ private fun WorkerHomeScaffold(
                 }
             }
 
+            Text(stringResource(R.string.worker_feedback_section_title), style = MaterialTheme.typography.titleSmall)
+            val feedback = state.feedbackReports.filter {
+                it.status == "changes_requested" || it.status == "approved" || it.status == "rejected"
+            }
+            if (feedback.isEmpty()) {
+                Text(stringResource(R.string.worker_feedback_empty), style = MaterialTheme.typography.bodySmall)
+            } else {
+                feedback.forEach { report ->
+                    val shortId = if (report.id.length > 8) report.id.substring(0, 8) else report.id
+                    TextButton(
+                        onClick = {
+                            if (report.status == "changes_requested") vm.openResubmit(report.id)
+                        }
+                    ) {
+                        Text(
+                            text = "${shortId} • ${report.status}",
+                            color = if (report.status == "changes_requested") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+            }
+
+            Text(stringResource(R.string.worker_sync_section_title), style = MaterialTheme.typography.titleSmall)
+            Text(
+                text = stringResource(R.string.worker_sync_status_fmt, state.syncStatus, state.syncCursor),
+                style = MaterialTheme.typography.bodySmall
+            )
+            if (!state.syncError.isNullOrBlank()) {
+                Text(text = state.syncError, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+            }
+
             Button(
                 onClick = { vm.refreshBootstrap() },
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(stringResource(R.string.action_refresh_config))
+            }
+            OutlinedButton(
+                onClick = { vm.runSync() },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !state.busy,
+            ) {
+                Text(stringResource(R.string.worker_sync_now))
             }
             Button(
                 onClick = { vm.startNewReport() },
@@ -298,6 +337,68 @@ private fun WorkerHomeScaffold(
                 enabled = !state.busy,
             ) {
                 Text(stringResource(R.string.action_create_report_photo))
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun WorkerResubmitScreen(vm: WorkerViewModel, state: WorkerUiState) {
+    val detail = state.selectedFeedbackDetail
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.worker_resubmit_title)) },
+                actions = {
+                    TextButton(onClick = { vm.backToHome() }) {
+                        Text(stringResource(R.string.action_back_home))
+                    }
+                },
+            )
+        },
+    ) { padding ->
+        Column(
+            Modifier
+                .padding(padding)
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            if (state.busy) LinearProgressIndicator(Modifier.fillMaxWidth())
+            if (detail == null) {
+                Text(stringResource(R.string.worker_loading_report))
+            } else {
+                val shortId = if (detail.id.length > 8) detail.id.substring(0, 8) else detail.id
+                Text(stringResource(R.string.worker_report_id_line_short, shortId))
+                Text(stringResource(R.string.worker_report_status_line, detail.status))
+                val managerNote = detail.managerNote
+                if (!managerNote.isNullOrBlank()) {
+                    Text(stringResource(R.string.worker_manager_note_title), style = MaterialTheme.typography.titleSmall)
+                    Text(managerNote)
+                }
+                Text(stringResource(R.string.worker_resubmit_hint), style = MaterialTheme.typography.bodySmall)
+                OutlinedTextField(
+                    value = state.workerNote,
+                    onValueChange = { vm.setWorkerNote(it) },
+                    label = { Text(stringResource(R.string.worker_resubmit_note_label)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 2,
+                )
+                state.submitMessage?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                state.doneMessage?.let { Text(it, color = MaterialTheme.colorScheme.primary) }
+                Button(
+                    onClick = { vm.submitReport() },
+                    enabled = !state.busy && state.doneMessage == null,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(stringResource(R.string.worker_submit_again))
+                }
+                if (state.doneMessage != null) {
+                    Button(onClick = { vm.dismissDone() }, modifier = Modifier.fillMaxWidth()) {
+                        Text(stringResource(R.string.action_dismiss))
+                    }
+                }
             }
         }
     }

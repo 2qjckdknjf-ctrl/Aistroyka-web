@@ -43,4 +43,17 @@
     <string name="worker_end_shift">Завершить смену</string>
     <string name="worker_report_note_label">Комментарий для менеджера (необязательно)</string>
     <string name="worker_photo_status_fmt">Фото «до»: %1$s · Фото «после»: %2$s</string>
+    <string name="worker_feedback_section_title">Обратная связь менеджера</string>
+    <string name="worker_feedback_empty">Решений менеджера пока нет.</string>
+    <string name="worker_resubmit_title">Повторная отправка отчёта</string>
+    <string name="worker_loading_report">Загрузка отчёта…</string>
+    <string name="worker_report_id_line_short">Отчёт: %1$s</string>
+    <string name="worker_report_status_line">Статус: %1$s</string>
+    <string name="worker_manager_note_title">Комментарий менеджера</string>
+    <string name="worker_resubmit_hint">Отправьте снова после исправлений по замечаниям менеджера. Уже загруженные доказательства сохраняются.</string>
+    <string name="worker_resubmit_note_label">Что исправили?</string>
+    <string name="worker_submit_again">Отправить снова</string>
+    <string name="worker_sync_section_title">Синхронизация</string>
+    <string name="worker_sync_status_fmt">Статус: %1$s · курсор: %2$d</string>
+    <string name="worker_sync_now">Синхронизировать</string>
 </resources>
