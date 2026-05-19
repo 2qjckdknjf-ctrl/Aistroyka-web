@@ -90,6 +90,9 @@
 "worker_report_resubmit_title" = "Доработка отчёта";
 "worker_manager_note_title" = "Сообщение менеджера";
 "worker_resubmit_hint" = "Отправьте снова, когда учтёте замечания. Новые фото — только через новый отчёт с главного экрана; здесь повторная отправка с уже прикреплёнными файлами.";
+"worker_evidence_section_title" = "Ваши фото в этом отчёте";
+"worker_evidence_load_failed_fmt" = "Не удалось загрузить фото %d.";
+"worker_evidence_no_preview_fmt" = "Фото %d — предпросмотр недоступен (id: %@).";
 "worker_submit_again" = "Отправить снова";
 "worker_loading_report" = "Загрузка отчёта…";
 "worker_task_title" = "Задача";

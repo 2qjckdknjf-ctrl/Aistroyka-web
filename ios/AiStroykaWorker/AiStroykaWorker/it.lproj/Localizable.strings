@@ -90,6 +90,9 @@
 "worker_report_resubmit_title" = "Aggiorna report";
 "worker_manager_note_title" = "Messaggio del manager";
 "worker_resubmit_hint" = "Invia di nuovo dopo aver gestito il feedback. Per nuove foto crea un nuovo report dalla home; questa schermata reinvia solo con prove già caricate.";
+"worker_evidence_section_title" = "Le tue foto in questa segnalazione";
+"worker_evidence_load_failed_fmt" = "Impossibile caricare la foto %d.";
+"worker_evidence_no_preview_fmt" = "Foto %d — anteprima non disponibile (id: %@).";
 "worker_submit_again" = "Invia di nuovo";
 "worker_loading_report" = "Caricamento report…";
 "worker_task_title" = "Attività";

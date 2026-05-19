@@ -353,12 +353,24 @@ private struct WorkerSyncPayload: Decodable {
     let reports: [WorkerSyncReportRow]?
 }
 
+struct WorkerReportMediaItem: Decodable {
+    let mediaId: String?
+    let uploadSessionId: String?
+    let fileUrl: String?
+    enum CodingKeys: String, CodingKey {
+        case mediaId = "media_id"
+        case uploadSessionId = "upload_session_id"
+        case fileUrl = "file_url"
+    }
+}
+
 struct WorkerReportDetailData: Decodable {
     let id: String
     let status: String
     let managerNote: String?
     let taskId: String?
     let workerNote: String?
+    let media: [WorkerReportMediaItem]?
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -366,6 +378,7 @@ struct WorkerReportDetailData: Decodable {
         case managerNote = "manager_note"
         case taskId = "task_id"
         case workerNote = "worker_note"
+        case media
     }
 }
 

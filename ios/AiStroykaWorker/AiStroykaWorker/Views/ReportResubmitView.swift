@@ -64,6 +64,15 @@ struct ReportResubmitView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
+                if let media = detail?.media, !media.isEmpty {
+                    Text(NSLocalizedString("worker_evidence_section_title", comment: ""))
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                    ForEach(Array(media.enumerated()), id: \.offset) { idx, m in
+                        WorkerReportEvidenceItemView(index: idx + 1, item: m)
+                    }
+                }
+
                 if detail?.status == "changes_requested" {
                     VStack(alignment: .leading, spacing: 6) {
                         Text(NSLocalizedString("worker_resubmit_note_label", comment: ""))
@@ -180,5 +189,49 @@ struct ReportResubmitView: View {
         )
         opStore.add(op)
         OperationQueueExecutor.shared.runLoop()
+    }
+}
+
+// MARK: - Evidence thumbnails (same URL contract as Manager `ReportEvidenceItemView`)
+
+private struct WorkerReportEvidenceItemView: View {
+    let index: Int
+    let item: WorkerReportMediaItem
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if let urlStr = item.fileUrl, let url = URL(string: urlStr), !urlStr.isEmpty {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .empty:
+                        ProgressView()
+                            .frame(maxWidth: .infinity, minHeight: 120)
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFit()
+                            .frame(maxHeight: 240)
+                            .cornerRadius(8)
+                    case .failure:
+                        Text(String(format: NSLocalizedString("worker_evidence_load_failed_fmt", comment: ""), index))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    @unknown default:
+                        EmptyView()
+                    }
+                }
+            } else {
+                Text(String(format: NSLocalizedString("worker_evidence_no_preview_fmt", comment: ""), index, evidenceShortId))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(.vertical, 4)
+    }
+
+    private var evidenceShortId: String {
+        let raw = item.mediaId ?? item.uploadSessionId ?? "—"
+        guard raw.count > 10 else { return raw }
+        return String(raw.prefix(8)) + "…"
     }
 }
