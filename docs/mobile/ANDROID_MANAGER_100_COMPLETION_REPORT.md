@@ -11,6 +11,7 @@
 - Localized critical manager runtime messages (auth/bootstrap/reports/review banners and action confirmations) through `en/ru/es/it` string bundles.
 - Added API error UX mapping for `403/404/409/5xx` and `lite_client_path_forbidden` to localized manager-facing messages.
 - Localized report status rendering in manager list/detail screens to avoid raw status keys in UI.
+- Localized manager AI pipeline status labels (`pending/running/completed/failed`) in report detail view.
 
 ## Gaps
 

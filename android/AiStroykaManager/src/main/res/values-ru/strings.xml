@@ -85,4 +85,8 @@
     <string name="manager_status_changes_requested">нужны правки</string>
     <string name="manager_status_open">открыт</string>
     <string name="manager_status_unknown">неизвестно</string>
+    <string name="manager_analysis_status_pending">в ожидании</string>
+    <string name="manager_analysis_status_running">в обработке</string>
+    <string name="manager_analysis_status_completed">завершён</string>
+    <string name="manager_analysis_status_failed">ошибка</string>
 </resources>

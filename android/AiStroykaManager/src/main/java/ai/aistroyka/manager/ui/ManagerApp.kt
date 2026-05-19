@@ -532,7 +532,10 @@ private fun DetailScreen(vm: ManagerViewModel) {
             Spacer(Modifier.height(16.dp))
             Text(stringResource(R.string.manager_ai_analysis_jobs), style = MaterialTheme.typography.titleMedium)
             state.analysisStatus?.let { a ->
-                Text(stringResource(R.string.manager_pipeline_line, a.status, a.jobCount ?: 0), style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    stringResource(R.string.manager_pipeline_line, managerAnalysisStatusLabel(a.status), a.jobCount ?: 0),
+                    style = MaterialTheme.typography.bodyMedium
+                )
                 a.summary?.let { s ->
                     Text(
                         stringResource(R.string.manager_media_jobs_line, s.mediaTotal ?: 0, s.analyzed ?: 0, s.failed ?: 0),
@@ -647,6 +650,17 @@ private fun managerStatusLabel(status: String?): String {
         "rejected" -> stringResource(R.string.manager_status_rejected)
         "changes_requested" -> stringResource(R.string.manager_status_changes_requested)
         "open" -> stringResource(R.string.manager_status_open)
+        else -> status ?: stringResource(R.string.manager_status_unknown)
+    }
+}
+
+@Composable
+private fun managerAnalysisStatusLabel(status: String?): String {
+    return when (status?.lowercase()) {
+        "pending" -> stringResource(R.string.manager_analysis_status_pending)
+        "running" -> stringResource(R.string.manager_analysis_status_running)
+        "done", "completed", "success" -> stringResource(R.string.manager_analysis_status_completed)
+        "failed", "error" -> stringResource(R.string.manager_analysis_status_failed)
         else -> status ?: stringResource(R.string.manager_status_unknown)
     }
 }

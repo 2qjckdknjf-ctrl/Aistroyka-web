@@ -85,4 +85,8 @@
     <string name="manager_status_changes_requested">changes requested</string>
     <string name="manager_status_open">open</string>
     <string name="manager_status_unknown">unknown</string>
+    <string name="manager_analysis_status_pending">pending</string>
+    <string name="manager_analysis_status_running">running</string>
+    <string name="manager_analysis_status_completed">completed</string>
+    <string name="manager_analysis_status_failed">failed</string>
 </resources>
