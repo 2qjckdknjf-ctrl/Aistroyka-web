@@ -58,4 +58,5 @@
     <string name="content_desc_report_media">Report media</string>
     <string name="manager_media_id_line">Media id: %1$s · session: %2$s</string>
     <string name="manager_no_preview_url">No preview URL (resolve via project media list when project is known).</string>
+    <string name="manager_note_required_reject_or_changes">Manager note is required to reject or request changes.</string>
 </resources>

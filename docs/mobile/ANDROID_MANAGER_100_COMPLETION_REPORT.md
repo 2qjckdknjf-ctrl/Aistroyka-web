@@ -6,6 +6,7 @@
 ## Fix delivered
 
 - `ClientProfile` + `parseClient` now includes **`android_manager`** (previously parsed as **`web`**). **`isLiteWorkerClient`** excludes manager profiles.
+- Enforced review parity with iOS: **reject** and **request changes** now require a manager note in Android Manager; validation error is shown inline before API call.
 
 ## Gaps
 

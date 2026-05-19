@@ -45,6 +45,7 @@ data class ManagerUiState(
     /** media row id -> preview URL from `GET projects/:id/media` */
     val mediaPreviewUrls: Map<String, String> = emptyMap(),
     val reviewNote: String = "",
+    val reviewValidationError: String? = null,
     val actionMessage: String? = null,
 )
 
@@ -62,7 +63,7 @@ class ManagerViewModel(application: Application) : AndroidViewModel(application)
 
     fun setEmail(v: String) = _state.update { it.copy(email = v) }
     fun setPassword(v: String) = _state.update { it.copy(password = v) }
-    fun setReviewNote(v: String) = _state.update { it.copy(reviewNote = v) }
+    fun setReviewNote(v: String) = _state.update { it.copy(reviewNote = v, reviewValidationError = null) }
     fun setReportsFilterSubmittedOnly(v: Boolean) = _state.update { it.copy(reportsFilterSubmittedOnly = v) }
 
     fun clearBanner() = _state.update { it.copy(banner = null) }
@@ -199,6 +200,7 @@ class ManagerViewModel(application: Application) : AndroidViewModel(application)
                 analysisStatus = null,
                 mediaPreviewUrls = emptyMap(),
                 reviewNote = "",
+                reviewValidationError = null,
             )
         }
     }
@@ -236,6 +238,7 @@ class ManagerViewModel(application: Application) : AndroidViewModel(application)
                     analysisStatus = null,
                     mediaPreviewUrls = emptyMap(),
                     reviewNote = "",
+                    reviewValidationError = null,
                     actionMessage = null,
                 )
             }
@@ -291,6 +294,7 @@ class ManagerViewModel(application: Application) : AndroidViewModel(application)
                 analysisStatus = null,
                 mediaPreviewUrls = emptyMap(),
                 reviewNote = "",
+                reviewValidationError = null,
                 actionMessage = null,
             )
         }
@@ -298,15 +302,34 @@ class ManagerViewModel(application: Application) : AndroidViewModel(application)
 
     fun submitReview(status: String) {
         val id = _state.value.selectedReportId ?: return
-        val note = _state.value.reviewNote.trim().ifEmpty { null }
+        val noteRaw = _state.value.reviewNote.trim()
+        val requiresNote = status == "rejected" || status == "changes_requested"
+        if (requiresNote && noteRaw.isEmpty()) {
+            _state.update {
+                it.copy(
+                    reviewValidationError = "manager_note_required_reject_or_changes",
+                    actionMessage = null,
+                )
+            }
+            return
+        }
+        val note = noteRaw.ifEmpty { null }
         viewModelScope.launch {
-            _state.update { it.copy(busy = true, banner = null, actionMessage = null) }
+            _state.update { it.copy(busy = true, banner = null, actionMessage = null, reviewValidationError = null) }
             try {
                 val updated = ManagerApi.reportReview(reportId = id, status = status, managerNote = note)
                 _state.update {
+                    val refreshed = it.reports.map { row ->
+                        if (row.id == id) {
+                            row.copy(status = updated.status)
+                        } else {
+                            row
+                        }
+                    }
                     it.copy(
                         busy = false,
                         reportDetail = updated,
+                        reports = refreshed,
                         actionMessage = "Review saved: $status",
                     )
                 }

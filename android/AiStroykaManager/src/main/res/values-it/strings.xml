@@ -58,4 +58,5 @@
     <string name="content_desc_report_media">Media del report</string>
     <string name="manager_media_id_line">Media: %1$s · sessione: %2$s</string>
     <string name="manager_no_preview_url">Nessun URL anteprima (risolvi dalla lista media del progetto).</string>
+    <string name="manager_note_required_reject_or_changes">Per rifiutare o richiedere modifiche è obbligatoria una nota del manager.</string>
 </resources>

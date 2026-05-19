@@ -58,4 +58,5 @@
     <string name="content_desc_report_media">Medios del informe</string>
     <string name="manager_media_id_line">Medio: %1$s · sesión: %2$s</string>
     <string name="manager_no_preview_url">Sin URL de vista previa (resuélvelo desde la lista de medios del proyecto).</string>
+    <string name="manager_note_required_reject_or_changes">Para rechazar o solicitar cambios, la nota del manager es obligatoria.</string>
 </resources>

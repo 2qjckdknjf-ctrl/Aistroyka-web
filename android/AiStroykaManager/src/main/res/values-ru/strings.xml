@@ -58,4 +58,5 @@
     <string name="content_desc_report_media">Медиа отчёта</string>
     <string name="manager_media_id_line">Медиа: %1$s · сессия: %2$s</string>
     <string name="manager_no_preview_url">Нет URL превью (получите через список медиа проекта).</string>
+    <string name="manager_note_required_reject_or_changes">Чтобы отклонить или запросить правки, добавьте комментарий.</string>
 </resources>

@@ -557,6 +557,14 @@ private fun DetailScreen(vm: ManagerViewModel) {
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 2
                 )
+                state.reviewValidationError?.let { key ->
+                    val msg = when (key) {
+                        "manager_note_required_reject_or_changes" -> stringResource(R.string.manager_note_required_reject_or_changes)
+                        else -> key
+                    }
+                    Spacer(Modifier.height(6.dp))
+                    Text(msg, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                }
                 Spacer(Modifier.height(12.dp))
                 Row(
                     Modifier.fillMaxWidth(),
