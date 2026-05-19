@@ -3,14 +3,14 @@
 //  Shared
 //
 //  Values must match `ClientProfile` in `apps/web/lib/tenant/tenant.types.ts`.
-//  Field-worker iOS uses `ios_lite` so `/api/v1/*` requests pass `checkLiteAllowList` in middleware.
+//  Field-worker iOS sends `ios_worker` (same allow-list as legacy `ios_lite`).
 //
 
 import Foundation
 
 public enum MobileClientProfile: String, Sendable {
-    /// Field worker (AiStroyka Worker). Required for lite API allow-list.
-    case liteWorker = "ios_lite"
+    /// Field worker (AiStroyka Worker). Canonical header; legacy `ios_lite` still accepted on the backend.
+    case worker = "ios_worker"
     /// Manager / foreman app (AiStroyka Manager).
     case manager = "ios_manager"
 }

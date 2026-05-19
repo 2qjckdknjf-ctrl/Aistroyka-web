@@ -4,7 +4,16 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export type ClientProfile = "web" | "ios_full" | "ios_lite" | "android_full" | "android_lite";
+export type ClientProfile =
+  | "web"
+  | "ios_full"
+  | "ios_lite"
+  | "ios_worker"
+  | "ios_manager"
+  | "android_full"
+  | "android_lite"
+  | "android_worker"
+  | "android_manager";
 
 export interface EmitEventParams {
   tenant_id?: string | null;

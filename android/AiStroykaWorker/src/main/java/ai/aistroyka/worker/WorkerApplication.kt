@@ -14,7 +14,7 @@ class WorkerApplication : Application() {
             supabaseUrl = BuildConfig.SUPABASE_URL,
             supabaseAnonKey = BuildConfig.SUPABASE_ANON_KEY
         )
-        AppRuntime.apiClientProfile = "android_lite"
+        AppRuntime.apiClientProfile = "android_worker"
         DeviceContext.init(this)
         SessionStore.init(this)
         PushRegistrationService.init(this)

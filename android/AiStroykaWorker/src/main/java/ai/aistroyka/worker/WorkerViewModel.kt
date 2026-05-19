@@ -20,6 +20,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 data class WorkerUiState(
     val email: String = "",
@@ -33,17 +35,27 @@ data class WorkerUiState(
     val selectedProjectId: String? = null,
     val tasks: List<TaskDto> = emptyList(),
     val selectedTaskId: String? = null,
+    /** Local shift id (yyyyMMdd), same contract as iOS `todayDayId`. */
+    val shiftDayId: String? = null,
     val activeReportId: String? = null,
     val photoLabel: String? = null,
     val pipelineStatus: String? = null,
-    val photoAttached: Boolean = false,
+    val beforePhotoAttached: Boolean = false,
+    val afterPhotoAttached: Boolean = false,
+    val workerNote: String = "",
     val submitMessage: String? = null,
     val doneMessage: String? = null,
 )
 
 class WorkerViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val _state = MutableStateFlow(WorkerUiState())
+    private val shiftPrefs = application.getSharedPreferences("aistroyka_worker_shift", Application.MODE_PRIVATE)
+
+    private val _state = MutableStateFlow(
+        WorkerUiState(
+            shiftDayId = shiftPrefs.getString("shift_day_id", null)?.takeIf { it.isNotBlank() },
+        ),
+    )
     val state: StateFlow<WorkerUiState> = _state.asStateFlow()
 
     init {
@@ -56,6 +68,7 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
 
     fun setEmail(v: String) = _state.update { it.copy(email = v) }
     fun setPassword(v: String) = _state.update { it.copy(password = v) }
+    fun setWorkerNote(v: String) = _state.update { it.copy(workerNote = v) }
 
     fun login() {
         val email = _state.value.email.trim()
@@ -86,11 +99,11 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
                     try {
                         WorkerApi.unregisterDevice()
                     } catch (_: Exception) {
-                        // Best-effort; always clear local session
                     }
                 }
             } finally {
                 AuthService.signOut()
+                shiftPrefs.edit().remove("shift_day_id").apply()
                 _state.value = WorkerUiState()
             }
         }
@@ -104,7 +117,7 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
                 val projects = WorkerApi.projects()
                 val hint = listOfNotNull(
                     cfg.serverTime?.let { t -> "Server time: $t" },
-                    cfg.clientProfile?.let { p -> "Profile: $p" }
+                    cfg.clientProfile?.let { p -> "Profile: $p" },
                 ).joinToString(" · ").ifEmpty { null }
                 val firstProject = projects.firstOrNull()?.id
                 _state.update {
@@ -133,6 +146,36 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
         _state.update { it.copy(selectedTaskId = id) }
     }
 
+    fun startShift() {
+        val day = todayDayId()
+        viewModelScope.launch {
+            _state.update { it.copy(busy = true, banner = null) }
+            try {
+                WorkerApi.startDay(idempotencyKey = DeviceContext.newIdempotencyKey())
+                shiftPrefs.edit().putString("shift_day_id", day).apply()
+                _state.update { it.copy(busy = false, shiftDayId = day) }
+                loadTasksForSelection()
+            } catch (e: ApiError) {
+                _state.update { it.copy(busy = false, banner = e.message) }
+            } catch (e: Exception) {
+                _state.update { it.copy(busy = false, banner = e.message ?: "Could not start shift") }
+            }
+        }
+    }
+
+    fun endShift() {
+        viewModelScope.launch {
+            _state.update { it.copy(busy = true, banner = null) }
+            try {
+                WorkerApi.endDay(idempotencyKey = DeviceContext.newIdempotencyKey())
+            } catch (_: Exception) {
+            } finally {
+                shiftPrefs.edit().remove("shift_day_id").apply()
+                _state.update { it.copy(busy = false, shiftDayId = null) }
+            }
+        }
+    }
+
     private fun loadTasksForSelection() {
         val projectId = _state.value.selectedProjectId
         viewModelScope.launch {
@@ -146,6 +189,11 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun startNewReport() {
+        val dayId = _state.value.shiftDayId
+        if (dayId.isNullOrBlank()) {
+            _state.update { it.copy(banner = "Start your shift before creating a report.") }
+            return
+        }
         val taskId = _state.value.selectedTaskId?.trim()?.takeIf { it.isNotEmpty() }
         viewModelScope.launch {
             _state.update {
@@ -155,23 +203,25 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
                     activeReportId = null,
                     photoLabel = null,
                     pipelineStatus = null,
-                    photoAttached = false,
+                    beforePhotoAttached = false,
+                    afterPhotoAttached = false,
+                    workerNote = "",
                     submitMessage = null,
                     doneMessage = null,
                 )
             }
             try {
                 val id = WorkerApi.createReport(
-                    dayId = null,
+                    dayId = dayId,
                     taskId = taskId,
-                    idempotencyKey = DeviceContext.newIdempotencyKey()
+                    idempotencyKey = DeviceContext.newIdempotencyKey(),
                 )
                 _state.update {
                     it.copy(
                         busy = false,
                         screen = "report",
                         activeReportId = id,
-                        pipelineStatus = "Report draft created. Add a photo.",
+                        pipelineStatus = "Add before and after photos, then submit.",
                     )
                 }
             } catch (e: ApiError) {
@@ -189,7 +239,9 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
                 activeReportId = null,
                 photoLabel = null,
                 pipelineStatus = null,
-                photoAttached = false,
+                beforePhotoAttached = false,
+                afterPhotoAttached = false,
+                workerNote = "",
                 submitMessage = null,
                 doneMessage = null,
             )
@@ -211,16 +263,25 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
             _state.update { it.copy(banner = "No active report") }
             return
         }
+        val purpose = when {
+            !_state.value.beforePhotoAttached -> "report_before"
+            !_state.value.afterPhotoAttached -> "report_after"
+            else -> {
+                _state.update { it.copy(banner = "Before and after photos are already attached.") }
+                return
+            }
+        }
         viewModelScope.launch {
-            _state.update { it.copy(busy = true, pipelineStatus = "Preparing…", photoAttached = false, submitMessage = null) }
+            _state.update { it.copy(busy = true, pipelineStatus = "Preparing…", submitMessage = null) }
             try {
                 val jpeg = compressJpeg(uri)
-                val filename = "${reportId.take(8)}.jpg"
+                val suffix = if (purpose == "report_before") "before" else "after"
+                val filename = "${reportId.take(8)}-$suffix.jpg"
                 _state.update { it.copy(pipelineStatus = "Creating upload session…") }
                 val keyCreate = DeviceContext.newIdempotencyKey()
                 val (sessionId, uploadPath) = WorkerApi.createUploadSession(
-                    purpose = "report_before",
-                    idempotencyKey = keyCreate
+                    purpose = purpose,
+                    idempotencyKey = keyCreate,
                 )
                 val pathInBucket = if (uploadPath.startsWith("media/")) uploadPath.removePrefix("media/") else uploadPath
                 val storagePath = "$pathInBucket/$filename"
@@ -233,19 +294,22 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
                     objectPath = objectPath,
                     mimeType = "image/jpeg",
                     sizeBytes = jpeg.size,
-                    idempotencyKey = DeviceContext.newIdempotencyKey()
+                    idempotencyKey = DeviceContext.newIdempotencyKey(),
                 )
                 _state.update { it.copy(pipelineStatus = "Linking media to report…") }
                 WorkerApi.addMedia(
                     reportId = reportId,
                     uploadSessionId = sessionId,
-                    idempotencyKey = DeviceContext.newIdempotencyKey()
+                    idempotencyKey = DeviceContext.newIdempotencyKey(),
                 )
                 _state.update {
+                    val nowBefore = it.beforePhotoAttached || purpose == "report_before"
+                    val nowAfter = it.afterPhotoAttached || purpose == "report_after"
                     it.copy(
                         busy = false,
-                        pipelineStatus = "Photo attached.",
-                        photoAttached = true,
+                        pipelineStatus = "Saved ($suffix).",
+                        beforePhotoAttached = nowBefore,
+                        afterPhotoAttached = nowAfter,
                     )
                 }
             } catch (e: ApiError) {
@@ -295,18 +359,23 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
             _state.update { it.copy(submitMessage = "No report id") }
             return
         }
-        if (!_state.value.photoAttached && !BuildConfig.PILOT_ALLOW_SUBMIT_WITHOUT_PHOTO) {
-            _state.update { it.copy(submitMessage = "Attach a photo first") }
+        val proofOk =
+             BuildConfig.PILOT_ALLOW_SUBMIT_WITHOUT_PHOTO ||
+                (_state.value.beforePhotoAttached && _state.value.afterPhotoAttached)
+        if (!proofOk) {
+            _state.update { it.copy(submitMessage = "Attach both before and after photos (or enable pilot flag).") }
             return
         }
         val taskId = _state.value.selectedTaskId?.trim()?.takeIf { it.isNotEmpty() }
+        val note = _state.value.workerNote.trim().takeIf { it.isNotEmpty() }
         viewModelScope.launch {
             _state.update { it.copy(busy = true, submitMessage = null) }
             try {
                 WorkerApi.submitReport(
                     reportId = reportId,
                     taskId = taskId,
-                    idempotencyKey = DeviceContext.newIdempotencyKey()
+                    idempotencyKey = DeviceContext.newIdempotencyKey(),
+                    workerNote = note,
                 )
                 _state.update {
                     it.copy(
@@ -330,4 +399,7 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
     fun clearBanner() {
         _state.update { it.copy(banner = null) }
     }
+
+    private fun todayDayId(): String =
+        LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE)
 }

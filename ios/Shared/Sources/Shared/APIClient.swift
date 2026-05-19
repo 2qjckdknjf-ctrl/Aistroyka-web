@@ -13,8 +13,8 @@ public actor APIClient {
     public static let shared = APIClient()
     private let session: URLSession
     private var tokenProvider: (() async -> String?)?
-    /// x-client header. Default matches field-worker allow-list; apps should call `AppRuntime.configureSharedNetworkingFor*`.
-    private var clientProfile: String = MobileClientProfile.liteWorker.rawValue
+    /// x-client header. Default is field worker; apps call `AppRuntime.configureSharedNetworkingFor*`.
+    private var clientProfile: String = MobileClientProfile.worker.rawValue
 
     public init(session: URLSession = .shared) {
         self.session = session
@@ -112,7 +112,7 @@ public actor APIClient {
 
     private var shouldEmitSessionExpiredNotification: Bool {
         clientProfile == MobileClientProfile.manager.rawValue
-            || clientProfile == MobileClientProfile.liteWorker.rawValue
+            || clientProfile == MobileClientProfile.worker.rawValue
     }
 }
 

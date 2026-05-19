@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit
  * HTTP client for app API v1 routes (parity with iOS APIClient: Bearer, x-device-id, x-client, idempotency).
  */
 object ApiClient {
-    internal const val CLIENT_PROFILE = "android_lite"
+    internal const val CLIENT_PROFILE = "android_worker"
 
     val json = Json {
         ignoreUnknownKeys = true

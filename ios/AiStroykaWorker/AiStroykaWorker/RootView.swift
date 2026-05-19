@@ -31,7 +31,7 @@ struct RootView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .apiClientDidReceiveUnauthorized)) { output in
             let profile = output.userInfo?["clientProfile"] as? String
-            guard profile == MobileClientProfile.liteWorker.rawValue else { return }
+            guard profile == MobileClientProfile.worker.rawValue else { return }
             appState.logout()
         }
         .onChange(of: appState.isLoggedIn) { loggedIn in

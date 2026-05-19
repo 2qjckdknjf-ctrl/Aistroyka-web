@@ -37,4 +37,10 @@
     <string name="worker_ai_hint_2">If task status is unclear, add photo and short note in report.</string>
     <string name="worker_ai_guide_confidence_fmt">AI guide confidence: %1$d%%</string>
     <string name="worker_ai_risk_signals_title">Risk signals</string>
+    <string name="worker_shift_in_progress">Shift started</string>
+    <string name="worker_shift_not_started">Shift not started</string>
+    <string name="worker_start_shift">Start shift</string>
+    <string name="worker_end_shift">End shift</string>
+    <string name="worker_report_note_label">Note for manager (optional)</string>
+    <string name="worker_photo_status_fmt">Before photo: %1$s · After photo: %2$s</string>
 </resources>

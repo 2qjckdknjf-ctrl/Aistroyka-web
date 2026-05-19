@@ -1,13 +1,11 @@
 /**
- * Lite client (ios_lite, android_lite) API path allow-list.
+ * Field-worker mobile clients: legacy `*_lite` plus canonical `*_worker` headers (same path allow-list).
  * Enforce in middleware or route guard; return 403 for disallowed paths.
  */
 
-const LITE_CLIENTS = ["ios_lite", "android_lite"] as const;
-
 function isLiteClient(header: string | null): boolean {
   const v = header?.toLowerCase().trim();
-  return v === "ios_lite" || v === "android_lite";
+  return v === "ios_lite" || v === "android_lite" || v === "ios_worker" || v === "android_worker";
 }
 
 /** Allowed path prefixes or exact paths for lite clients. */

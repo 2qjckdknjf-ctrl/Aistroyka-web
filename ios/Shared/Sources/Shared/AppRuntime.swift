@@ -8,9 +8,9 @@
 import Foundation
 
 public enum AppRuntime {
-    /// Configure `APIClient` for AiStroyka Worker. Keeps `x-client: ios_lite` (backend contract).
+    /// Configure `APIClient` for AiStroyka Worker (`x-client: ios_worker`).
     public static func configureSharedNetworkingForWorker() async {
-        await APIClient.shared.setClientProfile(MobileClientProfile.liteWorker.rawValue)
+        await APIClient.shared.setClientProfile(MobileClientProfile.worker.rawValue)
     }
 
     /// Configure `APIClient` for AiStroyka Manager.

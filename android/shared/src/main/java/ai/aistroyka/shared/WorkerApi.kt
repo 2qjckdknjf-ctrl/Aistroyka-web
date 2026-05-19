@@ -61,6 +61,24 @@ object WorkerApi {
         return r.data.orEmpty()
     }
 
+    suspend fun startDay(idempotencyKey: String) {
+        ApiClient.requestVoid(
+            path = "worker/day/start",
+            method = "POST",
+            jsonBody = "{}",
+            idempotencyKey = idempotencyKey,
+        )
+    }
+
+    suspend fun endDay(idempotencyKey: String) {
+        ApiClient.requestVoid(
+            path = "worker/day/end",
+            method = "POST",
+            jsonBody = "{}",
+            idempotencyKey = idempotencyKey,
+        )
+    }
+
     /** GET /api/v1/tasks/:id — detail when assigned to current worker (or manager). Uses [TaskDetailResponse] from ManagerDtos. */
     suspend fun task(taskId: String): TaskDetailDto {
         val r: TaskDetailResponse = ApiClient.request("tasks/${taskId.trim()}")

@@ -27,7 +27,7 @@ struct DiagnosticsView: View {
             }
             Section("Environment") {
                 LabeledContent("API", value: Config.baseURL)
-                Text("Client: ios_lite").font(.caption).foregroundColor(.secondary)
+                Text("Client: \(MobileClientProfile.worker.rawValue)").font(.caption).foregroundColor(.secondary)
             }
             Section("Device") {
                 Text(DeviceContext.deviceId)

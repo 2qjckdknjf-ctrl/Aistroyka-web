@@ -175,7 +175,7 @@
 "mgr_ai_guide_confidence_fmt" = "AI guide confidence: %d%%";
 "mgr_ai_risk_signals_title" = "Risk signals";
 "mgr_onboard_p1_title" = "Projects and team";
-"mgr_onboard_p1_body" = "Browse projects, open details and summaries, and monitor tasks and field activity.";
+"mgr_onboard_p1_body" = "AISTROYKA Manager helps supervisors see projects, review reports, inspect photo evidence, and approve work or send it back for fixes. Browse projects, open details and summaries, and monitor tasks and field activity.";
 "mgr_onboard_p2_title" = "Reports inbox";
 "mgr_onboard_p2_body" = "Incoming field reports appear under Reports. Open one to see status, notes, and evidence references.";
 "mgr_onboard_p3_title" = "Review and decisions";
