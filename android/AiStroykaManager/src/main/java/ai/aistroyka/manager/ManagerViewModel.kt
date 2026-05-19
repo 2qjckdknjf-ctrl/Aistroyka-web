@@ -360,12 +360,29 @@ class ManagerViewModel(application: Application) : AndroidViewModel(application)
     }
 
     private suspend fun handleApiError(e: ApiError) {
-        val message = e.message
+        val message = mapApiErrorMessage(e)
         if (e.isUnauthorized) {
             AuthService.signOut()
             _state.value = ManagerUiState(banner = message)
             return
         }
         _state.update { it.copy(busy = false, banner = message) }
+    }
+
+    private fun mapApiErrorMessage(e: ApiError): String {
+        when (e.code) {
+            "lite_client_path_forbidden" -> return app.getString(R.string.manager_api_endpoint_unavailable)
+            "manager_note_required" -> return app.getString(R.string.manager_api_note_required)
+            "sync_conflict" -> return app.getString(R.string.manager_api_sync_conflict)
+        }
+        return when (e.statusCode) {
+            401 -> app.getString(R.string.manager_api_session_expired)
+            403 -> app.getString(R.string.manager_api_forbidden)
+            404 -> app.getString(R.string.manager_api_not_found)
+            409 -> app.getString(R.string.manager_api_conflict)
+            null -> e.message.ifBlank { app.getString(R.string.manager_api_request_failed) }
+            in 500..599 -> app.getString(R.string.manager_api_server_error)
+            else -> e.message.ifBlank { app.getString(R.string.manager_api_request_failed) }
+        }
     }
 }

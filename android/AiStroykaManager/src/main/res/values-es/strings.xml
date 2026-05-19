@@ -70,4 +70,13 @@
     <string name="manager_error_load_failed">Error de carga.</string>
     <string name="manager_action_review_saved_fmt">Revisión guardada: %1$s</string>
     <string name="manager_error_review_failed">La revisión falló.</string>
+    <string name="manager_api_session_expired">La sesión expiró. Inicia sesión de nuevo.</string>
+    <string name="manager_api_forbidden">No tienes acceso a esta acción.</string>
+    <string name="manager_api_not_found">No se encontraron los datos solicitados.</string>
+    <string name="manager_api_conflict">Se detectó conflicto de datos. Actualiza e inténtalo otra vez.</string>
+    <string name="manager_api_server_error">El servidor no está disponible temporalmente. Inténtalo más tarde.</string>
+    <string name="manager_api_endpoint_unavailable">Esta acción no está disponible para el perfil móvil de manager.</string>
+    <string name="manager_api_request_failed">La solicitud falló. Inténtalo de nuevo.</string>
+    <string name="manager_api_note_required">La nota del manager es obligatoria para esta acción.</string>
+    <string name="manager_api_sync_conflict">Se detectó conflicto de sincronización. Actualiza y reintenta.</string>
 </resources>

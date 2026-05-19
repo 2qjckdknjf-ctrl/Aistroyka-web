@@ -78,4 +78,15 @@
     <string name="worker_done_resubmitted">Report reinviato con successo.</string>
     <string name="worker_done_submitted">Report inviato con successo.</string>
     <string name="worker_error_submit_failed">Invio report non riuscito.</string>
+    <string name="worker_api_session_expired">Sessione scaduta. Accedi di nuovo.</string>
+    <string name="worker_api_forbidden">Non hai accesso a questa azione.</string>
+    <string name="worker_api_not_found">I dati richiesti non sono stati trovati.</string>
+    <string name="worker_api_conflict">Rilevato conflitto dati. Aggiorna e riprova.</string>
+    <string name="worker_api_server_error">Server temporaneamente non disponibile. Riprova più tardi.</string>
+    <string name="worker_api_endpoint_unavailable">Questa azione non è disponibile per il profilo mobile operatore.</string>
+    <string name="worker_api_request_failed">Richiesta non riuscita. Riprova.</string>
+    <string name="worker_api_proof_required">La prova fotografica è obbligatoria prima dell\'invio.</string>
+    <string name="worker_api_task_invalid">L\'attività selezionata non è valida.</string>
+    <string name="worker_api_task_not_assigned">Questa attività non è assegnata a te.</string>
+    <string name="worker_api_sync_conflict">Conflitto di sincronizzazione rilevato. Aggiorna e riprova.</string>
 </resources>

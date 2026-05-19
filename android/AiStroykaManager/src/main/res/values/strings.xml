@@ -70,4 +70,13 @@
     <string name="manager_error_load_failed">Load failed.</string>
     <string name="manager_action_review_saved_fmt">Review saved: %1$s</string>
     <string name="manager_error_review_failed">Review failed.</string>
+    <string name="manager_api_session_expired">Session expired. Please sign in again.</string>
+    <string name="manager_api_forbidden">You do not have access to this action.</string>
+    <string name="manager_api_not_found">Requested data was not found.</string>
+    <string name="manager_api_conflict">Data conflict detected. Refresh and try again.</string>
+    <string name="manager_api_server_error">Server is temporarily unavailable. Try again later.</string>
+    <string name="manager_api_endpoint_unavailable">This action is not available for the mobile manager profile.</string>
+    <string name="manager_api_request_failed">Request failed. Please try again.</string>
+    <string name="manager_api_note_required">Manager note is required for this action.</string>
+    <string name="manager_api_sync_conflict">Sync conflict detected. Refresh and retry.</string>
 </resources>

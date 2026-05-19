@@ -70,4 +70,13 @@
     <string name="manager_error_load_failed">Ошибка загрузки.</string>
     <string name="manager_action_review_saved_fmt">Проверка сохранена: %1$s</string>
     <string name="manager_error_review_failed">Не удалось сохранить проверку.</string>
+    <string name="manager_api_session_expired">Сессия истекла. Войдите снова.</string>
+    <string name="manager_api_forbidden">У вас нет доступа к этому действию.</string>
+    <string name="manager_api_not_found">Запрошенные данные не найдены.</string>
+    <string name="manager_api_conflict">Обнаружен конфликт данных. Обновите и повторите.</string>
+    <string name="manager_api_server_error">Сервер временно недоступен. Повторите позже.</string>
+    <string name="manager_api_endpoint_unavailable">Это действие недоступно для мобильного профиля менеджера.</string>
+    <string name="manager_api_request_failed">Запрос не выполнен. Попробуйте снова.</string>
+    <string name="manager_api_note_required">Для этого действия необходим комментарий менеджера.</string>
+    <string name="manager_api_sync_conflict">Обнаружен конфликт синхронизации. Обновите и повторите.</string>
 </resources>

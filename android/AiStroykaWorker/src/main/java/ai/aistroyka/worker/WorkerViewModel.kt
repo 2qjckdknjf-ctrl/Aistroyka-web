@@ -226,7 +226,7 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
                         _state.update {
                             it.copy(
                                 syncStatus = "error",
-                                syncError = e.message,
+                                syncError = mapApiErrorMessage(e),
                                 syncCursor = cursor,
                             )
                         }
@@ -542,7 +542,7 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
                 if (e.isUnauthorized) {
                     handleApiError(e)
                 } else {
-                    _state.update { it.copy(busy = false, submitMessage = e.message) }
+                    _state.update { it.copy(busy = false, submitMessage = mapApiErrorMessage(e)) }
                 }
             } catch (e: Exception) {
                 _state.update { it.copy(busy = false, submitMessage = e.message ?: app.getString(R.string.worker_error_submit_failed)) }
@@ -576,7 +576,7 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     private suspend fun handleApiError(e: ApiError) {
-        val message = e.message
+        val message = mapApiErrorMessage(e)
         if (e.isUnauthorized) {
             AuthService.signOut()
             shiftPrefs.edit().remove("shift_day_id").apply()
@@ -584,5 +584,24 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
             return
         }
         _state.update { it.copy(busy = false, banner = message) }
+    }
+
+    private fun mapApiErrorMessage(e: ApiError): String {
+        when (e.code) {
+            "lite_client_path_forbidden" -> return app.getString(R.string.worker_api_endpoint_unavailable)
+            "proof_required" -> return app.getString(R.string.worker_api_proof_required)
+            "task_invalid" -> return app.getString(R.string.worker_api_task_invalid)
+            "task_not_assigned" -> return app.getString(R.string.worker_api_task_not_assigned)
+            "sync_conflict" -> return app.getString(R.string.worker_api_sync_conflict)
+        }
+        return when (e.statusCode) {
+            401 -> app.getString(R.string.worker_api_session_expired)
+            403 -> app.getString(R.string.worker_api_forbidden)
+            404 -> app.getString(R.string.worker_api_not_found)
+            409 -> app.getString(R.string.worker_api_conflict)
+            null -> e.message.ifBlank { app.getString(R.string.worker_api_request_failed) }
+            in 500..599 -> app.getString(R.string.worker_api_server_error)
+            else -> e.message.ifBlank { app.getString(R.string.worker_api_request_failed) }
+        }
     }
 }

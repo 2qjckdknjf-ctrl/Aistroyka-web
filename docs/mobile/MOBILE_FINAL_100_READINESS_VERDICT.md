@@ -16,15 +16,15 @@
 | Submit | Code OK | — | Code OK | — |
 | Review queue | — | Code OK | — | Code OK |
 | Approve/reject/request changes | — | Code OK | — | Code OK |
-| Resubmit | Code OK | — | **FAIL (missing)** | — |
+| Resubmit | Code OK | — | Code OK (implemented; live E2E pending) | — |
 | Offline/retry | Partial | Partial | Weak | Weak |
 | Localization | OK | OK | Partial | Partial |
-| Security | OK w/ notes | OK w/ notes | P1 prefs | P1 prefs |
-| Release readiness | OPEN | OPEN | OPEN | OPEN |
+| Security | OK w/ notes | OK w/ notes | OK w/ notes | OK w/ notes |
+| Release readiness | OPEN | OPEN | Partial (release build PASS, signing OPEN) | Partial (release build PASS, signing OPEN) |
 
 \*Simulator launch inferred from successful Debug builds; not instrumented UI smoke in this pass after all edits.
 
 ## Final statement
 
 **100% READY:** **NO**  
-**Blockers:** (1) No executed worker↔manager E2E with captured report/media IDs in this session. (2) Android Worker lacks resubmit + sync/offline parity with iOS. (3) Release signing / store checklists open. (4) Android localization polish for es/it + English-only error strings.
+**Blockers:** (1) No executed worker↔manager E2E with captured report/media IDs in this session. (2) Android Worker still lacks offline/sync parity with iOS queue model. (3) Release signing / store checklists open. (4) Full semantic localization of backend-originated dynamic error payloads remains open.

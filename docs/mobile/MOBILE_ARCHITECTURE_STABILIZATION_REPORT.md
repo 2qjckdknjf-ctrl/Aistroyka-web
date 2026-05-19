@@ -17,7 +17,7 @@
 
 - Supabase password grant; Bearer on `/api/v1`; Keychain (iOS) / `SessionStore` (Android).
 - **401:** iOS uses `NotificationCenter` session-expired path; Android Worker/Manager now clear session and reset to login state on unauthorized API responses.
-- **403:** Shown as API error message; lite allow-list returns `lite_client_path_forbidden`.
+- **403/404/409/5xx:** Android Worker/Manager now map common API statuses and `lite_client_path_forbidden` to user-friendly localized messages (`en/ru/es/it`) instead of raw backend text where possible.
 - **Token refresh:** Not implemented in shared REST client (**P1** — document; no silent refresh loop).
 - **Logout:** clears session; Worker iOS unregisters device; Android Worker mirrors unregister.
 

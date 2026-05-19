@@ -78,4 +78,15 @@
     <string name="worker_done_resubmitted">Отчёт успешно отправлен повторно.</string>
     <string name="worker_done_submitted">Отчёт успешно отправлен.</string>
     <string name="worker_error_submit_failed">Не удалось отправить отчёт.</string>
+    <string name="worker_api_session_expired">Сессия истекла. Войдите снова.</string>
+    <string name="worker_api_forbidden">У вас нет доступа к этому действию.</string>
+    <string name="worker_api_not_found">Запрошенные данные не найдены.</string>
+    <string name="worker_api_conflict">Обнаружен конфликт данных. Обновите и повторите.</string>
+    <string name="worker_api_server_error">Сервер временно недоступен. Повторите позже.</string>
+    <string name="worker_api_endpoint_unavailable">Это действие недоступно для мобильного профиля исполнителя.</string>
+    <string name="worker_api_request_failed">Запрос не выполнен. Попробуйте снова.</string>
+    <string name="worker_api_proof_required">Перед отправкой необходимо добавить фото-доказательства.</string>
+    <string name="worker_api_task_invalid">Выбрана некорректная задача.</string>
+    <string name="worker_api_task_not_assigned">Эта задача не назначена вам.</string>
+    <string name="worker_api_sync_conflict">Обнаружен конфликт синхронизации. Обновите и повторите синхронизацию.</string>
 </resources>

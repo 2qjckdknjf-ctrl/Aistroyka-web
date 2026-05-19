@@ -70,4 +70,13 @@
     <string name="manager_error_load_failed">Caricamento non riuscito.</string>
     <string name="manager_action_review_saved_fmt">Revisione salvata: %1$s</string>
     <string name="manager_error_review_failed">Revisione non riuscita.</string>
+    <string name="manager_api_session_expired">Sessione scaduta. Accedi di nuovo.</string>
+    <string name="manager_api_forbidden">Non hai accesso a questa azione.</string>
+    <string name="manager_api_not_found">I dati richiesti non sono stati trovati.</string>
+    <string name="manager_api_conflict">Rilevato conflitto dati. Aggiorna e riprova.</string>
+    <string name="manager_api_server_error">Server temporaneamente non disponibile. Riprova più tardi.</string>
+    <string name="manager_api_endpoint_unavailable">Questa azione non è disponibile per il profilo mobile manager.</string>
+    <string name="manager_api_request_failed">Richiesta non riuscita. Riprova.</string>
+    <string name="manager_api_note_required">La nota del manager è obbligatoria per questa azione.</string>
+    <string name="manager_api_sync_conflict">Conflitto di sincronizzazione rilevato. Aggiorna e riprova.</string>
 </resources>

@@ -11,13 +11,14 @@
 - Added basic sync cycle in app (`sync/bootstrap` → `sync/changes` → `sync/ack`) with visible sync status/cursor and manual “Sync now” action.
 - Added `401` handling hardening: unauthorized API responses now trigger session clear (`AuthService.signOut()`), shift-day reset, and return user to login state instead of leaving stale in-app state.
 - Localized critical runtime worker messages (login/bootstrap/report/submit/sync errors and confirmations) via Android string resources across `en/ru/es/it`.
+- Added API error UX mapping for `403/404/409/5xx` and `lite_client_path_forbidden` to localized user-facing messages.
 
 ## Still missing vs iOS / spec
 
 - Persistent offline operation queue + retry semantics.
 - Full offline-first sync UX (auto background retries, richer conflict recovery, pending queue visibility).
-- Full localization (es/it) for new keys.
+- Full semantic localization of all backend-provided dynamic error payloads.
 
 ## Validation
 
-- `:AiStroykaWorker:assembleDebug` → **SUCCEEDED** (latest rerun after 401 hardening).
+- `:AiStroykaWorker:assembleDebug` → **SUCCEEDED** (latest rerun after API error UX localization mapping).

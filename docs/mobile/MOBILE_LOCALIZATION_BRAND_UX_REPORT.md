@@ -18,8 +18,9 @@
 ## Raw technical messages
 
 - Android Worker/Manager critical runtime banners and action messages moved to string resources (`en/ru/es/it`) for login/bootstrap/report/review errors and confirmations.
-- Remaining non-localized surfaces are mostly backend-provided dynamic messages and status codes from API payloads.
+- Android Worker/Manager now also map common API statuses (`401/403/404/409/5xx`) and `lite_client_path_forbidden` to localized UX messages.
+- Remaining non-localized surfaces are mostly backend-provided dynamic payload text outside known status/code mappings.
 
 ## Verdict
 
-**PARTIALLY COMPLETE** — major Android hardcoded English leakage reduced; full semantic localization of server-originated error payloads remains open.
+**PARTIALLY COMPLETE** — major Android hardcoded English leakage reduced and key API error paths localized; full semantic localization of all server-originated payload text remains open.

@@ -78,4 +78,15 @@
     <string name="worker_done_resubmitted">Report resubmitted successfully.</string>
     <string name="worker_done_submitted">Report submitted successfully.</string>
     <string name="worker_error_submit_failed">Submit failed.</string>
+    <string name="worker_api_session_expired">Session expired. Please sign in again.</string>
+    <string name="worker_api_forbidden">You do not have access to this action.</string>
+    <string name="worker_api_not_found">Requested data was not found.</string>
+    <string name="worker_api_conflict">Data conflict detected. Refresh and try again.</string>
+    <string name="worker_api_server_error">Server is temporarily unavailable. Try again later.</string>
+    <string name="worker_api_endpoint_unavailable">This action is not available for the mobile worker profile.</string>
+    <string name="worker_api_request_failed">Request failed. Please try again.</string>
+    <string name="worker_api_proof_required">Photo proof is required before submission.</string>
+    <string name="worker_api_task_invalid">Selected task is invalid.</string>
+    <string name="worker_api_task_not_assigned">This task is not assigned to you.</string>
+    <string name="worker_api_sync_conflict">Sync conflict detected. Refresh and retry sync.</string>
 </resources>

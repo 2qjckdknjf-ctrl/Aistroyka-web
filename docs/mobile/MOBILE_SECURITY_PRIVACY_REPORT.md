@@ -5,7 +5,7 @@
 ## Token storage
 
 - iOS: Keychain (`KeychainHelper`).  
-- Android: `SessionStore` (shared prefs — **review** for EncryptedSharedPreferences **P2**).
+- Android: `SessionStore` uses `EncryptedSharedPreferences` + `MasterKey` in shared module.
 
 ## Logging
 
@@ -28,4 +28,4 @@
 
 ## Verdict
 
-**Pilot acceptable with P1/P2 follow-ups** (encrypted storage, logging audit).
+**Pilot acceptable with P2 follow-ups** (targeted Android logging audit + release permission verification).
