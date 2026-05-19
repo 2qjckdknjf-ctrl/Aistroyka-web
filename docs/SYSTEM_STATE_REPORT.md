@@ -10,8 +10,8 @@
 
 - **Application:** Single primary app in `apps/web`: Next.js 14 with OpenNext/Cloudflare build and deploy. Monorepo includes `packages` (contracts, contracts-openapi, api-client) and extensive `docs` and ADRs.
 - **Implemented and working:** Authentication (Supabase + cookies), tenant context and isolation, core v1 API (health, config, projects, AI analyze-image, jobs process, sync bootstrap/changes/ack, media upload-sessions, worker endpoints, devices, tenant invite/members). Job queue (DB-backed), handlers (AI media/report, export, retention, resolve-image). Web dashboard (projects, AI insights, admin pages). Migrations and RLS for tenant-scoped tables. Security headers and middleware.
-- **Partially implemented:** Admin and billing (routes exist; some stubbed or optional). Lite client parsing (x-client) without path allow-list enforcement. Idempotency service present but not enforced on all lite writes. Provider Router and Policy Engine exist but are not used by the main AI entry points. Push (register/unregister and outbox) with send stubbed. SCIM/SSO stubs.
-- **Not implemented / broken:** Lite allow-list (no 403 for lite on admin/billing/ai/jobs/process). Single AIService facade (AI goes directly to OpenAI from route and runVisionAnalysis). Sync bootstrap contains direct DB access in route. Root `app/` duplicates or predates apps/web; role unclear.
+- **Partially implemented:** Admin and billing (routes exist; some stubbed or optional). Idempotency service present but not enforced on all lite writes. Provider Router and Policy Engine exist but are not used by the main AI entry points. Push (register/unregister and outbox) with send stubbed. SCIM/SSO stubs.
+- **Not implemented / broken:** Single AIService facade (AI goes directly to OpenAI from route and runVisionAnalysis). Sync bootstrap contains direct DB access in route. Root `app/` duplicates or predates apps/web; role unclear.
 
 ---
 
@@ -20,7 +20,7 @@
 | Risk | Impact | Mitigation |
 |------|--------|------------|
 | AI governance bypass | Compliance and consistency; circuit breaker and policy not applied | Route all AI through AIService → Policy Engine → Provider Router (Phase 1). |
-| Lite clients calling full API | Data and billing exposure | Enforce path allow-list for ios_lite/android_lite (Phase 1). |
+| Lite clients bypassing surface | Unwanted access to admin/AI/billing from field apps | **Middleware allow-list** for `ios_lite` / `android_lite` (`lite-allow-list.ts`); extend idempotency on writes. |
 | Business logic and direct DB in routes | Harder maintenance and guardrail violations | Move to SyncService and keep routes thin (Phase 1). |
 | Duplicate or legacy routes (root app/, legacy /api) | Confusion and wrong deployment | Remove or document root app/; deprecate legacy paths (Phase 2). |
 | Admin/diag exposure | Information leakage | Ensure requireAdmin and production gating for admin and diag (Security + Phase 2). |
@@ -29,7 +29,7 @@
 
 ## 3. Major Gaps
 
-- **Architecture:** No single AIService; analyze-image and runVisionAnalysis call OpenAI directly. Sync bootstrap has logic and direct Supabase in the route. Lite allow-list not enforced.
+- **Architecture:** No single AIService; analyze-image and runVisionAnalysis call OpenAI directly. Sync bootstrap has logic and direct Supabase in the route.
 - **Mobile:** Idempotency not enforced on all lite write endpoints; push send stubbed; sync 409 behavior to be confirmed.
 - **Operations:** Job processing trigger (cron vs HTTP) and deployment dry-run not fully spelled out; migration ordering has duplicates.
 - **Testing:** Unit and e2e smoke exist; full regression and load testing not evidenced.
@@ -39,13 +39,13 @@
 ## 4. Architecture Quality
 
 - **Strengths:** Clear tenant and auth layer; domain services and repositories used in most places; platform modules (jobs, ai-usage, rate-limit, idempotency, billing, flags) present; RLS and tenant_id filtering; good documentation and ADRs.
-- **Weaknesses:** AI path bypasses governance; one route (sync bootstrap) mixes direct DB and logic; no lite path enforcement. Fixing these (Phase 1) would bring the system in line with the stated architecture guardrails.
+- **Weaknesses:** AI path bypasses governance; one route (sync bootstrap) mixes direct DB and logic. Fixing these (Phase 1) would bring the system in line with the stated architecture guardrails.
 
 ---
 
 ## 5. Development Priorities
 
-1. **Phase 1 (Stabilize):** AIService + Policy/Provider Router, SyncService for bootstrap, Lite allow-list, idempotency on lite writes.
+1. **Phase 1 (Stabilize):** AIService + Policy/Provider Router, SyncService for bootstrap, **full** idempotency on lite writes (path allow-list for lite is **done** in middleware).
 2. **Phase 2 (SaaS core):** Admin and billing completion, legacy deprecation, root app/ resolution.
 3. **Phase 3 (AI):** Construction brain alignment, optional multi-provider.
 4. **Phase 4 (Mobile):** Sync 409, push send, upload flow.

@@ -147,7 +147,7 @@
 | Aspect | Status |
 |--------|--------|
 | x-client, x-device-id, x-idempotency-key | **PARTIALLY_IMPLEMENTED** (parsed; device-id required for bootstrap; idempotency not enforced on all lite writes) |
-| Lite allow-list enforcement | **NOT_IMPLEMENTED** (no path-based block for admin/billing/ai/etc. for lite) |
+| Lite allow-list enforcement | **IMPLEMENTED** — `middleware.ts` + `apps/web/lib/api/lite-allow-list.ts` (403 `lite_client_path_forbidden` for disallowed `/api/v1/*` when `x-client` is `ios_lite` / `android_lite`; see tests) |
 | Worker + sync + upload-sessions + config + devices + auth | **WORKING** (routes exist and function) |
 
 ---
