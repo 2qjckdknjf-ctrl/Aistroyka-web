@@ -19,7 +19,7 @@ This document tracks **overall** readiness against the iOS product completion ro
 | 5 | Resubmit loop | **CLOSED (docs + integration)** — `IOS_RESUBMIT_FLOW_REPORT.md`; **logged** backend E2E still Phase 9 |
 | 6 | Evidence hardening | **CLOSED** — `IOS_EVIDENCE_SYSTEM_REPORT.md` (URL contract, Manager + Worker preview, signed-URL gap explicit) |
 | 7 | Intelligence surfaces | **CLOSED** — `IOS_MOBILE_INTELLIGENCE_REPORT.md`; Worker `activation`/`help` lite allow-list fix |
-| 8 | Documents / budget minimal | **NOT CLOSED** — `IOS_DOCUMENTS_BUDGET_MINIMAL.md` TBD |
+| 8 | Documents / budget minimal | **CLOSED** — `IOS_DOCUMENTS_BUDGET_MINIMAL.md` (scope boundary + isolation; no iOS doc/finance UI) |
 | 9 | E2E validation | **PARTIAL** — UITest smoke targets (`WorkerSmokeUITests`, `ManagerSmokeUITests`) + `.github/workflows/ios-ui-smoke.yml`; **`IOS_E2E_VALIDATION_REPORT.md`** TBD |
 | 10 | TestFlight pilot | **NOT CLOSED** — `IOS_TESTFLIGHT_PILOT_REPORT.md` TBD |
 
@@ -35,9 +35,8 @@ This document tracks **overall** readiness against the iOS product completion ro
 
 ## Next mandatory action
 
-1. **Phase 8** — documents / budget minimal slice (`IOS_DOCUMENTS_BUDGET_MINIMAL.md`), or prioritize **Phase 9** if staging proof is the bottleneck.  
-2. **Phase 9** — author `IOS_E2E_VALIDATION_REPORT.md` with **logged** staging runs (evidence URLs, review, resubmit, **Worker help card**); expand UITest beyond login smoke if CI capacity allows.  
-3. Do **not** claim overall product-ready until Phase 9–10 closure matches mission §16.
+1. **Phase 9** — author `IOS_E2E_VALIDATION_REPORT.md` with **logged** staging runs (evidence URLs, review, resubmit, **Worker help card**); expand UITest beyond login smoke if CI capacity allows.  
+2. Do **not** claim overall product-ready until Phase 9–10 closure matches mission §16.
 
 ---
 
@@ -51,6 +50,7 @@ This document tracks **overall** readiness against the iOS product completion ro
 | Resubmit flow (Phase 5) | `docs/mobile-ios/IOS_RESUBMIT_FLOW_REPORT.md` |
 | Evidence system (Phase 6) | `docs/mobile-ios/IOS_EVIDENCE_SYSTEM_REPORT.md` |
 | Intelligence surfaces (Phase 7) | `docs/mobile-ios/IOS_MOBILE_INTELLIGENCE_REPORT.md` |
+| Documents / budget boundary (Phase 8) | `docs/mobile-ios/IOS_DOCUMENTS_BUDGET_MINIMAL.md` |
 
 ---
 
