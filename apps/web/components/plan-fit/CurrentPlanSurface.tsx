@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@/i18n/navigation";
 import { Card, Skeleton } from "@/components/ui";
@@ -12,26 +13,27 @@ import {
 import type { PlanSurfaceViewModel } from "@/lib/platform/plan-fit/plan-surface.types";
 
 function LimitsSummary({ limits }: { limits: PlanSurfaceViewModel["limitsSummary"] }) {
+  const t = useTranslations("planFitSurface");
   return (
     <dl className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-3">
       <div>
-        <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Users</dt>
+        <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{t("limitsUsers")}</dt>
         <dd className="text-aistroyka-subheadline font-medium text-aistroyka-text-primary">{limits.maxUsers}</dd>
       </div>
       <div>
-        <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Projects</dt>
+        <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{t("limitsProjects")}</dt>
         <dd className="text-aistroyka-subheadline font-medium text-aistroyka-text-primary">{limits.maxProjects}</dd>
       </div>
       <div>
-        <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Storage</dt>
+        <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{t("limitsStorage")}</dt>
         <dd className="text-aistroyka-subheadline font-medium text-aistroyka-text-primary">{limits.maxStorageGb} GB</dd>
       </div>
       <div>
-        <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Mobile workers</dt>
+        <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{t("limitsMobileWorkers")}</dt>
         <dd className="text-aistroyka-subheadline font-medium text-aistroyka-text-primary">{limits.maxActiveMobileWorkers}</dd>
       </div>
       <div>
-        <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">AI requests/mo</dt>
+        <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{t("limitsAiRequests")}</dt>
         <dd className="text-aistroyka-subheadline font-medium text-aistroyka-text-primary">{limits.maxMonthlyAiRequests}</dd>
       </div>
     </dl>
@@ -63,6 +65,7 @@ function CapabilityGroups({ groups }: { groups: PlanSurfaceViewModel["capability
 }
 
 function UpgradeCta({ suggestion }: { suggestion: PlanSurfaceViewModel["upgradeSuggestion"] }) {
+  const t = useTranslations("planFitSurface");
   if (suggestion.ctaVariant === "none" || !suggestion.ctaCopy) return null;
   const targetRoute = getUpgradeCtaTargetRoute(suggestion.ctaVariant);
   return (
@@ -75,13 +78,14 @@ function UpgradeCta({ suggestion }: { suggestion: PlanSurfaceViewModel["upgradeS
         href={targetRoute}
         className="mt-3 inline-block text-aistroyka-caption font-medium text-aistroyka-accent hover:underline"
       >
-        Review available plans
+        {t("reviewPlansLink")}
       </Link>
     </div>
   );
 }
 
 export function CurrentPlanSurface() {
+  const t = useTranslations("planFitSurface");
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["plan-surface"],
     queryFn: fetchPlanSurface,
@@ -121,14 +125,14 @@ export function CurrentPlanSurface() {
       </div>
 
       <div className="mt-6">
-        <h3 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">Limits</h3>
+        <h3 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">{t("limitsHeading")}</h3>
         <div className="mt-2">
           <LimitsSummary limits={surface.limitsSummary} />
         </div>
       </div>
 
       <div className="mt-6">
-        <h3 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">Capabilities</h3>
+        <h3 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">{t("capabilitiesHeading")}</h3>
         <div className="mt-2">
           <CapabilityGroups groups={surface.capabilityGroups} />
         </div>

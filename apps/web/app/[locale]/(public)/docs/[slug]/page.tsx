@@ -25,21 +25,24 @@ const DOC_TITLE_KEYS: Record<(typeof DOC_SLUGS)[number], "gettingStarted" | "pro
   "users-and-roles": "usersAndRoles",
 };
 
-const DOC_BODY: Record<(typeof DOC_SLUGS)[number], string> = {
-  "getting-started": "Create an account, invite your team, and create your first project. Connect mobile apps for field reporting and enable AI analysis in project settings.",
-  projects: "Projects hold structure, media, and analyses. Create a project, add phases or lots, upload photos, and run AI analysis. Use the dashboard to see all projects.",
-  tasks: "Tasks are assigned to users with due dates. Create tasks from the project or dashboard. Workers see their tasks in the mobile app and can complete them with photo evidence.",
-  reports: "Daily reports capture site progress. Field teams submit reports from the mobile app with photos and comments. Reports can trigger AI analysis and appear in the dashboard.",
-  "ai-analytics": "AI analyzes uploaded photos for progress, deviations, and risks. Results are suggestions; managers review and act. Enable AI per project in settings.",
-  "mobile-apps": "Manager app: full dashboard, reports review, tasks. Worker app: daily reports, task completion, photo evidence. Both support offline-friendly workflows.",
-  "users-and-roles": "Roles: Owner, Admin, Member, Viewer. Owners and admins manage team and settings. Members create and edit content. Viewers have read-only access.",
+const DOC_BODY_KEYS: Record<(typeof DOC_SLUGS)[number], string> = {
+  "getting-started": "gettingStartedBody",
+  projects: "projectsBody",
+  tasks: "tasksBody",
+  reports: "reportsBody",
+  "ai-analytics": "aiAnalyticsBody",
+  "mobile-apps": "mobileAppsBody",
+  "users-and-roles": "usersAndRolesBody",
 };
 
 type Props = { params: Promise<{ locale: string; slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, slug } = await params;
-  if (!DOC_SLUGS.includes(slug as (typeof DOC_SLUGS)[number])) return { title: "Docs" };
+  if (!DOC_SLUGS.includes(slug as (typeof DOC_SLUGS)[number])) {
+    const t0 = await getTranslations({ locale, namespace: "public.docs" });
+    return { title: t0("title") };
+  }
   const t = await getTranslations({ locale, namespace: "public.docs" });
   const titleKey = DOC_TITLE_KEYS[slug as (typeof DOC_SLUGS)[number]];
   return {
@@ -68,7 +71,7 @@ export default async function DocSlugPage({ params }: Props) {
         {t(titleKey)}
       </h1>
       <div className="prose prose-neutral mt-6 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-primary)]">
-        <p className="text-[var(--aistroyka-text-secondary)]">{DOC_BODY[key]}</p>
+        <p className="text-[var(--aistroyka-text-secondary)]">{t(DOC_BODY_KEYS[key])}</p>
       </div>
     </div>
   );

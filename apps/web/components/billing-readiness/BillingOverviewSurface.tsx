@@ -6,6 +6,7 @@
  * No fake "Pay now" or misleading "Start trial".
  */
 
+import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
 import { Card, Skeleton } from "@/components/ui";
 
@@ -44,17 +45,8 @@ async function fetchBillingOverview(): Promise<BillingOverview> {
   return res.json();
 }
 
-function getBillingStatusLabel(overview: BillingOverview): string {
-  if (overview.readinessFlags.hasActiveSubscription && overview.billingSubscription) {
-    return `Active (${overview.billingSubscription.billingProvider})`;
-  }
-  if (overview.readinessFlags.billingConnected) {
-    return "Manual / legacy";
-  }
-  return "Not yet connected";
-}
-
 export function BillingOverviewSurface() {
+  const t = useTranslations("billingOverviewSurface");
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["billing-overview"],
     queryFn: fetchBillingOverview,
@@ -73,45 +65,56 @@ export function BillingOverviewSurface() {
     return (
       <Card className="mb-aistroyka-8 border-l-4 border-l-aistroyka-error">
         <p className="text-aistroyka-subheadline text-aistroyka-text-secondary">
-          {error instanceof Error ? error.message : "Failed to load billing status"}
+          {error instanceof Error ? error.message : t("loadFailed")}
         </p>
       </Card>
     );
   }
 
-  const statusLabel = getBillingStatusLabel(data);
+  let subscriptionLine: string;
+  if (data.readinessFlags.hasActiveSubscription && data.billingSubscription) {
+    subscriptionLine = t("billingStatusActive", {
+      provider: data.billingSubscription.billingProvider,
+    });
+  } else if (data.readinessFlags.billingConnected) {
+    subscriptionLine = t("billingStatusManual");
+  } else {
+    subscriptionLine = t("billingStatusDisconnected");
+  }
+
   const checkoutAvailable = data.readinessFlags.checkoutEnabled;
   const sandboxMode = data.readinessFlags.sandboxMode ?? false;
 
+  let checkoutLine: string;
+  if (checkoutAvailable) {
+    checkoutLine = t("checkoutAvailable");
+  } else if (sandboxMode) {
+    checkoutLine = t("checkoutSandbox");
+  } else {
+    checkoutLine = t("checkoutDisabled");
+  }
+
   return (
     <Card className="mb-aistroyka-8 border-l-4 border-l-aistroyka-border-subtle">
-      <h3 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">
-        Billing status
-      </h3>
+      <h3 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">{t("cardTitle")}</h3>
       <dl className="mt-2 space-y-1">
         <div>
-          <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Current plan</dt>
+          <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{t("labelCurrentPlan")}</dt>
           <dd className="text-aistroyka-subheadline font-medium text-aistroyka-text-primary">
             {data.planSurfaceSummary?.humanReadablePlanName ?? data.selectedPlan.canonicalPlanCode}
           </dd>
         </div>
         <div>
-          <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Billing status</dt>
-          <dd className="text-aistroyka-subheadline font-medium text-aistroyka-text-primary">
-            {statusLabel}
-          </dd>
+          <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{t("labelSubscriptionState")}</dt>
+          <dd className="text-aistroyka-subheadline font-medium text-aistroyka-text-primary">{subscriptionLine}</dd>
         </div>
         <div>
-          <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Checkout</dt>
-          <dd className="text-aistroyka-subheadline font-medium text-aistroyka-text-primary">
-            {checkoutAvailable ? "Available" : sandboxMode ? "Sandbox simulation" : "Not yet enabled"}
-          </dd>
+          <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{t("labelCheckout")}</dt>
+          <dd className="text-aistroyka-subheadline font-medium text-aistroyka-text-primary">{checkoutLine}</dd>
         </div>
       </dl>
       <p className="mt-3 text-aistroyka-caption text-aistroyka-text-tertiary">
-        {sandboxMode
-          ? "Sandbox mode: simulate checkout flow. No live payment."
-          : "Billing architecture is ready for future integration. No payment capture in production."}
+        {sandboxMode ? t("sandboxHint") : t("productionHint")}
       </p>
     </Card>
   );

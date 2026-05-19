@@ -8,40 +8,6 @@ type Props = { params: Promise<{ locale: string }> };
 
 const CASE_SLUGS = ["residential", "commercial", "infrastructure", "renovation"] as const;
 
-const CASE_DATA: Record<
-  (typeof CASE_SLUGS)[number],
-  { projectSize: string; teamSize: string; timeline: string; tools: string; benefits: string }
-> = {
-  residential: {
-    projectSize: "120 units",
-    teamSize: "15–25",
-    timeline: "18 months",
-    tools: "Projects, Tasks, Reports, AI analytics",
-    benefits: "Unified visibility, risk alerts, fewer delays.",
-  },
-  commercial: {
-    projectSize: "12,000 m²",
-    teamSize: "40+",
-    timeline: "24 months",
-    tools: "Dashboard, AI, Mobile, Integrations",
-    benefits: "Portfolio view, compliance, faster reporting.",
-  },
-  infrastructure: {
-    projectSize: "Multi-site",
-    teamSize: "80+",
-    timeline: "36 months",
-    tools: "Projects, Reports, AI, API",
-    benefits: "Cross-site progress, risk prediction, audit trail.",
-  },
-  renovation: {
-    projectSize: "50+ lots",
-    teamSize: "10–20",
-    timeline: "12 months",
-    tools: "Tasks, Photo evidence, Daily reports",
-    benefits: "Before/after tracking, quality control, on-time delivery.",
-  },
-};
-
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "public.cases" });
@@ -66,7 +32,6 @@ export default async function CasesPage({ params }: Props) {
       </p>
       <div className="mt-12 grid gap-6 sm:grid-cols-2">
         {CASE_SLUGS.map((slug) => {
-          const data = CASE_DATA[slug];
           const titleKey = slug as "residential" | "commercial" | "infrastructure" | "renovation";
           return (
             <Link
@@ -80,19 +45,19 @@ export default async function CasesPage({ params }: Props) {
               <dl className="mt-4 space-y-2 text-[var(--aistroyka-font-footnote)]">
                 <div>
                   <dt className="text-[var(--aistroyka-text-tertiary)]">{t("projectSize")}</dt>
-                  <dd className="text-[var(--aistroyka-text-primary)]">{data.projectSize}</dd>
+                  <dd className="text-[var(--aistroyka-text-primary)]">{t(`${slug}ProjectSize`)}</dd>
                 </div>
                 <div>
                   <dt className="text-[var(--aistroyka-text-tertiary)]">{t("teamSize")}</dt>
-                  <dd className="text-[var(--aistroyka-text-primary)]">{data.teamSize}</dd>
+                  <dd className="text-[var(--aistroyka-text-primary)]">{t(`${slug}TeamSize`)}</dd>
                 </div>
                 <div>
                   <dt className="text-[var(--aistroyka-text-tertiary)]">{t("timeline")}</dt>
-                  <dd className="text-[var(--aistroyka-text-primary)]">{data.timeline}</dd>
+                  <dd className="text-[var(--aistroyka-text-primary)]">{t(`${slug}Timeline`)}</dd>
                 </div>
               </dl>
               <p className="mt-3 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-secondary)]">
-                {data.benefits}
+                {t(`${slug}Benefits`)}
               </p>
             </Link>
           );
