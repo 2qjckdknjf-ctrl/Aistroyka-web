@@ -47,6 +47,7 @@
 "mgr_api" = "API";
 "mgr_app_version" = "App version";
 "mgr_approve" = "Approve";
+"mgr_reject" = "Reject";
 "mgr_assign_section" = "Assign";
 "mgr_assign_to" = "Assign to";
 "mgr_assign_to_worker" = "Assign to worker";
@@ -87,8 +88,11 @@
 "mgr_loading_team" = "Loading team…";
 "mgr_loading_workers" = "Loading workers…";
 "mgr_manager_note" = "Manager note";
+"mgr_worker_note" = "Worker note";
 "mgr_mark_reviewed" = "Mark reviewed";
 "mgr_media_count_fmt" = "Media (%d)";
+"mgr_evidence_load_failed_fmt" = "Could not load photo %d.";
+"mgr_evidence_no_preview_fmt" = "Photo %d — preview unavailable (id: %@).";
 "mgr_media_fmt" = "Media: %@";
 "mgr_name" = "Name";
 "mgr_new" = "New";
@@ -113,6 +117,8 @@
 "mgr_no_workers_title" = "No workers yet";
 "mgr_not_signed_in" = "Not signed in";
 "mgr_note_optional" = "Note (optional)";
+"mgr_report_review_note_label" = "Note (required if you reject or request changes; optional if you approve)";
+"mgr_note_required_reject_or_changes" = "Enter a note before rejecting or requesting changes.";
 "mgr_notification" = "Notification";
 "mgr_notifications_placeholder" = "Notifications — placeholder";
 "mgr_open_reports" = "Open reports";
@@ -168,3 +174,18 @@
 "mgr_ai_hint_2" = "If reports are delayed, escalate blockers in team channel.";
 "mgr_ai_guide_confidence_fmt" = "AI guide confidence: %d%%";
 "mgr_ai_risk_signals_title" = "Risk signals";
+"mgr_onboard_p1_title" = "Projects and team";
+"mgr_onboard_p1_body" = "Browse projects, open details and summaries, and monitor tasks and field activity.";
+"mgr_onboard_p2_title" = "Reports inbox";
+"mgr_onboard_p2_body" = "Incoming field reports appear under Reports. Open one to see status, notes, and evidence references.";
+"mgr_onboard_p3_title" = "Review and decisions";
+"mgr_onboard_p3_body" = "Approve, reject, or request changes with a clear note. The home dashboard highlights risks and queues.";
+"mgr_onboard_continue" = "Continue to sign in";
+"mgr_onboard_next" = "Next";
+"mgr_how_title" = "How it works";
+"mgr_how_bullet_1" = "Projects: see scope and drill into tasks and summaries.";
+"mgr_how_bullet_2" = "Reports: open the inbox, filter by project, read each submission.";
+"mgr_how_bullet_3" = "Evidence: preview photo proof in report detail when URLs are available.";
+"mgr_how_bullet_4" = "Actions: approve, reject, or request changes—add a note when asking for fixes.";
+"mgr_how_bullet_5" = "Home: watch overdue tasks, pending approvals, and risk signals for the operation.";
+"mgr_more_how_it_works" = "How it works";

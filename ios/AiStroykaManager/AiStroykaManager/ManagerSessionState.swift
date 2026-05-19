@@ -26,7 +26,7 @@ final class ManagerSessionState: ObservableObject {
         ) { [weak self] notification in
             guard let self else { return }
             let profile = notification.userInfo?["clientProfile"] as? String
-            guard profile == "ios_manager" else { return }
+            guard profile == MobileClientProfile.manager.rawValue else { return }
             Task { await self.handleUnauthorizedFromAPI() }
         }
     }

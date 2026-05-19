@@ -10,6 +10,7 @@ struct HomeView: View {
     @EnvironmentObject var appState: AppState
     let project: ProjectDTO
     let onLogout: () -> Void
+    let onLeaveProject: () -> Void
     @ObservedObject private var store = AppStateStoreManager.shared
     @ObservedObject private var opStore = OperationQueueStore.shared
     @ObservedObject private var executor = OperationQueueExecutor.shared
@@ -20,11 +21,13 @@ struct HomeView: View {
     @State private var todayTasks: [TaskDTO] = []
     @State private var tasksLoading = false
     @State private var showDiagnostics = false
+    @State private var showHowItWorks = false
     @State private var activationStatus: WorkerActivationStatusDTO?
     @State private var helpHints: [WorkerHelpHintDTO] = []
     @State private var guideSummary: String?
     @State private var guideConfidence: Int?
     @State private var guideRiskSignals: [WorkerHelpAssistantRiskSignalDTO] = []
+    @State private var feedbackReports: [WorkerSyncReportRow] = []
 
     private var shiftStarted: Bool { store.state.shift.isStarted }
     private var dayId: String? { store.state.shift.dayId }
@@ -36,13 +39,14 @@ struct HomeView: View {
                 let pending = opStore.pendingCount()
                 if pending > 0 {
                     HStack {
-                        Text("Pending: \(pending)")
+                        Text(String(format: NSLocalizedString("worker_pending", comment: ""), pending))
                             .font(.caption)
                             .foregroundColor(.orange)
-                        Button(executor.isPaused ? "Resume queue" : "Pause queue") {
+                        Button(executor.isPaused ? NSLocalizedString("worker_resume_queue", comment: "") : NSLocalizedString("worker_pause_queue", comment: "")) {
                             if executor.isPaused { executor.resumeQueue() } else { executor.pauseQueue() }
                         }
                         .font(.caption)
+                        .accessibilityIdentifier(executor.isPaused ? "pilot_worker_resume_queue" : "pilot_worker_pause_queue")
                     }
                     .padding(8)
                     .background(Color.orange.opacity(0.15))
@@ -50,14 +54,15 @@ struct HomeView: View {
                 }
                 if store.pendingCount > 0 {
                     HStack {
-                        Text("Pending uploads: \(store.pendingCount)")
+                        Text(String(format: NSLocalizedString("worker_pending_uploads", comment: ""), store.pendingCount))
                             .font(.caption)
                             .foregroundColor(.orange)
-                        Button("Resume uploads") {
+                        Button(NSLocalizedString("worker_resume_uploads", comment: "")) {
                             resumeDraftReportId = store.state.draftReportId
                             navigateToNewReport = true
                         }
                         .font(.caption)
+                        .accessibilityIdentifier("pilot_worker_resume_uploads")
                     }
                     .padding(8)
                     .background(Color.orange.opacity(0.15))
@@ -80,20 +85,22 @@ struct HomeView: View {
                 }
                 // Shift status
                 HStack {
-                    Text(shiftStarted ? "Shift in progress" : "Shift not started")
+                    Text(shiftStarted ? NSLocalizedString("worker_shift_in_progress", comment: "") : NSLocalizedString("worker_shift_not_started", comment: ""))
                         .foregroundColor(shiftStarted ? .green : .secondary)
                 }
                 HStack(spacing: 12) {
-                    Button("Start shift") { startShift() }
+                    Button(NSLocalizedString("worker_start_shift", comment: "")) { startShift() }
                         .disabled(shiftStarted)
-                    Button("End shift") { endShift() }
+                        .accessibilityIdentifier("pilot_worker_start_shift")
+                    Button(NSLocalizedString("worker_end_shift", comment: "")) { endShift() }
                         .disabled(!shiftStarted)
+                        .accessibilityIdentifier("pilot_worker_end_shift")
                 }
                 // Today's tasks (Phase 7.5)
                 if tasksLoading && todayTasks.isEmpty {
-                    ProgressView("Loading tasks…")
+                    ProgressView(NSLocalizedString("worker_loading_tasks", comment: ""))
                 } else if !todayTasks.isEmpty {
-                    Text("Today's tasks").font(.subheadline).fontWeight(.semibold)
+                    Text(NSLocalizedString("worker_todays_tasks", comment: "")).font(.subheadline).fontWeight(.semibold)
                     ForEach(todayTasks, id: \.id) { task in
                         NavigationLink {
                             TaskDetailView(task: task, projectId: project.id, dayId: dayId)
@@ -105,27 +112,87 @@ struct HomeView: View {
                             }
                             .padding(.vertical, 4)
                         }
+                        .accessibilityIdentifier("pilot_worker_task_\(task.id)")
                     }
                 }
-                Button("New report") {
+                if !feedbackReports.isEmpty {
+                    Text(NSLocalizedString("worker_feedback_section_title", comment: ""))
+                        .font(.subheadline).fontWeight(.semibold)
+                    ForEach(feedbackReports) { r in
+                        NavigationLink(value: r.id) {
+                            HStack {
+                                Text(String(format: NSLocalizedString("worker_feedback_report_fmt", comment: ""), String(r.id.prefix(8))))
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .padding(.vertical, 4)
+                        }
+                        .accessibilityIdentifier("pilot_worker_feedback_\(r.id)")
+                    }
+                }
+                Button(NSLocalizedString("worker_new_report", comment: "")) {
                     store.save { $0.draftTaskId = nil }
                     resumeDraftReportId = nil
                     navigateToNewReport = true
                 }
+                .accessibilityIdentifier("pilot_worker_new_report")
                 Spacer()
-                Button("Support") { showDiagnostics = true }
+                Button(NSLocalizedString("worker_support", comment: "")) { showDiagnostics = true }
                     .foregroundColor(.secondary)
-                Button("Sign out", action: onLogout)
+                    .accessibilityIdentifier("pilot_worker_support")
+                Button(NSLocalizedString("worker_sign_out", comment: ""), action: onLogout)
                     .foregroundColor(.secondary)
+                    .accessibilityIdentifier("pilot_worker_sign_out")
             }
             .padding()
+            .navigationTitle(project.name ?? project.id)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: onLeaveProject) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "chevron.backward")
+                            Text(NSLocalizedString("worker_nav_projects", comment: ""))
+                        }
+                    }
+                    .accessibilityLabel(NSLocalizedString("worker_nav_projects", comment: ""))
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        showHowItWorks = true
+                    } label: {
+                        Image(systemName: "questionmark.circle")
+                    }
+                    .accessibilityLabel(NSLocalizedString("worker_nav_how_it_works", comment: ""))
+                }
+            }
+            .sheet(isPresented: $showHowItWorks) {
+                NavigationStack {
+                    ScrollView {
+                        WorkerHowItWorksContent()
+                            .padding()
+                    }
+                    .background(Color(.systemGroupedBackground))
+                    .navigationTitle(NSLocalizedString("worker_how_title", comment: ""))
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button(NSLocalizedString("worker_how_done", comment: "")) {
+                                showHowItWorks = false
+                            }
+                        }
+                    }
+                }
+            }
             .sheet(isPresented: $showDiagnostics) {
                 NavigationStack {
                     DiagnosticsView()
                         .environmentObject(appState)
                         .toolbar {
                             ToolbarItem(placement: .cancellationAction) {
-                                Button("Done") { showDiagnostics = false }
+                                Button(NSLocalizedString("worker_done", comment: "")) { showDiagnostics = false }
                             }
                         }
                 }
@@ -139,9 +206,13 @@ struct HomeView: View {
                     taskTitle: nil
                 )
             }
+            .navigationDestination(for: String.self) { rid in
+                ReportResubmitView(reportId: rid)
+            }
         }
         .onAppear {
             loadTodayTasks()
+            loadFeedbackReports()
             loadHelpHints()
             OperationQueueExecutor.shared.runLoop()
             if syncService.status == .idle || syncService.status == .offline {
@@ -151,7 +222,9 @@ struct HomeView: View {
         .onReceive(NotificationCenter.default.publisher(for: .aiStroykaWorkerPushPayload)) { notification in
             guard let type = notification.userInfo?["type"] as? String else { return }
             switch type {
-            case "task_assigned", "task_updated": loadTodayTasks()
+            case "task_assigned", "task_updated":
+                loadTodayTasks()
+                loadFeedbackReports()
             case "report_reminder", "upload_failed": break
             default: break
             }
@@ -236,12 +309,12 @@ struct HomeView: View {
 
     private var syncStatusLabel: String {
         switch syncService.status {
-        case .idle: return "Sync"
-        case .synced: return "Synced"
-        case .syncing: return "Syncing…"
-        case .needsBootstrap: return "Bootstrap"
-        case .offline: return "Offline"
-        case .error: return "Error"
+        case .idle: return NSLocalizedString("sync_status_idle", comment: "")
+        case .synced: return NSLocalizedString("sync_status_synced", comment: "")
+        case .syncing: return NSLocalizedString("sync_status_syncing", comment: "")
+        case .needsBootstrap: return NSLocalizedString("sync_status_bootstrap", comment: "")
+        case .offline: return NSLocalizedString("sync_status_offline", comment: "")
+        case .error: return NSLocalizedString("sync_status_error", comment: "")
         }
     }
 
@@ -344,6 +417,19 @@ struct HomeView: View {
         }
     }
 
+    private func loadFeedbackReports() {
+        Task {
+            do {
+                let list = try await WorkerAPI.workerSync()
+                await MainActor.run {
+                    feedbackReports = list.filter { $0.status == "changes_requested" }
+                }
+            } catch {
+                await MainActor.run { feedbackReports = [] }
+            }
+        }
+    }
+
     private func loadHelpHints() {
         Task {
             let activation = try? await WorkerAPI.activationStatus()
@@ -356,20 +442,20 @@ struct HomeView: View {
             }
             let hints = (try? await WorkerAPI.helpHints(
                 locale: supportedHelpLocale(),
-                role: "manager",
+                role: AppRuntime.helpHintsLaunchRoleForWorkerApp,
                 getStarted: getStarted
             )) ?? []
             let assistant = try? await WorkerAPI.helpAssistant(
                 query: "",
                 locale: supportedHelpLocale(),
-                role: "manager",
+                role: AppRuntime.helpHintsLaunchRoleForWorkerApp,
                 pathname: "/worker",
                 activation: activation
             )
             await WorkerAPI.helpAssistantEvent(
                 type: "open",
                 locale: supportedHelpLocale(),
-                role: "worker",
+                role: AppRuntime.helpAssistantEventRoleWorker,
                 pathname: "/worker"
             )
             await MainActor.run {

@@ -17,14 +17,21 @@ struct HomeContainerView: View {
     var body: some View {
         Group {
             if loading && projects.isEmpty {
-                ProgressView("Loading…")
+                InlineLoadingRow(NSLocalizedString("worker_loading_projects", comment: ""))
             } else if let err = errorMessage {
-                VStack {
-                    Text(err).foregroundColor(.red)
-                    Button("Retry") { loadProjects() }
-                }
+                InlineErrorRetryRow(
+                    message: err,
+                    retryTitle: NSLocalizedString("worker_retry", comment: "")
+                ) { loadProjects() }
             } else if projects.isEmpty {
-                Text("No projects").padding()
+                VStack(spacing: 8) {
+                    Text(NSLocalizedString("worker_no_projects", comment: ""))
+                    Text(NSLocalizedString("worker_no_projects_subtitle", comment: ""))
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                .padding()
             } else if selectedProject == nil, projects.count == 1 {
                 ProgressView()
                     .onAppear {
@@ -34,7 +41,14 @@ struct HomeContainerView: View {
             } else if selectedProject == nil {
                 ProjectPickerView(projects: projects, selected: $selectedProject)
             } else {
-                HomeView(project: selectedProject!, onLogout: { appState.logout() })
+                HomeView(
+                    project: selectedProject!,
+                    onLogout: { appState.logout() },
+                    onLeaveProject: {
+                        selectedProject = nil
+                        store.save { $0.selectedProjectId = nil }
+                    }
+                )
             }
         }
         .onAppear {

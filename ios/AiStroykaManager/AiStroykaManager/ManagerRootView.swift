@@ -13,6 +13,10 @@ struct ManagerRootView: View {
         Group {
             if sessionState.isCheckingSession {
                 LoadingStateView()
+            } else if !ManagerOnboardingPreferences.isIntroCompleted {
+                ManagerOnboardingView {
+                    sessionState.checkSession()
+                }
             } else if !sessionState.isLoggedIn {
                 ManagerLoginView()
             } else if !sessionState.isAuthorizedRole, let msg = sessionState.roleFailureMessage {
@@ -22,10 +26,14 @@ struct ManagerRootView: View {
             }
         }
         .onAppear {
-            Task {
-                await APIClient.shared.setClientProfile("ios_manager")
+            Task { @MainActor in
+                await ManagerUITestLaunchHooks.prepareManagerSurfaceIfNeeded(sessionState: sessionState)
+                ManagerOnboardingPreferences.skipIntroIfKeychainHasSession()
+                await AppRuntime.configureSharedNetworkingForManager()
                 await APIClient.shared.setTokenProvider { await AuthService.shared.getAccessToken() }
-                sessionState.checkSession()
+                if ManagerOnboardingPreferences.isIntroCompleted {
+                    sessionState.checkSession()
+                }
             }
         }
     }

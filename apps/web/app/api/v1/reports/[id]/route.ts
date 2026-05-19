@@ -50,7 +50,7 @@ export async function GET(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const media = await reportRepo.listMediaByReportId(supabase, id, ctx.tenantId!);
+  const media = await reportRepo.listMediaByReportIdWithUrls(supabase, id, ctx.tenantId!);
   return NextResponse.json({ data: { ...report, media } });
 }
 
@@ -93,7 +93,9 @@ export async function PATCH(
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
   const status = typeof body.status === "string" ? body.status.trim() : undefined;
-  const manager_note = body.manager_note !== undefined ? (typeof body.manager_note === "string" ? body.manager_note : null) : undefined;
+  const rawNote = body.manager_note;
+  const normalizedNote =
+    rawNote === undefined ? null : typeof rawNote === "string" ? rawNote.trim() || null : null;
   if (!status || !REVIEW_STATUSES.includes(status as ReportReviewStatus)) {
     return NextResponse.json(
       { error: "status required: one of approved, rejected, changes_requested" },
@@ -101,10 +103,20 @@ export async function PATCH(
     );
   }
 
+  if ((status === "rejected" || status === "changes_requested") && !normalizedNote) {
+    return NextResponse.json(
+      {
+        error: "Manager note is required when rejecting or requesting changes",
+        code: "manager_note_required",
+      },
+      { status: 400 }
+    );
+  }
+
   const supabase = await createClientFromRequest(request);
   const updated = await reportRepo.updateReview(supabase, id, ctx.tenantId, ctx.userId, {
     status: status as ReportReviewStatus,
-    manager_note: manager_note ?? null,
+    manager_note: normalizedNote,
   });
   if (!updated) {
     return NextResponse.json(
@@ -120,9 +132,9 @@ export async function PATCH(
     action: "report_review",
     resource_type: "report",
     resource_id: id,
-    details: { status, has_note: !!manager_note },
+    details: { status, has_note: Boolean(normalizedNote) },
   });
 
-  const media = await reportRepo.listMediaByReportId(supabase, id, ctx.tenantId);
+  const media = await reportRepo.listMediaByReportIdWithUrls(supabase, id, ctx.tenantId);
   return NextResponse.json({ data: { ...updated, media } });
 }

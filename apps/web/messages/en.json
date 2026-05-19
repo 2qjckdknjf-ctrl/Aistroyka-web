@@ -737,7 +737,15 @@
       "aiAnalytics": "AI analytics",
       "teamRoles": "Team roles & access",
       "dashboards": "Dashboards & metrics",
-      "integrations": "Integration readiness"
+      "integrations": "Integration readiness",
+      "projectManagementDesc": "Projects, structure, progress tracking.",
+      "tasksDesc": "Assign, track, and complete tasks with deadlines.",
+      "dailyReportsDesc": "Daily reports from the field with evidence.",
+      "photoVideoDesc": "Photo and video evidence linked to tasks.",
+      "aiAnalyticsDesc": "AI-powered analysis and risk detection.",
+      "teamRolesDesc": "Roles, access control, and permissions.",
+      "dashboardsDesc": "Dashboards and operational metrics.",
+      "integrationsDesc": "API and integration readiness."
     },
     "solutions": {
       "title": "Solutions",
@@ -746,7 +754,12 @@
       "forGeneralContractor": "For general contractor",
       "forContractor": "For contractor",
       "forProjectManager": "For project manager",
-      "forFieldTeams": "For field teams & workers"
+      "forFieldTeams": "For field teams & workers",
+      "forDeveloperDesc": "Full visibility, risk and delay control, portfolio view.",
+      "forGeneralContractorDesc": "Multi-project control, subcontractors, reporting.",
+      "forContractorDesc": "Tasks, daily reports, evidence, and compliance.",
+      "forProjectManagerDesc": "Dashboards, tasks, team coordination, AI insights.",
+      "forFieldTeamsDesc": "Mobile reporting, quick tasks, photo evidence."
     },
     "aiControl": {
       "title": "AI Construction Control",
@@ -755,7 +768,12 @@
       "photoWorkflows": "Photo before/after workflows",
       "deviationRisk": "Deviation & risk detection",
       "managerInsights": "Manager insights",
-      "humanInTheLoop": "Human-in-the-loop"
+      "humanInTheLoop": "Human-in-the-loop",
+      "whatAiAnalyzesDesc": "AI analyzes site photos for progress, completeness, and deviations from plans or expectations.",
+      "photoWorkflowsDesc": "Before/after and time-series photo workflows with automatic analysis and alerts.",
+      "deviationRiskDesc": "Deviation and risk detection with severity and suggested actions.",
+      "managerInsightsDesc": "Insights and recommendations for managers, prioritized by impact.",
+      "humanInTheLoopDesc": "Decisions stay with humans; AI supports with analysis and suggestions."
     },
     "mobile": {
       "title": "Mobile",
@@ -763,7 +781,11 @@
       "managerApp": "Manager app",
       "workerApp": "Worker / contractor app",
       "fieldReporting": "Field reporting scenarios",
-      "fastWorkflows": "Fast mobile workflows"
+      "fastWorkflows": "Fast mobile workflows",
+      "managerAppDesc": "Full dashboard, reports review, tasks, and AI insights on the go.",
+      "workerAppDesc": "Light app for field workers: daily reports, photo evidence, task completion.",
+      "fieldReportingDesc": "Fast reporting scenarios: check-in, photos, comments, submit.",
+      "fastWorkflowsDesc": "Optimized mobile workflows for low latency and offline-friendly use."
     },
     "pricing": {
       "title": "Pricing",
@@ -785,7 +807,11 @@
       "mission": "Mission",
       "marketProblem": "Market problem",
       "whyAistroyka": "Why Aistroyka",
-      "reliability": "Reliability, control, transparency"
+      "reliability": "Reliability, control, transparency",
+      "missionDesc": "We help construction and development teams gain visibility, control risks, and deliver on time with AI-powered analytics and mobile reporting.",
+      "marketProblemDesc": "Construction often runs on scattered tools, delayed reports, and reactive decisions. Visibility and control are limited.",
+      "whyAistroykaDesc": "Aistroyka unifies projects, tasks, daily reports, and AI analysis in one platform, with human-in-the-loop control.",
+      "reliabilityDesc": "We focus on reliability, clear control points, and transparency so teams can trust the data and act on it."
     },
     "contact": {
       "title": "Contact",
@@ -895,7 +921,27 @@
       "teamSize": "Team size",
       "timeline": "Timeline",
       "toolsUsed": "Tools used",
-      "benefits": "Benefits"
+      "benefits": "Benefits",
+      "residentialProjectSize": "120 units",
+      "residentialTeamSize": "15–25",
+      "residentialTimeline": "18 months",
+      "residentialToolsUsed": "Projects, Tasks, Reports, AI analytics",
+      "residentialBenefits": "Unified visibility, risk alerts, fewer delays.",
+      "commercialProjectSize": "12,000 m²",
+      "commercialTeamSize": "40+",
+      "commercialTimeline": "24 months",
+      "commercialToolsUsed": "Dashboard, AI, Mobile, Integrations",
+      "commercialBenefits": "Portfolio view, compliance, faster reporting.",
+      "infrastructureProjectSize": "Multi-site",
+      "infrastructureTeamSize": "80+",
+      "infrastructureTimeline": "36 months",
+      "infrastructureToolsUsed": "Projects, Reports, AI, API",
+      "infrastructureBenefits": "Cross-site progress, risk prediction, audit trail.",
+      "renovationProjectSize": "50+ lots",
+      "renovationTeamSize": "10–20",
+      "renovationTimeline": "12 months",
+      "renovationToolsUsed": "Tasks, Photo evidence, Daily reports",
+      "renovationBenefits": "Before/after tracking, quality control, on-time delivery."
     },
     "projectsShowcase": {
       "title": "Product Showcase",
@@ -903,7 +949,12 @@
       "dashboard": "Dashboard",
       "aiAnalytics": "AI analytics",
       "progressTracking": "Progress tracking",
-      "mobileReporting": "Mobile reporting"
+      "mobileReporting": "Mobile reporting",
+      "previewPlaceholder": "Product preview",
+      "dashboardDesc": "Unified dashboard: projects, tasks, reports, and KPIs in one place.",
+      "aiAnalyticsDesc": "AI-powered analysis: progress, deviations, risks, and recommendations.",
+      "progressTrackingDesc": "Real-time progress tracking with photo evidence and timelines.",
+      "mobileReportingDesc": "Field teams submit daily reports and evidence from mobile apps."
     },
     "docs": {
       "title": "Documentation",
@@ -914,7 +965,14 @@
       "reports": "Reports",
       "aiAnalytics": "AI analytics",
       "mobileApps": "Mobile apps",
-      "usersAndRoles": "Users and roles"
+      "usersAndRoles": "Users and roles",
+      "gettingStartedBody": "Create an account, invite your team, and create your first project. Connect mobile apps for field reporting and enable AI analysis in project settings.",
+      "projectsBody": "Projects hold structure, media, and analyses. Create a project, add phases or lots, upload photos, and run AI analysis. Use the dashboard to see all projects.",
+      "tasksBody": "Tasks are assigned to users with due dates. Create tasks from the project or dashboard. Workers see their tasks in the mobile app and can complete them with photo evidence.",
+      "reportsBody": "Daily reports capture site progress. Field teams submit reports from the mobile app with photos and comments. Reports can trigger AI analysis and appear in the dashboard.",
+      "aiAnalyticsBody": "AI analyzes uploaded photos for progress, deviations, and risks. Results are suggestions; managers review and act. Enable AI per project in settings.",
+      "mobileAppsBody": "Manager app: full dashboard, reports review, tasks. Worker app: daily reports, task completion, photo evidence. Both support offline-friendly workflows.",
+      "usersAndRolesBody": "Roles: Owner, Admin, Member, Viewer. Owners and admins manage team and settings. Members create and edit content. Viewers have read-only access."
     },
     "security": {
       "title": "Security",
@@ -923,7 +981,12 @@
       "aiSafety": "AI safety",
       "infrastructureReliability": "Infrastructure reliability",
       "supabaseSecurity": "Supabase security",
-      "cloudflareProtection": "Cloudflare protection"
+      "cloudflareProtection": "Cloudflare protection",
+      "dataProtectionBody": "Data is encrypted in transit and at rest. Access is role-based and auditable. We do not train models on your content.",
+      "aiSafetyBody": "AI outputs are recommendations; decisions remain with humans. No automated actions without review. Quotas and guardrails limit misuse.",
+      "infrastructureReliabilityBody": "Platform runs on redundant, monitored infrastructure. Uptime targets and incident processes are in place for critical paths.",
+      "supabaseSecurityBody": "Database and auth are powered by Supabase: row-level security, secure auth flows, and managed backups.",
+      "cloudflareProtectionBody": "Edge delivery and DDoS protection via Cloudflare. Security headers and best practices are applied globally."
     },
     "platform": {
       "title": "Platform",
@@ -932,7 +995,12 @@
       "managerApp": "Manager mobile app",
       "workerApp": "Worker mobile app",
       "aiEngine": "AI engine",
-      "integrations": "Integrations"
+      "integrations": "Integrations",
+      "webPlatformDesc": "Full web app: dashboard, projects, tasks, reports, AI insights, team and settings.",
+      "managerAppDesc": "Mobile app for managers: review reports, assign tasks, view AI insights on the go.",
+      "workerAppDesc": "Light mobile app for field workers: daily reports, photo evidence, task completion.",
+      "aiEngineDesc": "AI engine analyzes site photos for progress, deviations, and risks; outputs are human-reviewed.",
+      "integrationsDesc": "API and integration readiness for ERP, BIM, and other tools."
     },
     "homeMetrics": {
       "title": "Construction control metrics",
@@ -1141,6 +1209,31 @@
     "emptyTitle": "No billing records",
     "emptySubtitle": "Billing data will appear here when available."
   },
+  "billingOverviewSurface": {
+    "cardTitle": "Billing status",
+    "labelCurrentPlan": "Current plan",
+    "labelSubscriptionState": "Subscription status",
+    "labelCheckout": "Checkout",
+    "billingStatusActive": "Active ({provider})",
+    "billingStatusManual": "Manual / legacy",
+    "billingStatusDisconnected": "Not yet connected",
+    "checkoutAvailable": "Available",
+    "checkoutSandbox": "Sandbox simulation",
+    "checkoutDisabled": "Not yet enabled",
+    "sandboxHint": "Sandbox mode: simulate checkout flow. No live payment.",
+    "productionHint": "Billing architecture is ready for future integration. No payment capture in production.",
+    "loadFailed": "Failed to load billing status"
+  },
+  "planFitSurface": {
+    "limitsHeading": "Limits",
+    "capabilitiesHeading": "Capabilities",
+    "limitsUsers": "Users",
+    "limitsProjects": "Projects",
+    "limitsStorage": "Storage",
+    "limitsMobileWorkers": "Mobile workers",
+    "limitsAiRequests": "AI requests/mo",
+    "reviewPlansLink": "Review available plans"
+  },
   "portfolioPage": {
     "backToProjects": "← Projects",
     "title": "Portfolio",
@@ -1308,6 +1401,7 @@
     "resubmittedHint": "Resubmitted after changes were requested.",
     "managerApproval": "Manager approval",
     "managerNote": "Manager note",
+    "workerNote": "Worker note",
     "mediaGallery": "Media gallery",
     "media": "Media",
     "session": "Session",
@@ -2577,6 +2671,8 @@
     "page": "Page",
     "approveRejectOrRequestChanges": "Approve, reject, or request changes.",
     "noteOptionalForRequestChanges": "Note (optional, recommended for \"Request changes\")",
+    "noteRequiredForRejectOrChanges": "Note: required when you reject or request changes; optional when you approve.",
+    "enterNoteBeforeRejectOrChanges": "Enter a note before rejecting or requesting changes.",
     "addNoteForWorker": "Add a note for the worker...",
     "viewPlanAndLimits": "View plan and limits",
     "failed": "Failed",

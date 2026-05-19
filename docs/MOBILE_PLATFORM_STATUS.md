@@ -11,8 +11,9 @@
 | GET /api/v1/worker/tasks/today | **Ready** | Uses task.service; tenant-scoped. |
 | POST /api/v1/worker/day/start, day/end | **Ready** | worker-day.service. |
 | POST /api/v1/worker/report/create, add-media, submit | **Ready** | report service. |
-| POST /api/v1/worker/sync | **Ready** | Sync path. |
-| GET/POST /api/v1/worker | **Stub** | 501. |
+| GET /api/v1/worker/sync | **Ready** | Lightweight delta (tasks, reports, sessions). |
+| GET /api/v1/worker | **Ready** | Discovery: lists canonical subroutes (JSON). |
+| POST /api/v1/worker | **N/A** | **405** — not an action endpoint; use subroutes. |
 
 ---
 
@@ -33,9 +34,9 @@
 |--------|--------|
 | Table | **Present** (idempotency_keys migration). |
 | Service | **Present** (idempotency.service). |
-| x-idempotency-key on lite writes | **Not enforced** in route layer for all worker/sync/media writes. |
+| x-idempotency-key on lite writes | **Mostly complete** — enforced on worker report/day paths, sync ack, media upload-sessions, **devices register/unregister**. Lite apps sign in via **Supabase SDK** (not `POST /api/v1/auth/login`); web login path is separate. |
 
-**Recommendation:** Require x-idempotency-key for POSTs from lite clients and use idempotency.service in upload-sessions, worker report create/add-media/submit, sync ack.
+**Recommendation:** If new lite-writable routes are added under the allow-list, attach `requireLiteIdempotency` + `storeLiteIdempotency` the same way as existing POST handlers.
 
 ---
 
@@ -62,6 +63,8 @@
 |-----------|--------|
 | device_tokens, push_outbox | **Migrations present** (upload_push_devices). |
 | POST /api/v1/devices/register, unregister | **Ready** |
+| Android Worker | **FCM** — `WorkerFirebaseMessagingService` → `PushRegistrationService` + `registerIfNeeded`; replace placeholder `google-services.json` (see `docs/runbooks/PUSH_DELIVERY.md`). |
+| iOS Worker | **Ready** — APNS token → Keychain; `registerIfNeeded` from AppDelegate / when logged in. |
 | push.service | **Present** (APNS/FCM stubs). |
 | Send path | **Stubbed** (docs: push send stubbed). |
 
@@ -69,11 +72,24 @@
 
 ## 7. Lite API Isolation
 
-**Required (guardrails):** Lite may only access worker/*, sync/*, media/upload-sessions*, reports/*/analysis-status, config, devices/*, auth/*. Forbidden: admin, billing, org, analytics, projects, export, security, jobs/process, ai/*.
+**Policy:** Clients sending **`x-client: ios_lite`** or **`android_lite`** may only hit an explicit allow-list; everything else under `/api/v1/*` gets **403** (`lite_client_path_forbidden`).
 
-**Current:** x-client parsed in tenant context; **no middleware or guard** that rejects lite requests to forbidden paths. A lite client could call /api/v1/projects or /api/v1/ai/analyze-image and would be allowed if authenticated.
+**Current (repo):** Implemented in Edge **`middleware.ts`** — for `/api/v1` requests it calls **`checkLiteAllowList`** (`apps/web/lib/api/lite-allow-list.ts`) before continuing. Covered by **`lite-allow-list.test.ts`**.
 
-**Recommendation:** Add middleware (or per-route check) that, when x-client is ios_lite or android_lite, returns 403 for any path not in the allowed list.
+**Allowed surface (summary — see source for exact methods):**
+
+- `GET /api/v1/projects` (tenant project list for worker app)
+- `/api/v1/config`
+- `/api/v1/worker/*`
+- `/api/v1/sync/*`
+- `/api/v1/media/upload-sessions*` (create + finalize)
+- `/api/v1/devices/*`, `/api/v1/auth/*`
+- `GET /api/v1/reports/:id/analysis-status`, `GET /api/v1/reports/:id` (read; writes not allow-listed)
+- `GET /api/v1/tasks/:id` (read; PATCH forbidden at middleware)
+
+**Not allow-listed (examples):** `POST /api/v1/projects`, `/api/v1/ai/*`, `/api/v1/admin/*`, billing/manager routes, etc. → **403** for lite.
+
+**Gap:** **`x-idempotency-key`** is not required on every lite write at the route layer (see §3). Allow-list is path-only.
 
 ---
 
@@ -83,12 +99,22 @@
 |--------|--------|
 | x-client | **Parsed** (tenant context). |
 | x-device-id | **Required** for bootstrap; used where needed. |
-| x-idempotency-key | **Not enforced** on all lite write endpoints. |
+| x-idempotency-key | **Partial** — worker/sync/media/device token routes require key for `ios_lite` / `android_lite`; other endpoints may differ. |
 | x-app-version, x-platform | **Documented**; not used in logic in reviewed code. |
 
 ---
 
-## 9. Summary
+## 9. CI — iOS UITest smoke
+
+| Item | Status |
+|------|--------|
+| GitHub Actions | `.github/workflows/ios-ui-smoke.yml` — on **pull_request** (`ios/**` + workflow file; **skip** if diff is only `ios/**/*.md`), **`workflow_dispatch`** |
+| Scope | Simulator-only login smoke (`pilot_*` accessibility ids); **Worker** + **Manager** schemes; no backend secrets required |
+| Runbooks | `docs/runbooks/MOBILE_OFFLINE_QUEUE.md`, `docs/runbooks/MOBILE_SYNC.md` |
+
+---
+
+## 10. Summary
 
 | Area | Status |
 |------|--------|
@@ -98,4 +124,5 @@
 | Upload session API | Ready |
 | Media storage flow | Ready (client upload + finalize) |
 | Push (devices + outbox) | Tables and register/unregister ready; send stubbed |
-| Lite allow-list | Not implemented |
+| Lite allow-list | **Ready** — middleware + `lib/api/lite-allow-list.ts` (see §7) |
+| iOS CI smoke | UITest on **Simulator** (see §9) |

@@ -13,8 +13,8 @@ public actor APIClient {
     public static let shared = APIClient()
     private let session: URLSession
     private var tokenProvider: (() async -> String?)?
-    /// x-client header value. Set at app bootstrap; Worker uses "ios_lite", Manager uses "ios_manager".
-    private var clientProfile: String = "ios_lite"
+    /// x-client header. Default matches field-worker allow-list; apps should call `AppRuntime.configureSharedNetworkingFor*`.
+    private var clientProfile: String = MobileClientProfile.liteWorker.rawValue
 
     public init(session: URLSession = .shared) {
         self.session = session
@@ -58,7 +58,7 @@ public actor APIClient {
 
         if let code = http?.statusCode, code >= 400 {
             if code == 401 {
-                notifyUnauthorizedIfNeeded()
+                await notifySessionInvalidIfNeeded()
             }
             throw APIError.from(data: data, response: response)
         }
@@ -92,21 +92,27 @@ public actor APIClient {
         let (data, response) = try await session.data(for: request)
         let code = (response as? HTTPURLResponse)?.statusCode ?? 0
         if code == 401 {
-            notifyUnauthorizedIfNeeded()
+            await notifySessionInvalidIfNeeded()
         }
         return (data, code)
     }
 
-    private func notifyUnauthorizedIfNeeded() {
-        guard clientProfile == "ios_manager" else { return }
+    /// 401: notify host apps so they can sign out and avoid a stuck authenticated UI (Worker queue pauses without this).
+    private func notifySessionInvalidIfNeeded() async {
+        guard shouldEmitSessionExpiredNotification else { return }
         let profile = clientProfile
-        Task { @MainActor in
+        await MainActor.run {
             NotificationCenter.default.post(
                 name: .apiClientDidReceiveUnauthorized,
                 object: nil,
                 userInfo: ["clientProfile": profile]
             )
         }
+    }
+
+    private var shouldEmitSessionExpiredNotification: Bool {
+        clientProfile == MobileClientProfile.manager.rawValue
+            || clientProfile == MobileClientProfile.liteWorker.rawValue
     }
 }
 

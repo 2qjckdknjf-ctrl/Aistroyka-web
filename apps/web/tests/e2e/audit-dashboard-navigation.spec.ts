@@ -62,7 +62,10 @@ test.describe("Dashboard Navigation CTA Audit", () => {
     const apiIssues = attachApiIssueTracking(page);
     const consoleTracking = attachConsoleErrorTracking(page);
 
-    await loginIfConfigured(page);
+    if (!(await loginIfConfigured(page))) {
+      test.skip();
+      return;
+    }
     apiIssues.drain();
     consoleTracking.drain();
 
@@ -74,7 +77,8 @@ test.describe("Dashboard Navigation CTA Audit", () => {
       try {
         await expect(page.getByTestId("cta.dashboard.nav.overview")).toBeVisible({ timeout: 25_000 });
       } catch {
-        await loginIfConfigured(page);
+        const relogged = await loginIfConfigured(page);
+        expect(relogged, "expected login retry to succeed when E2E credentials are set").toBe(true);
         navLocale = localeFromDashboardUrl(page.url()) ?? auditLocale;
         await page.goto(`/${navLocale}/dashboard`);
         await page.waitForLoadState("domcontentloaded");

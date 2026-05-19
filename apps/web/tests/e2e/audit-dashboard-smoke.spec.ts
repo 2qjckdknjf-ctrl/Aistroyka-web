@@ -18,7 +18,10 @@ test.describe("Dashboard Smoke Navigation Audit", () => {
     const apiIssues = attachApiIssueTracking(page);
     const consoleIssues = attachConsoleErrorTracking(page);
 
-    await loginIfConfigured(page);
+    if (!(await loginIfConfigured(page))) {
+      test.skip();
+      return;
+    }
 
     const navLocale = localeFromDashboardUrl(page.url()) ?? auditLocale;
     await expect(page.locator("#dashboard-sidebar").getByRole("navigation")).toBeVisible();

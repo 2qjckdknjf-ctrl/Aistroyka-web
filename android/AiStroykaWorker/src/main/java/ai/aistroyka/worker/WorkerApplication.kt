@@ -3,6 +3,7 @@ package ai.aistroyka.worker
 import android.app.Application
 import ai.aistroyka.shared.AppRuntime
 import ai.aistroyka.shared.DeviceContext
+import ai.aistroyka.shared.PushRegistrationService
 import ai.aistroyka.shared.SessionStore
 
 class WorkerApplication : Application() {
@@ -16,5 +17,6 @@ class WorkerApplication : Application() {
         AppRuntime.apiClientProfile = "android_lite"
         DeviceContext.init(this)
         SessionStore.init(this)
+        PushRegistrationService.init(this)
     }
 }

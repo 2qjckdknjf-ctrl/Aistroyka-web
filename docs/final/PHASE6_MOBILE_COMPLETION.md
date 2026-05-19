@@ -25,8 +25,8 @@
 
 1. **Android** — no API client, no auth, no navigation beyond placeholder `Text`.
 2. **Parity with current web** — owner, portfolio, document decision, issues, attention, timeline, billing, plan-fit: **absent** on iOS Manager.
-3. **CI** — no automated mobile builds in GitHub Actions.
-4. **Automated tests** — none in mobile trees.
+3. **CI** — **partial:** `.github/workflows/ios-ui-smoke.yml` builds and runs **AiStroykaWorker** + **AiStroykaManager** simulator UITest smoke when `ios/**` changes (and on `workflow_dispatch`); **Android** instrumented smoke exists as a separate manual workflow (`android-instrumented-smoke.yml`). Release/code-sign to device is still operator-driven.
+4. **Automated tests** — **partial:** iOS login-surface UITests (`pilot_*` accessibility ids); Android small unit tests under `android/shared` (e.g. submit body JSON). Broad UI/E2E coverage on mobile is **not** implemented.
 5. **Live production proof** — blocked on operator remediation for [AISAA-11](/AISAA/issues/AISAA-11) for API/RLS truth (same as web).
 
 ## Backend dependency note

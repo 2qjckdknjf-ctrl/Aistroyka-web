@@ -2,6 +2,8 @@
 
 Offline-first sync: bootstrap, changes, ack. Deterministic 409 conflict handling.
 
+For the **Worker app’s persisted local write queue** (separate from sync cursors), see **[MOBILE_OFFLINE_QUEUE.md](./MOBILE_OFFLINE_QUEUE.md)**.
+
 ## Endpoints
 
 - **GET /api/v1/sync/bootstrap** — Full snapshot (tasks, reports, upload sessions) + initial cursor. Requires `x-device-id`.

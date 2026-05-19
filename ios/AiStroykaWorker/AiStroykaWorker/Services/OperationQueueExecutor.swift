@@ -78,7 +78,8 @@ final class OperationQueueExecutor: ObservableObject {
             if attempt >= maxAttempts {
                 opStore.update(id: op.id) {
                     $0.state = .failed_permanent
-                    $0.lastErrorMessage = "Max attempts (\(maxAttempts)) reached. Retry from app."
+                    $0.lastErrorCode = "max_attempts"
+                    $0.lastErrorMessage = nil
                 }
             } else {
                 opStore.update(id: op.id) {
@@ -89,10 +90,11 @@ final class OperationQueueExecutor: ObservableObject {
                     $0.nextAttemptAt = nextAttemptDate(attempt: attempt)
                 }
             }
-        case .permanent(let message):
+        case .permanent(let message, let code):
             opStore.update(id: op.id) {
                 $0.state = .failed_permanent
                 $0.lastErrorMessage = message
+                $0.lastErrorCode = code
             }
         case .authRequired:
             isPaused = true
@@ -107,7 +109,8 @@ final class OperationQueueExecutor: ObservableObject {
         case success
         case deferred  // e.g. uploadBinary scheduled in background; op stays .running until delegate completes
         case retry(code: String?, message: String)
-        case permanent(message: String)
+        /// `code` mirrors API error codes when available (e.g. `proof_required`) for localized UI.
+        case permanent(message: String, code: String? = nil)
         case authRequired
         case needsBootstrap
     }
@@ -170,7 +173,12 @@ final class OperationQueueExecutor: ObservableObject {
             case .submitReport:
                 let reportId = op.payload.reportId ?? op.dependsOn.compactMap { opStore.operation(id: $0)?.resultReportId }.first
                 guard let reportId = reportId else { return .permanent(message: "Missing reportId") }
-                try await WorkerAPI.submitReport(reportId: reportId, taskId: op.payload.taskId, idempotencyKey: op.idempotencyKey)
+                try await WorkerAPI.submitReport(
+                    reportId: reportId,
+                    taskId: op.payload.taskId,
+                    workerNote: op.payload.workerNote,
+                    idempotencyKey: op.idempotencyKey
+                )
                 appStore.save { $0.draftReportId = nil; $0.pendingUploads = [] }
                 return .success
             case .syncAck:
@@ -183,7 +191,7 @@ final class OperationQueueExecutor: ObservableObject {
             if err.isUnauthorized || err.isForbidden { return .authRequired }
             if err.isConflict { return .needsBootstrap }
             if err.statusCode == 429 || (err.statusCode ?? 0) >= 500 { return .retry(code: err.code, message: err.message) }
-            if (err.statusCode ?? 0) >= 400 { return .permanent(message: err.message) }
+            if (err.statusCode ?? 0) >= 400 { return .permanent(message: err.message, code: err.code) }
             return .retry(code: err.code, message: err.message)
         } catch {
             return .retry(code: nil, message: error.localizedDescription)

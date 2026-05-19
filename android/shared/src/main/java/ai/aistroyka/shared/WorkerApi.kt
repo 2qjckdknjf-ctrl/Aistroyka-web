@@ -27,6 +27,34 @@ object WorkerApi {
         return r.data.orEmpty()
     }
 
+    /** POST /api/v1/devices/register — FCM token; use when wiring push (parity with iOS [WorkerAPI.registerDevice]). */
+    suspend fun registerDevice(fcmToken: String) {
+        val body = RegisterDeviceBody(
+            deviceId = DeviceContext.deviceId,
+            platform = "android",
+            token = fcmToken.trim(),
+        )
+        val json = ApiClient.json.encodeToString(RegisterDeviceBody.serializer(), body)
+        ApiClient.requestVoid(
+            path = "devices/register",
+            method = "POST",
+            jsonBody = json,
+            idempotencyKey = DeviceContext.idempotencyKeyDeviceRegister(fcmToken),
+        )
+    }
+
+    /** POST /api/v1/devices/unregister — remove device_tokens row before sign-out (parity with iOS). */
+    suspend fun unregisterDevice() {
+        val body = UnregisterDeviceBody(deviceId = DeviceContext.deviceId)
+        val json = ApiClient.json.encodeToString(UnregisterDeviceBody.serializer(), body)
+        ApiClient.requestVoid(
+            path = "devices/unregister",
+            method = "POST",
+            jsonBody = json,
+            idempotencyKey = DeviceContext.idempotencyKeyDeviceUnregister(),
+        )
+    }
+
     suspend fun tasksToday(projectId: String?): List<TaskDto> {
         val q = if (!projectId.isNullOrBlank()) "?project_id=${java.net.URLEncoder.encode(projectId, Charsets.UTF_8.name())}" else ""
         val r: TasksTodayResponse = ApiClient.request("worker/tasks/today$q")
@@ -98,8 +126,8 @@ object WorkerApi {
         )
     }
 
-    suspend fun submitReport(reportId: String, taskId: String?, idempotencyKey: String) {
-        val json = buildSubmitReportJson(reportId, taskId)
+    suspend fun submitReport(reportId: String, taskId: String?, idempotencyKey: String, workerNote: String? = null) {
+        val json = buildSubmitReportJson(reportId, taskId, workerNote)
         ApiClient.requestVoid(
             path = "worker/report/submit",
             method = "POST",
@@ -135,6 +163,16 @@ object WorkerApi {
             throw ApiError(res.code, null, msg)
         }
     }
+
+    @Serializable
+    private data class UnregisterDeviceBody(@SerialName("device_id") val deviceId: String)
+
+    @Serializable
+    private data class RegisterDeviceBody(
+        @SerialName("device_id") val deviceId: String,
+        val platform: String,
+        val token: String,
+    )
 
     @Serializable
     private data class ReportCreateBody(

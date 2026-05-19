@@ -38,11 +38,23 @@ struct ManagerLoginView: View {
                         .focused($focusedField, equals: .email)
                         .submitLabel(.next)
                         .onSubmit { focusedField = .password }
+                        .accessibilityIdentifier("pilot_manager_email")
+                    #if DEBUG
+                    // UITests / Simulator automation: SecureField is hard to drive reliably (matches Worker app).
+                    TextField(NSLocalizedString("mgr_password_placeholder", comment: ""), text: $password)
+                        .textContentType(.password)
+                        .focused($focusedField, equals: .password)
+                        .submitLabel(.go)
+                        .onSubmit { signIn() }
+                        .accessibilityIdentifier("pilot_manager_password")
+                    #else
                     SecureField(NSLocalizedString("mgr_password_placeholder", comment: ""), text: $password)
                         .textContentType(.password)
                         .focused($focusedField, equals: .password)
                         .submitLabel(.go)
                         .onSubmit { signIn() }
+                        .accessibilityIdentifier("pilot_manager_password")
+                    #endif
                 }
                 if !networkMonitor.isConnected {
                     Section {
@@ -65,6 +77,7 @@ struct ManagerLoginView: View {
                         .frame(maxWidth: .infinity)
                     }
                     .disabled(isLoading || email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || password.isEmpty || !networkMonitor.isConnected)
+                    .accessibilityIdentifier("pilot_manager_sign_in")
                 }
             }
             .navigationTitle(NSLocalizedString("mgr_nav_title", comment: ""))

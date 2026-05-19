@@ -10,6 +10,7 @@ import ai.aistroyka.shared.ApiError
 import ai.aistroyka.shared.AuthService
 import ai.aistroyka.shared.DeviceContext
 import ai.aistroyka.shared.ProjectDto
+import ai.aistroyka.shared.PushRegistrationService
 import ai.aistroyka.shared.SessionStore
 import ai.aistroyka.shared.TaskDto
 import ai.aistroyka.shared.WorkerApi
@@ -49,6 +50,7 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
         if (SessionStore.hasSession()) {
             _state.update { it.copy(screen = "home", banner = null) }
             refreshBootstrap()
+            PushRegistrationService.registerIfNeeded()
         }
     }
 
@@ -68,6 +70,7 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
                 AuthService.signIn(email, password)
                 _state.update { it.copy(screen = "home", busy = false) }
                 refreshBootstrap()
+                PushRegistrationService.registerIfNeeded()
             } catch (e: ApiError) {
                 _state.update { it.copy(busy = false, banner = e.message) }
             } catch (e: Exception) {
@@ -78,8 +81,18 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
 
     fun logout() {
         viewModelScope.launch {
-            AuthService.signOut()
-            _state.value = WorkerUiState()
+            try {
+                if (SessionStore.hasSession()) {
+                    try {
+                        WorkerApi.unregisterDevice()
+                    } catch (_: Exception) {
+                        // Best-effort; always clear local session
+                    }
+                }
+            } finally {
+                AuthService.signOut()
+                _state.value = WorkerUiState()
+            }
         }
     }
 
