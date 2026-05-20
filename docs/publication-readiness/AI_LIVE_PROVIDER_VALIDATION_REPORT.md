@@ -31,6 +31,15 @@ Follow-up rerun after adding `PILOT_SMOKE_PROJECT_ID_PRODUCTION`:
   - `ai_phase5_gate: analyze-image OK (degraded fallback=provider_unavailable)`
   - `ai_phase5_gate: copilot stream OK (done received)`
 
+Latest repeat check:
+
+- Workflow run: <https://github.com/2qjckdknjf-ctrl/Aistroyka-web/actions/runs/26189062534>
+- Job: `Post-deploy AI Phase 5 gate (non-blocking)` -> success
+- Log evidence repeats same posture:
+  - `PROJECT_ID: ***` present
+  - `analyze-image OK (degraded fallback=provider_unavailable)`
+  - `copilot stream OK (done received)`
+
 ### 2) Public unauthenticated fallback probe
 
 Command:
