@@ -29,6 +29,19 @@ curl -i https://aistroyka.ai/api/system/health -H "X-System-Key: $SYSTEM_API_KEY
    - **BLOCKED_EXTERNAL**
    - `SYSTEM_API_KEY` was not available in the current runtime environment.
 
+## Latest rerun (live-closure pass)
+
+Commands rerun with identical matrix:
+
+- no key -> HTTP 401
+- wrong key -> HTTP 401
+- correct key -> blocked (`SYSTEM_API_KEY_UNSET`)
+
+Revalidation conclusion:
+
+- deny-path protection remains correct and stable in production.
+- allow-path still blocked externally by missing real key in current shell.
+
 ## Security conclusion
 
 - Unauthorized access is blocked in production for no-key and wrong-key probes.

@@ -217,6 +217,7 @@
 - Report: `docs/publication-readiness/LIVE_SYSTEM_HEALTH_GUARD_REPORT.md`
 - Commit hash: `a1d3174f`
 - Evidence: deny-path 401 verified; allow-path blocked by missing `SYSTEM_API_KEY` in current shell.
+- Revalidation pass: unchanged (deny-path still 401 for no/wrong key; allow-path still blocked external).
 
 ### Stage E — Supabase Live Migration Parity
 - Status: BLOCKED_EXTERNAL
