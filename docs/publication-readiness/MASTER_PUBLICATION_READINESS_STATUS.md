@@ -64,8 +64,24 @@
 
 - Status: PARTIAL
 - Report: `docs/publication-readiness/STAGE_07_PUBLIC_SITE_LOCALIZATION_BRAND_REPORT.md`
-- Commit hash: PENDING
-- Push status: PENDING
+- Commit hash: `977974aa`
+- Push status: pushed to `origin/release/publication-readiness-mega-sprint`
 - Notes: RU localization leftovers were fixed in Copilot/intelligence strings; full multi-locale page crawl is still pending.
 - Next stage started: Stage 08 — Dashboard UX / First User Experience
+
+## Continuation Run — Stage 08–18
+
+- Continuation timestamp: 2026-05-20
+- Branch verified: `release/publication-readiness-mega-sprint`
+- Pre-check status: existing unrelated dirty files remain (`package.json`, `apps/cloudflare-agent/*`, `docs/cloudflare/*`) and are excluded from stage commits.
+- Execution policy: continue sequentially from Stage 08, commit/push per stage, classify external blockers explicitly.
+
+### Stage 08 — Dashboard UX / First User Experience
+
+- Status: CLOSED
+- Report: `docs/publication-readiness/STAGE_08_DASHBOARD_FIRST_USER_EXPERIENCE_REPORT.md`
+- Commit hash: PENDING
+- Push status: PENDING
+- Notes: Added actionable dashboard empty-state CTAs and localized previously hardcoded task assignment labels.
+- Next stage started: Stage 09 — Worker Core Flow End-to-End
 

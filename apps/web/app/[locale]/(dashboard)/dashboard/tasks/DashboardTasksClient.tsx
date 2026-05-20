@@ -249,6 +249,9 @@ export function DashboardTasksClient() {
               icon={<span className="text-2xl">📋</span>}
               title={tDetail("noTasks")}
               subtitle={tDetail("createTaskOrAdjustFilters")}
+              action={
+                <Button onClick={() => setCreateOpen(true)}>{tDetail("createTask")}</Button>
+              }
             />
           </div>
         ) : (
@@ -292,8 +295,7 @@ export function DashboardTasksClient() {
                         </Link>
                       ) : (
                         <Button variant="secondary" size="sm" onClick={() => setAssignTaskId(r.id)} className="text-xs">
-                          Assign
-                          
+                          {tDetail("assign")}
                         </Button>
                       )}
                     </TableCell>
@@ -322,8 +324,7 @@ export function DashboardTasksClient() {
                       ) : null}
                       {!r.assigned_to && (
                         <Button variant="secondary" size="sm" onClick={() => setAssignTaskId(r.id)} className="ml-1 text-xs">
-                          Assign
-                          
+                          {tDetail("assign")}
                         </Button>
                       )}
                     </TableCell>
