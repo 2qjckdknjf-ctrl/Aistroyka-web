@@ -125,8 +125,18 @@
 
 - Status: PARTIAL
 - Report: `docs/publication-readiness/STAGE_13_AI_COPILOT_INTELLIGENCE_REPORT.md`
-- Commit hash: PENDING
-- Push status: PENDING
+- Commit hash: `ccd373b1`
+- Push status: pushed to `origin/release/publication-readiness-mega-sprint`
 - Notes: Added non-stream Copilot route safety tests; live provider-runtime proof remains external.
 - Next stage started: Stage 14 — iOS Pilot Readiness
+
+### Stage 14 — iOS Pilot Readiness
+
+- Status: PARTIAL
+- Report: `docs/publication-readiness/STAGE_14_IOS_PILOT_READINESS_REPORT.md`
+- Checklist: `docs/publication-readiness/IOS_TESTFLIGHT_READINESS_CHECKLIST.md`
+- Commit hash: PENDING
+- Push status: PENDING
+- Notes: Worker/Manager simulator builds passed; runtime smoke completion remains pending for full pilot-ready classification.
+- Next stage started: Stage 15 — Android Scope Lock / Deferred Product Policy
 
