@@ -1093,7 +1093,8 @@
       "metaDescription": "Escríbenos, solicita una demo o haz una pregunta.",
       "formTitle": "Contáctanos",
       "demoBlockTitle": "Solicitar demo",
-      "businessCta": "Para consultas comerciales"
+      "businessCta": "Para consultas comerciales",
+      "businessCtaDetails": "Para consultas comerciales, usa el formulario de arriba e indica \"Demo\" en tu mensaje, o te contactaremos para agendar una llamada."
     },
     "faq": {
       "title": "FAQ",
@@ -1137,6 +1138,7 @@
     },
     "footer": {
       "product": "Producto",
+      "resources": "Recursos",
       "company": "Empresa",
       "legal": "Legal",
       "contact": "Contacto"

@@ -24,7 +24,7 @@ Reason:
 | iOS | PARTIAL | build + rerun-targeted UITest runtime proof improved, full flow still pending (`IOS_RUNTIME_SMOKE_REPORT.md`) |
 | Android | DEFERRED | `BUILDABLE_SHELL`; excluded from first release (`STAGE_15_ANDROID_SCOPE_LOCK_REPORT.md`) |
 | AI | PARTIAL | live degraded fallback revalidated, stream auth gate confirmed (401 unauth), full provider path still not proven (`AI_LIVE_PROVIDER_VALIDATION_REPORT.md`) |
-| public site/contact | PARTIAL | locale route/contact API revalidated as live pass; full browser visual crawl pending (`LIVE_PUBLIC_SITE_LOCALE_CONTACT_REPORT.md`) |
+| public site/contact | PARTIAL | browser visual rerun found RU mixed-language text and untranslated footer heading on live; code fix prepared, deploy verification pending (`LIVE_PUBLIC_SITE_LOCALE_CONTACT_REPORT.md`) |
 | API posture | ACCEPTABLE_WITH_BACKLOG | `API_FINAL_DRIFT_POSTURE_REPORT.md`, backlog in `API_LEGACY_DRIFT_BACKLOG.md` |
 | PR scope | CLEANED_FOR_RELEASE | cloudflare-agent split out (`PR_17_SCOPE_REVIEW_REPORT.md`) |
 
@@ -36,7 +36,7 @@ None open.
 
 1. iOS full worker/manager runtime transaction chain still incomplete (only targeted login/inbox smoke proven).
 2. AI full provider-backed path (non-fallback) and stream probe with project context remain unproven.
-3. Full browser-level visual locale QA (leftovers/console/nav UX) remains partial.
+3. Full browser-level visual locale QA remains partial until production recheck after latest localization fix deploy.
 
 ## 4.1 Latest closure-pass check notes
 
@@ -44,7 +44,7 @@ None open.
 2. System-health allow-path is closed by operator probe with real `X-System-Key`.
 3. iOS remains partial at login-screen smoke evidence level.
 4. AI remains partial: graceful degraded behavior proven, provider-backed full path pending.
-5. Locale/contact remains partial at browser-render visual QA level.
+5. Locale/contact remains partial: browser run found RU mixed-language copy on live; code fix is prepared but not yet verified after deploy.
 
 ## 5. P2 backlog
 
@@ -84,7 +84,6 @@ bun run smoke:pilot:check --strict
 
 ## 10. Final recommendation
 
-- Keep verdict at **GO_PILOT_ONLY**.
 - Upgrade verdict to **GO_PUBLIC_CANDIDATE**.
 - Do **not** claim full GO_PUBLIC/GA until remaining P1 items are closed or explicitly accepted.
 

@@ -36,6 +36,24 @@ Rechecked matrix:
 - locale roots (`/ru`, `/en`, `/es`, `/it`) -> 200
 - locale-prefixed target pages (`pricing/about/contact/workflows/enterprise/copilot/ai-demo`) -> all 200 for `ru/en/es/it`
 
+## Browser visual rerun (operator-assisted browser automation)
+
+Observed on live host during browser-level pass:
+
+- `/ru/contact` contains mixed-language helper text:
+  - `Для бизнес-запросов Use the form above and mention "Demo"...`
+- Footer section heading appears as `Resources` on RU pages (untranslated visual string).
+
+Code-side remediation prepared in branch:
+
+- `apps/web/app/[locale]/(public)/contact/page.tsx` switched to localized `businessCtaDetails` key.
+- `apps/web/components/public/PublicFooter.tsx` switched `Resources` heading to `public.footer.resources`.
+- Locale keys added in `apps/web/messages/{en,ru,es,it}.json`.
+
+Current live-state interpretation:
+
+- Visual locale QA remains partial until these changes are deployed and rechecked on production.
+
 ## Contact flow probe
 
 Commands:
@@ -64,5 +82,5 @@ Manual browser checklist for closure:
 
 ## Verdict
 
-**PARTIAL (live route/contact API healthy; full visual crawl remains external/manual/browser step)**
+**PARTIAL (live route/contact API healthy; browser visual QA found locale mix issues now fixed in code but pending deploy verification)**
 

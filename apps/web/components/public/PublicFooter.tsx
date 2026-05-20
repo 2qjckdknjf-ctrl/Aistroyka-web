@@ -74,7 +74,7 @@ export function PublicFooter() {
           </div>
           <div>
             <h3 className="font-heading text-[var(--aistroyka-font-subheadline)] font-semibold text-[var(--text-main)]">
-              Resources
+              {tFooter("resources")}
             </h3>
             <ul className="mt-3 space-y-2">
               {RESOURCE_LINKS.map(({ href, key }) => (

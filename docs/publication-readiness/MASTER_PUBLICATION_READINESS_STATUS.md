@@ -246,7 +246,7 @@
 - Status: PARTIAL
 - Report: `docs/publication-readiness/LIVE_PUBLIC_SITE_LOCALE_CONTACT_REPORT.md`
 - Commit hash: `bf95508a`
-- Revalidation pass: locale route matrix and contact API remain healthy; full browser-render visual QA still pending manual run.
+- Revalidation pass: browser visual rerun found RU mixed-language contact helper and untranslated footer heading on live; localization fix prepared in code, deploy verification pending.
 
 ### Stage J — API Envelope / Legacy Drift Final Posture
 - Status: CLOSED (posture), backlog remains P2

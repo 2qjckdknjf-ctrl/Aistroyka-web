@@ -818,7 +818,8 @@
       "metaDescription": "Get in touch, request a demo, or ask a question.",
       "formTitle": "Contact us",
       "demoBlockTitle": "Request a demo",
-      "businessCta": "For business inquiries"
+      "businessCta": "For business inquiries",
+      "businessCtaDetails": "For business inquiries, use the form above and mention \"Demo\" in your message, or we will follow up to schedule a call."
     },
     "faq": {
       "title": "FAQ",
@@ -862,6 +863,7 @@
     },
     "footer": {
       "product": "Product",
+      "resources": "Resources",
       "company": "Company",
       "legal": "Legal",
       "contact": "Contact"

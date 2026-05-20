@@ -22,7 +22,7 @@
    - system-health allow-path proof with real key captured by operator evidence.
    - iOS full runtime transaction coverage still partial (login-screen smoke only).
    - AI full provider path and stream-project probe partial.
-   - full browser visual locale QA partial.
+   - full browser visual locale QA partial (RU mixed-language copy observed on live; code fix prepared, deploy verification pending).
 
 ## Recommendation (updated after live-closure rerun)
 
