@@ -89,8 +89,17 @@
 
 - Status: PARTIAL
 - Report: `docs/publication-readiness/STAGE_09_WORKER_CORE_E2E_REPORT.md`
-- Commit hash: PENDING
-- Push status: PENDING
+- Commit hash: `e5a31cea`
+- Push status: pushed to `origin/release/publication-readiness-mega-sprint`
 - Notes: Core route contract coverage is strong and extended by new submit-route tests; runtime device E2E evidence remains external.
 - Next stage started: Stage 10 — Manager Review / Approval / Governance
+
+### Stage 10 — Manager Review / Approval / Governance
+
+- Status: CLOSED
+- Report: `docs/publication-readiness/STAGE_10_MANAGER_APPROVAL_GOVERNANCE_REPORT.md`
+- Commit hash: PENDING
+- Push status: PENDING
+- Notes: Added manager review route coverage for permission/transition/error paths and explicit resubmit-loop coverage for changes_requested.
+- Next stage started: Stage 11 — Documents / Acts / Contracts Manager Workflow
 
