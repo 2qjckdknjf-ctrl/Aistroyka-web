@@ -116,8 +116,17 @@
 
 - Status: PARTIAL
 - Report: `docs/publication-readiness/STAGE_12_BUDGET_COST_LIVE_READINESS_REPORT.md`
-- Commit hash: PENDING
-- Push status: PENDING
+- Commit hash: `d479299b`
+- Push status: pushed to `origin/release/publication-readiness-mega-sprint`
 - Notes: Added item-level costs route tests; repo-layer readiness validated, but live Supabase migration parity remains externally blocked.
 - Next stage started: Stage 13 — AI / Copilot / Intelligence Publication Readiness
+
+### Stage 13 — AI / Copilot / Intelligence Publication Readiness
+
+- Status: PARTIAL
+- Report: `docs/publication-readiness/STAGE_13_AI_COPILOT_INTELLIGENCE_REPORT.md`
+- Commit hash: PENDING
+- Push status: PENDING
+- Notes: Added non-stream Copilot route safety tests; live provider-runtime proof remains external.
+- Next stage started: Stage 14 — iOS Pilot Readiness
 
