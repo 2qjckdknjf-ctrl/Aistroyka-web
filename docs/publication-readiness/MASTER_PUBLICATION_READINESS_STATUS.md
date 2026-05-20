@@ -168,8 +168,28 @@
   - `docs/publication-readiness/PILOT_ONBOARDING_GUIDE.md`
   - `docs/publication-readiness/USER_RELEASE_NOTES.md`
   - `docs/publication-readiness/KNOWN_LIMITATIONS.md`
-- Commit hash: PENDING
-- Push status: PENDING
+- Commit hash: `756428e7`
+- Push status: pushed to `origin/release/publication-readiness-mega-sprint`
 - Notes: Publication package prepared with explicit first-release scope and limitations (Android deferred, iOS runtime pending, Supabase parity pending).
 - Next stage started: Stage 18 — Final GO / NO-GO Audit
+
+### Stage 18 — Final GO / NO-GO Audit
+
+- Status: CLOSED
+- Report: `docs/publication-readiness/FINAL_GO_NO_GO_AUDIT.md`
+- Final verdict: GO_PILOT_ONLY
+- Commit hash: PENDING
+- Push status: PENDING
+- Notes: Repository-level quality gate passed; broad public release still blocked by live deploy-truth and Supabase parity evidence gaps.
+- Next stage: publication operator follow-up and controlled pilot rollout only
+
+## Final sprint verdict (Stage 08–18 continuation)
+
+- Verdict: GO_PILOT_ONLY
+- Public GA verdict: NO_GO_PUBLIC
+- Rationale:
+  1. Stage 16 executed and passed at repository level.
+  2. Live deploy buildStamp confirmation on target host remains pending.
+  3. Live Supabase migration parity remains externally blocked.
+  4. Android is intentionally excluded from first release scope.
 
