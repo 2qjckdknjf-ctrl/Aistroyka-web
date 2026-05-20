@@ -29,6 +29,21 @@ Observed:
 - HTTP 200 with `x-ai-fallback-reason: provider_unavailable`
 - Response returns deterministic safety payload (no secret leakage in body/headers).
 
+### 3) Latest rerun (live-closure pass)
+
+Checks executed:
+
+1. Local provider key presence check:
+   - result: `AI_PROVIDER_KEY_MISSING` in current shell (`OPENAI_API_KEY` / `ANTHROPIC_API_KEY` / `GOOGLE_AI_API_KEY` / `GEMINI_API_KEY` absent)
+2. Copilot stream probe without auth:
+   - `POST /api/v1/projects/<id>/copilot/chat/stream` -> HTTP 401 (`{"error":"Authentication required"}`)
+
+Interpretation:
+
+- Non-stream degraded fallback remains stable and safe.
+- Stream path correctly enforces auth.
+- Full provider-backed success path remains unproven in this environment.
+
 ## Readiness classification
 
 - Live route behavior: **graceful degraded mode works**
@@ -45,6 +60,9 @@ Observed:
 # provide a valid project id for stream probe and rerun AI gate
 # (in deploy workflow secrets/config)
 # PILOT_SMOKE_PROJECT_ID_PRODUCTION=<project_uuid>
+
+# provide provider keys in runtime env where full-path proof is required
+# OPENAI_API_KEY=<...> or ANTHROPIC_API_KEY=<...> or GOOGLE_AI_API_KEY/GEMINI_API_KEY=<...>
 
 # optional direct rerun from CI context:
 gh workflow run deploy-cloudflare-prod.yml --ref main -f ref=main

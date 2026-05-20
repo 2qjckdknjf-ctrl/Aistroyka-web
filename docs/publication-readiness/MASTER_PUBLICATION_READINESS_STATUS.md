@@ -241,6 +241,7 @@
 - Status: PARTIAL / BLOCKED_EXTERNAL_FOR_FULL_PROVIDER_PATH
 - Report: `docs/publication-readiness/AI_LIVE_PROVIDER_VALIDATION_REPORT.md`
 - Commit hash: `e3808f48`
+- Revalidation pass: local provider keys missing; non-stream fallback stays safe; stream path enforces auth (401 without credentials).
 
 ### Stage I — Public Locale / Contact Live Crawl
 - Status: PARTIAL

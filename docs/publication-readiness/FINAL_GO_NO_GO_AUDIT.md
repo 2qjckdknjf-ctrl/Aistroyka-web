@@ -22,7 +22,7 @@ Reason:
 | quality gate | PASS_WITH_EXTERNAL_BLOCKERS | `FINAL_QUALITY_GATE_RERUN_REPORT.md` |
 | iOS | PARTIAL | build + rerun-targeted UITest runtime proof improved, full flow still pending (`IOS_RUNTIME_SMOKE_REPORT.md`) |
 | Android | DEFERRED | `BUILDABLE_SHELL`; excluded from first release (`STAGE_15_ANDROID_SCOPE_LOCK_REPORT.md`) |
-| AI | PARTIAL | live degraded fallback confirmed (`provider_unavailable`), full provider path not proven (`AI_LIVE_PROVIDER_VALIDATION_REPORT.md`) |
+| AI | PARTIAL | live degraded fallback revalidated, stream auth gate confirmed (401 unauth), full provider path still not proven (`AI_LIVE_PROVIDER_VALIDATION_REPORT.md`) |
 | public site/contact | PARTIAL | locale route/contact API live pass; full browser visual crawl pending (`LIVE_PUBLIC_SITE_LOCALE_CONTACT_REPORT.md`) |
 | API posture | ACCEPTABLE_WITH_BACKLOG | `API_FINAL_DRIFT_POSTURE_REPORT.md`, backlog in `API_LEGACY_DRIFT_BACKLOG.md` |
 | PR scope | CLEANED_FOR_RELEASE | cloudflare-agent split out (`PR_17_SCOPE_REVIEW_REPORT.md`) |
