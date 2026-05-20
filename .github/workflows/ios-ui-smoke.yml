@@ -26,6 +26,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Prepare local iOS secrets config for CI
+        run: |
+          if [ ! -f ios/Config/Secrets.xcconfig ]; then
+            cp ios/Config/Secrets.xcconfig.example ios/Config/Secrets.xcconfig
+          fi
+
       - name: Xcode / pick iPhone simulator
         id: sim
         run: |
