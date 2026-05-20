@@ -145,8 +145,17 @@
 - Status: CLOSED
 - Report: `docs/publication-readiness/STAGE_15_ANDROID_SCOPE_LOCK_REPORT.md`
 - Classification: BUILDABLE_SHELL (deferred from first release scope)
-- Commit hash: PENDING
-- Push status: PENDING
+- Commit hash: `0b2265a1`
+- Push status: pushed to `origin/release/publication-readiness-mega-sprint`
 - Notes: Worker/Manager debug builds pass; runtime product readiness is unproven, so Android is excluded from first publication claim.
 - Next stage started: Stage 16 — Final Quality Gate
+
+### Stage 16 — Final Quality Gate
+
+- Status: PARTIAL
+- Report: `docs/publication-readiness/STAGE_16_FINAL_QUALITY_GATE_REPORT.md`
+- Commit hash: PENDING
+- Push status: PENDING
+- Notes: Full repo gate (i18n/lint/tests/build/cf:build + iOS/Android builds) passed; strict pilot runtime env checks and Supabase live migration parity remain external blockers.
+- Next stage started: Stage 17 — Publication Package
 
