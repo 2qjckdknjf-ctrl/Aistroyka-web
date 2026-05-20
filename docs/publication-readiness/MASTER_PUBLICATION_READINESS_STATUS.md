@@ -242,7 +242,7 @@
 - Commit hash: `e3808f48`
 - Revalidation pass: production run `26186503554` again shows degraded fallback (`provider_unavailable`), with stream probe disabled because `PROJECT_ID` is empty in gate env.
 - Continuation pass: local runtime env still lacks `AUTH_HEADER`, `PROJECT_ID`, and provider keys; full provider-path evidence remains externally blocked.
-- Inventory pass: repo secrets include provider keys, but `PILOT_SMOKE_PROJECT_ID_PRODUCTION` is missing and blocks stream probe closure.
+- Inventory pass: `PILOT_SMOKE_PROJECT_ID_PRODUCTION` configured and stream probe now passes in run `26188813972`; provider-backed non-fallback path remains pending (`provider_unavailable`).
 
 ### Stage I — Public Locale / Contact Live Crawl
 - Status: CLOSED

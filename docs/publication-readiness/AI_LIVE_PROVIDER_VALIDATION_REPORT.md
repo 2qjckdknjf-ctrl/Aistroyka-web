@@ -22,6 +22,15 @@ Latest rerun:
   - `PROJECT_ID:` empty in gate environment (stream probe disabled by gate script)
   - `ai_phase5_gate: analyze-image OK (degraded fallback=provider_unavailable)`
 
+Follow-up rerun after adding `PILOT_SMOKE_PROJECT_ID_PRODUCTION`:
+
+- Workflow run: <https://github.com/2qjckdknjf-ctrl/Aistroyka-web/actions/runs/26188813972>
+- Job: `Post-deploy AI Phase 5 gate (non-blocking)` -> success
+- Log evidence:
+  - `PROJECT_ID: ***` present in gate environment
+  - `ai_phase5_gate: analyze-image OK (degraded fallback=provider_unavailable)`
+  - `ai_phase5_gate: copilot stream OK (done received)`
+
 ### 2) Public unauthenticated fallback probe
 
 Command:
@@ -65,17 +74,17 @@ Conclusion:
 - No authenticated/project-scoped live provider probe can be executed from this shell.
 - Status remains partial until operator-supplied runtime context is present.
 
-Repository secret inventory check (`gh secret list`) confirms:
+Repository secret inventory check (`gh secret list`) now confirms:
 
 - `OPENAI_API_KEY` present
 - `ANTHROPIC_API_KEY` present
-- `PILOT_SMOKE_PROJECT_ID_PRODUCTION` absent
+- `PILOT_SMOKE_PROJECT_ID_PRODUCTION` configured
 
 ## Readiness classification
 
 - Live route behavior: **graceful degraded mode works**
 - Provider-backed full AI path: **not proven** in this run (`provider_unavailable`)
-- Copilot stream live success path: not proven in this run because `PROJECT_ID` was empty in AI gate job (stream probe skipped).
+- Copilot stream live success path: **proven** (`copilot stream OK (done received)` in run `26188813972`).
 
 ## Verdict
 

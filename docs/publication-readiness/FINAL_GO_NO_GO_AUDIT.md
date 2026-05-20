@@ -23,7 +23,7 @@ Reason:
 | quality gate | PASS_WITH_EXTERNAL_BLOCKERS | `FINAL_QUALITY_GATE_RERUN_REPORT.md` |
 | iOS | PARTIAL | repeated UITest smoke rerun completed, but full runtime transaction proof still pending (`IOS_RUNTIME_SMOKE_REPORT.md`) |
 | Android | DEFERRED | `BUILDABLE_SHELL`; excluded from first release (`STAGE_15_ANDROID_SCOPE_LOCK_REPORT.md`) |
-| AI | PARTIAL | live degraded fallback revalidated again in production run `26186503554` (`provider_unavailable`), full provider path still not proven (`AI_LIVE_PROVIDER_VALIDATION_REPORT.md`) |
+| AI | PARTIAL | stream probe is now proven in production run `26188813972`, but provider-backed vision path remains degraded (`provider_unavailable`) (`AI_LIVE_PROVIDER_VALIDATION_REPORT.md`) |
 | public site/contact | CLOSED | post-deploy browser verification confirms RU contact/footer localization and EN footer consistency (`LIVE_PUBLIC_SITE_LOCALE_CONTACT_REPORT.md`) |
 | API posture | ACCEPTABLE_WITH_BACKLOG | `API_FINAL_DRIFT_POSTURE_REPORT.md`, backlog in `API_LEGACY_DRIFT_BACKLOG.md` |
 | PR scope | CLEANED_FOR_RELEASE | cloudflare-agent split out (`PR_17_SCOPE_REVIEW_REPORT.md`) |
@@ -35,14 +35,14 @@ None open.
 ## 4. P1 blockers
 
 1. iOS full worker/manager runtime transaction chain still incomplete (only targeted login/inbox smoke proven).
-2. AI full provider-backed path (non-fallback) and stream probe with project context remain unproven.
+2. AI provider-backed non-fallback path remains unproven (`analyze-image` still degraded `provider_unavailable`), while stream probe is now proven.
 
 ## 4.1 Latest closure-pass check notes
 
 1. Supabase parity is closed by authenticated operator migration list + dry-run evidence.
 2. System-health allow-path is closed by operator probe with real `X-System-Key`.
 3. iOS remains partial at login-screen smoke evidence level.
-4. AI remains partial: graceful degraded behavior proven, provider-backed full path pending.
+4. AI remains partial: stream probe closure achieved; provider-backed non-fallback path still pending.
 5. Locale/contact is closed by post-deploy browser verification run.
 
 ## 5. P2 backlog
