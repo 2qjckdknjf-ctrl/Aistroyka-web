@@ -21,7 +21,7 @@
    - Supabase live migration parity closed by operator evidence.
    - system-health allow-path proof with real key captured by operator evidence.
    - iOS full runtime transaction coverage still partial (login-screen smoke only).
-   - AI stream-project probe is closed; provider-backed non-fallback path remains partial.
+  - AI stream-project probe is closed; provider-backed non-fallback path remains partial even after runtime provider-key injection in production deploy.
    - browser visual locale/contact QA closed by post-deploy verification.
 
 ## Recommendation (updated after live-closure rerun)
@@ -46,8 +46,8 @@ bun run test
 bun run build
 bun run cf:build
 
-gh secret set PILOT_SMOKE_PROJECT_ID_PRODUCTION --repo 2qjckdknjf-ctrl/Aistroyka-web --body "<project_uuid>"
 gh workflow run deploy-cloudflare-prod.yml --repo 2qjckdknjf-ctrl/Aistroyka-web --ref main -f ref=main
 gh run watch <new_run_id> --repo 2qjckdknjf-ctrl/Aistroyka-web --exit-status
+gh run view <new_run_id> --repo 2qjckdknjf-ctrl/Aistroyka-web --log | rg "ai_phase5_gate: analyze-image|ai_phase5_gate: copilot stream"
 ```
 

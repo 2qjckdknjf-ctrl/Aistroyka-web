@@ -74,5 +74,10 @@ Observed:
 ## Remaining operator/TestFlight checks
 
 - Continue with `docs/publication-readiness/IOS_TESTFLIGHT_READINESS_CHECKLIST.md` full flow items.
-- Capture proof artifacts (screens/video + app logs) for worker report and manager review action chain.
+- Execute end-to-end runtime chain on pilot tenant:
+  1. Worker: sign in -> create report -> attach photo -> submit.
+  2. Manager: sign in -> open inbox -> approve/reject/request changes.
+  3. Worker: receive decision -> resubmit after changes (if requested).
+- Capture proof artifacts for each step: screen recording + screenshots + exported app logs.
+- Record build metadata and evidence links in `docs/mobile-ios/IOS_E2E_VALIDATION_REPORT.md` (Layer B table).
 

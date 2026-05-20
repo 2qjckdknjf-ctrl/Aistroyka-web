@@ -23,7 +23,7 @@ Reason:
 | quality gate | PASS_WITH_EXTERNAL_BLOCKERS | `FINAL_QUALITY_GATE_RERUN_REPORT.md` |
 | iOS | PARTIAL | repeated UITest smoke rerun completed, but full runtime transaction proof still pending (`IOS_RUNTIME_SMOKE_REPORT.md`) |
 | Android | DEFERRED | `BUILDABLE_SHELL`; excluded from first release (`STAGE_15_ANDROID_SCOPE_LOCK_REPORT.md`) |
-| AI | PARTIAL | stream probe is proven in production runs `26188813972` and `26189062534`, but provider-backed vision path remains degraded (`provider_unavailable`) (`AI_LIVE_PROVIDER_VALIDATION_REPORT.md`) |
+| AI | PARTIAL | stream probe is proven in production runs `26188813972`, `26189062534`, `26190744467`; provider-backed vision path remains degraded (`provider_unavailable`) even after deploy-time provider key injection (`AI_LIVE_PROVIDER_VALIDATION_REPORT.md`) |
 | public site/contact | CLOSED | post-deploy browser verification confirms RU contact/footer localization and EN footer consistency (`LIVE_PUBLIC_SITE_LOCALE_CONTACT_REPORT.md`) |
 | API posture | ACCEPTABLE_WITH_BACKLOG | `API_FINAL_DRIFT_POSTURE_REPORT.md`, backlog in `API_LEGACY_DRIFT_BACKLOG.md` |
 | PR scope | CLEANED_FOR_RELEASE | cloudflare-agent split out (`PR_17_SCOPE_REVIEW_REPORT.md`) |
@@ -60,7 +60,7 @@ None open.
 
 1. Broad public GA announcement.
 2. Android production-readiness claims.
-3. Claims that Supabase live migration parity is fully verified.
+3. Claims that AI provider-backed (non-fallback) vision path is fully verified.
 
 ## 8. What must be hidden or beta-labeled
 
@@ -80,10 +80,10 @@ export E2E_PASSWORD='<pilot-user-password>'
 export SUPABASE_ACCESS_TOKEN='<supabase_pat>'
 bun run smoke:pilot:check --strict
 
-# AI full-path closure: add missing stream probe secret + rerun deploy AI gate
-gh secret set PILOT_SMOKE_PROJECT_ID_PRODUCTION --repo 2qjckdknjf-ctrl/Aistroyka-web --body "<project_uuid>"
+# AI full-path closure: rerun deploy AI gate and confirm fallback disappears
 gh workflow run deploy-cloudflare-prod.yml --repo 2qjckdknjf-ctrl/Aistroyka-web --ref main -f ref=main
 gh run watch <new_run_id> --repo 2qjckdknjf-ctrl/Aistroyka-web --exit-status
+gh run view <new_run_id> --repo 2qjckdknjf-ctrl/Aistroyka-web --log | rg "ai_phase5_gate: analyze-image|ai_phase5_gate: copilot stream"
 
 # iOS full transaction closure (manual/TestFlight runtime evidence)
 CI_SIGNING_HACK=1 bash ios/scripts/run-ios-uitest-smoke-local.sh

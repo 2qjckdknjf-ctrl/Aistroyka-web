@@ -40,6 +40,18 @@ Latest repeat check:
   - `analyze-image OK (degraded fallback=provider_unavailable)`
   - `copilot stream OK (done received)`
 
+Deploy-time provider-key injection check:
+
+- Workflow run: <https://github.com/2qjckdknjf-ctrl/Aistroyka-web/actions/runs/26190744467>
+- Job: `Build and deploy to production` -> success
+- Deploy evidence:
+  - `env.OPENAI_API_KEY ("(hidden)")` present in Worker bindings
+  - `env.ANTHROPIC_API_KEY ("(hidden)")` present in Worker bindings
+- AI gate in same run:
+  - `ai_phase5_gate: analyze-image OK (degraded fallback=provider_unavailable)`
+  - `ai_phase5_gate: copilot stream OK (done received)`
+- Interpretation: provider keys are now injected into production deploy runtime, but non-fallback vision path still degrades.
+
 ### 2) Public unauthenticated fallback probe
 
 Command:
@@ -83,7 +95,7 @@ Conclusion:
 - No authenticated/project-scoped live provider probe can be executed from this shell.
 - Status remains partial until operator-supplied runtime context is present.
 
-Repository secret inventory check (`gh secret list`) now confirms:
+Repository secret inventory check (`gh secret list`) confirms:
 
 - `OPENAI_API_KEY` present
 - `ANTHROPIC_API_KEY` present
@@ -102,14 +114,17 @@ Repository secret inventory check (`gh secret list`) now confirms:
 ## Operator closure commands
 
 ```bash
-# add missing stream probe secret
-gh secret set PILOT_SMOKE_PROJECT_ID_PRODUCTION --repo 2qjckdknjf-ctrl/Aistroyka-web --body "<project_uuid>"
-
-# rerun production deploy workflow (includes AI gate)
+# rerun production deploy workflow (includes AI gate with stream probe)
 gh workflow run deploy-cloudflare-prod.yml --repo 2qjckdknjf-ctrl/Aistroyka-web --ref main -f ref=main
 
-# inspect AI gate logs for provider-backed + stream evidence
+# inspect AI gate logs and verify analyze-image switches to full vision path (no fallback header)
 gh run watch <new_run_id> --repo 2qjckdknjf-ctrl/Aistroyka-web --exit-status
-gh run view <new_run_id> --repo 2qjckdknjf-ctrl/Aistroyka-web --log
+gh run view <new_run_id> --repo 2qjckdknjf-ctrl/Aistroyka-web --log | rg "ai_phase5_gate: analyze-image|ai_phase5_gate: copilot stream"
+
+# if fallback persists, verify provider account-level readiness outside repo:
+# - OpenAI/Anthropic project keys active and not revoked
+# - model access enabled for configured vision models
+# - quota/billing and org policy allow image calls
+# - no provider-side regional/network block from Cloudflare egress
 ```
 

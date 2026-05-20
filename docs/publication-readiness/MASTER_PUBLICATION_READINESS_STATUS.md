@@ -244,6 +244,7 @@
 - Continuation pass: local runtime env still lacks `AUTH_HEADER`, `PROJECT_ID`, and provider keys; full provider-path evidence remains externally blocked.
 - Inventory pass: `PILOT_SMOKE_PROJECT_ID_PRODUCTION` configured and stream probe now passes in run `26188813972`; provider-backed non-fallback path remains pending (`provider_unavailable`).
 - Repeat run `26189062534` confirms same AI posture: stream passes, analyze-image remains degraded (`provider_unavailable`).
+- Infra hardening pass: production deploy now injects `OPENAI_API_KEY` and `ANTHROPIC_API_KEY` into Worker runtime (run `26190744467` shows both bindings present), but analyze-image still degrades with `provider_unavailable`.
 
 ### Stage I — Public Locale / Contact Live Crawl
 - Status: CLOSED
@@ -266,7 +267,7 @@
 ### Stage L — Final Audit Refresh
 - Status: CLOSED
 - Report: `docs/publication-readiness/FINAL_GO_NO_GO_AUDIT.md` (updated)
-- Current verdict: GO_PILOT_ONLY
+- Current verdict: GO_PUBLIC_CANDIDATE
 
 ### Stage M — PR #17 Final Merge Recommendation
 - Status: UPDATED
@@ -281,6 +282,9 @@
 - `bce1b308` — stage-live(ai): close or classify ai provider full path
 - `c8c418a8` — stage-live(site): close public locale contact qa
 - `bc7fcd43` — stage-live(quality): rerun final gate after live closure
+- `88ad49b1` — stage-live(ai): sync provider secrets during prod deploy (attempt, replaced by versions-safe approach)
+- `ce9ade46` — fix(ci): use wrangler versions secret put for ai keys
+- `4982b467` — fix(ci): inject ai provider vars into production deploy
 
 ## Current global verdict
 
