@@ -21,7 +21,7 @@ Reason:
 | Supabase parity | CLOSED | operator-authenticated `migration list` + `db push --dry-run --linked` closure evidence (`LIVE_SUPABASE_PARITY_REPORT.md`) |
 | strict smoke | CLOSED (runtime) | production pilot-smoke job success in runs `26146584712` and `26186503554`; local strict prereq still env-blocked (`LIVE_STRICT_SMOKE_REPORT.md`) |
 | quality gate | PASS_WITH_EXTERNAL_BLOCKERS | `FINAL_QUALITY_GATE_RERUN_REPORT.md` |
-| iOS | PARTIAL | build + rerun-targeted UITest runtime proof improved, full flow still pending (`IOS_RUNTIME_SMOKE_REPORT.md`) |
+| iOS | PARTIAL | repeated UITest smoke rerun completed, but full runtime transaction proof still pending (`IOS_RUNTIME_SMOKE_REPORT.md`) |
 | Android | DEFERRED | `BUILDABLE_SHELL`; excluded from first release (`STAGE_15_ANDROID_SCOPE_LOCK_REPORT.md`) |
 | AI | PARTIAL | live degraded fallback revalidated again in production run `26186503554` (`provider_unavailable`), full provider path still not proven (`AI_LIVE_PROVIDER_VALIDATION_REPORT.md`) |
 | public site/contact | CLOSED | post-deploy browser verification confirms RU contact/footer localization and EN footer consistency (`LIVE_PUBLIC_SITE_LOCALE_CONTACT_REPORT.md`) |

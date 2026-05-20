@@ -43,6 +43,20 @@ Rerun result:
 - Manager smoke passed: `testLoginScreen_reachableWithPilotIdentifiers`
 - Script confirms both UITest smoke targets pass end-to-end in simulator runtime.
 
+## Additional rerun (continuation pass)
+
+Executed again:
+
+```bash
+CI_SIGNING_HACK=1 bash ios/scripts/run-ios-uitest-smoke-local.sh
+```
+
+Observed:
+
+- command finished successfully (`exit 0`)
+- evidence remains login-surface smoke level
+- no new runtime proof for full worker submit/upload/sync chain and manager approve/reject/resubmit chain
+
 ## Coverage status versus target runtime matrix
 
 - Proven now:
