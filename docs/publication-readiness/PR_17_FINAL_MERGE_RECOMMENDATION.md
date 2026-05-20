@@ -45,5 +45,9 @@ Reason:
 bun run test
 bun run build
 bun run cf:build
+
+gh secret set PILOT_SMOKE_PROJECT_ID_PRODUCTION --repo 2qjckdknjf-ctrl/Aistroyka-web --body "<project_uuid>"
+gh workflow run deploy-cloudflare-prod.yml --repo 2qjckdknjf-ctrl/Aistroyka-web --ref main -f ref=main
+gh run watch <new_run_id> --repo 2qjckdknjf-ctrl/Aistroyka-web --exit-status
 ```
 

@@ -79,6 +79,14 @@ export E2E_EMAIL='<pilot-user-email>'
 export E2E_PASSWORD='<pilot-user-password>'
 export SUPABASE_ACCESS_TOKEN='<supabase_pat>'
 bun run smoke:pilot:check --strict
+
+# AI full-path closure: add missing stream probe secret + rerun deploy AI gate
+gh secret set PILOT_SMOKE_PROJECT_ID_PRODUCTION --repo 2qjckdknjf-ctrl/Aistroyka-web --body "<project_uuid>"
+gh workflow run deploy-cloudflare-prod.yml --repo 2qjckdknjf-ctrl/Aistroyka-web --ref main -f ref=main
+gh run watch <new_run_id> --repo 2qjckdknjf-ctrl/Aistroyka-web --exit-status
+
+# iOS full transaction closure (manual/TestFlight runtime evidence)
+CI_SIGNING_HACK=1 bash ios/scripts/run-ios-uitest-smoke-local.sh
 ```
 
 ## 10. Final recommendation

@@ -65,6 +65,12 @@ Conclusion:
 - No authenticated/project-scoped live provider probe can be executed from this shell.
 - Status remains partial until operator-supplied runtime context is present.
 
+Repository secret inventory check (`gh secret list`) confirms:
+
+- `OPENAI_API_KEY` present
+- `ANTHROPIC_API_KEY` present
+- `PILOT_SMOKE_PROJECT_ID_PRODUCTION` absent
+
 ## Readiness classification
 
 - Live route behavior: **graceful degraded mode works**
@@ -78,14 +84,14 @@ Conclusion:
 ## Operator closure commands
 
 ```bash
-# provide a valid project id for stream probe and rerun AI gate
-# (in deploy workflow secrets/config)
-# PILOT_SMOKE_PROJECT_ID_PRODUCTION=<project_uuid>
+# add missing stream probe secret
+gh secret set PILOT_SMOKE_PROJECT_ID_PRODUCTION --repo 2qjckdknjf-ctrl/Aistroyka-web --body "<project_uuid>"
 
-# provide provider keys in runtime env where full-path proof is required
-# OPENAI_API_KEY=<...> or ANTHROPIC_API_KEY=<...> or GOOGLE_AI_API_KEY/GEMINI_API_KEY=<...>
+# rerun production deploy workflow (includes AI gate)
+gh workflow run deploy-cloudflare-prod.yml --repo 2qjckdknjf-ctrl/Aistroyka-web --ref main -f ref=main
 
-# optional direct rerun from CI context:
-gh workflow run deploy-cloudflare-prod.yml --ref main -f ref=main
+# inspect AI gate logs for provider-backed + stream evidence
+gh run watch <new_run_id> --repo 2qjckdknjf-ctrl/Aistroyka-web --exit-status
+gh run view <new_run_id> --repo 2qjckdknjf-ctrl/Aistroyka-web --log
 ```
 
