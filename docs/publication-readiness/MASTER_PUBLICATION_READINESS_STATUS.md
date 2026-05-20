@@ -80,8 +80,17 @@
 
 - Status: CLOSED
 - Report: `docs/publication-readiness/STAGE_08_DASHBOARD_FIRST_USER_EXPERIENCE_REPORT.md`
-- Commit hash: PENDING
-- Push status: PENDING
+- Commit hash: `2ea28998`
+- Push status: pushed to `origin/release/publication-readiness-mega-sprint`
 - Notes: Added actionable dashboard empty-state CTAs and localized previously hardcoded task assignment labels.
 - Next stage started: Stage 09 — Worker Core Flow End-to-End
+
+### Stage 09 — Worker Core Flow End-to-End
+
+- Status: PARTIAL
+- Report: `docs/publication-readiness/STAGE_09_WORKER_CORE_E2E_REPORT.md`
+- Commit hash: PENDING
+- Push status: PENDING
+- Notes: Core route contract coverage is strong and extended by new submit-route tests; runtime device E2E evidence remains external.
+- Next stage started: Stage 10 — Manager Review / Approval / Governance
 
