@@ -15,6 +15,7 @@
 
 ## Runtime smoke (required before external pilot)
 
+- [x] Automated UITest smoke for Worker/Manager login-screen reachability passes (`run-ios-uitest-smoke-local.sh`).
 - [ ] Worker login verified on real/simulator runtime.
 - [ ] Worker task list/detail verified.
 - [ ] Worker day start/day end verified.

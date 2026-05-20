@@ -235,6 +235,7 @@
 - Report: `docs/publication-readiness/IOS_RUNTIME_SMOKE_REPORT.md`
 - Commit hash: `6fc5414d`
 - Evidence: targeted Worker/Manager UITest smoke succeeded.
+- Revalidation pass: `run-ios-uitest-smoke-local.sh` rerun passed; still login-screen level evidence, full transaction chain remains pending.
 
 ### Stage H — AI Live Provider Validation
 - Status: PARTIAL / BLOCKED_EXTERNAL_FOR_FULL_PROVIDER_PATH

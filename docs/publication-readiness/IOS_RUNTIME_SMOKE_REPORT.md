@@ -29,11 +29,25 @@ xcodebuild test -project ios/AiStroykaManager/AiStroykaManager.xcodeproj \
    - `** TEST SUCCEEDED **`
    - `ManagerSmokeUITests.testLoginAndOpenReportsInbox_withPilotIdentifiers` executed in runtime smoke context.
 
+## Latest rerun (live-closure pass)
+
+Executed:
+
+```bash
+CI_SIGNING_HACK=1 bash ios/scripts/run-ios-uitest-smoke-local.sh
+```
+
+Rerun result:
+
+- Worker smoke passed: `testLoginScreen_reachableWithPilotIdentifiers`
+- Manager smoke passed: `testLoginScreen_reachableWithPilotIdentifiers`
+- Script confirms both UITest smoke targets pass end-to-end in simulator runtime.
+
 ## Coverage status versus target runtime matrix
 
 - Proven now:
   - Worker login surface reachable in simulator runtime
-  - Manager login + reports inbox opening reachable in simulator runtime
+  - Manager login surface reachable in simulator runtime
 - Still not fully proven in this run:
   - Worker end-to-end report create/upload/submit/sync transaction with live pilot credentials
   - Manager approve/reject/request-changes transitions through runtime UI flow

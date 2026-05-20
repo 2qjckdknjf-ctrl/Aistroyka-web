@@ -20,7 +20,7 @@ Reason:
 | Supabase parity | BLOCKED_EXTERNAL | `LIVE_SUPABASE_PARITY_REPORT.md` (revalidated in live-closure run; still auth/password blocked) |
 | strict smoke | CLOSED (runtime) | production pilot-smoke job success in run `26146584712`; local strict prereq still env-blocked (`LIVE_STRICT_SMOKE_REPORT.md`) |
 | quality gate | PASS_WITH_EXTERNAL_BLOCKERS | `FINAL_QUALITY_GATE_RERUN_REPORT.md` |
-| iOS | PARTIAL | build + targeted UITest runtime proof improved, full flow still pending (`IOS_RUNTIME_SMOKE_REPORT.md`) |
+| iOS | PARTIAL | build + rerun-targeted UITest runtime proof improved, full flow still pending (`IOS_RUNTIME_SMOKE_REPORT.md`) |
 | Android | DEFERRED | `BUILDABLE_SHELL`; excluded from first release (`STAGE_15_ANDROID_SCOPE_LOCK_REPORT.md`) |
 | AI | PARTIAL | live degraded fallback confirmed (`provider_unavailable`), full provider path not proven (`AI_LIVE_PROVIDER_VALIDATION_REPORT.md`) |
 | public site/contact | PARTIAL | locale route/contact API live pass; full browser visual crawl pending (`LIVE_PUBLIC_SITE_LOCALE_CONTACT_REPORT.md`) |
