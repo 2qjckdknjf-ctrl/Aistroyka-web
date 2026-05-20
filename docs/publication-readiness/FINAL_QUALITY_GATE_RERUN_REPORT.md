@@ -29,6 +29,19 @@ Re-run strongest available repository and platform gate after final-stage update
 2. Remaining failures are environment/external credential blockers, not repo compile/test regressions.
 3. Strict smoke runtime has independent passing evidence in production deploy workflow, while local strict precheck remains env-dependent.
 
+## Latest rerun (live-closure pass)
+
+Executed in this pass:
+
+- `bun run typecheck` -> `UNAVAILABLE` (`Script not found "typecheck"` in root `package.json`)
+- `bun run lint` -> PASS
+- `bun run test` -> PASS (`274` files / `1446` tests)
+- `bun run build` -> PASS
+- `bun run cf:build` -> PASS
+- `bun run smoke:pilot:check --strict` -> FAIL (ENV: missing `BASE_URL`, auth path, E2E creds, `SUPABASE_ACCESS_TOKEN`)
+
+Conclusion remains unchanged: repo gate passes; strict local smoke and Supabase-linked checks are environment-dependent.
+
 ## Verdict
 
 **PASS_WITH_EXTERNAL_BLOCKERS**
