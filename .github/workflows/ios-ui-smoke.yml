@@ -11,8 +11,7 @@ on:
     paths:
       - "ios/**"
       - ".github/workflows/ios-ui-smoke.yml"
-    paths-ignore:
-      - "ios/**/*.md"
+      - "!ios/**/*.md"
 
 concurrency:
   group: ios-ui-smoke-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
