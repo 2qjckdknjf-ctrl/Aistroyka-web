@@ -33,6 +33,10 @@ jobs:
       - name: Lint
         run: bun run lint
 
+      - name: Typecheck
+        working-directory: apps/web
+        run: bunx tsc --noEmit
+
       - name: Test
         run: bun run test
 

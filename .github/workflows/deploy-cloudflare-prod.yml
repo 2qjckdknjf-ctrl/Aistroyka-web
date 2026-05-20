@@ -63,6 +63,12 @@ jobs:
           ref: ${{ steps.deploy_ref.outputs.ref }}
 
       - name: Check env/config (deploy-production)
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://vthfrxehrursfloevnlp.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_PRODUCTION }}
+          NEXT_PUBLIC_APP_URL: https://aistroyka.ai
+          NEXT_PUBLIC_APP_ENV: production
+          PILOT_SMOKE_BEARER: ${{ secrets.PILOT_SMOKE_BEARER_PRODUCTION }}
         run: bash scripts/release/check-env-config.sh deploy-production
 
       - name: Setup Bun

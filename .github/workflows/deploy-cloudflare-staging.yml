@@ -63,6 +63,12 @@ jobs:
           ref: ${{ steps.deploy_ref.outputs.ref }}
 
       - name: Check env/config (deploy-staging)
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://vthfrxehrursfloevnlp.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_STAGING }}
+          NEXT_PUBLIC_APP_URL: https://staging.aistroyka.ai
+          NEXT_PUBLIC_APP_ENV: staging
+          PILOT_SMOKE_BEARER: ${{ secrets.PILOT_SMOKE_BEARER_STAGING }}
         run: bash scripts/release/check-env-config.sh deploy-staging
 
       - name: Setup Bun

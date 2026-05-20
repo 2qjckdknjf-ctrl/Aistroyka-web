@@ -19,8 +19,17 @@
 
 - Status: CLOSED
 - Report: `docs/publication-readiness/STAGE_02_HEALTH_SYSTEM_ROUTES_REPORT.md`
-- Commit hash: PENDING
-- Push status: PENDING
+- Commit hash: `18234cd3`
+- Push status: pushed to `origin/release/publication-readiness-mega-sprint`
 - Notes: Guard policy validated for missing/wrong/correct key paths and production detection fallback.
 - Next stage started: Stage 03 — Release Gate / Smoke / Env Config
+
+### Stage 03 — Release Gate / Smoke / Env Config
+
+- Status: CLOSED
+- Report: `docs/publication-readiness/STAGE_03_RELEASE_GATE_SMOKE_ENV_REPORT.md`
+- Commit hash: PENDING
+- Push status: PENDING
+- Notes: Added explicit typecheck to CI gate and hardened deploy env checks for release-critical values.
+- Next stage started: Stage 04 — Database / Supabase / Migrations Readiness
 
