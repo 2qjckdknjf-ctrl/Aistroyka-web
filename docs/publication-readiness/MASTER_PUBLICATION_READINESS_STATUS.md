@@ -46,8 +46,17 @@
 
 - Status: PARTIAL
 - Report: `docs/publication-readiness/STAGE_05_AUTH_TENANT_SECURITY_REPORT.md`
-- Commit hash: PENDING
-- Push status: PENDING
+- Commit hash: `af5acd78`
+- Push status: pushed to `origin/release/publication-readiness-mega-sprint`
 - Notes: Core tenant/auth guard tests pass on sampled critical routes; full API-wide authorization audit remains open.
 - Next stage started: Stage 06 — API V1 Contract / Legacy Drift Closure
+
+### Stage 06 — API V1 Contract / Legacy Drift Closure
+
+- Status: PARTIAL
+- Report: `docs/publication-readiness/STAGE_06_API_V1_CONTRACT_LEGACY_REPORT.md`
+- Commit hash: PENDING
+- Push status: PENDING
+- Notes: v1 is dominant and legacy deprecation headers exist, but full envelope/drift audit across all routes remains open.
+- Next stage started: Stage 07 — Public Website / Localization / Brand
 
