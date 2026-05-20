@@ -5,7 +5,6 @@
   "packageManager": "bun@1.2.15",
   "workspaces": [
     "apps/web",
-    "apps/cloudflare-agent",
     "packages/contracts"
   ],
   "scripts": {
@@ -21,9 +20,6 @@
     "cf:deploy": "cd apps/web && bun run cf:deploy",
     "cf:deploy:staging": "cd apps/web && bunx wrangler deploy --env staging --config wrangler.toml",
     "cf:deploy:prod": "cd apps/web && bunx wrangler deploy --env production --dry-run --outdir .open-next/deploy && node scripts/patch-bundle-require.cjs && OPEN_NEXT_DEPLOY=true bunx wrangler deploy --env production --no-bundle --config wrangler.deploy.toml",
-    "cf:agent:dev": "npm run --prefix apps/cloudflare-agent dev",
-    "cf:agent:check": "npm run --prefix apps/cloudflare-agent check",
-    "cf:agent:deploy": "npm run --prefix apps/cloudflare-agent deploy",
     "lint": "bun run --cwd apps/web lint",
     "i18n:check": "node scripts/i18n/check-messages.js",
     "test": "bun run build:contracts && bun run --cwd apps/web test",
