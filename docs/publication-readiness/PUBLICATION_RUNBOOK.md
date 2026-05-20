@@ -41,6 +41,11 @@ Required checks:
 2. `buildStamp.sha7` and `buildTime` present and matching deployed commit.
 3. No system route access without correct system key.
 
+Current evidence snapshot:
+
+- BuildStamp proof: closed in live production (`LIVE_BUILDSTAMP_VERIFICATION_REPORT.md`).
+- System guard deny-path: closed; allow-path with real key still requires operator-local key execution.
+
 ## 4. Smoke verification
 
 Syntax gate:
@@ -61,6 +66,11 @@ Run pilot smoke when prereqs pass:
 ```bash
 bun run smoke:pilot
 ```
+
+Current evidence snapshot:
+
+- Blocking post-deploy pilot smoke job is passing in production workflow.
+- Local strict prereq command is still environment-dependent.
 
 ## 5. DB migration verification
 
@@ -98,6 +108,7 @@ xcodebuild -project ios/AiStroykaManager/AiStroykaManager.xcodeproj -scheme AiSt
 Runtime checks must follow:
 
 - `docs/publication-readiness/IOS_TESTFLIGHT_READINESS_CHECKLIST.md`
+- `docs/publication-readiness/IOS_RUNTIME_SMOKE_REPORT.md`
 
 ## 8. Android exclusion/deferred policy
 

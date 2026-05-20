@@ -6,116 +6,88 @@
 
 Reason:
 
-- Stage 16 quality gate ran and passed at repo/build/test level.
-- But public-release blockers remain: missing live deploy buildStamp proof, missing live Supabase migration parity proof, and incomplete live smoke/login evidence in this environment.
-- Android is deferred and must stay excluded.
+- Live production redeploy and buildStamp proof are now closed.
+- Blocking pilot smoke runtime is closed in production workflow.
+- Core repo quality gate rerun is passing.
+- But GO_PUBLIC blockers remain: Supabase live parity is still external-blocked, system-health allow-path with real key is not proven in this environment, iOS full transaction runtime chain is partial, and full live browser visual crawl remains partial.
 
-## 2. Scorecard
+## 2. Evidence table
 
-| Area | Status | Notes |
+| Area | Status | Evidence |
 |---|---|---|
-| Public site | YELLOW | Build/tests pass; live production crawl evidence pending in this run. |
-| Localization | GREEN | i18n check passes for key dashboard/activation namespaces. |
-| Auth | YELLOW | Route/test coverage strong; live post-deploy smoke evidence pending. |
-| Tenant security | GREEN | Guardrails and tests present; no cross-tenant exposure findings in sprint scope. |
-| Dashboard | GREEN | Stage 08 UX fixes landed and validated by code/tests. |
-| Worker flow | YELLOW | API/tests + manual script exist; live runtime/device evidence still partial. |
-| Manager flow | GREEN | Review/approval governance flows covered and tested. |
-| Documents | GREEN | Manager create/upload/status paths covered by tests. |
-| Costs | YELLOW | Repo coverage good; live DB parity not proven. |
-| AI/Copilot/Intelligence | YELLOW | Fallback and safety validated; live provider-key runtime evidence pending. |
-| API contracts | YELLOW | Strong test coverage; full legacy drift closure still backlog. |
-| DB/migrations | RED | Live Supabase migration parity blocked (auth/password). |
-| Release/CI/CD | YELLOW | Build/cf build pass; live deploy-truth confirmation pending. |
-| Health/system diagnostics | YELLOW | Guarding implemented; post-redeploy buildStamp proof pending. |
-| Observability | YELLOW | In-repo checks/tests present; live dashboards not fully audited here. |
-| iOS | YELLOW | Worker/Manager simulator builds pass; runtime smoke not fully closed. |
-| Android | RED (for release scope) | Buildable shell only; excluded from first release. |
-| Quality gate | GREEN | Stage 16 executed: install, lint, test, build, cf build, mobile builds. |
-| Publication docs | GREEN | Stage 17 package completed. |
-| Rollback/support readiness | GREEN | Runbook and support path documented. |
+| production buildStamp | CLOSED | `docs/publication-readiness/LIVE_BUILDSTAMP_VERIFICATION_REPORT.md` |
+| system guard | PARTIAL | deny-paths 401 proven; allow-path blocked by missing `SYSTEM_API_KEY` in current env (`LIVE_SYSTEM_HEALTH_GUARD_REPORT.md`) |
+| Supabase parity | BLOCKED_EXTERNAL | `LIVE_SUPABASE_PARITY_REPORT.md` |
+| strict smoke | CLOSED (runtime) | production pilot-smoke job success in run `26146584712`; local strict prereq still env-blocked (`LIVE_STRICT_SMOKE_REPORT.md`) |
+| quality gate | PASS_WITH_EXTERNAL_BLOCKERS | `FINAL_QUALITY_GATE_RERUN_REPORT.md` |
+| iOS | PARTIAL | build + targeted UITest runtime proof improved, full flow still pending (`IOS_RUNTIME_SMOKE_REPORT.md`) |
+| Android | DEFERRED | `BUILDABLE_SHELL`; excluded from first release (`STAGE_15_ANDROID_SCOPE_LOCK_REPORT.md`) |
+| AI | PARTIAL | live degraded fallback confirmed (`provider_unavailable`), full provider path not proven (`AI_LIVE_PROVIDER_VALIDATION_REPORT.md`) |
+| public site/contact | PARTIAL | locale route/contact API live pass; full browser visual crawl pending (`LIVE_PUBLIC_SITE_LOCALE_CONTACT_REPORT.md`) |
+| API posture | ACCEPTABLE_WITH_BACKLOG | `API_FINAL_DRIFT_POSTURE_REPORT.md`, backlog in `API_LEGACY_DRIFT_BACKLOG.md` |
+| PR scope | CLEANED_FOR_RELEASE | cloudflare-agent split out (`PR_17_SCOPE_REVIEW_REPORT.md`) |
 
 ## 3. P0 blockers
 
-1. Public launch cannot be claimed while live deploy buildStamp confirmation is missing.
-2. Live Supabase migration parity remains unverified in target environment.
+1. Supabase live migration parity is still unproven (`migration list` + `db push --dry-run --linked` blocked by auth/password).
 
 ## 4. P1 blockers
 
-1. Strict smoke prereqs not satisfied in current environment (runtime creds/vars missing).
-2. iOS runtime smoke completion evidence still incomplete.
-3. Live AI-provider validation remains key/environment dependent.
+1. `/api/system/health` allow-path with valid `X-System-Key` is not proven from current environment.
+2. iOS full worker/manager runtime transaction chain still incomplete (only targeted login/inbox smoke proven).
+3. AI full provider-backed path (non-fallback) and stream probe with project context remain unproven.
+4. Full browser-level visual locale QA (leftovers/console/nav UX) remains partial.
 
 ## 5. P2 backlog
 
-1. Full API envelope/legacy drift closure.
-2. Full public multi-locale visual crawl and contact flow live verification.
-3. Android AGP modernization and future runtime hardening (post-defer track).
+1. API legacy drift closure tasks in `API_LEGACY_DRIFT_BACKLOG.md`.
+2. Android AGP modernization and deferred product hardening track.
 
 ## 6. What is safe to publish now
 
-1. Controlled pilot with web + API + manager/worker flows under operator supervision.
-2. Documentation package (runbook, onboarding, release notes, limitations).
-3. iOS TestFlight internal pilot track after checklist closure.
+1. Controlled pilot (web + API + manager/worker operational path).
+2. Publication documentation package and operator runbook.
+3. iOS TestFlight pilot track with explicit checklist gates.
 
 ## 7. What must not be published now
 
-1. Broad public GA claim.
-2. Android readiness claim.
-3. Supabase migration parity as “fully verified” claim.
+1. Broad public GA announcement.
+2. Android production-readiness claims.
+3. Claims that Supabase live migration parity is fully verified.
 
 ## 8. What must be hidden or beta-labeled
 
-1. AI/copilot live-provider behavior -> beta label until live key-backed validation is completed.
-2. iOS runtime-critical flows -> pilot/internal label until runtime smoke evidence closes.
-3. Any Android references -> “deferred / not in first release scope”.
+1. AI/copilot live-provider capability (keep beta/degraded notice).
+2. iOS full runtime operational claims beyond proven smoke coverage.
+3. Any Android availability claims beyond deferred/buildable-shell status.
 
 ## 9. Operator actions still required
 
 ```bash
-# Deploy-truth verification (after approved deploy)
-curl -sS https://<host>/api/v1/health
-curl -sS https://<host>/api/v1/system/health -H "X-System-Key: <SYSTEM_KEY>"
-
-# Supabase parity verification (apps/web)
+# Supabase parity closure
+cd apps/web
 supabase login
 supabase link --project-ref <PROJECT_REF>
 export SUPABASE_DB_PASSWORD='<DB_PASSWORD>'
 supabase migration list
-supabase db push --dry-run
+supabase db push --dry-run --linked
 
-# Strict smoke prereq closure
-export BASE_URL='https://<host>'
+# System health allow-path closure
+export SYSTEM_API_KEY='<REAL_KEY>'
+curl -i https://aistroyka.ai/api/system/health -H "X-System-Key: $SYSTEM_API_KEY"
+
+# Optional local strict smoke reproducibility
+export BASE_URL='https://aistroyka.ai'
 export PLAYWRIGHT_BASE_URL="$BASE_URL"
+export AUTH_HEADER='Bearer <tenant_user_jwt>' # or COOKIE / smoke credential path
 export E2E_EMAIL='<pilot-user-email>'
 export E2E_PASSWORD='<pilot-user-password>'
-export SUPABASE_ACCESS_TOKEN='<token>'
+export SUPABASE_ACCESS_TOKEN='<supabase_pat>'
 bun run smoke:pilot:check --strict
 ```
 
-## 10. Exact final verification commands
+## 10. Final recommendation
 
-```bash
-# repo gate
-bun install
-bun run i18n:check
-bun run lint
-bun run test
-bun run build
-bun run cf:build
-
-# smoke script syntax
-bash -n scripts/smoke/pilot_launch.sh
-bash -n scripts/smoke/check_pilot_prereqs.sh
-
-# mobile build checks
-xcodebuild -project ios/AiStroykaWorker/AiStroykaWorker.xcodeproj -scheme AiStroykaWorker -configuration Debug -sdk iphonesimulator CODE_SIGNING_ALLOWED=NO build
-xcodebuild -project ios/AiStroykaManager/AiStroykaManager.xcodeproj -scheme AiStroykaManager -configuration Debug -sdk iphonesimulator CODE_SIGNING_ALLOWED=NO build
-cd android && ./gradlew :AiStroykaWorker:assembleDebug :AiStroykaManager:assembleDebug
-```
-
-## 11. Final recommendation
-
-- Proceed with **GO_PILOT_ONLY** under controlled rollout.
-- Do not announce broad public readiness until operator closes live deploy-truth and Supabase parity blockers and reruns strict smoke in target environment.
+- Keep verdict at **GO_PILOT_ONLY**.
+- Do **not** upgrade to GO_PUBLIC until P0/P1 blockers above are closed with evidence.
 

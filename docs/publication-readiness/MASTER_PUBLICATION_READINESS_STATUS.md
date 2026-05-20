@@ -178,9 +178,9 @@
 - Status: CLOSED
 - Report: `docs/publication-readiness/FINAL_GO_NO_GO_AUDIT.md`
 - Final verdict: GO_PILOT_ONLY
-- Commit hash: PENDING
-- Push status: PENDING
-- Notes: Repository-level quality gate passed; broad public release still blocked by live deploy-truth and Supabase parity evidence gaps.
+- Commit hash: `1ef6f8d8`
+- Push status: pushed to `origin/release/publication-readiness-mega-sprint`
+- Notes: Initial final audit issued; later final-hardening run updates this verdict with new live evidence and remaining blockers.
 - Next stage: publication operator follow-up and controlled pilot rollout only
 
 ## Final sprint verdict (Stage 08–18 continuation)
@@ -192,4 +192,81 @@
   2. Live deploy buildStamp confirmation on target host remains pending.
   3. Live Supabase migration parity remains externally blocked.
   4. Android is intentionally excluded from first release scope.
+
+## Final hardening run — Stage A-M (post-PR17 draft)
+
+### Stage A — Preflight / Branch / PR State
+- Status: CLOSED
+- Report: `docs/publication-readiness/FINAL_PRE_MERGE_PREFLIGHT_REPORT.md`
+- Commit hash: `17547e66`
+
+### Stage B — PR #17 Scope Review
+- Status: CLOSED
+- Report: `docs/publication-readiness/PR_17_SCOPE_REVIEW_REPORT.md`
+- Commit hash: `39c2cbb4` (+ split prep with preserved branch `release/cloudflare-agent-starter-split`)
+- Outcome: Cloudflare-agent split out from publication PR scope.
+
+### Stage C — Production Redeploy + BuildStamp Live Proof
+- Status: CLOSED
+- Report: `docs/publication-readiness/LIVE_BUILDSTAMP_VERIFICATION_REPORT.md`
+- Commit hash: `43d7dc32`
+- Evidence: production workflow run `26146584712`, live `buildStamp.sha7/buildTime` on apex + www.
+
+### Stage D — System Health Security Live Proof
+- Status: PARTIAL
+- Report: `docs/publication-readiness/LIVE_SYSTEM_HEALTH_GUARD_REPORT.md`
+- Commit hash: `a1d3174f`
+- Evidence: deny-path 401 verified; allow-path blocked by missing `SYSTEM_API_KEY` in current shell.
+
+### Stage E — Supabase Live Migration Parity
+- Status: BLOCKED_EXTERNAL
+- Report: `docs/publication-readiness/LIVE_SUPABASE_PARITY_REPORT.md`
+- Commit hash: `5a1c76d9`
+
+### Stage F — Strict Pilot Smoke Runtime
+- Status: CLOSED (runtime), local env repro blocked
+- Report: `docs/publication-readiness/LIVE_STRICT_SMOKE_REPORT.md`
+- Commit hash: `595b0996`
+
+### Stage G — iOS Runtime Pilot Evidence
+- Status: PARTIAL (improved)
+- Report: `docs/publication-readiness/IOS_RUNTIME_SMOKE_REPORT.md`
+- Commit hash: `6fc5414d`
+- Evidence: targeted Worker/Manager UITest smoke succeeded.
+
+### Stage H — AI Live Provider Validation
+- Status: PARTIAL / BLOCKED_EXTERNAL_FOR_FULL_PROVIDER_PATH
+- Report: `docs/publication-readiness/AI_LIVE_PROVIDER_VALIDATION_REPORT.md`
+- Commit hash: `e3808f48`
+
+### Stage I — Public Locale / Contact Live Crawl
+- Status: PARTIAL
+- Report: `docs/publication-readiness/LIVE_PUBLIC_SITE_LOCALE_CONTACT_REPORT.md`
+- Commit hash: `bf95508a`
+
+### Stage J — API Envelope / Legacy Drift Final Posture
+- Status: CLOSED (posture), backlog remains P2
+- Reports:
+  - `docs/publication-readiness/API_FINAL_DRIFT_POSTURE_REPORT.md`
+  - `docs/publication-readiness/API_LEGACY_DRIFT_BACKLOG.md`
+- Commit hash: `07f0fdea`
+
+### Stage K — Final Quality Gate Rerun
+- Status: PASS_WITH_EXTERNAL_BLOCKERS
+- Report: `docs/publication-readiness/FINAL_QUALITY_GATE_RERUN_REPORT.md`
+- Commit hash: `337e463f`
+
+### Stage L — Final Audit Refresh
+- Status: CLOSED
+- Report: `docs/publication-readiness/FINAL_GO_NO_GO_AUDIT.md` (updated)
+- Current verdict: GO_PILOT_ONLY
+
+### Stage M — PR #17 Final Merge Recommendation
+- Status: PENDING (to be issued in `PR_17_FINAL_MERGE_RECOMMENDATION.md`)
+
+## Current global verdict
+
+- Verdict: GO_PILOT_ONLY
+- GO_PUBLIC status: NO
+- Hard blockers to GO_PUBLIC: Supabase live parity + unresolved P1 evidence items from final audit.
 

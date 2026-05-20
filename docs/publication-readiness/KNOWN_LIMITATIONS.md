@@ -9,7 +9,8 @@
 ## iOS status
 
 - iOS Worker/Manager simulator builds pass.
-- Full runtime smoke evidence is still pending for final pilot-ready claim.
+- Targeted runtime UITest smoke (worker login + manager login/inbox) is now proven.
+- Full end-to-end worker submit and manager review transaction chain is still partial.
 
 ## Supabase external blocker
 
@@ -20,15 +21,21 @@
 
 ## Production buildStamp proof
 
-- Post-redeploy live confirmation of `buildStamp.sha7` + `buildTime` on deployed health endpoint remains required to close deploy-truth proof.
+- Closed: live production now returns `buildStamp.sha7` and `buildStamp.buildTime` after redeploy proof.
 
 ## Documents / costs / AI limitations
 
 - Repo-level tests cover these modules, but live environment proof still depends on operator credentials and runtime smoke.
-- AI provider live behavior remains key-dependent; fallback behavior is validated.
+- AI provider full-path remains unstable/unproven in this run (`provider_unavailable`); graceful fallback is validated.
 
 ## Live smoke limitations
 
-- Strict pilot smoke checks fail in current shell unless required env vars and auth are supplied.
-- Multi-locale public visual crawl/contact runtime verification is still pending a dedicated live run.
+- Runtime pilot smoke is proven in production deploy workflow.
+- Local strict smoke checks still fail in this shell unless required env vars and auth are supplied.
+- Multi-locale route and contact API live probes are verified, but full browser visual/content QA remains partial.
+
+## System health guard limitations
+
+- Deny-path protection (`no key` / `wrong key`) is proven live.
+- Allow-path proof with real `X-System-Key` remains external in this shell (missing key).
 

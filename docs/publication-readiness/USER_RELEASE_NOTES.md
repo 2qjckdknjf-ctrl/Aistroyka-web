@@ -11,9 +11,9 @@
 ## Beta limitations
 
 - Live Supabase migration parity proof is still operator-dependent.
-- Strict pilot smoke prereqs require environment credentials.
-- AI provider live behavior depends on runtime keys; deterministic fallback is present.
-- iOS runtime smoke is not fully closed with final pass artifact in this run.
+- Local strict smoke prereq checks require environment credentials (runtime pipeline smoke is passing).
+- AI provider full path depends on runtime availability; deterministic fallback is currently active and validated.
+- iOS runtime smoke is partially closed (targeted login/inbox UITest evidence); full transaction chain remains pending.
 
 ## Supported platforms (first release scope)
 
