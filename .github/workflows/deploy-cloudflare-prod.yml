@@ -155,7 +155,7 @@ jobs:
         run: |
           grep -q 'x.includes("middleware") && x.includes("manifest")' .open-next/deploy/worker-bootstrap.js || (echo "::error::Patch not applied: middleware-manifest stub missing in deploy bundle" && exit 1)
           echo "Patched bundle verified."
-      - name: Sync AI provider secrets to Cloudflare (production)
+      - name: Sync AI provider secrets to Cloudflare versions (production)
         working-directory: apps/web
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -163,12 +163,12 @@ jobs:
         run: |
           set -euo pipefail
           if [ -n "${OPENAI_API_KEY:-}" ]; then
-            printf '%s' "$OPENAI_API_KEY" | npx wrangler secret put OPENAI_API_KEY --env production
+            printf '%s' "$OPENAI_API_KEY" | npx wrangler versions secret put OPENAI_API_KEY --env production
           else
             echo "OPENAI_API_KEY secret is empty; skipping sync"
           fi
           if [ -n "${ANTHROPIC_API_KEY:-}" ]; then
-            printf '%s' "$ANTHROPIC_API_KEY" | npx wrangler secret put ANTHROPIC_API_KEY --env production
+            printf '%s' "$ANTHROPIC_API_KEY" | npx wrangler versions secret put ANTHROPIC_API_KEY --env production
           else
             echo "ANTHROPIC_API_KEY secret is empty; skipping sync"
           fi
