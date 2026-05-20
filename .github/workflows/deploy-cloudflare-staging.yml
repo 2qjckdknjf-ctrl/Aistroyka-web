@@ -115,7 +115,11 @@ jobs:
         working-directory: apps/web
         env:
           OPEN_NEXT_DEPLOY: "true"
-        run: npx wrangler deploy --env staging --no-bundle --config wrangler.deploy.toml
+        run: |
+          npx wrangler deploy --env staging --no-bundle --config wrangler.deploy.toml \
+            --var NEXT_PUBLIC_BUILD_SHA:${{ github.sha }} \
+            --var NEXT_PUBLIC_BUILD_TIME:"${{ env.NEXT_PUBLIC_BUILD_TIME }}" \
+            --var NEXT_PUBLIC_APP_ENV:staging
 
       - name: Post-deploy summary
         run: |
