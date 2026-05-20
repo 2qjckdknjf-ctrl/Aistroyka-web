@@ -55,8 +55,17 @@
 
 - Status: PARTIAL
 - Report: `docs/publication-readiness/STAGE_06_API_V1_CONTRACT_LEGACY_REPORT.md`
-- Commit hash: PENDING
-- Push status: PENDING
+- Commit hash: `f68c335b`
+- Push status: pushed to `origin/release/publication-readiness-mega-sprint`
 - Notes: v1 is dominant and legacy deprecation headers exist, but full envelope/drift audit across all routes remains open.
 - Next stage started: Stage 07 — Public Website / Localization / Brand
+
+### Stage 07 — Public Website / Localization / Brand
+
+- Status: PARTIAL
+- Report: `docs/publication-readiness/STAGE_07_PUBLIC_SITE_LOCALIZATION_BRAND_REPORT.md`
+- Commit hash: PENDING
+- Push status: PENDING
+- Notes: RU localization leftovers were fixed in Copilot/intelligence strings; full multi-locale page crawl is still pending.
+- Next stage started: Stage 08 — Dashboard UX / First User Experience
 
