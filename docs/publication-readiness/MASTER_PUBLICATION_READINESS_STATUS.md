@@ -37,8 +37,17 @@
 
 - Status: BLOCKED_EXTERNAL
 - Report: `docs/publication-readiness/STAGE_04_DATABASE_SUPABASE_MIGRATIONS_REPORT.md`
-- Commit hash: PENDING
-- Push status: PENDING
+- Commit hash: `156250f1`
+- Push status: pushed to `origin/release/publication-readiness-mega-sprint`
 - Notes: Local migration integrity is validated; remote migration parity is blocked by missing authorized Supabase DB credentials.
 - Next stage started: Stage 05 — Auth / Tenant / Role / Route Security
+
+### Stage 05 — Auth / Tenant / Role / Route Security
+
+- Status: PARTIAL
+- Report: `docs/publication-readiness/STAGE_05_AUTH_TENANT_SECURITY_REPORT.md`
+- Commit hash: PENDING
+- Push status: PENDING
+- Notes: Core tenant/auth guard tests pass on sampled critical routes; full API-wide authorization audit remains open.
+- Next stage started: Stage 06 — API V1 Contract / Legacy Drift Closure
 
