@@ -1,0 +1,35 @@
+# Final Quality Gate Rerun Report
+
+## Goal
+
+Re-run strongest available repository and platform gate after final-stage updates.
+
+## Command matrix
+
+| Command | Result | Notes |
+|---|---|---|
+| `bun install` | PASS | Dependencies resolved and postinstall check passed. |
+| `bun run typecheck` | UNAVAILABLE | Root script `typecheck` is not defined in `package.json`. |
+| `bun run lint` | PASS | No ESLint warnings/errors. |
+| `bun run test` | PASS | `274` files / `1446` tests passed. |
+| `bun run build` | PASS | Contracts + Next build succeeded. |
+| `bun run cf:build` | PASS | OpenNext Cloudflare bundle succeeded. |
+| `bun run release:check` | PASS_WITH_WARNINGS | Optional integrations remain unset in local env. |
+| `NODE_ENV=production node scripts/validate-release-env.mjs` | PASS_WITH_WARNINGS | Optional keys not set (AI/Stripe/etc). |
+| `bash -n scripts/smoke/pilot_launch.sh` + `bash -n scripts/smoke/check_pilot_prereqs.sh` | PASS | Smoke scripts syntax-valid. |
+| `bun run smoke:pilot:check --strict` | FAIL (ENV) | Missing local runtime env/credentials in this shell. |
+| `supabase migration list` | FAIL (EXTERNAL) | 401 unauthorized / missing DB login role password path. |
+| `xcodebuild ... AiStroykaWorker ... build` | PASS | iOS Worker build successful. |
+| `xcodebuild ... AiStroykaManager ... build` | PASS | iOS Manager build successful. |
+| `./gradlew :AiStroykaWorker:assembleDebug :AiStroykaManager:assembleDebug` | PASS | Android debug builds successful (AGP warning persists). |
+
+## Interpretation
+
+1. Repository quality gate is strong and passing for code/build/tests.
+2. Remaining failures are environment/external credential blockers, not repo compile/test regressions.
+3. Strict smoke runtime has independent passing evidence in production deploy workflow, while local strict precheck remains env-dependent.
+
+## Verdict
+
+**PASS_WITH_EXTERNAL_BLOCKERS**
+
