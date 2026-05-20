@@ -243,10 +243,10 @@
 - Revalidation pass: local provider keys missing; non-stream fallback stays safe; stream path enforces auth (401 without credentials).
 
 ### Stage I — Public Locale / Contact Live Crawl
-- Status: PARTIAL
+- Status: CLOSED
 - Report: `docs/publication-readiness/LIVE_PUBLIC_SITE_LOCALE_CONTACT_REPORT.md`
 - Commit hash: `bf95508a`
-- Revalidation pass: browser visual rerun found RU mixed-language contact helper and untranslated footer heading on live; localization fix prepared in code, deploy verification pending.
+- Revalidation pass: production deploy run `26186503554` completed; post-deploy browser check confirms RU contact/footer localization fix on live.
 
 ### Stage J — API Envelope / Legacy Drift Final Posture
 - Status: CLOSED (posture), backlog remains P2
@@ -281,7 +281,7 @@
 
 ## Current global verdict
 
-- Verdict: GO_PILOT_ONLY
+- Verdict: GO_PUBLIC_CANDIDATE
 - GO_PUBLIC status: CANDIDATE
-- Remaining blockers to full GO_PUBLIC: unresolved P1 evidence items from final audit.
+- Remaining blockers to full GO_PUBLIC: unresolved P1 evidence items (iOS full transaction runtime + AI provider full-path).
 

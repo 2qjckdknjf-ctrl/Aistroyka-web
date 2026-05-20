@@ -54,6 +54,24 @@ Current live-state interpretation:
 
 - Visual locale QA remains partial until these changes are deployed and rechecked on production.
 
+## Post-deploy browser verification (run `26186503554`)
+
+Production deploy from `release/publication-readiness-mega-sprint` completed successfully:
+
+- workflow: `Deploy Cloudflare (Production)`
+- run: `26186503554`
+- pilot-smoke: passed
+- ai phase5 gate: passed
+
+Live browser recheck after deploy:
+
+- `/ru/contact` helper text is fully Russian:
+  - `Для бизнес-запросов используйте форму выше и укажите «Demo»...`
+- `/ru` footer resources heading is localized:
+  - `Ресурсы`
+- `/en` footer resources heading remains English:
+  - `Resources`
+
 ## Contact flow probe
 
 Commands:
@@ -82,5 +100,5 @@ Manual browser checklist for closure:
 
 ## Verdict
 
-**PARTIAL (live route/contact API healthy; browser visual QA found locale mix issues now fixed in code but pending deploy verification)**
+**CLOSED**
 

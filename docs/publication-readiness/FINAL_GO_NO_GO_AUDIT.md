@@ -10,7 +10,7 @@ Reason:
 - Blocking pilot smoke runtime is closed in production workflow.
 - Core repo quality gate rerun is passing.
 - P0 blockers are now closed by operator evidence (Supabase parity + system-key allow-path).
-- P1 evidence remains partial (iOS full transaction runtime, AI provider-backed full path, browser visual locale/contact QA), so full GA claim is still restricted.
+- P1 evidence remains partial (iOS full transaction runtime and AI provider-backed full path), so full GA claim is still restricted.
 
 ## 2. Evidence table
 
@@ -19,12 +19,12 @@ Reason:
 | production buildStamp | CLOSED | `docs/publication-readiness/LIVE_BUILDSTAMP_VERIFICATION_REPORT.md` |
 | system guard | CLOSED | deny-path and allow-path both proven with operator-authenticated key evidence (`LIVE_SYSTEM_HEALTH_GUARD_REPORT.md`) |
 | Supabase parity | CLOSED | operator-authenticated `migration list` + `db push --dry-run --linked` closure evidence (`LIVE_SUPABASE_PARITY_REPORT.md`) |
-| strict smoke | CLOSED (runtime) | production pilot-smoke job success in run `26146584712`; local strict prereq still env-blocked (`LIVE_STRICT_SMOKE_REPORT.md`) |
+| strict smoke | CLOSED (runtime) | production pilot-smoke job success in runs `26146584712` and `26186503554`; local strict prereq still env-blocked (`LIVE_STRICT_SMOKE_REPORT.md`) |
 | quality gate | PASS_WITH_EXTERNAL_BLOCKERS | `FINAL_QUALITY_GATE_RERUN_REPORT.md` |
 | iOS | PARTIAL | build + rerun-targeted UITest runtime proof improved, full flow still pending (`IOS_RUNTIME_SMOKE_REPORT.md`) |
 | Android | DEFERRED | `BUILDABLE_SHELL`; excluded from first release (`STAGE_15_ANDROID_SCOPE_LOCK_REPORT.md`) |
 | AI | PARTIAL | live degraded fallback revalidated, stream auth gate confirmed (401 unauth), full provider path still not proven (`AI_LIVE_PROVIDER_VALIDATION_REPORT.md`) |
-| public site/contact | PARTIAL | browser visual rerun found RU mixed-language text and untranslated footer heading on live; code fix prepared, deploy verification pending (`LIVE_PUBLIC_SITE_LOCALE_CONTACT_REPORT.md`) |
+| public site/contact | CLOSED | post-deploy browser verification confirms RU contact/footer localization and EN footer consistency (`LIVE_PUBLIC_SITE_LOCALE_CONTACT_REPORT.md`) |
 | API posture | ACCEPTABLE_WITH_BACKLOG | `API_FINAL_DRIFT_POSTURE_REPORT.md`, backlog in `API_LEGACY_DRIFT_BACKLOG.md` |
 | PR scope | CLEANED_FOR_RELEASE | cloudflare-agent split out (`PR_17_SCOPE_REVIEW_REPORT.md`) |
 
@@ -36,7 +36,6 @@ None open.
 
 1. iOS full worker/manager runtime transaction chain still incomplete (only targeted login/inbox smoke proven).
 2. AI full provider-backed path (non-fallback) and stream probe with project context remain unproven.
-3. Full browser-level visual locale QA remains partial until production recheck after latest localization fix deploy.
 
 ## 4.1 Latest closure-pass check notes
 
@@ -44,7 +43,7 @@ None open.
 2. System-health allow-path is closed by operator probe with real `X-System-Key`.
 3. iOS remains partial at login-screen smoke evidence level.
 4. AI remains partial: graceful degraded behavior proven, provider-backed full path pending.
-5. Locale/contact remains partial: browser run found RU mixed-language copy on live; code fix is prepared but not yet verified after deploy.
+5. Locale/contact is closed by post-deploy browser verification run.
 
 ## 5. P2 backlog
 
