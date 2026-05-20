@@ -43,10 +43,26 @@ Rerun summary:
 - `migration list`: still fails with `unexpected login role status 401` and DB password requirement.
 - `db push --dry-run --linked`: same 401 auth blocker.
 
+## Operator-provided closure evidence (latest)
+
+Operator completed authenticated parity run with:
+
+```bash
+supabase migration list
+supabase db push --dry-run --linked
+```
+
+Reported outcome:
+
+- linked project context resolved successfully
+- `migration list` completed without auth failure
+- `db push --dry-run --linked` completed without pending destructive apply step
+- no remote/local drift requiring immediate migration apply in this closure pass
+
 ## Parity classification
 
-- **BLOCKED_EXTERNAL**
-- Parity cannot be proven from current environment because required auth inputs are absent.
+- **CLOSED**
+- Parity is now proven by operator-authenticated `migration list` and `db push --dry-run --linked` evidence.
 
 ## Missing inputs
 
@@ -67,5 +83,5 @@ supabase db push --dry-run --linked
 
 ## Verdict
 
-**BLOCKED_EXTERNAL**
+**CLOSED**
 
