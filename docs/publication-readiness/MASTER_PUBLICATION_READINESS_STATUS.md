@@ -98,8 +98,17 @@
 
 - Status: CLOSED
 - Report: `docs/publication-readiness/STAGE_10_MANAGER_APPROVAL_GOVERNANCE_REPORT.md`
-- Commit hash: PENDING
-- Push status: PENDING
+- Commit hash: `aba19cc8`
+- Push status: pushed to `origin/release/publication-readiness-mega-sprint`
 - Notes: Added manager review route coverage for permission/transition/error paths and explicit resubmit-loop coverage for changes_requested.
 - Next stage started: Stage 11 — Documents / Acts / Contracts Manager Workflow
+
+### Stage 11 — Documents / Acts / Contracts Manager Workflow
+
+- Status: CLOSED
+- Report: `docs/publication-readiness/STAGE_11_DOCUMENTS_ACTS_CONTRACTS_REPORT.md`
+- Commit hash: PENDING
+- Push status: PENDING
+- Notes: Added route-level create/list and upload workflow tests, including rights and cross-project safeguards.
+- Next stage started: Stage 12 — Budget / Cost Layer Live Readiness
 
