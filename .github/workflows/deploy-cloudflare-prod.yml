@@ -24,6 +24,8 @@ jobs:
     name: Build and deploy to production
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    outputs:
+      deploy_ref: ${{ steps.deploy_ref.outputs.ref }}
 
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -46,17 +48,53 @@ jobs:
         env:
           DEPLOY_REF: ${{ steps.deploy_ref.outputs.ref }}
         run: |
+          set -euo pipefail
+
+          REPO_URL="https://github.com/${GITHUB_REPOSITORY}.git"
+
+          if [ -z "$DEPLOY_REF" ]; then
+            echo "::error::Deploy ref is empty. Use ref=main or a full 40-character commit SHA."
+            exit 1
+          fi
+
+          # Only allow full 40-character SHA, not partial SHA.
           if echo "$DEPLOY_REF" | grep -Eq '^[0-9a-f]{40}$'; then
-            echo "Using commit SHA ref."
+            if git ls-remote --exit-code "$REPO_URL" "$DEPLOY_REF" >/dev/null 2>&1; then
+              echo "Resolved deploy ref as full commit SHA: $DEPLOY_REF"
+              exit 0
+            fi
+
+            # Fallback: ls-remote by SHA may not always return direct object lookup.
+            # If checkout can fetch by exact SHA from repository, allow it only after verifying all refs contain it.
+            if git ls-remote "$REPO_URL" | awk '{print $1}' | grep -Fx "$DEPLOY_REF" >/dev/null; then
+              echo "Resolved deploy ref as exact remote commit SHA: $DEPLOY_REF"
+              exit 0
+            fi
+
+            echo "::error::Full commit SHA '$DEPLOY_REF' was not found in remote refs."
+            exit 1
+          fi
+
+          # Reject partial SHAs explicitly.
+          if echo "$DEPLOY_REF" | grep -Eq '^[0-9a-f]{7,39}$'; then
+            echo "::error::Partial commit SHA '$DEPLOY_REF' is not allowed. Use a branch, tag, or full 40-character SHA."
+            exit 1
+          fi
+
+          # Exact branch match only.
+          if git ls-remote --exit-code --heads "$REPO_URL" "refs/heads/$DEPLOY_REF" >/dev/null 2>&1; then
+            echo "Resolved deploy ref as exact branch: refs/heads/$DEPLOY_REF"
             exit 0
           fi
 
-          if git ls-remote --exit-code --heads --tags "https://github.com/${GITHUB_REPOSITORY}.git" "$DEPLOY_REF" >/dev/null; then
-            echo "Resolved deploy ref: $DEPLOY_REF"
-          else
-            echo "::error::Requested ref '$DEPLOY_REF' was not found as a branch, tag, or full commit SHA. Use e.g. ref=main."
-            exit 1
+          # Exact tag match only.
+          if git ls-remote --exit-code --tags "$REPO_URL" "refs/tags/$DEPLOY_REF" >/dev/null 2>&1; then
+            echo "Resolved deploy ref as exact tag: refs/tags/$DEPLOY_REF"
+            exit 0
           fi
+
+          echo "::error::Requested deploy ref '$DEPLOY_REF' was not found as an exact branch, exact tag, or full 40-character commit SHA. Use e.g. ref=main."
+          exit 1
 
       - uses: actions/checkout@v4
         with:
@@ -161,13 +199,13 @@ jobs:
 
   ai-phase5-gate:
     name: Post-deploy AI Phase 5 gate (non-blocking)
-    needs: pilot-smoke
+    needs: [deploy, pilot-smoke]
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.ref || github.ref }}
+          ref: ${{ needs.deploy.outputs.deploy_ref }}
 
       - name: Run ai_phase5_gate.sh
         env:
