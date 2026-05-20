@@ -1,0 +1,27 @@
+{
+  "name": "aistroyka-cloudflare-agent",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-01-01",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "ai": {
+    "binding": "AI"
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "AISTROYKA_FIELD_AGENT",
+        "class_name": "AistroykaFieldAgent"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": [
+        "AistroykaFieldAgent"
+      ]
+    }
+  ]
+}
