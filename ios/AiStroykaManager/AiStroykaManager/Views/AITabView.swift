@@ -52,8 +52,15 @@ struct AITabView: View {
 
     @MainActor
     private func loadAsync() async {
-        await runManagerLoad(isLoading: &isLoading, errorMessage: &errorMessage) {
+        errorMessage = nil
+        isLoading = true
+        defer { isLoading = false }
+        do {
             jobs = try await ManagerAPI.aiRequests(limit: 100)
+        } catch let apiError as APIError {
+            errorMessage = apiError.message
+        } catch {
+            errorMessage = error.localizedDescription
         }
     }
 }
