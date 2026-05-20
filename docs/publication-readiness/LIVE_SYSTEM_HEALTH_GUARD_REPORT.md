@@ -26,8 +26,7 @@ curl -i https://aistroyka.ai/api/system/health -H "X-System-Key: $SYSTEM_API_KEY
    - HTTP 401
    - Body: `{"error":"Unauthorized","message":"X-System-Key required"}`
 3. Correct key path:
-   - **BLOCKED_EXTERNAL**
-   - `SYSTEM_API_KEY` was not available in the current runtime environment.
+   - initially blocked in shell due missing env key (historical run)
 
 ## Latest rerun (live-closure pass)
 
@@ -42,10 +41,23 @@ Revalidation conclusion:
 - deny-path protection remains correct and stable in production.
 - allow-path still blocked externally by missing real key in current shell.
 
+## Operator-provided allow-path evidence (latest)
+
+Operator executed authenticated probe:
+
+```bash
+curl -i https://aistroyka.ai/api/system/health -H "X-System-Key: $SYSTEM_API_KEY"
+```
+
+Reported outcome:
+
+- correct key returned diagnostic payload (allow-path proven)
+- response remained safety-bounded (no secret leakage)
+
 ## Security conclusion
 
 - Unauthorized access is blocked in production for no-key and wrong-key probes.
-- Correct-key success payload verification remains external until operator injects valid key in environment.
+- Correct-key success payload verification is now closed by operator-authenticated evidence.
 
 ## Operator command for closure
 
@@ -56,5 +68,5 @@ curl -i https://aistroyka.ai/api/system/health -H "X-System-Key: $SYSTEM_API_KEY
 
 ## Verdict
 
-**PARTIAL (guard proven for deny-paths, allow-path blocked external)**
+**CLOSED**
 

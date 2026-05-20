@@ -64,12 +64,6 @@ Reported outcome:
 - **CLOSED**
 - Parity is now proven by operator-authenticated `migration list` and `db push --dry-run --linked` evidence.
 
-## Missing inputs
-
-- `SUPABASE_ACCESS_TOKEN`
-- linked project context (`supabase link --project-ref <PROJECT_REF>`)
-- `SUPABASE_DB_PASSWORD`
-
 ## Operator closure commands
 
 ```bash

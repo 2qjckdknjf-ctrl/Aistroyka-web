@@ -213,17 +213,16 @@
 - Evidence: production workflow run `26146584712`, live `buildStamp.sha7/buildTime` on apex + www.
 
 ### Stage D — System Health Security Live Proof
-- Status: PARTIAL
+- Status: CLOSED
 - Report: `docs/publication-readiness/LIVE_SYSTEM_HEALTH_GUARD_REPORT.md`
 - Commit hash: `a1d3174f`
-- Evidence: deny-path 401 verified; allow-path blocked by missing `SYSTEM_API_KEY` in current shell.
-- Revalidation pass: unchanged (deny-path still 401 for no/wrong key; allow-path still blocked external).
+- Evidence: deny-path 401 verified and allow-path with real key proven by operator evidence.
 
 ### Stage E — Supabase Live Migration Parity
-- Status: BLOCKED_EXTERNAL
+- Status: CLOSED
 - Report: `docs/publication-readiness/LIVE_SUPABASE_PARITY_REPORT.md`
 - Commit hash: `5a1c76d9`
-- Revalidation pass: rerun in live-closure cycle still blocked by missing `SUPABASE_ACCESS_TOKEN` + `SUPABASE_DB_PASSWORD` (401 on login role)
+- Revalidation pass: operator-authenticated `migration list` + `db push --dry-run --linked` proved parity closure.
 
 ### Stage F — Strict Pilot Smoke Runtime
 - Status: CLOSED (runtime), local env repro blocked
@@ -269,7 +268,7 @@
 ### Stage M — PR #17 Final Merge Recommendation
 - Status: UPDATED
 - Report: `docs/publication-readiness/PR_17_FINAL_MERGE_RECOMMENDATION.md`
-- Recommendation: MERGE_AFTER_LIVE_BLOCKERS
+- Recommendation: READY_TO_MERGE_FOR_PILOT
 
 ## Live-closure commits (current pass)
 
@@ -283,6 +282,6 @@
 ## Current global verdict
 
 - Verdict: GO_PILOT_ONLY
-- GO_PUBLIC status: NO
-- Hard blockers to GO_PUBLIC: Supabase live parity + unresolved P1 evidence items from final audit.
+- GO_PUBLIC status: CANDIDATE
+- Remaining blockers to full GO_PUBLIC: unresolved P1 evidence items from final audit.
 

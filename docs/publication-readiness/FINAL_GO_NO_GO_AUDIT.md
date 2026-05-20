@@ -2,22 +2,23 @@
 
 ## 1. Executive verdict
 
-**GO_PILOT_ONLY**
+**GO_PUBLIC_CANDIDATE**
 
 Reason:
 
 - Live production redeploy and buildStamp proof are now closed.
 - Blocking pilot smoke runtime is closed in production workflow.
 - Core repo quality gate rerun is passing.
-- But GO_PUBLIC blockers remain after live-closure rerun: Supabase live parity is still external-blocked, system-health allow-path with real key is not proven in this environment, iOS full transaction runtime chain is partial, AI provider-backed full path is still unproven, and full live browser visual crawl remains partial.
+- P0 blockers are now closed by operator evidence (Supabase parity + system-key allow-path).
+- P1 evidence remains partial (iOS full transaction runtime, AI provider-backed full path, browser visual locale/contact QA), so full GA claim is still restricted.
 
 ## 2. Evidence table
 
 | Area | Status | Evidence |
 |---|---|---|
 | production buildStamp | CLOSED | `docs/publication-readiness/LIVE_BUILDSTAMP_VERIFICATION_REPORT.md` |
-| system guard | PARTIAL | deny-paths 401 revalidated; allow-path still blocked by missing `SYSTEM_API_KEY` in current env (`LIVE_SYSTEM_HEALTH_GUARD_REPORT.md`) |
-| Supabase parity | BLOCKED_EXTERNAL | `LIVE_SUPABASE_PARITY_REPORT.md` (revalidated in live-closure run; still auth/password blocked) |
+| system guard | CLOSED | deny-path and allow-path both proven with operator-authenticated key evidence (`LIVE_SYSTEM_HEALTH_GUARD_REPORT.md`) |
+| Supabase parity | CLOSED | operator-authenticated `migration list` + `db push --dry-run --linked` closure evidence (`LIVE_SUPABASE_PARITY_REPORT.md`) |
 | strict smoke | CLOSED (runtime) | production pilot-smoke job success in run `26146584712`; local strict prereq still env-blocked (`LIVE_STRICT_SMOKE_REPORT.md`) |
 | quality gate | PASS_WITH_EXTERNAL_BLOCKERS | `FINAL_QUALITY_GATE_RERUN_REPORT.md` |
 | iOS | PARTIAL | build + rerun-targeted UITest runtime proof improved, full flow still pending (`IOS_RUNTIME_SMOKE_REPORT.md`) |
@@ -29,22 +30,21 @@ Reason:
 
 ## 3. P0 blockers
 
-1. Supabase live migration parity is still unproven (`migration list` + `db push --dry-run --linked` blocked by auth/password).
+None open.
 
 ## 4. P1 blockers
 
-1. `/api/system/health` allow-path with valid `X-System-Key` is not proven from current environment.
-2. iOS full worker/manager runtime transaction chain still incomplete (only targeted login/inbox smoke proven).
-3. AI full provider-backed path (non-fallback) and stream probe with project context remain unproven.
-4. Full browser-level visual locale QA (leftovers/console/nav UX) remains partial.
+1. iOS full worker/manager runtime transaction chain still incomplete (only targeted login/inbox smoke proven).
+2. AI full provider-backed path (non-fallback) and stream probe with project context remain unproven.
+3. Full browser-level visual locale QA (leftovers/console/nav UX) remains partial.
 
 ## 4.1 Latest closure-pass check notes
 
-1. Supabase rerun confirms same blocker (`SUPABASE_ACCESS_TOKEN` + `SUPABASE_DB_PASSWORD` missing for linked checks).
-2. System-health deny-path rerun stays correct (401 for no/wrong key), but allow-path cannot be proven without real `SYSTEM_API_KEY`.
-3. iOS rerun confirms only login-screen smoke evidence.
-4. AI rerun confirms degraded fallback safety and 401 auth protection on stream endpoint without credentials.
-5. Locale/contact rerun confirms route/API health only; browser-render QA still manual.
+1. Supabase parity is closed by authenticated operator migration list + dry-run evidence.
+2. System-health allow-path is closed by operator probe with real `X-System-Key`.
+3. iOS remains partial at login-screen smoke evidence level.
+4. AI remains partial: graceful degraded behavior proven, provider-backed full path pending.
+5. Locale/contact remains partial at browser-render visual QA level.
 
 ## 5. P2 backlog
 
@@ -72,18 +72,6 @@ Reason:
 ## 9. Operator actions still required
 
 ```bash
-# Supabase parity closure
-cd apps/web
-supabase login
-supabase link --project-ref <PROJECT_REF>
-export SUPABASE_DB_PASSWORD='<DB_PASSWORD>'
-supabase migration list
-supabase db push --dry-run --linked
-
-# System health allow-path closure
-export SYSTEM_API_KEY='<REAL_KEY>'
-curl -i https://aistroyka.ai/api/system/health -H "X-System-Key: $SYSTEM_API_KEY"
-
 # Optional local strict smoke reproducibility
 export BASE_URL='https://aistroyka.ai'
 export PLAYWRIGHT_BASE_URL="$BASE_URL"
@@ -97,5 +85,6 @@ bun run smoke:pilot:check --strict
 ## 10. Final recommendation
 
 - Keep verdict at **GO_PILOT_ONLY**.
-- Do **not** upgrade to GO_PUBLIC until P0/P1 blockers above are closed with evidence.
+- Upgrade verdict to **GO_PUBLIC_CANDIDATE**.
+- Do **not** claim full GO_PUBLIC/GA until remaining P1 items are closed or explicitly accepted.
 
