@@ -10,7 +10,6 @@ on:
       - master
     paths:
       - "ios/**"
-      - ".github/workflows/ios-ui-smoke.yml"
       - "!ios/**/*.md"
 
 concurrency:
