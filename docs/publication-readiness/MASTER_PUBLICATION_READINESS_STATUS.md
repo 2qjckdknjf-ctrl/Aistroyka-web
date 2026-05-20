@@ -107,8 +107,17 @@
 
 - Status: CLOSED
 - Report: `docs/publication-readiness/STAGE_11_DOCUMENTS_ACTS_CONTRACTS_REPORT.md`
-- Commit hash: PENDING
-- Push status: PENDING
+- Commit hash: `a987cdb4`
+- Push status: pushed to `origin/release/publication-readiness-mega-sprint`
 - Notes: Added route-level create/list and upload workflow tests, including rights and cross-project safeguards.
 - Next stage started: Stage 12 — Budget / Cost Layer Live Readiness
+
+### Stage 12 — Budget / Cost Layer Live Readiness
+
+- Status: PARTIAL
+- Report: `docs/publication-readiness/STAGE_12_BUDGET_COST_LIVE_READINESS_REPORT.md`
+- Commit hash: PENDING
+- Push status: PENDING
+- Notes: Added item-level costs route tests; repo-layer readiness validated, but live Supabase migration parity remains externally blocked.
+- Next stage started: Stage 13 — AI / Copilot / Intelligence Publication Readiness
 
