@@ -28,8 +28,17 @@
 
 - Status: CLOSED
 - Report: `docs/publication-readiness/STAGE_03_RELEASE_GATE_SMOKE_ENV_REPORT.md`
-- Commit hash: PENDING
-- Push status: PENDING
+- Commit hash: `6b731e44`
+- Push status: pushed to `origin/release/publication-readiness-mega-sprint`
 - Notes: Added explicit typecheck to CI gate and hardened deploy env checks for release-critical values.
 - Next stage started: Stage 04 — Database / Supabase / Migrations Readiness
+
+### Stage 04 — Database / Supabase / Migrations Readiness
+
+- Status: BLOCKED_EXTERNAL
+- Report: `docs/publication-readiness/STAGE_04_DATABASE_SUPABASE_MIGRATIONS_REPORT.md`
+- Commit hash: PENDING
+- Push status: PENDING
+- Notes: Local migration integrity is validated; remote migration parity is blocked by missing authorized Supabase DB credentials.
+- Next stage started: Stage 05 — Auth / Tenant / Role / Route Security
 
