@@ -241,6 +241,7 @@
 - Report: `docs/publication-readiness/AI_LIVE_PROVIDER_VALIDATION_REPORT.md`
 - Commit hash: `e3808f48`
 - Revalidation pass: production run `26186503554` again shows degraded fallback (`provider_unavailable`), with stream probe disabled because `PROJECT_ID` is empty in gate env.
+- Continuation pass: local runtime env still lacks `AUTH_HEADER`, `PROJECT_ID`, and provider keys; full provider-path evidence remains externally blocked.
 
 ### Stage I — Public Locale / Contact Live Crawl
 - Status: CLOSED

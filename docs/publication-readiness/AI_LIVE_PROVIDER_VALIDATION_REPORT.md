@@ -52,6 +52,19 @@ Interpretation:
 - Stream path correctly enforces auth.
 - Full provider-backed success path remains unproven in this environment.
 
+### 4) Continuation attempt (current pass)
+
+Environment probe for provider-path closure:
+
+- `AUTH_HEADER`: missing
+- `PROJECT_ID` / `PILOT_SMOKE_PROJECT_ID_PRODUCTION`: missing
+- provider keys (`OPENAI_API_KEY` / `ANTHROPIC_API_KEY` / `GOOGLE_AI_API_KEY` / `GEMINI_API_KEY`): missing
+
+Conclusion:
+
+- No authenticated/project-scoped live provider probe can be executed from this shell.
+- Status remains partial until operator-supplied runtime context is present.
+
 ## Readiness classification
 
 - Live route behavior: **graceful degraded mode works**
