@@ -45,6 +45,7 @@ Current evidence snapshot:
 
 - BuildStamp proof: closed in live production (`LIVE_BUILDSTAMP_VERIFICATION_REPORT.md`).
 - System guard deny-path: closed; allow-path with real key still requires operator-local key execution.
+- Latest deny-path rerun (2026-05-20): `401` for both `no key` and `wrong key`.
 
 ## 4. Smoke verification
 
@@ -86,6 +87,10 @@ supabase db push --dry-run
 
 If unauthorized/401 appears, stop and restore credentials/link before publication claim.
 
+Latest parity rerun status:
+
+- still blocked externally in this shell until `supabase login/link` + `SUPABASE_DB_PASSWORD` are provided.
+
 ## 6. Login and dashboard verification
 
 Minimum post-deploy checks:
@@ -109,6 +114,11 @@ Runtime checks must follow:
 
 - `docs/publication-readiness/IOS_TESTFLIGHT_READINESS_CHECKLIST.md`
 - `docs/publication-readiness/IOS_RUNTIME_SMOKE_REPORT.md`
+
+Current runtime truth:
+
+- automated smoke script passes at login-screen coverage level.
+- full transaction (worker submit + manager approve/reject/resubmit) is still manual and pending evidence.
 
 ## 8. Android exclusion/deferred policy
 

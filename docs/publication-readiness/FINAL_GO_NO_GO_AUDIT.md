@@ -9,7 +9,7 @@ Reason:
 - Live production redeploy and buildStamp proof are now closed.
 - Blocking pilot smoke runtime is closed in production workflow.
 - Core repo quality gate rerun is passing.
-- But GO_PUBLIC blockers remain: Supabase live parity is still external-blocked, system-health allow-path with real key is not proven in this environment, iOS full transaction runtime chain is partial, and full live browser visual crawl remains partial.
+- But GO_PUBLIC blockers remain after live-closure rerun: Supabase live parity is still external-blocked, system-health allow-path with real key is not proven in this environment, iOS full transaction runtime chain is partial, AI provider-backed full path is still unproven, and full live browser visual crawl remains partial.
 
 ## 2. Evidence table
 
@@ -37,6 +37,14 @@ Reason:
 2. iOS full worker/manager runtime transaction chain still incomplete (only targeted login/inbox smoke proven).
 3. AI full provider-backed path (non-fallback) and stream probe with project context remain unproven.
 4. Full browser-level visual locale QA (leftovers/console/nav UX) remains partial.
+
+## 4.1 Latest closure-pass check notes
+
+1. Supabase rerun confirms same blocker (`SUPABASE_ACCESS_TOKEN` + `SUPABASE_DB_PASSWORD` missing for linked checks).
+2. System-health deny-path rerun stays correct (401 for no/wrong key), but allow-path cannot be proven without real `SYSTEM_API_KEY`.
+3. iOS rerun confirms only login-screen smoke evidence.
+4. AI rerun confirms degraded fallback safety and 401 auth protection on stream endpoint without credentials.
+5. Locale/contact rerun confirms route/API health only; browser-render QA still manual.
 
 ## 5. P2 backlog
 

@@ -259,7 +259,7 @@
 ### Stage K — Final Quality Gate Rerun
 - Status: PASS_WITH_EXTERNAL_BLOCKERS
 - Report: `docs/publication-readiness/FINAL_QUALITY_GATE_RERUN_REPORT.md`
-- Commit hash: `337e463f`
+- Commit hash: `bc7fcd43` (latest rerun)
 
 ### Stage L — Final Audit Refresh
 - Status: CLOSED
@@ -267,7 +267,18 @@
 - Current verdict: GO_PILOT_ONLY
 
 ### Stage M — PR #17 Final Merge Recommendation
-- Status: PENDING (to be issued in `PR_17_FINAL_MERGE_RECOMMENDATION.md`)
+- Status: UPDATED
+- Report: `docs/publication-readiness/PR_17_FINAL_MERGE_RECOMMENDATION.md`
+- Recommendation: MERGE_AFTER_LIVE_BLOCKERS
+
+## Live-closure commits (current pass)
+
+- `4aea5c31` — stage-live(db): close or classify supabase migration parity
+- `f120bc99` — stage-live(health): prove system key allow path
+- `35640550` — stage-live(ios): close or classify ios transaction runtime
+- `bce1b308` — stage-live(ai): close or classify ai provider full path
+- `c8c418a8` — stage-live(site): close public locale contact qa
+- `bc7fcd43` — stage-live(quality): rerun final gate after live closure
 
 ## Current global verdict
 

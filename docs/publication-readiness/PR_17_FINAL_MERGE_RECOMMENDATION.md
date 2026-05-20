@@ -20,11 +20,11 @@
 4. Remaining blockers:
    - Supabase live migration parity external-blocked.
    - system-health allow-path proof with real key not yet captured.
-   - iOS full runtime transaction coverage still partial.
+   - iOS full runtime transaction coverage still partial (login-screen smoke only).
    - AI full provider path and stream-project probe partial.
    - full browser visual locale QA partial.
 
-## Recommendation
+## Recommendation (updated after live-closure rerun)
 
 - **MERGE_AFTER_LIVE_BLOCKERS**
 
@@ -32,6 +32,7 @@ Reason:
 
 - The PR is materially strong for controlled pilot progression, but GO_PUBLIC criteria are not yet met.
 - Merge should happen only when operator closes remaining P0/P1 live proofs documented in final audit.
+- Current branch quality remains strong for pilot progression, but GO_PUBLIC evidence is still incomplete.
 
 ## Draft status recommendation
 

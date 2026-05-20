@@ -9,7 +9,7 @@
 ## iOS status
 
 - iOS Worker/Manager simulator builds pass.
-- Targeted runtime UITest smoke (worker login + manager login/inbox) is now proven.
+- Targeted runtime UITest smoke (worker login screen + manager login screen) is now proven.
 - Full end-to-end worker submit and manager review transaction chain is still partial.
 
 ## Supabase external blocker
@@ -38,4 +38,9 @@
 
 - Deny-path protection (`no key` / `wrong key`) is proven live.
 - Allow-path proof with real `X-System-Key` remains external in this shell (missing key).
+
+## Browser visual QA limitations
+
+- Live locale routes and contact API are healthy.
+- Full browser-render visual QA (leftover-language scan, nav clicks, responsive checks, favicon/logo sanity) still requires manual operator execution.
 

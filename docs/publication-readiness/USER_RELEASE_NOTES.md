@@ -13,7 +13,8 @@
 - Live Supabase migration parity proof is still operator-dependent.
 - Local strict smoke prereq checks require environment credentials (runtime pipeline smoke is passing).
 - AI provider full path depends on runtime availability; deterministic fallback is currently active and validated.
-- iOS runtime smoke is partially closed (targeted login/inbox UITest evidence); full transaction chain remains pending.
+- iOS runtime smoke is partially closed (targeted login-screen UITest evidence); full transaction chain remains pending.
+- Full browser-level visual locale QA remains manual and is not fully closed by HTTP probes alone.
 
 ## Supported platforms (first release scope)
 
