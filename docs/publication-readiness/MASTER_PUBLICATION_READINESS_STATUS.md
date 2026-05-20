@@ -222,6 +222,7 @@
 - Status: BLOCKED_EXTERNAL
 - Report: `docs/publication-readiness/LIVE_SUPABASE_PARITY_REPORT.md`
 - Commit hash: `5a1c76d9`
+- Revalidation pass: rerun in live-closure cycle still blocked by missing `SUPABASE_ACCESS_TOKEN` + `SUPABASE_DB_PASSWORD` (401 on login role)
 
 ### Stage F — Strict Pilot Smoke Runtime
 - Status: CLOSED (runtime), local env repro blocked

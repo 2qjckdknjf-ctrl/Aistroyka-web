@@ -17,7 +17,7 @@ Reason:
 |---|---|---|
 | production buildStamp | CLOSED | `docs/publication-readiness/LIVE_BUILDSTAMP_VERIFICATION_REPORT.md` |
 | system guard | PARTIAL | deny-paths 401 proven; allow-path blocked by missing `SYSTEM_API_KEY` in current env (`LIVE_SYSTEM_HEALTH_GUARD_REPORT.md`) |
-| Supabase parity | BLOCKED_EXTERNAL | `LIVE_SUPABASE_PARITY_REPORT.md` |
+| Supabase parity | BLOCKED_EXTERNAL | `LIVE_SUPABASE_PARITY_REPORT.md` (revalidated in live-closure run; still auth/password blocked) |
 | strict smoke | CLOSED (runtime) | production pilot-smoke job success in run `26146584712`; local strict prereq still env-blocked (`LIVE_STRICT_SMOKE_REPORT.md`) |
 | quality gate | PASS_WITH_EXTERNAL_BLOCKERS | `FINAL_QUALITY_GATE_RERUN_REPORT.md` |
 | iOS | PARTIAL | build + targeted UITest runtime proof improved, full flow still pending (`IOS_RUNTIME_SMOKE_REPORT.md`) |

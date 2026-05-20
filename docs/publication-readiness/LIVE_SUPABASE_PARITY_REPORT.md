@@ -26,6 +26,23 @@ supabase db push --dry-run --linked
 4. `supabase db push --dry-run --linked`:
    - failed with same 401 unauthorized / missing DB password path
 
+## Latest rerun (live-closure pass)
+
+Commands rerun:
+
+```bash
+cd apps/web
+supabase projects list
+supabase migration list
+supabase db push --dry-run --linked
+```
+
+Rerun summary:
+
+- `projects list`: still blocked (`SUPABASE_ACCESS_TOKEN` missing / no `supabase login` session).
+- `migration list`: still fails with `unexpected login role status 401` and DB password requirement.
+- `db push --dry-run --linked`: same 401 auth blocker.
+
 ## Parity classification
 
 - **BLOCKED_EXTERNAL**
