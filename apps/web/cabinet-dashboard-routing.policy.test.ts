@@ -31,7 +31,26 @@ describe("Cabinet visibility / dashboard stability policy (source asserts)", () 
 
   it("dashboard layout gate uses hasDashboardAccess (pilot / subscription merge)", () => {
     const layoutSrc = readFileSync(join(__dirname, "app/[locale]/(dashboard)/layout.tsx"), "utf8");
-    expect(layoutSrc).toContain("!subscriptionState.hasDashboardAccess");
+    expect(layoutSrc).toContain("shouldRequireDashboardSubscription");
+    expect(layoutSrc).toContain("hasDashboardAccess: subscriptionState.hasDashboardAccess");
+  });
+
+  it("dashboard layout does not swallow subscription redirects", () => {
+    const layoutSrc = readFileSync(join(__dirname, "app/[locale]/(dashboard)/layout.tsx"), "utf8");
+    const catchIdx = layoutSrc.indexOf('console.error("[dashboard layout] subscription gate failed"');
+    const redirectIdx = layoutSrc.indexOf('redirect(`/${locale}/subscribe?dashboard_access=require_subscription`)');
+    expect(catchIdx).toBeGreaterThanOrEqual(0);
+    expect(redirectIdx).toBeGreaterThan(catchIdx);
+  });
+
+  it("dashboard layout exempts portal-only stakeholders from the manager subscription gate", () => {
+    const layoutSrc = readFileSync(join(__dirname, "app/[locale]/(dashboard)/layout.tsx"), "utf8");
+    const shellSrc = readFileSync(join(__dirname, "components/DashboardShell.tsx"), "utf8");
+    expect(layoutSrc).toContain("getActiveTenantRoleForUser");
+    expect(layoutSrc).toContain('tenantRole === "stakeholder"');
+    expect(layoutSrc).toContain("portalOnlyStakeholder={portalOnlyStakeholder}");
+    expect(shellSrc).toContain("portalOnlyStakeholder");
+    expect(shellSrc).toContain('href: "/portal/projects"');
   });
 
   it("subscribe page redirects dashboard-eligible users (subscription or pilot cohort)", () => {

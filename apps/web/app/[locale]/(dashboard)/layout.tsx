@@ -8,7 +8,9 @@ import { routing } from "@/i18n/routing";
 import {
   getActiveSubscriptionStateForUser,
   isDashboardSubscriptionGateEnforced,
+  shouldRequireDashboardSubscription,
 } from "@/lib/platform/billing/subscription-gate";
+import { getActiveTenantRoleForUser } from "@/lib/tenant/tenant-role.server";
 
 /**
  * Tenant-aware layout for all authenticated routes.
@@ -56,22 +58,30 @@ export default async function DashboardLayout({
       redirect(`/${locale}/login`);
     }
 
+    let portalOnlyStakeholder = false;
+    let shouldRedirectToSubscribe = false;
     try {
       const admin = getAdminClient();
       if (admin) {
-        const subscriptionState = await getActiveSubscriptionStateForUser(admin, user.id);
-        if (
-          isDashboardSubscriptionGateEnforced() &&
-          subscriptionState.tenantId &&
-          !subscriptionState.hasDashboardAccess
-        ) {
-          redirect(`/${locale}/subscribe?dashboard_access=require_subscription`);
-        }
+        const [subscriptionState, tenantRole] = await Promise.all([
+          getActiveSubscriptionStateForUser(admin, user.id),
+          getActiveTenantRoleForUser(admin, user.id),
+        ]);
+        portalOnlyStakeholder = tenantRole === "stakeholder";
+        shouldRedirectToSubscribe = shouldRequireDashboardSubscription({
+          isGateEnforced: isDashboardSubscriptionGateEnforced(),
+          tenantId: subscriptionState.tenantId,
+          hasDashboardAccess: subscriptionState.hasDashboardAccess,
+          tenantRole,
+        });
       }
     } catch (e) {
       if (process.env.NODE_ENV !== "production") {
         console.error("[dashboard layout] subscription gate failed", e instanceof Error ? e.message : String(e));
       }
+    }
+    if (shouldRedirectToSubscribe) {
+      redirect(`/${locale}/subscribe?dashboard_access=require_subscription`);
     }
 
     let isAdmin = false;
@@ -88,7 +98,7 @@ export default async function DashboardLayout({
     }
 
     return (
-      <DashboardShell userEmail={user.email ?? undefined} isAdmin={isAdmin}>
+      <DashboardShell userEmail={user.email ?? undefined} isAdmin={isAdmin} portalOnlyStakeholder={portalOnlyStakeholder}>
         {children}
       </DashboardShell>
     );

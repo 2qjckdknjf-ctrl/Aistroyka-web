@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getWorkspacePilotStatus } from "@/lib/platform/billing-readiness/billing-pilot.repository";
+import type { TenantRoleDb } from "@/lib/tenant/tenant.types";
 
 /**
  * Controls server-side dashboard subscription enforcement in `(dashboard)` layout.
@@ -36,6 +37,20 @@ export function dashboardAccessFromBillingAndPilot(
   inBillingPilotCohort: boolean
 ): boolean {
   return hasActiveSubscription || inBillingPilotCohort;
+}
+
+export function shouldRequireDashboardSubscription({
+  isGateEnforced,
+  tenantId,
+  hasDashboardAccess,
+  tenantRole,
+}: {
+  isGateEnforced: boolean;
+  tenantId: string | null;
+  hasDashboardAccess: boolean;
+  tenantRole: TenantRoleDb | null;
+}): boolean {
+  return isGateEnforced && tenantId != null && tenantRole !== "stakeholder" && !hasDashboardAccess;
 }
 
 async function resolveTenantIdForUser(

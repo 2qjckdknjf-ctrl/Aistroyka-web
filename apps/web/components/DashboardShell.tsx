@@ -35,15 +35,19 @@ export function DashboardShell({
   children,
   userEmail,
   isAdmin,
+  portalOnlyStakeholder = false,
 }: {
   children: React.ReactNode;
   userEmail?: string;
   isAdmin: boolean;
+  portalOnlyStakeholder?: boolean;
 }) {
   const t = useTranslations("nav");
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [dateRange, setDateRange] = useState("7d");
+  const sidebarLinks = portalOnlyStakeholder ? [{ href: "/portal/projects", key: "projects" as const }] : SIDEBAR_LINKS;
+  const homeHref = portalOnlyStakeholder ? "/portal/projects" : "/dashboard";
 
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);
 
@@ -64,10 +68,10 @@ export function DashboardShell({
       >
         <div className="flex h-full flex-col pt-[var(--aistroyka-space-4)]">
           <div className="px-[var(--aistroyka-space-4)] pb-[var(--aistroyka-space-3)]">
-            <Logo href="/dashboard" height={26} className="block" onClick={closeSidebar} />
+            <Logo href={homeHref} height={26} className="block" onClick={closeSidebar} />
           </div>
           <nav className="flex-1 space-y-0.5 px-[var(--aistroyka-space-2)]" aria-label={t("main")}>
-            {SIDEBAR_LINKS.map(({ href, key }) => {
+            {sidebarLinks.map(({ href, key }) => {
               const active = isActive(href);
               return (
                 <Link
@@ -86,7 +90,7 @@ export function DashboardShell({
                 </Link>
               );
             })}
-            {getDashboardNavIncludesAdmin(isAdmin) && (
+            {!portalOnlyStakeholder && getDashboardNavIncludesAdmin(isAdmin) && (
               <>
                 <div className="px-3 py-2 text-[var(--aistroyka-font-caption)] font-semibold uppercase tracking-wide text-aistroyka-text-tertiary">
                   {t("admin")}

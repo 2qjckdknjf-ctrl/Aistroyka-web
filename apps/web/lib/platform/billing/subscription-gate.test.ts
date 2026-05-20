@@ -35,3 +35,49 @@ describe("dashboardAccessFromBillingAndPilot", () => {
     expect(dashboardAccessFromBillingAndPilot(false, false)).toBe(false);
   });
 });
+
+describe("shouldRequireDashboardSubscription", () => {
+  it("requires subscription for a non-stakeholder tenant without dashboard access", async () => {
+    const { shouldRequireDashboardSubscription } = await import("./subscription-gate");
+    expect(
+      shouldRequireDashboardSubscription({
+        isGateEnforced: true,
+        tenantId: "tenant_1",
+        hasDashboardAccess: false,
+        tenantRole: "owner",
+      })
+    ).toBe(true);
+  });
+
+  it("keeps stakeholder portal users out of the manager billing gate", async () => {
+    const { shouldRequireDashboardSubscription } = await import("./subscription-gate");
+    expect(
+      shouldRequireDashboardSubscription({
+        isGateEnforced: true,
+        tenantId: "tenant_1",
+        hasDashboardAccess: false,
+        tenantRole: "stakeholder",
+      })
+    ).toBe(false);
+  });
+
+  it("does not redirect when the gate is disabled or dashboard access exists", async () => {
+    const { shouldRequireDashboardSubscription } = await import("./subscription-gate");
+    expect(
+      shouldRequireDashboardSubscription({
+        isGateEnforced: false,
+        tenantId: "tenant_1",
+        hasDashboardAccess: false,
+        tenantRole: "owner",
+      })
+    ).toBe(false);
+    expect(
+      shouldRequireDashboardSubscription({
+        isGateEnforced: true,
+        tenantId: "tenant_1",
+        hasDashboardAccess: true,
+        tenantRole: "owner",
+      })
+    ).toBe(false);
+  });
+});
