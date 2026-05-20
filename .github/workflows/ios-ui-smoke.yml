@@ -48,6 +48,7 @@ jobs:
             -scheme AiStroykaWorker \
             -destination '${{ steps.sim.outputs.destination }}' \
             -only-testing:AiStroykaWorkerUITests/WorkerSmokeUITests/testLoginScreen_reachableWithPilotIdentifiers \
+            SWIFT_STRICT_CONCURRENCY=minimal \
             CODE_SIGN_IDENTITY=- \
             CODE_SIGNING_REQUIRED=NO
 
@@ -59,5 +60,6 @@ jobs:
             -scheme AiStroykaManager \
             -destination '${{ steps.sim.outputs.destination }}' \
             -only-testing:AiStroykaManagerUITests/ManagerSmokeUITests/testLoginScreen_reachableWithPilotIdentifiers \
+            SWIFT_STRICT_CONCURRENCY=minimal \
             CODE_SIGN_IDENTITY=- \
             CODE_SIGNING_REQUIRED=NO
