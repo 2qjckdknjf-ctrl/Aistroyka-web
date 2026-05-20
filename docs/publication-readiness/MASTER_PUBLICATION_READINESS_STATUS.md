@@ -135,8 +135,18 @@
 - Status: PARTIAL
 - Report: `docs/publication-readiness/STAGE_14_IOS_PILOT_READINESS_REPORT.md`
 - Checklist: `docs/publication-readiness/IOS_TESTFLIGHT_READINESS_CHECKLIST.md`
-- Commit hash: PENDING
-- Push status: PENDING
+- Commit hash: `7a4d8b5e`
+- Push status: pushed to `origin/release/publication-readiness-mega-sprint`
 - Notes: Worker/Manager simulator builds passed; runtime smoke completion remains pending for full pilot-ready classification.
 - Next stage started: Stage 15 — Android Scope Lock / Deferred Product Policy
+
+### Stage 15 — Android Scope Lock / Deferred Product Policy
+
+- Status: CLOSED
+- Report: `docs/publication-readiness/STAGE_15_ANDROID_SCOPE_LOCK_REPORT.md`
+- Classification: BUILDABLE_SHELL (deferred from first release scope)
+- Commit hash: PENDING
+- Push status: PENDING
+- Notes: Worker/Manager debug builds pass; runtime product readiness is unproven, so Android is excluded from first publication claim.
+- Next stage started: Stage 16 — Final Quality Gate
 
