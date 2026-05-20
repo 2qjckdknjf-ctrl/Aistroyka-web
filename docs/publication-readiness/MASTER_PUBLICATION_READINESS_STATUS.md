@@ -154,8 +154,22 @@
 
 - Status: PARTIAL
 - Report: `docs/publication-readiness/STAGE_16_FINAL_QUALITY_GATE_REPORT.md`
-- Commit hash: PENDING
-- Push status: PENDING
+- Commit hash: `e6939823`
+- Push status: pushed to `origin/release/publication-readiness-mega-sprint`
 - Notes: Full repo gate (i18n/lint/tests/build/cf:build + iOS/Android builds) passed; strict pilot runtime env checks and Supabase live migration parity remain external blockers.
 - Next stage started: Stage 17 — Publication Package
+
+### Stage 17 — Publication Package
+
+- Status: CLOSED
+- Report: `docs/publication-readiness/STAGE_17_PUBLICATION_PACKAGE_REPORT.md`
+- Artifacts:
+  - `docs/publication-readiness/PUBLICATION_RUNBOOK.md`
+  - `docs/publication-readiness/PILOT_ONBOARDING_GUIDE.md`
+  - `docs/publication-readiness/USER_RELEASE_NOTES.md`
+  - `docs/publication-readiness/KNOWN_LIMITATIONS.md`
+- Commit hash: PENDING
+- Push status: PENDING
+- Notes: Publication package prepared with explicit first-release scope and limitations (Android deferred, iOS runtime pending, Supabase parity pending).
+- Next stage started: Stage 18 — Final GO / NO-GO Audit
 
