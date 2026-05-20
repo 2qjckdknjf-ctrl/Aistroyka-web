@@ -240,7 +240,7 @@
 - Status: PARTIAL / BLOCKED_EXTERNAL_FOR_FULL_PROVIDER_PATH
 - Report: `docs/publication-readiness/AI_LIVE_PROVIDER_VALIDATION_REPORT.md`
 - Commit hash: `e3808f48`
-- Revalidation pass: local provider keys missing; non-stream fallback stays safe; stream path enforces auth (401 without credentials).
+- Revalidation pass: production run `26186503554` again shows degraded fallback (`provider_unavailable`), with stream probe disabled because `PROJECT_ID` is empty in gate env.
 
 ### Stage I — Public Locale / Contact Live Crawl
 - Status: CLOSED

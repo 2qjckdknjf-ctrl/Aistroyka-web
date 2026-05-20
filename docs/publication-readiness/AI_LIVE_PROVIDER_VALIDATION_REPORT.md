@@ -14,6 +14,14 @@ Classify live AI/copilot readiness based on real production evidence.
   - `ai_phase5_gate: analyze-image OK (degraded fallback=provider_unavailable)`
   - Indicates authenticated live probe works, but via deterministic fallback due provider unavailability.
 
+Latest rerun:
+
+- Workflow run: <https://github.com/2qjckdknjf-ctrl/Aistroyka-web/actions/runs/26186503554>
+- Job: `Post-deploy AI Phase 5 gate (non-blocking)` -> success
+- Log evidence:
+  - `PROJECT_ID:` empty in gate environment (stream probe disabled by gate script)
+  - `ai_phase5_gate: analyze-image OK (degraded fallback=provider_unavailable)`
+
 ### 2) Public unauthenticated fallback probe
 
 Command:
