@@ -52,6 +52,20 @@ Deploy-time provider-key injection check:
   - `ai_phase5_gate: copilot stream OK (done received)`
 - Interpretation: provider keys are now injected into production deploy runtime, but non-fallback vision path still degrades.
 
+Provider-router failover hardening check:
+
+- Commit: `e00a64e0` (`fix(ai): keep provider fallback chain on non-retryable errors`)
+- Change: provider router now continues fallback chain even when a provider returns non-retryable classification (for example `invalid_input`), instead of terminating early.
+- Validation:
+  - Local tests passed:
+    - `bun run test lib/platform/ai/providers/provider.router.test.ts`
+    - `bun run test app/api/v1/ai/analyze-image/route.fallback.test.ts app/api/v1/ai/analyze-image/route.test.ts`
+  - Production workflow run: <https://github.com/2qjckdknjf-ctrl/Aistroyka-web/actions/runs/26207812004>
+  - AI gate evidence remains:
+    - `ai_phase5_gate: analyze-image OK (degraded fallback=provider_unavailable)`
+    - `ai_phase5_gate: copilot stream OK (done received)`
+- Interpretation: fallback-chain early-termination is not the remaining blocker; runtime still degrades at provider availability/capability level.
+
 ### 2) Public unauthenticated fallback probe
 
 Command:
@@ -105,7 +119,7 @@ Repository secret inventory check (`gh secret list`) confirms:
 
 - Live route behavior: **graceful degraded mode works**
 - Provider-backed full AI path: **not proven** in this run (`provider_unavailable`)
-- Copilot stream live success path: **proven** (`copilot stream OK (done received)` in run `26188813972`).
+- Copilot stream live success path: **proven** (`copilot stream OK (done received)` in runs `26188813972`, `26189062534`, `26190744467`, `26207812004`).
 
 ## Verdict
 

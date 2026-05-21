@@ -21,7 +21,7 @@
    - Supabase live migration parity closed by operator evidence.
    - system-health allow-path proof with real key captured by operator evidence.
    - iOS full runtime transaction coverage still partial (login-screen smoke only).
-  - AI stream-project probe is closed; provider-backed non-fallback path remains partial even after runtime provider-key injection in production deploy.
+  - AI stream-project probe is closed; provider-backed non-fallback path remains partial even after runtime provider-key injection and provider-router failover hardening.
    - browser visual locale/contact QA closed by post-deploy verification.
 
 ## Recommendation (updated after live-closure rerun)

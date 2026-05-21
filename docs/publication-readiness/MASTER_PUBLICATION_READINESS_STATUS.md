@@ -245,6 +245,7 @@
 - Inventory pass: `PILOT_SMOKE_PROJECT_ID_PRODUCTION` configured and stream probe now passes in run `26188813972`; provider-backed non-fallback path remains pending (`provider_unavailable`).
 - Repeat run `26189062534` confirms same AI posture: stream passes, analyze-image remains degraded (`provider_unavailable`).
 - Infra hardening pass: production deploy now injects `OPENAI_API_KEY` and `ANTHROPIC_API_KEY` into Worker runtime (run `26190744467` shows both bindings present), but analyze-image still degrades with `provider_unavailable`.
+- Router hardening pass: provider fallback chain no longer aborts on non-retryable provider errors (commit `e00a64e0`); production run `26207812004` still reports degraded analyze-image fallback.
 
 ### Stage I — Public Locale / Contact Live Crawl
 - Status: CLOSED
