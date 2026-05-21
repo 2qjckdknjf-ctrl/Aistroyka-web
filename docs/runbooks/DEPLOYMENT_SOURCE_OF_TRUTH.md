@@ -20,7 +20,7 @@
 
 - **Vercel** deployment rows (Canceled / Queued / Building / Ready), especially on duplicate projects (`aistroyka-web`, `aistroyka-web-web`, `aistroyka-web-web-v7jq`)
 - **Vercel preview** noise from docs/mobile/experiment branches
-- **Staging workflow** failures triggered from **`main`** or non-`develop` branches (staging is **`develop`**-driven)
+- Legacy assumptions that staging is `develop`-driven (current canonical trigger is `main`)
 
 ---
 
@@ -47,7 +47,7 @@
 | Layer | Source of truth |
 |------|------------------|
 | **Deploy workflow** | `.github/workflows/deploy-cloudflare-staging.yml` — **Deploy Cloudflare (Staging)** |
-| **Trigger** | Push to **`develop`** and `workflow_dispatch` |
+| **Trigger** | Push to **`main`** and `workflow_dispatch` |
 | **Public URL** | `https://staging.aistroyka.ai` |
 | **Worker name (expected)** | `aistroyka-web-staging` |
 
@@ -183,6 +183,7 @@ Repeat for: **`aistroyka-web`**, **`aistroyka-web-web`**, **`aistroyka-web-web-v
 - DNS notes: `docs/REPORT-DNS-DOMAINS-20260305.md`
 - Env vars: `docs/ENVIRONMENT-VARIABLES.md`
 - Agent memory: `AGENTS.md` (Cloudflare-first runtime)
+- Final release decision checklist: `docs/release-hardening/GO_NO_GO_COUNCIL_CHECKLIST.md`
 
 ---
 

@@ -125,6 +125,13 @@ Repository secret inventory check (`gh secret list`) confirms:
 
 **PARTIAL / BLOCKED_EXTERNAL_FOR_FULL_PROVIDER_PATH**
 
+## Publication policy linkage
+
+Until full provider-backed success is proven, publish AI capabilities under degraded policy:
+
+- `docs/publication-readiness/AI_DEGRADED_MODE_POLICY.md`
+- `docs/publication-readiness/KNOWN_LIMITATIONS.md`
+
 ## Operator closure commands
 
 ```bash

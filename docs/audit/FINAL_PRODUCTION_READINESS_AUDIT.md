@@ -1,7 +1,7 @@
 # Final production readiness audit (Phase 13)
 
 **Roadmap:** `docs/roadmap/AISTROYKA_MEGA_ROADMAP_CUSTOMER_FINANCE_SAFE.md` — § Phase 13  
-**Date:** 2026-05-07 (updated **2026-05-08** live verification sprint)
+**Date:** 2026-05-07 (updated **2026-05-21** hardening pass)
 
 **Scope:** Repository and workflow readiness before serious sales. Live go/no-go still requires operator-run smoke on secured environments.
 
@@ -12,7 +12,7 @@
 | PR merge gate | `.github/workflows/ci-check.yml` — `bun install`, `lint`, `bun run test`, Cloudflare/OpenNext bundle with `NEXT_PUBLIC_*` |
 | Monorepo build | Root `bun run build` per `AGENTS.md` |
 
-**Status:** **PASS** at repo level. **Verify:** each PR/churn stays green; fix lockfile drift if CI warns.
+**Status:** **PASS** at repo level. CI now includes `release:check` policy gate in addition to lint/test/build checks.
 
 ## 2. Deploy and staging
 
@@ -47,8 +47,11 @@
 |------|--------|
 | CI green | required |
 | Staging deploy | workflow exists |
-| Pilot smoke | optional/continue-on-error per staging workflow |
+| Pilot smoke | blocking in deploy pipelines |
 | Production + rollback | document in runbooks; not asserted here |
+
+Go/no-go council checklist: `docs/release-hardening/GO_NO_GO_COUNCIL_CHECKLIST.md`  
+Workflow assist: `.github/workflows/release-go-no-go-council.yml`
 
 ## P0 / P1 register (readiness)
 
@@ -70,9 +73,21 @@
 
 **Phase 13 closure:** **CONDITIONAL** (`PHASE13_ROADMAP_CLOSURE.md`) until E2E + Supabase CLI + optional live customer sanity.
 
+## Latest preflight (2026-05-21)
+
+| Check | Result |
+|-------|--------|
+| `bun run lint` | **PASS** |
+| `bun run test` | **PASS** — 1452 tests |
+| `bun run cf:build` | **PASS** |
+| `bun run release:check` | **PASS_WITH_WARNINGS** |
+| `bun run smoke:pilot:check --strict` | **FAIL (env blocked)** — missing auth path for `ops/metrics`, E2E creds, and `SUPABASE_ACCESS_TOKEN` |
+| `bash scripts/verify/stakeholder_finance_sanity.sh` | **BLOCKED** — missing `STAKEHOLDER_SMOKE_EMAIL` / `STAKEHOLDER_SMOKE_PASSWORD` |
+| `gh workflow run release-go-no-go-council.yml` | **BLOCKED** — workflow not yet present on default branch (local-only until push/merge) |
+
 ## Verdict
 
-**SMOKE / HEALTH GREEN** on staging and production for **2026-05-08** pilot script. **E2E** and **live Supabase CLI** **not** closure-complete. **Production go-live** remains **operator decision** with open **P1** E2E items.
+Current baseline remains **GO_PUBLIC_CANDIDATE** for controlled rollout, not broad GA. Final publication decision requires a fresh council run on the target SHA and updated live evidence.
 
 ## References
 

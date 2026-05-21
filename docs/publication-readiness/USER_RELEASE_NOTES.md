@@ -13,6 +13,7 @@
 - Live Supabase migration parity proof is still operator-dependent.
 - Local strict smoke prereq checks require environment credentials (runtime pipeline smoke is passing).
 - AI provider full path depends on runtime availability; deterministic fallback is currently active and validated.
+- AI behavior is released under degraded/beta policy until provider-backed closure (`docs/publication-readiness/AI_DEGRADED_MODE_POLICY.md`).
 - iOS runtime smoke is partially closed (targeted login-screen UITest evidence); full transaction chain remains pending.
 - Full browser-level visual locale QA remains manual and is not fully closed by HTTP probes alone.
 
@@ -24,6 +25,7 @@
 ## Unsupported / deferred platforms
 
 - Android (deferred; classified `BUILDABLE_SHELL`, not production-ready)
+- Deferred Android hardening scope is tracked in `docs/publication-readiness/ANDROID_HARDENING_BACKLOG.md`.
 
 ## Support path
 

@@ -40,6 +40,13 @@ jobs:
       - name: Test
         run: bun run test
 
+      - name: Release readiness policy check
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://vthfrxehrursfloevnlp.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_STAGING }}
+          SUPABASE_SERVICE_ROLE_KEY: ci-placeholder-service-role-key
+        run: bun run release:check
+
       # Bake NEXT_PUBLIC_* into the OpenNext bundle (same requirement as deploy workflows).
       - name: Cloudflare bundle (no deploy)
         env:

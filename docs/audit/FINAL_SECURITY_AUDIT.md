@@ -18,6 +18,13 @@
 
 **Verdict:** **PASS** with ongoing route-level reviews for new `/api/v1/*` handlers.
 
+Additional hardening (2026-05): customer-facing routes now fail closed when forbidden internal finance keys appear in payload shaping:
+
+- `/api/v1/portal/projects/:id`
+- `/api/v1/share/proof/:token`
+
+Guard implementation: `apps/web/lib/security/customer-finance-guard.ts`.
+
 ## 3. Share token security
 
 - Proof pack / share routes: service-role paths validated in dedicated tests (e.g. `app/api/v1/share/proof/[token]/route.test.ts`).

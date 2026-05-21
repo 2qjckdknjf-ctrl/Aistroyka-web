@@ -94,3 +94,17 @@ CI_SIGNING_HACK=1 bash ios/scripts/run-ios-uitest-smoke-local.sh
 - Upgrade verdict to **GO_PUBLIC_CANDIDATE**.
 - Do **not** claim full GO_PUBLIC/GA until remaining P1 items are closed or explicitly accepted.
 
+## 11. Hardening artifacts added in current pass
+
+- War-room baseline lock: `docs/publication-readiness/RELEASE_WAR_ROOM_BASELINE_2026-05.md`
+- Android deferred hardening backlog: `docs/publication-readiness/ANDROID_HARDENING_BACKLOG.md`
+- AI degraded publication policy: `docs/publication-readiness/AI_DEGRADED_MODE_POLICY.md`
+- Final decision checklist: `docs/release-hardening/GO_NO_GO_COUNCIL_CHECKLIST.md`
+- Workflow assist: `.github/workflows/release-go-no-go-council.yml`
+
+## 12. Current execution status (2026-05-21)
+
+- Local release preflight is green at engineering gate level (`lint`, `test`, `cf:build`, `release:check`).
+- Stakeholder live sanity remains blocked without stakeholder credentials in shell env.
+- Council workflow dispatch remains blocked until `.github/workflows/release-go-no-go-council.yml` is available on default branch (push/merge required).
+

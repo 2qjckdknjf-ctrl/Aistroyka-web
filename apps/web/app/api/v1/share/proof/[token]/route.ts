@@ -10,6 +10,7 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { getProofPackByToken } from "@/lib/domain/proof-pack/proof-pack.service";
+import { assertCustomerFinanceSafePayload } from "@/lib/security/customer-finance-guard";
 
 export const dynamic = "force-dynamic";
 
@@ -28,5 +29,10 @@ export async function GET(_request: Request, context: { params: Promise<{ token:
   }
   const { data, error } = await getProofPackByToken(admin, token);
   if (!data) return NextResponse.json({ error: error || "Not found" }, { status: 404 });
+  const safety = assertCustomerFinanceSafePayload(data);
+  if (!safety.ok) {
+    console.error(`Blocked customer-finance leak in /api/v1/share/proof/${token}: ${safety.path ?? safety.key}`);
+    return NextResponse.json({ error: "Proof pack payload failed finance safety guard" }, { status: 500 });
+  }
   return NextResponse.json({ data });
 }
