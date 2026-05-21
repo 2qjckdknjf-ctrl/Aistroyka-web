@@ -133,6 +133,24 @@ describe("provider.router", () => {
     expect(recordSuccess).toHaveBeenCalledWith(supabase, "anthropic");
   });
 
+  it("falls back when preferred provider returns invalid_input error", async () => {
+    mockInvokeVision.mockRejectedValue(
+      new ProviderRequestError("OpenAI invalid request", "invalid_input", 400)
+    );
+    mockAnthropicInvoke.mockResolvedValue(
+      makeResult("anthropic", "claude-sonnet-4-20250514")
+    );
+
+    const result = await invokeVisionWithRouter(supabase, "https://example.com/img.jpg", {
+      maxTokens: 1024,
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.providerUsed).toBe("anthropic");
+    expect(recordFailure).toHaveBeenCalledWith(supabase, "openai");
+    expect(recordSuccess).toHaveBeenCalledWith(supabase, "anthropic");
+  });
+
   it("passes model from model tier when no explicit model", async () => {
     vi.mocked(getTenantAIPreferences).mockResolvedValue({
       modelTier: "low",
