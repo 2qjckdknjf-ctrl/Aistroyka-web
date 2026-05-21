@@ -178,7 +178,6 @@ describe("report.service task link", () => {
       } as any);
       vi.mocked(taskRepo.getById).mockResolvedValue({ id: "task-1", assigned_to: "other-user", title: "T", status: "pending" } as any);
       vi.mocked(isTaskAssignedTo).mockResolvedValue(false);
-      const submit = vi.fn().mockResolvedValue({ error: null });
       const supabase = { from: vi.fn().mockReturnValue({ update: vi.fn().mockReturnValue({ eq: vi.fn().mockReturnValue({ eq: vi.fn().mockReturnValue({ eq: vi.fn() }) }) }) }) } as any;
       const ctx = { tenantId, userId, role: "member" } as any;
       const result = await submitReport(supabase, ctx, "rpt-1", null, { taskId: "task-1" });

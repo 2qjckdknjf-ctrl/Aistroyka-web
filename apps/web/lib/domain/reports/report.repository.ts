@@ -232,6 +232,7 @@ export async function listMediaByReportId(
   reportId: string,
   _tenantId: string
 ): Promise<ReportMediaRow[]> {
+  void _tenantId;
   const { data, error } = await supabase
     .from("worker_report_media")
     .select("media_id, upload_session_id")
