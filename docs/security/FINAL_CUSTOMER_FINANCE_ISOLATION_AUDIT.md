@@ -48,7 +48,7 @@ Repo-wide `apps/web` TypeScript grep for cost/finance tokens surfaced hits in **
 **BLOCKED** — do **not** mark **PASS** until all steps below are satisfied.
 
 1. **Account:** a real **`stakeholder`** user (invited client). Current production fallback credentials resolve to **`role=admin`** (council run `26212368552`) and do **not** satisfy the stakeholder-only gate.
-2. **Council evidence:** `Release GO/NO-GO Council` run `26211837253` initially failed due missing `STAKEHOLDER_SMOKE_*` secrets; after workflow fallback merge (PR #22), runs `26212368552` and `26213133876` pass credentials but still fail on role mismatch (`admin` vs expected `stakeholder`).
+2. **Council evidence:** `Release GO/NO-GO Council` run `26211837253` initially failed due missing `STAKEHOLDER_SMOKE_*` secrets; after workflow fallback merge (PR #22), runs `26212368552`, `26213133876`, and `26219736831` pass credentials but still fail on role mismatch (`admin` vs expected `stakeholder`).
 3. **Closure command:** run `bash scripts/verify/stakeholder_finance_sanity.sh` with dedicated stakeholder credentials (`STAKEHOLDER_SMOKE_EMAIL`, `STAKEHOLDER_SMOKE_PASSWORD`). Expected: `role=stakeholder`, `portal/projects` **200** JSON, `GET/POST .../costs` → **403**, portal project JSON must not expose internal cost keys.
 
 **Repo/route tests** for cost isolation: **PASS**. **Live** stakeholder sanity: **BLOCKED** until dedicated stakeholder credentials are configured and script passes.

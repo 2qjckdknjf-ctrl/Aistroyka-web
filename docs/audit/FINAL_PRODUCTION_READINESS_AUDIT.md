@@ -93,6 +93,7 @@ Workflow assist: `.github/workflows/release-go-no-go-council.yml`
 | `26211837253` | **FAIL** | stakeholder sanity enabled, but `STAKEHOLDER_SMOKE_*` secrets absent |
 | `26212368552` | **FAIL** | stakeholder sanity received fallback credentials, script failed: `/api/v1/me role=admin`, expected `stakeholder` |
 | `26213133876` | **FAIL** | final replay after audit refresh merge: same blocker (`role=admin`, expected `stakeholder`) |
+| `26219736831` | **FAIL** | latest replay on `main`: `release:check` passed, stakeholder sanity still fails with fallback account role mismatch (`admin`, expected `stakeholder`) |
 
 Follow-up fix merged via PR #22 (`a8ee64b474ca63a1d6702332a14bb4cee3ac918d`) to allow fallback credentials, but final gate still needs dedicated stakeholder account.
 

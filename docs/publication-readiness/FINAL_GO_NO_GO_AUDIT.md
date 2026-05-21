@@ -21,7 +21,7 @@ Reason:
 | Supabase parity | CLOSED | operator-authenticated `migration list` + `db push --dry-run --linked` closure evidence (`LIVE_SUPABASE_PARITY_REPORT.md`) |
 | strict smoke | CLOSED (runtime) | production pilot-smoke job success in runs `26146584712` and `26186503554`; local strict prereq still env-blocked (`LIVE_STRICT_SMOKE_REPORT.md`) |
 | quality gate | PASS_WITH_EXTERNAL_BLOCKERS | `FINAL_QUALITY_GATE_RERUN_REPORT.md` |
-| iOS | PARTIAL | repeated UITest smoke rerun completed, but full runtime transaction proof still pending (`IOS_RUNTIME_SMOKE_REPORT.md`) |
+| iOS | PARTIAL | PR #25 stabilized manager smoke (actor-isolation fix + single-worker CI smoke + retry), but full runtime transaction proof still pending (`IOS_RUNTIME_SMOKE_REPORT.md`) |
 | Android | DEFERRED | `BUILDABLE_SHELL`; excluded from first release (`STAGE_15_ANDROID_SCOPE_LOCK_REPORT.md`) |
 | AI | PARTIAL | stream probe is proven in production runs `26188813972`, `26189062534`, `26190744467`, `26207812004`; provider-backed vision path remains degraded (`provider_unavailable`) even after deploy-time provider key injection and router failover hardening (`AI_LIVE_PROVIDER_VALIDATION_REPORT.md`) |
 | public site/contact | CLOSED | post-deploy browser verification confirms RU contact/footer localization and EN footer consistency (`LIVE_PUBLIC_SITE_LOCALE_CONTACT_REPORT.md`) |
@@ -108,6 +108,6 @@ CI_SIGNING_HACK=1 bash ios/scripts/run-ios-uitest-smoke-local.sh
 - Local release preflight is green at engineering gate level (`lint`, `test`, `cf:build`, `release:check`).
 - Council workflow is now merged and runnable on `main`.
 - Council run `26210496994` passed with stakeholder sanity disabled.
-- Council runs `26211837253`, `26212368552`, and `26213133876` failed with stakeholder sanity enabled (first: missing secrets; subsequent replays: fallback account role is `admin`, not `stakeholder`).
+- Council runs `26211837253`, `26212368552`, `26213133876`, and `26219736831` failed with stakeholder sanity enabled (first: missing secrets; subsequent replays: fallback account role is `admin`, not `stakeholder`).
 - Broad GA remains blocked until dedicated stakeholder account passes live sanity script.
 
