@@ -78,7 +78,10 @@ struct ReportsInboxView: View {
     }
 
     private func loadAsync() async {
-        await runManagerLoad(isLoading: &isLoading, errorMessage: &errorMessage) {
+        await runManagerLoad(
+            setLoading: { isLoading = $0 },
+            setErrorMessage: { errorMessage = $0 }
+        ) {
             async let reportsTask = ManagerAPI.reports(projectId: selectedProjectId, limit: 100)
             async let projectsTask = ManagerAPI.projects()
             reports = try await reportsTask
@@ -232,8 +235,8 @@ struct ReportDetailReviewView: View {
         reviewActionError = nil
         Task {
             let success = await runManagerAction(
-                isLoading: &reviewActionLoading,
-                errorMessage: &reviewActionError
+                setLoading: { reviewActionLoading = $0 },
+                setErrorMessage: { reviewActionError = $0 }
             ) {
                 report = try await ManagerAPI.reportReview(reportId: reportId, status: status, managerNote: note.isEmpty ? nil : note)
             }
@@ -255,7 +258,10 @@ struct ReportDetailReviewView: View {
     }
 
     private func loadAsync() async {
-        await runManagerLoad(isLoading: &isLoading, errorMessage: &errorMessage) {
+        await runManagerLoad(
+            setLoading: { isLoading = $0 },
+            setErrorMessage: { errorMessage = $0 }
+        ) {
             report = try await ManagerAPI.reportDetail(id: reportId)
         }
     }
