@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { createReport, submitReport, validateTaskForReportLink } from "./report.service";
+import { addMediaToReport, createReport, submitReport, validateTaskForReportLink } from "./report.service";
 import * as taskRepo from "@/lib/domain/tasks/task.repository";
 import { isTaskAssignedTo } from "@/lib/domain/task-assignments";
 import * as repo from "./report.repository";
@@ -101,6 +101,66 @@ describe("report.service task link", () => {
       expect(result.data).toBeNull();
       expect(result.code).toBe("task_not_assigned");
       expect(insert).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("addMediaToReport ownership", () => {
+    const draftReport = {
+      id: "rpt-1",
+      tenant_id: tenantId,
+      user_id: userId,
+      day_id: null,
+      status: "draft",
+      created_at: "2025-01-01T00:00:00Z",
+      submitted_at: null,
+      task_id: null,
+    } as any;
+
+    it("rejects upload sessions owned by another worker", async () => {
+      vi.mocked(repo.getById).mockResolvedValue(draftReport);
+      vi.mocked(repo.getUploadSessionForAttach).mockResolvedValue({
+        id: "session-1",
+        tenant_id: tenantId,
+        user_id: "other-worker",
+      });
+
+      const supabase = {} as any;
+      const ctx = { tenantId, userId, role: "member" } as any;
+      const result = await addMediaToReport(supabase, ctx, "rpt-1", { uploadSessionId: "session-1" });
+
+      expect(result.ok).toBe(false);
+      expect(result.error).toBe("Media not found");
+      expect(repo.addMedia).not.toHaveBeenCalled();
+    });
+
+    it("attaches upload sessions owned by the report author", async () => {
+      vi.mocked(repo.getById).mockResolvedValue(draftReport);
+      vi.mocked(repo.getUploadSessionForAttach).mockResolvedValue({
+        id: "session-1",
+        tenant_id: tenantId,
+        user_id: userId,
+      });
+      vi.mocked(repo.addMedia).mockResolvedValue(true);
+
+      const supabase = {} as any;
+      const ctx = { tenantId, userId, role: "member" } as any;
+      const result = await addMediaToReport(supabase, ctx, "rpt-1", { uploadSessionId: "session-1" });
+
+      expect(result.ok).toBe(true);
+      expect(repo.addMedia).toHaveBeenCalledWith(supabase, "rpt-1", { uploadSessionId: "session-1" });
+    });
+
+    it("rejects media ids outside the tenant", async () => {
+      vi.mocked(repo.getById).mockResolvedValue(draftReport);
+      vi.mocked(repo.mediaBelongsToTenant).mockResolvedValue(false);
+
+      const supabase = {} as any;
+      const ctx = { tenantId, userId, role: "member" } as any;
+      const result = await addMediaToReport(supabase, ctx, "rpt-1", { mediaId: "media-1" });
+
+      expect(result.ok).toBe(false);
+      expect(result.error).toBe("Media not found");
+      expect(repo.addMedia).not.toHaveBeenCalled();
     });
   });
 

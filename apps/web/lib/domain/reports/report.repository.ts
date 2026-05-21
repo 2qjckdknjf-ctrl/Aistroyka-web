@@ -78,6 +78,41 @@ export async function addMedia(
   return !error;
 }
 
+export interface AttachableUploadSessionRow {
+  id: string;
+  tenant_id: string;
+  user_id: string;
+}
+
+export async function getUploadSessionForAttach(
+  supabase: SupabaseClient,
+  sessionId: string,
+  tenantId: string
+): Promise<AttachableUploadSessionRow | null> {
+  const { data, error } = await supabase
+    .from("upload_sessions")
+    .select("id, tenant_id, user_id")
+    .eq("id", sessionId)
+    .eq("tenant_id", tenantId)
+    .maybeSingle();
+  if (error || !data) return null;
+  return data as AttachableUploadSessionRow;
+}
+
+export async function mediaBelongsToTenant(
+  supabase: SupabaseClient,
+  mediaId: string,
+  tenantId: string
+): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("media")
+    .select("id")
+    .eq("id", mediaId)
+    .eq("tenant_id", tenantId)
+    .maybeSingle();
+  return !error && Boolean(data);
+}
+
 export async function submit(
   supabase: SupabaseClient,
   reportId: string,

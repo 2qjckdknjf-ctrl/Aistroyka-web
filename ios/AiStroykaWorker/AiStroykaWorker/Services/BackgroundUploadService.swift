@@ -196,6 +196,26 @@ final class BackgroundUploadService: NSObject {
         let sec = min(pow(baseSeconds, Double(attempt)) + Double.random(in: 0...1), 300)
         return ISO8601DateFormatter().string(from: Date().addingTimeInterval(sec))
     }
+
+    private func finalizedObjectPath(for op: QueuedOperation, operationId: String) -> String {
+        if let objectPath = op.payload.objectPath, !objectPath.isEmpty {
+            return objectPath
+        }
+        let uploadPath = op.payload.uploadPath
+            ?? op.resultUploadPath
+            ?? op.dependsOn.compactMap { OperationQueueStore.shared.operation(id: $0)?.resultUploadPath }.first
+            ?? ""
+        let normalizedUploadPath: String
+        if uploadPath.hasPrefix("media/") {
+            normalizedUploadPath = uploadPath
+        } else if uploadPath.isEmpty {
+            normalizedUploadPath = "media"
+        } else {
+            normalizedUploadPath = "media/\(uploadPath)"
+        }
+        let photoItemId = op.payload.photoItemId ?? String(operationId.prefix(8))
+        return "\(normalizedUploadPath)/\(photoItemId.prefix(8)).jpg"
+    }
 }
 
 extension BackgroundUploadService: URLSessionDelegate {
@@ -233,11 +253,7 @@ extension BackgroundUploadService: URLSessionTaskDelegate {
             mappingStore.remove(taskIdentifier: taskId)
             return
         }
-        let pathInBucket = op.payload.uploadPath ?? ""
-        let path = pathInBucket.hasPrefix("media/") ? String(pathInBucket.dropFirst(6)) : pathInBucket
-        let photoItemId = op.payload.photoItemId ?? String(operationId.prefix(8))
-        let filename = "\(photoItemId).jpg"
-        let objectPath = "media/\(path)/\(filename)"
+        let objectPath = finalizedObjectPath(for: op, operationId: operationId)
         let sizeBytes = op.payload.sizeBytes ?? 0
         markUploadSucceeded(operationId: operationId, taskId: taskId, objectPath: objectPath, sizeBytes: sizeBytes)
     }

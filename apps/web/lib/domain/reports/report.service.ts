@@ -60,6 +60,14 @@ export async function addMediaToReport(
   if (!report) return { ok: false, error: "Report not found" };
   if (report.user_id !== ctx.userId) return { ok: false, error: "Not your report" };
   if (report.status !== "draft") return { ok: false, error: "Report already submitted" };
+  if (opts.uploadSessionId) {
+    const session = await repo.getUploadSessionForAttach(supabase, opts.uploadSessionId, ctx.tenantId);
+    if (!session || session.user_id !== ctx.userId) return { ok: false, error: "Media not found" };
+  }
+  if (opts.mediaId) {
+    const mediaOk = await repo.mediaBelongsToTenant(supabase, opts.mediaId, ctx.tenantId);
+    if (!mediaOk) return { ok: false, error: "Media not found" };
+  }
   const ok = await repo.addMedia(supabase, reportId, opts);
   return { ok, error: ok ? "" : "Failed to add media" };
 }
