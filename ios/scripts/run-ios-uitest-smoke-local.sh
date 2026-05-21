@@ -24,6 +24,8 @@ run_smoke_test() {
     -project "$project" \
     -scheme "$scheme" \
     -destination "$DEST" \
+    -parallel-testing-enabled NO \
+    -maximum-parallel-testing-workers 1 \
     -only-testing:"$test_target" \
     "${SIGN[@]}"
 }
