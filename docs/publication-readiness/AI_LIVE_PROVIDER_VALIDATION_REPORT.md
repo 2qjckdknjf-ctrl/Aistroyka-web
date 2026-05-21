@@ -125,6 +125,11 @@ Repository secret inventory check (`gh secret list`) confirms:
 
 **PARTIAL / BLOCKED_EXTERNAL_FOR_FULL_PROVIDER_PATH**
 
+## GA stance
+
+- For broad GA, this remains a P1 blocker unless explicitly accepted as `GO WITH EXCEPTIONS`.
+- Current recommended production posture: keep AI provider-backed vision under degraded/beta labeling per policy until non-fallback success is proven.
+
 ## Publication policy linkage
 
 Until full provider-backed success is proven, publish AI capabilities under degraded policy:

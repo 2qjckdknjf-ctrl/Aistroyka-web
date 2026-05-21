@@ -20,6 +20,15 @@
 3. **Alert transport**: health/log signals exist, but escalation transport is external and must be operator-wired.
 4. **Android production readiness**: deferred track requires separate CI/runtime hardening.
 
+## P2 closure windows (target)
+
+| P2 item | Target window | Owner |
+|---|---|---|
+| Rollback automation rehearsal (manual runbook quality) | +2 weeks after GA decision | TBD |
+| Migration workflow parity (CI/apply governance) | +3 weeks after GA decision | TBD |
+| Alert transport wiring (Slack/PagerDuty/webhook) | +1 week after GA decision | TBD |
+| Android deferred backlog re-baseline | +4 weeks after GA decision | TBD |
+
 ## Workstream owners (to be assigned in war room kickoff)
 
 | Workstream | Deliverable | Owner |

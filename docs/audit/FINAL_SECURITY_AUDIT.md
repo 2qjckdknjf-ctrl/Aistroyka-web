@@ -55,6 +55,14 @@ Guard implementation: `apps/web/lib/security/customer-finance-guard.ts`.
 - **`/api/v1/system/health`:** **503/401** JSON policy without secrets (see §4).
 - **E2E:** pilot was **FAIL** on 2026-05-08; **FirstLaunchGuide** overlay + **core-flow** route/assertions addressed in repo — **retest** before claiming regression closure.
 
+## Council replay snapshot (2026-05-21)
+
+- `Release GO/NO-GO Council` run `26210496994`: **PASS** with `run_stakeholder_sanity=false`.
+- `Release GO/NO-GO Council` run `26211837253`: **FAIL** — stakeholder secrets missing.
+- `Release GO/NO-GO Council` run `26212368552`: **FAIL** — credentials present, but `/api/v1/me` returns `role=admin` (expected `stakeholder`).
+
+**Security implication:** customer-finance live sanity remains **open** until dedicated stakeholder credentials are provisioned and the sanity script passes on production.
+
 ## References
 
 - `docs/security/threat-model.md`, `data-flow.md`

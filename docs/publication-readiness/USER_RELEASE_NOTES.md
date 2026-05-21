@@ -14,6 +14,7 @@
 - Local strict smoke prereq checks require environment credentials (runtime pipeline smoke is passing).
 - AI provider full path depends on runtime availability; deterministic fallback is currently active and validated.
 - AI behavior is released under degraded/beta policy until provider-backed closure (`docs/publication-readiness/AI_DEGRADED_MODE_POLICY.md`).
+- Stakeholder finance live sanity gate is still open because current production smoke credentials resolve to an internal admin role, not a dedicated stakeholder test user.
 - iOS runtime smoke is partially closed (targeted login-screen UITest evidence); full transaction chain remains pending.
 - Full browser-level visual locale QA remains manual and is not fully closed by HTTP probes alone.
 

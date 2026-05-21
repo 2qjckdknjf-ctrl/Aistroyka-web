@@ -49,4 +49,5 @@
 
 - Current: **BUILD_VERIFIED_RUNTIME_PENDING**.
 - iOS cannot be marked full pilot-ready until runtime smoke items above are closed with evidence.
+- Latest local rerun (2026-05-21) showed manager UITest runner crash (`signal kill`, exit code 65), so stability gate is still open.
 
