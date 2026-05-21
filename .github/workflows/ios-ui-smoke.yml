@@ -53,13 +53,26 @@ jobs:
             CODE_SIGNING_REQUIRED=NO
 
       - name: AiStroykaManager UI smoke
+        timeout-minutes: 20
         run: |
           set -eo pipefail
-          xcodebuild test \
-            -project ios/AiStroykaManager/AiStroykaManager.xcodeproj \
-            -scheme AiStroykaManager \
-            -destination '${{ steps.sim.outputs.destination }}' \
-            -only-testing:AiStroykaManagerUITests/ManagerSmokeUITests/testLoginScreen_reachableWithPilotIdentifiers \
-            SWIFT_STRICT_CONCURRENCY=minimal \
-            CODE_SIGN_IDENTITY=- \
-            CODE_SIGNING_REQUIRED=NO
+          run_manager_smoke() {
+            xcodebuild test \
+              -project ios/AiStroykaManager/AiStroykaManager.xcodeproj \
+              -scheme AiStroykaManager \
+              -destination '${{ steps.sim.outputs.destination }}' \
+              -only-testing:AiStroykaManagerUITests/ManagerSmokeUITests/testLoginScreen_reachableWithPilotIdentifiers \
+              SWIFT_STRICT_CONCURRENCY=minimal \
+              CODE_SIGN_IDENTITY=- \
+              CODE_SIGNING_REQUIRED=NO
+          }
+
+          if ! run_manager_smoke; then
+            echo "Manager smoke failed; retrying once after simulator reboot"
+            UDID='${{ steps.sim.outputs.destination }}'
+            UDID="${UDID#id=}"
+            xcrun simctl shutdown "$UDID" || true
+            xcrun simctl boot "$UDID" || true
+            sleep 5
+            run_manager_smoke
+          fi
