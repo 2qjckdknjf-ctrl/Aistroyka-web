@@ -263,7 +263,7 @@
 ### Stage K — Final Quality Gate Rerun
 - Status: PASS_WITH_EXTERNAL_BLOCKERS
 - Report: `docs/publication-readiness/FINAL_QUALITY_GATE_RERUN_REPORT.md`
-- Commit hash: `bc7fcd43` (latest rerun)
+- Commit hash: `bc7fcd43` (initial rerun) + max continuation rerun (`bun run test/build/cf:build` all PASS)
 
 ### Stage L — Final Audit Refresh
 - Status: CLOSED
@@ -286,6 +286,8 @@
 - `88ad49b1` — stage-live(ai): sync provider secrets during prod deploy (attempt, replaced by versions-safe approach)
 - `ce9ade46` — fix(ci): use wrangler versions secret put for ai keys
 - `4982b467` — fix(ci): inject ai provider vars into production deploy
+- `e00a64e0` — fix(ai): keep provider fallback chain on non-retryable errors
+- `2a9a64a3` — stage-live(audit): record ai router hardening revalidation evidence
 
 ## Current global verdict
 
