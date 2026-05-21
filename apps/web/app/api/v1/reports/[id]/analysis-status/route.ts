@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { getById as getReportById } from "@/lib/domain/reports/report.repository";
+import { canReviewReport } from "@/lib/domain/reports/report.policy";
+import { isLiteWorkerClient } from "@/lib/tenant/client-profile";
 import * as jobRepo from "@/lib/platform/jobs/job.repository";
 
 export const dynamic = "force-dynamic";
@@ -26,6 +28,13 @@ export async function GET(
   const supabase = await createClient();
   const report = await getReportById(supabase, reportId, ctx.tenantId!);
   if (!report) return NextResponse.json({ error: "Report not found" }, { status: 404 });
+  if (isLiteWorkerClient(ctx)) {
+    if (report.user_id !== ctx.userId) {
+      return NextResponse.json({ error: "Report not found" }, { status: 404 });
+    }
+  } else if (!canReviewReport(ctx) && report.user_id !== ctx.userId) {
+    return NextResponse.json({ error: "Report not found" }, { status: 404 });
+  }
 
   const admin = (await import("@/lib/supabase/admin")).getAdminClient();
   const client = admin ?? supabase;
