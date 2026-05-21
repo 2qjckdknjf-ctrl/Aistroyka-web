@@ -108,6 +108,6 @@ CI_SIGNING_HACK=1 bash ios/scripts/run-ios-uitest-smoke-local.sh
 - Local release preflight is green at engineering gate level (`lint`, `test`, `cf:build`, `release:check`).
 - Council workflow is now merged and runnable on `main`.
 - Council run `26210496994` passed with stakeholder sanity disabled.
-- Council runs `26211837253`, `26212368552`, `26213133876`, and `26219736831` failed with stakeholder sanity enabled (first: missing secrets; subsequent replays: fallback account role is `admin`, not `stakeholder`).
+- Council runs `26211837253`, `26212368552`, `26213133876`, `26219736831`, and `26226853236` failed with stakeholder sanity enabled (first: missing secrets; subsequent replays: fallback account role is `admin`, not `stakeholder`).
 - Broad GA remains blocked until dedicated stakeholder account passes live sanity script.
 
