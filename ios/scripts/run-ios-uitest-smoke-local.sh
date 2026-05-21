@@ -15,18 +15,36 @@ if [[ "${CI_SIGNING_HACK:-}" == "1" ]]; then
   SIGN=(CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO)
 fi
 
-xcodebuild test \
-  -project "$IOS_ROOT/AiStroykaWorker/AiStroykaWorker.xcodeproj" \
-  -scheme AiStroykaWorker \
-  -destination "$DEST" \
-  -only-testing:AiStroykaWorkerUITests/WorkerSmokeUITests/testLoginScreen_reachableWithPilotIdentifiers \
-  "${SIGN[@]}"
+run_smoke_test() {
+  local project="$1"
+  local scheme="$2"
+  local test_target="$3"
 
-xcodebuild test \
-  -project "$IOS_ROOT/AiStroykaManager/AiStroykaManager.xcodeproj" \
-  -scheme AiStroykaManager \
-  -destination "$DEST" \
-  -only-testing:AiStroykaManagerUITests/ManagerSmokeUITests/testLoginScreen_reachableWithPilotIdentifiers \
-  "${SIGN[@]}"
+  xcodebuild test \
+    -project "$project" \
+    -scheme "$scheme" \
+    -destination "$DEST" \
+    -only-testing:"$test_target" \
+    "${SIGN[@]}"
+}
+
+run_smoke_test \
+  "$IOS_ROOT/AiStroykaWorker/AiStroykaWorker.xcodeproj" \
+  "AiStroykaWorker" \
+  "AiStroykaWorkerUITests/WorkerSmokeUITests/testLoginScreen_reachableWithPilotIdentifiers"
+
+if ! run_smoke_test \
+  "$IOS_ROOT/AiStroykaManager/AiStroykaManager.xcodeproj" \
+  "AiStroykaManager" \
+  "AiStroykaManagerUITests/ManagerSmokeUITests/testLoginScreen_reachableWithPilotIdentifiers"; then
+  echo "Manager smoke failed; retrying once after simulator reboot..."
+  xcrun simctl shutdown "$UDID" || true
+  xcrun simctl boot "$UDID" || true
+  sleep 5
+  run_smoke_test \
+    "$IOS_ROOT/AiStroykaManager/AiStroykaManager.xcodeproj" \
+    "AiStroykaManager" \
+    "AiStroykaManagerUITests/ManagerSmokeUITests/testLoginScreen_reachableWithPilotIdentifiers"
+fi
 
 echo "OK — Worker and Manager UITest smoke passed."
