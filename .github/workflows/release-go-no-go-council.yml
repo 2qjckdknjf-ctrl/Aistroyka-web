@@ -40,8 +40,8 @@ jobs:
         if: ${{ inputs.run_stakeholder_sanity }}
         env:
           STAKEHOLDER_FINANCE_BASE_URL: ${{ inputs.base_url }}
-          STAKEHOLDER_SMOKE_EMAIL: ${{ secrets.STAKEHOLDER_SMOKE_EMAIL }}
-          STAKEHOLDER_SMOKE_PASSWORD: ${{ secrets.STAKEHOLDER_SMOKE_PASSWORD }}
+          STAKEHOLDER_SMOKE_EMAIL: ${{ secrets.STAKEHOLDER_SMOKE_EMAIL || secrets.PILOT_SMOKE_EMAIL_PRODUCTION }}
+          STAKEHOLDER_SMOKE_PASSWORD: ${{ secrets.STAKEHOLDER_SMOKE_PASSWORD || secrets.PILOT_SMOKE_PASSWORD_PRODUCTION }}
         run: bash scripts/verify/stakeholder_finance_sanity.sh
 
       - name: Verify council docs exist
