@@ -73,7 +73,10 @@ struct ProjectDetailView: View {
     }
 
     private func loadAsync() async {
-        await runManagerLoad(isLoading: &isLoading, errorMessage: &errorMessage) {
+        await runManagerLoad(
+            setLoading: { isLoading = $0 },
+            setErrorMessage: { errorMessage = $0 }
+        ) {
             async let projectTask = ManagerAPI.projectDetail(id: projectId)
             async let summaryTask = ManagerAPI.projectSummary(projectId: projectId)
             project = try await projectTask
@@ -133,7 +136,10 @@ struct ProjectAIView: View {
     }
 
     private func loadAsync() async {
-        await runManagerLoad(isLoading: &isLoading, errorMessage: &errorMessage) {
+        await runManagerLoad(
+            setLoading: { isLoading = $0 },
+            setErrorMessage: { errorMessage = $0 }
+        ) {
             jobs = try await ManagerAPI.projectAi(projectId: projectId, limit: 50)
         }
     }
@@ -205,7 +211,10 @@ struct TasksListForProjectView: View {
     }
 
     private func loadAsync() async {
-        await runManagerLoad(isLoading: &isLoading, errorMessage: &errorMessage) {
+        await runManagerLoad(
+            setLoading: { isLoading = $0 },
+            setErrorMessage: { errorMessage = $0 }
+        ) {
             tasks = try await ManagerAPI.tasks(projectId: projectId, limit: 100)
         }
     }
@@ -254,7 +263,10 @@ struct ReportsInboxForProjectView: View {
     }
 
     private func loadAsync() async {
-        await runManagerLoad(isLoading: &isLoading, errorMessage: &errorMessage) {
+        await runManagerLoad(
+            setLoading: { isLoading = $0 },
+            setErrorMessage: { errorMessage = $0 }
+        ) {
             reports = try await ManagerAPI.reports(projectId: projectId, limit: 100)
         }
     }

@@ -49,7 +49,10 @@ struct TeamOverviewView: View {
     }
 
     private func loadAsync() async {
-        await runManagerLoad(isLoading: &isLoading, errorMessage: &errorMessage) {
+        await runManagerLoad(
+            setLoading: { isLoading = $0 },
+            setErrorMessage: { errorMessage = $0 }
+        ) {
             workers = try await ManagerAPI.workers(limit: 200)
         }
     }

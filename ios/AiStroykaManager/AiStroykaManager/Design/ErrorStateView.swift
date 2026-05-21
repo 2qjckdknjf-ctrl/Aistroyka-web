@@ -32,39 +32,39 @@ struct ErrorStateView: View {
 
 @MainActor
 func runManagerLoad(
-    isLoading: inout Bool,
-    errorMessage: inout String?,
+    setLoading: @MainActor (Bool) -> Void,
+    setErrorMessage: @MainActor (String?) -> Void,
     operation: () async throws -> Void
 ) async {
-    errorMessage = nil
-    isLoading = true
-    defer { isLoading = false }
+    setErrorMessage(nil)
+    setLoading(true)
+    defer { setLoading(false) }
     do {
         try await operation()
     } catch let apiError as APIError {
-        errorMessage = apiError.message
+        setErrorMessage(apiError.message)
     } catch {
-        errorMessage = error.localizedDescription
+        setErrorMessage(error.localizedDescription)
     }
 }
 
 @MainActor
 @discardableResult
 func runManagerAction(
-    isLoading: inout Bool,
-    errorMessage: inout String?,
+    setLoading: @MainActor (Bool) -> Void,
+    setErrorMessage: @MainActor (String?) -> Void,
     operation: () async throws -> Void
 ) async -> Bool {
-    errorMessage = nil
-    isLoading = true
-    defer { isLoading = false }
+    setErrorMessage(nil)
+    setLoading(true)
+    defer { setLoading(false) }
     do {
         try await operation()
         return true
     } catch let apiError as APIError {
-        errorMessage = apiError.message
+        setErrorMessage(apiError.message)
     } catch {
-        errorMessage = error.localizedDescription
+        setErrorMessage(error.localizedDescription)
     }
     return false
 }
