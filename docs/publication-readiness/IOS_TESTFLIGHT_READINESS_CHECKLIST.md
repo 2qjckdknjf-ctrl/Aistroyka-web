@@ -26,6 +26,12 @@
 - [ ] Manager report review approve/reject/request changes verified.
 - [ ] Manager documents/costs screens verified for pilot scope.
 
+## Runtime evidence package (required for closure)
+
+- [ ] One artifact set per flow (video or step-by-step log + timestamp + build SHA).
+- [ ] Evidence references added to `docs/publication-readiness/IOS_RUNTIME_SMOKE_REPORT.md`.
+- [ ] Cross-role chain explicitly proven: worker submit -> manager review -> worker resubmit.
+
 ## Notifications and permissions
 
 - [x] Worker has camera/photo usage descriptions in `Info.plist`.

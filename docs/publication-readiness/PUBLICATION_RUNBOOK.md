@@ -46,6 +46,8 @@ Current evidence snapshot:
 - BuildStamp proof: closed in live production (`LIVE_BUILDSTAMP_VERIFICATION_REPORT.md`).
 - System guard deny-path: closed; allow-path with real key still requires operator-local key execution.
 - Latest deny-path rerun (2026-05-20): `401` for both `no key` and `wrong key`.
+- Stakeholder finance isolation sanity must be replayed on target host before any GA claim:
+  `bash scripts/verify/stakeholder_finance_sanity.sh`
 
 ## 4. Smoke verification
 
@@ -119,11 +121,22 @@ Current runtime truth:
 
 - automated smoke script passes at login-screen coverage level.
 - full transaction (worker submit + manager approve/reject/resubmit) is still manual and pending evidence.
+- release approval must reference:
+  - `docs/mobile-ios/IOS_E2E_VALIDATION_REPORT.md`
+  - `docs/publication-readiness/IOS_TESTFLIGHT_READINESS_CHECKLIST.md`
 
 ## 8. Android exclusion/deferred policy
 
 - Android classification is `BUILDABLE_SHELL`.
 - Do not include Android in launch announcement, onboarding promises, or support matrix.
+- Deferred hardening track: `docs/publication-readiness/ANDROID_HARDENING_BACKLOG.md`
+
+## 8.1 AI degraded-mode policy
+
+- If provider-backed AI path is still partial, ship AI with degraded/beta labeling only.
+- Policy and wording source:
+  - `docs/publication-readiness/AI_DEGRADED_MODE_POLICY.md`
+  - `docs/publication-readiness/USER_RELEASE_NOTES.md`
 
 ## 9. Rollback path
 
@@ -141,4 +154,11 @@ Priority incidents:
 3. Manager review queue failures.
 4. Cloudflare deploy drift (`buildStamp` mismatch).
 5. Supabase migration/auth parity drift.
+
+## 11. Final release decision gate
+
+- Mandatory council checklist:
+  - `docs/release-hardening/GO_NO_GO_COUNCIL_CHECKLIST.md`
+- Optional execution helper workflow:
+  - `.github/workflows/release-go-no-go-council.yml`
 

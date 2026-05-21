@@ -54,4 +54,19 @@ describe("GET /api/v1/share/proof/:token", () => {
     const body = await res.json();
     expect(body.data.project.name).toBe("House");
   });
+
+  it("returns 500 when payload contains forbidden internal finance keys", async () => {
+    vi.mocked(admin.getAdminClient).mockReturnValue({} as never);
+    vi.mocked(proofPackService.getProofPackByToken).mockResolvedValue({
+      data: {
+        generated_at: "2026-01-01",
+        project: { id: "p1", name: "House", margin: 33 },
+      } as never,
+      error: "",
+    });
+    const res = await GET(new Request("https://test/api/v1/share/proof/tok"), {
+      params: Promise.resolve({ token: "tok" }),
+    });
+    expect(res.status).toBe(500);
+  });
 });

@@ -22,6 +22,12 @@ curl -sS https://your-app.com/api/health/auth  # with cookie or session
 # curl -X POST -H "x-cron-secret: $CRON_SECRET" https://your-app.com/api/v1/admin/jobs/cron-tick
 ```
 
+Recommended publication sanity command:
+
+```bash
+bash scripts/verify/stakeholder_finance_sanity.sh
+```
+
 ## Rollback triggers
 
 - Error rate >X% for >15 min → consider rollback.
@@ -34,3 +40,7 @@ curl -sS https://your-app.com/api/health/auth  # with cookie or session
 2. **P1:** Cron not running; jobs stuck; uploads failing; AI down.
 3. **P2:** Single-tenant; slow; non-critical feature.
 4. **P3:** Cosmetic; i18n; minor UX.
+
+## Final publication decision checkpoint
+
+- Use `docs/release-hardening/GO_NO_GO_COUNCIL_CHECKLIST.md` before any broad GA claim.

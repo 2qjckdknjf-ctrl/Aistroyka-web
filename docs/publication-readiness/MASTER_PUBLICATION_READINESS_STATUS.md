@@ -3,6 +3,7 @@
 ## Sprint branch
 
 - `release/publication-readiness-mega-sprint`
+- War-room baseline lock: `docs/publication-readiness/RELEASE_WAR_ROOM_BASELINE_2026-05.md`
 
 ## Stage timeline
 

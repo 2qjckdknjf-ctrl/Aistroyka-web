@@ -9,7 +9,7 @@
 
 | Target | Trigger | Build | Deploy command (from `apps/web`) |
 |--------|---------|-------|----------------------------------|
-| **Staging** | Push to `develop` | `bun run cf:build` | `npx wrangler deploy --env staging --config wrangler.toml` |
+| **Staging** | Push to `main` | `bun run cf:build` | `npx wrangler deploy --env staging --no-bundle --config wrangler.deploy.toml` (after dry-run + `patch-bundle-require.cjs`) |
 | **Production** | Push to `main` or `workflow_dispatch` (optional `ref`) | Same + patch step for production bundle | `npx wrangler deploy --env production --no-bundle --config wrangler.deploy.toml` (after dry-run + `patch-bundle-require.cjs`) |
 
 - Worker names (as logged in workflows): staging worker from `[env.staging]` in `wrangler.toml`; production expected `aistroyka-web-production`.
@@ -19,10 +19,12 @@
 
 ## 2. Migration apply path (current)
 
-- Workflow: `.github/workflows/apply-migrations.yml` — **`workflow_dispatch` only**.
-- Steps: checkout → migration sanity → Supabase CLI link → `migration list` → **`db push --dry-run`** → **`db push --yes`** (real apply).
-- Targets: `staging` / `production` via input; secrets per GitHub Environment (`SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`).
-- **There is no repo workflow to “roll back” migrations.** Supabase/Postgres does not get an automatic down-migration from this repo.
+- There is currently **no canonical repo workflow** for migration apply.
+- Current operator path is manual:
+  - `supabase migration list`
+  - `supabase db push --dry-run --linked`
+  - `supabase db push --linked` (explicit operator decision)
+- **There is no automated migration rollback** in repo workflows. Recovery stays fix-forward or PITR (operator + Supabase).
 
 ---
 
@@ -38,7 +40,7 @@
 
 | Layer | What exists | What does **not** exist |
 |-------|-------------|-------------------------|
-| **Web (Cloudflare)** | Redeploy by pushing **revert** or older commit to `main`/`develop`, or prod **`workflow_dispatch`** with `ref` pointing at a known-good SHA/branch | One-click “rollback to last release” in repo; no stored golden artifact in CI |
+| **Web (Cloudflare)** | Redeploy by pushing **revert** or older commit to `main`, or prod/staging **`workflow_dispatch`** with `ref` pointing at a known-good SHA/branch | One-click “rollback to last release” in repo; no stored golden artifact in CI |
 | **DB** | Fix-forward migrations; operator-driven **Supabase backup / PITR** per plan (see `docs/security/backup-restore.md`) | Automatic reverse migration; `supabase db pull` as rollback |
 | **CI** | Failed deploy job → previous worker unchanged on that env (if deploy step never completed) | Smoke failure does not auto-revert worker |
 
@@ -68,7 +70,7 @@
 
 ## 7. Known-good deployment identifier
 
-- **Web:** Last known-good is a **commit SHA** (or branch/tag pointing to it) on `main` (prod) or `develop` (staging). No CI-stored “golden” deployment ID; operator uses git history and Actions run list to identify the SHA to revert to or to pass as `ref` in workflow_dispatch.
+- **Web:** Last known-good is a **commit SHA** (or branch/tag pointing to it) on `main` (prod and staging deploy workflows). No CI-stored “golden” deployment ID; operator uses git history and Actions run list to identify the SHA to revert to or to pass as `ref` in workflow_dispatch.
 - **DB:** Migration history is in Supabase; no single “version” token in repo. Use `supabase migration list` and A1 runbook to align.
 
 ---

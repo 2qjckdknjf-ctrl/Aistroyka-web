@@ -24,6 +24,7 @@ Phase 9 is **closed for documentation + layer A** once this file exists and CI i
 - **Tests:**
   - `AiStroykaWorkerUITests/WorkerSmokeUITests/testLoginScreen_reachableWithPilotIdentifiers`
   - `AiStroykaManagerUITests/ManagerSmokeUITests/testLoginScreen_reachableWithPilotIdentifiers`
+- **Gate policy:** manager smoke is blocking in CI (no `continue-on-error`).
 - **Signing:** `CODE_SIGN_IDENTITY=-`, `CODE_SIGNING_REQUIRED=NO` (fork-friendly).
 
 ### Local (same tests as CI)
@@ -36,6 +37,7 @@ CI_SIGNING_HACK=1 bash ios/scripts/run-ios-uitest-smoke-local.sh
 See `ios/README.md`.
 
 **Logged local run (Layer A):** 2026-05-19 — `CI_SIGNING_HACK=1 bash ios/scripts/run-ios-uitest-smoke-local.sh` — **PASS** (both `WorkerSmokeUITests` and `ManagerSmokeUITests` login-surface tests; ~6.5 min on maintainer machine).
+**Latest rerun:** 2026-05-21 — `CI_SIGNING_HACK=1 bash ios/scripts/run-ios-uitest-smoke-local.sh` — **PASS** (login-surface coverage remains stable; full runtime transaction chain still pending Layer B).
 
 ### Limits of layer A
 

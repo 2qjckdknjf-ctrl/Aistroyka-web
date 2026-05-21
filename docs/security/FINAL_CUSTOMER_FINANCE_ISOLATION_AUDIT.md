@@ -16,6 +16,7 @@
 | Owner can see only estimates sent to owner | `customer-estimates` / portal shaping; see `customer-estimates.service.test.ts` and portal routes. |
 | Share proof does not include internal finance | `getProofPackByToken` shape — e.g. `approved_commercial_changes`, no cost line items. **Test:** `share/proof/[token]/route.test.ts` + `proof-pack.service.test.ts` as applicable. |
 | Owner digest excludes internal finance | **PASS** architecturally — `docs/security/PHASE7_DIGEST_FINANCE_ISOLATION_AUDIT.md`; tests in `daily-digest.service.test.ts`. |
+| Customer-facing routes fail-closed on forbidden finance keys | `assertCustomerFinanceSafePayload` guard applied in `/api/v1/portal/projects/:id` and `/api/v1/share/proof/:token`; route tests assert **500** on forbidden payload keys. |
 
 ## Historical phase audits (context)
 

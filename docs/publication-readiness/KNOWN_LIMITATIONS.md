@@ -5,6 +5,7 @@
 - Android is **not** part of first release scope.
 - Current classification: `BUILDABLE_SHELL`.
 - Build passes do not equal product-readiness claim.
+- Deferred hardening track is documented in `docs/publication-readiness/ANDROID_HARDENING_BACKLOG.md`.
 
 ## iOS status
 
@@ -27,6 +28,7 @@
 
 - Repo-level tests cover these modules, but live environment proof still depends on operator credentials and runtime smoke.
 - AI provider full-path remains unstable/unproven in this run (`provider_unavailable`); graceful fallback is validated.
+- Degraded-mode publication policy is tracked in `docs/publication-readiness/AI_DEGRADED_MODE_POLICY.md`.
 
 ## Live smoke limitations
 
