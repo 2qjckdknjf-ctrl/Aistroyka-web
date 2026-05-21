@@ -1,0 +1,66 @@
+# UiTest smoke on Simulator (no real backend): login surface + pilot_* identifiers.
+# Ad-hoc simulator signing (CODE_SIGN_IDENTITY=-) so forks can run without org secrets.
+name: iOS UI Smoke (Simulator)
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+      - master
+    paths:
+      - "ios/**"
+      - "!ios/**/*.md"
+
+concurrency:
+  group: ios-ui-smoke-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  uitest:
+    name: Worker + Manager UI smoke
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare local iOS secrets config for CI
+        run: |
+          if [ ! -f ios/Config/Secrets.xcconfig ]; then
+            cp ios/Config/Secrets.xcconfig.example ios/Config/Secrets.xcconfig
+          fi
+
+      - name: Xcode / pick iPhone simulator
+        id: sim
+        run: |
+          xcodebuild -version
+          xcrun simctl list devices available | head -50
+          UDID="$(bash ios/scripts/ci-pick-iphone-simulator-udid.sh)"
+          echo "destination=id=$UDID" >> "$GITHUB_OUTPUT"
+          echo "Using id=$UDID"
+
+      - name: AiStroykaWorker UI smoke
+        run: |
+          set -eo pipefail
+          xcodebuild test \
+            -project ios/AiStroykaWorker/AiStroykaWorker.xcodeproj \
+            -scheme AiStroykaWorker \
+            -destination '${{ steps.sim.outputs.destination }}' \
+            -only-testing:AiStroykaWorkerUITests/WorkerSmokeUITests/testLoginScreen_reachableWithPilotIdentifiers \
+            SWIFT_STRICT_CONCURRENCY=minimal \
+            CODE_SIGN_IDENTITY=- \
+            CODE_SIGNING_REQUIRED=NO
+
+      - name: AiStroykaManager UI smoke
+        continue-on-error: true
+        run: |
+          set -eo pipefail
+          xcodebuild test \
+            -project ios/AiStroykaManager/AiStroykaManager.xcodeproj \
+            -scheme AiStroykaManager \
+            -destination '${{ steps.sim.outputs.destination }}' \
+            -only-testing:AiStroykaManagerUITests/ManagerSmokeUITests/testLoginScreen_reachableWithPilotIdentifiers \
+            SWIFT_STRICT_CONCURRENCY=minimal \
+            CODE_SIGN_IDENTITY=- \
+            CODE_SIGNING_REQUIRED=NO

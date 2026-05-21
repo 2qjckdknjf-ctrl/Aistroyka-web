@@ -30,6 +30,11 @@ struct ManagerMoreView: View {
                     }
                 }
                 Section(NSLocalizedString("mgr_section_app", comment: "")) {
+                    NavigationLink {
+                        ManagerHowItWorksView()
+                    } label: {
+                        Label(NSLocalizedString("mgr_more_how_it_works", comment: ""), systemImage: "questionmark.circle")
+                    }
                     NavigationLink(NSLocalizedString("mgr_settings", comment: ""), value: ManagerMoreDestination.settings)
                     NavigationLink(NSLocalizedString("mgr_notifications", comment: ""), value: ManagerMoreDestination.notifications)
                 }

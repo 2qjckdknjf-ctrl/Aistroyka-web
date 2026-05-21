@@ -47,6 +47,7 @@
 "mgr_api" = "API";
 "mgr_app_version" = "Versión de la app";
 "mgr_approve" = "Aprobar";
+"mgr_reject" = "Rechazar";
 "mgr_assign_section" = "Asignación";
 "mgr_assign_to" = "Asignar a";
 "mgr_assign_to_worker" = "Asignar al operario";
@@ -87,8 +88,11 @@
 "mgr_loading_team" = "Cargando equipo…";
 "mgr_loading_workers" = "Cargando operarios…";
 "mgr_manager_note" = "Nota del manager";
+"mgr_worker_note" = "Nota del trabajador";
 "mgr_mark_reviewed" = "Marcar como revisado";
 "mgr_media_count_fmt" = "Medios (%d)";
+"mgr_evidence_load_failed_fmt" = "No se pudo cargar la foto %d.";
+"mgr_evidence_no_preview_fmt" = "Foto %d: vista previa no disponible (id: %@).";
 "mgr_media_fmt" = "Medios: %@";
 "mgr_name" = "Nombre";
 "mgr_new" = "Nueva";
@@ -113,6 +117,8 @@
 "mgr_no_workers_title" = "Aún no hay operarios";
 "mgr_not_signed_in" = "No has iniciado sesión";
 "mgr_note_optional" = "Nota (opcional)";
+"mgr_report_review_note_label" = "Nota: obligatoria al rechazar o pedir cambios; opcional al aprobar.";
+"mgr_note_required_reject_or_changes" = "Escribe una nota antes de rechazar o pedir cambios.";
 "mgr_notification" = "Notificación";
 "mgr_notifications_placeholder" = "Notificaciones — vista provisional";
 "mgr_open_reports" = "Informes abiertos";
@@ -168,3 +174,18 @@
 "mgr_ai_hint_2" = "Si hay retrasos en informes, escala bloqueos en el canal del equipo.";
 "mgr_ai_guide_confidence_fmt" = "Confianza de la guía IA: %d%%";
 "mgr_ai_risk_signals_title" = "Señales de riesgo";
+"mgr_onboard_p1_title" = "Proyectos y equipo";
+"mgr_onboard_p1_body" = "Consulta proyectos, detalles y resúmenes, y supervisa tareas y actividad en campo.";
+"mgr_onboard_p2_title" = "Bandeja de informes";
+"mgr_onboard_p2_body" = "Los informes del equipo de obra aparecen en Informes. Abre uno para ver estado, notas y referencias de evidencia.";
+"mgr_onboard_p3_title" = "Revisión y decisiones";
+"mgr_onboard_p3_body" = "Aprueba, rechaza o pide cambios con una nota clara. El inicio muestra riesgos y colas.";
+"mgr_onboard_continue" = "Continuar para iniciar sesión";
+"mgr_onboard_next" = "Siguiente";
+"mgr_how_title" = "Cómo funciona";
+"mgr_how_bullet_1" = "Proyectos: alcance, tareas y resúmenes.";
+"mgr_how_bullet_2" = "Informes: cola, filtro por proyecto, lectura de cada envío.";
+"mgr_how_bullet_3" = "Evidencia: vista previa de fotos en el detalle del informe cuando hay URL disponibles.";
+"mgr_how_bullet_4" = "Acciones: aprobar, rechazar o pedir cambios—con nota si necesitas correcciones.";
+"mgr_how_bullet_5" = "Inicio: retrasos, pendientes de aprobación y señales de riesgo.";
+"mgr_more_how_it_works" = "Cómo funciona";

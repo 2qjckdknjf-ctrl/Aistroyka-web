@@ -66,6 +66,20 @@ describe("checkLiteAllowList", () => {
     expect(checkLiteAllowList("/api/v1/devices/register", "POST", "ios_lite")).toBeNull();
   });
 
+  it("returns null for lite activation + help paths (worker intelligence surfaces)", () => {
+    expect(checkLiteAllowList("/api/v1/activation/status", "GET", "ios_lite")).toBeNull();
+    expect(checkLiteAllowList("/api/v1/help/hints", "POST", "android_lite")).toBeNull();
+    expect(checkLiteAllowList("/api/v1/help/assistant", "POST", "ios_lite")).toBeNull();
+    expect(checkLiteAllowList("/api/v1/help/assistant/events", "POST", "android_lite")).toBeNull();
+  });
+
+  it("returns 403 for lite on help paths with wrong method or extra help routes", () => {
+    expect(checkLiteAllowList("/api/v1/activation/status", "POST", "ios_lite")).not.toBeNull();
+    expect(checkLiteAllowList("/api/v1/help/hints", "GET", "ios_lite")).not.toBeNull();
+    expect(checkLiteAllowList("/api/v1/help/query", "POST", "ios_lite")).not.toBeNull();
+    expect(checkLiteAllowList("/api/v1/help/assistant/metrics", "GET", "android_lite")).not.toBeNull();
+  });
+
   it("ignores non-/api/v1 paths", () => {
     expect(checkLiteAllowList("/api/health", "GET", "ios_lite")).toBeNull();
   });

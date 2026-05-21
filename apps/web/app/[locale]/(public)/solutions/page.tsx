@@ -20,11 +20,11 @@ export default async function SolutionsPage({ params }: Props) {
   const t = await getTranslations("public.solutions");
 
   const solutions = [
-    { key: "forDeveloper" as const, desc: "Full visibility, risk and delay control, portfolio view." },
-    { key: "forGeneralContractor" as const, desc: "Multi-project control, subcontractors, reporting." },
-    { key: "forContractor" as const, desc: "Tasks, daily reports, evidence, and compliance." },
-    { key: "forProjectManager" as const, desc: "Dashboards, tasks, team coordination, AI insights." },
-    { key: "forFieldTeams" as const, desc: "Mobile reporting, quick tasks, photo evidence." },
+    "forDeveloper",
+    "forGeneralContractor",
+    "forContractor",
+    "forProjectManager",
+    "forFieldTeams",
   ] as const;
 
   return (
@@ -36,7 +36,7 @@ export default async function SolutionsPage({ params }: Props) {
         {t("metaDescription")}
       </p>
       <div className="mt-12 space-y-8">
-        {solutions.map(({ key, desc }) => (
+        {solutions.map((key) => (
           <div
             key={key}
             className="card rounded-[var(--aistroyka-radius-card)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] p-6 shadow-[var(--aistroyka-shadow-e1)]"
@@ -45,7 +45,7 @@ export default async function SolutionsPage({ params }: Props) {
               {t(key)}
             </h2>
             <p className="mt-2 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-secondary)]">
-              {desc}
+              {t(`${key}Desc`)}
             </p>
           </div>
         ))}

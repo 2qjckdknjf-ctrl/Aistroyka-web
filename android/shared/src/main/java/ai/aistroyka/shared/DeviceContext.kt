@@ -1,6 +1,7 @@
 package ai.aistroyka.shared
 
 import android.content.Context
+import java.security.MessageDigest
 import java.util.UUID
 
 /**
@@ -28,4 +29,25 @@ object DeviceContext {
         }
 
     fun newIdempotencyKey(): String = UUID.randomUUID().toString()
+
+    /**
+     * Stable idempotency key for `POST /api/v1/devices/register` (same device + push token → same key for safe retries).
+     * Matches iOS [DeviceContext.idempotencyKeyDeviceRegister]: SHA-256 of `deviceId + RS + token`, prefix `device-register-`.
+     */
+    fun idempotencyKeyDeviceRegister(pushToken: String): String {
+        val material = "${deviceId}\u001E$pushToken"
+        val md = MessageDigest.getInstance("SHA-256")
+        val digest = md.digest(material.toByteArray(Charsets.UTF_8))
+        val hex = digest.joinToString("") { b -> "%02x".format(b) }
+        return "device-register-$hex"
+    }
+
+    /** Same scheme as iOS [DeviceContext.idempotencyKeyDeviceUnregister]. */
+    fun idempotencyKeyDeviceUnregister(): String {
+        val material = "${deviceId}\u001Edevice-unregister"
+        val md = MessageDigest.getInstance("SHA-256")
+        val digest = md.digest(material.toByteArray(Charsets.UTF_8))
+        val hex = digest.joinToString("") { b -> "%02x".format(b) }
+        return "device-unregister-$hex"
+    }
 }

@@ -35,7 +35,21 @@ enum WorkerAPI {
             path: "devices/register",
             method: "POST",
             body: body,
-            idempotencyKey: nil
+            idempotencyKey: DeviceContext.idempotencyKeyDeviceRegister(pushToken: pushToken)
+        )
+    }
+
+    /// POST /api/v1/devices/unregister — remove this device row server-side (call before sign-out when session exists).
+    static func unregisterDevice() async throws {
+        struct Body: Encodable {
+            let deviceId: String
+            enum CodingKeys: String, CodingKey { case deviceId = "device_id" }
+        }
+        let _: RegisterDeviceResponse = try await APIClient.shared.request(
+            path: "devices/unregister",
+            method: "POST",
+            body: Body(deviceId: DeviceContext.deviceId),
+            idempotencyKey: DeviceContext.idempotencyKeyDeviceUnregister()
         )
     }
 
@@ -100,16 +114,27 @@ enum WorkerAPI {
         )
     }
     
-    static func submitReport(reportId: String, taskId: String?, idempotencyKey: String) async throws {
+    static func submitReport(reportId: String, taskId: String?, workerNote: String?, idempotencyKey: String) async throws {
         struct Body: Encodable {
             let reportId: String
             let taskId: String?
-            enum CodingKeys: String, CodingKey { case reportId = "report_id"; case taskId = "task_id" }
+            let workerNote: String?
+            enum CodingKeys: String, CodingKey {
+                case reportId = "report_id"
+                case taskId = "task_id"
+                case workerNote = "worker_note"
+            }
         }
+        let trimmed = workerNote?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let notePayload: String? = {
+            guard let t = trimmed, !t.isEmpty else { return nil }
+            return String(t.prefix(2000))
+        }()
+        let body = Body(reportId: reportId, taskId: taskId, workerNote: notePayload)
         try await APIClient.shared.requestVoid(
             path: "worker/report/submit",
             method: "POST",
-            body: Body(reportId: reportId, taskId: taskId),
+            body: body,
             idempotencyKey: idempotencyKey
         )
     }
@@ -245,6 +270,21 @@ enum WorkerAPI {
             body: Body(type: type, locale: locale, role: role, pathname: pathname)
         ) as WorkerHelpAssistantEventAckDTO
     }
+
+    /// GET /api/v1/worker/sync — recent tasks/reports/sessions for the signed-in worker (lite).
+    static func workerSync() async throws -> [WorkerSyncReportRow] {
+        let env: WorkerSyncEnvelope = try await APIClient.shared.request(path: "worker/sync")
+        return env.data?.reports ?? []
+    }
+
+    /// GET /api/v1/reports/:id — own report detail (manager note visible to worker).
+    static func reportDetail(id: String) async throws -> WorkerReportDetailData {
+        let env: WorkerReportDetailEnvelope = try await APIClient.shared.request(path: "reports/\(id)")
+        guard let data = env.data else {
+            throw APIError(statusCode: nil, code: nil, message: "No report data")
+        }
+        return data
+    }
 }
 
 private struct EmptyBody: Encodable {}
@@ -296,4 +336,52 @@ struct WorkerHelpAssistantResponseDTO: Decodable {
 
 struct WorkerHelpAssistantEventAckDTO: Decodable {
     let ok: Bool?
+}
+
+struct WorkerSyncReportRow: Decodable, Identifiable {
+    let id: String
+    let status: String
+    let createdAt: String
+    let submittedAt: String?
+}
+
+private struct WorkerSyncEnvelope: Decodable {
+    let data: WorkerSyncPayload?
+}
+
+private struct WorkerSyncPayload: Decodable {
+    let reports: [WorkerSyncReportRow]?
+}
+
+struct WorkerReportMediaItem: Decodable {
+    let mediaId: String?
+    let uploadSessionId: String?
+    let fileUrl: String?
+    enum CodingKeys: String, CodingKey {
+        case mediaId = "media_id"
+        case uploadSessionId = "upload_session_id"
+        case fileUrl = "file_url"
+    }
+}
+
+struct WorkerReportDetailData: Decodable {
+    let id: String
+    let status: String
+    let managerNote: String?
+    let taskId: String?
+    let workerNote: String?
+    let media: [WorkerReportMediaItem]?
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case status
+        case managerNote = "manager_note"
+        case taskId = "task_id"
+        case workerNote = "worker_note"
+        case media
+    }
+}
+
+private struct WorkerReportDetailEnvelope: Decodable {
+    let data: WorkerReportDetailData?
 }

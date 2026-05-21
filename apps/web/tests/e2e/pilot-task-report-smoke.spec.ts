@@ -6,6 +6,7 @@
  * verifies the task detail UI and linked-report section render. No insecure bypass.
  */
 import { test, expect } from "@playwright/test";
+import { expectLocaleLandingOrLoginUrl } from "./audit-helpers";
 
 const LOCALE = "en";
 const TASKS_LIST = `/${LOCALE}/dashboard/tasks`;
@@ -16,7 +17,7 @@ test.describe("Pilot task→report linkage smoke", () => {
     await page.waitForLoadState("domcontentloaded");
     const url = page.url();
     if (!url.includes("/dashboard/tasks")) {
-      expect(url).toMatch(/\/(en|ru|es|it)(\/)?$/);
+      expectLocaleLandingOrLoginUrl(url);
       return;
     }
     const firstTaskLink = page.locator(`a[href*="/dashboard/tasks/"]`).first();

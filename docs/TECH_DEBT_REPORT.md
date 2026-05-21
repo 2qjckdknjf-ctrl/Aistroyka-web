@@ -9,7 +9,7 @@
 | Item | Description |
 |------|-------------|
 | Worker base | GET/POST /api/v1/worker return 501. |
-| Lite allow-list | x-client parsed but no enforcement of allowed paths for ios_lite/android_lite. |
+| Lite allow-list | **Done** — middleware enforces `checkLiteAllowList` for `ios_lite` / `android_lite`. **Remaining:** extend `x-idempotency-key` coverage on all lite writes (see below). |
 | Idempotency on lite writes | idempotency_keys table and service exist; not applied to all worker/sync/media write endpoints. |
 | AI governance path | Policy Engine and Provider Router not used by analyze-image route or runVisionAnalysis. |
 | Multi-provider AI | Anthropic/Gemini are stubs; only OpenAI is live. |
@@ -58,7 +58,7 @@
 | Admin client null | Some routes check getAdminClient() and return 503; others may assume admin exists. |
 | Stripe optional | Billing routes may behave differently when Stripe not configured; ensure no crash. |
 | Migration order | Duplicate migration numbers (e.g. 20260307400000, 20260307500000, 20260307600000) in list—verify order and idempotency. |
-| Lite + projects | If lite is blocked from /api/v1/projects by policy, document; otherwise lite could access projects today. |
+| Lite + projects | **By design:** `GET /api/v1/projects` is allow-listed for lite (tenant-scoped list for Worker); `POST` and other methods are **403**. |
 
 ---
 
@@ -66,6 +66,6 @@
 
 1. **High:** Introduce AIService and route all AI through Policy Engine + Provider Router; remove direct OpenAI from route and runVisionAnalysis.
 2. **High:** Refactor sync/bootstrap into SyncService; remove direct Supabase from route.
-3. **Medium:** Enforce Lite allow-list (middleware or guard); enforce x-idempotency-key on lite write endpoints.
+3. **Medium:** Enforce **x-idempotency-key** consistently on lite write endpoints (allow-list for paths is already in middleware).
 4. **Medium:** Resolve or remove root app/; single source of truth for routes (apps/web).
 5. **Low:** Replace 501 worker with real implementation or document as intentionally unimplemented; consolidate health/analyze-image to v1-only and deprecate legacy paths.

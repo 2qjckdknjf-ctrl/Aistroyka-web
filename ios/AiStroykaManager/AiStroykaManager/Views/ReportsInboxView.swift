@@ -61,6 +61,7 @@ struct ReportsInboxView: View {
                 NavigationLink(destination: ReportDetailReviewView(reportId: r.id)) {
                     ReportRowView(report: r)
                 }
+                .accessibilityIdentifier("pilot_manager_report_\(r.id)")
             }
         }
     }
@@ -91,7 +92,7 @@ struct ReportRowView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(report.id)
+            Text(shortReportId(report.id))
                 .font(.caption)
                 .foregroundStyle(.secondary)
             HStack {
@@ -113,9 +114,14 @@ struct ReportRowView: View {
         .padding(.vertical, 4)
     }
 
+    private func shortReportId(_ id: String) -> String {
+        guard id.count > 10 else { return id }
+        return String(id.prefix(8)) + "…"
+    }
+
     private func statusLabel(_ s: String) -> String {
         if s.isEmpty { return NSLocalizedString("mgr_unknown", comment: "") }
-        return s.prefix(1).uppercased() + s.dropFirst().lowercased()
+        return s.prefix(1).uppercased() + s.dropFirst().lowercased().replacingOccurrences(of: "_", with: " ")
     }
 }
 
@@ -145,14 +151,14 @@ struct ReportDetailReviewView: View {
                         if let note = r.managerNote, !note.isEmpty {
                             LabeledContent(NSLocalizedString("mgr_manager_note", comment: ""), value: note)
                         }
+                        if let wnote = r.workerNote, !wnote.isEmpty {
+                            LabeledContent(NSLocalizedString("mgr_worker_note", comment: ""), value: wnote)
+                        }
                     }
                     if let media = r.media, !media.isEmpty {
                         Section(String(format: NSLocalizedString("mgr_media_count_fmt", comment: ""), media.count)) {
-                            ForEach(Array(media.enumerated()), id: \.offset) { _, m in
-                                HStack {
-                                    Text(String(format: NSLocalizedString("mgr_item_fmt", comment: ""), m.mediaId ?? m.uploadSessionId ?? "?"))
-                                        .font(.caption)
-                                }
+                            ForEach(Array(media.enumerated()), id: \.offset) { idx, m in
+                                ReportEvidenceItemView(index: idx + 1, item: m)
                             }
                         }
                     }
@@ -171,15 +177,19 @@ struct ReportDetailReviewView: View {
                                     .font(.caption)
                                     .foregroundStyle(.red)
                             }
-                            TextField(NSLocalizedString("mgr_note_optional", comment: ""), text: $managerNoteText, axis: .vertical)
+                            TextField(NSLocalizedString("mgr_report_review_note_label", comment: ""), text: $managerNoteText, axis: .vertical)
                                 .lineLimit(2...4)
                                 .disabled(reviewActionLoading)
+                                .accessibilityIdentifier("pilot_manager_review_note")
                             Button(NSLocalizedString("mgr_approve", comment: "")) { submitReview(status: "approved") }
                                 .disabled(reviewActionLoading)
-                            Button(NSLocalizedString("mgr_mark_reviewed", comment: "")) { submitReview(status: "reviewed") }
-                                .disabled(reviewActionLoading)
+                                .accessibilityIdentifier("pilot_manager_review_approve")
                             Button(NSLocalizedString("mgr_request_changes", comment: "")) { submitReview(status: "changes_requested") }
                                 .disabled(reviewActionLoading)
+                                .accessibilityIdentifier("pilot_manager_review_request_changes")
+                            Button(NSLocalizedString("mgr_reject", comment: ""), role: .destructive) { submitReview(status: "rejected") }
+                                .disabled(reviewActionLoading)
+                                .accessibilityIdentifier("pilot_manager_review_reject")
                         }
                     } else if !isReviewStatus(r.status) {
                         Section(NSLocalizedString("mgr_review_section", comment: "")) {
@@ -188,6 +198,9 @@ struct ReportDetailReviewView: View {
                                 .foregroundStyle(.secondary)
                         }
                     }
+                }
+                .onChange(of: managerNoteText) { _ in
+                    if reviewActionError != nil { reviewActionError = nil }
                 }
                 .refreshable { await loadAsync() }
             } else {
@@ -200,7 +213,7 @@ struct ReportDetailReviewView: View {
 
     private func isReviewStatus(_ s: String?) -> Bool {
         guard let s = s?.lowercased() else { return false }
-        return s == "approved" || s == "reviewed" || s == "changes_requested"
+        return s == "approved" || s == "rejected" || s == "changes_requested"
     }
 
     private func statusLabel(_ s: String) -> String {
@@ -209,12 +222,19 @@ struct ReportDetailReviewView: View {
     }
 
     private func submitReview(status: String) {
+        let note = managerNoteText.trimmingCharacters(in: .whitespacesAndNewlines)
+        if status == "rejected" || status == "changes_requested" {
+            if note.isEmpty {
+                reviewActionError = NSLocalizedString("mgr_note_required_reject_or_changes", comment: "")
+                return
+            }
+        }
+        reviewActionError = nil
         Task {
             let success = await runManagerAction(
                 isLoading: &reviewActionLoading,
                 errorMessage: &reviewActionError
             ) {
-                let note = managerNoteText.trimmingCharacters(in: .whitespacesAndNewlines)
                 report = try await ManagerAPI.reportReview(reportId: reportId, status: status, managerNote: note.isEmpty ? nil : note)
             }
             if success {
@@ -247,6 +267,48 @@ struct ReportDetailReviewView: View {
             return d.formatted(date: .abbreviated, time: .shortened)
         }
         return s
+    }
+}
+
+private struct ReportEvidenceItemView: View {
+    let index: Int
+    let item: ReportMediaItem
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if let urlStr = item.fileUrl, let url = URL(string: urlStr), !urlStr.isEmpty {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .empty:
+                        ProgressView()
+                            .frame(maxWidth: .infinity, minHeight: 120)
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFit()
+                            .frame(maxHeight: 240)
+                            .cornerRadius(8)
+                    case .failure:
+                        Text(String(format: NSLocalizedString("mgr_evidence_load_failed_fmt", comment: ""), index))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    @unknown default:
+                        EmptyView()
+                    }
+                }
+            } else {
+                Text(String(format: NSLocalizedString("mgr_evidence_no_preview_fmt", comment: ""), index, evidenceShortId))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(.vertical, 4)
+    }
+
+    private var evidenceShortId: String {
+        let raw = item.mediaId ?? item.uploadSessionId ?? "—"
+        guard raw.count > 10 else { return raw }
+        return String(raw.prefix(8)) + "…"
     }
 }
 

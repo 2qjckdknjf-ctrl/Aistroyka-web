@@ -67,7 +67,7 @@ enum ManagerAPI {
         return data
     }
 
-    /// PATCH /api/v1/reports/:id — manager review (approved / reviewed / changes_requested). Optional manager_note.
+    /// PATCH /api/v1/reports/:id — manager review (approved / rejected / changes_requested). Optional manager_note.
     static func reportReview(reportId: String, status: String, managerNote: String?) async throws -> ReportDetailDTO {
         struct Body: Encodable {
             let status: String
@@ -358,18 +358,25 @@ struct ReportDetailDTO: Decodable {
     let reviewedAt: String?
     let reviewedBy: String?
     let managerNote: String?
+    let workerNote: String?
     let media: [ReportMediaItem]?
     enum CodingKeys: String, CodingKey {
         case id; case tenantId = "tenant_id"; case userId = "user_id"; case taskId = "task_id"
         case status; case createdAt = "created_at"; case submittedAt = "submitted_at"
         case reviewedAt = "reviewed_at"; case reviewedBy = "reviewed_by"; case managerNote = "manager_note"
+        case workerNote = "worker_note"
         case media
     }
 }
 struct ReportMediaItem: Decodable {
     let mediaId: String?
     let uploadSessionId: String?
-    enum CodingKeys: String, CodingKey { case mediaId = "media_id"; case uploadSessionId = "upload_session_id" }
+    let fileUrl: String?
+    enum CodingKeys: String, CodingKey {
+        case mediaId = "media_id"
+        case uploadSessionId = "upload_session_id"
+        case fileUrl = "file_url"
+    }
 }
 struct ReportDetailResponse: Decodable { let data: ReportDetailDTO? }
 

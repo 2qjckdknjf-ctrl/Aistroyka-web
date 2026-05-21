@@ -27,10 +27,56 @@ object WorkerApi {
         return r.data.orEmpty()
     }
 
+    /** POST /api/v1/devices/register — FCM token; use when wiring push (parity with iOS [WorkerAPI.registerDevice]). */
+    suspend fun registerDevice(fcmToken: String) {
+        val body = RegisterDeviceBody(
+            deviceId = DeviceContext.deviceId,
+            platform = "android",
+            token = fcmToken.trim(),
+        )
+        val json = ApiClient.json.encodeToString(RegisterDeviceBody.serializer(), body)
+        ApiClient.requestVoid(
+            path = "devices/register",
+            method = "POST",
+            jsonBody = json,
+            idempotencyKey = DeviceContext.idempotencyKeyDeviceRegister(fcmToken),
+        )
+    }
+
+    /** POST /api/v1/devices/unregister — remove device_tokens row before sign-out (parity with iOS). */
+    suspend fun unregisterDevice() {
+        val body = UnregisterDeviceBody(deviceId = DeviceContext.deviceId)
+        val json = ApiClient.json.encodeToString(UnregisterDeviceBody.serializer(), body)
+        ApiClient.requestVoid(
+            path = "devices/unregister",
+            method = "POST",
+            jsonBody = json,
+            idempotencyKey = DeviceContext.idempotencyKeyDeviceUnregister(),
+        )
+    }
+
     suspend fun tasksToday(projectId: String?): List<TaskDto> {
         val q = if (!projectId.isNullOrBlank()) "?project_id=${java.net.URLEncoder.encode(projectId, Charsets.UTF_8.name())}" else ""
         val r: TasksTodayResponse = ApiClient.request("worker/tasks/today$q")
         return r.data.orEmpty()
+    }
+
+    suspend fun startDay(idempotencyKey: String) {
+        ApiClient.requestVoid(
+            path = "worker/day/start",
+            method = "POST",
+            jsonBody = "{}",
+            idempotencyKey = idempotencyKey,
+        )
+    }
+
+    suspend fun endDay(idempotencyKey: String) {
+        ApiClient.requestVoid(
+            path = "worker/day/end",
+            method = "POST",
+            jsonBody = "{}",
+            idempotencyKey = idempotencyKey,
+        )
     }
 
     /** GET /api/v1/tasks/:id — detail when assigned to current worker (or manager). Uses [TaskDetailResponse] from ManagerDtos. */
@@ -98,12 +144,57 @@ object WorkerApi {
         )
     }
 
-    suspend fun submitReport(reportId: String, taskId: String?, idempotencyKey: String) {
-        val json = buildSubmitReportJson(reportId, taskId)
+    suspend fun submitReport(reportId: String, taskId: String?, idempotencyKey: String, workerNote: String? = null) {
+        val json = buildSubmitReportJson(reportId, taskId, workerNote)
         ApiClient.requestVoid(
             path = "worker/report/submit",
             method = "POST",
             jsonBody = json,
+            idempotencyKey = idempotencyKey
+        )
+    }
+
+    /** GET /api/v1/worker/sync — recent reports for signed-in worker (status feed incl. changes_requested/approved). */
+    suspend fun workerSync(): List<WorkerSyncReportRow> {
+        val env: WorkerSyncEnvelope = ApiClient.request("worker/sync")
+        return env.data?.reports.orEmpty()
+    }
+
+    /** GET /api/v1/reports/:id — own report detail with manager note and media metadata. */
+    suspend fun reportDetail(id: String): WorkerReportDetailData {
+        val env: WorkerReportDetailEnvelope = ApiClient.request("reports/${id.trim()}")
+        return env.data ?: throw ApiError(null, null, "No report data")
+    }
+
+    suspend fun syncBootstrap(): SyncBootstrapResponse {
+        return ApiClient.request("sync/bootstrap")
+    }
+
+    /**
+     * On 409 returns [SyncConflictError] with mustBootstrap/serverCursor.
+     */
+    suspend fun syncChanges(cursor: Int, limit: Int = 100): SyncChangesResponse {
+        val (body, code) = ApiClient.requestDataAndStatus("sync/changes?cursor=$cursor&limit=$limit")
+        if (code == 409) {
+            val conflict = try {
+                ApiClient.json.decodeFromString(SyncConflictBody.serializer(), body)
+            } catch (_: Exception) {
+                throw ApiError(code, null, body.ifBlank { "Sync conflict" })
+            }
+            throw SyncConflictError(conflict)
+        }
+        if (code >= 400) {
+            throw ApiError.fromHttp(code, body)
+        }
+        return ApiClient.json.decodeFromString(SyncChangesResponse.serializer(), body)
+    }
+
+    suspend fun syncAck(cursor: Int, idempotencyKey: String) {
+        val body = """{"cursor":$cursor}"""
+        ApiClient.requestVoid(
+            path = "sync/ack",
+            method = "POST",
+            jsonBody = body,
             idempotencyKey = idempotencyKey
         )
     }
@@ -135,6 +226,16 @@ object WorkerApi {
             throw ApiError(res.code, null, msg)
         }
     }
+
+    @Serializable
+    private data class UnregisterDeviceBody(@SerialName("device_id") val deviceId: String)
+
+    @Serializable
+    private data class RegisterDeviceBody(
+        @SerialName("device_id") val deviceId: String,
+        val platform: String,
+        val token: String,
+    )
 
     @Serializable
     private data class ReportCreateBody(

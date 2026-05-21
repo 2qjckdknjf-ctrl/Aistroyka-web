@@ -25,6 +25,12 @@
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "@aistroyka/contracts": [
+        "../../packages/contracts/src/index.ts"
+      ],
+      "@aistroyka/contracts/*": [
+        "../../packages/contracts/src/*"
       ]
     },
     "target": "ES2017"

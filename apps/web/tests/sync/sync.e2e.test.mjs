@@ -92,6 +92,8 @@ test("Sync Contract & Behavior", async (t) => {
       device_id: deviceId,
       platform: "ios",
       token: `audit-token-${deviceId}`,
+    }, {
+      "x-idempotency-key": `audit-device-reg-${deviceId}`,
     });
     assert.ok([200, 201, 503].includes(out.res.status), `device register returned ${out.res.status}`);
   });

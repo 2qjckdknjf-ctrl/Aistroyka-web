@@ -21,23 +21,24 @@ struct TaskDetailView: View {
             Text(task.title)
                 .font(.headline)
             if let due = task.dueDate, !due.isEmpty {
-                Text("Due: \(due)")
+                Text(String(format: NSLocalizedString("worker_task_due_fmt", comment: ""), due))
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             }
-            Text("Status: \(task.status)")
+            Text(String(format: NSLocalizedString("worker_task_status_fmt", comment: ""), task.status))
                 .font(.caption)
                 .foregroundColor(.secondary)
             Spacer().frame(height: 8)
-            Button("Start report") {
+            Button(NSLocalizedString("worker_start_report", comment: "")) {
                 store.save { $0.draftTaskId = task.id }
                 navigateToReport = true
             }
             .buttonStyle(.borderedProminent)
+            .accessibilityIdentifier("pilot_worker_start_report")
             Spacer()
         }
         .padding()
-        .navigationTitle("Task")
+        .navigationTitle(NSLocalizedString("worker_task_title", comment: ""))
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(isPresented: $navigateToReport) {
             ReportCreateView(

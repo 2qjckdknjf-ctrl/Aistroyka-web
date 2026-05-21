@@ -64,7 +64,9 @@ export async function getHealthResponse(): Promise<{ body: HealthBody; status: n
   const status = ok ? 200 : 503;
   const { sha, buildTime } = getBuildStamp();
   const serviceRoleConfigured = serverConfig.SUPABASE_SERVICE_ROLE_KEY.length > 0;
-  const appEnv = (process.env.NEXT_PUBLIC_APP_ENV ?? "").trim().toLowerCase();
+  const appEnv =
+    (process.env.NEXT_PUBLIC_APP_ENV ?? "").trim().toLowerCase() ||
+    (process.env.NODE_ENV ?? "").trim().toLowerCase();
   const body: HealthBody = {
     ok,
     db,

@@ -47,6 +47,22 @@ describe("requireLiteIdempotency", () => {
     expect(result.response.status).toBe(400);
   });
 
+  it("returns 400 when ios_worker omits x-idempotency-key", async () => {
+    const req = requestWith({ "x-client": "ios_worker" });
+    const result = await requireLiteIdempotency(req, { tenantId: "t", userId: "u" }, "POST /r");
+    expect(result.ok).toBe(false);
+    if (!("response" in result)) throw new Error("expected response");
+    const body = await result.response.json();
+    expect(body.code).toBe(IDEMPOTENCY_KEY_REQUIRED_CODE);
+  });
+
+  it("returns ok: true for android_worker with idempotency key", async () => {
+    const req = requestWith({ "x-client": "android_worker", "x-idempotency-key": "key-w" });
+    const result = await requireLiteIdempotency(req, { tenantId: "t", userId: "u" }, "POST /r");
+    expect(result).toEqual({ ok: true });
+    expect(idem.getCachedResponse).toHaveBeenCalledWith({}, "key-w", "t", "u", "POST /r");
+  });
+
   it("returns ok: true for lite client with key when no cached response", async () => {
     const req = requestWith({ "x-client": "android_lite", "x-idempotency-key": "key-1" });
     const result = await requireLiteIdempotency(req, { tenantId: "t", userId: "u" }, "POST /r");

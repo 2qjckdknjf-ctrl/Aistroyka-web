@@ -6,8 +6,11 @@ import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { DeviceRegisterRequestSchema } from "@aistroyka/contracts";
+import { requireLiteIdempotency, storeLiteIdempotency } from "@/lib/api/lite-idempotency";
 
 export const dynamic = "force-dynamic";
+
+const ROUTE_KEY = "POST /api/v1/devices/register";
 
 export async function POST(request: Request) {
   const ctx = await getTenantContextFromRequest(request);
@@ -17,6 +20,8 @@ export async function POST(request: Request) {
     if (e instanceof TenantRequiredError) return NextResponse.json({ error: e.message }, { status: 401 });
     throw e;
   }
+  const guard = await requireLiteIdempotency(request, ctx, ROUTE_KEY);
+  if (!guard.ok) return guard.response;
   let rawBody: unknown;
   try {
     rawBody = await request.json();
@@ -42,5 +47,7 @@ export async function POST(request: Request) {
     onConflict: "tenant_id,user_id,device_id",
   });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ success: true });
+  const body = { success: true };
+  await storeLiteIdempotency(request, ctx, ROUTE_KEY, body, 200);
+  return NextResponse.json(body);
 }

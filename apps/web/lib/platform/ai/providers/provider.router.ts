@@ -6,7 +6,6 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { canInvoke, recordSuccess, recordFailure } from "./circuit-breaker";
-import { isRetryableProviderError } from "./provider.errors";
 import { openaiProvider } from "./provider.openai";
 import { anthropicProvider } from "./provider.anthropic";
 import { geminiProvider } from "./provider.gemini";
@@ -64,7 +63,9 @@ export async function invokeVisionWithRouter(
       }
     } catch (err) {
       await recordFailure(supabase, provider.name);
-      if (!isRetryableProviderError(err)) return null;
+      // Provider-specific failures should not block cross-provider fallback.
+      // Continue to the next provider and only fail after the full chain.
+      void err;
     }
   }
   return null;

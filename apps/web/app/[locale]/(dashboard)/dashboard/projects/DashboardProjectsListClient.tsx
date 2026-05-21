@@ -127,6 +127,16 @@ export function DashboardProjectsListClient() {
               icon={<span className="text-2xl">📁</span>}
               title={data?.length ? tDetail("noMatchingProjects") : tDetail("noProjectsYet")}
               subtitle={data?.length ? tDetail("adjustFiltersOrSearch") : tDetail("createProjectToStart")}
+              action={
+                !data?.length ? (
+                  <Link
+                    href="/projects/new"
+                    className="inline-flex items-center rounded-[var(--aistroyka-radius-md)] bg-aistroyka-accent px-3 py-2 text-aistroyka-subheadline font-medium text-aistroyka-text-on-branded hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-aistroyka-accent focus:ring-offset-2"
+                  >
+                    {tDetail("create")}
+                  </Link>
+                ) : undefined
+              }
             />
           </div>
         ) : (

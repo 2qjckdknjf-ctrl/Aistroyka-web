@@ -97,10 +97,17 @@ struct NotificationsView: View {
     }
 
     private func loadAsync() async {
-        await runManagerLoad(isLoading: &isLoading, errorMessage: &errorMessage) {
+        errorMessage = nil
+        isLoading = true
+        defer { isLoading = false }
+        do {
             let result = try await ManagerAPI.notifications(limit: 50, offset: 0)
             items = result.items
             total = result.total
+        } catch let apiError as APIError {
+            errorMessage = apiError.message
+        } catch {
+            errorMessage = error.localizedDescription
         }
     }
 

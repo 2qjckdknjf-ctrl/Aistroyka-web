@@ -146,5 +146,33 @@ describe("report.service task link", () => {
       expect(result.code).toBe("proof_required");
       expect(repo.submit).not.toHaveBeenCalled();
     });
+
+    it("resubmits when report is in changes_requested status", async () => {
+      vi.mocked(repo.getById).mockResolvedValue({
+        id: "rpt-1",
+        tenant_id: tenantId,
+        user_id: userId,
+        day_id: null,
+        status: "changes_requested",
+        created_at: "2025-01-01T00:00:00Z",
+        submitted_at: null,
+        task_id: "task-1",
+      } as any);
+      vi.mocked(repo.listMediaByReportId).mockResolvedValue([{ media_id: "m1", upload_session_id: null }]);
+      vi.mocked(repo.getProjectIdForReport).mockResolvedValue(null);
+      vi.mocked(repo.resubmit).mockResolvedValue(true);
+      const supabase = {} as any;
+      const ctx = { tenantId, userId, role: "member" } as any;
+      const result = await submitReport(supabase, ctx, "rpt-1", null, { workerNote: "updated" });
+      expect(result.ok).toBe(true);
+      expect(repo.resubmit).toHaveBeenCalledWith(
+        supabase,
+        "rpt-1",
+        tenantId,
+        "task-1",
+        "updated"
+      );
+      expect(repo.submit).not.toHaveBeenCalled();
+    });
   });
 });

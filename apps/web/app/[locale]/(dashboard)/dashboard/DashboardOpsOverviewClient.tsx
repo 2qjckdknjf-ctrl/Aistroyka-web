@@ -77,17 +77,48 @@ export function DashboardOpsOverviewClient() {
 
   const { kpis, queues } = data;
   const today = new Date().toISOString().slice(0, 10);
-  const kpiCards: { label: string; value: number; borderClass: string; href?: string }[] = [
-    { label: t("kpiActiveProjects"), value: kpis.activeProjects, borderClass: "border-l-aistroyka-accent" },
-    { label: t("kpiActiveWorkersToday"), value: kpis.activeWorkersToday, borderClass: "border-l-aistroyka-info" },
-    { label: t("kpiReportsToday"), value: kpis.reportsToday, borderClass: "border-l-aistroyka-success" },
-    { label: t("kpiStuckUploads"), value: kpis.stuckUploads, borderClass: "border-l-aistroyka-warning" },
-    { label: t("kpiOfflineDevices"), value: kpis.offlineDevices, borderClass: "border-l-aistroyka-warning" },
-    { label: t("kpiFailedJobs"), value: kpis.failedJobs24h, borderClass: "border-l-aistroyka-error" },
-    { label: t("kpiTasksAssignedToday"), value: kpis.tasks_assigned_today ?? 0, borderClass: "border-l-aistroyka-info", href: "/dashboard/tasks" },
-    { label: t("kpiTasksCompletedToday"), value: kpis.tasks_completed_today ?? 0, borderClass: "border-l-aistroyka-success", href: `/dashboard/tasks?from=${today}&to=${today}&status=done` },
-    { label: t("kpiTasksOpenToday"), value: kpis.tasks_open_today ?? 0, borderClass: "border-l-aistroyka-warning", href: `/dashboard/tasks?from=${today}&to=${today}` },
-    { label: t("kpiTasksOverdue"), value: kpis.tasks_overdue ?? 0, borderClass: "border-l-aistroyka-error", href: "/dashboard/tasks?status=pending" },
+  type KpiLabelKey =
+    | "kpiActiveProjects"
+    | "kpiActiveWorkersToday"
+    | "kpiReportsToday"
+    | "kpiStuckUploads"
+    | "kpiOfflineDevices"
+    | "kpiFailedJobs"
+    | "kpiTasksAssignedToday"
+    | "kpiTasksCompletedToday"
+    | "kpiTasksOpenToday"
+    | "kpiTasksOverdue";
+  const kpiCards: { labelKey: KpiLabelKey; value: number; borderClass: string; href?: string }[] = [
+    { labelKey: "kpiActiveProjects", value: kpis.activeProjects, borderClass: "border-l-aistroyka-accent" },
+    { labelKey: "kpiActiveWorkersToday", value: kpis.activeWorkersToday, borderClass: "border-l-aistroyka-info" },
+    { labelKey: "kpiReportsToday", value: kpis.reportsToday, borderClass: "border-l-aistroyka-success" },
+    { labelKey: "kpiStuckUploads", value: kpis.stuckUploads, borderClass: "border-l-aistroyka-warning" },
+    { labelKey: "kpiOfflineDevices", value: kpis.offlineDevices, borderClass: "border-l-aistroyka-warning" },
+    { labelKey: "kpiFailedJobs", value: kpis.failedJobs24h, borderClass: "border-l-aistroyka-error" },
+    {
+      labelKey: "kpiTasksAssignedToday",
+      value: kpis.tasks_assigned_today ?? 0,
+      borderClass: "border-l-aistroyka-info",
+      href: "/dashboard/tasks",
+    },
+    {
+      labelKey: "kpiTasksCompletedToday",
+      value: kpis.tasks_completed_today ?? 0,
+      borderClass: "border-l-aistroyka-success",
+      href: `/dashboard/tasks?from=${today}&to=${today}&status=done`,
+    },
+    {
+      labelKey: "kpiTasksOpenToday",
+      value: kpis.tasks_open_today ?? 0,
+      borderClass: "border-l-aistroyka-warning",
+      href: `/dashboard/tasks?from=${today}&to=${today}`,
+    },
+    {
+      labelKey: "kpiTasksOverdue",
+      value: kpis.tasks_overdue ?? 0,
+      borderClass: "border-l-aistroyka-error",
+      href: "/dashboard/tasks?status=pending",
+    },
   ];
 
   return (
@@ -96,10 +127,10 @@ export function DashboardOpsOverviewClient() {
         className="mb-aistroyka-6 grid gap-aistroyka-4 sm:grid-cols-2 lg:grid-cols-6"
         aria-label={t("kpiOverviewAria")}
       >
-        {kpiCards.map(({ label, value, borderClass, href }) => (
-          <Card key={label} className={`border-l-4 ${borderClass}`}>
+        {kpiCards.map(({ labelKey, value, borderClass, href }) => (
+          <Card key={labelKey} className={`border-l-4 ${borderClass}`}>
             <p className="text-aistroyka-caption font-medium uppercase tracking-wide text-aistroyka-text-tertiary">
-              {label}
+              {t(labelKey)}
             </p>
             {href ? (
               <Link href={href} className="mt-aistroyka-1 block text-aistroyka-title3 font-semibold text-aistroyka-accent hover:underline">

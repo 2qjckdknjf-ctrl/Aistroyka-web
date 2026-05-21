@@ -16,6 +16,14 @@ export function ReportApprovalCard({ reportId, onSuccess }: ReportApprovalCardPr
   const [error, setError] = useState<string | null>(null);
 
   async function handleReview(reviewStatus: "approved" | "rejected" | "changes_requested") {
+    const trimmed = note.trim();
+    if (
+      (reviewStatus === "rejected" || reviewStatus === "changes_requested") &&
+      !trimmed
+    ) {
+      setError(tDetail("enterNoteBeforeRejectOrChanges"));
+      return;
+    }
     setStatus("loading");
     setError(null);
     try {
@@ -25,7 +33,7 @@ export function ReportApprovalCard({ reportId, onSuccess }: ReportApprovalCardPr
         credentials: "include",
         body: JSON.stringify({
           status: reviewStatus,
-          manager_note: reviewStatus === "changes_requested" && note.trim() ? note.trim() : null,
+          manager_note: trimmed ? trimmed : null,
         }),
       });
       if (!res.ok) {
@@ -46,6 +54,21 @@ export function ReportApprovalCard({ reportId, onSuccess }: ReportApprovalCardPr
         {tDetail("approveRejectOrRequestChanges")}
       </p>
       {error && <p className="text-sm text-aistroyka-error">{error}</p>}
+      <div>
+        <label className="text-aistroyka-caption text-aistroyka-text-tertiary block mb-1">
+          {tDetail("noteRequiredForRejectOrChanges")}
+        </label>
+        <Textarea
+          value={note}
+          onChange={(e) => {
+            setNote(e.target.value);
+            if (error) setError(null);
+          }}
+          placeholder={tDetail("addNoteForWorker")}
+          rows={2}
+          className="max-w-md"
+        />
+      </div>
       <div className="flex flex-wrap gap-2">
         <Button
           variant="primary"
@@ -71,18 +94,6 @@ export function ReportApprovalCard({ reportId, onSuccess }: ReportApprovalCardPr
         >
           {tDetail("requestChanges")}
         </Button>
-      </div>
-      <div>
-        <label className="text-aistroyka-caption text-aistroyka-text-tertiary block mb-1">
-          {tDetail("noteOptionalForRequestChanges")}
-        </label>
-        <Textarea
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          placeholder={tDetail("addNoteForWorker")}
-          rows={2}
-          className="max-w-md"
-        />
       </div>
     </div>
   );

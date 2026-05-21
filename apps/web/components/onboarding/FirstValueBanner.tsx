@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@/i18n/navigation";
 
@@ -18,6 +19,7 @@ async function fetchStatus(): Promise<{ reportCount: number; projectCount: numbe
  * Shows after first report: prompt to view AI analysis (Project health, Top risks, Recommendations).
  */
 export function FirstValueBanner() {
+  const t = useTranslations("activation");
   const { data } = useQuery({
     queryKey: ["activation-status"],
     queryFn: fetchStatus,
@@ -31,11 +33,9 @@ export function FirstValueBanner() {
 
   return (
     <div className="mb-6 rounded-[var(--aistroyka-radius-card)] border border-aistroyka-accent/30 bg-aistroyka-accent-light/30 px-4 py-3">
-      <p className="text-aistroyka-subheadline font-medium text-aistroyka-text-primary">
-        First report submitted. View AI analysis: Project health, Top risks, Recommendations.
-      </p>
+      <p className="text-aistroyka-subheadline font-medium text-aistroyka-text-primary">{t("firstReportSubmitted")}</p>
       <Link href={href} className="mt-2 inline-block text-aistroyka-caption font-medium text-aistroyka-accent hover:underline">
-        Open AI insights →
+        {t("openAiInsights")}
       </Link>
     </div>
   );
