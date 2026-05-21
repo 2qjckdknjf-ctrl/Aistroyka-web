@@ -85,6 +85,16 @@ Workflow assist: `.github/workflows/release-go-no-go-council.yml`
 | `bash scripts/verify/stakeholder_finance_sanity.sh` | **BLOCKED** — missing `STAKEHOLDER_SMOKE_EMAIL` / `STAKEHOLDER_SMOKE_PASSWORD` |
 | `gh workflow run release-go-no-go-council.yml` | **BLOCKED** — workflow not yet present on default branch (local-only until push/merge) |
 
+## Council workflow replay (2026-05-21)
+
+| Run | Result | Notes |
+|-----|--------|-------|
+| `26210496994` | **PASS** | council on `main`, stakeholder sanity disabled (`run_stakeholder_sanity=false`) |
+| `26211837253` | **FAIL** | stakeholder sanity enabled, but `STAKEHOLDER_SMOKE_*` secrets absent |
+| `26212368552` | **FAIL** | stakeholder sanity received fallback credentials, script failed: `/api/v1/me role=admin`, expected `stakeholder` |
+
+Follow-up fix merged via PR #22 (`a8ee64b474ca63a1d6702332a14bb4cee3ac918d`) to allow fallback credentials, but final gate still needs dedicated stakeholder account.
+
 ## Verdict
 
 Current baseline remains **GO_PUBLIC_CANDIDATE** for controlled rollout, not broad GA. Final publication decision requires a fresh council run on the target SHA and updated live evidence.

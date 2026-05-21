@@ -57,6 +57,20 @@ Observed:
 - evidence remains login-surface smoke level
 - no new runtime proof for full worker submit/upload/sync chain and manager approve/reject/resubmit chain
 
+## Latest rerun (2026-05-21)
+
+Executed:
+
+```bash
+CI_SIGNING_HACK=1 bash ios/scripts/run-ios-uitest-smoke-local.sh
+```
+
+Observed:
+
+- Worker smoke: **PASS** (`WorkerSmokeUITests.testLoginScreen_reachableWithPilotIdentifiers`)
+- Manager smoke: **FAIL** (`AiStroykaManagerUITests-Runner ... test crashed with signal kill before starting test execution`, exit code 65)
+- Result confirms that login-surface smoke remains non-deterministic under local simulator load; Layer B runtime chain remains unproven.
+
 ## Coverage status versus target runtime matrix
 
 - Proven now:
@@ -69,7 +83,7 @@ Observed:
 
 ## Classification
 
-- **PARTIAL (improved runtime evidence, full pilot flow still pending)**
+- **PARTIAL (full pilot flow pending; latest local manager smoke unstable)**
 
 ## Remaining operator/TestFlight checks
 

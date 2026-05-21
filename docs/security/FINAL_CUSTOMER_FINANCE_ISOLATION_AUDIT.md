@@ -43,14 +43,14 @@
 
 Repo-wide `apps/web` TypeScript grep for cost/finance tokens surfaced hits in **internal** surfaces (e.g. `ProjectCostsPanel`, `/api/v1/projects/:id/costs`, `change-orders` `internal_cost_item_id`, `cost-signals`, manager actions). Customer-facing shaping layers (`portal`, `share`, digest owner path, proof-pack, telegram emit) remain aligned with prior PASS; digest/proof tests continue to assert absence of internal finance phrases in owner-facing output.
 
-## Live stakeholder sanity (2026-05-09)
+## Live stakeholder sanity (latest 2026-05-21)
 
 **BLOCKED** — do **not** mark **PASS** until all steps below are satisfied.
 
-1. **Account:** a real **`stakeholder`** user (invited client). **`SMOKE_*` / tenant `owner`** on staging returns `role: owner` from `GET /api/v1/me` and does **not** substitute a portal-only check.
-2. **Portal API deploy:** on **staging** and **production**, an authenticated `GET /api/v1/portal/projects` currently returns **HTML 404** (Next not-found page), while `GET /api/v1/projects` and owner `GET /api/v1/projects/:id/costs` return **200**. So `app/api/v1/portal/**` routes are **missing on the deployed Worker bundle** or the deploy is **stale** — **redeploy** the current OpenNext/Cloudflare build and re-check until `/api/v1/portal/projects` returns **200 JSON**.
-3. **After deploy + credentials:** run `bash scripts/verify/stakeholder_finance_sanity.sh` with `STAKEHOLDER_SMOKE_EMAIL`, `STAKEHOLDER_SMOKE_PASSWORD` (optional `STAKEHOLDER_FINANCE_BASE_URL` — see `apps/web/.env.local.example`). Expect: `role=stakeholder`, `portal/projects` **200** JSON, `GET/POST .../costs` → **403**, portal project JSON must not expose internal cost keys.
+1. **Account:** a real **`stakeholder`** user (invited client). Current production fallback credentials resolve to **`role=admin`** (council run `26212368552`) and do **not** satisfy the stakeholder-only gate.
+2. **Council evidence:** `Release GO/NO-GO Council` run `26211837253` initially failed due missing `STAKEHOLDER_SMOKE_*` secrets; after workflow fallback merge (PR #22), run `26212368552` now passes credentials but still fails on role mismatch (`admin` vs expected `stakeholder`).
+3. **Closure command:** run `bash scripts/verify/stakeholder_finance_sanity.sh` with dedicated stakeholder credentials (`STAKEHOLDER_SMOKE_EMAIL`, `STAKEHOLDER_SMOKE_PASSWORD`). Expected: `role=stakeholder`, `portal/projects` **200** JSON, `GET/POST .../costs` → **403**, portal project JSON must not expose internal cost keys.
 
-**Repo/route tests** for cost isolation: **PASS**. **Live** stakeholder sanity: **BLOCKED** until steps 2–3.
+**Repo/route tests** for cost isolation: **PASS**. **Live** stakeholder sanity: **BLOCKED** until dedicated stakeholder credentials are configured and script passes.
 
 **PASS (with continuous regression discipline)** — code-level boundaries and tests hold; **live** stakeholder verification follows the checklist above.
