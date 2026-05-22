@@ -23,8 +23,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 
 data class WorkerUiState(
     val email: String = "",
@@ -279,11 +277,10 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun startShift() {
-        val day = todayDayId()
         viewModelScope.launch {
             _state.update { it.copy(busy = true, banner = null) }
             try {
-                WorkerApi.startDay(idempotencyKey = DeviceContext.newIdempotencyKey())
+                val day = WorkerApi.startDay(idempotencyKey = DeviceContext.newIdempotencyKey())
                 shiftPrefs.edit().putString("shift_day_id", day).apply()
                 _state.update { it.copy(busy = false, shiftDayId = day) }
                 loadTasksForSelection()
@@ -577,9 +574,6 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
     fun clearBanner() {
         _state.update { it.copy(banner = null) }
     }
-
-    private fun todayDayId(): String =
-        LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE)
 
     private fun saveCursor(cursor: Int) {
         syncPrefs.edit().putInt("cursor", cursor).apply()

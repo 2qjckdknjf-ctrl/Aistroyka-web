@@ -151,8 +151,13 @@ final class OperationQueueExecutor: ObservableObject {
                 let pathInBucket = uploadPath.hasPrefix("media/") ? String(uploadPath.dropFirst("media/".count)) : uploadPath
                 let filename = "\(photoItemId.prefix(8)).jpg"
                 let storagePath = "\(pathInBucket)/\(filename)"
+                let objectPath = "media/\(storagePath)"
+                opStore.update(id: op.id) {
+                    $0.payload.uploadPath = uploadPath
+                    $0.payload.objectPath = objectPath
+                    $0.payload.sizeBytes = data.count
+                }
                 try BackgroundUploadService.shared.scheduleUpload(operationId: op.id, storagePath: storagePath, data: data, token: token)
-                opStore.update(id: op.id) { $0.payload.sizeBytes = data.count }
                 return .deferred
             case .finalizeSession:
                 let sessionId = op.payload.sessionId

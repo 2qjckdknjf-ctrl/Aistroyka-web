@@ -61,13 +61,14 @@ object WorkerApi {
         return r.data.orEmpty()
     }
 
-    suspend fun startDay(idempotencyKey: String) {
-        ApiClient.requestVoid(
+    suspend fun startDay(idempotencyKey: String): String {
+        val r: WorkerDayResponse = ApiClient.request(
             path = "worker/day/start",
             method = "POST",
             jsonBody = "{}",
             idempotencyKey = idempotencyKey,
         )
+        return r.data?.id ?: throw ApiError(null, null, "No worker day id in response")
     }
 
     suspend fun endDay(idempotencyKey: String) {

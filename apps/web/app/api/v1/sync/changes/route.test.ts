@@ -122,4 +122,21 @@ describe("GET /api/v1/sync/changes", () => {
     expect(data.next_cursor).toBe(5);
     expect(data.data.changes).toHaveLength(1);
   });
+
+  it("returns 503 instead of an empty delta when the change log query fails", async () => {
+    vi.mocked(changeLogRepo.getMaxCursor).mockResolvedValue(100);
+    vi.mocked(syncCursorsRepo.getCursor).mockResolvedValue(0);
+    vi.mocked(changeLogRepo.getChangesAfter).mockRejectedValue(new Error("db timeout"));
+    const req = new Request("https://test/api/v1/sync/changes?cursor=0&limit=50", {
+      headers: { "x-device-id": "device-1" },
+    });
+
+    const res = await GET(req);
+
+    expect(res.status).toBe(503);
+    const data = await res.json();
+    expect(data).toMatchObject({
+      code: "sync_changes_unavailable",
+    });
+  });
 });

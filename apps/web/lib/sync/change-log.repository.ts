@@ -56,7 +56,8 @@ export async function getChangesAfter(
     .gt("id", afterCursor)
     .order("id", { ascending: true })
     .limit(limit);
-  if (error || !data) return [];
+  if (error) throw new Error(`Failed to load change log: ${error.message}`);
+  if (!data) return [];
   return data as ChangeLogRow[];
 }
 

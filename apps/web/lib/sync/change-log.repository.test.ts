@@ -60,7 +60,7 @@ describe("change-log.repository", () => {
   });
 
   describe("getChangesAfter", () => {
-    it("returns empty array on error", async () => {
+    it("throws on query error instead of returning a false empty delta", async () => {
       const supabase = {
         from: vi.fn(() => ({
           select: vi.fn(() => ({
@@ -74,8 +74,7 @@ describe("change-log.repository", () => {
           })),
         })),
       } as any;
-      const result = await getChangesAfter(supabase, "t1", 0, 10);
-      expect(result).toEqual([]);
+      await expect(getChangesAfter(supabase, "t1", 0, 10)).rejects.toThrow("Failed to load change log");
     });
   });
 

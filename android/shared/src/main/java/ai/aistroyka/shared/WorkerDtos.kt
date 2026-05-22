@@ -33,6 +33,12 @@ data class TaskDto(
 data class TasksTodayResponse(val data: List<TaskDto>? = null)
 
 @Serializable
+data class WorkerDayResponse(val data: WorkerDayData? = null) {
+    @Serializable
+    data class WorkerDayData(val id: String)
+}
+
+@Serializable
 data class ReportCreateResponse(val data: ReportCreateData? = null) {
     @Serializable
     data class ReportCreateData(val id: String)

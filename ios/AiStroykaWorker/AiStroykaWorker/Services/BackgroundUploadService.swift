@@ -233,11 +233,13 @@ extension BackgroundUploadService: URLSessionTaskDelegate {
             mappingStore.remove(taskIdentifier: taskId)
             return
         }
-        let pathInBucket = op.payload.uploadPath ?? ""
-        let path = pathInBucket.hasPrefix("media/") ? String(pathInBucket.dropFirst(6)) : pathInBucket
-        let photoItemId = op.payload.photoItemId ?? String(operationId.prefix(8))
-        let filename = "\(photoItemId).jpg"
-        let objectPath = "media/\(path)/\(filename)"
+        let objectPath = op.payload.objectPath ?? {
+            let pathInBucket = op.payload.uploadPath ?? ""
+            let path = pathInBucket.hasPrefix("media/") ? String(pathInBucket.dropFirst(6)) : pathInBucket
+            let photoItemId = op.payload.photoItemId ?? String(operationId.prefix(8))
+            let filename = "\(photoItemId.prefix(8)).jpg"
+            return "media/\(path)/\(filename)"
+        }()
         let sizeBytes = op.payload.sizeBytes ?? 0
         markUploadSucceeded(operationId: operationId, taskId: taskId, objectPath: objectPath, sizeBytes: sizeBytes)
     }

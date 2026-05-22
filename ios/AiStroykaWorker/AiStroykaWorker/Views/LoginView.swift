@@ -91,6 +91,7 @@ struct LoginView: View {
                 await MainActor.run {
                     focusedField = nil
                     appState.checkSession()
+                    OperationQueueExecutor.shared.resumeQueue()
                     loading = false
                 }
             } catch {
