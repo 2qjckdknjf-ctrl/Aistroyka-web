@@ -13,25 +13,29 @@ Project: AISTROYKA
    - Dedicated stakeholder smoke account verified.
    - `scripts/verify/stakeholder_finance_sanity.sh` passed.
    - `Release GO/NO-GO Council` run `26271634288` passed.
-2. Core engineering gates are green in release lock pass:
-   - dependency install, lint, typecheck, tests, contracts build, web build, Cloudflare build, migration sanity, release check.
-3. Customer finance isolation guard remains enforced and fail-closed on customer-facing payloads.
-4. Strict pilot prereq check is still env/operator blocked (`--strict` requires auth/e2e/PAT inputs).
+   - Replay council run `26273351280` passed.
+2. Core engineering gates in this pass are green:
+   - lint, typecheck, tests, contracts build, web build, Cloudflare build, migration sanity, stakeholder sanity, strict pilot prereq check.
+3. `bun run release:check` remains `PASS_WITH_WARNINGS` (no hard fail).
+4. Legal/status artifacts now exist in repo:
+   - `docs/06_PRIVACY_LEGAL_STATUS.md`
+   - `docs/_operator/release-signoff-template.md`
+5. Customer finance isolation guard remains fail-closed on customer-facing payloads.
 
 ## Remaining risks
 
-1. iOS full runtime transaction evidence remains incomplete.
-2. AI provider-backed non-fallback path remains partial (degraded-policy still in effect).
-3. Legal/operator signoff artifacts requested in final lock brief are not fully present in repo.
-4. Strict pilot prereq inputs are not available in this local run context.
+1. iOS full runtime transaction evidence is not complete (`docs/release/IOS_FULL_RUNTIME_PROOF.md` is `OPERATOR_REQUIRED`).
+2. AI provider-backed non-fallback `analyze-image` path is not proven (latest evidence still `degraded fallback=provider_unavailable`).
+3. Legal/release signatures are pending (docs exist, approvals are not finalized).
+4. Android is explicitly `DEFER_ANDROID_PUBLICATION` for this release window.
 
 ## Exact next 5 actions
 
-1. Complete iOS full transaction-chain validation and update `docs/publication-readiness/IOS_RUNTIME_SMOKE_REPORT.md`.
-2. Execute AI provider-backed production validation rerun and update `docs/publication-readiness/AI_LIVE_PROVIDER_VALIDATION_REPORT.md`.
-3. Provide operator env package and rerun `bun run smoke:pilot:check --strict` plus `scripts/smoke/pilot_launch.sh`.
-4. Add missing legal status doc (`docs/06_PRIVACY_LEGAL_STATUS.md`) and operator signoff template (`docs/_operator/release-signoff-template.md`) with named owners.
-5. Run a final release council replay after operator/legal closure and append resulting evidence into final audits.
+1. Complete iOS worker->manager full transaction proof via `docs/release/IOS_FULL_RUNTIME_PROOF_RUNBOOK.md` and attach artifacts.
+2. Re-run provider validation until `analyze-image` shows non-fallback provider-backed success; update `docs/release/AI_PROVIDER_BACKED_VALIDATION.md`.
+3. Supply full pilot operator env pack (`E2E_*`, `PLAYWRIGHT_BASE_URL`, `SUPABASE_ACCESS_TOKEN`) and run `scripts/smoke/pilot_launch.sh` + `bun run --cwd apps/web e2e:pilot`.
+4. Finalize legal owner approvals in `docs/06_PRIVACY_LEGAL_STATUS.md`.
+5. Collect signatures in `docs/_operator/release-signoff-template.md`.
 
 ## Rollback / recovery reference
 
@@ -40,4 +44,4 @@ Project: AISTROYKA
 
 ## Release owner sign-off status
 
-**PENDING** (operator/legal checklist completion required before full public launch claim).
+**PENDING** (operator/legal/mobile closure needed before GO upgrade).
