@@ -119,8 +119,7 @@ final class OperationQueueExecutor: ObservableObject {
         do {
             switch op.type {
             case .startShift:
-                try await WorkerAPI.startDay(idempotencyKey: op.idempotencyKey)
-                let day = op.payload.dayId ?? todayDayId()
+                let day = try await WorkerAPI.startDay(idempotencyKey: op.idempotencyKey)
                 appStore.save {
                     $0.shift.dayId = day
                     $0.shift.startedAt = ISO8601DateFormatter().string(from: Date())
@@ -209,7 +208,4 @@ final class OperationQueueExecutor: ObservableObject {
         return ISO8601DateFormatter().string(from: date)
     }
 
-    private func todayDayId() -> String {
-        ISO8601DateFormatter().string(from: Date()).prefix(10).replacingOccurrences(of: "-", with: "")
-    }
 }

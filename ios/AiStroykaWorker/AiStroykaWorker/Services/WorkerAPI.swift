@@ -63,13 +63,15 @@ enum WorkerAPI {
         return r.data ?? []
     }
     
-    static func startDay(idempotencyKey: String) async throws {
-        try await APIClient.shared.requestVoid(
+    static func startDay(idempotencyKey: String) async throws -> String {
+        let r: WorkerDayResponse = try await APIClient.shared.request(
             path: "worker/day/start",
             method: "POST",
             body: EmptyBody(),
             idempotencyKey: idempotencyKey
         )
+        guard let id = r.data?.id else { throw APIError(statusCode: nil, code: nil, message: "No worker day id in response") }
+        return id
     }
     
     static func endDay(idempotencyKey: String) async throws {

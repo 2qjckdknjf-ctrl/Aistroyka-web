@@ -38,6 +38,13 @@ public struct RegisterDeviceResponse: Decodable {
     public let success: Bool?
 }
 
+public struct WorkerDayResponse: Decodable {
+    public let data: WorkerDayData?
+    public struct WorkerDayData: Decodable {
+        public let id: String
+    }
+}
+
 public struct ReportCreateResponse: Decodable {
     public let data: ReportCreateData?
     public struct ReportCreateData: Decodable {

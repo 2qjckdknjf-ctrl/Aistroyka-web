@@ -42,7 +42,7 @@ data class WorkerUiState(
     val syncStatus: String = "idle",
     val syncCursor: Int = 0,
     val syncError: String? = null,
-    /** Local shift id (yyyyMMdd), same contract as iOS `todayDayId`. */
+    /** Server `worker_day.id` used as the report `day_id` foreign key. */
     val shiftDayId: String? = null,
     val activeReportId: String? = null,
     val photoLabel: String? = null,
