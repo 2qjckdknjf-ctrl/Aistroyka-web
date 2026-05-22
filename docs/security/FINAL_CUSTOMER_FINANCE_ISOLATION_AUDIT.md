@@ -43,14 +43,16 @@
 
 Repo-wide `apps/web` TypeScript grep for cost/finance tokens surfaced hits in **internal** surfaces (e.g. `ProjectCostsPanel`, `/api/v1/projects/:id/costs`, `change-orders` `internal_cost_item_id`, `cost-signals`, manager actions). Customer-facing shaping layers (`portal`, `share`, digest owner path, proof-pack, telegram emit) remain aligned with prior PASS; digest/proof tests continue to assert absence of internal finance phrases in owner-facing output.
 
-## Live stakeholder sanity (latest 2026-05-21)
+## Live stakeholder sanity (latest 2026-05-22)
 
-**BLOCKED** — do **not** mark **PASS** until all steps below are satisfied.
+**PASS** — dedicated stakeholder smoke account is configured and verified in production.
 
-1. **Account:** a real **`stakeholder`** user (invited client). Current production fallback credentials resolve to **`role=admin`** (council run `26212368552`) and do **not** satisfy the stakeholder-only gate.
-2. **Council evidence:** `Release GO/NO-GO Council` run `26211837253` initially failed due missing `STAKEHOLDER_SMOKE_*` secrets; after workflow fallback merge (PR #22), runs `26212368552`, `26213133876`, `26219736831`, and `26226853236` pass credentials but still fail on role mismatch (`admin` vs expected `stakeholder`).
-3. **Closure command:** run `bash scripts/verify/stakeholder_finance_sanity.sh` with dedicated stakeholder credentials (`STAKEHOLDER_SMOKE_EMAIL`, `STAKEHOLDER_SMOKE_PASSWORD`). Expected: `role=stakeholder`, `portal/projects` **200** JSON, `GET/POST .../costs` → **403**, portal project JSON must not expose internal cost keys.
+1. **Account:** dedicated stakeholder smoke user provisioned and linked (not admin/owner). Details: `docs/security/STAKEHOLDER_SMOKE_ACCOUNT_SETUP_REPORT.md`.
+2. **Council evidence:** `Release GO/NO-GO Council` run `26271634288` passed with `run_stakeholder_sanity=true`.
+3. **Closure command:** `bash scripts/verify/stakeholder_finance_sanity.sh` returns PASS with stakeholder credentials; `/api/v1/me role=stakeholder`, portal access works, and `/api/v1/projects/:id/costs` remains denied (`403`).
 
-**Repo/route tests** for cost isolation: **PASS**. **Live** stakeholder sanity: **BLOCKED** until dedicated stakeholder credentials are configured and script passes.
+Final stakeholder finance live gate: PASS. Dedicated stakeholder smoke account verified. Release GO/NO-GO Council run 26271634288 passed. No security weakening applied.
 
-**PASS (with continuous regression discipline)** — code-level boundaries and tests hold; **live** stakeholder verification follows the checklist above.
+**Repo/route tests** for cost isolation: **PASS**. **Live** stakeholder sanity: **PASS**.
+
+**PASS (with continuous regression discipline)** — code-level boundaries and tests hold; live stakeholder verification is now closed.
