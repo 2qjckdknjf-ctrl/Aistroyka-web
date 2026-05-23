@@ -5,6 +5,7 @@ import * as repo from "./report.repository";
 import type { Report } from "./report.types";
 import * as taskRepo from "@/lib/domain/tasks/task.repository";
 import { isTaskAssignedTo } from "@/lib/domain/task-assignments";
+import * as uploadSessionRepo from "@/lib/domain/upload-session/upload-session.repository";
 import { enqueueJob } from "@/lib/platform/jobs/job.service";
 import { emitAudit } from "@/lib/observability/audit.service";
 import { emitChange } from "@/lib/sync/change-log.repository";
@@ -60,6 +61,12 @@ export async function addMediaToReport(
   if (!report) return { ok: false, error: "Report not found" };
   if (report.user_id !== ctx.userId) return { ok: false, error: "Not your report" };
   if (report.status !== "draft") return { ok: false, error: "Report already submitted" };
+  if (opts.uploadSessionId) {
+    const session = await uploadSessionRepo.getById(supabase, opts.uploadSessionId, ctx.tenantId);
+    if (!session || session.user_id !== ctx.userId) {
+      return { ok: false, error: "Not your session" };
+    }
+  }
   const ok = await repo.addMedia(supabase, reportId, opts);
   return { ok, error: ok ? "" : "Failed to add media" };
 }

@@ -1,12 +1,14 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { createReport, submitReport, validateTaskForReportLink } from "./report.service";
+import { addMediaToReport, createReport, submitReport, validateTaskForReportLink } from "./report.service";
 import * as taskRepo from "@/lib/domain/tasks/task.repository";
 import { isTaskAssignedTo } from "@/lib/domain/task-assignments";
 import * as repo from "./report.repository";
+import * as uploadSessionRepo from "@/lib/domain/upload-session/upload-session.repository";
 
 vi.mock("@/lib/domain/tasks/task.repository");
 vi.mock("@/lib/domain/task-assignments");
 vi.mock("./report.repository");
+vi.mock("@/lib/domain/upload-session/upload-session.repository");
 vi.mock("@/lib/sync/change-log.repository", () => ({ emitChange: vi.fn().mockResolvedValue(1) }));
 
 describe("report.service task link", () => {
@@ -101,6 +103,73 @@ describe("report.service task link", () => {
       expect(result.data).toBeNull();
       expect(result.code).toBe("task_not_assigned");
       expect(insert).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("addMediaToReport upload session ownership", () => {
+    it("rejects upload sessions owned by another worker", async () => {
+      vi.mocked(repo.getById).mockResolvedValue({
+        id: "rpt-1",
+        tenant_id: tenantId,
+        user_id: userId,
+        day_id: null,
+        status: "draft",
+        created_at: "2025-01-01T00:00:00Z",
+        submitted_at: null,
+        task_id: null,
+      } as any);
+      vi.mocked(uploadSessionRepo.getById).mockResolvedValue({
+        id: "session-1",
+        tenant_id: tenantId,
+        user_id: "other-worker",
+        purpose: "report_before",
+        status: "finalized",
+        object_path: "media/tenant-1/session-1/before.jpg",
+        mime_type: "image/jpeg",
+        size_bytes: 1024,
+        created_at: "2025-01-01T00:00:00Z",
+        expires_at: "2025-01-01T01:00:00Z",
+      } as any);
+
+      const result = await addMediaToReport({} as any, { tenantId, userId, role: "member" } as any, "rpt-1", {
+        uploadSessionId: "session-1",
+      });
+
+      expect(result).toEqual({ ok: false, error: "Not your session" });
+      expect(repo.addMedia).not.toHaveBeenCalled();
+    });
+
+    it("allows attaching the caller's own upload session", async () => {
+      vi.mocked(repo.getById).mockResolvedValue({
+        id: "rpt-1",
+        tenant_id: tenantId,
+        user_id: userId,
+        day_id: null,
+        status: "draft",
+        created_at: "2025-01-01T00:00:00Z",
+        submitted_at: null,
+        task_id: null,
+      } as any);
+      vi.mocked(uploadSessionRepo.getById).mockResolvedValue({
+        id: "session-1",
+        tenant_id: tenantId,
+        user_id: userId,
+        purpose: "report_before",
+        status: "finalized",
+        object_path: "media/tenant-1/session-1/before.jpg",
+        mime_type: "image/jpeg",
+        size_bytes: 1024,
+        created_at: "2025-01-01T00:00:00Z",
+        expires_at: "2025-01-01T01:00:00Z",
+      } as any);
+      vi.mocked(repo.addMedia).mockResolvedValue(true);
+
+      const result = await addMediaToReport({} as any, { tenantId, userId, role: "member" } as any, "rpt-1", {
+        uploadSessionId: "session-1",
+      });
+
+      expect(result).toEqual({ ok: true, error: "" });
+      expect(repo.addMedia).toHaveBeenCalledWith(expect.anything(), "rpt-1", { uploadSessionId: "session-1" });
     });
   });
 

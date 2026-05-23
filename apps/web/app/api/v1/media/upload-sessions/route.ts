@@ -6,6 +6,7 @@ import { listForManager } from "@/lib/domain/upload-session/upload-session.repos
 import { checkRequestBodySize } from "@/lib/api/request-limit";
 import { requireLiteIdempotency, storeLiteIdempotency } from "@/lib/api/lite-idempotency";
 import { withRequestIdAndTiming } from "@/lib/observability";
+import { isLiteWorkerClient } from "@/lib/tenant/client-profile";
 import { CreateUploadSessionRequestSchema } from "@aistroyka/contracts";
 
 export const dynamic = "force-dynamic";
@@ -32,7 +33,8 @@ export async function GET(request: Request) {
   const stuck = url.searchParams.get("stuck") === "1" || url.searchParams.get("stuck") === "true";
   const stuckHoursParam = url.searchParams.get("stuck_hours");
   const stuckHours = stuckHoursParam ? Math.max(1, Math.min(168, parseInt(stuckHoursParam, 10) || 4)) : undefined;
-  const userId = url.searchParams.get("user_id") ?? url.searchParams.get("worker_id") ?? undefined;
+  const requestedUserId = url.searchParams.get("user_id") ?? url.searchParams.get("worker_id") ?? undefined;
+  const userId = isLiteWorkerClient(ctx) ? ctx.userId : requestedUserId;
   const from = url.searchParams.get("from") ?? undefined;
   const to = url.searchParams.get("to") ?? undefined;
   const supabase = await createClientFromRequest(request);

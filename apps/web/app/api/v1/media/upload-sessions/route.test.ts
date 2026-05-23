@@ -99,6 +99,28 @@ describe("GET /api/v1/media/upload-sessions", () => {
     );
   });
 
+  it("forces lite worker clients to list only their own upload sessions", async () => {
+    const { getTenantContextFromRequest } = await import("@/lib/tenant");
+    vi.mocked(getTenantContextFromRequest).mockResolvedValueOnce({
+      tenantId: "t1",
+      userId: "u1",
+      role: "member",
+      subscriptionTier: "free",
+      clientProfile: "ios_worker",
+      traceId: "trace-1",
+    });
+    listForManager.mockResolvedValueOnce({ rows: [], total: 0 });
+
+    const res = await GET(new Request("https://test/api/v1/media/upload-sessions?worker_id=other-worker"));
+
+    expect(res.status).toBe(200);
+    expect(listForManager).toHaveBeenCalledWith(
+      expect.anything(),
+      "t1",
+      expect.objectContaining({ userId: "u1" })
+    );
+  });
+
   it("does not pass stuck when stuck=0", async () => {
     listForManager.mockResolvedValueOnce({ rows: mockRows, total: 1 });
     const res = await GET(new Request("https://test/api/v1/media/upload-sessions?stuck=0"));
