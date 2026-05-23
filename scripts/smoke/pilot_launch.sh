@@ -82,14 +82,21 @@ echo "Pilot launch smoke: $BASE (from=$FROM to=$TO)"
 
 # 0) Health (no auth) — must pass
 code=$(curl -sSL -o /tmp/pilot_health.json -w "%{http_code}" -m 15 "$BASE/api/v1/health" || true)
-if [[ "$code" != "200" && "$code" != "503" ]]; then
+if [[ "$code" != "200" ]]; then
   echo "  FAIL: GET /api/v1/health → HTTP $code"
   FAIL=1
 else
-  if grep -q '"ok"' /tmp/pilot_health.json 2>/dev/null; then
+  if command -v jq &>/dev/null; then
+    health_ok="$(jq -r '.ok // false' /tmp/pilot_health.json 2>/dev/null || echo false)"
+  elif grep -Eq '"ok"[[:space:]]*:[[:space:]]*true' /tmp/pilot_health.json 2>/dev/null; then
+    health_ok="true"
+  else
+    health_ok="false"
+  fi
+  if [[ "$health_ok" == "true" ]]; then
     echo "  PASS: health"
   else
-    echo "  FAIL: health response missing ok"
+    echo "  FAIL: health response ok is not true"
     FAIL=1
   fi
 fi
