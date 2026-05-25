@@ -1,6 +1,6 @@
 # Deployment source of truth (operators)
 
-**Last updated:** 2026-05-25 (workflow gate refresh: staging/prod deploy YAML + pilot smoke source)  
+**Last updated:** 2026-05-25 (workflow gate refresh: staging/prod deploy YAML + pilot smoke source)
 **Applies to:** AISTROYKA web (`apps/web`), GitHub repo **Aistroyka-web** (`git@github.com:2qjckdknjf-ctrl/Aistroyka-web.git`)
 
 ---
