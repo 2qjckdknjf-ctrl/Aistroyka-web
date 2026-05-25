@@ -65,6 +65,13 @@ Expected evidence:
    - `pilot-smoke` (strict health 200)
    - `stakeholder-finance-sanity`
 
+Note:
+
+- `migrations-preflight` runs only when both repository secrets are configured:
+  - `SUPABASE_ACCESS_TOKEN`
+  - `SUPABASE_PROJECT_REF`
+- If these secrets are absent, the job is skipped and `C-04` must remain open.
+
 Expected evidence:
 
 - staging run URL + successful job list
