@@ -10,7 +10,7 @@ Execution reference:
 
 ## Current execution snapshot
 
-- Completed in code/workflows (pending live rollout evidence):
+- Completed in code/workflows and validated in live runs:
   - `/api/v1/projects/:id/estimate` now denies non-manager roles.
   - Stakeholder finance sanity script now checks `/estimate` deny path.
   - RLS hotfix migration drafted for `project_estimate_results` internal-only access.
@@ -18,11 +18,13 @@ Execution reference:
   - Production workflow now starts from successful staging workflow completion.
   - Staging pilot E2E switched from optional to blocking.
   - Production smoke health gate tightened to require `HTTP 200`.
+  - Production run `26406727533` passed: deploy, pilot smoke, and stakeholder finance sanity.
+  - Production fail-fast guard for missing `CRON_SECRET` is active and validated.
 - Still pending:
-  - Apply migrations and verify live RLS behavior.
+  - Apply migrations and verify live RLS behavior for estimate-results boundary.
   - GitHub branch protection/ruleset confirmation in UI.
   - Remaining RLS advisory table closure and full Phase 13 doc reconciliation.
-  - Live evidence that webhook/cron fail-closed defaults are active in production.
+  - Explicit webhook fail-closed runtime evidence capture.
 
 ## Wave P0 (immediate, release-blocking)
 
