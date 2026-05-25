@@ -41,6 +41,7 @@ vi.mock("@/lib/platform/jobs/job.repository", () => ({
 
 describe("GET /api/v1/reports/:id/analysis-status", () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     getTenantContextFromRequest.mockResolvedValue(tenantContext);
     requireTenant.mockReset();
     createClientFromRequest.mockResolvedValue({ client: "request-bound" });
