@@ -20,7 +20,20 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  migrations-preflight:
+    name: Supabase migrations preflight (blocking)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check env/config (migrations)
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: bash scripts/release/check-env-config.sh migrations
+
   deploy:
+    needs: migrations-preflight
     name: Build and deploy to staging
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -196,13 +209,13 @@ jobs:
       supabase_url: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_STAGING }}
       supabase_anon_key: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_STAGING }}
 
-  # Playwright pilot (buttons + sync + core) against staging; requires PILOT_E2E_* secrets. Non-blocking so missing secrets or UI flakiness do not fail deploy.
+  # Playwright pilot (buttons + sync + core) against staging; requires PILOT_E2E_* secrets.
+  # Blocking: staging must prove customer-facing flows before production promotion.
   pilot-e2e-audit:
-    name: Post-deploy Playwright pilot E2E (optional)
+    name: Post-deploy Playwright pilot E2E (blocking)
     needs: [deploy, pilot-smoke]
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
         with:

@@ -1,0 +1,49 @@
+# Deep Audit Risk Register
+
+Date: 2026-05-25  
+Scale: `Critical / High / Medium`  
+Status terms: `open`, `in_progress`, `blocked`, `closed`
+
+## Critical
+
+| ID | Risk | Evidence | Impact | Owner | Status |
+|---|---|---|---|---|---|
+| C-01 | Stakeholder can access internal estimate intelligence via `/api/v1/projects/:id/estimate` | `apps/web/app/api/v1/projects/[id]/estimate/route.ts`, `apps/web/lib/domain/estimate/estimate.service.ts`, `apps/web/supabase/migrations/20260329140000_stakeholder_rls_isolation.sql` | Direct violation of customer-finance isolation rule from roadmap | Web + DB | in_progress (code+tests ready and green; migration apply/live verify pending) |
+| C-02 | Production deploy not promotion-gated by staging success | `.github/workflows/deploy-cloudflare-staging.yml`, `.github/workflows/deploy-cloudflare-prod.yml` | Defective change can reach production without mandatory staged pass | Release Eng | in_progress (workflow wiring updated; awaiting live run proof) |
+| C-03 | Required merge checks/branch protection not provably enforced from repo state | `docs/runbooks/DEPLOYMENT_SOURCE_OF_TRUTH.md` (UI-only verification note); API snapshot currently shows `branches/main/protection -> 404`, repo rulesets `[]` | CI may be bypassed if ruleset is misconfigured | Repo Admin | blocked (GitHub UI/org policy action required) |
+| C-04 | Supabase migration readiness was outside automated deploy contour | `scripts/release/check-env-config.sh` (`migrations` mode), deploy workflows | Schema drift risk between application deploy and DB state | Release Eng + DB | in_progress (blocking migrations-preflight jobs added; awaiting pipeline evidence) |
+
+## High
+
+| ID | Risk | Evidence | Impact | Owner | Status |
+|---|---|---|---|---|---|
+| H-01 | Finance fail-closed guard is not uniformly applied across customer routes | `apps/web/lib/security/customer-finance-guard.ts`; route-level usage now expanded across portal endpoints + regression tests | Regression can leak finance fields without hard fail | Web | in_progress (portal route coverage + tests added; full customer surface sweep pending) |
+| H-02 | E2E and AI post-deploy checks are non-blocking in deploy flows | `continue-on-error: true` in staging/prod workflows | Release can pass with unresolved customer-flow or AI regressions | Release Eng | in_progress (staging pilot E2E is now blocking; AI gate remains non-blocking by design) |
+| H-03 | Webhook security can run unsigned if secret not configured | `apps/web/lib/webhooks/webhook-verifier.ts`, `apps/web/app/api/v1/webhooks/incoming/route.ts`, `apps/web/app/api/webhooks/incoming/route.ts` | Event injection risk under misconfiguration | Platform | in_progress (production fail-closed + tests added; legacy route now aliases canonical v1 handler; env rollout verify pending) |
+| H-04 | Cron/job triggers are weak if `REQUIRE_CRON_SECRET` disabled | `apps/web/lib/api/cron-auth.ts` | Unauthorized job triggering / abuse risk | Platform | in_progress (production defaults to require secret + tests added; live secret rollout verify pending) |
+| H-05 | Legacy API surface coexists with canonical `/api/v1` | legacy routes under `apps/web/app/api/**` | Drift and inconsistent auth/validation behavior | Web | in_progress |
+| H-06 | RLS advisory backlog (11 tables) unresolved in repo migrations | reported in phase docs, no closure migration committed | Security due-diligence and enterprise readiness risk | DB | open (estimate-results RLS hotfix prepared; remaining table set pending) |
+
+## Medium
+
+| ID | Risk | Evidence | Impact | Owner | Status |
+|---|---|---|---|---|---|
+| M-01 | Multi-tenant context ambiguity (first membership row selection) | `apps/web/lib/tenant/tenant.context.ts` (`limit(1)` without explicit tenant selection) | Wrong-tenant user experience or accidental data scope confusion | Web | open |
+| M-02 | No single blocking E2E chain for roadmap customer flows 7-14 | `docs/audit/FINAL_E2E_REPORT.md`, `apps/web/tests/e2e` | Coverage blind spots for launch-critical customer flows | QA + Web | open |
+| M-03 | OpenNext Cloudflare patch chain is fragile | deploy patch scripts + `wrangler.deploy.toml` path | Build/deploy regressions on toolchain upgrades | Platform | in_progress |
+| M-04 | Phase 13 closure artifacts are partially stale/inconsistent | `docs/product/PHASE13_ROADMAP_CLOSURE.md` vs newer release docs | Governance confusion, false block/false green risk | Product/Release | in_progress (deep audit set added, core closure doc refresh pending) |
+| M-05 | Orphan workflow configs under non-canonical path can mislead operators | `apps/web/.github/workflows/*` | Operational confusion and wrong assumptions | Release Eng | open |
+
+## Risk acceptance policy for this audit
+
+- No `Critical` risks are acceptable for GA posture.
+- `High` risks require either fix or explicit signed temporary acceptance with expiry date.
+- `Medium` risks may be deferred only with owner, due date, and regression test guard.
+
+## Exit criteria (risk-register side)
+
+This register can be considered green only when:
+
+1. C-01, C-02, C-03 are `closed`.
+2. H-01 through H-04 are `closed` or accepted with signed expiry and compensating controls.
+3. Updated evidence links are attached to each closed item (tests/workflow runs/docs).

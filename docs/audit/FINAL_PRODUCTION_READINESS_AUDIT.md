@@ -1,7 +1,7 @@
 # Final production readiness audit (Phase 13)
 
 **Roadmap:** `docs/roadmap/AISTROYKA_MEGA_ROADMAP_CUSTOMER_FINANCE_SAFE.md` — § Phase 13  
-**Date:** 2026-05-07 (updated **2026-05-21** hardening pass)
+**Date:** 2026-05-07 (updated **2026-05-22** release lock pass)
 
 **Scope:** Repository and workflow readiness before serious sales. Live go/no-go still requires operator-run smoke on secured environments.
 
@@ -82,8 +82,8 @@ Workflow assist: `.github/workflows/release-go-no-go-council.yml`
 | `bun run cf:build` | **PASS** |
 | `bun run release:check` | **PASS_WITH_WARNINGS** |
 | `bun run smoke:pilot:check --strict` | **FAIL (env blocked)** — missing auth path for `ops/metrics`, E2E creds, and `SUPABASE_ACCESS_TOKEN` |
-| `bash scripts/verify/stakeholder_finance_sanity.sh` | **BLOCKED** — missing `STAKEHOLDER_SMOKE_EMAIL` / `STAKEHOLDER_SMOKE_PASSWORD` |
-| `gh workflow run release-go-no-go-council.yml` | **BLOCKED** — workflow not yet present on default branch (local-only until push/merge) |
+| `bash scripts/verify/stakeholder_finance_sanity.sh` | **PASS** — dedicated stakeholder smoke account verified; role check returns `stakeholder` |
+| `gh workflow run release-go-no-go-council.yml` | **PASS** — latest council run `26271634288` successful with stakeholder sanity enabled |
 
 ## Council workflow replay (2026-05-21)
 
@@ -95,12 +95,13 @@ Workflow assist: `.github/workflows/release-go-no-go-council.yml`
 | `26213133876` | **FAIL** | final replay after audit refresh merge: same blocker (`role=admin`, expected `stakeholder`) |
 | `26219736831` | **FAIL** | latest replay on `main`: `release:check` passed, stakeholder sanity still fails with fallback account role mismatch (`admin`, expected `stakeholder`) |
 | `26226853236` | **FAIL** | replay on `main` confirms blocker persists unchanged: fallback smoke account resolves to `role=admin`, not `stakeholder` |
+| `26271634288` | **PASS** | final release-lock replay on `main`: `release:check` + stakeholder finance sanity both pass with dedicated stakeholder account |
 
-Follow-up fix merged via PR #22 (`a8ee64b474ca63a1d6702332a14bb4cee3ac918d`) to allow fallback credentials, but final gate still needs dedicated stakeholder account.
+Final stakeholder finance live gate: PASS. Dedicated stakeholder smoke account verified. Release GO/NO-GO Council run 26271634288 passed. No security weakening applied. See `docs/security/STAKEHOLDER_SMOKE_ACCOUNT_SETUP_REPORT.md`.
 
 ## Verdict
 
-Current baseline remains **GO_PUBLIC_CANDIDATE** for controlled rollout, not broad GA. Final publication decision requires a fresh council run on the target SHA and updated live evidence.
+Current baseline remains **GO_PUBLIC_CANDIDATE** for controlled rollout, not broad GA. Final stakeholder gate is now closed; remaining constraints are non-stakeholder items (mobile runtime completeness, AI provider-backed non-fallback proof, and operator/legal signoff surfaces).
 
 ## References
 

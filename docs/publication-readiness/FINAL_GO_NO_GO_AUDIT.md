@@ -36,7 +36,6 @@ None open.
 
 1. iOS full worker/manager runtime transaction chain still incomplete (only targeted login/inbox smoke proven).
 2. AI provider-backed non-fallback path remains unproven (`analyze-image` still degraded `provider_unavailable`), while stream probe is now proven.
-3. Stakeholder finance live sanity is not closed: latest council run with enabled sanity uses an `admin` user and fails stakeholder-role requirement.
 
 ## 4.1 Latest closure-pass check notes
 
@@ -108,6 +107,8 @@ CI_SIGNING_HACK=1 bash ios/scripts/run-ios-uitest-smoke-local.sh
 - Local release preflight is green at engineering gate level (`lint`, `test`, `cf:build`, `release:check`).
 - Council workflow is now merged and runnable on `main`.
 - Council run `26210496994` passed with stakeholder sanity disabled.
-- Council runs `26211837253`, `26212368552`, `26213133876`, `26219736831`, and `26226853236` failed with stakeholder sanity enabled (first: missing secrets; subsequent replays: fallback account role is `admin`, not `stakeholder`).
-- Broad GA remains blocked until dedicated stakeholder account passes live sanity script.
+- Council run `26271634288` passed with stakeholder sanity enabled after dedicated stakeholder smoke account setup (`docs/security/STAKEHOLDER_SMOKE_ACCOUNT_SETUP_REPORT.md`).
+- Broad GA remains blocked by non-stakeholder items (iOS full runtime chain, AI provider-backed non-fallback proof, operator/legal publication items).
+
+Final stakeholder finance live gate: PASS. Dedicated stakeholder smoke account verified. Release GO/NO-GO Council run 26271634288 passed. No security weakening applied.
 

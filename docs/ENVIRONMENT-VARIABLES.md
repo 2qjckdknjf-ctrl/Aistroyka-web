@@ -97,6 +97,8 @@ Vercel может встречаться как исторический/доп�
 | `GEMINI_VIDEO_MODEL` | Модель Gemini для анализа видео «работа за день» (по умолчанию — `GEMINI_VISION_MODEL` или `gemini-1.5-flash`). |
 | `GEMINI_VIDEO_FETCH_MAX_BYTES` | Верхняя граница размера скачиваемого ролика на один запрос (байты); не выше лимита тарифа и этого значения (в коде по умолчанию ~45 MiB). |
 | `WEBHOOK_INCOMING_SECRET` | Секрет для входящих webhooks (если используется). |
+| `WEBHOOK_INCOMING_REQUIRE_SIGNATURE` | Если `true`, входящие webhooks требуют подпись всегда (в т.ч. не-production). |
+| `WEBHOOK_INCOMING_ALLOW_UNSIGNED` | Только аварийный bypass: если `true`, в production допускаются неподписанные webhook payloads (не рекомендуется). |
 
 ---
 
