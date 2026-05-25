@@ -29,8 +29,8 @@ Current posture: `CONDITIONAL GO / GO_PUBLIC_CANDIDATE`, not broad GA.
 Why:
 
 - Strong baseline exists in tenant isolation, Cloudflare-first deploy discipline, and route-level tests.
-- Critical customer-finance boundary risk remains on internal estimate surface.
-- Production release flow still lacks hard promotion gates from staging and full blocking customer-flow E2E.
+- Critical customer-finance boundary risk remains on internal estimate surface until DB migration apply evidence is attached.
+- Staging-to-production promotion gate and blocking runtime checks are now proven in live runs, but branch-protection proof is still pending in GitHub UI.
 - Phase 13 closure evidence is partially stale across docs and needs reconciliation.
 
 ## 2.1) Implementation progress after this audit pass
@@ -56,8 +56,8 @@ Applied in repository during this pass:
 Pending to call risks fully closed:
 
 - migration apply on target environments,
-- live run evidence of updated gates,
-- branch protection/ruleset confirmation in GitHub UI.
+- branch protection/ruleset confirmation in GitHub UI,
+- explicit webhook fail-closed runtime proof capture.
 
 ## 3) Consolidated findings (highest risk first)
 
@@ -69,9 +69,9 @@ Pending to call risks fully closed:
    - RLS currently permits portal stakeholder select on `project_estimate_results`:
      `apps/web/supabase/migrations/20260329140000_stakeholder_rls_isolation.sql`
 
-2. Production deploy and migration gates required release hardening.
-   - Promotion and migration preflight are now implemented in workflow code.
-   - Full closure still depends on live run evidence.
+2. Production deploy and promotion gates were hardened and validated in live workflows.
+   - Promotion from staging to production is now proven in Actions runs.
+   - Production blocking gates (pilot smoke + stakeholder finance sanity) passed in run `26406727533`.
    - Files: `.github/workflows/deploy-cloudflare-staging.yml`, `.github/workflows/deploy-cloudflare-prod.yml`
 
 3. Branch protection / required-check enforcement is not proven in repo artifacts.
@@ -137,7 +137,7 @@ Verdict: `PARTIAL`.
 Verdict: `PARTIAL`.
 
 - Strong baseline: CI Check, Cloudflare deploy pipelines, blocking pilot-smoke.
-- Remaining gap: branch protection/ruleset proof is still UI-level and operator-managed.
+- Remaining gaps: branch protection/ruleset proof is still UI-level and operator-managed; migrations-preflight remains conditional when Supabase migration secrets are absent.
 
 ### Roadmap and phase compliance
 

@@ -26,6 +26,12 @@ Goal: close remaining live/operator blockers and move critical risks to `closed`
 
 ## 2) Remaining critical closures (live/operator)
 
+Latest live evidence already captured:
+
+- staging success: `26402956304`
+- production promotion trigger from staging: `26403104100` (`workflow_run`)
+- full production pass with blocking gates: `26406727533`
+
 ### C-01 — Estimate finance boundary closure
 
 Do now:
@@ -40,6 +46,8 @@ Close when:
 - migration apply + runtime deny proof are attached.
 
 ### C-02 — Promotion gate proof
+
+Status: `closed` (evidence captured in workflow runs listed above).
 
 Do now:
 
@@ -75,12 +83,13 @@ Close when:
 
 Do now:
 
-1. run staging/prod workflows after hardening merge
-2. confirm `migrations-preflight` jobs execute and pass
+1. configure `SUPABASE_ACCESS_TOKEN` + `SUPABASE_PROJECT_REF` in repository secrets
+2. run staging/prod workflows after secret rollout
+3. confirm `migrations-preflight` secret-check step executes (not skipped)
 
 Close when:
 
-- deploy run artifacts show preflight gate passing in both environments.
+- deploy run artifacts show migration preflight check step passing in both environments.
 
 ## 3) Exact execution order
 
