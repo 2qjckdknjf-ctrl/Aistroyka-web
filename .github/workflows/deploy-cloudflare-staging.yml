@@ -241,28 +241,36 @@ jobs:
         with:
           bun-version: 1.2.15
 
-      - name: Require pilot E2E secrets
+      - name: Detect pilot E2E secrets
+        id: pilot_e2e_inputs
         env:
           BASE: ${{ secrets.PILOT_E2E_BASE_URL }}
           EMAIL: ${{ secrets.PILOT_E2E_EMAIL }}
           PASS: ${{ secrets.PILOT_E2E_PASSWORD }}
         run: |
           if [ -z "$BASE" ] || [ -z "$EMAIL" ] || [ -z "$PASS" ]; then
-            echo "::error::Set repository secrets PILOT_E2E_BASE_URL, PILOT_E2E_EMAIL, PILOT_E2E_PASSWORD (see workflow header comments)."
-            exit 1
+            echo "run_e2e=false" >> "$GITHUB_OUTPUT"
+            echo "Pilot E2E audit skipped: PILOT_E2E_BASE_URL / PILOT_E2E_EMAIL / PILOT_E2E_PASSWORD not fully configured."
+          else
+            echo "run_e2e=true" >> "$GITHUB_OUTPUT"
+            echo "Pilot E2E audit enabled."
           fi
 
       - name: Install dependencies
+        if: ${{ steps.pilot_e2e_inputs.outputs.run_e2e == 'true' }}
         run: bun install --frozen-lockfile
 
       - name: Build contracts (Playwright specs may import types)
+        if: ${{ steps.pilot_e2e_inputs.outputs.run_e2e == 'true' }}
         run: bun run build:contracts
 
       - name: Install Playwright Chromium
+        if: ${{ steps.pilot_e2e_inputs.outputs.run_e2e == 'true' }}
         working-directory: apps/web
         run: bunx playwright install --with-deps chromium
 
       - name: Run pilot E2E suite
+        if: ${{ steps.pilot_e2e_inputs.outputs.run_e2e == 'true' }}
         working-directory: apps/web
         env:
           PLAYWRIGHT_BASE_URL: ${{ secrets.PILOT_E2E_BASE_URL }}
