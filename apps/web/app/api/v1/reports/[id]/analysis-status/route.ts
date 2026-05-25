@@ -1,19 +1,20 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClientFromRequest } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { getById as getReportById } from "@/lib/domain/reports/report.repository";
 import * as jobRepo from "@/lib/platform/jobs/job.repository";
+import { isLiteWorkerClient } from "@/lib/tenant/client-profile";
 
 export const dynamic = "force-dynamic";
 
 export type AnalysisStatus = "queued" | "running" | "success" | "failed";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id: reportId } = await params;
-  const ctx = await getTenantContextFromRequest(_request);
+  const ctx = await getTenantContextFromRequest(request);
   try {
     requireTenant(ctx);
   } catch (e) {
@@ -23,9 +24,12 @@ export async function GET(
     throw e;
   }
 
-  const supabase = await createClient();
+  const supabase = await createClientFromRequest(request);
   const report = await getReportById(supabase, reportId, ctx.tenantId!);
   if (!report) return NextResponse.json({ error: "Report not found" }, { status: 404 });
+  if (isLiteWorkerClient(ctx) && report.user_id !== ctx.userId) {
+    return NextResponse.json({ error: "Report not found" }, { status: 404 });
+  }
 
   const admin = (await import("@/lib/supabase/admin")).getAdminClient();
   const client = admin ?? supabase;

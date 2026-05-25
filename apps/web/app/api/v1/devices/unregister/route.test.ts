@@ -1,6 +1,18 @@
 import { describe, expect, it, vi } from "vitest";
 import { POST } from "./route";
 
+const { deleteChain } = vi.hoisted(() => {
+  const chain = {
+    eq: vi.fn().mockReturnThis(),
+    then: vi.fn((fn: (v: { error: null }) => void) => {
+      fn({ error: null });
+      return Promise.resolve({ error: null });
+    }),
+    catch: vi.fn(),
+  };
+  return { deleteChain: chain };
+});
+
 vi.mock("@/lib/tenant", () => ({
   getTenantContextFromRequest: vi.fn().mockResolvedValue({
     tenantId: "t1",
@@ -19,23 +31,13 @@ vi.mock("@/lib/tenant", () => ({
   },
 }));
 
-vi.mock("@/lib/supabase/server", () => {
-  const deleteChain = {
-    eq: vi.fn().mockReturnThis(),
-    then: vi.fn((fn: (v: { error: null }) => void) => {
-      fn({ error: null });
-      return Promise.resolve({ error: null });
+vi.mock("@/lib/supabase/admin", () => ({
+  getAdminClient: vi.fn().mockReturnValue({
+    from: vi.fn().mockReturnValue({
+      delete: vi.fn().mockReturnValue(deleteChain),
     }),
-    catch: vi.fn(),
-  };
-  return {
-    createClient: vi.fn().mockResolvedValue({
-      from: vi.fn().mockReturnValue({
-        delete: vi.fn().mockReturnValue(deleteChain),
-      }),
-    }),
-  };
-});
+  }),
+}));
 
 describe("POST /api/v1/devices/unregister", () => {
   it("returns 400 when device_id missing", async () => {
@@ -95,5 +97,8 @@ describe("POST /api/v1/devices/unregister", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body).toEqual({ success: true });
+    expect(deleteChain.eq).toHaveBeenCalledWith("tenant_id", "t1");
+    expect(deleteChain.eq).toHaveBeenCalledWith("user_id", "u1");
+    expect(deleteChain.eq).toHaveBeenCalledWith("device_id", "device-123");
   });
 });

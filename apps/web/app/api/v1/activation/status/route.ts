@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClientFromRequest } from "@/lib/supabase/server";
 import { getOrCreateTenantForCurrentUser } from "@/lib/api/engine";
 
 /**
  * GET /api/v1/activation/status
  * Returns product activation state for onboarding and Get Started checklist.
  */
-export async function GET() {
-  const supabase = await createClient();
+export async function GET(request: Request) {
+  const supabase = await createClientFromRequest(request);
   const tenantId = await getOrCreateTenantForCurrentUser(supabase);
   if (!tenantId) {
     return NextResponse.json({

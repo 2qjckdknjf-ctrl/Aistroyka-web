@@ -30,6 +30,8 @@ vi.mock("@/lib/tenant", () => ({
     userId: "u1",
     subscriptionTier: "pro",
   }),
+  requireTenant: vi.fn(),
+  TenantRequiredError: class TenantRequiredError extends Error {},
 }));
 
 function jsonRequest(body: object) {
@@ -83,6 +85,26 @@ describe("POST /api/v1/ai/analyze-video-daily", () => {
     const data = (await res.json()) as { summary: string; work_date: string };
     expect(data.summary).toContain("Concrete");
     expect(data.work_date).toBe("2026-04-27");
+    vi.unstubAllEnvs();
+  });
+
+  it("returns 401 before provider spend when tenant auth is missing", async () => {
+    vi.stubEnv("GOOGLE_AI_API_KEY", "sk-test");
+    const analyzeSpy = vi.spyOn(aiService, "analyzeVideoDailyWork");
+    const tenant = await import("@/lib/tenant");
+    vi.mocked(tenant.getTenantContextFromRequest).mockResolvedValueOnce({
+      tenantId: null,
+      userId: null,
+      subscriptionTier: "free",
+    } as never);
+    vi.mocked(tenant.requireTenant).mockImplementationOnce(() => {
+      throw new tenant.TenantRequiredError("Tenant required");
+    });
+
+    const res = await POST(jsonRequest({ video_url: "https://example.com/site.mp4" }));
+
+    expect(res.status).toBe(401);
+    expect(analyzeSpy).not.toHaveBeenCalled();
     vi.unstubAllEnvs();
   });
 });

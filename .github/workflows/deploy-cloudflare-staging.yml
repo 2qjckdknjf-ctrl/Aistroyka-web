@@ -119,7 +119,8 @@ jobs:
 
       - name: Set build stamp and app env
         run: |
-          echo "NEXT_PUBLIC_BUILD_SHA=${{ github.sha }}" >> $GITHUB_ENV
+          DEPLOYED_SHA="$(git rev-parse HEAD)"
+          echo "NEXT_PUBLIC_BUILD_SHA=$DEPLOYED_SHA" >> $GITHUB_ENV
           echo "NEXT_PUBLIC_BUILD_TIME=$(date -u +%Y-%m-%d\ %H:%M)" >> $GITHUB_ENV
           echo "NEXT_PUBLIC_APP_ENV=staging" >> $GITHUB_ENV
 
@@ -161,14 +162,15 @@ jobs:
           OPEN_NEXT_DEPLOY: "true"
         run: |
           npx wrangler deploy --env staging --no-bundle --config wrangler.deploy.toml \
-            --var NEXT_PUBLIC_BUILD_SHA:${{ github.sha }} \
-            --var NEXT_PUBLIC_BUILD_TIME:"${{ env.NEXT_PUBLIC_BUILD_TIME }}" \
+            --var NEXT_PUBLIC_BUILD_SHA:"${NEXT_PUBLIC_BUILD_SHA}" \
+            --var NEXT_PUBLIC_BUILD_TIME:"${NEXT_PUBLIC_BUILD_TIME}" \
             --var NEXT_PUBLIC_APP_ENV:staging
 
       - name: Post-deploy summary
         run: |
-          SHA7="$(echo ${{ github.sha }} | cut -c1-7)"
+          SHA7="$(echo "$NEXT_PUBLIC_BUILD_SHA" | cut -c1-7)"
           echo "Deployed worker: aistroyka-web-staging (apps/web)"
+          echo "Commit SHA (full): $NEXT_PUBLIC_BUILD_SHA"
           echo "Commit sha7: $SHA7"
           echo "workers.dev URL: see 'Deploy to Cloudflare (staging)' step output above"
 

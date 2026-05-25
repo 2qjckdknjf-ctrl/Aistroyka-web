@@ -23,6 +23,9 @@ final class AppState: ObservableObject {
             let session = await auth.currentSession()
             isLoggedIn = session != nil
             currentUser = session?.user.email
+            if session != nil {
+                OperationQueueExecutor.shared.resumeQueue()
+            }
         }
     }
     

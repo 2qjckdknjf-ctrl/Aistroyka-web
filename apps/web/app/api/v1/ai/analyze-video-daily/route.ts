@@ -7,7 +7,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { getTenantContextFromRequest } from "@/lib/tenant";
+import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { createClientFromRequest } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/platform/rate-limit/rate-limit.service";
@@ -131,6 +131,23 @@ export async function POST(request: Request) {
   }
 
   const tenantCtx = await getTenantContextFromRequest(request);
+  try {
+    requireTenant(tenantCtx);
+  } catch (e) {
+    if (e instanceof TenantRequiredError) {
+      logVisionAnalyzeError({
+        request_id: requestId,
+        route: ROUTE_KEY,
+        tenant_id: tenantCtx.tenantId,
+        latency_ms: Date.now() - start,
+        error_kind: "validation_failure",
+        http_status: 401,
+        ...rel(),
+      });
+      return wrap(NextResponse.json({ error: e.message, request_id: requestId }, { status: 401 }), tenantCtx.tenantId, tenantCtx.userId);
+    }
+    throw e;
+  }
   const userSupabase = await createClientFromRequest(request);
   const admin = getAdminClient();
   if (admin) {

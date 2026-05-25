@@ -86,8 +86,7 @@ object WorkerApi {
     }
 
     suspend fun createReport(dayId: String?, taskId: String?, idempotencyKey: String): String {
-        val body = ReportCreateBody(dayId = dayId, taskId = taskId)
-        val json = ApiClient.json.encodeToString(ReportCreateBody.serializer(), body)
+        val json = buildCreateReportJson(dayId, taskId)
         val r: ReportCreateResponse = ApiClient.request(
             path = "worker/report/create",
             method = "POST",
@@ -235,12 +234,6 @@ object WorkerApi {
         @SerialName("device_id") val deviceId: String,
         val platform: String,
         val token: String,
-    )
-
-    @Serializable
-    private data class ReportCreateBody(
-        @SerialName("day_id") val dayId: String? = null,
-        @SerialName("task_id") val taskId: String? = null,
     )
 
     @Serializable

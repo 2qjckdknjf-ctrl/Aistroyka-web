@@ -23,9 +23,9 @@ struct RootView: View {
         .onAppear {
             Task { @MainActor in
                 await UITestLaunchHooks.prepareWorkerSurfaceIfNeeded(store: store, appState: appState)
-                appState.checkSession()
                 await AppRuntime.configureSharedNetworkingForWorker()
                 await APIClient.shared.setTokenProvider { await AuthService.shared.getAccessToken() }
+                appState.checkSession()
                 if appState.isLoggedIn { PushRegistrationService.registerIfNeeded() }
             }
         }
@@ -35,7 +35,10 @@ struct RootView: View {
             appState.logout()
         }
         .onChange(of: appState.isLoggedIn) { loggedIn in
-            if loggedIn { PushRegistrationService.registerIfNeeded() }
+            if loggedIn {
+                OperationQueueExecutor.shared.resumeQueue()
+                PushRegistrationService.registerIfNeeded()
+            }
         }
     }
 }

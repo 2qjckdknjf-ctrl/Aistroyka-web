@@ -1,7 +1,11 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { POST } from "./route";
 
-vi.mock("@/lib/tenant", () => ({ getTenantContextFromRequest: vi.fn() }));
+vi.mock("@/lib/tenant", () => ({
+  getTenantContextFromRequest: vi.fn(),
+  requireTenant: vi.fn(),
+  TenantRequiredError: class TenantRequiredError extends Error {},
+}));
 vi.mock("@/lib/supabase/server", () => ({ createClientFromRequest: vi.fn() }));
 vi.mock("@/lib/supabase/admin", () => ({ getAdminClient: vi.fn() }));
 vi.mock("@/lib/platform/rate-limit/rate-limit.service", () => ({
@@ -44,10 +48,11 @@ describe("POST /api/v1/ai/analyze-image — vision deterministic fallback", () =
     vi.stubEnv("AI_VISION_DETERMINISTIC_FALLBACK", "true");
     const tenant = await import("@/lib/tenant");
     vi.mocked(tenant.getTenantContextFromRequest).mockResolvedValue({
-      tenantId: null,
-      userId: null,
+      tenantId: "t1",
+      userId: "u1",
       subscriptionTier: "free",
     } as never);
+    vi.mocked(tenant.requireTenant).mockReset();
     const server = await import("@/lib/supabase/server");
     vi.mocked(server.createClientFromRequest).mockResolvedValue({} as never);
     const admin = await import("@/lib/supabase/admin");
@@ -94,5 +99,23 @@ describe("POST /api/v1/ai/analyze-image — vision deterministic fallback", () =
     expect(res.status).toBe(502);
     const body = (await res.json()) as { error?: string };
     expect(body.error).toBeDefined();
+  });
+
+  it("returns 401 before provider spend when tenant auth is missing", async () => {
+    const tenant = await import("@/lib/tenant");
+    vi.mocked(tenant.getTenantContextFromRequest).mockResolvedValueOnce({
+      tenantId: null,
+      userId: null,
+      subscriptionTier: "free",
+    } as never);
+    vi.mocked(tenant.requireTenant).mockImplementationOnce(() => {
+      throw new tenant.TenantRequiredError("Tenant required");
+    });
+    const ai = await import("@/lib/platform/ai/ai.service");
+
+    const res = await POST(jsonRequest({ image_url: "https://example.com/photo.jpg" }));
+
+    expect(res.status).toBe(401);
+    expect(vi.mocked(ai.analyzeImage)).not.toHaveBeenCalled();
   });
 });
