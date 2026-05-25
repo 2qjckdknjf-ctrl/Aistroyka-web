@@ -57,7 +57,7 @@ Pending to call risks fully closed:
 
 - migration apply on target environments,
 - branch protection/ruleset confirmation in GitHub UI,
-- explicit webhook fail-closed runtime proof capture.
+- migrations-preflight secret rollout (`SUPABASE_ACCESS_TOKEN` + `SUPABASE_PROJECT_REF`) so migration env check step executes (not skipped).
 
 ## 3) Consolidated findings (highest risk first)
 
