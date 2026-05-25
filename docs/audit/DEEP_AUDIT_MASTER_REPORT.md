@@ -57,7 +57,7 @@ Pending to call risks fully closed:
 
 - migration apply on target environments,
 - branch protection/ruleset confirmation in GitHub UI,
-- migrations-preflight secret rollout (`SUPABASE_ACCESS_TOKEN` + `SUPABASE_PROJECT_REF`) so migration env check step executes (not skipped).
+- finance-boundary DB/runtime closure evidence for estimate-results surface.
 
 ## 3) Consolidated findings (highest risk first)
 
