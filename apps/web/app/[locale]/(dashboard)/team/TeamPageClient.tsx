@@ -39,7 +39,7 @@ export function TeamPageClient({
     if (!trimmed) return;
     setLoading(true);
     try {
-      const res = await fetch("/api/tenant/invite", {
+      const res = await fetch("/api/v1/tenant/invite", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: trimmed, role }),
@@ -63,7 +63,7 @@ export function TeamPageClient({
     setRevoking(userId);
     setError(null);
     try {
-      const res = await fetch("/api/tenant/revoke", {
+      const res = await fetch("/api/v1/tenant/revoke", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_id: userId }),
@@ -135,9 +135,12 @@ export function TeamPageClient({
           </form>
           {message && <p className="mt-3 text-sm text-aistroyka-success">{message}</p>}
           {inviteLink && (
-            <button type="button" onClick={copyLink} className="btn-secondary mt-2">
-              {t("copyLink")}
-            </button>
+            <div className="mt-3 space-y-2">
+              <p className="text-xs text-aistroyka-text-tertiary">{inviteLink}</p>
+              <button type="button" onClick={copyLink} className="btn-secondary">
+                {t("copyLink")}
+              </button>
+            </div>
           )}
           {error && <p className="mt-2 text-sm text-aistroyka-error" role="alert">{error}</p>}
         </section>

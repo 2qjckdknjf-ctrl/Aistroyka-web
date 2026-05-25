@@ -9,7 +9,7 @@ import { hasSupabaseEnv } from "@/lib/env";
 import { Input, Button, Alert } from "@/components/ui";
 
 const SIGN_IN_TIMEOUT_MS = 25_000;
-const LOGIN_ENDPOINT = "/api/auth/login";
+const LOGIN_ENDPOINT = "/api/v1/auth/login";
 
 export type LoginStep =
   | "idle"
@@ -25,6 +25,7 @@ function LoginForm() {
   const locale = useLocale();
   const searchParams = useSearchParams();
   const next = searchParams?.get("next") ?? "/dashboard";
+  const registerHref = next ? `/register?next=${encodeURIComponent(next)}` : "/register";
   const t = useTranslations("auth");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -184,7 +185,7 @@ function LoginForm() {
           </p>
           <p className="mt-aistroyka-6 text-center text-aistroyka-subheadline text-aistroyka-text-secondary">
             {t("noAccount")}{" "}
-            <Link href="/register" className="font-medium text-aistroyka-accent hover:underline focus:outline-none focus:ring-2 focus:ring-aistroyka-accent focus:ring-offset-2 rounded-aistroyka-sm">
+            <Link href={registerHref} className="font-medium text-aistroyka-accent hover:underline focus:outline-none focus:ring-2 focus:ring-aistroyka-accent focus:ring-offset-2 rounded-aistroyka-sm">
               {t("createAccount")}
             </Link>
           </p>

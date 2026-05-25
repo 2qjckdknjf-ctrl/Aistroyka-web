@@ -74,22 +74,31 @@ export function PublicHeader() {
           </Link>
         </div>
 
-        <button
-          type="button"
-          className="inline-flex min-h-[var(--aistroyka-touch-min)] min-w-[var(--aistroyka-touch-min)] items-center justify-center rounded-[var(--aistroyka-radius-lg)] text-aistroyka-text-primary hover:bg-aistroyka-surface-raised md:hidden"
-          aria-expanded={mobileMenuOpen}
-          aria-controls="mobile-menu"
-          onClick={() => setMobileMenuOpen((v) => !v)}
-        >
-          <span className="sr-only">{mobileMenuOpen ? t("closeMenu") : t("openMenu")}</span>
-          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-            {mobileMenuOpen ? (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            ) : (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            )}
-          </svg>
-        </button>
+        <div className="flex items-center gap-1 md:hidden">
+          <Link
+            href="/dashboard"
+            className="inline-flex min-h-[var(--aistroyka-touch-min)] items-center rounded-[var(--aistroyka-radius-lg)] px-3 py-2 text-[var(--aistroyka-font-caption)] font-semibold text-aistroyka-accent hover:bg-aistroyka-surface-raised"
+            data-testid="cta.public.header.mobile.cabinet"
+          >
+            {t("cabinet")}
+          </Link>
+          <button
+            type="button"
+            className="inline-flex min-h-[var(--aistroyka-touch-min)] min-w-[var(--aistroyka-touch-min)] items-center justify-center rounded-[var(--aistroyka-radius-lg)] text-aistroyka-text-primary hover:bg-aistroyka-surface-raised"
+            aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-menu"
+            onClick={() => setMobileMenuOpen((v) => !v)}
+          >
+            <span className="sr-only">{mobileMenuOpen ? t("closeMenu") : t("openMenu")}</span>
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+              {mobileMenuOpen ? (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              )}
+            </svg>
+          </button>
+        </div>
       </div>
 
       <div
@@ -98,6 +107,24 @@ export function PublicHeader() {
         aria-hidden={!mobileMenuOpen}
       >
         <nav className="flex flex-col gap-0.5 px-4 py-4" aria-label={t("mainMobile")}>
+          <div className="mb-3 flex flex-col gap-2 border-b border-aistroyka-border-subtle pb-4">
+            <Link
+              href="/dashboard"
+              className="btn-primary text-center"
+              onClick={() => setMobileMenuOpen(false)}
+              data-testid="cta.public.mobile.cabinet"
+            >
+              {t("cabinet")}
+            </Link>
+            <Link
+              href="/login"
+              className="rounded-[var(--aistroyka-radius-lg)] border border-aistroyka-border-subtle bg-transparent px-4 py-3 text-center text-[var(--aistroyka-font-subheadline)] font-semibold text-aistroyka-text-primary hover:bg-aistroyka-surface-raised"
+              onClick={() => setMobileMenuOpen(false)}
+              data-testid="cta.public.mobile.login"
+            >
+              {t("login")}
+            </Link>
+          </div>
           {PRIMARY_NAV.map(({ href, key }) => (
             <Link
               key={href}
@@ -126,20 +153,6 @@ export function PublicHeader() {
               onClick={() => setMobileMenuOpen(false)}
             >
               {t("requestDemo")}
-            </Link>
-            <Link
-              href="/dashboard"
-              className="rounded-[var(--aistroyka-radius-lg)] px-4 py-3 text-center text-[var(--aistroyka-font-subheadline)] font-semibold text-aistroyka-text-secondary hover:bg-aistroyka-surface-raised"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              {t("cabinet")}
-            </Link>
-            <Link
-              href="/login"
-              className="btn-primary text-center"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              {t("login")}
             </Link>
           </div>
         </nav>

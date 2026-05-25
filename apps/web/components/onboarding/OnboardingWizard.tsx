@@ -1,16 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Link } from "@/i18n/navigation";
+import { Input } from "@/components/ui";
 import { Card, Button } from "@/components/ui";
 
-const STEPS = [
-  "companyType",
-  "createProject",
-  "inviteTeam",
-  "enableAi",
+const STEPS = ["persona", "company"] as const;
+const PERSONA_OPTIONS = [
+  "developer",
+  "contractor",
+  "customer",
+  "supervisor",
+  "other",
+  "invited_worker_manager",
 ] as const;
 
 export function OnboardingWizard({
@@ -23,14 +26,52 @@ export function OnboardingWizard({
   const t = useTranslations("onboarding");
   const router = useRouter();
   const [stepIndex, setStepIndex] = useState(initialStep);
-  const [companyType, setCompanyType] = useState<string>("");
+  const [persona, setPersona] = useState<string>("");
+  const [companyName, setCompanyName] = useState("");
+  const [companyType, setCompanyType] = useState<"developer" | "contractor" | "supervisor" | "other" | "customer">(
+    "contractor"
+  );
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const step = STEPS[stepIndex];
   const isLast = stepIndex === STEPS.length - 1;
+  const requiresCompanyDetails = useMemo(
+    () => persona !== "invited_worker_manager" && persona !== "customer",
+    [persona]
+  );
+
+  async function finish() {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/v1/onboarding/complete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          persona,
+          companyName: requiresCompanyDetails ? companyName.trim() : null,
+          companyType: requiresCompanyDetails ? companyType : "customer",
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.error ?? t("defaultError"));
+        return;
+      }
+      onComplete?.();
+      router.replace("/dashboard");
+      router.refresh();
+    } catch {
+      setError(t("defaultError"));
+    } finally {
+      setLoading(false);
+    }
+  }
 
   function next() {
+    if (step === "persona" && !persona) return;
     if (isLast) {
-      onComplete?.();
-      router.refresh();
+      void finish();
       return;
     }
     setStepIndex((i) => Math.min(i + 1, STEPS.length - 1));
@@ -50,76 +91,90 @@ export function OnboardingWizard({
         {t(step)}
       </h2>
 
-      {step === "companyType" && (
+      {step === "persona" && (
         <div className="mt-4 space-y-3">
           <p className="text-aistroyka-subheadline text-aistroyka-text-secondary">
-            {t("companyTypeDescription")}
+            {t("personaDescription")}
           </p>
           <div className="flex flex-wrap gap-2">
-            {["contractor", "developer", "supervisor", "other"].map((type) => (
+            {PERSONA_OPTIONS.map((type) => (
               <button
                 key={type}
                 type="button"
-                onClick={() => setCompanyType(type)}
+                onClick={() => setPersona(type)}
                 className={`rounded-[var(--aistroyka-radius-md)] border px-4 py-2 text-sm font-medium transition-colors ${
-                  companyType === type
+                  persona === type
                     ? "border-aistroyka-accent bg-aistroyka-accent-light text-aistroyka-accent"
                     : "border-aistroyka-border-subtle text-aistroyka-text-secondary hover:bg-aistroyka-surface-raised"
                 }`}
               >
-                {t(`companyType_${type}`)}
+                {t(`persona_${type}`)}
               </button>
             ))}
           </div>
         </div>
       )}
 
-      {step === "createProject" && (
-        <div className="mt-4">
-          <p className="text-aistroyka-subheadline text-aistroyka-text-secondary">
-            {t("createProjectDescription")}
-          </p>
-          <Link href="/projects/new" className="mt-4 inline-block">
-            <Button variant="primary">{t("createProject")}</Button>
-          </Link>
+      {step === "company" && (
+        <div className="mt-4 space-y-4">
+          {requiresCompanyDetails ? (
+            <>
+              <p className="text-aistroyka-subheadline text-aistroyka-text-secondary">
+                {t("companySetupDescription")}
+              </p>
+              <Input
+                id="company-name"
+                label={t("companyName")}
+                value={companyName}
+                onChange={(event) => setCompanyName(event.target.value)}
+                placeholder={t("companyNamePlaceholder")}
+                required
+              />
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-aistroyka-text-primary">{t("companyType")}</p>
+                <div className="flex flex-wrap gap-2">
+                  {(["contractor", "developer", "supervisor", "other", "customer"] as const).map((type) => (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => setCompanyType(type)}
+                      className={`rounded-[var(--aistroyka-radius-md)] border px-4 py-2 text-sm font-medium transition-colors ${
+                        companyType === type
+                          ? "border-aistroyka-accent bg-aistroyka-accent-light text-aistroyka-accent"
+                          : "border-aistroyka-border-subtle text-aistroyka-text-secondary hover:bg-aistroyka-surface-raised"
+                      }`}
+                    >
+                      {t(`companyType_${type}`)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
+          ) : (
+            <p className="text-aistroyka-subheadline text-aistroyka-text-secondary">
+              {t("invitedFlowDescription")}
+            </p>
+          )}
         </div>
       )}
 
-      {step === "inviteTeam" && (
-        <div className="mt-4">
-          <p className="text-aistroyka-subheadline text-aistroyka-text-secondary">
-            {t("inviteTeamDescription")}
-          </p>
-          <Link href="/team" className="mt-4 inline-block">
-            <Button variant="primary">{t("inviteTeam")}</Button>
-          </Link>
-        </div>
-      )}
-
-      {step === "enableAi" && (
-        <div className="mt-4">
-          <p className="text-aistroyka-subheadline text-aistroyka-text-secondary">
-            {t("enableAiDescription")}
-          </p>
-          <Link href="/dashboard/projects" className="mt-4 inline-block">
-            <Button variant="primary">{t("openProjects")}</Button>
-          </Link>
-        </div>
-      )}
+      {error ? <p className="mt-4 text-sm text-aistroyka-error">{error}</p> : null}
 
       <div className="mt-8 flex justify-between">
         <Button variant="secondary" onClick={back} disabled={stepIndex === 0}>
           {t("back")}
         </Button>
-        {step === "companyType" || step === "createProject" || step === "inviteTeam" ? (
-          <Button variant="primary" onClick={next}>
-            {t("next")}
-          </Button>
-        ) : (
-          <Button variant="primary" onClick={next}>
-            {t("finish")}
-          </Button>
-        )}
+        <Button
+          variant="primary"
+          onClick={next}
+          disabled={
+            loading ||
+            (step === "persona" && !persona) ||
+            (step === "company" && requiresCompanyDetails && companyName.trim().length < 2)
+          }
+        >
+          {loading ? t("saving") : isLast ? t("finish") : t("next")}
+        </Button>
       </div>
     </Card>
   );

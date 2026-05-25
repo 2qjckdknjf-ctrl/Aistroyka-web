@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui";
 async function fetchActivationStatus(): Promise<{
   showOnboarding: boolean;
 }> {
-  const res = await fetch("/api/activation/status", { credentials: "include" });
+  const res = await fetch("/api/v1/onboarding/status", { credentials: "include" });
   if (!res.ok) return { showOnboarding: false };
   const json = await res.json();
   return { showOnboarding: json.showOnboarding === true };
