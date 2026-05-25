@@ -31,6 +31,8 @@ Latest live evidence already captured:
 - staging success: `26402956304`
 - production promotion trigger from staging: `26403104100` (`workflow_run`)
 - full production pass with blocking gates: `26406727533`
+- revalidated staging/prod chain: `26410298260` -> `26410422613`
+- webhook fail-closed probe: unsigned request to `/api/v1/webhooks/incoming` returned `503`
 
 ### C-01 — Estimate finance boundary closure
 
@@ -90,6 +92,10 @@ Do now:
 Close when:
 
 - deploy run artifacts show migration preflight check step passing in both environments.
+
+Current status:
+
+- workflow chain passes overall, but migration check step is still skipped in both runs (`26410298260`, `26410422613`), so `C-04` remains open.
 
 ## 3) Exact execution order
 

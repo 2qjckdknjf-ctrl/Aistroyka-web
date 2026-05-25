@@ -24,7 +24,7 @@ Execution reference:
   - Apply migrations and verify live RLS behavior for estimate-results boundary.
   - GitHub branch protection/ruleset confirmation in UI.
   - Remaining RLS advisory table closure and full Phase 13 doc reconciliation.
-  - Explicit webhook fail-closed runtime evidence capture.
+  - Supabase migration preflight secret rollout so migration env check runs in deploy workflows (currently skipped).
 
 ## Wave P0 (immediate, release-blocking)
 

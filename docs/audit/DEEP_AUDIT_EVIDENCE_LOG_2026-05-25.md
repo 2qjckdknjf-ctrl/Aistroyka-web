@@ -57,11 +57,33 @@
 - Verdict: `pass`
 - Notes: Prior fail-fast run (`26403104100`) correctly failed when secret was absent.
 
+### Record 4
+
+- Risk ID: C-04
+- Action performed: Re-ran full staging->production deploy chain to validate migrations preflight evidence.
+- Command / workflow: staging `26410298260`, production `26410422613`.
+- Expected result: migration preflight env check executes (not skipped) and passes in both workflows.
+- Actual result: migrations preflight job succeeded, but `Check env/config (migrations)` step remained skipped in both runs.
+- Artifact link (logs/screenshots): https://github.com/2qjckdknjf-ctrl/Aistroyka-web/actions/runs/26410298260, https://github.com/2qjckdknjf-ctrl/Aistroyka-web/actions/runs/26410422613
+- Verdict: `blocked`
+- Notes: `SUPABASE_ACCESS_TOKEN` and/or `SUPABASE_PROJECT_REF` are still absent at workflow runtime.
+
+### Record 5
+
+- Risk ID: H-03
+- Action performed: Probed production webhook endpoint without signature.
+- Command / workflow: `curl -X POST https://aistroyka.ai/api/v1/webhooks/incoming` with JSON body and no signature headers.
+- Expected result: fail-closed rejection for unsigned webhook traffic.
+- Actual result: `HTTP 503` with body `Webhook signature enforcement enabled but WEBHOOK_INCOMING_SECRET is not configured`.
+- Artifact link (logs/screenshots): production live probe output + endpoint response body.
+- Verdict: `pass`
+- Notes: Misconfiguration does not degrade to unsigned acceptance; endpoint fails closed.
+
 ## Status update proposal
 
-- Risk IDs proposed to move to `closed`: `C-02`, `H-02`, `H-04`
+- Risk IDs proposed to move to `closed`: `C-02`, `H-02`, `H-03`, `H-04`
 - Rationale: Live run evidence confirms hardened behavior in real deploy workflows.
-- Remaining blockers (if any): `C-01`, `C-03`, `C-04`, `H-01`, `H-03`.
+- Remaining blockers (if any): `C-01`, `C-03`, `C-04`, `H-01`.
 
 ## Signoff
 
