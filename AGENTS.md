@@ -10,7 +10,7 @@
 - For mobile: do not merge Manager and Worker into one app; keep shared logic in Shared; do not use WorkerLite as primary product name; treat iOS as the primary mobile product contour and defer broad Android parity work until iOS is product-ready (no preemptive Android scope expansion or speculative backend modules for mobile).
 - Do not invent or fake success (e.g. fake build results, UI-only flows without real backend/API behavior); document real blockers and missing values.
 - When config values may exist in repo: search first (env examples, docs, scripts); do not ask for values that are already there; do not hardcode fake placeholders if real values exist.
-- Prefer end-to-end execution when asked ("do it yourself"); on continue signals («делай», keep going, по плану, etc.) chain focused work: validate, fix failures, proceed—no extra checkpoints unless blocked or unclear scope.
+- Prefer end-to-end execution when asked ("do it yourself"); on continue signals («делай», keep going, по плану, etc.) chain focused work: validate, fix failures, proceed—no extra checkpoints unless blocked or unclear scope. For continual-learning runs, process only parent transcripts (`UUID/UUID.jsonl`) with incremental mtime-based indexing.
 - Product sequencing and customer-finance boundaries: follow `docs/roadmap/AISTROYKA_MEGA_ROADMAP_CUSTOMER_FINANCE_SAFE.md`; never expose internal contractor financial state on customer/owner/stakeholder surfaces except designed customer-facing commercial artifacts (see `docs/security/*` isolation audits).
 
 ## Learned Workspace Facts
