@@ -72,6 +72,12 @@ Expected behavior after rollout:
    - `stakeholder-finance-sanity`
 5. Staging/production deploy jobs pass `migrations-preflight` before build/deploy.
 
+Important:
+
+- `migrations-preflight` is conditional and executes only when repository secrets
+  `SUPABASE_ACCESS_TOKEN` and `SUPABASE_PROJECT_REF` are configured.
+- If secrets are absent and the job is skipped, keep `C-04` as not closed.
+
 Evidence to capture:
 
 - GitHub Actions run URLs and job summaries for staging + production.
