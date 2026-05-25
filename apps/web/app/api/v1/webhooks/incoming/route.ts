@@ -20,7 +20,16 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json({ error: "Invalid body" }, { status: 400 });
   }
-  const secret = process.env.WEBHOOK_INCOMING_SECRET ?? null;
+  const secret = process.env.WEBHOOK_INCOMING_SECRET?.trim() || null;
+  const enforceSignature =
+    process.env.WEBHOOK_INCOMING_REQUIRE_SIGNATURE === "true" ||
+    (process.env.NODE_ENV === "production" && process.env.WEBHOOK_INCOMING_ALLOW_UNSIGNED !== "true");
+  if (enforceSignature && !secret) {
+    return NextResponse.json(
+      { error: "Webhook signature enforcement enabled but WEBHOOK_INCOMING_SECRET is not configured" },
+      { status: 503 }
+    );
+  }
   const verification = await verifyIncomingWebhook(request, bodyText, {
     secret: secret || undefined,
     signatureHeader: "x-webhook-signature",

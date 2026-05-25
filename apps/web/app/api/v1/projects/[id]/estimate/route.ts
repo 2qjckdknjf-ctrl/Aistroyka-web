@@ -27,6 +27,9 @@ export async function GET(
     }
     throw e;
   }
+  if (!canManageProjects(ctx)) {
+    return NextResponse.json({ error: "Insufficient rights" }, { status: 403 });
+  }
 
   const supabase = await createClientFromRequest(request);
   const project = await getProjectById(supabase, projectId, ctx.tenantId!);

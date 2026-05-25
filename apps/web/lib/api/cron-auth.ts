@@ -12,7 +12,10 @@ export const CRON_UNAUTHORIZED_CODE = "cron_unauthorized";
 export const CRON_MISCONFIGURED_CODE = "cron_secret_misconfigured";
 
 export function isCronSecretRequired(): boolean {
-  return process.env.REQUIRE_CRON_SECRET === "true";
+  const explicit = process.env.REQUIRE_CRON_SECRET;
+  if (explicit === "true") return true;
+  if (explicit === "false") return false;
+  return process.env.NODE_ENV === "production";
 }
 
 export function requireCronSecretIfEnabled(request: Request): NextResponse | null {
