@@ -59,6 +59,8 @@ Pending to call risks fully closed:
 - branch protection/ruleset confirmation in GitHub UI,
 - finance-boundary DB/runtime closure evidence for estimate-results surface.
 
+Remaining open critical IDs: `C-01`, `C-03`.
+
 ## 3) Consolidated findings (highest risk first)
 
 ### Critical

@@ -24,7 +24,7 @@ Execution reference:
   - Apply migrations and verify live RLS behavior for estimate-results boundary.
   - GitHub branch protection/ruleset confirmation in UI.
   - Remaining RLS advisory table closure and full Phase 13 doc reconciliation.
-  - Explicit closure evidence for remaining open critical/high items (`C-01`, `C-03`, `H-01`).
+  - Explicit closure evidence for remaining open critical items (`C-01`, `C-03`).
 
 ## Wave P0 (immediate, release-blocking)
 
