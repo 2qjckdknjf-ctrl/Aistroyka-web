@@ -83,6 +83,8 @@ Close when:
 
 ### C-04 — Migration preflight rollout proof
 
+Status: `closed`.
+
 Do now:
 
 1. configure `SUPABASE_ACCESS_TOKEN` + `SUPABASE_PROJECT_REF` in repository secrets
@@ -93,9 +95,10 @@ Close when:
 
 - deploy run artifacts show migration preflight check step passing in both environments.
 
-Current status:
+Evidence:
 
-- workflow chain passes overall, but migration check step is still skipped in both runs (`26410298260`, `26410422613`), so `C-04` remains open.
+- staging `26411584976`: `Check env/config (migrations)` executed and passed
+- production `26411702450`: `Check env/config (migrations)` executed and passed
 
 ## 3) Exact execution order
 

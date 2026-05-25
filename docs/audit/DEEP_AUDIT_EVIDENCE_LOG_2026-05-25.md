@@ -79,11 +79,22 @@
 - Verdict: `pass`
 - Notes: Misconfiguration does not degrade to unsigned acceptance; endpoint fails closed.
 
+### Record 6
+
+- Risk ID: C-04
+- Action performed: Re-ran staging->production after Supabase migration secrets rollout.
+- Command / workflow: staging `26411584976`, production `26411702450`.
+- Expected result: `Check env/config (migrations)` executes and passes in both workflows (not skipped).
+- Actual result: both runs executed `Check env/config (migrations)` with `success`.
+- Artifact link (logs/screenshots): https://github.com/2qjckdknjf-ctrl/Aistroyka-web/actions/runs/26411584976, https://github.com/2qjckdknjf-ctrl/Aistroyka-web/actions/runs/26411702450
+- Verdict: `pass`
+- Notes: C-04 closure criteria satisfied for deploy-pipeline contour.
+
 ## Status update proposal
 
-- Risk IDs proposed to move to `closed`: `C-02`, `H-02`, `H-03`, `H-04`
+- Risk IDs proposed to move to `closed`: `C-02`, `C-04`, `H-02`, `H-03`, `H-04`
 - Rationale: Live run evidence confirms hardened behavior in real deploy workflows.
-- Remaining blockers (if any): `C-01`, `C-03`, `C-04`, `H-01`.
+- Remaining blockers (if any): `C-01`, `C-03`, `H-01`.
 
 ## Signoff
 
