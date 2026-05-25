@@ -1,6 +1,6 @@
 # Deployment source of truth (operators)
 
-**Last updated:** 2026-05-19 (closure: `docs/incidents/DEPLOY_TOPOLOGY_CLEANUP_100_CLOSURE.md`)  
+**Last updated:** 2026-05-25 (workflow gate refresh: staging/prod deploy YAML + pilot smoke source)  
 **Applies to:** AISTROYKA web (`apps/web`), GitHub repo **Aistroyka-web** (`git@github.com:2qjckdknjf-ctrl/Aistroyka-web.git`)
 
 ---
@@ -11,10 +11,10 @@
 |--|--|
 | **Runtime** | **Cloudflare Workers** + OpenNext (`cf:build` + Wrangler) |
 | **Deploy workflow** | `.github/workflows/deploy-cloudflare-prod.yml` — **Deploy Cloudflare (Production)** |
-| **Post-deploy gate** | **Post-deploy pilot smoke** (blocking) against `https://aistroyka.ai` |
+| **Post-deploy gates** | **Post-deploy pilot smoke** + **stakeholder finance sanity** (both blocking) against `https://aistroyka.ai` |
 | **Fast prod check** | `curl -i https://aistroyka.ai/api/v1/health` |
 
-**Staging source of truth:** `.github/workflows/deploy-cloudflare-staging.yml` → worker **`aistroyka-web-staging`** → `https://staging.aistroyka.ai`.
+**Staging source of truth:** `.github/workflows/deploy-cloudflare-staging.yml` → worker **`aistroyka-web-staging`** → `https://staging.aistroyka.ai` → blocking `pilot-smoke`; Pilot E2E runs only when its required secrets are configured.
 
 ### Ignore for “is production ready?”
 
@@ -34,9 +34,12 @@
 | **Worker name (expected)** | `aistroyka-web-production` (per deploy workflow / `wrangler.toml` comments) |
 | **Public URL** | https://aistroyka.ai (apex and `www` should both serve the app; validate with health below) |
 
-**GitHub workflow (production):** **Deploy Cloudflare (Production)** — triggers on **push to `main`** and `workflow_dispatch`.
+**GitHub workflow (production):** **Deploy Cloudflare (Production)** — triggers after **Deploy Cloudflare (Staging)** completes successfully on `main`, and by manual `workflow_dispatch`.
 
-**Blocking production gate after deploy:** **Post-deploy pilot smoke** (reusable workflow), targeting `https://aistroyka.ai`.
+**Blocking production gates after deploy:**
+
+- **Post-deploy pilot smoke** (reusable workflow), targeting `https://aistroyka.ai`.
+- **Post-deploy stakeholder finance sanity**, using `STAKEHOLDER_SMOKE_EMAIL` / `STAKEHOLDER_SMOKE_PASSWORD` or falling back to production pilot smoke credentials.
 
 **Non-blocking:** **Post-deploy AI Phase 5 gate** (`continue-on-error: true`).
 
@@ -50,6 +53,20 @@
 | **Trigger** | Push to **`main`** and `workflow_dispatch` |
 | **Public URL** | `https://staging.aistroyka.ai` |
 | **Worker name (expected)** | `aistroyka-web-staging` |
+
+### Deploy ref and gate behavior
+
+Both staging and production support manual `workflow_dispatch` with a `ref` input. The workflows accept an exact branch, an exact tag, or a full 40-character commit SHA. Partial SHAs are rejected before checkout.
+
+| Gate / check | Staging | Production | Source |
+|--------------|---------|------------|--------|
+| Supabase migrations preflight | Runs only when both `SUPABASE_ACCESS_TOKEN` and `SUPABASE_PROJECT_REF` exist; skipped otherwise. If enabled, failures block deploy. | Same behavior. | `migrations-preflight` job |
+| Cloudflare deploy secrets | Requires `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `NEXT_PUBLIC_SUPABASE_ANON_KEY_STAGING`, and `PILOT_SMOKE_BEARER_STAGING`. | Requires `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `NEXT_PUBLIC_SUPABASE_ANON_KEY_PRODUCTION`, and `PILOT_SMOKE_BEARER_PRODUCTION`. | `scripts/release/check-env-config.sh` |
+| Cron secret | Deploy passes `REQUIRE_CRON_SECRET:false`; `CRON_SECRET` may still be passed to smoke if present. | `CRON_SECRET` is required before rollout, then passed to pilot smoke as `x-cron-secret`. | deploy workflows + `apps/web/lib/api/cron-auth.ts` |
+| Pilot smoke | Blocking after deploy. Requires a non-empty bearer secret; optional smoke email/password can mint a fresh Supabase user JWT for tenant routes. | Blocking after deploy; `strict_health_200=true`. Same auth behavior. | `.github/workflows/pilot-smoke.yml`, `scripts/smoke/pilot_launch.sh` |
+| Playwright Pilot E2E | Job skips cleanly when `PILOT_E2E_BASE_URL`, `PILOT_E2E_EMAIL`, or `PILOT_E2E_PASSWORD` is missing. If configured and tests fail, deploy workflow fails. | Not part of production deploy. | `pilot-e2e-audit` job in staging workflow |
+| Stakeholder finance sanity | Not part of staging deploy. | Blocking after pilot smoke. | `scripts/verify/stakeholder_finance_sanity.sh` |
+| AI Phase 5 gate | Non-blocking (`continue-on-error: true`). | Non-blocking (`continue-on-error: true`). | deploy workflows |
 
 ---
 

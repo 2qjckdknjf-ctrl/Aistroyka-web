@@ -22,11 +22,16 @@ After each successful **deploy** job, workflows call `.github/workflows/pilot-sm
 | `PILOT_SMOKE_BEARER_STAGING` | Supabase **access_token** (JWT only, no `Bearer ` prefix) for a user that belongs to a tenant on **staging** |
 | `PILOT_SMOKE_BEARER_PRODUCTION` | Same for **production** |
 
-**Optional**
+**Cron secret behavior**
 
 | Secret | When |
 |--------|------|
-| `CRON_SECRET` | Passed as `x-cron-secret` when production/staging has `REQUIRE_CRON_SECRET=true` |
+| `CRON_SECRET` | Passed as `x-cron-secret` when the target has `REQUIRE_CRON_SECRET=true`. Production deploy now requires this repository secret before rollout; staging deploy currently passes `REQUIRE_CRON_SECRET:false`, so staging smoke can run without it. |
+
+**Optional auth fallback / probes**
+
+| Secret | When |
+|--------|------|
 | `PILOT_SMOKE_EMAIL_STAGING` / `PILOT_SMOKE_PASSWORD_STAGING` | With `NEXT_PUBLIC_SUPABASE_URL_STAGING` + `NEXT_PUBLIC_SUPABASE_ANON_KEY_STAGING`: password-grant mint for `pilot-smoke` / `ai_phase5_gate`. When all four are set, **`pilot_launch.sh` prefers this user JWT** over `PILOT_SMOKE_BEARER_*` for tenant routes (avoids stale or non-user bearer 401 on `ops/metrics`). |
 | `PILOT_SMOKE_EMAIL_PRODUCTION` / `PILOT_SMOKE_PASSWORD_PRODUCTION` | Same for **production** (`NEXT_PUBLIC_SUPABASE_URL_PRODUCTION` + `NEXT_PUBLIC_SUPABASE_ANON_KEY_PRODUCTION`); preferred over bearer when set. |
 | `PILOT_SMOKE_PROJECT_ID_STAGING` | If set, overrides the staging pilot **project UUID** for **`ai-phase5-gate`** stream probe. If unset, defaults to the STAGE4 fixture `a0000003-0000-4000-8000-000000000001`. |
@@ -75,6 +80,8 @@ Use a dedicated pilot/service user with tenant membership. Example (run locally,
 |----------------|--------|
 | Smoke fails after deploy | App may already be live; fix endpoint or secrets, re-run failed job or push empty commit after fix |
 | Bearer empty | Add or fix repository secrets |
+| cron-tick 403 | Set `CRON_SECRET` when target runtime has `REQUIRE_CRON_SECRET=true` |
+| Production deploy stops before rollout with missing cron secret | Add repository secret `CRON_SECRET`; production intentionally fails fast before deploy |
 
 | Manual | Action |
 |--------|--------|

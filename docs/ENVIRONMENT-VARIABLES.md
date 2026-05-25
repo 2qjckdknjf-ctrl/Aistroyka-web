@@ -33,8 +33,8 @@ Vercel может встречаться как исторический/доп�
 
 | Variable | Описание |
 |----------|----------|
-| `REQUIRE_CRON_SECRET` | В production рекомендуется `true`. |
-| `CRON_SECRET` | Секрет для вызова cron/job-эндпоинтов (задать при `REQUIRE_CRON_SECRET=true`). |
+| `REQUIRE_CRON_SECRET` | Если `true`, `/api/v1/admin/jobs/cron-tick` и `/api/v1/jobs/process` требуют заголовок `x-cron-secret`. Если переменная не задана, код считает секрет обязательным при `NODE_ENV=production`. Staging deploy сейчас явно передаёт `REQUIRE_CRON_SECRET:false`. |
+| `CRON_SECRET` | Секрет для вызова cron/job-эндпоинтов. Production deploy workflow останавливается до rollout, если GitHub Actions secret `CRON_SECRET` пустой; `pilot-smoke` передаёт его как `x-cron-secret`. |
 
 ---
 
@@ -118,9 +118,10 @@ Vercel может встречаться как исторический/доп�
 
 При Cloudflare Workers:
 
-1. Runtime vars (`NEXT_PUBLIC_*` и др.) задаются в `wrangler.toml`/`wrangler.deploy.toml` для нужного env.
-2. Секреты задаются через `wrangler secret put` или через GitHub Actions secrets для deploy workflows.
-3. После изменения переменных требуется новый deploy.
+1. Build-time public vars (`NEXT_PUBLIC_*`) должны быть доступны в GitHub Actions во время `bun run cf:build`; Worker runtime secrets alone не заменяют их, потому что Next.js встраивает public vars в клиентский bundle.
+2. Runtime vars (`NEXT_PUBLIC_APP_ENV`, `REQUIRE_CRON_SECRET` и др.) задаются в `wrangler.toml`/`wrangler.deploy.toml` или передаются workflow через `wrangler deploy --var` для нужного env.
+3. Секреты задаются через `wrangler secret put` или через GitHub Actions secrets для deploy workflows.
+4. После изменения переменных требуется новый deploy.
 
 При использовании Vercel (legacy/fallback окружения):
 
@@ -134,7 +135,7 @@ Vercel может встречаться как исторический/доп�
 
 ## GitHub Actions: Playwright pilot E2E (опционально)
 
-Репозиторные **Actions secrets** (Settings → Secrets and variables → Actions), если нужен ручной или post-deploy прогон `.github/workflows/pilot-e2e-audit.yml`:
+Репозиторные **Actions secrets** (Settings → Secrets and variables → Actions), если нужен ручной workflow `.github/workflows/pilot-e2e-audit.yml` или встроенный post-deploy staging job:
 
 | Secret | Описание |
 |--------|----------|
@@ -143,7 +144,13 @@ Vercel может встречаться как исторический/доп�
 | `PILOT_E2E_PASSWORD` | Пароль. |
 | `PILOT_E2E_PROJECT_ID` | Опционально: UUID проекта; иначе берётся первый из API после входа. |
 
-После `pilot-smoke` workflow **Deploy Cloudflare (Staging)** может вызывать тот же аудит с `continue-on-error: true`, поэтому отсутствие секретов не блокирует деплой, но шаг завершится ошибкой до установки зависимостей.
+Текущая staging deploy workflow содержит встроенный `pilot-e2e-audit` job после `pilot-smoke`:
+
+- если `PILOT_E2E_BASE_URL`, `PILOT_E2E_EMAIL` или `PILOT_E2E_PASSWORD` не настроены, job пишет skip-сообщение и завершается успешно без установки зависимостей;
+- если все три секрета настроены, job запускает `bun run e2e:pilot`, и падение Playwright блокирует staging deploy workflow;
+- ручной workflow `.github/workflows/pilot-e2e-audit.yml` остаётся строгим: при отсутствии этих секретов он завершается ошибкой.
+
+Для post-deploy staging значения обычно должны указывать на `https://staging.aistroyka.ai` и tenant-пользователя с доступом к пилотному проекту.
 
 ---
 

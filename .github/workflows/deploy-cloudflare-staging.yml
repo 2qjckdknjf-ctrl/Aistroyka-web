@@ -224,8 +224,8 @@ jobs:
       supabase_url: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_STAGING }}
       supabase_anon_key: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_STAGING }}
 
-  # Playwright pilot (buttons + sync + core) against staging; requires PILOT_E2E_* secrets.
-  # Blocking: staging must prove customer-facing flows before production promotion.
+  # Playwright pilot (buttons + sync + core) against staging.
+  # Skips when PILOT_E2E_* secrets are absent; blocks the staging workflow when configured and failing.
   pilot-e2e-audit:
     name: Post-deploy Playwright pilot E2E (blocking)
     needs: [deploy, pilot-smoke]
