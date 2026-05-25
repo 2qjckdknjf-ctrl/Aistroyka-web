@@ -190,7 +190,8 @@ jobs:
           npx wrangler deploy --env staging --no-bundle --config wrangler.deploy.toml \
             --var NEXT_PUBLIC_BUILD_SHA:${{ github.sha }} \
             --var NEXT_PUBLIC_BUILD_TIME:"${{ env.NEXT_PUBLIC_BUILD_TIME }}" \
-            --var NEXT_PUBLIC_APP_ENV:staging
+            --var NEXT_PUBLIC_APP_ENV:staging \
+            --var REQUIRE_CRON_SECRET:false
 
       - name: Post-deploy summary
         run: |
