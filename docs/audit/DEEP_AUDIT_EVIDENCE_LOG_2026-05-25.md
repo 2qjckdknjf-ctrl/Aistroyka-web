@@ -90,11 +90,22 @@
 - Verdict: `pass`
 - Notes: C-04 closure criteria satisfied for deploy-pipeline contour.
 
+### Record 7
+
+- Risk ID: H-01
+- Action performed: Verified stakeholder-facing finance isolation checks in blocking production gate.
+- Command / workflow: production `26411702450`, job `Post-deploy stakeholder finance sanity (blocking)` (`77747682969`).
+- Expected result: stakeholder cannot access `/costs` + `/estimate`; portal payload denylist scan passes.
+- Actual result: job passed with stakeholder finance sanity checks (`PASS: stakeholder costs denied; portal JSON keys OK`).
+- Artifact link (logs/screenshots): https://github.com/2qjckdknjf-ctrl/Aistroyka-web/actions/runs/26411702450
+- Verdict: `pass`
+- Notes: Confirms expanded route-level finance guard behavior in live production gate.
+
 ## Status update proposal
 
-- Risk IDs proposed to move to `closed`: `C-02`, `C-04`, `H-02`, `H-03`, `H-04`
+- Risk IDs proposed to move to `closed`: `C-02`, `C-04`, `H-01`, `H-02`, `H-03`, `H-04`
 - Rationale: Live run evidence confirms hardened behavior in real deploy workflows.
-- Remaining blockers (if any): `C-01`, `C-03`, `H-01`.
+- Remaining blockers (if any): `C-01`, `C-03`.
 
 ## Signoff
 

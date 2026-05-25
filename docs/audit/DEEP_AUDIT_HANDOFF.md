@@ -100,6 +100,15 @@ Evidence:
 - staging `26411584976`: `Check env/config (migrations)` executed and passed
 - production `26411702450`: `Check env/config (migrations)` executed and passed
 
+### H-01 — Portal finance guard runtime proof
+
+Status: `closed`.
+
+Evidence:
+
+- production `26411702450` job `77747682969` passed stakeholder finance sanity
+- run output confirms `/costs`/`/estimate` denies and portal JSON denylist pass
+
 ## 3) Exact execution order
 
 1. Merge current hardening changes.
