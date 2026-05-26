@@ -1,10 +1,10 @@
-name: GDPR Deletion Processor
+name: Platform Cron Tick
 
 on:
   workflow_dispatch:
     inputs:
       base_url:
-        description: "Base URL to run deletion processing against (default: production)"
+        description: "Base URL to run the protected platform cron tick against (default: production)"
         required: false
         default: "https://aistroyka.ai"
   schedule:
@@ -12,12 +12,12 @@ on:
     - cron: "20 2 * * *"
 
 concurrency:
-  group: gdpr-deletion-processor
+  group: platform-cron-tick
   cancel-in-progress: false
 
 jobs:
-  run-gdpr-deletion-processor:
-    name: Trigger deletion processing tick
+  run-platform-cron-tick:
+    name: Trigger protected platform cron tick
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -36,11 +36,11 @@ jobs:
       - name: Validate required secret
         run: |
           if [ -z "${CRON_SECRET:-}" ]; then
-            echo "::error::CRON_SECRET is not configured; cannot run protected processor endpoint."
+            echo "::error::CRON_SECRET is not configured; cannot run protected cron endpoint."
             exit 1
           fi
 
-      - name: Trigger processor endpoint
+      - name: Trigger cron endpoint
         env:
           BASE_URL: ${{ steps.base.outputs.value }}
         run: |
@@ -58,7 +58,7 @@ jobs:
           )"
 
           if [ "$status_code" != "200" ]; then
-            echo "::error::Processor call failed with HTTP ${status_code}"
+            echo "::error::Cron tick call failed with HTTP ${status_code}"
             echo "Response:"
             cat "$response_file"
             exit 1
@@ -66,7 +66,7 @@ jobs:
 
           ok_value="$(jq -r '.ok // false' "$response_file" 2>/dev/null || echo "false")"
           if [ "$ok_value" != "true" ]; then
-            echo "::error::Processor returned non-ok payload"
+            echo "::error::Cron tick returned non-ok payload"
             cat "$response_file"
             exit 1
           fi
@@ -74,4 +74,4 @@ jobs:
           scheduled="$(jq -r '.scheduled // 0' "$response_file" 2>/dev/null || echo 0)"
           processed="$(jq -r '.processed // 0' "$response_file" 2>/dev/null || echo 0)"
           tenants="$(jq -r '.tenants // 0' "$response_file" 2>/dev/null || echo 0)"
-          echo "Processor succeeded: tenants=${tenants}, scheduled=${scheduled}, processed=${processed}"
+          echo "Cron tick succeeded: tenants=${tenants}, scheduled=${scheduled}, processed=${processed}"
