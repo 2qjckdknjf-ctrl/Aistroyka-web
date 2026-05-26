@@ -32,14 +32,21 @@ android {
         buildConfigField("String", "SUPABASE_URL", "\"${configuredValue("SUPABASE_URL", "")}\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"${configuredValue("SUPABASE_ANON_KEY", "")}\"")
     }
-    buildFeatures { compose = true }
-    composeOptions { kotlinCompilerExtensionVersion = "1.5.5" }
-    packagingOptions { resources.excludes += "/META-INF/{AL2.0,LGPL2.1}" }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+    buildFeatures {
+        buildConfig = true
+        compose = true
     }
-    kotlinOptions { jvmTarget = "11" }
+    composeOptions { kotlinCompilerExtensionVersion = "1.5.5" }
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+    kotlinOptions { jvmTarget = "17" }
 }
 dependencies {
     implementation(project(":shared"))
