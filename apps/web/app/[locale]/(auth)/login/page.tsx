@@ -7,6 +7,7 @@ import { Link } from "@/i18n/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import { hasSupabaseEnv } from "@/lib/env";
 import { Input, Button, Alert } from "@/components/ui";
+import { AuthProviderButtons } from "@/components/auth/AuthProviderButtons";
 
 const SIGN_IN_TIMEOUT_MS = 25_000;
 const LOGIN_ENDPOINT = "/api/v1/auth/login";
@@ -33,6 +34,7 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState<LoginStep>("idle");
   const [envOk, setEnvOk] = useState<boolean | null>(null);
+  const [showEmailForm, setShowEmailForm] = useState(true);
 
   useEffect(() => {
     setEnvOk(hasSupabaseEnv());
@@ -145,7 +147,18 @@ function LoginForm() {
               className="mb-aistroyka-4"
             />
           )}
-          <form onSubmit={handleSubmit} className="space-y-aistroyka-5">
+          <AuthProviderButtons
+            mode="login"
+            nextPath={next}
+            onContinueEmail={() => {
+              setShowEmailForm(true);
+              queueMicrotask(() => {
+                document.getElementById("email-login-form")?.scrollIntoView({ behavior: "smooth", block: "center" });
+              });
+            }}
+          />
+          <div className="my-4 h-px bg-aistroyka-border-subtle" />
+          <form id="email-login-form" onSubmit={handleSubmit} className="space-y-aistroyka-5">
             <Input
               id="email"
               type="email"
@@ -189,13 +202,15 @@ function LoginForm() {
               </Button>
             )}
           </form>
-          <p
-            className="mt-aistroyka-4 text-center text-aistroyka-caption text-aistroyka-text-tertiary"
-            aria-live="polite"
-            aria-atomic="true"
-          >
-            {t("loginStep")}: {step}
-          </p>
+          {showEmailForm ? (
+            <p
+              className="mt-aistroyka-4 text-center text-aistroyka-caption text-aistroyka-text-tertiary"
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              {t("loginStep")}: {step}
+            </p>
+          ) : null}
           <p className="mt-aistroyka-6 text-center text-aistroyka-subheadline text-aistroyka-text-secondary">
             {t("noAccount")}{" "}
             <Link href={registerHref} className="font-medium text-aistroyka-accent hover:underline focus:outline-none focus:ring-2 focus:ring-aistroyka-accent focus:ring-offset-2 rounded-aistroyka-sm">

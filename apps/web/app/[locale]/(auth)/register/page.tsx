@@ -8,6 +8,7 @@ import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import { Input, Button, Alert } from "@/components/ui";
+import { AuthProviderButtons } from "@/components/auth/AuthProviderButtons";
 
 const SIGN_UP_TIMEOUT_MS = 15_000;
 
@@ -76,7 +77,15 @@ function RegisterForm() {
             <h1 className="text-aistroyka-title2 font-bold tracking-tight text-aistroyka-text-primary sm:text-aistroyka-title">{t("register")}</h1>
             <p className="mt-aistroyka-1 text-aistroyka-subheadline text-aistroyka-text-secondary">{t("tagline")}</p>
           </div>
-          <form onSubmit={handleSubmit} className="space-y-aistroyka-5">
+          <AuthProviderButtons
+            mode="register"
+            nextPath={next ?? "/dashboard"}
+            onContinueEmail={() => {
+              document.getElementById("email-register-form")?.scrollIntoView({ behavior: "smooth", block: "center" });
+            }}
+          />
+          <div className="my-4 h-px bg-aistroyka-border-subtle" />
+          <form id="email-register-form" onSubmit={handleSubmit} className="space-y-aistroyka-5">
             <Input
               id="email"
               type="email"
@@ -129,11 +138,12 @@ function RegisterForm() {
 }
 
 export default function RegisterPage() {
+  const t = useTranslations("common");
   return (
     <Suspense
       fallback={
         <div className="mx-auto max-w-sm px-aistroyka-4 py-aistroyka-8 text-center text-aistroyka-subheadline text-aistroyka-text-secondary">
-          Loading…
+          {t("loading")}
         </div>
       }
     >
