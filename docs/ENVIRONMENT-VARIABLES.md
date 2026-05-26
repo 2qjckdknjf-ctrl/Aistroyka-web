@@ -75,8 +75,10 @@ Vercel может встречаться как исторический/доп�
 
 | Variable | Описание |
 |----------|----------|
+| `TELEGRAM_AUTH_ENABLED` | Включает Telegram Login bridge (рекомендуемо `true` только после полной настройки). |
 | `TELEGRAM_BOT_TOKEN` | Токен бота (`@BotFather`). Нужен для исходящих сообщений и приёма webhook. |
 | `TELEGRAM_BOT_USERNAME` | Имя бота **без** `@` — для deep link `https://t.me/...`. |
+| `NEXT_PUBLIC_TELEGRAM_BOT_USERNAME` | Публичное имя бота для Telegram Login widget в web auth UI (если не задано, используется server-side `TELEGRAM_BOT_USERNAME`). |
 | `TELEGRAM_WEBHOOK_SECRET` | Секрет `secret_token` при `setWebhook`; в **production** обязателен (иначе webhook отвечает 503). Заголовок входящих запросов: `X-Telegram-Bot-Api-Secret-Token`. |
 
 ---

@@ -23,6 +23,8 @@ const SIDEBAR_LINKS = [
   { href: "/dashboard/devices", key: "devices" as const },
   { href: "/dashboard/ai", key: "ai" as const },
   { href: "/dashboard/alerts", key: "alerts" as const },
+  { href: "/dashboard/support", key: "support" as const },
+  { href: "/dashboard/settings/auth", key: "authSettings" as const },
   { href: "/dashboard/help", key: "helpCenter" as const },
 ] as const;
 
@@ -82,7 +84,7 @@ export function DashboardShell({
                   }`}
                   aria-current={active ? "page" : undefined}
                 >
-                  {t(key)}
+                  {href === "/dashboard" ? t("dashboard") : t(key)}
                 </Link>
               );
             })}
