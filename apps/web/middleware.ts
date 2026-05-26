@@ -6,6 +6,7 @@ import { checkLiteAllowList } from "@/lib/api/lite-allow-list";
 import { resolvePostAuthEntry } from "@/lib/entry/entry-routing";
 import { OWNER_RATE_LIMIT_ALREADY_APPLIED_HEADER } from "@/lib/platform-owner/constants";
 import { gateOwnerRequest } from "@/lib/platform-owner/middleware-owner-gate";
+import { getSecurityHeaders } from "@/lib/security-headers";
 
 const intlMiddleware = createIntlMiddleware(routing);
 
@@ -13,20 +14,13 @@ const PROTECTED_PREFIXES = ["/dashboard", "/portal", "/projects", "/billing", "/
 const AUTH_PREFIXES = ["/login", "/register"];
 const LOCALES = ["ru", "en", "es", "it"];
 
-const SECURITY_HEADERS: Record<string, string> = {
-  "X-Frame-Options": "DENY",
-  "X-Content-Type-Options": "nosniff",
-  "Referrer-Policy": "strict-origin-when-cross-origin",
-  "Permissions-Policy": "camera=(), microphone=()",
-  "Content-Security-Policy":
-    "default-src 'self'; script-src 'self' 'unsafe-inline' https://*.supabase.co; connect-src 'self' https://*.supabase.co; img-src 'self' data:; style-src 'self' 'unsafe-inline';",
-};
+const SECURITY_HEADERS = getSecurityHeaders(process.env.NODE_ENV === "development");
 
 const HSTS_HEADER = "Strict-Transport-Security";
 const HSTS_VALUE = "max-age=31536000; includeSubdomains; preload";
 
 function applySecurityHeaders(res: NextResponse, isProduction: boolean): NextResponse {
-  Object.entries(SECURITY_HEADERS).forEach(([key, value]) => res.headers.set(key, value));
+  SECURITY_HEADERS.forEach(({ key, value }) => res.headers.set(key, value));
   if (isProduction) res.headers.set(HSTS_HEADER, HSTS_VALUE);
   return res;
 }

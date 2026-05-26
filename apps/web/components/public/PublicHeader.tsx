@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, usePathname } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { Logo } from "@/components/brand/Logo";
 
 const PRIMARY_NAV = [
+  { href: "/dashboard", key: "cabinet" as const },
   { href: "/platform", key: "platform" as const },
   { href: "/solutions", key: "solutions" as const },
   { href: "/features", key: "features" as const },
@@ -33,6 +34,12 @@ export function PublicHeader() {
   const t = useTranslations("public.nav");
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
+  const isMenuOpen = !isHydrated || mobileMenuOpen;
+
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 border-b border-aistroyka-border-subtle bg-aistroyka-bg-primary py-3 backdrop-blur-md">
@@ -85,13 +92,13 @@ export function PublicHeader() {
           <button
             type="button"
             className="inline-flex min-h-[var(--aistroyka-touch-min)] min-w-[var(--aistroyka-touch-min)] items-center justify-center rounded-[var(--aistroyka-radius-lg)] text-aistroyka-text-primary hover:bg-aistroyka-surface-raised"
-            aria-expanded={mobileMenuOpen}
+            aria-expanded={isMenuOpen}
             aria-controls="mobile-menu"
             onClick={() => setMobileMenuOpen((v) => !v)}
           >
-            <span className="sr-only">{mobileMenuOpen ? t("closeMenu") : t("openMenu")}</span>
+            <span className="sr-only">{isMenuOpen ? t("closeMenu") : t("openMenu")}</span>
             <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-              {mobileMenuOpen ? (
+              {isMenuOpen ? (
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               ) : (
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -103,8 +110,8 @@ export function PublicHeader() {
 
       <div
         id="mobile-menu"
-        className={`mx-auto mt-2 max-w-7xl rounded-[var(--aistroyka-radius-xl)] border border-aistroyka-border-subtle bg-aistroyka-surface md:hidden ${mobileMenuOpen ? "block" : "hidden"}`}
-        aria-hidden={!mobileMenuOpen}
+        className={`mx-auto mt-2 max-w-7xl rounded-[var(--aistroyka-radius-xl)] border border-aistroyka-border-subtle bg-aistroyka-surface md:hidden ${isMenuOpen ? "block" : "hidden"}`}
+        aria-hidden={!isMenuOpen}
       >
         <nav className="flex flex-col gap-0.5 px-4 py-4" aria-label={t("mainMobile")}>
           <div className="mb-3 flex flex-col gap-2 border-b border-aistroyka-border-subtle pb-4">
