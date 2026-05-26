@@ -44,6 +44,10 @@ const RELEASE_ENV_SPEC: EnvVarSpec[] = [
   { name: "APNS_KEY_ID", category: "required_push", required: false, description: "APNS key ID" },
   { name: "APNS_TEAM_ID", category: "required_push", required: false, description: "APNS team ID" },
   { name: "APNS_BUNDLE_ID", category: "required_push", required: false, description: "APNS bundle ID" },
+  { name: "TELEGRAM_AUTH_ENABLED", category: "optional", required: false, description: "Enable Telegram login bridge" },
+  { name: "TELEGRAM_BOT_TOKEN", category: "optional", required: false, description: "Telegram bot token for login verification" },
+  { name: "TELEGRAM_BOT_USERNAME", category: "optional", required: false, description: "Telegram bot username for login widget" },
+  { name: "NEXT_PUBLIC_TELEGRAM_BOT_USERNAME", category: "optional", required: false, description: "Public Telegram bot username for login UI" },
   { name: "DEBUG_AUTH", category: "debug_forbidden_in_prod", required: false, description: "Must be unset or false in prod", forbiddenInProd: true },
   { name: "DEBUG_DIAG", category: "debug_forbidden_in_prod", required: false, description: "Must be unset or false in prod", forbiddenInProd: true },
   { name: "ENABLE_DIAG_ROUTES", category: "debug_forbidden_in_prod", required: false, description: "Must be unset or false in prod", forbiddenInProd: true },
@@ -157,6 +161,17 @@ export function validateReleaseEnv(): ReleaseEnvReport {
   const pushConfigured =
     (getEnv("FCM_PROJECT_ID").length > 0 && getEnv("FCM_CLIENT_EMAIL").length > 0 && getEnv("FCM_PRIVATE_KEY").length > 0) ||
     (getEnv("APNS_KEY").length > 0 && getEnv("APNS_KEY_ID").length > 0 && getEnv("APNS_TEAM_ID").length > 0 && getEnv("APNS_BUNDLE_ID").length > 0);
+
+  const telegramAuthEnabled = getEnv("TELEGRAM_AUTH_ENABLED").toLowerCase() === "true";
+  if (prod && telegramAuthEnabled) {
+    if (!getEnv("TELEGRAM_BOT_TOKEN")) {
+      criticalMissing.push("TELEGRAM_BOT_TOKEN");
+    }
+    const hasPublicUser = getEnv("NEXT_PUBLIC_TELEGRAM_BOT_USERNAME").length > 0 || getEnv("TELEGRAM_BOT_USERNAME").length > 0;
+    if (!hasPublicUser) {
+      criticalMissing.push("NEXT_PUBLIC_TELEGRAM_BOT_USERNAME");
+    }
+  }
 
   let verdict: ReleaseEnvReport["verdict"] = "PASS";
   let verdictReason = "All critical env present; no forbidden flags in prod.";
