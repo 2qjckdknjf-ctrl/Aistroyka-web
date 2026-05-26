@@ -149,17 +149,30 @@ function LoginForm() {
             <Input
               id="email"
               type="email"
+              name="email"
               label={t("email")}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
+              inputMode="email"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              enterKeyHint="next"
               required
             />
             <Input
               id="password"
               type="password"
+              name="password"
               label={t("password")}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              enterKeyHint="go"
               required
             />
             {error && (

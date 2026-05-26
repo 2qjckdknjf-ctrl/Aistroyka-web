@@ -77,8 +77,36 @@ function RegisterForm() {
             <p className="mt-aistroyka-1 text-aistroyka-subheadline text-aistroyka-text-secondary">{t("tagline")}</p>
           </div>
           <form onSubmit={handleSubmit} className="space-y-aistroyka-5">
-            <Input id="email" type="email" label={t("email")} value={email} onChange={(e) => setEmail(e.target.value)} required />
-            <Input id="password" type="password" label={t("password")} value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
+            <Input
+              id="email"
+              type="email"
+              name="email"
+              label={t("email")}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
+              inputMode="email"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              enterKeyHint="next"
+              required
+            />
+            <Input
+              id="password"
+              type="password"
+              name="password"
+              label={t("password")}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="new-password"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              enterKeyHint="done"
+              required
+              minLength={6}
+            />
             {error && <Alert message={error} style="error" />}
             {message && <Alert message={message} style="success" />}
             <Button type="submit" loading={loading} disabled={loading} className="w-full">
