@@ -35,6 +35,9 @@ on:
         description: "Optional; Supabase anon key used with smoke credentials for token fallback."
         required: false
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   smoke:
     name: Post-deploy pilot smoke
