@@ -2,7 +2,7 @@
 
 - Do not use destructive git operations: no force push, no reset --hard, no history rewrite.
 - Do not delete or remove things without explicit necessity.
-- Run an audit or check state before performing risky or irreversible actions; prefer running automated tests for the code paths you change unless the task calls for a broader suite.
+- Run an audit or check state before performing risky or irreversible actions; prefer running automated tests for the code paths you change unless the task calls for a broader suite. Before provisioning external infrastructure (for example Supabase), verify and continue in the existing project/environment instead of creating a parallel one.
 - Do not break existing dashboard, auth flows, middleware, tenant logic, or platform-owner access gates when adding features; keep a clear public path into the dashboard when the product exposes a cabinet entry, and avoid unexplained post-auth redirects to subscribe or billing when users expect the locale dashboard (pilot and test access should not feel like the cabinet vanished).
 - Do not commit secrets, .env files with real values, tokens, or build artifacts; use .gitignore and example files.
 - Prefer new work as isolated additions (components, routes, docs) over broad refactors; put reports and documentation under docs/ and phase subdirs (e.g. docs/mobile-rebuild/, docs/audit/).
@@ -10,7 +10,7 @@
 - For mobile: do not merge Manager and Worker into one app; keep shared logic in Shared; do not use WorkerLite as primary product name; treat iOS as the primary mobile product contour and defer broad Android parity work until iOS is product-ready (no preemptive Android scope expansion or speculative backend modules for mobile).
 - Do not invent or fake success (e.g. fake build results, UI-only flows without real backend/API behavior); document real blockers and missing values.
 - When config values may exist in repo: search first (env examples, docs, scripts); do not ask for values that are already there; do not hardcode fake placeholders if real values exist.
-- Prefer end-to-end execution when asked ("do it yourself"); on continue signals («делай», keep going, по плану, etc.) chain focused work: validate, fix failures, proceed—no extra checkpoints unless blocked or unclear scope. For continual-learning runs, process only parent transcripts (`UUID/UUID.jsonl`) with incremental mtime-based indexing.
+- Prefer end-to-end execution when asked ("do it yourself"); on continue signals («делай», keep going, по плану, etc.) chain focused work: validate, fix failures, proceed—no extra checkpoints unless blocked or unclear scope. When subagent output is already shown to the user, do not restate it unless asked or multi-result synthesis is required. For continual-learning runs, process only parent transcripts (`UUID/UUID.jsonl`) with incremental mtime-based indexing.
 - Product sequencing and customer-finance boundaries: follow `docs/roadmap/AISTROYKA_MEGA_ROADMAP_CUSTOMER_FINANCE_SAFE.md`; never expose internal contractor financial state on customer/owner/stakeholder surfaces except designed customer-facing commercial artifacts (see `docs/security/*` isolation audits).
 
 ## Learned Workspace Facts
