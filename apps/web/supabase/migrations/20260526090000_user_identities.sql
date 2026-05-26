@@ -42,6 +42,12 @@ create policy user_identities_update_own
   using (user_id = auth.uid())
   with check (user_id = auth.uid());
 
+drop policy if exists user_identities_delete_own on public.user_identities;
+create policy user_identities_delete_own
+  on public.user_identities
+  for delete
+  using (user_id = auth.uid());
+
 create or replace function public.set_user_identities_updated_at()
 returns trigger as $$
 begin

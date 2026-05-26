@@ -19,6 +19,19 @@ function localeFromPath(pathname: string): string {
   return match?.[1] ?? "ru";
 }
 
+function hasLocalePrefix(pathname: string): boolean {
+  return /^\/(ru|en|es|it)(?=\/|$)/.test(pathname);
+}
+
+function withLocalePath(pathname: string, locale: string): string {
+  if (hasLocalePrefix(pathname)) return pathname;
+  return pathname === "/" ? `/${locale}` : `/${locale}${pathname}`;
+}
+
+function readString(value: unknown): string | null {
+  return typeof value === "string" && value.trim().length > 0 ? value : null;
+}
+
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
@@ -43,20 +56,20 @@ export async function GET(request: NextRequest) {
   }
 
   const provider = user.app_metadata?.provider;
-  if (provider === "apple") {
+  const appleIdentity = user.identities?.find((identity) => identity.provider === "apple");
+  if (appleIdentity || provider === "apple") {
+    const appleData = (appleIdentity?.identity_data ?? {}) as Record<string, unknown>;
+    const fallbackData = (user.user_metadata ?? {}) as Record<string, unknown>;
     await linkIdentityRow(supabase, {
       user_id: user.id,
       provider: "apple",
-      provider_user_id: String(user.user_metadata?.sub ?? user.id),
-      email: user.email ?? null,
-      full_name:
-        typeof user.user_metadata?.full_name === "string"
-          ? user.user_metadata.full_name
-          : null,
+      provider_user_id: String(appleData.sub ?? appleIdentity?.identity_id ?? user.user_metadata?.sub ?? user.id),
+      email: readString(appleData.email) ?? user.email ?? null,
+      full_name: readString(appleData.full_name) ?? readString(fallbackData.full_name),
       avatar_url:
-        typeof user.user_metadata?.avatar_url === "string"
-          ? user.user_metadata.avatar_url
-          : null,
+        readString(appleData.avatar_url) ??
+        readString(appleData.picture) ??
+        readString(fallbackData.avatar_url),
       metadata: {
         provider: "apple",
       },
@@ -74,6 +87,6 @@ export async function GET(request: NextRequest) {
   const fallbackTarget = member
     ? `/${locale}/dashboard`
     : `/${locale}/dashboard?onboarding=1`;
-  const next = toSafeRelativePath(explicitNext, fallbackTarget);
+  const next = withLocalePath(toSafeRelativePath(explicitNext, fallbackTarget), locale);
   return NextResponse.redirect(new URL(next, request.url));
 }

@@ -28,6 +28,17 @@ describe("GET /api/auth/callback", () => {
           id: "user-1",
           email: "user@example.com",
           app_metadata: { provider: "apple" },
+          identities: [
+            {
+              provider: "apple",
+              identity_id: "apple-identity-1",
+              identity_data: {
+                sub: "apple-sub-1",
+                email: "user@example.com",
+                full_name: "Alex Builder",
+              },
+            },
+          ],
           user_metadata: { sub: "apple-sub-1", full_name: "Alex Builder" },
         },
       },
@@ -57,5 +68,59 @@ describe("GET /api/auth/callback", () => {
     const response = await GET(request as never);
     expect(response.status).toBe(307);
     expect(response.headers.get("location")).toContain("/en/dashboard?onboarding=1");
+  });
+
+  it("mirrors Apple identities even when email remains the primary provider", async () => {
+    getUser.mockResolvedValue({
+      data: {
+        user: {
+          id: "user-1",
+          email: "user@example.com",
+          app_metadata: { provider: "email", providers: ["email", "apple"] },
+          identities: [
+            {
+              provider: "email",
+              identity_id: "email-identity-1",
+              identity_data: {
+                email: "user@example.com",
+              },
+            },
+            {
+              provider: "apple",
+              identity_id: "apple-identity-2",
+              identity_data: {
+                sub: "apple-sub-2",
+                email: "apple-user@example.com",
+                full_name: "Apple Linked User",
+                picture: "https://example.com/apple-avatar.png",
+              },
+            },
+          ],
+          user_metadata: { full_name: "Email User" },
+        },
+      },
+    });
+
+    await GET(new Request("https://aistroyka.ai/api/auth/callback?code=test-code") as never);
+
+    expect(linkIdentityRow).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        user_id: "user-1",
+        provider: "apple",
+        provider_user_id: "apple-sub-2",
+        email: "apple-user@example.com",
+        full_name: "Apple Linked User",
+        avatar_url: "https://example.com/apple-avatar.png",
+      })
+    );
+  });
+
+  it("preserves the active locale when next omits a locale prefix", async () => {
+    const request = new Request("https://aistroyka.ai/api/auth/callback?code=test-code&callback=%2Fru%2Fdashboard&next=%2Fdashboard");
+    const response = await GET(request as never);
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toContain("/ru/dashboard");
   });
 });
