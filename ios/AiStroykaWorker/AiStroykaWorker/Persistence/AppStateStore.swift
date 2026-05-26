@@ -48,15 +48,18 @@ struct AppStateStore: Codable, Equatable {
     var shiftIdempotencyKeys: [String: ShiftIdempotencyKeys]
     /// Phase 7.4: createReport idempotency key per draft (draftId -> key).
     var draftReportCreateKey: [String: String]
+    /// Phase 2: first-run intro; missing in legacy JSON → true (do not show intro upgrades).
+    var hasCompletedWorkerIntro: Bool
     var updatedAt: String
 
     enum CodingKeys: String, CodingKey {
         case selectedProjectId, shift, draftReportId, draftTaskId, pendingUploads, lastSyncCursor, updatedAt
         case shiftIdempotencyKeys
         case draftReportCreateKey
+        case hasCompletedWorkerIntro
     }
 
-    init(selectedProjectId: String?, shift: ShiftState, draftReportId: String?, draftTaskId: String?, pendingUploads: [PendingUploadItem], lastSyncCursor: String?, shiftIdempotencyKeys: [String: ShiftIdempotencyKeys], draftReportCreateKey: [String: String], updatedAt: String) {
+    init(selectedProjectId: String?, shift: ShiftState, draftReportId: String?, draftTaskId: String?, pendingUploads: [PendingUploadItem], lastSyncCursor: String?, shiftIdempotencyKeys: [String: ShiftIdempotencyKeys], draftReportCreateKey: [String: String], hasCompletedWorkerIntro: Bool, updatedAt: String) {
         self.selectedProjectId = selectedProjectId
         self.shift = shift
         self.draftReportId = draftReportId
@@ -65,6 +68,7 @@ struct AppStateStore: Codable, Equatable {
         self.lastSyncCursor = lastSyncCursor
         self.shiftIdempotencyKeys = shiftIdempotencyKeys
         self.draftReportCreateKey = draftReportCreateKey
+        self.hasCompletedWorkerIntro = hasCompletedWorkerIntro
         self.updatedAt = updatedAt
     }
 
@@ -78,6 +82,7 @@ struct AppStateStore: Codable, Equatable {
         lastSyncCursor = try c.decodeIfPresent(String.self, forKey: .lastSyncCursor)
         shiftIdempotencyKeys = try c.decodeIfPresent([String: ShiftIdempotencyKeys].self, forKey: .shiftIdempotencyKeys) ?? [:]
         draftReportCreateKey = try c.decodeIfPresent([String: String].self, forKey: .draftReportCreateKey) ?? [:]
+        hasCompletedWorkerIntro = try c.decodeIfPresent(Bool.self, forKey: .hasCompletedWorkerIntro) ?? true
         updatedAt = try c.decode(String.self, forKey: .updatedAt)
     }
 
@@ -91,6 +96,7 @@ struct AppStateStore: Codable, Equatable {
         try c.encodeIfPresent(lastSyncCursor, forKey: .lastSyncCursor)
         try c.encode(shiftIdempotencyKeys, forKey: .shiftIdempotencyKeys)
         try c.encode(draftReportCreateKey, forKey: .draftReportCreateKey)
+        try c.encode(hasCompletedWorkerIntro, forKey: .hasCompletedWorkerIntro)
         try c.encode(updatedAt, forKey: .updatedAt)
     }
 
@@ -104,6 +110,7 @@ struct AppStateStore: Codable, Equatable {
             lastSyncCursor: nil,
             shiftIdempotencyKeys: [:],
             draftReportCreateKey: [:],
+            hasCompletedWorkerIntro: false,
             updatedAt: ISO8601DateFormatter().string(from: Date())
         )
     }

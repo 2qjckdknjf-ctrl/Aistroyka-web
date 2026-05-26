@@ -69,7 +69,7 @@ export async function submitReport(
   ctx: TenantContext,
   reportId: string,
   traceId?: string | null,
-  options?: { taskId?: string | null }
+  options?: { taskId?: string | null; workerNote?: string | null }
 ): Promise<{ ok: boolean; error: string; code?: string; jobIds?: string[] }> {
   if (!canCreateReport(ctx)) return { ok: false, error: "Insufficient rights" };
   const report = await repo.getById(supabase, reportId, ctx.tenantId);
@@ -93,8 +93,8 @@ export async function submitReport(
 
   const ok =
     report.status === "changes_requested"
-      ? await repo.resubmit(supabase, reportId, ctx.tenantId, taskId ?? undefined)
-      : await repo.submit(supabase, reportId, ctx.tenantId, taskId ?? undefined);
+      ? await repo.resubmit(supabase, reportId, ctx.tenantId, taskId ?? undefined, options?.workerNote ?? null)
+      : await repo.submit(supabase, reportId, ctx.tenantId, taskId ?? undefined, options?.workerNote ?? null);
   if (!ok) return { ok: false, error: "Failed to submit" };
 
   await emitAudit(supabase, {

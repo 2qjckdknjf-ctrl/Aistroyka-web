@@ -1,7 +1,7 @@
 # Final production readiness audit (Phase 13)
 
 **Roadmap:** `docs/roadmap/AISTROYKA_MEGA_ROADMAP_CUSTOMER_FINANCE_SAFE.md` — § Phase 13  
-**Date:** 2026-05-07 (updated **2026-05-08** live verification sprint)
+**Date:** 2026-05-07 (updated **2026-05-22** release lock pass)
 
 **Scope:** Repository and workflow readiness before serious sales. Live go/no-go still requires operator-run smoke on secured environments.
 
@@ -12,7 +12,7 @@
 | PR merge gate | `.github/workflows/ci-check.yml` — `bun install`, `lint`, `bun run test`, Cloudflare/OpenNext bundle with `NEXT_PUBLIC_*` |
 | Monorepo build | Root `bun run build` per `AGENTS.md` |
 
-**Status:** **PASS** at repo level. **Verify:** each PR/churn stays green; fix lockfile drift if CI warns.
+**Status:** **PASS** at repo level. CI now includes `release:check` policy gate in addition to lint/test/build checks.
 
 ## 2. Deploy and staging
 
@@ -47,8 +47,11 @@
 |------|--------|
 | CI green | required |
 | Staging deploy | workflow exists |
-| Pilot smoke | optional/continue-on-error per staging workflow |
+| Pilot smoke | blocking in deploy pipelines |
 | Production + rollback | document in runbooks; not asserted here |
+
+Go/no-go council checklist: `docs/release-hardening/GO_NO_GO_COUNCIL_CHECKLIST.md`  
+Workflow assist: `.github/workflows/release-go-no-go-council.yml`
 
 ## P0 / P1 register (readiness)
 
@@ -70,9 +73,35 @@
 
 **Phase 13 closure:** **CONDITIONAL** (`PHASE13_ROADMAP_CLOSURE.md`) until E2E + Supabase CLI + optional live customer sanity.
 
+## Latest preflight (2026-05-21)
+
+| Check | Result |
+|-------|--------|
+| `bun run lint` | **PASS** |
+| `bun run test` | **PASS** — 1452 tests |
+| `bun run cf:build` | **PASS** |
+| `bun run release:check` | **PASS_WITH_WARNINGS** |
+| `bun run smoke:pilot:check --strict` | **FAIL (env blocked)** — missing auth path for `ops/metrics`, E2E creds, and `SUPABASE_ACCESS_TOKEN` |
+| `bash scripts/verify/stakeholder_finance_sanity.sh` | **PASS** — dedicated stakeholder smoke account verified; role check returns `stakeholder` |
+| `gh workflow run release-go-no-go-council.yml` | **PASS** — latest council run `26271634288` successful with stakeholder sanity enabled |
+
+## Council workflow replay (2026-05-21)
+
+| Run | Result | Notes |
+|-----|--------|-------|
+| `26210496994` | **PASS** | council on `main`, stakeholder sanity disabled (`run_stakeholder_sanity=false`) |
+| `26211837253` | **FAIL** | stakeholder sanity enabled, but `STAKEHOLDER_SMOKE_*` secrets absent |
+| `26212368552` | **FAIL** | stakeholder sanity received fallback credentials, script failed: `/api/v1/me role=admin`, expected `stakeholder` |
+| `26213133876` | **FAIL** | final replay after audit refresh merge: same blocker (`role=admin`, expected `stakeholder`) |
+| `26219736831` | **FAIL** | latest replay on `main`: `release:check` passed, stakeholder sanity still fails with fallback account role mismatch (`admin`, expected `stakeholder`) |
+| `26226853236` | **FAIL** | replay on `main` confirms blocker persists unchanged: fallback smoke account resolves to `role=admin`, not `stakeholder` |
+| `26271634288` | **PASS** | final release-lock replay on `main`: `release:check` + stakeholder finance sanity both pass with dedicated stakeholder account |
+
+Final stakeholder finance live gate: PASS. Dedicated stakeholder smoke account verified. Release GO/NO-GO Council run 26271634288 passed. No security weakening applied. See `docs/security/STAKEHOLDER_SMOKE_ACCOUNT_SETUP_REPORT.md`.
+
 ## Verdict
 
-**SMOKE / HEALTH GREEN** on staging and production for **2026-05-08** pilot script. **E2E** and **live Supabase CLI** **not** closure-complete. **Production go-live** remains **operator decision** with open **P1** E2E items.
+Current baseline remains **GO_PUBLIC_CANDIDATE** for controlled rollout, not broad GA. Final stakeholder gate is now closed; remaining constraints are non-stakeholder items (mobile runtime completeness, AI provider-backed non-fallback proof, and operator/legal signoff surfaces).
 
 ## References
 

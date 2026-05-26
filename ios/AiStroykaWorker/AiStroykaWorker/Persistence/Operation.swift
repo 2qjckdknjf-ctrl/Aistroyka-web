@@ -41,8 +41,24 @@ struct OperationPayload: Codable, Equatable {
     var sizeBytes: Int?
     var imageDataBase64: String?
     var cursor: Int?
+    /// Optional narrative sent with `POST worker/report/submit`.
+    var workerNote: String?
 
-    init(dayId: String? = nil, taskId: String? = nil, reportId: String? = nil, purpose: String? = nil, photoItemId: String? = nil, sessionId: String? = nil, uploadPath: String? = nil, objectPath: String? = nil, mimeType: String? = nil, sizeBytes: Int? = nil, imageDataBase64: String? = nil, cursor: Int? = nil) {
+    init(
+        dayId: String? = nil,
+        taskId: String? = nil,
+        reportId: String? = nil,
+        purpose: String? = nil,
+        photoItemId: String? = nil,
+        sessionId: String? = nil,
+        uploadPath: String? = nil,
+        objectPath: String? = nil,
+        mimeType: String? = nil,
+        sizeBytes: Int? = nil,
+        imageDataBase64: String? = nil,
+        cursor: Int? = nil,
+        workerNote: String? = nil
+    ) {
         self.dayId = dayId
         self.taskId = taskId
         self.reportId = reportId
@@ -55,6 +71,7 @@ struct OperationPayload: Codable, Equatable {
         self.sizeBytes = sizeBytes
         self.imageDataBase64 = imageDataBase64
         self.cursor = cursor
+        self.workerNote = workerNote
     }
 }
 

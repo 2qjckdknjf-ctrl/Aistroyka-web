@@ -61,6 +61,13 @@ for method in GET POST; do
   fi
 done
 
+estimate_code="$(curl -sS -b "$COOKIEJAR" -o /dev/null -w '%{http_code}' -H 'Accept: application/json' \
+  "$BASE_URL/api/v1/projects/$pid/estimate")"
+if [[ "$estimate_code" != "403" ]]; then
+  echo "FAIL: GET /api/v1/projects/$pid/estimate expected 403, got $estimate_code"
+  exit 1
+fi
+
 curl -sS -b "$COOKIEJAR" -H 'Accept: application/json' -o /tmp/sfs-portal-proj.json "$BASE_URL/api/v1/portal/projects/$pid"
 python3 <<'PY'
 import json, sys

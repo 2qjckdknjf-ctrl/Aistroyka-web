@@ -28,6 +28,9 @@ final class AppState: ObservableObject {
     
     func logout() {
         Task {
+            if await auth.currentSession() != nil {
+                try? await WorkerAPI.unregisterDevice()
+            }
             await auth.signOut()
             isLoggedIn = false
             currentUser = nil

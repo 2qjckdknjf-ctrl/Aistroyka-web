@@ -32,4 +32,14 @@ public struct APIError: Error {
     public var isForbidden: Bool { statusCode == 403 }
     public var isConflict: Bool { statusCode == 409 || code == "sync_conflict" }
     public var isRateLimited: Bool { statusCode == 429 }
+
+    /// Stable copy for UI (already avoids raw JSON dumps in `from`).
+    public var userFacingMessage: String { message }
+
+    /// Rough classification for generic retry surfaces (views still map 409 / auth specially).
+    public var isRetryable: Bool {
+        guard let sc = statusCode else { return false }
+        if sc == 401 || sc == 403 || sc == 404 { return false }
+        return sc == 429 || sc >= 500
+    }
 }

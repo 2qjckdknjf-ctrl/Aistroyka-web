@@ -462,7 +462,11 @@ private fun ReportsScreen(vm: ManagerViewModel) {
                                     overflow = TextOverflow.Ellipsis
                                 )
                                 Text(
-                                    stringResource(R.string.manager_report_row_status, r.status ?: "—", r.mediaCount ?: 0),
+                                    stringResource(
+                                        R.string.manager_report_row_status,
+                                        managerStatusLabel(r.status),
+                                        r.mediaCount ?: 0
+                                    ),
                                     style = MaterialTheme.typography.bodySmall
                                 )
                                 r.analysisStatus?.let { s ->
@@ -521,14 +525,17 @@ private fun DetailScreen(vm: ManagerViewModel) {
                 stringResource(R.string.manager_report_title, detail.id ?: "—"),
                 style = MaterialTheme.typography.titleLarge
             )
-            Text(stringResource(R.string.manager_status_line, detail.status ?: "—"), style = MaterialTheme.typography.bodyMedium)
+            Text(stringResource(R.string.manager_status_line, managerStatusLabel(detail.status)), style = MaterialTheme.typography.bodyMedium)
             detail.submittedAt?.let { Text(stringResource(R.string.manager_submitted_line, it), style = MaterialTheme.typography.bodySmall) }
             detail.reviewedAt?.let { Text(stringResource(R.string.manager_reviewed_line, it), style = MaterialTheme.typography.bodySmall) }
             detail.managerNote?.let { Text(stringResource(R.string.manager_note_line, it), style = MaterialTheme.typography.bodySmall) }
             Spacer(Modifier.height(16.dp))
             Text(stringResource(R.string.manager_ai_analysis_jobs), style = MaterialTheme.typography.titleMedium)
             state.analysisStatus?.let { a ->
-                Text(stringResource(R.string.manager_pipeline_line, a.status, a.jobCount ?: 0), style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    stringResource(R.string.manager_pipeline_line, managerAnalysisStatusLabel(a.status), a.jobCount ?: 0),
+                    style = MaterialTheme.typography.bodyMedium
+                )
                 a.summary?.let { s ->
                     Text(
                         stringResource(R.string.manager_media_jobs_line, s.mediaTotal ?: 0, s.analyzed ?: 0, s.failed ?: 0),
@@ -557,6 +564,14 @@ private fun DetailScreen(vm: ManagerViewModel) {
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 2
                 )
+                state.reviewValidationError?.let { key ->
+                    val msg = when (key) {
+                        "manager_note_required_reject_or_changes" -> stringResource(R.string.manager_note_required_reject_or_changes)
+                        else -> key
+                    }
+                    Spacer(Modifier.height(6.dp))
+                    Text(msg, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                }
                 Spacer(Modifier.height(12.dp))
                 Row(
                     Modifier.fillMaxWidth(),
@@ -624,5 +639,28 @@ private fun MediaRow(item: ReportMediaItemDto, urlById: Map<String, String>) {
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun managerStatusLabel(status: String?): String {
+    return when (status?.lowercase()) {
+        "submitted" -> stringResource(R.string.manager_status_submitted)
+        "approved" -> stringResource(R.string.manager_status_approved)
+        "rejected" -> stringResource(R.string.manager_status_rejected)
+        "changes_requested" -> stringResource(R.string.manager_status_changes_requested)
+        "open" -> stringResource(R.string.manager_status_open)
+        else -> status ?: stringResource(R.string.manager_status_unknown)
+    }
+}
+
+@Composable
+private fun managerAnalysisStatusLabel(status: String?): String {
+    return when (status?.lowercase()) {
+        "pending" -> stringResource(R.string.manager_analysis_status_pending)
+        "running" -> stringResource(R.string.manager_analysis_status_running)
+        "done", "completed", "success" -> stringResource(R.string.manager_analysis_status_completed)
+        "failed", "error" -> stringResource(R.string.manager_analysis_status_failed)
+        else -> status ?: stringResource(R.string.manager_status_unknown)
     }
 }

@@ -12,6 +12,10 @@ import Shared
 struct AiStroykaManagerApp: App {
     @StateObject private var sessionState = ManagerSessionState()
 
+    init() {
+        ManagerOnboardingPreferences.skipIntroIfKeychainHasSession()
+    }
+
     var body: some Scene {
         WindowGroup {
             ManagerRootView()

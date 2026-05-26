@@ -8,21 +8,31 @@ import Shared
 
 struct RootView: View {
     @EnvironmentObject var appState: AppState
-    
+    @ObservedObject private var store = AppStateStoreManager.shared
+
     var body: some View {
         Group {
             if appState.isLoggedIn {
                 HomeContainerView()
+            } else if !store.state.hasCompletedWorkerIntro {
+                WorkerOnboardingView()
             } else {
                 LoginView()
             }
         }
         .onAppear {
-            appState.checkSession()
-            Task {
+            Task { @MainActor in
+                await UITestLaunchHooks.prepareWorkerSurfaceIfNeeded(store: store, appState: appState)
+                appState.checkSession()
+                await AppRuntime.configureSharedNetworkingForWorker()
                 await APIClient.shared.setTokenProvider { await AuthService.shared.getAccessToken() }
+                if appState.isLoggedIn { PushRegistrationService.registerIfNeeded() }
             }
-            if appState.isLoggedIn { PushRegistrationService.registerIfNeeded() }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .apiClientDidReceiveUnauthorized)) { output in
+            let profile = output.userInfo?["clientProfile"] as? String
+            guard profile == MobileClientProfile.worker.rawValue else { return }
+            appState.logout()
         }
         .onChange(of: appState.isLoggedIn) { loggedIn in
             if loggedIn { PushRegistrationService.registerIfNeeded() }

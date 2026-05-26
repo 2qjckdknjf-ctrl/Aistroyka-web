@@ -1,0 +1,55 @@
+name: Release GO/NO-GO Council
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Target URL for live stakeholder sanity"
+        required: true
+        default: "https://aistroyka.ai"
+      run_stakeholder_sanity:
+        description: "Run stakeholder finance sanity check (requires stakeholder secrets)"
+        required: true
+        type: boolean
+        default: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  council-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2.15
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Release readiness policy check
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://vthfrxehrursfloevnlp.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_PRODUCTION }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'ci-placeholder-service-role-key' }}
+        run: bun run release:check
+
+      - name: Run stakeholder finance sanity
+        if: ${{ inputs.run_stakeholder_sanity }}
+        env:
+          STAKEHOLDER_FINANCE_BASE_URL: ${{ inputs.base_url }}
+          STAKEHOLDER_SMOKE_EMAIL: ${{ secrets.STAKEHOLDER_SMOKE_EMAIL || secrets.PILOT_SMOKE_EMAIL_PRODUCTION }}
+          STAKEHOLDER_SMOKE_PASSWORD: ${{ secrets.STAKEHOLDER_SMOKE_PASSWORD || secrets.PILOT_SMOKE_PASSWORD_PRODUCTION }}
+        run: bash scripts/verify/stakeholder_finance_sanity.sh
+
+      - name: Verify council docs exist
+        run: |
+          test -f docs/release-hardening/GO_NO_GO_COUNCIL_CHECKLIST.md
+          test -f docs/publication-readiness/FINAL_GO_NO_GO_AUDIT.md
+          test -f docs/audit/FINAL_PRODUCTION_READINESS_AUDIT.md
+

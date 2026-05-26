@@ -58,4 +58,18 @@ describe("GET /api/v1/portal/projects/:id", () => {
     });
     expect(res.status).toBe(200);
   });
+
+  it("returns 500 when payload contains forbidden internal finance keys", async () => {
+    vi.mocked(portalService.getPortalProjectView).mockResolvedValue({
+      data: {
+        project: { id: "p1", name: "X", budget_pressure: "high" },
+      } as never,
+      error: "",
+    });
+
+    const res = await GET(new Request("https://test/api/v1/portal/projects/p1"), {
+      params: Promise.resolve({ id: "p1" }),
+    });
+    expect(res.status).toBe(500);
+  });
 });

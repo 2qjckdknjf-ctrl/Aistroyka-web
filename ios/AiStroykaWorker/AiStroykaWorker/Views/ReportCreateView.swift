@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UIKit
 import Shared
 
 struct ReportCreateView: View {
@@ -31,6 +32,7 @@ struct ReportCreateView: View {
     @State private var showImageSourceAfter = false
     @State private var submitEnqueued = false
     @State private var submitted = false
+    @State private var workerNoteText = ""
 
     private var store: AppStateStoreManager { AppStateStoreManager.shared }
 
@@ -44,44 +46,74 @@ struct ReportCreateView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             if let title = taskTitle, !title.isEmpty {
-                Text("Report for task: \(title)")
+                Text(String(format: NSLocalizedString("worker_report_for_task_fmt", comment: ""), title))
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             }
             if draftId == nil {
-                Button("Create report") { enqueueCreateReport() }
+                Button(NSLocalizedString("worker_report_create", comment: "")) { enqueueCreateReport() }
+                    .accessibilityIdentifier("pilot_worker_report_create")
             } else if let did = draftId {
-                Text("Draft: \(String(did.prefix(8)))…").font(.caption)
-                if let rid = reportId { Text("Report: \(rid)").font(.caption) }
-                Group {
-                    HStack {
-                        Button("Before photo") { showImageSourceBefore = true }
-                        if let id = beforeItemId { photoStatusRow(photoItemId: id, label: "Before") }
-                    }
-                    HStack {
-                        Button("After photo") { showImageSourceAfter = true }
-                        if let id = afterItemId { photoStatusRow(photoItemId: id, label: "After") }
-                    }
+                Text(String(format: NSLocalizedString("worker_report_draft_fmt", comment: ""), String(did.prefix(8))))
+                    .font(.caption)
+                if let rid = reportId {
+                    Text(String(format: NSLocalizedString("worker_report_server_id", comment: ""), String(rid.prefix(8))))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
-                if canSubmitReport {
-                    Button("Submit report") { enqueueSubmitReport() }
-                        .disabled(submitEnqueued)
+                Group {
+                    photoPickRow(
+                        label: NSLocalizedString("worker_photo_before", comment: ""),
+                        image: beforeImage,
+                        showSource: $showImageSourceBefore,
+                        itemId: beforeItemId,
+                        photoLabel: NSLocalizedString("worker_photo_before_short", comment: ""),
+                        pickAccessibilityId: "pilot_worker_photo_before_pick",
+                        retryAccessibilityId: "pilot_worker_photo_before_retry"
+                    )
+                    photoPickRow(
+                        label: NSLocalizedString("worker_photo_after", comment: ""),
+                        image: afterImage,
+                        showSource: $showImageSourceAfter,
+                        itemId: afterItemId,
+                        photoLabel: NSLocalizedString("worker_photo_after_short", comment: ""),
+                        pickAccessibilityId: "pilot_worker_photo_after_pick",
+                        retryAccessibilityId: "pilot_worker_photo_after_retry"
+                    )
+                }
+                if canSubmitReport && !submitted {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(NSLocalizedString("worker_report_note_label", comment: ""))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        TextField(NSLocalizedString("worker_report_note_placeholder", comment: ""), text: $workerNoteText, axis: .vertical)
+                            .lineLimit(3...6)
+                            .textFieldStyle(.roundedBorder)
+                            .accessibilityIdentifier("pilot_worker_report_note")
+                    }
+                    Button(NSLocalizedString("worker_submit_report", comment: "")) { enqueueSubmitReport() }
+                        .disabled(submitEnqueued && !submitFailed)
+                        .accessibilityIdentifier("pilot_worker_submit_report")
                 }
             }
             if let err = errorMessage { Text(err).foregroundColor(.red).font(.caption) }
-            if submitEnqueued && !submitted { Text("Submit queued").foregroundColor(.green) }
-            if submitted { Text("Submitted").foregroundColor(.green) }
+            if submitEnqueued && !submitted && !submitFailed {
+                Text(NSLocalizedString("worker_submit_queued", comment: "")).foregroundColor(.green)
+            }
+            if submitted { Text(NSLocalizedString("worker_submitted", comment: "")).foregroundColor(.green) }
         }
         .padding()
-        .confirmationDialog("Before photo", isPresented: $showImageSourceBefore) {
-            Button("Take photo") { showCameraBefore = true }
-            Button("Choose from library") { showImagePickerBefore = true }
-            Button("Cancel", role: .cancel) {}
+        .navigationTitle(NSLocalizedString("worker_new_report", comment: ""))
+        .navigationBarTitleDisplayMode(.inline)
+        .confirmationDialog(NSLocalizedString("worker_photo_dialog_before", comment: ""), isPresented: $showImageSourceBefore) {
+            Button(NSLocalizedString("worker_take_photo", comment: "")) { showCameraBefore = true }
+            Button(NSLocalizedString("worker_choose_library", comment: "")) { showImagePickerBefore = true }
+            Button(NSLocalizedString("worker_cancel", comment: ""), role: .cancel) {}
         }
-        .confirmationDialog("After photo", isPresented: $showImageSourceAfter) {
-            Button("Take photo") { showCameraAfter = true }
-            Button("Choose from library") { showImagePickerAfter = true }
-            Button("Cancel", role: .cancel) {}
+        .confirmationDialog(NSLocalizedString("worker_photo_dialog_after", comment: ""), isPresented: $showImageSourceAfter) {
+            Button(NSLocalizedString("worker_take_photo", comment: "")) { showCameraAfter = true }
+            Button(NSLocalizedString("worker_choose_library", comment: "")) { showImagePickerAfter = true }
+            Button(NSLocalizedString("worker_cancel", comment: ""), role: .cancel) {}
         }
         .sheet(isPresented: $showImagePickerBefore) { ImagePicker(image: $beforeImage) }
         .sheet(isPresented: $showImagePickerAfter) { ImagePicker(image: $afterImage) }
@@ -97,9 +129,15 @@ struct ReportCreateView: View {
         .onChange(of: opStore.operations) { _ in
             if let did = draftId {
                 reportId = opStore.operation(id: createReportOpId(draftId: did))?.resultReportId
-                if opStore.operation(id: submitReportOpId(draftId: did))?.state == .succeeded {
+                let submitOp = opStore.operation(id: submitReportOpId(draftId: did))
+                if submitOp?.state == .succeeded {
                     submitted = true
+                    submitEnqueued = false
+                    errorMessage = nil
                     store.save { $0.draftTaskId = nil }
+                } else if submitOp?.state == .failed_permanent {
+                    errorMessage = localizedOpFailure(submitOp)
+                    submitEnqueued = false
                 }
             }
         }
@@ -113,23 +151,68 @@ struct ReportCreateView: View {
         }
     }
 
-    private func photoStatusRow(photoItemId: String, label: String) -> some View {
+    private var submitFailed: Bool {
+        guard let did = draftId else { return false }
+        return opStore.operation(id: submitReportOpId(draftId: did))?.state == .failed_permanent
+    }
+
+    private func localizedOpFailure(_ op: QueuedOperation?) -> String {
+        guard let op else { return NSLocalizedString("worker_error_generic", comment: "") }
+        if op.lastErrorCode == "proof_required" {
+            return NSLocalizedString("worker_error_proof_required", comment: "")
+        }
+        if op.lastErrorCode == "max_attempts" {
+            return NSLocalizedString("worker_error_max_attempts", comment: "")
+        }
+        if let msg = op.lastErrorMessage, !msg.isEmpty { return msg }
+        return NSLocalizedString("worker_error_generic", comment: "")
+    }
+
+    private func photoPickRow(
+        label: String,
+        image: UIImage?,
+        showSource: Binding<Bool>,
+        itemId: String?,
+        photoLabel: String,
+        pickAccessibilityId: String,
+        retryAccessibilityId: String
+    ) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            if let img = image {
+                Image(uiImage: img)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 56, height: 56)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+            }
+            VStack(alignment: .leading, spacing: 6) {
+                Button(label) { showSource.wrappedValue = true }
+                    .accessibilityIdentifier(pickAccessibilityId)
+                if let id = itemId {
+                    photoStatusRow(photoItemId: id, label: photoLabel, retryAccessibilityId: retryAccessibilityId)
+                }
+            }
+        }
+    }
+
+    private func photoStatusRow(photoItemId: String, label: String, retryAccessibilityId: String) -> some View {
         let attachOp = opStore.operation(id: attachMediaOpId(photoItemId: photoItemId))
         let state = attachOp?.state ?? .queued
         return HStack(spacing: 4) {
             Text("\(label): \(stateLabel(state))").font(.caption2)
             if state == .failed_permanent || (state == .queued && (attachOp?.attemptCount ?? 0) > 0) {
-                Button("Retry") { retryPhotoChain(photoItemId: photoItemId) }
+                Button(NSLocalizedString("worker_retry", comment: "")) { retryPhotoChain(photoItemId: photoItemId) }
+                    .accessibilityIdentifier(retryAccessibilityId)
             }
         }
     }
 
     private func stateLabel(_ state: OperationState) -> String {
         switch state {
-        case .queued: return "queued"
-        case .running: return "running"
-        case .succeeded: return "done"
-        case .failed_permanent: return "failed"
+        case .queued: return NSLocalizedString("worker_op_queued", comment: "")
+        case .running: return NSLocalizedString("worker_op_running", comment: "")
+        case .succeeded: return NSLocalizedString("worker_op_done", comment: "")
+        case .failed_permanent: return NSLocalizedString("worker_op_failed", comment: "")
         }
     }
 
@@ -199,8 +282,8 @@ struct ReportCreateView: View {
 
         let createReportId = createReportOpId(draftId: did)
         let now = ISO8601DateFormatter().string(from: Date())
-        func mkPayload(dayId: String? = nil, taskId: String? = nil, reportId: String? = nil, purpose: String? = nil, photoItemId: String? = nil, sessionId: String? = nil, uploadPath: String? = nil, objectPath: String? = nil, mimeType: String? = nil, sizeBytes: Int? = nil, imageDataBase64: String? = nil, cursor: Int? = nil) -> OperationPayload {
-            OperationPayload(dayId: dayId, taskId: taskId, reportId: reportId, purpose: purpose, photoItemId: photoItemId, sessionId: sessionId, uploadPath: uploadPath, objectPath: objectPath, mimeType: mimeType, sizeBytes: sizeBytes, imageDataBase64: imageDataBase64, cursor: cursor)
+        func mkPayload(dayId: String? = nil, taskId: String? = nil, reportId: String? = nil, purpose: String? = nil, photoItemId: String? = nil, sessionId: String? = nil, uploadPath: String? = nil, objectPath: String? = nil, mimeType: String? = nil, sizeBytes: Int? = nil, imageDataBase64: String? = nil, cursor: Int? = nil, workerNote: String? = nil) -> OperationPayload {
+            OperationPayload(dayId: dayId, taskId: taskId, reportId: reportId, purpose: purpose, photoItemId: photoItemId, sessionId: sessionId, uploadPath: uploadPath, objectPath: objectPath, mimeType: mimeType, sizeBytes: sizeBytes, imageDataBase64: imageDataBase64, cursor: cursor, workerNote: workerNote)
         }
 
         let opCreateSession = QueuedOperation(id: createSessionOpId(photoItemId: photoId), type: .createUploadSession, payload: mkPayload(purpose: purpose), idempotencyKey: keyCreate, dependsOn: [createReportId], state: .queued, attemptCount: 0, nextAttemptAt: nil, lastErrorCode: nil, lastErrorMessage: nil, createdAt: now, updatedAt: now, resultReportId: nil, resultSessionId: nil, resultUploadPath: nil)
@@ -249,13 +332,30 @@ struct ReportCreateView: View {
 
     private func enqueueSubmitReport() {
         guard let did = draftId, let beforeId = beforeItemId, let afterId = afterItemId else { return }
+        errorMessage = nil
         let taskIdForSubmit = taskId ?? store.state.draftTaskId
         let key = DeviceContext.newIdempotencyKey()
         let now = ISO8601DateFormatter().string(from: Date())
+        let trimmedNote = workerNoteText.trimmingCharacters(in: .whitespacesAndNewlines)
+        let noteForSubmit: String? = trimmedNote.isEmpty ? nil : String(trimmedNote.prefix(2000))
         let op = QueuedOperation(
             id: submitReportOpId(draftId: did),
             type: .submitReport,
-            payload: OperationPayload(dayId: nil, taskId: taskIdForSubmit, reportId: nil, purpose: nil, photoItemId: nil, sessionId: nil, uploadPath: nil, objectPath: nil, mimeType: nil, sizeBytes: nil, imageDataBase64: nil, cursor: nil),
+            payload: OperationPayload(
+                dayId: nil,
+                taskId: taskIdForSubmit,
+                reportId: nil,
+                purpose: nil,
+                photoItemId: nil,
+                sessionId: nil,
+                uploadPath: nil,
+                objectPath: nil,
+                mimeType: nil,
+                sizeBytes: nil,
+                imageDataBase64: nil,
+                cursor: nil,
+                workerNote: noteForSubmit
+            ),
             idempotencyKey: key,
             dependsOn: [createReportOpId(draftId: did), attachMediaOpId(photoItemId: beforeId), attachMediaOpId(photoItemId: afterId)],
             state: .queued,

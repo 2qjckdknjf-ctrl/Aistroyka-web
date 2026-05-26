@@ -17,6 +17,7 @@ interface ReportDetail {
   reviewed_at?: string | null;
   reviewed_by?: string | null;
   manager_note?: string | null;
+  worker_note?: string | null;
   media: { media_id: string | null; upload_session_id: string | null }[];
 }
 
@@ -170,6 +171,12 @@ export default function ReportDetailPage() {
             <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("mediaAttachments")}</dt>
             <dd>{data.media?.length ?? 0}</dd>
           </div>
+          {data.worker_note && (
+            <div className="sm:col-span-2">
+              <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("workerNote")}</dt>
+              <dd className="text-aistroyka-subheadline text-aistroyka-text-secondary mt-1 whitespace-pre-wrap">{data.worker_note}</dd>
+            </div>
+          )}
           {data.reviewed_at && (
             <>
               <div>

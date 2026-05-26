@@ -16,6 +16,7 @@
 | Owner can see only estimates sent to owner | `customer-estimates` / portal shaping; see `customer-estimates.service.test.ts` and portal routes. |
 | Share proof does not include internal finance | `getProofPackByToken` shape — e.g. `approved_commercial_changes`, no cost line items. **Test:** `share/proof/[token]/route.test.ts` + `proof-pack.service.test.ts` as applicable. |
 | Owner digest excludes internal finance | **PASS** architecturally — `docs/security/PHASE7_DIGEST_FINANCE_ISOLATION_AUDIT.md`; tests in `daily-digest.service.test.ts`. |
+| Customer-facing routes fail-closed on forbidden finance keys | `assertCustomerFinanceSafePayload` guard applied in `/api/v1/portal/projects/:id` and `/api/v1/share/proof/:token`; route tests assert **500** on forbidden payload keys. |
 
 ## Historical phase audits (context)
 
@@ -42,14 +43,16 @@
 
 Repo-wide `apps/web` TypeScript grep for cost/finance tokens surfaced hits in **internal** surfaces (e.g. `ProjectCostsPanel`, `/api/v1/projects/:id/costs`, `change-orders` `internal_cost_item_id`, `cost-signals`, manager actions). Customer-facing shaping layers (`portal`, `share`, digest owner path, proof-pack, telegram emit) remain aligned with prior PASS; digest/proof tests continue to assert absence of internal finance phrases in owner-facing output.
 
-## Live stakeholder sanity (2026-05-09)
+## Live stakeholder sanity (latest 2026-05-22)
 
-**BLOCKED** — do **not** mark **PASS** until all steps below are satisfied.
+**PASS** — dedicated stakeholder smoke account is configured and verified in production.
 
-1. **Account:** a real **`stakeholder`** user (invited client). **`SMOKE_*` / tenant `owner`** on staging returns `role: owner` from `GET /api/v1/me` and does **not** substitute a portal-only check.
-2. **Portal API deploy:** on **staging** and **production**, an authenticated `GET /api/v1/portal/projects` currently returns **HTML 404** (Next not-found page), while `GET /api/v1/projects` and owner `GET /api/v1/projects/:id/costs` return **200**. So `app/api/v1/portal/**` routes are **missing on the deployed Worker bundle** or the deploy is **stale** — **redeploy** the current OpenNext/Cloudflare build and re-check until `/api/v1/portal/projects` returns **200 JSON**.
-3. **After deploy + credentials:** run `bash scripts/verify/stakeholder_finance_sanity.sh` with `STAKEHOLDER_SMOKE_EMAIL`, `STAKEHOLDER_SMOKE_PASSWORD` (optional `STAKEHOLDER_FINANCE_BASE_URL` — see `apps/web/.env.local.example`). Expect: `role=stakeholder`, `portal/projects` **200** JSON, `GET/POST .../costs` → **403**, portal project JSON must not expose internal cost keys.
+1. **Account:** dedicated stakeholder smoke user provisioned and linked (not admin/owner). Details: `docs/security/STAKEHOLDER_SMOKE_ACCOUNT_SETUP_REPORT.md`.
+2. **Council evidence:** `Release GO/NO-GO Council` run `26271634288` passed with `run_stakeholder_sanity=true`.
+3. **Closure command:** `bash scripts/verify/stakeholder_finance_sanity.sh` returns PASS with stakeholder credentials; `/api/v1/me role=stakeholder`, portal access works, and `/api/v1/projects/:id/costs` remains denied (`403`).
 
-**Repo/route tests** for cost isolation: **PASS**. **Live** stakeholder sanity: **BLOCKED** until steps 2–3.
+Final stakeholder finance live gate: PASS. Dedicated stakeholder smoke account verified. Release GO/NO-GO Council run 26271634288 passed. No security weakening applied.
 
-**PASS (with continuous regression discipline)** — code-level boundaries and tests hold; **live** stakeholder verification follows the checklist above.
+**Repo/route tests** for cost isolation: **PASS**. **Live** stakeholder sanity: **PASS**.
+
+**PASS (with continuous regression discipline)** — code-level boundaries and tests hold; live stakeholder verification is now closed.

@@ -11,6 +11,7 @@ import {
   TenantForbiddenError,
 } from "@/lib/tenant";
 import { listChangeOrders } from "@/lib/domain/change-orders/change-orders.service";
+import { assertCustomerFinanceSafePayload } from "@/lib/security/customer-finance-guard";
 
 export const dynamic = "force-dynamic";
 
@@ -35,5 +36,13 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
   const supabase = await createClientFromRequest(request);
   const { data, error } = await listChangeOrders(supabase, ctx, projectId);
   if (error === "Insufficient rights") return NextResponse.json({ error }, { status: 403 });
-  return NextResponse.json({ data: data ?? [] });
+  const payload = { data: data ?? [] };
+  const safety = assertCustomerFinanceSafePayload(payload);
+  if (!safety.ok) {
+    console.error(
+      `Blocked customer-finance leak in /api/v1/portal/projects/${projectId}/change-orders: ${safety.path ?? safety.key}`
+    );
+    return NextResponse.json({ error: "Portal payload failed finance safety guard" }, { status: 500 });
+  }
+  return NextResponse.json(payload);
 }

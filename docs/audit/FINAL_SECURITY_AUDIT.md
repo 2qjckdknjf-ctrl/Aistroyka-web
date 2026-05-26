@@ -18,6 +18,13 @@
 
 **Verdict:** **PASS** with ongoing route-level reviews for new `/api/v1/*` handlers.
 
+Additional hardening (2026-05): customer-facing routes now fail closed when forbidden internal finance keys appear in payload shaping:
+
+- `/api/v1/portal/projects/:id`
+- `/api/v1/share/proof/:token`
+
+Guard implementation: `apps/web/lib/security/customer-finance-guard.ts`.
+
 ## 3. Share token security
 
 - Proof pack / share routes: service-role paths validated in dedicated tests (e.g. `app/api/v1/share/proof/[token]/route.test.ts`).
@@ -47,6 +54,14 @@
 - **`/api/v1/health`:** **200** staging + production (apex/www); body reports `supabaseReachable`, `serviceRoleConfigured`.
 - **`/api/v1/system/health`:** **503/401** JSON policy without secrets (see §4).
 - **E2E:** pilot was **FAIL** on 2026-05-08; **FirstLaunchGuide** overlay + **core-flow** route/assertions addressed in repo — **retest** before claiming regression closure.
+
+## Council replay snapshot (2026-05-21)
+
+- `Release GO/NO-GO Council` run `26210496994`: **PASS** with `run_stakeholder_sanity=false`.
+- `Release GO/NO-GO Council` run `26211837253`: **FAIL** — stakeholder secrets missing.
+- `Release GO/NO-GO Council` run `26212368552`: **FAIL** — credentials present, but `/api/v1/me` returns `role=admin` (expected `stakeholder`).
+
+**Security implication:** customer-finance live sanity remains **open** until dedicated stakeholder credentials are provisioned and the sanity script passes on production.
 
 ## References
 

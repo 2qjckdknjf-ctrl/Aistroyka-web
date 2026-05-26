@@ -62,6 +62,28 @@ describe("POST /api/v1/devices/unregister", () => {
     expect(res.status).toBe(400);
   });
 
+  it("returns 400 for ios_lite without x-idempotency-key", async () => {
+    const { getTenantContextFromRequest } = await import("@/lib/tenant");
+    vi.mocked(getTenantContextFromRequest).mockResolvedValueOnce({
+      tenantId: "t1",
+      userId: "u1",
+      role: "member",
+      subscriptionTier: "free",
+      clientProfile: "ios_lite",
+      traceId: "trace-1",
+    });
+    const res = await POST(
+      new Request("https://test/api/v1/devices/unregister", {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-client": "ios_lite" },
+        body: JSON.stringify({ device_id: "device-123" }),
+      })
+    );
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as { code?: string };
+    expect(body.code).toBe("idempotency_key_required");
+  });
+
   it("returns 200 when device_id valid", async () => {
     const res = await POST(
       new Request("https://test/api/v1/devices/unregister", {

@@ -58,9 +58,14 @@ export async function POST(request: Request) {
       userId: ctx.userId,
     });
   }
-  const { report_id: reportId, task_id: taskId } = parsed.data;
+  const { report_id: reportId, task_id: taskId, worker_note: workerNoteRaw } = parsed.data;
+  const workerNote =
+    typeof workerNoteRaw === "string" ? workerNoteRaw.trim().slice(0, 2000) || undefined : undefined;
   const supabase = await createClientFromRequest(request);
-  const result = await submitReport(supabase, ctx, reportId, ctx.traceId, { taskId: taskId?.trim() || undefined });
+  const result = await submitReport(supabase, ctx, reportId, ctx.traceId, {
+    taskId: taskId?.trim() || undefined,
+    workerNote: workerNote ?? null,
+  });
   if (!result.ok) {
     const status =
       result.code === "task_invalid" ? 404 : result.code === "proof_required" ? 400 : 403;

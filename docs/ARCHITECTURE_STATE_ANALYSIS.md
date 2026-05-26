@@ -51,7 +51,7 @@
 
 | Layer | Status | Notes |
 |-------|--------|--------|
-| Clients | Partial | x-client parsed; no enforced Lite allow-list by path. |
+| Clients | Partial | x-client parsed; **Lite allow-list** enforced in `middleware.ts` for `ios_lite` / `android_lite` (`lib/api/lite-allow-list.ts`). |
 | API routes | Mixed | Many routes validate → context → service → response; some contain direct DB or logic. |
 | Tenant/Auth | Good | Tenant context + requireTenant + authorize(scope) used widely. |
 | Domain services | Good | Present for projects, media, reports, tasks, upload-session, worker-day, org, tenants. |

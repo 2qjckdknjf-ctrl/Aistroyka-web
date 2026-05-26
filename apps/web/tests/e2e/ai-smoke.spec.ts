@@ -4,6 +4,7 @@
  * - With TEST_PROJECT_ID: open project AI page and check tabs (Summary, Explain Risk, Copilot)
  */
 import { test, expect } from "@playwright/test";
+import { expectLocaleLandingOrLoginUrl } from "./audit-helpers";
 
 test.describe("AI Copilot smoke", () => {
   test("app loads and shows auth or dashboard", async ({ page }) => {
@@ -161,7 +162,7 @@ test.describe("Admin AI Observability smoke", () => {
     // Layout guard: non-admin redirects to default locale root
     const url = page.url();
     expect(url).not.toContain("/admin/ai");
-    expect(url).toMatch(/\/(en|ru|es|it)(\/)?$/);
+    expectLocaleLandingOrLoginUrl(url);
   });
 
   test("unauthenticated user visiting /admin/ai/requests is redirected", async ({
@@ -171,7 +172,7 @@ test.describe("Admin AI Observability smoke", () => {
     await page.waitForLoadState("domcontentloaded");
     const url = page.url();
     expect(url).not.toContain("/admin/");
-    expect(url).toMatch(/\/(en|ru|es|it)(\/)?$/);
+    expectLocaleLandingOrLoginUrl(url);
   });
 
   test("admin AI overview page structure when Edge is mocked (with auth)", async ({

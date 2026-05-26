@@ -7,45 +7,14 @@ import { routing } from "@/i18n/routing";
 
 const CASE_SLUGS = ["residential", "commercial", "infrastructure", "renovation"] as const;
 
-const CASE_DATA: Record<
-  (typeof CASE_SLUGS)[number],
-  { projectSize: string; teamSize: string; timeline: string; tools: string; benefits: string }
-> = {
-  residential: {
-    projectSize: "120 units",
-    teamSize: "15–25",
-    timeline: "18 months",
-    tools: "Projects, Tasks, Reports, AI analytics",
-    benefits: "Unified visibility, risk alerts, fewer delays.",
-  },
-  commercial: {
-    projectSize: "12,000 m²",
-    teamSize: "40+",
-    timeline: "24 months",
-    tools: "Dashboard, AI, Mobile, Integrations",
-    benefits: "Portfolio view, compliance, faster reporting.",
-  },
-  infrastructure: {
-    projectSize: "Multi-site",
-    teamSize: "80+",
-    timeline: "36 months",
-    tools: "Projects, Reports, AI, API",
-    benefits: "Cross-site progress, risk prediction, audit trail.",
-  },
-  renovation: {
-    projectSize: "50+ lots",
-    teamSize: "10–20",
-    timeline: "12 months",
-    tools: "Tasks, Photo evidence, Daily reports",
-    benefits: "Before/after tracking, quality control, on-time delivery.",
-  },
-};
-
 type Props = { params: Promise<{ locale: string; slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, slug } = await params;
-  if (!CASE_SLUGS.includes(slug as (typeof CASE_SLUGS)[number])) return { title: "Case" };
+  const t0 = await getTranslations({ locale, namespace: "public.cases" });
+  if (!CASE_SLUGS.includes(slug as (typeof CASE_SLUGS)[number])) {
+    return { title: t0("title") };
+  }
   const t = await getTranslations({ locale, namespace: "public.cases" });
   const titleKey = slug as (typeof CASE_SLUGS)[number];
   return {
@@ -60,7 +29,6 @@ export default async function CaseSlugPage({ params }: Props) {
   if (!CASE_SLUGS.includes(slug as (typeof CASE_SLUGS)[number])) notFound();
   const t = await getTranslations("public.cases");
   const key = slug as (typeof CASE_SLUGS)[number];
-  const data = CASE_DATA[key];
 
   return (
     <div className="mx-auto min-w-0 max-w-3xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
@@ -79,7 +47,7 @@ export default async function CaseSlugPage({ params }: Props) {
             {t("projectSize")}
           </dt>
           <dd className="mt-1 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-primary)]">
-            {data.projectSize}
+            {t(`${key}ProjectSize`)}
           </dd>
         </div>
         <div>
@@ -87,7 +55,7 @@ export default async function CaseSlugPage({ params }: Props) {
             {t("teamSize")}
           </dt>
           <dd className="mt-1 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-primary)]">
-            {data.teamSize}
+            {t(`${key}TeamSize`)}
           </dd>
         </div>
         <div>
@@ -95,7 +63,7 @@ export default async function CaseSlugPage({ params }: Props) {
             {t("timeline")}
           </dt>
           <dd className="mt-1 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-primary)]">
-            {data.timeline}
+            {t(`${key}Timeline`)}
           </dd>
         </div>
         <div>
@@ -103,7 +71,7 @@ export default async function CaseSlugPage({ params }: Props) {
             {t("toolsUsed")}
           </dt>
           <dd className="mt-1 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-primary)]">
-            {data.tools}
+            {t(`${key}ToolsUsed`)}
           </dd>
         </div>
         <div>
@@ -111,7 +79,7 @@ export default async function CaseSlugPage({ params }: Props) {
             {t("benefits")}
           </dt>
           <dd className="mt-1 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-primary)]">
-            {data.benefits}
+            {t(`${key}Benefits`)}
           </dd>
         </div>
       </dl>

@@ -24,6 +24,7 @@ CRON="${CRON_SECRET:-}"
 AUTH="${AUTH_HEADER:-}"
 COOKIE="${COOKIE:-}"
 FAIL=0
+STRICT_HEALTH="${STRICT_HEALTH_200:-auto}"
 
 is_local_base() {
   [[ "$BASE" == http://localhost* || "$BASE" == https://localhost* || "$BASE" == http://127.0.0.1* || "$BASE" == https://127.0.0.1* ]]
@@ -80,9 +81,26 @@ fi
 
 echo "Pilot launch smoke: $BASE (from=$FROM to=$TO)"
 
+ALLOW_HEALTH_503=1
+case "$STRICT_HEALTH" in
+  1|true|TRUE|yes|YES) ALLOW_HEALTH_503=0 ;;
+  0|false|FALSE|no|NO) ALLOW_HEALTH_503=1 ;;
+  auto|AUTO|"")
+    if [[ "$BASE" == *"aistroyka.ai"* && "$BASE" != *"staging.aistroyka.ai"* ]]; then
+      ALLOW_HEALTH_503=0
+    fi
+    ;;
+  *)
+    echo "  WARN: unknown STRICT_HEALTH_200='$STRICT_HEALTH', using auto mode"
+    if [[ "$BASE" == *"aistroyka.ai"* && "$BASE" != *"staging.aistroyka.ai"* ]]; then
+      ALLOW_HEALTH_503=0
+    fi
+    ;;
+esac
+
 # 0) Health (no auth) — must pass
 code=$(curl -sSL -o /tmp/pilot_health.json -w "%{http_code}" -m 15 "$BASE/api/v1/health" || true)
-if [[ "$code" != "200" && "$code" != "503" ]]; then
+if [[ "$code" != "200" && ! ( "$ALLOW_HEALTH_503" -eq 1 && "$code" == "503" ) ]]; then
   echo "  FAIL: GET /api/v1/health → HTTP $code"
   FAIL=1
 else

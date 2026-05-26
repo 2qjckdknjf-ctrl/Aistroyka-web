@@ -16,10 +16,10 @@ object AppRuntime {
         private set
 
     /**
-     * `x-client` header. Worker: `android_lite` (lite allow-list). Manager: `android_manager` (full manager API).
-     * Parity: iOS Worker `ios_lite`, iOS Manager `ios_manager`.
+     * `x-client` header. Worker: `android_worker` (field-worker allow-list). Manager: `android_manager`.
+     * Legacy `android_lite` is still accepted by the backend.
      */
-    var apiClientProfile: String = "android_lite"
+    var apiClientProfile: String = "android_worker"
 
     /** Full prefix for v1 routes, e.g. https://aistroyka.ai/api/v1 */
     val apiV1Root: String

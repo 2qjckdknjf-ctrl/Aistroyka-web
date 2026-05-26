@@ -9,6 +9,19 @@ import { getServerConfig } from "@/lib/config/server";
 
 export type HealthBody = Record<string, unknown>;
 
+function isRlsAccessError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const maybeCode = "code" in error ? String((error as { code?: unknown }).code ?? "") : "";
+  const maybeMessage = "message" in error ? String((error as { message?: unknown }).message ?? "") : "";
+  const message = maybeMessage.toLowerCase();
+  return (
+    maybeCode === "42501" ||
+    message.includes("permission denied") ||
+    message.includes("insufficient privilege") ||
+    message.includes("row-level security")
+  );
+}
+
 export async function getHealthResponse(): Promise<{ body: HealthBody; status: number }> {
   const serverConfig = getServerConfig();
   const aiConfigured = serverConfig.AI_ANALYSIS_URL.length > 0;
@@ -36,8 +49,14 @@ export async function getHealthResponse(): Promise<{ body: HealthBody; status: n
     const supabase = createClient(url, key, { auth: { persistSession: false } });
     const { error } = await supabase.from("tenants").select("id").limit(1);
     if (error) {
-      reason = error.message ?? "db_error";
-      db = "error";
+      if (isRlsAccessError(error)) {
+        db = "ok";
+        supabaseReachable = true;
+        reason = "rls_restricted";
+      } else {
+        reason = error.message ?? "db_error";
+        db = "error";
+      }
     } else {
       db = "ok";
       supabaseReachable = true;
@@ -64,7 +83,9 @@ export async function getHealthResponse(): Promise<{ body: HealthBody; status: n
   const status = ok ? 200 : 503;
   const { sha, buildTime } = getBuildStamp();
   const serviceRoleConfigured = serverConfig.SUPABASE_SERVICE_ROLE_KEY.length > 0;
-  const appEnv = (process.env.NEXT_PUBLIC_APP_ENV ?? "").trim().toLowerCase();
+  const appEnv =
+    (process.env.NEXT_PUBLIC_APP_ENV ?? "").trim().toLowerCase() ||
+    (process.env.NODE_ENV ?? "").trim().toLowerCase();
   const body: HealthBody = {
     ok,
     db,

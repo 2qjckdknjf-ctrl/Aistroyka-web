@@ -12,4 +12,6 @@ export interface Report {
   reviewed_at?: string | null;
   reviewed_by?: string | null;
   manager_note?: string | null;
+  /** Worker narrative at submit/resubmit */
+  worker_note?: string | null;
 }

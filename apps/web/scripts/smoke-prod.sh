@@ -5,7 +5,7 @@ set -e
 BASE="${1:-${SMOKE_BASE_URL:-https://aistroyka.ai}}"
 echo "Smoke check: $BASE"
 code=$(curl -sS -o /dev/null -w "%{http_code}" -m 15 -L "$BASE/api/v1/health")
-if [[ "$code" != "200" && "$code" != "503" ]]; then
+if [[ "$code" != "200" ]]; then
   echo "FAIL: GET $BASE/api/v1/health → HTTP $code"
   exit 1
 fi

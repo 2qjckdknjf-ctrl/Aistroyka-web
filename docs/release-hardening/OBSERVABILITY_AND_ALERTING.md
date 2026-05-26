@@ -35,3 +35,9 @@ No in-app alert dispatch in repo. Use external services:
 ## First 72h
 
 See FIRST_72H_OPERATIONS_CHECKLIST.md.
+
+## Release council integration
+
+Before expanding user publication scope, run the final checklist:
+
+- `docs/release-hardening/GO_NO_GO_COUNCIL_CHECKLIST.md`

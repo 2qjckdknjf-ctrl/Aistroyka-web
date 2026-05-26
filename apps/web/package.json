@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "i18n:check": "node ../../scripts/i18n/check-messages.js",
     "check:design": "node scripts/check-raw-colors.mjs",
     "test": "vitest run --maxWorkers=1",
     "test:manager-layer": "bun test lib/dashboard/alert-destinations.test.ts lib/dashboard/priority-actions.test.ts lib/intelligence/next-action-href.test.ts",

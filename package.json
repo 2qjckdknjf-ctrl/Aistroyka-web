@@ -10,7 +10,7 @@
   "scripts": {
     "dev": "cd apps/web && bun run dev",
     "build:contracts": "bun run --cwd packages/contracts clean && bun run --cwd packages/contracts build",
-    "build:contracts:npm": "npm run --prefix packages/contracts clean && npm install --prefix packages/contracts --include=dev && npm run --prefix packages/contracts build",
+    "build:contracts:npm": "cd packages/contracts && npm run clean && npm install --include=dev && npm run build",
     "build:web": "bun run --cwd apps/web build",
     "build:web:npm": "npm run --prefix apps/web build",
     "build": "bun run build:contracts && bun run build:web",
@@ -21,6 +21,7 @@
     "cf:deploy:staging": "cd apps/web && bunx wrangler deploy --env staging --config wrangler.toml",
     "cf:deploy:prod": "cd apps/web && bunx wrangler deploy --env production --dry-run --outdir .open-next/deploy && node scripts/patch-bundle-require.cjs && OPEN_NEXT_DEPLOY=true bunx wrangler deploy --env production --no-bundle --config wrangler.deploy.toml",
     "lint": "bun run --cwd apps/web lint",
+    "i18n:check": "node scripts/i18n/check-messages.js",
     "test": "bun run build:contracts && bun run --cwd apps/web test",
     "audit:e2e": "bash scripts/audit/run_e2e_audit.sh",
     "smoke:prod": "bash apps/web/scripts/smoke-prod.sh",

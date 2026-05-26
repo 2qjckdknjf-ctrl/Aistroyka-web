@@ -1,4 +1,4 @@
-import { type Page, type Response, type TestInfo } from "@playwright/test";
+import { expect, type Page, type Response, type TestInfo } from "@playwright/test";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -19,6 +19,14 @@ export type NetworkIssue = {
 
 export function formatNetworkIssue(i: NetworkIssue): string {
   return `${i.method} ${i.status} ${i.url}`;
+}
+
+/** Unauthenticated flow: middleware may send `/xx`, `/xx/`, or `/xx/login?next=...`. */
+export function expectLocaleLandingOrLoginUrl(url: string) {
+  expect(
+    /\/(en|ru|es|it)\/?(?:\?.*)?$/i.test(url) || /\/(en|ru|es|it)\/login(?:\?.*)?$/i.test(url),
+    `Expected locale root or sign-in URL, got: ${url}`,
+  ).toBe(true);
 }
 
 /** One listener bound to `page`; call {@link #drain} between steps to isolate failures. */
@@ -93,11 +101,15 @@ export function attachConsoleErrorTracking(page: Page) {
   };
 }
 
-export async function loginIfConfigured(page: Page) {
+/**
+ * Signs in via `/api/auth/login` when credentials are configured.
+ * Returns `false` when `E2E_USER_EMAIL` / `E2E_USER_PASSWORD` (or `SMOKE_*`) are absent.
+ */
+export async function loginIfConfigured(page: Page): Promise<boolean> {
   const email = process.env.E2E_USER_EMAIL || process.env.SMOKE_EMAIL;
   const password = process.env.E2E_USER_PASSWORD || process.env.SMOKE_PASSWORD;
   if (!email || !password) {
-    testSkipWithoutAuth();
+    return false;
   }
 
   const loginResponse = await page.request.post("/api/auth/login", {
@@ -122,10 +134,7 @@ export async function loginIfConfigured(page: Page) {
   });
   await page.reload({ waitUntil: "domcontentloaded" });
   await page.waitForURL(/\/(en|ru|es|it)\/dashboard/, { timeout: 30_000 });
-}
-
-function testSkipWithoutAuth(): never {
-  throw new Error("E2E_USER_EMAIL and E2E_USER_PASSWORD are required for authenticated E2E audit");
+  return true;
 }
 
 export async function attachJson(testInfo: TestInfo, name: string, value: unknown) {

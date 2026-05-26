@@ -50,3 +50,8 @@ Router selects v1 when all of project ID, client email, and private key are pres
 - **No sends**: Check APNS/FCM env; check `device_tokens` has rows and `disabled_at` is null.
 - **invalid_token**: Normal; tokens are disabled and the outbox row can be marked sent if at least one token succeeded, or failed if all invalid.
 - **Retryable errors**: Outbox row stays queued with `next_retry_at`; next job run will retry.
+
+## Android Worker app (FCM client)
+
+1. In [Firebase Console](https://console.firebase.google.com/), create or select a project, add an Android app with package **`ai.aistroyka.worker`**, download **`google-services.json`**, and replace **`android/AiStroykaWorker/google-services.json`**. The file in the repo is a **placeholder** so Gradle/CI can run; real pushes require the file from your Firebase project.
+2. **`WorkerFirebaseMessagingService`** handles **`onNewToken`**: **`PushRegistrationService.saveToken`** then **`registerIfNeeded()`** (POST `/api/v1/devices/register` with **`x-idempotency-key`** when the user is signed in).

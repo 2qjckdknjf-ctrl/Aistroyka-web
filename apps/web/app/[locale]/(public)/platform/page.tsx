@@ -5,13 +5,7 @@ import { routing } from "@/i18n/routing";
 
 type Props = { params: Promise<{ locale: string }> };
 
-const ITEMS = [
-  { key: "webPlatform" as const, desc: "Full web app: dashboard, projects, tasks, reports, AI insights, team and settings." },
-  { key: "managerApp" as const, desc: "Mobile app for managers: review reports, assign tasks, view AI insights on the go." },
-  { key: "workerApp" as const, desc: "Light mobile app for field workers: daily reports, photo evidence, task completion." },
-  { key: "aiEngine" as const, desc: "AI engine analyzes site photos for progress, deviations, and risks; outputs are human-reviewed." },
-  { key: "integrations" as const, desc: "API and integration readiness for ERP, BIM, and other tools." },
-] as const;
+const ITEM_KEYS = ["webPlatform", "managerApp", "workerApp", "aiEngine", "integrations"] as const;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
@@ -36,7 +30,7 @@ export default async function PlatformPage({ params }: Props) {
         {t("metaDescription")}
       </p>
       <div className="mt-12 space-y-6">
-        {ITEMS.map(({ key, desc }) => (
+        {ITEM_KEYS.map((key) => (
           <div
             key={key}
             className="rounded-[var(--aistroyka-radius-card)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] p-6 shadow-[var(--aistroyka-shadow-e1)]"
@@ -45,7 +39,7 @@ export default async function PlatformPage({ params }: Props) {
               {t(key)}
             </h2>
             <p className="mt-2 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-secondary)]">
-              {desc}
+              {t(`${key}Desc`)}
             </p>
           </div>
         ))}

@@ -212,7 +212,10 @@ struct HomeDashboardView: View {
     }
 
     private func loadAsync() async {
-        await runManagerLoad(isLoading: &isLoading, errorMessage: &errorMessage) {
+        await runManagerLoad(
+            setLoading: { isLoading = $0 },
+            setErrorMessage: { errorMessage = $0 }
+        ) {
             overview = try await ManagerAPI.opsOverview()
             let activation = try? await ManagerAPI.activationStatus()
             activationStatus = activation

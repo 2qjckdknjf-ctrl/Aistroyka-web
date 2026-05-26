@@ -20,14 +20,14 @@ export default async function FeaturesPage({ params }: Props) {
   const t = await getTranslations("public.features");
 
   const features = [
-    { key: "projectManagement" as const, desc: "Projects, structure, progress tracking." },
-    { key: "tasks" as const, desc: "Assign, track, and complete tasks with deadlines." },
-    { key: "dailyReports" as const, desc: "Daily reports from the field with evidence." },
-    { key: "photoVideo" as const, desc: "Photo and video evidence linked to tasks." },
-    { key: "aiAnalytics" as const, desc: "AI-powered analysis and risk detection." },
-    { key: "teamRoles" as const, desc: "Roles, access control, and permissions." },
-    { key: "dashboards" as const, desc: "Dashboards and operational metrics." },
-    { key: "integrations" as const, desc: "API and integration readiness." },
+    "projectManagement",
+    "tasks",
+    "dailyReports",
+    "photoVideo",
+    "aiAnalytics",
+    "teamRoles",
+    "dashboards",
+    "integrations",
   ] as const;
 
   return (
@@ -39,7 +39,7 @@ export default async function FeaturesPage({ params }: Props) {
         {t("metaDescription")}
       </p>
       <div className="mt-12 grid gap-6 sm:grid-cols-2">
-        {features.map(({ key, desc }) => (
+        {features.map((key) => (
           <div
             key={key}
             className="card rounded-[var(--aistroyka-radius-card)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] p-6 shadow-[var(--aistroyka-shadow-e1)]"
@@ -48,7 +48,7 @@ export default async function FeaturesPage({ params }: Props) {
               {t(key)}
             </h2>
             <p className="mt-2 text-[var(--aistroyka-font-footnote)] text-[var(--aistroyka-text-secondary)]">
-              {desc}
+              {t(`${key}Desc`)}
             </p>
           </div>
         ))}

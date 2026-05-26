@@ -43,7 +43,7 @@ export default async function ContactPage({ params }: Props) {
           {t("demoBlockTitle")}
         </h2>
         <p className="mt-2 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-secondary)]">
-          {t("businessCta")} Use the form above and mention &quot;Demo&quot; in your message, or we will follow up to schedule a call.
+          {t("businessCtaDetails")}
         </p>
       </section>
     </div>

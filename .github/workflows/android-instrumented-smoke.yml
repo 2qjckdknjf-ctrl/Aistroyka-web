@@ -7,6 +7,9 @@ concurrency:
   group: android-instrumented-smoke-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   worker-instrumented:
     name: AiStroykaWorker connectedDebugAndroidTest

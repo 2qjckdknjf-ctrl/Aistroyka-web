@@ -20,11 +20,11 @@ export default async function AiConstructionControlPage({ params }: Props) {
   const t = await getTranslations("public.aiControl");
 
   const sections = [
-    { key: "whatAiAnalyzes" as const, desc: "AI analyzes site photos for progress, completeness, and deviations from plans or expectations." },
-    { key: "photoWorkflows" as const, desc: "Before/after and time-series photo workflows with automatic analysis and alerts." },
-    { key: "deviationRisk" as const, desc: "Deviation and risk detection with severity and suggested actions." },
-    { key: "managerInsights" as const, desc: "Insights and recommendations for managers, prioritized by impact." },
-    { key: "humanInTheLoop" as const, desc: "Decisions stay with humans; AI supports with analysis and suggestions." },
+    "whatAiAnalyzes",
+    "photoWorkflows",
+    "deviationRisk",
+    "managerInsights",
+    "humanInTheLoop",
   ] as const;
 
   return (
@@ -36,7 +36,7 @@ export default async function AiConstructionControlPage({ params }: Props) {
         {t("metaDescription")}
       </p>
       <div className="mt-12 space-y-8">
-        {sections.map(({ key, desc }) => (
+        {sections.map((key) => (
           <div
             key={key}
             className="card rounded-[var(--aistroyka-radius-card)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] p-6 shadow-[var(--aistroyka-shadow-e1)]"
@@ -45,7 +45,7 @@ export default async function AiConstructionControlPage({ params }: Props) {
               {t(key)}
             </h2>
             <p className="mt-2 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-secondary)]">
-              {desc}
+              {t(`${key}Desc`)}
             </p>
           </div>
         ))}

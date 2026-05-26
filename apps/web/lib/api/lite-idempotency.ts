@@ -1,6 +1,6 @@
 /**
- * Idempotency enforcement for lite client (ios_lite, android_lite) write requests.
- * Lite writes must send x-idempotency-key; duplicate keys return cached response.
+ * Idempotency enforcement for field-worker mobile clients (ios_lite, android_lite, ios_worker, android_worker) write requests.
+ * Writes must send x-idempotency-key; duplicate keys return cached response.
  */
 
 import { NextResponse } from "next/server";
@@ -12,11 +12,9 @@ import {
 } from "@/lib/platform/idempotency/idempotency.service";
 import type { TenantContextOrAbsent } from "@/lib/tenant/tenant.types";
 
-const LITE_CLIENTS = ["ios_lite", "android_lite"] as const;
-
 function isLiteClient(header: string | null | undefined): boolean {
   const v = header?.toLowerCase().trim();
-  return v === "ios_lite" || v === "android_lite";
+  return v === "ios_lite" || v === "android_lite" || v === "ios_worker" || v === "android_worker";
 }
 
 export const IDEMPOTENCY_KEY_REQUIRED_CODE = "idempotency_key_required";

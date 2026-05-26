@@ -5,12 +5,12 @@ import { routing } from "@/i18n/routing";
 
 type Props = { params: Promise<{ locale: string }> };
 
-const SECTIONS = [
-  { key: "dataProtection" as const, body: "Data is encrypted in transit and at rest. Access is role-based and auditable. We do not train models on your content." },
-  { key: "aiSafety" as const, body: "AI outputs are recommendations; decisions remain with humans. No automated actions without review. Quotas and guardrails limit misuse." },
-  { key: "infrastructureReliability" as const, body: "Platform runs on redundant, monitored infrastructure. Uptime targets and incident processes are in place for critical paths." },
-  { key: "supabaseSecurity" as const, body: "Database and auth are powered by Supabase: row-level security, secure auth flows, and managed backups." },
-  { key: "cloudflareProtection" as const, body: "Edge delivery and DDoS protection via Cloudflare. Security headers and best practices are applied globally." },
+const SECTION_KEYS = [
+  "dataProtection",
+  "aiSafety",
+  "infrastructureReliability",
+  "supabaseSecurity",
+  "cloudflareProtection",
 ] as const;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -36,7 +36,7 @@ export default async function SecurityPage({ params }: Props) {
         {t("metaDescription")}
       </p>
       <div className="mt-12 space-y-8">
-        {SECTIONS.map(({ key, body }) => (
+        {SECTION_KEYS.map((key) => (
           <div
             key={key}
             className="rounded-[var(--aistroyka-radius-card)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] p-6 shadow-[var(--aistroyka-shadow-e1)]"
@@ -45,7 +45,7 @@ export default async function SecurityPage({ params }: Props) {
               {t(key)}
             </h2>
             <p className="mt-2 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-secondary)]">
-              {body}
+              {t(`${key}Body`)}
             </p>
           </div>
         ))}

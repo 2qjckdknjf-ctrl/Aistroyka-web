@@ -10,6 +10,11 @@ on:
         description: "Public base URL (no trailing slash), e.g. https://staging.aistroyka.ai"
         required: true
         type: string
+      strict_health_200:
+        description: "If true, /api/v1/health must be HTTP 200 (do not accept 503)."
+        required: false
+        type: boolean
+        default: false
     secrets:
       pilot_smoke_bearer:
         description: "Supabase JWT for a user with tenant membership (ops/metrics). No Bearer prefix."
@@ -29,6 +34,9 @@ on:
       supabase_anon_key:
         description: "Optional; Supabase anon key used with smoke credentials for token fallback."
         required: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
   smoke:
@@ -61,4 +69,5 @@ jobs:
           SMOKE_PASSWORD: ${{ secrets.smoke_password }}
           SUPABASE_URL: ${{ secrets.supabase_url }}
           SUPABASE_ANON_KEY: ${{ secrets.supabase_anon_key }}
+          STRICT_HEALTH_200: ${{ inputs.strict_health_200 }}
         run: bash scripts/smoke/pilot_launch.sh

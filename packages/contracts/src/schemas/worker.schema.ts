@@ -4,6 +4,7 @@ import { z } from "zod";
 export const WorkerReportSubmitRequestSchema = z.object({
   report_id: z.string().min(1, "report_id required"),
   task_id: z.string().optional(),
+  worker_note: z.string().max(2000).optional(),
 });
 
 /** POST /api/v1/worker/report/create */

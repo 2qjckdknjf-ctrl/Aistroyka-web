@@ -12,13 +12,16 @@ const ctx = (profile: TenantContext["clientProfile"]): TenantContext => ({
 });
 
 describe("isLiteWorkerClient", () => {
-  it("is true for ios_lite and android_lite", () => {
+  it("is true for field-worker profiles (legacy lite + canonical worker)", () => {
     expect(isLiteWorkerClient(ctx("ios_lite"))).toBe(true);
     expect(isLiteWorkerClient(ctx("android_lite"))).toBe(true);
+    expect(isLiteWorkerClient(ctx("ios_worker"))).toBe(true);
+    expect(isLiteWorkerClient(ctx("android_worker"))).toBe(true);
   });
   it("is false for web and manager/full clients", () => {
     expect(isLiteWorkerClient(ctx("web"))).toBe(false);
     expect(isLiteWorkerClient(ctx("ios_manager"))).toBe(false);
+    expect(isLiteWorkerClient(ctx("android_manager"))).toBe(false);
     expect(isLiteWorkerClient(ctx("ios_full"))).toBe(false);
     expect(isLiteWorkerClient(ctx("android_full"))).toBe(false);
   });

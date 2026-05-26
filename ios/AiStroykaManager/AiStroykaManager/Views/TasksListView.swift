@@ -102,7 +102,10 @@ struct TasksListView: View {
     }
 
     private func loadAsync() async {
-        await runManagerLoad(isLoading: &isLoading, errorMessage: &errorMessage) {
+        await runManagerLoad(
+            setLoading: { isLoading = $0 },
+            setErrorMessage: { errorMessage = $0 }
+        ) {
             async let tasksTask = ManagerAPI.tasks(projectId: selectedProjectId, status: statusFilter, limit: 100)
             async let projectsTask = ManagerAPI.projects()
             tasks = try await tasksTask
@@ -209,7 +212,10 @@ struct TaskDetailManagerView: View {
     }
 
     private func loadAsync() async {
-        await runManagerLoad(isLoading: &isLoading, errorMessage: &errorMessage) {
+        await runManagerLoad(
+            setLoading: { isLoading = $0 },
+            setErrorMessage: { errorMessage = $0 }
+        ) {
             task = try await ManagerAPI.taskDetail(id: taskId)
         }
     }
@@ -218,8 +224,8 @@ struct TaskDetailManagerView: View {
         assignSuccessMessage = nil
         Task {
             let success = await runManagerAction(
-                isLoading: &isAssigning,
-                errorMessage: &assignError
+                setLoading: { isAssigning = $0 },
+                setErrorMessage: { assignError = $0 }
             ) {
                 try await ManagerAPI.assignTask(taskId: taskId, workerId: workerId, idempotencyKey: UUID().uuidString)
                 await loadAsync()
@@ -305,7 +311,10 @@ struct TaskAssigneePickerView: View {
     }
 
     private func loadAsync() async {
-        await runManagerLoad(isLoading: &isLoading, errorMessage: &errorMessage) {
+        await runManagerLoad(
+            setLoading: { isLoading = $0 },
+            setErrorMessage: { errorMessage = $0 }
+        ) {
                 workers = try await ManagerAPI.workers(limit: 200)
         }
     }
@@ -375,8 +384,8 @@ struct TaskCreateEditView: View {
         guard !t.isEmpty else { return }
         Task {
             let success = await runManagerAction(
-                isLoading: &isSubmitting,
-                errorMessage: &errorMessage
+                setLoading: { isSubmitting = $0 },
+                setErrorMessage: { errorMessage = $0 }
             ) {
                 _ = try await ManagerAPI.createTask(projectId: projectId, title: t, idempotencyKey: UUID().uuidString)
             }

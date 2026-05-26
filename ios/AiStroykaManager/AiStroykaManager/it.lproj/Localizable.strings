@@ -47,6 +47,7 @@
 "mgr_api" = "API";
 "mgr_app_version" = "Versione app";
 "mgr_approve" = "Approva";
+"mgr_reject" = "Rifiuta";
 "mgr_assign_section" = "Assegnazione";
 "mgr_assign_to" = "Assegna a";
 "mgr_assign_to_worker" = "Assegna all'operatore";
@@ -87,8 +88,11 @@
 "mgr_loading_team" = "Caricamento team…";
 "mgr_loading_workers" = "Caricamento operatori…";
 "mgr_manager_note" = "Nota del manager";
+"mgr_worker_note" = "Nota del operaio";
 "mgr_mark_reviewed" = "Segna come revisionato";
 "mgr_media_count_fmt" = "Media (%d)";
+"mgr_evidence_load_failed_fmt" = "Impossibile caricare la foto %d.";
+"mgr_evidence_no_preview_fmt" = "Foto %d — anteprima non disponibile (id: %@).";
 "mgr_media_fmt" = "Media: %@";
 "mgr_name" = "Nome";
 "mgr_new" = "Nuova";
@@ -113,6 +117,8 @@
 "mgr_no_workers_title" = "Ancora nessun operatore";
 "mgr_not_signed_in" = "Accesso non effettuato";
 "mgr_note_optional" = "Nota (opzionale)";
+"mgr_report_review_note_label" = "Nota: obbligatoria per rifiutare o richiedere modifiche; facoltativa se approvi.";
+"mgr_note_required_reject_or_changes" = "Inserisci una nota prima di rifiutare o richiedere modifiche.";
 "mgr_notification" = "Notifica";
 "mgr_notifications_placeholder" = "Notifiche — segnaposto";
 "mgr_open_reports" = "Report aperti";
@@ -168,3 +174,18 @@
 "mgr_ai_hint_2" = "Se i report sono in ritardo, scala i blocchi nel canale del team.";
 "mgr_ai_guide_confidence_fmt" = "Confidenza guida IA: %d%%";
 "mgr_ai_risk_signals_title" = "Segnali di rischio";
+"mgr_onboard_p1_title" = "Progetti e team";
+"mgr_onboard_p1_body" = "Consulta i progetti, dettagli e riepiloghi, monitora attività e lavoro in cantiere.";
+"mgr_onboard_p2_title" = "Coda report";
+"mgr_onboard_p2_body" = "I report dal campo compaiono in Report. Apri la scheda per stato, note e riferimenti alle prove.";
+"mgr_onboard_p3_title" = "Revisione e decisioni";
+"mgr_onboard_p3_body" = "Approva, rifiuta o richiedi modifiche con una nota chiara. La home evidenzia rischi e code.";
+"mgr_onboard_continue" = "Continua per accedere";
+"mgr_onboard_next" = "Avanti";
+"mgr_how_title" = "Come funziona";
+"mgr_how_bullet_1" = "Progetti: contesto, attività e riepiloghi.";
+"mgr_how_bullet_2" = "Report: coda, filtro per progetto, lettura di ogni invio.";
+"mgr_how_bullet_3" = "Prove: l'anteprima delle foto nel dettaglio del report quando gli URL sono disponibili.";
+"mgr_how_bullet_4" = "Azioni: approva, rifiuta o richiedi modifiche—con nota se servono correzioni.";
+"mgr_how_bullet_5" = "Home: ritardi, approvazioni in sospeso e segnali di rischio.";
+"mgr_more_how_it_works" = "Come funziona";

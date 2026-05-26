@@ -1,18 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { useRouter } from "@/i18n/navigation";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import { Input, Button, Alert } from "@/components/ui";
+import { AuthProviderButtons } from "@/components/auth/AuthProviderButtons";
 
 const SIGN_UP_TIMEOUT_MS = 15_000;
 
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const t = useTranslations("auth");
+  const next = searchParams?.get("next");
+  const loginHref = next ? `/login?next=${encodeURIComponent(next)}` : "/login";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -47,7 +52,8 @@ export default function RegisterPage() {
         return;
       }
       if (signUpResult.data.session) {
-        router.push("/subscribe");
+        const nextPath = next && next.startsWith("/") ? next : "/dashboard";
+        router.push(nextPath);
         return;
       }
       setMessage(t("checkEmail"));
@@ -71,9 +77,45 @@ export default function RegisterPage() {
             <h1 className="text-aistroyka-title2 font-bold tracking-tight text-aistroyka-text-primary sm:text-aistroyka-title">{t("register")}</h1>
             <p className="mt-aistroyka-1 text-aistroyka-subheadline text-aistroyka-text-secondary">{t("tagline")}</p>
           </div>
-          <form onSubmit={handleSubmit} className="space-y-aistroyka-5">
-            <Input id="email" type="email" label={t("email")} value={email} onChange={(e) => setEmail(e.target.value)} required />
-            <Input id="password" type="password" label={t("password")} value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
+          <AuthProviderButtons
+            mode="register"
+            nextPath={next ?? "/dashboard"}
+            onContinueEmail={() => {
+              document.getElementById("email-register-form")?.scrollIntoView({ behavior: "smooth", block: "center" });
+            }}
+          />
+          <div className="my-4 h-px bg-aistroyka-border-subtle" />
+          <form id="email-register-form" onSubmit={handleSubmit} className="space-y-aistroyka-5">
+            <Input
+              id="email"
+              type="email"
+              name="email"
+              label={t("email")}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
+              inputMode="email"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              enterKeyHint="next"
+              required
+            />
+            <Input
+              id="password"
+              type="password"
+              name="password"
+              label={t("password")}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="new-password"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              enterKeyHint="done"
+              required
+              minLength={6}
+            />
             {error && <Alert message={error} style="error" />}
             {message && <Alert message={message} style="success" />}
             <Button type="submit" loading={loading} disabled={loading} className="w-full">
@@ -82,12 +124,30 @@ export default function RegisterPage() {
           </form>
           <p className="mt-aistroyka-6 text-center text-aistroyka-subheadline text-aistroyka-text-secondary">
             {t("alreadyHaveAccount")}{" "}
-            <Link href="/login" className="font-medium text-aistroyka-accent hover:underline focus:outline-none focus:ring-2 focus:ring-aistroyka-accent focus:ring-offset-2 rounded-aistroyka-sm">
+            <Link
+              href={loginHref}
+              className="font-medium text-aistroyka-accent hover:underline focus:outline-none focus:ring-2 focus:ring-aistroyka-accent focus:ring-offset-2 rounded-aistroyka-sm"
+            >
               {t("logIn")}
             </Link>
           </p>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  const t = useTranslations("common");
+  return (
+    <Suspense
+      fallback={
+        <div className="mx-auto max-w-sm px-aistroyka-4 py-aistroyka-8 text-center text-aistroyka-subheadline text-aistroyka-text-secondary">
+          {t("loading")}
+        </div>
+      }
+    >
+      <RegisterForm />
+    </Suspense>
   );
 }

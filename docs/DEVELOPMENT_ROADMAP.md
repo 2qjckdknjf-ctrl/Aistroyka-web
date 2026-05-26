@@ -12,7 +12,7 @@
 
 - Introduce **AIService** (or VisionService): single entry for vision analysis. Route and job handlers call only this service. Service uses Policy Engine → Provider Router (circuit breaker, fallback) → usage recording.
 - Refactor **sync/bootstrap**: move all logic into SyncService.bootstrap(ctx); route only validates, gets context, calls service, returns response.
-- Add **Lite allow-list**: middleware or guard that returns 403 for ios_lite/android_lite when path is not in allowed list (worker/*, sync/*, media/upload-sessions*, reports/*/analysis-status, config, devices/*, auth/*).
+- **Lite allow-list:** **Shipped** — `middleware.ts` + `lib/api/lite-allow-list.ts`; see `MOBILE_PLATFORM_STATUS.md` §7. **Next:** tighten **x-idempotency-key** on all lite writes.
 - Enforce **x-idempotency-key** on lite write endpoints (upload-sessions create, worker report create/add-media/submit, sync ack) using idempotency.service.
 
 **Risks:** Refactors touch hot paths; need tests and smoke checks.

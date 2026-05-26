@@ -17,4 +17,16 @@ class SubmitReportBodyTest {
         assertTrue(j.contains("\"task_id\":\"t-42\""))
         assertTrue(j.contains("\"report_id\":\"r1\""))
     }
+
+    @Test
+    fun omitsWorkerNoteWhenNullOrBlank() {
+        assertFalse(buildSubmitReportJson("r1", null, null).contains("worker_note"))
+        assertFalse(buildSubmitReportJson("r1", null, "   ").contains("worker_note"))
+    }
+
+    @Test
+    fun includesWorkerNoteWhenPresent() {
+        val j = buildSubmitReportJson("r1", null, " Fixed grout ")
+        assertTrue(j.contains("\"worker_note\":\"Fixed grout\""))
+    }
 }

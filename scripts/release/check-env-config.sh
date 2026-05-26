@@ -46,8 +46,15 @@ case "${MODE}" in
         status=1
       fi
     done
-    # Public app env is configured in Cloudflare vars and ENVIRONMENT-VARIABLES.md, not directly visible here.
-    note_external_only "Cloudflare env.staging vars (NEXT_PUBLIC_*), Supabase URL/anon key — see apps/web/wrangler*.toml and docs/ENVIRONMENT-VARIABLES.md"
+    for var in NEXT_PUBLIC_SUPABASE_URL NEXT_PUBLIC_SUPABASE_ANON_KEY NEXT_PUBLIC_APP_URL NEXT_PUBLIC_APP_ENV; do
+      if ! check_required_env "${var}" "config"; then
+        status=1
+      fi
+    done
+    if ! check_required_env "PILOT_SMOKE_BEARER" "secret"; then
+      status=1
+    fi
+    note_external_only "Cloudflare runtime vars (SYSTEM_API_KEY, CRON_SECRET and other server keys) are dashboard-managed."
     ;;
 
   deploy-production)
@@ -57,7 +64,15 @@ case "${MODE}" in
         status=1
       fi
     done
-    note_external_only "Cloudflare env.production vars (NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_APP_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY via secret), cron flags (REQUIRE_CRON_SECRET/CRON_SECRET), and other runtime keys — see wrangler.deploy.toml and docs/ENVIRONMENT-VARIABLES.md"
+    for var in NEXT_PUBLIC_SUPABASE_URL NEXT_PUBLIC_SUPABASE_ANON_KEY NEXT_PUBLIC_APP_URL NEXT_PUBLIC_APP_ENV; do
+      if ! check_required_env "${var}" "config"; then
+        status=1
+      fi
+    done
+    if ! check_required_env "PILOT_SMOKE_BEARER" "secret"; then
+      status=1
+    fi
+    note_external_only "Cloudflare runtime vars (SYSTEM_API_KEY, CRON_SECRET and other server keys) are dashboard-managed."
     ;;
 
   migrations)

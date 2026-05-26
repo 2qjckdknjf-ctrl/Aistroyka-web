@@ -3,6 +3,7 @@ package ai.aistroyka.worker
 import android.app.Application
 import ai.aistroyka.shared.AppRuntime
 import ai.aistroyka.shared.DeviceContext
+import ai.aistroyka.shared.PushRegistrationService
 import ai.aistroyka.shared.SessionStore
 
 class WorkerApplication : Application() {
@@ -13,8 +14,9 @@ class WorkerApplication : Application() {
             supabaseUrl = BuildConfig.SUPABASE_URL,
             supabaseAnonKey = BuildConfig.SUPABASE_ANON_KEY
         )
-        AppRuntime.apiClientProfile = "android_lite"
+        AppRuntime.apiClientProfile = "android_worker"
         DeviceContext.init(this)
         SessionStore.init(this)
+        PushRegistrationService.init(this)
     }
 }
