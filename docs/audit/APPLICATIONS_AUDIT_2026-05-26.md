@@ -42,15 +42,11 @@
 
 ### Medium Priority (P1)
 
-- Android toolchain drift risk: AGP `7.4.2` is older than recommended for `compileSdk 34`
-  - Current impact: warning only
-  - Risk: future CI/runtime incompatibility as toolchain evolves
+- ~~Android toolchain drift risk: AGP `7.4.2` is older than recommended for `compileSdk 34`~~ **Resolved 2026-05-26:** upgraded to AGP `8.2.2`, Java/Kotlin target `17`, explicit `buildConfig` for app modules.
 
 ### Low Priority (P2)
 
-- `next lint` deprecation notice in Next.js stack
-  - Current impact: none (lint passes)
-  - Future action: migrate from `next lint` to ESLint CLI before Next.js 16 migration window
+- ~~`next lint` deprecation notice in Next.js stack~~ **Resolved 2026-05-26:** migrated to ESLint CLI (`eslint app components lib middleware.ts --quiet`) with `root: true` in `apps/web/.eslintrc.json` so monorepo lint no longer no-ops via root ignore patterns.
 
 ## Readiness Snapshot
 
@@ -63,6 +59,6 @@
 
 ## Recommended Next Actions
 
-1. Plan Android Gradle Plugin upgrade path for `compileSdk 34+` compatibility hardening.
-2. Migrate lint command from `next lint` to ESLint CLI in planned Next.js maintenance batch.
+1. ~~Plan Android Gradle Plugin upgrade path for `compileSdk 34+` compatibility hardening.~~ Done (AGP 8.2.2).
+2. ~~Migrate lint command from `next lint` to ESLint CLI in planned Next.js maintenance batch.~~ Done.
 3. Run targeted E2E smoke (`worker -> manager report lifecycle`) after any API/auth/security changes.

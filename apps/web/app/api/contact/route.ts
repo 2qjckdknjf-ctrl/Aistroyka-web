@@ -30,9 +30,7 @@ export async function POST(request: Request) {
     if (!supabase) {
       return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
     }
-    // contact_leads: migration 20260307000000 + 20260319000000 (status, source, notes)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any).from("contact_leads").insert({
+    const { error } = await (supabase as { from: (table: string) => { insert: (row: Record<string, unknown>) => Promise<{ error: { message: string } | null }> } }).from("contact_leads").insert({
       name,
       email,
       company: company || null,

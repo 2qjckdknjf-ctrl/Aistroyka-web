@@ -1,4 +1,5 @@
 import { getTranslations } from "next-intl/server";
+import { Link } from "@/i18n/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { JobStatusBadge } from "../projects/JobStatusBadge";
 import { AISystemHealth } from "./AISystemHealth";
@@ -55,13 +56,13 @@ export default async function AdminPage() {
           {tDetail("allJobsAcrossProjectsNoActions")}
         </p>
         <p className="mt-aistroyka-3 flex flex-wrap gap-aistroyka-4">
-          <a href="/admin/leads" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">{tDetail("contactLeadsArrow")}</a>
-          <a href="/admin/governance" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">{tDetail("aiGovernanceAuditArrow")}</a>
-          <a href="/admin/trust" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">{tDetail("aiTrustDashboardArrow")}</a>
-          <a href="/admin/operator" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">Operator workbench →</a>
-          <a href="/admin/system" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">System observability →</a>
-          <a href="/admin/jobs" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">Failed jobs queue →</a>
-          <a href="/admin/ai" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">AI runtime control →</a>
+          <Link href="/admin/leads" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">{tDetail("contactLeadsArrow")}</Link>
+          <Link href="/admin/governance" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">{tDetail("aiGovernanceAuditArrow")}</Link>
+          <Link href="/admin/trust" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">{tDetail("aiTrustDashboardArrow")}</Link>
+          <Link href="/admin/operator" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">Operator workbench →</Link>
+          <Link href="/admin/system" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">System observability →</Link>
+          <Link href="/admin/jobs" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">Failed jobs queue →</Link>
+          <Link href="/admin/ai" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">AI runtime control →</Link>
         </p>
       </Card>
 
