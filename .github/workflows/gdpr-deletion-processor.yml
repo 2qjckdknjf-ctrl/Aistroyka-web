@@ -1,0 +1,77 @@
+name: GDPR Deletion Processor
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Base URL to run deletion processing against (default: production)"
+        required: false
+        default: "https://aistroyka.ai"
+  schedule:
+    # Run every day at 02:20 UTC
+    - cron: "20 2 * * *"
+
+concurrency:
+  group: gdpr-deletion-processor
+  cancel-in-progress: false
+
+jobs:
+  run-gdpr-deletion-processor:
+    name: Trigger deletion processing tick
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      INPUT_BASE_URL: ${{ github.event.inputs.base_url }}
+      CRON_SECRET: ${{ secrets.CRON_SECRET }}
+    steps:
+      - name: Resolve base URL
+        id: base
+        run: |
+          if [ -n "${INPUT_BASE_URL:-}" ]; then
+            echo "value=${INPUT_BASE_URL%/}" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=https://aistroyka.ai" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Validate required secret
+        run: |
+          if [ -z "${CRON_SECRET:-}" ]; then
+            echo "::error::CRON_SECRET is not configured; cannot run protected processor endpoint."
+            exit 1
+          fi
+
+      - name: Trigger processor endpoint
+        env:
+          BASE_URL: ${{ steps.base.outputs.value }}
+        run: |
+          set -euo pipefail
+          endpoint="${BASE_URL}/api/v1/admin/jobs/cron-tick"
+          echo "Calling ${endpoint}"
+
+          response_file="$(mktemp)"
+          status_code="$(
+            curl -sS -o "$response_file" -w "%{http_code}" \
+              -X POST \
+              -H "Content-Type: application/json" \
+              -H "x-cron-secret: ${CRON_SECRET}" \
+              "$endpoint"
+          )"
+
+          if [ "$status_code" != "200" ]; then
+            echo "::error::Processor call failed with HTTP ${status_code}"
+            echo "Response:"
+            cat "$response_file"
+            exit 1
+          fi
+
+          ok_value="$(jq -r '.ok // false' "$response_file" 2>/dev/null || echo "false")"
+          if [ "$ok_value" != "true" ]; then
+            echo "::error::Processor returned non-ok payload"
+            cat "$response_file"
+            exit 1
+          fi
+
+          scheduled="$(jq -r '.scheduled // 0' "$response_file" 2>/dev/null || echo 0)"
+          processed="$(jq -r '.processed // 0' "$response_file" 2>/dev/null || echo 0)"
+          tenants="$(jq -r '.tenants // 0' "$response_file" 2>/dev/null || echo 0)"
+          echo "Processor succeeded: tenants=${tenants}, scheduled=${scheduled}, processed=${processed}"
