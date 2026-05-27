@@ -29,6 +29,9 @@ vi.mock("@/lib/ops/ops-metrics.repository", () => ({
     tasks_overdue: 0,
   }),
 }));
+vi.mock("@/lib/supabase/admin", () => ({
+  getAdminClient: vi.fn().mockReturnValue(null),
+}));
 
 describe("GET /api/v1/ops/metrics", () => {
   it("returns 200 with valid bearer and tenant membership", async () => {
@@ -55,7 +58,7 @@ describe("GET /api/v1/ops/metrics", () => {
       build_time: "2026-03-01T00:00:00Z",
     });
     const { getOpsMetrics } = await import("@/lib/ops/ops-metrics.repository");
-    expect(getOpsMetrics).toHaveBeenCalledWith(expect.anything(), "t1", expect.any(Object));
+    expect(getOpsMetrics).toHaveBeenCalledWith(expect.anything(), "t1", expect.any(Object), undefined);
   });
 
   it("passes from, to, project_id to repository", async () => {
@@ -66,7 +69,7 @@ describe("GET /api/v1/ops/metrics", () => {
       from: "2026-03-01",
       to: "2026-03-06",
       project_id: "p1",
-    });
+    }, undefined);
   });
 
   it("returns 401 when no auth (requireTenant throws TenantRequiredError)", async () => {

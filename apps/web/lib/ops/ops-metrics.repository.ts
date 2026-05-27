@@ -42,7 +42,8 @@ export interface OpsMetrics {
 export async function getOpsMetrics(
   supabase: SupabaseClient,
   tenantId: string,
-  opts: { from?: string; to?: string; project_id?: string } = {}
+  opts: { from?: string; to?: string; project_id?: string } = {},
+  adminSupabase?: SupabaseClient
 ): Promise<OpsMetrics> {
   const now = new Date().toISOString();
   const from = opts.from ?? new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
@@ -53,6 +54,8 @@ export async function getOpsMetrics(
   const offlineSince = new Date(Date.now() - offlineHours * 60 * 60 * 1000).toISOString();
 
   const today = now.slice(0, 10);
+  const rpcClient = adminSupabase ?? supabase;
+
   const [
     stuckRes,
     expiredRes,
@@ -79,7 +82,7 @@ export async function getOpsMetrics(
       .eq("status", "expired")
       .gte("created_at", from)
       .lte("created_at", to),
-    supabase.rpc("get_offline_device_count", { p_tenant_id: tenantId, p_since: offlineSince }),
+    rpcClient.rpc("get_offline_device_count", { p_tenant_id: tenantId, p_since: offlineSince }),
     supabase
       .from("ops_events")
       .select("id", { count: "exact", head: true })
