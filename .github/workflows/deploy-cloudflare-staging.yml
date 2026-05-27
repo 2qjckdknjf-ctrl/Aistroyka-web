@@ -19,8 +19,6 @@ concurrency:
   group: deploy-cloudflare-staging
   cancel-in-progress: false
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
   migrations-preflight:
@@ -28,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Detect migrations preflight secrets
         id: migrations_preflight_inputs
         env:
@@ -126,7 +124,7 @@ jobs:
           echo "::error::Requested deploy ref '$DEPLOY_REF' was not found as an exact branch, exact tag, or full 40-character commit SHA. Use e.g. ref=main."
           exit 1
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ steps.deploy_ref.outputs.ref }}
 
@@ -140,7 +138,7 @@ jobs:
         run: bash scripts/release/check-env-config.sh deploy-staging
 
       - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
+        uses: oven-sh/setup-bun@v2
         with:
           bun-version: "1.2.15"
 
@@ -235,7 +233,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ needs.deploy.outputs.deploy_ref }}
 
@@ -296,7 +294,7 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ needs.deploy.outputs.deploy_ref }}
 
