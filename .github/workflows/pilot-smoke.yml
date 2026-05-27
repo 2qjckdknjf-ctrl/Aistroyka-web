@@ -35,8 +35,6 @@ on:
         description: "Optional; Supabase anon key used with smoke credentials for token fallback."
         required: false
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
   smoke:
@@ -44,7 +42,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Check env/config (pilot-smoke)
         env:
