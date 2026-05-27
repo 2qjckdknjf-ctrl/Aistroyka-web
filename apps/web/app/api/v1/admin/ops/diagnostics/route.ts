@@ -10,6 +10,7 @@ import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from 
 import { requireAdmin } from "@/lib/api/require-admin";
 import { getBuildStamp } from "@/lib/config/public";
 import { getOpsMetrics } from "@/lib/ops/ops-metrics.repository";
+import { getAdminClient } from "@/lib/supabase/admin";
 import {
   listAiRuntimeAuditRows,
   aggregateAiRuntimeRows,
@@ -40,7 +41,7 @@ export async function GET(request: Request) {
   const stamp = getBuildStamp();
 
   const [opsMetrics, aiRows, failedJobs] = await Promise.all([
-    getOpsMetrics(supabase, ctx.tenantId!, { from: undefined, to: undefined }),
+    getOpsMetrics(supabase, ctx.tenantId!, { from: undefined, to: undefined }, getAdminClient() ?? undefined),
     listAiRuntimeAuditRows(supabase, ctx.tenantId!, { hours, limit }),
     getFailedJobs(supabase, ctx.tenantId!, 100),
   ]);

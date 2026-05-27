@@ -7,6 +7,7 @@ import { getSloDaily } from "@/lib/sre/slo.service";
 import { getOpsMetrics } from "@/lib/ops/ops-metrics.repository";
 import { listAiRuntimeAuditRows } from "@/lib/observability/audit.service";
 import { listAnomalies } from "@/lib/platform/anomaly/anomaly.service";
+import { getAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 
@@ -41,7 +42,7 @@ export async function POST(request: Request) {
   const [metricsRows, sloRows, opsMetrics, failedJobs, aiAuditRows, anomalies] = await Promise.all([
     getMetricsOverview(supabase, ctx.tenantId, 7),
     getSloDaily(supabase, { tenantId: ctx.tenantId, rangeDays: 7 }),
-    getOpsMetrics(supabase, ctx.tenantId),
+    getOpsMetrics(supabase, ctx.tenantId, {}, getAdminClient() ?? undefined),
     getFailedJobs(supabase, ctx.tenantId, 30),
     listAiRuntimeAuditRows(supabase, ctx.tenantId, { hours: 24, limit: 150 }),
     listAnomalies(supabase, ctx.tenantId, 30, false),
