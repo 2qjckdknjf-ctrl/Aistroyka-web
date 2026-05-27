@@ -158,4 +158,27 @@ describe("POST /api/v1/auth/telegram", () => {
     const body = await response.json();
     expect(body.error).toBe("identity_conflict");
   });
+
+  it("does not bind a new Telegram identity to an existing session", async () => {
+    getSessionUser.mockResolvedValueOnce({ id: "attacker-user" });
+    const now = String(Math.floor(Date.now() / 1000));
+    const hash = telegramHash({ id: "1001", first_name: "Alex", auth_date: now }, "test-token");
+    const response = await POST(
+      new Request("https://aistroyka.ai/api/v1/auth/telegram", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: "1001",
+          first_name: "Alex",
+          auth_date: now,
+          hash,
+          locale: "ru",
+        }),
+      })
+    );
+    expect(response.status).toBe(403);
+    const body = await response.json();
+    expect(body.error).toBe("telegram_link_requires_verified_flow");
+    expect(linkIdentityRow).not.toHaveBeenCalled();
+  });
 });
