@@ -163,6 +163,7 @@ export async function createDiscussion(
 
 export async function addDiscussionEntry(
   supabase: SupabaseClient,
+  adminSupabase: SupabaseClient | undefined,
   ctx: TenantContext,
   projectId: string,
   discussionId: string,
@@ -218,7 +219,8 @@ export async function addDiscussionEntry(
     if (isManager) {
       await repo.updateDiscussion(supabase, discussionId, ctx.tenantId, { status: nextStatus });
     } else if (isParticipant) {
-      await repo.updateDiscussionStatusAsPortal(supabase, discussionId, ctx.tenantId, nextStatus);
+      // Participant status flips run through server-side admin client after explicit policy checks above.
+      await repo.updateDiscussion(adminSupabase ?? supabase, discussionId, ctx.tenantId, { status: nextStatus });
     }
   }
 

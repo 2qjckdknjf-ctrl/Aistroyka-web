@@ -12,6 +12,7 @@ import {
 } from "@/lib/tenant";
 import { addDiscussionEntry } from "@/lib/domain/stakeholder-discussions/stakeholder-discussions.service";
 import type { StakeholderDiscussionEntryKind } from "@/lib/domain/stakeholder-discussions/stakeholder-discussions.types";
+import { getAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 
@@ -41,7 +42,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   }
 
   const supabase = await createClientFromRequest(request);
-  const { data, error } = await addDiscussionEntry(supabase, ctx, projectId, discussionId, {
+  const { data, error } = await addDiscussionEntry(supabase, getAdminClient() ?? undefined, ctx, projectId, discussionId, {
     entry_kind: body.entry_kind as StakeholderDiscussionEntryKind,
     body: typeof body.body === "string" ? body.body : "",
   });

@@ -27,6 +27,7 @@ describe("stakeholder-discussions.service", () => {
     role: "owner",
   } as never;
   const supabase = {} as never;
+  const adminSupabase = {} as never;
 
   it("resolveDiscussion requires summary", async () => {
     vi.mocked(policy.canManageStakeholderDiscussions).mockResolvedValue(true);
@@ -49,7 +50,7 @@ describe("stakeholder-discussions.service", () => {
       tenant_id: "t1",
       status: "awaiting_stakeholder",
     } as never);
-    const r = await addDiscussionEntry(supabase, ctx, "p1", "d1", {
+    const r = await addDiscussionEntry(supabase, adminSupabase, ctx, "p1", "d1", {
       entry_kind: "resolution_note",
       body: "x",
     });
@@ -67,17 +68,17 @@ describe("stakeholder-discussions.service", () => {
     } as never);
     vi.mocked(repo.insertEntry).mockResolvedValue({ id: "e1" } as never);
     vi.mocked(repo.updateDiscussionStatusAsPortal).mockResolvedValue(true);
-    const r = await addDiscussionEntry(supabase, ctx, "p1", "d1", {
+    const r = await addDiscussionEntry(supabase, adminSupabase, ctx, "p1", "d1", {
       entry_kind: "feedback",
       body: "Thanks",
     });
     expect(r.data?.id).toBe("e1");
-    expect(repo.updateDiscussionStatusAsPortal).toHaveBeenCalledWith(
-      supabase,
+    expect(repo.updateDiscussion).toHaveBeenCalledWith(
+      adminSupabase,
       "d1",
       "t1",
-      "awaiting_manager"
+      { status: "awaiting_manager" }
     );
-    expect(repo.updateDiscussion).not.toHaveBeenCalled();
+    expect(repo.updateDiscussionStatusAsPortal).not.toHaveBeenCalled();
   });
 });
