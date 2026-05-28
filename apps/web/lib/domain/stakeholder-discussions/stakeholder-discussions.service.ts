@@ -196,6 +196,18 @@ export async function addDiscussionEntry(
     }
   }
 
+  const nextStatus: StakeholderDiscussionStatus | null = isManager
+    ? d.status === "awaiting_manager" || d.status === "open"
+      ? "awaiting_stakeholder"
+      : null
+    : isParticipant
+      ? "awaiting_manager"
+      : null;
+
+  if (isParticipant && nextStatus && !adminSupabase) {
+    return { data: null, error: "Discussion updates require server configuration" };
+  }
+
   const entry = await repo.insertEntry(supabase, {
     tenant_id: ctx.tenantId,
     project_id: projectId,
@@ -206,21 +218,12 @@ export async function addDiscussionEntry(
   });
   if (!entry) return { data: null, error: "Failed to add entry" };
 
-  let nextStatus: StakeholderDiscussionStatus | null = null;
-  if (isManager) {
-    if (d.status === "awaiting_manager" || d.status === "open") {
-      nextStatus = "awaiting_stakeholder";
-    }
-  } else if (isParticipant) {
-    nextStatus = "awaiting_manager";
-  }
-
   if (nextStatus) {
     if (isManager) {
       await repo.updateDiscussion(supabase, discussionId, ctx.tenantId, { status: nextStatus });
     } else if (isParticipant) {
       // Participant status flips run through server-side admin client after explicit policy checks above.
-      await repo.updateDiscussion(adminSupabase ?? supabase, discussionId, ctx.tenantId, { status: nextStatus });
+      await repo.updateDiscussion(adminSupabase, discussionId, ctx.tenantId, { status: nextStatus });
     }
   }
 

@@ -42,10 +42,14 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   }
 
   const supabase = await createClientFromRequest(request);
-  const { data, error } = await addDiscussionEntry(supabase, getAdminClient() ?? undefined, ctx, projectId, discussionId, {
+  const admin = getAdminClient() ?? undefined;
+  const { data, error } = await addDiscussionEntry(supabase, admin, ctx, projectId, discussionId, {
     entry_kind: body.entry_kind as StakeholderDiscussionEntryKind,
     body: typeof body.body === "string" ? body.body : "",
   });
+  if (error === "Discussion updates require server configuration") {
+    return NextResponse.json({ error }, { status: 503 });
+  }
   if (error === "Insufficient rights") return NextResponse.json({ error }, { status: 403 });
   if (!data) return NextResponse.json({ error: error || "Failed" }, { status: 400 });
   return NextResponse.json({ data });

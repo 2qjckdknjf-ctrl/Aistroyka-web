@@ -57,7 +57,28 @@ describe("stakeholder-discussions.service", () => {
     expect(r.error).toBe("Invalid entry kind for participant");
   });
 
-  it("addDiscussionEntry uses portal RPC for status when participant responds", async () => {
+  it("addDiscussionEntry requires admin client for participant status changes", async () => {
+    vi.mocked(policy.canManageStakeholderDiscussions).mockResolvedValue(false);
+    vi.mocked(policy.canParticipateStakeholderDiscussion).mockResolvedValue(true);
+    vi.mocked(repo.getById).mockResolvedValue({
+      id: "d1",
+      project_id: "p1",
+      tenant_id: "t1",
+      status: "awaiting_stakeholder",
+    } as never);
+    const r = await addDiscussionEntry(supabase, undefined, ctx, "p1", "d1", {
+      entry_kind: "feedback",
+      body: "Thanks",
+    });
+    expect(r).toEqual({
+      data: null,
+      error: "Discussion updates require server configuration",
+    });
+    expect(repo.insertEntry).not.toHaveBeenCalled();
+    expect(repo.updateDiscussion).not.toHaveBeenCalled();
+  });
+
+  it("addDiscussionEntry uses admin client for status when participant responds", async () => {
     vi.mocked(policy.canManageStakeholderDiscussions).mockResolvedValue(false);
     vi.mocked(policy.canParticipateStakeholderDiscussion).mockResolvedValue(true);
     vi.mocked(repo.getById).mockResolvedValue({
