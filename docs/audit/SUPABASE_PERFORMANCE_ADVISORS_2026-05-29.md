@@ -5,8 +5,8 @@
 | Advisor | Count | Status |
 |---------|------:|--------|
 | `multiple_permissive_policies` | 0 | Cleared (PR #58, #59) |
-| `unused_index` | 305 | Deferred |
-| `auth_db_connections_absolute` | 1 | INFO — dashboard/Supabase config |
+| `unused_index` | 282 | Batch 1 dropped 23 redundant indexes (PR pending) |
+| `auth_db_connections_absolute` | 1 | Script/workflow added to switch Auth pool to `percent` |
 
 Security advisors: **0 WARN** (leaked password protection enabled via PR #56–#57).
 
@@ -28,6 +28,16 @@ Mass-dropping 305 indexes risks regressions once pilot traffic grows. Several fl
    - Not the only index on an FK column used in joins
    - Not a strict prefix duplicate of another index on the same table
 3. Drop in small batches (≤20 indexes) with before/after query plans on hot paths (`worker_reports`, `project_documents`, `analysis_jobs`, sync cursors).
+
+## Index batch 1 (`20260529113000`)
+
+Dropped 23 indexes that duplicated unique/PK or named indexes on the same column(s), e.g.:
+
+- `idx_fkfix_*` duplicates of `idx_*` on FK columns
+- `idx_*` duplicates of unique constraints (`user_identities`, `worker_day`, `proof_pack_shares`, etc.)
+- Prefix duplicates covered by composite unique/PK (`tenant_members.tenant_id`, etc.)
+
+Advisor count: `unused_index` 305 → 282.
 
 ## RLS changes shipped
 
