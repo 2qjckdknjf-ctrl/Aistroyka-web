@@ -6,7 +6,7 @@
 |---------|------:|--------|
 | `multiple_permissive_policies` | 0 | Cleared (PR #58, #59) |
 | `unused_index` | 282 | Batch 1 dropped 23 redundant indexes (PR pending) |
-| `auth_db_connections_absolute` | 1 | Script/workflow added to switch Auth pool to `percent` |
+| `auth_db_connections_absolute` | 0 | Cleared — Auth pool set to 17% via workflow |
 
 Security advisors: **0 WARN** (leaked password protection enabled via PR #56–#57).
 
