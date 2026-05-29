@@ -5,7 +5,7 @@
 | Advisor | Count | Status |
 |---------|------:|--------|
 | `multiple_permissive_policies` | 0 | Cleared (PR #58, #59) |
-| `unused_index` | 282 | Batch 1 dropped 23 redundant indexes (PR pending) |
+| `unused_index` | 259 | Batch 1 (-23) + batch 2 (-23) |
 | `auth_db_connections_absolute` | 0 | Cleared — Auth pool set to 17% via workflow |
 
 Security advisors: **0 WARN** (leaked password protection enabled via PR #56–#57).
@@ -38,6 +38,12 @@ Dropped 23 indexes that duplicated unique/PK or named indexes on the same column
 - Prefix duplicates covered by composite unique/PK (`tenant_members.tenant_id`, etc.)
 
 Advisor count: `unused_index` 305 → 282.
+
+## Index batch 2 (`20260529120000`)
+
+Dropped 23 unused `idx_fkfix_*` indexes on audit/event tables where the primary entity timeline index remains (e.g. `defect_id`, `request_id`, `document_id`). Also dropped `idx_fkfix_ai_run_records_df7c76ebea` covered by `idx_ai_run_records_project`.
+
+Advisor count: `unused_index` 282 → 259.
 
 ## RLS changes shipped
 
