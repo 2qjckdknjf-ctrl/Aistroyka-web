@@ -221,6 +221,20 @@ jobs:
             --var NEXT_PUBLIC_APP_ENV:production \
             "${EXTRA_VARS[@]}"
 
+      - name: Persist AI provider secrets on Worker (production)
+        working-directory: apps/web
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -n "${OPENAI_API_KEY:-}" ]; then
+            printf '%s' "$OPENAI_API_KEY" | npx wrangler secret put OPENAI_API_KEY --env production --config wrangler.deploy.toml
+          fi
+          if [ -n "${ANTHROPIC_API_KEY:-}" ]; then
+            printf '%s' "$ANTHROPIC_API_KEY" | npx wrangler secret put ANTHROPIC_API_KEY --env production --config wrangler.deploy.toml
+          fi
+
       - name: Post-deploy summary
         run: |
           SHA7="$(echo ${{ github.sha }} | cut -c1-7)"
