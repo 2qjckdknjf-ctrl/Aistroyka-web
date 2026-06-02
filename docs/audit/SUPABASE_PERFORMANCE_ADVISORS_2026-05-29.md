@@ -5,8 +5,8 @@
 | Advisor | Count | Status |
 |---------|------:|--------|
 | `multiple_permissive_policies` | 0 | Cleared (PR #58, #59) |
-| `unused_index` | 215 | Batch 1–4 (−74) + batch 5 (−16) |
-| `unindexed_foreign_keys` | 65 | INFO — expected after batches 2–5 |
+| `unused_index` | 198 | Batch 1–5 (−90) + batch 6 (−17) |
+| `unindexed_foreign_keys` | 82 | INFO — expected after batches 2–6 |
 | `auth_db_connections_absolute` | 0 | Cleared — Auth pool set to 17% via workflow |
 
 Security advisors: **0 WARN** (leaked password protection enabled via PR #56–#57).
@@ -63,6 +63,12 @@ Advisor count: `unused_index` 241 → 231; `unindexed_foreign_keys` 40 → 50 (I
 Dropped 16 unused `idx_fkfix_*` on `governance_cases`, `project_issues`, `customer_estimates`, `project_commercial_items`, `ai_optimization_decisions`, plus `tenant_id` fkfix on `ai_memory_records` (covered by composite indexes). Kept `project_id`/`user_id`/`superseded_by` fkfix on `ai_memory_records` (sole single-column FK helpers).
 
 Advisor count: `unused_index` 231 → 215; `unindexed_foreign_keys` 50 → 65 (INFO; tenant_id fkfix drop did not add a new FK advisory).
+
+## Index batch 6 (`20260529160000`)
+
+Dropped 17 unused actor/linked `idx_fkfix_*` on project entity tables (`project_handover`, `project_risks`, `project_cost_items`, `project_estimate_results`, stakeholder tables, `proof_pack_shares`), plus `ai_run_records.user_id`, `worker_reports.reviewed_by`, and low-traffic internal tables. **Not dropped:** `worker_reports.day_id`, `worker_tasks.project_id`, `push_outbox.tenant_id` (hot path or sole FK helper).
+
+Advisor count: `unused_index` 215 → 198; `unindexed_foreign_keys` 65 → 82 (INFO).
 
 ## RLS changes shipped
 
