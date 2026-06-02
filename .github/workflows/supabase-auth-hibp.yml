@@ -1,0 +1,19 @@
+# One-shot operator workflow: enable Supabase Auth leaked password protection (HIBP).
+# Uses repo secret SUPABASE_ACCESS_TOKEN (project ref is pinned in script).
+
+name: Supabase Auth HIBP enable
+
+on:
+  workflow_dispatch:
+
+jobs:
+  enable-hibp:
+    name: Enable leaked password protection
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - name: Enable password_hibp_enabled via Management API
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: node apps/web/scripts/enable-auth-leaked-password-protection.mjs

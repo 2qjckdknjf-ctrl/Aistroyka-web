@@ -7,6 +7,7 @@ import { NextResponse } from "next/server";
 import { createClientFromRequest } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError, TenantForbiddenError } from "@/lib/tenant";
 import { getOpsMetrics } from "@/lib/ops/ops-metrics.repository";
+import { getAdminClient } from "@/lib/supabase/admin";
 import { getBuildStamp } from "@/lib/config/public";
 import { withRequestIdAndTiming } from "@/lib/observability";
 
@@ -43,7 +44,7 @@ export async function GET(request: Request) {
   const projectId = url.searchParams.get("project_id") ?? undefined;
 
   const supabase = await createClientFromRequest(request);
-  const metrics = await getOpsMetrics(supabase, ctx.tenantId!, { from, to, project_id: projectId });
+  const metrics = await getOpsMetrics(supabase, ctx.tenantId!, { from, to, project_id: projectId }, getAdminClient() ?? undefined);
   const stamp = getBuildStamp();
   return withRequestIdAndTiming(
     request,

@@ -16,6 +16,7 @@ concurrency:
   group: ios-ui-smoke-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+
 jobs:
   uitest:
     name: Worker + Manager UI smoke
@@ -23,7 +24,7 @@ jobs:
     timeout-minutes: 45
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Prepare local iOS secrets config for CI
         run: |
