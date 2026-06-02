@@ -52,6 +52,23 @@ Deploy-time provider-key injection check:
   - `ai_phase5_gate: copilot stream OK (done received)`
 - Interpretation: provider keys are now injected into production deploy runtime, but non-fallback vision path still degrades.
 
+Production deploy regression recovery (2026-06-02):
+
+- PR #72 introduced post-deploy `wrangler secret put`, but failed when deploy also passed `--var OPENAI_API_KEY` (`Binding name already in use`).
+- PR #73 removed AI keys from deploy `--var`; deploy run `26848011286` green through secret put.
+- Live checks after #73:
+  - `GET /api/health` -> `openaiConfigured: true`, `aiConfigured: true`
+  - `POST /api/v1/ai/analyze-image` -> HTTP 200 with `x-ai-fallback-reason: provider_unavailable`
+- PR #74 set `OPENAI_VISION_MODEL=gpt-4o-mini` in `wrangler.deploy.toml`; deploy run `26848427586` still shows degraded analyze-image.
+- Circuit reset via Supabase (`ai_provider_health` -> closed) does not change outcome; both providers record failures on invoke (policy decisions remain `allow`).
+- Copilot stream gate `done received` is **not** proof of live OpenAI success — stream route emits `event: done` on deterministic fallback too.
+
+Operator next step for full provider path:
+
+1. Verify GitHub repo secrets `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` match active, billed provider projects (not revoked placeholders).
+2. Re-run production deploy; confirm analyze-image returns HTTP 200 **without** `x-ai-fallback-reason`.
+3. Reset circuits if needed: `node apps/web/scripts/reset-ai-provider-circuits.mjs` (service role required).
+
 Provider-router failover hardening check:
 
 - Commit: `e00a64e0` (`fix(ai): keep provider fallback chain on non-retryable errors`)
