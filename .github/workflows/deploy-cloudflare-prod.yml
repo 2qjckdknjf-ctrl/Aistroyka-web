@@ -204,22 +204,12 @@ jobs:
         working-directory: apps/web
         env:
           OPEN_NEXT_DEPLOY: "true"
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           set -euo pipefail
-          EXTRA_VARS=()
-          if [ -n "${OPENAI_API_KEY:-}" ]; then
-            EXTRA_VARS+=(--var "OPENAI_API_KEY:${OPENAI_API_KEY}")
-          fi
-          if [ -n "${ANTHROPIC_API_KEY:-}" ]; then
-            EXTRA_VARS+=(--var "ANTHROPIC_API_KEY:${ANTHROPIC_API_KEY}")
-          fi
           npx wrangler deploy --env production --no-bundle --config wrangler.deploy.toml \
             --var NEXT_PUBLIC_BUILD_SHA:${{ github.sha }} \
             --var NEXT_PUBLIC_BUILD_TIME:"${{ env.NEXT_PUBLIC_BUILD_TIME }}" \
-            --var NEXT_PUBLIC_APP_ENV:production \
-            "${EXTRA_VARS[@]}"
+            --var NEXT_PUBLIC_APP_ENV:production
 
       - name: Persist AI provider secrets on Worker (production)
         working-directory: apps/web
