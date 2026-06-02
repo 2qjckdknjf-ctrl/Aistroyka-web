@@ -13,7 +13,26 @@ import { ProviderRequestError } from "./provider.errors";
 const NAME = "anthropic";
 const DEFAULT_MODEL = "claude-sonnet-4-20250514";
 const TIMEOUT_MS = 85_000;
+const IMAGE_FETCH_TIMEOUT_MS = 15_000;
 const ANTHROPIC_VERSION = "2023-06-01";
+
+async function fetchImageAsBase64(imageUrl: string): Promise<{ data: string; mediaType: string }> {
+  const res = await fetch(imageUrl, {
+    signal: AbortSignal.timeout(IMAGE_FETCH_TIMEOUT_MS),
+  });
+  if (!res.ok) throw new ProviderRequestError(`Image fetch failed: ${res.status}`, "invalid_input");
+  const contentType = res.headers.get("content-type") ?? "";
+  const mediaType = contentType.includes("png")
+    ? "image/png"
+    : contentType.includes("webp")
+      ? "image/webp"
+      : contentType.includes("gif")
+        ? "image/gif"
+        : "image/jpeg";
+  const buf = await res.arrayBuffer();
+  const data = Buffer.from(buf).toString("base64");
+  return { data, mediaType };
+}
 
 function getConfig(): { apiKey: string; model: string } {
   const apiKey = (process.env.ANTHROPIC_API_KEY ?? "").trim();
@@ -49,6 +68,7 @@ export async function invokeVision(
   const systemPrompt = options?.systemPrompt ?? CONSTRUCTION_VISION_SYSTEM_PROMPT;
   const userMessage = options?.userMessage ?? CONSTRUCTION_VISION_USER_MESSAGE;
 
+  const { data: imageBase64, mediaType } = await fetchImageAsBase64(imageUrl);
   const body = {
     model: resolvedModel,
     max_tokens: maxTokens,
@@ -60,7 +80,11 @@ export async function invokeVision(
           { type: "text" as const, text: userMessage },
           {
             type: "image" as const,
-            source: { type: "url" as const, url: imageUrl },
+            source: {
+              type: "base64" as const,
+              media_type: mediaType,
+              data: imageBase64,
+            },
           },
         ],
       },

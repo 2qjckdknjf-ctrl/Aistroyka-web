@@ -38,6 +38,15 @@ describe("circuit-breaker", () => {
     expect(ok).toBe(false);
   });
 
+  it("transitions open → half_open after cooldown and allows invoke", async () => {
+    const stale = new Date(Date.now() - 120_000).toISOString();
+    const supabase = mockSupabase("open", 99, stale) as any;
+    const state = await getCircuitState(supabase, "openai");
+    expect(state).toBe("half_open");
+    const ok = await canInvoke(supabase, "openai");
+    expect(ok).toBe(true);
+  });
+
   it("recordSuccess upserts closed state", async () => {
     const supabase = mockSupabase("closed") as any;
     await recordSuccess(supabase, "openai");

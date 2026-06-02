@@ -296,3 +296,10 @@
 - GO_PUBLIC status: CANDIDATE
 - Remaining blockers to full GO_PUBLIC: unresolved P1 evidence items (iOS full transaction runtime + AI provider full-path).
 
+## Supabase advisor program closure (2026-06-02)
+
+- Status: **CLOSED**
+- Report: `docs/publication-readiness/SUPABASE_ADVISOR_PROGRAM_CLOSURE_2026-06-02.md`
+- Live posture: Security WARN **0**; `unused_index` 305 → **190** (batches 1–7); fkfix sweep complete with 6 hot-path indexes retained
+- PR range: #55–#70 on `main`; migrations applied to **AISTROYKA** (`vthfrxehrursfloevnlp`)
+

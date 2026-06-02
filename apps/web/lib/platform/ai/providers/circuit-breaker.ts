@@ -23,7 +23,19 @@ export async function getCircuitState(
   const row = data as { state: string; failure_count: number; last_failure_at: string | null };
   if (row.state === "open") {
     const at = row.last_failure_at ? new Date(row.last_failure_at).getTime() : 0;
-    if (Date.now() - at > WINDOW_MS) return "half_open";
+    if (Date.now() - at > WINDOW_MS) {
+      await supabase.from("ai_provider_health").upsert(
+        {
+          provider,
+          state: "half_open",
+          failure_count: 0,
+          last_failure_at: row.last_failure_at,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "provider" }
+      );
+      return "half_open";
+    }
     return "open";
   }
   return (row.state as CircuitState) || "closed";
