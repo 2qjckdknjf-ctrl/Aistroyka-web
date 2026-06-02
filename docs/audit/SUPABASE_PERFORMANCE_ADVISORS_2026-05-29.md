@@ -5,7 +5,8 @@
 | Advisor | Count | Status |
 |---------|------:|--------|
 | `multiple_permissive_policies` | 0 | Cleared (PR #58, #59) |
-| `unused_index` | 259 | Batch 1 (-23) + batch 2 (-23) |
+| `unused_index` | 241 | Batch 1 (-23) + batch 2 (-23) + batch 3 (-18) |
+| `unindexed_foreign_keys` | 40 | INFO — expected after batch 2 (+22) and batch 3 (+18) |
 | `auth_db_connections_absolute` | 0 | Cleared — Auth pool set to 17% via workflow |
 
 Security advisors: **0 WARN** (leaked password protection enabled via PR #56–#57).
@@ -44,6 +45,12 @@ Advisor count: `unused_index` 305 → 282.
 Dropped 23 unused `idx_fkfix_*` indexes on audit/event tables where the primary entity timeline index remains (e.g. `defect_id`, `request_id`, `document_id`). Also dropped `idx_fkfix_ai_run_records_df7c76ebea` covered by `idx_ai_run_records_project`.
 
 Advisor count: `unused_index` 282 → 259.
+
+## Index batch 3 (`20260529130000`)
+
+Dropped 18 unused `idx_fkfix_*` indexes on `project_defects` and `project_change_orders` (linked-entity and actor FK helpers). Each table keeps project-scoped list indexes (`idx_project_defects_project`, `idx_change_orders_project`, `idx_*_project_id`, partial blocking index on defects).
+
+Advisor count: `unused_index` 259 → 241; `unindexed_foreign_keys` 22 → 40 (INFO, acceptable on pilot traffic — restore targeted FK indexes if reverse-lookup joins appear in slow query logs).
 
 ## RLS changes shipped
 
