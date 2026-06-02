@@ -5,8 +5,8 @@
 | Advisor | Count | Status |
 |---------|------:|--------|
 | `multiple_permissive_policies` | 0 | Cleared (PR #58, #59) |
-| `unused_index` | 231 | Batch 1–3 (−64) + batch 4 (−10) |
-| `unindexed_foreign_keys` | 50 | INFO — expected after batches 2–4 |
+| `unused_index` | 215 | Batch 1–4 (−74) + batch 5 (−16) |
+| `unindexed_foreign_keys` | 66 | INFO — expected after batches 2–5 |
 | `auth_db_connections_absolute` | 0 | Cleared — Auth pool set to 17% via workflow |
 
 Security advisors: **0 WARN** (leaked password protection enabled via PR #56–#57).
@@ -57,6 +57,12 @@ Advisor count: `unused_index` 259 → 241; `unindexed_foreign_keys` 22 → 40 (I
 Dropped 10 unused `idx_fkfix_*` indexes on `project_client_requests` (actor FK helpers) and `project_documents` (actor/linked-entity FK helpers). Each table keeps project-scoped indexes (`idx_project_client_requests_project`, `idx_project_documents_project`, status partials, tenant indexes).
 
 Advisor count: `unused_index` 241 → 231; `unindexed_foreign_keys` 40 → 50 (INFO).
+
+## Index batch 5 (`20260529150000`)
+
+Dropped 16 unused `idx_fkfix_*` on `governance_cases`, `project_issues`, `customer_estimates`, `project_commercial_items`, `ai_optimization_decisions`, plus `tenant_id` fkfix on `ai_memory_records` (covered by composite indexes). Kept `project_id`/`user_id`/`superseded_by` fkfix on `ai_memory_records` (sole single-column FK helpers).
+
+Advisor count: `unused_index` 231 → 215; `unindexed_foreign_keys` 50 → 66 (INFO).
 
 ## RLS changes shipped
 
