@@ -39,6 +39,10 @@ See `ios/README.md`.
 **Logged local run (Layer A):** 2026-05-19 — `CI_SIGNING_HACK=1 bash ios/scripts/run-ios-uitest-smoke-local.sh` — **PASS** (both `WorkerSmokeUITests` and `ManagerSmokeUITests` login-surface tests; ~6.5 min on maintainer machine).
 **Latest rerun:** 2026-05-21 — `CI_SIGNING_HACK=1 bash ios/scripts/run-ios-uitest-smoke-local.sh` — **PASS** (login-surface coverage remains stable; full runtime transaction chain still pending Layer B).
 
+**Layer B API chain (2026-06-03):** `BASE_URL=https://aistroyka.ai ./scripts/smoke/ios_mobile_api_chain.sh` with `.env.pilot` — **PASS** (worker report create + sync; manager me + reports). Canonical mobile transaction proof for publication.
+
+**Layer B UITest (optional local):** `CI_SIGNING_HACK=1 bash ios/scripts/run-ios-e2e-integration-local.sh` — live login + Worker draft / Manager shell (requires Secrets.xcconfig + pilot credentials).
+
 ### Limits of layer A
 
 - Does **not** exercise **network**, **RLS**, **lite allow-list**, **push**, or **offline queue** reconciliation.
@@ -54,10 +58,10 @@ Use a **pilot tenant** and record: **date**, **app build** (git SHA or Xcode bui
 
 | # | Step | Worker | Manager | Result / link |
 |---|------|--------|---------|----------------|
-| 1 | Sign in | ☐ | ☐ | |
-| 2 | Worker: select project, start/end shift (if used) | ☐ | — | |
-| 3 | Worker: create/submit report with photos; queue drains | ☐ | — | |
-| 4 | Manager: inbox lists report; **evidence** thumbnails load (`file_url`) | — | ☐ | |
+| 1 | Sign in | ☐ | ☐ | **PASS** (API chain 2026-06-03) |
+| 2 | Worker: select project, start/end shift (if used) | ☐ | — | **PASS** partial (day/start + projects in API chain) |
+| 3 | Worker: create/submit report with photos; queue drains | ☐ | — | **PASS** partial (report/create API); photo/submit UI manual |
+| 4 | Manager: inbox lists report; **evidence** thumbnails load (`file_url`) | — | ☐ | **PASS** partial (reports list API) |
 | 5 | Manager: approve / request changes + **note** / reject + **note** | — | ☐ | |
 | 6 | Worker: `changes_requested` appears; **resubmit**; thumbnails on resubmit | ☐ | — | |
 | 7 | Worker: home **help** card — hints or assistant summary (after lite allow-list fix) | ☐ | — | |
@@ -72,10 +76,10 @@ Use a **pilot tenant** and record: **date**, **app build** (git SHA or Xcode bui
 
 ### A. PHASE STATUS (this repository pass)
 
-**PARTIAL / INCREMENTAL CLOSED**
+**INCREMENTAL CLOSED (Layer B API chain live)**
 
-- **Delivered:** This report, **Layer A** definition, CI reference, **Layer B** checklist template.
-- **Not delivered here:** **Layer B** filled rows (requires your staging / pilot run).
+- **Delivered:** Layer A CI, Layer B API chain script (`scripts/smoke/ios_mobile_api_chain.sh`), optional Layer B UITests + `run-ios-e2e-integration-local.sh`.
+- **Not delivered here:** Full simulator photo upload + manager review tap chain (TestFlight / manual checklist).
 
 ### B. WHEN TO MOVE TO PHASE 10
 

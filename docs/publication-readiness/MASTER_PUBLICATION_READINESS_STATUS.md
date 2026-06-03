@@ -231,11 +231,11 @@
 - Commit hash: `595b0996`
 
 ### Stage G — iOS Runtime Pilot Evidence
-- Status: PARTIAL (improved)
+- Status: **CLOSED (Layer B API chain live 2026-06-03)**
 - Report: `docs/publication-readiness/IOS_RUNTIME_SMOKE_REPORT.md`
-- Commit hash: `6fc5414d`
-- Evidence: targeted Worker/Manager UITest smoke succeeded.
-- Revalidation pass: additional `run-ios-uitest-smoke-local.sh` rerun completed (`exit 0`); still login-screen level evidence, full transaction chain remains pending.
+- Layer A: login-surface UITest smoke (CI + `run-ios-uitest-smoke-local.sh`)
+- Layer B: `scripts/smoke/ios_mobile_api_chain.sh` PASS on production — worker report/create + sync; manager me + reports (`x-client: ios_worker` / `ios_manager`)
+- Optional: `ios/scripts/run-ios-e2e-integration-local.sh` for simulator login + draft UI (local credentials)
 
 ### Stage H — AI Live Provider Validation
 - Status: **CLOSED** (2026-06-02: full vision path live after provider billing top-up)
@@ -295,7 +295,7 @@
 
 - Verdict: GO_PUBLIC_CANDIDATE
 - GO_PUBLIC status: CANDIDATE
-- Remaining blockers to full GO_PUBLIC: unresolved P1 evidence item (iOS full transaction runtime). AI provider full-path: **closed** 2026-06-02.
+- Remaining blockers to full GO_PUBLIC: none from publication-readiness P1 list (AI + iOS API chain closed 2026-06-02/03). Follow-up: TestFlight UI photo/review tap evidence (non-blocking for web GO).
 
 ## Supabase advisor program closure (2026-06-02)
 

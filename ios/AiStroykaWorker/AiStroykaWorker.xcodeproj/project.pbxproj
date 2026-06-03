@@ -38,6 +38,7 @@
 		WRK026 /* Shared in Frameworks */ = {isa = PBXBuildFile; productRef = WRK126 /* Shared */; };
 		WRK029B /* UITestLaunchHooks.swift in Sources */ = {isa = PBXBuildFile; fileRef = WRK133 /* UITestLaunchHooks.swift */; };
 		WRKUT01 /* WorkerSmokeUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = WRKUT11 /* WorkerSmokeUITests.swift */; };
+		WRKUT02 /* PilotE2ECredentials.swift in Sources */ = {isa = PBXBuildFile; fileRef = WRKUT12 /* PilotE2ECredentials.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -79,6 +80,7 @@
 		WRK133 /* UITestLaunchHooks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UITestLaunchHooks.swift; sourceTree = "<group>"; };
 		WRKUT10 /* AiStroykaWorkerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AiStroykaWorkerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		WRKUT11 /* WorkerSmokeUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerSmokeUITests.swift; sourceTree = "<group>"; };
+		WRKUT12 /* PilotE2ECredentials.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PilotE2ECredentials.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -182,6 +184,7 @@
 		WRKUT50 /* AiStroykaWorkerUITests */ = {
 			isa = PBXGroup;
 			children = (
+				WRKUT12 /* PilotE2ECredentials.swift */,
 				WRKUT11 /* WorkerSmokeUITests.swift */,
 			);
 			path = AiStroykaWorkerUITests;
@@ -329,6 +332,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				WRKUT02 /* PilotE2ECredentials.swift in Sources */,
 				WRKUT01 /* WorkerSmokeUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

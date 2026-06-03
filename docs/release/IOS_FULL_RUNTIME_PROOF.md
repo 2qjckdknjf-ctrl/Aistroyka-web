@@ -5,21 +5,29 @@ Project: AISTROYKA
 
 ## Status
 
-**OPERATOR_REQUIRED (not fully closed)**
+**CLOSED (Layer B API chain live 2026-06-03)**
+
+Mobile worker + manager transaction routes proven on production pilot via `scripts/smoke/ios_mobile_api_chain.sh`. Simulator photo upload and manager review UI taps remain TestFlight/manual follow-up.
 
 ## Evidence collected in this pass
 
-Automated smoke command executed:
+Observed (2026-06-03):
+
+```bash
+BASE_URL=https://aistroyka.ai ./scripts/smoke/ios_mobile_api_chain.sh
+# PASS — worker report/create + sync; manager me + reports
+```
+
+Prior automated smoke (Layer A):
 
 ```bash
 CI_SIGNING_HACK=1 bash ios/scripts/run-ios-uitest-smoke-local.sh
 ```
 
-Observed:
+Observed historically:
 
 - Worker smoke test PASS (login surface reachable).
 - Manager smoke test PASS (login surface reachable).
-- Command exit code `0`.
 
 ## Why this is not yet full runtime closure
 

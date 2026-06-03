@@ -23,6 +23,7 @@ struct ManagerTabShell: View {
             ReportsInboxView()
                 .tabItem { Label(NSLocalizedString("mgr_tab_reports", comment: ""), systemImage: "doc.text.fill") }
                 .tag(3)
+                .accessibilityIdentifier("pilot_manager_tab_reports")
             TeamOverviewView()
                 .tabItem { Label(NSLocalizedString("mgr_tab_team", comment: ""), systemImage: "person.3.fill") }
                 .tag(4)

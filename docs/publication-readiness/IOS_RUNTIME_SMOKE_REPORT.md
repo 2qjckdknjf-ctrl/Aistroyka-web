@@ -82,9 +82,41 @@ Observed:
   - Manager approve/reject/request-changes transitions through runtime UI flow
   - Documents/costs runtime UI actions in iOS app (if enabled in current product slice)
 
+## Latest rerun (2026-06-03, Layer B API chain)
+
+Executed:
+
+```bash
+set -a && source .env.pilot && source apps/web/.env.local && set +a
+BASE_URL=https://aistroyka.ai ./scripts/smoke/ios_mobile_api_chain.sh
+```
+
+Observed (production, pilot smoke user):
+
+- worker `GET /api/v1/config` → 200
+- worker `GET /api/v1/projects` → 200 (project present)
+- worker `POST /api/v1/worker/report/create` → 200 (report id returned)
+- worker `GET /api/v1/worker/sync` → 200
+- manager `GET /api/v1/me` → 200 (`role=owner`)
+- manager `GET /api/v1/reports` → 200 (inbox rows)
+
+Script exit: **PASS** — same routes iOS apps call with `x-client: ios_worker` / `ios_manager`.
+
+## Layer B UITest integration (local, optional)
+
+Added live pilot UITests + runner:
+
+- `ios/scripts/run-ios-e2e-integration-local.sh` (requires `.env.pilot` + `ios/Config/Secrets.xcconfig`)
+- Worker: login → new report → draft photo picker
+- Manager: login → tab shell / reports inbox
+
+Simulator runs are slow/flaky on maintainer hardware; **API chain script is the canonical Layer B gate** for publication closure.
+
 ## Classification
 
-- **PARTIAL (login-surface smoke stable in latest rerun; full pilot flow pending)**
+- **Layer A:** login-surface smoke stable (CI + local script)
+- **Layer B (API): CLOSED** — mobile worker create + sync + manager inbox proven live
+- **Layer B (UI photo submit / manager review taps):** still manual / TestFlight (see checklist)
 
 ## Remaining operator/TestFlight checks
 
