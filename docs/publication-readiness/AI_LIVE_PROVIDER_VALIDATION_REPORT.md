@@ -52,6 +52,31 @@ Deploy-time provider-key injection check:
   - `ai_phase5_gate: copilot stream OK (done received)`
 - Interpretation: provider keys are now injected into production deploy runtime, but non-fallback vision path still degrades.
 
+Production deploy regression recovery (2026-06-02):
+
+- PR #72 introduced post-deploy `wrangler secret put`, but failed when deploy also passed `--var OPENAI_API_KEY` (`Binding name already in use`).
+- PR #73 removed AI keys from deploy `--var`; deploy run `26848011286` green through secret put.
+- Live checks after #73:
+  - `GET /api/health` -> `openaiConfigured: true`, `aiConfigured: true`
+  - `POST /api/v1/ai/analyze-image` -> HTTP 200 with `x-ai-fallback-reason: provider_unavailable`
+- PR #74 set `OPENAI_VISION_MODEL=gpt-4o-mini` in `wrangler.deploy.toml`; deploy run `26848427586` still shows degraded analyze-image.
+- Circuit reset via Supabase (`ai_provider_health` -> closed) does not change outcome; both providers record failures on invoke (policy decisions remain `allow`).
+- Copilot stream gate `done received` is **not** proof of live OpenAI success — stream route emits `event: done` on deterministic fallback too.
+
+Operator next step for full provider path:
+
+1. Verify GitHub repo secrets `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` match active, billed provider projects (not revoked placeholders).
+2. Re-run production deploy; confirm analyze-image returns HTTP 200 **without** `x-ai-fallback-reason`.
+3. Reset circuits if needed: `node apps/web/scripts/reset-ai-provider-circuits.mjs` (service role required).
+
+Provider billing recovery (2026-06-02, operator topped up OpenAI/Anthropic balances):
+
+- Reset `ai_provider_health` circuits to `closed`.
+- Live probe `POST https://aistroyka.ai/api/v1/ai/analyze-image` (public) -> HTTP 200, **no** `x-ai-fallback-reason`; model returned real analysis (e.g. construction-site classification), latency ~3s.
+- Local `scripts/smoke/ai_phase5_gate.sh` with `.env.pilot` credentials -> `analyze-image OK (full vision path)`.
+- Post-probe circuits: openai/anthropic `closed`, `failure_count: 0`.
+- **Verdict update:** provider-backed vision path **proven live**; Stage H blocker from billing/quota cleared (no code deploy required).
+
 Provider-router failover hardening check:
 
 - Commit: `e00a64e0` (`fix(ai): keep provider fallback chain on non-retryable errors`)
@@ -118,24 +143,22 @@ Repository secret inventory check (`gh secret list`) confirms:
 ## Readiness classification
 
 - Live route behavior: **graceful degraded mode works**
-- Provider-backed full AI path: **not proven** in this run (`provider_unavailable`)
-- Copilot stream live success path: **proven** (`copilot stream OK (done received)` in runs `26188813972`, `26189062534`, `26190744467`, `26207812004`).
+- Provider-backed full AI path: **proven** (2026-06-02 after operator billing top-up; no `x-ai-fallback-reason`; `ai_phase5_gate` full vision path)
+- Copilot stream: SSE `done` event works; use stream logs / `X-Stream-Status` when distinguishing fallback vs live LLM
 
 ## Verdict
 
-**PARTIAL / BLOCKED_EXTERNAL_FOR_FULL_PROVIDER_PATH**
+**CLOSED — full provider-backed vision path proven on production**
 
 ## GA stance
 
-- For broad GA, this remains a P1 blocker unless explicitly accepted as `GO WITH EXCEPTIONS`.
-- Current recommended production posture: keep AI provider-backed vision under degraded/beta labeling per policy until non-fallback success is proven.
+- AI vision P1 blocker cleared for publication readiness (billing was root cause after deploy secret fix).
+- Degraded fallback remains as safety net (`AI_VISION_DETERMINISTIC_FALLBACK`); not required for normal operation when providers are healthy.
 
 ## Publication policy linkage
 
-Until full provider-backed success is proven, publish AI capabilities under degraded policy:
-
-- `docs/publication-readiness/AI_DEGRADED_MODE_POLICY.md`
-- `docs/publication-readiness/KNOWN_LIMITATIONS.md`
+- Degraded policy docs remain valid for incident/runbook use: `AI_DEGRADED_MODE_POLICY.md`, `KNOWN_LIMITATIONS.md`
+- Product may publish AI vision as live capability when paired with routine circuit/health monitoring
 
 ## Operator closure commands
 

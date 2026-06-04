@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { getOrCreateTenantForCurrentUser } from "@/lib/api/engine";
+import { createClient, getSessionUser } from "@/lib/supabase/server";
+import { getTenantForCurrentUser } from "@/lib/api/engine";
+import { shouldShowOnboarding } from "@/lib/onboarding/user-onboarding";
 
 /**
  * GET /api/v1/activation/status
@@ -8,7 +9,11 @@ import { getOrCreateTenantForCurrentUser } from "@/lib/api/engine";
  */
 export async function GET() {
   const supabase = await createClient();
-  const tenantId = await getOrCreateTenantForCurrentUser(supabase);
+  const user = await getSessionUser(supabase);
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const tenantId = await getTenantForCurrentUser(supabase);
   if (!tenantId) {
     return NextResponse.json({
       projectCount: 0,
@@ -16,7 +21,7 @@ export async function GET() {
       taskCount: 0,
       reportCount: 0,
       hasAiInsight: false,
-      showOnboarding: true,
+      showOnboarding: await shouldShowOnboarding(supabase, user.id),
       getStarted: { createProject: false, inviteTeam: false, addTask: false, uploadReport: false, viewAi: false },
     });
   }
@@ -63,7 +68,7 @@ export async function GET() {
     }
   }
 
-  const showOnboarding = projectCount === 0;
+  const showOnboarding = await shouldShowOnboarding(supabase, user.id);
   const getStarted = {
     createProject: projectCount > 0,
     inviteTeam: hasInvited,

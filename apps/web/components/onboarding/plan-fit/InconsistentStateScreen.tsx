@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { Card, Button } from "@/components/ui";
 
 export function InconsistentStateScreen({ onRetry }: { onRetry: () => void }) {
@@ -18,12 +19,12 @@ export function InconsistentStateScreen({ onRetry }: { onRetry: () => void }) {
         <Button variant="primary" onClick={onRetry}>
           {t("retry")}
         </Button>
-        <a
+        <Link
           href="/dashboard"
           className="inline-flex min-h-[var(--aistroyka-touch-min)] items-center justify-center rounded-[var(--aistroyka-radius-lg)] border border-[var(--aistroyka-button-secondary-border)] bg-[var(--aistroyka-button-secondary-bg)] px-4 py-2.5 text-sm font-semibold text-[var(--aistroyka-button-secondary-text)] hover:bg-aistroyka-surface-raised"
         >
           {t("openDashboard")}
-        </a>
+        </Link>
       </div>
     </Card>
   );

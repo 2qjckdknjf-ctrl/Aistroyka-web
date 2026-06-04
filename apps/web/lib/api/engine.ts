@@ -8,20 +8,21 @@ import { createAnalysisJobRpc } from "./rpcClient";
 
 const MEDIA_BUCKET = "media";
 
-/** Fallback when new schema (user_id, tenant_members) is not applied: use first tenant. */
-async function getFirstTenantId(supabase: SupabaseClient): Promise<string | null> {
-  const { data, error } = await supabase.from("tenants").select("id").limit(1).maybeSingle();
-  return error ? null : data?.id ?? null;
+/**
+ * Legacy alias kept for compatibility.
+ * Returns the active tenant for the current user without auto-creating one.
+ */
+export async function getOrCreateTenantForCurrentUser(
+  supabase: SupabaseClient
+): Promise<string | null> {
+  return getTenantForCurrentUser(supabase);
 }
 
 /**
- * Get or create tenant for the current user.
- * 1) Tenant where user_id = me (owner cabinet)
- * 2) Else first tenant from tenant_members (invited)
- * 3) Else create new tenant and add self as owner
- * 4) Fallback: first tenant (when migrations not applied)
+ * Returns the active tenant for current user.
+ * Priority: owned tenant -> tenant_members membership.
  */
-export async function getOrCreateTenantForCurrentUser(
+export async function getTenantForCurrentUser(
   supabase: SupabaseClient
 ): Promise<string | null> {
   try {
@@ -44,24 +45,53 @@ export async function getOrCreateTenantForCurrentUser(
       .maybeSingle();
     if (!e2 && memberRow?.tenant_id) return memberRow.tenant_id;
 
-    const name = user.user_metadata?.name ?? user.email ?? "Personal";
-    const { data: created, error: insertError } = await supabase
-      .from("tenants")
-      .insert({ name, plan: "free", user_id: user.id })
-      .select("id")
-      .single();
-    if (!insertError && created?.id) {
-      const tenantId = created.id;
-      await supabase.from("tenant_members").upsert(
-        { tenant_id: tenantId, user_id: user.id, role: "owner" },
-        { onConflict: "tenant_id,user_id" }
-      );
-      return tenantId;
+    // If user has a pending invitation, do not auto-create a personal tenant.
+    const normalizedEmail = (user.email ?? "").trim().toLowerCase();
+    if (normalizedEmail) {
+      const { data: pendingInvite } = await supabase
+        .from("tenant_invitations")
+        .select("id")
+        .eq("email", normalizedEmail)
+        .gt("expires_at", new Date().toISOString())
+        .limit(1)
+        .maybeSingle();
+      if (pendingInvite?.id) return null;
     }
 
-    return await getFirstTenantId(supabase);
+    return null;
   } catch {
-    return await getFirstTenantId(supabase);
+    return null;
+  }
+}
+
+export async function createTenantAndOwnerMembershipForCurrentUser(
+  supabase: SupabaseClient,
+  params: { name: string; companyType?: string | null }
+): Promise<string | null> {
+  try {
+    const res = await supabase.auth.getUser();
+    const user = res?.data?.user ?? null;
+    if (!user?.id) return null;
+
+    const existingTenant = await getTenantForCurrentUser(supabase);
+    if (existingTenant) return existingTenant;
+
+    const tenantName = params.name.trim() || user.user_metadata?.name || user.email || "Workspace";
+    const { data: created, error: insertError } = await supabase
+      .from("tenants")
+      .insert({ name: tenantName, plan: "free", user_id: user.id })
+      .select("id")
+      .single();
+    if (insertError || !created?.id) return null;
+
+    const tenantId = created.id;
+    await supabase.from("tenant_members").upsert(
+      { tenant_id: tenantId, user_id: user.id, role: "owner" },
+      { onConflict: "tenant_id,user_id" }
+    );
+    return tenantId;
+  } catch {
+    return null;
   }
 }
 

@@ -231,14 +231,14 @@
 - Commit hash: `595b0996`
 
 ### Stage G — iOS Runtime Pilot Evidence
-- Status: PARTIAL (improved)
+- Status: **CLOSED (Layer B API chain live 2026-06-03)**
 - Report: `docs/publication-readiness/IOS_RUNTIME_SMOKE_REPORT.md`
-- Commit hash: `6fc5414d`
-- Evidence: targeted Worker/Manager UITest smoke succeeded.
-- Revalidation pass: additional `run-ios-uitest-smoke-local.sh` rerun completed (`exit 0`); still login-screen level evidence, full transaction chain remains pending.
+- Layer A: login-surface UITest smoke (CI + `run-ios-uitest-smoke-local.sh`)
+- Layer B: `scripts/smoke/ios_mobile_api_chain.sh` PASS on production — worker report/create + sync; manager me + reports (`x-client: ios_worker` / `ios_manager`)
+- Optional: `ios/scripts/run-ios-e2e-integration-local.sh` for simulator login + draft UI (local credentials)
 
 ### Stage H — AI Live Provider Validation
-- Status: PARTIAL / BLOCKED_EXTERNAL_FOR_FULL_PROVIDER_PATH
+- Status: **CLOSED** (2026-06-02: full vision path live after provider billing top-up)
 - Report: `docs/publication-readiness/AI_LIVE_PROVIDER_VALIDATION_REPORT.md`
 - Commit hash: `e3808f48`
 - Revalidation pass: production run `26186503554` again shows degraded fallback (`provider_unavailable`), with stream probe disabled because `PROJECT_ID` is empty in gate env.
@@ -247,6 +247,7 @@
 - Repeat run `26189062534` confirms same AI posture: stream passes, analyze-image remains degraded (`provider_unavailable`).
 - Infra hardening pass: production deploy now injects `OPENAI_API_KEY` and `ANTHROPIC_API_KEY` into Worker runtime (run `26190744467` shows both bindings present), but analyze-image still degrades with `provider_unavailable`.
 - Router hardening pass: provider fallback chain no longer aborts on non-retryable provider errors (commit `e00a64e0`); production run `26207812004` still reports degraded analyze-image fallback.
+- Deploy regression fix (2026-06-02): PRs #72–#73 restore encrypted Worker secrets; run `26848011286` green. Billing top-up same day: live analyze-image without `x-ai-fallback-reason`; `ai_phase5_gate` reports **full vision path** — see `AI_LIVE_PROVIDER_VALIDATION_REPORT.md`.
 
 ### Stage I — Public Locale / Contact Live Crawl
 - Status: CLOSED
@@ -294,7 +295,7 @@
 
 - Verdict: GO_PUBLIC_CANDIDATE
 - GO_PUBLIC status: CANDIDATE
-- Remaining blockers to full GO_PUBLIC: unresolved P1 evidence items (iOS full transaction runtime + AI provider full-path).
+- Remaining blockers to full GO_PUBLIC: none from publication-readiness P1 list (AI + iOS API chain closed 2026-06-02/03). Follow-up: TestFlight UI photo/review tap evidence (non-blocking for web GO).
 
 ## Supabase advisor program closure (2026-06-02)
 

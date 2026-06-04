@@ -37,10 +37,12 @@ export function DashboardShell({
   children,
   userEmail,
   isAdmin,
+  canManageTeam,
 }: {
   children: React.ReactNode;
   userEmail?: string;
   isAdmin: boolean;
+  canManageTeam: boolean;
 }) {
   const t = useTranslations("nav");
   const pathname = usePathname();
@@ -88,6 +90,21 @@ export function DashboardShell({
                 </Link>
               );
             })}
+            {canManageTeam ? (
+              <Link
+                href="/team"
+                onClick={closeSidebar}
+                data-testid="cta.dashboard.nav.team"
+                className={`flex min-h-aistroyka-touch items-center rounded-[var(--aistroyka-radius-lg)] px-[var(--aistroyka-space-3)] py-[var(--aistroyka-space-2)] text-[var(--aistroyka-font-subheadline)] font-medium transition-colors ${
+                  isActive("/team")
+                    ? "bg-aistroyka-accent-light text-aistroyka-accent"
+                    : "text-aistroyka-text-secondary hover:bg-aistroyka-surface-raised hover:text-aistroyka-text-primary"
+                }`}
+                aria-current={isActive("/team") ? "page" : undefined}
+              >
+                {t("team")}
+              </Link>
+            ) : null}
             {getDashboardNavIncludesAdmin(isAdmin) && (
               <>
                 <div className="px-3 py-2 text-[var(--aistroyka-font-caption)] font-semibold uppercase tracking-wide text-aistroyka-text-tertiary">

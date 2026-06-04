@@ -17,5 +17,6 @@ Pull requests that change files under `ios/` (except **`ios/**/*.md` only** — 
 - `ios/scripts/ci-pick-iphone-simulator-udid.sh` — prints a UDID for `xcodebuild -destination "id=..."`. Prefers simulators whose **device name** starts with `iPhone` (skips renamed entries such as "HiAir Fresh iPhone 15" so logs don’t look like the wrong product; the built app is still the Xcode scheme).
 - `ios/scripts/run-ios-uitest-smoke-local.sh` — runs both UITest smoke targets (uses your Xcode signing). To mimic CI signing:  
   `CI_SIGNING_HACK=1 bash ios/scripts/run-ios-uitest-smoke-local.sh`
+- `ios/scripts/run-ios-e2e-integration-local.sh` — **Layer B** live pilot UITests (login + Worker report draft + Manager reports inbox). Requires `ios/Config/Secrets.xcconfig` and `SMOKE_EMAIL`/`SMOKE_PASSWORD` in repo-root `.env.pilot` (or `IOS_E2E_*` exports). Optional: `CI_SIGNING_HACK=1`.
 
 See also `docs/runbooks/MOBILE_OFFLINE_QUEUE.md` (Worker offline queue vs sync). Staging/pilot checklists: `docs/mobile-ios/manual-smoke/`.

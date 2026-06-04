@@ -16,7 +16,6 @@ export function getStripeClient(): import("stripe").Stripe | null {
   const key = getSecretKey();
   if (!key) return null;
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const Stripe = require("stripe");
     stripeInstance = new Stripe(key, { apiVersion: "2024-11-20.acacia" });
     return stripeInstance;
