@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getAdminClient } from "@/lib/supabase/admin";
+import { insertContactLead } from "@/lib/public/contact-lead-submit";
 
 const ContactSchema = z.object({
   name: z.string().min(1, "Name is required").max(200),
@@ -30,14 +31,7 @@ export async function POST(request: Request) {
     if (!supabase) {
       return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
     }
-    const { error } = await (supabase as { from: (table: string) => { insert: (row: Record<string, unknown>) => Promise<{ error: { message: string } | null }> } }).from("contact_leads").insert({
-      name,
-      email,
-      company: company || null,
-      message,
-      source: "contact_form",
-      status: "new",
-    });
+    const { error } = await insertContactLead(supabase, { name, email, company, message });
 
     if (error) {
       if (process.env.NODE_ENV !== "production") {
