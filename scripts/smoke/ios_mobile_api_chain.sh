@@ -106,4 +106,19 @@ REPORTS_CODE=$(curl -sSL -o /tmp/ios_reports.json -w "%{http_code}" -m 20 \
 REPORT_COUNT=$(jq -r '.data | length' /tmp/ios_reports.json)
 echo "  manager GET /api/v1/reports OK (count=$REPORT_COUNT)"
 
-echo "ios_mobile_api_chain: PASS (worker create+sync, manager me+reports)"
+PROJECT_ID="${IOS_CHAIN_PROJECT_ID:-${PILOT_SMOKE_PROJECT_ID_PRODUCTION:-}}"
+if [[ -z "$PROJECT_ID" ]]; then
+  PROJECT_ID=$(curl -sSL -m 20 -H "Authorization: $AUTH" -H "x-client: $MANAGER_CLIENT" \
+    "$BASE/api/v1/projects?limit=1" | jq -r '.data[0].id // empty' 2>/dev/null || true)
+fi
+if [[ -n "$PROJECT_ID" ]]; then
+  INTEL_CODE=$(curl -sSL -o /tmp/ios_intel.json -w "%{http_code}" -m 45 \
+    -H "Authorization: $AUTH" -H "x-client: $MANAGER_CLIENT" \
+    "$BASE/api/v1/projects/$PROJECT_ID/intelligence" || true)
+  [[ "$INTEL_CODE" == "200" ]] || { echo "FAIL manager intelligence HTTP $INTEL_CODE" >&2; exit 1; }
+  echo "  manager GET /api/v1/projects/…/intelligence OK"
+else
+  echo "  skip manager intelligence (no project id)"
+fi
+
+echo "ios_mobile_api_chain: PASS (worker create+sync, manager me+reports+intelligence)"
