@@ -73,6 +73,22 @@ describe("checkLiteAllowList", () => {
     expect(checkLiteAllowList("/api/v1/help/assistant/events", "POST", "android_lite")).toBeNull();
   });
 
+  it("returns 403 for lite client on manager AI routes (copilot, intelligence, analyze-image)", () => {
+    const blocked = [
+      ["/api/v1/projects/p1/copilot", "GET"],
+      ["/api/v1/projects/p1/copilot/chat/stream", "POST"],
+      ["/api/v1/projects/p1/intelligence", "GET"],
+      ["/api/v1/ai/analyze-image", "POST"],
+      ["/api/v1/ai/memory/context", "GET"],
+    ] as const;
+    for (const [path, method] of blocked) {
+      const r = checkLiteAllowList(path, method, "ios_lite");
+      expect(r, `${method} ${path}`).not.toBeNull();
+      expect(r!.status).toBe(403);
+      expect(r!.body.code).toBe("lite_client_path_forbidden");
+    }
+  });
+
   it("returns 403 for lite on help paths with wrong method or extra help routes", () => {
     expect(checkLiteAllowList("/api/v1/activation/status", "POST", "ios_lite")).not.toBeNull();
     expect(checkLiteAllowList("/api/v1/help/hints", "GET", "ios_lite")).not.toBeNull();

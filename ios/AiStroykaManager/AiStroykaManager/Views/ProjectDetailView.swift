@@ -28,6 +28,7 @@ struct ProjectDetailView: View {
                 EmptyStateView(title: NSLocalizedString("mgr_project_not_found", comment: ""), subtitle: nil)
             }
         }
+        .accessibilityIdentifier("pilot_manager_project_detail_e2e")
         .navigationTitle(project?.name ?? projectName ?? NSLocalizedString("mgr_project", comment: ""))
         .refreshable { await loadAsync() }
         .onAppear { loadIfNeeded() }
@@ -55,8 +56,23 @@ struct ProjectDetailView: View {
                     Label(NSLocalizedString("mgr_tab_reports", comment: ""), systemImage: "doc.text")
                 }
                 NavigationLink(destination: ProjectAIView(projectId: projectId, projectName: p.name ?? NSLocalizedString("mgr_project", comment: ""))) {
-                    Label(NSLocalizedString("mgr_tab_ai", comment: ""), systemImage: "sparkles")
+                    Label(NSLocalizedString("mgr_ai_jobs_link", comment: ""), systemImage: "sparkles")
                 }
+                NavigationLink(destination: ProjectIntelligenceView(
+                    projectId: projectId,
+                    projectName: p.name ?? NSLocalizedString("mgr_project", comment: "")
+                )) {
+                    Label(NSLocalizedString("mgr_intelligence_link", comment: ""), systemImage: "chart.bar.doc.horizontal")
+                }
+                .accessibilityIdentifier("pilot_manager_project_intelligence_link")
+                NavigationLink(destination: ProjectCopilotChatView(
+                    projectId: projectId,
+                    projectName: p.name ?? NSLocalizedString("mgr_project", comment: ""),
+                    intelligence: nil
+                )) {
+                    Label(NSLocalizedString("mgr_copilot_link", comment: ""), systemImage: "bubble.left.and.bubble.right")
+                }
+                .accessibilityIdentifier("pilot_manager_project_copilot_link")
             }
         }
     }

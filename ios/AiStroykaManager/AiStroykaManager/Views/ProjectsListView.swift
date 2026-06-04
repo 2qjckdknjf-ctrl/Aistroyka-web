@@ -16,6 +16,7 @@ struct ProjectsListView: View {
             Group {
                 if isLoading {
                     LoadingStateView(message: NSLocalizedString("mgr_loading_projects", comment: ""))
+                        .accessibilityIdentifier("pilot_manager_projects_loading")
                 } else if let err = errorMessage {
                     ErrorStateView(message: err, retry: { load() })
                 } else if projects.isEmpty {
@@ -23,12 +24,15 @@ struct ProjectsListView: View {
                         title: NSLocalizedString("mgr_no_projects_yet", comment: ""),
                         subtitle: nil
                     )
+                    .accessibilityIdentifier("pilot_manager_projects_empty")
                 } else {
                     List(projects, id: \.id) { p in
                         NavigationLink(destination: ProjectDetailView(projectId: p.id, projectName: p.name)) {
                             Text(p.name ?? p.id)
+                                .accessibilityIdentifier("pilot_manager_project_\(p.id)")
                         }
                     }
+                    .accessibilityIdentifier("pilot_manager_projects_list")
                 }
             }
             .navigationTitle(NSLocalizedString("mgr_tab_projects", comment: ""))

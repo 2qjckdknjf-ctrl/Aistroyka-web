@@ -18,10 +18,19 @@ enum ManagerUITestLaunchHooks {
         ProcessInfo.processInfo.environment["AISTROYKA_E2E"] == "1"
     }
 
+    /// When set with `AISTROYKA_E2E=1`, opens project detail via sheet (skips projects list in UITest).
+    static var e2eProjectId: String? {
+        guard isE2EEnabled else { return nil }
+        let raw = ProcessInfo.processInfo.environment["AISTROYKA_E2E_PROJECT_ID"]?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return raw.isEmpty ? nil : raw
+    }
+
     @MainActor
     static func prepareManagerSurfaceIfNeeded(sessionState: ManagerSessionState) async {
         if isE2EEnabled {
             ManagerOnboardingPreferences.markIntroCompleted()
+            await sessionState.signOut()
             return
         }
         guard isEnabled else { return }

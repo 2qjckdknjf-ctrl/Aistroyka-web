@@ -1,5 +1,32 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi, beforeEach } from "vitest";
 import { POST } from "./route";
+
+const getTenantContextFromRequest = vi.fn();
+const getProjectForInternalWorkspace = vi.fn();
+
+vi.mock("@/lib/tenant", () => ({
+  getTenantContextFromRequest: (...args: unknown[]) => getTenantContextFromRequest(...args),
+  requireTenant: (ctx: { tenantId?: string | null }) => {
+    if (!ctx.tenantId) throw new Error("Tenant required");
+  },
+  TenantRequiredError: class TenantRequiredError extends Error {
+    constructor(message = "Tenant required") {
+      super(message);
+    }
+  },
+}));
+
+vi.mock("@/lib/domain/projects/project.service", () => ({
+  getProjectForInternalWorkspace: (...args: unknown[]) => getProjectForInternalWorkspace(...args),
+}));
+
+vi.mock("@/lib/supabase/server", () => ({
+  createClientFromRequest: vi.fn().mockResolvedValue({}),
+}));
+
+vi.mock("@/lib/supabase/admin", () => ({
+  getAdminClient: vi.fn().mockReturnValue(null),
+}));
 
 function jsonRequest(body: object) {
   return new Request("http://test/api/v1/ai/analyze-image", {
@@ -10,6 +37,37 @@ function jsonRequest(body: object) {
 }
 
 describe("POST /api/v1/ai/analyze-image", () => {
+  beforeEach(() => {
+    getTenantContextFromRequest.mockResolvedValue({
+      tenantId: null,
+      userId: null,
+      subscriptionTier: "free",
+    });
+    getProjectForInternalWorkspace.mockResolvedValue({ data: { id: "p1" }, error: null });
+  });
+
+  it("returns 403 when project_id is outside tenant rights", async () => {
+    vi.stubEnv("OPENAI_API_KEY", "sk-test");
+    getTenantContextFromRequest.mockResolvedValueOnce({
+      tenantId: "tenant-a",
+      userId: "user-1",
+      subscriptionTier: "free",
+    });
+    getProjectForInternalWorkspace.mockResolvedValueOnce({
+      data: null,
+      error: "Insufficient rights",
+    });
+
+    const req = jsonRequest({
+      image_url: "https://example.com/photo.jpg",
+      project_id: "other-tenant-project",
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(403);
+    const data = (await res.json()) as { error?: string };
+    expect(data.error).toContain("Insufficient rights");
+  });
+
   it("returns 503 when no vision provider is configured", async () => {
     vi.stubEnv("OPENAI_API_KEY", "");
     vi.stubEnv("ANTHROPIC_API_KEY", "");

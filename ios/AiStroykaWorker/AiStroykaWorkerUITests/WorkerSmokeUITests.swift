@@ -11,20 +11,71 @@ final class WorkerSmokeUITests: XCTestCase {
     private func launchForE2E() -> XCUIApplication {
         let app = XCUIApplication()
         app.launchEnvironment["AISTROYKA_E2E"] = "1"
+        if let projectId = PilotE2ECredentials.projectId {
+            app.launchEnvironment["AISTROYKA_E2E_PROJECT_ID"] = projectId
+        }
         app.launch()
         return app
     }
 
-    private func signInWorker(app: XCUIApplication, email: String, password: String) {
+    private func dismissKeyboardIfPresent(app: XCUIApplication) {
+        let done = app.toolbars.buttons["Done"]
+        if done.exists { done.tap(); return }
+        let ret = app.keyboards.buttons["Return"]
+        if ret.exists { ret.tap() }
+    }
+
+    private func typeText(_ text: String, into field: XCUIElement, app: XCUIApplication) {
+        field.tap()
+        let clear = field.buttons["Clear text"]
+        if clear.waitForExistence(timeout: 1) {
+            clear.tap()
+        }
+        field.typeText(text)
+        dismissKeyboardIfPresent(app: app)
+    }
+
+    private func signInWorkerIfNeeded(app: XCUIApplication, email: String, password: String) {
         let emailField = app.textFields["pilot_worker_email"]
-        XCTAssertTrue(emailField.waitForExistence(timeout: 25))
-        emailField.tap()
-        emailField.typeText(email)
+        guard emailField.waitForExistence(timeout: 20) else { return }
+        typeText(email, into: emailField, app: app)
         let passwordField = app.textFields["pilot_worker_password"]
-        XCTAssertTrue(passwordField.exists)
+        XCTAssertTrue(passwordField.waitForExistence(timeout: 10))
         passwordField.tap()
+        passwordField.doubleTap()
         passwordField.typeText(password)
-        app.buttons["pilot_worker_sign_in"].tap()
+        dismissKeyboardIfPresent(app: app)
+        let signInBtn = app.buttons["pilot_worker_sign_in"]
+        signInBtn.tap()
+        let deadline = Date().addingTimeInterval(120)
+        while signInBtn.exists, Date() < deadline {
+            RunLoop.current.run(until: Date().addingTimeInterval(0.4))
+        }
+    }
+
+    private func waitForWorkerHome(app: XCUIApplication, timeout: TimeInterval) -> Bool {
+        let loading = app.otherElements["pilot_worker_projects_loading"]
+        if loading.waitForExistence(timeout: 5) {
+            let loadDeadline = Date().addingTimeInterval(min(timeout, 120))
+            while loading.exists, Date() < loadDeadline {
+                RunLoop.current.run(until: Date().addingTimeInterval(0.4))
+            }
+        }
+        let newReport = app.descendants(matching: .any)["pilot_worker_new_report"]
+        let home = app.otherElements["pilot_worker_home"]
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            if newReport.exists || home.exists { return true }
+            let projectButton = app.descendants(matching: .any).matching(
+                NSPredicate(format: "identifier BEGINSWITH 'pilot_worker_project_'")
+            ).firstMatch
+            if projectButton.exists {
+                projectButton.tap()
+                if newReport.waitForExistence(timeout: 30) { return true }
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.4))
+        }
+        return newReport.exists || home.exists
     }
 
     func testLoginScreen_reachableWithPilotIdentifiers() throws {
@@ -47,15 +98,14 @@ final class WorkerSmokeUITests: XCTestCase {
         }
 
         let app = launchForE2E()
-        signInWorker(app: app, email: email, password: password)
+        signInWorkerIfNeeded(app: app, email: email, password: password)
 
-        let projectButton = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'pilot_worker_project_'")).firstMatch
-        if projectButton.waitForExistence(timeout: 45) {
-            projectButton.tap()
-        }
+        XCTAssertTrue(
+            waitForWorkerHome(app: app, timeout: 180),
+            "Expected worker home after live login (pilot_worker_new_report or pilot_worker_home)"
+        )
 
-        let newReport = app.buttons["pilot_worker_new_report"]
-        XCTAssertTrue(newReport.waitForExistence(timeout: 60), "Expected worker home after live login (project list or home)")
+        let newReport = app.descendants(matching: .any)["pilot_worker_new_report"]
         newReport.tap()
 
         let createReport = app.buttons["pilot_worker_report_create"]

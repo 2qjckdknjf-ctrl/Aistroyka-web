@@ -4,6 +4,21 @@
 
 ---
 
+## Canonical telemetry (apps/web — 2026-06-04)
+
+**Runtime:** `apps/web` on Cloudflare Workers. **Not authoritative:** legacy Edge `engine/` tables (`ai_llm_logs`, `ai_retrieval_logs`) unless explicitly re-migrated into `apps/web/supabase/migrations`.
+
+| Signal | Source | Notes |
+|--------|--------|--------|
+| Copilot / intelligence / vision lifecycle | Structured logs (`lib/observability/ai-telemetry.ts`, `logger`) | `error_kind` includes `persistence_failure`, `fallback_invoked`, etc. |
+| Operator audit trail | `audit_logs` via `emitAiRuntimeAudit` | Actions e.g. `ai_copilot_stream_complete`, `ai_intelligence_complete` |
+| Usage / cost | `recordUsage` (`ai-usage` tables) | Stream + non-stream copilot, vision |
+| Live provider proof | `scripts/smoke/ai_live_provider.sh --require-live` | Production vision path; not `ai_llm_logs` |
+
+**SLO measurement below** that references `ai_llm_logs` / `ai_slo_daily` describes the **legacy Edge copilot** contract. For web copilot/intelligence/vision, derive p95/error/fallback from **structured logs + `audit_logs` + usage rows** until dedicated web SLO tables exist.
+
+---
+
 ## Availability target
 
 - **Target:** 99.9% (e.g. successful Copilot responses as proportion of total requests, excluding client-side cancellations).  

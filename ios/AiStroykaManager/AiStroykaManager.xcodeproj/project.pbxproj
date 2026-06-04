@@ -39,6 +39,10 @@
 		MGR029 /* Shared in Frameworks */ = {isa = PBXBuildFile; productRef = MGR130; };
 		MGR036 /* ManagerOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR132 /* ManagerOnboardingView.swift */; };
 		MGR037 /* ManagerUITestLaunchHooks.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR133 /* ManagerUITestLaunchHooks.swift */; };
+		MGR038 /* ManagerIntelligenceModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR134 /* ManagerIntelligenceModels.swift */; };
+		MGR039 /* ManagerCopilotService.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR135 /* ManagerCopilotService.swift */; };
+		MGR040 /* ProjectIntelligenceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR136 /* ProjectIntelligenceView.swift */; };
+		MGR041B /* ProjectCopilotChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR137 /* ProjectCopilotChatView.swift */; };
 		MGRUT01 /* ManagerSmokeUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGRUT11 /* ManagerSmokeUITests.swift */; };
 		MGRUT02 /* PilotE2ECredentials.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGRUT12 /* PilotE2ECredentials.swift */; };
 /* End PBXBuildFile section */
@@ -81,6 +85,10 @@
 		MGR173 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
 		MGR174 /* it */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = it; path = it.lproj/Localizable.strings; sourceTree = "<group>"; };
 		MGR133 /* ManagerUITestLaunchHooks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManagerUITestLaunchHooks.swift; sourceTree = "<group>"; };
+		MGR134 /* ManagerIntelligenceModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManagerIntelligenceModels.swift; sourceTree = "<group>"; };
+		MGR135 /* ManagerCopilotService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManagerCopilotService.swift; sourceTree = "<group>"; };
+		MGR136 /* ProjectIntelligenceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectIntelligenceView.swift; sourceTree = "<group>"; };
+		MGR137 /* ProjectCopilotChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectCopilotChatView.swift; sourceTree = "<group>"; };
 		MGRUT10 /* AiStroykaManagerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AiStroykaManagerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		MGRUT11 /* ManagerSmokeUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManagerSmokeUITests.swift; sourceTree = "<group>"; };
 		MGRUT12 /* PilotE2ECredentials.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PilotE2ECredentials.swift; sourceTree = "<group>"; };
@@ -111,7 +119,7 @@
 		};
 		MGR051S /* Services */ = {
 			isa = PBXGroup;
-			children = ( MGR104 );
+			children = ( MGR104, MGR134, MGR135 );
 			path = Services;
 			sourceTree = "<group>";
 		};
@@ -123,7 +131,7 @@
 		};
 		MGR051V /* Views */ = {
 			isa = PBXGroup;
-			children = ( MGR110, MGR111, MGR112, MGR113, MGR114, MGR115, MGR116, MGR117, MGR118, MGR119, MGR120, MGR121, MGR122, MGR123, MGR124, MGR132, MGR125, MGR126, MGR127 );
+			children = ( MGR110, MGR111, MGR112, MGR113, MGR114, MGR115, MGR116, MGR117, MGR118, MGR119, MGR120, MGR121, MGR122, MGR123, MGR124, MGR132, MGR125, MGR126, MGR127, MGR136, MGR137 );
 			path = Views;
 			sourceTree = "<group>";
 		};
@@ -229,7 +237,7 @@
 		MGR030 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
-			files = ( MGR001, MGR002, MGR003, MGR004, MGR005, MGR006, MGR007, MGR008, MGR009, MGR010, MGR011, MGR012, MGR013, MGR014, MGR015, MGR016, MGR017, MGR018, MGR019, MGR020, MGR021, MGR022, MGR023, MGR036, MGR024, MGR025, MGR026, MGR027, MGR037 );
+			files = ( MGR001, MGR002, MGR003, MGR004, MGR005, MGR006, MGR007, MGR008, MGR009, MGR010, MGR011, MGR012, MGR013, MGR014, MGR015, MGR016, MGR017, MGR018, MGR019, MGR020, MGR021, MGR022, MGR023, MGR036, MGR024, MGR025, MGR026, MGR027, MGR037, MGR038, MGR039, MGR040, MGR041B );
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		MGRUT21 /* Sources */ = {

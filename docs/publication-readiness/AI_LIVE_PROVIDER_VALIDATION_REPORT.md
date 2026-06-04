@@ -1,5 +1,8 @@
 # AI Live Provider Validation Report
 
+> **Authoritative gate (2026-06-04):** `bash scripts/smoke/ai_live_provider.sh --require-live` on deployed `apps/web` (Cloudflare Worker). Truth report: `docs/ai/AUDIT_AI_VALIDATION_REPORT.md`. Architecture: `docs/ai/AUDIT_AI_RUNTIME_ARCHITECTURE_TRUTH.md`.  
+> **SUPERSEDED / NOT AUTHORITATIVE:** any `backend/.../check_ai_connection.py` reference (no Python backend in AISTROYKA).
+
 ## Goal
 
 Classify live AI/copilot readiness based on real production evidence.
@@ -163,6 +166,9 @@ Repository secret inventory check (`gh secret list`) confirms:
 ## Operator closure commands
 
 ```bash
+# Canonical live provider gate (required for LEVEL 4)
+bash scripts/smoke/ai_live_provider.sh --require-live
+
 # rerun production deploy workflow (includes AI gate with stream probe)
 gh workflow run deploy-cloudflare-prod.yml --repo 2qjckdknjf-ctrl/Aistroyka-web --ref main -f ref=main
 

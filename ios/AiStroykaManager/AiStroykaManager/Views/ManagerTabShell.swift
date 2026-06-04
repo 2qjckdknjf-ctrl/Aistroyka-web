@@ -8,6 +8,8 @@ import Shared
 
 struct ManagerTabShell: View {
     @State private var selectedTab = 0
+    @State private var e2eProjectId: String?
+    @State private var showE2EProjectDetail = false
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -15,6 +17,7 @@ struct ManagerTabShell: View {
                 .tabItem { Label(NSLocalizedString("mgr_tab_home", comment: ""), systemImage: "house.fill") }
                 .tag(0)
             ProjectsListView()
+                .accessibilityIdentifier("pilot_manager_projects_tab")
                 .tabItem { Label(NSLocalizedString("mgr_tab_projects", comment: ""), systemImage: "folder.fill") }
                 .tag(1)
             TasksListView()
@@ -34,6 +37,22 @@ struct ManagerTabShell: View {
                 .tabItem { Label(NSLocalizedString("mgr_tab_more", comment: ""), systemImage: "ellipsis.circle.fill") }
                 .tag(6)
         }
+        .accessibilityIdentifier("pilot_manager_tab_shell")
         .tint(.accentColor)
+        .onAppear {
+            let pid = ManagerUITestLaunchHooks.e2eProjectId
+            e2eProjectId = pid
+            if pid != nil {
+                showE2EProjectDetail = true
+            }
+        }
+        .fullScreenCover(isPresented: $showE2EProjectDetail) {
+            if let projectId = e2eProjectId {
+                NavigationStack {
+                    ProjectDetailView(projectId: projectId, projectName: nil)
+                        .accessibilityIdentifier("pilot_manager_project_detail_e2e")
+                }
+            }
+        }
     }
 }

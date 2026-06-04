@@ -32,7 +32,8 @@ public actor APIClient {
         path: String,
         method: String = "GET",
         body: Encodable? = nil,
-        idempotencyKey: String? = nil
+        idempotencyKey: String? = nil,
+        keyDecoding: JSONDecoder.KeyDecodingStrategy = .convertFromSnakeCase
     ) async throws -> T {
         guard let base = Config.apiBaseURL else { throw APIError(statusCode: nil, code: nil, message: "Invalid base URL") }
         let pathTrimmed = path.hasPrefix("/") ? String(path.dropFirst()) : path
@@ -64,8 +65,43 @@ public actor APIClient {
         }
 
         let decoder = JSONDecoder()
-        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        decoder.keyDecodingStrategy = keyDecoding
         return try decoder.decode(T.self, from: data)
+    }
+
+    /// POST with raw response for SSE streams (caller parses body).
+    public func postForStream(
+        path: String,
+        body: Encodable
+    ) async throws -> (URLSession.AsyncBytes, HTTPURLResponse) {
+        guard let base = Config.apiBaseURL else { throw APIError(statusCode: nil, code: nil, message: "Invalid base URL") }
+        let pathTrimmed = path.hasPrefix("/") ? String(path.dropFirst()) : path
+        guard let url = URL(string: pathTrimmed, relativeTo: base) else { throw APIError(statusCode: nil, code: nil, message: "Invalid path") }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue(DeviceContext.deviceId, forHTTPHeaderField: "x-device-id")
+        request.setValue(clientProfile, forHTTPHeaderField: "x-client")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("text/event-stream", forHTTPHeaderField: "Accept")
+        if let token = await tokenProvider?() {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        request.httpBody = try JSONEncoder().encode(AnyEncodable(body))
+        let (bytes, response) = try await session.bytes(for: request)
+        guard let http = response as? HTTPURLResponse else {
+            throw APIError(statusCode: nil, code: nil, message: "Invalid response")
+        }
+        if http.statusCode == 401 {
+            await notifySessionInvalidIfNeeded()
+        }
+        if http.statusCode >= 400 {
+            var data = Data()
+            for try await chunk in bytes {
+                data.append(chunk)
+            }
+            throw APIError.from(data: data, response: response)
+        }
+        return (bytes, http)
     }
 
     public func requestVoid(

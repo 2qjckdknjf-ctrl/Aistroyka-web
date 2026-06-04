@@ -311,3 +311,11 @@ jobs:
             export INCLUDE_STREAM=0
           fi
           bash scripts/smoke/ai_phase5_gate.sh
+
+  ai-live-provider-gate:
+    name: Post-deploy AI live provider gate (non-blocking)
+    needs: [deploy, pilot-smoke, stakeholder-finance-sanity]
+    uses: ./.github/workflows/ai-live-provider-gate.yml
+    with:
+      base_url: https://aistroyka.ai
+    continue-on-error: true

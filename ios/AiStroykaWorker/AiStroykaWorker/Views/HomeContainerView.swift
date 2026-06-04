@@ -18,6 +18,7 @@ struct HomeContainerView: View {
         Group {
             if loading && projects.isEmpty {
                 InlineLoadingRow(NSLocalizedString("worker_loading_projects", comment: ""))
+                    .accessibilityIdentifier("pilot_worker_projects_loading")
             } else if let err = errorMessage {
                 InlineErrorRetryRow(
                     message: err,
@@ -49,11 +50,14 @@ struct HomeContainerView: View {
                         store.save { $0.selectedProjectId = nil }
                     }
                 )
+                .accessibilityIdentifier("pilot_worker_home")
             }
         }
+        .accessibilityIdentifier("pilot_worker_home_container")
         .onAppear {
             loadProjects()
             restoreSelectedProject()
+            applyE2EProjectSelectionIfNeeded()
         }
         .onChange(of: selectedProject?.id) { new in
             if let id = new { saveSelectedProjectId(id) }
@@ -61,10 +65,20 @@ struct HomeContainerView: View {
     }
     
     private func restoreSelectedProject() {
+        if applyE2EProjectSelectionIfNeeded() { return }
         guard let id = store.state.selectedProjectId, !projects.isEmpty else { return }
         if let p = projects.first(where: { $0.id == id }) {
             selectedProject = p
         }
+    }
+
+    @discardableResult
+    private func applyE2EProjectSelectionIfNeeded() -> Bool {
+        guard let e2eId = UITestLaunchHooks.e2eProjectId, !projects.isEmpty else { return false }
+        guard let p = projects.first(where: { $0.id == e2eId }) else { return false }
+        selectedProject = p
+        saveSelectedProjectId(p.id)
+        return true
     }
     
     private func saveSelectedProjectId(_ id: String) {
@@ -80,6 +94,10 @@ struct HomeContainerView: View {
                 await MainActor.run {
                     projects = list
                     if selectedProject == nil {
+                        if applyE2EProjectSelectionIfNeeded() {
+                            loading = false
+                            return
+                        }
                         if let id = store.state.selectedProjectId, let p = list.first(where: { $0.id == id }) {
                             selectedProject = p
                         } else if list.count == 1 {

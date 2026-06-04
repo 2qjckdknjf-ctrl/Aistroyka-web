@@ -36,5 +36,6 @@ struct ManagerUnauthorizedView: View {
         .padding()
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(.systemGroupedBackground))
+        .accessibilityIdentifier("pilot_manager_unauthorized")
     }
 }
