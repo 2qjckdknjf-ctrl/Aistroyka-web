@@ -1,0 +1,21 @@
+# Redirect-only Worker for aistroyka.com → https://aistroyka.ai (301, path + query preserved).
+# Does NOT attach to aistroyka.ai or www.aistroyka.ai.
+name = "aistroyka-com-redirect"
+main = "worker.js"
+compatibility_date = "2024-12-30"
+
+[[routes]]
+pattern = "aistroyka.com"
+zone_name = "aistroyka.com"
+
+[[routes]]
+pattern = "aistroyka.com/*"
+zone_name = "aistroyka.com"
+
+[[routes]]
+pattern = "www.aistroyka.com"
+zone_name = "aistroyka.com"
+
+[[routes]]
+pattern = "www.aistroyka.com/*"
+zone_name = "aistroyka.com"

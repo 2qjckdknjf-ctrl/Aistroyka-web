@@ -1,0 +1,32 @@
+# One-shot: proxied DNS for aistroyka.com + validate 301 redirect to aistroyka.ai.
+# Worker aistroyka-com-redirect must already be deployed (see apps/cloudflare-com-redirect/).
+# Requires GitHub secrets: CLOUDFLARE_API_TOKEN; optional CLOUDFLARE_ZONE_ID_AISTROYKA_COM.
+name: Aistroyka.com redirect setup
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  configure-com-redirect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check Cloudflare token present
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [ -z "${CLOUDFLARE_API_TOKEN}" ]; then
+            echo "CLOUDFLARE_API_TOKEN secret is missing"
+            exit 1
+          fi
+          echo "CLOUDFLARE_API_TOKEN is set (len=${#CLOUDFLARE_API_TOKEN})"
+
+      - name: Configure proxied DNS and validate redirects
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ZONE_ID_AISTROYKA_COM: ${{ vars.CLOUDFLARE_ZONE_ID_AISTROYKA_COM }}
+        run: bash scripts/ops/configure-aistroyka-com-dns-for-redirect.sh
