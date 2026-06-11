@@ -104,6 +104,14 @@ linux-x64 → бинаря нет → конфиг не загружается. 
   `apps/web/vercel.json` `{"github": {"autoJobCancelation": false}}` (не применено —
   поведенческое решение за владельцем).
 
+## Дозакрытые пункты (follow-up 2026-06-11, вечер)
+
+- **Размер Cloudflare-воркера (гипотеза №11):** замерено на свежем `cf:build` — `handler.mjs` 26 MB raw (< лимита 64 MB), **3.92 MiB gzip**. Это выше лимита Free-плана (3 MiB), но в пределах Paid (10 MiB); прод-деплои проходят → аккаунт на Workers Paid, запас ~2.5×. Мониторить при росте бандла.
+- **Тех-долг «копипаста между worktree» (гипотеза №9, корень репо):** остатки до-монорепного приложения в корне (`components/`, `lib/`, `middleware.ts`, `next.config.js`, `tailwind.config.ts`, `postcss.config.js`, `public/`) ни на что не ссылались (apps/web имеет собственные конфиги; grep по scripts/workflows/packages пуст) — перенесены в `archive/legacy-app-root/` по конвенции репо. Валидация: полный `cf:build` зелёный после переноса.
+- **Дизайн-токены:** `bun run check:design` — чисто (raw-цветов вне токенов нет).
+- **Android instrumented smoke:** воркфлоу был сломан с момента добавления `WorkerAppLaunchInstrumentedTest` (никогда не было androidTest-зависимостей и runner'а) — починен в PR #80, прогон на эмуляторе зелёный.
+- **iOS #31:** портирован в main (PR #79), ios-ui-smoke зелёный.
+
 ## Триаж draft-PR от cursor[bot] (выполнен, см. вторую/третью ревизию ветки)
 
 Каждое заявление ботовских PR сверено с фактическим кодом main:
