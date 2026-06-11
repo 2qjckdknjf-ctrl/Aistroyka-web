@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient, getSessionUser } from "@/lib/supabase/server";
+import { createClientFromRequest, getSessionUser } from "@/lib/supabase/server";
 import { getTenantForCurrentUser } from "@/lib/api/engine";
 import { shouldShowOnboarding } from "@/lib/onboarding/user-onboarding";
 
@@ -7,8 +7,8 @@ import { shouldShowOnboarding } from "@/lib/onboarding/user-onboarding";
  * GET /api/v1/activation/status
  * Returns product activation state for onboarding and Get Started checklist.
  */
-export async function GET() {
-  const supabase = await createClient();
+export async function GET(request: Request) {
+  const supabase = await createClientFromRequest(request);
   const user = await getSessionUser(supabase);
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

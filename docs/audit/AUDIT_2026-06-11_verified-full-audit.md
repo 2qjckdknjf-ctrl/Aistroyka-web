@@ -104,9 +104,26 @@ linux-x64 → бинаря нет → конфиг не загружается. 
   `apps/web/vercel.json` `{"github": {"autoJobCancelation": false}}` (не применено —
   поведенческое решение за владельцем).
 
+## Триаж draft-PR от cursor[bot] (выполнен, см. вторую/третью ревизию ветки)
+
+Каждое заявление ботовских PR сверено с фактическим кодом main:
+
+| PR | Заявление | Вердикт | Действие |
+|---|---|---|---|
+| #50 | Неявная привязка Telegram к активной сессии | Был жив | **Исправлено в этой ветке** (409/403 + тесты) |
+| #53 | `create_analysis_job` зовётся сессионным клиентом при отозванном EXECUTE | Был жив (upload-роуты, `lib/supabase/rpc.ts`) | **Исправлено в этой ветке**: RPC всегда через service-role внутри `lib/api/engine.ts#createAnalysisJob`, fail-closed без ключа + тесты |
+| #33b | Bearer-only запросы падают на cookie-клиенте: `reports/[id]/analysis-status`, `projects/[id]/reports`, `activation/status`, `devices/unregister` | Был жив (все 4 роута) | **Исправлено в этой ветке**: переведены на `createClientFromRequest` |
+| #33a / #29 | Android-манифесты не регистрируют `ManagerApplication`/`WorkerApplication` (краш на холодном старте) | Был жив | **Исправлено в этой ветке**: `android:name` добавлен в оба манифеста |
+| #33c | AI-роуты analyze-image/analyze-video-daily без tenant-auth | Закрыт ранее | Закрыть PR как superseded |
+| #33d | `/api/v1/sync/changes`: ошибки change-log трактуются как пустая дельта (`change-log.repository.ts` возвращает `[]` при error) | Похоже, жив | Триаж владельцем: graceful degradation или баг — решить и при необходимости вернуть 503 |
+| #33e/f, #31 | iOS worker_day.id / object_path / гонки фильтров менеджера | Не верифицируемо чтением кода | Ручная проверка на симуляторе |
+| #18 | Subscription-gate redirect внутри try/catch + нет исключения для stakeholder | Похоже, жив (`app/[locale]/(dashboard)/layout.tsx:61-77`) | Поведенческое решение владельца — не менялось |
+| #27/#30/#45 | Изоляция upload-sessions, cron-secret | Закрыты ранее | Закрыть PR как superseded |
+| #40 | Runbook описывает прод-деплой как push-triggered | Док расходится с заявлением PR | Решить, какое поведение актуально, и закрыть PR |
+
 ## Остаточные рекомендации (без изменений в этом PR)
 
-1. Триаж 9 draft-PR от cursor[bot], в первую очередь #50 (Telegram linking).
+1. Дозакрыть триаж: #33d (sync/changes 503), #18 (subscription-gate), iOS-пункты #33e/f и #31 — затем закрыть все ботовские draft-PR.
 2. Согласовать судьбу двойного лок-набора (bun.lock + package-lock.json): npm-путь нужен
    Vercel, bun — CI/Cloudflare; зафиксировать в CI проверку согласованности корневого лока
    (`npm ci --dry-run` на linux) чтобы рассинхрон не возвращался.
