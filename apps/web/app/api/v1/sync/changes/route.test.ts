@@ -39,10 +39,22 @@ vi.mock("@/lib/sync/sync-cursors.repository", () => ({
 
 describe("GET /api/v1/sync/changes", () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     vi.mocked(changeLogRepo.getMinRetainedCursor).mockReturnValue(0);
     vi.mocked(changeLogRepo.getMaxCursor).mockResolvedValue(0);
     vi.mocked(syncCursorsRepo.getCursor).mockResolvedValue(0);
     vi.mocked(changeLogRepo.getChangesAfter).mockResolvedValue([]);
+  });
+
+  it("returns 503 sync_changes_unavailable when change-log query fails", async () => {
+    vi.mocked(changeLogRepo.getChangesAfter).mockRejectedValueOnce(new Error("db down"));
+    const req = new Request("https://test/api/v1/sync/changes?cursor=0&limit=50", {
+      headers: { "x-device-id": "device-1" },
+    });
+    const res = await GET(req);
+    expect(res.status).toBe(503);
+    const body = await res.json();
+    expect(body).toMatchObject({ error: "sync_changes_unavailable" });
   });
 
   it("returns 409 with sync_conflict when cursor is ahead of server", async () => {

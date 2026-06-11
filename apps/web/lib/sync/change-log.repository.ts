@@ -42,7 +42,11 @@ export type ChangeLogRow = {
   payload: Record<string, unknown>;
 };
 
-/** Get changes after cursor for tenant (array form for sync/changes route). */
+/**
+ * Get changes after cursor for tenant (array form for sync/changes route).
+ * Throws on query failure: a DB error must not look like "no changes",
+ * otherwise sync clients treat a failed read as caught-up.
+ */
 export async function getChangesAfter(
   supabase: SupabaseClient,
   tenantId: string,
@@ -56,8 +60,8 @@ export async function getChangesAfter(
     .gt("id", afterCursor)
     .order("id", { ascending: true })
     .limit(limit);
-  if (error || !data) return [];
-  return data as ChangeLogRow[];
+  if (error) throw error;
+  return (data ?? []) as ChangeLogRow[];
 }
 
 /** Get changes after cursor for tenant (rows + nextCursor). */

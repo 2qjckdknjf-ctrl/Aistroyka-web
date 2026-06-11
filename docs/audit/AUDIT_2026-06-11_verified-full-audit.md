@@ -115,7 +115,7 @@ linux-x64 → бинаря нет → конфиг не загружается. 
 | #33b | Bearer-only запросы падают на cookie-клиенте: `reports/[id]/analysis-status`, `projects/[id]/reports`, `activation/status`, `devices/unregister` | Был жив (все 4 роута) | **Исправлено в этой ветке**: переведены на `createClientFromRequest` |
 | #33a / #29 | Android-манифесты не регистрируют `ManagerApplication`/`WorkerApplication` (краш на холодном старте) | Был жив | **Исправлено в этой ветке**: `android:name` добавлен в оба манифеста |
 | #33c | AI-роуты analyze-image/analyze-video-daily без tenant-auth | Закрыт ранее | Закрыть PR как superseded |
-| #33d | `/api/v1/sync/changes`: ошибки change-log трактуются как пустая дельта (`change-log.repository.ts` возвращает `[]` при error) | Похоже, жив | Триаж владельцем: graceful degradation или баг — решить и при необходимости вернуть 503 |
+| #33d | `/api/v1/sync/changes`: ошибки change-log трактуются как пустая дельта (`change-log.repository.ts` возвращает `[]` при error) | Был жив | **Исправлено в этой ветке**: throw в репозитории → 503 `sync_changes_unavailable` в роуте + тесты. Изменение контракта безопасно: мобильные клиенты кидают ApiError на ≥400 и ретраят без сдвига курсора |
 | #33e/f, #31 | iOS worker_day.id / object_path / гонки фильтров менеджера | Не верифицируемо чтением кода | Ручная проверка на симуляторе |
 | #18 | Subscription-gate redirect внутри try/catch + нет исключения для stakeholder | Похоже, жив (`app/[locale]/(dashboard)/layout.tsx:61-77`) | Поведенческое решение владельца — не менялось |
 | #27/#30/#45 | Изоляция upload-sessions, cron-secret | Закрыты ранее | Закрыть PR как superseded |
@@ -123,7 +123,7 @@ linux-x64 → бинаря нет → конфиг не загружается. 
 
 ## Остаточные рекомендации (без изменений в этом PR)
 
-1. Дозакрыть триаж: #33d (sync/changes 503), #18 (subscription-gate), iOS-пункты #33e/f и #31 — затем закрыть все ботовские draft-PR.
+1. Дозакрыть триаж: #18 (subscription-gate — поведенческое решение по биллингу), iOS-пункты #33e/f и #31 (нужен симулятор) — затем закрыть все ботовские draft-PR.
 2. Согласовать судьбу двойного лок-набора (bun.lock + package-lock.json): npm-путь нужен
    Vercel, bun — CI/Cloudflare; зафиксировать в CI проверку согласованности корневого лока
    (`npm ci --dry-run` на linux) чтобы рассинхрон не возвращался.
