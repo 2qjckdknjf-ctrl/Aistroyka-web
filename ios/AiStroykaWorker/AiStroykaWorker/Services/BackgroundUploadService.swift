@@ -233,12 +233,18 @@ extension BackgroundUploadService: URLSessionTaskDelegate {
             mappingStore.remove(taskIdentifier: taskId)
             return
         }
+        let sizeBytes = op.payload.sizeBytes ?? 0
+        if let persisted = op.payload.objectPath, !persisted.isEmpty {
+            markUploadSucceeded(operationId: operationId, taskId: taskId, objectPath: persisted, sizeBytes: sizeBytes)
+            return
+        }
+        // Legacy fallback for in-flight operations scheduled before objectPath persistence.
+        // Filename must match the uploaded one (photoItemId.prefix(8), see uploadBinary).
         let pathInBucket = op.payload.uploadPath ?? ""
         let path = pathInBucket.hasPrefix("media/") ? String(pathInBucket.dropFirst(6)) : pathInBucket
         let photoItemId = op.payload.photoItemId ?? String(operationId.prefix(8))
-        let filename = "\(photoItemId).jpg"
+        let filename = "\(photoItemId.prefix(8)).jpg"
         let objectPath = "media/\(path)/\(filename)"
-        let sizeBytes = op.payload.sizeBytes ?? 0
         markUploadSucceeded(operationId: operationId, taskId: taskId, objectPath: objectPath, sizeBytes: sizeBytes)
     }
 }

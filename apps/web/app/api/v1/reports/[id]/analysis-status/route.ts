@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClientFromRequest } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { getById as getReportById } from "@/lib/domain/reports/report.repository";
 import * as jobRepo from "@/lib/platform/jobs/job.repository";
@@ -23,7 +23,7 @@ export async function GET(
     throw e;
   }
 
-  const supabase = await createClient();
+  const supabase = await createClientFromRequest(_request);
   const report = await getReportById(supabase, reportId, ctx.tenantId!);
   if (!report) return NextResponse.json({ error: "Report not found" }, { status: 404 });
 

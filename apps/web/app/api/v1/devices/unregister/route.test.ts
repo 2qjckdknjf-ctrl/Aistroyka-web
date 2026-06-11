@@ -28,12 +28,14 @@ vi.mock("@/lib/supabase/server", () => {
     }),
     catch: vi.fn(),
   };
-  return {
-    createClient: vi.fn().mockResolvedValue({
-      from: vi.fn().mockReturnValue({
-        delete: vi.fn().mockReturnValue(deleteChain),
-      }),
+  const client = {
+    from: vi.fn().mockReturnValue({
+      delete: vi.fn().mockReturnValue(deleteChain),
     }),
+  };
+  return {
+    createClient: vi.fn().mockResolvedValue(client),
+    createClientFromRequest: vi.fn().mockResolvedValue(client),
   };
 });
 

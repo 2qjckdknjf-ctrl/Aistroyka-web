@@ -20,6 +20,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      # CI builds with bun; Vercel installs with npm from the root lock. Catch
+      # npm-lock corruption (missing versions, macOS-only platform binaries)
+      # here instead of on the next Vercel deploy.
+      - name: Validate root package-lock (Vercel npm path)
+        run: node scripts/ci/validate-npm-lock.cjs
+
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:

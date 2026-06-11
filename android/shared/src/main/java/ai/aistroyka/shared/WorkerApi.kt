@@ -61,13 +61,15 @@ object WorkerApi {
         return r.data.orEmpty()
     }
 
-    suspend fun startDay(idempotencyKey: String) {
-        ApiClient.requestVoid(
+    /** Returns the server `worker_day.id` (UUID) so reports can link `day_id` correctly. */
+    suspend fun startDay(idempotencyKey: String): String? {
+        val r: WorkerDayResponse = ApiClient.request(
             path = "worker/day/start",
             method = "POST",
             jsonBody = "{}",
             idempotencyKey = idempotencyKey,
         )
+        return r.data?.id
     }
 
     suspend fun endDay(idempotencyKey: String) {
@@ -226,6 +228,12 @@ object WorkerApi {
             throw ApiError(res.code, null, msg)
         }
     }
+
+    @Serializable
+    private data class WorkerDayResponse(val data: WorkerDayData? = null)
+
+    @Serializable
+    private data class WorkerDayData(val id: String? = null)
 
     @Serializable
     private data class UnregisterDeviceBody(@SerialName("device_id") val deviceId: String)
