@@ -63,13 +63,20 @@ enum WorkerAPI {
         return r.data ?? []
     }
     
-    static func startDay(idempotencyKey: String) async throws {
-        try await APIClient.shared.requestVoid(
+    /// Returns the server `worker_day.id` (UUID) so reports can link `day_id` correctly.
+    @discardableResult
+    static func startDay(idempotencyKey: String) async throws -> String? {
+        struct Response: Decodable {
+            struct Day: Decodable { let id: String? }
+            let data: Day?
+        }
+        let response: Response = try await APIClient.shared.request(
             path: "worker/day/start",
             method: "POST",
             body: EmptyBody(),
             idempotencyKey: idempotencyKey
         )
+        return response.data?.id
     }
     
     static func endDay(idempotencyKey: String) async throws {

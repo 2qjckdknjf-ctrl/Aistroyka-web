@@ -119,8 +119,10 @@ final class OperationQueueExecutor: ObservableObject {
         do {
             switch op.type {
             case .startShift:
-                try await WorkerAPI.startDay(idempotencyKey: op.idempotencyKey)
-                let day = op.payload.dayId ?? todayDayId()
+                // Persist the server worker_day UUID: worker_reports.day_id is a uuid FK,
+                // a local date key would fail report creation or unlink the shift.
+                let serverDayId = try await WorkerAPI.startDay(idempotencyKey: op.idempotencyKey)
+                let day = serverDayId ?? op.payload.dayId ?? todayDayId()
                 appStore.save {
                     $0.shift.dayId = day
                     $0.shift.startedAt = ISO8601DateFormatter().string(from: Date())
@@ -152,7 +154,13 @@ final class OperationQueueExecutor: ObservableObject {
                 let filename = "\(photoItemId.prefix(8)).jpg"
                 let storagePath = "\(pathInBucket)/\(filename)"
                 try BackgroundUploadService.shared.scheduleUpload(operationId: op.id, storagePath: storagePath, data: data, token: token)
-                opStore.update(id: op.id) { $0.payload.sizeBytes = data.count }
+                // Persist the exact uploaded path: the background delegate must finalize the
+                // same object it uploaded, not a reconstruction from partial payload state.
+                opStore.update(id: op.id) {
+                    $0.payload.sizeBytes = data.count
+                    $0.payload.uploadPath = uploadPath
+                    $0.payload.objectPath = "media/\(storagePath)"
+                }
                 return .deferred
             case .finalizeSession:
                 let sessionId = op.payload.sessionId
