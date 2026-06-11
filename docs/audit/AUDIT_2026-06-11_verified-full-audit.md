@@ -117,13 +117,13 @@ linux-x64 → бинаря нет → конфиг не загружается. 
 | #33c | AI-роуты analyze-image/analyze-video-daily без tenant-auth | Закрыт ранее | Закрыть PR как superseded |
 | #33d | `/api/v1/sync/changes`: ошибки change-log трактуются как пустая дельта (`change-log.repository.ts` возвращает `[]` при error) | Был жив | **Исправлено в этой ветке**: throw в репозитории → 503 `sync_changes_unavailable` в роуте + тесты. Изменение контракта безопасно: мобильные клиенты кидают ApiError на ≥400 и ретраят без сдвига курсора |
 | #33e/f, #31 | iOS worker_day.id / object_path / гонки фильтров менеджера | Не верифицируемо чтением кода | Ручная проверка на симуляторе |
-| #18 | Subscription-gate redirect внутри try/catch + нет исключения для stakeholder | Похоже, жив (`app/[locale]/(dashboard)/layout.tsx:61-77`) | Поведенческое решение владельца — не менялось |
+| #18 | Subscription-gate redirect внутри try/catch + нет исключения для stakeholder | Был жив: `redirect()` бросает NEXT_REDIRECT, локальный catch его проглатывал — гейт был мёртв | **Исправлено в этой ветке** (redirect вынесен из try/catch). ⚠️ После мержа гейт впервые реально включится в проде: убедитесь, что пилотные workspace в `billing_pilot_workspaces`, либо выставьте `SUBSCRIPTION_GATE_DASHBOARD=pilot`. Stakeholder без tenant'а гейтом не задевается (`tenantId=null`) |
 | #27/#30/#45 | Изоляция upload-sessions, cron-secret | Закрыты ранее | Закрыть PR как superseded |
 | #40 | Runbook описывает прод-деплой как push-triggered | Док расходится с заявлением PR | Решить, какое поведение актуально, и закрыть PR |
 
 ## Остаточные рекомендации (без изменений в этом PR)
 
-1. Дозакрыть триаж: #18 (subscription-gate — поведенческое решение по биллингу), iOS-пункты #33e/f и #31 (нужен симулятор) — затем закрыть все ботовские draft-PR.
+1. Дозакрыть триаж: iOS-пункты #33e/f и #31 (нужен симулятор) — затем закрыть все ботовские draft-PR (#18, #27, #29, #30, #31, #33, #40, #45, #50, #53) как superseded/triaged.
 2. Согласовать судьбу двойного лок-набора (bun.lock + package-lock.json): npm-путь нужен
    Vercel, bun — CI/Cloudflare; зафиксировать в CI проверку согласованности корневого лока
    (`npm ci --dry-run` на linux) чтобы рассинхрон не возвращался.
