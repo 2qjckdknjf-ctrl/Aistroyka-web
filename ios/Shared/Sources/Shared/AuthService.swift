@@ -101,6 +101,13 @@ public actor AuthService {
         }
     }
 
+    /// Live E2E: seed session from host-prefetched Supabase token (see `run-ios-e2e-integration-local.sh`).
+    public func seedE2ESession(accessToken: String, userId: String, email: String?) {
+        cachedSession = (accessToken, AuthUser(id: userId, email: email))
+        _ = KeychainHelper.set(key: KeychainHelper.sessionTokenKey, value: accessToken)
+        _ = KeychainHelper.set(key: KeychainHelper.sessionUserIdKey, value: userId)
+    }
+
     public func signOut() async {
         cachedSession = nil
         KeychainHelper.delete(key: KeychainHelper.sessionTokenKey)

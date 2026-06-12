@@ -41,6 +41,16 @@ struct HomeContainerView: View {
                     }
             } else if selectedProject == nil {
                 ProjectPickerView(projects: projects, selected: $selectedProject)
+            } else if UITestLaunchHooks.isE2EEnabled, UITestLaunchHooks.e2eOpenReportDraft {
+                ReportCreateView(
+                    projectId: selectedProject!.id,
+                    dayId: store.state.shift.dayId,
+                    draftReportId: nil,
+                    taskId: nil,
+                    taskTitle: nil
+                )
+                .accessibilityElement(children: .contain)
+                .accessibilityIdentifier("pilot_worker_e2e_report_draft_shell")
             } else {
                 HomeView(
                     project: selectedProject!,
@@ -61,6 +71,9 @@ struct HomeContainerView: View {
         }
         .onChange(of: selectedProject?.id) { new in
             if let id = new { saveSelectedProjectId(id) }
+        }
+        .onChange(of: projects.count) { _ in
+            _ = applyE2EProjectSelectionIfNeeded()
         }
     }
     

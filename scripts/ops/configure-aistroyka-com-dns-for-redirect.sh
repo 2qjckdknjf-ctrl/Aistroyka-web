@@ -8,6 +8,7 @@ APEX_PLACEHOLDER_IP="192.0.2.1"
 
 if [[ -z "${CLOUDFLARE_API_TOKEN:-}" ]]; then
   echo "ERROR: CLOUDFLARE_API_TOKEN is required." >&2
+  echo "Token must include Zone DNS Edit for aistroyka.com (not just Workers deploy scope)." >&2
   exit 1
 fi
 

@@ -32,26 +32,54 @@ public enum Config {
     }
 
     public static var baseURL: String {
-        stringInfo("BASE_URL")
+        if let e2e = E2EAutoSignIn.apiBaseURLOverride {
+            return e2e.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        }
+        if E2EAutoSignIn.isEnabled,
+           let launchBase = ProcessInfo.processInfo.environment["BASE_URL"]?
+            .trimmingCharacters(in: .whitespacesAndNewlines),
+           !launchBase.isEmpty {
+            return launchBase.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        }
+        return stringInfo("BASE_URL")
             ?? ProcessInfo.processInfo.environment["BASE_URL"]
             ?? "http://localhost:3000"
     }
 
     public static var supabaseURL: String {
-        stringInfo("SUPABASE_URL")
+        if let e2e = E2EAutoSignIn.supabaseURLOverride {
+            return e2e
+        }
+        if E2EAutoSignIn.isEnabled,
+           let launch = ProcessInfo.processInfo.environment["SUPABASE_URL"]?
+            .trimmingCharacters(in: .whitespacesAndNewlines),
+           !launch.isEmpty {
+            return launch
+        }
+        return stringInfo("SUPABASE_URL")
             ?? ProcessInfo.processInfo.environment["SUPABASE_URL"]
             ?? ""
     }
 
     public static var supabaseAnonKey: String {
-        stringInfo("SUPABASE_ANON_KEY")
+        if let e2e = E2EAutoSignIn.supabaseAnonKeyOverride {
+            return e2e
+        }
+        if E2EAutoSignIn.isEnabled,
+           let launch = ProcessInfo.processInfo.environment["SUPABASE_ANON_KEY"]?
+            .trimmingCharacters(in: .whitespacesAndNewlines),
+           !launch.isEmpty {
+            return launch
+        }
+        return stringInfo("SUPABASE_ANON_KEY")
             ?? ProcessInfo.processInfo.environment["SUPABASE_ANON_KEY"]
             ?? ""
     }
 
-    /// Base for v1 API: e.g. http://localhost:3000/api/v1
+    /// Base for v1 API: e.g. http://localhost:3000/api/v1/
+    /// Trailing slash required — Foundation `URL(string:relativeTo:)` drops `/v1` without it.
     public static var apiBaseURL: URL? {
         let b = baseURL.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-        return URL(string: "\(b)/api/v1")
+        return URL(string: "\(b)/api/v1/")
     }
 }

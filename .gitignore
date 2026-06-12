@@ -34,6 +34,8 @@ DerivedData/
 **/SourcePackages/
 *.xcresult
 ios/Config/Secrets.xcconfig
+ios/Config/.uitest-e2e-credentials
+ios/Shared/Sources/Shared/e2e-credentials.env
 **/xcuserdata/
 *.xcuserstate
 

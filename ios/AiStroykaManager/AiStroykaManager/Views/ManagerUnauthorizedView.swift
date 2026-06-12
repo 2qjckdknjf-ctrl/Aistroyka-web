@@ -27,11 +27,13 @@ struct ManagerUnauthorizedView: View {
                     sessionState.checkSession()
                 }
                 .buttonStyle(.bordered)
+                .accessibilityIdentifier("pilot_manager_unauthorized_retry")
             }
             Button(NSLocalizedString("mgr_sign_out", comment: "")) {
                 Task { await sessionState.signOut() }
             }
             .buttonStyle(.borderedProminent)
+            .accessibilityIdentifier("pilot_manager_unauthorized_sign_out")
         }
         .padding()
         .frame(maxWidth: .infinity, maxHeight: .infinity)

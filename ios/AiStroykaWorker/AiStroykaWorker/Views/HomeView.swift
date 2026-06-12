@@ -17,6 +17,7 @@ struct HomeView: View {
     @ObservedObject private var syncService = SyncService.shared
     @State private var errorMessage: String?
     @State private var navigateToNewReport = false
+    @State private var showNewReportSheet = false
     @State private var resumeDraftReportId: String?
     @State private var todayTasks: [TaskDTO] = []
     @State private var tasksLoading = false
@@ -34,6 +35,7 @@ struct HomeView: View {
 
     var body: some View {
         NavigationStack {
+            ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 workerStartGuidanceCard
                 let pending = opStore.pendingCount()
@@ -132,12 +134,8 @@ struct HomeView: View {
                         .accessibilityIdentifier("pilot_worker_feedback_\(r.id)")
                     }
                 }
-                Button(NSLocalizedString("worker_new_report", comment: "")) {
-                    store.save { $0.draftTaskId = nil }
-                    resumeDraftReportId = nil
-                    navigateToNewReport = true
-                }
-                .accessibilityIdentifier("pilot_worker_new_report")
+                Button(NSLocalizedString("worker_new_report", comment: ""), action: openNewReportDraft)
+                    .accessibilityIdentifier("pilot_worker_new_report")
                 Spacer()
                 Button(NSLocalizedString("worker_support", comment: "")) { showDiagnostics = true }
                     .foregroundColor(.secondary)
@@ -147,6 +145,8 @@ struct HomeView: View {
                     .accessibilityIdentifier("pilot_worker_sign_out")
             }
             .padding()
+            }
+            .accessibilityIdentifier("pilot_worker_home_scroll")
             .navigationTitle(project.name ?? project.id)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -197,6 +197,18 @@ struct HomeView: View {
                         }
                 }
             }
+            .sheet(isPresented: $showNewReportSheet) {
+                NavigationStack {
+                    ReportCreateView(
+                        projectId: project.id,
+                        dayId: dayId,
+                        draftReportId: nil,
+                        taskId: nil,
+                        taskTitle: nil
+                    )
+                }
+                .accessibilityIdentifier("pilot_worker_report_compose_sheet")
+            }
             .navigationDestination(isPresented: $navigateToNewReport) {
                 ReportCreateView(
                     projectId: project.id,
@@ -229,6 +241,12 @@ struct HomeView: View {
             default: break
             }
         }
+    }
+
+    private func openNewReportDraft() {
+        store.save { $0.draftTaskId = nil; $0.draftReportId = nil }
+        resumeDraftReportId = nil
+        showNewReportSheet = true
     }
 
     private var workerStartGuidanceCard: some View {

@@ -8,10 +8,20 @@ import Shared
 
 struct ManagerTabShell: View {
     @State private var selectedTab = 0
-    @State private var e2eProjectId: String?
-    @State private var showE2EProjectDetail = false
 
     var body: some View {
+        if let projectId = ManagerUITestLaunchHooks.e2eProjectId {
+            NavigationStack {
+                ProjectDetailView(projectId: projectId, projectName: nil)
+            }
+            .accessibilityElement(children: .contain)
+            .accessibilityIdentifier("pilot_manager_e2e_deeplink_shell")
+        } else {
+            managerTabs
+        }
+    }
+
+    private var managerTabs: some View {
         TabView(selection: $selectedTab) {
             HomeDashboardView()
                 .tabItem { Label(NSLocalizedString("mgr_tab_home", comment: ""), systemImage: "house.fill") }
@@ -39,20 +49,5 @@ struct ManagerTabShell: View {
         }
         .accessibilityIdentifier("pilot_manager_tab_shell")
         .tint(.accentColor)
-        .onAppear {
-            let pid = ManagerUITestLaunchHooks.e2eProjectId
-            e2eProjectId = pid
-            if pid != nil {
-                showE2EProjectDetail = true
-            }
-        }
-        .fullScreenCover(isPresented: $showE2EProjectDetail) {
-            if let projectId = e2eProjectId {
-                NavigationStack {
-                    ProjectDetailView(projectId: projectId, projectName: nil)
-                        .accessibilityIdentifier("pilot_manager_project_detail_e2e")
-                }
-            }
-        }
     }
 }

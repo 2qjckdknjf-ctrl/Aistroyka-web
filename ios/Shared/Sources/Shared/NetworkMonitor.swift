@@ -18,7 +18,9 @@ public final class NetworkMonitor: ObservableObject {
 
     private static var treatsNetworkAsConnectedForAutomation: Bool {
         let env = ProcessInfo.processInfo.environment
-        return env["AISTROYKA_E2E"] == "1" || env["AISTROYKA_UI_TEST"] == "1"
+        if env["AISTROYKA_E2E"] == "1" || env["AISTROYKA_UI_TEST"] == "1" { return true }
+        let args = ProcessInfo.processInfo.arguments
+        return args.contains("-AISTROYKA_E2E") || args.contains("-AISTROYKA_UI_TEST")
     }
 
     public init() {

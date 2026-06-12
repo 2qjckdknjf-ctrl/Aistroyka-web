@@ -31,13 +31,38 @@ enum PilotE2ECredentials {
     static var projectId: String? {
         firstNonEmpty(
             "IOS_E2E_PROJECT_ID",
+            "AISTROYKA_E2E_PROJECT_ID",
             "PILOT_SMOKE_PROJECT_ID_PRODUCTION",
             "PILOT_E2E_PROJECT_ID"
         )
     }
 
+    static var apiBaseURL: String? {
+        firstNonEmpty("IOS_E2E_BASE_URL", "AISTROYKA_E2E_BASE_URL", "BASE_URL", "PILOT_E2E_BASE_URL")
+    }
+
+    static var supabaseURL: String? {
+        firstNonEmpty("SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_URL")
+    }
+
+    static var supabaseAnonKey: String? {
+        firstNonEmpty("SUPABASE_ANON_KEY", "NEXT_PUBLIC_SUPABASE_ANON_KEY")
+    }
+
+    static var accessToken: String? {
+        firstNonEmpty("IOS_E2E_ACCESS_TOKEN", "AISTROYKA_E2E_ACCESS_TOKEN")
+    }
+
+    static var userId: String? {
+        firstNonEmpty("IOS_E2E_USER_ID", "AISTROYKA_E2E_USER_ID")
+    }
+
+    static var credentialsFilePath: String {
+        credentialsFileURL.path
+    }
+
     static var isConfigured: Bool {
-        email != nil && password != nil
+        (email != nil && password != nil) || (accessToken != nil && userId != nil)
     }
 
     static func skipUnlessConfigured(_ testCase: XCTestCase) throws {
