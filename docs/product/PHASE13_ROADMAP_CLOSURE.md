@@ -11,7 +11,7 @@
 | No P0/P1 open | **PASS (prod)** | `docs/audit/AUDIT_2026-06-11_full-project-audit-v2.md` — P0/P1 not found on `main` after PR #77–#82; stakeholder live sanity **PASS** (2026-05-22, `FINAL_CUSTOMER_FINANCE_ISOLATION_AUDIT.md`) |
 | Staging green | **PASS** | `pilot_launch.sh` staging exit 0 — 2026-05-08; `/api/v1/health` **200** (2026-06-12) |
 | Production smoke green | **PASS** | `pilot_launch.sh` production exit 0 — 2026-05-08; `/api/v1/health` **200** (2026-06-12) |
-| Core E2E green | **PASS** | `bun run e2e:pilot` vs staging — 2026-05-09 (`FINAL_E2E_REPORT.md`) |
+| Core E2E green | **PASS** | `bun run e2e:pilot` vs staging — **21 passed** (2026-06-12, after i18n namespace fix + staging deploy `c48f1f8a`) |
 | Customer finance isolation green | **PASS (repo + live)** | Route guards + RLS; prod audit v2: ~130 public tables `rowsecurity=true`, Supabase security advisors **0**; stakeholder sanity script PASS |
 | Clear launch checklist | **YES** | `FINAL_RELEASE_CHECKLIST.md` |
 
@@ -23,7 +23,7 @@
 | `bun run test` | **PASS** — 1488 tests |
 | `bun run i18n:check` | **PASS** — activation/dashboard namespaces |
 | `bun run release:check` | **PASS_WITH_WARNINGS** (optional stripe/ai/push/e2e env) |
-| `bun run cf:build` | **NOT RE-RUN** this session — last PASS 2026-05-08 |
+| `bun run cf:build` | **PASS** (2026-06-12, local + staging deploy workflow) |
 
 ## Live gates — 2026-06-12
 
