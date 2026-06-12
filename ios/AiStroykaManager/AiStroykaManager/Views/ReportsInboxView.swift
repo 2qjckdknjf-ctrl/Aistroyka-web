@@ -201,7 +201,7 @@ struct ReportDetailReviewView: View {
                             if let err = reviewActionError {
                                 Text(err)
                                     .font(.caption)
-                                    .foregroundStyle(.red)
+                                    .foregroundStyle(ManagerSemanticColors.error)
                             }
                             TextField(NSLocalizedString("mgr_report_review_note_label", comment: ""), text: $managerNoteText, axis: .vertical)
                                 .lineLimit(2...4)

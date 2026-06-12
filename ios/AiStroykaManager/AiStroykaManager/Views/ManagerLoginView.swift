@@ -68,7 +68,7 @@ struct ManagerLoginView: View {
                 if let err = effectiveErrorMessage {
                     Section {
                         Text(err)
-                            .foregroundStyle(.red)
+                            .foregroundStyle(ManagerSemanticColors.error)
                     }
                 }
                 Section {
