@@ -13,7 +13,7 @@
 		MGR004 /* ManagerAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR104; };
 		MGR005 /* EmptyStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR105; };
 		MGR006 /* ErrorStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR106; };
-		MGR038 /* ManagerSemanticColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR175; };
+		MGR042 /* ManagerSemanticColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR175; };
 		MGR007 /* KPICard.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR107; };
 		MGR008 /* LoadingStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR108; };
 		MGR009 /* SectionHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR109; };
@@ -239,7 +239,7 @@
 		MGR030 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
-			files = ( MGR001, MGR002, MGR003, MGR004, MGR005, MGR006, MGR007, MGR008, MGR009, MGR010, MGR011, MGR012, MGR013, MGR014, MGR015, MGR016, MGR017, MGR018, MGR019, MGR020, MGR021, MGR022, MGR023, MGR036, MGR024, MGR025, MGR026, MGR027, MGR037, MGR038, MGR039, MGR040, MGR041B );
+			files = ( MGR001, MGR002, MGR003, MGR004, MGR005, MGR006, MGR042, MGR007, MGR008, MGR009, MGR010, MGR011, MGR012, MGR013, MGR014, MGR015, MGR016, MGR017, MGR018, MGR019, MGR020, MGR021, MGR022, MGR023, MGR036, MGR024, MGR025, MGR026, MGR027, MGR037, MGR038, MGR039, MGR040, MGR041B );
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		MGRUT21 /* Sources */ = {
