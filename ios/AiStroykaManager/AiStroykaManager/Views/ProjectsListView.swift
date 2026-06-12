@@ -14,10 +14,10 @@ struct ProjectsListView: View {
     var body: some View {
         NavigationStack {
             Group {
-                if isLoading {
+                if isLoading && projects.isEmpty && errorMessage == nil {
                     LoadingStateView(message: NSLocalizedString("mgr_loading_projects", comment: ""))
                         .accessibilityIdentifier("pilot_manager_projects_loading")
-                } else if let err = errorMessage {
+                } else if let err = errorMessage, projects.isEmpty {
                     ErrorStateView(message: err, retry: { load() })
                 } else if projects.isEmpty {
                     EmptyStateView(

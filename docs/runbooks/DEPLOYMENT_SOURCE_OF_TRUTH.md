@@ -34,7 +34,7 @@
 | **Worker name (expected)** | `aistroyka-web-production` (per deploy workflow / `wrangler.toml` comments) |
 | **Public URL** | https://aistroyka.ai (apex and `www` should both serve the app; validate with health below) |
 
-**GitHub workflow (production):** **Deploy Cloudflare (Production)** — triggers on **push to `main`** and `workflow_dispatch`.
+**GitHub workflow (production):** **Deploy Cloudflare (Production)** — triggers on **successful completion of “Deploy Cloudflare (Staging)” on `main`** (`workflow_run`; the deploy job is gated by `workflow_run.conclusion == 'success'`) and on manual `workflow_dispatch` (optional `ref` input, default `main`). There is no direct push-to-main trigger.
 
 **Blocking production gate after deploy:** **Post-deploy pilot smoke** (reusable workflow), targeting `https://aistroyka.ai`.
 

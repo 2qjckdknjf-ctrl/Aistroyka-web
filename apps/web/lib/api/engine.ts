@@ -5,6 +5,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createAnalysisJobRpc } from "./rpcClient";
+import { getAdminClient } from "@/lib/supabase/admin";
 
 const MEDIA_BUCKET = "media";
 
@@ -102,12 +103,24 @@ export async function getDefaultTenantId(
   return getOrCreateTenantForCurrentUser(supabase);
 }
 
-/** Create a pending analysis job for the given media. Returns job row or throws. */
+/**
+ * Create a pending analysis job for the given media. Returns job row or throws.
+ * EXECUTE on create_analysis_job is revoked from anon/authenticated
+ * (migration 20260527170500), so the RPC always goes through the service-role
+ * client. Callers must complete their own auth/ownership checks first; the
+ * caller-facing client parameter is intentionally not used for the RPC.
+ */
 export async function createAnalysisJob(
-  supabase: SupabaseClient,
+  _supabase: SupabaseClient,
   params: { tenant_id: string; media_id: string; priority?: "high" | "normal" | "low" }
 ): Promise<{ id: string; media_id: string; status: string }> {
-  const row = await createAnalysisJobRpc(supabase, {
+  const admin = getAdminClient();
+  if (!admin) {
+    throw new Error(
+      "create_analysis_job requires SUPABASE_SERVICE_ROLE_KEY (server-only). Set in env and redeploy."
+    );
+  }
+  const row = await createAnalysisJobRpc(admin, {
     p_tenant_id: params.tenant_id,
     p_media_id: params.media_id,
     p_priority: params.priority ?? "normal",

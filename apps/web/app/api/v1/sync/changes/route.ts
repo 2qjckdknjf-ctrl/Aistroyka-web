@@ -68,7 +68,13 @@ export async function GET(request: Request) {
     await recordSyncConflict(supabase, tenantId, { hint: "device_mismatch", device_id: deviceId });
     return withRequestIdAndTiming(request, syncConflictResponse(serverCursor, false, "device_mismatch"), { route: ROUTE_KEY, method: "GET", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
   }
-  const changes = await getChangesAfter(supabase, ctx.tenantId, cursor, limit);
+  let changes: Awaited<ReturnType<typeof getChangesAfter>>;
+  try {
+    changes = await getChangesAfter(supabase, ctx.tenantId, cursor, limit);
+  } catch (err) {
+    logStructured({ event: "sync_changes_unavailable", route: ROUTE_KEY, tenant_id: ctx.tenantId, device_id: deviceId, error: String(err), request_id: getOrCreateRequestId(request) });
+    return withRequestIdAndTiming(request, NextResponse.json({ error: "sync_changes_unavailable" }, { status: 503 }), { route: ROUTE_KEY, method: "GET", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
+  }
   const nextCursor = changes.length > 0 ? changes[changes.length - 1].id : cursor;
   void Promise.resolve(
     supabase

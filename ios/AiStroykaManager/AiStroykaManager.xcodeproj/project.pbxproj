@@ -13,6 +13,7 @@
 		MGR004 /* ManagerAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR104; };
 		MGR005 /* EmptyStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR105; };
 		MGR006 /* ErrorStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR106; };
+		MGR038 /* ManagerSemanticColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR175; };
 		MGR007 /* KPICard.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR107; };
 		MGR008 /* LoadingStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR108; };
 		MGR009 /* SectionHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR109; };
@@ -55,6 +56,7 @@
 		MGR104 /* ManagerAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManagerAPI.swift; sourceTree = "<group>"; };
 		MGR105 /* EmptyStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyStateView.swift; sourceTree = "<group>"; };
 		MGR106 /* ErrorStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorStateView.swift; sourceTree = "<group>"; };
+		MGR175 /* ManagerSemanticColors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManagerSemanticColors.swift; sourceTree = "<group>"; };
 		MGR107 /* KPICard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KPICard.swift; sourceTree = "<group>"; };
 		MGR108 /* LoadingStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingStateView.swift; sourceTree = "<group>"; };
 		MGR109 /* SectionHeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionHeaderView.swift; sourceTree = "<group>"; };
@@ -125,7 +127,7 @@
 		};
 		MGR051D /* Design */ = {
 			isa = PBXGroup;
-			children = ( MGR105, MGR106, MGR107, MGR108, MGR109 );
+			children = ( MGR105, MGR106, MGR107, MGR108, MGR109, MGR175 );
 			path = Design;
 			sourceTree = "<group>";
 		};

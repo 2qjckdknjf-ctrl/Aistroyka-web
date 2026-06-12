@@ -122,6 +122,21 @@ export async function POST(request: Request) {
   }
 
   const identityRow = existingIdentity as { user_id?: string } | null;
+  // An authenticated session must not implicitly bind a Telegram identity:
+  // a phished/replayed widget payload would otherwise attach the victim's
+  // Telegram login to the attacker's account. Linking goes through the
+  // verified flow (/api/v1/integrations/telegram/link); re-login of an
+  // already-linked identity for the same user stays allowed.
+  if (currentUser && identityRow?.user_id && identityRow.user_id !== currentUser.id) {
+    return NextResponse.json({ ok: false, error: "identity_conflict" }, { status: 409 });
+  }
+  if (currentUser && !identityRow?.user_id) {
+    return NextResponse.json(
+      { ok: false, error: "telegram_link_requires_verified_flow" },
+      { status: 403 }
+    );
+  }
+
   const targetUserId = currentUser?.id ?? identityRow?.user_id ?? null;
   let resolvedUserId = targetUserId;
   let sessionIssued = false;

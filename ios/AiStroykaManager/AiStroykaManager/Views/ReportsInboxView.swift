@@ -13,6 +13,7 @@ struct ReportsInboxView: View {
     @State private var selectedProjectId: String?
     @State private var isLoading = true
     @State private var errorMessage: String?
+    @State private var loadGeneration = 0
 
     var body: some View {
         NavigationStack {
@@ -31,7 +32,7 @@ struct ReportsInboxView: View {
                 }
             }
             .navigationTitle(NSLocalizedString("mgr_tab_reports", comment: ""))
-            .refreshable { await loadAsync() }
+            .refreshable { await refreshAsync() }
             .onAppear {
                 if let id = initialProjectId, selectedProjectId == nil { selectedProjectId = id }
                 loadIfNeeded()
@@ -44,11 +45,10 @@ struct ReportsInboxView: View {
             if !projects.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
-                        FilterChip(title: NSLocalizedString("mgr_all", comment: ""), selected: selectedProjectId == nil) { selectedProjectId = nil; load() }
+                        FilterChip(title: NSLocalizedString("mgr_all", comment: ""), selected: selectedProjectId == nil) { selectProjectFilter(nil) }
                         ForEach(projects, id: \.id) { p in
                             FilterChip(title: p.name ?? p.id, selected: selectedProjectId == p.id) {
-                                selectedProjectId = p.id
-                                load()
+                                selectProjectFilter(p.id)
                             }
                         }
                     }
@@ -66,10 +66,22 @@ struct ReportsInboxView: View {
         }
     }
 
-    private func load() {
+    @MainActor
+    private func selectProjectFilter(_ projectId: String?) {
+        guard selectedProjectId != projectId else { return }
+        selectedProjectId = projectId
+        load(clearReports: true)
+    }
+
+    @MainActor
+    private func load(clearReports: Bool = false) {
         errorMessage = nil
         isLoading = true
-        Task { await loadAsync() }
+        if clearReports { reports = [] }
+        loadGeneration += 1
+        let generation = loadGeneration
+        let projectId = selectedProjectId
+        Task { await loadAsync(generation: generation, projectId: projectId) }
     }
 
     private func loadIfNeeded() {
@@ -77,15 +89,26 @@ struct ReportsInboxView: View {
         load()
     }
 
-    private func loadAsync() async {
+    @MainActor
+    private func refreshAsync() async {
+        loadGeneration += 1
+        let generation = loadGeneration
+        await loadAsync(generation: generation, projectId: selectedProjectId)
+    }
+
+    @MainActor
+    private func loadAsync(generation: Int, projectId: String?) async {
         await runManagerLoad(
-            setLoading: { isLoading = $0 },
-            setErrorMessage: { errorMessage = $0 }
+            setLoading: { if generation == loadGeneration { isLoading = $0 } },
+            setErrorMessage: { if generation == loadGeneration { errorMessage = $0 } }
         ) {
-            async let reportsTask = ManagerAPI.reports(projectId: selectedProjectId, limit: 100)
+            async let reportsTask = ManagerAPI.reports(projectId: projectId, limit: 100)
             async let projectsTask = ManagerAPI.projects()
-            reports = try await reportsTask
-            projects = try await projectsTask
+            let loadedReports = try await reportsTask
+            let loadedProjects = try await projectsTask
+            guard generation == loadGeneration else { return }
+            reports = loadedReports
+            projects = loadedProjects
         }
     }
 }
@@ -178,7 +201,7 @@ struct ReportDetailReviewView: View {
                             if let err = reviewActionError {
                                 Text(err)
                                     .font(.caption)
-                                    .foregroundStyle(.red)
+                                    .foregroundStyle(ManagerSemanticColors.error)
                             }
                             TextField(NSLocalizedString("mgr_report_review_note_label", comment: ""), text: $managerNoteText, axis: .vertical)
                                 .lineLimit(2...4)

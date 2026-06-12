@@ -11,15 +11,16 @@ export type ContactLeadInput = {
 
 /** Persist public contact/demo form to platform-level contact_leads (service role). */
 export async function insertContactLead(admin: AdminClient, data: ContactLeadInput) {
-  return admin
-    .from("contact_leads")
-    // @ts-expect-error contact_leads insert row not in generated Database types
-    .insert({
-      name: data.name,
-      email: data.email,
-      company: data.company ?? null,
-      message: data.message,
-      source: "contact_form",
-      status: "new",
-    });
+  // contact_leads is not in the generated Database types; the typed insert
+  // resolves to never[], and the error line shifts between supabase-js patch
+  // versions, so a cast is more stable here than @ts-expect-error.
+  const row = {
+    name: data.name,
+    email: data.email,
+    company: data.company ?? null,
+    message: data.message,
+    source: "contact_form",
+    status: "new",
+  };
+  return admin.from("contact_leads").insert(row as never);
 }

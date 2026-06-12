@@ -44,7 +44,7 @@ data class WorkerUiState(
     val syncStatus: String = "idle",
     val syncCursor: Int = 0,
     val syncError: String? = null,
-    /** Local shift id (yyyyMMdd), same contract as iOS `todayDayId`. */
+    /** Server `worker_day.id` (UUID); legacy installs may still hold a local yyyyMMdd key. */
     val shiftDayId: String? = null,
     val activeReportId: String? = null,
     val photoLabel: String? = null,
@@ -283,9 +283,10 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch {
             _state.update { it.copy(busy = true, banner = null) }
             try {
-                WorkerApi.startDay(idempotencyKey = DeviceContext.newIdempotencyKey())
-                shiftPrefs.edit().putString("shift_day_id", day).apply()
-                _state.update { it.copy(busy = false, shiftDayId = day) }
+                val serverDayId = WorkerApi.startDay(idempotencyKey = DeviceContext.newIdempotencyKey())
+                val effectiveDayId = serverDayId?.takeIf { it.isNotBlank() } ?: day
+                shiftPrefs.edit().putString("shift_day_id", effectiveDayId).apply()
+                _state.update { it.copy(busy = false, shiftDayId = effectiveDayId) }
                 loadTasksForSelection()
             } catch (e: ApiError) {
                 handleApiError(e)
@@ -346,7 +347,9 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
             }
             try {
                 val id = WorkerApi.createReport(
-                    dayId = dayId,
+                    // day_id is a uuid FK on the server; legacy local yyyyMMdd keys would
+                    // fail report creation, so send the day only when it is a server UUID.
+                    dayId = dayId.takeIf { it.length == 36 && it.contains("-") },
                     taskId = taskId,
                     idempotencyKey = DeviceContext.newIdempotencyKey(),
                 )

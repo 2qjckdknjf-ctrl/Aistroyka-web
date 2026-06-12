@@ -15,6 +15,7 @@ struct TasksListView: View {
     @State private var showCreate = false
     @State private var isLoading = true
     @State private var errorMessage: String?
+    @State private var loadGeneration = 0
 
     var body: some View {
         NavigationStack {
@@ -37,13 +38,13 @@ struct TasksListView: View {
             }
             .navigationTitle(NSLocalizedString("mgr_tab_tasks", comment: ""))
             .toolbar { ToolbarItem(placement: .primaryAction) { Button(NSLocalizedString("mgr_new", comment: ""), systemImage: "plus") { showCreate = true } } }
-            .refreshable { await loadAsync() }
+            .refreshable { await refreshAsync() }
             .onAppear {
                 if let id = initialProjectId, selectedProjectId == nil { selectedProjectId = id }
                 loadIfNeeded()
             }
             .sheet(isPresented: $showCreate) {
-                if let proj = projects.first ?? projects.first(where: { $0.id == selectedProjectId }) {
+                if let proj = projects.first(where: { $0.id == selectedProjectId }) ?? projects.first {
                     TaskCreateEditView(projectId: proj.id, projectName: proj.name, onDismiss: { showCreate = false; load() })
                 } else {
                     Text(NSLocalizedString("mgr_load_projects_first", comment: ""))
@@ -67,16 +68,15 @@ struct TasksListView: View {
     private var filtersBar: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                FilterChip(title: NSLocalizedString("mgr_all_projects", comment: ""), selected: selectedProjectId == nil) { selectedProjectId = nil; load() }
+                FilterChip(title: NSLocalizedString("mgr_all_projects", comment: ""), selected: selectedProjectId == nil) { selectProjectFilter(nil) }
                 ForEach(projects.prefix(5), id: \.id) { p in
                     FilterChip(title: p.name ?? p.id, selected: selectedProjectId == p.id) {
-                        selectedProjectId = p.id
-                        load()
+                        selectProjectFilter(p.id)
                     }
                 }
-                FilterChip(title: NSLocalizedString("mgr_all_status", comment: ""), selected: statusFilter == nil) { statusFilter = nil; load() }
-                FilterChip(title: NSLocalizedString("mgr_status_pending", comment: ""), selected: statusFilter == "pending") { statusFilter = "pending"; load() }
-                FilterChip(title: NSLocalizedString("mgr_status_done", comment: ""), selected: statusFilter == "done") { statusFilter = "done"; load() }
+                FilterChip(title: NSLocalizedString("mgr_all_status", comment: ""), selected: statusFilter == nil) { selectStatusFilter(nil) }
+                FilterChip(title: NSLocalizedString("mgr_status_pending", comment: ""), selected: statusFilter == "pending") { selectStatusFilter("pending") }
+                FilterChip(title: NSLocalizedString("mgr_status_done", comment: ""), selected: statusFilter == "done") { selectStatusFilter("done") }
             }
             .padding(.horizontal)
         }
@@ -90,10 +90,30 @@ struct TasksListView: View {
             .padding()
     }
 
-    private func load() {
+    @MainActor
+    private func selectProjectFilter(_ projectId: String?) {
+        guard selectedProjectId != projectId else { return }
+        selectedProjectId = projectId
+        load(clearTasks: true)
+    }
+
+    @MainActor
+    private func selectStatusFilter(_ status: String?) {
+        guard statusFilter != status else { return }
+        statusFilter = status
+        load(clearTasks: true)
+    }
+
+    @MainActor
+    private func load(clearTasks: Bool = false) {
         errorMessage = nil
         isLoading = true
-        Task { await loadAsync() }
+        if clearTasks { tasks = [] }
+        loadGeneration += 1
+        let generation = loadGeneration
+        let projectId = selectedProjectId
+        let status = statusFilter
+        Task { await loadAsync(generation: generation, projectId: projectId, status: status) }
     }
 
     private func loadIfNeeded() {
@@ -101,15 +121,34 @@ struct TasksListView: View {
         load()
     }
 
-    private func loadAsync() async {
+    @MainActor
+    private func refreshAsync() async {
+        loadGeneration += 1
+        let generation = loadGeneration
+        await loadAsync(generation: generation, projectId: selectedProjectId, status: statusFilter)
+    }
+
+    @MainActor
+    private func loadAsync(generation: Int, projectId: String?, status: String?) async {
+        let shouldLoadProjects = projects.isEmpty
         await runManagerLoad(
-            setLoading: { isLoading = $0 },
-            setErrorMessage: { errorMessage = $0 }
+            setLoading: { if generation == loadGeneration { isLoading = $0 } },
+            setErrorMessage: { if generation == loadGeneration { errorMessage = $0 } }
         ) {
-            async let tasksTask = ManagerAPI.tasks(projectId: selectedProjectId, status: statusFilter, limit: 100)
-            async let projectsTask = ManagerAPI.projects()
-            tasks = try await tasksTask
-            if projects.isEmpty { projects = try await projectsTask }
+            if shouldLoadProjects {
+                async let tasksTask = ManagerAPI.tasks(projectId: projectId, status: status, limit: 100)
+                async let projectsTask = ManagerAPI.projects()
+                let loadedTasks = try await tasksTask
+                let loadedProjects = try await projectsTask
+                guard generation == loadGeneration else { return }
+                tasks = loadedTasks
+                projects = loadedProjects
+                return
+            }
+
+            let loadedTasks = try await ManagerAPI.tasks(projectId: projectId, status: status, limit: 100)
+            guard generation == loadGeneration else { return }
+            tasks = loadedTasks
         }
     }
 }
@@ -175,7 +214,12 @@ struct TaskDetailManagerView: View {
                         .disabled(isAssigning)
                         if let err = assignError {
                             Text(err)
-                                .foregroundStyle(.red)
+                                .foregroundStyle(ManagerSemanticColors.error)
+                                .font(.caption)
+                        }
+                        if let message = assignSuccessMessage {
+                            Text(message)
+                                .foregroundStyle(ManagerSemanticColors.success)
                                 .font(.caption)
                         }
                     }
@@ -228,16 +272,31 @@ struct TaskDetailManagerView: View {
                 setErrorMessage: { assignError = $0 }
             ) {
                 try await ManagerAPI.assignTask(taskId: taskId, workerId: workerId, idempotencyKey: UUID().uuidString)
-                await loadAsync()
             }
             if success {
+                task = taskAssigned(to: workerId)
                 assignSuccessMessage = NSLocalizedString("mgr_assigned", comment: "")
+                await loadAsync()
                 Task { @MainActor in
                     try? await Task.sleep(nanoseconds: 2_500_000_000)
                     assignSuccessMessage = nil
                 }
             }
         }
+    }
+
+    private func taskAssigned(to workerId: String) -> TaskDetailDTO? {
+        guard let current = task else { return nil }
+        return TaskDetailDTO(
+            id: current.id,
+            title: current.title,
+            status: current.status,
+            projectId: current.projectId,
+            dueDate: current.dueDate,
+            assignedTo: workerId,
+            reportId: current.reportId,
+            reportStatus: current.reportStatus
+        )
     }
 }
 
@@ -282,7 +341,7 @@ struct TaskAssigneePickerView: View {
                                 Spacer(minLength: 8)
                                 if w.userId == currentAssignedTo {
                                     Image(systemName: "checkmark.circle.fill")
-                                        .foregroundStyle(.green)
+                                        .foregroundStyle(ManagerSemanticColors.success)
                                         .font(.body)
                                 }
                             }
@@ -364,7 +423,7 @@ struct TaskCreateEditView: View {
                 if let err = errorMessage {
                     Section {
                         Text(err)
-                            .foregroundStyle(.red)
+                            .foregroundStyle(ManagerSemanticColors.error)
                     }
                 }
             }

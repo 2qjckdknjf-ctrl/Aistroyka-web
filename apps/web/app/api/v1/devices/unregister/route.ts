@@ -3,7 +3,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClientFromRequest } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { DeviceUnregisterRequestSchema } from "@aistroyka/contracts";
 import { requireLiteIdempotency, storeLiteIdempotency } from "@/lib/api/lite-idempotency";
@@ -34,7 +34,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: msg }, { status: 400 });
   }
   const deviceId = parsed.data.device_id;
-  const supabase = await createClient();
+  const supabase = await createClientFromRequest(request);
   const { error } = await supabase
     .from("device_tokens")
     .delete()

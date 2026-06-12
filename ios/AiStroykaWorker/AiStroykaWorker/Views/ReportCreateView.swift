@@ -229,7 +229,9 @@ struct ReportCreateView: View {
         draftId = did
         let key = store.state.draftReportCreateKey[did] ?? DeviceContext.newIdempotencyKey()
         store.save { $0.draftReportCreateKey[did] = key; $0.draftReportId = did }
-        let day = dayId ?? todayDayId()
+        // day_id is a uuid FK on the server; send it only when we hold the server
+        // worker_day id (legacy local date keys would fail report creation).
+        let day = dayId.flatMap { $0.count == 36 && $0.contains("-") ? $0 : nil }
         let taskIdForCreate = taskId ?? store.state.draftTaskId
         let now = ISO8601DateFormatter().string(from: Date())
         let op = QueuedOperation(

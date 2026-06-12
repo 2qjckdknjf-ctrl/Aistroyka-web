@@ -58,6 +58,10 @@ export default async function DashboardLayout({
       redirect(`/${locale}/login`);
     }
 
+    // redirect() must be called outside this try/catch: it throws NEXT_REDIRECT,
+    // and a local catch would swallow it, silently disabling the gate.
+    // Gate *errors* stay fail-open so transient billing reads don't lock users out.
+    let subscribeRedirect: string | null = null;
     try {
       const admin = getAdminClient();
       if (admin) {
@@ -67,13 +71,16 @@ export default async function DashboardLayout({
           subscriptionState.tenantId &&
           !subscriptionState.hasDashboardAccess
         ) {
-          redirect(`/${locale}/subscribe?dashboard_access=require_subscription`);
+          subscribeRedirect = `/${locale}/subscribe?dashboard_access=require_subscription`;
         }
       }
     } catch (e) {
       if (process.env.NODE_ENV !== "production") {
         console.error("[dashboard layout] subscription gate failed", e instanceof Error ? e.message : String(e));
       }
+    }
+    if (subscribeRedirect) {
+      redirect(subscribeRedirect);
     }
 
     let isAdmin = false;
