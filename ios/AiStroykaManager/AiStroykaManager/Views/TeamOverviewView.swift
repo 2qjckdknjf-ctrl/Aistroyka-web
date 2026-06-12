@@ -73,8 +73,8 @@ struct WorkerRowView: View {
             }
             if let a = worker.anomalies, (a.openShift == true || a.overtime == true || a.noActivity == true) {
                 HStack(spacing: 6) {
-                    if a.openShift == true { Label(NSLocalizedString("mgr_open_shift", comment: ""), systemImage: "clock.badge.exclamation").font(.caption2).foregroundStyle(.orange) }
-                    if a.overtime == true { Label(NSLocalizedString("mgr_overtime", comment: ""), systemImage: "exclamationmark.triangle").font(.caption2).foregroundStyle(.orange) }
+                    if a.openShift == true { Label(NSLocalizedString("mgr_open_shift", comment: ""), systemImage: "clock.badge.exclamation").font(.caption2).foregroundStyle(ManagerSemanticColors.warning) }
+                    if a.overtime == true { Label(NSLocalizedString("mgr_overtime", comment: ""), systemImage: "exclamationmark.triangle").font(.caption2).foregroundStyle(ManagerSemanticColors.warning) }
                     if a.noActivity == true { Label(NSLocalizedString("mgr_no_activity", comment: ""), systemImage: "person.slash").font(.caption2).foregroundStyle(.secondary) }
                 }
             }

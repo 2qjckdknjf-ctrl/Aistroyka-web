@@ -214,12 +214,12 @@ struct TaskDetailManagerView: View {
                         .disabled(isAssigning)
                         if let err = assignError {
                             Text(err)
-                                .foregroundStyle(.red)
+                                .foregroundStyle(ManagerSemanticColors.error)
                                 .font(.caption)
                         }
                         if let message = assignSuccessMessage {
                             Text(message)
-                                .foregroundStyle(.green)
+                                .foregroundStyle(ManagerSemanticColors.success)
                                 .font(.caption)
                         }
                     }
@@ -341,7 +341,7 @@ struct TaskAssigneePickerView: View {
                                 Spacer(minLength: 8)
                                 if w.userId == currentAssignedTo {
                                     Image(systemName: "checkmark.circle.fill")
-                                        .foregroundStyle(.green)
+                                        .foregroundStyle(ManagerSemanticColors.success)
                                         .font(.body)
                                 }
                             }
@@ -423,7 +423,7 @@ struct TaskCreateEditView: View {
                 if let err = errorMessage {
                     Section {
                         Text(err)
-                            .foregroundStyle(.red)
+                            .foregroundStyle(ManagerSemanticColors.error)
                     }
                 }
             }

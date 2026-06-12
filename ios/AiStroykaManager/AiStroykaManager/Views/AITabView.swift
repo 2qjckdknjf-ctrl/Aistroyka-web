@@ -86,7 +86,7 @@ struct AIJobRowView: View {
             if let err = job.lastError, !err.isEmpty {
                 Text(err)
                     .font(.caption2)
-                    .foregroundStyle(.red)
+                    .foregroundStyle(ManagerSemanticColors.error)
                     .lineLimit(2)
             }
         }
