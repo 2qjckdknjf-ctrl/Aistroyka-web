@@ -16,7 +16,7 @@ const SOURCE_LOCALE = "en";
 const TARGET_LOCALES = ["ru", "es", "it"];
 
 /** Namespaces required for dashboard + activation UX */
-const DEFAULT_NAMESPACE_PREFIXES = ["activation.", "dashboard."];
+const DEFAULT_NAMESPACE_PREFIXES = ["activation.", "dashboard.", "dashboardDetail."];
 const fullTreeCheck = process.env.I18N_CHECK_ALL === "1";
 
 /**
@@ -60,7 +60,7 @@ function main() {
   if (!fullTreeCheck) {
     enKeys = new Set(filterByPrefixes(enKeys, prefixes));
     console.log(
-      `[i18n] Checking namespaces: activation.* and dashboard.* (${enKeys.size} leaf keys in ${SOURCE_LOCALE}). Set I18N_CHECK_ALL=1 for full-tree parity.`,
+      `[i18n] Checking namespaces: activation.*, dashboard.*, dashboardDetail.* (${enKeys.size} leaf keys in ${SOURCE_LOCALE}). Set I18N_CHECK_ALL=1 for full-tree parity.`,
     );
   } else {
     console.log(`[i18n] Full-tree parity (${enKeys.size} leaf keys in ${SOURCE_LOCALE}).`);

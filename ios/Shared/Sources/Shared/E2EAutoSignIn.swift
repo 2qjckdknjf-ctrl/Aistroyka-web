@@ -133,14 +133,10 @@ public enum E2EAutoSignIn {
         return v.isEmpty ? nil : v
     }
 
-    /// Layer B E2E: `run-ios-e2e-integration-local.sh` copies secrets into Shared bundle resource.
+    /// Layer B E2E: credentials from gitignored `ios/Config/.uitest-e2e-credentials` via `AISTROYKA_E2E_CRED_FILE`.
     private static func valueFromCredentialsFile(_ key: String) -> String? {
         guard isEnabled else { return nil }
-        // Simulator UITest: host cred file from run-ios-e2e-integration-local.sh is fresher than SPM bundle.
         if let host = hostCredentialsText(), let v = parseCredentialsValue(key, in: host) {
-            return v
-        }
-        if let bundled = bundledCredentialsText(), let v = parseCredentialsValue(key, in: bundled) {
             return v
         }
         return nil
