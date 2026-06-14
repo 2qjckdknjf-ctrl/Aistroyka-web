@@ -57,6 +57,31 @@ describe("GET /api/v1/sync/changes", () => {
     expect(body).toMatchObject({ error: "sync_changes_unavailable" });
   });
 
+  it("returns 503 when the server cursor read (getMaxCursor) fails", async () => {
+    vi.mocked(changeLogRepo.getMaxCursor).mockRejectedValueOnce(new Error("db down"));
+    const req = new Request("https://test/api/v1/sync/changes?cursor=5&limit=50", {
+      headers: { "x-device-id": "device-1" },
+    });
+    const res = await GET(req);
+    expect(res.status).toBe(503);
+    const body = await res.json();
+    expect(body).toMatchObject({ error: "sync_changes_unavailable" });
+    expect(changeLogRepo.getChangesAfter).not.toHaveBeenCalled();
+  });
+
+  it("returns 503 when the device cursor read (getCursor) fails", async () => {
+    vi.mocked(changeLogRepo.getMaxCursor).mockResolvedValue(10);
+    vi.mocked(syncCursorsRepo.getCursor).mockRejectedValueOnce(new Error("db down"));
+    const req = new Request("https://test/api/v1/sync/changes?cursor=5&limit=50", {
+      headers: { "x-device-id": "device-1" },
+    });
+    const res = await GET(req);
+    expect(res.status).toBe(503);
+    const body = await res.json();
+    expect(body).toMatchObject({ error: "sync_changes_unavailable" });
+    expect(changeLogRepo.getChangesAfter).not.toHaveBeenCalled();
+  });
+
   it("returns 409 with sync_conflict when cursor is ahead of server", async () => {
     vi.mocked(changeLogRepo.getMaxCursor).mockResolvedValue(10);
     const req = new Request("https://test/api/v1/sync/changes?cursor=20&limit=50", {

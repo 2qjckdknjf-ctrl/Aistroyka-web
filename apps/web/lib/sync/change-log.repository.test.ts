@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { getChanges, getChangesAfter, getMinRetainedCursor } from "./change-log.repository";
+import { getChanges, getChangesAfter, getMaxCursor, getMinRetainedCursor } from "./change-log.repository";
 
 const mockRows = (ids: number[]) =>
   ids.map((id) => ({
@@ -75,6 +75,31 @@ describe("change-log.repository", () => {
         })),
       } as any;
       await expect(getChangesAfter(supabase, "t1", 0, 10)).rejects.toThrow("db");
+    });
+  });
+
+  describe("getMaxCursor", () => {
+    const build = (result: { data?: unknown; error?: unknown }) =>
+      ({
+        from: vi.fn(() => ({
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              order: vi.fn(() => ({
+                limit: vi.fn(() => ({
+                  maybeSingle: () => Promise.resolve(result),
+                })),
+              })),
+            })),
+          })),
+        })),
+      }) as any;
+
+    it("throws on query error instead of reading it as cursor 0", async () => {
+      await expect(getMaxCursor(build({ error: new Error("db") }), "t1")).rejects.toThrow("db");
+    });
+
+    it("returns 0 when there are no rows (no error)", async () => {
+      await expect(getMaxCursor(build({ data: null, error: null }), "t1")).resolves.toBe(0);
     });
   });
 

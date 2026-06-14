@@ -76,7 +76,11 @@ export async function getChanges(
   return { rows, nextCursor };
 }
 
-/** Get current max cursor for tenant (latest change_log id). */
+/**
+ * Get current max cursor for tenant (latest change_log id).
+ * Throws on query failure so callers don't mistake a DB error for cursor 0
+ * (which would force a false sync conflict). No rows legitimately means 0.
+ */
 export async function getMaxCursor(supabase: SupabaseClient, tenantId: string): Promise<number> {
   const { data, error } = await supabase
     .from("change_log")
@@ -85,7 +89,8 @@ export async function getMaxCursor(supabase: SupabaseClient, tenantId: string): 
     .order("id", { ascending: false })
     .limit(1)
     .maybeSingle();
-  if (error || !data) return 0;
+  if (error) throw error;
+  if (!data) return 0;
   return (data as { id: number }).id;
 }
 

@@ -112,7 +112,37 @@ Android instrumented smoke зелёный (#80). **Не покрыто кодо�
 5. Ручной WCAG 2.2 AA + краш-чек мобильных на устройстве.
 6. Перф-индексы под RLS-колонки — когда вырастет объём данных.
 
+## 6. Дополнение (2026-06-14): data-masking в error-path + Vercel
+
+**Vercel-гигиена — закрыто пользователем, проверено:** в команде остался ровно один проект
+`aistroyka-web-web-v7jq` (рабочий). Оба дубля (`aistroyka-web-web`, `aistroyka-web`) удалены.
+
+**Целевой поиск багов класса `getChangesAfter`** (ошибка БД маскируется под пустое/нулевое
+значение в `catch`/`if (error)` и используется как легитимный ответ). Найдено и
+**исправлено в этой ревизии — sync-подсистема:**
+- `lib/sync/change-log.repository.ts#getMaxCursor` и
+  `lib/sync/sync-cursors.repository.ts#getCursor` возвращали `0` при ошибке запроса.
+  Последствия: `getMaxCursor`→`0` давал ложный `cursor_ahead` (лишний ре-bootstrap);
+  `getCursor`→`0` **молча отключал anti-rollback защиту device-mismatch**. Обе функции
+  теперь `throw` на ошибке (а `0` — только при честном отсутствии строк), роут
+  `/api/v1/sync/changes` читает оба курсора под единым `try`→503 `sync_changes_unavailable`
+  (как уже сделано для `getChangesAfter`). +4 теста.
+
+**Найдено, НЕ исправлялось — требуется решение владельца (компромисс fail-closed vs throw,
+затрагивает authz/billing-семантику):**
+| Место | Класс | Поведение при ошибке БД | Рекомендация |
+|---|---|---|---|
+| `lib/authz/authz.repository.ts#getPermissionsForRoleName`, `#getUserScopes` | authz | `[]` → доступ запрещён (fail-closed) | безопасное направление, но маскирует сбой; рассмотреть throw→500 или отдельный лог-алерт |
+| `lib/domain/project-members/project-members.repository.ts#getMembership`/`isProjectMember` | authz | `null`/`false` → не участник (fail-closed) | то же; на ошибке владелец проекта временно «теряет» owner-права |
+| `lib/domain/org/org.repository.ts#hasOrgAdminRole` | authz | `false` → запрет (fail-closed) | то же |
+| `lib/platform/billing/entitlements.service.ts#getEntitlements` | billing | `null` → откат к дефолтным лимитам тарифа | **потенциально опасно**: сбой чтения может СНЯТЬ кастомный лимит; рассмотреть throw |
+| `lib/platform/ai-usage/ai-usage.repository.ts` (budget/spent reads) | billing | `0`/синтетика → может обойти бюджет-гейт | **потенциально опасно для спенда**; решить fail-closed (блок AI при сбое чтения биллинга) vs текущее |
+
+LOW-risk (маскировка в презентационных/ops/телеметрия-репозиториях) — приемлемая
+деградация, в отчёт занесена, не трогалось.
+
 ## Заключение
 
-Критических и высоких рисков на текущем `main` не выявлено. Все находки первой ревизии
-исправлены и в проде; остаток — управляемая гигиена уровня P2/P3.
+Критических и высоких рисков на текущем `main` не выявлено. Находки первой ревизии и
+sync-подсистемы исправлены и в проде; остаток — управляемая гигиена P2/P3 плюс пять
+authz/billing error-path решений, вынесенных на владельца (см. §6).

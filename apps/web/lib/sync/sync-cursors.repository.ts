@@ -17,7 +17,12 @@ export async function upsertCursor(
   return !error;
 }
 
-/** Get cursor for device. */
+/**
+ * Get cursor for device.
+ * Throws on query failure so a DB error is not silently read as cursor 0,
+ * which would disable the device-mismatch / anti-rollback guard. No stored
+ * row legitimately means 0 (first sync for this device).
+ */
 export async function getCursor(
   supabase: SupabaseClient,
   tenantId: string,
@@ -31,6 +36,7 @@ export async function getCursor(
     .eq("user_id", userId)
     .eq("device_id", deviceId)
     .maybeSingle();
-  if (error || !data) return 0;
+  if (error) throw error;
+  if (!data) return 0;
   return (data as { cursor: number }).cursor;
 }
