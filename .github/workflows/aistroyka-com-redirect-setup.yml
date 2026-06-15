@@ -24,9 +24,28 @@ jobs:
             exit 1
           fi
           echo "CLOUDFLARE_API_TOKEN is set (len=${#CLOUDFLARE_API_TOKEN})"
+          echo "Required scopes: Zone DNS Edit + (optional) Single Redirect Edit for zone aistroyka.com"
 
-      - name: Configure proxied DNS and validate redirects
+      - name: Configure proxied DNS (.com zone)
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ZONE_ID_AISTROYKA_COM: ${{ vars.CLOUDFLARE_ZONE_ID_AISTROYKA_COM }}
-        run: bash scripts/ops/configure-aistroyka-com-dns-for-redirect.sh
+        run: cd apps/web && node scripts/cf-dns-setup-aistroyka-com.mjs
+
+      - name: Validate 301 redirects
+        run: |
+          sleep 15
+          check() {
+            url="$1" expect="$2"
+            loc=$(curl -sI --max-time 20 "$url" | awk 'tolower($1)=="location:"{print $2}' | tr -d '\r')
+            code=$(curl -sI --max-time 20 "$url" | awk '/^HTTP/{print $2; exit}')
+            echo "$url -> $code $loc"
+            test "$code" = "301" && test "$loc" = "$expect"
+          }
+          check "http://aistroyka.com" "https://aistroyka.ai/"
+          check "https://aistroyka.com" "https://aistroyka.ai/"
+          check "http://www.aistroyka.com" "https://aistroyka.ai/"
+          check "https://www.aistroyka.com" "https://aistroyka.ai/"
+          check "https://aistroyka.com/pricing?x=1" "https://aistroyka.ai/pricing?x=1"
+          check "https://www.aistroyka.com/contact?source=test" "https://aistroyka.ai/contact?source=test"
+          curl -sI --max-time 20 https://aistroyka.ai | grep -vi 'location:.*aistroyka\.com'

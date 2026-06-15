@@ -1,19 +1,15 @@
 //
 //  AICopilotPlaceholderView.swift
-//  AiStroyka Manager
+//  Legacy name — hosts project picker hint for per-project copilot (see ProjectDetailView).
 //
 
 import SwiftUI
-import Shared
 
 struct AICopilotPlaceholderView: View {
     var body: some View {
-        NavigationStack {
-            List {
-                Text(NSLocalizedString("mgr_ai_copilot_placeholder", comment: ""))
-                    .foregroundStyle(.secondary)
-            }
-            .navigationTitle(NSLocalizedString("mgr_tab_ai", comment: ""))
-        }
+        EmptyStateView(
+            title: NSLocalizedString("mgr_copilot_per_project_title", comment: ""),
+            subtitle: NSLocalizedString("mgr_copilot_per_project_body", comment: "")
+        )
     }
 }

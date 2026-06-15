@@ -8,36 +8,154 @@
 import XCTest
 
 final class ManagerSmokeUITests: XCTestCase {
-    private func launchForE2E() -> XCUIApplication {
+    private func launchForE2E(email: String, password: String, deepLinkProject: Bool = false) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchEnvironment["AISTROYKA_E2E"] = "1"
+        app.launchArguments += ["-AISTROYKA_E2E", "1"]
+        app.launchEnvironment["AISTROYKA_E2E_EMAIL"] = email
+        app.launchEnvironment["AISTROYKA_E2E_PASSWORD"] = password
+        app.launchArguments += ["-AISTROYKA_E2E_EMAIL", email, "-AISTROYKA_E2E_PASSWORD", password]
+        if deepLinkProject, let projectId = PilotE2ECredentials.projectId {
+            app.launchEnvironment["AISTROYKA_E2E_PROJECT_ID"] = projectId
+            app.launchEnvironment["IOS_E2E_PROJECT_ID"] = projectId
+            app.launchArguments += ["-AISTROYKA_E2E_PROJECT_ID", projectId]
+        }
+        if let base = PilotE2ECredentials.apiBaseURL {
+            app.launchEnvironment["BASE_URL"] = base
+            app.launchEnvironment["AISTROYKA_E2E_BASE_URL"] = base
+            app.launchEnvironment["IOS_E2E_BASE_URL"] = base
+        }
+        if let supa = PilotE2ECredentials.supabaseURL {
+            app.launchEnvironment["SUPABASE_URL"] = supa
+            app.launchArguments += ["-SUPABASE_URL", supa]
+        }
+        if let key = PilotE2ECredentials.supabaseAnonKey {
+            app.launchEnvironment["SUPABASE_ANON_KEY"] = key
+            app.launchArguments += ["-SUPABASE_ANON_KEY", key]
+        }
+        if let base = PilotE2ECredentials.apiBaseURL {
+            app.launchArguments += ["-AISTROYKA_E2E_BASE_URL", base, "-BASE_URL", base]
+        }
+        let credFile = PilotE2ECredentials.credentialsFilePath
+        app.launchEnvironment["AISTROYKA_E2E_CRED_FILE"] = credFile
+        app.launchArguments += ["-AISTROYKA_E2E_CRED_FILE", credFile]
         app.launch()
         return app
     }
 
-    private func signInManager(app: XCUIApplication, email: String, password: String) {
-        let emailField = app.textFields["pilot_manager_email"]
-        XCTAssertTrue(emailField.waitForExistence(timeout: 25))
-        emailField.tap()
-        emailField.typeText(email)
-        let passwordField = app.textFields["pilot_manager_password"]
-        XCTAssertTrue(passwordField.exists)
-        passwordField.tap()
-        passwordField.typeText(password)
-        app.buttons["pilot_manager_sign_in"].tap()
-    }
-
-    private func waitForManagerShell(app: XCUIApplication, timeout: TimeInterval) -> Bool {
-        let signIn = app.buttons["pilot_manager_sign_in"]
-        let reportsTab = app.tabBars.buttons["pilot_manager_tab_reports"]
-        let reportRow = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'pilot_manager_report_'")).firstMatch
+    private func waitForE2EBootstrapToFinish(app: XCUIApplication, timeout: TimeInterval = 90) {
+        let boot = app.otherElements["pilot_manager_e2e_bootstrapping"]
+        guard boot.waitForExistence(timeout: 5) else { return }
         let deadline = Date().addingTimeInterval(timeout)
-        while Date() < deadline {
-            if reportsTab.exists || reportRow.exists { return true }
-            if !signIn.exists, app.tabBars.buttons.count > 0 { return true }
+        while boot.exists, Date() < deadline {
             RunLoop.current.run(until: Date().addingTimeInterval(0.4))
         }
-        return reportsTab.exists || reportRow.exists || (!signIn.exists && app.tabBars.buttons.count > 0)
+    }
+
+    private func clearAndType(_ field: XCUIElement, text: String) {
+        field.tap()
+        guard field.waitForExistence(timeout: 3) else { return }
+        if let value = field.value as? String, !value.isEmpty {
+            let delete = String(repeating: XCUIKeyboardKey.delete.rawValue, count: value.count + 4)
+            field.typeText(delete)
+        }
+        field.typeText(text)
+    }
+
+    /// Fallback when programmatic E2E sign-in does not flip session state in time on Simulator.
+    private func signInViaUIIfNeeded(app: XCUIApplication, email: String, password: String) {
+        waitForE2EBootstrapToFinish(app: app)
+        if waitForManagerReady(
+            app: app,
+            timeout: 10,
+            requiresDeepLink: PilotE2ECredentials.projectId != nil
+        ) { return }
+        let signInBtn = app.buttons["pilot_manager_sign_in"]
+        guard signInBtn.waitForExistence(timeout: 20), signInBtn.isHittable else { return }
+        if signInBtn.isEnabled {
+            signInBtn.tap()
+            _ = waitForManagerReady(
+                app: app,
+                timeout: 90,
+                requiresDeepLink: PilotE2ECredentials.projectId != nil
+            )
+            return
+        }
+        let emailField = app.textFields["pilot_manager_email"]
+        let passwordField = app.textFields["pilot_manager_password"]
+        guard emailField.waitForExistence(timeout: 5),
+              passwordField.waitForExistence(timeout: 5),
+              emailField.isHittable,
+              passwordField.isHittable else { return }
+        clearAndType(emailField, text: email)
+        clearAndType(passwordField, text: password)
+        guard signInBtn.isEnabled, signInBtn.isHittable else { return }
+        signInBtn.tap()
+        _ = waitForManagerReady(
+            app: app,
+            timeout: 90,
+            requiresDeepLink: PilotE2ECredentials.projectId != nil
+        )
+    }
+
+    /// Waits for E2E auto-login + project deep link (or tab shell).
+    private func waitForManagerReady(
+        app: XCUIApplication,
+        timeout: TimeInterval = 180,
+        requiresDeepLink: Bool = false
+    ) -> Bool {
+        let expectsDeepLink = requiresDeepLink && PilotE2ECredentials.projectId != nil
+        let bootstrapping = app.otherElements["pilot_manager_e2e_bootstrapping"]
+        let checkingSession = app.otherElements["pilot_manager_e2e_checking_session"]
+        let detailLoading = app.descendants(matching: .any)["pilot_manager_project_detail_loading"]
+        let e2eProjectDetail = app.descendants(matching: .any)["pilot_manager_project_detail_e2e"]
+        let e2eIntelLink = app.descendants(matching: .any)["pilot_manager_project_intelligence_link"]
+        let signIn = app.buttons["pilot_manager_sign_in"]
+        let loginError = app.staticTexts["pilot_manager_login_error"]
+        let unauthorized = app.otherElements["pilot_manager_unauthorized"]
+        let deeplinkShell = app.descendants(matching: .any)["pilot_manager_e2e_deeplink_shell"]
+        let detailError = app.descendants(matching: .any)["pilot_manager_project_detail_error"]
+        let detailRetry = app.buttons["pilot_manager_error_retry"]
+        let tabBar = app.tabBars.firstMatch
+
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            if bootstrapping.exists || checkingSession.exists {
+                RunLoop.current.run(until: Date().addingTimeInterval(0.4))
+                continue
+            }
+            if deeplinkShell.exists {
+                return true
+            }
+            if e2eIntelLink.exists || e2eProjectDetail.exists || detailLoading.exists || detailError.exists {
+                return true
+            }
+            if deeplinkShell.exists {
+                return true
+            }
+            if !expectsDeepLink, tabBar.exists, !signIn.exists, !unauthorized.exists {
+                return true
+            }
+            if detailError.exists, detailRetry.exists {
+                detailRetry.tap()
+            }
+            if loginError.exists, signIn.exists, !bootstrapping.exists,
+               !detailLoading.exists, !e2eProjectDetail.exists,
+               Date().addingTimeInterval(20) > deadline {
+                return false
+            }
+            if unauthorized.exists, !detailLoading.exists, !e2eProjectDetail.exists {
+                XCTFail("Manager unauthorized during E2E — verify IOS_E2E_BASE_URL=https://aistroyka.ai")
+                return false
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.4))
+        }
+        if expectsDeepLink {
+            return deeplinkShell.exists || e2eIntelLink.exists || e2eProjectDetail.exists
+                || detailLoading.exists || detailError.exists
+        }
+        return deeplinkShell.exists || e2eIntelLink.exists || e2eProjectDetail.exists
+            || detailLoading.exists || detailError.exists || (tabBar.exists && !signIn.exists)
     }
 
     func testLoginScreen_reachableWithPilotIdentifiers() throws {
@@ -59,17 +177,179 @@ final class ManagerSmokeUITests: XCTestCase {
             return
         }
 
-        let app = launchForE2E()
-        signInManager(app: app, email: email, password: password)
-
+        let app = launchForE2E(email: email, password: password)
+        waitForE2EBootstrapToFinish(app: app)
+        if !waitForManagerReady(app: app, timeout: 90) {
+            signInViaUIIfNeeded(app: app, email: email, password: password)
+        }
         XCTAssertTrue(
-            waitForManagerShell(app: app, timeout: 120),
+            waitForManagerReady(app: app, timeout: 120),
             "Expected manager tab shell after live login (reports tab, inbox row, or tab bar)"
         )
 
-        let reportsTab = app.tabBars.buttons["pilot_manager_tab_reports"]
-        if reportsTab.exists {
-            reportsTab.tap()
+        if app.tabBars.buttons.count > 3 {
+            app.tabBars.buttons.element(boundBy: 3).tap()
+        } else {
+            let reportsTab = app.tabBars.buttons["pilot_manager_tab_reports"]
+            if reportsTab.exists { reportsTab.tap() }
         }
+        _ = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'pilot_manager_report_'")).firstMatch
+            .waitForExistence(timeout: 60)
+    }
+
+    private func projectRowElement(app: XCUIApplication) -> XCUIElement {
+        if let pid = PilotE2ECredentials.projectId, !pid.isEmpty {
+            let id = "pilot_manager_project_\(pid)"
+            let candidates: [XCUIElement] = [
+                app.staticTexts[id],
+                app.buttons[id],
+                app.cells.containing(NSPredicate(format: "identifier == %@", id)).firstMatch,
+                app.descendants(matching: .any).matching(NSPredicate(format: "identifier == %@", id)).firstMatch,
+            ]
+            for element in candidates where element.waitForExistence(timeout: 2) {
+                return element
+            }
+        }
+        return app.descendants(matching: .any).matching(
+            NSPredicate(format: "identifier BEGINSWITH 'pilot_manager_project_'")
+        ).firstMatch
+    }
+
+    private func openProjectDetailViaE2EDeepLink(app: XCUIApplication) -> Bool {
+        let intel = app.descendants(matching: .any)["pilot_manager_project_intelligence_link"]
+        let deadline = Date().addingTimeInterval(60)
+        while Date() < deadline {
+            if intel.exists { return true }
+            app.swipeUp()
+            RunLoop.current.run(until: Date().addingTimeInterval(0.4))
+        }
+        return intel.exists
+    }
+
+    private func openProjectsTab(app: XCUIApplication) {
+        if app.tabBars.buttons.count > 1 {
+            app.tabBars.buttons.element(boundBy: 1).tap()
+        }
+        _ = app.otherElements["pilot_manager_projects_tab"].waitForExistence(timeout: 30)
+    }
+
+    private func waitForProjectsListReady(app: XCUIApplication) {
+        let loading = app.otherElements["pilot_manager_projects_loading"]
+        if loading.waitForExistence(timeout: 5) {
+            let deadline = Date().addingTimeInterval(120)
+            while loading.exists, Date() < deadline {
+                RunLoop.current.run(until: Date().addingTimeInterval(0.4))
+            }
+        }
+    }
+
+    private func waitForProjectDetailLoaded(app: XCUIApplication) {
+        let intel = app.descendants(matching: .any)["pilot_manager_project_intelligence_link"]
+        let detail = app.descendants(matching: .any)["pilot_manager_project_detail_e2e"]
+        let loading = app.descendants(matching: .any)["pilot_manager_project_detail_loading"]
+        let detailError = app.descendants(matching: .any)["pilot_manager_project_detail_error"]
+        let detailRetry = app.buttons["pilot_manager_error_retry"]
+        let deadline = Date().addingTimeInterval(180)
+        while Date() < deadline {
+            if intel.exists { return }
+            if detail.exists, intel.waitForExistence(timeout: 5) { return }
+            if loading.exists {
+                RunLoop.current.run(until: Date().addingTimeInterval(0.5))
+                continue
+            }
+            if detailError.exists, detailRetry.exists {
+                detailRetry.tap()
+            }
+            app.swipeUp()
+            RunLoop.current.run(until: Date().addingTimeInterval(0.5))
+        }
+        XCTAssertTrue(
+            intel.exists,
+            "Expected project detail content after GET /api/v1/projects/:id (check pilot_manager_project_detail_error)"
+        )
+    }
+
+    private func openProjectDetail(app: XCUIApplication) {
+        if PilotE2ECredentials.projectId != nil {
+            waitForProjectDetailLoaded(app: app)
+            return
+        }
+        if openProjectDetailViaE2EDeepLink(app: app) {
+            waitForProjectDetailLoaded(app: app)
+            return
+        }
+        openProjectsTab(app: app)
+        waitForProjectsListReady(app: app)
+        let empty = app.otherElements["pilot_manager_projects_empty"]
+        if empty.waitForExistence(timeout: 3) {
+            XCTFail("Manager projects list is empty for pilot tenant — set IOS_E2E_PROJECT_ID or seed a project")
+        }
+        let projectRow = projectRowElement(app: app)
+        XCTAssertTrue(projectRow.waitForExistence(timeout: 90), "Expected at least one project row")
+        projectRow.tap()
+    }
+
+    /// Layer B: project intelligence API + copilot screen reachable (no LLM send required).
+    func testManager_livePilot_projectIntelligenceAndCopilot() throws {
+        try PilotE2ECredentials.skipUnlessConfigured(self)
+        guard let email = PilotE2ECredentials.email, let password = PilotE2ECredentials.password else {
+            return
+        }
+
+        let app = launchForE2E(email: email, password: password, deepLinkProject: true)
+        waitForE2EBootstrapToFinish(app: app)
+        if !waitForManagerReady(app: app, timeout: 120, requiresDeepLink: true) {
+            signInViaUIIfNeeded(app: app, email: email, password: password)
+        }
+        XCTAssertTrue(
+            waitForManagerReady(app: app, timeout: 120, requiresDeepLink: true),
+            "Expected manager project deep link after E2E login — check pilot_manager_login_error and IOS_E2E_BASE_URL"
+        )
+        let loginError = app.staticTexts["pilot_manager_login_error"]
+        if loginError.waitForExistence(timeout: 1) {
+            XCTFail("Manager login failed: \(loginError.label)")
+        }
+
+        openProjectDetail(app: app)
+
+        let intelLink = app.descendants(matching: .any)["pilot_manager_project_intelligence_link"]
+        XCTAssertTrue(intelLink.waitForExistence(timeout: 30))
+        if intelLink.isHittable {
+            intelLink.tap()
+        } else {
+            app.buttons["pilot_manager_project_intelligence_link"].firstMatch.tap()
+        }
+
+        let openCopilot = app.buttons["pilot_manager_open_copilot"].firstMatch
+        let intelligence = app.descendants(matching: .any)["pilot_manager_intelligence"]
+        let intelligenceDeadline = Date().addingTimeInterval(120)
+        var intelligenceReady = false
+        while Date() < intelligenceDeadline {
+            if openCopilot.exists || intelligence.exists {
+                intelligenceReady = true
+                break
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.5))
+        }
+        XCTAssertTrue(
+            intelligenceReady,
+            "Expected project intelligence screen after GET /projects/:id/intelligence"
+        )
+
+        if openCopilot.waitForExistence(timeout: 5) {
+            openCopilot.tap()
+        } else {
+            app.navigationBars.buttons.element(boundBy: 0).tap()
+            let copilotLink = app.buttons["pilot_manager_project_copilot_link"].firstMatch
+            XCTAssertTrue(copilotLink.waitForExistence(timeout: 15))
+            copilotLink.tap()
+        }
+
+        let copilotSend = app.buttons["pilot_manager_copilot_send"]
+        let copilot = app.descendants(matching: .any)["pilot_manager_copilot"]
+        XCTAssertTrue(
+            copilotSend.waitForExistence(timeout: 30) || copilot.waitForExistence(timeout: 5),
+            "Expected copilot chat screen"
+        )
     }
 }

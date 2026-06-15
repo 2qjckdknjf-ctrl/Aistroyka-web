@@ -56,6 +56,7 @@ struct ReportCreateView: View {
             } else if let did = draftId {
                 Text(String(format: NSLocalizedString("worker_report_draft_fmt", comment: ""), String(did.prefix(8))))
                     .font(.caption)
+                    .accessibilityIdentifier("pilot_worker_report_draft_ready")
                 if let rid = reportId {
                     Text(String(format: NSLocalizedString("worker_report_server_id", comment: ""), String(rid.prefix(8))))
                         .font(.caption)
@@ -103,6 +104,8 @@ struct ReportCreateView: View {
             if submitted { Text(NSLocalizedString("worker_submitted", comment: "")).foregroundColor(.green) }
         }
         .padding()
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("pilot_worker_report_compose")
         .navigationTitle(NSLocalizedString("worker_new_report", comment: ""))
         .navigationBarTitleDisplayMode(.inline)
         .confirmationDialog(NSLocalizedString("worker_photo_dialog_before", comment: ""), isPresented: $showImageSourceBefore) {

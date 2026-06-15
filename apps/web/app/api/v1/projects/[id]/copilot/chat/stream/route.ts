@@ -21,6 +21,10 @@ import {
   DEFAULT_CONTEXT_BUDGET,
   type ChatContextInput,
 } from "@/lib/copilot/context-budget";
+import {
+  formatMemoryContextSection,
+  loadCopilotStreamMemoryChunks,
+} from "@/lib/copilot/copilot-stream-memory";
 import type { DecisionContextPayload } from "@/lib/engine/types";
 import {
   logCopilotStreamComplete,
@@ -321,9 +325,11 @@ export async function POST(
           .join(" | ")}`
       : "";
 
+  const memoryChunks = await loadCopilotStreamMemoryChunks(supabase, tenantId, projectId, userId);
+
   const contextInput: ChatContextInput = {
     summary: historicalSummary,
-    memoryChunks: [],
+    memoryChunks,
     recentMessages: recentForContext,
     currentUserMessage: userText,
   };
@@ -333,9 +339,14 @@ export async function POST(
   const systemPrompt =
     `You are a construction project assistant. Use the provided context to answer. Be concise and actionable. Do not invent numbers or facts not in the context.` +
     streamLocaleLine(body.locale);
-  const contextBlock = budgeted.summary
-    ? `Context: ${budgeted.summary}\n\nProject context: ${ctxStr}`
-    : `Project context: ${ctxStr}`;
+  const memorySection = formatMemoryContextSection(budgeted.memoryChunks);
+  const contextBlock = [
+    budgeted.summary ? `Context: ${budgeted.summary}` : null,
+    memorySection || null,
+    `Project context: ${ctxStr}`,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
 
   const openaiMessages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
     { role: "system", content: `${systemPrompt}\n\n${contextBlock}` },
@@ -391,7 +402,7 @@ export async function POST(
         errorKind: string | null = null
       ): Promise<string | null> => {
         try {
-          const { data: inserted } = await supabase
+          const { data: inserted, error: insertErr } = await supabase
             .from("ai_chat_messages")
             .insert({
               tenant_id: tenantId,
@@ -404,8 +415,33 @@ export async function POST(
             })
             .select("id")
             .single();
-          return inserted?.id ?? null;
+          if (insertErr || !inserted?.id) {
+            const latencyMs = Date.now() - streamStartMs;
+            logCopilotStreamError({
+              request_id: requestId,
+              route: STREAM_ROUTE_KEY,
+              tenant_id: tenantId,
+              project_id: projectId,
+              latency_ms: latencyMs,
+              error_kind: "persistence_failure",
+              retryable: false,
+              ...rel,
+            });
+            return null;
+          }
+          return inserted.id;
         } catch {
+          const latencyMs = Date.now() - streamStartMs;
+          logCopilotStreamError({
+            request_id: requestId,
+            route: STREAM_ROUTE_KEY,
+            tenant_id: tenantId,
+            project_id: projectId,
+            latency_ms: latencyMs,
+            error_kind: "persistence_failure",
+            retryable: false,
+            ...rel,
+          });
           return null;
         }
       };

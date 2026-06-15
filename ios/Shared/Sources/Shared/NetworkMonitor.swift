@@ -16,9 +16,16 @@ public final class NetworkMonitor: ObservableObject {
 
     public var onBecameReachable: (() -> Void)?
 
+    private static var treatsNetworkAsConnectedForAutomation: Bool {
+        let env = ProcessInfo.processInfo.environment
+        if env["AISTROYKA_E2E"] == "1" || env["AISTROYKA_UI_TEST"] == "1" { return true }
+        let args = ProcessInfo.processInfo.arguments
+        return args.contains("-AISTROYKA_E2E") || args.contains("-AISTROYKA_UI_TEST")
+    }
+
     public init() {
         monitor.pathUpdateHandler = { [weak self] path in
-            let connected = path.status == .satisfied
+            let connected = path.status == .satisfied || Self.treatsNetworkAsConnectedForAutomation
             DispatchQueue.main.async {
                 let wasOffline = self?.isConnected == false
                 self?.isConnected = connected

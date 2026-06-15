@@ -69,6 +69,7 @@ struct ManagerLoginView: View {
                     Section {
                         Text(err)
                             .foregroundStyle(ManagerSemanticColors.error)
+                            .accessibilityIdentifier("pilot_manager_login_error")
                     }
                 }
                 Section {
@@ -97,7 +98,25 @@ struct ManagerLoginView: View {
             }
             .navigationTitle(NSLocalizedString("mgr_nav_title", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
+            .onAppear {
+                if E2EAutoSignIn.isEnabled {
+                    if email.isEmpty, let e = E2EAutoSignIn.email { email = e }
+                    if password.isEmpty, let p = E2EAutoSignIn.password { password = p }
+                } else {
+                    applyE2EAutoSignInIfNeeded()
+                }
+            }
         }
+    }
+
+    private func applyE2EAutoSignInIfNeeded() {
+        // ManagerRootView performs programmatic E2E sign-in; avoid duplicate attempts here.
+        guard !E2EAutoSignIn.isEnabled else { return }
+        guard E2EAutoSignIn.canAutoSignIn, !isLoading, !sessionState.isAuthorizedRole else { return }
+        guard let e = E2EAutoSignIn.email, let p = E2EAutoSignIn.password else { return }
+        email = e
+        password = p
+        signIn()
     }
 
     private func signIn() {
@@ -122,7 +141,11 @@ struct ManagerLoginView: View {
             defer { isLoading = false }
             do {
                 try await AuthService.shared.signIn(email: emailTrimmed, password: passwordTrimmed)
-                sessionState.checkSession()
+                if E2EAutoSignIn.isEnabled {
+                    await sessionState.checkSessionAndWait(maxAttempts: 40)
+                } else {
+                    sessionState.checkSession()
+                }
             } catch let apiError as APIError {
                 errorMessage = apiError.message
             } catch {

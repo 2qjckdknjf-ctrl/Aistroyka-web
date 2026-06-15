@@ -313,3 +313,11 @@ jobs:
           export PROJECT_ID="${PROJECT_ID_STAGING_OVERRIDE:-a0000003-0000-4000-8000-000000000001}"
           unset PROJECT_ID_STAGING_OVERRIDE
           bash scripts/smoke/ai_phase5_gate.sh
+
+  ai-live-provider-gate:
+    name: Post-deploy AI live provider gate (non-blocking)
+    needs: [deploy, pilot-smoke]
+    uses: ./.github/workflows/ai-live-provider-gate.yml
+    with:
+      base_url: https://staging.aistroyka.ai
+    continue-on-error: true

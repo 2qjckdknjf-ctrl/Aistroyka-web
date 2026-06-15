@@ -23,6 +23,7 @@ struct ErrorStateView: View {
             if let retry = retry {
                 Button(retryTitle, action: retry)
                     .buttonStyle(.bordered)
+                    .accessibilityIdentifier("pilot_manager_error_retry")
             }
         }
         .padding()

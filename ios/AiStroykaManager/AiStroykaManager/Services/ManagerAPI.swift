@@ -122,7 +122,11 @@ enum ManagerAPI {
 
     /// GET /api/v1/projects/:id/summary — project summary counts.
     static func projectSummary(projectId: String) async throws -> ProjectSummaryDTO {
-        let r: ProjectSummaryResponse = try await APIClient.shared.request(path: "projects/\(projectId)/summary")
+        // Backend returns camelCase counts; default client decoder uses convertFromSnakeCase.
+        let r: ProjectSummaryResponse = try await APIClient.shared.request(
+            path: "projects/\(projectId)/summary",
+            keyDecoding: .useDefaultKeys
+        )
         guard let data = r.data else { throw APIError(statusCode: nil, code: nil, message: "No data") }
         return data
     }

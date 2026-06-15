@@ -75,6 +75,11 @@ vi.mock("@/lib/domain/projects/project.service", () => ({
   }),
 }));
 
+vi.mock("@/lib/copilot/copilot-stream-memory", () => ({
+  loadCopilotStreamMemoryChunks: vi.fn().mockResolvedValue([]),
+  formatMemoryContextSection: vi.fn(() => ""),
+}));
+
 vi.mock("@/lib/supabase/admin", () => ({
   getAdminClient: vi.fn(() => ({})),
 }));
@@ -109,6 +114,75 @@ describe("POST /api/v1/projects/:id/copilot/chat/stream", () => {
       data: { id: "p1", name: "Project" },
       error: null,
     });
+  });
+
+  it("returns 404 when thread_id is not found for tenant/project (RLS-filtered)", async () => {
+    const { createClientFromRequest } = await import("@/lib/supabase/server");
+    vi.mocked(createClientFromRequest).mockResolvedValueOnce({
+      from: vi.fn((table: string) => {
+        if (table === "ai_chat_threads") {
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+          };
+        }
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          insert: vi.fn().mockResolvedValue({ error: null }),
+        };
+      }),
+    } as never);
+
+    const req = new Request("https://x/api/v1/projects/p1/copilot/chat/stream", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        thread_id: "foreign-thread-id",
+        user_text: "Hello",
+        decision_context: {
+          overall_risk: 0,
+          confidence: 0,
+          top_risk_factors: [],
+          projected_delay_date: null,
+          velocity_trend: "unknown",
+          anomalies: [],
+          aggregated_at: new Date().toISOString(),
+        },
+        locale: null,
+      }),
+    });
+    const res = await POST(req, { params: Promise.resolve({ id: "p1" }) });
+    expect(res.status).toBe(404);
+    const j = (await res.json()) as { error?: string };
+    expect(j.error).toContain("Thread not found");
+  });
+
+  it("returns 403 when project is outside tenant rights", async () => {
+    const { getProject } = await import("@/lib/domain/projects/project.service");
+    vi.mocked(getProject).mockResolvedValueOnce({ data: null, error: "Insufficient rights" });
+
+    const req = new Request("https://x/api/v1/projects/p1/copilot/chat/stream", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        thread_id: null,
+        user_text: "Hello",
+        decision_context: {
+          overall_risk: 0,
+          confidence: 0,
+          top_risk_factors: [],
+          projected_delay_date: null,
+          velocity_trend: "unknown",
+          anomalies: [],
+          aggregated_at: new Date().toISOString(),
+        },
+        locale: null,
+      }),
+    });
+    const res = await POST(req, { params: Promise.resolve({ id: "p1" }) });
+    expect(res.status).toBe(403);
   });
 
   it("returns 400 when user_text is missing or blank", async () => {

@@ -3,6 +3,7 @@
 "worker_email_placeholder" = "Correo";
 "worker_password_placeholder" = "Contraseña";
 "worker_sign_in" = "Iniciar sesión";
+"worker_signing_in" = "Iniciando sesión…";
 "worker_no_projects" = "Sin proyectos";
 "worker_pending" = "En cola: %lld";
 "worker_pause_queue" = "Pausar cola";

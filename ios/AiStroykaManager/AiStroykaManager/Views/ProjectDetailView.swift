@@ -20,10 +20,13 @@ struct ProjectDetailView: View {
         Group {
             if isLoading && project == nil && errorMessage == nil {
                 LoadingStateView(message: NSLocalizedString("mgr_loading_project", comment: ""))
+                    .accessibilityIdentifier("pilot_manager_project_detail_loading")
             } else if let err = errorMessage, project == nil {
                 ErrorStateView(message: err, retry: { load() })
+                    .accessibilityIdentifier("pilot_manager_project_detail_error")
             } else if let p = project {
                 content(project: p)
+                    .accessibilityIdentifier("pilot_manager_project_detail_e2e")
             } else {
                 EmptyStateView(title: NSLocalizedString("mgr_project_not_found", comment: ""), subtitle: nil)
             }
@@ -55,7 +58,22 @@ struct ProjectDetailView: View {
                     Label(NSLocalizedString("mgr_tab_reports", comment: ""), systemImage: "doc.text")
                 }
                 NavigationLink(destination: ProjectAIView(projectId: projectId, projectName: p.name ?? NSLocalizedString("mgr_project", comment: ""))) {
-                    Label(NSLocalizedString("mgr_tab_ai", comment: ""), systemImage: "sparkles")
+                    Label(NSLocalizedString("mgr_ai_jobs_link", comment: ""), systemImage: "sparkles")
+                }
+                NavigationLink(destination: ProjectIntelligenceView(
+                    projectId: projectId,
+                    projectName: p.name ?? NSLocalizedString("mgr_project", comment: "")
+                )) {
+                    Label(NSLocalizedString("mgr_intelligence_link", comment: ""), systemImage: "chart.bar.doc.horizontal")
+                        .accessibilityIdentifier("pilot_manager_project_intelligence_link")
+                }
+                NavigationLink(destination: ProjectCopilotChatView(
+                    projectId: projectId,
+                    projectName: p.name ?? NSLocalizedString("mgr_project", comment: ""),
+                    intelligence: nil
+                )) {
+                    Label(NSLocalizedString("mgr_copilot_link", comment: ""), systemImage: "bubble.left.and.bubble.right")
+                        .accessibilityIdentifier("pilot_manager_project_copilot_link")
                 }
             }
         }
@@ -73,14 +91,35 @@ struct ProjectDetailView: View {
     }
 
     private func loadAsync() async {
-        await runManagerLoad(
-            setLoading: { isLoading = $0 },
-            setErrorMessage: { errorMessage = $0 }
-        ) {
-            async let projectTask = ManagerAPI.projectDetail(id: projectId)
-            async let summaryTask = ManagerAPI.projectSummary(projectId: projectId)
-            project = try await projectTask
-            summary = try await summaryTask
+        if ManagerUITestLaunchHooks.isE2EEnabled {
+            for _ in 0..<40 where await AuthService.shared.getAccessToken() == nil {
+                try? await Task.sleep(nanoseconds: 250_000_000)
+            }
+            for _ in 0..<24 {
+                do {
+                    if try await ManagerAPI.me().data != nil { break }
+                } catch {
+                    try? await Task.sleep(nanoseconds: 500_000_000)
+                }
+            }
+        }
+        var lastLoadError: String?
+        for attempt in 0..<(ManagerUITestLaunchHooks.isE2EEnabled ? 6 : 1) {
+            if attempt > 0 {
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
+            }
+            await runManagerLoad(
+                setLoading: { isLoading = $0 },
+                setErrorMessage: { errorMessage = $0 }
+            ) {
+                project = try await ManagerAPI.projectDetail(id: projectId)
+                summary = try? await ManagerAPI.projectSummary(projectId: projectId)
+            }
+            if project != nil { return }
+            lastLoadError = errorMessage
+        }
+        if project == nil, lastLoadError != nil {
+            errorMessage = lastLoadError
         }
     }
 

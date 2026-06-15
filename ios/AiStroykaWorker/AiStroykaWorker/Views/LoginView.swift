@@ -56,10 +56,11 @@ struct LoginView: View {
                 .background(Color(.systemGray6))
                 .cornerRadius(8)
             #endif
-            if let msg = errorMessage {
+            if let msg = errorMessage ?? appState.bootstrapAuthError {
                 Text(msg)
                     .font(.caption)
                     .foregroundColor(.red)
+                    .accessibilityIdentifier("pilot_worker_login_error")
             }
             Button(action: startSignIn) {
                 if loading {
@@ -88,6 +89,12 @@ struct LoginView: View {
             .disabled(loading)
         }
         .padding(32)
+        .onAppear {
+            if E2EAutoSignIn.isEnabled {
+                if email.isEmpty, let e = E2EAutoSignIn.email { email = e }
+                if password.isEmpty, let p = E2EAutoSignIn.password { password = p }
+            }
+        }
     }
 
     private func startSignIn() {

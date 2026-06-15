@@ -10,11 +10,24 @@ struct ManagerTabShell: View {
     @State private var selectedTab = 0
 
     var body: some View {
+        if let projectId = ManagerUITestLaunchHooks.e2eProjectId {
+            NavigationStack {
+                ProjectDetailView(projectId: projectId, projectName: nil)
+            }
+            .accessibilityElement(children: .contain)
+            .accessibilityIdentifier("pilot_manager_e2e_deeplink_shell")
+        } else {
+            managerTabs
+        }
+    }
+
+    private var managerTabs: some View {
         TabView(selection: $selectedTab) {
             HomeDashboardView()
                 .tabItem { Label(NSLocalizedString("mgr_tab_home", comment: ""), systemImage: "house.fill") }
                 .tag(0)
             ProjectsListView()
+                .accessibilityIdentifier("pilot_manager_projects_tab")
                 .tabItem { Label(NSLocalizedString("mgr_tab_projects", comment: ""), systemImage: "folder.fill") }
                 .tag(1)
             TasksListView()
@@ -34,6 +47,7 @@ struct ManagerTabShell: View {
                 .tabItem { Label(NSLocalizedString("mgr_tab_more", comment: ""), systemImage: "ellipsis.circle.fill") }
                 .tag(6)
         }
+        .accessibilityIdentifier("pilot_manager_tab_shell")
         .tint(.accentColor)
     }
 }

@@ -26,8 +26,17 @@ struct AITabView: View {
                         subtitle: NSLocalizedString("mgr_no_ai_jobs_subtitle", comment: "")
                     )
                 } else {
-                    List(Array(jobs.enumerated()), id: \.offset) { _, job in
-                        AIJobRowView(job: job)
+                    List {
+                        Section {
+                            Text(NSLocalizedString("mgr_ai_tab_copilot_hint", comment: ""))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        Section(NSLocalizedString("mgr_ai_jobs_section", comment: "")) {
+                            ForEach(Array(jobs.enumerated()), id: \.offset) { _, job in
+                                AIJobRowView(job: job)
+                            }
+                        }
                     }
                 }
             }

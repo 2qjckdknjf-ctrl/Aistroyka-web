@@ -41,7 +41,7 @@ See `ios/README.md`.
 
 **Layer B API chain (2026-06-03):** `BASE_URL=https://aistroyka.ai ./scripts/smoke/ios_mobile_api_chain.sh` with `.env.pilot` — **PASS** (worker report create + sync; manager me + reports). Canonical mobile transaction proof for publication.
 
-**Layer B UITest (optional local):** `CI_SIGNING_HACK=1 bash ios/scripts/run-ios-e2e-integration-local.sh` — live login + Worker draft / Manager shell (requires Secrets.xcconfig + pilot credentials).
+**Layer B UITest (optional local):** `CI_SIGNING_HACK=1 bash ios/scripts/run-ios-e2e-integration-local.sh` — live login + Worker draft + Manager reports inbox + **project intelligence + copilot screen** (`testManager_livePilot_projectIntelligenceAndCopilot`; requires Secrets.xcconfig + pilot credentials). Optional `IOS_E2E_PROJECT_ID` pins project row.
 
 ### Limits of layer A
 
@@ -65,7 +65,7 @@ Use a **pilot tenant** and record: **date**, **app build** (git SHA or Xcode bui
 | 5 | Manager: approve / request changes + **note** / reject + **note** | — | ☐ | |
 | 6 | Worker: `changes_requested` appears; **resubmit**; thumbnails on resubmit | ☐ | — | |
 | 7 | Worker: home **help** card — hints or assistant summary (after lite allow-list fix) | ☐ | — | |
-| 8 | Manager: home dashboard hints + **AI** tab jobs list (if data exists) | — | ☐ | |
+| 8 | Manager: **AI** tab jobs; project **Intelligence** + **Copilot** screens | — | ☐ | **API PASS** (`ios_mobile_api_chain` intelligence 2026-06-04); **UITest** `testManager_livePilot_projectIntelligenceAndCopilot` added — run via `ios/scripts/run-ios-e2e-integration-local.sh` (may need `IOS_E2E_BASE_URL=https://aistroyka.ai`; simulator list hydration flaky) |
 | 9 | Push: assign task → Worker receives update (optional) | ☐ | — | |
 
 **Staging log policy:** Do not paste secrets, tokens, or PII. Use internal links or ticket IDs.

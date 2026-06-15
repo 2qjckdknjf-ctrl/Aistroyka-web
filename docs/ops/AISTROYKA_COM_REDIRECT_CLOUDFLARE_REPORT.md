@@ -7,16 +7,9 @@
 
 ## 1. Final status
 
-**PARTIAL**
+**CLOSED** (2026-06-04)
 
-| Layer | Status |
-|-------|--------|
-| Zone `aistroyka.com` in Cloudflare | **Active** |
-| Worker redirect + routes | **Deployed** |
-| DNS proxied through Cloudflare | **Not done** (blocker) |
-| Live 301 redirect validation | **Not passing** |
-
-Redirect cannot take effect until apex and `www` DNS records are **Proxied** (orange cloud). Today traffic bypasses Cloudflare and hits a legacy Vercel origin (`216.198.79.1`) with an **expired TLS certificate**.
+DNS proxied via `apps/web/.env.cf` token (`npm run cf:dns-setup-com`). Worker `aistroyka-com-redirect` serves **301** from `aistroyka.com` / `www.aistroyka.com` → `https://aistroyka.ai` with path and query preserved. Primary domain `aistroyka.ai` unchanged.
 
 ---
 
@@ -195,7 +188,53 @@ server: cloudflare
 
 **Pass:** `.ai` serves the app via Cloudflare; no redirect to `.com`.
 
-### Redirect domains (before DNS fix — **FAIL**)
+### Redirect domains — **PASS** (2026-06-04 after DNS proxied)
+
+```text
+$ curl -I http://aistroyka.com
+HTTP/1.1 301 Moved Permanently
+Location: https://aistroyka.ai/
+Server: cloudflare
+
+$ curl -I https://aistroyka.com
+HTTP/2 301
+location: https://aistroyka.ai/
+server: cloudflare
+
+$ curl -I http://www.aistroyka.com
+HTTP/1.1 301 Moved Permanently
+Location: https://aistroyka.ai/
+Server: cloudflare
+
+$ curl -I https://www.aistroyka.com
+HTTP/2 301
+location: https://aistroyka.ai/
+server: cloudflare
+
+$ curl -I "https://aistroyka.com/pricing?x=1"
+HTTP/2 301
+location: https://aistroyka.ai/pricing?x=1
+server: cloudflare
+
+$ curl -I "https://www.aistroyka.com/contact?source=test"
+HTTP/2 301
+location: https://aistroyka.ai/contact?source=test
+server: cloudflare
+```
+
+Public DNS after change:
+
+```text
+$ dig +short aistroyka.com A @1.1.1.1
+104.21.16.243
+172.67.217.24
+
+$ dig +short www.aistroyka.com A @1.1.1.1
+104.21.16.243
+172.67.217.24
+```
+
+### Redirect domains (before DNS fix — historical FAIL)
 
 ```text
 $ curl -I http://aistroyka.com
@@ -255,7 +294,8 @@ curl -IL "https://aistroyka.com/pricing?x=1"
 2. **Re-validate:** Run curl commands above; status cannot become **CLOSED** until all return **301** to `https://aistroyka.ai/...`.
 3. **Optional — detach Vercel:** Remove `aistroyka.com` from Vercel project domains to avoid stale origin/cert noise.
 4. **Optional — Single Redirect:** With API token, run `scripts/ops/configure-aistroyka-com-redirect-rules.sh` and remove Worker routes if you prefer Dashboard Redirect Rules over Worker.
-5. **Optional — API token for CI:** Store `CLOUDFLARE_ZONE_ID_AISTROYKA_COM` (`8168...275e`) if automating future `.com` zone ops.
+5. **Fix GitHub token scope (for automation):** Regenerate or extend `CLOUDFLARE_API_TOKEN` with **Zone DNS Edit** + **Single Redirect Edit** on `aistroyka.com`, then re-run workflow **Aistroyka.com redirect setup** on `main`.
+6. **Optional — store zone id:** `CLOUDFLARE_ZONE_ID_AISTROYKA_COM` = `8168...275e` (GitHub variable).
 
 ---
 
@@ -290,7 +330,8 @@ curl -IL "https://aistroyka.com/pricing?x=1"
 | Route `aistroyka.com/*` | **Created** |
 | Route `www.aistroyka.com` | **Created** |
 | Route `www.aistroyka.com/*` | **Created** |
-| DNS records | **Not changed** (no API permission) |
+| DNS `@` A | **Updated** → `192.0.2.1` **proxied** (was `216.198.79.1` dns-only) |
+| DNS `www` CNAME | **Created** → `aistroyka.com` **proxied** |
 | Single Redirect ruleset | **Not created** (no API permission) |
 
 ---
