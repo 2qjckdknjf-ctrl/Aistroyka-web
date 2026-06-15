@@ -179,6 +179,7 @@ Repeat for: **`aistroyka-web`**, **`aistroyka-web-web`**, **`aistroyka-web-web-v
 ## Related documents
 
 - **Initiative closure (100% engineering sign-off):** `docs/incidents/DEPLOY_TOPOLOGY_CLEANUP_100_CLOSURE.md`
+- **Post-merge governance (C-03 branch protection):** `docs/ops/POST_MERGE_GOVERNANCE_CHECKLIST.md`
 - Incident / RCA: `docs/incidents/DEPLOY_TOPOLOGY_RCA_AND_FIX.md`
 - DNS notes: `docs/REPORT-DNS-DOMAINS-20260305.md`
 - Env vars: `docs/ENVIRONMENT-VARIABLES.md`
