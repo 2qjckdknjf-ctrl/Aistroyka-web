@@ -31,7 +31,7 @@ Status terms: `open`, `in_progress`, `blocked`, `closed`
 | M-01 | Multi-tenant context ambiguity (first membership row selection) | `apps/web/lib/tenant/tenant.context.ts` (`limit(1)` without explicit tenant selection) | Wrong-tenant user experience or accidental data scope confusion | Web | open |
 | M-02 | No single blocking E2E chain for roadmap customer flows 7-14 | `docs/audit/FINAL_E2E_REPORT.md`, `apps/web/tests/e2e` | Coverage blind spots for launch-critical customer flows | QA + Web | open |
 | M-03 | OpenNext Cloudflare patch chain is fragile | deploy patch scripts + `wrangler.deploy.toml` path | Build/deploy regressions on toolchain upgrades | Platform | in_progress |
-| M-04 | Phase 13 closure artifacts are partially stale/inconsistent | `docs/product/PHASE13_ROADMAP_CLOSURE.md` vs newer release docs | Governance confusion, false block/false green risk | Product/Release | closed (refreshed 2026-06-12; aligned with prod `fa5c797` + audit v2) |
+| M-04 | Phase 13 closure artifacts are partially stale/inconsistent | `docs/product/PHASE13_ROADMAP_CLOSURE.md` vs newer release docs | Governance confusion, false block/false green risk | Product/Release | closed (refreshed 2026-06-15; aligned with prod `cd130eb`, PR #76/#83, deploy runs `27528576940`/`27528720688`) |
 | M-05 | Orphan workflow configs under non-canonical path can mislead operators | `apps/web/.github/workflows/*` | Operational confusion and wrong assumptions | Release Eng | open |
 
 ## Risk acceptance policy for this audit
