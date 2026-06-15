@@ -50,13 +50,14 @@ Not broad enterprise GA: branch protection unproven from repo; iOS Layer B live 
 
 ## Residual operator actions
 
-1. **GitHub:** enable branch protection / required checks on `main` (CI Check + deploy gates) — C-03.
+1. **GitHub:** enable branch protection / required checks on `main` — step-by-step: `docs/ops/POST_MERGE_GOVERNANCE_CHECKLIST.md` (§ A, C-03).
 2. **iOS Layer B:** `ios/scripts/run-ios-e2e-integration-local.sh` with gitignored `.uitest-e2e-credentials`.
 3. **Secrets rotation:** if smoke password or JWT ever appeared in logs/chats, rotate per `docs/audit/SECRET_EXPOSURE_REMEDIATION_2026-05-01.md`.
 4. **Local stakeholder sanity:** requires `STAKEHOLDER_SMOKE_*` (not in `.env.pilot`; use GitHub secrets or dedicated account).
 
 ## References
 
+- `docs/ops/POST_MERGE_GOVERNANCE_CHECKLIST.md` — operator steps to close C-03 (branch protection) + residual gates
 - `docs/audit/AUDIT_2026-06-11_full-project-audit-v2.md` — prod truth after PR #77–#82
 - `docs/security/FINAL_CUSTOMER_FINANCE_ISOLATION_AUDIT.md`
 - `docs/audit/LIVE_SMOKE_FINAL_VERIFICATION.md`
