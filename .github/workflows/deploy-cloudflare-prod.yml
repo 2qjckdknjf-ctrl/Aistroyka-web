@@ -315,7 +315,15 @@ jobs:
   ai-live-provider-gate:
     name: Post-deploy AI live provider gate (non-blocking)
     needs: [deploy, pilot-smoke, stakeholder-finance-sanity]
-    uses: ./.github/workflows/ai-live-provider-gate.yml
-    with:
-      base_url: https://aistroyka.ai
-    continue-on-error: true
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.deploy.outputs.deploy_ref }}
+
+      - name: Run canonical live gate
+        continue-on-error: true
+        env:
+          BASE_URL: https://aistroyka.ai
+        run: bash scripts/smoke/ai_live_provider.sh --require-live
