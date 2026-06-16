@@ -3,6 +3,11 @@
 # Requires a real STAKEHOLDER (or portal-only) user — not tenant owner/manager.
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+# shellcheck source=../smoke/_json_lib.sh
+source "$REPO_ROOT/scripts/smoke/_json_lib.sh"
+
 BASE_URL="${STAKEHOLDER_FINANCE_BASE_URL:-${BASE_URL:-https://staging.aistroyka.ai}}"
 BASE_URL="${BASE_URL%/}"
 EMAIL="${STAKEHOLDER_SMOKE_EMAIL:-}"
@@ -26,7 +31,7 @@ if [[ "$code" != "200" ]]; then
 fi
 
 me="$(curl -sS -b "$COOKIEJAR" -H 'Accept: application/json' "$BASE_URL/api/v1/me")"
-role="$(python3 -c 'import json,sys; d=json.load(sys.stdin); print((d.get("data") or {}).get("role") or "")' <<<"$me")"
+role="$(smoke_python3 -c 'import json,sys; d=json.load(sys.stdin); print((d.get("data") or {}).get("role") or "")' <<<"$me")"
 if [[ "$role" != "stakeholder" ]]; then
   echo "BLOCKED: /api/v1/me role is '$role', expected 'stakeholder' (do not use owner/manager smoke user)."
   exit 2
@@ -42,7 +47,7 @@ if [[ "$plist_code" != "200" ]]; then
   exit 1
 fi
 
-pid="$(python3 -c 'import json,sys; j=json.load(sys.stdin); a=j.get("data") or []; print(a[0]["id"] if a else "")' < /tmp/sfs-portal-list.json)"
+pid="$(smoke_python3 -c 'import json,sys; j=json.load(sys.stdin); a=j.get("data") or []; print(a[0]["id"] if a else "")' < /tmp/sfs-portal-list.json)"
 if [[ -z "$pid" ]]; then
   echo "BLOCKED: no portal projects for this user (enable client portal + membership)."
   exit 2
@@ -69,7 +74,7 @@ if [[ "$estimate_code" != "403" ]]; then
 fi
 
 curl -sS -b "$COOKIEJAR" -H 'Accept: application/json' -o /tmp/sfs-portal-proj.json "$BASE_URL/api/v1/portal/projects/$pid"
-python3 <<'PY'
+smoke_python3 <<'PY'
 import json, sys
 
 DENY_KEYS = frozenset({

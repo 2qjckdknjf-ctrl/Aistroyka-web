@@ -8,7 +8,7 @@ Status terms: `open`, `in_progress`, `blocked`, `closed`
 
 | ID | Risk | Evidence | Impact | Owner | Status |
 |---|---|---|---|---|---|
-| C-01 | Stakeholder can access internal estimate intelligence via `/api/v1/projects/:id/estimate` | `apps/web/app/api/v1/projects/[id]/estimate/route.ts`, `apps/web/lib/domain/estimate/estimate.service.ts`, `apps/web/supabase/migrations/20260329140000_stakeholder_rls_isolation.sql` | Direct violation of customer-finance isolation rule from roadmap | Web + DB | in_progress (runtime sanity gate passed in production run `26406727533`; DB migration apply evidence still pending) |
+| C-01 | Stakeholder can access internal estimate intelligence via `/api/v1/projects/:id/estimate` | `estimate/route.ts` 403 for stakeholder; `route.test.ts`; prod stakeholder sanity `27646563842` | Direct violation of customer-finance isolation rule from roadmap | Web + DB | closed (route guard + CI blocking stakeholder sanity; migration evidence in `20260329140000_stakeholder_rls_isolation.sql`) |
 | C-02 | Production deploy not promotion-gated by staging success | `.github/workflows/deploy-cloudflare-staging.yml`, `.github/workflows/deploy-cloudflare-prod.yml` | Defective change can reach production without mandatory staged pass | Release Eng | closed (staging success `26402956304` promoted into production `workflow_run` `26403104100`; latest full production pass `26406727533`) |
 | C-03 | Required merge checks/branch protection not provably enforced from repo state | `scripts/ops/configure-main-branch-protection.sh`; API `branches/main/protection` (2026-06-16) — required `check`, 1 PR review | CI bypass risk if ruleset misconfigured | Repo Admin | closed (classic protection applied 2026-06-16; required status check `check`, 1 approving review) |
 | C-04 | Supabase migration readiness was outside automated deploy contour | `scripts/release/check-env-config.sh` (`migrations` mode), deploy workflows | Schema drift risk between application deploy and DB state | Release Eng + DB | closed (staging `26411584976` and production `26411702450` executed `Check env/config (migrations)` successfully after secrets rollout) |
@@ -32,7 +32,7 @@ Status terms: `open`, `in_progress`, `blocked`, `closed`
 | M-02 | No single blocking E2E chain for roadmap customer flows 7-14 | `docs/audit/FINAL_E2E_REPORT.md`, `apps/web/tests/e2e` | Coverage blind spots for launch-critical customer flows | QA + Web | open |
 | M-03 | OpenNext Cloudflare patch chain is fragile | deploy patch scripts + `wrangler.deploy.toml` path | Build/deploy regressions on toolchain upgrades | Platform | in_progress |
 | M-04 | Phase 13 closure artifacts are partially stale/inconsistent | `docs/product/PHASE13_ROADMAP_CLOSURE.md` vs newer release docs | Governance confusion, false block/false green risk | Product/Release | closed (refreshed 2026-06-15; aligned with prod `cd130eb`, PR #76/#83, deploy runs `27528576940`/`27528720688`) |
-| M-05 | Orphan workflow configs under non-canonical path can mislead operators | `apps/web/.github/workflows/*` | Operational confusion and wrong assumptions | Release Eng | open |
+| M-05 | Orphan workflow configs under non-canonical path can mislead operators | `apps/web/.github/workflows/README.md` documents non-canonical path | Operational confusion and wrong assumptions | Release Eng | closed (README added 2026-06-16; canonical paths in `DEPLOYMENT_SOURCE_OF_TRUTH.md`) |
 
 ## Risk acceptance policy for this audit
 

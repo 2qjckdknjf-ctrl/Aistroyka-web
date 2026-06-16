@@ -51,10 +51,11 @@ Not broad enterprise GA: P2 hygiene per audit v2 (stale branches, npm moderate v
 
 ## Residual operator actions
 
-1. ~~**GitHub:** enable branch protection~~ — **DONE** 2026-06-16 (`check` + 1 review).
-2. **iOS Layer B:** re-run after major `ios/` changes: `CI_SIGNING_HACK=1 bash ios/scripts/run-ios-e2e-integration-local.sh`
-3. **Secrets rotation:** if smoke password or JWT ever appeared in logs/chats, rotate per `docs/audit/SECRET_EXPOSURE_REMEDIATION_2026-05-01.md`.
-4. **Local stakeholder sanity:** requires `STAKEHOLDER_SMOKE_*` (CI prod deploy passes; local optional).
+All Phase 13 / post-merge **required** tails closed 2026-06-16. Optional only:
+
+1. **Local stakeholder sanity:** add `STAKEHOLDER_SMOKE_*` to gitignored `.env.pilot` (template in `.env.pilot.example`) — CI prod deploy already runs blocking gate.
+2. **Secrets rotation:** if smoke password or JWT ever appeared in logs/chats, rotate per `docs/audit/SECRET_EXPOSURE_REMEDIATION_2026-05-01.md`.
+3. **P2 hygiene:** stale remote branches, `npm audit` moderate advisories, DB type regeneration (audit v2 backlog — not pilot blockers).
 
 ## References
 
