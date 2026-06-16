@@ -5,6 +5,9 @@
 #   BASE_URL=... AUTH_HEADER="Bearer ..." ./scripts/smoke/ai_vision.sh
 # Optional: PROJECT_ID=... IMAGE_URL=...
 set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=_json_lib.sh
+source "$SCRIPT_DIR/_json_lib.sh"
 
 BASE="${BASE_URL:-http://localhost:3000}"
 AUTH="${AUTH_HEADER:-}"
@@ -18,10 +21,8 @@ mint_smoke_token_if_possible() {
     TOKEN_RESP=$(curl -sSL -m 15 -X POST "${SUPA_URL}/auth/v1/token?grant_type=password" \
       -H "Content-Type: application/json" -H "apikey: $SUPA_KEY" \
       --data-binary "{\"email\":\"${SMOKE_EMAIL}\",\"password\":\"${SMOKE_PASSWORD}\"}" 2>/dev/null || true)
-    if command -v jq &>/dev/null; then
-      TOKEN=$(printf '%s' "$TOKEN_RESP" | jq -r '.access_token // empty' 2>/dev/null)
-      [[ -n "$TOKEN" ]] && echo "Bearer $TOKEN"
-    fi
+    TOKEN=$(printf '%s' "$TOKEN_RESP" | smoke_jq -r '.access_token // empty')
+    [[ -n "$TOKEN" ]] && echo "Bearer $TOKEN"
   fi
 }
 
@@ -32,11 +33,6 @@ fi
 
 if [[ -z "$AUTH" ]]; then
   echo "ai_vision: need AUTH_HEADER or SMOKE_EMAIL+SMOKE_PASSWORD+SUPABASE_*" >&2
-  exit 2
-fi
-
-if ! command -v jq &>/dev/null; then
-  echo "ai_vision: jq required" >&2
   exit 2
 fi
 
@@ -64,7 +60,7 @@ if [[ "$code" != "200" ]]; then
   exit 1
 fi
 
-jq -e '.risk_level and .stage and (.completion_percent|type=="number")' "$TMPBODY" >/dev/null \
+smoke_assert_analysis_result "$TMPBODY" \
   || { echo "ai_vision: invalid AnalysisResult body" >&2; cat "$TMPBODY" >&2; exit 1; }
 
 fb=$(awk -F': ' 'BEGIN{IGNORECASE=1} $1=="x-ai-fallback-reason"{print $2}' "$TMPHDR" | tr -d '\r')

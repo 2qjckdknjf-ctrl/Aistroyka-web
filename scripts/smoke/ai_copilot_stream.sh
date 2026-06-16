@@ -11,6 +11,9 @@
 #   SMOKE_EMAIL=... SMOKE_PASSWORD=... SUPABASE_URL=... SUPABASE_ANON_KEY=... \
 #   BASE_URL=... PROJECT_ID=... ./scripts/smoke/ai_copilot_stream.sh
 set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=_json_lib.sh
+source "$SCRIPT_DIR/_json_lib.sh"
 
 BASE="${BASE_URL:-http://localhost:3000}"
 AUTH="${AUTH_HEADER:-}"
@@ -23,10 +26,8 @@ mint_smoke_token_if_possible() {
     TOKEN_RESP=$(curl -sSL -m 15 -X POST "${SUPA_URL}/auth/v1/token?grant_type=password" \
       -H "Content-Type: application/json" -H "apikey: $SUPA_KEY" \
       --data-binary "{\"email\":\"${SMOKE_EMAIL}\",\"password\":\"${SMOKE_PASSWORD}\"}" 2>/dev/null || true)
-    if command -v jq &>/dev/null; then
-      TOKEN=$(printf '%s' "$TOKEN_RESP" | jq -r '.access_token // empty' 2>/dev/null)
-      [[ -n "$TOKEN" ]] && echo "Bearer $TOKEN"
-    fi
+    TOKEN=$(printf '%s' "$TOKEN_RESP" | smoke_jq -r '.access_token // empty')
+    [[ -n "$TOKEN" ]] && echo "Bearer $TOKEN"
   fi
 }
 

@@ -11,6 +11,9 @@
 #
 # Use curl --location-trusted if your BASE_URL redirects across hosts (Authorization preserved).
 set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=_json_lib.sh
+source "$SCRIPT_DIR/_json_lib.sh"
 
 BASE="${BASE_URL:-http://localhost:3000}"
 AUTH="${AUTH_HEADER:-}"
@@ -26,10 +29,8 @@ mint_smoke_token_if_possible() {
     TOKEN_RESP=$(curl -sSL -m 15 -X POST "${SUPA_URL}/auth/v1/token?grant_type=password" \
       -H "Content-Type: application/json" -H "apikey: $SUPA_KEY" \
       --data-binary "{\"email\":\"${SMOKE_EMAIL}\",\"password\":\"${SMOKE_PASSWORD}\"}" 2>/dev/null || true)
-    if command -v jq &>/dev/null; then
-      TOKEN=$(printf '%s' "$TOKEN_RESP" | jq -r '.access_token // empty' 2>/dev/null)
-      [[ -n "$TOKEN" ]] && echo "Bearer $TOKEN"
-    fi
+    TOKEN=$(printf '%s' "$TOKEN_RESP" | smoke_jq -r '.access_token // empty')
+    [[ -n "$TOKEN" ]] && echo "Bearer $TOKEN"
   fi
 }
 
@@ -81,12 +82,7 @@ if [[ "$code" != "200" ]]; then
   exit 1
 fi
 
-if ! command -v jq &>/dev/null; then
-  echo "ai_phase5_gate: jq required to validate JSON body" >&2
-  exit 2
-fi
-
-if ! jq -e '.risk_level and .stage and (.completion_percent|type=="number") and (.detected_issues|type=="array") and (.recommendations|type=="array")' "$TMPBODY" &>/dev/null; then
+if ! smoke_assert_analysis_result_full "$TMPBODY"; then
   echo "ai_phase5_gate: analyze-image body is not a valid AnalysisResult shape" >&2
   cat "$TMPBODY" >&2
   exit 1

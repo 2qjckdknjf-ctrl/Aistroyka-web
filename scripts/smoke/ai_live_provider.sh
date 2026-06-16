@@ -27,6 +27,8 @@ elif [[ -n "${1:-}" ]]; then
 fi
 
 REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+# shellcheck source=_json_lib.sh
+source "$REPO_ROOT/scripts/smoke/_json_lib.sh"
 cd "$REPO_ROOT"
 
 BASE="${BASE_URL:-https://aistroyka.ai}"
@@ -89,7 +91,7 @@ emit_json() {
   elif [[ "$fallback_count" -gt 0 && "$llm_success_count" -gt 0 ]]; then
     fb_rate="50"
   fi
-  if command -v jq &>/dev/null; then
+  if smoke_have_jq; then
     jq -n \
       --argjson provider_configured "$(bool_json "$provider_configured")" \
       --argjson live_provider_call_attempted "$(bool_json "$live_provider_call_attempted")" \
@@ -118,21 +120,43 @@ emit_json() {
         error_kind: (if $error_kind == "" then null else $error_kind end)
       }'
   else
-    printf '{"canonical_gate":"scripts/smoke/ai_live_provider.sh","provider_configured":%s,"live_provider_call_succeeded":%s,"llm_success_count":%s,"fallback_count":%s}\n' \
-      "$provider_configured" "$live_provider_call_succeeded" "$llm_success_count" "$fallback_count"
+    smoke_python3 -c '
+import json,sys
+print(json.dumps({
+  "canonical_gate": "scripts/smoke/ai_live_provider.sh",
+  "runtime": "apps/web/cloudflare_workers",
+  "provider_configured": sys.argv[1] == "true",
+  "live_provider_call_attempted": sys.argv[2] == "true",
+  "live_provider_call_succeeded": sys.argv[3] == "true",
+  "llm_success_count": int(sys.argv[4]),
+  "fallback_count": int(sys.argv[5]),
+  "missing_key_count": int(sys.argv[6]),
+  "fallback_rate": sys.argv[7] + "%",
+  "provider": sys.argv[8] or None,
+  "model": sys.argv[9] or None,
+  "error_kind": sys.argv[10] or None,
+}))
+' "$provider_configured" "$live_provider_call_attempted" "$live_provider_call_succeeded" \
+      "$llm_success_count" "$fallback_count" "$missing_key_count" "$fb_rate" \
+      "$provider_used" "$model_used" "$error_kind"
   fi
 }
 
 # --- remote health (optional signal) ---
 health_openai=false
-if command -v curl &>/dev/null && command -v jq &>/dev/null; then
+if command -v curl &>/dev/null; then
   HEALTH_JSON="$(curl -sS -m 15 "${BASE}/api/v1/health" 2>/dev/null || true)"
-  if echo "$HEALTH_JSON" | jq -e '.openaiConfigured == true' &>/dev/null; then
-    health_openai=true
-    if [[ "$provider_configured" == false ]]; then
-      provider_configured=true
-      missing_key_count=0
+  if [[ -n "$HEALTH_JSON" ]]; then
+    HEALTH_FILE="$(mktemp)"
+    printf '%s' "$HEALTH_JSON" >"$HEALTH_FILE"
+    if smoke_json_get_bool "$HEALTH_FILE" "openaiConfigured"; then
+      health_openai=true
+      if [[ "$provider_configured" == false ]]; then
+        provider_configured=true
+        missing_key_count=0
+      fi
     fi
+    rm -f "$HEALTH_FILE"
   fi
 fi
 
@@ -176,7 +200,7 @@ remote_vision_probe() {
     return 1
   fi
 
-  if command -v jq &>/dev/null && jq -e '.risk_level and .stage' "$body" &>/dev/null; then
+  if smoke_assert_analysis_result "$body" 2>/dev/null || smoke_python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); sys.exit(0 if d.get("risk_level") and d.get("stage") else 1)' "$body"; then
     llm_success_count=1
     live_provider_call_succeeded=true
     provider_used="vision_router"
@@ -204,8 +228,7 @@ direct_openai_probe() {
     -H "Content-Type: application/json" \
     -d "{\"model\":\"${DIRECT_MODEL}\",\"messages\":[{\"role\":\"user\",\"content\":\"Reply with exactly: ok\"}],\"max_tokens\":5}" 2>/dev/null || echo "000")
 
-  if [[ "$code" == "200" ]] && command -v jq &>/dev/null \
-    && jq -e '.choices[0].message.content' "$resp" &>/dev/null; then
+  if [[ "$code" == "200" ]] && smoke_python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); sys.exit(0 if d.get("choices") and d["choices"][0].get("message",{}).get("content") else 1)' "$resp" 2>/dev/null; then
     llm_success_count=1
     live_provider_call_succeeded=true
     return 0
@@ -225,11 +248,11 @@ direct_openai_probe() {
 if [[ -z "${AUTH_HEADER:-}" && -n "${SMOKE_EMAIL:-}" && -n "${SMOKE_PASSWORD:-}" ]]; then
   SUPA_URL="${SUPABASE_URL:-${NEXT_PUBLIC_SUPABASE_URL:-}}"
   SUPA_KEY="${SUPABASE_ANON_KEY:-${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}}"
-  if [[ -n "$SUPA_URL" && -n "$SUPA_KEY" ]] && command -v jq &>/dev/null; then
+  if [[ -n "$SUPA_URL" && -n "$SUPA_KEY" ]]; then
     TOKEN_RESP=$(curl -sSL -m 15 -X POST "${SUPA_URL}/auth/v1/token?grant_type=password" \
       -H "Content-Type: application/json" -H "apikey: $SUPA_KEY" \
       --data-binary "{\"email\":\"${SMOKE_EMAIL}\",\"password\":\"${SMOKE_PASSWORD}\"}" 2>/dev/null || true)
-    TOKEN=$(printf '%s' "$TOKEN_RESP" | jq -r '.access_token // empty' 2>/dev/null)
+    TOKEN=$(printf '%s' "$TOKEN_RESP" | smoke_jq -r '.access_token // empty')
     [[ -n "$TOKEN" ]] && AUTH_HEADER="Bearer $TOKEN"
   fi
 fi

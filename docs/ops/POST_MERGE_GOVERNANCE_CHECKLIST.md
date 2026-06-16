@@ -1,28 +1,28 @@
 # Post-merge governance checklist (operators)
 
-**Date:** 2026-06-15  
-**Context:** PR #76 merged to `main`; prod build `cd130eb` (PR #83 hotfix included). Phase 13 verdict: **CONDITIONAL YES**.  
-**Primary blocker:** **C-03** — branch protection / required checks not provable from repo API.
+**Date:** 2026-06-16  
+**Context:** Post-merge closure complete. Prod build **`ee9d997`** (PR #86–#88). Phase 13: **CONDITIONAL YES**.  
+**Governance:** C-03 **closed** 2026-06-16 (branch protection on `main`).
 
 Repo: [2qjckdknjf-ctrl/Aistroyka-web](https://github.com/2qjckdknjf-ctrl/Aistroyka-web)
 
 ---
 
-## Quick status (2026-06-15)
+## Quick status (2026-06-16)
 
 | Item | Status | Notes |
 |------|--------|-------|
-| PR #76 on `main` | **DONE** | Manager AI parity, i18n fix, E2E secrets hygiene |
-| Staging + prod deploy | **DONE** | Runs `27528576940` / `27528720688`; docs PR #84 redeployed |
-| `CI Check` on PRs | **PASS** (when run) | Not yet **required** for merge |
-| `main` branch protection | **DONE** | API 2026-06-16 — required `check`, 1 PR review |
-| Stakeholder sanity (CI prod) | **PASS** | Blocking job in prod deploy |
-| Stakeholder sanity (local) | **BLOCKED** | Needs `STAKEHOLDER_SMOKE_*` (not in `.env.pilot`) |
-| iOS Layer B live E2E | **PASS (local)** | 2026-06-16 — `run-ios-e2e-integration-local.sh` exit 0 (Worker report draft + Manager intelligence/copilot) |
+| PR #76–#88 on `main` | **DONE** | AI parity, i18n, deploy fix, C-03, smoke arm64 |
+| Staging + prod deploy | **DONE** | Latest prod `27646563842` / build `ee9d997` |
+| `CI Check` on PRs | **REQUIRED** | `check` + 1 review on `main` |
+| `main` branch protection | **DONE** | `configure-main-branch-protection.sh` 2026-06-16 |
+| Stakeholder sanity (CI prod) | **PASS** | Blocking job `27646563842` |
+| Stakeholder sanity (local) | **OPTIONAL** | Add `STAKEHOLDER_SMOKE_*` to `.env.pilot` (see `.env.pilot.example`) |
+| iOS Layer B live E2E | **PASS (local)** | 2026-06-16 |
 
 ---
 
-## A. GitHub branch protection (C-03) — **do this first**
+## A. GitHub branch protection (C-03) — **DONE 2026-06-16**
 
 ### A.1 Who
 
@@ -159,13 +159,9 @@ CI_SIGNING_HACK=1 bash ios/scripts/run-ios-e2e-integration-local.sh
 
 ## E. Closure verdict update
 
-When **A.3–A.6** are complete:
+**Complete (2026-06-16):** governance C-03 closed; prod deploy gates green; iOS Layer B PASS; smoke scripts portable on arm64.
 
-1. C-03 → **closed** in `docs/audit/DEEP_AUDIT_RISK_REGISTER.md`
-2. Phase 13 governance row → **PASS** in `docs/product/PHASE13_ROADMAP_CLOSURE.md`
-3. Optional: run **Release GO/NO-GO Council** workflow (`workflow_dispatch`) for formal sign-off
-
-**Enterprise GA** still requires: iOS Layer B proof, branch protection proof, and P2 hygiene from `docs/audit/AUDIT_2026-06-11_full-project-audit-v2.md`.
+Optional ongoing: rotate secrets if exposed; re-run Layer B after major `ios/` changes; local `STAKEHOLDER_SMOKE_*` only if operator wants offline replay (CI prod already blocks on deploy).
 
 ---
 
