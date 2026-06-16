@@ -7,6 +7,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 IOS_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 REPO_ROOT="$(cd "$IOS_ROOT/.." && pwd)"
+# shellcheck source=../../scripts/smoke/_json_lib.sh
+source "$REPO_ROOT/scripts/smoke/_json_lib.sh"
 
 if [[ -f "$REPO_ROOT/.env.pilot" ]]; then
   set -a
@@ -31,14 +33,6 @@ export IOS_E2E_MANAGER_PASSWORD="${IOS_E2E_MANAGER_PASSWORD:-$IOS_E2E_PASSWORD}"
 export SMOKE_EMAIL="$IOS_E2E_EMAIL"
 export SMOKE_PASSWORD="$IOS_E2E_PASSWORD"
 
-json_access_token() {
-  python3 -c 'import json,sys; print(json.load(sys.stdin).get("access_token") or "")' 2>/dev/null || true
-}
-
-json_first_project_id() {
-  python3 -c 'import json,sys; d=json.load(sys.stdin); data=d.get("data") or []; print((data[0] or {}).get("id") or "")' 2>/dev/null || true
-}
-
 # Pin first tenant project for Manager navigation when the simulator list is slow to hydrate.
 if [[ -z "${IOS_E2E_PROJECT_ID:-}" ]]; then
   BASE_URL="${IOS_E2E_BASE_URL:-${PILOT_E2E_BASE_URL:-${PILOT_SMOKE_BASE_URL:-https://aistroyka.ai}}}"
@@ -49,11 +43,11 @@ if [[ -z "${IOS_E2E_PROJECT_ID:-}" ]]; then
     TOKEN_JSON=$(curl -sSL -m 20 -X POST "${SUPA_URL}/auth/v1/token?grant_type=password" \
       -H "Content-Type: application/json" -H "apikey: $SUPA_KEY" \
       --data-binary "{\"email\":\"${IOS_E2E_EMAIL}\",\"password\":\"${IOS_E2E_PASSWORD}\"}" 2>/dev/null || true)
-    TOKEN=$(printf '%s' "$TOKEN_JSON" | json_access_token)
+    TOKEN=$(printf '%s' "$TOKEN_JSON" | smoke_jq -r '.access_token // empty')
     if [[ -n "$TOKEN" ]]; then
       IOS_E2E_PROJECT_ID=$(curl -sSL -m 20 \
         -H "Authorization: Bearer $TOKEN" -H "x-client: ios_worker" \
-        "${BASE_URL}/api/v1/projects?limit=1" | json_first_project_id)
+        "${BASE_URL}/api/v1/projects?limit=1" | smoke_jq -r '.data[0].id // empty')
       export IOS_E2E_PROJECT_ID
     fi
   fi
@@ -129,11 +123,11 @@ if [[ -n "$PREFLIGHT_SUPA" && -n "$PREFLIGHT_KEY" ]]; then
   PF_JSON=$(curl -sSL -m 20 -X POST "${PREFLIGHT_SUPA}/auth/v1/token?grant_type=password" \
     -H "Content-Type: application/json" -H "apikey: $PREFLIGHT_KEY" \
     --data-binary "{\"email\":\"${IOS_E2E_EMAIL}\",\"password\":\"${IOS_E2E_PASSWORD}\"}" 2>/dev/null || true)
-  PF_TOKEN=$(printf '%s' "$PF_JSON" | json_access_token)
+  PF_TOKEN=$(printf '%s' "$PF_JSON" | smoke_jq -r '.access_token // empty')
   if [[ -n "$PF_TOKEN" ]]; then
     IOS_E2E_ACCESS_TOKEN="$PF_TOKEN"
     export IOS_E2E_ACCESS_TOKEN
-    IOS_E2E_USER_ID=$(printf '%s' "$PF_TOKEN" | python3 -c "import sys,base64,json; p=sys.stdin.read().strip().split('.')[1]; p+='='*(-len(p)%4); print(json.loads(base64.urlsafe_b64decode(p)).get('sub',''))" 2>/dev/null || true)
+    IOS_E2E_USER_ID=$(printf '%s' "$PF_TOKEN" | smoke_python3 -c "import sys,base64,json; p=sys.stdin.read().strip().split('.')[1]; p+='='*(-len(p)%4); print(json.loads(base64.urlsafe_b64decode(p)).get('sub',''))" 2>/dev/null || true)
     export IOS_E2E_USER_ID
     PF_CODE=$(curl -sSL -o /dev/null -w "%{http_code}" -m 20 \
       -H "Authorization: Bearer $PF_TOKEN" -H "x-client: ios_manager" \

@@ -41,7 +41,7 @@ See `ios/README.md`.
 
 **Layer B API chain (2026-06-03):** `BASE_URL=https://aistroyka.ai ./scripts/smoke/ios_mobile_api_chain.sh` with `.env.pilot` — **PASS** (worker report create + sync; manager me + reports). Canonical mobile transaction proof for publication.
 
-**Layer B UITest (optional local):** `CI_SIGNING_HACK=1 bash ios/scripts/run-ios-e2e-integration-local.sh` — live login + Worker draft + Manager reports inbox + **project intelligence + copilot screen** (`testManager_livePilot_projectIntelligenceAndCopilot`; requires Secrets.xcconfig + pilot credentials). Optional `IOS_E2E_PROJECT_ID` pins project row.
+**Layer B UITest (local):** `bash ios/scripts/run-ios-e2e-integration-local.sh` with `.env.pilot` + `apps/web/.env.local` + `IOS_E2E_BASE_URL=https://aistroyka.ai` — **PASS** (2026-06-16, branch `fix/smoke-json-arm64`): all three live tests green (~93s wall time): `testManager_livePilot_projectIntelligenceAndCopilot`, `testManager_livePilot_loginAndReachReportsInbox`, `testWorker_livePilot_loginAndOpenNewReportDraft`. Runner auto-pins `IOS_E2E_PROJECT_ID`, preflights `/api/v1/me`, writes gitignored `ios/Config/.uitest-e2e-credentials`. JSON parsing uses `scripts/smoke/_json_lib.sh` (Apple Silicon–safe). Optional `IOS_E2E_ONLY_TEST`, `IOS_E2E_SKIP_WORKER=1`.
 
 ### Limits of layer A
 
@@ -65,7 +65,7 @@ Use a **pilot tenant** and record: **date**, **app build** (git SHA or Xcode bui
 | 5 | Manager: approve / request changes + **note** / reject + **note** | — | ☐ | |
 | 6 | Worker: `changes_requested` appears; **resubmit**; thumbnails on resubmit | ☐ | — | |
 | 7 | Worker: home **help** card — hints or assistant summary (after lite allow-list fix) | ☐ | — | |
-| 8 | Manager: **AI** tab jobs; project **Intelligence** + **Copilot** screens | — | ☐ | **API PASS** (`ios_mobile_api_chain` intelligence 2026-06-04); **UITest** `testManager_livePilot_projectIntelligenceAndCopilot` added — run via `ios/scripts/run-ios-e2e-integration-local.sh` (may need `IOS_E2E_BASE_URL=https://aistroyka.ai`; simulator list hydration flaky) |
+| 8 | Manager: **AI** tab jobs; project **Intelligence** + **Copilot** screens | — | ☐ | **PASS** API (`ios_mobile_api_chain` 2026-06-04) + **PASS** UITest (2026-06-16, `https://aistroyka.ai`) |
 | 9 | Push: assign task → Worker receives update (optional) | ☐ | — | |
 
 **Staging log policy:** Do not paste secrets, tokens, or PII. Use internal links or ticket IDs.
@@ -76,9 +76,9 @@ Use a **pilot tenant** and record: **date**, **app build** (git SHA or Xcode bui
 
 ### A. PHASE STATUS (this repository pass)
 
-**INCREMENTAL CLOSED (Layer B API chain live)**
+**INCREMENTAL CLOSED (Layer B API chain + live UITests on pilot)**
 
-- **Delivered:** Layer A CI, Layer B API chain script (`scripts/smoke/ios_mobile_api_chain.sh`), optional Layer B UITests + `run-ios-e2e-integration-local.sh`.
+- **Delivered:** Layer A CI, Layer B API chain (`scripts/smoke/ios_mobile_api_chain.sh`), Layer B UITests + `run-ios-e2e-integration-local.sh` (Manager intelligence/copilot + reports inbox; Worker report draft compose).
 - **Not delivered here:** Full simulator photo upload + manager review tap chain (TestFlight / manual checklist).
 
 ### B. WHEN TO MOVE TO PHASE 10

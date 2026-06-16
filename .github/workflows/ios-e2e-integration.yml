@@ -1,0 +1,91 @@
+# Layer B — live pilot iOS UITests (Manager intelligence/copilot + reports; Worker report draft).
+# Requires macOS runner + repository secrets (Settings → Secrets → Actions):
+#   PILOT_E2E_EMAIL, PILOT_E2E_PASSWORD
+#   NEXT_PUBLIC_SUPABASE_URL_PRODUCTION, NEXT_PUBLIC_SUPABASE_ANON_KEY_PRODUCTION
+# Optional: PILOT_E2E_BASE_URL (default https://aistroyka.ai), PILOT_E2E_PROJECT_ID
+#
+# Manual only — not on PR path (simulator + live tenant; ~15 min).
+name: iOS Layer B E2E (live pilot)
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Pilot API base URL (no trailing slash)"
+        required: false
+        default: "https://aistroyka.ai"
+        type: string
+  workflow_call:
+    inputs:
+      base_url:
+        description: "Pilot API base URL"
+        type: string
+        required: false
+        default: "https://aistroyka.ai"
+
+concurrency:
+  group: ios-e2e-integration-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ios-layer-b:
+    name: Mobile API chain + live UITests
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Require pilot E2E secrets
+        env:
+          EMAIL: ${{ secrets.PILOT_E2E_EMAIL }}
+          PASS: ${{ secrets.PILOT_E2E_PASSWORD }}
+          SUPA_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_PRODUCTION }}
+          SUPA_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_PRODUCTION }}
+        run: |
+          if [ -z "$EMAIL" ] || [ -z "$PASS" ] || [ -z "$SUPA_URL" ] || [ -z "$SUPA_KEY" ]; then
+            echo "::error::Set PILOT_E2E_EMAIL, PILOT_E2E_PASSWORD, NEXT_PUBLIC_SUPABASE_URL_PRODUCTION, NEXT_PUBLIC_SUPABASE_ANON_KEY_PRODUCTION."
+            exit 1
+          fi
+
+      - name: Write ios/Config/Secrets.xcconfig for CI
+        env:
+          BASE_URL: ${{ inputs.base_url || secrets.PILOT_E2E_BASE_URL || 'https://aistroyka.ai' }}
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_PRODUCTION }}
+          SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_PRODUCTION }}
+        run: |
+          set -eo pipefail
+          xc_escape() { printf '%s' "$1" | sed 's/\//\\\/\\/g'; }
+          BASE_ESC="$(xc_escape "$BASE_URL")"
+          SUPA_ESC="$(xc_escape "$SUPABASE_URL")"
+          umask 077
+          cat > ios/Config/Secrets.xcconfig <<EOF
+BASE_URL = ${BASE_ESC}
+SUPABASE_URL = ${SUPA_ESC}
+SUPABASE_ANON_KEY = ${SUPABASE_ANON_KEY}
+EOF
+
+      - name: Xcode version
+        run: xcodebuild -version
+
+      - name: Mobile API chain (Layer B preflight)
+        env:
+          BASE_URL: ${{ inputs.base_url || secrets.PILOT_E2E_BASE_URL || 'https://aistroyka.ai' }}
+          SMOKE_EMAIL: ${{ secrets.PILOT_E2E_EMAIL }}
+          SMOKE_PASSWORD: ${{ secrets.PILOT_E2E_PASSWORD }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_PRODUCTION }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_PRODUCTION }}
+        run: bash scripts/smoke/ios_mobile_api_chain.sh
+
+      - name: Live pilot iOS UITests
+        env:
+          CI_SIGNING_HACK: "1"
+          IOS_E2E_BASE_URL: ${{ inputs.base_url || secrets.PILOT_E2E_BASE_URL || 'https://aistroyka.ai' }}
+          IOS_E2E_EMAIL: ${{ secrets.PILOT_E2E_EMAIL }}
+          IOS_E2E_PASSWORD: ${{ secrets.PILOT_E2E_PASSWORD }}
+          SMOKE_EMAIL: ${{ secrets.PILOT_E2E_EMAIL }}
+          SMOKE_PASSWORD: ${{ secrets.PILOT_E2E_PASSWORD }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_PRODUCTION }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_PRODUCTION }}
+          IOS_E2E_PROJECT_ID: ${{ secrets.PILOT_E2E_PROJECT_ID }}
+        run: bash ios/scripts/run-ios-e2e-integration-local.sh

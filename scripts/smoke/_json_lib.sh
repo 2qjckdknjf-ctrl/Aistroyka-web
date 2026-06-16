@@ -30,6 +30,11 @@ smoke_jq() {
   smoke_python3 -c '
 import json, sys
 expr = sys.argv[1].replace(" // empty", "").strip()
+default = ""
+if " // " in expr:
+    expr, default_part = expr.split(" // ", 1)
+    expr = expr.strip()
+    default = default_part.strip().strip('"').strip("'")
 raw = sys.stdin.read()
 try:
     obj = json.loads(raw) if raw.strip() else {}
@@ -63,7 +68,10 @@ while path:
         cur = cur.get(head)
     else:
         cur = None
-out(cur)
+if (cur is None or cur == "") and default:
+    out(default)
+else:
+    out(cur)
 ' "$filter"
 }
 
@@ -77,4 +85,61 @@ smoke_jq_file() {
   done
   local file="$1"
   smoke_jq -r "$filter" <"$file"
+}
+
+smoke_assert_analysis_result() {
+  local file="$1"
+  if smoke_have_jq; then
+    jq -e '.risk_level and .stage and (.completion_percent|type=="number")' "$file" >/dev/null
+    return
+  fi
+  smoke_python3 -c '
+import json, sys
+d = json.load(open(sys.argv[1]))
+ok = bool(d.get("risk_level") and d.get("stage") and isinstance(d.get("completion_percent"), (int, float)))
+sys.exit(0 if ok else 1)
+' "$file"
+}
+
+smoke_assert_analysis_result_full() {
+  local file="$1"
+  if smoke_have_jq; then
+    jq -e '.risk_level and .stage and (.completion_percent|type=="number") and (.detected_issues|type=="array") and (.recommendations|type=="array")' "$file" >/dev/null
+    return
+  fi
+  smoke_python3 -c '
+import json, sys
+d = json.load(open(sys.argv[1]))
+ok = (
+  d.get("risk_level") and d.get("stage")
+  and isinstance(d.get("completion_percent"), (int, float))
+  and isinstance(d.get("detected_issues"), list)
+  and isinstance(d.get("recommendations"), list)
+)
+sys.exit(0 if ok else 1)
+' "$file"
+}
+
+smoke_assert_intelligence_shape() {
+  local file="$1"
+  if smoke_have_jq; then
+    jq -e '.projectHealthScore and .missingEvidenceInsights and .topRiskInsights and .executiveProjectSummary' "$file" >/dev/null
+    return
+  fi
+  smoke_python3 -c '
+import json, sys
+d = json.load(open(sys.argv[1]))
+for key in ("projectHealthScore", "missingEvidenceInsights", "topRiskInsights", "executiveProjectSummary"):
+    if key not in d:
+        sys.exit(1)
+' "$file"
+}
+
+smoke_json_get_bool() {
+  local file="$1" key="$2"
+  if smoke_have_jq; then
+    jq -e ".${key} == true" "$file" &>/dev/null
+    return
+  fi
+  smoke_python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); raise SystemExit(0 if d.get(sys.argv[2]) is True else 1)' "$file" "$key"
 }
