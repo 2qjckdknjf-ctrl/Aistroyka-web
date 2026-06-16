@@ -31,21 +31,29 @@ export IOS_E2E_MANAGER_PASSWORD="${IOS_E2E_MANAGER_PASSWORD:-$IOS_E2E_PASSWORD}"
 export SMOKE_EMAIL="$IOS_E2E_EMAIL"
 export SMOKE_PASSWORD="$IOS_E2E_PASSWORD"
 
+json_access_token() {
+  python3 -c 'import json,sys; print(json.load(sys.stdin).get("access_token") or "")' 2>/dev/null || true
+}
+
+json_first_project_id() {
+  python3 -c 'import json,sys; d=json.load(sys.stdin); data=d.get("data") or []; print((data[0] or {}).get("id") or "")' 2>/dev/null || true
+}
+
 # Pin first tenant project for Manager navigation when the simulator list is slow to hydrate.
 if [[ -z "${IOS_E2E_PROJECT_ID:-}" ]]; then
   BASE_URL="${IOS_E2E_BASE_URL:-${PILOT_E2E_BASE_URL:-${PILOT_SMOKE_BASE_URL:-https://aistroyka.ai}}}"
   BASE_URL="${BASE_URL%/}"
   SUPA_URL="${SUPABASE_URL:-${NEXT_PUBLIC_SUPABASE_URL:-}}"
   SUPA_KEY="${SUPABASE_ANON_KEY:-${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}}"
-  if [[ -n "$SUPA_URL" && -n "$SUPA_KEY" && -n "$IOS_E2E_EMAIL" && -n "$IOS_E2E_PASSWORD" ]] && command -v jq &>/dev/null; then
+  if [[ -n "$SUPA_URL" && -n "$SUPA_KEY" && -n "$IOS_E2E_EMAIL" && -n "$IOS_E2E_PASSWORD" ]]; then
     TOKEN_JSON=$(curl -sSL -m 20 -X POST "${SUPA_URL}/auth/v1/token?grant_type=password" \
       -H "Content-Type: application/json" -H "apikey: $SUPA_KEY" \
-      --data-binary "{\"email\":\"${IOS_E2E_EMAIL}\",\"password\":\"${IOS_E2E_PASSWORD}\"}" || true)
-    TOKEN=$(printf '%s' "$TOKEN_JSON" | jq -r '.access_token // empty')
+      --data-binary "{\"email\":\"${IOS_E2E_EMAIL}\",\"password\":\"${IOS_E2E_PASSWORD}\"}" 2>/dev/null || true)
+    TOKEN=$(printf '%s' "$TOKEN_JSON" | json_access_token)
     if [[ -n "$TOKEN" ]]; then
       IOS_E2E_PROJECT_ID=$(curl -sSL -m 20 \
         -H "Authorization: Bearer $TOKEN" -H "x-client: ios_worker" \
-        "${BASE_URL}/api/v1/projects?limit=1" | jq -r '.data[0].id // empty' 2>/dev/null || true)
+        "${BASE_URL}/api/v1/projects?limit=1" | json_first_project_id)
       export IOS_E2E_PROJECT_ID
     fi
   fi
@@ -115,12 +123,13 @@ echo "E2E email: ${IOS_E2E_EMAIL}"
 # Fail fast if pilot cannot reach manager /me (avoids long UITest hangs on unauthorized).
 PREFLIGHT_SUPA="${SUPABASE_URL:-${NEXT_PUBLIC_SUPABASE_URL:-}}"
 PREFLIGHT_KEY="${SUPABASE_ANON_KEY:-${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}}"
-if [[ -n "$PREFLIGHT_SUPA" && -n "$PREFLIGHT_KEY" ]] && command -v jq &>/dev/null; then
+if [[ -n "$PREFLIGHT_SUPA" && -n "$PREFLIGHT_KEY" ]]; then
   PREFLIGHT_BASE="${IOS_E2E_BASE_URL}"
   PREFLIGHT_BASE="${PREFLIGHT_BASE%/}"
-  PF_TOKEN=$(curl -sSL -m 20 -X POST "${PREFLIGHT_SUPA}/auth/v1/token?grant_type=password" \
+  PF_JSON=$(curl -sSL -m 20 -X POST "${PREFLIGHT_SUPA}/auth/v1/token?grant_type=password" \
     -H "Content-Type: application/json" -H "apikey: $PREFLIGHT_KEY" \
-    --data-binary "{\"email\":\"${IOS_E2E_EMAIL}\",\"password\":\"${IOS_E2E_PASSWORD}\"}" | jq -r '.access_token // empty' 2>/dev/null || true)
+    --data-binary "{\"email\":\"${IOS_E2E_EMAIL}\",\"password\":\"${IOS_E2E_PASSWORD}\"}" 2>/dev/null || true)
+  PF_TOKEN=$(printf '%s' "$PF_JSON" | json_access_token)
   if [[ -n "$PF_TOKEN" ]]; then
     IOS_E2E_ACCESS_TOKEN="$PF_TOKEN"
     export IOS_E2E_ACCESS_TOKEN

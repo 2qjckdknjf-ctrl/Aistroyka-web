@@ -40,18 +40,19 @@
 | E2E pilot (staging) | **PASS** — 21 passed, 1 skipped (2026-06-15) |
 | Branch protection / required checks (C-03) | **BLOCKED** — `branches/main/protection` → 404; GitHub UI/org ruleset required |
 | iOS E2E secrets hygiene | **CLOSED (repo)** — `e2e-credentials.env` gitignored; credentials via `.uitest-e2e-credentials` only |
+| iOS Layer B live E2E | **PASS (local)** | `run-ios-e2e-integration-local.sh` exit 0 — 2026-06-16 (Worker report draft + Manager intelligence/copilot) |
 | Deploy workflow YAML | **CLOSED** — PR #83 fixed invalid `continue-on-error` on reusable workflow jobs |
 
 ## Verdict
 
-**CONDITIONAL YES — Phase 13 product scope closed for pilot/public candidate**, with explicit residual **governance** items (branch protection proof, iOS Layer B live E2E on device).
+**CONDITIONAL YES — Phase 13 product scope closed for pilot/public candidate**, with explicit residual **governance** item (branch protection proof).
 
-Not broad enterprise GA: branch protection unproven from repo; iOS Layer B live E2E requires operator device/simulator run; P2 hygiene per audit v2 (stale branches, npm moderate vulns, DB type regeneration).
+Not broad enterprise GA: branch protection unproven from repo; P2 hygiene per audit v2 (stale branches, npm moderate vulns, DB type regeneration). iOS Layer B live E2E **PASS** locally (2026-06-16).
 
 ## Residual operator actions
 
 1. **GitHub:** enable branch protection / required checks on `main` — step-by-step: `docs/ops/POST_MERGE_GOVERNANCE_CHECKLIST.md` (§ A, C-03).
-2. **iOS Layer B:** `ios/scripts/run-ios-e2e-integration-local.sh` with gitignored `.uitest-e2e-credentials`.
+2. **iOS Layer B:** done locally 2026-06-16; re-run after major `ios/` changes: `CI_SIGNING_HACK=1 bash ios/scripts/run-ios-e2e-integration-local.sh`
 3. **Secrets rotation:** if smoke password or JWT ever appeared in logs/chats, rotate per `docs/audit/SECRET_EXPOSURE_REMEDIATION_2026-05-01.md`.
 4. **Local stakeholder sanity:** requires `STAKEHOLDER_SMOKE_*` (not in `.env.pilot`; use GitHub secrets or dedicated account).
 

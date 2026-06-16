@@ -109,6 +109,7 @@ Required checks:
 Evidence to capture:
 
 - screenshots or operator note from GitHub branch/ruleset UI.
+- optional API apply: `scripts/ops/configure-main-branch-protection.sh` (requires `GH_TOKEN` with repo admin).
 - optional API snapshot (reference only, not sufficient by itself):
   - `gh api repos/2qjckdknjf-ctrl/Aistroyka-web/branches/main/protection`
   - `gh api repos/2qjckdknjf-ctrl/Aistroyka-web/rulesets`
