@@ -18,7 +18,7 @@ Repo: [2qjckdknjf-ctrl/Aistroyka-web](https://github.com/2qjckdknjf-ctrl/Aistroy
 | `main` branch protection | **OPEN** | API: `branches/main/protection` → **404**; repo rulesets → `[]` |
 | Stakeholder sanity (CI prod) | **PASS** | Blocking job in prod deploy |
 | Stakeholder sanity (local) | **BLOCKED** | Needs `STAKEHOLDER_SMOKE_*` (not in `.env.pilot`) |
-| iOS Layer B live E2E | **OPEN** | Operator simulator/device + `.uitest-e2e-credentials` |
+| iOS Layer B live E2E | **PASS (local)** | 2026-06-16 — `run-ios-e2e-integration-local.sh` exit 0 (Worker report draft + Manager intelligence/copilot) |
 
 ---
 
@@ -140,9 +140,9 @@ CI_SIGNING_HACK=1 bash ios/scripts/run-ios-uitest-smoke-local.sh
 CI_SIGNING_HACK=1 bash ios/scripts/run-ios-e2e-integration-local.sh
 ```
 
-- [ ] Worker UITest smoke PASS
-- [ ] Manager UITest smoke PASS
-- [ ] Layer B integration PASS (attach log path to `docs/publication-readiness/IOS_RUNTIME_SMOKE_REPORT.md` if publishing)
+- [x] Worker UITest smoke PASS (2026-06-16 Layer B)
+- [x] Manager UITest smoke PASS (2026-06-16 Layer B)
+- [x] Layer B integration PASS — `CI_SIGNING_HACK=1 bash ios/scripts/run-ios-e2e-integration-local.sh`
 
 ---
 
