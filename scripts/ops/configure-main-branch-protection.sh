@@ -76,7 +76,11 @@ http_code="$(curl -sS -o /tmp/bp-response.json -w '%{http_code}' \
 
 if [[ "$http_code" == "200" ]]; then
   echo "PASS: branch protection applied (HTTP 200)."
-  python3 -m json.tool /tmp/bp-response.json | head -40
+  if command -v python3 >/dev/null 2>&1 && python3 --version >/dev/null 2>&1; then
+    python3 -m json.tool /tmp/bp-response.json | head -40
+  else
+    head -40 /tmp/bp-response.json
+  fi
   echo ""
   echo "Next: open a test PR and confirm merge waits for '${REQUIRED_CHECK}'."
   echo "Then close C-03 in docs/audit/DEEP_AUDIT_RISK_REGISTER.md with today's date."
