@@ -92,6 +92,19 @@ gh api repos/2qjckdknjf-ctrl/Aistroyka-web/rulesets
 - [ ] Confirm **merge is blocked** until **`check` / CI Check** is green.
 - [ ] Confirm merge is **not** blocked waiting for Vercel or Cloudflare deploy workflows.
 
+### A.7 API helper (optional — repo admin token)
+
+If you have a GitHub token with **administration** write on the repo:
+
+```bash
+GH_TOKEN=ghp_... bash scripts/ops/configure-main-branch-protection.sh --dry-run
+GH_TOKEN=ghp_... bash scripts/ops/configure-main-branch-protection.sh
+```
+
+Override check name if the UI dropdown differs: `REQUIRED_STATUS_CHECK='CI Check' GH_TOKEN=... bash scripts/ops/configure-main-branch-protection.sh`
+
+On failure (403/404), use § A.2 UI steps — API cannot replace org-level rulesets without org admin.
+
 ---
 
 ## B. Post-merge runtime gates (already green — re-run after big changes)
