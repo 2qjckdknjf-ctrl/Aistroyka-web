@@ -9,6 +9,10 @@
 # Requires: SMOKE_EMAIL, SMOKE_PASSWORD, NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=_json_lib.sh
+source "$SCRIPT_DIR/_json_lib.sh"
+
 BASE="${BASE_URL:-https://aistroyka.ai}"
 BASE="${BASE%/}"
 SUPA_URL="${SUPABASE_URL:-${NEXT_PUBLIC_SUPABASE_URL:-}}"
@@ -21,11 +25,6 @@ if [[ -z "$EMAIL" || -z "$PASS" || -z "$SUPA_URL" || -z "$SUPA_KEY" ]]; then
   exit 2
 fi
 
-if ! command -v jq &>/dev/null; then
-  echo "ios_mobile_api_chain: jq required" >&2
-  exit 2
-fi
-
 mint_token() {
   curl -sSL -m 20 -X POST "${SUPA_URL}/auth/v1/token?grant_type=password" \
     -H "Content-Type: application/json" -H "apikey: $SUPA_KEY" \
@@ -33,7 +32,7 @@ mint_token() {
 }
 
 TOKEN_JSON=$(mint_token)
-TOKEN=$(printf '%s' "$TOKEN_JSON" | jq -r '.access_token // empty')
+TOKEN=$(printf '%s' "$TOKEN_JSON" | smoke_jq -r '.access_token // empty')
 if [[ -z "$TOKEN" ]]; then
   echo "ios_mobile_api_chain: auth failed" >&2
   printf '%s' "$TOKEN_JSON" | head -c 300 >&2 || true
@@ -69,7 +68,7 @@ echo "  worker GET /api/v1/config OK"
 code_projects=$(curl -sSL -o /tmp/ios_projects.json -w "%{http_code}" -m 20 \
   -H "Authorization: $AUTH" -H "x-client: $WORKER_CLIENT" "$BASE/api/v1/projects" || true)
 [[ "$code_projects" == "200" ]] || { echo "FAIL projects HTTP $code_projects" >&2; exit 1; }
-PROJECT_ID=$(jq -r '.data[0].id // empty' /tmp/ios_projects.json)
+PROJECT_ID=$(smoke_jq_file -r '.data[0].id // empty' /tmp/ios_projects.json)
 if [[ -z "$PROJECT_ID" ]]; then
   echo "FAIL worker projects list empty (tenant membership / pilot data)" >&2
   exit 1
@@ -81,7 +80,7 @@ echo "  worker POST /api/v1/worker/day/start attempted"
 
 # createReport uses day_id/task_id only; tenant context supplies project scope
 CREATE_RESP=$(api POST "/api/v1/worker/report/create" "$WORKER_CLIENT" "{}")
-REPORT_ID=$(printf '%s' "$CREATE_RESP" | jq -r '.data.id // empty')
+REPORT_ID=$(printf '%s' "$CREATE_RESP" | smoke_jq -r '.data.id // empty')
 if [[ -z "$REPORT_ID" ]]; then
   echo "FAIL worker/report/create: $(printf '%s' "$CREATE_RESP" | head -c 400)" >&2
   exit 1
@@ -97,19 +96,19 @@ echo "  worker GET /api/v1/worker/sync OK"
 ME_CODE=$(curl -sSL -o /tmp/ios_me.json -w "%{http_code}" -m 20 \
   -H "Authorization: $AUTH" -H "x-client: $MANAGER_CLIENT" "$BASE/api/v1/me" || true)
 [[ "$ME_CODE" == "200" ]] || { echo "FAIL manager /api/v1/me HTTP $ME_CODE" >&2; exit 1; }
-ROLE=$(jq -r '.data.role // empty' /tmp/ios_me.json)
+ROLE=$(smoke_jq_file -r '.data.role // empty' /tmp/ios_me.json)
 echo "  manager GET /api/v1/me OK (role=${ROLE:-unknown})"
 
 REPORTS_CODE=$(curl -sSL -o /tmp/ios_reports.json -w "%{http_code}" -m 20 \
   -H "Authorization: $AUTH" -H "x-client: $MANAGER_CLIENT" "$BASE/api/v1/reports?limit=5" || true)
 [[ "$REPORTS_CODE" == "200" ]] || { echo "FAIL manager /api/v1/reports HTTP $REPORTS_CODE" >&2; exit 1; }
-REPORT_COUNT=$(jq -r '.data | length' /tmp/ios_reports.json)
+REPORT_COUNT=$(smoke_jq_file -r '.data | length' /tmp/ios_reports.json)
 echo "  manager GET /api/v1/reports OK (count=$REPORT_COUNT)"
 
 PROJECT_ID="${IOS_CHAIN_PROJECT_ID:-${PILOT_SMOKE_PROJECT_ID_PRODUCTION:-}}"
 if [[ -z "$PROJECT_ID" ]]; then
   PROJECT_ID=$(curl -sSL -m 20 -H "Authorization: $AUTH" -H "x-client: $MANAGER_CLIENT" \
-    "$BASE/api/v1/projects?limit=1" | jq -r '.data[0].id // empty' 2>/dev/null || true)
+    "$BASE/api/v1/projects?limit=1" | smoke_jq -r '.data[0].id // empty' 2>/dev/null || true)
 fi
 if [[ -n "$PROJECT_ID" ]]; then
   INTEL_CODE=$(curl -sSL -o /tmp/ios_intel.json -w "%{http_code}" -m 45 \

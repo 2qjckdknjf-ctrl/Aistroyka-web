@@ -19,6 +19,9 @@
 # Metrics uses Authorization or Cookie; apex→www redirect must keep credentials: --location-trusted (curl drops Authorization on cross-host redirect with -L alone).
 # Same rule applies to any authenticated curl to BASE_URL (e.g. worker/tasks, tasks/:id, reports/:id): use curl --location-trusted or a fixed canonical host.
 set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=_json_lib.sh
+source "$SCRIPT_DIR/_json_lib.sh"
 BASE="${BASE_URL:-http://localhost:3000}"
 CRON="${CRON_SECRET:-}"
 AUTH="${AUTH_HEADER:-}"
@@ -33,7 +36,7 @@ is_local_base() {
 json_field() {
   local file="$1"
   local field="$2"
-  if command -v jq &>/dev/null; then
+  if smoke_have_jq; then
     jq -r ".${field} // empty" "$file" 2>/dev/null | tr -d '\n'
   else
     sed -nE "s/.*\"${field}\"[[:space:]]*:[[:space:]]*\"([^\"]+)\".*/\\1/p" "$file" 2>/dev/null | head -n1 | tr -d '\n'
@@ -48,10 +51,8 @@ mint_smoke_token_if_possible() {
     TOKEN_RESP=$(curl -sSL -m 15 -X POST "${SUPA_URL}/auth/v1/token?grant_type=password" \
       -H "Content-Type: application/json" -H "apikey: $SUPA_KEY" \
       --data-binary "{\"email\":\"${SMOKE_EMAIL}\",\"password\":\"${SMOKE_PASSWORD}\"}" 2>/dev/null || true)
-    if command -v jq &>/dev/null; then
-      TOKEN=$(printf '%s' "$TOKEN_RESP" | jq -r '.access_token // empty' 2>/dev/null)
-      [[ -n "$TOKEN" ]] && echo "Bearer $TOKEN"
-    fi
+    TOKEN=$(printf '%s' "$TOKEN_RESP" | smoke_jq -r '.access_token // empty')
+    [[ -n "$TOKEN" ]] && echo "Bearer $TOKEN"
   fi
 }
 
@@ -127,7 +128,7 @@ if [[ -n "$CRON" ]]; then
     -H "Content-Type: application/json" -H "x-cron-secret: $CRON" \
     "$BASE/api/v1/admin/jobs/cron-tick" || true)
   if [[ "$code" == "200" ]]; then
-    if command -v jq &>/dev/null && [[ "$(jq -r '.ok // "true"' /tmp/pilot_cron.json)" != "true" ]]; then
+    if [[ "$(smoke_jq_file -r '.ok // "true"' /tmp/pilot_cron.json)" != "true" ]]; then
       echo "  FAIL: cron-tick returned ok:false"
       FAIL=1
     else
@@ -142,7 +143,7 @@ else
     -H "Content-Type: application/json" \
     "$BASE/api/v1/admin/jobs/cron-tick" || true)
   if [[ "$code" == "200" ]]; then
-    if command -v jq &>/dev/null && [[ "$(jq -r '.ok // "true"' /tmp/pilot_cron.json)" != "true" ]]; then
+    if [[ "$(smoke_jq_file -r '.ok // "true"' /tmp/pilot_cron.json)" != "true" ]]; then
       echo "  FAIL: cron-tick returned ok:false"
       FAIL=1
     else
@@ -188,9 +189,7 @@ if [[ "$code" == "401" && -n "$AUTH" && -z "$COOKIE" ]]; then
 fi
 if [[ "$code" != "200" ]]; then
   ERR_HINT=""
-  if command -v jq &>/dev/null; then
-    ERR_HINT=$(jq -r '.error // empty' /tmp/pilot_metrics.json 2>/dev/null | tr -d '\n' || true)
-  fi
+  ERR_HINT=$(smoke_jq_file -r '.error // empty' /tmp/pilot_metrics.json 2>/dev/null | tr -d '\n' || true)
   if [[ "$code" == "401" && -z "$AUTH" && -z "$COOKIE" ]]; then
     echo "  FAIL: ops/metrics → HTTP $code (set COOKIE or AUTH_HEADER, or SMOKE_EMAIL+SMOKE_PASSWORD+Supabase keys)"
   elif [[ "$code" == "403" && -n "$ERR_HINT" ]]; then
@@ -207,12 +206,7 @@ if [[ "$code" != "200" ]]; then
   FAIL=1
 else
   echo "  PASS: ops/metrics"
-  # Print key counters (jq optional)
-  if command -v jq &>/dev/null; then
-    echo "  Counters: uploads_stuck=$(jq -r '.uploads_stuck // "?"' /tmp/pilot_metrics.json) uploads_expired=$(jq -r '.uploads_expired // "?"' /tmp/pilot_metrics.json) devices_offline=$(jq -r '.devices_offline // "?"' /tmp/pilot_metrics.json) sync_conflicts=$(jq -r '.sync_conflicts // "?"' /tmp/pilot_metrics.json) tasks_assigned_today=$(jq -r '.tasks_assigned_today // "?"' /tmp/pilot_metrics.json) tasks_open_today=$(jq -r '.tasks_open_today // "?"' /tmp/pilot_metrics.json) tasks_completed_today=$(jq -r '.tasks_completed_today // "?"' /tmp/pilot_metrics.json)"
-  else
-    echo "  (install jq to print counters; raw: /tmp/pilot_metrics.json)"
-  fi
+  echo "  Counters: uploads_stuck=$(smoke_jq_file -r '.uploads_stuck // "?"' /tmp/pilot_metrics.json) uploads_expired=$(smoke_jq_file -r '.uploads_expired // "?"' /tmp/pilot_metrics.json) devices_offline=$(smoke_jq_file -r '.devices_offline // "?"' /tmp/pilot_metrics.json) sync_conflicts=$(smoke_jq_file -r '.sync_conflicts // "?"' /tmp/pilot_metrics.json) tasks_assigned_today=$(smoke_jq_file -r '.tasks_assigned_today // "?"' /tmp/pilot_metrics.json) tasks_open_today=$(smoke_jq_file -r '.tasks_open_today // "?"' /tmp/pilot_metrics.json) tasks_completed_today=$(smoke_jq_file -r '.tasks_completed_today // "?"' /tmp/pilot_metrics.json)"
 fi
 
 if [[ $FAIL -eq 1 ]]; then

@@ -78,6 +78,8 @@ if [[ "$http_code" == "200" ]]; then
   echo "PASS: branch protection applied (HTTP 200)."
   if command -v python3 >/dev/null 2>&1 && python3 --version >/dev/null 2>&1; then
     python3 -m json.tool /tmp/bp-response.json | head -40
+  elif [[ -x /usr/bin/python3 ]]; then
+    /usr/bin/python3 -m json.tool /tmp/bp-response.json | head -40
   else
     head -40 /tmp/bp-response.json
   fi

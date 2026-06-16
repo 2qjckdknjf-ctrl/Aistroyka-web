@@ -1,8 +1,8 @@
 # Phase 13 — Roadmap closure verdict
 
-**Date:** 2026-06-15 (refresh after prod deploy `cd130eb` — PR #76 + hotfix #83)  
+**Date:** 2026-06-16 (refresh after prod deploy `ee9d997` — PR #86–#87, C-03 closed)  
 **Mega-roadmap:** `docs/roadmap/AISTROYKA_MEGA_ROADMAP_CUSTOMER_FINANCE_SAFE.md` — § Phase 13  
-**Production build:** `cd130eb` (2026-06-15 06:40 UTC) — merge PR #76 (Manager AI parity, i18n fix, E2E secrets) + PR #83 (deploy workflow YAML fix)
+**Production build:** `ee9d997` (2026-06-16 20:38 UTC) — PR #87 C-03 evidence + branch protection on `main`
 
 ## Done criteria (from mega-roadmap)
 
@@ -25,23 +25,23 @@
 | `bun run release:check` | **PASS_WITH_WARNINGS** (optional stripe/ai/push/e2e env) |
 | `bun run cf:build` | **PASS** (PR #76 CI + staging/prod deploy workflows `27528576940` / `27528720688`) |
 
-## Live gates — 2026-06-15
+## Live gates — 2026-06-16
 
 | Gate | Result |
 |------|--------|
-| Staging `/api/v1/health` | **200** — `ok: true` |
-| Production `/api/v1/health` | **200** — `aiConfigured: true`, `db: ok`, build `cd130eb` |
-| Staging `pilot_launch.sh` | **PASS** — 2026-06-15 |
-| Production `pilot_launch.sh` | **PARTIAL** — health/config/metrics PASS; cron-tick needs `CRON_SECRET` locally (CI prod deploy passed full gate `27528720688`) |
-| `ai_live_provider.sh --require-live` (prod) | **PASS** — 2026-06-15, fallback 0% |
+| Staging `/api/v1/health` | **200** — build `ee9d997` |
+| Production `/api/v1/health` | **200** — `aiConfigured: true`, build `ee9d997` (2026-06-16 20:38 UTC) |
+| Prod deploy CI `27646563842` | **PASS** — pilot smoke + stakeholder sanity + AI gates (blocking) |
+| Staging `pilot_launch.sh` | **PASS** — 2026-06-15+ |
+| `ai_live_provider.sh --require-live` (prod) | **PASS** — CI prod deploy 2026-06-16 |
 | Staging `GET /api/v1/portal/projects` (unauthenticated) | **401** JSON `Authentication required` |
 | Live Supabase RLS / advisors (prod audit v2) | **PASS** — 0 security advisor findings; finance tables isolated |
-| Stakeholder live finance sanity | **PASS** — prod deploy `27528720688` (blocking job); prior council `26271634288` |
+| Stakeholder live finance sanity | **PASS** — prod deploy `27646563842` (blocking) |
 | E2E pilot (staging) | **PASS** — 21 passed, 1 skipped (2026-06-15) |
-| Branch protection / required checks (C-03) | **PASS** | API 2026-06-16 — required `check`, 1 PR review; script `configure-main-branch-protection.sh` |
-| iOS E2E secrets hygiene | **CLOSED (repo)** — `e2e-credentials.env` gitignored; credentials via `.uitest-e2e-credentials` only |
-| iOS Layer B live E2E | **PASS (local)** | `run-ios-e2e-integration-local.sh` exit 0 — 2026-06-16 (Worker report draft + Manager intelligence/copilot) |
-| Deploy workflow YAML | **CLOSED** — PR #83 fixed invalid `continue-on-error` on reusable workflow jobs |
+| Branch protection / required checks (C-03) | **PASS** — API 2026-06-16: required `check`, 1 PR review |
+| iOS E2E secrets hygiene | **CLOSED (repo)** — gitignored `.uitest-e2e-credentials` only |
+| iOS Layer B live E2E | **PASS (local)** — 2026-06-16 (`run-ios-e2e-integration-local.sh`) |
+| Deploy workflow YAML | **CLOSED** — PR #83 |
 
 ## Verdict
 
