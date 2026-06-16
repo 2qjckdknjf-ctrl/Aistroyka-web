@@ -4,7 +4,9 @@
 #   NEXT_PUBLIC_SUPABASE_URL_PRODUCTION, NEXT_PUBLIC_SUPABASE_ANON_KEY_PRODUCTION
 # Optional: PILOT_E2E_BASE_URL (default https://aistroyka.ai), PILOT_E2E_PROJECT_ID
 #
-# Manual only — not on PR path (simulator + live tenant; ~15 min).
+# Manual only — workflow_dispatch (not on PR path; simulator + live tenant; ~15 min).
+# Note: GitHub may log a 0s phantom "push" failure when this file changes on main
+# (workflow_dispatch-only workflows); safe to ignore — use Actions → Run workflow.
 name: iOS Layer B E2E (live pilot)
 
 on:
@@ -15,13 +17,6 @@ on:
         required: false
         default: "https://aistroyka.ai"
         type: string
-  workflow_call:
-    inputs:
-      base_url:
-        description: "Pilot API base URL"
-        type: string
-        required: false
-        default: "https://aistroyka.ai"
 
 concurrency:
   group: ios-e2e-integration-${{ github.workflow }}-${{ github.ref }}
@@ -30,6 +25,7 @@ concurrency:
 jobs:
   ios-layer-b:
     name: Mobile API chain + live UITests
+    if: github.event_name == 'workflow_dispatch'
     runs-on: macos-latest
     timeout-minutes: 45
     steps:
@@ -48,9 +44,19 @@ jobs:
             exit 1
           fi
 
+      - name: Resolve pilot base URL
+        id: pilot
+        env:
+          DISPATCH_BASE: ${{ github.event.inputs.base_url }}
+          SECRET_BASE: ${{ secrets.PILOT_E2E_BASE_URL }}
+        run: |
+          BASE="${DISPATCH_BASE:-$SECRET_BASE}"
+          BASE="${BASE:-https://aistroyka.ai}"
+          echo "base_url=$BASE" >> "$GITHUB_OUTPUT"
+
       - name: Write ios/Config/Secrets.xcconfig for CI
         env:
-          BASE_URL: ${{ inputs.base_url || secrets.PILOT_E2E_BASE_URL || 'https://aistroyka.ai' }}
+          BASE_URL: ${{ steps.pilot.outputs.base_url }}
           SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_PRODUCTION }}
           SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_PRODUCTION }}
         run: |
@@ -70,7 +76,7 @@ EOF
 
       - name: Mobile API chain (Layer B preflight)
         env:
-          BASE_URL: ${{ inputs.base_url || secrets.PILOT_E2E_BASE_URL || 'https://aistroyka.ai' }}
+          BASE_URL: ${{ steps.pilot.outputs.base_url }}
           SMOKE_EMAIL: ${{ secrets.PILOT_E2E_EMAIL }}
           SMOKE_PASSWORD: ${{ secrets.PILOT_E2E_PASSWORD }}
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_PRODUCTION }}
@@ -80,7 +86,7 @@ EOF
       - name: Live pilot iOS UITests
         env:
           CI_SIGNING_HACK: "1"
-          IOS_E2E_BASE_URL: ${{ inputs.base_url || secrets.PILOT_E2E_BASE_URL || 'https://aistroyka.ai' }}
+          IOS_E2E_BASE_URL: ${{ steps.pilot.outputs.base_url }}
           IOS_E2E_EMAIL: ${{ secrets.PILOT_E2E_EMAIL }}
           IOS_E2E_PASSWORD: ${{ secrets.PILOT_E2E_PASSWORD }}
           SMOKE_EMAIL: ${{ secrets.PILOT_E2E_EMAIL }}

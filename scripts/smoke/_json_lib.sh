@@ -34,7 +34,7 @@ default = ""
 if " // " in expr:
     expr, default_part = expr.split(" // ", 1)
     expr = expr.strip()
-    default = default_part.strip().strip('"').strip("'")
+    default = default_part.strip().strip(chr(34)).strip(chr(39))
 raw = sys.stdin.read()
 try:
     obj = json.loads(raw) if raw.strip() else {}

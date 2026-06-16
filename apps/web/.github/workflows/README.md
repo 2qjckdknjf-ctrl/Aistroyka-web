@@ -11,3 +11,5 @@ These workflow files live under `apps/web/.github/workflows/` for historical / V
 | Production deploy | `.github/workflows/deploy-cloudflare-prod.yml` |
 
 Do not enable `apps/web/.github/workflows/ci.yml` or `deploy.yml` as required checks on `main`. See `docs/runbooks/DEPLOYMENT_SOURCE_OF_TRUTH.md`.
+
+**Manual iOS Layer B:** `.github/workflows/ios-e2e-integration.yml` (repo root) — `workflow_dispatch` only. A 0s phantom failure on `push` when the file changes is a known GitHub Actions quirk; run manually from the Actions tab.
