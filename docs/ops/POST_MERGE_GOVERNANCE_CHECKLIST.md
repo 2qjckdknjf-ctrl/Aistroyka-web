@@ -15,7 +15,7 @@ Repo: [2qjckdknjf-ctrl/Aistroyka-web](https://github.com/2qjckdknjf-ctrl/Aistroy
 | PR #76 on `main` | **DONE** | Manager AI parity, i18n fix, E2E secrets hygiene |
 | Staging + prod deploy | **DONE** | Runs `27528576940` / `27528720688`; docs PR #84 redeployed |
 | `CI Check` on PRs | **PASS** (when run) | Not yet **required** for merge |
-| `main` branch protection | **OPEN** | API: `branches/main/protection` → **404**; repo rulesets → `[]` |
+| `main` branch protection | **DONE** | API 2026-06-16 — required `check`, 1 PR review |
 | Stakeholder sanity (CI prod) | **PASS** | Blocking job in prod deploy |
 | Stakeholder sanity (local) | **BLOCKED** | Needs `STAKEHOLDER_SMOKE_*` (not in `.env.pilot`) |
 | iOS Layer B live E2E | **PASS (local)** | 2026-06-16 — `run-ios-e2e-integration-local.sh` exit 0 (Worker report draft + Manager intelligence/copilot) |
