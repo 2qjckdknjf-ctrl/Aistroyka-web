@@ -23,9 +23,10 @@ export function UploadMediaForm({ projectId }: { projectId: string }) {
     const form = new FormData();
     form.set("file", file);
     try {
-      const res = await fetch(`/api/projects/${projectId}/upload`, {
+      const res = await fetch(`/api/v1/projects/${projectId}/upload`, {
         method: "POST",
         body: form,
+        credentials: "include",
       });
       const data = (await res.json().catch(() => ({}))) as {
         success?: boolean;
@@ -43,7 +44,7 @@ export function UploadMediaForm({ projectId }: { projectId: string }) {
         return;
       }
       // Trigger one job processing so AI runs without a separate worker
-      fetch("/api/analysis/process", { method: "POST" }).catch(() => {});
+      fetch("/api/v1/analysis/process", { method: "POST", credentials: "include" }).catch(() => {});
       router.refresh();
     } catch (_e) {
       setLoading(false);

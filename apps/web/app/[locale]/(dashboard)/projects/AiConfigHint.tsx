@@ -16,7 +16,7 @@ export function AiConfigHint({ showWhenActive }: { showWhenActive: boolean }) {
       return;
     }
     let cancelled = false;
-    fetch("/api/health")
+    fetch("/api/v1/health", { credentials: "include" })
       .then((r) => r.json())
       .then((d) => {
         if (!cancelled && d && typeof d.aiConfigured === "boolean") {

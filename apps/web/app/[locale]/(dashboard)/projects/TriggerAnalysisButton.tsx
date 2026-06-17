@@ -37,8 +37,8 @@ export function TriggerAnalysisButton({
 
     try {
       const res = await fetch(
-        `/api/projects/${projectId}/media/${mediaId}/trigger`,
-        { method: "POST" }
+        `/api/v1/projects/${projectId}/media/${mediaId}/trigger`,
+        { method: "POST", credentials: "include" }
       );
       const data = (await res.json().catch(() => ({}))) as {
         success?: boolean;
