@@ -5,8 +5,6 @@
 # Optional: PILOT_E2E_BASE_URL (default https://aistroyka.ai), PILOT_E2E_PROJECT_ID
 #
 # Manual only — workflow_dispatch (not on PR path; simulator + live tenant; ~15 min).
-# Note: GitHub may log a 0s phantom "push" failure when this file changes on main
-# (workflow_dispatch-only workflows); safe to ignore — use Actions → Run workflow.
 name: iOS Layer B E2E (live pilot)
 
 on:
@@ -23,6 +21,13 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  dispatch-only-placeholder:
+    name: Manual dispatch only (skip on push)
+    if: github.event_name != 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Run this workflow manually from the Actions tab (workflow_dispatch)."
+
   ios-layer-b:
     name: Mobile API chain + live UITests
     if: github.event_name == 'workflow_dispatch'

@@ -18,7 +18,7 @@ Pull requests that change files under `ios/` (except **`ios/**/*.md` only** — 
 - `ios/scripts/run-ios-uitest-smoke-local.sh` — runs both UITest smoke targets (uses your Xcode signing). To mimic CI signing:  
   `CI_SIGNING_HACK=1 bash ios/scripts/run-ios-uitest-smoke-local.sh`
 - `ios/scripts/run-ios-e2e-integration-local.sh` — **Layer B** live pilot UITests (Worker report draft; Manager reports inbox + project intelligence + copilot screens). Requires `ios/Config/Secrets.xcconfig` and `SMOKE_EMAIL`/`SMOKE_PASSWORD` in repo-root `.env.pilot` (or `IOS_E2E_*` exports). Writes gitignored `ios/Config/.uitest-e2e-credentials` for the UITest runner (template: `ios/Shared/Sources/Shared/e2e-credentials.env.example`; never commit `e2e-credentials.env`). Auto-pins `IOS_E2E_PROJECT_ID` from production API when unset (`IOS_E2E_BASE_URL` defaults to `https://aistroyka.ai`, not local `NEXT_PUBLIC_APP_URL`). Optional: `CI_SIGNING_HACK=1`, `IOS_E2E_ONLY_TEST`, `IOS_E2E_SKIP_WORKER=1`.
-- **CI (manual):** `.github/workflows/ios-e2e-integration.yml` — `workflow_dispatch` runs API chain + Layer B UITests on `macos-latest` when `PILOT_E2E_*` and production Supabase secrets are configured. A 0s phantom `push` failure on merge is a known GitHub quirk — ignore; run manually from Actions.
+- **CI (manual):** `.github/workflows/ios-e2e-integration.yml` — `workflow_dispatch` runs API chain + Layer B UITests on `macos-latest` when `PILOT_E2E_*` and production Supabase secrets are configured. Operator notes: `.github/workflows/README.md`.
 
 See also `docs/runbooks/MOBILE_OFFLINE_QUEUE.md` (Worker offline queue vs sync). Staging/pilot checklists: `docs/mobile-ios/manual-smoke/`.
 
