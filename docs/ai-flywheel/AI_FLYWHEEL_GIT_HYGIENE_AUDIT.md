@@ -3,15 +3,18 @@
 **Date:** 2026-06-17  
 **Purpose:** Clean commit for final tail closure + CI cf:build proof
 
-## Starting state
+## Final state
 
 | Field | Value |
 |-------|-------|
-| Original branch | `feat/p1-footer-tokens` |
-| Original HEAD | `406e1888341b8f165b11ae63a290bbdb3c4fc542` |
 | Closure branch | `ai/flywheel-final-tail-closure` |
+| Committed SHA | `7b5654a090e32bf92b13ffbc5ce5f318e78f8eb6` |
+| PR | https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/103 |
+| Parent branch | `feat/p1-footer-tokens` @ `406e1888341b8f165b11ae63a290bbdb3c4fc542` |
 
 ## Included (Category A — flywheel tail closure)
+
+97 files in commit `7b5654a0`:
 
 ### Web code
 - `apps/web/lib/platform/ai-flywheel/**`
@@ -52,12 +55,18 @@
 | `apps/web/scripts/set-cf-secrets.sh` | Unrelated deploy script delta |
 | `ios/Shared/.build/**` | Local SPM build artifacts |
 
-## Commit plan
-
-Single commit on `ai/flywheel-final-tail-closure`:
+## Commit executed
 
 ```
 chore(ai-flywheel): close final feedback gating and validation tails
 ```
 
-Then push and verify CI Check **Cloudflare bundle (no deploy)** on new SHA.
+SHA: `7b5654a090e32bf92b13ffbc5ce5f318e78f8eb6`
+
+## Working tree after commit
+
+Clean for flywheel scope. Remaining unstaged files are Category B only (AGENTS.md, Stripe/billing, wrangler, ios `.build`).
+
+## CI follow-up
+
+PR #103 opened → CI Check run **27684285605** on SHA `7b5654a0` → **success** (Cloudflare bundle step green).
