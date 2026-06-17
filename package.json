@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "packageManager": "bun@1.2.15",
+  "engines": {
+    "bun": "1.2.15",
+    "node": ">=22.9.0"
+  },
   "workspaces": [
     "apps/web",
     "packages/contracts"
@@ -28,6 +32,7 @@
     "smoke:staging": "bash apps/web/scripts/smoke-staging.sh",
     "smoke:pilot": "bash scripts/smoke/pilot_launch.sh",
     "smoke:pilot:check": "bash scripts/smoke/check_pilot_prereqs.sh",
+    "smoke:security-headers": "bash scripts/smoke/security_headers.sh",
     "audit:pilot": "bash scripts/audit/run-pilot-audit.sh",
     "release:check": "node scripts/release-readiness-check.mjs",
     "postinstall": "node scripts/ensure-swc-native.cjs"

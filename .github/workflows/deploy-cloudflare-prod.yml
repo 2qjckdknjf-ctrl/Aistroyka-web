@@ -285,9 +285,24 @@ jobs:
           STAKEHOLDER_SMOKE_PASSWORD: ${{ secrets.STAKEHOLDER_SMOKE_PASSWORD || secrets.PILOT_SMOKE_PASSWORD_PRODUCTION }}
         run: bash scripts/verify/stakeholder_finance_sanity.sh
 
+  security-headers-smoke:
+    name: Post-deploy security headers (blocking)
+    needs: [deploy]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.deploy.outputs.deploy_ref }}
+
+      - name: Run security headers smoke
+        env:
+          SECURITY_HEADERS_BASE_URL: https://aistroyka.ai
+        run: bash scripts/smoke/security_headers.sh
+
   ai-phase5-gate:
     name: Post-deploy AI Phase 5 gate (non-blocking)
-    needs: [deploy, pilot-smoke, stakeholder-finance-sanity]
+    needs: [deploy, pilot-smoke, stakeholder-finance-sanity, security-headers-smoke]
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -314,7 +329,7 @@ jobs:
 
   ai-live-provider-gate:
     name: Post-deploy AI live provider gate (non-blocking)
-    needs: [deploy, pilot-smoke, stakeholder-finance-sanity]
+    needs: [deploy, pilot-smoke, stakeholder-finance-sanity, security-headers-smoke]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

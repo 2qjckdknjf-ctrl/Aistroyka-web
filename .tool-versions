@@ -1,0 +1,4 @@
+# Toolchain pins for local dev and CI alignment.
+# Install: https://bun.sh — then `bun install` from repo root.
+bun 1.2.15
+nodejs 22.9.0

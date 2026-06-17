@@ -1,22 +1,17 @@
-/**
- * Verify security headers on a representative route. Run with vitest.
- * Middleware applies these; this test documents expected headers.
- */
-
 import { describe, expect, it } from "vitest";
+import {
+  REQUIRED_API_SECURITY_HEADER_KEYS,
+  REQUIRED_PAGE_SECURITY_HEADER_KEYS,
+} from "@/lib/security-headers";
 
-const EXPECTED_HEADERS = [
-  "x-frame-options",
-  "x-content-type-options",
-  "referrer-policy",
-  "permissions-policy",
-  "content-security-policy",
-];
+describe("security headers (route policy)", () => {
+  it("page profile keys match middleware expectations", () => {
+    expect(REQUIRED_PAGE_SECURITY_HEADER_KEYS).toContain("Content-Security-Policy");
+    expect(REQUIRED_PAGE_SECURITY_HEADER_KEYS).toContain("X-Frame-Options");
+  });
 
-describe("security headers", () => {
-  it("expected header names are defined for middleware", () => {
-    expect(EXPECTED_HEADERS).toContain("x-frame-options");
-    expect(EXPECTED_HEADERS).toContain("x-content-type-options");
-    expect(EXPECTED_HEADERS).toContain("content-security-policy");
+  it("api profile keys omit CSP", () => {
+    expect(REQUIRED_API_SECURITY_HEADER_KEYS).not.toContain("Content-Security-Policy");
+    expect(REQUIRED_API_SECURITY_HEADER_KEYS).toContain("X-Content-Type-Options");
   });
 });
