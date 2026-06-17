@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import type { DecisionContextPayload } from "@/lib/engine/types";
 import type { EngineError } from "@/lib/engine/errors";
@@ -13,6 +13,8 @@ import { LowConfidenceNotice } from "@/components/ai/LowConfidenceNotice";
 import { CopyRequestIdButton } from "@/components/ai/CopyRequestIdButton";
 import { Button } from "@/components/ui";
 import type { ChatMessage } from "../types";
+import { CopilotOptionalFeedback } from "./CopilotOptionalFeedback";
+import { isAiFeedbackCaptureUiEnabled } from "@/lib/platform/ai-flywheel/feedback-ui-gate";
 
 const DEFAULT_CONTEXT: DecisionContextPayload = {
   overall_risk: 0,
@@ -59,6 +61,7 @@ export function CopilotChatPanel({
 }: CopilotChatPanelProps) {
   const localeFromHook = useLocale();
   const locale = localeProp ?? localeFromHook;
+  const tDetail = useTranslations("dashboardDetail");
   const [input, setInput] = useState("");
   const listRef = useRef<HTMLDivElement>(null);
   const [lastMemoryMeta, setLastMemoryMeta] = useState<{ summaryUsed?: boolean; chunksCount?: number }>({});
@@ -73,6 +76,7 @@ export function CopilotChatPanel({
     : messages;
   const lastAssistant = [...messages].reverse().find((m) => m.role === "assistant");
   const lastRequestId = lastAssistant?.requestId;
+  const lastUserQuestion = [...messages].reverse().find((m) => m.role === "user")?.content;
   const lastLowConfidence = lastAssistant?.lowConfidence;
   const lastError = lastAssistant ? messageToEngineError(lastAssistant) : null;
 
@@ -270,6 +274,20 @@ export function CopilotChatPanel({
           )}
         </div>
       </div>
+
+      {isAiFeedbackCaptureUiEnabled() && lastRequestId && lastAssistant?.content && (
+        <details className="mt-4 rounded border border-aistroyka-border-subtle bg-aistroyka-surface-muted/20 p-3 text-xs">
+          <summary className="cursor-pointer font-medium text-aistroyka-text-secondary">
+            {tDetail("copilotOptionalFeedbackSummary")}
+          </summary>
+          <CopilotOptionalFeedback
+            runId={lastRequestId}
+            assistantText={lastAssistant.content}
+            userQuestion={lastUserQuestion}
+            getAuthToken={getAuthTokenStable}
+          />
+        </details>
+      )}
 
       {IS_DEV_OR_STAGING && (lastRequestId || lastAssistant || lastMemoryMeta.chunksCount != null || lastMemoryMeta.summaryUsed) && (
         <details className="mt-4 rounded border border-aistroyka-border-subtle bg-aistroyka-surface-muted/30 p-3 text-xs">

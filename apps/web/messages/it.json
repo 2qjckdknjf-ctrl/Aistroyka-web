@@ -1956,6 +1956,10 @@
     "reject": "Reject",
     "yourFeedback": "Il tuo feedback",
     "submitFeedback": "Invia feedback",
+    "copilotOptionalFeedbackSummary": "Feedback IA opzionale",
+    "copilotOptionalFeedbackHint": "Opzionale: suggerisci una risposta migliore per la qualità IA interna. Nessun campo obbligatorio.",
+    "copilotCorrectionOptional": "Correzione opzionale (lascia vuoto per solo punteggio)",
+    "copilotFeedbackSaved": "Feedback salvato",
     "iAcknowledge": "Confermo",
     "submitChoice": "Invia scelta",
     "confirmReview": "Conferma revisione",
@@ -2767,5 +2771,22 @@
     "limitsMobileWorkers": "Operatori mobile",
     "limitsAiRequests": "Richieste IA/mese",
     "reviewPlansLink": "Vedi i piani disponibili"
+  },
+  "aiFlywheel": {
+    "consent": {
+      "title": "Consenso dati per addestramento IA",
+      "description": "Se attivato, AISTROYKA può usare interazioni IA edili sanitizzate e anonimizzate di questo tenant per migliorare i modelli. Foto grezze, dati personali e finanze interne sono esclusi per policy.",
+      "toggleLabel": "Consenti ad AISTROYKA di usare i dati sanitizzati di questo tenant per migliorare l'IA edile di AISTROYKA",
+      "revocationTitle": "Se disattivi in seguito",
+      "revocationFuture": "Le esportazioni future escluderanno automaticamente questo tenant.",
+      "revocationModels": "Le versioni di modello già addestrate non vengono ripristinate automaticamente.",
+      "revocationSnapshot": "Esportazione e model card registrano la data dello snapshot del consenso.",
+      "loading": "Caricamento impostazioni consenso…",
+      "save": "Salva consenso",
+      "saving": "Salvataggio…",
+      "saved": "Consenso salvato.",
+      "loadError": "Impossibile caricare le impostazioni di consenso.",
+      "saveError": "Impossibile salvare il consenso."
+    }
   }
 }

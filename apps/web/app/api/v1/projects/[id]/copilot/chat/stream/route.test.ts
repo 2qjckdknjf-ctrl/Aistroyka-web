@@ -94,6 +94,10 @@ vi.mock("@/lib/platform/ai-usage/ai-usage.service", () => ({
   checkBudgetAlert: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock("@/lib/ai-brain/phase-d/run/run-recorder.service", () => ({
+  recordRun: vi.fn(),
+}));
+
 vi.mock("@/lib/config/server", () => ({
   getServerConfig: vi.fn().mockReturnValue({
     OPENAI_API_KEY: "sk-test",
@@ -343,6 +347,15 @@ describe("POST /api/v1/projects/:id/copilot/chat/stream", () => {
     expect(res.body).toBeInstanceOf(ReadableStream);
     await res.text();
     expect(vi.mocked(recordUsage)).toHaveBeenCalled();
+    const { recordRun } = await import("@/lib/ai-brain/phase-d/run/run-recorder.service");
+    expect(vi.mocked(recordRun)).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        route: "POST /api/v1/projects/:id/copilot/chat/stream",
+        mode: "copilot_stream",
+        outputContractType: "copilot_text",
+      })
+    );
   });
 
   it("falls back to deterministic done event when provider returns non-OK", async () => {

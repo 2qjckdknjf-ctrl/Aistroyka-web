@@ -1956,6 +1956,10 @@
     "reject": "Reject",
     "yourFeedback": "Tu feedback",
     "submitFeedback": "Enviar feedback",
+    "copilotOptionalFeedbackSummary": "Feedback de IA opcional",
+    "copilotOptionalFeedbackHint": "Opcional: sugiera una mejor respuesta para calidad interna de IA. No hay campos obligatorios.",
+    "copilotCorrectionOptional": "Corrección opcional (deje vacío para solo puntuación)",
+    "copilotFeedbackSaved": "Feedback guardado",
     "iAcknowledge": "Confirmo",
     "submitChoice": "Enviar elección",
     "confirmReview": "Confirmar revisión",
@@ -2767,5 +2771,22 @@
     "limitsMobileWorkers": "Trabajadores móviles",
     "limitsAiRequests": "Solicitudes IA/mes",
     "reviewPlansLink": "Ver planes disponibles"
+  },
+  "aiFlywheel": {
+    "consent": {
+      "title": "Consentimiento de datos para entrenamiento IA",
+      "description": "Si está activado, AISTROYKA puede usar interacciones sanitizadas y anonimizadas de IA de construcción de este tenant para mejorar modelos. Fotos sin procesar, datos personales y finanzas internas quedan excluidos por política.",
+      "toggleLabel": "Permitir que AISTROYKA use los datos sanitizados de este tenant para mejorar la IA de construcción de AISTROYKA",
+      "revocationTitle": "Si lo desactiva más tarde",
+      "revocationFuture": "Las exportaciones futuras excluirán automáticamente este tenant.",
+      "revocationModels": "Las versiones de modelos ya entrenadas no se revierten automáticamente.",
+      "revocationSnapshot": "La exportación y las model cards registran la fecha del snapshot de consentimiento.",
+      "loading": "Cargando ajustes de consentimiento…",
+      "save": "Guardar consentimiento",
+      "saving": "Guardando…",
+      "saved": "Consentimiento guardado.",
+      "loadError": "No se pudieron cargar los ajustes de consentimiento.",
+      "saveError": "No se pudo guardar el consentimiento."
+    }
   }
 }

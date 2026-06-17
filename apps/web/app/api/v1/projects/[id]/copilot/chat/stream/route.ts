@@ -33,6 +33,7 @@ import {
   getAiReleaseCorrelation,
 } from "@/lib/observability/ai-telemetry";
 import { emitAiRuntimeAudit } from "@/lib/observability/audit.service";
+import { recordRun } from "@/lib/ai-brain/phase-d/run/run-recorder.service";
 
 export const dynamic = "force-dynamic";
 
@@ -479,6 +480,18 @@ export async function POST(
           context_trim_applied: budgeted.meta.context_trim_applied,
           fallback_reason: fallbackReason,
         });
+        recordRun(supabase, {
+          runId: requestId,
+          tenantId,
+          projectId,
+          userId: userId || null,
+          route: STREAM_ROUTE_KEY,
+          mode: "copilot_stream",
+          outputContractType: "copilot_text",
+          degradedFlags: [fallbackReason],
+          executionTimingMs: Date.now() - streamStartMs,
+          validationResult: "partial",
+        });
         const latencyMs = Date.now() - streamStartMs;
         logCopilotStreamLifecycle("stream_completed", {
           request_id: requestId,
@@ -716,6 +729,18 @@ export async function POST(
         } catch {
           // best-effort usage persistence
         }
+
+        recordRun(supabase, {
+          runId: requestId,
+          tenantId,
+          projectId,
+          userId: userId || null,
+          route: STREAM_ROUTE_KEY,
+          mode: "copilot_stream",
+          outputContractType: "copilot_text",
+          executionTimingMs: billingDurationMs,
+          validationResult: "ok",
+        });
 
         send("done", {
           request_id: requestId,

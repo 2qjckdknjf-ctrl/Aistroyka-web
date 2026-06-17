@@ -22,6 +22,9 @@ export default function AdminAiPage() {
           <Link href="/admin/ai/guide" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">
             AI Guide analytics →
           </Link>
+          <Link href="/admin/ai/training-consent" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">
+            AI training consent →
+          </Link>
           <span className="text-aistroyka-text-tertiary">·</span>
           <span className="text-aistroyka-subheadline text-aistroyka-text-secondary">
             Below: route-level AI audit rollup (copilot, intelligence, vision).

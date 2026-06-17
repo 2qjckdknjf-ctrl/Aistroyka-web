@@ -6,8 +6,10 @@
 import { NextResponse } from "next/server";
 import { createClientFromRequest } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
-import { submitFeedback } from "@/lib/ai-brain/phase-d/feedback/feedback.service";
+import { getAdminClient } from "@/lib/supabase/admin";
 import {
+  submitFeedback,
+  parsePreferencePairFromBody,
   validateFeedbackCategory,
   validateSourceKind,
   validateScore,
@@ -50,20 +52,28 @@ export async function POST(request: Request) {
   }
 
   const supabase = await createClientFromRequest(request);
-  const result = await submitFeedback(supabase, {
-    runId,
-    tenantId: ctx.tenantId!,
-    sourceKind: sourceKind as "human" | "system" | "test",
-    feedbackCategory: feedbackCategory as Parameters<typeof submitFeedback>[1]["feedbackCategory"],
-    reviewerRole: typeof body.reviewerRole === "string" ? body.reviewerRole : undefined,
-    factualityScore: validateScore(body.factualityScore) ?? undefined,
-    usefulnessScore: validateScore(body.usefulnessScore) ?? undefined,
-    safetyScore: validateScore(body.safetyScore) ?? undefined,
-    roleFitScore: validateScore(body.roleFitScore) ?? undefined,
-    completenessScore: validateScore(body.completenessScore) ?? undefined,
-    comments: typeof body.comments === "string" ? body.comments : undefined,
-    linkedRefs: validateLinkedRefs(body.linkedRefs),
-  });
+  const admin = getAdminClient();
+  const preferencePair = parsePreferencePairFromBody(body);
+
+  const result = await submitFeedback(
+    supabase,
+    {
+      runId,
+      tenantId: ctx.tenantId!,
+      sourceKind: sourceKind as "human" | "system" | "test",
+      feedbackCategory: feedbackCategory as Parameters<typeof submitFeedback>[1]["feedbackCategory"],
+      reviewerRole: typeof body.reviewerRole === "string" ? body.reviewerRole : undefined,
+      factualityScore: validateScore(body.factualityScore) ?? undefined,
+      usefulnessScore: validateScore(body.usefulnessScore) ?? undefined,
+      safetyScore: validateScore(body.safetyScore) ?? undefined,
+      roleFitScore: validateScore(body.roleFitScore) ?? undefined,
+      completenessScore: validateScore(body.completenessScore) ?? undefined,
+      comments: typeof body.comments === "string" ? body.comments : undefined,
+      linkedRefs: validateLinkedRefs(body.linkedRefs),
+      preferencePair,
+    },
+    { adminClient: admin }
+  );
 
   if (!result.success) {
     return NextResponse.json({ error: result.error }, { status: 400 });
