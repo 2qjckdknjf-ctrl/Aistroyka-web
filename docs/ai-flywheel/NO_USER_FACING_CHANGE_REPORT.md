@@ -1,58 +1,52 @@
 # No User-Facing Change Report
 
-**Date:** 2026-06-17 (final owner-strict recheck)  
-**Sprint:** AI Flywheel Final Tail Recheck
+**Date:** 2026-06-17 (Gold Memory MVP)  
+**Sprint:** AI Flywheel Gold Memory MVP
 
 ## Method
 
-- Production wiring review (web + iOS)
-- Flag defaults + behavior-safety tests
-- UX gate: **flag-gated** optional sections (`feedback-ui-gate` / `AiFlywheelConfig`)
+- Flag defaults + gold-memory tests
+- Copilot stream integration review (one route only)
+- Builder dry-run + export dry-run unchanged behavior
 
 ## Findings
 
 ### Production UX — unchanged by default
 
-- Optional feedback UI **hidden unless** `AI_FLYWHEEL_ENABLED` + `AI_FEEDBACK_CAPTURE_ENABLED` (web) or iOS plist opt-in
-- When enabled: collapsed `<details>` / `DisclosureGroup` only
-- **No new required fields** — managers can ignore entirely
-- Copilot send/receive flow unchanged
-- Diagnostics block remains dev/staging-only on web
+- Gold Memory prompt injection **disabled unless** all gold memory flags true
+- Copilot stream SSE/meta adds optional gold memory metadata fields (backward compatible)
+- Optional feedback UI remains flag-gated (prior sprint)
+- **No new required fields** for managers
 
-### AI output — unchanged
+### AI output — unchanged by default
 
-- No prompt, model, or stream logic changes in this sprint
-- `recordRun` telemetry only (Phase D)
+- Copilot stream system prompt **unchanged** when gold memory flags false
+- No model routing changes
+- No training/export/shadow enabled
 
-### Feedback API — backward compatible
+### Gold Memory tables — internal only
 
-- Legacy payloads without preference fields succeed
-- Malformed optional fields → null pair, feedback still succeeds
-- Capture non-strict; flags default false
-
-### Shadow / export / training — disabled
-
-All flywheel flags default **false**.
+- `ai_gold_memory` RLS deny-all; service-role only
+- No tenant dashboard exposure
 
 ### Finance / tenant isolation
 
-- No owner/customer finance fields in preference payloads
-- `ai_preference_pairs` / `ai_expert_reviews` deny-all RLS unchanged
-- Client portal / report approval not wired
-
-### Android
-
-- No scope expansion; no Android changes
+- Owner/customer retrieval requires `finance_guard_passed=true`
+- Tenant-filtered retrieval; no cross-tenant MVP
+- Scrubbed JSON only in prompt injection
 
 ## Flag default state
 
 | Flag | Default |
 |------|---------|
 | AI_FLYWHEEL_ENABLED | false |
+| AI_GOLD_MEMORY_ENABLED | false |
+| AI_GOLD_MEMORY_WRITE_ENABLED | false |
+| AI_GOLD_MEMORY_READ_ENABLED | false |
+| AI_GOLD_MEMORY_PROMPT_INJECTION_ENABLED | false |
 | AI_FEEDBACK_CAPTURE_ENABLED | false |
 | AI_DATASET_EXPORT_ENABLED | false |
 | AI_SHADOW_MODE_ENABLED | false |
-| AI_GOLD_MEMORY_ENABLED | false |
 
 ## Verdict
 
@@ -60,5 +54,10 @@ All flywheel flags default **false**.
 |-------|--------|
 | Production behavior changed by default | **NO** |
 | AI output changed by default | **NO** |
-| New required feedback fields | **NO** |
-| Old feedback payload compatible | **YES** |
+| Prompt unchanged when flags false | **YES** |
+| Copilot works without gold memory | **YES** |
+| Training/export/shadow enabled | **NO** |
+| Owner finance leakage | **NO** |
+| Tenant cross-leak | **NO** |
+| Raw PII in prompt injection | **NO** |
+| Logs contain raw gold examples | **NO** |

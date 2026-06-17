@@ -34,6 +34,10 @@ import {
 } from "@/lib/observability/ai-telemetry";
 import { emitAiRuntimeAudit } from "@/lib/observability/audit.service";
 import { recordRun } from "@/lib/ai-brain/phase-d/run/run-recorder.service";
+import {
+  enrichCopilotStreamContextWithGoldMemory,
+} from "@/lib/platform/ai-flywheel/gold-memory/gold-memory.prompt";
+import { goldMemoryMetaForStreamMeta } from "@/lib/platform/ai-flywheel/gold-memory/gold-memory.observability";
 
 export const dynamic = "force-dynamic";
 
@@ -341,13 +345,23 @@ export async function POST(
     `You are a construction project assistant. Use the provided context to answer. Be concise and actionable. Do not invent numbers or facts not in the context.` +
     streamLocaleLine(body.locale);
   const memorySection = formatMemoryContextSection(budgeted.memoryChunks);
-  const contextBlock = [
+  let contextBlock = [
     budgeted.summary ? `Context: ${budgeted.summary}` : null,
     memorySection || null,
     `Project context: ${ctxStr}`,
   ]
     .filter(Boolean)
     .join("\n\n");
+
+  const goldEnriched = await enrichCopilotStreamContextWithGoldMemory({
+    supabase: admin,
+    tenantId,
+    sanitizedUserText: userText,
+    contextBlock,
+    requestId,
+  });
+  contextBlock = goldEnriched.contextBlock;
+  const goldMemoryMeta = goldEnriched.meta;
 
   const openaiMessages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
     { role: "system", content: `${systemPrompt}\n\n${contextBlock}` },
@@ -376,6 +390,7 @@ export async function POST(
         memory_used: budgeted.meta.memory_used,
         memory_chunks_count: budgeted.meta.memory_chunks_count,
         summary_used: budgeted.meta.summary_used,
+        ...goldMemoryMetaForStreamMeta(goldMemoryMeta),
       });
 
       const abortCtrl = new AbortController();
