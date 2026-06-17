@@ -1,7 +1,7 @@
 # Post-merge governance checklist (operators)
 
 **Date:** 2026-06-16  
-**Context:** Post-merge closure complete. Prod build **`ee9d997`** (PR #86–#88). Phase 13: **CONDITIONAL YES**.  
+**Context:** Post-merge closure complete. Prod build **`a7686d6`** (PR #89–#90). Phase 13: **CONDITIONAL YES**.  
 **Governance:** C-03 **closed** 2026-06-16 (branch protection on `main`).
 
 Repo: [2qjckdknjf-ctrl/Aistroyka-web](https://github.com/2qjckdknjf-ctrl/Aistroyka-web)
@@ -12,12 +12,12 @@ Repo: [2qjckdknjf-ctrl/Aistroyka-web](https://github.com/2qjckdknjf-ctrl/Aistroy
 
 | Item | Status | Notes |
 |------|--------|-------|
-| PR #76–#88 on `main` | **DONE** | AI parity, i18n, deploy fix, C-03, smoke arm64 |
-| Staging + prod deploy | **DONE** | Latest prod `27646563842` / build `ee9d997` |
+| PR #76–#90 on `main` | **DONE** | AI parity, i18n, deploy fix, C-03, smoke arm64, operator tooling |
+| Staging + prod deploy | **DONE** | Latest prod `27649470701` / build `a7686d6` |
 | `CI Check` on PRs | **REQUIRED** | `check` + 1 review on `main` |
 | `main` branch protection | **DONE** | `configure-main-branch-protection.sh` 2026-06-16 |
-| Stakeholder sanity (CI prod) | **PASS** | Blocking job `27646563842` |
-| Stakeholder sanity (local) | **OPTIONAL** | Add `STAKEHOLDER_SMOKE_*` to `.env.pilot` (see `.env.pilot.example`) |
+| Stakeholder sanity (CI prod) | **PASS** | Blocking job `27649470701` |
+| Stakeholder sanity (local) | **OPTIONAL** | `STAKEHOLDER_SMOKE_*` in `.env.pilot`; script auto-loads file — `bun run smoke:pilot:check` |
 | iOS Layer B live E2E | **PASS (local)** | 2026-06-16 |
 
 ---

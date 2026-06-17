@@ -14,6 +14,14 @@
 #   ./scripts/smoke/check_pilot_prereqs.sh --strict   # exit 1 if ops/metrics auth path incomplete
 set -euo pipefail
 
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+if [[ -f "$REPO_ROOT/.env.pilot" ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source "$REPO_ROOT/.env.pilot"
+  set +a
+fi
+
 STRICT=0
 if [[ "${1:-}" == "--strict" ]]; then
   STRICT=1
@@ -61,6 +69,14 @@ if have PLAYWRIGHT_BASE_URL; then
   echo "[e2e:pilot] PLAYWRIGHT_BASE_URL: $PLAYWRIGHT_BASE_URL"
 else
   echo "[e2e:pilot] PLAYWRIGHT_BASE_URL: unset (default in docs: http://localhost:3000)"
+fi
+
+echo
+if have STAKEHOLDER_SMOKE_EMAIL && have STAKEHOLDER_SMOKE_PASSWORD; then
+  echo "[stakeholder sanity] STAKEHOLDER_SMOKE_EMAIL / PASSWORD: set (local replay of CI finance gate)"
+else
+  echo "[stakeholder sanity] STAKEHOLDER_SMOKE_*: missing (optional — CI prod deploy runs blocking gate)"
+  echo "  Add to .env.pilot — see docs/security/STAKEHOLDER_SMOKE_ACCOUNT_SETUP_REPORT.md"
 fi
 
 echo

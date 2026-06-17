@@ -1,8 +1,8 @@
 # Phase 13 — Roadmap closure verdict
 
-**Date:** 2026-06-16 (refresh after prod deploy `ee9d997` — PR #86–#87, C-03 closed)  
+**Date:** 2026-06-16 (refresh after prod deploy `a7686d6` — PR #89–#90)  
 **Mega-roadmap:** `docs/roadmap/AISTROYKA_MEGA_ROADMAP_CUSTOMER_FINANCE_SAFE.md` — § Phase 13  
-**Production build:** `ee9d997` (2026-06-16 20:38 UTC) — PR #87 C-03 evidence + branch protection on `main`
+**Production build:** `a7686d6` (2026-06-16 21:31 UTC) — PR #89 tails + PR #90 smoke arm64 fix
 
 ## Done criteria (from mega-roadmap)
 
@@ -29,14 +29,14 @@
 
 | Gate | Result |
 |------|--------|
-| Staging `/api/v1/health` | **200** — build `ee9d997` |
-| Production `/api/v1/health` | **200** — `aiConfigured: true`, build `ee9d997` (2026-06-16 20:38 UTC) |
-| Prod deploy CI `27646563842` | **PASS** — pilot smoke + stakeholder sanity + AI gates (blocking) |
+| Staging `/api/v1/health` | **200** — build `a7686d6` |
+| Production `/api/v1/health` | **200** — `aiConfigured: true`, build `a7686d6` (2026-06-16 21:31 UTC) |
+| Prod deploy CI `27649470701` | **PASS** — pilot smoke + stakeholder sanity + AI gates (blocking) |
 | Staging `pilot_launch.sh` | **PASS** — 2026-06-15+ |
 | `ai_live_provider.sh --require-live` (prod) | **PASS** — CI prod deploy 2026-06-16 |
 | Staging `GET /api/v1/portal/projects` (unauthenticated) | **401** JSON `Authentication required` |
 | Live Supabase RLS / advisors (prod audit v2) | **PASS** — 0 security advisor findings; finance tables isolated |
-| Stakeholder live finance sanity | **PASS** — prod deploy `27646563842` (blocking) |
+| Stakeholder live finance sanity | **PASS** — prod deploy `27649470701` (blocking) |
 | E2E pilot (staging) | **PASS** — 21 passed, 1 skipped (2026-06-15) |
 | Branch protection / required checks (C-03) | **PASS** — API 2026-06-16: required `check`, 1 PR review |
 | iOS E2E secrets hygiene | **CLOSED (repo)** — gitignored `.uitest-e2e-credentials` only |
@@ -55,7 +55,7 @@ All Phase 13 / post-merge **required** tails closed 2026-06-16. Optional only:
 
 1. **Local stakeholder sanity:** add `STAKEHOLDER_SMOKE_*` to gitignored `.env.pilot` (template in `.env.pilot.example`) — CI prod deploy already runs blocking gate.
 2. **Secrets rotation:** if smoke password or JWT ever appeared in logs/chats, rotate per `docs/audit/SECRET_EXPOSURE_REMEDIATION_2026-05-01.md`.
-3. **P2 hygiene:** stale remote branches, `npm audit` moderate advisories, DB type regeneration (audit v2 backlog — not pilot blockers).
+3. **P2 hygiene:** stale remote branches, `npm audit` moderate advisories, DB type regeneration, legacy API dashboard migration per `docs/audit/LEGACY_API_SURFACE_INVENTORY.md` (audit v2 backlog — not pilot blockers).
 
 ## References
 
