@@ -1,9 +1,16 @@
 # Security headers policy
 
 **Source of truth:** `apps/web/lib/security-headers.ts`  
-**Application:** `apps/web/middleware.ts` (auth, short-circuit JSON) + `apps/web/next.config.js` `headers()` (route handlers on Cloudflare OpenNext).
+**Application:**
 
-OpenNext/Workers does not always attach headers from `NextResponse.next()` in middleware onto API route responses; `next.config` `headers()` is the reliable path for `/api/*`. Middleware still applies page headers on HTML redirects and short-circuit 403/owner denials.
+| Surface | Mechanism |
+|---------|-----------|
+| HTML pages | `apps/web/middleware.ts` (OpenNext `middleware/handler.mjs` on Workers) |
+| `/api/v1/*` (most routes) | `apps/web/worker-bootstrap.js` wraps Worker `fetch` — OpenNext **bypasses** middleware for these paths |
+| Short-circuit JSON (403, owner deny) | `middleware.ts` on synthetic `Response` |
+| Vercel / `next dev` fallback | `apps/web/next.config.js` `headers()` |
+
+Do not route all traffic through a single catch-all middleware matcher on Workers; that regressed HTML SSR (prod incident 2026-06-17). Keep the pre-P0 split matcher (`api` excluded + `/api/v1/:path*`) and exclude all `/_next/*`.
 
 ## Profiles
 
