@@ -73,10 +73,10 @@ export async function middleware(request: NextRequest) {
       requestHeaders.set(OWNER_RATE_LIMIT_ALREADY_APPLIED_HEADER, "1");
       const res = NextResponse.next({ request: { headers: requestHeaders } });
       mergeSupabaseSessionIntoResponse(sessionResponse, res);
-      return applyApiSecurityHeaders(res);
+      return res;
     }
 
-    return applyApiSecurityHeaders(NextResponse.next());
+    return NextResponse.next();
   }
 
   const pathWithoutLocEarly = pathWithoutLocale(pathname).path;
@@ -141,6 +141,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    // Exclude all Next internals (_next/data RSC flights, static, image optimizer).
+    "/((?!_next/|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

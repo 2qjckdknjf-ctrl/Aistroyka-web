@@ -297,7 +297,7 @@ jobs:
 
       - name: Run security headers smoke
         env:
-          SECURITY_HEADERS_BASE_URL: https://aistroyka.ai
+          SECURITY_HEADERS_BASE_URL: https://www.aistroyka.ai
         run: bash scripts/smoke/security_headers.sh
 
   ai-phase5-gate:
