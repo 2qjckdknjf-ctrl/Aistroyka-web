@@ -6,6 +6,7 @@
 
 @layer base {
   :root {
+    /* Legacy aliases (deprecated — prefer --aistroyka-* from design-tokens.css) */
     --ai-white: #ffffff;
     --ai-yellow: #F5C518;
     --ai-pink: #F29CB2;
