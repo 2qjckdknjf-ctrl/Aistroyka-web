@@ -1,7 +1,9 @@
 # Security headers policy
 
 **Source of truth:** `apps/web/lib/security-headers.ts`  
-**Application:** `apps/web/middleware.ts` only (no duplicate `next.config.js` headers).
+**Application:** `apps/web/middleware.ts` (auth, short-circuit JSON) + `apps/web/next.config.js` `headers()` (route handlers on Cloudflare OpenNext).
+
+OpenNext/Workers does not always attach headers from `NextResponse.next()` in middleware onto API route responses; `next.config` `headers()` is the reliable path for `/api/*`. Middleware still applies page headers on HTML redirects and short-circuit 403/owner denials.
 
 ## Profiles
 

@@ -1,6 +1,8 @@
 const path = require("path");
 const createNextIntlPlugin = require("next-intl/plugin");
 const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
+
+const { getPageSecurityHeaders, getApiSecurityHeaders } = require("./lib/security-headers");
 // Standalone tracing is required for Cloudflare/OpenNext builds only.
 // Keeping default local/CI build non-standalone avoids flaky trace ENOENTs.
 const isStandaloneOutput =
@@ -28,6 +30,20 @@ const nextConfig = {
     // array for internal aliases (`private-next-pages/*`); spreading breaks builds.
     // Zod resolves via apps/web package.json for `@aistroyka/contracts`.
     return config;
+  },
+  async headers() {
+    const isProduction = process.env.NODE_ENV === "production";
+    const pageHeaders = [...getPageSecurityHeaders(process.env.NODE_ENV === "development")];
+    const apiHeaders = [...getApiSecurityHeaders()];
+    if (isProduction) {
+      const hsts = { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubdomains; preload" };
+      pageHeaders.push(hsts);
+      apiHeaders.push(hsts);
+    }
+    return [
+      { source: "/api/:path*", headers: apiHeaders },
+      { source: "/:path*", headers: pageHeaders },
+    ];
   },
 };
 
