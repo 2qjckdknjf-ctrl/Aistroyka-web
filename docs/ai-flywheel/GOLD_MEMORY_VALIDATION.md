@@ -27,4 +27,6 @@ written: 0
 
 ## CI
 
-Pending commit + push — see `GOLD_MEMORY_GIT_CI_EVIDENCE.md`.
+- Run ID: **27693195243**
+- SHA: `a956c8a3509157fc51f08a578ff54c97f8849c73`
+- Cloudflare bundle: **success**

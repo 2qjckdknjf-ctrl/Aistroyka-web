@@ -56,7 +56,7 @@
 | Lint passed | **YES** |
 | Build passed | **YES** |
 | cf:build passed (local) | **YES** |
-| CI on committed SHA | **PENDING** |
+| CI on committed SHA | **YES** (run 27693195243) |
 
 ---
 
@@ -66,14 +66,14 @@
 |-------|-------|
 | **P0** | None |
 | **P1** | None |
-| **P2** | Remote CI pending on committed SHA; pgvector not yet in live schema (jsonb embedding MVP) |
+| **P2** | pgvector not yet in live schema (jsonb embedding MVP) |
 | **P3** | Live `--write` requires migration apply to Supabase AISTROYKA; embedding scale limits until pgvector |
 
 ---
 
 ## Final verdict
 
-**GOLD MEMORY MVP CLOSED:** **YES** (pending CI evidence update)
+**GOLD MEMORY MVP CLOSED:** **YES**
 
 **Next safe step:** Expert Review Queue MVP or Gold Memory rollout hardening (enable flags per tenant in staging only).
 
