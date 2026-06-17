@@ -3,16 +3,16 @@
 **Date:** 2026-06-17  
 **Branch:** `ai/expert-review-queue-mvp`  
 **Engineering SHA:** `9baceb734b139dda8a1ee29ebaa33ec3fbb1f542`  
-**Branch tip SHA:** `268f3dffdfb4326e72864f931a5d26ceb17252dc`  
+**Branch tip SHA:** `44e6db1e5b0d47d1f8cf51e18623132e9f2d1b7a`  
 **CI run (engineering):** 27696094224  
-**CI run (branch tip):** 27696387950
+**CI run (final tip):** 27711839037
 
 ## Closure checklist
 
 | Item | Result |
 |------|--------|
 | PR opened | **YES** (#105 → `ai/gold-memory-mvp`; CI via #106 → `main`) |
-| CI on committed SHA | **YES** (27696094224 on `9baceb73`; 27696387950 on tip) |
+| CI on committed SHA | **YES** (27696094224 on `9baceb73`; 27711839037 on tip) |
 | cf:build CI passed | **YES** |
 | tests passed | **YES** |
 | lint passed | **YES** |
@@ -64,7 +64,7 @@
 | # | Item | Result |
 |---|------|--------|
 | 15 | Tests/lint/build | **YES** |
-| 16 | CI on SHA | **YES** (27696094224 + 27696387950) |
+| 16 | CI on SHA | **YES** (27696094224 + 27711839037) |
 
 ## Risks
 
