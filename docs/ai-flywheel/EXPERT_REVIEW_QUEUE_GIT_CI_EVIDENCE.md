@@ -1,22 +1,29 @@
 # Expert Review Queue Git / CI Evidence
 
 **Date:** 2026-06-17  
-**Timestamp (CI complete):** 2026-06-17T14:28 UTC (approx.)
+**Timestamp (CI complete):** 2026-06-17T14:31:54Z
 
 | Field | Value |
 |-------|-------|
 | Branch | `ai/expert-review-queue-mvp` |
 | Base branch (stacked merge) | `ai/gold-memory-mvp` |
-| Commit SHA | `9baceb734b139dda8a1ee29ebaa33ec3fbb1f542` |
+| Engineering commit SHA | `9baceb734b139dda8a1ee29ebaa33ec3fbb1f542` |
+| Branch tip SHA (docs closure) | `268f3dffdfb4326e72864f931a5d26ceb17252dc` |
 | Stacked merge PR | **#105** — https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/105 |
-| CI validation PR | **#106** — https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/106 (targets `main`; required because CI Check triggers only on PRs to `main`/`master`) |
+| CI validation PR | **#106** — https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/106 (targets `main`; CI Check triggers on PRs to `main`/`master`) |
 | Workflow | **CI Check** (`.github/workflows/ci-check.yml`) |
-| Run ID | **27696094224** |
-| URL | https://github.com/2qjckdknjf-ctrl/Aistroyka-web/actions/runs/27696094224 |
-| Result | **success** |
-| Run covers current SHA | **YES** (`headSha` = `9baceb73…`) |
 
-## CI job steps (run 27696094224)
+## CI runs
+
+| Run ID | headSha | Result | Covers engineering MVP |
+|--------|---------|--------|--------------------------|
+| **27696094224** | `9baceb73…` | **success** | **YES** (feat commit) |
+| **27696387950** | `268f3dff…` | **success** | YES (docs-only tip; includes engineering) |
+
+- Engineering validation URL: https://github.com/2qjckdknjf-ctrl/Aistroyka-web/actions/runs/27696094224
+- Branch tip URL: https://github.com/2qjckdknjf-ctrl/Aistroyka-web/actions/runs/27696387950
+
+## CI job steps (run 27696094224 — engineering SHA)
 
 | Step | Result |
 |------|--------|
@@ -26,7 +33,17 @@
 | Test | success |
 | Cloudflare bundle (no deploy) | **success** |
 
-## Local validation (same commit)
+## CI job steps (run 27696387950 — branch tip)
+
+| Step | Result |
+|------|--------|
+| i18n messages (dashboard + activation) | success |
+| Lint | success |
+| Typecheck | success |
+| Test | success |
+| Cloudflare bundle (no deploy) | **success** |
+
+## Local validation (engineering commit)
 
 | Check | Result |
 |-------|--------|
