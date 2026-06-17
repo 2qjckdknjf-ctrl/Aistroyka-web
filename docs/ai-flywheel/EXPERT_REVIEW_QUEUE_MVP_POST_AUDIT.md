@@ -1,27 +1,68 @@
 # Expert Review Queue MVP Post-Audit
 
-**Date:** 2026-06-17
+**Date:** 2026-06-17  
+**Branch:** `ai/expert-review-queue-mvp`  
+**SHA:** `9baceb734b139dda8a1ee29ebaa33ec3fbb1f542`  
+**CI run:** 27696094224
 
-## Audit
+## Closure checklist
+
+| Item | Result |
+|------|--------|
+| PR opened | **YES** (#105 → `ai/gold-memory-mvp`; CI via #106 → `main`) |
+| CI on committed SHA | **YES** (run 27696094224, `headSha` matches) |
+| cf:build CI passed | **YES** |
+| tests passed | **YES** |
+| lint passed | **YES** |
+| i18n passed | **YES** |
+| build passed | **YES** (local + CI bundle step) |
+| flags default false | **YES** |
+| no production behavior change | **YES** |
+| no training/export/shadow | **YES** |
+| no tenant direct access | **YES** |
+| no raw PII logs/UI | **YES** |
+| Gold Memory bridge disabled by default | **YES** |
+
+## Queue
 
 | # | Item | Result |
 |---|------|--------|
 | 1 | Queue exists | **YES** (`ai_expert_review_queue`) |
 | 2 | RLS deny-all | **YES** |
 | 3 | No tenant direct access | **YES** |
+
+## Candidate generation
+
+| # | Item | Result |
+|---|------|--------|
 | 4 | Candidate dry-run | **YES** |
 | 5 | Write flag-gated | **YES** |
 | 6 | Duplicates prevented | **YES** |
 | 7 | PII/finance guards | **YES** |
+
+## UI
+
+| # | Item | Result |
+|---|------|--------|
 | 8 | UI flag-gated | **YES** |
-| 9 | Unauthorized blocked | **YES** (admin layout + API 403) |
+| 9 | Unauthorized blocked | **YES** |
 | 10 | Reviewer can submit | **YES** (when flags + data) |
-| 11 | No raw PII in UI | **YES** (scrubbed JSON) |
+| 11 | No raw PII in UI | **YES** |
+
+## Submission
+
+| # | Item | Result |
+|---|------|--------|
 | 12 | Writes ai_expert_reviews | **YES** |
 | 13 | Safe audit metadata | **YES** |
 | 14 | Gold Memory bridge disabled default | **YES** |
+
+## Validation
+
+| # | Item | Result |
+|---|------|--------|
 | 15 | Tests/lint/build | **YES** |
-| 16 | CI on SHA | **PENDING** |
+| 16 | CI on SHA | **YES** (27696094224) |
 
 ## Risks
 
@@ -30,10 +71,10 @@
 | P0 | None |
 | P1 | None |
 | P2 | None meaningful |
-| P3 | DATA_SUPPLY_EMPTY live; staging collection needed |
+| P3 | DATA_SUPPLY_EMPTY live; automated copilot→queue hook deferred |
 
 ## Verdict
 
-**EXPERT REVIEW QUEUE MVP CLOSED:** **YES** (pending CI evidence update)
+**EXPERT REVIEW QUEUE MVP CLOSED:** **YES**
 
-**Next:** Staging collection of first expert reviews → Gold Memory staging pilot
+**Next safe step:** Staging collection of first expert reviews.
