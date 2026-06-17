@@ -8,13 +8,21 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 # shellcheck source=../smoke/_json_lib.sh
 source "$REPO_ROOT/scripts/smoke/_json_lib.sh"
 
+if [[ -f "$REPO_ROOT/.env.pilot" ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source "$REPO_ROOT/.env.pilot"
+  set +a
+fi
+
 BASE_URL="${STAKEHOLDER_FINANCE_BASE_URL:-${BASE_URL:-https://staging.aistroyka.ai}}"
 BASE_URL="${BASE_URL%/}"
 EMAIL="${STAKEHOLDER_SMOKE_EMAIL:-}"
 PASSWORD="${STAKEHOLDER_SMOKE_PASSWORD:-}"
 
 if [[ -z "$EMAIL" || -z "$PASSWORD" ]]; then
-  echo "BLOCKED: set STAKEHOLDER_SMOKE_EMAIL and STAKEHOLDER_SMOKE_PASSWORD (invited client/stakeholder account)."
+  echo "BLOCKED: set STAKEHOLDER_SMOKE_EMAIL and STAKEHOLDER_SMOKE_PASSWORD in env or repo-root .env.pilot"
+  echo "  (dedicated stakeholder user — see docs/security/STAKEHOLDER_SMOKE_ACCOUNT_SETUP_REPORT.md)"
   exit 2
 fi
 
