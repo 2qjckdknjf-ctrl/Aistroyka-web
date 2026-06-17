@@ -2783,6 +2783,34 @@
       "saved": "Consent saved.",
       "loadError": "Unable to load consent settings.",
       "saveError": "Unable to save consent settings."
+    },
+    "expertReview": {
+      "pageTitle": "Expert review queue",
+      "pageDescription": "Internal workflow for expert corrections on AI outputs. Owner/admin only. Feeds Gold Memory when consented.",
+      "disabled": "Expert review queue is not enabled for this environment.",
+      "loading": "Loading queue…",
+      "loadError": "Unable to load expert review queue.",
+      "pendingTitle": "Pending candidates",
+      "reviewTitle": "Review",
+      "empty": "No pending candidates. Run the queue builder or collect preference/feedback data first.",
+      "selectItem": "Select a candidate to review.",
+      "inputLabel": "Sanitized input",
+      "modelOutputLabel": "Model output",
+      "verdictLabel": "Verdict",
+      "conclusionLabel": "Expert conclusion",
+      "rationaleLabel": "Rationale (optional)",
+      "correctedJsonLabel": "Corrected output (JSON)",
+      "submit": "Submit review",
+      "submitting": "Submitting…",
+      "submitError": "Unable to submit review.",
+      "skip": "Skip",
+      "skipError": "Unable to skip item.",
+      "verdict": {
+        "model_correct": "Model correct",
+        "model_partially_correct": "Partially correct",
+        "model_wrong": "Model wrong",
+        "both_models_wrong": "Both wrong"
+      }
     }
   },
   "errors": {

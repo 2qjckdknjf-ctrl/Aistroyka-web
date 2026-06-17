@@ -2787,6 +2787,34 @@
       "saved": "Consenso salvato.",
       "loadError": "Impossibile caricare le impostazioni di consenso.",
       "saveError": "Impossibile salvare il consenso."
+    },
+    "expertReview": {
+      "pageTitle": "Coda revisione esperta",
+      "pageDescription": "Flusso interno per correzioni esperte delle uscite IA. Solo owner/admin. Alimenta Gold Memory con consenso.",
+      "disabled": "La coda revisione esperta non è abilitata in questo ambiente.",
+      "loading": "Caricamento coda…",
+      "loadError": "Impossibile caricare la coda.",
+      "pendingTitle": "Candidati in attesa",
+      "reviewTitle": "Revisione",
+      "empty": "Nessun candidato in attesa. Eseguire il builder o raccogliere dati preference/feedback.",
+      "selectItem": "Seleziona un candidato da revisionare.",
+      "inputLabel": "Input sanitizzato",
+      "modelOutputLabel": "Output del modello",
+      "verdictLabel": "Verdetto",
+      "conclusionLabel": "Conclusione esperta",
+      "rationaleLabel": "Motivazione (opzionale)",
+      "correctedJsonLabel": "Output corretto (JSON)",
+      "submit": "Invia revisione",
+      "submitting": "Invio…",
+      "submitError": "Impossibile inviare la revisione.",
+      "skip": "Salta",
+      "skipError": "Impossibile saltare.",
+      "verdict": {
+        "model_correct": "Modello corretto",
+        "model_partially_correct": "Parzialmente corretto",
+        "model_wrong": "Modello errato",
+        "both_models_wrong": "Entrambi errati"
+      }
     }
   }
 }

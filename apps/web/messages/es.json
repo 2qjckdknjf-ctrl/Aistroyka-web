@@ -2787,6 +2787,34 @@
       "saved": "Consentimiento guardado.",
       "loadError": "No se pudieron cargar los ajustes de consentimiento.",
       "saveError": "No se pudo guardar el consentimiento."
+    },
+    "expertReview": {
+      "pageTitle": "Cola de revisión experta",
+      "pageDescription": "Flujo interno de correcciones expertas de salidas IA. Solo owner/admin. Alimenta Gold Memory con consentimiento.",
+      "disabled": "La cola de revisión experta no está habilitada en este entorno.",
+      "loading": "Cargando cola…",
+      "loadError": "No se pudo cargar la cola.",
+      "pendingTitle": "Candidatos pendientes",
+      "reviewTitle": "Revisión",
+      "empty": "No hay candidatos pendientes. Ejecute el generador o recopile datos preference/feedback.",
+      "selectItem": "Seleccione un candidato para revisar.",
+      "inputLabel": "Entrada sanitizada",
+      "modelOutputLabel": "Salida del modelo",
+      "verdictLabel": "Veredicto",
+      "conclusionLabel": "Conclusión experta",
+      "rationaleLabel": "Razonamiento (opcional)",
+      "correctedJsonLabel": "Salida corregida (JSON)",
+      "submit": "Enviar revisión",
+      "submitting": "Enviando…",
+      "submitError": "No se pudo enviar la revisión.",
+      "skip": "Omitir",
+      "skipError": "No se pudo omitir.",
+      "verdict": {
+        "model_correct": "Modelo correcto",
+        "model_partially_correct": "Parcialmente correcto",
+        "model_wrong": "Modelo incorrecto",
+        "both_models_wrong": "Ambos incorrectos"
+      }
     }
   }
 }

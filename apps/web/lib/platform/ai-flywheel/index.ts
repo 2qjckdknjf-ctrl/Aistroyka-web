@@ -13,3 +13,4 @@ export * from "./expert-review";
 export * from "./training-consent.service";
 export * from "./feedback-wire";
 export * from "./gold-memory";
+export * from "./expert-review-queue";

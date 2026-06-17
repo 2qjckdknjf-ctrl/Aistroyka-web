@@ -1,8 +1,10 @@
 import { Card } from "@/components/ui";
 import { Link } from "@/i18n/navigation";
 import { AdminAiOverviewClient } from "./AdminAiOverviewClient";
+import { isExpertReviewQueueUiEnabled } from "@/lib/platform/ai-flywheel/expert-review-queue/expert-review-queue.ui-gate";
 
 export default function AdminAiPage() {
+  const expertReviewEnabled = isExpertReviewQueueUiEnabled();
   return (
     <>
       <Card className="mb-6 border-l-4 border-l-aistroyka-accent">
@@ -25,6 +27,11 @@ export default function AdminAiPage() {
           <Link href="/admin/ai/training-consent" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">
             AI training consent →
           </Link>
+          {expertReviewEnabled ? (
+            <Link href="/admin/ai/expert-review" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">
+              Expert review queue →
+            </Link>
+          ) : null}
           <span className="text-aistroyka-text-tertiary">·</span>
           <span className="text-aistroyka-subheadline text-aistroyka-text-secondary">
             Below: route-level AI audit rollup (copilot, intelligence, vision).
