@@ -8,7 +8,9 @@
 | Branch | `ai/expert-review-queue-mvp` |
 | Base branch (stacked merge) | `ai/gold-memory-mvp` |
 | Engineering commit SHA | `9baceb734b139dda8a1ee29ebaa33ec3fbb1f542` |
-| Branch tip SHA (docs closure) | `44e6db1e5b0d47d1f8cf51e18623132e9f2d1b7a` |
+| Branch tip SHA (docs closure) | `1ef4391557ae18a92582d450556e169931194e04` |
+| Reconciled into `ai/gold-memory-mvp` | **YES** (fast-forward merge, 2026-06-17T18:56:38Z) |
+| PR #105 merge commit | `1ef4391557ae18a92582d450556e169931194e04` (fast-forward; no merge commit) |
 | Stacked merge PR | **#105** — https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/105 |
 | CI validation PR | **#106** — https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/106 (targets `main`; CI Check triggers on PRs to `main`/`master`) |
 | Workflow | **CI Check** (`.github/workflows/ci-check.yml`) |
