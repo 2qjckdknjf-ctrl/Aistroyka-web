@@ -55,7 +55,7 @@ All Phase 13 / post-merge **required** tails closed 2026-06-16. Optional only:
 
 1. **Local stakeholder sanity:** add `STAKEHOLDER_SMOKE_*` to gitignored `.env.pilot` (template in `.env.pilot.example`) — CI prod deploy already runs blocking gate.
 2. **Secrets rotation:** if smoke password or JWT ever appeared in logs/chats, rotate per `docs/audit/SECRET_EXPOSURE_REMEDIATION_2026-05-01.md`.
-3. **P2 hygiene:** stale remote branches, `npm audit` moderate advisories, DB type regeneration, legacy API dashboard migration per `docs/audit/LEGACY_API_SURFACE_INVENTORY.md` (audit v2 backlog — not pilot blockers).
+3. **P2 hygiene:** stale remote branches, `npm audit` moderate advisories, DB type regeneration (audit v2 backlog — not pilot blockers). Legacy API: dashboard projects UI on `/api/v1` (2026-06-17).
 
 ## References
 

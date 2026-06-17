@@ -55,8 +55,11 @@ export function JobListPolling({
       if (abortController.signal.aborted) return;
       try {
         // Kick processing so the web app can run the AI engine without a separate worker
-        fetch("/api/analysis/process", { method: "POST", signal: abortController.signal }).catch(() => {});
-        const res = await fetch(`/api/projects/${projectId}/poll-status`, { signal: abortController.signal });
+        fetch("/api/v1/analysis/process", { method: "POST", credentials: "include", signal: abortController.signal }).catch(() => {});
+        const res = await fetch(`/api/v1/projects/${projectId}/poll-status`, {
+          signal: abortController.signal,
+          credentials: "include",
+        });
         const data = (await res.json().catch(() => ({}))) as {
           ok?: boolean;
           data?: { hasActiveJobs?: boolean };

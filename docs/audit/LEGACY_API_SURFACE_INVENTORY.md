@@ -38,7 +38,7 @@ Implementation: `apps/web/lib/api/legacy-redirect.ts` (`redirectToV1PreservePath
 
 | Path prefix | Used by | Migration note |
 |-------------|---------|----------------|
-| `/api/projects` (+ `[id]`, upload, poll-status, media trigger) | Dashboard React forms (`CreateProjectForm`, `UploadMediaForm`, `TriggerAnalysisButton`, `JobListPolling`) | Prefer migrating UI fetch to `/api/v1/projects/*`; v1 list/create already aliases legacy handlers |
+| `/api/projects` (+ `[id]`, upload, poll-status, media trigger) | ~~Dashboard React forms~~ **migrated 2026-06-17** to `/api/v1/projects/*` (`CreateProjectForm`, `UploadMediaForm`, `JobListPolling`, `TriggerAnalysisButton`, `AiConfigHint`) | Legacy handlers remain for external clients until sunset |
 | `/api/ai/analyze-image`, `/api/ai/analyze-video-daily` | AI smoke + older clients | v1 twins exist under `/api/v1/ai/*` |
 | `/api/analysis/process` | Analysis pipeline | v1: `/api/v1/analysis/process` |
 | `/api/contact` | Public contact form | No v1 twin required for pilot |

@@ -27,10 +27,11 @@ export function CreateProjectForm() {
     setError(null);
     setLoading(true);
     try {
-      const res = await fetch("/api/projects", {
+      const res = await fetch("/api/v1/projects", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: name.trim() }),
+        credentials: "include",
       });
       const data = (await res.json().catch(() => ({}))) as {
         success?: boolean;
