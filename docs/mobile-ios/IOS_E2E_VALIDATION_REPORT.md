@@ -41,7 +41,9 @@ See `ios/README.md`.
 
 **Layer B API chain (2026-06-03):** `BASE_URL=https://aistroyka.ai ./scripts/smoke/ios_mobile_api_chain.sh` with `.env.pilot` — **PASS** (worker report create + sync; manager me + reports). Canonical mobile transaction proof for publication.
 
-**Layer B UITest (local):** `bash ios/scripts/run-ios-e2e-integration-local.sh` with `.env.pilot` + `apps/web/.env.local` + `IOS_E2E_BASE_URL=https://aistroyka.ai` — **PASS** (2026-06-16, branch `fix/smoke-json-arm64`): all three live tests green (~93s wall time): `testManager_livePilot_projectIntelligenceAndCopilot`, `testManager_livePilot_loginAndReachReportsInbox`, `testWorker_livePilot_loginAndOpenNewReportDraft`. Runner auto-pins `IOS_E2E_PROJECT_ID`, preflights `/api/v1/me`, writes gitignored `ios/Config/.uitest-e2e-credentials`. JSON parsing uses `scripts/smoke/_json_lib.sh` (Apple Silicon–safe). Optional `IOS_E2E_ONLY_TEST`, `IOS_E2E_SKIP_WORKER=1`.
+**Layer B UITest (local):** `bash ios/scripts/run-ios-e2e-integration-local.sh` with `.env.pilot` + `apps/web/.env.local` + `IOS_E2E_BASE_URL=https://aistroyka.ai` — **PASS** (2026-06-16): all three live tests green (~93s wall time): `testManager_livePilot_projectIntelligenceAndCopilot`, `testManager_livePilot_loginAndReachReportsInbox`, `testWorker_livePilot_loginAndOpenNewReportDraft`. Runner auto-pins `IOS_E2E_PROJECT_ID`, preflights `/api/v1/me`, writes gitignored `ios/Config/.uitest-e2e-credentials`. JSON parsing uses `scripts/smoke/_json_lib.sh` (Apple Silicon–safe). Optional `IOS_E2E_ONLY_TEST`, `IOS_E2E_SKIP_WORKER=1`.
+
+**Layer B CI (manual):** `.github/workflows/ios-e2e-integration.yml` — same three UITests + API chain preflight; `workflow_dispatch` only (see `.github/workflows/README.md` for secrets and phantom push quirk).
 
 ### Limits of layer A
 
