@@ -1,6 +1,6 @@
 # Layer B — live pilot iOS UITests (Manager intelligence/copilot + reports; Worker report draft).
 # Requires macOS runner + repository secrets (Settings → Secrets → Actions):
-#   PILOT_E2E_EMAIL, PILOT_E2E_PASSWORD
+#   PILOT_E2E_EMAIL, PILOT_E2E_PASSWORD (or PILOT_SMOKE_EMAIL_PRODUCTION / PILOT_SMOKE_PASSWORD_PRODUCTION)
 #   NEXT_PUBLIC_SUPABASE_URL_PRODUCTION, NEXT_PUBLIC_SUPABASE_ANON_KEY_PRODUCTION
 # Optional: PILOT_E2E_BASE_URL (default https://aistroyka.ai), PILOT_E2E_PROJECT_ID
 #
@@ -43,13 +43,13 @@ jobs:
 
       - name: Require pilot E2E secrets
         env:
-          EMAIL: ${{ secrets.PILOT_E2E_EMAIL }}
-          PASS: ${{ secrets.PILOT_E2E_PASSWORD }}
+          EMAIL: ${{ secrets.PILOT_E2E_EMAIL || secrets.PILOT_SMOKE_EMAIL_PRODUCTION }}
+          PASS: ${{ secrets.PILOT_E2E_PASSWORD || secrets.PILOT_SMOKE_PASSWORD_PRODUCTION }}
           SUPA_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_PRODUCTION }}
           SUPA_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_PRODUCTION }}
         run: |
           if [ -z "$EMAIL" ] || [ -z "$PASS" ] || [ -z "$SUPA_URL" ] || [ -z "$SUPA_KEY" ]; then
-            echo "::error::Set PILOT_E2E_EMAIL, PILOT_E2E_PASSWORD, NEXT_PUBLIC_SUPABASE_URL_PRODUCTION, NEXT_PUBLIC_SUPABASE_ANON_KEY_PRODUCTION."
+            echo "::error::Set PILOT_E2E_EMAIL/PILOT_E2E_PASSWORD or PILOT_SMOKE_EMAIL_PRODUCTION/PILOT_SMOKE_PASSWORD_PRODUCTION, plus NEXT_PUBLIC_SUPABASE_URL_PRODUCTION and NEXT_PUBLIC_SUPABASE_ANON_KEY_PRODUCTION."
             exit 1
           fi
 
@@ -86,8 +86,8 @@ jobs:
       - name: Mobile API chain (Layer B preflight)
         env:
           BASE_URL: ${{ steps.pilot.outputs.base_url }}
-          SMOKE_EMAIL: ${{ secrets.PILOT_E2E_EMAIL }}
-          SMOKE_PASSWORD: ${{ secrets.PILOT_E2E_PASSWORD }}
+          SMOKE_EMAIL: ${{ secrets.PILOT_E2E_EMAIL || secrets.PILOT_SMOKE_EMAIL_PRODUCTION }}
+          SMOKE_PASSWORD: ${{ secrets.PILOT_E2E_PASSWORD || secrets.PILOT_SMOKE_PASSWORD_PRODUCTION }}
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_PRODUCTION }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_PRODUCTION }}
         run: bash scripts/smoke/ios_mobile_api_chain.sh
@@ -96,10 +96,10 @@ jobs:
         env:
           CI_SIGNING_HACK: "1"
           IOS_E2E_BASE_URL: ${{ steps.pilot.outputs.base_url }}
-          IOS_E2E_EMAIL: ${{ secrets.PILOT_E2E_EMAIL }}
-          IOS_E2E_PASSWORD: ${{ secrets.PILOT_E2E_PASSWORD }}
-          SMOKE_EMAIL: ${{ secrets.PILOT_E2E_EMAIL }}
-          SMOKE_PASSWORD: ${{ secrets.PILOT_E2E_PASSWORD }}
+          IOS_E2E_EMAIL: ${{ secrets.PILOT_E2E_EMAIL || secrets.PILOT_SMOKE_EMAIL_PRODUCTION }}
+          IOS_E2E_PASSWORD: ${{ secrets.PILOT_E2E_PASSWORD || secrets.PILOT_SMOKE_PASSWORD_PRODUCTION }}
+          SMOKE_EMAIL: ${{ secrets.PILOT_E2E_EMAIL || secrets.PILOT_SMOKE_EMAIL_PRODUCTION }}
+          SMOKE_PASSWORD: ${{ secrets.PILOT_E2E_PASSWORD || secrets.PILOT_SMOKE_PASSWORD_PRODUCTION }}
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_PRODUCTION }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_PRODUCTION }}
           IOS_E2E_PROJECT_ID: ${{ secrets.PILOT_E2E_PROJECT_ID }}
