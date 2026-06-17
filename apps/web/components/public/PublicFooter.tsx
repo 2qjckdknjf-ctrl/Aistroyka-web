@@ -41,7 +41,7 @@ export function PublicFooter() {
   const tFooter = useTranslations("public.footer");
 
   return (
-    <footer className="border-t border-[var(--border-main)] bg-[var(--bg-card)]">
+    <footer className="border-t border-aistroyka-border-subtle bg-aistroyka-surface">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
           <div>
@@ -51,12 +51,12 @@ export function PublicFooter() {
             >
               AISTROYKA
             </Link>
-            <p className="mt-2 text-[var(--aistroyka-font-footnote)] text-[var(--text-muted)]">
+            <p className="mt-2 text-aistroyka-footnote text-aistroyka-text-secondary">
               AI Construction Intelligence
             </p>
           </div>
           <div>
-            <h3 className="font-heading text-[var(--aistroyka-font-subheadline)] font-semibold text-[var(--text-main)]">
+            <h3 className="font-heading text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">
               {tFooter("product")}
             </h3>
             <ul className="mt-3 space-y-2">
@@ -64,7 +64,7 @@ export function PublicFooter() {
                 <li key={href}>
                   <Link
                     href={href}
-                    className="text-[var(--aistroyka-font-footnote)] text-[var(--text-muted)] hover:text-[var(--text-main)]"
+                    className="text-aistroyka-footnote text-aistroyka-text-secondary hover:text-aistroyka-text-primary"
                   >
                     {t(key)}
                   </Link>
@@ -73,7 +73,7 @@ export function PublicFooter() {
             </ul>
           </div>
           <div>
-            <h3 className="font-heading text-[var(--aistroyka-font-subheadline)] font-semibold text-[var(--text-main)]">
+            <h3 className="font-heading text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">
               {tFooter("resources")}
             </h3>
             <ul className="mt-3 space-y-2">
@@ -81,7 +81,7 @@ export function PublicFooter() {
                 <li key={href}>
                   <Link
                     href={href}
-                    className="text-[var(--aistroyka-font-footnote)] text-[var(--text-muted)] hover:text-[var(--text-main)]"
+                    className="text-aistroyka-footnote text-aistroyka-text-secondary hover:text-aistroyka-text-primary"
                   >
                     {t(key)}
                   </Link>
@@ -90,7 +90,7 @@ export function PublicFooter() {
             </ul>
           </div>
           <div>
-            <h3 className="font-heading text-[var(--aistroyka-font-subheadline)] font-semibold text-[var(--text-main)]">
+            <h3 className="font-heading text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">
               {tFooter("company")}
             </h3>
             <ul className="mt-3 space-y-2">
@@ -98,7 +98,7 @@ export function PublicFooter() {
                 <li key={href}>
                   <Link
                     href={href}
-                    className="text-[var(--aistroyka-font-footnote)] text-[var(--text-muted)] hover:text-[var(--text-main)]"
+                    className="text-aistroyka-footnote text-aistroyka-text-secondary hover:text-aistroyka-text-primary"
                   >
                     {t(key)}
                   </Link>
@@ -107,7 +107,7 @@ export function PublicFooter() {
             </ul>
           </div>
           <div>
-            <h3 className="font-heading text-[var(--aistroyka-font-subheadline)] font-semibold text-[var(--text-main)]">
+            <h3 className="font-heading text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">
               {tFooter("legal")}
             </h3>
             <ul className="mt-3 space-y-2">
@@ -115,7 +115,7 @@ export function PublicFooter() {
                 <li key={href}>
                   <Link
                     href={href}
-                    className="text-[var(--aistroyka-font-footnote)] text-[var(--text-muted)] hover:text-[var(--text-main)]"
+                    className="text-aistroyka-footnote text-aistroyka-text-secondary hover:text-aistroyka-text-primary"
                   >
                     {t(key)}
                   </Link>
@@ -124,7 +124,7 @@ export function PublicFooter() {
             </ul>
           </div>
         </div>
-        <div className="mt-10 border-t border-[var(--border-main)] pt-8 text-center text-[var(--aistroyka-font-caption)] text-[var(--text-muted)]">
+        <div className="mt-10 border-t border-aistroyka-border-subtle pt-8 text-center text-aistroyka-caption text-aistroyka-text-secondary">
           © {new Date().getFullYear()} Aistroyka. All rights reserved.
         </div>
       </div>

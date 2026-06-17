@@ -17,12 +17,13 @@
 |------|--------|
 | SSR mobile menu flash | `PublicHeader` — menu closed until user opens (no `!isHydrated \|\| open`) |
 | `global-error.tsx` hardcoded colors | Uses `design-tokens.css` CSS variables |
+| `PublicFooter` legacy CSS vars | Migrated to `aistroyka-*` Tailwind tokens |
 
 ## Remaining (P1 backlog)
 
 | Item | Notes |
 |------|-------|
-| Legacy `:root` aliases in `globals.css` | `--bg-main`, `--text-muted`, etc. — documented deprecated; migrate `PublicFooter` to `--aistroyka-*` |
+| Legacy `:root` aliases in `globals.css` | `--bg-main`, `--text-muted`, etc. — documented deprecated; migrate remaining public components to `aistroyka-*` Tailwind |
 | Tailwind duplicate keys | `card` radius vs shadow — keep `aistroyka-card` as canonical |
 | Help / dashboard header | audit remaining hardcoded hex outside tokens |
 | Visual regression matrix | Playwright screenshots — Phase 2 |
