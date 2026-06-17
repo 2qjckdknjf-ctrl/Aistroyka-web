@@ -1,4 +1,8 @@
-/** Security headers applied globally. Used by next.config and verification tests. */
+/** Security headers — single source of truth for middleware (pages + API). */
+
+export type SecurityHeader = { readonly key: string; readonly value: string };
+
+export type SecurityHeaderProfile = "page" | "api";
 
 const BASE_CSP_DIRECTIVES = [
   "default-src 'self'",
@@ -9,7 +13,6 @@ const BASE_CSP_DIRECTIVES = [
 ] as const;
 
 function buildScriptSrcDirective(isDevelopment: boolean): string {
-  // Next.js dev runtime requires eval for HMR/react refresh.
   return isDevelopment
     ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.supabase.co"
     : "script-src 'self' 'unsafe-inline' https://*.supabase.co";
@@ -19,7 +22,8 @@ export function buildCspValue(isDevelopment: boolean): string {
   return [...BASE_CSP_DIRECTIVES, buildScriptSrcDirective(isDevelopment)].join("; ") + ";";
 }
 
-export function getSecurityHeaders(isDevelopment = process.env.NODE_ENV === "development") {
+/** HTML/document routes: full CSP + frame denial. */
+export function getPageSecurityHeaders(isDevelopment = process.env.NODE_ENV === "development"): SecurityHeader[] {
   const cspValue = buildCspValue(isDevelopment);
   return [
     { key: "X-Content-Type-Options", value: "nosniff" },
@@ -27,15 +31,58 @@ export function getSecurityHeaders(isDevelopment = process.env.NODE_ENV === "dev
     { key: "X-Frame-Options", value: "DENY" },
     { key: "Content-Security-Policy", value: cspValue },
     { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), interest-cohort=()" },
-  ] as const;
+  ];
 }
 
-export const SECURITY_HEADERS = getSecurityHeaders();
+/** JSON/API routes: hardening without document CSP (avoids breaking clients). */
+export function getApiSecurityHeaders(): SecurityHeader[] {
+  return [
+    { key: "X-Content-Type-Options", value: "nosniff" },
+    { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+    { key: "X-Frame-Options", value: "DENY" },
+    { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), interest-cohort=()" },
+  ];
+}
 
-export const REQUIRED_SECURITY_HEADER_KEYS = [
+/** @deprecated Use getPageSecurityHeaders — kept for tests and CJS shim. */
+export function getSecurityHeaders(isDevelopment = process.env.NODE_ENV === "development"): SecurityHeader[] {
+  return getPageSecurityHeaders(isDevelopment);
+}
+
+export const SECURITY_HEADERS = getPageSecurityHeaders();
+
+export const REQUIRED_PAGE_SECURITY_HEADER_KEYS = [
   "X-Content-Type-Options",
   "Referrer-Policy",
   "X-Frame-Options",
   "Content-Security-Policy",
   "Permissions-Policy",
 ] as const;
+
+export const REQUIRED_API_SECURITY_HEADER_KEYS = [
+  "X-Content-Type-Options",
+  "Referrer-Policy",
+  "X-Frame-Options",
+  "Permissions-Policy",
+] as const;
+
+/** @deprecated Use REQUIRED_PAGE_SECURITY_HEADER_KEYS */
+export const REQUIRED_SECURITY_HEADER_KEYS = REQUIRED_PAGE_SECURITY_HEADER_KEYS;
+
+const HSTS_HEADER = "Strict-Transport-Security";
+const HSTS_VALUE = "max-age=31536000; includeSubdomains; preload";
+
+export function applySecurityHeadersToResponse(
+  res: Response,
+  profile: SecurityHeaderProfile,
+  options?: { isProduction?: boolean; isDevelopment?: boolean }
+): Response {
+  const isProduction = options?.isProduction ?? process.env.NODE_ENV === "production";
+  const isDevelopment = options?.isDevelopment ?? process.env.NODE_ENV === "development";
+  const headers = profile === "page" ? getPageSecurityHeaders(isDevelopment) : getApiSecurityHeaders();
+  headers.forEach(({ key, value }) => res.headers.set(key, value));
+  if (profile === "page" && isProduction) {
+    res.headers.set(HSTS_HEADER, HSTS_VALUE);
+  }
+  return res;
+}

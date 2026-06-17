@@ -4,10 +4,14 @@ Primary web app: **`apps/web`** (Next.js, OpenNext, Cloudflare Workers). Mobile:
 
 ## Quick start
 
+Requires **Bun 1.2.15** (see `.tool-versions`). From repo root:
+
 ```bash
-bun install
+bun install --frozen-lockfile
 bun run dev
 ```
+
+**Lock strategy:** canonical install is **Bun** (`bun.lock` at repo root). Root `package-lock.json` exists only for the legacy **Vercel npm** preview path — regenerate on **linux** if it breaks (`node scripts/ci/validate-npm-lock.cjs`). Do not add nested `package-lock.json` / `bun.lock` under workspaces.
 
 ## Build & deploy (Cloudflare)
 
