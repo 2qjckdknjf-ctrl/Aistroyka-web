@@ -15,6 +15,10 @@ on:
         required: false
         default: "https://aistroyka.ai"
         type: string
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/ios-e2e-integration.yml
 
 concurrency:
   group: ios-e2e-integration-${{ github.workflow }}-${{ github.ref }}
@@ -70,11 +74,11 @@ jobs:
           BASE_ESC="$(xc_escape "$BASE_URL")"
           SUPA_ESC="$(xc_escape "$SUPABASE_URL")"
           umask 077
-          cat > ios/Config/Secrets.xcconfig <<EOF
-BASE_URL = ${BASE_ESC}
-SUPABASE_URL = ${SUPA_ESC}
-SUPABASE_ANON_KEY = ${SUPABASE_ANON_KEY}
-EOF
+          {
+            printf 'BASE_URL = %s\n' "$BASE_ESC"
+            printf 'SUPABASE_URL = %s\n' "$SUPA_ESC"
+            printf 'SUPABASE_ANON_KEY = %s\n' "$SUPABASE_ANON_KEY"
+          } > ios/Config/Secrets.xcconfig
 
       - name: Xcode version
         run: xcodebuild -version
