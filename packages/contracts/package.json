@@ -14,7 +14,7 @@
   "sideEffects": false,
   "scripts": {
     "clean": "rm -rf dist",
-    "build": "tsc -p tsconfig.json",
+    "build": "bun ../../node_modules/typescript/bin/tsc -p tsconfig.json",
     "test": "vitest run"
   },
   "dependencies": {
