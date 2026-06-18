@@ -726,6 +726,14 @@
       "main": "Principal",
       "mainMobile": "Principal móvil"
     },
+    "cta": {
+      "launchPilot": "Iniciar piloto",
+      "contactUs": "Contáctanos",
+      "getPresentation": "Obtener presentación",
+      "launchPilotHref": "/dashboard",
+      "contactHref": "/contact",
+      "presentationHref": "/contact"
+    },
     "copilot": {
       "title": "Copilot IA",
       "heroTitle": "Copilot IA para operaciones de construcción",

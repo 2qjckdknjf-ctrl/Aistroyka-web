@@ -726,6 +726,14 @@
       "main": "Main",
       "mainMobile": "Main mobile"
     },
+    "cta": {
+      "launchPilot": "Launch pilot",
+      "contactUs": "Contact us",
+      "getPresentation": "Get presentation",
+      "launchPilotHref": "/dashboard",
+      "contactHref": "/contact",
+      "presentationHref": "/contact"
+    },
     "home": {
       "heroTitle": "AI construction control",
       "heroSubtitle": "Projects, field reports, risks, and schedules in one operational lens — transparent control for managers and teams.",

@@ -1,0 +1,93 @@
+"use client";
+
+import { useTranslations } from "next-intl";
+import { GlassPanel } from "@/components/design/liquid-glass";
+import { PublicHeroCTA, type PublicCtaLabels } from "./PublicHeroCTA";
+
+export type PublicCTASectionVariant = "band" | "floating" | "inline";
+
+export type PublicCTASectionProps = Partial<PublicCtaLabels> & {
+  variant?: PublicCTASectionVariant;
+  title?: string;
+  subtitle?: string;
+  showPresentation?: boolean;
+  className?: string;
+  testIdPrefix?: string;
+};
+
+export function PublicCTASection({
+  variant = "band",
+  title,
+  subtitle,
+  primaryLabel,
+  secondaryLabel,
+  presentationLabel,
+  showPresentation = true,
+  className = "",
+  testIdPrefix = "cta.public.section",
+}: PublicCTASectionProps) {
+  const t = useTranslations("public.cta");
+
+  const labels: PublicCtaLabels = {
+    primaryLabel: primaryLabel ?? t("launchPilot"),
+    secondaryLabel: secondaryLabel ?? t("contactUs"),
+    presentationLabel: presentationLabel ?? t("getPresentation"),
+  };
+
+  const ctaBlock = (
+    <PublicHeroCTA
+      {...labels}
+      showPresentation={showPresentation}
+      className={variant === "inline" ? "mt-6" : "mt-8"}
+      testIdPrefix={testIdPrefix}
+    />
+  );
+
+  const copyBlock =
+    title || subtitle ? (
+      <div className="mx-auto min-w-0 max-w-3xl text-center">
+        {title ? (
+          <h2 className="font-heading text-[var(--aistroyka-font-title2)] font-semibold text-aistroyka-text-primary">
+            {title}
+          </h2>
+        ) : null}
+        {subtitle ? (
+          <p className="mt-3 text-[var(--aistroyka-font-body)] text-aistroyka-text-secondary">{subtitle}</p>
+        ) : null}
+      </div>
+    ) : null;
+
+  if (variant === "inline") {
+    return (
+      <div className={`min-w-0 ${className}`.trim()}>
+        {copyBlock}
+        {ctaBlock}
+      </div>
+    );
+  }
+
+  if (variant === "floating") {
+    return (
+      <section className={`px-4 py-12 sm:px-6 lg:px-8 ${className}`.trim()} aria-label={title ?? labels.primaryLabel}>
+        <div className="mx-auto min-w-0 max-w-3xl">
+          <GlassPanel intensity="subtle" contentClassName="text-center">
+            {copyBlock}
+            {ctaBlock}
+          </GlassPanel>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section
+      className={`bg-aistroyka-bg-primary px-4 py-16 sm:px-6 sm:py-20 lg:px-8 ${className}`.trim()}
+      aria-label={title ?? labels.primaryLabel}
+    >
+      <div className="mx-auto min-w-0 max-w-3xl">
+        {copyBlock}
+        <div className="flex justify-center">{ctaBlock}</div>
+      </div>
+    </section>
+  );
+}
