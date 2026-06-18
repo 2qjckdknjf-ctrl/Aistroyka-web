@@ -241,7 +241,7 @@ export function AdminExpertReviewClient() {
             </div>
           </div>
         )}
-        {error ? <p className="mt-4 text-aistroyka-footnote text-red-600">{error}</p> : null}
+        {error ? <p className="mt-4 text-aistroyka-footnote text-aistroyka-error">{error}</p> : null}
       </Card>
     </div>
   );

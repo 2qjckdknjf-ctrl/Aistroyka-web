@@ -85,7 +85,7 @@ export function CopilotOptionalFeedback({
       {status === "saved" ? (
         <p className="text-xs text-aistroyka-accent">{tDetail("copilotFeedbackSaved")}</p>
       ) : null}
-      {status === "error" && error ? <p className="text-xs text-red-600">{error}</p> : null}
+      {status === "error" && error ? <p className="text-xs text-aistroyka-error">{error}</p> : null}
     </div>
   );
 }
