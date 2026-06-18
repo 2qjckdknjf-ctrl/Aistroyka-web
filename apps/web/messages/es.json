@@ -702,18 +702,15 @@
       "privacy": "Privacidad",
       "terms": "Términos",
       "cabinet": "Panel",
-      "requestDemo": "Solicitar demo",
       "contactUs": "Contáctanos",
-      "launchPilot": "Iniciar piloto",
       "login": "Entrar",
-      "tryPlatform": "Probar plataforma",
       "aiDemo": "Demo IA",
       "cases": "Casos",
       "docs": "Docs",
       "platform": "Plataforma",
       "security": "Seguridad",
       "projectsShowcase": "Showcase",
-      "copilot": "Copilot IA",
+      "copilot": "Copilot",
       "integrations": "Integraciones",
       "api": "API",
       "workflows": "Flujos",
@@ -868,8 +865,7 @@
       "r2": "Arquitectura escalable",
       "r3": "Consistencia reportes",
       "r4": "Transparencia",
-      "ctaSales": "Ventas",
-      "ctaDemo": "Demo enterprise"
+      "ctaSales": "Ventas"
     },
     "implementation": {
       "title": "Implementación",
@@ -1096,8 +1092,6 @@
       "heroCardAiSubtitle": "Progreso, riesgos, retrasos",
       "heroCardMobileTitle": "Móvil",
       "heroCardMobileSubtitle": "Informes, evidencia",
-      "ctaLogin": "Entrar",
-      "ctaTry": "Probar plataforma",
       "trustStrip": "Para equipos de construcción y desarrollo",
       "painTitle": "Construcción sin visibilidad",
       "painSubtitle": "Informes dispersos, decisiones retrasadas y sin una única fuente de verdad.",
@@ -1245,9 +1239,9 @@
       "relatedCopilot": "Copilot",
       "relatedCopilotDesc": "Asistente para preguntas y resúmenes — sobre outputs de análisis, no en su lugar.",
       "linkCopilot": "Explorar Copilot",
-      "relatedAiDemo": "AI Demo",
+      "relatedAiDemo": "Mock interactivo",
       "relatedAiDemoDesc": "Mock interactivo — pruebe una foto de muestra con salida simulada.",
-      "linkAiDemo": "Probar demo interactiva",
+      "linkAiDemo": "Abrir análisis mock",
       "ctaTitle": "Vea Construction AI en su piloto",
       "ctaSubtitle": "Inicie un piloto o contáctenos para revisar flujos de análisis en sus obras activas."
     },
@@ -1325,7 +1319,7 @@
     },
     "pricing": {
       "title": "Precios",
-      "metaDescription": "Planes Starter, Pro, Business y Enterprise. Solicita presupuesto o reserva una demo.",
+      "metaDescription": "Planes Starter, Pro, Business y Enterprise. Solicita presupuesto o presentación.",
       "starter": "Starter",
       "pro": "Pro",
       "business": "Business",
@@ -1334,8 +1328,7 @@
       "proDesc": "Contratistas en crecimiento: documentos, flujos internos, presupuestos y órdenes de cambio para el cliente, digest IA donde esté disponible.",
       "businessDesc": "Mayor escala: permisos y marca más sólidos, integraciones como Telegram, packs de entrega y analítica más profunda.",
       "enterpriseDesc": "SSO, auditoría ampliada, retención e integraciones, soporte dedicado — alineado con ventas a lo que tengáis en producción.",
-      "requestQuote": "Solicitar presupuesto",
-      "bookDemo": "Reservar demo"
+      "requestQuote": "Solicitar presupuesto"
     },
     "about": {
       "title": "Nosotros",

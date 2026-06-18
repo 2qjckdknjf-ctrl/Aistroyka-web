@@ -19,6 +19,7 @@ export default async function EnterprisePage({ params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("public.enterprise");
+  const tCta = await getTranslations("public.cta");
 
   return (
     <div className="mx-auto min-w-0 max-w-5xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
@@ -66,7 +67,7 @@ export default async function EnterprisePage({ params }: Props) {
           {t("ctaSales")}
         </Link>
         <Link href="/contact" className="btn-secondary max-w-full min-w-0 sm:max-w-none">
-          {t("ctaDemo")}
+          {tCta("getPresentation")}
         </Link>
       </section>
     </div>

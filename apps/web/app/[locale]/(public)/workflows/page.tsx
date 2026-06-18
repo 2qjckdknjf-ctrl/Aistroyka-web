@@ -19,7 +19,7 @@ export default async function WorkflowsPage({ params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("public.workflows");
-  const tNav = await getTranslations("public.nav");
+  const tCta = await getTranslations("public.cta");
 
   return (
     <div className="mx-auto min-w-0 max-w-5xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
@@ -69,7 +69,7 @@ export default async function WorkflowsPage({ params }: Props) {
 
       <section className="mt-12 flex justify-center">
         <Link href="/contact" className="btn-primary max-w-full">
-          {tNav("requestDemo")}
+          {tCta("contactUs")}
         </Link>
       </section>
     </div>

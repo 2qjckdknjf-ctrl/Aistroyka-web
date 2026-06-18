@@ -702,18 +702,15 @@
       "privacy": "Privacy",
       "terms": "Termini",
       "cabinet": "Dashboard",
-      "requestDemo": "Richiedi demo",
       "contactUs": "Contattaci",
-      "launchPilot": "Avvia pilota",
       "login": "Accedi",
-      "tryPlatform": "Prova la piattaforma",
       "aiDemo": "Demo IA",
       "cases": "Casi",
       "docs": "Docs",
       "platform": "Piattaforma",
       "security": "Sicurezza",
       "projectsShowcase": "Showcase",
-      "copilot": "Copilot IA",
+      "copilot": "Copilot",
       "integrations": "Integrazioni",
       "api": "API",
       "workflows": "Workflow",
@@ -868,8 +865,7 @@
       "r2": "Architettura scalabile",
       "r3": "Coerenza report",
       "r4": "Trasparenza",
-      "ctaSales": "Vendite",
-      "ctaDemo": "Demo enterprise"
+      "ctaSales": "Vendite"
     },
     "implementation": {
       "title": "Implementazione",
@@ -1096,8 +1092,6 @@
       "heroCardAiSubtitle": "Avanzamento, rischi, ritardi",
       "heroCardMobileTitle": "Mobile",
       "heroCardMobileSubtitle": "Report, evidenze",
-      "ctaLogin": "Accedi",
-      "ctaTry": "Prova la piattaforma",
       "trustStrip": "Per team di costruzione e sviluppo",
       "painTitle": "Edilizia senza visibilità",
       "painSubtitle": "Report frammentati, decisioni ritardate e nessuna fonte unica di verità.",
@@ -1245,9 +1239,9 @@
       "relatedCopilot": "Copilot",
       "relatedCopilotDesc": "Assistant per domande e riepiloghi — sugli output di analisi, non al loro posto.",
       "linkCopilot": "Esplora Copilot",
-      "relatedAiDemo": "AI Demo",
+      "relatedAiDemo": "Mock interattivo",
       "relatedAiDemoDesc": "Mock interattivo — provate una foto campione con output simulato.",
-      "linkAiDemo": "Prova demo interattiva",
+      "linkAiDemo": "Apri analisi mock",
       "ctaTitle": "Construction AI nel vostro pilota",
       "ctaSubtitle": "Avviate un pilota o contattateci per rivedere i workflow di analisi sui cantieri attivi."
     },
@@ -1325,7 +1319,7 @@
     },
     "pricing": {
       "title": "Prezzi",
-      "metaDescription": "Piani Starter, Pro, Business e Enterprise. Richiedi preventivo o prenota una demo.",
+      "metaDescription": "Piani Starter, Pro, Business e Enterprise. Richiedi preventivo o presentazione.",
       "starter": "Starter",
       "pro": "Pro",
       "business": "Business",
@@ -1334,8 +1328,7 @@
       "proDesc": "Imprese in crescita: documenti, flussi interni, preventivi e ordini di variazione per il cliente, digest IA dove disponibile.",
       "businessDesc": "Scala seria: permessi e branding più avanzati, integrazioni come Telegram, pacchetti di consegna, analitica più profonda.",
       "enterpriseDesc": "SSO, audit esteso, retention e integrazioni, supporto dedicato — definito con il commerciale in base al vostro ambiente produttivo.",
-      "requestQuote": "Richiedi preventivo",
-      "bookDemo": "Prenota demo"
+      "requestQuote": "Richiedi preventivo"
     },
     "about": {
       "title": "Chi siamo",
