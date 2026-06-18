@@ -1,58 +1,54 @@
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
+import { PublicHeroCTA, PublicHeroLens, PublicHeroMetrics } from "@/components/public";
 
 export async function PublicHomeContent() {
   const t = await getTranslations("public.home");
   const tMetrics = await getTranslations("public.homeMetrics");
-  const tNav = await getTranslations("public.nav");
 
   const MOCK_METRICS = { projects: "500+", reports: "12K+", insights: "8K+", photos: "45K+" };
 
   return (
     <>
-      {/* Hero */}
-      <section className="relative overflow-hidden px-4 pb-24 pt-20 sm:px-6 lg:px-8">
-        <div aria-hidden className="pointer-events-none absolute inset-0">
-          <div className="absolute -left-24 top-12 h-80 w-80 rounded-full bg-[var(--aistroyka-neural-core)] opacity-20 blur-3xl animate-neural-pulse" />
-          <div className="absolute -right-28 bottom-4 h-96 w-96 rounded-full bg-[var(--aistroyka-neural-accent)] opacity-20 blur-3xl animate-neural-drift" />
-        </div>
-
-        <div className="public-shell relative mx-auto min-w-0 max-w-6xl rounded-[var(--aistroyka-radius-xxl)] px-4 py-10 sm:px-10 sm:py-16">
-          <div className="max-w-3xl min-w-0">
-            <div className="public-badge mb-6 inline-flex max-w-full flex-wrap rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] sm:px-4 sm:tracking-[0.16em]">
+      {/* Hero — LG-2A glass lens + operational chips */}
+      <section className="relative overflow-hidden px-4 pb-20 pt-10 sm:px-6 sm:pt-14 lg:px-8 lg:pb-24">
+        <div className="mx-auto grid min-w-0 max-w-7xl gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,24rem)] lg:items-center lg:gap-12">
+          <div className="min-w-0">
+            <div className="public-badge mb-5 inline-flex max-w-full flex-wrap rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] sm:px-4 sm:tracking-[0.16em]">
               {t("neuralConstructionControl")}
             </div>
-            <h1 className="text-balance font-heading text-3xl font-semibold uppercase tracking-[0.04em] text-aistroyka-text-primary sm:text-5xl sm:tracking-[0.06em] lg:text-6xl">
+            <h1 className="text-balance font-heading text-3xl font-semibold uppercase tracking-[0.04em] text-aistroyka-text-primary sm:text-5xl sm:tracking-[0.06em] lg:text-[3.25rem] lg:leading-tight">
               <span className="text-aistroyka-accent">AISTROYKA</span>{" "}
               <span className="text-aistroyka-text-primary">{t("heroTitle")}</span>
             </h1>
-            <p className="mt-6 max-w-2xl text-pretty text-[var(--aistroyka-font-headline)] text-aistroyka-text-secondary sm:text-xl">
+            <p className="mt-5 max-w-xl text-pretty text-[var(--aistroyka-font-headline)] text-aistroyka-text-secondary sm:text-xl">
               {t("heroSubtitle")}
             </p>
-            <div className="mt-10 flex flex-wrap gap-3">
-              <Link href="/contact" className="btn-primary min-w-0 flex-1 basis-[min(100%,14rem)] sm:flex-none sm:basis-auto">
-                {tNav("requestDemo")}
-              </Link>
-              <Link href="/ai-demo" className="btn-secondary min-w-0 flex-1 basis-[min(100%,14rem)] sm:flex-none sm:basis-auto">
-                {tNav("aiDemo")}
-              </Link>
-            </div>
+            <PublicHeroCTA
+              primaryLabel={t("ctaLaunchPilot")}
+              secondaryLabel={t("ctaContact")}
+              presentationLabel={t("ctaPresentation")}
+            />
+            <PublicHeroMetrics
+              chips={[
+                { value: MOCK_METRICS.projects, label: tMetrics("projectsMonitored") },
+                { value: MOCK_METRICS.reports, label: tMetrics("dailyReportsAnalyzed") },
+                { value: MOCK_METRICS.insights, label: tMetrics("aiInsightsGenerated") },
+                { value: MOCK_METRICS.photos, label: tMetrics("photosProcessed") },
+              ]}
+            />
           </div>
 
-          <div className="mt-12 grid min-w-0 gap-4 sm:grid-cols-3">
-            <Link href="/projects-showcase" className="public-card-motion min-w-0 rounded-[var(--aistroyka-radius-xl)] border border-aistroyka-border-subtle bg-aistroyka-surface px-4 py-4 sm:px-5">
-              <div className="text-sm font-semibold uppercase tracking-[0.12em] text-aistroyka-accent">{t("heroCardDashboardTitle")}</div>
-              <p className="mt-2 text-sm text-aistroyka-text-secondary">{t("heroCardDashboardSubtitle")}</p>
-            </Link>
-            <Link href="/ai-construction-control" className="public-card-motion min-w-0 rounded-[var(--aistroyka-radius-xl)] border border-aistroyka-border-subtle bg-aistroyka-surface px-4 py-4 sm:px-5">
-              <div className="text-sm font-semibold uppercase tracking-[0.12em] text-aistroyka-accent">{t("heroCardAiTitle")}</div>
-              <p className="mt-2 text-sm text-aistroyka-text-secondary">{t("heroCardAiSubtitle")}</p>
-            </Link>
-            <Link href="/mobile" className="public-card-motion min-w-0 rounded-[var(--aistroyka-radius-xl)] border border-aistroyka-border-subtle bg-aistroyka-surface px-4 py-4 sm:px-5">
-              <div className="text-sm font-semibold uppercase tracking-[0.12em] text-aistroyka-accent">{t("heroCardMobileTitle")}</div>
-              <p className="mt-2 text-sm text-aistroyka-text-secondary">{t("heroCardMobileSubtitle")}</p>
-            </Link>
-          </div>
+          <PublicHeroLens
+            label={t("heroLensLabel")}
+            title={t("heroLensTitle")}
+            stats={[
+              { label: t("heroLensProgressLabel"), value: t("heroLensProgressValue") },
+              { label: t("heroLensRiskLabel"), value: t("heroLensRiskValue"), tone: "warning" },
+              { label: t("heroLensReportsLabel"), value: t("heroLensReportsValue") },
+            ]}
+            streamLines={[t("heroLensStream1"), t("heroLensStream2"), t("heroLensStream3")]}
+          />
         </div>
       </section>
 

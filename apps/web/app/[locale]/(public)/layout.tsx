@@ -1,5 +1,7 @@
 import { PublicHeader } from "@/components/public";
 import { PublicFooter } from "@/components/public";
+import { PublicAmbientField } from "@/components/public/PublicAmbientField";
+import { PublicLiquidGlassRoot } from "@/components/public/PublicLiquidGlassRoot";
 import { getAppUrl } from "@/lib/app-url";
 
 /**
@@ -28,7 +30,9 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-aistroyka-bg-primary">
+    <div className="public-ambient-shell flex min-h-screen flex-col bg-aistroyka-bg-primary">
+      <PublicAmbientField />
+      <PublicLiquidGlassRoot />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
@@ -37,9 +41,11 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareSchema) }}
       />
-      <PublicHeader />
-      <main className="min-w-0 flex-1">{children}</main>
-      <PublicFooter />
+      <div className="relative z-10 flex min-h-screen flex-col">
+        <PublicHeader />
+        <main className="min-w-0 flex-1">{children}</main>
+        <PublicFooter />
+      </div>
     </div>
   );
 }
