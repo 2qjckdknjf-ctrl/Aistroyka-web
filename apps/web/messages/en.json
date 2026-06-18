@@ -738,9 +738,6 @@
       "heroTitle": "AI construction control",
       "heroSubtitle": "Projects, field reports, risks, and schedules in one operational lens — transparent control for managers and teams.",
       "neuralConstructionControl": "Neural Construction Control",
-      "ctaLaunchPilot": "Launch pilot",
-      "ctaContact": "Contact us",
-      "ctaPresentation": "Get presentation",
       "heroLensLabel": "Live site lens",
       "heroLensTitle": "Tower B · Level 4",
       "heroLensProgressLabel": "Progress",
@@ -758,7 +755,6 @@
       "heroCardAiSubtitle": "Progress, risks, delays",
       "heroCardMobileTitle": "Mobile",
       "heroCardMobileSubtitle": "Reports, evidence",
-      "ctaDemo": "Request Demo",
       "ctaLogin": "Log in",
       "ctaTry": "Try platform",
       "trustStrip": "Trusted by construction and development teams",
@@ -791,10 +787,9 @@
       "mobileSubtitle": "Manager and worker apps for fast reporting and task execution.",
       "mobileCta": "Mobile",
       "pricingTeaserTitle": "Plans for every scale",
-      "pricingTeaserSubtitle": "From teams to enterprise. Request a demo for a tailored quote.",
+      "pricingTeaserSubtitle": "From teams to enterprise. See plans or contact us for a tailored quote.",
       "finalCtaTitle": "Ready to take control?",
-      "finalCtaSubtitle": "Request a demo or start with a trial.",
-      "finalCtaButton": "Request Demo"
+      "finalCtaSubtitle": "Launch a pilot, contact us, or request a presentation."
     },
     "features": {
       "title": "Features",

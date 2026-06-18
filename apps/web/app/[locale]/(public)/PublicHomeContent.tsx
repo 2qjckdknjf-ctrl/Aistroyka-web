@@ -1,9 +1,10 @@
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
-import { PublicHeroCTA, PublicHeroLens, PublicHeroMetrics } from "@/components/public";
+import { PublicCTASection, PublicHeroCTA, PublicHeroLens, PublicHeroMetrics } from "@/components/public";
 
 export async function PublicHomeContent() {
   const t = await getTranslations("public.home");
+  const tCta = await getTranslations("public.cta");
   const tMetrics = await getTranslations("public.homeMetrics");
 
   const MOCK_METRICS = { projects: "500+", reports: "12K+", insights: "8K+", photos: "45K+" };
@@ -25,9 +26,10 @@ export async function PublicHomeContent() {
               {t("heroSubtitle")}
             </p>
             <PublicHeroCTA
-              primaryLabel={t("ctaLaunchPilot")}
-              secondaryLabel={t("ctaContact")}
-              presentationLabel={t("ctaPresentation")}
+              primaryLabel={tCta("launchPilot")}
+              secondaryLabel={tCta("contactUs")}
+              presentationLabel={tCta("getPresentation")}
+              testIdPrefix="cta.public.home.hero"
             />
             <PublicHeroMetrics
               chips={[
@@ -211,20 +213,12 @@ export async function PublicHomeContent() {
         </div>
       </section>
 
-      {/* Final CTA */}
-      <section className="bg-aistroyka-bg-primary px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-        <div className="mx-auto min-w-0 max-w-3xl text-center">
-          <h2 className="font-heading text-[var(--aistroyka-font-title2)] font-semibold text-[var(--text-main)]">
-            {t("finalCtaTitle")}
-          </h2>
-          <p className="mt-3 text-[var(--text-muted)]">
-            {t("finalCtaSubtitle")}
-          </p>
-          <Link href="/contact" className="btn-primary mt-6 inline-flex max-w-full sm:px-8">
-            {t("finalCtaButton")}
-          </Link>
-        </div>
-      </section>
+      <PublicCTASection
+        variant="band"
+        title={t("finalCtaTitle")}
+        subtitle={t("finalCtaSubtitle")}
+        testIdPrefix="cta.public.home"
+      />
     </>
   );
 }

@@ -1079,9 +1079,6 @@
       "heroTitle": "Controllo di cantiere con IA",
       "heroSubtitle": "Progetti, report di campo, rischi e programmazioni in una lente operativa — controllo trasparente per manager e team.",
       "neuralConstructionControl": "Controllo neurale di cantiere",
-      "ctaLaunchPilot": "Avvia pilota",
-      "ctaContact": "Contattaci",
-      "ctaPresentation": "Richiedi presentazione",
       "heroLensLabel": "Lente del cantiere",
       "heroLensTitle": "Torre B · Livello 4",
       "heroLensProgressLabel": "Avanzamento",
@@ -1099,7 +1096,6 @@
       "heroCardAiSubtitle": "Avanzamento, rischi, ritardi",
       "heroCardMobileTitle": "Mobile",
       "heroCardMobileSubtitle": "Report, evidenze",
-      "ctaDemo": "Richiedi demo",
       "ctaLogin": "Accedi",
       "ctaTry": "Prova la piattaforma",
       "trustStrip": "Per team di costruzione e sviluppo",
@@ -1132,10 +1128,9 @@
       "mobileSubtitle": "App per responsabili e lavoratori: report rapidi ed esecuzione attività.",
       "mobileCta": "Mobile",
       "pricingTeaserTitle": "Piani per ogni scala",
-      "pricingTeaserSubtitle": "Da team a enterprise. Richiedi una demo per un preventivo su misura.",
+      "pricingTeaserSubtitle": "Da team a enterprise. Consulta i piani o contattaci per un preventivo su misura.",
       "finalCtaTitle": "Pronto a prendere il controllo?",
-      "finalCtaSubtitle": "Richiedi una demo o inizia con una prova.",
-      "finalCtaButton": "Richiedi demo"
+      "finalCtaSubtitle": "Avvia un pilota, contattaci o richiedi una presentazione."
     },
     "features": {
       "title": "Funzionalità",
