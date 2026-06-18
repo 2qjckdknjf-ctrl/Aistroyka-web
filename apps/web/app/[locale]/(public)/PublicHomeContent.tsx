@@ -216,7 +216,7 @@ export async function PublicHomeContent() {
             {t("pricingTeaserSubtitle")}
           </p>
           <Link href="/pricing" className="btn-primary mx-auto mt-6 inline-flex max-w-full">
-            {t("pricingTeaserTitle")}
+            {t("pricingTeaserCta")}
           </Link>
         </div>
       </section>
