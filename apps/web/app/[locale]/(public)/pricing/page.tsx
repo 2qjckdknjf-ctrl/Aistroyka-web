@@ -19,6 +19,7 @@ export default async function PricingPage({ params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("public.pricing");
+  const tCta = await getTranslations("public.cta");
 
   const plans = [
     { key: "starter" as const, descKey: "starterDesc" as const },
@@ -52,7 +53,7 @@ export default async function PricingPage({ params }: Props) {
                 {t("requestQuote")}
               </Link>
               <Link href="/contact" className="btn-primary min-w-0 flex-1 text-sm sm:flex-none sm:basis-auto">
-                {t("bookDemo")}
+                {tCta("getPresentation")}
               </Link>
             </div>
           </div>

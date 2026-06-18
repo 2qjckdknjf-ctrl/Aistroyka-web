@@ -702,18 +702,15 @@
       "privacy": "Конфиденциальность",
       "terms": "Условия использования",
       "cabinet": "Кабинет",
-      "requestDemo": "Запросить демо",
       "contactUs": "Связаться с нами",
-      "launchPilot": "Запустить пилот",
       "login": "Войти",
-      "tryPlatform": "Попробовать платформу",
       "aiDemo": "ИИ-демо",
       "cases": "Кейсы",
       "docs": "Документация",
       "platform": "Платформа",
       "security": "Безопасность",
       "projectsShowcase": "Шоукейс",
-      "copilot": "ИИ-копилот",
+      "copilot": "Copilot",
       "integrations": "Интеграции",
       "api": "API",
       "workflows": "Воркфлоу",
@@ -868,8 +865,7 @@
       "r2": "Масштабируемая архитектура",
       "r3": "Единообразие отчётности",
       "r4": "Прозрачность операций",
-      "ctaSales": "Связаться с продажами",
-      "ctaDemo": "Enterprise демо"
+      "ctaSales": "Связаться с продажами"
     },
     "implementation": {
       "title": "Внедрение",
@@ -1096,8 +1092,6 @@
       "heroCardAiSubtitle": "Прогресс, риски, задержки",
       "heroCardMobileTitle": "Мобильные",
       "heroCardMobileSubtitle": "Отчёты, доказательства",
-      "ctaLogin": "Войти",
-      "ctaTry": "Попробовать платформу",
       "trustStrip": "Используют строительные и девелоперские команды",
       "painTitle": "Строительство без видимости",
       "painSubtitle": "Разрозненные отчёты, запоздалые решения и отсутствие единого источника правды.",
@@ -1245,9 +1239,9 @@
       "relatedCopilot": "Copilot",
       "relatedCopilotDesc": "Assistant для вопросов и summary — на outputs анализа, не вместо них.",
       "linkCopilot": "Explore Copilot",
-      "relatedAiDemo": "AI Demo",
+      "relatedAiDemo": "Интерактивный mock",
       "relatedAiDemoDesc": "Интерактивный mock анализа — sample photo с simulated output.",
-      "linkAiDemo": "Try interactive demo",
+      "linkAiDemo": "Открыть mock-анализ",
       "ctaTitle": "Construction AI в вашем пилоте",
       "ctaSubtitle": "Запустите пилот или свяжитесь с нами — разберём analysis workflows на ваших объектах."
     },
@@ -1325,7 +1319,7 @@
     },
     "pricing": {
       "title": "Тарифы",
-      "metaDescription": "Тарифы Starter, Pro, Business и Enterprise. Запросите расчёт или демо.",
+      "metaDescription": "Тарифы Starter, Pro, Business и Enterprise. Запросите расчёт или презентацию.",
       "starter": "Starter",
       "pro": "Pro",
       "business": "Business",
@@ -1334,8 +1328,7 @@
       "proDesc": "Растущие подрядчики: документы, внутренние процессы, сметы и допсоглашения для заказчика, ИИ-дайджест там, где включено.",
       "businessDesc": "Серьёзный масштаб: расширенные права и бренд, интеграции (например Telegram), пакеты для сдачи, глубже аналитика.",
       "enterpriseDesc": "SSO, расширенный аудит, хранение и интеграции, выделенная поддержка — согласуем с продажами под ваш продакшен.",
-      "requestQuote": "Запросить расчёт",
-      "bookDemo": "Записаться на демо"
+      "requestQuote": "Запросить расчёт"
     },
     "about": {
       "title": "О нас",

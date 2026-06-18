@@ -702,18 +702,15 @@
       "privacy": "Privacy",
       "terms": "Terms",
       "cabinet": "Dashboard",
-      "requestDemo": "Request Demo",
       "contactUs": "Contact us",
-      "launchPilot": "Launch pilot",
       "login": "Log in",
-      "tryPlatform": "Try platform",
       "aiDemo": "AI Demo",
       "cases": "Case Studies",
       "docs": "Docs",
       "platform": "Platform",
       "security": "Security",
       "projectsShowcase": "Showcase",
-      "copilot": "AI Copilot",
+      "copilot": "Copilot",
       "integrations": "Integrations",
       "api": "API",
       "workflows": "Workflows",
@@ -755,8 +752,6 @@
       "heroCardAiSubtitle": "Progress, risks, delays",
       "heroCardMobileTitle": "Mobile",
       "heroCardMobileSubtitle": "Reports, evidence",
-      "ctaLogin": "Log in",
-      "ctaTry": "Try platform",
       "trustStrip": "Trusted by construction and development teams",
       "painTitle": "Construction without visibility",
       "painSubtitle": "Scattered reports, delayed decisions, and no single source of truth.",
@@ -904,9 +899,9 @@
       "relatedCopilot": "Copilot",
       "relatedCopilotDesc": "Manager assistant for questions and summaries — built on analysis outputs, not a replacement for them.",
       "linkCopilot": "Explore Copilot",
-      "relatedAiDemo": "AI Demo",
+      "relatedAiDemo": "Interactive mock",
       "relatedAiDemoDesc": "Interactive mock analysis — try a sample photo with simulated output.",
-      "linkAiDemo": "Try interactive demo",
+      "linkAiDemo": "Open mock analysis",
       "ctaTitle": "See Construction AI in your pilot",
       "ctaSubtitle": "Launch a pilot or contact us to review analysis workflows on your active projects."
     },
@@ -984,7 +979,7 @@
     },
     "pricing": {
       "title": "Pricing",
-      "metaDescription": "Starter, Pro, Business, and Enterprise. Request a quote or book a demo.",
+      "metaDescription": "Starter, Pro, Business, and Enterprise. Request a quote or get a presentation.",
       "starter": "Starter",
       "pro": "Pro",
       "business": "Business",
@@ -993,8 +988,7 @@
       "proDesc": "Growing contractors: documents, internal workflows, customer estimates and change orders, AI digest where available.",
       "businessDesc": "Serious scale: stronger permissions and branding, integrations such as Telegram, handover-oriented packs, deeper analytics.",
       "enterpriseDesc": "SSO, extended audit, retention and integrations, dedicated support — scoped with sales to match what you run in production.",
-      "requestQuote": "Request quote",
-      "bookDemo": "Book demo"
+      "requestQuote": "Request quote"
     },
     "about": {
       "title": "About",
@@ -1526,8 +1520,7 @@
       "r2": "Scalable architecture",
       "r3": "Reporting consistency",
       "r4": "Operational transparency",
-      "ctaSales": "Contact sales",
-      "ctaDemo": "Enterprise demo"
+      "ctaSales": "Contact sales"
     },
     "implementation": {
       "title": "Implementation",
