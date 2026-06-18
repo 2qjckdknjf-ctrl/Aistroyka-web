@@ -1079,9 +1079,6 @@
       "heroTitle": "Control de construcción con IA",
       "heroSubtitle": "Proyectos, informes de campo, riesgos y calendarios en una lente operativa — control transparente para gerentes y equipos.",
       "neuralConstructionControl": "Control neural de construcción",
-      "ctaLaunchPilot": "Iniciar piloto",
-      "ctaContact": "Contáctanos",
-      "ctaPresentation": "Obtener presentación",
       "heroLensLabel": "Lente de obra",
       "heroLensTitle": "Torre B · Nivel 4",
       "heroLensProgressLabel": "Progreso",
@@ -1099,7 +1096,6 @@
       "heroCardAiSubtitle": "Progreso, riesgos, retrasos",
       "heroCardMobileTitle": "Móvil",
       "heroCardMobileSubtitle": "Informes, evidencia",
-      "ctaDemo": "Solicitar demo",
       "ctaLogin": "Entrar",
       "ctaTry": "Probar plataforma",
       "trustStrip": "Para equipos de construcción y desarrollo",
@@ -1132,10 +1128,9 @@
       "mobileSubtitle": "Apps para responsable y trabajadores: informes rápidos y ejecución de tareas.",
       "mobileCta": "Móvil",
       "pricingTeaserTitle": "Planes para cada escala",
-      "pricingTeaserSubtitle": "Desde equipos hasta empresa. Solicita una demo para un presupuesto a medida.",
+      "pricingTeaserSubtitle": "Desde equipos hasta empresa. Consulta planes o contáctanos para un presupuesto a medida.",
       "finalCtaTitle": "¿Listo para tomar el control?",
-      "finalCtaSubtitle": "Solicita una demo o empieza con una prueba.",
-      "finalCtaButton": "Solicitar demo"
+      "finalCtaSubtitle": "Inicia un piloto, contáctanos o solicita una presentación."
     },
     "features": {
       "title": "Funciones",
