@@ -726,6 +726,14 @@
       "main": "Основное",
       "mainMobile": "Основное (моб.)"
     },
+    "cta": {
+      "launchPilot": "Запустить пилот",
+      "contactUs": "Связаться с нами",
+      "getPresentation": "Получить презентацию",
+      "launchPilotHref": "/dashboard",
+      "contactHref": "/contact",
+      "presentationHref": "/contact"
+    },
     "copilot": {
       "title": "ИИ-копилот",
       "heroTitle": "ИИ-копилот для строительных операций",
