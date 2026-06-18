@@ -136,6 +136,14 @@ export async function PublicHomeContent() {
               </div>
             ))}
           </div>
+          <p className="mt-8 text-center text-[var(--aistroyka-font-body)] text-[var(--text-muted)]">
+            <Link
+              href="/features"
+              className="font-medium text-aistroyka-accent underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-[var(--aistroyka-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+            >
+              {t("seeAllFeatures")}
+            </Link>
+          </p>
         </div>
       </section>
 

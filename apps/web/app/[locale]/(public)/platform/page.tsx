@@ -1,6 +1,7 @@
 import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
+import { Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import {
   PublicCTASection,
@@ -37,6 +38,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
+const linkFocusClass =
+  "font-medium text-aistroyka-accent underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-[var(--aistroyka-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent";
+
 export default async function PlatformPage({ params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
@@ -64,23 +68,30 @@ export default async function PlatformPage({ params }: Props) {
       />
 
       <div className="mx-auto min-w-0 max-w-7xl space-y-20 px-4 pb-8 sm:px-6 lg:px-8 lg:pb-12">
-        <PublicFeatureGrid
-          title={t("capabilitiesTitle")}
-          subtitle={t("capabilitiesSubtitle")}
-          columns={3}
-          items={CAPABILITY_KEYS.map((key) => ({
-            title: t(key),
-            description: t(`${key}Desc`),
-            variant: key === "capConstructionAi" ? "glass-highlight" : "solid",
-            href:
-              key === "capFieldReporting"
-                ? "/mobile"
-                : key === "capConstructionAi"
-                  ? "/ai-construction-control"
-                  : undefined,
-            eyebrow: key === "capConstructionAi" ? t("capConstructionAiEyebrow") : undefined,
-          }))}
-        />
+        <div className="space-y-6">
+          <PublicFeatureGrid
+            title={t("capabilitiesTitle")}
+            subtitle={t("capabilitiesSubtitle")}
+            columns={3}
+            items={CAPABILITY_KEYS.map((key) => ({
+              title: t(key),
+              description: t(`${key}Desc`),
+              variant: key === "capConstructionAi" ? "glass-highlight" : "solid",
+              href:
+                key === "capFieldReporting"
+                  ? "/mobile"
+                  : key === "capConstructionAi"
+                    ? "/ai-construction-control"
+                    : undefined,
+              eyebrow: key === "capConstructionAi" ? t("capConstructionAiEyebrow") : undefined,
+            }))}
+          />
+          <p className="text-[var(--aistroyka-font-body)] text-aistroyka-text-secondary">
+            <Link href="/features" className={linkFocusClass}>
+              {t("exploreAllFeatures")}
+            </Link>
+          </p>
+        </div>
 
         <PublicTimelineSection
           title={t("howItWorksTitle")}
