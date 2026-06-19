@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { routing } from "@/i18n/routing";
 import { buildPublicPageMetadata } from "@/lib/seo/public-page-metadata";
 import { buildStandardPublicBreadcrumb } from "@/lib/seo/public-page-breadcrumb";
-import { PublicCTASection, PublicJsonLd, PublicRelatedLinksSection } from "@/components/public";
+import { PublicCTASection, PublicJsonLd, PublicPageHero, PublicRelatedLinksSection } from "@/components/public";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -12,10 +12,10 @@ const TYPES = ["type1", "type2", "type3", "type4"] as const;
 const BENEFITS = ["benefit1", "benefit2", "benefit3", "benefit4"] as const;
 
 const RELATED_LINKS = [
-  { href: "/implementation", titleKey: "relatedImplementation", descKey: "relatedImplementationDesc", linkKey: "linkImplementation" },
+  { href: "/features", titleKey: "relatedFeatures", descKey: "relatedFeaturesDesc", linkKey: "linkFeatures" },
+  { href: "/platform", titleKey: "relatedPlatform", descKey: "relatedPlatformDesc", linkKey: "linkPlatform" },
+  { href: "/pricing", titleKey: "relatedPricing", descKey: "relatedPricingDesc", linkKey: "linkPricing" },
   { href: "/contact", titleKey: "relatedContact", descKey: "relatedContactDesc", linkKey: "linkContact" },
-  { href: "/integrations", titleKey: "relatedIntegrations", descKey: "relatedIntegrationsDesc", linkKey: "linkIntegrations" },
-  { href: "/enterprise", titleKey: "relatedEnterprise", descKey: "relatedEnterpriseDesc", linkKey: "linkEnterprise" },
 ] as const;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -43,16 +43,20 @@ export default async function PartnersPage({ params }: Props) {
   return (
     <>
       <PublicJsonLd data={breadcrumbJsonLd} />
-      <div className="mx-auto min-w-0 max-w-5xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-        <section className="text-center">
-          <h1 className="text-[var(--aistroyka-font-title)] font-bold text-[var(--aistroyka-text-primary)]">
-            {t("title")}
-          </h1>
-          <p className="mt-4 text-lg text-[var(--aistroyka-text-secondary)]">{t("heroTitle")}</p>
-        </section>
+      <PublicPageHero
+        variant="compact"
+        eyebrow={t("eyebrow")}
+        title={t("heroTitle")}
+        subtitle={t("heroSubtitle")}
+        ctas={false}
+      />
 
-        <section className="mt-12">
-          <h2 className="text-[var(--aistroyka-font-title2)] font-semibold text-[var(--aistroyka-text-primary)]">
+      <div className="mx-auto min-w-0 max-w-7xl space-y-16 px-4 pb-8 sm:px-6 lg:px-8 lg:pb-12">
+        <section className="mt-4" aria-labelledby="partners-types-heading">
+          <h2
+            id="partners-types-heading"
+            className="text-[var(--aistroyka-font-title2)] font-semibold text-[var(--aistroyka-text-primary)]"
+          >
             {t("typesTitle")}
           </h2>
           <div className="mt-6 grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
@@ -67,8 +71,11 @@ export default async function PartnersPage({ params }: Props) {
           </div>
         </section>
 
-        <section className="mt-16">
-          <h2 className="text-[var(--aistroyka-font-title2)] font-semibold text-[var(--aistroyka-text-primary)]">
+        <section aria-labelledby="partners-benefits-heading">
+          <h2
+            id="partners-benefits-heading"
+            className="text-[var(--aistroyka-font-title2)] font-semibold text-[var(--aistroyka-text-primary)]"
+          >
             {t("benefitsTitle")}
           </h2>
           <div className="mt-6 grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
@@ -83,19 +90,17 @@ export default async function PartnersPage({ params }: Props) {
           </div>
         </section>
 
-        <div className="mt-16">
-          <PublicRelatedLinksSection
-            headingId="partners-related-heading"
-            title={t("relatedTitle")}
-            subtitle={t("relatedSubtitle")}
-            links={RELATED_LINKS.map(({ href, titleKey, descKey, linkKey }) => ({
-              href,
-              title: t(titleKey),
-              description: t(descKey),
-              linkLabel: t(linkKey),
-            }))}
-          />
-        </div>
+        <PublicRelatedLinksSection
+          headingId="partners-related-heading"
+          title={t("relatedTitle")}
+          subtitle={t("relatedSubtitle")}
+          links={RELATED_LINKS.map(({ href, titleKey, descKey, linkKey }) => ({
+            href,
+            title: t(titleKey),
+            description: t(descKey),
+            linkLabel: t(linkKey),
+          }))}
+        />
       </div>
 
       <PublicCTASection
