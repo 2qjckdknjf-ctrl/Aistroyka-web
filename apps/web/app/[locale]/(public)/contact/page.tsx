@@ -128,7 +128,8 @@ export default async function ContactPage({ params }: Props) {
         title={t("ctaTitle")}
         subtitle={t("ctaSubtitle")}
         primaryLabel={tCta("launchPilot")}
-        secondaryLabel={tCta("contactUs")}
+        secondaryLabel={t("ctaSecondaryToForm")}
+        secondaryHref="#contact-form"
         presentationLabel={tCta("getPresentation")}
         testIdPrefix="cta.public.contact"
       />

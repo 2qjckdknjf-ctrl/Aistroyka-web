@@ -24,6 +24,8 @@ const SECONDARY_NAV = [
   { href: "/api", key: "api" as const },
   { href: "/workflows", key: "workflows" as const },
   { href: "/security", key: "security" as const },
+  { href: "/implementation", key: "implementation" as const },
+  { href: "/partners", key: "partners" as const },
   { href: "/docs", key: "docs" as const },
   { href: "/cases", key: "cases" as const },
   { href: "/about", key: "about" as const },
