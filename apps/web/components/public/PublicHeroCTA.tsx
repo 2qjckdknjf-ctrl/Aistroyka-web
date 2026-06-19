@@ -16,6 +16,7 @@ export type PublicCtaLabels = {
 export type PublicHeroCTAProps = PublicCtaLabels & {
   className?: string;
   showPresentation?: boolean;
+  showSecondary?: boolean;
   primaryHref?: string;
   secondaryHref?: string;
   presentationHref?: string;
@@ -28,6 +29,7 @@ export function PublicHeroCTA({
   presentationLabel,
   className = "mt-8",
   showPresentation = true,
+  showSecondary = true,
   primaryHref = PUBLIC_CTA_HREFS.launchPilot,
   secondaryHref = PUBLIC_CTA_HREFS.contact,
   presentationHref = PUBLIC_CTA_HREFS.presentation,
@@ -44,13 +46,15 @@ export function PublicHeroCTA({
       >
         {primaryLabel}
       </Link>
-      <Link
-        href={secondaryHref}
-        className="btn-secondary min-w-0 flex-1 basis-[min(100%,14rem)] text-center sm:flex-none sm:basis-auto"
-        data-testid={`${testIdPrefix}.contact`}
-      >
-        {secondaryLabel}
-      </Link>
+      {showSecondary ? (
+        <Link
+          href={secondaryHref}
+          className="btn-secondary min-w-0 flex-1 basis-[min(100%,14rem)] text-center sm:flex-none sm:basis-auto"
+          data-testid={`${testIdPrefix}.contact`}
+        >
+          {secondaryLabel}
+        </Link>
+      ) : null}
       {showPresentation && presentationLabel ? (
         <Link
           href={presentationHref}

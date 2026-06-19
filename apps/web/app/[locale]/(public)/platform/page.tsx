@@ -5,7 +5,7 @@ import { Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { buildPublicPageMetadata } from "@/lib/seo/public-page-metadata";
 import { buildStandardPublicBreadcrumb } from "@/lib/seo/public-page-breadcrumb";
-import { PublicCTASection, PublicFeatureGrid, PublicPageHero, PublicProofSection, PublicTimelineSection, PublicJsonLd } from "@/components/public";
+import { PublicCTASection, PublicFeatureGrid, PublicPageHero, PublicProofSection, PublicRelatedLinksSection, PublicTimelineSection, PublicJsonLd } from "@/components/public";
 import { PlatformStackVisual } from "./PlatformStackVisual";
 
 type Props = { params: Promise<{ locale: string }> };
@@ -24,6 +24,13 @@ const TIMELINE_KEYS = ["stepWorkers", "stepReports", "stepManagers", "stepAi", "
 const PROOF_KEYS = ["proofStat1", "proofStat2", "proofStat3"] as const;
 
 const VISUAL_LAYER_KEYS = ["visualLayerWeb", "visualLayerMobile", "visualLayerAi", "visualLayerNotify"] as const;
+
+const RELATED_LINKS = [
+  { href: "/integrations", titleKey: "relatedIntegrations", descKey: "relatedIntegrationsDesc", linkKey: "linkIntegrations" },
+  { href: "/api", titleKey: "relatedApi", descKey: "relatedApiDesc", linkKey: "linkApi" },
+  { href: "/security", titleKey: "relatedSecurity", descKey: "relatedSecurityDesc", linkKey: "linkSecurity" },
+  { href: "/contact", titleKey: "relatedContact", descKey: "relatedContactDesc", linkKey: "linkContact" },
+] as const;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
@@ -95,6 +102,9 @@ export default async function PlatformPage({ params }: Props) {
               {t("exploreAllFeatures")}
             </Link>
           </p>
+          <p className="mt-3 max-w-3xl text-[var(--aistroyka-font-footnote)] text-aistroyka-text-secondary">
+            {t("connectivityNote")}
+          </p>
         </div>
 
         <PublicTimelineSection
@@ -126,6 +136,18 @@ export default async function PlatformPage({ params }: Props) {
             />
           </div>
         </section>
+
+        <PublicRelatedLinksSection
+          headingId="platform-related-heading"
+          title={t("relatedTitle")}
+          subtitle={t("relatedSubtitle")}
+          links={RELATED_LINKS.map(({ href, titleKey, descKey, linkKey }) => ({
+            href,
+            title: t(titleKey),
+            description: t(descKey),
+            linkLabel: t(linkKey),
+          }))}
+        />
       </div>
 
       <PublicCTASection

@@ -1,6 +1,13 @@
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
-import { PublicCTASection, PublicHeroCTA, PublicHeroLens, PublicHeroMetrics } from "@/components/public";
+import { PublicCTASection, PublicHeroCTA, PublicHeroLens, PublicHeroMetrics, PublicRelatedLinksSection } from "@/components/public";
+
+const HOME_RELATED_LINKS = [
+  { href: "/platform", titleKey: "relatedPlatform", descKey: "relatedPlatformDesc", linkKey: "linkPlatform" },
+  { href: "/features", titleKey: "relatedFeatures", descKey: "relatedFeaturesDesc", linkKey: "linkFeatures" },
+  { href: "/security", titleKey: "relatedSecurity", descKey: "relatedSecurityDesc", linkKey: "linkSecurity" },
+  { href: "/contact", titleKey: "relatedContact", descKey: "relatedContactDesc", linkKey: "linkContact" },
+] as const;
 
 export async function PublicHomeContent() {
   const t = await getTranslations("public.home");
@@ -39,6 +46,9 @@ export async function PublicHomeContent() {
                 { value: MOCK_METRICS.photos, label: tMetrics("photosProcessed") },
               ]}
             />
+            <p className="mt-3 max-w-xl text-[var(--aistroyka-font-footnote)] text-aistroyka-text-secondary">
+              {tMetrics("heroDisclaimer")}
+            </p>
           </div>
 
           <PublicHeroLens
@@ -229,6 +239,22 @@ export async function PublicHomeContent() {
           <Link href="/pricing" className="btn-primary mx-auto mt-6 inline-flex max-w-full">
             {t("pricingTeaserCta")}
           </Link>
+        </div>
+      </section>
+
+      <section className="bg-[var(--bg-main)] px-4 py-16 sm:px-6 lg:px-8">
+        <div className="mx-auto min-w-0 max-w-7xl">
+          <PublicRelatedLinksSection
+            headingId="home-related-heading"
+            title={t("relatedTitle")}
+            subtitle={t("relatedSubtitle")}
+            links={HOME_RELATED_LINKS.map(({ href, titleKey, descKey, linkKey }) => ({
+              href,
+              title: t(titleKey),
+              description: t(descKey),
+              linkLabel: t(linkKey),
+            }))}
+          />
         </div>
       </section>
 

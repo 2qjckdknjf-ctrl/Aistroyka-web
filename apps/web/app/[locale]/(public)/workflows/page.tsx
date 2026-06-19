@@ -2,7 +2,7 @@ import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 import { routing } from "@/i18n/routing";
-import { PublicCTASection, PublicJsonLd } from "@/components/public";
+import { PublicCTASection, PublicJsonLd, PublicRelatedLinksSection } from "@/components/public";
 import { buildPublicPageMetadata } from "@/lib/seo/public-page-metadata";
 import { buildStandardPublicBreadcrumb } from "@/lib/seo/public-page-breadcrumb";
 
@@ -10,6 +10,13 @@ type Props = { params: Promise<{ locale: string }> };
 
 const EXAMPLES = ["ex1", "ex2", "ex3", "ex4", "ex5"] as const;
 const BENEFITS = ["b1", "b2", "b3", "b4"] as const;
+
+const RELATED_LINKS = [
+  { href: "/ai-construction-control", titleKey: "relatedAiControl", descKey: "relatedAiControlDesc", linkKey: "linkAiControl" },
+  { href: "/mobile", titleKey: "relatedMobile", descKey: "relatedMobileDesc", linkKey: "linkMobile" },
+  { href: "/implementation", titleKey: "relatedImplementation", descKey: "relatedImplementationDesc", linkKey: "linkImplementation" },
+  { href: "/contact", titleKey: "relatedContact", descKey: "relatedContactDesc", linkKey: "linkContact" },
+] as const;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
@@ -55,12 +62,12 @@ export default async function WorkflowsPage({ params }: Props) {
             {EXAMPLES.map((key) => (
               <div
                 key={key}
-                className="flex items-start gap-4 rounded-[var(--aistroyka-radius-card)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] p-4"
+                className="flex min-w-0 items-start gap-4 rounded-[var(--aistroyka-radius-card)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] p-4"
               >
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--aistroyka-accent-light)] text-[var(--aistroyka-font-footnote)] font-semibold text-[var(--aistroyka-accent)]">
                   →
                 </span>
-                <span className="text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-primary)]">
+                <span className="min-w-0 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-primary)]">
                   {t(key)}
                 </span>
               </div>
@@ -72,7 +79,7 @@ export default async function WorkflowsPage({ params }: Props) {
           <h2 className="text-[var(--aistroyka-font-title2)] font-semibold text-[var(--aistroyka-text-primary)]">
             {t("benefitsTitle")}
           </h2>
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          <div className="mt-6 grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
             {BENEFITS.map((key) => (
               <div
                 key={key}
@@ -83,6 +90,20 @@ export default async function WorkflowsPage({ params }: Props) {
             ))}
           </div>
         </section>
+
+        <div className="mt-16">
+          <PublicRelatedLinksSection
+            headingId="workflows-related-heading"
+            title={t("relatedTitle")}
+            subtitle={t("relatedSubtitle")}
+            links={RELATED_LINKS.map(({ href, titleKey, descKey, linkKey }) => ({
+              href,
+              title: t(titleKey),
+              description: t(descKey),
+              linkLabel: t(linkKey),
+            }))}
+          />
+        </div>
       </div>
 
       <PublicCTASection

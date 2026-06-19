@@ -11,6 +11,10 @@ export type PublicCTASectionProps = Partial<PublicCtaLabels> & {
   title?: string;
   subtitle?: string;
   showPresentation?: boolean;
+  showSecondary?: boolean;
+  primaryHref?: string;
+  secondaryHref?: string;
+  presentationHref?: string;
   className?: string;
   testIdPrefix?: string;
 };
@@ -23,6 +27,10 @@ export function PublicCTASection({
   secondaryLabel,
   presentationLabel,
   showPresentation = true,
+  showSecondary = true,
+  primaryHref,
+  secondaryHref,
+  presentationHref,
   className = "",
   testIdPrefix = "cta.public.section",
 }: PublicCTASectionProps) {
@@ -38,6 +46,10 @@ export function PublicCTASection({
     <PublicHeroCTA
       {...labels}
       showPresentation={showPresentation}
+      showSecondary={showSecondary}
+      primaryHref={primaryHref}
+      secondaryHref={showSecondary ? secondaryHref : undefined}
+      presentationHref={presentationHref}
       className={variant === "inline" ? "mt-6" : "mt-8"}
       testIdPrefix={testIdPrefix}
     />
