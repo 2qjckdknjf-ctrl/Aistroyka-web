@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 import { Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
+import { buildPublicPageMetadata } from "@/lib/seo/public-page-metadata";
 import {
   PublicCTASection,
   PublicFeatureGrid,
@@ -104,10 +105,10 @@ function toGridItems(
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "public.security" });
-  return {
+  return buildPublicPageMetadata(locale, "/security", {
     title: t("title"),
     description: t("metaDescription"),
-  };
+  });
 }
 
 export default async function SecurityPage({ params }: Props) {

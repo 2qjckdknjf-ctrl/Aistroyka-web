@@ -7,8 +7,10 @@ import {
   PublicFeatureGrid,
   PublicPageHero,
   PublicProofSection,
+  PublicRelatedLinksSection,
   PublicTimelineSection,
 } from "@/components/public";
+import { buildPublicPageMetadata } from "@/lib/seo/public-page-metadata";
 import { MobileWorkflowVisual } from "./MobileWorkflowVisual";
 
 type Props = { params: Promise<{ locale: string }> };
@@ -43,15 +45,22 @@ const TIMELINE_KEYS = [
 
 const PROOF_KEYS = ["proofStat1", "proofStat2", "proofStat3"] as const;
 
+const RELATED_LINKS = [
+  { href: "/platform", titleKey: "relatedPlatform", descKey: "relatedPlatformDesc", linkKey: "linkPlatform" },
+  { href: "/ai-construction-control", titleKey: "relatedAiControl", descKey: "relatedAiControlDesc", linkKey: "linkAiControl" },
+  { href: "/features", titleKey: "relatedFeatures", descKey: "relatedFeaturesDesc", linkKey: "linkFeatures" },
+  { href: "/contact", titleKey: "relatedContact", descKey: "relatedContactDesc", linkKey: "linkContact" },
+] as const;
+
 const VISUAL_LAYER_KEYS = ["visualLayerWorker", "visualLayerPhotos", "visualLayerSync", "visualLayerReview"] as const;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "public.mobile" });
-  return {
+  return buildPublicPageMetadata(locale, "/mobile", {
     title: t("title"),
     description: t("metaDescription"),
-  };
+  });
 }
 
 export default async function MobilePage({ params }: Props) {
@@ -134,6 +143,18 @@ export default async function MobilePage({ params }: Props) {
             />
           </div>
         </section>
+
+        <PublicRelatedLinksSection
+          headingId="mobile-related-heading"
+          title={t("relatedTitle")}
+          subtitle={t("relatedSubtitle")}
+          links={RELATED_LINKS.map(({ href, titleKey, descKey, linkKey }) => ({
+            href,
+            title: t(titleKey),
+            description: t(descKey),
+            linkLabel: t(linkKey),
+          }))}
+        />
       </div>
 
       <PublicCTASection

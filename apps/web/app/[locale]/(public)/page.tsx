@@ -3,20 +3,17 @@ import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 import { PublicHomeContent } from "./PublicHomeContent";
+import { buildPublicPageMetadata } from "@/lib/seo/public-page-metadata";
 
 type Props = { params: Promise<{ locale: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "public.home" });
-  return {
-    title: { absolute: `Aistroyka — ${t("heroTitle")}` },
+  return buildPublicPageMetadata(locale, "", {
+    titleAbsolute: `Aistroyka — ${t("heroTitle")}`,
     description: t("heroSubtitle"),
-    openGraph: {
-      title: `Aistroyka — ${t("heroTitle")}`,
-      description: t("heroSubtitle"),
-    },
-  };
+  });
 }
 
 /**

@@ -9,20 +9,20 @@ import { GlassNav, useGlassNavScrolled } from "@/components/design/liquid-glass"
 const PRIMARY_NAV = [
   { href: "/dashboard", key: "cabinet" as const },
   { href: "/platform", key: "platform" as const },
-  { href: "/solutions", key: "solutions" as const },
   { href: "/features", key: "features" as const },
+  { href: "/solutions", key: "solutions" as const },
   { href: "/pricing", key: "pricing" as const },
   { href: "/enterprise", key: "enterprise" as const },
 ] as const;
 
 const SECONDARY_NAV = [
+  { href: "/ai-construction-control", key: "aiControl" as const },
+  { href: "/ai-demo", key: "aiDemo" as const },
   { href: "/copilot", key: "copilot" as const },
+  { href: "/mobile", key: "mobile" as const },
   { href: "/integrations", key: "integrations" as const },
   { href: "/api", key: "api" as const },
   { href: "/workflows", key: "workflows" as const },
-  { href: "/ai-demo", key: "aiDemo" as const },
-  { href: "/ai-construction-control", key: "aiControl" as const },
-  { href: "/mobile", key: "mobile" as const },
   { href: "/security", key: "security" as const },
   { href: "/docs", key: "docs" as const },
   { href: "/cases", key: "cases" as const },

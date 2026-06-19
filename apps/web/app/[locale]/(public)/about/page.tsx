@@ -7,8 +7,10 @@ import {
   PublicFeatureGrid,
   PublicPageHero,
   PublicProofSection,
+  PublicRelatedLinksSection,
   PublicTimelineSection,
 } from "@/components/public";
+import { buildPublicPageMetadata } from "@/lib/seo/public-page-metadata";
 import { AboutTrustVisual } from "./AboutTrustVisual";
 
 type Props = { params: Promise<{ locale: string }> };
@@ -48,13 +50,20 @@ const VISUAL_PILLAR_KEYS = [
   "visualPillarDecisions",
 ] as const;
 
+const RELATED_LINKS = [
+  { href: "/security", titleKey: "relatedSecurity", descKey: "relatedSecurityDesc", linkKey: "linkSecurity" },
+  { href: "/platform", titleKey: "relatedPlatform", descKey: "relatedPlatformDesc", linkKey: "linkPlatform" },
+  { href: "/faq", titleKey: "relatedFaq", descKey: "relatedFaqDesc", linkKey: "linkFaq" },
+  { href: "/contact", titleKey: "relatedContact", descKey: "relatedContactDesc", linkKey: "linkContact" },
+] as const;
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "public.about" });
-  return {
+  return buildPublicPageMetadata(locale, "/about", {
     title: t("title"),
     description: t("metaDescription"),
-  };
+  });
 }
 
 export default async function AboutPage({ params }: Props) {
@@ -137,6 +146,18 @@ export default async function AboutPage({ params }: Props) {
             />
           </div>
         </section>
+
+        <PublicRelatedLinksSection
+          headingId="about-related-heading"
+          title={t("relatedTitle")}
+          subtitle={t("relatedSubtitle")}
+          links={RELATED_LINKS.map(({ href, titleKey, descKey, linkKey }) => ({
+            href,
+            title: t(titleKey),
+            description: t(descKey),
+            linkLabel: t(linkKey),
+          }))}
+        />
       </div>
 
       <PublicCTASection

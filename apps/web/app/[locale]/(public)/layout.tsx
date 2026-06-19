@@ -1,14 +1,24 @@
+import { setRequestLocale, getTranslations } from "next-intl/server";
 import { PublicHeader } from "@/components/public";
 import { PublicFooter } from "@/components/public";
 import { PublicAmbientField } from "@/components/public/PublicAmbientField";
 import { PublicLiquidGlassRoot } from "@/components/public/PublicLiquidGlassRoot";
 import { getAppUrl } from "@/lib/app-url";
+import { routing } from "@/i18n/routing";
+
+type Props = {
+  children: React.ReactNode;
+  params: Promise<{ locale: string }>;
+};
 
 /**
  * Layout for all public marketing pages: header + footer, no auth required.
  * Does not wrap (dashboard) or (auth) routes.
  */
-export default function PublicLayout({ children }: { children: React.ReactNode }) {
+export default async function PublicLayout({ children, params }: Props) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+  const t = await getTranslations({ locale, namespace: "public.layout" });
   const baseUrl = getAppUrl();
   const organizationSchema = {
     "@context": "https://schema.org",
@@ -16,7 +26,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
     name: "Aistroyka",
     url: baseUrl,
     logo: `${baseUrl}/brand/aistroyka-logo.png`,
-    description: "AI Construction Intelligence — control progress, risks, and quality on site.",
+    description: t("schemaOrgDescription"),
   };
   const softwareSchema = {
     "@context": "https://schema.org",
@@ -24,9 +34,17 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
     name: "Aistroyka",
     applicationCategory: "BusinessApplication",
     operatingSystem: "Web, iOS",
-    description: "AI-powered construction intelligence platform: projects, tasks, daily reports, photo evidence, and AI analytics.",
+    description: t("schemaSoftwareDescription"),
     url: baseUrl,
     image: `${baseUrl}/brand/aistroyka-logo.png`,
+  };
+  const websiteSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "Aistroyka",
+    url: baseUrl,
+    inLanguage: routing.locales,
+    description: t("schemaOrgDescription"),
   };
 
   return (
@@ -40,6 +58,10 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
       />
       <div className="relative z-10 flex min-h-screen flex-col">
         <PublicHeader />

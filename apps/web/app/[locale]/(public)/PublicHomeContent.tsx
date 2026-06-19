@@ -60,6 +60,9 @@ export async function PublicHomeContent() {
           <h2 className="text-center text-[var(--aistroyka-font-headline)] font-semibold text-[var(--text-muted)]">
             {tMetrics("title")}
           </h2>
+          <p className="mx-auto mt-2 max-w-2xl text-center text-[var(--aistroyka-font-footnote)] text-[var(--text-muted)]">
+            {tMetrics("disclaimer")}
+          </p>
           <div className="mt-6 grid grid-cols-2 gap-6 sm:grid-cols-4">
             <div className="text-center">
               <div className="font-heading text-[var(--aistroyka-font-title2)] font-bold text-[var(--ai-yellow)]">{MOCK_METRICS.projects}</div>
@@ -188,6 +191,14 @@ export async function PublicHomeContent() {
           <Link href="/ai-construction-control" className="btn-primary mt-6 inline-flex max-w-full sm:px-6">
             {t("learnMore")}
           </Link>
+          <p className="mt-4 text-[var(--aistroyka-font-footnote)] text-[var(--text-muted)]">
+            <Link
+              href="/ai-demo"
+              className="font-medium text-aistroyka-accent underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-[var(--aistroyka-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+            >
+              {t("tryMockAnalysis")}
+            </Link>
+          </p>
         </div>
       </section>
 

@@ -2,10 +2,12 @@ import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 import { routing } from "@/i18n/routing";
+import { buildPublicPageMetadata } from "@/lib/seo/public-page-metadata";
 import {
   PublicCTASection,
   PublicFeatureGrid,
   PublicPageHero,
+  PublicRelatedLinksSection,
   PublicTimelineSection,
 } from "@/components/public";
 import { CopilotInsightVisual } from "./CopilotInsightVisual";
@@ -45,13 +47,20 @@ const VISUAL_SIGNAL_KEYS = [
   "visualSignalSchedule",
 ] as const;
 
+const RELATED_LINKS = [
+  { href: "/ai-construction-control", titleKey: "relatedAiControl", descKey: "relatedAiControlDesc", linkKey: "linkAiControl" },
+  { href: "/ai-demo", titleKey: "relatedAiDemo", descKey: "relatedAiDemoDesc", linkKey: "linkAiDemo" },
+  { href: "/features", titleKey: "relatedFeatures", descKey: "relatedFeaturesDesc", linkKey: "linkFeatures" },
+  { href: "/contact", titleKey: "relatedContact", descKey: "relatedContactDesc", linkKey: "linkContact" },
+] as const;
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "public.copilot" });
-  return {
+  return buildPublicPageMetadata(locale, "/copilot", {
     title: t("title"),
     description: t("metaDescription"),
-  };
+  });
 }
 
 export default async function CopilotPage({ params }: Props) {
@@ -112,6 +121,20 @@ export default async function CopilotPage({ params }: Props) {
             title: t(key),
             description: t(`${key}Desc`),
             variant: "solid",
+          }))}
+        />
+      </div>
+
+      <div className="mx-auto min-w-0 max-w-7xl px-4 pb-8 sm:px-6 lg:px-8 lg:pb-12">
+        <PublicRelatedLinksSection
+          headingId="copilot-related-heading"
+          title={t("relatedTitle")}
+          subtitle={t("relatedSubtitle")}
+          links={RELATED_LINKS.map(({ href, titleKey, descKey, linkKey }) => ({
+            href,
+            title: t(titleKey),
+            description: t(descKey),
+            linkLabel: t(linkKey),
           }))}
         />
       </div>
