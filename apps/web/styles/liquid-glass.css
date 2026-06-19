@@ -1,0 +1,265 @@
+/**
+ * Liquid Glass — canonical CSS (LG-1).
+ * Tokens live in app/design-tokens.css (--lg-*).
+ * Mount LiquidGlassFilter once per preview/page tree.
+ */
+
+.lg {
+  position: relative;
+  border-radius: var(--lg-radius);
+  isolation: isolate;
+  box-shadow: var(--lg-shadow);
+}
+
+.lg__refraction {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  backdrop-filter: blur(var(--lg-blur-refraction)) url(#lg-refraction);
+  -webkit-backdrop-filter: blur(var(--lg-blur));
+  contain: layout style paint;
+}
+
+@supports not (backdrop-filter: blur(1px) url(#x)) {
+  .lg__refraction {
+    backdrop-filter: blur(var(--lg-blur));
+    -webkit-backdrop-filter: blur(var(--lg-blur));
+  }
+}
+
+.lg__tint {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1px solid var(--lg-border);
+  background: color-mix(in srgb, var(--lg-tint) calc(var(--lg-intensity) * 1%), transparent);
+}
+
+.lg__sheen {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  overflow: hidden;
+  box-shadow:
+    inset 0 1px 1px var(--lg-sheen-highlight),
+    inset 0 -1px 1px var(--lg-sheen-bottom);
+}
+
+.lg__sheen::after {
+  content: "";
+  position: absolute;
+  inset: -50%;
+  background: linear-gradient(
+    115deg,
+    transparent 40%,
+    color-mix(in srgb, var(--lg-sheen-highlight) calc(var(--lg-sheen-opacity) * 100%), transparent) 50%,
+    transparent 60%
+  );
+  transform: translateX(-120%);
+}
+
+.lg--interactive:hover .lg__sheen::after {
+  animation: lg-sweep var(--lg-motion-sweep) var(--lg-motion-ease-gentle);
+}
+
+@keyframes lg-sweep {
+  to {
+    transform: translateX(120%);
+  }
+}
+
+.lg__content {
+  position: relative;
+  z-index: var(--lg-z-content);
+}
+
+/* —— Intensity presets —— */
+.lg--intensity-subtle {
+  --lg-intensity: 35;
+  --lg-opacity: 0.35;
+}
+
+.lg--intensity-medium {
+  --lg-intensity: 55;
+  --lg-opacity: 0.55;
+}
+
+.lg--intensity-strong {
+  --lg-intensity: 75;
+  --lg-opacity: 0.75;
+}
+
+/* —— Variant presets —— */
+.lg--variant-nav {
+  --lg-radius: 20px;
+}
+
+.lg--variant-nav .lg__refraction {
+  backdrop-filter: blur(var(--lg-blur-refraction)) url(#lg-refraction-soft);
+}
+
+.lg--variant-panel {
+  --lg-radius: var(--lg-radius);
+}
+
+.lg--variant-hero {
+  --lg-radius: 28px;
+}
+
+.lg--variant-hero .lg__tint {
+  background:
+    linear-gradient(135deg, var(--lg-tint-accent), transparent 55%),
+    color-mix(in srgb, var(--lg-tint) calc(var(--lg-intensity) * 1%), transparent);
+}
+
+.lg--variant-control {
+  --lg-radius: var(--lg-radius-control);
+}
+
+.lg--pill {
+  --lg-radius: var(--lg-radius-pill);
+}
+
+.lg--intensity-strong .lg__tint {
+  background: color-mix(
+    in srgb,
+    var(--lg-tint-strong) calc(max(var(--lg-intensity), 65) * 1%),
+    transparent
+  );
+}
+
+.lg--interactive {
+  transition:
+    transform 0.25s var(--lg-motion-ease-bouncy),
+    box-shadow 0.25s var(--lg-motion-ease);
+}
+
+.lg--interactive:hover {
+  box-shadow: var(--lg-shadow-hover);
+}
+
+.lg--interactive:active {
+  transform: scale(0.97);
+}
+
+.lg--glow .lg__sheen {
+  background: radial-gradient(
+    140px 140px at var(--lg-gx, 50%) var(--lg-gy, 50%),
+    rgba(245, 197, 24, 0.22),
+    transparent 70%
+  );
+}
+
+@keyframes lg-materialize {
+  from {
+    opacity: 0;
+    filter: blur(12px);
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: scale(1);
+  }
+}
+
+.lg--enter {
+  animation: lg-materialize var(--lg-motion-duration) var(--lg-motion-ease) both;
+}
+
+@keyframes lg-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.lg--float {
+  animation: lg-float 7s ease-in-out infinite;
+}
+
+/* Preview-only ambient field (not used on production pages in LG-1) */
+.lg-preview-field {
+  position: relative;
+  min-height: 100dvh;
+  background: var(--aistroyka-bg-primary);
+}
+
+.lg-preview-field::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(520px 420px at 18% 8%, rgba(42, 77, 133, 0.28), transparent 62%),
+    radial-gradient(480px 380px at 82% 12%, rgba(79, 120, 186, 0.18), transparent 64%),
+    radial-gradient(720px 420px at 50% 100%, rgba(4, 10, 24, 0.95), transparent 72%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lg--enter {
+    animation: none;
+    opacity: 1;
+    filter: none;
+    transform: none;
+  }
+
+  .lg--interactive {
+    transition: opacity 0.2s linear;
+  }
+
+  .lg--interactive:active {
+    transform: none;
+  }
+
+  .lg--interactive:hover .lg__sheen::after {
+    animation: none;
+  }
+
+  .lg--float {
+    animation: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .lg__refraction {
+    backdrop-filter: blur(var(--lg-blur-refraction));
+    -webkit-backdrop-filter: blur(var(--lg-blur));
+  }
+
+  .lg--variant-nav .lg__refraction,
+  .lg--variant-hero .lg__refraction {
+    backdrop-filter: blur(var(--lg-blur-refraction));
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .lg__refraction {
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+  }
+
+  .lg__tint {
+    background: var(--aistroyka-surface) !important;
+    opacity: 0.96;
+  }
+}
+
+/* High-contrast fallback when forced-colors is active */
+@media (forced-colors: active) {
+  .lg__tint {
+    background: Canvas !important;
+    border: 1px solid CanvasText;
+    opacity: 1;
+  }
+
+  .lg__refraction {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}

@@ -91,7 +91,7 @@ export function AdminAiTrainingConsentClient() {
         </ul>
       </div>
 
-      {error ? <p className="mt-4 text-aistroyka-footnote text-red-600">{error}</p> : null}
+      {error ? <p className="mt-4 text-aistroyka-footnote text-aistroyka-error">{error}</p> : null}
       {saved ? <p className="mt-4 text-aistroyka-footnote text-aistroyka-accent">{t("saved")}</p> : null}
 
       <button

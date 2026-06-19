@@ -1,58 +1,66 @@
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
+import { PublicCTASection, PublicHeroCTA, PublicHeroLens, PublicHeroMetrics, PublicRelatedLinksSection } from "@/components/public";
+
+const HOME_RELATED_LINKS = [
+  { href: "/platform", titleKey: "relatedPlatform", descKey: "relatedPlatformDesc", linkKey: "linkPlatform" },
+  { href: "/features", titleKey: "relatedFeatures", descKey: "relatedFeaturesDesc", linkKey: "linkFeatures" },
+  { href: "/pricing", titleKey: "relatedPricing", descKey: "relatedPricingDesc", linkKey: "linkPricing" },
+  { href: "/contact", titleKey: "relatedContact", descKey: "relatedContactDesc", linkKey: "linkContact" },
+] as const;
 
 export async function PublicHomeContent() {
   const t = await getTranslations("public.home");
+  const tCta = await getTranslations("public.cta");
   const tMetrics = await getTranslations("public.homeMetrics");
-  const tNav = await getTranslations("public.nav");
 
   const MOCK_METRICS = { projects: "500+", reports: "12K+", insights: "8K+", photos: "45K+" };
 
   return (
     <>
-      {/* Hero */}
-      <section className="relative overflow-hidden px-4 pb-24 pt-20 sm:px-6 lg:px-8">
-        <div aria-hidden className="pointer-events-none absolute inset-0">
-          <div className="absolute -left-24 top-12 h-80 w-80 rounded-full bg-[var(--aistroyka-neural-core)] opacity-20 blur-3xl animate-neural-pulse" />
-          <div className="absolute -right-28 bottom-4 h-96 w-96 rounded-full bg-[var(--aistroyka-neural-accent)] opacity-20 blur-3xl animate-neural-drift" />
-        </div>
-
-        <div className="public-shell relative mx-auto min-w-0 max-w-6xl rounded-[var(--aistroyka-radius-xxl)] px-4 py-10 sm:px-10 sm:py-16">
-          <div className="max-w-3xl min-w-0">
-            <div className="public-badge mb-6 inline-flex max-w-full flex-wrap rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] sm:px-4 sm:tracking-[0.16em]">
+      {/* Hero — LG-2A glass lens + operational chips */}
+      <section className="relative overflow-hidden px-4 pb-20 pt-10 sm:px-6 sm:pt-14 lg:px-8 lg:pb-24">
+        <div className="mx-auto grid min-w-0 max-w-7xl gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,24rem)] lg:items-center lg:gap-12">
+          <div className="min-w-0">
+            <div className="public-badge mb-5 inline-flex max-w-full flex-wrap rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] sm:px-4 sm:tracking-[0.16em]">
               {t("neuralConstructionControl")}
             </div>
-            <h1 className="text-balance font-heading text-3xl font-semibold uppercase tracking-[0.04em] text-aistroyka-text-primary sm:text-5xl sm:tracking-[0.06em] lg:text-6xl">
+            <h1 className="text-balance font-heading text-3xl font-semibold uppercase tracking-[0.04em] text-aistroyka-text-primary sm:text-5xl sm:tracking-[0.06em] lg:text-[3.25rem] lg:leading-tight">
               <span className="text-aistroyka-accent">AISTROYKA</span>{" "}
               <span className="text-aistroyka-text-primary">{t("heroTitle")}</span>
             </h1>
-            <p className="mt-6 max-w-2xl text-pretty text-[var(--aistroyka-font-headline)] text-aistroyka-text-secondary sm:text-xl">
+            <p className="mt-5 max-w-xl text-pretty text-[var(--aistroyka-font-headline)] text-aistroyka-text-secondary sm:text-xl">
               {t("heroSubtitle")}
             </p>
-            <div className="mt-10 flex flex-wrap gap-3">
-              <Link href="/contact" className="btn-primary min-w-0 flex-1 basis-[min(100%,14rem)] sm:flex-none sm:basis-auto">
-                {tNav("requestDemo")}
-              </Link>
-              <Link href="/ai-demo" className="btn-secondary min-w-0 flex-1 basis-[min(100%,14rem)] sm:flex-none sm:basis-auto">
-                {tNav("aiDemo")}
-              </Link>
-            </div>
+            <PublicHeroCTA
+              primaryLabel={tCta("launchPilot")}
+              secondaryLabel={tCta("contactUs")}
+              presentationLabel={tCta("getPresentation")}
+              testIdPrefix="cta.public.home.hero"
+            />
+            <PublicHeroMetrics
+              chips={[
+                { value: MOCK_METRICS.projects, label: tMetrics("projectsMonitored") },
+                { value: MOCK_METRICS.reports, label: tMetrics("dailyReportsAnalyzed") },
+                { value: MOCK_METRICS.insights, label: tMetrics("aiInsightsGenerated") },
+                { value: MOCK_METRICS.photos, label: tMetrics("photosProcessed") },
+              ]}
+            />
+            <p className="mt-3 max-w-xl text-[var(--aistroyka-font-footnote)] text-aistroyka-text-secondary">
+              {tMetrics("heroDisclaimer")}
+            </p>
           </div>
 
-          <div className="mt-12 grid min-w-0 gap-4 sm:grid-cols-3">
-            <Link href="/projects-showcase" className="public-card-motion min-w-0 rounded-[var(--aistroyka-radius-xl)] border border-aistroyka-border-subtle bg-aistroyka-surface px-4 py-4 sm:px-5">
-              <div className="text-sm font-semibold uppercase tracking-[0.12em] text-aistroyka-accent">{t("heroCardDashboardTitle")}</div>
-              <p className="mt-2 text-sm text-aistroyka-text-secondary">{t("heroCardDashboardSubtitle")}</p>
-            </Link>
-            <Link href="/ai-construction-control" className="public-card-motion min-w-0 rounded-[var(--aistroyka-radius-xl)] border border-aistroyka-border-subtle bg-aistroyka-surface px-4 py-4 sm:px-5">
-              <div className="text-sm font-semibold uppercase tracking-[0.12em] text-aistroyka-accent">{t("heroCardAiTitle")}</div>
-              <p className="mt-2 text-sm text-aistroyka-text-secondary">{t("heroCardAiSubtitle")}</p>
-            </Link>
-            <Link href="/mobile" className="public-card-motion min-w-0 rounded-[var(--aistroyka-radius-xl)] border border-aistroyka-border-subtle bg-aistroyka-surface px-4 py-4 sm:px-5">
-              <div className="text-sm font-semibold uppercase tracking-[0.12em] text-aistroyka-accent">{t("heroCardMobileTitle")}</div>
-              <p className="mt-2 text-sm text-aistroyka-text-secondary">{t("heroCardMobileSubtitle")}</p>
-            </Link>
-          </div>
+          <PublicHeroLens
+            label={t("heroLensLabel")}
+            title={t("heroLensTitle")}
+            stats={[
+              { label: t("heroLensProgressLabel"), value: t("heroLensProgressValue") },
+              { label: t("heroLensRiskLabel"), value: t("heroLensRiskValue"), tone: "warning" },
+              { label: t("heroLensReportsLabel"), value: t("heroLensReportsValue") },
+            ]}
+            streamLines={[t("heroLensStream1"), t("heroLensStream2"), t("heroLensStream3")]}
+          />
         </div>
       </section>
 
@@ -62,6 +70,9 @@ export async function PublicHomeContent() {
           <h2 className="text-center text-[var(--aistroyka-font-headline)] font-semibold text-[var(--text-muted)]">
             {tMetrics("title")}
           </h2>
+          <p className="mx-auto mt-2 max-w-2xl text-center text-[var(--aistroyka-font-footnote)] text-[var(--text-muted)]">
+            {tMetrics("disclaimer")}
+          </p>
           <div className="mt-6 grid grid-cols-2 gap-6 sm:grid-cols-4">
             <div className="text-center">
               <div className="font-heading text-[var(--aistroyka-font-title2)] font-bold text-[var(--ai-yellow)]">{MOCK_METRICS.projects}</div>
@@ -138,6 +149,14 @@ export async function PublicHomeContent() {
               </div>
             ))}
           </div>
+          <p className="mt-8 text-center text-[var(--aistroyka-font-body)] text-[var(--text-muted)]">
+            <Link
+              href="/features"
+              className="font-medium text-aistroyka-accent underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-[var(--aistroyka-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+            >
+              {t("seeAllFeatures")}
+            </Link>
+          </p>
         </div>
       </section>
 
@@ -182,6 +201,14 @@ export async function PublicHomeContent() {
           <Link href="/ai-construction-control" className="btn-primary mt-6 inline-flex max-w-full sm:px-6">
             {t("learnMore")}
           </Link>
+          <p className="mt-4 text-[var(--aistroyka-font-footnote)] text-[var(--text-muted)]">
+            <Link
+              href="/ai-demo"
+              className="font-medium text-aistroyka-accent underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-[var(--aistroyka-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+            >
+              {t("tryMockAnalysis")}
+            </Link>
+          </p>
         </div>
       </section>
 
@@ -210,25 +237,33 @@ export async function PublicHomeContent() {
             {t("pricingTeaserSubtitle")}
           </p>
           <Link href="/pricing" className="btn-primary mx-auto mt-6 inline-flex max-w-full">
-            {t("pricingTeaserTitle")}
+            {t("pricingTeaserCta")}
           </Link>
         </div>
       </section>
 
-      {/* Final CTA */}
-      <section className="bg-aistroyka-bg-primary px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-        <div className="mx-auto min-w-0 max-w-3xl text-center">
-          <h2 className="font-heading text-[var(--aistroyka-font-title2)] font-semibold text-[var(--text-main)]">
-            {t("finalCtaTitle")}
-          </h2>
-          <p className="mt-3 text-[var(--text-muted)]">
-            {t("finalCtaSubtitle")}
-          </p>
-          <Link href="/contact" className="btn-primary mt-6 inline-flex max-w-full sm:px-8">
-            {t("finalCtaButton")}
-          </Link>
+      <section className="bg-[var(--bg-main)] px-4 py-16 sm:px-6 lg:px-8">
+        <div className="mx-auto min-w-0 max-w-7xl">
+          <PublicRelatedLinksSection
+            headingId="home-related-heading"
+            title={t("relatedTitle")}
+            subtitle={t("relatedSubtitle")}
+            links={HOME_RELATED_LINKS.map(({ href, titleKey, descKey, linkKey }) => ({
+              href,
+              title: t(titleKey),
+              description: t(descKey),
+              linkLabel: t(linkKey),
+            }))}
+          />
         </div>
       </section>
+
+      <PublicCTASection
+        variant="band"
+        title={t("finalCtaTitle")}
+        subtitle={t("finalCtaSubtitle")}
+        testIdPrefix="cta.public.home"
+      />
     </>
   );
 }

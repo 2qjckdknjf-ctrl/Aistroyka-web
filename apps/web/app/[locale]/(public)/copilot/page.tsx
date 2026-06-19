@@ -1,90 +1,157 @@
 import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
-import { Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
-import { CopilotMockUI } from "./CopilotMockUI";
+import { buildPublicPageMetadata } from "@/lib/seo/public-page-metadata";
+import { buildStandardPublicBreadcrumb } from "@/lib/seo/public-page-breadcrumb";
+import { PublicCTASection, PublicFeatureGrid, PublicPageHero, PublicRelatedLinksSection, PublicTimelineSection, PublicJsonLd } from "@/components/public";
+import { CopilotInsightVisual } from "./CopilotInsightVisual";
 
 type Props = { params: Promise<{ locale: string }> };
+
+const HELP_KEYS = [
+  "helpSummarizeReports",
+  "helpSurfaceRisks",
+  "helpMissingEvidence",
+  "helpManagerDecisions",
+  "helpFollowUps",
+  "helpLearnCorrections",
+] as const;
+
+const TIMELINE_KEYS = [
+  "stepReports",
+  "stepEvidence",
+  "stepAnalysis",
+  "stepAnswer",
+  "stepReview",
+  "stepDecisions",
+] as const;
+
+const GUARD_KEYS = [
+  "guardTenantContext",
+  "guardHumanReview",
+  "guardNoBlindAutomation",
+  "guardExplainableOutputs",
+  "guardConstructionSignals",
+] as const;
+
+const VISUAL_SIGNAL_KEYS = [
+  "visualSignalReports",
+  "visualSignalRisks",
+  "visualSignalEvidence",
+  "visualSignalSchedule",
+] as const;
+
+const RELATED_LINKS = [
+  { href: "/ai-construction-control", titleKey: "relatedAiControl", descKey: "relatedAiControlDesc", linkKey: "linkAiControl" },
+  { href: "/ai-demo", titleKey: "relatedAiDemo", descKey: "relatedAiDemoDesc", linkKey: "linkAiDemo" },
+  { href: "/features", titleKey: "relatedFeatures", descKey: "relatedFeaturesDesc", linkKey: "linkFeatures" },
+  { href: "/contact", titleKey: "relatedContact", descKey: "relatedContactDesc", linkKey: "linkContact" },
+] as const;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "public.copilot" });
-  return { title: t("title"), description: t("metaDescription") };
+  return buildPublicPageMetadata(locale, "/copilot", {
+    title: t("title"),
+    description: t("metaDescription"),
+  });
 }
 
 export default async function CopilotPage({ params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("public.copilot");
-
-  const caps = ["cap1", "cap2", "cap3", "cap4", "cap5", "cap6", "cap7"] as const;
-  const patterns = ["pat1", "pat2", "pat3", "pat4", "pat5"] as const;
+  const tCta = await getTranslations("public.cta");
+  const tLayout = await getTranslations("public.layout");
+  const breadcrumbJsonLd = buildStandardPublicBreadcrumb(
+    locale,
+    "/copilot",
+    t("title"),
+    tLayout("breadcrumbHome"),
+  );
 
   return (
-    <div className="mx-auto min-w-0 max-w-5xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-      <section className="text-center">
-        <h1 className="text-[var(--aistroyka-font-title)] font-bold text-[var(--aistroyka-text-primary)]">
-          {t("title")}
-        </h1>
-        <p className="mt-4 text-lg text-[var(--aistroyka-text-secondary)]">{t("heroTitle")}</p>
-        <p className="mt-2 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-secondary)]">
-          {t("heroSubtitle")}
-        </p>
-        <div className="mx-auto mt-8 flex min-w-0 max-w-full flex-wrap justify-center gap-3 sm:gap-4">
-          <Link href="/contact" className="btn-primary max-w-full min-w-0 sm:max-w-none">
-            {t("ctaDemo")}
-          </Link>
-          <Link href="/platform" className="btn-secondary max-w-full min-w-0 sm:max-w-none">
-            {t("ctaPlatform")}
-          </Link>
-        </div>
-      </section>
+    <>
+      <PublicJsonLd data={breadcrumbJsonLd} />
+      <PublicPageHero
+        variant="split-visual"
+        eyebrow={t("eyebrow")}
+        title={t("heroTitle")}
+        subtitle={t("heroSubtitle")}
+        ctas={false}
+        visual={
+          <CopilotInsightVisual
+            label={t("visualLabel")}
+            title={t("visualTitle")}
+            prompt={t("visualPrompt")}
+            signals={VISUAL_SIGNAL_KEYS.map((key) => ({
+              label: t(key),
+              detail: t(`${key}Detail`),
+            }))}
+          />
+        }
+      />
 
-      <section className="mt-16">
-        <h2 className="text-[var(--aistroyka-font-title2)] font-semibold text-[var(--aistroyka-text-primary)]">
-          {t("capabilitiesTitle")}
-        </h2>
-        <ul className="mt-4 grid gap-3 sm:grid-cols-2">
-          {caps.map((key) => (
-            <li key={key} className="rounded-[var(--aistroyka-radius-lg)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] p-4">
-              {t(key)}
-            </li>
-          ))}
-        </ul>
-      </section>
+      <div className="mx-auto min-w-0 max-w-7xl space-y-20 px-4 pb-8 sm:px-6 lg:px-8 lg:pb-12">
+        <PublicFeatureGrid
+          title={t("helpsTitle")}
+          subtitle={t("helpsSubtitle")}
+          columns={3}
+          items={HELP_KEYS.map((key) => ({
+            title: t(key),
+            description: t(`${key}Desc`),
+            variant: key === "helpSummarizeReports" ? "glass-highlight" : "solid",
+            eyebrow: key === "helpSummarizeReports" ? t("helpSummarizeReportsEyebrow") : undefined,
+          }))}
+        />
 
-      <section className="mt-16">
-        <h2 className="text-[var(--aistroyka-font-title2)] font-semibold text-[var(--aistroyka-text-primary)]">
-          {t("patternsTitle")}
-        </h2>
-        <ul className="mt-4 grid gap-3 sm:grid-cols-2">
-          {patterns.map((key) => (
-            <li key={key} className="rounded-[var(--aistroyka-radius-lg)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] p-4">
-              {t(key)}
-            </li>
-          ))}
-        </ul>
-      </section>
+        <PublicTimelineSection
+          title={t("howTitle")}
+          subtitle={t("howSubtitle")}
+          steps={TIMELINE_KEYS.map((key) => ({
+            title: t(`${key}Title`),
+            description: t(`${key}Desc`),
+          }))}
+        />
 
-      <section className="mt-16">
-        <h2 className="text-[var(--aistroyka-font-title3)] font-semibold text-[var(--aistroyka-text-primary)]">
-          {t("mockAssistantUi")}
-        </h2>
-        <div className="mt-4">
-          <CopilotMockUI />
-        </div>
-      </section>
+        <PublicFeatureGrid
+          title={t("trustTitle")}
+          subtitle={t("trustSubtitle")}
+          columns={3}
+          headingLevel="h2"
+          items={GUARD_KEYS.map((key) => ({
+            title: t(key),
+            description: t(`${key}Desc`),
+            variant: "solid",
+          }))}
+        />
+      </div>
 
-      <section className="mt-16 rounded-[var(--aistroyka-radius-card)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] p-6">
-        <h2 className="text-[var(--aistroyka-font-title3)] font-semibold text-[var(--aistroyka-text-primary)]">
-          {t("humanTitle")}
-        </h2>
-        <p className="mt-3 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-secondary)]">
-          {t("humanBody")}
-        </p>
-      </section>
-    </div>
+      <div className="mx-auto min-w-0 max-w-7xl px-4 pb-8 sm:px-6 lg:px-8 lg:pb-12">
+        <PublicRelatedLinksSection
+          headingId="copilot-related-heading"
+          title={t("relatedTitle")}
+          subtitle={t("relatedSubtitle")}
+          links={RELATED_LINKS.map(({ href, titleKey, descKey, linkKey }) => ({
+            href,
+            title: t(titleKey),
+            description: t(descKey),
+            linkLabel: t(linkKey),
+          }))}
+        />
+      </div>
+
+      <PublicCTASection
+        variant="floating"
+        title={t("ctaTitle")}
+        subtitle={t("ctaSubtitle")}
+        primaryLabel={tCta("launchPilot")}
+        secondaryLabel={tCta("contactUs")}
+        presentationLabel={tCta("getPresentation")}
+        testIdPrefix="cta.public.copilot"
+      />
+    </>
   );
 }
 
