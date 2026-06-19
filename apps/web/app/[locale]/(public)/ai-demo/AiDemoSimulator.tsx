@@ -11,7 +11,7 @@ const MOCK_RESULTS = {
   aiSummary: "mockAiSummary",
 };
 
-export function AiDemoSimulator() {
+export function AiDemoSimulator({ embedded = false }: { embedded?: boolean }) {
   const t = useTranslations("public.aiDemo");
   const [step, setStep] = useState<"upload" | "analyzing" | "results">("upload");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -35,8 +35,12 @@ export function AiDemoSimulator() {
     inputRef.current?.click();
   }
 
+  const shellClass = embedded
+    ? ""
+    : "rounded-[var(--aistroyka-radius-card)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] p-6 shadow-[var(--aistroyka-shadow-e2)]";
+
   return (
-    <div className="rounded-[var(--aistroyka-radius-card)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] p-6 shadow-[var(--aistroyka-shadow-e2)]">
+    <div className={shellClass}>
       <div className="grid gap-6 lg:grid-cols-2">
         <div>
           <h3 className="text-[var(--aistroyka-font-headline)] font-semibold text-[var(--aistroyka-text-primary)]">
@@ -64,7 +68,7 @@ export function AiDemoSimulator() {
               />
             ) : (
               <span className="text-[var(--aistroyka-text-secondary)]">
-                {step === "analyzing" ? t("analyzing") : t("clickOrDropPhoto")}
+                {step === "analyzing" ? t("simulatingAnalysis") : t("clickOrDropPhoto")}
               </span>
             )}
           </button>
@@ -133,7 +137,7 @@ export function AiDemoSimulator() {
             </p>
           )}
           {step === "analyzing" && (
-            <p className="text-[var(--aistroyka-text-secondary)]">{t("runningAnalysis")}</p>
+            <p className="text-[var(--aistroyka-text-secondary)]">{t("simulatingAnalysisProgress")}</p>
           )}
         </div>
       </div>

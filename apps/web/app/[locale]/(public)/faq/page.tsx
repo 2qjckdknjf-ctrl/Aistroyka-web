@@ -2,7 +2,8 @@ import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 import { routing } from "@/i18n/routing";
-import { PublicCTASection, PublicFeatureGrid, PublicPageHero } from "@/components/public";
+import { PublicCTASection, PublicFeatureGrid, PublicPageHero, PublicRelatedLinksSection } from "@/components/public";
+import { buildPublicPageMetadata } from "@/lib/seo/public-page-metadata";
 import { FaqVisual } from "./FaqVisual";
 
 type Props = { params: Promise<{ locale: string }> };
@@ -29,6 +30,18 @@ const TRUST_KEYS = ["trustDataVisibility", "trustAccessControl", "trustAiAutonom
 
 const VISUAL_TOPIC_KEYS = ["visualTopicCore", "visualTopicOps", "visualTopicTrust"] as const;
 
+const RELATED_LINKS = [
+  { href: "/security", titleKey: "relatedSecurity", descKey: "relatedSecurityDesc", linkKey: "linkSecurity" },
+  { href: "/enterprise", titleKey: "relatedEnterprise", descKey: "relatedEnterpriseDesc", linkKey: "linkEnterprise" },
+  {
+    href: "/implementation",
+    titleKey: "relatedImplementation",
+    descKey: "relatedImplementationDesc",
+    linkKey: "linkImplementation",
+  },
+  { href: "/contact", titleKey: "relatedContact", descKey: "relatedContactDesc", linkKey: "linkContact" },
+] as const;
+
 function faqItems(keys: readonly string[], t: (key: string) => string) {
   return keys.map((key) => ({
     title: t(`${key}Q`),
@@ -40,10 +53,10 @@ function faqItems(keys: readonly string[], t: (key: string) => string) {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "public.faq" });
-  return {
+  return buildPublicPageMetadata(locale, "/faq", {
     title: t("title"),
     description: t("metaDescription"),
-  };
+  });
 }
 
 export default async function FaqPage({ params }: Props) {
@@ -94,6 +107,20 @@ export default async function FaqPage({ params }: Props) {
           columns={2}
           headingLevel="h2"
           items={faqItems(TRUST_KEYS, t)}
+        />
+      </div>
+
+      <div className="mx-auto min-w-0 max-w-7xl px-4 pb-8 sm:px-6 lg:px-8 lg:pb-12">
+        <PublicRelatedLinksSection
+          headingId="faq-related-heading"
+          title={t("relatedTitle")}
+          subtitle={t("relatedSubtitle")}
+          links={RELATED_LINKS.map(({ href, titleKey, descKey, linkKey }) => ({
+            href,
+            title: t(titleKey),
+            description: t(descKey),
+            linkLabel: t(linkKey),
+          }))}
         />
       </div>
 

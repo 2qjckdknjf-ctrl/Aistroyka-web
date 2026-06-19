@@ -2,6 +2,7 @@ import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 import { routing } from "@/i18n/routing";
+import { buildPublicPageMetadata } from "@/lib/seo/public-page-metadata";
 import {
   PublicCTASection,
   PublicFeatureGrid,
@@ -36,10 +37,10 @@ const VISUAL_PILLAR_KEYS = [
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "public.contact" });
-  return {
+  return buildPublicPageMetadata(locale, "/contact", {
     title: t("title"),
     description: t("metaDescription"),
-  };
+  });
 }
 
 export default async function ContactPage({ params }: Props) {

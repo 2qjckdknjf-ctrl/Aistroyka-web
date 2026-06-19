@@ -5,18 +5,20 @@ import { useTranslations } from "next-intl";
 
 const PRODUCT_LINKS = [
   { href: "/platform", key: "platform" as const },
-  { href: "/solutions", key: "solutions" as const },
   { href: "/features", key: "features" as const },
+  { href: "/solutions", key: "solutions" as const },
   { href: "/pricing", key: "pricing" as const },
   { href: "/enterprise", key: "enterprise" as const },
 ] as const;
 
 const RESOURCE_LINKS = [
+  { href: "/ai-construction-control", key: "aiControl" as const },
+  { href: "/ai-demo", key: "aiDemo" as const },
   { href: "/copilot", key: "copilot" as const },
+  { href: "/mobile", key: "mobile" as const },
   { href: "/integrations", key: "integrations" as const },
   { href: "/api", key: "api" as const },
   { href: "/workflows", key: "workflows" as const },
-  { href: "/ai-demo", key: "aiDemo" as const },
   { href: "/docs", key: "docs" as const },
   { href: "/cases", key: "cases" as const },
   { href: "/security", key: "security" as const },
@@ -52,7 +54,7 @@ export function PublicFooter() {
               AISTROYKA
             </Link>
             <p className="mt-2 text-aistroyka-footnote text-aistroyka-text-secondary">
-              AI Construction Intelligence
+              {tFooter("tagline")}
             </p>
           </div>
           <div>
@@ -125,7 +127,7 @@ export function PublicFooter() {
           </div>
         </div>
         <div className="mt-10 border-t border-aistroyka-border-subtle pt-8 text-center text-aistroyka-caption text-aistroyka-text-secondary">
-          © {new Date().getFullYear()} Aistroyka. All rights reserved.
+          {tFooter("copyright", { year: new Date().getFullYear() })}
         </div>
       </div>
     </footer>

@@ -3,66 +3,119 @@ import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 import { Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
+import { buildPublicPageMetadata } from "@/lib/seo/public-page-metadata";
+import { GlassSurface } from "@/components/design/liquid-glass";
+import { PublicCTASection, PublicPageHero } from "@/components/public";
 import { AiDemoSimulator } from "./AiDemoSimulator";
 
 type Props = { params: Promise<{ locale: string }> };
 
+const RELATED_LINKS = [
+  {
+    href: "/ai-construction-control",
+    titleKey: "relatedAiControl",
+    descKey: "relatedAiControlDesc",
+    linkKey: "linkAiControl",
+  },
+  { href: "/copilot", titleKey: "relatedCopilot", descKey: "relatedCopilotDesc", linkKey: "linkCopilot" },
+  { href: "/features", titleKey: "relatedFeatures", descKey: "relatedFeaturesDesc", linkKey: "linkFeatures" },
+  { href: "/contact", titleKey: "relatedContact", descKey: "relatedContactDesc", linkKey: "linkContact" },
+] as const;
+
+const linkFocusClass =
+  "font-medium text-aistroyka-accent underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-[var(--aistroyka-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent";
+
+const openSimulatorClass =
+  "btn-secondary inline-flex max-w-full min-w-0 outline-none focus-visible:ring-2 focus-visible:ring-[var(--aistroyka-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent";
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "public.aiDemo" });
-  return {
+  return buildPublicPageMetadata(locale, "/ai-demo", {
     title: t("title"),
     description: t("metaDescription"),
-  };
+  });
 }
 
 export default async function AiDemoPage({ params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("public.aiDemo");
-
-  const capabilities = [
-    "photoAnalysis",
-    "progressTracking",
-    "deviationDetection",
-    "riskPrediction",
-    "constructionInsights",
-  ] as const;
+  const tCta = await getTranslations("public.cta");
 
   return (
-    <div className="mx-auto min-w-0 max-w-5xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-      <section className="text-center">
-        <h1 className="text-[var(--aistroyka-font-title)] font-bold text-[var(--aistroyka-text-primary)]">
-          {t("title")}
-        </h1>
-        <p className="mt-4 text-lg text-[var(--aistroyka-text-secondary)]">
-          {t("heroTitle")}
-        </p>
-        <Link href="#demo" className="btn-primary mx-auto mt-6 inline-flex max-w-full">
-          {t("cta")}
-        </Link>
-      </section>
+    <>
+      <PublicPageHero
+        variant="compact"
+        eyebrow={t("eyebrow")}
+        title={t("heroTitle")}
+        subtitle={t("heroSubtitle")}
+        ctas={false}
+      />
 
-      <section id="demo" className="mt-16">
-        <AiDemoSimulator />
-      </section>
-
-      <section className="mt-16">
-        <h2 className="text-center text-[var(--aistroyka-font-title2)] font-semibold text-[var(--aistroyka-text-primary)]">
-          {t("capabilitiesTitle")}
-        </h2>
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {capabilities.map((key) => (
-            <div
-              key={key}
-              className="rounded-[var(--aistroyka-radius-lg)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] p-4"
-            >
-              <div className="font-semibold text-[var(--aistroyka-text-primary)]">{t(key)}</div>
-            </div>
-          ))}
+      <div className="mx-auto min-w-0 max-w-7xl space-y-20 px-4 pb-8 sm:px-6 lg:px-8 lg:pb-12">
+        <div className="flex justify-center">
+          <Link href="#demo" className={openSimulatorClass}>
+            {t("openSimulator")}
+          </Link>
         </div>
-      </section>
-    </div>
+
+        <section id="demo" aria-labelledby="ai-demo-simulator-heading">
+          <h2
+            id="ai-demo-simulator-heading"
+            className="text-[var(--aistroyka-font-title2)] font-semibold text-aistroyka-text-primary"
+          >
+            {t("simulatorTitle")}
+          </h2>
+          <p className="mt-3 max-w-3xl text-[var(--aistroyka-font-body)] text-aistroyka-text-secondary">
+            {t("simulatorSubtitle")}
+          </p>
+          <div className="mt-8">
+            <GlassSurface intensity="subtle" padding="md">
+              <AiDemoSimulator embedded />
+            </GlassSurface>
+          </div>
+        </section>
+
+        <section aria-labelledby="ai-demo-related-heading">
+          <h2
+            id="ai-demo-related-heading"
+            className="text-[var(--aistroyka-font-title2)] font-semibold text-aistroyka-text-primary"
+          >
+            {t("relatedTitle")}
+          </h2>
+          <p className="mt-3 max-w-3xl text-[var(--aistroyka-font-body)] text-aistroyka-text-secondary">
+            {t("relatedSubtitle")}
+          </p>
+          <ul className="mt-8 grid min-w-0 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {RELATED_LINKS.map(({ href, titleKey, descKey, linkKey }) => (
+              <li
+                key={href}
+                className="rounded-[var(--aistroyka-radius-card)] border border-aistroyka-border-subtle bg-aistroyka-surface p-5 shadow-[var(--aistroyka-shadow-e1)]"
+              >
+                <h3 className="font-semibold text-aistroyka-text-primary">{t(titleKey)}</h3>
+                <p className="mt-2 text-[var(--aistroyka-font-footnote)] text-aistroyka-text-secondary">
+                  {t(descKey)}
+                </p>
+                <Link href={href} className={`mt-4 inline-flex text-sm ${linkFocusClass}`}>
+                  {t(linkKey)}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </div>
+
+      <PublicCTASection
+        variant="floating"
+        title={t("ctaTitle")}
+        subtitle={t("ctaSubtitle")}
+        primaryLabel={tCta("launchPilot")}
+        secondaryLabel={tCta("contactUs")}
+        presentationLabel={tCta("getPresentation")}
+        testIdPrefix="cta.public.aiDemo"
+      />
+    </>
   );
 }
 
