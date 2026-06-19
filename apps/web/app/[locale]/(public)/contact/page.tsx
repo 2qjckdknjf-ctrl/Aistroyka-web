@@ -3,12 +3,8 @@ import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 import { routing } from "@/i18n/routing";
 import { buildPublicPageMetadata } from "@/lib/seo/public-page-metadata";
-import {
-  PublicCTASection,
-  PublicFeatureGrid,
-  PublicPageHero,
-  PublicTimelineSection,
-} from "@/components/public";
+import { buildStandardPublicBreadcrumb } from "@/lib/seo/public-page-breadcrumb";
+import { PublicCTASection, PublicFeatureGrid, PublicPageHero, PublicTimelineSection, PublicJsonLd } from "@/components/public";
 import { ContactConversionVisual } from "./ContactConversionVisual";
 import { ContactForm } from "./ContactForm";
 
@@ -48,9 +44,17 @@ export default async function ContactPage({ params }: Props) {
   setRequestLocale(locale);
   const t = await getTranslations("public.contact");
   const tCta = await getTranslations("public.cta");
+  const tLayout = await getTranslations("public.layout");
+  const breadcrumbJsonLd = buildStandardPublicBreadcrumb(
+    locale,
+    "/contact",
+    t("title"),
+    tLayout("breadcrumbHome"),
+  );
 
   return (
     <>
+      <PublicJsonLd data={breadcrumbJsonLd} />
       <PublicPageHero
         variant="split-visual"
         eyebrow={t("eyebrow")}

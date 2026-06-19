@@ -3,13 +3,8 @@ import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 import { routing } from "@/i18n/routing";
 import { buildPublicPageMetadata } from "@/lib/seo/public-page-metadata";
-import {
-  PublicCTASection,
-  PublicFeatureGrid,
-  PublicPageHero,
-  PublicRelatedLinksSection,
-  PublicTimelineSection,
-} from "@/components/public";
+import { buildStandardPublicBreadcrumb } from "@/lib/seo/public-page-breadcrumb";
+import { PublicCTASection, PublicFeatureGrid, PublicPageHero, PublicRelatedLinksSection, PublicTimelineSection, PublicJsonLd } from "@/components/public";
 import { CopilotInsightVisual } from "./CopilotInsightVisual";
 
 type Props = { params: Promise<{ locale: string }> };
@@ -68,9 +63,17 @@ export default async function CopilotPage({ params }: Props) {
   setRequestLocale(locale);
   const t = await getTranslations("public.copilot");
   const tCta = await getTranslations("public.cta");
+  const tLayout = await getTranslations("public.layout");
+  const breadcrumbJsonLd = buildStandardPublicBreadcrumb(
+    locale,
+    "/copilot",
+    t("title"),
+    tLayout("breadcrumbHome"),
+  );
 
   return (
     <>
+      <PublicJsonLd data={breadcrumbJsonLd} />
       <PublicPageHero
         variant="split-visual"
         eyebrow={t("eyebrow")}

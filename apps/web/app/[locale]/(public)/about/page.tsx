@@ -2,15 +2,9 @@ import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 import { routing } from "@/i18n/routing";
-import {
-  PublicCTASection,
-  PublicFeatureGrid,
-  PublicPageHero,
-  PublicProofSection,
-  PublicRelatedLinksSection,
-  PublicTimelineSection,
-} from "@/components/public";
+import { PublicCTASection, PublicFeatureGrid, PublicPageHero, PublicProofSection, PublicRelatedLinksSection, PublicTimelineSection, PublicJsonLd } from "@/components/public";
 import { buildPublicPageMetadata } from "@/lib/seo/public-page-metadata";
+import { buildStandardPublicBreadcrumb } from "@/lib/seo/public-page-breadcrumb";
 import { AboutTrustVisual } from "./AboutTrustVisual";
 
 type Props = { params: Promise<{ locale: string }> };
@@ -71,9 +65,17 @@ export default async function AboutPage({ params }: Props) {
   setRequestLocale(locale);
   const t = await getTranslations("public.about");
   const tCta = await getTranslations("public.cta");
+  const tLayout = await getTranslations("public.layout");
+  const breadcrumbJsonLd = buildStandardPublicBreadcrumb(
+    locale,
+    "/about",
+    t("title"),
+    tLayout("breadcrumbHome"),
+  );
 
   return (
     <>
+      <PublicJsonLd data={breadcrumbJsonLd} />
       <PublicPageHero
         variant="split-visual"
         eyebrow={t("eyebrow")}

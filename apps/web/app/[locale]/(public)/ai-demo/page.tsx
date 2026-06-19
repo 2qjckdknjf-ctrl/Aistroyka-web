@@ -4,8 +4,9 @@ import type { Metadata } from "next";
 import { Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { buildPublicPageMetadata } from "@/lib/seo/public-page-metadata";
+import { buildStandardPublicBreadcrumb } from "@/lib/seo/public-page-breadcrumb";
 import { GlassSurface } from "@/components/design/liquid-glass";
-import { PublicCTASection, PublicPageHero } from "@/components/public";
+import { PublicCTASection, PublicPageHero, PublicJsonLd } from "@/components/public";
 import { AiDemoSimulator } from "./AiDemoSimulator";
 
 type Props = { params: Promise<{ locale: string }> };
@@ -42,9 +43,17 @@ export default async function AiDemoPage({ params }: Props) {
   setRequestLocale(locale);
   const t = await getTranslations("public.aiDemo");
   const tCta = await getTranslations("public.cta");
+  const tLayout = await getTranslations("public.layout");
+  const breadcrumbJsonLd = buildStandardPublicBreadcrumb(
+    locale,
+    "/ai-demo",
+    t("title"),
+    tLayout("breadcrumbHome"),
+  );
 
   return (
     <>
+      <PublicJsonLd data={breadcrumbJsonLd} />
       <PublicPageHero
         variant="compact"
         eyebrow={t("eyebrow")}

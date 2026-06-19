@@ -2,8 +2,9 @@ import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 import { routing } from "@/i18n/routing";
-import { PublicCTASection, PublicRelatedLinksSection } from "@/components/public";
+import { PublicCTASection, PublicRelatedLinksSection, PublicJsonLd } from "@/components/public";
 import { buildPublicPageMetadata } from "@/lib/seo/public-page-metadata";
+import { buildStandardPublicBreadcrumb } from "@/lib/seo/public-page-breadcrumb";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -28,6 +29,13 @@ export default async function SolutionsPage({ params }: Props) {
   setRequestLocale(locale);
   const t = await getTranslations("public.solutions");
   const tCta = await getTranslations("public.cta");
+  const tLayout = await getTranslations("public.layout");
+  const breadcrumbJsonLd = buildStandardPublicBreadcrumb(
+    locale,
+    "/solutions",
+    t("title"),
+    tLayout("breadcrumbHome"),
+  );
 
   const solutions = [
     "forDeveloper",
@@ -39,6 +47,7 @@ export default async function SolutionsPage({ params }: Props) {
 
   return (
     <>
+      <PublicJsonLd data={breadcrumbJsonLd} />
       <div className="mx-auto min-w-0 max-w-4xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
         <h1 className="text-[var(--aistroyka-font-title)] font-bold text-[var(--aistroyka-text-primary)]">
           {t("title")}

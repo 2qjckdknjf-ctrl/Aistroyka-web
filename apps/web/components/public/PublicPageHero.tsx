@@ -102,7 +102,7 @@ export function PublicPageHero({
   if (variant === "split-visual") {
     return (
       <header className={`${shellClass} ${className}`.trim()}>
-        <div className="grid min-w-0 gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,22rem)] lg:items-center lg:gap-12">
+        <div className="grid min-w-0 grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,22rem)] lg:items-center lg:gap-12">
           <PageHeroCopy
             eyebrow={eyebrow}
             eyebrowGlass={eyebrowGlass}
@@ -114,7 +114,7 @@ export function PublicPageHero({
             showPresentation={showPresentation}
             proofSlot={proofSlot}
           />
-          {visual ? <div className="min-w-0 lg:justify-self-end">{visual}</div> : null}
+          {visual ? <div className="min-w-0 max-w-full lg:justify-self-end">{visual}</div> : null}
         </div>
       </header>
     );

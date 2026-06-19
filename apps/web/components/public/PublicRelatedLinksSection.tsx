@@ -43,7 +43,7 @@ export function PublicRelatedLinksSection({
       <p className="mt-3 max-w-3xl text-[var(--aistroyka-font-body)] text-aistroyka-text-secondary">
         {subtitle}
       </p>
-      <ul className={`mt-8 grid min-w-0 gap-4 ${gridClass}`}>
+      <ul className={`mt-8 grid min-w-0 grid-cols-1 gap-4 ${gridClass}`}>
         {links.map(({ href, title: linkTitle, description, linkLabel }) => (
           <li
             key={href}

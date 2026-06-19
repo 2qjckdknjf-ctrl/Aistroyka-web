@@ -47,7 +47,10 @@ export function PublicCTASection({
     title || subtitle ? (
       <div className="mx-auto min-w-0 max-w-3xl text-center">
         {title ? (
-          <h2 className="font-heading text-[var(--aistroyka-font-title2)] font-semibold text-aistroyka-text-primary">
+          <h2
+            id={`${testIdPrefix}-heading`}
+            className="font-heading text-[var(--aistroyka-font-title2)] font-semibold text-aistroyka-text-primary"
+          >
             {title}
           </h2>
         ) : null}
@@ -68,7 +71,11 @@ export function PublicCTASection({
 
   if (variant === "floating") {
     return (
-      <section className={`px-4 py-12 sm:px-6 lg:px-8 ${className}`.trim()} aria-label={title ?? labels.primaryLabel}>
+      <section
+        className={`px-3 py-12 sm:px-6 lg:px-8 ${className}`.trim()}
+        aria-labelledby={title ? `${testIdPrefix}-heading` : undefined}
+        aria-label={title ? undefined : labels.primaryLabel}
+      >
         <div className="mx-auto min-w-0 max-w-3xl">
           <GlassPanel intensity="subtle" contentClassName="text-center">
             {copyBlock}
@@ -81,8 +88,9 @@ export function PublicCTASection({
 
   return (
     <section
-      className={`bg-aistroyka-bg-primary px-4 py-16 sm:px-6 sm:py-20 lg:px-8 ${className}`.trim()}
-      aria-label={title ?? labels.primaryLabel}
+      className={`bg-aistroyka-bg-primary px-3 py-16 sm:px-6 sm:py-20 lg:px-8 ${className}`.trim()}
+      aria-labelledby={title ? `${testIdPrefix}-heading` : undefined}
+      aria-label={title ? undefined : labels.primaryLabel}
     >
       <div className="mx-auto min-w-0 max-w-3xl">
         {copyBlock}
