@@ -65,7 +65,7 @@ export default async function PublicLayout({ children, params }: Props) {
       />
       <div className="relative z-10 flex min-h-screen flex-col">
         <PublicHeader />
-        <main className="min-w-0 flex-1">{children}</main>
+        <main className="min-w-0 flex-1 overflow-x-clip">{children}</main>
         <PublicFooter />
       </div>
     </div>

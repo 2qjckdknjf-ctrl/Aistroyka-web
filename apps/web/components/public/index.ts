@@ -16,5 +16,6 @@ export {
   type PublicProofStat,
   type PublicProofCaseSnippet,
 } from "./PublicProofSection";
+export { PublicJsonLd } from "./PublicJsonLd";
 export { PublicRelatedLinksSection, type PublicRelatedLinkItem } from "./PublicRelatedLinksSection";
 export { PublicTimelineSection, type PublicTimelineSectionProps, type PublicTimelineStep } from "./PublicTimelineSection";

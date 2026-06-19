@@ -4,12 +4,8 @@ import type { Metadata } from "next";
 import { Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { buildPublicPageMetadata } from "@/lib/seo/public-page-metadata";
-import {
-  PublicCTASection,
-  PublicFeatureGrid,
-  PublicPageHero,
-  PublicProofSection,
-} from "@/components/public";
+import { buildStandardPublicBreadcrumb } from "@/lib/seo/public-page-breadcrumb";
+import { PublicCTASection, PublicFeatureGrid, PublicPageHero, PublicProofSection, PublicJsonLd } from "@/components/public";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -116,9 +112,17 @@ export default async function SecurityPage({ params }: Props) {
   setRequestLocale(locale);
   const t = await getTranslations("public.security");
   const tCta = await getTranslations("public.cta");
+  const tLayout = await getTranslations("public.layout");
+  const breadcrumbJsonLd = buildStandardPublicBreadcrumb(
+    locale,
+    "/security",
+    t("title"),
+    tLayout("breadcrumbHome"),
+  );
 
   return (
     <>
+      <PublicJsonLd data={breadcrumbJsonLd} />
       <PublicPageHero
         variant="compact"
         eyebrow={t("eyebrow")}

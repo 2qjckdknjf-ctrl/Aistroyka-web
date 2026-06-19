@@ -29,11 +29,18 @@ export function PublicFeatureGrid({
   headingLevel = "h2",
 }: PublicFeatureGridProps) {
   const HeadingTag = headingLevel;
+  const headingId = title ? `feature-grid-${HeadingTag}-${title.replace(/\s+/g, "-").slice(0, 48)}` : undefined;
 
   return (
-    <section className={`min-w-0 ${className}`.trim()} aria-label={title}>
+    <section
+      className={`min-w-0 ${className}`.trim()}
+      {...(headingId ? { "aria-labelledby": headingId } : {})}
+    >
       {title ? (
-        <HeadingTag className="text-[var(--aistroyka-font-title2)] font-semibold text-aistroyka-text-primary">
+        <HeadingTag
+          id={headingId}
+          className="text-[var(--aistroyka-font-title2)] font-semibold text-aistroyka-text-primary"
+        >
           {title}
         </HeadingTag>
       ) : null}
