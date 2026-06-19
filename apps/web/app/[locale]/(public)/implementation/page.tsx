@@ -3,70 +3,170 @@ import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 import { Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
+import {
+  PublicCTASection,
+  PublicFeatureGrid,
+  PublicPageHero,
+  PublicTimelineSection,
+} from "@/components/public";
 
 type Props = { params: Promise<{ locale: string }> };
 
-const PHASES = ["phase1", "phase2", "phase3", "phase4", "phase5", "phase6"] as const;
+type Readiness = "live" | "partial" | "planned";
+
+const DEPLOYMENT_PHASES = [
+  "phaseDiscovery",
+  "phasePilot",
+  "phaseConfiguration",
+  "phaseTraining",
+  "phaseRollout",
+  "phaseExpansion",
+] as const;
+
+const ADOPTION_ROLES: ReadonlyArray<{ key: string; readiness: Readiness; highlight?: boolean }> = [
+  { key: "adoptWorkers", readiness: "partial" },
+  { key: "adoptManagers", readiness: "live", highlight: true },
+  { key: "adoptOwners", readiness: "partial" },
+  { key: "adoptStakeholders", readiness: "live" },
+];
+
+const PILOT_KEYS = ["pilotScope", "pilotWorkspace", "pilotFieldCapture", "pilotManagerReview", "pilotFeedback"] as const;
+const RISK_KEYS = ["riskScopeCreep", "riskConnectivity", "riskRoles", "riskDevices", "riskReviewDiscipline"] as const;
+
+const RELATED_LINKS = [
+  { href: "/pricing", titleKey: "relatedPricing", descKey: "relatedPricingDesc", linkKey: "linkPricing" },
+  { href: "/enterprise", titleKey: "relatedEnterprise", descKey: "relatedEnterpriseDesc", linkKey: "linkEnterprise" },
+  { href: "/security", titleKey: "relatedSecurity", descKey: "relatedSecurityDesc", linkKey: "linkSecurity" },
+  { href: "/contact", titleKey: "relatedContact", descKey: "relatedContactDesc", linkKey: "linkContact" },
+] as const;
+
+const linkFocusClass =
+  "font-medium text-aistroyka-accent underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-[var(--aistroyka-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent";
+
+function statusKey(readiness: Readiness): "statusLive" | "statusPartial" | "statusPlanned" {
+  switch (readiness) {
+    case "live":
+      return "statusLive";
+    case "partial":
+      return "statusPartial";
+    case "planned":
+      return "statusPlanned";
+    default: {
+      const _exhaustive: never = readiness;
+      return _exhaustive;
+    }
+  }
+}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "public.implementation" });
-  return { title: t("title"), description: t("metaDescription") };
+  return {
+    title: t("title"),
+    description: t("metaDescription"),
+  };
 }
 
 export default async function ImplementationPage({ params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("public.implementation");
+  const tCta = await getTranslations("public.cta");
 
   return (
-    <div className="mx-auto min-w-0 max-w-5xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-      <section className="text-center">
-        <h1 className="text-[var(--aistroyka-font-title)] font-bold text-[var(--aistroyka-text-primary)]">
-          {t("title")}
-        </h1>
-        <p className="mt-4 text-lg text-[var(--aistroyka-text-secondary)]">{t("heroTitle")}</p>
-      </section>
+    <>
+      <PublicPageHero
+        variant="compact"
+        eyebrow={t("eyebrow")}
+        title={t("heroTitle")}
+        subtitle={t("heroSubtitle")}
+        ctas={false}
+      />
 
-      <section className="mt-12">
-        <h2 className="text-[var(--aistroyka-font-title2)] font-semibold text-[var(--aistroyka-text-primary)]">
-          Phases
-        </h2>
-        <ol className="mt-6 space-y-4">
-          {PHASES.map((key, i) => (
-            <li
-              key={key}
-              className="flex gap-4 rounded-[var(--aistroyka-radius-card)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] p-4"
-            >
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--aistroyka-accent)] text-[var(--aistroyka-font-footnote)] font-semibold text-aistroyka-text-inverse">
-                {i + 1}
-              </span>
-              <span className="text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-primary)]">
-                {t(key)}
-              </span>
-            </li>
-          ))}
-        </ol>
-      </section>
+      <div className="mx-auto min-w-0 max-w-7xl space-y-20 px-4 pb-8 sm:px-6 lg:px-8 lg:pb-12">
+        <PublicTimelineSection
+          title={t("phasesTitle")}
+          subtitle={t("phasesSubtitle")}
+          steps={DEPLOYMENT_PHASES.map((key) => ({
+            title: t(`${key}Title`),
+            description: t(`${key}Desc`),
+            status: t(`${key}Status`),
+          }))}
+        />
 
-      <section className="mt-16 rounded-[var(--aistroyka-radius-card)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] p-6">
-        <p className="text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-secondary)]">
-          {t("explainDuration")}
-        </p>
-        <p className="mt-3 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-secondary)]">
-          {t("explainNeeds")}
-        </p>
-      </section>
+        <PublicFeatureGrid
+          title={t("adoptionTitle")}
+          subtitle={t("adoptionSubtitle")}
+          columns={2}
+          items={ADOPTION_ROLES.map(({ key, readiness, highlight }) => ({
+            title: t(`${key}Title`),
+            description: t(`${key}Desc`),
+            variant: highlight ? "glass-highlight" : "solid",
+            eyebrow: t(statusKey(readiness)),
+          }))}
+        />
 
-      <section className="mt-12 flex min-w-0 flex-wrap gap-3 sm:gap-4">
-        <Link href="/contact" className="btn-primary max-w-full min-w-0 sm:max-w-none">
-          {t("ctaPlan")}
-        </Link>
-        <Link href="/contact" className="btn-secondary max-w-full min-w-0 sm:max-w-none">
-          {t("ctaConsult")}
-        </Link>
-      </section>
-    </div>
+        <PublicFeatureGrid
+          title={t("pilotTitle")}
+          subtitle={t("pilotSubtitle")}
+          columns={2}
+          items={PILOT_KEYS.map((key) => ({
+            title: t(`${key}Title`),
+            description: t(`${key}Desc`),
+            variant: "solid",
+          }))}
+        />
+
+        <PublicFeatureGrid
+          title={t("risksTitle")}
+          subtitle={t("risksSubtitle")}
+          columns={2}
+          items={RISK_KEYS.map((key) => ({
+            title: t(`${key}Title`),
+            description: t(`${key}Desc`),
+            variant: "solid",
+          }))}
+        />
+
+        <section aria-labelledby="implementation-related-heading">
+          <h2
+            id="implementation-related-heading"
+            className="text-[var(--aistroyka-font-title2)] font-semibold text-aistroyka-text-primary"
+          >
+            {t("relatedTitle")}
+          </h2>
+          <p className="mt-3 max-w-3xl text-[var(--aistroyka-font-body)] text-aistroyka-text-secondary">
+            {t("relatedSubtitle")}
+          </p>
+          <ul className="mt-8 grid min-w-0 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {RELATED_LINKS.map(({ href, titleKey, descKey, linkKey }) => (
+              <li
+                key={href}
+                className="rounded-[var(--aistroyka-radius-card)] border border-aistroyka-border-subtle bg-aistroyka-surface p-5 shadow-[var(--aistroyka-shadow-e1)]"
+              >
+                <h3 className="font-semibold text-aistroyka-text-primary">{t(titleKey)}</h3>
+                <p className="mt-2 text-[var(--aistroyka-font-footnote)] text-aistroyka-text-secondary">
+                  {t(descKey)}
+                </p>
+                <Link href={href} className={`mt-4 inline-flex text-sm ${linkFocusClass}`}>
+                  {t(linkKey)}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </div>
+
+      <PublicCTASection
+        variant="floating"
+        title={t("ctaTitle")}
+        subtitle={t("ctaSubtitle")}
+        primaryLabel={tCta("launchPilot")}
+        secondaryLabel={tCta("contactUs")}
+        presentationLabel={tCta("getPresentation")}
+        testIdPrefix="cta.public.implementation"
+      />
+    </>
   );
 }
 
