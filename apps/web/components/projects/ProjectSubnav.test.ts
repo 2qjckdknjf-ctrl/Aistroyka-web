@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getProjectSubnavItems } from "./project-subnav.items";
+import { getProjectSubnavItems, isProjectSubnavItemActive } from "./project-subnav.items";
 
 describe("ProjectSubnav", () => {
   it("returns only safe project-scoped navigation items", () => {
@@ -29,5 +29,18 @@ describe("ProjectSubnav", () => {
     expect(serialized).not.toMatch(/export/i);
     expect(serialized).not.toMatch(/owner|customer|stakeholder|portal|client/i);
     expect(serialized).not.toMatch(/mobile|ios|android/i);
+  });
+
+  it("marks active items only for safe project subnav tabs", () => {
+    const items = getProjectSubnavItems("project-1");
+    const overview = items.find((item) => item.key === "overview");
+    const reports = items.find((item) => item.key === "reports");
+
+    expect(overview).toBeDefined();
+    expect(reports).toBeDefined();
+    expect(isProjectSubnavItemActive(overview!, "workers")).toBe(true);
+    expect(isProjectSubnavItemActive(reports!, "reports")).toBe(true);
+    expect(isProjectSubnavItemActive(overview!, "costs")).toBe(false);
+    expect(isProjectSubnavItemActive(overview!, "ai")).toBe(false);
   });
 });

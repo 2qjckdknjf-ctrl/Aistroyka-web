@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { getProjectSubnavItems, type ProjectSubnavItem } from "./project-subnav.items";
+import { getProjectSubnavItems, isProjectSubnavItemActive } from "./project-subnav.items";
 
 export function ProjectSubnav({
   projectId,
@@ -16,13 +16,6 @@ export function ProjectSubnav({
   const t = useTranslations("dashboardDetail");
   const items = getProjectSubnavItems(projectId);
 
-  const isItemActive = (item: ProjectSubnavItem) => {
-    if (item.tab === null) {
-      return !items.some((candidate) => candidate.tab === activeTab);
-    }
-    return activeTab === item.tab;
-  };
-
   return (
     <nav
       aria-label={t("projectSubnavAria")}
@@ -30,7 +23,7 @@ export function ProjectSubnav({
       data-testid="project-subnav"
     >
       {items.map((item) => {
-        const active = isItemActive(item);
+        const active = isProjectSubnavItemActive(item, activeTab);
         return (
           <Link
             key={item.key}

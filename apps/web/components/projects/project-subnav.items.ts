@@ -22,3 +22,8 @@ export function getProjectSubnavItems(projectId: string): ProjectSubnavItem[] {
     href: item.tab ? `${base}?tab=${item.tab}` : base,
   }));
 }
+
+export function isProjectSubnavItemActive(item: ProjectSubnavItem, activeTab: string): boolean {
+  if (item.tab === null) return activeTab === "workers";
+  return activeTab === item.tab;
+}
