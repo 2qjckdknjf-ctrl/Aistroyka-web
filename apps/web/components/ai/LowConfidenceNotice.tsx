@@ -34,7 +34,7 @@ export function LowConfidenceNotice({
           <button
             type="button"
             onClick={() => onSuggestFollowUp(tDetail("followUpTemplate"))}
-            className="rounded border border-aistroyka-border-subtle bg-aistroyka-surface px-2 py-1 text-xs font-medium text-aistroyka-text-secondary hover:bg-aistroyka-surface-muted focus:outline-none focus:ring-2 focus:ring-aistroyka-accent focus:ring-offset-2"
+            className="input-field-sm px-2 py-1 text-xs font-medium text-aistroyka-text-secondary focus:ring-offset-2"
           >
             {tDetail("suggestFollowUpQuestion")}
           </button>

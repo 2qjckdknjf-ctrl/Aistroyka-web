@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui";
 
 type Overview = {
   totalTenants: number;
@@ -225,14 +226,15 @@ export function OwnerConsoleClient() {
                 </button>
                 <div className="mt-2 flex gap-2">
                   {["in_progress", "waiting_user", "resolved", "closed"].map((status) => (
-                    <button
+                    <Button
                       key={status}
                       type="button"
-                      className="btn-secondary text-xs"
+                      variant="secondary"
+                      size="sm"
                       onClick={() => updateStatus(ticket.id, status)}
                     >
                       {status}
-                    </button>
+                    </Button>
                   ))}
                 </div>
               </li>
@@ -271,9 +273,7 @@ export function OwnerConsoleClient() {
                   placeholder="Owner reply"
                   required
                 />
-                <button type="submit" className="btn-primary">
-                  Send owner reply
-                </button>
+                <Button type="submit">Send owner reply</Button>
               </form>
             </>
           ) : (

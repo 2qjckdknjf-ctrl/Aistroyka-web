@@ -51,7 +51,7 @@ export function StakeholderActivityBlock({
 
   if (displayed.length === 0) {
     return (
-      <div className="rounded-lg border border-aistroyka-border-subtle bg-aistroyka-surface p-4">
+      <div className="surface-glass rounded-lg p-4">
         <h3 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">{resolvedTitle}</h3>
         <p className="mt-2 text-sm text-aistroyka-text-secondary">{resolvedEmptyMessage}</p>
       </div>
@@ -59,7 +59,7 @@ export function StakeholderActivityBlock({
   }
 
   return (
-    <div className="rounded-lg border border-aistroyka-border-subtle bg-aistroyka-surface overflow-hidden">
+    <div className="surface-glass rounded-lg overflow-hidden">
       <h3 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary p-4 pb-2">{resolvedTitle}</h3>
       <p className="px-4 pb-2 text-xs text-aistroyka-text-tertiary">
         {tDetail("requestsResponsesPortalAccessHint")}

@@ -35,7 +35,7 @@ export function FeatureUpgradePromptCard({ prompt, variant = "card" }: FeatureUp
 
   if (variant === "inline") {
     return (
-      <div className="rounded-[var(--aistroyka-radius-md)] border border-aistroyka-border-subtle bg-aistroyka-surface-raised px-4 py-3">
+      <div className="surface-glass-raised rounded-[var(--aistroyka-radius-md)] px-4 py-3">
         {content}
       </div>
     );

@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
+import { GlassLink } from "@/components/design/liquid-glass";
 import { createClient } from "@/lib/supabase/client";
 
 type InvitePreview = {
@@ -108,12 +109,10 @@ function AcceptInviteContent() {
             {t("inviteFlowHint")}
           </p>
           <div className="mt-aistroyka-6 flex flex-wrap items-center justify-center gap-2">
-            <Link href={loginUrl} className="btn-primary inline-block">
-              {t("signIn")}
-            </Link>
-            <Link href={registerUrl} className="btn-secondary inline-block">
+            <GlassLink href={loginUrl}>{t("signIn")}</GlassLink>
+            <GlassLink href={registerUrl} intensity="subtle">
               {t("register")}
-            </Link>
+            </GlassLink>
           </div>
           <section className="mt-aistroyka-6 text-left">
             <h2 className="text-aistroyka-subheadline font-medium text-aistroyka-text-primary">{t("mobileAppsTitle")}</h2>
@@ -171,9 +170,9 @@ function AcceptInviteContent() {
         <div className="card-elevated text-center">
           <h1 className="text-aistroyka-title2 font-bold text-aistroyka-text-primary">{t("acceptInviteTitle")}</h1>
           <p className="mt-aistroyka-2 text-aistroyka-subheadline text-aistroyka-error" role="alert">{errorMessage}</p>
-          <Link href="/dashboard" className="btn-secondary mt-aistroyka-6 inline-block">
+          <GlassLink href="/dashboard" intensity="subtle" className="mt-aistroyka-6 inline-block">
             {t("goToDashboard")}
-          </Link>
+          </GlassLink>
         </div>
       </main>
     );

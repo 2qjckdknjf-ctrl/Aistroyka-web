@@ -2,6 +2,7 @@ import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 import { routing } from "@/i18n/routing";
+import { PublicGlassContentPage, PublicRevealGlassCard } from "@/components/public";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -20,31 +21,22 @@ export default async function TermsPage({ params }: Props) {
   const t = await getTranslations("public.terms");
 
   return (
-    <div className="mx-auto min-w-0 max-w-3xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-      <h1 className="text-[var(--aistroyka-font-title)] font-bold text-[var(--aistroyka-text-primary)]">
-        {t("title")}
-      </h1>
-      <p className="mt-4 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-secondary)]">
-        {t("metaDescription")}
-      </p>
-      <div className="prose prose-neutral mt-8 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-primary)]">
-        <p className="text-[var(--aistroyka-text-secondary)]">
-          <strong>{t("placeholderStrong")}</strong> {t("placeholderBody")} {t("lastUpdated")}: {new Date().toISOString().slice(0, 10)}.
-        </p>
-        <h2 className="mt-8 text-[var(--aistroyka-font-title3)] font-semibold">{t("section1Title")}</h2>
-        <p className="text-[var(--aistroyka-text-secondary)]">
-          {t("section1Body")}
-        </p>
-        <h2 className="mt-8 text-[var(--aistroyka-font-title3)] font-semibold">{t("section2Title")}</h2>
-        <p className="text-[var(--aistroyka-text-secondary)]">
-          {t("section2Body")}
-        </p>
-        <h2 className="mt-8 text-[var(--aistroyka-font-title3)] font-semibold">{t("section3Title")}</h2>
-        <p className="text-[var(--aistroyka-text-secondary)]">
-          {t("section3Body")}
-        </p>
-      </div>
-    </div>
+    <PublicGlassContentPage title={t("title")} description={t("metaDescription")}>
+      <PublicRevealGlassCard>
+        <div className="prose prose-neutral text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-primary)]">
+          <p className="text-[var(--aistroyka-text-secondary)]">
+            <strong>{t("placeholderStrong")}</strong> {t("placeholderBody")} {t("lastUpdated")}:{" "}
+            {new Date().toISOString().slice(0, 10)}.
+          </p>
+          <h2 className="mt-8 text-[var(--aistroyka-font-title3)] font-semibold">{t("section1Title")}</h2>
+          <p className="text-[var(--aistroyka-text-secondary)]">{t("section1Body")}</p>
+          <h2 className="mt-8 text-[var(--aistroyka-font-title3)] font-semibold">{t("section2Title")}</h2>
+          <p className="text-[var(--aistroyka-text-secondary)]">{t("section2Body")}</p>
+          <h2 className="mt-8 text-[var(--aistroyka-font-title3)] font-semibold">{t("section3Title")}</h2>
+          <p className="text-[var(--aistroyka-text-secondary)]">{t("section3Body")}</p>
+        </div>
+      </PublicRevealGlassCard>
+    </PublicGlassContentPage>
   );
 }
 

@@ -34,7 +34,7 @@ export function ProjectTimelineBlock({
 
   if (displayed.length === 0) {
     return (
-      <div className="rounded-lg border border-aistroyka-border-subtle bg-aistroyka-surface p-4">
+      <div className="surface-glass rounded-lg p-4">
         <h3 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">
           {title}
         </h3>
@@ -44,7 +44,7 @@ export function ProjectTimelineBlock({
   }
 
   return (
-    <div className="rounded-lg border border-aistroyka-border-subtle bg-aistroyka-surface overflow-hidden">
+    <div className="surface-glass rounded-lg overflow-hidden">
       <h3 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary p-4 pb-2">
         {title}
       </h3>

@@ -52,7 +52,7 @@ export function AdminAiOverviewClient() {
                 <select
                   value={tenantId ?? ""}
                   onChange={(e) => setSelectedTenantId(e.target.value || null)}
-                  className="rounded border border-aistroyka-border-subtle bg-aistroyka-surface-raised px-2 py-1 text-aistroyka-subheadline"
+                  className="input-field-sm px-2 py-1 text-aistroyka-subheadline"
                 >
                   {tenants.map((t) => (
                     <option key={t.id} value={t.id}>

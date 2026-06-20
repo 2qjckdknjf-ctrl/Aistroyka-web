@@ -32,7 +32,7 @@ export function DemoProjectCard() {
   const d = DEMO_PROJECT;
   return (
     <Card className="overflow-hidden p-0">
-      <div className="border-b border-aistroyka-border-subtle bg-aistroyka-surface-raised px-4 py-3">
+      <div className="border-b border-[var(--lg-border)] surface-glass-row px-4 py-3">
         <div className="flex items-center justify-between">
           <h3 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">
             {d.name}

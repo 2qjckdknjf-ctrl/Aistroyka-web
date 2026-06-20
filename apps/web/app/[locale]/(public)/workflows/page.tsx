@@ -8,6 +8,7 @@ import {
   PublicJsonLd,
   PublicPageHero,
   PublicRelatedLinksSection,
+  PublicRevealGlassCard,
   PublicTimelineSection,
 } from "@/components/public";
 import { buildPublicPageMetadata } from "@/lib/seo/public-page-metadata";
@@ -66,9 +67,9 @@ export default async function WorkflowsPage({ params }: Props) {
       />
 
       <div className="mx-auto min-w-0 max-w-7xl space-y-20 px-4 pb-8 sm:px-6 lg:px-8 lg:pb-12">
-        <p className="-mt-8 max-w-3xl rounded-[var(--aistroyka-radius-lg)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-bg-primary)] px-4 py-3 text-[var(--aistroyka-font-footnote)] text-[var(--aistroyka-text-secondary)]">
-          {t("positioning")}
-        </p>
+        <PublicRevealGlassCard intensity="subtle" className="-mt-8 max-w-3xl">
+          <p className="text-[var(--aistroyka-font-footnote)] text-aistroyka-text-secondary">{t("positioning")}</p>
+        </PublicRevealGlassCard>
 
         <PublicFeatureGrid
           title={t("matrixTitle")}

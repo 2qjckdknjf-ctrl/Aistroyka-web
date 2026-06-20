@@ -111,7 +111,7 @@ export function ProjectVideoDailyAnalysisPanel({ projectId }: { projectId: strin
         </div>
       ) : null}
       {result ? (
-        <div className="space-y-3 rounded border border-aistroyka-border-subtle bg-aistroyka-surface-muted/40 p-4 text-sm">
+        <div className="surface-glass-muted space-y-3 rounded p-4 text-sm">
           <div>
             <span className="font-medium text-aistroyka-text-primary">{t("videoDailyWorkDate")}:</span>{" "}
             <span className="text-aistroyka-text-secondary">{result.work_date}</span>

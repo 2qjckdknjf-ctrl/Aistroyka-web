@@ -1,4 +1,7 @@
+"use client";
+
 import type { ReactNode } from "react";
+import { GlassSurface } from "@/components/design/liquid-glass";
 
 export function Card({
   children,
@@ -10,14 +13,14 @@ export function Card({
   className?: string;
 }) {
   return (
-    <div
-      className={`rounded-[var(--aistroyka-radius-card)] border bg-[var(--aistroyka-card-bg)] p-[var(--aistroyka-card-padding)] ${
-        elevated
-          ? "border-[var(--aistroyka-card-border-e2)] shadow-[var(--aistroyka-card-shadow-e2)]"
-          : "border-[var(--aistroyka-card-border-e1)] shadow-[var(--aistroyka-card-shadow-e1)]"
-      } ${className}`.trim()}
+    <GlassSurface
+      intensity={elevated ? "medium" : "subtle"}
+      padding="none"
+      className={className}
+      contentClassName="p-[var(--aistroyka-card-padding)]"
+      motion={elevated ? ["interactive"] : []}
     >
       {children}
-    </div>
+    </GlassSurface>
   );
 }

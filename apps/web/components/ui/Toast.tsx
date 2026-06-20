@@ -5,7 +5,7 @@ import { useEffect } from "react";
 export type ToastVariant = "neutral" | "success" | "warning" | "error";
 
 const variantClasses: Record<ToastVariant, string> = {
-  neutral: "bg-aistroyka-surface border-aistroyka-border-subtle text-aistroyka-text-primary",
+  neutral: "surface-glass-popover border-[var(--lg-border)] text-aistroyka-text-primary",
   success: "bg-[var(--aistroyka-badge-success-bg)] border-aistroyka-success/30 text-[var(--aistroyka-badge-success-text)]",
   warning: "bg-[var(--aistroyka-badge-warning-bg)] border-aistroyka-warning/30 text-[var(--aistroyka-badge-warning-text)]",
   error: "bg-[var(--aistroyka-badge-error-bg)] border-aistroyka-error/30 text-[var(--aistroyka-badge-error-text)]",

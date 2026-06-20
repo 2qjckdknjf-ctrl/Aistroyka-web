@@ -64,7 +64,7 @@ export function CurrentCalibration({ latest }: { latest: Latest }) {
           {showExplain ? tDetail("hide") : tDetail("whyTheseThresholds")}
         </Button>
         {showExplain && (
-          <div className="mt-aistroyka-3 rounded-aistroyka-lg border border-aistroyka-border-subtle bg-aistroyka-surface-raised p-aistroyka-4 text-aistroyka-subheadline text-aistroyka-text-secondary">
+          <div className="surface-glass-raised mt-aistroyka-3 rounded-aistroyka-lg p-aistroyka-4 text-aistroyka-subheadline text-aistroyka-text-secondary">
             <p>{tDetail("thresholdsCalibratedHint", { alpha, date })}</p>
             {latest.thresholds_smoothed && Object.entries(latest.thresholds_smoothed).map(([key, value]) => (
               <p key={key} className="mt-aistroyka-2">

@@ -55,7 +55,7 @@ export function UploadMediaForm({ projectId }: { projectId: string }) {
 
   return (
     <div>
-      <label className="inline-flex min-h-[44px] cursor-pointer items-center justify-center rounded-aistroyka-lg border border-aistroyka-border-subtle bg-aistroyka-surface px-4 py-2.5 text-sm font-medium text-aistroyka-text-primary transition-colors hover:bg-aistroyka-surface-raised focus-within:ring-2 focus-within:ring-aistroyka-accent/20 disabled:pointer-events-none disabled:opacity-50">
+      <label className="surface-glass inline-flex min-h-[44px] cursor-pointer items-center justify-center rounded-aistroyka-lg px-4 py-2.5 text-sm font-medium text-aistroyka-text-primary transition-colors hover:-translate-y-0.5 focus-within:ring-2 focus-within:ring-aistroyka-accent/20 disabled:pointer-events-none disabled:opacity-50">
         <input
           ref={inputRef}
           type="file"

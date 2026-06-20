@@ -1,6 +1,13 @@
 import { getTranslations } from "next-intl/server";
-import { Link } from "@/i18n/navigation";
-import { PublicCTASection, PublicHeroCTA, PublicHeroLens, PublicHeroMetrics, PublicRelatedLinksSection } from "@/components/public";
+import {
+  PublicCTASection,
+  PublicHeroCTA,
+  PublicHeroLens,
+  PublicHeroMetrics,
+  PublicRelatedLinksSection,
+  PublicRevealGlassCard,
+} from "@/components/public";
+import { GlassLink } from "@/components/design/liquid-glass";
 
 const HOME_RELATED_LINKS = [
   { href: "/platform", titleKey: "relatedPlatform", descKey: "relatedPlatformDesc", linkKey: "linkPlatform" },
@@ -8,6 +15,8 @@ const HOME_RELATED_LINKS = [
   { href: "/pricing", titleKey: "relatedPricing", descKey: "relatedPricingDesc", linkKey: "linkPricing" },
   { href: "/contact", titleKey: "relatedContact", descKey: "relatedContactDesc", linkKey: "linkContact" },
 ] as const;
+
+const MODULE_KEYS = ["projectManagement", "tasks", "dailyReports", "photoVideo"] as const;
 
 export async function PublicHomeContent() {
   const t = await getTranslations("public.home");
@@ -18,7 +27,6 @@ export async function PublicHomeContent() {
 
   return (
     <>
-      {/* Hero — LG-2A glass lens + operational chips */}
       <section className="relative overflow-hidden px-4 pb-20 pt-10 sm:px-6 sm:pt-14 lg:px-8 lg:pb-24">
         <div className="mx-auto grid min-w-0 max-w-7xl gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,24rem)] lg:items-center lg:gap-12">
           <div className="min-w-0">
@@ -64,185 +72,189 @@ export async function PublicHomeContent() {
         </div>
       </section>
 
-      {/* Metrics block */}
-      <section className="border-b border-[var(--border-main)] bg-[var(--bg-card)] py-10">
-        <div className="mx-auto min-w-0 max-w-5xl px-4 sm:px-6 lg:px-8">
-          <h2 className="text-center text-[var(--aistroyka-font-headline)] font-semibold text-[var(--text-muted)]">
-            {tMetrics("title")}
-          </h2>
-          <p className="mx-auto mt-2 max-w-2xl text-center text-[var(--aistroyka-font-footnote)] text-[var(--text-muted)]">
-            {tMetrics("disclaimer")}
-          </p>
-          <div className="mt-6 grid grid-cols-2 gap-6 sm:grid-cols-4">
-            <div className="text-center">
-              <div className="font-heading text-[var(--aistroyka-font-title2)] font-bold text-[var(--ai-yellow)]">{MOCK_METRICS.projects}</div>
-              <div className="mt-1 text-[var(--aistroyka-font-footnote)] text-[var(--text-muted)]">{tMetrics("projectsMonitored")}</div>
+      <section className="px-4 py-10 sm:px-6 lg:px-8">
+        <div className="mx-auto min-w-0 max-w-5xl">
+          <PublicRevealGlassCard intensity="subtle">
+            <h2 className="text-center text-[var(--aistroyka-font-headline)] font-semibold text-aistroyka-text-primary">
+              {tMetrics("title")}
+            </h2>
+            <p className="mx-auto mt-2 max-w-2xl text-center text-[var(--aistroyka-font-footnote)] text-aistroyka-text-secondary">
+              {tMetrics("disclaimer")}
+            </p>
+            <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+              {(
+                [
+                  [MOCK_METRICS.projects, tMetrics("projectsMonitored")],
+                  [MOCK_METRICS.reports, tMetrics("dailyReportsAnalyzed")],
+                  [MOCK_METRICS.insights, tMetrics("aiInsightsGenerated")],
+                  [MOCK_METRICS.photos, tMetrics("photosProcessed")],
+                ] as const
+              ).map(([value, label]) => (
+                <PublicRevealGlassCard key={label} interactive intensity="subtle">
+                  <div className="text-center">
+                    <div className="font-heading text-[var(--aistroyka-font-title2)] font-bold text-aistroyka-accent">
+                      {value}
+                    </div>
+                    <div className="mt-1 text-[var(--aistroyka-font-footnote)] text-aistroyka-text-secondary">
+                      {label}
+                    </div>
+                  </div>
+                </PublicRevealGlassCard>
+              ))}
             </div>
-            <div className="text-center">
-              <div className="font-heading text-[var(--aistroyka-font-title2)] font-bold text-[var(--ai-yellow)]">{MOCK_METRICS.reports}</div>
-              <div className="mt-1 text-[var(--aistroyka-font-footnote)] text-[var(--text-muted)]">{tMetrics("dailyReportsAnalyzed")}</div>
-            </div>
-            <div className="text-center">
-              <div className="font-heading text-[var(--aistroyka-font-title2)] font-bold text-[var(--ai-yellow)]">{MOCK_METRICS.insights}</div>
-              <div className="mt-1 text-[var(--aistroyka-font-footnote)] text-[var(--text-muted)]">{tMetrics("aiInsightsGenerated")}</div>
-            </div>
-            <div className="text-center">
-              <div className="font-heading text-[var(--aistroyka-font-title2)] font-bold text-[var(--ai-yellow)]">{MOCK_METRICS.photos}</div>
-              <div className="mt-1 text-[var(--aistroyka-font-footnote)] text-[var(--text-muted)]">{tMetrics("photosProcessed")}</div>
-            </div>
-          </div>
+          </PublicRevealGlassCard>
         </div>
       </section>
 
-      {/* Trust strip */}
-      <section className="border-b border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] py-6">
-        <div className="mx-auto min-w-0 max-w-7xl px-4 text-center text-[var(--aistroyka-font-subheadline)] text-[var(--aistroyka-text-secondary)] sm:px-6 lg:px-8">
-          {t("trustStrip")}
-        </div>
-      </section>
-
-      {/* Pain points */}
-      <section className="bg-[var(--bg-main)] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-        <div className="mx-auto min-w-0 max-w-3xl text-center">
-          <h2 className="font-heading text-[var(--aistroyka-font-title2)] font-semibold text-[var(--text-main)]">
-            {t("painTitle")}
-          </h2>
-          <p className="mt-3 text-[var(--aistroyka-font-body)] text-[var(--text-muted)]">
-            {t("painSubtitle")}
-          </p>
-        </div>
-      </section>
-
-      {/* Solution overview */}
-      <section className="bg-[var(--bg-card)] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-        <div className="mx-auto min-w-0 max-w-4xl text-center">
-          <h2 className="font-heading text-[var(--aistroyka-font-title2)] font-semibold text-[var(--text-main)]">
-            {t("solutionTitle")}
-          </h2>
-          <p className="mt-3 text-[var(--aistroyka-font-body)] text-[var(--text-muted)]">
-            {t("solutionSubtitle")}
-          </p>
-        </div>
-      </section>
-
-      {/* Key modules - cards */}
-      <section className="bg-[var(--bg-main)] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+      <section className="px-4 py-6 sm:px-6 lg:px-8">
         <div className="mx-auto min-w-0 max-w-7xl">
-          <h2 className="font-heading text-center text-[var(--aistroyka-font-title2)] font-semibold text-[var(--text-main)]">
-            {t("modulesTitle")}
-          </h2>
-          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {(["projectManagement", "tasks", "dailyReports", "photoVideo"] as const).map((key) => (
-              <div
-                key={key}
-                className="rounded-[var(--radius-main)] border border-[var(--border-main)] bg-[var(--bg-card)] p-6 shadow-[var(--aistroyka-shadow-e1)] transition-all hover:shadow-[var(--aistroyka-shadow-e2)] hover:border-[var(--ai-yellow)]/20"
-              >
-                <div className="text-[var(--aistroyka-font-headline)] font-semibold text-[var(--text-main)]">
+          <PublicRevealGlassCard intensity="subtle">
+            <p className="text-center text-[var(--aistroyka-font-subheadline)] text-aistroyka-text-secondary">
+              {t("trustStrip")}
+            </p>
+          </PublicRevealGlassCard>
+        </div>
+      </section>
+
+      <section className="px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+        <div className="mx-auto min-w-0 max-w-3xl">
+          <PublicRevealGlassCard>
+            <h2 className="text-center font-heading text-[var(--aistroyka-font-title2)] font-semibold text-aistroyka-text-primary">
+              {t("painTitle")}
+            </h2>
+            <p className="mt-3 text-center text-[var(--aistroyka-font-body)] text-aistroyka-text-secondary">
+              {t("painSubtitle")}
+            </p>
+          </PublicRevealGlassCard>
+        </div>
+      </section>
+
+      <section className="px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+        <div className="mx-auto min-w-0 max-w-4xl">
+          <PublicRevealGlassCard>
+            <h2 className="text-center font-heading text-[var(--aistroyka-font-title2)] font-semibold text-aistroyka-text-primary">
+              {t("solutionTitle")}
+            </h2>
+            <p className="mt-3 text-center text-[var(--aistroyka-font-body)] text-aistroyka-text-secondary">
+              {t("solutionSubtitle")}
+            </p>
+          </PublicRevealGlassCard>
+        </div>
+      </section>
+
+      <section className="px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+        <div className="mx-auto min-w-0 max-w-7xl">
+          <div className="mx-auto max-w-2xl text-center">
+            <span className="text-[13px] font-semibold uppercase tracking-[0.02em] text-aistroyka-accent">
+              {t("modulesTitle")}
+            </span>
+            <h2 className="mt-3 font-heading text-[var(--aistroyka-font-title2)] font-semibold text-aistroyka-text-primary">
+              {t("modulesTitle")}
+            </h2>
+          </div>
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {MODULE_KEYS.map((key) => (
+              <PublicRevealGlassCard key={key} interactive>
+                <h3 className="text-[var(--aistroyka-font-headline)] font-semibold text-aistroyka-text-primary">
                   {t(`modules.${key}`)}
-                </div>
-                <p className="mt-2 text-[var(--aistroyka-font-footnote)] text-[var(--text-muted)]">
+                </h3>
+                <p className="mt-2 text-[var(--aistroyka-font-footnote)] text-aistroyka-text-secondary">
                   {key === "projectManagement" && t("moduleDescProjectManagement")}
                   {key === "tasks" && t("moduleDescTasks")}
                   {key === "dailyReports" && t("moduleDescDailyReports")}
                   {key === "photoVideo" && t("moduleDescPhotoVideo")}
                 </p>
-              </div>
+              </PublicRevealGlassCard>
             ))}
           </div>
-          <p className="mt-8 text-center text-[var(--aistroyka-font-body)] text-[var(--text-muted)]">
-            <Link
-              href="/features"
-              className="font-medium text-aistroyka-accent underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-[var(--aistroyka-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
-            >
+          <p className="mt-8 text-center">
+            <GlassLink href="/features" pill intensity="subtle" linkClassName="text-sm">
               {t("seeAllFeatures")}
-            </Link>
+            </GlassLink>
           </p>
         </div>
       </section>
 
-      {/* Role-based value - reuse features copy */}
-      <section className="bg-[var(--aistroyka-surface)] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+      <section className="px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
         <div className="mx-auto min-w-0 max-w-7xl">
-          <h2 className="text-center text-[var(--aistroyka-font-title2)] font-semibold text-[var(--aistroyka-text-primary)]">
+          <h2 className="text-center text-[var(--aistroyka-font-title2)] font-semibold text-aistroyka-text-primary">
             {t("rolesTitle")}
           </h2>
-          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            <div className="card p-6">
-              <div className="font-semibold text-[var(--aistroyka-text-primary)]">{t("roleDeveloperGcTitle")}</div>
-              <p className="mt-2 text-[var(--aistroyka-font-footnote)] text-[var(--aistroyka-text-secondary)]">
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <PublicRevealGlassCard>
+              <div className="font-semibold text-aistroyka-text-primary">{t("roleDeveloperGcTitle")}</div>
+              <p className="mt-2 text-[var(--aistroyka-font-footnote)] text-aistroyka-text-secondary">
                 {t("roleDeveloperGcBody")}
               </p>
-            </div>
-            <div className="rounded-[var(--radius-main)] border border-[var(--border-main)] bg-[var(--bg-main)] p-6">
-              <div className="font-semibold text-[var(--text-main)]">{t("roleProjectManagerTitle")}</div>
-              <p className="mt-2 text-[var(--aistroyka-font-footnote)] text-[var(--text-muted)]">
+            </PublicRevealGlassCard>
+            <PublicRevealGlassCard>
+              <div className="font-semibold text-aistroyka-text-primary">{t("roleProjectManagerTitle")}</div>
+              <p className="mt-2 text-[var(--aistroyka-font-footnote)] text-aistroyka-text-secondary">
                 {t("roleProjectManagerBody")}
               </p>
-            </div>
-            <div className="rounded-[var(--radius-main)] border border-[var(--border-main)] bg-[var(--bg-main)] p-6">
-              <div className="font-semibold text-[var(--text-main)]">{t("roleFieldTeamsTitle")}</div>
-              <p className="mt-2 text-[var(--aistroyka-font-footnote)] text-[var(--text-muted)]">
+            </PublicRevealGlassCard>
+            <PublicRevealGlassCard>
+              <div className="font-semibold text-aistroyka-text-primary">{t("roleFieldTeamsTitle")}</div>
+              <p className="mt-2 text-[var(--aistroyka-font-footnote)] text-aistroyka-text-secondary">
                 {t("roleFieldTeamsBody")}
               </p>
-            </div>
+            </PublicRevealGlassCard>
           </div>
         </div>
       </section>
 
-      {/* AI Construction Control */}
-      <section className="bg-aistroyka-bg-primary px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-        <div className="mx-auto min-w-0 max-w-4xl text-center">
-          <h2 className="font-heading text-[var(--aistroyka-font-title2)] font-semibold text-[var(--text-main)]">
-            {t("aiSectionTitle")}
-          </h2>
-          <p className="mt-3 text-[var(--text-muted)]">
-            {t("aiSectionSubtitle")}
-          </p>
-          <Link href="/ai-construction-control" className="btn-primary mt-6 inline-flex max-w-full sm:px-6">
-            {t("learnMore")}
-          </Link>
-          <p className="mt-4 text-[var(--aistroyka-font-footnote)] text-[var(--text-muted)]">
-            <Link
-              href="/ai-demo"
-              className="font-medium text-aistroyka-accent underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-[var(--aistroyka-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
-            >
-              {t("tryMockAnalysis")}
-            </Link>
-          </p>
+      <section className="px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+        <div className="mx-auto min-w-0 max-w-4xl">
+          <PublicRevealGlassCard intensity="strong">
+            <h2 className="text-center font-heading text-[var(--aistroyka-font-title2)] font-semibold text-aistroyka-text-primary">
+              {t("aiSectionTitle")}
+            </h2>
+            <p className="mt-3 text-center text-aistroyka-text-secondary">{t("aiSectionSubtitle")}</p>
+            <div className="mt-6 flex justify-center">
+              <GlassLink href="/ai-construction-control">{t("learnMore")}</GlassLink>
+            </div>
+            <p className="mt-4 text-center">
+              <GlassLink href="/ai-demo" intensity="subtle" pill linkClassName="text-sm">
+                {t("tryMockAnalysis")}
+              </GlassLink>
+            </p>
+          </PublicRevealGlassCard>
         </div>
       </section>
 
-      {/* Mobile */}
-      <section className="bg-[var(--bg-card)] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-        <div className="mx-auto min-w-0 max-w-4xl text-center">
-          <h2 className="font-heading text-[var(--aistroyka-font-title2)] font-semibold text-[var(--text-main)]">
-            {t("mobileTitle")}
-          </h2>
-          <p className="mt-3 text-[var(--aistroyka-font-body)] text-[var(--text-muted)]">
-            {t("mobileSubtitle")}
-          </p>
-          <Link href="/mobile" className="btn-primary mx-auto mt-6 inline-flex max-w-full">
-            {t("mobileCta")}
-          </Link>
+      <section className="px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+        <div className="mx-auto min-w-0 max-w-4xl">
+          <PublicRevealGlassCard>
+            <h2 className="text-center font-heading text-[var(--aistroyka-font-title2)] font-semibold text-aistroyka-text-primary">
+              {t("mobileTitle")}
+            </h2>
+            <p className="mt-3 text-center text-[var(--aistroyka-font-body)] text-aistroyka-text-secondary">
+              {t("mobileSubtitle")}
+            </p>
+            <div className="mt-6 flex justify-center">
+              <GlassLink href="/mobile">{t("mobileCta")}</GlassLink>
+            </div>
+          </PublicRevealGlassCard>
         </div>
       </section>
 
-      {/* Pricing teaser */}
-      <section className="bg-[var(--bg-main)] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-        <div className="mx-auto min-w-0 max-w-3xl text-center">
-          <h2 className="font-heading text-[var(--aistroyka-font-title2)] font-semibold text-[var(--text-main)]">
-            {t("pricingTeaserTitle")}
-          </h2>
-          <p className="mt-3 text-[var(--aistroyka-font-body)] text-[var(--text-muted)]">
-            {t("pricingTeaserSubtitle")}
-          </p>
-          <Link href="/pricing" className="btn-primary mx-auto mt-6 inline-flex max-w-full">
-            {t("pricingTeaserCta")}
-          </Link>
+      <section className="px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+        <div className="mx-auto min-w-0 max-w-3xl">
+          <PublicRevealGlassCard>
+            <h2 className="text-center font-heading text-[var(--aistroyka-font-title2)] font-semibold text-aistroyka-text-primary">
+              {t("pricingTeaserTitle")}
+            </h2>
+            <p className="mt-3 text-center text-[var(--aistroyka-font-body)] text-aistroyka-text-secondary">
+              {t("pricingTeaserSubtitle")}
+            </p>
+            <div className="mt-6 flex justify-center">
+              <GlassLink href="/pricing">{t("pricingTeaserCta")}</GlassLink>
+            </div>
+          </PublicRevealGlassCard>
         </div>
       </section>
 
-      <section className="bg-[var(--bg-main)] px-4 py-16 sm:px-6 lg:px-8">
+      <section className="px-4 py-16 sm:px-6 lg:px-8">
         <div className="mx-auto min-w-0 max-w-7xl">
           <PublicRelatedLinksSection
             headingId="home-related-heading"
@@ -259,7 +271,7 @@ export async function PublicHomeContent() {
       </section>
 
       <PublicCTASection
-        variant="band"
+        variant="floating"
         title={t("finalCtaTitle")}
         subtitle={t("finalCtaSubtitle")}
         testIdPrefix="cta.public.home"

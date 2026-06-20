@@ -1,8 +1,7 @@
-"use client";
-
-import { LiquidGlassFilter } from "@/components/design/liquid-glass";
-
-/** Mount canonical SVG refraction filters once per public layout tree. */
+/**
+ * @deprecated Filters mount globally via `AppGlassRoot` in `app/layout.tsx`.
+ * Kept for public layout compatibility — no duplicate SVG injection.
+ */
 export function PublicLiquidGlassRoot() {
-  return <LiquidGlassFilter />;
+  return null;
 }

@@ -209,7 +209,7 @@ export function ChangeOrdersManagerPanel({ projectId }: { projectId: string }) {
         {listQuery.data?.map((r) => (
           <div
             key={r.id}
-            className="flex flex-wrap items-center justify-between gap-2 rounded border border-aistroyka-border-subtle bg-aistroyka-surface-muted/30 px-3 py-2"
+            className="flex flex-wrap items-center justify-between gap-2 surface-glass-muted rounded px-3 py-2"
           >
             <div>
               <Link

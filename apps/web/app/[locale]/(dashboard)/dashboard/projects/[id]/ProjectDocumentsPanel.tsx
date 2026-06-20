@@ -382,7 +382,7 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
       </div>
 
       {pendingDocs.length > 0 && (
-        <div className="mb-4 rounded-lg border border-aistroyka-border-subtle bg-aistroyka-surface-muted p-3 flex flex-wrap items-center justify-between gap-2">
+        <div className="mb-4 surface-glass rounded-lg-muted p-3 flex flex-wrap items-center justify-between gap-2">
           <div className="min-w-[220px]">
             <p className="text-sm font-medium text-aistroyka-text-primary">
               {pendingDocs.length} {tDetail("documentsPendingReview")}

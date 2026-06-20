@@ -167,7 +167,7 @@ export function ClientPortalViewClient({ projectId }: { projectId: string }) {
             {d.handover.status === "completed" && tDetail("handoverStatus.completed")}
           </p>
           {d.handover.handover_notes ? (
-            <p className="mt-3 rounded border border-aistroyka-border-subtle bg-aistroyka-surface-muted/40 p-3 text-sm whitespace-pre-wrap">
+            <p className="mt-3 surface-glass-muted rounded p-3 text-sm whitespace-pre-wrap">
               {d.handover.handover_notes}
             </p>
           ) : null}

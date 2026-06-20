@@ -17,7 +17,7 @@ export function AdminTable<R>({
 }) {
   if (rows.length === 0) {
     return (
-      <div className="rounded border border-aistroyka-border-subtle bg-aistroyka-surface-raised/30 p-6 text-center text-aistroyka-subheadline text-aistroyka-text-secondary">
+      <div className="surface-glass-muted rounded p-6 text-center text-aistroyka-subheadline text-aistroyka-text-secondary">
         {emptyMessage}
       </div>
     );
@@ -26,7 +26,7 @@ export function AdminTable<R>({
     <div className="overflow-x-auto rounded border border-aistroyka-border-subtle">
       <table className="w-full min-w-[320px] text-left text-aistroyka-subheadline">
         <thead>
-          <tr className="border-b border-aistroyka-border-subtle bg-aistroyka-surface-raised">
+          <tr className="border-b border-[var(--lg-border)] surface-glass-row">
             {columns.map((col) => (
               <th
                 key={col.key}

@@ -69,7 +69,7 @@ function UpgradeCta({ suggestion }: { suggestion: PlanSurfaceViewModel["upgradeS
   if (suggestion.ctaVariant === "none" || !suggestion.ctaCopy) return null;
   const targetRoute = getUpgradeCtaTargetRoute(suggestion.ctaVariant);
   return (
-    <div className="mt-4 rounded-[var(--aistroyka-radius-md)] border border-aistroyka-border-subtle bg-aistroyka-surface-raised p-4">
+    <div className="mt-4 surface-glass-raised rounded-[var(--aistroyka-radius-md)] p-4">
       <p className="text-aistroyka-subheadline font-medium text-aistroyka-text-primary">{suggestion.ctaCopy}</p>
       {suggestion.learnMoreCopy && (
         <p className="mt-1 text-aistroyka-caption text-aistroyka-text-secondary">{suggestion.learnMoreCopy}</p>

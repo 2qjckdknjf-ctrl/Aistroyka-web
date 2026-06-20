@@ -7,14 +7,14 @@ export function EvidenceOverview({ pack }: { pack: EvidencePack | null }) {
   const tDetail = useTranslations("dashboardDetail");
   if (pack == null) {
     return (
-      <div className="rounded-lg border border-aistroyka-border-subtle bg-aistroyka-surface-raised p-4 text-sm text-aistroyka-text-secondary sm:p-6">
+      <div className="surface-glass-raised rounded-lg p-4 text-sm text-aistroyka-text-secondary sm:p-6">
         {tDetail("evidenceOverviewEmpty")}
       </div>
     );
   }
 
   return (
-    <div className="rounded-lg border border-aistroyka-border-subtle bg-aistroyka-surface-raised p-4 text-sm sm:p-6">
+    <div className="surface-glass-raised rounded-lg p-4 text-sm sm:p-6">
       <div className="font-medium text-aistroyka-text-primary">{tDetail("evidenceOverview")}</div>
 
       <div className="mt-4">

@@ -24,7 +24,7 @@ export function Nav({ userEmail }: { userEmail?: string }) {
   const closeMobile = useCallback(() => setMobileOpen(false), []);
 
   return (
-    <nav className="border-b border-aistroyka-border-subtle bg-aistroyka-surface" role="navigation" aria-label={t("main")}>
+    <nav className="border-b border-[var(--lg-border)] surface-glass-chrome" role="navigation" aria-label={t("main")}>
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-aistroyka-3 px-aistroyka-4 py-aistroyka-4">
         <div className="flex min-h-aistroyka-touch items-center gap-aistroyka-4 md:gap-aistroyka-8">
           <Link
@@ -87,7 +87,7 @@ export function Nav({ userEmail }: { userEmail?: string }) {
       </div>
       <div
         id="nav-menu-mobile"
-        className={`border-t border-aistroyka-border-subtle bg-aistroyka-surface md:hidden ${mobileOpen ? "block" : "hidden"}`}
+        className={`border-t border-[var(--lg-border)] surface-glass-chrome md:hidden ${mobileOpen ? "block" : "hidden"}`}
         aria-hidden={!mobileOpen}
       >
         <div className="mx-auto max-w-6xl px-aistroyka-4 py-aistroyka-3">
@@ -123,7 +123,7 @@ export function Nav({ userEmail }: { userEmail?: string }) {
 function LocaleSwitcher() {
   const pathname = usePathname();
   return (
-    <div className="flex rounded-aistroyka-lg border border-aistroyka-border-subtle bg-aistroyka-surface-raised p-0.5">
+    <div className="surface-glass-raised flex rounded-aistroyka-lg p-0.5">
       {routing.locales.map((loc) => (
         <Link
           key={loc}

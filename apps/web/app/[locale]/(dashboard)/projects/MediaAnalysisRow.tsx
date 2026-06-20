@@ -63,7 +63,7 @@ export function MediaAnalysisRow({
       : null;
 
   return (
-    <li className="rounded-lg border border-aistroyka-border-subtle bg-aistroyka-surface p-4">
+    <li className="surface-glass rounded-lg p-4">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm text-aistroyka-text-secondary">{media.file_url}</p>

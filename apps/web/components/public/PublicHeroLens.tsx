@@ -1,4 +1,7 @@
+"use client";
+
 import { GlassHeroCard } from "@/components/design/liquid-glass";
+import { CountUpText } from "./CountUpText";
 
 type LensStat = {
   label: string;
@@ -14,35 +17,37 @@ type PublicHeroLensProps = {
 };
 
 /**
- * Signature “AI lens over the site” panel — single accent glass element per hero.
+ * Signature “AI lens over the site” panel — glow + 3D tilt (demo balance-card parity).
  */
 export function PublicHeroLens({ label, title, stats, streamLines }: PublicHeroLensProps) {
   return (
-    <GlassHeroCard float contentClassName="p-5 sm:p-6">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-aistroyka-accent">{label}</p>
-      <p className="mt-2 font-heading text-xl font-semibold text-aistroyka-text-primary">{title}</p>
-      <dl className="mt-4 grid gap-2 text-sm">
-        {stats.map(({ label: statLabel, value, tone = "default" }, index) => (
-          <div
-            key={statLabel}
-            className={`flex items-center justify-between gap-3 ${index < stats.length - 1 ? "border-b border-aistroyka-border-subtle pb-2" : ""}`}
-          >
-            <dt className="text-aistroyka-text-secondary">{statLabel}</dt>
-            <dd
-              className={`font-medium ${tone === "warning" ? "text-aistroyka-warning" : "text-aistroyka-text-primary"}`}
+    <div className="flex justify-center [perspective:1200px]">
+      <GlassHeroCard className="w-full max-w-[20rem] rounded-[28px]" contentClassName="p-5 sm:p-6">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-aistroyka-accent">{label}</p>
+        <p className="mt-2 font-heading text-xl font-semibold text-aistroyka-text-primary">{title}</p>
+        <dl className="mt-4 grid gap-2 text-sm">
+          {stats.map(({ label: statLabel, value, tone = "default" }, index) => (
+            <div
+              key={statLabel}
+              className={`flex items-center justify-between gap-3 ${index < stats.length - 1 ? "border-b border-aistroyka-border-subtle pb-2" : ""}`}
             >
-              {value}
-            </dd>
-          </div>
-        ))}
-      </dl>
-      <div className="public-hero-lens-stream mt-5 space-y-1.5 border-t border-aistroyka-border-subtle pt-4" aria-hidden>
-        {streamLines.map((line) => (
-          <p key={line} className="truncate font-mono text-[11px] text-aistroyka-text-tertiary">
-            {line}
-          </p>
-        ))}
-      </div>
-    </GlassHeroCard>
+              <dt className="text-aistroyka-text-secondary">{statLabel}</dt>
+              <dd
+                className={`font-medium ${tone === "warning" ? "text-aistroyka-warning" : "text-aistroyka-text-primary"}`}
+              >
+                <CountUpText value={value} />
+              </dd>
+            </div>
+          ))}
+        </dl>
+        <div className="public-hero-lens-stream mt-5 space-y-1.5 border-t border-aistroyka-border-subtle pt-4" aria-hidden>
+          {streamLines.map((line) => (
+            <p key={line} className="truncate font-mono text-[11px] text-aistroyka-text-tertiary">
+              {line}
+            </p>
+          ))}
+        </div>
+      </GlassHeroCard>
+    </div>
   );
 }

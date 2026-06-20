@@ -7,6 +7,7 @@ import {
   normalizeApiError,
   networkErrorToApiError,
 } from "@/lib/api/errorShape";
+import { Button } from "@/components/ui";
 
 export function CreateProjectForm() {
   const router = useRouter();
@@ -73,14 +74,14 @@ export function CreateProjectForm() {
         aria-label={t("projectNamePlaceholder")}
         autoComplete="off"
       />
-      <button
+      <Button
         type="submit"
         disabled={loading || !name.trim()}
-        className="btn-primary"
+        loading={loading}
         aria-label={loading ? t("creating") : t("create")}
       >
         {loading ? t("creating") : t("create")}
-      </button>
+      </Button>
       {error && (
         <span className="w-full text-sm text-aistroyka-error sm:w-auto" role="alert">{error}</span>
       )}

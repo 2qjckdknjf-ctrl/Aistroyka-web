@@ -21,11 +21,11 @@ export const TYPE = {
   link: "text-aistroyka-subheadline text-aistroyka-text-secondary hover:underline",
 } as const;
 
-/** Card: use @/components/ui Card when possible */
+/** Card: use @/components/ui Card when possible (Liquid Glass surface). */
 export const CARD =
-  "rounded-aistroyka-card border border-aistroyka-border-subtle bg-aistroyka-surface p-aistroyka-4 sm:p-aistroyka-6";
+  "relative isolate overflow-hidden rounded-[var(--lg-radius)] border border-[var(--lg-border)] p-aistroyka-4 sm:p-aistroyka-6 [background:color-mix(in_srgb,var(--lg-tint)_calc(var(--lg-intensity)*1%),transparent)] [backdrop-filter:blur(var(--lg-blur))] shadow-[var(--lg-shadow)]";
 export const CARD_MUTED =
-  "rounded-aistroyka-card border border-aistroyka-border-subtle bg-aistroyka-surface-raised p-aistroyka-4 sm:p-aistroyka-6";
+  "relative isolate overflow-hidden rounded-[var(--lg-radius)] border border-[var(--lg-border)] p-aistroyka-4 sm:p-aistroyka-6 [background:color-mix(in_srgb,var(--lg-tint-strong)_72%,transparent)] [backdrop-filter:blur(var(--lg-blur))] shadow-[var(--lg-shadow-hover)]";
 
 /** Status (use Badge from @/components/ui when possible) */
 export const STATUS = {

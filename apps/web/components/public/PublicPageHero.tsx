@@ -89,7 +89,7 @@ export function PublicPageHero({
   subtitle,
   variant = "compact",
   eyebrow,
-  eyebrowGlass = false,
+  eyebrowGlass = true,
   headingLevel = "h1",
   visual,
   proofSlot,

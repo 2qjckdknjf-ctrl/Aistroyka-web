@@ -1,11 +1,17 @@
 import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
-import { Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { buildPublicPageMetadata } from "@/lib/seo/public-page-metadata";
 import { buildStandardPublicBreadcrumb } from "@/lib/seo/public-page-breadcrumb";
-import { PublicCTASection, PublicFeatureGrid, PublicPageHero, PublicTimelineSection, PublicJsonLd } from "@/components/public";
+import {
+  PublicCTASection,
+  PublicFeatureGrid,
+  PublicJsonLd,
+  PublicPageHero,
+  PublicRelatedLinksSection,
+  PublicTimelineSection,
+} from "@/components/public";
 import { AiControlSignalVisual } from "./AiControlSignalVisual";
 
 type Props = { params: Promise<{ locale: string }> };
@@ -50,9 +56,6 @@ const RELATED_LINKS = [
   { href: "/copilot", titleKey: "relatedCopilot", descKey: "relatedCopilotDesc", linkKey: "linkCopilot" },
   { href: "/ai-demo", titleKey: "relatedAiDemo", descKey: "relatedAiDemoDesc", linkKey: "linkAiDemo" },
 ] as const;
-
-const linkFocusClass =
-  "outline-none focus-visible:ring-2 focus-visible:ring-[var(--aistroyka-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent";
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
@@ -155,36 +158,17 @@ export default async function AiConstructionControlPage({ params }: Props) {
           </div>
         </section>
 
-        <section aria-labelledby="ai-control-related-heading">
-          <h2
-            id="ai-control-related-heading"
-            className="text-[var(--aistroyka-font-title2)] font-semibold text-aistroyka-text-primary"
-          >
-            {t("relatedTitle")}
-          </h2>
-          <p className="mt-3 max-w-3xl text-[var(--aistroyka-font-body)] text-aistroyka-text-secondary">
-            {t("relatedSubtitle")}
-          </p>
-          <ul className="mt-8 grid min-w-0 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {RELATED_LINKS.map(({ href, titleKey, descKey, linkKey }) => (
-              <li
-                key={href}
-                className="rounded-[var(--aistroyka-radius-card)] border border-aistroyka-border-subtle bg-aistroyka-surface p-5 shadow-[var(--aistroyka-shadow-e1)]"
-              >
-                <h3 className="font-semibold text-aistroyka-text-primary">{t(titleKey)}</h3>
-                <p className="mt-2 text-[var(--aistroyka-font-footnote)] text-aistroyka-text-secondary">
-                  {t(descKey)}
-                </p>
-                <Link
-                  href={href}
-                  className={`mt-4 inline-flex text-sm font-medium text-aistroyka-accent underline-offset-4 hover:underline ${linkFocusClass}`}
-                >
-                  {t(linkKey)}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
+        <PublicRelatedLinksSection
+          headingId="ai-control-related-heading"
+          title={t("relatedTitle")}
+          subtitle={t("relatedSubtitle")}
+          links={RELATED_LINKS.map(({ href, titleKey, descKey, linkKey }) => ({
+            href,
+            title: t(titleKey),
+            description: t(descKey),
+            linkLabel: t(linkKey),
+          }))}
+        />
       </div>
 
       <PublicCTASection

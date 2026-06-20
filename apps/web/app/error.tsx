@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { GlassLink } from "@/components/design/liquid-glass";
 import { ErrorState } from "@/components/ui/ErrorState";
 
 const IS_DEV =
@@ -52,24 +51,20 @@ export default function Error({
     /auth|session|401|403|unauthorized|forbidden|tenant|membership/i.test(
       error?.message?.trim() ?? ""
     );
-  const pathname = usePathname();
-  const knownLocales = ["ru", "en", "es", "it"];
-  const firstSegment = pathname?.startsWith("/") ? pathname.split("/")[1] : "";
-  const locale = firstSegment && knownLocales.includes(firstSegment) ? firstSegment : "ru";
-  const loginHref = `/${locale}/login`;
+  const loginHref = "/login";
 
   return (
     <div className="flex min-h-[50vh] flex-col items-center justify-center gap-5 px-4">
-      <ErrorState message={message} onRetry={reset} />
-      <div className="flex flex-wrap justify-center gap-3">
-        {isAuthRelated && (
-          <Link href={loginHref} className="btn-primary">
-            Log in again
-          </Link>
-        )}
-        <Link href="/" className="btn-secondary">
-          Go home
-        </Link>
+      <div className="card-elevated w-full max-w-lg text-center">
+        <ErrorState message={message} onRetry={reset} />
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
+          {isAuthRelated && (
+            <GlassLink href={loginHref}>Log in again</GlassLink>
+          )}
+          <GlassLink href="/" intensity="subtle">
+            Go home
+          </GlassLink>
+        </div>
       </div>
     </div>
   );

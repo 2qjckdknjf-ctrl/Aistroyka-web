@@ -29,7 +29,7 @@ export function Modal({
         aria-hidden
         onClick={onClose}
       />
-      <div className="relative w-full max-w-md rounded-[var(--aistroyka-radius-xxl)] border border-aistroyka-border-subtle bg-aistroyka-surface p-[var(--aistroyka-space-6)] shadow-[var(--aistroyka-shadow-e4)]">
+      <div className="relative w-full max-w-md card-elevated p-[var(--aistroyka-space-6)]">
         {title ? (
           <h2 id="modal-title" className="mb-[var(--aistroyka-space-4)] text-[var(--aistroyka-font-title3)] font-semibold text-aistroyka-text-primary">
             {title}

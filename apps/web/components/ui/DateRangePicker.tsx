@@ -25,7 +25,7 @@ export function DateRangePicker({
   return (
     <div className="flex flex-wrap items-center gap-2" role="group" aria-label={ariaLabel ?? tDetail("dateRange")}>
       {onPreset && (
-        <div className="flex gap-1 rounded-[var(--aistroyka-radius-lg)] border border-aistroyka-border-subtle bg-aistroyka-surface-raised p-0.5">
+        <div className="flex gap-1 surface-glass-raised rounded-[var(--aistroyka-radius-lg)] p-0.5">
           {(["7d", "30d", "90d"] as DateRangePreset[]).map((preset) => (
             <button
               key={preset}

@@ -76,7 +76,7 @@ export function Alert({
   return (
     <div
       role="alert"
-      className={`flex items-start gap-[var(--aistroyka-space-3)] rounded-[var(--aistroyka-radius-md)] border bg-aistroyka-surface p-[var(--aistroyka-space-4)] ${borderTintClasses[style]} ${className}`.trim()}
+      className={`surface-glass flex items-start gap-[var(--aistroyka-space-3)] rounded-[var(--aistroyka-radius-md)] border p-[var(--aistroyka-space-4)] ${borderTintClasses[style]} ${className}`.trim()}
     >
       <Icon style={style} />
       <p className="min-w-0 flex-1 text-[var(--aistroyka-font-subheadline)] font-medium text-aistroyka-text-primary">

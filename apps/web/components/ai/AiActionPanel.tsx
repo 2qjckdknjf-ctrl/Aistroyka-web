@@ -184,7 +184,7 @@ export function AiActionPanel({
     (result.groundedness_passed === false || result.retrieval_low_confidence === true);
 
   return (
-    <div className="rounded-lg border border-aistroyka-border-subtle bg-aistroyka-surface p-4">
+    <div className="surface-glass rounded-lg p-4">
       <h3 className="mb-3 text-aistroyka-font-title3 font-semibold text-aistroyka-text-primary">
         {tDetail("aiCopilot")}
       </h3>
@@ -269,7 +269,7 @@ export function AiActionPanel({
       )}
 
       {!isPending && !result && !error && (
-        <div className="rounded border border-aistroyka-border-subtle bg-aistroyka-surface-muted/50 p-4 text-center text-sm text-aistroyka-text-tertiary">
+        <div className="surface-glass-muted rounded p-4 text-center text-sm text-aistroyka-text-tertiary">
           {tDetail("runAiToSeeSummaryRiskOrAsk")}
         </div>
       )}
@@ -301,7 +301,7 @@ export function AiActionPanel({
       )}
 
       {IS_DEV_OR_STAGING && (requestId || result || error) && (
-        <details className="mt-4 rounded border border-aistroyka-border-subtle bg-aistroyka-surface-muted/30 p-3 text-xs">
+        <details className="mt-4 surface-glass-muted rounded p-3 text-xs">
           <summary className="cursor-pointer font-medium text-aistroyka-text-secondary">
             {tDetail("diagnostics")}
           </summary>

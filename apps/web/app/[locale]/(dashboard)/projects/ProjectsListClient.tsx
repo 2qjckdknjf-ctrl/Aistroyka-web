@@ -60,7 +60,7 @@ export function ProjectsListClient({
           <div className="overflow-x-auto">
             <table className="w-full min-w-[260px] text-left text-aistroyka-subheadline">
               <thead>
-                <tr className="border-b border-aistroyka-border-subtle bg-aistroyka-surface-raised">
+                <tr className="border-b border-[var(--lg-border)] surface-glass-row">
                   <th className="table-cell w-6 py-2 pr-0" aria-label={tDetail("aiSignal")} />
                   <th className="table-cell font-semibold text-aistroyka-text-primary">
                     {t("name")}

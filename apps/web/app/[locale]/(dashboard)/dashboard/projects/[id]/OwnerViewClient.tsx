@@ -944,7 +944,7 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
               </div>
             )}
             {scheduledBulkAction && (
-              <div className="mb-3 flex flex-wrap items-center gap-2 rounded border border-aistroyka-border-subtle bg-aistroyka-surface-raised p-3">
+              <div className="surface-glass-raised mb-3 flex flex-wrap items-center gap-2 rounded p-3">
                 <p className="text-sm text-aistroyka-text-primary">
                   {tDetail("bulkUndoWindowMessage", {
                     action: scheduledBulkActionLabel,

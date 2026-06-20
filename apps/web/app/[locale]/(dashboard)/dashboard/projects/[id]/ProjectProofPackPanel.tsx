@@ -130,7 +130,7 @@ export function ProjectProofPackPanel({ projectId }: { projectId: string }) {
       ) : null}
 
       {fullUrl ? (
-        <div className="mt-4 rounded border border-aistroyka-border-subtle bg-aistroyka-surface-muted/30 p-3">
+        <div className="mt-4 surface-glass-muted rounded p-3">
           <p className="text-xs font-medium uppercase text-aistroyka-text-tertiary">{t("proofPackShareUrl")}</p>
           <p className="mt-1 break-all font-mono text-sm text-aistroyka-accent">{fullUrl}</p>
           <div className="mt-3 flex flex-wrap gap-2">

@@ -116,7 +116,7 @@ export function DashboardProjectsListClient() {
             type="button"
             onClick={handleExportCsv}
             disabled={pageData.length === 0}
-            className="rounded-[var(--aistroyka-radius-md)] border border-aistroyka-border-subtle bg-aistroyka-surface-raised px-3 py-1.5 text-aistroyka-caption font-medium text-aistroyka-text-primary hover:bg-aistroyka-surface focus:outline-none focus:ring-2 focus:ring-aistroyka-accent disabled:opacity-50"
+            className="surface-glass-raised rounded-[var(--aistroyka-radius-md)] px-3 py-1.5 text-aistroyka-caption font-medium text-aistroyka-text-primary focus:outline-none focus:ring-2 focus:ring-aistroyka-accent disabled:opacity-50"
           >
             {tDetail("exportCsv")}
           </button>

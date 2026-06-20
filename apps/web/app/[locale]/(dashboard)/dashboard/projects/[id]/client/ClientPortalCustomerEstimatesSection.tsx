@@ -48,7 +48,7 @@ export function ClientPortalCustomerEstimatesSection({
   return (
     <section
       id="portal-customer-estimates"
-      className="rounded-lg border border-aistroyka-border-subtle bg-aistroyka-surface p-4 border-l-4 border-l-aistroyka-accent"
+      className="surface-glass rounded-lg p-4 border-l-4 border-l-aistroyka-accent"
       aria-labelledby="portal-estimates-heading"
     >
       <h3 id="portal-estimates-heading" className="font-semibold text-aistroyka-text-primary">
@@ -74,7 +74,7 @@ export function ClientPortalCustomerEstimatesSection({
             {e.status === "sent" && canRespond ? (
               <div className="mt-3 space-y-2">
                 <textarea
-                  className="w-full rounded border border-aistroyka-border-subtle bg-aistroyka-surface px-3 py-2 text-aistroyka-text-primary min-h-[72px]"
+                  className="w-full input-field-sm text-aistroyka-text-primary min-h-[72px]"
                   placeholder={t("customerEstimatesNotePlaceholder")}
                   value={notes[e.id] ?? ""}
                   onChange={(ev) => setNotes((prev) => ({ ...prev, [e.id]: ev.target.value }))}

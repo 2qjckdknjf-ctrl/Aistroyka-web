@@ -44,7 +44,7 @@ export function AdminAiSecurityClient() {
                 <select
                   value={tenantId ?? ""}
                   onChange={(e) => setSelectedTenantId(e.target.value || null)}
-                  className="rounded border border-aistroyka-border-subtle bg-aistroyka-surface-raised px-2 py-1"
+                  className="input-field-sm px-2 py-1"
                 >
                   {tenants.map((t) => (
                     <option key={t.id} value={t.id}>{t.name ?? t.id.slice(0, 8)}</option>
@@ -57,7 +57,7 @@ export function AdminAiSecurityClient() {
               <select
                 value={severity}
                 onChange={(e) => setSeverity(e.target.value)}
-                className="rounded border border-aistroyka-border-subtle bg-aistroyka-surface-raised px-2 py-1 text-aistroyka-subheadline"
+                className="input-field-sm px-2 py-1 text-aistroyka-subheadline"
               >
                 <option value="">{tDetail("allSeverity")}</option>
                 <option value="low">{tDetail("low")}</option>
@@ -70,7 +70,7 @@ export function AdminAiSecurityClient() {
                 placeholder={tDetail("eventTypeFilter")}
                 value={eventType}
                 onChange={(e) => setEventType(e.target.value)}
-                className="rounded border border-aistroyka-border-subtle bg-aistroyka-surface-raised px-2 py-1 text-aistroyka-subheadline"
+                className="input-field-sm px-2 py-1 text-aistroyka-subheadline"
               />
             </div>
             <QueryBoundary query={eventsQuery} emptyCondition={(d) => !d?.length} emptyTitle={tDetail("noSecurityEvents")}>

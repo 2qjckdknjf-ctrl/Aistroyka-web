@@ -1,4 +1,5 @@
-import { Link } from "@/i18n/navigation";
+import { GlassLink } from "@/components/design/liquid-glass";
+import { PublicRevealGlassCard } from "./PublicRevealGlassCard";
 
 export type PublicRelatedLinkItem = {
   href: string;
@@ -6,9 +7,6 @@ export type PublicRelatedLinkItem = {
   description: string;
   linkLabel: string;
 };
-
-const linkFocusClass =
-  "font-medium text-aistroyka-accent underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-[var(--aistroyka-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent";
 
 type PublicRelatedLinksSectionProps = {
   headingId: string;
@@ -45,17 +43,16 @@ export function PublicRelatedLinksSection({
       </p>
       <ul className={`mt-8 grid min-w-0 grid-cols-1 gap-4 ${gridClass}`}>
         {links.map(({ href, title: linkTitle, description, linkLabel }) => (
-          <li
-            key={href}
-            className="rounded-[var(--aistroyka-radius-card)] border border-aistroyka-border-subtle bg-aistroyka-surface p-5 shadow-[var(--aistroyka-shadow-e1)]"
-          >
-            <h3 className="font-semibold text-aistroyka-text-primary">{linkTitle}</h3>
-            <p className="mt-2 text-[var(--aistroyka-font-footnote)] text-aistroyka-text-secondary">
-              {description}
-            </p>
-            <Link href={href} className={`mt-4 inline-flex text-sm ${linkFocusClass}`}>
-              {linkLabel}
-            </Link>
+          <li key={href}>
+            <PublicRevealGlassCard interactive>
+              <h3 className="font-semibold text-aistroyka-text-primary">{linkTitle}</h3>
+              <p className="mt-2 text-[var(--aistroyka-font-footnote)] text-aistroyka-text-secondary">
+                {description}
+              </p>
+              <GlassLink href={href} intensity="subtle" pill className="mt-4 inline-block" linkClassName="text-sm">
+                {linkLabel}
+              </GlassLink>
+            </PublicRevealGlassCard>
           </li>
         ))}
       </ul>

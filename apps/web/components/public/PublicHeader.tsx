@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Link, usePathname } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { Logo } from "@/components/brand/Logo";
-import { GlassNav, useGlassNavScrolled } from "@/components/design/liquid-glass";
+import { GlassLink, GlassNav, useGlassNavScrolled } from "@/components/design/liquid-glass";
 
 const PRIMARY_NAV = [
   { href: "/dashboard", key: "cabinet" as const },
@@ -74,15 +74,15 @@ export function PublicHeader() {
           </nav>
 
           <div className="hidden min-w-0 flex-wrap items-center justify-end gap-2 md:flex">
-            <Link href="/contact" className="btn-secondary">
+            <GlassLink href="/contact" intensity="subtle" linkClassName="text-sm">
               {t("contactUs")}
-            </Link>
-            <Link href="/dashboard" className={navLinkClass(false)}>
+            </GlassLink>
+            <GlassLink href="/dashboard" intensity="subtle" linkClassName="text-sm">
               {t("cabinet")}
-            </Link>
-            <Link href="/login" className="btn-primary">
+            </GlassLink>
+            <GlassLink href="/login" pill intensity="strong" linkClassName="text-sm">
               {t("login")}
-            </Link>
+            </GlassLink>
           </div>
 
           <div className="flex items-center gap-1 md:hidden">
@@ -114,27 +114,30 @@ export function PublicHeader() {
 
         <div
           id="mobile-menu"
-          className={`mt-2 rounded-[var(--aistroyka-radius-xl)] border border-aistroyka-border-subtle bg-aistroyka-surface shadow-[var(--aistroyka-shadow-e2)] md:hidden ${mobileMenuOpen ? "block" : "hidden"}`}
+          className={`surface-glass-popover mt-2 rounded-[var(--aistroyka-radius-xl)] md:hidden ${mobileMenuOpen ? "block" : "hidden"}`}
           aria-hidden={!mobileMenuOpen}
         >
           <nav className="flex flex-col gap-0.5 px-4 py-4" aria-label={t("mainMobile")}>
             <div className="mb-3 flex flex-col gap-2 border-b border-aistroyka-border-subtle pb-4">
-              <Link
+              <GlassLink
                 href="/dashboard"
-                className="btn-primary text-center"
+                className="w-full"
+                linkClassName="text-center"
                 onClick={() => setMobileMenuOpen(false)}
                 data-testid="cta.public.mobile.cabinet"
               >
                 {t("cabinet")}
-              </Link>
-              <Link
+              </GlassLink>
+              <GlassLink
                 href="/login"
-                className="rounded-[var(--aistroyka-radius-lg)] border border-aistroyka-border-subtle bg-transparent px-4 py-3 text-center text-[var(--aistroyka-font-subheadline)] font-semibold text-aistroyka-text-primary hover:bg-aistroyka-surface-raised"
+                intensity="subtle"
+                className="w-full"
+                linkClassName="text-center"
                 onClick={() => setMobileMenuOpen(false)}
                 data-testid="cta.public.mobile.login"
               >
                 {t("login")}
-              </Link>
+              </GlassLink>
             </div>
             {PRIMARY_NAV.map(({ href, key }) => (
               <Link

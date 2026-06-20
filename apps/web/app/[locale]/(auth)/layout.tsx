@@ -1,4 +1,5 @@
 import { BuildStamp } from "@/components/BuildStamp";
+import { PublicAmbientField } from "@/components/public/PublicAmbientField";
 
 /**
  * Auth layout: login/register. Includes build marker so unauthenticated users
@@ -6,10 +7,11 @@ import { BuildStamp } from "@/components/BuildStamp";
  */
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen flex-col">
-      <main className="flex-1">{children}</main>
+    <div className="public-ambient-shell relative flex min-h-screen flex-col">
+      <PublicAmbientField />
+      <main className="relative z-10 flex-1">{children}</main>
       <footer
-        className="mt-auto py-2 text-center text-aistroyka-caption text-aistroyka-text-tertiary"
+        className="relative z-10 mt-auto py-2 text-center text-aistroyka-caption text-aistroyka-text-tertiary"
         aria-hidden="true"
       >
         <BuildStamp />

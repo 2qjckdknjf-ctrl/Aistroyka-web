@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "@/i18n/navigation";
-import { GlassSurface } from "@/components/design/liquid-glass";
+import { PublicRevealGlassCard } from "./PublicRevealGlassCard";
 
 export type PublicFeatureCardVariant = "solid" | "subtle" | "glass-highlight" | "faq";
 
@@ -19,6 +19,15 @@ export type PublicFeatureCardProps = {
 const linkFocusClass =
   "outline-none focus-visible:ring-2 focus-visible:ring-[var(--aistroyka-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent";
 
+function isInteractiveVariant(variant: PublicFeatureCardVariant): boolean {
+  return variant === "glass-highlight" || variant === "solid";
+}
+
+function intensityForVariant(variant: PublicFeatureCardVariant): "subtle" | "medium" | "strong" {
+  if (variant === "subtle" || variant === "faq") return "subtle";
+  return "medium";
+}
+
 function CardShell({
   variant,
   className,
@@ -30,45 +39,25 @@ function CardShell({
   children: ReactNode;
   href?: string;
 }) {
-  if (variant === "glass-highlight") {
-    const inner = (
-      <GlassSurface intensity="subtle" padding="md" className={className}>
-        {children}
-      </GlassSurface>
-    );
-    if (href) {
-      return (
-        <Link href={href} className={`block rounded-[var(--aistroyka-radius-card)] ${linkFocusClass}`}>
-          {inner}
-        </Link>
-      );
-    }
-    return inner;
-  }
-
-  const surfaceClass =
-    variant === "subtle"
-      ? "border border-aistroyka-border-subtle bg-aistroyka-bg-primary"
-      : "border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] shadow-[var(--aistroyka-shadow-e1)]";
-
-  const body = (
-    <div className={`rounded-[var(--aistroyka-radius-card)] p-6 ${surfaceClass} ${className}`.trim()}>
+  const card = (
+    <PublicRevealGlassCard
+      className={className}
+      interactive={isInteractiveVariant(variant)}
+      intensity={intensityForVariant(variant)}
+    >
       {children}
-    </div>
+    </PublicRevealGlassCard>
   );
 
   if (href) {
     return (
-      <Link
-        href={href}
-        className={`block rounded-[var(--aistroyka-radius-card)] transition-colors hover:border-aistroyka-accent/30 ${linkFocusClass}`}
-      >
-        {body}
+      <Link href={href} className={`block rounded-[var(--aistroyka-radius-card)] ${linkFocusClass}`}>
+        {card}
       </Link>
     );
   }
 
-  return body;
+  return card;
 }
 
 function CardContent({
@@ -122,7 +111,7 @@ function CardContent({
 export function PublicFeatureCard({
   title,
   description,
-  variant = "solid",
+  variant = "glass-highlight",
   href,
   eyebrow,
   metadata,
@@ -132,7 +121,7 @@ export function PublicFeatureCard({
 }: PublicFeatureCardProps) {
   if (variant === "faq") {
     return (
-      <CardShell variant="solid" className={className} href={href}>
+      <CardShell variant="faq" className={className} href={href}>
         <dl className="m-0">
           <CardContent
             eyebrow={eyebrow}

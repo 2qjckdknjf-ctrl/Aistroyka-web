@@ -16,7 +16,7 @@ export default async function TelegramStartPage({ searchParams }: Props) {
 
   return (
     <div className="mx-auto flex min-h-[100dvh] max-w-md items-center px-aistroyka-4 py-aistroyka-8">
-      <div className="w-full rounded-[var(--aistroyka-radius-card)] border border-aistroyka-border-subtle bg-aistroyka-surface p-6">
+      <div className="w-full card-elevated">
         <h1 className="text-aistroyka-title2 font-bold text-aistroyka-text-primary">
           {t("continueWithTelegram")}
         </h1>

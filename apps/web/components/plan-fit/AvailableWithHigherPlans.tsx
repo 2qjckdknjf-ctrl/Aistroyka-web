@@ -41,7 +41,7 @@ export function AvailableWithHigherPlans() {
         {items.map((item) => (
           <li
             key={item.capabilityKey}
-            className="flex flex-wrap items-start justify-between gap-2 rounded-[var(--aistroyka-radius-md)] border border-aistroyka-border-subtle bg-aistroyka-surface-raised px-4 py-3"
+            className="flex flex-wrap items-start justify-between gap-2 surface-glass-raised rounded-[var(--aistroyka-radius-md)] px-4 py-3"
           >
             <div>
               <p className="text-aistroyka-subheadline font-medium text-aistroyka-text-primary">{item.title}</p>

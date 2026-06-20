@@ -65,7 +65,7 @@ export function AuditTimeline({ events }: { events: Event[] }) {
         <label className="flex items-center gap-2 text-aistroyka-subheadline text-aistroyka-text-secondary">
           <span>{tDetail("type")}</span>
           <select
-            className="rounded-aistroyka-md border border-aistroyka-border-subtle bg-aistroyka-surface px-2 py-1 text-aistroyka-callout"
+            className="input-field-sm rounded-aistroyka-md px-2 py-1 text-aistroyka-callout"
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
           >
@@ -77,7 +77,7 @@ export function AuditTimeline({ events }: { events: Event[] }) {
         <label className="flex items-center gap-2 text-aistroyka-subheadline text-aistroyka-text-secondary">
           <span>{tDetail("severity")}</span>
           <select
-            className="rounded-aistroyka-md border border-aistroyka-border-subtle bg-aistroyka-surface px-2 py-1 text-aistroyka-callout"
+            className="input-field-sm rounded-aistroyka-md px-2 py-1 text-aistroyka-callout"
             value={severityFilter}
             onChange={(e) => setSeverityFilter(e.target.value)}
           >
@@ -89,7 +89,7 @@ export function AuditTimeline({ events }: { events: Event[] }) {
         <label className="flex items-center gap-2 text-aistroyka-subheadline text-aistroyka-text-secondary">
           <span>{tDetail("days")}</span>
           <select
-            className="rounded-aistroyka-md border border-aistroyka-border-subtle bg-aistroyka-surface px-2 py-1 text-aistroyka-callout"
+            className="input-field-sm rounded-aistroyka-md px-2 py-1 text-aistroyka-callout"
             value={days}
             onChange={(e) => setDays(Number(e.target.value))}
           >

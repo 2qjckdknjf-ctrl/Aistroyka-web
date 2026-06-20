@@ -113,7 +113,7 @@ export function ClientPortalServiceRequestDetailClient({
           </p>
         ) : null}
         {d.resolution_note ? (
-          <p className="mt-4 rounded border border-aistroyka-border-subtle bg-aistroyka-surface-muted/40 p-3 text-sm">
+          <p className="mt-4 surface-glass-muted rounded p-3 text-sm">
             <span className="font-medium">{tDetail("outcome")}:</span> {d.resolution_note}
           </p>
         ) : null}

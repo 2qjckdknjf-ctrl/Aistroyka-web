@@ -20,7 +20,7 @@ export type PublicCTASectionProps = Partial<PublicCtaLabels> & {
 };
 
 export function PublicCTASection({
-  variant = "band",
+  variant = "floating",
   title,
   subtitle,
   primaryLabel,
@@ -89,7 +89,7 @@ export function PublicCTASection({
         aria-label={title ? undefined : labels.primaryLabel}
       >
         <div className="mx-auto min-w-0 max-w-3xl">
-          <GlassPanel intensity="subtle" contentClassName="text-center">
+          <GlassPanel intensity="strong" reveal contentClassName="px-6 py-12 text-center sm:px-10 sm:py-14">
             {copyBlock}
             {ctaBlock}
           </GlassPanel>
@@ -100,13 +100,15 @@ export function PublicCTASection({
 
   return (
     <section
-      className={`bg-aistroyka-bg-primary px-3 py-16 sm:px-6 sm:py-20 lg:px-8 ${className}`.trim()}
+      className={`px-3 py-12 sm:px-6 lg:px-8 ${className}`.trim()}
       aria-labelledby={title ? `${testIdPrefix}-heading` : undefined}
       aria-label={title ? undefined : labels.primaryLabel}
     >
       <div className="mx-auto min-w-0 max-w-3xl">
-        {copyBlock}
-        <div className="flex justify-center">{ctaBlock}</div>
+        <GlassPanel intensity="strong" reveal contentClassName="px-6 py-12 text-center sm:px-10 sm:py-14">
+          {copyBlock}
+          {ctaBlock}
+        </GlassPanel>
       </div>
     </section>
   );

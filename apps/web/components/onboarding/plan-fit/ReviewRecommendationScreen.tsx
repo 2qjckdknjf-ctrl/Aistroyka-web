@@ -33,7 +33,7 @@ export function ReviewRecommendationScreen({
         {t("reviewSubtitle")}
       </p>
 
-      <div className="mt-6 rounded-lg border border-aistroyka-border-subtle bg-aistroyka-surface-muted/50 p-4">
+      <div className="mt-6 surface-glass rounded-lg-muted/50 p-4">
         <p className="font-medium text-aistroyka-text-primary">{recommendedLabel}</p>
         {recommendation.reasoningCodes.length > 0 && (
           <p className="mt-2 text-sm text-aistroyka-text-secondary">

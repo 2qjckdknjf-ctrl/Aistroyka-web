@@ -10,7 +10,7 @@ export default async function OwnerCabinetLayout({ children }: { children: React
   await assertPlatformOwnerPageAccess();
   return (
     <div className="min-h-screen bg-aistroyka-bg-primary text-aistroyka-text-primary">
-      <header className="border-b border-aistroyka-border-subtle bg-aistroyka-surface px-aistroyka-4 py-aistroyka-3">
+      <header className="surface-glass-chrome border-b border-[var(--lg-border)] px-aistroyka-4 py-aistroyka-3">
         <p className="text-aistroyka-caption font-semibold uppercase tracking-wide text-aistroyka-text-tertiary">
           Isolated control layer
         </p>

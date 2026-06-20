@@ -155,7 +155,7 @@ export function CopilotChatPanel({
   const isPending = sendMessageMutation.isPending;
 
   return (
-    <div className="flex flex-col rounded-lg border border-aistroyka-border-subtle bg-aistroyka-surface p-4">
+    <div className="flex flex-col surface-glass rounded-lg p-4">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-aistroyka-font-title3 font-semibold text-aistroyka-text-primary">
           Copilot chat
@@ -188,7 +188,7 @@ export function CopilotChatPanel({
       </div>
 
       {threadSummary?.summary && (
-        <details className="mb-3 rounded border border-aistroyka-border-subtle bg-aistroyka-surface-muted/50 p-2">
+        <details className="surface-glass-muted mb-3 rounded p-2">
           <summary className="cursor-pointer text-sm font-medium text-aistroyka-text-secondary">
             Thread summary
           </summary>
@@ -272,7 +272,7 @@ export function CopilotChatPanel({
       </div>
 
       {IS_DEV_OR_STAGING && (lastRequestId || lastAssistant || lastMemoryMeta.chunksCount != null || lastMemoryMeta.summaryUsed) && (
-        <details className="mt-4 rounded border border-aistroyka-border-subtle bg-aistroyka-surface-muted/30 p-3 text-xs">
+        <details className="mt-4 surface-glass-muted rounded p-3 text-xs">
           <summary className="cursor-pointer font-medium text-aistroyka-text-secondary">
             Diagnostics
           </summary>

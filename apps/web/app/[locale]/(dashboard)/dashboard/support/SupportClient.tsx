@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { Button } from "@/components/ui";
 
 type SupportTicket = {
   id: string;
@@ -146,9 +147,9 @@ export function SupportClient() {
           className="input-field min-h-28"
           required
         />
-        <button type="submit" className="btn-primary" disabled={loading}>
+        <Button type="submit" disabled={loading} loading={loading}>
           {loading ? "Sending..." : "Create ticket"}
-        </button>
+        </Button>
         {error ? <p className="text-sm text-aistroyka-error">{error}</p> : null}
       </form>
 
@@ -209,9 +210,9 @@ export function SupportClient() {
                   className="input-field min-h-20"
                   required
                 />
-                <button type="submit" className="btn-secondary" disabled={loading || !reply.trim()}>
+                <Button type="submit" variant="secondary" disabled={loading || !reply.trim()} loading={loading}>
                   Send message
-                </button>
+                </Button>
               </form>
             </>
           ) : (

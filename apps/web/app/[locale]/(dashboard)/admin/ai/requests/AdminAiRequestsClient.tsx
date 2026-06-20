@@ -35,7 +35,7 @@ export function AdminAiRequestsClient() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder={tDetail("pasteRequestIdHint")}
-          className="min-w-[240px] rounded border border-aistroyka-border-subtle bg-aistroyka-surface-raised px-3 py-2 font-mono text-aistroyka-subheadline"
+          className="input-field-sm min-w-[240px] font-mono text-aistroyka-subheadline"
         />
       </div>
 

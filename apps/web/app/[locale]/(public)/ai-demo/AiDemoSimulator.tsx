@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
+import { GlassButton } from "@/components/design/liquid-glass";
 
 const MOCK_RESULTS = {
   detectedElements: ["foundation", "walls", "framing", "roofStructure", "mepRoughIn"] as const,
@@ -35,12 +36,8 @@ export function AiDemoSimulator({ embedded = false }: { embedded?: boolean }) {
     inputRef.current?.click();
   }
 
-  const shellClass = embedded
-    ? ""
-    : "rounded-[var(--aistroyka-radius-card)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] p-6 shadow-[var(--aistroyka-shadow-e2)]";
-
   return (
-    <div className={shellClass}>
+    <div>
       <div className="grid gap-6 lg:grid-cols-2">
         <div>
           <h3 className="text-[var(--aistroyka-font-headline)] font-semibold text-[var(--aistroyka-text-primary)]">
@@ -126,9 +123,9 @@ export function AiDemoSimulator({ embedded = false }: { embedded?: boolean }) {
                   {t(MOCK_RESULTS.aiSummary)}
                 </p>
               </div>
-              <button type="button" onClick={handleTryDemo} className="btn-secondary mt-2 text-sm">
+              <GlassButton type="button" onClick={handleTryDemo} className="mt-2" intensity="subtle">
                 {t("tryAnotherPhoto")}
-              </button>
+              </GlassButton>
             </>
           )}
           {step === "upload" && (

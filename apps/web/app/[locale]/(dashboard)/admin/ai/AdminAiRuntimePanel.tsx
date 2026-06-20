@@ -67,7 +67,7 @@ export function AdminAiRuntimePanel({ tenantId }: { tenantId: string | null }) {
           <select
             value={hours}
             onChange={(e) => setHours(Number(e.target.value))}
-            className="ml-2 rounded border border-aistroyka-border-subtle bg-aistroyka-surface-raised px-2 py-1 text-sm"
+            className="ml-2 input-field-sm px-2 py-1 text-sm"
           >
             <option value={24}>24h</option>
             <option value={72}>72h</option>

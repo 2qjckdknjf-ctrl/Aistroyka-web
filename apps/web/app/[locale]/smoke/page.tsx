@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { callRPC, AppError } from "@/lib/rpc";
+import { Button } from "@/components/ui";
 import { hasSupabaseEnv } from "@/lib/env";
 
 export default function SmokePage() {
@@ -80,11 +81,11 @@ export default function SmokePage() {
 
       <section className="card mb-aistroyka-6">
         <h2 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">{t("checkSession")}</h2>
-        <button type="button" onClick={handleCheckSession} className="btn-secondary mt-aistroyka-3">
+        <Button type="button" variant="secondary" onClick={handleCheckSession} className="mt-aistroyka-3">
           {t("checkSession")}
-        </button>
+        </Button>
         {sessionResult && (
-          <pre className="mt-aistroyka-3 overflow-auto rounded-card-sm border border-aistroyka-border-subtle bg-aistroyka-surface-raised p-aistroyka-3 text-aistroyka-caption text-aistroyka-text-primary">
+          <pre className="mt-aistroyka-3 surface-glass-raised overflow-auto rounded-card-sm p-aistroyka-3 text-aistroyka-caption text-aistroyka-text-primary">
             {sessionResult}
           </pre>
         )}
@@ -110,12 +111,12 @@ export default function SmokePage() {
             onChange={(e) => setRpcParamsJson(e.target.value)}
             className="input-field font-mono"
           />
-          <button type="button" onClick={handlePingRPC} disabled={rpcLoading} className="btn-primary w-fit disabled:opacity-50">
+          <Button type="button" onClick={handlePingRPC} disabled={rpcLoading} loading={rpcLoading} className="w-fit">
             {rpcLoading ? t("calling") : t("callRpc")}
-          </button>
+          </Button>
         </div>
         {rpcResult && (
-          <pre className="mt-aistroyka-3 overflow-auto rounded-card-sm border border-aistroyka-border-subtle bg-aistroyka-surface-raised p-aistroyka-3 text-aistroyka-caption text-aistroyka-text-primary">
+          <pre className="mt-aistroyka-3 surface-glass-raised overflow-auto rounded-card-sm p-aistroyka-3 text-aistroyka-caption text-aistroyka-text-primary">
             {rpcResult}
           </pre>
         )}

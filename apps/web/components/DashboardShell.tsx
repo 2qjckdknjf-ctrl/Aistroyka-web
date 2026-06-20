@@ -61,7 +61,7 @@ export function DashboardShell({
       {/* Sidebar */}
       <aside
         id="dashboard-sidebar"
-        className={`fixed inset-y-0 left-0 z-40 w-56 border-r border-aistroyka-border-subtle bg-aistroyka-surface transition-transform md:static md:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 w-56 border-r border-[var(--lg-border)] surface-glass-chrome transition-transform md:static md:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
         aria-label={t("dashboardNavigation")}
@@ -167,7 +167,7 @@ export function DashboardShell({
         <FirstLaunchGuide />
         <AIGuidePanel />
         {/* Topbar */}
-        <header className="sticky top-0 z-20 border-b border-aistroyka-border-subtle bg-aistroyka-surface">
+        <header className="sticky top-0 z-20 border-b border-[var(--lg-border)] surface-glass-chrome">
           <div className="flex flex-wrap items-center justify-between gap-2 px-[var(--aistroyka-space-4)] py-[var(--aistroyka-space-3)]">
             <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 sm:gap-3">
               <button
@@ -238,7 +238,7 @@ export function DashboardShell({
 function LocaleSwitcher() {
   const pathname = usePathname();
   return (
-    <div className="flex rounded-[var(--aistroyka-radius-lg)] border border-aistroyka-border-subtle bg-aistroyka-surface-raised p-0.5">
+    <div className="flex surface-glass-raised rounded-[var(--aistroyka-radius-lg)] p-0.5">
       {routing.locales.map((loc) => (
         <Link
           key={loc}

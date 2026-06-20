@@ -2,6 +2,7 @@
 
 import { useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
+import { Button } from "@/components/ui";
 import { createClient } from "@/lib/supabase/client";
 
 export function NavLogout() {
@@ -16,12 +17,8 @@ export function NavLogout() {
   }
 
   return (
-    <button
-      type="button"
-      onClick={handleLogout}
-      className="btn-secondary text-sm"
-    >
+    <Button type="button" variant="secondary" size="sm" onClick={handleLogout}>
       {t("logout")}
-    </button>
+    </Button>
   );
 }

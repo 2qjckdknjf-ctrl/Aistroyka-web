@@ -23,7 +23,7 @@ export function ClientPortalActivitySection({ projectId }: { projectId: string }
 
   if (q.isPending) {
     return (
-      <div className="rounded-lg border border-aistroyka-border-subtle bg-aistroyka-surface p-4">
+      <div className="surface-glass rounded-lg p-4">
         <p className="text-sm text-aistroyka-text-tertiary">{tDetail("loadingActivity")}</p>
       </div>
     );

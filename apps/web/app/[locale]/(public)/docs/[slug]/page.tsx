@@ -2,8 +2,9 @@ import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Link } from "@/i18n/navigation";
+import { GlassLink } from "@/components/design/liquid-glass";
 import { routing } from "@/i18n/routing";
+import { PublicGlassContentPage, PublicRevealGlassCard } from "@/components/public";
 
 const DOC_SLUGS = [
   "getting-started",
@@ -60,20 +61,16 @@ export default async function DocSlugPage({ params }: Props) {
   const titleKey = DOC_TITLE_KEYS[key];
 
   return (
-    <div className="mx-auto min-w-0 max-w-3xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-      <Link
-        href="/docs"
-        className="text-[var(--aistroyka-font-footnote)] text-[var(--aistroyka-accent)] hover:underline"
-      >
+    <PublicGlassContentPage title={t(titleKey)} maxWidthClass="max-w-3xl">
+      <GlassLink href="/docs" intensity="subtle" pill linkClassName="text-sm">
         ← {t("title")}
-      </Link>
-      <h1 className="mt-4 text-[var(--aistroyka-font-title)] font-bold text-[var(--aistroyka-text-primary)]">
-        {t(titleKey)}
-      </h1>
-      <div className="prose prose-neutral mt-6 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-primary)]">
-        <p className="text-[var(--aistroyka-text-secondary)]">{t(DOC_BODY_KEYS[key])}</p>
-      </div>
-    </div>
+      </GlassLink>
+      <PublicRevealGlassCard>
+        <div className="prose prose-neutral text-[var(--aistroyka-font-body)] text-aistroyka-text-primary">
+          <p className="text-aistroyka-text-secondary">{t(DOC_BODY_KEYS[key])}</p>
+        </div>
+      </PublicRevealGlassCard>
+    </PublicGlassContentPage>
   );
 }
 

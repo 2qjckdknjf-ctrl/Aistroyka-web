@@ -2,6 +2,7 @@ import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 import { routing } from "@/i18n/routing";
+import { PublicGlassContentPage, PublicRevealGlassCard } from "@/components/public";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -22,32 +23,19 @@ export default async function ProjectsShowcasePage({ params }: Props) {
   const sections = ["dashboard", "aiAnalytics", "progressTracking", "mobileReporting"] as const;
 
   return (
-    <div className="mx-auto min-w-0 max-w-5xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-      <h1 className="text-[var(--aistroyka-font-title)] font-bold text-[var(--aistroyka-text-primary)]">
-        {t("title")}
-      </h1>
-      <p className="mt-4 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-secondary)]">
-        {t("metaDescription")}
-      </p>
-      <div className="mt-12 grid gap-8 sm:grid-cols-2">
+    <PublicGlassContentPage title={t("title")} description={t("metaDescription")} maxWidthClass="max-w-5xl">
+      <div className="grid gap-6 sm:grid-cols-2">
         {sections.map((key) => (
-          <div
-            key={key}
-            className="flex flex-col rounded-[var(--aistroyka-radius-card)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] p-6 shadow-[var(--aistroyka-shadow-e1)]"
-          >
-            <div className="mb-4 flex h-32 items-center justify-center rounded-[var(--aistroyka-radius-lg)] bg-[var(--aistroyka-bg-primary)] text-[var(--aistroyka-text-tertiary)]">
+          <PublicRevealGlassCard key={key} interactive>
+            <div className="mb-4 flex h-32 items-center justify-center rounded-[var(--aistroyka-radius-lg)] bg-aistroyka-bg-primary/80 text-aistroyka-text-tertiary">
               {t("previewPlaceholder")}
             </div>
-            <h2 className="text-[var(--aistroyka-font-title3)] font-semibold text-[var(--aistroyka-text-primary)]">
-              {t(key)}
-            </h2>
-            <p className="mt-2 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-secondary)]">
-              {t(`${key}Desc`)}
-            </p>
-          </div>
+            <h2 className="text-[var(--aistroyka-font-title3)] font-semibold text-aistroyka-text-primary">{t(key)}</h2>
+            <p className="mt-2 text-[var(--aistroyka-font-body)] text-aistroyka-text-secondary">{t(`${key}Desc`)}</p>
+          </PublicRevealGlassCard>
         ))}
       </div>
-    </div>
+    </PublicGlassContentPage>
   );
 }
 

@@ -78,7 +78,7 @@ export function TriggerAnalysisButton({
         type="button"
         onClick={handleClick}
         disabled={disabled}
-        className="min-h-[36px] rounded-aistroyka-lg border border-aistroyka-border-subtle bg-aistroyka-surface px-3 py-2 text-sm disabled:opacity-50"
+        className="input-field-sm disabled:opacity-50"
       >
         {buttonLabel}
       </button>

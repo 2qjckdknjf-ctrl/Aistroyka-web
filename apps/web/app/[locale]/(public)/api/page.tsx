@@ -2,13 +2,16 @@ import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 import { routing } from "@/i18n/routing";
+import { GlassSurface } from "@/components/design/liquid-glass";
 import {
   PublicCTASection,
   PublicFeatureGrid,
+  PublicGlassMatrixGrid,
   PublicJsonLd,
   PublicPageHero,
   PublicProofSection,
   PublicRelatedLinksSection,
+  PublicRevealGlassCard,
   PublicTimelineSection,
 } from "@/components/public";
 import { buildPublicPageMetadata } from "@/lib/seo/public-page-metadata";
@@ -65,9 +68,9 @@ export default async function ApiPage({ params }: Props) {
       />
 
       <div className="mx-auto min-w-0 max-w-7xl space-y-20 px-4 pb-8 sm:px-6 lg:px-8 lg:pb-12">
-        <p className="-mt-8 max-w-3xl rounded-[var(--aistroyka-radius-lg)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-bg-primary)] px-4 py-3 text-[var(--aistroyka-font-footnote)] text-[var(--aistroyka-text-secondary)]">
-          {t("positioning")}
-        </p>
+        <PublicRevealGlassCard intensity="subtle" className="-mt-8 max-w-3xl">
+          <p className="text-[var(--aistroyka-font-footnote)] text-aistroyka-text-secondary">{t("positioning")}</p>
+        </PublicRevealGlassCard>
 
         <PublicFeatureGrid
           title={t("categoriesTitle")}
@@ -122,19 +125,12 @@ export default async function ApiPage({ params }: Props) {
               }))}
             />
           </div>
-          <ul className="mt-8 grid min-w-0 gap-4 sm:grid-cols-3">
-            {PUBLIC_API_MATRIX_KEYS.map((key) => (
-              <li
-                key={key}
-                className="rounded-[var(--aistroyka-radius-card)] border border-aistroyka-border-subtle bg-aistroyka-surface p-5 shadow-[var(--aistroyka-shadow-e1)]"
-              >
-                <h3 className="font-semibold text-aistroyka-text-primary">{t(`${key}Title`)}</h3>
-                <p className="mt-2 text-[var(--aistroyka-font-footnote)] text-aistroyka-text-secondary">
-                  {t(`${key}Desc`)}
-                </p>
-              </li>
-            ))}
-          </ul>
+          <PublicGlassMatrixGrid
+            items={PUBLIC_API_MATRIX_KEYS.map((key) => ({
+              title: t(`${key}Title`),
+              description: t(`${key}Desc`),
+            }))}
+          />
         </section>
 
         <section aria-labelledby="api-examples-heading">
@@ -147,9 +143,11 @@ export default async function ApiPage({ params }: Props) {
           <p className="mt-3 max-w-3xl text-[var(--aistroyka-font-body)] text-aistroyka-text-secondary">
             {t("examplesNote")}
           </p>
-          <pre className="mt-6 overflow-x-auto rounded-[var(--aistroyka-radius-lg)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-bg-branded)] p-4 text-[var(--aistroyka-font-footnote)] text-[var(--aistroyka-text-on-branded)]">
-            {PUBLIC_API_EXAMPLE_ROUTES.join("\n")}
-          </pre>
+          <GlassSurface intensity="subtle" padding="md" reveal className="mt-6">
+            <pre className="overflow-x-auto text-[var(--aistroyka-font-footnote)] text-aistroyka-text-primary">
+              {PUBLIC_API_EXAMPLE_ROUTES.join("\n")}
+            </pre>
+          </GlassSurface>
         </section>
 
         <PublicRelatedLinksSection

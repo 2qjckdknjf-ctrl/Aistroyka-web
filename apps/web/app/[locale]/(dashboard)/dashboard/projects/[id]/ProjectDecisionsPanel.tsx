@@ -126,7 +126,7 @@ export function ProjectDecisionsPanel({ projectId }: { projectId: string }) {
           <label className="flex flex-col gap-1 text-sm">
             <span className="text-aistroyka-text-secondary">{t("title")}</span>
             <input
-              className="rounded border border-aistroyka-border-subtle bg-aistroyka-surface px-3 py-2 text-aistroyka-text-primary"
+              className="input-field-sm text-aistroyka-text-primary"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
@@ -135,7 +135,7 @@ export function ProjectDecisionsPanel({ projectId }: { projectId: string }) {
           <label className="flex flex-col gap-1 text-sm">
             <span className="text-aistroyka-text-secondary">{t("decisionRequestsTypeLabel")}</span>
             <select
-              className="rounded border border-aistroyka-border-subtle bg-aistroyka-surface px-3 py-2 text-aistroyka-text-primary"
+              className="input-field-sm text-aistroyka-text-primary"
               value={decisionType}
               onChange={(e) => setDecisionType(e.target.value as ClientRequestDecisionType)}
             >
@@ -150,7 +150,7 @@ export function ProjectDecisionsPanel({ projectId }: { projectId: string }) {
             <span className="text-aistroyka-text-secondary">{t("decisionRequestsDueOptional")}</span>
             <input
               type="datetime-local"
-              className="rounded border border-aistroyka-border-subtle bg-aistroyka-surface px-3 py-2 text-aistroyka-text-primary"
+              className="input-field-sm text-aistroyka-text-primary"
               value={dueAt}
               onChange={(e) => setDueAt(e.target.value)}
             />
@@ -163,13 +163,13 @@ export function ProjectDecisionsPanel({ projectId }: { projectId: string }) {
                   type="number"
                   min="0"
                   step="0.01"
-                  className="flex-1 rounded border border-aistroyka-border-subtle bg-aistroyka-surface px-3 py-2 text-aistroyka-text-primary"
+                  className="flex-1 input-field-sm text-aistroyka-text-primary"
                   value={customerAmount}
                   onChange={(e) => setCustomerAmount(e.target.value)}
                   placeholder="0"
                 />
                 <input
-                  className="w-24 rounded border border-aistroyka-border-subtle bg-aistroyka-surface px-3 py-2 text-aistroyka-text-primary"
+                  className="w-24 input-field-sm text-aistroyka-text-primary"
                   value={customerCurrency}
                   onChange={(e) => setCustomerCurrency(e.target.value)}
                   maxLength={8}
@@ -182,7 +182,7 @@ export function ProjectDecisionsPanel({ projectId }: { projectId: string }) {
         <label className="flex flex-col gap-1 text-sm">
           <span className="text-aistroyka-text-secondary">{t("decisionRequestsDescriptionLabel")}</span>
           <textarea
-            className="rounded border border-aistroyka-border-subtle bg-aistroyka-surface px-3 py-2 text-aistroyka-text-primary min-h-[88px]"
+            className="input-field-sm min-h-[88px] text-aistroyka-text-primary"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />

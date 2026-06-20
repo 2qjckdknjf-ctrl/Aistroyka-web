@@ -1,15 +1,12 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { GlassButton } from "@/components/design/liquid-glass";
 
 type Variant = "primary" | "secondary" | "ghost" | "destructive" | "icon";
 type Size = "sm" | "md";
 
-const variantClasses: Record<Variant, string> = {
-  primary:
-    "bg-[var(--aistroyka-button-primary-bg)] text-[var(--aistroyka-button-primary-text)] hover:bg-[var(--aistroyka-button-primary-hover-bg)] active:bg-[var(--aistroyka-button-primary-pressed-bg)] disabled:bg-[var(--aistroyka-button-primary-disabled-bg)]",
-  secondary:
-    "border border-[var(--aistroyka-button-secondary-border)] bg-[var(--aistroyka-button-secondary-bg)] text-[var(--aistroyka-button-secondary-text)] hover:bg-aistroyka-surface-raised disabled:text-[var(--aistroyka-button-secondary-text-disabled)] disabled:opacity-50",
+const variantClasses: Record<Exclude<Variant, "primary" | "secondary">, string> = {
   ghost:
     "text-aistroyka-accent hover:bg-aistroyka-surface-raised disabled:text-aistroyka-text-tertiary",
   destructive:
@@ -48,6 +45,42 @@ export function Button({
 }) {
   const isDisabled = disabled || loading;
   const isIcon = variant === "icon";
+
+  const content = loading ? (
+    <span
+      className="inline-block h-5 w-5 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent opacity-90"
+      aria-hidden
+    />
+  ) : (
+    children
+  );
+
+  if (variant === "primary" || variant === "secondary") {
+    return (
+      <GlassButton
+        type={type}
+        disabled={isDisabled}
+        intensity={variant === "primary" ? "strong" : "subtle"}
+        className={["inline-block max-w-full", isIcon ? "" : "w-auto", className].filter(Boolean).join(" ")}
+        aria-busy={loading}
+        aria-label={ariaLabel}
+        onClick={onClick}
+        {...rest}
+      >
+        <span
+          className={[
+            "inline-flex w-full items-center justify-center whitespace-normal break-words text-center",
+            isIcon ? "" : sizeClasses[size],
+          ]
+            .filter(Boolean)
+            .join(" ")}
+        >
+          {content}
+        </span>
+      </GlassButton>
+    );
+  }
+
   return (
     <button
       type={type}
@@ -58,14 +91,7 @@ export function Button({
       aria-label={ariaLabel}
       {...rest}
     >
-      {loading ? (
-        <span
-          className="inline-block h-5 w-5 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent opacity-90"
-          aria-hidden
-        />
-      ) : (
-        children
-      )}
+      {content}
     </button>
   );
 }

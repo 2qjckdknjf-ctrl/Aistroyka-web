@@ -20,7 +20,7 @@ export function SystemStabilityOverview({
   const tDetail = useTranslations("dashboardDetail");
   if (history.length === 0) {
     return (
-      <div className="rounded-lg border border-aistroyka-border-subtle bg-aistroyka-surface-raised p-4 text-sm text-aistroyka-text-secondary sm:p-6">
+      <div className="surface-glass-raised rounded-lg p-4 text-sm text-aistroyka-text-secondary sm:p-6">
         {tDetail("systemStabilityOverviewEmpty")}
       </div>
     );
@@ -29,7 +29,7 @@ export function SystemStabilityOverview({
   const result = computeCrossAnalysis(history);
 
   return (
-    <div className="rounded-lg border border-aistroyka-border-subtle bg-aistroyka-surface-raised p-4 text-sm sm:p-6">
+    <div className="surface-glass-raised rounded-lg p-4 text-sm sm:p-6">
       <div className="font-medium text-aistroyka-text-primary">{tDetail("systemStabilityOverview")}</div>
       <div className="mt-4 grid gap-2 text-aistroyka-text-primary sm:grid-cols-2">
         <div>

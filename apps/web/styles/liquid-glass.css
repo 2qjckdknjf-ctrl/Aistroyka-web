@@ -137,10 +137,16 @@
 
 .lg--interactive:hover {
   box-shadow: var(--lg-shadow-hover);
+  transform: translateY(-2px);
 }
 
 .lg--interactive:active {
   transform: scale(0.97);
+}
+
+.lg--tilt {
+  transform-style: preserve-3d;
+  will-change: transform;
 }
 
 .lg--glow .lg__sheen {
@@ -154,14 +160,18 @@
 @keyframes lg-materialize {
   from {
     opacity: 0;
-    filter: blur(12px);
-    transform: scale(0.92);
+    filter: blur(14px);
+    transform: scale(0.93) translateY(8px);
   }
   to {
     opacity: 1;
     filter: blur(0);
-    transform: scale(1);
+    transform: scale(1) translateY(0);
   }
+}
+
+.lg--pending {
+  opacity: 0;
 }
 
 .lg--enter {
@@ -209,10 +219,15 @@
     transform: none;
   }
 
+  .lg--pending {
+    opacity: 1;
+  }
+
   .lg--interactive {
     transition: opacity 0.2s linear;
   }
 
+  .lg--interactive:hover,
   .lg--interactive:active {
     transform: none;
   }

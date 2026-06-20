@@ -144,7 +144,7 @@ export function AdminBillingPilotClient({
           <SectionHeader title={tPage("workspaceDiagnosticsTitle")} />
           <Card>
             {diagnostics.executionStatus && (
-              <div className="mb-aistroyka-4 rounded border border-aistroyka-border-subtle bg-aistroyka-surface-raised px-aistroyka-4 py-aistroyka-3">
+              <div className="surface-glass-raised mb-aistroyka-4 rounded px-aistroyka-4 py-aistroyka-3">
                 <div className="flex flex-wrap items-center gap-aistroyka-2">
                   <span className="font-semibold text-aistroyka-text-primary">{tDetail("e2eStage")}:</span>
                   <code className="rounded bg-aistroyka-surface px-aistroyka-1 py-aistroyka-0.5 text-sm">
@@ -230,7 +230,7 @@ export function AdminBillingPilotClient({
             <div className="overflow-x-auto">
               <table className="w-full min-w-[320px] text-left text-aistroyka-subheadline">
                 <thead>
-                  <tr className="border-b border-aistroyka-border-subtle bg-aistroyka-surface-raised">
+                  <tr className="border-b border-[var(--lg-border)] surface-glass-row">
                     <th className="table-cell font-semibold text-aistroyka-text-primary">{tDetail("workspaceId")}</th>
                     <th className="table-cell font-semibold text-aistroyka-text-primary">{tDetail("source")}</th>
                     <th className="table-cell font-semibold text-aistroyka-text-primary">{tDetail("live")}</th>

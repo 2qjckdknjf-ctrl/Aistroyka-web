@@ -30,7 +30,7 @@ export function InlineUpgradeHint({ capabilityKey }: InlineUpgradeHintProps) {
   const { description, ctaLabel, ctaTargetRoute } = getFeatureUpgradePromptDisplayProps(prompt);
 
   return (
-    <div className="mb-4 rounded-[var(--aistroyka-radius-md)] border border-aistroyka-border-subtle bg-aistroyka-surface-raised px-4 py-2">
+    <div className="mb-4 surface-glass-raised rounded-[var(--aistroyka-radius-md)] px-4 py-2">
       <p className="text-aistroyka-caption text-aistroyka-text-secondary">
         {description}{" "}
         <Link href={ctaTargetRoute} className="font-medium text-aistroyka-accent hover:underline">

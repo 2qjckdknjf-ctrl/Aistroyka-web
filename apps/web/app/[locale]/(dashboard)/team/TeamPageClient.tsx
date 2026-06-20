@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { Button } from "@/components/ui";
 
 type Member = { user_id: string; role: string; created_at: string; is_owner: boolean };
 type Invitation = { id: string; email: string; role: string; expires_at: string };
@@ -129,17 +130,17 @@ export function TeamPageClient({
                 <option value="admin">{t("admin")}</option>
               </select>
             </div>
-            <button type="submit" disabled={loading || inviteDisabled} className="btn-primary">
+            <Button type="submit" disabled={loading || inviteDisabled} loading={loading}>
               {loading ? "…" : t("invite")}
-            </button>
+            </Button>
           </form>
           {message && <p className="mt-3 text-sm text-aistroyka-success">{message}</p>}
           {inviteLink && (
             <div className="mt-3 space-y-2">
               <p className="text-xs text-aistroyka-text-tertiary">{inviteLink}</p>
-              <button type="button" onClick={copyLink} className="btn-secondary">
+              <Button type="button" variant="secondary" onClick={copyLink}>
                 {t("copyLink")}
-              </button>
+              </Button>
             </div>
           )}
           {error && <p className="mt-2 text-sm text-aistroyka-error" role="alert">{error}</p>}
@@ -155,19 +156,21 @@ export function TeamPageClient({
             {members.map((m) => (
               <li
                 key={m.user_id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-card border border-aistroyka-border-subtle bg-aistroyka-surface-raised/80 px-4 py-2.5"
+                className="flex flex-wrap items-center justify-between gap-2 surface-glass-raised rounded-card px-4 py-2.5"
               >
                 <span className="font-mono text-sm text-aistroyka-text-secondary">{m.user_id.slice(0, 8)}…</span>
                 <span className="text-sm text-aistroyka-text-primary">{roleLabel(m.role)}</span>
                 {canManage && !m.is_owner && m.user_id !== currentUserId && (
-                  <button
+                  <Button
                     type="button"
+                    variant="secondary"
+                    size="sm"
                     onClick={() => handleRevoke(m.user_id)}
                     disabled={revoking === m.user_id}
-                    className="btn-secondary text-sm"
+                    loading={revoking === m.user_id}
                   >
                     {revoking === m.user_id ? "…" : t("revoke")}
-                  </button>
+                  </Button>
                 )}
               </li>
             ))}
@@ -185,7 +188,7 @@ export function TeamPageClient({
               {invitations.map((inv) => (
                 <li
                   key={inv.id}
-                  className="flex flex-wrap items-center justify-between gap-2 rounded-card border border-aistroyka-border-subtle bg-aistroyka-surface-raised/80 px-4 py-2.5"
+                  className="flex flex-wrap items-center justify-between gap-2 surface-glass-raised rounded-card px-4 py-2.5"
                 >
                   <span className="text-sm text-aistroyka-text-primary">{inv.email}</span>
                   <span className="text-sm text-aistroyka-text-secondary">{roleLabel(inv.role)}</span>

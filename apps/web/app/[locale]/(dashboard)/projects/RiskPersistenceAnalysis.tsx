@@ -26,7 +26,7 @@ export function RiskPersistenceAnalysis({
   const tDetail = useTranslations("dashboardDetail");
   if (history.length < 2) {
     return (
-      <div className="rounded-lg border border-aistroyka-border-subtle bg-aistroyka-surface-raised p-4 text-sm text-aistroyka-text-secondary sm:p-6">
+      <div className="surface-glass-raised rounded-lg p-4 text-sm text-aistroyka-text-secondary sm:p-6">
         {tDetail("riskPersistenceAnalysisEmpty")}
       </div>
     );
@@ -70,7 +70,7 @@ export function RiskPersistenceAnalysis({
   );
 
   return (
-    <div className="rounded-lg border border-aistroyka-border-subtle bg-aistroyka-surface-raised p-4 text-sm sm:p-6">
+    <div className="surface-glass-raised rounded-lg p-4 text-sm sm:p-6">
       <div className="font-medium text-aistroyka-text-primary">{tDetail("riskPersistenceAnalysis")}</div>
       <div className="mt-4 grid gap-2 text-aistroyka-text-primary sm:grid-cols-2">
         <div>

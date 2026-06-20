@@ -1,16 +1,17 @@
 "use client";
 
+import type { ReactNode } from "react";
+import { GlassSurface } from "@/components/design/liquid-glass";
+
 type PanelProps = {
-  children: React.ReactNode;
+  children: ReactNode;
   className?: string;
 };
 
 export function Panel({ children, className = "" }: PanelProps) {
   return (
-    <div
-      className={`rounded-[var(--radius-main)] border border-[var(--border-main)] bg-[var(--bg-card)]/80 backdrop-blur-sm ${className}`}
-    >
+    <GlassSurface intensity="subtle" padding="none" className={className} contentClassName="p-4 sm:p-6">
       {children}
-    </div>
+    </GlassSurface>
   );
 }

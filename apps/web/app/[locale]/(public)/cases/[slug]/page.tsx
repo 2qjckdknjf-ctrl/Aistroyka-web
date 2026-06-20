@@ -2,8 +2,9 @@ import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Link } from "@/i18n/navigation";
+import { GlassLink } from "@/components/design/liquid-glass";
 import { routing } from "@/i18n/routing";
+import { PublicGlassContentPage, PublicRevealGlassCard } from "@/components/public";
 
 const CASE_SLUGS = ["residential", "commercial", "infrastructure", "renovation"] as const;
 
@@ -31,59 +32,35 @@ export default async function CaseSlugPage({ params }: Props) {
   const key = slug as (typeof CASE_SLUGS)[number];
 
   return (
-    <div className="mx-auto min-w-0 max-w-3xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-      <Link
-        href="/cases"
-        className="text-[var(--aistroyka-font-footnote)] text-[var(--aistroyka-accent)] hover:underline"
-      >
+    <PublicGlassContentPage title={t(key)} maxWidthClass="max-w-3xl">
+      <GlassLink href="/cases" intensity="subtle" pill linkClassName="text-sm">
         ← {t("title")}
-      </Link>
-      <h1 className="mt-4 text-[var(--aistroyka-font-title)] font-bold text-[var(--aistroyka-text-primary)]">
-        {t(key)}
-      </h1>
-      <dl className="mt-8 space-y-4">
-        <div>
-          <dt className="text-[var(--aistroyka-font-subheadline)] text-[var(--aistroyka-text-tertiary)]">
-            {t("projectSize")}
-          </dt>
-          <dd className="mt-1 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-primary)]">
-            {t(`${key}ProjectSize`)}
-          </dd>
-        </div>
-        <div>
-          <dt className="text-[var(--aistroyka-font-subheadline)] text-[var(--aistroyka-text-tertiary)]">
-            {t("teamSize")}
-          </dt>
-          <dd className="mt-1 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-primary)]">
-            {t(`${key}TeamSize`)}
-          </dd>
-        </div>
-        <div>
-          <dt className="text-[var(--aistroyka-font-subheadline)] text-[var(--aistroyka-text-tertiary)]">
-            {t("timeline")}
-          </dt>
-          <dd className="mt-1 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-primary)]">
-            {t(`${key}Timeline`)}
-          </dd>
-        </div>
-        <div>
-          <dt className="text-[var(--aistroyka-font-subheadline)] text-[var(--aistroyka-text-tertiary)]">
-            {t("toolsUsed")}
-          </dt>
-          <dd className="mt-1 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-primary)]">
-            {t(`${key}ToolsUsed`)}
-          </dd>
-        </div>
-        <div>
-          <dt className="text-[var(--aistroyka-font-subheadline)] text-[var(--aistroyka-text-tertiary)]">
-            {t("benefits")}
-          </dt>
-          <dd className="mt-1 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-primary)]">
-            {t(`${key}Benefits`)}
-          </dd>
-        </div>
-      </dl>
-    </div>
+      </GlassLink>
+      <PublicRevealGlassCard>
+        <dl className="space-y-4">
+          <div>
+            <dt className="text-[var(--aistroyka-font-subheadline)] text-aistroyka-text-tertiary">{t("projectSize")}</dt>
+            <dd className="mt-1 text-[var(--aistroyka-font-body)] text-aistroyka-text-primary">{t(`${key}ProjectSize`)}</dd>
+          </div>
+          <div>
+            <dt className="text-[var(--aistroyka-font-subheadline)] text-aistroyka-text-tertiary">{t("teamSize")}</dt>
+            <dd className="mt-1 text-[var(--aistroyka-font-body)] text-aistroyka-text-primary">{t(`${key}TeamSize`)}</dd>
+          </div>
+          <div>
+            <dt className="text-[var(--aistroyka-font-subheadline)] text-aistroyka-text-tertiary">{t("timeline")}</dt>
+            <dd className="mt-1 text-[var(--aistroyka-font-body)] text-aistroyka-text-primary">{t(`${key}Timeline`)}</dd>
+          </div>
+          <div>
+            <dt className="text-[var(--aistroyka-font-subheadline)] text-aistroyka-text-tertiary">{t("toolsUsed")}</dt>
+            <dd className="mt-1 text-[var(--aistroyka-font-body)] text-aistroyka-text-primary">{t(`${key}ToolsUsed`)}</dd>
+          </div>
+          <div>
+            <dt className="text-[var(--aistroyka-font-subheadline)] text-aistroyka-text-tertiary">{t("benefits")}</dt>
+            <dd className="mt-1 text-[var(--aistroyka-font-body)] text-aistroyka-text-primary">{t(`${key}Benefits`)}</dd>
+          </div>
+        </dl>
+      </PublicRevealGlassCard>
+    </PublicGlassContentPage>
   );
 }
 

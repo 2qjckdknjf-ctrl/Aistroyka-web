@@ -83,7 +83,7 @@ export default async function MobilePage({ params }: Props) {
           <MobileWorkflowVisual
             label={t("visualLabel")}
             title={t("visualTitle")}
-            layers={VISUAL_LAYER_KEYS.map((key) => ({
+            steps={VISUAL_LAYER_KEYS.map((key) => ({
               label: t(key),
               detail: t(`${key}Detail`),
             }))}

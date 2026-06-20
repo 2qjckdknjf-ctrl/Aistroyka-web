@@ -49,7 +49,7 @@ export function DropdownMenu({
       {open && (
         <ul
           role="menu"
-          className={`absolute top-full z-50 mt-1 min-w-[160px] rounded-[var(--aistroyka-radius-lg)] border border-aistroyka-border-subtle bg-aistroyka-surface py-1 shadow-[var(--aistroyka-shadow-e3)] ${
+          className={`surface-glass-popover absolute top-full z-50 mt-1 min-w-[160px] rounded-[var(--aistroyka-radius-lg)] py-1 ${
             align === "right" ? "right-0" : "left-0"
           }`}
         >

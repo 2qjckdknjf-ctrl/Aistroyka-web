@@ -13,7 +13,7 @@ export function DecisionSimulation({ result }: { result: SimulationResult | null
   const tDetail = useTranslations("dashboardDetail");
   if (result == null) {
     return (
-      <div className="rounded-lg border border-aistroyka-border-subtle bg-aistroyka-surface-raised p-4 text-sm text-aistroyka-text-secondary sm:p-6">
+      <div className="surface-glass-raised rounded-lg p-4 text-sm text-aistroyka-text-secondary sm:p-6">
         {tDetail("decisionSimulationEmpty")}
       </div>
     );
@@ -22,7 +22,7 @@ export function DecisionSimulation({ result }: { result: SimulationResult | null
   const { baseline, acceleration, degradation, deltaDaysAcceleration, deltaDaysDegradation, deltaHealthAcceleration, deltaHealthDegradation, deltaRiskAcceleration, deltaRiskDegradation } = result;
 
   return (
-    <div className="rounded-lg border border-aistroyka-border-subtle bg-aistroyka-surface-raised p-4 text-sm sm:p-6">
+    <div className="surface-glass-raised rounded-lg p-4 text-sm sm:p-6">
       <div className="font-medium text-aistroyka-text-primary">{tDetail("decisionSimulation")}</div>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-3">

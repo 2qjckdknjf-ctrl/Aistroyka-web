@@ -100,7 +100,7 @@ export default async function ProofSharePage({
                     {items.map((item) => (
                       <figure
                         key={item.id}
-                        className="overflow-hidden rounded border border-aistroyka-border-subtle bg-aistroyka-surface-muted/20"
+                        className="overflow-hidden surface-glass-muted rounded"
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img

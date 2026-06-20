@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { routing } from "@/i18n/routing";
 import { buildPublicPageMetadata } from "@/lib/seo/public-page-metadata";
 import { buildStandardPublicBreadcrumb } from "@/lib/seo/public-page-breadcrumb";
-import { PublicCTASection, PublicFeatureGrid, PublicPageHero, PublicTimelineSection, PublicJsonLd } from "@/components/public";
+import { PublicCTASection, PublicFeatureGrid, PublicGlassFormShell, PublicPageHero, PublicTimelineSection, PublicJsonLd } from "@/components/public";
 import { ContactConversionVisual } from "./ContactConversionVisual";
 import { ContactForm } from "./ContactForm";
 
@@ -117,8 +117,10 @@ export default async function ContactPage({ params }: Props) {
           <p className="mt-3 max-w-3xl text-[var(--aistroyka-font-body)] text-aistroyka-text-secondary">
             {t("formSubtitle")}
           </p>
-          <div className="mt-8 rounded-[var(--aistroyka-radius-card)] border border-aistroyka-border-subtle bg-aistroyka-surface p-6 shadow-[var(--aistroyka-shadow-e1)]">
-            <ContactForm />
+          <div className="mt-8">
+            <PublicGlassFormShell>
+              <ContactForm />
+            </PublicGlassFormShell>
           </div>
         </section>
       </div>

@@ -4,7 +4,13 @@ import type { Metadata } from "next";
 import { routing } from "@/i18n/routing";
 import { buildPublicPageMetadata } from "@/lib/seo/public-page-metadata";
 import { buildStandardPublicBreadcrumb } from "@/lib/seo/public-page-breadcrumb";
-import { PublicCTASection, PublicJsonLd, PublicPageHero, PublicRelatedLinksSection } from "@/components/public";
+import {
+  PublicCTASection,
+  PublicJsonLd,
+  PublicPageHero,
+  PublicRelatedLinksSection,
+  PublicRevealGlassCard,
+} from "@/components/public";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -55,18 +61,15 @@ export default async function PartnersPage({ params }: Props) {
         <section className="mt-4" aria-labelledby="partners-types-heading">
           <h2
             id="partners-types-heading"
-            className="text-[var(--aistroyka-font-title2)] font-semibold text-[var(--aistroyka-text-primary)]"
+            className="text-[var(--aistroyka-font-title2)] font-semibold text-aistroyka-text-primary"
           >
             {t("typesTitle")}
           </h2>
           <div className="mt-6 grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
             {TYPES.map((key) => (
-              <div
-                key={key}
-                className="rounded-[var(--aistroyka-radius-card)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] p-4"
-              >
+              <PublicRevealGlassCard key={key} interactive intensity="subtle">
                 {t(key)}
-              </div>
+              </PublicRevealGlassCard>
             ))}
           </div>
         </section>
@@ -74,18 +77,15 @@ export default async function PartnersPage({ params }: Props) {
         <section aria-labelledby="partners-benefits-heading">
           <h2
             id="partners-benefits-heading"
-            className="text-[var(--aistroyka-font-title2)] font-semibold text-[var(--aistroyka-text-primary)]"
+            className="text-[var(--aistroyka-font-title2)] font-semibold text-aistroyka-text-primary"
           >
             {t("benefitsTitle")}
           </h2>
           <div className="mt-6 grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
             {BENEFITS.map((key) => (
-              <div
-                key={key}
-                className="rounded-[var(--aistroyka-radius-card)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] p-4"
-              >
+              <PublicRevealGlassCard key={key} interactive intensity="subtle">
                 {t(key)}
-              </div>
+              </PublicRevealGlassCard>
             ))}
           </div>
         </section>
@@ -104,7 +104,6 @@ export default async function PartnersPage({ params }: Props) {
       </div>
 
       <PublicCTASection
-        variant="floating"
         title={t("ctaTitle")}
         subtitle={t("ctaSubtitle")}
         primaryLabel={tCta("launchPilot")}

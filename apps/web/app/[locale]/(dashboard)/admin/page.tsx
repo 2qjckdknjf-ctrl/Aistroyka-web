@@ -82,7 +82,7 @@ export default async function AdminPage() {
             <div className="overflow-x-auto">
               <table className="w-full min-w-[320px] text-left text-aistroyka-subheadline">
                 <thead>
-                  <tr className="border-b border-aistroyka-border-subtle bg-aistroyka-surface-raised">
+                  <tr className="border-b border-[var(--lg-border)] surface-glass-row">
                     <th className="table-cell font-semibold text-aistroyka-text-primary">{tDetail("jobId")}</th>
                     <th className="table-cell font-semibold text-aistroyka-text-primary">{tDetail("projectId")}</th>
                     <th className="table-cell font-semibold text-aistroyka-text-primary">{tDetail("status")}</th>

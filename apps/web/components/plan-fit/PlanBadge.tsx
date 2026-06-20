@@ -20,7 +20,7 @@ export function PlanBadge() {
   return (
     <Link
       href="/billing"
-      className="rounded-[var(--aistroyka-radius-md)] border border-aistroyka-border-subtle bg-aistroyka-surface-raised px-2 py-1 text-aistroyka-caption font-medium text-aistroyka-text-secondary transition-colors hover:bg-aistroyka-surface hover:text-aistroyka-text-primary"
+      className="surface-glass-raised rounded-[var(--aistroyka-radius-md)] px-2 py-1 text-aistroyka-caption font-medium text-aistroyka-text-secondary transition-colors hover:text-aistroyka-text-primary"
       title={tDetail("viewPlanAndLimits")}
     >
       {planName}

@@ -96,7 +96,7 @@ export function FilterBar({
   }, [setParams]);
 
   return (
-    <div className="flex flex-wrap items-center gap-3 rounded-[var(--aistroyka-radius-card)] border border-aistroyka-border-subtle bg-aistroyka-surface px-4 py-3">
+    <div className="flex flex-wrap items-center gap-3 surface-glass rounded-[var(--lg-radius)] px-4 py-3">
       {showProject && (
         <div className="flex flex-col gap-1">
           <label htmlFor="filter-project" className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("project")}</label>
@@ -198,7 +198,7 @@ export function FilterBar({
             <button
               type="button"
               onClick={saveCurrentView}
-              className="rounded-[var(--aistroyka-radius-md)] border border-aistroyka-border-subtle bg-aistroyka-surface-raised px-2 py-1.5 text-aistroyka-caption font-medium text-aistroyka-text-primary hover:bg-aistroyka-surface focus:outline-none focus:ring-2 focus:ring-aistroyka-accent"
+              className="surface-glass-raised rounded-[var(--aistroyka-radius-md)] px-2 py-1.5 text-aistroyka-caption font-medium text-aistroyka-text-primary focus:outline-none focus:ring-2 focus:ring-aistroyka-accent"
             >
               {tDetail("saveCurrent")}
             </button>

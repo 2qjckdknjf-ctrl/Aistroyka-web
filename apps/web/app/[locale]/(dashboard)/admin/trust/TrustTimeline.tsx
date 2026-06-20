@@ -43,7 +43,7 @@ export function TrustTimeline({ timeline }: { timeline: Point[] }) {
         <label className="flex items-center gap-2 text-aistroyka-subheadline text-aistroyka-text-secondary">
           <span>{tDetail("days")}</span>
           <select
-            className="rounded border border-aistroyka-border-subtle bg-aistroyka-surface px-2 py-1 text-aistroyka-callout"
+            className="input-field-sm px-2 py-1 text-aistroyka-callout"
             value={days}
             onChange={(e) => setDays(Number(e.target.value))}
           >
@@ -54,7 +54,7 @@ export function TrustTimeline({ timeline }: { timeline: Point[] }) {
         <label className="flex items-center gap-2 text-aistroyka-subheadline text-aistroyka-text-secondary">
           <span>{tDetail("metric")}</span>
           <select
-            className="rounded border border-aistroyka-border-subtle bg-aistroyka-surface px-2 py-1 text-aistroyka-callout"
+            className="input-field-sm px-2 py-1 text-aistroyka-callout"
             value={metric}
             onChange={(e) => setMetric(e.target.value as "ati" | "gri")}
           >

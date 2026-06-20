@@ -80,7 +80,7 @@ export function ClientPortalDefectDetailClient({ projectId, defectId }: { projec
           <p className="mt-2 text-sm text-aistroyka-text-secondary">{tDetail("target")} {new Date(d.due_date).toLocaleDateString()}</p>
         ) : null}
         {d.resolution_note ? (
-          <p className="mt-4 rounded border border-aistroyka-border-subtle bg-aistroyka-surface-muted/40 p-3 text-sm">
+          <p className="mt-4 surface-glass-muted rounded p-3 text-sm">
             <span className="font-medium">{tDetail("resolution")}:</span> {d.resolution_note}
           </p>
         ) : null}
