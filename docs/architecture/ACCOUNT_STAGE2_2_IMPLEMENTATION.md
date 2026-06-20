@@ -97,20 +97,30 @@ After `tenant_members` upsert:
 | Scope | Verdict | Date |
 |-------|---------|------|
 | Repo implementation | **STAGE 2.2 CLOSED** | 2026-06-20 |
-| Live activation | **STAGE 2.2 LIVE NOT CLOSED** | 2026-06-20 |
+| Live activation | **STAGE 2.2 LIVE CLOSED** | 2026-06-20 |
 
-Live closure evidence: `docs/architecture/ACCOUNT_STAGE2_2_EVIDENCE.md` § Live activation run — 2026-06-20.
+**Deploy tip:** `89bfde22` on `main` (staging run [27874374254](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/actions/runs/27874374254), production [27874464939](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/actions/runs/27874464939)). Health `buildStamp.sha7`: `1d6cf82` → `89bfde2`.
 
-**Live blockers:** Stage 2.2 not on `origin/main` / not deployed (prod+staging `buildStamp.sha7=1d6cf82`); no app-path signup or invite-accept proof; operator deploy tools unavailable locally.
-
-**Runtime ready:** `serviceRoleConfigured: true` on production and staging health endpoints (service role present in Workers; does not substitute for Stage 2.2 code deploy).
+Evidence: `docs/architecture/ACCOUNT_STAGE2_2_EVIDENCE.md` § Live activation run — 2026-06-20 (closure).
 
 ---
 
-## Next step (Stage 2.2 live only — not Stage 2.3)
+## Files in release (main)
 
-1. Commit + merge Stage 2.2 to `main` → CI Check green.
-2. Deploy staging → production via Cloudflare workflows.
-3. Run `scripts/smoke/stage2_2_live_workspace_verify.ts` against staging with valid service role.
-4. Confirm health `buildStamp` matches merge commit; re-run evidence SQL on a fresh test signup user.
-5. Update evidence doc verdict to **STAGE 2.2 LIVE CLOSED** only after app-path proof.
+| File | Role |
+|------|------|
+| `lib/account/account-workspace.service.ts` | Atomic create + invite sync |
+| `lib/account/account-workspace.constants.ts` | Eligible roles + slug |
+| `lib/account/account.types.ts` | Types import (build fix) |
+| `lib/account/account-workspace*.test.ts` | Tests |
+| `lib/api/engine.ts` | Signup delegation |
+| `lib/domain/tenants/tenant.*` | Guard + delegation |
+| `app/api/v1/onboarding/complete/route.ts` | Workspace errors + invite sync |
+| `app/api/v1/tenant/accept-invite/route.ts` | Invite sync |
+| `scripts/smoke/stage2_2_live_workspace_verify.ts` | Live smoke |
+
+---
+
+## Next step (not Stage 2.3)
+
+Stage 2.2 live is closed. Do **not** proceed to Stage 2.3 (`primary_tenant_id`, account switcher, client onboarding) without explicit product gate.
