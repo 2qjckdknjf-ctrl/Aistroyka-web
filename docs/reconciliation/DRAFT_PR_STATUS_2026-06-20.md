@@ -1,7 +1,7 @@
 # Draft PR Status — 2026-06-20
 
 ## Status
-- Branch pushed: pending.
+- Branch pushed: YES.
 - PR created: NO.
 - Reason: GitHub CLI unavailable locally (`bad CPU type in executable`).
 - Manual PR instructions: `docs/reconciliation/MANUAL_DRAFT_PR_INSTRUCTIONS_2026-06-20.md`.
@@ -9,12 +9,13 @@
 ## PR Details
 - PR URL: not created by agent.
 - PR number: not created by agent.
+- Manual PR URL: `https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/new/integration/aistroyka-full-reconciliation-2026-06-20`
 - Base: `main`
 - Head: `integration/aistroyka-full-reconciliation-2026-06-20`
 - Draft required: YES.
 
 ## CI Status
-- Not available until branch is pushed and PR is created manually.
+- Not available until PR is created manually.
 
 ## Blockers
 - Authenticated browser dashboard review.
@@ -24,4 +25,4 @@
 - AI/mobile broader reconciliation deferred.
 
 ## Next Exact Step
-Push branch, then create manual Draft PR using the summary file.
+Create manual Draft PR using the summary file.
