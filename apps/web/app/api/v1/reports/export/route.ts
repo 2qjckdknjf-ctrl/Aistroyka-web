@@ -5,11 +5,13 @@ import { canReviewReport } from "@/lib/domain/reports/report.policy";
 import { isLiteWorkerClient } from "@/lib/tenant/client-profile";
 import { getProject } from "@/lib/domain/projects/project.service";
 import { generateReportsExportCsv } from "@/lib/domain/reports/report-export.service";
+import type { TenantContext } from "@/lib/tenant/tenant.types";
 
 export const dynamic = "force-dynamic";
 
 const CSV_CONTENT_TYPE = "text/csv; charset=utf-8";
 const CSV_FILENAME = "reports-export.csv";
+const ALLOWED_STATUSES = new Set(["draft", "submitted", "approved", "rejected", "changes_requested"]);
 
 /** GET /api/v1/reports/export — read-only manager/admin CSV export with safe columns only. */
 export async function GET(request: Request) {
@@ -23,16 +25,16 @@ export async function GET(request: Request) {
     throw e;
   }
 
-  if (!ctx.tenantId || !ctx.userId || isLiteWorkerClient(ctx) || !canReviewReport(ctx) || ctx.role === "stakeholder") {
+  if (!isReportExportAdmin(ctx) || isLiteWorkerClient(ctx) || !canReviewReport(ctx)) {
     return NextResponse.json({ error: "Insufficient rights" }, { status: 403 });
   }
 
   const url = new URL(request.url);
   const projectId = normalizeParam(url.searchParams.get("project_id"));
-  const status = normalizeParam(url.searchParams.get("status"));
-  const from = normalizeParam(url.searchParams.get("from"));
-  const to = normalizeParam(url.searchParams.get("to"));
-  const rangeDays = parseRangeDays(url.searchParams.get("range_days"));
+  const parsedQuery = parseExportQuery(url.searchParams);
+  if (!parsedQuery.ok) {
+    return NextResponse.json({ error: parsedQuery.error }, { status: 400 });
+  }
   const supabase = await createClientFromRequest(request);
 
   if (projectId) {
@@ -47,10 +49,10 @@ export async function GET(request: Request) {
 
   const csv = await generateReportsExportCsv(supabase, ctx.tenantId, {
     projectId,
-    status,
-    from,
-    to,
-    rangeDays,
+    status: parsedQuery.status,
+    from: parsedQuery.from,
+    to: parsedQuery.to,
+    rangeDays: parsedQuery.rangeDays,
   });
 
   return new NextResponse(csv, {
@@ -68,9 +70,45 @@ function normalizeParam(value: string | null): string | undefined {
   return trimmed || undefined;
 }
 
-function parseRangeDays(value: string | null): number | undefined {
-  if (!value) return undefined;
-  const parsed = Number.parseInt(value, 10);
-  if (!Number.isFinite(parsed)) return undefined;
-  return Math.min(Math.max(parsed, 1), 365);
+function isReportExportAdmin(ctx: unknown): ctx is TenantContext {
+  if (!ctx || typeof ctx !== "object") return false;
+  const candidate = ctx as Partial<TenantContext>;
+  return Boolean(candidate.tenantId && candidate.userId && (candidate.role === "owner" || candidate.role === "admin"));
+}
+
+type ParsedExportQuery =
+  | { ok: true; status?: string; from?: string; to?: string; rangeDays?: number }
+  | { ok: false; error: string };
+
+function parseExportQuery(searchParams: URLSearchParams): ParsedExportQuery {
+  const status = normalizeParam(searchParams.get("status"));
+  if (status && !ALLOWED_STATUSES.has(status)) {
+    return { ok: false, error: "Invalid status filter" };
+  }
+  const from = normalizeParam(searchParams.get("from"));
+  if (from && !isValidDateFilter(from)) {
+    return { ok: false, error: "Invalid from date" };
+  }
+  const to = normalizeParam(searchParams.get("to"));
+  if (to && !isValidDateFilter(to)) {
+    return { ok: false, error: "Invalid to date" };
+  }
+  const rangeDaysResult = parseRangeDays(searchParams.get("range_days"));
+  if (!rangeDaysResult.ok) {
+    return rangeDaysResult;
+  }
+  return { ok: true, status, from, to, rangeDays: rangeDaysResult.rangeDays };
+}
+
+function isValidDateFilter(value: string): boolean {
+  return Number.isFinite(Date.parse(value));
+}
+
+function parseRangeDays(value: string | null): { ok: true; rangeDays?: number } | { ok: false; error: string } {
+  const normalized = normalizeParam(value);
+  if (!normalized) return { ok: true };
+  if (!/^\d+$/.test(normalized)) return { ok: false, error: "Invalid range_days" };
+  const parsed = Number.parseInt(normalized, 10);
+  if (!Number.isFinite(parsed)) return { ok: false, error: "Invalid range_days" };
+  return { ok: true, rangeDays: Math.min(Math.max(parsed, 1), 365) };
 }

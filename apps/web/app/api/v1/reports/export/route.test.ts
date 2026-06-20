@@ -53,9 +53,13 @@ describe("GET /api/v1/reports/export", () => {
     getTenantContextFromRequest.mockResolvedValue(tenantContext);
     requireTenant.mockReset();
     createClientFromRequest.mockResolvedValue({ client: "request-bound" });
+    canReviewReport.mockReset();
     canReviewReport.mockReturnValue(true);
+    isLiteWorkerClient.mockReset();
     isLiteWorkerClient.mockReturnValue(false);
+    getProject.mockClear();
     getProject.mockResolvedValue({ data: { id: "project-1" }, error: null });
+    generateReportsExportCsv.mockClear();
     generateReportsExportCsv.mockResolvedValue("report_id,project_id\r\nreport-1,project-1\r\n");
   });
 
@@ -75,8 +79,17 @@ describe("GET /api/v1/reports/export", () => {
     const workerResponse = await GET(new Request("https://test/api/v1/reports/export"));
     expect(workerResponse.status).toBe(403);
 
+    getTenantContextFromRequest.mockResolvedValueOnce({
+      ...tenantContext,
+      role: "member",
+      userId: "worker-web-1",
+      clientProfile: "web",
+    });
+    const memberResponse = await GET(new Request("https://test/api/v1/reports/export"));
+    expect(memberResponse.status).toBe(403);
+
     isLiteWorkerClient.mockReturnValue(false);
-    canReviewReport.mockReturnValueOnce(false);
+    canReviewReport.mockReturnValue(false);
     const viewerResponse = await GET(new Request("https://test/api/v1/reports/export"));
     expect(viewerResponse.status).toBe(403);
     expect(generateReportsExportCsv).not.toHaveBeenCalled();
@@ -92,6 +105,18 @@ describe("GET /api/v1/reports/export", () => {
     const response = await GET(new Request("https://test/api/v1/reports/export"));
 
     expect(response.status).toBe(403);
+    expect(generateReportsExportCsv).not.toHaveBeenCalled();
+  });
+
+  it("rejects invalid query filters safely", async () => {
+    const invalidStatus = await GET(new Request("https://test/api/v1/reports/export?status=manager_note"));
+    expect(invalidStatus.status).toBe(400);
+
+    const invalidDate = await GET(new Request("https://test/api/v1/reports/export?from=not-a-date"));
+    expect(invalidDate.status).toBe(400);
+
+    const invalidRange = await GET(new Request("https://test/api/v1/reports/export?range_days=forever"));
+    expect(invalidRange.status).toBe(400);
     expect(generateReportsExportCsv).not.toHaveBeenCalled();
   });
 
@@ -124,5 +149,23 @@ describe("GET /api/v1/reports/export", () => {
       })
     );
     await expect(response.text()).resolves.toContain("report-1");
+  });
+
+  it("allows tenant-wide export only for owner/admin roles", async () => {
+    getTenantContextFromRequest.mockResolvedValueOnce({
+      ...tenantContext,
+      role: "owner",
+      userId: "owner-1",
+    });
+
+    const response = await GET(new Request("https://test/api/v1/reports/export"));
+
+    expect(response.status).toBe(200);
+    expect(getProject).not.toHaveBeenCalled();
+    expect(generateReportsExportCsv).toHaveBeenCalledWith(
+      expect.anything(),
+      "tenant-1",
+      expect.objectContaining({ projectId: undefined })
+    );
   });
 });
