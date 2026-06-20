@@ -79,7 +79,7 @@ export async function PATCH(
     }
     throw e;
   }
-  if (!canReviewReport(ctx)) {
+  if (isLiteWorkerClient(ctx) || !canReviewReport(ctx)) {
     return NextResponse.json({ error: "Insufficient rights" }, { status: 403 });
   }
   if (!ctx.tenantId || !ctx.userId) {
