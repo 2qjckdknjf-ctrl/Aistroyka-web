@@ -86,7 +86,7 @@ After `tenant_members` upsert:
 
 1. **Service role required** — signup/invite sync fails closed without `SUPABASE_SERVICE_ROLE_KEY`.
 2. **Not live-deployed yet** — app code must deploy before production signup fixed end-to-end.
-3. **Migration timestamp skew** — unchanged from Stage 2.1.
+3. **Migration timestamps** — Stage 1 / 2.1 repo filenames aligned with remote history (2026-06-20 reconciliation).
 4. **Billing still tenant-keyed** — Stage 2.4.
 5. **Account switcher** — Stage 2.5.
 

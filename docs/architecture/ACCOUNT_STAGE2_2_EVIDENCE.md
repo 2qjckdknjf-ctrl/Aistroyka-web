@@ -208,6 +208,19 @@ Stage 2.2 was uncommitted; prod/staging on `1d6cf82`; local deploy tooling block
 
 ---
 
+## Migration timestamp reconciliation (2026-06-20)
+
+Stage 1 and 2.1 repo migration filenames now match live `supabase_migrations.schema_migrations` on `vthfrxehrursfloevnlp`:
+
+| Remote version | Repo file |
+|----------------|-----------|
+| `20260620140442` / `rbac_stage1_security_hardening` | `20260620140442_rbac_stage1_security_hardening.sql` |
+| `20260620142136` / `stage2_1_accounts_foundation` | `20260620142136_stage2_1_accounts_foundation.sql` |
+
+SQL content unchanged; `scripts/release/check-migrations.sh` PASS (150 migrations). See Stage 2.1 / RBAC evidence docs for details.
+
+---
+
 ## Remaining risks
 
 1. Main merge bypassed PR/CI Check gate (branch protection bypass) — monitor for regressions.
