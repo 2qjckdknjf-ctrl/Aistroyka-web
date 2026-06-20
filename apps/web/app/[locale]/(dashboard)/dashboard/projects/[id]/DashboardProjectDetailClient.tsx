@@ -30,6 +30,7 @@ import { ProjectDecisionsPanel } from "./ProjectDecisionsPanel";
 import { TelegramConnectCard } from "@/components/integrations/TelegramConnectCard";
 import { ProjectSubnav } from "@/components/projects/ProjectSubnav";
 import { buildProjectReportsExportHref } from "@/components/projects/reports-export-ui";
+import { resolveProjectDetailTab } from "./project-detail-tabs";
 
 const PAGE_SIZE = 10;
 
@@ -116,32 +117,10 @@ export function DashboardProjectDetailClient({
   const tDetail = useTranslations("dashboardDetail");
   const searchParams = useSearchParams();
   const tabParam = searchParams?.get("tab");
-  const [activeTab, setActiveTab] = useState(
-    tabParam === "contractors"
-      ? "contractors"
-      : tabParam === "intelligence"
-        ? "intelligence"
-        : tabParam === "schedule"
-          ? "schedule"
-          : tabParam === "documents"
-            ? "documents"
-            : tabParam === "costs"
-              ? "costs"
-              : tabParam === "estimate"
-                ? "estimate"
-                : tabParam === "decisions"
-                  ? "decisions"
-                  : "workers"
-  );
+  const [activeTab, setActiveTab] = useState(resolveProjectDetailTab(tabParam));
 
   useEffect(() => {
-    if (tabParam === "contractors") setActiveTab("contractors");
-    else if (tabParam === "intelligence") setActiveTab("intelligence");
-    else if (tabParam === "schedule") setActiveTab("schedule");
-    else if (tabParam === "documents") setActiveTab("documents");
-    else if (tabParam === "costs") setActiveTab("costs");
-    else if (tabParam === "estimate") setActiveTab("estimate");
-    else if (tabParam === "decisions") setActiveTab("decisions");
+    setActiveTab(resolveProjectDetailTab(tabParam));
   }, [tabParam]);
   const [workersPage, setWorkersPage] = useState(1);
   const [contractorsPage, setContractorsPage] = useState(1);
@@ -491,22 +470,16 @@ function ProjectReportsPanel({
   if (query.isError) return <p className="text-aistroyka-text-secondary p-4">{tDetail("failedLoadReports")}</p>;
   const { data: rows = [], total } = query.data ?? { data: [], total: 0 };
   if (rows.length === 0 && total === 0) {
-    return <EmptyState icon={<span className="text-2xl">📋</span>} title={tDetail("reports")} subtitle={tDetail("noReportsForProjectYet")} />;
+    return (
+      <div className="p-4">
+        <ProjectReportsExportAction projectId={projectId} canExportReports={canExportReports} />
+        <EmptyState icon={<span className="text-2xl">📋</span>} title={tDetail("reports")} subtitle={tDetail("noReportsForProjectYet")} />
+      </div>
+    );
   }
   return (
     <div className="p-4">
-      {canExportReports ? (
-        <div className="mb-3 flex justify-end">
-          <a
-            href={buildProjectReportsExportHref(projectId)}
-            data-testid="project-reports-export"
-            className="rounded-[var(--aistroyka-radius-lg)] border border-aistroyka-border-subtle bg-aistroyka-surface-raised px-3 py-2 text-aistroyka-subheadline font-medium text-aistroyka-text-primary hover:bg-aistroyka-surface"
-            aria-label={tDetail("exportProjectReportsCsv")}
-          >
-            {tDetail("exportCsv")}
-          </a>
-        </div>
-      ) : null}
+      <ProjectReportsExportAction projectId={projectId} canExportReports={canExportReports} />
       <Table aria-label={tDetail("projectReports")}>
         <TableHead>
           <TableRow>
@@ -536,6 +509,29 @@ function ProjectReportsPanel({
         </TableBody>
       </Table>
       <TablePagination page={page} pageSize={PAGE_SIZE} totalCount={total} onPageChange={onPageChange} />
+    </div>
+  );
+}
+
+function ProjectReportsExportAction({
+  projectId,
+  canExportReports,
+}: {
+  projectId: string;
+  canExportReports: boolean;
+}) {
+  const tDetail = useTranslations("dashboardDetail");
+  if (!canExportReports) return null;
+  return (
+    <div className="mb-3 flex justify-end">
+      <a
+        href={buildProjectReportsExportHref(projectId)}
+        data-testid="project-reports-export"
+        className="rounded-[var(--aistroyka-radius-lg)] border border-aistroyka-border-subtle bg-aistroyka-surface-raised px-3 py-2 text-aistroyka-subheadline font-medium text-aistroyka-text-primary hover:bg-aistroyka-surface"
+        aria-label={tDetail("exportProjectReportsCsv")}
+      >
+        {tDetail("exportCsv")}
+      </a>
     </div>
   );
 }
