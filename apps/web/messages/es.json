@@ -2509,6 +2509,7 @@
     "projectContractors": "Project contractors",
     "noReportsForProjectYet": "No reports for this project yet.",
     "projectReports": "Project reports",
+    "exportProjectReportsCsv": "Exportar CSV de informes del proyecto",
     "noUploadSessionsForProjectYet": "No upload sessions linked to this project yet.",
     "projectUploads": "Project uploads",
     "noAiJobsForProjectYet": "No AI analysis jobs for this project yet.",

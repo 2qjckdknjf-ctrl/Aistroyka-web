@@ -29,6 +29,7 @@ import { ProjectEstimatePanel } from "./ProjectEstimatePanel";
 import { ProjectDecisionsPanel } from "./ProjectDecisionsPanel";
 import { TelegramConnectCard } from "@/components/integrations/TelegramConnectCard";
 import { ProjectSubnav } from "@/components/projects/ProjectSubnav";
+import { buildProjectReportsExportHref } from "@/components/projects/reports-export-ui";
 
 const PAGE_SIZE = 10;
 
@@ -104,7 +105,13 @@ async function fetchProjectAi(projectId: string, page: number): Promise<{ data: 
   return res.json();
 }
 
-export function DashboardProjectDetailClient({ projectId }: { projectId: string }) {
+export function DashboardProjectDetailClient({
+  projectId,
+  canExportReports = false,
+}: {
+  projectId: string;
+  canExportReports?: boolean;
+}) {
   const tPage = useTranslations("dashboardPageMeta");
   const tDetail = useTranslations("dashboardDetail");
   const searchParams = useSearchParams();
@@ -298,9 +305,11 @@ export function DashboardProjectDetailClient({ projectId }: { projectId: string 
         </TabPanel>
         <TabPanel id="panel-reports" selected={activeTab === "reports"} aria-labelledby="tab-reports">
           <ProjectReportsPanel
+            projectId={projectId}
             query={reportsQuery}
             page={reportsPage}
             onPageChange={setReportsPage}
+            canExportReports={canExportReports}
           />
         </TabPanel>
         <TabPanel id="panel-uploads" selected={activeTab === "uploads"} aria-labelledby="tab-uploads">
@@ -465,13 +474,17 @@ function ProjectContractorsPanel({
 }
 
 function ProjectReportsPanel({
+  projectId,
   query,
   page,
   onPageChange,
+  canExportReports,
 }: {
+  projectId: string;
   query: { data?: { data: { id: string; user_id: string; status: string; created_at: string; submitted_at: string | null }[]; total: number }; isPending: boolean; isError: boolean };
   page: number;
   onPageChange: (p: number) => void;
+  canExportReports: boolean;
 }) {
   const tDetail = useTranslations("dashboardDetail");
   if (query.isPending) return <Skeleton className="h-48" />;
@@ -482,6 +495,18 @@ function ProjectReportsPanel({
   }
   return (
     <div className="p-4">
+      {canExportReports ? (
+        <div className="mb-3 flex justify-end">
+          <a
+            href={buildProjectReportsExportHref(projectId)}
+            data-testid="project-reports-export"
+            className="rounded-[var(--aistroyka-radius-lg)] border border-aistroyka-border-subtle bg-aistroyka-surface-raised px-3 py-2 text-aistroyka-subheadline font-medium text-aistroyka-text-primary hover:bg-aistroyka-surface"
+            aria-label={tDetail("exportProjectReportsCsv")}
+          >
+            {tDetail("exportCsv")}
+          </a>
+        </div>
+      ) : null}
       <Table aria-label={tDetail("projectReports")}>
         <TableHead>
           <TableRow>
