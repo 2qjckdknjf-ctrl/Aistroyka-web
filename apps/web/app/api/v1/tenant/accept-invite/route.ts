@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import { createClient, getSessionUser } from "@/lib/supabase/server";
+import {
+  AccountWorkspaceError,
+  syncAccountMemberForInternalTenantRole,
+} from "@/lib/account/account-workspace.service";
 import { mapInvitationDbError } from "@/lib/tenant/invitation-errors";
 
 /** POST: accept invitation by token. Body: { token: string } */
@@ -61,6 +65,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: mapped.message }, { status: mapped.status });
     }
     return NextResponse.json({ error: "Unable to join the workspace. Try again or contact support." }, { status: 500 });
+  }
+
+  try {
+    await syncAccountMemberForInternalTenantRole({
+      tenantId: inv.tenant_id,
+      userId: user.id,
+      tenantRole: inv.role,
+    });
+  } catch (error) {
+    if (error instanceof AccountWorkspaceError) {
+      return NextResponse.json({ error: error.message }, { status: 503 });
+    }
+    return NextResponse.json({ error: "Unable to sync account membership for this workspace." }, { status: 500 });
   }
 
   await supabase

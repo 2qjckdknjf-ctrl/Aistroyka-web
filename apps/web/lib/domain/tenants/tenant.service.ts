@@ -3,6 +3,7 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { createContractorWorkspaceForUser } from "@/lib/account/account-workspace.service";
 import { getSessionUser } from "@/lib/supabase/server";
 import * as repo from "./tenant.repository";
 import type { Tenant } from "./tenant.types";
@@ -20,14 +21,11 @@ export async function getOrCreateTenantForUser(
   if (member?.tenant_id) return member.tenant_id;
 
   const name = user.email ?? "Personal";
-  const created = await repo.createTenant(supabase, { name, user_id: user.id });
-  if (created?.id) {
-    await repo.addMember(supabase, created.id, user.id, "owner");
-    return created.id;
-  }
-
-  const { data: fallback } = await supabase.from("tenants").select("id").limit(1).maybeSingle();
-  return fallback?.id ?? null;
+  const { tenantId } = await createContractorWorkspaceForUser({
+    userId: user.id,
+    displayName: name,
+  });
+  return tenantId;
 }
 
 export async function getTenant(

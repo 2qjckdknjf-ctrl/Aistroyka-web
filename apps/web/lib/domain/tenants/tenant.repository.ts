@@ -78,17 +78,14 @@ export async function listMembers(
   return (data ?? []) as TenantMember[];
 }
 
+/** @deprecated Use createContractorWorkspaceForUser — tenants.account_id is required on live DB. */
 export async function createTenant(
-  supabase: SupabaseClient,
-  params: { name: string; user_id: string; plan?: string }
+  _supabase: SupabaseClient,
+  _params: { name: string; user_id: string; plan?: string }
 ): Promise<Tenant | null> {
-  const { data, error } = await supabase
-    .from("tenants")
-    .insert({ name: params.name, user_id: params.user_id, plan: params.plan ?? "free" })
-    .select("id, name, plan, user_id, created_at")
-    .single();
-  if (error || !data) return null;
-  return data as Tenant;
+  throw new Error(
+    "createTenant without account_id is disabled. Use createContractorWorkspaceForUser from account-workspace.service."
+  );
 }
 
 export async function addMember(

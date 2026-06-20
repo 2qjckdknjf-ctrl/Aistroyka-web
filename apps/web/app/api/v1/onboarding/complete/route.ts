@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient, getSessionUser } from "@/lib/supabase/server";
 import {
+  AccountWorkspaceError,
+  syncAccountMemberForInternalTenantRole,
+} from "@/lib/account/account-workspace.service";
+import {
   createTenantAndOwnerMembershipForCurrentUser,
   getTenantForCurrentUser,
 } from "@/lib/api/engine";
@@ -46,6 +50,19 @@ async function acceptInviteByToken(
   );
   if (upsertError) return { error: "Unable to join the workspace.", status: 500 };
 
+  try {
+    await syncAccountMemberForInternalTenantRole({
+      tenantId: inv.tenant_id,
+      userId: user.id,
+      tenantRole: inv.role,
+    });
+  } catch (error) {
+    if (error instanceof AccountWorkspaceError) {
+      return { error: error.message, status: 503 };
+    }
+    return { error: "Unable to sync account membership for this workspace.", status: 500 };
+  }
+
   await supabase.from("tenant_invitations").delete().eq("id", inv.id);
   return { tenantId: inv.tenant_id, role: inv.role };
 }
@@ -84,11 +101,18 @@ export async function POST(request: Request) {
   }
 
   if (!tenantId && persona !== "invited_worker_manager" && persona !== "customer") {
-    const createdTenantId = await createTenantAndOwnerMembershipForCurrentUser(supabase, {
-      name: companyName || "New company",
-      companyType,
-    });
-    tenantId = createdTenantId;
+    try {
+      const createdTenantId = await createTenantAndOwnerMembershipForCurrentUser(supabase, {
+        name: companyName || "New company",
+        companyType,
+      });
+      tenantId = createdTenantId;
+    } catch (error) {
+      if (error instanceof AccountWorkspaceError) {
+        return NextResponse.json({ error: error.message }, { status: 503 });
+      }
+      return NextResponse.json({ error: "Unable to create workspace." }, { status: 500 });
+    }
   }
 
   const { error: profileError } = await db.from("user_onboarding_profiles").upsert(

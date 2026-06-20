@@ -4,6 +4,7 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { createContractorWorkspaceForUser } from "@/lib/account/account-workspace.service";
 import { createAnalysisJobRpc } from "./rpcClient";
 import { getAdminClient } from "@/lib/supabase/admin";
 
@@ -69,31 +70,24 @@ export async function createTenantAndOwnerMembershipForCurrentUser(
   supabase: SupabaseClient,
   params: { name: string; companyType?: string | null }
 ): Promise<string | null> {
-  try {
-    const res = await supabase.auth.getUser();
-    const user = res?.data?.user ?? null;
-    if (!user?.id) return null;
+  const res = await supabase.auth.getUser();
+  const user = res?.data?.user ?? null;
+  if (!user?.id) return null;
 
-    const existingTenant = await getTenantForCurrentUser(supabase);
-    if (existingTenant) return existingTenant;
+  const existingTenant = await getTenantForCurrentUser(supabase);
+  if (existingTenant) return existingTenant;
 
-    const tenantName = params.name.trim() || user.user_metadata?.name || user.email || "Workspace";
-    const { data: created, error: insertError } = await supabase
-      .from("tenants")
-      .insert({ name: tenantName, plan: "free", user_id: user.id })
-      .select("id")
-      .single();
-    if (insertError || !created?.id) return null;
+  const tenantName =
+    params.name.trim() ||
+    (typeof user.user_metadata?.name === "string" ? user.user_metadata.name : "") ||
+    user.email ||
+    "Workspace";
 
-    const tenantId = created.id;
-    await supabase.from("tenant_members").upsert(
-      { tenant_id: tenantId, user_id: user.id, role: "owner" },
-      { onConflict: "tenant_id,user_id" }
-    );
-    return tenantId;
-  } catch {
-    return null;
-  }
+  const { tenantId } = await createContractorWorkspaceForUser({
+    userId: user.id,
+    displayName: tenantName,
+  });
+  return tenantId;
 }
 
 /** @deprecated Use getOrCreateTenantForCurrentUser for per-user isolation. */
