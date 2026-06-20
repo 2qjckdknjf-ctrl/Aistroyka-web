@@ -2457,6 +2457,8 @@
     "youMayNotHaveAccess": "You may not have access to this project.",
     "projectSummary": "Project summary",
     "projectSections": "Project sections",
+    "projectSubnavAria": "Navegación del proyecto",
+    "overview": "Resumen",
     "contractors": "Contractors",
     "uploads": "Uploads",
     "intelligence": "Intelligence",

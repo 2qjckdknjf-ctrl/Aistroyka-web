@@ -28,6 +28,7 @@ import { ProjectCostsPanel } from "./ProjectCostsPanel";
 import { ProjectEstimatePanel } from "./ProjectEstimatePanel";
 import { ProjectDecisionsPanel } from "./ProjectDecisionsPanel";
 import { TelegramConnectCard } from "@/components/integrations/TelegramConnectCard";
+import { ProjectSubnav } from "@/components/projects/ProjectSubnav";
 
 const PAGE_SIZE = 10;
 
@@ -239,6 +240,8 @@ export function DashboardProjectDetailClient({ projectId }: { projectId: string 
       </section>
 
       <TelegramConnectCard className="mb-6" />
+
+      <ProjectSubnav projectId={projectId} activeTab={activeTab} onSelect={setActiveTab} />
 
       <Card>
         <Tabs aria-label={tDetail("projectSections")}>
