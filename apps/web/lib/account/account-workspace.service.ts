@@ -5,7 +5,12 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAdminClient } from "@/lib/supabase/admin";
+import type {
+  AccountMemberRole,
+  AccountMemberStatus,
+} from "./account.types";
 import {
+  type AccountMemberEligibleTenantRole,
   isAccountMemberEligibleTenantRole,
   tenantAccountSlug,
 } from "./account-workspace.constants";
@@ -23,6 +28,21 @@ type WorkspaceRollbackState = {
   accountId: string | null;
   tenantId: string | null;
 };
+
+type AccountMemberSyncTarget =
+  | {
+      accountId: string;
+      role: AccountMemberEligibleTenantRole;
+    }
+  | {
+      accountId: null;
+      skippedReason: "stakeholder_excluded" | "role_not_eligible";
+    };
+
+type AccountMemberSnapshot = {
+  role: AccountMemberRole;
+  status: AccountMemberStatus;
+} | null;
 
 async function rollbackPartialWorkspace(
   admin: SupabaseClient,
@@ -46,6 +66,117 @@ function requireAdminClient(): SupabaseClient {
     );
   }
   return admin;
+}
+
+async function resolveAccountMemberSyncTarget(
+  admin: SupabaseClient,
+  params: {
+    tenantId: string;
+    tenantRole: string;
+  }
+): Promise<AccountMemberSyncTarget> {
+  if (params.tenantRole === "stakeholder") {
+    return { accountId: null, skippedReason: "stakeholder_excluded" };
+  }
+
+  if (!isAccountMemberEligibleTenantRole(params.tenantRole)) {
+    return { accountId: null, skippedReason: "role_not_eligible" };
+  }
+
+  const { data: tenant, error: tenantError } = await admin
+    .from("tenants")
+    .select("account_id")
+    .eq("id", params.tenantId)
+    .maybeSingle();
+
+  if (tenantError) {
+    throw new AccountWorkspaceError(`Unable to load tenant account linkage: ${tenantError.message}`);
+  }
+
+  const accountId = tenant?.account_id as string | undefined;
+  if (!accountId) {
+    throw new AccountWorkspaceError(
+      `Tenant ${params.tenantId} has no account_id. Stage 2.1 backfill required before invite accept.`
+    );
+  }
+
+  return { accountId, role: params.tenantRole };
+}
+
+async function loadAccountMemberSnapshot(
+  admin: SupabaseClient,
+  params: {
+    accountId: string;
+    userId: string;
+  }
+): Promise<AccountMemberSnapshot> {
+  const { data, error } = await admin
+    .from("account_members")
+    .select("role, status")
+    .eq("account_id", params.accountId)
+    .eq("user_id", params.userId)
+    .maybeSingle();
+
+  if (error) {
+    throw new AccountWorkspaceError(`Unable to load account membership: ${error.message}`);
+  }
+
+  if (!data?.role || !data?.status) return null;
+  return {
+    role: data.role as AccountMemberRole,
+    status: data.status as AccountMemberStatus,
+  };
+}
+
+async function upsertAccountMember(
+  admin: SupabaseClient,
+  params: {
+    accountId: string;
+    userId: string;
+    role: AccountMemberEligibleTenantRole;
+  }
+): Promise<void> {
+  const { error } = await admin.from("account_members").upsert(
+    {
+      account_id: params.accountId,
+      user_id: params.userId,
+      role: params.role,
+      status: "active",
+    },
+    { onConflict: "account_id,user_id" }
+  );
+
+  if (error) {
+    throw new AccountWorkspaceError(`Failed to sync account membership: ${error.message}`);
+  }
+}
+
+async function restoreAccountMemberSnapshot(
+  admin: SupabaseClient,
+  params: {
+    accountId: string;
+    userId: string;
+    snapshot: AccountMemberSnapshot;
+  }
+): Promise<void> {
+  if (params.snapshot) {
+    await admin.from("account_members").upsert(
+      {
+        account_id: params.accountId,
+        user_id: params.userId,
+        role: params.snapshot.role,
+        status: params.snapshot.status,
+      },
+      { onConflict: "account_id,user_id" }
+    );
+    return;
+  }
+
+  await admin
+    .from("account_members")
+    .delete()
+    .eq("account_id", params.accountId)
+    .eq("user_id", params.userId);
 }
 
 /**
@@ -153,46 +284,70 @@ export async function syncAccountMemberForInternalTenantRole(params: {
   userId: string;
   tenantRole: string;
 }): Promise<{ synced: boolean; skippedReason?: string }> {
-  if (params.tenantRole === "stakeholder") {
-    return { synced: false, skippedReason: "stakeholder_excluded" };
-  }
-
-  if (!isAccountMemberEligibleTenantRole(params.tenantRole)) {
-    return { synced: false, skippedReason: "role_not_eligible" };
-  }
-
   const admin = requireAdminClient();
-
-  const { data: tenant, error: tenantError } = await admin
-    .from("tenants")
-    .select("account_id")
-    .eq("id", params.tenantId)
-    .maybeSingle();
-
-  if (tenantError) {
-    throw new AccountWorkspaceError(`Unable to load tenant account linkage: ${tenantError.message}`);
+  const target = await resolveAccountMemberSyncTarget(admin, params);
+  if (!target.accountId) {
+    return { synced: false, skippedReason: target.skippedReason };
   }
 
-  const accountId = tenant?.account_id as string | undefined;
-  if (!accountId) {
+  await upsertAccountMember(admin, {
+    accountId: target.accountId,
+    userId: params.userId,
+    role: target.role,
+  });
+
+  return { synced: true };
+}
+
+/**
+ * Accepts an internal tenant invite without leaving tenant_members access behind
+ * if the Stage 2 account_members sync cannot be completed.
+ */
+export async function acceptInternalTenantInviteMembership(params: {
+  tenantId: string;
+  userId: string;
+  tenantRole: string;
+}): Promise<{ synced: boolean; skippedReason?: string }> {
+  const admin = requireAdminClient();
+  const target = await resolveAccountMemberSyncTarget(admin, params);
+  let accountSnapshot: AccountMemberSnapshot = null;
+
+  if (target.accountId) {
+    accountSnapshot = await loadAccountMemberSnapshot(admin, {
+      accountId: target.accountId,
+      userId: params.userId,
+    });
+    await upsertAccountMember(admin, {
+      accountId: target.accountId,
+      userId: params.userId,
+      role: target.role,
+    });
+  }
+
+  const { error: tenantMemberError } = await admin.from("tenant_members").upsert(
+    {
+      tenant_id: params.tenantId,
+      user_id: params.userId,
+      role: params.tenantRole,
+    },
+    { onConflict: "tenant_id,user_id" }
+  );
+
+  if (tenantMemberError) {
+    if (target.accountId) {
+      await restoreAccountMemberSnapshot(admin, {
+        accountId: target.accountId,
+        userId: params.userId,
+        snapshot: accountSnapshot,
+      });
+    }
     throw new AccountWorkspaceError(
-      `Tenant ${params.tenantId} has no account_id. Stage 2.1 backfill required before invite accept.`
+      `Failed to create tenant membership: ${tenantMemberError.message}`
     );
   }
 
-  const { error: upsertError } = await admin.from("account_members").upsert(
-    {
-      account_id: accountId,
-      user_id: params.userId,
-      role: params.tenantRole,
-      status: "active",
-    },
-    { onConflict: "account_id,user_id" }
-  );
-
-  if (upsertError) {
-    throw new AccountWorkspaceError(`Failed to sync account membership: ${upsertError.message}`);
+  if (!target.accountId) {
+    return { synced: false, skippedReason: target.skippedReason };
   }
-
   return { synced: true };
 }
