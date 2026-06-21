@@ -286,7 +286,7 @@ export async function syncAccountMemberForInternalTenantRole(params: {
 }): Promise<{ synced: boolean; skippedReason?: string }> {
   const admin = requireAdminClient();
   const target = await resolveAccountMemberSyncTarget(admin, params);
-  if (!target.accountId) {
+  if (target.accountId === null) {
     return { synced: false, skippedReason: target.skippedReason };
   }
 
@@ -346,7 +346,7 @@ export async function acceptInternalTenantInviteMembership(params: {
     );
   }
 
-  if (!target.accountId) {
+  if (target.accountId === null) {
     return { synced: false, skippedReason: target.skippedReason };
   }
   return { synced: true };
