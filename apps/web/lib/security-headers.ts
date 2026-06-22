@@ -86,3 +86,8 @@ export function applySecurityHeadersToResponse(
   }
   return res;
 }
+
+/** Apply API hardening headers without document CSP (middleware short-circuit + OpenNext fallback). */
+export function applyApiSecurityHeadersToHeaders(headers: Headers): void {
+  getApiSecurityHeaders().forEach(({ key, value }) => headers.set(key, value));
+}
