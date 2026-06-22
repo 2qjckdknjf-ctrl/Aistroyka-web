@@ -90,7 +90,7 @@ export function HelpStartChecklist() {
           return (
             <li key={step.key} className="flex items-center justify-between gap-3 rounded-[var(--aistroyka-radius-md)] border border-aistroyka-border-subtle px-3 py-2">
               <div className="flex items-center gap-2">
-                <span className={done ? "text-green-600" : "text-aistroyka-text-tertiary"} aria-hidden>
+                <span className={done ? "text-aistroyka-success" : "text-aistroyka-text-tertiary"} aria-hidden>
                   {done ? "✓" : "○"}
                 </span>
                 <span className={done ? "text-aistroyka-text-primary" : "text-aistroyka-text-secondary"}>

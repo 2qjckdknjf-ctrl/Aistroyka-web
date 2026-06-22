@@ -204,6 +204,12 @@
 "mgr_copilot_input_placeholder" = "Chiedi su questo progetto…";
 "mgr_copilot_welcome" = "Chiedi su tempi, rischi o evidenze in cantiere. Usa il contesto intelligence del progetto.";
 "mgr_copilot_fallback_fmt" = "Copilot in fallback (%@). Riprova più tardi.";
+"mgr_copilot_optional_feedback" = "Feedback IA opzionale";
+"mgr_copilot_feedback_hint" = "Opzionale: suggerisci una risposta migliore per la qualità IA interna.";
+"mgr_copilot_correction_optional" = "Correzione opzionale (lascia vuoto per solo punteggio)";
+"mgr_copilot_submit_feedback" = "Invia feedback";
+"mgr_copilot_feedback_saved" = "Feedback salvato";
+"mgr_copilot_feedback_failed" = "Impossibile salvare il feedback";
 "mgr_ai_jobs_link" = "Job analisi IA";
 "mgr_ai_jobs_section" = "Job di analisi";
 "mgr_ai_tab_copilot_hint" = "Apri un progetto → Intelligence o Copilot per l'assistente completo.";

@@ -175,4 +175,32 @@
 
   /* Alert / Banner */
   --aistroyka-alert-border-opacity: 0.5;
+
+  /* —— Liquid Glass (LG-1 canonical) —— */
+  --lg-intensity: 55;
+  --lg-opacity: 0.55;
+  --lg-blur: 14px;
+  --lg-blur-refraction: 4px;
+  --lg-saturation: 1.12;
+  --lg-tint: rgba(11, 20, 40, 0.42);
+  --lg-tint-strong: rgba(8, 14, 28, 0.72);
+  --lg-tint-clear: rgba(4, 10, 24, 0.35);
+  --lg-tint-accent: rgba(245, 197, 24, 0.1);
+  --lg-border: rgba(255, 255, 255, 0.12);
+  --lg-sheen-opacity: 0.45;
+  --lg-sheen-highlight: rgba(255, 255, 255, 0.45);
+  --lg-sheen-bottom: rgba(255, 255, 255, 0.08);
+  --lg-refraction-strength: 18;
+  --lg-refraction-strength-soft: 8;
+  --lg-radius: 24px;
+  --lg-radius-pill: 999px;
+  --lg-radius-control: 12px;
+  --lg-shadow: 0 8px 28px rgba(0, 0, 0, 0.28);
+  --lg-shadow-hover: 0 14px 36px rgba(0, 0, 0, 0.32);
+  --lg-z-content: 1;
+  --lg-motion-duration: 550ms;
+  --lg-motion-sweep: 900ms;
+  --lg-motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --lg-motion-ease-bouncy: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --lg-motion-ease-gentle: cubic-bezier(0.16, 1, 0.3, 1);
 }

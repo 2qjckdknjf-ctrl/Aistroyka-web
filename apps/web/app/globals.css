@@ -1,4 +1,5 @@
 @import "./design-tokens.css";
+@import "../styles/liquid-glass.css";
 
 @tailwind base;
 @tailwind components;
@@ -120,5 +121,59 @@
   }
   .public-card-motion {
     @apply transition-transform duration-[var(--aistroyka-duration-fast)] hover:-translate-y-1;
+  }
+
+  /* LG-2A public ambient field — decorative, non-interactive */
+  .public-ambient-shell {
+    @apply relative isolate;
+  }
+
+  .public-ambient-field {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+    background-color: var(--aistroyka-bg-primary);
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+
+  .public-ambient-field__glow {
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(64px);
+    opacity: 0.22;
+  }
+
+  .public-ambient-field__glow--core {
+    top: -8rem;
+    left: -6rem;
+    height: 20rem;
+    width: 20rem;
+    background: var(--aistroyka-neural-core);
+    animation: neural-pulse 5s ease-in-out infinite;
+  }
+
+  .public-ambient-field__glow--accent {
+    right: -5rem;
+    top: 20%;
+    height: 18rem;
+    width: 18rem;
+    background: color-mix(in srgb, var(--aistroyka-accent) 35%, var(--aistroyka-neural-accent));
+    animation: neural-drift 12s ease-in-out infinite;
+  }
+
+  .public-hero-lens-stream {
+    mask-image: linear-gradient(to bottom, black 60%, transparent);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .public-ambient-field__glow--core,
+    .public-ambient-field__glow--accent {
+      animation: none;
+    }
   }
 }

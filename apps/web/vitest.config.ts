@@ -12,6 +12,7 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "."),
       "@aistroyka/contracts": path.resolve(__dirname, "../../packages/contracts/dist/index.js"),
+      zod: path.resolve(__dirname, "./vitest.zod-shim.ts"),
     },
   },
 });
