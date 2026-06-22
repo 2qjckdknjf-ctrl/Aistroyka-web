@@ -6,6 +6,8 @@ import { canReviewReport } from "@/lib/domain/reports/report.policy";
 import { isLiteWorkerClient } from "@/lib/tenant/client-profile";
 import type { ReportReviewStatus } from "@/lib/domain/reports/report.repository";
 import { emitAudit } from "@/lib/observability/audit.service";
+import { getProjectMembership } from "@/lib/domain/projects/project-access";
+import type { TenantContext } from "@/lib/tenant/tenant.types";
 
 export const dynamic = "force-dynamic";
 
@@ -79,11 +81,11 @@ export async function PATCH(
     }
     throw e;
   }
-  if (!canReviewReport(ctx)) {
-    return NextResponse.json({ error: "Insufficient rights" }, { status: 403 });
-  }
   if (!ctx.tenantId || !ctx.userId) {
     return NextResponse.json({ error: "Tenant and user required" }, { status: 403 });
+  }
+  if (isLiteWorkerClient(ctx) || !canReviewReport(ctx)) {
+    return NextResponse.json({ error: "Insufficient rights" }, { status: 403 });
   }
 
   let body: { status?: string; manager_note?: string | null };
@@ -114,6 +116,18 @@ export async function PATCH(
   }
 
   const supabase = await createClientFromRequest(request);
+  const report = await reportRepo.getById(supabase, id, ctx.tenantId);
+  if (!report) {
+    return NextResponse.json(
+      { error: "Report not found or not in submitted status" },
+      { status: 404 }
+    );
+  }
+  const canReview = await canReviewReportInRoute(supabase, ctx, report);
+  if (!canReview) {
+    return NextResponse.json({ error: "Insufficient rights" }, { status: 403 });
+  }
+
   const updated = await reportRepo.updateReview(supabase, id, ctx.tenantId, ctx.userId, {
     status: status as ReportReviewStatus,
     manager_note: normalizedNote,
@@ -137,4 +151,18 @@ export async function PATCH(
 
   const media = await reportRepo.listMediaByReportIdWithUrls(supabase, id, ctx.tenantId);
   return NextResponse.json({ data: { ...updated, media } });
+}
+
+async function canReviewReportInRoute(
+  supabase: Awaited<ReturnType<typeof createClientFromRequest>>,
+  ctx: TenantContext,
+  report: { task_id?: string | null; day_id?: string | null }
+): Promise<boolean> {
+  if (isLiteWorkerClient(ctx)) return false;
+  if (ctx.role === "owner" || ctx.role === "admin") return true;
+  if (!canReviewReport(ctx)) return false;
+  const projectId = await reportRepo.getProjectIdForReport(supabase, ctx.tenantId, report);
+  if (!projectId) return false;
+  const membership = await getProjectMembership(supabase, ctx.tenantId, projectId, ctx.userId);
+  return membership?.role === "manager";
 }
