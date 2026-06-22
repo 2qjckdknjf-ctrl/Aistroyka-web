@@ -57,6 +57,24 @@ const REQUIRED_API_SECURITY_HEADER_KEYS = [
 ];
 const REQUIRED_SECURITY_HEADER_KEYS = REQUIRED_PAGE_SECURITY_HEADER_KEYS;
 
+const HSTS_HEADER = "Strict-Transport-Security";
+const HSTS_VALUE = "max-age=31536000; includeSubdomains; preload";
+
+function applySecurityHeadersToResponse(res, profile, options) {
+  const isProduction = options?.isProduction ?? process.env.NODE_ENV === "production";
+  const isDevelopment = options?.isDevelopment ?? process.env.NODE_ENV === "development";
+  const headers = profile === "page" ? getPageSecurityHeaders(isDevelopment) : getApiSecurityHeaders();
+  headers.forEach(({ key, value }) => res.headers.set(key, value));
+  if (profile === "page" && isProduction) {
+    res.headers.set(HSTS_HEADER, HSTS_VALUE);
+  }
+  return res;
+}
+
+function applyApiSecurityHeadersToHeaders(headers) {
+  getApiSecurityHeaders().forEach(({ key, value }) => headers.set(key, value));
+}
+
 module.exports = {
   SECURITY_HEADERS,
   REQUIRED_SECURITY_HEADER_KEYS,
@@ -66,4 +84,6 @@ module.exports = {
   getSecurityHeaders,
   getPageSecurityHeaders,
   getApiSecurityHeaders,
+  applySecurityHeadersToResponse,
+  applyApiSecurityHeadersToHeaders,
 };

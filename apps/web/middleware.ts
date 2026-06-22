@@ -6,7 +6,7 @@ import { checkLiteAllowList } from "@/lib/api/lite-allow-list";
 import { resolvePostAuthEntry } from "@/lib/entry/entry-routing";
 import { OWNER_RATE_LIMIT_ALREADY_APPLIED_HEADER } from "@/lib/platform-owner/constants";
 import { gateOwnerRequest } from "@/lib/platform-owner/middleware-owner-gate";
-import { getPageSecurityHeaders } from "@/lib/security-headers";
+import { applyApiSecurityHeadersToHeaders, getPageSecurityHeaders } from "@/lib/security-headers";
 
 const intlMiddleware = createIntlMiddleware(routing);
 
@@ -18,9 +18,14 @@ const SECURITY_HEADERS = getPageSecurityHeaders(process.env.NODE_ENV === "develo
 const HSTS_HEADER = "Strict-Transport-Security";
 const HSTS_VALUE = "max-age=31536000; includeSubdomains; preload";
 
-function applySecurityHeaders(res: NextResponse, isProduction: boolean): NextResponse {
+function applyPageSecurityHeaders(res: NextResponse, isProduction: boolean): NextResponse {
   SECURITY_HEADERS.forEach(({ key, value }) => res.headers.set(key, value));
   if (isProduction) res.headers.set(HSTS_HEADER, HSTS_VALUE);
+  return res;
+}
+
+function applyApiSecurityHeaders(res: NextResponse): NextResponse {
+  applyApiSecurityHeadersToHeaders(res.headers);
   return res;
 }
 
@@ -54,14 +59,14 @@ export async function middleware(request: NextRequest) {
   if (pathname.startsWith("/api/v1")) {
     const forbidden = checkLiteAllowList(pathname, request.method, request.headers.get("x-client"));
     if (forbidden) {
-      return NextResponse.json(forbidden.body, { status: 403 });
+      return applyApiSecurityHeaders(NextResponse.json(forbidden.body, { status: 403 }));
     }
   }
 
   if (isOwnerApi) {
     const { response: sessionResponse, user } = await updateSession(request);
     if (sessionResponse.status === 503) {
-      return applySecurityHeaders(sessionResponse, isProduction);
+      return applyApiSecurityHeaders(sessionResponse);
     }
     const denied = await gateOwnerRequest({
       request,
@@ -71,27 +76,27 @@ export async function middleware(request: NextRequest) {
       isApi: true,
     });
     if (denied) {
-      return applySecurityHeaders(denied, isProduction);
+      return applyApiSecurityHeaders(denied);
     }
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set(OWNER_RATE_LIMIT_ALREADY_APPLIED_HEADER, "1");
     const res = NextResponse.next({ request: { headers: requestHeaders } });
     mergeSupabaseSessionIntoResponse(sessionResponse, res);
-    return applySecurityHeaders(res, isProduction);
+    return applyApiSecurityHeaders(res);
   }
 
   if (pathname.startsWith("/api/v1")) {
-    return NextResponse.next();
+    return applyApiSecurityHeaders(NextResponse.next());
   }
 
   if (pathname === "/dashboard" || pathname === "/dashboard/") {
     const redir = NextResponse.redirect(new URL("/en/dashboard", request.url), 308);
-    return applySecurityHeaders(redir, process.env.NODE_ENV === "production");
+    return applyPageSecurityHeaders(redir, process.env.NODE_ENV === "production");
   }
 
   const { response: sessionResponse, user } = await updateSession(request);
   if (sessionResponse.status === 503) {
-    return applySecurityHeaders(sessionResponse, process.env.NODE_ENV === "production");
+    return applyPageSecurityHeaders(sessionResponse, process.env.NODE_ENV === "production");
   }
 
   if (isOwnerPage) {
@@ -103,7 +108,7 @@ export async function middleware(request: NextRequest) {
       isApi: false,
     });
     if (denied) {
-      return applySecurityHeaders(denied, isProduction);
+      return applyPageSecurityHeaders(denied, isProduction);
     }
   }
 
@@ -121,7 +126,7 @@ export async function middleware(request: NextRequest) {
     const redir = NextResponse.redirect(loginUrl);
     mergeSupabaseSessionIntoResponse(sessionResponse, redir);
     redir.headers.set("X-Auth-Redirect", "login");
-    return applySecurityHeaders(redir, isProduction);
+    return applyPageSecurityHeaders(redir, isProduction);
   }
   if (isAuthPage && user) {
     const next = request.nextUrl.searchParams.get("next") ?? undefined;
@@ -130,7 +135,7 @@ export async function middleware(request: NextRequest) {
     const redir = NextResponse.redirect(nextUrl);
     mergeSupabaseSessionIntoResponse(sessionResponse, redir);
     redir.headers.set("X-Auth-Redirect", "post-auth-entry");
-    return applySecurityHeaders(redir, isProduction);
+    return applyPageSecurityHeaders(redir, isProduction);
   }
 
   mergeSupabaseSessionIntoResponse(sessionResponse, res);
@@ -138,7 +143,7 @@ export async function middleware(request: NextRequest) {
   if (isProtected || isAuthPage) {
     res.headers.set("Cache-Control", "private, no-store, max-age=0, must-revalidate");
   }
-  return applySecurityHeaders(res, isProduction);
+  return applyPageSecurityHeaders(res, isProduction);
 }
 
 export const config = {
