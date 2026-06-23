@@ -12,6 +12,9 @@ vi.mock("@/lib/tenant", () => ({
 vi.mock("@/lib/api/require-admin", () => ({
   requireAdmin: vi.fn().mockReturnValue(null),
 }));
+vi.mock("@/lib/supabase/admin", () => ({
+  getAdminClient: vi.fn().mockReturnValue(null),
+}));
 vi.mock("@/lib/config/public", () => ({
   getBuildStamp: vi.fn().mockReturnValue({ sha: "deadbeef123", buildTime: "2026-03-15T12:00:00Z" }),
 }));
