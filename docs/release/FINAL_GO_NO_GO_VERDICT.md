@@ -1,5 +1,7 @@
 # FINAL GO / NO-GO VERDICT
 
+> **Historical evidence notice:** This document is a historical snapshot. It is not the current project truth source. See `docs/CURRENT_PROJECT_TRUTH_INDEX.md` for current status. Any production-ready, GA, certified, or locked-down claim must be revalidated against current main SHA, CI, deployment, smoke, and governance evidence.
+
 Date: 2026-05-22  
 Project: AISTROYKA
 
