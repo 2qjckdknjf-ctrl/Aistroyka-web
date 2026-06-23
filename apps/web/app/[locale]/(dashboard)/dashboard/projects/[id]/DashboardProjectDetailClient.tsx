@@ -20,6 +20,7 @@ import {
   TableHeaderCell,
   TableCell,
   TablePagination,
+  Button,
 } from "@/components/ui";
 import { ProjectIntelligenceClient } from "./ProjectIntelligenceClient";
 import { ProjectSchedulePanel } from "./ProjectSchedulePanel";
@@ -29,7 +30,7 @@ import { ProjectEstimatePanel } from "./ProjectEstimatePanel";
 import { ProjectDecisionsPanel } from "./ProjectDecisionsPanel";
 import { TelegramConnectCard } from "@/components/integrations/TelegramConnectCard";
 import { ProjectSubnav } from "@/components/projects/ProjectSubnav";
-import { buildProjectReportsExportHref } from "@/components/projects/reports-export-ui";
+import { downloadProjectReportsExport } from "@/components/projects/reports-export-ui";
 import { resolveProjectDetailTab } from "./project-detail-tabs";
 
 const PAGE_SIZE = 10;
@@ -466,7 +467,14 @@ function ProjectReportsPanel({
   canExportReports: boolean;
 }) {
   const tDetail = useTranslations("dashboardDetail");
-  if (query.isPending) return <Skeleton className="h-48" />;
+  if (query.isPending) {
+    return (
+      <div className="p-4">
+        <ProjectReportsExportAction projectId={projectId} canExportReports={canExportReports} />
+        <Skeleton className="h-48" />
+      </div>
+    );
+  }
   if (query.isError) return <p className="text-aistroyka-text-secondary p-4">{tDetail("failedLoadReports")}</p>;
   const { data: rows = [], total } = query.data ?? { data: [], total: 0 };
   if (rows.length === 0 && total === 0) {
@@ -521,17 +529,50 @@ function ProjectReportsExportAction({
   canExportReports: boolean;
 }) {
   const tDetail = useTranslations("dashboardDetail");
+  const [exporting, setExporting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [startedHint, setStartedHint] = useState(false);
+
   if (!canExportReports) return null;
+
+  const handleExport = async () => {
+    setExporting(true);
+    setError(null);
+    setStartedHint(false);
+    const result = await downloadProjectReportsExport(projectId);
+    setExporting(false);
+    if (!result.ok) {
+      setError(result.error || tDetail("exportProjectReportsFailed"));
+      return;
+    }
+    setStartedHint(true);
+    window.setTimeout(() => setStartedHint(false), 3000);
+  };
+
   return (
-    <div className="mb-3 flex justify-end">
-      <a
-        href={buildProjectReportsExportHref(projectId)}
+    <div className="mb-3 flex w-full flex-col items-stretch gap-2 sm:items-end">
+      <Button
+        variant="secondary"
+        size="sm"
+        loading={exporting}
+        disabled={exporting}
+        onClick={handleExport}
         data-testid="project-reports-export"
-        className="rounded-[var(--aistroyka-radius-lg)] border border-aistroyka-border-subtle bg-aistroyka-surface-raised px-3 py-2 text-aistroyka-subheadline font-medium text-aistroyka-text-primary hover:bg-aistroyka-surface"
         aria-label={tDetail("exportProjectReportsCsv")}
+        className="w-full sm:w-auto sm:self-end"
       >
-        {tDetail("exportCsv")}
-      </a>
+        {tDetail("exportProjectReportsCsvShort")}
+      </Button>
+      {error ? (
+        <p role="alert" className="text-right text-sm text-aistroyka-error sm:max-w-xs">
+          {error}
+        </p>
+      ) : null}
+      {startedHint ? (
+        <p role="status" className="text-right text-sm text-aistroyka-text-secondary sm:max-w-xs">
+          {tDetail("exportProjectReportsStarted")}
+        </p>
+      ) : null}
     </div>
   );
 }
