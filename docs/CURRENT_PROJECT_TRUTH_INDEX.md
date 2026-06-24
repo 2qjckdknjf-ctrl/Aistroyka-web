@@ -1,7 +1,7 @@
 # AISTROYKA Current Project Truth Index
 
-**Last updated:** 2026-06-23  
-**Canonical main SHA:** `d4681983d1809c25ff2dc087c3a0995f01642091`
+**Last updated:** 2026-06-24  
+**Canonical main SHA:** `ed3ebee8524f74a6ed3672ae2786f54cd99ca260`
 
 ## 1. Purpose
 
@@ -15,8 +15,8 @@ Historical docs under `docs/` may contain older readiness, certification, GO/NO-
 
 | Field | Value |
 |-------|-------|
-| **main commit** | `d4681983d1809c25ff2dc087c3a0995f01642091` |
-| **date** | 2026-06-23 |
+| **main commit** | `ed3ebee8524f74a6ed3672ae2786f54cd99ca260` |
+| **date** | 2026-06-24 |
 | **repo** | `2qjckdknjf-ctrl/Aistroyka-web` |
 
 ### Latest merged post-baseline slices (on main)
@@ -29,19 +29,26 @@ Historical docs under `docs/` may contain older readiness, certification, GO/NO-
 | #125 | GitHub governance forensic audit + remediation evidence |
 | #126 | Diagnostics route test stabilization (test-only) |
 | #127 | Reports export UI polish (UI/i18n/tests only) |
+| #128 | Current project truth index (this file) |
+| #129 | Stale branch archival plan (docs-only) |
+| #130 | Branch archival dry-run manifest (docs-only) |
+| #131 | Branch archival execution report (docs-only) |
+| #132 | Security follow-up audit for issue #114 (docs-only) |
+| #133 | Middleware page security header regression tests (test-only) |
 
 ## 3. What is verified
 
-- **CI/build/test on main after PR #127:** green in operator validation (install, lint, contracts, i18n:check, tests, build, cf:build).
-- **Test count (post PR #127):** 1543/1543 passing in full suite run.
-- **Security headers slice (PR #120 scope):** verified with staging/production smoke at time of that slice (see PR #120 evidence; not re-run by this index).
+- **CI/build/test on main after PR #133:** green in operator validation (install, lint, contracts, i18n:check, tests, build, cf:build).
+- **Test count (post PR #133):** 1546/1546 passing in full suite run.
+- **Security headers slice (PR #120 scope):** API header slice PASS; verified with staging/production smoke at time of that slice (see PR #120 evidence; not re-run by this index).
+- **Security follow-up (issue #114, CLOSED):** PR #132 audit + PR #133 regression tests — page/login/protected-redirect CSP and page security headers covered in `middleware.security-headers.test.ts`; API CSP omission remains covered; no production code, middleware runtime, or auth/RBAC changes in PR #133.
 - **Governance (issue #110):** P0 remediation applied (`enforce_admins: true`); issue closed after non-author APPROVED protected merge of forensic audit PR #125.
 - **Reports export UI (issue #118):** acceptance criteria met via PR #127; protected merge with non-author approval; backend CSV schema, role gates, and `/api/v1/reports/export` authorization unchanged.
 - **Architecture lockdown forensic intake (PR #124):** external “9.5/10 CERTIFIED” claim **rejected** — documented in `docs/reconciliation/architecture-lockdown-forensic-intake-2026-06-22/`.
 
 ## 4. What is NOT verified
 
-- **Latest main deployment after PR #127** is **not** automatically confirmed unless a deployment run and/or `GET /api/v1/health` `buildStamp.sha7` on production/staging proves the merged SHA.
+- **Latest main deployment after PR #133** is **not** automatically confirmed unless a deployment run and/or `GET /api/v1/health` `buildStamp.sha7` on production/staging proves the merged SHA.
 - **Architecture lockdown 9.5/10** is **not** accepted as current truth.
 - **Broad merge** of `cursor/aistroyka-system-maturity-7957` is **not safe** (584 commits behind main; high-risk surface; see PR #124 audit).
 - **Public GA** is **not** declared by this index or by docs-only updates.
@@ -52,17 +59,17 @@ Historical docs under `docs/` may contain older readiness, certification, GO/NO-
 
 | Area | Current status | Evidence | Next safe step |
 |------|----------------|----------|----------------|
-| **Web main** | Post-baseline reconciliation + polish slices merged | main `d4681983`; PRs #120–#127 | Continue small scoped slices; full validation per PR |
+| **Web main** | Post-baseline reconciliation + polish slices merged | main `ed3ebee8`; PRs #120–#133 | Continue small scoped slices; full validation per PR |
 | **Production runtime** | Deployed SHA **not assumed** equal to latest main | Confirm via Cloudflare/Vercel + `/api/v1/health` buildStamp | Run deploy/smoke only per `docs/ops/LIVE_STAGING_SMOKE_RUNBOOK.md` when operator-approved |
-| **Security headers** | Slice merged (#120); smoke PASS at slice time | PR #120; `apps/web/lib/security-headers.ts` | Small follow-up slices only if evidence-backed |
+| **Security headers** | API slice PASS (#120); page regression tests added (#133); issue #114 **CLOSED** | PR #120, #132, #133; `apps/web/middleware.security-headers.test.ts` | No further issue #114 slices unless new evidence-backed gap |
 | **Governance** | Remediated; protected merge process verified | PR #125; issue #110 closed; `enforce_admins: true` | Non-author APPROVED + CI before every main merge |
 | **Reports export UI** | Polish merged (#127) | PR #127; issue #118 | No backend/CSV/role changes without explicit audit |
 | **Architecture lockdown** | **NOT verified** (9.5/10 rejected) | `docs/reconciliation/architecture-lockdown-forensic-intake-2026-06-22/` | Do not broad-merge maturity branch; obtain primary source if claim persists |
 | **AI / Flywheel** | Deferred; not production-certified | Issue #111 stacked audit | Fresh rebase + small-slice audit before implementation |
 | **Mobile pilot** | Deferred; iOS-primary contour | Issue #112 stacked audit | UITest/smoke per `ios/README.md`; no speculative Android expansion |
 | **Design / Public** | Deferred | Issue #113 stacked audit | Small public/design slice only if narrowly scoped |
-| **Docs truth** | In progress (this index) | Issue #116; PR for this file | Merge docs-only truth index; avoid mass doc rewrites |
-| **Stale branches** | Archival plan drafted (issue #117); **no deletion performed** | `docs/reconciliation/issue-117-stale-branch-archival-plan-2026-06-23/` | Owner-approved separate task for any delete; no broad merges |
+| **Docs truth** | Truth index merged (#128); housekeeping updates ongoing | Issue #116; PR #128; this file | Narrow index updates only; avoid mass doc rewrites |
+| **Stale branches** | Owner-approved archival executed (#131); 21 branches tagged/deleted | `docs/reconciliation/branch-archival-execution-2026-06-24/` | No broad merges; `cursor/aistroyka-system-maturity-7957` remains forbidden |
 
 ## 6. Historical docs policy
 
@@ -78,6 +85,7 @@ Historical docs under `docs/` may contain older readiness, certification, GO/NO-
 - `docs/reconciliation/architecture-lockdown-forensic-intake-2026-06-22/`
 - `docs/reconciliation/issue-110-github-governance-forensic-2026-06-23/`
 - `docs/reconciliation/issue-116-docs-truth-stacked-audit/`
+- `docs/reconciliation/issue-114-security-followup-2026-06-24/`
 
 ## 7. Forbidden assumptions
 
@@ -90,11 +98,12 @@ Historical docs under `docs/` may contain older readiness, certification, GO/NO-
 
 ## 8. Current safe backlog (prioritized)
 
-1. **#116 docs truth** — merge this current truth index (docs-only).
-2. **#117 stale branch archival** — plan only; no deletion first.
-3. **#113 design/public** — small slice only if narrowly scoped.
-4. **#114 middleware/security** — remaining security slices only if small and evidence-backed.
-5. **#111 / #112 AI/mobile** — only after fresh rebase and small-slice audit.
+1. **#113 design/public** — small slice only if narrowly scoped.
+2. **#111 / #112 AI/mobile** — only after fresh rebase and small-slice audit.
+3. **Truth index housekeeping** — narrow updates after each merged slice (docs-only).
+4. **~~#114 middleware/security~~** — **CLOSED** (PR #132 audit + PR #133 regression tests).
+5. **~~#116 docs truth~~** — initial index merged (#128); ongoing housekeeping only.
+6. **~~#117 stale branch archival~~** — plan (#129), dry-run (#130), execution (#131) complete; no broad merges.
 
 ---
 
