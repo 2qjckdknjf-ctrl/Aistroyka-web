@@ -62,7 +62,7 @@ Historical docs under `docs/` may contain older readiness, certification, GO/NO-
 | **Mobile pilot** | Deferred; iOS-primary contour | Issue #112 stacked audit | UITest/smoke per `ios/README.md`; no speculative Android expansion |
 | **Design / Public** | Deferred | Issue #113 stacked audit | Small public/design slice only if narrowly scoped |
 | **Docs truth** | In progress (this index) | Issue #116; PR for this file | Merge docs-only truth index; avoid mass doc rewrites |
-| **Stale branches** | Archival planning only | Issue #117 stacked audit | Plan/archive; **no deletion first**; no broad merges |
+| **Stale branches** | Archival plan drafted (issue #117); **no deletion performed** | `docs/reconciliation/issue-117-stale-branch-archival-plan-2026-06-23/` | Owner-approved separate task for any delete; no broad merges |
 
 ## 6. Historical docs policy
 
