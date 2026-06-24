@@ -1,0 +1,21 @@
+audit/issue-110-github-governance-forensic-2026-06-23|1f649114d305026b12675c6d0a751c1e53fcb4c7|2026-06-23T08:27:39+02:00|docs: audit github governance bypass issue
+audit/issue-116-docs-truth-stacked-audit-2026-06-22|b47a91208dd3d52c46c4745fc1349448ef4cc25e|2026-06-22T14:17:43+02:00|docs: audit docs truth stacked post-baseline scope
+docs/batch5-fk-count-fix|6839b3b3b9ba602e6e2db0c9a0422dd257f860e9|2026-06-02T08:20:48+02:00|docs(audit): correct batch 5 unindexed_foreign_keys count to 65.
+docs/issue-115-live-staging-smoke-runbook-2026-06-22|4199e204b2d323caa90b7f9201f78e697a2b371f|2026-06-22T22:35:07+02:00|docs: add live staging smoke runbook
+docs/issue-117-stale-branch-archival-plan-2026-06-23|35133d1d98e02c797f72cb2e3b6c02a6393a2c4e|2026-06-23T16:20:37+02:00|docs: add stale branch archival plan
+docs/performance-advisors-update|50524a3ea0e3dd5efc993ad3f4abe946a083c81c|2026-05-29T08:53:27+02:00|Update performance advisor audit after batch 1 and Auth DB percent.
+docs/pr13-release-closure|e5500630a284c365258aac3a951dad866edebb3e|2026-05-20T00:18:27+02:00|fix(manager): localize AI pipeline status labels
+fix/ai-vision-circuit-recovery|bd2b6a4f5a46f0a231fa6b2cf9985f0a500df912|2026-06-02T22:49:17+02:00|fix(ai): recover vision providers from stuck circuit breakers.
+fix/auth-hibp-project-ref|59f8dea3298ad532724ab7d27b49564ed4482576|2026-05-29T07:02:26+02:00|Fix HIBP enable script to use canonical AISTROYKA project ref.
+fix/drop-redundant-indexes-batch1|b5e6bde2207537dc55dea98129570dfc9e12e7b9|2026-05-29T08:51:34+02:00|Drop 23 redundant indexes and add Auth DB pool percent workflow.
+fix/drop-redundant-indexes-batch2|f3b27227970a662849497226e126fa6b82a0c65f|2026-05-29T09:13:48+02:00|Drop redundant audit/event fkfix indexes (batch 2).
+fix/drop-redundant-indexes-batch3|70ebbb345ba828a638aa60c4eccfc42a23368741|2026-06-02T07:54:21+02:00|Drop redundant fkfix indexes on defects and change orders (batch 3).
+fix/drop-redundant-indexes-batch4|2f4d7d94132586e211e2c526727da135f5b29ceb|2026-06-02T08:05:38+02:00|Drop redundant fkfix indexes on client requests and documents (batch 4).
+fix/drop-redundant-indexes-batch5|bbccef048d8aeaa1532982c955376729b3083bef|2026-06-02T08:15:51+02:00|Drop redundant fkfix indexes on commercial/AI entity tables (batch 5).
+fix/drop-redundant-indexes-batch6|b15ae9a74745832eafe77be467239cb6add5a59b|2026-06-02T08:27:06+02:00|Drop redundant actor fkfix indexes on entity tables (batch 6).
+fix/drop-redundant-indexes-batch7|bc58499b2e2a020f807933e2b7a8beaad953c26f|2026-06-02T08:40:24+02:00|Drop final low-traffic fkfix indexes (batch 7).
+fix/issue-114-api-security-header-coverage-2026-06-22|b1b17bd9d86342f1fc1b187298e0ead04e34fc67|2026-06-22T14:52:49+02:00|fix: verify API security header coverage
+fix/pilot-smoke-prefer-user-jwt|b4166233fd96ddfd61b0262f154e62b6e1bc6abb|2026-04-19T10:59:01+02:00|fix(smoke): prefer password-grant JWT for pilot ops/metrics
+fix/project-defects-insert-policy-merge|8e14519efb878d173cc77642eab84adf493ec7d1|2026-05-29T07:36:01+02:00|Merge project_defects INSERT RLS policies to clear remaining advisor warnings.
+fix/rls-split-overlapping-all-policies|6c425b9b10efefdccd03cc42a7961987ca2bdad7|2026-05-29T07:35:26+02:00|Split overlapping FOR ALL RLS policies for advisor performance.
+fix/smoke-json-arm64|b9946ee05cdd6a38f6eea35a093d8f57e97df9a1|2026-06-16T22:43:45+02:00|fix(smoke): portable JSON parsing on Apple Silicon hosts
