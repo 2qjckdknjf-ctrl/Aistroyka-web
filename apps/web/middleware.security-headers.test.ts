@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 const {
   mockUpdateSession,
@@ -29,7 +29,10 @@ vi.mock("next-intl/middleware", () => ({
   default: () => mockIntlMiddleware,
 }));
 
-import { REQUIRED_API_SECURITY_HEADER_KEYS } from "@/lib/security-headers";
+import {
+  REQUIRED_API_SECURITY_HEADER_KEYS,
+  REQUIRED_PAGE_SECURITY_HEADER_KEYS,
+} from "@/lib/security-headers";
 import { middleware } from "./middleware";
 
 function expectApiSecurityHeaders(res: Response): void {
@@ -39,16 +42,23 @@ function expectApiSecurityHeaders(res: Response): void {
   expect(res.headers.get("Content-Security-Policy")).toBeNull();
 }
 
+function expectPageSecurityHeaders(res: Response): void {
+  for (const key of REQUIRED_PAGE_SECURITY_HEADER_KEYS) {
+    expect(res.headers.get(key), `missing ${key}`).toBeTruthy();
+  }
+  expect(res.headers.get("Content-Security-Policy")).toContain("default-src 'self'");
+}
+
 describe("middleware API security headers", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockCheckLiteAllowList.mockReturnValue(null);
     mockUpdateSession.mockResolvedValue({
-      response: new Response(null, { status: 200 }),
+      response: NextResponse.next(),
       user: null,
     });
     mockGateOwnerRequest.mockResolvedValue(null);
-    mockIntlMiddleware.mockResolvedValue(new Response(null, { status: 200 }));
+    mockIntlMiddleware.mockResolvedValue(NextResponse.next());
   });
 
   it("applies API headers on /api/v1 pass-through without CSP", async () => {
@@ -75,5 +85,42 @@ describe("middleware API security headers", () => {
     const res = await middleware(req);
     expect(res.status).toBe(403);
     expectApiSecurityHeaders(res);
+  });
+});
+
+describe("middleware page security headers", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockCheckLiteAllowList.mockReturnValue(null);
+    mockUpdateSession.mockResolvedValue({
+      response: NextResponse.next(),
+      user: null,
+    });
+    mockGateOwnerRequest.mockResolvedValue(null);
+    mockIntlMiddleware.mockResolvedValue(NextResponse.next());
+  });
+
+  it("applies page security headers on public localized page with CSP", async () => {
+    const req = new NextRequest("https://aistroyka.ai/en");
+    const res = await middleware(req);
+    expect(res.status).toBe(200);
+    expectPageSecurityHeaders(res);
+  });
+
+  it("applies page security headers on login page with CSP", async () => {
+    const req = new NextRequest("https://aistroyka.ai/en/login");
+    const res = await middleware(req);
+    expect(res.status).toBe(200);
+    expectPageSecurityHeaders(res);
+  });
+
+  it("applies page security headers on unauthenticated protected dashboard redirect", async () => {
+    const req = new NextRequest("https://aistroyka.ai/en/dashboard");
+    const res = await middleware(req);
+    expect(res.status).toBeGreaterThanOrEqual(300);
+    expect(res.status).toBeLessThan(400);
+    expect(res.headers.get("Location")).toContain("/en/login");
+    expect(res.headers.get("X-Auth-Redirect")).toBe("login");
+    expectPageSecurityHeaders(res);
   });
 });
