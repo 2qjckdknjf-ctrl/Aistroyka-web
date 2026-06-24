@@ -1,0 +1,105 @@
+origin|2026-06-24 08:31:57 +0200|082f5324001ce935e2a7fec13d7b599bc878a167|Merge pull request #130 from 2qjckdknjf-ctrl/docs/branch-archival-dry-run-2026-06-24
+origin/ai/expert-review-queue-mvp|2026-06-17 20:57:17 +0200|498b6743d41c14e35bcef8fed0981561c0931134|docs(ai-flywheel): record PR #105 reconciliation into ai/gold-memory-mvp
+origin/ai/flywheel-final-tail-closure|2026-06-17 13:06:25 +0200|20b4f3f7dff888da3401679e1dd8f2244a3c0544|docs(ai-flywheel): record CI cf:build proof on closure SHA
+origin/ai/gold-memory-mvp|2026-06-19 16:04:17 +0200|98a068c1d6e87c9d419fe25457e2317b6f22fadb|Design: complete Liquid Glass public site redesign (#107)
+origin/audit/architecture-lockdown-forensic-intake-2026-06-22|2026-06-22 22:54:31 +0200|cd147ee3c3d8aaaa8227318629f9596eafe2ee2d|docs: audit architecture lockdown report intake
+origin/audit/final-global-premerge-audit-2026-06-21|2026-06-21 03:10:51 +0200|b696f80d85eba9909a2cad70a91dcb727bb2360a|docs: add post-baseline tail plan
+origin/audit/issue-111-ai-flywheel-stacked-audit-2026-06-21|2026-06-22 14:17:39 +0200|d810465b3a13ee89e921856cb71a561008305d2c|docs: audit AI flywheel stacked post-baseline scope
+origin/audit/issue-112-mobile-pilot-stacked-audit-2026-06-22|2026-06-22 14:17:43 +0200|1a862c8f6178c332eb72ae0fd280e7e56ed089c8|docs: audit mobile pilot stacked post-baseline scope
+origin/audit/issue-113-design-public-stacked-audit-2026-06-22|2026-06-22 14:17:43 +0200|6ece0d5db7b89ec0d612ee3ae2b4bfea56af237c|docs: audit design public stacked post-baseline scope
+origin/audit/issue-114-middleware-security-stacked-audit-2026-06-22|2026-06-22 14:17:43 +0200|4475dcd1dfdd5d4f5791a6db4e03a403f4dd2caa|docs: audit middleware security stacked post-baseline scope
+origin/audit/issue-115-live-staging-smoke-stacked-audit-2026-06-22|2026-06-22 14:17:43 +0200|66f63c24353946a32e08eef09f78343deb04f517|docs: audit live staging smoke stacked post-baseline scope
+origin/audit/issue-117-stale-branch-archival-stacked-audit-2026-06-22|2026-06-22 14:17:43 +0200|ae10f5f46bf5ed93222353e0cf932f29ca8d7b33|docs: audit stale branch archival stacked post-baseline scope
+origin/audit/issue-118-reports-export-ui-polish-stacked-audit-2026-06-22|2026-06-22 14:17:43 +0200|fb3bb620b152f938f6920846dcb9480a4de86263|docs: audit reports export UI polish stacked post-baseline scope
+origin/chore/actions-runtime-refresh|2026-05-27 07:34:32 +0200|ffd099fc1fb886c03c539f3c228c7101ed9edf15|chore(ci): upgrade workflow actions to Node24-native versions
+origin/chore/agents-md-continual-learning|2026-06-02 07:59:17 +0200|942a0cc5c1a01467c921d2d1f5fca2412d50a29c|chore: refresh AGENTS.md from continual-learning run
+origin/chore/deep-production-completion|2026-05-12 08:37:07 +0200|8529a91c04e6f6c504b41089240d85633824dacc|chore(agents): sync learned dashboard routing and OpenNext/layout notes
+origin/chore/enable-auth-hibp|2026-05-29 07:00:57 +0200|92e3d559fa5a3297ea9019512c779552e5832d6b|Enable Supabase leaked password protection via Management API workflow.
+origin/chore/next-after-pr12|2026-05-03 20:59:07 +0200|c600b7e68b679f911772e2ced5e9a8ec3a108312|Merge pull request #12 from 2qjckdknjf-ctrl/feat/platform-owner-cabinet
+origin/claude/aistroyka-audit-security-infra-cg810i|2026-06-14 07:30:37 +0000|193e9b80d229dd04fb259e5b7019f2b3ebd23b2c|fix(sync): stop masking cursor-read DB errors as cursor 0
+origin/cursor-test|2026-03-15 17:32:48 +0100|3d88f1babbc25013da471c6531a5e9451b62882c|fix(vercel): update install command to include dev dependencies for Vercel build
+origin/cursor/admin-expert-review-bugs-5228|2026-06-19 14:04:48 +0000|8590459e9d532234137be7c5dfda99c7ec7addcc|Fix expert review queue selection state
+origin/cursor/aistroyka-system-maturity-7957|2026-03-07 11:18:45 +0000|63d9f26ff9909c11a04887c15bb15b64c8aa91ff|architecture: final certification - normalization complete
+origin/cursor/android-platform-launch-b8bb|2026-03-07 18:19:26 +0000|1ae0b23dca39f61602b0db09576a3f4d65b85b7a|docs: add local setup instructions
+origin/cursor/auth-and-dashboard-issues-eb7c|2026-05-26 20:57:24 +0000|9f738640d08f3b88583ba7c6d11ce71ea33441aa|Fix auth identity sync regressions
+origin/cursor/critical-bug-investigation-66e8|2026-06-21 11:07:04 +0000|d0ed7258b898b0f1e8466e858e54f9ae2d3c0520|fix: narrow invite sync target type
+origin/cursor/critical-bug-investigation-7dfb|2026-05-27 11:05:46 +0000|c4f9858693c88b9d85daf307c7156be705ce378c|fix(auth): block unsafe Telegram identity linking
+origin/cursor/critical-bug-investigation-c421|2026-05-28 11:07:22 +0000|018a5e17547b3f230641d6ca53f9c6356419c919|fix(web): use service role for analysis job rpc
+origin/cursor/critical-correctness-bugs-20fe|2026-05-23 11:11:38 +0000|bf1c3faa06ea739228a0b45aa251c27410fe508b|fix(ci): fail pilot smoke on unhealthy healthcheck
+origin/cursor/critical-correctness-bugs-2263|2026-05-21 11:19:44 +0000|f064274e61650dea518850fad211426df9076291|test: clean report lint regressions
+origin/cursor/critical-correctness-bugs-4030|2026-05-25 11:17:05 +0000|d5f51947e5f041fd07e792c942b34eb6ce6d98eb|test: isolate analysis status route mocks
+origin/cursor/critical-correctness-bugs-7cfa|2026-05-26 11:13:04 +0000|8c36711d26dc3d858013888d3f5d702caf458a15|fix(security): require cron secret on staging
+origin/cursor/critical-correctness-bugs-84c0|2026-05-24 11:08:13 +0000|34573f22e4a23e33e7f9ad6d73ad44aac97968db|fix(ios): prevent stale manager task data
+origin/cursor/critical-correctness-bugs-85e3|2026-05-20 11:07:40 +0000|47011c84c68b10fa76c414d1751bf9ed4b08fbfb|fix: restore dashboard gate and android bootstrap
+origin/cursor/critical-correctness-bugs-af15|2026-05-22 11:14:25 +0000|6a8001deae7228be4ad21537044d641c070d06b0|fix: use server worker day ids on ios
+origin/cursor/development-environment-setup-b598|2026-02-24 20:50:06 +0000|47c6f8a4890339e02f58a4f578ff79e86a8343a2|Add AGENTS.md with Cursor Cloud development instructions
+origin/cursor/development-environment-setup-ba4b|2026-03-04 19:46:43 +0000|9b98907984198f80e86b964fd4445a9f985a9bca|docs: add AGENTS.md with Cursor Cloud development instructions
+origin/cursor/discussion-status-silent-failure-c12b|2026-05-28 12:37:33 +0000|d99441f8a01395aedc3a795420df18e06f443cd6|Fix participant stakeholder discussion status updates
+origin/cursor/technical-documentation-updates-569f|2026-05-25 16:06:56 +0000|b8126236379d94d52dfd02f40eef2561faa57da0|docs: fix deploy runbook whitespace
+origin/design/liquid-glass-public-shell-lg2a|2026-06-19 15:45:00 +0200|68be705af313fa87a0edfda0648c5a38f9a52247|docs: add final LG branch readiness report
+origin/develop|2026-04-27 12:49:22 +0200|e509f53763e9fe1807b69dd2cc48130cbd6cae7f|Merge PR #11: pilot audit E2E, staging CI hook, public UI fixes
+origin/docs/branch-archival-dry-run-2026-06-24|2026-06-24 08:25:20 +0200|71bd70ad9ae1342f10e9d41065b9b95e98298447|docs: prepare branch archival dry-run manifest
+origin/docs/issue-116-current-truth-index-2026-06-23|2026-06-23 14:58:14 +0200|7a2b0c7c410b8dbdc74f1de202e6b47d710e6e80|docs: add current project truth index
+origin/docs/supabase-performance-advisors|2026-05-29 07:36:22 +0200|3c834c5b9374ce5eccff54a393049f0e9120905f|Document Supabase performance advisor triage after RLS policy split.
+origin/feat/manager-ai-parity-and-live-gates|2026-06-12 09:37:14 +0200|43d3737d0761fef2829e6c4ddf0f25705aec4882|fix(ios): resolve duplicate MGR038 pbxproj id for ManagerSemanticColors
+origin/feat/platform-owner-cabinet|2026-05-03 20:55:12 +0200|b4b7b3fecfa1cc4ef9c29e3574bb0ffa8ff6ec87|chore(ci): retrigger checks after removing stale vercel integration
+origin/feat/stage2-2-account-workspace|2026-06-20 16:38:35 +0200|cb90eae1d68726388ed5b2eabb92b62442c39537|feat: wire account workspace creation for tenant signup
+origin/fix/deploy-ref-validation-clean|2026-05-19 22:48:07 +0200|a39c58e6d7c4e243f86e87179b2c671241f5e32f|fix(release): document deploy failure audit and rerun evidence
+origin/fix/diagnostics-route-env-sensitive-mock-2026-06-23|2026-06-23 09:40:31 +0200|bbaccd43fb7a345ce2668615597352bcb326ca98|test: stabilize diagnostics route config mock
+origin/fix/ios-e2e-workflow-push-phantom|2026-06-17 06:48:05 +0200|773ba8e2db94a64ce498e06d4fc6b270ab5d6c81|docs(ios): centralize Layer B CI operator notes
+origin/fix/prod-ai-secrets-no-var-conflict|2026-06-02 23:05:17 +0200|55ded23b442c1c65613e7b22bdb3eb9cbbe72591|fix(deploy): stop --var AI keys; secret put after deploy only
+origin/fix/prod-ai-worker-secrets|2026-06-02 22:59:56 +0200|99e3bab197c29d68edad925dd27b0c69b918cdbe|fix(deploy): persist OpenAI/Anthropic keys via wrangler secret put on prod
+origin/fix/prod-vision-model-gpt4o-mini|2026-06-02 23:13:43 +0200|fc430c2145c483027c47da422b022445e4f33892|fix(prod): set OPENAI_VISION_MODEL to gpt-4o-mini on production Worker
+origin/fix/supabase-create-analysis-job-rpc-surface|2026-05-27 18:50:20 +0200|65b72d1d660ef7f9812acacdd065a6d0bf4a052a|fix(db): restrict create_analysis_job RPC to service role
+origin/fix/supabase-offline-count-rpc-hardening|2026-05-27 19:14:55 +0200|338726d125d650e48276c5d8eb52311a880bca63|fix(db): harden offline-device count RPC grants
+origin/fix/supabase-stakeholder-status-rpc-hardening|2026-05-28 15:16:24 +0200|b315103211697f1bfd717107dc500f198d4340b7|fix(db): wrap RLS helper definers behind invoker functions
+origin/hotfix/deploy-workflow-yaml|2026-06-15 08:36:01 +0200|a04d16b053f7350495eaad947692addedda268a8|fix(ci): unblock deploy workflows after invalid reusable-job continue-on-error
+origin/integration/aistroyka-full-reconciliation-2026-06-20|2026-06-21 02:52:23 +0200|bc23c832ad03d7662c0a5db5a00a16c558712de6|fix: harden report review authorization
+origin/main|2026-06-24 08:31:57 +0200|082f5324001ce935e2a7fec13d7b599bc878a167|Merge pull request #130 from 2qjckdknjf-ctrl/docs/branch-archival-dry-run-2026-06-24
+origin/ops/c03-branch-protection-script|2026-06-16 22:26:34 +0200|805f010ab336007cee60e4d31cfe01d38282a31f|docs: record iOS Layer B live E2E PASS (2026-06-16)
+origin/ops/close-c03-evidence|2026-06-16 22:28:49 +0200|21a96a2058d377d717a4852631cf7fc42cc683db|docs(audit): close C-03 after main branch protection applied
+origin/ops/external-setup-attempt|2026-03-15 11:40:31 +0100|6d112cb0107b66d1ad2c7aba313c5e0443b32d10|fix(ci): add missing web source files for cloudflare build
+origin/ops/post-merge-closure-2026-06-15|2026-06-15 08:48:54 +0200|00a442df27426a578060ef12baca68f4939e7412|docs: record post-merge prod cd130eb closure and AGENTS.md learnings
+origin/ops/post-merge-governance-checklist|2026-06-15 09:02:40 +0200|dde4338738dc0f1c402efb8320711e64ab6d9e73|docs(ops): add post-merge governance checklist for C-03 closure
+origin/polish/issue-118-reports-export-ui-2026-06-23|2026-06-23 14:43:40 +0200|6cca074fee1de5d33f4a1de0d787fc5515c2e92d|polish: improve reports export UI feedback
+origin/release/cloudflare-agent-starter-split|2026-05-20 08:52:57 +0200|17547e663a4715328c202ff54cc7404618164605|stage-final(preflight): document pre-merge branch state
+origin/release/phase5-2-1|2026-03-07 14:09:47 +0100|2ad42578dd9bcfa9140e88aa992ee099691a35ba|docs(prod): final smoke green proof + smoke auth/runbook
+origin/release/publication-readiness-mega-sprint|2026-06-04 12:59:54 +0200|c66174190f2460831c0c23be5e73b83565bdadc4|fix(web): typecheck contact routes via shared insertContactLead helper
+origin/release/vercel-prod-hardening-2026-03-05|2026-03-06 01:59:28 +0100|667212dd33bba49651ac6d0a89cd43dad0496cef|docs(ops): add lockfile frozen / cache notes to final report
+origin/release/web-pilot-rc|2026-06-20 21:56:30 +0200|9d6a7812d57c2f4b228620de67c4249c3df468ec|design: apply Liquid Glass across web app surfaces
+origin/snapshots/2026-03-15|2026-03-15 17:32:48 +0100|3d88f1babbc25013da471c6531a5e9451b62882c|fix(vercel): update install command to include dev dependencies for Vercel build
+origin/snapshots/2026-03-16|2026-03-15 17:32:48 +0100|3d88f1babbc25013da471c6531a5e9451b62882c|fix(vercel): update install command to include dev dependencies for Vercel build
+origin/snapshots/2026-03-17|2026-03-15 17:32:48 +0100|3d88f1babbc25013da471c6531a5e9451b62882c|fix(vercel): update install command to include dev dependencies for Vercel build
+origin/snapshots/2026-03-18|2026-03-18 12:33:27 +0100|99ed42a8765908d6cdf67ffa3420085188bfc79b|ci(A2): blocking post-deploy pilot smoke via reusable workflow
+origin/snapshots/2026-03-19|2026-03-19 10:04:08 +0100|62a5784230c981b42e7c3379775090af22135af5|Remove domain redirects from middleware
+origin/snapshots/2026-03-20|2026-03-19 10:04:08 +0100|62a5784230c981b42e7c3379775090af22135af5|Remove domain redirects from middleware
+origin/snapshots/2026-03-21|2026-03-19 10:04:08 +0100|62a5784230c981b42e7c3379775090af22135af5|Remove domain redirects from middleware
+origin/snapshots/2026-03-22|2026-03-19 10:04:08 +0100|62a5784230c981b42e7c3379775090af22135af5|Remove domain redirects from middleware
+origin/snapshots/2026-03-23|2026-03-19 10:04:08 +0100|62a5784230c981b42e7c3379775090af22135af5|Remove domain redirects from middleware
+origin/snapshots/2026-03-24|2026-03-19 10:04:08 +0100|62a5784230c981b42e7c3379775090af22135af5|Remove domain redirects from middleware
+origin/snapshots/2026-03-25|2026-03-25 16:31:29 +0100|3d329d38b50020d68ea29ec5d9b5197e748f1770|fix(android-manager): Maestro-visible report row tags; manager pilot waits for row
+origin/snapshots/2026-03-26|2026-03-25 16:31:29 +0100|3d329d38b50020d68ea29ec5d9b5197e748f1770|fix(android-manager): Maestro-visible report row tags; manager pilot waits for row
+origin/snapshots/2026-03-27|2026-03-25 16:31:29 +0100|3d329d38b50020d68ea29ec5d9b5197e748f1770|fix(android-manager): Maestro-visible report row tags; manager pilot waits for row
+origin/snapshots/2026-03-28|2026-03-28 21:01:36 +0100|0c7479a7b0c7f5069ec608270b9123c7f9b57eaf|docs(release1): Wave 3 cross-worker closure — live denial proof, seed metadata, verdict
+origin/snapshots/2026-03-29|2026-03-29 14:18:28 +0200|6d03c7e75af305811c2755794eae5845ef8e5c91|docs(db): note production evidence doc commit in git truth
+origin/snapshots/2026-03-30|2026-03-29 14:18:28 +0200|6d03c7e75af305811c2755794eae5845ef8e5c91|docs(db): note production evidence doc commit in git truth
+origin/snapshots/2026-03-31|2026-03-29 14:18:28 +0200|6d03c7e75af305811c2755794eae5845ef8e5c91|docs(db): note production evidence doc commit in git truth
+origin/snapshots/2026-04-01|2026-03-29 14:18:28 +0200|6d03c7e75af305811c2755794eae5845ef8e5c91|docs(db): note production evidence doc commit in git truth
+origin/snapshots/2026-04-02|2026-03-29 14:18:28 +0200|6d03c7e75af305811c2755794eae5845ef8e5c91|docs(db): note production evidence doc commit in git truth
+origin/snapshots/2026-04-03|2026-03-29 14:18:28 +0200|6d03c7e75af305811c2755794eae5845ef8e5c91|docs(db): note production evidence doc commit in git truth
+origin/snapshots/2026-04-04|2026-03-29 14:18:28 +0200|6d03c7e75af305811c2755794eae5845ef8e5c91|docs(db): note production evidence doc commit in git truth
+origin/snapshots/2026-04-05|2026-03-29 14:18:28 +0200|6d03c7e75af305811c2755794eae5845ef8e5c91|docs(db): note production evidence doc commit in git truth
+origin/snapshots/2026-04-06|2026-03-29 14:18:28 +0200|6d03c7e75af305811c2755794eae5845ef8e5c91|docs(db): note production evidence doc commit in git truth
+origin/snapshots/2026-04-07|2026-03-29 14:18:28 +0200|6d03c7e75af305811c2755794eae5845ef8e5c91|docs(db): note production evidence doc commit in git truth
+origin/snapshots/2026-04-08|2026-04-08 01:09:58 +0200|0c40ed500a1c60bdf6e757a11576dafcb6cd0c31|fix(ai-router): fallback to next provider on auth errors
+origin/snapshots/2026-04-09|2026-04-08 01:09:58 +0200|0c40ed500a1c60bdf6e757a11576dafcb6cd0c31|fix(ai-router): fallback to next provider on auth errors
+origin/snapshots/2026-04-10|2026-04-08 01:09:58 +0200|0c40ed500a1c60bdf6e757a11576dafcb6cd0c31|fix(ai-router): fallback to next provider on auth errors
+origin/snapshots/2026-04-11|2026-04-08 01:09:58 +0200|0c40ed500a1c60bdf6e757a11576dafcb6cd0c31|fix(ai-router): fallback to next provider on auth errors
+origin/snapshots/2026-04-12|2026-04-08 01:09:58 +0200|0c40ed500a1c60bdf6e757a11576dafcb6cd0c31|fix(ai-router): fallback to next provider on auth errors
+origin/snapshots/2026-04-13|2026-04-08 01:09:58 +0200|0c40ed500a1c60bdf6e757a11576dafcb6cd0c31|fix(ai-router): fallback to next provider on auth errors
+origin/snapshots/2026-04-14|2026-04-08 01:09:58 +0200|0c40ed500a1c60bdf6e757a11576dafcb6cd0c31|fix(ai-router): fallback to next provider on auth errors
+origin/snapshots/2026-04-15|2026-04-08 01:09:58 +0200|0c40ed500a1c60bdf6e757a11576dafcb6cd0c31|fix(ai-router): fallback to next provider on auth errors
+origin/snapshots/2026-04-16|2026-04-08 01:09:58 +0200|0c40ed500a1c60bdf6e757a11576dafcb6cd0c31|fix(ai-router): fallback to next provider on auth errors
+origin/snapshots/2026-04-17|2026-04-08 01:09:58 +0200|0c40ed500a1c60bdf6e757a11576dafcb6cd0c31|fix(ai-router): fallback to next provider on auth errors
+origin/snapshots/2026-04-18|2026-04-08 01:09:58 +0200|0c40ed500a1c60bdf6e757a11576dafcb6cd0c31|fix(ai-router): fallback to next provider on auth errors
+origin/snapshots/2026-04-19|2026-04-08 01:09:58 +0200|0c40ed500a1c60bdf6e757a11576dafcb6cd0c31|fix(ai-router): fallback to next provider on auth errors
