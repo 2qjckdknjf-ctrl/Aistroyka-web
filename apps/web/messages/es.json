@@ -702,7 +702,7 @@
       "privacy": "Privacidad",
       "terms": "Términos",
       "cabinet": "Panel",
-      "requestDemo": "Solicitar demo",
+      "requestDemo": "Lanzar piloto",
       "login": "Entrar",
       "tryPlatform": "Probar plataforma",
       "aiDemo": "Demo IA",
@@ -728,7 +728,7 @@
       "title": "Copilot IA",
       "heroTitle": "Copilot IA para operaciones de construcción",
       "heroSubtitle": "Ayuda a PM, contratistas y propietarios a decidir más rápido.",
-      "ctaDemo": "Solicitar demo",
+      "ctaDemo": "Contactar",
       "ctaPlatform": "Explorar plataforma",
       "metaDescription": "Copilot IA para construcción.",
       "capabilitiesTitle": "Capacidades",
@@ -835,7 +835,7 @@
       "r3": "Consistencia reportes",
       "r4": "Transparencia",
       "ctaSales": "Ventas",
-      "ctaDemo": "Demo enterprise"
+      "ctaDemo": "Obtener presentación"
     },
     "implementation": {
       "title": "Implementación",
@@ -1009,7 +1009,7 @@
       "heroCardAiSubtitle": "Progreso, riesgos, retrasos",
       "heroCardMobileTitle": "Móvil",
       "heroCardMobileSubtitle": "Informes, evidencia",
-      "ctaDemo": "Solicitar demo",
+      "ctaDemo": "Lanzar piloto",
       "ctaLogin": "Entrar",
       "ctaTry": "Probar plataforma",
       "trustStrip": "Para equipos de construcción y desarrollo",
@@ -1042,10 +1042,10 @@
       "mobileSubtitle": "Apps para responsable y trabajadores: informes rápidos y ejecución de tareas.",
       "mobileCta": "Móvil",
       "pricingTeaserTitle": "Planes para cada escala",
-      "pricingTeaserSubtitle": "Desde equipos hasta empresa. Solicita una demo para un presupuesto a medida.",
+      "pricingTeaserSubtitle": "Desde equipos hasta empresa. Lanza un piloto o contáctanos para un presupuesto a medida.",
       "finalCtaTitle": "¿Listo para tomar el control?",
-      "finalCtaSubtitle": "Solicita una demo o empieza con una prueba.",
-      "finalCtaButton": "Solicitar demo"
+      "finalCtaSubtitle": "Lanza un piloto o contáctanos para empezar.",
+      "finalCtaButton": "Lanzar piloto"
     },
     "features": {
       "title": "Funciones",
@@ -1109,7 +1109,7 @@
     },
     "pricing": {
       "title": "Precios",
-      "metaDescription": "Planes Starter, Pro, Business y Enterprise. Solicita presupuesto o reserva una demo.",
+      "metaDescription": "Planes Starter, Pro, Business y Enterprise. Contáctanos u obtén una presentación.",
       "starter": "Starter",
       "pro": "Pro",
       "business": "Business",
@@ -1119,7 +1119,7 @@
       "businessDesc": "Mayor escala: permisos y marca más sólidos, integraciones como Telegram, packs de entrega y analítica más profunda.",
       "enterpriseDesc": "SSO, auditoría ampliada, retención e integraciones, soporte dedicado — alineado con ventas a lo que tengáis en producción.",
       "requestQuote": "Solicitar presupuesto",
-      "bookDemo": "Reservar demo"
+      "bookDemo": "Obtener presentación"
     },
     "about": {
       "title": "Nosotros",
@@ -1135,11 +1135,11 @@
     },
     "contact": {
       "title": "Contacto",
-      "metaDescription": "Escríbenos, solicita una demo o haz una pregunta.",
-      "formTitle": "Contáctanos",
-      "demoBlockTitle": "Solicitar demo",
+      "metaDescription": "Escríbenos, lanza un piloto o haz una pregunta.",
+      "formTitle": "Contactar",
+      "demoBlockTitle": "Lanzar piloto",
       "businessCta": "Para consultas comerciales",
-      "businessCtaDetails": "Para consultas comerciales, usa el formulario de arriba e indica \"Demo\" en tu mensaje, o te contactaremos para agendar una llamada."
+      "businessCtaDetails": "Para consultas comerciales, usa el formulario de arriba e indica tu interés en piloto o presentación, o te contactaremos para agendar una llamada."
     },
     "faq": {
       "title": "FAQ",
@@ -1153,7 +1153,7 @@
       "mobile": "¿Hay app móvil?",
       "mobileA": "Sí. Apps para responsable y trabajadores: informes de obra, tareas y evidencia fotográfica.",
       "pricing": "¿Cómo son los precios?",
-      "pricingA": "Planes Starter, Pro, Business y Enterprise. Contáctanos para presupuesto o demo."
+      "pricingA": "Planes Starter, Pro, Business y Enterprise. Contáctanos para presupuesto u obtén una presentación a medida."
     },
     "privacy": {
       "title": "Política de privacidad",

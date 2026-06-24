@@ -702,7 +702,7 @@
       "privacy": "Privacy",
       "terms": "Terms",
       "cabinet": "Dashboard",
-      "requestDemo": "Request Demo",
+      "requestDemo": "Launch pilot",
       "login": "Log in",
       "tryPlatform": "Try platform",
       "aiDemo": "AI Demo",
@@ -734,7 +734,7 @@
       "heroCardAiSubtitle": "Progress, risks, delays",
       "heroCardMobileTitle": "Mobile",
       "heroCardMobileSubtitle": "Reports, evidence",
-      "ctaDemo": "Request Demo",
+      "ctaDemo": "Launch pilot",
       "ctaLogin": "Log in",
       "ctaTry": "Try platform",
       "trustStrip": "Trusted by construction and development teams",
@@ -767,10 +767,10 @@
       "mobileSubtitle": "Manager and worker apps for fast reporting and task execution.",
       "mobileCta": "Mobile",
       "pricingTeaserTitle": "Plans for every scale",
-      "pricingTeaserSubtitle": "From teams to enterprise. Request a demo for a tailored quote.",
+      "pricingTeaserSubtitle": "From teams to enterprise. Launch a pilot or contact us for a tailored quote.",
       "finalCtaTitle": "Ready to take control?",
-      "finalCtaSubtitle": "Request a demo or start with a trial.",
-      "finalCtaButton": "Request Demo"
+      "finalCtaSubtitle": "Launch a pilot or contact us to get started.",
+      "finalCtaButton": "Launch pilot"
     },
     "features": {
       "title": "Features",
@@ -834,7 +834,7 @@
     },
     "pricing": {
       "title": "Pricing",
-      "metaDescription": "Starter, Pro, Business, and Enterprise. Request a quote or book a demo.",
+      "metaDescription": "Starter, Pro, Business, and Enterprise. Contact us or get a presentation.",
       "starter": "Starter",
       "pro": "Pro",
       "business": "Business",
@@ -844,7 +844,7 @@
       "businessDesc": "Serious scale: stronger permissions and branding, integrations such as Telegram, handover-oriented packs, deeper analytics.",
       "enterpriseDesc": "SSO, extended audit, retention and integrations, dedicated support — scoped with sales to match what you run in production.",
       "requestQuote": "Request quote",
-      "bookDemo": "Book demo"
+      "bookDemo": "Get presentation"
     },
     "about": {
       "title": "About",
@@ -860,11 +860,11 @@
     },
     "contact": {
       "title": "Contact",
-      "metaDescription": "Get in touch, request a demo, or ask a question.",
+      "metaDescription": "Get in touch, launch a pilot, or ask a question.",
       "formTitle": "Contact us",
-      "demoBlockTitle": "Request a demo",
+      "demoBlockTitle": "Launch pilot",
       "businessCta": "For business inquiries",
-      "businessCtaDetails": "For business inquiries, use the form above and mention \"Demo\" in your message, or we will follow up to schedule a call."
+      "businessCtaDetails": "For business inquiries, use the form above and mention your pilot or presentation request, or we will follow up to schedule a call."
     },
     "faq": {
       "title": "FAQ",
@@ -878,7 +878,7 @@
       "mobile": "Is there a mobile app?",
       "mobileA": "Yes. Manager and worker apps for field reporting, tasks, and photo evidence. Fast workflows and offline-friendly scenarios.",
       "pricing": "How is pricing structured?",
-      "pricingA": "We offer Starter, Pro, Business, and Enterprise. Contact us for a quote or book a demo for a tailored proposal."
+      "pricingA": "We offer Starter, Pro, Business, and Enterprise. Contact us for a quote or get a presentation for a tailored proposal."
     },
     "privacy": {
       "title": "Privacy Policy",
@@ -1060,7 +1060,7 @@
       "title": "AI Copilot",
       "heroTitle": "AI Copilot for construction operations",
       "heroSubtitle": "Helps project managers, contractors, and owners make faster decisions with summarized reports, risk detection, and actionable recommendations.",
-      "ctaDemo": "Request demo",
+      "ctaDemo": "Contact us",
       "ctaPlatform": "Explore platform",
       "metaDescription": "AI Copilot for construction: summarize reports, detect risks, recommend actions.",
       "capabilitiesTitle": "Capabilities",
@@ -1167,7 +1167,7 @@
       "r3": "Reporting consistency",
       "r4": "Operational transparency",
       "ctaSales": "Contact sales",
-      "ctaDemo": "Enterprise demo"
+      "ctaDemo": "Get presentation"
     },
     "implementation": {
       "title": "Implementation",
