@@ -3,6 +3,7 @@
 > Refreshed 2026-06-26 to match current `main` (`61707470dcea9e565afdd96d8238248c2efbd46a`) after PR #140.
 > Source of truth for the underlying audit: `docs/reconciliation/issue-112-mobile-fresh-audit-2026-06-26/**` (issue #112).
 > This document records **source presence and validation reality only**. It makes **no** TestFlight / App Store / Google Play / pilot-live / production-GA claim, and does **not** assume latest `main` is deployed (confirm any deploy claim via `GET /api/v1/health` `buildStamp.sha7`).
+> Evidence required before any pilot/store claim: `docs/reconciliation/issue-112-mobile-build-evidence-plan-2026-06-26/`.
 
 ## iOS Manager (AiStroykaManager)
 
