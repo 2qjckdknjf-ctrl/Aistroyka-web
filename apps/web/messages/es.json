@@ -993,11 +993,15 @@
       "integrationsDesc": "Preparación de API e integraciones para ERP, BIM y otras herramientas."
     },
     "homeMetrics": {
-      "title": "Métricas de control",
-      "projectsMonitored": "Proyectos monitoreados",
-      "dailyReportsAnalyzed": "Informes analizados",
-      "aiInsightsGenerated": "Insights IA generados",
-      "photosProcessed": "Fotos procesadas"
+      "title": "Qué hace AISTROYKA",
+      "projectsMonitored": "Control de proyectos",
+      "projectsMonitoredDesc": "Todas las obras en un solo panel de control",
+      "dailyReportsAnalyzed": "Informes diarios",
+      "dailyReportsAnalyzedDesc": "Reportes estructurados desde la obra",
+      "aiInsightsGenerated": "Análisis con IA",
+      "aiInsightsGeneratedDesc": "Análisis de avance y riesgos",
+      "photosProcessed": "Documentación fotográfica",
+      "photosProcessedDesc": "Fotos de obra capturadas y organizadas"
     },
     "home": {
       "heroTitle": "Inteligencia de construcción con IA",

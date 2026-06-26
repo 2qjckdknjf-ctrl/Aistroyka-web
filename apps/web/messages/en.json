@@ -1050,11 +1050,15 @@
       "integrationsDesc": "API and integration readiness for ERP, BIM, and other tools."
     },
     "homeMetrics": {
-      "title": "Construction control metrics",
-      "projectsMonitored": "Projects monitored",
-      "dailyReportsAnalyzed": "Daily reports analyzed",
-      "aiInsightsGenerated": "AI insights generated",
-      "photosProcessed": "Photos processed"
+      "title": "What AISTROYKA does",
+      "projectsMonitored": "Project monitoring",
+      "projectsMonitoredDesc": "Every site in one control dashboard",
+      "dailyReportsAnalyzed": "Daily site reports",
+      "dailyReportsAnalyzedDesc": "Structured reporting from the field",
+      "aiInsightsGenerated": "AI insights",
+      "aiInsightsGeneratedDesc": "Progress and risk analysis",
+      "photosProcessed": "Photo documentation",
+      "photosProcessedDesc": "Site photos captured and organized"
     },
     "copilot": {
       "title": "AI Copilot",
