@@ -1,7 +1,7 @@
 # AISTROYKA Current Project Truth Index
 
 **Last updated:** 2026-06-26  
-**Canonical main SHA:** `04ff4db40609defc0179d1ae3dd4d4cc1bab0d99`
+**Canonical main SHA:** `80a8b7d75b88ae4d1680cd3a418fffc835865efd`
 
 ## 1. Purpose
 
@@ -15,7 +15,7 @@ Historical docs under `docs/` may contain older readiness, certification, GO/NO-
 
 | Field | Value |
 |-------|-------|
-| **main commit** | `04ff4db40609defc0179d1ae3dd4d4cc1bab0d99` |
+| **main commit** | `80a8b7d75b88ae4d1680cd3a418fffc835865efd` |
 | **date** | 2026-06-26 |
 | **repo** | `2qjckdknjf-ctrl/Aistroyka-web` |
 
@@ -38,21 +38,23 @@ Historical docs under `docs/` may contain older readiness, certification, GO/NO-
 | #134 | Truth index housekeeping (docs-only) |
 | #135 | Design/public follow-up audit for issue #113 (docs-only) |
 | #136 | Public CTA copy alignment — i18n-only, pilot-first EN/RU/ES/IT (no components/layout/CSS/design-system/mobile/backend changes) |
+| #138 | Public homepage truth cleanup — removed `MOCK_METRICS` / fake numeric claims; qualitative capability cards; pilot-first CTAs preserved (homepage component + i18n only; no design-system/Liquid Glass/mobile/backend changes) |
 
 ## 3. What is verified
 
-- **CI/build/test on main after PR #136:** green in operator validation (install, lint, contracts, i18n:check, tests, build, cf:build).
-- **Test count (post PR #136):** 1546/1546 passing in full suite run.
+- **CI/build/test on main after PR #138:** green in operator validation (install, lint, contracts, i18n:check, `I18N_CHECK_ALL=1` i18n:check, tests, build, cf:build).
+- **Test count (post PR #138):** 1546/1546 passing in full suite run.
 - **Security headers slice (PR #120 scope):** API header slice PASS; verified with staging/production smoke at time of that slice (see PR #120 evidence; not re-run by this index).
 - **Security follow-up (issue #114, CLOSED):** PR #132 audit + PR #133 regression tests — page/login/protected-redirect CSP and page security headers covered in `middleware.security-headers.test.ts`; API CSP omission remains covered; no production code, middleware runtime, or auth/RBAC changes in PR #133.
 - **Governance (issue #110):** P0 remediation applied (`enforce_admins: true`); issue closed after non-author APPROVED protected merge of forensic audit PR #125.
 - **Reports export UI (issue #118):** acceptance criteria met via PR #127; protected merge with non-author approval; backend CSV schema, role gates, and `/api/v1/reports/export` authorization unchanged.
 - **Architecture lockdown forensic intake (PR #124):** external “9.5/10 CERTIFIED” claim **rejected** — documented in `docs/reconciliation/architecture-lockdown-forensic-intake-2026-06-22/`.
-- **Design/public follow-up (issue #113, CLOSED):** PR #135 docs-only audit + PR #136 i18n-only public CTA copy alignment (EN/RU/ES/IT pilot-first wording: Launch pilot → Contact us → Get presentation); Cabinet/login CTAs unchanged. No components/layout/CSS, design-system, mobile, or backend/API changes. Homepage `MOCK_METRICS` removal remains a **separate tiny slice** (deferred, not blocking #113).
+- **Design/public follow-up (issue #113, CLOSED):** PR #135 docs-only audit + PR #136 i18n-only public CTA copy alignment (EN/RU/ES/IT pilot-first wording: Launch pilot → Contact us → Get presentation); Cabinet/login CTAs unchanged. No components/layout/CSS, design-system, mobile, or backend/API changes.
+- **Public homepage truth cleanup (PR #138):** homepage `MOCK_METRICS` constant and fake numeric claims (`500+`, `12K+`, `8K+`, `45K+`) removed; metrics cards replaced with truthful qualitative capability statements; pilot-first CTAs preserved. Scope: `apps/web/app/[locale]/(public)/PublicHomeContent.tsx` + EN/RU/ES/IT `public.homeMetrics` only; no design-system, Liquid Glass, mobile, or backend/auth/RBAC changes. `i18n:check` and `I18N_CHECK_ALL=1 i18n:check` PASS.
 
 ## 4. What is NOT verified
 
-- **Latest main deployment after PR #136** is **not** automatically confirmed unless a deployment run and/or `GET /api/v1/health` `buildStamp.sha7` on production/staging proves the merged SHA.
+- **Latest main deployment after PR #138** is **not** automatically confirmed unless a deployment run and/or `GET /api/v1/health` `buildStamp.sha7` on production/staging proves the merged SHA.
 - **Architecture lockdown 9.5/10** is **not** accepted as current truth.
 - **Broad merge** of `cursor/aistroyka-system-maturity-7957` is **not safe** (584 commits behind main; high-risk surface; see PR #124 audit).
 - **Public GA** is **not** declared by this index or by docs-only updates.
@@ -63,7 +65,7 @@ Historical docs under `docs/` may contain older readiness, certification, GO/NO-
 
 | Area | Current status | Evidence | Next safe step |
 |------|----------------|----------|----------------|
-| **Web main** | Post-baseline reconciliation + polish slices merged | main `04ff4db4`; PRs #120–#136 | Continue small scoped slices; full validation per PR |
+| **Web main** | Post-baseline reconciliation + polish slices merged | main `80a8b7d7`; PRs #120–#138 | Continue small scoped slices; full validation per PR |
 | **Production runtime** | Deployed SHA **not assumed** equal to latest main | Confirm via Cloudflare/Vercel + `/api/v1/health` buildStamp | Run deploy/smoke only per `docs/ops/LIVE_STAGING_SMOKE_RUNBOOK.md` when operator-approved |
 | **Security headers** | API slice PASS (#120); page regression tests added (#133); issue #114 **CLOSED** | PR #120, #132, #133; `apps/web/middleware.security-headers.test.ts` | No further issue #114 slices unless new evidence-backed gap |
 | **Governance** | Remediated; protected merge process verified | PR #125; issue #110 closed; `enforce_admins: true` | Non-author APPROVED + CI before every main merge |
@@ -71,8 +73,8 @@ Historical docs under `docs/` may contain older readiness, certification, GO/NO-
 | **Architecture lockdown** | **NOT verified** (9.5/10 rejected) | `docs/reconciliation/architecture-lockdown-forensic-intake-2026-06-22/` | Do not broad-merge maturity branch; obtain primary source if claim persists |
 | **AI / Flywheel** | Deferred; not production-certified | Issue #111 stacked audit | Fresh rebase + small-slice audit before implementation |
 | **Mobile pilot** | Deferred; iOS-primary contour | Issue #112 stacked audit | UITest/smoke per `ios/README.md`; no speculative Android expansion |
-| **Design / Public** | Follow-up audit (#135) + i18n-only CTA alignment (#136) merged; issue #113 **CLOSED** | PRs #135, #136; `docs/reconciliation/issue-113-design-public-followup-2026-06-24/` | Homepage `MOCK_METRICS` removal as separate tiny slice; no broad design-branch merges |
-| **Docs truth** | Index merged (#128); housekeeping updates ongoing (#134 + this update) | Issue #116; PRs #128, #134; this file | Narrow index updates only; avoid mass doc rewrites |
+| **Design / Public** | Follow-up audit (#135) + i18n-only CTA alignment (#136) + homepage `MOCK_METRICS` cleanup (#138) merged; issue #113 **CLOSED** | PRs #135, #136, #138; `docs/reconciliation/issue-113-design-public-followup-2026-06-24/` | No broad design-branch merges; Liquid Glass requires fresh rebase + explicit small-slice plan |
+| **Docs truth** | Index merged (#128); housekeeping updates ongoing (#134, #137 + this update) | Issue #116; PRs #128, #134, #137; this file | Narrow index updates only; avoid mass doc rewrites |
 | **Stale branches** | Owner-approved archival executed (#131); 21 branches tagged/deleted | `docs/reconciliation/branch-archival-execution-2026-06-24/` | No broad merges; `cursor/aistroyka-system-maturity-7957` remains forbidden |
 
 ## 6. Historical docs policy
@@ -102,10 +104,10 @@ Historical docs under `docs/` may contain older readiness, certification, GO/NO-
 
 ## 8. Current safe backlog (prioritized)
 
-1. **Homepage `MOCK_METRICS` removal** — separate tiny slice only (deferred from #113; not blocking).
-2. **#111 / #112 AI/mobile** — only after fresh rebase and small-slice audit.
-3. **Truth index housekeeping** — narrow updates after each merged slice (docs-only).
-4. **~~#113 design/public~~** — **CLOSED** (PR #135 audit + PR #136 i18n-only CTA alignment).
+1. **#111 / #112 AI/mobile** — only after fresh rebase and small-slice audit.
+2. **Truth index housekeeping** — narrow updates after each merged slice (docs-only).
+3. **~~Homepage `MOCK_METRICS` removal~~** — **DONE** (PR #138; fake numeric metrics removed, qualitative cards, pilot-first CTAs preserved).
+4. **~~#113 design/public~~** — **CLOSED** (PR #135 audit + PR #136 i18n-only CTA alignment + PR #138 homepage cleanup).
 5. **~~#114 middleware/security~~** — **CLOSED** (PR #132 audit + PR #133 regression tests).
 6. **~~#116 docs truth~~** — initial index merged (#128); ongoing housekeeping only.
 7. **~~#117 stale branch archival~~** — plan (#129), dry-run (#130), execution (#131) complete; no broad merges.
