@@ -993,11 +993,15 @@
       "integrationsDesc": "Prontezza API e integrazioni verso ERP, BIM e altri strumenti."
     },
     "homeMetrics": {
-      "title": "Metriche di controllo",
-      "projectsMonitored": "Progetti monitorati",
-      "dailyReportsAnalyzed": "Report analizzati",
-      "aiInsightsGenerated": "Insight IA generati",
-      "photosProcessed": "Foto elaborate"
+      "title": "Cosa fa AISTROYKA",
+      "projectsMonitored": "Controllo dei progetti",
+      "projectsMonitoredDesc": "Tutti i cantieri in un'unica dashboard di controllo",
+      "dailyReportsAnalyzed": "Report giornalieri",
+      "dailyReportsAnalyzedDesc": "Reportistica strutturata dal cantiere",
+      "aiInsightsGenerated": "Analisi con IA",
+      "aiInsightsGeneratedDesc": "Analisi di avanzamento e rischi",
+      "photosProcessed": "Documentazione fotografica",
+      "photosProcessedDesc": "Foto di cantiere acquisite e organizzate"
     },
     "home": {
       "heroTitle": "Intelligenza per l'edilizia con IA",

@@ -6,8 +6,6 @@ export async function PublicHomeContent() {
   const tMetrics = await getTranslations("public.homeMetrics");
   const tNav = await getTranslations("public.nav");
 
-  const MOCK_METRICS = { projects: "500+", reports: "12K+", insights: "8K+", photos: "45K+" };
-
   return (
     <>
       {/* Hero */}
@@ -56,7 +54,7 @@ export async function PublicHomeContent() {
         </div>
       </section>
 
-      {/* Metrics block */}
+      {/* Capabilities block */}
       <section className="border-b border-[var(--border-main)] bg-[var(--bg-card)] py-10">
         <div className="mx-auto min-w-0 max-w-5xl px-4 sm:px-6 lg:px-8">
           <h2 className="text-center text-[var(--aistroyka-font-headline)] font-semibold text-[var(--text-muted)]">
@@ -64,20 +62,20 @@ export async function PublicHomeContent() {
           </h2>
           <div className="mt-6 grid grid-cols-2 gap-6 sm:grid-cols-4">
             <div className="text-center">
-              <div className="font-heading text-[var(--aistroyka-font-title2)] font-bold text-[var(--ai-yellow)]">{MOCK_METRICS.projects}</div>
-              <div className="mt-1 text-[var(--aistroyka-font-footnote)] text-[var(--text-muted)]">{tMetrics("projectsMonitored")}</div>
+              <div className="font-heading text-[var(--aistroyka-font-subheadline)] font-bold text-[var(--ai-yellow)]">{tMetrics("projectsMonitored")}</div>
+              <div className="mt-1 text-[var(--aistroyka-font-footnote)] text-[var(--text-muted)]">{tMetrics("projectsMonitoredDesc")}</div>
             </div>
             <div className="text-center">
-              <div className="font-heading text-[var(--aistroyka-font-title2)] font-bold text-[var(--ai-yellow)]">{MOCK_METRICS.reports}</div>
-              <div className="mt-1 text-[var(--aistroyka-font-footnote)] text-[var(--text-muted)]">{tMetrics("dailyReportsAnalyzed")}</div>
+              <div className="font-heading text-[var(--aistroyka-font-subheadline)] font-bold text-[var(--ai-yellow)]">{tMetrics("dailyReportsAnalyzed")}</div>
+              <div className="mt-1 text-[var(--aistroyka-font-footnote)] text-[var(--text-muted)]">{tMetrics("dailyReportsAnalyzedDesc")}</div>
             </div>
             <div className="text-center">
-              <div className="font-heading text-[var(--aistroyka-font-title2)] font-bold text-[var(--ai-yellow)]">{MOCK_METRICS.insights}</div>
-              <div className="mt-1 text-[var(--aistroyka-font-footnote)] text-[var(--text-muted)]">{tMetrics("aiInsightsGenerated")}</div>
+              <div className="font-heading text-[var(--aistroyka-font-subheadline)] font-bold text-[var(--ai-yellow)]">{tMetrics("aiInsightsGenerated")}</div>
+              <div className="mt-1 text-[var(--aistroyka-font-footnote)] text-[var(--text-muted)]">{tMetrics("aiInsightsGeneratedDesc")}</div>
             </div>
             <div className="text-center">
-              <div className="font-heading text-[var(--aistroyka-font-title2)] font-bold text-[var(--ai-yellow)]">{MOCK_METRICS.photos}</div>
-              <div className="mt-1 text-[var(--aistroyka-font-footnote)] text-[var(--text-muted)]">{tMetrics("photosProcessed")}</div>
+              <div className="font-heading text-[var(--aistroyka-font-subheadline)] font-bold text-[var(--ai-yellow)]">{tMetrics("photosProcessed")}</div>
+              <div className="mt-1 text-[var(--aistroyka-font-footnote)] text-[var(--text-muted)]">{tMetrics("photosProcessedDesc")}</div>
             </div>
           </div>
         </div>

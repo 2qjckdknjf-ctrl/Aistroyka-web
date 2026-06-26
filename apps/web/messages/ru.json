@@ -993,11 +993,15 @@
       "integrationsDesc": "Готовность к API и интеграциям с ERP, BIM и другими системами."
     },
     "homeMetrics": {
-      "title": "Метрики контроля строительства",
-      "projectsMonitored": "Проектов под контролем",
-      "dailyReportsAnalyzed": "Отчётов проанализировано",
-      "aiInsightsGenerated": "ИИ-инсайтов сгенерировано",
-      "photosProcessed": "Фото обработано"
+      "title": "Что делает AISTROYKA",
+      "projectsMonitored": "Контроль проектов",
+      "projectsMonitoredDesc": "Все объекты в одной панели управления",
+      "dailyReportsAnalyzed": "Ежедневные отчёты",
+      "dailyReportsAnalyzedDesc": "Структурированная отчётность с площадки",
+      "aiInsightsGenerated": "ИИ-аналитика",
+      "aiInsightsGeneratedDesc": "Анализ прогресса и рисков",
+      "photosProcessed": "Фотодокументация",
+      "photosProcessedDesc": "Фото объектов снимаются и систематизируются"
     },
     "home": {
       "heroTitle": "ИИ для управления строительством",
