@@ -31,6 +31,7 @@ android {
         buildConfigField("String", "BASE_URL", "\"${configuredValue("BASE_URL", "https://www.aistroyka.ai")}\"")
         buildConfigField("String", "SUPABASE_URL", "\"${configuredValue("SUPABASE_URL", "")}\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"${configuredValue("SUPABASE_ANON_KEY", "")}\"")
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     buildFeatures {
         buildConfig = true
@@ -60,4 +61,10 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("com.google.android.material:material:1.12.0")
     implementation("io.coil-kt:coil-compose:2.5.0")
+    // Instrumented launch smoke (ManagerAppLaunchInstrumentedTest) — mirrors Worker.
+    androidTestImplementation(platform("androidx.compose:compose-bom:2023.10.01"))
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation("androidx.test:runner:1.5.2")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
 }
