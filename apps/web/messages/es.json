@@ -722,7 +722,8 @@
       "openMenu": "Abrir menú",
       "more": "Más",
       "main": "Principal",
-      "mainMobile": "Principal móvil"
+      "mainMobile": "Principal móvil",
+      "contactUs": "Contáctanos"
     },
     "copilot": {
       "title": "Copilot IA",
@@ -1001,7 +1002,9 @@
       "aiInsightsGenerated": "Análisis con IA",
       "aiInsightsGeneratedDesc": "Análisis de avance y riesgos",
       "photosProcessed": "Documentación fotográfica",
-      "photosProcessedDesc": "Fotos de obra capturadas y organizadas"
+      "photosProcessedDesc": "Fotos de obra capturadas y organizadas",
+      "disclaimer": "Señales ilustrativas del panel — no estadísticas publicadas de clientes.",
+      "heroDisclaimer": "Illustrative sample — not published customer statistics."
     },
     "home": {
       "heroTitle": "Inteligencia de construcción con IA",
@@ -1049,7 +1052,38 @@
       "pricingTeaserSubtitle": "Desde equipos hasta empresa. Lanza un piloto o contáctanos para un presupuesto a medida.",
       "finalCtaTitle": "¿Listo para tomar el control?",
       "finalCtaSubtitle": "Lanza un piloto o contáctanos para empezar.",
-      "finalCtaButton": "Lanzar piloto"
+      "finalCtaButton": "Lanzar piloto",
+      "heroLensLabel": "Ejemplo de lente de obra",
+      "heroLensTitle": "Torre B · Nivel 4",
+      "heroLensProgressLabel": "Progreso",
+      "heroLensProgressValue": "72% completado",
+      "heroLensRiskLabel": "Riesgo",
+      "heroLensRiskValue": "Retraso por clima",
+      "heroLensReportsLabel": "Informes",
+      "heroLensReportsValue": "3 hoy",
+      "heroLensStream1": "▸ Informe #482 — hormigón verificado",
+      "heroLensStream2": "▸ Sincronización — 2 tareas pendientes",
+      "heroLensStream3": "▸ Alerta IA — firma de cimentación pendiente",
+      "seeAllFeatures": "Ver todas las funciones →",
+      "tryMockAnalysis": "Probar análisis simulado →",
+      "pricingTeaserCta": "Cómo trabajamos →",
+      "relatedTitle": "Continue exploring",
+      "relatedSubtitle": "Home presenta el producto — siga Platform, Features, Pricing y Contact para profundidad canónica.",
+      "relatedPlatform": "Platform",
+      "relatedPlatformDesc": "How web, mobile, AI, and approvals connect in one stack.",
+      "linkPlatform": "See platform",
+      "relatedFeatures": "Features",
+      "relatedFeaturesDesc": "Full capability catalog — what the product includes.",
+      "linkFeatures": "View features",
+      "relatedPricing": "Pricing",
+      "relatedPricingDesc": "Pilot-first commercial engagement — not public list pricing.",
+      "linkPricing": "See pricing",
+      "relatedSecurity": "Security",
+      "relatedSecurityDesc": "Tenant isolation, access control, and data handling.",
+      "linkSecurity": "See security",
+      "relatedContact": "Contact",
+      "relatedContactDesc": "Pilot intake, presentations, and scoped deployment discussions.",
+      "linkContact": "Contact us"
     },
     "features": {
       "title": "Funciones",
@@ -1190,7 +1224,9 @@
       "resources": "Recursos",
       "company": "Empresa",
       "legal": "Legal",
-      "contact": "Contacto"
+      "contact": "Contacto",
+      "tagline": "Operaciones de construcción asistidas por IA para proyectos, evidencia de campo y supervisión gerencial.",
+      "copyright": "© {year} Aistroyka. Todos los derechos reservados."
     },
     "form": {
       "name": "Nombre",
@@ -1201,6 +1237,19 @@
       "sending": "Enviando…",
       "success": "Mensaje enviado. Te responderemos pronto.",
       "error": "Algo falló. Inténtalo de nuevo."
+    },
+    "cta": {
+      "launchPilot": "Iniciar piloto",
+      "contactUs": "Contáctanos",
+      "getPresentation": "Obtener presentación",
+      "launchPilotHref": "/dashboard",
+      "contactHref": "/contact",
+      "presentationHref": "/contact"
+    },
+    "layout": {
+      "schemaOrgDescription": "Operaciones de construcción asistidas por IA — apoyo a decisiones sobre progreso, riesgos y calidad en obra.",
+      "schemaSoftwareDescription": "Plataforma de operaciones de construcción con análisis asistido por IA cuando está habilitado: proyectos, tareas, informes diarios, evidencia fotográfica y analítica lista para revisión.",
+      "breadcrumbHome": "Inicio"
     }
   },
   "subscriptionOnboarding": {

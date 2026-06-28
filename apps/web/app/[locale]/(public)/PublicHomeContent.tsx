@@ -1,232 +1,273 @@
 import { getTranslations } from "next-intl/server";
-import { Link } from "@/i18n/navigation";
+import {
+  PublicCTASection,
+  PublicHeroCTA,
+  PublicHeroLens,
+  PublicHeroMetrics,
+  PublicRelatedLinksSection,
+  PublicRevealGlassCard,
+} from "@/components/public";
+import { GlassLink } from "@/components/design/liquid-glass";
+
+const HOME_RELATED_LINKS = [
+  { href: "/platform", titleKey: "relatedPlatform", descKey: "relatedPlatformDesc", linkKey: "linkPlatform" },
+  { href: "/features", titleKey: "relatedFeatures", descKey: "relatedFeaturesDesc", linkKey: "linkFeatures" },
+  { href: "/pricing", titleKey: "relatedPricing", descKey: "relatedPricingDesc", linkKey: "linkPricing" },
+  { href: "/contact", titleKey: "relatedContact", descKey: "relatedContactDesc", linkKey: "linkContact" },
+] as const;
+
+const MODULE_KEYS = ["projectManagement", "tasks", "dailyReports", "photoVideo"] as const;
 
 export async function PublicHomeContent() {
   const t = await getTranslations("public.home");
+  const tCta = await getTranslations("public.cta");
   const tMetrics = await getTranslations("public.homeMetrics");
-  const tNav = await getTranslations("public.nav");
 
   return (
     <>
-      {/* Hero */}
-      <section className="relative overflow-hidden px-4 pb-24 pt-20 sm:px-6 lg:px-8">
-        <div aria-hidden className="pointer-events-none absolute inset-0">
-          <div className="absolute -left-24 top-12 h-80 w-80 rounded-full bg-[var(--aistroyka-neural-core)] opacity-20 blur-3xl animate-neural-pulse" />
-          <div className="absolute -right-28 bottom-4 h-96 w-96 rounded-full bg-[var(--aistroyka-neural-accent)] opacity-20 blur-3xl animate-neural-drift" />
-        </div>
-
-        <div className="public-shell relative mx-auto min-w-0 max-w-6xl rounded-[var(--aistroyka-radius-xxl)] px-4 py-10 sm:px-10 sm:py-16">
-          <div className="max-w-3xl min-w-0">
-            <div className="public-badge mb-6 inline-flex max-w-full flex-wrap rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] sm:px-4 sm:tracking-[0.16em]">
+      <section className="relative overflow-hidden px-4 pb-20 pt-10 sm:px-6 sm:pt-14 lg:px-8 lg:pb-24">
+        <div className="mx-auto grid min-w-0 max-w-7xl gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,24rem)] lg:items-center lg:gap-12">
+          <div className="min-w-0">
+            <div className="public-badge mb-5 inline-flex max-w-full flex-wrap rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] sm:px-4 sm:tracking-[0.16em]">
               {t("neuralConstructionControl")}
             </div>
-            <h1 className="text-balance font-heading text-3xl font-semibold uppercase tracking-[0.04em] text-aistroyka-text-primary sm:text-5xl sm:tracking-[0.06em] lg:text-6xl">
+            <h1 className="text-balance font-heading text-3xl font-semibold uppercase tracking-[0.04em] text-aistroyka-text-primary sm:text-5xl sm:tracking-[0.06em] lg:text-[3.25rem] lg:leading-tight">
               <span className="text-aistroyka-accent">AISTROYKA</span>{" "}
               <span className="text-aistroyka-text-primary">{t("heroTitle")}</span>
             </h1>
-            <p className="mt-6 max-w-2xl text-pretty text-[var(--aistroyka-font-headline)] text-aistroyka-text-secondary sm:text-xl">
+            <p className="mt-5 max-w-xl text-pretty text-[var(--aistroyka-font-headline)] text-aistroyka-text-secondary sm:text-xl">
               {t("heroSubtitle")}
             </p>
-            <div className="mt-10 flex flex-wrap gap-3">
-              <Link href="/contact" className="btn-primary min-w-0 flex-1 basis-[min(100%,14rem)] sm:flex-none sm:basis-auto">
-                {tNav("requestDemo")}
-              </Link>
-              <Link href="/ai-demo" className="btn-secondary min-w-0 flex-1 basis-[min(100%,14rem)] sm:flex-none sm:basis-auto">
-                {tNav("aiDemo")}
-              </Link>
-            </div>
+            <PublicHeroCTA
+              primaryLabel={tCta("launchPilot")}
+              secondaryLabel={tCta("contactUs")}
+              presentationLabel={tCta("getPresentation")}
+              testIdPrefix="cta.public.home.hero"
+            />
+            <PublicHeroMetrics
+              chips={[
+                { value: tMetrics("projectsMonitored"), label: tMetrics("projectsMonitoredDesc") },
+                { value: tMetrics("dailyReportsAnalyzed"), label: tMetrics("dailyReportsAnalyzedDesc") },
+                { value: tMetrics("aiInsightsGenerated"), label: tMetrics("aiInsightsGeneratedDesc") },
+                { value: tMetrics("photosProcessed"), label: tMetrics("photosProcessedDesc") },
+              ]}
+            />
           </div>
 
-          <div className="mt-12 grid min-w-0 gap-4 sm:grid-cols-3">
-            <Link href="/projects-showcase" className="public-card-motion min-w-0 rounded-[var(--aistroyka-radius-xl)] border border-aistroyka-border-subtle bg-aistroyka-surface px-4 py-4 sm:px-5">
-              <div className="text-sm font-semibold uppercase tracking-[0.12em] text-aistroyka-accent">{t("heroCardDashboardTitle")}</div>
-              <p className="mt-2 text-sm text-aistroyka-text-secondary">{t("heroCardDashboardSubtitle")}</p>
-            </Link>
-            <Link href="/ai-construction-control" className="public-card-motion min-w-0 rounded-[var(--aistroyka-radius-xl)] border border-aistroyka-border-subtle bg-aistroyka-surface px-4 py-4 sm:px-5">
-              <div className="text-sm font-semibold uppercase tracking-[0.12em] text-aistroyka-accent">{t("heroCardAiTitle")}</div>
-              <p className="mt-2 text-sm text-aistroyka-text-secondary">{t("heroCardAiSubtitle")}</p>
-            </Link>
-            <Link href="/mobile" className="public-card-motion min-w-0 rounded-[var(--aistroyka-radius-xl)] border border-aistroyka-border-subtle bg-aistroyka-surface px-4 py-4 sm:px-5">
-              <div className="text-sm font-semibold uppercase tracking-[0.12em] text-aistroyka-accent">{t("heroCardMobileTitle")}</div>
-              <p className="mt-2 text-sm text-aistroyka-text-secondary">{t("heroCardMobileSubtitle")}</p>
-            </Link>
-          </div>
+          <PublicHeroLens
+            label={t("heroLensLabel")}
+            title={t("heroLensTitle")}
+            stats={[
+              { label: t("heroLensProgressLabel"), value: t("heroLensProgressValue") },
+              { label: t("heroLensRiskLabel"), value: t("heroLensRiskValue"), tone: "warning" },
+              { label: t("heroLensReportsLabel"), value: t("heroLensReportsValue") },
+            ]}
+            streamLines={[t("heroLensStream1"), t("heroLensStream2"), t("heroLensStream3")]}
+          />
         </div>
       </section>
 
-      {/* Capabilities block */}
-      <section className="border-b border-[var(--border-main)] bg-[var(--bg-card)] py-10">
-        <div className="mx-auto min-w-0 max-w-5xl px-4 sm:px-6 lg:px-8">
-          <h2 className="text-center text-[var(--aistroyka-font-headline)] font-semibold text-[var(--text-muted)]">
-            {tMetrics("title")}
-          </h2>
-          <div className="mt-6 grid grid-cols-2 gap-6 sm:grid-cols-4">
-            <div className="text-center">
-              <div className="font-heading text-[var(--aistroyka-font-subheadline)] font-bold text-[var(--ai-yellow)]">{tMetrics("projectsMonitored")}</div>
-              <div className="mt-1 text-[var(--aistroyka-font-footnote)] text-[var(--text-muted)]">{tMetrics("projectsMonitoredDesc")}</div>
+      <section className="px-4 py-10 sm:px-6 lg:px-8">
+        <div className="mx-auto min-w-0 max-w-5xl">
+          <PublicRevealGlassCard intensity="subtle">
+            <h2 className="text-center text-[var(--aistroyka-font-headline)] font-semibold text-aistroyka-text-primary">
+              {tMetrics("title")}
+            </h2>
+            <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+              {(
+                [
+                  [tMetrics("projectsMonitored"), tMetrics("projectsMonitoredDesc")],
+                  [tMetrics("dailyReportsAnalyzed"), tMetrics("dailyReportsAnalyzedDesc")],
+                  [tMetrics("aiInsightsGenerated"), tMetrics("aiInsightsGeneratedDesc")],
+                  [tMetrics("photosProcessed"), tMetrics("photosProcessedDesc")],
+                ] as const
+              ).map(([title, desc]) => (
+                <PublicRevealGlassCard key={title} interactive intensity="subtle">
+                  <div className="text-center">
+                    <div className="font-heading text-[var(--aistroyka-font-headline)] font-semibold text-aistroyka-accent">
+                      {title}
+                    </div>
+                    <div className="mt-1 text-[var(--aistroyka-font-footnote)] text-aistroyka-text-secondary">
+                      {desc}
+                    </div>
+                  </div>
+                </PublicRevealGlassCard>
+              ))}
             </div>
-            <div className="text-center">
-              <div className="font-heading text-[var(--aistroyka-font-subheadline)] font-bold text-[var(--ai-yellow)]">{tMetrics("dailyReportsAnalyzed")}</div>
-              <div className="mt-1 text-[var(--aistroyka-font-footnote)] text-[var(--text-muted)]">{tMetrics("dailyReportsAnalyzedDesc")}</div>
-            </div>
-            <div className="text-center">
-              <div className="font-heading text-[var(--aistroyka-font-subheadline)] font-bold text-[var(--ai-yellow)]">{tMetrics("aiInsightsGenerated")}</div>
-              <div className="mt-1 text-[var(--aistroyka-font-footnote)] text-[var(--text-muted)]">{tMetrics("aiInsightsGeneratedDesc")}</div>
-            </div>
-            <div className="text-center">
-              <div className="font-heading text-[var(--aistroyka-font-subheadline)] font-bold text-[var(--ai-yellow)]">{tMetrics("photosProcessed")}</div>
-              <div className="mt-1 text-[var(--aistroyka-font-footnote)] text-[var(--text-muted)]">{tMetrics("photosProcessedDesc")}</div>
-            </div>
-          </div>
+          </PublicRevealGlassCard>
         </div>
       </section>
 
-      {/* Trust strip */}
-      <section className="border-b border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] py-6">
-        <div className="mx-auto min-w-0 max-w-7xl px-4 text-center text-[var(--aistroyka-font-subheadline)] text-[var(--aistroyka-text-secondary)] sm:px-6 lg:px-8">
-          {t("trustStrip")}
-        </div>
-      </section>
-
-      {/* Pain points */}
-      <section className="bg-[var(--bg-main)] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-        <div className="mx-auto min-w-0 max-w-3xl text-center">
-          <h2 className="font-heading text-[var(--aistroyka-font-title2)] font-semibold text-[var(--text-main)]">
-            {t("painTitle")}
-          </h2>
-          <p className="mt-3 text-[var(--aistroyka-font-body)] text-[var(--text-muted)]">
-            {t("painSubtitle")}
-          </p>
-        </div>
-      </section>
-
-      {/* Solution overview */}
-      <section className="bg-[var(--bg-card)] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-        <div className="mx-auto min-w-0 max-w-4xl text-center">
-          <h2 className="font-heading text-[var(--aistroyka-font-title2)] font-semibold text-[var(--text-main)]">
-            {t("solutionTitle")}
-          </h2>
-          <p className="mt-3 text-[var(--aistroyka-font-body)] text-[var(--text-muted)]">
-            {t("solutionSubtitle")}
-          </p>
-        </div>
-      </section>
-
-      {/* Key modules - cards */}
-      <section className="bg-[var(--bg-main)] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+      <section className="px-4 py-6 sm:px-6 lg:px-8">
         <div className="mx-auto min-w-0 max-w-7xl">
-          <h2 className="font-heading text-center text-[var(--aistroyka-font-title2)] font-semibold text-[var(--text-main)]">
-            {t("modulesTitle")}
-          </h2>
-          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {(["projectManagement", "tasks", "dailyReports", "photoVideo"] as const).map((key) => (
-              <div
-                key={key}
-                className="rounded-[var(--radius-main)] border border-[var(--border-main)] bg-[var(--bg-card)] p-6 shadow-[var(--aistroyka-shadow-e1)] transition-all hover:shadow-[var(--aistroyka-shadow-e2)] hover:border-[var(--ai-yellow)]/20"
-              >
-                <div className="text-[var(--aistroyka-font-headline)] font-semibold text-[var(--text-main)]">
+          <PublicRevealGlassCard intensity="subtle">
+            <p className="text-center text-[var(--aistroyka-font-subheadline)] text-aistroyka-text-secondary">
+              {t("trustStrip")}
+            </p>
+          </PublicRevealGlassCard>
+        </div>
+      </section>
+
+      <section className="px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+        <div className="mx-auto min-w-0 max-w-3xl">
+          <PublicRevealGlassCard>
+            <h2 className="text-center font-heading text-[var(--aistroyka-font-title2)] font-semibold text-aistroyka-text-primary">
+              {t("painTitle")}
+            </h2>
+            <p className="mt-3 text-center text-[var(--aistroyka-font-body)] text-aistroyka-text-secondary">
+              {t("painSubtitle")}
+            </p>
+          </PublicRevealGlassCard>
+        </div>
+      </section>
+
+      <section className="px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+        <div className="mx-auto min-w-0 max-w-4xl">
+          <PublicRevealGlassCard>
+            <h2 className="text-center font-heading text-[var(--aistroyka-font-title2)] font-semibold text-aistroyka-text-primary">
+              {t("solutionTitle")}
+            </h2>
+            <p className="mt-3 text-center text-[var(--aistroyka-font-body)] text-aistroyka-text-secondary">
+              {t("solutionSubtitle")}
+            </p>
+          </PublicRevealGlassCard>
+        </div>
+      </section>
+
+      <section className="px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+        <div className="mx-auto min-w-0 max-w-7xl">
+          <div className="mx-auto max-w-2xl text-center">
+            <span className="text-[13px] font-semibold uppercase tracking-[0.02em] text-aistroyka-accent">
+              {t("modulesTitle")}
+            </span>
+            <h2 className="mt-3 font-heading text-[var(--aistroyka-font-title2)] font-semibold text-aistroyka-text-primary">
+              {t("modulesTitle")}
+            </h2>
+          </div>
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {MODULE_KEYS.map((key) => (
+              <PublicRevealGlassCard key={key} interactive>
+                <h3 className="text-[var(--aistroyka-font-headline)] font-semibold text-aistroyka-text-primary">
                   {t(`modules.${key}`)}
-                </div>
-                <p className="mt-2 text-[var(--aistroyka-font-footnote)] text-[var(--text-muted)]">
+                </h3>
+                <p className="mt-2 text-[var(--aistroyka-font-footnote)] text-aistroyka-text-secondary">
                   {key === "projectManagement" && t("moduleDescProjectManagement")}
                   {key === "tasks" && t("moduleDescTasks")}
                   {key === "dailyReports" && t("moduleDescDailyReports")}
                   {key === "photoVideo" && t("moduleDescPhotoVideo")}
                 </p>
-              </div>
+              </PublicRevealGlassCard>
             ))}
           </div>
+          <p className="mt-8 text-center">
+            <GlassLink href="/features" pill intensity="subtle" linkClassName="text-sm">
+              {t("seeAllFeatures")}
+            </GlassLink>
+          </p>
         </div>
       </section>
 
-      {/* Role-based value - reuse features copy */}
-      <section className="bg-[var(--aistroyka-surface)] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+      <section className="px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
         <div className="mx-auto min-w-0 max-w-7xl">
-          <h2 className="text-center text-[var(--aistroyka-font-title2)] font-semibold text-[var(--aistroyka-text-primary)]">
+          <h2 className="text-center text-[var(--aistroyka-font-title2)] font-semibold text-aistroyka-text-primary">
             {t("rolesTitle")}
           </h2>
-          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            <div className="card p-6">
-              <div className="font-semibold text-[var(--aistroyka-text-primary)]">{t("roleDeveloperGcTitle")}</div>
-              <p className="mt-2 text-[var(--aistroyka-font-footnote)] text-[var(--aistroyka-text-secondary)]">
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <PublicRevealGlassCard>
+              <div className="font-semibold text-aistroyka-text-primary">{t("roleDeveloperGcTitle")}</div>
+              <p className="mt-2 text-[var(--aistroyka-font-footnote)] text-aistroyka-text-secondary">
                 {t("roleDeveloperGcBody")}
               </p>
-            </div>
-            <div className="rounded-[var(--radius-main)] border border-[var(--border-main)] bg-[var(--bg-main)] p-6">
-              <div className="font-semibold text-[var(--text-main)]">{t("roleProjectManagerTitle")}</div>
-              <p className="mt-2 text-[var(--aistroyka-font-footnote)] text-[var(--text-muted)]">
+            </PublicRevealGlassCard>
+            <PublicRevealGlassCard>
+              <div className="font-semibold text-aistroyka-text-primary">{t("roleProjectManagerTitle")}</div>
+              <p className="mt-2 text-[var(--aistroyka-font-footnote)] text-aistroyka-text-secondary">
                 {t("roleProjectManagerBody")}
               </p>
-            </div>
-            <div className="rounded-[var(--radius-main)] border border-[var(--border-main)] bg-[var(--bg-main)] p-6">
-              <div className="font-semibold text-[var(--text-main)]">{t("roleFieldTeamsTitle")}</div>
-              <p className="mt-2 text-[var(--aistroyka-font-footnote)] text-[var(--text-muted)]">
+            </PublicRevealGlassCard>
+            <PublicRevealGlassCard>
+              <div className="font-semibold text-aistroyka-text-primary">{t("roleFieldTeamsTitle")}</div>
+              <p className="mt-2 text-[var(--aistroyka-font-footnote)] text-aistroyka-text-secondary">
                 {t("roleFieldTeamsBody")}
               </p>
-            </div>
+            </PublicRevealGlassCard>
           </div>
         </div>
       </section>
 
-      {/* AI Construction Control */}
-      <section className="bg-aistroyka-bg-primary px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-        <div className="mx-auto min-w-0 max-w-4xl text-center">
-          <h2 className="font-heading text-[var(--aistroyka-font-title2)] font-semibold text-[var(--text-main)]">
-            {t("aiSectionTitle")}
-          </h2>
-          <p className="mt-3 text-[var(--text-muted)]">
-            {t("aiSectionSubtitle")}
-          </p>
-          <Link href="/ai-construction-control" className="btn-primary mt-6 inline-flex max-w-full sm:px-6">
-            {t("learnMore")}
-          </Link>
+      <section className="px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+        <div className="mx-auto min-w-0 max-w-4xl">
+          <PublicRevealGlassCard intensity="strong">
+            <h2 className="text-center font-heading text-[var(--aistroyka-font-title2)] font-semibold text-aistroyka-text-primary">
+              {t("aiSectionTitle")}
+            </h2>
+            <p className="mt-3 text-center text-aistroyka-text-secondary">{t("aiSectionSubtitle")}</p>
+            <div className="mt-6 flex justify-center">
+              <GlassLink href="/ai-construction-control">{t("learnMore")}</GlassLink>
+            </div>
+            <p className="mt-4 text-center">
+              <GlassLink href="/ai-demo" intensity="subtle" pill linkClassName="text-sm">
+                {t("tryMockAnalysis")}
+              </GlassLink>
+            </p>
+          </PublicRevealGlassCard>
         </div>
       </section>
 
-      {/* Mobile */}
-      <section className="bg-[var(--bg-card)] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-        <div className="mx-auto min-w-0 max-w-4xl text-center">
-          <h2 className="font-heading text-[var(--aistroyka-font-title2)] font-semibold text-[var(--text-main)]">
-            {t("mobileTitle")}
-          </h2>
-          <p className="mt-3 text-[var(--aistroyka-font-body)] text-[var(--text-muted)]">
-            {t("mobileSubtitle")}
-          </p>
-          <Link href="/mobile" className="btn-primary mx-auto mt-6 inline-flex max-w-full">
-            {t("mobileCta")}
-          </Link>
+      <section className="px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+        <div className="mx-auto min-w-0 max-w-4xl">
+          <PublicRevealGlassCard>
+            <h2 className="text-center font-heading text-[var(--aistroyka-font-title2)] font-semibold text-aistroyka-text-primary">
+              {t("mobileTitle")}
+            </h2>
+            <p className="mt-3 text-center text-[var(--aistroyka-font-body)] text-aistroyka-text-secondary">
+              {t("mobileSubtitle")}
+            </p>
+            <div className="mt-6 flex justify-center">
+              <GlassLink href="/mobile">{t("mobileCta")}</GlassLink>
+            </div>
+          </PublicRevealGlassCard>
         </div>
       </section>
 
-      {/* Pricing teaser */}
-      <section className="bg-[var(--bg-main)] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-        <div className="mx-auto min-w-0 max-w-3xl text-center">
-          <h2 className="font-heading text-[var(--aistroyka-font-title2)] font-semibold text-[var(--text-main)]">
-            {t("pricingTeaserTitle")}
-          </h2>
-          <p className="mt-3 text-[var(--aistroyka-font-body)] text-[var(--text-muted)]">
-            {t("pricingTeaserSubtitle")}
-          </p>
-          <Link href="/pricing" className="btn-primary mx-auto mt-6 inline-flex max-w-full">
-            {t("pricingTeaserTitle")}
-          </Link>
+      <section className="px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+        <div className="mx-auto min-w-0 max-w-3xl">
+          <PublicRevealGlassCard>
+            <h2 className="text-center font-heading text-[var(--aistroyka-font-title2)] font-semibold text-aistroyka-text-primary">
+              {t("pricingTeaserTitle")}
+            </h2>
+            <p className="mt-3 text-center text-[var(--aistroyka-font-body)] text-aistroyka-text-secondary">
+              {t("pricingTeaserSubtitle")}
+            </p>
+            <div className="mt-6 flex justify-center">
+              <GlassLink href="/pricing">{t("pricingTeaserCta")}</GlassLink>
+            </div>
+          </PublicRevealGlassCard>
         </div>
       </section>
 
-      {/* Final CTA */}
-      <section className="bg-aistroyka-bg-primary px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-        <div className="mx-auto min-w-0 max-w-3xl text-center">
-          <h2 className="font-heading text-[var(--aistroyka-font-title2)] font-semibold text-[var(--text-main)]">
-            {t("finalCtaTitle")}
-          </h2>
-          <p className="mt-3 text-[var(--text-muted)]">
-            {t("finalCtaSubtitle")}
-          </p>
-          <Link href="/contact" className="btn-primary mt-6 inline-flex max-w-full sm:px-8">
-            {t("finalCtaButton")}
-          </Link>
+      <section className="px-4 py-16 sm:px-6 lg:px-8">
+        <div className="mx-auto min-w-0 max-w-7xl">
+          <PublicRelatedLinksSection
+            headingId="home-related-heading"
+            title={t("relatedTitle")}
+            subtitle={t("relatedSubtitle")}
+            links={HOME_RELATED_LINKS.map(({ href, titleKey, descKey, linkKey }) => ({
+              href,
+              title: t(titleKey),
+              description: t(descKey),
+              linkLabel: t(linkKey),
+            }))}
+          />
         </div>
       </section>
+
+      <PublicCTASection
+        variant="floating"
+        title={t("finalCtaTitle")}
+        subtitle={t("finalCtaSubtitle")}
+        testIdPrefix="cta.public.home"
+      />
     </>
   );
 }
