@@ -722,7 +722,8 @@
       "openMenu": "Открыть меню",
       "more": "Ещё",
       "main": "Основное",
-      "mainMobile": "Основное (моб.)"
+      "mainMobile": "Основное (моб.)",
+      "contactUs": "Связаться с нами"
     },
     "copilot": {
       "title": "ИИ-копилот",
@@ -1001,7 +1002,9 @@
       "aiInsightsGenerated": "ИИ-аналитика",
       "aiInsightsGeneratedDesc": "Анализ прогресса и рисков",
       "photosProcessed": "Фотодокументация",
-      "photosProcessedDesc": "Фото объектов снимаются и систематизируются"
+      "photosProcessedDesc": "Фото объектов снимаются и систематизируются",
+      "disclaimer": "Иллюстративные сигналы дашборда — не опубликованная статистика клиентов.",
+      "heroDisclaimer": "Illustrative sample — not published customer statistics."
     },
     "home": {
       "heroTitle": "ИИ для управления строительством",
@@ -1049,7 +1052,38 @@
       "pricingTeaserSubtitle": "От команд до корпораций. Запустите пилот или свяжитесь с нами для индивидуального предложения.",
       "finalCtaTitle": "Готовы взять контроль?",
       "finalCtaSubtitle": "Запустите пилот или свяжитесь с нами, чтобы начать.",
-      "finalCtaButton": "Запустить пилот"
+      "finalCtaButton": "Запустить пилот",
+      "heroLensLabel": "Пример линзы объекта",
+      "heroLensTitle": "Башня B · Уровень 4",
+      "heroLensProgressLabel": "Прогресс",
+      "heroLensProgressValue": "72% выполнено",
+      "heroLensRiskLabel": "Риск",
+      "heroLensRiskValue": "Задержка из-за погоды",
+      "heroLensReportsLabel": "Отчёты",
+      "heroLensReportsValue": "3 сегодня",
+      "heroLensStream1": "▸ Отчёт #482 — бетон подтверждён",
+      "heroLensStream2": "▸ Синхронизация графика — 2 задачи",
+      "heroLensStream3": "▸ ИИ-флаг — ожидает подпись фундамента",
+      "seeAllFeatures": "Все возможности →",
+      "tryMockAnalysis": "Попробовать мок-анализ →",
+      "pricingTeaserCta": "Как мы работаем →",
+      "relatedTitle": "Continue exploring",
+      "relatedSubtitle": "Home представляет продукт — Platform, Features, Pricing и Contact для canonical depth.",
+      "relatedPlatform": "Platform",
+      "relatedPlatformDesc": "How web, mobile, AI, and approvals connect in one stack.",
+      "linkPlatform": "See platform",
+      "relatedFeatures": "Features",
+      "relatedFeaturesDesc": "Full capability catalog — what the product includes.",
+      "linkFeatures": "View features",
+      "relatedPricing": "Pricing",
+      "relatedPricingDesc": "Pilot-first commercial engagement — not public list pricing.",
+      "linkPricing": "See pricing",
+      "relatedSecurity": "Security",
+      "relatedSecurityDesc": "Tenant isolation, access control, and data handling.",
+      "linkSecurity": "See security",
+      "relatedContact": "Contact",
+      "relatedContactDesc": "Pilot intake, presentations, and scoped deployment discussions.",
+      "linkContact": "Contact us"
     },
     "features": {
       "title": "Возможности",
@@ -1190,7 +1224,9 @@
       "resources": "Ресурсы",
       "company": "Компания",
       "legal": "Правовая информация",
-      "contact": "Контакты"
+      "contact": "Контакты",
+      "tagline": "AI-assisted construction operations для проектов, полевых доказательств и oversight руководителей.",
+      "copyright": "© {year} Aistroyka. Все права защищены."
     },
     "form": {
       "name": "Имя",
@@ -1201,6 +1237,19 @@
       "sending": "Отправка…",
       "success": "Сообщение отправлено. Мы скоро ответим.",
       "error": "Что-то пошло не так. Попробуйте снова."
+    },
+    "cta": {
+      "launchPilot": "Запустить пилот",
+      "contactUs": "Связаться с нами",
+      "getPresentation": "Получить презентацию",
+      "launchPilotHref": "/dashboard",
+      "contactHref": "/contact",
+      "presentationHref": "/contact"
+    },
+    "layout": {
+      "schemaOrgDescription": "AI-assisted construction operations — decision support для прогресса, рисков и качества на объекте.",
+      "schemaSoftwareDescription": "Construction operations platform с AI-assisted analysis where enabled: проекты, задачи, ежедневные отчёты, фото-доказательства и review-ready analytics.",
+      "breadcrumbHome": "Главная"
     }
   },
   "subscriptionOnboarding": {

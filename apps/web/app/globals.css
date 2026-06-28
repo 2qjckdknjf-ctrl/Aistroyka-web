@@ -1,4 +1,5 @@
 @import "./design-tokens.css";
+@import "../styles/liquid-glass.css";
 
 @tailwind base;
 @tailwind components;
@@ -38,19 +39,89 @@
 
 @layer components {
   .btn-primary {
-    @apply inline-flex max-w-full min-h-[var(--aistroyka-touch-min)] items-center justify-center whitespace-normal break-words rounded-[var(--aistroyka-radius-lg)] border border-transparent bg-[linear-gradient(135deg,var(--aistroyka-gradient-start),var(--aistroyka-gradient-end))] px-3 py-2.5 text-center text-sm font-semibold uppercase tracking-[0.05em] text-[var(--aistroyka-text-primary)] shadow-[var(--aistroyka-shadow-glow)] transition-[transform,box-shadow,opacity] duration-[var(--aistroyka-duration-fast)] hover:-translate-y-0.5 hover:shadow-[0_0_28px_rgba(255,196,0,0.45)] active:translate-y-0 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100 sm:px-5 sm:tracking-[0.08em];
+    @apply relative isolate inline-flex max-w-full min-h-[var(--aistroyka-touch-min)] items-center justify-center whitespace-normal break-words rounded-[var(--lg-radius-control)] border border-[var(--lg-border)] px-3 py-2.5 text-center text-sm font-semibold uppercase tracking-[0.05em] text-[var(--aistroyka-text-primary)] transition-[transform,box-shadow,opacity] duration-[var(--aistroyka-duration-fast)] hover:-translate-y-0.5 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50 motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100 sm:px-5 sm:tracking-[0.08em];
+    background: color-mix(in srgb, var(--lg-tint-strong) 72%, transparent);
+    backdrop-filter: blur(var(--lg-blur));
+    -webkit-backdrop-filter: blur(var(--lg-blur));
+    box-shadow: var(--lg-shadow);
+  }
+  .btn-primary:hover {
+    box-shadow: var(--lg-shadow-hover);
   }
   .btn-secondary {
-    @apply inline-flex max-w-full min-h-[var(--aistroyka-touch-min)] items-center justify-center whitespace-normal break-words rounded-[var(--aistroyka-radius-lg)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-bg-secondary)] px-3 py-2.5 text-center text-sm font-semibold uppercase tracking-[0.05em] text-[var(--aistroyka-text-primary)] transition-[transform,border-color,background-color] duration-[var(--aistroyka-duration-fast)] hover:-translate-y-0.5 hover:border-[var(--aistroyka-accent)] hover:bg-[var(--aistroyka-surface)] active:translate-y-0 active:scale-[0.98] motion-reduce:transition-none motion-reduce:hover:translate-y-0 sm:px-5 sm:tracking-[0.08em];
+    @apply relative isolate inline-flex max-w-full min-h-[var(--aistroyka-touch-min)] items-center justify-center whitespace-normal break-words rounded-[var(--lg-radius-control)] border border-[var(--lg-border)] px-3 py-2.5 text-center text-sm font-semibold uppercase tracking-[0.05em] text-[var(--aistroyka-text-primary)] transition-[transform,border-color,background-color,box-shadow] duration-[var(--aistroyka-duration-fast)] hover:-translate-y-0.5 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50 motion-reduce:transition-none motion-reduce:hover:translate-y-0 sm:px-5 sm:tracking-[0.08em];
+    background: color-mix(in srgb, var(--lg-tint) 42%, transparent);
+    backdrop-filter: blur(var(--lg-blur));
+    -webkit-backdrop-filter: blur(var(--lg-blur));
+    box-shadow: var(--lg-shadow);
+  }
+  .btn-secondary:hover {
+    box-shadow: var(--lg-shadow-hover);
   }
   .card {
-    @apply rounded-[var(--aistroyka-radius-card)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] p-4 shadow-[var(--aistroyka-shadow-e1)] sm:p-6;
+    @apply relative isolate overflow-hidden rounded-[var(--lg-radius)] border border-[var(--lg-border)] p-4 sm:p-6;
+    background: color-mix(in srgb, var(--lg-tint) calc(var(--lg-intensity) * 1%), transparent);
+    backdrop-filter: blur(var(--lg-blur));
+    -webkit-backdrop-filter: blur(var(--lg-blur));
+    box-shadow: var(--lg-shadow);
   }
   .card-elevated {
-    @apply rounded-[var(--aistroyka-radius-card)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] p-4 shadow-[var(--aistroyka-shadow-e2)] sm:p-6;
+    @apply relative isolate overflow-hidden rounded-[var(--lg-radius)] border border-[var(--lg-border)] p-4 sm:p-6;
+    background: color-mix(in srgb, var(--lg-tint-strong) 72%, transparent);
+    backdrop-filter: blur(var(--lg-blur));
+    -webkit-backdrop-filter: blur(var(--lg-blur));
+    box-shadow: var(--lg-shadow-hover);
+  }
+  .surface-glass {
+    @apply relative isolate border border-[var(--lg-border)];
+    background: color-mix(in srgb, var(--lg-tint) calc(var(--lg-intensity) * 1%), transparent);
+    backdrop-filter: blur(var(--lg-blur));
+    -webkit-backdrop-filter: blur(var(--lg-blur));
+    box-shadow: var(--lg-shadow);
+  }
+  .surface-glass-raised {
+    @apply relative isolate border border-[var(--lg-border)];
+    background: color-mix(in srgb, var(--lg-tint-strong) 72%, transparent);
+    backdrop-filter: blur(var(--lg-blur));
+    -webkit-backdrop-filter: blur(var(--lg-blur));
+    box-shadow: var(--lg-shadow-hover);
+  }
+  .surface-glass-muted {
+    @apply relative isolate border border-[var(--lg-border)];
+    background: color-mix(in srgb, var(--lg-tint) 28%, transparent);
+    backdrop-filter: blur(var(--lg-blur));
+    -webkit-backdrop-filter: blur(var(--lg-blur));
+    box-shadow: var(--lg-shadow);
+  }
+  .surface-glass-chrome {
+    @apply relative isolate;
+    background: color-mix(in srgb, var(--lg-tint-strong) 58%, transparent);
+    backdrop-filter: blur(calc(var(--lg-blur) * 1.15));
+    -webkit-backdrop-filter: blur(calc(var(--lg-blur) * 1.15));
+  }
+  .surface-glass-popover {
+    @apply relative isolate border border-[var(--lg-border)];
+    background: color-mix(in srgb, var(--lg-tint-strong) 78%, transparent);
+    backdrop-filter: blur(var(--lg-blur));
+    -webkit-backdrop-filter: blur(var(--lg-blur));
+    box-shadow: var(--lg-shadow-hover);
+  }
+  .surface-glass-row {
+    background: color-mix(in srgb, var(--lg-tint-strong) 38%, transparent);
+    backdrop-filter: blur(calc(var(--lg-blur) * 0.85));
+    -webkit-backdrop-filter: blur(calc(var(--lg-blur) * 0.85));
   }
   .input-field {
-    @apply min-h-[var(--aistroyka-touch-min)] w-full rounded-[var(--aistroyka-radius-lg)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] px-4 py-2.5 text-base text-[var(--aistroyka-text-primary)] placeholder-[var(--aistroyka-text-tertiary)] transition-colors focus:border-[var(--aistroyka-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--aistroyka-accent)] focus:ring-opacity-20;
+    @apply min-h-[var(--aistroyka-touch-min)] w-full rounded-[var(--aistroyka-radius-lg)] border border-[var(--lg-border)] px-4 py-2.5 text-base text-[var(--aistroyka-text-primary)] placeholder-[var(--aistroyka-text-tertiary)] transition-colors focus:border-[var(--aistroyka-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--aistroyka-accent)] focus:ring-opacity-20;
+    background: color-mix(in srgb, var(--lg-tint) 55%, transparent);
+    backdrop-filter: blur(var(--lg-blur));
+    -webkit-backdrop-filter: blur(var(--lg-blur));
+  }
+  .input-field-sm {
+    @apply min-h-[36px] w-full rounded-[var(--aistroyka-radius-lg)] border border-[var(--lg-border)] px-3 py-2 text-sm text-[var(--aistroyka-text-primary)] placeholder-[var(--aistroyka-text-tertiary)] transition-colors focus:border-[var(--aistroyka-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--aistroyka-accent)] focus:ring-opacity-20;
+    background: color-mix(in srgb, var(--lg-tint) 55%, transparent);
+    backdrop-filter: blur(var(--lg-blur));
+    -webkit-backdrop-filter: blur(var(--lg-blur));
   }
   .table-cell {
     @apply px-3 py-2.5 sm:px-5 sm:py-3.5;
@@ -120,5 +191,97 @@
   }
   .public-card-motion {
     @apply transition-transform duration-[var(--aistroyka-duration-fast)] hover:-translate-y-1;
+  }
+
+  /* LG-2A public ambient field — decorative, non-interactive */
+  .public-ambient-shell {
+    @apply relative isolate;
+  }
+
+  .public-ambient-field {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+    background: linear-gradient(180deg, var(--aistroyka-bg-primary) 0%, var(--aistroyka-bg-secondary) 100%);
+  }
+
+  .public-ambient-field__blob {
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(70px);
+    opacity: 0.55;
+    will-change: transform;
+  }
+
+  .public-ambient-field__blob--1 {
+    top: -8vw;
+    left: -10vw;
+    height: 46vw;
+    width: 46vw;
+    background: var(--aistroyka-neural-core);
+    animation: public-blob-drift-1 26s ease-in-out infinite;
+  }
+
+  .public-ambient-field__blob--2 {
+    top: 18vw;
+    right: -8vw;
+    height: 38vw;
+    width: 38vw;
+    background: color-mix(in srgb, var(--aistroyka-accent) 55%, var(--aistroyka-neural-accent));
+    animation: public-blob-drift-2 32s ease-in-out infinite;
+  }
+
+  .public-ambient-field__blob--3 {
+    bottom: -14vw;
+    left: 18vw;
+    height: 34vw;
+    width: 34vw;
+    opacity: 0.35;
+    background: color-mix(in srgb, var(--aistroyka-warning) 70%, var(--aistroyka-accent));
+    animation: public-blob-drift-3 38s ease-in-out infinite;
+  }
+
+  @keyframes public-blob-drift-1 {
+    0%,
+    100% {
+      transform: translate(0, 0);
+    }
+    50% {
+      transform: translate(4vw, 6vw);
+    }
+  }
+
+  @keyframes public-blob-drift-2 {
+    0%,
+    100% {
+      transform: translate(0, 0);
+    }
+    50% {
+      transform: translate(-5vw, -4vw);
+    }
+  }
+
+  @keyframes public-blob-drift-3 {
+    0%,
+    100% {
+      transform: translate(0, 0);
+    }
+    50% {
+      transform: translate(3vw, -5vw);
+    }
+  }
+
+  .public-hero-lens-stream {
+    mask-image: linear-gradient(to bottom, black 60%, transparent);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .public-ambient-field__blob--1,
+    .public-ambient-field__blob--2,
+    .public-ambient-field__blob--3 {
+      animation: none;
+    }
   }
 }

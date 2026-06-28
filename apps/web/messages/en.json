@@ -722,7 +722,8 @@
       "openMenu": "Open menu",
       "more": "More",
       "main": "Main",
-      "mainMobile": "Main mobile"
+      "mainMobile": "Main mobile",
+      "contactUs": "Contact us"
     },
     "home": {
       "heroTitle": "AI Construction Intelligence",
@@ -770,7 +771,38 @@
       "pricingTeaserSubtitle": "From teams to enterprise. Launch a pilot or contact us for a tailored quote.",
       "finalCtaTitle": "Ready to take control?",
       "finalCtaSubtitle": "Launch a pilot or contact us to get started.",
-      "finalCtaButton": "Launch pilot"
+      "finalCtaButton": "Launch pilot",
+      "heroLensLabel": "Sample site lens",
+      "heroLensTitle": "Tower B · Level 4",
+      "heroLensProgressLabel": "Progress",
+      "heroLensProgressValue": "72% complete",
+      "heroLensRiskLabel": "Risk",
+      "heroLensRiskValue": "Weather delay",
+      "heroLensReportsLabel": "Reports",
+      "heroLensReportsValue": "3 today",
+      "heroLensStream1": "▸ Report #482 — concrete verified",
+      "heroLensStream2": "▸ Schedule sync — 2 tasks due",
+      "heroLensStream3": "▸ AI flag — foundation sign-off pending",
+      "seeAllFeatures": "See all features →",
+      "tryMockAnalysis": "Try mock analysis →",
+      "pricingTeaserCta": "See how we engage",
+      "relatedTitle": "Continue exploring",
+      "relatedSubtitle": "Home introduces the product — follow Platform, Features, Pricing, and Contact for canonical depth.",
+      "relatedPlatform": "Platform",
+      "relatedPlatformDesc": "How web, mobile, AI, and approvals connect in one stack.",
+      "linkPlatform": "See platform",
+      "relatedFeatures": "Features",
+      "relatedFeaturesDesc": "Full capability catalog — what the product includes.",
+      "linkFeatures": "View features",
+      "relatedPricing": "Pricing",
+      "relatedPricingDesc": "Pilot-first commercial engagement — not public list pricing.",
+      "linkPricing": "See pricing",
+      "relatedSecurity": "Security",
+      "relatedSecurityDesc": "Tenant isolation, access control, and data handling.",
+      "linkSecurity": "See security",
+      "relatedContact": "Contact",
+      "relatedContactDesc": "Pilot intake, presentations, and scoped deployment discussions.",
+      "linkContact": "Contact us"
     },
     "features": {
       "title": "Features",
@@ -911,7 +943,9 @@
       "resources": "Resources",
       "company": "Company",
       "legal": "Legal",
-      "contact": "Contact"
+      "contact": "Contact",
+      "tagline": "AI-assisted construction operations for projects, field evidence, and manager oversight.",
+      "copyright": "© {year} Aistroyka. All rights reserved."
     },
     "form": {
       "name": "Name",
@@ -1058,7 +1092,9 @@
       "aiInsightsGenerated": "AI insights",
       "aiInsightsGeneratedDesc": "Progress and risk analysis",
       "photosProcessed": "Photo documentation",
-      "photosProcessedDesc": "Site photos captured and organized"
+      "photosProcessedDesc": "Site photos captured and organized",
+      "disclaimer": "Illustrative dashboard signals — not published customer statistics.",
+      "heroDisclaimer": "Illustrative sample — not published customer statistics."
     },
     "copilot": {
       "title": "AI Copilot",
@@ -1201,6 +1237,19 @@
       "benefit3": "Enterprise delivery",
       "benefit4": "Ecosystem growth",
       "cta": "Become a partner"
+    },
+    "cta": {
+      "launchPilot": "Launch pilot",
+      "contactUs": "Contact us",
+      "getPresentation": "Get presentation",
+      "launchPilotHref": "/dashboard",
+      "contactHref": "/contact",
+      "presentationHref": "/contact"
+    },
+    "layout": {
+      "schemaOrgDescription": "AI-assisted construction operations — decision support for progress, risks, and quality on site.",
+      "schemaSoftwareDescription": "Construction operations platform with AI-assisted analysis where enabled: projects, tasks, daily reports, photo evidence, and review-ready analytics.",
+      "breadcrumbHome": "Home"
     }
   },
   "subscriptionOnboarding": {

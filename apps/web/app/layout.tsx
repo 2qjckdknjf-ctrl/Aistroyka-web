@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import { Exo_2, Inter } from "next/font/google";
 import { QueryProvider } from "@/lib/query/QueryProvider";
+import { AppGlassRoot } from "@/components/design/liquid-glass/AppGlassRoot";
 import "./globals.css";
 
 const inter = Inter({
@@ -72,6 +73,7 @@ export default async function RootLayout({
   return (
     <html lang={lang} className={`${inter.variable} ${exo2.variable} overflow-x-clip`}>
       <body className="min-h-screen min-w-0 font-sans antialiased [padding-bottom:env(safe-area-inset-bottom)] [padding-left:env(safe-area-inset-left)] [padding-right:env(safe-area-inset-right)]">
+        <AppGlassRoot />
         <QueryProvider>{children}</QueryProvider>
       </body>
     </html>

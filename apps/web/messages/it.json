@@ -722,7 +722,8 @@
       "openMenu": "Apri menu",
       "more": "Altro",
       "main": "Principale",
-      "mainMobile": "Principale mobile"
+      "mainMobile": "Principale mobile",
+      "contactUs": "Contattaci"
     },
     "copilot": {
       "title": "Copilot IA",
@@ -1001,7 +1002,9 @@
       "aiInsightsGenerated": "Analisi con IA",
       "aiInsightsGeneratedDesc": "Analisi di avanzamento e rischi",
       "photosProcessed": "Documentazione fotografica",
-      "photosProcessedDesc": "Foto di cantiere acquisite e organizzate"
+      "photosProcessedDesc": "Foto di cantiere acquisite e organizzate",
+      "disclaimer": "Segnali illustrativi della dashboard — non statistiche pubblicate dei clienti.",
+      "heroDisclaimer": "Illustrative sample — not published customer statistics."
     },
     "home": {
       "heroTitle": "Intelligenza per l'edilizia con IA",
@@ -1049,7 +1052,38 @@
       "pricingTeaserSubtitle": "Da team a enterprise. Avvia un pilota o contattaci per un preventivo su misura.",
       "finalCtaTitle": "Pronto a prendere il controllo?",
       "finalCtaSubtitle": "Avvia un pilota o contattaci per iniziare.",
-      "finalCtaButton": "Avvia pilota"
+      "finalCtaButton": "Avvia pilota",
+      "heroLensLabel": "Esempio di lente cantiere",
+      "heroLensTitle": "Torre B · Livello 4",
+      "heroLensProgressLabel": "Avanzamento",
+      "heroLensProgressValue": "72% completato",
+      "heroLensRiskLabel": "Rischio",
+      "heroLensRiskValue": "Ritardo meteo",
+      "heroLensReportsLabel": "Report",
+      "heroLensReportsValue": "3 oggi",
+      "heroLensStream1": "▸ Report #482 — calcestruzzo verificato",
+      "heroLensStream2": "▸ Sync programma — 2 attività in scadenza",
+      "heroLensStream3": "▸ Flag IA — firma fondazioni in attesa",
+      "seeAllFeatures": "Vedi tutte le funzionalità →",
+      "tryMockAnalysis": "Prova analisi simulata →",
+      "pricingTeaserCta": "Come lavoriamo →",
+      "relatedTitle": "Continue exploring",
+      "relatedSubtitle": "Home presenta il prodotto — segui Platform, Features, Pricing e Contact per profondità canonica.",
+      "relatedPlatform": "Platform",
+      "relatedPlatformDesc": "How web, mobile, AI, and approvals connect in one stack.",
+      "linkPlatform": "See platform",
+      "relatedFeatures": "Features",
+      "relatedFeaturesDesc": "Full capability catalog — what the product includes.",
+      "linkFeatures": "View features",
+      "relatedPricing": "Pricing",
+      "relatedPricingDesc": "Pilot-first commercial engagement — not public list pricing.",
+      "linkPricing": "See pricing",
+      "relatedSecurity": "Security",
+      "relatedSecurityDesc": "Tenant isolation, access control, and data handling.",
+      "linkSecurity": "See security",
+      "relatedContact": "Contact",
+      "relatedContactDesc": "Pilot intake, presentations, and scoped deployment discussions.",
+      "linkContact": "Contact us"
     },
     "features": {
       "title": "Funzionalità",
@@ -1190,7 +1224,9 @@
       "resources": "Risorse",
       "company": "Azienda",
       "legal": "Legale",
-      "contact": "Contatti"
+      "contact": "Contatti",
+      "tagline": "Operazioni di cantiere assistite da IA per progetti, evidenze di campo e supervisione manageriale.",
+      "copyright": "© {year} Aistroyka. Tutti i diritti riservati."
     },
     "form": {
       "name": "Nome",
@@ -1201,6 +1237,19 @@
       "sending": "Invio…",
       "success": "Messaggio inviato. Ti risponderemo presto.",
       "error": "Qualcosa è andato storto. Riprova."
+    },
+    "cta": {
+      "launchPilot": "Avvia pilota",
+      "contactUs": "Contattaci",
+      "getPresentation": "Richiedi presentazione",
+      "launchPilotHref": "/dashboard",
+      "contactHref": "/contact",
+      "presentationHref": "/contact"
+    },
+    "layout": {
+      "schemaOrgDescription": "Operazioni di cantiere assistite da IA — supporto decisionale su avanzamento, rischi e qualità in cantiere.",
+      "schemaSoftwareDescription": "Piattaforma operativa di cantiere con analisi assistita da IA quando abilitata: progetti, attività, report giornalieri, evidenze fotografiche e analitica pronta per la revisione.",
+      "breadcrumbHome": "Home"
     }
   },
   "subscriptionOnboarding": {
