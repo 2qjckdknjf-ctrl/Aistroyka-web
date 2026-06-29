@@ -39,6 +39,16 @@ ios/Shared/Sources/Shared/e2e-credentials.env
 **/xcuserdata/
 *.xcuserstate
 
+# Android build output / signing materials (never commit secrets or artifacts)
+android/build/
+android/**/build/
+android/.secrets/
+android/keystore.properties
+**/*.jks
+**/*.keystore
+*.aab
+*.apk
+
 # archives / exports
 *.zip
 archive_*/
