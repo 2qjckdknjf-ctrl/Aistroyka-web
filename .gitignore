@@ -131,3 +131,17 @@ uploads/
 .wrangler
 .turbo
 *.log
+
+# Mobile store MODE B — local credentials and upload artifacts (never commit)
+local-secrets/
+evidence/
+.secrets/
+*.p8
+AuthKey_*.p8
+*.cer
+*.mobileprovision
+*.xcarchive
+*.ipa
+play-service-account*.json
+google-play*.json
+service-account*.json
