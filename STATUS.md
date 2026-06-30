@@ -6,16 +6,17 @@
 ---
 
 **Last updated:** 2026-06-30
-**Updated by:** Branch/worktree archival dry-run (ops task)
+**Updated by:** Branch cleanup Slice 1 execution (ops task)
 
 ## Now
 
 | Field | Value |
 |---|---|
-| Current branch | `ops/branch-archival-dry-run` (task branch for the archival dry-run) |
-| Production truth | `origin/main` @ `e45c7630` (2026-06-30); local pointer `post-merge-pr171` @ `171fedda` |
-| Active module | Branch/worktree archival **DRY RUN** — `docs/reports/BRANCH_WORKTREE_ARCHIVAL_DRY_RUN.md` |
-| Archival dry-run status | COMPLETE — no deletions/removals; owner approval required before any archival |
+| Current branch | `ops/branch-cleanup-slice-1` (Slice 1 execution + docs) |
+| Production truth | `origin/main` @ `d997c0df` (PR #173 merged) |
+| Active module | Branch cleanup **Slice 1** — `docs/reports/BRANCH_CLEANUP_SLICE_1_EXECUTION.md` |
+| Cleanup Slice 1 status | COMPLETE — 5 local branches deleted (merged + archive-tagged); 0 remote/worktree/tag changes |
+| Deleted local branches | 5 · Skipped: rest of §D + all out-of-scope · Local branch count 198 → 193 |
 | Validation status | Local web validation available (lint/typecheck/test/cf:build); not run as part of doc-only setup unless requested |
 | Deployment status | Production = Cloudflare Workers via CI chain. No deploy in progress. Verify via `GET /api/v1/health` → `buildStamp.sha7` |
 | Database status | Active Supabase project `vthfrxehrursfloevnlp` (eu-central-1). No migration in progress. Supabase CLI not installed locally |
@@ -27,11 +28,12 @@
 - Liquid Glass public slice 1 — merged.
 - iOS/Android distribution preflight + Mode B evidence (owner-gated upload still pending).
 - Project Operating System docs scaffold — created.
-- Branch/worktree archival **dry-run** — complete (`docs/reports/BRANCH_WORKTREE_ARCHIVAL_DRY_RUN.md`, policy in `docs/ops/BRANCH_ARCHIVAL_POLICY.md`).
+- Branch/worktree archival **dry-run** — complete + merged (PR #173 → `d997c0df`).
+- Branch cleanup **Slice 1** — complete (5 local merged+tagged branches deleted; no remote/worktree/tag changes).
 
 ## Open modules
 
-- Branch/worktree sprawl cleanup — dry-run done; **execution pending owner approval**.
+- Branch/worktree sprawl cleanup — Slice 1 done; **Slice 2 pending separate owner approval** (tag-first for `post-merge-prNNN` after clean-worktree removal; `snapshots/*` and `cursor/*` need explicit confirmation).
 - Supabase CLI install OR confirm MCP-only DB workflow.
 
 ## Blockers
@@ -41,7 +43,7 @@
 
 ## Next recommended task
 
-**Owner action:** review `docs/reports/BRANCH_WORKTREE_ARCHIVAL_DRY_RUN.md` §C/§D and approve a first archival slice (lowest-risk = the 7 merged-AND-remote-gone branches in §D). No branches/worktrees are deleted until that approval is recorded. Dangerous (dirty `.cursor/worktrees/*`, dirty `main` worktree, `[ahead N]` branches) stay untouched.
+Merge the Slice 1 docs PR (`ops/branch-cleanup-slice-1`) via the protected path (non-author approval). Then, only if/when the owner approves **Slice 2**: tag-first the next merged batch (`post-merge-prNNN` after removing their clean worktrees, `temp-pr125-merge`, `chore/actions-node24-readiness`) and decide on `snapshots/*` / `cursor/*`. Dangerous (dirty `.cursor/worktrees/*`, dirty `main` worktree, `[ahead N]` branches) stay untouched.
 
 ## Last handoff
 
