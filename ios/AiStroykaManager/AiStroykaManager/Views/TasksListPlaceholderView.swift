@@ -10,10 +10,10 @@ struct TasksListPlaceholderView: View {
     var body: some View {
         NavigationStack {
             List {
-                Text(NSLocalizedString("mgr_tasks_placeholder", comment: ""))
+                Text("Tasks list/board — GET /api/v1/tasks")
                     .foregroundStyle(.secondary)
             }
-            .navigationTitle(NSLocalizedString("mgr_tab_tasks", comment: ""))
+            .navigationTitle("Tasks")
         }
     }
 }

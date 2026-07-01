@@ -7,9 +7,10 @@ describe("document.policy", () => {
     expect(r).toEqual({ ok: true });
   });
 
-  it("allows draft -> under_review", () => {
+  it("rejects draft -> under_review", () => {
     const r = validateDocumentStatusTransition("draft", "under_review");
-    expect(r).toEqual({ ok: true });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.reason).toBe("invalid_status_transition");
   });
 
   it("allows uploaded -> under_review", () => {
@@ -31,10 +32,6 @@ describe("document.policy", () => {
   it("allows approved/rejected -> archived", () => {
     expect(validateDocumentStatusTransition("approved", "archived")).toEqual({ ok: true });
     expect(validateDocumentStatusTransition("rejected", "archived")).toEqual({ ok: true });
-  });
-
-  it("allows draft -> archived", () => {
-    expect(validateDocumentStatusTransition("draft", "archived")).toEqual({ ok: true });
   });
 
   it("rejects archived -> anything else (status)", () => {

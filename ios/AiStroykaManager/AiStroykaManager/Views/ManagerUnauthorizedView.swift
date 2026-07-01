@@ -13,22 +13,16 @@ struct ManagerUnauthorizedView: View {
     var body: some View {
         VStack(spacing: 24) {
             Image(systemName: "person.crop.circle.badge.minus")
-                .font(.largeTitle)
+                .font(.system(size: 60))
                 .foregroundStyle(.secondary)
-            Text(NSLocalizedString("mgr_unauthorized", comment: ""))
+            Text("Not authorized")
                 .font(.title2)
                 .fontWeight(.semibold)
             Text(message)
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
                 .padding(.horizontal)
-            if sessionState.canRetryRoleCheck {
-                Button(NSLocalizedString("mgr_retry", comment: "")) {
-                    sessionState.checkSession()
-                }
-                .buttonStyle(.bordered)
-            }
-            Button(NSLocalizedString("mgr_sign_out", comment: "")) {
+            Button("Sign out") {
                 Task { await sessionState.signOut() }
             }
             .buttonStyle(.borderedProminent)

@@ -23,7 +23,6 @@ const SAFE_PATH_PREFIXES = [
   "/settings",
   "/invite",
   "/billing",
-  "/subscribe",
   "/admin",
 ] as const;
 

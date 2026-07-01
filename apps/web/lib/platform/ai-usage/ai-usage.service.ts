@@ -98,8 +98,3 @@ export function estimateMaxVisionCostUsd(
   }
   return max;
 }
-
-/** Conservative monthly-quota hold before running Gemini daily-work video (upload + long context). */
-export function estimateGeminiVideoDailyQuotaReserveUsd(_tier?: string): number {
-  return 0.75;
-}

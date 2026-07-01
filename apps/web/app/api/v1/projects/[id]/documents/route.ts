@@ -14,12 +14,6 @@ import type { ProjectDocumentType } from "@/lib/domain/documents/document.types"
 
 export const dynamic = "force-dynamic";
 
-function parseOptionalLinkId(value: unknown): string | undefined {
-  if (typeof value !== "string") return undefined;
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : undefined;
-}
-
 /** GET /api/v1/projects/:id/documents — list project documents. */
 export async function GET(
   request: Request,
@@ -93,22 +87,13 @@ export async function POST(
       typeof body.status === "string" && ["draft", "uploaded", "under_review", "approved", "rejected", "archived"].includes(body.status)
         ? (body.status as "draft" | "uploaded" | "under_review" | "approved" | "rejected" | "archived")
         : undefined,
-    report_id: parseOptionalLinkId(body.report_id),
-    task_id: parseOptionalLinkId(body.task_id),
-    milestone_id: parseOptionalLinkId(body.milestone_id),
+    report_id: typeof body.report_id === "string" ? body.report_id : undefined,
+    task_id: typeof body.task_id === "string" ? body.task_id : undefined,
+    milestone_id: typeof body.milestone_id === "string" ? body.milestone_id : undefined,
   });
 
-  if (error && error !== "Project not found") {
-    if (
-      error === "invalid_report_linkage" ||
-      error === "invalid_task_linkage" ||
-      error === "invalid_milestone_linkage" ||
-      error === "status must be draft on create"
-    ) {
-      return NextResponse.json({ error }, { status: 400 });
-    }
+  if (error && error !== "Project not found")
     return NextResponse.json({ error }, { status: 403 });
-  }
   if (error === "Project not found") return NextResponse.json({ error }, { status: 404 });
   if (!data) return NextResponse.json({ error: "Create failed" }, { status: 500 });
   return NextResponse.json({ data }, { status: 201 });

@@ -7,7 +7,7 @@ import SwiftUI
 import Shared
 
 struct LoadingStateView: View {
-    var message: String = NSLocalizedString("mgr_loading", comment: "")
+    var message: String = "Loading…"
 
     var body: some View {
         VStack(spacing: 12) {

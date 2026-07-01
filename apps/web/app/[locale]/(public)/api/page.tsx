@@ -20,7 +20,7 @@ export default async function ApiPage({ params }: Props) {
   const t = await getTranslations("public.api");
 
   return (
-    <div className="mx-auto min-w-0 max-w-5xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+    <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
       <section className="text-center">
         <h1 className="text-[var(--aistroyka-font-title)] font-bold text-[var(--aistroyka-text-primary)]">
           {t("title")}
@@ -68,13 +68,9 @@ GET /api/v1/reports?project_id=...`}
         </pre>
       </section>
 
-      <section className="mt-12 flex min-w-0 flex-wrap gap-3 sm:gap-4">
-        <Link href="/contact" className="btn-primary max-w-full min-w-0 sm:max-w-none">
-          {t("ctaAccess")}
-        </Link>
-        <Link href="/contact" className="btn-secondary max-w-full min-w-0 sm:max-w-none">
-          {t("ctaEnterprise")}
-        </Link>
+      <section className="mt-12 flex flex-wrap gap-4">
+        <Link href="/contact" className="btn-primary">{t("ctaAccess")}</Link>
+        <Link href="/contact" className="btn-secondary">{t("ctaEnterprise")}</Link>
       </section>
     </div>
   );

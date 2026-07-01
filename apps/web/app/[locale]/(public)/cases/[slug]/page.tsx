@@ -63,7 +63,7 @@ export default async function CaseSlugPage({ params }: Props) {
   const data = CASE_DATA[key];
 
   return (
-    <div className="mx-auto min-w-0 max-w-3xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+    <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
       <Link
         href="/cases"
         className="text-[var(--aistroyka-font-footnote)] text-[var(--aistroyka-accent)] hover:underline"

@@ -33,7 +33,7 @@ const defaults: FilterParams = {
   pageSize: "25",
 };
 
-function getParam(sp: Pick<URLSearchParams, "get">, key: keyof FilterParams): string {
+function getParam(sp: URLSearchParams, key: keyof FilterParams): string {
   const v = sp.get(key);
   return v ?? defaults[key];
 }
@@ -48,22 +48,19 @@ export function useFilterParams(): {
   const pathname = usePathname();
   const router = useRouter();
 
-  const params = useMemo<FilterParams>(() => {
-    const sp = searchParams ?? new URLSearchParams();
-    return {
-      project_id: getParam(sp, "project_id"),
-      worker_id: getParam(sp, "worker_id"),
-      from: getParam(sp, "from"),
-      to: getParam(sp, "to"),
-      status: getParam(sp, "status"),
-      q: getParam(sp, "q"),
-      page: getParam(sp, "page"),
-      pageSize: getParam(sp, "pageSize"),
-    };
-  }, [searchParams]);
+  const params = useMemo<FilterParams>(() => ({
+    project_id: getParam(searchParams, "project_id"),
+    worker_id: getParam(searchParams, "worker_id"),
+    from: getParam(searchParams, "from"),
+    to: getParam(searchParams, "to"),
+    status: getParam(searchParams, "status"),
+    q: getParam(searchParams, "q"),
+    page: getParam(searchParams, "page"),
+    pageSize: getParam(searchParams, "pageSize"),
+  }), [searchParams]);
 
   const setParam = useCallback((key: keyof FilterParams, value: string) => {
-    const next = new URLSearchParams(searchParams?.toString() ?? "");
+    const next = new URLSearchParams(searchParams.toString());
     const def = defaults[key];
     if (value === def || !value) {
       next.delete(key);
@@ -77,7 +74,7 @@ export function useFilterParams(): {
   }, [searchParams, pathname, router]);
 
   const setParams = useCallback((updates: Partial<FilterParams>) => {
-    const next = new URLSearchParams(searchParams?.toString() ?? "");
+    const next = new URLSearchParams(searchParams.toString());
     let resetPage = false;
     for (const [k, v] of Object.entries(updates)) {
       const key = k as keyof FilterParams;
@@ -94,7 +91,7 @@ export function useFilterParams(): {
     router.replace(`${pathname}?${next.toString()}`, { scroll: false });
   }, [searchParams, pathname, router]);
 
-  const toQueryString = useCallback(() => searchParams?.toString() ?? "", [searchParams]);
+  const toQueryString = useCallback(() => searchParams.toString(), [searchParams]);
 
   return { params, setParam, setParams, toQueryString };
 }

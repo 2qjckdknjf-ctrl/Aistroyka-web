@@ -5,8 +5,7 @@ import { getProjectById } from "@/lib/supabase/rpc";
 import { AiActionPanel } from "@/components/ai/AiActionPanel";
 import { ProjectAIHeaderClient } from "./ProjectAIHeaderClient";
 import { buildDecisionContextFromProject, type ProjectAnalysisSource } from "@/lib/engine/buildContext";
-import { SectionHeader, Card } from "@/components/ui";
-import { ProjectVideoDailyAnalysisPanel } from "../../ProjectVideoDailyAnalysisPanel";
+import { SectionHeader } from "@/components/ui";
 
 export default async function ProjectAiPage({
   params,
@@ -15,7 +14,6 @@ export default async function ProjectAiPage({
 }) {
   const { id } = await params;
   const t = await getTranslations("dashboardPageMeta");
-  const tProject = await getTranslations("projectDetail");
   const supabase = await createClient();
   const user = await getSessionUser(supabase);
   if (!user) notFound();
@@ -93,13 +91,6 @@ export default async function ProjectAiPage({
           projectId={id}
           tenantId={project.tenant_id}
         />
-      </section>
-
-      <section className="mb-aistroyka-8">
-        <SectionHeader title={tProject("videoDailyTitle")} subtitle={tProject("videoDailySubtitle")} />
-        <Card>
-          <ProjectVideoDailyAnalysisPanel projectId={id} />
-        </Card>
       </section>
     </>
   );

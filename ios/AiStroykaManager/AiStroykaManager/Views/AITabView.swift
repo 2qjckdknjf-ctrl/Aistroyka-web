@@ -17,23 +17,20 @@ struct AITabView: View {
         NavigationStack {
             Group {
                 if isLoading && jobs.isEmpty && errorMessage == nil {
-                    LoadingStateView(message: NSLocalizedString("mgr_loading_ai_jobs", comment: ""))
+                    LoadingStateView(message: "Loading AI jobs…")
                 } else if let err = errorMessage, jobs.isEmpty {
                     ErrorStateView(message: err, retry: { load() })
                 } else if jobs.isEmpty {
-                    EmptyStateView(
-                        title: NSLocalizedString("mgr_no_ai_jobs_title", comment: ""),
-                        subtitle: NSLocalizedString("mgr_no_ai_jobs_subtitle", comment: "")
-                    )
+                    EmptyStateView(title: "No AI jobs", subtitle: "Analysis jobs will appear when reports are processed.")
                 } else {
                     List(Array(jobs.enumerated()), id: \.offset) { _, job in
                         AIJobRowView(job: job)
                     }
                 }
             }
-            .navigationTitle(NSLocalizedString("mgr_tab_ai", comment: ""))
+            .navigationTitle("AI")
             .refreshable { await loadAsync() }
-            .onAppear { loadIfNeeded() }
+            .onAppear { load() }
         }
     }
 
@@ -43,14 +40,16 @@ struct AITabView: View {
         Task { await loadAsync() }
     }
 
-    private func loadIfNeeded() {
-        guard shouldLoadInitially(items: jobs, errorMessage: errorMessage) else { return }
-        load()
-    }
-
     private func loadAsync() async {
-        await runManagerLoad(isLoading: &isLoading, errorMessage: &errorMessage) {
+        errorMessage = nil
+        isLoading = true
+        defer { isLoading = false }
+        do {
             jobs = try await ManagerAPI.aiRequests(limit: 100)
+        } catch let e as APIError {
+            errorMessage = e.message
+        } catch {
+            errorMessage = error.localizedDescription
         }
     }
 }
@@ -67,7 +66,7 @@ struct AIJobRowView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 if let e = job.entity, !e.isEmpty {
-                    Text(String(format: NSLocalizedString("mgr_bullet_entity_fmt", comment: ""), e))
+                    Text("· \(e)")
                         .font(.caption)
                         .foregroundStyle(.tertiary)
                         .lineLimit(1)

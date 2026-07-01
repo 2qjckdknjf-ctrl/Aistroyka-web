@@ -24,17 +24,17 @@ struct ManagerMoreView: View {
     var body: some View {
         NavigationStack(path: $path) {
             List {
-                Section(NSLocalizedString("mgr_section_account", comment: "")) {
-                    Button(NSLocalizedString("mgr_sign_out", comment: ""), role: .destructive) {
+                Section("Account") {
+                    Button("Sign out", role: .destructive) {
                         Task { await sessionState.signOut() }
                     }
                 }
-                Section(NSLocalizedString("mgr_section_app", comment: "")) {
-                    NavigationLink(NSLocalizedString("mgr_settings", comment: ""), value: ManagerMoreDestination.settings)
-                    NavigationLink(NSLocalizedString("mgr_notifications", comment: ""), value: ManagerMoreDestination.notifications)
+                Section("App") {
+                    NavigationLink("Settings", value: ManagerMoreDestination.settings)
+                    NavigationLink("Notifications", value: ManagerMoreDestination.notifications)
                 }
             }
-            .navigationTitle(NSLocalizedString("mgr_tab_more", comment: ""))
+            .navigationTitle("More")
             .navigationDestination(for: ManagerMoreDestination.self) { dest in
                 switch dest {
                 case .settings:

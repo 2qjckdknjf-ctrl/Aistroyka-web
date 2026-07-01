@@ -3,29 +3,14 @@ const createNextIntlPlugin = require("next-intl/plugin");
 const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 
 const { SECURITY_HEADERS } = require("./lib/security-headers");
-// Standalone tracing is required for Cloudflare/OpenNext builds only.
-// Keeping default local/CI build non-standalone avoids flaky trace ENOENTs.
-const isStandaloneOutput =
-  process.env.NEXT_PRIVATE_STANDALONE === "true" ||
-  process.env.NEXT_PRIVATE_STANDALONE === "1";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   poweredByHeader: false,
-  // Keep root tracing context stable in monorepo even for non-standalone builds.
+  output: "standalone",
   outputFileTracingRoot: path.join(__dirname, "../.."),
-  ...(isStandaloneOutput
-    ? {
-        output: "standalone",
-      }
-    : {}),
   transpilePackages: ["@aistroyka/contracts"],
-  webpack: (config, { dev }) => {
-    // Avoid PackFileCacheStrategy / manifest races seen on production `next build`
-    // (ENOENT on `.next/build-manifest.json` right after "Compiled successfully").
-    if (!dev) {
-      config.cache = false;
-    }
+  webpack: (config, { isServer }) => {
     // Resolve zod from app context when bundling @aistroyka/contracts (monorepo workspace)
     const zodPath = path.dirname(require.resolve("zod/package.json", { paths: [__dirname] }));
     config.resolve.alias = {
@@ -48,10 +33,7 @@ const nextConfig = {
 // Cloudflare/OpenNext path: init only when not deploying to Vercel.
 const isVercelDeploy =
   process.env.VERCEL === "1" || process.env.DEPLOY_TARGET === "vercel";
-// initOpenNextCloudflareForDev is for `next dev` only (Wrangler proxy + vm patch).
-// Running it during `next build` can race with the compiler and yield ENOENT on
-// `.next/server/pages-manifest.json` and similar artifacts.
-if (!isVercelDeploy && process.env.NODE_ENV === "development") {
+if (!isVercelDeploy) {
   try {
     const { initOpenNextCloudflareForDev } = require("@opennextjs/cloudflare");
     initOpenNextCloudflareForDev();

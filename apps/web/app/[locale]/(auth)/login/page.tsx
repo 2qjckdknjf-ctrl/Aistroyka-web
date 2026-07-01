@@ -24,7 +24,7 @@ export type LoginStep =
 function LoginForm() {
   const locale = useLocale();
   const searchParams = useSearchParams();
-  const next = searchParams?.get("next") ?? "/dashboard";
+  const next = searchParams.get("next") ?? "/dashboard";
   const t = useTranslations("auth");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

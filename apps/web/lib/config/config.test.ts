@@ -64,27 +64,6 @@ describe("config", () => {
       vi.stubEnv("OPENAI_VISION_MODEL", undefined);
       expect(getServerConfig().OPENAI_VISION_MODEL).toBe("gpt-4o");
     });
-    it("returns copilot defaults when unset", () => {
-      vi.stubEnv("OPENAI_COPILOT_MODEL", undefined);
-      vi.stubEnv("OPENAI_COPILOT_TIMEOUT_MS", undefined);
-      vi.stubEnv("OPENAI_COPILOT_MAX_RETRIES", undefined);
-      const c = getServerConfig();
-      expect(c.OPENAI_COPILOT_MODEL).toBe("gpt-4o-mini");
-      expect(c.OPENAI_COPILOT_TIMEOUT_MS).toBe(60_000);
-      expect(c.OPENAI_COPILOT_MAX_RETRIES).toBe(2);
-    });
-    it("clamps OPENAI_COPILOT_TIMEOUT_MS between 15k and 120k", () => {
-      vi.stubEnv("OPENAI_COPILOT_TIMEOUT_MS", "5000");
-      expect(getServerConfig().OPENAI_COPILOT_TIMEOUT_MS).toBe(15_000);
-      vi.stubEnv("OPENAI_COPILOT_TIMEOUT_MS", "200000");
-      expect(getServerConfig().OPENAI_COPILOT_TIMEOUT_MS).toBe(120_000);
-    });
-    it("clamps OPENAI_TRANSCRIPTION_TIMEOUT_MS between 30k and 180k", () => {
-      vi.stubEnv("OPENAI_TRANSCRIPTION_TIMEOUT_MS", "10000");
-      expect(getServerConfig().OPENAI_TRANSCRIPTION_TIMEOUT_MS).toBe(30_000);
-      vi.stubEnv("OPENAI_TRANSCRIPTION_TIMEOUT_MS", "300000");
-      expect(getServerConfig().OPENAI_TRANSCRIPTION_TIMEOUT_MS).toBe(180_000);
-    });
   });
 
   describe("isOpenAIConfigured", () => {

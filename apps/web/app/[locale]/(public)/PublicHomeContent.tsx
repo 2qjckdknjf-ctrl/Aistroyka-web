@@ -17,7 +17,7 @@ export async function PublicHomeContent() {
           <div className="absolute -right-28 bottom-4 h-96 w-96 rounded-full bg-[var(--aistroyka-neural-accent)] opacity-20 blur-3xl animate-neural-drift" />
         </div>
 
-        <div className="public-shell relative mx-auto min-w-0 max-w-6xl rounded-[var(--aistroyka-radius-xxl)] px-4 py-10 sm:px-10 sm:py-16">
+        <div className="public-shell relative mx-auto max-w-6xl min-w-0 rounded-[var(--aistroyka-radius-xxl)] px-4 py-10 sm:px-10 sm:py-16">
           <div className="max-w-3xl min-w-0">
             <div className="public-badge mb-6 inline-flex max-w-full flex-wrap rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] sm:px-4 sm:tracking-[0.16em]">
               {t("neuralConstructionControl")}
@@ -58,7 +58,7 @@ export async function PublicHomeContent() {
 
       {/* Metrics block */}
       <section className="border-b border-[var(--border-main)] bg-[var(--bg-card)] py-10">
-        <div className="mx-auto min-w-0 max-w-5xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <h2 className="text-center text-[var(--aistroyka-font-headline)] font-semibold text-[var(--text-muted)]">
             {tMetrics("title")}
           </h2>
@@ -85,14 +85,14 @@ export async function PublicHomeContent() {
 
       {/* Trust strip */}
       <section className="border-b border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] py-6">
-        <div className="mx-auto min-w-0 max-w-7xl px-4 text-center text-[var(--aistroyka-font-subheadline)] text-[var(--aistroyka-text-secondary)] sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl px-4 text-center text-[var(--aistroyka-font-subheadline)] text-[var(--aistroyka-text-secondary)] sm:px-6 lg:px-8">
           {t("trustStrip")}
         </div>
       </section>
 
       {/* Pain points */}
       <section className="bg-[var(--bg-main)] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-        <div className="mx-auto min-w-0 max-w-3xl text-center">
+        <div className="mx-auto max-w-3xl text-center">
           <h2 className="font-heading text-[var(--aistroyka-font-title2)] font-semibold text-[var(--text-main)]">
             {t("painTitle")}
           </h2>
@@ -104,7 +104,7 @@ export async function PublicHomeContent() {
 
       {/* Solution overview */}
       <section className="bg-[var(--bg-card)] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-        <div className="mx-auto min-w-0 max-w-4xl text-center">
+        <div className="mx-auto max-w-4xl text-center">
           <h2 className="font-heading text-[var(--aistroyka-font-title2)] font-semibold text-[var(--text-main)]">
             {t("solutionTitle")}
           </h2>
@@ -116,7 +116,7 @@ export async function PublicHomeContent() {
 
       {/* Key modules - cards */}
       <section className="bg-[var(--bg-main)] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-        <div className="mx-auto min-w-0 max-w-7xl">
+        <div className="mx-auto max-w-7xl">
           <h2 className="font-heading text-center text-[var(--aistroyka-font-title2)] font-semibold text-[var(--text-main)]">
             {t("modulesTitle")}
           </h2>
@@ -143,7 +143,7 @@ export async function PublicHomeContent() {
 
       {/* Role-based value - reuse features copy */}
       <section className="bg-[var(--aistroyka-surface)] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-        <div className="mx-auto min-w-0 max-w-7xl">
+        <div className="mx-auto max-w-7xl">
           <h2 className="text-center text-[var(--aistroyka-font-title2)] font-semibold text-[var(--aistroyka-text-primary)]">
             {t("rolesTitle")}
           </h2>
@@ -172,7 +172,7 @@ export async function PublicHomeContent() {
 
       {/* AI Construction Control */}
       <section className="bg-[var(--bg-main)] px-4 py-16 sm:px-6 sm:py-20 lg:px-8" style={{ background: "linear-gradient(180deg, #0B0F19 0%, #05070d 100%)" }}>
-        <div className="mx-auto min-w-0 max-w-4xl text-center">
+        <div className="mx-auto max-w-4xl text-center">
           <h2 className="font-heading text-[var(--aistroyka-font-title2)] font-semibold text-[var(--text-main)]">
             {t("aiSectionTitle")}
           </h2>
@@ -190,7 +190,7 @@ export async function PublicHomeContent() {
 
       {/* Mobile */}
       <section className="bg-[var(--bg-card)] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-        <div className="mx-auto min-w-0 max-w-4xl text-center">
+        <div className="mx-auto max-w-4xl text-center">
           <h2 className="font-heading text-[var(--aistroyka-font-title2)] font-semibold text-[var(--text-main)]">
             {t("mobileTitle")}
           </h2>
@@ -205,7 +205,7 @@ export async function PublicHomeContent() {
 
       {/* Pricing teaser */}
       <section className="bg-[var(--bg-main)] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-        <div className="mx-auto min-w-0 max-w-3xl text-center">
+        <div className="mx-auto max-w-3xl text-center">
           <h2 className="font-heading text-[var(--aistroyka-font-title2)] font-semibold text-[var(--text-main)]">
             {t("pricingTeaserTitle")}
           </h2>
@@ -220,7 +220,7 @@ export async function PublicHomeContent() {
 
       {/* Final CTA */}
       <section className="px-4 py-16 sm:px-6 sm:py-20 lg:px-8" style={{ background: "linear-gradient(180deg, #0B0F19 0%, #05070d 100%)" }}>
-        <div className="mx-auto min-w-0 max-w-3xl text-center">
+        <div className="mx-auto max-w-3xl text-center">
           <h2 className="font-heading text-[var(--aistroyka-font-title2)] font-semibold text-[var(--text-main)]">
             {t("finalCtaTitle")}
           </h2>

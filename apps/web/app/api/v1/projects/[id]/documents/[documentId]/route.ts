@@ -14,12 +14,6 @@ import type { ProjectDocumentStatus } from "@/lib/domain/documents/document.type
 
 export const dynamic = "force-dynamic";
 
-function parseOptionalLinkId(value: unknown): string | undefined {
-  if (typeof value !== "string") return undefined;
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : undefined;
-}
-
 /** GET /api/v1/projects/:id/documents/:documentId */
 export async function GET(
   request: Request,
@@ -102,20 +96,14 @@ export async function PATCH(
     status,
     client_visible: typeof body.client_visible === "boolean" ? body.client_visible : undefined,
     object_path: typeof body.object_path === "string" ? body.object_path : undefined,
-    report_id: parseOptionalLinkId(body.report_id),
-    task_id: parseOptionalLinkId(body.task_id),
-    milestone_id: parseOptionalLinkId(body.milestone_id),
+    report_id: typeof body.report_id === "string" ? body.report_id : undefined,
+    task_id: typeof body.task_id === "string" ? body.task_id : undefined,
+    milestone_id: typeof body.milestone_id === "string" ? body.milestone_id : undefined,
     decision_comment,
   });
 
   if (error && error !== "Document not found" && error !== "Project not found") {
-    if (
-      error === "invalid_status_transition" ||
-      error === "invalid_object_path_update" ||
-      error === "invalid_report_linkage" ||
-      error === "invalid_task_linkage" ||
-      error === "invalid_milestone_linkage"
-    ) {
+    if (error === "invalid_status_transition" || error === "invalid_object_path_update") {
       return NextResponse.json({ error }, { status: 400 });
     }
     return NextResponse.json({ error }, { status: 403 });

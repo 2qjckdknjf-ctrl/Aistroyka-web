@@ -10,10 +10,10 @@ struct TeamOverviewPlaceholderView: View {
     var body: some View {
         NavigationStack {
             List {
-                Text(NSLocalizedString("mgr_team_placeholder", comment: ""))
+                Text("Team — GET /api/v1/workers")
                     .foregroundStyle(.secondary)
             }
-            .navigationTitle(NSLocalizedString("mgr_tab_team", comment: ""))
+            .navigationTitle("Team")
         }
     }
 }

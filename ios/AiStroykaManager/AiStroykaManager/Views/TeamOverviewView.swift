@@ -15,14 +15,11 @@ struct TeamOverviewView: View {
         NavigationStack {
             Group {
                 if isLoading && workers.isEmpty && errorMessage == nil {
-                    LoadingStateView(message: NSLocalizedString("mgr_loading_team", comment: ""))
+                    LoadingStateView(message: "Loading team…")
                 } else if let err = errorMessage, workers.isEmpty {
                     ErrorStateView(message: err, retry: { load() })
                 } else if workers.isEmpty {
-                    EmptyStateView(
-                        title: NSLocalizedString("mgr_no_workers_title", comment: ""),
-                        subtitle: NSLocalizedString("mgr_no_workers_subtitle", comment: "")
-                    )
+                    EmptyStateView(title: "No workers yet", subtitle: "Workers appear when they join the tenant.")
                 } else {
                     List(workers, id: \.userId) { w in
                         NavigationLink(destination: WorkerDetailView(worker: w)) {
@@ -31,9 +28,9 @@ struct TeamOverviewView: View {
                     }
                 }
             }
-            .navigationTitle(NSLocalizedString("mgr_tab_team", comment: ""))
+            .navigationTitle("Team")
             .refreshable { await loadAsync() }
-            .onAppear { loadIfNeeded() }
+            .onAppear { load() }
         }
     }
 
@@ -43,14 +40,16 @@ struct TeamOverviewView: View {
         Task { await loadAsync() }
     }
 
-    private func loadIfNeeded() {
-        guard shouldLoadInitially(items: workers, errorMessage: errorMessage) else { return }
-        load()
-    }
-
     private func loadAsync() async {
-        await runManagerLoad(isLoading: &isLoading, errorMessage: &errorMessage) {
+        errorMessage = nil
+        isLoading = true
+        defer { isLoading = false }
+        do {
             workers = try await ManagerAPI.workers(limit: 200)
+        } catch let e as APIError {
+            errorMessage = e.message
+        } catch {
+            errorMessage = error.localizedDescription
         }
     }
 }
@@ -64,15 +63,15 @@ struct WorkerRowView: View {
                 .font(.subheadline)
                 .lineLimit(1)
             if let day = worker.lastDayDate {
-                Text(String(format: NSLocalizedString("mgr_last_day_fmt", comment: ""), day))
+                Text("Last day: \(day)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
             if let a = worker.anomalies, (a.openShift == true || a.overtime == true || a.noActivity == true) {
                 HStack(spacing: 6) {
-                    if a.openShift == true { Label(NSLocalizedString("mgr_open_shift", comment: ""), systemImage: "clock.badge.exclamation").font(.caption2).foregroundStyle(.orange) }
-                    if a.overtime == true { Label(NSLocalizedString("mgr_overtime", comment: ""), systemImage: "exclamationmark.triangle").font(.caption2).foregroundStyle(.orange) }
-                    if a.noActivity == true { Label(NSLocalizedString("mgr_no_activity", comment: ""), systemImage: "person.slash").font(.caption2).foregroundStyle(.secondary) }
+                    if a.openShift == true { Label("Open shift", systemImage: "clock.badge.exclamation").font(.caption2).foregroundStyle(.orange) }
+                    if a.overtime == true { Label("Overtime", systemImage: "exclamationmark.triangle").font(.caption2).foregroundStyle(.orange) }
+                    if a.noActivity == true { Label("No activity", systemImage: "person.slash").font(.caption2).foregroundStyle(.secondary) }
                 }
             }
         }
@@ -85,24 +84,24 @@ struct WorkerDetailView: View {
 
     var body: some View {
         List {
-            Section(NSLocalizedString("mgr_worker_section", comment: "")) {
-                LabeledContent(NSLocalizedString("mgr_user_id", comment: ""), value: worker.userId)
+            Section("Worker") {
+                LabeledContent("User ID", value: worker.userId)
             }
-            Section(NSLocalizedString("mgr_last_activity_section", comment: "")) {
-                if let d = worker.lastDayDate { LabeledContent(NSLocalizedString("mgr_day", comment: ""), value: d) }
-                if let s = worker.lastStartedAt { LabeledContent(NSLocalizedString("mgr_started", comment: ""), value: formatDate(s)) }
-                if let e = worker.lastEndedAt { LabeledContent(NSLocalizedString("mgr_ended", comment: ""), value: formatDate(e)) }
-                if let r = worker.lastReportSubmittedAt { LabeledContent(NSLocalizedString("mgr_last_report", comment: ""), value: formatDate(r)) }
+            Section("Last activity") {
+                if let d = worker.lastDayDate { LabeledContent("Day", value: d) }
+                if let s = worker.lastStartedAt { LabeledContent("Started", value: formatDate(s)) }
+                if let e = worker.lastEndedAt { LabeledContent("Ended", value: formatDate(e)) }
+                if let r = worker.lastReportSubmittedAt { LabeledContent("Last report", value: formatDate(r)) }
             }
             if let a = worker.anomalies {
-                Section(NSLocalizedString("mgr_flags_section", comment: "")) {
-                    if a.openShift == true { Label(NSLocalizedString("mgr_open_shift", comment: ""), systemImage: "clock.badge.exclamation") }
-                    if a.overtime == true { Label(NSLocalizedString("mgr_overtime", comment: ""), systemImage: "exclamationmark.triangle") }
-                    if a.noActivity == true { Label(NSLocalizedString("mgr_no_recent_activity", comment: ""), systemImage: "person.slash") }
+                Section("Flags") {
+                    if a.openShift == true { Label("Open shift", systemImage: "clock.badge.exclamation") }
+                    if a.overtime == true { Label("Overtime", systemImage: "exclamationmark.triangle") }
+                    if a.noActivity == true { Label("No recent activity", systemImage: "person.slash") }
                 }
             }
         }
-        .navigationTitle(NSLocalizedString("mgr_worker", comment: ""))
+        .navigationTitle("Worker")
     }
 
     private func formatDate(_ s: String) -> String {

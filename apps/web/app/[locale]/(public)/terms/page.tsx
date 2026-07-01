@@ -20,7 +20,7 @@ export default async function TermsPage({ params }: Props) {
   const t = await getTranslations("public.terms");
 
   return (
-    <div className="mx-auto min-w-0 max-w-3xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+    <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
       <h1 className="text-[var(--aistroyka-font-title)] font-bold text-[var(--aistroyka-text-primary)]">
         {t("title")}
       </h1>

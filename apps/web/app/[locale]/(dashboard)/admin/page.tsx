@@ -2,7 +2,6 @@ import { getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
 import { JobStatusBadge } from "../projects/JobStatusBadge";
 import { AISystemHealth } from "./AISystemHealth";
-import { AdminProductControlCenterClient } from "./AdminProductControlCenterClient";
 import { computeCalibration } from "@/lib/intelligence/calibration";
 import { Card, SectionHeader, EmptyState } from "@/components/ui";
 import type { JobStatus } from "@/lib/types";
@@ -58,16 +57,8 @@ export default async function AdminPage() {
           <a href="/admin/leads" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">{tDetail("contactLeadsArrow")}</a>
           <a href="/admin/governance" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">{tDetail("aiGovernanceAuditArrow")}</a>
           <a href="/admin/trust" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">{tDetail("aiTrustDashboardArrow")}</a>
-          <a href="/admin/operator" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">Operator workbench →</a>
-          <a href="/admin/system" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">System observability →</a>
-          <a href="/admin/jobs" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">Failed jobs queue →</a>
-          <a href="/admin/ai" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">AI runtime control →</a>
         </p>
       </Card>
-
-      <section className="mb-aistroyka-8">
-        <AdminProductControlCenterClient />
-      </section>
 
       <section className="mb-aistroyka-8">
         <SectionHeader title={tPage("aiSystemHealthTitle")} />

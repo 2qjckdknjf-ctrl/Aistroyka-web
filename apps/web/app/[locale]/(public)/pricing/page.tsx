@@ -27,18 +27,18 @@ export default async function PricingPage({ params }: Props) {
   ] as const;
 
   return (
-    <div className="mx-auto min-w-0 max-w-4xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+    <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
       <h1 className="text-[var(--aistroyka-font-title)] font-bold text-[var(--aistroyka-text-primary)]">
         {t("title")}
       </h1>
       <p className="mt-4 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-secondary)]">
         {t("metaDescription")}
       </p>
-      <div className="mt-12 grid min-w-0 gap-8 sm:grid-cols-3">
+      <div className="mt-12 grid gap-8 sm:grid-cols-3">
         {plans.map(({ key, desc }) => (
           <div
             key={key}
-            className="card min-w-0 rounded-[var(--aistroyka-radius-card)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] p-6 shadow-[var(--aistroyka-shadow-e1)]"
+            className="card rounded-[var(--aistroyka-radius-card)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] p-6 shadow-[var(--aistroyka-shadow-e1)]"
           >
             <h2 className="text-[var(--aistroyka-font-title3)] font-semibold text-[var(--aistroyka-text-primary)]">
               {t(key)}
@@ -46,11 +46,11 @@ export default async function PricingPage({ params }: Props) {
             <p className="mt-2 text-[var(--aistroyka-font-footnote)] text-[var(--aistroyka-text-secondary)]">
               {desc}
             </p>
-            <div className="mt-4 flex min-w-0 flex-wrap gap-2">
-              <Link href="/contact" className="btn-secondary min-w-0 flex-1 text-sm sm:flex-none sm:basis-auto">
+            <div className="mt-4 flex gap-2">
+              <Link href="/contact" className="btn-secondary text-sm">
                 {t("requestQuote")}
               </Link>
-              <Link href="/contact" className="btn-primary min-w-0 flex-1 text-sm sm:flex-none sm:basis-auto">
+              <Link href="/contact" className="btn-primary text-sm">
                 {t("bookDemo")}
               </Link>
             </div>

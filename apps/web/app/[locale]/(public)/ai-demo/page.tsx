@@ -30,7 +30,7 @@ export default async function AiDemoPage({ params }: Props) {
   ] as const;
 
   return (
-    <div className="mx-auto min-w-0 max-w-5xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+    <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
       <section className="text-center">
         <h1 className="text-[var(--aistroyka-font-title)] font-bold text-[var(--aistroyka-text-primary)]">
           {t("title")}
@@ -38,7 +38,7 @@ export default async function AiDemoPage({ params }: Props) {
         <p className="mt-4 text-lg text-[var(--aistroyka-text-secondary)]">
           {t("heroTitle")}
         </p>
-        <Link href="#demo" className="btn-primary mx-auto mt-6 inline-flex max-w-full">
+        <Link href="#demo" className="btn-primary mt-6">
           {t("cta")}
         </Link>
       </section>

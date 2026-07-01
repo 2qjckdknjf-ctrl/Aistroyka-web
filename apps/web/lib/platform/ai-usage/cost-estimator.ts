@@ -19,14 +19,3 @@ export function estimateCostUsd(model: string, tokensInput: number, tokensOutput
   const p = getPricePer1k(model);
   return (tokensInput / 1000) * p.in + (tokensOutput / 1000) * p.out;
 }
-
-/** OpenAI Whisper-class audio: list-price order of magnitude (~USD per second). */
-export function estimateTranscriptionCostUsd(_model: string, durationSeconds: number): number {
-  const perMinuteUsd = 0.006;
-  return (Math.max(0, durationSeconds) / 60) * perMinuteUsd;
-}
-
-/** Conservative monthly-quota hold before running a transcription (cap long clips). */
-export function estimateTranscriptionQuotaReserveUsd(maxAudioMinutes: number): number {
-  return estimateTranscriptionCostUsd("whisper-1", maxAudioMinutes * 60);
-}

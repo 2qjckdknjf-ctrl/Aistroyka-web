@@ -37,8 +37,6 @@ interface ProjectDocument {
   report_id?: string | null;
   task_id?: string | null;
   milestone_id?: string | null;
-  decision_comment?: string | null;
-  decided_by?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -47,18 +45,6 @@ interface Milestone {
   id: string;
   title: string;
   target_date: string;
-  status: string;
-}
-
-interface ReportSummary {
-  id: string;
-  status: string;
-  created_at: string;
-}
-
-interface TaskSummary {
-  id: string;
-  title: string;
   status: string;
 }
 
@@ -87,34 +73,9 @@ async function fetchMilestones(projectId: string): Promise<Milestone[]> {
   return json.data ?? [];
 }
 
-async function fetchReports(projectId: string): Promise<ReportSummary[]> {
-  const res = await fetch(`/api/v1/projects/${projectId}/reports?limit=100&offset=0`, {
-    credentials: "include",
-  });
-  if (!res.ok) return [];
-  const json = await res.json();
-  return json.data ?? [];
-}
-
-async function fetchTasks(projectId: string): Promise<TaskSummary[]> {
-  const res = await fetch(`/api/v1/tasks?project_id=${encodeURIComponent(projectId)}&limit=100&offset=0`, {
-    credentials: "include",
-  });
-  if (!res.ok) return [];
-  const json = await res.json();
-  return json.data ?? [];
-}
-
 async function createDocument(
   projectId: string,
-  body: {
-    type: string;
-    title: string;
-    description?: string;
-    report_id?: string;
-    task_id?: string;
-    milestone_id?: string;
-  }
+  body: { type: string; title: string; description?: string; milestone_id?: string }
 ): Promise<ProjectDocument> {
   const res = await fetch(`/api/v1/projects/${projectId}/documents`, {
     method: "POST",
@@ -153,13 +114,7 @@ async function uploadDocumentFile(
 async function updateDocument(
   projectId: string,
   documentId: string,
-  body: {
-    status?: string;
-    report_id?: string;
-    task_id?: string;
-    milestone_id?: string;
-    decision_comment?: string;
-  }
+  body: { status?: string; milestone_id?: string }
 ): Promise<ProjectDocument> {
   const res = await fetch(`/api/v1/projects/${projectId}/documents/${documentId}`, {
     method: "PATCH",
@@ -173,13 +128,6 @@ async function updateDocument(
   }
   const json = await res.json();
   return json.data;
-}
-
-function fileNameFromObjectPath(objectPath: string | null | undefined): string | null {
-  if (!objectPath) return null;
-  const parts = objectPath.split("/");
-  const fileName = parts[parts.length - 1];
-  return fileName || objectPath;
 }
 
 function statusBadgeClass(status: string): string {
@@ -230,12 +178,6 @@ function formatDocumentError(message: string, tDetail: (key: string) => string):
       return tDetail("updateFailed");
     case "UPLOAD_FAILED":
       return tDetail("uploadFailed");
-    case "invalid_status_transition":
-      return tDetail("updateFailed");
-    case "invalid_task_linkage":
-    case "invalid_report_linkage":
-    case "invalid_milestone_linkage":
-      return "Invalid linkage. Select entities from the same project.";
     default:
       return message;
   }
@@ -248,10 +190,7 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
   const [uploadDocId, setUploadDocId] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
-  const [updateErrorById, setUpdateErrorById] = useState<Record<string, string>>({});
   const [historyDocId, setHistoryDocId] = useState<string | null>(null);
-  const [decisionTarget, setDecisionTarget] = useState<{ documentId: string; status: "approved" | "rejected" } | null>(null);
-  const [decisionComment, setDecisionComment] = useState("");
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const uploadTargetRef = useRef<string | null>(null);
 
@@ -265,26 +204,10 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
     queryFn: () => fetchMilestones(projectId),
     enabled: !!projectId,
   });
-  const reportsQuery = useQuery({
-    queryKey: ["project-reports-for-doc-linkage", projectId],
-    queryFn: () => fetchReports(projectId),
-    enabled: !!projectId,
-  });
-  const tasksQuery = useQuery({
-    queryKey: ["project-tasks-for-doc-linkage", projectId],
-    queryFn: () => fetchTasks(projectId),
-    enabled: !!projectId,
-  });
 
   const createMutation = useMutation({
-    mutationFn: (body: {
-      type: string;
-      title: string;
-      description?: string;
-      report_id?: string;
-      task_id?: string;
-      milestone_id?: string;
-    }) => createDocument(projectId, body),
+    mutationFn: (body: { type: string; title: string; description?: string; milestone_id?: string }) =>
+      createDocument(projectId, body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["project-documents", projectId] });
       setCreateOpen(false);
@@ -307,32 +230,12 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({
-      documentId,
-      body,
-    }: {
-      documentId: string;
-      body: { status?: string; report_id?: string; task_id?: string; milestone_id?: string; decision_comment?: string };
-    }) =>
+    mutationFn: ({ documentId, body }: { documentId: string; body: { status?: string; milestone_id?: string } }) =>
       updateDocument(projectId, documentId, body),
-    onMutate: ({ documentId }) => {
-      setUpdatingId(documentId);
-      setUpdateErrorById((prev) => ({ ...prev, [documentId]: "" }));
-    },
-    onError: (error, variables) => {
-      const message =
-        error instanceof Error && error.message
-          ? error.message
-          : "UPDATE_FAILED";
-      setUpdateErrorById((prev) => ({ ...prev, [variables.documentId]: message }));
-    },
-    onSettled: () => {
-      setUpdatingId(null);
-    },
+    onMutate: ({ documentId }) => setUpdatingId(documentId),
+    onSettled: () => setUpdatingId(null),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["project-documents", projectId] });
-      setDecisionTarget(null);
-      setDecisionComment("");
     },
   });
 
@@ -437,21 +340,10 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
           <TableBody>
             {rows.map((doc) => {
               const url = fileUrl(doc.object_path);
-              const fileName = fileNameFromObjectPath(doc.object_path);
               const canUpload = doc.status === "draft" && !uploadMutation.isPending;
               const isUploading = uploadDocId === doc.id && uploadMutation.isPending;
-              const canSubmitForReview =
-                (doc.status === "draft" || doc.status === "uploaded" || doc.status === "changes_requested") &&
-                updatingId !== doc.id;
+              const canSubmitForReview = doc.status === "uploaded" && updatingId !== doc.id;
               const canReview = doc.status === "under_review" && updatingId !== doc.id;
-              const canArchive =
-                (doc.status === "draft" ||
-                  doc.status === "uploaded" ||
-                  doc.status === "under_review" ||
-                  doc.status === "approved" ||
-                  doc.status === "rejected" ||
-                  doc.status === "changes_requested") &&
-                updatingId !== doc.id;
 
               return (
                 <TableRow key={doc.id}>
@@ -472,21 +364,14 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
                   </TableCell>
                   <TableCell>
                     {url ? (
-                      <div className="flex flex-col gap-1">
-                        <a
-                          href={url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-aistroyka-accent hover:underline text-sm"
-                        >
-                          {tDetail("open")}
-                        </a>
-                        {fileName ? (
-                          <span className="text-aistroyka-text-tertiary text-xs break-all">
-                            {fileName}
-                          </span>
-                        ) : null}
-                      </div>
+                      <a
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-aistroyka-accent hover:underline text-sm"
+                      >
+                        {tDetail("open")}
+                      </a>
                     ) : canUpload ? (
                       <button
                         type="button"
@@ -515,32 +400,28 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
                     )}
                   </TableCell>
                   <TableCell className="text-aistroyka-text-secondary text-sm">
-                    <div className="flex flex-col gap-1">
-                      {doc.milestone_id ? (
-                        <span>
-                          {tDetail("milestone")}:{" "}
-                          {milestones.find((m) => m.id === doc.milestone_id)?.title ??
-                            doc.milestone_id.slice(0, 8) + "…"}
-                        </span>
-                      ) : null}
-                      {doc.report_id ? (
-                        <Link
-                          href={`/dashboard/reports/${doc.report_id}`}
-                          className="text-aistroyka-accent hover:underline font-medium"
-                        >
-                          {tDetail("report")} {doc.report_id.slice(0, 8)}…
-                        </Link>
-                      ) : null}
-                      {doc.task_id ? (
-                        <Link
-                          href={`/dashboard/tasks/${doc.task_id}`}
-                          className="text-aistroyka-accent hover:underline font-medium"
-                        >
-                          {tDetail("task")} {doc.task_id.slice(0, 8)}…
-                        </Link>
-                      ) : null}
-                      {!doc.milestone_id && !doc.report_id && !doc.task_id ? "—" : null}
-                    </div>
+                    {doc.milestone_id ? (
+                      <>
+                        {milestones.find((m) => m.id === doc.milestone_id)?.title ??
+                          doc.milestone_id.slice(0, 8) + "…"}
+                      </>
+                    ) : doc.report_id ? (
+                      <Link
+                        href={`/dashboard/reports/${doc.report_id}`}
+                        className="text-aistroyka-accent hover:underline font-medium"
+                      >
+                        {tDetail("report")} {doc.report_id.slice(0, 8)}…
+                      </Link>
+                    ) : doc.task_id ? (
+                      <Link
+                        href={`/dashboard/tasks/${doc.task_id}`}
+                        className="text-aistroyka-accent hover:underline font-medium"
+                      >
+                        {tDetail("task")} {doc.task_id.slice(0, 8)}…
+                      </Link>
+                    ) : (
+                      "—"
+                    )}
                   </TableCell>
                   <TableCell className="text-aistroyka-text-secondary text-sm">
                     {new Date(doc.created_at).toLocaleDateString()}
@@ -566,10 +447,12 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
                           <Button
                             variant="primary"
                             size="sm"
-                            onClick={() => {
-                              setDecisionTarget({ documentId: doc.id, status: "approved" });
-                              setDecisionComment("");
-                            }}
+                            onClick={() =>
+                              updateMutation.mutate({
+                                documentId: doc.id,
+                                body: { status: "approved" },
+                              })
+                            }
                             disabled={updatingId === doc.id}
                           >
                             {tDetail("approve")}
@@ -577,10 +460,12 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
                           <Button
                             variant="secondary"
                             size="sm"
-                            onClick={() => {
-                              setDecisionTarget({ documentId: doc.id, status: "rejected" });
-                              setDecisionComment("");
-                            }}
+                            onClick={() =>
+                              updateMutation.mutate({
+                                documentId: doc.id,
+                                body: { status: "rejected" },
+                              })
+                            }
                             disabled={updatingId === doc.id}
                           >
                             {tDetail("reject")}
@@ -598,32 +483,7 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
                       >
                         {tDetail("history")}
                       </Button>
-                      {canArchive ? (
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() =>
-                            updateMutation.mutate({
-                              documentId: doc.id,
-                              body: { status: "archived" },
-                            })
-                          }
-                          disabled={updatingId === doc.id}
-                        >
-                          {tDetail("archived")}
-                        </Button>
-                      ) : null}
                     </div>
-                    {updateErrorById[doc.id] ? (
-                      <p className="mt-1 text-xs text-aistroyka-error" role="alert">
-                        {formatDocumentError(updateErrorById[doc.id], tDetail)}
-                      </p>
-                    ) : null}
-                    {doc.decision_comment ? (
-                      <p className="mt-1 text-xs text-aistroyka-text-tertiary">
-                        {tDetail("commentOptional")}: {doc.decision_comment}
-                      </p>
-                    ) : null}
                   </TableCell>
                 </TableRow>
               );
@@ -648,9 +508,8 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
           setCreateOpen(false);
           createMutation.reset();
         }}
+        projectId={projectId}
         milestones={milestones}
-        reports={reportsQuery.data ?? []}
-        tasks={tasksQuery.data ?? []}
         onSubmit={(body) => createMutation.mutate(body)}
         isSubmitting={createMutation.isPending}
         error={
@@ -659,27 +518,6 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
             : null
         }
       />
-      <DecisionCommentModal
-        open={decisionTarget !== null}
-        isSubmitting={updateMutation.isPending}
-        action={decisionTarget?.status ?? "approved"}
-        comment={decisionComment}
-        onCommentChange={setDecisionComment}
-        onClose={() => {
-          setDecisionTarget(null);
-          setDecisionComment("");
-        }}
-        onSubmit={() => {
-          if (!decisionTarget) return;
-          updateMutation.mutate({
-            documentId: decisionTarget.documentId,
-            body: {
-              status: decisionTarget.status,
-              decision_comment: decisionComment.trim() || undefined,
-            },
-          });
-        }}
-      />
     </div>
   );
 }
@@ -687,26 +525,17 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
 function CreateDocumentModal({
   open,
   onClose,
+  projectId,
   milestones,
-  reports,
-  tasks,
   onSubmit,
   isSubmitting,
   error,
 }: {
   open: boolean;
   onClose: () => void;
+  projectId: string;
   milestones: Milestone[];
-  reports: ReportSummary[];
-  tasks: TaskSummary[];
-  onSubmit: (body: {
-    type: string;
-    title: string;
-    description?: string;
-    report_id?: string;
-    task_id?: string;
-    milestone_id?: string;
-  }) => void;
+  onSubmit: (body: { type: string; title: string; description?: string; milestone_id?: string }) => void;
   isSubmitting: boolean;
   error: string | null;
 }) {
@@ -714,8 +543,6 @@ function CreateDocumentModal({
   const [type, setType] = useState<string>("document");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [reportId, setReportId] = useState<string>("");
-  const [taskId, setTaskId] = useState<string>("");
   const [milestoneId, setMilestoneId] = useState<string>("");
 
   function handleSubmit(e: React.FormEvent) {
@@ -726,8 +553,6 @@ function CreateDocumentModal({
       type,
       title: t,
       description: description.trim() || undefined,
-      report_id: reportId || undefined,
-      task_id: taskId || undefined,
       milestone_id: milestoneId || undefined,
     });
   }
@@ -774,53 +599,28 @@ function CreateDocumentModal({
           disabled={isSubmitting}
           rows={2}
         />
-        {reports.length > 0 && (
-          <Select
-            id="doc-report"
-            label={tDetail("report")}
-            value={reportId}
-            onChange={(e) => setReportId(e.target.value)}
-            disabled={isSubmitting}
-          >
-            <option value="">{tDetail("none")}</option>
-            {reports.map((report) => (
-              <option key={report.id} value={report.id}>
-                {report.id.slice(0, 8)}… ({statusLabel(report.status, tDetail)})
-              </option>
-            ))}
-          </Select>
-        )}
-        {tasks.length > 0 && (
-          <Select
-            id="doc-task"
-            label={tDetail("task")}
-            value={taskId}
-            onChange={(e) => setTaskId(e.target.value)}
-            disabled={isSubmitting}
-          >
-            <option value="">{tDetail("none")}</option>
-            {tasks.map((task) => (
-              <option key={task.id} value={task.id}>
-                {task.title}
-              </option>
-            ))}
-          </Select>
-        )}
         {milestones.length > 0 && (
-          <Select
-            id="doc-milestone"
-            label={tDetail("linkToMilestoneOptional")}
-            value={milestoneId}
-            onChange={(e) => setMilestoneId(e.target.value)}
-            disabled={isSubmitting}
-          >
-            <option value="">{tDetail("none")}</option>
-            {milestones.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.title} ({m.target_date})
-              </option>
-            ))}
-          </Select>
+          <div>
+            <label
+              htmlFor="doc-milestone"
+              className="mb-1.5 block text-[var(--aistroyka-font-subheadline)] font-medium text-aistroyka-text-primary"
+            >
+              {tDetail("linkToMilestoneOptional")}
+            </label>
+            <Select
+              id="doc-milestone"
+              value={milestoneId}
+              onChange={(e) => setMilestoneId(e.target.value)}
+              disabled={isSubmitting}
+            >
+              <option value="">{tDetail("none")}</option>
+              {milestones.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.title} ({m.target_date})
+                </option>
+              ))}
+            </Select>
+          </div>
         )}
         {error && (
           <p className="text-sm text-aistroyka-error" role="alert">
@@ -836,55 +636,6 @@ function CreateDocumentModal({
           </Button>
         </div>
       </form>
-    </Modal>
-  );
-}
-
-function DecisionCommentModal({
-  open,
-  action,
-  comment,
-  isSubmitting,
-  onCommentChange,
-  onSubmit,
-  onClose,
-}: {
-  open: boolean;
-  action: "approved" | "rejected";
-  comment: string;
-  isSubmitting: boolean;
-  onCommentChange: (value: string) => void;
-  onSubmit: () => void;
-  onClose: () => void;
-}) {
-  const tDetail = useTranslations("dashboardDetail");
-  if (!open) return null;
-
-  return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      title={action === "approved" ? tDetail("approve") : tDetail("reject")}
-    >
-      <div className="space-y-3">
-        <Textarea
-          id="doc-decision-comment"
-          label={tDetail("commentOptional")}
-          value={comment}
-          onChange={(event) => onCommentChange(event.target.value)}
-          placeholder={tDetail("addShortCommentOrReason")}
-          rows={3}
-          disabled={isSubmitting}
-        />
-        <div className="flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={onClose} disabled={isSubmitting}>
-            {tDetail("cancel")}
-          </Button>
-          <Button type="button" variant="primary" onClick={onSubmit} disabled={isSubmitting}>
-            {isSubmitting ? tDetail("loading") : tDetail("apply")}
-          </Button>
-        </div>
-      </div>
     </Modal>
   );
 }

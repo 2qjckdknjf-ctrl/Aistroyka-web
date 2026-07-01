@@ -126,12 +126,7 @@ final class OperationQueueStore: ObservableObject {
         let temp = url.deletingLastPathComponent().appendingPathComponent(UUID().uuidString + ".tmp")
         do {
             try data.write(to: temp)
-            if fileManager.fileExists(atPath: url.path) {
-                _ = try? fileManager.replaceItemAt(url, withItemAt: temp)
-                try? fileManager.removeItem(at: temp)
-            } else {
-                try? fileManager.moveItem(at: temp, to: url)
-            }
+            _ = try? fileManager.replaceItemAt(url, withItemAt: temp)
         } catch {
             try? fileManager.removeItem(at: temp)
         }

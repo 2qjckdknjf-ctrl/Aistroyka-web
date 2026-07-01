@@ -12,25 +12,25 @@ struct ManagerTabShell: View {
     var body: some View {
         TabView(selection: $selectedTab) {
             HomeDashboardView()
-                .tabItem { Label(NSLocalizedString("mgr_tab_home", comment: ""), systemImage: "house.fill") }
+                .tabItem { Label("Home", systemImage: "house.fill") }
                 .tag(0)
             ProjectsListView()
-                .tabItem { Label(NSLocalizedString("mgr_tab_projects", comment: ""), systemImage: "folder.fill") }
+                .tabItem { Label("Projects", systemImage: "folder.fill") }
                 .tag(1)
             TasksListView()
-                .tabItem { Label(NSLocalizedString("mgr_tab_tasks", comment: ""), systemImage: "checklist") }
+                .tabItem { Label("Tasks", systemImage: "checklist") }
                 .tag(2)
             ReportsInboxView()
-                .tabItem { Label(NSLocalizedString("mgr_tab_reports", comment: ""), systemImage: "doc.text.fill") }
+                .tabItem { Label("Reports", systemImage: "doc.text.fill") }
                 .tag(3)
             TeamOverviewView()
-                .tabItem { Label(NSLocalizedString("mgr_tab_team", comment: ""), systemImage: "person.3.fill") }
+                .tabItem { Label("Team", systemImage: "person.3.fill") }
                 .tag(4)
             AITabView()
-                .tabItem { Label(NSLocalizedString("mgr_tab_ai", comment: ""), systemImage: "sparkles") }
+                .tabItem { Label("AI", systemImage: "sparkles") }
                 .tag(5)
             ManagerMoreView()
-                .tabItem { Label(NSLocalizedString("mgr_tab_more", comment: ""), systemImage: "ellipsis.circle.fill") }
+                .tabItem { Label("More", systemImage: "ellipsis.circle.fill") }
                 .tag(6)
         }
         .tint(.accentColor)

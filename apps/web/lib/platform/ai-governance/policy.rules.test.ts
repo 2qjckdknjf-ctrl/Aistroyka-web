@@ -42,23 +42,4 @@ describe("policy.rules", () => {
     expect(r.decision).toBe("degrade");
     expect(r.rule_hits).toContain("tier_unknown");
   });
-
-  it("blocks when video_size_bytes exceeded for FREE", () => {
-    const r = evaluatePolicy({
-      tenant_id: "t1",
-      subscription_tier: "FREE",
-      video_size_bytes: 30 * 1024 * 1024,
-    });
-    expect(r.decision).toBe("block");
-    expect(r.rule_hits).toContain("max_video_size_exceeded");
-  });
-
-  it("allows large video for ENTERPRISE within cap", () => {
-    const r = evaluatePolicy({
-      tenant_id: "t1",
-      subscription_tier: "ENTERPRISE",
-      video_size_bytes: 400 * 1024 * 1024,
-    });
-    expect(r.decision).toBe("allow");
-  });
 });

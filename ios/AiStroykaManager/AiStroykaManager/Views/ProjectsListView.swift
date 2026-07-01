@@ -15,14 +15,21 @@ struct ProjectsListView: View {
         NavigationStack {
             Group {
                 if isLoading {
-                    LoadingStateView(message: NSLocalizedString("mgr_loading_projects", comment: ""))
+                    ProgressView("Loading projects…")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if let err = errorMessage {
-                    ErrorStateView(message: err, retry: { load() })
+                    VStack(spacing: 12) {
+                        Text(err)
+                            .foregroundStyle(.red)
+                            .multilineTextAlignment(.center)
+                        Button("Retry") { load() }
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if projects.isEmpty {
-                    EmptyStateView(
-                        title: NSLocalizedString("mgr_no_projects_yet", comment: ""),
-                        subtitle: nil
-                    )
+                    Text("No projects yet")
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
                     List(projects, id: \.id) { p in
                         NavigationLink(destination: ProjectDetailView(projectId: p.id, projectName: p.name)) {
@@ -31,26 +38,23 @@ struct ProjectsListView: View {
                     }
                 }
             }
-            .navigationTitle(NSLocalizedString("mgr_tab_projects", comment: ""))
-            .refreshable { await loadAsync() }
-            .onAppear { loadIfNeeded() }
+            .navigationTitle("Projects")
+            .onAppear { load() }
         }
     }
 
     private func load() {
         errorMessage = nil
         isLoading = true
-        Task { await loadAsync() }
-    }
-
-    private func loadIfNeeded() {
-        guard shouldLoadInitially(items: projects, errorMessage: errorMessage) else { return }
-        load()
-    }
-
-    private func loadAsync() async {
-        await runManagerLoad(isLoading: &isLoading, errorMessage: &errorMessage) {
-            projects = try await ManagerAPI.projects()
+        Task {
+            do {
+                projects = try await ManagerAPI.projects()
+            } catch let e as APIError {
+                errorMessage = e.message
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+            isLoading = false
         }
     }
 }
@@ -61,8 +65,8 @@ struct ProjectDetailPlaceholderView: View {
 
     var body: some View {
         List {
-            Text(String(format: NSLocalizedString("mgr_project_fmt", comment: ""), name))
-            Text(String(format: NSLocalizedString("mgr_id_fmt", comment: ""), projectId))
+            Text("Project: \(name)")
+            Text("ID: \(projectId)")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }

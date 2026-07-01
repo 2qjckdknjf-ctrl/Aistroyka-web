@@ -11,7 +11,7 @@ export function StakeholderInviteClient() {
   const tDetail = useTranslations("dashboardDetail");
   const sp = useSearchParams();
   const router = useRouter();
-  const token = sp?.get("token") ?? "";
+  const token = sp.get("token") ?? "";
 
   const mutation = useMutation({
     mutationFn: async () => {

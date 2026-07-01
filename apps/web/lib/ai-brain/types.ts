@@ -34,11 +34,6 @@ export interface CopilotLLMResult {
 
 /** Adapter interface for LLM/generation. Implement with real provider or mock. */
 export interface ILLMAdapter {
+  generateBrief(context: CopilotContext): Promise<CopilotLLMResult>;
   isAvailable(): boolean;
-  /** Full Copilot prompt (from buildPrompt); preferred over any summary-only path. */
-  generateFromPrompt(
-    prompt: string,
-    useCase: string,
-    context: Pick<CopilotContext, "projectId" | "tenantId">
-  ): Promise<CopilotLLMResult>;
 }

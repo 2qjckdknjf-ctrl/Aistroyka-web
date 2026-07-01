@@ -13,7 +13,6 @@ maestro/output/
 
 # Google Drive Desktop sync temp fragments (do not commit)
 .tmp.driveupload/
-.tmp-home/
 
 # testing
 coverage
@@ -27,7 +26,6 @@ ios/build/
 ios/**/build/
 ios/ci_derived/
 ios/**/ci_derived/
-ios/.deriveddata_*/
 ios/**/DerivedData/
 DerivedData/
 **/DerivedData/

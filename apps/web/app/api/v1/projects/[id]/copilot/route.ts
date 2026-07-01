@@ -6,22 +6,21 @@
 
 import { NextResponse } from "next/server";
 import { createClientFromRequest } from "@/lib/supabase/server";
-import { getAdminClient } from "@/lib/supabase/admin";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { getProject } from "@/lib/domain/projects/project.service";
-import { runCopilot } from "@/lib/copilot/copilot.service";
-import type { ICopilotProvider } from "@/lib/copilot/copilot.provider";
-import type { CopilotUseCase } from "@/lib/copilot/copilot.types";
-import { createOpenAiCopilotProviderFromEnv } from "@/lib/copilot/copilot.openai-provider";
-import { gateCopilotLlmRequest } from "@/lib/copilot/copilot-ai-gate";
-import { isOpenAIConfigured } from "@/lib/config/server";
-import { recordUsage, checkBudgetAlert } from "@/lib/platform/ai-usage/ai-usage.service";
+import {
+  summarizeProjectStatus,
+  summarizeDailyReports,
+  detectTopRisks,
+  findMissingEvidence,
+  identifyBlockedTasks,
+  generateManagerBrief,
+  generateExecutiveBrief,
+} from "@/lib/copilot";
 import { logCopilotNonStreamComplete, getAiReleaseCorrelation } from "@/lib/observability/ai-telemetry";
 import { emitAiRuntimeAudit } from "@/lib/observability/audit.service";
 
 export const dynamic = "force-dynamic";
-
-const ROUTE_KEY = "GET /api/v1/projects/:id/copilot";
 
 function generateRequestId(): string {
   return typeof crypto !== "undefined" && crypto.randomUUID
@@ -73,85 +72,40 @@ export async function GET(
   const requestId = request.headers.get("X-Request-Id")?.trim() || generateRequestId();
   const startMs = Date.now();
 
-  const admin = getAdminClient();
-  let copilotProvider: ICopilotProvider | null = null;
-
-  if (isOpenAIConfigured() && admin) {
-    const gate = await gateCopilotLlmRequest(admin, {
-      tenantId,
-      userId: ctx.userId ?? null,
-      subscriptionTier: ctx.subscriptionTier ?? null,
-      requestId,
-      endpoint: ROUTE_KEY,
-      request,
-    });
-    if (!gate.ok) {
-      return NextResponse.json(
-        { error: gate.message, code: gate.code, request_id: requestId },
-        { status: gate.httpStatus, headers: { "X-Request-Id": requestId } }
-      );
-    }
-    copilotProvider =
-      createOpenAiCopilotProviderFromEnv(async (usage) => {
-        await recordUsage(admin, {
-          tenant_id: tenantId,
-          user_id: ctx.userId ?? null,
-          trace_id: requestId,
-          provider: "openai",
-          model: usage.model,
-          tokens_input: usage.promptTokens,
-          tokens_output: usage.completionTokens,
-          tokens_total: usage.promptTokens + usage.completionTokens,
-          cost_usd: usage.costUsd,
-          status: "success",
-          duration_ms: usage.durationMs,
-        });
-        await checkBudgetAlert(admin, tenantId, usage.costUsd);
-      }) ?? null;
-  }
-
-  const copilotOpts = {
-    supabase,
-    copilotProvider: copilotProvider ?? undefined,
-  };
-
-  const uc = useCase as CopilotUseCase;
   let result;
-  switch (uc) {
+  switch (useCase) {
     case "summarizeProjectStatus":
-      result = await runCopilot({ useCase: uc, projectId: id, tenantId }, copilotOpts);
+      result = await summarizeProjectStatus(supabase, id, tenantId);
       break;
     case "detectTopRisks":
-      result = await runCopilot({ useCase: uc, projectId: id, tenantId }, copilotOpts);
+      result = await detectTopRisks(supabase, id, tenantId);
       break;
     case "findMissingEvidence":
-      result = await runCopilot({ useCase: uc, projectId: id, tenantId }, copilotOpts);
+      result = await findMissingEvidence(supabase, id, tenantId);
       break;
     case "identifyBlockedTasks":
-      result = await runCopilot({ useCase: uc, projectId: id, tenantId }, copilotOpts);
+      result = await identifyBlockedTasks(supabase, id, tenantId);
       break;
     case "generateManagerBrief":
-      result = await runCopilot({ useCase: uc, projectId: id, tenantId }, copilotOpts);
+      result = await generateManagerBrief(supabase, id, tenantId);
       break;
     case "generateExecutiveBrief":
-      result = await runCopilot({ useCase: uc, projectId: id, tenantId }, copilotOpts);
+      result = await generateExecutiveBrief(supabase, id, tenantId);
       break;
     case "summarizeDailyReports":
-      result = await runCopilot({ useCase: uc, projectId: id, tenantId }, copilotOpts);
+      result = await summarizeDailyReports(supabase, id, tenantId);
       break;
     default:
-      result = await runCopilot({ useCase: "generateManagerBrief", projectId: id, tenantId }, copilotOpts);
+      result = await generateManagerBrief(supabase, id, tenantId);
   }
 
   const fallbackTriggered = result.source === "deterministic";
   const fallbackReason = fallbackTriggered ? "provider_unavailable_or_error" : undefined;
   const latencyMs = Date.now() - startMs;
   const rel = getAiReleaseCorrelation();
-  const providerLabel =
-    result.source === "llm" ? "openai" : result.source === "mock" ? "mock" : "none";
   logCopilotNonStreamComplete({
     request_id: requestId,
-    route: ROUTE_KEY,
+    route: "GET /api/v1/projects/:id/copilot",
     tenant_id: tenantId,
     project_id: id,
     user_id: ctx.userId ?? undefined,
@@ -162,7 +116,7 @@ export async function GET(
     fallback_reason: fallbackReason ?? undefined,
     fallback_target_path: fallbackTriggered ? "deterministicFallback" : undefined,
     use_case: useCase,
-    provider: providerLabel,
+    provider: fallbackTriggered ? "none" : "openai",
     ...rel,
   });
   void emitAiRuntimeAudit(supabase, {
@@ -173,13 +127,13 @@ export async function GET(
     action: "ai_copilot_non_stream_complete",
     details: {
       request_id: requestId,
-      route: ROUTE_KEY,
+      route: "GET /api/v1/projects/:id/copilot",
       latency_ms: latencyMs,
       output_type: "copilot",
       streaming: false,
       fallback_triggered: fallbackTriggered,
       fallback_reason: fallbackReason ?? undefined,
-      provider: providerLabel,
+      provider: fallbackTriggered ? "none" : "openai",
       ...rel,
     },
   });

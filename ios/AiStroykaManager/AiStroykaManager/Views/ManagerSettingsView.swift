@@ -22,25 +22,25 @@ struct ManagerSettingsView: View {
 
     var body: some View {
         List {
-            Section(NSLocalizedString("mgr_section_account", comment: "")) {
-                Text(sessionState.isLoggedIn ? NSLocalizedString("mgr_signed_in", comment: "") : NSLocalizedString("mgr_not_signed_in", comment: ""))
+            Section("Account") {
+                Text(sessionState.isLoggedIn ? "Signed in" : "Not signed in")
                     .foregroundColor(sessionState.isLoggedIn ? .green : .secondary)
                 if sessionState.isAuthorizedRole == false, let msg = sessionState.roleFailureMessage {
                     Text(msg).font(.caption).foregroundColor(.orange)
                 }
             }
-            Section(NSLocalizedString("mgr_environment_section", comment: "")) {
-                LabeledContent(NSLocalizedString("mgr_api", comment: ""), value: Config.baseURL)
-                Text(NSLocalizedString("mgr_client_ios_manager", comment: "")).font(.caption).foregroundColor(.secondary)
+            Section("Environment") {
+                LabeledContent("API", value: Config.baseURL)
+                Text("Client: ios_manager").font(.caption).foregroundColor(.secondary)
             }
-            Section(NSLocalizedString("mgr_diagnostics_section", comment: "")) {
-                LabeledContent(NSLocalizedString("mgr_app_version", comment: ""), value: appVersion)
-                LabeledContent(NSLocalizedString("mgr_build", comment: ""), value: buildNumber)
-                LabeledContent(NSLocalizedString("mgr_tenant_id", comment: ""), value: meData?.tenantId ?? (meLoadFailed ? "—" : "…"))
-                LabeledContent(NSLocalizedString("mgr_role", comment: ""), value: meData?.role ?? (meLoadFailed ? "—" : "…"))
+            Section("Diagnostics") {
+                LabeledContent("App version", value: appVersion)
+                LabeledContent("Build", value: buildNumber)
+                LabeledContent("Tenant ID", value: meData?.tenantId ?? (meLoadFailed ? "—" : "…"))
+                LabeledContent("Role", value: meData?.role ?? (meLoadFailed ? "—" : "…"))
             }
         }
-        .navigationTitle(NSLocalizedString("mgr_settings", comment: ""))
+        .navigationTitle("Settings")
         .task {
             guard sessionState.isLoggedIn else { return }
             do {

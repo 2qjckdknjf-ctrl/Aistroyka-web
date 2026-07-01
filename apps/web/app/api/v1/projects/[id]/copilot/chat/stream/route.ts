@@ -1,21 +1,14 @@
 /**
  * POST /api/v1/projects/:id/copilot/chat/stream
  * Streaming Copilot chat. SSE events: meta, token, done, error.
- * Requires: ai_chat_threads, ai_chat_messages; OPENAI_API_KEY; service role for quota/policy/usage.
+ * Requires: ai_chat_threads, ai_chat_messages tables; OPENAI_API_KEY.
  */
 
 import { NextResponse } from "next/server";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClientFromRequest } from "@/lib/supabase/server";
-import { getAdminClient } from "@/lib/supabase/admin";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { getProject } from "@/lib/domain/projects/project.service";
 import { getServerConfig, isOpenAIConfigured } from "@/lib/config/server";
-import { fetchWithOpenAiRetry } from "@/lib/platform/ai/openai-http-retry";
-import { OPENAI_CHAT_COMPLETIONS_URL } from "@/lib/platform/ai/openai-chat-completion";
-import { gateCopilotLlmRequest, COPILOT_STREAM_ESTIMATE_USD } from "@/lib/copilot/copilot-ai-gate";
-import { recordUsage, checkBudgetAlert } from "@/lib/platform/ai-usage/ai-usage.service";
-import { estimateCostUsd } from "@/lib/platform/ai-usage/cost-estimator";
 import {
   applyContextBudget,
   DEFAULT_CONTEXT_BUDGET,
@@ -31,44 +24,6 @@ import {
 import { emitAiRuntimeAudit } from "@/lib/observability/audit.service";
 
 export const dynamic = "force-dynamic";
-
-const STREAM_ROUTE_KEY = "POST /api/v1/projects/:id/copilot/chat/stream";
-
-async function recordCopilotStreamUsage(
-  admin: SupabaseClient,
-  params: {
-    tenantId: string;
-    userId: string | null;
-    requestId: string;
-    model: string;
-    streamUsage: { prompt_tokens: number; completion_tokens: number } | null;
-    contextTokensEstimated: number;
-    fullText: string;
-    durationMs: number;
-  }
-): Promise<void> {
-  const pt =
-    params.streamUsage?.prompt_tokens ??
-    Math.min(32_000, Math.max(400, params.contextTokensEstimated));
-  const ct =
-    params.streamUsage?.completion_tokens ??
-    Math.max(1, Math.ceil(params.fullText.length / 4));
-  const costUsd = estimateCostUsd(params.model, pt, ct);
-  await recordUsage(admin, {
-    tenant_id: params.tenantId,
-    user_id: params.userId,
-    trace_id: params.requestId,
-    provider: "openai",
-    model: params.model,
-    tokens_input: pt,
-    tokens_output: ct,
-    tokens_total: pt + ct,
-    cost_usd: costUsd,
-    status: "success",
-    duration_ms: params.durationMs,
-  });
-  await checkBudgetAlert(admin, params.tenantId, costUsd);
-}
 
 function generateRequestId(): string {
   return typeof crypto !== "undefined" && crypto.randomUUID
@@ -125,14 +80,6 @@ interface StreamRequestBody {
 
 function sseEvent(name: string, data: unknown): string {
   return `event: ${name}\ndata: ${JSON.stringify(data)}\n\n`;
-}
-
-/** Optional UI locale from client (next-intl) to align reply language. */
-function streamLocaleLine(locale: string | null | undefined): string {
-  const t = locale?.trim().toLowerCase();
-  if (!t) return "";
-  if (!/^[a-z]{2}(-[a-z0-9]+)?$/i.test(t)) return "";
-  return `\nUser interface language: ${t}. Answer in this language unless the user explicitly switches language.`;
 }
 
 export async function POST(
@@ -196,40 +143,6 @@ export async function POST(
 
   const tenantId = ctx.tenantId!;
   const userId = ctx.userId ?? "";
-
-  const admin = getAdminClient();
-  if (!admin) {
-    return NextResponse.json(
-      {
-        error: "Copilot streaming requires service configuration for AI usage tracking.",
-        code: "ai_admin_unavailable",
-        request_id: requestId,
-      },
-      {
-        status: 503,
-        headers: {
-          "X-Request-Id": requestId,
-          "X-Stream-Status": "unavailable",
-        },
-      }
-    );
-  }
-
-  const gate = await gateCopilotLlmRequest(admin, {
-    tenantId,
-    userId: ctx.userId ?? null,
-    subscriptionTier: ctx.subscriptionTier ?? null,
-    requestId,
-    endpoint: STREAM_ROUTE_KEY,
-    request,
-    estimatedCostUsd: COPILOT_STREAM_ESTIMATE_USD,
-  });
-  if (!gate.ok) {
-    return NextResponse.json(
-      { error: gate.message, code: gate.code, request_id: requestId },
-      { status: gate.httpStatus, headers: { "X-Request-Id": requestId } }
-    );
-  }
 
   let threadId = body.thread_id?.trim() || null;
   let recentMessages: { role: "user" | "assistant"; content: string }[] = [];
@@ -330,9 +243,7 @@ export async function POST(
   const budgeted = applyContextBudget(contextInput, DEFAULT_CONTEXT_BUDGET);
   const ctxStr = formatDecisionContext(decisionContext);
 
-  const systemPrompt =
-    `You are a construction project assistant. Use the provided context to answer. Be concise and actionable. Do not invent numbers or facts not in the context.` +
-    streamLocaleLine(body.locale);
+  const systemPrompt = `You are a construction project assistant. Use the provided context to answer. Be concise and actionable. Do not invent numbers or facts not in the context.`;
   const contextBlock = budgeted.summary
     ? `Context: ${budgeted.summary}\n\nProject context: ${ctxStr}`
     : `Project context: ${ctxStr}`;
@@ -345,7 +256,7 @@ export async function POST(
 
   const config = getServerConfig();
   const apiKey = config.OPENAI_API_KEY;
-  const model = config.OPENAI_COPILOT_MODEL;
+  const model = "gpt-4o-mini";
 
   const streamStartMs = Date.now();
   const stream = new ReadableStream({
@@ -377,7 +288,7 @@ export async function POST(
       const rel = getAiReleaseCorrelation();
       logCopilotStreamLifecycle("stream_started", {
         request_id: requestId,
-        route: STREAM_ROUTE_KEY,
+        route: "POST /api/v1/projects/:id/copilot/chat/stream",
         tenant_id: tenantId,
         project_id: projectId,
         latency_ms: 0,
@@ -446,7 +357,7 @@ export async function POST(
         const latencyMs = Date.now() - streamStartMs;
         logCopilotStreamLifecycle("stream_completed", {
           request_id: requestId,
-          route: STREAM_ROUTE_KEY,
+          route: "POST /api/v1/projects/:id/copilot/chat/stream",
           tenant_id: tenantId,
           project_id: projectId,
           latency_ms: latencyMs,
@@ -455,7 +366,7 @@ export async function POST(
         });
         logCopilotStreamComplete({
           request_id: requestId,
-          route: STREAM_ROUTE_KEY,
+          route: "POST /api/v1/projects/:id/copilot/chat/stream",
           tenant_id: tenantId,
           project_id: projectId,
           user_id: userId || undefined,
@@ -482,7 +393,7 @@ export async function POST(
           action: "ai_copilot_stream_complete",
           details: {
             request_id: requestId,
-            route: STREAM_ROUTE_KEY,
+            route: "POST /api/v1/projects/:id/copilot/chat/stream",
             latency_ms: latencyMs,
             output_type: "copilot",
             streaming: true,
@@ -495,29 +406,20 @@ export async function POST(
       };
 
       try {
-        const res = await fetchWithOpenAiRetry(
-          OPENAI_CHAT_COMPLETIONS_URL,
-          (signal) => ({
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${apiKey}`,
-            },
-            body: JSON.stringify({
-              model,
-              messages: openaiMessages,
-              stream: true,
-              stream_options: { include_usage: true },
-              max_tokens: 1024,
-            }),
-            signal,
+        const res = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            model,
+            messages: openaiMessages,
+            stream: true,
+            max_tokens: 1024,
           }),
-          {
-            maxRetries: config.OPENAI_COPILOT_MAX_RETRIES,
-            timeoutMs: config.OPENAI_COPILOT_TIMEOUT_MS,
-            outerSignal: abortCtrl.signal,
-          }
-        );
+          signal: abortCtrl.signal,
+        });
 
         if (!res.ok) {
           await res.text();
@@ -525,7 +427,7 @@ export async function POST(
           const latencyMs = Date.now() - streamStartMs;
           logCopilotStreamLifecycle("stream_error", {
             request_id: requestId,
-            route: STREAM_ROUTE_KEY,
+            route: "POST /api/v1/projects/:id/copilot/chat/stream",
             tenant_id: tenantId,
             project_id: projectId,
             latency_ms: latencyMs,
@@ -535,7 +437,7 @@ export async function POST(
           });
           logCopilotStreamError({
             request_id: requestId,
-            route: STREAM_ROUTE_KEY,
+            route: "POST /api/v1/projects/:id/copilot/chat/stream",
             tenant_id: tenantId,
             project_id: projectId,
             latency_ms: latencyMs,
@@ -551,7 +453,7 @@ export async function POST(
             action: "ai_copilot_stream_error",
             details: {
               request_id: requestId,
-              route: STREAM_ROUTE_KEY,
+              route: "POST /api/v1/projects/:id/copilot/chat/stream",
               latency_ms: latencyMs,
               output_type: "copilot",
               error_kind: errorKind,
@@ -570,7 +472,7 @@ export async function POST(
           const latencyMs = Date.now() - streamStartMs;
           logCopilotStreamLifecycle("stream_error", {
             request_id: requestId,
-            route: STREAM_ROUTE_KEY,
+            route: "POST /api/v1/projects/:id/copilot/chat/stream",
             tenant_id: tenantId,
             project_id: projectId,
             latency_ms: latencyMs,
@@ -580,7 +482,7 @@ export async function POST(
           });
           logCopilotStreamError({
             request_id: requestId,
-            route: STREAM_ROUTE_KEY,
+            route: "POST /api/v1/projects/:id/copilot/chat/stream",
             tenant_id: tenantId,
             project_id: projectId,
             latency_ms: latencyMs,
@@ -596,7 +498,7 @@ export async function POST(
             action: "ai_copilot_stream_error",
             details: {
               request_id: requestId,
-              route: STREAM_ROUTE_KEY,
+              route: "POST /api/v1/projects/:id/copilot/chat/stream",
               latency_ms: latencyMs,
               output_type: "copilot",
               error_kind: "stream_transport_failure",
@@ -611,7 +513,6 @@ export async function POST(
         const decoder = new TextDecoder();
         let buffer = "";
         let fullText = "";
-        let streamUsage: { prompt_tokens: number; completion_tokens: number } | null = null;
 
         while (true) {
           const { done, value } = await reader.read();
@@ -625,26 +526,14 @@ export async function POST(
               const data = line.slice(6);
               if (data === "[DONE]") continue;
               try {
-                const parsed = JSON.parse(data) as {
-                  choices?: Array<{ delta?: { content?: string } }>;
-                  usage?: { prompt_tokens?: number; completion_tokens?: number };
-                };
-                if (parsed.usage && typeof parsed.usage.prompt_tokens === "number") {
-                  streamUsage = {
-                    prompt_tokens: parsed.usage.prompt_tokens,
-                    completion_tokens:
-                      typeof parsed.usage.completion_tokens === "number"
-                        ? parsed.usage.completion_tokens
-                        : 0,
-                  };
-                }
+                const parsed = JSON.parse(data) as { choices?: Array<{ delta?: { content?: string } }> };
                 const delta = parsed.choices?.[0]?.delta?.content;
                 if (delta) {
                   if (firstTokenMs === null) {
                     firstTokenMs = Date.now() - streamStartMs;
                     logCopilotStreamLifecycle("first_token", {
                       request_id: requestId,
-                      route: STREAM_ROUTE_KEY,
+                      route: "POST /api/v1/projects/:id/copilot/chat/stream",
                       tenant_id: tenantId,
                       project_id: projectId,
                       latency_ms: firstTokenMs,
@@ -665,22 +554,6 @@ export async function POST(
         const assistantMessageId = await persistAssistantMessage(fullText);
         await touchThread();
 
-        const billingDurationMs = Date.now() - streamStartMs;
-        try {
-          await recordCopilotStreamUsage(admin, {
-            tenantId,
-            userId: userId || null,
-            requestId,
-            model,
-            streamUsage,
-            contextTokensEstimated: budgeted.meta.context_tokens_estimated,
-            fullText,
-            durationMs: billingDurationMs,
-          });
-        } catch {
-          // best-effort usage persistence
-        }
-
         send("done", {
           request_id: requestId,
           thread_id: threadId,
@@ -693,7 +566,7 @@ export async function POST(
         const latencyMs = Date.now() - streamStartMs;
         logCopilotStreamLifecycle("stream_completed", {
           request_id: requestId,
-          route: STREAM_ROUTE_KEY,
+          route: "POST /api/v1/projects/:id/copilot/chat/stream",
           tenant_id: tenantId,
           project_id: projectId,
           latency_ms: latencyMs,
@@ -702,7 +575,7 @@ export async function POST(
         });
         logCopilotStreamComplete({
           request_id: requestId,
-          route: STREAM_ROUTE_KEY,
+          route: "POST /api/v1/projects/:id/copilot/chat/stream",
           tenant_id: tenantId,
           project_id: projectId,
           user_id: userId || undefined,
@@ -726,7 +599,7 @@ export async function POST(
           action: "ai_copilot_stream_complete",
           details: {
             request_id: requestId,
-            route: STREAM_ROUTE_KEY,
+            route: "POST /api/v1/projects/:id/copilot/chat/stream",
             latency_ms: latencyMs,
             output_type: "copilot",
             streaming: true,
@@ -753,7 +626,7 @@ export async function POST(
         const life = errorKind === "cancellation" ? "stream_cancelled" : "stream_error";
         logCopilotStreamLifecycle(life, {
           request_id: requestId,
-          route: STREAM_ROUTE_KEY,
+          route: "POST /api/v1/projects/:id/copilot/chat/stream",
           tenant_id: tenantId,
           project_id: projectId,
           latency_ms: latencyMs,
@@ -763,7 +636,7 @@ export async function POST(
         });
         logCopilotStreamError({
           request_id: requestId,
-          route: STREAM_ROUTE_KEY,
+          route: "POST /api/v1/projects/:id/copilot/chat/stream",
           tenant_id: tenantId,
           project_id: projectId,
           latency_ms: latencyMs,
@@ -779,7 +652,7 @@ export async function POST(
           action: "ai_copilot_stream_error",
           details: {
             request_id: requestId,
-            route: STREAM_ROUTE_KEY,
+            route: "POST /api/v1/projects/:id/copilot/chat/stream",
             latency_ms: latencyMs,
             output_type: "copilot",
             error_kind: errorKind,

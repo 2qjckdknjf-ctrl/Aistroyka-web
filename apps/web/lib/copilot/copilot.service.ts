@@ -5,7 +5,6 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ILLMAdapter } from "@/lib/ai-brain/types";
-import { logStructured } from "@/lib/observability";
 import { buildCopilotContext } from "./copilot.context-builder";
 import { buildPrompt } from "./copilot.prompt-builder";
 import { parseCopilotOutput, toCopilotResponse } from "./copilot.output-parser";
@@ -58,16 +57,7 @@ export async function runCopilot(
       const contextForProvider = { ...context, ...budgeted };
       result = await provider.generateFromPrompt(prompt, useCase, contextForProvider);
       source = "llm";
-    } catch (err) {
-      logStructured({
-        event: "copilot_llm_error",
-        component: "copilot.service",
-        use_case: useCase,
-        project_id: request.projectId ?? "",
-        tenantId: request.tenantId,
-        error_type: err instanceof Error ? err.name : "unknown",
-        copilot_error: err instanceof Error ? err.message.slice(0, 200) : String(err).slice(0, 200),
-      });
+    } catch {
       result = deterministicFallback(useCase, context);
     }
   } else {
