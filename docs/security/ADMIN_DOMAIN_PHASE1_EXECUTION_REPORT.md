@@ -44,7 +44,7 @@ Deployed aistroyka-web-production triggers
 | **DNS** | **LIVE** | `dig @1.1.1.1 +short admin.aistroyka.ai` → `104.21.45.103`, `172.67.213.36` |
 | **TLS** | **VALID** | Custom domain `cert_id: 5d31e858-5c83-49ad-9cd9-db3e7f26c588`, `enabled: true` |
 | **Worker binding** | **LIVE** | `admin.aistroyka.ai` → `aistroyka-web-production` |
-| **Cloudflare Access** | **NOT ENABLED** | Validated 2026-07-03 — no Access challenge (§3) |
+| **Cloudflare Access** | **NOT ENABLED** | §4.6 — `CLOUDFLARE_ACCESS_API_TOKEN` absent on disk |
 | **OWNER_ALLOWED_HOSTS** | **NOT SET** | Phase 3 enforcement only |
 
 ---
@@ -227,6 +227,48 @@ CLOUDFLARE_ACCESS_OPERATOR_EMAILS="z6pxn548dk@privaterelay.appleid.com" node scr
 
 **Why automation could not self-unblock:** No available credential can read or write `/accounts/{id}/access/*`, and no authenticated Dashboard session exists. Creating a scoped token via API also failed (9109) with both credentials.
 
+### 4.6 Access enablement retry (2026-07-03 — owner supplied token claim)
+
+**Trigger:** Owner reported `CLOUDFLARE_ACCESS_API_TOKEN` added to `apps/web/.env.cf`.
+
+**Pre-flight (disk):**
+
+| Check | Result |
+|-------|--------|
+| `grep CLOUDFLARE_ACCESS_API_TOKEN apps/web/.env.cf` | **0 matches** |
+| Keys present in `.env.cf` | `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `OPENAI_API_KEY` only (3 lines) |
+| Shell `CLOUDFLARE_ACCESS_API_TOKEN` | **unset** |
+
+**Execution:**
+
+```bash
+cd apps/web
+unset CLOUDFLARE_API_TOKEN   # script prefers CLOUDFLARE_ACCESS_API_TOKEN
+node scripts/cf-admin-domain-access.mjs
+# LIST apps failed HTTP 403 code 10000 — fell back to CLOUDFLARE_API_TOKEN (no ACCESS key on disk)
+```
+
+**Post-retry live probes:**
+
+```bash
+curl -sI https://admin.aistroyka.ai/
+# HTTP/2 307 — location: /ru (NOT cloudflareaccess.com)
+
+curl -sI https://admin.aistroyka.ai/api/v1/health
+# HTTP/2 200 — public JSON (NOT Access-gated)
+
+curl -s https://aistroyka.ai/api/v1/health
+# ok: true — HEALTHY
+```
+
+**Unblock:** Save `CLOUDFLARE_ACCESS_API_TOKEN=<Access Apps/Policies Edit token>` as a **fourth line** in `apps/web/.env.cf` (gitignored), then re-run:
+
+```bash
+cd apps/web
+unset CLOUDFLARE_API_TOKEN
+CLOUDFLARE_ACCESS_OPERATOR_EMAILS="z6pxn548dk@privaterelay.appleid.com" node scripts/cf-admin-domain-access.mjs
+```
+
 ### API token writes (Worker — resolved earlier via OAuth)
 
 | API call | HTTP | Code | Blocker |
@@ -249,10 +291,11 @@ CLOUDFLARE_ACCESS_OPERATOR_EMAILS="z6pxn548dk@privaterelay.appleid.com" node scr
 
 ## 6. Remaining for Phase 1 completion
 
-1. **Owner:** Complete Path A or B in §4.5 (only unblock)
-2. Re-probe: `curl -sI https://admin.aistroyka.ai/` → `*.cloudflareaccess.com`
-3. Confirm admin `/api/v1/health` is Access-gated when unauthenticated
-4. Owner MFA enrollment + post-login smoke on admin host
+1. **Save** `CLOUDFLARE_ACCESS_API_TOKEN` in `apps/web/.env.cf` (verify with `grep CLOUDFLARE_ACCESS_API_TOKEN .env.cf`)
+2. Re-run `node scripts/cf-admin-domain-access.mjs` with `CLOUDFLARE_API_TOKEN` unset
+3. Re-probe: `curl -sI https://admin.aistroyka.ai/` → `*.cloudflareaccess.com`
+4. Confirm admin `/api/v1/health` is Access-gated when unauthenticated
+5. Owner MFA enrollment + post-login smoke on admin host
 
 ## 7. Phase 2 readiness
 
@@ -267,8 +310,8 @@ Blocked until Access validation passes (§3 checks 1–2 **YES**):
 
 | Verdict | Value |
 |---------|-------|
-| `ADMIN_DOMAIN_PHASE1_COMPLETE` | **NO** — Access enablement failed; all credentials exhausted |
+| `ADMIN_DOMAIN_PHASE1_COMPLETE` | **NO** — Access app not created; token not on disk |
 | `CLOUDFLARE_ACCESS_ENABLED` | **NO** |
 | `READY_FOR_PHASE2_HOST_ROUTING` | **NO** |
 | `PRODUCTION_HEALTH` | **HEALTHY** |
-| `MANUAL_OWNER_ACTION_REQUIRED` | **YES** — Dashboard login or `CLOUDFLARE_ACCESS_API_TOKEN` with Access edit scope |
+| `MANUAL_OWNER_ACTION_REQUIRED` | **YES** — save `CLOUDFLARE_ACCESS_API_TOKEN` to `.env.cf` and re-run script |
