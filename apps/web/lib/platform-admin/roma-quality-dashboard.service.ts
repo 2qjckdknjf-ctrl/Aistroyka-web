@@ -1,41 +1,27 @@
-import { getHealthResponse } from "@/lib/controllers/health";
-import { getPublicConfig, getBuildStamp, hasSupabaseEnv } from "@/lib/config";
-import { validateReleaseEnv } from "@/lib/config/release-env";
-import { getSystemHealth, type ServiceStatus } from "@/lib/system/health.service";
-import { getBillingAdapterDiagnostics } from "@/lib/platform/billing-readiness/billing-adapter-registry";
-import { getAdminClient } from "@/lib/supabase/admin";
+import { getPublicConfig, hasSupabaseEnv } from "@/lib/config";
+import { isStripeBillingProviderFlagEnabled } from "@/lib/platform/billing-readiness/billing-provider-config";
 import { PLATFORM_ADMIN_PREFERRED_HOST } from "./constants";
+import {
+  buildDataCoverage,
+  runLiveProbes,
+  type LiveProbeBundle,
+} from "./roma-live-probes";
 import type {
   BlockerSeverity,
+  DataCoverage,
+  DomainSection,
+  KnownReportRef,
   LatestChanges,
+  PlatformTimelineEvent,
   QualityBlocker,
   QualityComponentCard,
+  QualityRecommendation,
   QualityStatus,
   ReadinessCategory,
   ReadinessLevel,
   RomaMaturityItem,
   RomaQualityDashboard,
-  KnownReportRef,
 } from "./roma-quality-dashboard.types";
-
-const UPLOAD_BUCKET = "media";
-
-function mapServiceStatus(status: ServiceStatus): QualityStatus {
-  switch (status) {
-    case "ok":
-      return "healthy";
-    case "degraded":
-      return "degraded";
-    case "error":
-      return "unavailable";
-    case "unavailable":
-      return "not_configured";
-    default: {
-      const _exhaustive: never = status;
-      return _exhaustive;
-    }
-  }
-}
 
 function statusLabel(status: QualityStatus): string {
   switch (status) {
@@ -97,42 +83,6 @@ function resolveEnvironmentLabel(): string {
   return appEnv || "Unknown";
 }
 
-function resolveDeployBranch(): string | null {
-  const ref =
-    (process.env.VERCEL_GIT_COMMIT_REF ?? "").trim() ||
-    (process.env.GITHUB_REF_NAME ?? "").trim() ||
-    (process.env.GITHUB_HEAD_REF ?? "").trim();
-  return ref || null;
-}
-
-async function checkStorage(): Promise<{ status: QualityStatus; details: string }> {
-  const admin = getAdminClient();
-  if (!admin) {
-    return { status: "not_configured", details: "Service role not configured — storage probe skipped." };
-  }
-  try {
-    const { data, error } = await admin.storage.listBuckets();
-    if (error) {
-      return { status: "unavailable", details: `Storage API error: ${error.message}` };
-    }
-    const buckets = data ?? [];
-    const hasMedia = buckets.some((b) => b.name === UPLOAD_BUCKET);
-    if (!hasMedia) {
-      return {
-        status: "degraded",
-        details: `Buckets reachable (${buckets.length}) but "${UPLOAD_BUCKET}" bucket not found.`,
-      };
-    }
-    return {
-      status: "healthy",
-      details: `Supabase storage reachable; "${UPLOAD_BUCKET}" bucket present.`,
-    };
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "storage_probe_failed";
-    return { status: "unavailable", details: message };
-  }
-}
-
 function buildKnownReports(): KnownReportRef[] {
   return [
     {
@@ -160,201 +110,475 @@ function buildKnownReports(): KnownReportRef[] {
       href: null,
     },
     {
+      label: "Live quality dashboard",
+      path: "docs/audits/ROMA_LIVE_QUALITY_DASHBOARD_REPORT.md",
+      note: "First live operations dashboard slice.",
+      href: null,
+    },
+    {
       label: "ROMA merge tracker",
       path: "docs/roma/ROMA_MERGE_TRACKER.md",
       note: "ROMA stage progression on feature/roma-qa-framework.",
       href: null,
     },
-    {
-      label: "ROMA Stage 2C review",
-      path: "docs/roma/ROMA_STAGE2C_REVIEW.md",
-      note: "OS kernel & constitution gate.",
-      href: null,
-    },
   ];
 }
 
-function deriveBlockers(input: {
-  healthOk: boolean;
-  dbOk: boolean;
-  releaseReport: ReturnType<typeof validateReleaseEnv>;
-  adminHostDeployed: boolean | null;
-  components: QualityComponentCard[];
-}): QualityBlocker[] {
-  const blockers: QualityBlocker[] = [];
+function deriveRecommendations(probes: LiveProbeBundle): QualityRecommendation[] {
+  const recs: QualityRecommendation[] = [];
+  const health = probes.health.data;
+  const release = probes.releaseEnv.data;
+  const storage = probes.storage.data;
+  const billing = probes.billing.data;
+  const ai = probes.ai.data;
+  const git = probes.gitMetadata.data;
+  const migrations = probes.migrations.data;
 
-  if (!input.healthOk) {
+  if (health && !health.openaiConfigured && release && !release.aiConfigured) {
+    recs.push({
+      id: "openai_missing",
+      title: "OpenAI API key not configured",
+      component: "AI",
+      severity: "warning",
+      evidence: "Health and release-env probes report no OPENAI_API_KEY or alternate provider.",
+    });
+  }
+  if (probes.migrations.connected === false && probes.migrations.error === "service_role_missing") {
+    recs.push({
+      id: "migration_probe_blocked",
+      title: "Cannot verify database migration state",
+      component: "Database",
+      severity: "information",
+      evidence: "SUPABASE_SERVICE_ROLE_KEY missing — migration inventory probe skipped.",
+    });
+  } else if (probes.migrations.connected === false) {
+    recs.push({
+      id: "migration_probe_failed",
+      title: "Database migration probe unavailable",
+      component: "Database",
+      severity: "warning",
+      evidence: probes.migrations.summary,
+    });
+  } else if (migrations && !migrations.latestVersion) {
+    recs.push({
+      id: "migration_empty",
+      title: "No migrations recorded in schema_migrations",
+      component: "Database",
+      severity: "information",
+      evidence: "supabase_migrations.schema_migrations returned zero rows.",
+    });
+  }
+  if (storage && (storage.status === "unavailable" || storage.status === "not_configured")) {
+    recs.push({
+      id: "storage_unavailable",
+      title: "Storage probe did not succeed",
+      component: "Storage",
+      severity: storage.status === "unavailable" ? "warning" : "information",
+      evidence: storage.details,
+    });
+  }
+  if (billing?.runtime.flagEnabled && !billing.runtime.configValid) {
+    recs.push({
+      id: "billing_flag_inconsistent",
+      title: "Stripe billing flag enabled but configuration invalid",
+      component: "Billing",
+      severity: "warning",
+      evidence: billing.runtime.fallbackReason ?? "ENABLE_STRIPE_BILLING_PROVIDER on with invalid Stripe config.",
+    });
+  }
+  if (git && !git.sha && !git.buildTime) {
+    recs.push({
+      id: "build_stamp_missing",
+      title: "Build stamp metadata missing",
+      component: "Deployments",
+      severity: "information",
+      evidence: "NEXT_PUBLIC_BUILD_SHA / NEXT_PUBLIC_BUILD_TIME not present at runtime.",
+    });
+  }
+  if (
+    health?.buildSha7 &&
+    probes.cloudflare.data?.externalBuildSha7 &&
+    health.buildSha7 !== probes.cloudflare.data.externalBuildSha7
+  ) {
+    recs.push({
+      id: "build_stamp_drift",
+      title: "Edge build stamp differs from in-process build stamp",
+      component: "Deployments",
+      severity: "warning",
+      evidence: `In-process=${health.buildSha7}; external=${probes.cloudflare.data.externalBuildSha7}.`,
+    });
+  }
+  if (release) {
+    for (const name of release.criticalMissing) {
+      recs.push({
+        id: `env_missing_${name}`,
+        title: `Required environment variable missing: ${name}`,
+        component: "Security",
+        severity: "critical",
+        evidence: `Release env validation verdict=${release.verdict}.`,
+      });
+    }
+    for (const name of release.forbiddenInProdSet) {
+      recs.push({
+        id: `env_forbidden_${name}`,
+        title: `Debug flag must be disabled in production: ${name}`,
+        component: "Security",
+        severity: "critical",
+        evidence: `${name} is set in production runtime.`,
+      });
+    }
+    if (release.isProduction && !release.cronConfigured) {
+      recs.push({
+        id: "cron_not_configured",
+        title: "Production cron secret not configured",
+        component: "Security",
+        severity: "critical",
+        evidence: "REQUIRE_CRON_SECRET=true requires CRON_SECRET.",
+      });
+    }
+  }
+  if (billing && billing.priceMappingsConfigured === 0 && isStripeBillingProviderFlagEnabled()) {
+    recs.push({
+      id: "stripe_prices_missing",
+      title: "Stripe price mappings not configured",
+      component: "Billing",
+      severity: "information",
+      evidence: "ENABLE_STRIPE_BILLING_PROVIDER is on but no STRIPE_PRICE_* env mappings found.",
+    });
+  }
+
+  return recs;
+}
+
+function deriveBlockers(probes: LiveProbeBundle, components: QualityComponentCard[]): QualityBlocker[] {
+  const blockers: QualityBlocker[] = [];
+  const health = probes.health.data;
+  const release = probes.releaseEnv.data;
+
+  if (health && !health.ok) {
     blockers.push({
       title: "Core health check failing",
       component: "Backend API",
       severity: "critical",
-      recommendation: "Inspect /api/v1/health and Supabase connectivity before pilot operations.",
+      recommendation: "Inspect /api/v1/health and Supabase connectivity.",
     });
   }
-  if (!input.dbOk) {
+  if (health && health.db !== "ok") {
     blockers.push({
-      title: "Database unreachable or misconfigured",
+      title: "Database probe not healthy",
       component: "Database",
       severity: "critical",
-      recommendation: "Verify NEXT_PUBLIC_SUPABASE_URL and anon key; confirm tenants table probe.",
+      recommendation: health.reason
+        ? `DB probe reason: ${health.reason}`
+        : "Verify Supabase URL and anon key.",
     });
   }
-  for (const name of input.releaseReport.criticalMissing) {
-    blockers.push({
-      title: `Missing required env: ${name}`,
-      component: "Platform",
-      severity: "critical",
-      recommendation: "Set required environment variable per docs/ENVIRONMENT-VARIABLES.md.",
-    });
+  if (release) {
+    for (const name of release.criticalMissing) {
+      blockers.push({
+        title: `Missing required env: ${name}`,
+        component: "Platform",
+        severity: "critical",
+        recommendation: "Set per docs/ENVIRONMENT-VARIABLES.md.",
+      });
+    }
   }
-  for (const name of input.releaseReport.forbiddenInProdSet) {
-    blockers.push({
-      title: `Debug flag enabled in production: ${name}`,
-      component: "Security",
-      severity: "critical",
-      recommendation: "Unset or set to false before production operations.",
-    });
-  }
-  if (input.adminHostDeployed === false) {
+
+  const adminHostConfigured =
+    typeof process.env.OWNER_ALLOWED_HOSTS === "string" && process.env.OWNER_ALLOWED_HOSTS.trim() !== "";
+  if (!adminHostConfigured) {
     blockers.push({
       title: "Dedicated platform admin host not deployed",
       component: "Platform Admin",
       severity: "warning",
-      recommendation: `Route fallback /platform-admin is active; deploy ${PLATFORM_ADMIN_PREFERRED_HOST} when DNS/Worker routing is ready.`,
-    });
-  }
-  if (!input.releaseReport.aiConfigured) {
-    blockers.push({
-      title: "No AI provider API key configured",
-      component: "AI",
-      severity: "warning",
-      recommendation: "Set OPENAI_API_KEY or alternate vision provider keys for AI features.",
-    });
-  }
-  if (!input.releaseReport.billingConfigured) {
-    blockers.push({
-      title: "Stripe billing not fully configured",
-      component: "Billing",
-      severity: "information",
-      recommendation: "Configure STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET when live billing is required.",
-    });
-  }
-  if (!input.releaseReport.pushConfigured) {
-    blockers.push({
-      title: "Push notifications not configured",
-      component: "Notifications",
-      severity: "information",
-      recommendation: "Configure FCM or APNS credentials for mobile push delivery.",
+      recommendation: `Use /platform-admin fallback until ${PLATFORM_ADMIN_PREFERRED_HOST} is routed.`,
     });
   }
 
-  const degraded = input.components.filter((c) => c.status === "degraded" || c.status === "unavailable");
-  for (const card of degraded) {
+  for (const card of components.filter((c) => c.status === "unavailable")) {
     if (blockers.some((b) => b.component === card.name)) continue;
-    const severity: BlockerSeverity =
-      card.status === "unavailable" ? "warning" : "information";
     blockers.push({
-      title: `${card.name} reported ${card.statusLabel}`,
+      title: `${card.name} unavailable`,
       component: card.name,
-      severity,
+      severity: "warning",
       recommendation: card.details,
-    });
-  }
-
-  if (blockers.length === 0) {
-    blockers.push({
-      title: "No critical blockers detected from live probes",
-      component: "Platform",
-      severity: "information",
-      recommendation: "Continue monitoring via this dashboard; test execution remains disabled.",
     });
   }
 
   return blockers;
 }
 
-export async function buildRomaQualityDashboard(): Promise<RomaQualityDashboard> {
-  const generatedAt = new Date().toISOString();
+function deriveKnownRisks(probes: LiveProbeBundle, components: QualityComponentCard[]): QualityBlocker[] {
+  const risks: QualityBlocker[] = [];
+  const release = probes.releaseEnv.data;
+
+  for (const card of components.filter((c) => c.status === "degraded")) {
+    risks.push({
+      title: `${card.name} degraded`,
+      component: card.name,
+      severity: "warning",
+      recommendation: card.details,
+    });
+  }
+  if (release && !release.aiConfigured) {
+    risks.push({
+      title: "AI provider not fully configured",
+      component: "AI",
+      severity: "warning",
+      recommendation: "Set OPENAI_API_KEY or alternate vision provider keys.",
+    });
+  }
+  if (release && !release.billingConfigured) {
+    risks.push({
+      title: "Stripe billing not fully configured",
+      component: "Billing",
+      severity: "information",
+      recommendation: "Configure STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET when live billing is required.",
+    });
+  }
+  if (probes.cloudflare.connected && probes.cloudflare.data?.externalHealthOk === false) {
+    risks.push({
+      title: "External edge health probe failed",
+      component: "Cloudflare",
+      severity: "warning",
+      recommendation: probes.cloudflare.summary,
+    });
+  }
+  if (probes.featureFlags.connected === false) {
+    risks.push({
+      title: "Global feature flags inventory unavailable",
+      component: "Release",
+      severity: "information",
+      recommendation: probes.featureFlags.summary,
+    });
+  }
+
+  return risks;
+}
+
+function buildPlatformTimeline(probes: LiveProbeBundle): PlatformTimelineEvent[] {
+  const git = probes.gitMetadata.data;
+  const health = probes.health.data;
+  const migrations = probes.migrations.data;
+  const audit = probes.platformAudit.data;
+
+  return [
+    {
+      id: "last_deploy",
+      label: "Last deployment",
+      timestamp: health?.buildTime ?? git?.buildTime ?? null,
+      displayValue: health?.buildTime ?? git?.buildTime ?? "Unknown",
+      source: "build stamp env",
+    },
+    {
+      id: "last_migration",
+      label: "Last migration",
+      timestamp: migrations?.latestVersion ? probes.checkedAt : null,
+      displayValue: migrations?.latestVersion ?? "Unavailable",
+      source: "supabase_migrations.schema_migrations",
+    },
+    {
+      id: "last_build",
+      label: "Last build",
+      timestamp: health?.buildTime ?? null,
+      displayValue: health?.buildSha7 ?? git?.sha?.slice(0, 7) ?? "Unknown",
+      source: "health / build stamp",
+    },
+    {
+      id: "last_audit",
+      label: "Last audit",
+      timestamp: audit?.latestAt ?? null,
+      displayValue: audit?.latestAt
+        ? `${audit.latestAction ?? "event"} @ ${audit.latestAt}`
+        : probes.platformAudit.connected
+          ? "No entries"
+          : "Unavailable",
+      source: "platform_owner_audit_log",
+    },
+    {
+      id: "last_restart",
+      label: "Last restart",
+      timestamp: null,
+      displayValue: "Unavailable",
+      source: "no runtime probe",
+    },
+  ];
+}
+
+function buildDomainSections(
+  probes: LiveProbeBundle,
+  overallHealth: QualityStatus,
+  releaseLevel: ReadinessLevel
+): DomainSection[] {
+  const health = probes.health.data;
+  const release = probes.releaseEnv.data;
+  const ai = probes.ai.data;
+  const mobile = probes.mobile.data;
+
+  return [
+    {
+      id: "platform_health",
+      label: "Platform Health",
+      status: overallHealth,
+      statusLabel: statusLabel(overallHealth),
+      summary: probes.health.summary,
+      highlights: [
+        `Core API ok=${String(health?.ok)}`,
+        `System health=${probes.systemHealth.data?.status ?? "unavailable"}`,
+      ],
+    },
+    {
+      id: "infrastructure",
+      label: "Infrastructure",
+      status:
+        health?.db === "ok" && probes.storage.data?.status === "healthy"
+          ? "healthy"
+          : health?.db === "ok"
+            ? "degraded"
+            : "unavailable",
+      statusLabel: statusLabel(
+        health?.db === "ok" && probes.storage.data?.status === "healthy"
+          ? "healthy"
+          : health?.db === "ok"
+            ? "degraded"
+            : "unavailable"
+      ),
+      summary: `DB=${health?.db ?? "unknown"}; storage=${probes.storage.data?.status ?? "unavailable"}.`,
+      highlights: [
+        probes.migrations.summary,
+        probes.featureFlags.summary,
+      ],
+    },
+    {
+      id: "security",
+      label: "Security",
+      status:
+        release?.verdict === "FAIL" || (release?.forbiddenInProdSet.length ?? 0) > 0
+          ? "unavailable"
+          : release?.verdict === "PASS"
+            ? "healthy"
+            : "degraded",
+      statusLabel: statusLabel(
+        release?.verdict === "FAIL" || (release?.forbiddenInProdSet.length ?? 0) > 0
+          ? "unavailable"
+          : release?.verdict === "PASS"
+            ? "healthy"
+            : "degraded"
+      ),
+      summary: release ? `Release env verdict: ${release.verdict}.` : "Release env probe unavailable.",
+      highlights: [probes.platformAudit.summary],
+    },
+    {
+      id: "ai",
+      label: "AI",
+      status: ai?.openai || ai?.visionProviders.length
+        ? probes.systemHealth.data?.services.ai_brain === "ok"
+          ? "healthy"
+          : "degraded"
+        : "not_configured",
+      statusLabel: statusLabel(
+        ai?.openai || ai?.visionProviders.length
+          ? probes.systemHealth.data?.services.ai_brain === "ok"
+            ? "healthy"
+            : "degraded"
+          : "not_configured"
+      ),
+      summary: probes.ai.summary,
+      highlights: [
+        `Vision providers: ${ai?.visionProviders.join(", ") || "none"}`,
+        `Copilot model: ${ai?.copilotModel ?? "unknown"}`,
+      ],
+    },
+    {
+      id: "mobile",
+      label: "Mobile",
+      status: probes.mobile.connected ? "degraded" : "unknown",
+      statusLabel: statusLabel(probes.mobile.connected ? "degraded" : "unknown"),
+      summary: probes.mobile.summary,
+      highlights: [
+        `iOS build=${mobile?.iosBuildNumber ?? "unknown"}`,
+        `Android versionCode=${mobile?.androidVersionCode ?? "unknown"}`,
+      ],
+    },
+    {
+      id: "deployments",
+      label: "Deployments",
+      status: probes.cloudflare.connected
+        ? probes.cloudflare.data?.externalHealthOk
+          ? "healthy"
+          : "degraded"
+        : "unknown",
+      statusLabel: statusLabel(
+        probes.cloudflare.connected
+          ? probes.cloudflare.data?.externalHealthOk
+            ? "healthy"
+            : "degraded"
+          : "unknown"
+      ),
+      summary: probes.cloudflare.summary,
+      highlights: [
+        `Branch=${probes.gitMetadata.data?.branch ?? "unknown"}`,
+        `GitHub workflow=${probes.gitMetadata.data?.githubWorkflow ?? "unavailable"}`,
+      ],
+    },
+    {
+      id: "release",
+      label: "Release",
+      status:
+        releaseLevel === "ready" ? "healthy" : releaseLevel === "partial" ? "degraded" : "unavailable",
+      statusLabel: statusLabel(
+        releaseLevel === "ready" ? "healthy" : releaseLevel === "partial" ? "degraded" : "unavailable"
+      ),
+      summary: probes.billing.summary,
+      highlights: [
+        `Feature flags=${probes.featureFlags.data?.count ?? "unavailable"}`,
+        `Price mappings=${probes.billing.data?.priceMappingsConfigured ?? 0}/${probes.billing.data?.priceMappingsTotal ?? 0}`,
+      ],
+    },
+  ];
+}
+
+function buildSystemComponents(probes: LiveProbeBundle, generatedAt: string): QualityComponentCard[] {
+  const health = probes.health.data;
+  const healthOk = health?.ok === true;
+  const dbOk = health?.db === "ok";
+  const ai = probes.ai.data;
+  const mobile = probes.mobile.data;
+  const storage = probes.storage.data;
+  const release = probes.releaseEnv.data;
   const publicConfig = getPublicConfig();
-  const releaseReport = validateReleaseEnv();
-  const billingDiag = getBillingAdapterDiagnostics();
 
-  const [healthResult, systemHealth, storageProbe] = await Promise.all([
-    getHealthResponse(),
-    getSystemHealth().catch(() => null),
-    checkStorage(),
-  ]);
-
-  const healthBody = healthResult.body as {
-    ok?: boolean;
-    db?: string;
-    aiConfigured?: boolean;
-    openaiConfigured?: boolean;
-    supabaseReachable?: boolean;
-    serviceRoleConfigured?: boolean;
-    env?: string;
-    buildStamp?: { sha7?: string; buildTime?: string };
-    reason?: string;
+  const mapService = (name: string): QualityStatus => {
+    const s = probes.systemHealth.data?.services[name];
+    if (!s) return "unknown";
+    if (s === "ok") return "healthy";
+    if (s === "degraded") return "degraded";
+    if (s === "error") return "unavailable";
+    return "not_configured";
   };
-
-  const { sha, buildTime } = getBuildStamp();
-  const buildSha7 = healthBody.buildStamp?.sha7 ?? (sha ? sha.slice(0, 7) : null);
-  const deployTime = healthBody.buildStamp?.buildTime || buildTime || null;
-
-  const healthOk = healthBody.ok === true;
-  const dbOk = healthBody.db === "ok";
-  const aiConfigured = Boolean(healthBody.aiConfigured || healthBody.openaiConfigured || releaseReport.aiConfigured);
-  const serviceRoleConfigured = Boolean(healthBody.serviceRoleConfigured);
-
-  const adminHostConfigured =
-    typeof process.env.OWNER_ALLOWED_HOSTS === "string" && process.env.OWNER_ALLOWED_HOSTS.trim() !== "";
-  const adminHostDeployed: boolean | null = adminHostConfigured ? null : false;
-
-  const mobileLinks = {
-    iosWorker: process.env.APP_STORE_WORKER_URL?.trim() || null,
-    iosManager: process.env.APP_STORE_MANAGER_URL?.trim() || null,
-    androidWorker: process.env.GOOGLE_PLAY_WORKER_URL?.trim() || null,
-    androidManager: process.env.GOOGLE_PLAY_MANAGER_URL?.trim() || null,
-  };
-  const mobileConfigured = Object.values(mobileLinks).some(Boolean);
 
   const telegramConfigured =
     Boolean(process.env.TELEGRAM_BOT_TOKEN?.trim()) &&
     Boolean(
       process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME?.trim() || process.env.TELEGRAM_BOT_USERNAME?.trim()
     );
-  const pushConfigured = releaseReport.pushConfigured;
 
-  const overallHealth: QualityStatus = healthOk
-    ? systemHealth?.status === "degraded"
-      ? "degraded"
-      : "healthy"
-    : healthBody.db === "error"
-      ? "unavailable"
-      : "degraded";
-
-  const systemComponents: QualityComponentCard[] = [
+  return [
     {
       id: "website",
       name: "Website",
       status: healthOk ? "healthy" : "unavailable",
       statusLabel: statusLabel(healthOk ? "healthy" : "unavailable"),
       lastCheck: generatedAt,
-      details: healthOk
-        ? `Public app responding; env=${resolveEnvironmentLabel()}.`
-        : `Health probe failed${healthBody.reason ? `: ${healthBody.reason}` : "."}`,
+      details: probes.health.summary,
     },
     {
       id: "web_dashboard",
       name: "Web Dashboard",
-      status: dbOk && hasSupabaseEnv() ? "healthy" : dbOk ? "degraded" : "unavailable",
-      statusLabel: statusLabel(dbOk && hasSupabaseEnv() ? "healthy" : dbOk ? "degraded" : "unavailable"),
+      status: dbOk && hasSupabaseEnv() ? "healthy" : hasSupabaseEnv() ? "degraded" : "not_configured",
+      statusLabel: statusLabel(dbOk && hasSupabaseEnv() ? "healthy" : hasSupabaseEnv() ? "degraded" : "not_configured"),
       lastCheck: generatedAt,
-      details: hasSupabaseEnv()
-        ? dbOk
-          ? "Dashboard auth/data prerequisites reachable."
-          : "Supabase env present but DB probe failed."
-        : "Supabase public env not configured.",
+      details: hasSupabaseEnv() ? "Dashboard prerequisites probed via Supabase." : "Supabase env missing.",
     },
     {
       id: "backend_api",
@@ -362,7 +586,7 @@ export async function buildRomaQualityDashboard(): Promise<RomaQualityDashboard>
       status: healthOk ? "healthy" : "unavailable",
       statusLabel: statusLabel(healthOk ? "healthy" : "unavailable"),
       lastCheck: generatedAt,
-      details: `/api/v1/health → HTTP ${healthResult.status}; ok=${String(healthBody.ok)}.`,
+      details: health ? `HTTP ${health.status}; ok=${String(health.ok)}.` : probes.health.summary,
     },
     {
       id: "database",
@@ -370,19 +594,32 @@ export async function buildRomaQualityDashboard(): Promise<RomaQualityDashboard>
       status: dbOk ? "healthy" : hasSupabaseEnv() ? "unavailable" : "not_configured",
       statusLabel: statusLabel(dbOk ? "healthy" : hasSupabaseEnv() ? "unavailable" : "not_configured"),
       lastCheck: generatedAt,
-      details: dbOk
-        ? "Supabase tenants probe succeeded."
-        : hasSupabaseEnv()
-          ? `DB status: ${healthBody.db ?? "unknown"}${healthBody.reason ? ` (${healthBody.reason})` : ""}.`
-          : "NEXT_PUBLIC_SUPABASE_* not set.",
+      details: probes.migrations.connected
+        ? `${probes.health.summary} ${probes.migrations.summary}`
+        : probes.health.summary,
     },
     {
       id: "storage",
       name: "Storage",
-      status: storageProbe.status,
-      statusLabel: statusLabel(storageProbe.status),
+      status:
+        storage?.status === "healthy"
+          ? "healthy"
+          : storage?.status === "degraded"
+            ? "degraded"
+            : storage?.status === "not_configured"
+              ? "not_configured"
+              : "unavailable",
+      statusLabel: statusLabel(
+        storage?.status === "healthy"
+          ? "healthy"
+          : storage?.status === "degraded"
+            ? "degraded"
+            : storage?.status === "not_configured"
+              ? "not_configured"
+              : "unavailable"
+      ),
       lastCheck: generatedAt,
-      details: storageProbe.details,
+      details: storage?.details ?? probes.storage.summary,
     },
     {
       id: "authentication",
@@ -390,117 +627,128 @@ export async function buildRomaQualityDashboard(): Promise<RomaQualityDashboard>
       status: hasSupabaseEnv() ? (dbOk ? "healthy" : "degraded") : "not_configured",
       statusLabel: statusLabel(hasSupabaseEnv() ? (dbOk ? "healthy" : "degraded") : "not_configured"),
       lastCheck: generatedAt,
-      details: hasSupabaseEnv()
-        ? `Supabase auth stack configured; service role ${serviceRoleConfigured ? "present" : "missing"}.`
-        : "Supabase env missing — auth unavailable.",
+      details: `Service role ${health?.serviceRoleConfigured ? "configured" : "missing"}.`,
     },
     {
       id: "notifications",
       name: "Notifications",
-      status: pushConfigured ? "healthy" : telegramConfigured ? "degraded" : "not_configured",
-      statusLabel: statusLabel(pushConfigured ? "healthy" : telegramConfigured ? "degraded" : "not_configured"),
+      status: release?.pushConfigured ? "healthy" : telegramConfigured ? "degraded" : "not_configured",
+      statusLabel: statusLabel(release?.pushConfigured ? "healthy" : telegramConfigured ? "degraded" : "not_configured"),
       lastCheck: generatedAt,
-      details: pushConfigured
-        ? "FCM or APNS credentials configured."
-        : telegramConfigured
-          ? "Telegram login configured; mobile push not fully configured."
-          : "Push and Telegram notification credentials not configured.",
+      details: release
+        ? `Push=${String(release.pushConfigured)}; Telegram widget=${String(telegramConfigured)}.`
+        : "Notification config unavailable.",
     },
     {
       id: "ai",
       name: "AI",
-      status: aiConfigured
-        ? systemHealth
-          ? mapServiceStatus(systemHealth.services.ai_brain)
-          : "healthy"
-        : "not_configured",
+      status: ai?.openai || (ai?.visionProviders.length ?? 0) > 0 ? mapService("ai_brain") : "not_configured",
       statusLabel: statusLabel(
-        aiConfigured
-          ? systemHealth
-            ? mapServiceStatus(systemHealth.services.ai_brain)
-            : "healthy"
-          : "not_configured"
+        ai?.openai || (ai?.visionProviders.length ?? 0) > 0 ? mapService("ai_brain") : "not_configured"
       ),
       lastCheck: generatedAt,
-      details: aiConfigured
-        ? `AI configured (openai=${String(healthBody.openaiConfigured)}; analysis=${String(healthBody.aiConfigured)}).`
-        : "No AI provider or analysis endpoint configured.",
+      details: probes.ai.summary,
     },
     {
       id: "cloudflare",
       name: "Cloudflare",
-      status: publicConfig.NEXT_PUBLIC_APP_URL.includes("aistroyka.ai") ? "healthy" : "unknown",
+      status: probes.cloudflare.connected
+        ? probes.cloudflare.data?.externalHealthOk
+          ? "healthy"
+          : "degraded"
+        : "unknown",
       statusLabel: statusLabel(
-        publicConfig.NEXT_PUBLIC_APP_URL.includes("aistroyka.ai") ? "healthy" : "unknown"
+        probes.cloudflare.connected
+          ? probes.cloudflare.data?.externalHealthOk
+            ? "healthy"
+            : "degraded"
+          : "unknown"
       ),
       lastCheck: generatedAt,
-      details: publicConfig.NEXT_PUBLIC_APP_URL
-        ? `App URL: ${publicConfig.NEXT_PUBLIC_APP_URL}. No live Cloudflare Workers API probe — configuration only.`
-        : "NEXT_PUBLIC_APP_URL not set.",
+      details: probes.cloudflare.summary,
     },
     {
       id: "supabase",
       name: "Supabase",
-      status: healthBody.supabaseReachable
-        ? dbOk
-          ? "healthy"
-          : "degraded"
-        : hasSupabaseEnv()
-          ? "unavailable"
-          : "not_configured",
+      status: health?.supabaseReachable ? (dbOk ? "healthy" : "degraded") : hasSupabaseEnv() ? "unavailable" : "not_configured",
       statusLabel: statusLabel(
-        healthBody.supabaseReachable
-          ? dbOk
-            ? "healthy"
-            : "degraded"
-          : hasSupabaseEnv()
-            ? "unavailable"
-            : "not_configured"
+        health?.supabaseReachable ? (dbOk ? "healthy" : "degraded") : hasSupabaseEnv() ? "unavailable" : "not_configured"
       ),
       lastCheck: generatedAt,
-      details: hasSupabaseEnv()
-        ? `Reachable=${String(healthBody.supabaseReachable)}; DB=${healthBody.db ?? "unknown"}.`
-        : "Supabase project URL/key not configured.",
+      details: `Reachable=${String(health?.supabaseReachable)}; DB=${health?.db ?? "unknown"}.`,
     },
     {
       id: "android",
       name: "Android",
-      status: mobileLinks.androidWorker || mobileLinks.androidManager ? "degraded" : "unknown",
-      statusLabel: statusLabel(
-        mobileLinks.androidWorker || mobileLinks.androidManager ? "degraded" : "unknown"
-      ),
+      status: mobile?.androidWorkerUrl || mobile?.androidManagerUrl ? "degraded" : "unknown",
+      statusLabel: statusLabel(mobile?.androidWorkerUrl || mobile?.androidManagerUrl ? "degraded" : "unknown"),
       lastCheck: generatedAt,
-      details: mobileConfigured
-        ? `Store links configured (worker=${Boolean(mobileLinks.androidWorker)}; manager=${Boolean(mobileLinks.androidManager)}). No live Play build probe.`
-        : "No Google Play URLs in environment — mobile distribution status unknown.",
+      details: mobile?.androidVersionCode
+        ? `versionCode=${mobile.androidVersionCode}; store URLs=${Boolean(mobile.androidWorkerUrl || mobile.androidManagerUrl)}.`
+        : probes.mobile.summary,
     },
     {
       id: "ios",
       name: "iOS",
-      status: mobileLinks.iosWorker || mobileLinks.iosManager ? "degraded" : "unknown",
-      statusLabel: statusLabel(mobileLinks.iosWorker || mobileLinks.iosManager ? "degraded" : "unknown"),
+      status: mobile?.iosWorkerUrl || mobile?.iosManagerUrl ? "degraded" : "unknown",
+      statusLabel: statusLabel(mobile?.iosWorkerUrl || mobile?.iosManagerUrl ? "degraded" : "unknown"),
       lastCheck: generatedAt,
-      details: mobileConfigured
-        ? `Store links configured (worker=${Boolean(mobileLinks.iosWorker)}; manager=${Boolean(mobileLinks.iosManager)}). No live TestFlight probe.`
-        : "No App Store URLs in environment — mobile distribution status unknown.",
+      details: mobile?.iosBuildNumber
+        ? `buildNumber=${mobile.iosBuildNumber}; store URLs=${Boolean(mobile.iosWorkerUrl || mobile.iosManagerUrl)}.`
+        : probes.mobile.summary,
     },
   ];
+}
+
+function buildDataCoverageSection(probes: LiveProbeBundle): DataCoverage {
+  const { sources, coveragePercent } = buildDataCoverage(probes);
+  const available = sources.filter((s) => s.status === "connected");
+  const unavailable = sources.filter((s) => s.status === "unavailable");
+  return {
+    lastRefresh: probes.checkedAt,
+    coveragePercent,
+    connectedCount: available.length,
+    totalCatalogCount: sources.length,
+    available,
+    unavailable,
+  };
+}
+
+function assembleDashboard(probes: LiveProbeBundle): RomaQualityDashboard {
+  const generatedAt = probes.checkedAt;
+  const publicConfig = getPublicConfig();
+  const health = probes.health.data;
+  const release = probes.releaseEnv.data;
+  const healthOk = health?.ok === true;
+  const dbOk = health?.db === "ok";
+  const buildSha7 = health?.buildSha7 ?? null;
+  const deployTime = health?.buildTime ?? probes.gitMetadata.data?.buildTime ?? null;
+
+  const overallHealth: QualityStatus = healthOk
+    ? probes.systemHealth.data?.status === "degraded"
+      ? "degraded"
+      : "healthy"
+    : health?.db === "error"
+      ? "unavailable"
+      : "degraded";
+
+  const systemComponents = buildSystemComponents(probes, generatedAt);
 
   const frontendLevel: ReadinessLevel = healthOk && buildSha7 ? "ready" : healthOk ? "partial" : "blocked";
-  const backendLevel: ReadinessLevel = healthOk && serviceRoleConfigured ? "ready" : healthOk ? "partial" : "blocked";
+  const backendLevel: ReadinessLevel =
+    healthOk && health?.serviceRoleConfigured ? "ready" : healthOk ? "partial" : "blocked";
   const databaseLevel: ReadinessLevel = dbOk ? "ready" : hasSupabaseEnv() ? "blocked" : "unknown";
-  const mobileLevel: ReadinessLevel = mobileConfigured ? "partial" : "unknown";
-  const aiLevel: ReadinessLevel = aiConfigured ? "ready" : "partial";
+  const mobileLevel: ReadinessLevel = probes.mobile.connected ? "partial" : "unknown";
+  const aiLevel: ReadinessLevel =
+    probes.ai.data?.openai || (probes.ai.data?.visionProviders.length ?? 0) > 0 ? "ready" : "partial";
   const securityLevel: ReadinessLevel =
-    releaseReport.verdict === "FAIL"
+    release?.verdict === "FAIL"
       ? "blocked"
-      : releaseReport.forbiddenInProdSet.length > 0
+      : (release?.forbiddenInProdSet.length ?? 0) > 0
         ? "blocked"
-        : releaseReport.cronConfigured
+        : release?.cronConfigured
           ? "ready"
           : "partial";
-  const performanceLevel: ReadinessLevel = "unknown";
-  const documentationLevel: ReadinessLevel = "partial";
 
   const releaseReadiness: ReadinessCategory[] = [
     {
@@ -515,7 +763,7 @@ export async function buildRomaQualityDashboard(): Promise<RomaQualityDashboard>
       label: "Backend",
       level: backendLevel,
       percent: readinessPercent(backendLevel),
-      summary: serviceRoleConfigured
+      summary: health?.serviceRoleConfigured
         ? "API health and service role configured."
         : "API reachable; service role missing.",
     },
@@ -524,124 +772,52 @@ export async function buildRomaQualityDashboard(): Promise<RomaQualityDashboard>
       label: "Database",
       level: databaseLevel,
       percent: readinessPercent(databaseLevel),
-      summary: dbOk ? "Database probe OK." : "Database probe failed or not configured.",
+      summary: probes.migrations.summary,
     },
     {
       id: "mobile",
       label: "Mobile",
       level: mobileLevel,
       percent: readinessPercent(mobileLevel),
-      summary: mobileConfigured
-        ? "Store URLs present; live build status not probed."
-        : "Mobile distribution status unknown.",
+      summary: probes.mobile.summary,
     },
     {
       id: "ai",
       label: "AI",
       level: aiLevel,
       percent: readinessPercent(aiLevel),
-      summary: aiConfigured ? "AI provider configured." : "AI provider not configured.",
+      summary: probes.ai.summary,
     },
     {
       id: "security",
       label: "Security",
       level: securityLevel,
       percent: readinessPercent(securityLevel),
-      summary: `Release env verdict: ${releaseReport.verdict}.`,
+      summary: release ? `Release env verdict: ${release.verdict}.` : "Unavailable",
     },
     {
       id: "performance",
       label: "Performance",
-      level: performanceLevel,
+      level: "unknown",
       percent: null,
-      summary: "No live performance telemetry source wired to this dashboard.",
+      summary: "No live performance telemetry source wired.",
     },
     {
       id: "documentation",
       label: "Documentation",
-      level: documentationLevel,
-      percent: readinessPercent(documentationLevel),
-      summary: "Audit and ROMA governance reports referenced; no runtime doc index.",
+      level: "partial",
+      percent: 50,
+      summary: "Audit report references available; no runtime doc index.",
     },
   ];
 
   const releasePercent = averagePercent(releaseReadiness);
   const releaseLevel = readinessFromPercent(releasePercent);
+  const dataCoverage = buildDataCoverageSection(probes);
+  const recommendations = deriveRecommendations(probes);
 
-  const latestChanges: LatestChanges = {
-    lastDeploy: deployTime,
-    lastCommit: buildSha7,
-    branch: resolveDeployBranch(),
-    build: buildSha7,
-    timestamp: deployTime ?? generatedAt,
-  };
-
-  const romaStatus: RomaMaturityItem[] = [
-    {
-      id: "architecture",
-      label: "Architecture",
-      level: systemHealth ? (systemHealth.status === "ok" ? "ready" : "partial") : "unknown",
-      summary: systemHealth
-        ? `Live system health: ${systemHealth.status}.`
-        : "System health service unavailable for probe.",
-      source: systemHealth ? "live" : "unavailable",
-    },
-    {
-      id: "governance",
-      label: "Governance",
-      level: releaseReport.verdict === "FAIL" ? "blocked" : "ready",
-      summary: `Release env validation: ${releaseReport.verdict}. Platform owner guard active.`,
-      source: "live",
-    },
-    {
-      id: "platform",
-      label: "Platform",
-      level: healthOk && dbOk ? "ready" : "partial",
-      summary: adminHostDeployed === false
-        ? `Platform admin on route fallback; ${PLATFORM_ADMIN_PREFERRED_HOST} pending.`
-        : "Platform admin cabinet and health probes operational.",
-      source: "live",
-    },
-    {
-      id: "execution",
-      label: "Execution",
-      level: "blocked",
-      summary: "ROMA test execution from UI is not enabled.",
-      source: "configuration",
-    },
-    {
-      id: "learning",
-      label: "Learning",
-      level: "unknown",
-      summary: "No live ROMA learning loop telemetry source.",
-      source: "unavailable",
-    },
-    {
-      id: "adapter_readiness",
-      label: "Adapter readiness",
-      level: billingDiag.configValid && aiConfigured ? "partial" : "blocked",
-      summary: `Billing adapter=${billingDiag.activeAdapterKind}; AI=${aiConfigured ? "configured" : "not configured"}.`,
-      source: "live",
-    },
-  ];
-
-  const dataSourcesAvailable = [
-    "GET /api/v1/health (in-process)",
-    "lib/system/health.service",
-    "lib/config/release-env",
-    "lib/platform/billing-readiness (adapter diagnostics)",
-    "Supabase storage listBuckets (when service role present)",
-    "Build stamp env (NEXT_PUBLIC_BUILD_SHA / VERCEL_GIT_COMMIT_SHA)",
-  ];
-  const dataSourcesUnavailable = [
-    "Cloudflare Workers live API status",
-    "CI pipeline / test run history",
-    "Mobile store build/TestFlight live probes",
-    "Performance telemetry (Lighthouse / RUM)",
-    "Database migration version probe",
-    "ROMA learning loop telemetry",
-    "Filesystem doc index at runtime",
-  ];
+  const adminHostConfigured =
+    typeof process.env.OWNER_ALLOWED_HOSTS === "string" && process.env.OWNER_ALLOWED_HOSTS.trim() !== "";
 
   return {
     pageMode: "read_only",
@@ -652,7 +828,7 @@ export async function buildRomaQualityDashboard(): Promise<RomaQualityDashboard>
       appUrl: publicConfig.NEXT_PUBLIC_APP_URL || null,
       nodeEnv: process.env.NODE_ENV ?? null,
       preferredAdminHost: PLATFORM_ADMIN_PREFERRED_HOST,
-      adminHostDeployed,
+      adminHostDeployed: adminHostConfigured ? null : false,
     },
     platformStatus: {
       overallHealth,
@@ -661,21 +837,142 @@ export async function buildRomaQualityDashboard(): Promise<RomaQualityDashboard>
       releaseReadinessPercent: releasePercent,
       lastUpdated: generatedAt,
     },
+    domainSections: buildDomainSections(probes, overallHealth, releaseLevel),
     systemComponents,
     releaseReadiness,
-    blockers: deriveBlockers({
-      healthOk,
-      dbOk,
-      releaseReport,
-      adminHostDeployed,
-      components: systemComponents,
-    }),
-    latestChanges,
-    romaStatus,
+    knownRisks: deriveKnownRisks(probes, systemComponents),
+    blockers: deriveBlockers(probes, systemComponents),
+    recommendations,
+    latestChanges: {
+      lastDeploy: deployTime,
+      lastCommit: buildSha7,
+      branch: probes.gitMetadata.data?.branch ?? null,
+      build: buildSha7,
+      timestamp: deployTime ?? generatedAt,
+    },
+    platformTimeline: buildPlatformTimeline(probes),
+    dataCoverage,
+    romaStatus: [
+      {
+        id: "architecture",
+        label: "Architecture",
+        level: probes.systemHealth.connected
+          ? probes.systemHealth.data?.status === "ok"
+            ? "ready"
+            : "partial"
+          : "unknown",
+        summary: probes.systemHealth.summary,
+        source: probes.systemHealth.connected ? "live" : "unavailable",
+      },
+      {
+        id: "governance",
+        label: "Governance",
+        level: release?.verdict === "FAIL" ? "blocked" : "ready",
+        summary: release ? `Release env: ${release.verdict}.` : "Unavailable",
+        source: release ? "live" : "unavailable",
+      },
+      {
+        id: "platform",
+        label: "Platform",
+        level: healthOk && dbOk ? "ready" : "partial",
+        summary: `Data coverage ${dataCoverage.coveragePercent}%.`,
+        source: "live",
+      },
+      {
+        id: "execution",
+        label: "Execution",
+        level: "blocked",
+        summary: "ROMA test execution from UI is not enabled.",
+        source: "configuration",
+      },
+      {
+        id: "learning",
+        label: "Learning",
+        level: "unknown",
+        summary: "No live ROMA learning loop telemetry source.",
+        source: "unavailable",
+      },
+      {
+        id: "adapter_readiness",
+        label: "Adapter readiness",
+        level:
+          probes.billing.data?.adapter.configValid && (probes.ai.data?.openai || (probes.ai.data?.visionProviders.length ?? 0) > 0)
+            ? "partial"
+            : "blocked",
+        summary: probes.billing.summary,
+        source: "live",
+      },
+    ],
     knownReports: buildKnownReports(),
     dataSources: {
-      available: dataSourcesAvailable,
-      unavailable: dataSourcesUnavailable,
+      available: dataCoverage.available.map((s) => s.label),
+      unavailable: dataCoverage.unavailable.map((s) => s.label),
     },
   };
+}
+
+function buildFallbackDashboard(error: string): RomaQualityDashboard {
+  const generatedAt = new Date().toISOString();
+  const emptyCoverage: DataCoverage = {
+    lastRefresh: generatedAt,
+    coveragePercent: 0,
+    connectedCount: 0,
+    totalCatalogCount: 0,
+    available: [],
+    unavailable: [],
+  };
+  return {
+    pageMode: "read_only",
+    testExecutionEnabled: false,
+    generatedAt,
+    environment: {
+      label: "Unknown",
+      appUrl: null,
+      nodeEnv: process.env.NODE_ENV ?? null,
+      preferredAdminHost: PLATFORM_ADMIN_PREFERRED_HOST,
+      adminHostDeployed: null,
+    },
+    platformStatus: {
+      overallHealth: "unavailable",
+      overallHealthLabel: "Unavailable",
+      releaseReadiness: "unknown",
+      releaseReadinessPercent: null,
+      lastUpdated: generatedAt,
+    },
+    domainSections: [],
+    systemComponents: [],
+    releaseReadiness: [],
+    knownRisks: [],
+    blockers: [
+      {
+        title: "Dashboard aggregation failed",
+        component: "Platform",
+        severity: "critical",
+        recommendation: error,
+      },
+    ],
+    recommendations: [],
+    latestChanges: {
+      lastDeploy: null,
+      lastCommit: null,
+      branch: null,
+      build: null,
+      timestamp: null,
+    },
+    platformTimeline: [],
+    dataCoverage: emptyCoverage,
+    romaStatus: [],
+    knownReports: buildKnownReports(),
+    dataSources: { available: [], unavailable: [] },
+  };
+}
+
+export async function buildRomaQualityDashboard(): Promise<RomaQualityDashboard> {
+  try {
+    const probes = await runLiveProbes();
+    return assembleDashboard(probes);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "dashboard_build_error";
+    return buildFallbackDashboard(message);
+  }
 }

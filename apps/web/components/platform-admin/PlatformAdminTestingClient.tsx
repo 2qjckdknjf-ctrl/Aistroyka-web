@@ -46,11 +46,11 @@ export function PlatformAdminTestingClient({ dashboard }: Props) {
         <div className="flex flex-wrap items-start justify-between gap-aistroyka-3">
           <div>
             <h1 className="text-aistroyka-title2 font-bold tracking-tight text-aistroyka-text-primary sm:text-aistroyka-title">
-              ROMA Quality Control Center
+              ROMA Live Operations Center
             </h1>
             <p className="mt-aistroyka-2 max-w-3xl text-aistroyka-subheadline text-aistroyka-text-secondary">
-              Live platform quality dashboard — read-only. Test execution, CI orchestration, and production
-              mutation are not enabled from this surface. Tenant company admins cannot access this page.
+              Live platform quality and observability dashboard — read-only. Test execution, CI orchestration, and
+              production mutation are not enabled. Data coverage: {formatPercent(d.dataCoverage.coveragePercent)}.
             </p>
           </div>
           <Badge variant="neutral">Read-only</Badge>
@@ -87,6 +87,30 @@ export function PlatformAdminTestingClient({ dashboard }: Props) {
           />
         </div>
       </Card>
+
+      <div>
+        <h2 className="mb-aistroyka-3 text-aistroyka-headline font-semibold text-aistroyka-text-primary">
+          Domain overview
+        </h2>
+        <div className="grid gap-aistroyka-3 sm:grid-cols-2 lg:grid-cols-3">
+          {d.domainSections.map((section) => (
+            <Card key={section.id} className="p-aistroyka-4">
+              <div className="flex items-center justify-between gap-aistroyka-2">
+                <h3 className="font-semibold text-aistroyka-text-primary">{section.label}</h3>
+                <Badge variant={qualityStatusBadgeVariant(section.status)}>{section.statusLabel}</Badge>
+              </div>
+              <p className="mt-aistroyka-2 text-aistroyka-subheadline text-aistroyka-text-secondary">
+                {section.summary}
+              </p>
+              <ul className="mt-aistroyka-2 list-disc space-y-aistroyka-1 pl-aistroyka-4 text-aistroyka-footnote text-aistroyka-text-tertiary">
+                {section.highlights.map((h) => (
+                  <li key={h}>{h}</li>
+                ))}
+              </ul>
+            </Card>
+          ))}
+        </div>
+      </div>
 
       <div>
         <h2 className="mb-aistroyka-3 text-aistroyka-headline font-semibold text-aistroyka-text-primary">
@@ -137,6 +161,39 @@ export function PlatformAdminTestingClient({ dashboard }: Props) {
 
       <Card className="p-aistroyka-5">
         <div className="flex flex-wrap items-center gap-aistroyka-2">
+          <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">Known risks</h2>
+          {d.knownRisks.length > 0 ? (
+            <Badge variant="warning">{d.knownRisks.length} risk(s)</Badge>
+          ) : (
+            <Badge variant="neutral">None from live probes</Badge>
+          )}
+        </div>
+        {d.knownRisks.length > 0 ? (
+          <ul className="mt-aistroyka-4 space-y-aistroyka-3">
+            {d.knownRisks.map((risk) => (
+              <li
+                key={`risk-${risk.component}-${risk.title}`}
+                className="rounded-card border border-aistroyka-border-subtle px-aistroyka-4 py-aistroyka-3"
+              >
+                <div className="flex flex-wrap items-center gap-aistroyka-2">
+                  <p className="font-medium text-aistroyka-text-primary">{risk.title}</p>
+                  <Badge variant={blockerSeverityBadgeVariant(risk.severity)}>{risk.severity}</Badge>
+                </div>
+                <p className="mt-aistroyka-2 text-aistroyka-subheadline text-aistroyka-text-secondary">
+                  {risk.recommendation}
+                </p>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-aistroyka-3 text-aistroyka-subheadline text-aistroyka-text-secondary">
+            No degraded components or warning-level risks detected from current probes.
+          </p>
+        )}
+      </Card>
+
+      <Card className="p-aistroyka-5">
+        <div className="flex flex-wrap items-center gap-aistroyka-2">
           <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">Current blockers</h2>
           {criticalCount > 0 ? (
             <Badge variant="danger">{criticalCount} critical</Badge>
@@ -162,6 +219,53 @@ export function PlatformAdminTestingClient({ dashboard }: Props) {
             </li>
           ))}
         </ul>
+      </Card>
+
+      <Card className="p-aistroyka-5">
+        <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">Platform timeline</h2>
+        <dl className="mt-aistroyka-4 grid gap-aistroyka-3 sm:grid-cols-2 lg:grid-cols-3">
+          {d.platformTimeline.map((event) => (
+            <div key={event.id}>
+              <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{event.label}</dt>
+              <dd className="font-medium text-aistroyka-text-primary">{event.displayValue}</dd>
+              <dd className="text-aistroyka-footnote text-aistroyka-text-tertiary">Source: {event.source}</dd>
+            </div>
+          ))}
+        </dl>
+      </Card>
+
+      <Card className="p-aistroyka-5">
+        <div className="flex flex-wrap items-center gap-aistroyka-2">
+          <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">Recommendations</h2>
+          {d.recommendations.length > 0 ? (
+            <Badge variant="warning">{d.recommendations.length} item(s)</Badge>
+          ) : (
+            <Badge variant="success">No evidence-based actions</Badge>
+          )}
+        </div>
+        {d.recommendations.length > 0 ? (
+          <ul className="mt-aistroyka-4 space-y-aistroyka-3">
+            {d.recommendations.map((rec) => (
+              <li
+                key={rec.id}
+                className="rounded-card border border-aistroyka-border-subtle px-aistroyka-4 py-aistroyka-3"
+              >
+                <div className="flex flex-wrap items-center gap-aistroyka-2">
+                  <p className="font-medium text-aistroyka-text-primary">{rec.title}</p>
+                  <Badge variant={blockerSeverityBadgeVariant(rec.severity)}>{rec.severity}</Badge>
+                  <span className="text-aistroyka-caption text-aistroyka-text-tertiary">{rec.component}</span>
+                </div>
+                <p className="mt-aistroyka-2 text-aistroyka-footnote text-aistroyka-text-tertiary">
+                  Evidence: {rec.evidence}
+                </p>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-aistroyka-3 text-aistroyka-subheadline text-aistroyka-text-secondary">
+            No recommendations generated — live probes did not surface actionable evidence.
+          </p>
+        )}
       </Card>
 
       <Card className="p-aistroyka-5">
@@ -252,23 +356,48 @@ export function PlatformAdminTestingClient({ dashboard }: Props) {
       </Card>
 
       <Card className="border border-dashed border-aistroyka-border-subtle p-aistroyka-5">
-        <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">Data sources</h2>
+        <div className="flex flex-wrap items-center justify-between gap-aistroyka-2">
+          <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">Data coverage</h2>
+          <Badge variant="neutral">
+            {d.dataCoverage.connectedCount}/{d.dataCoverage.totalCatalogCount} sources ·{" "}
+            {formatPercent(d.dataCoverage.coveragePercent)}
+          </Badge>
+        </div>
+        <p className="mt-aistroyka-2 text-aistroyka-footnote text-aistroyka-text-tertiary">
+          Last refresh: {formatTimestamp(d.dataCoverage.lastRefresh)}
+        </p>
         <div className="mt-aistroyka-4 grid gap-aistroyka-4 lg:grid-cols-2">
           <div>
-            <p className="text-aistroyka-caption font-semibold uppercase text-aistroyka-text-tertiary">Available</p>
-            <ul className="mt-aistroyka-2 list-disc space-y-aistroyka-1 pl-aistroyka-5 text-aistroyka-footnote text-aistroyka-text-secondary">
-              {d.dataSources.available.map((source) => (
-                <li key={source}>{source}</li>
+            <p className="text-aistroyka-caption font-semibold uppercase text-aistroyka-text-tertiary">Connected</p>
+            <ul className="mt-aistroyka-2 space-y-aistroyka-2">
+              {d.dataCoverage.available.map((source) => (
+                <li
+                  key={source.id}
+                  className="rounded-card border border-aistroyka-border-subtle px-aistroyka-3 py-aistroyka-2"
+                >
+                  <p className="font-medium text-aistroyka-text-primary">{source.label}</p>
+                  <p className="text-aistroyka-caption text-aistroyka-text-tertiary">{source.category}</p>
+                  <p className="mt-aistroyka-1 text-aistroyka-footnote text-aistroyka-text-secondary">
+                    {source.summary}
+                  </p>
+                </li>
               ))}
             </ul>
           </div>
           <div>
-            <p className="text-aistroyka-caption font-semibold uppercase text-aistroyka-text-tertiary">
-              Unavailable
-            </p>
-            <ul className="mt-aistroyka-2 list-disc space-y-aistroyka-1 pl-aistroyka-5 text-aistroyka-footnote text-aistroyka-text-secondary">
-              {d.dataSources.unavailable.map((source) => (
-                <li key={source}>{source}</li>
+            <p className="text-aistroyka-caption font-semibold uppercase text-aistroyka-text-tertiary">Unavailable</p>
+            <ul className="mt-aistroyka-2 space-y-aistroyka-2">
+              {d.dataCoverage.unavailable.map((source) => (
+                <li
+                  key={source.id}
+                  className="rounded-card border border-aistroyka-border-subtle px-aistroyka-3 py-aistroyka-2"
+                >
+                  <p className="font-medium text-aistroyka-text-primary">{source.label}</p>
+                  <p className="text-aistroyka-caption text-aistroyka-text-tertiary">{source.category}</p>
+                  <p className="mt-aistroyka-1 text-aistroyka-footnote text-aistroyka-text-secondary">
+                    {source.summary}
+                  </p>
+                </li>
               ))}
             </ul>
           </div>

@@ -39,7 +39,10 @@ describe("ROMA live quality dashboard", () => {
     expect(clientSrc).not.toMatch(/>\s*Restart\s*</i);
     expect(clientSrc).not.toMatch(/>\s*Delete\s*</i);
     expect(clientSrc).not.toMatch(/>\s*Fix\s*</i);
-    expect(clientSrc).toMatch(/Unknown/);
+    expect(clientSrc).toMatch(/dataCoverage/);
+    expect(clientSrc).toMatch(/platformTimeline/);
+    expect(clientSrc).toMatch(/recommendations/);
+    expect(clientSrc).toMatch(/knownRisks/);
     expect(pageSrc).toMatch(/buildRomaQualityDashboard/);
   });
 
