@@ -4,12 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "@/i18n/navigation";
 import { Card, Skeleton, EmptyState, Badge } from "@/components/ui";
 
-type LeadRow = {
-  id: string;
-  status: string;
-  created_at: string;
-};
-
 type AlertRow = {
   id: string;
   severity: string;
@@ -38,7 +32,6 @@ type SloRow = {
 };
 
 type ProductControlData = {
-  leads: LeadRow[];
   alerts: AlertRow[];
   anomalies: AnomalyRow[];
   jobs: JobRow[];
@@ -47,7 +40,6 @@ type ProductControlData = {
 };
 
 const EMPTY_DATA: ProductControlData = {
-  leads: [],
   alerts: [],
   anomalies: [],
   jobs: [],
@@ -74,8 +66,7 @@ export function AdminProductControlCenterClient() {
     const load = async () => {
       setLoading(true);
       try {
-        const [leadsRes, alertsRes, anomaliesRes, jobsRes, auditRes, sloRes] = await Promise.all([
-          fetchJson<{ data?: LeadRow[] }>("/api/v1/admin/leads?limit=200"),
+        const [alertsRes, anomaliesRes, jobsRes, auditRes, sloRes] = await Promise.all([
           fetchJson<{ data?: AlertRow[] }>("/api/v1/admin/alerts?resolved=false"),
           fetchJson<{ data?: AnomalyRow[] }>("/api/v1/admin/anomalies?resolved=false&range=30d"),
           fetchJson<{ data?: JobRow[] }>("/api/v1/admin/jobs?status=failed&limit=100"),
@@ -86,7 +77,6 @@ export function AdminProductControlCenterClient() {
         if (cancelled) return;
 
         setData({
-          leads: leadsRes.data ?? [],
           alerts: alertsRes.data ?? [],
           anomalies: anomaliesRes.data ?? [],
           jobs: jobsRes.data ?? [],
@@ -110,8 +100,6 @@ export function AdminProductControlCenterClient() {
   }, []);
 
   const metrics = useMemo(() => {
-    const communicationBacklog = data.leads.filter((lead) => lead.status === "new" || lead.status === "reviewed").length;
-    const newLeads = data.leads.filter((lead) => lead.status === "new").length;
     const criticalAlerts = data.alerts.filter((alert) => alert.severity === "critical").length;
     const highAnomalies = data.anomalies.filter((anomaly) => anomaly.severity === "high").length;
 
@@ -128,8 +116,6 @@ export function AdminProductControlCenterClient() {
     const communicationEvents = data.audit.filter((row) => communicationActions.has(row.action)).length;
 
     return {
-      communicationBacklog,
-      newLeads,
       criticalAlerts,
       highAnomalies,
       failedJobs: data.jobs.length,
@@ -163,31 +149,15 @@ export function AdminProductControlCenterClient() {
         <div>
           <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">Product Control Center</h2>
           <p className="mt-1 text-aistroyka-subheadline text-aistroyka-text-secondary">
-            Unified operations panel for clients, incidents, tests/quality, and communication.
+            Tenant operations panel for incidents, quality signals, and team communication.
           </p>
         </div>
-        <Badge variant={metrics.communicationBacklog > 0 || metrics.criticalAlerts > 0 ? "warning" : "success"}>
-          {metrics.communicationBacklog > 0 || metrics.criticalAlerts > 0 ? "attention needed" : "stable"}
+        <Badge variant={metrics.criticalAlerts > 0 ? "warning" : "success"}>
+          {metrics.criticalAlerts > 0 ? "attention needed" : "stable"}
         </Badge>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <div className="rounded-[var(--aistroyka-radius-lg)] border border-aistroyka-border-subtle p-3">
-          <p className="text-aistroyka-caption uppercase tracking-wide text-aistroyka-text-tertiary">Clients</p>
-          <p className="mt-2 text-aistroyka-title3 font-semibold text-aistroyka-text-primary">{metrics.newLeads} new leads</p>
-          <p className="mt-1 text-aistroyka-caption text-aistroyka-text-secondary">
-            Backlog for response: {metrics.communicationBacklog}
-          </p>
-          <div className="mt-3 flex gap-3">
-            <Link href="/admin/leads" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">
-              Open leads →
-            </Link>
-            <Link href="/admin/operator" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">
-              Operator triage →
-            </Link>
-          </div>
-        </div>
-
         <div className="rounded-[var(--aistroyka-radius-lg)] border border-aistroyka-border-subtle p-3">
           <p className="text-aistroyka-caption uppercase tracking-wide text-aistroyka-text-tertiary">Incidents & Errors</p>
           <p className="mt-2 text-aistroyka-title3 font-semibold text-aistroyka-text-primary">{metrics.openAlerts} open alerts</p>
@@ -226,16 +196,13 @@ export function AdminProductControlCenterClient() {
           </div>
         </div>
 
-        <div className="rounded-[var(--aistroyka-radius-lg)] border border-aistroyka-border-subtle p-3">
+        <div className="rounded-[var(--aistroyka-radius-lg)] border border-aistroyka-border-subtle p-3 sm:col-span-2">
           <p className="text-aistroyka-caption uppercase tracking-wide text-aistroyka-text-tertiary">Communication</p>
           <p className="mt-2 text-aistroyka-title3 font-semibold text-aistroyka-text-primary">{metrics.communicationEvents} events / 7d</p>
           <p className="mt-1 text-aistroyka-caption text-aistroyka-text-secondary">
             Invite, assignments, and report communication events.
           </p>
           <div className="mt-3 flex flex-wrap gap-3">
-            <Link href="/admin/leads" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">
-              Client communications →
-            </Link>
             <Link href="/admin/ai/requests" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">
               AI request explorer →
             </Link>

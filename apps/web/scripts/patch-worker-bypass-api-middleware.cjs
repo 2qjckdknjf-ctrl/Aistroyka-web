@@ -20,9 +20,13 @@ let code = fs.readFileSync(workerPath, "utf8");
 const marker =
   "            // - `Request`s are handled by the Next server\n            const reqOrResp = await middlewareHandler(request, env, ctx);";
 const alreadyBypassMarker = "url.pathname.startsWith(\"/api/v1/\")";
-const replacement = `            // Bypass middleware for /api/v1/* except /api/v1/owner/* (owner APIs must run middleware gate on Workers)
+const replacement = `            // Bypass middleware for /api/v1/* except platform-admin API namespaces (owner + platform gates on Workers)
             let reqOrResp;
-            if (url.pathname.startsWith("/api/v1/") && !url.pathname.startsWith("/api/v1/owner")) {
+            if (
+              url.pathname.startsWith("/api/v1/") &&
+              !url.pathname.startsWith("/api/v1/owner") &&
+              !url.pathname.startsWith("/api/v1/platform")
+            ) {
                 reqOrResp = request;
             } else {
                 const { handler: middlewareHandler } = await import("./middleware/handler.mjs");
@@ -64,10 +68,10 @@ if (code.includes(stubRequireMarker) && !code.includes("_origRequire")) {
 // Upgrade previously patched workers: restore middleware for owner API paths
 code = code.replace(
   /if \(url\.pathname\.startsWith\("\/api\/v1\/"\)\) \{\s*reqOrResp = request;/,
-  'if (url.pathname.startsWith("/api/v1/") && !url.pathname.startsWith("/api/v1/owner")) {\n                reqOrResp = request;'
+  'if (url.pathname.startsWith("/api/v1/") && !url.pathname.startsWith("/api/v1/owner") && !url.pathname.startsWith("/api/v1/platform")) {\n                reqOrResp = request;'
 );
 
 fs.writeFileSync(workerPath, code, "utf8");
 console.log(
-  "patch-worker-bypass-api-middleware: patched .open-next/worker.js (bypass middleware for /api/v1/* except /api/v1/owner/*)"
+  "patch-worker-bypass-api-middleware: patched .open-next/worker.js (bypass middleware for /api/v1/* except /api/v1/owner/* and /api/v1/platform/*)"
 );

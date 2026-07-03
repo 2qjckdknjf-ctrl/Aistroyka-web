@@ -1,14 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Card, Button, Input, Textarea, Badge, Skeleton, EmptyState } from "@/components/ui";
-
-type LeadRow = {
-  id: string;
-  name: string;
-  status: "new" | "reviewed" | "contacted" | "archived";
-  created_at: string;
-};
+import { useCallback, useEffect, useState } from "react";
+import { Card, Button, Input, Badge, Skeleton, EmptyState } from "@/components/ui";
 
 type AlertRow = {
   id: string;
@@ -77,22 +70,6 @@ type ActionLogEntry = {
   createdAt: string;
 };
 
-const LEAD_STATUS_OPTIONS: LeadRow["status"][] = ["reviewed", "contacted", "archived"];
-
-const LEAD_STATUS_FLOW: Record<LeadRow["status"], LeadRow["status"]> = {
-  new: "reviewed",
-  reviewed: "contacted",
-  contacted: "archived",
-  archived: "archived",
-};
-
-const STATUS_BADGE_VARIANT: Record<LeadRow["status"], "danger" | "warning" | "success" | "neutral"> = {
-  new: "danger",
-  reviewed: "warning",
-  contacted: "success",
-  archived: "neutral",
-};
-
 async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, {
     credentials: "include",
@@ -116,23 +93,16 @@ export function OperatorWorkbenchClient() {
   const [error, setError] = useState<string | null>(null);
 
   const [context, setContext] = useState<OperatorContext | null>(null);
-  const [leads, setLeads] = useState<LeadRow[]>([]);
   const [alerts, setAlerts] = useState<AlertRow[]>([]);
   const [anomalies, setAnomalies] = useState<AnomalyRow[]>([]);
   const [jobs, setJobs] = useState<JobRow[]>([]);
   const [flags, setFlags] = useState<FlagRow[]>([]);
 
-  const [cronSecret, setCronSecret] = useState("");
   const [diagnostics, setDiagnostics] = useState<DiagnosticsResponse | null>(null);
   const [smokeReport, setSmokeReport] = useState<SmokeReport | null>(null);
   const [runningAction, setRunningAction] = useState<string | null>(null);
   const [actionLog, setActionLog] = useState<ActionLogEntry[]>([]);
-  const [bulkLeadTarget, setBulkLeadTarget] = useState<LeadRow["status"]>("reviewed");
-  const [bulkLeadLimit, setBulkLeadLimit] = useState("5");
 
-  const [newFlagKey, setNewFlagKey] = useState("");
-  const [newFlagDescription, setNewFlagDescription] = useState("");
-  const [newFlagRollout, setNewFlagRollout] = useState("100");
   const [overrideFlagKey, setOverrideFlagKey] = useState("");
   const [overrideEnabled, setOverrideEnabled] = useState(true);
   const [overrideVariant, setOverrideVariant] = useState("");
@@ -149,9 +119,8 @@ export function OperatorWorkbenchClient() {
   const loadAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [contextRes, leadsRes, alertsRes, anomaliesRes, jobsRes, flagsRes] = await Promise.all([
+      const [contextRes, alertsRes, anomaliesRes, jobsRes, flagsRes] = await Promise.all([
         requestJson<{ data: OperatorContext }>("/api/v1/admin/operator/context"),
-        requestJson<{ data?: LeadRow[] }>("/api/v1/admin/leads?limit=100"),
         requestJson<{ data?: AlertRow[] }>("/api/v1/admin/alerts?resolved=false"),
         requestJson<{ data?: AnomalyRow[] }>("/api/v1/admin/anomalies?resolved=false&range=30d"),
         requestJson<{ data?: JobRow[] }>("/api/v1/admin/jobs?status=failed&limit=50"),
@@ -159,7 +128,6 @@ export function OperatorWorkbenchClient() {
       ]);
 
       setContext(contextRes.data);
-      setLeads(leadsRes.data ?? []);
       setAlerts(alertsRes.data ?? []);
       setAnomalies(anomaliesRes.data ?? []);
       setJobs(jobsRes.data ?? []);
@@ -176,16 +144,6 @@ export function OperatorWorkbenchClient() {
   useEffect(() => {
     void loadAll();
   }, [loadAll]);
-
-  const leadsBacklog = useMemo(
-    () => leads.filter((lead) => lead.status === "new" || lead.status === "reviewed"),
-    [leads]
-  );
-
-  const headerForCron = useMemo(
-    () => (cronSecret.trim() ? { "x-cron-secret": cronSecret.trim() } : undefined),
-    [cronSecret]
-  );
 
   const runAction = useCallback(
     async (actionId: string, label: string, worker: () => Promise<string>) => {
@@ -226,28 +184,6 @@ export function OperatorWorkbenchClient() {
     });
   }, [runAction]);
 
-  const triggerScheduleReconcile = useCallback(async () => {
-    await runAction("schedule-reconcile", "Schedule reconcile jobs", async () => {
-      const payload = await requestJson<{ enqueued?: number; tenants?: number }>("/api/v1/admin/jobs/schedule-reconcile", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...(headerForCron ?? {}) },
-      });
-      await loadAll();
-      return `Enqueued ${payload.enqueued ?? 0} reconcile jobs for ${payload.tenants ?? 0} tenants.`;
-    });
-  }, [headerForCron, loadAll, runAction]);
-
-  const triggerCronTick = useCallback(async () => {
-    await runAction("cron-tick", "Run global cron tick", async () => {
-      const payload = await requestJson<{ scheduled?: number; processed?: number; tenants?: number }>("/api/v1/admin/jobs/cron-tick", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...(headerForCron ?? {}) },
-      });
-      await loadAll();
-      return `Cron tick complete. Scheduled ${payload.scheduled ?? 0}, processed ${payload.processed ?? 0} across ${payload.tenants ?? 0} tenants.`;
-    });
-  }, [headerForCron, loadAll, runAction]);
-
   const sendTestPush = useCallback(async () => {
     await runAction("push-test", "Send test push", async () => {
       const payload = await requestJson<{ outbox_id?: string }>("/api/v1/admin/push/test", {
@@ -258,53 +194,6 @@ export function OperatorWorkbenchClient() {
       return `Push queued. Outbox id: ${payload.outbox_id ?? "n/a"}.`;
     });
   }, [runAction]);
-
-  const advanceLead = useCallback(
-    async (lead: LeadRow) => {
-      const nextStatus = LEAD_STATUS_FLOW[lead.status];
-      if (!nextStatus || nextStatus === lead.status) return;
-
-      await runAction(`lead-${lead.id}`, `Advance lead ${lead.name}`, async () => {
-        await requestJson<{ data: LeadRow }>(`/api/v1/admin/leads/${lead.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status: nextStatus }),
-        });
-        setLeads((prev) => prev.map((row) => (row.id === lead.id ? { ...row, status: nextStatus } : row)));
-        return `Lead moved to ${nextStatus}.`;
-      });
-    },
-    [runAction]
-  );
-
-  const bulkUpdateLeads = useCallback(async () => {
-    await runAction("bulk-leads", "Bulk update leads", async () => {
-      const parsedLimit = Number.parseInt(bulkLeadLimit, 10);
-      const maxItems = Number.isFinite(parsedLimit) && parsedLimit > 0 ? Math.min(parsedLimit, 50) : 5;
-      const targets = leadsBacklog
-        .filter((lead) => lead.status !== bulkLeadTarget)
-        .slice(0, maxItems);
-      if (targets.length === 0) {
-        throw new Error("No leads eligible for this transition.");
-      }
-      const payload = await requestJson<{ updated: number }>("/api/v1/admin/leads/bulk", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ids: targets.map((lead) => lead.id),
-          status: bulkLeadTarget,
-        }),
-      });
-      if ((payload.updated ?? 0) > 0) {
-        setLeads((prev) =>
-          prev.map((lead) =>
-            targets.some((target) => target.id === lead.id) ? { ...lead, status: bulkLeadTarget } : lead
-          )
-        );
-      }
-      return `Bulk updated ${payload.updated ?? 0}/${targets.length} leads to ${bulkLeadTarget}.`;
-    });
-  }, [bulkLeadLimit, bulkLeadTarget, leadsBacklog, runAction]);
 
   const resolveAlerts = useCallback(
     async (ids: string[], label: string) => {
@@ -337,32 +226,6 @@ export function OperatorWorkbenchClient() {
     },
     [runAction]
   );
-
-  const createOrUpdateFlag = useCallback(async () => {
-    await runAction("flag-upsert", "Upsert feature flag", async () => {
-      const rolloutAsNumber = Number(newFlagRollout);
-      const body = {
-        key: newFlagKey.trim(),
-        description: newFlagDescription.trim() || null,
-        rollout_percent:
-          Number.isFinite(rolloutAsNumber) && rolloutAsNumber >= 0 && rolloutAsNumber <= 100
-            ? rolloutAsNumber
-            : null,
-      };
-      if (!body.key) {
-        throw new Error("Flag key is required.");
-      }
-      await requestJson<{ success: boolean }>("/api/v1/admin/flags", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      const refreshed = await requestJson<{ data?: FlagRow[] }>("/api/v1/admin/flags");
-      setFlags(refreshed.data ?? []);
-      setOverrideFlagKey(body.key);
-      return `Flag ${body.key} saved.`;
-    });
-  }, [newFlagDescription, newFlagKey, newFlagRollout, runAction]);
 
   const setTenantOverride = useCallback(async () => {
     await runAction("tenant-override", "Set tenant flag override", async () => {
@@ -411,13 +274,9 @@ export function OperatorWorkbenchClient() {
       <Card>
         <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">Operator command bridge</h2>
         <p className="mt-1 text-aistroyka-subheadline text-aistroyka-text-secondary">
-          Run production operations, test subsystems, and apply safe rollout updates from one place.
+          Tenant-scoped operations, diagnostics, and safe rollout overrides.
         </p>
         <div className="mt-3 grid gap-3 sm:grid-cols-3">
-          <div className="rounded-[var(--aistroyka-radius-md)] border border-aistroyka-border-subtle p-3">
-            <p className="text-aistroyka-caption text-aistroyka-text-tertiary">Lead backlog</p>
-            <p className="text-aistroyka-title3 font-semibold text-aistroyka-text-primary">{leadsBacklog.length}</p>
-          </div>
           <div className="rounded-[var(--aistroyka-radius-md)] border border-aistroyka-border-subtle p-3">
             <p className="text-aistroyka-caption text-aistroyka-text-tertiary">Open alerts</p>
             <p className="text-aistroyka-title3 font-semibold text-aistroyka-text-primary">{alerts.length}</p>
@@ -436,56 +295,32 @@ export function OperatorWorkbenchClient() {
       <Card>
         <h3 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">Operations & testing</h3>
         <p className="mt-1 text-aistroyka-caption text-aistroyka-text-secondary">
-          If cron endpoints are protected, paste `CRON_SECRET` for this session.
+          Tenant health checks only. Cross-tenant cron controls moved to platform admin.
         </p>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <Input
-            value={cronSecret}
-            onChange={(event) => setCronSecret(event.target.value)}
-            placeholder="Optional cron secret"
-            aria-label="Cron secret"
-          />
-          <div className="flex flex-wrap gap-2">
-            <Button
-              onClick={() => void runDiagnosticsSnapshot()}
-              loading={runningAction === "diagnostics"}
-              disabled={runningAction !== null}
-            >
-              Run diagnostics snapshot
-            </Button>
-            <Button
-              variant="secondary"
-              onClick={() => void runSmokeSuite()}
-              loading={runningAction === "smoke-suite"}
-              disabled={runningAction !== null}
-            >
-              Run smoke suite
-            </Button>
-            <Button
-              variant="secondary"
-              onClick={() => void triggerScheduleReconcile()}
-              loading={runningAction === "schedule-reconcile"}
-              disabled={runningAction !== null}
-            >
-              Enqueue reconcile
-            </Button>
-            <Button
-              variant="secondary"
-              onClick={() => void triggerCronTick()}
-              loading={runningAction === "cron-tick"}
-              disabled={runningAction !== null}
-            >
-              Run cron tick
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => void sendTestPush()}
-              loading={runningAction === "push-test"}
-              disabled={runningAction !== null}
-            >
-              Send test push
-            </Button>
-          </div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Button
+            onClick={() => void runDiagnosticsSnapshot()}
+            loading={runningAction === "diagnostics"}
+            disabled={runningAction !== null}
+          >
+            Run diagnostics snapshot
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => void runSmokeSuite()}
+            loading={runningAction === "smoke-suite"}
+            disabled={runningAction !== null}
+          >
+            Run smoke suite
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={() => void sendTestPush()}
+            loading={runningAction === "push-test"}
+            disabled={runningAction !== null}
+          >
+            Send test push
+          </Button>
         </div>
         {diagnostics ? (
           <div className="mt-4 rounded-[var(--aistroyka-radius-md)] border border-aistroyka-border-subtle p-3">
@@ -515,75 +350,6 @@ export function OperatorWorkbenchClient() {
             </ul>
           </div>
         ) : null}
-      </Card>
-
-      <Card>
-        <h3 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">Client communications triage</h3>
-        <div className="mt-3 flex flex-wrap items-end gap-2 rounded-[var(--aistroyka-radius-md)] border border-aistroyka-border-subtle p-3">
-          <div>
-            <p className="text-aistroyka-caption text-aistroyka-text-tertiary">Bulk target status</p>
-            <select
-              value={bulkLeadTarget}
-              onChange={(event) => setBulkLeadTarget(event.target.value as LeadRow["status"])}
-              className="rounded-[var(--aistroyka-radius-md)] border border-aistroyka-border-subtle bg-aistroyka-bg-primary px-3 py-2 text-aistroyka-body"
-            >
-              {LEAD_STATUS_OPTIONS.map((status) => (
-                <option key={status} value={status}>
-                  {status}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <p className="text-aistroyka-caption text-aistroyka-text-tertiary">Max leads</p>
-            <Input
-              type="number"
-              min={1}
-              max={50}
-              value={bulkLeadLimit}
-              onChange={(event) => setBulkLeadLimit(event.target.value)}
-              aria-label="Bulk lead limit"
-            />
-          </div>
-          <Button
-            variant="secondary"
-            onClick={() => void bulkUpdateLeads()}
-            loading={runningAction === "bulk-leads"}
-            disabled={runningAction !== null}
-          >
-            Apply bulk transition
-          </Button>
-        </div>
-        {leadsBacklog.length === 0 ? (
-          <p className="mt-2 text-aistroyka-caption text-aistroyka-text-secondary">No pending leads in new/reviewed status.</p>
-        ) : (
-          <div className="mt-3 space-y-2">
-            {leadsBacklog.slice(0, 8).map((lead) => (
-              <div
-                key={lead.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-[var(--aistroyka-radius-md)] border border-aistroyka-border-subtle p-2"
-              >
-                <div>
-                  <p className="text-aistroyka-subheadline font-medium text-aistroyka-text-primary">{lead.name}</p>
-                  <p className="text-aistroyka-caption text-aistroyka-text-secondary">
-                    {new Date(lead.created_at).toLocaleString()}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant={STATUS_BADGE_VARIANT[lead.status]}>{lead.status}</Badge>
-                  <Button
-                    variant="secondary"
-                    onClick={() => void advanceLead(lead)}
-                    loading={runningAction === `lead-${lead.id}`}
-                    disabled={runningAction !== null || LEAD_STATUS_FLOW[lead.status] === lead.status}
-                  >
-                    Move to {LEAD_STATUS_FLOW[lead.status]}
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
       </Card>
 
       <Card>
@@ -664,77 +430,46 @@ export function OperatorWorkbenchClient() {
       </Card>
 
       <Card>
-        <h3 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">Feature delivery controls</h3>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <div className="space-y-2 rounded-[var(--aistroyka-radius-md)] border border-aistroyka-border-subtle p-3">
-            <p className="text-aistroyka-caption text-aistroyka-text-tertiary">Create or update flag</p>
-            <Input
-              value={newFlagKey}
-              onChange={(event) => setNewFlagKey(event.target.value)}
-              placeholder="flag.key"
-              aria-label="Flag key"
+        <h3 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">Tenant feature overrides</h3>
+        <p className="mt-1 text-aistroyka-caption text-aistroyka-text-secondary">
+          Global flag rollout is platform-admin only. Tenant admins may set overrides for the current tenant.
+        </p>
+        <div className="mt-3 max-w-md space-y-2 rounded-[var(--aistroyka-radius-md)] border border-aistroyka-border-subtle p-3">
+          <p className="text-aistroyka-caption text-aistroyka-text-tertiary">Tenant override</p>
+          <select
+            value={overrideFlagKey}
+            onChange={(event) => setOverrideFlagKey(event.target.value)}
+            className="w-full rounded-[var(--aistroyka-radius-md)] border border-aistroyka-border-subtle bg-aistroyka-bg-primary px-3 py-2 text-aistroyka-body"
+            aria-label="Select flag for override"
+          >
+            {flags.map((flag) => (
+              <option key={flag.key} value={flag.key}>
+                {flag.key}
+              </option>
+            ))}
+          </select>
+          <label className="flex items-center gap-2 text-aistroyka-subheadline text-aistroyka-text-secondary">
+            <input
+              type="checkbox"
+              checked={overrideEnabled}
+              onChange={(event) => setOverrideEnabled(event.target.checked)}
             />
-            <Textarea
-              value={newFlagDescription}
-              onChange={(event) => setNewFlagDescription(event.target.value)}
-              rows={2}
-              placeholder="Description"
-              aria-label="Flag description"
-            />
-            <Input
-              type="number"
-              min={0}
-              max={100}
-              value={newFlagRollout}
-              onChange={(event) => setNewFlagRollout(event.target.value)}
-              aria-label="Rollout percent"
-            />
-            <Button
-              onClick={() => void createOrUpdateFlag()}
-              loading={runningAction === "flag-upsert"}
-              disabled={runningAction !== null}
-            >
-              Save flag
-            </Button>
-          </div>
-
-          <div className="space-y-2 rounded-[var(--aistroyka-radius-md)] border border-aistroyka-border-subtle p-3">
-            <p className="text-aistroyka-caption text-aistroyka-text-tertiary">Tenant override</p>
-            <select
-              value={overrideFlagKey}
-              onChange={(event) => setOverrideFlagKey(event.target.value)}
-              className="w-full rounded-[var(--aistroyka-radius-md)] border border-aistroyka-border-subtle bg-aistroyka-bg-primary px-3 py-2 text-aistroyka-body"
-              aria-label="Select flag for override"
-            >
-              {flags.map((flag) => (
-                <option key={flag.key} value={flag.key}>
-                  {flag.key}
-                </option>
-              ))}
-            </select>
-            <label className="flex items-center gap-2 text-aistroyka-subheadline text-aistroyka-text-secondary">
-              <input
-                type="checkbox"
-                checked={overrideEnabled}
-                onChange={(event) => setOverrideEnabled(event.target.checked)}
-              />
-              Enabled for current tenant
-            </label>
-            <Input
-              value={overrideVariant}
-              onChange={(event) => setOverrideVariant(event.target.value)}
-              placeholder="Optional variant"
-              aria-label="Override variant"
-            />
-            <Button
-              variant="secondary"
-              onClick={() => void setTenantOverride()}
-              loading={runningAction === "tenant-override"}
-              disabled={runningAction !== null}
-            >
-              Apply tenant override
-            </Button>
-          </div>
+            Enabled for current tenant
+          </label>
+          <Input
+            value={overrideVariant}
+            onChange={(event) => setOverrideVariant(event.target.value)}
+            placeholder="Optional variant"
+            aria-label="Override variant"
+          />
+          <Button
+            variant="secondary"
+            onClick={() => void setTenantOverride()}
+            loading={runningAction === "tenant-override"}
+            disabled={runningAction !== null}
+          >
+            Apply tenant override
+          </Button>
         </div>
       </Card>
 

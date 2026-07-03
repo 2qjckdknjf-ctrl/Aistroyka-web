@@ -6,6 +6,9 @@ import { checkLiteAllowList } from "@/lib/api/lite-allow-list";
 import { resolvePostAuthEntry } from "@/lib/entry/entry-routing";
 import { OWNER_RATE_LIMIT_ALREADY_APPLIED_HEADER } from "@/lib/platform-owner/constants";
 import { gateOwnerRequest } from "@/lib/platform-owner/middleware-owner-gate";
+import { isPlatformAdminApiPath, isPlatformAdminPagePath } from "@/lib/platform-admin/middleware-paths";
+import { resolveHostProfile } from "@/lib/platform-admin/host-policy";
+import { isAdminHostBlockedApiPath, resolveAdminHostPageRouting } from "@/lib/platform-admin/host-routing";
 import { applyApiSecurityHeadersToHeaders, getPageSecurityHeaders } from "@/lib/security-headers";
 
 const intlMiddleware = createIntlMiddleware(routing);
@@ -21,6 +24,11 @@ const HSTS_VALUE = "max-age=31536000; includeSubdomains; preload";
 function applyPageSecurityHeaders(res: NextResponse, isProduction: boolean): NextResponse {
   SECURITY_HEADERS.forEach(({ key, value }) => res.headers.set(key, value));
   if (isProduction) res.headers.set(HSTS_HEADER, HSTS_VALUE);
+  return res;
+}
+
+function applyHostProfileHeader(res: NextResponse, request: NextRequest): NextResponse {
+  res.headers.set("X-Aistroyka-Host-Profile", resolveHostProfile(request.headers.get("host")));
   return res;
 }
 
@@ -53,20 +61,29 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const isProduction = process.env.NODE_ENV === "production";
   const pathWithoutLocEarly = pathWithoutLocale(pathname).path;
-  const isOwnerPage = pathWithoutLocEarly.startsWith("/owner");
-  const isOwnerApi = pathname.startsWith("/api/v1/owner");
+  const isPlatformAdminPage = isPlatformAdminPagePath(pathWithoutLocEarly);
+  const isPlatformAdminApi = isPlatformAdminApiPath(pathname);
 
   if (pathname.startsWith("/api/v1")) {
     const forbidden = checkLiteAllowList(pathname, request.method, request.headers.get("x-client"));
     if (forbidden) {
-      return applyApiSecurityHeaders(NextResponse.json(forbidden.body, { status: 403 }));
+      const res = applyApiSecurityHeaders(NextResponse.json(forbidden.body, { status: 403 }));
+      return applyHostProfileHeader(res, request);
+    }
+
+    if (isAdminHostBlockedApiPath(request.headers.get("host"), pathname)) {
+      const res = applyApiSecurityHeaders(
+        NextResponse.json({ error: "admin_host_api_forbidden" }, { status: 403 })
+      );
+      return applyHostProfileHeader(res, request);
     }
   }
 
-  if (isOwnerApi) {
+  if (isPlatformAdminApi) {
     const { response: sessionResponse, user } = await updateSession(request);
     if (sessionResponse.status === 503) {
-      return applyApiSecurityHeaders(sessionResponse);
+      const res = applyApiSecurityHeaders(sessionResponse);
+      return applyHostProfileHeader(res, request);
     }
     const denied = await gateOwnerRequest({
       request,
@@ -76,30 +93,45 @@ export async function middleware(request: NextRequest) {
       isApi: true,
     });
     if (denied) {
-      return applyApiSecurityHeaders(denied);
+      const res = applyApiSecurityHeaders(denied);
+      return applyHostProfileHeader(res, request);
     }
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set(OWNER_RATE_LIMIT_ALREADY_APPLIED_HEADER, "1");
     const res = NextResponse.next({ request: { headers: requestHeaders } });
     mergeSupabaseSessionIntoResponse(sessionResponse, res);
-    return applyApiSecurityHeaders(res);
+    return applyHostProfileHeader(applyApiSecurityHeaders(res), request);
   }
 
   if (pathname.startsWith("/api/v1")) {
-    return applyApiSecurityHeaders(NextResponse.next());
+    const res = applyApiSecurityHeaders(NextResponse.next());
+    return applyHostProfileHeader(res, request);
   }
 
   if (pathname === "/dashboard" || pathname === "/dashboard/") {
     const redir = NextResponse.redirect(new URL("/en/dashboard", request.url), 308);
-    return applyPageSecurityHeaders(redir, process.env.NODE_ENV === "production");
+    return applyHostProfileHeader(applyPageSecurityHeaders(redir, process.env.NODE_ENV === "production"), request);
   }
 
   const { response: sessionResponse, user } = await updateSession(request);
   if (sessionResponse.status === 503) {
-    return applyPageSecurityHeaders(sessionResponse, process.env.NODE_ENV === "production");
+    return applyHostProfileHeader(
+      applyPageSecurityHeaders(sessionResponse, process.env.NODE_ENV === "production"),
+      request
+    );
   }
 
-  if (isOwnerPage) {
+  const host = request.headers.get("host");
+  const { path: pathWithoutLocForHost, locale: localeForHost } = pathWithoutLocale(pathname);
+  const adminHostRouting = resolveAdminHostPageRouting(host, pathWithoutLocForHost, localeForHost);
+  if (adminHostRouting.action === "redirect") {
+    const redir = NextResponse.redirect(new URL(adminHostRouting.targetPath, request.url), 307);
+    redir.headers.set("X-Aistroyka-Host-Routing", adminHostRouting.reason);
+    mergeSupabaseSessionIntoResponse(sessionResponse, redir);
+    return applyHostProfileHeader(applyPageSecurityHeaders(redir, isProduction), request);
+  }
+
+  if (isPlatformAdminPage) {
     const denied = await gateOwnerRequest({
       request,
       sessionResponse,
@@ -108,7 +140,7 @@ export async function middleware(request: NextRequest) {
       isApi: false,
     });
     if (denied) {
-      return applyPageSecurityHeaders(denied, isProduction);
+      return applyHostProfileHeader(applyPageSecurityHeaders(denied, isProduction), request);
     }
   }
 
@@ -126,7 +158,7 @@ export async function middleware(request: NextRequest) {
     const redir = NextResponse.redirect(loginUrl);
     mergeSupabaseSessionIntoResponse(sessionResponse, redir);
     redir.headers.set("X-Auth-Redirect", "login");
-    return applyPageSecurityHeaders(redir, isProduction);
+    return applyHostProfileHeader(applyPageSecurityHeaders(redir, isProduction), request);
   }
   if (isAuthPage && user) {
     const next = request.nextUrl.searchParams.get("next") ?? undefined;
@@ -135,7 +167,7 @@ export async function middleware(request: NextRequest) {
     const redir = NextResponse.redirect(nextUrl);
     mergeSupabaseSessionIntoResponse(sessionResponse, redir);
     redir.headers.set("X-Auth-Redirect", "post-auth-entry");
-    return applyPageSecurityHeaders(redir, isProduction);
+    return applyHostProfileHeader(applyPageSecurityHeaders(redir, isProduction), request);
   }
 
   mergeSupabaseSessionIntoResponse(sessionResponse, res);
@@ -143,7 +175,7 @@ export async function middleware(request: NextRequest) {
   if (isProtected || isAuthPage) {
     res.headers.set("Cache-Control", "private, no-store, max-age=0, must-revalidate");
   }
-  return applyPageSecurityHeaders(res, isProduction);
+  return applyHostProfileHeader(applyPageSecurityHeaders(res, isProduction), request);
 }
 
 export const config = {
