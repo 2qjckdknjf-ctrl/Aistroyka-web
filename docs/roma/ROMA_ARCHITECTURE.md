@@ -338,22 +338,9 @@ Coverage is **never** a substitute for verdicts. High coverage with failing test
 
 ## 15. Project Quality Score (PQS)
 
-Weighted composite (0–100). Weights are council-tunable; default:
+> **Canonical source:** `docs/roma/adr/ADR-0001-PQS-CANONICAL-WEIGHTS.md` — do not duplicate weights here.
 
-| Domain | Weight |
-|--------|--------|
-| Security & tenant isolation | 15 |
-| Core business journeys | 15 |
-| Public + dashboard UX | 10 |
-| Mobile (iOS + Android) | 15 |
-| Backend/API health | 10 |
-| Database consistency | 8 |
-| AI reliability & safety | 12 |
-| Performance | 8 |
-| Accessibility | 7 |
-| **Total** | **100** |
-
-Scoring: YES = full weight, UNKNOWN = 30% (configurable), NO = 0. Documented in `ROMA_REPORTING_MODEL.md`.
+Weighted composite (0–100). Ten categories (functional, backend, security, AI, mobile, design, a11y, performance, observability, release readiness). Scoring: YES = full weight, UNKNOWN = 30% (configurable), NO = 0. Documented in `ROMA_PROJECT_QUALITY_SCORE.md`.
 
 ---
 

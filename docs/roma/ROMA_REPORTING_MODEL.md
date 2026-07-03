@@ -129,46 +129,12 @@ Display values: **YES** | **NO** | **UNKNOWN** only. No PASS/FAIL synonyms in co
 
 ## 6. Project Quality Score (PQS)
 
-### 6.1 Formula
+> **Canonical source:** `docs/roma/adr/ADR-0001-PQS-CANONICAL-WEIGHTS.md` and `ROMA_PROJECT_QUALITY_SCORE.md`.  
+> Informal tables in this document are superseded by ADR-0001.
 
-```
-PQS = Σ (domain_weight × domain_score)
+Weighted composite (0–100). Scoring: YES = full weight, UNKNOWN = 30% (configurable), NO = 0.
 
-domain_score:
-  YES     → 1.0
-  UNKNOWN → unknown_penalty (default 0.3)
-  NO      → 0.0
-```
-
-### 6.2 Default weights (sum = 100)
-
-| Domain | Weight | Rationale |
-|--------|--------|-----------|
-| SECURITY_READY + TENANT_ISOLATION | 15 | Existential trust |
-| DASHBOARD_READY + RBAC | 12 | Core product value |
-| BACKEND_READY | 10 | API powers all clients |
-| MOBILE_IOS_READY | 10 | Primary mobile contour |
-| MOBILE_ANDROID_READY | 8 | Secondary; thinner maturity |
-| AI_READY | 12 | Differentiator; governance risk |
-| PUBLIC_SITE_READY | 8 | Acquisition surface |
-| DATABASE_READY | 8 | Data truth |
-| PERFORMANCE_READY | 8 | UX quality |
-| ACCESSIBILITY_READY | 7 | Compliance + inclusion |
-| OBSERVABILITY_READY | 5 | Deploy proof |
-| CI_READY | 5 | Engineering hygiene |
-
-Council may rebalance via `pqs_config` revision (ADR required).
-
-### 6.3 PQS interpretation
-
-| Range | Label |
-|-------|-------|
-| 85–100 | Strong — council may GO if no R0 |
-| 70–84 | Adequate — CONDITIONAL GO typical |
-| 50–69 | Weak — NOT READY |
-| 0–49 | Critical gaps |
-
-PQS **never overrides** explicit R0 NO-GO.
+See `ROMA_PROJECT_QUALITY_SCORE.md` for category table, thresholds, and examples.
 
 ---
 
