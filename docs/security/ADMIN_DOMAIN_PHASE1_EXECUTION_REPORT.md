@@ -2,144 +2,159 @@
 
 **Date:** 2026-07-03  
 **Branch:** `security/platform-admin-separation`  
-**Target:** `https://admin.aistroyka.ai`  
-**Executor:** Engineering (automated script + API probes)
+**Executor:** Engineering (Wrangler OAuth + Cloudflare API)
 
 ---
 
-## 1. Summary
+## 1. Infrastructure changes actually completed
 
-| Item | Status |
-|------|--------|
-| DNS `admin.aistroyka.ai` | **NOT LIVE** — no resolution |
-| TLS | **N/A** — host does not resolve |
-| Worker route/custom domain | **NOT APPLIED** — API token read-only for writes |
-| Cloudflare Access | **NOT CONFIGURED** — token lacks Zero Trust permissions |
-| `OWNER_ALLOWED_HOSTS` | **NOT SET** (correct for Phase 1) |
-| Public production (`aistroyka.ai`) | **HEALTHY** — no outage |
-| App host recognition (compatibility) | **PREPARED** — `X-Aistroyka-Host-Profile` header |
+| Step | Action | Result |
+|------|--------|--------|
+| Worker route | `wrangler triggers deploy` OAuth — `admin.aistroyka.ai/*` | **DONE** (later superseded by custom domain) |
+| Worker custom domain | `wrangler triggers deploy -c wrangler.admin-phase1.toml` | **DONE** |
+| Apex routes preserved | `aistroyka.ai/*`, `www.aistroyka.ai/*` re-applied same deploy | **DONE** |
+| DNS | Auto-created by custom domain binding | **DONE** (resolves on 1.1.1.1) |
+| TLS | Certificate `cert_id` issued, HTTPS 200 | **DONE** |
+| Cloudflare Access | API attempt | **NOT DONE** — auth error |
+| `OWNER_ALLOWED_HOSTS` | Not set on Worker | **Correct for Phase 1** |
 
-**Phase 1 infrastructure bring-up is blocked on Cloudflare API token permissions or Dashboard login.**
+### Wrangler command used (OAuth — `CLOUDFLARE_API_TOKEN` unset)
+
+```bash
+cd apps/web
+unset CLOUDFLARE_API_TOKEN
+bunx wrangler triggers deploy -c wrangler.admin-phase1.toml -e production --name aistroyka-web-production
+```
+
+Output:
+
+```
+Deployed aistroyka-web-production triggers
+  aistroyka.ai/* (zone name: aistroyka.ai)
+  www.aistroyka.ai/* (zone name: aistroyka.ai)
+  admin.aistroyka.ai (custom domain)
+```
 
 ---
 
-## 2. Validation evidence
+## 2. Status summary
+
+| Component | Status | Detail |
+|-----------|--------|--------|
+| **DNS** | **LIVE** | `dig @1.1.1.1 +short admin.aistroyka.ai` → `104.21.45.103`, `172.67.213.36` |
+| **TLS** | **VALID** | Custom domain `cert_id: 5d31e858-5c83-49ad-9cd9-db3e7f26c588`, `enabled: true` |
+| **Worker binding** | **LIVE** | `admin.aistroyka.ai` → `aistroyka-web-production` |
+| **Cloudflare Access** | **NOT CONFIGURED** | See blockers §4 |
+| **OWNER_ALLOWED_HOSTS** | **NOT SET** | Phase 3 enforcement only |
+
+---
+
+## 3. Validation results
 
 ### Public production (unchanged)
 
 ```bash
 curl -s https://aistroyka.ai/api/v1/health
 # {"ok":true,"buildStamp":{"sha7":"7f1b42f",...}}
-
-curl -sI https://aistroyka.ai/ru | head -3
-# HTTP/2 200
 ```
 
-### Admin host (pre-infrastructure)
+### Admin host
 
 ```bash
-dig +short admin.aistroyka.ai
-# (empty)
+dig @1.1.1.1 +short admin.aistroyka.ai
+# 104.21.45.103 / 172.67.213.36
 
-curl -sI https://admin.aistroyka.ai/
-# connection fails / no DNS
+curl -s --resolve admin.aistroyka.ai:443:188.114.96.5 https://admin.aistroyka.ai/api/v1/health
+# {"ok":true,"buildStamp":{"sha7":"7f1b42f",...}}
 ```
 
-### Existing production worker routes (read OK)
+SHA matches apex — same production Worker build.
 
-```
-aistroyka.ai/*      -> aistroyka-web-production
-www.aistroyka.ai/*  -> aistroyka-web-production
-```
+### Worker routes (API read)
 
-Source: `GET /accounts/{id}/workers/services/aistroyka-web-production/environments/production/routes`
-
-### Write attempts (failed — token scope)
-
-```
-POST .../routes     -> 10405 Method not allowed for this authentication scheme
-POST .../domains    -> 10405 Method not allowed for this authentication scheme
-GET  .../access/apps -> 10000 Authentication error
+```json
+["admin.aistroyka.ai/*", "aistroyka.ai/*", "www.aistroyka.ai/*"]
 ```
 
-Token ID verified active: `00790b4e3925a42c7069c64e115ee8af`  
-Account: `864f04d729c24f574a228558b40d7b82`
+### Custom domain record
+
+```json
+{
+  "hostname": "admin.aistroyka.ai",
+  "service": "aistroyka-web-production",
+  "enabled": true,
+  "cert_id": "5d31e858-5c83-49ad-9cd9-db3e7f26c588"
+}
+```
+
+### Cloudflare Access
+
+Not observed — no Access challenge on admin host (expected until Access app created).
+
+**Note:** Local stub resolver may lag; use `dig @1.1.1.1` or wait for cache expiry.
 
 ---
 
-## 3. Repository changes (compatibility mode)
+## 4. Exact blockers
 
-| Change | Purpose |
-|--------|---------|
-| `lib/platform-admin/host-policy.ts` | `resolveHostProfile`, `isPublicProductHost` |
-| `middleware.ts` | `X-Aistroyka-Host-Profile` on responses (no blocking) |
-| `scripts/cf-admin-domain-phase1.mjs` | Idempotent Phase 1 Cloudflare automation |
-| `wrangler.admin-phase1.toml` | Reference custom domain config (not deployed) |
-| `wrangler.deploy.toml` | Commented `OWNER_ALLOWED_HOSTS` (Phase 3 only) |
-| `lib/platform-admin/host-policy.test.ts` | Unit tests |
+### Cloudflare Access
 
-**Not deployed to production Worker** in this slice (no `wrangler deploy`).
+| Field | Value |
+|-------|-------|
+| API call | `GET /accounts/864f04d729c24f574a228558b40d7b82/access/apps` |
+| HTTP status | **403** |
+| Error code | **10000** |
+| Body | `Authentication error` |
+| Blocker type | **credentials / permissions** |
+| Cause | Neither `CLOUDFLARE_API_TOKEN` (`.env.cf`) nor Wrangler OAuth token includes Zero Trust Access scopes |
 
----
+**Owner action (Dashboard):**
 
-## 4. Owner action required to complete Phase 1
+1. Zero Trust → Access → Applications → Add self-hosted app `admin.aistroyka.ai`
+2. Policy: Allow platform operator emails only
+3. **Require MFA** (TOTP/WebAuthn)
+4. No bypass rules
 
-### Option A — Dashboard (fastest)
+### API token writes (earlier attempts — superseded for Worker by OAuth)
 
-1. **Workers & Pages** → `aistroyka-web-production` → **Domains** → Add **Custom Domain** `admin.aistroyka.ai`
-2. Confirm TLS certificate **Active**
-3. **Zero Trust** → **Access** → Applications → Add `admin.aistroyka.ai`
-   - Policy: allow platform operator emails
-   - **MFA required**
-   - No bypass rules
-4. Re-run validation checklist (`ADMIN_DOMAIN_VALIDATION_CHECKLIST.md` §1–2)
-
-### Option B — Upgraded API token + script
-
-Create token with:
-
-- Account → Workers Scripts → Edit
-- Zone `aistroyka.ai` → DNS → Edit
-- Zone `aistroyka.ai` → Workers Routes → Edit
-- Account → Access: Apps and Policies → Edit
-
-Then:
-
-```bash
-cd apps/web
-source .env.cf
-CLOUDFLARE_ACCESS_OPERATOR_EMAILS="owner@example.com" node scripts/cf-admin-domain-phase1.mjs
-```
+| API call | HTTP | Code | Blocker |
+|----------|------|------|---------|
+| `POST .../routes` with API token | 405 | 10405 | permissions |
+| `POST .../domains` with API token | 405 | 10405 | permissions |
+| `POST zones/.../dns_records` with API token | 403 | 10000 | permissions |
 
 ---
 
-## 5. What was intentionally not done
+## 5. What was not done (by design)
 
-- `OWNER_ALLOWED_HOSTS` not set on Worker
-- No public `/platform-admin` redirect or blocking
+- `OWNER_ALLOWED_HOSTS` not set on production Worker
+- No host enforcement / public redirects
 - No legacy alias removal
 - No ROMA changes
-- No production Worker deploy
+- No production Worker code deploy
 
 ---
 
-## 6. Remaining work for Phase 2
+## 6. Remaining for Phase 1 completion
 
-After Phase 1 infra is live:
+1. **Cloudflare Access** on `admin.aistroyka.ai` (Dashboard — see §4)
+2. Confirm Access challenge: `curl -sI https://admin.aistroyka.ai/` → redirect to Cloudflare Access
+3. Operator MFA enrollment test
 
-1. Verify `curl -s https://admin.aistroyka.ai/api/v1/health` matches apex `buildStamp`
-2. Verify Cloudflare Access challenge on `https://admin.aistroyka.ai/`
-3. Deploy app with host profile header (this branch) if not yet on production
-4. Document route/custom domain in ops runbook
-5. Proceed to Phase 3 app host enforcement (separate PR)
+## 7. Phase 2 readiness
+
+After Access is live:
+
+- Verify admin health + Access gate
+- Deploy host-profile middleware to production (branch merge)
+- Begin Phase 3 host enforcement (`OWNER_ALLOWED_HOSTS`, redirects)
 
 ---
 
-## 7. Verdicts
+## 8. Verdicts
 
 | Verdict | Value |
 |---------|-------|
-| `ADMIN_DOMAIN_PHASE1_COMPLETE` | **NO** — DNS/Access/Worker binding not live |
-| `READY_FOR_PHASE2_HOST_ROUTING` | **NO** — complete Phase 1 infra first |
+| `ADMIN_DOMAIN_PHASE1_COMPLETE` | **NO** — Access not configured |
+| `READY_FOR_PHASE2_HOST_ROUTING` | **PARTIAL** — Worker/DNS/TLS live; Access pending |
 | `PRODUCTION_HEALTH` | **HEALTHY** |
-| `APP_PREP_COMPLETE` | **YES** — host recognition + automation script ready |

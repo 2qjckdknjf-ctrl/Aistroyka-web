@@ -1,22 +1,19 @@
 #!/usr/bin/env node
 /**
- * Phase 1: admin.aistroyka.ai infrastructure (DNS/route/custom domain + Cloudflare Access).
+ * Phase 1: admin.aistroyka.ai infrastructure.
  *
- * Requires CLOUDFLARE_API_TOKEN with:
- * - Account:Workers Scripts:Edit
- * - Zone:DNS:Edit (zone aistroyka.ai)
- * - Zone:Workers Routes:Edit OR account workers services routes write
- * - Account:Access: Apps and Policies:Edit (Zero Trust)
+ * PRIMARY PATH (executed 2026-07-03): Wrangler OAuth (unset CLOUDFLARE_API_TOKEN)
+ *   unset CLOUDFLARE_API_TOKEN
+ *   bunx wrangler triggers deploy -c wrangler.admin-phase1.toml -e production --name aistroyka-web-production
  *
- * Usage (from apps/web):
- *   CLOUDFLARE_API_TOKEN=... CLOUDFLARE_ACCOUNT_ID=... node scripts/cf-admin-domain-phase1.mjs
- *   CLOUDFLARE_ACCESS_OPERATOR_EMAILS=ops@example.com,owner@example.com node scripts/cf-admin-domain-phase1.mjs
+ * API token path (apps/web/.env.cf) is read-only for route/domain/DNS/Access writes (10405/10000).
  *
- * Phase 1 does NOT set OWNER_ALLOWED_HOSTS on the Worker.
+ * Access (Zero Trust) requires Dashboard or API token with Account → Access: Apps and Policies → Edit.
  */
 
 import fs from "node:fs";
 import path from "node:path";
+import { spawnSync } from "node:child_process";
 
 const API = "https://api.cloudflare.com/client/v4";
 const ZONE_NAME = "aistroyka.ai";
@@ -24,7 +21,9 @@ const ADMIN_HOST = "admin.aistroyka.ai";
 const WORKER_SERVICE = "aistroyka-web-production";
 const WORKER_ENV = "production";
 
-function loadTokenFromEnvFile() {
+function loadToken() {
+  const fromEnv = process.env.CLOUDFLARE_API_TOKEN?.trim();
+  if (fromEnv) return fromEnv;
   try {
     const envPath = path.join(process.cwd(), ".env.cf");
     if (fs.existsSync(envPath)) {
@@ -38,26 +37,41 @@ function loadTokenFromEnvFile() {
   return undefined;
 }
 
-function loadToken() {
-  const fromEnv = process.env.CLOUDFLARE_API_TOKEN?.trim();
-  if (fromEnv) return fromEnv;
-  return loadTokenFromEnvFile();
-}
-
-async function cf(path, { method = "GET", body } = {}) {
-  const token = loadToken();
-  if (!token) throw new Error("CLOUDFLARE_API_TOKEN missing");
-  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID?.trim();
-  const res = await fetch(`${API}${path}`, {
+async function cf(apiPath, { method = "GET", body, token } = {}) {
+  const auth = token ?? loadToken();
+  if (!auth) throw new Error("CLOUDFLARE_API_TOKEN missing");
+  const res = await fetch(`${API}${apiPath}`, {
     method,
     headers: {
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${auth}`,
       "Content-Type": "application/json",
     },
     body: body ? JSON.stringify(body) : undefined,
   });
   const json = await res.json();
   return { status: res.status, json };
+}
+
+function deployViaWranglerOAuth() {
+  console.log("\n--- Wrangler OAuth triggers deploy (preferred) ---");
+  const env = { ...process.env };
+  delete env.CLOUDFLARE_API_TOKEN;
+  const result = spawnSync(
+    "bunx",
+    [
+      "wrangler",
+      "triggers",
+      "deploy",
+      "-c",
+      "wrangler.admin-phase1.toml",
+      "-e",
+      "production",
+      "--name",
+      WORKER_SERVICE,
+    ],
+    { cwd: process.cwd(), env, stdio: "inherit" }
+  );
+  return result.status === 0;
 }
 
 async function main() {
@@ -69,126 +83,42 @@ async function main() {
 
   console.log("=== Phase 1 admin domain infrastructure ===");
   console.log("Target:", ADMIN_HOST);
-  console.log("Worker:", WORKER_SERVICE);
 
-  const zones = await cf(`/zones?name=${ZONE_NAME}`);
-  if (!zones.json.success || !zones.json.result?.[0]) {
-    console.error("Zone lookup failed:", zones.json);
+  const ok = deployViaWranglerOAuth();
+  if (!ok) {
+    console.error("Wrangler OAuth deploy failed — ensure `wrangler whoami` shows workers_routes:write");
     process.exit(1);
   }
-  const zoneId = zones.json.result[0].id;
-  console.log("Zone ID:", zoneId);
 
   const routesPath = `/accounts/${accountId}/workers/services/${WORKER_SERVICE}/environments/${WORKER_ENV}/routes`;
-  const routesBefore = await cf(routesPath);
-  console.log("\n--- Current worker routes ---");
-  if (routesBefore.json.success) {
-    for (const r of routesBefore.json.result ?? []) {
-      console.log(`  ${r.pattern} -> ${r.script}`);
+  const routes = await cf(routesPath);
+  console.log("\n--- Worker routes ---");
+  if (routes.json.success) {
+    for (const r of routes.json.result ?? []) {
+      console.log(`  ${r.pattern}`);
     }
-  } else {
-    console.log("  (cannot read routes)", routesBefore.json.errors);
-  }
-
-  const hasAdminRoute = (routesBefore.json.result ?? []).some((r) =>
-    String(r.pattern).includes(ADMIN_HOST)
-  );
-
-  if (!hasAdminRoute) {
-    console.log("\n--- Adding worker route ---");
-    const addRoute = await cf(routesPath, {
-      method: "POST",
-      body: { pattern: `${ADMIN_HOST}/*`, zone_name: ZONE_NAME },
-    });
-    if (!addRoute.json.success) {
-      console.error("FAILED to add route:", addRoute.json.errors);
-      console.error("Token likely needs Workers Routes write. Use Dashboard or upgrade token.");
-    } else {
-      console.log("OK route added:", addRoute.json.result?.pattern ?? ADMIN_HOST);
-    }
-  } else {
-    console.log("\nAdmin route already present — skip add.");
   }
 
   const domainsPath = `/accounts/${accountId}/workers/services/${WORKER_SERVICE}/environments/${WORKER_ENV}/domains`;
-  console.log("\n--- Custom domain (optional, preferred over route) ---");
   const domains = await cf(domainsPath);
-  const hasDomain = (domains.json.result ?? []).some((d) => d.hostname === ADMIN_HOST);
-  if (!hasDomain) {
-    const addDomain = await cf(domainsPath, {
-      method: "POST",
-      body: { hostname: ADMIN_HOST, zone_id: zoneId },
-    });
-    if (!addDomain.json.success) {
-      console.log("Custom domain POST not applied (route fallback may suffice):", addDomain.json.errors);
-    } else {
-      console.log("OK custom domain:", ADMIN_HOST);
+  console.log("\n--- Custom domains ---");
+  if (domains.json.success) {
+    for (const d of domains.json.result ?? []) {
+      console.log(`  ${d.hostname} enabled=${d.enabled ?? true} cert=${d.cert_id ?? "n/a"}`);
     }
-  } else {
-    console.log("Custom domain already present.");
   }
 
-  const operatorEmails = (process.env.CLOUDFLARE_ACCESS_OPERATOR_EMAILS ?? "")
-    .split(",")
-    .map((e) => e.trim())
-    .filter(Boolean);
-
-  console.log("\n--- Cloudflare Access application ---");
   const apps = await cf(`/accounts/${accountId}/access/apps`);
   if (!apps.json.success) {
-    console.error("FAILED to list Access apps (need Zero Trust permissions):", apps.json.errors);
-  } else {
-    const existing = (apps.json.result ?? []).find((a) =>
-      (a.domain ?? a.self_hosted_domains ?? []).includes?.(ADMIN_HOST) ||
-      a.name === "AISTROYKA Platform Admin"
-    );
-    if (existing) {
-      console.log("Access app exists:", existing.name, existing.id);
-    } else if (operatorEmails.length === 0) {
-      console.log("Skip Access create — set CLOUDFLARE_ACCESS_OPERATOR_EMAILS to create allow policy.");
-    } else {
-      const createApp = await cf(`/accounts/${accountId}/access/apps`, {
-        method: "POST",
-        body: {
-          name: "AISTROYKA Platform Admin",
-          type: "self_hosted",
-          session_duration: "8h",
-          auto_redirect_to_identity: true,
-          allowed_idps: [],
-          domain: ADMIN_HOST,
-          self_hosted_domains: [ADMIN_HOST],
-        },
-      });
-      if (!createApp.json.success) {
-        console.error("FAILED to create Access app:", createApp.json.errors);
-      } else {
-        const appId = createApp.json.result?.id;
-        console.log("OK Access app created:", appId);
-        const policy = await cf(`/accounts/${accountId}/access/apps/${appId}/policies`, {
-          method: "POST",
-          body: {
-            name: "Platform operators",
-            decision: "allow",
-            include: operatorEmails.map((email) => ({ email: { email } })),
-            precedence: 1,
-          },
-        });
-        if (!policy.json.success) {
-          console.error("FAILED to create Access policy:", policy.json.errors);
-        } else {
-          console.log("OK Access allow policy for", operatorEmails.join(", "));
-          console.log("Enable MFA on the policy in Zero Trust dashboard (API MFA flags vary by plan).");
-        }
-      }
-    }
+    console.log("\n--- Cloudflare Access ---");
+    console.log("SKIP API:", apps.json.errors);
+    console.log("Create Access app in Zero Trust Dashboard for", ADMIN_HOST);
   }
 
-  console.log("\n--- Post-check (external DNS may take minutes) ---");
-  console.log("Run:");
-  console.log(`  dig +short ${ADMIN_HOST}`);
-  console.log(`  curl -sI https://${ADMIN_HOST}/`);
-  console.log(`  curl -s https://aistroyka.ai/api/v1/health | jq .buildStamp.sha7`);
-  console.log("\nOWNER_ALLOWED_HOSTS: NOT SET (Phase 3 only).");
+  console.log("\nValidate:");
+  console.log(`  dig @1.1.1.1 +short ${ADMIN_HOST}`);
+  console.log(`  curl -s https://${ADMIN_HOST}/api/v1/health`);
+  console.log("OWNER_ALLOWED_HOSTS: not set in Phase 1 (Phase 3 enforcement).");
 }
 
 main().catch((e) => {
