@@ -1,0 +1,15 @@
+# Phase 1 admin host — trigger reference only (dashboard-managed routes in production).
+# Do not deploy this file directly; use scripts/cf-admin-domain-phase1.mjs or Dashboard.
+# See docs/security/ADMIN_DOMAIN_PHASE1_EXECUTION_REPORT.md
+
+name = "aistroyka-web-production"
+compatibility_date = "2024-12-30"
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
+main = ".open-next/deploy/worker-bootstrap.js"
+
+[env.production]
+name = "aistroyka-web-production"
+
+[[env.production.routes]]
+pattern = "admin.aistroyka.ai"
+custom_domain = true
