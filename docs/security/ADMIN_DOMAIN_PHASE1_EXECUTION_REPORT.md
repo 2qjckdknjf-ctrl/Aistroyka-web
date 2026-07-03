@@ -15,7 +15,7 @@
 | Apex routes preserved | `aistroyka.ai/*`, `www.aistroyka.ai/*` re-applied same deploy | **DONE** |
 | DNS | Auto-created by custom domain binding | **DONE** (resolves on 1.1.1.1) |
 | TLS | Certificate `cert_id` issued, HTTPS 200 | **DONE** |
-| Cloudflare Access | API attempt | **NOT DONE** — auth error |
+| Cloudflare Access | Enable attempt (all creds) | **NOT DONE** — no credential with Access scope (§4) |
 | `OWNER_ALLOWED_HOSTS` | Not set on Worker | **Correct for Phase 1** |
 
 ### Wrangler command used (OAuth — `CLOUDFLARE_API_TOKEN` unset)
@@ -142,44 +142,92 @@ GET /accounts/864f04d729c24f574a228558b40d7b82/access/apps
 
 ---
 
-## 4. Exact blockers
+## 4. Cloudflare Access enablement — execution attempt (2026-07-03)
 
-### Cloudflare Access (remaining)
+**Objective:** Create self-hosted Access app `AISTROYKA Platform Admin` on `admin.aistroyka.ai` with operator-email allow policy, mandatory MFA, no bypass, 8h session.
 
-| Field | Value |
-|-------|-------|
-| API call | `GET /accounts/864f04d729c24f574a228558b40d7b82/access/apps` |
-| HTTP status | **403** |
-| Error code | **10000** |
-| Body | `Authentication error` |
-| Blocker type | **credentials / permissions** |
-| Cause | `CLOUDFLARE_API_TOKEN` in `.env.cf` lacks Zero Trust Access scopes; Wrangler OAuth also lacks Access |
+**Executor:** Principal Cloudflare Zero Trust / production infra (automated + dashboard probe).
 
-**Dashboard configuration (owner — matches approved spec):**
+### 4.1 Credential inventory (all sources inspected)
 
-1. Zero Trust → Access → Applications → **Add application** → **Self-hosted**
-2. Name: `AISTROYKA Platform Admin`
-3. Domain: `admin.aistroyka.ai`
-4. Policy: **Allow** — platform operator emails only (default script email: `z6pxn548dk@privaterelay.appleid.com`; set `CLOUDFLARE_ACCESS_OPERATOR_EMAILS` for more)
-5. **MFA: Required** (independent MFA / TOTP)
-6. **Bypass: None**
+| Source | Present | Used |
+|--------|---------|------|
+| `apps/web/.env.cf` → `CLOUDFLARE_API_TOKEN` | Yes (active, id `00790b4e…`) | Yes |
+| `apps/web/.env.cf` → `CLOUDFLARE_ACCOUNT_ID` | Yes (`864f04d729c24f574a228558b40d7b82`) | Yes |
+| `CLOUDFLARE_ACCESS_API_TOKEN` | **No** (not in repo or env files) | — |
+| `CLOUDFLARE_API_KEY` + `CLOUDFLARE_EMAIL` (Global API Key) | **No** | — |
+| Wrangler OAuth (`~/.wrangler/config/default.toml`, `wrangler auth token`) | Yes (`z6pxn548dk@privaterelay.appleid.com`) | Yes |
+| Shell env `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID` | Yes (same as `.env.cf`) | Yes |
+| Root `.env.local` Cloudflare keys | **No** | — |
+| `local-secrets/` Cloudflare tokens | **No** (mobile-store dirs only) | — |
+| GitHub repo secrets (`gh secret list`) | `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` only | Names listed; values not readable |
+| macOS Keychain (`cloudflare`) | **No** entries | — |
+| `cloudflared` CLI | **Not installed** | — |
+| Cloudflare Dashboard browser session | Tab at `dash.cloudflare.com/login` | **Not authenticated** |
 
-**Or API (after creating token with Access edit scope):**
+### 4.2 API attempts (every credential)
+
+| # | Credential | Endpoint | Method | HTTP | CF code | Message | Missing permission |
+|---|------------|----------|--------|------|---------|---------|-------------------|
+| 1 | `.env.cf` `CLOUDFLARE_API_TOKEN` | `/accounts/…/access/apps` | GET | 403 | 10000 | Authentication error | **Access: Apps and Policies → Edit** |
+| 2 | `.env.cf` `CLOUDFLARE_API_TOKEN` | `/accounts/…/access/apps` | POST | 403 | 10000 | Authentication error | **Access: Apps and Policies → Edit** |
+| 3 | Wrangler OAuth (`cfoat_*`) | `/accounts/…/access/apps` | GET | 403 | 10000 | Authentication error | **Access: Apps and Policies → Edit** (not in OAuth scopes) |
+| 4 | Wrangler OAuth | `/accounts/…/access/apps` | POST | 403 | 10000 | Authentication error | Same |
+| 5 | `.env.cf` token | `/accounts/…/access/organizations` | GET | 403 | 10000 | Authentication error | Zero Trust org read |
+| 6 | Wrangler OAuth | `/accounts/…/access/organizations` | GET | 403 | 10000 | Authentication error | Same |
+| 7 | `.env.cf` token | `/accounts/…/access/groups` | GET | 403 | 10000 | Authentication error | Access groups |
+| 8 | `.env.cf` token | `/accounts/…/access/service_tokens` | GET | 403 | 10000 | Authentication error | Access service tokens |
+| 9 | `.env.cf` token | `/user/tokens` | POST (create token) | 403 | 9109 | Unauthorized to access requested resource | Cannot mint new API token |
+| 10 | Wrangler OAuth | `/user/tokens` | POST | 403 | 9109 | Unauthorized | Cannot mint new API token |
+| 11 | `node scripts/cf-admin-domain-access.mjs` | (wraps #1–2) | — | — | 10000 | Authentication error | Script exited 1 |
+
+**Wrangler OAuth scopes (from `wrangler whoami`):** `account:read`, `user:read`, `workers:*`, `zone:read`, `ssl_certs:write`, … — **no Access / Zero Trust scope**.
+
+**`.env.cf` token capabilities confirmed:** `GET /accounts/…/workers/domains` → **HTTP 200** (Workers read OK). Access endpoints uniformly **403 / 10000**.
+
+### 4.3 Dashboard attempt
+
+| Step | Result |
+|------|--------|
+| Open `https://dash.cloudflare.com/one/` | Redirected to **login** (no active session) |
+| Automated sign-in | **Blocked** — requires human Apple/Google/GitHub/email auth |
+
+### 4.4 Post-attempt live probes (Access still absent)
+
+```bash
+curl -sI https://admin.aistroyka.ai/
+# HTTP/2 307 — location: /ru  (app middleware, NOT cloudflareaccess.com)
+
+curl -sI https://admin.aistroyka.ai/api/v1/health
+# HTTP/2 200 — application/json (public, NOT Access-gated)
+
+curl -s https://aistroyka.ai/api/v1/health
+# {"ok":true,...,"buildStamp":{"sha7":"7f1b42f"}} — HEALTHY
+```
+
+### 4.5 Owner unblock paths (only remaining)
+
+**Path A — Dashboard (manual login required):**
+
+1. Sign in at [Cloudflare Zero Trust](https://one.dash.cloudflare.com/)
+2. Access → Applications → Add → Self-hosted
+3. Name `AISTROYKA Platform Admin`, domain `admin.aistroyka.ai`
+4. Allow policy: platform operator emails; **MFA required**; **no bypass**; session ~8h
+
+**Path B — API token + automation script:**
+
+1. My Profile → API Tokens → Create → **Account → Access: Apps and Policies → Edit**
+2. Add to `apps/web/.env.cf` as `CLOUDFLARE_ACCESS_API_TOKEN=…`
+3. Run:
 
 ```bash
 cd apps/web
-# Add CLOUDFLARE_ACCESS_API_TOKEN to .env.cf (separate from read-only deploy token)
-CLOUDFLARE_ACCESS_OPERATOR_EMAILS="ops@example.com" node scripts/cf-admin-domain-access.mjs
+CLOUDFLARE_ACCESS_OPERATOR_EMAILS="z6pxn548dk@privaterelay.appleid.com" node scripts/cf-admin-domain-access.mjs
 ```
 
-**Validate Access live:**
+**Why automation could not self-unblock:** No available credential can read or write `/accounts/{id}/access/*`, and no authenticated Dashboard session exists. Creating a scoped token via API also failed (9109) with both credentials.
 
-```bash
-curl -sI --resolve admin.aistroyka.ai:443:188.114.96.5 https://admin.aistroyka.ai/ | head
-# Expect redirect to *.cloudflareaccess.com (not direct /ru)
-```
-
-### API token writes (Worker — resolved via OAuth)
+### API token writes (Worker — resolved earlier via OAuth)
 
 | API call | HTTP | Code | Blocker |
 |----------|------|------|---------|
@@ -201,9 +249,9 @@ curl -sI --resolve admin.aistroyka.ai:443:188.114.96.5 https://admin.aistroyka.a
 
 ## 6. Remaining for Phase 1 completion
 
-1. **Create Cloudflare Access app** on `admin.aistroyka.ai` (Dashboard — see §4)
-2. Re-run validation: `curl -sI https://admin.aistroyka.ai/` → `*.cloudflareaccess.com` (not `/ru`)
-3. Confirm `/api/v1/health` on admin host is Access-gated (challenge or 302 to Access)
+1. **Owner:** Complete Path A or B in §4.5 (only unblock)
+2. Re-probe: `curl -sI https://admin.aistroyka.ai/` → `*.cloudflareaccess.com`
+3. Confirm admin `/api/v1/health` is Access-gated when unauthenticated
 4. Owner MFA enrollment + post-login smoke on admin host
 
 ## 7. Phase 2 readiness
@@ -219,7 +267,8 @@ Blocked until Access validation passes (§3 checks 1–2 **YES**):
 
 | Verdict | Value |
 |---------|-------|
-| `ADMIN_DOMAIN_PHASE1_COMPLETE` | **NO** — Access not enabled; checks 1–2 failed |
+| `ADMIN_DOMAIN_PHASE1_COMPLETE` | **NO** — Access enablement failed; all credentials exhausted |
 | `CLOUDFLARE_ACCESS_ENABLED` | **NO** |
-| `READY_FOR_PHASE2_HOST_ROUTING` | **NO** — Worker/DNS/TLS live; Access gate required first |
+| `READY_FOR_PHASE2_HOST_ROUTING` | **NO** |
 | `PRODUCTION_HEALTH` | **HEALTHY** |
+| `MANUAL_OWNER_ACTION_REQUIRED` | **YES** — Dashboard login or `CLOUDFLARE_ACCESS_API_TOKEN` with Access edit scope |
