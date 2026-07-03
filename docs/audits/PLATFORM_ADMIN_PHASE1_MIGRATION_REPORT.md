@@ -87,6 +87,8 @@ cd apps/web && bun run test -- lib/platform-admin app/api/v1/admin/billing app/a
 - DNS / Cloudflare route for `admin.aistroyka.ai` (host policy helpers only)
 - Removal of `/owner` or `/api/v1/admin/billing|leads` aliases
 
+**Follow-on:** Final admin host architecture and rollout plan — `docs/security/ADMIN_DOMAIN_*.md` (2026-07-03).
+
 ## Final verdicts
 
 | Verdict | Value |

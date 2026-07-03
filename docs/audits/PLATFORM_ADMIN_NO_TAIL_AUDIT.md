@@ -261,3 +261,5 @@ Phase 1 separation is intact on branch HEAD. Residual items are **P2 hygiene** (
 | `READY_FOR_ROMA_READONLY_PAGE` | **YES** |
 | `READY_FOR_ADMIN_HOST_DEPLOY` | **PARTIAL** |
 | `NEXT_SAFE_ACTION` | Add read-only page at `apps/web/app/[locale]/(platform-admin)/platform-admin/testing/page.tsx` under existing layout; add optional `Testing` nav item to `PlatformAdminShell`; show static/read-only artifacts only; exclude uncommitted QA/package files from the ROMA PR |
+
+**Update (2026-07-03):** Admin host rollout architecture documented in `docs/security/ADMIN_DOMAIN_*.md`. `isPlatformAdminHost` wiring and DNS remain implementation follow-on.
