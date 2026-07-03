@@ -3,16 +3,20 @@
 import { Card, Badge } from "@/components/ui";
 import { PLATFORM_ADMIN_BASE_PATH, PLATFORM_ADMIN_PREFERRED_HOST } from "@/lib/platform-admin/constants";
 import type { RomaQualityDashboard } from "@/lib/platform-admin/roma-quality-dashboard.types";
+import type { RomaEngineeringIntelligence } from "@/lib/platform-admin/roma-engineering-intelligence.types";
 import {
   blockerSeverityBadgeVariant,
+  confidenceBadgeVariant,
   formatPercent,
   formatTimestamp,
   qualityStatusBadgeVariant,
   readinessBadgeVariant,
+  releaseDecisionBadgeVariant,
 } from "@/lib/platform-admin/quality-dashboard-ui";
 
 type Props = {
   dashboard: RomaQualityDashboard;
+  intelligence: RomaEngineeringIntelligence;
 };
 
 function MetricTile({
@@ -35,8 +39,9 @@ function MetricTile({
   );
 }
 
-export function PlatformAdminTestingClient({ dashboard }: Props) {
+export function PlatformAdminTestingClient({ dashboard, intelligence }: Props) {
   const d = dashboard;
+  const intel = intelligence;
   const criticalCount = d.blockers.filter((b) => b.severity === "critical").length;
   const warningCount = d.blockers.filter((b) => b.severity === "warning").length;
 
@@ -64,6 +69,82 @@ export function PlatformAdminTestingClient({ dashboard }: Props) {
           </code>
           . ROMA cannot mutate production from here.
         </p>
+      </Card>
+
+      <Card className="border-l-4 border-l-aistroyka-accent p-aistroyka-5">
+        <div className="flex flex-wrap items-start justify-between gap-aistroyka-3">
+          <div>
+            <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">
+              Engineering Intelligence
+            </h2>
+            <p className="mt-aistroyka-1 text-aistroyka-footnote text-aistroyka-text-tertiary">
+              Rule-based engineering conclusions from live probes — recommendation only, no automatic fixes.
+            </p>
+          </div>
+          <Badge variant={releaseDecisionBadgeVariant(intel.releaseDecision)}>
+            {intel.releaseDecisionLabel}
+          </Badge>
+        </div>
+        <p className="mt-aistroyka-4 text-aistroyka-subheadline text-aistroyka-text-secondary">
+          {intel.engineeringAssessment}
+        </p>
+        <div className="mt-aistroyka-4 grid gap-aistroyka-3 sm:grid-cols-2 lg:grid-cols-3">
+          <MetricTile
+            label="Release recommendation"
+            value={intel.releaseDecisionLabel}
+            hint="Derived from probe evidence only"
+          />
+          <MetricTile
+            label="Confidence"
+            value={intel.confidenceScore.toUpperCase()}
+            hint={
+              intel.confidencePercent !== null
+                ? `${intel.confidencePercent}% probe alignment`
+                : "Insufficient evidence"
+            }
+          />
+          <MetricTile label="Business impact" value={intel.businessImpact.slice(0, 80) + (intel.businessImpact.length > 80 ? "…" : "")} />
+        </div>
+        <div className="mt-aistroyka-5">
+          <h3 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">Reasoning</h3>
+          <ul className="mt-aistroyka-2 list-disc space-y-aistroyka-1 pl-aistroyka-5 text-aistroyka-subheadline text-aistroyka-text-secondary">
+            {intel.reasoning.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+        </div>
+        {intel.recommendations.length > 0 ? (
+          <div className="mt-aistroyka-5">
+            <h3 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">Recommendations</h3>
+            <ul className="mt-aistroyka-2 list-disc space-y-aistroyka-1 pl-aistroyka-5 text-aistroyka-subheadline text-aistroyka-text-secondary">
+              {intel.recommendations.map((rec) => (
+                <li key={rec}>{rec}</li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+        {intel.topRisks.length > 0 ? (
+          <div className="mt-aistroyka-5">
+            <h3 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">Top risks</h3>
+            <ul className="mt-aistroyka-3 space-y-aistroyka-3">
+              {intel.topRisks.map((risk) => (
+                <li
+                  key={risk.id}
+                  className="rounded-card border border-aistroyka-border-subtle px-aistroyka-4 py-aistroyka-3"
+                >
+                  <div className="flex flex-wrap items-center gap-aistroyka-2">
+                    <p className="font-medium text-aistroyka-text-primary">{risk.whatHappened}</p>
+                    <Badge variant={blockerSeverityBadgeVariant(risk.severity)}>{risk.severity}</Badge>
+                    <Badge variant={confidenceBadgeVariant(risk.confidence)}>{risk.confidence} confidence</Badge>
+                  </div>
+                  <p className="mt-aistroyka-2 text-aistroyka-footnote text-aistroyka-text-tertiary">
+                    Evidence: {risk.evidence}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
       </Card>
 
       <Card className="p-aistroyka-5">

@@ -1,4 +1,5 @@
 import type { QualityStatus, ReadinessLevel, BlockerSeverity } from "./roma-quality-dashboard.types";
+import type { ConfidenceLevel, ReleaseDecision } from "./roma-engineering-intelligence.types";
 
 export function qualityStatusBadgeVariant(
   status: QualityStatus
@@ -61,6 +62,40 @@ export function blockerSeverityBadgeVariant(
 export function formatPercent(percent: number | null): string {
   if (percent === null) return "Unknown";
   return `${percent}%`;
+}
+
+export function confidenceBadgeVariant(
+  level: ConfidenceLevel
+): "success" | "warning" | "danger" | "neutral" {
+  switch (level) {
+    case "high":
+      return "success";
+    case "medium":
+      return "warning";
+    case "low":
+      return "danger";
+    default: {
+      const _exhaustive: never = level;
+      return _exhaustive;
+    }
+  }
+}
+
+export function releaseDecisionBadgeVariant(
+  decision: ReleaseDecision
+): "success" | "warning" | "danger" | "neutral" {
+  switch (decision) {
+    case "ready":
+      return "success";
+    case "ready_with_warnings":
+      return "warning";
+    case "not_ready":
+      return "danger";
+    default: {
+      const _exhaustive: never = decision;
+      return _exhaustive;
+    }
+  }
 }
 
 export function formatTimestamp(value: string | null): string {

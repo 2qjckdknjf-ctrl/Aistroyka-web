@@ -43,7 +43,9 @@ describe("ROMA live quality dashboard", () => {
     expect(clientSrc).toMatch(/platformTimeline/);
     expect(clientSrc).toMatch(/recommendations/);
     expect(clientSrc).toMatch(/knownRisks/);
-    expect(pageSrc).toMatch(/buildRomaQualityDashboard/);
+    expect(pageSrc).toMatch(/buildRomaEngineeringIntelligence/);
+    expect(pageSrc).toMatch(/intelligence={intelligence}/);
+    expect(clientSrc).toMatch(/Engineering Intelligence/);
   });
 
   it("quality API route is read-only GET under platform namespace", () => {
