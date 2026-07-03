@@ -12,6 +12,7 @@ describe("platform-admin middleware-paths", () => {
     expect(isPlatformAdminPagePath("/owner/")).toBe(true);
     expect(isPlatformAdminPagePath(PLATFORM_ADMIN_BASE_PATH)).toBe(true);
     expect(isPlatformAdminPagePath(`${PLATFORM_ADMIN_BASE_PATH}/billing`)).toBe(true);
+    expect(isPlatformAdminPagePath(`${PLATFORM_ADMIN_BASE_PATH}/testing`)).toBe(true);
     expect(isPlatformAdminPagePath("/admin")).toBe(false);
     expect(isPlatformAdminPagePath("/dashboard")).toBe(false);
   });

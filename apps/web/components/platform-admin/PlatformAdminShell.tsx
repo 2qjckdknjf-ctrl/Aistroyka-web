@@ -2,13 +2,7 @@
 
 import { Link } from "@/i18n/navigation";
 import { usePathname } from "next/navigation";
-import { PLATFORM_ADMIN_BASE_PATH } from "@/lib/platform-admin/constants";
-
-const NAV_ITEMS = [
-  { href: PLATFORM_ADMIN_BASE_PATH, label: "Overview", exact: true },
-  { href: `${PLATFORM_ADMIN_BASE_PATH}/billing`, label: "Billing pilot" },
-  { href: `${PLATFORM_ADMIN_BASE_PATH}/leads`, label: "Contact leads" },
-] as const;
+import { PLATFORM_ADMIN_SHELL_NAV_ITEMS } from "@/lib/platform-admin/shell-nav";
 
 export function PlatformAdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? "";
@@ -26,7 +20,7 @@ export function PlatformAdminShell({ children }: { children: React.ReactNode }) 
             </p>
           </div>
           <nav className="flex flex-wrap gap-aistroyka-2" aria-label="Platform admin">
-            {NAV_ITEMS.map((item) => {
+            {PLATFORM_ADMIN_SHELL_NAV_ITEMS.map((item) => {
               const active = item.exact
                 ? pathname.endsWith(item.href) || pathname.endsWith(`${item.href}/`)
                 : pathname.includes(item.href);
