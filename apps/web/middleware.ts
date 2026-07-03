@@ -6,6 +6,7 @@ import { checkLiteAllowList } from "@/lib/api/lite-allow-list";
 import { resolvePostAuthEntry } from "@/lib/entry/entry-routing";
 import { OWNER_RATE_LIMIT_ALREADY_APPLIED_HEADER } from "@/lib/platform-owner/constants";
 import { gateOwnerRequest } from "@/lib/platform-owner/middleware-owner-gate";
+import { isPlatformAdminApiPath, isPlatformAdminPagePath } from "@/lib/platform-admin/middleware-paths";
 import { applyApiSecurityHeadersToHeaders, getPageSecurityHeaders } from "@/lib/security-headers";
 
 const intlMiddleware = createIntlMiddleware(routing);
@@ -53,8 +54,8 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const isProduction = process.env.NODE_ENV === "production";
   const pathWithoutLocEarly = pathWithoutLocale(pathname).path;
-  const isOwnerPage = pathWithoutLocEarly.startsWith("/owner");
-  const isOwnerApi = pathname.startsWith("/api/v1/owner");
+  const isPlatformAdminPage = isPlatformAdminPagePath(pathWithoutLocEarly);
+  const isPlatformAdminApi = isPlatformAdminApiPath(pathname);
 
   if (pathname.startsWith("/api/v1")) {
     const forbidden = checkLiteAllowList(pathname, request.method, request.headers.get("x-client"));
@@ -63,7 +64,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  if (isOwnerApi) {
+  if (isPlatformAdminApi) {
     const { response: sessionResponse, user } = await updateSession(request);
     if (sessionResponse.status === 503) {
       return applyApiSecurityHeaders(sessionResponse);
@@ -99,7 +100,7 @@ export async function middleware(request: NextRequest) {
     return applyPageSecurityHeaders(sessionResponse, process.env.NODE_ENV === "production");
   }
 
-  if (isOwnerPage) {
+  if (isPlatformAdminPage) {
     const denied = await gateOwnerRequest({
       request,
       sessionResponse,

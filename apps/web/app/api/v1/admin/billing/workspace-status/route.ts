@@ -1,65 +1,7 @@
-/**
- * GET /api/v1/admin/billing/workspace-status?workspaceId=...
- * Internal: workspace billing pilot diagnostics (Step 19) + E2E execution status (Step 20). Admin only.
- */
-
-import { NextResponse } from "next/server";
-import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
-import { requireAdmin } from "@/lib/api/require-admin";
-import { requirePlatformOwnerLegacyAdminRoute } from "@/lib/api/require-platform-admin-legacy-route";
-import { getAdminClient } from "@/lib/supabase/admin";
-import { getBillingPilotWorkspaceDiagnostics } from "@/lib/platform/billing-readiness/billing-pilot-ops.service";
-import {
-  getBillingPilotExecutionStatus,
-  getBillingPilotOperatorActions,
-} from "@/lib/platform/billing-readiness/billing-pilot-execution.service";
-
 export const dynamic = "force-dynamic";
+import { delegateLegacyTenantAdminPlatformApi } from "@/lib/platform-admin/legacy-tenant-admin-api";
+import { GET as platformGET } from "../../../platform/billing/workspace-status/route";
 
 export async function GET(request: Request) {
-  const platformErr = await requirePlatformOwnerLegacyAdminRoute(request);
-  if (platformErr) return platformErr;
-
-  const ctx = await getTenantContextFromRequest(request);
-  try {
-    requireTenant(ctx);
-  } catch (e) {
-    if (e instanceof TenantRequiredError) {
-      return NextResponse.json({ error: e.message }, { status: 401 });
-    }
-    throw e;
-  }
-  const adminErr = requireAdmin(ctx, "read");
-  if (adminErr) return adminErr;
-
-  const url = new URL(request.url);
-  const workspaceId = url.searchParams.get("workspaceId")?.trim();
-  if (!workspaceId) {
-    return NextResponse.json({ error: "workspaceId query param required" }, { status: 400 });
-  }
-
-  const admin = getAdminClient();
-  if (!admin) {
-    return NextResponse.json({ error: "Service unavailable" }, { status: 503 });
-  }
-
-  const diagnostics = await getBillingPilotWorkspaceDiagnostics(admin, workspaceId);
-  if (!diagnostics) {
-    return NextResponse.json({ error: "Failed to load diagnostics" }, { status: 500 });
-  }
-
-  const executionStatus = await getBillingPilotExecutionStatus(admin, workspaceId);
-  const operatorActions = getBillingPilotOperatorActions(executionStatus);
-
-  return NextResponse.json({
-    ...diagnostics,
-    executionStatus: {
-      stage: executionStatus.stage,
-      suggestedOperatorAction: executionStatus.suggestedOperatorAction,
-      suggestedOperatorHint: executionStatus.suggestedOperatorHint,
-      attentionReasons: executionStatus.attentionReasons,
-      isSandbox: executionStatus.isSandbox,
-    },
-    operatorActions,
-  });
+  return delegateLegacyTenantAdminPlatformApi(request, "/billing/workspace-status", platformGET);
 }
