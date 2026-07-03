@@ -18,22 +18,26 @@ Stages ROMA from architecture to operational platform **without prescribing impl
 ## 2. Roadmap Overview
 
 ```
-Stage 0 — Architecture (current)
+Stage 0 — Architecture ✅
     ↓
-Stage 1 — Core + Inventory + Reporting skeleton
+Stage 1 — Core + Inventory + Reporting skeleton (governance ✅)
     ↓
-Stage 2 — Web + Backend + Security adapters
+Stage 2 — Intelligence layer (decision engine) ✅
     ↓
-Stage 3 — Database + RBAC + AI adapters
+Stage 3 — Web + Backend + Security adapters
     ↓
-Stage 4 — Mobile (iOS + Android) integration
+Stage 4 — Database + RBAC + AI adapters
     ↓
-Stage 5 — Performance + Accessibility depth
+Stage 5 — Mobile (iOS + Android) integration
     ↓
-Stage 6 — Observability + Chaos + Learning maturity
+Stage 6 — Performance + Accessibility depth
     ↓
-Stage 7 — Council automation + dashboard (optional)
+Stage 7 — Observability + Chaos + Learning maturity
+    ↓
+Stage 8 — Council automation + dashboard (optional)
 ```
+
+*Note (2026-07-03): Stage 2 was redefined as ROMA Intelligence (architecture). Former roadmap Stage 2 (WEB/BCK/SEC adapters) is now **Stage 3**. Stages 3–7 renumbered to 4–8 accordingly in section headings below.*
 
 Estimated calendar duration depends on team allocation; architecture assumes **incremental value per stage** — no big-bang.
 
@@ -91,7 +95,41 @@ Establish orchestration skeleton, inventory pipeline, artifact layout, and verdi
 
 ---
 
-## 5. Stage 2 — Web + Backend + Security
+## 5. Stage 2 — Intelligence Layer ✅
+
+### Goals
+Define the decision brain that controls all future QA subsystems — risk, planning, regression, coverage, learning, release confidence, and executive reporting.
+
+### Deliverables
+| # | Deliverable |
+|---|-------------|
+| 2.1 | `docs/roma/intelligence/` — 13 engine architecture documents |
+| 2.2 | `ROMA_DECISION_PIPELINE.md` — end-to-end flow |
+| 2.3 | `ROMA_KNOWLEDGE_GRAPH.md` — impact analysis schema |
+| 2.4 | `ADR-0007` — recommendation-only boundary |
+| 2.5 | `ROMA_STAGE2_REVIEW.md` — stage gate |
+
+### Entry criteria
+- Stage 1 governance approved
+
+### Exit criteria
+- All intelligence engines documented with inputs, outputs, rationale
+- No contradiction with ADRs 0001–0006
+- Core spec delegates planning to Intelligence
+
+### Non-goals
+- Test implementation (any subsystem)
+- Runtime intelligence service
+- Knowledge graph auto-extraction
+
+### Status
+**COMPLETE** (2026-07-03)
+
+---
+
+## 6. Stage 3 — Web + Backend + Security
+
+*Former roadmap Stage 2.*
 
 ### Goals
 Unify public/dashboard validation and API contract monitoring under ROMA contracts.
@@ -99,12 +137,13 @@ Unify public/dashboard validation and API contract monitoring under ROMA contrac
 ### Deliverables
 | # | Deliverable |
 |---|-------------|
-| 2.1 | ROMA WEB adapter (absorb `tests/e2e`, `tests/qa` under manifest) |
-| 2.2 | ROMA BCK network monitor + contract registry |
-| 2.3 | ROMA SEC sensitive endpoint catalog + finance denylist integration |
-| 2.4 | Multi-browser/viewport matrix policy (tier-gated) |
-| 2.5 | T1 PR gate advisory comment with DOMAIN_VERDICT_BOARD |
-| 2.6 | Stakeholder profile integration for portal slices |
+| 3.1 | ROMA WEB adapter (absorb `tests/e2e`, `tests/qa` under manifest) |
+| 3.2 | ROMA BCK network monitor + contract registry |
+| 3.3 | ROMA SEC sensitive endpoint catalog + finance denylist integration |
+| 3.4 | Multi-browser/viewport matrix policy (tier-gated) |
+| 3.5 | T1 PR gate advisory comment with DOMAIN_VERDICT_BOARD |
+| 3.6 | Stakeholder profile integration for portal slices |
+| 3.7 | Intelligence `run_plan` consumer in Core + WEB/BCK/SEC adapters |
 
 ### Exit criteria
 - T1 nightly on staging: PUBLIC_SITE, SECURITY, BACKEND domains ≠ UNKNOWN
@@ -117,7 +156,9 @@ Unify public/dashboard validation and API contract monitoring under ROMA contrac
 
 ---
 
-## 6. Stage 3 — Database + RBAC + AI
+## 7. Stage 4 — Database + RBAC + AI
+
+*Former roadmap Stage 3.*
 
 ### Goals
 Prove data consistency, role matrix, and AI LIVE governance.
@@ -143,7 +184,9 @@ Prove data consistency, role matrix, and AI LIVE governance.
 
 ---
 
-## 7. Stage 4 — Mobile Integration
+## 8. Stage 5 — Mobile Integration
+
+*Former roadmap Stage 4.*
 
 ### Goals
 Bring iOS and Android under same release verdict board.
@@ -168,7 +211,9 @@ Bring iOS and Android under same release verdict board.
 
 ---
 
-## 8. Stage 5 — Performance + Accessibility
+## 9. Stage 6 — Performance + Accessibility
+
+*Former roadmap Stage 5.*
 
 ### Goals
 Budget enforcement and a11y regression detection on critical paths.
@@ -188,7 +233,9 @@ Budget enforcement and a11y regression detection on critical paths.
 
 ---
 
-## 9. Stage 6 — Observability + Chaos + Learning Maturity
+## 10. Stage 7 — Observability + Chaos + Learning Maturity
+
+*Former roadmap Stage 6.*
 
 ### Goals
 Close the loop: prove deploy SHA, inject faults safely, learn from trends.
@@ -209,7 +256,9 @@ Close the loop: prove deploy SHA, inject faults safely, learn from trends.
 
 ---
 
-## 10. Stage 7 — Council Automation (Optional)
+## 11. Stage 8 — Council Automation (Optional)
+
+*Former roadmap Stage 7.*
 
 ### Goals
 Reduce manual council friction; optional read-only dashboard.
@@ -228,11 +277,11 @@ Reduce manual council friction; optional read-only dashboard.
 
 ---
 
-## 11. Dependencies on AISTROYKA Product
+## 12. Dependencies on AISTROYKA Product
 
 | Product state | ROMA stage blocked? |
 |---------------|---------------------|
-| Staging unstable | Stage 2+ flaky — fix deploy first |
+| Staging unstable | Stage 3+ flaky — fix deploy first |
 | No stakeholder smoke account | SEC finance slice UNKNOWN |
 | No pilot E2E creds | Dashboard UNKNOWN |
 | iOS Layer B creds missing | IOS deep UNKNOWN |
@@ -240,7 +289,7 @@ Reduce manual council friction; optional read-only dashboard.
 
 ---
 
-## 12. Success Metrics (Platform KPIs)
+## 13. Success Metrics (Platform KPIs)
 
 | KPI | Target (12 months post Stage 1) |
 |-----|--------------------------------|
@@ -253,7 +302,7 @@ Reduce manual council friction; optional read-only dashboard.
 
 ---
 
-## 13. Governance Checkpoints
+## 14. Governance Checkpoints
 
 | Checkpoint | When | Participants |
 |------------|------|--------------|
@@ -269,3 +318,4 @@ Reduce manual council friction; optional read-only dashboard.
 | Version | Date | Change |
 |---------|------|--------|
 | 1.0 | 2026-07-03 | Initial roadmap |
+| 1.1 | 2026-07-03 | Stage 2 = Intelligence; adapter stages renumbered 3–8 |

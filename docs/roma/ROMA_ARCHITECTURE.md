@@ -122,6 +122,13 @@ See `ROMA_CORE_PRINCIPLES.md` for the full principle catalog. Summary:
 │         │                    │                            │                 │
 │         ▼                    ▼                            │                 │
 │  ┌──────────────────────────────────────────────────────────────────────┐  │
+│  │              ROMA INTELLIGENCE (decision layer)                       │  │
+│  │  Risk · Planner · Regression · Coverage · Learning · Confidence     │  │
+│  │  Knowledge Graph · Decision Pipeline · Evidence · Scoring · Priority  │  │
+│  └──────────────────────────────┬───────────────────────────────────────┘  │
+│                                 │ run_plan · risk_manifest               │
+│                                 ▼                                        │
+│  ┌──────────────────────────────────────────────────────────────────────┐  │
 │  │                     SUBSYSTEM ADAPTER LAYER                           │  │
 │  │                                                                       │  │
 │  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ │  │
@@ -154,8 +161,9 @@ See `ROMA_CORE_PRINCIPLES.md` for the full principle catalog. Summary:
 ### Data flow summary
 
 ```
-Inventory → Plan → Execute (tiered) → Collect artifacts → Normalize findings
-    → Score (coverage, risk, PQS) → Aggregate (Release verdict) → Learn
+Inventory → Change detect → Intelligence (risk · plan · forecast)
+    → Execute (tiered) → Collect artifacts → Normalize findings
+    → Score (coverage, PQS, confidence) → Aggregate (Release verdict) → Learn → Report
 ```
 
 ---
@@ -165,6 +173,7 @@ Inventory → Plan → Execute (tiered) → Collect artifacts → Normalize find
 | Subsystem | Role |
 |-----------|------|
 | **ROMA Core** | Orchestration, inventory, scheduling, contracts, artifact store |
+| **ROMA Intelligence** | Risk scoring, test planning, regression forecast, coverage debt, release confidence, executive reports — recommendation only (`docs/roma/intelligence/`) |
 | **ROMA Web** | Public site, dashboard, admin, portal, owner web surfaces |
 | **ROMA Android** | Android Manager + Worker native/UI/API-chain validation |
 | **ROMA iOS** | iOS Manager + Worker simulator, device, Layer B live |
@@ -189,7 +198,7 @@ Each subsystem **owns validation logic for its domain** and **emits normalized f
 
 | Subsystem | Owns | Does not own |
 |-----------|------|--------------|
-| ROMA Core | Run plans, inventory sync, artifact paths, subsystem registry | Domain-specific assertions |
+| ROMA Core | Run plans (via Intelligence), inventory sync, artifact paths, subsystem registry | Domain-specific assertions, risk scoring logic |
 | ROMA Web | Web UX, routing, i18n surfaces, responsive layout | Native mobile binaries |
 | ROMA Android | Android apps, FCM, instrumented tests | iOS XCTest |
 | ROMA iOS | Xcode UITest, Layer B E2E, ASC build metadata | Playwright |
@@ -232,8 +241,14 @@ Each subsystem **owns validation logic for its domain** and **emits normalized f
 ```
 ROMA Core
   ├── requires: inventory, environment, credential profiles
+  ├── delegates planning to: ROMA Intelligence
   ├── drives: all subsystems
   └── feeds: ROMA Release, ROMA Learning
+
+ROMA Intelligence
+  ├── requires: ROMA Core inventory, Knowledge Graph, prior run artifacts
+  ├── produces: run_plan, risk_manifest, release_confidence, RPT-*
+  └── does not: execute tests or modify product code (ADR-0007)
 
 ROMA Web, iOS, Android
   ├── require: ROMA Core, ROMA Backend (API truth)
@@ -336,6 +351,16 @@ Coverage is **never** a substitute for verdicts. High coverage with failing test
 
 ---
 
+## 14.5 ROMA Intelligence Layer (Stage 2)
+
+> **Canonical source:** `docs/roma/intelligence/ROMA_INTELLIGENCE.md` and engine specs in `docs/roma/intelligence/`.
+
+ROMA Intelligence is the **decision brain** between Core orchestration and subsystem adapters. It answers what to test, why, how deeply, and whether release is safe — producing `run_plan`, risk manifests, regression forecasts, coverage debt, release confidence %, and audience-specific reports.
+
+Intelligence is **recommendation-only** (ADR-0007). Core executes approved plans; Learning ingests outcomes. No automatic production code changes.
+
+---
+
 ## 15. Project Quality Score (PQS)
 
 > **Canonical source:** `docs/roma/adr/ADR-0001-PQS-CANONICAL-WEIGHTS.md` — do not duplicate weights here.
@@ -425,5 +450,6 @@ All documents: version header, status, rationale for decisions, explicit UNKNOWN
 | Version | Date | Author | Change |
 |---------|------|--------|--------|
 | 1.0 | 2026-07-03 | ROMA Architecture | Initial baseline |
+| 1.1 | 2026-07-03 | ROMA Architecture | Stage 2 Intelligence layer (§14.5, diagram, dependency graph) |
 
-**Related documents:** `ROMA_CORE_PRINCIPLES.md`, `ROMA_SUBSYSTEMS.md`, `ROMA_EXECUTION_MODEL.md`, `ROMA_REPORTING_MODEL.md`, `ROMA_GLOSSARY.md`, `ROMA_ROADMAP.md`
+**Related documents:** `ROMA_CORE_PRINCIPLES.md`, `ROMA_SUBSYSTEMS.md`, `ROMA_EXECUTION_MODEL.md`, `ROMA_REPORTING_MODEL.md`, `ROMA_GLOSSARY.md`, `ROMA_ROADMAP.md`, `intelligence/ROMA_INTELLIGENCE.md`

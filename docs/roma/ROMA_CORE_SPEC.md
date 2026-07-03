@@ -23,7 +23,7 @@ Stage 1 delivers this **specification and policy layer**. Runtime registry YAML,
 |---|----------------|
 | R1 | Maintain **module/subsystem registry** (enabled modules, contract versions, stewards) |
 | R2 | Sync **system inventory** (routes, APIs, roles, AI entries, mobile screens) |
-| R3 | Build **run plans** from tier + environment + trigger |
+| R3 | Delegate **run plan construction** to **ROMA Intelligence** (Planner, Priority, Risk, Regression, Coverage); Core validates tier, credentials, and blocking policy |
 | R4 | Enforce **credential profile** resolution (ADR-0003) |
 | R5 | Coordinate subsystem lifecycle: `plan → execute → collect → verdict` |
 | R6 | Assign global **`run_id`** and artifact index |
@@ -38,6 +38,17 @@ Stage 1 delivers this **specification and policy layer**. Runtime registry YAML,
 - Mutate product code or production data
 - Override council CONDITIONAL GO decisions
 - Store secrets
+
+### Intelligence delegation (Stage 2+)
+
+Core **does not** select individual tests. On each run:
+
+1. Core syncs inventory and passes `change_set`, `tier`, `trigger_context` to Intelligence.
+2. Intelligence returns `run_plan.json` (tests to run/skip, environments, estimates) per `ROMA_DECISION_PIPELINE.md`.
+3. Core resolves credential profiles (ADR-0003) and executes subsystem `plan → execute → collect → verdict`.
+4. Post-run, Core passes artifacts to Intelligence for coverage update, learning, confidence, and reports.
+
+See `docs/roma/intelligence/` and ADR-0007.
 
 ---
 
@@ -233,3 +244,4 @@ When Stage 2+ implements browser tests under ROMA WEB:
 | Version | Date | Change |
 |---------|------|--------|
 | 1.0 | 2026-07-03 | Stage 1 governance spec |
+| 1.1 | 2026-07-03 | Intelligence delegation (R3, §2.1) |
