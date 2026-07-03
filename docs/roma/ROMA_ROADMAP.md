@@ -28,9 +28,11 @@ Stage 2A — Intelligence core (how ROMA thinks) ✅
     ↓
 Stage 2B — Intelligence schemas + contracts ✅
     ↓
-Stage 2C — Machine schema validation
+Stage 2C — ROMA OS Kernel & Constitution ✅
     ↓
-Stage 3 — Web + Backend + Security adapters
+Stage 2D — Machine schema validation (optional)
+    ↓
+Stage 3 — QA Application: AISTROYKA Project Adapter + Tool Adapters (WEB/BCK/SEC)
     ↓
 Stage 4 — Database + RBAC + AI adapters
     ↓
@@ -44,6 +46,8 @@ Stage 8 — Council automation + dashboard (optional)
 ```
 
 *Note (2026-07-03): Stage 2 was redefined as ROMA Intelligence (architecture). Former roadmap Stage 2 (WEB/BCK/SEC adapters) is now **Stage 3**. Stages 3–7 renumbered to 4–8 accordingly in section headings below.*
+
+*Note (2026-07-03, Stage 2C): ROMA evolves to **ROMA OS**. Stages 0–2B remain the ROMA QA Application spec. AISTROYKA is the first Project Adapter. Prior “machine schema” scope moved to **Stage 2D**.*
 
 Estimated calendar duration depends on team allocation; architecture assumes **incremental value per stage** — no big-bang.
 
@@ -189,7 +193,7 @@ Formalize Stage 2A/2 interfaces as enforceable contracts: canonical schema docs,
 - RT-Critical registry draft ✅
 
 ### Non-goals
-- Machine JSON Schema `.json` files (Stage 2C)
+- Machine JSON Schema `.json` files (Stage 2D)
 - Adapter code
 
 ### Status
@@ -197,7 +201,42 @@ Formalize Stage 2A/2 interfaces as enforceable contracts: canonical schema docs,
 
 ---
 
-## 5C. Stage 2C — Machine Schema Validation
+## 5C. Stage 2C — ROMA OS Kernel & Constitution ✅
+
+### Goals
+Define ROMA as an Engineering Intelligence Operating System: constitution, kernel, applications, adapters, platform services, compatibility with Stages 0–2B.
+
+### Deliverables
+| # | Deliverable |
+|---|-------------|
+| 2C.1 | `docs/roma/os/ROMA_CONSTITUTION.md` |
+| 2C.2 | `docs/roma/os/ROMA_OS_ARCHITECTURE.md` |
+| 2C.3 | `docs/roma/os/ROMA_KERNEL.md` |
+| 2C.4 | `docs/roma/os/ROMA_APPLICATION_MODEL.md` |
+| 2C.5 | `docs/roma/os/ROMA_ADAPTER_MODEL.md` |
+| 2C.6 | `docs/roma/os/ROMA_PLATFORM_SERVICES.md` |
+| 2C.7 | `docs/roma/os/ROMA_COMPATIBILITY_POLICY.md` |
+| 2C.8 | `ADR-0009-ROMA-OS-EVOLUTION.md` |
+| 2C.9 | `ROMA_STAGE2C_REVIEW.md` |
+
+### Exit criteria
+- Constitution + kernel + app/adapter models documented
+- QA as first app; AISTROYKA as first Project Adapter stated
+- No breaking changes to Stage 0–2B
+
+### Non-goals
+- Runtime kernel code
+- Tool Adapter implementation
+- Mass doc rename
+
+### Status
+**COMPLETE** (2026-07-03)
+
+---
+
+## 5D. Stage 2D — Machine Schema Validation
+
+*Former Stage 2C scope (pre-OS evolution).*
 
 ### Goals
 JSON Schema files, automated fixture validation, schema index.
@@ -216,9 +255,9 @@ JSON Schema files, automated fixture validation, schema index.
 
 ---
 
-## 6. Stage 3 — Web + Backend + Security
+## 6. Stage 3 — QA Application: AISTROYKA Adapter + WEB/BCK/SEC
 
-*Former roadmap Stage 2.*
+*Former roadmap Stage 2 (subsystem adapters), now under ROMA OS Application + Adapter model.*
 
 ### Goals
 Unify public/dashboard validation and API contract monitoring under ROMA contracts.
@@ -233,6 +272,7 @@ Unify public/dashboard validation and API contract monitoring under ROMA contrac
 | 3.5 | T1 PR gate advisory comment with DOMAIN_VERDICT_BOARD |
 | 3.6 | Stakeholder profile integration for portal slices |
 | 3.7 | Intelligence `run_plan` consumer in Core + WEB/BCK/SEC adapters |
+| 3.8 | Register ROMA QA app + AISTROYKA Project Adapter with Kernel |
 
 ### Exit criteria
 - T1 nightly on staging: PUBLIC_SITE, SECURITY, BACKEND domains ≠ UNKNOWN
@@ -410,3 +450,4 @@ Reduce manual council friction; optional read-only dashboard.
 | 1.1 | 2026-07-03 | Stage 2 = Intelligence; adapter stages renumbered 3–8 |
 | 1.2 | 2026-07-03 | Stage 2A Intelligence Core; Stage 2B/2C schemas added to roadmap |
 | 1.3 | 2026-07-03 | Stage 2B complete — `.schema.md` contracts, ADR-0008 |
+| 1.4 | 2026-07-03 | Stage 2C ROMA OS; machine schemas → Stage 2D |

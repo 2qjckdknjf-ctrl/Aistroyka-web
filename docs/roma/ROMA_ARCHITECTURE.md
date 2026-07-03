@@ -363,6 +363,24 @@ Intelligence is **recommendation-only** (ADR-0007). Core executes approved plans
 
 ---
 
+## 14.6 ROMA OS Evolution (Stage 2C)
+
+> **Canonical source:** `docs/roma/os/ROMA_OS_ARCHITECTURE.md`, `ROMA_CONSTITUTION.md`, `ADR-0009`.
+
+From Stage 2C onward, ROMA is also defined as **ROMA OS** — an Engineering Intelligence Operating System. This document (ROMA QA Framework architecture) remains valid; it describes the **first application** (ROMA QA) and AISTROYKA deployment context.
+
+| ROMA OS layer | Stage 0–2B mapping |
+|---------------|-------------------|
+| Kernel | ROMA Core orchestration (generalized in `ROMA_KERNEL.md`) |
+| Intelligence Layer | §14.5 + `docs/roma/intelligence/` |
+| Platform Services | Registry, Evidence, Decision, Release, etc. |
+| ROMA QA Application | Stages 0–2B + subsystem adapters (Stage 3+) |
+| AISTROYKA Project Adapter | Project inventory, finance rules, pilot gates |
+
+**Compatibility:** No mass rename of this file or prior stages (`ROMA_COMPATIBILITY_POLICY.md`).
+
+---
+
 ## 15. Project Quality Score (PQS)
 
 > **Canonical source:** `docs/roma/adr/ADR-0001-PQS-CANONICAL-WEIGHTS.md` — do not duplicate weights here.
@@ -453,5 +471,6 @@ All documents: version header, status, rationale for decisions, explicit UNKNOWN
 |---------|------|--------|--------|
 | 1.0 | 2026-07-03 | ROMA Architecture | Initial baseline |
 | 1.1 | 2026-07-03 | ROMA Architecture | Stage 2 Intelligence layer (§14.5, diagram, dependency graph) |
+| 1.2 | 2026-07-03 | ROMA Architecture | Stage 2C ROMA OS evolution note (§14.6) |
 
-**Related documents:** `ROMA_CORE_PRINCIPLES.md`, `ROMA_SUBSYSTEMS.md`, `ROMA_EXECUTION_MODEL.md`, `ROMA_REPORTING_MODEL.md`, `ROMA_GLOSSARY.md`, `ROMA_ROADMAP.md`, `intelligence/ROMA_INTELLIGENCE.md`
+**Related documents:** `ROMA_CORE_PRINCIPLES.md`, `ROMA_SUBSYSTEMS.md`, `ROMA_EXECUTION_MODEL.md`, `ROMA_REPORTING_MODEL.md`, `ROMA_GLOSSARY.md`, `ROMA_ROADMAP.md`, `intelligence/ROMA_INTELLIGENCE.md`, `os/ROMA_OS_ARCHITECTURE.md`
