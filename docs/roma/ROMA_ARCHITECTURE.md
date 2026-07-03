@@ -355,7 +355,9 @@ Coverage is **never** a substitute for verdicts. High coverage with failing test
 
 > **Canonical source:** `docs/roma/intelligence/ROMA_INTELLIGENCE.md` and engine specs in `docs/roma/intelligence/`.
 
-ROMA Intelligence is the **decision brain** between Core orchestration and subsystem adapters. It answers what to test, why, how deeply, and whether release is safe — producing `run_plan`, risk manifests, regression forecasts, coverage debt, release confidence %, and audience-specific reports.
+ROMA Intelligence is the **decision brain** between Core orchestration and subsystem adapters. Stage 2A defines **how it thinks** (reasoning, memory, knowledge, feedback); Stage 2 defines **computational engines** that implement those contracts.
+
+Canonical cognitive specs: `docs/roma/intelligence/ROMA_INTELLIGENCE_CORE.md` and related `ROMA_*_MODEL.md` documents.
 
 Intelligence is **recommendation-only** (ADR-0007). Core executes approved plans; Learning ingests outcomes. No automatic production code changes.
 

@@ -24,6 +24,10 @@ Stage 1 — Core + Inventory + Reporting skeleton (governance ✅)
     ↓
 Stage 2 — Intelligence layer (decision engine) ✅
     ↓
+Stage 2A — Intelligence core (how ROMA thinks) ✅
+    ↓
+Stage 2B — Intelligence schemas + interface contracts
+    ↓
 Stage 3 — Web + Backend + Security adapters
     ↓
 Stage 4 — Database + RBAC + AI adapters
@@ -124,6 +128,67 @@ Define the decision brain that controls all future QA subsystems — risk, plann
 
 ### Status
 **COMPLETE** (2026-07-03)
+
+---
+
+## 5A. Stage 2A — Intelligence Core (How ROMA Thinks) ✅
+
+### Goals
+Define the cognitive architecture — reasoning, memory, knowledge, feedback, decision synthesis, and lifecycle — as an Engineering Intelligence Platform.
+
+### Deliverables
+| # | Deliverable |
+|---|-------------|
+| 2A.1 | `ROMA_INTELLIGENCE_CORE.md` — platform definition |
+| 2A.2 | `ROMA_REASONING_MODEL.md` — nine-question reasoning schema |
+| 2A.3 | `ROMA_DECISION_ENGINE.md` — decision bundle synthesis |
+| 2A.4 | `ROMA_MEMORY_MODEL.md` — long-term engineering memory |
+| 2A.5 | `ROMA_RISK_MODEL.md` — risk ontology |
+| 2A.6 | `ROMA_RELEASE_MODEL.md` — release readiness reasoning |
+| 2A.7 | `ROMA_KNOWLEDGE_MODEL.md` — system world-model |
+| 2A.8 | `ROMA_FEEDBACK_MODEL.md` — prediction calibration |
+| 2A.9 | `ROMA_ENGINE_INTERFACES.md` — cognitive ↔ engine contracts |
+| 2A.10 | `ROMA_STATE_MACHINE.md` — intelligence lifecycle |
+| 2A.11 | `ROMA_STAGE2A_REVIEW.md` — stage gate |
+
+### Exit criteria
+- All 10 documents with purpose, I/O, interfaces, extensions, open questions
+- Stage 2 engines explicitly implement 2A contracts
+- No contradiction with ADR-0007
+
+### Non-goals
+- JSON Schema files (Stage 2B)
+- Runtime implementation
+- ML training
+
+### Status
+**COMPLETE** (2026-07-03)
+
+---
+
+## 5B. Stage 2B — Intelligence Schemas + Contracts
+
+### Goals
+Formalize Stage 2A/2 interfaces as validated JSON schemas and conformance checklist.
+
+### Deliverables
+| # | Deliverable |
+|---|-------------|
+| 2B.1 | `docs/roma/schemas/reasoning_trace.schema.json` |
+| 2B.2 | `docs/roma/schemas/decision_bundle.schema.json` |
+| 2B.3 | `docs/roma/schemas/state_snapshot.schema.json` |
+| 2B.4 | `docs/roma/schemas/risk_manifest.schema.json` |
+| 2B.5 | `docs/roma/schemas/run_plan.schema.json` |
+| 2B.6 | Interface conformance matrix vs `ROMA_ENGINE_INTERFACES.md` |
+| 2B.7 | RT-Critical module registry draft YAML |
+
+### Exit criteria
+- Schema validation passes on fixture examples
+- All IF-* interfaces mapped to schema fields
+
+### Non-goals
+- Adapter code
+- Graph auto-extraction jobs
 
 ---
 
@@ -319,3 +384,4 @@ Reduce manual council friction; optional read-only dashboard.
 |---------|------|--------|
 | 1.0 | 2026-07-03 | Initial roadmap |
 | 1.1 | 2026-07-03 | Stage 2 = Intelligence; adapter stages renumbered 3–8 |
+| 1.2 | 2026-07-03 | Stage 2A Intelligence Core; Stage 2B schemas added to roadmap |

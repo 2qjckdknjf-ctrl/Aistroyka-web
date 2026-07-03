@@ -3,7 +3,7 @@
 **Document ID:** ROMA-INT-000  
 **Version:** 1.0  
 **Date:** 2026-07-03  
-**Status:** Stage 2 Architecture (design only)  
+**Status:** Stage 2 + 2A Architecture (design only)  
 **Parent:** `ROMA_CORE_SPEC.md`  
 **Location:** `docs/roma/intelligence/`
 
@@ -56,7 +56,24 @@ Transform QA from static suites into a **context-aware decision engine** that:
 
 ---
 
-## 4. Intelligence Engines (Index)
+## 4. Intelligence Layers
+
+### 4.1 Cognitive foundation (Stage 2A — how ROMA thinks)
+
+| Model | Document | Primary question |
+|-------|----------|------------------|
+| Intelligence Core | `ROMA_INTELLIGENCE_CORE.md` | What is the engineering intelligence platform? |
+| Reasoning | `ROMA_REASONING_MODEL.md` | How does every decision get justified? |
+| Decision | `ROMA_DECISION_ENGINE.md` | What actions are recommended? |
+| Memory | `ROMA_MEMORY_MODEL.md` | What engineering knowledge persists? |
+| Risk (conceptual) | `ROMA_RISK_MODEL.md` | How is risk classified and composed? |
+| Release (conceptual) | `ROMA_RELEASE_MODEL.md` | How is release readiness reasoned? |
+| Knowledge (ontology) | `ROMA_KNOWLEDGE_MODEL.md` | How is the system world-model structured? |
+| Feedback | `ROMA_FEEDBACK_MODEL.md` | How do predictions calibrate against outcomes? |
+| Engine Interfaces | `ROMA_ENGINE_INTERFACES.md` | How do models and engines connect? |
+| State Machine | `ROMA_STATE_MACHINE.md` | What is the intelligence lifecycle? |
+
+### 4.2 Computational engines (Stage 2 — what each engine computes)
 
 | Engine | Document | Primary question |
 |--------|----------|------------------|
@@ -130,3 +147,4 @@ Transform QA from static suites into a **context-aware decision engine** that:
 | Version | Date | Change |
 |---------|------|--------|
 | 1.0 | 2026-07-03 | Initial intelligence overview |
+| 1.1 | 2026-07-03 | Stage 2A cognitive layer index (§4.1) |
