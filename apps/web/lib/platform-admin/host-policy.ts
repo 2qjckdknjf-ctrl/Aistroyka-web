@@ -30,7 +30,7 @@ export function isPublicProductHost(host: string | null | undefined): boolean {
   return PUBLIC_PRODUCT_HOSTS.has(normalized);
 }
 
-/** Compatibility-mode host classification — no enforcement, observability only. */
+/** Host classification for routing headers and policy (enforcement is layered in middleware). */
 export function resolveHostProfile(host: string | null | undefined): HostProfile {
   if (isPlatformAdminHost(host)) return "platform_admin";
   if (isPublicProductHost(host)) return "public_product";

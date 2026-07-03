@@ -361,7 +361,7 @@ CLOUDFLARE_ACCESS_OPERATOR_EMAILS="z6pxn548dk@privaterelay.appleid.com" node scr
 
 ## 7. Phase 2 readiness
 
-Access gate live — ready to begin host-profile middleware deploy (branch merge) and Phase 3 planning.
+Access gate live — host-profile middleware implemented in Phase 2 (`docs/security/ADMIN_DOMAIN_PHASE2_HOST_ROUTING_REPORT.md`). Phase 3: `OWNER_ALLOWED_HOSTS` + optional public-host redirect.
 
 ---
 

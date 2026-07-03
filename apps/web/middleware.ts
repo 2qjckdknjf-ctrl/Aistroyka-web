@@ -8,6 +8,7 @@ import { OWNER_RATE_LIMIT_ALREADY_APPLIED_HEADER } from "@/lib/platform-owner/co
 import { gateOwnerRequest } from "@/lib/platform-owner/middleware-owner-gate";
 import { isPlatformAdminApiPath, isPlatformAdminPagePath } from "@/lib/platform-admin/middleware-paths";
 import { resolveHostProfile } from "@/lib/platform-admin/host-policy";
+import { isAdminHostBlockedApiPath, resolveAdminHostPageRouting } from "@/lib/platform-admin/host-routing";
 import { applyApiSecurityHeadersToHeaders, getPageSecurityHeaders } from "@/lib/security-headers";
 
 const intlMiddleware = createIntlMiddleware(routing);
@@ -69,6 +70,13 @@ export async function middleware(request: NextRequest) {
       const res = applyApiSecurityHeaders(NextResponse.json(forbidden.body, { status: 403 }));
       return applyHostProfileHeader(res, request);
     }
+
+    if (isAdminHostBlockedApiPath(request.headers.get("host"), pathname)) {
+      const res = applyApiSecurityHeaders(
+        NextResponse.json({ error: "admin_host_api_forbidden" }, { status: 403 })
+      );
+      return applyHostProfileHeader(res, request);
+    }
   }
 
   if (isPlatformAdminApi) {
@@ -111,6 +119,16 @@ export async function middleware(request: NextRequest) {
       applyPageSecurityHeaders(sessionResponse, process.env.NODE_ENV === "production"),
       request
     );
+  }
+
+  const host = request.headers.get("host");
+  const { path: pathWithoutLocForHost, locale: localeForHost } = pathWithoutLocale(pathname);
+  const adminHostRouting = resolveAdminHostPageRouting(host, pathWithoutLocForHost, localeForHost);
+  if (adminHostRouting.action === "redirect") {
+    const redir = NextResponse.redirect(new URL(adminHostRouting.targetPath, request.url), 307);
+    redir.headers.set("X-Aistroyka-Host-Routing", adminHostRouting.reason);
+    mergeSupabaseSessionIntoResponse(sessionResponse, redir);
+    return applyHostProfileHeader(applyPageSecurityHeaders(redir, isProduction), request);
   }
 
   if (isPlatformAdminPage) {
