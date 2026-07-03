@@ -97,7 +97,7 @@ Not observed — no Access challenge on admin host (expected until Access app cr
 
 ## 4. Exact blockers
 
-### Cloudflare Access
+### Cloudflare Access (remaining)
 
 | Field | Value |
 |-------|-------|
@@ -106,16 +106,33 @@ Not observed — no Access challenge on admin host (expected until Access app cr
 | Error code | **10000** |
 | Body | `Authentication error` |
 | Blocker type | **credentials / permissions** |
-| Cause | Neither `CLOUDFLARE_API_TOKEN` (`.env.cf`) nor Wrangler OAuth token includes Zero Trust Access scopes |
+| Cause | `CLOUDFLARE_API_TOKEN` in `.env.cf` lacks Zero Trust Access scopes; Wrangler OAuth also lacks Access |
 
-**Owner action (Dashboard):**
+**Dashboard configuration (owner — matches approved spec):**
 
-1. Zero Trust → Access → Applications → Add self-hosted app `admin.aistroyka.ai`
-2. Policy: Allow platform operator emails only
-3. **Require MFA** (TOTP/WebAuthn)
-4. No bypass rules
+1. Zero Trust → Access → Applications → **Add application** → **Self-hosted**
+2. Name: `AISTROYKA Platform Admin`
+3. Domain: `admin.aistroyka.ai`
+4. Policy: **Allow** — platform operator emails only (default script email: `z6pxn548dk@privaterelay.appleid.com`; set `CLOUDFLARE_ACCESS_OPERATOR_EMAILS` for more)
+5. **MFA: Required** (independent MFA / TOTP)
+6. **Bypass: None**
 
-### API token writes (earlier attempts — superseded for Worker by OAuth)
+**Or API (after creating token with Access edit scope):**
+
+```bash
+cd apps/web
+# Add CLOUDFLARE_ACCESS_API_TOKEN to .env.cf (separate from read-only deploy token)
+CLOUDFLARE_ACCESS_OPERATOR_EMAILS="ops@example.com" node scripts/cf-admin-domain-access.mjs
+```
+
+**Validate Access live:**
+
+```bash
+curl -sI --resolve admin.aistroyka.ai:443:188.114.96.5 https://admin.aistroyka.ai/ | head
+# Expect redirect to *.cloudflareaccess.com (not direct /ru)
+```
+
+### API token writes (Worker — resolved via OAuth)
 
 | API call | HTTP | Code | Blocker |
 |----------|------|------|---------|
