@@ -39,13 +39,17 @@ describe("ROMA live quality dashboard", () => {
     expect(clientSrc).not.toMatch(/>\s*Restart\s*</i);
     expect(clientSrc).not.toMatch(/>\s*Delete\s*</i);
     expect(clientSrc).not.toMatch(/>\s*Fix\s*</i);
+    expect(clientSrc).toMatch(/ownerSummary/);
+    expect(clientSrc).toMatch(/decisionReasons/);
+    expect(clientSrc).toMatch(/affectedProductAreas/);
+    expect(clientSrc).toMatch(/coverageExplanation/);
     expect(clientSrc).toMatch(/dataCoverage/);
     expect(clientSrc).toMatch(/platformTimeline/);
-    expect(clientSrc).toMatch(/recommendations/);
-    expect(clientSrc).toMatch(/knownRisks/);
     expect(pageSrc).toMatch(/buildRomaEngineeringIntelligence/);
     expect(pageSrc).toMatch(/intelligence={intelligence}/);
-    expect(clientSrc).toMatch(/Engineering Intelligence/);
+    expect(clientSrc).toMatch(/Owner operator summary/);
+    expect(clientSrc).toMatch(/Why this decision/);
+    expect(clientSrc).not.toMatch(/\/admin\//);
   });
 
   it("quality API route is read-only GET under platform namespace", () => {

@@ -91,8 +91,59 @@ export function releaseDecisionBadgeVariant(
       return "warning";
     case "not_ready":
       return "danger";
+    case "unknown":
+      return "neutral";
     default: {
       const _exhaustive: never = decision;
+      return _exhaustive;
+    }
+  }
+}
+
+export function releaseDecisionBorderClass(decision: ReleaseDecision): string {
+  switch (decision) {
+    case "not_ready":
+      return "border-l-4 border-l-red-600";
+    case "unknown":
+      return "border-l-4 border-dashed border-l-aistroyka-text-tertiary";
+    case "ready_with_warnings":
+      return "border-l-4 border-l-amber-500";
+    case "ready":
+      return "border-l-4 border-l-emerald-600";
+    default: {
+      const _exhaustive: never = decision;
+      return _exhaustive;
+    }
+  }
+}
+
+export function productAreaStatusLabel(status: "affected" | "not_affected" | "unknown"): string {
+  switch (status) {
+    case "affected":
+      return "Affected";
+    case "not_affected":
+      return "Not affected";
+    case "unknown":
+      return "Unknown";
+    default: {
+      const _exhaustive: never = status;
+      return _exhaustive;
+    }
+  }
+}
+
+export function productAreaBadgeVariant(
+  status: "affected" | "not_affected" | "unknown"
+): "success" | "warning" | "danger" | "neutral" {
+  switch (status) {
+    case "affected":
+      return "warning";
+    case "not_affected":
+      return "success";
+    case "unknown":
+      return "neutral";
+    default: {
+      const _exhaustive: never = status;
       return _exhaustive;
     }
   }

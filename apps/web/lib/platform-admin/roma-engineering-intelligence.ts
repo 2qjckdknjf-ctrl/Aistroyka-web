@@ -1,10 +1,26 @@
 import type { BlockerSeverity, RomaQualityDashboard } from "./roma-quality-dashboard.types";
 import type {
   ConfidenceLevel,
+  DecisionReason,
   EngineeringIssue,
+  OwnerOperatorSummary,
+  ProductAreaImpact,
   ReleaseDecision,
   RomaEngineeringIntelligence,
 } from "./roma-engineering-intelligence.types";
+
+const PRODUCT_AREA_CATALOG: ReadonlyArray<{ id: string; label: string }> = [
+  { id: "worker_reports", label: "Worker reports" },
+  { id: "photo_media_upload", label: "Photo/media upload" },
+  { id: "manager_review", label: "Manager review" },
+  { id: "documents", label: "Documents" },
+  { id: "costs", label: "Costs" },
+  { id: "ai_copilot", label: "AI Copilot" },
+  { id: "mobile_apps", label: "Mobile apps" },
+  { id: "platform_admin", label: "Platform admin" },
+  { id: "tenant_isolation", label: "Tenant isolation" },
+  { id: "release_pipeline", label: "Release pipeline" },
+] as const;
 
 function componentById(dashboard: RomaQualityDashboard, id: string) {
   return dashboard.systemComponents.find((c) => c.id === id);
@@ -14,8 +30,9 @@ function hasRecommendation(dashboard: RomaQualityDashboard, id: string): boolean
   return dashboard.recommendations.some((r) => r.id === id);
 }
 
-function criticalBlockers(dashboard: RomaQualityDashboard) {
-  return dashboard.blockers.filter((b) => b.severity === "critical");
+function hasCriticalProbeGaps(dashboard: RomaQualityDashboard): boolean {
+  const connected = dashboard.dataCoverage.available.map((s) => s.id);
+  return !connected.includes("core_health") || !connected.includes("supabase_db");
 }
 
 function issue(
@@ -29,30 +46,39 @@ function issue(
 
 function evaluateStorageIssue(dashboard: RomaQualityDashboard): EngineeringIssue | null {
   const storage = componentById(dashboard, "storage");
-  if (!storage) return null;
+  if (!storage || storage.status === "healthy") return null;
 
-  if (storage.status === "healthy") return null;
+  const unavailable = storage.status === "unavailable";
+  const notConfigured = storage.status === "not_configured";
 
-  const unavailable = storage.status === "unavailable" || storage.status === "not_configured";
+  if (notConfigured) {
+    return issue({
+      id: "storage_impact",
+      whatHappened: "Storage probe was not run — service role not configured.",
+      whyItHappened: storage.details,
+      affectedComponents: ["Storage", "Observability"],
+      userImpact: "Upload status cannot be confirmed from this dashboard.",
+      businessImpact: "Field media workflow impact is unknown until storage is probed.",
+      releaseImpact: "Manual storage verification required before relying on upload flows.",
+      severity: "information",
+      confidence: "medium",
+      recommendedAction: "Configure SUPABASE_SERVICE_ROLE_KEY and re-check storage probe.",
+      recheckConditions: "Storage component reports Healthy with media bucket present.",
+      evidence: storage.details,
+    });
+  }
+
   return issue({
     id: "storage_impact",
-    whatHappened: unavailable
-      ? "Supabase storage probe did not succeed."
-      : "Storage is reachable but the media bucket check is degraded.",
+    whatHappened: "Supabase storage probe failed.",
     whyItHappened: storage.details,
     affectedComponents: ["Storage", "Worker uploads", "Media pipeline"],
-    userImpact: unavailable
-      ? "Field workers may be unable to upload photos and media attachments."
-      : "Upload reliability may be intermittent until the media bucket is verified.",
-    businessImpact: unavailable
-      ? "Pilot field evidence quality degrades; site documentation workflows are at risk."
-      : "Pilot quality may be degraded until storage is fully verified.",
+    userImpact: "Field workers may be unable to upload photos and media attachments.",
+    businessImpact: "Pilot field evidence quality may degrade; site documentation workflows are at risk.",
     releaseImpact: unavailable ? "Release not recommended until storage is healthy." : "Release with warnings — verify storage before pilot expansion.",
     severity: unavailable ? "critical" : "warning",
-    confidence: storage.details.includes("Service role") ? "high" : "medium",
-    recommendedAction: unavailable
-      ? "Verify SUPABASE_SERVICE_ROLE_KEY, storage permissions, and the media bucket."
-      : "Confirm the media bucket exists and storage policies allow worker uploads.",
+    confidence: "high",
+    recommendedAction: "Verify storage permissions and the media bucket.",
     recheckConditions: "Storage component status becomes Healthy and media bucket probe passes.",
     evidence: storage.details,
   });
@@ -67,10 +93,6 @@ function evaluateOpenAiIssue(dashboard: RomaQualityDashboard): EngineeringIssue 
 
   if (!openAiMissing) return null;
 
-  const coreHealthy =
-    dashboard.platformStatus.overallHealth === "healthy" ||
-    dashboard.platformStatus.overallHealth === "degraded";
-
   return issue({
     id: "openai_missing",
     whatHappened: "No AI provider API key is configured at runtime.",
@@ -80,9 +102,7 @@ function evaluateOpenAiIssue(dashboard: RomaQualityDashboard): EngineeringIssue 
     affectedComponents: ["AI", "Copilot", "Vision analysis"],
     userImpact: "AI Copilot and vision-assisted workflows are unavailable.",
     businessImpact: "Core construction operations can continue; AI-assisted insights are offline.",
-    releaseImpact: coreHealthy
-      ? "Release allowed — AI is optional for core pilot operations."
-      : "Release decision depends on resolving core health issues first.",
+    releaseImpact: "Release allowed with warnings — AI is optional for core pilot operations.",
     severity: "warning",
     confidence: hasRecommendation(dashboard, "openai_missing") ? "high" : "medium",
     recommendedAction: "Configure OPENAI_API_KEY or an alternate vision provider key.",
@@ -110,7 +130,7 @@ function evaluateCriticalEnvIssues(dashboard: RomaQualityDashboard): Engineering
       severity: "critical",
       confidence: "high",
       recommendedAction: rec.title.includes("missing")
-        ? `Set the required environment variable documented in docs/ENVIRONMENT-VARIABLES.md.`
+        ? "Set the required environment variable documented in docs/ENVIRONMENT-VARIABLES.md."
         : "Disable debug flags and satisfy production cron secret requirements.",
       recheckConditions: "Release environment validation returns PASS with no criticalMissing or forbiddenInProdSet.",
       evidence: rec.evidence,
@@ -124,28 +144,34 @@ function evaluateMigrationIssue(dashboard: RomaQualityDashboard): EngineeringIss
   );
   const migrationTimeline = dashboard.platformTimeline.find((e) => e.id === "last_migration");
   const migrationUnavailable =
-    migrationTimeline?.displayValue === "Unavailable" ||
-    Boolean(migrationRec);
+    migrationTimeline?.displayValue === "Unavailable" || Boolean(migrationRec);
 
   if (!migrationUnavailable) return null;
 
-  const blocked = migrationRec?.id === "migration_probe_failed" || migrationRec?.id === "migration_empty";
+  const probeBlocked = migrationRec?.id === "migration_probe_blocked";
+  const probeFailed = migrationRec?.id === "migration_probe_failed" || migrationRec?.id === "migration_empty";
 
   return issue({
     id: "migration_review",
-    whatHappened: blocked
+    whatHappened: probeFailed
       ? "Database migration state could not be confirmed or appears empty."
-      : "Migration inventory probe was skipped.",
+      : probeBlocked
+        ? "Migration inventory probe was skipped."
+        : "Migration version is unavailable from live probes.",
     whyItHappened: migrationRec?.evidence ?? migrationTimeline?.displayValue ?? "Migration probe unavailable.",
     affectedComponents: ["Database", "Schema", "API compatibility"],
-    userImpact: "Features depending on recent schema changes may fail unpredictably.",
-    businessImpact: "Schema mismatch risk during pilot — data integrity and feature availability uncertain.",
+    userImpact: probeFailed
+      ? "Features depending on recent schema changes may fail unpredictably."
+      : "Schema drift cannot be ruled out without migration inventory.",
+    businessImpact: probeFailed
+      ? "Schema mismatch risk during pilot — manual review required."
+      : "Release confidence reduced until migration state is verified.",
     releaseImpact: "Manual review required before release.",
-    severity: blocked ? "warning" : "information",
+    severity: probeFailed ? "warning" : "information",
     confidence: migrationRec ? "high" : "low",
-    recommendedAction: blocked
-      ? "Reconcile repo migrations with supabase_migrations.schema_migrations before promoting."
-      : "Provide SUPABASE_SERVICE_ROLE_KEY to enable migration inventory probe.",
+    recommendedAction: probeBlocked
+      ? "Provide SUPABASE_SERVICE_ROLE_KEY to enable migration inventory probe."
+      : "Reconcile repo migrations with supabase_migrations.schema_migrations before promoting.",
     recheckConditions: "Migration probe connected and latest migration version matches expected repo head.",
     evidence: migrationRec?.evidence ?? migrationTimeline?.displayValue ?? "Insufficient migration evidence.",
   });
@@ -181,7 +207,6 @@ function evaluateDatabaseIssue(dashboard: RomaQualityDashboard): EngineeringIssu
   const db = componentById(dashboard, "database");
   if (!db || db.status === "healthy") return null;
 
-  const unavailable = db.status === "unavailable" || db.status === "not_configured";
   return issue({
     id: "database_unavailable",
     whatHappened: `Database probe status: ${db.statusLabel}.`,
@@ -191,7 +216,7 @@ function evaluateDatabaseIssue(dashboard: RomaQualityDashboard): EngineeringIssu
     businessImpact: "Platform is not operationally reliable for pilot or production use.",
     releaseImpact: "Release blocked.",
     severity: "critical",
-    confidence: "high",
+    confidence: db.status === "unknown" ? "low" : "high",
     recommendedAction: "Verify NEXT_PUBLIC_SUPABASE_URL, anon key, and database reachability.",
     recheckConditions: "Database component status becomes Healthy.",
     evidence: db.details,
@@ -228,10 +253,11 @@ function evaluateLowCoverageIssue(dashboard: RomaQualityDashboard): EngineeringI
     affectedComponents: ["Observability", "Release decision confidence"],
     userImpact: "No direct user impact; operator visibility is reduced.",
     businessImpact: "Engineering conclusions may miss hidden risks due to incomplete telemetry.",
-    releaseImpact: "Manual review recommended — automated confidence is reduced.",
+    releaseImpact: "Decision confidence reduced — manual review recommended.",
     severity: "information",
     confidence: "low",
-    recommendedAction: "Increase probe connectivity (service role, deployment env, GitHub metadata) before relying on release decision.",
+    recommendedAction:
+      "Increase probe connectivity (service role, deployment env, GitHub metadata) before relying on release decision.",
     recheckConditions: "Data coverage reaches at least 50% with critical probes (health, DB, release env) connected.",
     evidence: `Connected: ${dashboard.dataCoverage.available.map((s) => s.label).join(", ") || "none"}.`,
   });
@@ -239,8 +265,7 @@ function evaluateLowCoverageIssue(dashboard: RomaQualityDashboard): EngineeringI
 
 function collectIssues(dashboard: RomaQualityDashboard): EngineeringIssue[] {
   const issues: EngineeringIssue[] = [];
-
-  const candidates = [
+  for (const item of [
     evaluateCoreHealthIssue(dashboard),
     evaluateDatabaseIssue(dashboard),
     evaluateStorageIssue(dashboard),
@@ -249,12 +274,9 @@ function collectIssues(dashboard: RomaQualityDashboard): EngineeringIssue[] {
     evaluateBillingFlagIssue(dashboard),
     evaluateLowCoverageIssue(dashboard),
     ...evaluateCriticalEnvIssues(dashboard),
-  ];
-
-  for (const item of candidates) {
+  ]) {
     if (item) issues.push(item);
   }
-
   return issues;
 }
 
@@ -283,10 +305,19 @@ function isReleaseBlocking(issue: EngineeringIssue): boolean {
   );
 }
 
-function deriveReleaseDecision(issues: EngineeringIssue[]): ReleaseDecision {
+function deriveReleaseDecision(
+  issues: EngineeringIssue[],
+  dashboard: RomaQualityDashboard,
+  confidence: ConfidenceLevel
+): ReleaseDecision {
+  if (confidence === "low" && hasCriticalProbeGaps(dashboard)) {
+    return "unknown";
+  }
+
   if (issues.some(isReleaseBlocking)) {
     return "not_ready";
   }
+
   if (
     issues.some(
       (i) =>
@@ -297,9 +328,15 @@ function deriveReleaseDecision(issues: EngineeringIssue[]): ReleaseDecision {
   ) {
     return "ready_with_warnings";
   }
-  if (issues.length > 0) {
+
+  if (confidence === "low") {
+    return "unknown";
+  }
+
+  if (issues.some((i) => i.severity === "information")) {
     return "ready_with_warnings";
   }
+
   return "ready";
 }
 
@@ -311,6 +348,8 @@ function releaseDecisionLabel(decision: ReleaseDecision): string {
       return "NOT READY";
     case "ready_with_warnings":
       return "READY WITH WARNINGS";
+    case "unknown":
+      return "UNKNOWN";
     default: {
       const _exhaustive: never = decision;
       return _exhaustive;
@@ -318,18 +357,16 @@ function releaseDecisionLabel(decision: ReleaseDecision): string {
   }
 }
 
-function computeConfidence(dashboard: RomaQualityDashboard, issues: EngineeringIssue[]): {
-  level: ConfidenceLevel;
-  percent: number | null;
-} {
+function computeConfidence(
+  dashboard: RomaQualityDashboard,
+  issues: EngineeringIssue[]
+): { level: ConfidenceLevel; percent: number | null } {
   const coverage = dashboard.dataCoverage.coveragePercent;
   const lowConfidenceIssues = issues.filter((i) => i.confidence === "low").length;
-  const hasCriticalProbeGaps =
-    !dashboard.dataCoverage.available.some((s) => s.id === "core_health") ||
-    !dashboard.dataCoverage.available.some((s) => s.id === "supabase_db");
+  const probeGaps = hasCriticalProbeGaps(dashboard);
 
-  if (coverage < 40 || lowConfidenceIssues > 0 || hasCriticalProbeGaps) {
-    return { level: "low", percent: Math.min(coverage, 40) };
+  if (coverage < 40 || lowConfidenceIssues > 0 || probeGaps) {
+    return { level: "low", percent: probeGaps ? Math.min(coverage, 40) : coverage };
   }
   if (coverage < 70 || issues.some((i) => i.confidence === "medium")) {
     return { level: "medium", percent: coverage };
@@ -337,13 +374,170 @@ function computeConfidence(dashboard: RomaQualityDashboard, issues: EngineeringI
   return { level: "high", percent: coverage };
 }
 
-function buildReasoning(issues: EngineeringIssue[]): string[] {
-  const chains: string[] = [];
-  for (const item of issues.slice(0, 6)) {
-    chains.push(
-      `${item.whatHappened} → ${item.userImpact} → ${item.releaseImpact}`
-    );
+function buildDecisionReasons(issues: EngineeringIssue[]): DecisionReason[] {
+  return [...issues]
+    .sort((a, b) => severityRank(b.severity) - severityRank(a.severity))
+    .slice(0, 5)
+    .map((i) => ({
+      title: i.whatHappened,
+      component: i.affectedComponents[0] ?? "Platform",
+      severity: i.severity,
+      evidence: i.evidence,
+      impact: i.userImpact,
+      recommendation: i.recommendedAction,
+      recheckCondition: i.recheckConditions,
+    }));
+}
+
+function buildAffectedProductAreas(
+  dashboard: RomaQualityDashboard,
+  issues: EngineeringIssue[]
+): ProductAreaImpact[] {
+  const issueIds = new Set(issues.map((i) => i.id));
+  const db = componentById(dashboard, "database");
+  const storage = componentById(dashboard, "storage");
+  const ai = componentById(dashboard, "ai");
+  const mobile = componentById(dashboard, "ios") ?? componentById(dashboard, "android");
+
+  const areaEvidence: Record<string, { status: ProductAreaImpact["status"]; evidence: string | null }> = {
+    worker_reports: { status: "not_affected", evidence: null },
+    photo_media_upload: { status: "not_affected", evidence: null },
+    manager_review: { status: "not_affected", evidence: null },
+    documents: { status: "not_affected", evidence: null },
+    costs: { status: "not_affected", evidence: null },
+    ai_copilot: { status: "not_affected", evidence: null },
+    mobile_apps: { status: "not_affected", evidence: null },
+    platform_admin: { status: "not_affected", evidence: null },
+    tenant_isolation: { status: "not_affected", evidence: null },
+    release_pipeline: { status: "not_affected", evidence: null },
+  };
+
+  if (issueIds.has("storage_impact") && storage && storage.status === "unavailable") {
+    areaEvidence.photo_media_upload = { status: "affected", evidence: storage.details };
+    areaEvidence.worker_reports = { status: "affected", evidence: "Storage probe failed — field media may not persist." };
+  } else if (issueIds.has("storage_impact")) {
+    areaEvidence.photo_media_upload = { status: "unknown", evidence: storage?.details ?? "Storage not verified." };
   }
+
+  if (issueIds.has("openai_missing")) {
+    areaEvidence.ai_copilot = {
+      status: "affected",
+      evidence: issues.find((i) => i.id === "openai_missing")?.evidence ?? null,
+    };
+  }
+
+  if (issueIds.has("database_unavailable") || (db && db.status !== "healthy")) {
+    const ev = db?.details ?? issues.find((i) => i.id === "database_unavailable")?.evidence ?? null;
+    areaEvidence.worker_reports = { status: "affected", evidence: ev };
+    areaEvidence.manager_review = { status: "affected", evidence: ev };
+    areaEvidence.documents = { status: "affected", evidence: ev };
+    areaEvidence.platform_admin = { status: "affected", evidence: ev };
+    areaEvidence.tenant_isolation = { status: "unknown", evidence: "Database unhealthy — tenant isolation impact not independently probed." };
+  }
+
+  if (issueIds.has("core_health_degraded")) {
+    const ev = issues.find((i) => i.id === "core_health_degraded")?.evidence ?? null;
+    for (const key of ["worker_reports", "manager_review", "platform_admin", "release_pipeline"] as const) {
+      if (areaEvidence[key].status === "not_affected") {
+        areaEvidence[key] = { status: "affected", evidence: ev };
+      }
+    }
+  }
+
+  if (issueIds.has("billing_flag_inconsistent")) {
+    areaEvidence.costs = {
+      status: "affected",
+      evidence: issues.find((i) => i.id === "billing_flag_inconsistent")?.evidence ?? null,
+    };
+  }
+
+  if (issueIds.has("migration_review")) {
+    areaEvidence.release_pipeline = {
+      status: "affected",
+      evidence: issues.find((i) => i.id === "migration_review")?.evidence ?? null,
+    };
+  }
+
+  if (mobile && (mobile.status === "unknown" || mobile.status === "unavailable")) {
+    areaEvidence.mobile_apps = { status: "unknown", evidence: mobile.details };
+  } else if (mobile && mobile.status === "degraded") {
+    areaEvidence.mobile_apps = { status: "affected", evidence: mobile.details };
+  }
+
+  if (issueIds.has("low_data_coverage")) {
+    for (const key of Object.keys(areaEvidence)) {
+      if (areaEvidence[key].status === "not_affected") {
+        areaEvidence[key] = { status: "unknown", evidence: "Insufficient probe coverage to confirm." };
+      }
+    }
+  }
+
+  return PRODUCT_AREA_CATALOG.map((area) => ({
+    id: area.id,
+    label: area.label,
+    status: areaEvidence[area.id]?.status ?? "unknown",
+    evidence: areaEvidence[area.id]?.evidence ?? null,
+  }));
+}
+
+function buildCoverageExplanation(dashboard: RomaQualityDashboard): {
+  explanation: string;
+  blindSpots: string[];
+} {
+  const pct = dashboard.dataCoverage.coveragePercent;
+  const connected = dashboard.dataCoverage.available.map((s) => s.label);
+  const unavailable = dashboard.dataCoverage.unavailable.map((s) => s.label);
+
+  const connectedSample = connected.slice(0, 4).join(", ") || "none";
+  const unavailableSample = unavailable.slice(0, 4).join(", ") || "none";
+
+  let explanation = `Coverage is ${pct}%. ROMA can see ${connectedSample || "no connected sources"}`;
+  if (unavailable.length > 0) {
+    explanation += `, but cannot see ${unavailableSample}${unavailable.length > 4 ? ", and others" : ""}.`;
+  } else {
+    explanation += ".";
+  }
+
+  if (pct < 50) {
+    explanation +=
+      " Low coverage prevents ROMA from confirming CI history, migration state, storage health, or performance telemetry.";
+  } else if (pct < 80) {
+    explanation += " Some blind spots remain — treat release decision as advisory.";
+  }
+
+  const blindSpots = unavailable.length > 0 ? unavailable : ["No unavailable sources recorded."];
+  return { explanation, blindSpots };
+}
+
+function buildOwnerSummary(
+  dashboard: RomaQualityDashboard,
+  issues: EngineeringIssue[],
+  releaseDecision: ReleaseDecision,
+  confidence: ConfidenceLevel,
+  actionPlan: string[]
+): OwnerOperatorSummary {
+  const readinessPercent = dashboard.platformStatus.releaseReadinessPercent;
+  return {
+    releaseDecisionLabel: releaseDecisionLabel(releaseDecision),
+    confidenceLabel: confidence.toUpperCase(),
+    readinessScoreLabel: readinessPercent !== null ? `${readinessPercent}%` : "Score unavailable",
+    criticalBlockersCount: issues.filter((i) => i.severity === "critical").length,
+    warningCount: issues.filter((i) => i.severity === "warning").length,
+    evidenceCoveragePercent: dashboard.dataCoverage.coveragePercent,
+    lastUpdated: dashboard.platformStatus.lastUpdated,
+    environment: dashboard.environment.label,
+    nextSafeAction:
+      actionPlan[0] ??
+      (releaseDecision === "ready"
+        ? "Continue monitoring; no immediate action required from probe evidence."
+        : "Review top decision reasons and resolve highest-severity evidence before release."),
+  };
+}
+
+function buildReasoning(issues: EngineeringIssue[]): string[] {
+  const chains = issues
+    .slice(0, 5)
+    .map((item) => `${item.whatHappened} → ${item.userImpact} → ${item.releaseImpact}`);
   if (chains.length === 0) {
     chains.push("Live probes show no material engineering issues — core platform appears operational.");
   }
@@ -351,14 +545,17 @@ function buildReasoning(issues: EngineeringIssue[]): string[] {
 }
 
 function buildActionPlan(issues: EngineeringIssue[]): string[] {
-  const actions = issues
-    .sort((a, b) => severityRank(b.severity) - severityRank(a.severity))
-    .map((i) => i.recommendedAction);
-  return [...new Set(actions)].slice(0, 8);
+  return [
+    ...new Set(
+      issues
+        .sort((a, b) => severityRank(b.severity) - severityRank(a.severity))
+        .map((i) => i.recommendedAction)
+    ),
+  ].slice(0, 5);
 }
 
 function buildRecommendations(issues: EngineeringIssue[]): string[] {
-  return [...new Set(issues.map((i) => i.recommendedAction))].slice(0, 8);
+  return buildActionPlan(issues);
 }
 
 function aggregateBusinessImpact(issues: EngineeringIssue[]): string {
@@ -374,18 +571,24 @@ function aggregateBusinessImpact(issues: EngineeringIssue[]): string {
 
 function buildRiskAnalysis(issues: EngineeringIssue[]): string {
   if (issues.length === 0) return "No top risks identified from probe evidence.";
-  const top = [...issues].sort((a, b) => severityRank(b.severity) - severityRank(a.severity)).slice(0, 3);
-  return top.map((i) => `${i.whatHappened} (${i.severity})`).join("; ");
+  return [...issues]
+    .sort((a, b) => severityRank(b.severity) - severityRank(a.severity))
+    .slice(0, 3)
+    .map((i) => `${i.whatHappened} (${i.severity})`)
+    .join("; ");
 }
 
-function buildEngineeringAssessment(dashboard: RomaQualityDashboard, issues: EngineeringIssue[]): string {
-  const decision = deriveReleaseDecision(issues);
+function buildEngineeringAssessment(
+  dashboard: RomaQualityDashboard,
+  issues: EngineeringIssue[],
+  decision: ReleaseDecision
+): string {
   const health = dashboard.platformStatus.overallHealthLabel;
   const coverage = dashboard.dataCoverage.coveragePercent;
   if (issues.length === 0) {
     return `Platform health is ${health} with ${coverage}% probe coverage. No blocking engineering issues detected.`;
   }
-  const top = issues.sort((a, b) => severityRank(b.severity) - severityRank(a.severity))[0];
+  const top = [...issues].sort((a, b) => severityRank(b.severity) - severityRank(a.severity))[0];
   return `Platform health is ${health} (${coverage}% coverage). Primary concern: ${top?.whatHappened ?? "unknown"}. Release posture: ${releaseDecisionLabel(decision)}.`;
 }
 
@@ -393,22 +596,29 @@ export function buildRomaEngineeringIntelligence(
   dashboard: RomaQualityDashboard
 ): RomaEngineeringIntelligence {
   const issues = collectIssues(dashboard);
-  const releaseDecision = deriveReleaseDecision(issues);
   const confidence = computeConfidence(dashboard, issues);
+  const releaseDecision = deriveReleaseDecision(issues, dashboard, confidence.level);
+  const actionPlan = buildActionPlan(issues);
+  const coverage = buildCoverageExplanation(dashboard);
   const topRisks = [...issues]
     .sort((a, b) => severityRank(b.severity) - severityRank(a.severity))
     .slice(0, 5);
 
   return {
-    engineeringAssessment: buildEngineeringAssessment(dashboard, issues),
+    engineeringAssessment: buildEngineeringAssessment(dashboard, issues, releaseDecision),
     releaseDecision,
     releaseDecisionLabel: releaseDecisionLabel(releaseDecision),
     riskAnalysis: buildRiskAnalysis(issues),
     businessImpact: aggregateBusinessImpact(issues),
-    actionPlan: buildActionPlan(issues),
+    actionPlan,
     confidenceScore: confidence.level,
     confidencePercent: confidence.percent,
-    engineeringSummary: buildEngineeringAssessment(dashboard, issues),
+    engineeringSummary: buildEngineeringAssessment(dashboard, issues, releaseDecision),
+    ownerSummary: buildOwnerSummary(dashboard, issues, releaseDecision, confidence.level, actionPlan),
+    decisionReasons: buildDecisionReasons(issues),
+    affectedProductAreas: buildAffectedProductAreas(dashboard, issues),
+    coverageExplanation: coverage.explanation,
+    coverageBlindSpots: coverage.blindSpots,
     topRisks,
     recommendations: buildRecommendations(issues),
     reasoning: buildReasoning(issues),

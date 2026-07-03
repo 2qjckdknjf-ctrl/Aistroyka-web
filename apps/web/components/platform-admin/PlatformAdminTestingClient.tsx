@@ -9,9 +9,12 @@ import {
   confidenceBadgeVariant,
   formatPercent,
   formatTimestamp,
+  productAreaBadgeVariant,
+  productAreaStatusLabel,
   qualityStatusBadgeVariant,
   readinessBadgeVariant,
   releaseDecisionBadgeVariant,
+  releaseDecisionBorderClass,
 } from "@/lib/platform-admin/quality-dashboard-ui";
 
 type Props = {
@@ -19,21 +22,13 @@ type Props = {
   intelligence: RomaEngineeringIntelligence;
 };
 
-function MetricTile({
-  label,
-  value,
-  hint,
-}: {
-  label: string;
-  value: string;
-  hint?: string;
-}) {
+function SummaryMetric({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
-    <div className="rounded-card border border-aistroyka-border-subtle bg-aistroyka-surface-raised px-aistroyka-4 py-aistroyka-3">
+    <div className="min-w-[9rem] flex-1 rounded-card border border-aistroyka-border-subtle bg-aistroyka-surface-raised px-aistroyka-3 py-aistroyka-2">
       <p className="text-aistroyka-caption font-semibold uppercase tracking-wide text-aistroyka-text-tertiary">
         {label}
       </p>
-      <p className="mt-aistroyka-1 text-aistroyka-headline font-semibold text-aistroyka-text-primary">{value}</p>
+      <p className="mt-aistroyka-1 text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">{value}</p>
       {hint ? <p className="mt-aistroyka-1 text-aistroyka-footnote text-aistroyka-text-tertiary">{hint}</p> : null}
     </div>
   );
@@ -42,448 +37,241 @@ function MetricTile({
 export function PlatformAdminTestingClient({ dashboard, intelligence }: Props) {
   const d = dashboard;
   const intel = intelligence;
-  const criticalCount = d.blockers.filter((b) => b.severity === "critical").length;
-  const warningCount = d.blockers.filter((b) => b.severity === "warning").length;
+  const summary = intel.ownerSummary;
 
   return (
-    <section className="space-y-aistroyka-6" aria-label="ROMA quality control center">
-      <Card className="border-l-4 border-l-aistroyka-accent p-aistroyka-5">
+    <section className="space-y-aistroyka-6" aria-label="ROMA live operations center">
+      <Card className={`p-aistroyka-5 ${releaseDecisionBorderClass(intel.releaseDecision)}`}>
         <div className="flex flex-wrap items-start justify-between gap-aistroyka-3">
-          <div>
-            <h1 className="text-aistroyka-title2 font-bold tracking-tight text-aistroyka-text-primary sm:text-aistroyka-title">
-              ROMA Live Operations Center
+          <div className="min-w-0 flex-1">
+            <p className="text-aistroyka-caption font-semibold uppercase tracking-wide text-aistroyka-text-tertiary">
+              Owner operator summary
+            </p>
+            <h1 className="mt-aistroyka-1 text-aistroyka-title2 font-bold tracking-tight text-aistroyka-text-primary sm:text-aistroyka-title">
+              ROMA Testing
             </h1>
             <p className="mt-aistroyka-2 max-w-3xl text-aistroyka-subheadline text-aistroyka-text-secondary">
-              Live platform quality and observability dashboard — read-only. Test execution, CI orchestration, and
-              production mutation are not enabled. Data coverage: {formatPercent(d.dataCoverage.coveragePercent)}.
+              {intel.engineeringAssessment}
             </p>
           </div>
-          <Badge variant="neutral">Read-only</Badge>
+          <div className="flex flex-wrap items-center gap-aistroyka-2">
+            <Badge variant={releaseDecisionBadgeVariant(intel.releaseDecision)} className="text-sm">
+              {summary.releaseDecisionLabel}
+            </Badge>
+            <Badge variant={confidenceBadgeVariant(intel.confidenceScore)}>{summary.confidenceLabel} confidence</Badge>
+            <Badge variant="neutral">Read-only</Badge>
+          </div>
         </div>
+
+        <div className="mt-aistroyka-4 flex flex-wrap gap-aistroyka-2">
+          <SummaryMetric label="Release recommendation" value={summary.releaseDecisionLabel} />
+          <SummaryMetric label="Confidence" value={summary.confidenceLabel} />
+          <SummaryMetric label="Readiness score" value={summary.readinessScoreLabel} />
+          <SummaryMetric label="Critical blockers" value={String(summary.criticalBlockersCount)} />
+          <SummaryMetric label="Warnings" value={String(summary.warningCount)} />
+          <SummaryMetric label="Evidence coverage" value={formatPercent(summary.evidenceCoveragePercent)} />
+          <SummaryMetric label="Environment" value={summary.environment} hint={d.environment.appUrl ?? undefined} />
+          <SummaryMetric label="Last updated" value={formatTimestamp(summary.lastUpdated)} />
+        </div>
+
+        <div className="mt-aistroyka-4 rounded-card border border-aistroyka-border-subtle bg-aistroyka-surface-raised px-aistroyka-4 py-aistroyka-3">
+          <p className="text-aistroyka-caption font-semibold uppercase text-aistroyka-text-tertiary">Next safe action</p>
+          <p className="mt-aistroyka-1 text-aistroyka-subheadline text-aistroyka-text-primary">{summary.nextSafeAction}</p>
+        </div>
+
         <p className="mt-aistroyka-3 text-aistroyka-footnote text-aistroyka-text-tertiary">
-          Preferred admin host{" "}
-          <code className="rounded bg-aistroyka-surface-raised px-1">{PLATFORM_ADMIN_PREFERRED_HOST}</code>{" "}
-          is pending deployment. Active route:{" "}
-          <code className="rounded bg-aistroyka-surface-raised px-1">
-            /[locale]{PLATFORM_ADMIN_BASE_PATH}/testing
-          </code>
-          . ROMA cannot mutate production from here.
+          Platform owner only · no test execution · route{" "}
+          <code className="rounded bg-aistroyka-surface-raised px-1">/[locale]{PLATFORM_ADMIN_BASE_PATH}/testing</code>
+          {d.environment.preferredAdminHost ? (
+            <>
+              {" "}
+              · preferred host <code className="rounded bg-aistroyka-surface-raised px-1">{PLATFORM_ADMIN_PREFERRED_HOST}</code> pending
+            </>
+          ) : null}
         </p>
       </Card>
 
-      <Card className="border-l-4 border-l-aistroyka-accent p-aistroyka-5">
-        <div className="flex flex-wrap items-start justify-between gap-aistroyka-3">
-          <div>
-            <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">
-              Engineering Intelligence
-            </h2>
-            <p className="mt-aistroyka-1 text-aistroyka-footnote text-aistroyka-text-tertiary">
-              Rule-based engineering conclusions from live probes — recommendation only, no automatic fixes.
-            </p>
-          </div>
-          <Badge variant={releaseDecisionBadgeVariant(intel.releaseDecision)}>
-            {intel.releaseDecisionLabel}
-          </Badge>
-        </div>
-        <p className="mt-aistroyka-4 text-aistroyka-subheadline text-aistroyka-text-secondary">
-          {intel.engineeringAssessment}
+      <Card className="p-aistroyka-5">
+        <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">Why this decision?</h2>
+        <p className="mt-aistroyka-1 text-aistroyka-footnote text-aistroyka-text-tertiary">
+          Top evidence-backed reasons from live probes (max 5). Recommendation-only — no automatic fixes.
         </p>
-        <div className="mt-aistroyka-4 grid gap-aistroyka-3 sm:grid-cols-2 lg:grid-cols-3">
-          <MetricTile
-            label="Release recommendation"
-            value={intel.releaseDecisionLabel}
-            hint="Derived from probe evidence only"
-          />
-          <MetricTile
-            label="Confidence"
-            value={intel.confidenceScore.toUpperCase()}
-            hint={
-              intel.confidencePercent !== null
-                ? `${intel.confidencePercent}% probe alignment`
-                : "Insufficient evidence"
-            }
-          />
-          <MetricTile label="Business impact" value={intel.businessImpact.slice(0, 80) + (intel.businessImpact.length > 80 ? "…" : "")} />
-        </div>
-        <div className="mt-aistroyka-5">
-          <h3 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">Reasoning</h3>
-          <ul className="mt-aistroyka-2 list-disc space-y-aistroyka-1 pl-aistroyka-5 text-aistroyka-subheadline text-aistroyka-text-secondary">
-            {intel.reasoning.map((line) => (
-              <li key={line}>{line}</li>
-            ))}
-          </ul>
-        </div>
-        {intel.recommendations.length > 0 ? (
-          <div className="mt-aistroyka-5">
-            <h3 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">Recommendations</h3>
-            <ul className="mt-aistroyka-2 list-disc space-y-aistroyka-1 pl-aistroyka-5 text-aistroyka-subheadline text-aistroyka-text-secondary">
-              {intel.recommendations.map((rec) => (
-                <li key={rec}>{rec}</li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
-        {intel.topRisks.length > 0 ? (
-          <div className="mt-aistroyka-5">
-            <h3 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">Top risks</h3>
-            <ul className="mt-aistroyka-3 space-y-aistroyka-3">
-              {intel.topRisks.map((risk) => (
-                <li
-                  key={risk.id}
-                  className="rounded-card border border-aistroyka-border-subtle px-aistroyka-4 py-aistroyka-3"
-                >
-                  <div className="flex flex-wrap items-center gap-aistroyka-2">
-                    <p className="font-medium text-aistroyka-text-primary">{risk.whatHappened}</p>
-                    <Badge variant={blockerSeverityBadgeVariant(risk.severity)}>{risk.severity}</Badge>
-                    <Badge variant={confidenceBadgeVariant(risk.confidence)}>{risk.confidence} confidence</Badge>
+        {intel.decisionReasons.length > 0 ? (
+          <ul className="mt-aistroyka-4 space-y-aistroyka-3">
+            {intel.decisionReasons.map((reason) => (
+              <li
+                key={`${reason.component}-${reason.title}`}
+                className="rounded-card border border-aistroyka-border-subtle px-aistroyka-4 py-aistroyka-3"
+              >
+                <div className="flex flex-wrap items-center gap-aistroyka-2">
+                  <p className="font-medium text-aistroyka-text-primary">{reason.title}</p>
+                  <Badge variant={blockerSeverityBadgeVariant(reason.severity)}>{reason.severity}</Badge>
+                  <span className="text-aistroyka-caption text-aistroyka-text-tertiary">{reason.component}</span>
+                </div>
+                <dl className="mt-aistroyka-3 grid gap-aistroyka-2 text-aistroyka-footnote sm:grid-cols-2">
+                  <div>
+                    <dt className="text-aistroyka-text-tertiary">Evidence</dt>
+                    <dd className="text-aistroyka-text-secondary">{reason.evidence}</dd>
                   </div>
-                  <p className="mt-aistroyka-2 text-aistroyka-footnote text-aistroyka-text-tertiary">
-                    Evidence: {risk.evidence}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
-      </Card>
-
-      <Card className="p-aistroyka-5">
-        <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">Platform status</h2>
-        <div className="mt-aistroyka-4 grid gap-aistroyka-3 sm:grid-cols-2 lg:grid-cols-4">
-          <MetricTile
-            label="Overall health"
-            value={d.platformStatus.overallHealthLabel}
-            hint={`Probe status: ${d.platformStatus.overallHealth}`}
-          />
-          <MetricTile
-            label="Release readiness"
-            value={formatPercent(d.platformStatus.releaseReadinessPercent)}
-            hint={`Level: ${d.platformStatus.releaseReadiness}`}
-          />
-          <MetricTile label="Last updated" value={formatTimestamp(d.platformStatus.lastUpdated)} />
-          <MetricTile
-            label="Environment"
-            value={d.environment.label}
-            hint={d.environment.appUrl ?? "App URL not configured"}
-          />
-        </div>
-      </Card>
-
-      <div>
-        <h2 className="mb-aistroyka-3 text-aistroyka-headline font-semibold text-aistroyka-text-primary">
-          Domain overview
-        </h2>
-        <div className="grid gap-aistroyka-3 sm:grid-cols-2 lg:grid-cols-3">
-          {d.domainSections.map((section) => (
-            <Card key={section.id} className="p-aistroyka-4">
-              <div className="flex items-center justify-between gap-aistroyka-2">
-                <h3 className="font-semibold text-aistroyka-text-primary">{section.label}</h3>
-                <Badge variant={qualityStatusBadgeVariant(section.status)}>{section.statusLabel}</Badge>
-              </div>
-              <p className="mt-aistroyka-2 text-aistroyka-subheadline text-aistroyka-text-secondary">
-                {section.summary}
-              </p>
-              <ul className="mt-aistroyka-2 list-disc space-y-aistroyka-1 pl-aistroyka-4 text-aistroyka-footnote text-aistroyka-text-tertiary">
-                {section.highlights.map((h) => (
-                  <li key={h}>{h}</li>
-                ))}
-              </ul>
-            </Card>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <h2 className="mb-aistroyka-3 text-aistroyka-headline font-semibold text-aistroyka-text-primary">
-          System components
-        </h2>
-        <div className="grid gap-aistroyka-3 sm:grid-cols-2 lg:grid-cols-3">
-          {d.systemComponents.map((component) => (
-            <Card key={component.id} className="p-aistroyka-4">
-              <div className="flex items-center justify-between gap-aistroyka-2">
-                <h3 className="font-semibold text-aistroyka-text-primary">{component.name}</h3>
-                <Badge variant={qualityStatusBadgeVariant(component.status)}>{component.statusLabel}</Badge>
-              </div>
-              <p className="mt-aistroyka-2 text-aistroyka-footnote text-aistroyka-text-tertiary">
-                Last check: {formatTimestamp(component.lastCheck)}
-              </p>
-              <p className="mt-aistroyka-2 text-aistroyka-subheadline text-aistroyka-text-secondary">
-                {component.details}
-              </p>
-            </Card>
-          ))}
-        </div>
-      </div>
-
-      <Card className="p-aistroyka-5">
-        <div className="flex flex-wrap items-center justify-between gap-aistroyka-2">
-          <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">Release readiness</h2>
-          <Badge variant={readinessBadgeVariant(d.platformStatus.releaseReadiness)}>
-            Overall {formatPercent(d.platformStatus.releaseReadinessPercent)}
-          </Badge>
-        </div>
-        <div className="mt-aistroyka-4 grid gap-aistroyka-3 sm:grid-cols-2 lg:grid-cols-4">
-          {d.releaseReadiness.map((category) => (
-            <div
-              key={category.id}
-              className="rounded-card border border-aistroyka-border-subtle px-aistroyka-4 py-aistroyka-3"
-            >
-              <div className="flex items-center justify-between gap-aistroyka-2">
-                <p className="font-medium text-aistroyka-text-primary">{category.label}</p>
-                <Badge variant={readinessBadgeVariant(category.level)}>{formatPercent(category.percent)}</Badge>
-              </div>
-              <p className="mt-aistroyka-2 text-aistroyka-footnote text-aistroyka-text-secondary">
-                {category.summary}
-              </p>
-            </div>
-          ))}
-        </div>
-      </Card>
-
-      <Card className="p-aistroyka-5">
-        <div className="flex flex-wrap items-center gap-aistroyka-2">
-          <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">Known risks</h2>
-          {d.knownRisks.length > 0 ? (
-            <Badge variant="warning">{d.knownRisks.length} risk(s)</Badge>
-          ) : (
-            <Badge variant="neutral">None from live probes</Badge>
-          )}
-        </div>
-        {d.knownRisks.length > 0 ? (
-          <ul className="mt-aistroyka-4 space-y-aistroyka-3">
-            {d.knownRisks.map((risk) => (
-              <li
-                key={`risk-${risk.component}-${risk.title}`}
-                className="rounded-card border border-aistroyka-border-subtle px-aistroyka-4 py-aistroyka-3"
-              >
-                <div className="flex flex-wrap items-center gap-aistroyka-2">
-                  <p className="font-medium text-aistroyka-text-primary">{risk.title}</p>
-                  <Badge variant={blockerSeverityBadgeVariant(risk.severity)}>{risk.severity}</Badge>
-                </div>
-                <p className="mt-aistroyka-2 text-aistroyka-subheadline text-aistroyka-text-secondary">
-                  {risk.recommendation}
-                </p>
+                  <div>
+                    <dt className="text-aistroyka-text-tertiary">Impact</dt>
+                    <dd className="text-aistroyka-text-secondary">{reason.impact}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-aistroyka-text-tertiary">Recommendation</dt>
+                    <dd className="text-aistroyka-text-secondary">{reason.recommendation}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-aistroyka-text-tertiary">Recheck when</dt>
+                    <dd className="text-aistroyka-text-secondary">{reason.recheckCondition}</dd>
+                  </div>
+                </dl>
               </li>
             ))}
           </ul>
         ) : (
-          <p className="mt-aistroyka-3 text-aistroyka-subheadline text-aistroyka-text-secondary">
-            No degraded components or warning-level risks detected from current probes.
+          <p className="mt-aistroyka-4 text-aistroyka-subheadline text-aistroyka-text-secondary">
+            No material issues detected — release posture is based on healthy probe evidence.
           </p>
         )}
       </Card>
 
       <Card className="p-aistroyka-5">
-        <div className="flex flex-wrap items-center gap-aistroyka-2">
-          <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">Current blockers</h2>
-          {criticalCount > 0 ? (
-            <Badge variant="danger">{criticalCount} critical</Badge>
-          ) : null}
-          {warningCount > 0 ? (
-            <Badge variant="warning">{warningCount} warnings</Badge>
-          ) : null}
-        </div>
-        <ul className="mt-aistroyka-4 space-y-aistroyka-3">
-          {d.blockers.map((blocker) => (
-            <li
-              key={`${blocker.component}-${blocker.title}`}
-              className="rounded-card border border-aistroyka-border-subtle px-aistroyka-4 py-aistroyka-3"
-            >
-              <div className="flex flex-wrap items-center gap-aistroyka-2">
-                <p className="font-medium text-aistroyka-text-primary">{blocker.title}</p>
-                <Badge variant={blockerSeverityBadgeVariant(blocker.severity)}>{blocker.severity}</Badge>
-                <span className="text-aistroyka-caption text-aistroyka-text-tertiary">{blocker.component}</span>
-              </div>
-              <p className="mt-aistroyka-2 text-aistroyka-subheadline text-aistroyka-text-secondary">
-                {blocker.recommendation}
-              </p>
-            </li>
-          ))}
-        </ul>
-      </Card>
-
-      <Card className="p-aistroyka-5">
-        <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">Platform timeline</h2>
-        <dl className="mt-aistroyka-4 grid gap-aistroyka-3 sm:grid-cols-2 lg:grid-cols-3">
-          {d.platformTimeline.map((event) => (
-            <div key={event.id}>
-              <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{event.label}</dt>
-              <dd className="font-medium text-aistroyka-text-primary">{event.displayValue}</dd>
-              <dd className="text-aistroyka-footnote text-aistroyka-text-tertiary">Source: {event.source}</dd>
-            </div>
-          ))}
-        </dl>
-      </Card>
-
-      <Card className="p-aistroyka-5">
-        <div className="flex flex-wrap items-center gap-aistroyka-2">
-          <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">Recommendations</h2>
-          {d.recommendations.length > 0 ? (
-            <Badge variant="warning">{d.recommendations.length} item(s)</Badge>
-          ) : (
-            <Badge variant="success">No evidence-based actions</Badge>
-          )}
-        </div>
-        {d.recommendations.length > 0 ? (
-          <ul className="mt-aistroyka-4 space-y-aistroyka-3">
-            {d.recommendations.map((rec) => (
-              <li
-                key={rec.id}
-                className="rounded-card border border-aistroyka-border-subtle px-aistroyka-4 py-aistroyka-3"
-              >
-                <div className="flex flex-wrap items-center gap-aistroyka-2">
-                  <p className="font-medium text-aistroyka-text-primary">{rec.title}</p>
-                  <Badge variant={blockerSeverityBadgeVariant(rec.severity)}>{rec.severity}</Badge>
-                  <span className="text-aistroyka-caption text-aistroyka-text-tertiary">{rec.component}</span>
-                </div>
-                <p className="mt-aistroyka-2 text-aistroyka-footnote text-aistroyka-text-tertiary">
-                  Evidence: {rec.evidence}
-                </p>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="mt-aistroyka-3 text-aistroyka-subheadline text-aistroyka-text-secondary">
-            No recommendations generated — live probes did not surface actionable evidence.
-          </p>
-        )}
-      </Card>
-
-      <Card className="p-aistroyka-5">
-        <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">Latest changes</h2>
-        <dl className="mt-aistroyka-4 grid gap-aistroyka-3 sm:grid-cols-2 lg:grid-cols-3">
-          <div>
-            <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Last deployment</dt>
-            <dd className="font-medium text-aistroyka-text-primary">
-              {formatTimestamp(d.latestChanges.lastDeploy)}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Last commit</dt>
-            <dd className="font-mono font-medium text-aistroyka-text-primary">
-              {d.latestChanges.lastCommit ?? "Unknown"}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Branch</dt>
-            <dd className="font-medium text-aistroyka-text-primary">{d.latestChanges.branch ?? "Unknown"}</dd>
-          </div>
-          <div>
-            <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Build</dt>
-            <dd className="font-mono font-medium text-aistroyka-text-primary">
-              {d.latestChanges.build ?? "Unknown"}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">Timestamp</dt>
-            <dd className="font-medium text-aistroyka-text-primary">
-              {formatTimestamp(d.latestChanges.timestamp)}
-            </dd>
-          </div>
-        </dl>
-      </Card>
-
-      <Card className="p-aistroyka-5">
-        <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">ROMA status</h2>
+        <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">Business impact by product area</h2>
         <p className="mt-aistroyka-1 text-aistroyka-footnote text-aistroyka-text-tertiary">
-          Maturity indicators from live probes and configuration — execution remains disabled.
+          Marked affected only when probe evidence supports it. Unknown means ROMA cannot confirm from current data.
         </p>
-        <div className="mt-aistroyka-4 grid gap-aistroyka-3 sm:grid-cols-2 lg:grid-cols-3">
-          {d.romaStatus.map((item) => (
+        <div className="mt-aistroyka-4 grid gap-aistroyka-2 sm:grid-cols-2 lg:grid-cols-3">
+          {intel.affectedProductAreas.map((area) => (
             <div
-              key={item.id}
-              className="rounded-card border border-aistroyka-border-subtle px-aistroyka-4 py-aistroyka-3"
+              key={area.id}
+              className="rounded-card border border-aistroyka-border-subtle px-aistroyka-3 py-aistroyka-2"
             >
               <div className="flex items-center justify-between gap-aistroyka-2">
-                <p className="font-medium text-aistroyka-text-primary">{item.label}</p>
-                <Badge variant={readinessBadgeVariant(item.level)}>{item.level}</Badge>
+                <p className="font-medium text-aistroyka-text-primary">{area.label}</p>
+                <Badge variant={productAreaBadgeVariant(area.status)}>{productAreaStatusLabel(area.status)}</Badge>
               </div>
-              <p className="mt-aistroyka-1 text-aistroyka-caption text-aistroyka-text-tertiary">
-                Source: {item.source.replace("_", " ")}
-              </p>
-              <p className="mt-aistroyka-2 text-aistroyka-subheadline text-aistroyka-text-secondary">
-                {item.summary}
-              </p>
-            </div>
-          ))}
-        </div>
-      </Card>
-
-      <Card className="p-aistroyka-5">
-        <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">Known reports</h2>
-        <p className="mt-aistroyka-1 text-aistroyka-footnote text-aistroyka-text-tertiary">
-          Repository audit references. In-app doc routes are not configured — paths shown for operator traceability.
-        </p>
-        <ul className="mt-aistroyka-4 space-y-aistroyka-3">
-          {d.knownReports.map((report) => (
-            <li
-              key={report.path}
-              className="rounded-card border border-aistroyka-border-subtle px-aistroyka-4 py-aistroyka-3"
-            >
-              {report.href ? (
-                <a href={report.href} className="font-medium text-aistroyka-accent hover:underline">
-                  {report.label}
-                </a>
+              {area.evidence ? (
+                <p className="mt-aistroyka-1 text-aistroyka-footnote text-aistroyka-text-secondary">{area.evidence}</p>
               ) : (
-                <p className="font-medium text-aistroyka-text-primary">{report.label}</p>
+                <p className="mt-aistroyka-1 text-aistroyka-footnote text-aistroyka-text-tertiary">No evidence of impact.</p>
               )}
-              <p className="font-mono text-aistroyka-caption text-aistroyka-text-tertiary">{report.path}</p>
-              <p className="mt-aistroyka-1 text-aistroyka-subheadline text-aistroyka-text-secondary">
-                {report.note}
-              </p>
-            </li>
+            </div>
           ))}
-        </ul>
+        </div>
       </Card>
 
       <Card className="border border-dashed border-aistroyka-border-subtle p-aistroyka-5">
         <div className="flex flex-wrap items-center justify-between gap-aistroyka-2">
-          <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">Data coverage</h2>
-          <Badge variant="neutral">
-            {d.dataCoverage.connectedCount}/{d.dataCoverage.totalCatalogCount} sources ·{" "}
+          <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">Data coverage & trust</h2>
+          <Badge variant={intel.confidenceScore === "low" ? "danger" : intel.confidenceScore === "medium" ? "warning" : "neutral"}>
             {formatPercent(d.dataCoverage.coveragePercent)}
           </Badge>
         </div>
+        <p className="mt-aistroyka-3 text-aistroyka-subheadline text-aistroyka-text-secondary">{intel.coverageExplanation}</p>
         <p className="mt-aistroyka-2 text-aistroyka-footnote text-aistroyka-text-tertiary">
-          Last refresh: {formatTimestamp(d.dataCoverage.lastRefresh)}
+          Last refresh: {formatTimestamp(d.dataCoverage.lastRefresh)} · {d.dataCoverage.connectedCount}/
+          {d.dataCoverage.totalCatalogCount} sources connected
         </p>
-        <div className="mt-aistroyka-4 grid gap-aistroyka-4 lg:grid-cols-2">
-          <div>
-            <p className="text-aistroyka-caption font-semibold uppercase text-aistroyka-text-tertiary">Connected</p>
-            <ul className="mt-aistroyka-2 space-y-aistroyka-2">
-              {d.dataCoverage.available.map((source) => (
-                <li
-                  key={source.id}
-                  className="rounded-card border border-aistroyka-border-subtle px-aistroyka-3 py-aistroyka-2"
-                >
-                  <p className="font-medium text-aistroyka-text-primary">{source.label}</p>
-                  <p className="text-aistroyka-caption text-aistroyka-text-tertiary">{source.category}</p>
-                  <p className="mt-aistroyka-1 text-aistroyka-footnote text-aistroyka-text-secondary">
-                    {source.summary}
-                  </p>
-                </li>
+        {intel.coverageBlindSpots.length > 0 ? (
+          <div className="mt-aistroyka-4">
+            <p className="text-aistroyka-caption font-semibold uppercase text-aistroyka-text-tertiary">Blind spots</p>
+            <ul className="mt-aistroyka-2 list-disc space-y-aistroyka-1 pl-aistroyka-5 text-aistroyka-footnote text-aistroyka-text-secondary">
+              {intel.coverageBlindSpots.slice(0, 8).map((spot) => (
+                <li key={spot}>{spot}</li>
               ))}
             </ul>
           </div>
+        ) : null}
+      </Card>
+
+      <details className="rounded-card border border-aistroyka-border-subtle bg-aistroyka-surface p-aistroyka-4">
+        <summary className="cursor-pointer text-aistroyka-headline font-semibold text-aistroyka-text-primary">
+          Detailed probe dashboard
+        </summary>
+        <div className="mt-aistroyka-5 space-y-aistroyka-6">
           <div>
-            <p className="text-aistroyka-caption font-semibold uppercase text-aistroyka-text-tertiary">Unavailable</p>
-            <ul className="mt-aistroyka-2 space-y-aistroyka-2">
-              {d.dataCoverage.unavailable.map((source) => (
-                <li
-                  key={source.id}
-                  className="rounded-card border border-aistroyka-border-subtle px-aistroyka-3 py-aistroyka-2"
-                >
-                  <p className="font-medium text-aistroyka-text-primary">{source.label}</p>
-                  <p className="text-aistroyka-caption text-aistroyka-text-tertiary">{source.category}</p>
-                  <p className="mt-aistroyka-1 text-aistroyka-footnote text-aistroyka-text-secondary">
-                    {source.summary}
-                  </p>
-                </li>
+            <h3 className="mb-aistroyka-3 text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">Domain overview</h3>
+            <div className="grid gap-aistroyka-3 sm:grid-cols-2 lg:grid-cols-3">
+              {d.domainSections.map((section) => (
+                <Card key={section.id} className="p-aistroyka-4">
+                  <div className="flex items-center justify-between gap-aistroyka-2">
+                    <h4 className="font-semibold text-aistroyka-text-primary">{section.label}</h4>
+                    <Badge variant={qualityStatusBadgeVariant(section.status)}>{section.statusLabel}</Badge>
+                  </div>
+                  <p className="mt-aistroyka-2 text-aistroyka-footnote text-aistroyka-text-secondary">{section.summary}</p>
+                </Card>
               ))}
-            </ul>
+            </div>
+          </div>
+
+          <div>
+            <h3 className="mb-aistroyka-3 text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">System components</h3>
+            <div className="grid gap-aistroyka-3 sm:grid-cols-2 lg:grid-cols-3">
+              {d.systemComponents.map((component) => (
+                <Card key={component.id} className="p-aistroyka-4">
+                  <div className="flex items-center justify-between gap-aistroyka-2">
+                    <h4 className="font-semibold text-aistroyka-text-primary">{component.name}</h4>
+                    <Badge variant={qualityStatusBadgeVariant(component.status)}>{component.statusLabel}</Badge>
+                  </div>
+                  <p className="mt-aistroyka-2 text-aistroyka-footnote text-aistroyka-text-secondary">{component.details}</p>
+                </Card>
+              ))}
+            </div>
+          </div>
+
+          <Card className="p-aistroyka-4">
+            <h3 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">Release readiness by category</h3>
+            <div className="mt-aistroyka-3 grid gap-aistroyka-2 sm:grid-cols-2 lg:grid-cols-4">
+              {d.releaseReadiness.map((category) => (
+                <div key={category.id} className="rounded-card border border-aistroyka-border-subtle px-aistroyka-3 py-aistroyka-2">
+                  <div className="flex items-center justify-between gap-aistroyka-2">
+                    <p className="font-medium text-aistroyka-text-primary">{category.label}</p>
+                    <Badge variant={readinessBadgeVariant(category.level)}>{formatPercent(category.percent)}</Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          <Card className="p-aistroyka-4">
+            <h3 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">Platform timeline</h3>
+            <dl className="mt-aistroyka-3 grid gap-aistroyka-2 sm:grid-cols-2 lg:grid-cols-3">
+              {d.platformTimeline.map((event) => (
+                <div key={event.id}>
+                  <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{event.label}</dt>
+                  <dd className="font-medium text-aistroyka-text-primary">{event.displayValue}</dd>
+                </div>
+              ))}
+            </dl>
+          </Card>
+
+          <div className="grid gap-aistroyka-4 lg:grid-cols-2">
+            <div>
+              <p className="text-aistroyka-caption font-semibold uppercase text-aistroyka-text-tertiary">Connected sources</p>
+              <ul className="mt-aistroyka-2 space-y-aistroyka-2">
+                {d.dataCoverage.available.map((source) => (
+                  <li key={source.id} className="rounded-card border border-aistroyka-border-subtle px-aistroyka-3 py-aistroyka-2 text-aistroyka-footnote">
+                    <span className="font-medium text-aistroyka-text-primary">{source.label}</span>
+                    <span className="text-aistroyka-text-tertiary"> — {source.summary}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <p className="text-aistroyka-caption font-semibold uppercase text-aistroyka-text-tertiary">Unavailable sources</p>
+              <ul className="mt-aistroyka-2 space-y-aistroyka-2">
+                {d.dataCoverage.unavailable.map((source) => (
+                  <li key={source.id} className="rounded-card border border-aistroyka-border-subtle px-aistroyka-3 py-aistroyka-2 text-aistroyka-footnote">
+                    <span className="font-medium text-aistroyka-text-primary">{source.label}</span>
+                    <span className="text-aistroyka-text-tertiary"> — {source.summary}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </div>
-      </Card>
+      </details>
     </section>
   );
 }
