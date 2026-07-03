@@ -9,6 +9,9 @@ vi.mock("@/lib/tenant", () => ({
 vi.mock("@/lib/api/require-admin", () => ({
   requireAdmin: vi.fn().mockReturnValue(null),
 }));
+vi.mock("@/lib/api/require-platform-admin-legacy-route", () => ({
+  requirePlatformOwnerLegacyAdminRoute: vi.fn().mockResolvedValue(null),
+}));
 
 const mockFrom = vi.fn();
 const mockSelect = vi.fn();
@@ -78,6 +81,17 @@ describe("GET /api/v1/admin/leads", () => {
     const { requireAdmin } = await import("@/lib/api/require-admin");
     vi.mocked(requireAdmin).mockReturnValueOnce(
       new Response(JSON.stringify({ error: "Forbidden" }), { status: 403 })
+    );
+    const req = new Request("http://x/api/v1/admin/leads");
+    const res = await GET(req);
+    expect(res.status).toBe(403);
+  });
+
+  it("returns 403 when platform owner grant is required", async () => {
+    const { requirePlatformOwnerLegacyAdminRoute } = await import("@/lib/api/require-platform-admin-legacy-route");
+    const { NextResponse } = await import("next/server");
+    vi.mocked(requirePlatformOwnerLegacyAdminRoute).mockResolvedValueOnce(
+      NextResponse.json({ error: "Platform owner access required", code: "platform_admin_required" }, { status: 403 })
     );
     const req = new Request("http://x/api/v1/admin/leads");
     const res = await GET(req);

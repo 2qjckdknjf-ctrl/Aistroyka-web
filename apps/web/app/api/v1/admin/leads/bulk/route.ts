@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { requireAdmin } from "@/lib/api/require-admin";
+import { requirePlatformOwnerLegacyAdminRoute } from "@/lib/api/require-platform-admin-legacy-route";
 import { getAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -17,6 +18,9 @@ const BulkLeadPatchSchema = z.object({
  * Bulk update lead status/notes by id list (admin only).
  */
 export async function PATCH(request: Request) {
+  const platformErr = await requirePlatformOwnerLegacyAdminRoute(request);
+  if (platformErr) return platformErr;
+
   const ctx = await getTenantContextFromRequest(request);
   try {
     requireTenant(ctx);

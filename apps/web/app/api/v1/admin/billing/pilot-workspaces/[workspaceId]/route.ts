@@ -6,6 +6,7 @@
 import { NextResponse } from "next/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { requireAdmin } from "@/lib/api/require-admin";
+import { requirePlatformOwnerLegacyAdminRoute } from "@/lib/api/require-platform-admin-legacy-route";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { removeWorkspaceFromPilotCohort } from "@/lib/platform/billing-readiness/billing-pilot-ops.service";
 
@@ -15,6 +16,9 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ workspaceId: string }> }
 ) {
+  const platformErr = await requirePlatformOwnerLegacyAdminRoute(request);
+  if (platformErr) return platformErr;
+
   const ctx = await getTenantContextFromRequest(request);
   try {
     requireTenant(ctx);

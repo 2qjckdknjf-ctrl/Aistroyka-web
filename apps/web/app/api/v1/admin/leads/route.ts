@@ -6,6 +6,7 @@
 import { NextResponse } from "next/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { requireAdmin } from "@/lib/api/require-admin";
+import { requirePlatformOwnerLegacyAdminRoute } from "@/lib/api/require-platform-admin-legacy-route";
 import { getAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -23,6 +24,9 @@ export type LeadRow = {
 };
 
 export async function GET(request: Request) {
+  const platformErr = await requirePlatformOwnerLegacyAdminRoute(request);
+  if (platformErr) return platformErr;
+
   const ctx = await getTenantContextFromRequest(request);
   try {
     requireTenant(ctx);

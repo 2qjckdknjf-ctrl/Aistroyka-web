@@ -56,7 +56,6 @@ export default async function AdminPage() {
           {tDetail("allJobsAcrossProjectsNoActions")}
         </p>
         <p className="mt-aistroyka-3 flex flex-wrap gap-aistroyka-4">
-          <Link href="/admin/leads" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">{tDetail("contactLeadsArrow")}</Link>
           <Link href="/admin/governance" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">{tDetail("aiGovernanceAuditArrow")}</Link>
           <Link href="/admin/trust" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">{tDetail("aiTrustDashboardArrow")}</Link>
           <Link href="/admin/operator" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">Operator workbench →</Link>

@@ -8,6 +8,7 @@ import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { enqueueJob } from "@/lib/platform/jobs/job.service";
 import { requireCronSecretIfEnabled } from "@/lib/api/cron-auth";
+import { blockAuthenticatedNonPlatformCronCaller } from "@/lib/api/require-platform-admin-legacy-route";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,9 @@ const DEDUPE_PREFIX = "upload_reconcile";
 export async function POST(request: Request) {
   const cronErr = requireCronSecretIfEnabled(request);
   if (cronErr) return cronErr;
+
+  const platformErr = await blockAuthenticatedNonPlatformCronCaller(request);
+  if (platformErr) return platformErr;
 
   const admin = getAdminClient();
   if (!admin) {

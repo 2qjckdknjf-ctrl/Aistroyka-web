@@ -7,6 +7,7 @@
 import { NextResponse } from "next/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { requireAdmin } from "@/lib/api/require-admin";
+import { requirePlatformOwnerLegacyAdminRoute } from "@/lib/api/require-platform-admin-legacy-route";
 import { getAdminClient } from "@/lib/supabase/admin";
 import {
   listBillingPilotWorkspacesSummary,
@@ -16,6 +17,9 @@ import {
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
+  const platformErr = await requirePlatformOwnerLegacyAdminRoute(request);
+  if (platformErr) return platformErr;
+
   const ctx = await getTenantContextFromRequest(request);
   try {
     requireTenant(ctx);
@@ -43,6 +47,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const platformErr = await requirePlatformOwnerLegacyAdminRoute(request);
+  if (platformErr) return platformErr;
+
   const ctx = await getTenantContextFromRequest(request);
   try {
     requireTenant(ctx);

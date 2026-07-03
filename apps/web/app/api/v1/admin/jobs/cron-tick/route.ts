@@ -9,6 +9,7 @@ import { getAdminClient } from "@/lib/supabase/admin";
 import { enqueueJob, processJobs } from "@/lib/platform/jobs/job.service";
 import { JOB_CONFIG } from "@/lib/platform/jobs/job.config";
 import { requireCronSecretIfEnabled } from "@/lib/api/cron-auth";
+import { blockAuthenticatedNonPlatformCronCaller } from "@/lib/api/require-platform-admin-legacy-route";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +21,9 @@ const ERROR_CODE_CRON_TICK = "cron_tick_error";
 export async function POST(request: Request) {
   const cronErr = requireCronSecretIfEnabled(request);
   if (cronErr) return cronErr;
+
+  const platformErr = await blockAuthenticatedNonPlatformCronCaller(request);
+  if (platformErr) return platformErr;
 
   const admin = getAdminClient();
   if (!admin) {

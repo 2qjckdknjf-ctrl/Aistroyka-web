@@ -4,6 +4,9 @@ import { POST } from "./route";
 vi.mock("@/lib/supabase/admin", () => ({ getAdminClient: vi.fn() }));
 vi.mock("@/lib/platform/jobs/job.service", () => ({ enqueueJob: vi.fn(), processJobs: vi.fn() }));
 vi.mock("@/lib/api/cron-auth", () => ({ requireCronSecretIfEnabled: vi.fn().mockReturnValue(null) }));
+vi.mock("@/lib/api/require-platform-admin-legacy-route", () => ({
+  blockAuthenticatedNonPlatformCronCaller: vi.fn().mockResolvedValue(null),
+}));
 
 describe("POST /api/v1/admin/jobs/cron-tick", () => {
   it("returns 403 when cron secret required and missing", async () => {
@@ -13,6 +16,17 @@ describe("POST /api/v1/admin/jobs/cron-tick", () => {
     const res = await POST(req);
     expect(res.status).toBe(403);
     vi.mocked(requireCronSecretIfEnabled).mockReturnValue(null);
+  });
+
+  it("returns 403 when authenticated tenant admin invokes cron tick", async () => {
+    const { blockAuthenticatedNonPlatformCronCaller } = await import("@/lib/api/require-platform-admin-legacy-route");
+    const { NextResponse } = await import("next/server");
+    vi.mocked(blockAuthenticatedNonPlatformCronCaller).mockResolvedValueOnce(
+      NextResponse.json({ error: "Platform owner access required", code: "platform_admin_required" }, { status: 403 })
+    );
+    const req = new Request("https://x/api/v1/admin/jobs/cron-tick", { method: "POST" });
+    const res = await POST(req);
+    expect(res.status).toBe(403);
   });
 
   it("schedules per tenant and runs processJobs", async () => {
