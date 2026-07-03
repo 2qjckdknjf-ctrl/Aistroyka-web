@@ -26,7 +26,9 @@ Stage 2 — Intelligence layer (decision engine) ✅
     ↓
 Stage 2A — Intelligence core (how ROMA thinks) ✅
     ↓
-Stage 2B — Intelligence schemas + interface contracts
+Stage 2B — Intelligence schemas + contracts ✅
+    ↓
+Stage 2C — Machine schema validation
     ↓
 Stage 3 — Web + Backend + Security adapters
     ↓
@@ -166,29 +168,51 @@ Define the cognitive architecture — reasoning, memory, knowledge, feedback, de
 
 ---
 
-## 5B. Stage 2B — Intelligence Schemas + Contracts
+## 5B. Stage 2B — Intelligence Schemas + Contracts ✅
 
 ### Goals
-Formalize Stage 2A/2 interfaces as validated JSON schemas and conformance checklist.
+Formalize Stage 2A/2 interfaces as enforceable contracts: canonical schema docs, conformance matrix, RT-Critical registry, fixtures, T0 reasoning ADR.
 
 ### Deliverables
 | # | Deliverable |
 |---|-------------|
-| 2B.1 | `docs/roma/schemas/reasoning_trace.schema.json` |
-| 2B.2 | `docs/roma/schemas/decision_bundle.schema.json` |
-| 2B.3 | `docs/roma/schemas/state_snapshot.schema.json` |
-| 2B.4 | `docs/roma/schemas/risk_manifest.schema.json` |
-| 2B.5 | `docs/roma/schemas/run_plan.schema.json` |
-| 2B.6 | Interface conformance matrix vs `ROMA_ENGINE_INTERFACES.md` |
-| 2B.7 | RT-Critical module registry draft YAML |
+| 2B.1–2B.9 | `docs/roma/schemas/*.schema.md` (9 artifacts) |
+| 2B.10 | `ROMA_INTERFACE_CONFORMANCE_MATRIX.md` |
+| 2B.11 | `registries/rt-critical-modules.yaml.md` |
+| 2B.12 | `fixtures/*.example.json.md` (5 fixtures) |
+| 2B.13 | `ADR-0008-T0-REASONING-DEPTH.md` |
+| 2B.14 | `ROMA_STAGE2B_REVIEW.md` |
 
 ### Exit criteria
-- Schema validation passes on fixture examples
-- All IF-* interfaces mapped to schema fields
+- All IF-* interfaces mapped ✅
+- Schema docs with validation rules and examples ✅
+- RT-Critical registry draft ✅
 
 ### Non-goals
+- Machine JSON Schema `.json` files (Stage 2C)
 - Adapter code
-- Graph auto-extraction jobs
+
+### Status
+**COMPLETE** (2026-07-03)
+
+---
+
+## 5C. Stage 2C — Machine Schema Validation
+
+### Goals
+JSON Schema files, automated fixture validation, schema index.
+
+### Deliverables
+| # | Deliverable |
+|---|-------------|
+| 2C.1 | `docs/roma/schemas/*.schema.json` mirroring `.schema.md` |
+| 2C.2 | Fixture validator (conformance script) |
+| 2C.3 | `regression_forecast.schema.md` (if needed) |
+| 2C.4 | `ROMA_SCHEMA_INDEX.md` |
+
+### Exit criteria
+- All Stage 2B fixtures pass machine validation
+- Stage 3 adapter onboarding checklist published
 
 ---
 
@@ -384,4 +408,5 @@ Reduce manual council friction; optional read-only dashboard.
 |---------|------|--------|
 | 1.0 | 2026-07-03 | Initial roadmap |
 | 1.1 | 2026-07-03 | Stage 2 = Intelligence; adapter stages renumbered 3–8 |
-| 1.2 | 2026-07-03 | Stage 2A Intelligence Core; Stage 2B schemas added to roadmap |
+| 1.2 | 2026-07-03 | Stage 2A Intelligence Core; Stage 2B/2C schemas added to roadmap |
+| 1.3 | 2026-07-03 | Stage 2B complete — `.schema.md` contracts, ADR-0008 |

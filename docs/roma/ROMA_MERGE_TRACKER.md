@@ -4,7 +4,7 @@
 **Canonical stage plan:** `ROMA_ROADMAP.md` (this tracker mirrors it exactly).
 
 **Branch:** `feature/roma-qa-framework`  
-**Last updated:** 2026-07-03
+**Last updated:** 2026-07-03 (Stage 2B)
 
 | stage_id | stage_name | branch | status | committed | pushed | merged_to_main | exit_verdict | notes |
 |----------|------------|--------|--------|-----------|--------|----------------|--------------|-------|
@@ -12,8 +12,9 @@
 | 0R | Stage 0 architecture review | `feature/roma-qa-framework` | DONE | YES | YES | NO | YES | `ROMA_STAGE0_REVIEW.md`; READY_FOR_STAGE1=YES |
 | 1 | Core + inventory + reporting skeleton (governance) | `feature/roma-qa-framework` | DONE | YES | YES | NO | YES | ADRs 0001–0006, Core spec, PQS spec; runtime adapters pending Stage 1 exit |
 | 2 | Intelligence layer (decision engine) | `feature/roma-qa-framework` | DONE | YES | YES | NO | YES | 13 engine docs + ADR-0007 + `ROMA_STAGE2_REVIEW.md` |
-| 2A | Intelligence core (how ROMA thinks) | `feature/roma-qa-framework` | DONE | YES | NO | NO | YES | 10 cognitive docs + `ROMA_STAGE2A_REVIEW.md` |
-| 2A | Intelligence schemas + contracts | — | NOT STARTED | NO | NO | NO | — | JSON schemas, RT-Critical registry draft |
+| 2A | Intelligence core (how ROMA thinks) | `feature/roma-qa-framework` | DONE | YES | YES | NO | YES | 10 cognitive docs + `ROMA_STAGE2A_REVIEW.md` |
+| 2B | Intelligence schemas + contracts | `feature/roma-qa-framework` | DONE | YES | NO | NO | YES | 9 schemas, matrix, registry, fixtures, ADR-0008 |
+| 2C | Machine schemas + validation | — | NOT STARTED | NO | NO | NO | — | JSON Schema files, fixture validator |
 | 3 | Web + Backend + Security adapters | — | NOT STARTED | NO | NO | NO | — | Consumes Intelligence `run_plan`; absorb legacy e2e/smokes |
 | 4 | Database + RBAC + AI adapters | — | NOT STARTED | NO | NO | NO | — | Fixture lifecycle, RBAC matrix, AI LIVE gate |
 | 5 | Mobile (iOS + Android) integration | — | NOT STARTED | NO | NO | NO | — | UITest, Layer B, instrumented |
