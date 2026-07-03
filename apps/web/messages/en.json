@@ -1608,6 +1608,7 @@
     "photos": "photos",
     "title": "Title",
     "commentOptional": "Comment (optional)",
+    "commentRequired": "Comment (required)",
     "decisionFailed": "Decision failed",
     "decisionModalTitle": "Decision: {title}",
     "decisionMetaLine": "Type: {type} · Created {date}",

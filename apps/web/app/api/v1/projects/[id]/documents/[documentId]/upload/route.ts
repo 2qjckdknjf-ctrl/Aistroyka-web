@@ -45,8 +45,13 @@ export async function POST(
   const doc = await getDocumentById(supabase, documentId, ctx.tenantId);
   if (!doc || doc.project_id !== projectId)
     return NextResponse.json({ error: "Document not found" }, { status: 404 });
-  if (doc.status !== "draft")
-    return NextResponse.json({ error: "Document must be in draft to upload" }, { status: 400 });
+  if (doc.status !== "draft" && doc.status !== "changes_requested")
+    return NextResponse.json(
+      { error: "Document must be in draft or changes_requested to upload" },
+      { status: 400 }
+    );
+
+  const previousObjectPath = doc.object_path ?? null;
 
   const contentLength = request.headers.get("content-length");
   if (contentLength && parseInt(contentLength, 10) > MAX_UPLOAD_BYTES)
@@ -71,8 +76,14 @@ export async function POST(
     .from(MEDIA_BUCKET)
     .upload(objectPath, file, { upsert: false });
 
-  if (uploadError)
+  if (uploadError) {
+    await supabase.storage.from(MEDIA_BUCKET).remove([objectPath]);
     return NextResponse.json({ error: uploadError.message ?? "Upload failed" }, { status: 500 });
+  }
+
+  if (previousObjectPath && previousObjectPath !== objectPath) {
+    await supabase.storage.from(MEDIA_BUCKET).remove([previousObjectPath]);
+  }
 
   const updatedResult = await updateDocument(supabase, ctx, documentId, projectId, {
     object_path: objectPath,

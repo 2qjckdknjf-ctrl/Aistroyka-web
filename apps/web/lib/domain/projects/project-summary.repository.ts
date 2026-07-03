@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { countSubmittedReportsForProject } from "@/lib/domain/reports/report-approval.repository";
 
 export interface ProjectSummary {
   activeWorkers: number;
@@ -41,7 +42,6 @@ export async function getProjectSummary(
     tasksDoneRes,
     tasksInProgressRes,
     milestonesRes,
-    pendingApprovalsRes,
     issuesRes,
     docsUnderReviewRes,
     costItemsRes,
@@ -79,12 +79,6 @@ export async function getProjectSummary(
       .select("id, target_date, status")
       .eq("project_id", projectId)
       .eq("tenant_id", tenantId),
-    supabase
-      .from("worker_reports")
-      .select("id", { count: "exact", head: true })
-      .eq("project_id", projectId)
-      .eq("tenant_id", tenantId)
-      .eq("status", "submitted"),
     supabase
       .from("project_issues")
       .select("id", { count: "exact", head: true })
@@ -192,6 +186,12 @@ export async function getProjectSummary(
   }).length;
   const budgetVarianceAmount = actualTotal - plannedTotal;
 
+  const pendingReportApprovalsCount = await countSubmittedReportsForProject(
+    supabase,
+    projectId,
+    tenantId
+  );
+
   return {
     activeWorkers,
     openReports,
@@ -201,7 +201,7 @@ export async function getProjectSummary(
     tasksDone,
     milestonesCount,
     overdueMilestonesCount,
-    pendingReportApprovalsCount: pendingApprovalsRes.count ?? 0,
+    pendingReportApprovalsCount,
     openIssuesCount: issuesRes.count ?? 0,
     pendingDecisionsCount: docsUnderReviewRes.count ?? 0,
     budgetOverBudget,

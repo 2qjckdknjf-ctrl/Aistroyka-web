@@ -6,6 +6,7 @@ import { canReviewReport } from "@/lib/domain/reports/report.policy";
 import { isLiteWorkerClient } from "@/lib/tenant/client-profile";
 import type { ReportReviewStatus } from "@/lib/domain/reports/report.repository";
 import { emitAudit } from "@/lib/observability/audit.service";
+import { insertReportApprovalEvent } from "@/lib/domain/reports/report-approval.repository";
 import { getProjectMembership } from "@/lib/domain/projects/project-access";
 import type { TenantContext } from "@/lib/tenant/tenant.types";
 
@@ -148,6 +149,15 @@ export async function PATCH(
     resource_id: id,
     details: { status, has_note: Boolean(normalizedNote) },
   });
+
+  await insertReportApprovalEvent(
+    supabase,
+    ctx.tenantId,
+    id,
+    status as "approved" | "rejected" | "changes_requested",
+    ctx.userId,
+    normalizedNote
+  );
 
   const media = await reportRepo.listMediaByReportIdWithUrls(supabase, id, ctx.tenantId);
   return NextResponse.json({ data: { ...updated, media } });

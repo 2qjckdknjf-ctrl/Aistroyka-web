@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getAISignalLineProps, getAISignalLinePropsFromScore } from "./AISignalLine";
+import { getAISignalLineProps, getAISignalLinePropsFromScore } from "./AISignalLine.helpers";
 
 describe("getAISignalLinePropsFromScore", () => {
   it("0–30 -> idle (subtle)", () => {

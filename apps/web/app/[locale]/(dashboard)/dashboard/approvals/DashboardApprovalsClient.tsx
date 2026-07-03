@@ -14,6 +14,8 @@ interface PendingApprovalRow {
   worker_id?: string;
   title?: string;
   document_type?: "document" | "act" | "contract";
+  queue?: "approval" | "follow_up";
+  reason?: string | null;
 }
 
 async function fetchPendingApprovals(): Promise<PendingApprovalRow[]> {
@@ -86,45 +88,59 @@ export function DashboardApprovalsClient() {
         </p>
       </div>
       <ul className="divide-y divide-aistroyka-border">
-        {items.map((item) => (
-          <li key={`${item.kind}:${item.id}`}>
-            <Link
-              href={
-                item.kind === "report"
-                  ? `/dashboard/reports/${item.id}`
-                  : `/dashboard/projects/${item.project_id ?? ""}?tab=documents`
-              }
-              className="flex flex-wrap items-center justify-between gap-2 p-4 hover:bg-aistroyka-surface-raised transition-colors"
-            >
-              <div className="flex flex-wrap items-center gap-2 min-w-0">
-                <span className="font-mono text-aistroyka-caption text-aistroyka-accent truncate">
-                  {item.id.slice(0, 8)}…
+        {items.map((item) => {
+          const isFollowUp = item.queue === "follow_up" || item.status === "changes_requested";
+          const href =
+            item.kind === "report"
+              ? `/dashboard/reports/${item.id}`
+              : `/dashboard/projects/${item.project_id ?? ""}?tab=documents`;
+
+          return (
+            <li key={`${item.kind}:${item.id}`}>
+              <Link
+                href={href}
+                className="flex flex-wrap items-center justify-between gap-2 p-4 hover:bg-aistroyka-surface-raised transition-colors"
+              >
+                <div className="flex flex-col gap-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2 min-w-0">
+                    <span className="font-mono text-aistroyka-caption text-aistroyka-accent truncate">
+                      {item.kind === "document" && item.title
+                        ? item.title
+                        : `${item.id.slice(0, 8)}…`}
+                    </span>
+                    <Badge variant={isFollowUp ? "neutral" : "warning"}>
+                      {item.kind === "report"
+                        ? isFollowUp
+                          ? tDetail("requestChanges")
+                          : tDetail("reportReview")
+                        : isFollowUp
+                          ? tDetail("requestChanges")
+                          : tDetail("documentReview")}
+                    </Badge>
+                    {item.kind === "report" && item.worker_id ? (
+                      <span className="text-aistroyka-caption text-aistroyka-text-tertiary">
+                        {tDetail("worker")} {item.worker_id.slice(0, 8)}…
+                      </span>
+                    ) : null}
+                    {item.project_id && (
+                      <span className="text-aistroyka-caption text-aistroyka-text-tertiary">
+                        · {tDetail("project")} {item.project_id.slice(0, 8)}…
+                      </span>
+                    )}
+                  </div>
+                  {item.reason ? (
+                    <span className="text-aistroyka-caption text-aistroyka-text-secondary truncate max-w-full">
+                      {item.reason}
+                    </span>
+                  ) : null}
+                </div>
+                <span className="text-aistroyka-caption text-aistroyka-text-tertiary tabular-nums">
+                  {item.pending_at ? formatAge(item.pending_at) : "—"}
                 </span>
-                <Badge variant="warning">
-                  {item.kind === "report" ? tDetail("reportReview") : tDetail("documentReview")}
-                </Badge>
-                {item.kind === "report" && item.worker_id ? (
-                  <span className="text-aistroyka-caption text-aistroyka-text-tertiary">
-                    {tDetail("worker")} {item.worker_id.slice(0, 8)}…
-                  </span>
-                ) : null}
-                {item.kind === "document" && item.title ? (
-                  <span className="text-aistroyka-caption text-aistroyka-text-tertiary truncate max-w-[260px]">
-                    {item.title}
-                  </span>
-                ) : null}
-                {item.project_id && (
-                  <span className="text-aistroyka-caption text-aistroyka-text-tertiary">
-                    · {tDetail("project")} {item.project_id.slice(0, 8)}…
-                  </span>
-                )}
-              </div>
-              <span className="text-aistroyka-caption text-aistroyka-text-tertiary tabular-nums">
-                {item.pending_at ? formatAge(item.pending_at) : "—"}
-              </span>
-            </Link>
-          </li>
-        ))}
+              </Link>
+            </li>
+          );
+        })}
       </ul>
       <div className="p-4 border-t border-aistroyka-border">
         <Link
