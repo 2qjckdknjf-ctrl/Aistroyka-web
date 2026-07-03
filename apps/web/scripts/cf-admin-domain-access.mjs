@@ -3,7 +3,7 @@
  * Create Cloudflare Access application for admin.aistroyka.ai
  *
  * Requires API token with: Account → Access: Apps and Policies → Edit
- * Set CLOUDFLARE_ACCESS_API_TOKEN (preferred) or CLOUDFLARE_API_TOKEN in env / .env.cf
+ * Set CLOUDFLARE_ACCESS_API_TOKEN in env / .env.cf (never use CLOUDFLARE_API_TOKEN for Access)
  *
  * Usage:
  *   CLOUDFLARE_ACCESS_OPERATOR_EMAILS=ops@example.com,owner@example.com \
@@ -22,16 +22,12 @@ const DEFAULT_OPERATOR = "z6pxn548dk@privaterelay.appleid.com";
 function loadToken() {
   const access = process.env.CLOUDFLARE_ACCESS_API_TOKEN?.trim();
   if (access) return access;
-  const main = process.env.CLOUDFLARE_API_TOKEN?.trim();
-  if (main) return main;
   try {
     const envPath = path.join(process.cwd(), ".env.cf");
     if (fs.existsSync(envPath)) {
       const content = fs.readFileSync(envPath, "utf8");
       const accessMatch = content.match(/CLOUDFLARE_ACCESS_API_TOKEN\s*=\s*(\S+)/);
       if (accessMatch) return accessMatch[1].trim();
-      const mainMatch = content.match(/CLOUDFLARE_API_TOKEN\s*=\s*(\S+)/);
-      if (mainMatch) return mainMatch[1].trim();
     }
   } catch {
     /* ignore */
@@ -41,7 +37,7 @@ function loadToken() {
 
 async function cf(apiPath, { method = "GET", body } = {}) {
   const token = loadToken();
-  if (!token) throw new Error("CLOUDFLARE_ACCESS_API_TOKEN or CLOUDFLARE_API_TOKEN required");
+  if (!token) throw new Error("CLOUDFLARE_ACCESS_API_TOKEN required");
   const res = await fetch(`${API}${apiPath}`, {
     method,
     headers: {
@@ -92,11 +88,6 @@ async function main() {
         domain: ADMIN_HOST,
         session_duration: "8h",
         auto_redirect_to_identity: true,
-        mfa_config: {
-          allowed_authenticators: ["totp", "security_key"],
-          mfa_disabled: false,
-          session_duration: "8h",
-        },
       },
     });
     if (!create.json.success) {
@@ -126,11 +117,6 @@ async function main() {
         decision: "allow",
         include: emails.map((email) => ({ email: { email } })),
         precedence: 1,
-        mfa_config: {
-          allowed_authenticators: ["totp", "security_key"],
-          mfa_disabled: false,
-          session_duration: "8h",
-        },
       },
     });
     if (!policy.json.success) {

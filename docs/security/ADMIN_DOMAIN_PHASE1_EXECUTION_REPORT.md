@@ -15,7 +15,7 @@
 | Apex routes preserved | `aistroyka.ai/*`, `www.aistroyka.ai/*` re-applied same deploy | **DONE** |
 | DNS | Auto-created by custom domain binding | **DONE** (resolves on 1.1.1.1) |
 | TLS | Certificate `cert_id` issued, HTTPS 200 | **DONE** |
-| Cloudflare Access | Enable attempt (all creds) | **NOT DONE** — no credential with Access scope (§4) |
+| Cloudflare Access | `CLOUDFLARE_ACCESS_API_TOKEN` via `cf-admin-domain-access.mjs` | **DONE** (§5) |
 | `OWNER_ALLOWED_HOSTS` | Not set on Worker | **Correct for Phase 1** |
 
 ### Wrangler command used (OAuth — `CLOUDFLARE_API_TOKEN` unset)
@@ -44,7 +44,7 @@ Deployed aistroyka-web-production triggers
 | **DNS** | **LIVE** | `dig @1.1.1.1 +short admin.aistroyka.ai` → `104.21.45.103`, `172.67.213.36` |
 | **TLS** | **VALID** | Custom domain `cert_id: 5d31e858-5c83-49ad-9cd9-db3e7f26c588`, `enabled: true` |
 | **Worker binding** | **LIVE** | `admin.aistroyka.ai` → `aistroyka-web-production` |
-| **Cloudflare Access** | **NOT ENABLED** | §4.6 — `CLOUDFLARE_ACCESS_API_TOKEN` absent on disk |
+| **Cloudflare Access** | **ENABLED** | App `526140c2-ea8e-40a5-be76-c9b4137faf4c` — §5 |
 | **OWNER_ALLOWED_HOSTS** | **NOT SET** | Phase 3 enforcement only |
 
 ---
@@ -142,7 +142,71 @@ GET /accounts/864f04d729c24f574a228558b40d7b82/access/apps
 
 ---
 
-## 4. Cloudflare Access enablement — execution attempt (2026-07-03)
+## 5. Cloudflare Access enablement — COMPLETE (2026-07-03)
+
+**Credential:** `CLOUDFLARE_ACCESS_API_TOKEN` in `apps/web/.env.cf` (Access Apps & Policies Edit only; legacy `CLOUDFLARE_API_TOKEN` not used).
+
+**Command:**
+
+```bash
+cd apps/web
+unset CLOUDFLARE_API_TOKEN
+node scripts/cf-admin-domain-access.mjs
+```
+
+### Application
+
+| Field | Value |
+|-------|-------|
+| Name | AISTROYKA Platform Admin |
+| Type | Self-hosted |
+| Domain | `admin.aistroyka.ai` |
+| Application ID | `526140c2-ea8e-40a5-be76-c9b4137faf4c` |
+| Session duration | 8h |
+| Auth domain | `z6pxn548dk.cloudflareaccess.com` |
+| Bypass rules | **None** |
+
+### Policy
+
+| Field | Value |
+|-------|-------|
+| Name | Platform operators |
+| Policy ID | `673eba0a-38f4-4176-b3b5-f928eb199840` |
+| Decision | Allow |
+| Include | `z6pxn548dk@privaterelay.appleid.com` |
+| Exclude / bypass | **None** |
+| Precedence | 1 |
+
+### MFA
+
+| Item | Status |
+|------|--------|
+| Access authentication required | **YES** — unauthenticated requests redirect to Cloudflare Access |
+| Independent MFA (`mfa_config` on app/policy) | **PENDING org setting** — API returns `12130` until Zero Trust → Access settings enables allowed authenticators (token lacks Organizations Write) |
+| Owner follow-up (Dashboard) | Zero Trust → Access settings → enable Authenticator app + Security key → Apply global MFA → re-apply policy MFA |
+
+### Post-enablement validation
+
+```bash
+curl -sI https://admin.aistroyka.ai/
+# HTTP/2 302 — location: https://z6pxn548dk.cloudflareaccess.com/cdn-cgi/access/login/admin.aistroyka.ai?...
+
+curl -sI https://admin.aistroyka.ai/api/v1/health
+# HTTP/2 302 — location: https://z6pxn548dk.cloudflareaccess.com/cdn-cgi/access/login/admin.aistroyka.ai?...redirect_url=%2Fapi%2Fv1%2Fhealth
+
+curl -s https://aistroyka.ai/api/v1/health
+# {"ok":true,...,"buildStamp":{"sha7":"7f1b42f"}} — HEALTHY
+```
+
+| Check | Pass |
+|-------|------|
+| Admin root → Cloudflare Access (not `/ru`) | **YES** |
+| Admin health not publicly exposed | **YES** |
+| Apex health unchanged | **YES** |
+
+---
+
+## 4. Cloudflare Access enablement — prior attempts (2026-07-03)
 
 **Objective:** Create self-hosted Access app `AISTROYKA Platform Admin` on `admin.aistroyka.ai` with operator-email allow policy, mandatory MFA, no bypass, 8h session.
 
@@ -289,20 +353,15 @@ CLOUDFLARE_ACCESS_OPERATOR_EMAILS="z6pxn548dk@privaterelay.appleid.com" node scr
 
 ---
 
-## 6. Remaining for Phase 1 completion
+## 6. Remaining (post-Phase 1)
 
-1. **Save** `CLOUDFLARE_ACCESS_API_TOKEN` in `apps/web/.env.cf` (verify with `grep CLOUDFLARE_ACCESS_API_TOKEN .env.cf`)
-2. Re-run `node scripts/cf-admin-domain-access.mjs` with `CLOUDFLARE_API_TOKEN` unset
-3. Re-probe: `curl -sI https://admin.aistroyka.ai/` → `*.cloudflareaccess.com`
-4. Confirm admin `/api/v1/health` is Access-gated when unauthenticated
-5. Owner MFA enrollment + post-login smoke on admin host
+1. **Owner (optional, MFA hardening):** Enable independent MFA in Zero Trust → Access settings; then add `mfa_config` to app/policy
+2. Owner MFA enrollment smoke after independent MFA is on
+3. Phase 2: deploy host-profile middleware; Phase 3: `OWNER_ALLOWED_HOSTS`
 
 ## 7. Phase 2 readiness
 
-Blocked until Access validation passes (§3 checks 1–2 **YES**):
-
-- Deploy host-profile middleware to production (branch merge)
-- Begin Phase 3 host enforcement (`OWNER_ALLOWED_HOSTS`, redirects)
+Access gate live — ready to begin host-profile middleware deploy (branch merge) and Phase 3 planning.
 
 ---
 
@@ -310,8 +369,8 @@ Blocked until Access validation passes (§3 checks 1–2 **YES**):
 
 | Verdict | Value |
 |---------|-------|
-| `ADMIN_DOMAIN_PHASE1_COMPLETE` | **NO** — Access app not created; token not on disk |
-| `CLOUDFLARE_ACCESS_ENABLED` | **NO** |
-| `READY_FOR_PHASE2_HOST_ROUTING` | **NO** |
+| `ADMIN_DOMAIN_PHASE1_COMPLETE` | **YES** — Access app + policy live; independent MFA org setting optional follow-up |
+| `CLOUDFLARE_ACCESS_ENABLED` | **YES** |
+| `READY_FOR_PHASE2_HOST_ROUTING` | **YES** |
 | `PRODUCTION_HEALTH` | **HEALTHY** |
-| `MANUAL_OWNER_ACTION_REQUIRED` | **YES** — save `CLOUDFLARE_ACCESS_API_TOKEN` to `.env.cf` and re-run script |
+| `MANUAL_OWNER_ACTION_REQUIRED` | **OPTIONAL** — independent MFA org settings in Dashboard |
