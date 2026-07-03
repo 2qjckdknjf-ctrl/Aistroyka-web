@@ -44,39 +44,83 @@ Deployed aistroyka-web-production triggers
 | **DNS** | **LIVE** | `dig @1.1.1.1 +short admin.aistroyka.ai` → `104.21.45.103`, `172.67.213.36` |
 | **TLS** | **VALID** | Custom domain `cert_id: 5d31e858-5c83-49ad-9cd9-db3e7f26c588`, `enabled: true` |
 | **Worker binding** | **LIVE** | `admin.aistroyka.ai` → `aistroyka-web-production` |
-| **Cloudflare Access** | **NOT CONFIGURED** | See blockers §4 |
+| **Cloudflare Access** | **NOT ENABLED** | Validated 2026-07-03 — no Access challenge (§3) |
 | **OWNER_ALLOWED_HOSTS** | **NOT SET** | Phase 3 enforcement only |
 
 ---
 
 ## 3. Validation results
 
-### Public production (unchanged)
+**Validation run:** 2026-07-03 (post–Access-setup check, read-only, no code/deploy changes)
+
+### Check 1 — Cloudflare Access before app access
+
+| Probe | Expected | Observed | Pass |
+|-------|----------|----------|------|
+| `curl -sI https://admin.aistroyka.ai/` | Redirect to `*.cloudflareaccess.com` | **HTTP 307** → `location: /ru` (app locale middleware) | **NO** |
+| Access response headers | `cf-access-*` or Access login redirect | None; `server: cloudflare` only | **NO** |
+
+**Conclusion:** Cloudflare Access is **not** in front of the admin host. Unauthenticated clients reach the production Worker directly.
+
+### Check 2 — Admin health endpoint Access policy
+
+| Probe | Expected (with Access) | Observed | Pass |
+|-------|------------------------|----------|------|
+| `curl -sI https://admin.aistroyka.ai/api/v1/health` | Access challenge or deny without session | **HTTP 200**, `content-type: application/json` | **NO** |
+| Body (unauth) | Not reachable without Access session | `{"ok":true,"db":"ok",...,"buildStamp":{"sha7":"7f1b42f"}}` | **NO** |
+
+Health is **publicly reachable** on `admin.aistroyka.ai` — not gated by Access.
+
+### Check 3 — Apex production health (unchanged)
 
 ```bash
 curl -s https://aistroyka.ai/api/v1/health
-# {"ok":true,"buildStamp":{"sha7":"7f1b42f",...}}
+# {"ok":true,"db":"ok","aiConfigured":true,...,"buildStamp":{"sha7":"7f1b42f","buildTime":"2026-07-01 12:58"}}
+
+curl -s https://www.aistroyka.ai/api/v1/health
+# {"ok":true,...,"buildStamp":{"sha7":"7f1b42f",...}}
 ```
 
-### Admin host
+| Verdict | **HEALTHY** — apex and www unaffected |
 
-```bash
-dig @1.1.1.1 +short admin.aistroyka.ai
-# 104.21.45.103 / 172.67.213.36
+### Check 4 — DNS and TLS
 
-curl -s --resolve admin.aistroyka.ai:443:188.114.96.5 https://admin.aistroyka.ai/api/v1/health
-# {"ok":true,"buildStamp":{"sha7":"7f1b42f",...}}
-```
+| Target | Result | Pass |
+|--------|--------|------|
+| `dig @1.1.1.1 +short admin.aistroyka.ai` | `172.67.213.36`, `104.21.45.103` | **YES** |
+| `dig @1.1.1.1 +short aistroyka.ai` | Same Cloudflare anycast pair | **YES** |
+| TLS `admin.aistroyka.ai` | CN=`aistroyka.ai`, GTS WE1, valid Jul 3 – Oct 1 2026 | **YES** |
 
-SHA matches apex — same production Worker build.
+### Check 5 — Worker serves admin host after Access login
 
-### Worker routes (API read)
+| Status | Detail |
+|--------|--------|
+| **NOT TESTED** | Access gate absent; cannot obtain Access session cookie from this environment |
+| Worker reachability (unauth) | Admin host returns same build as apex (`sha7: 7f1b42f`) — Worker binding **live** |
+
+Post-Access-login behavior requires owner MFA test after Access app is created.
+
+### Check 6 — Route exposure on admin host (compatibility mode, no enforcement)
+
+`OWNER_ALLOWED_HOSTS` **not set**; host enforcement **not enabled** (by design for Phase 1).
+
+| Path | Unauth response | Notes |
+|------|-----------------|-------|
+| `/` | 307 → `/ru` | Public locale routing (same as product host) |
+| `/ru/dashboard` | 307 → `/ru/login?next=...` | Tenant dashboard path reachable; app auth only |
+| `/platform-admin` | 404 → `/ru/platform-admin` | Legacy alias still routed (compatibility) |
+| `/api/v1/health` | 200 JSON | Public |
+| `/api/v1/ops/metrics` | 401 JSON | App-level auth gate only |
+
+**Conclusion:** Admin host currently mirrors full product routing — **no Access layer**, **no host-profile enforcement**. Exposure is limited to existing app auth rules only; this matches Phase 1 compatibility mode but **fails** the intended Access-first admin perimeter.
+
+### Worker routes (API read — unchanged)
 
 ```json
 ["admin.aistroyka.ai/*", "aistroyka.ai/*", "www.aistroyka.ai/*"]
 ```
 
-### Custom domain record
+### Custom domain record (unchanged)
 
 ```json
 {
@@ -87,11 +131,14 @@ SHA matches apex — same production Worker build.
 }
 ```
 
-### Cloudflare Access
+### Cloudflare Access API (read attempt)
 
-Not observed — no Access challenge on admin host (expected until Access app created).
+```bash
+GET /accounts/864f04d729c24f574a228558b40d7b82/access/apps
+# HTTP 403, code 10000 — cannot confirm app existence via API token
+```
 
-**Note:** Local stub resolver may lag; use `dig @1.1.1.1` or wait for cache expiry.
+**Note:** Local stub resolver may lag; validation used live `https://admin.aistroyka.ai` and `dig @1.1.1.1`.
 
 ---
 
@@ -154,15 +201,15 @@ curl -sI --resolve admin.aistroyka.ai:443:188.114.96.5 https://admin.aistroyka.a
 
 ## 6. Remaining for Phase 1 completion
 
-1. **Cloudflare Access** on `admin.aistroyka.ai` (Dashboard — see §4)
-2. Confirm Access challenge: `curl -sI https://admin.aistroyka.ai/` → redirect to Cloudflare Access
-3. Operator MFA enrollment test
+1. **Create Cloudflare Access app** on `admin.aistroyka.ai` (Dashboard — see §4)
+2. Re-run validation: `curl -sI https://admin.aistroyka.ai/` → `*.cloudflareaccess.com` (not `/ru`)
+3. Confirm `/api/v1/health` on admin host is Access-gated (challenge or 302 to Access)
+4. Owner MFA enrollment + post-login smoke on admin host
 
 ## 7. Phase 2 readiness
 
-After Access is live:
+Blocked until Access validation passes (§3 checks 1–2 **YES**):
 
-- Verify admin health + Access gate
 - Deploy host-profile middleware to production (branch merge)
 - Begin Phase 3 host enforcement (`OWNER_ALLOWED_HOSTS`, redirects)
 
@@ -172,6 +219,7 @@ After Access is live:
 
 | Verdict | Value |
 |---------|-------|
-| `ADMIN_DOMAIN_PHASE1_COMPLETE` | **NO** — Access not configured |
-| `READY_FOR_PHASE2_HOST_ROUTING` | **PARTIAL** — Worker/DNS/TLS live; Access pending |
+| `ADMIN_DOMAIN_PHASE1_COMPLETE` | **NO** — Access not enabled; checks 1–2 failed |
+| `CLOUDFLARE_ACCESS_ENABLED` | **NO** |
+| `READY_FOR_PHASE2_HOST_ROUTING` | **NO** — Worker/DNS/TLS live; Access gate required first |
 | `PRODUCTION_HEALTH` | **HEALTHY** |
