@@ -134,11 +134,7 @@ export type LiveProbeBundle = {
   mobile: ProbeOutcome<MobileProbeData>;
 };
 
-export const LIVE_SOURCE_CATALOG: ReadonlyArray<{
-  id: string;
-  label: string;
-  category: string;
-}> = [
+export const LIVE_SOURCE_CATALOG = [
   { id: "core_health", label: "Core health API", category: "Platform Health" },
   { id: "system_health", label: "System health service", category: "Infrastructure" },
   { id: "release_env", label: "Release environment validation", category: "Security" },
@@ -371,7 +367,12 @@ async function probeMigrations(): Promise<ProbeOutcome<MigrationProbeData>> {
     };
   }
   try {
-    const { data, error } = await admin
+    // Supabase generated types omit supabase_migrations; runtime probe only.
+    const { data, error } = await (
+      admin as unknown as {
+        schema: (schemaName: string) => ReturnType<NonNullable<ReturnType<typeof getAdminClient>>["schema"]>;
+      }
+    )
       .schema("supabase_migrations")
       .from("schema_migrations")
       .select("version")
@@ -627,8 +628,9 @@ export function buildDataCoverage(probes: LiveProbeBundle): {
   const sources: LiveDataSource[] = LIVE_SOURCE_CATALOG.map((catalogItem) => {
     let connected = false;
     let summary = "Unavailable";
+    const sourceId = catalogItem.id;
 
-    switch (catalogItem.id) {
+    switch (sourceId) {
       case "core_health":
         connected = probes.health.connected;
         summary = probes.health.summary;
@@ -702,7 +704,7 @@ export function buildDataCoverage(probes: LiveProbeBundle): {
           : "Notification configuration probe unavailable.";
         break;
       default: {
-        const _exhaustive: never = catalogItem.id;
+        const _exhaustive: never = sourceId;
         summary = String(_exhaustive);
       }
     }
