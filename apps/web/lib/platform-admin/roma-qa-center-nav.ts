@@ -6,7 +6,8 @@ export type RomaQaCenterNavId =
   | "quality-graph"
   | "test-catalog"
   | "change-intelligence"
-  | "execution-planner";
+  | "execution-planner"
+  | "execution-engine";
 
 export type RomaQaCenterNavItem = {
   id: RomaQaCenterNavId;
@@ -24,6 +25,7 @@ export const ROMA_QA_CENTER_NAV_ITEMS: readonly RomaQaCenterNavItem[] = [
   { id: "test-catalog", href: `${TESTING_BASE}/test-catalog`, label: "Test Catalog", exact: true },
   { id: "change-intelligence", href: `${TESTING_BASE}/change-intelligence`, label: "Change Intelligence", exact: true },
   { id: "execution-planner", href: `${TESTING_BASE}/execution-planner`, label: "Execution Planner", exact: true },
+  { id: "execution-engine", href: `${TESTING_BASE}/execution-engine`, label: "Execution Engine", exact: true },
   { id: "audits", href: `${TESTING_BASE}/audits`, label: "Audits" },
   { id: "web", href: `${TESTING_BASE}/web`, label: "Web" },
   { id: "mobile", href: `${TESTING_BASE}/mobile`, label: "Mobile" },
