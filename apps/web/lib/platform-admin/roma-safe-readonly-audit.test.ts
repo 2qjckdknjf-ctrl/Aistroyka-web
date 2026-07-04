@@ -43,6 +43,7 @@ describe("ROMA Safe Readonly Audit V1", () => {
   it("meta has execution disabled", () => {
     expect(getSafeReadonlyAuditMeta().executionEnabled).toBe(false);
     expect(getSafeReadonlyAuditMeta().mode).toBe("SAFE_READONLY_AUDIT");
+    expect(getSafeReadonlyAuditMeta().refreshApiPath).toContain("safe-audit/refresh");
   });
 
   it("audit uses only allowed sources", () => {
@@ -217,9 +218,10 @@ describe("ROMA Safe Readonly Audit V1", () => {
     expect(limits.some((l) => /No CI|deploys|DB writes/i.test(l))).toBe(true);
   });
 
-  it("no run deploy fix buttons in UI", () => {
+  it("no run full audit deploy fix buttons in UI", () => {
     const ui = readRelative("components/platform-admin/RomaSafeAuditClient.tsx");
-    expect(ui).not.toMatch(/>\s*Run\s*</i);
+    expect(ui).toMatch(/Refresh Safe Audit/);
+    expect(ui).not.toMatch(/Run Full Audit/i);
     expect(ui).not.toMatch(/>\s*Execute\s*</i);
     expect(ui).not.toMatch(/>\s*Deploy\s*</i);
     expect(ui).not.toMatch(/>\s*Fix\s*</i);

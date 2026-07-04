@@ -1,5 +1,11 @@
-import { Card, Badge } from "@/components/ui";
-import type { RomaSafeReadonlyAudit } from "@/lib/platform-admin/roma-safe-readonly-audit.types";
+"use client";
+
+import { useCallback, useState } from "react";
+import { Card, Badge, Button } from "@/components/ui";
+import type {
+  RomaSafeReadonlyAudit,
+  RomaSafeReadonlyAuditRefreshResponse,
+} from "@/lib/platform-admin/roma-safe-readonly-audit.types";
 import {
   getReadonlyAuditLimitations,
   getSafeReadonlyAuditMeta,
@@ -27,19 +33,68 @@ function statusVariant(status: RomaSafeReadonlyAudit["status"]): "success" | "wa
   }
 }
 
-export function RomaSafeAuditClient({ audit }: Props) {
+export function RomaSafeAuditClient({ audit: initialAudit }: Props) {
   const meta = getSafeReadonlyAuditMeta();
   const limitations = getReadonlyAuditLimitations();
+  const [audit, setAudit] = useState(initialAudit);
+  const [lastRefreshedAt, setLastRefreshedAt] = useState(initialAudit.createdAt);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const refreshAudit = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(meta.refreshApiPath, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!response.ok) {
+        const body = (await response.json().catch(() => null)) as {
+          error?: { message?: string };
+        } | null;
+        throw new Error(body?.error?.message ?? `Refresh failed (${response.status})`);
+      }
+      const json = (await response.json()) as { data: RomaSafeReadonlyAuditRefreshResponse };
+      setAudit(json.data.audit);
+      setLastRefreshedAt(json.data.generatedAt);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Refresh failed");
+    } finally {
+      setLoading(false);
+    }
+  }, [meta.refreshApiPath]);
 
   return (
     <section className="space-y-aistroyka-5" aria-label="ROMA Safe Readonly Audit">
       <Card className="p-aistroyka-5 border-aistroyka-border-warning bg-aistroyka-surface-raised">
         <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">Safety notice</h2>
         <p className="mt-aistroyka-2 text-aistroyka-subheadline text-aistroyka-text-secondary">
-          This page runs a <strong>read-only audit</strong> on load using safe server probes. It does{" "}
+          This page runs a <strong>read-only audit</strong> using safe server probes.{" "}
+          <strong>Refresh Safe Audit</strong> recomputes live evidence only — it does{" "}
           <strong>not</strong> execute catalog tests, trigger CI, deploy, mutate production, or write to the database.
-          No Run button in V1 — snapshot refreshes on page reload only.
         </p>
+        <div className="mt-aistroyka-4 flex flex-wrap items-center gap-aistroyka-3">
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            loading={loading}
+            disabled={loading}
+            onClick={() => void refreshAudit()}
+            aria-label="Refresh Safe Audit"
+          >
+            Refresh Safe Audit
+          </Button>
+          <p className="text-aistroyka-footnote text-aistroyka-text-tertiary">
+            Last refreshed: <time dateTime={lastRefreshedAt}>{lastRefreshedAt}</time>
+          </p>
+        </div>
+        {error ? (
+          <p className="mt-aistroyka-3 text-aistroyka-footnote text-aistroyka-error" role="alert">
+            {error}
+          </p>
+        ) : null}
       </Card>
 
       <Card className="p-aistroyka-5">

@@ -10,6 +10,7 @@ import type {
   RomaReadonlyAuditFinding,
   RomaReadonlyAuditRecommendation,
   RomaSafeReadonlyAudit,
+  RomaSafeReadonlyAuditRefreshResponse,
   RomaSafeReadonlyAuditSourceId,
   RomaSafeReadonlyAuditStatus,
 } from "./roma-safe-readonly-audit.types";
@@ -309,8 +310,7 @@ export function getReadonlyAuditLimitations(): readonly string[] {
   return [
     "Read-only probes only — no catalog test execution, Playwright, or mobile simulators",
     "No CI triggers, deploys, DB writes, or feature-flag changes",
-    "Evidence collected at page load — no manual refresh button in V1",
-    "No run history persistence — snapshot is ephemeral per request",
+    "Manual refresh recomputes snapshot via owner-only API — no persistence or run history",
     "Production mutation never performed; production targets are not probed for writes",
     "Confidence degrades when service role or probe sources are unavailable",
     "Release recommendation is advisory — owner must confirm before any release action",
@@ -365,8 +365,26 @@ export function getSafeReadonlyAuditMeta(): {
   version: "v1";
   executionEnabled: false;
   mode: "SAFE_READONLY_AUDIT";
+  refreshApiPath: "/api/v1/platform/testing/safe-audit/refresh";
 } {
-  return { version: "v1", executionEnabled: false, mode: "SAFE_READONLY_AUDIT" };
+  return {
+    version: "v1",
+    executionEnabled: false,
+    mode: "SAFE_READONLY_AUDIT",
+    refreshApiPath: "/api/v1/platform/testing/safe-audit/refresh",
+  };
+}
+
+/** Owner-only refresh payload — calls createSafeReadonlyAudit(), no persistence. */
+export async function buildSafeReadonlyAuditRefreshResponse(): Promise<RomaSafeReadonlyAuditRefreshResponse> {
+  const audit = await createSafeReadonlyAudit();
+  return {
+    audit,
+    generatedAt: audit.createdAt,
+    mode: audit.mode,
+    limitations: audit.limitations,
+    forbiddenActions: audit.forbiddenActions,
+  };
 }
 
 /** For tests — evaluate from mock bundle without live probes. */

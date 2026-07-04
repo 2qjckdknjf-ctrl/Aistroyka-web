@@ -86,6 +86,15 @@ export type RomaSafeReadonlyAudit = {
   forbiddenActions: readonly RomaSafeReadonlyAuditForbiddenAction[];
 };
 
+/** Owner-only manual refresh API response (no persistence). */
+export type RomaSafeReadonlyAuditRefreshResponse = {
+  audit: RomaSafeReadonlyAudit;
+  generatedAt: string;
+  mode: RomaSafeReadonlyAuditMode;
+  limitations: readonly string[];
+  forbiddenActions: readonly RomaSafeReadonlyAuditForbiddenAction[];
+};
+
 export type RomaReadonlyAuditEvidenceBundle = {
   collectedAt: string;
   dashboardGeneratedAt: string;
