@@ -131,17 +131,7 @@ export async function middleware(request: NextRequest) {
     return applyHostProfileHeader(applyPageSecurityHeaders(redir, isProduction), request);
   }
 
-  if (isPlatformAdminPage) {
-    if (!user) {
-      const { locale: loginLocale } = pathWithoutLocale(pathname);
-      const loginUrl = new URL(`/${loginLocale}/login`, request.url);
-      loginUrl.searchParams.set("next", pathname);
-      const redir = NextResponse.redirect(loginUrl);
-      mergeSupabaseSessionIntoResponse(sessionResponse, redir);
-      redir.headers.set("X-Auth-Redirect", "platform-admin-login");
-      return applyHostProfileHeader(applyPageSecurityHeaders(redir, isProduction), request);
-    }
-
+  if (isPlatformAdminPage && user) {
     const denied = await gateOwnerRequest({
       request,
       sessionResponse,
@@ -160,14 +150,18 @@ export async function middleware(request: NextRequest) {
   const { path: pathWithoutLoc, locale } = pathWithoutLocale(pathnameForLoc);
 
   const isProtected = PROTECTED_PREFIXES.some((p) => pathWithoutLoc.startsWith(p));
+  const isPlatformAdminPageAfterIntl = isPlatformAdminPagePath(pathWithoutLoc);
   const isAuthPage = AUTH_PREFIXES.some((p) => pathWithoutLoc.startsWith(p));
 
-  if (isProtected && !user) {
+  if (!user && (isProtected || isPlatformAdminPageAfterIntl)) {
     const loginUrl = new URL(`/${locale}/login`, request.url);
     loginUrl.searchParams.set("next", pathnameForLoc);
     const redir = NextResponse.redirect(loginUrl);
     mergeSupabaseSessionIntoResponse(sessionResponse, redir);
-    redir.headers.set("X-Auth-Redirect", "login");
+    redir.headers.set(
+      "X-Auth-Redirect",
+      isPlatformAdminPageAfterIntl ? "platform-admin-login" : "login"
+    );
     return applyHostProfileHeader(applyPageSecurityHeaders(redir, isProduction), request);
   }
   if (isAuthPage && user) {
