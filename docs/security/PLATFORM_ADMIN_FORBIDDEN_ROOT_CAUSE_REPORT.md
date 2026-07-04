@@ -133,26 +133,41 @@ Applied via Supabase MCP to project **AISTROYKA**:
 
 ## 5. Validation
 
-### Automated tests
+### Pre-deploy tests (PR #183)
 
-```bash
-cd apps/web
-bunx vitest run middleware.host-routing.test.ts lib/entry/entry-routing.test.ts \
-  lib/platform-admin/host-routing.test.ts lib/api/require-platform-admin-legacy-route.test.ts
-```
+55 focused tests passed (host routing, entry routing, platform owner gate, ROMA dashboard, legacy route guards).
 
-### Operator smoke (post-deploy for middleware redirect)
+### Production deployment
 
-1. Cloudflare Access login → `admin.aistroyka.ai`
-2. If no Supabase session → redirect to `/ru/login?next=/ru/platform-admin`
-3. Login with `626***@gmail.com` (Supabase credentials)
-4. `/ru/platform-admin` → **200** Platform Admin shell
-5. `/ru/platform-admin/testing` → ROMA Testing loads
-6. Tenant admin account → still **403** on platform-admin (no grant)
+| Item | Value |
+|------|-------|
+| PR | [#183](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/183) (login redirect + bootstrap script), [#184](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/184) (middleware 307 ordering), [#185](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/185) (layout login redirect — fixes OpenNext 500) |
+| Merge commit | `619429f1` |
+| Production `buildStamp.sha7` | `619429f` (2026-07-04 06:24 UTC) |
+| Deploy workflows | Staging + Production Cloudflare — **SUCCESS** |
 
-### Immediate partial validation (DB grant live now)
+### Live validation (2026-07-04, production)
 
-Operators with an **existing Supabase session** and matching grant should reach platform-admin **before** middleware deploy. Operators with Access-only session need deploy + login flow.
+| Check | Expected | Observed | Pass |
+|-------|----------|----------|------|
+| `GET https://aistroyka.ai/api/v1/health` | `ok: true` | `ok: true`, `sha7: 619429f` | **YES** |
+| `GET https://admin.aistroyka.ai/` (unauth) | Cloudflare Access | **302** → `*.cloudflareaccess.com` | **YES** |
+| `GET /ru/platform-admin` (no Supabase session) | 307 → login | **307** `location: /ru/login?next=%2Fru%2Fplatform-admin`, `x-auth-redirect: platform-admin-login` | **YES** |
+| Follow redirect chain | login page 200 | `final=200`, `redirects=1` | **YES** |
+| `GET /ru/platform-admin/testing` (no session) | 307 → login with deep next | **307** `next=%2Fru%2Fplatform-admin%2Ftesting` | **YES** |
+| `GET /api/v1/platform/overview` (no session) | owner gate 403 | **403** `{code: owner_gate}` | **YES** |
+| `POST /api/v1/admin/flags` (tenant P0) | platform_admin_required | **403** `{code: platform_admin_required}` | **YES** |
+| `platform_owner_grants` row | 1 OWNER grant | **1 row** (live DB) | **YES** |
+
+### Operator browser smoke (requires human session)
+
+After Cloudflare Access + Supabase login as OWNER grant holder:
+
+1. `/ru/platform-admin` → Platform Admin shell (**200**)
+2. `/ru/platform-admin/testing` → ROMA Testing dashboard
+3. Tenant admin (no grant) → **403** on platform-admin
+
+Automated probes cannot complete Access + Supabase authenticated browser flow from CI.
 
 ---
 
@@ -169,10 +184,11 @@ Operators with an **existing Supabase session** and matching grant should reach 
 
 ## 7. Follow-up
 
-1. **Deploy** middleware + entry-routing fix to production (merge + Cloudflare deploy)
+1. ~~Deploy middleware + entry-routing fix to production~~ **DONE** (`619429f`)
 2. Reconcile repo ↔ remote migration timestamps in `docs/audit/LIVE_SUPABASE_SCHEMA_REPORT.md`
 3. Add rollout checklist item: verify `platform_owner_grants` exists before admin domain go-live
-4. Optional: document that Access operator email may differ from Supabase login email
+4. Document that Access operator email may differ from Supabase login email (already noted in §3)
+5. Owner browser smoke: confirm ROMA Testing after Access + Supabase login
 
 ---
 
@@ -180,7 +196,11 @@ Operators with an **existing Supabase session** and matching grant should reach 
 
 | Verdict | Value |
 |---------|-------|
-| `PLATFORM_ADMIN_LOGIN_FIXED` | **PARTIAL** — DB + grant **YES** (live); login redirect **YES** (needs deploy) |
-| `ROOT_CAUSE` | Missing production `platform_owner_grants` table + no Supabase session after Access-only login treated as 403 |
+| `PLATFORM_ADMIN_LOGIN_FIXED` | **YES** — DB grant live + production 307 login redirect deployed |
+| `DEPLOYED_TO_PRODUCTION` | **YES** — `buildStamp.sha7: 619429f` |
+| `CLOUDFLARE_ACCESS_OK` | **YES** |
+| `SUPABASE_LOGIN_REDIRECT_OK` | **YES** — 307 with correct `next` param |
+| `PLATFORM_OWNER_ACCESS_OK` | **YES** (grant + gate); authenticated page load pending owner browser smoke |
+| `ROMA_TESTING_PAGE_OK` | **PARTIAL** — unauth redirect correct; authenticated load requires owner session |
+| `ROOT_CAUSE` | Missing production `platform_owner_grants` + Access-only auth treated as Forbidden/500 |
 | `SECURITY_WEAKENED` | **NO** |
-| `ROMA_READY` | **YES** after operator completes Supabase login with OWNER grant (post-deploy redirect improves UX) |
