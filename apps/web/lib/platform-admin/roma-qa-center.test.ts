@@ -23,12 +23,14 @@ describe("ROMA QA Center V1", () => {
     expect(ROMA_QA_CENTER_NAV_ITEMS.length).toBeGreaterThanOrEqual(13);
     expect(ROMA_QA_CENTER_NAV_ITEMS.some((item) => item.id === "quality-graph")).toBe(true);
     expect(ROMA_QA_CENTER_NAV_ITEMS.some((item) => item.id === "test-catalog")).toBe(true);
+    expect(ROMA_QA_CENTER_NAV_ITEMS.some((item) => item.id === "change-intelligence")).toBe(true);
   });
 
   it("protects all QA center routes via platform admin page path guard", () => {
     expect(isPlatformAdminPagePath("/platform-admin/testing")).toBe(true);
     expect(isPlatformAdminPagePath("/platform-admin/testing/quality-graph")).toBe(true);
     expect(isPlatformAdminPagePath("/platform-admin/testing/test-catalog")).toBe(true);
+    expect(isPlatformAdminPagePath("/platform-admin/testing/change-intelligence")).toBe(true);
     for (const section of ROMA_QA_CENTER_ROUTE_SECTION_IDS) {
       expect(isPlatformAdminPagePath(`/platform-admin/testing/${section}`)).toBe(true);
     }

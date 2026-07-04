@@ -1,7 +1,7 @@
 import { PLATFORM_ADMIN_BASE_PATH } from "./constants";
 import type { RomaQaCenterSectionId } from "./roma-qa-center.types";
 
-export type RomaQaCenterNavId = RomaQaCenterSectionId | "quality-graph" | "test-catalog";
+export type RomaQaCenterNavId = RomaQaCenterSectionId | "quality-graph" | "test-catalog" | "change-intelligence";
 
 export type RomaQaCenterNavItem = {
   id: RomaQaCenterNavId;
@@ -17,6 +17,7 @@ export const ROMA_QA_CENTER_NAV_ITEMS: readonly RomaQaCenterNavItem[] = [
   { id: "dashboard", href: TESTING_BASE, label: "Dashboard", exact: true },
   { id: "quality-graph", href: `${TESTING_BASE}/quality-graph`, label: "Quality Graph", exact: true },
   { id: "test-catalog", href: `${TESTING_BASE}/test-catalog`, label: "Test Catalog", exact: true },
+  { id: "change-intelligence", href: `${TESTING_BASE}/change-intelligence`, label: "Change Intelligence", exact: true },
   { id: "audits", href: `${TESTING_BASE}/audits`, label: "Audits" },
   { id: "web", href: `${TESTING_BASE}/web`, label: "Web" },
   { id: "mobile", href: `${TESTING_BASE}/mobile`, label: "Mobile" },
