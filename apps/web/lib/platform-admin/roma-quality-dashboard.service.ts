@@ -976,3 +976,8 @@ export async function buildRomaQualityDashboard(): Promise<RomaQualityDashboard>
     return buildFallbackDashboard(message);
   }
 }
+
+/** Build dashboard from an existing probe bundle (single probe pass — safe audit). */
+export function buildRomaQualityDashboardFromProbes(probes: LiveProbeBundle): RomaQualityDashboard {
+  return assembleDashboard(probes);
+}
