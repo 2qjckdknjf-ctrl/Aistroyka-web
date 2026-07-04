@@ -1,4 +1,4 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import createIntlMiddleware from "next-intl/middleware";
 import { updateSession } from "@/lib/supabase/middleware";
 import { routing } from "@/i18n/routing";
@@ -60,6 +60,12 @@ function pathWithoutLocale(pathname: string): { path: string; locale: string } {
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const isProduction = process.env.NODE_ENV === "production";
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-aistroyka-pathname", pathname);
+  const requestWithPath = new NextRequest(request.url, {
+    headers: requestHeaders,
+    method: request.method,
+  });
   const pathWithoutLocEarly = pathWithoutLocale(pathname).path;
   const isPlatformAdminPage = isPlatformAdminPagePath(pathWithoutLocEarly);
   const isPlatformAdminApi = isPlatformAdminApiPath(pathname);
@@ -144,7 +150,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  const res = await intlMiddleware(request);
+  const res = await intlMiddleware(requestWithPath);
 
   const pathnameForLoc = request.nextUrl.pathname;
   const { path: pathWithoutLoc, locale } = pathWithoutLocale(pathnameForLoc);
