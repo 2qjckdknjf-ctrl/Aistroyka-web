@@ -101,6 +101,7 @@ describe("middleware admin host routing", () => {
     );
     expect(res.headers.get("X-Auth-Redirect")).toBe("platform-admin-login");
     expect(mockGateOwnerRequest).not.toHaveBeenCalled();
+    expect(mockIntlMiddleware).toHaveBeenCalled();
   });
 
   it("includes platform API in protected middleware flow on admin host", async () => {
