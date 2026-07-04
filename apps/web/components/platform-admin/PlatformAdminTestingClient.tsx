@@ -40,7 +40,7 @@ export function PlatformAdminTestingClient({ dashboard, intelligence }: Props) {
   const summary = intel.ownerSummary;
 
   return (
-    <section className="space-y-aistroyka-6" aria-label="ROMA live operations center">
+    <section className="space-y-aistroyka-6" aria-label="ROMA QA Center dashboard">
       <Card className={`p-aistroyka-5 ${releaseDecisionBorderClass(intel.releaseDecision)}`}>
         <div className="flex flex-wrap items-start justify-between gap-aistroyka-3">
           <div className="min-w-0 flex-1">
@@ -48,7 +48,7 @@ export function PlatformAdminTestingClient({ dashboard, intelligence }: Props) {
               Owner operator summary
             </p>
             <h1 className="mt-aistroyka-1 text-aistroyka-title2 font-bold tracking-tight text-aistroyka-text-primary sm:text-aistroyka-title">
-              ROMA Testing
+              Dashboard
             </h1>
             <p className="mt-aistroyka-2 max-w-3xl text-aistroyka-subheadline text-aistroyka-text-secondary">
               {intel.engineeringAssessment}

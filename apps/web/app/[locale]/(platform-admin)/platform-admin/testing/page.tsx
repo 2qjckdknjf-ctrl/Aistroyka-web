@@ -4,7 +4,7 @@ import { buildRomaEngineeringIntelligence } from "@/lib/platform-admin/roma-engi
 import { PlatformAdminTestingClient } from "@/components/platform-admin/PlatformAdminTestingClient";
 
 export const metadata: Metadata = {
-  title: "ROMA Testing",
+  title: "ROMA QA Center · Dashboard",
   robots: { index: false, follow: false, googleBot: { index: false, follow: false } },
 };
 

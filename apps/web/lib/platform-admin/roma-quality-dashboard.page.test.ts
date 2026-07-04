@@ -6,10 +6,10 @@ import { PLATFORM_ADMIN_SHELL_NAV_ITEMS } from "./shell-nav";
 import { isPlatformAdminPagePath } from "./middleware-paths";
 
 describe("ROMA live quality dashboard", () => {
-  it("includes ROMA Testing in shell navigation", () => {
+  it("includes ROMA QA Center in shell navigation", () => {
     const testing = PLATFORM_ADMIN_SHELL_NAV_ITEMS.find((item) => item.href.endsWith("/testing"));
     expect(testing).toBeDefined();
-    expect(testing?.label).toMatch(/ROMA Testing/i);
+    expect(testing?.label).toBe("ROMA QA Center");
   });
 
   it("treats /platform-admin/testing as platform admin page path", () => {
