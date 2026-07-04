@@ -11,6 +11,8 @@ import {
   getSafeReadonlyAuditMeta,
   summarizeReadonlyAudit,
 } from "@/lib/platform-admin/roma-safe-readonly-audit";
+import { ROMA_AUDIT_RUN_HISTORY_META } from "@/lib/platform-admin/roma-run-history.service";
+import type { RomaAuditRunSaveResult } from "@/lib/platform-admin/roma-run-history.types";
 
 type Props = {
   audit: RomaSafeReadonlyAudit;
@@ -39,7 +41,10 @@ export function RomaSafeAuditClient({ audit: initialAudit }: Props) {
   const [audit, setAudit] = useState(initialAudit);
   const [lastRefreshedAt, setLastRefreshedAt] = useState(initialAudit.createdAt);
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [lastSavedRun, setLastSavedRun] = useState<RomaAuditRunSaveResult | null>(null);
 
   const refreshAudit = useCallback(async () => {
     setLoading(true);
@@ -65,6 +70,33 @@ export function RomaSafeAuditClient({ audit: initialAudit }: Props) {
     }
   }, [meta.refreshApiPath]);
 
+  const saveSnapshot = useCallback(async () => {
+    setSaving(true);
+    setError(null);
+    setSaveMessage(null);
+    try {
+      const response = await fetch(ROMA_AUDIT_RUN_HISTORY_META.saveApiPath, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!response.ok) {
+        const body = (await response.json().catch(() => null)) as {
+          error?: { message?: string };
+        } | null;
+        throw new Error(body?.error?.message ?? `Save failed (${response.status})`);
+      }
+      const json = (await response.json()) as { data: RomaAuditRunSaveResult };
+      setLastSavedRun(json.data);
+      setSaveMessage(
+        `Snapshot saved (${json.data.runId}). Redacted audit evidence only — no tests run, no product data mutated.`
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Save failed");
+    } finally {
+      setSaving(false);
+    }
+  }, []);
+
   return (
     <section className="space-y-aistroyka-5" aria-label="ROMA Safe Readonly Audit">
       <Card className="p-aistroyka-5 border-aistroyka-border-warning bg-aistroyka-surface-raised">
@@ -72,7 +104,8 @@ export function RomaSafeAuditClient({ audit: initialAudit }: Props) {
         <p className="mt-aistroyka-2 text-aistroyka-subheadline text-aistroyka-text-secondary">
           This page runs a <strong>read-only audit</strong> using safe server probes.{" "}
           <strong>Refresh Safe Audit</strong> recomputes live evidence only — it does{" "}
-          <strong>not</strong> execute catalog tests, trigger CI, deploy, mutate production, or write to the database.
+          <strong>not</strong> execute catalog tests, trigger CI, deploy, or mutate product data.{" "}
+          <strong>Save Snapshot</strong> appends redacted audit evidence to run history only (owner-only, explicit action).
         </p>
         <div className="mt-aistroyka-4 flex flex-wrap items-center gap-aistroyka-3">
           <Button
@@ -80,11 +113,22 @@ export function RomaSafeAuditClient({ audit: initialAudit }: Props) {
             variant="secondary"
             size="sm"
             loading={loading}
-            disabled={loading}
+            disabled={loading || saving}
             onClick={() => void refreshAudit()}
             aria-label="Refresh Safe Audit"
           >
             Refresh Safe Audit
+          </Button>
+          <Button
+            type="button"
+            variant="primary"
+            size="sm"
+            loading={saving}
+            disabled={loading || saving}
+            onClick={() => void saveSnapshot()}
+            aria-label="Save Snapshot"
+          >
+            Save Snapshot
           </Button>
           <p className="text-aistroyka-footnote text-aistroyka-text-tertiary">
             Last refreshed: <time dateTime={lastRefreshedAt}>{lastRefreshedAt}</time>
@@ -93,6 +137,16 @@ export function RomaSafeAuditClient({ audit: initialAudit }: Props) {
         {error ? (
           <p className="mt-aistroyka-3 text-aistroyka-footnote text-aistroyka-error" role="alert">
             {error}
+          </p>
+        ) : null}
+        {saveMessage ? (
+          <p className="mt-aistroyka-3 text-aistroyka-footnote text-aistroyka-text-secondary" role="status">
+            {saveMessage}
+            {lastSavedRun ? (
+              <span className="block font-mono text-aistroyka-caption text-aistroyka-text-tertiary">
+                Retention until {lastSavedRun.retentionUntil}
+              </span>
+            ) : null}
           </p>
         ) : null}
       </Card>

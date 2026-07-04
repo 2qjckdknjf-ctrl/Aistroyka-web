@@ -8,7 +8,8 @@ export type RomaQaCenterNavId =
   | "change-intelligence"
   | "execution-planner"
   | "execution-engine"
-  | "safe-audit";
+  | "safe-audit"
+  | "audit-runs";
 
 export type RomaQaCenterNavItem = {
   id: RomaQaCenterNavId;
@@ -28,6 +29,7 @@ export const ROMA_QA_CENTER_NAV_ITEMS: readonly RomaQaCenterNavItem[] = [
   { id: "execution-planner", href: `${TESTING_BASE}/execution-planner`, label: "Execution Planner", exact: true },
   { id: "execution-engine", href: `${TESTING_BASE}/execution-engine`, label: "Execution Engine", exact: true },
   { id: "safe-audit", href: `${TESTING_BASE}/safe-audit`, label: "Safe Audit", exact: true },
+  { id: "audit-runs", href: `${TESTING_BASE}/audit-runs`, label: "Audit Runs", exact: true },
   { id: "audits", href: `${TESTING_BASE}/audits`, label: "Audits" },
   { id: "web", href: `${TESTING_BASE}/web`, label: "Web" },
   { id: "mobile", href: `${TESTING_BASE}/mobile`, label: "Mobile" },

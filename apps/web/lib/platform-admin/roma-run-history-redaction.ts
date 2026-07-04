@@ -1,10 +1,13 @@
 /**
- * ROMA audit run history — redaction and summary helpers (design only, no DB writes).
+ * ROMA audit run history — redaction helpers and draft builder.
  */
 
 import { createHash } from "node:crypto";
 import type { RomaSafeReadonlyAudit } from "./roma-safe-readonly-audit.types";
 import type {
+  RomaAuditRunEvidenceSummaryJson,
+  RomaAuditRunFindingsSummaryJson,
+  RomaAuditRunRecommendationsSummaryJson,
   RomaAuditRunRedactedPayload,
   RomaAuditRunRedactionKind,
   RomaAuditRunRedactionMeta,
@@ -71,9 +74,9 @@ export function computeRetentionUntil(createdAt: Date, retentionDays = ROMA_AUDI
 }
 
 export function buildAuditRunSummaries(audit: RomaSafeReadonlyAudit): {
-  evidence_summary: string;
-  findings_summary: string;
-  recommendations_summary: string;
+  evidence_summary: RomaAuditRunEvidenceSummaryJson;
+  findings_summary: RomaAuditRunFindingsSummaryJson;
+  recommendations_summary: RomaAuditRunRecommendationsSummaryJson;
   critical_count: number;
   warning_count: number;
   coverage_percent: number | null;
@@ -86,9 +89,26 @@ export function buildAuditRunSummaries(audit: RomaSafeReadonlyAudit): {
     audit.evidence.length > 0 ? Math.round((evidenceHealthy / audit.evidence.length) * 100) : null;
 
   return {
-    evidence_summary: audit.evidence.map((e) => `${e.sourceId}:${e.status}`).join("; "),
-    findings_summary: audit.findings.map((f) => `${f.severity}:${f.title}`).join("; ") || "none",
-    recommendations_summary: audit.recommendations.map((r) => r.title).join("; ") || "none",
+    evidence_summary: {
+      items: audit.evidence.map((e) => ({
+        sourceId: e.sourceId,
+        status: e.status,
+        label: e.label,
+      })),
+    },
+    findings_summary: {
+      items: audit.findings.map((f) => ({
+        id: f.id,
+        severity: f.severity,
+        title: f.title,
+      })),
+    },
+    recommendations_summary: {
+      items: audit.recommendations.map((r) => ({
+        id: r.id,
+        title: r.title,
+      })),
+    },
     critical_count,
     warning_count,
     coverage_percent,
@@ -155,8 +175,8 @@ export function redactAuditPayloadForStorage(audit: RomaSafeReadonlyAudit): Roma
 
 export function buildAuditRunRecordDraft(input: {
   audit: RomaSafeReadonlyAudit;
-  createdByUserId: string;
-  createdByEmail: string;
+  createdByUserId: string | null;
+  createdByEmail: string | null;
   environment: string;
   buildSha?: string | null;
   createdAt?: Date;
@@ -167,7 +187,7 @@ export function buildAuditRunRecordDraft(input: {
   return {
     created_at: createdAt.toISOString(),
     created_by_user_id: input.createdByUserId,
-    created_by_email_hash: hashOwnerEmail(input.createdByEmail),
+    created_by_email_hash: input.createdByEmail ? hashOwnerEmail(input.createdByEmail) : null,
     mode: input.audit.mode,
     status: input.audit.status,
     release_recommendation: input.audit.releaseRecommendation,

@@ -104,8 +104,8 @@ describe("ROMA Run History redaction model", () => {
     const summaries = buildAuditRunSummaries(sampleAudit());
     expect(summaries.critical_count).toBe(0);
     expect(summaries.warning_count).toBe(1);
-    expect(summaries.evidence_summary).toContain("health_endpoint:healthy");
-    expect(summaries.findings_summary).toContain("warning:Storage degraded");
+    expect(summaries.evidence_summary.items[0]?.sourceId).toBe("health_endpoint");
+    expect(summaries.findings_summary.items[0]?.title).toBe("Storage degraded");
   });
 
   it("computes retention window", () => {

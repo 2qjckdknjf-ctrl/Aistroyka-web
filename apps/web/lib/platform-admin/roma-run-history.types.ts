@@ -1,6 +1,6 @@
 /**
- * ROMA Safe Audit Run History — design types only (no persistence in V1).
- * See docs/audits/ROMA_RUN_HISTORY_DESIGN.md
+ * ROMA Safe Audit Run History types.
+ * See docs/audits/ROMA_RUN_HISTORY_DESIGN.md and ROMA_RUN_HISTORY_IMPLEMENTATION_V1_REPORT.md
  */
 
 import type { ConfidenceLevel, ReleaseDecision } from "./roma-engineering-intelligence.types";
@@ -9,13 +9,13 @@ import type { RomaSafeReadonlyAudit, RomaSafeReadonlyAuditMode, RomaSafeReadonly
 /** Recommended storage backend for AISTROYKA (design verdict). */
 export type RomaAuditRunStorageBackend = "supabase_table";
 
-/** Future `public.roma_audit_runs` row (design — not migrated yet). */
+/** `public.roma_audit_runs` row. */
 export type RomaAuditRunRecord = {
   id: string;
   created_at: string;
-  created_by_user_id: string;
+  created_by_user_id: string | null;
   /** SHA-256 prefix of normalized email — never store raw email in history row. */
-  created_by_email_hash: string;
+  created_by_email_hash: string | null;
   mode: RomaSafeReadonlyAuditMode;
   status: RomaSafeReadonlyAuditStatus;
   release_recommendation: ReleaseDecision;
@@ -23,15 +23,27 @@ export type RomaAuditRunRecord = {
   coverage_percent: number | null;
   critical_count: number;
   warning_count: number;
-  evidence_summary: string;
-  findings_summary: string;
-  recommendations_summary: string;
+  evidence_summary: RomaAuditRunEvidenceSummaryJson;
+  findings_summary: RomaAuditRunFindingsSummaryJson;
+  recommendations_summary: RomaAuditRunRecommendationsSummaryJson;
   limitations: readonly string[];
   source_version: string;
   build_sha: string | null;
   environment: string;
   raw_payload_redacted: RomaAuditRunRedactedPayload;
   retention_until: string;
+};
+
+export type RomaAuditRunEvidenceSummaryJson = {
+  items: readonly { sourceId: string; status: string; label: string }[];
+};
+
+export type RomaAuditRunFindingsSummaryJson = {
+  items: readonly { id: string; severity: string; title: string }[];
+};
+
+export type RomaAuditRunRecommendationsSummaryJson = {
+  items: readonly { id: string; title: string }[];
 };
 
 /** Redacted JSON stored in `raw_payload_redacted` — safe for platform-owner review. */
@@ -93,20 +105,37 @@ export type RomaAuditRunRedactionKind =
   | "connection_string"
   | "ip_address";
 
-/** List row for future /platform-admin/testing/audit-runs UI. */
+/** List row for /platform-admin/testing/audit-runs UI (summary only — no raw payload). */
 export type RomaAuditRunListItem = {
   id: string;
   createdAt: string;
+  createdByUserId: string | null;
+  createdByEmailHash: string | null;
+  mode: RomaSafeReadonlyAuditMode;
   status: RomaSafeReadonlyAuditStatus;
   releaseRecommendation: ReleaseDecision;
-  releaseRecommendationLabel: string;
   confidence: ConfidenceLevel;
   coveragePercent: number | null;
   criticalCount: number;
   warningCount: number;
   environment: string;
   buildSha: string | null;
-  createdByEmailHash: string;
+  retentionUntil: string;
+  sourceVersion: string;
+  evidenceSummary: RomaAuditRunEvidenceSummaryJson;
+  findingsSummary: RomaAuditRunFindingsSummaryJson;
+  recommendationsSummary: RomaAuditRunRecommendationsSummaryJson;
+};
+
+export type RomaAuditRunSaveResult = {
+  runId: string;
+  createdAt: string;
+  status: RomaSafeReadonlyAuditStatus;
+  releaseRecommendation: ReleaseDecision;
+  confidence: ConfidenceLevel;
+  environment: string;
+  buildSha: string | null;
+  retentionUntil: string;
 };
 
 /** Compare view for two saved runs (design). */

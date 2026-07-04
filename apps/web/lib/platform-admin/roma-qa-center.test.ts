@@ -27,6 +27,7 @@ describe("ROMA QA Center V1", () => {
     expect(ROMA_QA_CENTER_NAV_ITEMS.some((item) => item.id === "execution-planner")).toBe(true);
     expect(ROMA_QA_CENTER_NAV_ITEMS.some((item) => item.id === "execution-engine")).toBe(true);
     expect(ROMA_QA_CENTER_NAV_ITEMS.some((item) => item.id === "safe-audit")).toBe(true);
+    expect(ROMA_QA_CENTER_NAV_ITEMS.some((item) => item.id === "audit-runs")).toBe(true);
   });
 
   it("protects all QA center routes via platform admin page path guard", () => {
@@ -37,6 +38,7 @@ describe("ROMA QA Center V1", () => {
     expect(isPlatformAdminPagePath("/platform-admin/testing/execution-planner")).toBe(true);
     expect(isPlatformAdminPagePath("/platform-admin/testing/execution-engine")).toBe(true);
     expect(isPlatformAdminPagePath("/platform-admin/testing/safe-audit")).toBe(true);
+    expect(isPlatformAdminPagePath("/platform-admin/testing/audit-runs")).toBe(true);
     for (const section of ROMA_QA_CENTER_ROUTE_SECTION_IDS) {
       expect(isPlatformAdminPagePath(`/platform-admin/testing/${section}`)).toBe(true);
     }
