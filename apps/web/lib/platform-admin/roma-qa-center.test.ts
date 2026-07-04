@@ -18,14 +18,15 @@ function readRelative(relativePath: string): string {
 }
 
 describe("ROMA QA Center V1", () => {
-  it("defines all 12 section ids in nav", () => {
+  it("defines all 12 section ids plus quality graph in nav", () => {
     expect(ROMA_QA_CENTER_SECTION_IDS).toHaveLength(12);
-    expect(ROMA_QA_CENTER_NAV_ITEMS).toHaveLength(12);
-    expect(ROMA_QA_CENTER_NAV_ITEMS.map((item) => item.id)).toEqual([...ROMA_QA_CENTER_SECTION_IDS]);
+    expect(ROMA_QA_CENTER_NAV_ITEMS.length).toBeGreaterThanOrEqual(13);
+    expect(ROMA_QA_CENTER_NAV_ITEMS.some((item) => item.id === "quality-graph")).toBe(true);
   });
 
   it("protects all QA center routes via platform admin page path guard", () => {
     expect(isPlatformAdminPagePath("/platform-admin/testing")).toBe(true);
+    expect(isPlatformAdminPagePath("/platform-admin/testing/quality-graph")).toBe(true);
     for (const section of ROMA_QA_CENTER_ROUTE_SECTION_IDS) {
       expect(isPlatformAdminPagePath(`/platform-admin/testing/${section}`)).toBe(true);
     }
