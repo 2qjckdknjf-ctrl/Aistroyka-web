@@ -7,7 +7,14 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false, googleBot: { index: false, follow: false } },
 };
 
-export default async function PlatformAdminLayout({ children }: { children: React.ReactNode }) {
-  await assertPlatformOwnerPageAccess();
+export default async function PlatformAdminLayout({
+  children,
+  params,
+}: {
+  children: React.ReactNode;
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  await assertPlatformOwnerPageAccess({ locale });
   return <PlatformAdminShell>{children}</PlatformAdminShell>;
 }
