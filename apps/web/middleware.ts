@@ -132,6 +132,16 @@ export async function middleware(request: NextRequest) {
   }
 
   if (isPlatformAdminPage) {
+    if (!user) {
+      const { locale: loginLocale } = pathWithoutLocale(pathname);
+      const loginUrl = new URL(`/${loginLocale}/login`, request.url);
+      loginUrl.searchParams.set("next", pathname);
+      const redir = NextResponse.redirect(loginUrl);
+      mergeSupabaseSessionIntoResponse(sessionResponse, redir);
+      redir.headers.set("X-Auth-Redirect", "platform-admin-login");
+      return applyHostProfileHeader(applyPageSecurityHeaders(redir, isProduction), request);
+    }
+
     const denied = await gateOwnerRequest({
       request,
       sessionResponse,

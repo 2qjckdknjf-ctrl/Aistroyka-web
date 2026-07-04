@@ -18,6 +18,9 @@ describe("sanitizeNextRoute", () => {
     expect(sanitizeNextRoute("/en/invite", BASE)).toBe("/en/invite");
     expect(sanitizeNextRoute("/en/billing", BASE)).toBe("/en/billing");
     expect(sanitizeNextRoute("/en/admin", BASE)).toBe("/en/admin");
+    expect(sanitizeNextRoute("/ru/platform-admin", BASE)).toBe("/ru/platform-admin");
+    expect(sanitizeNextRoute("/ru/platform-admin/testing", BASE)).toBe("/ru/platform-admin/testing");
+    expect(sanitizeNextRoute("/en/owner", BASE)).toBe("/en/owner");
   });
 
   it("accepts path without locale and prepends locale", () => {
@@ -105,6 +108,16 @@ describe("resolvePostAuthEntry", () => {
   it("preserves invite accept deep link", () => {
     const r = resolvePostAuthEntry({ locale: "en", next: "/invite/accept?token=abc", baseUrl: BASE });
     expect(r.path).toBe("/en/invite/accept?token=abc");
+    expect(r.reason).toBe("explicit_next");
+  });
+
+  it("preserves platform-admin deep link after login", () => {
+    const r = resolvePostAuthEntry({
+      locale: "ru",
+      next: "/ru/platform-admin/testing",
+      baseUrl: "https://admin.aistroyka.ai/ru/login",
+    });
+    expect(r.path).toBe("/ru/platform-admin/testing");
     expect(r.reason).toBe("explicit_next");
   });
 });
