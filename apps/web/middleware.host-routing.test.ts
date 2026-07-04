@@ -77,6 +77,10 @@ describe("middleware admin host routing", () => {
   });
 
   it("keeps public host /ru/platform-admin compatibility during transition", async () => {
+    mockUpdateSession.mockResolvedValueOnce({
+      response: NextResponse.next(),
+      user: { id: "owner-user-id", email: "owner@example.com" },
+    });
     const req = new NextRequest("https://aistroyka.ai/ru/platform-admin", {
       headers: { host: "aistroyka.ai" },
     });
@@ -84,6 +88,19 @@ describe("middleware admin host routing", () => {
     expect(res.status).toBe(200);
     expect(mockIntlMiddleware).toHaveBeenCalled();
     expect(mockGateOwnerRequest).toHaveBeenCalled();
+  });
+
+  it("redirects unauthenticated platform-admin page to login with next", async () => {
+    const req = new NextRequest("https://admin.aistroyka.ai/ru/platform-admin", {
+      headers: { host: "admin.aistroyka.ai" },
+    });
+    const res = await middleware(req);
+    expect(res.status).toBeGreaterThanOrEqual(300);
+    expect(res.headers.get("location")).toBe(
+      "https://admin.aistroyka.ai/ru/login?next=%2Fru%2Fplatform-admin"
+    );
+    expect(res.headers.get("X-Auth-Redirect")).toBe("platform-admin-login");
+    expect(mockGateOwnerRequest).not.toHaveBeenCalled();
   });
 
   it("includes platform API in protected middleware flow on admin host", async () => {
