@@ -9,6 +9,8 @@ function statusBadgeVariant(
   switch (status) {
     case "available":
       return "success";
+    case "partial":
+      return "warning";
     case "coming_soon":
       return "warning";
     case "unknown":
@@ -24,6 +26,8 @@ function statusLabel(status: RomaQaCenterSection["status"]): string {
   switch (status) {
     case "available":
       return "Available";
+    case "partial":
+      return "Partial";
     case "coming_soon":
       return "Coming soon";
     case "unknown":

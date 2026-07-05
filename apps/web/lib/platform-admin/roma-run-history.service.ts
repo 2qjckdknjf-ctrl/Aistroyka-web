@@ -6,8 +6,11 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createSafeReadonlyAudit } from "./roma-safe-readonly-audit";
 import type { RomaSafeReadonlyAudit } from "./roma-safe-readonly-audit.types";
 import { buildAuditRunRecordDraft } from "./roma-run-history-redaction";
+import { ROMA_AUDIT_RUN_HISTORY_META } from "./roma-run-history.constants";
 import type { RomaAuditRunListItem, RomaAuditRunSaveResult } from "./roma-run-history.types";
 import { ROMA_AUDIT_RUN_FORBIDDEN_STORAGE_KEYS } from "./roma-run-history.types";
+
+export { ROMA_AUDIT_RUN_HISTORY_META };
 
 const LIST_COLUMNS =
   "id, created_at, created_by_user_id, created_by_email_hash, mode, status, release_recommendation, confidence, coverage_percent, critical_count, warning_count, evidence_summary, findings_summary, recommendations_summary, limitations, source_version, build_sha, environment, retention_until";
@@ -155,11 +158,3 @@ export async function listAuditRunSummaries(
 
   return (data ?? []).map((row) => mapRowToListItem(row as DbRow));
 }
-
-export const ROMA_AUDIT_RUN_HISTORY_META = {
-  persistenceEnabled: true,
-  autoSaveEnabled: false,
-  listLimit: 20,
-  saveApiPath: "/api/v1/platform/testing/safe-audit/save",
-  listApiPath: "/api/v1/platform/testing/safe-audit/runs",
-} as const;

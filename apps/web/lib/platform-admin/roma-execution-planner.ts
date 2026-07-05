@@ -292,22 +292,22 @@ export function estimatePlanRuntime(plan: RomaExecutionPlan): string {
 }
 
 function buildPlannedTests(testIds: readonly string[]): RomaPlannedTest[] {
-  return testIds
-    .map((testId) => {
-      const item = getTestById(testId);
-      if (!item) return null;
-      const blockReason = resolveBlockReason(item);
-      return {
-        testId: item.testId,
-        title: item.title,
-        domain: item.domain,
-        phaseId: domainToPhase(item.domain),
-        executable: false as const,
-        releaseCritical: item.releaseCritical,
-        blockReason,
-      };
-    })
-    .filter((t): t is RomaPlannedTest => t !== null);
+  const planned: RomaPlannedTest[] = [];
+  for (const testId of testIds) {
+    const item = getTestById(testId);
+    if (!item) continue;
+    const blockReason = resolveBlockReason(item);
+    planned.push({
+      testId: item.testId,
+      title: item.title,
+      domain: item.domain,
+      phaseId: domainToPhase(item.domain),
+      executable: false,
+      releaseCritical: item.releaseCritical,
+      blockReason,
+    });
+  }
+  return planned;
 }
 
 function buildSkippedTests(

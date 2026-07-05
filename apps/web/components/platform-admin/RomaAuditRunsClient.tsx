@@ -1,6 +1,6 @@
 import { Card, Badge } from "@/components/ui";
 import type { RomaAuditRunListItem } from "@/lib/platform-admin/roma-run-history.types";
-import { ROMA_AUDIT_RUN_HISTORY_META } from "@/lib/platform-admin/roma-run-history.service";
+import { ROMA_AUDIT_RUN_HISTORY_META } from "@/lib/platform-admin/roma-run-history.constants";
 
 type Props = {
   runs: readonly RomaAuditRunListItem[];

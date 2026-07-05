@@ -11,7 +11,7 @@ import {
   getSafeReadonlyAuditMeta,
   summarizeReadonlyAudit,
 } from "@/lib/platform-admin/roma-safe-readonly-audit";
-import { ROMA_AUDIT_RUN_HISTORY_META } from "@/lib/platform-admin/roma-run-history.service";
+import { ROMA_AUDIT_RUN_HISTORY_META } from "@/lib/platform-admin/roma-run-history.constants";
 import type { RomaAuditRunSaveResult } from "@/lib/platform-admin/roma-run-history.types";
 
 type Props = {

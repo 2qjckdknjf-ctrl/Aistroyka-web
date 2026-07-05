@@ -13,7 +13,7 @@ export type RomaQaCenterSectionId =
   | "history"
   | "reports";
 
-export type RomaQaCenterSectionStatus = "available" | "coming_soon" | "unknown";
+export type RomaQaCenterSectionStatus = "available" | "partial" | "coming_soon" | "unknown";
 
 export type RomaQaCenterMaturity = "live" | "partial" | "planned";
 

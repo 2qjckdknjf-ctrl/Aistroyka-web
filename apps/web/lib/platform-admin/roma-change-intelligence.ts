@@ -191,7 +191,7 @@ function computeRequiredCatalogDomains(
   ]) as RomaTestCatalogDomain[];
 
   if (isDocsOnlyChange(input.changedPaths)) {
-    const filtered = isSecurityOrReleaseDoc(input.changedPaths)
+    const filtered: RomaTestCatalogDomain[] = isSecurityOrReleaseDoc(input.changedPaths)
       ? domains.filter((d) => d === "security" || d === "release")
       : [];
     for (const d of ALL_CATALOG_DOMAINS) {
