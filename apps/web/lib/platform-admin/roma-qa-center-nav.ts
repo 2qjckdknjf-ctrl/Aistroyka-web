@@ -26,7 +26,7 @@ export type RomaQaCenterNavGroup = {
 
 const TESTING_BASE = `${PLATFORM_ADMIN_BASE_PATH}/testing`;
 
-/** Grouped ROMA system map navigation (executive IA V2). */
+/** Grouped ROMA navigation (executive IA V3). */
 export const ROMA_QA_CENTER_NAV_GROUPS: readonly RomaQaCenterNavGroup[] = [
   {
     id: "overview",
@@ -45,8 +45,8 @@ export const ROMA_QA_CENTER_NAV_GROUPS: readonly RomaQaCenterNavGroup[] = [
     id: "quality",
     label: "Quality",
     items: [
-      { id: "quality-graph", href: `${TESTING_BASE}/quality-graph`, label: "Quality Graph", exact: true },
-      { id: "test-catalog", href: `${TESTING_BASE}/test-catalog`, label: "Test Catalog", exact: true },
+      { id: "quality-graph", href: `${TESTING_BASE}/quality-graph`, label: "Graph", exact: true },
+      { id: "test-catalog", href: `${TESTING_BASE}/test-catalog`, label: "Catalog", exact: true },
       {
         id: "change-intelligence",
         href: `${TESTING_BASE}/change-intelligence`,
@@ -59,18 +59,8 @@ export const ROMA_QA_CENTER_NAV_GROUPS: readonly RomaQaCenterNavGroup[] = [
     id: "execution",
     label: "Execution",
     items: [
-      {
-        id: "execution-planner",
-        href: `${TESTING_BASE}/execution-planner`,
-        label: "Planner",
-        exact: true,
-      },
-      {
-        id: "execution-engine",
-        href: `${TESTING_BASE}/execution-engine`,
-        label: "Engine",
-        exact: true,
-      },
+      { id: "execution-planner", href: `${TESTING_BASE}/execution-planner`, label: "Planner", exact: true },
+      { id: "execution-engine", href: `${TESTING_BASE}/execution-engine`, label: "Engine", exact: true },
     ],
   },
   {
@@ -79,13 +69,13 @@ export const ROMA_QA_CENTER_NAV_GROUPS: readonly RomaQaCenterNavGroup[] = [
     items: [
       { id: "web", href: `${TESTING_BASE}/web`, label: "Web" },
       { id: "mobile", href: `${TESTING_BASE}/mobile`, label: "Mobile" },
+      { id: "backend", href: `${TESTING_BASE}/backend`, label: "Backend" },
       { id: "ai", href: `${TESTING_BASE}/ai`, label: "AI" },
       { id: "security", href: `${TESTING_BASE}/security`, label: "Security" },
     ],
   },
 ] as const;
 
-/** Flat nav list (derived from groups — routes unchanged). */
 export const ROMA_QA_CENTER_NAV_ITEMS: readonly RomaQaCenterNavItem[] = ROMA_QA_CENTER_NAV_GROUPS.flatMap(
   (group) => group.items
 );

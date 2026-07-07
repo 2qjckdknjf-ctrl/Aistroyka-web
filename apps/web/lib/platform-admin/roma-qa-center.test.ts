@@ -21,13 +21,13 @@ describe("ROMA QA Center V1", () => {
   it("defines grouped system map navigation with core ROMA routes", () => {
     expect(ROMA_QA_CENTER_SECTION_IDS).toHaveLength(12);
     expect(ROMA_QA_CENTER_NAV_GROUPS.length).toBe(5);
-    expect(ROMA_QA_CENTER_NAV_ITEMS.length).toBe(12);
+    expect(ROMA_QA_CENTER_NAV_ITEMS.length).toBe(13);
     expect(ROMA_QA_CENTER_NAV_ITEMS.some((item) => item.id === "quality-graph")).toBe(true);
     expect(ROMA_QA_CENTER_NAV_ITEMS.some((item) => item.id === "safe-audit")).toBe(true);
     expect(ROMA_QA_CENTER_NAV_ITEMS.some((item) => item.id === "audit-runs")).toBe(true);
     expect(ROMA_QA_CENTER_NAV_ITEMS.some((item) => item.label === "Audit History")).toBe(true);
     expect(ROMA_QA_CENTER_NAV_ITEMS.some((item) => item.id === "audits")).toBe(false);
-    expect(ROMA_QA_CENTER_NAV_ITEMS.some((item) => item.id === "backend")).toBe(false);
+    expect(ROMA_QA_CENTER_NAV_ITEMS.some((item) => item.id === "backend")).toBe(true);
   });
 
   it("protects all QA center routes via platform admin page path guard", () => {
@@ -79,9 +79,8 @@ describe("ROMA QA Center V1", () => {
     expect(dashboard?.status).toBe("unknown");
   });
 
-  it("section pages and shell have no enabled Run/Execute/Deploy/Fix actions", () => {
+  it("section pages have no enabled Run/Execute/Deploy/Fix actions on dashboard", () => {
     const paths = [
-      "components/platform-admin/RomaQaCenterShell.tsx",
       "components/platform-admin/RomaQaCenterSectionClient.tsx",
       "components/platform-admin/PlatformAdminTestingClient.tsx",
       "app/[locale]/(platform-admin)/platform-admin/testing/layout.tsx",

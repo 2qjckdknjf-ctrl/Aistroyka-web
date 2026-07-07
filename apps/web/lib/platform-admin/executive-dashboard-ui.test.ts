@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { buildExecutiveSummaryNarrative, groupDecisionReasonsBySeverity } from "./executive-dashboard-ui";
+import {
+  buildPlainEnglishReleaseWhy,
+  buildPlatformHealthCards,
+  buildPrioritizedActions,
+  buildRecentChangesTimeline,
+  groupBusinessImpact,
+  groupDecisionReasonsBySeverity,
+  qualityStatusToHealthBucket,
+} from "./executive-dashboard-ui";
 import type { RomaEngineeringIntelligence } from "./roma-engineering-intelligence.types";
 import type { RomaQualityDashboard } from "./roma-quality-dashboard.types";
 
@@ -7,7 +15,7 @@ function minimalDashboard(): RomaQualityDashboard {
   return {
     pageMode: "read_only",
     testExecutionEnabled: false,
-    generatedAt: "2026-07-05T10:00:00.000Z",
+    generatedAt: "2026-07-07T08:00:00.000Z",
     environment: {
       label: "Production",
       appUrl: "https://aistroyka.ai",
@@ -20,17 +28,25 @@ function minimalDashboard(): RomaQualityDashboard {
       overallHealthLabel: "Healthy",
       releaseReadiness: "ready",
       releaseReadinessPercent: 96,
-      lastUpdated: "2026-07-05T10:00:00.000Z",
+      lastUpdated: "2026-07-07T08:00:00.000Z",
     },
-    domainSections: [],
+    domainSections: [{ id: "release", label: "Release", status: "healthy", statusLabel: "Healthy", summary: "", highlights: [] }],
     systemComponents: [
+      {
+        id: "database",
+        name: "Database",
+        status: "healthy",
+        statusLabel: "Healthy",
+        lastCheck: "2026-07-07T08:00:00.000Z",
+        details: "",
+      },
       {
         id: "ai",
         name: "AI",
         status: "not_configured",
         statusLabel: "Not configured",
-        lastCheck: "2026-07-05T10:00:00.000Z",
-        details: "OpenAI not configured",
+        lastCheck: "2026-07-07T08:00:00.000Z",
+        details: "",
       },
     ],
     releaseReadiness: [],
@@ -40,10 +56,10 @@ function minimalDashboard(): RomaQualityDashboard {
     latestChanges: { lastDeploy: null, lastCommit: null, branch: null, build: "abc1234", timestamp: null },
     platformTimeline: [],
     dataCoverage: {
-      lastRefresh: "2026-07-05T10:00:00.000Z",
+      lastRefresh: "2026-07-07T08:41:00.000Z",
       coveragePercent: 96,
-      connectedCount: 4,
-      totalCatalogCount: 5,
+      connectedCount: 12,
+      totalCatalogCount: 15,
       available: [],
       unavailable: [],
     },
@@ -55,15 +71,15 @@ function minimalDashboard(): RomaQualityDashboard {
 
 function minimalIntelligence(): RomaEngineeringIntelligence {
   return {
-    engineeringAssessment: "Platform probes indicate healthy production posture with minor gaps.",
+    engineeringAssessment: "Healthy production posture.",
     releaseDecision: "ready_with_warnings",
     releaseDecisionLabel: "READY WITH WARNINGS",
-    riskAnalysis: "One warning affects AI configuration.",
-    businessImpact: "Limited impact on AI-assisted workflows.",
-    actionPlan: ["Verify OpenAI configuration when enabling AI features."],
+    riskAnalysis: "Minor AI gap.",
+    businessImpact: "Low.",
+    actionPlan: ["Verify database migration state"],
     confidenceScore: "high",
     confidencePercent: 96,
-    engineeringSummary: "Healthy with warnings.",
+    engineeringSummary: "OK",
     ownerSummary: {
       releaseDecisionLabel: "READY WITH WARNINGS",
       confidenceLabel: "HIGH",
@@ -71,52 +87,78 @@ function minimalIntelligence(): RomaEngineeringIntelligence {
       criticalBlockersCount: 0,
       warningCount: 1,
       evidenceCoveragePercent: 96,
-      lastUpdated: "2026-07-05T10:00:00.000Z",
+      lastUpdated: "2026-07-07T08:00:00.000Z",
       environment: "Production",
-      nextSafeAction: "Review AI provider configuration.",
+      nextSafeAction: "Verify database migration state",
     },
-    decisionReasons: [],
-    affectedProductAreas: [],
-    coverageExplanation: "Most live sources connected.",
-    coverageBlindSpots: [],
+    decisionReasons: [
+      {
+        title: "AI provider not configured",
+        component: "ai",
+        severity: "warning",
+        evidence: "OpenAI key missing",
+        impact: "Copilot may not run live",
+        recommendation: "Verify database migration state",
+        recheckCondition: "After env update",
+      },
+    ],
+    affectedProductAreas: [
+      { id: "a", label: "AI Copilot", status: "affected", evidence: "Not configured" },
+      { id: "b", label: "Mobile apps", status: "not_affected", evidence: null },
+    ],
+    coverageExplanation: "12 of 15 sources connected.",
+    coverageBlindSpots: ["Performance telemetry unavailable"],
     topRisks: [],
     recommendations: [],
     reasoning: [],
   };
 }
 
-describe("Executive dashboard UI helpers", () => {
-  it("builds narrative from engineering intelligence without new rules", () => {
+describe("Executive dashboard V3 UI helpers", () => {
+  it("maps quality status to health buckets for sorting", () => {
+    expect(qualityStatusToHealthBucket("unavailable")).toBe("critical");
+    expect(qualityStatusToHealthBucket("healthy")).toBe("healthy");
+  });
+
+  it("builds prioritized actions capped at five", () => {
+    const actions = buildPrioritizedActions(minimalIntelligence(), "/platform-admin/testing");
+    expect(actions.length).toBeLessThanOrEqual(5);
+    expect(actions[0]?.priority).toBe(1);
+  });
+
+  it("sorts platform health cards critical first", () => {
     const dashboard = minimalDashboard();
-    const intelligence = minimalIntelligence();
-    const lines = buildExecutiveSummaryNarrative(dashboard, intelligence);
-    expect(lines.length).toBeGreaterThanOrEqual(4);
-    expect(lines.some((l) => /release is ready with warnings/i.test(l))).toBe(true);
-    expect(lines.some((l) => /ai provider is not configured/i.test(l))).toBe(true);
+    dashboard.systemComponents.push({
+      id: "storage",
+      name: "Storage",
+      status: "unavailable",
+      statusLabel: "Unavailable",
+      lastCheck: "",
+      details: "",
+    });
+    const cards = buildPlatformHealthCards(dashboard);
+    expect(cards[0]?.bucket).toBe("critical");
+  });
+
+  it("groups business impact for executive layout", () => {
+    const groups = groupBusinessImpact(minimalIntelligence().affectedProductAreas);
+    expect(groups.affected).toHaveLength(1);
+    expect(groups.healthy).toHaveLength(1);
+  });
+
+  it("builds plain English release why lines", () => {
+    const lines = buildPlainEnglishReleaseWhy(minimalIntelligence());
+    expect(lines.length).toBeGreaterThan(0);
+    expect(lines[0]).not.toMatch(/probe/i);
+  });
+
+  it("builds recent changes timeline", () => {
+    const timeline = buildRecentChangesTimeline(minimalDashboard(), minimalIntelligence(), []);
+    expect(timeline.length).toBeGreaterThan(0);
   });
 
   it("groups decision reasons by severity", () => {
-    const grouped = groupDecisionReasonsBySeverity([
-      {
-        title: "Critical",
-        component: "db",
-        severity: "critical",
-        evidence: "e",
-        impact: "i",
-        recommendation: "r",
-        recheckCondition: "c",
-      },
-      {
-        title: "Warn",
-        component: "ai",
-        severity: "warning",
-        evidence: "e",
-        impact: "i",
-        recommendation: "r",
-        recheckCondition: "c",
-      },
-    ]);
-    expect(grouped.critical).toHaveLength(1);
+    const grouped = groupDecisionReasonsBySeverity(minimalIntelligence().decisionReasons);
     expect(grouped.warning).toHaveLength(1);
   });
 });
