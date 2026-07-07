@@ -5,7 +5,6 @@ import {
   buildPrioritizedActions,
   buildRecentChangesTimeline,
   groupBusinessImpact,
-  groupDecisionReasonsBySeverity,
   qualityStatusToHealthBucket,
 } from "./executive-dashboard-ui";
 import type { RomaEngineeringIntelligence } from "./roma-engineering-intelligence.types";
@@ -155,10 +154,5 @@ describe("Executive dashboard V3 UI helpers", () => {
   it("builds recent changes timeline", () => {
     const timeline = buildRecentChangesTimeline(minimalDashboard(), minimalIntelligence(), []);
     expect(timeline.length).toBeGreaterThan(0);
-  });
-
-  it("groups decision reasons by severity", () => {
-    const grouped = groupDecisionReasonsBySeverity(minimalIntelligence().decisionReasons);
-    expect(grouped.warning).toHaveLength(1);
   });
 });

@@ -1,5 +1,6 @@
 import { analyzeChangeSet, selectTestsForChange } from "./roma-change-intelligence";
 import type { RomaChangeSetInput } from "./roma-change-intelligence.types";
+import { isSecuritySensitiveChange } from "./roma-path-domain-rules";
 import { getTestById, getTestCatalog } from "./roma-test-catalog";
 import type { RomaTestCatalogDomain, RomaTestCatalogItem } from "./roma-test-catalog.types";
 import type {
@@ -170,8 +171,7 @@ function resolveBlockReason(item: RomaTestCatalogItem): string | undefined {
 
 function requiresManualReview(input: RomaChangeSetInput, analysis: ReturnType<typeof analyzeChangeSet>): boolean {
   if (analysis.confidence === "unknown") return true;
-  const paths = input.changedPaths.join(" ");
-  if (/platform-admin|platform_owner|tenant.isol|rls|rbac|middleware|auth|security/i.test(paths)) return true;
+  if (isSecuritySensitiveChange(input.changedPaths)) return true;
   if (analysis.affectedAreas.some((a) => /platform-admin|tenant-isolation|authentication/.test(a))) return true;
   if (analysis.riskLevel === "critical" || analysis.riskLevel === "high") return true;
   return false;

@@ -1,5 +1,7 @@
 # Platform Admin ROMA Read-Only Page Report
 
+> **ARCHIVED / SUPERSEDED** — See [ROMA_EXECUTIVE_DASHBOARD_V3.md](./ROMA_EXECUTIVE_DASHBOARD_V3.md) and [ROMA_DOCUMENTATION_INDEX.md](./ROMA_DOCUMENTATION_INDEX.md).
+
 **Date:** 2026-07-03  
 **Branch:** `security/platform-admin-separation`  
 **Scope:** Read-only ROMA / testing center at `/[locale]/platform-admin/testing`

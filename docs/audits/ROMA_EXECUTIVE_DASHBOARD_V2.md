@@ -1,5 +1,7 @@
 # ROMA Executive Dashboard V2
 
+> **ARCHIVED / SUPERSEDED** — See [ROMA_EXECUTIVE_DASHBOARD_V3.md](./ROMA_EXECUTIVE_DASHBOARD_V3.md) and [ROMA_DOCUMENTATION_INDEX.md](./ROMA_DOCUMENTATION_INDEX.md).
+
 **Date:** 2026-07-07  
 **Branch:** `security/platform-admin-separation`  
 **Route:** `/[locale]/platform-admin/testing`  

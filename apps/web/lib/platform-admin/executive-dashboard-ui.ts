@@ -314,33 +314,6 @@ export function formatDeployShaForDiagnostics(dashboard: RomaQualityDashboard): 
   return sha ?? "Not available from live sources";
 }
 
-export type GroupedRisks = {
-  critical: DecisionReason[];
-  warning: DecisionReason[];
-  information: DecisionReason[];
-};
-
-export function groupDecisionReasonsBySeverity(reasons: DecisionReason[]): GroupedRisks {
-  const grouped: GroupedRisks = { critical: [], warning: [], information: [] };
-  for (const reason of reasons) {
-    switch (reason.severity) {
-      case "critical":
-        grouped.critical.push(reason);
-        break;
-      case "warning":
-        grouped.warning.push(reason);
-        break;
-      case "information":
-        grouped.information.push(reason);
-        break;
-      default:
-        grouped.information.push(reason);
-        break;
-    }
-  }
-  return grouped;
-}
-
 export function healthBucketDotClass(bucket: HealthBucket): string {
   switch (bucket) {
     case "critical":

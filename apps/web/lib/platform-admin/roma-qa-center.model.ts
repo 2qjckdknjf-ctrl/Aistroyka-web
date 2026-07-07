@@ -1,39 +1,32 @@
-import type { RomaEngineeringIntelligence } from "./roma-engineering-intelligence.types";
-import type { RomaQualityDashboard } from "./roma-quality-dashboard.types";
 import type {
   RomaQaCenterModel,
   RomaQaCenterSection,
   RomaQaCenterSectionId,
 } from "./roma-qa-center.types";
+import { ROMA_QA_CENTER_PLATFORM_SECTION_IDS } from "./roma-qa-center-routes";
 
 export const ROMA_QA_CENTER_SECTION_IDS = [
   "dashboard",
-  "audits",
   "web",
   "mobile",
   "backend",
   "ai",
   "security",
-  "performance",
-  "regression",
-  "coverage",
-  "history",
-  "reports",
 ] as const satisfies readonly RomaQaCenterSectionId[];
 
-export type RomaQaCenterRouteSectionId = Exclude<RomaQaCenterSectionId, "dashboard">;
+export type RomaQaCenterRouteSectionId = RomaQaCenterPlatformSectionId;
+export type RomaQaCenterPlatformSectionId = (typeof ROMA_QA_CENTER_PLATFORM_SECTION_IDS)[number];
 
-export const ROMA_QA_CENTER_ROUTE_SECTION_IDS = ROMA_QA_CENTER_SECTION_IDS.filter(
-  (id): id is RomaQaCenterRouteSectionId => id !== "dashboard"
-);
+export { ROMA_QA_CENTER_PLATFORM_SECTION_IDS as ROMA_QA_CENTER_ROUTE_SECTION_IDS };
 
 export function isRomaQaCenterRouteSectionId(value: string): value is RomaQaCenterRouteSectionId {
-  return (ROMA_QA_CENTER_ROUTE_SECTION_IDS as readonly string[]).includes(value);
+  return (ROMA_QA_CENTER_PLATFORM_SECTION_IDS as readonly string[]).includes(value);
 }
 
 const BASE_REPORTS: RomaQaCenterSection["relatedReports"] = [
   { label: "Platform admin owner-only access", path: "docs/security/PLATFORM_ADMIN_OWNER_ONLY_ACCESS_REPORT.md" },
   { label: "ROMA live data integration", path: "docs/audits/ROMA_LIVE_DATA_INTEGRATION_REPORT.md" },
+  { label: "ROMA documentation index", path: "docs/audits/ROMA_DOCUMENTATION_INDEX.md" },
 ];
 
 function section(
@@ -45,27 +38,8 @@ function section(
   };
 }
 
-function buildStaticSections(): RomaQaCenterSection[] {
+function buildPlatformSections(): RomaQaCenterSection[] {
   return [
-    section({
-      id: "audits",
-      title: "Audits",
-      status: "partial",
-      maturity: "partial",
-      sourceAvailability: "Safe readonly audit + manual refresh on platform-admin",
-      description: "Owner-gated safe audit runs across product surfaces. Explicit refresh and Save Snapshot only.",
-      currentCapability:
-        "Safe Readonly Audit at /testing/safe-audit with refresh API and redacted snapshot save. No automated execution.",
-      futureCapability:
-        "Additional scoped audit types (web smoke, API contract, RBAC matrix) with immutable reports.",
-      blockers: ["No scheduled audit jobs", "No CI coupling", "Physical device smoke not in center"],
-      subAreas: [
-        { id: "safe-audit", label: "Safe readonly audit", status: "partial", note: "Refresh + Save Snapshot" },
-        { id: "rbac", label: "RBAC boundary", status: "coming_soon", note: "Platform vs tenant isolation matrix" },
-        { id: "ai-live", label: "AI live provider", status: "coming_soon", note: "scripts/smoke/ai_live_provider.sh gate" },
-        { id: "mobile-smoke", label: "Mobile device smoke", status: "coming_soon", note: "Physical device matrix — not enabled" },
-      ],
-    }),
     section({
       id: "web",
       title: "Web",
@@ -161,125 +135,16 @@ function buildStaticSections(): RomaQaCenterSection[] {
         { id: "apis", label: "Platform APIs", status: "partial", note: "requirePlatformOwnerApi gate" },
       ],
     }),
-    section({
-      id: "performance",
-      title: "Performance",
-      status: "coming_soon",
-      maturity: "planned",
-      sourceAvailability: "Not available",
-      description: "Core Web Vitals, API latency, dashboard and mobile performance.",
-      currentCapability: "No performance time-series in V1 center.",
-      futureCapability: "CWV probes, API p95 dashboards, mobile startup metrics.",
-      blockers: ["No performance telemetry ingestion for ROMA center"],
-      subAreas: [
-        { id: "cwv", label: "Core Web Vitals", status: "unknown", note: "Not available" },
-        { id: "api-latency", label: "API latency", status: "unknown", note: "Not available" },
-        { id: "dashboard-perf", label: "Dashboard performance", status: "unknown", note: "Not available" },
-        { id: "mobile-perf", label: "Mobile performance", status: "unknown", note: "Not available" },
-      ],
-    }),
-    section({
-      id: "regression",
-      title: "Regression",
-      status: "coming_soon",
-      maturity: "planned",
-      sourceAvailability: "Not available",
-      description: "Changed files, affected modules, required checks, risk prediction.",
-      currentCapability: "Placeholder only — no git diff integration.",
-      futureCapability: "PR-scoped risk hints, required check mapping, module blast-radius.",
-      blockers: ["No change-detection pipeline", "No CI integration in center"],
-    }),
-    section({
-      id: "coverage",
-      title: "Coverage",
-      status: "partial",
-      maturity: "partial",
-      sourceAvailability: "Dashboard data coverage percent (live probes only)",
-      description: "Routes, roles, APIs, devices, business flows, AI scenarios.",
-      currentCapability: "Evidence coverage % on Dashboard from connected probes — not test coverage metrics.",
-      futureCapability: "Route/role/API matrices, device coverage, business-flow catalog.",
-      blockers: ["No route matrix automation", "No fabricated coverage percentages"],
-    }),
-    section({
-      id: "history",
-      title: "History",
-      status: "partial",
-      maturity: "partial",
-      sourceAvailability: "Saved audit snapshots via service-role store (owner only)",
-      description: "Previous safe audit runs, release posture snapshots, and trend context.",
-      currentCapability:
-        "Audit History at /testing/audit-runs lists latest saved snapshots (summary columns, no raw payload in list API).",
-      futureCapability: "Compare runs, trend charts, recurring issue fingerprints, retention purge job.",
-      blockers: ["No compare/export UI", "No retention purge job", "Execution disabled"],
-    }),
-    section({
-      id: "reports",
-      title: "Reports",
-      status: "partial",
-      maturity: "partial",
-      sourceAvailability: "Static repo docs referenced below",
-      description: "Downloadable or linked reports and audit artifacts.",
-      currentCapability: "Links to existing docs/audits and docs/security reports (reference paths). No artifact upload.",
-      futureCapability: "Ingest CI artifacts, store signed reports, export PDF/JSON from runs.",
-      blockers: ["No artifact ingestion pipeline"],
-      relatedReports: [
-        ...BASE_REPORTS,
-        { label: "ROMA QA Center V1 architecture", path: "docs/audits/ROMA_QA_CENTER_V1_ARCHITECTURE_REPORT.md" },
-        { label: "Platform admin forbidden RCA", path: "docs/security/PLATFORM_ADMIN_FORBIDDEN_ROOT_CAUSE_REPORT.md" },
-      ],
-    }),
   ];
 }
 
-function buildDashboardSection(
-  dashboard: RomaQualityDashboard,
-  intelligence: RomaEngineeringIntelligence
-): RomaQaCenterSection {
-  const coverage =
-    dashboard.dataCoverage.coveragePercent != null
-      ? `${dashboard.dataCoverage.coveragePercent}% probe sources connected`
-      : "Unknown";
-
-  return section({
-    id: "dashboard",
-    title: "Dashboard",
-    status: "available",
-    maturity: "live",
-    sourceAvailability: coverage,
-    description: "Live quality dashboard, engineering intelligence, release recommendation, source coverage.",
-    currentCapability:
-      "Read-only live probes, release decision, confidence, blockers, product-area impact, data coverage.",
-    futureCapability: "Same dashboard feeds future audit sections; optional drill-down per domain.",
-    blockers: intelligence.coverageBlindSpots.length > 0 ? intelligence.coverageBlindSpots.slice(0, 5) : [],
-    relatedReports: BASE_REPORTS,
-  });
-}
-
-export function buildRomaQaCenterModel(input?: {
-  dashboard?: RomaQualityDashboard;
-  intelligence?: RomaEngineeringIntelligence;
-}): RomaQaCenterModel {
-  const staticSections = buildStaticSections();
-  const dashboardSection =
-    input?.dashboard && input?.intelligence
-      ? buildDashboardSection(input.dashboard, input.intelligence)
-      : section({
-          id: "dashboard",
-          title: "Dashboard",
-          status: "unknown",
-          maturity: "partial",
-          sourceAvailability: "Unknown",
-          description: "Live quality dashboard and engineering intelligence.",
-          currentCapability: "Read-only when probes load successfully.",
-          futureCapability: "Feeds all QA center sections.",
-          blockers: ["Dashboard data unavailable in this render context"],
-        });
-
+/** Static platform-domain sections for `[section]` overview pages. */
+export function buildRomaQaCenterModel(): RomaQaCenterModel {
   return {
     version: "v1",
     executionEnabled: false,
     generatedAt: new Date().toISOString(),
-    sections: [dashboardSection, ...staticSections],
+    sections: buildPlatformSections(),
   };
 }
 

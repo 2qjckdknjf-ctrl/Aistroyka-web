@@ -7,6 +7,7 @@ import type {
   RomaQualityGraphNodeType,
   RomaQualityGraphReleaseGateImpact,
 } from "./roma-quality-graph.types";
+import { matchPathsToAreaIds } from "./roma-path-domain-rules";
 
 function node(
   partial: RomaQualityGraphNode
@@ -252,70 +253,6 @@ const REQUIRED_NODE_TYPES: RomaQualityGraphNodeType[] = [
   "release_gate",
 ];
 
-/** Path prefix → product area IDs (deterministic V1 mapping). */
-const PATH_TO_AREAS: readonly { match: (path: string) => boolean; areaIds: readonly string[] }[] = [
-  {
-    match: (p) => /platform-admin|platform.owner|platform_owner/i.test(p),
-    areaIds: ["pa-platform-admin", "pa-roma-qa-center"],
-  },
-  {
-    match: (p) => /worker.*report|reports\/|field-report|daily-report/i.test(p),
-    areaIds: ["pa-worker-reports"],
-  },
-  {
-    match: (p) => /manager.*review|approve.*report/i.test(p),
-    areaIds: ["pa-manager-review"],
-  },
-  {
-    match: (p) => /copilot|\/ai\/|vision|openai|llm/i.test(p),
-    areaIds: ["pa-ai-copilot"],
-  },
-  {
-    match: (p) => /middleware|auth|login|session|supabase\/auth/i.test(p),
-    areaIds: ["pa-authentication"],
-  },
-  {
-    match: (p) => /rls|tenant.isol|platform_owner_grants|break_glass/i.test(p),
-    areaIds: ["pa-tenant-isolation", "pa-platform-admin"],
-  },
-  {
-    match: (p) => /upload|storage|bucket/i.test(p),
-    areaIds: ["pa-documents", "pa-worker-reports"],
-  },
-  {
-    match: (p) => /project/i.test(p),
-    areaIds: ["pa-projects"],
-  },
-  {
-    match: (p) => /document/i.test(p),
-    areaIds: ["pa-documents"],
-  },
-  {
-    match: (p) => /cost|budget/i.test(p),
-    areaIds: ["pa-costs-budgets"],
-  },
-  {
-    match: (p) => /wrangler|deploy|cloudflare|\.github\/workflows/i.test(p),
-    areaIds: ["pa-release-pipeline"],
-  },
-  {
-    match: (p) => /^ios\//i.test(p) || /ios\/Shared/i.test(p),
-    areaIds: ["pa-worker-reports", "pa-manager-review"],
-  },
-  {
-    match: (p) => /^android\//i.test(p),
-    areaIds: ["pa-worker-reports", "pa-manager-review"],
-  },
-  {
-    match: (p) => /\(public\)|public-site|marketing/i.test(p),
-    areaIds: ["pa-public-website"],
-  },
-  {
-    match: (p) => /\(dashboard\)|dashboard\//i.test(p),
-    areaIds: ["pa-web-dashboard"],
-  },
-];
-
 const MODULE_TO_AREAS: Record<string, readonly string[]> = {
   "platform-admin": ["pa-platform-admin", "pa-roma-qa-center"],
   reports: ["pa-worker-reports"],
@@ -437,13 +374,7 @@ function collectRelatedIds(
 }
 
 export function getAffectedAreasForChange(input: RomaQualityGraphChangeInput): readonly string[] {
-  const areaIds: string[] = [];
-
-  for (const path of input.changedPaths) {
-    for (const rule of PATH_TO_AREAS) {
-      if (rule.match(path)) areaIds.push(...rule.areaIds);
-    }
-  }
+  const areaIds: string[] = [...matchPathsToAreaIds(input.changedPaths)];
 
   for (const mod of input.changedModules ?? []) {
     const key = mod.toLowerCase();

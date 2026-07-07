@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { RomaQaCenterSectionClient } from "@/components/platform-admin/RomaQaCenterSectionClient";
 import {
   buildRomaQaCenterModel,
   getRomaQaCenterSection,
-  ROMA_QA_CENTER_ROUTE_SECTION_IDS,
   isRomaQaCenterRouteSectionId,
+  ROMA_QA_CENTER_ROUTE_SECTION_IDS,
 } from "@/lib/platform-admin/roma-qa-center.model";
+import { getRomaLegacyRedirectTarget } from "@/lib/platform-admin/roma-qa-center-routes";
 
 type PageProps = {
   params: Promise<{ locale: string; section: string }>;
@@ -18,6 +19,10 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { section: sectionId } = await params;
+  const legacyTarget = getRomaLegacyRedirectTarget(sectionId);
+  if (legacyTarget) {
+    return { title: "ROMA QA Center" };
+  }
   if (!isRomaQaCenterRouteSectionId(sectionId)) {
     return { title: "ROMA QA Center" };
   }
@@ -30,7 +35,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function RomaQaCenterSectionPage({ params }: PageProps) {
-  const { section: sectionId } = await params;
+  const { locale, section: sectionId } = await params;
+
+  const legacyTarget = getRomaLegacyRedirectTarget(sectionId);
+  if (legacyTarget) {
+    redirect(`/${locale}${legacyTarget}`);
+  }
+
   if (!isRomaQaCenterRouteSectionId(sectionId)) {
     notFound();
   }

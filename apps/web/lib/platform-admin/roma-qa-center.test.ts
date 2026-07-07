@@ -7,6 +7,7 @@ import {
   ROMA_QA_CENTER_SECTION_IDS,
   buildRomaQaCenterModel,
 } from "./roma-qa-center.model";
+import { ROMA_QA_CENTER_LEGACY_REDIRECTS } from "./roma-qa-center-routes";
 import { isPlatformAdminPagePath } from "./middleware-paths";
 import { PLATFORM_ADMIN_SHELL_NAV_ITEMS } from "./shell-nav";
 import { isRomaQaCenterNavPath } from "./roma-qa-center-nav";
@@ -17,9 +18,9 @@ function readRelative(relativePath: string): string {
   return readFileSync(join(ROOT, relativePath), "utf8");
 }
 
-describe("ROMA QA Center V1", () => {
+describe("ROMA QA Center", () => {
   it("defines grouped system map navigation with core ROMA routes", () => {
-    expect(ROMA_QA_CENTER_SECTION_IDS).toHaveLength(12);
+    expect(ROMA_QA_CENTER_SECTION_IDS).toHaveLength(6);
     expect(ROMA_QA_CENTER_NAV_GROUPS.length).toBe(5);
     expect(ROMA_QA_CENTER_NAV_ITEMS.length).toBe(13);
     expect(ROMA_QA_CENTER_NAV_ITEMS.some((item) => item.id === "quality-graph")).toBe(true);
@@ -42,10 +43,10 @@ describe("ROMA QA Center V1", () => {
     for (const section of ROMA_QA_CENTER_ROUTE_SECTION_IDS) {
       expect(isPlatformAdminPagePath(`/platform-admin/testing/${section}`)).toBe(true);
     }
-    expect(isRomaQaCenterNavPath("/platform-admin/testing")).toBe(true);
-    for (const section of ROMA_QA_CENTER_ROUTE_SECTION_IDS) {
-      expect(isRomaQaCenterNavPath(`/platform-admin/testing/${section}`)).toBe(true);
+    for (const legacy of Object.keys(ROMA_QA_CENTER_LEGACY_REDIRECTS)) {
+      expect(isPlatformAdminPagePath(`/platform-admin/testing/${legacy}`)).toBe(true);
     }
+    expect(isRomaQaCenterNavPath("/platform-admin/testing")).toBe(true);
     expect(isPlatformAdminPagePath("/admin/testing")).toBe(false);
     expect(isPlatformAdminPagePath("/dashboard")).toBe(false);
   });
@@ -56,28 +57,17 @@ describe("ROMA QA Center V1", () => {
     expect(PLATFORM_ADMIN_SHELL_NAV_ITEMS.some((item) => item.href.startsWith("/admin"))).toBe(false);
   });
 
-  it("model has execution disabled and does not fabricate completed audits", () => {
+  it("platform section model has execution disabled and no fabricated audits", () => {
     const model = buildRomaQaCenterModel();
     expect(model.executionEnabled).toBe(false);
-
-    const audits = model.sections.find((s) => s.id === "audits");
-    expect(audits?.status).toBe("partial");
-    expect(audits?.maturity).toBe("partial");
-    expect(audits?.currentCapability).not.toMatch(/completed|passed|success/i);
-
-    const history = model.sections.find((s) => s.id === "history");
-    expect(history?.status).toBe("partial");
-    expect(history?.currentCapability).toMatch(/audit-runs/i);
-    expect(history?.currentCapability).not.toMatch(/\d+\s+audits?\s+completed/i);
+    expect(model.sections).toHaveLength(5);
+    expect(model.sections.some((s) => s.id === "audits")).toBe(false);
+    expect(model.sections.some((s) => s.id === "history")).toBe(false);
 
     for (const section of model.sections) {
-      if (section.id === "dashboard") continue;
       expect(section.status).not.toBe("available");
       expect(section.currentCapability).not.toMatch(/\d+\s+audits?\s+completed/i);
     }
-
-    const dashboard = model.sections.find((s) => s.id === "dashboard");
-    expect(dashboard?.status).toBe("unknown");
   });
 
   it("section pages have no enabled Run/Execute/Deploy/Fix actions on dashboard", () => {
@@ -110,9 +100,12 @@ describe("ROMA QA Center V1", () => {
     expect(pageSrc).toMatch(/PlatformAdminTestingClient/);
   });
 
-  it("tenant admin cannot reach platform-admin testing via public /admin path", () => {
-    expect(isPlatformAdminPagePath("/admin/testing")).toBe(false);
-    expect(isPlatformAdminPagePath("/admin")).toBe(false);
+  it("legacy section routes redirect to canonical modules", () => {
+    const sectionPage = readRelative(
+      "app/[locale]/(platform-admin)/platform-admin/testing/[section]/page.tsx"
+    );
+    expect(sectionPage).toMatch(/getRomaLegacyRedirectTarget/);
+    expect(sectionPage).toMatch(/redirect\(/);
   });
 
   it("invalid section route uses notFound guard", () => {
@@ -121,5 +114,10 @@ describe("ROMA QA Center V1", () => {
     );
     expect(sectionPage).toMatch(/isRomaQaCenterRouteSectionId/);
     expect(sectionPage).toMatch(/notFound\(\)/);
+  });
+
+  it("tenant admin cannot reach platform-admin testing via public /admin path", () => {
+    expect(isPlatformAdminPagePath("/admin/testing")).toBe(false);
+    expect(isPlatformAdminPagePath("/admin")).toBe(false);
   });
 });

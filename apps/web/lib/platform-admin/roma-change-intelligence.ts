@@ -21,6 +21,7 @@ import type {
   RomaChangeSetInput,
   RomaSkippedDomain,
 } from "./roma-change-intelligence.types";
+import { matchPathsToCatalogDomains, ROMA_PATH_DOMAIN_RULES } from "./roma-path-domain-rules";
 
 /** Graph test_domain node → catalog domain. */
 const GRAPH_TEST_DOMAIN_TO_CATALOG: Record<string, RomaTestCatalogDomain> = {
@@ -58,49 +59,6 @@ const ALL_CATALOG_DOMAINS: readonly RomaTestCatalogDomain[] = [
   "release",
   "pilot",
   "business_flow",
-];
-
-/** Path-triggered catalog domain requirements (V1 rules). */
-const PATH_CATALOG_DOMAIN_RULES: readonly {
-  match: (path: string) => boolean;
-  domains: readonly RomaTestCatalogDomain[];
-}[] = [
-  {
-    match: (p) => /api\/v1\/reports|reports\//i.test(p),
-    domains: ["backend", "business_flow", "mobile_ios", "mobile_android"],
-  },
-  {
-    match: (p) => /auth|session|middleware|login|supabase\/auth/i.test(p),
-    domains: ["security", "backend", "web", "release"],
-  },
-  {
-    match: (p) => /platform-admin|platform.owner|platform_owner/i.test(p),
-    domains: ["security", "web", "release"],
-  },
-  {
-    match: (p) => /copilot|\/ai\/|openai|llm|vision/i.test(p),
-    domains: ["ai", "backend", "security"],
-  },
-  {
-    match: (p) => /^ios\//i.test(p) || /ios\/Shared/i.test(p),
-    domains: ["mobile_ios"],
-  },
-  {
-    match: (p) => /^android\//i.test(p),
-    domains: ["mobile_android"],
-  },
-  {
-    match: (p) => /upload|storage|bucket/i.test(p),
-    domains: ["backend", "business_flow"],
-  },
-  {
-    match: (p) => /wrangler|deploy|\.github\/workflows/i.test(p),
-    domains: ["release"],
-  },
-  {
-    match: (p) => /rls|tenant.isol|migration/i.test(p),
-    domains: ["database", "security"],
-  },
 ];
 
 function uniqueStrings(values: readonly string[]): string[] {
@@ -169,12 +127,11 @@ function catalogDomainsFromGraphTestDomains(testDomainIds: readonly string[]): R
 }
 
 function catalogDomainsFromPaths(paths: readonly string[]): RomaTestCatalogDomain[] {
-  const domains: RomaTestCatalogDomain[] = [];
+  const domains = [...matchPathsToCatalogDomains(paths)];
   for (const path of paths) {
-    for (const rule of PATH_CATALOG_DOMAIN_RULES) {
-      if (rule.match(path)) domains.push(...rule.domains);
+    if (/auth|rbac|middleware/i.test(path) && !domains.includes("security")) {
+      domains.push("security");
     }
-    if (/auth|rbac|middleware/i.test(path)) domains.push("security");
   }
   return uniqueStrings(domains) as RomaTestCatalogDomain[];
 }
@@ -222,7 +179,7 @@ function computeConfidence(
     (input.changedModules?.length ?? 0) > 0 ||
     (input.changedMobileApps?.length ?? 0) > 0;
   const pathMatches = input.changedPaths.some((p) =>
-    PATH_CATALOG_DOMAIN_RULES.some((r) => r.match(p))
+    ROMA_PATH_DOMAIN_RULES.some((r) => r.match(p))
   );
   if (areaIds.length >= 2 || (hasExplicitSignal && pathMatches)) return "high";
   if (areaIds.length >= 1 && pathMatches) return "medium";
