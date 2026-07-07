@@ -63,6 +63,18 @@ The [`docs/roma/`](../roma/) tree (71 files) contains strategic ROMA OS / intell
 
 ---
 
+## Platform Integration Program (Engineering Operations Center)
+
+| Document | Role |
+|----------|------|
+| [../platform/ROMA_PLATFORM_INVENTORY.md](../platform/ROMA_PLATFORM_INVENTORY.md) | **Canonical** — 22 subsystem inventory |
+| [../platform/ROMA_PLATFORM_MODEL.md](../platform/ROMA_PLATFORM_MODEL.md) | **Canonical** — metadata registry design |
+| [../platform/ROMA_PLATFORM_ARCHITECTURE.md](../platform/ROMA_PLATFORM_ARCHITECTURE.md) | Integration architecture |
+| [../platform/ROMA_PLATFORM_GAP_ANALYSIS.md](../platform/ROMA_PLATFORM_GAP_ANALYSIS.md) | Gaps + priorities |
+| [../platform/ROMA_PLATFORM_INTEGRATION_ROADMAP.md](../platform/ROMA_PLATFORM_INTEGRATION_ROADMAP.md) | Phased roadmap |
+
+---
+
 ## Canonical route map
 
 | Feature | Route |
