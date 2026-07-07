@@ -1,6 +1,5 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "AISTROYKA-WEB-CF-CHECK",
@@ -33,6 +32,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@aistroyka/contracts": "file:../../packages/contracts",
+        "@aistroyka/roma-kernel": "file:../../packages/roma-kernel",
         "@supabase/ssr": "^0.5.2",
         "@supabase/supabase-js": "^2.47.10",
         "@tanstack/react-query": "^5.90.21",
@@ -75,9 +75,19 @@
         "vitest": "^4.0.18",
       },
     },
+    "packages/roma-kernel": {
+      "name": "@aistroyka/roma-kernel",
+      "version": "0.1.0",
+      "devDependencies": {
+        "typescript": "^5.6.3",
+        "vitest": "^4.0.18",
+      },
+    },
   },
   "packages": {
     "@aistroyka/contracts": ["@aistroyka/contracts@workspace:packages/contracts"],
+
+    "@aistroyka/roma-kernel": ["@aistroyka/roma-kernel@workspace:packages/roma-kernel"],
 
     "@alloc/quick-lru": ["@alloc/quick-lru@5.2.0", "", {}, "sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw=="],
 

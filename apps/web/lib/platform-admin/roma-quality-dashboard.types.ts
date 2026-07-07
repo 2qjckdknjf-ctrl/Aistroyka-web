@@ -1,4 +1,12 @@
-export type LiveSourceStatus = "connected" | "unavailable";
+import type {
+  RomaProbeConnectionStatus,
+  RomaReadinessLevel,
+  RomaSeverity,
+} from "@aistroyka/roma-kernel";
+
+export type BlockerSeverity = RomaSeverity;
+export type LiveSourceStatus = RomaProbeConnectionStatus;
+export type ReadinessLevel = RomaReadinessLevel;
 
 export type LiveDataSource = {
   id: string;
@@ -43,16 +51,13 @@ export type DomainSection = {
   highlights: string[];
 };
 
+/** Module view — aligns with RomaHealthStatus; migrate new code to @aistroyka/roma-kernel. */
 export type QualityStatus =
   | "healthy"
   | "degraded"
   | "unavailable"
   | "unknown"
   | "not_configured";
-
-export type ReadinessLevel = "ready" | "partial" | "blocked" | "unknown";
-
-export type BlockerSeverity = "critical" | "warning" | "information" | "unknown";
 
 export type QualityComponentCard = {
   id: string;

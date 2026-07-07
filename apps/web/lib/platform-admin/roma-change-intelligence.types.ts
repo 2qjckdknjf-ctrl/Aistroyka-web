@@ -1,3 +1,13 @@
+import type {
+  RomaConfidence,
+  RomaReleaseImpact,
+  RomaRiskLevel,
+} from "@aistroyka/roma-kernel";
+
+export type RomaChangeConfidence = RomaConfidence;
+export type RomaChangeRiskLevel = RomaRiskLevel;
+export type RomaChangeReleaseImpact = RomaReleaseImpact;
+
 /** ROMA Change Intelligence Engine input (V1). */
 export type RomaChangeSetInput = {
   changedPaths: readonly string[];
@@ -6,12 +16,6 @@ export type RomaChangeSetInput = {
   changedMobileApps?: readonly string[];
   changedEnv?: readonly string[];
 };
-
-export type RomaChangeConfidence = "high" | "medium" | "low" | "unknown";
-
-export type RomaChangeReleaseImpact = "none" | "low" | "medium" | "high";
-
-export type RomaChangeRiskLevel = "critical" | "high" | "medium" | "low" | "unknown";
 
 export type RomaSkippedDomain = {
   domain: string;

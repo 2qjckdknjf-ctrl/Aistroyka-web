@@ -70,6 +70,7 @@ out
 
 # workspace packages build output
 packages/contracts/dist
+packages/roma-kernel/dist
 
 # macOS
 .DS_Store

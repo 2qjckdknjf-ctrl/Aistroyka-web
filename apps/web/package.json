@@ -46,6 +46,7 @@
   },
   "dependencies": {
     "@aistroyka/contracts": "file:../../packages/contracts",
+    "@aistroyka/roma-kernel": "file:../../packages/roma-kernel",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.47.10",
     "@tanstack/react-query": "^5.90.21",

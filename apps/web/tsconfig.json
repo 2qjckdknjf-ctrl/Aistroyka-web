@@ -31,6 +31,12 @@
       ],
       "@aistroyka/contracts/*": [
         "../../packages/contracts/src/*"
+      ],
+      "@aistroyka/roma-kernel": [
+        "../../packages/roma-kernel/src/index.ts"
+      ],
+      "@aistroyka/roma-kernel/*": [
+        "../../packages/roma-kernel/src/*"
       ]
     },
     "target": "ES2017"

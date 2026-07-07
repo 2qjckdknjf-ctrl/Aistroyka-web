@@ -11,6 +11,7 @@ import type {
   BlockerSeverity,
 } from "./roma-quality-dashboard.types";
 import type { RomaAuditRunListItem } from "./roma-run-history.types";
+import type { RomaHealthBucket } from "@aistroyka/roma-kernel";
 import { formatPercent, formatTimestamp } from "./quality-dashboard-ui";
 
 export function findSystemComponent(
@@ -25,7 +26,7 @@ export function findDomainSection(dashboard: RomaQualityDashboard, id: string) {
 }
 
 /** Health bucket for executive sorting (Critical → Warning → Unknown → Healthy). */
-export type HealthBucket = "critical" | "warning" | "unknown" | "healthy";
+export type HealthBucket = RomaHealthBucket;
 
 export function qualityStatusToHealthBucket(status: QualityStatus): HealthBucket {
   switch (status) {

@@ -1,10 +1,13 @@
+import type {
+  RomaConfidenceCore,
+  RomaImpactStatus,
+  RomaReleaseDecision,
+} from "@aistroyka/roma-kernel";
 import type { BlockerSeverity } from "./roma-quality-dashboard.types";
 
-export type ReleaseDecision = "ready" | "not_ready" | "ready_with_warnings" | "unknown";
-
-export type ConfidenceLevel = "high" | "medium" | "low";
-
-export type ProductAreaStatus = "affected" | "not_affected" | "unknown";
+export type ReleaseDecision = RomaReleaseDecision;
+export type ConfidenceLevel = RomaConfidenceCore;
+export type ProductAreaStatus = RomaImpactStatus;
 
 export type ProductAreaImpact = {
   id: string;

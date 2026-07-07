@@ -1,21 +1,8 @@
-/** ROMA Test Catalog domain (V1). */
-export type RomaTestCatalogDomain =
-  | "web"
-  | "backend"
-  | "database"
-  | "security"
-  | "ai"
-  | "mobile_ios"
-  | "mobile_android"
-  | "performance"
-  | "accessibility"
-  | "ux"
-  | "visual"
-  | "release"
-  | "pilot"
-  | "business_flow";
+import type { RomaTestDomain, RomaTestPriority } from "@aistroyka/roma-kernel";
 
-export type RomaTestCatalogPriority = "p0" | "p1" | "p2" | "p3";
+/** ROMA Test Catalog domain (V1) — canonical: RomaTestDomain in @aistroyka/roma-kernel. */
+export type RomaTestCatalogDomain = RomaTestDomain;
+export type RomaTestCatalogPriority = RomaTestPriority;
 
 export type RomaTestCatalogSeverity = "critical" | "high" | "medium" | "low";
 
