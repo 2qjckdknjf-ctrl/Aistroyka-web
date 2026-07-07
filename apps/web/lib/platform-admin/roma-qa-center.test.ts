@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { ROMA_QA_CENTER_NAV_ITEMS } from "./roma-qa-center-nav";
+import { ROMA_QA_CENTER_NAV_GROUPS, ROMA_QA_CENTER_NAV_ITEMS } from "./roma-qa-center-nav";
 import {
   ROMA_QA_CENTER_ROUTE_SECTION_IDS,
   ROMA_QA_CENTER_SECTION_IDS,
@@ -18,16 +18,16 @@ function readRelative(relativePath: string): string {
 }
 
 describe("ROMA QA Center V1", () => {
-  it("defines all 12 section ids plus quality graph in nav", () => {
+  it("defines grouped system map navigation with core ROMA routes", () => {
     expect(ROMA_QA_CENTER_SECTION_IDS).toHaveLength(12);
-    expect(ROMA_QA_CENTER_NAV_ITEMS.length).toBeGreaterThanOrEqual(13);
+    expect(ROMA_QA_CENTER_NAV_GROUPS.length).toBe(5);
+    expect(ROMA_QA_CENTER_NAV_ITEMS.length).toBe(12);
     expect(ROMA_QA_CENTER_NAV_ITEMS.some((item) => item.id === "quality-graph")).toBe(true);
-    expect(ROMA_QA_CENTER_NAV_ITEMS.some((item) => item.id === "test-catalog")).toBe(true);
-    expect(ROMA_QA_CENTER_NAV_ITEMS.some((item) => item.id === "change-intelligence")).toBe(true);
-    expect(ROMA_QA_CENTER_NAV_ITEMS.some((item) => item.id === "execution-planner")).toBe(true);
-    expect(ROMA_QA_CENTER_NAV_ITEMS.some((item) => item.id === "execution-engine")).toBe(true);
     expect(ROMA_QA_CENTER_NAV_ITEMS.some((item) => item.id === "safe-audit")).toBe(true);
     expect(ROMA_QA_CENTER_NAV_ITEMS.some((item) => item.id === "audit-runs")).toBe(true);
+    expect(ROMA_QA_CENTER_NAV_ITEMS.some((item) => item.label === "Audit History")).toBe(true);
+    expect(ROMA_QA_CENTER_NAV_ITEMS.some((item) => item.id === "audits")).toBe(false);
+    expect(ROMA_QA_CENTER_NAV_ITEMS.some((item) => item.id === "backend")).toBe(false);
   });
 
   it("protects all QA center routes via platform admin page path guard", () => {

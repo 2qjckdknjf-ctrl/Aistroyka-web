@@ -39,16 +39,14 @@ describe("ROMA live quality dashboard", () => {
     expect(clientSrc).not.toMatch(/>\s*Restart\s*</i);
     expect(clientSrc).not.toMatch(/>\s*Delete\s*</i);
     expect(clientSrc).not.toMatch(/>\s*Fix\s*</i);
-    expect(clientSrc).toMatch(/ownerSummary/);
-    expect(clientSrc).toMatch(/decisionReasons/);
+    expect(clientSrc).toMatch(/Executive Operations Dashboard/);
+    expect(clientSrc).toMatch(/buildExecutiveSummaryNarrative/);
     expect(clientSrc).toMatch(/affectedProductAreas/);
-    expect(clientSrc).toMatch(/coverageExplanation/);
-    expect(clientSrc).toMatch(/dataCoverage/);
-    expect(clientSrc).toMatch(/platformTimeline/);
+    expect(clientSrc).toMatch(/release-readiness/);
+    expect(clientSrc).toMatch(/recentAudits/);
     expect(pageSrc).toMatch(/buildRomaEngineeringIntelligence/);
-    expect(pageSrc).toMatch(/intelligence={intelligence}/);
-    expect(clientSrc).toMatch(/Owner operator summary/);
-    expect(clientSrc).toMatch(/Why this decision/);
+    expect(pageSrc).toMatch(/listAuditRunSummaries/);
+    expect(pageSrc).toMatch(/recentAudits={recentAudits}/);
     expect(clientSrc).not.toMatch(/\/admin\//);
   });
 
