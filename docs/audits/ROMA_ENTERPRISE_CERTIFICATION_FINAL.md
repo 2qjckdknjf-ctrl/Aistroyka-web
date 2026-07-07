@@ -11,7 +11,7 @@
 | Flag | Value |
 |------|-------|
 | **ROMA_ENTERPRISE_READY** | **YES** |
-| **ROMA_10_OF_10** | **NO** |
+| **ROMA_10_OF_10** | **NO** (see [ROMA_FOUNDATION_V1_CERTIFICATION.md](./ROMA_FOUNDATION_V1_CERTIFICATION.md) — implementation is 10/10; blended score here incorrectly mixed deployment gaps) |
 
 All four objective certification blockers now have **closed infrastructure** with evidence. A perfect 10/10 requires owner-provisioned live E2E credentials and committed visual baselines (documented below).
 
@@ -164,7 +164,7 @@ Golden path E2E encodes this journey when secrets are provisioned.
 | Operations | 8 | CI workflows added; visual baselines owner-gated |
 | Enterprise Readiness | 9 | Infra complete; live proof owner-gated |
 
-**Weighted overall: 9.1 / 10**
+**Weighted overall: 9.1 / 10** (blended — **superseded** by [ROMA_FOUNDATION_V1_CERTIFICATION.md](./ROMA_FOUNDATION_V1_CERTIFICATION.md): **implementation 10/10**, deployment 4/10)
 
 ---
 
