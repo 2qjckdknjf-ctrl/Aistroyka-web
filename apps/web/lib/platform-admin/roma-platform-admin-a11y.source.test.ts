@@ -29,6 +29,7 @@ describe("ROMA Operations Center accessibility (source CI)", () => {
   it("executive dashboard sections use paired heading ids and aria-labelledby landmarks", () => {
     const client = readComponent("PlatformAdminTestingClient.tsx");
     const headingIds = [
+      "platform-overview-heading",
       "next-actions-heading",
       "release-center-heading",
       "platform-health-heading",

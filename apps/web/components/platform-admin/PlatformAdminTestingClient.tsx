@@ -150,6 +150,28 @@ export function PlatformAdminTestingClient({ dashboard, intelligence, recentAudi
         </div>
       </header>
 
+      <section aria-labelledby="platform-overview-heading" className="space-y-aistroyka-4">
+        <SectionHeading
+          headingId="platform-overview-heading"
+          title="Platform overview"
+          subtitle="Live counts from existing platform services — unknown when evidence is missing."
+        />
+        <div className="grid gap-aistroyka-3 sm:grid-cols-2 lg:grid-cols-4">
+          <OverviewStat label="Tenants" value={formatOverviewCount(d.platformOverview.totalTenants)} />
+          <OverviewStat label="Active users" value={formatOverviewCount(d.platformOverview.activeUsers)} />
+          <OverviewStat label="Projects" value={formatOverviewCount(d.platformOverview.totalProjects)} />
+          <OverviewStat label="Open support" value={formatOverviewCount(d.platformOverview.openSupportEvents)} />
+          <OverviewStat label="Pending invites" value={formatOverviewCount(d.platformOverview.pendingInvites)} />
+          <OverviewStat label="Push pending" value={formatOverviewCount(d.platformOverview.pushPending)} />
+          <OverviewStat label="Push failed" value={formatOverviewCount(d.platformOverview.pushFailed)} />
+          <OverviewStat
+            label="Entitlements rows"
+            value={formatOverviewCount(d.platformOverview.entitlementsRows)}
+          />
+        </div>
+        <p className="text-aistroyka-footnote text-aistroyka-text-tertiary">{d.platformOverview.summary}</p>
+      </section>
+
       <section aria-labelledby="next-actions-heading" className="space-y-aistroyka-4">
         <SectionHeading
           headingId="next-actions-heading"
@@ -437,4 +459,20 @@ function ImpactCard({ area, emphasized }: { area: ProductAreaImpact; emphasized?
 function truncateAction(text: string, max = 48): string {
   if (text.length <= max) return text;
   return `${text.slice(0, max - 1)}…`;
+}
+
+function formatOverviewCount(value: number | null): string {
+  if (value === null) return "Unknown";
+  return String(value);
+}
+
+function OverviewStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl bg-aistroyka-surface-raised/60 px-aistroyka-4 py-aistroyka-3">
+      <p className="text-aistroyka-caption font-medium uppercase tracking-wider text-aistroyka-text-tertiary">
+        {label}
+      </p>
+      <p className="mt-aistroyka-1 text-aistroyka-title3 font-semibold text-aistroyka-text-primary">{value}</p>
+    </div>
+  );
 }

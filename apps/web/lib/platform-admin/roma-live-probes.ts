@@ -23,6 +23,8 @@ import { getStripePriceMappingDiagnostics } from "@/lib/platform/billing-readine
 import { listFlags } from "@/lib/platform/flags/flags.repository";
 import { getAdminClient } from "@/lib/supabase/admin";
 import type { LiveDataSource, LiveSourceStatus } from "./roma-quality-dashboard.types";
+import { runPlatformIntegrationProbes } from "./roma-platform-integration";
+import type { PlatformIntegrationProbeBundle } from "./roma-platform-integration";
 
 const UPLOAD_BUCKET = "media";
 
@@ -132,6 +134,7 @@ export type LiveProbeBundle = {
   ai: ProbeOutcome<AiProbeData>;
   cloudflare: ProbeOutcome<CloudflareProbeData>;
   mobile: ProbeOutcome<MobileProbeData>;
+  platformIntegration: PlatformIntegrationProbeBundle;
 };
 
 export const LIVE_SOURCE_CATALOG = [
@@ -150,6 +153,9 @@ export const LIVE_SOURCE_CATALOG = [
   { id: "mobile_metadata", label: "Mobile build metadata", category: "Mobile" },
   { id: "github_actions_env", label: "GitHub Actions metadata", category: "Deployments" },
   { id: "notification_config", label: "Notification services config", category: "Infrastructure" },
+  { id: "platform_overview", label: "Platform overview metrics", category: "Platform" },
+  { id: "push_outbox_health", label: "Push outbox delivery health", category: "Notifications" },
+  { id: "billing_platform_inventory", label: "Billing entitlements inventory", category: "Billing" },
 ] as const;
 
 function resolveDeployBranch(): string | null {
@@ -594,6 +600,7 @@ export async function runLiveProbes(): Promise<LiveProbeBundle> {
     migrations,
     platformAudit,
     cloudflare,
+    platformIntegration,
   ] = await Promise.all([
     probeHealth(),
     probeSystemHealth(),
@@ -602,6 +609,7 @@ export async function runLiveProbes(): Promise<LiveProbeBundle> {
     probeMigrations(),
     probePlatformAudit(),
     probeCloudflare(),
+    runPlatformIntegrationProbes(),
   ]);
 
   return {
@@ -618,6 +626,7 @@ export async function runLiveProbes(): Promise<LiveProbeBundle> {
     ai: probeAi(),
     cloudflare,
     mobile: probeMobile(),
+    platformIntegration,
   };
 }
 
@@ -700,8 +709,20 @@ export function buildDataCoverage(probes: LiveProbeBundle): {
       case "notification_config":
         connected = probes.releaseEnv.connected;
         summary = probes.releaseEnv.connected
-          ? `Push configured=${String(probes.releaseEnv.data?.pushConfigured)}.`
+          ? `Push configured=${String(probes.releaseEnv.data?.pushConfigured)}; FCM=${String(probes.platformIntegration.pushOutbox.data?.fcmConfigured ?? false)}.`
           : "Notification configuration probe unavailable.";
+        break;
+      case "platform_overview":
+        connected = probes.platformIntegration.platformOverview.connected;
+        summary = probes.platformIntegration.platformOverview.summary;
+        break;
+      case "push_outbox_health":
+        connected = probes.platformIntegration.pushOutbox.connected;
+        summary = probes.platformIntegration.pushOutbox.summary;
+        break;
+      case "billing_platform_inventory":
+        connected = probes.platformIntegration.billingPlatform.connected;
+        summary = probes.platformIntegration.billingPlatform.summary;
         break;
       default: {
         const _exhaustive: never = sourceId;

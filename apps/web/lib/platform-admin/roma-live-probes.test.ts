@@ -17,13 +17,18 @@ function minimalBundle(partial?: Partial<LiveProbeBundle>): LiveProbeBundle {
     ai: { connected: false, summary: "fail", data: null, error: "x" },
     cloudflare: { connected: false, summary: "fail", data: null, error: "x" },
     mobile: { connected: false, summary: "fail", data: null, error: "x" },
+    platformIntegration: {
+      platformOverview: { connected: false, summary: "skip", data: null, error: "service_role_missing" },
+      pushOutbox: { connected: false, summary: "skip", data: null, error: "service_role_missing" },
+      billingPlatform: { connected: false, summary: "skip", data: null, error: "service_role_missing" },
+    },
   };
   return { ...base, ...partial };
 }
 
 describe("roma live probes coverage", () => {
   it("catalog has fixed source count for coverage math", () => {
-    expect(LIVE_SOURCE_CATALOG.length).toBe(15);
+    expect(LIVE_SOURCE_CATALOG.length).toBe(18);
   });
 
   it("calculates coverage percent from connected sources", () => {
@@ -65,7 +70,7 @@ describe("roma live probes coverage", () => {
       },
     });
     const { sources, coveragePercent } = buildDataCoverage(bundle);
-    expect(sources).toHaveLength(15);
+    expect(sources).toHaveLength(18);
     expect(coveragePercent).toBeGreaterThan(0);
     expect(coveragePercent).toBeLessThanOrEqual(100);
   });

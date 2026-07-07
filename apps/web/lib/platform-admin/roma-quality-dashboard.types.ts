@@ -106,6 +106,21 @@ export type KnownReportRef = {
   href: string | null;
 };
 
+export type PlatformOverviewMetrics = {
+  evidenceStatus: "live" | "unavailable" | "not_configured";
+  summary: string;
+  totalTenants: number | null;
+  activeUsers: number | null;
+  totalProjects: number | null;
+  pendingInvites: number | null;
+  openSupportEvents: number | null;
+  pushPending: number | null;
+  pushFailed: number | null;
+  pushSent24h: number | null;
+  entitlementsRows: number | null;
+  billingCustomers: number | null;
+};
+
 export type RomaQualityDashboard = {
   pageMode: "read_only";
   testExecutionEnabled: false;
@@ -133,6 +148,7 @@ export type RomaQualityDashboard = {
   latestChanges: LatestChanges;
   platformTimeline: PlatformTimelineEvent[];
   dataCoverage: DataCoverage;
+  platformOverview: PlatformOverviewMetrics;
   romaStatus: RomaMaturityItem[];
   knownReports: KnownReportRef[];
   /** @deprecated use dataCoverage.available */

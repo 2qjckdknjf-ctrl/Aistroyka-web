@@ -169,6 +169,48 @@ function makeProbeBundle(overrides?: Partial<LiveProbeBundle>): LiveProbeBundle 
       },
       error: "mobile_metadata_missing",
     },
+    platformIntegration: {
+      platformOverview: {
+        connected: true,
+        summary: "Tenants=2; users=3; projects=5; open support=1.",
+        data: {
+          connected: true,
+          error: null,
+          totalTenants: 2,
+          activeUsers: 3,
+          totalProjects: 5,
+          pendingInvites: 0,
+          openSupportEvents: 1,
+          recentSupportEvents: [],
+        },
+        error: null,
+      },
+      pushOutbox: {
+        connected: true,
+        summary: "pending=0; failed=0",
+        data: {
+          connected: true,
+          error: null,
+          pendingCount: 0,
+          failedCount: 0,
+          sentCount24h: 1,
+          fcmConfigured: false,
+          telegramConfigured: false,
+        },
+        error: null,
+      },
+      billingPlatform: {
+        connected: true,
+        summary: "entitlements=2",
+        data: {
+          connected: true,
+          error: null,
+          entitlementsRowCount: 2,
+          billingCustomersCount: 1,
+        },
+        error: null,
+      },
+    },
     ...overrides,
   };
 }
@@ -180,7 +222,9 @@ describe("buildRomaQualityDashboardFromProbes", () => {
     expect(dashboard.testExecutionEnabled).toBe(false);
     expect(dashboard.dataCoverage.totalCatalogCount).toBeGreaterThan(0);
     expect(dashboard.dataCoverage.coveragePercent).toBeGreaterThanOrEqual(0);
-    expect(dashboard.domainSections.length).toBe(7);
+    expect(dashboard.domainSections.length).toBe(8);
+    expect(dashboard.platformOverview.totalTenants).toBe(2);
+    expect(dashboard.platformOverview.totalProjects).toBe(5);
     expect(dashboard.platformTimeline.length).toBe(5);
   });
 

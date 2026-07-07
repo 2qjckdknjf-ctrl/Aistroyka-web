@@ -12,6 +12,7 @@ import type {
   DomainSection,
   KnownReportRef,
   LatestChanges,
+  PlatformOverviewMetrics,
   PlatformTimelineEvent,
   QualityBlocker,
   QualityComponentCard,
@@ -492,8 +493,8 @@ function buildDomainSections(
     {
       id: "mobile",
       label: "Mobile",
-      status: probes.mobile.connected ? "degraded" : "unknown",
-      statusLabel: statusLabel(probes.mobile.connected ? "degraded" : "unknown"),
+      status: "unknown",
+      statusLabel: statusLabel("unknown"),
       summary: probes.mobile.summary,
       highlights: [
         `iOS build=${mobile?.iosBuildNumber ?? "unknown"}`,
@@ -531,8 +532,23 @@ function buildDomainSections(
       ),
       summary: probes.billing.summary,
       highlights: [
-        `Feature flags=${probes.featureFlags.data?.count ?? "unavailable"}`,
-        `Price mappings=${probes.billing.data?.priceMappingsConfigured ?? 0}/${probes.billing.data?.priceMappingsTotal ?? 0}`,
+        probes.billing.summary,
+        probes.platformIntegration.billingPlatform.connected
+          ? `Entitlements rows=${probes.platformIntegration.billingPlatform.data?.entitlementsRowCount ?? "unknown"}`
+          : "Billing inventory unavailable",
+      ],
+    },
+    {
+      id: "platform",
+      label: "Platform",
+      status: probes.platformIntegration.platformOverview.connected ? "healthy" : "unknown",
+      statusLabel: statusLabel(
+        probes.platformIntegration.platformOverview.connected ? "healthy" : "unknown"
+      ),
+      summary: probes.platformIntegration.platformOverview.summary,
+      highlights: [
+        `Tenants=${probes.platformIntegration.platformOverview.data?.totalTenants ?? "unknown"}`,
+        `Projects=${probes.platformIntegration.platformOverview.data?.totalProjects ?? "unknown"}`,
       ],
     },
   ];
@@ -632,12 +648,42 @@ function buildSystemComponents(probes: LiveProbeBundle, generatedAt: string): Qu
     {
       id: "notifications",
       name: "Notifications",
-      status: release?.pushConfigured ? "healthy" : telegramConfigured ? "degraded" : "not_configured",
-      statusLabel: statusLabel(release?.pushConfigured ? "healthy" : telegramConfigured ? "degraded" : "not_configured"),
+      status: (() => {
+        const push = probes.platformIntegration.pushOutbox;
+        if (push.connected && push.data) {
+          if ((push.data.failedCount ?? 0) > 0) return "degraded";
+          if ((push.data.pendingCount ?? 0) > 0) return "degraded";
+          if (push.data.fcmConfigured || push.data.telegramConfigured || release?.pushConfigured) {
+            return "healthy";
+          }
+          return "not_configured";
+        }
+        if (release?.pushConfigured) return "unknown";
+        if (telegramConfigured) return "unknown";
+        return "not_configured";
+      })(),
+      statusLabel: statusLabel(
+        (() => {
+          const push = probes.platformIntegration.pushOutbox;
+          if (push.connected && push.data) {
+            if ((push.data.failedCount ?? 0) > 0) return "degraded";
+            if ((push.data.pendingCount ?? 0) > 0) return "degraded";
+            if (push.data.fcmConfigured || push.data.telegramConfigured || release?.pushConfigured) {
+              return "healthy";
+            }
+            return "not_configured";
+          }
+          if (release?.pushConfigured) return "unknown";
+          if (telegramConfigured) return "unknown";
+          return "not_configured";
+        })()
+      ),
       lastCheck: generatedAt,
-      details: release
-        ? `Push=${String(release.pushConfigured)}; Telegram widget=${String(telegramConfigured)}.`
-        : "Notification config unavailable.",
+      details: probes.platformIntegration.pushOutbox.connected
+        ? probes.platformIntegration.pushOutbox.summary
+        : release
+          ? `Push env=${String(release.pushConfigured)}; Telegram widget=${String(telegramConfigured)}.`
+          : "Notification evidence unavailable.",
     },
     {
       id: "ai",
@@ -680,24 +726,79 @@ function buildSystemComponents(probes: LiveProbeBundle, generatedAt: string): Qu
     {
       id: "android",
       name: "Android",
-      status: mobile?.androidWorkerUrl || mobile?.androidManagerUrl ? "degraded" : "unknown",
-      statusLabel: statusLabel(mobile?.androidWorkerUrl || mobile?.androidManagerUrl ? "degraded" : "unknown"),
+      status: "unknown",
+      statusLabel: statusLabel("unknown"),
       lastCheck: generatedAt,
-      details: mobile?.androidVersionCode
-        ? `versionCode=${mobile.androidVersionCode}; store URLs=${Boolean(mobile.androidWorkerUrl || mobile.androidManagerUrl)}.`
+      details: mobile?.androidVersionCode || mobile?.androidWorkerUrl || mobile?.androidManagerUrl
+        ? `Metadata only — versionCode=${mobile.androidVersionCode ?? "unknown"}; no live health probe.`
         : probes.mobile.summary,
     },
     {
       id: "ios",
       name: "iOS",
-      status: mobile?.iosWorkerUrl || mobile?.iosManagerUrl ? "degraded" : "unknown",
-      statusLabel: statusLabel(mobile?.iosWorkerUrl || mobile?.iosManagerUrl ? "degraded" : "unknown"),
+      status: "unknown",
+      statusLabel: statusLabel("unknown"),
       lastCheck: generatedAt,
-      details: mobile?.iosBuildNumber
-        ? `buildNumber=${mobile.iosBuildNumber}; store URLs=${Boolean(mobile.iosWorkerUrl || mobile.iosManagerUrl)}.`
+      details: mobile?.iosBuildNumber || mobile?.iosWorkerUrl || mobile?.iosManagerUrl
+        ? `Metadata only — buildNumber=${mobile.iosBuildNumber ?? "unknown"}; no live health probe.`
         : probes.mobile.summary,
     },
   ];
+}
+
+function buildPlatformOverviewMetrics(probes: LiveProbeBundle): PlatformOverviewMetrics {
+  const overview = probes.platformIntegration.platformOverview;
+  const push = probes.platformIntegration.pushOutbox;
+  const billing = probes.platformIntegration.billingPlatform;
+
+  if (overview.error === "service_role_missing") {
+    return {
+      evidenceStatus: "not_configured",
+      summary: "SUPABASE_SERVICE_ROLE_KEY missing — platform metrics unavailable.",
+      totalTenants: null,
+      activeUsers: null,
+      totalProjects: null,
+      pendingInvites: null,
+      openSupportEvents: null,
+      pushPending: null,
+      pushFailed: null,
+      pushSent24h: null,
+      entitlementsRows: null,
+      billingCustomers: null,
+    };
+  }
+
+  if (!overview.connected || !overview.data) {
+    return {
+      evidenceStatus: "unavailable",
+      summary: overview.summary,
+      totalTenants: null,
+      activeUsers: null,
+      totalProjects: null,
+      pendingInvites: null,
+      openSupportEvents: null,
+      pushPending: push.data?.pendingCount ?? null,
+      pushFailed: push.data?.failedCount ?? null,
+      pushSent24h: push.data?.sentCount24h ?? null,
+      entitlementsRows: billing.data?.entitlementsRowCount ?? null,
+      billingCustomers: billing.data?.billingCustomersCount ?? null,
+    };
+  }
+
+  return {
+    evidenceStatus: "live",
+    summary: overview.summary,
+    totalTenants: overview.data.totalTenants,
+    activeUsers: overview.data.activeUsers,
+    totalProjects: overview.data.totalProjects,
+    pendingInvites: overview.data.pendingInvites,
+    openSupportEvents: overview.data.openSupportEvents,
+    pushPending: push.data?.pendingCount ?? null,
+    pushFailed: push.data?.failedCount ?? null,
+    pushSent24h: push.data?.sentCount24h ?? null,
+    entitlementsRows: billing.data?.entitlementsRowCount ?? null,
+    billingCustomers: billing.data?.billingCustomersCount ?? null,
+  };
 }
 
 function buildDataCoverageSection(probes: LiveProbeBundle): DataCoverage {
@@ -738,7 +839,7 @@ function assembleDashboard(probes: LiveProbeBundle): RomaQualityDashboard {
   const backendLevel: ReadinessLevel =
     healthOk && health?.serviceRoleConfigured ? "ready" : healthOk ? "partial" : "blocked";
   const databaseLevel: ReadinessLevel = dbOk ? "ready" : hasSupabaseEnv() ? "blocked" : "unknown";
-  const mobileLevel: ReadinessLevel = probes.mobile.connected ? "partial" : "unknown";
+  const mobileLevel: ReadinessLevel = "unknown";
   const aiLevel: ReadinessLevel =
     probes.ai.data?.openai || (probes.ai.data?.visionProviders.length ?? 0) > 0 ? "ready" : "partial";
   const securityLevel: ReadinessLevel =
@@ -852,6 +953,7 @@ function assembleDashboard(probes: LiveProbeBundle): RomaQualityDashboard {
     },
     platformTimeline: buildPlatformTimeline(probes),
     dataCoverage,
+    platformOverview: buildPlatformOverviewMetrics(probes),
     romaStatus: [
       {
         id: "architecture",
@@ -961,6 +1063,20 @@ function buildFallbackDashboard(error: string): RomaQualityDashboard {
     },
     platformTimeline: [],
     dataCoverage: emptyCoverage,
+    platformOverview: {
+      evidenceStatus: "unavailable",
+      summary: "Dashboard aggregation failed.",
+      totalTenants: null,
+      activeUsers: null,
+      totalProjects: null,
+      pendingInvites: null,
+      openSupportEvents: null,
+      pushPending: null,
+      pushFailed: null,
+      pushSent24h: null,
+      entitlementsRows: null,
+      billingCustomers: null,
+    },
     romaStatus: [],
     knownReports: buildKnownReports(),
     dataSources: { available: [], unavailable: [] },
