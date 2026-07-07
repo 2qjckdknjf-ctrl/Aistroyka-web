@@ -38,16 +38,16 @@ function telegramConfigured(): boolean {
 export async function runPlatformIntegrationProbes(): Promise<PlatformIntegrationProbeBundle> {
   const admin = getAdminClient();
   if (!admin) {
-    const missing: ProbeOutcome<null> = {
+    const missing = <T,>(label: string): ProbeOutcome<T> => ({
       connected: false,
-      summary: "Service role not configured — platform integration skipped.",
+      summary: `${label} skipped — service role not configured.`,
       data: null,
       error: "service_role_missing",
-    };
+    });
     return {
-      platformOverview: missing,
-      pushOutbox: missing,
-      billingPlatform: missing,
+      platformOverview: missing<PlatformOverviewProbeData>("Platform overview"),
+      pushOutbox: missing<PushOutboxProbeData>("Push outbox"),
+      billingPlatform: missing<BillingPlatformProbeData>("Billing platform"),
     };
   }
 
