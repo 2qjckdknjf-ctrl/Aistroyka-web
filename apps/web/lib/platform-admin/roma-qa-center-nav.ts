@@ -45,8 +45,8 @@ export const ROMA_QA_CENTER_NAV_GROUPS: readonly RomaQaCenterNavGroup[] = [
     id: "quality",
     label: "Quality",
     items: [
-      { id: "quality-graph", href: `${TESTING_BASE}/quality-graph`, label: "Graph", exact: true },
-      { id: "test-catalog", href: `${TESTING_BASE}/test-catalog`, label: "Catalog", exact: true },
+      { id: "quality-graph", href: `${TESTING_BASE}/quality-graph`, label: "Quality Graph", exact: true },
+      { id: "test-catalog", href: `${TESTING_BASE}/test-catalog`, label: "Test Catalog", exact: true },
       {
         id: "change-intelligence",
         href: `${TESTING_BASE}/change-intelligence`,
@@ -59,8 +59,8 @@ export const ROMA_QA_CENTER_NAV_GROUPS: readonly RomaQaCenterNavGroup[] = [
     id: "execution",
     label: "Execution",
     items: [
-      { id: "execution-planner", href: `${TESTING_BASE}/execution-planner`, label: "Planner", exact: true },
-      { id: "execution-engine", href: `${TESTING_BASE}/execution-engine`, label: "Engine", exact: true },
+      { id: "execution-planner", href: `${TESTING_BASE}/execution-planner`, label: "Execution Planner", exact: true },
+      { id: "execution-engine", href: `${TESTING_BASE}/execution-engine`, label: "Execution Engine", exact: true },
     ],
   },
   {
@@ -70,7 +70,7 @@ export const ROMA_QA_CENTER_NAV_GROUPS: readonly RomaQaCenterNavGroup[] = [
       { id: "web", href: `${TESTING_BASE}/web`, label: "Web" },
       { id: "mobile", href: `${TESTING_BASE}/mobile`, label: "Mobile" },
       { id: "backend", href: `${TESTING_BASE}/backend`, label: "Backend" },
-      { id: "ai", href: `${TESTING_BASE}/ai`, label: "AI" },
+      { id: "ai", href: `${TESTING_BASE}/ai`, label: "AI Review" },
       { id: "security", href: `${TESTING_BASE}/security`, label: "Security" },
     ],
   },

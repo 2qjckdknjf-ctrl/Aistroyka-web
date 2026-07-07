@@ -139,13 +139,18 @@ function buildPlatformSections(): RomaQaCenterSection[] {
 }
 
 /** Static platform-domain sections for `[section]` overview pages. */
+let cachedRomaQaCenterModel: RomaQaCenterModel | undefined;
+
 export function buildRomaQaCenterModel(): RomaQaCenterModel {
-  return {
-    version: "v1",
-    executionEnabled: false,
-    generatedAt: new Date().toISOString(),
-    sections: buildPlatformSections(),
-  };
+  if (!cachedRomaQaCenterModel) {
+    cachedRomaQaCenterModel = {
+      version: "v1",
+      executionEnabled: false,
+      generatedAt: new Date().toISOString(),
+      sections: buildPlatformSections(),
+    };
+  }
+  return cachedRomaQaCenterModel;
 }
 
 export function getRomaQaCenterSection(

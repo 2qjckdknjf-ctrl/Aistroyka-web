@@ -29,7 +29,7 @@ export function RomaAuditRunsClient({ runs, loadError }: Props) {
     <section className="space-y-aistroyka-5" aria-label="ROMA Audit Run History">
       <Card className="p-aistroyka-5">
         <h1 className="text-aistroyka-title2 font-bold tracking-tight text-aistroyka-text-primary">
-          Audit Run History
+          Audit History
         </h1>
         <p className="mt-aistroyka-2 max-w-3xl text-aistroyka-subheadline text-aistroyka-text-secondary">
           Saved Safe Readonly Audit snapshots — append-only, redacted evidence. Use{" "}

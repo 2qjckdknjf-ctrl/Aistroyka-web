@@ -72,7 +72,7 @@ function minimalIntelligence(): RomaEngineeringIntelligence {
   return {
     engineeringAssessment: "Healthy production posture.",
     releaseDecision: "ready_with_warnings",
-    releaseDecisionLabel: "READY WITH WARNINGS",
+    releaseDecisionLabel: "Ready with warnings",
     riskAnalysis: "Minor AI gap.",
     businessImpact: "Low.",
     actionPlan: ["Verify database migration state"],
@@ -80,8 +80,8 @@ function minimalIntelligence(): RomaEngineeringIntelligence {
     confidencePercent: 96,
     engineeringSummary: "OK",
     ownerSummary: {
-      releaseDecisionLabel: "READY WITH WARNINGS",
-      confidenceLabel: "HIGH",
+      releaseDecisionLabel: "Ready with warnings",
+      confidenceLabel: "High",
       readinessScoreLabel: "96%",
       criticalBlockersCount: 0,
       warningCount: 1,
@@ -151,8 +151,24 @@ describe("Executive dashboard V3 UI helpers", () => {
     expect(lines[0]).not.toMatch(/probe/i);
   });
 
-  it("builds recent changes timeline", () => {
+  it("builds recent changes timeline without synthetic Yesterday labels", () => {
     const timeline = buildRecentChangesTimeline(minimalDashboard(), minimalIntelligence(), []);
-    expect(timeline.length).toBeGreaterThan(0);
+    expect(timeline.every((entry) => entry.timeLabel !== "Yesterday")).toBe(true);
+  });
+
+  it("uses sentence-case release labels in timeline when audits exist", () => {
+    const timeline = buildRecentChangesTimeline(minimalDashboard(), minimalIntelligence(), [
+      {
+        id: "run-1",
+        createdAt: "2026-07-07T08:00:00.000Z",
+        releaseRecommendation: "ready_with_warnings",
+        status: "degraded",
+        confidence: "high",
+        environment: "Production",
+        summary: "ok",
+      },
+    ]);
+    const auditEntry = timeline.find((e) => e.id.startsWith("audit-"));
+    expect(auditEntry?.title).toContain("Ready with warnings");
   });
 });

@@ -343,15 +343,30 @@ function deriveReleaseDecision(
 function releaseDecisionLabel(decision: ReleaseDecision): string {
   switch (decision) {
     case "ready":
-      return "READY";
+      return "Ready";
     case "not_ready":
-      return "NOT READY";
+      return "Not ready";
     case "ready_with_warnings":
-      return "READY WITH WARNINGS";
+      return "Ready with warnings";
     case "unknown":
-      return "UNKNOWN";
+      return "Unknown";
     default: {
       const _exhaustive: never = decision;
+      return _exhaustive;
+    }
+  }
+}
+
+function confidenceLabel(level: ConfidenceLevel): string {
+  switch (level) {
+    case "high":
+      return "High";
+    case "medium":
+      return "Medium";
+    case "low":
+      return "Low";
+    default: {
+      const _exhaustive: never = level;
       return _exhaustive;
     }
   }
@@ -519,7 +534,7 @@ function buildOwnerSummary(
   const readinessPercent = dashboard.platformStatus.releaseReadinessPercent;
   return {
     releaseDecisionLabel: releaseDecisionLabel(releaseDecision),
-    confidenceLabel: confidence.toUpperCase(),
+    confidenceLabel: confidenceLabel(confidence),
     readinessScoreLabel: readinessPercent !== null ? `${readinessPercent}%` : "Score unavailable",
     criticalBlockersCount: issues.filter((i) => i.severity === "critical").length,
     warningCount: issues.filter((i) => i.severity === "warning").length,

@@ -6,10 +6,10 @@ import { PLATFORM_ADMIN_SHELL_NAV_ITEMS } from "./shell-nav";
 import { isPlatformAdminPagePath } from "./middleware-paths";
 
 describe("ROMA live quality dashboard", () => {
-  it("includes ROMA QA Center in shell navigation", () => {
+  it("includes Operations Center in shell navigation", () => {
     const testing = PLATFORM_ADMIN_SHELL_NAV_ITEMS.find((item) => item.href.endsWith("/testing"));
     expect(testing).toBeDefined();
-    expect(testing?.label).toBe("ROMA QA Center");
+    expect(testing?.label).toBe("Operations Center");
   });
 
   it("treats /platform-admin/testing as platform admin page path", () => {
@@ -51,6 +51,29 @@ describe("ROMA live quality dashboard", () => {
     expect(pageSrc).toMatch(/listAuditRunSummaries/);
     expect(pageSrc).toMatch(/recentAudits={recentAudits}/);
     expect(clientSrc).not.toMatch(/\/admin\//);
+  });
+
+  it("operations center dashboard uses matching section heading ids for landmarks", () => {
+    const clientPath = join(process.cwd(), "components/platform-admin/PlatformAdminTestingClient.tsx");
+    const shellPath = join(process.cwd(), "components/platform-admin/RomaQaCenterShell.tsx");
+    const clientSrc = readFileSync(clientPath, "utf8");
+    const shellSrc = readFileSync(shellPath, "utf8");
+
+    const headingIds = [
+      "next-actions-heading",
+      "release-center-heading",
+      "platform-health-heading",
+      "business-impact-heading",
+      "recent-changes-heading",
+      "confidence-heading",
+      "technical-diagnostics-heading",
+    ];
+    for (const id of headingIds) {
+      expect(clientSrc).toMatch(new RegExp(`headingId="${id}"`));
+      expect(clientSrc).toMatch(new RegExp(`aria-labelledby="${id}"`));
+    }
+    expect(shellSrc).toMatch(/aria-current=\{active \? "page" : undefined\}/);
+    expect(shellSrc).toMatch(/aria-controls=\{panelId\}/);
   });
 
   it("quality API route is read-only GET under platform namespace", () => {

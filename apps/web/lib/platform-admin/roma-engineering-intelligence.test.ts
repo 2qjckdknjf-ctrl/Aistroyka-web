@@ -99,7 +99,7 @@ describe("buildRomaEngineeringIntelligence", () => {
   it("returns READY when probes are healthy", () => {
     const result = buildRomaEngineeringIntelligence(baseDashboard());
     expect(result.releaseDecision).toBe("ready");
-    expect(result.releaseDecisionLabel).toBe("READY");
+    expect(result.releaseDecisionLabel).toBe("Ready");
     expect(result.confidenceScore).toBe("high");
   });
 
@@ -283,7 +283,7 @@ describe("buildRomaEngineeringIntelligence", () => {
     const result = buildRomaEngineeringIntelligence(dashboard);
     expect(result.releaseDecision).toBe("not_ready");
     expect(result.ownerSummary.criticalBlockersCount).toBeGreaterThan(0);
-    expect(result.ownerSummary.releaseDecisionLabel).toBe("NOT READY");
+    expect(result.ownerSummary.releaseDecisionLabel).toBe("Not ready");
   });
 
   it("shows READY WITH WARNINGS for non-critical OpenAI missing", () => {
@@ -334,7 +334,7 @@ describe("buildRomaEngineeringIntelligence", () => {
     });
     const result = buildRomaEngineeringIntelligence(dashboard);
     expect(result.releaseDecision).toBe("ready_with_warnings");
-    expect(result.ownerSummary.releaseDecisionLabel).toBe("READY WITH WARNINGS");
+    expect(result.ownerSummary.releaseDecisionLabel).toBe("Ready with warnings");
     expect(result.affectedProductAreas.find((a) => a.id === "ai_copilot")?.status).toBe("affected");
   });
 
@@ -368,9 +368,9 @@ describe("buildRomaEngineeringIntelligence", () => {
     });
     const result = buildRomaEngineeringIntelligence(dashboard);
     expect(result.confidenceScore).toBe("low");
-    expect(result.ownerSummary.confidenceLabel).toBe("LOW");
+    expect(result.ownerSummary.confidenceLabel).toBe("Low");
     expect(result.releaseDecision).toBe("unknown");
-    expect(result.ownerSummary.releaseDecisionLabel).toBe("UNKNOWN");
+    expect(result.ownerSummary.releaseDecisionLabel).toBe("Unknown");
   });
 
   it("does not treat storage not_configured as NOT READY", () => {

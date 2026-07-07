@@ -1,4 +1,4 @@
-import type { QualityStatus, ReadinessLevel, BlockerSeverity } from "./roma-quality-dashboard.types";
+import type { QualityStatus } from "./roma-quality-dashboard.types";
 import type { ConfidenceLevel, ReleaseDecision } from "./roma-engineering-intelligence.types";
 
 export function qualityStatusBadgeVariant(
@@ -16,44 +16,6 @@ export function qualityStatusBadgeVariant(
       return "neutral";
     default: {
       const _exhaustive: never = status;
-      return _exhaustive;
-    }
-  }
-}
-
-export function readinessBadgeVariant(
-  level: ReadinessLevel
-): "success" | "warning" | "danger" | "neutral" {
-  switch (level) {
-    case "ready":
-      return "success";
-    case "partial":
-      return "warning";
-    case "blocked":
-      return "danger";
-    case "unknown":
-      return "neutral";
-    default: {
-      const _exhaustive: never = level;
-      return _exhaustive;
-    }
-  }
-}
-
-export function blockerSeverityBadgeVariant(
-  severity: BlockerSeverity
-): "success" | "warning" | "danger" | "neutral" {
-  switch (severity) {
-    case "critical":
-      return "danger";
-    case "warning":
-      return "warning";
-    case "information":
-      return "neutral";
-    case "unknown":
-      return "neutral";
-    default: {
-      const _exhaustive: never = severity;
       return _exhaustive;
     }
   }

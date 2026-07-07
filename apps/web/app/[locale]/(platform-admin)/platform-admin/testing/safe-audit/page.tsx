@@ -3,7 +3,7 @@ import { RomaSafeAuditClient } from "@/components/platform-admin/RomaSafeAuditCl
 import { createSafeReadonlyAudit } from "@/lib/platform-admin/roma-safe-readonly-audit";
 
 export const metadata: Metadata = {
-  title: "ROMA QA Center · Safe Audit",
+  title: "Operations Center · Safe Audit",
   robots: { index: false, follow: false, googleBot: { index: false, follow: false } },
 };
 

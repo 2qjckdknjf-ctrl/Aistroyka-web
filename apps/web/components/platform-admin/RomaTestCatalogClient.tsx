@@ -108,8 +108,6 @@ export function RomaTestCatalogClient() {
           </div>
           <div className="flex flex-wrap gap-aistroyka-2">
             <Badge variant="neutral">Read-only</Badge>
-            <Badge variant="neutral">Execution disabled</Badge>
-            <Badge variant="neutral">v1</Badge>
           </div>
         </div>
 

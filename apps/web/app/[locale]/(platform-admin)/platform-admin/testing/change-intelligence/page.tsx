@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { RomaChangeIntelligenceClient } from "@/components/platform-admin/RomaChangeIntelligenceClient";
 
 export const metadata: Metadata = {
-  title: "ROMA QA Center · Change Intelligence",
+  title: "Operations Center · Change Intelligence",
   robots: { index: false, follow: false, googleBot: { index: false, follow: false } },
 };
 

@@ -26,6 +26,8 @@ describe("ROMA QA Center", () => {
     expect(ROMA_QA_CENTER_NAV_ITEMS.some((item) => item.id === "quality-graph")).toBe(true);
     expect(ROMA_QA_CENTER_NAV_ITEMS.some((item) => item.id === "safe-audit")).toBe(true);
     expect(ROMA_QA_CENTER_NAV_ITEMS.some((item) => item.id === "audit-runs")).toBe(true);
+    expect(ROMA_QA_CENTER_NAV_ITEMS.some((item) => item.label === "Quality Graph")).toBe(true);
+    expect(ROMA_QA_CENTER_NAV_ITEMS.some((item) => item.label === "Test Catalog")).toBe(true);
     expect(ROMA_QA_CENTER_NAV_ITEMS.some((item) => item.label === "Audit History")).toBe(true);
     expect(ROMA_QA_CENTER_NAV_ITEMS.some((item) => item.id === "audits")).toBe(false);
     expect(ROMA_QA_CENTER_NAV_ITEMS.some((item) => item.id === "backend")).toBe(true);
@@ -51,9 +53,9 @@ describe("ROMA QA Center", () => {
     expect(isPlatformAdminPagePath("/dashboard")).toBe(false);
   });
 
-  it("shell nav labels ROMA QA Center (not tenant /admin)", () => {
+  it("shell nav labels Operations Center (not tenant /admin)", () => {
     const qaNav = PLATFORM_ADMIN_SHELL_NAV_ITEMS.find((item) => item.href.endsWith("/testing"));
-    expect(qaNav?.label).toBe("ROMA QA Center");
+    expect(qaNav?.label).toBe("Operations Center");
     expect(PLATFORM_ADMIN_SHELL_NAV_ITEMS.some((item) => item.href.startsWith("/admin"))).toBe(false);
   });
 

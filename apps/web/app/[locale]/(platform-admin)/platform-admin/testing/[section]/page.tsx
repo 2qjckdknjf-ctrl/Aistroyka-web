@@ -21,15 +21,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { section: sectionId } = await params;
   const legacyTarget = getRomaLegacyRedirectTarget(sectionId);
   if (legacyTarget) {
-    return { title: "ROMA QA Center" };
+    return { title: "Operations Center" };
   }
   if (!isRomaQaCenterRouteSectionId(sectionId)) {
-    return { title: "ROMA QA Center" };
+    return { title: "Operations Center" };
   }
   const model = buildRomaQaCenterModel();
   const section = getRomaQaCenterSection(model, sectionId);
   return {
-    title: section ? `ROMA QA Center · ${section.title}` : "ROMA QA Center",
+    title: section ? `Operations Center · ${section.title}` : "Operations Center",
     robots: { index: false, follow: false, googleBot: { index: false, follow: false } },
   };
 }

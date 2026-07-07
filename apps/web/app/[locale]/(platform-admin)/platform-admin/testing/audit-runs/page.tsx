@@ -4,7 +4,7 @@ import { listAuditRunSummaries } from "@/lib/platform-admin/roma-run-history.ser
 import { getAdminClient } from "@/lib/supabase/admin";
 
 export const metadata: Metadata = {
-  title: "ROMA QA Center · Audit Runs",
+  title: "Operations Center · Audit History",
   robots: { index: false, follow: false, googleBot: { index: false, follow: false } },
 };
 

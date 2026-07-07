@@ -12,7 +12,7 @@ function statusBadgeVariant(
     case "partial":
       return "warning";
     case "coming_soon":
-      return "warning";
+      return "neutral";
     case "unknown":
       return "neutral";
     default: {
@@ -117,7 +117,7 @@ export function RomaQaCenterSectionClient({ section }: Props) {
         ) : null}
 
         <p className="mt-aistroyka-5 text-aistroyka-footnote text-aistroyka-text-tertiary">
-          Test execution, Run Full Audit, CI triggers, and production mutation are intentionally disabled in V1.
+          Test execution and production changes are intentionally disabled in this release.
         </p>
       </Card>
 
@@ -145,7 +145,7 @@ export function RomaQaCenterSectionClient({ section }: Props) {
         <Card className="p-aistroyka-5">
           <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">Related reports</h2>
           <p className="mt-aistroyka-1 text-aistroyka-footnote text-aistroyka-text-tertiary">
-            Repo reference paths — not downloadable artifacts from this center yet.
+            Internal documentation references for engineering teams.
           </p>
           <ul className="mt-aistroyka-4 space-y-aistroyka-2">
             {section.relatedReports.map((report) => (

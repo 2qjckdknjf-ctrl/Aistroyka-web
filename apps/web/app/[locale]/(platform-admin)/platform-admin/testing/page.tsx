@@ -6,7 +6,7 @@ import { PlatformAdminTestingClient } from "@/components/platform-admin/Platform
 import { getAdminClient } from "@/lib/supabase/admin";
 
 export const metadata: Metadata = {
-  title: "ROMA · Operations Center",
+  title: "Operations Center",
   robots: { index: false, follow: false, googleBot: { index: false, follow: false } },
 };
 

@@ -1,6 +1,5 @@
 import type {
   RomaEngineeringIntelligence,
-  DecisionReason,
   ProductAreaImpact,
   ReleaseDecision,
 } from "./roma-engineering-intelligence.types";
@@ -14,14 +13,14 @@ import type { RomaAuditRunListItem } from "./roma-run-history.types";
 import type { RomaHealthBucket } from "@aistroyka/roma-kernel";
 import { formatPercent, formatTimestamp } from "./quality-dashboard-ui";
 
-export function findSystemComponent(
+function findSystemComponent(
   dashboard: RomaQualityDashboard,
   id: string
 ): QualityComponentCard | undefined {
   return dashboard.systemComponents.find((c) => c.id === id);
 }
 
-export function findDomainSection(dashboard: RomaQualityDashboard, id: string) {
+function findDomainSection(dashboard: RomaQualityDashboard, id: string) {
   return dashboard.domainSections.find((s) => s.id === id);
 }
 
@@ -174,7 +173,7 @@ export function buildPrioritizedActions(
   ensureAction("Refresh Safe Audit", `${testingBase}/safe-audit`, "1 min");
 
   if (intelligence.releaseDecision === "ready_with_warnings") {
-    ensureAction("Review release warning", "#release-center", "5 min");
+    ensureAction("Review release warnings", "#release-center", "5 min");
   }
 
   return actions.slice(0, 5).map((action, index) => ({ ...action, priority: index + 1 }));
@@ -217,7 +216,7 @@ export type ChangeTimelineEntry = {
   title: string;
 };
 
-function formatTimelineTime(iso: string): string {
+export function formatTimelineTime(iso: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return iso;
   const now = new Date();
@@ -238,8 +237,21 @@ function formatTimelineTime(iso: string): string {
   return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
-function releaseLabel(decision: ReleaseDecision): string {
-  return decision.replace(/_/g, " ").toUpperCase();
+function formatReleaseDecisionShort(decision: ReleaseDecision): string {
+  switch (decision) {
+    case "ready":
+      return "Ready";
+    case "not_ready":
+      return "Not ready";
+    case "ready_with_warnings":
+      return "Ready with warnings";
+    case "unknown":
+      return "Unknown";
+    default: {
+      const _exhaustive: never = decision;
+      return _exhaustive;
+    }
+  }
 }
 
 export function buildRecentChangesTimeline(
@@ -260,7 +272,7 @@ export function buildRecentChangesTimeline(
     entries.push({
       id: `audit-${latest.id}`,
       timeLabel: formatTimelineTime(latest.createdAt),
-      title: `Safe Audit saved — ${releaseLabel(latest.releaseRecommendation)}`,
+      title: `Safe Audit saved — ${formatReleaseDecisionShort(latest.releaseRecommendation)}`,
     });
   }
 
@@ -278,8 +290,8 @@ export function buildRecentChangesTimeline(
   if (intelligence.ownerSummary.warningCount === 0 && intelligence.ownerSummary.criticalBlockersCount === 0) {
     entries.push({
       id: "no-blockers",
-      timeLabel: "Yesterday",
-      title: "No new release blockers",
+      timeLabel: formatTimelineTime(dashboard.dataCoverage.lastRefresh),
+      title: "No release blockers detected",
     });
   }
 
@@ -287,8 +299,8 @@ export function buildRecentChangesTimeline(
   if (coverage >= 80) {
     entries.push({
       id: "coverage",
-      timeLabel: "Yesterday",
-      title: `Decision confidence at ${coverage}%`,
+      timeLabel: formatTimelineTime(dashboard.dataCoverage.lastRefresh),
+      title: `Evidence coverage at ${coverage}%`,
     });
   }
 

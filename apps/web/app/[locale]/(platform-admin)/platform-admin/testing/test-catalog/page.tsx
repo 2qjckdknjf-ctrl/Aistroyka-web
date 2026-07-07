@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { RomaTestCatalogClient } from "@/components/platform-admin/RomaTestCatalogClient";
 
 export const metadata: Metadata = {
-  title: "ROMA QA Center · Test Catalog",
+  title: "Operations Center · Test Catalog",
   robots: { index: false, follow: false, googleBot: { index: false, follow: false } },
 };
 

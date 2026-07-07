@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { RomaQaCenterShell } from "@/components/platform-admin/RomaQaCenterShell";
 
 export const metadata: Metadata = {
-  title: "ROMA QA Center",
+  title: "Operations Center",
   robots: { index: false, follow: false, googleBot: { index: false, follow: false } },
 };
 
