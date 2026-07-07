@@ -67,8 +67,8 @@ const PLATFORM_HEALTH_SPECS: readonly { id: string; label: string; fallbackDomai
   { id: "security", label: "Security" },
   { id: "authentication", label: "Authentication" },
   { id: "deployments", label: "Release Pipeline", fallbackDomainId: "release" },
-  { id: "ios", label: "Worker Apps", fallbackDomainId: "mobile" },
-  { id: "android", label: "Manager Apps", fallbackDomainId: "mobile" },
+  { id: "ios", label: "iOS", fallbackDomainId: "mobile" },
+  { id: "android", label: "Android", fallbackDomainId: "mobile" },
   { id: "backend_api", label: "API" },
   { id: "notifications", label: "Notifications" },
 ];

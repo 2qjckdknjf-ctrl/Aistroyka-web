@@ -29,7 +29,7 @@ export function RomaQaCenterNav() {
     const stored = loadNavGroupExpandedState();
     const initial: Record<string, boolean> = {};
     for (const group of ROMA_QA_CENTER_NAV_GROUPS) {
-      initial[group.id] = stored[group.id] ?? group.id === "overview" || isGroupActive(group, pathname);
+      initial[group.id] = stored[group.id] ?? (group.id === "overview" || isGroupActive(group, pathname));
     }
     setExpanded(initial);
   }, [pathname]);

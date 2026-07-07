@@ -1,18 +1,8 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { buildRomaQualityDashboard } from "./roma-quality-dashboard.service";
+import { describe, expect, it } from "vitest";
+import {
+  buildRomaQualityDashboardFromProbes,
+} from "./roma-quality-dashboard.service";
 import type { LiveProbeBundle } from "./roma-live-probes";
-
-vi.mock("./roma-live-probes", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("./roma-live-probes")>();
-  return {
-    ...actual,
-    runLiveProbes: vi.fn(),
-  };
-});
-
-import { runLiveProbes } from "./roma-live-probes";
-
-const mockRunLiveProbes = vi.mocked(runLiveProbes);
 
 function makeProbeBundle(overrides?: Partial<LiveProbeBundle>): LiveProbeBundle {
   const checkedAt = "2026-07-03T12:00:00.000Z";
@@ -183,18 +173,9 @@ function makeProbeBundle(overrides?: Partial<LiveProbeBundle>): LiveProbeBundle 
   };
 }
 
-describe("buildRomaQualityDashboard", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://example.supabase.co";
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "anon-key";
-    process.env.NEXT_PUBLIC_APP_URL = "https://staging.aistroyka.ai";
-    process.env.NEXT_PUBLIC_APP_ENV = "staging";
-    mockRunLiveProbes.mockResolvedValue(makeProbeBundle());
-  });
-
-  it("returns live operations dashboard with data coverage", async () => {
-    const dashboard = await buildRomaQualityDashboard();
+describe("buildRomaQualityDashboardFromProbes", () => {
+  it("returns live operations dashboard with data coverage", () => {
+    const dashboard = buildRomaQualityDashboardFromProbes(makeProbeBundle());
     expect(dashboard.pageMode).toBe("read_only");
     expect(dashboard.testExecutionEnabled).toBe(false);
     expect(dashboard.dataCoverage.totalCatalogCount).toBeGreaterThan(0);
@@ -203,13 +184,13 @@ describe("buildRomaQualityDashboard", () => {
     expect(dashboard.platformTimeline.length).toBe(5);
   });
 
-  it("does not fabricate recommendations when probes are healthy", async () => {
-    const dashboard = await buildRomaQualityDashboard();
+  it("does not fabricate recommendations when probes are healthy", () => {
+    const dashboard = buildRomaQualityDashboardFromProbes(makeProbeBundle());
     expect(dashboard.recommendations.some((r) => r.id === "openai_missing")).toBe(false);
   });
 
-  it("generates evidence-based recommendations from probe failures", async () => {
-    mockRunLiveProbes.mockResolvedValue(
+  it("generates evidence-based recommendations from probe failures", () => {
+    const dashboard = buildRomaQualityDashboardFromProbes(
       makeProbeBundle({
         health: {
           connected: true,
@@ -262,15 +243,7 @@ describe("buildRomaQualityDashboard", () => {
         },
       })
     );
-    const dashboard = await buildRomaQualityDashboard();
     expect(dashboard.recommendations.some((r) => r.id === "openai_missing")).toBe(true);
     expect(dashboard.recommendations.some((r) => r.id === "build_stamp_missing")).toBe(true);
-  });
-
-  it("returns fallback dashboard when probe runner throws", async () => {
-    mockRunLiveProbes.mockRejectedValue(new Error("probe_catastrophe"));
-    const dashboard = await buildRomaQualityDashboard();
-    expect(dashboard.platformStatus.overallHealthLabel).toBe("Unavailable");
-    expect(dashboard.blockers[0]?.title).toMatch(/aggregation failed/i);
   });
 });

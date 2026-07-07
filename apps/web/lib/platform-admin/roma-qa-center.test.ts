@@ -61,13 +61,14 @@ describe("ROMA QA Center V1", () => {
     expect(model.executionEnabled).toBe(false);
 
     const audits = model.sections.find((s) => s.id === "audits");
-    expect(audits?.status).toBe("coming_soon");
-    expect(audits?.maturity).toBe("planned");
+    expect(audits?.status).toBe("partial");
+    expect(audits?.maturity).toBe("partial");
     expect(audits?.currentCapability).not.toMatch(/completed|passed|success/i);
 
     const history = model.sections.find((s) => s.id === "history");
-    expect(history?.sourceAvailability).toMatch(/not available/i);
-    expect(history?.currentCapability).toMatch(/no historical runs/i);
+    expect(history?.status).toBe("partial");
+    expect(history?.currentCapability).toMatch(/audit-runs/i);
+    expect(history?.currentCapability).not.toMatch(/\d+\s+audits?\s+completed/i);
 
     for (const section of model.sections) {
       if (section.id === "dashboard") continue;
