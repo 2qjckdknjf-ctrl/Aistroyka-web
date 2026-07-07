@@ -51,6 +51,7 @@
     "node_modules",
     "**/*.test.ts",
     "**/*.spec.ts",
+    "playwright*.config.ts",
     "audit_*",
     "audit_*/**"
   ]

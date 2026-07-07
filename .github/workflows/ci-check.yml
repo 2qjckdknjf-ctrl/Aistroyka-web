@@ -47,6 +47,9 @@ jobs:
       - name: Test
         run: bun run test
 
+      - name: ROMA vendor dependency audit
+        run: node scripts/audit/roma-vendor-dependency-audit.mjs
+
       - name: Release readiness policy check
         env:
           NEXT_PUBLIC_SUPABASE_URL: https://vthfrxehrursfloevnlp.supabase.co

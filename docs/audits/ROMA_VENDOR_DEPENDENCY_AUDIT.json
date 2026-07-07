@@ -1,0 +1,305 @@
+{
+  "platform-admin": {
+    "files": 36,
+    "findings": [
+      {
+        "kind": "indirect_vendor_coupling",
+        "vendor": "@/lib/controllers/health",
+        "specifier": "@/lib/controllers/health",
+        "file": "apps/web/lib/platform-admin/roma-live-probes.ts",
+        "severity": "medium"
+      },
+      {
+        "kind": "adapter_violation_candidate",
+        "vendor": "in-app service boundary",
+        "specifier": "@/lib/controllers/health",
+        "file": "apps/web/lib/platform-admin/roma-live-probes.ts",
+        "severity": "medium",
+        "note": "roma-live-probes calls app services directly instead of injected adapters"
+      },
+      {
+        "kind": "adapter_violation_candidate",
+        "vendor": "in-app service boundary",
+        "specifier": "@/lib/config",
+        "file": "apps/web/lib/platform-admin/roma-live-probes.ts",
+        "severity": "medium",
+        "note": "roma-live-probes calls app services directly instead of injected adapters"
+      },
+      {
+        "kind": "adapter_violation_candidate",
+        "vendor": "in-app service boundary",
+        "specifier": "@/lib/config/release-env",
+        "file": "apps/web/lib/platform-admin/roma-live-probes.ts",
+        "severity": "medium",
+        "note": "roma-live-probes calls app services directly instead of injected adapters"
+      },
+      {
+        "kind": "indirect_vendor_coupling",
+        "vendor": "@/lib/config/server",
+        "specifier": "@/lib/config/server",
+        "file": "apps/web/lib/platform-admin/roma-live-probes.ts",
+        "severity": "medium"
+      },
+      {
+        "kind": "adapter_violation_candidate",
+        "vendor": "in-app service boundary",
+        "specifier": "@/lib/config/server",
+        "file": "apps/web/lib/platform-admin/roma-live-probes.ts",
+        "severity": "medium",
+        "note": "roma-live-probes calls app services directly instead of injected adapters"
+      },
+      {
+        "kind": "indirect_vendor_coupling",
+        "vendor": "@/lib/system/health",
+        "specifier": "@/lib/system/health.service",
+        "file": "apps/web/lib/platform-admin/roma-live-probes.ts",
+        "severity": "medium"
+      },
+      {
+        "kind": "adapter_violation_candidate",
+        "vendor": "in-app service boundary",
+        "specifier": "@/lib/system/health.service",
+        "file": "apps/web/lib/platform-admin/roma-live-probes.ts",
+        "severity": "medium",
+        "note": "roma-live-probes calls app services directly instead of injected adapters"
+      },
+      {
+        "kind": "indirect_vendor_coupling",
+        "vendor": "@/lib/platform/billing",
+        "specifier": "@/lib/platform/billing-readiness/billing-adapter-registry",
+        "file": "apps/web/lib/platform-admin/roma-live-probes.ts",
+        "severity": "medium"
+      },
+      {
+        "kind": "adapter_violation_candidate",
+        "vendor": "in-app service boundary",
+        "specifier": "@/lib/platform/billing-readiness/billing-adapter-registry",
+        "file": "apps/web/lib/platform-admin/roma-live-probes.ts",
+        "severity": "medium",
+        "note": "roma-live-probes calls app services directly instead of injected adapters"
+      },
+      {
+        "kind": "indirect_vendor_coupling",
+        "vendor": "@/lib/platform/billing",
+        "specifier": "@/lib/platform/billing-readiness/billing-provider-config",
+        "file": "apps/web/lib/platform-admin/roma-live-probes.ts",
+        "severity": "medium"
+      },
+      {
+        "kind": "adapter_violation_candidate",
+        "vendor": "in-app service boundary",
+        "specifier": "@/lib/platform/billing-readiness/billing-provider-config",
+        "file": "apps/web/lib/platform-admin/roma-live-probes.ts",
+        "severity": "medium",
+        "note": "roma-live-probes calls app services directly instead of injected adapters"
+      },
+      {
+        "kind": "direct_vendor_sdk",
+        "vendor": "Stripe",
+        "specifier": "@/lib/platform/billing-readiness/stripe-price-mapping",
+        "file": "apps/web/lib/platform-admin/roma-live-probes.ts",
+        "severity": "high"
+      },
+      {
+        "kind": "indirect_vendor_coupling",
+        "vendor": "@/lib/platform/billing",
+        "specifier": "@/lib/platform/billing-readiness/stripe-price-mapping",
+        "file": "apps/web/lib/platform-admin/roma-live-probes.ts",
+        "severity": "medium"
+      },
+      {
+        "kind": "adapter_violation_candidate",
+        "vendor": "in-app service boundary",
+        "specifier": "@/lib/platform/billing-readiness/stripe-price-mapping",
+        "file": "apps/web/lib/platform-admin/roma-live-probes.ts",
+        "severity": "medium",
+        "note": "roma-live-probes calls app services directly instead of injected adapters"
+      },
+      {
+        "kind": "adapter_violation_candidate",
+        "vendor": "in-app service boundary",
+        "specifier": "@/lib/platform/flags/flags.repository",
+        "file": "apps/web/lib/platform-admin/roma-live-probes.ts",
+        "severity": "medium",
+        "note": "roma-live-probes calls app services directly instead of injected adapters"
+      },
+      {
+        "kind": "indirect_vendor_coupling",
+        "vendor": "@/lib/supabase/",
+        "specifier": "@/lib/supabase/admin",
+        "file": "apps/web/lib/platform-admin/roma-live-probes.ts",
+        "severity": "medium"
+      },
+      {
+        "kind": "adapter_violation_candidate",
+        "vendor": "in-app service boundary",
+        "specifier": "@/lib/supabase/admin",
+        "file": "apps/web/lib/platform-admin/roma-live-probes.ts",
+        "severity": "medium",
+        "note": "roma-live-probes calls app services directly instead of injected adapters"
+      },
+      {
+        "kind": "indirect_vendor_coupling",
+        "vendor": "@/lib/platform/billing",
+        "specifier": "@/lib/platform/billing-readiness/billing-provider-config",
+        "file": "apps/web/lib/platform-admin/roma-quality-dashboard.service.ts",
+        "severity": "medium"
+      },
+      {
+        "kind": "direct_vendor_sdk",
+        "vendor": "Supabase",
+        "specifier": "@supabase/supabase-js",
+        "file": "apps/web/lib/platform-admin/roma-run-history.service.ts",
+        "severity": "high"
+      }
+    ],
+    "importCounts": {}
+  },
+  "roma-live-probes": {
+    "files": 1,
+    "findings": [
+      {
+        "kind": "indirect_vendor_coupling",
+        "vendor": "@/lib/controllers/health",
+        "specifier": "@/lib/controllers/health",
+        "file": "apps/web/lib/platform-admin/roma-live-probes.ts",
+        "severity": "medium"
+      },
+      {
+        "kind": "adapter_violation_candidate",
+        "vendor": "in-app service boundary",
+        "specifier": "@/lib/controllers/health",
+        "file": "apps/web/lib/platform-admin/roma-live-probes.ts",
+        "severity": "medium",
+        "note": "roma-live-probes calls app services directly instead of injected adapters"
+      },
+      {
+        "kind": "adapter_violation_candidate",
+        "vendor": "in-app service boundary",
+        "specifier": "@/lib/config",
+        "file": "apps/web/lib/platform-admin/roma-live-probes.ts",
+        "severity": "medium",
+        "note": "roma-live-probes calls app services directly instead of injected adapters"
+      },
+      {
+        "kind": "adapter_violation_candidate",
+        "vendor": "in-app service boundary",
+        "specifier": "@/lib/config/release-env",
+        "file": "apps/web/lib/platform-admin/roma-live-probes.ts",
+        "severity": "medium",
+        "note": "roma-live-probes calls app services directly instead of injected adapters"
+      },
+      {
+        "kind": "indirect_vendor_coupling",
+        "vendor": "@/lib/config/server",
+        "specifier": "@/lib/config/server",
+        "file": "apps/web/lib/platform-admin/roma-live-probes.ts",
+        "severity": "medium"
+      },
+      {
+        "kind": "adapter_violation_candidate",
+        "vendor": "in-app service boundary",
+        "specifier": "@/lib/config/server",
+        "file": "apps/web/lib/platform-admin/roma-live-probes.ts",
+        "severity": "medium",
+        "note": "roma-live-probes calls app services directly instead of injected adapters"
+      },
+      {
+        "kind": "indirect_vendor_coupling",
+        "vendor": "@/lib/system/health",
+        "specifier": "@/lib/system/health.service",
+        "file": "apps/web/lib/platform-admin/roma-live-probes.ts",
+        "severity": "medium"
+      },
+      {
+        "kind": "adapter_violation_candidate",
+        "vendor": "in-app service boundary",
+        "specifier": "@/lib/system/health.service",
+        "file": "apps/web/lib/platform-admin/roma-live-probes.ts",
+        "severity": "medium",
+        "note": "roma-live-probes calls app services directly instead of injected adapters"
+      },
+      {
+        "kind": "indirect_vendor_coupling",
+        "vendor": "@/lib/platform/billing",
+        "specifier": "@/lib/platform/billing-readiness/billing-adapter-registry",
+        "file": "apps/web/lib/platform-admin/roma-live-probes.ts",
+        "severity": "medium"
+      },
+      {
+        "kind": "adapter_violation_candidate",
+        "vendor": "in-app service boundary",
+        "specifier": "@/lib/platform/billing-readiness/billing-adapter-registry",
+        "file": "apps/web/lib/platform-admin/roma-live-probes.ts",
+        "severity": "medium",
+        "note": "roma-live-probes calls app services directly instead of injected adapters"
+      },
+      {
+        "kind": "indirect_vendor_coupling",
+        "vendor": "@/lib/platform/billing",
+        "specifier": "@/lib/platform/billing-readiness/billing-provider-config",
+        "file": "apps/web/lib/platform-admin/roma-live-probes.ts",
+        "severity": "medium"
+      },
+      {
+        "kind": "adapter_violation_candidate",
+        "vendor": "in-app service boundary",
+        "specifier": "@/lib/platform/billing-readiness/billing-provider-config",
+        "file": "apps/web/lib/platform-admin/roma-live-probes.ts",
+        "severity": "medium",
+        "note": "roma-live-probes calls app services directly instead of injected adapters"
+      },
+      {
+        "kind": "direct_vendor_sdk",
+        "vendor": "Stripe",
+        "specifier": "@/lib/platform/billing-readiness/stripe-price-mapping",
+        "file": "apps/web/lib/platform-admin/roma-live-probes.ts",
+        "severity": "high"
+      },
+      {
+        "kind": "indirect_vendor_coupling",
+        "vendor": "@/lib/platform/billing",
+        "specifier": "@/lib/platform/billing-readiness/stripe-price-mapping",
+        "file": "apps/web/lib/platform-admin/roma-live-probes.ts",
+        "severity": "medium"
+      },
+      {
+        "kind": "adapter_violation_candidate",
+        "vendor": "in-app service boundary",
+        "specifier": "@/lib/platform/billing-readiness/stripe-price-mapping",
+        "file": "apps/web/lib/platform-admin/roma-live-probes.ts",
+        "severity": "medium",
+        "note": "roma-live-probes calls app services directly instead of injected adapters"
+      },
+      {
+        "kind": "adapter_violation_candidate",
+        "vendor": "in-app service boundary",
+        "specifier": "@/lib/platform/flags/flags.repository",
+        "file": "apps/web/lib/platform-admin/roma-live-probes.ts",
+        "severity": "medium",
+        "note": "roma-live-probes calls app services directly instead of injected adapters"
+      },
+      {
+        "kind": "indirect_vendor_coupling",
+        "vendor": "@/lib/supabase/",
+        "specifier": "@/lib/supabase/admin",
+        "file": "apps/web/lib/platform-admin/roma-live-probes.ts",
+        "severity": "medium"
+      },
+      {
+        "kind": "adapter_violation_candidate",
+        "vendor": "in-app service boundary",
+        "specifier": "@/lib/supabase/admin",
+        "file": "apps/web/lib/platform-admin/roma-live-probes.ts",
+        "severity": "medium",
+        "note": "roma-live-probes calls app services directly instead of injected adapters"
+      }
+    ],
+    "importCounts": {}
+  },
+  "kernel": {
+    "files": 37,
+    "findings": [],
+    "importCounts": {}
+  }
+}

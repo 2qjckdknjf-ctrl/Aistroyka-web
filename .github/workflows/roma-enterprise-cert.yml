@@ -1,0 +1,57 @@
+name: ROMA Enterprise Certification
+
+on:
+  pull_request:
+    branches: [main, master]
+    paths:
+      - "apps/web/lib/platform-admin/**"
+      - "apps/web/components/platform-admin/**"
+      - "apps/web/tests/platform-admin/**"
+      - "packages/roma-kernel/**"
+      - "scripts/audit/roma-vendor-dependency-audit.mjs"
+      - ".github/workflows/roma-enterprise-cert.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: roma-enterprise-cert-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  roma-cert-static:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2.15
+      - run: bun install --frozen-lockfile
+      - name: ROMA vendor dependency audit
+        run: node scripts/audit/roma-vendor-dependency-audit.mjs
+      - name: ROMA platform-admin unit tests (incl. accessibility source CI)
+        run: bun run --cwd apps/web vitest run lib/platform-admin --maxWorkers=1
+
+  roma-cert-playwright:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    needs: roma-cert-static
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2.15
+      - run: bun install --frozen-lockfile
+      - name: Install Playwright Chromium
+        working-directory: apps/web
+        run: bunx playwright install chromium
+      - name: ROMA Operations Center Playwright (axe, golden path, visual)
+        working-directory: apps/web
+        env:
+          CI: "true"
+          PLAYWRIGHT_SKIP_WEB_SERVER: "1"
+          PLAYWRIGHT_BASE_URL: ${{ secrets.ROMA_E2E_BASE_URL }}
+          ROMA_PLATFORM_OWNER_EMAIL: ${{ secrets.ROMA_PLATFORM_OWNER_EMAIL }}
+          ROMA_PLATFORM_OWNER_PASSWORD: ${{ secrets.ROMA_PLATFORM_OWNER_PASSWORD }}
+          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+        run: bun run e2e:platform-admin

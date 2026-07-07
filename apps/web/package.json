@@ -14,6 +14,8 @@
     "test:manager-layer": "bun test lib/dashboard/alert-destinations.test.ts lib/dashboard/priority-actions.test.ts lib/intelligence/next-action-href.test.ts",
     "e2e": "playwright test",
     "e2e:pilot": "playwright test tests/e2e/dashboard-button-audit.spec.ts tests/e2e/sync-contract.spec.ts tests/e2e/core-flow.spec.ts",
+    "e2e:platform-admin": "playwright test -c playwright.platform-admin.config.ts",
+    "e2e:platform-admin:update-snapshots": "playwright test -c playwright.platform-admin.config.ts --update-snapshots",
     "test:e2e": "playwright test",
     "postinstall": "node scripts/link-next-if-workspace.cjs",
     "prepare": "node scripts/prepare.cjs",
@@ -61,6 +63,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.10.1",
     "@playwright/test": "^1.49.0",
     "@types/node": "^22.9.0",
     "@types/react": "^19.0.0",

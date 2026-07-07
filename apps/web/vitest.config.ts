@@ -5,7 +5,13 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["**/*.test.ts", "**/*.spec.ts"],
-    exclude: ["**/audit_*/**", "**/tests/e2e/**", "**/node_modules/**"],
+    exclude: [
+      "**/audit_*/**",
+      "**/tests/e2e/**",
+      "**/tests/qa/**",
+      "**/tests/platform-admin/**",
+      "**/node_modules/**",
+    ],
     setupFiles: ["./vitest.setup.ts"],
   },
   resolve: {
