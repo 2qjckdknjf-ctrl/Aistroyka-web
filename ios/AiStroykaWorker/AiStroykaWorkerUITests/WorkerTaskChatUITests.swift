@@ -13,7 +13,8 @@ final class WorkerTaskChatUITests: XCTestCase {
     private func launchWorker(
         email: String,
         password: String,
-        forceOffline: Bool = false
+        forceOffline: Bool = false,
+        chatMediaFixture: Bool = false
     ) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchEnvironment["AISTROYKA_E2E"] = "1"
@@ -21,6 +22,10 @@ final class WorkerTaskChatUITests: XCTestCase {
         if forceOffline {
             app.launchEnvironment["AISTROYKA_E2E_FORCE_OFFLINE"] = "1"
             app.launchArguments += ["-AISTROYKA_E2E_FORCE_OFFLINE"]
+        }
+        if chatMediaFixture {
+            app.launchEnvironment["AISTROYKA_E2E_CHAT_FIXTURE"] = "1"
+            app.launchArguments += ["-AISTROYKA_E2E_CHAT_FIXTURE"]
         }
         app.launchEnvironment["AISTROYKA_E2E_EMAIL"] = email
         app.launchEnvironment["AISTROYKA_E2E_PASSWORD"] = password
@@ -280,8 +285,63 @@ final class WorkerTaskChatUITests: XCTestCase {
         }
     }
 
+    /// Upload-path regression without PhotosPicker (E2E fixture JPEG).
+    func testTaskChat_fixturePhotoUploadPath() throws {
+        let email = DeviceSmokeE2ESecrets.workerEmail
+        let password = DeviceSmokeE2ESecrets.workerPassword
+        let app = launchWorker(email: email, password: password, chatMediaFixture: true)
+        signInIfNeeded(app, email: email, password: password)
+        openSyntheticTaskChat(app)
+
+        let before = app.descendants(matching: .any).matching(
+            NSPredicate(format: "identifier BEGINSWITH 'task_chat_image_'")
+        ).count
+
+        let attach = element(app, "task_chat_attach")
+        XCTAssertTrue(attach.waitForExistence(timeout: 15))
+        attach.tap()
+
+        let photoBubble = app.descendants(matching: .any).matching(
+            NSPredicate(format: "identifier BEGINSWITH 'task_chat_image_' OR label ==[c] 'task_chat_photo'")
+        ).firstMatch
+        let err = element(app, "task_chat_error")
+        let deadline = Date().addingTimeInterval(90)
+        var appeared = false
+        while Date() < deadline {
+            if photoBubble.exists { appeared = true; break }
+            if err.exists { XCTFail("Fixture photo error: \(err.label)") }
+            RunLoop.current.run(until: Date().addingTimeInterval(1))
+        }
+        XCTAssertTrue(appeared, "Fixture photo bubble must appear")
+        let after = app.descendants(matching: .any).matching(
+            NSPredicate(format: "identifier BEGINSWITH 'task_chat_image_'")
+        ).count
+        XCTAssertGreaterThanOrEqual(after, before)
+
+        app.terminate()
+        let app2 = launchWorker(email: email, password: password, chatMediaFixture: true)
+        signInIfNeeded(app2, email: email, password: password)
+        openSyntheticTaskChat(app2)
+        let persisted = app2.descendants(matching: .any).matching(
+            NSPredicate(format: "identifier BEGINSWITH 'task_chat_image_' OR label ==[c] 'task_chat_photo'")
+        ).firstMatch
+        XCTAssertTrue(persisted.waitForExistence(timeout: 30), "Fixture photo must persist")
+    }
+
     /// Gallery contract: paperclip opens PhotosPicker (no dedicated in-chat camera button).
     func testTaskChat_photoPickerGalleryPath() throws {
+        let interrupt = addUIInterruptionMonitor(withDescription: "photos") { alert in
+            for label in [
+                "Allow Full Access", "Allow Access to All Photos",
+                "Allow While Using App", "Allow", "OK", "Разрешить полный доступ", "Разрешить",
+            ] {
+                let b = alert.buttons[label]
+                if b.exists { b.tap(); return true }
+            }
+            return false
+        }
+        defer { removeUIInterruptionMonitor(interrupt) }
+
         seedPhotoViaCameraIfNeeded()
 
         let email = DeviceSmokeE2ESecrets.workerEmail
@@ -289,6 +349,7 @@ final class WorkerTaskChatUITests: XCTestCase {
         let app = launchWorker(email: email, password: password)
         signInIfNeeded(app, email: email, password: password)
         openSyntheticTaskChat(app)
+        app.tap() // engage interruption monitor
 
         let attach = element(app, "task_chat_attach")
         XCTAssertTrue(attach.waitForExistence(timeout: 15))
@@ -391,15 +452,13 @@ final class WorkerTaskChatUITests: XCTestCase {
         let record = element(app, "task_chat_voice_record")
         XCTAssertTrue(record.waitForExistence(timeout: 10))
         record.tap()
-        app.tap() // engage interruption monitor
         acceptSystemPermissionIfPresent()
-        // Permission callback is async — retap if still showing record
+        // Permission callback is async — retap if still showing record (do not tap app center; that can hit Stop).
         let armDeadline = Date().addingTimeInterval(12)
         while Date() < armDeadline {
             if element(app, "task_chat_voice_stop").exists { break }
             if element(app, "task_chat_voice_record").exists {
                 element(app, "task_chat_voice_record").tap()
-                app.tap()
                 acceptSystemPermissionIfPresent()
             }
             if element(app, "task_chat_error").exists {
@@ -416,11 +475,11 @@ final class WorkerTaskChatUITests: XCTestCase {
         }
         XCTAssertTrue(element(app, "task_chat_voice_stop").waitForExistence(timeout: 5), "Recording should start after mic allow")
 
-        // Cancel: leave chat (stopRecording(send: false) on disappear)
-        if app.navigationBars.buttons.firstMatch.exists {
-            app.navigationBars.buttons.firstMatch.tap()
-        }
-        openSyntheticTaskChat(app)
+        // Cancel via explicit control — must not create a voice bubble
+        let cancel = element(app, "task_chat_voice_cancel")
+        XCTAssertTrue(cancel.waitForExistence(timeout: 5), "Cancel control while recording")
+        cancel.tap()
+        RunLoop.current.run(until: Date().addingTimeInterval(1.0))
         let afterCancel = app.descendants(matching: .any).matching(
             NSPredicate(format: "identifier BEGINSWITH 'task_chat_voice_'")
         ).count
@@ -429,10 +488,9 @@ final class WorkerTaskChatUITests: XCTestCase {
         let record2 = element(app, "task_chat_voice_record")
         XCTAssertTrue(record2.waitForExistence(timeout: 10))
         record2.tap()
-        app.tap()
         acceptSystemPermissionIfPresent()
         XCTAssertTrue(element(app, "task_chat_voice_stop").waitForExistence(timeout: 12))
-        RunLoop.current.run(until: Date().addingTimeInterval(3.0))
+        RunLoop.current.run(until: Date().addingTimeInterval(5.0))
         element(app, "task_chat_voice_stop").tap()
 
         let voiceBubble = app.descendants(matching: .any).matching(
