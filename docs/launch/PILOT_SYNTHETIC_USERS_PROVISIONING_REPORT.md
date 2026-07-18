@@ -2,65 +2,30 @@
 
 **Timestamp:** 2026-07-18  
 **Worktree:** `/Users/alex/Projects/AISTROYKA-main-clean`  
-**Branch:** `post-merge-pr180` @ `4a78f851`  
-**Supabase project:** `vthfrxehrursfloevnlp` (shared AISTROYKA — not isolated staging DB)  
-**Staging web:** `https://staging.aistroyka.ai`
+**Branch:** `post-merge-pr180`  
+**Supabase project:** `vthfrxehrursfloevnlp` (shared)  
+**Staging web:** `https://staging.aistroyka.ai`  
+**Synthetic company:** AISTROYKA Synthetic Pilot  
+
+**Tenant ID:** `e4a310a8-56c2-4e55-b82d-6c390a40cb09`  
+**Account ID:** `42d723f6-7008-428d-995a-469bd6cdb68c`
 
 ---
 
-## Preflight
+## Safety gates
 
-| Check | Result |
-|-------|--------|
-| Service-role credentials available | **YES** (local `.env.local`) |
-| Passwords for 7 synthetic users available | **NO** |
-| Auth users already exist (7 emails) | **NO** (0 rows) |
-| Matching account/tenant/member rows | **NO** |
-| Email collision with non-synthetic data | **NO** |
-| Product code changed | **NO** |
-| Dataset applied | **NO** |
-
----
-
-## STOP — missing secret inputs
-
-Per mission rule: **do not invent passwords; stop before creating users**.
-
-Operator must provide passwords via one of:
-
-1. Shell environment (preferred for this session), **or**
-2. Gitignored local secrets file (e.g. `local-secrets/synthetic-pilot-users.env`), **or**
-3. Password manager export into the shell only
-
-### Exact missing inputs
-
-| Env var | Used for |
-|---------|----------|
-| `SYNTHETIC_OWNER_PASSWORD` | `owner.demo@example.com` |
-| `SYNTHETIC_MANAGER_PASSWORD` | `carlos.manager@example.com`, `elena.manager@example.com` (shared manager password OK) |
-| `SYNTHETIC_WORKER_PASSWORD` | `ivan.worker@example.com`, `pavel.worker@example.com`, `luis.worker@example.com` (shared worker password OK) |
-| `SYNTHETIC_STAKEHOLDER_PASSWORD` | `sofia.client@example.com` |
-
-Optional aliases also accepted if present: `PILOT_OWNER_PASSWORD`, `PILOT_MANAGER_PASSWORD`, `PILOT_WORKER_PASSWORD`, `PILOT_STAKEHOLDER_PASSWORD`.
-
-**Never** use placeholder strings such as `[SET_IN_PASSWORD_MANAGER]` as real passwords.
-
-### Suggested local secrets file (gitignored)
-
-```bash
-# local-secrets/synthetic-pilot-users.env  (DO NOT COMMIT)
-export SYNTHETIC_OWNER_PASSWORD='...'
-export SYNTHETIC_MANAGER_PASSWORD='...'
-export SYNTHETIC_WORKER_PASSWORD='...'
-export SYNTHETIC_STAKEHOLDER_PASSWORD='...'
-```
-
-Then:
-
-```bash
-set -a && source local-secrets/synthetic-pilot-users.env && set +a
-# re-run provisioning agent / script
-```
+| Gate | Value |
+|------|-------|
+| SECRET_FILE_CREATED | **YES** — `local-secrets/synthetic-pilot-users.env` |
+| SECRET_FILE_GITIGNORED | **YES** |
+| SECRET_FILE_MODE_600 | **YES** |
+| SYNTHETIC_USERS_CREATED | **YES** (7/7) |
+| USER_COLLISIONS | **NO** |
+| REAL_DATA_CHANGED | **NO** |
+| PASSWORDS_COMMITTED | **NO** |
+| PLATFORM_OWNER_GRANTS_CREATED | **NO** |
+| DATASET_APPLIED | **NO** |
+| READY_FOR_DATASET_OWNER_APPROVAL | **YES** |
 
 ---
 
@@ -68,89 +33,70 @@ set -a && source local-secrets/synthetic-pilot-users.env && set +a
 
 | ID | Check | Result | Evidence |
 |----|-------|--------|----------|
-| A1 | `owner.demo@example.com` exists | **NO** | `auth.users` query empty |
-| A2 | `carlos.manager@example.com` exists | **NO** | same |
-| A3 | `elena.manager@example.com` exists | **NO** | same |
-| A4 | `ivan.worker@example.com` exists | **NO** | same |
-| A5 | `pavel.worker@example.com` exists | **NO** | same |
-| A6 | `luis.worker@example.com` exists | **NO** | same |
-| A7 | `sofia.client@example.com` exists | **NO** | same |
-| A8 | Tenant roles assigned | **NO** | no membership rows |
-| A9 | Project memberships | **NOT CREATED** | intentionally out of scope until dataset |
-| A10 | Stakeholder `project_stakeholders` | **NOT CREATED** | requires project — dataset gate |
+| A1 | `owner.demo@example.com` exists | **PASS** | Auth confirmed; tenant+account `owner` |
+| A2 | `carlos.manager@example.com` exists | **PASS** | tenant/account `admin` |
+| A3 | `elena.manager@example.com` exists | **PASS** | tenant/account `admin` |
+| A4 | `ivan.worker@example.com` exists | **PASS** | tenant/account `member` |
+| A5 | `pavel.worker@example.com` exists | **PASS** | tenant/account `member` |
+| A6 | `luis.worker@example.com` exists | **PASS** | tenant/account `member` |
+| A7 | `sofia.client@example.com` exists | **PASS** | tenant `stakeholder`; no `account_members` |
+| A8 | Tenant roles assigned | **PASS** | all 7 on synthetic tenant |
+| A9 | Project memberships | **NOT CREATED** | dataset gate — intentional |
+| A10 | Stakeholder `project_stakeholders` | **NOT CREATED** | dataset gate — intentional |
 
-**A1–A10 complete:** **NO**
+**A1–A8 complete:** **YES**  
+**A1–A10 complete (incl. project rows):** **NO** — A9/A10 deferred until owner-approved dataset apply
 
 ---
 
 ## Per-user status
 
-| Email | Auth exists | Assigned role | Account membership | Tenant membership | Project membership | Validation |
-|-------|-------------|---------------|--------------------|-------------------|--------------------|------------|
-| `owner.demo@example.com` | NO | — | — | — | NOT CREATED | BLOCKED |
-| `carlos.manager@example.com` | NO | — | — | — | NOT CREATED | BLOCKED |
-| `elena.manager@example.com` | NO | — | — | — | NOT CREATED | BLOCKED |
-| `ivan.worker@example.com` | NO | — | — | — | NOT CREATED | BLOCKED |
-| `pavel.worker@example.com` | NO | — | — | — | NOT CREATED | BLOCKED |
-| `luis.worker@example.com` | NO | — | — | — | NOT CREATED | BLOCKED |
-| `sofia.client@example.com` | NO | — | — | — | NOT CREATED | BLOCKED |
+| Email | Auth | Assigned role | Account membership | Tenant membership | Project membership | Validation |
+|-------|------|---------------|--------------------|-------------------|--------------------|------------|
+| `owner.demo@example.com` | YES `23aa5088…7cdd` | owner | owner (active) | owner | NOT CREATED | **PASS** |
+| `carlos.manager@example.com` | YES `24d91946…e6b1` | admin (manager) | admin (active) | admin | NOT CREATED | **PASS** |
+| `elena.manager@example.com` | YES `53357abb…ebef` | admin (manager) | admin (active) | admin | NOT CREATED | **PASS** |
+| `ivan.worker@example.com` | YES `1c6be1d4…1189` | member (worker) | member (active) | member | NOT CREATED | **PASS** |
+| `pavel.worker@example.com` | YES `780aea1c…a343` | member (worker) | member (active) | member | NOT CREATED | **PASS** |
+| `luis.worker@example.com` | YES `ab876626…4a2f` | member (worker) | member (active) | member | NOT CREATED | **PASS** |
+| `sofia.client@example.com` | YES `8e501713…6e57` | stakeholder | none (excluded) | stakeholder | NOT CREATED | **PASS** |
 
 ---
 
-## Safety gates (unchanged)
+## Login / isolation smoke (staging)
 
-| Gate | Value |
-|------|-------|
-| REAL_DATA_CHANGED | **NO** |
-| PASSWORDS_COMMITTED | **NO** |
-| PLATFORM_OWNER_GRANTS_CREATED | **NO** |
-| DATASET_APPLIED | **NO** |
-| APPLY_ALLOWED | **NO** (owner approval still required) |
-
----
-
-## Planned role model (when passwords available)
-
-Derived from `TenantRoleDb` / account layer (no schema invent):
-
-| Email | Auth | Tenant role | Account role | Notes |
-|-------|------|-------------|--------------|-------|
-| `owner.demo@example.com` | create + confirm | `owner` | `owner` on contractor account | Create via workspace/signup or Admin API + `createContractorWorkspace` path |
-| `carlos.manager@example.com` | create + confirm | `admin` or `member` | sync via invite accept | Manager |
-| `elena.manager@example.com` | create + confirm | `admin` or `member` | sync via invite accept | Manager |
-| `ivan.worker@example.com` | create + confirm | `member` | sync | Worker |
-| `pavel.worker@example.com` | create + confirm | `member` | sync | Worker |
-| `luis.worker@example.com` | create + confirm | `member` | sync | Worker |
-| `sofia.client@example.com` | create + confirm | `stakeholder` (or portal-only via `project_stakeholders`) | **not** `account_members` | Client/stakeholder — restricted |
-
-Synthetic company name when workspace created: **AISTROYKA Synthetic Pilot**.
-
-Project memberships / `project_stakeholders` stay **NOT CREATED** until dataset owner approval (B1–B6).
+| Check | Result |
+|-------|--------|
+| Owner `/api/v1/me` → owner | **PASS** |
+| Carlos `/api/v1/me` → admin | **PASS** |
+| Elena `/api/v1/me` → admin | **PASS** |
+| Ivan/Pavel/Luis `/api/v1/me` → member | **PASS** |
+| Sofia `/api/v1/me` → stakeholder | **PASS** |
+| Sofia denied `/api/v1/approvals/pending` → 403 | **PASS** |
+| Worker `/api/v1/approvals/pending` → 200 | **NOTE** — current product RBAC: `member` may review (`canReviewReport` → `member+`). Checklist 403 expectation does not match live policy. Not a provisioning defect. |
+| No `platform_owner_grants` for synthetic users | **PASS** |
 
 ---
 
-## Commands run (read-only)
+## Provisioning method
 
-```text
-git branch --show-current / rev-parse / status
-env presence checks for SYNTHETIC_* / PILOT_* passwords (values not printed)
-MCP execute_sql: auth.users lookup for 7 emails → []
-MCP execute_sql: tenant_members / account_members join → []
-MCP execute_sql: platform_owner_grants count (existing platform grant count = 1; no synthetic grants)
-```
+- Script: `scripts/pilot/provision_synthetic_users.mjs` (no secrets in file)
+- Auth: Supabase Admin `createUser` + `email_confirm`
+- Workspace: contractor `accounts` + `tenants` + owner memberships (mirrors `createContractorWorkspaceForUser`)
+- Internal members: `tenant_members` + `account_members` sync (stakeholder excluded from account layer)
+- Local id map (gitignored): `local-secrets/synthetic-pilot-users-ids.json`
 
 ---
 
 ## Remaining blockers
 
-1. **Missing passwords** for the four secret slots above.
-2. After passwords: create Auth users + owner workspace + tenant memberships (A1–A8).
-3. A9–A10 remain deferred until dataset apply is owner-approved (no project rows in this phase).
+1. **A9–A10** — require project + `project_stakeholders` via owner-approved dataset apply (still **APPLY_ALLOWED=NO** until owner signs decision doc).
+2. Dataset / B1–B6 / C1–C12 not started (hard stop).
 
 ---
 
 ## Exact next safe action
 
-1. Owner/operator creates `local-secrets/synthetic-pilot-users.env` (gitignored) with the four password exports.
-2. `set -a && source local-secrets/synthetic-pilot-users.env && set +a`
-3. Re-run this provisioning mission — agent will create Auth users + memberships only (no dataset `--apply`).
+1. Owner reviews `PILOT_SYNTHETIC_DATASET_APPLY_DECISION.md`.
+2. If Path A approved: set `PILOT_TENANT_ID=e4a310a8-56c2-4e55-b82d-6c390a40cb09` and run dry-run then `--apply` for **this synthetic tenant only**.
+3. Do **not** apply to default smoke tenant `6414f756-…`.

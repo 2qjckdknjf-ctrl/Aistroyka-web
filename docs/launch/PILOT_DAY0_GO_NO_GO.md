@@ -21,8 +21,9 @@
 |------|--------|
 | Intake READY | **YES** |
 | Staging API smokes | **PASS** |
-| Synthetic users (`@example.com`) | **STOPPED** — passwords missing (2026-07-18) |
-| A1–A10 complete | **NO** |
+| Synthetic users (`@example.com`) | **YES** — 7/7 (2026-07-18) |
+| A1–A8 complete | **YES** |
+| A9–A10 (project rows) | **NOT CREATED** |
 | Dataset apply | **NO** (owner approval pending) |
 | Media / manager action / stakeholder smokes | **OPEN** |
 

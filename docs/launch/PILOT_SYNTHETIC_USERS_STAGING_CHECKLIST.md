@@ -155,15 +155,17 @@ See `PILOT_SYNTHETIC_DATASET_APPLY_DECISION.md` before `--apply`.
 
 | Item | Status |
 |------|--------|
-| Preflight (auth existence) | **DONE** — 0/7 users in `auth.users` |
-| Passwords available | **NO** — provisioning **STOPPED** |
-| Synthetic users created | **NO** |
-| Owner workspace on staging | **NOT STARTED** |
-| This checklist complete | **OPEN** |
+| Preflight (auth existence) | **DONE** |
+| Passwords available | **YES** — `local-secrets/synthetic-pilot-users.env` (gitignored, mode 600) |
+| Synthetic users created | **YES** — 7/7 Auth users |
+| Owner workspace | **YES** — AISTROYKA Synthetic Pilot (`e4a310a8-…` / `42d723f6-…`) |
+| Tenant/account memberships (A1–A8) | **PASS** |
+| Project memberships (A9–A10) | **NOT CREATED** (dataset gate) |
+| This checklist complete | **PARTIAL** — A1–A8 done; A9–A10 deferred |
 
 **Evidence:** `PILOT_SYNTHETIC_USERS_PROVISIONING_REPORT.md`
 
-**Required before create:** export `SYNTHETIC_OWNER_PASSWORD`, `SYNTHETIC_MANAGER_PASSWORD`, `SYNTHETIC_WORKER_PASSWORD`, `SYNTHETIC_STAKEHOLDER_PASSWORD` (gitignored secrets only).
+**Provision script:** `node scripts/pilot/provision_synthetic_users.mjs` (after sourcing secrets)
 
 ---
 

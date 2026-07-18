@@ -9,21 +9,23 @@
 
 | Launch type | Allowed | Reason |
 |-------------|---------|--------|
-| **Continue synthetic staging work** | **YES** | Intake READY; API smokes PASS; checklists published |
-| **A1–A10 user provisioning** | **NO** (STOPPED) | Passwords missing — no Auth writes |
-| **Synthetic Day 0 complete** | **NO** (PARTIAL) | Users, dataset, media, approval, stakeholder OPEN |
+| **Continue synthetic staging work** | **YES** | A1–A8 users provisioned |
+| **A1–A8 user provisioning** | **YES** | 7 Auth users + synthetic tenant/account |
+| **A1–A10 complete** | **NO** | A9–A10 need dataset/project rows |
+| **Synthetic Day 0 complete** | **NO** (PARTIAL) | Dataset + media/approval/stakeholder smokes OPEN |
 | **Real client launch** | **NO** | Synthetic intake only |
 
 ---
 
 ## Blockers (synthetic completion)
 
-1. **Passwords unavailable** — provisioning stopped — see `PILOT_SYNTHETIC_USERS_PROVISIONING_REPORT.md`
-2. Synthetic users not created — see `PILOT_SYNTHETIC_USERS_STAGING_CHECKLIST.md`
-3. Dataset `--apply` **not allowed** until owner approval — see `PILOT_SYNTHETIC_DATASET_APPLY_DECISION.md`
-4. Media upload smoke **OPEN**
-5. Manager approve/reject/request-changes **OPEN**
-6. Stakeholder portal + finance isolation **OPEN**
+1. **A9–A10** — project memberships / `project_stakeholders` not created (await dataset owner approval)
+2. Dataset `--apply` **not allowed** until owner signs `PILOT_SYNTHETIC_DATASET_APPLY_DECISION.md`
+3. Media upload smoke **OPEN**
+4. Manager approve/reject/request-changes **OPEN**
+5. Stakeholder portal + finance isolation **OPEN** (portal row not yet created)
+
+**Target tenant for future apply:** `e4a310a8-56c2-4e55-b82d-6c390a40cb09` (AISTROYKA Synthetic Pilot) — **not** default smoke tenant.
 
 ---
 

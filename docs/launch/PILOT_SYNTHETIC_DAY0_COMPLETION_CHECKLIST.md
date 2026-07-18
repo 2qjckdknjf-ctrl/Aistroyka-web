@@ -13,18 +13,18 @@ Mark each item when verified on **staging** with synthetic `@example.com` users.
 
 | # | Check | Done | 2026-07-18 |
 |---|-------|------|------------|
-| A1 | `owner.demo@example.com` exists in Auth | ☐ | **FAIL** — not in `auth.users` |
-| A2 | `carlos.manager@example.com` exists | ☐ | **FAIL** |
-| A3 | `elena.manager@example.com` exists | ☐ | **FAIL** |
-| A4 | `ivan.worker@example.com` exists | ☐ | **FAIL** |
-| A5 | `pavel.worker@example.com` exists | ☐ | **FAIL** |
-| A6 | `luis.worker@example.com` exists | ☐ | **FAIL** |
-| A7 | `sofia.client@example.com` exists | ☐ | **FAIL** |
-| A8 | Tenant roles assigned (owner/admin/member/stakeholder) | ☐ | **FAIL** — no memberships |
+| A1 | `owner.demo@example.com` exists in Auth | ☑ | **PASS** |
+| A2 | `carlos.manager@example.com` exists | ☑ | **PASS** |
+| A3 | `elena.manager@example.com` exists | ☑ | **PASS** |
+| A4 | `ivan.worker@example.com` exists | ☑ | **PASS** |
+| A5 | `pavel.worker@example.com` exists | ☑ | **PASS** |
+| A6 | `luis.worker@example.com` exists | ☑ | **PASS** |
+| A7 | `sofia.client@example.com` exists | ☑ | **PASS** |
+| A8 | Tenant roles assigned (owner/admin/member/stakeholder) | ☑ | **PASS** |
 | A9 | Project memberships for managers + workers | ☐ | **NOT CREATED** (dataset gate) |
 | A10 | Stakeholder project_stakeholders row active | ☐ | **NOT CREATED** (dataset gate) |
 
-**Blocker:** passwords unavailable — see `PILOT_SYNTHETIC_USERS_PROVISIONING_REPORT.md`.
+**Evidence:** `PILOT_SYNTHETIC_USERS_PROVISIONING_REPORT.md`
 
 **Guide:** `PILOT_SYNTHETIC_USERS_STAGING_CHECKLIST.md`
 
