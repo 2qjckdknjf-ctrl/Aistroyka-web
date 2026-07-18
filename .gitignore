@@ -148,3 +148,6 @@ service-account*.json
 
 # Device UI smoke secrets (never commit)
 **/DeviceSmokeE2ESecrets.swift
+
+# Real pilot intake (never commit)
+docs/launch/pilot-intake.real.local.json
