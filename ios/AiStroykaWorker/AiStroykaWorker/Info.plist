@@ -26,8 +26,10 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>AiStroyka Worker needs camera access to capture before/after photos for reports.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>AiStroyka Worker needs microphone access to send voice messages in task chat.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>AiStroyka Worker needs photo library access to attach before/after photos to reports.</string>
+	<string>AiStroyka Worker needs photo library access to attach before/after photos to reports and task chat.</string>
 	<key>SUPABASE_ANON_KEY</key>
 	<string>$(SUPABASE_ANON_KEY)</string>
 	<key>SUPABASE_URL</key>

@@ -15,6 +15,34 @@ function nextRetryAt(attempts: number): Date {
   return new Date(Date.now() + BACKOFF_MS[idx]);
 }
 
+/** Exported for unit tests — merge nested `data` with flat stringifiable keys + message type. */
+export function buildPushDataMap(
+  type: string,
+  payload: Record<string, unknown>
+): Record<string, string> {
+  const out: Record<string, string> = { type };
+  const nested =
+    payload.data && typeof payload.data === "object" && !Array.isArray(payload.data)
+      ? (payload.data as Record<string, unknown>)
+      : null;
+  if (nested) {
+    for (const [k, v] of Object.entries(nested)) {
+      if (v == null) continue;
+      if (typeof v === "string" || typeof v === "number" || typeof v === "boolean") {
+        out[k] = String(v);
+      }
+    }
+  }
+  for (const [k, v] of Object.entries(payload)) {
+    if (k === "data" || k === "title" || k === "body") continue;
+    if (v == null) continue;
+    if (typeof v === "string" || typeof v === "number" || typeof v === "boolean") {
+      out[k] = String(v);
+    }
+  }
+  return out;
+}
+
 export async function handlePushSend(admin: SupabaseClient, _job: Job): Promise<void> {
   const { data: rows } = await admin
     .from("push_outbox")
@@ -57,7 +85,8 @@ export async function handlePushSend(admin: SupabaseClient, _job: Job): Promise<
     const payload = row.payload ?? {};
     const title = typeof payload.title === "string" ? payload.title : undefined;
     const body = typeof payload.body === "string" ? payload.body : undefined;
-    const data = payload.data && typeof payload.data === "object" ? (payload.data as Record<string, string>) : undefined;
+    /** Flat outbox payload keys + type → APNs/FCM data map (clients read userInfo.type / task_id). */
+    const data = buildPushDataMap(row.type, payload);
 
     let anySent = false;
     let retryableError: string | null = null;

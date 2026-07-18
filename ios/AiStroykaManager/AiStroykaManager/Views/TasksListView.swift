@@ -16,6 +16,8 @@ struct TasksListView: View {
     @State private var isLoading = true
     @State private var errorMessage: String?
     @State private var loadGeneration = 0
+    @State private var deepLinkTaskId: String?
+    @State private var unreadByTaskId: [String: Bool] = [:]
 
     var body: some View {
         NavigationStack {
@@ -39,6 +41,19 @@ struct TasksListView: View {
             .navigationTitle(NSLocalizedString("mgr_tab_tasks", comment: ""))
             .toolbar { ToolbarItem(placement: .primaryAction) { Button(NSLocalizedString("mgr_new", comment: ""), systemImage: "plus") { showCreate = true } } }
             .refreshable { await refreshAsync() }
+            .navigationDestination(isPresented: Binding(
+                get: { deepLinkTaskId != nil },
+                set: { if !$0 { deepLinkTaskId = nil } }
+            )) {
+                if let id = deepLinkTaskId {
+                    TaskDetailManagerView(taskId: id)
+                }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .aiStroykaManagerOpenTaskChat)) { note in
+                if let taskId = note.userInfo?["task_id"] as? String, !taskId.isEmpty {
+                    deepLinkTaskId = taskId
+                }
+            }
             .onAppear {
                 if let id = initialProjectId, selectedProjectId == nil { selectedProjectId = id }
                 loadIfNeeded()
@@ -59,7 +74,7 @@ struct TasksListView: View {
             filtersBar
             List(tasks, id: \.id) { t in
                 NavigationLink(destination: TaskDetailManagerView(taskId: t.id)) {
-                    TaskRowView(task: t)
+                    TaskRowView(task: t, hasUnreadChat: unreadByTaskId[t.id] == true)
                 }
             }
         }
@@ -143,32 +158,65 @@ struct TasksListView: View {
                 guard generation == loadGeneration else { return }
                 tasks = loadedTasks
                 projects = loadedProjects
+                await refreshUnreadBadges(for: loadedTasks)
                 return
             }
 
             let loadedTasks = try await ManagerAPI.tasks(projectId: projectId, status: status, limit: 100)
             guard generation == loadGeneration else { return }
             tasks = loadedTasks
+            await refreshUnreadBadges(for: loadedTasks)
         }
+    }
+
+    private func refreshUnreadBadges(for tasks: [TaskDTO]) async {
+        var map: [String: Bool] = [:]
+        await withTaskGroup(of: (String, Bool).self) { group in
+            for t in tasks.prefix(40) {
+                group.addTask {
+                    do {
+                        let msgs = try await TaskMessagesAPI.listAll(taskId: t.id, pageSize: 50, maxPages: 3)
+                        let latest = msgs.last?.createdAt
+                        return (t.id, TaskChatReadStore.isUnread(taskId: t.id, latestCreatedAt: latest))
+                    } catch {
+                        return (t.id, false)
+                    }
+                }
+            }
+            for await (id, unread) in group {
+                map[id] = unread
+            }
+        }
+        unreadByTaskId = map
     }
 }
 
 struct TaskRowView: View {
     let task: TaskDTO
+    var hasUnreadChat: Bool = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(task.title)
-                .font(.subheadline)
-            HStack {
-                Text(task.status)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                if let d = task.dueDate {
-                    Text(String(format: NSLocalizedString("mgr_due_fmt", comment: ""), d))
+        HStack(alignment: .top, spacing: 8) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(task.title)
+                    .font(.subheadline)
+                HStack {
+                    Text(task.status)
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                    if let d = task.dueDate {
+                        Text(String(format: NSLocalizedString("mgr_due_fmt", comment: ""), d))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
+            }
+            Spacer(minLength: 0)
+            if hasUnreadChat {
+                Circle()
+                    .fill(Color.accentColor)
+                    .frame(width: 8, height: 8)
+                    .accessibilityLabel(NSLocalizedString("task_chat_unread", comment: ""))
             }
         }
         .padding(.vertical, 4)
@@ -184,6 +232,7 @@ struct TaskDetailManagerView: View {
     @State private var assignError: String?
     @State private var assignSuccessMessage: String?
     @State private var isAssigning = false
+    @State private var managerUserId: String?
 
     var body: some View {
         Group {
@@ -192,37 +241,42 @@ struct TaskDetailManagerView: View {
             } else if let err = errorMessage, task == nil {
                 ErrorStateView(message: err, retry: { load() })
             } else if let t = task {
-                List {
-                    Section(NSLocalizedString("mgr_task_section", comment: "")) {
-                        LabeledContent(NSLocalizedString("mgr_title", comment: ""), value: t.title ?? "—")
-                        LabeledContent(NSLocalizedString("mgr_status", comment: ""), value: t.status ?? "—")
-                        if let d = t.dueDate { LabeledContent(NSLocalizedString("mgr_due", comment: ""), value: d) }
-                        if let a = t.assignedTo { LabeledContent(NSLocalizedString("mgr_assigned_to", comment: ""), value: a) }
-                        if let r = t.reportId { LabeledContent(NSLocalizedString("mgr_report", comment: ""), value: r) }
-                        if let s = t.reportStatus { LabeledContent(NSLocalizedString("mgr_report_status", comment: ""), value: s) }
-                    }
-                    Section(NSLocalizedString("mgr_assign_section", comment: "")) {
-                        Button {
-                            showAssignPicker = true
-                            assignError = nil
-                        } label: {
-                            HStack {
-                                Text(NSLocalizedString("mgr_assign_to_worker", comment: ""))
-                                if isAssigning { Spacer(); ProgressView() }
+                VStack(spacing: 0) {
+                    List {
+                        Section(NSLocalizedString("mgr_task_section", comment: "")) {
+                            LabeledContent(NSLocalizedString("mgr_title", comment: ""), value: t.title ?? "—")
+                            LabeledContent(NSLocalizedString("mgr_status", comment: ""), value: t.status ?? "—")
+                            if let d = t.dueDate { LabeledContent(NSLocalizedString("mgr_due", comment: ""), value: d) }
+                            if let a = t.assignedTo { LabeledContent(NSLocalizedString("mgr_assigned_to", comment: ""), value: a) }
+                            if let r = t.reportId { LabeledContent(NSLocalizedString("mgr_report", comment: ""), value: r) }
+                            if let s = t.reportStatus { LabeledContent(NSLocalizedString("mgr_report_status", comment: ""), value: s) }
+                        }
+                        Section(NSLocalizedString("mgr_assign_section", comment: "")) {
+                            Button {
+                                showAssignPicker = true
+                                assignError = nil
+                            } label: {
+                                HStack {
+                                    Text(NSLocalizedString("mgr_assign_to_worker", comment: ""))
+                                    if isAssigning { Spacer(); ProgressView() }
+                                }
+                            }
+                            .disabled(isAssigning)
+                            if let err = assignError {
+                                Text(err)
+                                    .foregroundStyle(ManagerSemanticColors.error)
+                                    .font(.caption)
+                            }
+                            if let message = assignSuccessMessage {
+                                Text(message)
+                                    .foregroundStyle(ManagerSemanticColors.success)
+                                    .font(.caption)
                             }
                         }
-                        .disabled(isAssigning)
-                        if let err = assignError {
-                            Text(err)
-                                .foregroundStyle(ManagerSemanticColors.error)
-                                .font(.caption)
-                        }
-                        if let message = assignSuccessMessage {
-                            Text(message)
-                                .foregroundStyle(ManagerSemanticColors.success)
-                                .font(.caption)
-                        }
                     }
+                    .frame(maxHeight: 280)
+                    TaskChatView(taskId: taskId, currentUserId: managerUserId)
+                        .accessibilityIdentifier("pilot_manager_task_chat")
                 }
                 .navigationTitle(t.title ?? NSLocalizedString("mgr_task_section", comment: ""))
                 .refreshable { await loadAsync() }
@@ -242,6 +296,11 @@ struct TaskDetailManagerView: View {
             }
         }
         .onAppear { loadIfNeeded() }
+        .task {
+            if let session = await AuthService.shared.currentSession() {
+                managerUserId = session.user.id
+            }
+        }
     }
 
     private func load() {

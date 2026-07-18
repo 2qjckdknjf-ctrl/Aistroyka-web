@@ -6,6 +6,36 @@ import * as repo from "./upload-session.repository";
 import type { UploadSession, UploadSessionPurpose } from "./upload-session.types";
 import { emitChange } from "@/lib/sync/change-log.repository";
 import { getAdminClient } from "@/lib/supabase/admin";
+import {
+  CHAT_MEDIA_LIMITS,
+  normalizeMime,
+} from "@/lib/domain/task-messages/task-messages.media";
+
+const CHAT_ALLOWED_MIMES = new Set<string>([
+  ...CHAT_MEDIA_LIMITS.image.mimes,
+  ...CHAT_MEDIA_LIMITS.voice.mimes,
+  ...CHAT_MEDIA_LIMITS.video.mimes,
+]);
+
+const CHAT_MAX_BYTES = Math.max(
+  CHAT_MEDIA_LIMITS.image.maxBytes,
+  CHAT_MEDIA_LIMITS.voice.maxBytes,
+  CHAT_MEDIA_LIMITS.video.maxBytes
+);
+
+function validateChatFinalizePayload(payload: {
+  mime_type?: string;
+  size_bytes?: number;
+}): string | null {
+  const mime = normalizeMime(payload.mime_type);
+  if (!mime || !CHAT_ALLOWED_MIMES.has(mime)) {
+    return "Unsupported chat media MIME type";
+  }
+  if (payload.size_bytes != null && (payload.size_bytes < 0 || payload.size_bytes > CHAT_MAX_BYTES)) {
+    return "Chat media exceeds size limit";
+  }
+  return null;
+}
 
 /** Bucket name for media uploads (must exist in Supabase Storage). */
 export const UPLOAD_BUCKET = "media";
@@ -80,6 +110,11 @@ export async function finalizeUploadSession(
   if (session.user_id !== ctx.userId) return { ok: false, error: "Not your session" };
   if (!isObjectPathAllowed(payload.object_path, ctx.tenantId, sessionId)) {
     return { ok: false, error: "object_path must be within session path" };
+  }
+
+  if (session.purpose === "task_chat") {
+    const chatErr = validateChatFinalizePayload(payload);
+    if (chatErr) return { ok: false, error: chatErr };
   }
 
   const verifyObject = process.env.MEDIA_FINALIZE_VERIFY_OBJECT === "true";

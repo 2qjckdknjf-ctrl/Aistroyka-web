@@ -2,7 +2,7 @@
 //  TaskDetailView.swift
 //  AiStroykaWorker
 //
-//  Phase 7.5 — Task detail with "Start report" CTA; links report draft to task via draftTaskId.
+//  Task detail with "Start report" CTA + task chat with manager.
 //
 
 import SwiftUI
@@ -15,29 +15,66 @@ struct TaskDetailView: View {
     @ObservedObject private var store = AppStateStoreManager.shared
     @Environment(\.dismiss) private var dismiss
     @State private var navigateToReport = false
+    @State private var currentUserId: String?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text(task.title)
-                .font(.headline)
-            if let due = task.dueDate, !due.isEmpty {
-                Text(String(format: NSLocalizedString("worker_task_due_fmt", comment: ""), due))
-                    .font(.subheadline)
+        VStack(spacing: 0) {
+            VStack(alignment: .leading, spacing: 12) {
+                Text(task.title)
+                    .font(.headline)
+                if let due = task.dueDate, !due.isEmpty {
+                    Text(String(format: NSLocalizedString("worker_task_due_fmt", comment: ""), due))
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+                Text(String(format: NSLocalizedString("worker_task_status_fmt", comment: ""), task.status))
+                    .font(.caption)
                     .foregroundColor(.secondary)
+                Button(NSLocalizedString("worker_start_report", comment: "")) {
+                    store.save { $0.draftTaskId = task.id }
+                    navigateToReport = true
+                }
+                .buttonStyle(.borderedProminent)
+                .accessibilityIdentifier("pilot_worker_start_report")
             }
-            Text(String(format: NSLocalizedString("worker_task_status_fmt", comment: ""), task.status))
-                .font(.caption)
-                .foregroundColor(.secondary)
-            Spacer().frame(height: 8)
-            Button(NSLocalizedString("worker_start_report", comment: "")) {
-                store.save { $0.draftTaskId = task.id }
-                navigateToReport = true
-            }
-            .buttonStyle(.borderedProminent)
-            .accessibilityIdentifier("pilot_worker_start_report")
-            Spacer()
+            .padding()
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            Divider()
+
+            TaskChatView(
+                taskId: task.id,
+                currentUserId: currentUserId,
+                enqueueOfflineText: { taskId, body, clientId in
+                    let now = ISO8601DateFormatter().string(from: Date())
+                    let op = QueuedOperation(
+                        id: UUID().uuidString,
+                        type: .sendTaskMessage,
+                        payload: OperationPayload(
+                            taskId: taskId,
+                            messageBody: body,
+                            clientId: clientId
+                        ),
+                        idempotencyKey: clientId,
+                        dependsOn: [],
+                        state: .queued,
+                        attemptCount: 0,
+                        nextAttemptAt: nil,
+                        lastErrorCode: nil,
+                        lastErrorMessage: nil,
+                        createdAt: now,
+                        updatedAt: now,
+                        resultReportId: nil,
+                        resultSessionId: nil,
+                        resultUploadPath: nil
+                    )
+                    OperationQueueStore.shared.add(op)
+                    OperationQueueExecutor.shared.runLoop()
+                    return true
+                }
+            )
+                .accessibilityIdentifier("pilot_worker_task_chat")
         }
-        .padding()
         .navigationTitle(NSLocalizedString("worker_task_title", comment: ""))
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(isPresented: $navigateToReport) {
@@ -48,6 +85,11 @@ struct TaskDetailView: View {
                 taskId: task.id,
                 taskTitle: task.title
             )
+        }
+        .task {
+            if let session = await AuthService.shared.currentSession() {
+                currentUserId = session.user.id
+            }
         }
     }
 }

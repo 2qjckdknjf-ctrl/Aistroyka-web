@@ -13,6 +13,10 @@ function isPathAllowed(pathname: string, method: string): boolean {
   const m = (method || "GET").toUpperCase();
   // Wave 3: worker task detail + own-report read — RBAC enforced in route handlers; lite middleware only gates surface area.
   if (m === "GET" && /^\/api\/v1\/tasks\/[^/]+$/.test(pathname)) return true;
+  // Task chat (Worker ↔ Manager): list/create/soft-delete — RBAC in handlers.
+  if (/^\/api\/v1\/tasks\/[^/]+\/messages(\/[^/]+)?$/.test(pathname)) {
+    if (m === "GET" || m === "POST" || m === "DELETE") return true;
+  }
   if (m === "GET" && /^\/api\/v1\/reports\/[^/]+$/.test(pathname)) return true;
   // Worker/iOS+Android lite apps list tenant projects (tenant-scoped; same as dashboard read).
   if (pathname === "/api/v1/projects" && method === "GET") return true;

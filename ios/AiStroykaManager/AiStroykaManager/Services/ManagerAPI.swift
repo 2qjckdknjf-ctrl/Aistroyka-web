@@ -142,6 +142,27 @@ enum ManagerAPI {
         return r.data ?? []
     }
 
+    /// POST /api/v1/devices/register — register APNS token for push. Token never logged.
+    static func registerDevice(pushToken: String) async throws {
+        struct Body: Encodable {
+            let deviceId: String
+            let platform: String
+            let token: String
+            enum CodingKeys: String, CodingKey {
+                case deviceId = "device_id"
+                case platform
+                case token
+            }
+        }
+        let body = Body(deviceId: DeviceContext.deviceId, platform: "ios", token: pushToken)
+        let _: RegisterDeviceResponse = try await APIClient.shared.request(
+            path: "devices/register",
+            method: "POST",
+            body: body,
+            idempotencyKey: DeviceContext.idempotencyKeyDeviceRegister(pushToken: pushToken)
+        )
+    }
+
     /// POST /api/v1/tasks/:id/assign — assign task to worker.
     static func assignTask(taskId: String, workerId: String, idempotencyKey: String) async throws {
         struct Body: Encodable {

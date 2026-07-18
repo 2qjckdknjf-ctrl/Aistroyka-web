@@ -102,3 +102,10 @@
 "worker_start_report" = "Iniciar informe";
 "worker_report_id_short_fmt" = "Informe …%@";
 "worker_report_status_fmt" = "Estado: %@";
+"task_chat_placeholder" = "Mensaje…";
+"task_chat_voice_fmt" = "Mensaje de voz (%ds)";
+"task_chat_photo" = "Foto";
+"task_chat_video" = "Vídeo";
+"task_chat_delete" = "Eliminar";
+"task_chat_media_offline" = "Fotos, vídeo y voz requieren conexión.";
+"task_chat_unread" = "Chat sin leer";

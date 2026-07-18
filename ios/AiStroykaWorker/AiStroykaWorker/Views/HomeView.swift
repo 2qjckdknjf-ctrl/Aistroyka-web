@@ -29,6 +29,7 @@ struct HomeView: View {
     @State private var guideConfidence: Int?
     @State private var guideRiskSignals: [WorkerHelpAssistantRiskSignalDTO] = []
     @State private var feedbackReports: [WorkerSyncReportRow] = []
+    @State private var unreadChatByTaskId: [String: Bool] = [:]
 
     private var shiftStarted: Bool { store.state.shift.isStarted }
     private var dayId: String? { store.state.shift.dayId }
@@ -106,10 +107,16 @@ struct HomeView: View {
                     ForEach(todayTasks, id: \.id) { task in
                         NavigationLink {
                             TaskDetailView(task: task, projectId: project.id, dayId: dayId)
-                        } label: {
+                        }                         label: {
                             HStack {
                                 Text(task.title)
                                 Spacer()
+                                if unreadChatByTaskId[task.id] == true {
+                                    Circle()
+                                        .fill(Color.accentColor)
+                                        .frame(width: 8, height: 8)
+                                        .accessibilityLabel(NSLocalizedString("task_chat_unread", comment: ""))
+                                }
                                 Text(task.status).font(.caption).foregroundColor(.secondary)
                             }
                             .padding(.vertical, 4)
@@ -234,7 +241,7 @@ struct HomeView: View {
         .onReceive(NotificationCenter.default.publisher(for: .aiStroykaWorkerPushPayload)) { notification in
             guard let type = notification.userInfo?["type"] as? String else { return }
             switch type {
-            case "task_assigned", "task_updated":
+            case "task_assigned", "task_updated", "task_message":
                 loadTodayTasks()
                 loadFeedbackReports()
             case "report_reminder", "upload_failed": break
@@ -422,13 +429,24 @@ struct HomeView: View {
         Task {
             do {
                 let list = try await WorkerAPI.tasksToday(projectId: project.id)
+                var unread: [String: Bool] = [:]
+                for t in list.prefix(30) {
+                    do {
+                        let msgs = try await TaskMessagesAPI.listAll(taskId: t.id, pageSize: 50, maxPages: 2)
+                        unread[t.id] = TaskChatReadStore.isUnread(taskId: t.id, latestCreatedAt: msgs.last?.createdAt)
+                    } catch {
+                        unread[t.id] = false
+                    }
+                }
                 await MainActor.run {
                     todayTasks = list
+                    unreadChatByTaskId = unread
                     tasksLoading = false
                 }
             } catch {
                 await MainActor.run {
                     todayTasks = []
+                    unreadChatByTaskId = [:]
                     tasksLoading = false
                 }
             }

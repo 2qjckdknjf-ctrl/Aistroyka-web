@@ -209,3 +209,10 @@
 "mgr_ai_tab_copilot_hint" = "Откройте проект → Intelligence или Copilot для полного ассистента.";
 "mgr_copilot_per_project_title" = "Копилот внутри проекта";
 "mgr_copilot_per_project_body" = "Проекты → объект → Copilot или Intelligence на экране проекта.";
+"task_chat_placeholder" = "Сообщение…";
+"task_chat_voice_fmt" = "Голосовое (%d с)";
+"task_chat_photo" = "Фото";
+"task_chat_video" = "Видео";
+"task_chat_delete" = "Удалить";
+"task_chat_media_offline" = "Фото, видео и голос требуют сеть.";
+"task_chat_unread" = "Новые сообщения";

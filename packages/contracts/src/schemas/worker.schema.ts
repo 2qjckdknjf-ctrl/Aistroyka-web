@@ -44,7 +44,7 @@ export const WorkerDayEndRequestSchema = z.object({}).strict().optional();
 
 /** POST /api/v1/media/upload-sessions */
 export const CreateUploadSessionRequestSchema = z.object({
-  purpose: z.enum(["report_before", "report_after", "project_media"]).optional(),
+  purpose: z.enum(["report_before", "report_after", "project_media", "task_chat"]).optional(),
 });
 
 /** POST /api/v1/media/upload-sessions/[id]/finalize */
