@@ -17,6 +17,8 @@ export interface TaskMessage {
   /** Joined from upload_sessions when present. */
   mime_type?: string | null;
   object_path?: string | null;
+  /** Finalized upload size in bytes (from upload_sessions). */
+  size_bytes?: number | null;
   /** Short-lived signed URL for chat media playback (when available). */
   media_url?: string | null;
 }

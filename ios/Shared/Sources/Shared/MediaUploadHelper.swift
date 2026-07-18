@@ -14,6 +14,10 @@ public enum MediaUploadHelper {
         token: String
     ) async throws {
         let base = Config.supabaseURL.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        guard !base.isEmpty else {
+            throw APIError(statusCode: nil, code: nil, message: "Supabase URL not configured for media upload")
+        }
+        // Same path construction as Worker UploadManager (report photos): no segment re-encoding.
         let urlString = "\(base)/storage/v1/object/media/\(storagePath)"
         guard let url = URL(string: urlString) else {
             throw APIError(statusCode: nil, code: nil, message: "Invalid storage URL")
@@ -23,10 +27,18 @@ public enum MediaUploadHelper {
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.setValue(Config.supabaseAnonKey, forHTTPHeaderField: "apikey")
         request.setValue(mimeType, forHTTPHeaderField: "Content-Type")
-        request.setValue("true", forHTTPHeaderField: "x-upsert")
-        let (respData, response) = try await URLSession.shared.upload(for: request, from: data)
+        request.timeoutInterval = 120
+        request.httpBody = data
+        let (respData, response) = try await URLSession.shared.data(for: request)
         let code = (response as? HTTPURLResponse)?.statusCode ?? 0
         if code >= 400 {
+            if code == 401 || code == 403 {
+                throw APIError(
+                    statusCode: code,
+                    code: nil,
+                    message: "Storage policy denied. Check Supabase RLS for bucket media and tenant path."
+                )
+            }
             throw APIError.from(data: respData, response: response)
         }
     }
@@ -37,6 +49,9 @@ public enum MediaUploadHelper {
         mimeType: String,
         fileExtension: String
     ) async throws -> String {
+        guard data.count > 0 else {
+            throw APIError(statusCode: nil, code: nil, message: "Empty media payload")
+        }
         guard let token = await AuthService.shared.getAccessToken() else {
             throw APIError(statusCode: 401, code: "unauthorized", message: "Not signed in")
         }

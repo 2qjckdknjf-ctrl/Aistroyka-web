@@ -22,12 +22,18 @@ type MessageRow = {
 
 function mapRow(
   row: MessageRow,
-  extra?: { mime_type?: string | null; object_path?: string | null; media_url?: string | null }
+  extra?: {
+    mime_type?: string | null;
+    object_path?: string | null;
+    size_bytes?: number | null;
+    media_url?: string | null;
+  }
 ): TaskMessage {
   return {
     ...row,
     mime_type: extra?.mime_type ?? null,
     object_path: extra?.object_path ?? null,
+    size_bytes: extra?.size_bytes ?? null,
     media_url: extra?.media_url ?? null,
   };
 }
@@ -117,13 +123,18 @@ async function attachUploadMeta(
   if (sessionIds.length === 0) return messages;
   const { data } = await supabase
     .from("upload_sessions")
-    .select("id, mime_type, object_path")
+    .select("id, mime_type, object_path, size_bytes")
     .eq("tenant_id", tenantId)
     .in("id", sessionIds);
   const byId = new Map(
-    ((data ?? []) as { id: string; mime_type: string | null; object_path: string | null }[]).map(
-      (r) => [r.id, r]
-    )
+    (
+      (data ?? []) as {
+        id: string;
+        mime_type: string | null;
+        object_path: string | null;
+        size_bytes: number | null;
+      }[]
+    ).map((r) => [r.id, r])
   );
 
   const signedBySession = new Map<string, string>();
@@ -150,6 +161,7 @@ async function attachUploadMeta(
       ...m,
       mime_type: meta.mime_type,
       object_path: meta.object_path,
+      size_bytes: meta.size_bytes,
       media_url: signedBySession.get(m.upload_session_id) ?? null,
     };
   });

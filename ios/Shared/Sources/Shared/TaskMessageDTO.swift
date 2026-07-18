@@ -19,6 +19,7 @@ public struct TaskMessageDTO: Codable, Identifiable, Equatable {
     public let createdAt: String
     public let mimeType: String?
     public let objectPath: String?
+    public let sizeBytes: Int?
     public let mediaUrl: String?
 
     public init(
@@ -35,6 +36,7 @@ public struct TaskMessageDTO: Codable, Identifiable, Equatable {
         createdAt: String,
         mimeType: String? = nil,
         objectPath: String? = nil,
+        sizeBytes: Int? = nil,
         mediaUrl: String? = nil
     ) {
         self.id = id
@@ -50,6 +52,7 @@ public struct TaskMessageDTO: Codable, Identifiable, Equatable {
         self.createdAt = createdAt
         self.mimeType = mimeType
         self.objectPath = objectPath
+        self.sizeBytes = sizeBytes
         self.mediaUrl = mediaUrl
     }
 }
@@ -163,15 +166,12 @@ public enum TaskMessagesAPI {
         sizeBytes: Int,
         idempotencyKey: String
     ) async throws {
+        // Rely on APIClient convertToSnakeCase (objectPath → object_path, etc.).
+        // Do not also declare snake_case CodingKeys — that can double-transform on some SDKs.
         struct Body: Encodable {
             let objectPath: String
             let mimeType: String
             let sizeBytes: Int
-            enum CodingKeys: String, CodingKey {
-                case objectPath = "object_path"
-                case mimeType = "mime_type"
-                case sizeBytes = "size_bytes"
-            }
         }
         try await APIClient.shared.requestVoid(
             path: "media/upload-sessions/\(sessionId)/finalize",

@@ -51,7 +51,10 @@ public actor APIClient {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
         if let body = body {
-            request.httpBody = try JSONEncoder().encode(AnyEncodable(body))
+            let encoder = JSONEncoder()
+            // Prefer explicit CodingKeys on payloads; also convert camelCase → snake_case for API contracts.
+            encoder.keyEncodingStrategy = .convertToSnakeCase
+            request.httpBody = try encoder.encode(AnyEncodable(body))
         }
 
         let (data, response) = try await session.data(for: request)

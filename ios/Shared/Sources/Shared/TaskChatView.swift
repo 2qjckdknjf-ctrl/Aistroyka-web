@@ -98,7 +98,10 @@ public final class TaskChatViewModel: ObservableObject {
         if !silent { isLoading = true }
         do {
             messages = try await TaskMessagesAPI.listAll(taskId: taskId)
-            errorMessage = nil
+            // Never clear a send/upload error on background poll — that hid media failures in UITests.
+            if !silent {
+                errorMessage = nil
+            }
             if let last = messages.last {
                 TaskChatReadStore.markRead(taskId: taskId, createdAt: last.createdAt)
             }
@@ -194,6 +197,23 @@ public final class TaskChatViewModel: ObservableObject {
         isSending = false
     }
 
+    /// UITest-only: send a generated JPEG without PhotosPicker (gated by launch flag).
+    public func sendE2EFixturePhoto() async {
+        guard ChatMediaE2E.shouldUseUploadFixture else { return }
+        do {
+            let data = try ChatMediaE2E.fixtureJPEGData()
+            let prepared = try ChatMediaPrep.prepareGalleryItem(data: data, isVideo: false, contentTypes: [.jpeg])
+            await sendMedia(
+                data: prepared.data,
+                kind: prepared.kind,
+                mimeType: prepared.mimeType,
+                fileExtension: prepared.fileExtension
+            )
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
     public func startRecording() {
         guard !isRecording else { return }
         let session = AVAudioSession.sharedInstance()
@@ -205,17 +225,22 @@ public final class TaskChatViewModel: ObservableObject {
                     return
                 }
                 do {
-                    try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker])
-                    try session.setActive(true)
+                    try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetooth])
+                    try session.setActive(true, options: [])
                     let url = FileManager.default.temporaryDirectory.appendingPathComponent("chat-voice-\(UUID().uuidString).m4a")
                     let settings: [String: Any] = [
                         AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
                         AVSampleRateKey: 44100,
                         AVNumberOfChannelsKey: 1,
+                        AVEncoderBitRateKey: 64000,
                         AVEncoderAudioQualityKey: AVAudioQuality.medium.rawValue,
                     ]
                     let recorder = try AVAudioRecorder(url: url, settings: settings)
-                    recorder.record()
+                    recorder.isMeteringEnabled = true
+                    guard recorder.prepareToRecord(), recorder.record() else {
+                        self.errorMessage = NSLocalizedString("task_chat_media_read_failed", comment: "")
+                        return
+                    }
                     self.audioRecorder = recorder
                     self.recordURL = url
                     self.isRecording = true
@@ -227,20 +252,49 @@ public final class TaskChatViewModel: ObservableObject {
         }
     }
 
+    public func cancelRecording() {
+        stopRecording(send: false)
+    }
+
     public func stopRecording(send: Bool) {
         guard isRecording else { return }
-        let durationMs = Int((audioRecorder?.currentTime ?? 0) * 1000)
+        var durationMs = Int((audioRecorder?.currentTime ?? 0) * 1000)
         audioRecorder?.stop()
         audioRecorder = nil
         isRecording = false
-        guard send, let url = recordURL, let data = try? Data(contentsOf: url) else {
+        guard send, let url = recordURL else {
             if let url = recordURL { try? FileManager.default.removeItem(at: url) }
             recordURL = nil
             return
         }
         recordURL = nil
+        guard let data = try? Data(contentsOf: url), data.count > 64 else {
+            try? FileManager.default.removeItem(at: url)
+            if send {
+                errorMessage = NSLocalizedString("task_chat_voice_too_short", comment: "")
+            }
+            return
+        }
+        // Fallback duration when AVAudioRecorder.currentTime is stale (common under XCTest/automation).
+        if durationMs < 250, let player = try? AVAudioPlayer(contentsOf: url), player.duration.isFinite {
+            durationMs = Int(player.duration * 1000)
+        }
+        guard durationMs >= 250 else {
+            try? FileManager.default.removeItem(at: url)
+            if send {
+                errorMessage = NSLocalizedString("task_chat_voice_too_short", comment: "")
+            }
+            return
+        }
         Task {
-            await sendMedia(data: data, kind: "voice", mimeType: "audio/m4a", fileExtension: "m4a", durationMs: max(durationMs, 1))
+            // Prefer audio/mp4 (AAC-in-MP4); audio/m4a is also accepted server-side.
+            await sendMedia(
+                data: data,
+                kind: "voice",
+                mimeType: "audio/mp4",
+                fileExtension: "m4a",
+                durationMs: max(durationMs, 1)
+            )
             try? FileManager.default.removeItem(at: url)
         }
     }
@@ -295,7 +349,6 @@ public struct TaskChatView: View {
                     .foregroundColor(.red)
                     .padding(.horizontal)
                     .accessibilityIdentifier("task_chat_error")
-                    .accessibilityLabel("task_chat_error")
             }
             composer
         }
@@ -325,21 +378,17 @@ public struct TaskChatView: View {
                     model.errorMessage = NSLocalizedString("task_chat_media_read_failed", comment: "")
                     return
                 }
-                if isVideo {
-                    await model.sendMedia(
-                        data: picked.data,
-                        kind: "video",
-                        mimeType: "video/mp4",
-                        fileExtension: "mp4"
-                    )
-                } else {
-                    await model.sendMedia(
-                        data: picked.data,
-                        kind: "image",
-                        mimeType: "image/jpeg",
-                        fileExtension: "jpg"
-                    )
-                }
+                let prepared = try ChatMediaPrep.prepareGalleryItem(
+                    data: picked.data,
+                    isVideo: isVideo,
+                    contentTypes: item.supportedContentTypes
+                )
+                await model.sendMedia(
+                    data: prepared.data,
+                    kind: prepared.kind,
+                    mimeType: prepared.mimeType,
+                    fileExtension: prepared.fileExtension
+                )
             } catch {
                 model.errorMessage = error.localizedDescription
             }
@@ -352,12 +401,20 @@ public struct TaskChatView: View {
             if mine { Spacer(minLength: 40) }
             VStack(alignment: mine ? .trailing : .leading, spacing: 4) {
                 Group {
-                    if msg.kind == "voice", let urlStr = msg.mediaUrl, let url = URL(string: urlStr) {
-                        TaskChatAudioPlayer(url: url)
-                            .padding(8)
-                            .accessibilityIdentifier("task_chat_voice_\(msg.id)")
-                            .accessibilityLabel("task_chat_voice")
-                    } else if msg.kind == "image", let urlStr = msg.mediaUrl, let url = URL(string: urlStr) {
+                    if msg.kind == "voice" {
+                        if let urlStr = msg.mediaUrl, let url = URL(string: urlStr) {
+                            TaskChatAudioPlayer(url: url)
+                                .padding(8)
+                                .accessibilityIdentifier("task_chat_voice_\(msg.id)")
+                                .accessibilityLabel("task_chat_voice")
+                        } else {
+                            Text(bubbleText(msg))
+                                .padding(8)
+                                .accessibilityIdentifier("task_chat_voice_\(msg.id)")
+                                .accessibilityLabel("task_chat_voice")
+                        }
+                    } else if msg.kind == "image" {
+                        if let urlStr = msg.mediaUrl, let url = URL(string: urlStr) {
                         AsyncImage(url: url) { phase in
                             switch phase {
                             case .success(let image):
@@ -372,15 +429,28 @@ public struct TaskChatView: View {
                         .padding(6)
                         .accessibilityIdentifier("task_chat_image_\(msg.id)")
                         .accessibilityLabel("task_chat_photo")
-                    } else if msg.kind == "video", let urlStr = msg.mediaUrl, let url = URL(string: urlStr) {
-                        Button {
-                            fullscreenURL = url
-                        } label: {
-                            Label(NSLocalizedString("task_chat_video", comment: ""), systemImage: "play.rectangle.fill")
+                        } else {
+                            Text(bubbleText(msg))
+                                .padding(6)
+                                .accessibilityIdentifier("task_chat_image_\(msg.id)")
+                                .accessibilityLabel("task_chat_photo")
                         }
-                        .padding(10)
-                        .accessibilityIdentifier("task_chat_video_\(msg.id)")
-                        .accessibilityLabel("task_chat_video")
+                    } else if msg.kind == "video" {
+                        if let urlStr = msg.mediaUrl, let url = URL(string: urlStr) {
+                            Button {
+                                fullscreenURL = url
+                            } label: {
+                                Label(NSLocalizedString("task_chat_video", comment: ""), systemImage: "play.rectangle.fill")
+                            }
+                            .padding(10)
+                            .accessibilityIdentifier("task_chat_video_\(msg.id)")
+                            .accessibilityLabel("task_chat_video")
+                        } else {
+                            Text(bubbleText(msg))
+                                .padding(10)
+                                .accessibilityIdentifier("task_chat_video_\(msg.id)")
+                                .accessibilityLabel("task_chat_video")
+                        }
                     } else {
                         Text(bubbleText(msg))
                             .padding(10)
@@ -444,7 +514,11 @@ public struct TaskChatView: View {
         VStack(spacing: 8) {
             HStack(alignment: .bottom, spacing: 8) {
                 Button {
-                    showPhotoPicker = true
+                    if ChatMediaE2E.shouldUseUploadFixture {
+                        Task { await model.sendE2EFixturePhoto() }
+                    } else {
+                        showPhotoPicker = true
+                    }
                 } label: {
                     Image(systemName: "paperclip")
                 }
@@ -456,6 +530,16 @@ public struct TaskChatView: View {
                     .textFieldStyle(.roundedBorder)
                     .accessibilityIdentifier("task_chat_composer")
                     .accessibilityLabel("task_chat_composer")
+                if model.isRecording {
+                    Button {
+                        model.cancelRecording()
+                    } label: {
+                        Image(systemName: "xmark.circle")
+                            .foregroundColor(.secondary)
+                    }
+                    .accessibilityIdentifier("task_chat_voice_cancel")
+                    .accessibilityLabel("task_chat_voice_cancel")
+                }
                 Button {
                     if model.isRecording {
                         model.stopRecording(send: true)

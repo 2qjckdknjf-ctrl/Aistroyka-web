@@ -218,3 +218,5 @@
 "task_chat_unread" = "Chat sin leer";
 "task_chat_media_read_failed" = "No se pudo leer el archivo seleccionado.";
 "task_chat_mic_denied" = "Se necesita acceso al micrófono para enviar mensajes de voz. Actívalo en Ajustes.";
+"task_chat_media_too_large" = "Este archivo es demasiado grande para el chat.";
+"task_chat_voice_too_short" = "Mantén pulsado un poco más para grabar un mensaje de voz.";

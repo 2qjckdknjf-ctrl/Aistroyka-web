@@ -111,3 +111,5 @@
 "task_chat_unread" = "Unread chat";
 "task_chat_media_read_failed" = "Could not read the selected media.";
 "task_chat_mic_denied" = "Microphone access is required to send voice messages. Enable it in Settings.";
+"task_chat_media_too_large" = "This file is too large for task chat.";
+"task_chat_voice_too_short" = "Hold a little longer to record a voice message.";
