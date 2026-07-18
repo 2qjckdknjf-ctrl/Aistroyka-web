@@ -22,6 +22,7 @@ describe("task-messages.media", () => {
   it("enforces size and duration caps", () => {
     expect(sizeWithinLimit("voice", CHAT_MEDIA_LIMITS.voice.maxBytes)).toBe(true);
     expect(sizeWithinLimit("voice", CHAT_MEDIA_LIMITS.voice.maxBytes + 1)).toBe(false);
+    expect(sizeWithinLimit("voice", null)).toBe(false);
     expect(durationWithinLimit(CHAT_MEDIA_LIMITS.voice.maxDurationMs)).toBe(true);
     expect(durationWithinLimit(CHAT_MEDIA_LIMITS.voice.maxDurationMs + 1)).toBe(false);
   });

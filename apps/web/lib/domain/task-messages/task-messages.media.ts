@@ -32,7 +32,8 @@ export function sizeWithinLimit(
   kind: Exclude<TaskMessageKind, "text">,
   sizeBytes: number | null | undefined
 ): boolean {
-  if (sizeBytes == null) return true; // best-effort when client omitted size
+  // Reject omitted size — otherwise large uploads can bypass caps.
+  if (sizeBytes == null) return false;
   return sizeBytes >= 0 && sizeBytes <= CHAT_MEDIA_LIMITS[kind].maxBytes;
 }
 
@@ -42,7 +43,7 @@ export function durationWithinLimit(durationMs: number | null | undefined): bool
 }
 
 /** Upload session purposes allowed for task chat attachments. */
-export const CHAT_UPLOAD_PURPOSES = ["task_chat", "project_media"] as const;
+export const CHAT_UPLOAD_PURPOSES = ["task_chat"] as const;
 export type ChatUploadPurpose = (typeof CHAT_UPLOAD_PURPOSES)[number];
 
 export function isChatUploadPurpose(purpose: string): boolean {

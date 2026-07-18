@@ -9,6 +9,7 @@ import {
   notifyProjectManagers,
   notifyTenantManagers,
 } from "@/lib/domain/notifications/manager-notifications.repository";
+import { isLiteWorkerClient } from "@/lib/tenant/client-profile";
 import { canAccessTaskChat, canSoftDeleteTaskMessage } from "./task-messages.policy";
 import * as repo from "./task-messages.repository";
 import {
@@ -18,6 +19,11 @@ import {
   sizeWithinLimit,
 } from "./task-messages.media";
 import type { CreateTaskMessageInput, ListTaskMessagesResult, TaskMessage } from "./task-messages.types";
+
+/** Manager/web surfaces only — lite worker clients always use assignment checks. */
+function isManagerTaskChatSurface(ctx: TenantContext): boolean {
+  return !isLiteWorkerClient(ctx) && canManageTasks(ctx);
+}
 
 async function assertTaskChatAccess(
   supabase: SupabaseClient,
@@ -30,7 +36,8 @@ async function assertTaskChatAccess(
   const task = await taskRepo.getById(supabase, taskId, ctx.tenantId);
   if (!task?.project_id) return { ok: false, error: "Not found", status: 404 };
 
-  if (canManageTasks(ctx)) {
+  // Mirror GET /tasks/:id — lite field workers never get tenant-wide manager chat access.
+  if (isManagerTaskChatSurface(ctx)) {
     return { ok: true, projectId: task.project_id };
   }
 
@@ -194,8 +201,8 @@ async function notifyTaskMessageRecipients(
             ? "Photo"
             : "Video";
 
-    // If sender is worker, notify managers; if manager, notify assignees (already in set).
-    if (!canManageTasks(ctx)) {
+    // Worker / lite surfaces notify managers; manager surfaces notify assignees (already in set).
+    if (!isManagerTaskChatSurface(ctx)) {
       if (params.projectId) {
         await notifyProjectManagers(admin, ctx.tenantId!, params.projectId, {
           type: "task_message",

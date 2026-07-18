@@ -95,7 +95,11 @@ export async function listByTask(
 
   const rows = data as MessageRow[];
   const page = rows.slice(0, limit);
-  const enriched = await attachUploadMeta(supabase, tenantId, page.map(mapRow));
+  const enriched = await attachUploadMeta(
+    supabase,
+    tenantId,
+    page.map((row) => mapRow(row))
+  );
   const last = page[page.length - 1];
   const nextCursor =
     rows.length > limit && last ? encodeMessageCursor(last.created_at, last.id) : null;

@@ -10,6 +10,10 @@ vi.mock("@/lib/domain/tasks/task.policy", () => ({
   canReadTasks: vi.fn().mockReturnValue(true),
 }));
 
+vi.mock("@/lib/tenant/client-profile", () => ({
+  isLiteWorkerClient: vi.fn(),
+}));
+
 vi.mock("@/lib/domain/tasks/task.repository", () => ({
   getById: vi.fn(),
 }));
@@ -41,6 +45,7 @@ vi.mock("@/lib/domain/notifications/manager-notifications.repository", () => ({
 }));
 
 import { canManageTasks } from "@/lib/domain/tasks/task.policy";
+import { isLiteWorkerClient } from "@/lib/tenant/client-profile";
 import * as taskRepo from "@/lib/domain/tasks/task.repository";
 import { validateTaskForReportLink } from "@/lib/domain/reports/report.service";
 import * as repo from "./task-messages.repository";
@@ -51,6 +56,7 @@ const supabase = {} as any;
 describe("task-messages.service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(isLiteWorkerClient).mockReturnValue(false);
     vi.mocked(taskRepo.getById).mockResolvedValue({
       id: "task-1",
       project_id: "p1",
@@ -148,5 +154,51 @@ describe("task-messages.service", () => {
     expect(res.status).toBe(200);
     expect(res.ok).toBe(true);
     expect(repo.softDelete).not.toHaveBeenCalled();
+  });
+
+  it("lite worker with member role still requires assignment", async () => {
+    vi.mocked(canManageTasks).mockReturnValue(true);
+    vi.mocked(isLiteWorkerClient).mockReturnValue(true);
+    vi.mocked(validateTaskForReportLink).mockResolvedValue({ ok: false, code: "task_not_assigned" });
+    const res = await listTaskMessages(supabase, ctx, "task-other");
+    expect(res.status).toBe(403);
+    expect(res.code).toBe("task_not_assigned");
+    expect(validateTaskForReportLink).toHaveBeenCalled();
+  });
+
+  it("rejects media when size_bytes missing", async () => {
+    vi.mocked(canManageTasks).mockReturnValue(true);
+    vi.mocked(repo.getFinalizedUploadSession).mockResolvedValue({
+      id: "s1",
+      purpose: "task_chat",
+      mime_type: "image/jpeg",
+      size_bytes: null,
+      object_path: "media/x.jpg",
+      status: "finalized",
+    } as any);
+    const res = await createTaskMessage(supabase, ctx, "task-1", {
+      kind: "image",
+      mediaId: "s1",
+    });
+    expect(res.status).toBe(400);
+    expect(res.code).toBe("media_size");
+  });
+
+  it("rejects project_media purpose for chat attach", async () => {
+    vi.mocked(canManageTasks).mockReturnValue(true);
+    vi.mocked(repo.getFinalizedUploadSession).mockResolvedValue({
+      id: "s1",
+      purpose: "project_media",
+      mime_type: "image/jpeg",
+      size_bytes: 1000,
+      object_path: "media/x.jpg",
+      status: "finalized",
+    } as any);
+    const res = await createTaskMessage(supabase, ctx, "task-1", {
+      kind: "image",
+      mediaId: "s1",
+    });
+    expect(res.status).toBe(400);
+    expect(res.code).toBe("media_purpose");
   });
 });
