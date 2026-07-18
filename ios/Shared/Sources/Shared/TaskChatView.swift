@@ -10,6 +10,41 @@ import AVFoundation
 import AVKit
 import PhotosUI
 import UniformTypeIdentifiers
+import CoreTransferable
+
+/// Reliable PhotosPicker import (raw `Data.self` often returns nil for library items).
+struct PickedChatMedia: Transferable {
+    let data: Data
+
+    static var transferRepresentation: some TransferRepresentation {
+        DataRepresentation(importedContentType: .image) { data in
+            PickedChatMedia(data: data)
+        }
+        DataRepresentation(importedContentType: .jpeg) { data in
+            PickedChatMedia(data: data)
+        }
+        DataRepresentation(importedContentType: .png) { data in
+            PickedChatMedia(data: data)
+        }
+        DataRepresentation(importedContentType: .heic) { data in
+            PickedChatMedia(data: data)
+        }
+        DataRepresentation(importedContentType: .mpeg4Movie) { data in
+            PickedChatMedia(data: data)
+        }
+        DataRepresentation(importedContentType: .quickTimeMovie) { data in
+            PickedChatMedia(data: data)
+        }
+        FileRepresentation(importedContentType: .image) { received in
+            let data = try Data(contentsOf: received.file)
+            return PickedChatMedia(data: data)
+        }
+        FileRepresentation(importedContentType: .movie) { received in
+            let data = try Data(contentsOf: received.file)
+            return PickedChatMedia(data: data)
+        }
+    }
+}
 
 @MainActor
 public final class TaskChatViewModel: ObservableObject {
@@ -21,7 +56,8 @@ public final class TaskChatViewModel: ObservableObject {
     @Published public var isRecording = false
 
     public let taskId: String
-    public let currentUserId: String?
+    /// May be nil at first paint (host resolves session async); refreshed in `start()`.
+    @Published public private(set) var currentUserId: String?
     private var pollTask: Task<Void, Never>?
     private var audioRecorder: AVAudioRecorder?
     private var recordURL: URL?
@@ -37,7 +73,12 @@ public final class TaskChatViewModel: ObservableObject {
     }
 
     public func start() {
-        Task { await reload() }
+        Task {
+            if currentUserId == nil, let session = await AuthService.shared.currentSession() {
+                currentUserId = session.user.id
+            }
+            await reload()
+        }
         pollTask?.cancel()
         pollTask = Task {
             while !Task.isCancelled {
@@ -156,23 +197,33 @@ public final class TaskChatViewModel: ObservableObject {
     public func startRecording() {
         guard !isRecording else { return }
         let session = AVAudioSession.sharedInstance()
-        do {
-            try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker])
-            try session.setActive(true)
-            let url = FileManager.default.temporaryDirectory.appendingPathComponent("chat-voice-\(UUID().uuidString).m4a")
-            let settings: [String: Any] = [
-                AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
-                AVSampleRateKey: 44100,
-                AVNumberOfChannelsKey: 1,
-                AVEncoderAudioQualityKey: AVAudioQuality.medium.rawValue,
-            ]
-            let recorder = try AVAudioRecorder(url: url, settings: settings)
-            recorder.record()
-            audioRecorder = recorder
-            recordURL = url
-            isRecording = true
-        } catch {
-            errorMessage = error.localizedDescription
+        session.requestRecordPermission { [weak self] granted in
+            Task { @MainActor in
+                guard let self else { return }
+                guard granted else {
+                    self.errorMessage = NSLocalizedString("task_chat_mic_denied", comment: "")
+                    return
+                }
+                do {
+                    try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker])
+                    try session.setActive(true)
+                    let url = FileManager.default.temporaryDirectory.appendingPathComponent("chat-voice-\(UUID().uuidString).m4a")
+                    let settings: [String: Any] = [
+                        AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
+                        AVSampleRateKey: 44100,
+                        AVNumberOfChannelsKey: 1,
+                        AVEncoderAudioQualityKey: AVAudioQuality.medium.rawValue,
+                    ]
+                    let recorder = try AVAudioRecorder(url: url, settings: settings)
+                    recorder.record()
+                    self.audioRecorder = recorder
+                    self.recordURL = url
+                    self.isRecording = true
+                    self.errorMessage = nil
+                } catch {
+                    self.errorMessage = error.localizedDescription
+                }
+            }
         }
     }
 
@@ -243,32 +294,54 @@ public struct TaskChatView: View {
                     .font(.caption)
                     .foregroundColor(.red)
                     .padding(.horizontal)
+                    .accessibilityIdentifier("task_chat_error")
+                    .accessibilityLabel("task_chat_error")
             }
             composer
         }
         .onAppear { model.start() }
         .onDisappear { model.stop() }
         .photosPicker(isPresented: $showPhotoPicker, selection: $photoItem, matching: .any(of: [.images, .videos]))
-        .onChange(of: photoItem) { item in
-            guard let item else { return }
-            Task {
-                if let data = try? await item.loadTransferable(type: Data.self) {
-                    let isVideo = (item.supportedContentTypes.contains { $0.conforms(to: .movie) || $0.conforms(to: .mpeg4Movie) })
-                    if isVideo {
-                        await model.sendMedia(data: data, kind: "video", mimeType: "video/mp4", fileExtension: "mp4")
-                    } else {
-                        await model.sendMedia(data: data, kind: "image", mimeType: "image/jpeg", fileExtension: "jpg")
-                    }
-                }
-                photoItem = nil
-            }
-        }
+        .modifier(TaskChatPhotoItemChangeModifier(photoItem: $photoItem, onPick: consumePickedPhotoItem))
         .fullScreenCover(isPresented: Binding(
             get: { fullscreenURL != nil },
             set: { if !$0 { fullscreenURL = nil } }
         )) {
             if let url = fullscreenURL {
                 TaskChatFullscreenMediaView(url: url) { fullscreenURL = nil }
+            }
+        }
+    }
+
+    private func consumePickedPhotoItem(_ item: PhotosPickerItem) {
+        Task {
+            defer { photoItem = nil }
+            let isVideo = item.supportedContentTypes.contains {
+                $0.conforms(to: .movie) || $0.conforms(to: .mpeg4Movie) || $0.conforms(to: .quickTimeMovie)
+            }
+            do {
+                let picked = try await item.loadTransferable(type: PickedChatMedia.self)
+                guard let picked, !picked.data.isEmpty else {
+                    model.errorMessage = NSLocalizedString("task_chat_media_read_failed", comment: "")
+                    return
+                }
+                if isVideo {
+                    await model.sendMedia(
+                        data: picked.data,
+                        kind: "video",
+                        mimeType: "video/mp4",
+                        fileExtension: "mp4"
+                    )
+                } else {
+                    await model.sendMedia(
+                        data: picked.data,
+                        kind: "image",
+                        mimeType: "image/jpeg",
+                        fileExtension: "jpg"
+                    )
+                }
+            } catch {
+                model.errorMessage = error.localizedDescription
             }
         }
     }
@@ -282,6 +355,8 @@ public struct TaskChatView: View {
                     if msg.kind == "voice", let urlStr = msg.mediaUrl, let url = URL(string: urlStr) {
                         TaskChatAudioPlayer(url: url)
                             .padding(8)
+                            .accessibilityIdentifier("task_chat_voice_\(msg.id)")
+                            .accessibilityLabel("task_chat_voice")
                     } else if msg.kind == "image", let urlStr = msg.mediaUrl, let url = URL(string: urlStr) {
                         AsyncImage(url: url) { phase in
                             switch phase {
@@ -295,6 +370,8 @@ public struct TaskChatView: View {
                             }
                         }
                         .padding(6)
+                        .accessibilityIdentifier("task_chat_image_\(msg.id)")
+                        .accessibilityLabel("task_chat_photo")
                     } else if msg.kind == "video", let urlStr = msg.mediaUrl, let url = URL(string: urlStr) {
                         Button {
                             fullscreenURL = url
@@ -302,6 +379,8 @@ public struct TaskChatView: View {
                             Label(NSLocalizedString("task_chat_video", comment: ""), systemImage: "play.rectangle.fill")
                         }
                         .padding(10)
+                        .accessibilityIdentifier("task_chat_video_\(msg.id)")
+                        .accessibilityLabel("task_chat_video")
                     } else {
                         Text(bubbleText(msg))
                             .padding(10)
@@ -315,14 +394,33 @@ public struct TaskChatView: View {
                         .font(.caption2)
                         .foregroundColor(.secondary)
                     if mine {
-                        Button(NSLocalizedString("task_chat_delete", comment: "")) {
+                        Button(role: .destructive) {
                             Task { await model.deleteMessage(msg.id) }
+                        } label: {
+                            Text(NSLocalizedString("task_chat_delete", comment: ""))
+                                .font(.caption.weight(.semibold))
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
                         }
-                        .font(.caption2)
+                        .buttonStyle(.bordered)
+                        .accessibilityIdentifier("task_chat_delete_\(msg.id)")
+                        .accessibilityLabel("task_chat_delete")
                     }
                 }
             }
             if !mine { Spacer(minLength: 40) }
+        }
+        .accessibilityIdentifier("task_chat_bubble_\(msg.id)")
+        .contextMenu {
+            if mine {
+                Button(role: .destructive) {
+                    Task { await model.deleteMessage(msg.id) }
+                } label: {
+                    Label(NSLocalizedString("task_chat_delete", comment: ""), systemImage: "trash")
+                }
+                .accessibilityIdentifier("task_chat_context_delete_\(msg.id)")
+                .accessibilityLabel("task_chat_delete")
+            }
         }
     }
 
@@ -351,9 +449,13 @@ public struct TaskChatView: View {
                     Image(systemName: "paperclip")
                 }
                 .disabled(model.isSending)
+                .accessibilityIdentifier("task_chat_attach")
+                .accessibilityLabel("task_chat_attach")
                 TextField(NSLocalizedString("task_chat_placeholder", comment: ""), text: $model.draftText, axis: .vertical)
                     .lineLimit(1...4)
                     .textFieldStyle(.roundedBorder)
+                    .accessibilityIdentifier("task_chat_composer")
+                    .accessibilityLabel("task_chat_composer")
                 Button {
                     if model.isRecording {
                         model.stopRecording(send: true)
@@ -365,6 +467,8 @@ public struct TaskChatView: View {
                         .foregroundColor(model.isRecording ? .red : .accentColor)
                 }
                 .disabled(model.isSending)
+                .accessibilityIdentifier(model.isRecording ? "task_chat_voice_stop" : "task_chat_voice_record")
+                .accessibilityLabel(model.isRecording ? "task_chat_voice_stop" : "task_chat_voice_record")
                 Button {
                     Task { await model.sendText() }
                 } label: {
@@ -372,6 +476,8 @@ public struct TaskChatView: View {
                         .font(.title2)
                 }
                 .disabled(model.isSending || model.draftText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                .accessibilityIdentifier("task_chat_send")
+                .accessibilityLabel("task_chat_send")
             }
             .padding(.horizontal)
             .padding(.vertical, 8)
@@ -434,6 +540,24 @@ struct TaskChatFullscreenMediaView: View {
                     .font(.title)
                     .foregroundStyle(.white)
                     .padding()
+            }
+        }
+    }
+}
+
+/// Bridges PhotosPicker selection across iOS 16/17+ onChange semantics.
+private struct TaskChatPhotoItemChangeModifier: ViewModifier {
+    @Binding var photoItem: PhotosPickerItem?
+    let onPick: (PhotosPickerItem) -> Void
+
+    func body(content: Content) -> some View {
+        if #available(iOS 17.0, *) {
+            content.onChange(of: photoItem) { _, newValue in
+                if let newValue { onPick(newValue) }
+            }
+        } else {
+            content.onChange(of: photoItem) { newValue in
+                if let newValue { onPick(newValue) }
             }
         }
     }

@@ -23,9 +23,24 @@ public final class NetworkMonitor: ObservableObject {
         return args.contains("-AISTROYKA_E2E") || args.contains("-AISTROYKA_UI_TEST")
     }
 
+    /// UITest-only: force offline path (takes precedence over E2E always-online).
+    private static var forceOfflineForAutomation: Bool {
+        let env = ProcessInfo.processInfo.environment
+        if env["AISTROYKA_E2E_FORCE_OFFLINE"] == "1" { return true }
+        return ProcessInfo.processInfo.arguments.contains("-AISTROYKA_E2E_FORCE_OFFLINE")
+    }
+
     public init() {
+        if Self.forceOfflineForAutomation {
+            isConnected = false
+        }
         monitor.pathUpdateHandler = { [weak self] path in
-            let connected = path.status == .satisfied || Self.treatsNetworkAsConnectedForAutomation
+            let connected: Bool
+            if Self.forceOfflineForAutomation {
+                connected = false
+            } else {
+                connected = path.status == .satisfied || Self.treatsNetworkAsConnectedForAutomation
+            }
             DispatchQueue.main.async {
                 let wasOffline = self?.isConnected == false
                 self?.isConnected = connected

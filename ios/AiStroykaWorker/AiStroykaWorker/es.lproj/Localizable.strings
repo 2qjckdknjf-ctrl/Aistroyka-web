@@ -109,3 +109,5 @@
 "task_chat_delete" = "Eliminar";
 "task_chat_media_offline" = "Fotos, vídeo y voz requieren conexión.";
 "task_chat_unread" = "Chat sin leer";
+"task_chat_media_read_failed" = "No se pudo leer el archivo seleccionado.";
+"task_chat_mic_denied" = "Se necesita acceso al micrófono para enviar mensajes de voz. Actívalo en Ajustes.";
