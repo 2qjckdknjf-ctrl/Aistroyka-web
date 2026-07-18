@@ -30,14 +30,13 @@
 
 ---
 
-## Progress (2026-07-18)
+## Progress (2026-07-18 / 2026-07-19)
 
-- Production/staging health `sha7=f088ed3`
-- iPhone DDI ready when USB connected; candidate device build **`2026071812`**
-- Task chat TEXT / DELETE / AUTHORIZATION / CROSS_TENANT UI **PASS**
-- API authz (Pavel 403, Sofia 403, cross-tenant 404) confirmed
-- Media wave: `size_bytes` list enrichment verified on local `:3010` (67/512); **prod still null** until deploy
-- Physical PHOTO/VOICE retest **blocked** — device `available (paired)` not connected
+- Backend size_bytes PR **#188** merged → staging+prod `buildStamp.sha7=a401693` (image 67 / voice 512)
+- Authz recheck: Pavel 403, cross-tenant 404
+- Candidate iOS media SHA `4667430a` / build **`2026071812`**
+- Physical PHOTO/VOICE/VIDEO **STOP** — device Locked / not stably USB-connected
+- TestFlight **NO**
 
 ---
 
