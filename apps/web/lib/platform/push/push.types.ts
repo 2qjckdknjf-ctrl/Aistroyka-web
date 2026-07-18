@@ -1,6 +1,11 @@
 export type PushPlatform = "ios" | "android";
 
-export type PushMessageType = "job_done" | "report_ready" | "task_assigned" | "task_updated";
+export type PushMessageType =
+  | "job_done"
+  | "report_ready"
+  | "task_assigned"
+  | "task_updated"
+  | "task_message";
 
 export interface PushOutboxRow {
   id: string;

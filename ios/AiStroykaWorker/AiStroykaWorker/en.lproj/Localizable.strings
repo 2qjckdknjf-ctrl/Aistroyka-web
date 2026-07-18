@@ -102,3 +102,10 @@
 "worker_start_report" = "Start report";
 "worker_report_id_short_fmt" = "Report …%@";
 "worker_report_status_fmt" = "Status: %@";
+"task_chat_placeholder" = "Message…";
+"task_chat_voice_fmt" = "Voice message (%ds)";
+"task_chat_photo" = "Photo";
+"task_chat_video" = "Video";
+"task_chat_delete" = "Delete";
+"task_chat_media_offline" = "Photos, video, and voice need a network connection.";
+"task_chat_unread" = "Unread chat";

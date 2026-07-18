@@ -102,3 +102,10 @@
 "worker_start_report" = "Начать отчёт";
 "worker_report_id_short_fmt" = "Отчёт …%@";
 "worker_report_status_fmt" = "Статус: %@";
+"task_chat_placeholder" = "Сообщение…";
+"task_chat_voice_fmt" = "Голосовое (%d с)";
+"task_chat_photo" = "Фото";
+"task_chat_video" = "Видео";
+"task_chat_delete" = "Удалить";
+"task_chat_media_offline" = "Фото, видео и голос требуют сеть.";
+"task_chat_unread" = "Новые сообщения";

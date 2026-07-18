@@ -1,4 +1,4 @@
-export type UploadSessionPurpose = "report_before" | "report_after" | "project_media";
+export type UploadSessionPurpose = "report_before" | "report_after" | "project_media" | "task_chat";
 export type UploadSessionStatus = "created" | "uploaded" | "finalized" | "expired";
 
 export interface UploadSession {

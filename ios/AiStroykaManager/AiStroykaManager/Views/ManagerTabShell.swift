@@ -49,5 +49,12 @@ struct ManagerTabShell: View {
         }
         .accessibilityIdentifier("pilot_manager_tab_shell")
         .tint(.accentColor)
+        .onReceive(NotificationCenter.default.publisher(for: .aiStroykaManagerOpenTaskChat)) { _ in
+            selectedTab = 2
+        }
     }
+}
+
+extension Notification.Name {
+    static let aiStroykaManagerOpenTaskChat = Notification.Name("AiStroykaManagerOpenTaskChat")
 }

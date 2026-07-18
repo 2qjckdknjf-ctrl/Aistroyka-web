@@ -62,6 +62,14 @@ describe("checkLiteAllowList", () => {
     expect(checkLiteAllowList("/api/v1/tasks/task-uuid-1", "PATCH", "ios_lite")).not.toBeNull();
   });
 
+  it("returns null for lite task chat messages paths", () => {
+    expect(checkLiteAllowList("/api/v1/tasks/task-uuid-1/messages", "GET", "ios_worker")).toBeNull();
+    expect(checkLiteAllowList("/api/v1/tasks/task-uuid-1/messages", "POST", "android_worker")).toBeNull();
+    expect(
+      checkLiteAllowList("/api/v1/tasks/task-uuid-1/messages/msg-1", "DELETE", "ios_lite")
+    ).toBeNull();
+  });
+
   it("returns null for lite client on /api/v1/devices/*", () => {
     expect(checkLiteAllowList("/api/v1/devices/register", "POST", "ios_lite")).toBeNull();
   });

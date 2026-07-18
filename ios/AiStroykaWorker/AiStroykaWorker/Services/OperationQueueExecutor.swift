@@ -194,6 +194,19 @@ final class OperationQueueExecutor: ObservableObject {
                 try await WorkerAPI.syncAck(cursor: cursor, idempotencyKey: op.idempotencyKey)
                 appStore.save { $0.lastSyncCursor = String(cursor) }
                 return .success
+            case .sendTaskMessage:
+                guard let taskId = op.payload.taskId,
+                      let body = op.payload.messageBody,
+                      let clientId = op.payload.clientId else {
+                    return .permanent(message: "Missing task chat payload")
+                }
+                _ = try await TaskMessagesAPI.sendText(
+                    taskId: taskId,
+                    body: body,
+                    clientId: clientId,
+                    idempotencyKey: op.idempotencyKey
+                )
+                return .success
             }
         } catch let err as APIError {
             if err.isUnauthorized || err.isForbidden { return .authRequired }

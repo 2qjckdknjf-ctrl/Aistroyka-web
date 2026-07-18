@@ -209,3 +209,10 @@
 "mgr_ai_tab_copilot_hint" = "Apri un progetto → Intelligence o Copilot per l'assistente completo.";
 "mgr_copilot_per_project_title" = "Copilot per progetto";
 "mgr_copilot_per_project_body" = "Progetti → cantiere → Copilot o Intelligence dalla scheda progetto.";
+"task_chat_placeholder" = "Messaggio…";
+"task_chat_voice_fmt" = "Messaggio vocale (%ds)";
+"task_chat_photo" = "Foto";
+"task_chat_video" = "Video";
+"task_chat_delete" = "Elimina";
+"task_chat_media_offline" = "Foto, video e voce richiedono rete.";
+"task_chat_unread" = "Chat non letta";

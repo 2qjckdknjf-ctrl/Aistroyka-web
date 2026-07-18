@@ -10,6 +10,7 @@ import Shared
 
 @main
 struct AiStroykaManagerApp: App {
+    @UIApplicationDelegateAdaptor(AiStroykaManagerAppDelegate.self) private var appDelegate
     @StateObject private var sessionState = ManagerSessionState()
 
     init() {

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { handlePushSend } from "./push-send";
+import { buildPushDataMap, handlePushSend } from "./push-send";
 import * as pushRouter from "@/lib/platform/push/push.provider.router";
 
 vi.mock("@/lib/platform/push/push.provider.router", () => ({
@@ -161,5 +161,57 @@ describe("handlePushSend", () => {
     const outboxUpdate = updates.find((u) => u.table === "push_outbox" && u.id === "ob4");
     expect(outboxUpdate).toBeDefined();
     expect(outboxUpdate!.update).toMatchObject({ status: "sent" });
+  });
+
+  it("buildPushDataMap includes type and flat task_message keys", () => {
+    const data = buildPushDataMap("task_message", {
+      title: "Task message",
+      body: "hello",
+      task_id: "task-1",
+      project_id: "p1",
+      message_id: "m1",
+      kind: "text",
+    });
+    expect(data).toMatchObject({
+      type: "task_message",
+      task_id: "task-1",
+      project_id: "p1",
+      message_id: "m1",
+      kind: "text",
+    });
+    expect(data.title).toBeUndefined();
+  });
+
+  it("sends task_message data map to provider", async () => {
+    vi.mocked(pushRouter.attemptSend).mockResolvedValue({ ok: true });
+    const { admin } = mockAdmin({
+      outboxRows: [
+        {
+          id: "ob5",
+          tenant_id: "t1",
+          user_id: "u1",
+          platform: "ios",
+          type: "task_message",
+          payload: {
+            title: "Task message",
+            body: "Photo",
+            task_id: "task-9",
+            kind: "image",
+          },
+          attempts: 0,
+        },
+      ],
+      deviceTokens: [{ device_id: "d1", token: "tok1" }],
+    });
+    await handlePushSend(admin, {} as any);
+    expect(pushRouter.attemptSend).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          type: "task_message",
+          task_id: "task-9",
+          kind: "image",
+        }),
+      })
+    );
   });
 });

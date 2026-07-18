@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		MGR001 /* AiStroykaManagerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR101; };
+		MGR043 /* AiStroykaManagerAppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR143; };
 		MGR002 /* ManagerSessionState.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR102; };
 		MGR003 /* ManagerRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR103; };
 		MGR004 /* ManagerAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR104; };
@@ -51,6 +52,7 @@
 /* Begin PBXFileReference section */
 		MGR100 /* AiStroykaManager.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AiStroykaManager.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		MGR101 /* AiStroykaManagerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AiStroykaManagerApp.swift; sourceTree = "<group>"; };
+		MGR143 /* AiStroykaManagerAppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AiStroykaManagerAppDelegate.swift; sourceTree = "<group>"; };
 		MGR102 /* ManagerSessionState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManagerSessionState.swift; sourceTree = "<group>"; };
 		MGR103 /* ManagerRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManagerRootView.swift; sourceTree = "<group>"; };
 		MGR104 /* ManagerAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManagerAPI.swift; sourceTree = "<group>"; };
@@ -115,7 +117,7 @@
 /* Begin PBXGroup section */
 		MGR041 /* AiStroykaManager */ = {
 			isa = PBXGroup;
-			children = ( MGR101, MGR102, MGR103, MGR133 /* ManagerUITestLaunchHooks.swift */, MGR051S, MGR051D, MGR051V, MGR129, MGR170 /* Localizable.strings */, MGR128 );
+			children = ( MGR101, MGR143 /* AiStroykaManagerAppDelegate.swift */, MGR102, MGR103, MGR133 /* ManagerUITestLaunchHooks.swift */, MGR051S, MGR051D, MGR051V, MGR129, MGR170 /* Localizable.strings */, MGR128 );
 			path = AiStroykaManager;
 			sourceTree = "<group>";
 		};
@@ -239,7 +241,7 @@
 		MGR030 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
-			files = ( MGR001, MGR002, MGR003, MGR004, MGR005, MGR006, MGR042, MGR007, MGR008, MGR009, MGR010, MGR011, MGR012, MGR013, MGR014, MGR015, MGR016, MGR017, MGR018, MGR019, MGR020, MGR021, MGR022, MGR023, MGR036, MGR024, MGR025, MGR026, MGR027, MGR037, MGR038, MGR039, MGR040, MGR041B );
+			files = ( MGR001, MGR043 /* AiStroykaManagerAppDelegate.swift in Sources */, MGR002, MGR003, MGR004, MGR005, MGR006, MGR042, MGR007, MGR008, MGR009, MGR010, MGR011, MGR012, MGR013, MGR014, MGR015, MGR016, MGR017, MGR018, MGR019, MGR020, MGR021, MGR022, MGR023, MGR036, MGR024, MGR025, MGR026, MGR027, MGR037, MGR038, MGR039, MGR040, MGR041B );
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		MGRUT21 /* Sources */ = {

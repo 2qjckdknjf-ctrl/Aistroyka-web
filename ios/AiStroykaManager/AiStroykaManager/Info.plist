@@ -24,6 +24,10 @@
 	<string>2026063001</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>AiStroyka Manager needs microphone access to send voice messages in task chat.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>AiStroyka Manager needs photo library access to attach photos and videos in task chat.</string>
 	<key>SUPABASE_ANON_KEY</key>
 	<string>$(SUPABASE_ANON_KEY)</string>
 	<key>SUPABASE_URL</key>

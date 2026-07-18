@@ -11,6 +11,7 @@ import {
   Modal,
   Select,
 } from "@/components/ui";
+import { TaskChatPanel } from "@/components/dashboard/TaskChatPanel";
 
 interface TaskDetail {
   id: string;
@@ -207,6 +208,8 @@ export function DashboardTaskDetailClient({ taskId }: { taskId: string }) {
           </div>
         </dl>
       </Card>
+
+      <TaskChatPanel taskId={taskId} />
 
       {assignOpen && (
         <Modal open={true} title={tDetail("assignTask")} onClose={() => setAssignOpen(false)}>
