@@ -74,7 +74,7 @@ Mark each item when verified on **staging** with synthetic `@example.com` users.
 | C11 | Stakeholder sees approved/safe progress | ☐ |
 | C12 | Internal cost / margin / contractor finance **denied** | ☐ |
 
-**Task chat device UI (related, not a substitute for C4–C12):** see `TASK_CHAT_DEVICE_UI_SMOKE_REPORT.md` — TEXT / DELETE / AUTHORIZATION / CROSS_TENANT **PASS**; PHOTO/VOICE **FAIL**; VIDEO / OFFLINE(media) **BLOCKED**; E2E **NO**.
+**Task chat device UI (related, not a substitute for C4–C12):** see `TASK_CHAT_DEVICE_UI_SMOKE_REPORT.md` — TEXT / DELETE / AUTHORIZATION / CROSS_TENANT **PASS**; PHOTO/VOICE **FAIL** (retest blocked on USB); VIDEO **BLOCKED**; OFFLINE media **REFUSED_BY_DESIGN**; `size_bytes` local PASS / prod FAIL until deploy; E2E **NO**; TestFlight **NO**.
 
 **Automated partial evidence:** `PILOT_SYNTHETIC_DAY0_SMOKE_REPORT.md`
 

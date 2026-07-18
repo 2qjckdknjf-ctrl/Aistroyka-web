@@ -1,144 +1,90 @@
 # Task Chat — Device UI Smoke Report
 
-**Date (UTC):** 2026-07-18T21:00Z  
+**Date (UTC):** 2026-07-18T22:15Z  
 **Operator:** Cursor (device-smoke worktree)  
-**Authoritative source SHA:** `f088ed3418069bac49df8699248252c47ce42e73`  
-**Device build:** `2026071807`  
+**Base task_chat SHA:** `f088ed3418069bac49df8699248252c47ce42e73`  
+**Branch HEAD at report:** uncommitted wave → build **`2026071812`**  
 **Install path:** Xcode Debug + UITest runner (not TestFlight)  
 **Authz / product scope:** no backend authz changes; synthetic tenant only
 
 ---
 
-## STEP 1 — Worktree safety
+## STEP 1 — Reconcile
 
 | Item | Value |
 |------|-------|
 | pwd | `/Users/alex/Projects/AISTROYKA-task-chat-device-smoke` |
 | Branch | `mobile/task-chat-device-smoke-20260718` |
-| SHA | `f088ed3418069bac49df8699248252c47ce42e73` |
-| `TaskChatView` | **YES** — `ios/Shared/Sources/Shared/TaskChatView.swift` |
-| Worker bundle | `ai.aistroyka.worker` |
-| Manager bundle | `ai.aistroyka.manager` |
+| Prior pushed HEAD | `1d0489c987c48c899a7abb38d44e42db5d87937b` |
+| Commits on top of `f088ed3` (pushed) | `b236b707` fix · `a9569eaf` test · `1d0489c9` docs |
+| Worker / Manager bundle | `ai.aistroyka.worker` / `ai.aistroyka.manager` |
 | Signing team | `43A4KW5BKB` |
-| Build number | `2026071807` |
+| Build number | **`2026071812`** (do not reuse `2026071807`) |
 
-### Uncommitted change classification
+### File classification (current wave)
 
 | Class | Files |
 |-------|--------|
-| **A** UI-test harness | `WorkerTaskChatUITests.swift`, `.gitignore` (`DeviceSmokeE2ESecrets`) |
-| **B** Project wiring | `AiStroykaWorker.xcodeproj/project.pbxproj` |
-| **C** Build number | Worker/Manager `Info.plist` → `2026071807` |
-| **D** Smoke defect fixes (not redesign) | `TaskChatView.swift` (PhotosPicker `Transferable`, a11y ids, delete affordance, mic permission + denied copy), `NetworkMonitor.swift` (E2E force-offline), locale `task_chat_*` strings |
+| **A Production fix** | `task-messages.repository.ts` (`size_bytes` in attach meta), `upload-session.service.ts` (positive `size_bytes` for task_chat finalize), `MediaUploadHelper.swift`, `TaskChatView.swift` (mic/recorder/cancel/errors), `TaskMessageDTO.swift`, `ChatMediaPrep.swift`, `APIClient.swift` (snake_case encode), locale strings, Info.plist build |
+| **B Regression test** | `upload-session.service.test.ts`, `task-messages.attach-meta.test.ts`, `WorkerTaskChatUITests.swift` (fixture photo + voice cancel) |
+| **C Device-smoke harness only** | `ChatMediaE2E.swift` (flag `AISTROYKA_E2E_CHAT_FIXTURE=1` only), `NetworkMonitor` force-offline (prior), gitignored `DeviceSmokeE2ESecrets.swift` |
+| **D Documentation** | this report + unblock / Day0 docs |
+| **E Temporary/unacceptable** | **None** — fixture path is launch-flag gated; secrets gitignored |
 
-Secrets (`DeviceSmokeE2ESecrets.swift`, `local-secrets/*`) remain gitignored / uncommitted.
-
----
-
-## STEP 2 — Device precheck
-
-| Check | Result |
-|-------|--------|
-| Unlocked / paired | **YES** (after reboot unlock) |
-| DDI | **`ddiServicesAvailable=true`** |
-| Developer Mode | **enabled** |
-| Worker / Manager launch | **YES** (`2026071807`) |
-| Camera / Mic / Photos | Prompted during UITests; Limited-Library “Select Photos…” previously poisoned picker automation |
-| Storage | 512 GB device — sufficient |
-| API | `aistroyka.ai` + staging health `sha7=f088ed3` |
-| Synthetic credentials | local gitignored env |
-| Obsolete TF `2026063001` | **not used** |
+No debug credentials/endpoints in app runtime without E2E flags. `DeviceSmokeE2ESecrets.swift` remains gitignored.
 
 ---
 
-## Declared product contracts (media)
+## Product contracts
 
 | Capability | Contract |
 |------------|----------|
-| Photo | **Gallery via paperclip → PhotosPicker only.** No in-chat camera capture button. |
-| Video | **Gallery/file via same PhotosPicker** (images+videos). No in-chat video camera. |
-| Voice | Mic button → record → stop sends; leave chat cancels (`stopRecording(send:false)`). |
-| Offline text | Queued via Worker `enqueueOfflineText` / `sendTaskMessage`. |
-| Offline media | **Not queued** — shows `task_chat_media_offline`. |
+| Photo | Gallery via paperclip → PhotosPicker only. No in-chat camera. |
+| Video | Gallery via same PhotosPicker. No in-chat recording. |
+| Voice | In-app mic record → stop sends; cancel control discards. |
+| Offline text | Supported (exactly-once). |
+| Offline media | **REFUSED_BY_DESIGN** — `task_chat_media_offline` |
 
 ---
 
 ## Matrix results
 
-### TEXT_UI — **PASS**
-
-| Step | Result | Evidence |
-|------|--------|----------|
-| Ivan send + appear | PASS | UITest `testTaskChat_textRoundTripSurface` (earlier full matrix) |
-| Persist after restart | PASS | same + API `device-ui-text-*` rows |
-| Carlos visibility | PASS (API) | manager list |
-
-### PHOTO_UI — **FAIL**
-
-| Step | Result | Notes |
-|------|--------|-------|
-| In-chat camera capture | **N/A / FAIL vs matrix** | Not in UI contract — cannot PASS matrix requiring camera |
-| Gallery select → send | **FAIL** | UITest `testTaskChat_photoPickerGalleryPath` failed; no UI-originated `kind=image` row |
-| Permission controlled error | PARTIAL | Full-access vs Limited Library automation flaky on iOS 26.5.2 |
-| `size_bytes` | **DEFECT** | API image from scripted upload has `size_bytes=null` after finalize (P2) |
-
-Backend upload+send for synthetic Ivan **works** (scripted 1×1 PNG → 201). UI path did not complete.
-
-### VOICE_UI — **FAIL**
-
-| Step | Result |
-|------|--------|
-| Record / cancel / send / playback | **FAIL** — UITest failed; **zero** `kind=voice` server rows from UI |
-| Mic denied safe UI | Fix landed (`task_chat_mic_denied`) — denied path not fully proven end-to-end this session |
-
-### VIDEO_UI — **BLOCKED**
-
-| Step | Result |
-|------|--------|
-| Gallery video | **BLOCKED** — UITest skipped: no selectable video asset on device library |
-| Camera video | Not in product contract |
-
-### OFFLINE_SYNC — **BLOCKED**
-
-| Step | Result |
-|------|--------|
-| Offline text queue → sync exactly once | **PASS** (UI earlier + API: each `device-ui-offline-*` body count = 1; Carlos sees latest) |
-| Offline media → sync once | **BLOCKED by product** — media offline intentionally refused (not queued) |
-| Matrix rule (text **and** media) | Therefore overall **BLOCKED** |
-
-### DELETE_UI — **PASS**
-
-| Step | Result |
-|------|--------|
-| Ivan UI delete + gone after relaunch | **PASS** — `testTaskChat_deleteOwnMessageViaUI` |
-| Manager / API reflection | PASS for deleted-in-session markers |
-
-### AUTHORIZATION_UI — **PASS**
-
-| Case | Result |
-|------|--------|
-| Ivan assigned | PASS (UI) |
-| Pavel unassigned | PASS (UI) |
-| Sofia stakeholder | PASS (UI — no task/chat) |
-| Carlos permitted | PASS (API) |
-| Cross-tenant smoke user | PASS (UI) — see below |
-
-### CROSS_TENANT_UI — **PASS**
-
-`testTaskChat_crossTenantCannotOpenSyntheticTask` — smoke identity cannot see Pilot task 1 / chat.  
-API: smoke `GET …/messages` → **404**; Sofia → **403**.
+| Gate | Verdict | Notes |
+|------|---------|-------|
+| TEXT_UI | **PASS** | Prior physical/UITest matrix |
+| PHOTO_UI | **FAIL** | Gallery XCTest still open; fixture path not re-proven (device locked/disconnected). Backend scripted image OK. |
+| VOICE_UI | **FAIL** | Last UITest failed; orphan `upload_sessions` at create; fixes landed, retest blocked on USB |
+| VIDEO_UI | **BLOCKED** | No short video asset on device library |
+| OFFLINE_TEXT | **PASS** | Prior |
+| OFFLINE_MEDIA_POLICY | **REFUSED_BY_DESIGN** | Not a defect |
+| DELETE_UI | **PASS** | Prior |
+| AUTHORIZATION_UI | **PASS** | Prior |
+| CROSS_TENANT_UI | **PASS** | Prior |
+| PHOTO_SIZE_BYTES | **FAIL (prod)** / **PASS (local :3010)** | Local list returns 67; prod still `null` until deploy |
+| VOICE_SIZE_BYTES | **FAIL (prod)** / **PASS (local :3010)** | Local list returns 512; prod still `null` until deploy |
+| VIDEO_SIZE_BYTES | **BLOCKED** | No finalized video row yet |
 
 ---
 
-## Defects
+## Root causes + fixes (this wave)
 
-| ID | Sev | Summary | Fixed? |
-|----|-----|---------|--------|
-| D1 | P1 | PhotosPicker gallery send not completing under XCTest / permission flow | No — harness hardened; still FAIL |
-| D2 | P1 | Voice UI send produces no server row under XCTest | Partial — mic permission request added |
-| D3 | P2 | Message list `size_bytes` null after finalize | No (backend mapping; out of authz scope) |
-| D4 | P2 | Offline media not queued | By design — document, not “fixed” |
-| D5 | P3 | Relaunch UI find flaky for text/offline after fresh install | No — API confirms delivery |
+| Defect | Root cause | Fix |
+|--------|------------|-----|
+| List `size_bytes` null | `attachUploadMeta` selected only `id, mime_type, object_path` | Select/map `size_bytes`; require positive size on task_chat finalize |
+| Media UI orphans | Upload helper ≠ report UploadManager; silent poll cleared errors | Align storage POST; keep errors across silent reload |
+| Voice XCTest | Center tap hit Stop; cancel via nav; `currentTime` stale | Cancel button; duration via `AVAudioPlayer`; `prepareToRecord` |
+| Photo XCTest brittleness | System PhotosPicker / Limited Library | E2E fixture JPEG behind flag (upload-path regression); gallery still required for PHOTO_UI PASS |
+
+---
+
+## Device gate (blocking retest)
+
+| Check | Result |
+|-------|--------|
+| iPhone 17 Pro / iOS 26.5.2 | Paired |
+| USB CoreDevice state | **`available (paired)` — not `connected`** |
+| Unlock / launch Worker | **Blocked** (`Locked` / disconnect) |
+| DDI when connected | Available previously |
 
 ---
 
@@ -146,10 +92,8 @@ API: smoke `GET …/messages` → **404**; Sofia → **403**.
 
 | Gate | Status |
 |------|--------|
-| Env `APPROVE_TESTFLIGHT_UPLOAD` | SET locally |
-| ASC key path | exists |
-| `AISTROYKA_IOS_BUILD_NUMBER` in `.env.local` | still **`2026063001`** (obsolete — must change before upload) |
-| Upload this session | **NO** — media matrix not closed; do not ship obsolete build number |
+| Upload this session | **NO** |
+| Reason | PHOTO/VOICE/VIDEO not PASS; prod `size_bytes` not PASS; device disconnected |
 
 ---
 
@@ -157,17 +101,25 @@ API: smoke `GET …/messages` → **404**; Sofia → **403**.
 
 | Gate | Verdict |
 |------|---------|
-| TEXT_UI | **PASS** |
 | PHOTO_UI | **FAIL** |
 | VOICE_UI | **FAIL** |
 | VIDEO_UI | **BLOCKED** |
-| OFFLINE_SYNC | **BLOCKED** |
+| OFFLINE_TEXT | **PASS** |
+| OFFLINE_MEDIA_POLICY | **REFUSED_BY_DESIGN** |
 | DELETE_UI | **PASS** |
 | AUTHORIZATION_UI | **PASS** |
 | CROSS_TENANT_UI | **PASS** |
+| PHOTO_SIZE_BYTES | **FAIL** (prod) |
+| VOICE_SIZE_BYTES | **FAIL** (prod) |
+| VIDEO_SIZE_BYTES | **BLOCKED** |
+| FINAL_SOURCE_SHA | _(pending reviewed commit after device PASS)_ |
+| FINAL_BUILD_NUMBER | **2026071812** (candidate; not TF) |
+| TESTFLIGHT_UPLOADED | **NO** |
+| TESTFLIGHT_PROCESSED | **NO** |
+| TESTFLIGHT_INSTALLED | **NO** |
+| TESTFLIGHT_MEDIA_SMOKE | **BLOCKED** |
 | TASK_CHAT_END_TO_END_READY | **NO** |
 | PILOT_DAY0_C3_C12_COMPLETE | **NO** |
 | PILOT_DAY0_COMPLETE | **NO** |
 
-Artifacts: `docs/launch/artifacts/task-chat-ui-smoke-2026-07-18/`  
-(`final-matrix-summary.json`, redacted `taskchat-*.log`, `installed-apps-final.txt`)
+Artifacts: `docs/launch/artifacts/task-chat-ui-smoke-2026-07-18/` (gitignored locally)

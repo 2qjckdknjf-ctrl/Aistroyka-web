@@ -33,9 +33,11 @@
 ## Progress (2026-07-18)
 
 - Production/staging health `sha7=f088ed3`
-- iPhone DDI ready; Worker+Manager `2026071807` installed via Xcode
+- iPhone DDI ready when USB connected; candidate device build **`2026071812`**
 - Task chat TEXT / DELETE / AUTHORIZATION / CROSS_TENANT UI **PASS**
 - API authz (Pavel 403, Sofia 403, cross-tenant 404) confirmed
+- Media wave: `size_bytes` list enrichment verified on local `:3010` (67/512); **prod still null** until deploy
+- Physical PHOTO/VOICE retest **blocked** — device `available (paired)` not connected
 
 ---
 
