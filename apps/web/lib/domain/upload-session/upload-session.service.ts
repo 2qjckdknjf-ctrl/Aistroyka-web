@@ -31,7 +31,11 @@ function validateChatFinalizePayload(payload: {
   if (!mime || !CHAT_ALLOWED_MIMES.has(mime)) {
     return "Unsupported chat media MIME type";
   }
-  if (payload.size_bytes != null && (payload.size_bytes < 0 || payload.size_bytes > CHAT_MAX_BYTES)) {
+  // Canonical size must be a positive integer captured from the client byte length.
+  if (payload.size_bytes == null || !Number.isFinite(payload.size_bytes) || payload.size_bytes <= 0) {
+    return "Chat media size_bytes required";
+  }
+  if (payload.size_bytes > CHAT_MAX_BYTES) {
     return "Chat media exceeds size limit";
   }
   return null;
