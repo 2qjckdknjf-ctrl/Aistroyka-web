@@ -145,3 +145,6 @@ AuthKey_*.p8
 play-service-account*.json
 google-play*.json
 service-account*.json
+
+# Device UI smoke secrets (never commit)
+**/DeviceSmokeE2ESecrets.swift
