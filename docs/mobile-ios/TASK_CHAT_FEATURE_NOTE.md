@@ -1,7 +1,8 @@
 # Task Chat (Worker ↔ Manager)
 
 **Date:** 2026-07-18  
-**Status:** Merged to `main` in PR #187  
+**Status:** Merged to `main` in PR #187
+
 **Scope:** Task-scoped chat with text, voice notes, photo, and video. No live calls.
 
 ## Surfaces
