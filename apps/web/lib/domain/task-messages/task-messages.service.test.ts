@@ -5,17 +5,12 @@ import {
   softDeleteTaskMessage,
 } from "./task-messages.service";
 
-vi.mock("@/lib/domain/tasks/task.policy", () => ({
-  canManageTasks: vi.fn(),
-  canReadTasks: vi.fn().mockReturnValue(true),
-}));
-
-vi.mock("@/lib/tenant/client-profile", () => ({
-  isLiteWorkerClient: vi.fn(),
-}));
-
 vi.mock("@/lib/domain/tasks/task.repository", () => ({
   getById: vi.fn(),
+}));
+
+vi.mock("@/lib/domain/projects/project-access", () => ({
+  getProjectMembership: vi.fn(),
 }));
 
 vi.mock("@/lib/domain/reports/report.service", () => ({
@@ -44,9 +39,8 @@ vi.mock("@/lib/domain/notifications/manager-notifications.repository", () => ({
   notifyTenantManagers: vi.fn(),
 }));
 
-import { canManageTasks } from "@/lib/domain/tasks/task.policy";
-import { isLiteWorkerClient } from "@/lib/tenant/client-profile";
 import * as taskRepo from "@/lib/domain/tasks/task.repository";
+import { getProjectMembership } from "@/lib/domain/projects/project-access";
 import { validateTaskForReportLink } from "@/lib/domain/reports/report.service";
 import * as repo from "./task-messages.repository";
 
@@ -56,7 +50,10 @@ const supabase = {} as any;
 describe("task-messages.service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(isLiteWorkerClient).mockReturnValue(false);
+    vi.mocked(getProjectMembership).mockResolvedValue({
+      role: "manager",
+      source: "project_members",
+    });
     vi.mocked(taskRepo.getById).mockResolvedValue({
       id: "task-1",
       project_id: "p1",
@@ -67,7 +64,7 @@ describe("task-messages.service", () => {
   });
 
   it("lists messages for assigned worker", async () => {
-    vi.mocked(canManageTasks).mockReturnValue(false);
+    vi.mocked(getProjectMembership).mockResolvedValue(null);
     vi.mocked(validateTaskForReportLink).mockResolvedValue({ ok: true });
     vi.mocked(repo.listByTask).mockResolvedValue({
       data: [
@@ -95,7 +92,7 @@ describe("task-messages.service", () => {
   });
 
   it("rejects create when worker not assigned", async () => {
-    vi.mocked(canManageTasks).mockReturnValue(false);
+    vi.mocked(getProjectMembership).mockResolvedValue(null);
     vi.mocked(validateTaskForReportLink).mockResolvedValue({ ok: false, code: "task_not_assigned" });
     const res = await createTaskMessage(supabase, ctx, "task-1", {
       kind: "text",
@@ -106,7 +103,6 @@ describe("task-messages.service", () => {
   });
 
   it("idempotent create via clientId", async () => {
-    vi.mocked(canManageTasks).mockReturnValue(true);
     const existing = {
       id: "m1",
       tenant_id: "t1",
@@ -134,7 +130,6 @@ describe("task-messages.service", () => {
   });
 
   it("soft-delete is idempotent when already deleted", async () => {
-    vi.mocked(canManageTasks).mockReturnValue(true);
     vi.mocked(repo.getById).mockResolvedValue({
       id: "m1",
       tenant_id: "t1",
@@ -156,9 +151,11 @@ describe("task-messages.service", () => {
     expect(repo.softDelete).not.toHaveBeenCalled();
   });
 
-  it("lite worker with member role still requires assignment", async () => {
-    vi.mocked(canManageTasks).mockReturnValue(true);
-    vi.mocked(isLiteWorkerClient).mockReturnValue(true);
+  it("member without manager project role still requires assignment", async () => {
+    vi.mocked(getProjectMembership).mockResolvedValue({
+      role: "internal_member",
+      source: "project_members",
+    });
     vi.mocked(validateTaskForReportLink).mockResolvedValue({ ok: false, code: "task_not_assigned" });
     const res = await listTaskMessages(supabase, ctx, "task-other");
     expect(res.status).toBe(403);
@@ -166,8 +163,36 @@ describe("task-messages.service", () => {
     expect(validateTaskForReportLink).toHaveBeenCalled();
   });
 
+  it("assigned member cannot soft-delete another sender's message", async () => {
+    vi.mocked(getProjectMembership).mockResolvedValue({
+      role: "internal_member",
+      source: "project_members",
+    });
+    vi.mocked(validateTaskForReportLink).mockResolvedValue({ ok: true });
+    vi.mocked(repo.getById).mockResolvedValue({
+      id: "m-manager",
+      tenant_id: "t1",
+      project_id: "p1",
+      task_id: "task-1",
+      sender_user_id: "u-manager",
+      kind: "text",
+      body: "manager message",
+      upload_session_id: null,
+      duration_ms: null,
+      client_id: null,
+      created_at: "2026-07-18T10:00:00Z",
+      edited_at: null,
+      deleted_at: null,
+    });
+
+    const res = await softDeleteTaskMessage(supabase, ctx, "task-1", "m-manager");
+
+    expect(res.status).toBe(403);
+    expect(res.ok).toBe(false);
+    expect(repo.softDelete).not.toHaveBeenCalled();
+  });
+
   it("rejects media when size_bytes missing", async () => {
-    vi.mocked(canManageTasks).mockReturnValue(true);
     vi.mocked(repo.getFinalizedUploadSession).mockResolvedValue({
       id: "s1",
       purpose: "task_chat",
@@ -185,7 +210,6 @@ describe("task-messages.service", () => {
   });
 
   it("rejects project_media purpose for chat attach", async () => {
-    vi.mocked(canManageTasks).mockReturnValue(true);
     vi.mocked(repo.getFinalizedUploadSession).mockResolvedValue({
       id: "s1",
       purpose: "project_media",
