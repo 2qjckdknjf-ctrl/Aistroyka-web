@@ -44,7 +44,12 @@ import { getProjectMembership } from "@/lib/domain/projects/project-access";
 import { validateTaskForReportLink } from "@/lib/domain/reports/report.service";
 import * as repo from "./task-messages.repository";
 
-const ctx = { tenantId: "t1", userId: "u-worker", role: "member" } as any;
+const ctx = {
+  tenantId: "t1",
+  userId: "u-worker",
+  role: "member",
+  clientProfile: "web",
+} as any;
 const supabase = {} as any;
 
 describe("task-messages.service", () => {
@@ -89,6 +94,27 @@ describe("task-messages.service", () => {
     const res = await listTaskMessages(supabase, ctx, "task-1");
     expect(res.status).toBe(200);
     expect(res.result?.data).toHaveLength(1);
+  });
+
+  it("allows an active project manager without task assignment", async () => {
+    vi.mocked(repo.listByTask).mockResolvedValue({ data: [], nextCursor: null });
+
+    const res = await listTaskMessages(supabase, ctx, "task-other");
+
+    expect(res.status).toBe(200);
+    expect(validateTaskForReportLink).not.toHaveBeenCalled();
+  });
+
+  it("allows a tenant admin regardless of client profile", async () => {
+    vi.mocked(getProjectMembership).mockResolvedValue(null);
+    vi.mocked(repo.listByTask).mockResolvedValue({ data: [], nextCursor: null });
+    const adminCtx = { ...ctx, role: "admin", clientProfile: "ios_lite" };
+
+    const res = await listTaskMessages(supabase, adminCtx, "task-other");
+
+    expect(res.status).toBe(200);
+    expect(getProjectMembership).not.toHaveBeenCalled();
+    expect(validateTaskForReportLink).not.toHaveBeenCalled();
   });
 
   it("rejects create when worker not assigned", async () => {
