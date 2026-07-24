@@ -95,10 +95,14 @@ export function TaskChatPanel({ taskId }: { taskId: string }) {
   const chunksRef = useRef<Blob[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const loadMessages = useCallback(async () => {
-    setLoading(true);
+  const loadMessages = useCallback(async (opts?: { background?: boolean }) => {
+    const background = opts?.background === true;
+    if (!background) setLoading(true);
     try {
-      const res = await fetch(`/api/v1/tasks/${taskId}/messages?limit=80`, {
+      // tail=1 returns the newest page (ascending within the window). Without it,
+      // oldest-first pagination + media realtime reload replaced the thread with
+      // the first 80 messages and dropped recent chat (including new media).
+      const res = await fetch(`/api/v1/tasks/${taskId}/messages?limit=80&tail=1`, {
         credentials: "include",
       });
       if (!res.ok) throw new Error("load_failed");
@@ -111,7 +115,7 @@ export function TaskChatPanel({ taskId }: { taskId: string }) {
     } catch {
       setError(t("taskChatError"));
     } finally {
-      setLoading(false);
+      if (!background) setLoading(false);
     }
   }, [taskId, t]);
 
@@ -155,8 +159,8 @@ export function TaskChatPanel({ taskId }: { taskId: string }) {
             },
           ];
         });
-        // Reload to attach signed media_url for non-text inserts.
-        if (row.kind !== "text") void loadMessages();
+        // Background reload attaches signed media_url without wiping to oldest page.
+        if (row.kind !== "text") void loadMessages({ background: true });
         markTaskChatRead(taskId, row.created_at);
       },
       onUpdate: (row) => {
