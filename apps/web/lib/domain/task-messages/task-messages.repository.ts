@@ -74,7 +74,7 @@ export async function listByTask(
   tenantId: string,
   taskId: string,
   opts: { limit: number; cursor?: string | null }
-): Promise<{ data: TaskMessage[]; nextCursor: string | null }> {
+): Promise<{ data: TaskMessage[]; nextCursor: string | null; error?: string }> {
   const limit = Math.min(Math.max(opts.limit, 1), 100);
   let query = supabase
     .from("task_messages")
@@ -97,9 +97,11 @@ export async function listByTask(
   }
 
   const { data, error } = await query;
-  if (error || !data) return { data: [], nextCursor: null };
+  // Never collapse query failures into an empty page — clients treat HTTP 200 + []
+  // as a real empty thread and wipe in-memory messages (looks like total data loss).
+  if (error) return { data: [], nextCursor: null, error: error.message || "list_failed" };
 
-  const rows = data as MessageRow[];
+  const rows = (data ?? []) as MessageRow[];
   const page = rows.slice(0, limit);
   const enriched = await attachUploadMeta(
     supabase,
