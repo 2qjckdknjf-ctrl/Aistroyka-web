@@ -209,7 +209,11 @@ final class OperationQueueExecutor: ObservableObject {
                 return .success
             }
         } catch let err as APIError {
-            if err.isUnauthorized || err.isForbidden { return .authRequired }
+            // Only 401 pauses the whole queue (session/auth). 403 is permission denied for
+            // this op (e.g. sendTaskMessage task_not_assigned) — fail it permanently so
+            // later report upload/submit ops are not blocked in a poison-retry loop.
+            if err.isUnauthorized { return .authRequired }
+            if err.isForbidden { return .permanent(message: err.message, code: err.code) }
             if err.isConflict { return .needsBootstrap }
             if err.statusCode == 429 || (err.statusCode ?? 0) >= 500 { return .retry(code: err.code, message: err.message) }
             if (err.statusCode ?? 0) >= 400 { return .permanent(message: err.message, code: err.code) }
