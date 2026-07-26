@@ -7,7 +7,12 @@
 
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabase/admin";
-import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
+import {
+  getTenantContextFromRequest,
+  requireTenant,
+  TenantRequiredError,
+  authorize,
+} from "@/lib/tenant";
 import { getWorkspaceBillingOverview } from "@/lib/platform/billing-readiness/billing-readiness.service";
 
 export const dynamic = "force-dynamic";
@@ -21,6 +26,12 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: e.message }, { status: 401 });
     }
     throw e;
+  }
+  // Match sibling billing routes: commercial overview is owner-only.
+  // Without this, any tenant member (including portal stakeholder) could read
+  // plan/subscription/pilot flags via the service-role path below.
+  if (!authorize(ctx, "billing:admin")) {
+    return NextResponse.json({ error: "Insufficient rights" }, { status: 403 });
   }
   if (!ctx.tenantId) {
     return NextResponse.json({ error: "Tenant required" }, { status: 403 });
