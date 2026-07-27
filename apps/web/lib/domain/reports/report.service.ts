@@ -9,6 +9,10 @@ import { enqueueJob } from "@/lib/platform/jobs/job.service";
 import { emitAudit } from "@/lib/observability/audit.service";
 import { emitChange } from "@/lib/sync/change-log.repository";
 import { notifyProjectManagers, notifyTenantManagers } from "@/lib/domain/notifications/manager-notifications.repository";
+import * as uploadSessionRepo from "@/lib/domain/upload-session/upload-session.repository";
+import * as mediaRepo from "@/lib/domain/media/media.repository";
+
+const REPORT_UPLOAD_PURPOSES = new Set(["report_before", "report_after"]);
 
 /** Returns { ok, code? }. code = task_invalid | task_not_assigned when not ok. */
 export async function validateTaskForReportLink(
@@ -22,6 +26,40 @@ export async function validateTaskForReportLink(
   if (task.assigned_to === userId) return { ok: true };
   const assigned = await isTaskAssignedTo(supabase, tenantId, taskId, userId);
   return assigned ? { ok: true } : { ok: false, code: "task_not_assigned" };
+}
+
+/**
+ * Photo proof must reference a real finalized report upload session owned by the
+ * worker, or a tenant-scoped media row with a file URL. Caller-controlled IDs alone
+ * must not satisfy the proof gate.
+ */
+export async function isValidReportPhotoProof(
+  supabase: SupabaseClient,
+  ctx: TenantContext,
+  opts: { mediaId?: string | null; uploadSessionId?: string | null }
+): Promise<boolean> {
+  const uploadSessionId = (opts.uploadSessionId ?? "").trim();
+  const mediaId = (opts.mediaId ?? "").trim();
+
+  if (uploadSessionId) {
+    const session = await uploadSessionRepo.getById(supabase, uploadSessionId, ctx.tenantId);
+    if (
+      session &&
+      session.user_id === ctx.userId &&
+      session.status === "finalized" &&
+      REPORT_UPLOAD_PURPOSES.has(session.purpose) &&
+      (session.object_path ?? "").trim()
+    ) {
+      return true;
+    }
+  }
+
+  if (mediaId) {
+    const media = await mediaRepo.getById(supabase, mediaId, ctx.tenantId);
+    if (media && (media.file_url ?? "").trim()) return true;
+  }
+
+  return false;
 }
 
 export async function createReport(
@@ -60,6 +98,11 @@ export async function addMediaToReport(
   if (!report) return { ok: false, error: "Report not found" };
   if (report.user_id !== ctx.userId) return { ok: false, error: "Not your report" };
   if (report.status !== "draft") return { ok: false, error: "Report already submitted" };
+  const proofOk = await isValidReportPhotoProof(supabase, ctx, {
+    mediaId: opts.mediaId,
+    uploadSessionId: opts.uploadSessionId,
+  });
+  if (!proofOk) return { ok: false, error: "Invalid photo proof" };
   const ok = await repo.addMedia(supabase, reportId, opts);
   return { ok, error: ok ? "" : "Failed to add media" };
 }
@@ -86,7 +129,18 @@ export async function submitReport(
   }
 
   const mediaRows = await repo.listMediaByReportId(supabase, reportId, ctx.tenantId);
-  const hasPhotoProof = mediaRows.some((r) => Boolean(r.media_id || r.upload_session_id));
+  let hasPhotoProof = false;
+  for (const row of mediaRows) {
+    if (
+      await isValidReportPhotoProof(supabase, ctx, {
+        mediaId: row.media_id,
+        uploadSessionId: row.upload_session_id,
+      })
+    ) {
+      hasPhotoProof = true;
+      break;
+    }
+  }
   if (!hasPhotoProof) {
     return { ok: false, error: "Photo proof required", code: "proof_required" };
   }
