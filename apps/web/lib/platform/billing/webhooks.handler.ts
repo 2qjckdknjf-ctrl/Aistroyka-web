@@ -7,6 +7,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { getStripeClient } from "./stripe.client";
 import { upsertEntitlements } from "./entitlements.service";
 
+/** Stripe statuses that grant paid entitlements / dashboard access. */
+const ACTIVE_SUBSCRIPTION_STATUSES = new Set(["active", "trialing"]);
+
 function getWebhookSecret(): string | null {
   return process.env.STRIPE_WEBHOOK_SECRET?.trim() ?? null;
 }
@@ -32,22 +35,38 @@ export function verifyWebhookEvent(payload: string | Buffer, signature: string |
 }
 
 /** Map Stripe plan/price to tier. */
-function planToTier(planId: string): string {
+export function planToTier(planId: string): string {
   const p = planId.toLowerCase();
   if (p.includes("enterprise")) return "ENTERPRISE";
   if (p.includes("pro")) return "PRO";
   return "FREE";
 }
 
-/** Apply subscription updated: sync billing_customers and entitlements. */
-export async function handleSubscriptionUpdated(
+/**
+ * Entitlement tier for a Stripe subscription status + price.
+ * Non-active statuses (canceled, past_due, unpaid, incomplete, …) must not keep paid tiers.
+ */
+export function entitlementTierForSubscription(status: string, planId: string): string {
+  if (!ACTIVE_SUBSCRIPTION_STATUSES.has(status)) return "FREE";
+  return planToTier(planId);
+}
+
+type SubscriptionPeriodFields = {
+  id: string;
+  customer: string;
+  status: string;
+  items?: { data?: Array<{ price?: { id?: string } }> };
+  current_period_start?: number;
+  current_period_end?: number;
+};
+
+async function syncBillingCustomerAndEntitlements(
   supabase: SupabaseClient,
-  subscription: { id: string; customer: string; status: string; items?: { data?: Array<{ price?: { id?: string } }> }; current_period_start?: number; current_period_end?: number }
+  tenantId: string,
+  subscription: SubscriptionPeriodFields
 ): Promise<void> {
-  const tenantId = await resolveTenantByStripeCustomer(supabase, subscription.customer as string);
-  if (!tenantId) return;
   const planId = subscription.items?.data?.[0]?.price?.id ?? "";
-  const tier = planToTier(planId);
+  const tier = entitlementTierForSubscription(subscription.status, planId);
   await supabase.from("billing_customers").upsert(
     {
       tenant_id: tenantId,
@@ -64,6 +83,34 @@ export async function handleSubscriptionUpdated(
     { onConflict: "tenant_id" }
   );
   await upsertEntitlements(supabase, { tenant_id: tenantId, tier });
+}
+
+/** Apply subscription created/updated: sync billing_customers and entitlements. */
+export async function handleSubscriptionUpdated(
+  supabase: SupabaseClient,
+  subscription: SubscriptionPeriodFields
+): Promise<void> {
+  const tenantId = await resolveTenantByStripeCustomer(supabase, subscription.customer as string);
+  if (!tenantId) return;
+  await syncBillingCustomerAndEntitlements(supabase, tenantId, subscription);
+}
+
+/**
+ * Apply subscription deleted: mark billing canceled and revoke paid entitlements.
+ * Stripe may omit a final `customer.subscription.updated` with status=canceled.
+ */
+export async function handleSubscriptionDeleted(
+  supabase: SupabaseClient,
+  subscription: { id: string; customer: string; items?: { data?: Array<{ price?: { id?: string } }> } }
+): Promise<void> {
+  const tenantId = await resolveTenantByStripeCustomer(supabase, subscription.customer as string);
+  if (!tenantId) return;
+  await syncBillingCustomerAndEntitlements(supabase, tenantId, {
+    id: subscription.id,
+    customer: subscription.customer,
+    status: "canceled",
+    items: subscription.items,
+  });
 }
 
 async function resolveTenantByStripeCustomer(supabase: SupabaseClient, stripeCustomerId: string): Promise<string | null> {
