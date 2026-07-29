@@ -24,13 +24,26 @@ vi.mock("@/lib/observability/audit.service", () => ({
   emitAiRuntimeAudit: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock("@/lib/tenant", () => ({
-  getTenantContextFromRequest: vi.fn().mockResolvedValue({
-    tenantId: "t1",
-    userId: "u1",
-    subscriptionTier: "pro",
-  }),
-}));
+vi.mock("@/lib/tenant", () => {
+  class TenantRequiredError extends Error {
+    constructor(message = "Authentication required") {
+      super(message);
+      this.name = "TenantRequiredError";
+    }
+  }
+  return {
+    getTenantContextFromRequest: vi.fn().mockResolvedValue({
+      tenantId: "t1",
+      userId: "u1",
+      role: "owner",
+      subscriptionTier: "pro",
+    }),
+    requireTenant: (ctx: { tenantId?: string | null }) => {
+      if (!ctx.tenantId) throw new TenantRequiredError();
+    },
+    TenantRequiredError,
+  };
+});
 
 function jsonRequest(body: object) {
   return new Request("http://test/api/v1/ai/analyze-video-daily", {
