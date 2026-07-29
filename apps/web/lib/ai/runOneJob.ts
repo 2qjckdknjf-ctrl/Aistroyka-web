@@ -5,6 +5,7 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { CRON_SECRET_HEADER } from "@/lib/api/cron-auth";
 import { getServerConfig } from "@/lib/config/server";
 import { logStructured } from "@/lib/observability";
 import { isAnalysisResult, type AnalysisResult } from "./types";
@@ -47,6 +48,11 @@ async function callAiAnalysis(
 ): Promise<AnalysisResult> {
   const { AI_REQUEST_TIMEOUT_MS, AI_RETRY_ATTEMPTS } = getServerConfig();
   const baseUrl = aiUrl.replace(/\/$/, "");
+  const cronSecret = process.env.CRON_SECRET?.trim();
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (cronSecret) {
+    headers[CRON_SECRET_HEADER] = cronSecret;
+  }
   let lastError: Error | null = null;
 
   for (let attempt = 1; attempt <= AI_RETRY_ATTEMPTS; attempt++) {
@@ -56,7 +62,7 @@ async function callAiAnalysis(
     try {
       const res = await fetch(baseUrl, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify(params),
         signal: controller.signal,
       });
@@ -117,15 +123,66 @@ async function markJobFailed(
     .in("status", ["pending", "processing"]);
 }
 
+type AnalysisJobRow = {
+  id: string;
+  media_id: string;
+  tenant_id?: string | null;
+};
+
+/**
+ * Claim the oldest queued job for a tenant without using the global dequeue RPC.
+ * Avoids cross-tenant job theft when session users trigger processing.
+ */
+async function claimQueuedJobForTenant(
+  supabase: SupabaseClient,
+  tenantId: string
+): Promise<{ job: AnalysisJobRow | null; error: string | null }> {
+  const { data: candidates, error: listError } = await supabase
+    .from("analysis_jobs")
+    .select("id, media_id, tenant_id")
+    .eq("tenant_id", tenantId)
+    .eq("status", "queued")
+    .order("started_at", { ascending: true })
+    .limit(5);
+
+  if (listError) {
+    return { job: null, error: listError.message };
+  }
+
+  for (const candidate of candidates ?? []) {
+    const { data: claimed, error: claimError } = await supabase
+      .from("analysis_jobs")
+      .update({
+        status: "processing",
+        started_at: new Date().toISOString(),
+      })
+      .eq("id", candidate.id)
+      .eq("status", "queued")
+      .eq("tenant_id", tenantId)
+      .select("id, media_id, tenant_id")
+      .maybeSingle();
+
+    if (claimError) {
+      return { job: null, error: claimError.message };
+    }
+    if (claimed?.id) {
+      return { job: claimed as AnalysisJobRow, error: null };
+    }
+  }
+
+  return { job: null, error: null };
+}
+
 /**
  * Process one job: dequeue → claim → AI → complete (or mark failed).
- * Uses RPCs dequeue_job(null, workerId), claim_job_execution(jobId, workerId), complete_analysis_job(...).
+ * When options.tenantId is set, only that tenant's queued jobs are claimed (session-safe).
+ * Without tenantId, uses global dequeue_job RPC (internal/cron workers only).
  * Optional traceId is included in job logs when provided (e.g. from request x-request-id).
  */
 export async function processOneJob(
   supabase: SupabaseClient,
   aiAnalysisUrl: string | undefined,
-  options?: { traceId?: string }
+  options?: { traceId?: string; tenantId?: string | null }
 ): Promise<ProcessOneJobResult> {
   const traceId = options?.traceId ?? (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `job-${Date.now()}`);
   if (!aiAnalysisUrl?.trim()) {
@@ -135,29 +192,47 @@ export async function processOneJob(
   // Keep worker_id nullable to stay compatible with live DBs that may enforce
   // a FK to a workers table not seeded by web-session users.
   const workerId: string | null = null;
+  const tenantId = options?.tenantId?.trim() || null;
 
-  const { data: jobRow, error: dequeueError } = await supabase.rpc("dequeue_job", {
-    p_region_id: null,
-    p_worker_id: workerId,
-  });
+  let job: AnalysisJobRow | null = null;
 
-  if (dequeueError) {
-    return { ok: false, reason: "error", message: dequeueError.message };
+  if (tenantId) {
+    const claimed = await claimQueuedJobForTenant(supabase, tenantId);
+    if (claimed.error) {
+      return { ok: false, reason: "error", message: claimed.error };
+    }
+    job = claimed.job;
+  } else {
+    const { data: jobRow, error: dequeueError } = await supabase.rpc("dequeue_job", {
+      p_region_id: null,
+      p_worker_id: workerId,
+    });
+
+    if (dequeueError) {
+      return { ok: false, reason: "error", message: dequeueError.message };
+    }
+
+    const row = Array.isArray(jobRow) ? jobRow[0] : jobRow;
+    if (row?.id) {
+      job = row as AnalysisJobRow;
+    }
   }
 
-  const job = Array.isArray(jobRow) ? jobRow[0] : jobRow;
   if (!job?.id) {
     return { ok: false, reason: "no_job" };
   }
 
-  const jobId = job.id as string;
-  const mediaId = job.media_id as string;
+  const jobId = job.id;
+  const mediaId = job.media_id;
 
-  const { data: media, error: mediaError } = await supabase
+  let mediaQuery = supabase
     .from("media")
-    .select("file_url, project_id, type")
-    .eq("id", mediaId)
-    .single();
+    .select("file_url, project_id, type, tenant_id")
+    .eq("id", mediaId);
+  if (tenantId) {
+    mediaQuery = mediaQuery.eq("tenant_id", tenantId);
+  }
+  const { data: media, error: mediaError } = await mediaQuery.single();
 
   if (mediaError || !media) {
     await markJobFailed(
@@ -166,6 +241,11 @@ export async function processOneJob(
       mediaError?.message ?? "Media not found",
       "validation_error"
     );
+    return { ok: true, jobId, status: "failed" };
+  }
+
+  if (tenantId && media.tenant_id !== tenantId) {
+    await markJobFailed(supabase, jobId, "Media tenant mismatch", "validation_error");
     return { ok: true, jobId, status: "failed" };
   }
 
