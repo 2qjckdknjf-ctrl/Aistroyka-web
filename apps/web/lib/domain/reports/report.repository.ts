@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getPublicConfig } from "@/lib/config";
+import { publicMediaObjectUrl } from "@/lib/media/path-in-media-bucket";
 import type { Report } from "./report.types";
 
 export async function create(
@@ -78,6 +79,12 @@ export async function addMedia(
   return !error;
 }
 
+function updateMatched(data: unknown[] | null, error: { message?: string } | null): boolean {
+  // PostgREST returns no error when 0 rows match the filter; treat that as failure
+  // so callers do not emit duplicate notifications / AI jobs on lost races.
+  return !error && Array.isArray(data) && data.length > 0;
+}
+
 export async function submit(
   supabase: SupabaseClient,
   reportId: string,
@@ -88,13 +95,14 @@ export async function submit(
   const updates: Record<string, unknown> = { status: "submitted", submitted_at: new Date().toISOString() };
   if (taskId != null && taskId !== "") (updates as Record<string, unknown>).task_id = taskId;
   if (workerNote != null) (updates as Record<string, unknown>).worker_note = workerNote;
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("worker_reports")
     .update(updates)
     .eq("id", reportId)
     .eq("tenant_id", tenantId)
-    .eq("status", "draft");
-  return !error;
+    .eq("status", "draft")
+    .select("id");
+  return updateMatched(data as unknown[] | null, error);
 }
 
 /** Resubmit after changes_requested. Keeps reviewed_at/reviewed_by/manager_note for history. */
@@ -108,13 +116,14 @@ export async function resubmit(
   const updates: Record<string, unknown> = { status: "submitted", submitted_at: new Date().toISOString() };
   if (taskId != null && taskId !== "") (updates as Record<string, unknown>).task_id = taskId;
   if (workerNote != null) (updates as Record<string, unknown>).worker_note = workerNote;
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("worker_reports")
     .update(updates)
     .eq("id", reportId)
     .eq("tenant_id", tenantId)
-    .eq("status", "changes_requested");
-  return !error;
+    .eq("status", "changes_requested")
+    .select("id");
+  return updateMatched(data as unknown[] | null, error);
 }
 
 /** Resolve project_id for a report (from task_id or day_id). */
@@ -207,8 +216,6 @@ export async function listMediaByReportId(
 
 export type ReportMediaRowWithUrl = ReportMediaRow & { file_url: string | null };
 
-const MEDIA_BUCKET = "media";
-
 /** Same resolution as job `resolve-image-url`: `media.file_url` or public storage URL from finalized session. */
 export async function listMediaByReportIdWithUrls(
   supabase: SupabaseClient,
@@ -259,7 +266,7 @@ export async function listMediaByReportIdWithUrls(
     if (!file_url && row.upload_session_id) {
       const objectPath = pathBySessionId.get(row.upload_session_id);
       if (objectPath && baseUrl) {
-        file_url = `${baseUrl}/storage/v1/object/public/${MEDIA_BUCKET}/${objectPath}`;
+        file_url = publicMediaObjectUrl(baseUrl, objectPath);
       }
     }
     return { ...row, file_url };
