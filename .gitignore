@@ -139,7 +139,8 @@ uploads/
 
 # Mobile store MODE B — local credentials and upload artifacts (never commit)
 local-secrets/
-evidence/
+# Root-only upload evidence dumps (do not ignore packages/*/src/evidence)
+/evidence/
 .secrets/
 *.p8
 AuthKey_*.p8
