@@ -109,8 +109,10 @@ describe("Phase 8 security-headers CI contract", () => {
     expect(smoke).toMatch(/never send credentials or auth headers/);
     expect(smoke).toMatch(/curl exit/);
     expect(smoke).toMatch(/fail-closed before header accept/);
-    expect(smoke).toMatch(/--connect-timeout 10/);
-    expect(smoke).toMatch(/--max-time 45/);
+    expect(smoke).toMatch(/SECURITY_HEADERS_CONNECT_TIMEOUT_SEC:-5/);
+    expect(smoke).toMatch(/SECURITY_HEADERS_REQUEST_MAX_TIME_SEC:-12/);
+    expect(smoke).toMatch(/--connect-timeout "\$CONNECT_TIMEOUT_SEC"/);
+    expect(smoke).toMatch(/--max-time "\$REQUEST_MAX_TIME_SEC"/);
     expect(smoke).toMatch(/hop\$\{hop\}-of-\$\{hop_count\}/);
     expect(smoke).toMatch(/Validate intermediate redirect responses/);
     expect(smoke).toMatch(/SECURITY_HEADERS_ALLOW_LOCALHOST/);
@@ -189,6 +191,33 @@ describe("Phase 8 security-headers CI contract", () => {
     },
     20_000,
   );
+
+  it("fits advertised serial retry budgets inside live and production job timeouts", () => {
+    const requestMaxSeconds = Number(
+      smoke.match(/SECURITY_HEADERS_REQUEST_MAX_TIME_SEC:-([0-9]+)/)?.[1],
+    );
+    const liveTimeoutSeconds =
+      Number(live.match(/timeout-minutes:\s*([0-9]+)/)?.[1]) * 60;
+    const liveAttempts = Number(live.match(/max_pair_attempts=([0-9]+)/)?.[1]);
+    const liveSleepSeconds = Number(live.match(/sleep_sec=([0-9]+)/)?.[1]);
+    const prodHeadersJob = prod.match(
+      /security-headers-smoke:[\s\S]*?timeout-minutes:\s*([0-9]+)/,
+    );
+    const prodTimeoutSeconds = Number(prodHeadersJob?.[1]) * 60;
+    const prodAttempts = Number(prod.match(/max_pair_attempts=([0-9]+)/)?.[1]);
+    const prodSleepSeconds = Number(prod.match(/sleep_sec=([0-9]+)/)?.[1]);
+    const probesPerHost = 5;
+
+    expect(requestMaxSeconds).toBe(12);
+    expect(
+      3 * probesPerHost * requestMaxSeconds * liveAttempts +
+        (liveAttempts - 1) * liveSleepSeconds,
+    ).toBeLessThan(liveTimeoutSeconds);
+    expect(
+      2 * probesPerHost * requestMaxSeconds * prodAttempts +
+        (prodAttempts - 1) * prodSleepSeconds,
+    ).toBeLessThan(prodTimeoutSeconds);
+  });
 });
 
 function runPromotionGuard(env: NodeJS.ProcessEnv): { status: number; out: string } {

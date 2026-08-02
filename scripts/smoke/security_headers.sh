@@ -168,6 +168,8 @@ LOCALE="${SECURITY_HEADERS_LOCALE:-en}"
 MAX_ATTEMPTS="${SECURITY_HEADERS_MAX_ATTEMPTS:-1}"
 REQUIRE_CONSECUTIVE="${SECURITY_HEADERS_REQUIRE_CONSECUTIVE:-1}"
 RETRY_SLEEP_SEC="${SECURITY_HEADERS_RETRY_SLEEP_SEC:-15}"
+CONNECT_TIMEOUT_SEC="${SECURITY_HEADERS_CONNECT_TIMEOUT_SEC:-5}"
+REQUEST_MAX_TIME_SEC="${SECURITY_HEADERS_REQUEST_MAX_TIME_SEC:-12}"
 
 if [[ -z "$BASE_URL" ]]; then
   echo "security_headers: empty target fail-closed" >&2
@@ -193,6 +195,18 @@ if ! [[ "$REQUIRE_CONSECUTIVE" =~ ^[0-9]+$ ]] || [[ "$REQUIRE_CONSECUTIVE" -lt 1
 fi
 if [[ "$REQUIRE_CONSECUTIVE" -gt "$MAX_ATTEMPTS" ]]; then
   echo "security_headers: REQUIRE_CONSECUTIVE ($REQUIRE_CONSECUTIVE) > MAX_ATTEMPTS ($MAX_ATTEMPTS)" >&2
+  exit 2
+fi
+if ! [[ "$CONNECT_TIMEOUT_SEC" =~ ^[0-9]+$ ]] || [[ "$CONNECT_TIMEOUT_SEC" -lt 1 ]]; then
+  echo "security_headers: SECURITY_HEADERS_CONNECT_TIMEOUT_SEC must be >= 1" >&2
+  exit 2
+fi
+if ! [[ "$REQUEST_MAX_TIME_SEC" =~ ^[0-9]+$ ]] || [[ "$REQUEST_MAX_TIME_SEC" -lt 1 ]]; then
+  echo "security_headers: SECURITY_HEADERS_REQUEST_MAX_TIME_SEC must be >= 1" >&2
+  exit 2
+fi
+if [[ "$CONNECT_TIMEOUT_SEC" -gt "$REQUEST_MAX_TIME_SEC" ]]; then
+  echo "security_headers: connect timeout ($CONNECT_TIMEOUT_SEC) exceeds request max time ($REQUEST_MAX_TIME_SEC)" >&2
   exit 2
 fi
 
@@ -286,8 +300,10 @@ check_url() {
     curl_proto_redir=(--proto-redir "=http,https")
   fi
   set +e
-  # Per-request deadlines keep hung origins from consuming the whole job/retry budget.
-  code="$(curl -sS -L --connect-timeout 10 --max-time 45 --max-redirs 5 "${curl_proto_redir[@]}" -D "$tmp" -o /dev/null -w '%{http_code}|%{url_effective}|%{num_redirects}' "$url" 2>/dev/null)"
+  # Per-request deadlines keep hung origins from consuming the whole job/retry
+  # budget. Defaults are sized so all advertised serial attempts fit the live
+  # (three hosts / 30 min) and production (two hosts / 20 min) workflows.
+  code="$(curl -sS -L --connect-timeout "$CONNECT_TIMEOUT_SEC" --max-time "$REQUEST_MAX_TIME_SEC" --max-redirs 5 "${curl_proto_redir[@]}" -D "$tmp" -o /dev/null -w '%{http_code}|%{url_effective}|%{num_redirects}' "$url" 2>/dev/null)"
   curl_rc=$?
   set -e
   if [[ -z "$code" ]]; then
@@ -379,7 +395,7 @@ run_once() {
   return 0
 }
 
-echo "security_headers: target=$BASE_URL max_attempts=$MAX_ATTEMPTS require_consecutive=$REQUIRE_CONSECUTIVE sleep_sec=$RETRY_SLEEP_SEC"
+echo "security_headers: target=$BASE_URL max_attempts=$MAX_ATTEMPTS require_consecutive=$REQUIRE_CONSECUTIVE sleep_sec=$RETRY_SLEEP_SEC connect_timeout_sec=$CONNECT_TIMEOUT_SEC request_max_time_sec=$REQUEST_MAX_TIME_SEC"
 consecutive=0
 attempt=1
 while [[ "$attempt" -le "$MAX_ATTEMPTS" ]]; do

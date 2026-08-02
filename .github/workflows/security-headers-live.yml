@@ -29,7 +29,9 @@ jobs:
   security-headers:
     name: Live security headers (bounded retry)
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # Worst-case serial budget: 3 hosts × 5 probes × 12s × 8 attempts,
+    # plus seven 15s sleeps = 1545s (< 30 minutes).
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
         with:
