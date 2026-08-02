@@ -168,3 +168,134 @@ describe("Phase 8 security-headers CI contract", () => {
     20_000,
   );
 });
+
+function runPromotionGuard(env: NodeJS.ProcessEnv): { status: number; out: string } {
+  const r = spawnSync("bash", ["scripts/release/production-promotion-guard.sh"], {
+    cwd: root,
+    env: { ...process.env, ...env },
+    encoding: "utf8",
+  });
+  return { status: r.status ?? 1, out: `${r.stdout || ""}${r.stderr || ""}` };
+}
+
+describe("Phase 8 production promotion fail-closed (T7)", () => {
+  const prod = read(".github/workflows/deploy-cloudflare-prod.yml");
+  const staging = read(".github/workflows/deploy-cloudflare-staging.yml");
+  const live = read(".github/workflows/security-headers-live.yml");
+  const guard = read("scripts/release/production-promotion-guard.sh");
+  const goodSha = "8408ca26c3db1a88cd5166c9dc86458ec630bf4d";
+
+  it("prod workflow wires no-promotion-guard before migrations/deploy", () => {
+    expect(prod).toMatch(/no-promotion-guard:/);
+    expect(prod).toMatch(/Production promotion guard/);
+    expect(prod).toMatch(/production-promotion-guard\.sh/);
+    expect(prod).toMatch(
+      /migrations-preflight:[\s\S]*needs:\s*\[no-promotion-guard\]/,
+    );
+    expect(prod).toMatch(
+      /deploy:[\s\S]*needs:\s*\[no-promotion-guard,\s*migrations-preflight\]/,
+    );
+    expect(prod).toMatch(/permissions:\s*\n\s*contents:\s*read\s*\n\s*actions:\s*read/);
+    expect(prod).not.toMatch(/permissions:[\s\S]*write|contents:\s*write|deployments:\s*write/);
+  });
+
+  it("exact skip marker blocks promotion; near-miss does not", () => {
+    const blocked = runPromotionGuard({
+      EVENT_NAME: "workflow_run",
+      STAGING_CONCLUSION: "success",
+      STAGING_HEAD_SHA: goodSha,
+      COMMIT_MESSAGE: "ci: headers [skip-staging-deploy]\n",
+    });
+    expect(blocked.status).not.toBe(0);
+    expect(blocked.out).toMatch(/skip-staging-deploy/);
+    expect(blocked.out).toMatch(/FAIL/);
+
+    const nearMiss = runPromotionGuard({
+      EVENT_NAME: "workflow_run",
+      STAGING_CONCLUSION: "success",
+      STAGING_HEAD_SHA: goodSha,
+      COMMIT_MESSAGE: "ci: headers [skip-staging-deployX] skip staging deploy\n",
+    });
+    expect(nearMiss.status).toBe(0);
+    expect(nearMiss.out).toMatch(/OK promote/);
+  });
+
+  it("staging failure / missing metadata fail closed", () => {
+    const stagingFail = runPromotionGuard({
+      EVENT_NAME: "workflow_run",
+      STAGING_CONCLUSION: "failure",
+      STAGING_HEAD_SHA: goodSha,
+      COMMIT_MESSAGE: "merge without marker",
+    });
+    expect(stagingFail.status).not.toBe(0);
+    expect(stagingFail.out).toMatch(/staging conclusion=failure/);
+
+    const missingSha = runPromotionGuard({
+      EVENT_NAME: "workflow_run",
+      STAGING_CONCLUSION: "success",
+      STAGING_HEAD_SHA: "",
+      COMMIT_MESSAGE: "ok",
+    });
+    expect(missingSha.status).not.toBe(0);
+    expect(missingSha.out).toMatch(/missing staging head SHA/);
+
+    const badSha = runPromotionGuard({
+      EVENT_NAME: "workflow_run",
+      STAGING_CONCLUSION: "success",
+      STAGING_HEAD_SHA: "not-a-sha",
+      COMMIT_MESSAGE: "ok",
+    });
+    expect(badSha.status).not.toBe(0);
+    expect(badSha.out).toMatch(/malformed staging head SHA/);
+
+    const missingConclusion = runPromotionGuard({
+      EVENT_NAME: "workflow_run",
+      STAGING_CONCLUSION: "",
+      STAGING_HEAD_SHA: goodSha,
+      COMMIT_MESSAGE: "ok",
+    });
+    expect(missingConclusion.status).not.toBe(0);
+    expect(missingConclusion.out).toMatch(/missing staging conclusion/);
+  });
+
+  it("valid staging success without marker remains allowed; dispatch allowed", () => {
+    const ok = runPromotionGuard({
+      EVENT_NAME: "workflow_run",
+      STAGING_CONCLUSION: "success",
+      STAGING_HEAD_SHA: goodSha,
+      COMMIT_MESSAGE: "ci: Security Headers Live Smoke + consecutive retry",
+    });
+    expect(ok.status).toBe(0);
+    expect(ok.out).toMatch(new RegExp(`OK promote sha=${goodSha}`));
+
+    const dispatch = runPromotionGuard({
+      EVENT_NAME: "workflow_dispatch",
+      STAGING_CONCLUSION: "",
+      STAGING_HEAD_SHA: "",
+      COMMIT_MESSAGE: "",
+    });
+    expect(dispatch.status).toBe(0);
+    expect(dispatch.out).toMatch(/workflow_dispatch/);
+  });
+
+  it("unexpected event fails closed; guard has no shell injection via expressions", () => {
+    const weird = runPromotionGuard({
+      EVENT_NAME: "pull_request",
+      STAGING_CONCLUSION: "success",
+      STAGING_HEAD_SHA: goodSha,
+      COMMIT_MESSAGE: "ok",
+    });
+    expect(weird.status).not.toBe(0);
+    expect(weird.out).toMatch(/unexpected event/);
+
+    expect(guard).not.toMatch(/eval |curl .*\$\{|\$\(\s*curl/);
+    expect(prod).not.toMatch(/\$\{\{\s*github\.event\.workflow_run\.head_commit\.message\s*\}\}/);
+    expect(guard).not.toMatch(/Authorization:|Bearer |api[_-]?key/i);
+  });
+
+  it("header-only workflow stays independent of staging/prod promotion", () => {
+    expect(live).not.toMatch(/skip-staging-deploy|no-promotion-guard|workflow_run/);
+    expect(live).toMatch(/workflow_dispatch/);
+    expect(staging).toMatch(/skip-staging-deploy-guard/);
+  });
+});

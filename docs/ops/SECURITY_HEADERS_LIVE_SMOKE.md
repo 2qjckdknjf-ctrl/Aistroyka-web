@@ -23,4 +23,4 @@ Does not send Bearer tokens and does not deploy.
 
 ## CI-only merge to main
 
-If merging only this workflow while `main` tip is older than the live staging/production SHA, include `[skip-staging-deploy]` in the merge commit message so Staging deploy fails closed and Production `workflow_run` does not auto-promote.
+If merging only this workflow while `main` tip is older than the live staging/production SHA, include `[skip-staging-deploy]` in the merge commit message so Staging deploy fails closed. Production `workflow_run` additionally runs `no-promotion-guard` / `scripts/release/production-promotion-guard.sh` so the production workflow cannot conclude as a misleading SUCCESS (migrations-only) when staging did not successfully deploy.

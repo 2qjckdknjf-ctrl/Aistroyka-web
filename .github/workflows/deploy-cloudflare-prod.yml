@@ -18,14 +18,64 @@ on:
         required: false
         default: "main"
 
+# Narrow token: read commit metadata for skip-marker / SHA validation only. No write / deploy secrets here.
+permissions:
+  contents: read
+  actions: read
+
 concurrency:
   group: deploy-cloudflare-prod
   cancel-in-progress: false
 
 
 jobs:
+  # Fail-closed before migrations/deploy so a skipped staging promotion cannot yield a green
+  # production workflow with only migrations-preflight succeeding and deploy skipped.
+  no-promotion-guard:
+    name: Production promotion guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - name: Load upstream commit message
+        id: upstream
+        if: ${{ github.event_name == 'workflow_run' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STAGING_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          if [ -z "${STAGING_HEAD_SHA:-}" ]; then
+            echo "message=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if ! [[ "$STAGING_HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "message=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Fetch message for exact [skip-staging-deploy] detection; do not print full message.
+          MSG="$(gh api "repos/${GITHUB_REPOSITORY}/commits/${STAGING_HEAD_SHA}" --jq .commit.message)"
+          {
+            echo "message<<PROMOTION_GUARD_EOF"
+            printf '%s\n' "$MSG"
+            echo "PROMOTION_GUARD_EOF"
+          } >> "$GITHUB_OUTPUT"
+          if printf '%s' "$MSG" | grep -Fq '[skip-staging-deploy]'; then
+            echo "has_skip_marker=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_skip_marker=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Evaluate production promotion guard
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          STAGING_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          STAGING_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          COMMIT_MESSAGE: ${{ steps.upstream.outputs.message }}
+        run: bash scripts/release/production-promotion-guard.sh
+
   migrations-preflight:
     name: Supabase migrations preflight (blocking)
+    needs: [no-promotion-guard]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -51,7 +101,8 @@ jobs:
         run: bash scripts/release/check-env-config.sh migrations
 
   deploy:
-    needs: migrations-preflight
+    needs: [no-promotion-guard, migrations-preflight]
+    # Defense in depth: staging must be success on workflow_run; failed no-promotion-guard skips this job.
     if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     name: Build and deploy to production
     runs-on: ubuntu-latest
