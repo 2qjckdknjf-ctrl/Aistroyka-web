@@ -21,8 +21,25 @@ concurrency:
 
 
 jobs:
+  # CI-only merges to main (e.g. new workflow_dispatch files) can include
+  # [skip-staging-deploy] in the merge commit message to avoid redeploying
+  # an outdated main tip and to fail the run so production workflow_run
+  # does not auto-promote.
+  skip-staging-deploy-guard:
+    name: Skip staging deploy guard
+    if: ${{ github.event_name == 'push' && contains(github.event.head_commit.message, '[skip-staging-deploy]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Fail intentionally (block prod promote)
+        run: |
+          echo "::notice::Staging deploy skipped via [skip-staging-deploy] in head commit message."
+          echo "::error::Failing this run so Deploy Cloudflare (Production) workflow_run does not treat it as success."
+          exit 1
+
   migrations-preflight:
     name: Supabase migrations preflight (blocking)
+    if: ${{ !(github.event_name == 'push' && contains(github.event.head_commit.message, '[skip-staging-deploy]')) }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
