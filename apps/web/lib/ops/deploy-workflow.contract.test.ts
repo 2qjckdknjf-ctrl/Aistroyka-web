@@ -172,6 +172,23 @@ describe("Phase 8 security-headers CI contract", () => {
     },
     20_000,
   );
+
+  it(
+    "mocked host ignores 103 Early Hints and validates the final response",
+    () => {
+      const runner = resolve(root, "scripts/smoke/security_headers_mock_host.py");
+      const earlyHints = spawnSync("python3", [runner, "early-hints"], {
+        cwd: root,
+        encoding: "utf8",
+        env: { ...process.env },
+      });
+      const earlyHintsOut = `${earlyHints.stdout || ""}${earlyHints.stderr || ""}`;
+      expect(earlyHints.status, earlyHintsOut).toBe(0);
+      expect(earlyHintsOut).toMatch(/public-home\/hop1-of-1/);
+      expect(earlyHintsOut).not.toMatch(/public-home\/hop2-of-2/);
+    },
+    20_000,
+  );
 });
 
 function runPromotionGuard(env: NodeJS.ProcessEnv): { status: number; out: string } {

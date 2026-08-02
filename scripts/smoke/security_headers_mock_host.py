@@ -3,9 +3,10 @@
 
 Usage:
   python3 scripts/smoke/security_headers_mock_host.py ok
+  python3 scripts/smoke/security_headers_mock_host.py early-hints
   python3 scripts/smoke/security_headers_mock_host.py missing-redirect-csp
 
-Exit code mirrors the smoke script (0 only for mode=ok with full PASS).
+Exit code mirrors the smoke script (0 for healthy modes with full PASS).
 """
 from __future__ import annotations
 
@@ -38,7 +39,7 @@ API_HEADERS: Dict[str, str] = {
 
 def main() -> int:
     mode = sys.argv[1] if len(sys.argv) > 1 else "ok"
-    if mode not in {"ok", "missing-redirect-csp"}:
+    if mode not in {"ok", "early-hints", "missing-redirect-csp"}:
         print(f"unknown mode: {mode}", file=sys.stderr)
         return 2
 
@@ -55,6 +56,14 @@ def main() -> int:
 
         def do_GET(self) -> None:  # noqa: N802
             path = self.path.split("?", 1)[0]
+            if mode == "early-hints" and path == "/en":
+                self.wfile.write(
+                    b"HTTP/1.1 103 Early Hints\r\n"
+                    b"Link: </app.css>; rel=preload; as=style\r\n\r\n"
+                )
+                self.wfile.flush()
+                self._send(200, PAGE_HEADERS)
+                return
             if path.startswith("/en/dashboard"):
                 headers = dict(PAGE_HEADERS)
                 if mode == "missing-redirect-csp":

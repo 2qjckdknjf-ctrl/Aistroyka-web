@@ -314,17 +314,26 @@ check_url() {
     return
   fi
 
-  # Split every response in the redirect chain (curl -D with -L appends hops).
-  # Validate intermediate redirect responses as well as the final destination.
+  # Split every non-informational response in the redirect chain (curl -D with
+  # -L appends blocks). 1xx responses such as 103 Early Hints are transport
+  # metadata, not redirect/final responses, and do not carry the page security
+  # header contract. Validate intermediate redirect responses (3xx) plus the
+  # final non-1xx response.
   local hop_count
   hop_count="$(
     awk '
-      BEGIN { n=0 }
+      BEGIN { n=0; keep=0 }
       tolower($0) ~ /^http\// {
+        status=$2 + 0
+        if (status >= 100 && status < 200) {
+          keep=0
+          next
+        }
         n++
+        keep=1
         next
       }
-      n > 0 { print > (dir "/hop_" n ".hdr") }
+      keep && n > 0 { print > (dir "/hop_" n ".hdr") }
       END { print n }
     ' dir="$hop_dir" "$tmp"
   )"
