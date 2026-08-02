@@ -109,6 +109,8 @@ describe("Phase 8 security-headers CI contract", () => {
     expect(smoke).toMatch(/never send credentials or auth headers/);
     expect(smoke).toMatch(/curl exit/);
     expect(smoke).toMatch(/fail-closed before header accept/);
+    expect(smoke).toMatch(/--connect-timeout 10/);
+    expect(smoke).toMatch(/--max-time 45/);
     expect(smoke).toMatch(/hop\$\{hop\}-of-\$\{hop_count\}/);
     expect(smoke).toMatch(/Validate intermediate redirect responses/);
     expect(smoke).toMatch(/SECURITY_HEADERS_ALLOW_LOCALHOST/);

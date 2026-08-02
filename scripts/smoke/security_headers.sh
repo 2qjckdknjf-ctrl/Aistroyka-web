@@ -286,7 +286,8 @@ check_url() {
     curl_proto_redir=(--proto-redir "=http,https")
   fi
   set +e
-  code="$(curl -sS -L --max-redirs 5 "${curl_proto_redir[@]}" -D "$tmp" -o /dev/null -w '%{http_code}|%{url_effective}|%{num_redirects}' "$url" 2>/dev/null)"
+  # Per-request deadlines keep hung origins from consuming the whole job/retry budget.
+  code="$(curl -sS -L --connect-timeout 10 --max-time 45 --max-redirs 5 "${curl_proto_redir[@]}" -D "$tmp" -o /dev/null -w '%{http_code}|%{url_effective}|%{num_redirects}' "$url" 2>/dev/null)"
   curl_rc=$?
   set -e
   if [[ -z "$code" ]]; then
