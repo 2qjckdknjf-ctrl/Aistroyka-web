@@ -18,14 +18,64 @@ on:
         required: false
         default: "main"
 
+# Narrow token: read commit metadata for skip-marker / SHA validation only. No write / deploy secrets here.
+permissions:
+  contents: read
+  actions: read
+
 concurrency:
   group: deploy-cloudflare-prod
   cancel-in-progress: false
 
 
 jobs:
+  # Fail-closed before migrations/deploy so a skipped staging promotion cannot yield a green
+  # production workflow with only migrations-preflight succeeding and deploy skipped.
+  no-promotion-guard:
+    name: Production promotion guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - name: Load upstream commit message
+        id: upstream
+        if: ${{ github.event_name == 'workflow_run' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STAGING_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          if [ -z "${STAGING_HEAD_SHA:-}" ]; then
+            echo "message=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if ! [[ "$STAGING_HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "message=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Fetch message for exact [skip-staging-deploy] detection; do not print full message.
+          MSG="$(gh api "repos/${GITHUB_REPOSITORY}/commits/${STAGING_HEAD_SHA}" --jq .commit.message)"
+          {
+            echo "message<<PROMOTION_GUARD_EOF"
+            printf '%s\n' "$MSG"
+            echo "PROMOTION_GUARD_EOF"
+          } >> "$GITHUB_OUTPUT"
+          if printf '%s' "$MSG" | grep -Fq '[skip-staging-deploy]'; then
+            echo "has_skip_marker=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_skip_marker=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Evaluate production promotion guard
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          STAGING_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          STAGING_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          COMMIT_MESSAGE: ${{ steps.upstream.outputs.message }}
+        run: bash scripts/release/production-promotion-guard.sh
+
   migrations-preflight:
     name: Supabase migrations preflight (blocking)
+    needs: [no-promotion-guard]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -51,7 +101,8 @@ jobs:
         run: bash scripts/release/check-env-config.sh migrations
 
   deploy:
-    needs: migrations-preflight
+    needs: [no-promotion-guard, migrations-preflight]
+    # Defense in depth: staging must be success on workflow_run; failed no-promotion-guard skips this job.
     if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     name: Build and deploy to production
     runs-on: ubuntu-latest
@@ -289,16 +340,51 @@ jobs:
     name: Post-deploy security headers (blocking)
     needs: [deploy]
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
         with:
           ref: ${{ needs.deploy.outputs.deploy_ref }}
+          persist-credentials: false
 
-      - name: Run security headers smoke
+      - name: Run security headers smoke (www + apex, 2 consecutive)
         env:
-          SECURITY_HEADERS_BASE_URL: https://www.aistroyka.ai
-        run: bash scripts/smoke/security_headers.sh
+          SECURITY_HEADERS_MAX_ATTEMPTS: "1"
+          SECURITY_HEADERS_REQUIRE_CONSECUTIVE: "1"
+        run: |
+          set -euo pipefail
+          consecutive=0
+          max_pair_attempts=8
+          sleep_sec=15
+          require=2
+          run_host() {
+            local host="$1"
+            env -u BASE_URL \
+              SECURITY_HEADERS_BASE_URL="$host" \
+              SECURITY_HEADERS_MAX_ATTEMPTS=1 \
+              SECURITY_HEADERS_REQUIRE_CONSECUTIVE=1 \
+              bash scripts/smoke/security_headers.sh
+          }
+          for attempt in $(seq 1 "$max_pair_attempts"); do
+            echo "=== security headers pair attempt $attempt/$max_pair_attempts (consecutive=$consecutive) ==="
+            if run_host "https://www.aistroyka.ai" \
+              && run_host "https://aistroyka.ai"; then
+              consecutive=$((consecutive + 1))
+              echo "PAIR PASS consecutive=$consecutive/$require"
+              if [[ "$consecutive" -ge "$require" ]]; then
+                echo "security_headers: PASS (consecutive pair=$consecutive)"
+                exit 0
+              fi
+            else
+              consecutive=0
+              echo "PAIR FAIL — consecutive reset"
+            fi
+            if [[ "$attempt" -lt "$max_pair_attempts" ]]; then
+              sleep "$sleep_sec"
+            fi
+          done
+          echo "::error::security_headers: FAIL — need $require consecutive www+apex passes"
+          exit 1
 
   ai-phase5-gate:
     name: Post-deploy AI Phase 5 gate (non-blocking)

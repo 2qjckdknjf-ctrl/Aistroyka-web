@@ -1,0 +1,102 @@
+# Header-only live smoke (no deploy). Read-only verification after propagation races.
+name: Security Headers Live Smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Which hosts to check"
+        required: true
+        default: production
+        type: choice
+        options:
+          - production
+          - staging
+          - both
+      ref:
+        description: "Branch/tag/SHA containing the smoke script"
+        required: false
+        default: main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-headers-live
+  cancel-in-progress: false
+
+jobs:
+  security-headers:
+    name: Live security headers (bounded retry)
+    runs-on: ubuntu-latest
+    # Worst-case serial budget: 3 hosts × 5 probes × 12s × 8 attempts,
+    # plus seven 15s sleeps = 1545s (< 30 minutes).
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+
+      - name: Run security headers smoke with consecutive PASS requirement
+        env:
+          # Single-shot per host; outer loop owns consecutive pair requirement.
+          SECURITY_HEADERS_MAX_ATTEMPTS: "1"
+          SECURITY_HEADERS_REQUIRE_CONSECUTIVE: "1"
+          TARGET: ${{ inputs.target }}
+        run: |
+          set -euo pipefail
+          consecutive=0
+          max_pair_attempts=8
+          sleep_sec=15
+          require=2
+
+          case "$TARGET" in
+            production|staging|both) ;;
+            *)
+              echo "::error::security_headers_live: invalid target=$TARGET"
+              exit 2
+              ;;
+          esac
+
+          run_host() {
+            local host="$1"
+            # Single unambiguous target source for CI: SECURITY_HEADERS_BASE_URL.
+            # Compatible with older scripts that ignore positional $1.
+            env -u BASE_URL \
+              SECURITY_HEADERS_BASE_URL="$host" \
+              SECURITY_HEADERS_MAX_ATTEMPTS=1 \
+              SECURITY_HEADERS_REQUIRE_CONSECUTIVE=1 \
+              bash scripts/smoke/security_headers.sh
+          }
+
+          for attempt in $(seq 1 "$max_pair_attempts"); do
+            echo "=== pair attempt $attempt/$max_pair_attempts (consecutive=$consecutive require=$require target=$TARGET) ==="
+            ok=1
+            if [[ "$TARGET" == "production" || "$TARGET" == "both" ]]; then
+              run_host "https://www.aistroyka.ai" || ok=0
+              if [[ "$ok" -eq 1 ]]; then
+                run_host "https://aistroyka.ai" || ok=0
+              fi
+            fi
+            if [[ "$ok" -eq 1 && ( "$TARGET" == "staging" || "$TARGET" == "both" ) ]]; then
+              run_host "https://staging.aistroyka.ai" || ok=0
+            fi
+
+            if [[ "$ok" -eq 1 ]]; then
+              consecutive=$((consecutive + 1))
+              echo "PAIR PASS consecutive=$consecutive/$require"
+              if [[ "$consecutive" -ge "$require" ]]; then
+                echo "security_headers_live: PASS (consecutive=$consecutive)"
+                exit 0
+              fi
+            else
+              consecutive=0
+              echo "PAIR FAIL — consecutive reset"
+            fi
+            if [[ "$attempt" -lt "$max_pair_attempts" ]]; then
+              sleep "$sleep_sec"
+            fi
+          done
+          echo "::error::security_headers_live: FAIL — need $require consecutive pair passes"
+          exit 1
