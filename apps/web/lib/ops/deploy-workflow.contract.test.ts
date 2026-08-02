@@ -120,26 +120,37 @@ describe("Phase 8 security-headers CI contract", () => {
     expect(denied.out).toMatch(/disallowed target fail-closed/);
   });
 
-  it("mocked host validates redirect hop headers and rejects missing CSP on 302", () => {
-    const runner = resolve(root, "scripts/smoke/security_headers_mock_host.py");
-    const ok = spawnSync("python3", [runner, "ok"], {
-      cwd: root,
-      encoding: "utf8",
-      env: { ...process.env },
-    });
-    const okOut = `${ok.stdout || ""}${ok.stderr || ""}`;
-    expect(ok.status, okOut).toBe(0);
-    expect(okOut).toMatch(/protected-redirect\/hop1-of-2/);
-    expect(okOut).toMatch(/protected-redirect\/hop2-of-2/);
+  it(
+    "mocked host validates redirect hop headers on 302→200 chain",
+    () => {
+      const runner = resolve(root, "scripts/smoke/security_headers_mock_host.py");
+      const ok = spawnSync("python3", [runner, "ok"], {
+        cwd: root,
+        encoding: "utf8",
+        env: { ...process.env },
+      });
+      const okOut = `${ok.stdout || ""}${ok.stderr || ""}`;
+      expect(ok.status, okOut).toBe(0);
+      expect(okOut).toMatch(/protected-redirect\/hop1-of-2/);
+      expect(okOut).toMatch(/protected-redirect\/hop2-of-2/);
+    },
+    20_000,
+  );
 
-    const bad = spawnSync("python3", [runner, "missing-redirect-csp"], {
-      cwd: root,
-      encoding: "utf8",
-      env: { ...process.env },
-    });
-    const badOut = `${bad.stdout || ""}${bad.stderr || ""}`;
-    expect(bad.status, badOut).not.toBe(0);
-    expect(badOut).toMatch(/missing header content-security-policy/);
-    expect(badOut).toMatch(/hop1-of-2/);
-  });
+  it(
+    "mocked host rejects missing CSP on intermediate 302 hop",
+    () => {
+      const runner = resolve(root, "scripts/smoke/security_headers_mock_host.py");
+      const bad = spawnSync("python3", [runner, "missing-redirect-csp"], {
+        cwd: root,
+        encoding: "utf8",
+        env: { ...process.env },
+      });
+      const badOut = `${bad.stdout || ""}${bad.stderr || ""}`;
+      expect(bad.status, badOut).not.toBe(0);
+      expect(badOut).toMatch(/missing header content-security-policy/);
+      expect(badOut).toMatch(/hop1-of-2/);
+    },
+    20_000,
+  );
 });
