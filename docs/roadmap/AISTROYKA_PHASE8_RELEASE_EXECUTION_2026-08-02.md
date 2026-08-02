@@ -49,7 +49,7 @@ Applied via MCP in order; staging/prod shared DB `rateLimitRpcStatus=present`; `
 | Script | `scripts/smoke/security_headers.sh` — `SECURITY_HEADERS_MAX_ATTEMPTS` / `REQUIRE_CONSECUTIVE` / `RETRY_SLEEP_SEC` |
 | Staging deploy workflow | requires **2 consecutive** header passes |
 | Prod deploy workflow | requires **2 consecutive** www+apex pair passes (max 8, 15s) |
-| Header-only GHA workflow | PR [#204](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/204)  →  (merge with ) |
+| Header-only GHA workflow | PR [#204](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/204) `ci/security-headers-live-smoke` → `main` (merge with `[skip-staging-deploy]`) |
 
 ## 7. First 72h (read-only)
 
