@@ -51,6 +51,14 @@ jobs:
           sleep_sec=15
           require=2
 
+          case "$TARGET" in
+            production|staging|both) ;;
+            *)
+              echo "::error::security_headers_live: invalid target=$TARGET"
+              exit 2
+              ;;
+          esac
+
           run_host() {
             local host="$1"
             # Single unambiguous target source for CI: SECURITY_HEADERS_BASE_URL.

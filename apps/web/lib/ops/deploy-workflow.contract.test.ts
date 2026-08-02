@@ -81,6 +81,16 @@ describe("Phase 8 security-headers CI contract", () => {
     expect(live).toMatch(/type:\s*choice/);
   });
 
+  it("live workflow rejects unknown targets before retrying any host", () => {
+    expect(live).toMatch(/case "\$TARGET" in/);
+    expect(live).toMatch(/production\|staging\|both\) ;;/);
+    expect(live).toMatch(/invalid target=\$TARGET/);
+    expect(live).toMatch(/invalid target=\$TARGET[\s\S]*exit 2/);
+    expect(live.indexOf('case "$TARGET" in')).toBeLessThan(
+      live.indexOf('for attempt in $(seq 1 "$max_pair_attempts")'),
+    );
+  });
+
   it("production security headers job requires consecutive www+apex pair passes", () => {
     expect(prod).toMatch(/2 consecutive/);
     expect(prod).toMatch(/consecutive pair/);
