@@ -3,7 +3,7 @@ import { createClient, getSessionUser } from "@/lib/supabase/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { getProjectById } from "@/lib/supabase/rpc";
 import { createAnalysisJob, MEDIA_BUCKET } from "@/lib/api/engine";
-import { hasMinRole } from "@/lib/auth/tenant";
+import { hasMinRole } from "@/lib/tenant/tenant-membership.server";
 
 function isBucketNotFoundError(message: string): boolean {
   if (!message || typeof message !== "string") return false;
@@ -47,7 +47,7 @@ export async function POST(
     );
   }
 
-  const { data: project } = await getProjectById(supabase, projectId);
+  const { data: project } = await getProjectById(supabase, projectId, request);
   if (!project) {
     return NextResponse.json(
       { success: false, error: "Project not found" },

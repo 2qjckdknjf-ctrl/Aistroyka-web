@@ -1,14 +1,17 @@
 /**
  * Rate limit, quota, and policy checks before non-streaming Copilot LLM calls.
  * Mirrors the guard pattern used by vision analyze-image (without image-specific rules).
+ * Rate-limit store unavailable → fail closed (no provider call).
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { checkRateLimit } from "@/lib/platform/rate-limit/rate-limit.service";
+import {
+  checkRateLimitStrict,
+  resolveTrustedClientIp,
+} from "@/lib/platform/rate-limit/rate-limit.service";
 import { checkQuota, checkBudgetAlert } from "@/lib/platform/ai-usage/ai-usage.service";
 import { estimateCostUsd } from "@/lib/platform/ai-usage/cost-estimator";
 import { runPolicy } from "@/lib/platform/ai-governance/policy.service";
-import { logStructured } from "@/lib/observability";
 
 /** Conservative reservation for one Copilot brief (large context + completion). */
 const COPILOT_BRIEF_RESERVE_MODEL = "gpt-4o-mini";
@@ -19,7 +22,7 @@ export const COPILOT_STREAM_ESTIMATE_USD = estimateCostUsd(COPILOT_BRIEF_RESERVE
 
 export type CopilotLlmGateFailure = {
   ok: false;
-  httpStatus: 402 | 403 | 429;
+  httpStatus: 402 | 403 | 429 | 503;
   message: string;
   code?: string;
 };
@@ -41,26 +44,37 @@ export async function gateCopilotLlmRequest(
     estimatedCostUsd?: number;
   }
 ): Promise<CopilotLlmGateResult> {
-  try {
-    const ip =
-      input.request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-      input.request.headers.get("x-real-ip") ??
-      "unknown";
-    const rl = await checkRateLimit(admin, {
-      tenantId: input.tenantId,
-      ip,
-      endpoint: input.endpoint,
-    });
-    if (rl.limited) {
-      return { ok: false, httpStatus: 429, message: rl.message, code: "rate_limited" };
+  if (!input.userId) {
+    return {
+      ok: false,
+      httpStatus: 403,
+      message: "Authentication required",
+      code: "unauthorized",
+    };
+  }
+
+  const { trustedIp } = resolveTrustedClientIp(input.request);
+  const rate = await checkRateLimitStrict(admin, {
+    tenantId: input.tenantId,
+    userId: input.userId,
+    ip: trustedIp,
+    endpoint: input.endpoint,
+  });
+  if (!rate.ok) {
+    if (rate.kind === "unavailable") {
+      return {
+        ok: false,
+        httpStatus: 503,
+        message: rate.message,
+        code: "rate_limit_unavailable",
+      };
     }
-  } catch {
-    logStructured({
-      event: "rate_limit_unavailable",
-      endpoint: input.endpoint,
-      tenant_id: input.tenantId,
-      request_id: input.requestId,
-    });
+    return {
+      ok: false,
+      httpStatus: 429,
+      message: rate.message,
+      code: "rate_limited",
+    };
   }
 
   const tier = input.subscriptionTier ?? "free";

@@ -1,11 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="aistroyka_bg_primary">#0B0F19</color>
-    <color name="aistroyka_bg_secondary">#111827</color>
-    <color name="aistroyka_surface">#1F2937</color>
+    <!-- Mapped from apps/web/app/design-tokens.css (aistroyka brand tokens) -->
+    <color name="aistroyka_bg_primary">#040A18</color>
+    <color name="aistroyka_bg_secondary">#0B1428</color>
+    <color name="aistroyka_surface">#101B33</color>
+    <color name="aistroyka_surface_raised">#16213E</color>
+    <color name="aistroyka_surface_muted">#1F2E4D</color>
     <color name="aistroyka_accent">#F5C518</color>
-    <color name="aistroyka_text_primary">#F9FAFB</color>
-    <color name="aistroyka_text_secondary">#9CA3AF</color>
-    <color name="aistroyka_border">#2B3648</color>
+    <color name="aistroyka_text_primary">#F8FBFF</color>
+    <color name="aistroyka_text_secondary">#9FB0CD</color>
+    <color name="aistroyka_text_tertiary">#6D7F9F</color>
+    <color name="aistroyka_text_on_primary">#050B1C</color>
+    <color name="aistroyka_border">#223250</color>
+    <color name="aistroyka_border_strong">#2F4771</color>
+    <color name="aistroyka_success">#34C759</color>
+    <color name="aistroyka_warning">#FF9500</color>
     <color name="aistroyka_error">#FF3B30</color>
+    <color name="aistroyka_info">#007AFF</color>
 </resources>

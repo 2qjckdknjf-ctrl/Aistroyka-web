@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClientFromRequest, getSessionUser } from "@/lib/supabase/server";
-import { getTenantForCurrentUser } from "@/lib/api/engine";
+import { resolveTenantForCurrentUser } from "@/lib/api/engine";
+import { isActiveTenantResolutionBlocked } from "@/lib/tenant/active-tenant";
 import { shouldShowOnboarding } from "@/lib/onboarding/user-onboarding";
 
 /**
@@ -13,7 +14,19 @@ export async function GET(request: Request) {
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const tenantId = await getTenantForCurrentUser(supabase);
+  const active = await resolveTenantForCurrentUser(supabase, request);
+  if (isActiveTenantResolutionBlocked(active)) {
+    return NextResponse.json(
+      {
+        error: active.queryError
+          ? "Active tenant lookup failed."
+          : "Active tenant selection rejected.",
+        code: "ACTIVE_TENANT_BLOCKED",
+      },
+      { status: active.queryError ? 503 : 403 }
+    );
+  }
+  const tenantId = active.tenantId;
   if (!tenantId) {
     return NextResponse.json({
       projectCount: 0,
@@ -21,7 +34,7 @@ export async function GET(request: Request) {
       taskCount: 0,
       reportCount: 0,
       hasAiInsight: false,
-      showOnboarding: await shouldShowOnboarding(supabase, user.id),
+      showOnboarding: await shouldShowOnboarding(supabase, user.id, request),
       getStarted: { createProject: false, inviteTeam: false, addTask: false, uploadReport: false, viewAi: false },
     });
   }
@@ -68,7 +81,7 @@ export async function GET(request: Request) {
     }
   }
 
-  const showOnboarding = await shouldShowOnboarding(supabase, user.id);
+  const showOnboarding = await shouldShowOnboarding(supabase, user.id, request);
   const getStarted = {
     createProject: projectCount > 0,
     inviteTeam: hasInvited,

@@ -8,6 +8,11 @@ import {
   CONSTRUCTION_VISION_SYSTEM_PROMPT,
   CONSTRUCTION_VISION_USER_MESSAGE,
 } from "@/lib/ai/prompts";
+import {
+  fetchSafeRemoteMedia,
+  SafeRemoteMediaError,
+  SAFE_IMAGE_MIME_TYPES,
+} from "@/lib/platform/ai/safe-remote-media";
 import type { VisionResult, VisionOptions } from "./provider.interface";
 import { ProviderRequestError } from "./provider.errors";
 
@@ -15,6 +20,7 @@ const NAME = "gemini";
 const DEFAULT_MODEL = "gemini-1.5-flash";
 const TIMEOUT_MS = 85_000;
 const IMAGE_FETCH_TIMEOUT_MS = 15_000;
+const IMAGE_MAX_BYTES = 8_000_000;
 
 function getConfig(): { apiKey: string; model: string } {
   const apiKey = (
@@ -28,21 +34,28 @@ function getConfig(): { apiKey: string; model: string } {
 }
 
 async function fetchImageAsBase64(imageUrl: string): Promise<{ data: string; mimeType: string }> {
-  const res = await fetch(imageUrl, {
-    signal: AbortSignal.timeout(IMAGE_FETCH_TIMEOUT_MS),
-  });
-  if (!res.ok) throw new ProviderRequestError(`Image fetch failed: ${res.status}`, "invalid_input");
-  const contentType = res.headers.get("content-type") ?? "";
-  const mimeType = contentType.includes("png")
-    ? "image/png"
-    : contentType.includes("webp")
-      ? "image/webp"
-      : contentType.includes("gif")
-        ? "image/gif"
-        : "image/jpeg";
-  const buf = await res.arrayBuffer();
-  const base64 = Buffer.from(buf).toString("base64");
-  return { data: base64, mimeType };
+  try {
+    const fetched = await fetchSafeRemoteMedia(imageUrl, {
+      maxBytes: IMAGE_MAX_BYTES,
+      timeoutMs: IMAGE_FETCH_TIMEOUT_MS,
+      allowedMimeTypes: SAFE_IMAGE_MIME_TYPES,
+      requireMimeAllowList: true,
+      allowCrossHostRedirect: false,
+      requireHttps: (process.env.NODE_ENV ?? "").trim() === "production",
+    });
+    const mimeType = SAFE_IMAGE_MIME_TYPES.has(fetched.contentType)
+      ? fetched.contentType === "image/jpg"
+        ? "image/jpeg"
+        : fetched.contentType
+      : "image/jpeg";
+    const data = Buffer.from(fetched.data).toString("base64");
+    return { data, mimeType };
+  } catch (e) {
+    if (e instanceof SafeRemoteMediaError) {
+      throw new ProviderRequestError(`Image fetch blocked: ${e.code}`, "invalid_input");
+    }
+    throw e;
+  }
 }
 
 function mapToProviderError(e: unknown, statusCode?: number): ProviderRequestError {

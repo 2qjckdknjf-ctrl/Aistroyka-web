@@ -29,6 +29,7 @@ describe("config", () => {
       vi.stubEnv("NEXT_PUBLIC_BUILD_SHA", "");
       vi.stubEnv("VERCEL_GIT_COMMIT_SHA", "");
       vi.stubEnv("GITHUB_SHA", "");
+      vi.stubEnv("CI", "");
       vi.stubEnv("NEXT_PUBLIC_BUILD_TIME", "");
       expect(getBuildStamp()).toEqual({ sha: "", buildTime: "" });
     });
@@ -37,17 +38,19 @@ describe("config", () => {
       vi.stubEnv("NEXT_PUBLIC_BUILD_TIME", "2025-01-01T00:00:00Z");
       expect(getBuildStamp()).toEqual({ sha: "abc1234", buildTime: "2025-01-01T00:00:00Z" });
     });
-    it("falls back to VERCEL_GIT_COMMIT_SHA when NEXT_PUBLIC_BUILD_SHA empty", () => {
+    it("ignores VERCEL_GIT_COMMIT_SHA (non-canonical for Cloudflare)", () => {
       vi.stubEnv("NEXT_PUBLIC_BUILD_SHA", "");
       vi.stubEnv("VERCEL_GIT_COMMIT_SHA", "vercel123");
       vi.stubEnv("GITHUB_SHA", "");
+      vi.stubEnv("CI", "");
       vi.stubEnv("NEXT_PUBLIC_BUILD_TIME", "");
-      expect(getBuildStamp()).toEqual({ sha: "vercel123", buildTime: "" });
+      expect(getBuildStamp()).toEqual({ sha: "", buildTime: "" });
     });
-    it("falls back to GITHUB_SHA when both NEXT_PUBLIC and VERCEL empty", () => {
+    it("uses GITHUB_SHA only when CI=true", () => {
       vi.stubEnv("NEXT_PUBLIC_BUILD_SHA", "");
       vi.stubEnv("VERCEL_GIT_COMMIT_SHA", "");
       vi.stubEnv("GITHUB_SHA", "github456");
+      vi.stubEnv("CI", "true");
       vi.stubEnv("NEXT_PUBLIC_BUILD_TIME", "");
       expect(getBuildStamp()).toEqual({ sha: "github456", buildTime: "" });
     });

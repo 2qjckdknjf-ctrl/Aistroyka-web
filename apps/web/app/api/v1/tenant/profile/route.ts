@@ -5,7 +5,7 @@
 
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getTenantContextFromRequest, requireTenant, TenantRequiredError, authorize } from "@/lib/tenant";
+import { getTenantContextFromRequest, requireTenant, TenantRequiredError, authorize, LitePathForbiddenError } from "@/lib/tenant";
 
 const MAX_NAME_LENGTH = 200;
 
@@ -14,6 +14,12 @@ export async function PATCH(request: Request) {
   try {
     requireTenant(ctx);
   } catch (e) {
+    if (e instanceof LitePathForbiddenError) {
+      return NextResponse.json(
+        { error: "forbidden", code: "lite_client_path_forbidden" },
+        { status: 403 }
+      );
+    }
     if (e instanceof TenantRequiredError) {
       return NextResponse.json({ error: e.message }, { status: e.message.includes("membership") ? 403 : 401 });
     }

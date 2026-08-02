@@ -1,5 +1,7 @@
 # Phase 3 / A3 — Rollback & recovery reality audit — AISTROYKA
 
+> **STALE PATH RISK (Phase 8, 2026-07-30):** Production deploy is gated on successful **Deploy Cloudflare (Staging)** (`workflow_run`), not a direct push-to-main production deploy. Prefer `docs/roadmap/AISTROYKA_PHASE8_ROLLBACK_REHEARSAL_2026-07-30.md` + `docs/runbooks/DEPLOYMENT_SOURCE_OF_TRUTH.md`. Historical snapshot — do not delete.
+
 **Date:** 2026-03-18  
 **Purpose:** Truthful picture of what exists today (no invented automation).
 

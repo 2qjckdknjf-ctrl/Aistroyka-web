@@ -15,11 +15,12 @@ public struct InlineLoadingRow: View {
     }
 
     public var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: BrandTokens.space2) {
             ProgressView()
+                .tint(BrandTokens.actionPrimary)
             Text(message)
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(BrandTokens.textSecondary)
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(message)
@@ -31,19 +32,23 @@ public struct InlineErrorRetryRow: View {
     private let retryTitle: String
     private let retry: () -> Void
 
-    public init(message: String, retryTitle: String = "Retry", retry: @escaping () -> Void) {
+    /// - Parameters:
+    ///   - retryTitle: Caller-supplied localized string (required; no English default).
+    public init(message: String, retryTitle: String, retry: @escaping () -> Void) {
         self.message = message
         self.retryTitle = retryTitle
         self.retry = retry
     }
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: BrandTokens.space2) {
             Text(message)
                 .font(.subheadline)
-                .foregroundStyle(.red)
-            Button(retryTitle, action: retry)
-                .buttonStyle(.bordered)
+                .foregroundStyle(BrandTokens.stateError)
+            BrandSecondaryButton(width: .hug, action: retry) {
+                Text(retryTitle)
+                    .padding(.horizontal, BrandTokens.space3)
+            }
         }
         .accessibilityElement(children: .contain)
     }

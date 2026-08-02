@@ -43,7 +43,7 @@ struct HomeView: View {
                     HStack {
                         Text(String(format: NSLocalizedString("worker_pending", comment: ""), pending))
                             .font(.caption)
-                            .foregroundColor(.orange)
+                            .foregroundStyle(BrandTokens.stateWarning)
                         Button(executor.isPaused ? NSLocalizedString("worker_resume_queue", comment: "") : NSLocalizedString("worker_pause_queue", comment: "")) {
                             if executor.isPaused { executor.resumeQueue() } else { executor.pauseQueue() }
                         }
@@ -51,14 +51,14 @@ struct HomeView: View {
                         .accessibilityIdentifier(executor.isPaused ? "pilot_worker_resume_queue" : "pilot_worker_pause_queue")
                     }
                     .padding(8)
-                    .background(Color.orange.opacity(0.15))
-                    .cornerRadius(8)
+                    .background(BrandTokens.badgeWarningBg)
+                    .clipShape(RoundedRectangle(cornerRadius: BrandTokens.radiusLg, style: .continuous))
                 }
                 if store.pendingCount > 0 {
                     HStack {
                         Text(String(format: NSLocalizedString("worker_pending_uploads", comment: ""), store.pendingCount))
                             .font(.caption)
-                            .foregroundColor(.orange)
+                            .foregroundStyle(BrandTokens.stateWarning)
                         Button(NSLocalizedString("worker_resume_uploads", comment: "")) {
                             resumeDraftReportId = store.state.draftReportId
                             navigateToNewReport = true
@@ -67,8 +67,8 @@ struct HomeView: View {
                         .accessibilityIdentifier("pilot_worker_resume_uploads")
                     }
                     .padding(8)
-                    .background(Color.orange.opacity(0.15))
-                    .cornerRadius(8)
+                    .background(BrandTokens.badgeWarningBg)
+                    .clipShape(RoundedRectangle(cornerRadius: BrandTokens.radiusLg, style: .continuous))
                 }
                 HStack {
                     Text(project.name ?? project.id)
@@ -83,12 +83,12 @@ struct HomeView: View {
                         .cornerRadius(4)
                 }
                 if let err = errorMessage {
-                    Text(err).foregroundColor(.red).font(.caption)
+                    Text(err).foregroundStyle(BrandTokens.stateError).font(.caption)
                 }
                 // Shift status
                 HStack {
                     Text(shiftStarted ? NSLocalizedString("worker_shift_in_progress", comment: "") : NSLocalizedString("worker_shift_not_started", comment: ""))
-                        .foregroundColor(shiftStarted ? .green : .secondary)
+                        .foregroundColor(shiftStarted ? BrandTokens.stateSuccess : BrandTokens.textSecondary)
                 }
                 HStack(spacing: 12) {
                     Button(NSLocalizedString("worker_start_shift", comment: "")) { startShift() }
@@ -110,7 +110,7 @@ struct HomeView: View {
                             HStack {
                                 Text(task.title)
                                 Spacer()
-                                Text(task.status).font(.caption).foregroundColor(.secondary)
+                                Text(task.status).font(.caption).foregroundStyle(BrandTokens.textSecondary)
                             }
                             .padding(.vertical, 4)
                         }
@@ -127,7 +127,7 @@ struct HomeView: View {
                                 Spacer()
                                 Image(systemName: "chevron.right")
                                     .font(.caption)
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(BrandTokens.textSecondary)
                             }
                             .padding(.vertical, 4)
                         }
@@ -138,10 +138,10 @@ struct HomeView: View {
                     .accessibilityIdentifier("pilot_worker_new_report")
                 Spacer()
                 Button(NSLocalizedString("worker_support", comment: "")) { showDiagnostics = true }
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(BrandTokens.textSecondary)
                     .accessibilityIdentifier("pilot_worker_support")
                 Button(NSLocalizedString("worker_sign_out", comment: ""), action: onLogout)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(BrandTokens.textSecondary)
                     .accessibilityIdentifier("pilot_worker_sign_out")
             }
             .padding()
@@ -174,8 +174,9 @@ struct HomeView: View {
                         WorkerHowItWorksContent()
                             .padding()
                     }
-                    .background(Color(.systemGroupedBackground))
+                    .background(BrandTokens.bgPage)
                     .navigationTitle(NSLocalizedString("worker_how_title", comment: ""))
+                    .brandScrollChrome()
                     .navigationBarTitleDisplayMode(.inline)
                     .toolbar {
                         ToolbarItem(placement: .confirmationAction) {
@@ -261,7 +262,7 @@ struct HomeView: View {
                 )
             )
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(BrandTokens.textSecondary)
             Text("\(launchDone(activationStatus?.getStarted?.addTask) ? "✓" : "○") \(NSLocalizedString("worker_start_step_1", comment: ""))")
                 .font(.subheadline)
             Text("\(launchDone(activationStatus?.getStarted?.uploadReport) ? "✓" : "○") \(NSLocalizedString("worker_start_step_2", comment: ""))")
@@ -276,7 +277,7 @@ struct HomeView: View {
             if let guideSummary, !guideSummary.isEmpty {
                 Text(guideSummary)
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(BrandTokens.textSecondary)
             }
             if let guideConfidence {
                 Text(
@@ -290,10 +291,10 @@ struct HomeView: View {
             if helpHints.isEmpty {
                 Text("• \(NSLocalizedString("worker_ai_hint_1", comment: ""))")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(BrandTokens.textSecondary)
                 Text("• \(NSLocalizedString("worker_ai_hint_2", comment: ""))")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(BrandTokens.textSecondary)
             } else {
                 ForEach(Array(helpHints.prefix(2).enumerated()), id: \.offset) { _, hint in
                     Text("• \(hint.title)")
@@ -301,7 +302,7 @@ struct HomeView: View {
                     if !hint.reason.isEmpty {
                         Text(hint.reason)
                             .font(.caption2)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(BrandTokens.textSecondary)
                     }
                 }
             }
@@ -315,14 +316,14 @@ struct HomeView: View {
                         .font(.caption)
                     Text(signal.detail)
                         .font(.caption2)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(BrandTokens.textSecondary)
                 }
             }
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.orange.opacity(0.12))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .background(BrandTokens.badgeWarningBg)
+        .clipShape(RoundedRectangle(cornerRadius: BrandTokens.radiusCard))
     }
 
     private var syncStatusLabel: String {
@@ -338,11 +339,11 @@ struct HomeView: View {
 
     private var syncStatusColor: Color {
         switch syncService.status {
-        case .synced: return .green
-        case .syncing: return .blue
-        case .offline: return .orange
-        case .needsBootstrap, .error: return .red
-        case .idle: return .gray
+        case .synced: return BrandTokens.stateSuccess
+        case .syncing: return BrandTokens.stateInfo
+        case .offline: return BrandTokens.stateWarning
+        case .needsBootstrap, .error: return BrandTokens.stateError
+        case .idle: return BrandTokens.textSecondary
         }
     }
 

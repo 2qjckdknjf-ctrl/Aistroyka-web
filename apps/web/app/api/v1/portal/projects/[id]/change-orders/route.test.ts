@@ -42,7 +42,7 @@ describe("GET /api/v1/portal/projects/:id/change-orders", () => {
     expect(res.status).toBe(500);
   });
 
-  it("returns 200 for safe payload", async () => {
+  it("returns 200 for safe payload and requests forcePublic list", async () => {
     vi.mocked(changeOrders.listChangeOrders).mockResolvedValue({
       data: [{ id: "c1", title: "Extra work", customer_amount_delta: 500 }] as never,
       error: "",
@@ -53,5 +53,11 @@ describe("GET /api/v1/portal/projects/:id/change-orders", () => {
     });
 
     expect(res.status).toBe(200);
+    expect(changeOrders.listChangeOrders).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      "p1",
+      { forcePublic: true }
+    );
   });
 });

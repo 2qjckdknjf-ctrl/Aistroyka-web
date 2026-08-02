@@ -36,8 +36,8 @@
 
 ## Android internal testing readiness
 
-- **Status:** No Android app in repo yet. When added: use internal testing track (Google Play Console); versionCode and versionName in build.gradle; environment config (build types or flavor) for API base URL.
-- **Checklist (when applicable):** (1) Build variant with correct API URL. (2) Upload AAB to internal testing. (3) Add testers; share opt-in link.
+- **Status (2026-07-30):** Android Worker/Manager modules **exist** under `android/` as a **buildable engineering foundation**. First pilot remains **web + iOS**; Android is **deferred** (P3 Option A / Phase 6). Apps are **not** promised to pilot users; Google Play internal/production upload is **NOT_AUTHORIZED** until a separate owner-approved readiness track.
+- **Checklist (when Android readiness is authorized):** (1) Build variant with correct API URL. (2) Upload AAB to internal testing under Mode B gates. (3) Add testers; share opt-in link. Do not present a public Play button until a live listing exists.
 
 ---
 

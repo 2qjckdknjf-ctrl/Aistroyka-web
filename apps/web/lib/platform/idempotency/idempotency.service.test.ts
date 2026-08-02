@@ -21,8 +21,9 @@ describe("idempotency.service", () => {
   });
 
   it("storeResponse calls repo.store", async () => {
-    (repo.store as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
-    await storeResponse({} as any, "k", "t", "u", "/r", { x: 1 }, 201);
+    (repo.store as ReturnType<typeof vi.fn>).mockResolvedValue(true);
+    const ok = await storeResponse({} as any, "k", "t", "u", "/r", { x: 1 }, 201);
+    expect(ok).toBe(true);
     expect(repo.store).toHaveBeenCalledWith({} as any, "k", "t", "u", "/r", { x: 1 }, 201, 24);
   });
 });

@@ -9,6 +9,8 @@ const FORBIDDEN_KEYS = [
   "cost_overrun",
   "subcontractor_cost",
   "ai_finance_risk",
+  "budget_delta_amount",
+  "budget_impact_level",
 ] as const;
 
 type GuardResult = {

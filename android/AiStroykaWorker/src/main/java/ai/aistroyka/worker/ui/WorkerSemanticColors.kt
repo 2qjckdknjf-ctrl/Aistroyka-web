@@ -1,27 +1,24 @@
 package ai.aistroyka.worker.ui
 
-import androidx.compose.material3.MaterialTheme
+import ai.aistroyka.shared.design.BrandColors
 import androidx.compose.runtime.Composable
 
+/** App alias → shared BrandColors (prevents Manager/Worker palette drift). */
 object WorkerSemanticColors {
-    @Composable
-    fun pageBackground() = MaterialTheme.colorScheme.background
-
-    @Composable
-    fun error() = MaterialTheme.colorScheme.error
-
-    @Composable
-    fun success() = MaterialTheme.colorScheme.primary
-
-    @Composable
-    fun primary() = MaterialTheme.colorScheme.primary
-
-    @Composable
-    fun onPrimary() = MaterialTheme.colorScheme.onPrimary
-
-    @Composable
-    fun disabledPrimary() = MaterialTheme.colorScheme.surfaceVariant
-
-    @Composable
-    fun textMuted() = MaterialTheme.colorScheme.onSurfaceVariant
+    @Composable fun pageBackground() = BrandColors.pageBackground()
+    @Composable fun surface() = BrandColors.surface()
+    @Composable fun surfaceMuted() = BrandColors.surfaceMuted()
+    @Composable fun borderSubtle() = BrandColors.borderSubtle()
+    @Composable fun primary() = BrandColors.primary()
+    @Composable fun onPrimary() = BrandColors.onPrimary()
+    @Composable fun disabledPrimary() = BrandColors.primaryDisabled()
+    @Composable fun textPrimary() = BrandColors.textPrimary()
+    @Composable fun textMuted() = BrandColors.textMuted()
+    @Composable fun textTertiary() = BrandColors.textTertiary()
+    @Composable fun error() = BrandColors.error()
+    @Composable fun success() = BrandColors.success()
+    @Composable fun warning() = BrandColors.warning()
+    @Composable fun info() = BrandColors.info()
+    @Composable fun overlayDim() = BrandColors.overlayDim()
+    @Composable fun badgeWarningBg() = BrandColors.badgeWarningBg()
 }

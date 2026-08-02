@@ -32,6 +32,10 @@ ios/**/DerivedData/
 DerivedData/
 **/DerivedData/
 **/SourcePackages/
+# SwiftPM local build tree (must not ship; historically some paths were tracked)
+ios/Shared/.build/
+ios/**/.build/
+**/.build/
 *.xcresult
 ios/Config/Secrets.xcconfig
 ios/Config/.uitest-e2e-credentials
@@ -146,3 +150,6 @@ AuthKey_*.p8
 play-service-account*.json
 google-play*.json
 service-account*.json
+
+# Local agent evidence (screenshots/logs/deriveddata)
+.evidence/

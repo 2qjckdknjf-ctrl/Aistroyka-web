@@ -1,7 +1,10 @@
 /**
- * Process one analysis job: dequeue, claim, call AI endpoint, complete or fail.
- * Used by POST /api/analysis/process so the web app can run the engine without a separate worker.
+ * Process one analysis job: tenant-scoped dequeue, claim, call AI endpoint, complete or fail.
+ * Used by POST /api/v1/analysis/process (and legacy /api/analysis/process).
  * Timeouts and retries from centralized config (lib/config/server).
+ *
+ * User HTTP path MUST pass tenantId and MUST call dequeue_tenant_job only.
+ * Global dequeue_job remains for trusted background workers — never from this module.
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -11,6 +14,14 @@ import { isAnalysisResult, type AnalysisResult } from "./types";
 
 const VIDEO_NOT_IMPLEMENTED = "Video processing not implemented yet";
 const AI_RETRY_DELAY_MS = 2000;
+const TENANT_MISMATCH_MESSAGE = "Job processing rejected";
+const TENANT_REQUIRED_MESSAGE = "tenantId is required";
+
+export type ProcessOneJobOptions = {
+  /** Server-derived tenant id only. Required — never from body/query. */
+  tenantId: string;
+  traceId?: string;
+};
 
 export type ProcessOneJobResult =
   | { ok: true; jobId: string; status: "completed" | "failed" }
@@ -31,6 +42,7 @@ function logJobLifecycle(
     next_retry_at?: string;
     error_code?: string;
     request_id?: string;
+    tenant_id?: string;
   }
 ) {
   if (getServerConfig().NODE_ENV === "test") return;
@@ -97,11 +109,12 @@ async function callAiAnalysis(
 }
 
 /**
- * Mark job as failed (status, error_message, error_type, finished_at).
+ * Mark job as failed (status, error_message, error_type, finished_at) within tenant scope.
  */
 async function markJobFailed(
   supabase: SupabaseClient,
   jobId: string,
+  tenantId: string,
   message: string,
   errorType: string
 ): Promise<void> {
@@ -114,20 +127,28 @@ async function markJobFailed(
       finished_at: new Date().toISOString(),
     })
     .eq("id", jobId)
+    .eq("tenant_id", tenantId)
     .in("status", ["pending", "processing"]);
 }
 
 /**
- * Process one job: dequeue → claim → AI → complete (or mark failed).
- * Uses RPCs dequeue_job(null, workerId), claim_job_execution(jobId, workerId), complete_analysis_job(...).
- * Optional traceId is included in job logs when provided (e.g. from request x-request-id).
+ * Process one job for a single tenant: dequeue_tenant_job → claim → AI → complete (or mark failed).
+ * Never calls global dequeue_job. Missing tenant RPC fails closed (no global fallback).
  */
 export async function processOneJob(
   supabase: SupabaseClient,
   aiAnalysisUrl: string | undefined,
-  options?: { traceId?: string }
+  options: ProcessOneJobOptions
 ): Promise<ProcessOneJobResult> {
-  const traceId = options?.traceId ?? (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `job-${Date.now()}`);
+  const tenantId = typeof options?.tenantId === "string" ? options.tenantId.trim() : "";
+  if (!tenantId) {
+    return { ok: false, reason: "error", message: TENANT_REQUIRED_MESSAGE };
+  }
+
+  const traceId =
+    options.traceId ??
+    (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `job-${Date.now()}`);
+
   if (!aiAnalysisUrl?.trim()) {
     return { ok: false, reason: "no_url", message: "AI_ANALYSIS_URL is not set" };
   }
@@ -136,7 +157,8 @@ export async function processOneJob(
   // a FK to a workers table not seeded by web-session users.
   const workerId: string | null = null;
 
-  const { data: jobRow, error: dequeueError } = await supabase.rpc("dequeue_job", {
+  const { data: jobRow, error: dequeueError } = await supabase.rpc("dequeue_tenant_job", {
+    p_tenant_id: tenantId,
     p_region_id: null,
     p_worker_id: workerId,
   });
@@ -151,18 +173,26 @@ export async function processOneJob(
   }
 
   const jobId = job.id as string;
+  const jobTenantId = typeof job.tenant_id === "string" ? job.tenant_id : "";
+  if (jobTenantId !== tenantId) {
+    // Fail closed: do not claim, fetch AI, complete, or mutate foreign tenant rows.
+    return { ok: false, reason: "error", message: TENANT_MISMATCH_MESSAGE };
+  }
+
   const mediaId = job.media_id as string;
 
   const { data: media, error: mediaError } = await supabase
     .from("media")
     .select("file_url, project_id, type")
     .eq("id", mediaId)
-    .single();
+    .eq("tenant_id", tenantId)
+    .maybeSingle();
 
   if (mediaError || !media) {
     await markJobFailed(
       supabase,
       jobId,
+      tenantId,
       mediaError?.message ?? "Media not found",
       "validation_error"
     );
@@ -174,7 +204,7 @@ export async function processOneJob(
   const type = (media.type as string) || "image";
 
   if (type === "video") {
-    await markJobFailed(supabase, jobId, VIDEO_NOT_IMPLEMENTED, "validation_error");
+    await markJobFailed(supabase, jobId, tenantId, VIDEO_NOT_IMPLEMENTED, "validation_error");
     return { ok: true, jobId, status: "failed" };
   }
 
@@ -187,6 +217,7 @@ export async function processOneJob(
     await markJobFailed(
       supabase,
       jobId,
+      tenantId,
       claimError?.message ?? "Failed to claim execution",
       "rpc_conflict"
     );
@@ -194,7 +225,7 @@ export async function processOneJob(
   }
 
   const startMs = Date.now();
-  logJobLifecycle("job_started", { job_id: jobId, request_id: traceId });
+  logJobLifecycle("job_started", { job_id: jobId, request_id: traceId, tenant_id: tenantId });
 
   try {
     const result = await callAiAnalysis(aiAnalysisUrl, {
@@ -219,6 +250,7 @@ export async function processOneJob(
       duration_ms: Date.now() - startMs,
       attempts: 1,
       request_id: traceId,
+      tenant_id: tenantId,
     });
     return { ok: true, jobId, status: "completed" };
   } catch (err) {
@@ -228,7 +260,7 @@ export async function processOneJob(
       : message.toLowerCase().includes("ai analysis failed")
         ? "ai_failure"
         : "unknown";
-    await markJobFailed(supabase, jobId, message, errorCode);
+    await markJobFailed(supabase, jobId, tenantId, message, errorCode);
     logJobLifecycle("job_failed", {
       job_id: jobId,
       duration_ms: Date.now() - startMs,
@@ -236,6 +268,7 @@ export async function processOneJob(
       retryable: false,
       error_code: errorCode,
       request_id: traceId,
+      tenant_id: tenantId,
     });
     return { ok: true, jobId, status: "failed" };
   }

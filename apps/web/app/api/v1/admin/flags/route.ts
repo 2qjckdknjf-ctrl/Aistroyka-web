@@ -4,11 +4,10 @@
  */
 
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { getAdminClient } from "@/lib/supabase/admin";
-import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
+import { getTenantContextFromRequest, requireTenant, TenantRequiredError, LitePathForbiddenError } from "@/lib/tenant";
 import { requireAdmin } from "@/lib/api/require-admin";
-import { requirePlatformOwnerLegacyAdminRoute } from "@/lib/api/require-platform-admin-legacy-route";
+import { requirePlatformOwnerApi } from "@/lib/platform-owner/require-platform-owner-api";
 import { listFlags, upsertFlag } from "@/lib/platform/flags";
 import { emitAudit } from "@/lib/observability/audit.service";
 
@@ -19,6 +18,12 @@ export async function GET(request: Request) {
   try {
     requireTenant(ctx);
   } catch (e) {
+    if (e instanceof LitePathForbiddenError) {
+      return NextResponse.json(
+        { error: "forbidden", code: "lite_client_path_forbidden" },
+        { status: 403 }
+      );
+    }
     if (e instanceof TenantRequiredError) {
       return NextResponse.json({ error: e.message }, { status: 401 });
     }
@@ -33,13 +38,19 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const platformErr = await requirePlatformOwnerLegacyAdminRoute(request);
-  if (platformErr) return platformErr;
+  const auth = await requirePlatformOwnerApi(request, { mode: "write" });
+  if (!auth.ok) return auth.response;
 
   const ctx = await getTenantContextFromRequest(request);
   try {
     requireTenant(ctx);
   } catch (e) {
+    if (e instanceof LitePathForbiddenError) {
+      return NextResponse.json(
+        { error: "forbidden", code: "lite_client_path_forbidden" },
+        { status: 403 }
+      );
+    }
     if (e instanceof TenantRequiredError) {
       return NextResponse.json({ error: e.message }, { status: 401 });
     }

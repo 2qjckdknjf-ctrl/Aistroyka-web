@@ -9,6 +9,12 @@ vi.mock("@/lib/tenant", () => ({
       this.name = "TenantRequiredError";
     }
   },
+  LitePathForbiddenError: class LitePathForbiddenError extends Error {
+    constructor(message = "forbidden") {
+      super(message);
+      this.name = "LitePathForbiddenError";
+    }
+  },
 }));
 
 vi.mock("@/lib/supabase/server", () => ({

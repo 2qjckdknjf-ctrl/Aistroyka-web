@@ -1,0 +1,35 @@
+app,flow,test_level,persona,client_profile,source_callsite,expected,result,evidence,blocker,notes
+Shared,BrandTokens + MobileClientProfile contract,unit,n/a,n/a,ios/Shared/Tests/SharedTests/BrandTokensContractTests.swift,profiles ios_worker/ios_manager + brand surfaces,PASS,/tmp/aistroyka-phase5-orch/gates/shared-test.log,,5 Shared tests total
+Shared,UploadSession/SyncConflict convertFromSnakeCase decode,unit,n/a,n/a,ios/Shared/Tests/SharedTests/UploadSessionDecodingTests.swift,upload_path and manager_note style fields decode,PASS,/tmp/aistroyka-phase5-orch/gates/shared-test.log,,Regression for Phase 5 media path bug
+Worker,Debug simulator build,build,n/a,ios_worker,xcodebuild CODE_SIGNING_ALLOWED=NO Debug,BUILD SUCCEEDED,PASS,/tmp/aistroyka-phase5-orch/gates/worker-debug2.log,,Dedicated gate sim UDID
+Worker,Release simulator build,build,n/a,ios_worker,xcodebuild CODE_SIGNING_ALLOWED=NO Release,BUILD SUCCEEDED,PASS,/tmp/aistroyka-phase5-orch/gates/worker-release2.log,,
+Manager,Debug simulator build,build,n/a,ios_manager,xcodebuild CODE_SIGNING_ALLOWED=NO Debug,BUILD SUCCEEDED,PASS,/tmp/aistroyka-phase5-orch/gates/manager-debug2.log,,
+Manager,Release simulator build,build,n/a,ios_manager,xcodebuild CODE_SIGNING_ALLOWED=NO Release,BUILD SUCCEEDED,PASS,/tmp/aistroyka-phase5-orch/gates/manager-release2.log,,
+Worker,Login smoke identifiers,UITest,worker,ios_worker,WorkerSmokeUITests/testLoginScreen_reachableWithPilotIdentifiers,Login surface reachable,PASS,/tmp/aistroyka-phase5-orch/gates/worker-login-smoke2.log,,Roadmap-required smoke
+Manager,Login smoke identifiers,UITest,manager,ios_manager,ManagerSmokeUITests/testLoginScreen_reachableWithPilotIdentifiers,Login surface reachable,PASS,/tmp/aistroyka-phase5-orch/gates/manager-login-smoke2.log,,Roadmap-required smoke
+Worker,Runtime persona /me,preflight API,worker,ios_worker,GET /api/v1/me + x-client=ios_worker,tenant member project worker no platform grant,PASS,/tmp/aistroyka-phase5-orch/layerb15.log,,Distinct user from Manager
+Manager,Runtime persona /me,preflight API,manager,ios_manager,GET /api/v1/me + x-client=ios_manager,project manager role same tenant no platform grant,PASS,/tmp/aistroyka-phase5-orch/layerb15.log,,Distinct user from Worker
+Worker,Full submit + offline queue,Layer B UITest,worker,ios_worker,WorkerPhase5UITests/testWorker_phase5_fullSubmitWithOfflineQueue,draft+media+pause+relaunch+resume+submit no duplicates,PASS,/tmp/aistroyka-phase5-orch/layerb15.log,,MEDIA_COUNT=2 REPORT found
+Worker,Report/media/submit API side effects,Layer B DB,worker,ios_worker,create/upload-sessions/finalize/add-media/submit,submitted report with before+after media,PASS,next-fresh.log + layerb15 LAYERB_MEDIA_COUNT: 2,,App UI/API not service-role mutations
+Worker,Offline durable queue relaunch,Layer B UITest,worker,ios_worker,pause queue + terminate + relaunch preserve ops,pending ops restore then resume,PASS,WorkerPhase5UITests offline phases in layerb15.log,,E2E sync foreground upload path
+Manager,Request changes on exact report,Layer B UITest,manager,ios_manager,ManagerPhase5UITests/testManager_phase5_requestChangesOnExactReport,exact report changes_requested with note,PASS,layerb15 LAYERB_DB_CHANGES_REQUESTED: OK,,No Copilot/LLM send
+Worker,Resubmit after changes_requested,Layer B UITest,worker,ios_worker,WorkerPhase5UITests/testWorker_phase5_resubmitAfterChangesRequested,see manager note + resubmit + submitted,PASS,layerb15 Worker resubmit TEST SUCCEEDED,,manager_note decode fix required
+Manager,Approve exact report after resubmit,Layer B UITest,manager,ios_manager,ManagerPhase5UITests/testManager_phase5_approveExactReport,status approved,PASS,layerb15 LAYERB_APPROVED: OK,,Review actions above List for XCTest
+Both,Idempotent recovery / no duplicate report,Layer B DB,worker+manager,ios_worker/ios_manager,worker_reports count for fixture user,exactly 1 report,PASS,layerb15 LAYERB_REPORT_COUNT: 1,,
+Both,Simulator isolation,harness,n/a,n/a,AISTROYKA-Phase5-<runId> create/boot/delete only,no shutdown-all / erase-all / foreign sims,PASS,layerb15 CLEANUP_DEDICATED_SIMULATOR + NO_PHASE5_SIMS after,,
+Both,Brand drift vs web tokens,script,n/a,n/a,scripts/mobile/check-mobile-brand-drift.mjs,PASS,PASS,/tmp/aistroyka-phase5-orch/gates/brand-drift2.log,,Web tokens source of truth
+Worker,App name/icon/permissions/metadata,audit,n/a,ios_worker,Info.plist + showBuildSettings/product Info,display name Worker bundle ai.aistroyka.worker camera+photos,PASS,closure metadata section,,CFBundleVersion 2026063001 note for owner
+Manager,App name/icon/permissions/metadata,audit,n/a,ios_manager,Info.plist + product Info,display name Manager bundle ai.aistroyka.manager,PASS,closure metadata section,,No Worker camera permission required
+Both,Signing / archive readiness,audit,n/a,n/a,local identities + ASC key presence,simulator unsigned OK; upload not authorized,PASS_WITH_EXTERNAL,closure signing section,TestFlight NOT_AUTHORIZED,No Apple state mutation
+Both,Physical device smoke,device,n/a,n/a,IOS_PHASE5_ALLOW_DEVICE gate,device install/launch,BLOCKED_EXTERNAL,layerb15 PHYSICAL_DEVICE_SMOKE,IOS_PHASE5_ALLOW_DEVICE unset,
+Both,TestFlight upload,distribution,n/a,n/a,Mode B upload gates,upload,NOT_AUTHORIZED,layerb15 TESTFLIGHT_UPLOAD,ASC/Mode B gates missing,
+Repo,check:design,gate,n/a,n/a,bun run --cwd apps/web check:design,PASS,PASS,/tmp/aistroyka-phase5-orch/gates/design2.log,,
+Repo,i18n:check,gate,n/a,n/a,bun run i18n:check,PASS,PASS,/tmp/aistroyka-phase5-orch/gates/i18n2.log,,
+Repo,lint,gate,n/a,n/a,bun run --cwd apps/web lint,PASS,PASS,/tmp/aistroyka-phase5-orch/gates/lint2.log,,
+Repo,full unit suite,gate,n/a,n/a,bun run test,417 files / 2687 tests PASS,PASS,/tmp/aistroyka-phase5-orch/gates/full-test2.log,,Fresh Phase 5 counts
+Repo,build,gate,n/a,n/a,bun run build,PASS,PASS,/tmp/aistroyka-phase5-orch/gates/build2.log,,
+Repo,cf:build,gate,n/a,n/a,bun run cf:build,PASS,PASS,/tmp/aistroyka-phase5-orch/gates/cf-build2.log,,
+Repo,npm-lock validation,gate,n/a,n/a,node scripts/ci/validate-npm-lock.cjs,PASS,PASS,/tmp/aistroyka-phase5-orch/gates/npm-lock2.log,,
+Repo,npm audit omit dev,gate,n/a,n/a,npm audit --omit=dev,0 vulnerabilities,PASS,/tmp/aistroyka-phase5-orch/gates/npm-audit2.log,,
+Repo,git diff --check,gate,n/a,n/a,git diff --check,clean,PASS,/tmp/aistroyka-phase5-orch/gates/diff-check2.log,,
+Both,Cleanup fixtures+sim+creds,harness cleanup,n/a,n/a,phase5-orchestrate cleanup,residue 0 smoke unchanged,PASS,layerb15 CLEANUP_* + post-check RESIDUE_USERS 0,,

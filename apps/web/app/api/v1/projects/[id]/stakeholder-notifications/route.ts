@@ -5,14 +5,10 @@
 
 import { NextResponse } from "next/server";
 import { createClientFromRequest } from "@/lib/supabase/server";
-import {
-  getTenantContextFromRequest,
-  requireTenant,
-  TenantRequiredError,
-  TenantForbiddenError,
-} from "@/lib/tenant";
+import { getTenantContextFromRequest, requireTenant, TenantRequiredError, TenantForbiddenError, LitePathForbiddenError } from "@/lib/tenant";
 import { canStakeholderAccessClientRequests } from "@/lib/domain/client-requests/client-requests.policy";
 import * as notifRepo from "@/lib/domain/stakeholder-notifications/stakeholder-notifications.repository";
+import { jsonWithCustomerFinanceGuard } from "@/lib/security/customer-finance-response";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +28,12 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
   try {
     requireTenant(ctx);
   } catch (e) {
+    if (e instanceof LitePathForbiddenError) {
+      return NextResponse.json(
+        { error: "forbidden", code: "lite_client_path_forbidden" },
+        { status: 403 }
+      );
+    }
     if (e instanceof TenantRequiredError) {
       return NextResponse.json({ error: e.message }, { status: 401 });
     }
@@ -52,5 +54,5 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
   const rows = await notifRepo.listForUser(supabase, ctx.tenantId, projectId, ctx.userId, { limit });
   const unread = await notifRepo.unreadCount(supabase, ctx.tenantId, projectId, ctx.userId);
   const data = rows.map((r) => notifRepo.rowToPublic(r));
-  return NextResponse.json({ data, unread });
+  return jsonWithCustomerFinanceGuard("GET /api/v1/projects/:id/stakeholder-notifications", { data, unread });
 }

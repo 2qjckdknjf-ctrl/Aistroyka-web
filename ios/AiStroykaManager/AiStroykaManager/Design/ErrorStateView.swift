@@ -8,25 +8,34 @@ import Shared
 
 struct ErrorStateView: View {
     var message: String
-    var retryTitle: String = NSLocalizedString("mgr_retry", comment: "")
+    /// Caller-supplied localized title — no English hardcoded default.
+    var retryTitle: String
     var retry: (() -> Void)?
 
+    init(message: String, retryTitle: String, retry: (() -> Void)? = nil) {
+        self.message = message
+        self.retryTitle = retryTitle
+        self.retry = retry
+    }
+
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: BrandTokens.space3) {
             Image(systemName: "exclamationmark.triangle")
-                .font(.largeTitle)
+                .font(.system(size: 44))
                 .foregroundStyle(ManagerSemanticColors.warning)
             Text(message)
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(ManagerSemanticColors.textSecondary)
                 .multilineTextAlignment(.center)
-            if let retry = retry {
-                Button(retryTitle, action: retry)
-                    .buttonStyle(.bordered)
-                    .accessibilityIdentifier("pilot_manager_error_retry")
+            if let retry {
+                BrandSecondaryButton(action: retry) {
+                    Text(retryTitle)
+                }
+                .frame(maxWidth: 280)
+                .accessibilityIdentifier("pilot_manager_error_retry")
             }
         }
-        .padding()
+        .padding(BrandTokens.space8)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }

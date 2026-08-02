@@ -19,12 +19,13 @@ struct ProjectIntelligenceView: View {
             if isLoading && data == nil && errorMessage == nil {
                 LoadingStateView(message: NSLocalizedString("mgr_loading_intelligence", comment: ""))
             } else if let err = errorMessage, data == nil {
-                ErrorStateView(message: err, retry: { load() })
+                ErrorStateView(message: err, retryTitle: NSLocalizedString("mgr_retry", comment: ""), retry: { load() })
             } else if let d = data {
                 intelligenceList(d)
             }
         }
         .navigationTitle(NSLocalizedString("mgr_intelligence_title", comment: ""))
+        .brandScrollChrome()
         .accessibilityIdentifier("pilot_manager_intelligence")
         .refreshable { await loadAsync() }
         .onAppear { loadIfNeeded() }
@@ -55,9 +56,9 @@ struct ProjectIntelligenceView: View {
                     ForEach(Array(risks.enumerated()), id: \.offset) { _, r in
                         VStack(alignment: .leading, spacing: 4) {
                             Text(r.title ?? "—").font(.subheadline.weight(.semibold))
-                            if let ex = r.explanation, !ex.isEmpty { Text(ex).font(.caption).foregroundStyle(.secondary) }
+                            if let ex = r.explanation, !ex.isEmpty { Text(ex).font(.caption).foregroundStyle(BrandTokens.textSecondary) }
                             if let act = r.recommendedAction, !act.isEmpty {
-                                Text(act).font(.caption).foregroundStyle(.tertiary)
+                                Text(act).font(.caption).foregroundStyle(BrandTokens.textTertiary)
                             }
                         }
                         .padding(.vertical, 2)

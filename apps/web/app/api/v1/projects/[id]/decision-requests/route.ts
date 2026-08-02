@@ -4,12 +4,7 @@
 
 import { NextResponse } from "next/server";
 import { createClientFromRequest } from "@/lib/supabase/server";
-import {
-  getTenantContextFromRequest,
-  requireTenant,
-  TenantForbiddenError,
-  TenantRequiredError,
-} from "@/lib/tenant";
+import { getTenantContextFromRequest, requireTenant, TenantForbiddenError, TenantRequiredError, LitePathForbiddenError } from "@/lib/tenant";
 import {
   createClientRequest,
   listClientRequests,
@@ -25,6 +20,12 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
   try {
     requireTenant(ctx);
   } catch (e) {
+    if (e instanceof LitePathForbiddenError) {
+      return NextResponse.json(
+        { error: "forbidden", code: "lite_client_path_forbidden" },
+        { status: 403 }
+      );
+    }
     if (e instanceof TenantRequiredError) return NextResponse.json({ error: e.message }, { status: 401 });
     if (e instanceof TenantForbiddenError) return NextResponse.json({ error: e.message }, { status: 403 });
     throw e;
@@ -46,6 +47,12 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   try {
     requireTenant(ctx);
   } catch (e) {
+    if (e instanceof LitePathForbiddenError) {
+      return NextResponse.json(
+        { error: "forbidden", code: "lite_client_path_forbidden" },
+        { status: 403 }
+      );
+    }
     if (e instanceof TenantRequiredError) return NextResponse.json({ error: e.message }, { status: 401 });
     if (e instanceof TenantForbiddenError) return NextResponse.json({ error: e.message }, { status: 403 });
     throw e;

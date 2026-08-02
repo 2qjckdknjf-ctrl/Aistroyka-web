@@ -1,0 +1,28 @@
+ui_route,api_dependency,intended_role,active_tenant,portal_enabled,customer_finance_guard,empty_error_behavior,mutation,existing_test,observed_result,e2e_result
+/{locale}/portal,redirect_only,stakeholder,yes,n/a,n/a,redirect_to_portal_projects,none,portal_root+middleware,PASS_redirect,PASS_real_stakeholder_e2e
+/{locale}/portal/projects,GET_/api/v1/portal/projects,stakeholder,yes,list_filters_portal_enabled,jsonWithCustomerFinanceGuard,loading_empty_auth_error_retry,none,portal_projects_route.test+list_client,PASS_local_contract,PASS_real_stakeholder_e2e
+/{locale}/dashboard/projects/{id}/client,GET_/api/v1/projects/{id}/client-view,stakeholder_or_internal_preview,yes,required_for_stakeholder,guarded_ClientProjectView,unavailable_empty_state_safe_back,respond_capability_gated,client-view.route.test+finance,PASS_audience_back_link_handover_hidden,PASS_real_stakeholder_e2e
+/{locale}/dashboard/projects/{id}/client/discussions,discussions_APIs,stakeholder,yes,via_membership,guarded,list_empty_ok,create_not_executed_3C,existing_domain_tests,PASS_path_allowlisted,PASS_real_stakeholder_e2e
+/{locale}/dashboard/projects/{id}/client/discussions/{id},discussion_detail_APIs,stakeholder,yes,via_membership,guarded,detail_error_ok,write_not_executed_3C,existing_domain_tests,PASS_path_allowlisted,PASS_real_stakeholder_e2e
+/{locale}/dashboard/projects/{id}/client/defects,defects_APIs,stakeholder,yes,via_membership,guarded,list_empty_ok,create_not_executed_3C,existing_domain_tests,PASS_path_allowlisted,PASS_real_stakeholder_e2e
+/{locale}/dashboard/projects/{id}/client/defects/{id},defect_detail_APIs,stakeholder,yes,via_membership,guarded,detail_error_ok,write_not_executed_3C,existing_domain_tests,PASS_path_allowlisted,PASS_real_stakeholder_e2e
+/{locale}/dashboard/projects/{id}/client/service-requests,aftercare_APIs,stakeholder,yes,via_membership,guarded,list_empty_ok,create_not_executed_3C,existing_domain_tests,PASS_path_allowlisted,PASS_real_stakeholder_e2e
+/{locale}/dashboard/projects/{id}/client/service-requests/{id},service_request_detail,stakeholder,yes,via_membership,guarded,detail_error_ok,write_not_executed_3C,existing_domain_tests,PASS_path_allowlisted,PASS_real_stakeholder_e2e
+/{locale}/dashboard/projects/{id}/client/change-orders,GET_portal_or_project_change_orders,stakeholder,yes,via_membership,finance_guard,list_empty_ok,respond_capability_gated,portal_change_orders.tests,PASS_local,PASS_real_stakeholder_e2e
+/{locale}/dashboard/projects/{id}/client/change-orders/{id},change_order_detail,stakeholder,yes,via_membership,finance_guard,detail_error_ok,respond_capability_gated,portal_change_order_detail.tests,PASS_local,PASS_real_stakeholder_e2e
+client notifications section,GET_/api/v1/projects/{id}/stakeholder-notifications,stakeholder,yes,via_membership,finance_guard,optional_widget_null_on_error,mark_read_not_executed_3C,route.finance.test,PASS_local,PASS_real_stakeholder_e2e
+client activity section,GET_/api/v1/projects/{id}/stakeholder-activity,stakeholder,yes,via_membership,finance_guard,optional_widget,none,route.finance.test,PASS_local,PASS_real_stakeholder_e2e
+client workload section,GET_/api/v1/workload?audience=stakeholder,stakeholder,yes,via_membership,audience_shaped,optional_null_on_error,none_action_url_sanitized,portal-action-url.test,PASS_sanitizer,PASS_real_stakeholder_e2e
+customer estimates section,client-view.customer_estimates,stakeholder,yes,via_membership,finance_guard,empty_ok,respond_capability_gated,estimates.finance.tests,PASS_local,PASS_real_stakeholder_e2e
+client requests/decisions,client-view+respond_routes,stakeholder,yes,via_membership,finance_guard,empty_ok,respond_capability_gated,decisions.respond.tests,PASS_local,PASS_real_stakeholder_e2e
+handover pack link (UI),internal_/handover/pack,internal_preview_only,yes,n/a,pack_customer_safe,hidden_for_stakeholder,none,portal-action-url+middleware,PASS_hidden_stakeholder,PASS_real_stakeholder_e2e
+GET_/api/v1/portal/projects,portal.service,stakeholder,yes,portal_enabled_filter,guard,401_403_not_empty_list,none,route.test,PASS,PASS_real_stakeholder_e2e
+GET_/api/v1/portal/projects/{id},portal.service,stakeholder,yes,membership,guard,404_deny,none,route.test,PASS,PASS_real_stakeholder_e2e
+GET_/api/v1/portal/projects/{id}/progress,portal_progress,stakeholder,yes,membership,guard,empty_ok,none,route.test,PASS,PASS_real_stakeholder_e2e
+GET_/api/v1/portal/projects/{id}/documents,portal_documents,stakeholder,yes,membership,guard,empty_ok,none,route.test,PASS,PASS_real_stakeholder_e2e
+GET_/api/v1/portal/projects/{id}/estimates,portal_estimates,stakeholder,yes,membership,guard,empty_ok,respond_gated,route.test,PASS,PASS_real_stakeholder_e2e
+GET_/api/v1/portal/projects/{id}/decisions,portal_decisions,stakeholder,yes,membership,guard,empty_ok,respond_gated,route.test,PASS,PASS_real_stakeholder_e2e
+GET_/api/v1/portal/projects/{id}/proof,portal_proof,stakeholder,yes,membership,guard,unavailable_ok,none,route.test,PASS,PASS_real_stakeholder_e2e
+GET_/api/v1/projects/{id}/client-view,client-portal.service,stakeholder_or_preview,yes,membership,guard,403_404,none,route.test+finance,PASS_canonical_UI,PASS_real_stakeholder_e2e
+internal_/admin_/billing_/portfolio,n/a,stakeholder_denied,yes,n/a,n/a,middleware_redirect_portal_home,none,middleware_gate.tests,PASS_redirect_portal_home,PASS_real_stakeholder_e2e
+portal_only_shell_nav,n/a,stakeholder,yes,n/a,n/a,no_internal_links,none,DashboardShell.test,PASS,PASS_real_stakeholder_e2e

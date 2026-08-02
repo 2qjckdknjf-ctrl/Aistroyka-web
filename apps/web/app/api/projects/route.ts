@@ -1,56 +1,17 @@
-import { NextResponse } from "next/server";
-import { createClientFromRequest } from "@/lib/supabase/server";
-import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
-import { isTenantContextPresent } from "@/lib/tenant/tenant.types";
-import { listProjects, createProject } from "@/lib/domain/projects/project.service";
-import { setLegacyApiHeaders } from "@/lib/api/deprecation-headers";
-import { CreateProjectRequestSchema } from "@aistroyka/contracts";
+/**
+ * Legacy /api/projects — lite clients forbidden; others redirect to /api/v1/projects.
+ */
 
-/** GET /api/projects — list projects (legacy). Prefer GET /api/v1/projects. */
+import { redirectLegacyApiToV1 } from "@/lib/api/legacy-redirect";
+
+export const dynamic = "force-dynamic";
+
+/** @deprecated Use GET /api/v1/projects */
 export async function GET(request: Request) {
-  const ctx = await getTenantContextFromRequest(request);
-  if (!isTenantContextPresent(ctx)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  const supabase = await createClientFromRequest(request);
-  const { data, error } = await listProjects(supabase, ctx);
-  if (error) return NextResponse.json({ error }, { status: 403 });
-  const res = NextResponse.json({ data });
-  setLegacyApiHeaders(res.headers);
-  res.headers.set("Link", "</api/v1/projects>; rel=\"successor\"");
-  return res;
+  return redirectLegacyApiToV1(request);
 }
 
-/** POST /api/projects — create project. Uses domain project.service. */
+/** @deprecated Use POST /api/v1/projects */
 export async function POST(request: Request) {
-  const ctx = await getTenantContextFromRequest(request);
-  try {
-    requireTenant(ctx);
-  } catch (e) {
-    if (e instanceof TenantRequiredError) {
-      return NextResponse.json({ success: false, error: e.message }, { status: 401 });
-    }
-    throw e;
-  }
-  let rawBody: unknown;
-  try {
-    rawBody = await request.json();
-  } catch {
-    rawBody = {};
-  }
-  const parsed = CreateProjectRequestSchema.safeParse(rawBody);
-  if (!parsed.success) {
-    const msg = parsed.error.flatten().formErrors[0] ?? parsed.error.flatten().fieldErrors.name?.[0] ?? "name required (1-200 chars)";
-    return NextResponse.json({ success: false, error: msg }, { status: 400 });
-  }
-  const supabase = await createClientFromRequest(request);
-  const result = await createProject(supabase, ctx, parsed.data.name);
-  if ("error" in result) {
-    const status = result.error.includes("Insufficient") ? 403 : 400;
-    return NextResponse.json({ success: false, error: result.error }, { status });
-  }
-  const res = NextResponse.json({ success: true, data: { id: result.id } });
-  setLegacyApiHeaders(res.headers);
-  res.headers.set("Link", "</api/v1/projects>; rel=\"successor\"");
-  return res;
+  return redirectLegacyApiToV1(request);
 }

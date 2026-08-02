@@ -3,13 +3,14 @@
  *
  * Contract:
  * - Request: POST JSON { image_url (required), media_id?, project_id? }.
- * - When project_id is set: requires tenant auth and project membership (403 Insufficient rights).
+ * - Auth required before any paid-provider path (optional project_id does not open anonymous spend).
+ * - When project_id is set: requires project membership (403 Insufficient rights).
  * - Response: 200 with AnalysisResult { stage, completion_percent, risk_level, detected_issues, recommendations }.
  * - Degraded success: 200 deterministic AnalysisResult when vision routers fail but `AI_VISION_DETERMINISTIC_FALLBACK` is enabled (default); `X-AI-Fallback-Reason` header set.
- * - Errors: 400 (bad body), 413 (body too large), 402 (quota), 429 (rate limit), 403 (policy block), 502/504 (AI when fallback disabled), 503 (no vision provider configured).
+ * - Errors: 400 (bad body), 401/403 (auth), 413 (body too large), 402 (quota), 429 (rate limit), 403 (policy block), 502/504 (AI when fallback disabled), 503 (no vision provider / rate-limit store).
  *
  * All AI calls go through AIService (Policy Engine → Provider Router → usage).
- * Phase 8: vision telemetry + audit (no image URLs or prompts in logs).
+ * Telemetry + audit: no image URLs or prompts in logs.
  */
 
 import { NextResponse } from "next/server";
@@ -17,15 +18,24 @@ import {
   getTenantContextFromRequest,
   requireTenant,
   TenantRequiredError,
+  LitePathForbiddenError,
 } from "@/lib/tenant";
 import { getProjectForInternalWorkspace } from "@/lib/domain/projects/project.service";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { createClientFromRequest } from "@/lib/supabase/server";
-import { checkRateLimit } from "@/lib/platform/rate-limit/rate-limit.service";
+import {
+  checkRateLimitStrict,
+  rateLimitUnavailableResponse,
+  resolveTrustedClientIp,
+} from "@/lib/platform/rate-limit/rate-limit.service";
 import { checkQuota, checkBudgetAlert, estimateMaxVisionCostUsd } from "@/lib/platform/ai-usage/ai-usage.service";
 import { analyzeImage, AIPolicyBlockedError, AIVisionFailedError } from "@/lib/platform/ai/ai.service";
+import {
+  assertSafeRemoteMediaUrl,
+  SafeRemoteMediaError,
+} from "@/lib/platform/ai/safe-remote-media";
 import { getServerConfig, getConfiguredVisionProviders, isAnyVisionProviderConfigured } from "@/lib/config/server";
-import { logStructured, withRequestIdAndTiming, getOrCreateRequestId } from "@/lib/observability";
+import { withRequestIdAndTiming, getOrCreateRequestId } from "@/lib/observability";
 import {
   logVisionAnalyzeComplete,
   logVisionAnalyzeError,
@@ -43,16 +53,20 @@ function shouldUseVisionFallback(): boolean {
   return raw !== "0" && raw !== "false" && raw !== "off" && raw !== "no";
 }
 
-function buildVisionDeterministicFallback(reason: "provider_unavailable" | "provider_timeout") {
+type VisionFallbackReason = "provider_unavailable" | "provider_timeout" | "rate_limit_unavailable";
+
+function buildVisionDeterministicFallback(reason: VisionFallbackReason) {
+  const issue =
+    reason === "provider_timeout"
+      ? "Vision provider timeout: analysis completed in deterministic fallback mode."
+      : reason === "rate_limit_unavailable"
+        ? "AI rate-limit controls are unavailable: analysis completed in deterministic fallback mode (no live provider call)."
+        : "Vision providers are temporarily unavailable: analysis completed in deterministic fallback mode.";
   return {
     stage: "unknown",
     completion_percent: 0,
     risk_level: "medium",
-    detected_issues: [
-      reason === "provider_timeout"
-        ? "Vision provider timeout: analysis completed in deterministic fallback mode."
-        : "Vision providers are temporarily unavailable: analysis completed in deterministic fallback mode.",
-    ],
+    detected_issues: [issue],
     recommendations: [
       "Retry image analysis in a few minutes when AI providers recover.",
       "Proceed with manual visual checklist for safety-critical observations.",
@@ -61,46 +75,19 @@ function buildVisionDeterministicFallback(reason: "provider_unavailable" | "prov
   } as const;
 }
 
-function validateImageUrl(
-  url: string
-): { ok: true } | { ok: false; error: string } {
-  if (url.length > MAX_IMAGE_URL_LENGTH) {
-    return { ok: false, error: "image_url too long" };
-  }
-  let parsed: URL;
-  try {
-    parsed = new URL(url);
-  } catch {
-    return { ok: false, error: "image_url must be a valid URL" };
-  }
-  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-    return { ok: false, error: "image_url must be http or https" };
-  }
-  if (getServerConfig().NODE_ENV === "production" && parsed.protocol !== "https:") {
-    return { ok: false, error: "image_url must be https in production" };
-  }
-  return { ok: true };
-}
-
 export async function POST(request: Request) {
   const start = Date.now();
   const requestId = getOrCreateRequestId(request);
   const wrap = (res: NextResponse, tenantId?: string | null, userId?: string | null) =>
-    withRequestIdAndTiming(request, res, { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start, tenantId, userId });
+    withRequestIdAndTiming(request, res, {
+      route: ROUTE_KEY,
+      method: "POST",
+      duration_ms: Date.now() - start,
+      tenantId,
+      userId,
+    });
 
   const rel = () => getAiReleaseCorrelation();
-
-  if (!isAnyVisionProviderConfigured()) {
-    logVisionAnalyzeError({
-      request_id: requestId,
-      route: ROUTE_KEY,
-      latency_ms: Date.now() - start,
-      error_kind: "provider_unavailable",
-      http_status: 503,
-      ...rel(),
-    });
-    return wrap(NextResponse.json({ error: "No AI vision provider is configured", request_id: requestId }, { status: 503 }));
-  }
 
   const contentLength = request.headers.get("content-length");
   if (contentLength !== null && contentLength !== "" && Number(contentLength) > MAX_BODY_BYTES) {
@@ -132,7 +119,10 @@ export async function POST(request: Request) {
 
   const parsed = AnalyzeImageRequestSchema.safeParse(rawBody);
   if (!parsed.success) {
-    const msg = parsed.error.flatten().formErrors[0] ?? parsed.error.flatten().fieldErrors.image_url?.[0] ?? "Invalid request body";
+    const msg =
+      parsed.error.flatten().formErrors[0] ??
+      parsed.error.flatten().fieldErrors.image_url?.[0] ??
+      "Invalid request body";
     logVisionAnalyzeError({
       request_id: requestId,
       route: ROUTE_KEY,
@@ -144,47 +134,36 @@ export async function POST(request: Request) {
     return wrap(NextResponse.json({ error: msg, request_id: requestId }, { status: 400 }));
   }
 
-  const imageUrl = parsed.data.image_url.trim();
-  const urlCheck = validateImageUrl(imageUrl);
-  if (!urlCheck.ok) {
-    logVisionAnalyzeError({
-      request_id: requestId,
-      route: ROUTE_KEY,
-      latency_ms: Date.now() - start,
-      error_kind: "validation_failure",
-      http_status: 400,
-      ...rel(),
-    });
-    return wrap(NextResponse.json({ error: urlCheck.error, request_id: requestId }, { status: 400 }));
+  const tenantCtx = await getTenantContextFromRequest(request);
+  try {
+    requireTenant(tenantCtx);
+  } catch (e) {
+    if (e instanceof LitePathForbiddenError) {
+      return wrap(
+        NextResponse.json({ error: "forbidden", code: "lite_client_path_forbidden", request_id: requestId }, { status: 403 })
+      );
+    }
+    if (e instanceof TenantRequiredError) {
+      logVisionAnalyzeError({
+        request_id: requestId,
+        route: ROUTE_KEY,
+        latency_ms: Date.now() - start,
+        error_kind: "auth_failure",
+        http_status: 401,
+        ...rel(),
+      });
+      return wrap(
+        NextResponse.json({ error: e.message, request_id: requestId }, { status: 401 }),
+        tenantCtx.tenantId,
+        tenantCtx.userId
+      );
+    }
+    throw e;
   }
 
-  const tenantCtx = await getTenantContextFromRequest(request);
   const userSupabase = await createClientFromRequest(request);
-
   const projectId = parsed.data.project_id?.trim() || null;
   if (projectId) {
-    try {
-      requireTenant(tenantCtx);
-    } catch (e) {
-      if (e instanceof TenantRequiredError) {
-        logVisionAnalyzeError({
-          request_id: requestId,
-          route: ROUTE_KEY,
-          tenant_id: tenantCtx.tenantId,
-          project_id: projectId,
-          latency_ms: Date.now() - start,
-          error_kind: "auth_failure",
-          http_status: 401,
-          ...rel(),
-        });
-        return wrap(
-          NextResponse.json({ error: e.message, request_id: requestId }, { status: 401 }),
-          tenantCtx.tenantId,
-          tenantCtx.userId
-        );
-      }
-      throw e;
-    }
     const { data: project, error: projectError } = await getProjectForInternalWorkspace(
       userSupabase,
       tenantCtx,
@@ -211,53 +190,6 @@ export async function POST(request: Request) {
   }
 
   const admin = getAdminClient();
-  if (admin) {
-    try {
-      const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? request.headers.get("x-real-ip") ?? "unknown";
-      const result = await checkRateLimit(admin, {
-        tenantId: tenantCtx.tenantId ?? null,
-        ip,
-        endpoint: ROUTE_KEY,
-      });
-      if (result.limited) {
-        logVisionAnalyzeError({
-          request_id: requestId,
-          route: ROUTE_KEY,
-          tenant_id: tenantCtx.tenantId,
-          latency_ms: Date.now() - start,
-          error_kind: "rate_limit",
-          http_status: 429,
-          ...rel(),
-        });
-        return wrap(NextResponse.json({ error: result.message, request_id: requestId }, { status: 429 }), tenantCtx.tenantId, tenantCtx.userId);
-      }
-    } catch {
-      logStructured({ event: "rate_limit_unavailable", endpoint: ROUTE_KEY, tenant_id: tenantCtx.tenantId ?? undefined, request_id: requestId });
-    }
-    if (tenantCtx.tenantId) {
-      const tier = tenantCtx.subscriptionTier ?? "free";
-      const estimatedCost = estimateMaxVisionCostUsd(getConfiguredVisionProviders(), tier);
-      const quotaMsg = await checkQuota(admin, tenantCtx.tenantId, estimatedCost);
-      if (quotaMsg) {
-        logVisionAnalyzeError({
-          request_id: requestId,
-          route: ROUTE_KEY,
-          tenant_id: tenantCtx.tenantId,
-          latency_ms: Date.now() - start,
-          error_kind: "rate_limit",
-          http_status: 402,
-          ...rel(),
-        });
-        return wrap(
-          NextResponse.json({ error: quotaMsg, code: "ai_budget_exceeded", request_id: requestId }, { status: 402 }),
-          tenantCtx.tenantId,
-          tenantCtx.userId
-        );
-      }
-      await checkBudgetAlert(admin, tenantCtx.tenantId, estimatedCost);
-    }
-  }
-
   if (!admin) {
     logVisionAnalyzeError({
       request_id: requestId,
@@ -268,20 +200,146 @@ export async function POST(request: Request) {
       http_status: 503,
       ...rel(),
     });
-    return wrap(NextResponse.json({ error: "No AI vision provider is configured", request_id: requestId }, { status: 503 }), tenantCtx.tenantId, tenantCtx.userId);
+    return wrap(
+      NextResponse.json({ error: "AI service unavailable", request_id: requestId }, { status: 503 }),
+      tenantCtx.tenantId,
+      tenantCtx.userId
+    );
+  }
+
+  const { trustedIp } = resolveTrustedClientIp(request);
+  const rate = await checkRateLimitStrict(admin, {
+    tenantId: tenantCtx.tenantId!,
+    userId: tenantCtx.userId!,
+    ip: trustedIp,
+    endpoint: ROUTE_KEY,
+  });
+  if (!rate.ok) {
+    if (rate.kind === "unavailable") {
+      // Fail-closed for paid providers: never call a model when the rate-limit store/RPC is down.
+      // Deterministic degraded response remains available so the product stays honest beta/degraded.
+      logVisionAnalyzeError({
+        request_id: requestId,
+        route: ROUTE_KEY,
+        tenant_id: tenantCtx.tenantId,
+        latency_ms: Date.now() - start,
+        error_kind: "rate_limit",
+        http_status: shouldUseVisionFallback() ? 200 : 503,
+        ...rel(),
+      });
+      if (shouldUseVisionFallback()) {
+        const fallbackResult = buildVisionDeterministicFallback("rate_limit_unavailable");
+        const fallbackResponse = NextResponse.json(fallbackResult, { status: 200 });
+        fallbackResponse.headers.set("X-AI-Fallback-Reason", "rate_limit_unavailable");
+        fallbackResponse.headers.set("X-Request-Id", requestId);
+        return wrap(fallbackResponse, tenantCtx.tenantId, tenantCtx.userId);
+      }
+      return wrap(rateLimitUnavailableResponse(rate.message), tenantCtx.tenantId, tenantCtx.userId);
+    }
+    logVisionAnalyzeError({
+      request_id: requestId,
+      route: ROUTE_KEY,
+      tenant_id: tenantCtx.tenantId,
+      latency_ms: Date.now() - start,
+      error_kind: "rate_limit",
+      http_status: 429,
+      ...rel(),
+    });
+    return wrap(
+      NextResponse.json(
+        { error: rate.message, code: "rate_limited", request_id: requestId },
+        { status: 429, headers: { "Retry-After": String(rate.retryAfterSec) } }
+      ),
+      tenantCtx.tenantId,
+      tenantCtx.userId
+    );
+  }
+
+  const tier = tenantCtx.subscriptionTier ?? "free";
+  const estimatedCost = estimateMaxVisionCostUsd(getConfiguredVisionProviders(), tier);
+  const quotaMsg = await checkQuota(admin, tenantCtx.tenantId!, estimatedCost);
+  if (quotaMsg) {
+    logVisionAnalyzeError({
+      request_id: requestId,
+      route: ROUTE_KEY,
+      tenant_id: tenantCtx.tenantId,
+      latency_ms: Date.now() - start,
+      error_kind: "rate_limit",
+      http_status: 402,
+      ...rel(),
+    });
+    return wrap(
+      NextResponse.json({ error: quotaMsg, code: "ai_budget_exceeded", request_id: requestId }, { status: 402 }),
+      tenantCtx.tenantId,
+      tenantCtx.userId
+    );
+  }
+  await checkBudgetAlert(admin, tenantCtx.tenantId!, estimatedCost);
+
+  // Auth / abuse gates complete — only then disclose provider configuration.
+  if (!isAnyVisionProviderConfigured()) {
+    logVisionAnalyzeError({
+      request_id: requestId,
+      route: ROUTE_KEY,
+      tenant_id: tenantCtx.tenantId,
+      latency_ms: Date.now() - start,
+      error_kind: "provider_unavailable",
+      http_status: 503,
+      ...rel(),
+    });
+    return wrap(
+      NextResponse.json({ error: "No AI vision provider is configured", request_id: requestId }, { status: 503 }),
+      tenantCtx.tenantId,
+      tenantCtx.userId
+    );
+  }
+
+  const imageUrl = parsed.data.image_url.trim();
+  try {
+    await assertSafeRemoteMediaUrl(imageUrl, {
+      maxUrlLength: MAX_IMAGE_URL_LENGTH,
+      requireHttps: getServerConfig().NODE_ENV === "production",
+    });
+  } catch (e) {
+    const msg =
+      e instanceof SafeRemoteMediaError
+        ? e.code === "https_required"
+          ? "image_url must be https in production"
+          : e.code === "scheme_not_allowed"
+            ? "image_url must be http or https"
+            : e.code === "invalid_url" && imageUrl.length > MAX_IMAGE_URL_LENGTH
+              ? "image_url too long"
+              : e.code === "invalid_url"
+                ? "image_url must be a valid URL"
+                : "image_url is not allowed"
+        : "image_url is not allowed";
+    logVisionAnalyzeError({
+      request_id: requestId,
+      route: ROUTE_KEY,
+      tenant_id: tenantCtx.tenantId,
+      latency_ms: Date.now() - start,
+      error_kind: "validation_failure",
+      http_status: 400,
+      ...rel(),
+    });
+    return wrap(NextResponse.json({ error: msg, request_id: requestId }, { status: 400 }), tenantCtx.tenantId, tenantCtx.userId);
   }
 
   try {
-    const result = await analyzeImage(admin, {
-      tenantId: tenantCtx.tenantId ?? null,
-      userId: tenantCtx.userId ?? null,
-      subscriptionTier: tenantCtx.subscriptionTier ?? "free",
-      traceId: requestId,
-    }, {
-      imageUrl,
-      projectId: parsed.data.project_id ?? null,
-      mediaId: parsed.data.media_id ?? null,
-    });
+    const result = await analyzeImage(
+      admin,
+      {
+        tenantId: tenantCtx.tenantId ?? null,
+        userId: tenantCtx.userId ?? null,
+        subscriptionTier: tenantCtx.subscriptionTier ?? "free",
+        traceId: requestId,
+      },
+      {
+        imageUrl,
+        projectId: parsed.data.project_id ?? null,
+        mediaId: parsed.data.media_id ?? null,
+      }
+    );
 
     const durationMs = Date.now() - start;
     const r = rel();
@@ -352,7 +410,11 @@ export async function POST(request: Request) {
           },
         });
       }
-      return wrap(NextResponse.json({ error: err.message, code: "ai_policy_denied", request_id: requestId }, { status: 403 }), tenantCtx.tenantId, tenantCtx.userId);
+      return wrap(
+        NextResponse.json({ error: err.message, code: "ai_policy_denied", request_id: requestId }, { status: 403 }),
+        tenantCtx.tenantId,
+        tenantCtx.userId
+      );
     }
     if (err instanceof AIVisionFailedError) {
       const isTimeout = err.message.toLowerCase().includes("timeout");
@@ -425,9 +487,12 @@ export async function POST(request: Request) {
         fallbackResponse.headers.set("X-Request-Id", requestId);
         return wrap(fallbackResponse, tenantCtx.tenantId, tenantCtx.userId);
       }
-      return wrap(NextResponse.json({ error: err.message, request_id: requestId }, { status: isTimeout ? 504 : 502 }), tenantCtx.tenantId, tenantCtx.userId);
+      return wrap(
+        NextResponse.json({ error: err.message, request_id: requestId }, { status: isTimeout ? 504 : 502 }),
+        tenantCtx.tenantId,
+        tenantCtx.userId
+      );
     }
-    const message = err instanceof Error ? err.message : "Analysis failed";
     logVisionAnalyzeError({
       request_id: requestId,
       route: ROUTE_KEY,
@@ -455,6 +520,10 @@ export async function POST(request: Request) {
         },
       });
     }
-    return wrap(NextResponse.json({ error: message, request_id: requestId }, { status: 500 }), tenantCtx.tenantId, tenantCtx.userId);
+    return wrap(
+      NextResponse.json({ error: "Analysis failed", request_id: requestId }, { status: 500 }),
+      tenantCtx.tenantId,
+      tenantCtx.userId
+    );
   }
 }

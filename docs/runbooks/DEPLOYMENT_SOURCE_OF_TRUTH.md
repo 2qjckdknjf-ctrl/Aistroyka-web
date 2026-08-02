@@ -1,7 +1,9 @@
 # Deployment source of truth (operators)
 
-**Last updated:** 2026-05-19 (closure: `docs/incidents/DEPLOY_TOPOLOGY_CLEANUP_100_CLOSURE.md`)  
+**Last updated:** 2026-07-30 (Phase 8 ops/deploy/observability; prior closure: `docs/incidents/DEPLOY_TOPOLOGY_CLEANUP_100_CLOSURE.md`)
 **Applies to:** AISTROYKA web (`apps/web`), GitHub repo **Aistroyka-web** (`git@github.com:2qjckdknjf-ctrl/Aistroyka-web.git`)
+
+**Phase 8 contract additions:** deploy workflows stamp from checked-out `git rev-parse HEAD` into `NEXT_PUBLIC_BUILD_SHA` / `NEXT_PUBLIC_BUILD_TIME`, pass the same values as Wrangler `--var`, and **verify** post-deploy `buildStamp.sha7` on staging / production apex+www. Dirty local trees are **not** deployable immutable releases — see `docs/roadmap/AISTROYKA_PHASE8_OPS_DEPLOY_OBSERVABILITY_ROLLBACK_CLOSURE_2026-07-30.md`.
 
 ---
 
@@ -79,10 +81,10 @@ Residual repo config: **`apps/web/vercel.json`** exists for optional / legacy Ve
 
 For **each** duplicate Vercel project you no longer want driving noise:
 
-1. **Vercel Dashboard** → select **Project**  
-2. **Settings** → **Git**  
-3. **Disconnect** Git integration **or** disable **automatic deployments** for the linked repo  
-4. Save  
+1. **Vercel Dashboard** → select **Project**
+2. **Settings** → **Git**
+3. **Disconnect** Git integration **or** disable **automatic deployments** for the linked repo
+4. Save
 
 Do **not** delete projects unless the owner approves; **disconnect / disable** is enough to reduce confusion.
 
@@ -142,13 +144,13 @@ If builds behave oddly after experiments: `rm -rf apps/web/.next apps/web/.open-
 ### GitHub — branch protection and required checks
 
 1. Open the repository on GitHub: **https://github.com/2qjckdknjf-ctrl/Aistroyka-web**
-2. **Settings → Branches**  
-   - Inspect **Branch protection rules** for **`main`** (and any release branches).  
-   - Under **Require status checks to pass**, **remove** any **Vercel**-origin contexts if production is Cloudflare-only (names vary: `Vercel`, `Vercel Preview`, project slug, etc.).  
+2. **Settings → Branches**
+   - Inspect **Branch protection rules** for **`main`** (and any release branches).
+   - Under **Require status checks to pass**, **remove** any **Vercel**-origin contexts if production is Cloudflare-only (names vary: `Vercel`, `Vercel Preview`, project slug, etc.).
    - **Keep** **`CI Check`** (and any org-mandated checks you intend).
-3. **Settings → Rules → Rulesets**  
+3. **Settings → Rules → Rulesets**
    - Inspect **Repository rulesets**; confirm none **require** Vercel-only statuses.
-4. **Organization** (if applicable, org owners only)  
+4. **Organization** (if applicable, org owners only)
    - **Organization → Settings → Rules → Rulesets** (or org **Branch protection** policies) — same **Vercel** rule: do not require for merge if Cloudflare is canonical.
 
 **API snapshot (non-admin token):** `GET /repos/.../branches/main/protection` may return **404** (“not protected”) and `GET /repos/.../rulesets` may return **`[]`** — that does **not** prove org-level rules are absent. **Always confirm in UI.**

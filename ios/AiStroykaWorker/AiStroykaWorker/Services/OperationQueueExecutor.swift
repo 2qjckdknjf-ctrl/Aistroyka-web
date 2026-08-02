@@ -60,6 +60,13 @@ final class OperationQueueExecutor: ObservableObject {
     }
 
     func resumeQueue() {
+        // Recover ops stuck in .running after process death / XCTest relaunch.
+        for op in opStore.operations where op.state == .running {
+            opStore.update(id: op.id) {
+                $0.state = .queued
+                $0.nextAttemptAt = nil
+            }
+        }
         isPaused = false
         runLoop()
     }
@@ -138,7 +145,13 @@ final class OperationQueueExecutor: ObservableObject {
                 opStore.update(id: op.id) { $0.resultReportId = reportId }
                 return .success
             case .createUploadSession:
-                let (sessionId, uploadPath) = try await WorkerAPI.createUploadSession(purpose: op.payload.purpose ?? "report_before", idempotencyKey: op.idempotencyKey)
+                let purpose: String = {
+                    if let p = op.payload.purpose?.trimmingCharacters(in: .whitespacesAndNewlines), !p.isEmpty {
+                        return p
+                    }
+                    return "report_before"
+                }()
+                let (sessionId, uploadPath) = try await WorkerAPI.createUploadSession(purpose: purpose, idempotencyKey: op.idempotencyKey)
                 opStore.update(id: op.id) { $0.resultSessionId = sessionId; $0.resultUploadPath = uploadPath }
                 return .success
             case .uploadBinary:
@@ -153,14 +166,30 @@ final class OperationQueueExecutor: ObservableObject {
                 let pathInBucket = uploadPath.hasPrefix("media/") ? String(uploadPath.dropFirst("media/".count)) : uploadPath
                 let filename = "\(photoItemId.prefix(8)).jpg"
                 let storagePath = "\(pathInBucket)/\(filename)"
-                try BackgroundUploadService.shared.scheduleUpload(operationId: op.id, storagePath: storagePath, data: data, token: token)
-                // Persist the exact uploaded path: the background delegate must finalize the
-                // same object it uploaded, not a reconstruction from partial payload state.
+                let objectPath = "media/\(storagePath)"
                 opStore.update(id: op.id) {
                     $0.payload.sizeBytes = data.count
                     $0.payload.uploadPath = uploadPath
-                    $0.payload.objectPath = "media/\(storagePath)"
+                    $0.payload.objectPath = objectPath
                 }
+                // XCTest/Simulator: await foreground upload (background URLSession is unreliable under UITest).
+                let e2e = ProcessInfo.processInfo.environment["AISTROYKA_E2E"] == "1"
+                    || ProcessInfo.processInfo.arguments.contains("-AISTROYKA_E2E")
+                if e2e {
+                    do {
+                        try await BackgroundUploadService.shared.uploadSynchronouslyForE2E(
+                            storagePath: storagePath,
+                            data: data,
+                            token: token
+                        )
+                        return .success
+                    } catch {
+                        return .retry(code: nil, message: error.localizedDescription)
+                    }
+                }
+                try BackgroundUploadService.shared.scheduleUpload(operationId: op.id, storagePath: storagePath, data: data, token: token)
+                // Persist the exact uploaded path: the background delegate must finalize the
+                // same object it uploaded, not a reconstruction from partial payload state.
                 return .deferred
             case .finalizeSession:
                 let sessionId = op.payload.sessionId

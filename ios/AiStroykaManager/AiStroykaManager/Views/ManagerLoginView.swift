@@ -28,10 +28,19 @@ struct ManagerLoginView: View {
         isLoading ? NSLocalizedString("mgr_signing_in", comment: "") : NSLocalizedString("mgr_sign_in", comment: "")
     }
 
+    private var credentialsEmpty: Bool {
+        email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || password.isEmpty
+    }
+
+    private var signInDisabled: Bool {
+        isLoading || credentialsEmpty || !networkMonitor.isConnected
+    }
+
     var body: some View {
         NavigationStack {
-            Form {
-                Section {
+            ScrollView {
+                VStack(spacing: BrandTokens.space5) {
+                    BrandMark(size: 64)
                     TextField(NSLocalizedString("mgr_email_placeholder", comment: ""), text: $email)
                         .textContentType(.emailAddress)
                         .keyboardType(.emailAddress)
@@ -42,14 +51,15 @@ struct ManagerLoginView: View {
                         .submitLabel(.next)
                         .onSubmit { focusedField = .password }
                         .accessibilityIdentifier("pilot_manager_email")
+                        .brandFieldChrome()
                     #if DEBUG
-                    // UITests / Simulator automation: SecureField is hard to drive reliably (matches Worker app).
                     TextField(NSLocalizedString("mgr_password_placeholder", comment: ""), text: $password)
                         .textContentType(.password)
                         .focused($focusedField, equals: .password)
                         .submitLabel(.go)
                         .onSubmit { signIn() }
                         .accessibilityIdentifier("pilot_manager_password")
+                        .brandFieldChrome()
                     #else
                     SecureField(NSLocalizedString("mgr_password_placeholder", comment: ""), text: $password)
                         .textContentType(.password)
@@ -57,33 +67,31 @@ struct ManagerLoginView: View {
                         .submitLabel(.go)
                         .onSubmit { signIn() }
                         .accessibilityIdentifier("pilot_manager_password")
+                        .brandFieldChrome()
                     #endif
-                }
-                if !networkMonitor.isConnected {
-                    Section {
-                        Text(NSLocalizedString("mgr_err_offline_signin", comment: ""))
-                            .foregroundStyle(.secondary)
+
+                    if !networkMonitor.isConnected {
+                        BrandOfflineBanner(NSLocalizedString("mgr_err_offline_signin", comment: ""))
                     }
-                }
-                if let err = effectiveErrorMessage {
-                    Section {
+                    if let err = effectiveErrorMessage {
                         Text(err)
+                            .font(.subheadline)
                             .foregroundStyle(ManagerSemanticColors.error)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                             .accessibilityIdentifier("pilot_manager_login_error")
                     }
-                }
-                Section {
-                    Button(action: signIn) {
-                        HStack {
-                            if isLoading { ProgressView().scaleEffect(0.8) }
+
+                    BrandPrimaryButton(disabled: signInDisabled, action: signIn) {
+                        HStack(spacing: BrandTokens.space2) {
+                            if isLoading {
+                                ProgressView()
+                                    .tint(BrandTokens.textOnPrimary)
+                            }
                             Text(signInButtonTitle)
                         }
-                        .frame(maxWidth: .infinity)
                     }
-                    .disabled(isLoading || email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || password.isEmpty || !networkMonitor.isConnected)
                     .accessibilityIdentifier("pilot_manager_sign_in")
-                }
-                Section {
+
                     SignInWithAppleButton(.signIn) { request in
                         appleNonce = Self.randomNonce()
                         request.requestedScopes = [.fullName, .email]
@@ -91,11 +99,13 @@ struct ManagerLoginView: View {
                     } onCompletion: { result in
                         handleAppleSignIn(result)
                     }
-                    .signInWithAppleButtonStyle(.black)
-                    .frame(height: 48)
+                    .brandAppleSignInStyle()
+                    .frame(height: BrandTokens.touchMin + 4)
                     .disabled(isLoading)
                 }
+                .padding(BrandTokens.space6)
             }
+            .brandScrollChrome()
             .navigationTitle(NSLocalizedString("mgr_nav_title", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
             .onAppear {
@@ -107,6 +117,7 @@ struct ManagerLoginView: View {
                 }
             }
         }
+        .brandPageChrome()
     }
 
     private func applyE2EAutoSignInIfNeeded() {

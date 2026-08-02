@@ -17,7 +17,7 @@ struct TeamOverviewView: View {
                 if isLoading && workers.isEmpty && errorMessage == nil {
                     LoadingStateView(message: NSLocalizedString("mgr_loading_team", comment: ""))
                 } else if let err = errorMessage, workers.isEmpty {
-                    ErrorStateView(message: err, retry: { load() })
+                    ErrorStateView(message: err, retryTitle: NSLocalizedString("mgr_retry", comment: ""), retry: { load() })
                 } else if workers.isEmpty {
                     EmptyStateView(
                         title: NSLocalizedString("mgr_no_workers_title", comment: ""),
@@ -32,6 +32,7 @@ struct TeamOverviewView: View {
                 }
             }
             .navigationTitle(NSLocalizedString("mgr_tab_team", comment: ""))
+            .brandScrollChrome()
             .refreshable { await loadAsync() }
             .onAppear { loadIfNeeded() }
         }
@@ -69,13 +70,13 @@ struct WorkerRowView: View {
             if let day = worker.lastDayDate {
                 Text(String(format: NSLocalizedString("mgr_last_day_fmt", comment: ""), day))
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(BrandTokens.textSecondary)
             }
             if let a = worker.anomalies, (a.openShift == true || a.overtime == true || a.noActivity == true) {
                 HStack(spacing: 6) {
                     if a.openShift == true { Label(NSLocalizedString("mgr_open_shift", comment: ""), systemImage: "clock.badge.exclamation").font(.caption2).foregroundStyle(ManagerSemanticColors.warning) }
                     if a.overtime == true { Label(NSLocalizedString("mgr_overtime", comment: ""), systemImage: "exclamationmark.triangle").font(.caption2).foregroundStyle(ManagerSemanticColors.warning) }
-                    if a.noActivity == true { Label(NSLocalizedString("mgr_no_activity", comment: ""), systemImage: "person.slash").font(.caption2).foregroundStyle(.secondary) }
+                    if a.noActivity == true { Label(NSLocalizedString("mgr_no_activity", comment: ""), systemImage: "person.slash").font(.caption2).foregroundStyle(BrandTokens.textSecondary) }
                 }
             }
         }

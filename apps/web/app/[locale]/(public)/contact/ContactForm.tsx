@@ -19,7 +19,7 @@ export function ContactForm() {
     setStatus("sending");
     setErrorMessage(null);
     try {
-      const res = await fetch("/api/contact", {
+      const res = await fetch("/api/v1/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, company: company || undefined, message }),

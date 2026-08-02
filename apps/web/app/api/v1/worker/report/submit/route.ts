@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClientFromRequest } from "@/lib/supabase/server";
-import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
+import { getTenantContextFromRequest, requireTenant, TenantRequiredError, LitePathForbiddenError } from "@/lib/tenant";
 import { submitReport } from "@/lib/domain/reports/report.service";
 import { requireLiteIdempotency, storeLiteIdempotency } from "@/lib/api/lite-idempotency";
 import { withRequestIdAndTiming } from "@/lib/observability";
@@ -16,6 +16,12 @@ export async function POST(request: Request) {
   try {
     requireTenant(ctx);
   } catch (e) {
+    if (e instanceof LitePathForbiddenError) {
+      return NextResponse.json(
+        { error: "forbidden", code: "lite_client_path_forbidden" },
+        { status: 403 }
+      );
+    }
     if (e instanceof TenantRequiredError) {
       return withRequestIdAndTiming(
         request,
@@ -77,7 +83,8 @@ export async function POST(request: Request) {
   }
   const { jobIds } = result;
   const response = { reportId, jobIds: jobIds ?? [], status: "queued" };
-  await storeLiteIdempotency(request, ctx, ROUTE_KEY, response, 200);
+  const idemStore = await storeLiteIdempotency(request, ctx, ROUTE_KEY, response, 200);
+  if (!idemStore.ok) return idemStore.response;
   return withRequestIdAndTiming(request, NextResponse.json(response), {
     route: ROUTE_KEY,
     method: "POST",

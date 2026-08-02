@@ -10,6 +10,7 @@ vi.mock("@/lib/tenant", () => ({
   requireTenant: vi.fn(),
   TenantRequiredError: class TenantRequiredError extends Error {},
   TenantForbiddenError: class TenantForbiddenError extends Error {},
+  LitePathForbiddenError: class LitePathForbiddenError extends Error {},
 }));
 vi.mock("@/lib/config/public", () => ({
   getBuildStamp: vi.fn().mockReturnValue({ sha: "abc1234", buildTime: "2026-03-01T00:00:00Z" }),

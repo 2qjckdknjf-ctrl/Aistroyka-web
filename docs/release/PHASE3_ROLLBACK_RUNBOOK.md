@@ -1,5 +1,7 @@
 # Phase 3 / A3 — Rollback & recovery runbook — AISTROYKA
 
+> **STALE PATH RISK (Phase 8, 2026-07-30):** Canonical runtime is **Cloudflare Workers + OpenNext** via `.github/workflows/deploy-cloudflare-{staging,prod}.yml`. Staging trigger is **`main`**, not `develop`. Do **not** treat Vercel as production proof. Prefer the tabletop + procedure in `docs/roadmap/AISTROYKA_PHASE8_ROLLBACK_REHEARSAL_2026-07-30.md` and `docs/runbooks/DEPLOYMENT_SOURCE_OF_TRUTH.md`. Keep this file as historical operator notes; do not delete.
+
 **Date:** 2026-03-18  
 **Short operator guide.** There is **no** one-command automated rollback in this repo.
 

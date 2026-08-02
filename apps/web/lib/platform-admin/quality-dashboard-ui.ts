@@ -65,13 +65,13 @@ export function releaseDecisionBadgeVariant(
 export function releaseDecisionBorderClass(decision: ReleaseDecision): string {
   switch (decision) {
     case "not_ready":
-      return "border-l-4 border-l-red-600";
+      return "border-l-4 border-l-aistroyka-error";
     case "unknown":
       return "border-l-4 border-dashed border-l-aistroyka-text-tertiary";
     case "ready_with_warnings":
-      return "border-l-4 border-l-amber-500";
+      return "border-l-4 border-l-aistroyka-warning";
     case "ready":
-      return "border-l-4 border-l-emerald-600";
+      return "border-l-4 border-l-aistroyka-success";
     default: {
       const _exhaustive: never = decision;
       return _exhaustive;

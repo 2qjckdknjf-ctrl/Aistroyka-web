@@ -4,18 +4,14 @@
 
 import { NextResponse } from "next/server";
 import { createClientFromRequest } from "@/lib/supabase/server";
-import {
-  getTenantContextFromRequest,
-  requireTenant,
-  TenantRequiredError,
-  TenantForbiddenError,
-} from "@/lib/tenant";
+import { getTenantContextFromRequest, requireTenant, TenantRequiredError, TenantForbiddenError, LitePathForbiddenError } from "@/lib/tenant";
 import { canManageClientRequests } from "@/lib/domain/client-requests/client-requests.policy";
 import {
   getClientRequest,
   patchClientRequestByManager,
 } from "@/lib/domain/client-requests/client-requests.service";
 import type { ManagerPatchClientRequest } from "@/lib/domain/client-requests/client-requests.types";
+import { jsonWithCustomerFinanceGuard } from "@/lib/security/customer-finance-response";
 
 export const dynamic = "force-dynamic";
 
@@ -39,6 +35,12 @@ export async function GET(
   try {
     requireTenant(ctx);
   } catch (e) {
+    if (e instanceof LitePathForbiddenError) {
+      return NextResponse.json(
+        { error: "forbidden", code: "lite_client_path_forbidden" },
+        { status: 403 }
+      );
+    }
     if (e instanceof TenantRequiredError) {
       return NextResponse.json({ error: e.message }, { status: 401 });
     }
@@ -57,7 +59,7 @@ export async function GET(
   const { data, error } = await getClientRequest(supabase, ctx, projectId, requestId, "stakeholder");
   if (error === "Insufficient rights") return NextResponse.json({ error }, { status: 403 });
   if (error === "Not found" || !data) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  return NextResponse.json({ data });
+  return jsonWithCustomerFinanceGuard("GET /api/v1/projects/:id/client-requests/:requestId", { data });
 }
 
 export async function PATCH(
@@ -80,6 +82,12 @@ export async function PATCH(
   try {
     requireTenant(ctx);
   } catch (e) {
+    if (e instanceof LitePathForbiddenError) {
+      return NextResponse.json(
+        { error: "forbidden", code: "lite_client_path_forbidden" },
+        { status: 403 }
+      );
+    }
     if (e instanceof TenantRequiredError) {
       return NextResponse.json({ error: e.message }, { status: 401 });
     }

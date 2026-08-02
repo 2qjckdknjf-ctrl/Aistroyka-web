@@ -1,6 +1,12 @@
 package ai.aistroyka.worker.ui
 
+import ai.aistroyka.shared.design.BrandCard
+import ai.aistroyka.shared.design.BrandErrorText
+import ai.aistroyka.shared.design.BrandMutedText
+import ai.aistroyka.shared.design.BrandOutlinedField
+import ai.aistroyka.shared.design.BrandPrimaryButton
 import ai.aistroyka.worker.R
+import androidx.compose.foundation.layout.size
 import ai.aistroyka.worker.WorkerUiState
 import ai.aistroyka.worker.WorkerViewModel
 import ai.aistroyka.shared.GetStartedDto
@@ -34,6 +40,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -45,7 +52,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.foundation.Image
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -119,7 +128,7 @@ fun WorkerApp() {
     }
 
     AiStroykaWorkerTheme {
-        Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+        Surface(modifier = Modifier.fillMaxSize(), color = WorkerSemanticColors.pageBackground()) {
             when (state.screen) {
                 "login" -> WorkerLoginScreen(vm, state)
                 "report" -> WorkerReportScreen(vm, state)
@@ -135,16 +144,16 @@ fun WorkerApp() {
                 )
             }
 
-            if (showGuide) {
+            if (showGuide && state.screen == "login") {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.55f))
+                        .background(WorkerSemanticColors.overlayDim())
                         .padding(20.dp),
                     contentAlignment = Alignment.Center,
                 ) {
                     Card(
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        colors = CardDefaults.cardColors(containerColor = WorkerSemanticColors.surface()),
                         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
                     ) {
                         Column(modifier = Modifier.padding(20.dp)) {
@@ -169,17 +178,14 @@ fun WorkerApp() {
                                 modifier = Modifier.padding(top = 6.dp),
                                 text = "3. ${stringResource(R.string.worker_guide_step_3)}",
                             )
-                            Button(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 12.dp),
+                            BrandPrimaryButton(
+                                text = stringResource(R.string.worker_guide_start),
                                 onClick = {
                                     prefs.edit().putBoolean(WORKER_FIRST_LAUNCH_KEY, true).apply()
                                     showGuide = false
                                 },
-                            ) {
-                                Text(stringResource(R.string.worker_guide_start))
-                            }
+                                modifier = Modifier.padding(top = 12.dp),
+                            )
                         }
                     }
                 }
@@ -208,6 +214,11 @@ private fun WorkerHomeScaffold(
                         Text(stringResource(R.string.action_sign_out))
                     }
                 },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = WorkerSemanticColors.pageBackground(),
+                    titleContentColor = WorkerSemanticColors.textPrimary(),
+                    actionIconContentColor = WorkerSemanticColors.textPrimary(),
+                ),
             )
         },
     ) { padding ->
@@ -222,7 +233,7 @@ private fun WorkerHomeScaffold(
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
             }
             state.banner?.let { msg ->
-                Text(text = msg, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                Text(text = msg, color = WorkerSemanticColors.error(), style = MaterialTheme.typography.bodySmall)
                 TextButton(onClick = { vm.clearBanner() }) { Text(stringResource(R.string.action_dismiss)) }
             }
             state.configHint?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
@@ -304,7 +315,7 @@ private fun WorkerHomeScaffold(
                     ) {
                         Text(
                             text = "${shortId} • $statusLabel",
-                            color = if (report.status == "changes_requested") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                            color = if (report.status == "changes_requested") WorkerSemanticColors.primary() else WorkerSemanticColors.textPrimary()
                         )
                     }
                 }
@@ -316,7 +327,7 @@ private fun WorkerHomeScaffold(
                 style = MaterialTheme.typography.bodySmall
             )
             if (!state.syncError.isNullOrBlank()) {
-                Text(text = state.syncError, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                Text(text = state.syncError, color = WorkerSemanticColors.error(), style = MaterialTheme.typography.bodySmall)
             }
 
             Button(
@@ -356,6 +367,11 @@ private fun WorkerResubmitScreen(vm: WorkerViewModel, state: WorkerUiState) {
                         Text(stringResource(R.string.action_back_home))
                     }
                 },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = WorkerSemanticColors.pageBackground(),
+                    titleContentColor = WorkerSemanticColors.textPrimary(),
+                    actionIconContentColor = WorkerSemanticColors.textPrimary(),
+                ),
             )
         },
     ) { padding ->
@@ -386,8 +402,8 @@ private fun WorkerResubmitScreen(vm: WorkerViewModel, state: WorkerUiState) {
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 2,
                 )
-                state.submitMessage?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-                state.doneMessage?.let { Text(it, color = MaterialTheme.colorScheme.primary) }
+                state.submitMessage?.let { Text(it, color = WorkerSemanticColors.error()) }
+                state.doneMessage?.let { Text(it, color = WorkerSemanticColors.primary()) }
                 Button(
                     onClick = { vm.submitReport() },
                     enabled = !state.busy && state.doneMessage == null,
@@ -414,32 +430,47 @@ private fun WorkerLoginScreen(vm: WorkerViewModel, state: WorkerUiState) {
         verticalArrangement = Arrangement.spacedBy(12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineSmall)
-        Text(stringResource(R.string.login_prompt), style = MaterialTheme.typography.bodyMedium)
-        if (state.busy) LinearProgressIndicator(Modifier.fillMaxWidth())
-        state.banner?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-        OutlinedTextField(
+        Image(
+            painter = painterResource(R.drawable.aistroyka_helmet),
+            contentDescription = null,
+            modifier = Modifier.size(72.dp),
+        )
+        Text(
+            stringResource(R.string.app_name),
+            style = MaterialTheme.typography.headlineSmall,
+            color = WorkerSemanticColors.textPrimary(),
+        )
+        Text(
+            stringResource(R.string.login_prompt),
+            style = MaterialTheme.typography.bodyMedium,
+            color = WorkerSemanticColors.textMuted(),
+        )
+        if (state.busy) {
+            LinearProgressIndicator(
+                modifier = Modifier.fillMaxWidth(),
+                color = WorkerSemanticColors.primary(),
+            )
+        }
+        state.banner?.let { Text(it, color = WorkerSemanticColors.error()) }
+        BrandOutlinedField(
             value = state.email,
             onValueChange = { vm.setEmail(it) },
-            label = { Text(stringResource(R.string.label_email)) },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
+            label = stringResource(R.string.label_email),
+            enabled = !state.busy,
         )
-        OutlinedTextField(
+        BrandOutlinedField(
             value = state.password,
             onValueChange = { vm.setPassword(it) },
-            label = { Text(stringResource(R.string.label_password)) },
-            singleLine = true,
-            visualTransformation = PasswordVisualTransformation(),
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Button(
-            onClick = { vm.login() },
-            modifier = Modifier.fillMaxWidth(),
+            label = stringResource(R.string.label_password),
             enabled = !state.busy,
-        ) {
-            Text(stringResource(R.string.action_sign_in))
-        }
+            visualTransformation = PasswordVisualTransformation(),
+        )
+        BrandPrimaryButton(
+            text = stringResource(R.string.action_sign_in),
+            onClick = { vm.login() },
+            enabled = !state.busy,
+            busy = state.busy,
+        )
     }
 }
 
@@ -458,6 +489,11 @@ private fun WorkerReportScreen(vm: WorkerViewModel, state: WorkerUiState) {
                         Text(stringResource(R.string.action_back_home))
                     }
                 },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = WorkerSemanticColors.pageBackground(),
+                    titleContentColor = WorkerSemanticColors.textPrimary(),
+                    actionIconContentColor = WorkerSemanticColors.textPrimary(),
+                ),
             )
         },
     ) { padding ->
@@ -477,7 +513,7 @@ private fun WorkerReportScreen(vm: WorkerViewModel, state: WorkerUiState) {
                 style = MaterialTheme.typography.bodySmall,
             )
             state.pipelineStatus?.let { Text(it) }
-            state.banner?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            state.banner?.let { Text(it, color = WorkerSemanticColors.error()) }
             Button(onClick = { pickImage.launch("image/*") }, enabled = !state.busy) {
                 Text(stringResource(R.string.action_choose_photo))
             }
@@ -488,8 +524,8 @@ private fun WorkerReportScreen(vm: WorkerViewModel, state: WorkerUiState) {
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 2,
             )
-            state.submitMessage?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-            state.doneMessage?.let { Text(it, color = MaterialTheme.colorScheme.primary) }
+            state.submitMessage?.let { Text(it, color = WorkerSemanticColors.error()) }
+            state.doneMessage?.let { Text(it, color = WorkerSemanticColors.primary()) }
             Button(
                 onClick = { vm.submitReport() },
                 enabled = !state.busy && state.doneMessage == null,
@@ -524,7 +560,7 @@ private fun WorkerStartGuidanceCard(
     val total = 5
 
     Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        colors = CardDefaults.cardColors(containerColor = WorkerSemanticColors.surfaceMuted()),
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -535,7 +571,7 @@ private fun WorkerStartGuidanceCard(
             Text(
                 text = stringResource(R.string.worker_start_progress_fmt, completed, total),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = WorkerSemanticColors.textMuted(),
             )
             Text(
                 text = "${if (getStarted?.addTask == true) "✓" else "○"} ${stringResource(R.string.worker_start_step_1)}",
@@ -558,7 +594,7 @@ private fun WorkerStartGuidanceCard(
                 Text(
                     text = guideSummary,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = WorkerSemanticColors.textMuted(),
                 )
             }
             if (guideConfidence != null) {
@@ -577,7 +613,7 @@ private fun WorkerStartGuidanceCard(
                         Text(
                             text = hint.reason,
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = WorkerSemanticColors.textMuted(),
                         )
                     }
                 }
@@ -585,12 +621,12 @@ private fun WorkerStartGuidanceCard(
                 Text(
                     text = "\u2022 ${stringResource(R.string.worker_ai_hint_1)}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = WorkerSemanticColors.textMuted(),
                 )
                 Text(
                     text = "\u2022 ${stringResource(R.string.worker_ai_hint_2)}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = WorkerSemanticColors.textMuted(),
                 )
             }
             if (guideRiskSignals.isNotEmpty()) {
@@ -607,7 +643,7 @@ private fun WorkerStartGuidanceCard(
                     Text(
                         text = signal.detail,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = WorkerSemanticColors.textMuted(),
                     )
                 }
             }

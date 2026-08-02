@@ -253,14 +253,6 @@ struct ReportListItemDTO: Decodable {
     let createdAt: String?
     let mediaCount: Int?
     let analysisStatus: String?
-    enum CodingKeys: String, CodingKey {
-        case id
-        case projectId = "project_id"
-        case status
-        case createdAt = "created_at"
-        case mediaCount = "media_count"
-        case analysisStatus = "analysis_status"
-    }
 }
 
 struct ReportsListResponse: Decodable {
@@ -351,6 +343,7 @@ struct WorkerAnomalies: Decodable {
 struct WorkersListResponse: Decodable { let data: [WorkerRowDTO]? }
 
 /// GET /api/v1/reports/:id — report detail (spread report + media). PATCH returns same shape with reviewed_*.
+/// Decoded via APIClient `.convertFromSnakeCase` — do not add snake_case CodingKeys (they drop fields).
 struct ReportDetailDTO: Decodable {
     let id: String?
     let tenantId: String?
@@ -364,23 +357,11 @@ struct ReportDetailDTO: Decodable {
     let managerNote: String?
     let workerNote: String?
     let media: [ReportMediaItem]?
-    enum CodingKeys: String, CodingKey {
-        case id; case tenantId = "tenant_id"; case userId = "user_id"; case taskId = "task_id"
-        case status; case createdAt = "created_at"; case submittedAt = "submitted_at"
-        case reviewedAt = "reviewed_at"; case reviewedBy = "reviewed_by"; case managerNote = "manager_note"
-        case workerNote = "worker_note"
-        case media
-    }
 }
 struct ReportMediaItem: Decodable {
     let mediaId: String?
     let uploadSessionId: String?
     let fileUrl: String?
-    enum CodingKeys: String, CodingKey {
-        case mediaId = "media_id"
-        case uploadSessionId = "upload_session_id"
-        case fileUrl = "file_url"
-    }
 }
 struct ReportDetailResponse: Decodable { let data: ReportDetailDTO? }
 

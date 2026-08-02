@@ -6,12 +6,7 @@
 
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabase/admin";
-import {
-  getTenantContextFromRequest,
-  requireTenant,
-  TenantForbiddenError,
-  TenantRequiredError,
-} from "@/lib/tenant";
+import { getTenantContextFromRequest, requireTenant, TenantForbiddenError, TenantRequiredError, LitePathForbiddenError } from "@/lib/tenant";
 import { getTelegramBotUsername } from "@/lib/platform/telegram/telegram.config";
 import { isTelegramBotConfigured } from "@/lib/platform/telegram/telegram.config";
 import {
@@ -35,6 +30,12 @@ export async function GET(request: Request) {
   try {
     requireTenant(ctx);
   } catch (e) {
+    if (e instanceof LitePathForbiddenError) {
+      return NextResponse.json(
+        { error: "forbidden", code: "lite_client_path_forbidden" },
+        { status: 403 }
+      );
+    }
     if (e instanceof TenantRequiredError) return NextResponse.json({ error: e.message }, { status: 401 });
     throw e;
   }
@@ -61,6 +62,12 @@ export async function POST(request: Request) {
   try {
     requireTenant(ctx);
   } catch (e) {
+    if (e instanceof LitePathForbiddenError) {
+      return NextResponse.json(
+        { error: "forbidden", code: "lite_client_path_forbidden" },
+        { status: 403 }
+      );
+    }
     if (e instanceof TenantRequiredError) return NextResponse.json({ error: e.message }, { status: 401 });
     throw e;
   }
@@ -101,6 +108,12 @@ export async function DELETE(request: Request) {
   try {
     requireTenant(ctx);
   } catch (e) {
+    if (e instanceof LitePathForbiddenError) {
+      return NextResponse.json(
+        { error: "forbidden", code: "lite_client_path_forbidden" },
+        { status: 403 }
+      );
+    }
     if (e instanceof TenantRequiredError) return NextResponse.json({ error: e.message }, { status: 401 });
     throw e;
   }

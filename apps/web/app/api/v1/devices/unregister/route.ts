@@ -4,7 +4,7 @@
 
 import { NextResponse } from "next/server";
 import { createClientFromRequest } from "@/lib/supabase/server";
-import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
+import { getTenantContextFromRequest, requireTenant, TenantRequiredError, LitePathForbiddenError } from "@/lib/tenant";
 import { DeviceUnregisterRequestSchema } from "@aistroyka/contracts";
 import { requireLiteIdempotency, storeLiteIdempotency } from "@/lib/api/lite-idempotency";
 
@@ -17,6 +17,12 @@ export async function POST(request: Request) {
   try {
     requireTenant(ctx);
   } catch (e) {
+    if (e instanceof LitePathForbiddenError) {
+      return NextResponse.json(
+        { error: "forbidden", code: "lite_client_path_forbidden" },
+        { status: 403 }
+      );
+    }
     if (e instanceof TenantRequiredError) return NextResponse.json({ error: e.message }, { status: 401 });
     throw e;
   }
@@ -43,6 +49,7 @@ export async function POST(request: Request) {
     .eq("device_id", deviceId);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   const body = { success: true };
-  await storeLiteIdempotency(request, ctx, ROUTE_KEY, body, 200);
+  const idemStore = await storeLiteIdempotency(request, ctx, ROUTE_KEY, body, 200);
+  if (!idemStore.ok) return idemStore.response;
   return NextResponse.json(body);
 }

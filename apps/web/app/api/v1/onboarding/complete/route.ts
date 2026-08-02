@@ -6,9 +6,11 @@ import {
   syncAccountMemberForInternalTenantRole,
 } from "@/lib/account/account-workspace.service";
 import {
+  ActiveTenantBlockedError,
   createTenantAndOwnerMembershipForCurrentUser,
-  getTenantForCurrentUser,
+  resolveTenantForCurrentUser,
 } from "@/lib/api/engine";
+import { isActiveTenantResolutionBlocked } from "@/lib/tenant/active-tenant";
 import { isOnboardingPersona } from "@/lib/onboarding/user-onboarding";
 
 const CompleteOnboardingSchema = z.object({
@@ -67,6 +69,18 @@ async function acceptInviteByToken(
   return { tenantId: inv.tenant_id, role: inv.role };
 }
 
+function blockedResponse(result: { queryError: boolean }) {
+  return NextResponse.json(
+    {
+      error: result.queryError
+        ? "Active tenant lookup failed."
+        : "Active tenant selection rejected.",
+      code: "ACTIVE_TENANT_BLOCKED",
+    },
+    { status: result.queryError ? 503 : 403 }
+  );
+}
+
 export async function POST(request: Request) {
   const supabase = await createClient();
   const db = supabase as any;
@@ -88,7 +102,14 @@ export async function POST(request: Request) {
   const companyName = parsed.data.companyName?.trim() || null;
   const companyType = parsed.data.companyType ?? null;
 
-  let tenantId = await getTenantForCurrentUser(supabase);
+  const active = await resolveTenantForCurrentUser(supabase, request);
+  // Rejected explicit claim / query error must never auto-create a workspace.
+  // Invite acceptance is an intentional alternate path and may proceed.
+  if (isActiveTenantResolutionBlocked(active) && !inviteToken) {
+    return blockedResponse(active);
+  }
+
+  let tenantId = isActiveTenantResolutionBlocked(active) ? null : active.tenantId;
   let invitedViaToken: string | null = null;
 
   if (inviteToken) {
@@ -102,12 +123,19 @@ export async function POST(request: Request) {
 
   if (!tenantId && persona !== "invited_worker_manager" && persona !== "customer") {
     try {
-      const createdTenantId = await createTenantAndOwnerMembershipForCurrentUser(supabase, {
-        name: companyName || "New company",
-        companyType,
-      });
+      const createdTenantId = await createTenantAndOwnerMembershipForCurrentUser(
+        supabase,
+        {
+          name: companyName || "New company",
+          companyType,
+        },
+        request
+      );
       tenantId = createdTenantId;
     } catch (error) {
+      if (error instanceof ActiveTenantBlockedError) {
+        return blockedResponse(error);
+      }
       if (error instanceof AccountWorkspaceError) {
         return NextResponse.json({ error: error.message }, { status: 503 });
       }

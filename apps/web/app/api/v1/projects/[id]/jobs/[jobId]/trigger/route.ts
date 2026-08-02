@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { getProjectById } from "@/lib/supabase/rpc";
-import { hasMinRole } from "@/lib/auth/tenant";
+import { hasMinRole } from "@/lib/tenant/tenant-membership.server";
 import { triggerAnalysisJobRpc } from "@/lib/api/rpcClient";
 
 /**
@@ -10,13 +10,13 @@ import { triggerAnalysisJobRpc } from "@/lib/api/rpcClient";
  * Caller must be a member+ of the job's tenant; job must belong to the given project.
  */
 export async function POST(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string; jobId: string }> }
 ) {
   const { id: projectId, jobId } = await params;
   const supabase = await createClient();
 
-  const { data: project } = await getProjectById(supabase, projectId);
+  const { data: project } = await getProjectById(supabase, projectId, request);
   if (!project) {
     return NextResponse.json(
       { success: false, error: "Project not found" },

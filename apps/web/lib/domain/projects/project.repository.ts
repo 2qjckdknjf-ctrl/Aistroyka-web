@@ -24,7 +24,7 @@ export async function countByTenant(supabase: SupabaseClient, tenantId: string):
 export async function getById(supabase: SupabaseClient, projectId: string, tenantId: string): Promise<Project | null> {
   const { data, error } = await supabase
     .from("projects")
-    .select("id, name, tenant_id, created_at")
+    .select("id, name, tenant_id, created_at, client_portal_enabled, client_show_budget_summary")
     .eq("id", projectId)
     .eq("tenant_id", tenantId)
     .maybeSingle();

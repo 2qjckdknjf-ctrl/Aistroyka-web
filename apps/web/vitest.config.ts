@@ -10,6 +10,14 @@ export default defineConfig({
       "**/tests/e2e/**",
       "**/tests/qa/**",
       "**/tests/platform-admin/**",
+      "**/tests/phase3a/**",
+      "**/tests/phase3b/**",
+      "**/tests/phase3c/**",
+      "**/tests/phase3d/**",
+      // Playwright Phase 3E browser specs; keep *.test.ts contract units via include.
+      "**/tests/phase3e/**/*.spec.ts",
+      // Playwright Phase 4 API specs; keep *.test.ts contract units via include.
+      "**/tests/phase4/**/*.spec.ts",
       "**/node_modules/**",
     ],
     setupFiles: ["./vitest.setup.ts"],

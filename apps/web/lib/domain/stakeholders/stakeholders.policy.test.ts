@@ -39,6 +39,24 @@ describe("stakeholders.policy", () => {
     vi.clearAllMocks();
   });
 
+  it("denies client-view when project portal flag is missing (getById must load client_portal_enabled)", async () => {
+    vi.mocked(projectRepo.getById).mockResolvedValue({
+      id: "project-1",
+      tenant_id: "tenant-1",
+      name: "Build",
+      // portal flag omitted — mirrors pre-fix getById select gap
+    } as never);
+    vi.mocked(projectAccess.isProjectOwner).mockResolvedValue(false);
+    vi.mocked(stakeholdersRepo.getActiveForUserOnProject).mockResolvedValue({
+      id: "stakeholder-1",
+      status: "active",
+      stakeholder_role: "client_viewer",
+    } as never);
+
+    await expect(canReadClientPortalView(supabase, ctx("stakeholder"), "project-1")).resolves.toBe(false);
+    expect(stakeholdersRepo.getActiveForUserOnProject).not.toHaveBeenCalled();
+  });
+
   it("allows stakeholder client-view only when portal is enabled and active project stakeholder exists", async () => {
     vi.mocked(projectRepo.getById).mockResolvedValue({
       id: "project-1",

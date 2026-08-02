@@ -1,6 +1,9 @@
 # Android Worker — 100% completion report
 
-**Date:** 2026-05-19  
+> **Historical session report (2026-05-19).** Title means “session completion,” not pilot/Play readiness.
+> Active policy: Android deferred for first pilot — see `P3_ANDROID_DEFER_DECISION.md` and `docs/roadmap/AISTROYKA_PHASE6_ANDROID_DEFERRED_TRACK_CLOSURE_2026-07-30.md`.
+
+**Date:** 2026-05-19
 **Verdict:** **NOT READY** vs iOS Worker / mission definition.
 
 ## Delivered in this session

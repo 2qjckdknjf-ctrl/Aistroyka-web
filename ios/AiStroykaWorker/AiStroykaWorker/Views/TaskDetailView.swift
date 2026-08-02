@@ -23,11 +23,11 @@ struct TaskDetailView: View {
             if let due = task.dueDate, !due.isEmpty {
                 Text(String(format: NSLocalizedString("worker_task_due_fmt", comment: ""), due))
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(BrandTokens.textSecondary)
             }
             Text(String(format: NSLocalizedString("worker_task_status_fmt", comment: ""), task.status))
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(BrandTokens.textSecondary)
             Spacer().frame(height: 8)
             Button(NSLocalizedString("worker_start_report", comment: "")) {
                 store.save { $0.draftTaskId = task.id }
@@ -39,6 +39,7 @@ struct TaskDetailView: View {
         }
         .padding()
         .navigationTitle(NSLocalizedString("worker_task_title", comment: ""))
+        .brandScrollChrome()
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(isPresented: $navigateToReport) {
             ReportCreateView(

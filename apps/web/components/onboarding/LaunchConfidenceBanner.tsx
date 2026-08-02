@@ -16,7 +16,7 @@ import {
 } from "@/lib/help/launch-steps";
 
 async function fetchActivationStatus(): Promise<ActivationStatusResponse> {
-  const res = await fetch("/api/activation/status", { credentials: "include" });
+  const res = await fetch("/api/v1/activation/status", { credentials: "include" });
   if (!res.ok) return {};
   return (await res.json()) as ActivationStatusResponse;
 }

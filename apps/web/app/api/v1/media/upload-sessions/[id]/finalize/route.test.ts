@@ -34,7 +34,7 @@ vi.mock("@/lib/domain/upload-session/upload-session.service", () => ({
 
 vi.mock("@/lib/api/lite-idempotency", () => ({
   requireLiteIdempotency: vi.fn().mockResolvedValue({ ok: true }),
-  storeLiteIdempotency: vi.fn().mockResolvedValue(undefined),
+  storeLiteIdempotency: vi.fn().mockResolvedValue({ ok: true }),
 }));
 
 vi.mock("@/lib/observability", () => ({

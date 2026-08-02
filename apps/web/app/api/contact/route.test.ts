@@ -1,114 +1,47 @@
 import { describe, expect, it, vi } from "vitest";
-import { POST } from "./route";
-
-const mockInsert = vi.fn().mockResolvedValue({ error: null });
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { LEGACY_API_HEADERS } from "@/lib/api/deprecation-headers";
 
 vi.mock("@/lib/supabase/admin", () => ({
-  getAdminClient: vi.fn(() => ({
-    from: vi.fn(() => ({
-      insert: mockInsert,
-    })),
-  })),
+  getAdminClient: vi.fn(() => {
+    throw new Error("legacy /api/contact must not touch admin client");
+  }),
 }));
 
-describe("POST /api/contact", () => {
-  it("returns 400 when name is missing", async () => {
-    const res = await POST(
-      new Request("http://x/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: "a@b.co", message: "Hi" }),
-      })
-    );
-    expect(res.status).toBe(400);
-    const data = await res.json();
-    expect(data.error).toBeDefined();
-    expect(mockInsert).not.toHaveBeenCalled();
+vi.mock("@/lib/public/contact-lead-submit", () => ({
+  insertContactLead: vi.fn(async () => {
+    throw new Error("legacy /api/contact must not insert");
+  }),
+}));
+
+vi.mock("@/lib/platform/rate-limit/public-contact-rate-limit", () => ({
+  checkPublicContactRateLimit: vi.fn(async () => {
+    throw new Error("legacy /api/contact must not rate-limit");
+  }),
+}));
+
+import { POST } from "./route";
+
+describe("POST /api/contact (legacy redirect)", () => {
+  it("source is redirect-only with no business imports", () => {
+    const src = readFileSync(join(process.cwd(), "app/api/contact/route.ts"), "utf8");
+    expect(src).toMatch(/redirectDeprecatedApiToV1/);
+    expect(src).not.toMatch(/insertContactLead|getAdminClient|checkPublicContactRateLimit|supabase/);
   });
 
-  it("returns 400 when email is invalid", async () => {
-    const res = await POST(
-      new Request("http://x/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: "Jane", email: "not-email", message: "Hi" }),
-      })
-    );
-    expect(res.status).toBe(400);
-    expect(mockInsert).not.toHaveBeenCalled();
-  });
-
-  it("returns 400 when message is empty", async () => {
-    const res = await POST(
-      new Request("http://x/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: "Jane", email: "j@b.co", message: "" }),
-      })
-    );
-    expect(res.status).toBe(400);
-    expect(mockInsert).not.toHaveBeenCalled();
-  });
-
-  it("returns 200 and inserts with source and status when valid", async () => {
-    mockInsert.mockResolvedValueOnce({ error: null });
-    const res = await POST(
-      new Request("http://x/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: "Jane Doe",
-          email: "jane@example.com",
-          company: "Acme",
-          message: "Hello",
-        }),
-      })
-    );
-    expect(res.status).toBe(200);
-    const data = await res.json();
-    expect(data.ok).toBe(true);
-    expect(mockInsert).toHaveBeenCalledWith({
-      name: "Jane Doe",
-      email: "jane@example.com",
-      company: "Acme",
-      message: "Hello",
-      source: "contact_form",
-      status: "new",
+  it("returns 307 to /api/v1/contact with query and deprecation headers", async () => {
+    const req = new Request("https://x/api/contact?src=form", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: "Jane", email: "j@e.co", message: "Hi" }),
     });
-  });
-
-  it("returns 200 and inserts with null company when company omitted", async () => {
-    mockInsert.mockResolvedValueOnce({ error: null });
-    const res = await POST(
-      new Request("http://x/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: "Bob", email: "bob@b.co", message: "Hi" }),
-      })
-    );
-    expect(res.status).toBe(200);
-    expect(mockInsert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        name: "Bob",
-        email: "bob@b.co",
-        message: "Hi",
-        company: null,
-        source: "contact_form",
-        status: "new",
-      })
-    );
-  });
-
-  it("returns 500 when getAdminClient returns null", async () => {
-    const { getAdminClient } = await import("@/lib/supabase/admin");
-    vi.mocked(getAdminClient).mockReturnValueOnce(null as never);
-    const res = await POST(
-      new Request("http://x/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: "x", email: "x@x.co", message: "x" }),
-      })
-    );
-    expect(res.status).toBe(500);
+    const res = await POST(req);
+    expect(res.status).toBe(307);
+    expect(res.headers.get("location")).toBe("https://x/api/v1/contact?src=form");
+    expect(res.headers.get("Deprecation")).toBe("true");
+    expect(res.headers.get("Sunset")).toBe(LEGACY_API_HEADERS.Sunset);
+    expect(res.headers.get("Link")).toBe('</api/v1/contact>; rel="successor"');
+    expect(req.bodyUsed).toBe(false);
   });
 });

@@ -120,4 +120,52 @@ describe("resolvePostAuthEntry", () => {
     expect(r.path).toBe("/ru/platform-admin/testing");
     expect(r.reason).toBe("explicit_next");
   });
+
+  it("defaults stakeholder to portal projects home", () => {
+    const r = resolvePostAuthEntry({
+      locale: "en",
+      next: undefined,
+      baseUrl: BASE,
+      activeRole: "stakeholder",
+    });
+    expect(r.path).toBe("/en/portal/projects");
+    expect(r.reason).toBe("default_portal");
+    expect(r.onboardingShellExpected).toBe(false);
+  });
+
+  it("overrides legacy next=/dashboard for stakeholder to portal home (G-11)", () => {
+    const r = resolvePostAuthEntry({
+      locale: "en",
+      next: "/dashboard",
+      baseUrl: BASE,
+      activeRole: "stakeholder",
+    });
+    expect(r.path).toBe("/en/portal/projects");
+    expect(r.reason).toBe("default_portal");
+    expect(r.nextPreserved).toBe(false);
+  });
+
+  it("keeps stakeholder explicit next to client project view", () => {
+    const r = resolvePostAuthEntry({
+      locale: "en",
+      next: "/en/dashboard/projects/abc/client",
+      baseUrl: BASE,
+      activeRole: "stakeholder",
+    });
+    expect(r.path).toBe("/en/dashboard/projects/abc/client");
+    expect(r.reason).toBe("explicit_next");
+  });
+
+  it("keeps contractor default dashboard when role is owner/admin/member", () => {
+    for (const role of ["owner", "admin", "member"] as const) {
+      const r = resolvePostAuthEntry({
+        locale: "en",
+        next: undefined,
+        baseUrl: BASE,
+        activeRole: role,
+      });
+      expect(r.path).toBe("/en/dashboard");
+      expect(r.reason).toBe("default_dashboard");
+    }
+  });
 });

@@ -6,16 +6,12 @@
 import { NextResponse } from "next/server";
 import { getTranslations } from "next-intl/server";
 import { createClientFromRequest } from "@/lib/supabase/server";
-import {
-  getTenantContextFromRequest,
-  requireTenant,
-  TenantRequiredError,
-  TenantForbiddenError,
-} from "@/lib/tenant";
+import { getTenantContextFromRequest, requireTenant, TenantRequiredError, TenantForbiddenError, LitePathForbiddenError } from "@/lib/tenant";
 import { resolveRequestLocale } from "@/lib/i18n/resolve-request-locale";
 import { buildManagerHandoverPack, buildOwnerHandoverPack } from "@/lib/domain/project-handover/handover-pack.service";
 import type { HandoverPackTranslate } from "@/lib/domain/project-handover/handover-pack.types";
 import { canManageProjectHandover, canReadProjectHandover } from "@/lib/domain/project-handover/project-handover.policy";
+import { jsonWithCustomerFinanceGuard } from "@/lib/security/customer-finance-response";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +29,12 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
   try {
     requireTenant(ctx);
   } catch (e) {
+    if (e instanceof LitePathForbiddenError) {
+      return NextResponse.json(
+        { error: "forbidden", code: "lite_client_path_forbidden" },
+        { status: 403 }
+      );
+    }
     if (e instanceof TenantRequiredError) return NextResponse.json({ error: e.message }, { status: 401 });
     throw e;
   }
@@ -53,7 +55,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     const { data, error } = await buildOwnerHandoverPack(supabase, ctx, projectId, translate);
     if (error === "Insufficient rights") return NextResponse.json({ error }, { status: 403 });
     if (!data) return NextResponse.json({ error: error || "Not available" }, { status: 404 });
-    return NextResponse.json({ data });
+    return jsonWithCustomerFinanceGuard("GET /api/v1/projects/:id/handover/pack", { data });
   }
 
   return NextResponse.json({ error: "Insufficient rights" }, { status: 403 });

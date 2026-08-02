@@ -1,6 +1,6 @@
 # AISTROYKA Current Project Truth Index
 
-**Last updated:** 2026-06-26  
+**Last updated:** 2026-07-30 (Phase 6 Android deferred-track note; historical main SHA below unchanged)
 **Canonical main SHA:** `2fe776f298d4a94eccfa8bc5745968692b77fb0f`
 
 ## 1. Purpose
@@ -69,7 +69,7 @@ Historical docs under `docs/` may contain older readiness, certification, GO/NO-
 ## 4. What is NOT verified
 
 - **Latest main deployment after PR #146** is **not** automatically confirmed unless a deployment run and/or `GET /api/v1/health` `buildStamp.sha7` on production/staging proves the merged SHA.
-- **Mobile build/pilot/store status** is **not** fully verified. **Partial** iOS evidence exists (PR #146: simulator build + login-surface UITest smoke PASS). Still **NOT** verified: iOS device/archive, Layer B live E2E, Android native build/instrumented launch, TestFlight, and Google Play. No full iOS/mobile readiness, store, or pilot-live claim — those require the remaining evidence per `docs/reconciliation/issue-112-mobile-build-evidence-plan-2026-06-26/`.
+- **Mobile build/pilot/store status** is **not** fully verified for launch. **iOS:** Phase 5 closed simulator Layer B (**YES**); physical device smoke and TestFlight remain external/not authorized. **Android:** Phase 6 **YES — DEFERRED** — Debug assemble + shared unit tests PASS; Android is **not** a first-pilot commitment; live FCM / emulator smoke / Google Play remain out of deferred scope. No Google Play / pilot-live claim.
 - **Architecture lockdown 9.5/10** is **not** accepted as current truth.
 - **Broad merge** of `cursor/aistroyka-system-maturity-7957` is **not safe** (584 commits behind main; high-risk surface; see PR #124 audit).
 - **Public GA** is **not** declared by this index or by docs-only updates.
@@ -87,7 +87,7 @@ Historical docs under `docs/` may contain older readiness, certification, GO/NO-
 | **Reports export UI** | Polish merged (#127) | PR #127; issue #118 | No backend/CSV/role changes without explicit audit |
 | **Architecture lockdown** | **NOT verified** (9.5/10 rejected) | `docs/reconciliation/architecture-lockdown-forensic-intake-2026-06-22/` | Do not broad-merge maturity branch; obtain primary source if claim persists |
 | **AI / Flywheel** | Deferred; not production-certified | Issue #111 stacked audit | Fresh rebase + small-slice audit before implementation |
-| **Mobile pilot** | Deferred; iOS-primary contour; fresh audit (#140) + readiness refresh (#141) + evidence plan (#144) + **first real iOS native evidence (#146: simulator build + login-surface UITest PASS, partial)**; issue #112 **OPEN** | PRs #140, #141, #144, #146; `docs/reconciliation/issue-112-mobile-fresh-audit-2026-06-26/`; `docs/reconciliation/issue-112-mobile-build-evidence-plan-2026-06-26/`; `docs/reconciliation/issue-112-ios-simulator-evidence-2026-06-26/`; `docs/release-hardening/MOBILE_PILOT_READINESS.md` | Remaining: iOS Layer B live E2E + Android debug assemble/instrumented launch evidence; login-surface smoke is not full pilot readiness; concrete store/pilot-live claim requires device/archive/TestFlight/Google Play/CI evidence; no broad mobile/`release/mobile-pilot-rc` merge; no speculative Android expansion |
+| **Mobile pilot** | **iOS-primary** first pilot; Phase 5 iOS Layer B **YES**; Android **deferred** (P3 Option A / Phase 6 YES — DEFERRED). Historical issue #112 audits remain evidence snapshots. | Phase 5/6 closures under `docs/roadmap/`; `docs/mobile/P3_ANDROID_DEFER_DECISION.md`; `docs/release-hardening/MOBILE_PILOT_READINESS.md` | Do not expand Android without owner/client mandate; iOS device/TestFlight and Play remain owner-gated; no speculative Android MVP |
 | **Design / Public** | Follow-up audit (#135) + i18n-only CTA alignment (#136) + homepage `MOCK_METRICS` cleanup (#138) merged; issue #113 **CLOSED** | PRs #135, #136, #138; `docs/reconciliation/issue-113-design-public-followup-2026-06-24/` | No broad design-branch merges; Liquid Glass requires fresh rebase + explicit small-slice plan |
 | **Docs truth** | Index merged (#128); housekeeping updates ongoing (#134, #137, #139, #143, #145 + this update); AGENTS.md learnings refreshed (#142) | Issue #116; PRs #128, #134, #137, #139, #142, #143, #145; this file | Narrow index updates only; avoid mass doc rewrites |
 | **Stale branches** | Owner-approved archival executed (#131); 21 branches tagged/deleted | `docs/reconciliation/branch-archival-execution-2026-06-24/` | No broad merges; `cursor/aistroyka-system-maturity-7957` remains forbidden |
@@ -119,7 +119,7 @@ Historical docs under `docs/` may contain older readiness, certification, GO/NO-
 
 ## 8. Current safe backlog (prioritized)
 
-1. **#111 / #112 AI/mobile** — only after fresh rebase and small-slice audit. Issue #112 mobile: fresh audit (#140) + readiness refresh (#141) + evidence plan (#144) + first real iOS native evidence (#146: simulator build + login-surface UITest PASS, partial) merged; **OPEN** pending remaining evidence — iOS Layer B live E2E and Android debug assemble + instrumented launch — backed by Xcode/Android SDK/device/emulator/TestFlight/Google Play/CI.
+1. **#111 AI** — only after fresh rebase and small-slice audit (Phase 7 track). Mobile: iOS Phase 5 closed (simulator Layer B); Android Phase 6 **deferred** — do not start Android MVP without owner/client mandate; store uploads remain owner-gated.
 2. **Truth index housekeeping** — narrow updates after each merged slice (docs-only).
 3. **~~Homepage `MOCK_METRICS` removal~~** — **DONE** (PR #138; fake numeric metrics removed, qualitative cards, pilot-first CTAs preserved).
 4. **~~#113 design/public~~** — **CLOSED** (PR #135 audit + PR #136 i18n-only CTA alignment + PR #138 homepage cleanup).

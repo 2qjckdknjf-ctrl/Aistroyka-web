@@ -8,6 +8,7 @@ import { useTranslations, useLocale } from "next-intl";
 import { hasSupabaseEnv } from "@/lib/env";
 import { Input, Button, Alert } from "@/components/ui";
 import { AuthProviderButtons } from "@/components/auth/AuthProviderButtons";
+import { resolvePostAuthEntry } from "@/lib/entry/entry-routing";
 
 const SIGN_IN_TIMEOUT_MS = 25_000;
 const LOGIN_ENDPOINT = "/api/v1/auth/login";
@@ -25,7 +26,8 @@ export type LoginStep =
 function LoginForm() {
   const locale = useLocale();
   const searchParams = useSearchParams();
-  const next = searchParams?.get("next") ?? "/dashboard";
+  // Do not invent next=/dashboard — that would force explicit_next and break stakeholder G-11 portal landing.
+  const next = searchParams?.get("next") ?? undefined;
   const registerHref = next ? `/register?next=${encodeURIComponent(next)}` : "/register";
   const t = useTranslations("auth");
   const [email, setEmail] = useState("");
@@ -101,9 +103,22 @@ function LoginForm() {
       }
 
       setStep("supabase_ok");
-      const targetPath = next.startsWith("/") ? next : `/${next}`;
-      const hasLocale = /^\/(ru|en|es|it)(\/|$)/.test(targetPath);
-      const pathWithLocale = hasLocale ? targetPath : `/${locale}${targetPath}`;
+      let activeRole: string | null = null;
+      try {
+        const meRes = await fetch("/api/v1/me", { credentials: "include" });
+        if (meRes.ok) {
+          const meJson = (await meRes.json()) as { data?: { role?: string | null } };
+          activeRole = typeof meJson.data?.role === "string" ? meJson.data.role : null;
+        }
+      } catch {
+        activeRole = null;
+      }
+      const { path: pathWithLocale } = resolvePostAuthEntry({
+        locale,
+        next,
+        baseUrl: typeof window !== "undefined" ? window.location.origin : "https://aistroyka.ai",
+        activeRole,
+      });
       setStep("redirecting");
       log("redirect", "ok");
       window.location.href = pathWithLocale;
@@ -149,7 +164,7 @@ function LoginForm() {
           )}
           <AuthProviderButtons
             mode="login"
-            nextPath={next}
+            nextPath={next ?? "/dashboard"}
             onContinueEmail={() => {
               setShowEmailForm(true);
               queueMicrotask(() => {

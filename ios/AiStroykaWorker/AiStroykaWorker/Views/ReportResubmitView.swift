@@ -39,12 +39,12 @@ struct ReportResubmitView: View {
                     ProgressView(NSLocalizedString("worker_loading_report", comment: ""))
                 }
                 if let loadError {
-                    Text(loadError).foregroundColor(.red).font(.caption)
+                    Text(loadError).foregroundStyle(BrandTokens.stateError).font(.caption)
                 }
 
                 Text(String(format: NSLocalizedString("worker_report_id_short_fmt", comment: ""), String(reportId.prefix(8))))
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(BrandTokens.textSecondary)
 
                 if let wn = detail?.workerNote, !wn.isEmpty {
                     Text(NSLocalizedString("worker_your_previous_note_title", comment: ""))
@@ -58,11 +58,12 @@ struct ReportResubmitView: View {
                         .font(.subheadline).fontWeight(.semibold)
                     Text(note)
                         .font(.body)
+                        .accessibilityIdentifier("pilot_worker_manager_note")
                 }
 
                 Text(NSLocalizedString("worker_resubmit_hint", comment: ""))
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(BrandTokens.textSecondary)
 
                 if let media = detail?.media, !media.isEmpty {
                     Text(NSLocalizedString("worker_evidence_section_title", comment: ""))
@@ -77,7 +78,7 @@ struct ReportResubmitView: View {
                     VStack(alignment: .leading, spacing: 6) {
                         Text(NSLocalizedString("worker_resubmit_note_label", comment: ""))
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(BrandTokens.textSecondary)
                         TextField(
                             NSLocalizedString("worker_resubmit_note_placeholder", comment: ""),
                             text: $workerReplyNote,
@@ -96,19 +97,24 @@ struct ReportResubmitView: View {
                 } else if let st = detail?.status {
                     Text(String(format: NSLocalizedString("worker_report_status_fmt", comment: ""), st))
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(BrandTokens.textSecondary)
                 }
 
                 if let err = submitErrorMessage {
-                    Text(err).foregroundColor(.red).font(.caption)
+                    Text(err).foregroundStyle(BrandTokens.stateError).font(.caption)
                 }
                 if submitted {
-                    Text(NSLocalizedString("worker_submitted", comment: "")).foregroundColor(.green)
+                    Text(NSLocalizedString("worker_submitted", comment: ""))
+                        .foregroundStyle(BrandTokens.stateSuccess)
+                        .accessibilityIdentifier("pilot_worker_resubmit_submitted")
                 }
             }
             .padding()
+            .accessibilityElement(children: .contain)
+            .accessibilityIdentifier("pilot_worker_resubmit_compose")
         }
         .navigationTitle(NSLocalizedString("worker_report_resubmit_title", comment: ""))
+        .brandScrollChrome()
         .navigationBarTitleDisplayMode(.inline)
         .onAppear(perform: loadDetail)
         .onChange(of: opStore.operations) { _ in
@@ -211,11 +217,11 @@ private struct WorkerReportEvidenceItemView: View {
                             .resizable()
                             .scaledToFit()
                             .frame(maxHeight: 240)
-                            .cornerRadius(8)
+                            .clipShape(RoundedRectangle(cornerRadius: BrandTokens.radiusLg, style: .continuous))
                     case .failure:
                         Text(String(format: NSLocalizedString("worker_evidence_load_failed_fmt", comment: ""), index))
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(BrandTokens.textSecondary)
                     @unknown default:
                         EmptyView()
                     }
@@ -223,7 +229,7 @@ private struct WorkerReportEvidenceItemView: View {
             } else {
                 Text(String(format: NSLocalizedString("worker_evidence_no_preview_fmt", comment: ""), index, evidenceShortId))
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(BrandTokens.textSecondary)
             }
         }
         .padding(.vertical, 4)

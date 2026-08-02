@@ -442,7 +442,7 @@ function ImpactCard({ area, emphasized }: { area: ProductAreaImpact; emphasized?
   return (
     <div
       className={`rounded-2xl px-aistroyka-4 py-aistroyka-4 ${
-        emphasized ? "bg-aistroyka-surface-raised ring-1 ring-amber-500/20" : "bg-aistroyka-surface-raised/60"
+        emphasized ? "bg-aistroyka-surface-raised ring-1 ring-aistroyka-warning/20" : "bg-aistroyka-surface-raised/60"
       }`}
     >
       <div className="flex items-center justify-between gap-aistroyka-2">

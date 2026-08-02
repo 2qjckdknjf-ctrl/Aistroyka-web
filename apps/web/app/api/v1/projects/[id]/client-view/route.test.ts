@@ -2,6 +2,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { GET } from "./route";
 import * as clientPortalService from "@/lib/domain/client-portal/client-portal.service";
 import * as tenant from "@/lib/tenant";
+import { expectCustomerFinanceBlocked } from "@/tests/helpers/customer-finance-route-assertions";
 
 vi.mock("@/lib/supabase/server", () => ({
   createClientFromRequest: vi.fn().mockResolvedValue({}),
@@ -24,17 +25,16 @@ vi.mock("@/lib/domain/client-portal/client-portal.service", () => ({
 }));
 
 describe("GET /api/v1/projects/:id/client-view", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
+  beforeEach(() => vi.clearAllMocks());
 
   it("returns 403 when service reports insufficient rights", async () => {
     vi.mocked(clientPortalService.getClientProjectView).mockResolvedValue({
       data: null,
       error: "Insufficient rights",
     });
-    const req = new Request("https://test/api/v1/projects/p1/client-view");
-    const res = await GET(req, { params: Promise.resolve({ id: "p1" }) });
+    const res = await GET(new Request("https://test/api/v1/projects/p1/client-view"), {
+      params: Promise.resolve({ id: "p1" }),
+    });
     expect(res.status).toBe(403);
   });
 
@@ -43,12 +43,13 @@ describe("GET /api/v1/projects/:id/client-view", () => {
       data: null,
       error: "Client portal is not enabled",
     });
-    const req = new Request("https://test/api/v1/projects/p1/client-view");
-    const res = await GET(req, { params: Promise.resolve({ id: "p1" }) });
+    const res = await GET(new Request("https://test/api/v1/projects/p1/client-view"), {
+      params: Promise.resolve({ id: "p1" }),
+    });
     expect(res.status).toBe(404);
   });
 
-  it("returns shaped data on success", async () => {
+  it("returns safe shaped data with commercial-safe fields", async () => {
     vi.mocked(clientPortalService.getClientProjectView).mockResolvedValue({
       data: {
         project: { id: "p1", name: "X" },
@@ -59,14 +60,17 @@ describe("GET /api/v1/projects/:id/client-view", () => {
         client_requests: [],
         capabilities: { can_respond_to_requests: false },
         handover: null,
+        approved_commercial_changes: [{ title: "Extra", amount: 1200 }],
       },
       error: "",
     });
-    const req = new Request("https://test/api/v1/projects/p1/client-view");
-    const res = await GET(req, { params: Promise.resolve({ id: "p1" }) });
+    const res = await GET(new Request("https://test/api/v1/projects/p1/client-view"), {
+      params: Promise.resolve({ id: "p1" }),
+    });
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.data.project.name).toBe("X");
+    expect(body.data.approved_commercial_changes[0].amount).toBe(1200);
   });
 
   it("passes stakeholder tenant context to client-view service after requireTenant", async () => {
@@ -92,12 +96,23 @@ describe("GET /api/v1/projects/:id/client-view", () => {
       },
       error: "",
     });
-
-    const req = new Request("https://test/api/v1/projects/p1/client-view");
-    const res = await GET(req, { params: Promise.resolve({ id: "p1" }) });
-
+    const res = await GET(new Request("https://test/api/v1/projects/p1/client-view"), {
+      params: Promise.resolve({ id: "p1" }),
+    });
     expect(res.status).toBe(200);
     expect(tenant.requireTenant).toHaveBeenCalledWith(stakeholderCtx);
-    expect(clientPortalService.getClientProjectView).toHaveBeenCalledWith(expect.anything(), stakeholderCtx, "p1");
+  });
+
+  it("blocks finance leak of budget_impact_level without leaking key or value", async () => {
+    vi.mocked(clientPortalService.getClientProjectView).mockResolvedValue({
+      data: {
+        project: { id: "p1", name: "X", budget_impact_level: "high" },
+      } as never,
+      error: "",
+    });
+    const res = await GET(new Request("https://test/api/v1/projects/p1/client-view"), {
+      params: Promise.resolve({ id: "p1" }),
+    });
+    await expectCustomerFinanceBlocked(res, { forbiddenKey: "budget_impact_level", injectedValue: "high" });
   });
 });

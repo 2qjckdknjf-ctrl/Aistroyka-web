@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid support request payload." }, { status: 400 });
   }
 
-  const tenantId = await getTenantForCurrentUser(supabase);
+  const tenantId = await getTenantForCurrentUser(supabase, request);
   const nowIso = new Date().toISOString();
   const { data: ticket, error: ticketError } = await db
     .from("support_tickets")

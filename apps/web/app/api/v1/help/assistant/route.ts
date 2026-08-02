@@ -1,6 +1,19 @@
 import { NextResponse } from "next/server";
 import { HELP_KNOWLEDGE_BASE, keywordsMatchBlob, type HelpLocale } from "@/lib/help/help-knowledge";
 import { LAUNCH_STEPS, type LaunchRole, type LaunchStepKey } from "@/lib/help/launch-steps";
+import {
+  abortHelpLiteIdempotency,
+  clampString,
+  commitHelpLiteIdempotency,
+  enforceHelpAbuseGuards,
+  HELP_MAX_HISTORY,
+  HELP_MAX_HISTORY_ITEM_LEN,
+  HELP_MAX_PATHNAME_LEN,
+  HELP_MAX_QUERY_LEN,
+  HELP_MAX_ROLE_LEN,
+  readJsonBodyBounded,
+  requireHelpTenant,
+} from "@/lib/help/help-api.shared";
 
 type AssistantRequest = {
   query?: string;
@@ -30,6 +43,9 @@ type AssistantRiskSignal = {
   severity: "high" | "medium";
   href: string;
 };
+
+const ROUTE_KEY = "POST /api/v1/help/assistant";
+const ENDPOINT = "/api/v1/help/assistant";
 
 const KNOWN_LOCALES = new Set<HelpLocale>(["en", "ru", "es", "it"]);
 const KNOWN_ROLES = new Set<LaunchRole>(["manager", "admin", "client", "owner"]);
@@ -120,11 +136,12 @@ const CONTEXT_HINTS: Record<HelpLocale, Record<string, string>> = {
   },
 };
 
-function normalizeLocale(locale?: string): HelpLocale {
+function normalizeLocale(locale?: string | null): HelpLocale {
   return KNOWN_LOCALES.has(locale as HelpLocale) ? (locale as HelpLocale) : "en";
 }
 
-function normalizeRole(role?: string): LaunchRole {
+/** Body role is a UX hint for KB ranking only — not an authorization claim. */
+function normalizeRoleHint(role?: string | null): LaunchRole {
   if (role === "worker") return "manager";
   return KNOWN_ROLES.has(role as LaunchRole) ? (role as LaunchRole) : "manager";
 }
@@ -156,7 +173,7 @@ function contextBoost(href: string, pathname?: string): number {
 function buildLaunchActions(
   locale: HelpLocale,
   role: LaunchRole,
-  getStarted?: Partial<Record<LaunchStepKey, boolean>>,
+  getStarted?: Partial<Record<LaunchStepKey, boolean>>
 ): AssistantAction[] {
   const pending = ROLE_ORDER[role].filter((step) => !getStarted?.[step]).slice(0, 2);
   return pending.map((step, index) => {
@@ -173,9 +190,9 @@ function buildLaunchActions(
 
 function buildRiskSignals(locale: HelpLocale, payload: AssistantRequest): AssistantRiskSignal[] {
   const signals: AssistantRiskSignal[] = [];
-  const projectCount = payload.projectCount ?? 0;
-  const taskCount = payload.taskCount ?? 0;
-  const reportCount = payload.reportCount ?? 0;
+  const projectCount = typeof payload.projectCount === "number" ? payload.projectCount : 0;
+  const taskCount = typeof payload.taskCount === "number" ? payload.taskCount : 0;
+  const reportCount = typeof payload.reportCount === "number" ? payload.reportCount : 0;
   const hasAiInsight = Boolean(payload.hasAiInsight);
 
   if (projectCount === 0) {
@@ -216,16 +233,110 @@ function detectContextKey(pathname?: string): "projects" | "reports" | "ai" | "d
   return "dashboard";
 }
 
-export async function POST(request: Request) {
-  let payload: AssistantRequest;
-  try {
-    payload = (await request.json()) as AssistantRequest;
-  } catch {
-    return NextResponse.json({ summary: DEFAULT_SUMMARY.en, answer: DEFAULT_ANSWER.en, actions: [], followUps: [] });
+function parseAssistantBody(
+  value: unknown
+): { ok: true; payload: AssistantRequest } | { ok: false; response: NextResponse } {
+  if (value == null || typeof value !== "object" || Array.isArray(value)) {
+    return {
+      ok: false,
+      response: NextResponse.json({ error: "Invalid body", code: "invalid_json" }, { status: 400 }),
+    };
+  }
+  const raw = value as Record<string, unknown>;
+  const query = clampString(raw.query, HELP_MAX_QUERY_LEN);
+  if (typeof raw.query === "string" && raw.query.length > HELP_MAX_QUERY_LEN) {
+    return {
+      ok: false,
+      response: NextResponse.json({ error: "query too long", code: "payload_too_large" }, { status: 413 }),
+    };
+  }
+  const pathname = clampString(raw.pathname, HELP_MAX_PATHNAME_LEN);
+  if (typeof raw.pathname === "string" && raw.pathname.length > HELP_MAX_PATHNAME_LEN) {
+    return {
+      ok: false,
+      response: NextResponse.json({ error: "pathname too long", code: "payload_too_large" }, { status: 413 }),
+    };
+  }
+  const role = clampString(raw.role, HELP_MAX_ROLE_LEN) ?? undefined;
+  const locale = clampString(raw.locale, 16) ?? undefined;
+
+  let history: string[] | undefined;
+  if (raw.history != null) {
+    if (!Array.isArray(raw.history)) {
+      return {
+        ok: false,
+        response: NextResponse.json({ error: "Invalid history", code: "invalid_body" }, { status: 400 }),
+      };
+    }
+    if (raw.history.length > HELP_MAX_HISTORY) {
+      return {
+        ok: false,
+        response: NextResponse.json({ error: "history too long", code: "payload_too_large" }, { status: 413 }),
+      };
+    }
+    history = [];
+    for (const item of raw.history) {
+      if (typeof item !== "string") {
+        return {
+          ok: false,
+          response: NextResponse.json({ error: "Invalid history item", code: "invalid_body" }, { status: 400 }),
+        };
+      }
+      if (item.length > HELP_MAX_HISTORY_ITEM_LEN) {
+        return {
+          ok: false,
+          response: NextResponse.json(
+            { error: "history item too long", code: "payload_too_large" },
+            { status: 413 }
+          ),
+        };
+      }
+      history.push(item);
+    }
   }
 
+  return {
+    ok: true,
+    payload: {
+      query: query ?? "",
+      locale,
+      role,
+      pathname: pathname ?? undefined,
+      history,
+      getStarted:
+        raw.getStarted && typeof raw.getStarted === "object" && !Array.isArray(raw.getStarted)
+          ? (raw.getStarted as Partial<Record<LaunchStepKey, boolean>>)
+          : undefined,
+      projectCount: typeof raw.projectCount === "number" ? raw.projectCount : undefined,
+      taskCount: typeof raw.taskCount === "number" ? raw.taskCount : undefined,
+      reportCount: typeof raw.reportCount === "number" ? raw.reportCount : undefined,
+      hasAiInsight: typeof raw.hasAiInsight === "boolean" ? raw.hasAiInsight : undefined,
+    },
+  };
+}
+
+export async function POST(request: Request) {
+  const auth = await requireHelpTenant(request);
+  if (!auth.ok) return auth.response;
+
+  const guards = await enforceHelpAbuseGuards(request, auth.ctx, ENDPOINT, ROUTE_KEY);
+  if (guards) return guards;
+
+  const body = await readJsonBodyBounded(request);
+  if (!body.ok) {
+    const abort = await abortHelpLiteIdempotency(request);
+    return abort ?? body.response;
+  }
+
+  const parsed = parseAssistantBody(body.value);
+  if (!parsed.ok) {
+    const abort = await abortHelpLiteIdempotency(request);
+    return abort ?? parsed.response;
+  }
+
+  const payload = parsed.payload;
   const locale = normalizeLocale(payload.locale);
-  const role = normalizeRole(payload.role);
+  const role = normalizeRoleHint(payload.role);
   const query = (payload.query ?? "").trim();
   const ranked = rankKnowledge(query, locale, role);
   const top = ranked[0]?.entry;
@@ -250,7 +361,7 @@ export async function POST(request: Request) {
       title: item.title,
       reason: item.reason,
       href: item.href,
-      priority: index === 0 ? "high" : "medium",
+      priority: (index === 0 ? "high" : "medium") as "high" | "medium",
     }));
 
   const actions = [...knowledgeActions, ...buildLaunchActions(locale, role, payload.getStarted)].slice(0, 4);
@@ -258,7 +369,7 @@ export async function POST(request: Request) {
   const followUps = ranked.slice(1, 4).map((row) => row.entry.title[locale]);
   const confidence = Math.min(98, 52 + actions.length * 8 + riskSignals.length * 6 + (top ? 10 : 0));
 
-  return NextResponse.json({
+  const responseBody = {
     summary: `${CONTEXT_HINTS[locale][contextKey]} ${top?.summary[locale] ?? DEFAULT_SUMMARY[locale]}`,
     answer: top?.answer[locale] ?? DEFAULT_ANSWER[locale],
     actions,
@@ -270,6 +381,9 @@ export async function POST(request: Request) {
       pathname: payload.pathname ?? "/dashboard",
       area: contextKey,
     },
-  });
-}
+  };
 
+  const finalizeFail = await commitHelpLiteIdempotency(request, auth.ctx, ROUTE_KEY, responseBody, 200);
+  if (finalizeFail) return finalizeFail;
+  return NextResponse.json(responseBody);
+}

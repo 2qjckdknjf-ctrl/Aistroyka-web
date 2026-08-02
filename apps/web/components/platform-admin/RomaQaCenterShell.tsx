@@ -66,11 +66,14 @@ export function RomaQaCenterNav() {
   }, []);
 
   return (
-    <nav className="flex shrink-0 flex-col gap-aistroyka-2 lg:w-56" aria-label="Operations Center navigation">
+    <nav
+      className="flex w-full max-w-full min-w-0 shrink-0 flex-col gap-aistroyka-2 lg:w-56"
+      aria-label="Operations Center navigation"
+    >
       <p className="mb-aistroyka-1 hidden text-aistroyka-caption font-semibold uppercase tracking-wide text-aistroyka-text-tertiary lg:block">
         Navigation
       </p>
-      <div className="flex gap-aistroyka-3 overflow-x-auto pb-aistroyka-2 lg:flex-col lg:overflow-visible lg:pb-0">
+      <div className="flex w-full max-w-full min-w-0 gap-aistroyka-3 overflow-x-auto overscroll-x-contain pb-aistroyka-2 lg:flex-col lg:overflow-visible lg:pb-0">
         {ROMA_QA_CENTER_NAV_GROUPS.map((group) => {
           const isOpen = expanded[group.id] ?? group.id === "overview";
           const groupActive = isGroupActive(group, pathname);
@@ -126,21 +129,23 @@ export function RomaQaCenterNav() {
 
 export function RomaQaCenterShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="space-y-aistroyka-6">
+    <div className="min-w-0 max-w-full space-y-aistroyka-6">
       <div className="rounded-2xl bg-aistroyka-surface-raised/60 px-aistroyka-4 py-aistroyka-4 sm:px-aistroyka-5">
-        <div className="flex flex-wrap items-center justify-between gap-aistroyka-2">
-          <div>
+        <div className="flex min-w-0 flex-wrap items-center justify-between gap-aistroyka-2">
+          <div className="min-w-0">
             <p className="text-aistroyka-caption font-semibold uppercase tracking-wide text-aistroyka-text-tertiary">
               AISTROYKA · ROMA
             </p>
             <p className="mt-aistroyka-1 text-aistroyka-footnote text-aistroyka-text-secondary">
-              Operations Center — read-only intelligence for platform owners
+              Operations Center — live intelligence for platform owners. Probes and catalog views do not mutate
+              tenant/business state. Persisting an audit snapshot is an explicit write action (not a silent
+              read).
             </p>
           </div>
-          <Badge variant="neutral">Read-only</Badge>
+          <Badge variant="neutral">No tenant mutations</Badge>
         </div>
       </div>
-      <div className="flex flex-col gap-aistroyka-6 lg:flex-row lg:items-start">
+      <div className="flex min-w-0 max-w-full flex-col gap-aistroyka-6 lg:flex-row lg:items-start">
         <RomaQaCenterNav />
         <div className="min-w-0 flex-1">{children}</div>
       </div>

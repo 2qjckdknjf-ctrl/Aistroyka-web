@@ -37,6 +37,9 @@ jobs:
       - name: i18n messages (dashboard + activation)
         run: bun run i18n:check
 
+      - name: Migration filename sanity
+        run: bash scripts/release/check-migrations.sh
+
       - name: Lint
         run: bun run lint
 

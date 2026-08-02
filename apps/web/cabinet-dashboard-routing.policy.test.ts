@@ -15,13 +15,15 @@ describe("Cabinet visibility / dashboard stability policy (source asserts)", () 
   });
 
   it("authenticated auth pages redirect via resolvePostAuthEntry without subscribe fallback", () => {
-    expect(middlewareSrc).toContain("resolvePostAuthEntry({ locale, next, baseUrl: request.url })");
+    expect(middlewareSrc).toContain("resolvePostAuthEntry({");
+    expect(middlewareSrc).toContain("activeRole");
     expect(middlewareSrc).not.toContain("{ path: `/${locale}/subscribe`");
     expect(middlewareSrc).not.toContain("hasExplicitNext");
     const authIdx = middlewareSrc.indexOf("isAuthPage && user");
     expect(authIdx).toBeGreaterThanOrEqual(0);
-    const authSlice = middlewareSrc.slice(authIdx, authIdx + 450);
+    const authSlice = middlewareSrc.slice(authIdx, authIdx + 900);
     expect(authSlice).toContain("resolvePostAuthEntry");
+    expect(authSlice).toContain("activeRole");
     expect(authSlice).not.toContain("/subscribe");
   });
 

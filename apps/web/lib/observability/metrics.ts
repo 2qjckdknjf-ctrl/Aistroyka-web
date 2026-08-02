@@ -51,37 +51,45 @@ export interface SystemMetrics {
 
 /**
  * Fetch analysis_jobs (recent) for success rate, duration, retry proxy.
+ * When `tenantId` is set, results are scoped to that tenant (required for admin UI).
  */
-async function fetchJobsSample(supabase: SupabaseClient) {
-  const { data } = await supabase
+async function fetchJobsSample(supabase: SupabaseClient, tenantId?: string | null) {
+  let q = supabase
     .from("analysis_jobs")
     .select("id, media_id, status, started_at, finished_at")
     .order("started_at", { ascending: false })
     .limit(MAX_SAMPLE_JOBS);
+  if (tenantId) q = q.eq("tenant_id", tenantId);
+  const { data } = await q;
   return data ?? [];
 }
 
 /**
  * Fetch ai_analysis (recent) for risk distribution, confidence proxy, anomaly rate.
+ * When `tenantId` is set, results are scoped to that tenant (required for admin UI).
  */
-async function fetchAnalysesSample(supabase: SupabaseClient) {
-  const { data } = await supabase
+async function fetchAnalysesSample(supabase: SupabaseClient, tenantId?: string | null) {
+  let q = supabase
     .from("ai_analysis")
     .select("id, risk_level, detected_issues")
     .order("created_at", { ascending: false })
     .limit(MAX_SAMPLE_ANALYSES);
+  if (tenantId) q = q.eq("tenant_id", tenantId);
+  const { data } = await q;
   return data ?? [];
 }
 
 /**
  * Aggregate telemetry and risk distribution from existing data.
+ * When `tenantId` is provided, samples are scoped to that tenant only.
  */
 export async function getSystemMetrics(
-  supabase: SupabaseClient
+  supabase: SupabaseClient,
+  tenantId?: string | null
 ): Promise<SystemMetrics | null> {
   const [jobs, analyses] = await Promise.all([
-    fetchJobsSample(supabase),
-    fetchAnalysesSample(supabase),
+    fetchJobsSample(supabase, tenantId),
+    fetchAnalysesSample(supabase, tenantId),
   ]);
 
   const totalJobs = jobs.length;
@@ -170,9 +178,9 @@ export async function getSystemMetrics(
     Math.min(100, 100 - avg_strategic_risk * 0.5)
   );
 
-  const { count: totalMediaCount } = await supabase
-    .from("media")
-    .select("id", { count: "exact", head: true });
+  let mediaCountQuery = supabase.from("media").select("id", { count: "exact", head: true });
+  if (tenantId) mediaCountQuery = mediaCountQuery.eq("tenant_id", tenantId);
+  const { count: totalMediaCount } = await mediaCountQuery;
 
   return {
     telemetry: {

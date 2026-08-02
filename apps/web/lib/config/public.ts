@@ -4,6 +4,8 @@
  * (See lib/config/index.ts for the full env governance model.)
  */
 
+import { resolveBuildStamp } from "./build-stamp";
+
 export interface PublicConfig {
   NEXT_PUBLIC_SUPABASE_URL: string;
   NEXT_PUBLIC_SUPABASE_ANON_KEY: string;
@@ -38,14 +40,10 @@ export function hasSupabaseEnv(): boolean {
 
 /**
  * Build stamp (no throw). Safe to call without Supabase env.
- * SHA: NEXT_PUBLIC_BUILD_SHA → VERCEL_GIT_COMMIT_SHA → GITHUB_SHA → "".
- * buildTime: NEXT_PUBLIC_BUILD_TIME only.
+ * Canonical: NEXT_PUBLIC_BUILD_SHA (+ NEXT_PUBLIC_BUILD_TIME).
+ * CI-only fallback: GITHUB_SHA when CI=true. Vercel SHA is ignored (non-canonical).
  */
 export function getBuildStamp(): { sha: string; buildTime: string } {
-  const sha =
-    (process.env.NEXT_PUBLIC_BUILD_SHA ?? "").trim() ||
-    (process.env.VERCEL_GIT_COMMIT_SHA ?? "").trim() ||
-    (process.env.GITHUB_SHA ?? "").trim();
-  const buildTime = (process.env.NEXT_PUBLIC_BUILD_TIME ?? "").trim();
-  return { sha, buildTime };
+  const stamp = resolveBuildStamp(process.env);
+  return { sha: stamp.sha, buildTime: stamp.buildTime };
 }

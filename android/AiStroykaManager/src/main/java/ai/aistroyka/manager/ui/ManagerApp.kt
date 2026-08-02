@@ -33,6 +33,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -47,7 +48,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.foundation.Image
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -55,6 +58,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import ai.aistroyka.manager.ManagerViewModel
+import ai.aistroyka.shared.design.BrandCard
+import ai.aistroyka.shared.design.BrandErrorText
+import ai.aistroyka.shared.design.BrandMutedText
+import ai.aistroyka.shared.design.BrandOutlinedField
+import ai.aistroyka.shared.design.BrandPrimaryButton
 import ai.aistroyka.shared.GetStartedDto
 import ai.aistroyka.shared.HelpAssistantRiskSignalDto
 import ai.aistroyka.shared.HelpHintDto
@@ -86,7 +94,12 @@ fun ManagerApp() {
                         if (state.screen != "login") {
                             TextButton(onClick = { vm.logout() }) { Text(stringResource(R.string.action_sign_out)) }
                         }
-                    }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = ManagerSemanticColors.pageBackground(),
+                        titleContentColor = ManagerSemanticColors.textPrimary(),
+                        actionIconContentColor = ManagerSemanticColors.textPrimary(),
+                    ),
                 )
             }
         ) { padding ->
@@ -94,7 +107,7 @@ fun ManagerApp() {
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding),
-                color = MaterialTheme.colorScheme.background
+                color = ManagerSemanticColors.pageBackground()
             ) {
                 Box(Modifier.fillMaxSize()) {
                     when (state.screen) {
@@ -104,7 +117,7 @@ fun ManagerApp() {
                         "detail" -> DetailScreen(vm)
                         else -> LoginScreen(vm)
                     }
-                    if (showGuide) {
+                    if (showGuide && state.screen == "login") {
                         FirstLaunchGuide(
                             onDismiss = {
                                 prefs.edit().putBoolean(MANAGER_FIRST_LAUNCH_KEY, true).apply()
@@ -123,14 +136,14 @@ private fun FirstLaunchGuide(onDismiss: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.55f))
+            .background(ManagerSemanticColors.overlayDim())
             .padding(20.dp),
         contentAlignment = Alignment.Center
     ) {
         Card(
             shape = RoundedCornerShape(20.dp),
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            colors = CardDefaults.cardColors(containerColor = ManagerSemanticColors.surface())
         ) {
             Column(
                 modifier = Modifier.padding(20.dp),
@@ -143,17 +156,15 @@ private fun FirstLaunchGuide(onDismiss: () -> Unit) {
                 Text(
                     text = stringResource(R.string.manager_guide_subtitle),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = ManagerSemanticColors.textMuted()
                 )
                 Text(text = "1. ${stringResource(R.string.manager_guide_step_1)}")
                 Text(text = "2. ${stringResource(R.string.manager_guide_step_2)}")
                 Text(text = "3. ${stringResource(R.string.manager_guide_step_3)}")
-                Button(
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = onDismiss
-                ) {
-                    Text(stringResource(R.string.manager_guide_start))
-                }
+                BrandPrimaryButton(
+                    text = stringResource(R.string.manager_guide_start),
+                    onClick = onDismiss,
+                )
             }
         }
     }
@@ -170,51 +181,46 @@ private fun LoginScreen(vm: ManagerViewModel) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(stringResource(R.string.manager_login_prompt), style = MaterialTheme.typography.bodyLarge)
+        Image(
+            painter = painterResource(R.drawable.aistroyka_helmet),
+            contentDescription = null,
+            modifier = Modifier.size(72.dp),
+        )
+        Spacer(Modifier.height(12.dp))
+        Text(
+            stringResource(R.string.manager_login_prompt),
+            style = MaterialTheme.typography.bodyLarge,
+            color = ManagerSemanticColors.textPrimary(),
+        )
         Spacer(Modifier.height(16.dp))
-        OutlinedTextField(
+        BrandOutlinedField(
             value = state.email,
             onValueChange = { vm.setEmail(it) },
-            label = { Text(stringResource(R.string.label_email)) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .pilotAutomatorTag("pilot_manager_email"),
-            singleLine = true,
-            enabled = !state.busy
+            label = stringResource(R.string.label_email),
+            modifier = Modifier.pilotAutomatorTag("pilot_manager_email"),
+            enabled = !state.busy,
         )
         Spacer(Modifier.height(8.dp))
-        OutlinedTextField(
+        BrandOutlinedField(
             value = state.password,
             onValueChange = { vm.setPassword(it) },
-            label = { Text(stringResource(R.string.label_password)) },
+            label = stringResource(R.string.label_password),
+            modifier = Modifier.pilotAutomatorTag("pilot_manager_password"),
+            enabled = !state.busy,
             visualTransformation = PasswordVisualTransformation(),
-            modifier = Modifier
-                .fillMaxWidth()
-                .pilotAutomatorTag("pilot_manager_password"),
-            singleLine = true,
-            enabled = !state.busy
         )
         Spacer(Modifier.height(16.dp))
         state.banner?.let {
-            Text(it, color = MaterialTheme.colorScheme.error)
+            BrandErrorText(it)
             Spacer(Modifier.height(8.dp))
         }
-        Button(
+        BrandPrimaryButton(
+            text = stringResource(R.string.action_sign_in),
             onClick = { vm.login() },
+            modifier = Modifier.pilotAutomatorTag("pilot_manager_sign_in"),
             enabled = !state.busy,
-            modifier = Modifier
-                .fillMaxWidth()
-                .pilotAutomatorTag("pilot_manager_sign_in")
-        ) {
-            if (state.busy) {
-                CircularProgressIndicator(
-                    Modifier.size(24.dp),
-                    color = MaterialTheme.colorScheme.onPrimary
-                )
-            } else {
-                Text(stringResource(R.string.action_sign_in))
-            }
-        }
+            busy = state.busy,
+        )
     }
 }
 
@@ -240,7 +246,7 @@ private fun HomeScreen(vm: ManagerViewModel) {
         )
         Spacer(Modifier.height(16.dp))
         state.banner?.let {
-            Text(it, color = MaterialTheme.colorScheme.error)
+            Text(it, color = ManagerSemanticColors.error())
             TextButton(onClick = { vm.clearBanner() }) { Text(stringResource(R.string.action_dismiss)) }
             Spacer(Modifier.height(8.dp))
         }
@@ -307,7 +313,7 @@ private fun StartGuidanceCard(
     val total = 5
 
     Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        colors = CardDefaults.cardColors(containerColor = ManagerSemanticColors.surfaceMuted()),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -318,7 +324,7 @@ private fun StartGuidanceCard(
             Text(
                 text = stringResource(R.string.manager_start_progress_fmt, completed, total),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = ManagerSemanticColors.textMuted()
             )
             Text(
                 text = "${if (getStarted?.createProject == true) "✓" else "○"} ${stringResource(R.string.manager_start_step_1)}",
@@ -341,7 +347,7 @@ private fun StartGuidanceCard(
                 Text(
                     text = guideSummary,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = ManagerSemanticColors.textMuted()
                 )
             }
             if (guideConfidence != null) {
@@ -360,7 +366,7 @@ private fun StartGuidanceCard(
                         Text(
                             text = hint.reason,
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = ManagerSemanticColors.textMuted()
                         )
                     }
                 }
@@ -368,12 +374,12 @@ private fun StartGuidanceCard(
                 Text(
                     text = "\u2022 ${stringResource(R.string.manager_ai_hint_1)}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = ManagerSemanticColors.textMuted()
                 )
                 Text(
                     text = "\u2022 ${stringResource(R.string.manager_ai_hint_2)}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = ManagerSemanticColors.textMuted()
                 )
             }
             if (guideRiskSignals.isNotEmpty()) {
@@ -390,7 +396,7 @@ private fun StartGuidanceCard(
                     Text(
                         text = signal.detail,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = ManagerSemanticColors.textMuted()
                     )
                 }
             }
@@ -429,7 +435,7 @@ private fun ReportsScreen(vm: ManagerViewModel) {
         state.banner?.let {
             Text(
                 it,
-                color = MaterialTheme.colorScheme.error,
+                color = ManagerSemanticColors.error(),
                 modifier = Modifier.padding(16.dp)
             )
             TextButton(onClick = { vm.clearBanner() }) { Text(stringResource(R.string.action_dismiss)) }
@@ -518,7 +524,7 @@ private fun DetailScreen(vm: ManagerViewModel) {
                 .padding(16.dp)
         ) {
             state.banner?.let {
-                Text(it, color = MaterialTheme.colorScheme.error)
+                Text(it, color = ManagerSemanticColors.error())
                 Spacer(Modifier.height(8.dp))
             }
             Text(
@@ -570,7 +576,7 @@ private fun DetailScreen(vm: ManagerViewModel) {
                         else -> key
                     }
                     Spacer(Modifier.height(6.dp))
-                    Text(msg, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                    Text(msg, color = ManagerSemanticColors.error(), style = MaterialTheme.typography.bodySmall)
                 }
                 Spacer(Modifier.height(12.dp))
                 Row(
@@ -600,12 +606,12 @@ private fun DetailScreen(vm: ManagerViewModel) {
                 Text(
                     stringResource(R.string.manager_review_only_submitted),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = ManagerSemanticColors.textMuted()
                 )
             }
             state.actionMessage?.let {
                 Spacer(Modifier.height(16.dp))
-                Text(it, color = MaterialTheme.colorScheme.primary)
+                Text(it, color = ManagerSemanticColors.primary())
             }
             if (state.busy) {
                 Spacer(Modifier.height(16.dp))
@@ -635,7 +641,7 @@ private fun MediaRow(item: ReportMediaItemDto, urlById: Map<String, String>) {
                 Text(
                     stringResource(R.string.manager_no_preview_url),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = ManagerSemanticColors.textMuted()
                 )
             }
         }

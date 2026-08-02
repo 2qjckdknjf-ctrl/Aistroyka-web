@@ -5,10 +5,9 @@
  */
 import { readFileSync, readdirSync } from "fs";
 import { join } from "path";
+import { findRawColorClasses, runRawColorPatternSelfTest } from "./raw-color-pattern.mjs";
 
 const ROOT = process.cwd();
-const FORBIDDEN =
-  /(?:^|\s)(?:text|bg|border|ring|from|to|via|divide|placeholder|ring)-((?:slate|red|amber|emerald|gray|zinc|neutral|stone|orange|yellow|lime|green|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-[0-9]+)/g;
 
 const excludeDir = (name) =>
   name === "node_modules" || name === ".next" || name.startsWith(".");
@@ -35,41 +34,62 @@ function walk(dir, base = "") {
   return files;
 }
 
-const dirs = ["app", "components", "lib"].map((d) => join(ROOT, d));
-const allFiles = [];
-for (const d of dirs) {
-  try {
-    allFiles.push(...walk(d));
-  } catch (_) {
-    // dir may not exist
+function runSelfTest() {
+  const { ok, failures } = runRawColorPatternSelfTest();
+  if (!ok) {
+    console.error("check-raw-colors self-test FAILED:\n");
+    for (const f of failures) console.error(`  - ${f}`);
+    process.exit(1);
   }
+  console.log("check-raw-colors self-test: PASS");
 }
 
-let failed = false;
-const report = [];
+function scanSourceTree() {
+  const dirs = ["app", "components", "lib"].map((d) => join(ROOT, d));
+  const allFiles = [];
+  for (const d of dirs) {
+    try {
+      allFiles.push(...walk(d));
+    } catch (_) {
+      // dir may not exist
+    }
+  }
 
-for (const file of allFiles) {
-  const content = readFileSync(file, "utf8");
-  const rel = file.replace(ROOT + "/", "");
-  let m;
-  FORBIDDEN.lastIndex = 0;
-  const matches = [];
-  while ((m = FORBIDDEN.exec(content)) !== null) {
-    matches.push(m[1]);
+  let failed = false;
+  const report = [];
+
+  for (const file of allFiles) {
+    const content = readFileSync(file, "utf8");
+    const rel = file.replace(ROOT + "/", "");
+    const matches = findRawColorClasses(content);
+    if (matches.length) {
+      failed = true;
+      report.push({ file: rel, classes: matches });
+    }
   }
-  if (matches.length) {
-    failed = true;
-    report.push({ file: rel, classes: [...new Set(matches)] });
+
+  if (report.length) {
+    console.error("Raw Tailwind colors are not allowed. Use aistroyka tokens.\n");
+    for (const { file, classes } of report) {
+      console.error(`  ${file}: ${classes.join(", ")}`);
+    }
+    console.error("\nRun: grep -rn 'slate-\\|red-\\|amber-\\|emerald-' app components lib");
+    process.exit(1);
   }
+
+  console.log("check-raw-colors: no raw color classes found.");
 }
 
-if (report.length) {
-  console.error("Raw Tailwind colors are not allowed. Use aistroyka tokens.\n");
-  for (const { file, classes } of report) {
-    console.error(`  ${file}: ${classes.join(", ")}`);
-  }
-  console.error("\nRun: grep -rn 'slate-\\|red-\\|amber-\\|emerald-' app components lib");
-  process.exit(1);
+const args = process.argv.slice(2);
+const selfTestOnly = args.includes("--self-test");
+const skipSelfTest = args.includes("--skip-self-test");
+
+if (selfTestOnly) {
+  runSelfTest();
+  process.exit(0);
 }
 
-console.log("check-raw-colors: no raw color classes found.");
+if (!skipSelfTest) {
+  runSelfTest();
+}
+scanSourceTree();

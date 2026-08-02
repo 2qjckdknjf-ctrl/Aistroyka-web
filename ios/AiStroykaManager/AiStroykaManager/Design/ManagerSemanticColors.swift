@@ -2,20 +2,30 @@
 //  ManagerSemanticColors.swift
 //  AiStroykaManager
 //
+//  App-level semantic aliases → Shared BrandTokens (live web --aistroyka-*).
+//
 
 import SwiftUI
+import Shared
 
 enum ManagerSemanticColors {
-    static let pageBackground = Color(red: 11.0 / 255.0, green: 15.0 / 255.0, blue: 25.0 / 255.0)
-    static let surfaceMuted = Color(red: 31.0 / 255.0, green: 41.0 / 255.0, blue: 55.0 / 255.0)
-    static let filterSelected = Color.accentColor
-    static let filterUnselected = Color(red: 43.0 / 255.0, green: 54.0 / 255.0, blue: 72.0 / 255.0)
-    static let primary = Color.accentColor
-    static let onPrimary = Color.white
-    static let primaryDisabled = Color(red: 156.0 / 255.0, green: 163.0 / 255.0, blue: 175.0 / 255.0)
-    static let success = Color(red: 52.0 / 255.0, green: 199.0 / 255.0, blue: 89.0 / 255.0)
-    static let warning = Color(red: 255.0 / 255.0, green: 149.0 / 255.0, blue: 0.0 / 255.0)
-    static let error = Color(red: 255.0 / 255.0, green: 59.0 / 255.0, blue: 48.0 / 255.0)
-    static let info = Color(red: 59.0 / 255.0, green: 130.0 / 255.0, blue: 246.0 / 255.0)
-    static let accent = Color.accentColor
+    static let pageBackground = BrandTokens.bgPage
+    static let surface = BrandTokens.surface
+    static let surfaceMuted = BrandTokens.surfaceMuted
+    static let surfaceRaised = BrandTokens.surfaceRaised
+    static let borderSubtle = BrandTokens.borderSubtle
+    static let filterSelected = BrandTokens.actionPrimary
+    static let filterUnselected = BrandTokens.borderSubtle
+    static let primary = BrandTokens.actionPrimary
+    static let onPrimary = BrandTokens.textOnPrimary
+    static let primaryDisabled = BrandTokens.actionPrimaryDisabled
+    static let textPrimary = BrandTokens.textPrimary
+    static let textSecondary = BrandTokens.textSecondary
+    static let textTertiary = BrandTokens.textTertiary
+    static let success = BrandTokens.stateSuccess
+    static let warning = BrandTokens.stateWarning
+    static let error = BrandTokens.stateError
+    static let info = BrandTokens.stateInfo
+    static let accent = BrandTokens.actionPrimary
+    static let warningSurface = BrandTokens.badgeWarningBg
 }

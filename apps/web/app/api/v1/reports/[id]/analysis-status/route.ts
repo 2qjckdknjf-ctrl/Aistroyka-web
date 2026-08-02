@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClientFromRequest } from "@/lib/supabase/server";
-import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
+import { getTenantContextFromRequest, requireTenant, TenantRequiredError, LitePathForbiddenError } from "@/lib/tenant";
 import { getById as getReportById } from "@/lib/domain/reports/report.repository";
+import { isLiteWorkerClient } from "@/lib/tenant/client-profile";
 import * as jobRepo from "@/lib/platform/jobs/job.repository";
 
 export const dynamic = "force-dynamic";
@@ -17,6 +18,12 @@ export async function GET(
   try {
     requireTenant(ctx);
   } catch (e) {
+    if (e instanceof LitePathForbiddenError) {
+      return NextResponse.json(
+        { error: "forbidden", code: "lite_client_path_forbidden" },
+        { status: 403 }
+      );
+    }
     if (e instanceof TenantRequiredError) {
       return NextResponse.json({ error: e.message }, { status: e.message.includes("membership") ? 403 : 401 });
     }
@@ -26,6 +33,9 @@ export async function GET(
   const supabase = await createClientFromRequest(_request);
   const report = await getReportById(supabase, reportId, ctx.tenantId!);
   if (!report) return NextResponse.json({ error: "Report not found" }, { status: 404 });
+  if (isLiteWorkerClient(ctx) && report.user_id !== ctx.userId) {
+    return NextResponse.json({ error: "Report not found" }, { status: 404 });
+  }
 
   const admin = (await import("@/lib/supabase/admin")).getAdminClient();
   const client = admin ?? supabase;

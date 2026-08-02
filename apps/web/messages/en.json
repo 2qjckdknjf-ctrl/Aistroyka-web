@@ -45,14 +45,20 @@
     "searchPlaceholder": "Search…",
     "helpCenter": "Help center",
     "dashboardNavigation": "Dashboard navigation",
-    "main": "Main"
+    "main": "Main",
+    "portalProjects": "Your projects",
+    "portalNavigation": "Customer portal navigation",
+    "customerPortal": "Customer portal"
   },
   "portalPage": {
     "title": "Your projects",
     "subtitle": "Customer portal — progress, documents, and approvals your builder shares with you.",
     "loadError": "Could not load projects.",
     "empty": "No projects with an active customer portal yet.",
-    "openPortal": "Open portal"
+    "openPortal": "Open portal",
+    "loading": "Loading projects",
+    "accessDenied": "You do not have access to the customer portal.",
+    "retry": "Retry"
   },
   "proofShare": {
     "unavailableTitle": "Proof pack unavailable",
@@ -638,7 +644,8 @@
     "videoDailyRisk": "Risk level",
     "videoDailyIssues": "Issues and risks",
     "videoDailyRecommendations": "Recommendations",
-    "videoDailyVisibility": "Visibility notes"
+    "videoDailyVisibility": "Visibility notes",
+    "aiCopilot": "AI Copilot"
   },
   "risk": {
     "low": "Low",
@@ -727,11 +734,11 @@
     },
     "home": {
       "heroTitle": "AI Construction Intelligence",
-      "heroSubtitle": "Control progress, risks, and quality on site with AI-powered analytics and mobile reporting.",
+      "heroSubtitle": "Control progress, risks, and quality on site with AI-assisted analytics (beta) and mobile reporting.",
       "neuralConstructionControl": "Neural Construction Control",
       "heroCardDashboardTitle": "Dashboard",
       "heroCardDashboardSubtitle": "Projects, tasks, KPIs",
-      "heroCardAiTitle": "AI insights",
+      "heroCardAiTitle": "AI insights (beta)",
       "heroCardAiSubtitle": "Progress, risks, delays",
       "heroCardMobileTitle": "Mobile",
       "heroCardMobileSubtitle": "Reports, evidence",
@@ -1099,10 +1106,10 @@
     "copilot": {
       "title": "AI Copilot",
       "heroTitle": "AI Copilot for construction operations",
-      "heroSubtitle": "Helps project managers, contractors, and owners make faster decisions with summarized reports, risk detection, and actionable recommendations.",
+      "heroSubtitle": "Beta assistant for project managers: summarized reports, risk signals, and recommendations. Deterministic fallback applies when providers are unavailable — not fully validated live automation.",
       "ctaDemo": "Contact us",
       "ctaPlatform": "Explore platform",
-      "metaDescription": "AI Copilot for construction: summarize reports, detect risks, recommend actions.",
+      "metaDescription": "AI Copilot (beta) for construction: summarize reports, surface risks, recommend actions. Simulation demo on this page is not live provider output.",
       "capabilitiesTitle": "Capabilities",
       "cap1": "Summarize daily reports",
       "cap2": "Detect delays and risks",
@@ -1118,7 +1125,7 @@
       "pat4": "Analyze photo evidence",
       "pat5": "Support management decisions",
       "mockAssistantUi": "Mock assistant UI",
-      "mockInterfaceTitle": "AI Copilot — mock interface",
+      "mockInterfaceTitle": "AI Copilot — simulation / mock interface (not live provider output)",
       "mockUserMessage": "User: What's the status of Block A this week?",
       "mockCopilotMessage": "Copilot: Block A is 72% complete. 2 reports pending. One delay risk (weather). Recommendation: confirm foundation sign-off before next phase.",
       "mockInputPlaceholder": "Ask about project status…",
@@ -1443,7 +1450,7 @@
     "leadDetailTitle": "Lead detail",
     "leadDetailSubtitle": "View and update lead status and notes.",
     "aiCopilotTitle": "AI Copilot",
-    "aiCopilotSubtitle": "Get AI summaries, explain risks, or ask project questions.",
+    "aiCopilotSubtitle": "Beta: AI summaries and project questions. May use deterministic fallback when providers are unavailable.",
     "projectOverviewSubtitle": "Project overview and operational tabs.",
     "discussionsTitle": "Discussions",
     "discussionsSubtitle": "Structured topics where teams ask and respond with clear updates.",
@@ -1465,6 +1472,7 @@
     "thresholdHistoryTitle": "Threshold history"
   },
   "dashboardDetail": {
+    "company": "Company",
     "dateRange": "Date range",
     "search": "Search",
     "searchPlaceholder": "Search…",
@@ -1812,7 +1820,7 @@
     "linkTypeOptional": "Link type (optional)",
     "milestone": "Milestone",
     "linkedEntityId": "Linked entity id",
-    "loading": "Loading…",
+    "loading": "Loading",
     "couldNotLoadRequests": "Could not load requests.",
     "noRequestsYet": "No requests yet.",
     "markComplete": "Mark complete",
@@ -2770,7 +2778,9 @@
     "managerActionSource_recommendation": "recommendation",
     "managerActionSource_health": "health",
     "managerActionSource_executive": "executive",
-    "fromExecutiveSummary": "From executive summary"
+    "fromExecutiveSummary": "From executive summary",
+    "aiCopilot": "AI Copilot",
+    "backToPortalProjects": "← Back to portal projects"
   },
   "governancePage": {
     "listSubtitle": "Cross-project governance and escalation across active projects.",

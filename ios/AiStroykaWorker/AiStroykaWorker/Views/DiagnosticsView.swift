@@ -27,7 +27,7 @@ struct DiagnosticsView: View {
             }
             Section("Environment") {
                 LabeledContent("API", value: Config.baseURL)
-                Text("Client: \(MobileClientProfile.worker.rawValue)").font(.caption).foregroundColor(.secondary)
+                Text("Client: \(MobileClientProfile.worker.rawValue)").font(.caption).foregroundStyle(BrandTokens.textSecondary)
             }
             Section("Device") {
                 Text(DeviceContext.deviceId)
@@ -37,15 +37,17 @@ struct DiagnosticsView: View {
             }
             Section("Session") {
                 Text(appState.isLoggedIn ? "Signed in" : "Not signed in")
-                    .foregroundColor(appState.isLoggedIn ? .green : .secondary)
+                    .foregroundColor(appState.isLoggedIn ? BrandTokens.stateSuccess : BrandTokens.textSecondary)
             }
             Section("Sync") {
                 LabeledContent("Status", value: syncService.status.rawValue)
                 if let err = syncService.lastError {
-                    Text(err).font(.caption).foregroundColor(.orange).textSelection(.enabled)
+                    Text(err).font(.caption).foregroundStyle(BrandTokens.stateWarning).textSelection(.enabled)
                 }
             }
         }
         .navigationTitle("Diagnostics")
+            .brandScrollChrome()
+
     }
 }

@@ -1,0 +1,32 @@
+surface,canonical_route,locale_behavior,persona,expected_unauthenticated_behavior,expected_authenticated_behavior,governing_layout_middleware_gate,existing_automated_coverage,observed_phase3a_result,credential_requirement,blocker_or_next_batch
+public_locale_root,/{locale},ru|en|es|it,guest,200-class public homepage; Cabinet+login visible; locale preserved,N/A (public),app/[locale]/(public)/layout.tsx + intl middleware,tests/qa/01-public-website.spec.ts; tests/phase3a/public-reachability.spec.ts,PASS_all_locales,none,—
+public_pricing,/{locale}/pricing,ru|en|es|it,guest,non-5xx marketing page,N/A,(public)/layout.tsx,qa + phase3a,PASS_all_locales,none,—
+public_features,/{locale}/features,ru|en|es|it,guest,non-5xx,N/A,(public)/layout.tsx,qa + phase3a,PASS_all_locales,none,—
+public_contact,/{locale}/contact,ru|en|es|it,guest,form renders; posts to /api/v1/contact (no live submit in 3A),N/A,(public)/layout.tsx + ContactForm.tsx,phase3a contact-claims + responsive,PASS_render_a11y_target; live_submit_BLOCKED_EXTERNAL_pending_rate_limit_migration,none,Phase2D abuse controls + migration apply (out of 3A)
+public_security,/{locale}/security,ru|en|es|it,guest,non-5xx,N/A,(public)/layout.tsx,phase3a,PASS_all_locales,none,—
+public_faq,/{locale}/faq,ru|en|es|it,guest,non-5xx,N/A,(public)/layout.tsx,phase3a,PASS_all_locales,none,—
+public_docs_index,/{locale}/docs,ru|en|es|it,guest,non-5xx index,N/A,(public)/layout.tsx,phase3a,PASS_all_locales,none,—
+public_docs_slug,/{locale}/docs/[slug],ru|en|es|it,guest,dynamic; no invented fixtures in 3A,N/A,(public)/docs/[slug],none_in_3A,NOT_EXECUTED_no_fixture_slug,none,optional later public content batch
+public_cases_index,/{locale}/cases,ru|en|es|it,guest,non-5xx,N/A,(public)/layout.tsx,phase3a,PASS_all_locales,none,—
+public_cases_slug,/{locale}/cases/[slug],ru|en|es|it,guest,dynamic; no invented fixtures,N/A,(public)/cases/[slug],none_in_3A,NOT_EXECUTED_no_fixture_slug,none,optional later
+public_privacy,/{locale}/privacy,ru|en|es|it,guest,non-5xx,N/A,(public)/layout.tsx,phase3a,PASS_all_locales,none,—
+public_terms,/{locale}/terms,ru|en|es|it,guest,non-5xx,N/A,(public)/layout.tsx,phase3a,PASS_all_locales,none,—
+public_other_static,"/{locale}/(about|platform|solutions|workflows|integrations|enterprise|partners|implementation|copilot|mobile|ai-demo|ai-construction-control|api|projects-showcase)",ru|en|es|it,guest,non-5xx,N/A,(public)/layout.tsx,phase3a STATIC_PUBLIC_ROUTES,PASS_all_locales,none,—
+public_unknown_404,/{locale}/this-route-does-not-exist-*,ru|en|es|it,guest,usable localized fallback; no 5xx,N/A,next not-found + intl,phase3a,PASS_all_locales,none,—
+auth_login,/{locale}/login,ru|en|es|it,guest,email/password form; invalid login shows accessible error; next sanitized via sanitizeNextRoute/resolvePostAuthEntry,session → safe next or dashboard,(auth) + entry-routing.ts,phase3a auth-entry; unit sanitizeNextRoute,PASS,none,—
+auth_register,/{locale}/register,ru|en|es|it,guest,reachable; locale preserved with login; post-signup next sanitized,session → sanitized next or dashboard,(auth) + sanitizeNextRoute,phase3a,PASS_entry,none,—
+protected_contractor_dashboard,/{locale}/dashboard,ru|en|es|it,guest,redirect → /{locale}/login?next=...,tenant member dashboard,middleware PROTECTED_PREFIXES,phase3a guest-protection,PASS_guest_redirect,E2E/QA tenant creds for auth proof,3B_authenticated_dashboard_admin_flows
+protected_dashboard_projects,/{locale}/dashboard/projects,ru|en|es|it,guest,redirect → login with next,manager/owner ops,middleware PROTECTED_PREFIXES,phase3a,PASS_guest_redirect,E2E/QA,3B
+protected_unlocalized_dashboard,/dashboard,en via 308 then gate,guest,308 → /en/dashboard → login,same,middleware early /dashboard 308,phase3a,PASS,none,—
+protected_tenant_admin,/{locale}/admin,ru|en|es|it,guest,redirect → login,tenant company admin only (not platform owner),middleware /admin,phase3a,PASS_guest_redirect,QA tenant owner/admin,3B
+protected_client_portal,/{locale}/portal,ru|en|es|it,guest,redirect → login,client/stakeholder (not tenant member),middleware /portal,phase3a,PASS_guest_redirect,QA_CLIENT_*,3C_client_portal_web_flow
+protected_owner_cabinet,/{locale}/owner,ru|en|es|it,guest,redirect → login,platform owner (distinct from tenant owner),isPlatformAdminPagePath,phase3a,PASS_guest_redirect,QA_PLATFORM_OWNER_*,3D_platform_admin_operations_center_flow
+protected_platform_admin,/{locale}/platform-admin,ru|en|es|it,guest,redirect → login,platform owner,isPlatformAdminPagePath + gateOwnerRequest,phase3a,PASS_guest_redirect,QA_PLATFORM_OWNER_*,3D
+protected_operations_center,/{locale}/platform-admin/testing,ru|en|es|it,guest,redirect → login,platform owner read-only OC,isPlatformAdminPagePath,phase3a,PASS_guest_redirect,QA_PLATFORM_OWNER_*,3D
+protected_projects_billing_portfolio_subscribe,/{locale}/(projects|billing|portfolio|subscribe),ru|en|es|it,guest,redirect → login,role-dependent,middleware PROTECTED_PREFIXES,phase3a,PASS_guest_redirect,role creds,3B/3E
+persona_guest,—,all,guest,public OK; protected → login,N/A,middleware,phase3a,PASS,none,—
+persona_tenant_owner,—,all,tenant_owner,N/A_in_3A,dashboard+admin (not platform-admin),RBAC tenant,none_executed,DEFERRED,QA_OWNER_* or E2E_*,3B then 3E
+persona_manager,—,all,manager,N/A_in_3A,contractor dashboard ops,RBAC,none_executed,DEFERRED,QA_MANAGER_*,3B/3E
+persona_worker_member,—,all,worker,N/A_in_3A,limited dashboard/mobile,RBAC,none_executed,DEFERRED,QA_WORKER_*,3E
+persona_client_stakeholder,—,all,client,N/A_in_3A,portal only; no internal finance,portal gates,none_executed,DEFERRED,QA_CLIENT_*,3C/3E
+persona_platform_owner,—,all,platform_owner,N/A_in_3A,platform-admin/OC; not tenant admin substitute,platform_owner_grants,none_executed,DEFERRED,QA_PLATFORM_OWNER_*,3D/3E

@@ -23,13 +23,33 @@ if [[ -f "$REPO_ROOT/apps/web/.env.local" ]]; then
   set +a
 fi
 
-export IOS_E2E_BASE_URL="${IOS_E2E_BASE_URL:-${PILOT_E2E_BASE_URL:-${PILOT_SMOKE_BASE_URL:-https://aistroyka.ai}}}"
-export IOS_E2E_EMAIL="${IOS_E2E_EMAIL:-${SMOKE_EMAIL:-${E2E_EMAIL:-}}}"
-export IOS_E2E_PASSWORD="${IOS_E2E_PASSWORD:-${SMOKE_PASSWORD:-${E2E_PASSWORD:-}}}"
-export IOS_E2E_WORKER_EMAIL="${IOS_E2E_WORKER_EMAIL:-$IOS_E2E_EMAIL}"
-export IOS_E2E_WORKER_PASSWORD="${IOS_E2E_WORKER_PASSWORD:-$IOS_E2E_PASSWORD}"
-export IOS_E2E_MANAGER_EMAIL="${IOS_E2E_MANAGER_EMAIL:-$IOS_E2E_EMAIL}"
-export IOS_E2E_MANAGER_PASSWORD="${IOS_E2E_MANAGER_PASSWORD:-$IOS_E2E_PASSWORD}"
+# Phase 5 must never silently fall back to production or reuse one account as both personas.
+if [[ "${IOS_PHASE5:-}" == "1" ]]; then
+  export IOS_E2E_BASE_URL="${IOS_E2E_BASE_URL:-${PHASE5_BASE_URL:-http://127.0.0.1:3000}}"
+  if [[ -z "${IOS_E2E_WORKER_EMAIL:-}" || -z "${IOS_E2E_WORKER_PASSWORD:-}" \
+     || -z "${IOS_E2E_MANAGER_EMAIL:-}" || -z "${IOS_E2E_MANAGER_PASSWORD:-}" ]]; then
+    echo "ERROR: Phase 5 requires distinct IOS_E2E_WORKER_* and IOS_E2E_MANAGER_* pairs" >&2
+    exit 2
+  fi
+  if [[ "$IOS_E2E_WORKER_EMAIL" == "$IOS_E2E_MANAGER_EMAIL" ]]; then
+    echo "ERROR: Phase 5 forbids reusing one account as Worker and Manager" >&2
+    exit 2
+  fi
+  if [[ "$IOS_E2E_BASE_URL" == *"aistroyka.ai"* && "$IOS_E2E_BASE_URL" != *"127.0.0.1"* && "$IOS_E2E_BASE_URL" != *"localhost"* ]]; then
+    echo "ERROR: Phase 5 refuses production URL silent fallback; set loopback IOS_E2E_BASE_URL" >&2
+    exit 2
+  fi
+else
+  export IOS_E2E_BASE_URL="${IOS_E2E_BASE_URL:-${PILOT_E2E_BASE_URL:-${PILOT_SMOKE_BASE_URL:-https://aistroyka.ai}}}"
+  export IOS_E2E_EMAIL="${IOS_E2E_EMAIL:-${SMOKE_EMAIL:-${E2E_EMAIL:-}}}"
+  export IOS_E2E_PASSWORD="${IOS_E2E_PASSWORD:-${SMOKE_PASSWORD:-${E2E_PASSWORD:-}}}"
+  export IOS_E2E_WORKER_EMAIL="${IOS_E2E_WORKER_EMAIL:-$IOS_E2E_EMAIL}"
+  export IOS_E2E_WORKER_PASSWORD="${IOS_E2E_WORKER_PASSWORD:-$IOS_E2E_PASSWORD}"
+  export IOS_E2E_MANAGER_EMAIL="${IOS_E2E_MANAGER_EMAIL:-$IOS_E2E_EMAIL}"
+  export IOS_E2E_MANAGER_PASSWORD="${IOS_E2E_MANAGER_PASSWORD:-$IOS_E2E_PASSWORD}"
+fi
+export IOS_E2E_EMAIL="${IOS_E2E_EMAIL:-${IOS_E2E_WORKER_EMAIL:-${SMOKE_EMAIL:-${E2E_EMAIL:-}}}}"
+export IOS_E2E_PASSWORD="${IOS_E2E_PASSWORD:-${IOS_E2E_WORKER_PASSWORD:-${SMOKE_PASSWORD:-${E2E_PASSWORD:-}}}}"
 export SMOKE_EMAIL="$IOS_E2E_EMAIL"
 export SMOKE_PASSWORD="$IOS_E2E_PASSWORD"
 
@@ -108,11 +128,19 @@ if [[ ! -f "$IOS_ROOT/Config/Secrets.xcconfig" ]]; then
   exit 2
 fi
 
-UDID="$("$SCRIPT_DIR/ci-pick-iphone-simulator-udid.sh")"
+# Prefer explicit UDID (Phase 5 dedicated simulator). Never silently reuse a busy device.
+if [[ -n "${IOS_E2E_SIMULATOR_UDID:-}" ]]; then
+  UDID="$IOS_E2E_SIMULATOR_UDID"
+elif [[ "${IOS_PHASE5:-}" == "1" ]]; then
+  echo "ERROR: Phase 5 requires IOS_E2E_SIMULATOR_UDID (dedicated AISTROYKA-Phase5-* simulator)" >&2
+  exit 2
+else
+  UDID="$("$SCRIPT_DIR/ci-pick-iphone-simulator-udid.sh")"
+fi
 # Pin simulator explicitly — avoid xcodebuild waiting on a busy physical iPhone.
 DEST="platform=iOS Simulator,id=$UDID"
 echo "Using destination $DEST (simulator $UDID)"
-echo "E2E email: ${IOS_E2E_EMAIL}"
+echo "E2E email: [REDACTED]"
 
 # Fail fast if pilot cannot reach manager /me (avoids long UITest hangs on unauthorized).
 PREFLIGHT_SUPA="${SUPABASE_URL:-${NEXT_PUBLIC_SUPABASE_URL:-}}"

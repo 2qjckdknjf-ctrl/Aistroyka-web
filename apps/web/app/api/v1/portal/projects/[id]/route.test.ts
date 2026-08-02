@@ -72,4 +72,20 @@ describe("GET /api/v1/portal/projects/:id", () => {
     });
     expect(res.status).toBe(500);
   });
+  it("returns 500 when payload contains budget_delta_amount", async () => {
+    vi.mocked(portalService.getPortalProjectView).mockResolvedValue({
+      data: {
+        project: { id: "p1", name: "X", budget_delta_amount: 42 },
+      } as never,
+      error: "",
+    });
+
+    const res = await GET(new Request("https://test/api/v1/portal/projects/p1"), {
+      params: Promise.resolve({ id: "p1" }),
+    });
+    expect(res.status).toBe(500);
+    const body = await res.json();
+    expect(JSON.stringify(body)).not.toContain("budget_delta_amount");
+  });
+
 });

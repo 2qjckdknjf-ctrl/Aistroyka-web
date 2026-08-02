@@ -22,6 +22,10 @@ service = "aistroyka-web-dev"
 [env.dev]
 name = "aistroyka-web-dev"
 
+# Trust cf-connecting-ip only on canonical Worker ingress (never on Vercel/local unless set).
+[env.dev.vars]
+AISTROYKA_TRUST_CF_CONNECTING_IP = "1"
+
 [env.dev.assets]
 directory = ".open-next/assets"
 binding = "ASSETS"
@@ -35,6 +39,9 @@ service = "aistroyka-web-dev"
 # ----------------------------------------
 [env.staging]
 name = "aistroyka-web-staging"
+
+[env.staging.vars]
+AISTROYKA_TRUST_CF_CONNECTING_IP = "1"
 
 [env.staging.assets]
 directory = ".open-next/assets"
@@ -54,6 +61,7 @@ name = "aistroyka-web-production"
 [env.production.vars]
 NEXT_PUBLIC_SUPABASE_URL = "https://vthfrxehrursfloevnlp.supabase.co"
 NEXT_PUBLIC_APP_URL = "https://aistroyka.ai"
+AISTROYKA_TRUST_CF_CONNECTING_IP = "1"
 
 [env.production.assets]
 directory = ".open-next/assets"

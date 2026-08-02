@@ -45,14 +45,20 @@
     "searchPlaceholder": "Buscar…",
     "helpCenter": "Centro de ayuda",
     "dashboardNavigation": "Navegación del panel",
-    "main": "Principal"
+    "main": "Principal",
+    "portalProjects": "Tus proyectos",
+    "portalNavigation": "Navegación del portal del cliente",
+    "customerPortal": "Portal del cliente"
   },
   "portalPage": {
     "title": "Sus proyectos",
     "subtitle": "Portal del cliente: avance, documentos y aprobaciones que comparte su constructor.",
     "loadError": "No se pudieron cargar los proyectos.",
     "empty": "Aún no hay proyectos con un portal de cliente activo.",
-    "openPortal": "Abrir portal"
+    "openPortal": "Abrir portal",
+    "loading": "Cargando proyectos",
+    "accessDenied": "No tienes acceso al portal del cliente.",
+    "retry": "Reintentar"
   },
   "proofShare": {
     "unavailableTitle": "Paquete de pruebas no disponible",
@@ -638,7 +644,8 @@
     "videoDailyRisk": "Nivel de riesgo",
     "videoDailyIssues": "Problemas y riesgos",
     "videoDailyRecommendations": "Recomendaciones",
-    "videoDailyVisibility": "Notas de visibilidad"
+    "videoDailyVisibility": "Notas de visibilidad",
+    "aiCopilot": "Copiloto IA"
   },
   "risk": {
     "low": "Bajo",
@@ -747,7 +754,7 @@
       "pat4": "Análisis fotos",
       "pat5": "Decisiones",
       "mockAssistantUi": "UI simulada del asistente",
-      "mockInterfaceTitle": "Copilot IA — interfaz simulada",
+      "mockInterfaceTitle": "AI Copilot — interfaz de simulación / mock (no es salida live del proveedor)",
       "mockUserMessage": "Usuario: ¿Cuál es el estado del Bloque A esta semana?",
       "mockCopilotMessage": "Copilot: El Bloque A está al 72% completado. 2 reportes pendientes. Un riesgo de retraso (clima). Recomendación: confirmar la aprobación de cimentación antes de la siguiente fase.",
       "mockInputPlaceholder": "Pregunta por el estado del proyecto…",
@@ -1012,7 +1019,7 @@
       "neuralConstructionControl": "Control neural de construcción",
       "heroCardDashboardTitle": "Dashboard",
       "heroCardDashboardSubtitle": "Proyectos, tareas, KPI",
-      "heroCardAiTitle": "AI insights",
+      "heroCardAiTitle": "AI insights (beta)",
       "heroCardAiSubtitle": "Progreso, riesgos, retrasos",
       "heroCardMobileTitle": "Móvil",
       "heroCardMobileSubtitle": "Informes, evidencia",
@@ -1418,7 +1425,7 @@
     "leadDetailTitle": "Detalle del lead",
     "leadDetailSubtitle": "Ver y actualizar estado y notas del lead.",
     "aiCopilotTitle": "Copiloto IA",
-    "aiCopilotSubtitle": "Obtén resúmenes IA, explicación de riesgos y respuestas del proyecto.",
+    "aiCopilotSubtitle": "Beta: resúmenes IA y preguntas del proyecto. Puede usar fallback determinista si el proveedor no está disponible.",
     "projectOverviewSubtitle": "Resumen del proyecto y pestañas operativas.",
     "discussionsTitle": "Discusiones",
     "discussionsSubtitle": "Temas estructurados donde los equipos preguntan y responden con claridad.",
@@ -1440,6 +1447,7 @@
     "thresholdHistoryTitle": "Historial de umbrales"
   },
   "dashboardDetail": {
+    "company": "Empresa",
     "dateRange": "Rango de fechas",
     "search": "Buscar",
     "searchPlaceholder": "Buscar…",
@@ -1787,7 +1795,7 @@
     "linkTypeOptional": "Tipo de vínculo (opcional)",
     "milestone": "Hito",
     "linkedEntityId": "ID de entidad vinculada",
-    "loading": "Cargando…",
+    "loading": "Cargando",
     "couldNotLoadRequests": "No se pudieron cargar las solicitudes.",
     "noRequestsYet": "Aún no hay solicitudes.",
     "markComplete": "Marcar completada",
@@ -2745,7 +2753,9 @@
     "managerActionSource_recommendation": "recommendation",
     "managerActionSource_health": "health",
     "managerActionSource_executive": "executive",
-    "fromExecutiveSummary": "From executive summary"
+    "fromExecutiveSummary": "From executive summary",
+    "aiCopilot": "Copiloto IA",
+    "backToPortalProjects": "← Volver a proyectos del portal"
   },
   "governancePage": {
     "listSubtitle": "Gobernanza y escalaciones entre proyectos activos.",

@@ -48,7 +48,7 @@ export default async function PublicLayout({ children, params }: Props) {
   };
 
   return (
-    <div className="public-ambient-shell flex min-h-screen flex-col bg-aistroyka-bg-primary">
+    <div className="public-ambient-shell flex min-h-screen flex-col overflow-x-clip bg-aistroyka-bg-primary">
       <PublicAmbientField />
       <PublicLiquidGlassRoot />
       <script

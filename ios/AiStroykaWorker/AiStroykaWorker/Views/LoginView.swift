@@ -19,10 +19,16 @@ struct LoginView: View {
 
     private enum Field { case email, password }
 
+    private var credentialsEmpty: Bool {
+        email.isEmpty || password.isEmpty
+    }
+
     var body: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: BrandTokens.space6) {
+            BrandMark(size: 72)
             Text(NSLocalizedString("worker_app_title", comment: ""))
                 .font(.title)
+                .foregroundStyle(BrandTokens.textPrimary)
             TextField(NSLocalizedString("worker_email_placeholder", comment: ""), text: $email)
                 .accessibilityIdentifier("pilot_worker_email")
                 .textContentType(.emailAddress)
@@ -31,9 +37,7 @@ struct LoginView: View {
                 .focused($focusedField, equals: .email)
                 .submitLabel(.next)
                 .onSubmit { focusedField = .password }
-                .padding()
-                .background(Color(.systemGray6))
-                .cornerRadius(8)
+                .brandFieldChrome()
             #if DEBUG
             // Maestro cannot reliably fill SecureField on Simulator; use TextField in Debug for STAGE 4 pilot automation only.
             TextField(NSLocalizedString("worker_password_placeholder", comment: ""), text: $password)
@@ -42,9 +46,7 @@ struct LoginView: View {
                 .focused($focusedField, equals: .password)
                 .submitLabel(.go)
                 .onSubmit { startSignIn() }
-                .padding()
-                .background(Color(.systemGray6))
-                .cornerRadius(8)
+                .brandFieldChrome()
             #else
             SecureField(NSLocalizedString("worker_password_placeholder", comment: ""), text: $password)
                 .accessibilityIdentifier("pilot_worker_password")
@@ -52,31 +54,23 @@ struct LoginView: View {
                 .focused($focusedField, equals: .password)
                 .submitLabel(.go)
                 .onSubmit { startSignIn() }
-                .padding()
-                .background(Color(.systemGray6))
-                .cornerRadius(8)
+                .brandFieldChrome()
             #endif
             if let msg = errorMessage ?? appState.bootstrapAuthError {
                 Text(msg)
                     .font(.caption)
-                    .foregroundColor(.red)
+                    .foregroundStyle(BrandTokens.stateError)
                     .accessibilityIdentifier("pilot_worker_login_error")
             }
-            Button(action: startSignIn) {
+            BrandPrimaryButton(disabled: loading || credentialsEmpty, action: startSignIn) {
                 if loading {
                     ProgressView()
-                        .tint(.white)
+                        .tint(BrandTokens.textOnPrimary)
                 } else {
                     Text(NSLocalizedString("worker_sign_in", comment: ""))
                 }
             }
             .accessibilityIdentifier("pilot_worker_sign_in")
-            .frame(maxWidth: .infinity)
-            .padding()
-            .background(email.isEmpty || password.isEmpty ? Color.gray : Color.accentColor)
-            .foregroundColor(.white)
-            .cornerRadius(8)
-            .disabled(loading || email.isEmpty || password.isEmpty)
             SignInWithAppleButton(.signIn) { request in
                 appleNonce = Self.randomNonce()
                 request.requestedScopes = [.fullName, .email]
@@ -84,11 +78,13 @@ struct LoginView: View {
             } onCompletion: { result in
                 handleAppleSignIn(result)
             }
-            .signInWithAppleButtonStyle(.black)
-            .frame(height: 48)
+            .brandAppleSignInStyle()
+            .frame(height: BrandTokens.touchMin + 4)
             .disabled(loading)
         }
-        .padding(32)
+        .padding(BrandTokens.space8)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .brandPageChrome()
         .onAppear {
             if E2EAutoSignIn.isEnabled {
                 if email.isEmpty, let e = E2EAutoSignIn.email { email = e }

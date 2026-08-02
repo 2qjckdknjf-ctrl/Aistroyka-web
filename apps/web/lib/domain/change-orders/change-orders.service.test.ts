@@ -200,4 +200,43 @@ describe("change-orders.service", () => {
     expect(r.ok).toBe(false);
     expect(r.error).toContain("locked");
   });
+  it("getChangeOrderDetail forcePublic strips manager budget fields", async () => {
+    vi.mocked(policy.canReadChangeOrders).mockResolvedValue(true);
+    vi.mocked(policy.canManageChangeOrders).mockResolvedValue(true);
+    vi.mocked(repo.getById).mockResolvedValue({
+      id: "c1",
+      project_id: "p1",
+      tenant_id: "t1",
+      status: "proposed",
+      title: "X",
+      kind: "other",
+      description: null,
+      schedule_impact_level: "minor_shift",
+      budget_impact_level: "major_increase",
+      schedule_impact_summary: "ok",
+      budget_impact_summary: "secret",
+      schedule_delta_days: 1,
+      budget_delta_amount: 1000,
+      customer_amount_delta: 200,
+      currency: "EUR",
+      linked_discussion_id: null,
+      linked_document_id: null,
+      linked_request_id: null,
+      linked_milestone_id: null,
+      created_by: "u2",
+      implemented_at: null,
+      implemented_by: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+      updated_at: "2026-01-01T00:00:00.000Z",
+    } as never);
+    vi.mocked(repo.listEvents).mockResolvedValue([]);
+
+    const r = await getChangeOrderDetail(supabase, ctx, "p1", "c1", { forcePublic: true });
+    const json = JSON.stringify(r.data);
+    expect(r.error).toBe("");
+    expect(json).not.toContain("budget_delta_amount");
+    expect(json).not.toContain("budget_impact_level");
+    expect(json).toContain("customer_amount_delta");
+  });
+
 });

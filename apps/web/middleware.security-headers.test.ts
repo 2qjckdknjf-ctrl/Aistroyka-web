@@ -30,23 +30,32 @@ vi.mock("next-intl/middleware", () => ({
 }));
 
 import {
-  REQUIRED_API_SECURITY_HEADER_KEYS,
-  REQUIRED_PAGE_SECURITY_HEADER_KEYS,
+  getApiSecurityHeaders,
+  getPageSecurityHeaders,
+  buildCspValue,
 } from "@/lib/security-headers";
 import { middleware } from "./middleware";
 
 function expectApiSecurityHeaders(res: Response): void {
-  for (const key of REQUIRED_API_SECURITY_HEADER_KEYS) {
-    expect(res.headers.get(key), `missing ${key}`).toBeTruthy();
+  for (const { key, value } of getApiSecurityHeaders()) {
+    expect(res.headers.get(key), `missing or wrong ${key}`).toBe(value);
   }
   expect(res.headers.get("Content-Security-Policy")).toBeNull();
+  // Headers whose canonical values have no commas must not be duplicated via join.
+  expect(res.headers.get("X-Frame-Options")).toBe("DENY");
+  expect(res.headers.get("X-Content-Type-Options")).toBe("nosniff");
 }
 
 function expectPageSecurityHeaders(res: Response): void {
-  for (const key of REQUIRED_PAGE_SECURITY_HEADER_KEYS) {
-    expect(res.headers.get(key), `missing ${key}`).toBeTruthy();
+  const expected = getPageSecurityHeaders(process.env.NODE_ENV === "development");
+  for (const { key, value } of expected) {
+    expect(res.headers.get(key), `missing or wrong ${key}`).toBe(value);
   }
-  expect(res.headers.get("Content-Security-Policy")).toContain("default-src 'self'");
+  expect(res.headers.get("Content-Security-Policy")).toBe(
+    buildCspValue(process.env.NODE_ENV === "development")
+  );
+  expect(res.headers.get("X-Frame-Options")).toBe("DENY");
+  expect(res.headers.get("X-Content-Type-Options")).toBe("nosniff");
 }
 
 describe("middleware API security headers", () => {

@@ -85,6 +85,7 @@ export function sanitizeNextRoute(
 export type EntryReason =
   | "explicit_next"
   | "default_dashboard"
+  | "default_portal"
   | "fallback_dashboard";
 
 export type ResolvePostAuthEntryResult = {
@@ -99,6 +100,7 @@ export type ResolvePostAuthEntryResult = {
  * Used by middleware and login page for redirect target.
  *
  * - If next is valid and safe → use it (explicit_next).
+ * - Else if activeRole is stakeholder → portal projects (default_portal).
  * - Otherwise → dashboard for locale (default_dashboard).
  * - Fallback → dashboard (fallback_dashboard).
  *
@@ -109,25 +111,37 @@ export function resolvePostAuthEntry(params: {
   locale: string;
   next?: string | null;
   baseUrl: string;
+  /** When known (e.g. after /api/v1/me), stakeholder defaults to portal home. */
+  activeRole?: string | null;
 }): ResolvePostAuthEntryResult {
-  const { locale, next, baseUrl } = params;
+  const { locale, next, baseUrl, activeRole } = params;
   const validLocale = LOCALES.includes(locale) ? locale : DEFAULT_LOCALE;
-  const defaultPath = `/${validLocale}/dashboard`;
+  const portalHome = `/${validLocale}/portal/projects`;
+  const dashboardHome = `/${validLocale}/dashboard`;
+  const defaultPath = activeRole === "stakeholder" ? portalHome : dashboardHome;
 
   const sanitized = sanitizeNextRoute(next ?? null, baseUrl, locale);
   if (sanitized) {
-    return {
-      path: sanitized,
-      reason: "explicit_next",
-      nextPreserved: true,
-      onboardingShellExpected: sanitized.includes("/dashboard"),
-    };
+    // Stakeholder must not land on contractor dashboard home via legacy next=/dashboard.
+    // Deeper allow-listed paths (e.g. /dashboard/projects/:id/client) remain explicit_next.
+    const pathnameOnly = sanitized.split("?")[0] ?? sanitized;
+    const isContractorDashboardHome = LOCALES.some(
+      (loc) => pathnameOnly === `/${loc}/dashboard` || pathnameOnly === "/dashboard"
+    );
+    if (!(activeRole === "stakeholder" && isContractorDashboardHome)) {
+      return {
+        path: sanitized,
+        reason: "explicit_next",
+        nextPreserved: true,
+        onboardingShellExpected: sanitized.includes("/dashboard"),
+      };
+    }
   }
 
   return {
     path: defaultPath,
-    reason: "default_dashboard",
+    reason: activeRole === "stakeholder" ? "default_portal" : "default_dashboard",
     nextPreserved: false,
-    onboardingShellExpected: true,
+    onboardingShellExpected: activeRole !== "stakeholder",
   };
 }

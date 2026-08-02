@@ -29,7 +29,7 @@ struct HomeContainerView: View {
                     Text(NSLocalizedString("worker_no_projects", comment: ""))
                     Text(NSLocalizedString("worker_no_projects_subtitle", comment: ""))
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(BrandTokens.textSecondary)
                         .multilineTextAlignment(.center)
                 }
                 .padding()
@@ -46,8 +46,8 @@ struct HomeContainerView: View {
                     projectId: selectedProject!.id,
                     dayId: store.state.shift.dayId,
                     draftReportId: nil,
-                    taskId: nil,
-                    taskTitle: nil
+                    taskId: UITestLaunchHooks.e2eTaskId,
+                    taskTitle: UITestLaunchHooks.e2eTaskId == nil ? nil : "Phase5 task"
                 )
                 .accessibilityElement(children: .contain)
                 .accessibilityIdentifier("pilot_worker_e2e_report_draft_shell")

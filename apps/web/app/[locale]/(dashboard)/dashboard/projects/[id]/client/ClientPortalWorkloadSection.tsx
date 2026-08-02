@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Card, Badge, Skeleton } from "@/components/ui";
 import type { WorkloadInboxResult, WorkloadItem } from "@/lib/domain/workload/workload.types";
+import { portalActionHrefOrFallback } from "@/lib/portal/portal-action-url";
 
 async function fetchStakeholderWorkload(): Promise<WorkloadInboxResult> {
   const res = await fetch("/api/v1/workload?audience=stakeholder", { credentials: "include" });
@@ -61,7 +62,10 @@ export function ClientPortalWorkloadSection({ projectId }: { projectId: string }
               <span className="font-medium text-aistroyka-text-primary">{w.title}</span>
             </div>
             <p className="mt-1 text-sm text-aistroyka-text-secondary">{w.reason}</p>
-            <Link href={w.action_url} className="mt-2 inline-block text-sm font-medium text-aistroyka-accent hover:underline">
+            <Link
+              href={portalActionHrefOrFallback(w.action_url)}
+              className="mt-2 inline-block text-sm font-medium text-aistroyka-accent hover:underline"
+            >
               {tDetail("takeAction")}
             </Link>
           </li>

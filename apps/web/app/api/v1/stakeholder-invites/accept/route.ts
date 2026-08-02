@@ -8,6 +8,7 @@ import { notifyProjectManagers } from "@/lib/domain/notifications/manager-notifi
 import { createClient, getSessionUser } from "@/lib/supabase/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { acceptStakeholderInvite } from "@/lib/domain/stakeholders/stakeholders.service";
+import { jsonWithCustomerFinanceGuard } from "@/lib/security/customer-finance-response";
 
 export const dynamic = "force-dynamic";
 
@@ -46,7 +47,7 @@ export async function POST(request: Request) {
     });
   }
 
-  return NextResponse.json({
+  return jsonWithCustomerFinanceGuard("POST /api/v1/stakeholder-invites/accept", {
     data: {
       ...data,
       redirect_path: `/dashboard/projects/${data.project_id}/client`,

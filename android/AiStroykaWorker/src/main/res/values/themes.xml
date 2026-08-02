@@ -1,4 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.AiStroykaWorker" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.AiStroykaWorker" parent="android:Theme.Material.NoActionBar">
+        <item name="android:statusBarColor">@color/aistroyka_bg_primary</item>
+        <item name="android:navigationBarColor">@color/aistroyka_bg_primary</item>
+        <item name="android:windowBackground">@color/aistroyka_bg_primary</item>
+        <item name="android:colorBackground">@color/aistroyka_bg_primary</item>
+        <item name="android:colorPrimary">@color/aistroyka_accent</item>
+        <item name="android:colorPrimaryDark">@color/aistroyka_bg_primary</item>
+        <item name="android:colorAccent">@color/aistroyka_accent</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
 </resources>

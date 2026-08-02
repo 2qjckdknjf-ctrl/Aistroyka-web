@@ -8,7 +8,7 @@ import { NextResponse } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClientFromRequest } from "@/lib/supabase/server";
 import { getAdminClient } from "@/lib/supabase/admin";
-import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
+import { getTenantContextFromRequest, requireTenant, TenantRequiredError, LitePathForbiddenError } from "@/lib/tenant";
 import { getProject } from "@/lib/domain/projects/project.service";
 import { getServerConfig, isOpenAIConfigured } from "@/lib/config/server";
 import { fetchWithOpenAiRetry } from "@/lib/platform/ai/openai-http-retry";
@@ -151,6 +151,12 @@ export async function POST(
   try {
     requireTenant(ctx);
   } catch (e) {
+    if (e instanceof LitePathForbiddenError) {
+      return NextResponse.json(
+        { error: "forbidden", code: "lite_client_path_forbidden" },
+        { status: 403 }
+      );
+    }
     if (e instanceof TenantRequiredError) {
       return NextResponse.json({ error: e.message }, { status: 401 });
     }

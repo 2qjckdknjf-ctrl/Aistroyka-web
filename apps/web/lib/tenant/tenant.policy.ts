@@ -10,6 +10,7 @@ const ROLE_ORDER: Record<string, number> = {
   admin: 3,
   member: 2,
   viewer: 1,
+  stakeholder: 0,
 };
 
 export type ResourceAction =

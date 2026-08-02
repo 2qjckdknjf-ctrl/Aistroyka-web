@@ -1,5 +1,12 @@
 /**
- * Legacy path: same handler as POST /api/v1/ai/transcribe (multipart audio → text).
+ * Legacy transcribe — lite clients forbidden; others redirect to canonical v1.
  */
 
-export { dynamic, POST } from "../../v1/ai/transcribe/route";
+import { redirectLegacyApiToV1 } from "@/lib/api/legacy-redirect";
+
+export const dynamic = "force-dynamic";
+
+/** @deprecated Use POST /api/v1/ai/transcribe */
+export async function POST(request: Request) {
+  return redirectLegacyApiToV1(request);
+}

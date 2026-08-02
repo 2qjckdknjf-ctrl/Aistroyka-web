@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import Shared
 
 struct WorkerOnboardingView: View {
     @ObservedObject private var store = AppStateStoreManager.shared
@@ -36,9 +37,9 @@ struct WorkerOnboardingView: View {
                     Text(NSLocalizedString("worker_onboard_continue", comment: ""))
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.accentColor)
-                        .foregroundColor(.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .background(BrandTokens.actionPrimary)
+                        .foregroundStyle(BrandTokens.textOnPrimary)
+                        .clipShape(RoundedRectangle(cornerRadius: BrandTokens.radiusCard))
                 }
                 .accessibilityIdentifier("worker_onboarding_continue")
 
@@ -47,14 +48,14 @@ struct WorkerOnboardingView: View {
                 } label: {
                     Text(NSLocalizedString("worker_onboard_next", comment: ""))
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(BrandTokens.textSecondary)
                 }
                 .disabled(page >= 2)
                 .opacity(page >= 2 ? 0 : 1)
             }
             .padding()
         }
-        .background(Color(.systemGroupedBackground))
+        .background(BrandTokens.bgPage)
     }
 
     private func onboardingPage(tag: Int, titleKey: String, bodyKey: String) -> some View {
@@ -64,7 +65,7 @@ struct WorkerOnboardingView: View {
                     .font(.title2.bold())
                 Text(NSLocalizedString(bodyKey, comment: ""))
                     .font(.body)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(BrandTokens.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: .infinity, alignment: .leading)

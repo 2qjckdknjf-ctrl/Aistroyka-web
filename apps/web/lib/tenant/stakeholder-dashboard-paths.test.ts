@@ -4,9 +4,9 @@ import { redirectIfStakeholderBlockedPath } from "./stakeholder-dashboard-paths"
 describe("redirectIfStakeholderBlockedPath", () => {
   const base = "https://app.example.com";
 
-  it("redirects dashboard root to projects list", () => {
+  it("redirects dashboard root to portal projects (portal-safe entry)", () => {
     const r = redirectIfStakeholderBlockedPath("/dashboard", "en", base);
-    expect(r?.headers.get("location")).toBe("https://app.example.com/en/dashboard/projects");
+    expect(r?.headers.get("location")).toBe("https://app.example.com/en/portal/projects");
   });
 
   it("redirects project detail to client portal", () => {
@@ -35,17 +35,28 @@ describe("redirectIfStakeholderBlockedPath", () => {
     expect(r?.headers.get("location")).toBe("https://app.example.com/en/portal/projects");
   });
 
-  it("blocks internal dashboard routes", () => {
+  it("blocks internal dashboard routes to portal home", () => {
     const r = redirectIfStakeholderBlockedPath("/dashboard/tasks", "en", base);
-    expect(r?.headers.get("location")).toBe("https://app.example.com/en/dashboard/projects");
+    expect(r?.headers.get("location")).toBe("https://app.example.com/en/portal/projects");
   });
 
-  it("blocks alternate projects shell and billing", () => {
+  it("blocks handover pack and costs under project (not /client)", () => {
+    expect(
+      redirectIfStakeholderBlockedPath("/dashboard/projects/p1/handover/pack", "en", base)?.headers.get(
+        "location"
+      )
+    ).toBe("https://app.example.com/en/portal/projects");
+    expect(
+      redirectIfStakeholderBlockedPath("/dashboard/projects/p1/costs", "en", base)?.headers.get("location")
+    ).toBe("https://app.example.com/en/portal/projects");
+  });
+
+  it("blocks alternate projects shell and billing to portal home", () => {
     expect(redirectIfStakeholderBlockedPath("/projects", "en", base)?.headers.get("location")).toBe(
-      "https://app.example.com/en/dashboard/projects"
+      "https://app.example.com/en/portal/projects"
     );
     expect(redirectIfStakeholderBlockedPath("/billing", "en", base)?.headers.get("location")).toBe(
-      "https://app.example.com/en/dashboard/projects"
+      "https://app.example.com/en/portal/projects"
     );
   });
 });

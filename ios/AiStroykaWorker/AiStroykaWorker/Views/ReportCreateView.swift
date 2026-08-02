@@ -48,7 +48,7 @@ struct ReportCreateView: View {
             if let title = taskTitle, !title.isEmpty {
                 Text(String(format: NSLocalizedString("worker_report_for_task_fmt", comment: ""), title))
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(BrandTokens.textSecondary)
             }
             if draftId == nil {
                 Button(NSLocalizedString("worker_report_create", comment: "")) { enqueueCreateReport() }
@@ -60,7 +60,7 @@ struct ReportCreateView: View {
                 if let rid = reportId {
                     Text(String(format: NSLocalizedString("worker_report_server_id", comment: ""), String(rid.prefix(8))))
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(BrandTokens.textSecondary)
                 }
                 Group {
                     photoPickRow(
@@ -86,7 +86,7 @@ struct ReportCreateView: View {
                     VStack(alignment: .leading, spacing: 6) {
                         Text(NSLocalizedString("worker_report_note_label", comment: ""))
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(BrandTokens.textSecondary)
                         TextField(NSLocalizedString("worker_report_note_placeholder", comment: ""), text: $workerNoteText, axis: .vertical)
                             .lineLimit(3...6)
                             .textFieldStyle(.roundedBorder)
@@ -97,16 +97,51 @@ struct ReportCreateView: View {
                         .accessibilityIdentifier("pilot_worker_submit_report")
                 }
             }
-            if let err = errorMessage { Text(err).foregroundColor(.red).font(.caption) }
+            if let err = errorMessage { Text(err).foregroundStyle(BrandTokens.stateError).font(.caption) }
             if submitEnqueued && !submitted && !submitFailed {
-                Text(NSLocalizedString("worker_submit_queued", comment: "")).foregroundColor(.green)
+                Text(NSLocalizedString("worker_submit_queued", comment: "")).foregroundStyle(BrandTokens.stateSuccess)
             }
-            if submitted { Text(NSLocalizedString("worker_submitted", comment: "")).foregroundColor(.green) }
+            if submitted {
+                Text(NSLocalizedString("worker_submitted", comment: ""))
+                    .foregroundStyle(BrandTokens.stateSuccess)
+                    .accessibilityIdentifier("pilot_worker_report_submitted")
+            }
+            #if DEBUG
+            if UITestLaunchHooks.isE2EEnabled {
+                let pending = opStore.operations.filter { $0.state == .queued || $0.state == .running }.count
+                Text("queue_pending=\(pending)")
+                    .font(.caption2)
+                    .foregroundStyle(BrandTokens.textSecondary)
+                    .accessibilityIdentifier("pilot_worker_queue_pending_count")
+                if OperationQueueExecutor.shared.isPaused {
+                    Text("queue_paused")
+                        .font(.caption2)
+                        .accessibilityIdentifier("pilot_worker_queue_paused")
+                    Button("Resume queue") {
+                        OperationQueueExecutor.shared.resumeQueue()
+                    }
+                    .accessibilityIdentifier("pilot_worker_queue_resume")
+                }
+                if let failed = opStore.operations.first(where: { $0.state == .failed_permanent }) {
+                    Text("op_failed=\(failed.type.rawValue):\(failed.lastErrorMessage ?? failed.lastErrorCode ?? "?")")
+                        .font(.caption2)
+                        .foregroundStyle(BrandTokens.stateError)
+                        .accessibilityIdentifier("pilot_worker_queue_failed_op")
+                }
+                if UITestLaunchHooks.e2eInjectSyntheticMedia, draftId != nil, beforeItemId == nil || afterItemId == nil {
+                    Button("Inject E2E media") {
+                        injectE2ESyntheticMediaIfNeeded()
+                    }
+                    .accessibilityIdentifier("pilot_worker_e2e_inject_media")
+                }
+            }
+            #endif
         }
         .padding()
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("pilot_worker_report_compose")
         .navigationTitle(NSLocalizedString("worker_new_report", comment: ""))
+        .brandScrollChrome()
         .navigationBarTitleDisplayMode(.inline)
         .confirmationDialog(NSLocalizedString("worker_photo_dialog_before", comment: ""), isPresented: $showImageSourceBefore) {
             Button(NSLocalizedString("worker_take_photo", comment: "")) { showCameraBefore = true }
@@ -127,7 +162,25 @@ struct ReportCreateView: View {
                 draftId = draft
                 reportId = opStore.operation(id: createReportOpId(draftId: draft))?.resultReportId
                 store.save { $0.draftReportId = draft }
+            } else if UITestLaunchHooks.e2ePreserveQueue, draftId == nil {
+                restoreDraftFromDurableQueueIfNeeded()
             }
+            if let note = UITestLaunchHooks.e2eWorkerNote, workerNoteText.isEmpty {
+                workerNoteText = note
+            }
+            if let tid = taskId {
+                store.save { $0.draftTaskId = tid }
+            }
+            #if DEBUG
+            if UITestLaunchHooks.e2ePauseQueue {
+                OperationQueueExecutor.shared.pauseQueue()
+            } else {
+                OperationQueueExecutor.shared.runLoop()
+            }
+            if UITestLaunchHooks.e2eInjectSyntheticMedia, draftId != nil {
+                injectE2ESyntheticMediaIfNeeded()
+            }
+            #endif
         }
         .onChange(of: opStore.operations) { _ in
             if let did = draftId {
@@ -382,4 +435,63 @@ struct ReportCreateView: View {
     private func todayDayId() -> String {
         ISO8601DateFormatter().string(from: Date()).prefix(10).replacingOccurrences(of: "-", with: "")
     }
+
+    private func restoreDraftFromDurableQueueIfNeeded() {
+        if let stored = store.state.draftReportId, !stored.isEmpty {
+            draftId = stored
+            reportId = opStore.operation(id: createReportOpId(draftId: stored))?.resultReportId
+        } else {
+            let createOps = opStore.operations.filter { $0.type == .createReport }
+            guard let latest = createOps.sorted(by: { $0.createdAt > $1.createdAt }).first else { return }
+            let prefix = "createReport-"
+            guard latest.id.hasPrefix(prefix) else { return }
+            let did = String(latest.id.dropFirst(prefix.count))
+            draftId = did
+            reportId = latest.resultReportId
+            store.save { $0.draftReportId = did }
+        }
+        // Rehydrate photo item ids from createSession purpose payloads.
+        for op in opStore.operations where op.type == .createUploadSession {
+            let photoId = op.id.replacingOccurrences(of: "createSession-", with: "")
+            guard !photoId.isEmpty else { continue }
+            if op.payload.purpose == "report_before", beforeItemId == nil {
+                beforeItemId = photoId
+            } else if op.payload.purpose == "report_after", afterItemId == nil {
+                afterItemId = photoId
+            }
+        }
+    }
+
+    #if DEBUG
+    /// Phase 5: synthetic solid-color JPEGs enter the same addPhoto → queue → signed upload path as picker photos.
+    private func injectE2ESyntheticMediaIfNeeded() {
+        guard UITestLaunchHooks.isE2EEnabled, UITestLaunchHooks.e2eInjectSyntheticMedia else { return }
+        guard draftId != nil else { return }
+        if beforeItemId == nil {
+            let before = makeE2ESolidJPEG(color: BrandTokens.uiSurface, seed: 1)
+            beforeImage = before
+            addPhoto(purpose: "report_before", image: before) { beforeItemId = $0 }
+        }
+        if afterItemId == nil {
+            let after = makeE2ESolidJPEG(color: BrandTokens.uiBgPage, seed: 2)
+            afterImage = after
+            addPhoto(purpose: "report_after", image: after) { afterItemId = $0 }
+        }
+    }
+
+    private func makeE2ESolidJPEG(color: UIColor, seed: Int) -> UIImage {
+        let size = CGSize(width: 320 + seed, height: 240 + seed)
+        let renderer = UIGraphicsImageRenderer(size: size)
+        let markerColor = BrandTokens.uiTextPrimary
+        return renderer.image { ctx in
+            color.setFill()
+            ctx.fill(CGRect(origin: .zero, size: size))
+            let marker = "P5-\(seed)" as NSString
+            marker.draw(at: CGPoint(x: 12, y: 12), withAttributes: [
+                .font: UIFont.boldSystemFont(ofSize: 28),
+                .foregroundColor: markerColor,
+            ])
+        }
+    }
+    #endif
 }

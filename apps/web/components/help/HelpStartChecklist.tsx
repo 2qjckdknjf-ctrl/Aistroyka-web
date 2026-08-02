@@ -15,7 +15,7 @@ import {
 } from "@/lib/help/launch-steps";
 
 async function fetchActivationStatus(): Promise<ActivationStatusResponse> {
-  const res = await fetch("/api/activation/status", { credentials: "include" });
+  const res = await fetch("/api/v1/activation/status", { credentials: "include" });
   if (!res.ok) return {};
   return (await res.json()) as ActivationStatusResponse;
 }
@@ -90,7 +90,7 @@ export function HelpStartChecklist() {
           return (
             <li key={step.key} className="flex items-center justify-between gap-3 rounded-[var(--aistroyka-radius-md)] border border-aistroyka-border-subtle px-3 py-2">
               <div className="flex items-center gap-2">
-                <span className={done ? "text-green-600" : "text-aistroyka-text-tertiary"} aria-hidden>
+                <span className={done ? "text-aistroyka-success" : "text-aistroyka-text-tertiary"} aria-hidden>
                   {done ? "✓" : "○"}
                 </span>
                 <span className={done ? "text-aistroyka-text-primary" : "text-aistroyka-text-secondary"}>

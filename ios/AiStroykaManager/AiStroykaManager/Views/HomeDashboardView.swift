@@ -22,13 +22,14 @@ struct HomeDashboardView: View {
                 if isLoading && overview == nil {
                     LoadingStateView(message: NSLocalizedString("mgr_loading_dashboard", comment: ""))
                 } else if let err = errorMessage, overview == nil {
-                    ErrorStateView(message: err, retry: { load() })
+                    ErrorStateView(message: err, retryTitle: NSLocalizedString("mgr_retry", comment: ""), retry: { load() })
                 } else {
                     content
                 }
             }
-            .background(Color(.systemGroupedBackground))
+            .background(BrandTokens.bgPage)
             .navigationTitle(NSLocalizedString("mgr_nav_home", comment: ""))
+            .brandScrollChrome()
             .refreshable { await loadAsync() }
             .onAppear { loadIfNeeded() }
         }
@@ -37,7 +38,7 @@ struct HomeDashboardView: View {
     private var content: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                managerStartGuidanceCard
+                BrandCard { managerStartGuidanceCard }
                 if let kpis = overview?.kpis {
                     kpiSection(kpis)
                 }
@@ -61,7 +62,7 @@ struct HomeDashboardView: View {
                 )
             )
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(BrandTokens.textSecondary)
 
             Text("\(launchDone(activationStatus?.getStarted?.createProject) ? "✓" : "○") \(NSLocalizedString("mgr_start_step_1", comment: ""))")
                 .font(.subheadline)
@@ -77,7 +78,7 @@ struct HomeDashboardView: View {
             if let guideSummary, !guideSummary.isEmpty {
                 Text(guideSummary)
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(BrandTokens.textSecondary)
             }
             if let guideConfidence {
                 Text(
@@ -91,10 +92,10 @@ struct HomeDashboardView: View {
             if helpHints.isEmpty {
                 Text("• \(NSLocalizedString("mgr_ai_hint_1", comment: ""))")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(BrandTokens.textSecondary)
                 Text("• \(NSLocalizedString("mgr_ai_hint_2", comment: ""))")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(BrandTokens.textSecondary)
             } else {
                 ForEach(Array(helpHints.prefix(2).enumerated()), id: \.offset) { _, hint in
                     Text("• \(hint.title)")
@@ -102,7 +103,7 @@ struct HomeDashboardView: View {
                     if !hint.reason.isEmpty {
                         Text(hint.reason)
                             .font(.caption2)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(BrandTokens.textSecondary)
                     }
                 }
             }
@@ -116,14 +117,11 @@ struct HomeDashboardView: View {
                         .font(.caption)
                     Text(signal.detail)
                         .font(.caption2)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(BrandTokens.textSecondary)
                 }
             }
         }
-        .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
     private func kpiSection(_ kpis: OpsOverviewDTO.OpsOverviewKpis) -> some View {
@@ -149,55 +147,58 @@ struct HomeDashboardView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(NSLocalizedString("mgr_overdue_tasks", comment: ""))
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(BrandTokens.textSecondary)
                     ForEach(Array(overdue.prefix(5)), id: \.id) { t in
                         NavigationLink(destination: TaskDetailManagerView(taskId: t.id ?? "")) {
                             Text(t.title ?? t.id ?? "")
                                 .font(.caption)
-                                .foregroundStyle(.primary)
+                                .foregroundStyle(BrandTokens.textPrimary)
                         }
                     }
                 }
-                .padding()
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color(.secondarySystemGroupedBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .padding(BrandTokens.space4)
+                .background(BrandTokens.surface)
+                .overlay(RoundedRectangle(cornerRadius: BrandTokens.radiusCard, style: .continuous).stroke(BrandTokens.borderSubtle.opacity(0.8), lineWidth: 1))
+                .clipShape(RoundedRectangle(cornerRadius: BrandTokens.radiusCard, style: .continuous))
             }
             if let openToday = queues.tasksOpenToday, !openToday.isEmpty {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(NSLocalizedString("mgr_due_today", comment: ""))
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(BrandTokens.textSecondary)
                     ForEach(Array(openToday.prefix(5)), id: \.id) { t in
                         NavigationLink(destination: TaskDetailManagerView(taskId: t.id ?? "")) {
                             Text(t.title ?? t.id ?? "")
                                 .font(.caption)
-                                .foregroundStyle(.primary)
+                                .foregroundStyle(BrandTokens.textPrimary)
                         }
                     }
                 }
-                .padding()
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color(.secondarySystemGroupedBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .padding(BrandTokens.space4)
+                .background(BrandTokens.surface)
+                .overlay(RoundedRectangle(cornerRadius: BrandTokens.radiusCard, style: .continuous).stroke(BrandTokens.borderSubtle.opacity(0.8), lineWidth: 1))
+                .clipShape(RoundedRectangle(cornerRadius: BrandTokens.radiusCard, style: .continuous))
             }
             if let pending = queues.reportsPendingReview, !pending.isEmpty {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(NSLocalizedString("mgr_reports_pending", comment: ""))
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(BrandTokens.textSecondary)
                     ForEach(Array(pending.prefix(5)), id: \.id) { r in
                         NavigationLink(destination: ReportDetailReviewView(reportId: r.id ?? "")) {
                             Text(r.id ?? "")
                                 .font(.caption)
-                                .foregroundStyle(.primary)
+                                .foregroundStyle(BrandTokens.textPrimary)
                         }
                     }
                 }
-                .padding()
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color(.secondarySystemGroupedBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .padding(BrandTokens.space4)
+                .background(BrandTokens.surface)
+                .overlay(RoundedRectangle(cornerRadius: BrandTokens.radiusCard, style: .continuous).stroke(BrandTokens.borderSubtle.opacity(0.8), lineWidth: 1))
+                .clipShape(RoundedRectangle(cornerRadius: BrandTokens.radiusCard, style: .continuous))
             }
         }
     }

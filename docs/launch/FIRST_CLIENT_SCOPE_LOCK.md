@@ -1,7 +1,11 @@
 # First-client launch — scope lock (STAGE 0)
 
-**Program:** Controlled first-client delivery (Aistroyka)  
-**Date locked:** 2026-03-24  
+> **SUPERSEDED for first-pilot Android scope (2026-07-03 / reconfirmed 2026-07-30).**
+> Active program policy is **P3 Option A — defer Android** (`docs/mobile/P3_ANDROID_DEFER_DECISION.md`, Phase 6 closure).
+> This 2026-03-24 lock remains a historical STAGE-0 snapshot. Do **not** treat its “Android mandatory” line as current first-pilot authorization.
+
+**Program:** Controlled first-client delivery (Aistroyka)
+**Date locked:** 2026-03-24
 **Business constraint (external):** First client waiting; **1-week delivery pressure**; **Android + iOS** both mandatory for Manager and Worker; operational contour **Worker → report/media → AI analysis → Manager review/action**.
 
 ## 1. Strategic override (authoritative for execution)
@@ -21,13 +25,13 @@
 
 ## 3. Out of scope (explicit deferrals)
 
-- Customer module, broad B2B2C surfaces  
-- Budget/cost expansion  
-- Broad documents/contracts platform  
-- Giant redesign or speculative refactors  
-- Unrelated AI expansion beyond what the contour needs  
-- Feature parity beyond launch-critical flows  
-- Nonessential UX polish  
+- Customer module, broad B2B2C surfaces
+- Budget/cost expansion
+- Broad documents/contracts platform
+- Giant redesign or speculative refactors
+- Unrelated AI expansion beyond what the contour needs
+- Feature parity beyond launch-critical flows
+- Nonessential UX polish
 
 ## 4. Product truth vs must-have list (critical gaps identified in repo)
 
@@ -55,8 +59,8 @@ The program’s bullet list includes **video** and **text comment** on the Worke
 
 STAGE 1 (Android Worker rescue) may close only when:
 
-1. Android Worker is no longer a stub: real auth, config, and **calls to actual `/api/v1` worker contracts** for the report pipeline.  
-2. Documented validation (`STAGE1_ANDROID_WORKER_VALIDATION.md`) has been run; failures triaged.  
+1. Android Worker is no longer a stub: real auth, config, and **calls to actual `/api/v1` worker contracts** for the report pipeline.
+2. Documented validation (`STAGE1_ANDROID_WORKER_VALIDATION.md`) has been run; failures triaged.
 3. Post-audit (`STAGE1_ANDROID_WORKER_POST_AUDIT.md`) answers FULLY / PARTIAL / OPEN + P0–P2 and **YES/NO** for next stage.
 
 ---

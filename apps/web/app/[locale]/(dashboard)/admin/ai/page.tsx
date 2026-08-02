@@ -1,8 +1,12 @@
+import { headers } from "next/headers";
 import { Card } from "@/components/ui";
 import { Link } from "@/i18n/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { resolveAdminPageTenantScope } from "@/src/features/admin/auth/resolveAdminPageTenantScope";
 import { AdminAiOverviewClient } from "./AdminAiOverviewClient";
 
-export default function AdminAiPage() {
+export default async function AdminAiPage() {
+  const scope = await resolveAdminPageTenantScope(await createClient(), await headers());
   return (
     <>
       <Card className="mb-6 border-l-4 border-l-aistroyka-accent">
@@ -10,7 +14,7 @@ export default function AdminAiPage() {
           AI Observability
         </h1>
         <p className="mt-1 text-aistroyka-subheadline text-aistroyka-text-secondary">
-          Usage, SLO, breaker state, and recent issues. Tenant-scoped; owner/admin only.
+          Usage, SLO, breaker state, and recent issues. Scoped to the active tenant; owner/admin only.
         </p>
         <p className="mt-3 flex flex-wrap gap-4">
           <Link href="/admin/ai/security" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">
@@ -28,7 +32,7 @@ export default function AdminAiPage() {
           </span>
         </p>
       </Card>
-      <AdminAiOverviewClient />
+      <AdminAiOverviewClient activeTenantId={scope.tenantId} />
     </>
   );
 }

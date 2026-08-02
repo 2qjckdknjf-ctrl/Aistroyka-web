@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.AiStroykaManager" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:statusBarColor">@color/aistroyka_bg_primary</item>
+        <item name="android:navigationBarColor">@color/aistroyka_bg_primary</item>
+        <item name="android:windowBackground">@color/aistroyka_bg_primary</item>
+        <item name="android:colorBackground">@color/aistroyka_bg_primary</item>
+        <item name="colorPrimary">@color/aistroyka_accent</item>
+        <item name="colorPrimaryDark">@color/aistroyka_bg_primary</item>
+        <item name="colorAccent">@color/aistroyka_accent</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+    </style>
+</resources>

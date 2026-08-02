@@ -13,6 +13,6 @@ struct SectionHeaderView: View {
     var body: some View {
         Text(title)
             .font(.headline)
-            .foregroundStyle(.primary)
+            .foregroundStyle(ManagerSemanticColors.textPrimary)
     }
 }

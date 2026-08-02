@@ -18,7 +18,7 @@ struct ProjectsListView: View {
                     LoadingStateView(message: NSLocalizedString("mgr_loading_projects", comment: ""))
                         .accessibilityIdentifier("pilot_manager_projects_loading")
                 } else if let err = errorMessage, projects.isEmpty {
-                    ErrorStateView(message: err, retry: { load() })
+                    ErrorStateView(message: err, retryTitle: NSLocalizedString("mgr_retry", comment: ""), retry: { load() })
                 } else if projects.isEmpty {
                     EmptyStateView(
                         title: NSLocalizedString("mgr_no_projects_yet", comment: ""),
@@ -36,6 +36,7 @@ struct ProjectsListView: View {
                 }
             }
             .navigationTitle(NSLocalizedString("mgr_tab_projects", comment: ""))
+            .brandScrollChrome()
             .refreshable { await loadAsync() }
             .onAppear { loadIfNeeded() }
         }
@@ -71,7 +72,7 @@ struct ProjectDetailPlaceholderView: View {
             Text(String(format: NSLocalizedString("mgr_project_fmt", comment: ""), name))
             Text(String(format: NSLocalizedString("mgr_id_fmt", comment: ""), projectId))
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(BrandTokens.textSecondary)
         }
         .navigationTitle(name)
     }

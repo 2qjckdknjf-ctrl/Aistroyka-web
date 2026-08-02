@@ -5,12 +5,12 @@ import { getAdminClient } from "@/lib/supabase/admin";
 import { DashboardShell } from "@/components/DashboardShell";
 import { requireAdmin } from "@/src/features/admin/auth/requireAdmin";
 import { routing } from "@/i18n/routing";
-import { getTenantForCurrentUser } from "@/lib/api/engine";
-import { hasMinRole } from "@/lib/auth/tenant";
 import {
   getActiveSubscriptionStateForUser,
   isDashboardSubscriptionGateEnforced,
 } from "@/lib/platform/billing/subscription-gate";
+import { getActiveTenantRoleForUser } from "@/lib/tenant/tenant-role.server";
+import { isPortalOnlyShellFromRole } from "@/components/dashboard-nav.utils";
 
 /**
  * Tenant-aware layout for all authenticated routes.
@@ -83,29 +83,42 @@ export default async function DashboardLayout({
       redirect(subscribeRedirect);
     }
 
+    // Portal-only shell from active-tenant role (not pathname). Admin/team nav share the same active-tenant contract.
     let isAdmin = false;
     let canManageTeam = false;
+    let portalOnly = false;
     try {
-      const adminResult = await requireAdmin(supabase);
-      isAdmin = adminResult.allowed;
+      const headersList = await headers();
+      const activeRole = await getActiveTenantRoleForUser(supabase, user.id, headersList);
+      portalOnly = isPortalOnlyShellFromRole(activeRole);
+      if (!portalOnly) {
+        const adminResult = await requireAdmin(supabase, headersList);
+        isAdmin = adminResult.allowed;
+        canManageTeam = adminResult.allowed;
+      }
       if (process.env.NODE_ENV !== "production") {
-        console.info("[dashboard layout] requireAdmin resolved", { isAdmin });
+        console.info("[dashboard layout] shell resolved", {
+          portalOnly,
+          isAdmin,
+          hasRole: !!activeRole,
+        });
       }
     } catch (e) {
       if (process.env.NODE_ENV !== "production") {
-        console.error("[dashboard layout] requireAdmin failed", e instanceof Error ? e.message : String(e));
+        console.error("[dashboard layout] shell role failed", e instanceof Error ? e.message : String(e));
       }
-    }
-
-    try {
-      const tenantId = await getTenantForCurrentUser(supabase);
-      canManageTeam = tenantId ? await hasMinRole(supabase, tenantId, "admin") : false;
-    } catch {
+      isAdmin = false;
       canManageTeam = false;
+      portalOnly = false;
     }
 
     return (
-      <DashboardShell userEmail={user.email ?? undefined} isAdmin={isAdmin} canManageTeam={canManageTeam}>
+      <DashboardShell
+        userEmail={user.email ?? undefined}
+        isAdmin={isAdmin}
+        canManageTeam={canManageTeam}
+        portalOnly={portalOnly}
+      >
         {children}
       </DashboardShell>
     );

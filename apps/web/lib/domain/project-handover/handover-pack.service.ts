@@ -95,7 +95,7 @@ function sectionsFromClientView(
       approved: docApproved,
       pending: docPending,
     }),
-    href: `/dashboard/projects/${projectId}?tab=documents`,
+    href: clientBase,
   });
 
   if (view.customer_estimates.length > 0) {

@@ -330,13 +330,13 @@ export function formatDeployShaForDiagnostics(dashboard: RomaQualityDashboard): 
 export function healthBucketDotClass(bucket: HealthBucket): string {
   switch (bucket) {
     case "critical":
-      return "bg-red-500";
+      return "bg-aistroyka-error";
     case "warning":
-      return "bg-amber-500";
+      return "bg-aistroyka-warning";
     case "unknown":
-      return "bg-gray-400";
+      return "bg-aistroyka-text-tertiary";
     case "healthy":
-      return "bg-emerald-500";
+      return "bg-aistroyka-success";
     default: {
       const _exhaustive: never = bucket;
       return _exhaustive;

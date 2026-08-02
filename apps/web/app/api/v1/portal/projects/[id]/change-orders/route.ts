@@ -4,12 +4,7 @@
 
 import { NextResponse } from "next/server";
 import { createClientFromRequest } from "@/lib/supabase/server";
-import {
-  getTenantContextFromRequest,
-  requireTenant,
-  TenantRequiredError,
-  TenantForbiddenError,
-} from "@/lib/tenant";
+import { getTenantContextFromRequest, requireTenant, TenantRequiredError, TenantForbiddenError, LitePathForbiddenError } from "@/lib/tenant";
 import { listChangeOrders } from "@/lib/domain/change-orders/change-orders.service";
 import { assertCustomerFinanceSafePayload } from "@/lib/security/customer-finance-guard";
 
@@ -29,12 +24,19 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
   try {
     requireTenant(ctx);
   } catch (e) {
+    if (e instanceof LitePathForbiddenError) {
+      return NextResponse.json(
+        { error: "forbidden", code: "lite_client_path_forbidden" },
+        { status: 403 }
+      );
+    }
     if (e instanceof TenantRequiredError) return NextResponse.json({ error: e.message }, { status: 401 });
     throw e;
   }
 
   const supabase = await createClientFromRequest(request);
-  const { data, error } = await listChangeOrders(supabase, ctx, projectId);
+  // Portal is always a customer surface — never return manager-internal CO rows.
+  const { data, error } = await listChangeOrders(supabase, ctx, projectId, { forcePublic: true });
   if (error === "Insufficient rights") return NextResponse.json({ error }, { status: 403 });
   const payload = { data: data ?? [] };
   const safety = assertCustomerFinanceSafePayload(payload);

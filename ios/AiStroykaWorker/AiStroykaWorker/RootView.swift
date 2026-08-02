@@ -12,19 +12,29 @@ struct RootView: View {
 
     var body: some View {
         Group {
-            if UITestLaunchHooks.isE2EEnabled, appState.isE2EBootstrapping {
+            if let preview = DesignPreview.screen {
+                DesignPreviewRoot(screen: preview, appTitle: "AiStroyka Worker")
+            } else if UITestLaunchHooks.isE2EEnabled, appState.isE2EBootstrapping {
                 ProgressView(NSLocalizedString("worker_signing_in", comment: ""))
                     .accessibilityIdentifier("pilot_worker_e2e_bootstrapping")
             } else if appState.isLoggedIn {
                 if UITestLaunchHooks.isE2EEnabled,
-                   UITestLaunchHooks.e2eOpenReportDraft,
-                   let projectId = UITestLaunchHooks.e2eProjectId {
+                   UITestLaunchHooks.e2eOpenResubmit,
+                   let reportId = UITestLaunchHooks.e2eReportId {
+                    NavigationStack {
+                        ReportResubmitView(reportId: reportId)
+                    }
+                    .accessibilityElement(children: .contain)
+                    .accessibilityIdentifier("pilot_worker_e2e_resubmit_shell")
+                } else if UITestLaunchHooks.isE2EEnabled,
+                          UITestLaunchHooks.e2eOpenReportDraft,
+                          let projectId = UITestLaunchHooks.e2eProjectId {
                     ReportCreateView(
                         projectId: projectId,
                         dayId: store.state.shift.dayId,
                         draftReportId: nil,
-                        taskId: nil,
-                        taskTitle: nil
+                        taskId: UITestLaunchHooks.e2eTaskId,
+                        taskTitle: UITestLaunchHooks.e2eTaskId == nil ? nil : "Phase5 task"
                     )
                     .accessibilityElement(children: .contain)
                     .accessibilityIdentifier("pilot_worker_e2e_report_draft_shell")
@@ -37,7 +47,9 @@ struct RootView: View {
                 LoginView()
             }
         }
+        .brandPageChrome()
         .onAppear {
+            BrandTokens.applyGlobalListChrome()
             Task { @MainActor in
                 if UITestLaunchHooks.isE2EEnabled {
                     appState.isE2EBootstrapping = true
@@ -47,6 +59,9 @@ struct RootView: View {
                 await APIClient.shared.setTokenProvider { await AuthService.shared.getAccessToken() }
                 if UITestLaunchHooks.isE2EEnabled {
                     await performWorkerE2EAutoSignInIfNeeded(appState: appState)
+                    if UITestLaunchHooks.e2ePauseQueue {
+                        OperationQueueExecutor.shared.pauseQueue()
+                    }
                     appState.isE2EBootstrapping = false
                 } else {
                     appState.checkSession()

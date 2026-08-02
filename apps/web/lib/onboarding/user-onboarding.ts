@@ -1,5 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getTenantForCurrentUser } from "@/lib/api/engine";
+import { resolveTenantForCurrentUser } from "@/lib/api/engine";
+import {
+  isActiveTenantResolutionBlocked,
+  type ActiveTenantRequestLike,
+} from "@/lib/tenant/active-tenant";
 
 export const ONBOARDING_PERSONAS = [
   "customer",
@@ -42,14 +46,22 @@ export async function getOnboardingProfile(
   };
 }
 
+/**
+ * Whether to prompt onboarding UI.
+ * Fail-closed: rejected explicit tenant / query errors never look like "no workspace → onboard".
+ */
 export async function shouldShowOnboarding(
   supabase: SupabaseClient,
-  userId: string
+  userId: string,
+  requestLike?: ActiveTenantRequestLike | null
 ): Promise<boolean> {
-  const [profile, tenantId] = await Promise.all([
+  const [profile, active] = await Promise.all([
     getOnboardingProfile(supabase, userId),
-    getTenantForCurrentUser(supabase),
+    resolveTenantForCurrentUser(supabase, requestLike),
   ]);
+  if (isActiveTenantResolutionBlocked(active)) return false;
+
+  const tenantId = active.tenantId;
   if (!profile) return !tenantId;
   if (!profile.onboarding_completed) return true;
   if (!tenantId && profile.persona !== "customer") return true;

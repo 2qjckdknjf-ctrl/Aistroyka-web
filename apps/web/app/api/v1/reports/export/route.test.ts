@@ -20,12 +20,14 @@ const generateReportsExportCsv = vi.fn().mockResolvedValue("report_id,project_id
 
 const hoisted = vi.hoisted(() => ({
   TenantRequiredError: class TenantRequiredError extends Error {},
+  LitePathForbiddenError: class LitePathForbiddenError extends Error {},
 }));
 
 vi.mock("@/lib/tenant", () => ({
   getTenantContextFromRequest: (...args: unknown[]) => getTenantContextFromRequest(...args),
   requireTenant: (...args: unknown[]) => requireTenant(...args),
   TenantRequiredError: hoisted.TenantRequiredError,
+  LitePathForbiddenError: hoisted.LitePathForbiddenError,
 }));
 
 vi.mock("@/lib/supabase/server", () => ({

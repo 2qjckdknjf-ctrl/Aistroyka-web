@@ -62,7 +62,8 @@ export function PublicHeader() {
           <Logo href="/" variant="wordmark" height={40} className="hidden shrink-0 sm:inline-flex" />
           <Logo href="/" variant="icon" className="inline-flex shrink-0 sm:hidden" />
 
-          <nav className="hidden min-w-0 items-center gap-1 md:flex" aria-label={t("main")}>
+          {/* lg+: desktop nav. md (tablet ~768) overflows PRIMARY_NAV + CTAs horizontally. */}
+          <nav className="hidden min-w-0 items-center gap-1 lg:flex" aria-label={t("main")}>
             {PRIMARY_NAV.map(({ href, key }) => {
               const isActive = pathname === href || pathname.startsWith(`${href}/`);
               return (
@@ -73,7 +74,7 @@ export function PublicHeader() {
             })}
           </nav>
 
-          <div className="hidden min-w-0 flex-wrap items-center justify-end gap-2 md:flex">
+          <div className="hidden min-w-0 flex-wrap items-center justify-end gap-2 lg:flex">
             <GlassLink href="/contact" intensity="subtle" linkClassName="text-sm">
               {t("contactUs")}
             </GlassLink>
@@ -85,7 +86,7 @@ export function PublicHeader() {
             </GlassLink>
           </div>
 
-          <div className="flex items-center gap-1 md:hidden">
+          <div className="flex items-center gap-1 lg:hidden">
             <Link
               href="/dashboard"
               className="inline-flex min-h-[var(--aistroyka-touch-min)] items-center rounded-[var(--aistroyka-radius-lg)] px-3 py-2 text-[var(--aistroyka-font-caption)] font-semibold text-aistroyka-accent outline-none hover:bg-aistroyka-surface-raised focus-visible:ring-2 focus-visible:ring-[var(--aistroyka-focus)]"
@@ -114,7 +115,7 @@ export function PublicHeader() {
 
         <div
           id="mobile-menu"
-          className={`surface-glass-popover mt-2 rounded-[var(--aistroyka-radius-xl)] md:hidden ${mobileMenuOpen ? "block" : "hidden"}`}
+          className={`surface-glass-popover mt-2 rounded-[var(--aistroyka-radius-xl)] lg:hidden ${mobileMenuOpen ? "block" : "hidden"}`}
           aria-hidden={!mobileMenuOpen}
         >
           <nav className="flex flex-col gap-0.5 px-4 py-4" aria-label={t("mainMobile")}>

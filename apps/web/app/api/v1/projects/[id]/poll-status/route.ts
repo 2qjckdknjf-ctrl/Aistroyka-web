@@ -9,7 +9,7 @@ const PROCESSING_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
  * Returns hasActiveJobs (excluding UI-timeout jobs) so client can retry on failure.
  */
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id: projectId } = await params;
@@ -22,7 +22,7 @@ export async function GET(
     );
   }
 
-  const { data: project } = await getProjectById(supabase, projectId);
+  const { data: project } = await getProjectById(supabase, projectId, request);
   if (!project) {
     return NextResponse.json(
       { ok: false, error: { code: "NOT_FOUND", message: "Project not found" } },

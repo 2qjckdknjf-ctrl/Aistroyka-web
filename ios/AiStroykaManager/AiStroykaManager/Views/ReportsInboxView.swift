@@ -21,7 +21,7 @@ struct ReportsInboxView: View {
                 if isLoading && reports.isEmpty && errorMessage == nil {
                     LoadingStateView(message: NSLocalizedString("mgr_loading_reports", comment: ""))
                 } else if let err = errorMessage, reports.isEmpty {
-                    ErrorStateView(message: err, retry: { load() })
+                    ErrorStateView(message: err, retryTitle: NSLocalizedString("mgr_retry", comment: ""), retry: { load() })
                 } else if reports.isEmpty {
                     EmptyStateView(
                         title: NSLocalizedString("mgr_no_reports_title", comment: ""),
@@ -32,6 +32,7 @@ struct ReportsInboxView: View {
                 }
             }
             .navigationTitle(NSLocalizedString("mgr_tab_reports", comment: ""))
+            .brandScrollChrome()
             .refreshable { await refreshAsync() }
             .onAppear {
                 if let id = initialProjectId, selectedProjectId == nil { selectedProjectId = id }
@@ -55,7 +56,7 @@ struct ReportsInboxView: View {
                     .padding(.horizontal)
                 }
                 .padding(.vertical, 8)
-                .background(Color(.secondarySystemGroupedBackground))
+                .background(BrandTokens.surface)
             }
             List(reports, id: \.id) { r in
                 NavigationLink(destination: ReportDetailReviewView(reportId: r.id)) {
@@ -120,7 +121,7 @@ struct ReportRowView: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(shortReportId(report.id))
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(BrandTokens.textSecondary)
             HStack {
                 Text(statusLabel(report.status ?? ""))
                     .font(.subheadline)
@@ -128,13 +129,13 @@ struct ReportRowView: View {
                 if let n = report.mediaCount, n > 0 {
                     Text(String(format: NSLocalizedString("mgr_photos_count_fmt", comment: ""), n))
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(BrandTokens.textSecondary)
                 }
             }
             if let a = report.analysisStatus, !a.isEmpty {
                 Text(String(format: NSLocalizedString("mgr_analysis_fmt", comment: ""), a))
                     .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(BrandTokens.textSecondary)
             }
         }
         .padding(.vertical, 4)
@@ -165,43 +166,40 @@ struct ReportDetailReviewView: View {
             if isLoading && report == nil && errorMessage == nil {
                 LoadingStateView(message: NSLocalizedString("mgr_loading_report", comment: ""))
             } else if let err = errorMessage, report == nil {
-                ErrorStateView(message: err, retry: { load() })
+                ErrorStateView(message: err, retryTitle: NSLocalizedString("mgr_retry", comment: ""), retry: { load() })
             } else if let r = report {
-                List {
-                    Section(NSLocalizedString("mgr_report_section", comment: "")) {
-                        LabeledContent(NSLocalizedString("mgr_id", comment: ""), value: r.id ?? reportId)
-                        LabeledContent(NSLocalizedString("mgr_status", comment: ""), value: statusLabel(r.status ?? ""))
-                        if let c = r.createdAt { LabeledContent(NSLocalizedString("mgr_created", comment: ""), value: formatDate(c)) }
-                        if let s = r.submittedAt { LabeledContent(NSLocalizedString("mgr_submitted", comment: ""), value: formatDate(s)) }
-                        if let ra = r.reviewedAt { LabeledContent(NSLocalizedString("mgr_reviewed_at", comment: ""), value: formatDate(ra)) }
-                        if let note = r.managerNote, !note.isEmpty {
-                            LabeledContent(NSLocalizedString("mgr_manager_note", comment: ""), value: note)
-                        }
-                        if let wnote = r.workerNote, !wnote.isEmpty {
-                            LabeledContent(NSLocalizedString("mgr_worker_note", comment: ""), value: wnote)
-                        }
+                VStack(alignment: .leading, spacing: 8) {
+                    // Outside List: XCTest reliably sees this node after review mutations.
+                    Text((r.status ?? "unknown").lowercased())
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(BrandTokens.textSecondary)
+                        .padding(.horizontal)
+                        .accessibilityIdentifier("pilot_manager_report_status_\((r.status ?? "unknown").lowercased())")
+                    if let note = r.managerNote, !note.isEmpty {
+                        Text(note)
+                            .font(.caption)
+                            .foregroundStyle(BrandTokens.textSecondary)
+                            .padding(.horizontal)
+                            .accessibilityIdentifier("pilot_manager_report_manager_note")
                     }
-                    if let media = r.media, !media.isEmpty {
-                        Section(String(format: NSLocalizedString("mgr_media_count_fmt", comment: ""), media.count)) {
-                            ForEach(Array(media.enumerated()), id: \.offset) { idx, m in
-                                ReportEvidenceItemView(index: idx + 1, item: m)
-                            }
-                        }
-                    }
+                    // Review actions above List so XCTest/lazy cells always materialize controls.
                     if r.status?.lowercased() == "submitted" {
-                        Section(NSLocalizedString("mgr_review_actions_section", comment: "")) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(NSLocalizedString("mgr_review_actions_section", comment: ""))
+                                .font(.subheadline.weight(.semibold))
                             if reviewActionLoading {
                                 HStack {
                                     ProgressView()
                                     Text(NSLocalizedString("mgr_submitting", comment: ""))
                                         .font(.subheadline)
-                                        .foregroundStyle(.secondary)
+                                        .foregroundStyle(BrandTokens.textSecondary)
                                 }
                             }
                             if let err = reviewActionError {
                                 Text(err)
                                     .font(.caption)
                                     .foregroundStyle(ManagerSemanticColors.error)
+                                    .accessibilityIdentifier("pilot_manager_review_error")
                             }
                             TextField(NSLocalizedString("mgr_report_review_note_label", comment: ""), text: $managerNoteText, axis: .vertical)
                                 .lineLimit(2...4)
@@ -217,23 +215,46 @@ struct ReportDetailReviewView: View {
                                 .disabled(reviewActionLoading)
                                 .accessibilityIdentifier("pilot_manager_review_reject")
                         }
+                        .padding(.horizontal)
                     } else if !isReviewStatus(r.status) {
-                        Section(NSLocalizedString("mgr_review_section", comment: "")) {
-                            Text(NSLocalizedString("mgr_report_not_submitted", comment: ""))
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                        Text(NSLocalizedString("mgr_report_not_submitted", comment: ""))
+                            .font(.caption)
+                            .foregroundStyle(BrandTokens.textSecondary)
+                            .padding(.horizontal)
+                    }
+                    List {
+                        Section(NSLocalizedString("mgr_report_section", comment: "")) {
+                            LabeledContent(NSLocalizedString("mgr_id", comment: ""), value: r.id ?? reportId)
+                            LabeledContent(NSLocalizedString("mgr_status", comment: ""), value: statusLabel(r.status ?? ""))
+                            if let c = r.createdAt { LabeledContent(NSLocalizedString("mgr_created", comment: ""), value: formatDate(c)) }
+                            if let s = r.submittedAt { LabeledContent(NSLocalizedString("mgr_submitted", comment: ""), value: formatDate(s)) }
+                            if let ra = r.reviewedAt { LabeledContent(NSLocalizedString("mgr_reviewed_at", comment: ""), value: formatDate(ra)) }
+                            if let wnote = r.workerNote, !wnote.isEmpty {
+                                Text(wnote)
+                                    .font(.caption)
+                                    .accessibilityIdentifier("pilot_manager_report_worker_note")
+                            }
+                        }
+                        .accessibilityIdentifier("pilot_manager_report_detail")
+                        if let media = r.media, !media.isEmpty {
+                            Section(String(format: NSLocalizedString("mgr_media_count_fmt", comment: ""), media.count)) {
+                                ForEach(Array(media.enumerated()), id: \.offset) { idx, m in
+                                    ReportEvidenceItemView(index: idx + 1, item: m)
+                                }
+                            }
                         }
                     }
+                    .onChange(of: managerNoteText) { _ in
+                        if reviewActionError != nil { reviewActionError = nil }
+                    }
+                    .refreshable { await loadAsync() }
                 }
-                .onChange(of: managerNoteText) { _ in
-                    if reviewActionError != nil { reviewActionError = nil }
-                }
-                .refreshable { await loadAsync() }
             } else {
                 EmptyStateView(title: NSLocalizedString("mgr_report_not_found", comment: ""), subtitle: nil)
             }
         }
         .navigationTitle(NSLocalizedString("mgr_report", comment: ""))
+        .brandScrollChrome()
         .onAppear { loadIfNeeded() }
     }
 
@@ -261,7 +282,13 @@ struct ReportDetailReviewView: View {
                 setLoading: { reviewActionLoading = $0 },
                 setErrorMessage: { reviewActionError = $0 }
             ) {
-                report = try await ManagerAPI.reportReview(reportId: reportId, status: status, managerNote: note.isEmpty ? nil : note)
+                _ = try await ManagerAPI.reportReview(
+                    reportId: reportId,
+                    status: status,
+                    managerNote: note.isEmpty ? nil : note
+                )
+                // Always reload detail so status/note a11y nodes refresh from GET payload.
+                report = try await ManagerAPI.reportDetail(id: reportId)
             }
             if success {
                 managerNoteText = ""
@@ -316,11 +343,11 @@ private struct ReportEvidenceItemView: View {
                             .resizable()
                             .scaledToFit()
                             .frame(maxHeight: 240)
-                            .cornerRadius(8)
+                            .clipShape(RoundedRectangle(cornerRadius: BrandTokens.radiusLg, style: .continuous))
                     case .failure:
                         Text(String(format: NSLocalizedString("mgr_evidence_load_failed_fmt", comment: ""), index))
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(BrandTokens.textSecondary)
                     @unknown default:
                         EmptyView()
                     }
@@ -328,7 +355,7 @@ private struct ReportEvidenceItemView: View {
             } else {
                 Text(String(format: NSLocalizedString("mgr_evidence_no_preview_fmt", comment: ""), index, evidenceShortId))
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(BrandTokens.textSecondary)
             }
         }
         .padding(.vertical, 4)
@@ -353,8 +380,8 @@ struct FilterChip: View {
                 .font(.caption)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
-                .background(selected ? Color.accentColor : Color(.tertiarySystemFill))
-                .foregroundColor(selected ? .white : .primary)
+                .background(selected ? BrandTokens.actionPrimary : BrandTokens.surfaceMuted)
+                .foregroundColor(selected ? BrandTokens.textOnPrimary : BrandTokens.textPrimary)
                 .clipShape(Capsule())
         }
         .buttonStyle(.plain)

@@ -6,19 +6,21 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getSessionUser } from "@/lib/supabase/server";
 import { getOrCreateTenantForCurrentUser, createAnalysisJob } from "@/lib/api/engine";
-import { hasMinRole } from "@/lib/auth/tenant";
+import { hasMinRole } from "@/lib/tenant/tenant-membership.server";
+import type { ActiveTenantRequestLike } from "@/lib/tenant/active-tenant";
 
 export type ProjectRow = { id: string; name: string; created_at: string };
 
 /** Create a project in the current user's tenant. Requires role member or higher. */
 export async function createProject(
   supabase: SupabaseClient,
-  name: string
+  name: string,
+  requestLike?: ActiveTenantRequestLike | null
 ): Promise<{ id: string } | { error: string }> {
   const user = await getSessionUser(supabase);
   if (!user) return { error: "Unauthorized" };
 
-  const tenantId = await getOrCreateTenantForCurrentUser(supabase);
+  const tenantId = await getOrCreateTenantForCurrentUser(supabase, requestLike);
   if (!tenantId) return { error: "No tenant configured" };
 
   const canCreate = await hasMinRole(supabase, tenantId, "member");
@@ -36,13 +38,14 @@ export async function createProject(
 
 /** List projects for the current user only (their tenant). */
 export async function listProjectsForUser(
-  supabase: SupabaseClient
+  supabase: SupabaseClient,
+  requestLike?: ActiveTenantRequestLike | null
 ): Promise<{ data: ProjectRow[] | null; error: string | null }> {
   try {
     const user = await getSessionUser(supabase);
     if (!user) return { data: null, error: "Unauthorized" };
 
-    const tenantId = await getOrCreateTenantForCurrentUser(supabase);
+    const tenantId = await getOrCreateTenantForCurrentUser(supabase, requestLike);
     if (!tenantId) return { data: [], error: null };
 
     const { data, error } = await supabase
@@ -61,12 +64,13 @@ export async function listProjectsForUser(
 /** Get a project by id only if it belongs to the current user's tenant. Returns 404 for others. */
 export async function getProjectById(
   supabase: SupabaseClient,
-  projectId: string
+  projectId: string,
+  requestLike?: ActiveTenantRequestLike | null
 ): Promise<{
   data: { id: string; name: string; tenant_id: string } | null;
   error: string | null;
 }> {
-  const tenantId = await getOrCreateTenantForCurrentUser(supabase);
+  const tenantId = await getOrCreateTenantForCurrentUser(supabase, requestLike);
   if (!tenantId) return { data: null, error: "Unauthorized" };
 
   const { data, error } = await supabase
@@ -91,12 +95,13 @@ const ACTIVE_JOB_STATUSES = ["pending", "processing", "queued"] as const;
 export async function triggerAnalysisForMedia(
   supabase: SupabaseClient,
   projectId: string,
-  mediaId: string
+  mediaId: string,
+  requestLike?: ActiveTenantRequestLike | null
 ): Promise<{ jobId: string } | { error: string }> {
   const user = await getSessionUser(supabase);
   if (!user) return { error: "Unauthorized" };
 
-  const { data: project } = await getProjectById(supabase, projectId);
+  const { data: project } = await getProjectById(supabase, projectId, requestLike);
   if (!project) return { error: "Project not found" };
 
   const canTrigger = await hasMinRole(supabase, project.tenant_id, "member");

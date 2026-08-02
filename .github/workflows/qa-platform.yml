@@ -1,0 +1,107 @@
+name: QA Platform
+
+on:
+  pull_request:
+    branches: [main, master]
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: "Base URL (empty = public-only offline checks)"
+        required: false
+        default: ""
+      mode:
+        description: "Run mode: public | full | release"
+        required: false
+        default: "public"
+
+concurrency:
+  group: qa-platform-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  qa-self-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2.15
+      - run: bun install --frozen-lockfile
+      - name: Route discovery + self-audit
+        run: |
+          node scripts/qa/route-discovery.mjs
+          node scripts/qa/self-audit.mjs
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: qa-coverage-report
+          path: docs/qa/reports/
+
+  qa-playwright:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    needs: qa-self-audit
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2.15
+      - run: bun install --frozen-lockfile
+      - name: Install Playwright browsers
+        working-directory: apps/web
+        run: bunx playwright install chromium firefox webkit msedge
+      - name: Set QA env
+        run: |
+          echo "QA_ARTIFACT_DIR=${{ github.workspace }}/docs/qa/artifacts/${{ github.run_id }}" >> "$GITHUB_ENV"
+          TARGET="${{ github.event.inputs.target_url }}"
+          if [[ -n "$TARGET" ]]; then
+            echo "PLAYWRIGHT_BASE_URL=$TARGET" >> "$GITHUB_ENV"
+            echo "PLAYWRIGHT_SKIP_WEB_SERVER=1" >> "$GITHUB_ENV"
+          fi
+          if [[ -n "${{ secrets.PILOT_E2E_EMAIL }}" ]]; then
+            echo "E2E_EMAIL=${{ secrets.PILOT_E2E_EMAIL }}" >> "$GITHUB_ENV"
+            echo "E2E_PASSWORD=${{ secrets.PILOT_E2E_PASSWORD }}" >> "$GITHUB_ENV"
+          fi
+      - name: Run QA platform
+        run: |
+          MODE="${{ github.event.inputs.mode || 'public' }}"
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            MODE="public"
+          fi
+          bash scripts/qa/run-qa-platform.sh "$MODE"
+      - name: Upload Playwright artifacts
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: qa-playwright-failures
+          path: |
+            docs/qa/artifacts/**/playwright/**
+            docs/qa/artifacts/**/screenshots/**
+      - name: Upload QA reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: qa-reports
+          path: docs/qa/reports/
+
+  qa-release-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'release'
+    needs: qa-playwright
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2.15
+      - run: bun install --frozen-lockfile
+      - name: Release gate (unit + lint + tsc + release:check)
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://vthfrxehrursfloevnlp.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_STAGING }}
+          SUPABASE_SERVICE_ROLE_KEY: ci-placeholder-service-role-key
+        run: bash scripts/qa/run-qa-platform.sh release

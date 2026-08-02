@@ -7,8 +7,11 @@
 |---------|-----------|
 | HTML pages | `apps/web/middleware.ts` (OpenNext `middleware/handler.mjs` on Workers) |
 | `/api/v1/*` (most routes) | `apps/web/worker-bootstrap.js` wraps Worker `fetch` — OpenNext **bypasses** middleware for these paths |
+| OpenNext duplicate collapse | `worker-bootstrap.js` `collapseDuplicatedSecurityHeaders` (identical comma-joined values only; keep in sync with `security-headers.ts`) |
 | Short-circuit JSON (403, owner deny) | `middleware.ts` on synthetic `Response` |
-| Vercel / `next dev` fallback | `apps/web/next.config.js` `headers()` |
+| Static assets only | `apps/web/next.config.js` `headers()` via `buildNextConfigStaticHeaderRules` — **not** page/API |
+
+**Note:** Vercel is not the canonical production runtime. Do not treat Vercel header behavior as Cloudflare proof.
 
 Do not route all traffic through a single catch-all middleware matcher on Workers; that regressed HTML SSR (prod incident 2026-06-17). Keep the pre-P0 split matcher (`api` excluded + `/api/v1/:path*`) and exclude all `/_next/*`.
 

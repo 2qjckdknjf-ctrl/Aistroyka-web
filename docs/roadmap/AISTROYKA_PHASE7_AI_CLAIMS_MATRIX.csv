@@ -1,0 +1,15 @@
+surface,claim,actual_runtime,allowed_wording,forbidden_wording,result,action
+public.home.heroCardAiTitle,AI insights,deterministic analytics + beta provider path,AI insights (beta); AI-assisted analytics (beta),live AI; Level 4 AI; production-ready Copilot,PASS,updated en/ru/es/it to beta
+public.home.heroLensTitle,Tower B · Level 4,building floor label (not AI maturity),Level 4 as floor/zone,Level 4 AI,PASS,left unchanged (floor)
+public.copilot.page,AI Copilot marketing,beta + mock simulation UI,AI Copilot (beta); simulation/mock not live provider output,live provider analysis; autonomous decisions,PASS,meta/hero/mock strings updated
+public.copilot.mockInterfaceTitle,mock interface,static mock,simulation / mock (not live provider output),real-time provider analysis,PASS,strengthened labeling
+dashboardPageMeta.aiCopilotSubtitle,Copilot summaries,beta + possible deterministic fallback,Beta; may use deterministic fallback,production-ready Copilot,PASS,updated all locales
+USER_RELEASE_NOTES,AI beta limitations,degraded/beta policy + Phase 7 rate-limit RPC blocker,degraded/beta; explicit migration follow-up,full production reliability while RPC missing,PASS,Phase 7 note added
+AI_DEGRADED_MODE_POLICY,degraded allowed,still authoritative for labeling,beta/degraded until non-fallback product proof on target,claim LIVE from openaiConfigured alone,PASS,no historical rewrite
+AI_LIVE_PROVIDER_VALIDATION_REPORT,historical LEVEL4/closed claims,historical 2026-06 evidence; not current source truth,historical evidence,treat as current without re-proof,PASS_historical,superseded by Phase 7 closure for 2026-07-30
+health.aiConfigured / openaiConfigured,config flags,env presence only,configured / configured_unverified,operational live / LIVE,PASS,aiOperationalStatus added; never live from env
+staging health buildStamp a401693,staging runtime,staging LIVE product vision proof 2026-07-30,Staging AI: LIVE (deployed runtime),claim dirty local source equals staging,PASS,explicit buildStamp recorded
+production health openaiConfigured=true,production runtime,production LIVE product vision proof 2026-07-30 (no buildStamp),Production AI: LIVE (deployed runtime; buildStamp absent),claim local dirty source equals production,PASS,recorded; deploy of Phase7 source needs rate-limit RPC first
+local loopback openaiConfigured,local source with Phase7 gates,paid path blocked by missing rate_limit RPC; credentials probe OK,Local product AI: DEGRADED/DISABLED paid path,Local LIVE,PASS,honest local classification
+mobile Manager AI,AI insights on the go,depends on same APIs; not freshly device-proven,beta AI insights,Android/iOS live provider proven this phase,PASS,no false mobile live claim
+onboarding enableAi,Enable AI insights,feature flag / pipeline hint,AI insights (beta),live Level 4,PASS,keep qualitative; beta on public surfaces

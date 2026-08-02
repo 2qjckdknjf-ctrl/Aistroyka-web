@@ -47,13 +47,12 @@ public struct ReportCreateResponse: Decodable {
 
 public struct UploadSessionResponse: Decodable {
     public let data: UploadSessionData?
+    /// Decoded with APIClient's `.convertFromSnakeCase` — do not add snake_case CodingKeys
+    /// (they conflict with the strategy and drop `upload_path` → wrong storage path / HTTP 400).
     public struct UploadSessionData: Decodable {
         public let id: String
         public let uploadPath: String?
-        enum CodingKeys: String, CodingKey {
-            case id
-            case uploadPath = "upload_path"
-        }
+        public let tenantId: String?
     }
 }
 
@@ -61,11 +60,6 @@ public struct SyncConflictBody: Decodable {
     public let code: String?
     public let mustBootstrap: Bool?
     public let serverCursor: Int?
-    enum CodingKeys: String, CodingKey {
-        case code
-        case mustBootstrap = "must_bootstrap"
-        case serverCursor = "server_cursor"
-    }
 }
 
 public struct SyncConflictError: Error {
@@ -82,11 +76,6 @@ public struct SyncBootstrapResponse: Decodable {
         public let tasks: [SyncTask]?
         public let reports: [SyncReport]?
         public let uploadSessions: [SyncUploadSession]?
-        enum CodingKeys: String, CodingKey {
-            case tasks
-            case reports
-            case uploadSessions = "uploadSessions"
-        }
     }
     public struct SyncTask: Decodable { public let id: String? }
     public struct SyncReport: Decodable { public let id: String? }
@@ -96,10 +85,6 @@ public struct SyncBootstrapResponse: Decodable {
 public struct SyncChangesResponse: Decodable {
     public let data: SyncChangesData?
     public let nextCursor: Int?
-    enum CodingKeys: String, CodingKey {
-        case data
-        case nextCursor = "next_cursor"
-    }
     public struct SyncChangesData: Decodable {
         public let changes: [SyncChangeItem]?
     }
@@ -110,10 +95,4 @@ public struct SyncChangeItem: Decodable {
     public let resourceType: String?
     public let resourceId: String?
     public let changeType: String?
-    enum CodingKeys: String, CodingKey {
-        case cursor
-        case resourceType = "resource_type"
-        case resourceId = "resource_id"
-        case changeType = "change_type"
-    }
 }

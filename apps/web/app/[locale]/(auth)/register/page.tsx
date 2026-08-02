@@ -5,15 +5,17 @@ import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { useRouter } from "@/i18n/navigation";
 import { Link } from "@/i18n/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import { Input, Button, Alert } from "@/components/ui";
 import { AuthProviderButtons } from "@/components/auth/AuthProviderButtons";
+import { sanitizeNextRoute } from "@/lib/entry/entry-routing";
 
 const SIGN_UP_TIMEOUT_MS = 15_000;
 
 function RegisterForm() {
   const router = useRouter();
+  const locale = useLocale();
   const searchParams = useSearchParams();
   const t = useTranslations("auth");
   const next = searchParams?.get("next");
@@ -52,8 +54,14 @@ function RegisterForm() {
         return;
       }
       if (signUpResult.data.session) {
-        const nextPath = next && next.startsWith("/") ? next : "/dashboard";
-        router.push(nextPath);
+        const origin = typeof window !== "undefined" ? window.location.origin : "https://aistroyka.ai";
+        const sanitized = sanitizeNextRoute(next, origin, locale);
+        if (sanitized) {
+          const withoutLocale = sanitized.replace(/^\/(ru|en|es|it)(?=\/|$)/, "") || "/dashboard";
+          router.push(withoutLocale);
+        } else {
+          router.push("/dashboard");
+        }
         return;
       }
       setMessage(t("checkEmail"));

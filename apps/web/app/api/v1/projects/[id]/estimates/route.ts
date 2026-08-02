@@ -4,8 +4,9 @@
 
 import { NextResponse } from "next/server";
 import { createClientFromRequest } from "@/lib/supabase/server";
-import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
+import { getTenantContextFromRequest, requireTenant, TenantRequiredError, LitePathForbiddenError } from "@/lib/tenant";
 import { createCustomerEstimate, listCustomerEstimates } from "@/lib/domain/customer-estimates/customer-estimates.service";
+import { jsonWithCustomerFinanceGuard } from "@/lib/security/customer-finance-response";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +28,12 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
   try {
     requireTenant(ctx);
   } catch (e) {
+    if (e instanceof LitePathForbiddenError) {
+      return NextResponse.json(
+        { error: "forbidden", code: "lite_client_path_forbidden" },
+        { status: 403 }
+      );
+    }
     if (e instanceof TenantRequiredError) return NextResponse.json({ error: e.message }, { status: 401 });
     throw e;
   }
@@ -34,6 +41,9 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
   const supabase = await createClientFromRequest(request);
   const { data, error } = await listCustomerEstimates(supabase, ctx, projectId, viewer);
   if (error) return NextResponse.json({ error }, { status: 403 });
+  if (viewer === "customer") {
+    return jsonWithCustomerFinanceGuard("GET /api/v1/projects/:id/estimates", { data });
+  }
   return NextResponse.json({ data });
 }
 
@@ -44,6 +54,12 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   try {
     requireTenant(ctx);
   } catch (e) {
+    if (e instanceof LitePathForbiddenError) {
+      return NextResponse.json(
+        { error: "forbidden", code: "lite_client_path_forbidden" },
+        { status: 403 }
+      );
+    }
     if (e instanceof TenantRequiredError) return NextResponse.json({ error: e.message }, { status: 401 });
     throw e;
   }

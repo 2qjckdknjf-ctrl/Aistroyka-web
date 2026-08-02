@@ -14,13 +14,13 @@ struct ManagerUnauthorizedView: View {
         VStack(spacing: 24) {
             Image(systemName: "person.crop.circle.badge.minus")
                 .font(.largeTitle)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(BrandTokens.textSecondary)
             Text(NSLocalizedString("mgr_unauthorized", comment: ""))
                 .font(.title2)
                 .fontWeight(.semibold)
             Text(message)
                 .multilineTextAlignment(.center)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(BrandTokens.textSecondary)
                 .padding(.horizontal)
             if sessionState.canRetryRoleCheck {
                 Button(NSLocalizedString("mgr_retry", comment: "")) {
@@ -37,7 +37,7 @@ struct ManagerUnauthorizedView: View {
         }
         .padding()
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(.systemGroupedBackground))
+        .background(BrandTokens.bgPage)
         .accessibilityIdentifier("pilot_manager_unauthorized")
     }
 }

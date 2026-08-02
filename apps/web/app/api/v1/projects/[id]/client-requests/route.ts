@@ -6,12 +6,7 @@
 
 import { NextResponse } from "next/server";
 import { createClientFromRequest } from "@/lib/supabase/server";
-import {
-  getTenantContextFromRequest,
-  requireTenant,
-  TenantRequiredError,
-  TenantForbiddenError,
-} from "@/lib/tenant";
+import { getTenantContextFromRequest, requireTenant, TenantRequiredError, TenantForbiddenError, LitePathForbiddenError } from "@/lib/tenant";
 import { canManageClientRequests } from "@/lib/domain/client-requests/client-requests.policy";
 import { emitClientRequestCreatedForStakeholders } from "@/lib/domain/stakeholder-notifications/stakeholder-notifications.emit";
 import { emitTelegramForNewClientRequest } from "@/lib/platform/telegram/telegram-notifications.emit";
@@ -21,6 +16,7 @@ import {
   listClientRequests,
 } from "@/lib/domain/client-requests/client-requests.service";
 import type { CreateClientRequestInput } from "@/lib/domain/client-requests/client-requests.types";
+import { jsonWithCustomerFinanceGuard } from "@/lib/security/customer-finance-response";
 
 export const dynamic = "force-dynamic";
 
@@ -44,6 +40,12 @@ export async function GET(
   try {
     requireTenant(ctx);
   } catch (e) {
+    if (e instanceof LitePathForbiddenError) {
+      return NextResponse.json(
+        { error: "forbidden", code: "lite_client_path_forbidden" },
+        { status: 403 }
+      );
+    }
     if (e instanceof TenantRequiredError) {
       return NextResponse.json({ error: e.message }, { status: 401 });
     }
@@ -69,7 +71,7 @@ export async function GET(
     status: status ?? "all",
   });
   if (error) return NextResponse.json({ error }, { status: 403 });
-  return NextResponse.json({ data });
+  return jsonWithCustomerFinanceGuard("GET /api/v1/projects/:id/client-requests", { data });
 }
 
 export async function POST(
@@ -92,6 +94,12 @@ export async function POST(
   try {
     requireTenant(ctx);
   } catch (e) {
+    if (e instanceof LitePathForbiddenError) {
+      return NextResponse.json(
+        { error: "forbidden", code: "lite_client_path_forbidden" },
+        { status: 403 }
+      );
+    }
     if (e instanceof TenantRequiredError) {
       return NextResponse.json({ error: e.message }, { status: 401 });
     }

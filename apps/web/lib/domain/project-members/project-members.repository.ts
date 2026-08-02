@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { ProjectMemberRole } from "./project-members.types";
 
-export type ProjectMemberRole = "worker" | "contractor" | "manager" | "owner";
+export type { ProjectMemberRole };
 
 /** Get project membership with role. Returns null if not a member. */
 export async function getMembership(

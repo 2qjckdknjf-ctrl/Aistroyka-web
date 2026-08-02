@@ -46,6 +46,7 @@
 		MGR041B /* ProjectCopilotChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR137 /* ProjectCopilotChatView.swift */; };
 		MGRUT01 /* ManagerSmokeUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGRUT11 /* ManagerSmokeUITests.swift */; };
 		MGRUT02 /* PilotE2ECredentials.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGRUT12 /* PilotE2ECredentials.swift */; };
+		MGRUT03 /* ManagerPhase5UITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGRUT13 /* ManagerPhase5UITests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -94,6 +95,7 @@
 		MGRUT10 /* AiStroykaManagerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AiStroykaManagerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		MGRUT11 /* ManagerSmokeUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManagerSmokeUITests.swift; sourceTree = "<group>"; };
 		MGRUT12 /* PilotE2ECredentials.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PilotE2ECredentials.swift; sourceTree = "<group>"; };
+		MGRUT13 /* ManagerPhase5UITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManagerPhase5UITests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -151,6 +153,7 @@
 			children = (
 				MGRUT12 /* PilotE2ECredentials.swift */,
 				MGRUT11 /* ManagerSmokeUITests.swift */,
+				MGRUT13 /* ManagerPhase5UITests.swift */,
 			);
 			path = AiStroykaManagerUITests;
 			sourceTree = "<group>";
@@ -248,6 +251,7 @@
 			files = (
 				MGRUT02 /* PilotE2ECredentials.swift in Sources */,
 				MGRUT01 /* ManagerSmokeUITests.swift in Sources */,
+				MGRUT03 /* ManagerPhase5UITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

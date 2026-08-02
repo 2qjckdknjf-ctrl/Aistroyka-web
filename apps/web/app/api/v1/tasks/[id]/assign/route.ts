@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClientFromRequest } from "@/lib/supabase/server";
-import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
+import { getTenantContextFromRequest, requireTenant, TenantRequiredError, LitePathForbiddenError } from "@/lib/tenant";
 import { assignTask, getTaskById } from "@/lib/domain/tasks/task.service";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { enqueuePushToUser } from "@/lib/platform/push/push.service";
@@ -38,6 +38,12 @@ export async function POST(
   try {
     requireTenant(ctx);
   } catch (e) {
+    if (e instanceof LitePathForbiddenError) {
+      return NextResponse.json(
+        { error: "forbidden", code: "lite_client_path_forbidden" },
+        { status: 403 }
+      );
+    }
     if (e instanceof TenantRequiredError) {
       return withRequestIdAndTiming(request, NextResponse.json({ error: e.message }, { status: 401 }), {
         route: routeKey,

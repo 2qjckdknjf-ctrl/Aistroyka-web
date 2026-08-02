@@ -65,6 +65,9 @@ final class AiStroykaWorkerAppDelegate: NSObject, UIApplicationDelegate {
     }
 
     private func requestPushPermissionAndRegister(application: UIApplication) {
+        // Design preview gallery must not show system permission sheets over evidence captures.
+        let args = ProcessInfo.processInfo.arguments
+        if args.contains("-DesignPreview") || DesignPreview.isActive { return }
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { _, _ in }
         application.registerForRemoteNotifications()
     }

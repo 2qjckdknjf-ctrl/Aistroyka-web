@@ -4,14 +4,10 @@
 
 import { NextResponse } from "next/server";
 import { createClientFromRequest } from "@/lib/supabase/server";
-import {
-  getTenantContextFromRequest,
-  requireTenant,
-  TenantRequiredError,
-  TenantForbiddenError,
-} from "@/lib/tenant";
+import { getTenantContextFromRequest, requireTenant, TenantRequiredError, TenantForbiddenError, LitePathForbiddenError } from "@/lib/tenant";
 import { getHandoverForManager, getHandoverPublicSummary } from "@/lib/domain/project-handover/project-handover.service";
 import { canManageProjectHandover } from "@/lib/domain/project-handover/project-handover.policy";
+import { jsonWithCustomerFinanceGuard } from "@/lib/security/customer-finance-response";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +25,12 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
   try {
     requireTenant(ctx);
   } catch (e) {
+    if (e instanceof LitePathForbiddenError) {
+      return NextResponse.json(
+        { error: "forbidden", code: "lite_client_path_forbidden" },
+        { status: 403 }
+      );
+    }
     if (e instanceof TenantRequiredError) return NextResponse.json({ error: e.message }, { status: 401 });
     throw e;
   }
@@ -45,5 +47,5 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
   const { data, error } = await getHandoverPublicSummary(supabase, ctx, projectId);
   if (error === "Insufficient rights") return NextResponse.json({ error }, { status: 403 });
   if (!data) return NextResponse.json({ error: error || "Not found" }, { status: 400 });
-  return NextResponse.json({ data, audience: "stakeholder" });
+  return jsonWithCustomerFinanceGuard("GET /api/v1/projects/:id/handover", { data, audience: "stakeholder" });
 }

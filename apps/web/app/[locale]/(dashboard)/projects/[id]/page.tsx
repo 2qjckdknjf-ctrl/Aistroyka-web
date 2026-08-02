@@ -1,3 +1,4 @@
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { Link } from "@/i18n/navigation";
 import { getTranslations } from "next-intl/server";
@@ -44,7 +45,7 @@ export default async function ProjectPage({
   const user = await getSessionUser(supabase);
   if (!user) notFound();
 
-  const { data: project } = await getProjectById(supabase, id);
+  const { data: project } = await getProjectById(supabase, id, await headers());
   if (!project) notFound();
 
   const { data: mediaRows } = await supabase

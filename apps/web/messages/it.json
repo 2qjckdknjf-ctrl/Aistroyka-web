@@ -45,14 +45,20 @@
     "searchPlaceholder": "Cerca…",
     "helpCenter": "Centro assistenza",
     "dashboardNavigation": "Navigazione dashboard",
-    "main": "Principale"
+    "main": "Principale",
+    "portalProjects": "I tuoi progetti",
+    "portalNavigation": "Navigazione del portale cliente",
+    "customerPortal": "Portale cliente"
   },
   "portalPage": {
     "title": "I tuoi progetti",
     "subtitle": "Portale cliente — avanzamento, documenti e approvazioni condivise dall'impresa.",
     "loadError": "Impossibile caricare i progetti.",
     "empty": "Non ci sono ancora progetti con portale cliente attivo.",
-    "openPortal": "Apri portale"
+    "openPortal": "Apri portale",
+    "loading": "Caricamento progetti",
+    "accessDenied": "Non hai accesso al portale cliente.",
+    "retry": "Riprova"
   },
   "proofShare": {
     "unavailableTitle": "Pacchetto prove non disponibile",
@@ -638,7 +644,8 @@
     "videoDailyRisk": "Livello di rischio",
     "videoDailyIssues": "Problemi e rischi",
     "videoDailyRecommendations": "Raccomandazioni",
-    "videoDailyVisibility": "Note sulla visibilità"
+    "videoDailyVisibility": "Note sulla visibilità",
+    "aiCopilot": "AI Copilot"
   },
   "risk": {
     "low": "Basso",
@@ -747,7 +754,7 @@
       "pat4": "Analisi foto",
       "pat5": "Decisioni",
       "mockAssistantUi": "UI assistente simulata",
-      "mockInterfaceTitle": "Copilot IA — interfaccia simulata",
+      "mockInterfaceTitle": "AI Copilot — interfaccia mock / simulazione (non output live del provider)",
       "mockUserMessage": "Utente: Qual è lo stato del Blocco A questa settimana?",
       "mockCopilotMessage": "Copilot: Il Blocco A è completato al 72%. 2 report in sospeso. Un rischio ritardo (meteo). Raccomandazione: confermare il sign-off fondazioni prima della fase successiva.",
       "mockInputPlaceholder": "Chiedi lo stato del progetto…",
@@ -1012,7 +1019,7 @@
       "neuralConstructionControl": "Controllo neurale di cantiere",
       "heroCardDashboardTitle": "Dashboard",
       "heroCardDashboardSubtitle": "Progetti, attività, KPI",
-      "heroCardAiTitle": "AI insights",
+      "heroCardAiTitle": "AI insights (beta)",
       "heroCardAiSubtitle": "Avanzamento, rischi, ritardi",
       "heroCardMobileTitle": "Mobile",
       "heroCardMobileSubtitle": "Report, evidenze",
@@ -1418,7 +1425,7 @@
     "leadDetailTitle": "Dettaglio lead",
     "leadDetailSubtitle": "Visualizza e aggiorna stato e note del lead.",
     "aiCopilotTitle": "AI Copilot",
-    "aiCopilotSubtitle": "Ottieni riepiloghi IA, spiegazione rischi e risposte sul progetto.",
+    "aiCopilotSubtitle": "Beta: riepiloghi IA e domande sul progetto. Può usare fallback deterministico se il provider non è disponibile.",
     "projectOverviewSubtitle": "Panoramica progetto e schede operative.",
     "discussionsTitle": "Discussioni",
     "discussionsSubtitle": "Temi strutturati in cui i team fanno domande e rispondono con aggiornamenti chiari.",
@@ -1440,6 +1447,7 @@
     "thresholdHistoryTitle": "Storico soglie"
   },
   "dashboardDetail": {
+    "company": "Azienda",
     "dateRange": "Intervallo date",
     "search": "Cerca",
     "searchPlaceholder": "Cerca…",
@@ -1787,7 +1795,7 @@
     "linkTypeOptional": "Tipo collegamento (opzionale)",
     "milestone": "Milestone",
     "linkedEntityId": "ID entità collegata",
-    "loading": "Caricamento…",
+    "loading": "Caricamento",
     "couldNotLoadRequests": "Impossibile caricare le richieste.",
     "noRequestsYet": "Nessuna richiesta.",
     "markComplete": "Segna completata",
@@ -2745,7 +2753,9 @@
     "managerActionSource_recommendation": "recommendation",
     "managerActionSource_health": "health",
     "managerActionSource_executive": "executive",
-    "fromExecutiveSummary": "From executive summary"
+    "fromExecutiveSummary": "From executive summary",
+    "aiCopilot": "AI Copilot",
+    "backToPortalProjects": "← Torna ai progetti del portale"
   },
   "governancePage": {
     "listSubtitle": "Governance ed escalation trasversali tra progetti attivi.",

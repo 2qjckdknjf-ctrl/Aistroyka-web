@@ -80,17 +80,20 @@ function toPublicDetail(row: ChangeOrderRow, events: import("./change-orders.typ
 export async function listChangeOrders(
   supabase: SupabaseClient,
   ctx: TenantContext,
-  projectId: string
+  projectId: string,
+  opts?: { forcePublic?: boolean }
 ): Promise<{ data: Array<ChangeOrderListItem | ChangeOrderPublicListItem> | null; error: string }> {
   if (!ctx.tenantId || !ctx.userId) return { data: null, error: "Tenant required" };
   if (!(await canReadChangeOrders(supabase, ctx, projectId))) {
     return { data: null, error: "Insufficient rights" };
   }
   const isMgr = await canManageChangeOrders(supabase, ctx, projectId);
+  const forcePublic = opts?.forcePublic === true;
   const rows = await repo.listByProject(supabase, projectId, ctx.tenantId, {
-    excludeDraft: !isMgr,
+    // Portal / customer surfaces never expose drafts, even for managers.
+    excludeDraft: forcePublic || !isMgr,
   });
-  if (!isMgr) {
+  if (!isMgr || forcePublic) {
     return {
       data: rows.map((row) => ({
         id: row.id,
@@ -112,7 +115,8 @@ export async function getChangeOrderDetail(
   supabase: SupabaseClient,
   ctx: TenantContext,
   projectId: string,
-  changeOrderId: string
+  changeOrderId: string,
+  opts?: { forcePublic?: boolean }
 ): Promise<{
   data: ChangeOrderDetailManager | ChangeOrderPublicDetail | null;
   error: string;
@@ -125,7 +129,8 @@ export async function getChangeOrderDetail(
   if (!row || row.project_id !== projectId) return { data: null, error: "Not found" };
   const events = await repo.listEvents(supabase, changeOrderId, ctx.tenantId);
   const isMgr = await canManageChangeOrders(supabase, ctx, projectId);
-  if (isMgr) {
+  const forcePublic = opts?.forcePublic === true;
+  if (isMgr && !forcePublic) {
     return {
       data: { ...row, events },
       error: "",

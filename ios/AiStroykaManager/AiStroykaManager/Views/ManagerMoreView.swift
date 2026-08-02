@@ -40,6 +40,7 @@ struct ManagerMoreView: View {
                 }
             }
             .navigationTitle(NSLocalizedString("mgr_tab_more", comment: ""))
+            .brandScrollChrome()
             .navigationDestination(for: ManagerMoreDestination.self) { dest in
                 switch dest {
                 case .settings:

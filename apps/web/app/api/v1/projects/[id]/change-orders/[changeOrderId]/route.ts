@@ -4,15 +4,11 @@
 
 import { NextResponse } from "next/server";
 import { createClientFromRequest } from "@/lib/supabase/server";
-import {
-  getTenantContextFromRequest,
-  requireTenant,
-  TenantRequiredError,
-  TenantForbiddenError,
-} from "@/lib/tenant";
+import { getTenantContextFromRequest, requireTenant, TenantRequiredError, TenantForbiddenError, LitePathForbiddenError } from "@/lib/tenant";
 import { getChangeOrderDetail, updateChangeOrderContent } from "@/lib/domain/change-orders/change-orders.service";
 import { canManageChangeOrders } from "@/lib/domain/change-orders/change-orders.policy";
 import type { ChangeOrderKind } from "@/lib/domain/change-orders/change-orders.types";
+import { jsonWithCustomerFinanceGuard } from "@/lib/security/customer-finance-response";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +26,12 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
   try {
     requireTenant(ctx);
   } catch (e) {
+    if (e instanceof LitePathForbiddenError) {
+      return NextResponse.json(
+        { error: "forbidden", code: "lite_client_path_forbidden" },
+        { status: 403 }
+      );
+    }
     if (e instanceof TenantRequiredError) return NextResponse.json({ error: e.message }, { status: 401 });
     throw e;
   }
@@ -40,7 +42,11 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
   if (!data) return NextResponse.json({ error: error || "Not found" }, { status: 404 });
 
   const isManager = await canManageChangeOrders(supabase, ctx, projectId);
-  return NextResponse.json({ data, audience: isManager ? "manager" : "stakeholder" });
+  const payload = { data, audience: isManager ? "manager" : "stakeholder" };
+  if (!isManager) {
+    return jsonWithCustomerFinanceGuard("GET /api/v1/projects/:id/change-orders/:changeOrderId", payload);
+  }
+  return NextResponse.json(payload);
 }
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string; changeOrderId: string }> }) {
@@ -57,6 +63,12 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   try {
     requireTenant(ctx);
   } catch (e) {
+    if (e instanceof LitePathForbiddenError) {
+      return NextResponse.json(
+        { error: "forbidden", code: "lite_client_path_forbidden" },
+        { status: 403 }
+      );
+    }
     if (e instanceof TenantRequiredError) return NextResponse.json({ error: e.message }, { status: 401 });
     throw e;
   }

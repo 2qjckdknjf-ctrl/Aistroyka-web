@@ -5,19 +5,21 @@ import { requireAdmin } from "@/src/features/admin/auth/requireAdmin";
 import { routing } from "@/i18n/routing";
 
 /**
- * /admin/* is only accessible to users with tenant_members.role in ('owner', 'admin').
+ * /admin/* is only accessible when the user is owner/admin in the *active* tenant.
+ * Admin membership in another workspace does not unlock this shell.
  * Otherwise redirect to dashboard root, preserving the current locale.
+ * redirect() is not wrapped in try/catch (NEXT_REDIRECT must propagate).
  */
 export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const headersList = await headers();
+  const locale = headersList.get("x-next-intl-locale") ?? routing.defaultLocale;
   const supabase = await createClient();
-  const { allowed } = await requireAdmin(supabase);
+  const { allowed } = await requireAdmin(supabase, headersList);
   if (!allowed) {
-    const headersList = await headers();
-    const locale = headersList.get("x-next-intl-locale") ?? routing.defaultLocale;
     redirect(`/${locale}/dashboard`);
   }
   return <>{children}</>;

@@ -29,6 +29,12 @@ vi.mock("@/lib/tenant", () => ({
       this.name = "TenantRequiredError";
     }
   },
+  LitePathForbiddenError: class LitePathForbiddenError extends Error {
+    constructor(m = "forbidden") {
+      super(m);
+      this.name = "LitePathForbiddenError";
+    }
+  },
 }));
 
 const listForManager = vi.fn().mockResolvedValue({ rows: mockRows, total: 1 });
@@ -48,7 +54,7 @@ vi.mock("@/lib/domain/upload-session/upload-session.service", () => ({
 
 vi.mock("@/lib/api/lite-idempotency", () => ({
   requireLiteIdempotency: vi.fn().mockResolvedValue({ ok: true }),
-  storeLiteIdempotency: vi.fn().mockResolvedValue(undefined),
+  storeLiteIdempotency: vi.fn().mockResolvedValue({ ok: true }),
 }));
 
 vi.mock("@/lib/observability", () => ({
@@ -75,6 +81,32 @@ describe("GET /api/v1/media/upload-sessions", () => {
     });
     const res = await GET(new Request("https://test/api/v1/media/upload-sessions"));
     expect(res.status).toBe(401);
+  });
+
+  it("returns 403 for lite worker clients before calling the manager list", async () => {
+    const { getTenantContextFromRequest } = await import("@/lib/tenant");
+    vi.mocked(getTenantContextFromRequest).mockResolvedValueOnce({
+      tenantId: "t1",
+      userId: "u1",
+      role: "member",
+      subscriptionTier: "free",
+      clientProfile: "android_worker",
+      traceId: "trace-lite",
+    });
+    listForManager.mockClear();
+
+    const res = await GET(
+      new Request("https://test/api/v1/media/upload-sessions", {
+        headers: { "x-client": "android_worker" },
+      }),
+    );
+
+    expect(res.status).toBe(403);
+    expect(await res.json()).toEqual({
+      error: "forbidden",
+      code: "lite_client_path_forbidden",
+    });
+    expect(listForManager).not.toHaveBeenCalled();
   });
 
   it("passes stuck=1 as stuck true to repository", async () => {

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
+import { getTenantContextFromRequest, requireTenant, TenantRequiredError, LitePathForbiddenError } from "@/lib/tenant";
 import { requireAdmin } from "@/lib/api/require-admin";
 
 export const dynamic = "force-dynamic";
@@ -34,6 +34,12 @@ export async function GET(request: Request) {
   try {
     requireTenant(ctx);
   } catch (error) {
+    if (error instanceof LitePathForbiddenError) {
+      return NextResponse.json(
+        { error: "forbidden", code: "lite_client_path_forbidden" },
+        { status: 403 }
+      );
+    }
     if (error instanceof TenantRequiredError) {
       return NextResponse.json({ error: error.message }, { status: 401 });
     }

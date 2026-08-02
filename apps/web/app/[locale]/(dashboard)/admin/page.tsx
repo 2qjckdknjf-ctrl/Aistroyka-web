@@ -1,4 +1,5 @@
 import { getTranslations } from "next-intl/server";
+import { headers } from "next/headers";
 import { Link } from "@/i18n/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { JobStatusBadge } from "../projects/JobStatusBadge";
@@ -7,6 +8,7 @@ import { AdminProductControlCenterClient } from "./AdminProductControlCenterClie
 import { computeCalibration } from "@/lib/intelligence/calibration";
 import { Card, SectionHeader, EmptyState } from "@/components/ui";
 import type { JobStatus } from "@/lib/types";
+import { resolveAdminPageTenantScope } from "@/src/features/admin/auth/resolveAdminPageTenantScope";
 
 type JobRow = {
   id: string;
@@ -21,19 +23,31 @@ export default async function AdminPage() {
   const tPage = await getTranslations("dashboardPageMeta");
   const tDetail = await getTranslations("dashboardDetail");
   const supabase = await createClient();
-  const { data: jobs } = await supabase
-    .from("analysis_jobs")
-    .select("id, media_id, status, started_at, error_message, media(project_id)")
-    .order("started_at", { ascending: false })
-    .limit(100);
+  const scope = await resolveAdminPageTenantScope(supabase, await headers());
 
-  const { data: analysisRows } = await supabase
-    .from("ai_analysis")
-    .select(
-      "stage, completion_percent, risk_level, detected_issues, recommendations, created_at"
-    )
-    .order("created_at", { ascending: false })
-    .limit(50);
+  const jobsQuery = scope.tenantId
+    ? supabase
+        .from("analysis_jobs")
+        .select("id, media_id, status, started_at, error_message, media(project_id)")
+        .eq("tenant_id", scope.tenantId)
+        .order("started_at", { ascending: false })
+        .limit(100)
+    : null;
+  const analysesQuery = scope.tenantId
+    ? supabase
+        .from("ai_analysis")
+        .select(
+          "stage, completion_percent, risk_level, detected_issues, recommendations, created_at"
+        )
+        .eq("tenant_id", scope.tenantId)
+        .order("created_at", { ascending: false })
+        .limit(50)
+    : null;
+
+  const [{ data: jobs }, { data: analysisRows }] = await Promise.all([
+    jobsQuery ?? Promise.resolve({ data: [] as JobRow[] | null }),
+    analysesQuery ?? Promise.resolve({ data: [] as Array<Record<string, unknown>> | null }),
+  ]);
 
   const analyses = (analysisRows ?? []) as Array<{
     stage: string | null;

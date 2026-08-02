@@ -11,9 +11,11 @@ struct ReportsInboxPlaceholderView: View {
         NavigationStack {
             List {
                 Text(NSLocalizedString("mgr_reports_placeholder", comment: ""))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(BrandTokens.textSecondary)
             }
             .navigationTitle(NSLocalizedString("mgr_tab_reports", comment: ""))
+        .brandScrollChrome()
+
         }
     }
 }

@@ -19,13 +19,20 @@ const mockClasses = vi.hoisted(() => {
       this.name = "TenantRequiredError";
     }
   }
-  return { TenantRequiredError };
+  class LitePathForbiddenError extends Error {
+    constructor(message = "forbidden") {
+      super(message);
+      this.name = "LitePathForbiddenError";
+    }
+  }
+  return { TenantRequiredError, LitePathForbiddenError };
 });
 
 vi.mock("@/lib/tenant", () => ({
   getTenantContextFromRequest: (...args: unknown[]) => getTenantContextFromRequest(...args),
   requireTenant: (...args: unknown[]) => requireTenant(...args),
   TenantRequiredError: mockClasses.TenantRequiredError,
+  LitePathForbiddenError: mockClasses.LitePathForbiddenError,
 }));
 
 const requestBoundClient = { client: "request-bound" };

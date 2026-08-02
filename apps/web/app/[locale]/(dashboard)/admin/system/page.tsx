@@ -1,15 +1,20 @@
 import { getTranslations } from "next-intl/server";
+import { headers } from "next/headers";
 import { Link } from "@/i18n/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getSystemMetrics } from "@/lib/observability/metrics";
+import { resolveAdminPageTenantScope } from "@/src/features/admin/auth/resolveAdminPageTenantScope";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminSystemPage() {
   const tDetail = await getTranslations("dashboardDetail");
   const supabase = await createClient();
+  const scope = await resolveAdminPageTenantScope(supabase, await headers());
 
-  const metrics = await getSystemMetrics(supabase);
+  const metrics = scope.tenantId
+    ? await getSystemMetrics(supabase, scope.tenantId)
+    : null;
   if (!metrics) {
     return (
       <main className="mx-auto max-w-4xl px-aistroyka-4 py-aistroyka-8">

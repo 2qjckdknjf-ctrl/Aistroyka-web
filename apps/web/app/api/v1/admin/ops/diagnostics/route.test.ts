@@ -8,6 +8,7 @@ vi.mock("@/lib/tenant", () => ({
   getTenantContextFromRequest: vi.fn().mockResolvedValue({ tenantId: "t1", userId: "u1", role: "admin" }),
   requireTenant: vi.fn(),
   TenantRequiredError: class TenantRequiredError extends Error {},
+  LitePathForbiddenError: class LitePathForbiddenError extends Error {},
 }));
 vi.mock("@/lib/api/require-admin", () => ({
   requireAdmin: vi.fn().mockReturnValue(null),

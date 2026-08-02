@@ -157,7 +157,11 @@ enum WorkerAPI {
             idempotencyKey: idempotencyKey
         )
         guard let data = r.data else { throw APIError(statusCode: nil, code: nil, message: "No session data") }
-        let path = data.uploadPath ?? "media/\(data.id)"
+        // Prefer server upload_path (media/{tenantId}/{sessionId}). Never invent a tenant-less
+        // fallback — Storage RLS rejects media/{sessionId}/… with HTTP 400.
+        guard let path = data.uploadPath?.trimmingCharacters(in: .whitespacesAndNewlines), !path.isEmpty else {
+            throw APIError(statusCode: nil, code: nil, message: "Upload session missing upload_path")
+        }
         return (data.id, path)
     }
     
@@ -364,13 +368,9 @@ struct WorkerReportMediaItem: Decodable {
     let mediaId: String?
     let uploadSessionId: String?
     let fileUrl: String?
-    enum CodingKeys: String, CodingKey {
-        case mediaId = "media_id"
-        case uploadSessionId = "upload_session_id"
-        case fileUrl = "file_url"
-    }
 }
 
+/// Decoded via APIClient `.convertFromSnakeCase` — do not add snake_case CodingKeys.
 struct WorkerReportDetailData: Decodable {
     let id: String
     let status: String
@@ -378,15 +378,6 @@ struct WorkerReportDetailData: Decodable {
     let taskId: String?
     let workerNote: String?
     let media: [WorkerReportMediaItem]?
-
-    enum CodingKeys: String, CodingKey {
-        case id
-        case status
-        case managerNote = "manager_note"
-        case taskId = "task_id"
-        case workerNote = "worker_note"
-        case media
-    }
 }
 
 private struct WorkerReportDetailEnvelope: Decodable {

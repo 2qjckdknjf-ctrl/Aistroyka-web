@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { createClientFromRequest } from "@/lib/supabase/server";
-import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
+import { getTenantContextFromRequest, requireTenant, TenantRequiredError, LitePathForbiddenError } from "@/lib/tenant";
 import { createUploadSession } from "@/lib/domain/upload-session/upload-session.service";
 import { listForManager } from "@/lib/domain/upload-session/upload-session.repository";
 import { checkRequestBodySize } from "@/lib/api/request-limit";
 import { requireLiteIdempotency, storeLiteIdempotency } from "@/lib/api/lite-idempotency";
 import { withRequestIdAndTiming } from "@/lib/observability";
+import { isLiteWorkerClient } from "@/lib/tenant/client-profile";
 import { CreateUploadSessionRequestSchema } from "@aistroyka/contracts";
 
 export const dynamic = "force-dynamic";
@@ -20,10 +21,32 @@ export async function GET(request: Request) {
   try {
     requireTenant(ctx);
   } catch (e) {
+    if (e instanceof LitePathForbiddenError) {
+      return NextResponse.json(
+        { error: "forbidden", code: "lite_client_path_forbidden" },
+        { status: 403 }
+      );
+    }
     if (e instanceof TenantRequiredError) {
       return withRequestIdAndTiming(request, NextResponse.json({ error: e.message }, { status: 401 }), { route: ROUTE_GET, method: "GET", duration_ms: Date.now() - start });
     }
     throw e;
+  }
+  if (isLiteWorkerClient(ctx)) {
+    return withRequestIdAndTiming(
+      request,
+      NextResponse.json(
+        { error: "forbidden", code: "lite_client_path_forbidden" },
+        { status: 403 },
+      ),
+      {
+        route: ROUTE_GET,
+        method: "GET",
+        duration_ms: Date.now() - start,
+        tenantId: ctx.tenantId,
+        userId: ctx.userId,
+      },
+    );
   }
   const url = new URL(request.url);
   const limit = Math.min(parseInt(url.searchParams.get("limit") ?? "50", 10) || 50, 100);
@@ -48,6 +71,12 @@ export async function POST(request: Request) {
   try {
     requireTenant(ctx);
   } catch (e) {
+    if (e instanceof LitePathForbiddenError) {
+      return NextResponse.json(
+        { error: "forbidden", code: "lite_client_path_forbidden" },
+        { status: 403 }
+      );
+    }
     if (e instanceof TenantRequiredError) {
       return withRequestIdAndTiming(request, NextResponse.json({ error: e.message }, { status: e.message.includes("membership") ? 403 : 401 }), { route: ROUTE_POST, method: "POST", duration_ms: Date.now() - start });
     }
@@ -66,6 +95,7 @@ export async function POST(request: Request) {
   const supabase = await createClientFromRequest(request);
   const { data, error } = await createUploadSession(supabase, ctx, purpose);
   if (error) return withRequestIdAndTiming(request, NextResponse.json({ error }, { status: 403 }), { route: ROUTE_POST, method: "POST", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
-  await storeLiteIdempotency(request, ctx, ROUTE_POST, { data }, 200);
+  const idemStore = await storeLiteIdempotency(request, ctx, ROUTE_POST, { data }, 200);
+  if (!idemStore.ok) return idemStore.response;
   return withRequestIdAndTiming(request, NextResponse.json({ data }), { route: ROUTE_POST, method: "POST", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
 }

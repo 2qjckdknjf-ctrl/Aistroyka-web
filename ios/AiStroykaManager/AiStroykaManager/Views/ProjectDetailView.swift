@@ -22,7 +22,7 @@ struct ProjectDetailView: View {
                 LoadingStateView(message: NSLocalizedString("mgr_loading_project", comment: ""))
                     .accessibilityIdentifier("pilot_manager_project_detail_loading")
             } else if let err = errorMessage, project == nil {
-                ErrorStateView(message: err, retry: { load() })
+                ErrorStateView(message: err, retryTitle: NSLocalizedString("mgr_retry", comment: ""), retry: { load() })
                     .accessibilityIdentifier("pilot_manager_project_detail_error")
             } else if let p = project {
                 content(project: p)
@@ -32,6 +32,8 @@ struct ProjectDetailView: View {
             }
         }
         .navigationTitle(project?.name ?? projectName ?? NSLocalizedString("mgr_project", comment: ""))
+        .brandScrollChrome()
+
         .refreshable { await loadAsync() }
         .onAppear { loadIfNeeded() }
     }
@@ -146,7 +148,7 @@ struct ProjectAIView: View {
             if isLoading && jobs.isEmpty && errorMessage == nil {
                 LoadingStateView(message: NSLocalizedString("mgr_loading_ai_jobs", comment: ""))
             } else if let err = errorMessage, jobs.isEmpty {
-                ErrorStateView(message: err, retry: { load() })
+                ErrorStateView(message: err, retryTitle: NSLocalizedString("mgr_retry", comment: ""), retry: { load() })
             } else if jobs.isEmpty {
                 EmptyStateView(
                     title: NSLocalizedString("mgr_no_ai_jobs_title", comment: ""),
@@ -191,8 +193,8 @@ struct ProjectAIRowView: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(job.status ?? "—")
                 .font(.subheadline)
-            if let m = job.mediaId { Text(String(format: NSLocalizedString("mgr_media_fmt", comment: ""), m)).font(.caption).foregroundStyle(.secondary) }
-            if let c = job.createdAt { Text(formatDate(c)).font(.caption2).foregroundStyle(.tertiary) }
+            if let m = job.mediaId { Text(String(format: NSLocalizedString("mgr_media_fmt", comment: ""), m)).font(.caption).foregroundStyle(BrandTokens.textSecondary) }
+            if let c = job.createdAt { Text(formatDate(c)).font(.caption2).foregroundStyle(BrandTokens.textTertiary) }
         }
         .padding(.vertical, 4)
     }
@@ -219,7 +221,7 @@ struct TasksListForProjectView: View {
             if isLoading && tasks.isEmpty && errorMessage == nil {
                 LoadingStateView(message: NSLocalizedString("mgr_loading_tasks", comment: ""))
             } else if let err = errorMessage, tasks.isEmpty {
-                ErrorStateView(message: err, retry: { load() })
+                ErrorStateView(message: err, retryTitle: NSLocalizedString("mgr_retry", comment: ""), retry: { load() })
             } else if tasks.isEmpty {
                 EmptyStateView(
                     title: NSLocalizedString("mgr_no_tasks_title", comment: ""),
@@ -234,6 +236,7 @@ struct TasksListForProjectView: View {
             }
         }
         .navigationTitle(NSLocalizedString("mgr_tab_tasks", comment: ""))
+        .brandScrollChrome()
         .refreshable { await loadAsync() }
         .onAppear { loadIfNeeded() }
     }
@@ -271,7 +274,7 @@ struct ReportsInboxForProjectView: View {
             if isLoading && reports.isEmpty && errorMessage == nil {
                 LoadingStateView(message: NSLocalizedString("mgr_loading_reports", comment: ""))
             } else if let err = errorMessage, reports.isEmpty {
-                ErrorStateView(message: err, retry: { load() })
+                ErrorStateView(message: err, retryTitle: NSLocalizedString("mgr_retry", comment: ""), retry: { load() })
             } else if reports.isEmpty {
                 EmptyStateView(
                     title: NSLocalizedString("mgr_no_reports_title", comment: ""),
@@ -286,6 +289,7 @@ struct ReportsInboxForProjectView: View {
             }
         }
         .navigationTitle(NSLocalizedString("mgr_tab_reports", comment: ""))
+        .brandScrollChrome()
         .refreshable { await loadAsync() }
         .onAppear { loadIfNeeded() }
     }

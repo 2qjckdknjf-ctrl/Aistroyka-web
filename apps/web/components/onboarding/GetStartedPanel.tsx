@@ -14,7 +14,7 @@ type GetStarted = {
 };
 
 async function fetchStatus(): Promise<{ getStarted: GetStarted; projectCount: number }> {
-  const res = await fetch("/api/activation/status", { credentials: "include" });
+  const res = await fetch("/api/v1/activation/status", { credentials: "include" });
   if (!res.ok) return { getStarted: { createProject: false, inviteTeam: false, addTask: false, uploadReport: false, viewAi: false }, projectCount: 0 };
   const json = await res.json();
   return { getStarted: json.getStarted ?? {}, projectCount: json.projectCount ?? 0 };

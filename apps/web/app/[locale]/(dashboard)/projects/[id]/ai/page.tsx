@@ -1,3 +1,4 @@
+import { headers } from "next/headers";
 import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { createClient, getSessionUser } from "@/lib/supabase/server";
@@ -20,7 +21,7 @@ export default async function ProjectAiPage({
   const user = await getSessionUser(supabase);
   if (!user) notFound();
 
-  const { data: project } = await getProjectById(supabase, id);
+  const { data: project } = await getProjectById(supabase, id, await headers());
   if (!project) notFound();
 
   const { data: mediaRows } = await supabase

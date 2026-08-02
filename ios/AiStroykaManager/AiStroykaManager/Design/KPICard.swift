@@ -12,22 +12,21 @@ struct KPICard: View {
     var subtitle: String?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(title)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            Text(value)
-                .font(.title2)
-                .fontWeight(.semibold)
-            if let subtitle = subtitle {
-                Text(subtitle)
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
+        BrandCard {
+            VStack(alignment: .leading, spacing: BrandTokens.space1) {
+                Text(title)
+                    .font(.caption)
+                    .foregroundStyle(ManagerSemanticColors.textSecondary)
+                Text(value)
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(ManagerSemanticColors.textPrimary)
+                if let subtitle = subtitle {
+                    Text(subtitle)
+                        .font(.caption2)
+                        .foregroundStyle(ManagerSemanticColors.textTertiary)
+                }
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding()
-        .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }

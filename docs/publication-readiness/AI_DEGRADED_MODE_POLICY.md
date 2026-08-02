@@ -34,3 +34,4 @@ All items must pass:
 
 - `docs/publication-readiness/AI_LIVE_PROVIDER_VALIDATION_REPORT.md`
 - `docs/publication-readiness/USER_RELEASE_NOTES.md`
+- Phase 7 closure (2026-07-30): `docs/roadmap/AISTROYKA_PHASE7_AI_RELIABILITY_CLOSURE_2026-07-30.md` — current source classified **YES — DEGRADED** until fail-closed rate-limit RPC is applied and per-target `--require-live` product proof is green for that runtime.

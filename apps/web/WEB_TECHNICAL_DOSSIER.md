@@ -1,6 +1,6 @@
 # Web Technical Dossier — Aistroyka (apps/web)
 
-**Version:** 1.0  
+**Version:** 1.0
 **Scope:** apps/web (Next.js). Product logic unchanged; analysis and recommendations only.
 
 ---
@@ -141,8 +141,8 @@ apps/web/
 
 ## API / Data Flow
 
-- **How web talks to backend:** (1) Browser → Next.js API routes (`/api/*`). (2) API routes use Supabase client (server) or getAdminClient() for storage/admin. (3) AI: `/api/ai/analyze-image` (OpenAI) and optional `AI_ANALYSIS_URL` for external analyze; `/api/analysis/process` triggers processing and uses runOneJob (fetch to AI_ANALYSIS_URL or in-app analyze-image).
-- **Endpoints used by client:** See `api_endpoints_map.md`. Summary: `/api/health`, `/api/projects`, `/api/projects/[id]/upload`, `/api/projects/[id]/poll-status`, `/api/analysis/process`, `/api/tenant/invite`, `/api/tenant/revoke`, `/api/tenant/accept-invite`; trigger routes for jobs/media.
+- **How web talks to backend:** (1) Browser → Next.js API routes (`/api/*` and canonical `/api/v1/*`). (2) API routes use Supabase client (server) or getAdminClient() for storage/admin. (3) AI: `/api/ai/analyze-image` (OpenAI) and optional `AI_ANALYSIS_URL` for external analyze; canonical `POST /api/v1/analysis/process` (legacy adapter `POST /api/analysis/process`) triggers tenant-scoped processing via `lib/ai/analysis-process.http.ts` → `runOneJob` → **`dequeue_tenant_job(p_tenant_id)`** (server `TenantContext` only; not body/query). Global `dequeue_job` is for trusted background workers only. Migration `20260725143000_dequeue_tenant_job.sql` must be applied before deploying the tenant-scoped code (not applied at Phase 2B.1 closure).
+- **Endpoints used by client:** Prefer `/api/v1/*`. Analysis process clients use `/api/v1/analysis/process` (see UploadMediaForm / JobListPolling). Legacy `/api/analysis/process` remains a deprecated adapter. Other summaries may still list older `/api/projects` and `/api/tenant/*` surfaces — treat `/api/v1` as canonical where both exist.
 - **Auth:** Cookie session via middleware; API routes that need user call `createClient()` (server) and `getUser()`. No explicit Authorization header from client to Next API (same-origin cookies).
 - **Error handling:** No single error shape for all API responses. Some routes return JSON `{ error: string }`; client checks `res.ok` and parses body. `lib/api/errorShape.ts` exists but not used everywhere.
 - **Retry/backoff:** `lib/ai/runOneJob.ts` has retry on 5xx and timeout; polling in JobListPolling. No generic fetch retry wrapper.

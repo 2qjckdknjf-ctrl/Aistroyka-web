@@ -16,6 +16,8 @@ service = "aistroyka-web-dev"
 
 [env.dev]
 name = "aistroyka-web-dev"
+[env.dev.vars]
+AISTROYKA_TRUST_CF_CONNECTING_IP = "1"
 [env.dev.assets]
 directory = ".open-next/assets"
 binding = "ASSETS"
@@ -29,7 +31,8 @@ main = ".open-next/deploy/worker-bootstrap.js"
 [env.staging.vars]
 NEXT_PUBLIC_SUPABASE_URL = "https://vthfrxehrursfloevnlp.supabase.co"
 NEXT_PUBLIC_APP_URL = "https://staging.aistroyka.ai"
-AI_ANALYSIS_URL = "https://staging.aistroyka.ai/api/ai/analyze-image"
+AI_ANALYSIS_URL = "https://staging.aistroyka.ai/api/v1/ai/analyze-image"
+AISTROYKA_TRUST_CF_CONNECTING_IP = "1"
 [env.staging.assets]
 directory = ".open-next/assets"
 binding = "ASSETS"
@@ -45,7 +48,8 @@ main = ".open-next/deploy/worker-bootstrap.js"
 NEXT_PUBLIC_SUPABASE_URL = "https://vthfrxehrursfloevnlp.supabase.co"
 # Required at runtime for health, middleware, auth. Set NEXT_PUBLIC_SUPABASE_ANON_KEY in Dashboard (secret).
 NEXT_PUBLIC_APP_URL = "https://aistroyka.ai"
-AI_ANALYSIS_URL = "https://aistroyka.ai/api/ai/analyze-image"
+AI_ANALYSIS_URL = "https://aistroyka.ai/api/v1/ai/analyze-image"
+AISTROYKA_TRUST_CF_CONNECTING_IP = "1"
 # Align with working copilot model tier; gpt-4o may be unavailable on some OpenAI projects.
 OPENAI_VISION_MODEL = "gpt-4o-mini"
 # Phase 3 only — do NOT enable during Phase 1 admin domain bring-up:

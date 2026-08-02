@@ -70,8 +70,12 @@ describe("host-routing", () => {
     expect(isAdminHostAllowedApiPath("/api/v1/health")).toBe(true);
     expect(isAdminHostAllowedApiPath(`${PLATFORM_API_PREFIX}/overview`)).toBe(true);
     expect(isAdminHostAllowedApiPath("/api/v1/admin/flags")).toBe(false);
+    expect(isAdminHostAllowedApiPath("/api/v1/admin/billing/pilot-status")).toBe(true);
+    expect(isAdminHostAllowedApiPath("/api/v1/admin/leads")).toBe(true);
 
     expect(isAdminHostBlockedApiPath(adminHost, "/api/v1/admin/flags")).toBe(true);
+    expect(isAdminHostBlockedApiPath(adminHost, "/api/v1/admin/billing/pilot-status")).toBe(false);
+    expect(isAdminHostBlockedApiPath(adminHost, "/api/v1/admin/leads")).toBe(false);
     expect(isAdminHostBlockedApiPath(adminHost, `${PLATFORM_API_PREFIX}/overview`)).toBe(false);
     expect(isAdminHostBlockedApiPath(publicHost, "/api/v1/admin/flags")).toBe(false);
   });

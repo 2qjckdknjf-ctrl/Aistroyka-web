@@ -3,12 +3,12 @@ import { createClient } from "@/lib/supabase/server";
 import { triggerAnalysisForMedia } from "@/lib/supabase/rpc";
 
 export async function POST(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string; mediaId: string }> }
 ) {
   const { id: projectId, mediaId } = await params;
   const supabase = await createClient();
-  const result = await triggerAnalysisForMedia(supabase, projectId, mediaId);
+  const result = await triggerAnalysisForMedia(supabase, projectId, mediaId, request);
   if ("error" in result) {
     if (result.error === "Unauthorized")
       return NextResponse.json(

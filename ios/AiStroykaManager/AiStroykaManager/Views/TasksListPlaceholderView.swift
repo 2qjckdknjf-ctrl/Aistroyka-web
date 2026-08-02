@@ -11,9 +11,11 @@ struct TasksListPlaceholderView: View {
         NavigationStack {
             List {
                 Text(NSLocalizedString("mgr_tasks_placeholder", comment: ""))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(BrandTokens.textSecondary)
             }
             .navigationTitle(NSLocalizedString("mgr_tab_tasks", comment: ""))
+        .brandScrollChrome()
+
         }
     }
 }

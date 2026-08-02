@@ -51,8 +51,8 @@ Field debugging without needing Xcode/Android Studio logs for every issue. Each 
 
 ## Android Worker / Manager
 
-**Status:** No Android app in repo yet. When implemented:
-- Add a **Diagnostics** or **Support** screen with: app version, build, API base URL, client profile, device id, auth state, last sync/error summary, request_id if captured from responses.
+**Status (2026-07-30):** Apps exist under `android/` as a **deferred buildable foundation** (not first-pilot). Dedicated Diagnostics/Support screens are **not** implemented and are **not** required for the deferred track.
+- When an owner-authorized Android readiness track starts: add a **Diagnostics** or **Support** screen with app version, build, API base URL, client profile, device id, auth state, last sync/error summary, request_id if captured from responses.
 
 ---
 

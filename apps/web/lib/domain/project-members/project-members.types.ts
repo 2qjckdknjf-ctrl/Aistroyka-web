@@ -1,4 +1,5 @@
-export type ProjectMemberRole = "worker" | "contractor" | "manager";
+/** Aligned with DB / project-members.repository (includes project owner). */
+export type ProjectMemberRole = "worker" | "contractor" | "manager" | "owner";
 export type ProjectMemberStatus = "active" | "inactive" | "removed";
 
 export interface ProjectMember {

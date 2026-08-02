@@ -1,54 +1,105 @@
 import { NextResponse } from "next/server";
 import { createClientFromRequest } from "@/lib/supabase/server";
-import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
+import {
+  abortHelpLiteIdempotency,
+  clampString,
+  commitHelpLiteIdempotency,
+  enforceHelpAbuseGuards,
+  HELP_MAX_LOCALE_LEN,
+  HELP_MAX_PATHNAME_LEN,
+  HELP_MAX_ROLE_LEN,
+  isHelpEventType,
+  readJsonBodyBounded,
+  requireHelpTenant,
+  sanitizePayload,
+} from "@/lib/help/help-api.shared";
 
-type AssistantEventRequest = {
-  type?: "open" | "ask" | "quick_prompt" | "action_click";
-  role?: string;
-  locale?: string;
-  pathname?: string;
-  payload?: Record<string, string | number | boolean | null>;
-};
+const ROUTE_KEY = "POST /api/v1/help/assistant/events";
+const ENDPOINT = "/api/v1/help/assistant/events";
+
+async function abortOr(request: Request, response: NextResponse): Promise<NextResponse> {
+  const abort = await abortHelpLiteIdempotency(request);
+  return abort ?? response;
+}
 
 export async function POST(request: Request) {
-  const ctx = await getTenantContextFromRequest(request);
-  try {
-    requireTenant(ctx);
-  } catch (error) {
-    if (error instanceof TenantRequiredError) {
-      return NextResponse.json({ ok: false, error: error.message }, { status: 401 });
-    }
-    throw error;
+  const auth = await requireHelpTenant(request);
+  if (!auth.ok) return auth.response;
+
+  const guards = await enforceHelpAbuseGuards(request, auth.ctx, ENDPOINT, ROUTE_KEY);
+  if (guards) return guards;
+
+  const body = await readJsonBodyBounded(request);
+  if (!body.ok) {
+    return abortOr(request, body.response);
   }
 
-  let body: AssistantEventRequest;
-  try {
-    body = (await request.json()) as AssistantEventRequest;
-  } catch {
-    return NextResponse.json({ ok: false }, { status: 400 });
+  if (body.value == null || typeof body.value !== "object" || Array.isArray(body.value)) {
+    return abortOr(
+      request,
+      NextResponse.json({ ok: false, error: "Invalid body", code: "invalid_json" }, { status: 400 })
+    );
   }
 
-  if (!body.type) {
-    return NextResponse.json({ ok: false }, { status: 400 });
+  const raw = body.value as Record<string, unknown>;
+  if (!isHelpEventType(raw.type)) {
+    return abortOr(
+      request,
+      NextResponse.json({ ok: false, error: "Invalid event type", code: "invalid_event_type" }, { status: 400 })
+    );
   }
 
-  const type = body.type;
-  const role = body.role ?? "manager";
-  const locale = body.locale ?? "en";
-  const pathname = body.pathname ?? "/dashboard";
+  if (typeof raw.role === "string" && raw.role.length > HELP_MAX_ROLE_LEN) {
+    return abortOr(
+      request,
+      NextResponse.json({ ok: false, error: "role too long", code: "payload_too_large" }, { status: 413 })
+    );
+  }
+  if (typeof raw.locale === "string" && raw.locale.length > HELP_MAX_LOCALE_LEN) {
+    return abortOr(
+      request,
+      NextResponse.json({ ok: false, error: "locale too long", code: "payload_too_large" }, { status: 413 })
+    );
+  }
+  if (typeof raw.pathname === "string" && raw.pathname.length > HELP_MAX_PATHNAME_LEN) {
+    return abortOr(
+      request,
+      NextResponse.json({ ok: false, error: "pathname too long", code: "payload_too_large" }, { status: 413 })
+    );
+  }
+
+  const type = raw.type;
+  const role = clampString(raw.role, HELP_MAX_ROLE_LEN) ?? "manager";
+  const locale = clampString(raw.locale, HELP_MAX_LOCALE_LEN) ?? "en";
+  const pathname = clampString(raw.pathname, HELP_MAX_PATHNAME_LEN) ?? "/dashboard";
+
+  const payloadResult = sanitizePayload(raw.payload);
+  if (!payloadResult.ok) {
+    return abortOr(request, payloadResult.response);
+  }
 
   const supabase = await createClientFromRequest(request);
-  await supabase.from("ai_guide_events").insert({
-    tenant_id: ctx.tenantId,
-    user_id: ctx.userId,
+  const { error } = await supabase.from("ai_guide_events").insert({
+    tenant_id: auth.ctx.tenantId,
+    user_id: auth.ctx.userId,
     event_type: type,
     role,
     locale,
     pathname,
-    payload: body.payload ?? {},
+    payload: payloadResult.value,
   });
 
-  return NextResponse.json({
+  if (error) {
+    return abortOr(
+      request,
+      NextResponse.json(
+        { ok: false, error: "Failed to record event", code: "event_insert_failed" },
+        { status: 500 }
+      )
+    );
+  }
+
+  const responseBody = {
     ok: true,
     accepted: {
       type,
@@ -56,6 +107,8 @@ export async function POST(request: Request) {
       locale,
       pathname,
     },
-  });
+  };
+  const finalizeFail = await commitHelpLiteIdempotency(request, auth.ctx, ROUTE_KEY, responseBody, 200);
+  if (finalizeFail) return finalizeFail;
+  return NextResponse.json(responseBody);
 }
-

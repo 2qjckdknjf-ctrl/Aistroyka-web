@@ -7,7 +7,13 @@ import { NavLogout } from "./NavLogout";
 import { BuildStamp } from "./BuildStamp";
 import { Logo } from "@/components/brand/Logo";
 import { routing } from "@/i18n/routing";
-import { getDashboardNavIncludesAdmin } from "./dashboard-nav.utils";
+import {
+  getDashboardNavIncludesAdmin,
+  getDashboardNavIncludesInternalOps,
+  getDashboardNavIncludesTeam,
+  getDashboardShellHomeHref,
+  getPortalOnlyNavItems,
+} from "./dashboard-nav.utils";
 import { FirstLaunchGuide, LaunchConfidenceBanner } from "@/components/onboarding";
 import { AIGuidePanel } from "@/components/help/AIGuidePanel";
 
@@ -38,11 +44,14 @@ export function DashboardShell({
   userEmail,
   isAdmin,
   canManageTeam,
+  portalOnly = false,
 }: {
   children: React.ReactNode;
   userEmail?: string;
   isAdmin: boolean;
   canManageTeam: boolean;
+  /** Active-tenant role is stakeholder — portal-only chrome (server-derived). */
+  portalOnly?: boolean;
 }) {
   const t = useTranslations("nav");
   const pathname = usePathname();
@@ -50,47 +59,71 @@ export function DashboardShell({
   const [dateRange, setDateRange] = useState("7d");
 
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);
+  const showInternal = getDashboardNavIncludesInternalOps(portalOnly);
+  const homeHref = getDashboardShellHomeHref(portalOnly);
 
   const isActive = (href: string) => {
     if (href === "/dashboard") return pathname === "/dashboard";
+    if (href === "/portal/projects") {
+      return pathname === "/portal/projects" || pathname.startsWith("/portal/projects/");
+    }
     return pathname.startsWith(href);
   };
 
   return (
-    <div className="min-h-screen bg-aistroyka-bg-primary flex">
-      {/* Sidebar */}
+    <div className="min-h-screen bg-aistroyka-bg-primary flex" data-portal-shell={portalOnly ? "1" : "0"}>
       <aside
         id="dashboard-sidebar"
         className={`fixed inset-y-0 left-0 z-40 w-56 border-r border-aistroyka-border-subtle bg-aistroyka-surface transition-transform md:static md:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
-        aria-label={t("dashboardNavigation")}
+        aria-label={portalOnly ? t("portalNavigation") : t("dashboardNavigation")}
       >
         <div className="flex h-full flex-col pt-[var(--aistroyka-space-4)]">
           <div className="px-[var(--aistroyka-space-4)] pb-[var(--aistroyka-space-3)]">
-            <Logo href="/dashboard" height={26} className="block" onClick={closeSidebar} />
+            <Logo href={homeHref} height={26} className="block" onClick={closeSidebar} />
           </div>
           <nav className="flex-1 space-y-0.5 px-[var(--aistroyka-space-2)]" aria-label={t("main")}>
-            {SIDEBAR_LINKS.map(({ href, key }) => {
-              const active = isActive(href);
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  onClick={closeSidebar}
-                  data-testid={`cta.dashboard.nav.${key}`}
-                  className={`flex min-h-aistroyka-touch items-center rounded-[var(--aistroyka-radius-lg)] px-[var(--aistroyka-space-3)] py-[var(--aistroyka-space-2)] text-[var(--aistroyka-font-subheadline)] font-medium transition-colors ${
-                    active
-                      ? "bg-aistroyka-accent-light text-aistroyka-accent"
-                      : "text-aistroyka-text-secondary hover:bg-aistroyka-surface-raised hover:text-aistroyka-text-primary"
-                  }`}
-                  aria-current={active ? "page" : undefined}
-                >
-                  {href === "/dashboard" ? t("dashboard") : t(key)}
-                </Link>
-              );
-            })}
-            {canManageTeam ? (
+            {portalOnly
+              ? getPortalOnlyNavItems().map(({ href, key, testId }) => {
+                  const active = isActive(href);
+                  return (
+                    <Link
+                      key={href}
+                      href={href}
+                      onClick={closeSidebar}
+                      data-testid={testId}
+                      className={`flex min-h-aistroyka-touch items-center rounded-[var(--aistroyka-radius-lg)] px-[var(--aistroyka-space-3)] py-[var(--aistroyka-space-2)] text-[var(--aistroyka-font-subheadline)] font-medium transition-colors ${
+                        active
+                          ? "bg-aistroyka-accent-light text-aistroyka-accent"
+                          : "text-aistroyka-text-secondary hover:bg-aistroyka-surface-raised hover:text-aistroyka-text-primary"
+                      }`}
+                      aria-current={active ? "page" : undefined}
+                    >
+                      {t(key)}
+                    </Link>
+                  );
+                })
+              : SIDEBAR_LINKS.map(({ href, key }) => {
+                  const active = isActive(href);
+                  return (
+                    <Link
+                      key={href}
+                      href={href}
+                      onClick={closeSidebar}
+                      data-testid={`cta.dashboard.nav.${key}`}
+                      className={`flex min-h-aistroyka-touch items-center rounded-[var(--aistroyka-radius-lg)] px-[var(--aistroyka-space-3)] py-[var(--aistroyka-space-2)] text-[var(--aistroyka-font-subheadline)] font-medium transition-colors ${
+                        active
+                          ? "bg-aistroyka-accent-light text-aistroyka-accent"
+                          : "text-aistroyka-text-secondary hover:bg-aistroyka-surface-raised hover:text-aistroyka-text-primary"
+                      }`}
+                      aria-current={active ? "page" : undefined}
+                    >
+                      {href === "/dashboard" ? t("dashboard") : t(key)}
+                    </Link>
+                  );
+                })}
+            {getDashboardNavIncludesTeam(canManageTeam, portalOnly) ? (
               <Link
                 href="/team"
                 onClick={closeSidebar}
@@ -105,7 +138,7 @@ export function DashboardShell({
                 {t("team")}
               </Link>
             ) : null}
-            {getDashboardNavIncludesAdmin(isAdmin) && (
+            {getDashboardNavIncludesAdmin(isAdmin, portalOnly) && (
               <>
                 <div className="px-3 py-2 text-[var(--aistroyka-font-caption)] font-semibold uppercase tracking-wide text-aistroyka-text-tertiary">
                   {t("admin")}
@@ -153,7 +186,6 @@ export function DashboardShell({
         </div>
       </aside>
 
-      {/* Overlay when sidebar open on mobile */}
       {sidebarOpen && (
         <button
           type="button"
@@ -164,9 +196,12 @@ export function DashboardShell({
       )}
 
       <div className="flex flex-1 flex-col min-w-0">
-        <FirstLaunchGuide />
-        <AIGuidePanel />
-        {/* Topbar */}
+        {showInternal ? (
+          <>
+            <FirstLaunchGuide />
+            <AIGuidePanel />
+          </>
+        ) : null}
         <header className="sticky top-0 z-20 border-b border-aistroyka-border-subtle bg-aistroyka-surface">
           <div className="flex flex-wrap items-center justify-between gap-2 px-[var(--aistroyka-space-4)] py-[var(--aistroyka-space-3)]">
             <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 sm:gap-3">
@@ -183,24 +218,28 @@ export function DashboardShell({
                 </svg>
               </button>
               <span className="text-aistroyka-subheadline text-aistroyka-text-tertiary" aria-hidden>
-                {t("workspace")}
+                {portalOnly ? t("customerPortal") : t("workspace")}
               </span>
-              <select
-                aria-label={t("dateRange")}
-                value={dateRange}
-                onChange={(e) => setDateRange(e.target.value)}
-                className="rounded-[var(--aistroyka-radius-md)] border border-aistroyka-border-subtle bg-aistroyka-bg-primary px-2 py-1.5 text-aistroyka-caption text-aistroyka-text-primary focus:outline-none focus:ring-2 focus:ring-aistroyka-accent"
-              >
-                <option value="7d">{t("last7Days")}</option>
-                <option value="30d">{t("last30Days")}</option>
-                <option value="90d">{t("last90Days")}</option>
-              </select>
-              <input
-                type="search"
-                placeholder={t("searchPlaceholder")}
-                aria-label={t("search")}
-                className="min-w-0 flex-1 basis-[7.5rem] rounded-[var(--aistroyka-radius-md)] border border-aistroyka-border-subtle bg-aistroyka-bg-primary px-2 py-1.5 text-aistroyka-caption text-aistroyka-text-primary placeholder:text-aistroyka-text-tertiary focus:outline-none focus:ring-2 focus:ring-aistroyka-accent sm:w-40 sm:flex-none sm:basis-auto"
-              />
+              {showInternal ? (
+                <>
+                  <select
+                    aria-label={t("dateRange")}
+                    value={dateRange}
+                    onChange={(e) => setDateRange(e.target.value)}
+                    className="rounded-[var(--aistroyka-radius-md)] border border-aistroyka-border-subtle bg-aistroyka-bg-primary px-2 py-1.5 text-aistroyka-caption text-aistroyka-text-primary focus:outline-none focus:ring-2 focus:ring-aistroyka-accent"
+                  >
+                    <option value="7d">{t("last7Days")}</option>
+                    <option value="30d">{t("last30Days")}</option>
+                    <option value="90d">{t("last90Days")}</option>
+                  </select>
+                  <input
+                    type="search"
+                    placeholder={t("searchPlaceholder")}
+                    aria-label={t("search")}
+                    className="min-w-0 flex-1 basis-[7.5rem] rounded-[var(--aistroyka-radius-md)] border border-aistroyka-border-subtle bg-aistroyka-bg-primary px-2 py-1.5 text-aistroyka-caption text-aistroyka-text-primary placeholder:text-aistroyka-text-tertiary focus:outline-none focus:ring-2 focus:ring-aistroyka-accent sm:w-40 sm:flex-none sm:basis-auto"
+                  />
+                </>
+              ) : null}
             </div>
             <div className="flex min-w-0 shrink-0 flex-wrap items-center justify-end gap-2">
               <BuildStamp />
@@ -220,14 +259,15 @@ export function DashboardShell({
 
         <div className="flex flex-1 flex-col min-h-0">
           <main className="mx-auto min-w-0 w-full max-w-6xl flex-1 px-[var(--aistroyka-space-4)] py-[var(--aistroyka-space-6)]">
-            <LaunchConfidenceBanner />
+            {showInternal ? <LaunchConfidenceBanner /> : null}
             {children}
           </main>
           <footer
             className="border-t border-aistroyka-border-subtle py-2 text-center text-aistroyka-caption text-aistroyka-text-tertiary"
             aria-hidden="true"
           >
-            Build: {process.env.NEXT_PUBLIC_BUILD_SHA?.slice(0, 7) ?? "unknown"} / {process.env.NEXT_PUBLIC_BUILD_TIME ?? "unknown"}
+            Build: {process.env.NEXT_PUBLIC_BUILD_SHA?.slice(0, 7) ?? "unknown"} /{" "}
+            {process.env.NEXT_PUBLIC_BUILD_TIME ?? "unknown"}
           </footer>
         </div>
       </div>

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClientFromRequest } from "@/lib/supabase/server";
 import { getAdminClient } from "@/lib/supabase/admin";
-import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
+import { getTenantContextFromRequest, requireTenant, TenantRequiredError, LitePathForbiddenError } from "@/lib/tenant";
 import { finalizeUploadSession } from "@/lib/domain/upload-session/upload-session.service";
 import { checkRequestBodySize } from "@/lib/api/request-limit";
 import { requireLiteIdempotency, storeLiteIdempotency } from "@/lib/api/lite-idempotency";
@@ -25,6 +25,12 @@ export async function POST(
   try {
     requireTenant(ctx);
   } catch (e) {
+    if (e instanceof LitePathForbiddenError) {
+      return NextResponse.json(
+        { error: "forbidden", code: "lite_client_path_forbidden" },
+        { status: 403 }
+      );
+    }
     if (e instanceof TenantRequiredError) {
       return withRequestIdAndTiming(request, NextResponse.json({ error: e.message }, { status: e.message.includes("membership") ? 403 : 401 }), { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start });
     }
@@ -65,6 +71,7 @@ export async function POST(
     return withRequestIdAndTiming(request, NextResponse.json({ error, code: error === "media_object_missing" ? error : undefined }, { status }), { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
   }
   const response = { ok: true };
-  await storeLiteIdempotency(request, ctx, ROUTE_KEY, response, 200);
+  const idemStore = await storeLiteIdempotency(request, ctx, ROUTE_KEY, response, 200);
+  if (!idemStore.ok) return idemStore.response;
   return withRequestIdAndTiming(request, NextResponse.json(response), { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
 }

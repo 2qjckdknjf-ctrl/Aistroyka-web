@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient, getSessionUser } from "@/lib/supabase/server";
 import { getOrCreateTenantForCurrentUser } from "@/lib/api/engine";
-import { hasMinRole, getRoleInTenant } from "@/lib/auth/tenant";
+import { hasMinRole, getRoleInTenant } from "@/lib/tenant/tenant-membership.server";
 
 /** POST: revoke member. Body: { user_id: string }. Admin+ can revoke; cannot revoke owner. */
 export async function POST(request: Request) {
@@ -11,7 +11,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const tenantId = await getOrCreateTenantForCurrentUser(supabase);
+  const tenantId = await getOrCreateTenantForCurrentUser(supabase, request);
   if (!tenantId) {
     return NextResponse.json({ error: "No tenant" }, { status: 403 });
   }

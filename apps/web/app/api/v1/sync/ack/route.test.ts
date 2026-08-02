@@ -30,7 +30,7 @@ vi.mock("@/lib/tenant", () => ({
 }));
 vi.mock("@/lib/api/lite-idempotency", () => ({
   requireLiteIdempotency: vi.fn().mockResolvedValue({ ok: true }),
-  storeLiteIdempotency: vi.fn().mockResolvedValue(undefined),
+  storeLiteIdempotency: vi.fn().mockResolvedValue({ ok: true }),
 }));
 vi.mock("@/lib/sync/change-log.repository", () => ({
   getMaxCursor: vi.fn(),

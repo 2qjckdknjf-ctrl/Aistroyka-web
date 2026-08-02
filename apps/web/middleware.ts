@@ -1,8 +1,10 @@
 import { NextResponse, NextRequest } from "next/server";
 import createIntlMiddleware from "next-intl/middleware";
+import { createServerClient } from "@supabase/ssr";
 import { updateSession } from "@/lib/supabase/middleware";
 import { routing } from "@/i18n/routing";
 import { checkLiteAllowList } from "@/lib/api/lite-allow-list";
+import { isSamePathOrChild } from "@/lib/api/path-segment";
 import { resolvePostAuthEntry } from "@/lib/entry/entry-routing";
 import { OWNER_RATE_LIMIT_ALREADY_APPLIED_HEADER } from "@/lib/platform-owner/constants";
 import { gateOwnerRequest } from "@/lib/platform-owner/middleware-owner-gate";
@@ -10,6 +12,9 @@ import { isPlatformAdminApiPath, isPlatformAdminPagePath } from "@/lib/platform-
 import { resolveHostProfile } from "@/lib/platform-admin/host-policy";
 import { isAdminHostBlockedApiPath, resolveAdminHostPageRouting } from "@/lib/platform-admin/host-routing";
 import { applyApiSecurityHeadersToHeaders, getPageSecurityHeaders } from "@/lib/security-headers";
+import { resolveStakeholderPageRedirect } from "@/lib/tenant/stakeholder-middleware-gate";
+import { getActiveTenantRoleForUser } from "@/lib/tenant/tenant-role.server";
+import { getPublicEnv, hasSupabaseEnv } from "@/lib/env";
 
 const intlMiddleware = createIntlMiddleware(routing);
 
@@ -32,8 +37,8 @@ function applyHostProfileHeader(res: NextResponse, request: NextRequest): NextRe
   return res;
 }
 
-function applyApiSecurityHeaders(res: NextResponse): NextResponse {
-  applyApiSecurityHeadersToHeaders(res.headers);
+function applyApiSecurityHeaders(res: NextResponse, isProduction: boolean): NextResponse {
+  applyApiSecurityHeadersToHeaders(res.headers, { isProduction });
   return res;
 }
 
@@ -70,16 +75,19 @@ export async function middleware(request: NextRequest) {
   const isPlatformAdminPage = isPlatformAdminPagePath(pathWithoutLocEarly);
   const isPlatformAdminApi = isPlatformAdminApiPath(pathname);
 
-  if (pathname.startsWith("/api/v1")) {
-    const forbidden = checkLiteAllowList(pathname, request.method, request.headers.get("x-client"));
-    if (forbidden) {
-      const res = applyApiSecurityHeaders(NextResponse.json(forbidden.body, { status: 403 }));
-      return applyHostProfileHeader(res, request);
-    }
+  // Lite allow-list: segment-safe /api/v1 plus legacy /api/projects and /api/ai families.
+  // Route handlers for legacy families still fail closed independently (CF may skip middleware for /api/v1).
+  const liteForbidden = checkLiteAllowList(pathname, request.method, request.headers.get("x-client"));
+  if (liteForbidden) {
+    const res = applyApiSecurityHeaders(NextResponse.json(liteForbidden.body, { status: 403 }), isProduction);
+    return applyHostProfileHeader(res, request);
+  }
 
+  if (isSamePathOrChild(pathname, "/api/v1")) {
     if (isAdminHostBlockedApiPath(request.headers.get("host"), pathname)) {
       const res = applyApiSecurityHeaders(
-        NextResponse.json({ error: "admin_host_api_forbidden" }, { status: 403 })
+        NextResponse.json({ error: "admin_host_api_forbidden" }, { status: 403 }),
+        isProduction
       );
       return applyHostProfileHeader(res, request);
     }
@@ -88,7 +96,7 @@ export async function middleware(request: NextRequest) {
   if (isPlatformAdminApi) {
     const { response: sessionResponse, user } = await updateSession(request);
     if (sessionResponse.status === 503) {
-      const res = applyApiSecurityHeaders(sessionResponse);
+      const res = applyApiSecurityHeaders(sessionResponse, isProduction);
       return applyHostProfileHeader(res, request);
     }
     const denied = await gateOwnerRequest({
@@ -99,18 +107,24 @@ export async function middleware(request: NextRequest) {
       isApi: true,
     });
     if (denied) {
-      const res = applyApiSecurityHeaders(denied);
+      const res = applyApiSecurityHeaders(denied, isProduction);
       return applyHostProfileHeader(res, request);
     }
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set(OWNER_RATE_LIMIT_ALREADY_APPLIED_HEADER, "1");
     const res = NextResponse.next({ request: { headers: requestHeaders } });
     mergeSupabaseSessionIntoResponse(sessionResponse, res);
-    return applyHostProfileHeader(applyApiSecurityHeaders(res), request);
+    return applyHostProfileHeader(applyApiSecurityHeaders(res, isProduction), request);
   }
 
-  if (pathname.startsWith("/api/v1")) {
-    const res = applyApiSecurityHeaders(NextResponse.next());
+  if (isSamePathOrChild(pathname, "/api/v1")) {
+    const res = applyApiSecurityHeaders(NextResponse.next(), isProduction);
+    return applyHostProfileHeader(res, request);
+  }
+
+  // Legacy /api/* (non-v1): middleware owns API headers after next.config headers() removal.
+  if (isSamePathOrChild(pathname, "/api")) {
+    const res = applyApiSecurityHeaders(NextResponse.next(), isProduction);
     return applyHostProfileHeader(res, request);
   }
 
@@ -172,12 +186,54 @@ export async function middleware(request: NextRequest) {
   }
   if (isAuthPage && user) {
     const next = request.nextUrl.searchParams.get("next") ?? undefined;
-    const { path } = resolvePostAuthEntry({ locale, next, baseUrl: request.url });
+    let activeRole: string | null = null;
+    try {
+      if (hasSupabaseEnv()) {
+        const { NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY } = getPublicEnv();
+        const supabase = createServerClient(NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+          cookies: {
+            getAll() {
+              return request.cookies.getAll();
+            },
+            setAll() {
+              /* session cookies already on sessionResponse */
+            },
+          },
+        });
+        activeRole = await getActiveTenantRoleForUser(supabase, user.id, request);
+      }
+    } catch {
+      activeRole = null;
+    }
+    const { path } = resolvePostAuthEntry({
+      locale,
+      next,
+      baseUrl: request.url,
+      activeRole,
+    });
     const nextUrl = new URL(path, request.url);
     const redir = NextResponse.redirect(nextUrl);
     mergeSupabaseSessionIntoResponse(sessionResponse, redir);
     redir.headers.set("X-Auth-Redirect", "post-auth-entry");
     return applyHostProfileHeader(applyPageSecurityHeaders(redir, isProduction), request);
+  }
+
+  if (user && isProtected) {
+    const stakeholderRedirect = await resolveStakeholderPageRedirect({
+      request,
+      sessionResponse,
+      userId: user.id,
+      pathWithoutLocale: pathWithoutLoc,
+      locale,
+    });
+    if (stakeholderRedirect) {
+      mergeSupabaseSessionIntoResponse(sessionResponse, stakeholderRedirect);
+      stakeholderRedirect.headers.set("X-Auth-Redirect", "stakeholder-path");
+      return applyHostProfileHeader(
+        applyPageSecurityHeaders(stakeholderRedirect, isProduction),
+        request
+      );
+    }
   }
 
   mergeSupabaseSessionIntoResponse(sessionResponse, res);
@@ -192,6 +248,6 @@ export const config = {
   matcher: [
     // Exclude api (handled by second matcher), all Next internals (_next/data RSC flights, static, image optimizer).
     "/((?!api|_next/|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
-    "/api/v1/:path*",
+    "/api/:path*",
   ],
 };

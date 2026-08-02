@@ -4,13 +4,9 @@
 
 import { NextResponse } from "next/server";
 import { createClientFromRequest } from "@/lib/supabase/server";
-import {
-  getTenantContextFromRequest,
-  requireTenant,
-  TenantRequiredError,
-  TenantForbiddenError,
-} from "@/lib/tenant";
+import { getTenantContextFromRequest, requireTenant, TenantRequiredError, TenantForbiddenError, LitePathForbiddenError } from "@/lib/tenant";
 import { updateClientPortalSettings } from "@/lib/domain/client-portal/client-portal.service";
+import { jsonWithCustomerFinanceGuard } from "@/lib/security/customer-finance-response";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +30,12 @@ export async function PATCH(
   try {
     requireTenant(ctx);
   } catch (e) {
+    if (e instanceof LitePathForbiddenError) {
+      return NextResponse.json(
+        { error: "forbidden", code: "lite_client_path_forbidden" },
+        { status: 403 }
+      );
+    }
     if (e instanceof TenantRequiredError) {
       return NextResponse.json({ error: e.message }, { status: 401 });
     }
@@ -60,5 +62,5 @@ export async function PATCH(
   const { data, error } = await updateClientPortalSettings(supabase, ctx, projectId, input);
   if (error === "Insufficient rights") return NextResponse.json({ error }, { status: 403 });
   if (!data) return NextResponse.json({ error: error || "Update failed" }, { status: 400 });
-  return NextResponse.json({ data });
+  return jsonWithCustomerFinanceGuard("PATCH /api/v1/projects/:id/client-portal", { data });
 }

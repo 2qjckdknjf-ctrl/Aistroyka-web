@@ -11,9 +11,11 @@ struct TeamOverviewPlaceholderView: View {
         NavigationStack {
             List {
                 Text(NSLocalizedString("mgr_team_placeholder", comment: ""))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(BrandTokens.textSecondary)
             }
             .navigationTitle(NSLocalizedString("mgr_tab_team", comment: ""))
+        .brandScrollChrome()
+
         }
     }
 }

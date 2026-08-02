@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { DashboardProjectDetailClient } from "./DashboardProjectDetailClient";
 import { createClient, getSessionUser } from "@/lib/supabase/server";
@@ -25,7 +26,7 @@ async function resolveCanExportReports(): Promise<boolean> {
     const supabase = await createClient();
     const user = await getSessionUser(supabase);
     if (!user) return false;
-    const role = await getActiveTenantRoleForUser(supabase, user.id);
+    const role = await getActiveTenantRoleForUser(supabase, user.id, await headers());
     return canShowProjectReportsExport(role);
   } catch {
     return false;

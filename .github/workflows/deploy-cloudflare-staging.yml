@@ -146,10 +146,24 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Set build stamp and app env
+        id: build_stamp
         run: |
-          echo "NEXT_PUBLIC_BUILD_SHA=${{ github.sha }}" >> $GITHUB_ENV
-          echo "NEXT_PUBLIC_BUILD_TIME=$(date -u +%Y-%m-%d\ %H:%M)" >> $GITHUB_ENV
-          echo "NEXT_PUBLIC_APP_ENV=staging" >> $GITHUB_ENV
+          # Use checked-out HEAD (deploy_ref), never a mismatched workflow github.sha.
+          DEPLOY_SHA="$(git rev-parse HEAD)"
+          if ! echo "$DEPLOY_SHA" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "::error::Checked-out HEAD is not a full 40-character SHA: $DEPLOY_SHA"
+            exit 1
+          fi
+          BUILD_TIME="$(date -u +%Y-%m-%d\ %H:%M)"
+          echo "NEXT_PUBLIC_BUILD_SHA=$DEPLOY_SHA" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_BUILD_TIME=$BUILD_TIME" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_APP_ENV=staging" >> "$GITHUB_ENV"
+          echo "sha=$DEPLOY_SHA" >> "$GITHUB_OUTPUT"
+          echo "time=$BUILD_TIME" >> "$GITHUB_OUTPUT"
+          echo "Immutable deploy SHA: $DEPLOY_SHA"
+
+      - name: Migration filename sanity (local ledger)
+        run: bash scripts/release/check-migrations.sh
 
       # NEXT_PUBLIC_* must exist at next build time — they are inlined into the client bundle.
       - name: Build (OpenNext Cloudflare)
@@ -189,17 +203,41 @@ jobs:
           OPEN_NEXT_DEPLOY: "true"
         run: |
           npx wrangler deploy --env staging --no-bundle --config wrangler.deploy.toml \
-            --var NEXT_PUBLIC_BUILD_SHA:${{ github.sha }} \
-            --var NEXT_PUBLIC_BUILD_TIME:"${{ env.NEXT_PUBLIC_BUILD_TIME }}" \
+            --var NEXT_PUBLIC_BUILD_SHA:${{ steps.build_stamp.outputs.sha }} \
+            --var NEXT_PUBLIC_BUILD_TIME:"${{ steps.build_stamp.outputs.time }}" \
             --var NEXT_PUBLIC_APP_ENV:staging \
             --var REQUIRE_CRON_SECRET:false
 
       - name: Post-deploy summary
         run: |
-          SHA7="$(echo ${{ github.sha }} | cut -c1-7)"
+          SHA7="$(echo ${{ steps.build_stamp.outputs.sha }} | cut -c1-7)"
           echo "Deployed worker: aistroyka-web-staging (apps/web)"
           echo "Commit sha7: $SHA7"
           echo "workers.dev URL: see 'Deploy to Cloudflare (staging)' step output above"
+
+      - name: Verify runtime buildStamp matches deploy SHA
+        env:
+          EXPECTED_SHA: ${{ steps.build_stamp.outputs.sha }}
+          HEALTH_URL: https://staging.aistroyka.ai/api/v1/health
+        run: |
+          set -euo pipefail
+          EXPECTED7="$(echo "$EXPECTED_SHA" | cut -c1-7)"
+          BODY="$(curl -fsS -m 30 "$HEALTH_URL")"
+          GOT7="$(printf '%s' "$BODY" | python3 -c 'import json,sys; d=json.load(sys.stdin); bs=d.get("buildStamp") or {}; print((bs.get("sha7") or ""))')"
+          if [[ -z "$GOT7" ]]; then
+            echo "::error::Staging health missing buildStamp.sha7"
+            exit 1
+          fi
+          if [[ "$GOT7" != "$EXPECTED7" ]]; then
+            echo "::error::buildStamp mismatch expected=$EXPECTED7 got=$GOT7"
+            exit 1
+          fi
+          echo "Staging buildStamp.sha7 matches deploy: $GOT7"
+
+      - name: Security headers smoke (staging)
+        env:
+          SECURITY_HEADERS_BASE_URL: https://staging.aistroyka.ai
+        run: bash scripts/smoke/security_headers.sh
 
       - name: Verify pilot smoke secret (staging)
         env:

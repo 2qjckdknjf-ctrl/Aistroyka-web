@@ -1,3 +1,4 @@
+import { headers } from "next/headers";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { createClient, getSessionUser } from "@/lib/supabase/server";
@@ -17,7 +18,7 @@ export default async function PortfolioPage() {
   const user = await getSessionUser(supabase);
   if (!user) return null;
 
-  const { data: projectsData } = await listProjectsForUser(supabase);
+  const { data: projectsData } = await listProjectsForUser(supabase, await headers());
   const projects = projectsData ?? [];
   const projectIds = projects.map((p) => p.id);
 

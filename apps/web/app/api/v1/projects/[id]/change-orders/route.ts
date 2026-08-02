@@ -4,13 +4,10 @@
 
 import { NextResponse } from "next/server";
 import { createClientFromRequest } from "@/lib/supabase/server";
-import {
-  getTenantContextFromRequest,
-  requireTenant,
-  TenantRequiredError,
-  TenantForbiddenError,
-} from "@/lib/tenant";
+import { getTenantContextFromRequest, requireTenant, TenantRequiredError, TenantForbiddenError, LitePathForbiddenError } from "@/lib/tenant";
 import { createChangeOrder, listChangeOrders } from "@/lib/domain/change-orders/change-orders.service";
+import { canManageChangeOrders } from "@/lib/domain/change-orders/change-orders.policy";
+import { jsonWithCustomerFinanceGuard } from "@/lib/security/customer-finance-response";
 import type { ChangeOrderKind, ChangeOrderStatus } from "@/lib/domain/change-orders/change-orders.types";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +26,12 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
   try {
     requireTenant(ctx);
   } catch (e) {
+    if (e instanceof LitePathForbiddenError) {
+      return NextResponse.json(
+        { error: "forbidden", code: "lite_client_path_forbidden" },
+        { status: 403 }
+      );
+    }
     if (e instanceof TenantRequiredError) return NextResponse.json({ error: e.message }, { status: 401 });
     throw e;
   }
@@ -36,7 +39,11 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
   const supabase = await createClientFromRequest(request);
   const { data, error } = await listChangeOrders(supabase, ctx, projectId);
   if (error === "Insufficient rights") return NextResponse.json({ error }, { status: 403 });
-  return NextResponse.json({ data: data ?? [] });
+  const payload = { data: data ?? [] };
+  if (!(await canManageChangeOrders(supabase, ctx, projectId))) {
+    return jsonWithCustomerFinanceGuard("GET /api/v1/projects/:id/change-orders", payload);
+  }
+  return NextResponse.json(payload);
 }
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
@@ -53,6 +60,12 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   try {
     requireTenant(ctx);
   } catch (e) {
+    if (e instanceof LitePathForbiddenError) {
+      return NextResponse.json(
+        { error: "forbidden", code: "lite_client_path_forbidden" },
+        { status: 403 }
+      );
+    }
     if (e instanceof TenantRequiredError) return NextResponse.json({ error: e.message }, { status: 401 });
     throw e;
   }

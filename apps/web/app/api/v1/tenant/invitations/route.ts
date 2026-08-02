@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server";
 import { createClient, getSessionUser } from "@/lib/supabase/server";
 import { getOrCreateTenantForCurrentUser } from "@/lib/api/engine";
-import { hasMinRole } from "@/lib/auth/tenant";
+import { hasMinRole } from "@/lib/tenant/tenant-membership.server";
 import { mapInvitationDbError } from "@/lib/tenant/invitation-errors";
 
-export async function GET() {
+export async function GET(request: Request) {
   const supabase = await createClient();
   const user = await getSessionUser(supabase);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const tenantId = await getOrCreateTenantForCurrentUser(supabase);
+  const tenantId = await getOrCreateTenantForCurrentUser(supabase, request);
   if (!tenantId) return NextResponse.json({ error: "No tenant" }, { status: 403 });
 
   if (!(await hasMinRole(supabase, tenantId, "admin"))) {

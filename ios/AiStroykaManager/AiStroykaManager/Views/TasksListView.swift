@@ -23,7 +23,7 @@ struct TasksListView: View {
                 if isLoading && tasks.isEmpty && errorMessage == nil {
                     LoadingStateView(message: NSLocalizedString("mgr_loading_tasks", comment: ""))
                 } else if let err = errorMessage, tasks.isEmpty {
-                    ErrorStateView(message: err, retry: { load() })
+                    ErrorStateView(message: err, retryTitle: NSLocalizedString("mgr_retry", comment: ""), retry: { load() })
                 } else if tasks.isEmpty {
                     EmptyStateView(
                         title: NSLocalizedString("mgr_no_tasks_title", comment: ""),
@@ -37,6 +37,7 @@ struct TasksListView: View {
                 }
             }
             .navigationTitle(NSLocalizedString("mgr_tab_tasks", comment: ""))
+            .brandScrollChrome()
             .toolbar { ToolbarItem(placement: .primaryAction) { Button(NSLocalizedString("mgr_new", comment: ""), systemImage: "plus") { showCreate = true } } }
             .refreshable { await refreshAsync() }
             .onAppear {
@@ -81,7 +82,7 @@ struct TasksListView: View {
             .padding(.horizontal)
         }
         .padding(.vertical, 8)
-        .background(Color(.secondarySystemGroupedBackground))
+        .background(BrandTokens.surface)
     }
 
     private var createButton: some View {
@@ -163,11 +164,11 @@ struct TaskRowView: View {
             HStack {
                 Text(task.status)
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(BrandTokens.textSecondary)
                 if let d = task.dueDate {
                     Text(String(format: NSLocalizedString("mgr_due_fmt", comment: ""), d))
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(BrandTokens.textSecondary)
                 }
             }
         }
@@ -190,7 +191,7 @@ struct TaskDetailManagerView: View {
             if isLoading && task == nil && errorMessage == nil {
                 LoadingStateView(message: NSLocalizedString("mgr_loading_task", comment: ""))
             } else if let err = errorMessage, task == nil {
-                ErrorStateView(message: err, retry: { load() })
+                ErrorStateView(message: err, retryTitle: NSLocalizedString("mgr_retry", comment: ""), retry: { load() })
             } else if let t = task {
                 List {
                     Section(NSLocalizedString("mgr_task_section", comment: "")) {
@@ -316,7 +317,7 @@ struct TaskAssigneePickerView: View {
                 if isLoading && workers.isEmpty && errorMessage == nil {
                     LoadingStateView(message: NSLocalizedString("mgr_loading_workers", comment: ""))
                 } else if let err = errorMessage, workers.isEmpty {
-                    ErrorStateView(message: err, retry: { load() })
+                    ErrorStateView(message: err, retryTitle: NSLocalizedString("mgr_retry", comment: ""), retry: { load() })
                 } else if workers.isEmpty {
                     EmptyStateView(
                         title: NSLocalizedString("mgr_no_workers_short_title", comment: ""),
@@ -335,7 +336,7 @@ struct TaskAssigneePickerView: View {
                                     if let subtitle = workerSubtitle(w) {
                                         Text(subtitle)
                                             .font(.caption)
-                                            .foregroundStyle(.secondary)
+                                            .foregroundStyle(BrandTokens.textSecondary)
                                     }
                                 }
                                 Spacer(minLength: 8)
@@ -351,6 +352,7 @@ struct TaskAssigneePickerView: View {
                 }
             }
             .navigationTitle(NSLocalizedString("mgr_assign_to", comment: ""))
+            .brandScrollChrome()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button(NSLocalizedString("mgr_cancel", comment: "")) { onDismiss() } }
             }
@@ -428,6 +430,7 @@ struct TaskCreateEditView: View {
                 }
             }
             .navigationTitle(NSLocalizedString("mgr_new_task", comment: ""))
+            .brandScrollChrome()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button(NSLocalizedString("mgr_cancel", comment: "")) { onDismiss() } }
                 ToolbarItem(placement: .confirmationAction) {

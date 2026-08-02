@@ -1,4 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
+import { NextResponse } from "next/server";
 import { POST } from "./route";
 import * as aiService from "@/lib/platform/ai/ai.service";
 
@@ -11,7 +12,10 @@ vi.mock("@/lib/supabase/admin", () => ({
 }));
 
 vi.mock("@/lib/platform/rate-limit/rate-limit.service", () => ({
-  checkRateLimit: vi.fn().mockResolvedValue({ limited: false }),
+  checkRateLimitStrict: vi.fn().mockResolvedValue({ ok: true }),
+  resolveTrustedClientIp: () => ({ trustedIp: null, source: "none", reason: "trust_flag_off" }),
+  rateLimitUnavailableResponse: (message = "Rate limit service unavailable.") =>
+    NextResponse.json({ error: message, code: "rate_limit_unavailable" }, { status: 503 }),
 }));
 
 vi.mock("@/lib/platform/ai-usage/ai-usage.service", () => ({
@@ -24,13 +28,41 @@ vi.mock("@/lib/observability/audit.service", () => ({
   emitAiRuntimeAudit: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock("@/lib/tenant", () => ({
-  getTenantContextFromRequest: vi.fn().mockResolvedValue({
-    tenantId: "t1",
-    userId: "u1",
-    subscriptionTier: "pro",
-  }),
-}));
+vi.mock("@/lib/platform/ai/safe-remote-media", async (importOriginal) => {
+  const mod = await importOriginal<typeof import("@/lib/platform/ai/safe-remote-media")>();
+  return {
+    ...mod,
+    assertSafeRemoteMediaUrl: vi.fn(async (url: string) => new URL(url)),
+  };
+});
+
+vi.mock("@/lib/tenant", () => {
+  class TenantRequiredError extends Error {
+    constructor(message = "Tenant context required") {
+      super(message);
+      this.name = "TenantRequiredError";
+    }
+  }
+  class LitePathForbiddenError extends Error {
+    code = "lite_client_path_forbidden";
+    constructor(message = "forbidden") {
+      super(message);
+      this.name = "LitePathForbiddenError";
+    }
+  }
+  return {
+    getTenantContextFromRequest: vi.fn().mockResolvedValue({
+      tenantId: "t1",
+      userId: "u1",
+      subscriptionTier: "pro",
+    }),
+    requireTenant: (ctx: { tenantId?: string | null }) => {
+      if (!ctx.tenantId) throw new TenantRequiredError("Authentication required");
+    },
+    TenantRequiredError,
+    LitePathForbiddenError,
+  };
+});
 
 function jsonRequest(body: object) {
   return new Request("http://test/api/v1/ai/analyze-video-daily", {

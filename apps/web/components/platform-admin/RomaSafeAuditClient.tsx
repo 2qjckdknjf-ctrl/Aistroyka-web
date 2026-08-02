@@ -16,6 +16,8 @@ import type { RomaAuditRunSaveResult } from "@/lib/platform-admin/roma-run-histo
 
 type Props = {
   audit: RomaSafeReadonlyAudit;
+  /** OWNER / OWNER_OPERATOR may persist audit artifacts; OWNER_READONLY cannot. */
+  canPersistAuditSnapshot: boolean;
 };
 
 function statusVariant(status: RomaSafeReadonlyAudit["status"]): "success" | "warning" | "danger" | "neutral" {
@@ -35,7 +37,7 @@ function statusVariant(status: RomaSafeReadonlyAudit["status"]): "success" | "wa
   }
 }
 
-export function RomaSafeAuditClient({ audit: initialAudit }: Props) {
+export function RomaSafeAuditClient({ audit: initialAudit, canPersistAuditSnapshot }: Props) {
   const meta = getSafeReadonlyAuditMeta();
   const limitations = getReadonlyAuditLimitations();
   const [audit, setAudit] = useState(initialAudit);
@@ -102,10 +104,12 @@ export function RomaSafeAuditClient({ audit: initialAudit }: Props) {
       <Card className="p-aistroyka-5 border-aistroyka-border-warning bg-aistroyka-surface-raised">
         <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">Safety notice</h2>
         <p className="mt-aistroyka-2 text-aistroyka-subheadline text-aistroyka-text-secondary">
-          This page runs a <strong>read-only audit</strong> using safe server probes.{" "}
+          This page runs a <strong>read-mode audit</strong> using safe server probes.{" "}
           <strong>Refresh Safe Audit</strong> recomputes live evidence only — it does{" "}
-          <strong>not</strong> execute catalog tests, trigger CI, deploy, or mutate product data.{" "}
-          <strong>Save Snapshot</strong> appends redacted audit evidence to run history only (owner-only, explicit action).
+          <strong>not</strong> persist history, execute catalog tests, trigger CI, deploy, or mutate tenant/business
+          data.{" "}
+          <strong>Save Snapshot</strong> is a separate <strong>write</strong> action that appends redacted audit
+          evidence to run history (requires write capability; not a silent read).
         </p>
         <div className="mt-aistroyka-4 flex flex-wrap items-center gap-aistroyka-3">
           <Button
@@ -116,20 +120,31 @@ export function RomaSafeAuditClient({ audit: initialAudit }: Props) {
             disabled={loading || saving}
             onClick={() => void refreshAudit()}
             aria-label="Refresh Safe Audit"
+            data-testid="cta.platform.safe-audit.refresh"
           >
             Refresh Safe Audit
           </Button>
-          <Button
-            type="button"
-            variant="primary"
-            size="sm"
-            loading={saving}
-            disabled={loading || saving}
-            onClick={() => void saveSnapshot()}
-            aria-label="Save Snapshot"
-          >
-            Save Snapshot
-          </Button>
+          {canPersistAuditSnapshot ? (
+            <Button
+              type="button"
+              variant="primary"
+              size="sm"
+              loading={saving}
+              disabled={loading || saving}
+              onClick={() => void saveSnapshot()}
+              aria-label="Save Snapshot (persists audit artifact)"
+              data-testid="cta.platform.safe-audit.save"
+            >
+              Save Snapshot
+            </Button>
+          ) : (
+            <p
+              className="text-aistroyka-footnote text-aistroyka-text-tertiary"
+              data-testid="cta.platform.safe-audit.save-denied"
+            >
+              Snapshot save unavailable for read-only platform role.
+            </p>
+          )}
           <p className="text-aistroyka-footnote text-aistroyka-text-tertiary">
             Last refreshed: <time dateTime={lastRefreshedAt}>{lastRefreshedAt}</time>
           </p>

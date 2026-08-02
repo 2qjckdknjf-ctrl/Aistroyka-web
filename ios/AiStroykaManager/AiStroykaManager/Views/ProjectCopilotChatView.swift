@@ -54,10 +54,10 @@ struct ProjectCopilotChatView: View {
             if let note = fallbackNote {
                 Text(note)
                     .font(.caption)
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(BrandTokens.stateWarning)
                     .padding(8)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.orange.opacity(0.12))
+                    .background(BrandTokens.badgeWarningBg)
             }
             ScrollViewReader { proxy in
                 ScrollView {
@@ -82,7 +82,7 @@ struct ProjectCopilotChatView: View {
             if let err = errorMessage {
                 Text(err)
                     .font(.caption)
-                    .foregroundStyle(.red)
+                    .foregroundStyle(BrandTokens.stateError)
                     .padding(.horizontal)
             }
             HStack(spacing: 8) {
@@ -118,8 +118,8 @@ struct ProjectCopilotChatView: View {
             if isUser { Spacer(minLength: 40) }
             Text(m.content)
                 .padding(10)
-                .background(isUser ? Color.accentColor.opacity(0.15) : Color(.secondarySystemBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .background(isUser ? BrandTokens.actionPrimary.opacity(0.15) : BrandTokens.surface)
+                .clipShape(RoundedRectangle(cornerRadius: BrandTokens.radiusCard))
             if !isUser { Spacer(minLength: 40) }
         }
     }

@@ -6,12 +6,7 @@
 
 import { NextResponse } from "next/server";
 import { createClientFromRequest } from "@/lib/supabase/server";
-import {
-  getTenantContextFromRequest,
-  requireTenant,
-  TenantRequiredError,
-  TenantForbiddenError,
-} from "@/lib/tenant";
+import { getTenantContextFromRequest, requireTenant, TenantRequiredError, TenantForbiddenError, LitePathForbiddenError } from "@/lib/tenant";
 import { getProjectForInternalWorkspace } from "@/lib/domain/projects/project.service";
 import {
   getStakeholderActivityTimeline,
@@ -19,6 +14,7 @@ import {
   shapeStakeholderAudience,
 } from "@/lib/domain/projects/stakeholder-activity-timeline.repository";
 import { canReadClientPortalView } from "@/lib/domain/stakeholders/stakeholders.policy";
+import { jsonWithCustomerFinanceGuard } from "@/lib/security/customer-finance-response";
 
 export const dynamic = "force-dynamic";
 
@@ -39,6 +35,12 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
   try {
     requireTenant(ctx);
   } catch (e) {
+    if (e instanceof LitePathForbiddenError) {
+      return NextResponse.json(
+        { error: "forbidden", code: "lite_client_path_forbidden" },
+        { status: 403 }
+      );
+    }
     if (e instanceof TenantRequiredError) {
       return NextResponse.json({ error: e.message }, { status: 401 });
     }
@@ -74,7 +76,10 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
       userId: ctx.userId,
       limit,
     });
-    return NextResponse.json({ audience: "stakeholder", data: shapeStakeholderAudience(raw) });
+    return jsonWithCustomerFinanceGuard("GET /api/v1/projects/:id/stakeholder-activity", {
+      audience: "stakeholder",
+      data: shapeStakeholderAudience(raw),
+    });
   }
 
   return NextResponse.json({ error: "Forbidden" }, { status: 403 });

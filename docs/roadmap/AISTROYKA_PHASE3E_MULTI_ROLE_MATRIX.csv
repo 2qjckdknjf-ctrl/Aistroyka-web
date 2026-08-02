@@ -1,0 +1,21 @@
+persona,tenant_role,project_role,platform_grant,route_or_api,expected_access,observed_status_or_redirect,ui_proof,finance_boundary,viewport,result,cleanup_evidence
+guest,N/A,N/A,N/A,/en home+login+register,public reachable,<500; Cabinet entry PRESENT,header cabinet/login links,N/A,desktop+mobile,PASS,N/A
+guest,N/A,N/A,N/A,protected dashboard/admin/portal/platform-admin,localized login + safe next,login with internal next; OAuth next sanitized vs evil host,login form visible,N/A,desktop+mobile,PASS,N/A
+temp_tenant_admin,admin,project_members.owner,ABSENT,/api/v1/me,role=admin,200 role=admin,admin nav visible,N/A,desktop+mobile,PASS,auth+tm+pm deleted
+temp_tenant_admin,admin,project_members.owner,ABSENT,/admin + temp project detail,YES,admin shell + project heading,not Operations Center,internal policy,desktop+mobile,PASS,exact project removed
+temp_tenant_admin,admin,project_members.owner,ABSENT,/platform-admin + /api/v1/platform/overview,fail-closed 403,Forbidden UI + API 403,no platform data,N/A,desktop+mobile,PASS,grant ABSENT proved
+temp_manager,member,project_members.manager,ABSENT,/api/v1/me + dashboard + temp project,YES limited,200 role=member; project 200,no admin nav; no portal shell,internal policy,desktop+mobile,PASS,auth+tm+pm deleted
+temp_manager,member,project_members.manager,ABSENT,/admin + /platform-admin,NO,denied/bounce + Forbidden,no owner/admin-only nav,N/A,desktop+mobile,PASS,exact rows deleted
+temp_manager,member,project_members.manager,ABSENT,foreign project UUID probe,403/404,403 or 404,N/A,N/A,desktop+mobile,PASS,N/A
+temp_worker,member,project_members.worker,ABSENT,web dashboard + temp project,YES limited,200; project detail renders,no admin/platform controls,denied/hidden internal finance UI,desktop+mobile,PASS,auth+tm+pm deleted
+temp_worker,member,project_members.worker,ABSENT,GET /api/v1/projects x-client ios_worker|android_worker,200 contains temp project,200 + id present,N/A,N/A,API via browser context,PASS,no tasks/reports created
+temp_worker,member,project_members.worker,ABSENT,GET /api/v1/sync/bootstrap + tasks/today,200 valid empty,200 schema + empty tasks,N/A,N/A,API,PASS,no business writes
+temp_worker,member,project_members.worker,ABSENT,admin metrics / upload-sessions GET / devices GET / legacy /api/projects / siblings,exact 403 lite_client_path_forbidden,403 code match,N/A,N/A,API,PASS,allow-list segment-safe
+temp_stakeholder,stakeholder,project_stakeholders.active client_viewer (no project_members),ABSENT,login default /portal/projects,portal-only,localized portal; data-portal-shell=1,no dashboard/admin nav,customer-safe,desktop+mobile,PASS,stakeholder+tm+auth deleted
+temp_stakeholder,stakeholder,active stakeholder,ABSENT,portal list + client-view + portal detail,200 finance-clean,200; deny-key scan clean,no internal cost UI,DENY internal finance keys,desktop+mobile,PASS,handover deleted
+temp_stakeholder,stakeholder,active stakeholder,ABSENT,GET costs,exact 403,403,N/A,DENY,API,PASS,N/A
+temp_stakeholder,stakeholder,active stakeholder,ABSENT,/dashboard /admin /billing /portfolio /projects,redirect portal home,portal/projects,portal shell,N/A,desktop+mobile,PASS,N/A
+temp_stakeholder,stakeholder,active stakeholder,ABSENT,/platform-admin + platform APIs,Forbidden/403,Forbidden body; overview 403,no Operations Center data,N/A,desktop+mobile,PASS,grant ABSENT
+smoke_platform_owner,admin,N/A (not on temp project),OWNER,Operations Center + cabinet,YES,200 surfaces; execution-engine disabled copy,Read-only; no Save Snapshot click,N/A,desktop+mobile,PASS,smoke membership+grant unchanged
+session_isolation,all five distinct,exact roles,matrix above,/api/v1/me per BrowserContext,no bleed,roles match; logout isolation,fresh cookies per context,N/A,desktop+mobile,PASS,contexts closed
+axe_contrast,all representative surfaces,N/A,N/A,login+admin+manager+worker+portal+Ops Center,contrast enabled (not globally disabled),PASS or computed-color AA sample,keyboard/headings/overflow,N/A,desktop+mobile,PASS,N/A

@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@/i18n/navigation";
 
 async function fetchStatus(): Promise<{ reportCount: number; projectCount: number; firstProjectId?: string }> {
-  const res = await fetch("/api/activation/status", { credentials: "include" });
+  const res = await fetch("/api/v1/activation/status", { credentials: "include" });
   if (!res.ok) return { reportCount: 0, projectCount: 0 };
   const json = await res.json();
   return {

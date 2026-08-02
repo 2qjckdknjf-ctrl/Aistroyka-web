@@ -4,6 +4,13 @@ import { ProviderRequestError } from "./provider.errors";
 
 const originalEnv = process.env;
 
+function imageFetchResponse(bytes = new Uint8Array([1, 2, 3])): Response {
+  return new Response(bytes, {
+    status: 200,
+    headers: { "content-type": "image/jpeg" },
+  });
+}
+
 describe("provider.anthropic", () => {
   beforeEach(() => {
     vi.stubGlobal("fetch", vi.fn());
@@ -33,21 +40,21 @@ describe("provider.anthropic", () => {
     process.env.ANTHROPIC_API_KEY = "sk-test";
     process.env.ANTHROPIC_VISION_MODEL = "claude-sonnet-4-20250514";
     vi.mocked(fetch)
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        headers: { get: () => "image/jpeg" },
-        arrayBuffer: () => Promise.resolve(Uint8Array.from([1, 2, 3]).buffer),
-      } as Response)
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: () =>
-          Promise.resolve({
-            content: [{ type: "text", text: '{"stage":"foundation","completion_percent":50,"risk_level":"medium","detected_issues":[],"recommendations":[]}' }],
+      .mockResolvedValueOnce(imageFetchResponse())
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            content: [
+              {
+                type: "text",
+                text: '{"stage":"foundation","completion_percent":50,"risk_level":"medium","detected_issues":[],"recommendations":[]}',
+              },
+            ],
             usage: { input_tokens: 100, output_tokens: 80 },
           }),
-      } as Response);
+          { status: 200, headers: { "content-type": "application/json" } }
+        )
+      );
 
     const result = await invokeVision("https://example.com/img.jpg", { maxTokens: 1024 });
 
@@ -73,17 +80,13 @@ describe("provider.anthropic", () => {
   it("throws ProviderRequestError on 4xx with invalid_input", async () => {
     process.env.ANTHROPIC_API_KEY = "sk-test";
     vi.mocked(fetch)
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        headers: { get: () => "image/jpeg" },
-        arrayBuffer: () => Promise.resolve(Uint8Array.from([1, 2, 3]).buffer),
-      } as Response)
-      .mockResolvedValueOnce({
-        ok: false,
-        status: 400,
-        json: () => Promise.resolve({ error: { message: "Bad request" } }),
-      } as Response);
+      .mockResolvedValueOnce(imageFetchResponse())
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: { message: "Bad request" } }), {
+          status: 400,
+          headers: { "content-type": "application/json" },
+        })
+      );
 
     try {
       await invokeVision("https://example.com/img.jpg");

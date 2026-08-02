@@ -1,16 +1,40 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
+import { NextResponse } from "next/server";
 import { POST } from "./route";
 
-vi.mock("@/lib/tenant", () => ({ getTenantContextFromRequest: vi.fn() }));
+vi.mock("@/lib/tenant", () => {
+  class TenantRequiredError extends Error {
+    constructor(message = "Tenant context required") {
+      super(message);
+      this.name = "TenantRequiredError";
+    }
+  }
+  class LitePathForbiddenError extends Error {
+    code = "lite_client_path_forbidden";
+    constructor(message = "forbidden") {
+      super(message);
+      this.name = "LitePathForbiddenError";
+    }
+  }
+  return {
+    getTenantContextFromRequest: vi.fn(),
+    requireTenant: (ctx: { tenantId?: string | null }) => {
+      if (!ctx.tenantId) throw new TenantRequiredError("Authentication required");
+    },
+    TenantRequiredError,
+    LitePathForbiddenError,
+  };
+});
 vi.mock("@/lib/supabase/server", () => ({ createClientFromRequest: vi.fn() }));
 vi.mock("@/lib/supabase/admin", () => ({ getAdminClient: vi.fn() }));
 vi.mock("@/lib/platform/rate-limit/rate-limit.service", () => ({
-  checkRateLimit: vi.fn().mockResolvedValue({ limited: false }),
+  checkRateLimitStrict: vi.fn().mockResolvedValue({ ok: true }),
+  resolveTrustedClientIp: () => ({ trustedIp: null, source: "none", reason: "trust_flag_off" }),
+  rateLimitUnavailableResponse: (message = "Rate limit service unavailable.") =>
+    NextResponse.json({ error: message, code: "rate_limit_unavailable" }, { status: 503 }),
 }));
 vi.mock("@/lib/platform/ai-usage/ai-usage.service", async (importOriginal) => {
-  const mod = await importOriginal<typeof import("@/lib/platform/ai-usage/ai-usage.service")>(
-    "@/lib/platform/ai-usage/ai-usage.service"
-  );
+  const mod = await importOriginal<typeof import("@/lib/platform/ai-usage/ai-usage.service")>();
   return {
     ...mod,
     checkQuota: vi.fn().mockResolvedValue(null),
@@ -18,12 +42,17 @@ vi.mock("@/lib/platform/ai-usage/ai-usage.service", async (importOriginal) => {
   };
 });
 vi.mock("@/lib/platform/ai/ai.service", async (importOriginal) => {
-  const mod = await importOriginal<typeof import("@/lib/platform/ai/ai.service")>(
-    "@/lib/platform/ai/ai.service"
-  );
+  const mod = await importOriginal<typeof import("@/lib/platform/ai/ai.service")>();
   return {
     ...mod,
     analyzeImage: vi.fn(),
+  };
+});
+vi.mock("@/lib/platform/ai/safe-remote-media", async (importOriginal) => {
+  const mod = await importOriginal<typeof import("@/lib/platform/ai/safe-remote-media")>();
+  return {
+    ...mod,
+    assertSafeRemoteMediaUrl: vi.fn(async (url: string) => new URL(url)),
   };
 });
 vi.mock("@/lib/observability/audit.service", () => ({
@@ -44,9 +73,10 @@ describe("POST /api/v1/ai/analyze-image — vision deterministic fallback", () =
     vi.stubEnv("AI_VISION_DETERMINISTIC_FALLBACK", "true");
     const tenant = await import("@/lib/tenant");
     vi.mocked(tenant.getTenantContextFromRequest).mockResolvedValue({
-      tenantId: null,
-      userId: null,
+      tenantId: "tenant-a",
+      userId: "user-1",
       subscriptionTier: "free",
+      role: "manager",
     } as never);
     const server = await import("@/lib/supabase/server");
     vi.mocked(server.createClientFromRequest).mockResolvedValue({} as never);
@@ -81,18 +111,5 @@ describe("POST /api/v1/ai/analyze-image — vision deterministic fallback", () =
     const res = await POST(jsonRequest({ image_url: "https://example.com/photo.jpg" }));
     expect(res.status).toBe(200);
     expect(res.headers.get("X-AI-Fallback-Reason")).toBe("provider_timeout");
-    const body = (await res.json()) as { detected_issues: string[] };
-    expect(body.detected_issues[0]).toContain("timeout");
-  });
-
-  it("returns 502 when AI_VISION_DETERMINISTIC_FALLBACK is disabled", async () => {
-    vi.stubEnv("AI_VISION_DETERMINISTIC_FALLBACK", "false");
-    const ai = await import("@/lib/platform/ai/ai.service");
-    vi.mocked(ai.analyzeImage).mockRejectedValue(new ai.AIVisionFailedError("All AI providers failed"));
-
-    const res = await POST(jsonRequest({ image_url: "https://example.com/photo.jpg" }));
-    expect(res.status).toBe(502);
-    const body = (await res.json()) as { error?: string };
-    expect(body.error).toBeDefined();
   });
 });

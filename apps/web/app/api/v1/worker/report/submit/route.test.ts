@@ -18,7 +18,7 @@ const submitReport = vi.fn().mockResolvedValue({
   jobIds: ["job-1"],
 });
 const requireLiteIdempotency = vi.fn().mockResolvedValue({ ok: true });
-const storeLiteIdempotency = vi.fn().mockResolvedValue(undefined);
+const storeLiteIdempotency = vi.fn().mockResolvedValue({ ok: true });
 
 vi.mock("@/lib/tenant", () => ({
   getTenantContextFromRequest: (...args: unknown[]) => getTenantContextFromRequest(...args),

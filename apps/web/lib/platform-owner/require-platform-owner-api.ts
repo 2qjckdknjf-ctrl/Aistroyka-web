@@ -243,7 +243,7 @@ export async function requirePlatformOwnerApi(
 
   const role = grant.role;
 
-  if (assertOwnerHttpMethodForRole(role, method) !== "ok") {
+  if (assertOwnerHttpMethodForRole(role, method, pathname) !== "ok") {
     logOwnerGateEvent({
       outcome: "deny",
       reason: "readonly_blocked",

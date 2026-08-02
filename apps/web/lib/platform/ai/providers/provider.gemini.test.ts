@@ -4,6 +4,13 @@ import { ProviderRequestError } from "./provider.errors";
 
 const originalEnv = process.env;
 
+function imageFetchResponse(bytes = new Uint8Array([1, 2, 3, 4])): Response {
+  return new Response(bytes, {
+    status: 200,
+    headers: { "content-type": "image/jpeg" },
+  });
+}
+
 describe("provider.gemini", () => {
   beforeEach(() => {
     vi.stubGlobal("fetch", vi.fn());
@@ -34,16 +41,10 @@ describe("provider.gemini", () => {
     process.env.GEMINI_API_KEY = "key-from-gemini";
     delete process.env.GOOGLE_AI_API_KEY;
     vi.mocked(fetch)
-      .mockResolvedValueOnce({
-        ok: true,
-        headers: new Headers({ "content-type": "image/jpeg" }),
-        arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
-      } as Response)
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: () =>
-          Promise.resolve({
+      .mockResolvedValueOnce(imageFetchResponse())
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
             candidates: [
               {
                 content: {
@@ -57,7 +58,9 @@ describe("provider.gemini", () => {
             ],
             usageMetadata: { promptTokenCount: 200, candidatesTokenCount: 100, totalTokenCount: 300 },
           }),
-      } as Response);
+          { status: 200, headers: { "content-type": "application/json" } }
+        )
+      );
 
     const result = await invokeVision("https://example.com/img.jpg");
 
@@ -75,26 +78,26 @@ describe("provider.gemini", () => {
   it("parses success response into VisionResult", async () => {
     process.env.GOOGLE_AI_API_KEY = "key-test";
     vi.mocked(fetch)
-      .mockResolvedValueOnce({
-        ok: true,
-        headers: new Headers({ "content-type": "image/jpeg" }),
-        arrayBuffer: () => Promise.resolve(new ArrayBuffer(100)),
-      } as Response)
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: () =>
-          Promise.resolve({
+      .mockResolvedValueOnce(imageFetchResponse(new Uint8Array(100).fill(7)))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
             candidates: [
               {
                 content: {
-                  parts: [{ text: '{"stage":"foundation","completion_percent":50,"risk_level":"medium","detected_issues":[],"recommendations":[]}' }],
+                  parts: [
+                    {
+                      text: '{"stage":"foundation","completion_percent":50,"risk_level":"medium","detected_issues":[],"recommendations":[]}',
+                    },
+                  ],
                 },
               },
             ],
             usageMetadata: { promptTokenCount: 150, candidatesTokenCount: 60, totalTokenCount: 210 },
           }),
-      } as Response);
+          { status: 200, headers: { "content-type": "application/json" } }
+        )
+      );
 
     const result = await invokeVision("https://example.com/img.jpg", { maxTokens: 1024 });
 
@@ -108,10 +111,7 @@ describe("provider.gemini", () => {
 
   it("throws ProviderRequestError on image fetch failure", async () => {
     process.env.GOOGLE_AI_API_KEY = "key-test";
-    vi.mocked(fetch).mockResolvedValueOnce({
-      ok: false,
-      status: 404,
-    } as Response);
+    vi.mocked(fetch).mockResolvedValueOnce(new Response(null, { status: 404 }));
 
     try {
       await invokeVision("https://example.com/missing.jpg");

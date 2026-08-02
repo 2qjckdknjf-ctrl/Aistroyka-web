@@ -4,7 +4,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
+import { getTenantContextFromRequest, requireTenant, TenantRequiredError, LitePathForbiddenError } from "@/lib/tenant";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { createClientFromRequest } from "@/lib/supabase/server";
 import { getServerConfig, isOpenAIConfigured } from "@/lib/config/server";
@@ -70,6 +70,12 @@ export async function POST(request: Request) {
   try {
     requireTenant(ctx);
   } catch (e) {
+    if (e instanceof LitePathForbiddenError) {
+      return NextResponse.json(
+        { error: "forbidden", code: "lite_client_path_forbidden" },
+        { status: 403 }
+      );
+    }
     if (e instanceof TenantRequiredError) {
       return NextResponse.json({ error: e.message, request_id: requestId }, { status: 401 });
     }

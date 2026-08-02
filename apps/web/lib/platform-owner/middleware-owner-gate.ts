@@ -209,7 +209,7 @@ export async function gateOwnerRequest(input: {
   }
 
   if (isApi) {
-    const methodGate = assertOwnerHttpMethodForRole(grant.role, request.method);
+    const methodGate = assertOwnerHttpMethodForRole(grant.role, request.method, pathname);
     if (methodGate !== "ok") {
       logOwnerGateEvent({
         outcome: "deny",

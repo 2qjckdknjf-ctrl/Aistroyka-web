@@ -7,6 +7,10 @@ import { Card, SectionHeader, Skeleton, EmptyState, Badge } from "@/components/u
 import type { ClientProjectView } from "@/lib/domain/client-portal/client-portal.types";
 import { translateApiError } from "@/lib/i18n/api-error-messages";
 import { formatPortalStatus } from "@/lib/i18n/portal-status-labels";
+import {
+  portalBackLinkForAudience,
+  shouldShowHandoverPackLink,
+} from "@/lib/portal/portal-action-url";
 import { ClientPortalActivitySection } from "./ClientPortalActivitySection";
 import { ClientPortalNotificationsSection } from "./ClientPortalNotificationsSection";
 import { ClientPortalRequestsSection } from "./ClientPortalRequestsSection";
@@ -15,6 +19,7 @@ import { ClientPortalWorkloadSection } from "./ClientPortalWorkloadSection";
 import { TelegramConnectCard } from "@/components/integrations/TelegramConnectCard";
 
 async function fetchClientView(projectId: string, tErr: (k: string) => string): Promise<ClientProjectView> {
+  // Canonical customer-facing read: client-view returns ClientProjectView (same projection as portal detail).
   const res = await fetch(`/api/v1/projects/${projectId}/client-view`, { credentials: "include" });
   if (!res.ok) {
     const j = await res.json().catch(() => ({}));
@@ -35,13 +40,22 @@ function documentTypeLabel(type: string, tDetail: (key: string) => string): stri
   }
 }
 
-export function ClientPortalViewClient({ projectId }: { projectId: string }) {
+export function ClientPortalViewClient({
+  projectId,
+  audience = "internal",
+}: {
+  projectId: string;
+  audience?: "stakeholder" | "internal";
+}) {
   const tPage = useTranslations("dashboardPageMeta");
   const tDetail = useTranslations("dashboardDetail");
   const tPortal = useTranslations("portalStatus");
   const tApi = useTranslations("apiErrors");
+  const backHref = portalBackLinkForAudience(audience, projectId);
+  const backLabel =
+    audience === "stakeholder" ? tDetail("backToPortalProjects") : tDetail("backToProjectOverview");
   const query = useQuery({
-    queryKey: ["client-project-view", projectId],
+    queryKey: ["client-project-view", projectId, audience],
     queryFn: () => fetchClientView(projectId, tApi),
     enabled: !!projectId,
   });
@@ -49,7 +63,9 @@ export function ClientPortalViewClient({ projectId }: { projectId: string }) {
   if (query.isPending) {
     return (
       <Card>
-        <Skeleton className="h-40" />
+        <div role="status" aria-label={tDetail("loading")}>
+          <Skeleton className="h-40" />
+        </div>
       </Card>
     );
   }
@@ -62,8 +78,8 @@ export function ClientPortalViewClient({ projectId }: { projectId: string }) {
           title={tDetail("clientPortalUnavailable")}
           subtitle={query.error instanceof Error ? query.error.message : tDetail("youMayNotHaveAccessOrPortalDisabled")}
           action={
-            <Link href={`/dashboard/projects/${projectId}`} className="text-aistroyka-accent hover:underline">
-              {tDetail("backToProject")}
+            <Link href={backHref} className="text-aistroyka-accent hover:underline">
+              {audience === "stakeholder" ? tDetail("backToPortalProjects") : tDetail("backToProject")}
             </Link>
           }
         />
@@ -76,11 +92,8 @@ export function ClientPortalViewClient({ projectId }: { projectId: string }) {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-3">
-        <Link
-          href={`/dashboard/projects/${projectId}`}
-          className="text-aistroyka-subheadline text-aistroyka-accent hover:underline"
-        >
-          {tDetail("backToProjectOverview")}
+        <Link href={backHref} className="text-aistroyka-subheadline text-aistroyka-accent hover:underline">
+          {backLabel}
         </Link>
       </div>
       <SectionHeader title={d.project.name} subtitle={tPage("clientViewSubtitle")} />
@@ -186,12 +199,14 @@ export function ClientPortalViewClient({ projectId }: { projectId: string }) {
                 : null}
             </p>
           )}
-          <Link
-            href={`/dashboard/projects/${projectId}/handover/pack`}
-            className="mt-3 inline-block text-sm font-medium text-aistroyka-accent hover:underline"
-          >
-            {tDetail("handoverPackPreviewLink")}
-          </Link>
+          {shouldShowHandoverPackLink(audience) ? (
+            <Link
+              href={`/dashboard/projects/${projectId}/handover/pack`}
+              className="mt-3 inline-block text-sm font-medium text-aistroyka-accent hover:underline"
+            >
+              {tDetail("handoverPackPreviewLink")}
+            </Link>
+          ) : null}
         </Card>
       ) : null}
 

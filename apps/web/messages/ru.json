@@ -45,14 +45,20 @@
     "searchPlaceholder": "Поиск…",
     "helpCenter": "Справочник",
     "dashboardNavigation": "Навигация дашборда",
-    "main": "Основное"
+    "main": "Основное",
+    "portalProjects": "Ваши проекты",
+    "portalNavigation": "Навигация клиентского портала",
+    "customerPortal": "Клиентский портал"
   },
   "portalPage": {
     "title": "Ваши проекты",
     "subtitle": "Портал заказчика — ход работ, документы и согласования, которыми делится подрядчик.",
     "loadError": "Не удалось загрузить проекты.",
     "empty": "Пока нет проектов с активным порталом заказчика.",
-    "openPortal": "Открыть портал"
+    "openPortal": "Открыть портал",
+    "loading": "Загрузка проектов",
+    "accessDenied": "Нет доступа к клиентскому порталу.",
+    "retry": "Повторить"
   },
   "proofShare": {
     "unavailableTitle": "Пакет недоступен",
@@ -638,7 +644,8 @@
     "videoDailyRisk": "Уровень риска",
     "videoDailyIssues": "Проблемы и риски",
     "videoDailyRecommendations": "Рекомендации",
-    "videoDailyVisibility": "Заметки по видимости"
+    "videoDailyVisibility": "Заметки по видимости",
+    "aiCopilot": "AI-копилот"
   },
   "risk": {
     "low": "Низкий",
@@ -747,7 +754,7 @@
       "pat4": "Анализ фото",
       "pat5": "Поддержка решений",
       "mockAssistantUi": "Mock-интерфейс ассистента",
-      "mockInterfaceTitle": "ИИ-копилот — mock-интерфейс",
+      "mockInterfaceTitle": "AI Copilot — симуляция / mock-интерфейс (не live-вывод провайдера)",
       "mockUserMessage": "Пользователь: Какой статус у блока A на этой неделе?",
       "mockCopilotMessage": "Copilot: Блок A выполнен на 72%. 2 отчёта ожидают. Один риск задержки (погода). Рекомендация: подтвердить приёмку фундамента перед следующим этапом.",
       "mockInputPlaceholder": "Спросите о статусе проекта…",
@@ -1012,7 +1019,7 @@
       "neuralConstructionControl": "Нейроконтроль строительства",
       "heroCardDashboardTitle": "Дашборд",
       "heroCardDashboardSubtitle": "Проекты, задачи, KPI",
-      "heroCardAiTitle": "AI-инсайты",
+      "heroCardAiTitle": "AI-инсайты (бета)",
       "heroCardAiSubtitle": "Прогресс, риски, задержки",
       "heroCardMobileTitle": "Мобильные",
       "heroCardMobileSubtitle": "Отчёты, доказательства",
@@ -1443,7 +1450,7 @@
     "leadDetailTitle": "Карточка лида",
     "leadDetailSubtitle": "Просмотр и обновление статуса лида и заметок.",
     "aiCopilotTitle": "AI-копилот",
-    "aiCopilotSubtitle": "Получайте AI-сводки, объяснение рисков и ответы по проекту.",
+    "aiCopilotSubtitle": "Бета: AI-сводки и вопросы по проекту. При недоступности провайдера возможен deterministic fallback.",
     "projectOverviewSubtitle": "Обзор проекта и операционные вкладки.",
     "discussionsTitle": "Обсуждения",
     "discussionsSubtitle": "Структурированные темы, где команды задают вопросы и фиксируют обновления.",
@@ -1465,6 +1472,7 @@
     "thresholdHistoryTitle": "История порогов"
   },
   "dashboardDetail": {
+    "company": "Компания",
     "dateRange": "Период",
     "search": "Поиск",
     "searchPlaceholder": "Поиск…",
@@ -1812,7 +1820,7 @@
     "linkTypeOptional": "Тип связи (необязательно)",
     "milestone": "Этап",
     "linkedEntityId": "ID связанной сущности",
-    "loading": "Загрузка…",
+    "loading": "Загрузка",
     "couldNotLoadRequests": "Не удалось загрузить запросы.",
     "noRequestsYet": "Пока нет запросов.",
     "markComplete": "Отметить выполненным",
@@ -2770,7 +2778,9 @@
     "managerActionSource_recommendation": "recommendation",
     "managerActionSource_health": "health",
     "managerActionSource_executive": "executive",
-    "fromExecutiveSummary": "From executive summary"
+    "fromExecutiveSummary": "From executive summary",
+    "aiCopilot": "AI-копилот",
+    "backToPortalProjects": "← К проектам портала"
   },
   "governancePage": {
     "listSubtitle": "Кросс-проектное управление и эскалации по активным проектам.",

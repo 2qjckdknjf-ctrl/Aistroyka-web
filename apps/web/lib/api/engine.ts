@@ -7,45 +7,97 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createContractorWorkspaceForUser } from "@/lib/account/account-workspace.service";
 import { createAnalysisJobRpc } from "./rpcClient";
 import { getAdminClient } from "@/lib/supabase/admin";
+import {
+  isActiveTenantResolutionBlocked,
+  resolveActiveTenantId,
+  type ActiveTenantRequestLike,
+  type ResolveActiveTenantResult,
+} from "@/lib/tenant/active-tenant";
 
 const MEDIA_BUCKET = "media";
+
+export class ActiveTenantBlockedError extends Error {
+  readonly code = "ACTIVE_TENANT_BLOCKED" as const;
+  readonly explicitRejected: boolean;
+  readonly queryError: boolean;
+
+  constructor(result: ResolveActiveTenantResult) {
+    super(
+      result.queryError
+        ? "Active tenant lookup failed."
+        : "Active tenant selection rejected."
+    );
+    this.name = "ActiveTenantBlockedError";
+    this.explicitRejected = result.explicitRejected;
+    this.queryError = result.queryError;
+  }
+}
+
+const UNauthenticated: ResolveActiveTenantResult = {
+  tenantId: null,
+  source: "none",
+  explicitRejected: false,
+  queryError: false,
+};
+
+/**
+ * Full active-tenant resolution for the current user (preserves fail-closed flags).
+ * Prefer this over getTenantForCurrentUser whenever auto-create / onboarding decisions depend on the result.
+ */
+export async function resolveTenantForCurrentUser(
+  supabase: SupabaseClient,
+  requestLike?: ActiveTenantRequestLike | null
+): Promise<ResolveActiveTenantResult> {
+  try {
+    const res = await supabase.auth.getUser();
+    const user = res?.data?.user ?? null;
+    if (!user?.id) return UNauthenticated;
+
+    return await resolveActiveTenantId(supabase, user.id, requestLike ?? null);
+  } catch {
+    return {
+      tenantId: null,
+      source: "none",
+      explicitRejected: false,
+      queryError: true,
+    };
+  }
+}
 
 /**
  * Legacy alias kept for compatibility.
  * Returns the active tenant for the current user without auto-creating one.
+ * Pass Request/Headers whenever the caller has HTTP context so `x-tenant-id` /
+ * `aistroyka_active_tenant` apply (same contract as resolveActiveTenantId).
  */
 export async function getOrCreateTenantForCurrentUser(
-  supabase: SupabaseClient
+  supabase: SupabaseClient,
+  requestLike?: ActiveTenantRequestLike | null
 ): Promise<string | null> {
-  return getTenantForCurrentUser(supabase);
+  return getTenantForCurrentUser(supabase, requestLike);
 }
 
 /**
- * Returns the active tenant for current user.
- * Priority: owned tenant -> tenant_members membership.
+ * Returns the active tenant id for the current user, or null.
+ * Note: null may mean absent membership OR a blocked explicit claim/query error.
+ * Do not use null alone to decide auto-create — use resolveTenantForCurrentUser /
+ * isActiveTenantResolutionBlocked / createTenantAndOwnerMembershipForCurrentUser.
  */
 export async function getTenantForCurrentUser(
-  supabase: SupabaseClient
+  supabase: SupabaseClient,
+  requestLike?: ActiveTenantRequestLike | null
 ): Promise<string | null> {
+  const active = await resolveTenantForCurrentUser(supabase, requestLike);
+  if (active.tenantId) return active.tenantId;
+
+  // Preserve fail-closed: blocked resolutions stay null (callers that auto-create
+  // must check resolveTenantForCurrentUser / ActiveTenantBlockedError).
+  if (isActiveTenantResolutionBlocked(active)) return null;
+
   try {
     const res = await supabase.auth.getUser();
     const user = res?.data?.user ?? null;
     if (!user?.id) return null;
-
-    const { data: ownTenant, error: e1 } = await supabase
-      .from("tenants")
-      .select("id")
-      .eq("user_id", user.id)
-      .maybeSingle();
-    if (!e1 && ownTenant?.id) return ownTenant.id;
-
-    const { data: memberRow, error: e2 } = await supabase
-      .from("tenant_members")
-      .select("tenant_id")
-      .eq("user_id", user.id)
-      .limit(1)
-      .maybeSingle();
-    if (!e2 && memberRow?.tenant_id) return memberRow.tenant_id;
 
     // If user has a pending invitation, do not auto-create a personal tenant.
     const normalizedEmail = (user.email ?? "").trim().toLowerCase();
@@ -66,16 +118,25 @@ export async function getTenantForCurrentUser(
   }
 }
 
+/**
+ * Create a contractor workspace for the current user when none exists.
+ * Fail-closed: refused when request carries a rejected explicit claim or query error
+ * (never creates a new tenant to "recover" from bad x-tenant-id / cookie).
+ */
 export async function createTenantAndOwnerMembershipForCurrentUser(
   supabase: SupabaseClient,
-  params: { name: string; companyType?: string | null }
+  params: { name: string; companyType?: string | null },
+  requestLike?: ActiveTenantRequestLike | null
 ): Promise<string | null> {
   const res = await supabase.auth.getUser();
   const user = res?.data?.user ?? null;
   if (!user?.id) return null;
 
-  const existingTenant = await getTenantForCurrentUser(supabase);
-  if (existingTenant) return existingTenant;
+  const existing = await resolveTenantForCurrentUser(supabase, requestLike);
+  if (isActiveTenantResolutionBlocked(existing)) {
+    throw new ActiveTenantBlockedError(existing);
+  }
+  if (existing.tenantId) return existing.tenantId;
 
   const tenantName =
     params.name.trim() ||
@@ -92,9 +153,10 @@ export async function createTenantAndOwnerMembershipForCurrentUser(
 
 /** @deprecated Use getOrCreateTenantForCurrentUser for per-user isolation. */
 export async function getDefaultTenantId(
-  supabase: SupabaseClient
+  supabase: SupabaseClient,
+  requestLike?: ActiveTenantRequestLike | null
 ): Promise<string | null> {
-  return getOrCreateTenantForCurrentUser(supabase);
+  return getOrCreateTenantForCurrentUser(supabase, requestLike);
 }
 
 /**

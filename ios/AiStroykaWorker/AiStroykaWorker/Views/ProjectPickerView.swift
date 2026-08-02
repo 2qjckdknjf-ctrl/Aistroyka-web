@@ -17,12 +17,12 @@ struct ProjectPickerView: View {
                     VStack(spacing: 12) {
                         Image(systemName: "folder")
                             .font(.largeTitle)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(BrandTokens.textSecondary)
                         Text(NSLocalizedString("worker_no_projects", comment: ""))
                             .font(.headline)
                         Text(NSLocalizedString("worker_picker_empty_subtitle", comment: ""))
                             .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(BrandTokens.textSecondary)
                             .multilineTextAlignment(.center)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)

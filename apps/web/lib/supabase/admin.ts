@@ -18,6 +18,10 @@ export function isUnsetOrPlaceholderServiceRoleKey(key: string): boolean {
     return true;
   if (lower.endsWith("_here")) return true;
   if (lower.includes("placeholder")) return true;
+  // Accept classic JWT service_role keys or modern sb_secret_ keys only.
+  const looksLikeJwt = k.split(".").length === 3 && k.startsWith("eyJ");
+  const looksLikeSecret = lower.startsWith("sb_secret_");
+  if (!looksLikeJwt && !looksLikeSecret) return true;
   return false;
 }
 

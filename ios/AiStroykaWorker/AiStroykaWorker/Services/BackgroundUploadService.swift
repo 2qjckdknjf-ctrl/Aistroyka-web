@@ -83,6 +83,8 @@ final class BackgroundUploadService: NSObject {
 
     private let mappingStore = UploadTaskMappingStore()
     private var session: URLSession!
+    /// Retained for XCTest/E2E foreground uploads (local URLSession must not deallocate mid-transfer).
+    private var e2eForegroundSession: URLSession?
     private let pendingDir: URL? = {
         guard let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else { return nil }
         let sub = dir.appendingPathComponent("AiStroykaWorker", isDirectory: true).appendingPathComponent("upload_pending", isDirectory: true)
@@ -111,7 +113,45 @@ final class BackgroundUploadService: NSObject {
         }
     }
 
+    private static var isE2EAutomation: Bool {
+        let env = ProcessInfo.processInfo.environment
+        if env["AISTROYKA_E2E"] == "1" || env["AISTROYKA_UI_TEST"] == "1" { return true }
+        let args = ProcessInfo.processInfo.arguments
+        return args.contains("-AISTROYKA_E2E") || args.contains("-AISTROYKA_UI_TEST")
+    }
+
+    /// Synchronous foreground POST for XCTest/E2E (same request shape as UploadManager).
+    func uploadSynchronouslyForE2E(storagePath: String, data: Data, token: String) async throws {
+        let base = Config.supabaseURL.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        let urlString = "\(base)/storage/v1/object/media/\(storagePath)"
+        guard let url = URL(string: urlString) else {
+            throw NSError(domain: "BackgroundUpload", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid storage URL"])
+        }
+        let anon = Config.supabaseAnonKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !anon.isEmpty else {
+            throw NSError(domain: "BackgroundUpload", code: -3, userInfo: [NSLocalizedDescriptionKey: "Missing SUPABASE_ANON_KEY for storage upload"])
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.setValue(anon, forHTTPHeaderField: "apikey")
+        request.setValue("image/jpeg", forHTTPHeaderField: "Content-Type")
+        request.setValue("true", forHTTPHeaderField: "x-upsert")
+        request.httpBody = data
+        request.timeoutInterval = 60
+        let (body, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse else {
+            throw NSError(domain: "BackgroundUpload", code: -2, userInfo: [NSLocalizedDescriptionKey: "No HTTP response"])
+        }
+        guard (200...299).contains(http.statusCode) else {
+            let snippet = String(data: body.prefix(160), encoding: .utf8) ?? ""
+            let detail = snippet.isEmpty ? "HTTP \(http.statusCode)" : "HTTP \(http.statusCode): \(snippet)"
+            throw NSError(domain: "BackgroundUpload", code: http.statusCode, userInfo: [NSLocalizedDescriptionKey: detail])
+        }
+    }
+
     /// Schedules upload; op stays .running until delegate marks success/failure.
+    /// Under XCTest/E2E, prefer `uploadSynchronouslyForE2E` from the executor instead.
     func scheduleUpload(operationId: String, storagePath: String, data: Data, token: String) throws {
         guard let dir = pendingDir else { throw NSError(domain: "BackgroundUpload", code: -1, userInfo: [NSLocalizedDescriptionKey: "No pending dir"]) }
         let fileURL = dir.appendingPathComponent("\(operationId).bin")
@@ -128,6 +168,69 @@ final class BackgroundUploadService: NSObject {
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.setValue(Config.supabaseAnonKey, forHTTPHeaderField: "apikey")
         request.setValue("image/jpeg", forHTTPHeaderField: "Content-Type")
+
+        if Self.isE2EAutomation {
+            let syntheticId = Int.random(in: 1_000_000...9_999_999)
+            mappingStore.add(taskIdentifier: syntheticId, operationId: operationId)
+            if e2eForegroundSession == nil {
+                e2eForegroundSession = URLSession(configuration: .default)
+            }
+            let foreground = e2eForegroundSession!
+            let task = foreground.uploadTask(with: request, fromFile: fileURL) { [weak self] _, response, error in
+                guard let self else { return }
+                let finish: () -> Void = {
+                    if let error {
+                        let retryable = (error as NSError).code == NSURLErrorNetworkConnectionLost
+                            || (error as NSError).code == NSURLErrorTimedOut
+                        self.markUploadFailed(
+                            operationId: operationId,
+                            taskId: syntheticId,
+                            retryable: retryable,
+                            message: error.localizedDescription
+                        )
+                        return
+                    }
+                    guard let http = response as? HTTPURLResponse else {
+                        self.markUploadFailed(operationId: operationId, taskId: syntheticId, retryable: true, message: "No response")
+                        return
+                    }
+                    guard (200...299).contains(http.statusCode) else {
+                        let retryable = http.statusCode == 429 || http.statusCode >= 500
+                        self.markUploadFailed(
+                            operationId: operationId,
+                            taskId: syntheticId,
+                            retryable: retryable,
+                            message: "HTTP \(http.statusCode)"
+                        )
+                        return
+                    }
+                    let opStore = OperationQueueStore.shared
+                    guard let op = opStore.operation(id: operationId) else {
+                        self.cleanupFile(operationId: operationId)
+                        self.mappingStore.remove(taskIdentifier: syntheticId)
+                        return
+                    }
+                    let sizeBytes = op.payload.sizeBytes ?? data.count
+                    if let persisted = op.payload.objectPath, !persisted.isEmpty {
+                        self.markUploadSucceeded(operationId: operationId, taskId: syntheticId, objectPath: persisted, sizeBytes: sizeBytes)
+                        return
+                    }
+                    let pathInBucket = op.payload.uploadPath ?? ""
+                    let path = pathInBucket.hasPrefix("media/") ? String(pathInBucket.dropFirst(6)) : pathInBucket
+                    let photoItemId = op.payload.photoItemId ?? String(operationId.prefix(8))
+                    let filename = "\(photoItemId.prefix(8)).jpg"
+                    let objectPath = "media/\(path)/\(filename)"
+                    self.markUploadSucceeded(operationId: operationId, taskId: syntheticId, objectPath: objectPath, sizeBytes: sizeBytes)
+                }
+                if Thread.isMainThread {
+                    finish()
+                } else {
+                    DispatchQueue.main.async(execute: finish)
+                }
+            }
+            task.resume()
+            return
+        }
 
         let task = session.uploadTask(with: request, fromFile: fileURL)
         mappingStore.add(taskIdentifier: task.taskIdentifier, operationId: operationId)

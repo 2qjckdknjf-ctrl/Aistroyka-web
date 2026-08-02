@@ -19,7 +19,7 @@ struct AITabView: View {
                 if isLoading && jobs.isEmpty && errorMessage == nil {
                     LoadingStateView(message: NSLocalizedString("mgr_loading_ai_jobs", comment: ""))
                 } else if let err = errorMessage, jobs.isEmpty {
-                    ErrorStateView(message: err, retry: { load() })
+                    ErrorStateView(message: err, retryTitle: NSLocalizedString("mgr_retry", comment: ""), retry: { load() })
                 } else if jobs.isEmpty {
                     EmptyStateView(
                         title: NSLocalizedString("mgr_no_ai_jobs_title", comment: ""),
@@ -30,7 +30,7 @@ struct AITabView: View {
                         Section {
                             Text(NSLocalizedString("mgr_ai_tab_copilot_hint", comment: ""))
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(BrandTokens.textSecondary)
                         }
                         Section(NSLocalizedString("mgr_ai_jobs_section", comment: "")) {
                             ForEach(Array(jobs.enumerated()), id: \.offset) { _, job in
@@ -41,6 +41,7 @@ struct AITabView: View {
                 }
             }
             .navigationTitle(NSLocalizedString("mgr_tab_ai", comment: ""))
+            .brandScrollChrome()
             .refreshable { await loadAsync() }
             .onAppear { loadIfNeeded() }
         }
@@ -84,11 +85,11 @@ struct AIJobRowView: View {
             HStack {
                 Text(job.status ?? "—")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(BrandTokens.textSecondary)
                 if let e = job.entity, !e.isEmpty {
                     Text(String(format: NSLocalizedString("mgr_bullet_entity_fmt", comment: ""), e))
                         .font(.caption)
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(BrandTokens.textTertiary)
                         .lineLimit(1)
                 }
             }

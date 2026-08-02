@@ -17,6 +17,12 @@ vi.mock("@/lib/tenant", () => ({
       this.name = "TenantRequiredError";
     }
   },
+  LitePathForbiddenError: class LitePathForbiddenError extends Error {
+    constructor(m = "forbidden") {
+      super(m);
+      this.name = "LitePathForbiddenError";
+    }
+  },
 }));
 
 vi.mock("@/lib/supabase/server", () => {
@@ -110,6 +116,30 @@ describe("GET /api/v1/devices", () => {
     });
     const res = await GET(new Request("https://test/api/v1/devices"));
     expect(res.status).toBe(401);
+  });
+
+  it("returns 403 for lite worker clients before opening tenant-wide inventory", async () => {
+    const { getTenantContextFromRequest } = await import("@/lib/tenant");
+    vi.mocked(getTenantContextFromRequest).mockResolvedValueOnce({
+      tenantId: "tenant-1",
+      userId: "user-1",
+      role: "member",
+      subscriptionTier: "free",
+      clientProfile: "ios_lite",
+      traceId: "trace-lite",
+    });
+
+    const res = await GET(
+      new Request("https://test/api/v1/devices", {
+        headers: { "x-client": "ios_lite" },
+      }),
+    );
+
+    expect(res.status).toBe(403);
+    expect(await res.json()).toEqual({
+      error: "forbidden",
+      code: "lite_client_path_forbidden",
+    });
   });
 
   it("never includes push token or token-like fields in response items", async () => {

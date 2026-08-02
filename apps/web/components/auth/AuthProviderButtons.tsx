@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui";
 import { createClient } from "@/lib/supabase/client";
+import { sanitizeNextRoute } from "@/lib/entry/entry-routing";
 
 type Props = {
   nextPath: string;
@@ -12,13 +13,6 @@ type Props = {
   appleIntent?: "signin" | "link";
   hideEmailButton?: boolean;
 };
-
-function makeSafePath(path: string, locale: string): string {
-  if (!path.startsWith("/") || path.startsWith("//") || path.includes("\\")) {
-    return `/${locale}/dashboard`;
-  }
-  return path;
-}
 
 export function AuthProviderButtons({
   nextPath,
@@ -31,7 +25,11 @@ export function AuthProviderButtons({
   const t = useTranslations("auth");
   const [appleLoading, setAppleLoading] = useState(false);
   const [appleError, setAppleError] = useState<string | null>(null);
-  const safeNext = useMemo(() => makeSafePath(nextPath, locale), [locale, nextPath]);
+  const safeNext = useMemo(() => {
+    const base =
+      typeof window !== "undefined" ? window.location.origin : "https://aistroyka.ai";
+    return sanitizeNextRoute(nextPath, base, locale) ?? `/${locale}/dashboard`;
+  }, [locale, nextPath]);
   const telegramStartHref = `/${locale}/telegram/start?next=${encodeURIComponent(safeNext)}`;
 
   async function continueWithApple() {

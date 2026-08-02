@@ -1,11 +1,14 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { getEngineError } from "@/lib/engine/normalizeError";
 import type { EngineError } from "@/lib/engine/errors";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { mapQueryErrorToUI } from "./mapQueryErrorToUI";
+
+export { mapQueryErrorToUI } from "./mapQueryErrorToUI";
+export type { EngineError };
 
 export interface QueryBoundaryProps<T> {
   /** Result of useQuery (data, isPending, isError, error, refetch). */
@@ -65,20 +68,4 @@ export function QueryBoundary<T>({
   }
 
   return <>{children(data as T)}</>;
-}
-
-/**
- * Map query error to UI: use EngineError message when present, else generic.
- */
-export function mapQueryErrorToUI(error: unknown): {
-  message: string;
-  engineError: EngineError | null;
-} {
-  const engineError = getEngineError(error);
-  if (engineError) return { message: engineError.message, engineError };
-  if (error instanceof Error) return { message: error.message, engineError: null };
-  return {
-    message: typeof error === "string" ? error : "Something went wrong.",
-    engineError: null,
-  };
 }

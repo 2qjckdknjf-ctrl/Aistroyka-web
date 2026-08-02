@@ -5,7 +5,7 @@
 
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabase/admin";
-import { getTenantContextFromRequest, requireTenant, TenantRequiredError, authorize } from "@/lib/tenant";
+import { getTenantContextFromRequest, requireTenant, TenantRequiredError, authorize, LitePathForbiddenError } from "@/lib/tenant";
 import { createPortalSession, isStripeConfigured } from "@/lib/platform/billing";
 import { BILLING_503_BODY } from "@/lib/platform/billing/billing-responses";
 
@@ -16,6 +16,12 @@ export async function GET(request: Request) {
   try {
     requireTenant(ctx);
   } catch (e) {
+    if (e instanceof LitePathForbiddenError) {
+      return NextResponse.json(
+        { error: "forbidden", code: "lite_client_path_forbidden" },
+        { status: 403 }
+      );
+    }
     if (e instanceof TenantRequiredError) {
       return NextResponse.json({ error: e.message }, { status: 401 });
     }

@@ -11,7 +11,9 @@ struct ManagerRootView: View {
 
     var body: some View {
         Group {
-            if ManagerUITestLaunchHooks.isE2EEnabled, sessionState.isE2EBootstrapping {
+            if let preview = DesignPreview.screen {
+                DesignPreviewRoot(screen: preview, appTitle: "AiStroyka Manager")
+            } else if ManagerUITestLaunchHooks.isE2EEnabled, sessionState.isE2EBootstrapping {
                 LoadingStateView(message: NSLocalizedString("mgr_signing_in", comment: ""))
                     .accessibilityIdentifier("pilot_manager_e2e_bootstrapping")
             } else if sessionState.isCheckingSession {
@@ -37,7 +39,9 @@ struct ManagerRootView: View {
                 ManagerTabShell()
             }
         }
+        .brandPageChrome()
         .onAppear {
+            BrandTokens.applyGlobalListChrome()
             Task { @MainActor in
                 if ManagerUITestLaunchHooks.isE2EEnabled {
                     sessionState.isE2EBootstrapping = true

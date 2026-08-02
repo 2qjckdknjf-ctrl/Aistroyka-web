@@ -1,6 +1,6 @@
 # ROMA Vendor Dependency Audit
 
-**Generated:** 2026-07-07T07:07:59.515Z
+**Generated:** 2026-07-07T07:18:30.973Z
 **Scope:** `platform-admin`, `roma-live-probes`, `kernel`
 **Mode:** Audit-only (no refactor)
 

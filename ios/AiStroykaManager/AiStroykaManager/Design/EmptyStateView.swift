@@ -13,24 +13,11 @@ struct EmptyStateView: View {
     var action: (() -> Void)?
 
     var body: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "tray")
-                .font(.largeTitle)
-                .foregroundStyle(.tertiary)
-            Text(title)
-                .font(.headline)
-            if let subtitle = subtitle {
-                Text(subtitle)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-            if let actionTitle = actionTitle, let action = action {
-                Button(actionTitle, action: action)
-                    .buttonStyle(.borderedProminent)
-            }
-        }
-        .padding()
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        BrandEmptyState(
+            title: title,
+            subtitle: subtitle,
+            actionTitle: actionTitle,
+            action: action
+        )
     }
 }

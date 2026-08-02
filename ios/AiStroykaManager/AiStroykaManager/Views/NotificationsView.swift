@@ -24,7 +24,7 @@ struct NotificationsView: View {
             if isLoading && items.isEmpty && errorMessage == nil {
                 LoadingStateView(message: NSLocalizedString("mgr_loading", comment: ""))
             } else if let err = errorMessage, items.isEmpty {
-                ErrorStateView(message: err, retry: { load() })
+                ErrorStateView(message: err, retryTitle: NSLocalizedString("mgr_retry", comment: ""), retry: { load() })
             } else if items.isEmpty {
                 EmptyStateView(
                     title: NSLocalizedString("mgr_inbox", comment: ""),
@@ -52,7 +52,7 @@ struct NotificationsView: View {
                             if devices.isEmpty && !showDevices { } else if devices.isEmpty {
                                 Text(NSLocalizedString("mgr_no_devices_subtitle", comment: ""))
                                     .font(.caption)
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(BrandTokens.textSecondary)
                             } else {
                                 ForEach(Array(devices.enumerated()), id: \.offset) { _, d in
                                     HStack {
@@ -61,13 +61,13 @@ struct NotificationsView: View {
                                                 .font(.caption)
                                             Text(d.platform ?? "")
                                                 .font(.caption2)
-                                                .foregroundStyle(.tertiary)
+                                                .foregroundStyle(BrandTokens.textTertiary)
                                         }
                                         Spacer()
                                         if let c = d.createdAt {
                                             Text(shortDate(c))
                                                 .font(.caption2)
-                                                .foregroundStyle(.tertiary)
+                                                .foregroundStyle(BrandTokens.textTertiary)
                                         }
                                     }
                                 }
@@ -81,6 +81,7 @@ struct NotificationsView: View {
             }
         }
         .navigationTitle(NSLocalizedString("mgr_notifications", comment: ""))
+        .brandScrollChrome()
         .refreshable { await loadAsync() }
         .onAppear { loadIfNeeded() }
     }
@@ -157,24 +158,24 @@ struct NotificationRowView: View {
         }) {
             HStack(alignment: .top, spacing: 10) {
                 Circle()
-                    .fill(item.readAt == nil ? Color.accentColor : Color.clear)
+                    .fill(item.readAt == nil ? BrandTokens.actionPrimary : Color.clear)
                     .frame(width: 8, height: 8)
-                    .overlay(Circle().stroke(Color.accentColor.opacity(0.5), lineWidth: 1))
+                    .overlay(Circle().stroke(BrandTokens.actionPrimary.opacity(0.5), lineWidth: 1))
                 VStack(alignment: .leading, spacing: 4) {
                     Text(item.title ?? NSLocalizedString("mgr_notification", comment: ""))
                         .font(.subheadline)
                         .fontWeight(item.readAt == nil ? .medium : .regular)
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(BrandTokens.textPrimary)
                     if let body = item.body, !body.isEmpty {
                         Text(body)
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(BrandTokens.textSecondary)
                             .lineLimit(2)
                     }
                     if let created = item.createdAt {
                         Text(shortDate(created))
                             .font(.caption2)
-                            .foregroundStyle(.tertiary)
+                            .foregroundStyle(BrandTokens.textTertiary)
                     }
                 }
                 Spacer(minLength: 0)

@@ -1,8 +1,9 @@
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { createClient, getSessionUser } from "@/lib/supabase/server";
 import { getOrCreateTenantForCurrentUser } from "@/lib/api/engine";
-import { hasMinRole } from "@/lib/auth/tenant";
+import { hasMinRole } from "@/lib/tenant/tenant-membership.server";
 import { TeamPageClient } from "./TeamPageClient";
 import { Card, Alert } from "@/components/ui";
 
@@ -12,7 +13,7 @@ export default async function TeamPage() {
   const user = await getSessionUser(supabase);
   if (!user) redirect("/login");
 
-  const tenantId = await getOrCreateTenantForCurrentUser(supabase);
+  const tenantId = await getOrCreateTenantForCurrentUser(supabase, await headers());
   if (!tenantId) redirect("/dashboard");
 
   const canManage = await hasMinRole(supabase, tenantId, "admin");

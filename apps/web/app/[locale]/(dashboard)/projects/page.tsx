@@ -1,14 +1,15 @@
+import { headers } from "next/headers";
 import { getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
 import { getOrCreateTenantForCurrentUser } from "@/lib/api/engine";
-import { hasMinRole } from "@/lib/auth/tenant";
+import { hasMinRole } from "@/lib/tenant/tenant-membership.server";
 import { CreateProjectForm } from "./CreateProjectForm";
 import { ProjectsListClient } from "./ProjectsListClient";
 
 export default async function ProjectsPage() {
   const t = await getTranslations("projects");
   const supabase = await createClient();
-  const tenantId = await getOrCreateTenantForCurrentUser(supabase);
+  const tenantId = await getOrCreateTenantForCurrentUser(supabase, await headers());
   const canCreate = tenantId ? await hasMinRole(supabase, tenantId, "member") : false;
 
   return (

@@ -24,14 +24,14 @@ struct ManagerSettingsView: View {
         List {
             Section(NSLocalizedString("mgr_section_account", comment: "")) {
                 Text(sessionState.isLoggedIn ? NSLocalizedString("mgr_signed_in", comment: "") : NSLocalizedString("mgr_not_signed_in", comment: ""))
-                    .foregroundColor(sessionState.isLoggedIn ? .green : .secondary)
+                    .foregroundColor(sessionState.isLoggedIn ? BrandTokens.stateSuccess : BrandTokens.textSecondary)
                 if sessionState.isAuthorizedRole == false, let msg = sessionState.roleFailureMessage {
-                    Text(msg).font(.caption).foregroundColor(.orange)
+                    Text(msg).font(.caption).foregroundStyle(BrandTokens.stateWarning)
                 }
             }
             Section(NSLocalizedString("mgr_environment_section", comment: "")) {
                 LabeledContent(NSLocalizedString("mgr_api", comment: ""), value: Config.baseURL)
-                Text(NSLocalizedString("mgr_client_ios_manager", comment: "")).font(.caption).foregroundColor(.secondary)
+                Text(NSLocalizedString("mgr_client_ios_manager", comment: "")).font(.caption).foregroundStyle(BrandTokens.textSecondary)
             }
             Section(NSLocalizedString("mgr_diagnostics_section", comment: "")) {
                 LabeledContent(NSLocalizedString("mgr_app_version", comment: ""), value: appVersion)
@@ -41,6 +41,7 @@ struct ManagerSettingsView: View {
             }
         }
         .navigationTitle(NSLocalizedString("mgr_settings", comment: ""))
+        .brandScrollChrome()
         .task {
             guard sessionState.isLoggedIn else { return }
             do {

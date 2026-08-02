@@ -1,8 +1,12 @@
+import { headers } from "next/headers";
 import { Card } from "@/components/ui";
 import { Link } from "@/i18n/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { resolveAdminPageTenantScope } from "@/src/features/admin/auth/resolveAdminPageTenantScope";
 import { AdminAiSecurityClient } from "./AdminAiSecurityClient";
 
-export default function AdminAiSecurityPage() {
+export default async function AdminAiSecurityPage() {
+  const scope = await resolveAdminPageTenantScope(await createClient(), await headers());
   return (
     <>
       <Card className="mb-6 border-l-4 border-l-aistroyka-accent">
@@ -10,7 +14,7 @@ export default function AdminAiSecurityPage() {
           AI Security events
         </h1>
         <p className="mt-1 text-aistroyka-subheadline text-aistroyka-text-secondary">
-          Filter by range, severity, event type. Details expand on click.
+          Filter by range, severity, event type. Scoped to the active tenant.
         </p>
         <p className="mt-3">
           <Link href="/admin/ai" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">
@@ -18,7 +22,7 @@ export default function AdminAiSecurityPage() {
           </Link>
         </p>
       </Card>
-      <AdminAiSecurityClient />
+      <AdminAiSecurityClient activeTenantId={scope.tenantId} />
     </>
   );
 }

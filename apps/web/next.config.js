@@ -2,7 +2,8 @@ const path = require("path");
 const createNextIntlPlugin = require("next-intl/plugin");
 const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 
-const { getPageSecurityHeaders, getApiSecurityHeaders } = require("./lib/security-headers");
+const { buildNextConfigStaticHeaderRules } = require("./lib/security-headers");
+
 // Standalone tracing is required for Cloudflare/OpenNext builds only.
 // Keeping default local/CI build non-standalone avoids flaky trace ENOENTs.
 const isStandaloneOutput =
@@ -12,6 +13,10 @@ const isStandaloneOutput =
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   poweredByHeader: false,
+  experimental: {
+    // Required for next/navigation `forbidden()` used by platform-owner page gates.
+    authInterrupts: true,
+  },
   // Keep root tracing context stable in monorepo even for non-standalone builds.
   outputFileTracingRoot: path.join(__dirname, "../.."),
   ...(isStandaloneOutput
@@ -31,19 +36,12 @@ const nextConfig = {
     // Zod resolves via apps/web package.json for `@aistroyka/contracts`.
     return config;
   },
+  // Static-only security headers for paths excluded from middleware matcher.
+  // Page/API headers remain middleware-owned — do not add /:path* or /api sources here.
   async headers() {
-    const isProduction = process.env.NODE_ENV === "production";
-    const pageHeaders = [...getPageSecurityHeaders(process.env.NODE_ENV === "development")];
-    const apiHeaders = [...getApiSecurityHeaders()];
-    if (isProduction) {
-      const hsts = { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubdomains; preload" };
-      pageHeaders.push(hsts);
-      apiHeaders.push(hsts);
-    }
-    return [
-      { source: "/api/:path*", headers: apiHeaders },
-      { source: "/:path*", headers: pageHeaders },
-    ];
+    return buildNextConfigStaticHeaderRules({
+      isProduction: process.env.NODE_ENV === "production",
+    });
   },
 };
 

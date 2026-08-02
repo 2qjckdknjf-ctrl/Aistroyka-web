@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClientFromRequest } from "@/lib/supabase/server";
 import { getAdminClient } from "@/lib/supabase/admin";
-import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
+import { getTenantContextFromRequest, requireTenant, TenantRequiredError, LitePathForbiddenError } from "@/lib/tenant";
 import { getCursor, upsertCursor } from "@/lib/sync/sync-cursors.repository";
 import { recordSyncConflict } from "@/lib/ops/ops-events.repository";
 import { getMaxCursor, getMinRetainedCursor } from "@/lib/sync/change-log.repository";
@@ -31,6 +31,12 @@ export async function POST(request: Request) {
   try {
     requireTenant(ctx);
   } catch (e) {
+    if (e instanceof LitePathForbiddenError) {
+      return NextResponse.json(
+        { error: "forbidden", code: "lite_client_path_forbidden" },
+        { status: 403 }
+      );
+    }
     if (e instanceof TenantRequiredError) {
       return withRequestIdAndTiming(request, NextResponse.json({ error: e.message }, { status: e.message.includes("membership") ? 403 : 401 }), { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start });
     }
@@ -87,6 +93,7 @@ export async function POST(request: Request) {
     supabase.from("device_tokens").update({ last_seen: new Date().toISOString() }).eq("tenant_id", tenantId).eq("user_id", ctx.userId).eq("device_id", deviceId)
   ).catch(() => {});
   const response = { ok: true, cursor, serverTime: new Date().toISOString() };
-  await storeLiteIdempotency(request, ctx, ROUTE_KEY, response, 200);
+  const idemStore = await storeLiteIdempotency(request, ctx, ROUTE_KEY, response, 200);
+  if (!idemStore.ok) return idemStore.response;
   return withRequestIdAndTiming(request, NextResponse.json(response), { route: ROUTE_KEY, method: "POST", duration_ms: Date.now() - start, tenantId: ctx.tenantId, userId: ctx.userId });
 }

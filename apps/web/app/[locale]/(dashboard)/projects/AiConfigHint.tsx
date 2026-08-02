@@ -39,7 +39,7 @@ export function AiConfigHint({ showWhenActive }: { showWhenActive: boolean }) {
       <p className="font-medium">{tDetail("aiAnalysisNotConfigured")}</p>
       <p className="mt-1 text-aistroyka-warning">
         {tDetail("aiConfigHintPrefix")} <code className="rounded bg-aistroyka-warning/20 px-1">AI_ANALYSIS_URL</code>{" "}
-        {tDetail("aiConfigHintMiddle")} <code className="rounded bg-aistroyka-warning/20 px-1">/api/ai/analyze-image</code>) {tDetail("and")}{" "}
+        {tDetail("aiConfigHintMiddle")} <code className="rounded bg-aistroyka-warning/20 px-1">/api/v1/ai/analyze-image</code>) {tDetail("and")}{" "}
         <code className="rounded bg-aistroyka-warning/20 px-1">OPENAI_API_KEY</code> {tDetail("aiConfigHintSuffix")}
       </p>
     </div>

@@ -45,9 +45,9 @@ struct ManagerOnboardingView: View {
                     Text(NSLocalizedString("mgr_onboard_continue", comment: ""))
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.accentColor)
-                        .foregroundColor(.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .background(BrandTokens.actionPrimary)
+                        .foregroundStyle(BrandTokens.textOnPrimary)
+                        .clipShape(RoundedRectangle(cornerRadius: BrandTokens.radiusCard))
                 }
                 .accessibilityIdentifier("manager_onboarding_continue")
 
@@ -56,14 +56,14 @@ struct ManagerOnboardingView: View {
                 } label: {
                     Text(NSLocalizedString("mgr_onboard_next", comment: ""))
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(BrandTokens.textSecondary)
                 }
                 .disabled(page >= 2)
                 .opacity(page >= 2 ? 0 : 1)
             }
             .padding()
         }
-        .background(Color(.systemGroupedBackground))
+        .background(BrandTokens.bgPage)
     }
 
     private func onboardingPage(tag: Int, titleKey: String, bodyKey: String) -> some View {
@@ -73,7 +73,7 @@ struct ManagerOnboardingView: View {
                     .font(.title2.bold())
                 Text(NSLocalizedString(bodyKey, comment: ""))
                     .font(.body)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(BrandTokens.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -98,8 +98,9 @@ struct ManagerHowItWorksView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding()
         }
-        .background(Color(.systemGroupedBackground))
+        .background(BrandTokens.bgPage)
         .navigationTitle(NSLocalizedString("mgr_how_title", comment: ""))
+        .brandScrollChrome()
         .navigationBarTitleDisplayMode(.inline)
     }
 

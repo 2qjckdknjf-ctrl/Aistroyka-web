@@ -48,8 +48,9 @@ describe("ROMA Operations Center accessibility (source CI)", () => {
   it("safe audit exposes labeled action buttons", () => {
     const src = readComponent("RomaSafeAuditClient.tsx");
     expect(src).toMatch(/aria-label="Refresh Safe Audit"/);
-    expect(src).toMatch(/aria-label="Save Snapshot"/);
+    expect(src).toMatch(/aria-label="Save Snapshot \(persists audit artifact\)"/);
     expect(src).toMatch(/aria-label="ROMA Safe Readonly Audit"/);
+    expect(src).toMatch(/canPersistAuditSnapshot/);
   });
 
   it("audit history module exposes section landmark", () => {

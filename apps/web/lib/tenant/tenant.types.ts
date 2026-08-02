@@ -41,10 +41,18 @@ export interface TenantContextAbsent {
   subscriptionTier: null;
   clientProfile: ClientProfile;
   traceId: string;
+  /** Set when field-worker x-client is denied by lite allow-list (handler-level). */
+  litePathForbidden?: boolean;
 }
 
 export type TenantContextOrAbsent = TenantContext | TenantContextAbsent;
 
 export function isTenantContextPresent(ctx: TenantContextOrAbsent): ctx is TenantContext {
   return ctx.tenantId !== null && ctx.role !== null;
+}
+
+export function isLitePathForbiddenContext(
+  ctx: TenantContextOrAbsent
+): ctx is TenantContextAbsent & { litePathForbidden: true } {
+  return ctx.tenantId === null && ctx.litePathForbidden === true;
 }
