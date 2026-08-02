@@ -86,16 +86,36 @@ extract_origin() {
   return 1
 }
 
-is_allowed_url_or_origin() {
+# Redirect/final origins must stay inside the selected environment (not the global trio).
+# staging → staging only; production apex↔www only; localhost mock → same origin only.
+is_allowed_redirect_origin() {
+  local origin="$1"
+  case "$BASE_URL" in
+    https://staging.aistroyka.ai)
+      [[ "$origin" == "https://staging.aistroyka.ai" ]]
+      ;;
+    https://aistroyka.ai|https://www.aistroyka.ai)
+      [[ "$origin" == "https://aistroyka.ai" || "$origin" == "https://www.aistroyka.ai" ]]
+      ;;
+    http://127.0.0.1:*|http://localhost:*)
+      [[ "$origin" == "$BASE_URL" ]]
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+is_allowed_redirect_url() {
   local raw="$1"
   local origin
   if ! origin="$(extract_origin "$raw")"; then
     return 1
   fi
-  is_allowed_base "$origin"
+  is_allowed_redirect_origin "$origin"
 }
 
-# Absolute Location targets must stay on the HTTPS allowlist (or localhost opt-in).
+# Absolute Location targets must stay in the selected environment.
 # Relative Location values are same-origin and accepted.
 assert_location_allowed() {
   local label="$1"
@@ -109,8 +129,8 @@ assert_location_allowed() {
   loc_norm="$(normalize_url_scheme "$loc")"
   case "$loc_norm" in
     http://*|https://*)
-      if ! is_allowed_url_or_origin "$loc_norm"; then
-        echo "FAIL [$label]: redirect Location off allowlist: $loc"
+      if ! is_allowed_redirect_url "$loc_norm"; then
+        echo "FAIL [$label]: redirect Location outside selected environment ($BASE_URL): $loc"
         FAIL=1
         return 1
       fi
@@ -286,8 +306,8 @@ check_url() {
     rm -rf "$tmp" "$hop_dir"
     return
   fi
-  if ! is_allowed_url_or_origin "$effective"; then
-    echo "FAIL [$label]: url_effective off allowlist: $effective"
+  if ! is_allowed_redirect_url "$effective"; then
+    echo "FAIL [$label]: url_effective outside selected environment ($BASE_URL): $effective"
     FAIL=1
     rm -rf "$tmp" "$hop_dir"
     return
