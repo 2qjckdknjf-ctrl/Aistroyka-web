@@ -59,6 +59,53 @@ is_allowed_base() {
   esac
 }
 
+# scheme://host[:port] from an absolute URL (path/query stripped).
+extract_origin() {
+  local url="$1"
+  if [[ "$url" =~ ^(https?://[^/?#]+) ]]; then
+    printf '%s' "${BASH_REMATCH[1]}"
+    return 0
+  fi
+  return 1
+}
+
+is_allowed_url_or_origin() {
+  local raw="$1"
+  local origin
+  if ! origin="$(extract_origin "$raw")"; then
+    return 1
+  fi
+  is_allowed_base "$origin"
+}
+
+# Absolute Location targets must stay on the HTTPS allowlist (or localhost opt-in).
+# Relative Location values are same-origin and accepted.
+assert_location_allowed() {
+  local label="$1"
+  local headers_file="$2"
+  local loc
+  loc="$(grep -i '^location[[:space:]]*:' "$headers_file" 2>/dev/null | head -1 | tr -d '\r' || true)"
+  [[ -z "$loc" ]] && return 0
+  loc="${loc#*:}"
+  loc="$(echo "$loc" | sed 's/^[[:space:]]*//')"
+  [[ -z "$loc" ]] && return 0
+  case "$loc" in
+    http://*|https://*)
+      if ! is_allowed_url_or_origin "$loc"; then
+        echo "FAIL [$label]: redirect Location off allowlist: $loc"
+        FAIL=1
+        return 1
+      fi
+      ;;
+    //*)
+      echo "FAIL [$label]: protocol-relative redirect Location forbidden: $loc"
+      FAIL=1
+      return 1
+      ;;
+  esac
+  return 0
+}
+
 # Explicit empty positional (script "") is fail-closed; omitting $1 is allowed.
 if [[ "${1+x}" == "x" && -z "${1}" ]]; then
   echo "security_headers: empty positional target fail-closed" >&2
@@ -183,8 +230,13 @@ check_url() {
   # Follow redirects for page/API smoke; never send credentials or auth headers.
   # Capture curl exit separately: a nonzero exit (e.g. max-redirs) must fail closed
   # even when -w still emitted an HTTP code from the last hop.
+  # Restrict redirect protocols: production smoke is HTTPS-only; localhost mock may use HTTP.
+  local -a curl_proto_redir=(--proto-redir "=https")
+  if [[ "${SECURITY_HEADERS_ALLOW_LOCALHOST:-}" == "1" ]]; then
+    curl_proto_redir=(--proto-redir "=http,https")
+  fi
   set +e
-  code="$(curl -sS -L --max-redirs 5 -D "$tmp" -o /dev/null -w '%{http_code}|%{url_effective}|%{num_redirects}' "$url" 2>/dev/null)"
+  code="$(curl -sS -L --max-redirs 5 "${curl_proto_redir[@]}" -D "$tmp" -o /dev/null -w '%{http_code}|%{url_effective}|%{num_redirects}' "$url" 2>/dev/null)"
   curl_rc=$?
   set -e
   if [[ -z "$code" ]]; then
@@ -200,6 +252,12 @@ check_url() {
   fi
   if [[ "$code" == "000" || "$code" -ge 500 ]]; then
     echo "FAIL [$label]: unexpected HTTP $code"
+    FAIL=1
+    rm -rf "$tmp" "$hop_dir"
+    return
+  fi
+  if ! is_allowed_url_or_origin "$effective"; then
+    echo "FAIL [$label]: url_effective off allowlist: $effective"
     FAIL=1
     rm -rf "$tmp" "$hop_dir"
     return
@@ -234,6 +292,7 @@ check_url() {
       continue
     fi
     echo "  validate [$hop_label]"
+    assert_location_allowed "$hop_label" "$hop_dir/hop_${hop}.hdr" || true
     # Intermediate hops use the request origin URL for HSTS eligibility; final uses url_effective.
     if [[ "$hop" -eq "$hop_count" ]]; then
       validate_headers_file "$hop_label" "$hop_dir/hop_${hop}.hdr" "$profile" "$effective"

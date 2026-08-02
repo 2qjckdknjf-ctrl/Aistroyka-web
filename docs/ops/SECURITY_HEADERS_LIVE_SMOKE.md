@@ -15,7 +15,7 @@ Requires **two consecutive** full host-pair passes (bounded attempts, nonzero ex
 
 Host targeting: each host is passed as `SECURITY_HEADERS_BASE_URL` (not a bare ignored positional). Allowlisted bases only: `https://aistroyka.ai`, `https://www.aistroyka.ai`, `https://staging.aistroyka.ai`.
 
-Redirect chains: `security_headers.sh` follows redirects without credentials and validates security headers on **every hop** (intermediate 3xx and final response). Nonzero `curl` exits fail closed before headers are accepted.
+Redirect chains: `security_headers.sh` follows redirects without credentials and validates security headers on **every hop** (intermediate 3xx and final response). Nonzero `curl` exits fail closed before headers are accepted. Production smoke uses `--proto-redir =https` and rejects off-allowlist `Location` / `url_effective` hosts.
 
 Local mocked-host contract: `python3 scripts/smoke/security_headers_mock_host.py ok|missing-redirect-csp` (opt-in `SECURITY_HEADERS_ALLOW_LOCALHOST=1` inside the harness only).
 

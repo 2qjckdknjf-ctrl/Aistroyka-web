@@ -112,6 +112,9 @@ describe("Phase 8 security-headers CI contract", () => {
     expect(smoke).toMatch(/hop\$\{hop\}-of-\$\{hop_count\}/);
     expect(smoke).toMatch(/Validate intermediate redirect responses/);
     expect(smoke).toMatch(/SECURITY_HEADERS_ALLOW_LOCALHOST/);
+    expect(smoke).toMatch(/--proto-redir/);
+    expect(smoke).toMatch(/url_effective off allowlist/);
+    expect(smoke).toMatch(/redirect Location off allowlist/);
   });
 
   it("localhost remains fail-closed without opt-in allow", () => {
