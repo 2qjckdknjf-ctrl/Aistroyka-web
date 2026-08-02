@@ -10,7 +10,7 @@
 | **Overall Phase 8** | **BLOCKED_EXTERNAL** |
 | **Safe to proceed to Phase 9** | **NO** |
 
-**Operator batch 2026-08-02:** see `docs/roadmap/AISTROYKA_PHASE8_RELEASE_EXECUTION_2026-08-02.md`. Staging + ordered migrations done. Production Worker **live** at `8408ca26…` (run [30740413032](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/actions/runs/30740413032)); CI security-headers job **failed** (live T+0/T+15m headers PASS). Rollback **not** executed. Overall Phase 8 **NO** until owner accepts live recheck or grants rollback.
+**Operator batch 2026-08-02:** see `docs/roadmap/AISTROYKA_PHASE8_RELEASE_EXECUTION_2026-08-02.md`. Staging + migrations + production Worker live at `8408ca26…`. Accept-live recheck: **2 consecutive** www+apex header PASS (no redeploy); CI bounded retry landed on release branch. Rollback **not** executed. **Overall Phase 8 = YES.** Phase 9 **NO**.
 
 Dirty local source is a **local fingerprint**, not an immutable deployable release. Staging/production are on older runtime (`a401693`, 2026-07-18) and cannot be proven equal to this worktree.
 

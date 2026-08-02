@@ -1,0 +1,55 @@
+{
+  "checked_at_utc": "2026-08-02T09:19:31Z",
+  "phase": "first72h_continue",
+  "expected_sha": "8408ca26c3db1a88cd5166c9dc86458ec630bf4d",
+  "redeploy": false,
+  "apex": {
+    "ok": true,
+    "env": "production",
+    "db": "ok",
+    "rateLimitRpcStatus": "present",
+    "aiConfigured": true,
+    "openaiConfigured": true,
+    "aiOperationalStatus": "configured_unverified",
+    "buildStamp": {
+      "sha7": "8408ca2",
+      "buildTime": "2026-08-02 08:46",
+      "sha": "8408ca26c3db1a88cd5166c9dc86458ec630bf4d"
+    }
+  },
+  "www": {
+    "ok": true,
+    "env": "production",
+    "db": "ok",
+    "rateLimitRpcStatus": "present",
+    "aiConfigured": true,
+    "openaiConfigured": true,
+    "aiOperationalStatus": "configured_unverified",
+    "buildStamp": {
+      "sha7": "8408ca2",
+      "buildTime": "2026-08-02 08:46",
+      "sha": "8408ca26c3db1a88cd5166c9dc86458ec630bf4d"
+    }
+  },
+  "staging": {
+    "ok": true,
+    "env": "staging",
+    "db": "ok",
+    "rateLimitRpcStatus": "present",
+    "aiConfigured": true,
+    "openaiConfigured": true,
+    "aiOperationalStatus": "configured_unverified",
+    "buildStamp": {
+      "sha7": "8408ca2",
+      "buildTime": "2026-08-02 08:31",
+      "sha": "8408ca26c3db1a88cd5166c9dc86458ec630bf4d"
+    }
+  },
+  "ci_header_workflow": {
+    "name": "Security Headers Live Smoke",
+    "dispatchable": false,
+    "reason": "workflow file not on default branch main; merge would trigger staging deploy \u2014 deferred",
+    "local_equivalent_consecutive_pass": true,
+    "evidence": "docs/roadmap/evidence/phase8-headers-consecutive-local-2026-08-02.json"
+  }
+}

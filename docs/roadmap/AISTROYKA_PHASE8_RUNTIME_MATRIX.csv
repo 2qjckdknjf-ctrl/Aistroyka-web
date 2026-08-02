@@ -1,5 +1,5 @@
 surface,http_status,env,buildStamp_sha7,buildStamp_buildTime,db,aiConfigured,openaiConfigured,rate_limit_rpc_openapi,security_headers_pages,security_headers_api,matches_release_sha_8408ca26,checked_at_utc,notes
-staging.aistroyka.ai/api/v1/health,200,staging,8408ca2,2026-08-02 08:31,ok,true,true,PRESENT,PASS,PASS,YES,2026-08-02T08:50:56Z,T+0 post-prod; same immutable SHA
-www.aistroyka.ai/api/v1/health,200,production,8408ca2,2026-08-02 08:46,ok,true,true,PRESENT,PASS_LIVE_T0,PASS_LIVE_T0,YES,2026-08-02T08:50:56Z,Workflow 30740413032 deploy success; CI headers FAIL then live PASS
-aistroyka.ai/api/v1/health,200,production,8408ca2,2026-08-02 08:46,ok,true,true,PRESENT,PASS_LIVE_T0,PASS_LIVE_T0,YES,2026-08-02T08:50:56Z,Workflow 30740413032 deploy success; CI headers FAIL then live PASS
-release_sha_8408ca26,N/A,immutable_git,8408ca2,2026-08-02 08:46,N/A,N/A,N/A,MIGRATIONS_APPLIED,FIXED_IN_SOURCE,FIXED_IN_SOURCE,SELF,2026-08-02T08:50:56Z,Tag phase8-staging-proven-8408ca26; overall workflow failure on headers CI
+staging.aistroyka.ai/api/v1/health,200,staging,8408ca2,2026-08-02 08:31,ok,true,true,PRESENT,PASS,PASS,YES,2026-08-02T09:19:31Z,first72h continue; same immutable SHA
+www.aistroyka.ai/api/v1/health,200,production,8408ca2,2026-08-02 08:46,ok,true,true,PRESENT,PASS_2CONSEC,PASS_2CONSEC,YES,2026-08-02T09:19:31Z,2 consecutive pair PASS local equivalent; no redeploy
+aistroyka.ai/api/v1/health,200,production,8408ca2,2026-08-02 08:46,ok,true,true,PRESENT,PASS_2CONSEC,PASS_2CONSEC,YES,2026-08-02T09:19:31Z,2 consecutive pair PASS local equivalent; no redeploy
+release_sha_8408ca26,N/A,immutable_git,8408ca2,2026-08-02 08:46,N/A,N/A,N/A,MIGRATIONS_APPLIED,RETRY_IN_CI_ON_RELEASE,RETRY_IN_CI_ON_RELEASE,SELF,2026-08-02T09:19:31Z,Phase8 YES; CI hardening tip dedef02a not deployed

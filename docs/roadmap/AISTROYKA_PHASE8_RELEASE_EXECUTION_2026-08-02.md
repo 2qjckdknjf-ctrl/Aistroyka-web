@@ -15,7 +15,9 @@
 `8408ca26c3db1a88cd5166c9dc86458ec630bf4d`  
 Tag pin: `phase8-staging-proven-8408ca26`
 
-Production Worker remains on this SHA (no redeploy in accept-live batch).
+Production Worker remains on this SHA (**no redeploy** in accept-live batch).
+
+CI hardening commit (script/workflows/docs only; not deployed): `dedef02abf2b0bf6ca2bc75a1de60369344ee29e`
 
 ## 3. Migrations
 
@@ -41,11 +43,13 @@ Applied via MCP in order; staging/prod shared DB `rateLimitRpcStatus=present`; `
 | Item | Result |
 | --- | --- |
 | Decision | **A** — do not rollback |
-| Local equivalent | **PASS** — 2 consecutive www+apex pair passes (`09:18:16Z`→`09:18:30Z`) |
+| Local/CI-equivalent | **PASS** — **2 consecutive** www+apex pair passes (`09:18:16Z`→`09:18:30Z`) |
 | Evidence | `docs/roadmap/evidence/phase8-headers-consecutive-local-2026-08-02.json` |
-| CI header-only workflow | `Security Headers Live Smoke` (new; no deploy) |
-| CI bounded retry | prod/staging deploy workflows require **2 consecutive** passes (max 8 attempts, 15s sleep) |
-| Script | `scripts/smoke/security_headers.sh` supports `SECURITY_HEADERS_*` retry env |
+| Prod stamps during recheck | both hosts still `8408ca26…` |
+| Script | `scripts/smoke/security_headers.sh` — `SECURITY_HEADERS_MAX_ATTEMPTS` / `REQUIRE_CONSECUTIVE` / `RETRY_SLEEP_SEC` |
+| Staging deploy workflow | requires **2 consecutive** header passes |
+| Prod deploy workflow | requires **2 consecutive** www+apex pair passes (max 8, 15s) |
+| Header-only GHA workflow | `security-headers-live.yml` on release branch; **not dispatchable until file exists on `main`** (merge to main would trigger staging deploy — deferred; local equivalent used for closure) |
 
 ## 7. First 72h (read-only)
 
@@ -53,7 +57,8 @@ Applied via MCP in order; staging/prod shared DB `rateLimitRpcStatus=present`; `
 | --- | --- |
 | T+0 | stamps match; RPC present; headers live PASS — `phase8-prod-t0-2026-08-02.json` |
 | T+15m | stamps stable; headers PASS — `phase8-prod-t15-2026-08-02.json` |
-| Ongoing | read-only monitoring per `docs/release-hardening/FIRST_72H_OPERATIONS_CHECKLIST.md` (window started 2026-08-02) |
+| Continue | `phase8-first72h-continue-2026-08-02.json` |
+| Checklist | `docs/release-hardening/FIRST_72H_OPERATIONS_CHECKLIST.md` — window started 2026-08-02 |
 | Rollback | remains **NOT_GRANTED** |
 
 ## 8. Verdicts
@@ -61,19 +66,29 @@ Applied via MCP in order; staging/prod shared DB `rateLimitRpcStatus=present`; `
 | Verdict | Value |
 | --- | --- |
 | Production Worker at proven SHA | **YES** |
-| Header consecutive recheck (local equivalent) | **YES** |
-| Header CI live smoke | *(filled after workflow)* |
+| Header consecutive recheck (CI-equivalent) | **YES** (2 consecutive pair PASS; no redeploy) |
 | Runtime parity stg+prod | **YES** (`8408ca26…`) |
-| Overall Phase 8 | *(YES only after CI header smoke success)* |
-| Safe to proceed to Phase 9 | **NO** until Overall = YES |
+| Migration RPC parity | **YES** |
+| Overall Phase 8 | **YES** |
+| Safe to proceed to Phase 9 | **NO** — Phase 9 not started / not authorized in this batch |
 
-## 9. Actions confirmation
+## 9. Closure note
+
+| Field | Value |
+| --- | --- |
+| Files changed (accept-live) | `scripts/smoke/security_headers.sh`, deploy staging/prod workflows, `security-headers-live.yml`, contract test, Phase 8 docs/evidence, FIRST_72H note |
+| Checks run | local 2× consecutive headers PASS; vitest deploy-workflow contract **7/7**; prod stamps confirm `8408ca26…` |
+| Result | Phase 8 closed **YES**; prod left on proven SHA; rollback not used |
+| Remaining follow-ups | Land `security-headers-live.yml` on `main` via controlled PR (avoid unintended staging deploy); continue T+1h…T+72h read-only checks |
+| Phase 9 | **NO** |
+
+## 10. Actions confirmation
 
 | Action | Status |
 | --- | --- |
-| keep prod on `8408ca26…` | yes |
-| header-only retry (no redeploy) | executed (local); CI pending/recorded below |
-| CI bounded retry added | yes (workflows + script) |
-| first-72h read-only | started |
-| rollback | not executed |
-| Phase 9 | not started |
+| keep prod on `8408ca26…` | **yes** |
+| header-only retry (no redeploy) | **executed** (2 consecutive PASS) |
+| CI bounded retry added | **yes** (on release branch) |
+| first-72h read-only | **started / continuing** |
+| rollback | **not executed** |
+| Phase 9 | **not started** |
