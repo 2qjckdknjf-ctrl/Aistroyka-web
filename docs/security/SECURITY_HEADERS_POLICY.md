@@ -32,14 +32,21 @@ bash scripts/smoke/security_headers.sh
 
 # Staging
 SECURITY_HEADERS_BASE_URL=https://staging.aistroyka.ai bash scripts/smoke/security_headers.sh
+
+# Propagation-safe (matches staging/prod deploy gates): 2 consecutive passes
+SECURITY_HEADERS_MAX_ATTEMPTS=8 \
+SECURITY_HEADERS_REQUIRE_CONSECUTIVE=2 \
+SECURITY_HEADERS_RETRY_SLEEP_SEC=15 \
+  bash scripts/smoke/security_headers.sh https://staging.aistroyka.ai
 ```
 
-Unit tests: `apps/web/lib/security-headers.test.ts`
+Unit tests: `apps/web/lib/security-headers.test.ts`  
+Deploy workflow contract: `apps/web/lib/ops/deploy-workflow.contract.test.ts`
 
 ## CI
 
-- PR **CI Check** runs the smoke script against `https://www.aistroyka.ai` (read-only public routes).
-- Post-deploy prod workflow may add the same gate after soak period.
+- Staging/production deploy workflows require **two consecutive** header smoke passes (bounded retries) to absorb Cloudflare edge propagation races.
+- Header-only workflow: `.github/workflows/security-headers-live.yml` (no deploy; dispatchable once present on default branch).
 
 ## Change process
 
