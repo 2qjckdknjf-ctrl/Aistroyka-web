@@ -1,6 +1,5 @@
-surface,http_status,env,buildStamp_sha7,buildStamp_buildTime,db,aiConfigured,openaiConfigured,rate_limit_rpc_openapi,security_headers_pages,security_headers_api,matches_local_dirty_fingerprint,checked_at_utc,notes
-staging.aistroyka.ai/api/v1/health,200,staging,a401693,2026-07-18 22:29,ok,true,true,MISSING,FAIL_joined_duplicates,PASS_single_values,NO,2026-08-02T08:19:00Z,Unchanged remote; last GH staging deploy sha7=a401693
-www.aistroyka.ai/api/v1/health,200,production,ABSENT,ABSENT,ok,false,true,MISSING,FAIL_joined_duplicates,PASS_single_values,NO,2026-08-02T08:19:00Z,Prod buildStamp missing — Phase8 external blocker
-aistroyka.ai/api/v1/health,200,production,ABSENT,ABSENT,ok,false,true,MISSING,FAIL_joined_duplicates,PASS_single_values,NO,2026-08-02T08:19:00Z,Same as www; apex/www stamp parity N/A while absent
-local_dirty_source,N/A,local_dev_or_unset,N/A_immutable,N/A,N/A,N/A,N/A,MISSING_via_openapi,FIXED_in_source_pending_deploy,FIXED_in_source_pending_deploy,SELF,2026-08-02T08:19:00Z,HEAD 7855fb1 dirty; audit PASS locally; fingerprint not deployable
-
+surface,http_status,env,buildStamp_sha7,buildStamp_buildTime,db,aiConfigured,openaiConfigured,rate_limit_rpc_openapi,security_headers_pages,security_headers_api,matches_release_sha_8408ca26,checked_at_utc,notes
+staging.aistroyka.ai/api/v1/health,200,staging,8408ca2,2026-08-02 08:31,ok,true,true,MISSING,PASS,PASS,YES,2026-08-02T08:35:00Z,Workflow 30739922707 success; headers PASS; AI degraded due RPC missing
+www.aistroyka.ai/api/v1/health,200,production,ABSENT,ABSENT,ok,false,true,MISSING,NOT_RECHECKED_AFTER_STAGING,PASS_API_PRIOR,NO,2026-08-02T08:35:00Z,Production not deployed in this batch
+aistroyka.ai/api/v1/health,200,production,ABSENT,ABSENT,ok,false,true,MISSING,NOT_RECHECKED_AFTER_STAGING,PASS_API_PRIOR,NO,2026-08-02T08:35:00Z,Production not deployed in this batch
+release_sha_8408ca26,N/A,immutable_git,8408ca2,2026-08-02 08:31,N/A,N/A,N/A,PENDING_TWO_MIGRATIONS,FIXED_IN_SOURCE,FIXED_IN_SOURCE,SELF,2026-08-02T08:35:00Z,Staging proven; prod approval + ordered migration apply still required

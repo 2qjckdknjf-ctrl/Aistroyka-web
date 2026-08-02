@@ -10,7 +10,7 @@
 | **Overall Phase 8** | **BLOCKED_EXTERNAL** |
 | **Safe to proceed to Phase 9** | **NO** |
 
-**Operator batch 2026-08-02:** preflight + audit remediation completed under `NOT_GRANTED` auth — see `docs/roadmap/AISTROYKA_PHASE8_RELEASE_EXECUTION_2026-08-02.md`. `bun audit --omit=dev` now **PASS (0)**. Commit/push/migration/staging/production still **not executed**.
+**Operator batch 2026-08-02:** see `docs/roadmap/AISTROYKA_PHASE8_RELEASE_EXECUTION_2026-08-02.md`. Staging deployed immutable `8408ca26…` (headers PASS, stamp match). Migration apply stopped (two pending). Production **not** deployed (`PRODUCTION` auth NOT_GRANTED). Overall still **BLOCKED_EXTERNAL**.
 
 Dirty local source is a **local fingerprint**, not an immutable deployable release. Staging/production are on older runtime (`a401693`, 2026-07-18) and cannot be proven equal to this worktree.
 
