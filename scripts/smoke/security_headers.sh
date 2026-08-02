@@ -59,11 +59,28 @@ is_allowed_base() {
   esac
 }
 
-# scheme://host[:port] from an absolute URL (path/query stripped).
-extract_origin() {
+# URI schemes are case-insensitive; normalize before allowlist / absolute checks.
+normalize_url_scheme() {
   local url="$1"
-  if [[ "$url" =~ ^(https?://[^/?#]+) ]]; then
-    printf '%s' "${BASH_REMATCH[1]}"
+  if [[ "$url" =~ ^([A-Za-z][A-Za-z0-9+.-]*):(.*)$ ]]; then
+    local scheme rest
+    scheme="$(printf '%s' "${BASH_REMATCH[1]}" | tr '[:upper:]' '[:lower:]')"
+    rest="${BASH_REMATCH[2]}"
+    printf '%s:%s' "$scheme" "$rest"
+    return 0
+  fi
+  printf '%s' "$url"
+}
+
+# scheme://host[:port] from an absolute URL (path/query stripped). Host lowercased.
+extract_origin() {
+  local url
+  url="$(normalize_url_scheme "$1")"
+  if [[ "$url" =~ ^(https?://)([^/?#]+) ]]; then
+    local scheme hostport
+    scheme="${BASH_REMATCH[1]}"
+    hostport="$(printf '%s' "${BASH_REMATCH[2]}" | tr '[:upper:]' '[:lower:]')"
+    printf '%s%s' "$scheme" "$hostport"
     return 0
   fi
   return 1
@@ -83,15 +100,16 @@ is_allowed_url_or_origin() {
 assert_location_allowed() {
   local label="$1"
   local headers_file="$2"
-  local loc
+  local loc loc_norm
   loc="$(grep -i '^location[[:space:]]*:' "$headers_file" 2>/dev/null | head -1 | tr -d '\r' || true)"
   [[ -z "$loc" ]] && return 0
   loc="${loc#*:}"
   loc="$(echo "$loc" | sed 's/^[[:space:]]*//')"
   [[ -z "$loc" ]] && return 0
-  case "$loc" in
+  loc_norm="$(normalize_url_scheme "$loc")"
+  case "$loc_norm" in
     http://*|https://*)
-      if ! is_allowed_url_or_origin "$loc"; then
+      if ! is_allowed_url_or_origin "$loc_norm"; then
         echo "FAIL [$label]: redirect Location off allowlist: $loc"
         FAIL=1
         return 1
@@ -99,6 +117,12 @@ assert_location_allowed() {
       ;;
     //*)
       echo "FAIL [$label]: protocol-relative redirect Location forbidden: $loc"
+      FAIL=1
+      return 1
+      ;;
+    *://*)
+      # Absolute URI with non-http(s) scheme after normalization — fail closed.
+      echo "FAIL [$label]: redirect Location unsupported scheme: $loc"
       FAIL=1
       return 1
       ;;
@@ -113,7 +137,13 @@ if [[ "${1+x}" == "x" && -z "${1}" ]]; then
 fi
 
 RAW_TARGET="$(resolve_base_url "${1:-}")"
-BASE_URL="${RAW_TARGET%/}"
+RAW_TARGET="${RAW_TARGET%/}"
+# Normalize scheme/host case before allowlist (URI schemes/hosts are case-insensitive).
+if BASE_URL="$(extract_origin "$RAW_TARGET")"; then
+  :
+else
+  BASE_URL="$(normalize_url_scheme "$RAW_TARGET")"
+fi
 LOCALE="${SECURITY_HEADERS_LOCALE:-en}"
 MAX_ATTEMPTS="${SECURITY_HEADERS_MAX_ATTEMPTS:-1}"
 REQUIRE_CONSECUTIVE="${SECURITY_HEADERS_REQUIRE_CONSECUTIVE:-1}"

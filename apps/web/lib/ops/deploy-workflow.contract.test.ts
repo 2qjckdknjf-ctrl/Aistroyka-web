@@ -115,6 +115,17 @@ describe("Phase 8 security-headers CI contract", () => {
     expect(smoke).toMatch(/--proto-redir/);
     expect(smoke).toMatch(/url_effective off allowlist/);
     expect(smoke).toMatch(/redirect Location off allowlist/);
+    expect(smoke).toMatch(/normalize_url_scheme/);
+  });
+
+  it("normalizes uppercase redirect schemes/hosts before allowlist match", () => {
+    const upper = dryResolve({ SECURITY_HEADERS_BASE_URL: "HTTPS://WWW.aistroyka.ai" });
+    expect(upper.status).toBe(0);
+    expect(upper.out).toMatch(/resolved_base=https:\/\/www\.aistroyka\.ai/);
+
+    const evilUpper = dryResolve({ SECURITY_HEADERS_BASE_URL: "HTTPS://evil.example" });
+    expect(evilUpper.status).not.toBe(0);
+    expect(evilUpper.out).toMatch(/disallowed target fail-closed/);
   });
 
   it("localhost remains fail-closed without opt-in allow", () => {
