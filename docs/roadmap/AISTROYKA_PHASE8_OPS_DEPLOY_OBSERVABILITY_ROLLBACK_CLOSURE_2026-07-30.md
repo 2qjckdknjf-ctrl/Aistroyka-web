@@ -10,7 +10,7 @@
 | **Overall Phase 8** | **BLOCKED_EXTERNAL** |
 | **Safe to proceed to Phase 9** | **NO** |
 
-**Operator batch 2026-08-02:** see `docs/roadmap/AISTROYKA_PHASE8_RELEASE_EXECUTION_2026-08-02.md`. Staging deployed immutable `8408ca26…` (headers PASS, stamp match). Migration apply stopped (two pending). Production **not** deployed (`PRODUCTION` auth NOT_GRANTED). Overall still **BLOCKED_EXTERNAL**.
+**Operator batch 2026-08-02:** see `docs/roadmap/AISTROYKA_PHASE8_RELEASE_EXECUTION_2026-08-02.md`. Staging + ordered migrations done. Production Worker **live** at `8408ca26…` (run [30740413032](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/actions/runs/30740413032)); CI security-headers job **failed** (live T+0/T+15m headers PASS). Rollback **not** executed. Overall Phase 8 **NO** until owner accepts live recheck or grants rollback.
 
 Dirty local source is a **local fingerprint**, not an immutable deployable release. Staging/production are on older runtime (`a401693`, 2026-07-18) and cannot be proven equal to this worktree.
 
@@ -265,4 +265,22 @@ Pre-existing dirty tree from earlier phases preserved.
 
 ## 28. Prohibited actions confirmation
 
-Not performed: commit, push, merge/PR, deploy/promote/rollback, workflow_dispatch/re-run/cancel, `wrangler deploy` without `--dry-run`, Supabase migration apply/push/repair, SQL writes, Cloudflare/Supabase/GitHub/DNS/env mutations, fixture/user creation, notifications, paid AI/provider probes, secret disclosure. Phase 9 not started.
+Original Phase 8 local pass (2026-07-30): not performed — commit, push, merge/PR, deploy/promote/rollback, workflow_dispatch, live migration apply, etc.
+
+**Operator addendum 2026-08-02 (authorized):** commit/push/staging deploy and ordered MCP migration apply were executed under explicit Phase 8 grant variables. Production deploy, rollback, `migration repair`, and Phase 9 remain **not** performed. Details: `AISTROYKA_PHASE8_RELEASE_EXECUTION_2026-08-02.md`.
+
+---
+
+## 29. Operator addendum — ordered migrations (2026-08-02)
+
+| Item | Result |
+| --- | --- |
+| Auth | `PHASE8_ORDERED_MIGRATIONS_AUTHORIZATION=GRANTED` |
+| Applied (order) | `20260725143000_dequeue_tenant_job` then `20260725190000_rate_limit_try_increment` |
+| Path | MCP `apply_migration` on `vthfrxehrursfloevnlp` |
+| Remote versions | `20260802084030`, `20260802084052` (MCP timestamp skew vs local filenames; **no repair**) |
+| Proof | service_role-only EXECUTE; all-or-nothing multi deny; `PHASE8_VERIFY:*` residue 0 |
+| Staging health | `rateLimitRpcStatus=present` @ `8408ca26…` |
+| Migration RPC parity | **YES** |
+| Overall Phase 8 | still **BLOCKED_EXTERNAL** until production deploy approval |
+| Phase 9 | **NO** |

@@ -6,12 +6,32 @@
 #   bash scripts/smoke/security_headers.sh https://staging.aistroyka.ai
 #   bash scripts/smoke/security_headers.sh https://www.aistroyka.ai
 #   SECURITY_HEADERS_BASE_URL=https://aistroyka.ai bash scripts/smoke/security_headers.sh
+#
+# Propagation-safe retries (Cloudflare edge may briefly serve prior headers):
+#   SECURITY_HEADERS_MAX_ATTEMPTS=8
+#   SECURITY_HEADERS_REQUIRE_CONSECUTIVE=2
+#   SECURITY_HEADERS_RETRY_SLEEP_SEC=15
 set -euo pipefail
 
 BASE_URL="${1:-${SECURITY_HEADERS_BASE_URL:-${BASE_URL:-https://www.aistroyka.ai}}}"
 BASE_URL="${BASE_URL%/}"
 LOCALE="${SECURITY_HEADERS_LOCALE:-en}"
-FAIL=0
+MAX_ATTEMPTS="${SECURITY_HEADERS_MAX_ATTEMPTS:-1}"
+REQUIRE_CONSECUTIVE="${SECURITY_HEADERS_REQUIRE_CONSECUTIVE:-1}"
+RETRY_SLEEP_SEC="${SECURITY_HEADERS_RETRY_SLEEP_SEC:-15}"
+
+if ! [[ "$MAX_ATTEMPTS" =~ ^[0-9]+$ ]] || [[ "$MAX_ATTEMPTS" -lt 1 ]]; then
+  echo "security_headers: SECURITY_HEADERS_MAX_ATTEMPTS must be >= 1" >&2
+  exit 2
+fi
+if ! [[ "$REQUIRE_CONSECUTIVE" =~ ^[0-9]+$ ]] || [[ "$REQUIRE_CONSECUTIVE" -lt 1 ]]; then
+  echo "security_headers: SECURITY_HEADERS_REQUIRE_CONSECUTIVE must be >= 1" >&2
+  exit 2
+fi
+if [[ "$REQUIRE_CONSECUTIVE" -gt "$MAX_ATTEMPTS" ]]; then
+  echo "security_headers: REQUIRE_CONSECUTIVE ($REQUIRE_CONSECUTIVE) > MAX_ATTEMPTS ($MAX_ATTEMPTS)" >&2
+  exit 2
+fi
 
 # Case-insensitive header presence + duplicate detection (counts header lines).
 header_count() {
@@ -107,16 +127,43 @@ check_url() {
   rm -f "$tmp" "$meta" "$final_hdr"
 }
 
-echo "security_headers: base=$BASE_URL"
-check_url "public-home" "$BASE_URL/$LOCALE" "page"
-check_url "auth-login" "$BASE_URL/$LOCALE/login" "page"
-check_url "api-health" "$BASE_URL/api/v1/health" "api"
-check_url "api-portal-unauth" "$BASE_URL/api/v1/portal/projects" "api"
-check_url "protected-redirect" "$BASE_URL/$LOCALE/dashboard" "page"
+run_once() {
+  FAIL=0
+  echo "security_headers: base=$BASE_URL"
+  check_url "public-home" "$BASE_URL/$LOCALE" "page"
+  check_url "auth-login" "$BASE_URL/$LOCALE/login" "page"
+  check_url "api-health" "$BASE_URL/api/v1/health" "api"
+  check_url "api-portal-unauth" "$BASE_URL/api/v1/portal/projects" "api"
+  check_url "protected-redirect" "$BASE_URL/$LOCALE/dashboard" "page"
+  if [[ $FAIL -ne 0 ]]; then
+    echo "security_headers: FAIL"
+    return 1
+  fi
+  echo "security_headers: PASS"
+  return 0
+}
 
-if [[ $FAIL -ne 0 ]]; then
-  echo "security_headers: FAIL"
-  exit 1
-fi
-echo "security_headers: PASS"
-exit 0
+echo "security_headers: max_attempts=$MAX_ATTEMPTS require_consecutive=$REQUIRE_CONSECUTIVE sleep_sec=$RETRY_SLEEP_SEC"
+consecutive=0
+attempt=1
+while [[ "$attempt" -le "$MAX_ATTEMPTS" ]]; do
+  echo "security_headers: attempt=$attempt/$MAX_ATTEMPTS consecutive=$consecutive"
+  if run_once; then
+    consecutive=$((consecutive + 1))
+    echo "security_headers: consecutive_pass=$consecutive/$REQUIRE_CONSECUTIVE"
+    if [[ "$consecutive" -ge "$REQUIRE_CONSECUTIVE" ]]; then
+      echo "security_headers: PASS (consecutive=$consecutive)"
+      exit 0
+    fi
+  else
+    consecutive=0
+    echo "security_headers: consecutive reset to 0 after failure"
+  fi
+  if [[ "$attempt" -lt "$MAX_ATTEMPTS" ]]; then
+    sleep "$RETRY_SLEEP_SEC"
+  fi
+  attempt=$((attempt + 1))
+done
+
+echo "security_headers: FAIL (no $REQUIRE_CONSECUTIVE consecutive passes within $MAX_ATTEMPTS attempts)"
+exit 1

@@ -1,0 +1,50 @@
+{
+  "checked_at_utc": "2026-08-02T08:50:56Z",
+  "phase": "T+0",
+  "workflow": "https://github.com/2qjckdknjf-ctrl/Aistroyka-web/actions/runs/30740413032",
+  "workflow_conclusion": "failure",
+  "expected_sha": "8408ca26c3db1a88cd5166c9dc86458ec630bf4d",
+  "note": "CI security_headers failed on www auth-login joined values; live recheck PASS",
+  "apex": {
+    "ok": true,
+    "env": "production",
+    "db": "ok",
+    "rateLimitRpcStatus": "present",
+    "aiConfigured": true,
+    "openaiConfigured": true,
+    "aiOperationalStatus": "configured_unverified",
+    "buildStamp": {
+      "sha7": "8408ca2",
+      "buildTime": "2026-08-02 08:46",
+      "sha": "8408ca26c3db1a88cd5166c9dc86458ec630bf4d"
+    }
+  },
+  "www": {
+    "ok": true,
+    "env": "production",
+    "db": "ok",
+    "rateLimitRpcStatus": "present",
+    "aiConfigured": true,
+    "openaiConfigured": true,
+    "aiOperationalStatus": "configured_unverified",
+    "buildStamp": {
+      "sha7": "8408ca2",
+      "buildTime": "2026-08-02 08:46",
+      "sha": "8408ca26c3db1a88cd5166c9dc86458ec630bf4d"
+    }
+  },
+  "staging": {
+    "ok": true,
+    "env": "staging",
+    "db": "ok",
+    "rateLimitRpcStatus": "present",
+    "aiConfigured": true,
+    "openaiConfigured": true,
+    "aiOperationalStatus": "configured_unverified",
+    "buildStamp": {
+      "sha7": "8408ca2",
+      "buildTime": "2026-08-02 08:31",
+      "sha": "8408ca26c3db1a88cd5166c9dc86458ec630bf4d"
+    }
+  }
+}

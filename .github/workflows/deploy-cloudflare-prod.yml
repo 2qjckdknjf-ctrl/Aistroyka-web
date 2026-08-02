@@ -331,17 +331,43 @@ jobs:
     name: Post-deploy security headers (blocking)
     needs: [deploy]
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
         with:
           ref: ${{ needs.deploy.outputs.deploy_ref }}
 
-      - name: Run security headers smoke (www + apex)
+      - name: Run security headers smoke (www + apex, 2 consecutive)
+        env:
+          # Single-shot per host; this step owns consecutive pair requirement (edge propagation).
+          SECURITY_HEADERS_MAX_ATTEMPTS: "1"
+          SECURITY_HEADERS_REQUIRE_CONSECUTIVE: "1"
         run: |
           set -euo pipefail
-          bash scripts/smoke/security_headers.sh https://www.aistroyka.ai
-          bash scripts/smoke/security_headers.sh https://aistroyka.ai
+          consecutive=0
+          max_pair_attempts=8
+          sleep_sec=15
+          require=2
+          for attempt in $(seq 1 "$max_pair_attempts"); do
+            echo "=== security headers pair attempt $attempt/$max_pair_attempts (consecutive=$consecutive) ==="
+            if bash scripts/smoke/security_headers.sh https://www.aistroyka.ai \
+              && bash scripts/smoke/security_headers.sh https://aistroyka.ai; then
+              consecutive=$((consecutive + 1))
+              echo "PAIR PASS consecutive=$consecutive/$require"
+              if [[ "$consecutive" -ge "$require" ]]; then
+                echo "security_headers: PASS (consecutive pair=$consecutive)"
+                exit 0
+              fi
+            else
+              consecutive=0
+              echo "PAIR FAIL — consecutive reset"
+            fi
+            if [[ "$attempt" -lt "$max_pair_attempts" ]]; then
+              sleep "$sleep_sec"
+            fi
+          done
+          echo "::error::security_headers: FAIL — need $require consecutive www+apex passes"
+          exit 1
 
   ai-phase5-gate:
     name: Post-deploy AI Phase 5 gate (non-blocking)

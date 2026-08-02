@@ -2,7 +2,7 @@
 
 **Canonical runtime:** Cloudflare Workers + OpenNext (`aistroyka.ai` / `staging.aistroyka.ai`).
 **Vercel is not production proof.**
-**This document is readiness + rehearsal guidance.** It does **not** claim that a 72-hour observation window has been executed.
+**Observation window status (Phase 8, 2026-08-02):** started after production Worker live at `8408ca26…` (T+0 / T+15m evidence under `docs/roadmap/evidence/phase8-prod-t*.json`). Remaining T+1h…T+72h checks are **read-only** monitoring; rollback remains owner-gated (`PHASE8_FAILED_SMOKE_ROLLBACK_AUTHORIZATION` NOT_GRANTED).
 
 Owner-policy thresholds marked `owner policy required` must be filled by product owner / incident commander before GO.
 

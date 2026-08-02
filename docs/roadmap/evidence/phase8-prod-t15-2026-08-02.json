@@ -1,0 +1,57 @@
+{
+  "checked_at_utc": "2026-08-02T09:08:16Z",
+  "phase": "T+15m",
+  "expected_sha": "8408ca26c3db1a88cd5166c9dc86458ec630bf4d",
+  "apex": {
+    "ok": true,
+    "env": "production",
+    "db": "ok",
+    "rateLimitRpcStatus": "present",
+    "aiConfigured": true,
+    "openaiConfigured": true,
+    "aiOperationalStatus": "configured_unverified",
+    "buildStamp": {
+      "sha7": "8408ca2",
+      "buildTime": "2026-08-02 08:46",
+      "sha": "8408ca26c3db1a88cd5166c9dc86458ec630bf4d"
+    }
+  },
+  "www": {
+    "ok": true,
+    "env": "production",
+    "db": "ok",
+    "rateLimitRpcStatus": "present",
+    "aiConfigured": true,
+    "openaiConfigured": true,
+    "aiOperationalStatus": "configured_unverified",
+    "buildStamp": {
+      "sha7": "8408ca2",
+      "buildTime": "2026-08-02 08:46",
+      "sha": "8408ca26c3db1a88cd5166c9dc86458ec630bf4d"
+    }
+  },
+  "staging": {
+    "ok": true,
+    "env": "staging",
+    "db": "ok",
+    "rateLimitRpcStatus": "present",
+    "aiConfigured": true,
+    "openaiConfigured": true,
+    "aiOperationalStatus": "configured_unverified",
+    "buildStamp": {
+      "sha7": "8408ca2",
+      "buildTime": "2026-08-02 08:31",
+      "sha": "8408ca26c3db1a88cd5166c9dc86458ec630bf4d"
+    }
+  },
+  "security_headers": {
+    "apex": {
+      "exit": 0,
+      "tail": "  OK [protected-redirect]: content-security-policy present (count=1)\n  OK [protected-redirect]: strict-transport-security present (count=1)\nsecurity_headers: PASS"
+    },
+    "www": {
+      "exit": 0,
+      "tail": "  OK [protected-redirect]: content-security-policy present (count=1)\n  OK [protected-redirect]: strict-transport-security present (count=1)\nsecurity_headers: PASS"
+    }
+  }
+}

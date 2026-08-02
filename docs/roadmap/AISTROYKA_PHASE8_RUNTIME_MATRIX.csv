@@ -1,5 +1,5 @@
 surface,http_status,env,buildStamp_sha7,buildStamp_buildTime,db,aiConfigured,openaiConfigured,rate_limit_rpc_openapi,security_headers_pages,security_headers_api,matches_release_sha_8408ca26,checked_at_utc,notes
-staging.aistroyka.ai/api/v1/health,200,staging,8408ca2,2026-08-02 08:31,ok,true,true,MISSING,PASS,PASS,YES,2026-08-02T08:35:00Z,Workflow 30739922707 success; headers PASS; AI degraded due RPC missing
-www.aistroyka.ai/api/v1/health,200,production,ABSENT,ABSENT,ok,false,true,MISSING,NOT_RECHECKED_AFTER_STAGING,PASS_API_PRIOR,NO,2026-08-02T08:35:00Z,Production not deployed in this batch
-aistroyka.ai/api/v1/health,200,production,ABSENT,ABSENT,ok,false,true,MISSING,NOT_RECHECKED_AFTER_STAGING,PASS_API_PRIOR,NO,2026-08-02T08:35:00Z,Production not deployed in this batch
-release_sha_8408ca26,N/A,immutable_git,8408ca2,2026-08-02 08:31,N/A,N/A,N/A,PENDING_TWO_MIGRATIONS,FIXED_IN_SOURCE,FIXED_IN_SOURCE,SELF,2026-08-02T08:35:00Z,Staging proven; prod approval + ordered migration apply still required
+staging.aistroyka.ai/api/v1/health,200,staging,8408ca2,2026-08-02 08:31,ok,true,true,PRESENT,PASS,PASS,YES,2026-08-02T08:50:56Z,T+0 post-prod; same immutable SHA
+www.aistroyka.ai/api/v1/health,200,production,8408ca2,2026-08-02 08:46,ok,true,true,PRESENT,PASS_LIVE_T0,PASS_LIVE_T0,YES,2026-08-02T08:50:56Z,Workflow 30740413032 deploy success; CI headers FAIL then live PASS
+aistroyka.ai/api/v1/health,200,production,8408ca2,2026-08-02 08:46,ok,true,true,PRESENT,PASS_LIVE_T0,PASS_LIVE_T0,YES,2026-08-02T08:50:56Z,Workflow 30740413032 deploy success; CI headers FAIL then live PASS
+release_sha_8408ca26,N/A,immutable_git,8408ca2,2026-08-02 08:46,N/A,N/A,N/A,MIGRATIONS_APPLIED,FIXED_IN_SOURCE,FIXED_IN_SOURCE,SELF,2026-08-02T08:50:56Z,Tag phase8-staging-proven-8408ca26; overall workflow failure on headers CI

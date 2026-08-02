@@ -1,0 +1,13 @@
+{
+  "checked_at_utc": "2026-08-02T09:18:30Z",
+  "kind": "local_equivalent_header_pair",
+  "require_consecutive": 2,
+  "result": "PASS",
+  "hosts": [
+    "https://www.aistroyka.ai",
+    "https://aistroyka.ai"
+  ],
+  "buildStamp_sha": "8408ca26c3db1a88cd5166c9dc86458ec630bf4d",
+  "redeploy": false,
+  "note": "Two consecutive www+apex PASS with single-shot script under outer pair loop"
+}

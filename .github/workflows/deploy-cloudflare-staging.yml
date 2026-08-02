@@ -241,9 +241,12 @@ jobs:
           echo "::error::buildStamp mismatch expected=$EXPECTED7 got=$GOT7 after retries"
           exit 1
 
-      - name: Security headers smoke (staging)
+      - name: Security headers smoke (staging, 2 consecutive)
         env:
           SECURITY_HEADERS_BASE_URL: https://staging.aistroyka.ai
+          SECURITY_HEADERS_MAX_ATTEMPTS: "8"
+          SECURITY_HEADERS_REQUIRE_CONSECUTIVE: "2"
+          SECURITY_HEADERS_RETRY_SLEEP_SEC: "15"
         run: bash scripts/smoke/security_headers.sh
 
       - name: Verify pilot smoke secret (staging)
