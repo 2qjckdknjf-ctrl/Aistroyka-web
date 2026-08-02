@@ -7,6 +7,7 @@ import {
   rowToPublic,
 } from "./client-requests.service";
 import type { ProjectClientRequestRow } from "./client-requests.types";
+import { getAdminClient } from "@/lib/supabase/admin";
 
 vi.mock("./client-requests.policy", () => ({
   canManageClientRequests: vi.fn(),
@@ -26,6 +27,9 @@ vi.mock("./client-requests.repository", () => ({
   updateRequest: vi.fn(),
   listByProject: vi.fn(),
   listEventsByRequest: vi.fn(),
+}));
+vi.mock("@/lib/supabase/admin", () => ({
+  getAdminClient: vi.fn().mockReturnValue(null),
 }));
 
 const policy = await import("./client-requests.policy");
@@ -75,6 +79,7 @@ function baseRow(over: Partial<ProjectClientRequestRow> = {}): ProjectClientRequ
 describe("client-requests.service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(getAdminClient).mockReturnValue(null);
   });
 
   it("createClientRequest rejects invalid kind", async () => {
@@ -152,6 +157,47 @@ describe("client-requests.service", () => {
         payload: expect.objectContaining({ response_value: "approve" }),
       })
     );
+  });
+
+  it("respondToClientRequest writes via service-role client for portal decision-makers", async () => {
+    const admin = { admin: true } as unknown as SupabaseClient;
+    vi.mocked(getAdminClient).mockReturnValue(admin as never);
+    vi.mocked(policy.canRespondToClientRequests).mockResolvedValue(true);
+    vi.mocked(repo.getById).mockResolvedValue(baseRow({ kind: "approve_or_reject" }));
+    vi.mocked(repo.updateRequest).mockImplementation(async () =>
+      baseRow({ status: "responded", response_value: "approve" })
+    );
+    vi.mocked(repo.insertEvent).mockResolvedValue({} as any);
+
+    const { data, error } = await respondToClientRequest(supabase, ctx, "p1", "req1", {
+      decision: "approve",
+    });
+    expect(error).toBe("");
+    expect(data?.status).toBe("responded");
+    expect(repo.updateRequest).toHaveBeenCalledWith(
+      admin,
+      "req1",
+      "t1",
+      expect.objectContaining({ status: "responded", response_value: "approve" })
+    );
+    expect(repo.insertEvent).toHaveBeenCalledWith(
+      admin,
+      expect.objectContaining({
+        event_type: "responded",
+        payload: expect.objectContaining({ response_value: "approve" }),
+      })
+    );
+  });
+
+  it("respondToClientRequest rejects when authz denies", async () => {
+    vi.mocked(policy.canRespondToClientRequests).mockResolvedValue(false);
+
+    const { data, error } = await respondToClientRequest(supabase, ctx, "p1", "req1", {
+      decision: "approve",
+    });
+    expect(data).toBeNull();
+    expect(error).toBe("Insufficient rights");
+    expect(repo.updateRequest).not.toHaveBeenCalled();
   });
 
   it("respondToClientRequest rejects info_only", async () => {
