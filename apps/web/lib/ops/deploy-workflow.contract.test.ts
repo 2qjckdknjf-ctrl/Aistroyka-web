@@ -104,8 +104,42 @@ describe("Phase 8 security-headers CI contract", () => {
     expect(staging).toMatch(/name: Build and deploy to staging/);
   });
 
-  it("script never uses auth headers or trusted redirect following", () => {
+  it("script never uses auth headers; checks curl exit and redirect hops", () => {
     expect(smoke).not.toMatch(/Authorization:|Bearer |--location-trusted/);
     expect(smoke).toMatch(/never send credentials or auth headers/);
+    expect(smoke).toMatch(/curl exit/);
+    expect(smoke).toMatch(/fail-closed before header accept/);
+    expect(smoke).toMatch(/hop\$\{hop\}-of-\$\{hop_count\}/);
+    expect(smoke).toMatch(/Validate intermediate redirect responses/);
+    expect(smoke).toMatch(/SECURITY_HEADERS_ALLOW_LOCALHOST/);
+  });
+
+  it("localhost remains fail-closed without opt-in allow", () => {
+    const denied = dryResolve({ SECURITY_HEADERS_BASE_URL: "http://127.0.0.1:9" });
+    expect(denied.status).not.toBe(0);
+    expect(denied.out).toMatch(/disallowed target fail-closed/);
+  });
+
+  it("mocked host validates redirect hop headers and rejects missing CSP on 302", () => {
+    const runner = resolve(root, "scripts/smoke/security_headers_mock_host.py");
+    const ok = spawnSync("python3", [runner, "ok"], {
+      cwd: root,
+      encoding: "utf8",
+      env: { ...process.env },
+    });
+    const okOut = `${ok.stdout || ""}${ok.stderr || ""}`;
+    expect(ok.status, okOut).toBe(0);
+    expect(okOut).toMatch(/protected-redirect\/hop1-of-2/);
+    expect(okOut).toMatch(/protected-redirect\/hop2-of-2/);
+
+    const bad = spawnSync("python3", [runner, "missing-redirect-csp"], {
+      cwd: root,
+      encoding: "utf8",
+      env: { ...process.env },
+    });
+    const badOut = `${bad.stdout || ""}${bad.stderr || ""}`;
+    expect(bad.status, badOut).not.toBe(0);
+    expect(badOut).toMatch(/missing header content-security-policy/);
+    expect(badOut).toMatch(/hop1-of-2/);
   });
 });

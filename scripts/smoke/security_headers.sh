@@ -46,6 +46,13 @@ is_allowed_base() {
     https://aistroyka.ai|https://www.aistroyka.ai|https://staging.aistroyka.ai)
       return 0
       ;;
+    http://127.0.0.1:*|http://localhost:*)
+      # Opt-in only for local mocked-host contract tests (never default-on).
+      if [[ "${SECURITY_HEADERS_ALLOW_LOCALHOST:-}" == "1" ]]; then
+        return 0
+      fi
+      return 1
+      ;;
     *)
       return 1
       ;;
@@ -145,41 +152,96 @@ forbid_header() {
   echo "  OK [$label]: $header_name absent (expected)"
 }
 
+validate_headers_file() {
+  local label="$1"
+  local headers_file="$2"
+  local profile="$3"
+  local effective_url="$4"
+
+  require_header "$label" "$headers_file" "x-content-type-options"
+  require_header "$label" "$headers_file" "referrer-policy"
+  require_header "$label" "$headers_file" "x-frame-options"
+  require_header "$label" "$headers_file" "permissions-policy"
+  if [[ "$profile" == "page" ]]; then
+    require_header "$label" "$headers_file" "content-security-policy"
+    if [[ "$effective_url" == https://* && "$effective_url" != *localhost* && "$effective_url" != *127.0.0.1* ]]; then
+      require_header "$label" "$headers_file" "strict-transport-security"
+    fi
+  else
+    forbid_header "$label" "$headers_file" "content-security-policy"
+  fi
+}
+
 check_url() {
   local label="$1"
   local url="$2"
   local profile="$3"
-  local tmp meta
+  local tmp hop_dir
   tmp="$(mktemp)"
-  meta="$(mktemp)"
-  local code effective redirects
+  hop_dir="$(mktemp -d)"
+  local code effective redirects curl_rc=0
   # Follow redirects for page/API smoke; never send credentials or auth headers.
-  code="$(curl -sS -L --max-redirs 5 -D "$tmp" -o /dev/null -w '%{http_code}|%{url_effective}|%{num_redirects}' "$url" 2>/dev/null || echo "000||")"
+  # Capture curl exit separately: a nonzero exit (e.g. max-redirs) must fail closed
+  # even when -w still emitted an HTTP code from the last hop.
+  set +e
+  code="$(curl -sS -L --max-redirs 5 -D "$tmp" -o /dev/null -w '%{http_code}|%{url_effective}|%{num_redirects}' "$url" 2>/dev/null)"
+  curl_rc=$?
+  set -e
+  if [[ -z "$code" ]]; then
+    code="000||"
+  fi
   IFS='|' read -r code effective redirects <<<"$code"
-  echo "[$label] $url → HTTP $code final=$effective redirects=${redirects:-0} (profile=$profile)"
+  echo "[$label] $url → HTTP $code final=$effective redirects=${redirects:-0} curl_rc=$curl_rc (profile=$profile)"
+  if [[ "$curl_rc" -ne 0 ]]; then
+    echo "FAIL [$label]: curl exit $curl_rc (fail-closed before header accept)"
+    FAIL=1
+    rm -rf "$tmp" "$hop_dir"
+    return
+  fi
   if [[ "$code" == "000" || "$code" -ge 500 ]]; then
     echo "FAIL [$label]: unexpected HTTP $code"
     FAIL=1
-    rm -f "$tmp" "$meta"
+    rm -rf "$tmp" "$hop_dir"
     return
   fi
-  local final_hdr
-  final_hdr="$(mktemp)"
-  awk 'BEGIN{n=0} tolower($0) ~ /^http\//{n++; delete b} {b[n]=b[n] $0 "\n"} END{printf "%s", b[n]}' "$tmp" >"$final_hdr"
 
-  require_header "$label" "$final_hdr" "x-content-type-options"
-  require_header "$label" "$final_hdr" "referrer-policy"
-  require_header "$label" "$final_hdr" "x-frame-options"
-  require_header "$label" "$final_hdr" "permissions-policy"
-  if [[ "$profile" == "page" ]]; then
-    require_header "$label" "$final_hdr" "content-security-policy"
-    if [[ "$effective" == https://* && "$effective" != *localhost* && "$effective" != *127.0.0.1* ]]; then
-      require_header "$label" "$final_hdr" "strict-transport-security"
-    fi
-  else
-    forbid_header "$label" "$final_hdr" "content-security-policy"
+  # Split every response in the redirect chain (curl -D with -L appends hops).
+  # Validate intermediate redirect responses as well as the final destination.
+  local hop_count
+  hop_count="$(
+    awk '
+      BEGIN { n=0 }
+      tolower($0) ~ /^http\// {
+        n++
+        next
+      }
+      n > 0 { print > (dir "/hop_" n ".hdr") }
+      END { print n }
+    ' dir="$hop_dir" "$tmp"
+  )"
+  if [[ -z "$hop_count" || "$hop_count" -lt 1 ]]; then
+    echo "FAIL [$label]: no HTTP response headers captured"
+    FAIL=1
+    rm -rf "$tmp" "$hop_dir"
+    return
   fi
-  rm -f "$tmp" "$meta" "$final_hdr"
+  local hop hop_label
+  for hop in $(seq 1 "$hop_count"); do
+    hop_label="${label}/hop${hop}-of-${hop_count}"
+    if [[ ! -s "$hop_dir/hop_${hop}.hdr" ]]; then
+      echo "FAIL [$hop_label]: empty header block"
+      FAIL=1
+      continue
+    fi
+    echo "  validate [$hop_label]"
+    # Intermediate hops use the request origin URL for HSTS eligibility; final uses url_effective.
+    if [[ "$hop" -eq "$hop_count" ]]; then
+      validate_headers_file "$hop_label" "$hop_dir/hop_${hop}.hdr" "$profile" "$effective"
+    else
+      validate_headers_file "$hop_label" "$hop_dir/hop_${hop}.hdr" "$profile" "$url"
+    fi
+  done
+  rm -rf "$tmp" "$hop_dir"
 }
 
 run_once() {
