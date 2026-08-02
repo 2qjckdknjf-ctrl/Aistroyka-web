@@ -254,17 +254,25 @@ jobs:
           set -euo pipefail
           EXPECTED7="$(echo "$EXPECTED_SHA" | cut -c1-7)"
           for HEALTH_URL in https://aistroyka.ai/api/v1/health https://www.aistroyka.ai/api/v1/health; do
-            BODY="$(curl -fsS -m 30 "$HEALTH_URL")"
-            GOT7="$(printf '%s' "$BODY" | python3 -c 'import json,sys; d=json.load(sys.stdin); bs=d.get("buildStamp") or {}; print((bs.get("sha7") or ""))')"
-            if [[ -z "$GOT7" ]]; then
-              echo "::error::$HEALTH_URL missing buildStamp.sha7"
-              exit 1
-            fi
+            GOT7=""
+            for attempt in 1 2 3 4 5 6 7 8 9 10; do
+              BODY="$(curl -fsS -m 30 "$HEALTH_URL?verify=${EXPECTED7}&t=${attempt}" || true)"
+              GOT7="$(printf '%s' "$BODY" | python3 -c 'import json,sys; d=json.load(sys.stdin); bs=d.get("buildStamp") or {}; print((bs.get("sha7") or ""))' 2>/dev/null || true)"
+              if [[ "$GOT7" == "$EXPECTED7" ]]; then
+                echo "OK $HEALTH_URL buildStamp.sha7=$GOT7 (attempt $attempt)"
+                break
+              fi
+              echo "$HEALTH_URL attempt=$attempt expected=$EXPECTED7 got=${GOT7:-empty}; waiting..."
+              sleep 6
+            done
             if [[ "$GOT7" != "$EXPECTED7" ]]; then
-              echo "::error::$HEALTH_URL buildStamp mismatch expected=$EXPECTED7 got=$GOT7"
+              if [[ -z "$GOT7" ]]; then
+                echo "::error::$HEALTH_URL missing buildStamp.sha7 after retries"
+              else
+                echo "::error::$HEALTH_URL buildStamp mismatch expected=$EXPECTED7 got=$GOT7 after retries"
+              fi
               exit 1
             fi
-            echo "OK $HEALTH_URL buildStamp.sha7=$GOT7"
           done
 
       - name: Verify pilot smoke secret (production)

@@ -222,17 +222,24 @@ jobs:
         run: |
           set -euo pipefail
           EXPECTED7="$(echo "$EXPECTED_SHA" | cut -c1-7)"
-          BODY="$(curl -fsS -m 30 "$HEALTH_URL")"
-          GOT7="$(printf '%s' "$BODY" | python3 -c 'import json,sys; d=json.load(sys.stdin); bs=d.get("buildStamp") or {}; print((bs.get("sha7") or ""))')"
+          GOT7=""
+          # Edge/Workers propagation can briefly serve the previous deployment.
+          for attempt in 1 2 3 4 5 6 7 8 9 10; do
+            BODY="$(curl -fsS -m 30 "$HEALTH_URL?verify=${EXPECTED7}&t=${attempt}" || true)"
+            GOT7="$(printf '%s' "$BODY" | python3 -c 'import json,sys; d=json.load(sys.stdin); bs=d.get("buildStamp") or {}; print((bs.get("sha7") or ""))' 2>/dev/null || true)"
+            if [[ "$GOT7" == "$EXPECTED7" ]]; then
+              echo "Staging buildStamp.sha7 matches deploy: $GOT7 (attempt $attempt)"
+              exit 0
+            fi
+            echo "attempt=$attempt expected=$EXPECTED7 got=${GOT7:-empty}; waiting for propagation..."
+            sleep 6
+          done
           if [[ -z "$GOT7" ]]; then
-            echo "::error::Staging health missing buildStamp.sha7"
+            echo "::error::Staging health missing buildStamp.sha7 after retries"
             exit 1
           fi
-          if [[ "$GOT7" != "$EXPECTED7" ]]; then
-            echo "::error::buildStamp mismatch expected=$EXPECTED7 got=$GOT7"
-            exit 1
-          fi
-          echo "Staging buildStamp.sha7 matches deploy: $GOT7"
+          echo "::error::buildStamp mismatch expected=$EXPECTED7 got=$GOT7 after retries"
+          exit 1
 
       - name: Security headers smoke (staging)
         env:
