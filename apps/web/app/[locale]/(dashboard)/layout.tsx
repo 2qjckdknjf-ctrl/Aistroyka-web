@@ -11,6 +11,14 @@ import {
   getActiveSubscriptionStateForUser,
   isDashboardSubscriptionGateEnforced,
 } from "@/lib/platform/billing/subscription-gate";
+import { getActiveTenantRoleForUser } from "@/lib/tenant/tenant-role.server";
+import { redirectIfStakeholderBlockedPath } from "@/lib/tenant/stakeholder-dashboard-paths";
+
+function pathWithoutLocale(pathname: string): string {
+  const match = pathname.match(/^\/(ru|en|es|it)(?=\/|$)/);
+  if (match) return pathname.slice(match[0].length) || "/";
+  return pathname || "/";
+}
 
 /**
  * Tenant-aware layout for all authenticated routes.
@@ -22,12 +30,14 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   let locale: (typeof routing.locales)[number] = routing.defaultLocale;
+  let pathnameHeader = "";
   try {
     const headersList = await headers();
     const fromHeader = headersList.get("x-next-intl-locale")?.trim();
     if (fromHeader && routing.locales.includes(fromHeader as (typeof routing.locales)[number])) {
       locale = fromHeader as (typeof routing.locales)[number];
     }
+    pathnameHeader = headersList.get("x-aistroyka-pathname")?.trim() ?? "";
   } catch {
     // headers() can throw in Edge/Workers; keep default locale
   }
@@ -56,6 +66,40 @@ export default async function DashboardLayout({
         console.info("[dashboard layout] no user, redirecting to login");
       }
       redirect(`/${locale}/login`);
+    }
+
+    // Portal-only stakeholders must not render internal shells (/projects AI, /billing, etc.).
+    // redirect() throws NEXT_REDIRECT; the outer catch rethrows it. Role lookup errors fail open.
+    if (pathnameHeader) {
+      try {
+        const role = await getActiveTenantRoleForUser(supabase, user.id);
+        if (role === "stakeholder") {
+          const pathNoLocale = pathWithoutLocale(pathnameHeader);
+          const gate = redirectIfStakeholderBlockedPath(
+            pathNoLocale,
+            locale,
+            `https://local.invalid${pathnameHeader}`
+          );
+          if (gate) {
+            const location = gate.headers.get("location");
+            if (location) {
+              const target = new URL(location);
+              redirect(`${target.pathname}${target.search}`);
+            }
+          }
+        }
+      } catch (e) {
+        if (e && typeof e === "object" && "digest" in e && typeof (e as { digest?: string }).digest === "string") {
+          const d = (e as { digest: string }).digest;
+          if (d.startsWith("NEXT_REDIRECT")) throw e;
+        }
+        if (process.env.NODE_ENV !== "production") {
+          console.error(
+            "[dashboard layout] stakeholder path gate failed",
+            e instanceof Error ? e.message : String(e)
+          );
+        }
+      }
     }
 
     // redirect() must be called outside this try/catch: it throws NEXT_REDIRECT,
