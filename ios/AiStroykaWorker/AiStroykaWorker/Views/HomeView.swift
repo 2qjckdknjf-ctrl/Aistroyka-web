@@ -461,7 +461,8 @@ struct HomeView: View {
                     feedbackReports = list.filter { $0.status == "changes_requested" }
                 }
             } catch {
-                await MainActor.run { feedbackReports = [] }
+                // Keep last known feedback on refresh failure — clearing would hide
+                // manager changes_requested work until the next successful sync.
             }
         }
     }
