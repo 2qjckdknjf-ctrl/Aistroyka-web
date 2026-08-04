@@ -146,9 +146,12 @@ final class OperationQueueExecutor: ObservableObject {
                 guard let uploadPath = uploadPath,
                       let photoItemId = op.payload.photoItemId,
                       let base64 = op.payload.imageDataBase64,
-                      let data = Data(base64Encoded: base64),
-                      let token = await AuthService.shared.getAccessToken() else {
-                    return .permanent(message: "Missing payload or token for uploadBinary")
+                      let data = Data(base64Encoded: base64) else {
+                    return .permanent(message: "Missing payload for uploadBinary")
+                }
+                // Missing/cleared session is recoverable after re-auth; do not burn the op as permanent.
+                guard let token = await AuthService.shared.getAccessToken() else {
+                    return .authRequired
                 }
                 let pathInBucket = uploadPath.hasPrefix("media/") ? String(uploadPath.dropFirst("media/".count)) : uploadPath
                 let filename = "\(photoItemId.prefix(8)).jpg"
