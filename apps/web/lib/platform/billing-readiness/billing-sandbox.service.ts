@@ -10,6 +10,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   getBillingCheckoutSession,
+  getCurrentBillingSubscription,
   createBillingEventRecord,
 } from "./billing-readiness.repository";
 import { processBillingEventRecord } from "./billing-event-processor.service";
@@ -18,7 +19,8 @@ const SANDBOX_PROVIDER = "sandbox" as const;
 
 /**
  * Complete sandbox checkout. Records event, then processes via processor.
- * Idempotent: if session already completed, event processing returns noop.
+ * Idempotent when session is completed *and* a subscription exists.
+ * If session was marked completed without a subscription (partial failure), re-process to recover.
  */
 export async function completeSandboxCheckout(
   supabase: SupabaseClient,
@@ -26,8 +28,11 @@ export async function completeSandboxCheckout(
 ): Promise<{ success: boolean; error?: string }> {
   const session = await getBillingCheckoutSession(supabase, sessionId);
   if (!session) return { success: false, error: "Session not found" };
-  if (session.status === "completed") return { success: true };
-  if (["cancelled", "expired", "failed"].includes(session.status)) {
+  if (session.status === "completed") {
+    const existing = await getCurrentBillingSubscription(supabase, session.workspaceId);
+    if (existing) return { success: true };
+    // Fall through: recover missing subscription via processor.
+  } else if (["cancelled", "expired", "failed"].includes(session.status)) {
     return { success: false, error: `Session already ${session.status}` };
   }
 

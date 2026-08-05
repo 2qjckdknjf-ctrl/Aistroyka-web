@@ -146,7 +146,7 @@ describe("billing-event-processor", () => {
       expect(markBillingEventProcessed).toHaveBeenCalledWith(noopSupabase, "evt-1", "processed", undefined);
     });
 
-    it("idempotent when session already completed", async () => {
+    it("idempotent when session already completed and subscription exists", async () => {
       const session = {
         id: "sess-1",
         workspaceId: "w1",
@@ -170,6 +170,35 @@ describe("billing-event-processor", () => {
       expect(result.idempotentHit).toBe(true);
       expect(updateBillingCheckoutSessionStatus).not.toHaveBeenCalled();
       expect(createBillingSubscription).not.toHaveBeenCalled();
+    });
+
+    it("recovers subscription when session completed but subscription missing", async () => {
+      const session = {
+        id: "sess-1",
+        workspaceId: "w1",
+        targetPlanCode: "team_contractor",
+        requestedBillingCycle: "monthly",
+        status: "completed",
+        providerSessionRef: null,
+        returnUrl: "https://a.com",
+        cancelUrl: "https://a.com",
+        createdByUserId: null,
+        createdAt: "",
+        expiresAt: null,
+        metadata: {},
+      };
+      vi.mocked(getBillingEventById).mockResolvedValue(makeEvent());
+      vi.mocked(getBillingCheckoutSession).mockResolvedValue(session);
+      vi.mocked(getCurrentBillingSubscription).mockResolvedValue(null);
+      vi.mocked(createBillingSubscription).mockResolvedValue({ data: { id: "sub-recovered" } as never, error: null });
+      vi.mocked(markBillingEventProcessed).mockResolvedValue({ error: null });
+
+      const result = await processBillingEventRecord(noopSupabase, "evt-1");
+      expect(result.status).toBe("processed");
+      expect(result.updatedSubscriptionId).toBe("sub-recovered");
+      expect(result.idempotentHit).toBe(false);
+      expect(createBillingSubscription).toHaveBeenCalled();
+      expect(updateBillingCheckoutSessionStatus).not.toHaveBeenCalled();
     });
 
     it("fails when session not found for checkout_complete - no subscription mutation (Step 17)", async () => {

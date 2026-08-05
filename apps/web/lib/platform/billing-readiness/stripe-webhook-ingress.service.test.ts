@@ -13,11 +13,13 @@ vi.mock("./billing-readiness.repository", async (importOriginal) => {
     ...actual,
     getBillingEventByProviderRef: vi.fn(),
     createBillingEventRecord: vi.fn(),
+    markBillingEventProcessed: vi.fn(),
   };
 });
 
 vi.mock("./billing-event-processor.service", () => ({
   processBillingEventRecord: vi.fn(),
+  reprocessBillingEvent: vi.fn(),
 }));
 
 vi.mock("./billing-pilot-resolution.service", () => ({
@@ -25,8 +27,9 @@ vi.mock("./billing-pilot-resolution.service", () => ({
 }));
 
 const { verifyStripeWebhookSignature, isStripeWebhookIngressReady } = await import("./stripe-webhook-verification");
-const { getBillingEventByProviderRef, createBillingEventRecord } = await import("./billing-readiness.repository");
-const { processBillingEventRecord } = await import("./billing-event-processor.service");
+const { getBillingEventByProviderRef, createBillingEventRecord, markBillingEventProcessed } =
+  await import("./billing-readiness.repository");
+const { processBillingEventRecord, reprocessBillingEvent } = await import("./billing-event-processor.service");
 const { resolveBillingPilotEligibility } = await import("./billing-pilot-resolution.service");
 
 const noopSupabase = {} as SupabaseClient;
@@ -75,6 +78,15 @@ describe("stripe-webhook-ingress.service (Step 17)", () => {
       notes: [],
       idempotentHit: false,
     });
+    vi.mocked(reprocessBillingEvent).mockResolvedValue({
+      status: "processed",
+      eventId: "evt-1",
+      updatedSubscriptionId: null,
+      updatedCheckoutSessionId: null,
+      notes: [],
+      idempotentHit: false,
+    });
+    vi.mocked(markBillingEventProcessed).mockResolvedValue({ error: null });
   });
 
   afterEach(() => {
@@ -95,7 +107,7 @@ describe("stripe-webhook-ingress.service (Step 17)", () => {
     expect(result.reason).toBe("Invalid signature");
   });
 
-  it("returns duplicate when event already exists - no record or process, no subscription mutation", async () => {
+  it("returns duplicate when event already processed - no record or process, no subscription mutation", async () => {
     vi.mocked(verifyStripeWebhookSignature).mockReturnValue({
       id: "evt_1",
       type: "checkout.session.completed",
@@ -118,6 +130,40 @@ describe("stripe-webhook-ingress.service (Step 17)", () => {
     expect(result.eventId).toBe("evt-existing");
     expect(createBillingEventRecord).not.toHaveBeenCalled();
     expect(processBillingEventRecord).not.toHaveBeenCalled();
+    expect(reprocessBillingEvent).not.toHaveBeenCalled();
+  });
+
+  it("reprocesses failed existing event on Stripe retry instead of silent duplicate", async () => {
+    vi.mocked(verifyStripeWebhookSignature).mockReturnValue({
+      id: "evt_1",
+      type: "checkout.session.completed",
+      data: { object: { metadata: { workspace_id: "w1" } } },
+    } as never);
+    vi.mocked(getBillingEventByProviderRef).mockResolvedValue({
+      id: "evt-failed",
+      workspaceId: "w1",
+      billingProvider: "stripe",
+      providerEventRef: "evt_1",
+      eventType: "checkout.session.completed",
+      eventPayloadSnapshot: {},
+      processingStatus: "failed",
+      processedAt: new Date().toISOString(),
+      receivedAt: new Date().toISOString(),
+      errorInfo: "create failed",
+    });
+    vi.mocked(reprocessBillingEvent).mockResolvedValue({
+      status: "processed",
+      eventId: "evt-failed",
+      updatedSubscriptionId: "sub-1",
+      updatedCheckoutSessionId: "sess-1",
+      notes: ["Recovered"],
+      idempotentHit: false,
+    });
+    const result = await ingestStripeWebhook(noopSupabase, "{}", "sig");
+    expect(result.status).toBe("processed");
+    expect(result.eventId).toBe("evt-failed");
+    expect(reprocessBillingEvent).toHaveBeenCalledWith(noopSupabase, "evt-failed");
+    expect(createBillingEventRecord).not.toHaveBeenCalled();
   });
 
   it("skips unsupported event type - no record or process", async () => {
@@ -151,7 +197,7 @@ describe("stripe-webhook-ingress.service (Step 17)", () => {
     expect(processBillingEventRecord).toHaveBeenCalled();
   });
 
-  it("missing workspace/session mapping: processor returns failed, no subscription mutation", async () => {
+  it("missing workspace/session mapping: processor failure surfaces as failed (Stripe can retry)", async () => {
     vi.mocked(verifyStripeWebhookSignature).mockReturnValue({
       id: "evt_1",
       type: "checkout.session.completed",
@@ -171,10 +217,12 @@ describe("stripe-webhook-ingress.service (Step 17)", () => {
       idempotentHit: false,
       error: "Session not found",
     });
-    vi.mocked(processBillingEventRecord).mockClear();
     const result = await ingestStripeWebhook(noopSupabase, "{}", "sig");
-    expect(result.status).toBe("processed");
-    expect(result.processingStatus).toBe("failed");
+    expect(result.status).toBe("failed");
+    if (result.status === "failed") {
+      expect(result.reason).toBe("Session not found");
+      expect(result.eventId).toBe("evt-1");
+    }
     expect(createBillingEventRecord).toHaveBeenCalled();
     expect(processBillingEventRecord).toHaveBeenCalled();
   });
@@ -206,6 +254,12 @@ describe("stripe-webhook-ingress.service (Step 17)", () => {
       expect(result.status).toBe("processed");
       expect(result.processingStatus).toBe("skipped_pilot_not_eligible");
       expect(createBillingEventRecord).toHaveBeenCalled();
+      expect(markBillingEventProcessed).toHaveBeenCalledWith(
+        noopSupabase,
+        "evt-1",
+        "skipped",
+        "skipped_pilot_not_eligible"
+      );
       expect(processBillingEventRecord).not.toHaveBeenCalled();
     });
 
@@ -219,6 +273,12 @@ describe("stripe-webhook-ingress.service (Step 17)", () => {
       expect(result.status).toBe("processed");
       expect(result.processingStatus).toBe("skipped_missing_workspace");
       expect(createBillingEventRecord).toHaveBeenCalled();
+      expect(markBillingEventProcessed).toHaveBeenCalledWith(
+        noopSupabase,
+        "evt-1",
+        "skipped",
+        "skipped_missing_workspace"
+      );
       expect(processBillingEventRecord).not.toHaveBeenCalled();
     });
 
