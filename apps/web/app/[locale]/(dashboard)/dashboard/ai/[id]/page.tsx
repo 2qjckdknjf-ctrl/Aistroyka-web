@@ -12,12 +12,14 @@ interface AIDetail {
   status: string;
   payload?: unknown;
   attempts: number;
-  max_attempts: number;
+  max_attempts: number | null;
   last_error: string | null;
   last_error_type: string | null;
+  user_message_key?: string;
   trace_id: string | null;
   created_at: string;
   updated_at: string;
+  vision_configured?: boolean;
 }
 
 function CopyIdButton({
@@ -41,6 +43,23 @@ function CopyIdButton({
       {copied ? copiedLabel : label}
     </Button>
   );
+}
+
+function friendlyMessage(
+  tDetail: ReturnType<typeof useTranslations<"dashboardDetail">>,
+  data: AIDetail
+): string {
+  const key = data.user_message_key;
+  if (key === "aiStatusQueued") return tDetail("aiStatusQueued");
+  if (key === "aiStatusRunning") return tDetail("aiStatusRunning");
+  if (key === "aiStatusSuccess") return tDetail("aiStatusSuccess");
+  if (key === "aiStatusTemporary") return tDetail("aiStatusTemporary");
+  if (key === "aiStatusNotConfigured") return tDetail("aiStatusNotConfigured");
+  if (key === "aiStatusFailed") return tDetail("aiStatusFailed");
+  if (data.status === "queued") return tDetail("aiStatusQueued");
+  if (data.status === "running") return tDetail("aiStatusRunning");
+  if (data.status === "success") return tDetail("aiStatusSuccess");
+  return tDetail("aiStatusFailed");
 }
 
 export default function AIRequestDetailPage() {
@@ -91,19 +110,31 @@ export default function AIRequestDetailPage() {
     return (
       <Card>
         <EmptyState
-          icon={<span className="text-2xl">⚠️</span>}
+          icon={<span className="text-2xl" aria-hidden>⚠️</span>}
           title={tDetail("requestNotFound")}
           subtitle={error ?? tDetail("accessDeniedHint")}
-          action={<Link href="/dashboard/ai" className="text-aistroyka-accent hover:underline">{tDetail("backToAi")}</Link>}
+          action={
+            <Link href="/dashboard/ai" className="text-aistroyka-accent hover:underline">
+              {tDetail("backToAi")}
+            </Link>
+          }
         />
       </Card>
     );
   }
 
+  const showTechnical =
+    data.status === "failed" || data.status === "dead" || data.status === "queued";
+
   return (
     <>
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <Link href="/dashboard/ai" className="text-aistroyka-subheadline text-aistroyka-accent hover:underline">{tDetail("aiShort")}</Link>
+        <Link
+          href="/dashboard/ai"
+          className="text-aistroyka-subheadline text-aistroyka-accent hover:underline"
+        >
+          {tDetail("aiShort")}
+        </Link>
         <CopyIdButton id={data.id} label={tDetail("copyId")} copiedLabel={tDetail("copied")} />
       </div>
       <SectionHeader
@@ -112,6 +143,9 @@ export default function AIRequestDetailPage() {
       />
 
       <Card className="mb-4">
+        <p className="text-aistroyka-subheadline text-aistroyka-text-secondary mb-4">
+          {friendlyMessage(tDetail, data)}
+        </p>
         <dl className="grid gap-2 sm:grid-cols-2">
           <div>
             <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("type")}</dt>
@@ -119,37 +153,69 @@ export default function AIRequestDetailPage() {
           </div>
           <div>
             <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("status")}</dt>
-            <dd><Badge variant={data.status === "success" ? "success" : data.status === "failed" || data.status === "dead" ? "danger" : "warning"}>{data.status}</Badge></dd>
+            <dd>
+              <Badge
+                variant={
+                  data.status === "success"
+                    ? "success"
+                    : data.status === "failed" || data.status === "dead"
+                      ? "danger"
+                      : "warning"
+                }
+              >
+                {data.status}
+              </Badge>
+            </dd>
           </div>
           <div>
-            <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("attempts")}</dt>
-            <dd className="tabular-nums">{data.attempts} / {data.max_attempts}</dd>
+            <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">
+              {tDetail("attempts")}
+            </dt>
+            <dd className="tabular-nums">
+              {data.attempts}
+              {data.max_attempts != null ? ` / ${data.max_attempts}` : ""}
+            </dd>
           </div>
           <div>
-            <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("traceId")}</dt>
-            <dd className="font-mono text-sm">{data.trace_id ?? "—"}</dd>
-          </div>
-          <div>
-            <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("created")}</dt>
+            <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">
+              {tDetail("created")}
+            </dt>
             <dd className="tabular-nums">{new Date(data.created_at).toLocaleString()}</dd>
           </div>
           <div>
-            <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("updated")}</dt>
+            <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">
+              {tDetail("updated")}
+            </dt>
             <dd className="tabular-nums">{new Date(data.updated_at).toLocaleString()}</dd>
           </div>
         </dl>
       </Card>
 
-      {data.last_error && (
+      {showTechnical && (data.last_error_type || data.last_error) && (
         <Card className="mb-4 border-l-4 border-l-aistroyka-error">
-          <h3 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary mb-2">{tDetail("error")}</h3>
-          <p className="text-aistroyka-subheadline text-aistroyka-text-secondary font-mono whitespace-pre-wrap">{data.last_error}</p>
-          {data.last_error_type && <p className="mt-1 text-aistroyka-caption text-aistroyka-text-tertiary">{data.last_error_type}</p>}
+          <h3 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary mb-2">
+            {tDetail("aiSafeDiagnostics")}
+          </h3>
+          {data.last_error_type && (
+            <p className="text-aistroyka-caption text-aistroyka-text-tertiary mb-1">
+              {tDetail("aiErrorCode")}: {data.last_error_type}
+            </p>
+          )}
+          {data.last_error && (
+            <p className="text-aistroyka-subheadline text-aistroyka-text-secondary whitespace-pre-wrap">
+              {data.last_error}
+            </p>
+          )}
+          <p className="mt-2 text-aistroyka-caption text-aistroyka-text-tertiary">
+            {tDetail("aiAdminDiagnosticsHint")}
+          </p>
         </Card>
       )}
 
       <Card>
-        <h3 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary mb-2">{tDetail("payloadMetadata")}</h3>
+        <h3 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary mb-2">
+          {tDetail("payloadMetadata")}
+        </h3>
         <pre className="text-aistroyka-caption font-mono bg-aistroyka-surface-muted p-4 rounded overflow-x-auto whitespace-pre-wrap">
           {JSON.stringify(data.payload ?? {}, null, 2)}
         </pre>

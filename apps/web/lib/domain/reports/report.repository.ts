@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getPublicConfig } from "@/lib/config";
+import { publicMediaObjectUrl } from "@/lib/platform/ai/media-path";
 import type { Report } from "./report.types";
 
 export async function create(
@@ -207,9 +208,7 @@ export async function listMediaByReportId(
 
 export type ReportMediaRowWithUrl = ReportMediaRow & { file_url: string | null };
 
-const MEDIA_BUCKET = "media";
-
-/** Same resolution as job `resolve-image-url`: `media.file_url` or public storage URL from finalized session. */
+/** Display URLs: `media.file_url` or public storage URL from finalized session (path prefix stripped). */
 export async function listMediaByReportIdWithUrls(
   supabase: SupabaseClient,
   reportId: string,
@@ -259,7 +258,8 @@ export async function listMediaByReportIdWithUrls(
     if (!file_url && row.upload_session_id) {
       const objectPath = pathBySessionId.get(row.upload_session_id);
       if (objectPath && baseUrl) {
-        file_url = `${baseUrl}/storage/v1/object/public/${MEDIA_BUCKET}/${objectPath}`;
+        // Strip leading `media/` so URL is .../public/media/{tenant}/... not .../media/media/...
+        file_url = publicMediaObjectUrl(baseUrl, objectPath);
       }
     }
     return { ...row, file_url };

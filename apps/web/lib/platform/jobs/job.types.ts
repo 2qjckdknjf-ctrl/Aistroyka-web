@@ -7,7 +7,10 @@ export interface JobPayloadAiAnalyzeMedia {
   report_id: string;
   media_id?: string;
   upload_session_id?: string;
+  /** Legacy; only trusted when it points at our media storage. */
   image_url?: string;
+  /** Optional project scope for tenant/project boundary checks. */
+  project_id?: string;
 }
 
 export interface JobPayloadAiAnalyzeReport {

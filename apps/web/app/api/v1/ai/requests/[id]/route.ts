@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
+import {
+  presentAIRequestRow,
+  visionConfiguredForEnv,
+} from "@/lib/platform/ai/ai-request-presentation";
 
 export const dynamic = "force-dynamic";
 
@@ -32,25 +36,31 @@ export async function GET(
     .eq("tenant_id", ctx.tenantId!)
     .maybeSingle();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ error: "Failed to load AI request" }, { status: 500 });
   if (!row) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const r = row as { type: string; payload?: unknown };
   if (!AI_JOB_TYPES.includes(r.type)) return NextResponse.json({ error: "Not an AI request" }, { status: 404 });
 
+  const presented = presentAIRequestRow(row as Parameters<typeof presentAIRequestRow>[0]);
+
+  // Tenant detail: safe fields only. Do not echo raw payload paths/URLs that may include storage keys.
+  const payload = (r.payload ?? {}) as Record<string, unknown>;
+  const safePayload = {
+    report_id: typeof payload.report_id === "string" ? payload.report_id : undefined,
+    media_id: typeof payload.media_id === "string" ? payload.media_id : undefined,
+    upload_session_id:
+      typeof payload.upload_session_id === "string" ? payload.upload_session_id : undefined,
+    project_id: typeof payload.project_id === "string" ? payload.project_id : undefined,
+    // Intentionally omit image_url (may contain signed/storage URLs).
+  };
+
   return NextResponse.json({
     data: {
-      id: (row as { id: string }).id,
-      type: (row as { type: string }).type,
-      status: (row as { status: string }).status,
-      payload: (row as { payload?: unknown }).payload,
-      attempts: (row as { attempts: number }).attempts,
-      max_attempts: (row as { max_attempts: number }).max_attempts,
-      last_error: (row as { last_error?: string | null }).last_error ?? null,
-      last_error_type: (row as { last_error_type?: string | null }).last_error_type ?? null,
+      ...presented,
+      payload: safePayload,
       trace_id: (row as { trace_id?: string | null }).trace_id ?? null,
-      created_at: (row as { created_at: string }).created_at,
-      updated_at: (row as { updated_at: string }).updated_at,
+      vision_configured: visionConfiguredForEnv(),
     },
   });
 }
