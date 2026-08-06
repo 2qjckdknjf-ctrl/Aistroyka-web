@@ -27,9 +27,17 @@
 - `/api/v1/ai/requests` normalizes date bounds, returns `summary` + `vision_configured`, sanitizes errors.
 - Dashboard AI UI distinguishes empty / filtered / pending / failed / not configured (RU/EN/ES/IT).
 
+## Security follow-up (cross-tenant signed URL)
+
+- **Defect:** `resolveFromMediaId` trusted `media.tenant_id` then signed a path taken from `media.file_url` without verifying the object key belongs to that tenant.
+- **Guard:** `lib/platform/ai/media-path-tenant-guard.ts` (+ ESM mirror `scripts/ops/lib/media-path-tenant-guard.mjs`, parity-tested).
+- **Chokepoint:** `createSignedUrlForPath(supabase, path, { tenantId, projectId })` always re-checks slash-bounded `${tenantId}/` (or legacy `${projectId}/`) scope before `createSignedUrl`.
+- Recovery script classifies poisoned `file_url` as `security_rejected` and never requeues them.
+- Additive migration (not applied): `20260806210000_media_file_url_immutable_for_clients.sql` blocks non-`service_role` UPDATEs of `media.file_url`. Application-level guard remains mandatory (INSERT of arbitrary `file_url` still possible under historic `media_tenant` FOR ALL).
+
 ## Database / migrations
 
-- **No schema migration required** for this slice (`jobs.attempts`, `last_error_type`, `dedupe_key` already exist).
+- Optional defense-in-depth migration present in repo; **do not apply to production** without owner approval.
 - Do **not** apply any migration to production for this PR.
 
 ## Recovery of existing dead jobs (dry-run first)

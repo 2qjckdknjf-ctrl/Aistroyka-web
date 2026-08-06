@@ -15,13 +15,19 @@
  *
  * Does NOT run against production unless you point env at production.
  * Does NOT delete jobs. Does NOT touch other tenants without --tenant-id.
+ * Does NOT requeue security-rejected (cross-tenant poisoned) media paths.
  */
 
 import { createClient } from "@supabase/supabase-js";
 import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
-
-const MEDIA_BUCKET = "media";
+import { fileURLToPath } from "node:url";
+import {
+  MEDIA_BUCKET,
+  assertMediaPathTenantScope,
+  classifyMediaFileUrlForTenant,
+  isUuid,
+} from "./lib/media-path-tenant-guard.mjs";
 
 function loadEnvFile(path) {
   if (!existsSync(path)) return;
@@ -56,31 +62,131 @@ function hasFlag(name) {
   return process.argv.includes(`--${name}`);
 }
 
-function pathInMediaBucket(objectPath) {
-  const trimmed = objectPath.trim().replace(/^\/+/, "");
-  return trimmed.startsWith(`${MEDIA_BUCKET}/`)
-    ? trimmed.slice(MEDIA_BUCKET.length + 1)
-    : trimmed;
-}
-
-function classifyResolve(session, media) {
-  if (media?.file_url && String(media.file_url).trim()) {
-    return { resolvable: true, reason: "media_file_url" };
+/**
+ * Classify whether a dead job's media reference is recoverable.
+ * Never returns foreign object paths for logging.
+ */
+export function classifyJobMediaReference({
+  media,
+  session,
+  tenantId,
+  supabaseUrl,
+  projectId = null,
+}) {
+  if (media) {
+    if (media.tenant_id && media.tenant_id !== tenantId) {
+      return {
+        resolvable: false,
+        reason: "media_tenant_mismatch",
+        permanently_unrecoverable: true,
+        security_rejected: true,
+      };
+    }
+    const fileUrl = typeof media.file_url === "string" ? media.file_url : "";
+    if (fileUrl.trim()) {
+      const allowedProject = projectId || media.project_id || null;
+      const classified = classifyMediaFileUrlForTenant(
+        fileUrl,
+        tenantId,
+        allowedProject,
+        supabaseUrl
+      );
+      if (classified.security_rejected) {
+        return {
+          resolvable: false,
+          reason: classified.reason,
+          permanently_unrecoverable: true,
+          security_rejected: true,
+        };
+      }
+      if (classified.resolvable) {
+        return {
+          resolvable: true,
+          reason: classified.reason,
+          bucketRelativePath: classified.bucketRelativePath,
+          security_rejected: false,
+        };
+      }
+      // Non-security unresolvable file_url — fall through to session if present
+      if (!session) {
+        return {
+          resolvable: false,
+          reason: classified.reason,
+          permanently_unrecoverable: true,
+          security_rejected: false,
+        };
+      }
+    }
   }
+
   if (!session) {
-    return { resolvable: false, reason: "upload_session_missing", permanent: true };
+    return {
+      resolvable: false,
+      reason: "upload_session_missing",
+      permanently_unrecoverable: true,
+      security_rejected: false,
+    };
+  }
+  if (session.tenant_id && session.tenant_id !== tenantId) {
+    return {
+      resolvable: false,
+      reason: "session_tenant_mismatch",
+      permanently_unrecoverable: true,
+      security_rejected: true,
+    };
   }
   if (session.status === "created" || session.status === "uploaded") {
-    return { resolvable: false, reason: "upload_not_finalized", permanent: false };
+    return {
+      resolvable: false,
+      reason: "upload_not_finalized",
+      permanently_unrecoverable: false,
+      security_rejected: false,
+    };
   }
   if (session.status !== "finalized" || !session.object_path) {
-    return { resolvable: false, reason: "corrupt_or_missing_path", permanent: true };
+    return {
+      resolvable: false,
+      reason: "corrupt_or_missing_path",
+      permanently_unrecoverable: true,
+      security_rejected: false,
+    };
   }
-  return { resolvable: true, reason: "upload_session_path", objectPath: session.object_path };
+
+  const scope = assertMediaPathTenantScope(session.object_path, tenantId, null);
+  if (!scope.ok) {
+    return {
+      resolvable: false,
+      reason: "poisoned_cross_tenant_path",
+      permanently_unrecoverable: true,
+      security_rejected: true,
+    };
+  }
+  // Session path must also sit under tenant/session id when session id known
+  if (session.id) {
+    const expected = `${tenantId}/${session.id}`;
+    if (
+      scope.bucketRelativePath !== expected &&
+      !scope.bucketRelativePath.startsWith(`${expected}/`)
+    ) {
+      return {
+        resolvable: false,
+        reason: "session_path_mismatch",
+        permanently_unrecoverable: true,
+        security_rejected: true,
+      };
+    }
+  }
+
+  return {
+    resolvable: true,
+    reason: "upload_session_path",
+    bucketRelativePath: scope.bucketRelativePath,
+    security_rejected: false,
+  };
 }
 
-async function storageExists(admin, objectPath) {
-  const relative = pathInMediaBucket(objectPath);
+async function storageExists(admin, bucketRelativePath) {
+  const relative = bucketRelativePath;
   const hasSlash = relative.includes("/");
   const folderPath = hasSlash ? relative.split("/").slice(0, -1).join("/") : "";
   const segmentName = hasSlash ? relative.split("/").pop() : relative;
@@ -95,7 +201,7 @@ async function main() {
   const execute = hasFlag("execute");
   const limit = Math.min(parseInt(argValue("limit") ?? "100", 10) || 100, 500);
 
-  if (!tenantId) {
+  if (!tenantId || !isUuid(tenantId)) {
     console.error("ERROR: --tenant-id=<uuid> is required (never scopes all tenants by default).");
     process.exit(2);
   }
@@ -116,7 +222,9 @@ async function main() {
 
   const { data: jobs, error } = await admin
     .from("jobs")
-    .select("id, tenant_id, type, status, payload, attempts, max_attempts, last_error, last_error_type, created_at, updated_at, dedupe_key")
+    .select(
+      "id, tenant_id, type, status, payload, attempts, max_attempts, last_error, last_error_type, created_at, updated_at, dedupe_key"
+    )
     .eq("tenant_id", tenantId)
     .eq("type", "ai_analyze_media")
     .eq("status", "dead")
@@ -136,6 +244,7 @@ async function main() {
     scanned: rows.length,
     recoverable: [],
     permanently_unrecoverable: [],
+    security_rejected: [],
     provider_configuration_blocked: [],
     requeued: [],
   };
@@ -144,23 +253,17 @@ async function main() {
     const payload = job.payload ?? {};
     const mediaId = payload.media_id ?? null;
     const uploadSessionId = payload.upload_session_id ?? null;
+    const projectId = typeof payload.project_id === "string" ? payload.project_id : null;
 
     let media = null;
     let session = null;
     if (mediaId) {
       const { data } = await admin
         .from("media")
-        .select("id, tenant_id, file_url")
+        .select("id, tenant_id, project_id, file_url")
         .eq("id", mediaId)
         .maybeSingle();
       media = data;
-      if (media && media.tenant_id && media.tenant_id !== tenantId) {
-        report.permanently_unrecoverable.push({
-          job_id: job.id,
-          reason: "media_tenant_mismatch",
-        });
-        continue;
-      }
     }
     if (uploadSessionId) {
       const { data } = await admin
@@ -169,16 +272,29 @@ async function main() {
         .eq("id", uploadSessionId)
         .maybeSingle();
       session = data;
-      if (session && session.tenant_id && session.tenant_id !== tenantId) {
-        report.permanently_unrecoverable.push({
-          job_id: job.id,
-          reason: "session_tenant_mismatch",
-        });
-        continue;
-      }
     }
 
-    const classification = classifyResolve(session, media);
+    const classification = classifyJobMediaReference({
+      media,
+      session,
+      tenantId,
+      supabaseUrl: url,
+      projectId,
+    });
+
+    if (classification.security_rejected) {
+      report.security_rejected.push({
+        job_id: job.id,
+        reason: classification.reason,
+      });
+      report.permanently_unrecoverable.push({
+        job_id: job.id,
+        reason: classification.reason,
+        last_error_type: job.last_error_type,
+      });
+      continue;
+    }
+
     if (!classification.resolvable) {
       report.permanently_unrecoverable.push({
         job_id: job.id,
@@ -188,8 +304,8 @@ async function main() {
       continue;
     }
 
-    if (classification.objectPath) {
-      const exists = await storageExists(admin, classification.objectPath);
+    if (classification.bucketRelativePath) {
+      const exists = await storageExists(admin, classification.bucketRelativePath);
       if (!exists.ok && !exists.temporary) {
         report.permanently_unrecoverable.push({
           job_id: job.id,
@@ -224,6 +340,7 @@ async function main() {
 
     if (!execute) continue;
 
+    // Never requeue security-rejected (already continued above).
     const { error: updErr } = await admin
       .from("jobs")
       .update({
@@ -255,7 +372,6 @@ async function main() {
     }
   }
 
-  // Never print secrets; tenant id shown as PRESENT only in summary header.
   console.log(
     JSON.stringify(
       {
@@ -264,6 +380,7 @@ async function main() {
           scanned: report.scanned,
           recoverable: report.recoverable.length,
           permanently_unrecoverable: report.permanently_unrecoverable.length,
+          security_rejected: report.security_rejected.length,
           provider_configuration_blocked: report.provider_configuration_blocked.length,
           requeued: report.requeued.length,
         },
@@ -277,12 +394,19 @@ async function main() {
     console.error(
       "\nDRY-RUN only. To requeue recoverable jobs:\n" +
         `  node scripts/ops/requeue-dead-ai-analyze-media.mjs --tenant-id=${tenantId} --execute\n` +
-        "Do not run --execute on production without explicit owner approval."
+        "Do not run --execute on production without explicit owner approval.\n" +
+        "Security-rejected jobs are never requeued."
     );
   }
 }
 
-main().catch((e) => {
-  console.error("ERROR:", e instanceof Error ? e.message : String(e));
-  process.exit(1);
-});
+const isMain =
+  process.argv[1] &&
+  resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url));
+
+if (isMain) {
+  main().catch((e) => {
+    console.error("ERROR:", e instanceof Error ? e.message : String(e));
+    process.exit(1);
+  });
+}

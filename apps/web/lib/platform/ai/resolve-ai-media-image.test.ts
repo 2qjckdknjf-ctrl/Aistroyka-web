@@ -49,11 +49,12 @@ function makeSupabase(opts: {
   } as any;
 }
 
-const tenantId = "11111111-1111-1111-1111-111111111111";
-const otherTenant = "22222222-2222-2222-2222-222222222222";
-const sessionId = "33333333-3333-3333-3333-333333333333";
-const mediaId = "44444444-4444-4444-4444-444444444444";
-const projectId = "55555555-5555-5555-5555-555555555555";
+const tenantId = "11111111-1111-4111-8111-111111111111";
+const otherTenant = "22222222-2222-4222-8222-222222222222";
+const sessionId = "33333333-3333-4333-8333-333333333333";
+const mediaId = "44444444-4444-4444-8444-444444444444";
+const projectId = "55555555-5555-4555-8555-555555555555";
+const supabaseOrigin = "https://abc.supabase.co";
 
 describe("resolveAIMediaImage", () => {
   beforeEach(() => {
@@ -66,7 +67,7 @@ describe("resolveAIMediaImage", () => {
         id: mediaId,
         tenant_id: tenantId,
         project_id: projectId,
-        file_url: `https://abc.supabase.co/storage/v1/object/public/media/${tenantId}/file.jpg`,
+        file_url: `${supabaseOrigin}/storage/v1/object/public/media/${tenantId}/file.jpg`,
       },
       signedUrl: "https://signed.example/media",
     });
@@ -126,6 +127,7 @@ describe("resolveAIMediaImage", () => {
       code: AI_ERROR_CODES.AI_MEDIA_NOT_READY,
       retryable: true,
     });
+    expect(supabase._createSignedUrl).not.toHaveBeenCalled();
   });
 
   it("returns AI_MEDIA_NOT_FOUND when media missing and no session", async () => {
@@ -147,7 +149,7 @@ describe("resolveAIMediaImage", () => {
         id: mediaId,
         tenant_id: otherTenant,
         project_id: projectId,
-        file_url: `https://abc.supabase.co/storage/v1/object/public/media/${otherTenant}/x.jpg`,
+        file_url: `${supabaseOrigin}/storage/v1/object/public/media/${otherTenant}/x.jpg`,
       },
     });
     const result = await resolveAIMediaImage(supabase, {
@@ -159,6 +161,7 @@ describe("resolveAIMediaImage", () => {
       code: AI_ERROR_CODES.AI_MEDIA_ACCESS_DENIED,
       retryable: false,
     });
+    expect(supabase._createSignedUrl).not.toHaveBeenCalled();
   });
 
   it("denies media project mismatch", async () => {
@@ -166,8 +169,8 @@ describe("resolveAIMediaImage", () => {
       media: {
         id: mediaId,
         tenant_id: tenantId,
-        project_id: "66666666-6666-6666-6666-666666666666",
-        file_url: `https://abc.supabase.co/storage/v1/object/public/media/${tenantId}/x.jpg`,
+        project_id: "66666666-6666-4666-8666-666666666666",
+        file_url: `${supabaseOrigin}/storage/v1/object/public/media/${tenantId}/x.jpg`,
       },
     });
     const result = await resolveAIMediaImage(supabase, {
@@ -179,6 +182,7 @@ describe("resolveAIMediaImage", () => {
       ok: false,
       code: AI_ERROR_CODES.AI_MEDIA_ACCESS_DENIED,
     });
+    expect(supabase._createSignedUrl).not.toHaveBeenCalled();
   });
 
   it("returns AI_MEDIA_OBJECT_MISSING when storage object absent", async () => {
@@ -239,6 +243,7 @@ describe("resolveAIMediaImage", () => {
       code: AI_ERROR_CODES.AI_MEDIA_CORRUPT_REFERENCE,
       retryable: false,
     });
+    expect(supabase._createSignedUrl).not.toHaveBeenCalled();
   });
 
   it("cannot resolve another tenant storage path via image_url", async () => {
@@ -250,6 +255,133 @@ describe("resolveAIMediaImage", () => {
     expect(result).toMatchObject({
       ok: false,
       code: AI_ERROR_CODES.AI_MEDIA_ACCESS_DENIED,
+    });
+    expect(supabase._createSignedUrl).not.toHaveBeenCalled();
+  });
+
+  describe("adversarial media.file_url poisoning", () => {
+    const cases: Array<{ name: string; file_url: string }> = [
+      {
+        name: "direct object path of other tenant",
+        file_url: `${otherTenant}/secret.jpg`,
+      },
+      {
+        name: "public URL of other tenant",
+        file_url: `${supabaseOrigin}/storage/v1/object/public/media/${otherTenant}/secret.jpg`,
+      },
+      {
+        name: "authenticated URL of other tenant",
+        file_url: `${supabaseOrigin}/storage/v1/object/authenticated/media/${otherTenant}/secret.jpg`,
+      },
+      {
+        name: "signed URL of other tenant",
+        file_url: `${supabaseOrigin}/storage/v1/object/sign/media/${otherTenant}/secret.jpg?token=x`,
+      },
+      {
+        name: "double media prefix other tenant",
+        file_url: `${supabaseOrigin}/storage/v1/object/public/media/media/${otherTenant}/secret.jpg`,
+      },
+    ];
+
+    for (const c of cases) {
+      it(`denies poisoned file_url (${c.name}) without signing`, async () => {
+        const supabase = makeSupabase({
+          media: {
+            id: mediaId,
+            tenant_id: tenantId, // row claims job tenant
+            project_id: projectId,
+            file_url: c.file_url,
+          },
+        });
+        const result = await resolveAIMediaImage(supabase, {
+          tenantId,
+          mediaId,
+          projectId,
+        });
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+          expect(result.code).toBe(AI_ERROR_CODES.AI_MEDIA_ACCESS_DENIED);
+          expect(result.retryable).toBe(false);
+        }
+        expect(supabase._createSignedUrl).not.toHaveBeenCalled();
+      });
+    }
+  });
+
+  describe("adversarial path attacks", () => {
+    const attacks: Array<{ name: string; imageUrl: string; code: string }> = [
+      {
+        name: "../ traversal",
+        imageUrl: `${tenantId}/../${otherTenant}/x.jpg`,
+        code: AI_ERROR_CODES.AI_MEDIA_CORRUPT_REFERENCE,
+      },
+      {
+        name: "encoded traversal",
+        imageUrl: `${tenantId}/%2e%2e/${otherTenant}/x.jpg`,
+        code: AI_ERROR_CODES.AI_MEDIA_CORRUPT_REFERENCE,
+      },
+      {
+        name: "double-encoded traversal",
+        imageUrl: `${tenantId}/%252e%252e%252f${otherTenant}/x.jpg`,
+        code: AI_ERROR_CODES.AI_MEDIA_CORRUPT_REFERENCE,
+      },
+      {
+        name: "backslash",
+        imageUrl: `${tenantId}\\x.jpg`,
+        code: AI_ERROR_CODES.AI_MEDIA_CORRUPT_REFERENCE,
+      },
+      {
+        name: "malformed percent",
+        imageUrl: `${tenantId}/file%.jpg`,
+        code: AI_ERROR_CODES.AI_MEDIA_CORRUPT_REFERENCE,
+      },
+      {
+        name: "similar tenant prefix",
+        imageUrl: `${tenantId}abcd/x.jpg`,
+        code: AI_ERROR_CODES.AI_MEDIA_ACCESS_DENIED,
+      },
+      {
+        name: "other supabase origin",
+        imageUrl: `https://other.supabase.co/storage/v1/object/public/media/${tenantId}/x.jpg`,
+        code: AI_ERROR_CODES.AI_MEDIA_CORRUPT_REFERENCE,
+      },
+      {
+        name: "arbitrary external URL",
+        imageUrl: "https://evil.example/img.jpg",
+        code: AI_ERROR_CODES.AI_MEDIA_CORRUPT_REFERENCE,
+      },
+    ];
+
+    for (const a of attacks) {
+      it(`blocks ${a.name} without calling createSignedUrl`, async () => {
+        const supabase = makeSupabase({});
+        const result = await resolveAIMediaImage(supabase, {
+          tenantId,
+          imageUrl: a.imageUrl,
+        });
+        expect(result.ok).toBe(false);
+        if (!result.ok) expect(result.code).toBe(a.code);
+        expect(supabase._createSignedUrl).not.toHaveBeenCalled();
+      });
+    }
+
+    it("accepts double media/media prefix for current tenant", async () => {
+      const supabase = makeSupabase({ signedUrl: "https://signed.example/ok" });
+      const result = await resolveAIMediaImage(supabase, {
+        tenantId,
+        imageUrl: `media/media/${tenantId}/ok.jpg`,
+      });
+      expect(result.ok).toBe(true);
+      expect(supabase._createSignedUrl).toHaveBeenCalledWith(`${tenantId}/ok.jpg`, 900);
+    });
+
+    it("accepts valid legacy path for current tenant", async () => {
+      const supabase = makeSupabase({ signedUrl: "https://signed.example/legacy" });
+      const result = await resolveAIMediaImage(supabase, {
+        tenantId,
+        imageUrl: `${tenantId}/legacy.jpg`,
+      });
+      expect(result.ok).toBe(true);
     });
   });
 });
