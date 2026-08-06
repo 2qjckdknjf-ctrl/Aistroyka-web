@@ -59,7 +59,9 @@ export type AIUserMessageKey =
   | "aiStatusEmpty"
   | "aiStatusFilteredEmpty";
 
-export function userMessageKeyForAIErrorCode(code: string | null | undefined): AIUserMessageKey {
+export function userMessageKeyForAIErrorCode(
+  code: string | null | undefined,
+): AIUserMessageKey {
   if (!code) return "aiStatusFailed";
   switch (code) {
     case AI_ERROR_CODES.AI_MEDIA_NOT_READY:
@@ -77,13 +79,18 @@ export function userMessageKeyForAIErrorCode(code: string | null | undefined): A
 }
 
 /** Strip secrets / stack / internal paths from error text before returning to tenants. */
-export function sanitizeAIErrorForTenant(message: string | null | undefined): string | null {
+export function sanitizeAIErrorForTenant(
+  message: string | null | undefined,
+): string | null {
   if (!message) return null;
   let out = message;
   // Redact obvious secrets
   out = out.replace(/sk-[a-zA-Z0-9_-]{10,}/g, "[redacted]");
   out = out.replace(/Bearer\s+[A-Za-z0-9._\-]+/gi, "Bearer [redacted]");
-  out = out.replace(/supabase\.co\/storage\/v1\/object\/[^\s"']+/gi, "[storage]");
+  out = out.replace(
+    /supabase\.co\/storage\/v1\/object\/[^\s"']+/gi,
+    "[storage]",
+  );
   out = out.replace(/\/storage\/v1\/object\/[^\s"']+/gi, "[storage]");
   // Drop stack-like lines
   out = out

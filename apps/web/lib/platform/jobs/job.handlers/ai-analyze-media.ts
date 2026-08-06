@@ -16,7 +16,7 @@ import { getTierForTenant } from "@/lib/platform/subscription/subscription.servi
  */
 export async function handleAiAnalyzeMedia(
   supabase: SupabaseClient,
-  job: Job
+  job: Job,
 ): Promise<void> {
   const raw = job.payload as {
     report_id?: string;
@@ -63,11 +63,15 @@ export async function handleAiAnalyzeMedia(
         mediaId: payload.media_id ?? null,
         reportId: payload.report_id,
         projectId: typeof raw.project_id === "string" ? raw.project_id : null,
-      }
+      },
     );
   } catch (e) {
     if (e instanceof AIPolicyBlockedError) {
-      throw new JobHandlerError("AI policy blocked", false, AI_ERROR_CODES.AI_POLICY_BLOCKED);
+      throw new JobHandlerError(
+        "AI policy blocked",
+        false,
+        AI_ERROR_CODES.AI_POLICY_BLOCKED,
+      );
     }
     if (e instanceof AIVisionFailedError) {
       throw new JobHandlerError(e.message, e.retryable, e.code);
@@ -75,13 +79,15 @@ export async function handleAiAnalyzeMedia(
     const message = e instanceof Error ? e.message : "Vision analysis failed";
     const lower = message.toLowerCase();
     const retryable =
-      lower.includes("timeout") || lower.includes("temporar") || lower.includes("429");
+      lower.includes("timeout") ||
+      lower.includes("temporar") ||
+      lower.includes("429");
     throw new JobHandlerError(
       message,
       retryable,
       retryable
         ? AI_ERROR_CODES.AI_PROVIDER_TEMPORARILY_UNAVAILABLE
-        : AI_ERROR_CODES.AI_PROVIDER_FAILED
+        : AI_ERROR_CODES.AI_PROVIDER_FAILED,
     );
   }
 }

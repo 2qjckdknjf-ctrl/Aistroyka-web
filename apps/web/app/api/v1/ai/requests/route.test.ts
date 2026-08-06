@@ -32,7 +32,11 @@ function makeQuery(rows: unknown[], count = rows.length) {
   const terminal = {
     ...chain,
     then: (resolve: (v: unknown) => unknown) =>
-      resolve({ data: rows.map((r: any) => ({ status: r.status })), error: null, count }),
+      resolve({
+        data: rows.map((r: any) => ({ status: r.status })),
+        error: null,
+        count,
+      }),
   };
   // Make in() return chain that is both chainable and awaitable for summary
   chain.in = vi.fn(() => ({
@@ -80,7 +84,9 @@ describe("GET /api/v1/ai/requests", () => {
     vi.mocked(createClientFromRequest).mockResolvedValue(supabase as any);
 
     const res = await GET(
-      new Request("http://localhost/api/v1/ai/requests?from=2026-08-02&to=2026-08-02")
+      new Request(
+        "http://localhost/api/v1/ai/requests?from=2026-08-02&to=2026-08-02",
+      ),
     );
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -94,7 +100,9 @@ describe("GET /api/v1/ai/requests", () => {
     expect(body.vision_configured).toBe(true);
 
     // Ensure date-only `to` was expanded past midnight
-    const listChain = supabase.from.mock.results[1]?.value ?? supabase.from.mock.results[0]?.value;
+    const listChain =
+      supabase.from.mock.results[1]?.value ??
+      supabase.from.mock.results[0]?.value;
     expect(listChain.lte).toHaveBeenCalled();
   });
 
@@ -114,7 +122,9 @@ describe("GET /api/v1/ai/requests", () => {
         })),
       })),
     };
-    vi.mocked(createClientFromRequest).mockResolvedValue({ from: vi.fn(() => chain) } as any);
+    vi.mocked(createClientFromRequest).mockResolvedValue({
+      from: vi.fn(() => chain),
+    } as any);
     const res = await GET(new Request("http://localhost/api/v1/ai/requests"));
     expect(res.status).toBe(500);
     const body = await res.json();

@@ -19,7 +19,11 @@ export function isStorageObjectPath(value: string): boolean {
   const v = value.trim();
   if (!v || /^https?:\/\//i.test(v)) return false;
   if (v.includes("..")) return false;
-  return v.startsWith(`${MEDIA_BUCKET}/`) || /^[0-9a-f-]{36}\//i.test(v) || v.includes("/");
+  return (
+    v.startsWith(`${MEDIA_BUCKET}/`) ||
+    /^[0-9a-f-]{36}\//i.test(v) ||
+    v.includes("/")
+  );
 }
 
 /**
@@ -28,7 +32,7 @@ export function isStorageObjectPath(value: string): boolean {
  */
 export function extractMediaPathFromStorageUrl(
   url: string,
-  supabaseUrl: string
+  supabaseUrl: string,
 ): string | null {
   const trimmed = url.trim();
   if (!trimmed || !supabaseUrl) return null;
@@ -68,7 +72,10 @@ export function extractMediaPathFromStorageUrl(
 }
 
 /** Build a public object URL (legacy display). Prefer signed URLs for AI providers. */
-export function publicMediaObjectUrl(supabaseUrl: string, objectPath: string): string {
+export function publicMediaObjectUrl(
+  supabaseUrl: string,
+  objectPath: string,
+): string {
   const relative = pathInMediaBucket(objectPath);
   return `${supabaseUrl.replace(/\/$/, "")}/storage/v1/object/public/${MEDIA_BUCKET}/${relative}`;
 }

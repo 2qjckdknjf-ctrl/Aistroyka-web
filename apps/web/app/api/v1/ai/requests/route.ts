@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { createClientFromRequest } from "@/lib/supabase/server";
-import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
+import {
+  getTenantContextFromRequest,
+  requireTenant,
+  TenantRequiredError,
+} from "@/lib/tenant";
 import {
   normalizeCreatedAtBound,
   presentAIRequestRow,
@@ -24,11 +28,23 @@ export async function GET(request: Request) {
   }
 
   const url = new URL(request.url);
-  const limit = Math.min(parseInt(url.searchParams.get("limit") ?? "50", 10) || 50, 100);
-  const offset = Math.max(0, parseInt(url.searchParams.get("offset") ?? "0", 10) || 0);
+  const limit = Math.min(
+    parseInt(url.searchParams.get("limit") ?? "50", 10) || 50,
+    100,
+  );
+  const offset = Math.max(
+    0,
+    parseInt(url.searchParams.get("offset") ?? "0", 10) || 0,
+  );
   const status = url.searchParams.get("status") ?? undefined;
-  const from = normalizeCreatedAtBound(url.searchParams.get("from") ?? undefined, "from");
-  const to = normalizeCreatedAtBound(url.searchParams.get("to") ?? undefined, "to");
+  const from = normalizeCreatedAtBound(
+    url.searchParams.get("from") ?? undefined,
+    "from",
+  );
+  const to = normalizeCreatedAtBound(
+    url.searchParams.get("to") ?? undefined,
+    "to",
+  );
   const q = url.searchParams.get("q")?.trim();
 
   const supabase = await createClientFromRequest(request);
@@ -62,7 +78,7 @@ export async function GET(request: Request) {
     .from("jobs")
     .select(
       "id, type, status, payload, attempts, max_attempts, last_error, last_error_type, created_at, updated_at",
-      { count: "exact" }
+      { count: "exact" },
     )
     .eq("tenant_id", ctx.tenantId!)
     .in("type", AI_JOB_TYPES)
@@ -74,11 +90,19 @@ export async function GET(request: Request) {
 
   const fetchLimit = q ? Math.min(200, 200) : limit;
   const fetchOffset = q ? 0 : offset;
-  const { data: rows, error, count } = await query.range(fetchOffset, fetchOffset + fetchLimit - 1);
-  if (error) return NextResponse.json({ error: "Failed to load AI requests" }, { status: 500 });
+  const {
+    data: rows,
+    error,
+    count,
+  } = await query.range(fetchOffset, fetchOffset + fetchLimit - 1);
+  if (error)
+    return NextResponse.json(
+      { error: "Failed to load AI requests" },
+      { status: 500 },
+    );
 
   let list = (rows ?? []).map((r) =>
-    presentAIRequestRow(r as Parameters<typeof presentAIRequestRow>[0])
+    presentAIRequestRow(r as Parameters<typeof presentAIRequestRow>[0]),
   );
 
   if (q) {
@@ -87,7 +111,7 @@ export async function GET(request: Request) {
       (item) =>
         String(item.id).toLowerCase().startsWith(qLower) ||
         String(item.id).toLowerCase().includes(qLower) ||
-        (item.entity && String(item.entity).toLowerCase().includes(qLower))
+        (item.entity && String(item.entity).toLowerCase().includes(qLower)),
     );
   }
   const total = q ? list.length : (count ?? 0);

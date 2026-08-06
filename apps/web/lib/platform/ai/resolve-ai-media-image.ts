@@ -42,23 +42,28 @@ export type ResolveAIMediaImageFailure = {
   message: string;
 };
 
-export type ResolveAIMediaImageResult = ResolveAIMediaImageSuccess | ResolveAIMediaImageFailure;
+export type ResolveAIMediaImageResult =
+  ResolveAIMediaImageSuccess | ResolveAIMediaImageFailure;
 
 function fail(
   code: AIErrorCode,
   message: string,
-  retryable: boolean
+  retryable: boolean,
 ): ResolveAIMediaImageFailure {
   return { ok: false, code, retryable, message };
 }
 
 async function createSignedUrlForPath(
   supabase: SupabaseClient,
-  objectPath: string
+  objectPath: string,
 ): Promise<ResolveAIMediaImageResult> {
   const relative = pathInMediaBucket(objectPath);
   if (!relative || relative.includes("..")) {
-    return fail(AI_ERROR_CODES.AI_MEDIA_CORRUPT_REFERENCE, "Invalid storage object path", false);
+    return fail(
+      AI_ERROR_CODES.AI_MEDIA_CORRUPT_REFERENCE,
+      "Invalid storage object path",
+      false,
+    );
   }
   try {
     const { data, error } = await supabase.storage
@@ -66,18 +71,22 @@ async function createSignedUrlForPath(
       .createSignedUrl(relative, AI_MEDIA_SIGNED_URL_TTL_SEC);
     if (error) {
       const msg = (error.message ?? "").toLowerCase();
-      if (msg.includes("not found") || msg.includes("object not found") || msg.includes("404")) {
+      if (
+        msg.includes("not found") ||
+        msg.includes("object not found") ||
+        msg.includes("404")
+      ) {
         return fail(
           AI_ERROR_CODES.AI_MEDIA_OBJECT_MISSING,
           "Storage object missing for media reference",
-          false
+          false,
         );
       }
       // Network / transient storage errors
       return fail(
         AI_ERROR_CODES.AI_MEDIA_STORAGE_TEMPORARY,
         "Temporary storage error while signing media URL",
-        true
+        true,
       );
     }
     const signed = data?.signedUrl;
@@ -85,7 +94,7 @@ async function createSignedUrlForPath(
       return fail(
         AI_ERROR_CODES.AI_MEDIA_STORAGE_TEMPORARY,
         "Storage did not return a signed URL",
-        true
+        true,
       );
     }
     return {
@@ -98,7 +107,7 @@ async function createSignedUrlForPath(
     return fail(
       AI_ERROR_CODES.AI_MEDIA_STORAGE_TEMPORARY,
       "Temporary storage error while signing media URL",
-      true
+      true,
     );
   }
 }
@@ -107,7 +116,7 @@ async function resolveFromMediaId(
   supabase: SupabaseClient,
   mediaId: string,
   tenantId: string,
-  projectId: string | null
+  projectId: string | null,
 ): Promise<ResolveAIMediaImageResult | null> {
   const { data, error } = await supabase
     .from("media")
@@ -116,7 +125,11 @@ async function resolveFromMediaId(
     .maybeSingle();
 
   if (error) {
-    return fail(AI_ERROR_CODES.AI_MEDIA_STORAGE_TEMPORARY, "Temporary error loading media row", true);
+    return fail(
+      AI_ERROR_CODES.AI_MEDIA_STORAGE_TEMPORARY,
+      "Temporary error loading media row",
+      true,
+    );
   }
   if (!data) {
     return null; // allow upload_session fallback
@@ -130,16 +143,28 @@ async function resolveFromMediaId(
   };
 
   if (row.tenant_id && row.tenant_id !== tenantId) {
-    return fail(AI_ERROR_CODES.AI_MEDIA_ACCESS_DENIED, "Media tenant mismatch", false);
+    return fail(
+      AI_ERROR_CODES.AI_MEDIA_ACCESS_DENIED,
+      "Media tenant mismatch",
+      false,
+    );
   }
   if (projectId && row.project_id && row.project_id !== projectId) {
-    return fail(AI_ERROR_CODES.AI_MEDIA_ACCESS_DENIED, "Media project mismatch", false);
+    return fail(
+      AI_ERROR_CODES.AI_MEDIA_ACCESS_DENIED,
+      "Media project mismatch",
+      false,
+    );
   }
 
   const fileUrl = typeof row.file_url === "string" ? row.file_url.trim() : "";
   if (!fileUrl) {
     // Media row exists but URL not ready — caller may fall back to upload session.
-    return fail(AI_ERROR_CODES.AI_MEDIA_NOT_READY, "Media row pending file_url", true);
+    return fail(
+      AI_ERROR_CODES.AI_MEDIA_NOT_READY,
+      "Media row pending file_url",
+      true,
+    );
   }
 
   let supabaseUrl = "";
@@ -149,7 +174,9 @@ async function resolveFromMediaId(
     supabaseUrl = "";
   }
 
-  const fromOurUrl = supabaseUrl ? extractMediaPathFromStorageUrl(fileUrl, supabaseUrl) : null;
+  const fromOurUrl = supabaseUrl
+    ? extractMediaPathFromStorageUrl(fileUrl, supabaseUrl)
+    : null;
   if (fromOurUrl) {
     const signed = await createSignedUrlForPath(supabase, fromOurUrl);
     if (signed.ok) return { ...signed, source: "media" };
@@ -166,14 +193,14 @@ async function resolveFromMediaId(
   return fail(
     AI_ERROR_CODES.AI_MEDIA_CORRUPT_REFERENCE,
     "Media file_url is not a trusted storage reference",
-    false
+    false,
   );
 }
 
 async function resolveFromUploadSession(
   supabase: SupabaseClient,
   uploadSessionId: string,
-  tenantId: string
+  tenantId: string,
 ): Promise<ResolveAIMediaImageResult> {
   const { data, error } = await supabase
     .from("upload_sessions")
@@ -185,11 +212,15 @@ async function resolveFromUploadSession(
     return fail(
       AI_ERROR_CODES.AI_MEDIA_STORAGE_TEMPORARY,
       "Temporary error loading upload session",
-      true
+      true,
     );
   }
   if (!data) {
-    return fail(AI_ERROR_CODES.AI_MEDIA_NOT_FOUND, "Upload session not found", false);
+    return fail(
+      AI_ERROR_CODES.AI_MEDIA_NOT_FOUND,
+      "Upload session not found",
+      false,
+    );
   }
 
   const session = data as {
@@ -200,7 +231,11 @@ async function resolveFromUploadSession(
   };
 
   if (session.tenant_id && session.tenant_id !== tenantId) {
-    return fail(AI_ERROR_CODES.AI_MEDIA_ACCESS_DENIED, "Upload session tenant mismatch", false);
+    return fail(
+      AI_ERROR_CODES.AI_MEDIA_ACCESS_DENIED,
+      "Upload session tenant mismatch",
+      false,
+    );
   }
 
   const status = session.status ?? "";
@@ -208,26 +243,31 @@ async function resolveFromUploadSession(
     return fail(
       AI_ERROR_CODES.AI_MEDIA_NOT_READY,
       "Upload session not finalized yet",
-      true
+      true,
     );
   }
   if (status === "expired") {
-    return fail(AI_ERROR_CODES.AI_MEDIA_NOT_FOUND, "Upload session expired", false);
+    return fail(
+      AI_ERROR_CODES.AI_MEDIA_NOT_FOUND,
+      "Upload session expired",
+      false,
+    );
   }
   if (status !== "finalized") {
     return fail(
       AI_ERROR_CODES.AI_MEDIA_CORRUPT_REFERENCE,
       `Unexpected upload session status: ${status || "unknown"}`,
-      false
+      false,
     );
   }
 
-  const objectPath = typeof session.object_path === "string" ? session.object_path.trim() : "";
+  const objectPath =
+    typeof session.object_path === "string" ? session.object_path.trim() : "";
   if (!objectPath) {
     return fail(
       AI_ERROR_CODES.AI_MEDIA_CORRUPT_REFERENCE,
       "Finalized upload session missing object_path",
-      false
+      false,
     );
   }
 
@@ -244,7 +284,7 @@ async function resolveFromUploadSession(
     return fail(
       AI_ERROR_CODES.AI_MEDIA_ACCESS_DENIED,
       "Upload session object_path outside tenant session prefix",
-      false
+      false,
     );
   }
 
@@ -256,7 +296,7 @@ async function resolveFromUploadSession(
 async function resolveFromLegacyImageUrl(
   supabase: SupabaseClient,
   imageUrl: string,
-  tenantId: string
+  tenantId: string,
 ): Promise<ResolveAIMediaImageResult | null> {
   const trimmed = imageUrl.trim();
   if (!trimmed) return null;
@@ -275,7 +315,7 @@ async function resolveFromLegacyImageUrl(
       return fail(
         AI_ERROR_CODES.AI_MEDIA_ACCESS_DENIED,
         "Storage path tenant mismatch",
-        false
+        false,
       );
     }
     const signed = await createSignedUrlForPath(supabase, relative);
@@ -290,7 +330,7 @@ async function resolveFromLegacyImageUrl(
         return fail(
           AI_ERROR_CODES.AI_MEDIA_ACCESS_DENIED,
           "Storage URL tenant mismatch",
-          false
+          false,
         );
       }
       const signed = await createSignedUrlForPath(supabase, fromUrl);
@@ -303,7 +343,7 @@ async function resolveFromLegacyImageUrl(
   return fail(
     AI_ERROR_CODES.AI_MEDIA_CORRUPT_REFERENCE,
     "External image_url is not a trusted storage reference",
-    false
+    false,
   );
 }
 
@@ -312,11 +352,15 @@ async function resolveFromLegacyImageUrl(
  */
 export async function resolveAIMediaImage(
   supabase: SupabaseClient,
-  input: ResolveAIMediaImageInput
+  input: ResolveAIMediaImageInput,
 ): Promise<ResolveAIMediaImageResult> {
   const tenantId = input.tenantId?.trim();
   if (!tenantId) {
-    return fail(AI_ERROR_CODES.AI_MEDIA_ACCESS_DENIED, "tenant_id required", false);
+    return fail(
+      AI_ERROR_CODES.AI_MEDIA_ACCESS_DENIED,
+      "tenant_id required",
+      false,
+    );
   }
 
   let projectId = input.projectId?.trim() || null;
@@ -332,14 +376,22 @@ export async function resolveAIMediaImage(
       return fail(
         AI_ERROR_CODES.AI_MEDIA_STORAGE_TEMPORARY,
         "Temporary error loading report",
-        true
+        true,
       );
     }
     if (!report) {
-      return fail(AI_ERROR_CODES.AI_MEDIA_NOT_FOUND, "Report not found for AI media job", false);
+      return fail(
+        AI_ERROR_CODES.AI_MEDIA_NOT_FOUND,
+        "Report not found for AI media job",
+        false,
+      );
     }
     if ((report as { tenant_id?: string }).tenant_id !== tenantId) {
-      return fail(AI_ERROR_CODES.AI_MEDIA_ACCESS_DENIED, "Report tenant mismatch", false);
+      return fail(
+        AI_ERROR_CODES.AI_MEDIA_ACCESS_DENIED,
+        "Report tenant mismatch",
+        false,
+      );
     }
     if (!projectId) {
       const taskId = (report as { task_id?: string | null }).task_id;
@@ -351,7 +403,8 @@ export async function resolveAIMediaImage(
           .eq("id", taskId)
           .eq("tenant_id", tenantId)
           .maybeSingle();
-        projectId = (task as { project_id?: string } | null)?.project_id ?? null;
+        projectId =
+          (task as { project_id?: string } | null)?.project_id ?? null;
       } else if (dayId) {
         const { data: day } = await supabase
           .from("worker_day")
@@ -368,10 +421,18 @@ export async function resolveAIMediaImage(
   const permanentFailures: ResolveAIMediaImageFailure[] = [];
 
   if (input.mediaId) {
-    const mediaResult = await resolveFromMediaId(supabase, input.mediaId, tenantId, projectId);
+    const mediaResult = await resolveFromMediaId(
+      supabase,
+      input.mediaId,
+      tenantId,
+      projectId,
+    );
     if (mediaResult?.ok) return mediaResult;
     if (mediaResult) {
-      if (mediaResult.retryable && mediaResult.code === AI_ERROR_CODES.AI_MEDIA_NOT_READY) {
+      if (
+        mediaResult.retryable &&
+        mediaResult.code === AI_ERROR_CODES.AI_MEDIA_NOT_READY
+      ) {
         pendingNotReady.push(mediaResult);
       } else if (mediaResult.code === AI_ERROR_CODES.AI_MEDIA_ACCESS_DENIED) {
         return mediaResult;
@@ -383,7 +444,11 @@ export async function resolveAIMediaImage(
     } else {
       // media row missing — try upload session before declaring not found
       permanentFailures.push(
-        fail(AI_ERROR_CODES.AI_MEDIA_NOT_FOUND, "Media record not found", false)
+        fail(
+          AI_ERROR_CODES.AI_MEDIA_NOT_FOUND,
+          "Media record not found",
+          false,
+        ),
       );
     }
   }
@@ -392,7 +457,7 @@ export async function resolveAIMediaImage(
     const sessionResult = await resolveFromUploadSession(
       supabase,
       input.uploadSessionId,
-      tenantId
+      tenantId,
     );
     if (sessionResult.ok) return sessionResult;
     if (sessionResult.retryable) {
@@ -405,7 +470,11 @@ export async function resolveAIMediaImage(
   }
 
   if (input.imageUrl) {
-    const legacy = await resolveFromLegacyImageUrl(supabase, input.imageUrl, tenantId);
+    const legacy = await resolveFromLegacyImageUrl(
+      supabase,
+      input.imageUrl,
+      tenantId,
+    );
     if (legacy?.ok) return legacy;
     if (legacy) {
       if (legacy.retryable) pendingNotReady.push(legacy);
@@ -421,8 +490,12 @@ export async function resolveAIMediaImage(
   if (permanentFailures.length > 0) {
     // Prefer object-missing / corrupt over generic not-found when we had references.
     const preferred =
-      permanentFailures.find((f) => f.code === AI_ERROR_CODES.AI_MEDIA_OBJECT_MISSING) ??
-      permanentFailures.find((f) => f.code === AI_ERROR_CODES.AI_MEDIA_CORRUPT_REFERENCE) ??
+      permanentFailures.find(
+        (f) => f.code === AI_ERROR_CODES.AI_MEDIA_OBJECT_MISSING,
+      ) ??
+      permanentFailures.find(
+        (f) => f.code === AI_ERROR_CODES.AI_MEDIA_CORRUPT_REFERENCE,
+      ) ??
       permanentFailures[0]!;
     return preferred;
   }
@@ -430,6 +503,6 @@ export async function resolveAIMediaImage(
   return fail(
     AI_ERROR_CODES.AI_MEDIA_NOT_FOUND,
     "Could not resolve image from media_id or upload_session_id",
-    false
+    false,
   );
 }

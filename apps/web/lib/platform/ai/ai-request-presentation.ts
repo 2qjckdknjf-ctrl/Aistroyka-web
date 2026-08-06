@@ -11,22 +11,28 @@ import {
 } from "./ai-media-errors";
 import { isAnyVisionProviderConfigured } from "@/lib/config/server";
 
-export type AIRequestStatus = "queued" | "running" | "success" | "failed" | "dead";
+export type AIRequestStatus =
+  "queued" | "running" | "success" | "failed" | "dead";
 
-export function normalizeCreatedAtBound(value: string | undefined, kind: "from" | "to"): string | undefined {
+export function normalizeCreatedAtBound(
+  value: string | undefined,
+  kind: "from" | "to",
+): string | undefined {
   if (!value) return undefined;
   const trimmed = value.trim();
   if (!trimmed) return undefined;
   // Date-only YYYY-MM-DD → inclusive day bounds (fixes midnight truncation empty lists).
   if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
-    return kind === "from" ? `${trimmed}T00:00:00.000Z` : `${trimmed}T23:59:59.999Z`;
+    return kind === "from"
+      ? `${trimmed}T00:00:00.000Z`
+      : `${trimmed}T23:59:59.999Z`;
   }
   return trimmed;
 }
 
 export function userMessageKeyForJobStatus(
   status: string,
-  lastErrorType: string | null | undefined
+  lastErrorType: string | null | undefined,
 ): AIUserMessageKey {
   switch (status) {
     case "queued":
@@ -60,7 +66,8 @@ export function presentAIRequestRow(row: {
     media_id?: string;
     upload_session_id?: string;
   };
-  const entity = payload.report_id ?? payload.media_id ?? payload.upload_session_id ?? null;
+  const entity =
+    payload.report_id ?? payload.media_id ?? payload.upload_session_id ?? null;
   const lastErrorType = row.last_error_type ?? null;
   const userKey = userMessageKeyForJobStatus(row.status, lastErrorType);
 
@@ -84,6 +91,8 @@ export function visionConfiguredForEnv(): boolean {
   return isAnyVisionProviderConfigured();
 }
 
-export function isProviderConfigError(code: string | null | undefined): boolean {
+export function isProviderConfigError(
+  code: string | null | undefined,
+): boolean {
   return code === AI_ERROR_CODES.AI_PROVIDER_NOT_CONFIGURED;
 }
