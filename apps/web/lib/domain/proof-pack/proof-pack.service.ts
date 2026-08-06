@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { TenantContext } from "@/lib/tenant/tenant.types";
-import { canManageProjects, canReadProjects } from "@/lib/tenant/tenant.policy";
+import { canReadProjects } from "@/lib/tenant/tenant.policy";
+import { canManageClientRequests } from "@/lib/domain/client-requests/client-requests.policy";
 import * as projectRepo from "@/lib/domain/projects/project.repository";
 import { getProjectSummary } from "@/lib/domain/projects/project-summary.repository";
 import * as mediaRepo from "@/lib/domain/media/media.repository";
@@ -145,7 +146,9 @@ export async function createProofPackShare(
   input?: { title?: string | null; expires_at?: string | null }
 ): Promise<{ data: ProofPackShare | null; error: string }> {
   if (!ctx.tenantId || !ctx.userId) return { data: null, error: "Tenant required" };
-  if (!canManageProjects(ctx)) return { data: null, error: "Insufficient rights" };
+  if (!(await canManageClientRequests(supabase, ctx, projectId))) {
+    return { data: null, error: "Insufficient rights" };
+  }
   const token = crypto.randomUUID().replace(/-/g, "");
   const { data, error } = await supabase
     .from("proof_pack_shares")
@@ -198,7 +201,9 @@ export async function revokeProofPackShare(
   token: string
 ): Promise<{ ok: boolean; error: string }> {
   if (!ctx.tenantId || !ctx.userId) return { ok: false, error: "Tenant required" };
-  if (!canManageProjects(ctx)) return { ok: false, error: "Insufficient rights" };
+  if (!(await canManageClientRequests(supabase, ctx, projectId))) {
+    return { ok: false, error: "Insufficient rights" };
+  }
   const now = new Date().toISOString();
   const { data: rows, error } = await supabase
     .from("proof_pack_shares")
