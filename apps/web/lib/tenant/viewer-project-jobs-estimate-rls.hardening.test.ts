@@ -14,11 +14,13 @@ describe("viewer / jobs / estimate RLS hardening migration", () => {
     expect(sql).toContain("is_internal_tenant_writer_for_tenant");
     expect(sql).toContain("is_tenant_owner_or_admin");
     expect(sql).toMatch(
-      /projects_write_internal_insert[\s\S]*is_internal_tenant_writer_for_tenant/
+      /create policy projects_write_internal_insert on public\.projects[\s\S]{0,200}?is_internal_tenant_writer_for_tenant/
     );
-    expect(sql).toMatch(/projects_write_internal_delete[\s\S]*is_tenant_owner_or_admin/);
+    expect(sql).toMatch(
+      /create policy projects_write_internal_delete on public\.projects[\s\S]{0,200}?is_tenant_owner_or_admin/
+    );
     expect(sql).not.toMatch(
-      /create policy projects_write_internal_delete[\s\S]*is_internal_tenant_reader_for_tenant/
+      /create policy projects_write_internal_delete on public\.projects[\s\S]{0,200}?is_internal_tenant_reader_for_tenant/
     );
   });
 
