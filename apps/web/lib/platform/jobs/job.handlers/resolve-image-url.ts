@@ -1,8 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getPublicConfig } from "@/lib/config";
+import { publicMediaObjectUrl } from "@/lib/media/path-in-media-bucket";
 import type { JobPayloadAiAnalyzeMedia } from "../job.types";
-
-const MEDIA_BUCKET = "media";
 
 /**
  * Resolve image URL for ai_analyze_media from payload (image_url, media_id, or upload_session_id).
@@ -34,7 +33,7 @@ export async function resolveImageUrl(
     if (typeof path !== "string" || !path) return null;
     try {
       const { NEXT_PUBLIC_SUPABASE_URL } = getPublicConfig();
-      return `${NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${MEDIA_BUCKET}/${path}`;
+      return publicMediaObjectUrl(NEXT_PUBLIC_SUPABASE_URL, path);
     } catch {
       return null;
     }

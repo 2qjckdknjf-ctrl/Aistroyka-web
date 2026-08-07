@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { pathInMediaBucket } from "@/lib/media/path-in-media-bucket";
 import type { CreateTaskMessageInput, TaskMessage, TaskMessageKind } from "./task-messages.types";
 
 const MESSAGE_SELECT =
@@ -44,10 +45,6 @@ function quoteFilterValue(value: string): string {
     return `"${value.replace(/"/g, '\\"')}"`;
   }
   return value;
-}
-
-function pathInMediaBucket(objectPath: string): string {
-  return objectPath.startsWith("media/") ? objectPath.slice("media/".length) : objectPath;
 }
 
 /** Encode cursor as base64url of `created_at|id`. */
