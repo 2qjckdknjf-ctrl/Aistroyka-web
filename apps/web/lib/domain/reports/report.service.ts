@@ -142,6 +142,21 @@ export async function submitReport(
 
     for (const row of mediaRows) {
       if (row.media_id || row.upload_session_id) {
+        // Skip enqueue when an active AI job already exists for this media attachment
+        // (avoids uncontrolled duplicates; dead/success jobs do not block a later resubmit).
+        const activeDedupe = `ai_analyze_media:${reportId}:${row.media_id ?? ""}:${row.upload_session_id ?? ""}`;
+        const { data: activeExisting } = await supabase
+          .from("jobs")
+          .select("id, status")
+          .eq("tenant_id", ctx.tenantId)
+          .eq("dedupe_key", activeDedupe)
+          .in("status", ["queued", "running"])
+          .limit(1)
+          .maybeSingle();
+        if (activeExisting?.id) {
+          jobIds.push(activeExisting.id as string);
+          continue;
+        }
         const mediaJob = await enqueueJob(supabase, {
           tenant_id: ctx.tenantId,
           user_id: ctx.userId,
@@ -150,8 +165,10 @@ export async function submitReport(
             report_id: reportId,
             media_id: row.media_id ?? undefined,
             upload_session_id: row.upload_session_id ?? undefined,
+            ...(projectId ? { project_id: projectId } : {}),
           },
           trace_id: traceId ?? null,
+          dedupe_key: activeDedupe,
         });
         if (mediaJob) jobIds.push(mediaJob.id);
       }

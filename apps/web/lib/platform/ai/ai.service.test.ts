@@ -18,6 +18,7 @@ describe("AIService.analyzeImage", () => {
   const admin = {} as any;
 
   beforeEach(() => {
+    vi.stubEnv("OPENAI_API_KEY", "sk-test");
     vi.mocked(runPolicy).mockReset().mockResolvedValue({ decision: "allow", rule_hits: [] });
     vi.mocked(invokeVisionWithRouter).mockReset();
   });
@@ -73,6 +74,7 @@ describe("AIService.analyzeImage", () => {
   });
 
   it("throws AIVisionFailedError when router returns null", async () => {
+    vi.stubEnv("OPENAI_API_KEY", "sk-test");
     (runPolicy as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       decision: "allow",
       rule_hits: [],
@@ -84,7 +86,30 @@ describe("AIService.analyzeImage", () => {
         { tenantId: "t1", userId: null, traceId: null },
         { imageUrl: "https://example.com/photo.jpg" }
       )
-    ).rejects.toThrow(AIVisionFailedError);
+    ).rejects.toMatchObject({
+      name: "AIVisionFailedError",
+      code: "AI_PROVIDERS_EXHAUSTED",
+      retryable: true,
+    });
+  });
+
+  it("throws non-retryable AI_PROVIDER_NOT_CONFIGURED when no keys", async () => {
+    vi.stubEnv("OPENAI_API_KEY", "");
+    vi.stubEnv("ANTHROPIC_API_KEY", "");
+    vi.stubEnv("GOOGLE_AI_API_KEY", "");
+    vi.stubEnv("GEMINI_API_KEY", "");
+    await expect(
+      analyzeImage(
+        admin,
+        { tenantId: "t1", userId: null, traceId: null },
+        { imageUrl: "https://example.com/photo.jpg" }
+      )
+    ).rejects.toMatchObject({
+      name: "AIVisionFailedError",
+      code: "AI_PROVIDER_NOT_CONFIGURED",
+      retryable: false,
+    });
+    expect(invokeVisionWithRouter).not.toHaveBeenCalled();
   });
 
   it("returns AnalysisResult shape when router returns valid JSON", async () => {

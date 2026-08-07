@@ -37,7 +37,20 @@ export async function enqueue(
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
-    return existing as Job | null;
+    const existingJob = existing as Job | null;
+    if (!existingJob) return null;
+    // Active job: idempotent return. Terminal job: free dedupe_key and insert a new one
+    // so resubmit/recovery are not blocked by a prior dead/success row.
+    if (existingJob.status === "queued" || existingJob.status === "running") {
+      return existingJob;
+    }
+    await supabase
+      .from("jobs")
+      .update({ dedupe_key: null, updated_at: new Date().toISOString() })
+      .eq("id", existingJob.id)
+      .eq("tenant_id", params.tenant_id);
+    const { data: retried } = await supabase.from("jobs").insert(row).select().single();
+    return (retried as Job | null) ?? null;
   }
   return null;
 }

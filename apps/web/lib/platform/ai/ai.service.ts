@@ -17,6 +17,12 @@ import { estimateCostUsd } from "@/lib/platform/ai-usage/cost-estimator";
 import { parseJsonFromContent, normalizeStage, sanitizeAnalysisResult } from "@/lib/ai/normalize";
 import { calibrateRiskLevel } from "@/lib/ai/riskCalibration";
 import type { AnalysisResult, RiskLevel } from "@/lib/ai/types";
+import { getConfiguredVisionProviders } from "@/lib/config/server";
+import {
+  AI_ERROR_CODES,
+  isRetryableAIErrorCode,
+  type AIErrorCode,
+} from "@/lib/platform/ai/ai-media-errors";
 
 export class AIPolicyBlockedError extends Error {
   constructor(message: string = "AI policy blocked") {
@@ -26,9 +32,18 @@ export class AIPolicyBlockedError extends Error {
 }
 
 export class AIVisionFailedError extends Error {
-  constructor(message: string = "Vision analysis failed") {
+  readonly code: AIErrorCode;
+  readonly retryable: boolean;
+
+  constructor(
+    message: string = "Vision analysis failed",
+    code: AIErrorCode = AI_ERROR_CODES.AI_PROVIDER_FAILED,
+    retryable?: boolean
+  ) {
     super(message);
     this.name = "AIVisionFailedError";
+    this.code = code;
+    this.retryable = retryable ?? isRetryableAIErrorCode(code);
   }
 }
 
@@ -177,6 +192,15 @@ export async function analyzeImage(
     }
   }
 
+  const configured = getConfiguredVisionProviders();
+  if (configured.length === 0) {
+    throw new AIVisionFailedError(
+      "AI provider not configured for this environment",
+      AI_ERROR_CODES.AI_PROVIDER_NOT_CONFIGURED,
+      false
+    );
+  }
+
   const visionResult = await invokeVisionWithRouter(admin, input.imageUrl, {
     tier,
     maxTokens: 1024,
@@ -185,14 +209,22 @@ export async function analyzeImage(
   });
 
   if (!visionResult) {
-    throw new AIVisionFailedError("All AI providers failed or are unavailable");
+    throw new AIVisionFailedError(
+      "All AI providers failed or are unavailable",
+      AI_ERROR_CODES.AI_PROVIDERS_EXHAUSTED,
+      true
+    );
   }
 
   let parsed: unknown;
   try {
     parsed = parseJsonFromContent(visionResult.content);
   } catch {
-    throw new AIVisionFailedError("AI returned non-JSON");
+    throw new AIVisionFailedError(
+      "AI returned non-JSON",
+      AI_ERROR_CODES.AI_PROVIDER_INVALID_RESPONSE,
+      false
+    );
   }
 
   const raw = parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : {};
