@@ -1,10 +1,14 @@
 /**
- * Centralized media object-path normalization + tenant authorization.
+ * Centralized media object-path normalization + tenant path classification.
  * Pure helpers — safe to mirror from the recovery .mjs script (parity-tested).
  *
  * Storage layouts (bucket-relative):
  * - Upload sessions: `{tenantId}/{sessionId}/...`
  * - Legacy project upload: `{projectId}/{uuid}.ext`
+ *
+ * IMPORTANT: A bare project UUID is NOT authorization.
+ * Project-prefixed paths require async DB proof via verifyProjectBelongsToTenant
+ * inside createSignedUrlForPath (or recovery's proveProjectOwnership).
  */
 
 import { AI_ERROR_CODES, type AIErrorCode } from "./ai-media-errors";
@@ -18,6 +22,16 @@ export type MediaPathGuardResult =
   | { ok: true; bucketRelativePath: string }
   | { ok: false; code: MediaPathGuardFailureCode; reason: string };
 
+/** Sync classification of a normalized path relative to a tenant. */
+export type MediaPathScopeInspection =
+  | { kind: "tenant_prefixed"; bucketRelativePath: string }
+  | {
+      kind: "project_prefix_candidate";
+      projectIdCandidate: string;
+      bucketRelativePath: string;
+    }
+  | { kind: "denied"; code: MediaPathGuardFailureCode; reason: string };
+
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -27,7 +41,6 @@ export function isUuid(value: string): boolean {
 
 /** Reject incomplete / malformed percent-encoding without throwing. */
 export function hasMalformedPercentEncoding(value: string): boolean {
-  // Any '%' must start a valid %HH sequence.
   for (let i = 0; i < value.length; i++) {
     if (value[i] !== "%") continue;
     const h1 = value[i + 1];
@@ -69,7 +82,7 @@ export function safeDecodePath(raw: string): string | null {
 
 /**
  * Normalize a storage object reference into a bucket-relative path.
- * Does NOT authorize tenant scope — call assertMediaPathTenantScope next.
+ * Does NOT authorize tenant/project scope.
  */
 export function normalizeMediaObjectPath(raw: string): MediaPathGuardResult {
   if (typeof raw !== "string" || !raw.trim()) {
@@ -80,7 +93,6 @@ export function normalizeMediaObjectPath(raw: string): MediaPathGuardResult {
     };
   }
 
-  // Reject before decode
   if (raw.includes("\0") || raw.includes("\\")) {
     return {
       ok: false,
@@ -106,7 +118,6 @@ export function normalizeMediaObjectPath(raw: string): MediaPathGuardResult {
     };
   }
 
-  // Reject whitespace inside the path (after end-trim already applied on input)
   if (/\s/.test(decoded)) {
     return {
       ok: false,
@@ -115,10 +126,7 @@ export function normalizeMediaObjectPath(raw: string): MediaPathGuardResult {
     };
   }
 
-  // Drop query/hash if somehow present on a path-like string
   let pathOnly = decoded.split("?")[0]!.split("#")[0]!;
-
-  // Normalize separators: collapse repeated slashes; strip leading slashes
   pathOnly = pathOnly.replace(/\/+/g, "/").replace(/^\/+/, "").replace(/\/+$/, "");
 
   if (!pathOnly) {
@@ -129,11 +137,7 @@ export function normalizeMediaObjectPath(raw: string): MediaPathGuardResult {
     };
   }
 
-  // Strip one or more leading media/ bucket prefixes (legacy double media/media/)
-  while (
-    pathOnly === MEDIA_BUCKET ||
-    pathOnly.startsWith(`${MEDIA_BUCKET}/`)
-  ) {
+  while (pathOnly === MEDIA_BUCKET || pathOnly.startsWith(`${MEDIA_BUCKET}/`)) {
     if (pathOnly === MEDIA_BUCKET) {
       return {
         ok: false,
@@ -157,46 +161,77 @@ export function normalizeMediaObjectPath(raw: string): MediaPathGuardResult {
 }
 
 /**
- * Authorize a bucket-relative (or raw) path for the given tenant.
- * Requires first segment === tenantId, or === projectId when projectId is provided.
- * Prefix matching is slash-bounded (tenant `abc` cannot authorize `abcd/...`).
+ * Classify path layout vs tenant.
+ * - tenant_prefixed: may be signed after this sync check
+ * - project_prefix_candidate: first segment is a UUID ≠ tenantId; requires DB ownership proof
+ * - denied: not under tenant and not a project-prefix candidate
+ *
+ * Never treats a caller-supplied project UUID as authorization.
  */
-export function assertMediaPathTenantScope(
+export function inspectMediaPathScope(
   rawPath: string,
-  tenantId: string,
-  projectId?: string | null
-): MediaPathGuardResult {
+  tenantId: string
+): MediaPathScopeInspection {
   if (!tenantId || !isUuid(tenantId)) {
     return {
-      ok: false,
+      kind: "denied",
       code: AI_ERROR_CODES.AI_MEDIA_ACCESS_DENIED,
       reason: "Invalid tenant scope",
     };
   }
 
   const normalized = normalizeMediaObjectPath(rawPath);
-  if (!normalized.ok) return normalized;
+  if (!normalized.ok) {
+    return { kind: "denied", code: normalized.code, reason: normalized.reason };
+  }
 
   const path = normalized.bucketRelativePath;
   const tenantPrefix = `${tenantId}/`;
-  const underTenant = path.startsWith(tenantPrefix) && path.length > tenantPrefix.length;
-
-  let underProject = false;
-  if (projectId && isUuid(projectId)) {
-    const projectPrefix = `${projectId}/`;
-    underProject =
-      path.startsWith(projectPrefix) && path.length > projectPrefix.length;
+  if (path.startsWith(tenantPrefix) && path.length > tenantPrefix.length) {
+    return { kind: "tenant_prefixed", bucketRelativePath: path };
   }
 
-  if (!underTenant && !underProject) {
+  const first = path.split("/")[0] ?? "";
+  if (isUuid(first) && first !== tenantId && path.length > first.length + 1) {
     return {
-      ok: false,
-      code: AI_ERROR_CODES.AI_MEDIA_ACCESS_DENIED,
-      reason: "Storage path outside tenant scope",
+      kind: "project_prefix_candidate",
+      projectIdCandidate: first,
+      bucketRelativePath: path,
     };
   }
 
-  return { ok: true, bucketRelativePath: path };
+  return {
+    kind: "denied",
+    code: AI_ERROR_CODES.AI_MEDIA_ACCESS_DENIED,
+    reason: "Storage path outside tenant scope",
+  };
+}
+
+/**
+ * Sync tenant-prefix-only authorization.
+ * Project-prefixed legacy paths are NOT authorized here — they need DB proof.
+ */
+export function assertMediaPathTenantScope(
+  rawPath: string,
+  tenantId: string
+): MediaPathGuardResult {
+  const inspection = inspectMediaPathScope(rawPath, tenantId);
+  switch (inspection.kind) {
+    case "tenant_prefixed":
+      return { ok: true, bucketRelativePath: inspection.bucketRelativePath };
+    case "project_prefix_candidate":
+      return {
+        ok: false,
+        code: AI_ERROR_CODES.AI_MEDIA_ACCESS_DENIED,
+        reason: "Project-prefixed path requires ownership proof",
+      };
+    case "denied":
+      return { ok: false, code: inspection.code, reason: inspection.reason };
+    default: {
+      const _exhaustive: never = inspection;
+      return _exhaustive;
+    }
+  }
 }
 
 /**
@@ -210,7 +245,6 @@ export function extractAndNormalizeStorageUrlPath(
   if (typeof url !== "string" || !url.trim() || !supabaseUrl) return null;
 
   const trimmed = url.trim();
-  // Object paths are not URLs — callers must normalize via normalizeMediaObjectPath.
   if (!/^https?:\/\//i.test(trimmed)) return null;
 
   let baseOrigin: string;
@@ -232,7 +266,7 @@ export function extractAndNormalizeStorageUrlPath(
   }
 
   if (parsed.origin !== baseOrigin) {
-    return null; // not our storage — caller treats as external
+    return null;
   }
 
   const prefixes = [
@@ -241,7 +275,7 @@ export function extractAndNormalizeStorageUrlPath(
     `/storage/v1/object/authenticated/${MEDIA_BUCKET}/`,
   ];
 
-  const pathname = parsed.pathname; // query/hash already excluded by URL.pathname
+  const pathname = parsed.pathname;
   let encodedObjectPath: string | null = null;
   for (const prefix of prefixes) {
     if (pathname.startsWith(prefix)) {
@@ -251,8 +285,6 @@ export function extractAndNormalizeStorageUrlPath(
   }
   if (!encodedObjectPath) return null;
 
-  // Query tokens must not be treated as path; pathname already excludes query.
-  // Still normalize/decode via shared guard (handles %2e%2e etc.).
   return normalizeMediaObjectPath(encodedObjectPath);
 }
 

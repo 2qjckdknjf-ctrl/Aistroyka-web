@@ -13,6 +13,9 @@ import { getTierForTenant } from "@/lib/platform/subscription/subscription.servi
 /**
  * Handler for ai_analyze_media: resolve image URL, run vision via AIService (Policy → Router → usage).
  * Idempotent: same job run twice is safe (vision result is not duplicated into analysis tables here).
+ *
+ * Security: `payload.project_id` is an untrusted claim only. It is never passed into signing
+ * as authorization. Trusted project is derived server-side (report → task/day → projects).
  */
 export async function handleAiAnalyzeMedia(
   supabase: SupabaseClient,
@@ -35,9 +38,15 @@ export async function handleAiAnalyzeMedia(
     image_url: raw.image_url,
   };
 
+  // Untrusted claim — mismatch detection only; never authorization for signed URLs.
+  const projectIdClaim =
+    typeof raw.project_id === "string" && raw.project_id.trim()
+      ? raw.project_id.trim()
+      : null;
+
   const resolved = await resolveImageUrlDetailed(supabase, payload, {
     tenantId: job.tenant_id,
-    projectId: typeof raw.project_id === "string" ? raw.project_id : null,
+    projectIdClaim,
   });
 
   if (!resolved.ok) {
@@ -62,7 +71,8 @@ export async function handleAiAnalyzeMedia(
         imageUrl: resolved.imageUrl,
         mediaId: payload.media_id ?? null,
         reportId: payload.report_id,
-        projectId: typeof raw.project_id === "string" ? raw.project_id : null,
+        // Only server-proven project id — never raw payload.project_id.
+        projectId: resolved.trustedProjectId,
       },
     );
   } catch (e) {

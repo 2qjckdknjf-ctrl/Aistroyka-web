@@ -29,15 +29,25 @@
 
 ## Security follow-up (cross-tenant signed URL)
 
-- **Defect:** `resolveFromMediaId` trusted `media.tenant_id` then signed a path taken from `media.file_url` without verifying the object key belongs to that tenant.
-- **Guard:** `lib/platform/ai/media-path-tenant-guard.ts` (+ ESM mirror `scripts/ops/lib/media-path-tenant-guard.mjs`, parity-tested).
-- **Chokepoint:** `createSignedUrlForPath(supabase, path, { tenantId, projectId })` always re-checks slash-bounded `${tenantId}/` (or legacy `${projectId}/`) scope before `createSignedUrl`.
-- Recovery script classifies poisoned `file_url` as `security_rejected` and never requeues them.
-- Additive migration (not applied): `20260806210000_media_file_url_immutable_for_clients.sql` blocks non-`service_role` UPDATEs of `media.file_url`. Application-level guard remains mandatory (INSERT of arbitrary `file_url` still possible under historic `media_tenant` FOR ALL).
+### Round 1 — poisoned `media.file_url`
+- **Defect:** `resolveFromMediaId` trusted `media.tenant_id` then signed a path from `media.file_url` without verifying the object key belongs to that tenant.
+- **Guard:** `lib/platform/ai/media-path-tenant-guard.ts` (+ ESM mirror, parity-tested).
+
+### Round 2 — untrusted project UUID as authorization
+- **Defect:** sync guard treated any UUID `projectId` as enough to authorize `${projectId}/...`, and the job handler fed raw `payload.project_id` into signing.
+- **Rule:** UUID is not authorization. Project-prefixed legacy paths require DB proof:
+  `projects.id = candidate AND projects.tenant_id = job.tenant_id` (fail closed).
+- **Chokepoint:** `createSignedUrlForPath(supabase, path, { tenantId })` — no `projectId` argument.
+  Tenant-prefixed paths authorize sync; project-prefixed paths call `verifyProjectBelongsToTenant` before `createSignedUrl`.
+- **Handler:** `payload.project_id` is `projectIdClaim` only (mismatch detection). `analyzeImage` receives only `trustedProjectId`.
+- Recovery proves project ownership the same way; foreign/missing/DB-error → never requeue.
+- Migrations in-repo, **not applied**:
+  - `20260806210000_media_file_url_immutable_for_clients.sql`
+  - `20260807090000_jobs_payload_project_tenant_check.sql`
 
 ## Database / migrations
 
-- Optional defense-in-depth migration present in repo; **do not apply to production** without owner approval.
+- Optional defense-in-depth migrations present in repo; **do not apply to production** without owner approval.
 - Do **not** apply any migration to production for this PR.
 
 ## Recovery of existing dead jobs (dry-run first)

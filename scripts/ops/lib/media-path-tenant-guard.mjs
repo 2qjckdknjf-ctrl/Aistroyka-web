@@ -2,6 +2,9 @@
  * Pure media path tenant guard (ESM).
  * Keep behavior in sync with apps/web/lib/platform/ai/media-path-tenant-guard.ts
  * — parity covered by media-path-tenant-guard.parity.test.ts
+ *
+ * Project UUID alone is NOT authorization. Project-prefixed paths return
+ * needs_project_ownership_proof for the recovery script to DB-verify.
  */
 
 export const MEDIA_BUCKET = "media";
@@ -90,34 +93,57 @@ export function normalizeMediaObjectPath(raw) {
   return { ok: true, bucketRelativePath: segments.join("/") };
 }
 
-export function assertMediaPathTenantScope(rawPath, tenantId, projectId) {
+export function inspectMediaPathScope(rawPath, tenantId) {
   if (!tenantId || !isUuid(tenantId)) {
-    return { ok: false, code: AI_MEDIA_ACCESS_DENIED, reason: "Invalid tenant scope" };
+    return {
+      kind: "denied",
+      code: AI_MEDIA_ACCESS_DENIED,
+      reason: "Invalid tenant scope",
+    };
   }
   const normalized = normalizeMediaObjectPath(rawPath);
-  if (!normalized.ok) return normalized;
+  if (!normalized.ok) {
+    return { kind: "denied", code: normalized.code, reason: normalized.reason };
+  }
   const path = normalized.bucketRelativePath;
   const tenantPrefix = `${tenantId}/`;
-  const underTenant = path.startsWith(tenantPrefix) && path.length > tenantPrefix.length;
-  let underProject = false;
-  if (projectId && isUuid(projectId)) {
-    const projectPrefix = `${projectId}/`;
-    underProject = path.startsWith(projectPrefix) && path.length > projectPrefix.length;
+  if (path.startsWith(tenantPrefix) && path.length > tenantPrefix.length) {
+    return { kind: "tenant_prefixed", bucketRelativePath: path };
   }
-  if (!underTenant && !underProject) {
+  const first = path.split("/")[0] ?? "";
+  if (isUuid(first) && first !== tenantId && path.length > first.length + 1) {
+    return {
+      kind: "project_prefix_candidate",
+      projectIdCandidate: first,
+      bucketRelativePath: path,
+    };
+  }
+  return {
+    kind: "denied",
+    code: AI_MEDIA_ACCESS_DENIED,
+    reason: "Storage path outside tenant scope",
+  };
+}
+
+/** Sync tenant-prefix-only. Project-prefixed paths require DB ownership proof. */
+export function assertMediaPathTenantScope(rawPath, tenantId) {
+  const inspection = inspectMediaPathScope(rawPath, tenantId);
+  if (inspection.kind === "tenant_prefixed") {
+    return { ok: true, bucketRelativePath: inspection.bucketRelativePath };
+  }
+  if (inspection.kind === "project_prefix_candidate") {
     return {
       ok: false,
       code: AI_MEDIA_ACCESS_DENIED,
-      reason: "Storage path outside tenant scope",
+      reason: "Project-prefixed path requires ownership proof",
     };
   }
-  return { ok: true, bucketRelativePath: path };
+  return { ok: false, code: inspection.code, reason: inspection.reason };
 }
 
 export function extractAndNormalizeStorageUrlPath(url, supabaseUrl) {
   if (typeof url !== "string" || !url.trim() || !supabaseUrl) return null;
   const trimmed = url.trim();
-  // Object paths are not URLs — callers normalize via normalizeMediaObjectPath.
   if (!/^https?:\/\//i.test(trimmed)) return null;
   let baseOrigin;
   try {
@@ -149,14 +175,17 @@ export function extractAndNormalizeStorageUrlPath(url, supabaseUrl) {
 }
 
 /**
- * Classify whether a media.file_url / object path is safe to recover for a tenant.
- * Never returns the foreign path string to callers for logging.
+ * Classify media.file_url / object path for a tenant.
+ * Project-prefixed paths return needs_project_ownership_proof (not recoverable yet).
+ * Never returns foreign path strings for logging.
  */
-export function classifyMediaFileUrlForTenant(fileUrl, tenantId, projectId, supabaseUrl) {
+export function classifyMediaFileUrlForTenant(fileUrl, tenantId, supabaseUrl) {
   if (typeof fileUrl !== "string" || !fileUrl.trim()) {
     return { resolvable: false, reason: "empty_file_url", security_rejected: false };
   }
   const trimmed = fileUrl.trim();
+  let pathResult = null;
+
   const fromUrl = supabaseUrl
     ? extractAndNormalizeStorageUrlPath(trimmed, supabaseUrl)
     : null;
@@ -168,32 +197,45 @@ export function classifyMediaFileUrlForTenant(fileUrl, tenantId, projectId, supa
         security_rejected: fromUrl.code === AI_MEDIA_ACCESS_DENIED,
       };
     }
-    const scope = assertMediaPathTenantScope(fromUrl.bucketRelativePath, tenantId, projectId);
-    if (!scope.ok) {
+    pathResult = fromUrl.bucketRelativePath;
+  } else if (/^https?:\/\//i.test(trimmed)) {
+    return { resolvable: false, reason: "external_url", security_rejected: false };
+  } else {
+    const normalized = normalizeMediaObjectPath(trimmed);
+    if (!normalized.ok) {
       return {
         resolvable: false,
-        reason: "poisoned_cross_tenant_path",
-        security_rejected: true,
+        reason: "corrupt_reference",
+        security_rejected:
+          normalized.reason.includes("traversal") ||
+          normalized.reason.includes("encoding"),
       };
     }
-    return { resolvable: true, reason: "media_storage_url", bucketRelativePath: scope.bucketRelativePath };
+    pathResult = normalized.bucketRelativePath;
   }
 
-  if (/^https?:\/\//i.test(trimmed)) {
-    return { resolvable: false, reason: "external_url", security_rejected: false };
-  }
-
-  const scope = assertMediaPathTenantScope(trimmed, tenantId, projectId);
-  if (!scope.ok) {
-    const security =
-      scope.code === AI_MEDIA_ACCESS_DENIED ||
-      scope.reason.includes("traversal") ||
-      scope.reason.includes("encoding");
+  const inspection = inspectMediaPathScope(pathResult, tenantId);
+  if (inspection.kind === "tenant_prefixed") {
     return {
-      resolvable: false,
-      reason: scope.code === AI_MEDIA_ACCESS_DENIED ? "poisoned_cross_tenant_path" : "corrupt_reference",
-      security_rejected: security || scope.code === AI_MEDIA_ACCESS_DENIED,
+      resolvable: true,
+      reason: fromUrl ? "media_storage_url" : "media_object_path",
+      bucketRelativePath: inspection.bucketRelativePath,
+      security_rejected: false,
     };
   }
-  return { resolvable: true, reason: "media_object_path", bucketRelativePath: scope.bucketRelativePath };
+  if (inspection.kind === "project_prefix_candidate") {
+    return {
+      resolvable: false,
+      needs_project_ownership_proof: true,
+      projectIdCandidate: inspection.projectIdCandidate,
+      bucketRelativePath: inspection.bucketRelativePath,
+      reason: "project_prefix_needs_proof",
+      security_rejected: false,
+    };
+  }
+  return {
+    resolvable: false,
+    reason: "poisoned_cross_tenant_path",
+    security_rejected: true,
+  };
 }

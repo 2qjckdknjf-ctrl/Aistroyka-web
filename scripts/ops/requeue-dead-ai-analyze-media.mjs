@@ -26,8 +26,62 @@ import {
   MEDIA_BUCKET,
   assertMediaPathTenantScope,
   classifyMediaFileUrlForTenant,
+  inspectMediaPathScope,
   isUuid,
 } from "./lib/media-path-tenant-guard.mjs";
+
+/**
+ * DB ownership proof: projects.id = projectId AND projects.tenant_id = tenantId.
+ * Injected in tests. Never logs foreign ids.
+ */
+export async function proveProjectOwnership(admin, projectId, tenantId) {
+  if (!isUuid(projectId) || !isUuid(tenantId)) {
+    return { ok: false, temporary: false, denied: true, reason: "invalid_project_scope" };
+  }
+  const { data, error } = await admin
+    .from("projects")
+    .select("id")
+    .eq("id", projectId)
+    .eq("tenant_id", tenantId)
+    .maybeSingle();
+  if (error) {
+    return { ok: false, temporary: true, denied: false, reason: "project_lookup_error" };
+  }
+  if (!data?.id) {
+    return { ok: false, temporary: false, denied: true, reason: "project_not_in_tenant" };
+  }
+  return { ok: true, temporary: false, denied: false, reason: "project_owned" };
+}
+
+async function resolvePathWithProjectProof(pathOrClassified, tenantId, prove) {
+  if (pathOrClassified.resolvable) return pathOrClassified;
+  if (!pathOrClassified.needs_project_ownership_proof) return pathOrClassified;
+
+  const proof = await prove(pathOrClassified.projectIdCandidate, tenantId);
+  if (proof.temporary) {
+    return {
+      resolvable: false,
+      reason: "project_lookup_error",
+      permanently_unrecoverable: true,
+      security_rejected: false,
+      lookup_error: true,
+    };
+  }
+  if (!proof.ok || proof.denied) {
+    return {
+      resolvable: false,
+      reason: "poisoned_cross_tenant_project_path",
+      permanently_unrecoverable: true,
+      security_rejected: true,
+    };
+  }
+  return {
+    resolvable: true,
+    reason: "media_project_path_proven",
+    bucketRelativePath: pathOrClassified.bucketRelativePath,
+    security_rejected: false,
+  };
+}
 
 function loadEnvFile(path) {
   if (!existsSync(path)) return;
@@ -64,15 +118,50 @@ function hasFlag(name) {
 
 /**
  * Classify whether a dead job's media reference is recoverable.
- * Never returns foreign object paths for logging.
+ * Never returns foreign object paths / foreign project UUIDs for logging.
+ *
+ * `payload.project_id` and `media.project_id` are untrusted until proveProjectOwnership succeeds.
  */
-export function classifyJobMediaReference({
+export async function classifyJobMediaReference({
   media,
   session,
   tenantId,
   supabaseUrl,
-  projectId = null,
+  /** Untrusted payload claim — never used as path authorization without DB proof. */
+  projectIdClaim = null,
+  proveProjectOwnership: prove,
 }) {
+  if (typeof prove !== "function") {
+    return {
+      resolvable: false,
+      reason: "project_proof_unavailable",
+      permanently_unrecoverable: true,
+      security_rejected: true,
+    };
+  }
+
+  // If a claim is present, it must belong to this tenant (fail closed).
+  if (projectIdClaim) {
+    const claimProof = await prove(projectIdClaim, tenantId);
+    if (claimProof.temporary) {
+      return {
+        resolvable: false,
+        reason: "project_lookup_error",
+        permanently_unrecoverable: true,
+        security_rejected: false,
+        lookup_error: true,
+      };
+    }
+    if (!claimProof.ok || claimProof.denied) {
+      return {
+        resolvable: false,
+        reason: "payload_project_not_in_tenant",
+        permanently_unrecoverable: true,
+        security_rejected: true,
+      };
+    }
+  }
+
   if (media) {
     if (media.tenant_id && media.tenant_id !== tenantId) {
       return {
@@ -82,15 +171,32 @@ export function classifyJobMediaReference({
         security_rejected: true,
       };
     }
+
+    // media.project_id is a candidate — require ownership proof when present.
+    if (media.project_id) {
+      const mediaProof = await prove(media.project_id, tenantId);
+      if (mediaProof.temporary) {
+        return {
+          resolvable: false,
+          reason: "project_lookup_error",
+          permanently_unrecoverable: true,
+          security_rejected: false,
+          lookup_error: true,
+        };
+      }
+      if (!mediaProof.ok || mediaProof.denied) {
+        return {
+          resolvable: false,
+          reason: "media_project_not_in_tenant",
+          permanently_unrecoverable: true,
+          security_rejected: true,
+        };
+      }
+    }
+
     const fileUrl = typeof media.file_url === "string" ? media.file_url : "";
     if (fileUrl.trim()) {
-      const allowedProject = projectId || media.project_id || null;
-      const classified = classifyMediaFileUrlForTenant(
-        fileUrl,
-        tenantId,
-        allowedProject,
-        supabaseUrl
-      );
+      const classified = classifyMediaFileUrlForTenant(fileUrl, tenantId, supabaseUrl);
       if (classified.security_rejected) {
         return {
           resolvable: false,
@@ -99,11 +205,23 @@ export function classifyJobMediaReference({
           security_rejected: true,
         };
       }
-      if (classified.resolvable) {
+      const proven = await resolvePathWithProjectProof(classified, tenantId, prove);
+      if (proven.security_rejected) {
+        return {
+          resolvable: false,
+          reason: proven.reason,
+          permanently_unrecoverable: true,
+          security_rejected: true,
+        };
+      }
+      if (proven.lookup_error) {
+        return proven;
+      }
+      if (proven.resolvable) {
         return {
           resolvable: true,
-          reason: classified.reason,
-          bucketRelativePath: classified.bucketRelativePath,
+          reason: proven.reason,
+          bucketRelativePath: proven.bucketRelativePath,
           security_rejected: false,
         };
       }
@@ -111,7 +229,7 @@ export function classifyJobMediaReference({
       if (!session) {
         return {
           resolvable: false,
-          reason: classified.reason,
+          reason: proven.reason || classified.reason,
           permanently_unrecoverable: true,
           security_rejected: false,
         };
@@ -152,8 +270,19 @@ export function classifyJobMediaReference({
     };
   }
 
-  const scope = assertMediaPathTenantScope(session.object_path, tenantId, null);
+  // Upload sessions must be tenant-prefixed (not project-prefixed).
+  const scope = assertMediaPathTenantScope(session.object_path, tenantId);
   if (!scope.ok) {
+    // If somehow project-prefixed, still require proof — but session paths must match tenant/session.
+    const insp = inspectMediaPathScope(session.object_path, tenantId);
+    if (insp.kind === "project_prefix_candidate") {
+      return {
+        resolvable: false,
+        reason: "session_path_mismatch",
+        permanently_unrecoverable: true,
+        security_rejected: true,
+      };
+    }
     return {
       resolvable: false,
       reason: "poisoned_cross_tenant_path",
@@ -161,7 +290,6 @@ export function classifyJobMediaReference({
       security_rejected: true,
     };
   }
-  // Session path must also sit under tenant/session id when session id known
   if (session.id) {
     const expected = `${tenantId}/${session.id}`;
     if (
@@ -253,7 +381,8 @@ async function main() {
     const payload = job.payload ?? {};
     const mediaId = payload.media_id ?? null;
     const uploadSessionId = payload.upload_session_id ?? null;
-    const projectId = typeof payload.project_id === "string" ? payload.project_id : null;
+    const projectIdClaim =
+      typeof payload.project_id === "string" ? payload.project_id : null;
 
     let media = null;
     let session = null;
@@ -274,13 +403,25 @@ async function main() {
       session = data;
     }
 
-    const classification = classifyJobMediaReference({
+    const classification = await classifyJobMediaReference({
       media,
       session,
       tenantId,
       supabaseUrl: url,
-      projectId,
+      projectIdClaim,
+      proveProjectOwnership: (projectId, tid) =>
+        proveProjectOwnership(admin, projectId, tid),
     });
+
+    // DB lookup errors: fail closed, never requeue.
+    if (classification.lookup_error) {
+      report.permanently_unrecoverable.push({
+        job_id: job.id,
+        reason: classification.reason,
+        last_error_type: job.last_error_type,
+      });
+      continue;
+    }
 
     if (classification.security_rejected) {
       report.security_rejected.push({

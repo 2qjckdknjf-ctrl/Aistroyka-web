@@ -15,7 +15,7 @@ export type { ResolveAIMediaImageResult };
 export async function resolveImageUrl(
   supabase: SupabaseClient,
   payload: JobPayloadAiAnalyzeMedia,
-  options?: { tenantId: string; projectId?: string | null }
+  options?: { tenantId: string; projectIdClaim?: string | null }
 ): Promise<string | null> {
   if (!options?.tenantId) {
     // Backward-compat call sites without tenant: cannot safely resolve.
@@ -27,7 +27,7 @@ export async function resolveImageUrl(
     mediaId: payload.media_id,
     uploadSessionId: payload.upload_session_id,
     imageUrl: payload.image_url,
-    projectId: options.projectId ?? null,
+    projectIdClaim: options.projectIdClaim ?? null,
   });
   return result.ok ? result.imageUrl : null;
 }
@@ -36,7 +36,7 @@ export async function resolveImageUrl(
 export async function resolveImageUrlDetailed(
   supabase: SupabaseClient,
   payload: JobPayloadAiAnalyzeMedia,
-  options: { tenantId: string; projectId?: string | null }
+  options: { tenantId: string; projectIdClaim?: string | null }
 ): Promise<ResolveAIMediaImageResult> {
   return resolveAIMediaImage(supabase, {
     tenantId: options.tenantId,
@@ -44,6 +44,6 @@ export async function resolveImageUrlDetailed(
     mediaId: payload.media_id,
     uploadSessionId: payload.upload_session_id,
     imageUrl: payload.image_url,
-    projectId: options.projectId ?? null,
+    projectIdClaim: options.projectIdClaim ?? null,
   });
 }
