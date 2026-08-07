@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient, getSessionUser } from "@/lib/supabase/server";
 import {
+  acceptInternalTenantInviteMembership,
   AccountWorkspaceError,
-  syncAccountMemberForInternalTenantRole,
 } from "@/lib/account/account-workspace.service";
 import {
   createTenantAndOwnerMembershipForCurrentUser,
@@ -40,18 +40,8 @@ async function acceptInviteByToken(
     };
   }
 
-  const { error: upsertError } = await supabase.from("tenant_members").upsert(
-    {
-      tenant_id: inv.tenant_id,
-      user_id: user.id,
-      role: inv.role,
-    },
-    { onConflict: "tenant_id,user_id" }
-  );
-  if (upsertError) return { error: "Unable to join the workspace.", status: 500 };
-
   try {
-    await syncAccountMemberForInternalTenantRole({
+    await acceptInternalTenantInviteMembership({
       tenantId: inv.tenant_id,
       userId: user.id,
       tenantRole: inv.role,
