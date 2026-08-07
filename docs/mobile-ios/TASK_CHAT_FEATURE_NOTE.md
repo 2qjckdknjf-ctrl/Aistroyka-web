@@ -1,7 +1,8 @@
 # Task Chat (Worker ↔ Manager)
 
 **Date:** 2026-07-18  
-**Branch:** `feature/task-chat-worker-manager`  
+**Status:** Merged to `main` in PR #187
+
 **Scope:** Task-scoped chat with text, voice notes, photo, and video. No live calls.
 
 ## Surfaces
@@ -24,6 +25,7 @@
 - Push type: `task_message`
 - Lite allow-list: messages paths for `ios_worker` / `android_worker`
 - Realtime helper: `apps/web/lib/realtime/task-messages-realtime.ts`
+- API contract: [`API-v1-ENDPOINTS.md#task-chat`](../API-v1-ENDPOINTS.md#task-chat)
 
 ## Audit
 
