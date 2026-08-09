@@ -1,10 +1,21 @@
 import path from "path";
 import { defineConfig } from "vitest/config";
 
-export default defineConfig({
+/**
+ * Vitest 4.1+ transforms via oxc and ignores esbuild.jsx.
+ * `oxc` is a runtime Vite/Vitest option; package typings differ across vite 7/8,
+ * so it is applied via a typed-safe spread (keeps CI `tsc --noEmit` green).
+ */
+const oxcJsx = {
   oxc: {
-    jsx: "automatic",
+    jsx: {
+      runtime: "automatic",
+    },
   },
+} as Record<string, unknown>;
+
+export default defineConfig({
+  ...oxcJsx,
   test: {
     environment: "node",
     include: ["**/*.test.ts", "**/*.spec.ts"],
