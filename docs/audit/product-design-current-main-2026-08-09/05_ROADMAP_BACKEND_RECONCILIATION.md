@@ -1,9 +1,13 @@
 # 05 — Roadmap & Backend Reconciliation
 
-**Audit date:** 2026-08-09  
-**Source/runtime SHA:** `02baa6a` (match)  
-**Historical baseline (not rewritten):** `docs/audit/AISTROYKA_FULL_PRODUCT_DESIGN_ARCHITECTURE_AUDIT_2026-08-02.md`  
-**Delivery roadmap:** `docs/roadmap/AISTROYKA_COMPLETION_DELIVERY_ROADMAP_2026-08-02.md`  
+**Audit date:** 2026-08-09
+
+**Source/runtime SHA:** `02baa6a` (match)
+
+**Historical baseline (not rewritten):** [`docs/audit/AISTROYKA_FULL_PRODUCT_DESIGN_ARCHITECTURE_AUDIT_2026-08-02.md`](../AISTROYKA_FULL_PRODUCT_DESIGN_ARCHITECTURE_AUDIT_2026-08-02.md) — previously local/unpublished; published with this handoff for self-containment.
+
+**Delivery roadmap:** [`docs/roadmap/AISTROYKA_COMPLETION_DELIVERY_ROADMAP_2026-08-02.md`](../../roadmap/AISTROYKA_COMPLETION_DELIVERY_ROADMAP_2026-08-02.md) — same provenance (local/unpublished → published with handoff).
+
 **Mega-roadmap finance rule:** customer must never see internal contractor finance — unchanged.
 
 Claim labels: `VERIFIED` | `PARTIAL` | `STALE` | `CONTRADICTED` | `BLOCKED_EXTERNAL`
@@ -112,4 +116,4 @@ Security/product drafts #213–#189 etc. may change portal/RBAC/report/upload be
 
 - Contractor project detail exposes **Costs** and **Estimate** tabs — appropriate for contractor ops if RBAC holds.
 - Client portal capture did **not** show cost/margin tables in viewport; however client view still used contractor shell — **PARTIAL / needs dedicated client-role proof**, not a finance-safe clearance.
-- Mega-roadmap rule remains binding for any Slice 01+ work.
+- Mega-roadmap rule remains binding for any **Product Design Remediation Slice 01+** work.

@@ -1,7 +1,9 @@
 # 07 — Final Product Design Audit (current main)
 
-**Date:** 2026-08-09  
-**Mode:** READ_ONLY_AUDIT_ONLY  
+**Date:** 2026-08-09
+
+**Mode:** READ_ONLY_AUDIT_ONLY
+
 **Verdict:** `PRODUCT_DESIGN_AUDIT_PARTIAL_BLOCKED_EXTERNAL`
 
 ---
@@ -27,7 +29,9 @@ Details: `00_CURRENT_BASELINE.md`.
 
 **In scope:** public production journeys; staging synthetic cabinet/portal/admin-AI; iOS Worker onboarding screenshot; design-system/code drift; bounded DOM/keyboard samples; roadmap reconciliation.
 
-**Out of scope / not done:** commits, PRs, deploys, migrations, fixtures, paid AI, push send, store upload, Figma, DesignPreview-as-proof, rewriting 2026-08-02 historical audit.
+**Out of scope / not done by the audit agent:** application-code changes, manual production promotion, migrations, fixtures, paid AI, push send, store upload, Figma, DesignPreview-as-proof, rewriting the 2026-08-02 historical audit body.
+
+**Deployment wording (precise):** this audit did **not** manually promote production or ship application code. Publishing the docs Draft PR may still run repository CI (lint/tests/`cf:build` Cloudflare bundle) and automatic preview deployments (e.g. Vercel Preview). Merge to `main` may trigger established staging/production Worker automation — that is existing repo CI, not a manual Product Design production deploy.
 
 **Limits:** no screen-reader certification; no WCAG claim; client finance isolation not DOM-proven; Operations Center and iOS Manager not captured; Worker authenticated path blocked.
 
@@ -109,7 +113,8 @@ Unverified: VoiceOver/TalkBack, full keyboard order on cabinet, 200% zoom certif
 
 ## 10. Design-system / Wave C stage
 
-**Wave C — feature migration in progress.**  
+**Wave C — feature migration in progress.**
+
 Wave A/B “complete” claims are **overstated** relative to missing `--lg-*` roots, legacy dual namespace, `check:design` FAIL, and mobile BrandTokens gap. Details: `04_DESIGN_SYSTEM_DRIFT.md`.
 
 ---
@@ -172,9 +177,12 @@ Safe for **continued pilot engineering** on matching `02baa6a` runtime. **Not** 
 
 ## 16. Recommended implementation order
 
-1. **Slice 01 (this track):** remove login debug string; dismiss-persist welcome modal; green `check:design` raw-color hits — see ops prompt.  
-2. **R1 / legal:** Privacy/Terms real copy (owner/counsel).  
-3. **Slice 02:** project tab IA unify; client shell; AI status chip; iOS notification defer.  
+1. **Product Design Remediation Slice 01** (this track; **not** completed by the audit handoff; **not** historical Liquid Glass Slice 1): remove login debug string; dismiss-persist welcome modal; green `check:design` raw-color hits — see ops prompt.
+
+2. **R1 / legal:** Privacy/Terms real copy (owner/counsel).
+
+3. **Product Design Remediation Slice 02:** project tab IA unify; client shell; AI status chip; iOS notification defer.
+
 4. **Evidence follow-ups:** Manager sim capture; owner Operations Center visual pass; client-persona finance-safe DOM audit.
 
 ---
@@ -199,7 +207,8 @@ Canonical new pointers for humans/agents:
 
 - Audit pack: `docs/audit/product-design-current-main-2026-08-09/`
 - Next prompt: `docs/ops/CURSOR_PRODUCT_DESIGN_SLICE_01_IMPLEMENTATION_PROMPT_2026-08-09.md`
-- Track: **AUDIT_ONLY** (implementation NOT_GRANTED until Slice 01 auth)
+- Track: **AUDIT_ONLY** (implementation NOT_GRANTED until Product Design Remediation Slice 01 auth)
+- Naming: **Product Design Remediation Slice 01** ≠ already-implemented **Liquid Glass Slice 1** (public design foundation)
 
 ---
 
@@ -207,10 +216,12 @@ Canonical new pointers for humans/agents:
 
 | Item | Value |
 |------|-------|
-| Files changed this run | Audit artifacts under `docs/audit/product-design-current-main-2026-08-09/` + Slice 01 prompt under `docs/ops/` |
+| Files changed this run | Audit artifacts under `docs/audit/product-design-current-main-2026-08-09/` + Product Design Remediation Slice 01 prompt under `docs/ops/` + previously unpublished 2026-08-02 historical audit/roadmap for self-containment |
 | Checks run | health apex/www/staging; security_headers.sh PASS; check:design FAIL (recorded); i18n:check PASS; Playwright captures; DOM keyboard sample; screenshot inspect+redact |
 | Result | Partial audit complete with evidence |
 | Remaining blockers | Listed in §12 |
+| Manual production promotion | **NONE** |
+| CI / preview / Worker builds | May run on docs PR push/merge (not claimed as “no build”) |
 | External mutations | **NONE** |
 | Pre-existing dirty preserved | **YES** |
 | Verdict | PARTIAL_BLOCKED_EXTERNAL — **YES** for audit deliverable completeness within limits |

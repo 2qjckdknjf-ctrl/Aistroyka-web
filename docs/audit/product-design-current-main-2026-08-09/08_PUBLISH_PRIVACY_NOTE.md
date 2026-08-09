@@ -7,7 +7,10 @@
 - Documents `00`–`07` and this note.
 - `evidence/manifest.json`
 - Production public / guest auth / iOS Worker onboarding screenshots that do **not** contain account identity pixels (`publishedScreenshotCount` in manifest).
-- Slice 01 implementation prompt under `docs/ops/`.
+- Product Design Remediation Slice 01 implementation prompt under `docs/ops/`.
+- Previously local/unpublished historical documents published for self-containment:
+  - `docs/audit/AISTROYKA_FULL_PRODUCT_DESIGN_ARCHITECTURE_AUDIT_2026-08-02.md`
+  - `docs/roadmap/AISTROYKA_COMPLETION_DELIVERY_ROADMAP_2026-08-02.md`
 
 ## Not published in git
 

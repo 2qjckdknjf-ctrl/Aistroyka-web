@@ -1,29 +1,48 @@
-# Cursor Prompt — Product Design Slice 01 Implementation
+# Cursor Prompt — Product Design Remediation Slice 01 Implementation
 
-**Date:** 2026-08-09  
-**Derived from:** `docs/audit/product-design-current-main-2026-08-09/` (verdict `PRODUCT_DESIGN_AUDIT_PARTIAL_BLOCKED_EXTERNAL`)  
-**Canonical source baseline:** `origin/main` @ `02baa6a379ca9ff30735d35e53aea5198e972d45` (verify at start)  
-**Authorizations (default for the implementation session):**  
-`IMPLEMENTATION_AUTHORIZATION=NOT_GRANTED`  
-`COMMIT_AUTHORIZATION=NOT_GRANTED`  
-`PUSH_AUTHORIZATION=NOT_GRANTED`  
-`PR_AUTHORIZATION=NOT_GRANTED`  
-`DRAFT_PR_AUTHORIZATION=NOT_GRANTED`  
-`MERGE_AUTHORIZATION=NOT_GRANTED`  
-`DEPLOY_AUTHORIZATION=NOT_GRANTED`  
-`PRODUCTION_AUTHORIZATION=NOT_GRANTED`  
-`MIGRATION_AUTHORIZATION=NOT_GRANTED`  
-`EXTERNAL_MUTATION_AUTHORIZATION=NOT_GRANTED`  
+**Date:** 2026-08-09
+
+**Canonical name:** **Product Design Remediation Slice 01**
+
+**Not the same as:** historical **Liquid Glass Slice 1** (public design foundation — already implemented).
+
+**Derived from:** `docs/audit/product-design-current-main-2026-08-09/` (verdict `PRODUCT_DESIGN_AUDIT_PARTIAL_BLOCKED_EXTERNAL`)
+
+**Canonical source baseline:** `origin/main` @ `02baa6a379ca9ff30735d35e53aea5198e972d45` (verify at start; re-verify after audit docs merge)
+
+**Authorizations (default for the implementation session):**
+
+`IMPLEMENTATION_AUTHORIZATION=NOT_GRANTED`
+
+`COMMIT_AUTHORIZATION=NOT_GRANTED`
+
+`PUSH_AUTHORIZATION=NOT_GRANTED`
+
+`PR_AUTHORIZATION=NOT_GRANTED`
+
+`DRAFT_PR_AUTHORIZATION=NOT_GRANTED`
+
+`MERGE_AUTHORIZATION=NOT_GRANTED`
+
+`DEPLOY_AUTHORIZATION=NOT_GRANTED`
+
+`PRODUCTION_AUTHORIZATION=NOT_GRANTED`
+
+`MIGRATION_AUTHORIZATION=NOT_GRANTED`
+
+`EXTERNAL_MUTATION_AUTHORIZATION=NOT_GRANTED`
+
 `LIVE_AI_AUTHORIZATION=NOT_GRANTED`
 
-This handoff publishes the audit only. Do **not** start Slice 01 implementation until a later owner prompt sets `IMPLEMENTATION_AUTHORIZATION=GRANTED` (and any commit/PR gates separately).
+This handoff publishes the audit only. Do **not** start **Product Design Remediation Slice 01** implementation until a later owner prompt sets `IMPLEMENTATION_AUTHORIZATION=GRANTED` (and any commit/PR gates separately). This remediation slice is **not** already completed.
 
 ---
 
 ## Copy into Cursor Agent mode
 
 ```text
-You are implementing Product Design Slice 01 for AISTROYKA.
+You are implementing Product Design Remediation Slice 01 for AISTROYKA
+(not Liquid Glass Slice 1; not a completed Wave C claim).
 
 PRIMARY WORKSPACE
 /Users/alex/Projects/AISTROYKA
@@ -39,7 +58,7 @@ AUDIT SOURCE (read completely)
 - AGENTS.md
 - docs/roadmap/AISTROYKA_MEGA_ROADMAP_CUSTOMER_FINANCE_SAFE.md
 
-IN SCOPE (Slice 01 only)
+IN SCOPE (Product Design Remediation Slice 01 only)
 1) PD-P1-01 — Remove production-visible login debug status ("Login step: idle") from /[locale]/login for EN/RU/ES/IT.
 2) PD-P1-03 — First-run Welcome modal must dismiss persistently and must not intercept project Open / primary cabinet navigation after the user chooses Start working (or equivalent).
 3) PD-P2-01 / PD-P2-02 — Make `bun run --cwd apps/web check:design` PASS by replacing raw Tailwind red-600/green-600 in:
@@ -54,7 +73,7 @@ OUT OF SCOPE (explicit exclusions)
 - Privacy/Terms legal rewrite (PD-P1-02) unless owner provides final counsel copy in the prompt follow-up.
 - Client portal shell rewrite (PD-P1-05).
 - Password reset route (PD-P1-06).
-- Broad Liquid Glass merges from design/* branches.
+- Broad Liquid Glass merges from design/* branches (do not conflate with this remediation slice).
 - iOS/Android feature work.
 - Platform-admin / ROMA changes.
 - AI LIVE calls, push, billing, migrations, store upload.
@@ -65,7 +84,7 @@ WORKTREE RULES
 - Preserve dirty primary worktree; never reset/revert/stash user work.
 - Create an isolated worktree/branch from current origin/main (verify SHA first).
 - Prefer /Users/alex/Projects/AISTROYKA-main-clean only if it is clean and exactly at current origin/main; otherwise new temp worktree.
-- Branch name suggestion: fix/product-design-slice-01-login-modal-tokens
+- Branch name suggestion: design/product-design-remediation-slice-01-2026-08-09
 
 IMPLEMENTATION CONSTRAINTS
 - Prefer isolated component/helper fixes over refactors.
@@ -103,11 +122,14 @@ STOP CONDITIONS
 - If `IMPLEMENTATION_AUTHORIZATION` is not `GRANTED`, do not implement.
 - If origin/main ≠ expected baseline and drift is unclear, stop and re-baseline.
 - If fix requires portal RBAC redesign, legal copy, platform-owner, client persona, or production mutation credentials, stop and split a new slice.
-- Do not merge. Do not deploy. Do not apply migrations. Do not mutate production/staging data.
+- Do not mark Ready / merge the implementation PR unless separately authorized.
+- Do **not** manually promote production or trigger application-code production deployment.
+- CI may still run lint/tests/`cf:build` (Cloudflare bundle) and automatic preview deployments on the Draft PR; that is not a manual production promotion. Do not cancel or alter those workflows.
+- Do not apply migrations. Do not mutate production/staging data.
 - When implementation is authorized later: open at most a **Draft PR**, then stop.
 
 FINAL RESPONSE FORMAT
-Slice 01 verdict YES/NO:
+Product Design Remediation Slice 01 verdict YES/NO:
 Files changed:
 Checks run + results:
 Screenshots paths:
@@ -120,6 +142,10 @@ Exact next action:
 
 ## Expected boundary
 
-Slice 01 is a **small UX/token hygiene** candidate covering **PD-P1-01, PD-P1-03, PD-P2-01, PD-P2-02** only (optional tiny PD-P1-04 label polish).  
-It does **not** close the other 13 backlog items, R1 legal, Wave C, blocked external flows, or Client Day 0.  
-Current handoff keeps `IMPLEMENTATION_AUTHORIZATION=NOT_GRANTED`.
+**Product Design Remediation Slice 01** is a **small UX/token hygiene** candidate covering **PD-P1-01, PD-P1-03, PD-P2-01, PD-P2-02** only (optional tiny PD-P1-04 label polish).
+
+It is distinct from already-implemented historical **Liquid Glass Slice 1** (public design foundation).
+
+It does **not** close the other 13 backlog items, R1 legal, Wave C, blocked external flows, or Client Day 0.
+
+Current handoff keeps `IMPLEMENTATION_AUTHORIZATION=NOT_GRANTED` and does **not** claim this remediation slice complete.
