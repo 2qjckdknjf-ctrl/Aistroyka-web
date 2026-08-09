@@ -8,6 +8,7 @@ import { useTranslations, useLocale } from "next-intl";
 import { hasSupabaseEnv } from "@/lib/env";
 import { Input, Button, Alert } from "@/components/ui";
 import { AuthProviderButtons } from "@/components/auth/AuthProviderButtons";
+import { shouldShowLoginStepDebug } from "@/lib/auth/login-step-debug";
 
 const SIGN_IN_TIMEOUT_MS = 25_000;
 const LOGIN_ENDPOINT = "/api/v1/auth/login";
@@ -202,11 +203,12 @@ function LoginForm() {
               </Button>
             )}
           </form>
-          {showEmailForm ? (
+          {showEmailForm && shouldShowLoginStepDebug() ? (
             <p
               className="mt-aistroyka-4 text-center text-aistroyka-caption text-aistroyka-text-tertiary"
               aria-live="polite"
               aria-atomic="true"
+              data-testid="login-step-debug"
             >
               {t("loginStep")}: {step}
             </p>
