@@ -1,0 +1,759 @@
+{
+  "audit": "product-design-current-main-2026-08-09",
+  "canonicalOriginMain": "02baa6a379ca9ff30735d35e53aea5198e972d45",
+  "deployedSha7": "02baa6a",
+  "runtimeSourceMatch": true,
+  "verdict": "PRODUCT_DESIGN_AUDIT_PARTIAL_BLOCKED_EXTERNAL",
+  "findingCounts": {
+    "P0": 0,
+    "P1": 6,
+    "P2": 8,
+    "P3": 3
+  },
+  "designWave": "Wave C in progress",
+  "createdAtUtc": "2026-08-09T09:56:22Z",
+  "documents": [
+    {
+      "file": "00_CURRENT_BASELINE.md",
+      "present": true
+    },
+    {
+      "file": "01_FUNCTIONAL_SURFACE_MATRIX.csv",
+      "present": true
+    },
+    {
+      "file": "02_FLOW_STEP_AUDIT.md",
+      "present": true
+    },
+    {
+      "file": "03_ACCESSIBILITY_RISK_REGISTER.csv",
+      "present": true
+    },
+    {
+      "file": "04_DESIGN_SYSTEM_DRIFT.md",
+      "present": true
+    },
+    {
+      "file": "05_ROADMAP_BACKEND_RECONCILIATION.md",
+      "present": true
+    },
+    {
+      "file": "06_PRIORITIZED_BACKLOG.csv",
+      "present": true
+    },
+    {
+      "file": "07_FINAL_PRODUCT_DESIGN_AUDIT.md",
+      "present": true
+    },
+    {
+      "file": "08_PUBLISH_PRIVACY_NOTE.md",
+      "present": true
+    }
+  ],
+  "publishedScreenshotCount": 35,
+  "localUnpublishableScreenshotCount": 20,
+  "screenshots": [
+    {
+      "id": "40_worker_launch",
+      "file": "evidence/ios/worker/40_worker_launch.png",
+      "bytes": 286553,
+      "capturedAtUtc": "2026-08-09T09:25:55Z",
+      "publishState": "PUBLISHED",
+      "pixels": {
+        "w": 1206,
+        "h": 2622
+      },
+      "source": "ios-simulator",
+      "runtimeSha7": "n/a-local-app",
+      "viewport": "iphone-simulator"
+    },
+    {
+      "id": "45_worker_after_privacy_revoke",
+      "file": "evidence/ios/worker/45_worker_after_privacy_revoke.png",
+      "bytes": 280965,
+      "capturedAtUtc": "2026-08-09T09:28:51Z",
+      "publishState": "PUBLISHED",
+      "pixels": {
+        "w": 1206,
+        "h": 2622
+      },
+      "source": "ios-simulator",
+      "runtimeSha7": "n/a-local-app",
+      "viewport": "iphone-simulator"
+    },
+    {
+      "id": "09_ai_demo_en_desktop",
+      "file": "evidence/web/ai/09_ai_demo_en_desktop.png",
+      "bytes": 203956,
+      "capturedAtUtc": "2026-08-09T09:55:23Z",
+      "publishState": "PUBLISHED",
+      "pixels": {
+        "w": 1440,
+        "h": 900
+      },
+      "source": "production",
+      "runtimeSha7": "02baa6a",
+      "viewport": "desktop"
+    },
+    {
+      "id": "02_login_en_desktop",
+      "file": "evidence/web/auth/02_login_en_desktop.png",
+      "bytes": 36193,
+      "capturedAtUtc": "2026-08-09T09:55:26Z",
+      "publishState": "PUBLISHED",
+      "pixels": {
+        "w": 1440,
+        "h": 900
+      },
+      "source": "production",
+      "runtimeSha7": "02baa6a",
+      "viewport": "desktop"
+    },
+    {
+      "id": "02_login_en_mobile",
+      "file": "evidence/web/auth/02_login_en_mobile.png",
+      "bytes": 30556,
+      "capturedAtUtc": "2026-08-09T09:55:27Z",
+      "publishState": "PUBLISHED",
+      "pixels": {
+        "w": 390,
+        "h": 844
+      },
+      "source": "production",
+      "runtimeSha7": "02baa6a",
+      "viewport": "mobile"
+    },
+    {
+      "id": "02_login_es_desktop",
+      "file": "evidence/web/auth/02_login_es_desktop.png",
+      "bytes": 39053,
+      "capturedAtUtc": "2026-08-09T09:55:29Z",
+      "publishState": "PUBLISHED",
+      "pixels": {
+        "w": 1440,
+        "h": 900
+      },
+      "source": "production",
+      "runtimeSha7": "02baa6a",
+      "viewport": "desktop"
+    },
+    {
+      "id": "02_login_es_mobile",
+      "file": "evidence/web/auth/02_login_es_mobile.png",
+      "bytes": 33047,
+      "capturedAtUtc": "2026-08-09T09:55:30Z",
+      "publishState": "PUBLISHED",
+      "pixels": {
+        "w": 390,
+        "h": 844
+      },
+      "source": "production",
+      "runtimeSha7": "02baa6a",
+      "viewport": "mobile"
+    },
+    {
+      "id": "02_login_it_desktop",
+      "file": "evidence/web/auth/02_login_it_desktop.png",
+      "bytes": 38571,
+      "capturedAtUtc": "2026-08-09T09:55:31Z",
+      "publishState": "PUBLISHED",
+      "pixels": {
+        "w": 1440,
+        "h": 900
+      },
+      "source": "production",
+      "runtimeSha7": "02baa6a",
+      "viewport": "desktop"
+    },
+    {
+      "id": "02_login_it_mobile",
+      "file": "evidence/web/auth/02_login_it_mobile.png",
+      "bytes": 32676,
+      "capturedAtUtc": "2026-08-09T09:55:31Z",
+      "publishState": "PUBLISHED",
+      "pixels": {
+        "w": 390,
+        "h": 844
+      },
+      "source": "production",
+      "runtimeSha7": "02baa6a",
+      "viewport": "mobile"
+    },
+    {
+      "id": "02_login_ru_desktop",
+      "file": "evidence/web/auth/02_login_ru_desktop.png",
+      "bytes": 35141,
+      "capturedAtUtc": "2026-08-09T09:55:28Z",
+      "publishState": "PUBLISHED",
+      "pixels": {
+        "w": 1440,
+        "h": 900
+      },
+      "source": "production",
+      "runtimeSha7": "02baa6a",
+      "viewport": "desktop"
+    },
+    {
+      "id": "02_login_ru_mobile",
+      "file": "evidence/web/auth/02_login_ru_mobile.png",
+      "bytes": 29634,
+      "capturedAtUtc": "2026-08-09T09:55:29Z",
+      "publishState": "PUBLISHED",
+      "pixels": {
+        "w": 390,
+        "h": 844
+      },
+      "source": "production",
+      "runtimeSha7": "02baa6a",
+      "viewport": "mobile"
+    },
+    {
+      "id": "03_register_en_desktop",
+      "file": "evidence/web/auth/03_register_en_desktop.png",
+      "bytes": 36958,
+      "capturedAtUtc": "2026-08-09T09:55:32Z",
+      "publishState": "PUBLISHED",
+      "pixels": {
+        "w": 1440,
+        "h": 900
+      },
+      "source": "production",
+      "runtimeSha7": "02baa6a",
+      "viewport": "desktop"
+    },
+    {
+      "id": "11_guest_dashboard_redirect_en_desktop",
+      "file": "evidence/web/auth/11_guest_dashboard_redirect_en_desktop.png",
+      "bytes": 36296,
+      "capturedAtUtc": "2026-08-09T09:55:33Z",
+      "publishState": "PUBLISHED",
+      "pixels": {
+        "w": 1440,
+        "h": 900
+      },
+      "source": "production",
+      "runtimeSha7": "02baa6a",
+      "viewport": "desktop"
+    },
+    {
+      "id": "01_home_en_desktop",
+      "file": "evidence/web/public/01_home_en_desktop.png",
+      "bytes": 455302,
+      "capturedAtUtc": "2026-08-09T09:29:32Z",
+      "publishState": "PUBLISHED",
+      "pixels": {
+        "w": 1440,
+        "h": 900
+      },
+      "source": "production",
+      "runtimeSha7": "02baa6a",
+      "viewport": "desktop"
+    },
+    {
+      "id": "01_home_en_mobile",
+      "file": "evidence/web/public/01_home_en_mobile.png",
+      "bytes": 113035,
+      "capturedAtUtc": "2026-08-09T09:29:32Z",
+      "publishState": "PUBLISHED",
+      "pixels": {
+        "w": 390,
+        "h": 844
+      },
+      "source": "production",
+      "runtimeSha7": "02baa6a",
+      "viewport": "mobile"
+    },
+    {
+      "id": "01_home_en_tablet",
+      "file": "evidence/web/public/01_home_en_tablet.png",
+      "bytes": 258597,
+      "capturedAtUtc": "2026-08-09T09:29:32Z",
+      "publishState": "PUBLISHED",
+      "pixels": {
+        "w": 768,
+        "h": 1024
+      },
+      "source": "production",
+      "runtimeSha7": "02baa6a",
+      "viewport": "tablet"
+    },
+    {
+      "id": "01_home_es_desktop",
+      "file": "evidence/web/public/01_home_es_desktop.png",
+      "bytes": 460121,
+      "capturedAtUtc": "2026-08-09T09:29:32Z",
+      "publishState": "PUBLISHED",
+      "pixels": {
+        "w": 1440,
+        "h": 900
+      },
+      "source": "production",
+      "runtimeSha7": "02baa6a",
+      "viewport": "desktop"
+    },
+    {
+      "id": "01_home_es_mobile",
+      "file": "evidence/web/public/01_home_es_mobile.png",
+      "bytes": 118252,
+      "capturedAtUtc": "2026-08-09T09:29:32Z",
+      "publishState": "PUBLISHED",
+      "pixels": {
+        "w": 390,
+        "h": 844
+      },
+      "source": "production",
+      "runtimeSha7": "02baa6a",
+      "viewport": "mobile"
+    },
+    {
+      "id": "01_home_es_tablet",
+      "file": "evidence/web/public/01_home_es_tablet.png",
+      "bytes": 268304,
+      "capturedAtUtc": "2026-08-09T09:29:32Z",
+      "publishState": "PUBLISHED",
+      "pixels": {
+        "w": 768,
+        "h": 1024
+      },
+      "source": "production",
+      "runtimeSha7": "02baa6a",
+      "viewport": "tablet"
+    },
+    {
+      "id": "01_home_it_desktop",
+      "file": "evidence/web/public/01_home_it_desktop.png",
+      "bytes": 457313,
+      "capturedAtUtc": "2026-08-09T09:29:32Z",
+      "publishState": "PUBLISHED",
+      "pixels": {
+        "w": 1440,
+        "h": 900
+      },
+      "source": "production",
+      "runtimeSha7": "02baa6a",
+      "viewport": "desktop"
+    },
+    {
+      "id": "01_home_it_mobile",
+      "file": "evidence/web/public/01_home_it_mobile.png",
+      "bytes": 114674,
+      "capturedAtUtc": "2026-08-09T09:29:32Z",
+      "publishState": "PUBLISHED",
+      "pixels": {
+        "w": 390,
+        "h": 844
+      },
+      "source": "production",
+      "runtimeSha7": "02baa6a",
+      "viewport": "mobile"
+    },
+    {
+      "id": "01_home_it_tablet",
+      "file": "evidence/web/public/01_home_it_tablet.png",
+      "bytes": 264427,
+      "capturedAtUtc": "2026-08-09T09:29:32Z",
+      "publishState": "PUBLISHED",
+      "pixels": {
+        "w": 768,
+        "h": 1024
+      },
+      "source": "production",
+      "runtimeSha7": "02baa6a",
+      "viewport": "tablet"
+    },
+    {
+      "id": "01_home_ru_desktop",
+      "file": "evidence/web/public/01_home_ru_desktop.png",
+      "bytes": 455118,
+      "capturedAtUtc": "2026-08-09T09:29:32Z",
+      "publishState": "PUBLISHED",
+      "pixels": {
+        "w": 1440,
+        "h": 900
+      },
+      "source": "production",
+      "runtimeSha7": "02baa6a",
+      "viewport": "desktop"
+    },
+    {
+      "id": "01_home_ru_mobile",
+      "file": "evidence/web/public/01_home_ru_mobile.png",
+      "bytes": 119287,
+      "capturedAtUtc": "2026-08-09T09:29:32Z",
+      "publishState": "PUBLISHED",
+      "pixels": {
+        "w": 390,
+        "h": 844
+      },
+      "source": "production",
+      "runtimeSha7": "02baa6a",
+      "viewport": "mobile"
+    },
+    {
+      "id": "01_home_ru_tablet",
+      "file": "evidence/web/public/01_home_ru_tablet.png",
+      "bytes": 269065,
+      "capturedAtUtc": "2026-08-09T09:29:32Z",
+      "publishState": "PUBLISHED",
+      "pixels": {
+        "w": 768,
+        "h": 1024
+      },
+      "source": "production",
+      "runtimeSha7": "02baa6a",
+      "viewport": "tablet"
+    },
+    {
+      "id": "04_features_en_desktop",
+      "file": "evidence/web/public/04_features_en_desktop.png",
+      "bytes": 299500,
+      "capturedAtUtc": "2026-08-09T09:29:32Z",
+      "publishState": "PUBLISHED",
+      "pixels": {
+        "w": 1440,
+        "h": 900
+      },
+      "source": "production",
+      "runtimeSha7": "02baa6a",
+      "viewport": "desktop"
+    },
+    {
+      "id": "05_contact_en_desktop",
+      "file": "evidence/web/public/05_contact_en_desktop.png",
+      "bytes": 252329,
+      "capturedAtUtc": "2026-08-09T09:29:32Z",
+      "publishState": "PUBLISHED",
+      "pixels": {
+        "w": 1440,
+        "h": 900
+      },
+      "source": "production",
+      "runtimeSha7": "02baa6a",
+      "viewport": "desktop"
+    },
+    {
+      "id": "06_privacy_en_desktop",
+      "file": "evidence/web/public/06_privacy_en_desktop.png",
+      "bytes": 450550,
+      "capturedAtUtc": "2026-08-09T09:29:32Z",
+      "publishState": "PUBLISHED",
+      "pixels": {
+        "w": 1440,
+        "h": 900
+      },
+      "source": "production",
+      "runtimeSha7": "02baa6a",
+      "viewport": "desktop"
+    },
+    {
+      "id": "07_terms_en_desktop",
+      "file": "evidence/web/public/07_terms_en_desktop.png",
+      "bytes": 434118,
+      "capturedAtUtc": "2026-08-09T09:29:32Z",
+      "publishState": "PUBLISHED",
+      "pixels": {
+        "w": 1440,
+        "h": 900
+      },
+      "source": "production",
+      "runtimeSha7": "02baa6a",
+      "viewport": "desktop"
+    },
+    {
+      "id": "08_copilot_en_desktop",
+      "file": "evidence/web/public/08_copilot_en_desktop.png",
+      "bytes": 331638,
+      "capturedAtUtc": "2026-08-09T09:29:32Z",
+      "publishState": "PUBLISHED",
+      "pixels": {
+        "w": 1440,
+        "h": 900
+      },
+      "source": "production",
+      "runtimeSha7": "02baa6a",
+      "viewport": "desktop"
+    },
+    {
+      "id": "10_404_en_desktop",
+      "file": "evidence/web/public/10_404_en_desktop.png",
+      "bytes": 40188,
+      "capturedAtUtc": "2026-08-09T09:29:32Z",
+      "publishState": "PUBLISHED",
+      "pixels": {
+        "w": 1440,
+        "h": 900
+      },
+      "source": "production",
+      "runtimeSha7": "02baa6a",
+      "viewport": "desktop"
+    },
+    {
+      "id": "12_home_ru_mobile_header",
+      "file": "evidence/web/public/12_home_ru_mobile_header.png",
+      "bytes": 119334,
+      "capturedAtUtc": "2026-08-09T09:29:32Z",
+      "publishState": "PUBLISHED",
+      "pixels": {
+        "w": 390,
+        "h": 844
+      },
+      "source": "production",
+      "runtimeSha7": "02baa6a",
+      "viewport": "mobile"
+    },
+    {
+      "id": "13_privacy_es_desktop",
+      "file": "evidence/web/public/13_privacy_es_desktop.png",
+      "bytes": 470922,
+      "capturedAtUtc": "2026-08-09T09:29:32Z",
+      "publishState": "PUBLISHED",
+      "pixels": {
+        "w": 1440,
+        "h": 900
+      },
+      "source": "production",
+      "runtimeSha7": "02baa6a",
+      "viewport": "desktop"
+    },
+    {
+      "id": "13_privacy_it_desktop",
+      "file": "evidence/web/public/13_privacy_it_desktop.png",
+      "bytes": 456533,
+      "capturedAtUtc": "2026-08-09T09:29:32Z",
+      "publishState": "PUBLISHED",
+      "pixels": {
+        "w": 1440,
+        "h": 900
+      },
+      "source": "production",
+      "runtimeSha7": "02baa6a",
+      "viewport": "desktop"
+    },
+    {
+      "id": "13_privacy_ru_desktop",
+      "file": "evidence/web/public/13_privacy_ru_desktop.png",
+      "bytes": 478152,
+      "capturedAtUtc": "2026-08-09T09:29:32Z",
+      "publishState": "PUBLISHED",
+      "pixels": {
+        "w": 1440,
+        "h": 900
+      },
+      "source": "production",
+      "runtimeSha7": "02baa6a",
+      "viewport": "desktop"
+    }
+  ],
+  "localUnpublishableScreenshots": [
+    {
+      "id": "32_admin_en_desktop",
+      "file": "evidence/_local_unpublishable_staging/admin/32_admin_en_desktop.png",
+      "bytes": 139855,
+      "publishState": "LOCAL_UNPUBLISHABLE",
+      "reason": "Staging authenticated capture retained synthetic account identity pixels after header redaction; excluded from git to avoid publishing account identifiers. Finding narratives remain in 02_FLOW_STEP_AUDIT.md / 06_PRIORITIZED_BACKLOG.csv with IDs PD-P1-03..05 etc.",
+      "source": "staging",
+      "runtimeSha7": "02baa6a"
+    },
+    {
+      "id": "37_platform_admin_en_desktop",
+      "file": "evidence/_local_unpublishable_staging/admin/37_platform_admin_en_desktop.png",
+      "bytes": 6176,
+      "publishState": "LOCAL_UNPUBLISHABLE",
+      "reason": "Staging authenticated capture retained synthetic account identity pixels after header redaction; excluded from git to avoid publishing account identifiers. Finding narratives remain in 02_FLOW_STEP_AUDIT.md / 06_PRIORITIZED_BACKLOG.csv with IDs PD-P1-03..05 etc.",
+      "source": "staging",
+      "runtimeSha7": "02baa6a"
+    },
+    {
+      "id": "43_platform_admin_testing_en_desktop",
+      "file": "evidence/_local_unpublishable_staging/admin/43_platform_admin_testing_en_desktop.png",
+      "bytes": 6176,
+      "publishState": "LOCAL_UNPUBLISHABLE",
+      "reason": "Staging authenticated capture retained synthetic account identity pixels after header redaction; excluded from git to avoid publishing account identifiers. Finding narratives remain in 02_FLOW_STEP_AUDIT.md / 06_PRIORITIZED_BACKLOG.csv with IDs PD-P1-03..05 etc.",
+      "source": "staging",
+      "runtimeSha7": "02baa6a"
+    },
+    {
+      "id": "28_dashboard_ai_en_desktop",
+      "file": "evidence/_local_unpublishable_staging/ai/28_dashboard_ai_en_desktop.png",
+      "bytes": 111639,
+      "publishState": "LOCAL_UNPUBLISHABLE",
+      "reason": "Staging authenticated capture retained synthetic account identity pixels after header redaction; excluded from git to avoid publishing account identifiers. Finding narratives remain in 02_FLOW_STEP_AUDIT.md / 06_PRIORITIZED_BACKLOG.csv with IDs PD-P1-03..05 etc.",
+      "source": "staging",
+      "runtimeSha7": "02baa6a"
+    },
+    {
+      "id": "33_admin_ai_en_desktop",
+      "file": "evidence/_local_unpublishable_staging/ai/33_admin_ai_en_desktop.png",
+      "bytes": 105596,
+      "publishState": "LOCAL_UNPUBLISHABLE",
+      "reason": "Staging authenticated capture retained synthetic account identity pixels after header redaction; excluded from git to avoid publishing account identifiers. Finding narratives remain in 02_FLOW_STEP_AUDIT.md / 06_PRIORITIZED_BACKLOG.csv with IDs PD-P1-03..05 etc.",
+      "source": "staging",
+      "runtimeSha7": "02baa6a"
+    },
+    {
+      "id": "22_dashboard_en_desktop",
+      "file": "evidence/_local_unpublishable_staging/cabinet/22_dashboard_en_desktop.png",
+      "bytes": 128037,
+      "publishState": "LOCAL_UNPUBLISHABLE",
+      "reason": "Staging authenticated capture retained synthetic account identity pixels after header redaction; excluded from git to avoid publishing account identifiers. Finding narratives remain in 02_FLOW_STEP_AUDIT.md / 06_PRIORITIZED_BACKLOG.csv with IDs PD-P1-03..05 etc.",
+      "source": "staging",
+      "runtimeSha7": "02baa6a"
+    },
+    {
+      "id": "23_projects_en_desktop",
+      "file": "evidence/_local_unpublishable_staging/cabinet/23_projects_en_desktop.png",
+      "bytes": 120961,
+      "publishState": "LOCAL_UNPUBLISHABLE",
+      "reason": "Staging authenticated capture retained synthetic account identity pixels after header redaction; excluded from git to avoid publishing account identifiers. Finding narratives remain in 02_FLOW_STEP_AUDIT.md / 06_PRIORITIZED_BACKLOG.csv with IDs PD-P1-03..05 etc.",
+      "source": "staging",
+      "runtimeSha7": "02baa6a"
+    },
+    {
+      "id": "24_tasks_en_desktop",
+      "file": "evidence/_local_unpublishable_staging/cabinet/24_tasks_en_desktop.png",
+      "bytes": 111124,
+      "publishState": "LOCAL_UNPUBLISHABLE",
+      "reason": "Staging authenticated capture retained synthetic account identity pixels after header redaction; excluded from git to avoid publishing account identifiers. Finding narratives remain in 02_FLOW_STEP_AUDIT.md / 06_PRIORITIZED_BACKLOG.csv with IDs PD-P1-03..05 etc.",
+      "source": "staging",
+      "runtimeSha7": "02baa6a"
+    },
+    {
+      "id": "25_reports_en_desktop",
+      "file": "evidence/_local_unpublishable_staging/cabinet/25_reports_en_desktop.png",
+      "bytes": 100482,
+      "publishState": "LOCAL_UNPUBLISHABLE",
+      "reason": "Staging authenticated capture retained synthetic account identity pixels after header redaction; excluded from git to avoid publishing account identifiers. Finding narratives remain in 02_FLOW_STEP_AUDIT.md / 06_PRIORITIZED_BACKLOG.csv with IDs PD-P1-03..05 etc.",
+      "source": "staging",
+      "runtimeSha7": "02baa6a"
+    },
+    {
+      "id": "26_approvals_en_desktop",
+      "file": "evidence/_local_unpublishable_staging/cabinet/26_approvals_en_desktop.png",
+      "bytes": 103029,
+      "publishState": "LOCAL_UNPUBLISHABLE",
+      "reason": "Staging authenticated capture retained synthetic account identity pixels after header redaction; excluded from git to avoid publishing account identifiers. Finding narratives remain in 02_FLOW_STEP_AUDIT.md / 06_PRIORITIZED_BACKLOG.csv with IDs PD-P1-03..05 etc.",
+      "source": "staging",
+      "runtimeSha7": "02baa6a"
+    },
+    {
+      "id": "27_uploads_en_desktop",
+      "file": "evidence/_local_unpublishable_staging/cabinet/27_uploads_en_desktop.png",
+      "bytes": 110764,
+      "publishState": "LOCAL_UNPUBLISHABLE",
+      "reason": "Staging authenticated capture retained synthetic account identity pixels after header redaction; excluded from git to avoid publishing account identifiers. Finding narratives remain in 02_FLOW_STEP_AUDIT.md / 06_PRIORITIZED_BACKLOG.csv with IDs PD-P1-03..05 etc.",
+      "source": "staging",
+      "runtimeSha7": "02baa6a"
+    },
+    {
+      "id": "29_support_en_desktop",
+      "file": "evidence/_local_unpublishable_staging/cabinet/29_support_en_desktop.png",
+      "bytes": 103748,
+      "publishState": "LOCAL_UNPUBLISHABLE",
+      "reason": "Staging authenticated capture retained synthetic account identity pixels after header redaction; excluded from git to avoid publishing account identifiers. Finding narratives remain in 02_FLOW_STEP_AUDIT.md / 06_PRIORITIZED_BACKLOG.csv with IDs PD-P1-03..05 etc.",
+      "source": "staging",
+      "runtimeSha7": "02baa6a"
+    },
+    {
+      "id": "30_notifications_en_desktop",
+      "file": "evidence/_local_unpublishable_staging/cabinet/30_notifications_en_desktop.png",
+      "bytes": 140639,
+      "publishState": "LOCAL_UNPUBLISHABLE",
+      "reason": "Staging authenticated capture retained synthetic account identity pixels after header redaction; excluded from git to avoid publishing account identifiers. Finding narratives remain in 02_FLOW_STEP_AUDIT.md / 06_PRIORITIZED_BACKLOG.csv with IDs PD-P1-03..05 etc.",
+      "source": "staging",
+      "runtimeSha7": "02baa6a"
+    },
+    {
+      "id": "34_dashboard_ru_desktop",
+      "file": "evidence/_local_unpublishable_staging/cabinet/34_dashboard_ru_desktop.png",
+      "bytes": 133538,
+      "publishState": "LOCAL_UNPUBLISHABLE",
+      "reason": "Staging authenticated capture retained synthetic account identity pixels after header redaction; excluded from git to avoid publishing account identifiers. Finding narratives remain in 02_FLOW_STEP_AUDIT.md / 06_PRIORITIZED_BACKLOG.csv with IDs PD-P1-03..05 etc.",
+      "source": "staging",
+      "runtimeSha7": "02baa6a"
+    },
+    {
+      "id": "35_dashboard_en_mobile",
+      "file": "evidence/_local_unpublishable_staging/cabinet/35_dashboard_en_mobile.png",
+      "bytes": 51101,
+      "publishState": "LOCAL_UNPUBLISHABLE",
+      "reason": "Staging authenticated capture retained synthetic account identity pixels after header redaction; excluded from git to avoid publishing account identifiers. Finding narratives remain in 02_FLOW_STEP_AUDIT.md / 06_PRIORITIZED_BACKLOG.csv with IDs PD-P1-03..05 etc.",
+      "source": "staging",
+      "runtimeSha7": "02baa6a"
+    },
+    {
+      "id": "36_project_detail_en_desktop",
+      "file": "evidence/_local_unpublishable_staging/cabinet/36_project_detail_en_desktop.png",
+      "bytes": 97836,
+      "publishState": "LOCAL_UNPUBLISHABLE",
+      "reason": "Staging authenticated capture retained synthetic account identity pixels after header redaction; excluded from git to avoid publishing account identifiers. Finding narratives remain in 02_FLOW_STEP_AUDIT.md / 06_PRIORITIZED_BACKLOG.csv with IDs PD-P1-03..05 etc.",
+      "source": "staging",
+      "runtimeSha7": "02baa6a"
+    },
+    {
+      "id": "38_dashboard_modal_blocker_en_desktop",
+      "file": "evidence/_local_unpublishable_staging/cabinet/38_dashboard_modal_blocker_en_desktop.png",
+      "bytes": 128037,
+      "publishState": "LOCAL_UNPUBLISHABLE",
+      "reason": "Staging authenticated capture retained synthetic account identity pixels after header redaction; excluded from git to avoid publishing account identifiers. Finding narratives remain in 02_FLOW_STEP_AUDIT.md / 06_PRIORITIZED_BACKLOG.csv with IDs PD-P1-03..05 etc.",
+      "source": "staging",
+      "runtimeSha7": "02baa6a"
+    },
+    {
+      "id": "42_change_orders_entry_en_desktop",
+      "file": "evidence/_local_unpublishable_staging/cabinet/42_change_orders_entry_en_desktop.png",
+      "bytes": 100411,
+      "publishState": "LOCAL_UNPUBLISHABLE",
+      "reason": "Staging authenticated capture retained synthetic account identity pixels after header redaction; excluded from git to avoid publishing account identifiers. Finding narratives remain in 02_FLOW_STEP_AUDIT.md / 06_PRIORITIZED_BACKLOG.csv with IDs PD-P1-03..05 etc.",
+      "source": "staging",
+      "runtimeSha7": "02baa6a"
+    },
+    {
+      "id": "31_portal_projects_en_desktop",
+      "file": "evidence/_local_unpublishable_staging/portal/31_portal_projects_en_desktop.png",
+      "bytes": 98065,
+      "publishState": "LOCAL_UNPUBLISHABLE",
+      "reason": "Staging authenticated capture retained synthetic account identity pixels after header redaction; excluded from git to avoid publishing account identifiers. Finding narratives remain in 02_FLOW_STEP_AUDIT.md / 06_PRIORITIZED_BACKLOG.csv with IDs PD-P1-03..05 etc.",
+      "source": "staging",
+      "runtimeSha7": "02baa6a"
+    },
+    {
+      "id": "39_client_portal_view_en_desktop",
+      "file": "evidence/_local_unpublishable_staging/portal/39_client_portal_view_en_desktop.png",
+      "bytes": 56981,
+      "publishState": "LOCAL_UNPUBLISHABLE",
+      "reason": "Staging authenticated capture retained synthetic account identity pixels after header redaction; excluded from git to avoid publishing account identifiers. Finding narratives remain in 02_FLOW_STEP_AUDIT.md / 06_PRIORITIZED_BACKLOG.csv with IDs PD-P1-03..05 etc.",
+      "source": "staging",
+      "runtimeSha7": "02baa6a"
+    }
+  ],
+  "blockedCaptures": [
+    {
+      "flow": "iOS Manager",
+      "reason": "Manager.app only on unavailable Shutdown simulator; did not boot/reconfigure owned devices"
+    },
+    {
+      "flow": "Platform Admin Operations Center",
+      "reason": "smoke account Forbidden"
+    },
+    {
+      "flow": "Worker authenticated field path",
+      "reason": "no UITest E2E credentials; no remote fixtures"
+    },
+    {
+      "flow": "Password reset",
+      "reason": "no dedicated reset route on current main"
+    },
+    {
+      "flow": "Task detail deep link",
+      "reason": "no task list links in smoke workspace"
+    }
+  ],
+  "privacy": {
+    "publishedContainsAccountEmails": false,
+    "stagingAuthenticatedEvidence": "LOCAL_ONLY_GITIGNORED",
+    "redactionNote": "Published pack contains production public/auth/iOS onboarding only. Staging authenticated PNGs are gitignored under evidence/_local_unpublishable_staging/."
+  },
+  "externalMutations": "NONE",
+  "paidAiCalls": "NONE",
+  "implementationStarted": false
+}
