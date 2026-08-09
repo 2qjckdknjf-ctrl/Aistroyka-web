@@ -237,16 +237,60 @@ require_header() {
   line="$(grep -i "^${header_name}[[:space:]]*:" "$headers_file" | head -1 | tr -d '\r')"
   local value="${line#*:}"
   value="$(echo "$value" | sed 's/^[[:space:]]*//')"
-  case "$(echo "$header_name" | tr '[:upper:]' '[:lower:]')" in
+  if ! assert_singleton_header_value "$label" "$header_name" "$value"; then
+    return
+  fi
+  echo "  OK [$label]: $header_name present (count=1)"
+}
+
+# Detect Cloudflare/OpenNext joined duplicates without forbidding legitimate
+# commas inside Permissions-Policy (distinct directives are comma-separated).
+assert_singleton_header_value() {
+  local label="$1"
+  local header_name="$2"
+  local value="$3"
+  local lower_name marker count
+  lower_name="$(echo "$header_name" | tr '[:upper:]' '[:lower:]')"
+  case "$lower_name" in
     x-content-type-options|x-frame-options|referrer-policy)
       if echo "$value" | grep -qi ','; then
         echo "FAIL [$label]: joined/multi value for $header_name"
         FAIL=1
-        return
+        return 1
       fi
       ;;
+    strict-transport-security)
+      count="$(echo "$value" | grep -oiE 'max-age=' | wc -l | tr -d '[:space:]')"
+      if [[ "$count" -gt 1 ]]; then
+        echo "FAIL [$label]: joined/multi value for $header_name (repeated max-age=)"
+        FAIL=1
+        return 1
+      fi
+      ;;
+    content-security-policy)
+      for marker in default-src script-src connect-src img-src style-src frame-ancestors; do
+        count="$(echo "$value" | grep -oiE "(^|[;[:space:]])${marker}[[:space:]]" | wc -l | tr -d '[:space:]')"
+        if [[ "$count" -gt 1 ]]; then
+          echo "FAIL [$label]: joined/multi value for $header_name (repeated ${marker})"
+          FAIL=1
+          return 1
+        fi
+      done
+      ;;
+    permissions-policy)
+      # Legitimate PP uses commas between distinct directives; fail only when a
+      # known directive key repeats (dual-owner join of the same policy).
+      for marker in camera microphone geolocation interest-cohort; do
+        count="$(echo "$value" | grep -oiE "(^|[,[:space:]])${marker}=" | wc -l | tr -d '[:space:]')"
+        if [[ "$count" -gt 1 ]]; then
+          echo "FAIL [$label]: joined/multi value for $header_name (repeated ${marker}=)"
+          FAIL=1
+          return 1
+        fi
+      done
+      ;;
   esac
-  echo "  OK [$label]: $header_name present (count=1)"
+  return 0
 }
 
 forbid_header() {
@@ -275,7 +319,13 @@ validate_headers_file() {
   require_header "$label" "$headers_file" "permissions-policy"
   if [[ "$profile" == "page" ]]; then
     require_header "$label" "$headers_file" "content-security-policy"
+    # Production HTTPS pages must send HSTS. Localhost mocks may omit it, but if
+    # the header is present it must still be a singleton (joined-duplicate catch).
+    local hsts_count
+    hsts_count="$(header_count "$headers_file" "strict-transport-security" | tr -d '[:space:]')"
     if [[ "$effective_url" == https://* && "$effective_url" != *localhost* && "$effective_url" != *127.0.0.1* ]]; then
+      require_header "$label" "$headers_file" "strict-transport-security"
+    elif [[ "$hsts_count" -gt 0 ]]; then
       require_header "$label" "$headers_file" "strict-transport-security"
     fi
   else

@@ -17,7 +17,7 @@ Host targeting: each host is passed as `SECURITY_HEADERS_BASE_URL` (not a bare i
 
 Redirect chains: `security_headers.sh` follows redirects without credentials and validates security headers on **every hop** (intermediate 3xx and final response). Nonzero `curl` exits fail closed before headers are accepted. Production smoke uses `--proto-redir =https` and rejects `Location` / `url_effective` outside the selected environment after case-normalizing URI schemes/hosts (staging stays on staging; production apex↔www only).
 
-Local mocked-host contract: `python3 scripts/smoke/security_headers_mock_host.py ok|missing-redirect-csp` (opt-in `SECURITY_HEADERS_ALLOW_LOCALHOST=1` inside the harness only).
+Local mocked-host contract: `python3 scripts/smoke/security_headers_mock_host.py ok|missing-redirect-csp|joined-duplicates|joined-api-duplicates|early-hints` (opt-in `SECURITY_HEADERS_ALLOW_LOCALHOST=1` inside the harness only). Joined-duplicate modes must FAIL (including CSP / HSTS / Permissions-Policy repeats).
 
 Does not send Bearer tokens and does not deploy.
 

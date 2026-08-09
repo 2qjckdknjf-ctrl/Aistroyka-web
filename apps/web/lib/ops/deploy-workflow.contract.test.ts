@@ -27,6 +27,10 @@ describe("Phase 8 security-headers CI contract", () => {
   it("security_headers.sh rejects duplicates/joins and supports consecutive retry env", () => {
     expect(smoke).toMatch(/duplicate header/);
     expect(smoke).toMatch(/joined\/multi value/);
+    expect(smoke).toMatch(/assert_singleton_header_value/);
+    expect(smoke).toMatch(/repeated max-age=/);
+    expect(smoke).toMatch(/default-src script-src connect-src/);
+    expect(smoke).toMatch(/camera microphone geolocation interest-cohort/);
     expect(smoke).toMatch(/SECURITY_HEADERS_REQUIRE_CONSECUTIVE/);
     expect(smoke).toMatch(/SECURITY_HEADERS_MAX_ATTEMPTS/);
     expect(smoke).toMatch(/SECURITY_HEADERS_RETRY_SLEEP_SEC/);
@@ -181,6 +185,43 @@ describe("Phase 8 security-headers CI contract", () => {
       expect(bad.status, badOut).not.toBe(0);
       expect(badOut).toMatch(/missing header content-security-policy/);
       expect(badOut).toMatch(/hop1-of-2/);
+    },
+    20_000,
+  );
+
+  it(
+    "mocked host rejects joined duplicate page headers including CSP/HSTS/PP",
+    () => {
+      const runner = resolve(root, "scripts/smoke/security_headers_mock_host.py");
+      const bad = spawnSync("python3", [runner, "joined-duplicates"], {
+        cwd: root,
+        encoding: "utf8",
+        env: { ...process.env },
+      });
+      const badOut = `${bad.stdout || ""}${bad.stderr || ""}`;
+      expect(bad.status, badOut).not.toBe(0);
+      expect(badOut).toMatch(/joined\/multi value for x-content-type-options/);
+      expect(badOut).toMatch(/joined\/multi value for content-security-policy/);
+      expect(badOut).toMatch(/joined\/multi value for permissions-policy/);
+      expect(badOut).toMatch(/joined\/multi value for strict-transport-security/);
+    },
+    20_000,
+  );
+
+  it(
+    "mocked host rejects joined duplicate API headers without requiring CSP",
+    () => {
+      const runner = resolve(root, "scripts/smoke/security_headers_mock_host.py");
+      const bad = spawnSync("python3", [runner, "joined-api-duplicates"], {
+        cwd: root,
+        encoding: "utf8",
+        env: { ...process.env },
+      });
+      const badOut = `${bad.stdout || ""}${bad.stderr || ""}`;
+      expect(bad.status, badOut).not.toBe(0);
+      expect(badOut).toMatch(/joined\/multi value for x-content-type-options/);
+      expect(badOut).toMatch(/joined\/multi value for permissions-policy/);
+      expect(badOut).not.toMatch(/missing header content-security-policy/);
     },
     20_000,
   );
