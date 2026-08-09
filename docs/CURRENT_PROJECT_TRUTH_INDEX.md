@@ -1,7 +1,9 @@
 # AISTROYKA Current Project Truth Index
 
 **Last updated:** 2026-08-09
-**Canonical main SHA:** `02baa6a379ca9ff30735d35e53aea5198e972d45`
+**Audited Product Design baseline SHA:** `02baa6a379ca9ff30735d35e53aea5198e972d45`
+**Current `origin/main` tip (pre-merge of PR #215):** `02baa6a379ca9ff30735d35e53aea5198e972d45` (equals audited baseline today)
+**Canonical main SHA after PR #215 merges:** refresh this index to the actual merge commit — do **not** keep `02baa6a…` labeled as tip once #215 lands
 
 ## 1. Purpose
 
@@ -15,11 +17,12 @@ Historical docs under `docs/` may contain older readiness, certification, GO/NO-
 
 | Field | Value |
 |-------|-------|
-| **main commit** | `02baa6a379ca9ff30735d35e53aea5198e972d45` |
-| **date** | 2026-08-09 (audited Product Design baseline; tip includes PR #214) |
+| **audited baseline** | `02baa6a379ca9ff30735d35e53aea5198e972d45` (Product Design audit source/runtime MATCH) |
+| **current origin/main tip** | `02baa6a379ca9ff30735d35e53aea5198e972d45` — equals audited baseline **until** PR #215 merges |
+| **date** | 2026-08-09 (tip includes PR #214; open docs PR #215 not yet on main) |
 | **repo** | `2qjckdknjf-ctrl/Aistroyka-web` |
 | **runtime match (audit)** | apex/www/staging `buildStamp.sha7=02baa6a` — MATCH at audit time |
-| **Open docs PR** | #215 `docs/product-design-audit-2026-08-09` — **Ready / not merged**; its head is **not** the canonical main SHA until merge |
+| **Open docs PR** | #215 Ready / not merged — after merge, set canonical tip to the merge SHA (distinct from audited baseline) |
 
 ### Latest merged post-baseline slices (on main)
 

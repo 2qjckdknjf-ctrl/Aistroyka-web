@@ -13,7 +13,7 @@
 | Field | Value |
 |---|---|
 | Production / source baseline (audited) | `origin/main` @ **`02baa6a379ca9ff30735d35e53aea5198e972d45`** (`buildStamp.sha7=02baa6a`; runtime↔source MATCH at audit time) |
-| Trusted active pointer | Use `origin/main` @ `02baa6a…` for current-main product truth. Do **not** treat open PR #215 head as the new `main` SHA until merge. |
+| Trusted active pointer | Audited baseline = `02baa6a…`. Current `origin/main` tip equals that baseline until PR #215 merges; after merge, tip becomes the merge SHA (refresh pointers). Do **not** treat open PR #215 head as `main` until merge. |
 | Active module | **Product Design audit handoff** — pack under `docs/audit/product-design-current-main-2026-08-09/`; PR #215 **Ready / OPEN / not merged** |
 | Audit verdict | `PRODUCT_DESIGN_AUDIT_PARTIAL_BLOCKED_EXTERNAL` (P0:0 / P1:6 / P2:8 / P3:3); Wave C **in progress** |
 | Next remediation | Product Design Remediation Slice 01 prompt published; **implementation not started** (separate authorization) |
