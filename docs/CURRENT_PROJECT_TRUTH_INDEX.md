@@ -1,7 +1,9 @@
 # AISTROYKA Current Project Truth Index
 
-**Last updated:** 2026-06-26  
-**Canonical main SHA:** `2fe776f298d4a94eccfa8bc5745968692b77fb0f`
+**Last updated:** 2026-08-09
+**Audited Product Design baseline SHA:** `02baa6a379ca9ff30735d35e53aea5198e972d45`
+**Current `origin/main` tip (pre-merge of PR #215):** `02baa6a379ca9ff30735d35e53aea5198e972d45` (equals audited baseline today)
+**Canonical main SHA after PR #215 merges:** refresh this index to the actual merge commit — do **not** keep `02baa6a…` labeled as tip once #215 lands
 
 ## 1. Purpose
 
@@ -15,9 +17,12 @@ Historical docs under `docs/` may contain older readiness, certification, GO/NO-
 
 | Field | Value |
 |-------|-------|
-| **main commit** | `2fe776f298d4a94eccfa8bc5745968692b77fb0f` |
-| **date** | 2026-06-26 |
+| **audited baseline** | `02baa6a379ca9ff30735d35e53aea5198e972d45` (Product Design audit source/runtime MATCH) |
+| **current origin/main tip** | `02baa6a379ca9ff30735d35e53aea5198e972d45` — equals audited baseline **until** PR #215 merges |
+| **date** | 2026-08-09 (tip includes PR #214; open docs PR #215 not yet on main) |
 | **repo** | `2qjckdknjf-ctrl/Aistroyka-web` |
+| **runtime match (audit)** | apex/www/staging `buildStamp.sha7=02baa6a` — MATCH at audit time |
+| **Open docs PR** | #215 Ready / not merged — after merge, set canonical tip to the merge SHA (distinct from audited baseline) |
 
 ### Latest merged post-baseline slices (on main)
 
@@ -48,8 +53,21 @@ Historical docs under `docs/` may contain older readiness, certification, GO/NO-
 | #145 | Truth index housekeeping after PR #144 (docs-only) |
 | #146 | iOS simulator evidence report for issue #112 (docs-only) — first real iOS native evidence: simulator build PASS + login-surface UITest smoke PASS |
 
+## 2b. Product Design audit pack (2026-08-09)
+
+| Field | Value |
+|-------|-------|
+| Pack | `docs/audit/product-design-current-main-2026-08-09/` (`00`–`08` + evidence) |
+| Audited baseline | `02baa6a379ca9ff30735d35e53aea5198e972d45` |
+| Verdict | `PRODUCT_DESIGN_AUDIT_PARTIAL_BLOCKED_EXTERNAL` |
+| Counts | P0:0 / P1:6 / P2:8 / P3:3 |
+| Design wave | Wave C **in progress** |
+| Slice 01 | Prompt only under `docs/ops/CURSOR_PRODUCT_DESIGN_SLICE_01_IMPLEMENTATION_PROMPT_2026-08-09.md` — **implementation not started** |
+| PR | #215 Ready; merge SHA will differ from audited baseline after merge |
+
 ## 3. What is verified
 
+- **Current-main Product Design audit (2026-08-09):** published pack + Slice 01 prompt on PR #215; audited against `02baa6a…` (not claiming PR #215 merged).
 - **CI/build/test on main after PR #146:** green in operator validation (install, lint, contracts, i18n:check, `I18N_CHECK_ALL=1` i18n:check, tests, build, cf:build).
 - **Test count (post PR #146):** 1546/1546 passing in full suite run.
 - **Security headers slice (PR #120 scope):** API header slice PASS; verified with staging/production smoke at time of that slice (see PR #120 evidence; not re-run by this index).
@@ -80,8 +98,9 @@ Historical docs under `docs/` may contain older readiness, certification, GO/NO-
 
 | Area | Current status | Evidence | Next safe step |
 |------|----------------|----------|----------------|
-| **Web main** | Post-baseline reconciliation + polish slices merged | main `2fe776f2`; PRs #120–#146 | Continue small scoped slices; full validation per PR |
-| **Production runtime** | Deployed SHA **not assumed** equal to latest main | Confirm via Cloudflare/Vercel + `/api/v1/health` buildStamp | Run deploy/smoke only per `docs/ops/LIVE_STAGING_SMOKE_RUNBOOK.md` when operator-approved |
+| **Web main** | Current tip `02baa6a…` (includes #214); older June post-baseline slices remain historical | main `02baa6a…`; Product Design audit pack on PR #215 | Merge #215 when authorized; then Slice 01 only with separate auth |
+| **Product Design** | Audit handoff Ready on PR #215; remediation not started | `docs/audit/product-design-current-main-2026-08-09/`; Slice 01 ops prompt | Fresh approve corrected head → merge docs → Slice 01 Draft later |
+| **Production runtime** | Audited MATCH to `02baa6a` at audit time; re-confirm after any later deploy | `/api/v1/health` `buildStamp.sha7` | Run deploy/smoke only per `docs/ops/LIVE_STAGING_SMOKE_RUNBOOK.md` when operator-approved |
 | **Security headers** | API slice PASS (#120); page regression tests added (#133); issue #114 **CLOSED** | PR #120, #132, #133; `apps/web/middleware.security-headers.test.ts` | No further issue #114 slices unless new evidence-backed gap |
 | **Governance** | Remediated; protected merge process verified | PR #125; issue #110 closed; `enforce_admins: true` | Non-author APPROVED + CI before every main merge |
 | **Reports export UI** | Polish merged (#127) | PR #127; issue #118 | No backend/CSV/role changes without explicit audit |
@@ -119,13 +138,15 @@ Historical docs under `docs/` may contain older readiness, certification, GO/NO-
 
 ## 8. Current safe backlog (prioritized)
 
-1. **#111 / #112 AI/mobile** — only after fresh rebase and small-slice audit. Issue #112 mobile: fresh audit (#140) + readiness refresh (#141) + evidence plan (#144) + first real iOS native evidence (#146: simulator build + login-surface UITest PASS, partial) merged; **OPEN** pending remaining evidence — iOS Layer B live E2E and Android debug assemble + instrumented launch — backed by Xcode/Android SDK/device/emulator/TestFlight/Google Play/CI.
-2. **Truth index housekeeping** — narrow updates after each merged slice (docs-only).
-3. **~~Homepage `MOCK_METRICS` removal~~** — **DONE** (PR #138; fake numeric metrics removed, qualitative cards, pilot-first CTAs preserved).
-4. **~~#113 design/public~~** — **CLOSED** (PR #135 audit + PR #136 i18n-only CTA alignment + PR #138 homepage cleanup).
-5. **~~#114 middleware/security~~** — **CLOSED** (PR #132 audit + PR #133 regression tests).
-6. **~~#116 docs truth~~** — initial index merged (#128); ongoing housekeeping only.
-7. **~~#117 stale branch archival~~** — plan (#129), dry-run (#130), execution (#131) complete; no broad merges.
+1. **PR #215 Product Design audit handoff** — finish review-fix corrections; fresh independent approval on corrected head; merge when authorized (docs/evidence only).
+2. **Product Design Remediation Slice 01** — only after #215 merge + separate implementation authorization (PD-P1-01, PD-P1-03 a11y, PD-P2-01/02).
+3. **#111 / #112 AI/mobile** — only after fresh rebase and small-slice audit. Issue #112 mobile: fresh audit (#140) + readiness refresh (#141) + evidence plan (#144) + first real iOS native evidence (#146: simulator build + login-surface UITest PASS, partial) merged; **OPEN** pending remaining evidence — iOS Layer B live E2E and Android debug assemble + instrumented launch — backed by Xcode/Android SDK/device/emulator/TestFlight/Google Play/CI.
+4. **Truth index housekeeping** — narrow updates after each merged slice (docs-only).
+5. **~~Homepage `MOCK_METRICS` removal~~** — **DONE** (PR #138; fake numeric metrics removed, qualitative cards, pilot-first CTAs preserved).
+6. **~~#113 design/public~~** — **CLOSED** (PR #135 audit + PR #136 i18n-only CTA alignment + PR #138 homepage cleanup).
+7. **~~#114 middleware/security~~** — **CLOSED** (PR #132 audit + PR #133 regression tests).
+8. **~~#116 docs truth~~** — initial index merged (#128); ongoing housekeeping only.
+9. **~~#117 stale branch archival~~** — plan (#129), dry-run (#130), execution (#131) complete; no broad merges.
 
 ---
 
