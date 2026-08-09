@@ -60,7 +60,7 @@ AUDIT SOURCE (read completely)
 
 IN SCOPE (Product Design Remediation Slice 01 only)
 1) PD-P1-01 — Remove production-visible login debug status ("Login step: idle") from /[locale]/login for EN/RU/ES/IT.
-2) PD-P1-03 — First-run Welcome modal must dismiss persistently and must not intercept project Open / primary cabinet navigation after the user chooses Start working (or equivalent).
+2) PD-P1-03 — First-run `FirstLaunchGuide` Modal accessibility: add Escape-to-close, focus trap, and initial/restore focus. Dismissal persistence already exists (`localStorage` key `aistroyka:first-launch-guide:v1` read on mount / written in `closeGuide`) — do NOT reimplement persistence or treat the intended first-run overlay itself as a defect.
 3) PD-P2-01 / PD-P2-02 — Make `bun run --cwd apps/web check:design` PASS by replacing raw Tailwind red-600/green-600 in:
    - apps/web/components/dashboard/TaskChatPanel.tsx
    - apps/web/components/help/HelpStartChecklist.tsx
@@ -97,26 +97,26 @@ VALIDATION (required)
 1. bun run --cwd apps/web check:design → PASS
 2. Web lint for touched paths (repo ESLint CLI / `bun run` lint script used by CI) → PASS
 3. TypeScript / typecheck for apps/web as used in CI (or equivalent `tsc --noEmit` path) → PASS
-4. Targeted unit/component tests for modal dismiss persistence and login UI
+4. Targeted unit/component tests for FirstLaunchGuide/Modal Escape + focus trap and login UI (do not re-test inventing persistence)
 5. `bun run i18n:check` → PASS when messages touched; EN/RU/ES/IT parity required for any copy change
 6. Visual regression evidence: BEFORE/AFTER screenshots on staging or local current-main:
    - `/en/login` and `/ru/login` (desktop + mobile) — no "Login step" debug text
-   - `/en/dashboard` then `/en/dashboard/projects` — modal does not block Open after dismiss
-7. Bounded keyboard check: Tab to Sign in; focus visible; Escape closes modal when open
+   - `/en/dashboard` first-run modal keyboard: Escape closes; focus trapped while open
+7. Bounded keyboard check: Tab to Sign in; focus visible; Escape closes first-run modal when open
 8. Prefer `bun run --cwd apps/web build` or CI-equivalent build proof for touched web surfaces when practical
 9. `git diff --check`
 10. Do not claim WCAG compliance
 
 ACCEPTANCE CRITERIA
 - Login screens EN/RU/ES/IT show no debug step string in production build.
-- Welcome modal dismissal persists for the user/session (define exact persistence: localStorage vs user preference vs once-per-session) and primary nav clicks work without overlay intercept.
+- First-run modal: Escape closes; focus trap/initial focus work; existing `aistroyka:first-launch-guide:v1` persistence behavior remains unchanged (do not reimplement).
 - check:design, lint, and typecheck are green for the slice.
 - No customer-finance leakage introduced.
 - Closure note with files changed, checks, YES/NO.
 
 ROLLBACK
 - Close Draft PR and/or revert the docs/code commit on the slice branch; no migration expected.
-- Modal persistence key should be namespaced to avoid sticky broken state across versions.
+- Keep using existing namespaced persistence key `aistroyka:first-launch-guide:v1` (do not invent a second key).
 
 STOP CONDITIONS
 - If `IMPLEMENTATION_AUTHORIZATION` is not `GRANTED`, do not implement.

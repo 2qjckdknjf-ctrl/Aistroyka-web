@@ -5,48 +5,50 @@
 
 ---
 
-**Last updated:** 2026-06-30
-**Updated by:** Post–Slice 1 landing sync (PR #174 merged to main)
+**Last updated:** 2026-08-09
+**Updated by:** Product Design audit handoff pointer sync (PR #215 docs branch; not yet merged)
 
 ## Now
 
 | Field | Value |
 |---|---|
-| Production truth | `origin/main` @ **`27b7d49a`** (PR #173 + **PR #174** merged) |
-| Trusted active pointer | Use `origin/main` — local `main` worktree (`AISTROYKA-release-closure`) is **452 commits behind** and **dirty (306 files)**; ff-only sync blocked until owner triage |
-| Active module | **Idle** — branch hygiene Slice 1 closed on main |
-| Cleanup Slice 1 | **LANDED on main** (PR #174 @ `27b7d49a`) — 5 local merged+archive-tagged branches deleted; 0 remote/worktree/tag changes |
-| Local branch count | 193 (was 198 before Slice 1 local cleanup) |
-| Validation status | Local web validation available (lint/typecheck/test/cf:build) |
-| Deployment status | Production = Cloudflare Workers via CI chain. Verify via `GET /api/v1/health` → `buildStamp.sha7` |
-| Database status | Active Supabase project `vthfrxehrursfloevnlp` (eu-central-1). Supabase CLI not installed locally |
+| Production / source baseline (audited) | `origin/main` @ **`02baa6a379ca9ff30735d35e53aea5198e972d45`** (`buildStamp.sha7=02baa6a`; runtime↔source MATCH at audit time) |
+| Trusted active pointer | Use `origin/main` @ `02baa6a…` for current-main product truth. Do **not** treat open PR #215 head as the new `main` SHA until merge. |
+| Active module | **Product Design audit handoff** — pack under `docs/audit/product-design-current-main-2026-08-09/`; PR #215 **Ready / OPEN / not merged** |
+| Audit verdict | `PRODUCT_DESIGN_AUDIT_PARTIAL_BLOCKED_EXTERNAL` (P0:0 / P1:6 / P2:8 / P3:3); Wave C **in progress** |
+| Next remediation | Product Design Remediation Slice 01 prompt published; **implementation not started** (separate authorization) |
+| Deployment status | Production = Cloudflare Workers via CI chain. Verify via `GET /api/v1/health` → `buildStamp.sha7`. No manual production promotion authorized by this docs handoff. |
+| Database status | Active Supabase project `vthfrxehrursfloevnlp` (eu-central-1) |
 | Mobile status | iOS primary. Store distribution owner-gated (TestFlight/Play = OWNER_ACTION_REQUIRED) |
 
 ## Completed modules (recent, high level)
 
-- Project Operating System docs — merged (PR #173 → `d997c0df`).
-- Branch/worktree archival dry-run + policy — on main.
-- Branch cleanup **Slice 1** — merged (PR #174 → `27b7d49a`); execution report `docs/reports/BRANCH_CLEANUP_SLICE_1_EXECUTION.md`.
+- Security header dedup hotfix — merged (PR #214 → `02baa6a…`).
+- AI pipeline recovery — already merged historically (PR #211); **out of scope** for this Product Design docs handoff.
+- Project Operating System docs — merged (PR #173).
+- Branch cleanup Slice 1 — merged (PR #174 @ `27b7d49a`; historical hygiene).
 - Mobile build/runtime audit — closed (does not imply store readiness).
-- Liquid Glass public slice 1 — merged.
-- iOS/Android distribution preflight + Mode B evidence (owner-gated upload still pending).
+- Liquid Glass public slice 1 — merged (public design foundation; ≠ Product Design Remediation Slice 01).
 
 ## Open modules
 
-- Branch/worktree sprawl — **Slice 2 pending separate owner approval** (tag-first for untagged merged branches; `post-merge-prNNN` after clean-worktree removal; `snapshots/*` / `cursor/*` need explicit confirmation).
-- Local `main` worktree sync — blocked by dirty checkout at `AISTROYKA-release-closure` (owner triage or new clean worktree from `origin/main`).
-- Supabase CLI install OR confirm MCP-only DB workflow.
+- Product Design audit pack — **PR #215 Ready, awaiting merge after fresh approval on corrected head** (docs/evidence only).
+- Product Design Remediation Slice 01 — **not started** (login debug + modal Escape/focus-trap a11y + `check:design` raw colors).
+- Branch/worktree sprawl — Slice 2 still needs separate owner approval.
+- R1 legal Privacy/Terms placeholders remain open.
 
 ## Blockers
 
-- Supabase CLI missing locally (DB CLI ops).
 - Store uploads (iOS TestFlight / Google Play) require owner approval + credentials.
-- `main` worktree dirty — cannot ff to `27b7d49a` without resolving local changes first.
+- Product Design external evidence gaps: platform-owner Operations Center, iOS Manager sim, Worker auth E2E, true client persona.
 
 ## Next recommended task
 
-**Do not start Slice 2** without explicit owner approval. Optional: owner triage of dirty `AISTROYKA-release-closure` worktree OR create a fresh worktree from `origin/main` for day-to-day desktop work. Dangerous sets (dirty `.cursor/worktrees/*`, `[ahead N]` branches, never-touch prefixes) stay untouched.
+1. Finish PR #215 docs review fixes → fresh independent approval on the corrected head → merge when authorized.
+2. Only after merge + separate implementation authorization: Product Design Remediation Slice 01 Draft PR.
+3. Do **not** start Slice 02 / AI recovery / migrations from this STATUS.
 
 ## Last handoff
 
-_None yet. First handoff will appear in `docs/handoff/`._
+Product Design audit pack: `docs/audit/product-design-current-main-2026-08-09/`
+Slice 01 prompt: `docs/ops/CURSOR_PRODUCT_DESIGN_SLICE_01_IMPLEMENTATION_PROMPT_2026-08-09.md`

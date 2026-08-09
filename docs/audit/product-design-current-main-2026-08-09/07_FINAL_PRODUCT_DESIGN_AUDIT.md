@@ -31,7 +31,7 @@ Details: `00_CURRENT_BASELINE.md`.
 
 **Out of scope / not done by the audit agent:** application-code changes, manual production promotion, migrations, fixtures, paid AI, push send, store upload, Figma, DesignPreview-as-proof, rewriting the 2026-08-02 historical audit body.
 
-**Deployment wording (precise):** this audit did **not** manually promote production or ship application code. Publishing the docs Draft PR may still run repository CI (lint/tests/`cf:build` Cloudflare bundle) and automatic preview deployments (e.g. Vercel Preview). Merge to `main` may trigger established staging/production Worker automation — that is existing repo CI, not a manual Product Design production deploy.
+**Deployment wording (precise):** this audit did **not** manually promote production or ship application code. Publishing/updating the docs PR (now Ready, not Draft) may still run repository CI (lint/tests/`cf:build` Cloudflare bundle) and automatic preview deployments (e.g. Vercel Preview). Merge to `main` may trigger established staging/production Worker automation — that is existing repo CI, not a manual Product Design production deploy. Manual production promotion is **not** authorized for this handoff.
 
 **Limits:** no screen-reader certification; no WCAG claim; client finance isolation not DOM-proven; Operations Center and iOS Manager not captured; Worker authenticated path blocked.
 
@@ -86,7 +86,7 @@ See `02_FLOW_STEP_AUDIT.md` (linked screenshots). Summary counts below in §13.
 
 1. **PD-P1-01** — Login debug “Login step: idle” (`02_login_*`).
 2. **PD-P1-02** — Privacy/Terms placeholders (`06_*`, `07_*`, `13_*`).
-3. **PD-P1-03** — Welcome modal blocks/obscures cabinet navigation (`22_*`, `38_*`).
+3. **PD-P1-03** — First-run `FirstLaunchGuide` Modal missing Escape / focus trap / initial focus (persistence already via `aistroyka:first-launch-guide:v1`; `22_*`, `38_*`).
 4. **PD-P1-04** — Project detail dual tab IA (`36_*`).
 5. **PD-P1-05** — Client portal contractor shell + Create first task (`39_*`).
 6. **PD-P1-06** — No password-reset route (matrix NOT_IMPLEMENTED).
@@ -147,14 +147,14 @@ From `01_FUNCTIONAL_SURFACE_MATRIX.csv` (34 rows):
 
 | Status | Count |
 |--------|------:|
-| WORKS | 16 |
-| PARTIAL | 10 |
-| NEEDS_POLISH (flow audit only) | — (folded into PARTIAL/NEEDS in flow doc) |
-| BROKEN | 0 |
+| WORKS | 18 |
+| PARTIAL | 9 |
 | NOT_IMPLEMENTED | 2 |
-| NOT_PROVEN | 0 |
-| BLOCKED_EXTERNAL | 5 |
+| BLOCKED_EXTERNAL | 4 |
 | DEFERRED | 1 |
+| **Sum** | **34** |
+
+Programmatically recomputed from `01_FUNCTIONAL_SURFACE_MATRIX.csv` (34 data rows). Statuses present in matrix: `WORKS`, `PARTIAL`, `NOT_IMPLEMENTED`, `BLOCKED_EXTERNAL`, `DEFERRED`. No `BROKEN` / `NOT_PROVEN` / `NEEDS_POLISH` rows in the matrix (flow-audit `NEEDS_POLISH` labels remain narrative-only in `02_FLOW_STEP_AUDIT.md`).
 
 ---
 
@@ -177,7 +177,7 @@ Safe for **continued pilot engineering** on matching `02baa6a` runtime. **Not** 
 
 ## 16. Recommended implementation order
 
-1. **Product Design Remediation Slice 01** (this track; **not** completed by the audit handoff; **not** historical Liquid Glass Slice 1): remove login debug string; dismiss-persist welcome modal; green `check:design` raw-color hits — see ops prompt.
+1. **Product Design Remediation Slice 01** (this track; **not** completed by the audit handoff; **not** historical Liquid Glass Slice 1): remove login debug string; first-run modal Escape/focus-trap a11y (persistence already exists); green `check:design` raw-color hits — see ops prompt.
 
 2. **R1 / legal:** Privacy/Terms real copy (owner/counsel).
 
@@ -201,13 +201,13 @@ Staging authenticated screenshots are **not** in the published git pack; they re
 
 ## Pointer update
 
-`STATUS.md` and `docs/CURRENT_PROJECT_TRUTH_INDEX.md` are **pre-existing dirty** with R0.2 content. Surgical update would overwrite unrelated dirty work → **`POINTER_UPDATE_BLOCKED_DIRTY_OVERLAP`**.
+Canonical truth pointers (`STATUS.md`, `docs/CURRENT_PROJECT_TRUTH_INDEX.md`) are updated in this docs branch to register the Product Design audit pack and audited runtime/source baseline **`02baa6a379ca9ff30735d35e53aea5198e972d45`**. That baseline is **not** the future merge SHA of open PR #215. PR #215 remains **Ready / not merged** until a separate merge authorization.
 
-Canonical new pointers for humans/agents:
+Canonical pointers for humans/agents:
 
 - Audit pack: `docs/audit/product-design-current-main-2026-08-09/`
 - Next prompt: `docs/ops/CURSOR_PRODUCT_DESIGN_SLICE_01_IMPLEMENTATION_PROMPT_2026-08-09.md`
-- Track: **AUDIT_ONLY** (implementation NOT_GRANTED until Product Design Remediation Slice 01 auth)
+- Track: **AUDIT_DOCS_HANDOFF** (Product Design Remediation Slice 01 implementation NOT started / not authorized in this PR)
 - Naming: **Product Design Remediation Slice 01** ≠ already-implemented **Liquid Glass Slice 1** (public design foundation)
 
 ---

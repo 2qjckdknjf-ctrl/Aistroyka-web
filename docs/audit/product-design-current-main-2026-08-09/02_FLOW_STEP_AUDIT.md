@@ -36,7 +36,7 @@ Health key: `HEALTHY` | `NEEDS_POLISH` | `PARTIAL` | `BLOCKED` | `BROKEN`
 
 | # | Step | Health | Screenshot | Notes |
 |---|------|--------|------------|-------|
-| B1 | Login → dashboard | PARTIAL | local `evidence/_local_unpublishable_staging/cabinet/22_*.png` (+ `38_*`) | Staging build stamp `02baa6a`. **Welcome modal** overlays cockpit; dense onboarding (“0/5”, AI hints, AI Guide FAB) competes with ops. Not published in git (identity pixels). |
+| B1 | Login → dashboard | PARTIAL | local `evidence/_local_unpublishable_staging/cabinet/22_*.png` (+ `38_*`) | Staging build stamp `02baa6a`. Intended first-run **FirstLaunchGuide** overlay (dismissal already persisted via `aistroyka:first-launch-guide:v1`); Escape/focus-trap gaps remain (**PD-P1-03**). Dense onboarding (“0/5”, AI hints, AI Guide FAB) competes with ops. Not published in git (identity pixels). |
 | B2 | Projects list | NEEDS_POLISH | `23_projects_en_desktop.png` | List works; modal previously intercepted Open clicks. |
 | B3 | Project detail | PARTIAL | local `.../cabinet/36_project_detail_en_desktop.png` | Dual navigation: Overview/Reports/Documents/Schedule/Decisions **and** bottom Workers…Costs/Estimate. High density; next action unclear. Local-only evidence. |
 | B4 | Tasks list | HEALTHY | `24_tasks_en_desktop.png` | Reachable from sidebar. |
