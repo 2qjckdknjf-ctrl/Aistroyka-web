@@ -1,4 +1,7 @@
-/** CJS shim for next.config.js (Node require does not load .ts). Keep in sync with security-headers.ts. */
+/**
+ * CJS shim for next.config.js (Node require does not load .ts).
+ * Keep in sync with security-headers.ts — page headers are owned by next.config.js.
+ */
 const BASE_CSP_DIRECTIVES = [
   "default-src 'self'",
   "connect-src 'self' https://*.supabase.co wss://*.supabase.co",

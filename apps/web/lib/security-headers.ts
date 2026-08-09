@@ -1,4 +1,8 @@
-/** Security headers — single source of truth for middleware (pages + API). */
+/**
+ * Security header values — single source of truth.
+ * Page/HTML headers are applied only via next.config.js `headers()`.
+ * API headers are applied via middleware short-circuits + worker-bootstrap.js.
+ */
 
 export type SecurityHeader = { readonly key: string; readonly value: string };
 
