@@ -9,7 +9,7 @@
 
 ## What it does
 
-1. **Persist** — Critical writes are stored as JSON in Application Support:  
+1. **Persist** — Critical writes are stored as JSON in Application Support:
    `Application Support/AiStroykaWorker/operations.json` (see `OperationQueueStore`).
 2. **Serialize** — `OperationQueueExecutor` runs **one runnable operation at a time** (with an extra throttle for `uploadBinary`: at most one concurrent upload op).
 3. **Dependencies** — Operations declare `dependsOn` op ids; the executor only runs an op when all dependencies have **succeeded**.
@@ -28,14 +28,37 @@
 
 ## Operation types (Worker)
 
-Defined in app `Operation` / `QueuedOperation` types (e.g. start/end shift, create report, upload pipeline steps, submit report, sync ack). Exact set evolves with releases; treat this runbook as behavioral, not an enum snapshot.
+Defined in `OperationType` (`ios/AiStroykaWorker/.../Persistence/Operation.swift`):
+
+| Type | Purpose |
+|------|---------|
+| `startShift` / `endShift` | Worker day boundaries |
+| `createReport` | Create draft report |
+| `createUploadSession` / `uploadBinary` / `finalizeSession` / `attachMedia` | Report media pipeline |
+| `submitReport` | Submit report (+ optional `workerNote`) |
+| `syncAck` | Advance sync cursor after bootstrap/changes |
+| `sendTaskMessage` | Offline **text** task-chat send |
+
+Treat the table as the current enum; product flows may not enqueue every type in every release.
+
+### `sendTaskMessage` (task chat)
+
+- **When:** Worker sends a text message from task chat while offline (or the send is queued for durability). Enqueued from `TaskDetailView` with `taskId`, `messageBody`, `clientId`, and an idempotency key.
+- **Execute:** `OperationQueueExecutor` calls `TaskMessagesAPI.sendText` → `POST /api/v1/tasks/:id/messages` with `kind: "text"`, `clientId`, and `x-idempotency-key`.
+- **Payload required:** `taskId`, `messageBody`, `clientId`. Missing fields → `failed_permanent`.
+- **Media:** Voice / photo / video are **not** queued offline; Shared `TaskChatView` surfaces `task_chat_media_offline` and requires connectivity (upload-session finalize needs live network + positive `size_bytes`).
+- **Replay:** Server dedupes on `(tenant, task, sender, clientId)` and also honors route idempotency — safe to retry after reconnect.
+- **Conflicts:** HTTP **409** still sets `needsBootstrap` like other ops; run sync bootstrap before expecting the chat send to finish.
+
+See [`../API-v1-ENDPOINTS.md#task-chat`](../API-v1-ENDPOINTS.md#task-chat) and [`../mobile-ios/TASK_CHAT_FEATURE_NOTE.md`](../mobile-ios/TASK_CHAT_FEATURE_NOTE.md).
 
 ## Manual verification
 
 1. Log in, ensure project selected, open **Home** (queue + sync status).
-2. Enable **Airplane mode** (or revoke network), perform an action that enqueues (e.g. shift or report flow per current product behavior).
+2. Enable **Airplane mode** (or revoke network), perform an action that enqueues (e.g. shift, report flow, or **task chat text**).
 3. Confirm **Pending** count increases and executor stops advancing.
 4. Restore network — pending ops should drain; sync status should return to normal unless **409** recovery is required.
+5. **Task chat:** offline text should appear for Manager after reconnect; attempting voice/photo/video offline should show the media-offline message and not enqueue.
 
 ## UI tests (cold start)
 
