@@ -8,6 +8,15 @@ vi.mock("@/lib/domain/tasks/task.repository");
 vi.mock("@/lib/domain/task-assignments");
 vi.mock("./report.repository");
 vi.mock("@/lib/sync/change-log.repository", () => ({ emitChange: vi.fn().mockResolvedValue(1) }));
+vi.mock("@/lib/observability/audit.service", () => ({ emitAudit: vi.fn().mockResolvedValue(undefined) }));
+vi.mock("@/lib/domain/reports/report-approval.repository", () => ({
+  insertReportApprovalEvent: vi.fn().mockResolvedValue(true),
+}));
+vi.mock("@/lib/domain/notifications/manager-notifications.repository", () => ({
+  notifyProjectManagers: vi.fn().mockResolvedValue(undefined),
+  notifyTenantManagers: vi.fn().mockResolvedValue(undefined),
+}));
+vi.mock("@/lib/jobs/job-queue.repository", () => ({ enqueueJob: vi.fn().mockResolvedValue(null) }));
 
 describe("report.service task link", () => {
   const tenantId = "tenant-1";

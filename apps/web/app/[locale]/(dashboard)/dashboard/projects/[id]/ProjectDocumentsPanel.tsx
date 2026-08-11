@@ -247,7 +247,10 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [updateErrorById, setUpdateErrorById] = useState<Record<string, string>>({});
   const [historyDocId, setHistoryDocId] = useState<string | null>(null);
-  const [decisionTarget, setDecisionTarget] = useState<{ documentId: string; status: "approved" | "rejected" } | null>(null);
+  const [decisionTarget, setDecisionTarget] = useState<{
+    documentId: string;
+    status: "approved" | "rejected" | "changes_requested";
+  } | null>(null);
   const [decisionComment, setDecisionComment] = useState("");
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const uploadTargetRef = useRef<string | null>(null);
@@ -436,7 +439,9 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
             {rows.map((doc) => {
               const url = fileUrl(doc.object_path);
               const fileName = fileNameFromObjectPath(doc.object_path);
-              const canUpload = doc.status === "draft" && !uploadMutation.isPending;
+              const canUpload =
+                (doc.status === "draft" || doc.status === "changes_requested") &&
+                !uploadMutation.isPending;
               const isUploading = uploadDocId === doc.id && uploadMutation.isPending;
               const canSubmitForReview =
                 (doc.status === "draft" || doc.status === "uploaded" || doc.status === "changes_requested") &&
@@ -483,6 +488,19 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
                           <span className="text-aistroyka-text-tertiary text-xs break-all">
                             {fileName}
                           </span>
+                        ) : null}
+                        {doc.status === "changes_requested" ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              uploadTargetRef.current = doc.id;
+                              uploadInputRef.current?.click();
+                            }}
+                            disabled={isUploading}
+                            className="text-aistroyka-accent hover:underline text-sm text-left disabled:opacity-50"
+                          >
+                            {isUploading ? tDetail("uploading") : tDetail("uploadFile")}
+                          </button>
                         ) : null}
                       </div>
                     ) : canUpload ? (
@@ -584,6 +602,20 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
                           >
                             {tDetail("reject")}
                           </Button>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => {
+                              setDecisionTarget({
+                                documentId: doc.id,
+                                status: "changes_requested",
+                              });
+                              setDecisionComment("");
+                            }}
+                            disabled={updatingId === doc.id}
+                          >
+                            {tDetail("requestChanges")}
+                          </Button>
                         </>
                       ) : (
                         <span className="text-aistroyka-text-tertiary text-sm">—</span>
@@ -670,11 +702,23 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
         }}
         onSubmit={() => {
           if (!decisionTarget) return;
+          const trimmed = decisionComment.trim();
+          if (
+            (decisionTarget.status === "rejected" ||
+              decisionTarget.status === "changes_requested") &&
+            !trimmed
+          ) {
+            setUpdateErrorById((prev) => ({
+              ...prev,
+              [decisionTarget.documentId]: "decision_comment_required",
+            }));
+            return;
+          }
           updateMutation.mutate({
             documentId: decisionTarget.documentId,
             body: {
               status: decisionTarget.status,
-              decision_comment: decisionComment.trim() || undefined,
+              decision_comment: trimmed || undefined,
             },
           });
         }}
@@ -850,7 +894,7 @@ function DecisionCommentModal({
   onClose,
 }: {
   open: boolean;
-  action: "approved" | "rejected";
+  action: "approved" | "rejected" | "changes_requested";
   comment: string;
   isSubmitting: boolean;
   onCommentChange: (value: string) => void;
@@ -860,21 +904,26 @@ function DecisionCommentModal({
   const tDetail = useTranslations("dashboardDetail");
   if (!open) return null;
 
+  const title =
+    action === "approved"
+      ? tDetail("approve")
+      : action === "rejected"
+        ? tDetail("reject")
+        : tDetail("requestChanges");
+  const commentRequired = action === "rejected" || action === "changes_requested";
+
   return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      title={action === "approved" ? tDetail("approve") : tDetail("reject")}
-    >
+    <Modal open={open} onClose={onClose} title={title}>
       <div className="space-y-3">
         <Textarea
           id="doc-decision-comment"
-          label={tDetail("commentOptional")}
+          label={commentRequired ? tDetail("commentRequired") : tDetail("commentOptional")}
           value={comment}
           onChange={(event) => onCommentChange(event.target.value)}
           placeholder={tDetail("addShortCommentOrReason")}
           rows={3}
           disabled={isSubmitting}
+          required={commentRequired}
         />
         <div className="flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onClose} disabled={isSubmitting}>

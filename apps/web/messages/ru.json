@@ -1608,6 +1608,7 @@
     "photos": "photos",
     "title": "Название",
     "commentOptional": "Комментарий (необязательно)",
+    "commentRequired": "Комментарий (обязательно)",
     "decisionFailed": "Не удалось выполнить решение",
     "decisionModalTitle": "Решение: {title}",
     "decisionMetaLine": "Тип: {type} · Создано {date}",

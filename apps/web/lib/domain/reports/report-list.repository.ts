@@ -34,39 +34,11 @@ export async function listReportsForManager(
   const { data: rows } = await query;
   if (!rows?.length) return [];
 
-  const dayIds = Array.from(new Set((rows as { day_id: string | null }[]).map((r) => r.day_id).filter(Boolean))) as string[];
-  let dayProjectMap: Record<string, string> = {};
-  if (dayIds.length > 0) {
-    const { data: dayRows } = await supabase
-      .from("worker_day")
-      .select("id, project_id")
-      .in("id", dayIds);
-    dayProjectMap = Object.fromEntries(
-      ((dayRows ?? []) as { id: string; project_id: string | null }[]).map((d) => [d.id, d.project_id ?? ""])
-    );
-  }
-
-  const taskIds = Array.from(
-    new Set((rows as { task_id: string | null }[]).map((r) => r.task_id).filter(Boolean))
-  ) as string[];
-  let taskProjectMap: Record<string, string> = {};
-  if (taskIds.length > 0) {
-    const { data: taskRows } = await supabase
-      .from("worker_tasks")
-      .select("id, project_id")
-      .eq("tenant_id", tenantId)
-      .in("id", taskIds);
-    taskProjectMap = Object.fromEntries(
-      ((taskRows ?? []) as { id: string; project_id: string | null }[]).map((t) => [t.id, t.project_id ?? ""])
-    );
-  }
-
-  let result: ReportListRow[] = (rows as { id: string; user_id: string; day_id: string | null; status: string; created_at: string; submitted_at: string | null; task_id: string | null }[]).map((r) => {
-    const fromDay = r.day_id ? dayProjectMap[r.day_id] ?? null : null;
-    const fromTask = r.task_id ? taskProjectMap[r.task_id] ?? null : null;
-    const project_id = fromDay ?? fromTask ?? null;
-    return { ...r, project_id };
-  });
+  let result = await enrichReportsWithProjectId(
+    supabase,
+    tenantId,
+    rows as ReportRowForEnrichment[]
+  );
 
   if (opts.projectId) {
     result = result.filter((r) => r.project_id === opts.projectId);
@@ -83,4 +55,103 @@ export async function listReportsForManager(
     );
   }
   return result.slice(0, limit);
+}
+
+type ReportRowForEnrichment = {
+  id: string;
+  user_id: string;
+  day_id: string | null;
+  status: string;
+  created_at: string;
+  submitted_at: string | null;
+  task_id: string | null;
+};
+
+/** Resolve project_id via worker_day / worker_tasks (worker_reports has no project_id column). */
+export async function enrichReportsWithProjectId(
+  supabase: SupabaseClient,
+  tenantId: string,
+  rows: ReportRowForEnrichment[]
+): Promise<ReportListRow[]> {
+  if (!rows.length) return [];
+
+  const dayIds = Array.from(new Set(rows.map((r) => r.day_id).filter(Boolean))) as string[];
+  let dayProjectMap: Record<string, string> = {};
+  if (dayIds.length > 0) {
+    const { data: dayRows } = await supabase
+      .from("worker_day")
+      .select("id, project_id")
+      .in("id", dayIds);
+    dayProjectMap = Object.fromEntries(
+      ((dayRows ?? []) as { id: string; project_id: string | null }[]).map((d) => [
+        d.id,
+        d.project_id ?? "",
+      ])
+    );
+  }
+
+  const taskIds = Array.from(new Set(rows.map((r) => r.task_id).filter(Boolean))) as string[];
+  let taskProjectMap: Record<string, string> = {};
+  if (taskIds.length > 0) {
+    const { data: taskRows } = await supabase
+      .from("worker_tasks")
+      .select("id, project_id")
+      .eq("tenant_id", tenantId)
+      .in("id", taskIds);
+    taskProjectMap = Object.fromEntries(
+      ((taskRows ?? []) as { id: string; project_id: string | null }[]).map((t) => [
+        t.id,
+        t.project_id ?? "",
+      ])
+    );
+  }
+
+  return rows.map((r) => {
+    const fromDay = r.day_id ? dayProjectMap[r.day_id] ?? null : null;
+    const fromTask = r.task_id ? taskProjectMap[r.task_id] ?? null : null;
+    const project_id = fromDay ?? fromTask ?? null;
+    return { ...r, project_id };
+  });
+}
+
+/** Tenant-scoped reports in given statuses, enriched with project_id. */
+export async function listReportsByStatusesForManager(
+  supabase: SupabaseClient,
+  tenantId: string,
+  statuses: string[],
+  opts: { limit?: number; orderColumn?: "submitted_at" | "reviewed_at" | "created_at" } = {}
+): Promise<
+  Array<
+    ReportListRow & {
+      reviewed_at?: string | null;
+      manager_note?: string | null;
+    }
+  >
+> {
+  const safeLimit = Math.max(1, Math.min(opts.limit ?? 50, 200));
+  const orderColumn = opts.orderColumn ?? "submitted_at";
+
+  let query = supabase
+    .from("worker_reports")
+    .select("id, user_id, day_id, status, created_at, submitted_at, task_id, reviewed_at, manager_note")
+    .eq("tenant_id", tenantId)
+    .in("status", statuses)
+    .order(orderColumn, { ascending: true, nullsFirst: false })
+    .limit(safeLimit);
+
+  const { data: rows } = await query;
+  if (!rows?.length) return [];
+
+  type RowWithReview = ReportRowForEnrichment & {
+    reviewed_at?: string | null;
+    manager_note?: string | null;
+  };
+  const typedRows = rows as RowWithReview[];
+  const enriched = await enrichReportsWithProjectId(supabase, tenantId, typedRows);
+
+  return enriched.map((row, index) => ({
+    ...row,
+    reviewed_at: typedRows[index]?.reviewed_at ?? null,
+    manager_note: typedRows[index]?.manager_note ?? null,
+  }));
 }

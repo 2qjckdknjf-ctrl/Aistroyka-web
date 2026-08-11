@@ -21,6 +21,7 @@ const getProjectIdForReport = vi.fn().mockResolvedValue("project-1");
 const updateReview = vi.fn();
 const listMediaByReportIdWithUrls = vi.fn().mockResolvedValue([]);
 const emitAudit = vi.fn().mockResolvedValue(undefined);
+const insertReportApprovalEvent = vi.fn().mockResolvedValue(true);
 
 vi.mock("@/lib/tenant", () => ({
   getTenantContextFromRequest: (...args: unknown[]) => getTenantContextFromRequest(...args),
@@ -56,6 +57,10 @@ vi.mock("@/lib/observability/audit.service", () => ({
   emitAudit: (...args: unknown[]) => emitAudit(...args),
 }));
 
+vi.mock("@/lib/domain/reports/report-approval.repository", () => ({
+  insertReportApprovalEvent: (...args: unknown[]) => insertReportApprovalEvent(...args),
+}));
+
 describe("PATCH /api/v1/reports/:id", () => {
   beforeEach(() => {
     getTenantContextFromRequest.mockResolvedValue(tenantContext);
@@ -80,6 +85,8 @@ describe("PATCH /api/v1/reports/:id", () => {
     listMediaByReportIdWithUrls.mockResolvedValue([]);
     emitAudit.mockReset();
     emitAudit.mockResolvedValue(undefined);
+    insertReportApprovalEvent.mockReset();
+    insertReportApprovalEvent.mockResolvedValue(true);
   });
 
   it("returns 403 for unauthorized reviewer", async () => {
@@ -293,6 +300,14 @@ describe("PATCH /api/v1/reports/:id", () => {
       resource_id: "r1",
       details: { status, has_note: Boolean(expectedNote) },
     });
+    expect(insertReportApprovalEvent).toHaveBeenCalledWith(
+      expect.anything(),
+      "tenant-1",
+      "r1",
+      status,
+      "manager-1",
+      expectedNote
+    );
     const body = await response.json();
     expect(body.data.status).toBe(status);
     expect(body.data.reviewed_by).toBe("manager-1");

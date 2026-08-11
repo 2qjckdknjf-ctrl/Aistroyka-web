@@ -7,6 +7,7 @@ import * as taskRepo from "@/lib/domain/tasks/task.repository";
 import { isTaskAssignedTo } from "@/lib/domain/task-assignments";
 import { enqueueJob } from "@/lib/platform/jobs/job.service";
 import { emitAudit } from "@/lib/observability/audit.service";
+import { insertReportApprovalEvent } from "@/lib/domain/reports/report-approval.repository";
 import { emitChange } from "@/lib/sync/change-log.repository";
 import { notifyProjectManagers, notifyTenantManagers } from "@/lib/domain/notifications/manager-notifications.repository";
 
@@ -105,6 +106,14 @@ export async function submitReport(
     resource_type: "report",
     resource_id: reportId,
   });
+  await insertReportApprovalEvent(
+    supabase,
+    ctx.tenantId,
+    reportId,
+    "submitted",
+    ctx.userId,
+    options?.workerNote ?? null
+  );
   await emitChange(supabase, {
     tenant_id: ctx.tenantId,
     resource_type: "report",

@@ -114,7 +114,7 @@ describe("POST /api/v1/projects/:id/documents/:documentId/upload", () => {
     expect(res.status).toBe(404);
   });
 
-  it("returns 400 when document status is not draft", async () => {
+  it("returns 400 when document status does not allow upload", async () => {
     getDocumentById.mockResolvedValueOnce({
       id: "doc-1",
       tenant_id: "tenant-1",
@@ -129,6 +129,32 @@ describe("POST /api/v1/projects/:id/documents/:documentId/upload", () => {
     });
     const res = await POST(req, { params: Promise.resolve({ id: "project-1", documentId: "doc-1" }) });
     expect(res.status).toBe(400);
+  });
+
+  it("uploads and sets document status to uploaded from changes_requested", async () => {
+    getDocumentById.mockResolvedValueOnce({
+      id: "doc-1",
+      tenant_id: "tenant-1",
+      project_id: "project-1",
+      status: "changes_requested",
+      object_path: "tenant/t1/project/p1/documents/old.pdf",
+    });
+    const form = new FormData();
+    form.set("file", new File(["pdf"], "handover-v2.pdf", { type: "application/pdf" }));
+    const req = new Request("https://test/api/v1/projects/project-1/documents/doc-1/upload", {
+      method: "POST",
+      body: form,
+    });
+    const res = await POST(req, { params: Promise.resolve({ id: "project-1", documentId: "doc-1" }) });
+    expect(res.status).toBe(200);
+    expect(hoisted.remove).toHaveBeenCalledWith(["tenant/t1/project/p1/documents/old.pdf"]);
+    expect(updateDocument).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ tenantId: "tenant-1", userId: "manager-1" }),
+      "doc-1",
+      "project-1",
+      expect.objectContaining({ status: "uploaded" })
+    );
   });
 
   it("uploads and sets document status to uploaded", async () => {

@@ -1583,6 +1583,7 @@
     "photos": "photos",
     "title": "Titolo",
     "commentOptional": "Commento (opzionale)",
+    "commentRequired": "Commento (obbligatorio)",
     "decisionFailed": "Impossibile completare la decisione",
     "decisionModalTitle": "Decisione: {title}",
     "decisionMetaLine": "Tipo: {type} · Creato {date}",
