@@ -84,3 +84,63 @@ VISUAL_EVIDENCE_BLOCKED=authenticated cabinet screenshots require a live synthet
 ## Baseline-versus-branch
 
 `lib/ops/deploy-workflow.contract.test.ts`: 5 failed / 17 passed on **both** clean base `7c6ff21f` and this branch. Unrelated to Slice 02 file set. Not fixed (out of allowlist).
+
+```text
+FULL_SUITE_BRANCH=1762_PASS_5_BASELINE_FAIL
+BASELINE_FAILURE_REGRESSION=false
+```
+
+## Cloudflare Workers Build investigation (PR #221)
+
+### Exact identities
+
+| Field | Value |
+|-------|--------|
+| Service | `aistroyka-web-production` |
+| Branch | `design/product-design-remediation-slice-02-2026-08-11` |
+| Exact head | `5dc848a0dd96923d74955ae0ca51bf65648805e8` |
+| Initial failed build | `ea8e28de-c895-4204-9cd1-70bb24e0e585` |
+| Initial failed check | GitHub check-run `93853636972` (duration reported `0s`) |
+| Prior SUCCESS on previous head `39dc44d0` | build `d36ed0fa-1541-47b7-a8f1-7ffa2fc1cf1c` → Version `192591ab-…` + Preview/Alias URLs |
+| Safe preview rerun (once) | GitHub Check Re-run on same exact head |
+| Rerun build | `f79cd88d-24d3-4f15-ab4a-161a0be0121a` |
+| Rerun check | `93863856946` **SUCCESS** |
+| Rerun Version ID | `9eed5e1e-f73e-4882-a4c1-9bde64688d1f` (#1391) |
+| Preview URL | `https://9eed5e1e-aistroyka-web-production.z6pxn548dk.workers.dev` |
+| Preview Alias URL | `https://design-product-design-remediation-0fe1-aistroyka-web-production.z6pxn548dk.workers.dev` |
+| Trigger annotation | `workers/triggered_by=version_upload` (preview version upload, not production traffic switch) |
+
+### Evidence sources attempted
+
+1. GitHub checks API / check-run output / annotations (no log text; failure summary had Build ID + Script only)
+2. Commit statuses (Vercel SUCCESS; Workers Builds is Check Run)
+3. Cloudflare Workers Builds REST (`/accounts/.../builds/workers/...`) → **403 Authentication error** with configured API token
+4. Cloudflare Workers versions/deployments APIs → **OK** (read-only)
+5. `wrangler deployments list` / `versions list` → **OK**
+6. Cloudflare Builds MCP → server discovery/auth error / timeout
+7. Authenticated browser session → account Workers deep-links often **404/permission**; GitHub Check Re-run UI accessible
+8. GitHub Actions artifacts → N/A for external Cloudflare check
+9. CF docs: non-production branch builds default to `wrangler versions upload` (preview)
+
+### Production traffic safety
+
+```text
+PRODUCTION_TRAFFIC_SHA=7c6ff21
+ACTIVE_DEPLOYMENT_VERSION=2752113e-0feb-4d10-86ef-82b792483968 @ 100%
+FEATURE_PREVIEW_IN_PRODUCTION_TRAFFIC=false
+PRODUCTION_INCIDENT=false
+```
+
+Live health `buildStamp.sha7` remained `7c6ff21` before and after the preview rerun. Preview version `9eed5e1e-…` is not in the active deployment percentages.
+
+### Classification
+
+```text
+CLOUDFLARE_FAILURE=TRANSIENT_OR_STALE
+FAILURE_CLASSIFICATION=TRANSIENT_EXTERNAL_FAILURE
+CLOUDFLARE_GATE=PASS
+CLOUDFLARE_EXACT_HEAD_PASS=true
+SOURCE_CAUSAL_LINK=false
+```
+
+Initial failure produced no Version ID / Preview URLs and completed in `0s`. One authorized feature-branch GitHub Re-run on the same SHA succeeded and uploaded a preview version only. No Slice 02 source fix was required.

@@ -8,7 +8,13 @@
 
 **Allowlist (Dima 2026-08-11):** `PD-P1-04`, `PD-P2-07`, `PD-P2-04`
 
-**PR state:** Draft only (`SLICE_02_READY=NOT_GRANTED`, `SLICE_02_MERGE=NOT_GRANTED`)
+**PR:** https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/221
+
+**Implementation head (keyboard remediation):** `5dc848a0dd96923d74955ae0ca51bf65648805e8`
+
+**Cloudflare exact-head gate:** cleared by authorized preview-only GitHub Re-run build `f79cd88d-24d3-4f15-ab4a-161a0be0121a` (SUCCESS → preview Version `9eed5e1e-…`; production traffic unchanged at `7c6ff21`). See evidence notes.
+
+**PR merge / production deploy / Slice 03:** still not authorized.
 
 ## Scope
 
