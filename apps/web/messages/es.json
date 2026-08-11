@@ -2040,6 +2040,10 @@
     "reject": "Reject",
     "yourFeedback": "Tu feedback",
     "submitFeedback": "Enviar feedback",
+    "copilotOptionalFeedbackSummary": "Feedback de IA opcional",
+    "copilotOptionalFeedbackHint": "Opcional: sugiera una mejor respuesta para calidad interna de IA. No hay campos obligatorios.",
+    "copilotCorrectionOptional": "Corrección opcional (deje vacío para solo puntuación)",
+    "copilotFeedbackSaved": "Feedback guardado",
     "iAcknowledge": "Confirmo",
     "submitChoice": "Enviar elección",
     "confirmReview": "Confirmar revisión",
@@ -2858,5 +2862,50 @@
     "limitsMobileWorkers": "Trabajadores móviles",
     "limitsAiRequests": "Solicitudes IA/mes",
     "reviewPlansLink": "Ver planes disponibles"
+  },
+  "aiFlywheel": {
+    "consent": {
+      "title": "Consentimiento de datos para entrenamiento IA",
+      "description": "Si está activado, AISTROYKA puede usar interacciones sanitizadas y anonimizadas de IA de construcción de este tenant para mejorar modelos. Fotos sin procesar, datos personales y finanzas internas quedan excluidos por política.",
+      "toggleLabel": "Permitir que AISTROYKA use los datos sanitizados de este tenant para mejorar la IA de construcción de AISTROYKA",
+      "revocationTitle": "Si lo desactiva más tarde",
+      "revocationFuture": "Las exportaciones futuras excluirán automáticamente este tenant.",
+      "revocationModels": "Las versiones de modelos ya entrenadas no se revierten automáticamente.",
+      "revocationSnapshot": "La exportación y las model cards registran la fecha del snapshot de consentimiento.",
+      "loading": "Cargando ajustes de consentimiento…",
+      "save": "Guardar consentimiento",
+      "saving": "Guardando…",
+      "saved": "Consentimiento guardado.",
+      "loadError": "No se pudieron cargar los ajustes de consentimiento.",
+      "saveError": "No se pudo guardar el consentimiento."
+    },
+    "expertReview": {
+      "pageTitle": "Cola de revisión experta",
+      "pageDescription": "Flujo interno de correcciones expertas de salidas IA. Solo owner/admin. Alimenta Gold Memory con consentimiento.",
+      "disabled": "La cola de revisión experta no está habilitada en este entorno.",
+      "loading": "Cargando cola…",
+      "loadError": "No se pudo cargar la cola.",
+      "pendingTitle": "Candidatos pendientes",
+      "reviewTitle": "Revisión",
+      "empty": "No hay candidatos pendientes. Ejecute el generador o recopile datos preference/feedback.",
+      "selectItem": "Seleccione un candidato para revisar.",
+      "inputLabel": "Entrada sanitizada",
+      "modelOutputLabel": "Salida del modelo",
+      "verdictLabel": "Veredicto",
+      "conclusionLabel": "Conclusión experta",
+      "rationaleLabel": "Razonamiento (opcional)",
+      "correctedJsonLabel": "Salida corregida (JSON)",
+      "submit": "Enviar revisión",
+      "submitting": "Enviando…",
+      "submitError": "No se pudo enviar la revisión.",
+      "skip": "Omitir",
+      "skipError": "No se pudo omitir.",
+      "verdict": {
+        "model_correct": "Modelo correcto",
+        "model_partially_correct": "Parcialmente correcto",
+        "model_wrong": "Modelo incorrecto",
+        "both_models_wrong": "Ambos incorrectos"
+      }
+    }
   }
 }

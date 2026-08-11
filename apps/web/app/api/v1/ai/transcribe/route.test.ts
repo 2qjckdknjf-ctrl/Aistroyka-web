@@ -88,7 +88,7 @@ describe("POST /api/v1/ai/transcribe", () => {
   });
 
   it("returns 415 for explicitly unsupported mime type", async () => {
-    const bad = new File([minWebmPayload()], "clip.bin", { type: "application/pdf" });
+    const bad = new File([new Uint8Array(64).fill(0x7f)], "clip.bin", { type: "application/pdf" });
     const fd = new FormData();
     fd.append("file", bad);
     const req = new Request("https://x/api/v1/ai/transcribe", { method: "POST", body: fd });
@@ -107,15 +107,24 @@ describe("POST /api/v1/ai/transcribe", () => {
   });
 
   it("returns 200 with text when file present", async () => {
-    const file = new File([minWebmPayload()], "clip.webm", { type: "audio/webm" });
+    const file = new File([minWebmPayload()], "clip.bin", { type: "" });
+    const fd = new FormData();
+    fd.append("file", file);
+    const req = new Request("https://x/api/v1/ai/transcribe", { method: "POST", body: fd });
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    const j = (await res.json()) as { data: { text: string } };
+    expect(j.data.text).toBe("hello site");
+  });
+
+  it("returns 200 with locale hint when file present", async () => {
+    const file = new File([minWebmPayload()], "clip.bin", { type: "" });
     const fd = new FormData();
     fd.append("file", file);
     fd.append("locale", "en");
     const req = new Request("https://x/api/v1/ai/transcribe", { method: "POST", body: fd });
     const res = await POST(req);
     expect(res.status).toBe(200);
-    const j = (await res.json()) as { data: { text: string } };
-    expect(j.data.text).toBe("hello site");
   });
 
   it("infers WebM when file type is empty", async () => {

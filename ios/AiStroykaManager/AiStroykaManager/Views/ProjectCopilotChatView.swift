@@ -10,11 +10,13 @@ struct CopilotChatMessage: Identifiable {
     let id: UUID
     let role: String
     let content: String
+    let requestId: String?
 
-    init(id: UUID = UUID(), role: String, content: String) {
+    init(id: UUID = UUID(), role: String, content: String, requestId: String? = nil) {
         self.id = id
         self.role = role
         self.content = content
+        self.requestId = requestId
     }
 }
 
@@ -29,6 +31,12 @@ struct ProjectCopilotChatView: View {
     @State private var isSending = false
     @State private var errorMessage: String?
     @State private var fallbackNote: String?
+    @State private var feedbackRunId: String?
+    @State private var feedbackAssistantText: String?
+    @State private var feedbackUserQuestion: String?
+    @State private var feedbackCorrection = ""
+    @State private var feedbackStatus: String?
+    @State private var feedbackExpanded = false
 
     private var decisionContext: DecisionContextPayload {
         intelligence?.buildDecisionContext() ?? DecisionContextPayload(
@@ -85,6 +93,11 @@ struct ProjectCopilotChatView: View {
                     .foregroundStyle(.red)
                     .padding(.horizontal)
             }
+            if AiFlywheelConfig.isFeedbackCaptureUiEnabled,
+               feedbackRunId != nil,
+               feedbackAssistantText != nil {
+                optionalFeedbackSection
+            }
             HStack(spacing: 8) {
                 TextField(NSLocalizedString("mgr_copilot_input_placeholder", comment: ""), text: $draft, axis: .vertical)
                     .textFieldStyle(.roundedBorder)
@@ -112,6 +125,86 @@ struct ProjectCopilotChatView: View {
     }
 
     @ViewBuilder
+    private var optionalFeedbackSection: some View {
+        DisclosureGroup(
+            isExpanded: $feedbackExpanded,
+            content: {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(NSLocalizedString("mgr_copilot_feedback_hint", comment: ""))
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    TextField(
+                        NSLocalizedString("mgr_copilot_correction_optional", comment: ""),
+                        text: $feedbackCorrection,
+                        axis: .vertical
+                    )
+                    .textFieldStyle(.roundedBorder)
+                    .lineLimit(2...4)
+                    Button(NSLocalizedString("mgr_copilot_submit_feedback", comment: "")) {
+                        submitOptionalFeedback()
+                    }
+                    .disabled(feedbackStatus == "saving")
+                    if feedbackStatus == "saved" {
+                        Text(NSLocalizedString("mgr_copilot_feedback_saved", comment: ""))
+                            .font(.caption2)
+                            .foregroundStyle(.green)
+                    } else if feedbackStatus == "error" {
+                        Text(NSLocalizedString("mgr_copilot_feedback_failed", comment: ""))
+                            .font(.caption2)
+                            .foregroundStyle(.red)
+                    }
+                }
+                .padding(.top, 4)
+            },
+            label: {
+                Text(NSLocalizedString("mgr_copilot_optional_feedback", comment: ""))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        )
+        .padding(.horizontal)
+    }
+
+    private func submitOptionalFeedback() {
+        guard let runId = feedbackRunId, let assistant = feedbackAssistantText else { return }
+        feedbackStatus = "saving"
+        Task { @MainActor in
+            let correction = feedbackCorrection.trimmingCharacters(in: .whitespacesAndNewlines)
+            let pair = AiFeedbackSubmit.preferenceFields(
+                runId: runId,
+                assistantText: assistant,
+                correctionText: correction,
+                userQuestion: feedbackUserQuestion
+            )
+            var req = AiFeedbackSubmitRequest(
+                runId: runId,
+                usefulnessScore: correction.isEmpty ? 4 : 2,
+                comments: correction.isEmpty ? nil : correction,
+                aiRequestId: runId
+            )
+            if let pair {
+                req = AiFeedbackSubmitRequest(
+                    runId: runId,
+                    usefulnessScore: 2,
+                    comments: correction,
+                    aiRequestId: runId,
+                    taskType: pair.taskType,
+                    audience: "internal",
+                    inputContext: pair.inputContext.isEmpty ? nil : pair.inputContext,
+                    rejectedOutput: pair.rejectedOutput,
+                    chosenOutput: pair.chosenOutput
+                )
+            }
+            do {
+                try await AiFeedbackSubmit.submit(req)
+                feedbackStatus = "saved"
+            } catch {
+                feedbackStatus = "error"
+            }
+        }
+    }
+
+    @ViewBuilder
     private func chatBubble(_ m: CopilotChatMessage) -> some View {
         let isUser = m.role == "user"
         HStack {
@@ -131,6 +224,7 @@ struct ProjectCopilotChatView: View {
         errorMessage = nil
         fallbackNote = nil
         messages.append(CopilotChatMessage(role: "user", content: text))
+        feedbackUserQuestion = text
         isSending = true
         let assistantId = UUID()
         messages.append(CopilotChatMessage(id: assistantId, role: "assistant", content: ""))
@@ -143,7 +237,8 @@ struct ProjectCopilotChatView: View {
                 copy[idx] = CopilotChatMessage(
                     id: assistantId,
                     role: "assistant",
-                    content: transform(copy[idx].content)
+                    content: transform(copy[idx].content),
+                    requestId: copy[idx].requestId
                 )
                 messages = copy
             }
@@ -166,6 +261,11 @@ struct ProjectCopilotChatView: View {
                             updateAssistant { $0 + delta }
                         case .done(let d):
                             threadId = d.threadId.isEmpty ? threadId : d.threadId
+                            if !d.requestId.isEmpty {
+                                feedbackRunId = d.requestId
+                                feedbackAssistantText = d.finalText.isEmpty ? messages.first(where: { $0.id == assistantId })?.content : d.finalText
+                                feedbackStatus = nil
+                            }
                             if let fr = d.fallbackReason, !fr.isEmpty {
                                 fallbackNote = String(
                                     format: NSLocalizedString("mgr_copilot_fallback_fmt", comment: ""),
@@ -174,6 +274,16 @@ struct ProjectCopilotChatView: View {
                             }
                             if !d.finalText.isEmpty {
                                 updateAssistant { _ in d.finalText }
+                                if let idx = messages.firstIndex(where: { $0.id == assistantId }) {
+                                    var copy = messages
+                                    copy[idx] = CopilotChatMessage(
+                                        id: assistantId,
+                                        role: "assistant",
+                                        content: d.finalText,
+                                        requestId: d.requestId.isEmpty ? nil : d.requestId
+                                    )
+                                    messages = copy
+                                }
                             }
                         default:
                             break

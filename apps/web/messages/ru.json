@@ -2065,6 +2065,10 @@
     "reject": "Reject",
     "yourFeedback": "Ваш комментарий",
     "submitFeedback": "Отправить комментарий",
+    "copilotOptionalFeedbackSummary": "Необязательный отзыв об ИИ",
+    "copilotOptionalFeedbackHint": "Необязательно: предложите лучший ответ для внутреннего контроля качества ИИ. Поля не обязательны.",
+    "copilotCorrectionOptional": "Необязательная правка (оставьте пустым для оценки без пары)",
+    "copilotFeedbackSaved": "Комментарий сохранён",
     "iAcknowledge": "Подтверждаю",
     "submitChoice": "Отправить выбор",
     "confirmReview": "Подтвердить просмотр",
@@ -2854,6 +2858,51 @@
     "createFailed": "Не удалось создать кейс",
     "updateFailed": "Не удалось обновить кейс",
     "error": "Ошибка"
+  },
+  "aiFlywheel": {
+    "consent": {
+      "title": "Согласие на данные для обучения ИИ",
+      "description": "Если включено, AISTROYKA может использовать обезличенные взаимодействия с construction AI этого tenant для улучшения моделей. Сырые фото, персональные данные и внутренняя финансовая информация исключаются политикой.",
+      "toggleLabel": "Разрешить AISTROYKA использовать обезличенные данные этого tenant для улучшения construction AI AISTROYKA",
+      "revocationTitle": "Если вы позже отключите",
+      "revocationFuture": "Будущие экспорты датасетов автоматически исключат этот tenant.",
+      "revocationModels": "Уже обученные версии моделей автоматически не откатываются.",
+      "revocationSnapshot": "Экспорт и model cards фиксируют дату снимка согласия.",
+      "loading": "Загрузка настроек согласия…",
+      "save": "Сохранить согласие",
+      "saving": "Сохранение…",
+      "saved": "Согласие сохранено.",
+      "loadError": "Не удалось загрузить настройки согласия.",
+      "saveError": "Не удалось сохранить настройки согласия."
+    },
+    "expertReview": {
+      "pageTitle": "Очередь экспертной проверки",
+      "pageDescription": "Внутренний процесс экспертных правок ответов ИИ. Только owner/admin. При согласии питает Gold Memory.",
+      "disabled": "Очередь экспертной проверки не включена в этой среде.",
+      "loading": "Загрузка очереди…",
+      "loadError": "Не удалось загрузить очередь.",
+      "pendingTitle": "Ожидающие кандидаты",
+      "reviewTitle": "Проверка",
+      "empty": "Нет ожидающих кандидатов. Запустите сборщик очереди или соберите данные preference/feedback.",
+      "selectItem": "Выберите кандидата для проверки.",
+      "inputLabel": "Очищенный вход",
+      "modelOutputLabel": "Ответ модели",
+      "verdictLabel": "Вердикт",
+      "conclusionLabel": "Экспертное заключение",
+      "rationaleLabel": "Обоснование (необязательно)",
+      "correctedJsonLabel": "Исправленный вывод (JSON)",
+      "submit": "Отправить проверку",
+      "submitting": "Отправка…",
+      "submitError": "Не удалось отправить проверку.",
+      "skip": "Пропустить",
+      "skipError": "Не удалось пропустить.",
+      "verdict": {
+        "model_correct": "Модель верна",
+        "model_partially_correct": "Частично верна",
+        "model_wrong": "Модель ошиблась",
+        "both_models_wrong": "Обе ошиблись"
+      }
+    }
   },
   "errors": {
     "insufficientRights": "Недостаточно прав",
