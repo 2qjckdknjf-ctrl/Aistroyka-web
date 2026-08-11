@@ -30,14 +30,40 @@
 - **Behavior:** `FirstValueBanner`/`GetStartedPanel` above `DashboardOpsOverviewClient`; full launch banner for any incomplete activation.
 - **Modal a11y:** Slice 01 `Modal` behavior must not regress.
 
-## Acceptance results (branch)
+## Dima review blocker (after Draft PR #221 head `39dc44d0`)
+
+```text
+BLOCKING_FINDING=PD-P1-04_KEYBOARD_TAB_NAVIGATION
+```
+
+Shared `Tabs`/`Tab` used `tabIndex={0}` only on the selected tab and `tabIndex={-1}` on others, but did not handle `ArrowLeft` / `ArrowRight` / `Home` / `End`. Keyboard users could focus only the active tab and could not reach other destinations in the tablist.
+
+Therefore these claims were **not** confirmed at `39dc44d0`:
+
+```text
+ACTIVE_DESTINATION_ACCESSIBLE=true
+ALL_EXISTING_DESTINATIONS_REACHABLE=true
+```
+
+Source-scanning `project-primary-nav.regression.test.ts` did not reproduce keyboard interaction.
+
+## Keyboard remediation
+
+- `Tabs` tablist: `aria-orientation="horizontal"` + `onKeyDown` with automatic activation via existing `onSelect` (`focus` + `click`).
+- `ArrowRight` / `ArrowLeft` cycle; `Home` / `End` jump; handled keys `preventDefault`; unrelated keys ignored.
+- Direct-child tab scoping avoids neighboring/nested tablists.
+- Project-detail URL sync continues through the same controlled `onSelect` → `router.replace` path.
+- Interaction coverage: `Tabs.keyboard.behavior.test.ts`, `tabs-keyboard.test.ts`, rewritten `project-primary-nav.regression.test.ts`.
+
+## Acceptance results (post-remediation)
 
 | Criterion | Result |
 |-----------|--------|
 | ONE_PRIMARY_PROJECT_NAVIGATION | true — single `project-primary-nav` tablist |
 | DUPLICATE_NAVIGATION_REMOVED | true — `ProjectSubnav` unmounted |
-| ACTIVE_DESTINATION_ACCESSIBLE | true — `aria-selected` + URL sync |
-| ALL_EXISTING_DESTINATIONS_REACHABLE | true — 11 tabs preserved |
+| KEYBOARD_TAB_NAVIGATION | true — Arrow/Home/End interaction tests green |
+| ACTIVE_DESTINATION_ACCESSIBLE | true — keyboard + click activate selected tab/`aria-selected` |
+| ALL_EXISTING_DESTINATIONS_REACHABLE | true — all 11 destinations reached via ArrowRight cycle + click |
 | RBAC_AND_ROUTE_GUARDS_UNCHANGED | true |
 | STATUS_CHIP_PERSISTENT | true — chip in filterBar for all states |
 | FALSE_LIVE_STATE_ABSENT | true — resolver never returns live |
@@ -52,7 +78,7 @@
 ## Visual evidence
 
 ```text
-VISUAL_EVIDENCE_BLOCKED=authenticated cabinet screenshots require a live synthetic session; this slice records unit/regression + i18n parity + builds instead of mutating staging/prod for captures. Pre-change audit captures remain under docs/audit/product-design-current-main-2026-08-09/evidence (local-unpublishable for authenticated cabinet).
+VISUAL_EVIDENCE_BLOCKED=authenticated cabinet screenshots require a live synthetic session
 ```
 
 ## Baseline-versus-branch

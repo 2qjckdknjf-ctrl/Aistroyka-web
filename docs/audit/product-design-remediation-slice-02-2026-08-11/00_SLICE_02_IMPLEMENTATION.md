@@ -14,7 +14,7 @@
 
 | ID | Surface | Change |
 |----|---------|--------|
-| PD-P1-04 | `/dashboard/projects/[id]` | Remove competing `ProjectSubnav`; keep one primary `tablist`; sync `?tab=` via `router.replace` |
+| PD-P1-04 | `/dashboard/projects/[id]` | Remove competing `ProjectSubnav`; keep one primary `tablist`; sync `?tab=` via `router.replace`; horizontal Arrow/Home/End keyboard activation on shared `Tabs` |
 | PD-P2-07 | `/dashboard/ai` | Persistent non-LIVE readiness chip (`Badge` + tokens); never claim LIVE |
 | PD-P2-04 | `/dashboard` + shell banner | Ops overview first; compact launch banner for returning partial progress; persistence key unchanged |
 
