@@ -310,7 +310,7 @@ export function TaskChatPanel({ taskId }: { taskId: string }) {
       <h3 className="text-aistroyka-title3 font-semibold text-aistroyka-text-primary">
         {t("taskChatTitle")}
       </h3>
-      {error ? <p className="text-aistroyka-caption text-red-600">{error}</p> : null}
+      {error ? <p className="text-aistroyka-caption text-aistroyka-error">{error}</p> : null}
       <div
         ref={listRef}
         className="max-h-80 overflow-y-auto space-y-2 rounded-lg border border-aistroyka-border bg-aistroyka-surface-secondary/40 p-3"
