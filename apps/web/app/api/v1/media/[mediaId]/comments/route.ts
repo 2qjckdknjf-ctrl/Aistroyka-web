@@ -5,7 +5,12 @@
 
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
+import {
+  canManageProjects,
+  getTenantContextFromRequest,
+  requireTenant,
+  TenantRequiredError,
+} from "@/lib/tenant";
 import { emitChange } from "@/lib/sync/change-log.repository";
 
 export const dynamic = "force-dynamic";
@@ -20,6 +25,10 @@ export async function POST(
   } catch (e) {
     if (e instanceof TenantRequiredError) return NextResponse.json({ error: e.message }, { status: 401 });
     throw e;
+  }
+  // media:upload >= member — viewers must not forge comments.
+  if (!canManageProjects(ctx)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   const { mediaId } = await params;
   if (!mediaId) return NextResponse.json({ error: "Missing mediaId" }, { status: 400 });
