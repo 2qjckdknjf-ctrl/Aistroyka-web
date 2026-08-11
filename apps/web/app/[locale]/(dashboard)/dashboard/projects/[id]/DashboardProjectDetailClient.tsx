@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import {
   Card,
   SectionHeader,
@@ -29,9 +29,8 @@ import { ProjectCostsPanel } from "./ProjectCostsPanel";
 import { ProjectEstimatePanel } from "./ProjectEstimatePanel";
 import { ProjectDecisionsPanel } from "./ProjectDecisionsPanel";
 import { TelegramConnectCard } from "@/components/integrations/TelegramConnectCard";
-import { ProjectSubnav } from "@/components/projects/ProjectSubnav";
 import { downloadProjectReportsExport } from "@/components/projects/reports-export-ui";
-import { resolveProjectDetailTab } from "./project-detail-tabs";
+import { projectDetailTabHref, resolveProjectDetailTab } from "./project-detail-tabs";
 
 const PAGE_SIZE = 10;
 
@@ -116,6 +115,7 @@ export function DashboardProjectDetailClient({
 }) {
   const tPage = useTranslations("dashboardPageMeta");
   const tDetail = useTranslations("dashboardDetail");
+  const router = useRouter();
   const searchParams = useSearchParams();
   const tabParam = searchParams?.get("tab");
   const [activeTab, setActiveTab] = useState(resolveProjectDetailTab(tabParam));
@@ -123,6 +123,13 @@ export function DashboardProjectDetailClient({
   useEffect(() => {
     setActiveTab(resolveProjectDetailTab(tabParam));
   }, [tabParam]);
+
+  function selectTab(tab: string) {
+    const next = resolveProjectDetailTab(tab);
+    setActiveTab(next);
+    router.replace(projectDetailTabHref(projectId, next), { scroll: false });
+  }
+
   const [workersPage, setWorkersPage] = useState(1);
   const [contractorsPage, setContractorsPage] = useState(1);
   const [reportsPage, setReportsPage] = useState(1);
@@ -228,41 +235,43 @@ export function DashboardProjectDetailClient({
 
       <TelegramConnectCard className="mb-6" />
 
-      <ProjectSubnav projectId={projectId} activeTab={activeTab} onSelect={setActiveTab} />
-
       <Card>
-        <Tabs aria-label={tDetail("projectSections")}>
-          <Tab id="tab-workers" selected={activeTab === "workers"} onSelect={() => setActiveTab("workers")} aria-controls="panel-workers">
+        <Tabs
+          aria-label={tDetail("projectSections")}
+          className="overflow-x-auto"
+          data-testid="project-primary-nav"
+        >
+          <Tab id="tab-workers" selected={activeTab === "workers"} onSelect={() => selectTab("workers")} aria-controls="panel-workers">
             {tDetail("workers")}
           </Tab>
-          <Tab id="tab-contractors" selected={activeTab === "contractors"} onSelect={() => setActiveTab("contractors")} aria-controls="panel-contractors">
+          <Tab id="tab-contractors" selected={activeTab === "contractors"} onSelect={() => selectTab("contractors")} aria-controls="panel-contractors">
             {tDetail("contractors")}
           </Tab>
-          <Tab id="tab-reports" selected={activeTab === "reports"} onSelect={() => setActiveTab("reports")} aria-controls="panel-reports">
+          <Tab id="tab-reports" selected={activeTab === "reports"} onSelect={() => selectTab("reports")} aria-controls="panel-reports">
             {tDetail("reports")}
           </Tab>
-          <Tab id="tab-uploads" selected={activeTab === "uploads"} onSelect={() => setActiveTab("uploads")} aria-controls="panel-uploads">
+          <Tab id="tab-uploads" selected={activeTab === "uploads"} onSelect={() => selectTab("uploads")} aria-controls="panel-uploads">
             {tDetail("uploads")}
           </Tab>
-          <Tab id="tab-ai" selected={activeTab === "ai"} onSelect={() => setActiveTab("ai")} aria-controls="panel-ai">
+          <Tab id="tab-ai" selected={activeTab === "ai"} onSelect={() => selectTab("ai")} aria-controls="panel-ai">
             {tDetail("ai")}
           </Tab>
-          <Tab id="tab-intelligence" selected={activeTab === "intelligence"} onSelect={() => setActiveTab("intelligence")} aria-controls="panel-intelligence">
+          <Tab id="tab-intelligence" selected={activeTab === "intelligence"} onSelect={() => selectTab("intelligence")} aria-controls="panel-intelligence">
             {tDetail("intelligence")}
           </Tab>
-          <Tab id="tab-schedule" selected={activeTab === "schedule"} onSelect={() => setActiveTab("schedule")} aria-controls="panel-schedule">
+          <Tab id="tab-schedule" selected={activeTab === "schedule"} onSelect={() => selectTab("schedule")} aria-controls="panel-schedule">
             {tDetail("schedule")}
           </Tab>
-          <Tab id="tab-documents" selected={activeTab === "documents"} onSelect={() => setActiveTab("documents")} aria-controls="panel-documents">
+          <Tab id="tab-documents" selected={activeTab === "documents"} onSelect={() => selectTab("documents")} aria-controls="panel-documents">
             {tDetail("documents")}
           </Tab>
-          <Tab id="tab-decisions" selected={activeTab === "decisions"} onSelect={() => setActiveTab("decisions")} aria-controls="panel-decisions">
+          <Tab id="tab-decisions" selected={activeTab === "decisions"} onSelect={() => selectTab("decisions")} aria-controls="panel-decisions">
             {tDetail("decisions")}
           </Tab>
-          <Tab id="tab-costs" selected={activeTab === "costs"} onSelect={() => setActiveTab("costs")} aria-controls="panel-costs">
+          <Tab id="tab-costs" selected={activeTab === "costs"} onSelect={() => selectTab("costs")} aria-controls="panel-costs">
             {tDetail("costs")}
           </Tab>
-          <Tab id="tab-estimate" selected={activeTab === "estimate"} onSelect={() => setActiveTab("estimate")} aria-controls="panel-estimate">
+          <Tab id="tab-estimate" selected={activeTab === "estimate"} onSelect={() => selectTab("estimate")} aria-controls="panel-estimate">
             {tDetail("estimate")}
           </Tab>
         </Tabs>

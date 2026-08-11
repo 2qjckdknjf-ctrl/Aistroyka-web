@@ -358,7 +358,9 @@
         "addTask": "Создать первую задачу",
         "uploadReport": "Отправить первый ежедневный отчёт",
         "viewAi": "Открыть AI-инсайты"
-      }
+      },
+      "showSetupGuide": "Показать гайд запуска",
+      "hideSetupGuide": "Скрыть гайд запуска"
     },
     "aiGuide": {
       "open": "ИИ-гайд",
@@ -2800,7 +2802,13 @@
     "managerActionSource_recommendation": "recommendation",
     "managerActionSource_health": "health",
     "managerActionSource_executive": "executive",
-    "fromExecutiveSummary": "From executive summary"
+    "fromExecutiveSummary": "From executive summary",
+    "aiReadinessNotConfigured": "Не настроено",
+    "aiReadinessConfiguredUnverified": "Настроено (не проверено)",
+    "aiReadinessDegraded": "Ограниченный режим",
+    "aiReadinessHintNotConfigured": "AI-анализ не настроен для этой среды. Этот экран не является LIVE.",
+    "aiReadinessHintConfiguredUnverified": "Ключи провайдера могут быть заданы, но LIVE-активация на этом экране не подтверждена.",
+    "aiReadinessHintDegraded": "Часть анализов недоступна или завершилась с ошибкой. Этот экран не является LIVE."
   },
   "governancePage": {
     "listSubtitle": "Кросс-проектное управление и эскалации по активным проектам.",

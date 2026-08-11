@@ -6,15 +6,18 @@ export function Tabs({
   children,
   "aria-label": ariaLabel,
   className = "",
+  "data-testid": dataTestId,
 }: {
   children: ReactNode;
   "aria-label"?: string;
   className?: string;
+  "data-testid"?: string;
 }) {
   return (
     <div
       role="tablist"
       aria-label={ariaLabel}
+      data-testid={dataTestId}
       className={`flex gap-0 border-b border-aistroyka-border-subtle ${className}`.trim()}
     >
       {children}

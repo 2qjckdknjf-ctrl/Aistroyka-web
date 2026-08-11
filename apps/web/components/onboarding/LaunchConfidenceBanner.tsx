@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { Link, usePathname } from "@/i18n/navigation";
 import { Button, Card } from "@/components/ui";
+import { resolveLaunchBannerDensity } from "@/lib/help/launch-banner-density";
 import {
   detectLaunchRole,
   getCompletedCount,
@@ -27,6 +28,7 @@ export function LaunchConfidenceBanner() {
   const locale = useLocale();
   const pathname = usePathname();
   const role = detectLaunchRole(pathname);
+  const [userExpanded, setUserExpanded] = useState(false);
   const [hints, setHints] = useState<
     Array<{ step: LaunchStepKey; title: string; reason: string; action: string; href: string }>
   >([]);
@@ -41,6 +43,7 @@ export function LaunchConfidenceBanner() {
   const total = LAUNCH_STEPS.length;
   const nextStep = getNextLaunchStep(data);
   const roleFirstActions = getRoleFirstActions(role, data);
+  const density = resolveLaunchBannerDensity({ completed, total, userExpanded });
 
   useEffect(() => {
     const controller = new AbortController();
@@ -62,14 +65,51 @@ export function LaunchConfidenceBanner() {
         setHints([]);
       }
     }
-    loadHints();
+    if (density === "expanded") {
+      loadHints();
+    } else {
+      setHints([]);
+    }
     return () => controller.abort();
-  }, [data?.getStarted, locale, role]);
+  }, [data?.getStarted, density, locale, role]);
 
-  if (completed >= total) return null;
+  if (density === "hidden") return null;
+
+  if (density === "compact") {
+    return (
+      <Card
+        className="mb-4 border-aistroyka-accent/30 bg-aistroyka-accent-light/30 p-3"
+        data-testid="launch-confidence-banner-compact"
+      >
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-aistroyka-subheadline text-aistroyka-text-secondary">
+            {t("progress", { completed, total })}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {nextStep ? (
+              <Link href={nextStep.href}>
+                <Button variant="primary">{t(`stepLabels.${nextStep.key}`)}</Button>
+              </Link>
+            ) : null}
+            <Button
+              variant="secondary"
+              type="button"
+              onClick={() => setUserExpanded(true)}
+              data-testid="launch-confidence-banner-expand"
+            >
+              {t("showSetupGuide")}
+            </Button>
+          </div>
+        </div>
+      </Card>
+    );
+  }
 
   return (
-    <Card className="mb-4 border-aistroyka-accent/30 bg-aistroyka-accent-light/30 p-4">
+    <Card
+      className="mb-4 border-aistroyka-accent/30 bg-aistroyka-accent-light/30 p-4"
+      data-testid="launch-confidence-banner-expanded"
+    >
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">{t("title")}</h2>
@@ -89,6 +129,16 @@ export function LaunchConfidenceBanner() {
           <Link href="/dashboard/help">
             <Button variant="secondary">{t("openHelp")}</Button>
           </Link>
+          {completed > 0 ? (
+            <Button
+              variant="secondary"
+              type="button"
+              onClick={() => setUserExpanded(false)}
+              data-testid="launch-confidence-banner-collapse"
+            >
+              {t("hideSetupGuide")}
+            </Button>
+          ) : null}
         </div>
       </div>
       {roleFirstActions.length > 0 ? (
@@ -123,4 +173,3 @@ export function LaunchConfidenceBanner() {
     </Card>
   );
 }
-

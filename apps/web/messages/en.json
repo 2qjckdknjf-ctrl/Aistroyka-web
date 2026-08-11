@@ -417,7 +417,9 @@
         "addTask": "Create first task",
         "uploadReport": "Submit first daily report",
         "viewAi": "Open AI insights"
-      }
+      },
+      "showSetupGuide": "Show setup guide",
+      "hideSetupGuide": "Hide setup guide"
     },
     "aiGuide": {
       "open": "AI Guide",
@@ -2800,7 +2802,13 @@
     "managerActionSource_recommendation": "recommendation",
     "managerActionSource_health": "health",
     "managerActionSource_executive": "executive",
-    "fromExecutiveSummary": "From executive summary"
+    "fromExecutiveSummary": "From executive summary",
+    "aiReadinessNotConfigured": "Not configured",
+    "aiReadinessConfiguredUnverified": "Configured (unverified)",
+    "aiReadinessDegraded": "Degraded",
+    "aiReadinessHintNotConfigured": "AI analysis is not configured for this environment. This surface is not LIVE.",
+    "aiReadinessHintConfiguredUnverified": "Provider keys may be present, but LIVE activation is not verified on this surface.",
+    "aiReadinessHintDegraded": "Some analyses failed or are unavailable. This surface is not LIVE."
   },
   "governancePage": {
     "listSubtitle": "Cross-project governance and escalation across active projects.",

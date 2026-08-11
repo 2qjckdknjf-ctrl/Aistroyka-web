@@ -358,7 +358,9 @@
         "addTask": "Crear primera tarea",
         "uploadReport": "Enviar primer informe diario",
         "viewAi": "Abrir insights de IA"
-      }
+      },
+      "showSetupGuide": "Mostrar guía de inicio",
+      "hideSetupGuide": "Ocultar guía de inicio"
     },
     "aiGuide": {
       "open": "Guía IA",
@@ -2775,7 +2777,13 @@
     "managerActionSource_recommendation": "recommendation",
     "managerActionSource_health": "health",
     "managerActionSource_executive": "executive",
-    "fromExecutiveSummary": "From executive summary"
+    "fromExecutiveSummary": "From executive summary",
+    "aiReadinessNotConfigured": "No configurado",
+    "aiReadinessConfiguredUnverified": "Configurado (sin verificar)",
+    "aiReadinessDegraded": "Degradado",
+    "aiReadinessHintNotConfigured": "El análisis de IA no está configurado en este entorno. Esta superficie no es LIVE.",
+    "aiReadinessHintConfiguredUnverified": "Puede haber claves de proveedor, pero la activación LIVE no está verificada en esta superficie.",
+    "aiReadinessHintDegraded": "Algunos análisis fallaron o no están disponibles. Esta superficie no es LIVE."
   },
   "governancePage": {
     "listSubtitle": "Gobernanza y escalaciones entre proyectos activos.",

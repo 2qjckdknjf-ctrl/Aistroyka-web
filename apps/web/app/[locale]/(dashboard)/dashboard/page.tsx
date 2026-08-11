@@ -43,11 +43,11 @@ export default async function DashboardPage() {
             <span className="font-medium">{user?.email ?? "—"}</span>
           </p>
         </header>
-        <section className="mb-aistroyka-8">
+        <DashboardOpsOverviewClient />
+        <section className="mt-aistroyka-8 mb-aistroyka-8">
           <FirstValueBanner />
           <GetStartedPanel />
         </section>
-        <DashboardOpsOverviewClient />
         <section className="mt-aistroyka-8">
           <DashboardManagerActionsClient />
         </section>

@@ -18,9 +18,11 @@ import {
   Button,
 } from "@/components/ui";
 import { FilterBar } from "@/components/cockpit/FilterBar";
+import { AiReadinessStatusChip } from "@/components/ai/AiReadinessStatusChip";
 import { useFilterParams } from "@/lib/cockpit/useFilterParams";
 import { parseTablePagination } from "@/lib/cockpit/useTablePagination";
 import { exportTableToCsv } from "@/lib/cockpit/csvExport";
+import { resolveDashboardAiReadiness } from "@/lib/platform/ai/dashboard-ai-readiness";
 
 interface AIRequestRow {
   id: string;
@@ -81,12 +83,18 @@ export function DashboardAIClient() {
   const [data, setData] = useState<AIRequestRow[] | null>(null);
   const [total, setTotal] = useState(0);
   const [summary, setSummary] = useState<AISummary | null>(null);
-  const [visionConfigured, setVisionConfigured] = useState(true);
+  const [visionConfigured, setVisionConfigured] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
 
   const { page, pageSize, offset, limit } = parseTablePagination(params);
+  const readiness = resolveDashboardAiReadiness({
+    visionConfigured,
+    failedCount: summary?.failed,
+    deadCount: summary?.dead,
+  });
+  const readinessChip = <AiReadinessStatusChip readiness={readiness} />;
 
   useEffect(() => {
     fetch("/api/v1/projects", { credentials: "include" })
@@ -119,7 +127,7 @@ export function DashboardAIClient() {
           setData(json.data ?? []);
           setTotal(json.total ?? 0);
           setSummary(json.summary ?? null);
-          setVisionConfigured(json.vision_configured !== false);
+          setVisionConfigured(json.vision_configured === true);
           setError(null);
         }
       )
@@ -128,12 +136,14 @@ export function DashboardAIClient() {
         setData([]);
         setTotal(0);
         setSummary(null);
+        setVisionConfigured(null);
       })
       .finally(() => setLoading(false));
   }, [offset, limit, params.status, params.from, params.to, params.q, tDetail]);
 
   const filterBar = (
     <div className="mb-4">
+      {readinessChip}
       <FilterBar
         projects={projects}
         workers={[]}
@@ -206,7 +216,7 @@ export function DashboardAIClient() {
       } else if (!filtersActive && hasPending) {
         title = tDetail("aiStatusQueued");
         subtitle = tDetail("aiRequestsPendingHint");
-      } else if (!visionConfigured) {
+      } else if (visionConfigured === false) {
         title = tDetail("aiStatusNotConfigured");
         subtitle = tDetail("aiRequestsNotConfiguredHint");
       }
@@ -224,7 +234,7 @@ export function DashboardAIClient() {
       );
     }
 
-    if (!visionConfigured) {
+    if (visionConfigured === false) {
       return (
         <>
           {filterBar}
@@ -256,13 +266,6 @@ export function DashboardAIClient() {
   return (
     <>
       {filterBar}
-      {!visionConfigured && (
-        <Card className="mb-4 border-l-4 border-l-aistroyka-warning">
-          <p className="p-4 text-aistroyka-subheadline text-aistroyka-text-secondary">
-            {tDetail("aiStatusNotConfigured")}
-          </p>
-        </Card>
-      )}
       <Card className="p-0 overflow-hidden">
         <div className="p-2 flex justify-end">
           <Button variant="secondary" onClick={exportCsv} className="text-sm">
