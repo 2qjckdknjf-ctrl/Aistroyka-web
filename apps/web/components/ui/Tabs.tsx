@@ -1,20 +1,58 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { KeyboardEvent, ReactNode } from "react";
+import {
+  getDirectTabElements,
+  resolveHorizontalTabKeyboardIndex,
+} from "./tabs-keyboard";
 
 export function Tabs({
   children,
   "aria-label": ariaLabel,
   className = "",
+  "data-testid": dataTestId,
 }: {
   children: ReactNode;
   "aria-label"?: string;
   className?: string;
+  "data-testid"?: string;
 }) {
+  function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    const tablist = event.currentTarget;
+    const tabs = getDirectTabElements(tablist);
+    const active = document.activeElement;
+    if (!(active instanceof HTMLElement) || !tabs.includes(active)) {
+      return;
+    }
+
+    const currentIndex = tabs.indexOf(active);
+    const nextIndex = resolveHorizontalTabKeyboardIndex({
+      key: event.key,
+      currentIndex,
+      tabCount: tabs.length,
+    });
+    if (nextIndex === null) {
+      return;
+    }
+
+    event.preventDefault();
+    const nextTab = tabs[nextIndex];
+    if (!nextTab) {
+      return;
+    }
+
+    // Automatic activation: focus + existing controlled onSelect via click.
+    nextTab.focus();
+    nextTab.click();
+  }
+
   return (
     <div
       role="tablist"
       aria-label={ariaLabel}
+      aria-orientation="horizontal"
+      data-testid={dataTestId}
+      onKeyDown={handleKeyDown}
       className={`flex gap-0 border-b border-aistroyka-border-subtle ${className}`.trim()}
     >
       {children}

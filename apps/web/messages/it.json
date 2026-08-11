@@ -358,7 +358,9 @@
         "addTask": "Crea la prima attività",
         "uploadReport": "Invia il primo report giornaliero",
         "viewAi": "Apri insight AI"
-      }
+      },
+      "showSetupGuide": "Mostra guida di avvio",
+      "hideSetupGuide": "Nascondi guida di avvio"
     },
     "aiGuide": {
       "open": "Guida AI",
@@ -2775,7 +2777,13 @@
     "managerActionSource_recommendation": "recommendation",
     "managerActionSource_health": "health",
     "managerActionSource_executive": "executive",
-    "fromExecutiveSummary": "From executive summary"
+    "fromExecutiveSummary": "From executive summary",
+    "aiReadinessNotConfigured": "Non configurato",
+    "aiReadinessConfiguredUnverified": "Configurato (non verificato)",
+    "aiReadinessDegraded": "Degradato",
+    "aiReadinessHintNotConfigured": "L'analisi IA non è configurata per questo ambiente. Questa superficie non è LIVE.",
+    "aiReadinessHintConfiguredUnverified": "Le chiavi del provider possono essere presenti, ma l'attivazione LIVE non è verificata su questa superficie.",
+    "aiReadinessHintDegraded": "Alcune analisi non sono disponibili o sono fallite. Questa superficie non è LIVE."
   },
   "governancePage": {
     "listSubtitle": "Governance ed escalation trasversali tra progetti attivi.",

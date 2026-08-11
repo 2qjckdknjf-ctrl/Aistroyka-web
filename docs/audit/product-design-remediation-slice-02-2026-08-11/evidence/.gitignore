@@ -1,0 +1,7 @@
+# Keep evidence notes publishable; block accidental capture dumps with identity pixels.
+_local_unpublishable/
+*.png
+*.jpg
+*.jpeg
+*.webp
+!notes/
