@@ -23,6 +23,7 @@ struct LoginView: View {
         VStack(spacing: 24) {
             Text(NSLocalizedString("worker_app_title", comment: ""))
                 .font(.title)
+                .foregroundStyle(WorkerSemanticColors.primary)
             TextField(NSLocalizedString("worker_email_placeholder", comment: ""), text: $email)
                 .accessibilityIdentifier("pilot_worker_email")
                 .textContentType(.emailAddress)
@@ -32,7 +33,7 @@ struct LoginView: View {
                 .submitLabel(.next)
                 .onSubmit { focusedField = .password }
                 .padding()
-                .background(Color(.systemGray6))
+                .background(WorkerSemanticColors.inputSurface)
                 .cornerRadius(8)
             #if DEBUG
             // Maestro cannot reliably fill SecureField on Simulator; use TextField in Debug for STAGE 4 pilot automation only.
@@ -43,7 +44,7 @@ struct LoginView: View {
                 .submitLabel(.go)
                 .onSubmit { startSignIn() }
                 .padding()
-                .background(Color(.systemGray6))
+                .background(WorkerSemanticColors.inputSurface)
                 .cornerRadius(8)
             #else
             SecureField(NSLocalizedString("worker_password_placeholder", comment: ""), text: $password)
@@ -53,19 +54,19 @@ struct LoginView: View {
                 .submitLabel(.go)
                 .onSubmit { startSignIn() }
                 .padding()
-                .background(Color(.systemGray6))
+                .background(WorkerSemanticColors.inputSurface)
                 .cornerRadius(8)
             #endif
             if let msg = errorMessage ?? appState.bootstrapAuthError {
                 Text(msg)
                     .font(.caption)
-                    .foregroundColor(.red)
+                    .foregroundColor(WorkerSemanticColors.error)
                     .accessibilityIdentifier("pilot_worker_login_error")
             }
             Button(action: startSignIn) {
                 if loading {
                     ProgressView()
-                        .tint(.white)
+                        .tint(WorkerSemanticColors.onPrimary)
                 } else {
                     Text(NSLocalizedString("worker_sign_in", comment: ""))
                 }
@@ -73,8 +74,8 @@ struct LoginView: View {
             .accessibilityIdentifier("pilot_worker_sign_in")
             .frame(maxWidth: .infinity)
             .padding()
-            .background(email.isEmpty || password.isEmpty ? Color.gray : Color.accentColor)
-            .foregroundColor(.white)
+            .background(email.isEmpty || password.isEmpty ? WorkerSemanticColors.primaryDisabled : WorkerSemanticColors.primary)
+            .foregroundColor(WorkerSemanticColors.onPrimary)
             .cornerRadius(8)
             .disabled(loading || email.isEmpty || password.isEmpty)
             SignInWithAppleButton(.signIn) { request in
@@ -89,6 +90,8 @@ struct LoginView: View {
             .disabled(loading)
         }
         .padding(32)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(WorkerSemanticColors.pageBackground)
         .onAppear {
             if E2EAutoSignIn.isEnabled {
                 if email.isEmpty, let e = E2EAutoSignIn.email { email = e }

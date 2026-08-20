@@ -52,15 +52,6 @@ const TAB_LABEL_KEYS: Record<ProjectCommandTab, string> = {
   uploads: "uploads",
 };
 
-const OVERVIEW_QUICK_TABS: ProjectCommandTab[] = [
-  "reports",
-  "schedule",
-  "decisions",
-  "workers",
-  "documents",
-  "intelligence",
-];
-
 const PAGE_SIZE = 10;
 
 interface Project {
@@ -286,7 +277,7 @@ export function DashboardProjectDetailClient({
         </Tabs>
 
         <TabPanel id="panel-overview" selected={activeTab === "overview"} aria-labelledby="tab-overview">
-          <ProjectOverviewPanel projectId={projectId} onSelectTab={selectTab} />
+          <ProjectOverviewPanel projectId={projectId} />
         </TabPanel>
         <TabPanel id="panel-workers" selected={activeTab === "workers"} aria-labelledby="tab-workers">
           <ProjectWorkersPanel
@@ -352,23 +343,14 @@ export function DashboardProjectDetailClient({
 
 function ProjectOverviewPanel({
   projectId,
-  onSelectTab,
 }: {
   projectId: string;
-  onSelectTab: (tab: ProjectCommandTab) => void;
 }) {
   const tDetail = useTranslations("dashboardDetail");
 
   return (
     <div className="space-y-4 p-4">
       <p className="text-aistroyka-subheadline text-aistroyka-text-secondary">{tDetail("projectSummary")}</p>
-      <div className="flex flex-wrap gap-2">
-        {OVERVIEW_QUICK_TABS.map((tab) => (
-          <Button key={tab} variant="secondary" size="sm" onClick={() => onSelectTab(tab)}>
-            {tDetail(TAB_LABEL_KEYS[tab])}
-          </Button>
-        ))}
-      </div>
       <Link
         href={`/dashboard/tasks?project_id=${encodeURIComponent(projectId)}`}
         className="inline-flex text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline focus:outline-none focus:ring-2 focus:ring-aistroyka-accent focus:ring-offset-2 rounded"

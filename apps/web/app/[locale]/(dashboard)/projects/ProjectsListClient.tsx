@@ -111,7 +111,7 @@ export function ProjectsListClient({
                     </td>
                     <td className="table-cell">
                         <Link
-                          href={`/projects/${p.id}`}
+                          href={`/dashboard/projects/${p.id}`}
                           onMouseEnter={() => prefetchProject(p.id)}
                           className="font-medium text-aistroyka-accent hover:underline focus:outline-none focus:ring-2 focus:ring-aistroyka-accent focus:ring-offset-2 rounded-aistroyka-sm"
                         >

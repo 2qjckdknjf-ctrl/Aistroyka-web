@@ -30,7 +30,7 @@ export function PlatformAdminShell({ children }: { children: React.ReactNode }) 
                   href={item.href}
                   className={`rounded-card px-aistroyka-3 py-aistroyka-2 text-aistroyka-subheadline font-medium ${
                     active
-                      ? "bg-aistroyka-accent text-white"
+                      ? "bg-aistroyka-accent text-aistroyka-text-inverse"
                       : "bg-aistroyka-surface-raised text-aistroyka-text-secondary hover:text-aistroyka-accent"
                   }`}
                 >

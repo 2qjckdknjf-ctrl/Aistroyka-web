@@ -1,7 +1,6 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Card } from "@/components/ui-lite";
 import type { VelocityTrend, RiskTrajectory } from "@/lib/intelligence/projection";
 import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 

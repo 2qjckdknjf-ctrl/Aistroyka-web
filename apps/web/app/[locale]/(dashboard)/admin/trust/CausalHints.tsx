@@ -26,9 +26,9 @@ export function CausalHints({ hints }: { hints: Hint[] }) {
   }
 
   const severityClass: Record<string, string> = {
-    critical: "bg-aistroyka-error text-white",
+    critical: "bg-aistroyka-error text-aistroyka-text-inverse",
     warning: "bg-aistroyka-warning text-aistroyka-text-inverse",
-    info: "bg-aistroyka-text-tertiary text-white",
+    info: "bg-aistroyka-text-tertiary text-aistroyka-text-inverse",
   };
 
   return (

@@ -51,7 +51,7 @@ export function GovernanceAlerts({ events }: { events: Event[] }) {
   }
 
   const severityClass: Record<string, string> = {
-    info: "bg-aistroyka-text-tertiary text-white",
+    info: "bg-aistroyka-text-tertiary text-aistroyka-text-inverse",
     warning: "bg-aistroyka-warning text-aistroyka-text-inverse",
     critical: "bg-aistroyka-error text-aistroyka-text-inverse",
   };

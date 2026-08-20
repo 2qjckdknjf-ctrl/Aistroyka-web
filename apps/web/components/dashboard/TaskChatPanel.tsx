@@ -331,7 +331,7 @@ export function TaskChatPanel({ taskId }: { taskId: string }) {
                 <div
                   className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm ${
                     mine
-                      ? "bg-aistroyka-accent text-white"
+                      ? "bg-aistroyka-accent text-aistroyka-text-inverse"
                       : "bg-aistroyka-surface-primary text-aistroyka-text-primary border border-aistroyka-border"
                   }`}
                 >
@@ -360,7 +360,7 @@ export function TaskChatPanel({ taskId }: { taskId: string }) {
                   )}
                   <div
                     className={`mt-1 flex items-center justify-between gap-2 text-[10px] ${
-                      mine ? "text-white/70" : "text-aistroyka-text-tertiary"
+                      mine ? "text-aistroyka-text-inverse/70" : "text-aistroyka-text-tertiary"
                     }`}
                   >
                     <span>{new Date(m.created_at).toLocaleString()}</span>

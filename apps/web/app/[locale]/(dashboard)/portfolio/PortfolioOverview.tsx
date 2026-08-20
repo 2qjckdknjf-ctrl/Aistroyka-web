@@ -53,8 +53,8 @@ export function PortfolioOverview({
         {rankedProjects.length > 0 ? (
           <ul className="mt-3 space-y-2">
             {rankedProjects.map((p) => (
-              <li key={p.projectId} className="flex flex-wrap items-center gap-2 rounded-card border border-aistroyka-border-subtle bg-white px-4 py-2.5 shadow-card transition-shadow hover:shadow-card-hover">
-                <Link href={`/projects/${p.projectId}`} className="font-medium text-aistroyka-text-primary hover:text-aistroyka-accent">
+              <li key={p.projectId} className="flex flex-wrap items-center gap-2 rounded-card border border-aistroyka-border-subtle bg-aistroyka-surface px-4 py-2.5 shadow-card transition-shadow hover:shadow-card-hover">
+                <Link href={`/dashboard/projects/${p.projectId}`} className="font-medium text-aistroyka-text-primary hover:text-aistroyka-accent">
                   {p.projectName}
                 </Link>
                 <span className={classificationClass(p.healthClassification)}>{classificationLabel(p.healthClassification)}</span>
