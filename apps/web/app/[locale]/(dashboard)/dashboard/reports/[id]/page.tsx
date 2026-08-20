@@ -12,7 +12,7 @@ import {
   analysisStatusBadgeVariant,
   reportStatusBadgeVariant,
   shouldPrioritizeReportDecision,
-} from "../daily-reports/reports-list.utils";
+} from "../../daily-reports/reports-list.utils";
 
 interface ReportDetail {
   id: string;
