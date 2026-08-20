@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, Badge } from "@/components/ui";
+import { Badge } from "@/components/ui";
 import { PLATFORM_ADMIN_BASE_PATH, PLATFORM_ADMIN_PREFERRED_HOST } from "@/lib/platform-admin/constants";
 import type { RomaQualityDashboard } from "@/lib/platform-admin/roma-quality-dashboard.types";
 import type { RomaEngineeringIntelligence } from "@/lib/platform-admin/roma-engineering-intelligence.types";
@@ -16,6 +16,7 @@ import {
   releaseDecisionBadgeVariant,
   releaseDecisionBorderClass,
 } from "@/lib/platform-admin/quality-dashboard-ui";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 type Props = {
   dashboard: RomaQualityDashboard;
@@ -41,7 +42,7 @@ export function PlatformAdminTestingClient({ dashboard, intelligence }: Props) {
 
   return (
     <section className="space-y-aistroyka-6" aria-label="ROMA live operations center">
-      <Card className={`p-aistroyka-5 ${releaseDecisionBorderClass(intel.releaseDecision)}`}>
+      <DashboardGlassCard className={`p-aistroyka-5 ${releaseDecisionBorderClass(intel.releaseDecision)}`}>
         <div className="flex flex-wrap items-start justify-between gap-aistroyka-3">
           <div className="min-w-0 flex-1">
             <p className="text-aistroyka-caption font-semibold uppercase tracking-wide text-aistroyka-text-tertiary">
@@ -89,9 +90,9 @@ export function PlatformAdminTestingClient({ dashboard, intelligence }: Props) {
             </>
           ) : null}
         </p>
-      </Card>
+      </DashboardGlassCard>
 
-      <Card className="p-aistroyka-5">
+      <DashboardGlassCard className="p-aistroyka-5">
         <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">Why this decision?</h2>
         <p className="mt-aistroyka-1 text-aistroyka-footnote text-aistroyka-text-tertiary">
           Top evidence-backed reasons from live probes (max 5). Recommendation-only — no automatic fixes.
@@ -134,9 +135,9 @@ export function PlatformAdminTestingClient({ dashboard, intelligence }: Props) {
             No material issues detected — release posture is based on healthy probe evidence.
           </p>
         )}
-      </Card>
+      </DashboardGlassCard>
 
-      <Card className="p-aistroyka-5">
+      <DashboardGlassCard className="p-aistroyka-5">
         <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">Business impact by product area</h2>
         <p className="mt-aistroyka-1 text-aistroyka-footnote text-aistroyka-text-tertiary">
           Marked affected only when probe evidence supports it. Unknown means ROMA cannot confirm from current data.
@@ -159,9 +160,9 @@ export function PlatformAdminTestingClient({ dashboard, intelligence }: Props) {
             </div>
           ))}
         </div>
-      </Card>
+      </DashboardGlassCard>
 
-      <Card className="border border-dashed border-aistroyka-border-subtle p-aistroyka-5">
+      <DashboardGlassCard className="border border-dashed border-aistroyka-border-subtle p-aistroyka-5">
         <div className="flex flex-wrap items-center justify-between gap-aistroyka-2">
           <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">Data coverage & trust</h2>
           <Badge variant={intel.confidenceScore === "low" ? "danger" : intel.confidenceScore === "medium" ? "warning" : "neutral"}>
@@ -183,7 +184,7 @@ export function PlatformAdminTestingClient({ dashboard, intelligence }: Props) {
             </ul>
           </div>
         ) : null}
-      </Card>
+      </DashboardGlassCard>
 
       <details className="rounded-card border border-aistroyka-border-subtle bg-aistroyka-surface p-aistroyka-4">
         <summary className="cursor-pointer text-aistroyka-headline font-semibold text-aistroyka-text-primary">
@@ -194,13 +195,13 @@ export function PlatformAdminTestingClient({ dashboard, intelligence }: Props) {
             <h3 className="mb-aistroyka-3 text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">Domain overview</h3>
             <div className="grid gap-aistroyka-3 sm:grid-cols-2 lg:grid-cols-3">
               {d.domainSections.map((section) => (
-                <Card key={section.id} className="p-aistroyka-4">
+                <DashboardGlassCard key={section.id} className="p-aistroyka-4">
                   <div className="flex items-center justify-between gap-aistroyka-2">
                     <h4 className="font-semibold text-aistroyka-text-primary">{section.label}</h4>
                     <Badge variant={qualityStatusBadgeVariant(section.status)}>{section.statusLabel}</Badge>
                   </div>
                   <p className="mt-aistroyka-2 text-aistroyka-footnote text-aistroyka-text-secondary">{section.summary}</p>
-                </Card>
+                </DashboardGlassCard>
               ))}
             </div>
           </div>
@@ -209,18 +210,18 @@ export function PlatformAdminTestingClient({ dashboard, intelligence }: Props) {
             <h3 className="mb-aistroyka-3 text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">System components</h3>
             <div className="grid gap-aistroyka-3 sm:grid-cols-2 lg:grid-cols-3">
               {d.systemComponents.map((component) => (
-                <Card key={component.id} className="p-aistroyka-4">
+                <DashboardGlassCard key={component.id} className="p-aistroyka-4">
                   <div className="flex items-center justify-between gap-aistroyka-2">
                     <h4 className="font-semibold text-aistroyka-text-primary">{component.name}</h4>
                     <Badge variant={qualityStatusBadgeVariant(component.status)}>{component.statusLabel}</Badge>
                   </div>
                   <p className="mt-aistroyka-2 text-aistroyka-footnote text-aistroyka-text-secondary">{component.details}</p>
-                </Card>
+                </DashboardGlassCard>
               ))}
             </div>
           </div>
 
-          <Card className="p-aistroyka-4">
+          <DashboardGlassCard className="p-aistroyka-4">
             <h3 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">Release readiness by category</h3>
             <div className="mt-aistroyka-3 grid gap-aistroyka-2 sm:grid-cols-2 lg:grid-cols-4">
               {d.releaseReadiness.map((category) => (
@@ -232,9 +233,9 @@ export function PlatformAdminTestingClient({ dashboard, intelligence }: Props) {
                 </div>
               ))}
             </div>
-          </Card>
+          </DashboardGlassCard>
 
-          <Card className="p-aistroyka-4">
+          <DashboardGlassCard className="p-aistroyka-4">
             <h3 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">Platform timeline</h3>
             <dl className="mt-aistroyka-3 grid gap-aistroyka-2 sm:grid-cols-2 lg:grid-cols-3">
               {d.platformTimeline.map((event) => (
@@ -244,7 +245,7 @@ export function PlatformAdminTestingClient({ dashboard, intelligence }: Props) {
                 </div>
               ))}
             </dl>
-          </Card>
+          </DashboardGlassCard>
 
           <div className="grid gap-aistroyka-4 lg:grid-cols-2">
             <div>

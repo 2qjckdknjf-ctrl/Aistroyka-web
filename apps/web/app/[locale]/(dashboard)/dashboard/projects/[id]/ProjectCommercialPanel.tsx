@@ -13,13 +13,13 @@ import {
   TableHeaderCell,
   TableCell,
   Button,
-  Card,
   Input,
   Select,
   Badge,
 } from "@/components/ui";
 import type { CommercialItemRow, CommercialItemKind, CommercialItemStatus } from "@/lib/domain/commercial/commercial.types";
 import { isEffectivelyOverdue } from "@/lib/domain/commercial/commercial.overdue";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 async function fetchItems(projectId: string): Promise<CommercialItemRow[]> {
   const res = await fetch(`/api/v1/projects/${projectId}/commercial-items`, { credentials: "include" });
@@ -143,7 +143,7 @@ export function ProjectCommercialPanel({ projectId }: { projectId: string }) {
       </div>
 
       {creating ? (
-        <Card className="p-4 border border-aistroyka-border-subtle">
+        <DashboardGlassCard className="p-4 border border-aistroyka-border-subtle">
           <p className="text-aistroyka-caption font-semibold uppercase text-aistroyka-text-tertiary mb-3">{tDetail("newCommercialLine")}</p>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <label className="block text-sm">
@@ -190,7 +190,7 @@ export function ProjectCommercialPanel({ projectId }: { projectId: string }) {
           >
             {createMut.isPending ? tDetail("saving") : tDetail("createDraft")}
           </Button>
-        </Card>
+        </DashboardGlassCard>
       ) : null}
 
       {rows.length === 0 ? (

@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
-import { Card, SectionHeader, Skeleton } from "@/components/ui";
+import { SectionHeader, Skeleton } from "@/components/ui";
 import { RequestIdPill } from "@/src/features/admin/components/RequestIdPill";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 type AiRuntimeResponse = {
   data: {
@@ -77,27 +78,27 @@ export function AdminAiRuntimePanel({ tenantId }: { tenantId: string | null }) {
       </div>
 
       {q.isPending && (
-        <Card>
+        <DashboardGlassCard>
           <Skeleton className="h-24 w-full" />
-        </Card>
+        </DashboardGlassCard>
       )}
       {q.isError && (
-        <Card className="border-l-4 border-l-aistroyka-error">
+        <DashboardGlassCard className="border-l-4 border-l-aistroyka-error">
           <p className="text-sm text-aistroyka-error">{(q.error as Error).message}</p>
-        </Card>
+        </DashboardGlassCard>
       )}
       {q.data && (
         <div className="space-y-4">
           {q.data.data.drilldown.complete_count === 0 && q.data.data.drilldown.error_count === 0 && (
-            <Card className="border-l-4 border-l-aistroyka-info bg-aistroyka-surface-raised">
+            <DashboardGlassCard className="border-l-4 border-l-aistroyka-info bg-aistroyka-surface-raised">
               <p className="text-sm font-medium text-aistroyka-text-primary">{tDetail("noAiRuntimeEventsInWindow")}</p>
               <p className="mt-1 text-sm text-aistroyka-text-secondary">
                 {tDetail("aiRuntimeWindowTooNarrowHint")} <strong>7d</strong>.
               </p>
-            </Card>
+            </DashboardGlassCard>
           )}
 
-          <Card>
+          <DashboardGlassCard>
             <p className="text-xs font-semibold uppercase text-aistroyka-text-tertiary">{tDetail("releaseCorrelation")}</p>
             <p className="mt-1 font-mono text-sm">
               build_sha: {q.data.correlation.build_sha ?? "—"} · env: {q.data.correlation.app_env ?? "—"}
@@ -105,26 +106,26 @@ export function AdminAiRuntimePanel({ tenantId }: { tenantId: string | null }) {
             <p className="mt-2 text-xs text-aistroyka-text-secondary">
               {tDetail("errorsSpikeAfterDeployHint")}
             </p>
-          </Card>
+          </DashboardGlassCard>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Card>
+            <DashboardGlassCard>
               <p className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("completesWindow")}</p>
               <p className="text-2xl font-semibold">{q.data.data.drilldown.complete_count}</p>
-            </Card>
-            <Card>
+            </DashboardGlassCard>
+            <DashboardGlassCard>
               <p className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("errorsWindow")}</p>
               <p className="text-2xl font-semibold text-aistroyka-error">{q.data.data.drilldown.error_count}</p>
-            </Card>
-            <Card>
+            </DashboardGlassCard>
+            <DashboardGlassCard>
               <p className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("errorRate")}</p>
               <p className="text-2xl font-semibold">
                 {q.data.data.drilldown.error_rate_window != null
                   ? `${(q.data.data.drilldown.error_rate_window * 100).toFixed(1)}%`
                   : "—"}
               </p>
-            </Card>
-            <Card>
+            </DashboardGlassCard>
+            <DashboardGlassCard>
               <p className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("failureClassesHint")}</p>
               <ul className="mt-1 space-y-1 text-xs text-aistroyka-text-secondary">
                 {Object.entries(q.data.data.operator_hints).slice(0, 4).map(([k, v]) => (
@@ -133,10 +134,10 @@ export function AdminAiRuntimePanel({ tenantId }: { tenantId: string | null }) {
                   </li>
                 ))}
               </ul>
-            </Card>
+            </DashboardGlassCard>
           </div>
 
-          <Card>
+          <DashboardGlassCard>
             <p className="text-sm font-semibold text-aistroyka-text-primary">{tDetail("trafficByRoute")}</p>
             <ul className="mt-2 max-h-40 overflow-y-auto text-sm font-mono space-y-1">
               {Object.entries(q.data.data.drilldown.by_route)
@@ -150,9 +151,9 @@ export function AdminAiRuntimePanel({ tenantId }: { tenantId: string | null }) {
             {Object.keys(q.data.data.drilldown.by_route).length === 0 && (
               <p className="text-sm text-aistroyka-text-tertiary">{tDetail("noAiRuntimeAuditRows")}</p>
             )}
-          </Card>
+          </DashboardGlassCard>
 
-          <Card>
+          <DashboardGlassCard>
             <p className="text-sm font-semibold text-aistroyka-text-primary">{tDetail("recentErrorsSample")}</p>
             <div className="mt-2 overflow-x-auto">
               <table className="w-full text-left text-sm">
@@ -181,7 +182,7 @@ export function AdminAiRuntimePanel({ tenantId }: { tenantId: string | null }) {
                 <p className="text-sm text-aistroyka-text-tertiary py-2">{tDetail("noSampledErrors")}</p>
               )}
             </div>
-          </Card>
+          </DashboardGlassCard>
         </div>
       )}
     </section>

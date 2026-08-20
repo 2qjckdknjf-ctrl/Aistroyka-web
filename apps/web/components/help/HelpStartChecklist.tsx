@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { Link, usePathname } from "@/i18n/navigation";
-import { Card } from "@/components/ui";
+
 import {
   detectLaunchRole,
   getCompletedCount,
@@ -13,6 +13,7 @@ import {
   type ActivationStatusResponse,
   type LaunchStepKey,
 } from "@/lib/help/launch-steps";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 async function fetchActivationStatus(): Promise<ActivationStatusResponse> {
   const res = await fetch("/api/activation/status", { credentials: "include" });
@@ -64,7 +65,7 @@ export function HelpStartChecklist() {
   }, [data?.getStarted, locale, role]);
 
   return (
-    <Card className="p-5">
+    <DashboardGlassCard className="p-5">
       <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">{t("title")}</h2>
       <p className="mt-1 text-aistroyka-subheadline text-aistroyka-text-secondary">
         {isPending ? t("loading") : t("progress", { completed, total })}
@@ -121,7 +122,7 @@ export function HelpStartChecklist() {
           </ul>
         </div>
       ) : null}
-    </Card>
+    </DashboardGlassCard>
   );
 }
 

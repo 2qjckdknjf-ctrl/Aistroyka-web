@@ -1,8 +1,8 @@
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { SectionHeader } from "@/components/ui";
-import { Card } from "@/components/ui";
 import { DashboardProjectsListClient } from "./DashboardProjectsListClient";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 export default async function DashboardProjectsPage() {
   const t = await getTranslations("nav");
@@ -14,7 +14,7 @@ export default async function DashboardProjectsPage() {
         title={t("projects")}
         subtitle={tPage("projectsSubtitle")}
       />
-      <Card className="mb-4 border-l-4 border-l-aistroyka-accent">
+      <DashboardGlassCard className="mb-4 border-l-4 border-l-aistroyka-accent">
         <p className="text-aistroyka-subheadline text-aistroyka-text-secondary">
           {tDetail("createProjectToStart")}
         </p>
@@ -26,7 +26,7 @@ export default async function DashboardProjectsPage() {
             {tDetail("create")}
           </Link>
         </div>
-      </Card>
+      </DashboardGlassCard>
       <DashboardProjectsListClient />
     </>
   );

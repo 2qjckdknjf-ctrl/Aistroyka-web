@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { Card } from "@/components/ui-lite";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 const MAX_ISSUES = 3;
 const MAX_RECOMMENDATIONS = 3;
@@ -24,11 +25,11 @@ export function LatestAnalysisBlock({
   const tDetail = useTranslations("dashboardDetail");
   if (!hasData) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <p className="text-sm text-aistroyka-text-secondary">
           {tDetail("noCompletedAnalysisLatestBlock")}
         </p>
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
@@ -36,7 +37,7 @@ export function LatestAnalysisBlock({
   const recs = (recommendations ?? []).slice(0, MAX_RECOMMENDATIONS);
 
   return (
-    <Card>
+    <DashboardGlassCard>
       <div className="mb-3 grid gap-2 text-sm sm:grid-cols-3">
         <div>
           <span className="text-aistroyka-text-tertiary">{tDetail("stage")}:</span>{" "}
@@ -71,6 +72,6 @@ export function LatestAnalysisBlock({
           </ul>
         </div>
       ) : null}
-    </Card>
+    </DashboardGlassCard>
   );
 }

@@ -2,8 +2,9 @@
 
 import { useState, useMemo } from "react";
 import { useTranslations } from "next-intl";
-import { Card } from "@/components/ui";
+
 import { EmptyState } from "@/components/ui";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 type Event = {
   id: string;
@@ -39,7 +40,7 @@ export function AuditTimeline({ events }: { events: Event[] }) {
 
   if (events.length === 0) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <EmptyState
           icon={
             <svg className="h-aistroyka-empty-icon w-aistroyka-empty-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
@@ -49,7 +50,7 @@ export function AuditTimeline({ events }: { events: Event[] }) {
           title={tDetail("noEventsYet")}
           subtitle={tDetail("governanceEventsAppear")}
         />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
@@ -60,7 +61,7 @@ export function AuditTimeline({ events }: { events: Event[] }) {
   };
 
   return (
-    <Card>
+    <DashboardGlassCard>
       <div className="mb-aistroyka-4 flex flex-wrap gap-aistroyka-3">
         <label className="flex items-center gap-2 text-aistroyka-subheadline text-aistroyka-text-secondary">
           <span>{tDetail("type")}</span>
@@ -113,6 +114,6 @@ export function AuditTimeline({ events }: { events: Event[] }) {
       {filtered.length > 100 && (
         <p className="mt-2 text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("showingFirst")} 100 {tDetail("of")} {filtered.length}.</p>
       )}
-    </Card>
+    </DashboardGlassCard>
   );
 }

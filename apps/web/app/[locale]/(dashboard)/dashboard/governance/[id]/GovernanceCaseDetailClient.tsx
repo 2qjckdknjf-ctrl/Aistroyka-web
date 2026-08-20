@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@/i18n/navigation";
-import { Card, Button, Badge, Skeleton, ErrorState } from "@/components/ui";
+import { Button, Badge, Skeleton, ErrorState } from "@/components/ui";
 import type { GovernanceCaseStatus, GovernanceCaseWithProjects } from "@/lib/domain/governance/governance.types";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 async function fetchCase(id: string): Promise<GovernanceCaseWithProjects> {
   const res = await fetch(`/api/v1/governance/cases/${id}`, { credentials: "include" });
@@ -69,10 +70,10 @@ export function GovernanceCaseDetailClient({ caseId }: { caseId: string }) {
   }
   if (q.isPending || !c) {
     return (
-      <Card className="p-4">
+      <DashboardGlassCard className="p-4">
         <Skeleton className="h-8 w-48 mb-4" />
         <Skeleton className="h-32 w-full" />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
@@ -81,7 +82,7 @@ export function GovernanceCaseDetailClient({ caseId }: { caseId: string }) {
       <Link href="/dashboard/governance" className="text-sm text-aistroyka-accent hover:underline">
         {t("backToCases")}
       </Link>
-      <Card className="p-4 space-y-4">
+      <DashboardGlassCard className="p-4 space-y-4">
         <div className="flex flex-wrap gap-2 items-start justify-between">
           <div>
             <h1 className="text-aistroyka-title3 font-semibold text-aistroyka-text-primary">{c.title}</h1>
@@ -121,9 +122,9 @@ export function GovernanceCaseDetailClient({ caseId }: { caseId: string }) {
             <p className="text-sm text-aistroyka-text-primary mt-1">{c.decision_outcome}</p>
           </div>
         ) : null}
-      </Card>
+      </DashboardGlassCard>
 
-      <Card className="p-4 space-y-4 border border-aistroyka-border-subtle">
+      <DashboardGlassCard className="p-4 space-y-4 border border-aistroyka-border-subtle">
         <h2 className="text-aistroyka-subheadline font-semibold">{t("updateStatusTitle")}</h2>
         <label className="block text-sm">
           <span className="text-aistroyka-text-secondary">{t("table.status")}</span>
@@ -168,7 +169,7 @@ export function GovernanceCaseDetailClient({ caseId }: { caseId: string }) {
         >
           {updateMut.isPending ? t("saving") : t("save")}
         </Button>
-      </Card>
+      </DashboardGlassCard>
     </div>
   );
 }

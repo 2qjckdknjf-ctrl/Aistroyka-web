@@ -4,13 +4,14 @@ import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@/i18n/navigation";
-import { Card, Badge, Skeleton, ErrorState, Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui";
+import { Badge, Skeleton, ErrorState, Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui";
 import type {
   PortfolioControlResult,
   PortfolioControlSignalCounts,
 } from "@/lib/domain/portfolio/portfolio-control.types";
 import { drilldownHrefForCategory } from "@/lib/domain/portfolio/portfolio-control.signals";
 import { formatPortfolioStateLabel, portfolioStateBadgeClass } from "./portfolioStateStyles";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 function SignalSummary({
   signals,
@@ -77,10 +78,10 @@ export function PortfolioControlOverviewClient() {
 
   if (q.isPending || !q.data) {
     return (
-      <Card className="p-4">
+      <DashboardGlassCard className="p-4">
         <Skeleton className="h-8 w-48 mb-4" />
         <Skeleton className="h-40 w-full" />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 

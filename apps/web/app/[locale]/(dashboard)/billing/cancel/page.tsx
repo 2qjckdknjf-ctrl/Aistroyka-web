@@ -4,13 +4,14 @@
  */
 
 import Link from "next/link";
-import { Card } from "@/components/ui";
+
 import { getCancelPageCopy } from "@/lib/platform/billing-readiness/billing-return-cancel-view";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 export default function BillingCancelPage() {
   const copy = getCancelPageCopy();
   return (
-    <Card className="max-w-lg mx-auto mt-aistroyka-12 border-l-4 border-l-aistroyka-border-subtle">
+    <DashboardGlassCard className="max-w-lg mx-auto mt-aistroyka-12 border-l-4 border-l-aistroyka-border-subtle">
       <h2 className="text-aistroyka-title2 font-semibold text-aistroyka-text-primary">
         {copy.title}
       </h2>
@@ -23,6 +24,6 @@ export default function BillingCancelPage() {
       >
         ← Back to Billing
       </Link>
-    </Card>
+    </DashboardGlassCard>
   );
 }

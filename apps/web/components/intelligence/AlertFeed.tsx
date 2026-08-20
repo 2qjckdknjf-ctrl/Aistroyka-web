@@ -15,21 +15,25 @@ function severityClass(s: string): string {
 export function AlertFeed({
   alerts,
   emptyMessage,
+  maxItems = 10,
 }: {
   alerts: AlertItemData[];
   emptyMessage?: string;
+  /** Omit or pass null to render the full list (alerts workspace). */
+  maxItems?: number | null;
 }) {
   const tDetail = useTranslations("dashboardDetail");
   const resolvedEmptyMessage = emptyMessage ?? tDetail("noAlerts");
+  const visible = maxItems == null ? alerts : alerts.slice(0, maxItems);
   return (
     <IntelligenceCard title={tDetail("tenantAlerts")} aria-label={tDetail("alertsFeed")}>
-      {alerts.length === 0 ? (
+      {visible.length === 0 ? (
         <p className="text-aistroyka-subheadline text-aistroyka-text-tertiary">
           {resolvedEmptyMessage}
         </p>
       ) : (
         <ul className="space-y-2" aria-label={tDetail("alertList")}>
-          {alerts.slice(0, 10).map((a) => {
+          {visible.map((a) => {
             const d = getAlertDestinations(a.id, a.type);
             return (
               <li

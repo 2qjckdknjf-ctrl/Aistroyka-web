@@ -1,10 +1,11 @@
 "use client";
 
+import { useCallback, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Link } from "@/i18n/navigation";
+import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import {
-  Card,
   Skeleton,
   EmptyState,
   Button,
@@ -15,6 +16,15 @@ import {
   TableHeaderCell,
   TableCell,
 } from "@/components/ui";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
+import {
+  buildNotificationHref,
+  countNotificationsByReadState,
+  filterNotificationsByReadState,
+  parseNotificationReadFilter,
+  sortNotificationsByAttention,
+  type NotificationReadFilter,
+} from "./notifications-workspace.utils";
 
 interface Notification {
   id: string;
@@ -31,16 +41,6 @@ interface Notification {
 interface ListResponse {
   data: Notification[];
   total: number;
-}
-
-function buildNotificationUrl(n: Notification): string {
-  if (n.target_type === "project" && n.target_id) return `/dashboard/projects/${n.target_id}`;
-  if (n.target_type === "issue" && n.project_id) return `/dashboard/projects/${n.project_id}?tab=issues`;
-  if (n.target_type === "document" && n.project_id) return `/dashboard/projects/${n.project_id}?tab=documents`;
-  if (n.target_type === "report" && n.target_id) return `/dashboard/daily-reports/${n.target_id}`;
-  if (n.target_type === "task" && n.target_id) return `/dashboard/tasks/${n.target_id}`;
-  if (n.project_id) return `/dashboard/projects/${n.project_id}`;
-  return "/dashboard";
 }
 
 async function fetchNotifications(): Promise<ListResponse> {
@@ -69,6 +69,11 @@ export function NotificationsClient() {
   const t = useTranslations("notificationsPage");
   const tCommon = useTranslations("common");
   const queryClient = useQueryClient();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const router = useRouter();
+  const readFilter = parseNotificationReadFilter(searchParams?.get("read"));
+
   const { data, isPending, isError, error } = useQuery({
     queryKey: ["notifications"],
     queryFn: fetchNotifications,
@@ -89,31 +94,59 @@ export function NotificationsClient() {
     },
   });
 
-  const notifications = data?.data ?? [];
-  const unreadCount = notifications.filter((n) => !n.read_at).length;
+  const setReadFilter = useCallback(
+    (value: NotificationReadFilter) => {
+      const next = new URLSearchParams(searchParams?.toString() ?? "");
+      if (value === "all") next.delete("read");
+      else next.set("read", value);
+      const qs = next.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    },
+    [searchParams, pathname, router],
+  );
+
+  const sorted = useMemo(
+    () => sortNotificationsByAttention(data?.data ?? []),
+    [data?.data],
+  );
+  const counts = useMemo(() => countNotificationsByReadState(sorted), [sorted]);
+  const notifications = useMemo(
+    () => filterNotificationsByReadState(sorted, readFilter),
+    [sorted, readFilter],
+  );
+  const unreadCount = counts.unread;
+
+  const filterChips: Array<{ id: NotificationReadFilter; label: string }> = [
+    { id: "all", label: t("filterAll") },
+    { id: "unread", label: t("unread") },
+    { id: "read", label: t("read") },
+  ];
 
   if (isPending) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <Skeleton className="h-48" />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   if (isError) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <EmptyState
           icon={<span className="text-2xl">⚠️</span>}
           title={t("loadFailed")}
           subtitle={error instanceof Error ? error.message : t("unknownError")}
           action={
-            <Button variant="secondary" onClick={() => queryClient.invalidateQueries({ queryKey: ["notifications"] })}>
+            <Button
+              variant="secondary"
+              onClick={() => queryClient.invalidateQueries({ queryKey: ["notifications"] })}
+            >
               {tCommon("retry")}
             </Button>
           }
         />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
@@ -128,7 +161,7 @@ export function NotificationsClient() {
             {t("subtitle")}
           </p>
         </div>
-        {unreadCount > 0 && (
+        {unreadCount > 0 ? (
           <Button
             variant="secondary"
             size="sm"
@@ -137,66 +170,156 @@ export function NotificationsClient() {
           >
             {t("markAllRead")}
           </Button>
-        )}
+        ) : null}
       </header>
+
+      <DashboardGlassCard contentClassName="mb-4 p-4">
+        <div
+          role="group"
+          aria-label={t("readFilter")}
+          className="flex flex-wrap gap-1"
+        >
+          {filterChips.map((chip) => {
+            const pressed = readFilter === chip.id;
+            return (
+              <button
+                key={chip.id}
+                type="button"
+                aria-pressed={pressed}
+                onClick={() => setReadFilter(chip.id)}
+                className={`min-h-aistroyka-touch rounded-[var(--aistroyka-radius-lg)] border px-3 text-aistroyka-caption font-medium ${
+                  pressed
+                    ? "border-aistroyka-accent bg-aistroyka-accent-light text-aistroyka-accent"
+                    : "border-aistroyka-border-subtle text-aistroyka-text-secondary hover:text-aistroyka-text-primary"
+                }`}
+              >
+                {chip.label}
+                <span className="ml-1 tabular-nums text-aistroyka-text-tertiary">
+                  ({counts[chip.id]})
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </DashboardGlassCard>
+
       {notifications.length === 0 ? (
-        <Card>
+        <DashboardGlassCard>
           <EmptyState
             icon={<span className="text-2xl">📋</span>}
             title={t("emptyTitle")}
-            subtitle={t("emptySubtitle")}
+            subtitle={readFilter === "all" ? t("emptySubtitle") : t("emptyForFilter")}
           />
-        </Card>
+        </DashboardGlassCard>
       ) : (
-        <Card>
-          <Table aria-label={t("tableAria")}>
-            <TableHead>
-              <TableRow>
-                <TableHeaderCell>{t("colTitle")}</TableHeaderCell>
-                <TableHeaderCell>{t("colDate")}</TableHeaderCell>
-                <TableHeaderCell>{t("colStatus")}</TableHeaderCell>
-                <TableHeaderCell>{t("colAction")}</TableHeaderCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {notifications.map((n) => (
-                <TableRow key={n.id} className={!n.read_at ? "bg-aistroyka-surface-muted/50" : ""}>
-                  <TableCell>
-                    <Link
-                      href={buildNotificationUrl(n)}
-                      className={`font-medium hover:underline ${!n.read_at ? "text-aistroyka-text-primary" : "text-aistroyka-text-secondary"}`}
+        <>
+          <ul className="space-y-2 sm:hidden">
+            {notifications.map((n) => (
+              <li key={n.id}>
+                <DashboardGlassCard
+                  contentClassName={`space-y-2 p-3 ${!n.read_at ? "border-l-4 border-l-aistroyka-accent" : ""}`}
+                >
+                  <Link
+                    href={buildNotificationHref(n)}
+                    className={`font-medium hover:underline ${
+                      !n.read_at ? "text-aistroyka-text-primary" : "text-aistroyka-text-secondary"
+                    }`}
+                  >
+                    {n.title}
+                  </Link>
+                  {n.body ? (
+                    <p className="line-clamp-2 text-xs text-aistroyka-text-tertiary">{n.body}</p>
+                  ) : null}
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-aistroyka-text-tertiary">
+                    <span>{new Date(n.created_at).toLocaleString()}</span>
+                    <span>{n.read_at ? t("read") : t("unread")}</span>
+                  </div>
+                  {!n.read_at ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => markReadMutation.mutate(n.id)}
+                      disabled={markReadMutation.isPending}
                     >
-                      {n.title}
+                      {t("markRead")}
+                    </Button>
+                  ) : (
+                    <Link
+                      href={buildNotificationHref(n)}
+                      className="text-sm text-aistroyka-accent hover:underline"
+                    >
+                      {t("view")}
                     </Link>
-                    {n.body && (
-                      <p className="text-xs text-aistroyka-text-tertiary mt-0.5 line-clamp-1">{n.body}</p>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-aistroyka-text-secondary text-sm">
-                    {new Date(n.created_at).toLocaleString()}
-                  </TableCell>
-                  <TableCell className="text-sm">{n.read_at ? t("read") : t("unread")}</TableCell>
-                  <TableCell>
-                    {!n.read_at ? (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => markReadMutation.mutate(n.id)}
-                        disabled={markReadMutation.isPending}
-                      >
-                        {t("markRead")}
-                      </Button>
-                    ) : (
-                      <Link href={buildNotificationUrl(n)} className="text-aistroyka-accent hover:underline text-sm">
-                        {t("view")}
-                      </Link>
-                    )}
-                  </TableCell>
+                  )}
+                </DashboardGlassCard>
+              </li>
+            ))}
+          </ul>
+
+          <DashboardGlassCard className="hidden sm:block" contentClassName="overflow-hidden p-0">
+            <Table aria-label={t("tableAria")}>
+              <TableHead>
+                <TableRow>
+                  <TableHeaderCell>{t("colTitle")}</TableHeaderCell>
+                  <TableHeaderCell>{t("colDate")}</TableHeaderCell>
+                  <TableHeaderCell>{t("colStatus")}</TableHeaderCell>
+                  <TableHeaderCell>{t("colAction")}</TableHeaderCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Card>
+              </TableHead>
+              <TableBody>
+                {notifications.map((n) => (
+                  <TableRow
+                    key={n.id}
+                    className={!n.read_at ? "bg-aistroyka-surface-muted/50" : ""}
+                  >
+                    <TableCell>
+                      <Link
+                        href={buildNotificationHref(n)}
+                        className={`font-medium hover:underline ${
+                          !n.read_at
+                            ? "text-aistroyka-text-primary"
+                            : "text-aistroyka-text-secondary"
+                        }`}
+                      >
+                        {n.title}
+                      </Link>
+                      {n.body ? (
+                        <p className="mt-0.5 line-clamp-1 text-xs text-aistroyka-text-tertiary">
+                          {n.body}
+                        </p>
+                      ) : null}
+                    </TableCell>
+                    <TableCell className="text-sm text-aistroyka-text-secondary">
+                      {new Date(n.created_at).toLocaleString()}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {n.read_at ? t("read") : t("unread")}
+                    </TableCell>
+                    <TableCell>
+                      {!n.read_at ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => markReadMutation.mutate(n.id)}
+                          disabled={markReadMutation.isPending}
+                        >
+                          {t("markRead")}
+                        </Button>
+                      ) : (
+                        <Link
+                          href={buildNotificationHref(n)}
+                          className="text-sm text-aistroyka-accent hover:underline"
+                        >
+                          {t("view")}
+                        </Link>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </DashboardGlassCard>
+        </>
       )}
     </>
   );

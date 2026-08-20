@@ -3,9 +3,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { Card, SectionHeader, Skeleton, EmptyState, Badge } from "@/components/ui";
+import { SectionHeader, Skeleton, EmptyState, Badge } from "@/components/ui";
 import { discussionStatusBadgeClass } from "../../statusBadgeStyles";
 import { formatPortalStatus } from "@/lib/i18n/portal-status-labels";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 type Row = {
   id: string;
@@ -36,21 +37,21 @@ export function ClientPortalDiscussionsListClient({ projectId }: { projectId: st
 
   if (q.isPending) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <Skeleton className="h-40" />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   if (q.isError) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <EmptyState
           icon={<span className="text-2xl">💬</span>}
           title={tDetail("unableToLoadDiscussions")}
           subtitle={q.error instanceof Error ? q.error.message : tDetail("tryAgainLater")}
         />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
@@ -68,7 +69,7 @@ export function ClientPortalDiscussionsListClient({ projectId }: { projectId: st
       </div>
       <SectionHeader title={tPage("discussionsTitle")} subtitle={tPage("discussionsSubtitle")} />
 
-      <Card className="p-4">
+      <DashboardGlassCard className="p-4">
         {rows.length === 0 ? (
           <p className="text-sm text-aistroyka-text-secondary">{tPage("noOpenDiscussions")}</p>
         ) : (
@@ -89,7 +90,7 @@ export function ClientPortalDiscussionsListClient({ projectId }: { projectId: st
             ))}
           </ul>
         )}
-      </Card>
+      </DashboardGlassCard>
     </div>
   );
 }

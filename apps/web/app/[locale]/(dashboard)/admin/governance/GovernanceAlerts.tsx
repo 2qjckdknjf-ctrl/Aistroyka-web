@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { Card } from "@/components/ui";
+
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui";
 import { acknowledgeGovernanceEvent } from "./actions";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 type Event = {
   id: string;
@@ -35,7 +36,7 @@ export function GovernanceAlerts({ events }: { events: Event[] }) {
 
   if (events.length === 0) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <EmptyState
           icon={
             <svg className="h-aistroyka-empty-icon w-aistroyka-empty-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
@@ -45,7 +46,7 @@ export function GovernanceAlerts({ events }: { events: Event[] }) {
           title={tDetail("noActiveAlerts")}
           subtitle={tDetail("unacknowledgedGovernanceEventsHint")}
         />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
@@ -56,7 +57,7 @@ export function GovernanceAlerts({ events }: { events: Event[] }) {
   };
 
   return (
-    <Card className="p-0 overflow-hidden">
+    <DashboardGlassCard contentClassName="p-0 overflow-hidden">
       <ul className="divide-y divide-aistroyka-border-subtle">
         {events.map((ev) => (
           <li key={ev.id} className="flex flex-wrap items-center justify-between gap-aistroyka-3 p-aistroyka-4">
@@ -82,6 +83,6 @@ export function GovernanceAlerts({ events }: { events: Event[] }) {
           </li>
         ))}
       </ul>
-    </Card>
+    </DashboardGlassCard>
   );
 }

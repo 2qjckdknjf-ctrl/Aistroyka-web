@@ -11,11 +11,11 @@ import {
   TableRow,
   TableHeaderCell,
   TableCell,
-  Card,
   Skeleton,
   EmptyState,
   Badge,
 } from "@/components/ui";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 interface DayRow {
   id: string;
@@ -55,25 +55,25 @@ export default function WorkerDaysPage() {
 
   if (!userId) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <p className="text-aistroyka-text-secondary">{tDetail("missingWorker")}</p>
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   if (loading && !data) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <Skeleton lines={5} />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   if (error) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <p className="text-aistroyka-text-secondary">{error}</p>
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
@@ -94,15 +94,15 @@ export default function WorkerDaysPage() {
         {tDetail("worker")} {userId.slice(0, 8)}… — {tDetail("last31Days")}
       </p>
       {!data?.length ? (
-        <Card>
+        <DashboardGlassCard>
           <EmptyState
             icon={<span className="text-2xl">📅</span>}
             title={tDetail("noDays")}
             subtitle={tDetail("noDayRecords")}
           />
-        </Card>
+        </DashboardGlassCard>
       ) : (
-        <Card className="p-0 overflow-hidden">
+        <DashboardGlassCard contentClassName="p-0 overflow-hidden">
           <Table aria-label={tDetail("workerDays")}>
             <TableHead>
               <TableRow>
@@ -139,7 +139,7 @@ export default function WorkerDaysPage() {
               ))}
             </TableBody>
           </Table>
-        </Card>
+        </DashboardGlassCard>
       )}
     </>
   );

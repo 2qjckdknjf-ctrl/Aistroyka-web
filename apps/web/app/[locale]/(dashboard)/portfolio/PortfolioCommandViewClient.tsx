@@ -4,8 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { getResourceHref } from "@/lib/intelligence/resource-links";
-import { Card, Skeleton, ErrorState } from "@/components/ui";
+import { Skeleton, ErrorState } from "@/components/ui";
 import { IntelligenceCard } from "@/components/intelligence";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 export interface PortfolioSummaryProject {
   id: string;
@@ -89,10 +90,10 @@ export function PortfolioCommandViewClient() {
     return (
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {[1, 2, 3, 4, 5, 6].map((i) => (
-          <Card key={i} className="p-4">
+          <DashboardGlassCard key={i} className="p-4">
             <Skeleton className="h-5 w-32 mb-2" />
             <Skeleton className="h-4 w-full" />
-          </Card>
+          </DashboardGlassCard>
         ))}
       </div>
     );
@@ -124,7 +125,7 @@ export function PortfolioCommandViewClient() {
       )}
 
       {governanceOpenCount > 0 && (
-        <Card className="border-l-4 border-l-aistroyka-warning p-4 bg-aistroyka-surface">
+        <DashboardGlassCard className="border-l-4 border-l-aistroyka-warning p-4 bg-aistroyka-surface">
           <p className="text-sm text-aistroyka-text-primary">
             <strong>{governanceOpenCount}</strong> {tDetail("openGovernanceCases")}
             {governanceCriticalOpenCount > 0
@@ -138,11 +139,11 @@ export function PortfolioCommandViewClient() {
           >
             {tDetail("reviewGovernance")}
           </Link>
-        </Card>
+        </DashboardGlassCard>
       )}
 
       {commercialOverdueCount > 0 && (
-        <Card className="border-l-4 border-l-aistroyka-error p-4 bg-aistroyka-surface">
+        <DashboardGlassCard className="border-l-4 border-l-aistroyka-error p-4 bg-aistroyka-surface">
           <p className="text-sm text-aistroyka-text-primary">
             <strong>{commercialOverdueCount}</strong> {tDetail("commercialBillingLinesOverdue")}
             {commercialOpenUnpaidCount > commercialOverdueCount
@@ -153,7 +154,7 @@ export function PortfolioCommandViewClient() {
           <p className="mt-1 text-xs text-aistroyka-text-tertiary">
             {tDetail("openProjectCommercialTabHint")}
           </p>
-        </Card>
+        </DashboardGlassCard>
       )}
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-label={tDetail("portfolioHealthOverview")}>

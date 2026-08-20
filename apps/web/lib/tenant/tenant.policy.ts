@@ -3,7 +3,7 @@
  * owner > admin > member > viewer.
  */
 
-import type { TenantContext } from "./tenant.types";
+import type { TenantContext, TenantRoleDb } from "./tenant.types";
 
 const ROLE_ORDER: Record<string, number> = {
   owner: 4,
@@ -78,6 +78,10 @@ export function canReadProjects(ctx: TenantContext): boolean {
 }
 
 /** Portal-only stakeholder must not access internal workspace flows. */
+export function isPortalOnlyTenantRole(role: TenantRoleDb | null | undefined): boolean {
+  return role === "stakeholder";
+}
+
 export function isPortalOnlyStakeholderRole(ctx: TenantContext): boolean {
-  return ctx.role === "stakeholder";
+  return isPortalOnlyTenantRole(ctx.role);
 }

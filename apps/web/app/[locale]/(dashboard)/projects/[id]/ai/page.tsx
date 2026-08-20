@@ -5,8 +5,9 @@ import { getProjectById } from "@/lib/supabase/rpc";
 import { AiActionPanel } from "@/components/ai/AiActionPanel";
 import { ProjectAIHeaderClient } from "./ProjectAIHeaderClient";
 import { buildDecisionContextFromProject, type ProjectAnalysisSource } from "@/lib/engine/buildContext";
-import { SectionHeader, Card } from "@/components/ui";
+import { SectionHeader } from "@/components/ui";
 import { ProjectVideoDailyAnalysisPanel } from "../../ProjectVideoDailyAnalysisPanel";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 export default async function ProjectAiPage({
   params,
@@ -97,9 +98,9 @@ export default async function ProjectAiPage({
 
       <section className="mb-aistroyka-8">
         <SectionHeader title={tProject("videoDailyTitle")} subtitle={tProject("videoDailySubtitle")} />
-        <Card>
+        <DashboardGlassCard>
           <ProjectVideoDailyAnalysisPanel projectId={id} />
-        </Card>
+        </DashboardGlassCard>
       </section>
     </>
   );

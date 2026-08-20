@@ -3,8 +3,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { Card, Badge, Skeleton } from "@/components/ui";
+import { Badge, Skeleton } from "@/components/ui";
 import type { WorkloadInboxResult, WorkloadItem } from "@/lib/domain/workload/workload.types";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 async function fetchStakeholderWorkload(): Promise<WorkloadInboxResult> {
   const res = await fetch("/api/v1/workload?audience=stakeholder", { credentials: "include" });
@@ -33,9 +34,9 @@ export function ClientPortalWorkloadSection({ projectId }: { projectId: string }
 
   if (q.isPending) {
     return (
-      <Card className="p-4 border-l-4 border-l-aistroyka-info">
+      <DashboardGlassCard className="p-4 border-l-4 border-l-aistroyka-info">
         <Skeleton className="h-16 w-full" />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
@@ -48,7 +49,7 @@ export function ClientPortalWorkloadSection({ projectId }: { projectId: string }
   }
 
   return (
-    <Card className="p-4 border-l-4 border-l-aistroyka-info">
+    <DashboardGlassCard className="p-4 border-l-4 border-l-aistroyka-info">
       <h3 className="font-semibold text-aistroyka-text-primary">{tDetail("waitingOnYou")}</h3>
       <p className="mt-1 text-sm text-aistroyka-text-secondary">
         {tDetail("waitingOnYouHint")}
@@ -67,6 +68,6 @@ export function ClientPortalWorkloadSection({ projectId }: { projectId: string }
           </li>
         ))}
       </ul>
-    </Card>
+    </DashboardGlassCard>
   );
 }

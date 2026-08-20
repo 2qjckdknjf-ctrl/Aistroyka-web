@@ -3,9 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
-import { Card, Input } from "@/components/ui";
+import { Input } from "@/components/ui";
 import { HELP_ARTICLE_CATALOG, type HelpArticleCatalogItem, type HelpRole } from "@/lib/help/help-catalog";
 import { HelpStartChecklist } from "./HelpStartChecklist";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 type Article = {
   id: HelpArticleCatalogItem["id"];
@@ -132,7 +133,7 @@ export function HelpCenterClient() {
 
   return (
     <section className="space-y-5">
-      <Card className="p-5">
+      <DashboardGlassCard className="p-5">
         <h1 className="text-aistroyka-title font-semibold text-aistroyka-text-primary">{t("title")}</h1>
         <p className="mt-2 text-aistroyka-subheadline text-aistroyka-text-secondary">{t("subtitle")}</p>
         <p className="mt-2 text-aistroyka-caption text-aistroyka-text-tertiary">
@@ -145,16 +146,16 @@ export function HelpCenterClient() {
           aria-label={t("searchLabel")}
           className="mt-4"
         />
-      </Card>
+      </DashboardGlassCard>
 
       <HelpStartChecklist />
 
       {smartLoading ? (
-        <Card className="p-5 text-aistroyka-subheadline text-aistroyka-text-secondary">{t("searching")}</Card>
+        <DashboardGlassCard className="p-5 text-aistroyka-subheadline text-aistroyka-text-secondary">{t("searching")}</DashboardGlassCard>
       ) : null}
 
       {(smartAnswer || bestAnswer) ? (
-        <Card className="p-5">
+        <DashboardGlassCard className="p-5">
           <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">{t("bestAnswerTitle")}</h2>
           <p className="mt-2 text-aistroyka-subheadline text-aistroyka-text-secondary">
             {smartAnswer?.summary ?? bestAnswer?.summary}
@@ -180,15 +181,15 @@ export function HelpCenterClient() {
               </div>
             </div>
           ) : null}
-        </Card>
+        </DashboardGlassCard>
       ) : null}
 
       {filteredArticles.length === 0 ? (
-        <Card className="p-5 text-aistroyka-subheadline text-aistroyka-text-secondary">{t("noResults")}</Card>
+        <DashboardGlassCard className="p-5 text-aistroyka-subheadline text-aistroyka-text-secondary">{t("noResults")}</DashboardGlassCard>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {filteredArticles.map((article) => (
-            <Card key={article.id} className="p-5">
+            <DashboardGlassCard key={article.id} className="p-5">
               <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">
                 {article.title}
                 {recommendedArticleIds.has(article.id) ? (
@@ -211,7 +212,7 @@ export function HelpCenterClient() {
               >
                 {t("openSection")}
               </Link>
-            </Card>
+            </DashboardGlassCard>
           ))}
         </div>
       )}

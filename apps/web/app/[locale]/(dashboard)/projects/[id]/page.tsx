@@ -14,7 +14,7 @@ import { EvidenceOverview } from "../EvidenceOverview";
 import { DecisionSimulation } from "../DecisionSimulation";
 import { SystemStabilityOverview } from "../SystemStabilityOverview";
 import { NextActions } from "../NextActions";
-import { SectionHeader, Card } from "@/components/ui";
+import { SectionHeader } from "@/components/ui";
 import { Collapsible } from "@/components/ui-lite";
 import { AiActionPanel } from "@/components/ai/AiActionPanel";
 import { buildDecisionContextFromProject } from "@/lib/engine/buildContext";
@@ -28,6 +28,7 @@ import { runSimulation } from "@/lib/intelligence/simulation";
 import { validateAnalysisResult } from "@/lib/api/validateAnalysisResult";
 import type { MediaWithJob } from "@/lib/types";
 import type { AnalysisSnapshot } from "@/lib/intelligence/metrics";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 const PROCESSING_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes, UI-only
 
@@ -375,17 +376,17 @@ export default async function ProjectPage({
       {/* Upload */}
       <section className="mb-aistroyka-8">
         <SectionHeader title={t("uploadImage")} subtitle={t("uploadImageSubtitle")} />
-        <Card>
+        <DashboardGlassCard>
           <UploadMediaForm projectId={id} />
-        </Card>
+        </DashboardGlassCard>
       </section>
 
       {/* Video — daily work summary (Gemini) */}
       <section className="mb-aistroyka-8">
         <SectionHeader title={t("videoDailyTitle")} subtitle={t("videoDailySubtitle")} />
-        <Card>
+        <DashboardGlassCard>
           <ProjectVideoDailyAnalysisPanel projectId={id} />
-        </Card>
+        </DashboardGlassCard>
       </section>
 
       {/* B) Operations */}

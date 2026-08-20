@@ -17,7 +17,8 @@ import {
   IntelligenceOperationalBanner,
   type ProjectIntelligenceData,
 } from "@/components/intelligence";
-import { Card, Skeleton, ErrorState } from "@/components/ui";
+import { Skeleton, ErrorState } from "@/components/ui";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 class IntelligenceFetchError extends Error {
   status: number;
@@ -97,14 +98,14 @@ export function ProjectIntelligenceClient({ projectId }: { projectId: string }) 
     return (
       <section className="space-y-4" aria-label={tDetail("intelligenceError")}>
         <ErrorState message={title} onRetry={() => refetch()} />
-        <Card className="border-l-4 border-l-aistroyka-info bg-aistroyka-surface-raised">
+        <DashboardGlassCard className="border-l-4 border-l-aistroyka-info bg-aistroyka-surface-raised">
           <p className="text-sm text-aistroyka-text-secondary">{hint}</p>
           {ref && (
             <p className="mt-2 text-xs font-mono text-aistroyka-text-tertiary">
               {tDetail("referenceForAdmin")}: {ref}
             </p>
           )}
-        </Card>
+        </DashboardGlassCard>
       </section>
     );
   }
@@ -112,18 +113,18 @@ export function ProjectIntelligenceClient({ projectId }: { projectId: string }) 
   if (isPending || !data) {
     return (
       <section className="space-y-4" aria-label={tDetail("intelligenceLoading")}>
-        <Card>
+        <DashboardGlassCard>
           <Skeleton className="h-6 w-48 mb-3" />
           <Skeleton className="h-4 w-full" />
           <Skeleton className="h-4 w-3/4 mt-2" />
-        </Card>
+        </DashboardGlassCard>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Card>
+          <DashboardGlassCard>
             <Skeleton className="h-24" />
-          </Card>
-          <Card>
+          </DashboardGlassCard>
+          <DashboardGlassCard>
             <Skeleton className="h-24" />
-          </Card>
+          </DashboardGlassCard>
         </div>
       </section>
     );

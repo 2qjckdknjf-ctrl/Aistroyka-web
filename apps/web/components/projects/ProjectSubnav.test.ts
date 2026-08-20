@@ -38,7 +38,7 @@ describe("ProjectSubnav", () => {
 
     expect(overview).toBeDefined();
     expect(reports).toBeDefined();
-    expect(isProjectSubnavItemActive(overview!, "workers")).toBe(true);
+    expect(isProjectSubnavItemActive(overview!, "overview")).toBe(true);
     expect(isProjectSubnavItemActive(reports!, "reports")).toBe(true);
     expect(isProjectSubnavItemActive(overview!, "costs")).toBe(false);
     expect(isProjectSubnavItemActive(overview!, "ai")).toBe(false);

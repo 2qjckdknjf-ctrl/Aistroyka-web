@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Button, Card } from "@/components/ui";
+import { Button } from "@/components/ui";
 import { createClient } from "@/lib/supabase/client";
 import { subscribeTaskMessages } from "@/lib/realtime/task-messages-realtime";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 type ChatMessage = {
   id: string;
@@ -306,7 +307,7 @@ export function TaskChatPanel({ taskId }: { taskId: string }) {
   };
 
   return (
-    <Card className="p-4 space-y-3 mt-4">
+    <DashboardGlassCard className="p-4 space-y-3 mt-4">
       <h3 className="text-aistroyka-title3 font-semibold text-aistroyka-text-primary">
         {t("taskChatTitle")}
       </h3>
@@ -438,6 +439,6 @@ export function TaskChatPanel({ taskId }: { taskId: string }) {
           {t("taskChatSend")}
         </Button>
       </div>
-    </Card>
+    </DashboardGlassCard>
   );
 }

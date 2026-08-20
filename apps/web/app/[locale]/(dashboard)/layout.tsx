@@ -7,6 +7,8 @@ import { requireAdmin } from "@/src/features/admin/auth/requireAdmin";
 import { routing } from "@/i18n/routing";
 import { getTenantForCurrentUser } from "@/lib/api/engine";
 import { hasMinRole } from "@/lib/auth/tenant";
+import { getActiveTenantRoleForUser } from "@/lib/tenant/tenant-role.server";
+import { isPortalOnlyTenantRole } from "@/lib/tenant/tenant.policy";
 import {
   getActiveSubscriptionStateForUser,
   isDashboardSubscriptionGateEnforced,
@@ -85,6 +87,7 @@ export default async function DashboardLayout({
 
     let isAdmin = false;
     let canManageTeam = false;
+    let portalOnly = false;
     try {
       const adminResult = await requireAdmin(supabase);
       isAdmin = adminResult.allowed;
@@ -104,8 +107,20 @@ export default async function DashboardLayout({
       canManageTeam = false;
     }
 
+    try {
+      const role = await getActiveTenantRoleForUser(supabase, user.id);
+      portalOnly = isPortalOnlyTenantRole(role);
+    } catch {
+      portalOnly = false;
+    }
+
     return (
-      <DashboardShell userEmail={user.email ?? undefined} isAdmin={isAdmin} canManageTeam={canManageTeam}>
+      <DashboardShell
+        userEmail={user.email ?? undefined}
+        isAdmin={isAdmin}
+        canManageTeam={canManageTeam}
+        portalOnly={portalOnly}
+      >
         {children}
       </DashboardShell>
     );

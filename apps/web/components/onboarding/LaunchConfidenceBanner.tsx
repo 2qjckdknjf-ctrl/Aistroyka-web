@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { Link, usePathname } from "@/i18n/navigation";
-import { Button, Card } from "@/components/ui";
+import { Button } from "@/components/ui";
 import {
   detectLaunchRole,
   getCompletedCount,
@@ -14,6 +14,7 @@ import {
   type ActivationStatusResponse,
   type LaunchStepKey,
 } from "@/lib/help/launch-steps";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 async function fetchActivationStatus(): Promise<ActivationStatusResponse> {
   const res = await fetch("/api/activation/status", { credentials: "include" });
@@ -69,7 +70,7 @@ export function LaunchConfidenceBanner() {
   if (completed >= total) return null;
 
   return (
-    <Card className="mb-4 border-aistroyka-accent/30 bg-aistroyka-accent-light/30 p-4">
+    <DashboardGlassCard className="mb-4 border-aistroyka-accent/30 bg-aistroyka-accent-light/30 p-4">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">{t("title")}</h2>
@@ -120,7 +121,7 @@ export function LaunchConfidenceBanner() {
           </ul>
         </div>
       ) : null}
-    </Card>
+    </DashboardGlassCard>
   );
 }
 

@@ -14,8 +14,9 @@ import {
   SummaryCard,
   type ProjectIntelligenceData,
 } from "@/components/intelligence";
-import { Card, Skeleton, ErrorState } from "@/components/ui";
+import { Skeleton, ErrorState } from "@/components/ui";
 import type { TopRiskInsightData } from "@/components/intelligence/types";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 async function fetchIntelligence(projectId: string): Promise<ProjectIntelligenceData> {
   const res = await fetch(`/api/v1/projects/${projectId}/intelligence`, { credentials: "include" });
@@ -198,7 +199,7 @@ export function DashboardAIOperatingCenterClient() {
       </div>
 
       {noProject && (
-        <Card className="border-l-4 border-l-aistroyka-info p-4">
+        <DashboardGlassCard className="border-l-4 border-l-aistroyka-info p-4">
           <p className="text-aistroyka-subheadline text-aistroyka-text-secondary">
             {tDetail("createOrOpenProjectHint")}
           </p>
@@ -208,7 +209,7 @@ export function DashboardAIOperatingCenterClient() {
           >
             {tDetail("browseProjectsArrow")}
           </Link>
-        </Card>
+        </DashboardGlassCard>
       )}
 
       {!noProject && intelligenceQuery.isError && (
@@ -221,11 +222,11 @@ export function DashboardAIOperatingCenterClient() {
       {!noProject && isLoading && !data && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3, 4, 5].map((i) => (
-            <Card key={i} className="p-4">
+            <DashboardGlassCard key={i} className="p-4">
               <Skeleton className="h-5 w-32 mb-2" />
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-3/4 mt-2" />
-            </Card>
+            </DashboardGlassCard>
           ))}
         </div>
       )}
@@ -318,10 +319,10 @@ export function DashboardAIOperatingCenterClient() {
           />
 
           {ops ? <TeamProductivityCard ops={ops} /> : (
-            <Card className="p-4">
+            <DashboardGlassCard className="p-4">
               <Skeleton className="h-5 w-36 mb-2" />
               <Skeleton className="h-4 w-full" />
-            </Card>
+            </DashboardGlassCard>
           )}
         </div>
       )}

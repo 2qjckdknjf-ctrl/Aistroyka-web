@@ -10,17 +10,21 @@ import {
   TableRow,
   TableHeaderCell,
   TableCell,
-  Card,
   Skeleton,
   EmptyState,
   Badge,
   TablePagination,
   Button,
 } from "@/components/ui";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 import { FilterBar } from "@/components/cockpit/FilterBar";
 import { useFilterParams } from "@/lib/cockpit/useFilterParams";
 import { parseTablePagination } from "@/lib/cockpit/useTablePagination";
 import { exportTableToCsv } from "@/lib/cockpit/csvExport";
+import {
+  countPendingReportApprovals,
+  reportStatusBadgeVariant,
+} from "./reports-list.utils";
 
 interface ReportRow {
   id: string;
@@ -48,6 +52,7 @@ function formatAge(dateStr: string, t: (key: string, values?: Record<string, str
 const DEFAULT_REPORTS_BASE = "/dashboard/daily-reports";
 
 export function DashboardReportsClient({ basePath = DEFAULT_REPORTS_BASE }: { basePath?: string }) {
+  const tDashboard = useTranslations("dashboard");
   const tDetail = useTranslations("dashboardDetail");
   const reportStatusOptions = [
     { value: "", label: tDetail("all") },
@@ -111,31 +116,36 @@ export function DashboardReportsClient({ basePath = DEFAULT_REPORTS_BASE }: { ba
     return { rows: data.slice(start, start + pageSize), total };
   }, [data, page, pageSize]);
 
+  const pendingReviewCount = useMemo(
+    () => countPendingReportApprovals(data ?? []),
+    [data],
+  );
+
   if (loading && !data) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <Skeleton lines={5} />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   if (error) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <p className="text-aistroyka-text-secondary p-4">{error}</p>
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   if (!data?.length) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <EmptyState
           icon={<span className="text-2xl">📋</span>}
           title={tDetail("noReportsYet")}
           subtitle={tDetail("dailyReportsAppear")}
         />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
@@ -170,7 +180,35 @@ export function DashboardReportsClient({ basePath = DEFAULT_REPORTS_BASE }: { ba
           showSavedViews={true}
         />
       </div>
-      <Card className="p-0 overflow-hidden">
+      {pendingReviewCount > 0 ? (
+        <DashboardGlassCard
+          className="mb-4 border-l-4 border-l-aistroyka-warning"
+          contentClassName="flex flex-wrap items-center justify-between gap-3 p-4"
+          aria-label={tDashboard("queueReportsReview")}
+        >
+          <div>
+            <p className="text-aistroyka-caption font-medium uppercase tracking-wide text-aistroyka-text-tertiary">
+              {tDashboard("queueReportsReview")}
+            </p>
+            <p className="mt-1 text-aistroyka-title3 font-semibold tabular-nums text-aistroyka-text-primary">
+              {pendingReviewCount}
+            </p>
+          </div>
+          {params.status !== "submitted" ? (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                setParam("status", "submitted");
+                setParam("page", "1");
+              }}
+            >
+              {tDashboard("viewAll")}
+            </Button>
+          ) : null}
+        </DashboardGlassCard>
+      ) : null}
+      <DashboardGlassCard contentClassName="p-0 overflow-hidden">
         <div className="p-2 flex justify-end">
           <Button variant="secondary" onClick={exportCsv} className="text-sm">{tDetail("exportCsv")}</Button>
         </div>
@@ -196,17 +234,7 @@ export function DashboardReportsClient({ basePath = DEFAULT_REPORTS_BASE }: { ba
                 </Link>
               </TableCell>
               <TableCell>
-                <Badge
-                  variant={
-                    r.status === "approved"
-                      ? "success"
-                      : r.status === "submitted"
-                        ? "warning"
-                        : r.status === "changes_requested" || r.status === "rejected"
-                          ? "danger"
-                          : "neutral"
-                  }
-                >
+                <Badge variant={reportStatusBadgeVariant(r.status)}>
                   {r.status}
                 </Badge>
               </TableCell>
@@ -248,7 +276,7 @@ export function DashboardReportsClient({ basePath = DEFAULT_REPORTS_BASE }: { ba
         totalCount={pageData.total}
         onPageChange={(p) => setParam("page", String(p))}
       />
-    </Card>
+      </DashboardGlassCard>
     </>
   );
 }

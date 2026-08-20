@@ -4,9 +4,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { useState } from "react";
-import { Card, Button, Badge } from "@/components/ui";
+import { Button, Badge } from "@/components/ui";
 import { handoverStatusBadgeClass } from "./statusBadgeStyles";
 import { formatPortalStatus } from "@/lib/i18n/portal-status-labels";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 type Blocker = {
   code: string;
@@ -67,17 +68,17 @@ export function HandoverManagerPanel({ projectId }: { projectId: string }) {
 
   if (q.isPending) {
     return (
-      <Card className="border-l-4 border-l-aistroyka-success p-4">
+      <DashboardGlassCard className="border-l-4 border-l-aistroyka-success p-4">
         <p className="text-sm text-aistroyka-text-secondary">{tDetail("loadingHandover")}</p>
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   if (q.isError) {
     return (
-      <Card className="border-l-4 border-l-aistroyka-success p-4">
+      <DashboardGlassCard className="border-l-4 border-l-aistroyka-success p-4">
         <p className="text-sm text-aistroyka-error">{q.error instanceof Error ? q.error.message : tDetail("error")}</p>
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
@@ -97,7 +98,7 @@ export function HandoverManagerPanel({ projectId }: { projectId: string }) {
           : null;
 
   return (
-    <Card className="border-l-4 border-l-aistroyka-success p-4">
+    <DashboardGlassCard className="border-l-4 border-l-aistroyka-success p-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <h3 className="text-aistroyka-caption font-semibold uppercase tracking-wide text-aistroyka-text-tertiary">
@@ -171,6 +172,6 @@ export function HandoverManagerPanel({ projectId }: { projectId: string }) {
       ) : (
         <p className="mt-3 text-sm text-aistroyka-text-tertiary">{tDetail("projectMarkedCompleted")}</p>
       )}
-    </Card>
+    </DashboardGlassCard>
   );
 }

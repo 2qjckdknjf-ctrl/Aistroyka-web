@@ -1,7 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
-import { Card } from "@/components/ui";
 import { EmptyState } from "@/components/ui";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 /** Read-only. If table public.billing exists with (id, plan, status, current_period_end), rows are shown; else empty state. */
 export default async function BillingPage() {
@@ -16,14 +16,14 @@ export default async function BillingPage() {
 
   return (
     <>
-      <Card className="mb-aistroyka-8 border-l-4 border-l-aistroyka-accent">
+      <DashboardGlassCard className="mb-aistroyka-8 border-l-4 border-l-aistroyka-accent">
         <h1 className="text-aistroyka-title2 font-bold tracking-tight text-aistroyka-text-primary sm:text-aistroyka-title">
           {t("title")}
         </h1>
         <p className="mt-aistroyka-1 text-aistroyka-subheadline text-aistroyka-text-secondary">{t("subtitle")}</p>
-      </Card>
+      </DashboardGlassCard>
       {list.length > 0 ? (
-        <Card className="overflow-hidden p-0">
+        <DashboardGlassCard contentClassName="overflow-hidden p-0">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[260px] text-left text-aistroyka-subheadline">
               <thead>
@@ -49,9 +49,9 @@ export default async function BillingPage() {
               </tbody>
             </table>
           </div>
-        </Card>
+        </DashboardGlassCard>
       ) : (
-        <Card>
+        <DashboardGlassCard>
           <EmptyState
             icon={
               <svg className="h-aistroyka-empty-icon w-aistroyka-empty-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
@@ -61,7 +61,7 @@ export default async function BillingPage() {
             title={t("emptyTitle")}
             subtitle={t("emptySubtitle")}
           />
-        </Card>
+        </DashboardGlassCard>
       )}
     </>
   );

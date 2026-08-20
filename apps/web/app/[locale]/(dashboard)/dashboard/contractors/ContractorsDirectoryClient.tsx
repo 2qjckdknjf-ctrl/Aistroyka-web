@@ -4,8 +4,9 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { Card, Input, Button, Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell, Skeleton, EmptyState } from "@/components/ui";
+import { Input, Button, Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell, Skeleton, EmptyState } from "@/components/ui";
 import type { ContractorDirectoryListItem } from "@/lib/domain/contractor-directory/contractor-directory.types";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 async function fetchDirectory(params: { q: string; specialization: string }): Promise<ContractorDirectoryListItem[]> {
   const sp = new URLSearchParams();
@@ -32,17 +33,17 @@ export function ContractorsDirectoryClient() {
 
   if (query.isPending) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <Skeleton className="h-40" />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   if (query.isError) {
     return (
-      <Card className="p-4">
+      <DashboardGlassCard className="p-4">
         <p className="text-aistroyka-error text-sm">{t("loadFailed")}</p>
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
@@ -50,7 +51,7 @@ export function ContractorsDirectoryClient() {
 
   return (
     <div className="space-y-4">
-      <Card className="p-4">
+      <DashboardGlassCard className="p-4">
         <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-end">
           <div className="min-w-[200px] flex-1">
             <Input
@@ -74,12 +75,12 @@ export function ContractorsDirectoryClient() {
             {t("applyFilters")}
           </Button>
         </div>
-      </Card>
+      </DashboardGlassCard>
 
       {rows.length === 0 ? (
         <EmptyState icon={<span className="text-2xl">📇</span>} title={t("emptyTitle")} subtitle={t("emptySubtitle")} />
       ) : (
-        <Card className="overflow-x-auto p-0">
+        <DashboardGlassCard className="overflow-x-auto" contentClassName="p-0">
           <Table aria-label={t("tableAria")}>
             <TableHead>
               <TableRow>
@@ -119,7 +120,7 @@ export function ContractorsDirectoryClient() {
               })}
             </TableBody>
           </Table>
-        </Card>
+        </DashboardGlassCard>
       )}
     </div>
   );

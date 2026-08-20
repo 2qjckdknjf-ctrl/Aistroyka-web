@@ -2,13 +2,14 @@
 
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { Card, Button } from "@/components/ui";
+import { Button } from "@/components/ui";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 export function OpenDashboardScreen() {
   const t = useTranslations("planFitOnboarding");
 
   return (
-    <Card className="mx-auto max-w-xl p-6">
+    <DashboardGlassCard className="mx-auto max-w-xl p-6">
       <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">
         {t("openDashboard")}
       </h2>
@@ -18,6 +19,6 @@ export function OpenDashboardScreen() {
       <Link href="/dashboard" className="mt-6 inline-block">
         <Button variant="primary">{t("openDashboard")}</Button>
       </Link>
-    </Card>
+    </DashboardGlassCard>
   );
 }

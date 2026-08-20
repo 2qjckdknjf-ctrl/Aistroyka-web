@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { Card, Button } from "@/components/ui";
+import { Button } from "@/components/ui";
 import { PlanFitRecommendRequestSchema } from "@/lib/platform/plan-fit/plan-fit-api.schema";
 import type { PlanFitRecommendRequest } from "@/lib/platform/plan-fit/plan-fit-api.schema";
 import type { PersonaType, ExpectedUsersRange, ExpectedProjectsRange, Priority, StartMode } from "@/lib/platform/plan-fit/recommend.types";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 const PERSONA_OPTIONS: PersonaType[] = ["client", "contractor", "developer_owner", "supervisor", "other"];
 const USERS_OPTIONS: ExpectedUsersRange[] = ["1", "2_5", "6_20", "21_100", "100_plus"];
@@ -72,7 +73,7 @@ export function PlanFitInputForm({
   }
 
   return (
-    <Card className="mx-auto max-w-xl p-6">
+    <DashboardGlassCard className="mx-auto max-w-xl p-6">
       <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">
         {t("title")}
       </h2>
@@ -217,6 +218,6 @@ export function PlanFitInputForm({
           {isSubmitting ? t("submitting") : t("submit")}
         </Button>
       </form>
-    </Card>
+    </DashboardGlassCard>
   );
 }

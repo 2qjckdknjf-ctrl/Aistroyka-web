@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@/i18n/navigation";
-import { Card, Button, Badge, Skeleton, EmptyState } from "@/components/ui";
+import { Button, Badge, Skeleton, EmptyState } from "@/components/ui";
 import { changeOrderStatusBadgeClass } from "../../statusBadgeStyles";
 import { formatPortalStatus } from "@/lib/i18n/portal-status-labels";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 type Event = {
   id: string;
@@ -161,21 +162,21 @@ export function ManagerChangeOrderDetailClient({
 
   if (q.isPending) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <Skeleton className="h-40" />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   if (q.isError) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <EmptyState
           icon={<span className="text-2xl">📋</span>}
           title={tDetail("changeOrderUnavailable")}
           subtitle={q.error instanceof Error ? q.error.message : ""}
         />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
@@ -187,7 +188,7 @@ export function ManagerChangeOrderDetailClient({
       <Link href={`/dashboard/projects/${projectId}`} className="text-aistroyka-subheadline text-aistroyka-accent hover:underline">
         {tDetail("backToProject")}
       </Link>
-      <Card className="p-4">
+      <DashboardGlassCard className="p-4">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <h1 className="text-aistroyka-title3 font-semibold">{row.title}</h1>
           <Badge className={changeOrderStatusBadgeClass(row.status)}>{formatPortalStatus(row.status, "changeOrder", tPortal)}</Badge>
@@ -195,10 +196,10 @@ export function ManagerChangeOrderDetailClient({
         <p className="mt-1 text-xs text-aistroyka-text-tertiary">
           {tDetail("kind")}: {row.kind.replace(/_/g, " ")} · {tDetail("createdBy")} {row.created_by.slice(0, 8)}…
         </p>
-      </Card>
+      </DashboardGlassCard>
 
       {editable ? (
-        <Card className="p-4 space-y-3">
+        <DashboardGlassCard className="p-4 space-y-3">
           <h2 className="font-semibold">{tDetail("editDetails")}</h2>
           <div>
             <label className="text-xs font-medium text-aistroyka-text-secondary">{tDetail("title")}</label>
@@ -284,9 +285,9 @@ export function ManagerChangeOrderDetailClient({
           <Button type="button" size="sm" onClick={() => patchMutation.mutate()} disabled={patchMutation.isPending}>
             {patchMutation.isPending ? tDetail("saving") : tDetail("saveChanges")}
           </Button>
-        </Card>
+        </DashboardGlassCard>
       ) : (
-        <Card className="p-4">
+        <DashboardGlassCard className="p-4">
           <h2 className="font-semibold">{tDetail("summary")}</h2>
           {row.description ? <p className="mt-2 text-sm whitespace-pre-wrap">{row.description}</p> : null}
           <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
@@ -311,11 +312,11 @@ export function ManagerChangeOrderDetailClient({
               </div>
             ) : null}
           </dl>
-        </Card>
+        </DashboardGlassCard>
       )}
 
       {options.length > 0 ? (
-        <Card className="p-4 space-y-3">
+        <DashboardGlassCard className="p-4 space-y-3">
           <h2 className="font-semibold">{tDetail("statusTransition")}</h2>
           <select
             className="w-full max-w-md rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
@@ -349,10 +350,10 @@ export function ManagerChangeOrderDetailClient({
               {transitionMutation.error instanceof Error ? transitionMutation.error.message : tDetail("error")}
             </p>
           ) : null}
-        </Card>
+        </DashboardGlassCard>
       ) : null}
 
-      <Card className="p-4">
+      <DashboardGlassCard className="p-4">
         <h2 className="font-semibold">{tDetail("history")}</h2>
         <ul className="mt-3 space-y-2 text-sm">
           {row.events.map((e) => (
@@ -365,7 +366,7 @@ export function ManagerChangeOrderDetailClient({
             </li>
           ))}
         </ul>
-      </Card>
+      </DashboardGlassCard>
     </div>
   );
 }

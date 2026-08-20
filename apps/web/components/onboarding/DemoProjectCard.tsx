@@ -1,7 +1,7 @@
 "use client";
 
 import { Link } from "@/i18n/navigation";
-import { Card } from "@/components/ui";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 /** Demo dataset for display when user has no projects. */
 export const DEMO_PROJECT = {
@@ -31,7 +31,7 @@ export const DEMO_PROJECT = {
 export function DemoProjectCard() {
   const d = DEMO_PROJECT;
   return (
-    <Card className="overflow-hidden p-0">
+    <DashboardGlassCard contentClassName="overflow-hidden p-0">
       <div className="border-b border-aistroyka-border-subtle bg-aistroyka-surface-raised px-4 py-3">
         <div className="flex items-center justify-between">
           <h3 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">
@@ -81,6 +81,6 @@ export function DemoProjectCard() {
           Create your first project →
         </Link>
       </div>
-    </Card>
+    </DashboardGlassCard>
   );
 }

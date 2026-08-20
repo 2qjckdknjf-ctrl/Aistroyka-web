@@ -4,9 +4,8 @@ import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "@/i18n/navigation";
+import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import {
-  Card,
   SectionHeader,
   Tabs,
   Tab,
@@ -29,9 +28,38 @@ import { ProjectCostsPanel } from "./ProjectCostsPanel";
 import { ProjectEstimatePanel } from "./ProjectEstimatePanel";
 import { ProjectDecisionsPanel } from "./ProjectDecisionsPanel";
 import { TelegramConnectCard } from "@/components/integrations/TelegramConnectCard";
-import { ProjectSubnav } from "@/components/projects/ProjectSubnav";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 import { downloadProjectReportsExport } from "@/components/projects/reports-export-ui";
-import { resolveProjectDetailTab } from "./project-detail-tabs";
+import {
+  DEFAULT_PROJECT_DETAIL_TAB,
+  PROJECT_COMMAND_TAB_ORDER,
+  resolveProjectDetailTab,
+  type ProjectCommandTab,
+} from "./project-detail-tabs";
+
+const TAB_LABEL_KEYS: Record<ProjectCommandTab, string> = {
+  overview: "overview",
+  reports: "reports",
+  documents: "documents",
+  schedule: "schedule",
+  decisions: "decisions",
+  workers: "workers",
+  contractors: "contractors",
+  costs: "costs",
+  estimate: "estimate",
+  intelligence: "intelligence",
+  ai: "ai",
+  uploads: "uploads",
+};
+
+const OVERVIEW_QUICK_TABS: ProjectCommandTab[] = [
+  "reports",
+  "schedule",
+  "decisions",
+  "workers",
+  "documents",
+  "intelligence",
+];
 
 const PAGE_SIZE = 10;
 
@@ -117,8 +145,22 @@ export function DashboardProjectDetailClient({
   const tPage = useTranslations("dashboardPageMeta");
   const tDetail = useTranslations("dashboardDetail");
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
   const tabParam = searchParams?.get("tab");
-  const [activeTab, setActiveTab] = useState(resolveProjectDetailTab(tabParam));
+  const [activeTab, setActiveTab] = useState(() => resolveProjectDetailTab(tabParam));
+
+  const selectTab = (tab: ProjectCommandTab) => {
+    setActiveTab(tab);
+    const params = new URLSearchParams(searchParams?.toString() ?? "");
+    if (tab === DEFAULT_PROJECT_DETAIL_TAB) {
+      params.delete("tab");
+    } else {
+      params.set("tab", tab);
+    }
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname);
+  };
 
   useEffect(() => {
     setActiveTab(resolveProjectDetailTab(tabParam));
@@ -172,15 +214,15 @@ export function DashboardProjectDetailClient({
 
   if (loading && !project) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <Skeleton lines={4} />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   if (error || !project) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <EmptyState
           icon={<span className="text-2xl">⚠️</span>}
           title={tDetail("projectNotFound")}
@@ -191,7 +233,7 @@ export function DashboardProjectDetailClient({
             </Link>
           }
         />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
@@ -208,65 +250,44 @@ export function DashboardProjectDetailClient({
       <SectionHeader title={project.name} subtitle={tPage("projectOverviewSubtitle")} />
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6" aria-label={tDetail("projectSummary")}>
-        <Card className="border-l-4 border-l-aistroyka-accent">
+        <DashboardGlassCard className="border-l-4 border-l-aistroyka-accent">
           <p className="text-aistroyka-caption font-medium uppercase tracking-wide text-aistroyka-text-tertiary">{tDetail("activeWorkers")}</p>
           <p className="mt-1 text-aistroyka-title3 font-semibold text-aistroyka-text-primary">{summary.activeWorkers}</p>
-        </Card>
-        <Card className="border-l-4 border-l-aistroyka-info">
+        </DashboardGlassCard>
+        <DashboardGlassCard className="border-l-4 border-l-aistroyka-info">
           <p className="text-aistroyka-caption font-medium uppercase tracking-wide text-aistroyka-text-tertiary">{tDetail("openReports")}</p>
           <p className="mt-1 text-aistroyka-title3 font-semibold text-aistroyka-text-primary">{summary.openReports}</p>
-        </Card>
-        <Card className="border-l-4 border-l-aistroyka-success">
+        </DashboardGlassCard>
+        <DashboardGlassCard className="border-l-4 border-l-aistroyka-success">
           <p className="text-aistroyka-caption font-medium uppercase tracking-wide text-aistroyka-text-tertiary">{tDetail("aiAnalyses")}</p>
           <p className="mt-1 text-aistroyka-title3 font-semibold text-aistroyka-text-primary">{summary.aiAnalyses}</p>
-        </Card>
-        <Card className="border-l-4 border-l-aistroyka-warning">
+        </DashboardGlassCard>
+        <DashboardGlassCard className="border-l-4 border-l-aistroyka-warning">
           <p className="text-aistroyka-caption font-medium uppercase tracking-wide text-aistroyka-text-tertiary">{tDetail("pendingUploads")}</p>
           <p className="mt-1 text-aistroyka-title3 font-semibold text-aistroyka-text-primary">—</p>
-        </Card>
+        </DashboardGlassCard>
       </section>
 
       <TelegramConnectCard className="mb-6" />
 
-      <ProjectSubnav projectId={projectId} activeTab={activeTab} onSelect={setActiveTab} />
-
-      <Card>
+      <DashboardGlassCard contentClassName="p-0">
         <Tabs aria-label={tDetail("projectSections")}>
-          <Tab id="tab-workers" selected={activeTab === "workers"} onSelect={() => setActiveTab("workers")} aria-controls="panel-workers">
-            {tDetail("workers")}
-          </Tab>
-          <Tab id="tab-contractors" selected={activeTab === "contractors"} onSelect={() => setActiveTab("contractors")} aria-controls="panel-contractors">
-            {tDetail("contractors")}
-          </Tab>
-          <Tab id="tab-reports" selected={activeTab === "reports"} onSelect={() => setActiveTab("reports")} aria-controls="panel-reports">
-            {tDetail("reports")}
-          </Tab>
-          <Tab id="tab-uploads" selected={activeTab === "uploads"} onSelect={() => setActiveTab("uploads")} aria-controls="panel-uploads">
-            {tDetail("uploads")}
-          </Tab>
-          <Tab id="tab-ai" selected={activeTab === "ai"} onSelect={() => setActiveTab("ai")} aria-controls="panel-ai">
-            {tDetail("ai")}
-          </Tab>
-          <Tab id="tab-intelligence" selected={activeTab === "intelligence"} onSelect={() => setActiveTab("intelligence")} aria-controls="panel-intelligence">
-            {tDetail("intelligence")}
-          </Tab>
-          <Tab id="tab-schedule" selected={activeTab === "schedule"} onSelect={() => setActiveTab("schedule")} aria-controls="panel-schedule">
-            {tDetail("schedule")}
-          </Tab>
-          <Tab id="tab-documents" selected={activeTab === "documents"} onSelect={() => setActiveTab("documents")} aria-controls="panel-documents">
-            {tDetail("documents")}
-          </Tab>
-          <Tab id="tab-decisions" selected={activeTab === "decisions"} onSelect={() => setActiveTab("decisions")} aria-controls="panel-decisions">
-            {tDetail("decisions")}
-          </Tab>
-          <Tab id="tab-costs" selected={activeTab === "costs"} onSelect={() => setActiveTab("costs")} aria-controls="panel-costs">
-            {tDetail("costs")}
-          </Tab>
-          <Tab id="tab-estimate" selected={activeTab === "estimate"} onSelect={() => setActiveTab("estimate")} aria-controls="panel-estimate">
-            {tDetail("estimate")}
-          </Tab>
+          {PROJECT_COMMAND_TAB_ORDER.map((tab) => (
+            <Tab
+              key={tab}
+              id={`tab-${tab}`}
+              selected={activeTab === tab}
+              onSelect={() => selectTab(tab)}
+              aria-controls={`panel-${tab}`}
+            >
+              {tDetail(TAB_LABEL_KEYS[tab])}
+            </Tab>
+          ))}
         </Tabs>
 
+        <TabPanel id="panel-overview" selected={activeTab === "overview"} aria-labelledby="tab-overview">
+          <ProjectOverviewPanel projectId={projectId} onSelectTab={selectTab} />
+        </TabPanel>
         <TabPanel id="panel-workers" selected={activeTab === "workers"} aria-labelledby="tab-workers">
           <ProjectWorkersPanel
             projectId={projectId}
@@ -324,8 +345,37 @@ export function DashboardProjectDetailClient({
         <TabPanel id="panel-estimate" selected={activeTab === "estimate"} aria-labelledby="tab-estimate">
           <ProjectEstimatePanel projectId={projectId} />
         </TabPanel>
-      </Card>
+      </DashboardGlassCard>
     </>
+  );
+}
+
+function ProjectOverviewPanel({
+  projectId,
+  onSelectTab,
+}: {
+  projectId: string;
+  onSelectTab: (tab: ProjectCommandTab) => void;
+}) {
+  const tDetail = useTranslations("dashboardDetail");
+
+  return (
+    <div className="space-y-4 p-4">
+      <p className="text-aistroyka-subheadline text-aistroyka-text-secondary">{tDetail("projectSummary")}</p>
+      <div className="flex flex-wrap gap-2">
+        {OVERVIEW_QUICK_TABS.map((tab) => (
+          <Button key={tab} variant="secondary" size="sm" onClick={() => onSelectTab(tab)}>
+            {tDetail(TAB_LABEL_KEYS[tab])}
+          </Button>
+        ))}
+      </div>
+      <Link
+        href={`/dashboard/tasks?project_id=${encodeURIComponent(projectId)}`}
+        className="inline-flex text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline focus:outline-none focus:ring-2 focus:ring-aistroyka-accent focus:ring-offset-2 rounded"
+      >
+        {tDetail("viewTasks")}
+      </Link>
+    </div>
   );
 }
 

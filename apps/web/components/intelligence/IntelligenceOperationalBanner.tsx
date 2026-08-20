@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import type { ManagerOperationalContextData } from "./types";
-import { Card } from "@/components/ui";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 export function IntelligenceOperationalBanner({
   operational,
@@ -24,7 +24,7 @@ export function IntelligenceOperationalBanner({
 
   return (
     <section aria-label={tDetail("intelligenceReliabilityAndNextSteps")}>
-    <Card
+    <DashboardGlassCard
       className={
         isAttention
           ? "border-l-4 border-l-aistroyka-warning bg-aistroyka-warning/10"
@@ -87,7 +87,7 @@ export function IntelligenceOperationalBanner({
           </ol>
         </div>
       )}
-    </Card>
+    </DashboardGlassCard>
     </section>
   );
 }

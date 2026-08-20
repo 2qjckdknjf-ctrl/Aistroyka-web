@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { Card, Button } from "@/components/ui";
+import { Button } from "@/components/ui";
 import type { PlanCode } from "@aistroyka/contracts";
 import type { SetupReadinessV2 } from "@/lib/platform/plan-fit/orchestration/setup-readiness.types";
 import {
@@ -11,6 +11,7 @@ import {
   getStepButtonLabelKey,
   getContinueSetupSubtitleKey,
 } from "./continue-workspace-setup.view-model";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 export function ContinueWorkspaceSetupScreen({
   selectedPlanCode,
@@ -26,7 +27,7 @@ export function ContinueWorkspaceSetupScreen({
   const subtitleKey = getContinueSetupSubtitleKey(checklist);
 
   return (
-    <Card className="mx-auto max-w-xl p-6">
+    <DashboardGlassCard className="mx-auto max-w-xl p-6">
       <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">
         {t("continueSetupTitle")}
       </h2>
@@ -98,6 +99,6 @@ export function ContinueWorkspaceSetupScreen({
           </Button>
         </Link>
       </div>
-    </Card>
+    </DashboardGlassCard>
   );
 }
