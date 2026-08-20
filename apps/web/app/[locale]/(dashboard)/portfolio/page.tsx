@@ -9,7 +9,7 @@ import {
   type AnalysisRow,
 } from "@/lib/intelligence/portfolio";
 import { PortfolioOverview } from "./PortfolioOverview";
-import { Card } from "@/components/ui";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 export default async function PortfolioPage() {
   const t = await getTranslations("portfolioPage");
@@ -24,12 +24,12 @@ export default async function PortfolioPage() {
   if (projectIds.length === 0) {
     return (
       <>
-        <Card className="border-l-4 border-l-aistroyka-accent">
+        <DashboardGlassCard className="border-l-4 border-l-aistroyka-accent">
           <h1 className="text-aistroyka-title2 font-bold tracking-tight text-aistroyka-text-primary sm:text-aistroyka-title">{t("title")}</h1>
           <p className="mt-aistroyka-2 text-aistroyka-subheadline text-aistroyka-text-secondary">
             {t("emptySubtitle")}
           </p>
-        </Card>
+        </DashboardGlassCard>
       </>
     );
   }
@@ -108,9 +108,9 @@ export default async function PortfolioPage() {
       <Link href="/projects" className="mb-aistroyka-6 inline-block text-aistroyka-subheadline font-medium text-aistroyka-text-secondary hover:text-aistroyka-accent focus:outline-none focus:ring-2 focus:ring-aistroyka-accent focus:ring-offset-2 rounded-aistroyka-md">
         {t("backToProjects")}
       </Link>
-      <Card className="mb-aistroyka-8 border-l-4 border-l-aistroyka-accent">
+      <DashboardGlassCard className="mb-aistroyka-8 border-l-4 border-l-aistroyka-accent">
         <h1 className="text-aistroyka-title2 font-bold tracking-tight text-aistroyka-text-primary sm:text-aistroyka-title">{t("title")}</h1>
-      </Card>
+      </DashboardGlassCard>
       <PortfolioOverview portfolio={portfolio} />
     </>
   );

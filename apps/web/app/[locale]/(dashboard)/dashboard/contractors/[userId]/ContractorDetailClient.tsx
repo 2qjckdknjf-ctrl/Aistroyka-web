@@ -4,7 +4,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import {
-  Card,
   Button,
   Input,
   Textarea,
@@ -14,6 +13,7 @@ import {
 } from "@/components/ui";
 import type { ContractorDirectoryDetail } from "@/lib/domain/contractor-directory/contractor-directory.types";
 import { useState, useEffect } from "react";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 async function fetchDetail(userId: string): Promise<ContractorDirectoryDetail> {
   const res = await fetch(`/api/v1/contractors/directory/${encodeURIComponent(userId)}`, {
@@ -79,9 +79,9 @@ export function ContractorDetailClient({ userId }: { userId: string }) {
 
   if (q.isPending) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <Skeleton className="h-48" />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
@@ -115,7 +115,7 @@ export function ContractorDetailClient({ userId }: { userId: string }) {
         </Link>
       </div>
 
-      <Card className="p-4">
+      <DashboardGlassCard className="p-4">
         <h2 className="text-lg font-semibold text-aistroyka-text-primary">{t("metricsSection")}</h2>
         <p className="mt-1 text-sm text-aistroyka-text-secondary">{t("metricsHint")}</p>
         <dl className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 text-sm">
@@ -150,9 +150,9 @@ export function ContractorDetailClient({ userId }: { userId: string }) {
             </dd>
           </div>
         </dl>
-      </Card>
+      </DashboardGlassCard>
 
-      <Card className="p-4">
+      <DashboardGlassCard className="p-4">
         <h2 className="text-lg font-semibold text-aistroyka-text-primary">{t("profileSection")}</h2>
         <p className="mt-1 text-sm text-aistroyka-text-secondary">{t("profileHint")}</p>
         <form
@@ -188,7 +188,7 @@ export function ContractorDetailClient({ userId }: { userId: string }) {
           </Button>
           {save.isError ? <p className="text-sm text-aistroyka-error">{t("saveFailed")}</p> : null}
         </form>
-      </Card>
+      </DashboardGlassCard>
     </div>
   );
 }

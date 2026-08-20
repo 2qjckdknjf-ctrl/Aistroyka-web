@@ -2,10 +2,11 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@/i18n/navigation";
-import { Card } from "@/components/ui";
+
 import { Skeleton } from "@/components/ui";
 import { fetchPlanSurface } from "@/lib/plan-fit/api-client";
 import { getAvailableWithHigherPlansItems } from "@/lib/platform/plan-fit/upgrade-prompt-presentation";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 /**
  * "Available with higher plans" section for billing page.
@@ -20,9 +21,9 @@ export function AvailableWithHigherPlans() {
 
   if (isLoading) {
     return (
-      <Card className="mb-aistroyka-8">
+      <DashboardGlassCard className="mb-aistroyka-8">
         <Skeleton className="h-24 w-full rounded-[var(--aistroyka-radius-md)]" />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
@@ -30,7 +31,7 @@ export function AvailableWithHigherPlans() {
   if (items.length === 0) return null;
 
   return (
-    <Card className="mb-aistroyka-8">
+    <DashboardGlassCard className="mb-aistroyka-8">
       <h3 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">
         Available with higher plans
       </h3>
@@ -56,6 +57,6 @@ export function AvailableWithHigherPlans() {
           </li>
         ))}
       </ul>
-    </Card>
+    </DashboardGlassCard>
   );
 }

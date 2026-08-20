@@ -3,8 +3,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Button, Alert, Card } from "@/components/ui";
+import { Button, Alert } from "@/components/ui";
 import { Link } from "@/i18n/navigation";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 type PlanKey = "starter" | "business" | "enterprise";
 
@@ -86,7 +87,7 @@ export function SubscribePlansClient({
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10">
-      <Card className="mb-6 border-l-4 border-l-aistroyka-accent">
+      <DashboardGlassCard className="mb-6 border-l-4 border-l-aistroyka-accent">
         <h1 className="text-aistroyka-title2 font-semibold text-aistroyka-text-primary">
           {t("title")}
         </h1>
@@ -101,7 +102,7 @@ export function SubscribePlansClient({
         <p className="mt-3 text-aistroyka-caption text-aistroyka-text-tertiary">
           {t("status", { status: billingStatus ?? "none" })}
         </p>
-      </Card>
+      </DashboardGlassCard>
 
       {checkoutState === "success" && !hasActiveSubscription ? (
         <>
@@ -116,7 +117,7 @@ export function SubscribePlansClient({
 
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
         {plans.map((plan) => (
-          <Card key={plan.key}>
+          <DashboardGlassCard key={plan.key}>
             <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">
               {plan.title}
             </h2>
@@ -141,7 +142,7 @@ export function SubscribePlansClient({
                 </Button>
               </div>
             )}
-          </Card>
+          </DashboardGlassCard>
         ))}
       </div>
     </div>

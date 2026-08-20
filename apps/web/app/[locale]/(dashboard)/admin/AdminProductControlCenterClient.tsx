@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@/i18n/navigation";
-import { Card, Skeleton, EmptyState, Badge } from "@/components/ui";
+import { Skeleton, EmptyState, Badge } from "@/components/ui";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 type AlertRow = {
   id: string;
@@ -129,22 +130,22 @@ export function AdminProductControlCenterClient() {
 
   if (loading) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <Skeleton lines={8} />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   if (error) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <EmptyState title="Control center unavailable" subtitle={error} icon={<span className="text-2xl">⚠️</span>} />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   return (
-    <Card>
+    <DashboardGlassCard>
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
           <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">Product Control Center</h2>
@@ -212,6 +213,6 @@ export function AdminProductControlCenterClient() {
           </div>
         </div>
       </div>
-    </Card>
+    </DashboardGlassCard>
   );
 }

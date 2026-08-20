@@ -5,8 +5,9 @@ import { JobStatusBadge } from "../projects/JobStatusBadge";
 import { AISystemHealth } from "./AISystemHealth";
 import { AdminProductControlCenterClient } from "./AdminProductControlCenterClient";
 import { computeCalibration } from "@/lib/intelligence/calibration";
-import { Card, SectionHeader, EmptyState } from "@/components/ui";
+import { SectionHeader, EmptyState } from "@/components/ui";
 import type { JobStatus } from "@/lib/types";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 type JobRow = {
   id: string;
@@ -48,7 +49,7 @@ export default async function AdminPage() {
 
   return (
     <>
-      <Card className="mb-aistroyka-8 border-l-4 border-l-aistroyka-accent">
+      <DashboardGlassCard className="mb-aistroyka-8 border-l-4 border-l-aistroyka-accent">
         <h1 className="text-aistroyka-title2 font-bold tracking-tight text-aistroyka-text-primary sm:text-aistroyka-title">
           {tDetail("adminJobsReadOnly")}
         </h1>
@@ -63,7 +64,7 @@ export default async function AdminPage() {
           <Link href="/admin/jobs" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">Failed jobs queue →</Link>
           <Link href="/admin/ai" className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline">AI runtime control →</Link>
         </p>
-      </Card>
+      </DashboardGlassCard>
 
       <section className="mb-aistroyka-8">
         <AdminProductControlCenterClient />
@@ -77,7 +78,7 @@ export default async function AdminPage() {
       <section>
         <SectionHeader title={tPage("jobsTitle")} />
         {jobs && jobs.length > 0 ? (
-          <Card className="overflow-hidden p-0">
+          <DashboardGlassCard contentClassName="overflow-hidden p-0">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[320px] text-left text-aistroyka-subheadline">
                 <thead>
@@ -107,9 +108,9 @@ export default async function AdminPage() {
                 </tbody>
               </table>
             </div>
-          </Card>
+          </DashboardGlassCard>
         ) : (
-          <Card>
+          <DashboardGlassCard>
             <EmptyState
               icon={
                 <svg className="h-aistroyka-empty-icon w-aistroyka-empty-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
@@ -119,7 +120,7 @@ export default async function AdminPage() {
               title={tDetail("noJobsYet")}
               subtitle={tDetail("analysisJobsAppearHere")}
             />
-          </Card>
+          </DashboardGlassCard>
         )}
       </section>
     </>

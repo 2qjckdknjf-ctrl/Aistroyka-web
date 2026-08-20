@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Card, Button, Input, Badge, Skeleton, EmptyState } from "@/components/ui";
+import { Button, Input, Badge, Skeleton, EmptyState } from "@/components/ui";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 type AlertRow = {
   id: string;
@@ -250,28 +251,28 @@ export function OperatorWorkbenchClient() {
 
   if (loading) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <Skeleton lines={10} />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   if (error) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <EmptyState title="Operator workbench unavailable" subtitle={error} icon={<span className="text-2xl">⚠️</span>} />
         <div className="mt-4">
           <Button variant="secondary" onClick={() => void loadAll()}>
             Retry
           </Button>
         </div>
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   return (
     <div className="space-y-6">
-      <Card>
+      <DashboardGlassCard>
         <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">Operator command bridge</h2>
         <p className="mt-1 text-aistroyka-subheadline text-aistroyka-text-secondary">
           Tenant-scoped operations, diagnostics, and safe rollout overrides.
@@ -290,9 +291,9 @@ export function OperatorWorkbenchClient() {
             <p className="text-aistroyka-title3 font-semibold text-aistroyka-text-primary">{jobs.length}</p>
           </div>
         </div>
-      </Card>
+      </DashboardGlassCard>
 
-      <Card>
+      <DashboardGlassCard>
         <h3 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">Operations & testing</h3>
         <p className="mt-1 text-aistroyka-caption text-aistroyka-text-secondary">
           Tenant health checks only. Cross-tenant cron controls moved to platform admin.
@@ -350,9 +351,9 @@ export function OperatorWorkbenchClient() {
             </ul>
           </div>
         ) : null}
-      </Card>
+      </DashboardGlassCard>
 
-      <Card>
+      <DashboardGlassCard>
         <h3 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">Incident resolution console</h3>
         <div className="mt-3 flex flex-wrap gap-2">
           <Button
@@ -427,9 +428,9 @@ export function OperatorWorkbenchClient() {
             </div>
           </div>
         </div>
-      </Card>
+      </DashboardGlassCard>
 
-      <Card>
+      <DashboardGlassCard>
         <h3 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">Tenant feature overrides</h3>
         <p className="mt-1 text-aistroyka-caption text-aistroyka-text-secondary">
           Global flag rollout is platform-admin only. Tenant admins may set overrides for the current tenant.
@@ -471,9 +472,9 @@ export function OperatorWorkbenchClient() {
             Apply tenant override
           </Button>
         </div>
-      </Card>
+      </DashboardGlassCard>
 
-      <Card>
+      <DashboardGlassCard>
         <h3 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">Operator action log</h3>
         {actionLog.length === 0 ? (
           <p className="mt-2 text-aistroyka-caption text-aistroyka-text-secondary">No actions executed in this session.</p>
@@ -498,7 +499,7 @@ export function OperatorWorkbenchClient() {
             ))}
           </div>
         )}
-      </Card>
+      </DashboardGlassCard>
     </div>
   );
 }

@@ -4,13 +4,13 @@ import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import {
-  Card,
   Badge,
   Skeleton,
   Button,
   Modal,
   Select,
 } from "@/components/ui";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 import { TaskChatPanel } from "@/components/dashboard/TaskChatPanel";
 
 interface TaskDetail {
@@ -120,23 +120,23 @@ export function DashboardTaskDetailClient({ taskId }: { taskId: string }) {
 
   if (loading && !task) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <Skeleton lines={6} />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   if (error || !task) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <p className="text-aistroyka-text-secondary">{error ?? "Not found"}</p>
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   return (
     <>
-      <Card className="p-4 space-y-4">
+      <DashboardGlassCard contentClassName="space-y-4 p-4">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
             <h2 className="text-aistroyka-title3 font-semibold text-aistroyka-text-primary">
@@ -207,7 +207,7 @@ export function DashboardTaskDetailClient({ taskId }: { taskId: string }) {
             </dd>
           </div>
         </dl>
-      </Card>
+      </DashboardGlassCard>
 
       <TaskChatPanel taskId={taskId} />
 

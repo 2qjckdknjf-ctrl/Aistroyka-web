@@ -2,12 +2,12 @@
 
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { Card } from "@/components/ui";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 export function TrustActions() {
   const tDetail = useTranslations("dashboardDetail");
   return (
-    <Card>
+    <DashboardGlassCard>
       <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">{tDetail("actions")}</h2>
       <ul className="mt-aistroyka-3 flex flex-wrap gap-aistroyka-3">
         <li>
@@ -30,6 +30,6 @@ export function TrustActions() {
       <p className="mt-aistroyka-2 text-aistroyka-caption text-aistroyka-text-tertiary">
         {tDetail("trustFreshnessHint")}
       </p>
-    </Card>
+    </DashboardGlassCard>
   )
 }

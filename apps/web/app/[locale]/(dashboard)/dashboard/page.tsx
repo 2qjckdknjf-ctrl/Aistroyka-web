@@ -8,6 +8,7 @@ import { DashboardManagerActionsClient } from "./DashboardManagerActionsClient";
 import { DashboardRecentProjectsClient } from "./DashboardRecentProjectsClient";
 import { DashboardAIOperatingCenterClient } from "./DashboardAIOperatingCenterClient";
 import { DashboardIntelligenceSectionClient } from "./DashboardIntelligenceSectionClient";
+import { DashboardCockpitHero } from "./DashboardCockpitHero";
 
 const FALLBACK_T: (key: string) => string = (k) => k;
 
@@ -34,23 +35,25 @@ export default async function DashboardPage() {
   return (
     <OnboardingGate>
       <>
-        <header className="mb-aistroyka-6 rounded-[var(--aistroyka-radius-card)] border border-aistroyka-border-subtle bg-[var(--aistroyka-bg-branded)] px-aistroyka-4 py-aistroyka-4 text-aistroyka-text-on-branded">
-          <h1 className="text-aistroyka-title font-bold tracking-tight sm:text-[var(--aistroyka-font-large)]">
-            AISTROYKA.AI — {t("opsTitle")}
-          </h1>
-          <p className="mt-aistroyka-1 text-aistroyka-subheadline text-aistroyka-text-on-branded/80">
-            {t("signedInAs")}{" "}
-            <span className="font-medium">{user?.email ?? "—"}</span>
-          </p>
-        </header>
+        <DashboardCockpitHero>
+          <header>
+            <h1 className="text-aistroyka-title font-bold tracking-tight sm:text-[var(--aistroyka-font-large)]">
+              AISTROYKA.AI — {t("opsTitle")}
+            </h1>
+            <p className="mt-aistroyka-1 text-aistroyka-subheadline text-aistroyka-text-on-branded/80">
+              {t("signedInAs")}{" "}
+              <span className="font-medium">{user?.email ?? "—"}</span>
+            </p>
+          </header>
+        </DashboardCockpitHero>
         <section className="mb-aistroyka-8">
           <FirstValueBanner />
           <GetStartedPanel />
         </section>
-        <DashboardOpsOverviewClient />
         <section className="mt-aistroyka-8">
           <DashboardManagerActionsClient />
         </section>
+        <DashboardOpsOverviewClient />
         <section className="mt-aistroyka-8">
           <DashboardAIOperatingCenterClient />
         </section>

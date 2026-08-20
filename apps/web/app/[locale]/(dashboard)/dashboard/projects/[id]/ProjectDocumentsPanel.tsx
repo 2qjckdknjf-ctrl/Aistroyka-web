@@ -22,8 +22,16 @@ import { Link } from "@/i18n/navigation";
 import { getPublicConfig } from "@/lib/config/public";
 import { DocumentApprovalHistory } from "@/components/approvals";
 import { ProjectProofPackPanel } from "./ProjectProofPackPanel";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 import { formatPortalStatus } from "@/lib/i18n/portal-status-labels";
 import { translateApiError } from "@/lib/i18n/api-error-messages";
+import {
+  DOCUMENT_FOLDER_TYPES,
+  countDocumentsByFolder,
+  countPendingDocumentsInFolder,
+  filterDocumentsByFolder,
+  type DocumentFolderFilter,
+} from "./documents-workspace.utils";
 
 const MEDIA_BUCKET = "media";
 const MAX_UPLOAD_MB = 25;
@@ -249,6 +257,7 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
   const [historyDocId, setHistoryDocId] = useState<string | null>(null);
   const [decisionTarget, setDecisionTarget] = useState<{ documentId: string; status: "approved" | "rejected" } | null>(null);
   const [decisionComment, setDecisionComment] = useState("");
+  const [folderFilter, setFolderFilter] = useState<DocumentFolderFilter>("all");
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const uploadTargetRef = useRef<string | null>(null);
 
@@ -342,6 +351,26 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
   const rows = query.data ?? [];
   const milestones = milestonesQuery.data ?? [];
   const pendingDocs = rows.filter((d) => d.status === "under_review");
+  const folderCounts = countDocumentsByFolder(rows);
+  const visibleRows = filterDocumentsByFolder(rows, folderFilter);
+  const pendingInFolder = countPendingDocumentsInFolder(rows, folderFilter);
+
+  const folderChipLabel = (folder: DocumentFolderFilter): string => {
+    switch (folder) {
+      case "all":
+        return tDetail("documentsFolderAll");
+      case "act":
+        return tDetail("act");
+      case "contract":
+        return tDetail("contract");
+      case "document":
+        return tDetail("document");
+      default: {
+        const _exhaustive: never = folder;
+        return _exhaustive;
+      }
+    }
+  };
 
   return (
     <div className="p-4">
@@ -382,20 +411,23 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
       </div>
 
       {pendingDocs.length > 0 && (
-        <div className="mb-4 rounded-lg border border-aistroyka-border-subtle bg-aistroyka-surface-muted p-3 flex flex-wrap items-center justify-between gap-2">
+        <DashboardGlassCard className="mb-4 border-l-4 border-l-aistroyka-warning" contentClassName="flex flex-wrap items-center justify-between gap-2 p-3">
           <div className="min-w-[220px]">
             <p className="text-sm font-medium text-aistroyka-text-primary">
               {pendingDocs.length} {tDetail("documentsPendingReview")}
             </p>
             <p className="text-xs text-aistroyka-text-tertiary mt-1">
               {tDetail("governanceUnderReviewHint")}
+              {folderFilter !== "all" && pendingInFolder > 0
+                ? ` · ${pendingInFolder} ${tDetail("documentsPendingInFolder")}`
+                : null}
             </p>
           </div>
           <Button
             variant="secondary"
             size="sm"
             onClick={() => {
-              const first = pendingDocs[0];
+              const first = (folderFilter === "all" ? pendingDocs : visibleRows.filter((d) => d.status === "under_review"))[0];
               if (!first) return;
               document.getElementById(`document-${first.id}`)?.scrollIntoView({
                 behavior: "smooth",
@@ -405,8 +437,36 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
           >
             {tDetail("jumpToPendingArrow")}
           </Button>
-        </div>
+        </DashboardGlassCard>
       )}
+
+      {rows.length > 0 ? (
+        <div
+          role="group"
+          aria-label={tDetail("documentsFolders")}
+          className="mb-4 flex flex-wrap gap-2"
+        >
+          {(["all", ...DOCUMENT_FOLDER_TYPES] as DocumentFolderFilter[]).map((folder) => {
+            const selected = folderFilter === folder;
+            return (
+              <button
+                key={folder}
+                type="button"
+                aria-pressed={selected}
+                onClick={() => setFolderFilter(folder)}
+                className={`min-h-aistroyka-touch rounded-[var(--aistroyka-radius-lg)] border px-3 text-aistroyka-caption font-medium transition-colors ${
+                  selected
+                    ? "border-aistroyka-accent bg-aistroyka-accent-light text-aistroyka-accent"
+                    : "border-aistroyka-border-subtle text-aistroyka-text-secondary hover:border-aistroyka-accent/40 hover:text-aistroyka-text-primary"
+                }`}
+              >
+                {folderChipLabel(folder)}
+                <span className="ml-1 tabular-nums text-aistroyka-text-tertiary">({folderCounts[folder]})</span>
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
 
       {rows.length === 0 ? (
         <EmptyState
@@ -419,6 +479,10 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
             </Button>
           }
         />
+      ) : visibleRows.length === 0 ? (
+        <DashboardGlassCard>
+          <p className="text-aistroyka-subheadline text-aistroyka-text-secondary">{tDetail("noDocumentsInFolder")}</p>
+        </DashboardGlassCard>
       ) : (
         <Table aria-label={tDetail("projectDocuments")}>
           <TableHead>
@@ -433,7 +497,7 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
             </TableRow>
           </TableHead>
           <TableBody>
-            {rows.map((doc) => {
+            {visibleRows.map((doc) => {
               const url = fileUrl(doc.object_path);
               const fileName = fileNameFromObjectPath(doc.object_path);
               const canUpload = doc.status === "draft" && !uploadMutation.isPending;

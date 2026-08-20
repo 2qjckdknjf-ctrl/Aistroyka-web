@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, Button, Skeleton, Input } from "@/components/ui";
+import { Button, Skeleton, Input } from "@/components/ui";
 import { getPublicConfig } from "@/lib/config/public";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 interface ProofPackPreview {
   generated_at: string;
@@ -78,9 +79,9 @@ export function ProjectProofPackPanel({ projectId }: { projectId: string }) {
   if (query.isPending) return <Skeleton className="h-36 mb-6" />;
   if (query.isError || !query.data) {
     return (
-      <Card className="mb-6 p-4 border-l-4 border-l-aistroyka-warning">
+      <DashboardGlassCard className="mb-6 p-4 border-l-4 border-l-aistroyka-warning">
         <p className="text-sm text-aistroyka-text-secondary">{t("proofPackLoadFailed")}</p>
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
@@ -88,7 +89,7 @@ export function ProjectProofPackPanel({ projectId }: { projectId: string }) {
   const fullUrl = lastShare ? absoluteShareUrl(lastShare.url) : null;
 
   return (
-    <Card className="mb-6 border-l-4 border-l-aistroyka-accent p-4">
+    <DashboardGlassCard className="mb-6 border-l-4 border-l-aistroyka-accent p-4">
       <h3 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">
         {t("proofPackHeading")}
       </h3>
@@ -165,6 +166,6 @@ export function ProjectProofPackPanel({ projectId }: { projectId: string }) {
           ) : null}
         </div>
       ) : null}
-    </Card>
+    </DashboardGlassCard>
   );
 }

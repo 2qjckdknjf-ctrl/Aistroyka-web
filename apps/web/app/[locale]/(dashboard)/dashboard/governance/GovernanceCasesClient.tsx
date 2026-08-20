@@ -5,7 +5,6 @@ import { useTranslations } from "next-intl";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@/i18n/navigation";
 import {
-  Card,
   Badge,
   Button,
   Skeleton,
@@ -18,6 +17,7 @@ import {
   TableCell,
 } from "@/components/ui";
 import type { GovernanceCaseWithProjects } from "@/lib/domain/governance/governance.types";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 interface ProjectOption {
   id: string;
@@ -124,10 +124,10 @@ export function GovernanceCasesClient() {
 
   if (casesQuery.isPending) {
     return (
-      <Card className="p-4">
+      <DashboardGlassCard className="p-4">
         <Skeleton className="h-8 w-64 mb-4" />
         <Skeleton className="h-48 w-full" />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
@@ -143,7 +143,7 @@ export function GovernanceCasesClient() {
       </div>
 
       {showCreate ? (
-        <Card className="p-4 space-y-4 border border-aistroyka-border-subtle">
+        <DashboardGlassCard className="p-4 space-y-4 border border-aistroyka-border-subtle">
           <h2 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">
             {t("createTitle")}
           </h2>
@@ -227,10 +227,10 @@ export function GovernanceCasesClient() {
           >
             {createMut.isPending ? t("creatingCase") : t("createCase")}
           </Button>
-        </Card>
+        </DashboardGlassCard>
       ) : null}
 
-      <Card className="overflow-hidden">
+      <DashboardGlassCard contentClassName="overflow-hidden">
         <Table aria-label={t("tableAria")}>
           <TableHead>
             <TableRow>
@@ -284,7 +284,7 @@ export function GovernanceCasesClient() {
             )}
           </TableBody>
         </Table>
-      </Card>
+      </DashboardGlassCard>
     </div>
   );
 }

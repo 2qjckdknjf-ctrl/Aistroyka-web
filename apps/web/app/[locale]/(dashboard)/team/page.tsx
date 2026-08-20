@@ -4,7 +4,8 @@ import { createClient, getSessionUser } from "@/lib/supabase/server";
 import { getOrCreateTenantForCurrentUser } from "@/lib/api/engine";
 import { hasMinRole } from "@/lib/auth/tenant";
 import { TeamPageClient } from "./TeamPageClient";
-import { Card, Alert } from "@/components/ui";
+import { Alert } from "@/components/ui";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 export default async function TeamPage() {
   const t = await getTranslations("team");
@@ -67,10 +68,10 @@ export default async function TeamPage() {
 
   return (
     <>
-      <Card className="mb-aistroyka-8 border-l-4 border-l-aistroyka-accent">
+      <DashboardGlassCard className="mb-aistroyka-8 border-l-4 border-l-aistroyka-accent">
         <h1 className="text-aistroyka-title2 font-bold tracking-tight text-aistroyka-text-primary sm:text-aistroyka-title">{t("title")}</h1>
         <p className="mt-aistroyka-1 text-aistroyka-subheadline text-aistroyka-text-secondary">{t("subtitle")}</p>
-      </Card>
+      </DashboardGlassCard>
       {!teamFeaturesAvailable && (
         <div className="mb-aistroyka-6">
           <Alert style="warning" message={`${t("migrationRequiredTitle")} ${t("migrationRequiredSteps")} ${t("migrationFileHint")}`} />

@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { Link } from "@/i18n/navigation";
-import { Card, Badge, Button, Textarea } from "@/components/ui";
+import { Badge, Button, Textarea } from "@/components/ui";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 type Lead = {
   id: string;
@@ -83,28 +84,28 @@ export function PlatformLeadDetailClient() {
 
   if (!id) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <p className="text-aistroyka-text-secondary">{tDetail("missingLeadId")}</p>
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   if (error && !lead) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <p className="text-aistroyka-text-secondary">{error}</p>
         <Link href="/platform-admin/leads" className="mt-4 inline-block text-aistroyka-accent hover:underline">
           {tDetail("backToLeads")}
         </Link>
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   if (loading || !lead) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <div className="h-32 animate-pulse rounded bg-aistroyka-surface-raised" />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
@@ -117,7 +118,7 @@ export function PlatformLeadDetailClient() {
         {tDetail("backToLeads")}
       </Link>
 
-      <Card className="p-6">
+      <DashboardGlassCard className="p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="text-aistroyka-title3 font-bold text-aistroyka-text-primary">{lead.name}</h1>
@@ -177,7 +178,7 @@ export function PlatformLeadDetailClient() {
             </Button>
           </div>
         </div>
-      </Card>
+      </DashboardGlassCard>
     </div>
   );
 }

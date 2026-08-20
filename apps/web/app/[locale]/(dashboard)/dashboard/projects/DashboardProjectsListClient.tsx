@@ -10,11 +10,11 @@ import {
   TableRow,
   TableHeaderCell,
   TableCell,
-  Card,
   Skeleton,
   EmptyState,
   TablePagination,
 } from "@/components/ui";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 import { FilterBar } from "@/components/cockpit/FilterBar";
 import { useFilterParams } from "@/lib/cockpit/useFilterParams";
 import { parseTablePagination } from "@/lib/cockpit/useTablePagination";
@@ -83,17 +83,17 @@ export function DashboardProjectsListClient() {
 
   if (loading && !data) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <Skeleton lines={5} />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   if (error) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <p className="text-aistroyka-text-secondary">{error}</p>
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
@@ -109,7 +109,7 @@ export function DashboardProjectsListClient() {
           showSavedViews={true}
         />
       </div>
-      <Card className="p-0 overflow-hidden">
+      <DashboardGlassCard contentClassName="p-0 overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-aistroyka-border-subtle px-4 py-3">
           <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">{tDetail("projects")}</h2>
           <button
@@ -184,7 +184,7 @@ export function DashboardProjectsListClient() {
             />
           </>
         )}
-      </Card>
+      </DashboardGlassCard>
     </>
   );
 }

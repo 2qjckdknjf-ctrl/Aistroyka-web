@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { Link } from "@/i18n/navigation";
-import { Card, SectionHeader, Skeleton, EmptyState, Badge, Button } from "@/components/ui";
+import { SectionHeader, Skeleton, EmptyState, Badge, Button } from "@/components/ui";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 interface AIDetail {
   id: string;
@@ -92,23 +93,23 @@ export default function AIRequestDetailPage() {
 
   if (!id) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <p className="text-aistroyka-text-secondary p-4">{tDetail("missingRequestId")}</p>
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   if (loading && !data) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <Skeleton lines={6} />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   if (error || !data) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <EmptyState
           icon={<span className="text-2xl" aria-hidden>⚠️</span>}
           title={tDetail("requestNotFound")}
@@ -119,7 +120,7 @@ export default function AIRequestDetailPage() {
             </Link>
           }
         />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
@@ -142,7 +143,7 @@ export default function AIRequestDetailPage() {
         subtitle={tPage("aiRequestDetailSubtitle")}
       />
 
-      <Card className="mb-4">
+      <DashboardGlassCard className="mb-4">
         <p className="text-aistroyka-subheadline text-aistroyka-text-secondary mb-4">
           {friendlyMessage(tDetail, data)}
         </p>
@@ -189,10 +190,10 @@ export default function AIRequestDetailPage() {
             <dd className="tabular-nums">{new Date(data.updated_at).toLocaleString()}</dd>
           </div>
         </dl>
-      </Card>
+      </DashboardGlassCard>
 
       {showTechnical && (data.last_error_type || data.last_error) && (
-        <Card className="mb-4 border-l-4 border-l-aistroyka-error">
+        <DashboardGlassCard className="mb-4 border-l-4 border-l-aistroyka-error">
           <h3 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary mb-2">
             {tDetail("aiSafeDiagnostics")}
           </h3>
@@ -209,17 +210,17 @@ export default function AIRequestDetailPage() {
           <p className="mt-2 text-aistroyka-caption text-aistroyka-text-tertiary">
             {tDetail("aiAdminDiagnosticsHint")}
           </p>
-        </Card>
+        </DashboardGlassCard>
       )}
 
-      <Card>
+      <DashboardGlassCard>
         <h3 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary mb-2">
           {tDetail("payloadMetadata")}
         </h3>
         <pre className="text-aistroyka-caption font-mono bg-aistroyka-surface-muted p-4 rounded overflow-x-auto whitespace-pre-wrap">
           {JSON.stringify(data.payload ?? {}, null, 2)}
         </pre>
-      </Card>
+      </DashboardGlassCard>
     </>
   );
 }

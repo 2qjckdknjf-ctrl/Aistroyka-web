@@ -4,8 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { AlertFeed, type AlertItemData } from "@/components/intelligence";
-import { Card, Skeleton, ErrorState } from "@/components/ui";
+import { Skeleton, ErrorState } from "@/components/ui";
 import { DashboardPriorityActionsClient } from "./DashboardPriorityActionsClient";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 async function fetchAlerts(): Promise<AlertItemData[]> {
   const res = await fetch("/api/v1/alerts?limit=10", { credentials: "include" });
@@ -40,11 +41,11 @@ export function DashboardIntelligenceSectionClient() {
         {isError ? (
           <ErrorState message={t("failedLoadAlerts")} onRetry={() => refetch()} />
         ) : isPending ? (
-          <Card>
+          <DashboardGlassCard>
             <Skeleton className="h-6 w-32 mb-3" />
             <Skeleton className="h-4 w-full" />
             <Skeleton className="h-4 w-2/3 mt-2" />
-          </Card>
+          </DashboardGlassCard>
         ) : (
           <AlertFeed alerts={alerts ?? []} emptyMessage={t("noAlerts")} />
         )}

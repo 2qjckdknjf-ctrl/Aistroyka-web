@@ -5,7 +5,6 @@ import { useTranslations } from "next-intl";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@/i18n/navigation";
 import {
-  Card,
   SectionHeader,
   Skeleton,
   EmptyState,
@@ -34,6 +33,7 @@ import { formatPortalStatus } from "@/lib/i18n/portal-status-labels";
 import { taskStatusBadgeClass } from "../../statusBadgeStyles";
 import { reportStatusBadgeClass } from "../../reports/reportStatusStyles";
 import { issueStatusBadgeClass } from "./statusBadgeStyles";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 interface Project {
   id: string;
@@ -509,15 +509,15 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
 
   if (loading && !project) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <Skeleton lines={6} />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   if (error || !project) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <EmptyState
           icon={<span className="text-2xl">⚠️</span>}
           title={tDetail("projectNotFound")}
@@ -532,7 +532,7 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
             </Link>
           }
         />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
@@ -719,7 +719,7 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
       </div>
 
       {/* Pending decisions — primary action surface */}
-      <Card className="mb-6">
+      <DashboardGlassCard className="mb-6">
         <h2 className="text-aistroyka-subheadline font-semibold p-4 pb-0">{tDetail("approveDocuments")}</h2>
         {documentsQuery.isPending ? (
           <Skeleton className="m-4 h-24" />
@@ -994,37 +994,37 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
             )}
           </div>
         )}
-      </Card>
+      </DashboardGlassCard>
 
       {/* Summary cards */}
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 mb-6" aria-label={tDetail("projectSummary")}>
-        <Card className="border-l-4 border-l-aistroyka-accent">
+        <DashboardGlassCard className="border-l-4 border-l-aistroyka-accent">
           <p className="text-aistroyka-caption font-medium uppercase tracking-wide text-aistroyka-text-tertiary">{tDetail("tasks")}</p>
           <p className="mt-1 text-aistroyka-title3 font-semibold text-aistroyka-text-primary">
             {summary.tasksDone ?? 0} / {summary.tasksTotal ?? 0}
           </p>
           <p className="text-xs text-aistroyka-text-tertiary">({summary.tasksInProgress ?? 0} {tDetail("inProgress")})</p>
-        </Card>
-        <Card className="border-l-4 border-l-aistroyka-info">
+        </DashboardGlassCard>
+        <DashboardGlassCard className="border-l-4 border-l-aistroyka-info">
           <p className="text-aistroyka-caption font-medium uppercase tracking-wide text-aistroyka-text-tertiary">{tDetail("milestones")}</p>
           <p className="mt-1 text-aistroyka-title3 font-semibold text-aistroyka-text-primary">{summary.milestonesCount ?? 0}</p>
-        </Card>
-        <Card className="border-l-4 border-l-aistroyka-warning">
+        </DashboardGlassCard>
+        <DashboardGlassCard className="border-l-4 border-l-aistroyka-warning">
           <p className="text-aistroyka-caption font-medium uppercase tracking-wide text-aistroyka-text-tertiary">{tDetail("openIssues")}</p>
           <p className="mt-1 text-aistroyka-title3 font-semibold text-aistroyka-text-primary">{summary.openIssuesCount ?? 0}</p>
-        </Card>
-        <Card className="border-l-4 border-l-aistroyka-warning">
+        </DashboardGlassCard>
+        <DashboardGlassCard className="border-l-4 border-l-aistroyka-warning">
           <p className="text-aistroyka-caption font-medium uppercase tracking-wide text-aistroyka-text-tertiary">{tDetail("pendingDecisions")}</p>
           <p className="mt-1 text-aistroyka-title3 font-semibold text-aistroyka-text-primary">{summary.pendingDecisionsCount ?? 0}</p>
-        </Card>
-        <Card className="border-l-4 border-l-aistroyka-info">
+        </DashboardGlassCard>
+        <DashboardGlassCard className="border-l-4 border-l-aistroyka-info">
           <p className="text-aistroyka-caption font-medium uppercase tracking-wide text-aistroyka-text-tertiary">{tDetail("openReports")}</p>
           <p className="mt-1 text-aistroyka-title3 font-semibold text-aistroyka-text-primary">{summary.openReports}</p>
-        </Card>
-        <Card className="border-l-4 border-l-aistroyka-success">
+        </DashboardGlassCard>
+        <DashboardGlassCard className="border-l-4 border-l-aistroyka-success">
           <p className="text-aistroyka-caption font-medium uppercase tracking-wide text-aistroyka-text-tertiary">{tDetail("photos")}</p>
           <p className="mt-1 text-aistroyka-title3 font-semibold text-aistroyka-text-primary">{media.length}</p>
-        </Card>
+        </DashboardGlassCard>
       </section>
 
       {/* Recent activity — portal vs operations */}
@@ -1044,7 +1044,7 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
       </div>
 
       {/* Milestones */}
-      <Card className="mb-6">
+      <DashboardGlassCard className="mb-6">
         <h2 className="text-aistroyka-subheadline font-semibold p-4 pb-0">{tDetail("milestones")}</h2>
         {milestonesQuery.isPending ? (
           <Skeleton className="m-4 h-24" />
@@ -1074,10 +1074,10 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
             </ul>
           </div>
         )}
-      </Card>
+      </DashboardGlassCard>
 
       {/* Issues */}
-      <Card className="mb-6">
+      <DashboardGlassCard className="mb-6">
         <h2 className="text-aistroyka-subheadline font-semibold p-4 pb-0">{tDetail("openIssues")}</h2>
         {issuesQuery.isPending ? (
           <Skeleton className="m-4 h-24" />
@@ -1111,7 +1111,7 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
             </Table>
           </div>
         )}
-      </Card>
+      </DashboardGlassCard>
 
       {/* Decision modal */}
       {decisionDoc && (
@@ -1292,7 +1292,7 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
       )}
 
       {/* Recent reports */}
-      <Card className="mb-6">
+      <DashboardGlassCard className="mb-6">
         <h2 className="text-aistroyka-subheadline font-semibold p-4 pb-0">{tDetail("recentReports")}</h2>
         {reportsQuery.isPending ? (
           <Skeleton className="m-4 h-24" />
@@ -1334,10 +1334,10 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
             </Table>
           </div>
         )}
-      </Card>
+      </DashboardGlassCard>
 
       {/* Recent photos */}
-      <Card>
+      <DashboardGlassCard>
         <h2 className="text-aistroyka-subheadline font-semibold p-4 pb-0">{tDetail("recentPhotos")}</h2>
         {mediaQuery.isPending ? (
           <Skeleton className="m-4 h-32" />
@@ -1368,7 +1368,7 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
             </div>
           </div>
         )}
-      </Card>
+      </DashboardGlassCard>
     </>
   );
 }

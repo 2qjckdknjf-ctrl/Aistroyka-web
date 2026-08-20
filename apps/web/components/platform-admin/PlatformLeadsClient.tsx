@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import {
-  Card,
   Table,
   TableHead,
   TableBody,
@@ -17,6 +16,7 @@ import {
   TablePagination,
 } from "@/components/ui";
 import type { LeadRow } from "@/app/api/v1/platform/leads/route";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 const STATUS_VARIANT: Record<string, "neutral" | "success" | "warning" | "danger"> = {
   new: "danger",
@@ -60,22 +60,22 @@ export function PlatformLeadsClient() {
 
   if (error) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <p className="text-aistroyka-text-secondary">{error}</p>
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   if (loading && data.length === 0) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <Skeleton lines={6} />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   return (
-    <Card className="p-0 overflow-hidden">
+    <DashboardGlassCard contentClassName="p-0 overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-aistroyka-border-subtle px-4 py-3">
         <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">{tDetail("contactLeads")}</h2>
         <select
@@ -152,6 +152,6 @@ export function PlatformLeadsClient() {
           />
         </>
       )}
-    </Card>
+    </DashboardGlassCard>
   );
 }

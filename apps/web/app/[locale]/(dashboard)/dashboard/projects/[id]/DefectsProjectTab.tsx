@@ -4,9 +4,10 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@/i18n/navigation";
-import { Card, Button, Badge, Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui";
+import { Button, Badge, Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui";
 import { blockingBadgeClass, defectStatusBadgeClass } from "./statusBadgeStyles";
 import { formatPortalStatus } from "@/lib/i18n/portal-status-labels";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 type Row = {
   id: string;
@@ -84,7 +85,7 @@ export function DefectsProjectTab({ projectId }: { projectId: string }) {
         </Button>
       </div>
       {open ? (
-        <Card className="p-3 space-y-2">
+        <DashboardGlassCard className="p-3 space-y-2">
           <input
             className="w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
             placeholder={tDetail("title")}
@@ -105,7 +106,7 @@ export function DefectsProjectTab({ projectId }: { projectId: string }) {
           <Button type="button" size="sm" disabled={!title.trim() || createMutation.isPending} onClick={() => createMutation.mutate()}>
             {createMutation.isPending ? tDetail("saving") : tDetail("create")}
           </Button>
-        </Card>
+        </DashboardGlassCard>
       ) : null}
 
       {listQuery.isPending ? <p className="text-sm text-aistroyka-text-secondary">{tDetail("loading")}</p> : null}

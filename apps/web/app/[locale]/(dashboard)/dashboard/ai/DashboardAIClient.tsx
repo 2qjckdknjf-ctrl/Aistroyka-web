@@ -10,7 +10,6 @@ import {
   TableRow,
   TableHeaderCell,
   TableCell,
-  Card,
   Skeleton,
   EmptyState,
   Badge,
@@ -21,6 +20,8 @@ import { FilterBar } from "@/components/cockpit/FilterBar";
 import { useFilterParams } from "@/lib/cockpit/useFilterParams";
 import { parseTablePagination } from "@/lib/cockpit/useTablePagination";
 import { exportTableToCsv } from "@/lib/cockpit/csvExport";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
+import { aiSummaryChipOrder, sortAiRequestsByAttention } from "./ai-requests-workspace.utils";
 
 interface AIRequestRow {
   id: string;
@@ -173,9 +174,9 @@ export function DashboardAIClient() {
     return (
       <>
         {filterBar}
-        <Card>
+        <DashboardGlassCard>
           <Skeleton lines={5} />
-        </Card>
+        </DashboardGlassCard>
       </>
     );
   }
@@ -183,9 +184,9 @@ export function DashboardAIClient() {
     return (
       <>
         {filterBar}
-        <Card>
+        <DashboardGlassCard>
           <p className="text-aistroyka-text-secondary p-4">{error}</p>
-        </Card>
+        </DashboardGlassCard>
       </>
     );
   }
@@ -213,13 +214,13 @@ export function DashboardAIClient() {
       return (
         <>
           {filterBar}
-          <Card>
+          <DashboardGlassCard>
             <EmptyState
               icon={<span className="text-2xl" aria-hidden>🤖</span>}
               title={title}
               subtitle={subtitle}
             />
-          </Card>
+          </DashboardGlassCard>
         </>
       );
     }
@@ -228,13 +229,13 @@ export function DashboardAIClient() {
       return (
         <>
           {filterBar}
-          <Card>
+          <DashboardGlassCard>
             <EmptyState
               icon={<span className="text-2xl" aria-hidden>🤖</span>}
               title={tDetail("aiStatusNotConfigured")}
               subtitle={tDetail("aiRequestsNotConfiguredHint")}
             />
-          </Card>
+          </DashboardGlassCard>
         </>
       );
     }
@@ -242,13 +243,13 @@ export function DashboardAIClient() {
     return (
       <>
         {filterBar}
-        <Card>
+        <DashboardGlassCard>
           <EmptyState
             icon={<span className="text-2xl" aria-hidden>🤖</span>}
             title={tDetail("noAiRequests")}
             subtitle={tDetail("aiRequestsAppear")}
           />
-        </Card>
+        </DashboardGlassCard>
       </>
     );
   }
@@ -257,13 +258,56 @@ export function DashboardAIClient() {
     <>
       {filterBar}
       {!visionConfigured && (
-        <Card className="mb-4 border-l-4 border-l-aistroyka-warning">
+        <DashboardGlassCard className="mb-4 border-l-4 border-l-aistroyka-warning">
           <p className="p-4 text-aistroyka-subheadline text-aistroyka-text-secondary">
             {tDetail("aiStatusNotConfigured")}
           </p>
-        </Card>
+        </DashboardGlassCard>
       )}
-      <Card className="p-0 overflow-hidden">
+      {summary && summary.total > 0 ? (
+        <div className="mb-4">
+          <DashboardGlassCard contentClassName="p-3">
+            <div
+              role="group"
+              aria-label={tDetail("aiStatusDensity")}
+              className="flex flex-wrap gap-2"
+            >
+              {aiSummaryChipOrder(summary).map((chip) => {
+                const pressed = params.status === chip.status;
+                const labelKey =
+                  chip.status === "queued"
+                    ? "queued"
+                    : chip.status === "running"
+                      ? "running"
+                      : chip.status === "success"
+                        ? "success"
+                        : chip.status === "failed"
+                          ? "failed"
+                          : "dead";
+                return (
+                  <button
+                    key={chip.status}
+                    type="button"
+                    aria-pressed={pressed}
+                    onClick={() => setParam("status", pressed ? "" : chip.status)}
+                    className={`min-h-aistroyka-touch rounded-[var(--aistroyka-radius-lg)] border px-3 text-aistroyka-caption font-medium ${
+                      pressed
+                        ? "border-aistroyka-accent bg-aistroyka-accent-light text-aistroyka-accent"
+                        : "border-aistroyka-border-subtle text-aistroyka-text-secondary hover:text-aistroyka-text-primary"
+                    }`}
+                  >
+                    {tDetail(labelKey)}
+                    <span className="ml-1 tabular-nums text-aistroyka-text-tertiary">
+                      ({chip.count})
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </DashboardGlassCard>
+        </div>
+      ) : null}
+      <DashboardGlassCard contentClassName="p-0 overflow-hidden">
         <div className="p-2 flex justify-end">
           <Button variant="secondary" onClick={exportCsv} className="text-sm">
             {tDetail("exportCsv")}
@@ -283,7 +327,7 @@ export function DashboardAIClient() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {(data ?? []).map((r) => (
+            {sortAiRequestsByAttention(data ?? []).map((r) => (
               <TableRow key={r.id}>
                 <TableCell>
                   <span className="font-mono text-sm" title={r.id}>
@@ -325,7 +369,7 @@ export function DashboardAIClient() {
           totalCount={total}
           onPageChange={(p) => setParam("page", String(p))}
         />
-      </Card>
+      </DashboardGlassCard>
     </>
   );
 }

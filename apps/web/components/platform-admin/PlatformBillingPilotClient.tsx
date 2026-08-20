@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { Card, SectionHeader, EmptyState } from "@/components/ui";
+import { SectionHeader, EmptyState } from "@/components/ui";
 import type { BillingPilotWorkspaceSummary } from "@/lib/platform/billing-readiness/billing-pilot-ops.types";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 type WorkspaceDiagnostics = {
   workspaceId: string;
@@ -116,7 +117,7 @@ export function PlatformBillingPilotClient({
     <>
       <section className="mb-aistroyka-8">
         <SectionHeader title={tPage("workspaceLookupTitle")} />
-        <Card>
+        <DashboardGlassCard>
           <div className="flex flex-wrap gap-aistroyka-4">
             <input
               type="text"
@@ -136,13 +137,13 @@ export function PlatformBillingPilotClient({
           </div>
           {error && <p className="mt-aistroyka-2 text-aistroyka-error text-sm">{error}</p>}
           {actionResult && <p className="mt-aistroyka-2 text-aistroyka-text-secondary text-sm">{actionResult}</p>}
-        </Card>
+        </DashboardGlassCard>
       </section>
 
       {diagnostics && (
         <section className="mb-aistroyka-8">
           <SectionHeader title={tPage("workspaceDiagnosticsTitle")} />
-          <Card>
+          <DashboardGlassCard>
             {diagnostics.executionStatus && (
               <div className="mb-aistroyka-4 rounded border border-aistroyka-border-subtle bg-aistroyka-surface-raised px-aistroyka-4 py-aistroyka-3">
                 <div className="flex flex-wrap items-center gap-aistroyka-2">
@@ -219,14 +220,14 @@ export function PlatformBillingPilotClient({
                 </button>
               )}
             </div>
-          </Card>
+          </DashboardGlassCard>
         </section>
       )}
 
       <section>
         <SectionHeader title={tPage("pilotCohortTitle")} />
         {workspaces.length > 0 ? (
-          <Card className="overflow-hidden p-0">
+          <DashboardGlassCard contentClassName="overflow-hidden p-0">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[320px] text-left text-aistroyka-subheadline">
                 <thead>
@@ -249,15 +250,15 @@ export function PlatformBillingPilotClient({
                 </tbody>
               </table>
             </div>
-          </Card>
+          </DashboardGlassCard>
         ) : (
-          <Card>
+          <DashboardGlassCard>
             <EmptyState
               icon={<span className="text-2xl">📋</span>}
               title={tDetail("noPilotWorkspaces")}
               subtitle={tDetail("addPilotWorkspacesHint")}
             />
-          </Card>
+          </DashboardGlassCard>
         )}
       </section>
     </>

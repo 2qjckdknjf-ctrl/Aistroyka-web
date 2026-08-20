@@ -5,7 +5,6 @@ import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import {
   Badge,
-  Card,
   EmptyState,
   Skeleton,
   Table,
@@ -20,6 +19,7 @@ import { FilterBar } from "@/components/cockpit/FilterBar";
 import { useFilterParams } from "@/lib/cockpit/useFilterParams";
 import { parseTablePagination } from "@/lib/cockpit/useTablePagination";
 import { Link } from "@/i18n/navigation";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 interface UploadSessionRow {
   id: string;
@@ -143,9 +143,9 @@ export function UploadsDashboardClient() {
     return (
       <>
         {filterBar}
-        <Card>
+        <DashboardGlassCard>
           <Skeleton lines={5} />
-        </Card>
+        </DashboardGlassCard>
       </>
     );
   }
@@ -154,9 +154,9 @@ export function UploadsDashboardClient() {
     return (
       <>
         {filterBar}
-        <Card>
+        <DashboardGlassCard>
           <p className="p-4 text-aistroyka-text-secondary">{error}</p>
-        </Card>
+        </DashboardGlassCard>
       </>
     );
   }
@@ -165,7 +165,7 @@ export function UploadsDashboardClient() {
     return (
       <>
         {filterBar}
-        <Card>
+        <DashboardGlassCard>
           <EmptyState
             icon={<span className="text-2xl">⇧</span>}
             title={stuck ? tDetail("noStuckUploadSessions") : tDetail("noUploadSessions")}
@@ -175,7 +175,7 @@ export function UploadsDashboardClient() {
                 : tDetail("uploadSessionsAppear")
             }
           />
-        </Card>
+        </DashboardGlassCard>
       </>
     );
   }
@@ -184,16 +184,16 @@ export function UploadsDashboardClient() {
     <>
       {filterBar}
       {stuck && (
-        <Card className="mb-4 border-l-4 border-l-aistroyka-warning">
+        <DashboardGlassCard className="mb-4 border-l-4 border-l-aistroyka-warning">
           <p className="text-aistroyka-subheadline font-medium text-aistroyka-text-primary">
               {tDetail("showingStuckUploadSessions")}
           </p>
           <p className="mt-1 text-aistroyka-caption text-aistroyka-text-secondary">
               {tDetail("clearUrlFilterUploadSessions")}
           </p>
-        </Card>
+        </DashboardGlassCard>
       )}
-      <Card className="overflow-hidden p-0">
+      <DashboardGlassCard contentClassName="overflow-hidden p-0">
         <Table aria-label={tDetail("uploadSessions")}>
           <TableHead>
             <TableRow>
@@ -246,7 +246,7 @@ export function UploadsDashboardClient() {
           totalCount={total}
           onPageChange={(p) => setParam("page", String(p))}
         />
-      </Card>
+      </DashboardGlassCard>
     </>
   );
 }

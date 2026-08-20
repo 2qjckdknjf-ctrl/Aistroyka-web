@@ -3,8 +3,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { Card, Badge, Skeleton, ErrorState } from "@/components/ui";
+import { Badge, Skeleton, ErrorState } from "@/components/ui";
 import type { ProjectReviewPack } from "@/lib/domain/review-packs/review-packs.types";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 async function fetchReviewPack(projectId: string): Promise<ProjectReviewPack> {
   const res = await fetch(`/api/v1/projects/${projectId}/review-pack`, { credentials: "include" });
@@ -38,28 +39,28 @@ export function ProjectReviewPackPanel({ projectId }: { projectId: string }) {
 
   if (q.isPending) {
     return (
-      <Card className="mb-6 p-4 border-l-4 border-l-aistroyka-info">
+      <DashboardGlassCard className="mb-6 p-4 border-l-4 border-l-aistroyka-info">
         <Skeleton className="h-6 w-48 mb-3" />
         <Skeleton className="h-24 w-full" />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   if (q.isError) {
     return (
-      <Card className="mb-6 p-4 border-l-4 border-l-aistroyka-info">
+      <DashboardGlassCard className="mb-6 p-4 border-l-4 border-l-aistroyka-info">
         <ErrorState
           message={q.error instanceof Error ? q.error.message : tDetail("failedLoadReviewPack")}
           onRetry={() => q.refetch()}
         />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   const pack = q.data!;
 
   return (
-    <Card className="mb-6 p-4 border-l-4 border-l-aistroyka-info" aria-label={tDetail("executiveReviewPack")}>
+    <DashboardGlassCard className="mb-6 p-4 border-l-4 border-l-aistroyka-info" aria-label={tDetail("executiveReviewPack")}>
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <h2 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">{tDetail("executiveReviewPack")}</h2>
@@ -134,6 +135,6 @@ export function ProjectReviewPackPanel({ projectId }: { projectId: string }) {
           </ul>
         </div>
       ) : null}
-    </Card>
+    </DashboardGlassCard>
   );
 }

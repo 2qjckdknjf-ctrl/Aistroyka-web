@@ -3,7 +3,8 @@
 import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@/i18n/navigation";
-import { Card, Skeleton } from "@/components/ui";
+import { Skeleton } from "@/components/ui";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 type GetStarted = {
   createProject: boolean;
@@ -38,11 +39,11 @@ export function GetStartedPanel() {
 
   if (isPending) {
     return (
-      <Card className="p-4">
+      <DashboardGlassCard className="p-4">
         <Skeleton className="h-6 w-48 mb-4" />
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-4 w-full mt-2" />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
@@ -51,7 +52,7 @@ export function GetStartedPanel() {
   if (allDone && (data?.projectCount ?? 0) > 0) return null;
 
   return (
-    <Card className="p-4">
+    <DashboardGlassCard className="p-4">
       <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary mb-3">
         {t("getStartedTitle")}
       </h2>
@@ -78,6 +79,6 @@ export function GetStartedPanel() {
           </li>
         ))}
       </ul>
-    </Card>
+    </DashboardGlassCard>
   );
 }

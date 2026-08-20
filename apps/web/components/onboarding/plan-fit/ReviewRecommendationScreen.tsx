@@ -1,9 +1,10 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Card, Button } from "@/components/ui";
+import { Button } from "@/components/ui";
 import type { PlanCode } from "@aistroyka/contracts";
 import type { OrchestrationRecommendationSummary } from "@/lib/platform/plan-fit/orchestration/orchestration.types";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 export function ReviewRecommendationScreen({
   recommendation,
@@ -25,7 +26,7 @@ export function ReviewRecommendationScreen({
   );
 
   return (
-    <Card className="mx-auto max-w-xl p-6">
+    <DashboardGlassCard className="mx-auto max-w-xl p-6">
       <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">
         {t("reviewTitle")}
       </h2>
@@ -70,6 +71,6 @@ export function ReviewRecommendationScreen({
           </div>
         )}
       </div>
-    </Card>
+    </DashboardGlassCard>
   );
 }

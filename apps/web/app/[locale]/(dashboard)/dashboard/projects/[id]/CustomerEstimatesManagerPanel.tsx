@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { Card, Button, Badge, Input } from "@/components/ui";
+import { Button, Badge, Input } from "@/components/ui";
 import type { CustomerEstimateRow } from "@/lib/domain/customer-estimates/customer-estimates.types";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 async function fetchCustomerEstimates(projectId: string): Promise<CustomerEstimateRow[]> {
   const res = await fetch(`/api/v1/projects/${projectId}/estimates`, { credentials: "include" });
@@ -108,7 +109,7 @@ export function CustomerEstimatesManagerPanel({ projectId }: { projectId: string
   const rows = query.data ?? [];
 
   return (
-    <Card className="border-l-4 border-l-aistroyka-success p-4">
+    <DashboardGlassCard className="border-l-4 border-l-aistroyka-success p-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <h3 className="font-semibold text-aistroyka-text-primary">{t("customerEstimatesManagerHeading")}</h3>
@@ -222,7 +223,7 @@ export function CustomerEstimatesManagerPanel({ projectId }: { projectId: string
         )}
       </ul>
       {patchMutation.isError ? <p className="mt-2 text-sm text-aistroyka-error">{(patchMutation.error as Error).message}</p> : null}
-    </Card>
+    </DashboardGlassCard>
   );
 }
 

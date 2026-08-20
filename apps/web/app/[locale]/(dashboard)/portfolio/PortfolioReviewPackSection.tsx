@@ -3,9 +3,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { Card, Badge, Skeleton, ErrorState } from "@/components/ui";
+import { Badge, Skeleton, ErrorState } from "@/components/ui";
 import type { PortfolioReviewPack } from "@/lib/domain/review-packs/review-packs.types";
 import { formatPortfolioStateLabel, portfolioStateBadgeClass } from "./portfolioStateStyles";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 async function fetchPack(): Promise<PortfolioReviewPack> {
   const res = await fetch("/api/v1/portfolio/review-pack", { credentials: "include" });
@@ -23,28 +24,28 @@ export function PortfolioReviewPackSection() {
 
   if (q.isPending) {
     return (
-      <Card className="mb-aistroyka-8 border-l-4 border-l-aistroyka-info p-4">
+      <DashboardGlassCard className="mb-aistroyka-8 border-l-4 border-l-aistroyka-info p-4">
         <Skeleton className="h-8 w-64 mb-3" />
         <Skeleton className="h-32 w-full" />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   if (q.isError) {
     return (
-      <Card className="mb-aistroyka-8 border-l-4 border-l-aistroyka-info p-4">
+      <DashboardGlassCard className="mb-aistroyka-8 border-l-4 border-l-aistroyka-info p-4">
         <ErrorState
           message={q.error instanceof Error ? q.error.message : tDetail("failedLoad")}
           onRetry={() => q.refetch()}
         />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   const pack = q.data!;
 
   return (
-    <Card className="mb-aistroyka-8 border-l-4 border-l-aistroyka-info p-4">
+    <DashboardGlassCard className="mb-aistroyka-8 border-l-4 border-l-aistroyka-info p-4">
       <div className="flex flex-wrap items-center gap-2 justify-between">
         <div>
           <h2 className="text-aistroyka-title3 font-semibold text-aistroyka-text-primary">{tDetail("portfolioReviewPack")}</h2>
@@ -127,6 +128,6 @@ export function PortfolioReviewPackSection() {
           {pack.distribution.totalProjects} {tDetail("total")}
         </p>
       </div>
-    </Card>
+    </DashboardGlassCard>
   );
 }

@@ -10,7 +10,6 @@ import {
   TableRow,
   TableHeaderCell,
   TableCell,
-  Card,
   Skeleton,
   EmptyState,
   Badge,
@@ -21,6 +20,7 @@ import { FilterBar } from "@/components/cockpit/FilterBar";
 import { useFilterParams } from "@/lib/cockpit/useFilterParams";
 import { parseTablePagination } from "@/lib/cockpit/useTablePagination";
 import { exportTableToCsv } from "@/lib/cockpit/csvExport";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 interface DeviceRow {
   user_id: string;
@@ -112,7 +112,7 @@ export function DashboardDevicesClient() {
     return (
       <>
         {filterBar}
-        <Card><Skeleton lines={5} /></Card>
+        <DashboardGlassCard><Skeleton lines={5} /></DashboardGlassCard>
       </>
     );
   }
@@ -120,7 +120,7 @@ export function DashboardDevicesClient() {
     return (
       <>
         {filterBar}
-        <Card><p className="text-aistroyka-text-secondary p-4">{error}</p></Card>
+        <DashboardGlassCard><p className="text-aistroyka-text-secondary p-4">{error}</p></DashboardGlassCard>
       </>
     );
   }
@@ -128,13 +128,13 @@ export function DashboardDevicesClient() {
     return (
       <>
         {filterBar}
-        <Card>
+        <DashboardGlassCard>
           <EmptyState
             icon={<span className="text-2xl">📱</span>}
             title={tDetail("noDevices")}
             subtitle={tDetail("registeredDevicesAppear")}
           />
-        </Card>
+        </DashboardGlassCard>
       </>
     );
   }
@@ -142,7 +142,7 @@ export function DashboardDevicesClient() {
   return (
     <>
       {filterBar}
-      <Card className="p-0 overflow-hidden">
+      <DashboardGlassCard contentClassName="p-0 overflow-hidden">
         <div className="p-2 flex justify-end">
           <Button variant="secondary" onClick={exportCsv} className="text-sm">{tDetail("exportCsv")}</Button>
         </div>
@@ -186,7 +186,7 @@ export function DashboardDevicesClient() {
         totalCount={total}
         onPageChange={(p) => setParam("page", String(p))}
       />
-    </Card>
+    </DashboardGlassCard>
     </>
   );
 }

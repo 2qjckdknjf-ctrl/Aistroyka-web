@@ -2,8 +2,9 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { Card, Badge, Skeleton, ErrorState } from "@/components/ui";
+import { Badge, Skeleton, ErrorState } from "@/components/ui";
 import { recurringRuleStateBadgeClass } from "./statusBadgeStyles";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 type RuleRow = {
   id: string;
@@ -45,10 +46,10 @@ export function RecurringOperationsPanel() {
 
   if (q.isPending) {
     return (
-      <Card className="p-4">
+      <DashboardGlassCard className="p-4">
         <Skeleton className="h-6 w-48 mb-3" />
         <Skeleton className="h-32 w-full" />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
@@ -64,7 +65,7 @@ export function RecurringOperationsPanel() {
   const { rules, canToggle } = q.data ?? { rules: [], canToggle: false };
 
   return (
-    <Card className="p-4 border border-aistroyka-border-subtle">
+    <DashboardGlassCard className="p-4 border border-aistroyka-border-subtle">
       <h2 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">{tDetail("recurringOperations")}</h2>
       <p className="mt-1 text-sm text-aistroyka-text-secondary">
         {tDetail("recurringOperationsHint")}
@@ -108,7 +109,7 @@ export function RecurringOperationsPanel() {
           ))}
         </ul>
       )}
-    </Card>
+    </DashboardGlassCard>
   );
 }
 

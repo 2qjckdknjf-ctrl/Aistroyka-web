@@ -4,9 +4,10 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@/i18n/navigation";
-import { Card, Button, Badge, Skeleton, EmptyState } from "@/components/ui";
+import { Button, Badge, Skeleton, EmptyState } from "@/components/ui";
 import { discussionStatusBadgeClass } from "../../../statusBadgeStyles";
 import { formatPortalStatus } from "@/lib/i18n/portal-status-labels";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 type Entry = { id: string; entry_kind: string; body: string; created_at: string };
 
@@ -75,21 +76,21 @@ export function ClientPortalDiscussionDetailClient({
 
   if (q.isPending) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <Skeleton className="h-40" />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   if (q.isError) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <EmptyState
           icon={<span className="text-2xl">💬</span>}
           title={tDetail("discussionUnavailable")}
           subtitle={q.error instanceof Error ? q.error.message : tDetail("accessDeniedHint")}
         />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
@@ -105,7 +106,7 @@ export function ClientPortalDiscussionDetailClient({
         {tDetail("backToAllDiscussions")}
       </Link>
 
-      <Card className="p-4">
+      <DashboardGlassCard className="p-4">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <h1 className="text-aistroyka-title3 font-semibold text-aistroyka-text-primary">{d.title}</h1>
           <Badge className={discussionStatusBadgeClass(d.status)}>{formatPortalStatus(d.status, "discussion", tPortal)}</Badge>
@@ -118,9 +119,9 @@ export function ClientPortalDiscussionDetailClient({
             <p className="mt-1 text-sm text-aistroyka-text-primary whitespace-pre-wrap">{d.resolution_summary}</p>
           </div>
         ) : null}
-      </Card>
+      </DashboardGlassCard>
 
-      <Card className="p-4">
+      <DashboardGlassCard className="p-4">
         <h2 className="text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">{tDetail("updates")}</h2>
         <ul className="mt-3 space-y-3">
           {d.entries.length === 0 ? (
@@ -134,10 +135,10 @@ export function ClientPortalDiscussionDetailClient({
             ))
           )}
         </ul>
-      </Card>
+      </DashboardGlassCard>
 
       {canRespond ? (
-        <Card className="p-4 border-l-4 border-l-aistroyka-warning">
+        <DashboardGlassCard className="p-4 border-l-4 border-l-aistroyka-warning">
           <h2 className="font-semibold text-aistroyka-text-primary">{tDetail("yourResponseTitle")}</h2>
           <p className="mt-1 text-xs text-aistroyka-text-tertiary">
             {tDetail("yourResponseHint")}
@@ -174,7 +175,7 @@ export function ClientPortalDiscussionDetailClient({
           >
             {tDetail("submitResponse")}
           </Button>
-        </Card>
+        </DashboardGlassCard>
       ) : (
         <p className="text-sm text-aistroyka-text-tertiary">
           {d.status === "resolved" || d.status === "closed"

@@ -109,12 +109,49 @@
   --aistroyka-e1-tint-opacity: 0.02;
   --aistroyka-e2-tint-opacity: 0.04;
 
-  /* —— Motion (iOS MotionTokens) —— */
+  /* —— Motion (iOS MotionTokens + canonical redesign 2026-08-19) —— */
   --aistroyka-duration-instant: 150ms;
   --aistroyka-duration-fast: 250ms;
   --aistroyka-duration-normal: 350ms;
   --aistroyka-duration-slow: 500ms;
   --aistroyka-duration-button: 200ms;
+  --aistroyka-duration-press: 140ms;
+  --aistroyka-duration-hover: 180ms;
+  --aistroyka-duration-pulse: 2300ms;
+  --aistroyka-duration-ambient: 18s;
+
+  /* —— Intelligence spectrum (supporting; yellow remains primary action) —— */
+  --aistroyka-live: #21d7ff;
+  --aistroyka-ai: #8c5cff;
+  --aistroyka-ai-deep: #6b3dff;
+
+  /* —— Liquid Glass roots (required by styles/liquid-glass.css) —— */
+  --lg-intensity: 55;
+  --lg-opacity: 0.55;
+  --lg-blur: 18px;
+  --lg-blur-refraction: 22px;
+  --lg-radius: 16px;
+  --lg-radius-control: 12px;
+  --lg-radius-pill: 999px;
+  --lg-tint: rgba(16, 27, 51, 0.62);
+  --lg-tint-strong: rgba(22, 33, 62, 0.82);
+  --lg-tint-accent: rgba(245, 197, 24, 0.2);
+  --lg-border: rgba(159, 176, 205, 0.22);
+  --lg-sheen-highlight: rgba(248, 251, 255, 0.28);
+  --lg-sheen-bottom: rgba(4, 10, 24, 0.35);
+  --lg-sheen-opacity: 0.45;
+  --lg-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(248, 251, 255, 0.08);
+  --lg-shadow-hover:
+    0 12px 40px rgba(0, 0, 0, 0.5),
+    0 0 28px color-mix(in srgb, var(--aistroyka-live) 14%, transparent);
+  --lg-z-content: 1;
+  --lg-motion-duration: 280ms;
+  --lg-motion-sweep: 700ms;
+  --lg-motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --lg-motion-ease-gentle: cubic-bezier(0.33, 1, 0.68, 1);
+  --lg-motion-ease-bouncy: cubic-bezier(0.34, 1.56, 0.64, 1);
 
   /* —— Opacity (iOS OpacityTokens) —— */
   --aistroyka-opacity-disabled: 0.5;

@@ -3,10 +3,11 @@
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, Badge, Button } from "@/components/ui";
+import { Badge, Button } from "@/components/ui";
 import type { ClientRequestPublic } from "@/lib/domain/client-requests/client-requests.types";
 import { clientRequestStatusBadgeClass } from "../statusBadgeStyles";
 import { formatPortalStatus } from "@/lib/i18n/portal-status-labels";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 function kindLabel(k: string): string {
   return k.replace(/_/g, " ");
@@ -65,7 +66,7 @@ export function ClientPortalRequestsSection({
   }
 
   return (
-    <Card className="p-4 border-l-4 border-l-aistroyka-info">
+    <DashboardGlassCard className="p-4 border-l-4 border-l-aistroyka-info">
       <h3 className="font-semibold text-aistroyka-text-primary">{tDetail("requestsFromYourProjectTeam")}</h3>
       <p className="mt-1 text-sm text-aistroyka-text-secondary">
         {tDetail("requestsFromTeamHint")}
@@ -241,6 +242,6 @@ export function ClientPortalRequestsSection({
           </li>
         ))}
       </ul>
-    </Card>
+    </DashboardGlassCard>
   );
 }

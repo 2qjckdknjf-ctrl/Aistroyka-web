@@ -1,8 +1,9 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Card } from "@/components/ui";
+
 import { EmptyState } from "@/components/ui";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 type Row = {
   id: string;
@@ -18,7 +19,7 @@ export function ThresholdHistory({ history }: { history: Row[] }) {
   const tDetail = useTranslations("dashboardDetail");
   if (history.length === 0) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <EmptyState
           icon={
             <svg className="h-aistroyka-empty-icon w-aistroyka-empty-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
@@ -28,7 +29,7 @@ export function ThresholdHistory({ history }: { history: Row[] }) {
           title={tDetail("noThresholdHistory")}
           subtitle={tDetail("thresholdHistoryAppears")}
         />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
@@ -38,7 +39,7 @@ export function ThresholdHistory({ history }: { history: Row[] }) {
   const keyLabel = keys.length ? keys[0] : "risk_jump_threshold";
 
   return (
-    <Card className="overflow-hidden p-0">
+    <DashboardGlassCard contentClassName="overflow-hidden p-0">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[320px] text-left text-aistroyka-subheadline">
           <thead>
@@ -85,6 +86,6 @@ export function ThresholdHistory({ history }: { history: Row[] }) {
           {tDetail("keyThresholdForTrend")} <strong>{keyLabel}</strong>. {tDetail("lastFiveCalibrations")}
         </p>
       )}
-    </Card>
+    </DashboardGlassCard>
   );
 }

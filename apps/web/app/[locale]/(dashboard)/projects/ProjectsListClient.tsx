@@ -7,9 +7,10 @@ import { useProjects } from "@/lib/projects/useProjects";
 import { usePrefetchProject } from "@/lib/projects/prefetchProject";
 import { useProjectIdsWithActiveRisk, useProjectRisks } from "@/lib/features/ai/useAIState";
 import { QueryBoundary } from "@/lib/query/render";
-import { Card } from "@/components/ui";
+
 import { AISignalLine } from "@/components/ai/AISignalLine";
 import type { ProjectRow } from "@/lib/supabase/rpc";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 function riskScoreColorClass(score: number): string {
   if (score <= 30) return "text-aistroyka-text-tertiary";
@@ -50,13 +51,13 @@ export function ProjectsListClient({
       emptySubtitle={t("noProjectsHint")}
       emptyAction={canCreate ? createForm : undefined}
       loadingFallback={
-        <Card className="overflow-hidden p-0">
+        <DashboardGlassCard contentClassName="overflow-hidden p-0">
           <div className="h-32 animate-pulse rounded bg-aistroyka-surface-muted" />
-        </Card>
+        </DashboardGlassCard>
       }
     >
       {(projectList: ProjectRow[]) => (
-        <Card className="overflow-hidden p-0">
+        <DashboardGlassCard contentClassName="overflow-hidden p-0">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[260px] text-left text-aistroyka-subheadline">
               <thead>
@@ -123,7 +124,7 @@ export function ProjectsListClient({
               </tbody>
             </table>
           </div>
-        </Card>
+        </DashboardGlassCard>
       )}
     </QueryBoundary>
   );

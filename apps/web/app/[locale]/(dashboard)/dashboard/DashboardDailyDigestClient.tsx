@@ -3,8 +3,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { Card, Skeleton, ErrorState } from "@/components/ui";
+import { Skeleton, ErrorState } from "@/components/ui";
 import { translateApiError } from "@/lib/i18n/api-error-messages";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 type PortfolioDigest = {
   headline: string;
@@ -45,11 +46,11 @@ export function DashboardDailyDigestClient() {
 
   if (isPending) {
     return (
-      <Card className="p-4" aria-busy>
+      <DashboardGlassCard className="p-4" aria-busy>
         <Skeleton className="mb-3 h-5 w-48" />
         <Skeleton className="h-4 w-full" />
         <Skeleton className="mt-2 h-4 w-5/6" />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
@@ -69,7 +70,7 @@ export function DashboardDailyDigestClient() {
   if (!data) return null;
 
   return (
-    <Card className="p-4" aria-label={t("dailyDigestAria")}>
+    <DashboardGlassCard className="p-4" aria-label={t("dailyDigestAria")}>
       <h3 className="text-base font-semibold text-aistroyka-text-primary">{t("dailyDigestTitle")}</h3>
       <p className="mt-1 text-xs text-aistroyka-text-tertiary">{t("dailyDigestHint")}</p>
       {data.lines.length === 0 ? (
@@ -93,6 +94,6 @@ export function DashboardDailyDigestClient() {
           ))}
         </ul>
       )}
-    </Card>
+    </DashboardGlassCard>
   );
 }

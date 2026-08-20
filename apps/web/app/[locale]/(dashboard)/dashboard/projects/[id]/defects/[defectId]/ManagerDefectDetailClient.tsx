@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@/i18n/navigation";
-import { Card, Button, Badge, Skeleton, EmptyState } from "@/components/ui";
+import { Button, Badge, Skeleton, EmptyState } from "@/components/ui";
 import { defectStatusBadgeClass } from "../../statusBadgeStyles";
 import { formatPortalStatus } from "@/lib/i18n/portal-status-labels";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 type Event = {
   id: string;
@@ -135,21 +136,21 @@ export function ManagerDefectDetailClient({ projectId, defectId }: { projectId: 
 
   if (q.isPending) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <Skeleton className="h-40" />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   if (q.isError) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <EmptyState
           icon={<span className="text-2xl">📌</span>}
           title={tDetail("defectUnavailable")}
           subtitle={q.error instanceof Error ? q.error.message : ""}
         />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
@@ -162,7 +163,7 @@ export function ManagerDefectDetailClient({ projectId, defectId }: { projectId: 
       <Link href={`/dashboard/projects/${projectId}?tab=defects`} className="text-aistroyka-accent hover:underline text-sm">
         {tDetail("backToPunchList")}
       </Link>
-      <Card className="p-4">
+      <DashboardGlassCard className="p-4">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <h1 className="text-aistroyka-title3 font-semibold">{row.title}</h1>
           <Badge className={defectStatusBadgeClass(row.status)}>{formatPortalStatus(row.status, "defect", tPortal)}</Badge>
@@ -170,10 +171,10 @@ export function ManagerDefectDetailClient({ projectId, defectId }: { projectId: 
         <p className="mt-1 text-xs text-aistroyka-text-tertiary">
           {tDetail("createdBy")} {row.created_by.slice(0, 8)}… {row.is_blocking ? `· ${tDetail("blockingHandover")}` : ""}
         </p>
-      </Card>
+      </DashboardGlassCard>
 
       {editable ? (
-        <Card className="p-4 space-y-3">
+        <DashboardGlassCard className="p-4 space-y-3">
           <h2 className="font-semibold">{tDetail("edit")}</h2>
           <input
             className="w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
@@ -199,20 +200,20 @@ export function ManagerDefectDetailClient({ projectId, defectId }: { projectId: 
           <Button type="button" size="sm" onClick={() => patchMutation.mutate()} disabled={patchMutation.isPending}>
             {tDetail("save")}
           </Button>
-        </Card>
+        </DashboardGlassCard>
       ) : (
-        <Card className="p-4">
+        <DashboardGlassCard className="p-4">
           {row.description ? <p className="text-sm whitespace-pre-wrap">{row.description}</p> : null}
           {row.resolution_note ? (
             <p className="mt-2 text-sm">
               <span className="font-medium">{tDetail("resolution")}:</span> {row.resolution_note}
             </p>
           ) : null}
-        </Card>
+        </DashboardGlassCard>
       )}
 
       {options.length > 0 && editable ? (
-        <Card className="p-4 space-y-3">
+        <DashboardGlassCard className="p-4 space-y-3">
           <h2 className="font-semibold">{tDetail("transition")}</h2>
           <select
             className="w-full max-w-md rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
@@ -248,10 +249,10 @@ export function ManagerDefectDetailClient({ projectId, defectId }: { projectId: 
           >
             {transitionMutation.isPending ? tDetail("applying") : tDetail("apply")}
           </Button>
-        </Card>
+        </DashboardGlassCard>
       ) : null}
 
-      <Card className="p-4">
+      <DashboardGlassCard className="p-4">
         <h2 className="font-semibold">{tDetail("history")}</h2>
         <ul className="mt-2 space-y-2 text-sm">
           {row.events.map((e) => (
@@ -263,7 +264,7 @@ export function ManagerDefectDetailClient({ projectId, defectId }: { projectId: 
             </li>
           ))}
         </ul>
-      </Card>
+      </DashboardGlassCard>
     </div>
   );
 }

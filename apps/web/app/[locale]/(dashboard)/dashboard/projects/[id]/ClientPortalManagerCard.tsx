@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@/i18n/navigation";
-import { Card } from "@/components/ui";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 export function ClientPortalManagerCard({
   projectId,
@@ -36,7 +36,7 @@ export function ClientPortalManagerCard({
   });
 
   return (
-    <Card className="border-l-4 border-l-aistroyka-info p-4">
+    <DashboardGlassCard className="border-l-4 border-l-aistroyka-info p-4">
       <h3 className="text-aistroyka-caption font-semibold uppercase tracking-wide text-aistroyka-text-tertiary">
         Client portal
       </h3>
@@ -68,6 +68,6 @@ export function ClientPortalManagerCard({
           {mutation.error.message}
         </p>
       ) : null}
-    </Card>
+    </DashboardGlassCard>
   );
 }

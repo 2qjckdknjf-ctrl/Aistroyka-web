@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Button, Card, Alert } from "@/components/ui";
+import { Button, Alert } from "@/components/ui";
 import { AuthProviderButtons } from "@/components/auth/AuthProviderButtons";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 type MethodsResponse = {
   methods: {
@@ -78,7 +79,7 @@ export function AuthMethodsSettingsCard() {
   const nextToComeBack = `/${locale}/dashboard/settings/auth`;
 
   return (
-    <Card className="p-5">
+    <DashboardGlassCard className="p-5">
       <h1 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">
         {t("linkedMethodsTitle")}
       </h1>
@@ -146,6 +147,6 @@ export function AuthMethodsSettingsCard() {
           }}
         />
       </div>
-    </Card>
+    </DashboardGlassCard>
   );
 }

@@ -3,9 +3,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { Card, Badge, Skeleton, EmptyState } from "@/components/ui";
+import { Badge, Skeleton, EmptyState } from "@/components/ui";
 import { blockingBadgeClass, defectStatusBadgeClass } from "../../../statusBadgeStyles";
 import { formatPortalStatus } from "@/lib/i18n/portal-status-labels";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 type PublicDetail = {
   id: string;
@@ -41,21 +42,21 @@ export function ClientPortalDefectDetailClient({ projectId, defectId }: { projec
 
   if (q.isPending) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <Skeleton className="h-40" />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   if (q.isError) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <EmptyState
           icon={<span className="text-2xl">📌</span>}
           title={tDetail("itemUnavailable")}
           subtitle={q.error instanceof Error ? q.error.message : ""}
         />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
@@ -66,7 +67,7 @@ export function ClientPortalDefectDetailClient({ projectId, defectId }: { projec
       <Link href={`/dashboard/projects/${projectId}/client/defects`} className="text-aistroyka-accent hover:underline text-sm font-medium">
         {tDetail("backToPunchList")}
       </Link>
-      <Card className="p-4">
+      <DashboardGlassCard className="p-4">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <h1 className="text-aistroyka-title3 font-semibold">{d.title}</h1>
           <div className="flex flex-wrap gap-2">
@@ -87,7 +88,7 @@ export function ClientPortalDefectDetailClient({ projectId, defectId }: { projec
         {d.resolved_at ? (
           <p className="mt-2 text-xs text-aistroyka-text-tertiary">{tDetail("resolved")} {new Date(d.resolved_at).toLocaleString()}</p>
         ) : null}
-      </Card>
+      </DashboardGlassCard>
     </div>
   );
 }

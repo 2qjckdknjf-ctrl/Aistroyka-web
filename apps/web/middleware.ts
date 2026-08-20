@@ -10,6 +10,9 @@ import { isPlatformAdminApiPath, isPlatformAdminPagePath } from "@/lib/platform-
 import { resolveHostProfile } from "@/lib/platform-admin/host-policy";
 import { isAdminHostBlockedApiPath, resolveAdminHostPageRouting } from "@/lib/platform-admin/host-routing";
 import { applyApiSecurityHeadersToHeaders } from "@/lib/security-headers";
+import { getActiveTenantRoleForUser } from "@/lib/tenant/tenant-role.server";
+import { isPortalOnlyTenantRole } from "@/lib/tenant/tenant.policy";
+import { redirectIfStakeholderBlockedPath } from "@/lib/tenant/stakeholder-dashboard-paths";
 
 const intlMiddleware = createIntlMiddleware(routing);
 
@@ -114,7 +117,7 @@ export async function middleware(request: NextRequest) {
     return applyHostProfileHeader(redir, request);
   }
 
-  const { response: sessionResponse, user } = await updateSession(request);
+  const { response: sessionResponse, user, supabase } = await updateSession(request);
   if (sessionResponse.status === 503) {
     return applyHostProfileHeader(sessionResponse, request);
   }
@@ -161,6 +164,22 @@ export async function middleware(request: NextRequest) {
       isPlatformAdminPageAfterIntl ? "platform-admin-login" : "login"
     );
     return applyHostProfileHeader(redir, request);
+  }
+  if (user && supabase) {
+    try {
+      const role = await getActiveTenantRoleForUser(supabase, user.id);
+      if (isPortalOnlyTenantRole(role)) {
+        const blocked = redirectIfStakeholderBlockedPath(pathWithoutLoc, locale, request.url);
+        if (blocked) {
+          mergeSupabaseSessionIntoResponse(sessionResponse, blocked);
+          blocked.headers.set("X-Auth-Redirect", "stakeholder-portal");
+          blocked.headers.set("Cache-Control", "private, no-store, max-age=0, must-revalidate");
+          return applyHostProfileHeader(blocked, request);
+        }
+      }
+    } catch {
+      // fail-open: role lookup errors must not lock contractor dashboards
+    }
   }
   if (isAuthPage && user) {
     const next = request.nextUrl.searchParams.get("next") ?? undefined;

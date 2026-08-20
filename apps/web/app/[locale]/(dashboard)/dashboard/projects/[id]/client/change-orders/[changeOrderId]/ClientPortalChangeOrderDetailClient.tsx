@@ -3,9 +3,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { Card, Badge, Skeleton, EmptyState, Button } from "@/components/ui";
+import { Badge, Skeleton, EmptyState, Button } from "@/components/ui";
 import { changeOrderStatusBadgeClass } from "../../../statusBadgeStyles";
 import { formatPortalStatus } from "@/lib/i18n/portal-status-labels";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 type Event = {
   id: string;
@@ -86,21 +87,21 @@ export function ClientPortalChangeOrderDetailClient({
 
   if (q.isPending) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <Skeleton className="h-40" />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   if (q.isError) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <EmptyState
           icon={<span className="text-2xl">📋</span>}
           title={tDetail("changeOrderUnavailable")}
           subtitle={q.error instanceof Error ? q.error.message : ""}
         />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
@@ -114,23 +115,23 @@ export function ClientPortalChangeOrderDetailClient({
       >
         {tDetail("backToChangeOrders")}
       </Link>
-      <Card className="p-4">
+      <DashboardGlassCard className="p-4">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <h1 className="text-aistroyka-title3 font-semibold">{d.title}</h1>
           <Badge className={changeOrderStatusBadgeClass(d.status)}>{formatPortalStatus(d.status, "changeOrder", tPortal)}</Badge>
         </div>
         <p className="mt-1 text-xs text-aistroyka-text-tertiary">{d.kind.replace(/_/g, " ")}</p>
-      </Card>
+      </DashboardGlassCard>
 
       {d.description ? (
-        <Card className="p-4">
+        <DashboardGlassCard className="p-4">
           <h2 className="font-semibold">{tDetail("whatChanged")}</h2>
           <p className="mt-2 text-sm whitespace-pre-wrap">{d.description}</p>
-        </Card>
+        </DashboardGlassCard>
       ) : null}
 
       {d.customer_amount_delta != null && Number(d.customer_amount_delta) > 0 ? (
-        <Card className="p-4 border-l-4 border-l-aistroyka-accent">
+        <DashboardGlassCard className="p-4 border-l-4 border-l-aistroyka-accent">
           <h2 className="font-semibold">{tDetail("changeOrderCustomerCommercialLabel")}</h2>
           <p className="mt-2 text-aistroyka-title3 font-semibold text-aistroyka-text-primary">
             {tDetail("changeOrderCustomerCommercialLine", {
@@ -139,11 +140,11 @@ export function ClientPortalChangeOrderDetailClient({
             })}
           </p>
           <p className="mt-1 text-xs text-aistroyka-text-tertiary">{tDetail("changeOrderCustomerCommercialHint")}</p>
-        </Card>
+        </DashboardGlassCard>
       ) : null}
 
       {(d.status === "proposed" || d.status === "under_review") && (
-        <Card className="p-4 border-l-4 border-l-aistroyka-warning">
+        <DashboardGlassCard className="p-4 border-l-4 border-l-aistroyka-warning">
           <p className="text-sm text-aistroyka-text-secondary">{tDetail("changeOrderDecisionNeeded")}</p>
           <div className="mt-3 flex flex-wrap gap-2">
             <Button
@@ -168,10 +169,10 @@ export function ClientPortalChangeOrderDetailClient({
           {respondMutation.isError ? (
             <p className="mt-2 text-sm text-aistroyka-error">{(respondMutation.error as Error).message}</p>
           ) : null}
-        </Card>
+        </DashboardGlassCard>
       )}
 
-      <Card className="p-4">
+      <DashboardGlassCard className="p-4">
         <h2 className="font-semibold">{tDetail("impact")}</h2>
         <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
           <div>
@@ -188,7 +189,7 @@ export function ClientPortalChangeOrderDetailClient({
             {tDetail("changeLinkedToRecords")}
           </p>
         )}
-      </Card>
+      </DashboardGlassCard>
 
       {d.implemented_at ? (
         <p className="text-sm text-aistroyka-text-secondary">
@@ -196,7 +197,7 @@ export function ClientPortalChangeOrderDetailClient({
         </p>
       ) : null}
 
-      <Card className="p-4">
+      <DashboardGlassCard className="p-4">
         <h2 className="font-semibold">{tDetail("statusHistory")}</h2>
         <ul className="mt-3 space-y-2 text-sm">
           {d.events.map((e) => (
@@ -208,7 +209,7 @@ export function ClientPortalChangeOrderDetailClient({
             </li>
           ))}
         </ul>
-      </Card>
+      </DashboardGlassCard>
     </div>
   );
 }

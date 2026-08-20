@@ -1,7 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { Card, SectionHeader, EmptyState, SkeletonCard } from "@/components/ui";
+import { SectionHeader, EmptyState, SkeletonCard } from "@/components/ui";
 import { GovernanceAlerts } from "./GovernanceAlerts";
 import { AuditTimeline } from "./AuditTimeline";
 import { ThresholdHistory } from "./ThresholdHistory";

@@ -1,6 +1,7 @@
-import { Card } from "@/components/ui";
+
 import { EmptyState } from "@/components/ui";
 import { useTranslations } from "next-intl";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 type Hint = {
   hint_type?: string;
@@ -14,13 +15,13 @@ export function CausalHints({ hints }: { hints: Hint[] }) {
   const tDetail = useTranslations("dashboardDetail");
   if (!hints.length) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <EmptyState
           icon={<span className="text-aistroyka-text-tertiary text-2xl">?</span>}
           title={tDetail("noCausalHints")}
           subtitle={tDetail("causalHintsAppearHint")}
         />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
@@ -31,7 +32,7 @@ export function CausalHints({ hints }: { hints: Hint[] }) {
   };
 
   return (
-    <Card className="p-0 overflow-hidden">
+    <DashboardGlassCard contentClassName="p-0 overflow-hidden">
       <ul className="divide-y divide-aistroyka-border-subtle">
         {hints.slice(0, 5).map((h, i) => (
           <li key={i} className="p-aistroyka-4">
@@ -46,6 +47,6 @@ export function CausalHints({ hints }: { hints: Hint[] }) {
           </li>
         ))}
       </ul>
-    </Card>
+    </DashboardGlassCard>
   );
 }

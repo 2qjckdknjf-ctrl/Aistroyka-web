@@ -4,8 +4,15 @@ import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { Link } from "@/i18n/navigation";
-import { Card, SectionHeader, Skeleton, EmptyState, Badge, Button } from "@/components/ui";
+import { SectionHeader, Skeleton, EmptyState, Badge, Button } from "@/components/ui";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
+import { ReportReviewSplit } from "@/components/dashboard/ReportReviewSplit";
 import { ReportApprovalCard, ReportApprovalHistory } from "@/components/approvals";
+import {
+  analysisStatusBadgeVariant,
+  reportStatusBadgeVariant,
+  shouldPrioritizeReportDecision,
+} from "../../daily-reports/reports-list.utils";
 
 interface ReportDetail {
   id: string;
@@ -91,73 +98,54 @@ export default function ReportDetailPage() {
 
   if (!id) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <p className="text-aistroyka-text-secondary p-4">{tDetail("missingReportId")}</p>
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   if (loading && !data) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <Skeleton lines={4} />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
   if (error || !data) {
     return (
-      <Card>
+      <DashboardGlassCard>
         <EmptyState
           icon={<span className="text-2xl">⚠️</span>}
           title={tDetail("reportNotFound")}
           subtitle={error ?? tDetail("accessDeniedHint")}
           action={<Link href={reportsPath} className="text-aistroyka-accent hover:underline">{tDetail("backToReports")}</Link>}
         />
-      </Card>
+      </DashboardGlassCard>
     );
   }
 
-  return (
-    <>
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <Link href={reportsPath} className="text-aistroyka-subheadline text-aistroyka-accent hover:underline">
-          {tDetail("reports")}
-        </Link>
-        <CopyIdButton id={data.id} label={tDetail("copyId")} copiedLabel={tDetail("copied")} />
-        <span className="text-aistroyka-caption text-aistroyka-text-tertiary" title={tDetail("deepLink")}>
-          {tDetail("reportIdLabel")} <span className="font-mono">{data.id.slice(0, 8)}…</span>
-        </span>
-      </div>
-      <SectionHeader
-        title={`Report ${data.id.slice(0, 8)}…`}
-        subtitle={tPage("reportDetailSubtitle")}
-      />
+  const decisionFirst = shouldPrioritizeReportDecision(data.status);
 
-      <Card className="mb-4">
+  const evidence = (
+    <>
+      <DashboardGlassCard>
+        <h3 className="mb-3 text-aistroyka-headline font-semibold text-aistroyka-text-primary">
+          {tDetail("reportEvidenceSection")}
+        </h3>
         <dl className="grid gap-2 sm:grid-cols-2">
           <div>
             <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("status")}</dt>
             <dd>
-              <Badge
-                variant={
-                  data.status === "approved"
-                    ? "success"
-                    : data.status === "submitted"
-                      ? "warning"
-                      : data.status === "changes_requested" || data.status === "rejected"
-                        ? "danger"
-                        : "neutral"
-                }
-              >
-                {data.status}
-              </Badge>
+              <Badge variant={reportStatusBadgeVariant(data.status)}>{data.status}</Badge>
             </dd>
           </div>
           <div>
             <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("worker")}</dt>
             <dd>
-              <Link href={`/dashboard/workers/${data.user_id}`} className="font-mono text-aistroyka-accent hover:underline">{data.user_id.slice(0, 8)}…</Link>
+              <Link href={`/dashboard/workers/${data.user_id}`} className="font-mono text-aistroyka-accent hover:underline">
+                {data.user_id.slice(0, 8)}…
+              </Link>
             </dd>
           </div>
           <div>
@@ -172,13 +160,15 @@ export default function ReportDetailPage() {
             <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("mediaAttachments")}</dt>
             <dd>{data.media?.length ?? 0}</dd>
           </div>
-          {data.worker_note && (
+          {data.worker_note ? (
             <div className="sm:col-span-2">
               <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("workerNote")}</dt>
-              <dd className="text-aistroyka-subheadline text-aistroyka-text-secondary mt-1 whitespace-pre-wrap">{data.worker_note}</dd>
+              <dd className="mt-1 whitespace-pre-wrap text-aistroyka-subheadline text-aistroyka-text-secondary">
+                {data.worker_note}
+              </dd>
             </div>
-          )}
-          {data.reviewed_at && (
+          ) : null}
+          {data.reviewed_at ? (
             <>
               <div>
                 <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("reviewedAt")}</dt>
@@ -189,82 +179,125 @@ export default function ReportDetailPage() {
                 <dd className="font-mono text-sm">{data.reviewed_by?.slice(0, 8) ?? "—"}…</dd>
               </div>
             </>
-          )}
+          ) : null}
         </dl>
-        {data.status === "submitted" && (
-          <div className="mt-4 pt-4 border-t border-aistroyka-border">
-            {data.reviewed_at && (
-              <p className="text-aistroyka-caption text-aistroyka-warning mb-2">
-                {tDetail("resubmittedHint")}
-              </p>
-            )}
-            <h3 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary mb-2">{tDetail("managerApproval")}</h3>
-            <ReportApprovalCard reportId={data.id} onSuccess={refetch} />
-          </div>
-        )}
-        {data.manager_note && (
-          <div className="mt-4 pt-4 border-t border-aistroyka-border">
-            <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("managerNote")}</dt>
-            <dd className="text-aistroyka-subheadline text-aistroyka-text-secondary mt-1">{data.manager_note}</dd>
-          </div>
-        )}
-        <ReportApprovalHistory reportId={data.id} />
-      </Card>
+      </DashboardGlassCard>
 
       {data.media?.length ? (
-        <Card className="mb-4">
-          <h3 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary mb-2">{tDetail("mediaGallery")}</h3>
-          <ul className="list-disc list-inside text-aistroyka-subheadline text-aistroyka-text-secondary">
+        <DashboardGlassCard>
+          <h3 className="mb-2 text-aistroyka-headline font-semibold text-aistroyka-text-primary">{tDetail("mediaGallery")}</h3>
+          <ul className="list-inside list-disc text-aistroyka-subheadline text-aistroyka-text-secondary">
             {data.media.map((m, i) => (
               <li key={i}>
                 {m.media_id ? (
-                  <Link href="/dashboard/uploads" className="text-aistroyka-accent hover:underline font-mono">{tDetail("media")} {m.media_id.slice(0, 8)}…</Link>
+                  <Link href="/dashboard/uploads" className="font-mono text-aistroyka-accent hover:underline">
+                    {tDetail("media")} {m.media_id.slice(0, 8)}…
+                  </Link>
                 ) : m.upload_session_id ? (
-                  <span className="font-mono">{tDetail("session")} {m.upload_session_id.slice(0, 8)}…</span>
+                  <span className="font-mono">
+                    {tDetail("session")} {m.upload_session_id.slice(0, 8)}…
+                  </span>
                 ) : (
                   "—"
                 )}
               </li>
             ))}
           </ul>
-        </Card>
+        </DashboardGlassCard>
       ) : (
-        <Card className="mb-4">
+        <DashboardGlassCard>
           <p className="text-aistroyka-subheadline text-aistroyka-text-tertiary">{tDetail("noMediaAttached")}</p>
-        </Card>
+        </DashboardGlassCard>
       )}
 
-      <Card>
-        <h3 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary mb-2">{tDetail("aiAnalysis")}</h3>
+      <DashboardGlassCard>
+        <h3 className="mb-2 text-aistroyka-headline font-semibold text-aistroyka-text-primary">{tDetail("aiAnalysis")}</h3>
         {analysis ? (
           <dl className="grid gap-2 sm:grid-cols-2">
             <div>
               <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("status")}</dt>
               <dd>
-                <Badge variant={analysis.status === "success" ? "success" : analysis.status === "failed" ? "danger" : "warning"}>{analysis.status}</Badge>
+                <Badge variant={analysisStatusBadgeVariant(analysis.status)}>{analysis.status}</Badge>
               </dd>
             </div>
             <div>
               <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("jobs")}</dt>
               <dd className="tabular-nums">{analysis.jobCount}</dd>
             </div>
-            {analysis.summary && (
+            {analysis.summary ? (
               <>
                 <div>
                   <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("analyzed")}</dt>
-                  <dd className="tabular-nums">{analysis.summary.analyzed} / {analysis.summary.mediaTotal}</dd>
+                  <dd className="tabular-nums">
+                    {analysis.summary.analyzed} / {analysis.summary.mediaTotal}
+                  </dd>
                 </div>
                 <div>
                   <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("failed")}</dt>
                   <dd className="tabular-nums">{analysis.summary.failed}</dd>
                 </div>
               </>
-            )}
+            ) : null}
           </dl>
         ) : (
           <p className="text-aistroyka-subheadline text-aistroyka-text-tertiary">{tDetail("noAiJobsYet")}</p>
         )}
-      </Card>
+      </DashboardGlassCard>
+    </>
+  );
+
+  const decision = (
+    <DashboardGlassCard
+      className={decisionFirst ? "border-l-4 border-l-aistroyka-warning" : undefined}
+    >
+      <h3 className="mb-2 text-aistroyka-headline font-semibold text-aistroyka-text-primary">
+        {tDetail("reportDecisionSection")}
+      </h3>
+      {data.status === "submitted" ? (
+        <>
+          {data.reviewed_at ? (
+            <p className="mb-2 text-aistroyka-caption text-aistroyka-warning">{tDetail("resubmittedHint")}</p>
+          ) : null}
+          <h4 className="mb-2 text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">
+            {tDetail("managerApproval")}
+          </h4>
+          <ReportApprovalCard reportId={data.id} onSuccess={refetch} />
+        </>
+      ) : (
+        <>
+          <p className="text-aistroyka-subheadline font-medium text-aistroyka-text-primary">{tDetail("decisionWaiting")}</p>
+          <p className="mt-1 text-aistroyka-caption text-aistroyka-text-secondary">{tDetail("decisionWaitingHint")}</p>
+        </>
+      )}
+      {data.manager_note ? (
+        <div className="mt-4 border-t border-aistroyka-border pt-4">
+          <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("managerNote")}</dt>
+          <dd className="mt-1 text-aistroyka-subheadline text-aistroyka-text-secondary">{data.manager_note}</dd>
+        </div>
+      ) : null}
+      <ReportApprovalHistory reportId={data.id} />
+    </DashboardGlassCard>
+  );
+
+  return (
+    <>
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <Link href={reportsPath} className="text-aistroyka-subheadline text-aistroyka-accent hover:underline">
+          {tDetail("reports")}
+        </Link>
+        <CopyIdButton id={data.id} label={tDetail("copyId")} copiedLabel={tDetail("copied")} />
+        <span className="text-aistroyka-caption text-aistroyka-text-tertiary" title={tDetail("deepLink")}>
+          {tDetail("reportIdLabel")} <span className="font-mono">{data.id.slice(0, 8)}…</span>
+        </span>
+      </div>
+      <SectionHeader title={`Report ${data.id.slice(0, 8)}…`} subtitle={tPage("reportDetailSubtitle")} />
+
+      <ReportReviewSplit
+        evidenceLabel={tDetail("reportEvidenceSection")}
+        decisionLabel={tDetail("reportDecisionSection")}
+        evidence={evidence}
+        decision={decision}
+      />
     </>
   );
 }

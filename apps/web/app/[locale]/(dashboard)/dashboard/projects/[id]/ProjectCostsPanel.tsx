@@ -13,11 +13,11 @@ import {
   TableHeaderCell,
   TableCell,
   Button,
-  Card,
   Modal,
   Input,
   Select,
 } from "@/components/ui";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 interface ProjectCostItem {
   id: string;
@@ -200,23 +200,23 @@ export function ProjectCostsPanel({ projectId }: { projectId: string }) {
         </Button>
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-l-4 border-l-aistroyka-accent">
+        <DashboardGlassCard className="border-l-4 border-l-aistroyka-accent">
           <p className="text-aistroyka-caption font-medium uppercase tracking-wide text-aistroyka-text-tertiary">
             {tDetail("plannedTotal")}
           </p>
           <p className="mt-1 text-aistroyka-title3 font-semibold text-aistroyka-text-primary">
             {formatAmount(summary.planned_total, summary.currency)}
           </p>
-        </Card>
-        <Card className="border-l-4 border-l-aistroyka-info">
+        </DashboardGlassCard>
+        <DashboardGlassCard className="border-l-4 border-l-aistroyka-info">
           <p className="text-aistroyka-caption font-medium uppercase tracking-wide text-aistroyka-text-tertiary">
             {tDetail("actualTotal")}
           </p>
           <p className="mt-1 text-aistroyka-title3 font-semibold text-aistroyka-text-primary">
             {formatAmount(summary.actual_total, summary.currency)}
           </p>
-        </Card>
-        <Card
+        </DashboardGlassCard>
+        <DashboardGlassCard
           className={`border-l-4 ${summary.over_budget ? "border-l-aistroyka-error" : "border-l-aistroyka-success"}`}
         >
           <p className="text-aistroyka-caption font-medium uppercase tracking-wide text-aistroyka-text-tertiary">
@@ -238,15 +238,15 @@ export function ProjectCostsPanel({ projectId }: { projectId: string }) {
               {tDetail("variance")}: {summary.variance_amount > 0 ? "+" : ""}{formatAmount(summary.variance_amount, summary.currency)}
             </p>
           )}
-        </Card>
-        <Card className="border-l-4 border-l-aistroyka-text-tertiary">
+        </DashboardGlassCard>
+        <DashboardGlassCard className="border-l-4 border-l-aistroyka-text-tertiary">
           <p className="text-aistroyka-caption font-medium uppercase tracking-wide text-aistroyka-text-tertiary">
             {tDetail("costItems")}
           </p>
           <p className="mt-1 text-aistroyka-title3 font-semibold text-aistroyka-text-primary">
             {summary.item_count}
           </p>
-        </Card>
+        </DashboardGlassCard>
       </div>
 
       {items.length === 0 ? (

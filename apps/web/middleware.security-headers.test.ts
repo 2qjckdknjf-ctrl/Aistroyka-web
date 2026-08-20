@@ -8,11 +8,13 @@ const {
   mockGateOwnerRequest,
   mockCheckLiteAllowList,
   mockIntlMiddleware,
+  mockGetActiveTenantRoleForUser,
 } = vi.hoisted(() => ({
   mockUpdateSession: vi.fn(),
   mockGateOwnerRequest: vi.fn(),
   mockCheckLiteAllowList: vi.fn(),
   mockIntlMiddleware: vi.fn(),
+  mockGetActiveTenantRoleForUser: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/middleware", () => ({
@@ -29,6 +31,10 @@ vi.mock("@/lib/api/lite-allow-list", () => ({
 
 vi.mock("next-intl/middleware", () => ({
   default: () => mockIntlMiddleware,
+}));
+
+vi.mock("@/lib/tenant/tenant-role.server", () => ({
+  getActiveTenantRoleForUser: (...args: unknown[]) => mockGetActiveTenantRoleForUser(...args),
 }));
 
 import {
@@ -65,6 +71,7 @@ describe("middleware API security headers", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockCheckLiteAllowList.mockReturnValue(null);
+    mockGetActiveTenantRoleForUser.mockResolvedValue(null);
     mockUpdateSession.mockResolvedValue({
       response: NextResponse.next(),
       user: null,
@@ -105,6 +112,7 @@ describe("middleware does not own page security headers", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockCheckLiteAllowList.mockReturnValue(null);
+    mockGetActiveTenantRoleForUser.mockResolvedValue(null);
     mockUpdateSession.mockResolvedValue({
       response: NextResponse.next(),
       user: null,
@@ -166,6 +174,22 @@ describe("middleware does not own page security headers", () => {
     expect(res.status).toBeGreaterThanOrEqual(300);
     expect(res.cookies.get("sb-access-token")?.value).toBe("tok-a");
     expect(res.cookies.get("sb-refresh-token")?.value).toBe("tok-b");
+    expectNoPageSecurityHeadersFromMiddleware(res);
+  });
+
+  it("redirects portal-only stakeholders off contractor dashboard routes", async () => {
+    mockUpdateSession.mockResolvedValueOnce({
+      response: NextResponse.next(),
+      user: { id: "stakeholder-1" },
+      supabase: {},
+    });
+    mockGetActiveTenantRoleForUser.mockResolvedValueOnce("stakeholder");
+    const req = new NextRequest("https://aistroyka.ai/en/dashboard/tasks");
+    const res = await middleware(req);
+    expect(res.status).toBeGreaterThanOrEqual(300);
+    expect(res.status).toBeLessThan(400);
+    expect(res.headers.get("Location")).toBe("https://aistroyka.ai/en/portal/projects");
+    expect(res.headers.get("X-Auth-Redirect")).toBe("stakeholder-portal");
     expectNoPageSecurityHeadersFromMiddleware(res);
   });
 });

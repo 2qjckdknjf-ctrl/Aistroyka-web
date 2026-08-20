@@ -1,9 +1,10 @@
 "use client";
 
 import { Link } from "@/i18n/navigation";
-import { Card } from "@/components/ui";
+
 import type { UpgradePromptViewModel } from "@/lib/platform/plan-fit/upgrade-prompt.types";
 import { getFeatureUpgradePromptDisplayProps } from "@/lib/platform/plan-fit/upgrade-prompt-presentation";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 export interface FeatureUpgradePromptCardProps {
   prompt: UpgradePromptViewModel;
@@ -42,8 +43,8 @@ export function FeatureUpgradePromptCard({ prompt, variant = "card" }: FeatureUp
   }
 
   return (
-    <Card className="border-l-4 border-l-aistroyka-accent/50">
+    <DashboardGlassCard className="border-l-4 border-l-aistroyka-accent/50">
       {content}
-    </Card>
+    </DashboardGlassCard>
   );
 }

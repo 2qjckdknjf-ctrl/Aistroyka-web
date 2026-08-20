@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, Skeleton, EmptyState, Button, Input } from "@/components/ui";
+import { Skeleton, EmptyState, Button, Input } from "@/components/ui";
 import { CustomerEstimatesManagerPanel } from "./CustomerEstimatesManagerPanel";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 interface BudgetSummary {
   planned_total: number;
@@ -129,7 +130,7 @@ export function ProjectEstimatePanel({ projectId }: { projectId: string }) {
       </p>
 
       {budget && (
-        <Card className="border-l-4 border-l-aistroyka-info">
+        <DashboardGlassCard className="border-l-4 border-l-aistroyka-info">
           <h3 className="font-medium text-aistroyka-text-primary">{tDetail("recordedBudget")}</h3>
           <p className="text-aistroyka-caption text-aistroyka-text-tertiary mt-1">
             {tDetail("fromCostItemsPlannedVsActual")}
@@ -149,19 +150,19 @@ export function ProjectEstimatePanel({ projectId }: { projectId: string }) {
             )}
             <span>{budget.over_budget ? tDetail("overBudget") : tDetail("onBudget")}</span>
           </div>
-        </Card>
+        </DashboardGlassCard>
       )}
 
       {!budget && (
-        <Card className="border-l-4 border-l-aistroyka-warning">
+        <DashboardGlassCard className="border-l-4 border-l-aistroyka-warning">
           <p className="text-aistroyka-text-secondary">
             {tDetail("noRecordedBudgetYetHint")}
           </p>
-        </Card>
+        </DashboardGlassCard>
       )}
 
       {latest && (
-        <Card className="border-l-4 border-l-aistroyka-accent">
+        <DashboardGlassCard className="border-l-4 border-l-aistroyka-accent">
           <h3 className="font-medium text-aistroyka-text-primary">{tDetail("latestEstimateAi")}</h3>
           <p className="text-aistroyka-caption text-aistroyka-text-tertiary mt-1">
             {tDetail("source")}: {latest.source_type}
@@ -194,20 +195,20 @@ export function ProjectEstimatePanel({ projectId }: { projectId: string }) {
               </p>
             )}
           </div>
-        </Card>
+        </DashboardGlassCard>
       )}
 
       {!latest && summary?.estimate_results?.length === 0 && (
-        <Card>
+        <DashboardGlassCard>
           <EmptyState
             icon={<span className="text-2xl">📐</span>}
             title={tDetail("noAiEstimateYet")}
             subtitle={tDetail("pasteImageUrlHint")}
           />
-        </Card>
+        </DashboardGlassCard>
       )}
 
-      <Card>
+      <DashboardGlassCard>
         <h3 className="font-medium text-aistroyka-text-primary">{tDetail("estimateFromImage")}</h3>
         <p className="text-aistroyka-caption text-aistroyka-text-tertiary mt-1">
           {tDetail("publicImageUrlHint")}
@@ -235,10 +236,10 @@ export function ProjectEstimatePanel({ projectId }: { projectId: string }) {
               : tDetail("estimateFailed")}
           </p>
         )}
-      </Card>
+      </DashboardGlassCard>
 
       {docs.length > 0 && (
-        <Card>
+        <DashboardGlassCard>
           <h3 className="font-medium text-aistroyka-text-primary">{tDetail("sourceDocuments")}</h3>
           <p className="text-aistroyka-caption text-aistroyka-text-tertiary mt-1">
             {tDetail("sourceDocumentsHint")}
@@ -250,7 +251,7 @@ export function ProjectEstimatePanel({ projectId }: { projectId: string }) {
               </li>
             ))}
           </ul>
-        </Card>
+        </DashboardGlassCard>
       )}
     </div>
   );
