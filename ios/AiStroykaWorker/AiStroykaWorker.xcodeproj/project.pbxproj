@@ -306,6 +306,7 @@
 				WRK002 /* AiStroykaWorkerAppDelegate.swift in Sources */,
 				WRK003 /* AppState.swift in Sources */,
 				WRK004 /* RootView.swift in Sources */,
+				WRK034 /* WorkerSemanticColors.swift in Sources */,
 				WRK005 /* AppStateStore.swift in Sources */,
 				WRK006 /* Operation.swift in Sources */,
 				WRK007 /* OperationQueueStore.swift in Sources */,
