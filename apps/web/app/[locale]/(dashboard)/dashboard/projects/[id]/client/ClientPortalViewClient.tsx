@@ -271,7 +271,7 @@ export function ClientPortalViewClient({ projectId }: { projectId: string }) {
       ) : null}
 
       <ClientPortalWorkloadSection projectId={projectId} />
-      <TelegramConnectCard />
+      {portalOnly ? null : <TelegramConnectCard />}
       <ClientPortalActivitySection projectId={projectId} />
     </div>
   );

@@ -1,7 +1,6 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Card } from "@/components/ui-lite";
 import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 const MAX_ISSUES = 3;

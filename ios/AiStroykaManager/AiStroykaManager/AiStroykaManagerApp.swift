@@ -21,6 +21,8 @@ struct AiStroykaManagerApp: App {
         WindowGroup {
             ManagerRootView()
                 .environmentObject(sessionState)
+                .preferredColorScheme(.dark)
+                .background(ManagerSemanticColors.pageBackground)
         }
     }
 }

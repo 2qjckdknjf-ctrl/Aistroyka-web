@@ -37,6 +37,7 @@
 		WRK027 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = WRK170 /* Localizable.strings */; };
 		WRK026 /* Shared in Frameworks */ = {isa = PBXBuildFile; productRef = WRK126 /* Shared */; };
 		WRK029B /* UITestLaunchHooks.swift in Sources */ = {isa = PBXBuildFile; fileRef = WRK133 /* UITestLaunchHooks.swift */; };
+		WRK034 /* WorkerSemanticColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = WRK134 /* WorkerSemanticColors.swift */; };
 		WRKUT01 /* WorkerSmokeUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = WRKUT11 /* WorkerSmokeUITests.swift */; };
 		WRKUT02 /* PilotE2ECredentials.swift in Sources */ = {isa = PBXBuildFile; fileRef = WRKUT12 /* PilotE2ECredentials.swift */; };
 /* End PBXBuildFile section */
@@ -78,6 +79,7 @@
 		WRK173 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
 		WRK174 /* it */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = it; path = it.lproj/Localizable.strings; sourceTree = "<group>"; };
 		WRK133 /* UITestLaunchHooks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UITestLaunchHooks.swift; sourceTree = "<group>"; };
+		WRK134 /* WorkerSemanticColors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerSemanticColors.swift; sourceTree = "<group>"; };
 		WRKUT10 /* AiStroykaWorkerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AiStroykaWorkerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		WRKUT11 /* WorkerSmokeUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerSmokeUITests.swift; sourceTree = "<group>"; };
 		WRKUT12 /* PilotE2ECredentials.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PilotE2ECredentials.swift; sourceTree = "<group>"; };
@@ -109,6 +111,7 @@
 				WRK102 /* AiStroykaWorkerAppDelegate.swift */,
 				WRK103 /* AppState.swift */,
 				WRK104 /* RootView.swift */,
+				WRK134 /* WorkerSemanticColors.swift */,
 				WRK133 /* UITestLaunchHooks.swift */,
 				WRK051P /* Persistence */,
 				WRK051S /* Services */,

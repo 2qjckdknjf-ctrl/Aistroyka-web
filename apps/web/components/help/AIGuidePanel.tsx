@@ -209,7 +209,7 @@ export function AIGuidePanel() {
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="fixed bottom-5 right-5 z-30 rounded-full bg-aistroyka-accent px-4 py-3 text-aistroyka-subheadline font-semibold text-white shadow-lg hover:opacity-95"
+        className="fixed bottom-5 right-5 z-30 rounded-full bg-aistroyka-accent px-4 py-3 text-aistroyka-subheadline font-semibold text-aistroyka-text-inverse shadow-lg hover:opacity-95"
         aria-expanded={open}
         aria-controls="ai-guide-panel"
       >

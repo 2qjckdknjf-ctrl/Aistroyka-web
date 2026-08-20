@@ -130,7 +130,7 @@ export function AdminBillingPilotClient({
               type="button"
               onClick={() => lookupId && fetchDiagnostics(lookupId)}
               disabled={loading || !lookupId.trim()}
-              className="rounded bg-aistroyka-accent px-aistroyka-4 py-aistroyka-2 text-sm font-medium text-white disabled:opacity-50"
+              className="rounded bg-aistroyka-accent px-aistroyka-4 py-aistroyka-2 text-sm font-medium text-aistroyka-text-inverse disabled:opacity-50"
             >
               {tDetail("lookup")}
             </button>

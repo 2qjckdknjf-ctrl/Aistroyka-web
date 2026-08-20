@@ -1,6 +1,7 @@
 "use client";
 
 import { Link } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 import { computeProjection } from "@/lib/intelligence/projection";
 import { computeGovernance } from "@/lib/intelligence/governance";
 import { computeStrategicRisk } from "@/lib/intelligence/strategicRisk";
@@ -15,6 +16,7 @@ import { getNextActionHref, getNextActionCtaLabel } from "@/lib/intelligence/nex
 import { validateAnalysisResult } from "@/lib/api/validateAnalysisResult";
 import type { AnalysisSnapshot } from "@/lib/intelligence/metrics";
 import type { AiAnalysis } from "@/lib/types";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 interface PreviousSnapshot {
   completion_percent: number;
@@ -36,20 +38,20 @@ export function NextActions({
   previousSnapshot: PreviousSnapshot | null;
   projectId?: string;
 }) {
+  const tDetail = useTranslations("dashboardDetail");
   if (history.length === 0) {
     return (
-      <div className="rounded-lg border border-aistroyka-border-subtle bg-white p-4 sm:p-6">
+      <DashboardGlassCard>
         <div className="text-base font-semibold text-aistroyka-text-primary">
-          Next actions (from AI analyses)
+          {tDetail("nextActionsFromAi")}
         </div>
         <p className="mt-2 text-sm text-aistroyka-warning">
-          Not enough analysis history yet — actions appear after repeated AI runs.
+          {tDetail("nextActionsNotEnoughHistory")}
         </p>
         <p className="mt-1 text-sm text-aistroyka-text-secondary">
-          Upload media and run analysis; this list is separate from the dashboard Operations queue and
-          tenant alerts.
+          {tDetail("nextActionsHistoryHint")}
         </p>
-      </div>
+      </DashboardGlassCard>
     );
   }
 
@@ -129,13 +131,12 @@ export function NextActions({
   }
 
   return (
-    <div className="rounded-lg border border-aistroyka-border-subtle bg-white p-4 sm:p-6">
+    <DashboardGlassCard>
       <div className="text-base font-semibold text-aistroyka-text-primary">
-        Next actions (from AI analyses)
+        {tDetail("nextActionsFromAi")}
       </div>
       <p className="mt-1 text-xs text-aistroyka-text-tertiary">
-        Derived from this project&apos;s analysis history — use links to open the right tab on the
-        dashboard project view.
+        {tDetail("nextActionsDerivedHint")}
       </p>
       <ul className="mt-4 space-y-0">
         {actions.map((action, idx) => (
@@ -154,7 +155,7 @@ export function NextActions({
             </div>
             <p className="mt-1.5 text-sm text-aistroyka-text-secondary">{action.rationale}</p>
             <p className="mt-1 text-xs text-aistroyka-text-tertiary">
-              Next: {action.next_step}
+              {tDetail("nextActionsNextPrefix")} {action.next_step}
             </p>
             {projectId && (
               <Link
@@ -172,9 +173,9 @@ export function NextActions({
           href={`/dashboard/projects/${projectId}?tab=intelligence`}
           className="mt-4 inline-block text-sm text-aistroyka-text-secondary hover:text-aistroyka-accent hover:underline"
         >
-          Full intelligence tab →
+          {tDetail("fullIntelligenceTabArrow")}
         </Link>
       )}
-    </div>
+    </DashboardGlassCard>
   );
 }

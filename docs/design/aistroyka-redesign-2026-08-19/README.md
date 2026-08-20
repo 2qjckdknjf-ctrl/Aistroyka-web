@@ -28,5 +28,6 @@ Vertical slices against Memory OS record `56263de1-d0a9-48b6-8275-e40df7391f5a` 
 | 22 | Workload inbox chrome | `21_SLICE_22_WORKLOAD.md` |
 | 23 | Notifications density | `22_SLICE_23_NOTIFICATIONS.md` |
 | 24 | AI requests status density | `23_SLICE_24_AI_STATUS.md` |
+| 25 | Canon audit remediation (web+iOS+Android) | `24_AUDIT_CANON_REMEDIATION_2026-08-21.md` |
 
-Not in these slices: Gantt (absent), drawing inspector (absent), entitlement cutover. Publication via PR when requested.
+Not in these slices: Gantt (absent), drawing inspector (absent), entitlement cutover.

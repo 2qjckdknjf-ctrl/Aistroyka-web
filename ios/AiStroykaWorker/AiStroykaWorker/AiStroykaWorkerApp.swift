@@ -17,6 +17,8 @@ struct AiStroykaWorkerApp: App {
         WindowGroup {
             RootView()
                 .environmentObject(appState)
+                .preferredColorScheme(.dark)
+                .background(WorkerSemanticColors.pageBackground)
         }
     }
 }

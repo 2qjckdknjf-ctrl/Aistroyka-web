@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui-lite";
+import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 
 type HealthClassification = "Healthy" | "Moderate" | "Unstable" | "Critical";
 type StrategicClassification = "Stable" | "Watch" | "Critical";
@@ -53,20 +54,18 @@ export function ExecutiveOverviewBlock({
   const tDetail = useTranslations("dashboardDetail");
   if (!hasData) {
     return (
-      <div className="rounded-lg border border-aistroyka-border-subtle bg-white p-4 sm:p-6">
+      <DashboardGlassCard>
         <p className="text-sm text-aistroyka-text-secondary">
           {tDetail("executiveOverviewEmpty")}
         </p>
-      </div>
+      </DashboardGlassCard>
     );
   }
 
   const { bar, tint, badgeVariant } = healthStatusStyles(healthClassification);
 
   return (
-    <div
-      className={`rounded-lg border border-aistroyka-border-subtle border-l-4 ${bar} ${tint} p-4 sm:p-6`}
-    >
+    <DashboardGlassCard className={`border-l-4 ${bar} ${tint}`}>
       {/* Health as dominant KPI: large, central */}
       <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-baseline gap-3">
@@ -110,6 +109,6 @@ export function ExecutiveOverviewBlock({
           {executiveSummary}
         </p>
       ) : null}
-    </div>
+    </DashboardGlassCard>
   );
 }
