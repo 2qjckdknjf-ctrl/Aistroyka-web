@@ -38,8 +38,13 @@ struct AITabView: View {
                             }
                         }
                     }
+                    .aistroykaListChrome(
+                        pageBackground: ManagerSemanticColors.pageBackground,
+                        surfaceMuted: ManagerSemanticColors.surfaceMuted
+                    )
                 }
             }
+            .aistroykaPageBackground(ManagerSemanticColors.pageBackground)
             .navigationTitle(NSLocalizedString("mgr_tab_ai", comment: ""))
             .refreshable { await loadAsync() }
             .onAppear { loadIfNeeded() }

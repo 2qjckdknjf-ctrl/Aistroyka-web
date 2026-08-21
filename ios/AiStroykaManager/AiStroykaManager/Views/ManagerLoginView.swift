@@ -75,11 +75,14 @@ struct ManagerLoginView: View {
                 Section {
                     Button(action: signIn) {
                         HStack {
-                            if isLoading { ProgressView().scaleEffect(0.8) }
+                            if isLoading { ProgressView().tint(ManagerSemanticColors.onPrimary) }
                             Text(signInButtonTitle)
                         }
                         .frame(maxWidth: .infinity)
+                        .padding(.vertical, 4)
+                        .foregroundColor(ManagerSemanticColors.onPrimary)
                     }
+                    .listRowBackground(ManagerSemanticColors.primary)
                     .disabled(isLoading || email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || password.isEmpty || !networkMonitor.isConnected)
                     .accessibilityIdentifier("pilot_manager_sign_in")
                 }
@@ -96,6 +99,11 @@ struct ManagerLoginView: View {
                     .disabled(isLoading)
                 }
             }
+            .aistroykaFormChrome(
+                pageBackground: ManagerSemanticColors.pageBackground,
+                surfaceMuted: ManagerSemanticColors.surfaceMuted
+            )
+            .aistroykaPageBackground(ManagerSemanticColors.pageBackground)
             .navigationTitle(NSLocalizedString("mgr_nav_title", comment: ""))
             .navigationBarTitleDisplayMode(.inline)
             .onAppear {

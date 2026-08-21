@@ -24,6 +24,7 @@ struct ProjectIntelligenceView: View {
                 intelligenceList(d)
             }
         }
+        .aistroykaPageBackground(ManagerSemanticColors.pageBackground)
         .navigationTitle(NSLocalizedString("mgr_intelligence_title", comment: ""))
         .accessibilityIdentifier("pilot_manager_intelligence")
         .refreshable { await loadAsync() }
@@ -80,6 +81,10 @@ struct ProjectIntelligenceView: View {
                 .accessibilityIdentifier("pilot_manager_open_copilot")
             }
         }
+        .aistroykaListChrome(
+            pageBackground: ManagerSemanticColors.pageBackground,
+            surfaceMuted: ManagerSemanticColors.surfaceMuted
+        )
     }
 
     private func load() {

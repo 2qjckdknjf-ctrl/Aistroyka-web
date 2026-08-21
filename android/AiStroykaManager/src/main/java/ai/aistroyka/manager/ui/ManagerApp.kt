@@ -605,7 +605,7 @@ private fun DetailScreen(vm: ManagerViewModel) {
             }
             state.actionMessage?.let {
                 Spacer(Modifier.height(16.dp))
-                Text(it, color = MaterialTheme.colorScheme.primary)
+                Text(it, color = ManagerSemanticColors.success())
             }
             if (state.busy) {
                 Spacer(Modifier.height(16.dp))

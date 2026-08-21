@@ -40,6 +40,10 @@ struct ManagerSettingsView: View {
                 LabeledContent(NSLocalizedString("mgr_role", comment: ""), value: meData?.role ?? (meLoadFailed ? "—" : "…"))
             }
         }
+        .aistroykaListChrome(
+            pageBackground: ManagerSemanticColors.pageBackground,
+            surfaceMuted: ManagerSemanticColors.surfaceMuted
+        )
         .navigationTitle(NSLocalizedString("mgr_settings", comment: ""))
         .task {
             guard sessionState.isLoggedIn else { return }

@@ -104,6 +104,7 @@ struct ReportCreateView: View {
             if submitted { Text(NSLocalizedString("worker_submitted", comment: "")).foregroundColor(.green) }
         }
         .padding()
+        .aistroykaPageBackground(WorkerSemanticColors.pageBackground)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("pilot_worker_report_compose")
         .navigationTitle(NSLocalizedString("worker_new_report", comment: ""))

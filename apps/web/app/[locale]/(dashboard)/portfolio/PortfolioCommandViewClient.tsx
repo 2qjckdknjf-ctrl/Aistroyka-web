@@ -125,7 +125,7 @@ export function PortfolioCommandViewClient() {
       )}
 
       {governanceOpenCount > 0 && (
-        <DashboardGlassCard className="border-l-4 border-l-aistroyka-warning p-4 bg-aistroyka-surface">
+        <DashboardGlassCard className="border-l-4 border-l-aistroyka-warning p-4">
           <p className="text-sm text-aistroyka-text-primary">
             <strong>{governanceOpenCount}</strong> {tDetail("openGovernanceCases")}
             {governanceCriticalOpenCount > 0
@@ -143,7 +143,7 @@ export function PortfolioCommandViewClient() {
       )}
 
       {commercialOverdueCount > 0 && (
-        <DashboardGlassCard className="border-l-4 border-l-aistroyka-error p-4 bg-aistroyka-surface">
+        <DashboardGlassCard className="border-l-4 border-l-aistroyka-error p-4">
           <p className="text-sm text-aistroyka-text-primary">
             <strong>{commercialOverdueCount}</strong> {tDetail("commercialBillingLinesOverdue")}
             {commercialOpenUnpaidCount > commercialOverdueCount

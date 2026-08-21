@@ -304,7 +304,7 @@ private fun WorkerHomeScaffold(
                     ) {
                         Text(
                             text = "${shortId} • $statusLabel",
-                            color = if (report.status == "changes_requested") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                            color = if (report.status == "changes_requested") WorkerSemanticColors.warning() else MaterialTheme.colorScheme.onSurface
                         )
                     }
                 }
@@ -387,7 +387,7 @@ private fun WorkerResubmitScreen(vm: WorkerViewModel, state: WorkerUiState) {
                     minLines = 2,
                 )
                 state.submitMessage?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-                state.doneMessage?.let { Text(it, color = MaterialTheme.colorScheme.primary) }
+                state.doneMessage?.let { Text(it, color = WorkerSemanticColors.success()) }
                 Button(
                     onClick = { vm.submitReport() },
                     enabled = !state.busy && state.doneMessage == null,
@@ -489,7 +489,7 @@ private fun WorkerReportScreen(vm: WorkerViewModel, state: WorkerUiState) {
                 minLines = 2,
             )
             state.submitMessage?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-            state.doneMessage?.let { Text(it, color = MaterialTheme.colorScheme.primary) }
+            state.doneMessage?.let { Text(it, color = WorkerSemanticColors.success()) }
             Button(
                 onClick = { vm.submitReport() },
                 enabled = !state.busy && state.doneMessage == null,

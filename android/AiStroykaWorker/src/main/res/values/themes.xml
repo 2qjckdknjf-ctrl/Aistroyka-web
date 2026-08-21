@@ -1,12 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.AiStroykaWorker" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+    <style name="Theme.AiStroykaWorker" parent="Theme.MaterialComponents.NoActionBar">
         <item name="colorPrimary">@color/aistroyka_accent</item>
         <item name="colorPrimaryDark">@color/aistroyka_bg_primary</item>
         <item name="colorAccent">@color/aistroyka_accent</item>
+        <item name="colorOnPrimary">@color/aistroyka_on_primary</item>
+        <item name="colorError">@color/aistroyka_error</item>
         <item name="android:statusBarColor">@color/aistroyka_bg_primary</item>
         <item name="android:navigationBarColor">@color/aistroyka_bg_primary</item>
         <item name="android:windowBackground">@color/aistroyka_bg_primary</item>
-        <item name="android:forceDarkAllowed">true</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:textColorPrimary">@color/aistroyka_text_primary</item>
+        <item name="android:textColorSecondary">@color/aistroyka_text_secondary</item>
+        <item name="android:forceDarkAllowed">false</item>
     </style>
 </resources>

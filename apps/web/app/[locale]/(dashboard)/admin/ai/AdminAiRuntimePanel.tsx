@@ -90,7 +90,7 @@ export function AdminAiRuntimePanel({ tenantId }: { tenantId: string | null }) {
       {q.data && (
         <div className="space-y-4">
           {q.data.data.drilldown.complete_count === 0 && q.data.data.drilldown.error_count === 0 && (
-            <DashboardGlassCard className="border-l-4 border-l-aistroyka-info bg-aistroyka-surface-raised">
+            <DashboardGlassCard className="border-l-4 border-l-aistroyka-info">
               <p className="text-sm font-medium text-aistroyka-text-primary">{tDetail("noAiRuntimeEventsInWindow")}</p>
               <p className="mt-1 text-sm text-aistroyka-text-secondary">
                 {tDetail("aiRuntimeWindowTooNarrowHint")} <strong>7d</strong>.

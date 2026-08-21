@@ -52,7 +52,7 @@ struct HomeView: View {
                         .accessibilityIdentifier(executor.isPaused ? "pilot_worker_resume_queue" : "pilot_worker_pause_queue")
                     }
                     .padding(8)
-                    .background(Color.orange.opacity(0.15))
+                    .background(WorkerSemanticColors.warningSurface)
                     .cornerRadius(8)
                 }
                 if store.pendingCount > 0 {
@@ -68,7 +68,7 @@ struct HomeView: View {
                         .accessibilityIdentifier("pilot_worker_resume_uploads")
                     }
                     .padding(8)
-                    .background(Color.orange.opacity(0.15))
+                    .background(WorkerSemanticColors.warningSurface)
                     .cornerRadius(8)
                 }
                 HStack {
@@ -153,6 +153,7 @@ struct HomeView: View {
             }
             .padding()
             }
+            .aistroykaPageBackground(WorkerSemanticColors.pageBackground)
             .accessibilityIdentifier("pilot_worker_home_scroll")
             .navigationTitle(project.name ?? project.id)
             .navigationBarTitleDisplayMode(.inline)
@@ -181,7 +182,7 @@ struct HomeView: View {
                         WorkerHowItWorksContent()
                             .padding()
                     }
-                    .background(Color(.systemGroupedBackground))
+                    .background(WorkerSemanticColors.pageBackground)
                     .navigationTitle(NSLocalizedString("worker_how_title", comment: ""))
                     .navigationBarTitleDisplayMode(.inline)
                     .toolbar {
@@ -328,7 +329,7 @@ struct HomeView: View {
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.orange.opacity(0.12))
+        .background(WorkerSemanticColors.warningSurface)
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 

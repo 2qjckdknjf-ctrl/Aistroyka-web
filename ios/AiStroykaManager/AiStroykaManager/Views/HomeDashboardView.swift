@@ -27,7 +27,7 @@ struct HomeDashboardView: View {
                     content
                 }
             }
-            .background(Color(.systemGroupedBackground))
+            .background(ManagerSemanticColors.pageBackground)
             .navigationTitle(NSLocalizedString("mgr_nav_home", comment: ""))
             .refreshable { await loadAsync() }
             .onAppear { loadIfNeeded() }
@@ -122,7 +122,7 @@ struct HomeDashboardView: View {
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(.secondarySystemGroupedBackground))
+        .background(ManagerSemanticColors.surfaceMuted)
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
@@ -160,7 +160,7 @@ struct HomeDashboardView: View {
                 }
                 .padding()
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color(.secondarySystemGroupedBackground))
+                .background(ManagerSemanticColors.surfaceMuted)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
             }
             if let openToday = queues.tasksOpenToday, !openToday.isEmpty {
@@ -178,7 +178,7 @@ struct HomeDashboardView: View {
                 }
                 .padding()
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color(.secondarySystemGroupedBackground))
+                .background(ManagerSemanticColors.surfaceMuted)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
             }
             if let pending = queues.reportsPendingReview, !pending.isEmpty {
@@ -196,7 +196,7 @@ struct HomeDashboardView: View {
                 }
                 .padding()
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color(.secondarySystemGroupedBackground))
+                .background(ManagerSemanticColors.surfaceMuted)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
             }
         }

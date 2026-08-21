@@ -29,8 +29,13 @@ struct TeamOverviewView: View {
                             WorkerRowView(worker: w)
                         }
                     }
+                    .aistroykaListChrome(
+                        pageBackground: ManagerSemanticColors.pageBackground,
+                        surfaceMuted: ManagerSemanticColors.surfaceMuted
+                    )
                 }
             }
+            .aistroykaPageBackground(ManagerSemanticColors.pageBackground)
             .navigationTitle(NSLocalizedString("mgr_tab_team", comment: ""))
             .refreshable { await loadAsync() }
             .onAppear { loadIfNeeded() }
@@ -105,6 +110,10 @@ struct WorkerDetailView: View {
                 }
             }
         }
+        .aistroykaListChrome(
+            pageBackground: ManagerSemanticColors.pageBackground,
+            surfaceMuted: ManagerSemanticColors.surfaceMuted
+        )
         .navigationTitle(NSLocalizedString("mgr_worker", comment: ""))
     }
 

@@ -39,6 +39,11 @@ struct ManagerMoreView: View {
                     NavigationLink(NSLocalizedString("mgr_notifications", comment: ""), value: ManagerMoreDestination.notifications)
                 }
             }
+            .aistroykaListChrome(
+                pageBackground: ManagerSemanticColors.pageBackground,
+                surfaceMuted: ManagerSemanticColors.surfaceMuted
+            )
+            .aistroykaPageBackground(ManagerSemanticColors.pageBackground)
             .navigationTitle(NSLocalizedString("mgr_tab_more", comment: ""))
             .navigationDestination(for: ManagerMoreDestination.self) { dest in
                 switch dest {

@@ -46,6 +46,11 @@ struct DiagnosticsView: View {
                 }
             }
         }
+        .aistroykaListChrome(
+            pageBackground: WorkerSemanticColors.pageBackground,
+            surfaceMuted: WorkerSemanticColors.surfaceMuted
+        )
+        .aistroykaPageBackground(WorkerSemanticColors.pageBackground)
         .navigationTitle("Diagnostics")
     }
 }

@@ -307,8 +307,8 @@ public struct TaskChatView: View {
                             .padding(10)
                     }
                 }
-                .background(mine ? Color.accentColor.opacity(0.85) : Color.secondary.opacity(0.15))
-                .foregroundColor(mine ? .white : .primary)
+                .background(mine ? Color.accentColor.opacity(0.85) : AistroykaCanonColors.surfaceMuted)
+                .foregroundColor(mine ? AistroykaCanonColors.onPrimary : .primary)
                 .clipShape(RoundedRectangle(cornerRadius: 14))
                 HStack(spacing: 8) {
                     Text(msg.createdAt)
@@ -376,7 +376,7 @@ public struct TaskChatView: View {
             .padding(.horizontal)
             .padding(.vertical, 8)
         }
-        .background(.ultraThinMaterial)
+        .background(AistroykaCanonColors.surfaceMuted)
     }
 }
 

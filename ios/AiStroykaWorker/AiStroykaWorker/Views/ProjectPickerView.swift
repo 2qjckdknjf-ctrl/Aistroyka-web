@@ -38,8 +38,13 @@ struct ProjectPickerView: View {
                         }
                         .accessibilityIdentifier("pilot_worker_project_\(p.id)")
                     }
+                    .aistroykaListChrome(
+                        pageBackground: WorkerSemanticColors.pageBackground,
+                        surfaceMuted: WorkerSemanticColors.surfaceMuted
+                    )
                 }
             }
+            .aistroykaPageBackground(WorkerSemanticColors.pageBackground)
             .navigationTitle(NSLocalizedString("worker_select_project", comment: ""))
         }
     }

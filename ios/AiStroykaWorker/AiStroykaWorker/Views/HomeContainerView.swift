@@ -63,6 +63,7 @@ struct HomeContainerView: View {
                 .accessibilityIdentifier("pilot_worker_home")
             }
         }
+        .aistroykaPageBackground(WorkerSemanticColors.pageBackground)
         .accessibilityIdentifier("pilot_worker_home_container")
         .onAppear {
             loadProjects()

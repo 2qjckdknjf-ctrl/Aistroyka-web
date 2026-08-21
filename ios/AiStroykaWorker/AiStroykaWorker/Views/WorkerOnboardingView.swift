@@ -37,7 +37,7 @@ struct WorkerOnboardingView: View {
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(Color.accentColor)
-                        .foregroundColor(.white)
+                        .foregroundColor(WorkerSemanticColors.onPrimary)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
                 .accessibilityIdentifier("worker_onboarding_continue")
@@ -54,7 +54,7 @@ struct WorkerOnboardingView: View {
             }
             .padding()
         }
-        .background(Color(.systemGroupedBackground))
+        .background(WorkerSemanticColors.pageBackground)
     }
 
     private func onboardingPage(tag: Int, titleKey: String, bodyKey: String) -> some View {

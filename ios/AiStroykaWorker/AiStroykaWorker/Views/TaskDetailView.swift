@@ -35,10 +35,12 @@ struct TaskDetailView: View {
                     navigateToReport = true
                 }
                 .buttonStyle(.borderedProminent)
+                .tint(WorkerSemanticColors.primary)
                 .accessibilityIdentifier("pilot_worker_start_report")
             }
             .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
+            .background(WorkerSemanticColors.surfaceMuted)
 
             Divider()
 
@@ -75,6 +77,7 @@ struct TaskDetailView: View {
             )
                 .accessibilityIdentifier("pilot_worker_task_chat")
         }
+        .aistroykaPageBackground(WorkerSemanticColors.pageBackground)
         .navigationTitle(NSLocalizedString("worker_task_title", comment: ""))
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(isPresented: $navigateToReport) {

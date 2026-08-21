@@ -8,6 +8,7 @@ import SwiftUI
 enum WorkerSemanticColors {
     static let pageBackground = Color(red: 11.0 / 255.0, green: 15.0 / 255.0, blue: 25.0 / 255.0)
     static let inputSurface = Color(red: 31.0 / 255.0, green: 41.0 / 255.0, blue: 55.0 / 255.0)
+    static let surfaceMuted = inputSurface
     static let primary = Color.accentColor
     static let onPrimary = Color(red: 11.0 / 255.0, green: 15.0 / 255.0, blue: 25.0 / 255.0)
     static let primaryDisabled = Color(red: 156.0 / 255.0, green: 163.0 / 255.0, blue: 175.0 / 255.0)
