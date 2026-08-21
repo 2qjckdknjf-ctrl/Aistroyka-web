@@ -91,6 +91,7 @@ struct ReportResubmitView: View {
                         enqueueSubmit()
                     }
                     .buttonStyle(.borderedProminent)
+                    .tint(WorkerSemanticColors.primary)
                     .disabled(submitted || submitInFlight)
                     .accessibilityIdentifier("pilot_worker_submit_again")
                 } else if let st = detail?.status {
@@ -108,6 +109,7 @@ struct ReportResubmitView: View {
             }
             .padding()
         }
+        .aistroykaPageBackground(WorkerSemanticColors.pageBackground)
         .navigationTitle(NSLocalizedString("worker_report_resubmit_title", comment: ""))
         .navigationBarTitleDisplayMode(.inline)
         .onAppear(perform: loadDetail)

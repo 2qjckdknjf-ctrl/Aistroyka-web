@@ -31,6 +31,7 @@ struct ReportsInboxView: View {
                     listContent
                 }
             }
+            .aistroykaPageBackground(ManagerSemanticColors.pageBackground)
             .navigationTitle(NSLocalizedString("mgr_tab_reports", comment: ""))
             .refreshable { await refreshAsync() }
             .onAppear {
@@ -55,7 +56,7 @@ struct ReportsInboxView: View {
                     .padding(.horizontal)
                 }
                 .padding(.vertical, 8)
-                .background(Color(.secondarySystemGroupedBackground))
+                .background(ManagerSemanticColors.surfaceMuted)
             }
             List(reports, id: \.id) { r in
                 NavigationLink(destination: ReportDetailReviewView(reportId: r.id)) {
@@ -63,6 +64,10 @@ struct ReportsInboxView: View {
                 }
                 .accessibilityIdentifier("pilot_manager_report_\(r.id)")
             }
+            .aistroykaListChrome(
+                pageBackground: ManagerSemanticColors.pageBackground,
+                surfaceMuted: ManagerSemanticColors.surfaceMuted
+            )
         }
     }
 
@@ -225,6 +230,10 @@ struct ReportDetailReviewView: View {
                         }
                     }
                 }
+                .aistroykaListChrome(
+                    pageBackground: ManagerSemanticColors.pageBackground,
+                    surfaceMuted: ManagerSemanticColors.surfaceMuted
+                )
                 .onChange(of: managerNoteText) { _ in
                     if reviewActionError != nil { reviewActionError = nil }
                 }
@@ -353,8 +362,8 @@ struct FilterChip: View {
                 .font(.caption)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
-                .background(selected ? Color.accentColor : Color(.tertiarySystemFill))
-                .foregroundColor(selected ? .white : .primary)
+                .background(selected ? Color.accentColor : ManagerSemanticColors.filterUnselected)
+                .foregroundColor(selected ? ManagerSemanticColors.onPrimary : .primary)
                 .clipShape(Capsule())
         }
         .buttonStyle(.plain)

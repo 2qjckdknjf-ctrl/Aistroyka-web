@@ -218,7 +218,7 @@ export function AIGuidePanel() {
 
       {open ? (
         <div id="ai-guide-panel">
-          <DashboardGlassCard className="fixed bottom-20 right-5 z-30 w-[min(92vw,28rem)] border-aistroyka-accent/30 bg-aistroyka-surface p-4 shadow-2xl">
+          <DashboardGlassCard className="fixed bottom-20 right-5 z-30 w-[min(92vw,28rem)] border-aistroyka-accent/30 p-4 shadow-2xl">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h3 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">{t("title")}</h3>

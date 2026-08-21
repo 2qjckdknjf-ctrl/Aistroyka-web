@@ -28,6 +28,8 @@ struct EmptyStateView: View {
             if let actionTitle = actionTitle, let action = action {
                 Button(actionTitle, action: action)
                     .buttonStyle(.borderedProminent)
+                    .tint(.accentColor)
+                    .foregroundStyle(AistroykaCanonColors.onPrimary)
             }
         }
         .padding()

@@ -105,7 +105,7 @@ export default async function PortfolioPage() {
 
   return (
     <>
-      <Link href="/projects" className="mb-aistroyka-6 inline-block text-aistroyka-subheadline font-medium text-aistroyka-text-secondary hover:text-aistroyka-accent focus:outline-none focus:ring-2 focus:ring-aistroyka-accent focus:ring-offset-2 rounded-aistroyka-md">
+      <Link href="/dashboard/projects" className="mb-aistroyka-6 inline-block text-aistroyka-subheadline font-medium text-aistroyka-text-secondary hover:text-aistroyka-accent focus:outline-none focus:ring-2 focus:ring-aistroyka-accent focus:ring-offset-2 rounded-aistroyka-md">
         {t("backToProjects")}
       </Link>
       <DashboardGlassCard className="mb-aistroyka-8 border-l-4 border-l-aistroyka-accent">

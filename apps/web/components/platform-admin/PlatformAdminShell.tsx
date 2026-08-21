@@ -9,7 +9,7 @@ export function PlatformAdminShell({ children }: { children: React.ReactNode }) 
 
   return (
     <div className="min-h-screen bg-aistroyka-bg-primary text-aistroyka-text-primary">
-      <header className="border-b border-aistroyka-border-subtle bg-aistroyka-surface">
+      <header className="surface-glass-chrome border-b border-[var(--lg-border)]">
         <div className="mx-auto flex max-w-5xl flex-col gap-aistroyka-3 px-aistroyka-4 py-aistroyka-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-aistroyka-caption font-semibold uppercase tracking-wide text-aistroyka-text-tertiary">
@@ -31,7 +31,7 @@ export function PlatformAdminShell({ children }: { children: React.ReactNode }) 
                   className={`rounded-card px-aistroyka-3 py-aistroyka-2 text-aistroyka-subheadline font-medium ${
                     active
                       ? "bg-aistroyka-accent text-aistroyka-text-inverse"
-                      : "bg-aistroyka-surface-raised text-aistroyka-text-secondary hover:text-aistroyka-accent"
+                      : "surface-glass-muted text-aistroyka-text-secondary hover:text-aistroyka-accent"
                   }`}
                 >
                   {item.label}

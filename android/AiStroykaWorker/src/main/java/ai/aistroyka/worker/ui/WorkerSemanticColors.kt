@@ -6,6 +6,7 @@ import androidx.compose.ui.graphics.Color
 
 object WorkerSemanticColors {
     private val SuccessGreen = Color(0xFF34C759)
+    private val WarningOrange = Color(0xFFFF9500)
 
     @Composable
     fun pageBackground() = MaterialTheme.colorScheme.background
@@ -15,6 +16,9 @@ object WorkerSemanticColors {
 
     @Composable
     fun success() = SuccessGreen
+
+    @Composable
+    fun warning() = WarningOrange
 
     @Composable
     fun primary() = MaterialTheme.colorScheme.primary

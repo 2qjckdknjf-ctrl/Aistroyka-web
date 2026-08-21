@@ -32,9 +32,14 @@ struct ProjectsListView: View {
                                 .accessibilityIdentifier("pilot_manager_project_\(p.id)")
                         }
                     }
+                    .aistroykaListChrome(
+                        pageBackground: ManagerSemanticColors.pageBackground,
+                        surfaceMuted: ManagerSemanticColors.surfaceMuted
+                    )
                     .accessibilityIdentifier("pilot_manager_projects_list")
                 }
             }
+            .aistroykaPageBackground(ManagerSemanticColors.pageBackground)
             .navigationTitle(NSLocalizedString("mgr_tab_projects", comment: ""))
             .refreshable { await loadAsync() }
             .onAppear { loadIfNeeded() }
@@ -73,6 +78,10 @@ struct ProjectDetailPlaceholderView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
+        .aistroykaListChrome(
+            pageBackground: ManagerSemanticColors.pageBackground,
+            surfaceMuted: ManagerSemanticColors.surfaceMuted
+        )
         .navigationTitle(name)
     }
 }

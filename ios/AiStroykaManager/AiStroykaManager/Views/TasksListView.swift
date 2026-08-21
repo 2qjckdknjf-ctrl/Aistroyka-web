@@ -38,6 +38,7 @@ struct TasksListView: View {
                     listContent
                 }
             }
+            .aistroykaPageBackground(ManagerSemanticColors.pageBackground)
             .navigationTitle(NSLocalizedString("mgr_tab_tasks", comment: ""))
             .toolbar { ToolbarItem(placement: .primaryAction) { Button(NSLocalizedString("mgr_new", comment: ""), systemImage: "plus") { showCreate = true } } }
             .refreshable { await refreshAsync() }
@@ -77,6 +78,10 @@ struct TasksListView: View {
                     TaskRowView(task: t, hasUnreadChat: unreadByTaskId[t.id] == true)
                 }
             }
+            .aistroykaListChrome(
+                pageBackground: ManagerSemanticColors.pageBackground,
+                surfaceMuted: ManagerSemanticColors.surfaceMuted
+            )
         }
     }
 
@@ -96,12 +101,13 @@ struct TasksListView: View {
             .padding(.horizontal)
         }
         .padding(.vertical, 8)
-        .background(Color(.secondarySystemGroupedBackground))
+        .background(ManagerSemanticColors.surfaceMuted)
     }
 
     private var createButton: some View {
         Button(NSLocalizedString("mgr_new_task", comment: "")) { showCreate = true }
             .buttonStyle(.borderedProminent)
+            .tint(ManagerSemanticColors.primary)
             .padding()
     }
 
@@ -275,9 +281,14 @@ struct TaskDetailManagerView: View {
                         }
                     }
                     .frame(maxHeight: 280)
+                    .aistroykaListChrome(
+                        pageBackground: ManagerSemanticColors.pageBackground,
+                        surfaceMuted: ManagerSemanticColors.surfaceMuted
+                    )
                     TaskChatView(taskId: taskId, currentUserId: managerUserId)
                         .accessibilityIdentifier("pilot_manager_task_chat")
                 }
+                .aistroykaPageBackground(ManagerSemanticColors.pageBackground)
                 .navigationTitle(t.title ?? NSLocalizedString("mgr_task_section", comment: ""))
                 .refreshable { await loadAsync() }
                 .sheet(isPresented: $showAssignPicker) {
@@ -407,8 +418,13 @@ struct TaskAssigneePickerView: View {
                             .padding(.vertical, 4)
                         }
                     }
+                    .aistroykaListChrome(
+                        pageBackground: ManagerSemanticColors.pageBackground,
+                        surfaceMuted: ManagerSemanticColors.surfaceMuted
+                    )
                 }
             }
+            .aistroykaPageBackground(ManagerSemanticColors.pageBackground)
             .navigationTitle(NSLocalizedString("mgr_assign_to", comment: ""))
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button(NSLocalizedString("mgr_cancel", comment: "")) { onDismiss() } }
@@ -486,6 +502,11 @@ struct TaskCreateEditView: View {
                     }
                 }
             }
+            .aistroykaFormChrome(
+                pageBackground: ManagerSemanticColors.pageBackground,
+                surfaceMuted: ManagerSemanticColors.surfaceMuted
+            )
+            .aistroykaPageBackground(ManagerSemanticColors.pageBackground)
             .navigationTitle(NSLocalizedString("mgr_new_task", comment: ""))
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button(NSLocalizedString("mgr_cancel", comment: "")) { onDismiss() } }

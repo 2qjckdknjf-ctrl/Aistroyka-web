@@ -98,7 +98,7 @@ export function ProjectIntelligenceClient({ projectId }: { projectId: string }) 
     return (
       <section className="space-y-4" aria-label={tDetail("intelligenceError")}>
         <ErrorState message={title} onRetry={() => refetch()} />
-        <DashboardGlassCard className="border-l-4 border-l-aistroyka-info bg-aistroyka-surface-raised">
+        <DashboardGlassCard className="border-l-4 border-l-aistroyka-info">
           <p className="text-sm text-aistroyka-text-secondary">{hint}</p>
           {ref && (
             <p className="mt-2 text-xs font-mono text-aistroyka-text-tertiary">

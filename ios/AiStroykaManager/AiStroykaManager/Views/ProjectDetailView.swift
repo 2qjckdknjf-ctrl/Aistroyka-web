@@ -31,6 +31,7 @@ struct ProjectDetailView: View {
                 EmptyStateView(title: NSLocalizedString("mgr_project_not_found", comment: ""), subtitle: nil)
             }
         }
+        .aistroykaPageBackground(ManagerSemanticColors.pageBackground)
         .navigationTitle(project?.name ?? projectName ?? NSLocalizedString("mgr_project", comment: ""))
         .refreshable { await loadAsync() }
         .onAppear { loadIfNeeded() }
@@ -77,6 +78,10 @@ struct ProjectDetailView: View {
                 }
             }
         }
+        .aistroykaListChrome(
+            pageBackground: ManagerSemanticColors.pageBackground,
+            surfaceMuted: ManagerSemanticColors.surfaceMuted
+        )
     }
 
     private func load() {
@@ -156,8 +161,13 @@ struct ProjectAIView: View {
                 List(Array(jobs.enumerated()), id: \.offset) { _, job in
                     ProjectAIRowView(job: job)
                 }
+                .aistroykaListChrome(
+                    pageBackground: ManagerSemanticColors.pageBackground,
+                    surfaceMuted: ManagerSemanticColors.surfaceMuted
+                )
             }
         }
+        .aistroykaPageBackground(ManagerSemanticColors.pageBackground)
         .navigationTitle(String(format: NSLocalizedString("mgr_ai_project_title_fmt", comment: ""), projectName))
         .refreshable { await loadAsync() }
         .onAppear { loadIfNeeded() }
@@ -231,8 +241,13 @@ struct TasksListForProjectView: View {
                         TaskRowView(task: t)
                     }
                 }
+                .aistroykaListChrome(
+                    pageBackground: ManagerSemanticColors.pageBackground,
+                    surfaceMuted: ManagerSemanticColors.surfaceMuted
+                )
             }
         }
+        .aistroykaPageBackground(ManagerSemanticColors.pageBackground)
         .navigationTitle(NSLocalizedString("mgr_tab_tasks", comment: ""))
         .refreshable { await loadAsync() }
         .onAppear { loadIfNeeded() }
@@ -283,8 +298,13 @@ struct ReportsInboxForProjectView: View {
                         ReportRowView(report: r)
                     }
                 }
+                .aistroykaListChrome(
+                    pageBackground: ManagerSemanticColors.pageBackground,
+                    surfaceMuted: ManagerSemanticColors.surfaceMuted
+                )
             }
         }
+        .aistroykaPageBackground(ManagerSemanticColors.pageBackground)
         .navigationTitle(NSLocalizedString("mgr_tab_reports", comment: ""))
         .refreshable { await loadAsync() }
         .onAppear { loadIfNeeded() }

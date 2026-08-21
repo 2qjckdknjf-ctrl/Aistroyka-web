@@ -78,8 +78,13 @@ struct NotificationsView: View {
                         }
                     }
                 }
+                .aistroykaListChrome(
+                    pageBackground: ManagerSemanticColors.pageBackground,
+                    surfaceMuted: ManagerSemanticColors.surfaceMuted
+                )
             }
         }
+        .aistroykaPageBackground(ManagerSemanticColors.pageBackground)
         .navigationTitle(NSLocalizedString("mgr_notifications", comment: ""))
         .refreshable { await loadAsync() }
         .onAppear { loadIfNeeded() }
