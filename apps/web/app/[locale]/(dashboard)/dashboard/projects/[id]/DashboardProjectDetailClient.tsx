@@ -29,6 +29,8 @@ import { ProjectEstimatePanel } from "./ProjectEstimatePanel";
 import { ProjectDecisionsPanel } from "./ProjectDecisionsPanel";
 import { TelegramConnectCard } from "@/components/integrations/TelegramConnectCard";
 import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
+import { AiActionPanel } from "@/components/ai/AiActionPanel";
+import { ProjectVideoDailyAnalysisPanel } from "../../../projects/ProjectVideoDailyAnalysisPanel";
 import { downloadProjectReportsExport } from "@/components/projects/reports-export-ui";
 import {
   DEFAULT_PROJECT_DETAIL_TAB,
@@ -313,6 +315,8 @@ export function DashboardProjectDetailClient({
         </TabPanel>
         <TabPanel id="panel-ai" selected={activeTab === "ai"} aria-labelledby="tab-ai">
           <ProjectAiPanel
+            projectId={projectId}
+            tenantId={project.tenant_id}
             query={aiQuery}
             page={aiPage}
             onPageChange={setAiPage}
@@ -657,44 +661,70 @@ function ProjectUploadsPanel({
 }
 
 function ProjectAiPanel({
+  projectId,
+  tenantId,
   query,
   page,
   onPageChange,
 }: {
+  projectId: string;
+  tenantId: string;
   query: { data?: { data: { id: string; media_id: string; status: string; created_at: string }[]; total: number }; isPending: boolean; isError: boolean };
   page: number;
   onPageChange: (p: number) => void;
 }) {
   const tDetail = useTranslations("dashboardDetail");
-  if (query.isPending) return <Skeleton className="h-48" />;
-  if (query.isError) return <p className="text-aistroyka-text-secondary p-4">{tDetail("failedLoadAiJobs")}</p>;
-  const { data: rows = [], total } = query.data ?? { data: [], total: 0 };
-  if (rows.length === 0 && total === 0) {
-    return <EmptyState icon={<span className="text-2xl">🤖</span>} title={tDetail("ai")} subtitle={tDetail("noAiJobsForProjectYet")} />;
-  }
+  const tPage = useTranslations("dashboardPageMeta");
+  const tProject = useTranslations("projectDetail");
+
   return (
-    <div className="p-4">
-      <Table aria-label={tDetail("projectAiJobs")}>
-        <TableHead>
-          <TableRow>
-            <TableHeaderCell>{tDetail("jobId")}</TableHeaderCell>
-            <TableHeaderCell>{tDetail("media")}</TableHeaderCell>
-            <TableHeaderCell>{tDetail("status")}</TableHeaderCell>
-            <TableHeaderCell>{tDetail("created")}</TableHeaderCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {rows.map((r) => (
-            <TableRow key={r.id}>
-              <TableCell className="font-mono text-sm">{r.id.slice(0, 8)}…</TableCell>
-              <TableCell className="font-mono text-sm">{r.media_id.slice(0, 8)}…</TableCell>
-              <TableCell>{r.status}</TableCell>
-              <TableCell>{new Date(r.created_at).toLocaleDateString()}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-      <TablePagination page={page} pageSize={PAGE_SIZE} totalCount={total} onPageChange={onPageChange} />
+    <div className="space-y-aistroyka-6 p-4">
+      <section>
+        <SectionHeader title={tPage("aiCopilotTitle")} subtitle={tPage("aiCopilotSubtitle")} />
+        <AiActionPanel projectId={projectId} tenantId={tenantId} />
+      </section>
+
+      <section>
+        <SectionHeader title={tProject("videoDailyTitle")} subtitle={tProject("videoDailySubtitle")} />
+        <DashboardGlassCard>
+          <ProjectVideoDailyAnalysisPanel projectId={projectId} />
+        </DashboardGlassCard>
+      </section>
+
+      <section>
+        <SectionHeader title={tDetail("ai")} subtitle={tDetail("projectAiJobs")} />
+        {query.isPending ? (
+          <Skeleton className="h-48" />
+        ) : query.isError ? (
+          <p className="text-aistroyka-text-secondary p-4">{tDetail("failedLoadAiJobs")}</p>
+        ) : (query.data?.total ?? 0) === 0 && (query.data?.data?.length ?? 0) === 0 ? (
+          <EmptyState icon={<span className="text-2xl">🤖</span>} title={tDetail("ai")} subtitle={tDetail("noAiJobsForProjectYet")} />
+        ) : (
+          <div>
+            <Table aria-label={tDetail("projectAiJobs")}>
+              <TableHead>
+                <TableRow>
+                  <TableHeaderCell>{tDetail("jobId")}</TableHeaderCell>
+                  <TableHeaderCell>{tDetail("media")}</TableHeaderCell>
+                  <TableHeaderCell>{tDetail("status")}</TableHeaderCell>
+                  <TableHeaderCell>{tDetail("created")}</TableHeaderCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {(query.data?.data ?? []).map((r) => (
+                  <TableRow key={r.id}>
+                    <TableCell className="font-mono text-sm">{r.id.slice(0, 8)}…</TableCell>
+                    <TableCell className="font-mono text-sm">{r.media_id.slice(0, 8)}…</TableCell>
+                    <TableCell>{r.status}</TableCell>
+                    <TableCell>{new Date(r.created_at).toLocaleDateString()}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <TablePagination page={page} pageSize={PAGE_SIZE} totalCount={query.data?.total ?? 0} onPageChange={onPageChange} />
+          </div>
+        )}
+      </section>
     </div>
   );
 }
