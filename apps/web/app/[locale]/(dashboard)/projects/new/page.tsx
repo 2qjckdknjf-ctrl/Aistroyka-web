@@ -7,7 +7,7 @@ export default async function NewProjectPage() {
   return (
     <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
       <Link
-        href="/projects"
+        href="/dashboard/projects"
         className="mb-6 inline-block text-sm font-medium text-aistroyka-text-secondary hover:text-aistroyka-accent"
       >
         {t("backToProjects")}

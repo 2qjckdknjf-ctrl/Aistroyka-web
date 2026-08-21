@@ -50,7 +50,7 @@ export function CreateProjectForm() {
       setName("");
       router.refresh();
       const id = data.data?.id ?? (data as { id?: string }).id;
-      if (id) router.push(`/projects/${id}`);
+      if (id) router.push(`/dashboard/projects/${id}`);
     } catch (_e) {
       setLoading(false);
       setError(networkErrorToApiError().error.message);

@@ -109,7 +109,7 @@ export function LaunchConfidenceBanner() {
           <p className="text-aistroyka-caption font-medium text-aistroyka-text-secondary">{t("aiHintsTitle")}</p>
           <ul className="mt-2 space-y-2">
             {hints.slice(0, 2).map((hint) => (
-              <li key={hint.step} className="rounded-[var(--aistroyka-radius-md)] bg-aistroyka-surface px-3 py-2">
+              <li key={hint.step} className="rounded-[var(--aistroyka-radius-md)] surface-glass-muted px-3 py-2">
                 <p className="text-aistroyka-caption font-semibold text-aistroyka-text-primary">{hint.title}</p>
                 <p className="mt-1 text-aistroyka-caption text-aistroyka-text-tertiary">{hint.reason}</p>
                 <p className="mt-1 text-aistroyka-caption text-aistroyka-text-secondary">{hint.action}</p>

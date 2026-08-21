@@ -32,7 +32,7 @@ export function DemoProjectCard() {
   const d = DEMO_PROJECT;
   return (
     <DashboardGlassCard contentClassName="overflow-hidden p-0">
-      <div className="border-b border-aistroyka-border-subtle bg-aistroyka-surface-raised px-4 py-3">
+      <div className="border-b border-aistroyka-border-subtle surface-glass-muted px-4 py-3">
         <div className="flex items-center justify-between">
           <h3 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">
             {d.name}
@@ -73,7 +73,7 @@ export function DemoProjectCard() {
           </p>
         </div>
       </div>
-      <div className="border-t border-aistroyka-border-subtle bg-aistroyka-surface-muted/50 px-4 py-3">
+      <div className="border-t border-aistroyka-border-subtle surface-glass-muted px-4 py-3">
         <Link
           href="/projects/new"
           className="text-aistroyka-caption font-medium text-aistroyka-accent hover:underline"

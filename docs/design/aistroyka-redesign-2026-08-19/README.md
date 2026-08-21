@@ -30,5 +30,6 @@ Vertical slices against Memory OS record `56263de1-d0a9-48b6-8275-e40df7391f5a` 
 | 24 | AI requests status density | `23_SLICE_24_AI_STATUS.md` |
 | 25 | Canon audit remediation (web+iOS+Android) | `24_AUDIT_CANON_REMEDIATION_2026-08-21.md` |
 | 26 | Unifyfy entire product to Memory OS v4 | `25_UNIFY_CANON_V4_2026-08-21.md` |
+| 27 | Post-unify audit fixes (AI tab, chrome, Android v27) | `26_POST_UNIFY_AUDIT_FIX_2026-08-21.md` |
 
 Not in these slices: Gantt (absent), drawing inspector (absent), entitlement cutover.
