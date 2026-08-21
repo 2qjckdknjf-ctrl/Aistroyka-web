@@ -28,6 +28,7 @@ struct TeamOverviewView: View {
                         NavigationLink(destination: WorkerDetailView(worker: w)) {
                             WorkerRowView(worker: w)
                         }
+                        .aistroykaRowChrome()
                     }
                     .aistroykaListChrome(
                         pageBackground: ManagerSemanticColors.pageBackground,
@@ -96,18 +97,21 @@ struct WorkerDetailView: View {
             Section(NSLocalizedString("mgr_worker_section", comment: "")) {
                 LabeledContent(NSLocalizedString("mgr_user_id", comment: ""), value: worker.userId)
             }
+            .aistroykaRowChrome()
             Section(NSLocalizedString("mgr_last_activity_section", comment: "")) {
                 if let d = worker.lastDayDate { LabeledContent(NSLocalizedString("mgr_day", comment: ""), value: d) }
                 if let s = worker.lastStartedAt { LabeledContent(NSLocalizedString("mgr_started", comment: ""), value: formatDate(s)) }
                 if let e = worker.lastEndedAt { LabeledContent(NSLocalizedString("mgr_ended", comment: ""), value: formatDate(e)) }
                 if let r = worker.lastReportSubmittedAt { LabeledContent(NSLocalizedString("mgr_last_report", comment: ""), value: formatDate(r)) }
             }
+            .aistroykaRowChrome()
             if let a = worker.anomalies {
                 Section(NSLocalizedString("mgr_flags_section", comment: "")) {
                     if a.openShift == true { Label(NSLocalizedString("mgr_open_shift", comment: ""), systemImage: "clock.badge.exclamation") }
                     if a.overtime == true { Label(NSLocalizedString("mgr_overtime", comment: ""), systemImage: "exclamationmark.triangle") }
                     if a.noActivity == true { Label(NSLocalizedString("mgr_no_recent_activity", comment: ""), systemImage: "person.slash") }
                 }
+                .aistroykaRowChrome()
             }
         }
         .aistroykaListChrome(

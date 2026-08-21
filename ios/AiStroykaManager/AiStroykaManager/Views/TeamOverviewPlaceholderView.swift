@@ -12,6 +12,7 @@ struct TeamOverviewPlaceholderView: View {
             List {
                 Text(NSLocalizedString("mgr_team_placeholder", comment: ""))
                     .foregroundStyle(.secondary)
+                    .aistroykaRowChrome()
             }
             .aistroykaListChrome(
                 pageBackground: ManagerSemanticColors.pageBackground,

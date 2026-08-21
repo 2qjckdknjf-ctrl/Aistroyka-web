@@ -41,6 +41,7 @@ struct ProjectIntelligenceView: View {
                         LabeledContent(NSLocalizedString("mgr_intelligence_trust_band", comment: ""), value: band)
                     }
                 }
+                .aistroykaRowChrome()
             }
             if let exec = d.executiveProjectSummary {
                 Section(NSLocalizedString("mgr_intelligence_summary_section", comment: "")) {
@@ -50,6 +51,7 @@ struct ProjectIntelligenceView: View {
                         LabeledContent(NSLocalizedString("mgr_intelligence_health_score", comment: ""), value: String(format: "%.0f", score))
                     }
                 }
+                .aistroykaRowChrome()
             }
             if let risks = d.topRiskInsights, !risks.isEmpty {
                 Section(NSLocalizedString("mgr_intelligence_risks_section", comment: "")) {
@@ -64,11 +66,13 @@ struct ProjectIntelligenceView: View {
                         .padding(.vertical, 2)
                     }
                 }
+                .aistroykaRowChrome()
             }
             if let hints = d.operational?.nextStepHints, !hints.isEmpty {
                 Section(NSLocalizedString("mgr_intelligence_next_steps", comment: "")) {
                     ForEach(hints, id: \.self) { Text($0).font(.subheadline) }
                 }
+                .aistroykaRowChrome()
             }
             Section {
                 NavigationLink(destination: ProjectCopilotChatView(
@@ -80,6 +84,7 @@ struct ProjectIntelligenceView: View {
                 }
                 .accessibilityIdentifier("pilot_manager_open_copilot")
             }
+            .aistroykaRowChrome()
         }
         .aistroykaListChrome(
             pageBackground: ManagerSemanticColors.pageBackground,

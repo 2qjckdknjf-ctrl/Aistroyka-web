@@ -47,6 +47,7 @@ struct NotificationsView: View {
                             Text(NSLocalizedString("mgr_inbox", comment: ""))
                         }
                     }
+                    .aistroykaRowChrome()
                     Section {
                         DisclosureGroup(NSLocalizedString("mgr_registered_devices", comment: ""), isExpanded: $showDevices) {
                             if devices.isEmpty && !showDevices { } else if devices.isEmpty {
@@ -77,6 +78,7 @@ struct NotificationsView: View {
                             if expanded && devices.isEmpty { loadDevices() }
                         }
                     }
+                    .aistroykaRowChrome()
                 }
                 .aistroykaListChrome(
                     pageBackground: ManagerSemanticColors.pageBackground,

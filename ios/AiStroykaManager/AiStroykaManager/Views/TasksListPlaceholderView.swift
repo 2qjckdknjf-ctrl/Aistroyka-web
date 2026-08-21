@@ -12,6 +12,7 @@ struct TasksListPlaceholderView: View {
             List {
                 Text(NSLocalizedString("mgr_tasks_placeholder", comment: ""))
                     .foregroundStyle(.secondary)
+                    .aistroykaRowChrome()
             }
             .aistroykaListChrome(
                 pageBackground: ManagerSemanticColors.pageBackground,

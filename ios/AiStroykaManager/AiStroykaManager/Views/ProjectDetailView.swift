@@ -44,12 +44,14 @@ struct ProjectDetailView: View {
                 LabeledContent(NSLocalizedString("mgr_id", comment: ""), value: p.id)
                 if let c = p.createdAt { LabeledContent(NSLocalizedString("mgr_created", comment: ""), value: formatDate(c)) }
             }
+            .aistroykaRowChrome()
             if let s = summary {
                 Section(NSLocalizedString("mgr_summary_section", comment: "")) {
                     if let n = s.activeWorkers { LabeledContent(NSLocalizedString("mgr_active_workers", comment: ""), value: "\(n)") }
                     if let n = s.openReports { LabeledContent(NSLocalizedString("mgr_open_reports", comment: ""), value: "\(n)") }
                     if let n = s.aiAnalyses { LabeledContent(NSLocalizedString("mgr_ai_analyses", comment: ""), value: "\(n)") }
                 }
+                .aistroykaRowChrome()
             }
             Section(NSLocalizedString("mgr_quick_links_section", comment: "")) {
                 NavigationLink(destination: TasksListForProjectView(projectId: projectId)) {
@@ -77,6 +79,7 @@ struct ProjectDetailView: View {
                         .accessibilityIdentifier("pilot_manager_project_copilot_link")
                 }
             }
+            .aistroykaRowChrome()
         }
         .aistroykaListChrome(
             pageBackground: ManagerSemanticColors.pageBackground,
@@ -160,6 +163,7 @@ struct ProjectAIView: View {
             } else {
                 List(Array(jobs.enumerated()), id: \.offset) { _, job in
                     ProjectAIRowView(job: job)
+                        .aistroykaRowChrome()
                 }
                 .aistroykaListChrome(
                     pageBackground: ManagerSemanticColors.pageBackground,
@@ -240,6 +244,7 @@ struct TasksListForProjectView: View {
                     NavigationLink(destination: TaskDetailManagerView(taskId: t.id)) {
                         TaskRowView(task: t)
                     }
+                    .aistroykaRowChrome()
                 }
                 .aistroykaListChrome(
                     pageBackground: ManagerSemanticColors.pageBackground,
@@ -297,6 +302,7 @@ struct ReportsInboxForProjectView: View {
                     NavigationLink(destination: ReportDetailReviewView(reportId: r.id)) {
                         ReportRowView(report: r)
                     }
+                    .aistroykaRowChrome()
                 }
                 .aistroykaListChrome(
                     pageBackground: ManagerSemanticColors.pageBackground,

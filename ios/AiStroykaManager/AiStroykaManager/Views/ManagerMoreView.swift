@@ -29,6 +29,7 @@ struct ManagerMoreView: View {
                         Task { await sessionState.signOut() }
                     }
                 }
+                .aistroykaRowChrome()
                 Section(NSLocalizedString("mgr_section_app", comment: "")) {
                     NavigationLink {
                         ManagerHowItWorksView()
@@ -38,6 +39,7 @@ struct ManagerMoreView: View {
                     NavigationLink(NSLocalizedString("mgr_settings", comment: ""), value: ManagerMoreDestination.settings)
                     NavigationLink(NSLocalizedString("mgr_notifications", comment: ""), value: ManagerMoreDestination.notifications)
                 }
+                .aistroykaRowChrome()
             }
             .aistroykaListChrome(
                 pageBackground: ManagerSemanticColors.pageBackground,

@@ -77,6 +77,7 @@ struct TasksListView: View {
                 NavigationLink(destination: TaskDetailManagerView(taskId: t.id)) {
                     TaskRowView(task: t, hasUnreadChat: unreadByTaskId[t.id] == true)
                 }
+                .aistroykaRowChrome()
             }
             .aistroykaListChrome(
                 pageBackground: ManagerSemanticColors.pageBackground,
@@ -257,6 +258,7 @@ struct TaskDetailManagerView: View {
                             if let r = t.reportId { LabeledContent(NSLocalizedString("mgr_report", comment: ""), value: r) }
                             if let s = t.reportStatus { LabeledContent(NSLocalizedString("mgr_report_status", comment: ""), value: s) }
                         }
+                        .aistroykaRowChrome()
                         Section(NSLocalizedString("mgr_assign_section", comment: "")) {
                             Button {
                                 showAssignPicker = true
@@ -279,6 +281,7 @@ struct TaskDetailManagerView: View {
                                     .font(.caption)
                             }
                         }
+                        .aistroykaRowChrome()
                     }
                     .frame(maxHeight: 280)
                     .aistroykaListChrome(
@@ -417,6 +420,7 @@ struct TaskAssigneePickerView: View {
                             }
                             .padding(.vertical, 4)
                         }
+                        .aistroykaRowChrome()
                     }
                     .aistroykaListChrome(
                         pageBackground: ManagerSemanticColors.pageBackground,
@@ -492,14 +496,17 @@ struct TaskCreateEditView: View {
                 Section(NSLocalizedString("mgr_project_section", comment: "")) {
                     Text(projectName ?? projectId)
                 }
+                .aistroykaRowChrome()
                 Section(NSLocalizedString("mgr_title_section", comment: "")) {
                     TextField(NSLocalizedString("mgr_task_title_placeholder", comment: ""), text: $title)
                 }
+                .aistroykaRowChrome()
                 if let err = errorMessage {
                     Section {
                         Text(err)
                             .foregroundStyle(ManagerSemanticColors.error)
                     }
+                    .aistroykaRowChrome()
                 }
             }
             .aistroykaFormChrome(

@@ -15,24 +15,56 @@ public enum AistroykaCanonColors {
 
 #if os(iOS)
 @available(iOS 16.0, *)
+private struct AistroykaRowChromeColorKey: EnvironmentKey {
+    static let defaultValue: Color? = nil
+}
+
+@available(iOS 16.0, *)
+private extension EnvironmentValues {
+    var aistroykaRowChromeColor: Color? {
+        get { self[AistroykaRowChromeColorKey.self] }
+        set { self[AistroykaRowChromeColorKey.self] = newValue }
+    }
+}
+
+@available(iOS 16.0, *)
+private struct AistroykaRowChromeModifier: ViewModifier {
+    @Environment(\.aistroykaRowChromeColor) private var surfaceMuted
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if let surfaceMuted {
+            content.listRowBackground(surfaceMuted)
+        } else {
+            content
+        }
+    }
+}
+
+@available(iOS 16.0, *)
 extension View {
     /// Full-screen graphite canvas behind scrollable content.
     public func aistroykaPageBackground(_ color: Color) -> some View {
         background(color.ignoresSafeArea())
     }
 
-    /// Hides UIKit list fill and applies canon page + muted row surfaces.
+    /// Hides UIKit list fill and provides canon page + row chrome colors.
     public func aistroykaListChrome(pageBackground: Color, surfaceMuted: Color) -> some View {
         scrollContentBackground(.hidden)
             .background(pageBackground)
-            .listRowBackground(surfaceMuted)
+            .environment(\.aistroykaRowChromeColor, surfaceMuted)
     }
 
     /// Same chrome treatment for Form-based screens (login, settings, create flows).
     public func aistroykaFormChrome(pageBackground: Color, surfaceMuted: Color) -> some View {
         scrollContentBackground(.hidden)
             .background(pageBackground)
-            .listRowBackground(surfaceMuted)
+            .environment(\.aistroykaRowChromeColor, surfaceMuted)
+    }
+
+    /// Applies the muted canon surface to a list/form row or Section.
+    public func aistroykaRowChrome() -> some View {
+        modifier(AistroykaRowChromeModifier())
     }
 }
 #endif

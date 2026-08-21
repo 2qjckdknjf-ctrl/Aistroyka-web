@@ -63,6 +63,7 @@ struct ReportsInboxView: View {
                     ReportRowView(report: r)
                 }
                 .accessibilityIdentifier("pilot_manager_report_\(r.id)")
+                .aistroykaRowChrome()
             }
             .aistroykaListChrome(
                 pageBackground: ManagerSemanticColors.pageBackground,
@@ -186,12 +187,14 @@ struct ReportDetailReviewView: View {
                             LabeledContent(NSLocalizedString("mgr_worker_note", comment: ""), value: wnote)
                         }
                     }
+                    .aistroykaRowChrome()
                     if let media = r.media, !media.isEmpty {
                         Section(String(format: NSLocalizedString("mgr_media_count_fmt", comment: ""), media.count)) {
                             ForEach(Array(media.enumerated()), id: \.offset) { idx, m in
                                 ReportEvidenceItemView(index: idx + 1, item: m)
                             }
                         }
+                        .aistroykaRowChrome()
                     }
                     if r.status?.lowercased() == "submitted" {
                         Section(NSLocalizedString("mgr_review_actions_section", comment: "")) {
@@ -222,12 +225,14 @@ struct ReportDetailReviewView: View {
                                 .disabled(reviewActionLoading)
                                 .accessibilityIdentifier("pilot_manager_review_reject")
                         }
+                        .aistroykaRowChrome()
                     } else if !isReviewStatus(r.status) {
                         Section(NSLocalizedString("mgr_review_section", comment: "")) {
                             Text(NSLocalizedString("mgr_report_not_submitted", comment: ""))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
+                        .aistroykaRowChrome()
                     }
                 }
                 .aistroykaListChrome(

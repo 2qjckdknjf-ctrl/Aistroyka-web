@@ -29,16 +29,19 @@ struct ManagerSettingsView: View {
                     Text(msg).font(.caption).foregroundColor(.orange)
                 }
             }
+            .aistroykaRowChrome()
             Section(NSLocalizedString("mgr_environment_section", comment: "")) {
                 LabeledContent(NSLocalizedString("mgr_api", comment: ""), value: Config.baseURL)
                 Text(NSLocalizedString("mgr_client_ios_manager", comment: "")).font(.caption).foregroundColor(.secondary)
             }
+            .aistroykaRowChrome()
             Section(NSLocalizedString("mgr_diagnostics_section", comment: "")) {
                 LabeledContent(NSLocalizedString("mgr_app_version", comment: ""), value: appVersion)
                 LabeledContent(NSLocalizedString("mgr_build", comment: ""), value: buildNumber)
                 LabeledContent(NSLocalizedString("mgr_tenant_id", comment: ""), value: meData?.tenantId ?? (meLoadFailed ? "—" : "…"))
                 LabeledContent(NSLocalizedString("mgr_role", comment: ""), value: meData?.role ?? (meLoadFailed ? "—" : "…"))
             }
+            .aistroykaRowChrome()
         }
         .aistroykaListChrome(
             pageBackground: ManagerSemanticColors.pageBackground,

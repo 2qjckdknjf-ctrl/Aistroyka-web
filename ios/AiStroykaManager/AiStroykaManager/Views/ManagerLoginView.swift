@@ -59,11 +59,13 @@ struct ManagerLoginView: View {
                         .accessibilityIdentifier("pilot_manager_password")
                     #endif
                 }
+                .aistroykaRowChrome()
                 if !networkMonitor.isConnected {
                     Section {
                         Text(NSLocalizedString("mgr_err_offline_signin", comment: ""))
                             .foregroundStyle(.secondary)
                     }
+                    .aistroykaRowChrome()
                 }
                 if let err = effectiveErrorMessage {
                     Section {
@@ -71,6 +73,7 @@ struct ManagerLoginView: View {
                             .foregroundStyle(ManagerSemanticColors.error)
                             .accessibilityIdentifier("pilot_manager_login_error")
                     }
+                    .aistroykaRowChrome()
                 }
                 Section {
                     Button(action: signIn) {
@@ -86,6 +89,7 @@ struct ManagerLoginView: View {
                     .disabled(isLoading || email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || password.isEmpty || !networkMonitor.isConnected)
                     .accessibilityIdentifier("pilot_manager_sign_in")
                 }
+                .aistroykaRowChrome()
                 Section {
                     SignInWithAppleButton(.signIn) { request in
                         appleNonce = Self.randomNonce()
@@ -98,6 +102,7 @@ struct ManagerLoginView: View {
                     .frame(height: 48)
                     .disabled(isLoading)
                 }
+                .aistroykaRowChrome()
             }
             .aistroykaFormChrome(
                 pageBackground: ManagerSemanticColors.pageBackground,

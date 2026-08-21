@@ -25,26 +25,31 @@ struct DiagnosticsView: View {
                 LabeledContent("Version", value: appVersion)
                 LabeledContent("Build", value: buildNumber)
             }
+            .aistroykaRowChrome()
             Section("Environment") {
                 LabeledContent("API", value: Config.baseURL)
                 Text("Client: \(MobileClientProfile.worker.rawValue)").font(.caption).foregroundColor(.secondary)
             }
+            .aistroykaRowChrome()
             Section("Device") {
                 Text(DeviceContext.deviceId)
                     .font(.caption)
                     .lineLimit(2)
                     .textSelection(.enabled)
             }
+            .aistroykaRowChrome()
             Section("Session") {
                 Text(appState.isLoggedIn ? "Signed in" : "Not signed in")
                     .foregroundColor(appState.isLoggedIn ? .green : .secondary)
             }
+            .aistroykaRowChrome()
             Section("Sync") {
                 LabeledContent("Status", value: syncService.status.rawValue)
                 if let err = syncService.lastError {
                     Text(err).font(.caption).foregroundColor(.orange).textSelection(.enabled)
                 }
             }
+            .aistroykaRowChrome()
         }
         .aistroykaListChrome(
             pageBackground: WorkerSemanticColors.pageBackground,

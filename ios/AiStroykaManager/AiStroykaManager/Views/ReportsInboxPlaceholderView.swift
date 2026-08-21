@@ -12,6 +12,7 @@ struct ReportsInboxPlaceholderView: View {
             List {
                 Text(NSLocalizedString("mgr_reports_placeholder", comment: ""))
                     .foregroundStyle(.secondary)
+                    .aistroykaRowChrome()
             }
             .aistroykaListChrome(
                 pageBackground: ManagerSemanticColors.pageBackground,

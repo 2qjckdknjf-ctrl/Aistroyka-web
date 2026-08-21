@@ -37,6 +37,7 @@ struct ProjectPickerView: View {
                             }
                         }
                         .accessibilityIdentifier("pilot_worker_project_\(p.id)")
+                        .aistroykaRowChrome()
                     }
                     .aistroykaListChrome(
                         pageBackground: WorkerSemanticColors.pageBackground,

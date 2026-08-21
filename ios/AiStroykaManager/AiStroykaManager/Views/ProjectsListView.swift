@@ -31,6 +31,7 @@ struct ProjectsListView: View {
                             Text(p.name ?? p.id)
                                 .accessibilityIdentifier("pilot_manager_project_\(p.id)")
                         }
+                        .aistroykaRowChrome()
                     }
                     .aistroykaListChrome(
                         pageBackground: ManagerSemanticColors.pageBackground,
@@ -74,9 +75,11 @@ struct ProjectDetailPlaceholderView: View {
     var body: some View {
         List {
             Text(String(format: NSLocalizedString("mgr_project_fmt", comment: ""), name))
+                .aistroykaRowChrome()
             Text(String(format: NSLocalizedString("mgr_id_fmt", comment: ""), projectId))
                 .font(.caption)
                 .foregroundStyle(.secondary)
+                .aistroykaRowChrome()
         }
         .aistroykaListChrome(
             pageBackground: ManagerSemanticColors.pageBackground,

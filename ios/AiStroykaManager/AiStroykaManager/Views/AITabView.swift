@@ -32,11 +32,13 @@ struct AITabView: View {
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
+                        .aistroykaRowChrome()
                         Section(NSLocalizedString("mgr_ai_jobs_section", comment: "")) {
                             ForEach(Array(jobs.enumerated()), id: \.offset) { _, job in
                                 AIJobRowView(job: job)
                             }
                         }
+                        .aistroykaRowChrome()
                     }
                     .aistroykaListChrome(
                         pageBackground: ManagerSemanticColors.pageBackground,
