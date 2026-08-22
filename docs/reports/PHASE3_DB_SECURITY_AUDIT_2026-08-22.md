@@ -23,8 +23,8 @@ Most drift is **timestamp skew** (same SQL, different `schema_migrations.version
 |-----|-----------|--------|--------|
 | `media_file_url_immutable_for_clients` | Repo → remote | Apply security trigger | **PROVEN** live 2026-08-22 |
 | `jobs_payload_project_tenant_check` | Repo → remote | Apply tenant guard trigger | **PROVEN** live 2026-08-22 |
-| `021_saved_places` | Remote → repo | Reconciliation migration needed | **OPEN** |
-| `022_protected_day_events` | Remote → repo | Reconciliation migration needed | **OPEN** |
+| `021_saved_places` | Remote → repo | Reconciliation migration needed | **PROVEN** — `20260821215505_021_saved_places.sql` |
+| `022_protected_day_events` | Remote → repo | Reconciliation migration needed | **PROVEN** — `20260821215559_022_protected_day_events.sql` |
 
 ### Live verification (post-apply)
 
@@ -64,7 +64,7 @@ Repo files (already present):
 
 | Area | Status |
 |------|--------|
-| Negative integration tests (Tenant A ≠ Tenant B) | **NOT TESTED** — Phase 3 next slice |
+| Negative integration tests (Tenant A ≠ Tenant B) | **PROVEN** (pure-logic matrix + existing media/signed-url tests) |
 | Open security PR queue (#208–#222) | **NOT MERGED** — review backlog |
 
 ---
@@ -73,7 +73,7 @@ Repo files (already present):
 
 | Check | Status |
 |-------|--------|
-| Secret scan | **NOT RUN** this session |
+| Secret scan | **PROVEN** — `scripts/scan-secrets-history.sh` (historical hits only; manual triage) |
 | IDOR / platform-admin separation | **NOT TESTED** this session |
 | Auth recovery (Phase 2 PR #229) | **PENDING MERGE** |
 
@@ -83,17 +83,17 @@ Repo files (already present):
 
 | Blocker | Type |
 |---------|------|
-| Repo reconciliation for `saved_places` / `protected_day_events` | Phase 3 in-scope |
-| RLS negative test suite | Phase 3 in-scope |
+| Repo reconciliation for `saved_places` / `protected_day_events` | **CLOSED** in PR #230 |
+| RLS negative test suite (live DB) | **DEFERRED** — pure-logic matrix added; live PostgREST negative tests need staging fixtures |
 | 30 open `cursor/critical-bug-investigation-*` PRs | Merge queue |
 
 ---
 
 ## 7. Closure verdict
 
-**NO** — security triggers now live; migration repo parity and RLS negative tests remain.
+**CONDITIONAL YES** — security triggers live; repo reconciliation migrations added; tenant isolation negative matrix tests added. Live PostgREST negative tests and security PR merge queue remain.
 
-**Next slice:** add reconciliation migrations for remote-only tables; expand tenant isolation negative tests; secret scan.
+**Next slice:** merge security PR backlog; staging live RLS negative tests with synthetic tenants; Phase 4 web product certification.
 
 ---
 
