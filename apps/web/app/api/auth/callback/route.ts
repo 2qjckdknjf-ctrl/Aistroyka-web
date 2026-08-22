@@ -36,6 +36,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL(`/${locale}/login?error=oauth_exchange_failed`, request.url));
   }
 
+  const isRecovery = url.searchParams.get("recovery") === "1";
+  if (isRecovery) {
+    const recoveryPath = toSafeRelativePath(url.searchParams.get("callback"), `/${locale}/reset-password`);
+    return NextResponse.redirect(new URL(recoveryPath, request.url));
+  }
+
   const { data: userData } = await supabase.auth.getUser();
   const user = userData.user;
   if (!user) {

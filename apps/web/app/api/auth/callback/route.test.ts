@@ -43,6 +43,16 @@ describe("GET /api/auth/callback", () => {
     linkIdentityRow.mockResolvedValue({ ok: true });
   });
 
+  it("redirects recovery flow to reset-password without onboarding checks", async () => {
+    const request = new Request(
+      "https://aistroyka.ai/api/auth/callback?code=test-code&callback=%2Fen%2Freset-password&recovery=1"
+    );
+    const response = await GET(request as never);
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toContain("/en/reset-password");
+    expect(hasTenantMembership).not.toHaveBeenCalled();
+  });
+
   it("redirects to dashboard when tenant membership exists", async () => {
     const request = new Request("https://aistroyka.ai/api/auth/callback?code=test-code");
     const response = await GET(request as never);
