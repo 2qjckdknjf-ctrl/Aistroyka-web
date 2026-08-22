@@ -25,7 +25,10 @@
 
 | Journey | Result |
 |---------|--------|
-| Login → portfolio → project → tasks → reports | **NOT TESTED** — requires pilot E2E credentials session |
+| Pilot E2E suite (`e2e:pilot` @ staging) | **PROVEN** — 21 passed, 1 skipped (2026-08-22) |
+| Core flow: API report → manager UI | **PROVEN** |
+| Sync contract API (bootstrap/ack/409) | **PROVEN** |
+| Dashboard button audit (nav CTAs) | **PROVEN** (1 inventory CTA skipped — no projects list state) |
 | Portal / stakeholder | **NOT TESTED** |
 | Platform admin | **NOT TESTED** — owner session + Access |
 
@@ -47,14 +50,14 @@
 
 | Blocker | Type |
 |---------|------|
-| Authenticated E2E personas | `BLOCKED_EXTERNAL` without `PILOT_E2E_*` / `.env.pilot` in CI session |
+| Authenticated E2E personas | **PARTIAL** — pilot manager account on staging; stakeholder/platform-admin not run |
 | PR #229 not merged | Staging missing auth recovery |
 
 ## 7. Closure verdict
 
-**NO** — unauthenticated + security + AI live gates pass; full persona journeys pending authenticated E2E.
+**CONDITIONAL YES** — unauthenticated, security, AI live, and pilot E2E (21/22) pass on staging; portal/platform-admin + full project IA journey remain.
 
-**Next:** merge #229; run `bun run --cwd apps/web e2e:pilot` with credentials; browser audit dashboard/project flows.
+**Next:** merge #229; stakeholder/platform-admin persona E2E; close PD-P1-04/05 in Slice 02.
 
 ---
 
