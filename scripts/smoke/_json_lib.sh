@@ -123,14 +123,15 @@ sys.exit(0 if ok else 1)
 smoke_assert_intelligence_shape() {
   local file="$1"
   if smoke_have_jq; then
-    jq -e '.projectHealthScore and .missingEvidenceInsights and .topRiskInsights and .executiveProjectSummary' "$file" >/dev/null
+    jq -e '(.projectHealthScore // .data.projectHealthScore) and (.missingEvidenceInsights // .data.missingEvidenceInsights) and (.topRiskInsights // .data.topRiskInsights) and (.executiveProjectSummary // .data.executiveProjectSummary)' "$file" >/dev/null
     return
   fi
   smoke_python3 -c '
 import json, sys
 d = json.load(open(sys.argv[1]))
+root = d.get("data", d)
 for key in ("projectHealthScore", "missingEvidenceInsights", "topRiskInsights", "executiveProjectSummary"):
-    if key not in d:
+    if key not in root:
         sys.exit(1)
 ' "$file"
 }
