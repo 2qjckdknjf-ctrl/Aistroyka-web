@@ -1235,8 +1235,8 @@
     "privacy": {
       "title": "Privacy policy",
       "metaDescription": "Privacy policy e trattamento dati.",
-      "placeholderStrong": "Segnaposto — contenuto legale.",
-      "placeholderBody": "Questa pagina è destinata alla tua Privacy Policy finale e al testo sul trattamento dati. Sostituisci questo blocco con il tuo testo legale.",
+      "placeholderStrong": "Bozza — in attesa di approvazione legale.",
+      "placeholderBody": "Questa bozza descrive il trattamento dei dati di Aistroyka per pilota e produzione. Sostituire o integrare con testo approvato dal legale prima della Public GA.",
       "lastUpdated": "Ultimo aggiornamento",
       "section1Title": "1. Dati che raccogliamo",
       "section1Body": "Raccogliamo dati account, dati d'uso e contenuti caricati (es. foto progetto) per fornire il servizio e migliorare IA e prodotto.",
