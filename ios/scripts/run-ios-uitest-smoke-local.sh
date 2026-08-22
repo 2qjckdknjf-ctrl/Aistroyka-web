@@ -20,14 +20,24 @@ run_smoke_test() {
   local scheme="$2"
   local test_target="$3"
 
-  xcodebuild test \
-    -project "$project" \
-    -scheme "$scheme" \
-    -destination "$DEST" \
-    -parallel-testing-enabled NO \
-    -maximum-parallel-testing-workers 1 \
-    -only-testing:"$test_target" \
-    "${SIGN[@]}"
+  if ((${#SIGN[@]} > 0)); then
+    xcodebuild test \
+      -project "$project" \
+      -scheme "$scheme" \
+      -destination "$DEST" \
+      -parallel-testing-enabled NO \
+      -maximum-parallel-testing-workers 1 \
+      -only-testing:"$test_target" \
+      "${SIGN[@]}"
+  else
+    xcodebuild test \
+      -project "$project" \
+      -scheme "$scheme" \
+      -destination "$DEST" \
+      -parallel-testing-enabled NO \
+      -maximum-parallel-testing-workers 1 \
+      -only-testing:"$test_target"
+  fi
 }
 
 run_smoke_test \
