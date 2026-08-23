@@ -17,7 +17,7 @@ import { redirectIfStakeholderBlockedPath } from "@/lib/tenant/stakeholder-dashb
 const intlMiddleware = createIntlMiddleware(routing);
 
 const PROTECTED_PREFIXES = ["/dashboard", "/portal", "/projects", "/billing", "/admin", "/portfolio", "/subscribe"];
-const AUTH_PREFIXES = ["/login", "/register"];
+const AUTH_PREFIXES = ["/login", "/register", "/forgot-password"];
 
 /**
  * Page/HTML security headers (CSP, HSTS, XFO, …) are owned solely by
