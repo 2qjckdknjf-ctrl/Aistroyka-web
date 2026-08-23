@@ -1,31 +1,36 @@
 # STATUS — AISTROYKA
 
-> Live project status. Keep this short and mobile-readable.
+> Live project status — 100% Readiness program.
 
 ---
 
 **Last updated:** 2026-08-23  
-**Updated by:** Phase 12 Day-0 operator pack slice
+**RC:** `v1.0.0-rc.1` @ `a7144249` (staging + prod MATCH)
 
 ## Now
 
 | Field | Value |
 |---|---|
-| RC tag | **`v1.0.0-rc.1`** @ `a7144249` |
-| Phase 12 launch | **NO** — `BLOCKED_EXTERNAL` (real intake) |
-| Active work | Operator pack PR — intake validate + Day-0 runbooks on `main` |
-| Next owner action | Fill `docs/launch/pilot-intake.real.local.json` → `bun run pilot:intake:validate` |
+| Consolidated PR | [#240](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/240) — **Phase 2 auth + Day-0 operator pack** |
+| Local gates | i18n, lint, **1798** tests, build, cf:build — **PASS** |
+| Day-0 rehearsal | **PASS** (forgot-password 404 until deploy) |
+| Phase 12 launch | **NO** — real intake missing |
+| Merge blocker | **WAITING_FOR_NON_AUTHOR_APPROVAL** |
 
-## Operator quick start
+## Operator
 
 ```bash
 cp docs/launch/pilot-intake.template.json docs/launch/pilot-intake.real.local.json
-# edit with real client data (never commit)
 bun run pilot:intake:validate -- docs/launch/pilot-intake.real.local.json
+bash scripts/pilot/run_day0_staging_rehearsal.sh
 ```
 
-Synthetic rehearsal: `docs/launch/pilot-intake.example.json` → **READY** (`example.com` only).
+## After merge + staging deploy
+
+```bash
+bash scripts/pilot/verify_forgot_password_route.sh https://staging.aistroyka.ai
+```
 
 ---
 
-*100% Readiness program.*
+*Autonomous execution — no stop.*

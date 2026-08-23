@@ -1,9 +1,26 @@
 # AISTROYKA Current Project Truth Index
 
-**Last updated:** 2026-08-09
-**Audited Product Design baseline SHA:** `02baa6a379ca9ff30735d35e53aea5198e972d45`
-**Current `origin/main` tip (pre-merge of PR #215):** `02baa6a379ca9ff30735d35e53aea5198e972d45` (equals audited baseline today)
-**Canonical main SHA after PR #215 merges:** refresh this index to the actual merge commit — do **not** keep `02baa6a…` labeled as tip once #215 lands
+**Last updated:** 2026-08-23  
+**100% Readiness RC:** `v1.0.0-rc.1` @ `a7144249ed0cf1f049cfbdaa9e36e722b1bcfcc8` (`buildStamp.sha7=a714424`)  
+**Runtime match (2026-08-23):** staging + production `a714424` — **MATCH**  
+**Classification:** `production-capable / controlled-pilot candidate` — **not Public GA**
+
+## 0. 100% Readiness program (current)
+
+| Field | Value |
+|-------|-------|
+| Active phases closed | 5–11 CONDITIONAL YES; 12 launch **NO** |
+| Consolidated merge PR | [#240](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/240) — auth recovery + Day-0 operator pack |
+| Execution log | `docs/reports/AISTROYKA_100_PERCENT_EXECUTION_LOG.md` |
+| STATUS | `STATUS.md` |
+| Merge blocker | `WAITING_FOR_NON_AUTHOR_APPROVAL` |
+| Phase 12 launch | **NO** — real client intake not filed |
+
+---
+
+**Historical baseline below** (Product Design audit 2026-08-09 @ `02baa6a…`) — retained as snapshot evidence.
+
+**Last updated (historical section):** 2026-08-09
 
 ## 1. Purpose
 
