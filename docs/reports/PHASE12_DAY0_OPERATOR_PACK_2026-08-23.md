@@ -23,6 +23,7 @@ Land **operator-ready** pilot Day-0 artifacts on `main` so owner/operator can co
 | `docs/launch/PILOT_INTAKE_CARD.md` | Human intake card |
 | `docs/launch/PILOT_DAY0_*.md` | Day-0 runbooks + updated GO/NO-GO |
 | `bun run pilot:intake:validate` | Root package script |
+| `scripts/pilot/run_day0_staging_rehearsal.sh` | Chained synthetic staging rehearsal |
 | `.gitignore` | `pilot-intake.real.local.json`, `pilot-intake.local.json` |
 
 ---
