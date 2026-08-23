@@ -120,6 +120,8 @@ next-env.d.ts
 !.env.e2e.example
 !.env.pilot.example
 .env.pilot
+docs/launch/pilot-intake.real.local.json
+docs/launch/pilot-intake.local.json
 apps/web/tests/e2e/_state/
 .idea
 .vscode

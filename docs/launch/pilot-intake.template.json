@@ -1,0 +1,115 @@
+{
+  "meta": {
+    "version": "1.0",
+    "intakeCardDoc": "docs/launch/PILOT_INTAKE_CARD.md",
+    "lastUpdated": null,
+    "filledBy": null
+  },
+  "client": {
+    "companyName": "",
+    "legalIdentifier": "",
+    "mainSponsor": {
+      "name": "",
+      "role": "",
+      "phone": "",
+      "email": ""
+    },
+    "preferredLanguage": "",
+    "timezone": "",
+    "notes": ""
+  },
+  "project": {
+    "name": "",
+    "address": "",
+    "type": "",
+    "typeOther": "",
+    "startDate": "",
+    "endDate": "",
+    "expectedDurationWeeks": null,
+    "siteInternetQuality": "",
+    "siteAccessNotes": ""
+  },
+  "users": {
+    "ownerAdmin": {
+      "name": "",
+      "email": "",
+      "phone": "",
+      "role": "owner"
+    },
+    "managers": [],
+    "workers": [],
+    "stakeholders": []
+  },
+  "devices": {
+    "workersHaveIphone": null,
+    "managersHaveIphone": null,
+    "androidOnlyWorkers": false,
+    "androidOnlyWorkersConfirmed": false,
+    "testFlightAccessReady": null,
+    "appleIdsAvailable": null,
+    "internetOnSite": "",
+    "deviceBlockers": ""
+  },
+  "scope": {
+    "workerDailyReports": { "included": true, "requiredForLaunch": true, "notes": "" },
+    "beforeAfterPhotoEvidence": { "included": true, "requiredForLaunch": true, "notes": "" },
+    "managerApprovals": { "included": true, "requiredForLaunch": true, "notes": "" },
+    "requestChangesResubmit": { "included": true, "requiredForLaunch": true, "notes": "" },
+    "documentsActsContracts": { "included": false, "requiredForLaunch": false, "notes": "" },
+    "costsBudgetInternalManagers": { "included": false, "requiredForLaunch": false, "notes": "" },
+    "stakeholderClientPortal": { "included": false, "requiredForLaunch": false, "notes": "" },
+    "scheduleMilestones": { "included": false, "requiredForLaunch": false, "notes": "" },
+    "aiIntelligenceProjectHealth": { "included": false, "requiredForLaunch": false, "notes": "" },
+    "notifications": { "included": false, "requiredForLaunch": false, "notes": "" },
+    "androidSupport": { "included": false, "requiredForLaunch": false, "notes": "Deferred per P3 unless owner authorizes MVP" }
+  },
+  "environment": {
+    "target": "",
+    "realClientDataUsed": null,
+    "syntheticDemoDataUsed": null,
+    "productionMutationAuthorizedByOwner": false,
+    "productionTenantName": "",
+    "dataCleanupResetPlan": ""
+  },
+  "support": {
+    "supportEmail": "",
+    "supportWhatsAppTelegram": "",
+    "supportOwner": "",
+    "escalationContact": "",
+    "supportHours": "",
+    "emergencyIssueProtocol": ""
+  },
+  "day0Checklist": {
+    "clientSelected": false,
+    "sponsorConfirmed": false,
+    "projectConfirmed": false,
+    "supportContactConfirmed": false,
+    "androidRequirementChecked": false,
+    "iosDevicesReady": false,
+    "testFlightInstalled": false,
+    "tenantAccountCreated": false,
+    "projectCreated": false,
+    "managersInvited": false,
+    "workersInvited": false,
+    "stakeholderInvited": false,
+    "tasksCreated": false,
+    "milestonesCreated": false,
+    "documentsPrepared": false,
+    "costsPrepared": false,
+    "workerReportMediaSmokePassed": false,
+    "managerApprovalSmokePassed": false,
+    "stakeholderVisibilitySmokePassed": false,
+    "knownLimitationsAccepted": false,
+    "ownerSignoff": false,
+    "clientSignoff": false
+  },
+  "goNoGo": {
+    "launchAllowed": null,
+    "reason": "",
+    "blockingItems": [],
+    "ownerSignoff": "",
+    "clientSignoff": "",
+    "decisionDate": "",
+    "nextAction": ""
+  }
+}
