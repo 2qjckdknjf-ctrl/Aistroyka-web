@@ -59,4 +59,23 @@ describe("POST /api/auth/forgot-password", () => {
       redirectTo: "https://aistroyka.ai/api/auth/callback?callback=%2Fen%2Freset-password&recovery=1",
     });
   });
+
+  it("rate-limits using cf-connecting-ip when present", async () => {
+    getAdminClient.mockReturnValue({});
+    checkRateLimit.mockResolvedValue({ limited: false });
+    const request = new Request("https://aistroyka.ai/api/auth/forgot-password", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "cf-connecting-ip": "203.0.113.10",
+        "x-forwarded-for": "198.51.100.99",
+      },
+      body: JSON.stringify({ email: "user@example.com" }),
+    });
+    await POST(request as never);
+    expect(checkRateLimit).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ ip: "203.0.113.10" })
+    );
+  });
 });

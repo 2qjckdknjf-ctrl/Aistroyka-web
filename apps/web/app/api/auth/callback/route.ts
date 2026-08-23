@@ -5,14 +5,9 @@ import {
   hasTenantMembership,
   linkIdentityRow,
 } from "@/lib/auth/multi-provider";
+import { toSafeRelativePath } from "@/lib/auth/password-recovery";
 
 export const dynamic = "force-dynamic";
-
-function toSafeRelativePath(input: string | null | undefined, fallback: string): string {
-  const value = (input ?? "").trim();
-  if (!value.startsWith("/") || value.startsWith("//") || value.includes("\\")) return fallback;
-  return value;
-}
 
 function localeFromPath(pathname: string): string {
   const match = pathname.match(/^\/(ru|en|es|it)(?=\/|$)/);

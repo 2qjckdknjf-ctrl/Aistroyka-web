@@ -15,6 +15,10 @@ describe("password-recovery helpers", () => {
   it("rejects unsafe callback paths", () => {
     expect(toSafeRelativePath("//evil", "/en/reset-password")).toBe("/en/reset-password");
     expect(toSafeRelativePath("https://evil", "/en/reset-password")).toBe("/en/reset-password");
+    expect(toSafeRelativePath("/%0a//evil.com", "/en/reset-password")).toBe("/en/reset-password");
+    expect(toSafeRelativePath("/%09//evil.com", "/en/reset-password")).toBe("/en/reset-password");
+    expect(toSafeRelativePath("/%0d//evil.com", "/en/reset-password")).toBe("/en/reset-password");
+    expect(toSafeRelativePath("/en/ok", "/en/reset-password")).toBe("/en/ok");
   });
 
   it("validates password length and confirmation", () => {

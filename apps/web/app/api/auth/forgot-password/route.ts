@@ -11,6 +11,7 @@ import { getOrCreateTraceId, logStructured } from "@/lib/observability";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { checkRateLimit } from "@/lib/platform/rate-limit/rate-limit.service";
 import { buildPasswordRecoveryRedirectUrl, isAuthLocale } from "@/lib/auth/password-recovery";
+import { getRequestClientIp } from "@/lib/platform-owner/client-ip";
 
 type CookieToSet = { name: string; value: string; options?: Record<string, unknown> };
 
@@ -25,7 +26,7 @@ export async function POST(request: NextRequest) {
   const admin = getAdminClient();
   if (admin) {
     try {
-      const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? request.headers.get("x-real-ip") ?? "unknown";
+      const ip = getRequestClientIp(request) ?? "unknown";
       const result = await checkRateLimit(admin, { tenantId: null, ip, endpoint: "/api/auth/forgot-password" });
       if (result.limited) {
         return NextResponse.json({ ok: false, message: result.message }, { status: 429 });
