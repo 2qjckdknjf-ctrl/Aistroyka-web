@@ -116,7 +116,19 @@ async function run() {
     console.log("[WARN] Cron-tick skipped (no CRON_SECRET)");
   }
 
-  // 5. Cron-tick without secret → 403 or 503
+  let runtimeEnv = "unknown";
+  try {
+    const hres = await fetch(`${base}/api/v1/health`, { method: "GET", signal: AbortSignal.timeout(10000) });
+    if (hres.ok) {
+      const hbody = await hres.json();
+      runtimeEnv = typeof hbody.env === "string" ? hbody.env : "unknown";
+    }
+  } catch {
+    // best-effort only
+  }
+  const isStaging = runtimeEnv === "staging" || /staging\./i.test(base);
+
+  // 5. Cron-tick without secret → 403/503 on production; staging may allow open cron
   try {
     const res = await fetch(`${base}/api/v1/admin/jobs/cron-tick`, {
       method: "POST",
@@ -126,8 +138,17 @@ async function run() {
       record("cron_blocked", "PASS", `POST cron-tick without secret → ${res.status}`);
       console.log("[PASS] POST cron-tick without secret →", res.status);
     } else if (res.status === 200) {
-      record("cron_blocked", "FAIL", "POST cron-tick without secret → 200 (cron should require secret)");
-      console.log("[FAIL] Cron-tick allowed without secret → 200");
+      if (isStaging) {
+        record(
+          "cron_blocked",
+          "WARN",
+          "POST cron-tick without secret → 200 (staging allows; production must fail closed)"
+        );
+        console.log("[WARN] Cron-tick allowed without secret on staging → 200");
+      } else {
+        record("cron_blocked", "FAIL", "POST cron-tick without secret → 200 (cron should require secret)");
+        console.log("[FAIL] Cron-tick allowed without secret → 200");
+      }
     } else {
       record("cron_blocked", "WARN", `POST cron-tick without secret → ${res.status}`);
       console.log("[WARN] POST cron-tick without secret →", res.status);

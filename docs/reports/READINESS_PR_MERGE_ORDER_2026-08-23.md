@@ -16,4 +16,4 @@ Merge **bottom-up** after non-author `APPROVED` on each PR head.
 | 7 | [#238](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/238) | docs RC manifest | Tag `v1.0.0-rc.1` already on `a7144249` |
 | 8 | [#239](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/239) | docs Phase 12 NO-GO | Evidence |
 
-**Blockers:** non-author approval on protected `main`; real client intake for Phase 12 YES.
+**Blockers:** non-author approval on protected `main` (`GITHUB_REVIEWER_TOKEN` returned 401 on 2026-08-23 — `WAITING_FOR_NON_AUTHOR_APPROVAL`); real client intake for Phase 12 YES.

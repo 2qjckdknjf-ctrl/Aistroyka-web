@@ -20,24 +20,32 @@ echo "=== Day-0 staging rehearsal (synthetic) ==="
 echo "target: $BASE_URL"
 echo ""
 
-echo "[1/5] validate example intake (example.com)"
+echo "[1/6] validate example intake (example.com)"
 bun run pilot:intake:validate -- docs/launch/pilot-intake.example.json
 
 echo ""
-echo "[2/5] pilot_launch.sh"
+echo "[2/6] pilot_launch.sh"
 bash scripts/smoke/pilot_launch.sh
 
 echo ""
-echo "[3/5] ios_mobile_api_chain.sh"
+echo "[3/6] ios_mobile_api_chain.sh"
 bash scripts/smoke/ios_mobile_api_chain.sh
 
 echo ""
-echo "[4/5] security_headers.sh"
+echo "[4/6] security_headers.sh"
 bash scripts/smoke/security_headers.sh "$BASE_URL"
 
 echo ""
-echo "[5/5] pilot-go-live-check (cron skipped)"
-PILOT_BASE_URL="$BASE_URL" PILOT_SKIP_CRON=1 node scripts/pilot-go-live-check.mjs || true
+echo "[5/6] pilot-go-live-check (cron skipped)"
+PILOT_BASE_URL="$BASE_URL" PILOT_SKIP_CRON=1 node scripts/pilot-go-live-check.mjs
+
+echo ""
+echo "[6/6] forgot-password route probe"
+if bash scripts/pilot/verify_forgot_password_route.sh "$BASE_URL"; then
+  echo "  forgot-password: LIVE"
+else
+  echo "  forgot-password: NOT DEPLOYED (expected until PR #229 merge)"
+fi
 
 echo ""
 echo "day0_staging_rehearsal: DONE (synthetic — not a client Day-0 YES)"
