@@ -320,6 +320,33 @@ jobs:
             *) echo "::error::Unexpected E2E entrypoint"; exit 1 ;;
           esac
 
+      - name: Reconfirm preview deployment SHA immediately before E2E
+        env:
+          PREVIEW_URL: ${{ needs.trust-boundary-preflight.outputs.preview_base_url }}
+          TARGET_SHA: ${{ needs.trust-boundary-preflight.outputs.target_sha }}
+          BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        run: |
+          set -euo pipefail
+          HTTP_CODE="$(curl -sS --globoff -o /tmp/health-pre-e2e.json -w '%{http_code}' \
+            -H "x-vercel-protection-bypass: ${BYPASS}" \
+            "${PREVIEW_URL}/api/v1/health" || true)"
+          BODY="$(cat /tmp/health-pre-e2e.json 2>/dev/null || echo '{}')"
+          if [ "$HTTP_CODE" -ge 500 ]; then
+            echo "::error::FAILED_RUNTIME: Preview health HTTP ${HTTP_CODE} before E2E"
+            exit 1
+          fi
+          DB="$(echo "$BODY" | jq -r '.db // empty')"
+          if [ -z "$DB" ] || [ "$DB" != "ok" ]; then
+            echo "::error::Preview health db=${DB:-missing} before E2E"
+            exit 1
+          fi
+          SHA7="$(echo "$BODY" | jq -r '.buildStamp.sha7 // empty')"
+          EXPECTED7="${TARGET_SHA:0:7}"
+          if [ -z "$SHA7" ] || [ "$SHA7" != "$EXPECTED7" ]; then
+            echo "::error::FAILED_DEPLOYMENT_ALIGNMENT: health sha7=${SHA7} expected=${EXPECTED7} before E2E"
+            exit 1
+          fi
+
       - name: Run governed AI staging E2E (raw output file only)
         id: e2e
         working-directory: pr-workspace

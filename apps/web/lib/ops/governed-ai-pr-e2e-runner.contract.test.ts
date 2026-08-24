@@ -223,6 +223,15 @@ describe("governed-ai-pr-e2e-runner workflow contract", () => {
     expect(wf).toMatch(/Verify E2E entrypoint path is fixed/);
   });
 
+  it("reconfirms preview deployment SHA immediately before E2E", () => {
+    const job2 = wf.split("governed-ai-pr-e2e:")[1].split("governed-ai-pr-e2e-verdict:")[0];
+    const reconfirmIdx = job2.indexOf("Reconfirm preview deployment SHA immediately before E2E");
+    const e2eIdx = job2.indexOf("Run governed AI staging E2E (raw output file only)");
+    expect(reconfirmIdx).toBeGreaterThan(-1);
+    expect(e2eIdx).toBeGreaterThan(reconfirmIdx);
+    expect(job2).toMatch(/FAILED_DEPLOYMENT_ALIGNMENT: health sha7=\$\{SHA7\} expected=\$\{EXPECTED7\} before E2E/);
+  });
+
   it("queues concurrent runs and pins trusted helper checkout to github.sha", () => {
     expect(wf).toMatch(/cancel-in-progress:\s*false/);
     expect(wf).toMatch(/ref: \$\{\{ github\.sha \}\}/);
