@@ -27,7 +27,7 @@ Workflow: `.github/workflows/governed-ai-pr-e2e-runner.yml` (must exist on **`ma
 - Revalidates PR head + deployment binding **before** PR checkout
 - Checkout exact verified PR SHA into `pr-workspace/`
 - Trusted deployment-binding helpers checked out from workflow ref into `trusted-runner-ops/`
-- Vercel bypass preflight → E2E harness only (raw `e2e-result.json` uploaded for Job 3; retention 1 day)
+- Vercel bypass preflight → E2E harness only (raw output staged via run-scoped `actions/cache` for Job 3; not published as a downloadable artifact)
 - **Does not** run trusted redaction or verdict validation in-process with PR-controlled code
 
 ### Job 3 — `governed-ai-pr-e2e-postprocess`

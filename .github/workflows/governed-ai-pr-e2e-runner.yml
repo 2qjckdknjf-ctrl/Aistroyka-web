@@ -204,7 +204,7 @@ jobs:
     timeout-minutes: 30
     environment: staging
     outputs:
-      e2e_exit_code: ${{ steps.e2e.outputs.exit_code }}
+      e2e_exit_code: ${{ steps.e2e_exit.outputs.exit_code }}
     permissions:
       contents: read
       pull-requests: read
@@ -465,8 +465,22 @@ jobs:
           set -uo pipefail
           E2E_EXIT=0
           node scripts/pilot/governed-ai-owner-evidence-staging-e2e.mjs > e2e-result.json 2> e2e-result.stderr || E2E_EXIT=$?
-          echo "exit_code=${E2E_EXIT}" >> "$GITHUB_OUTPUT"
+          printf '%s' "$E2E_EXIT" > .e2e-exit-code
           exit 0
+
+      - name: Record validated E2E exit code
+        id: e2e_exit
+        if: steps.e2e.outcome != 'cancelled'
+        working-directory: pr-workspace
+        run: |
+          set -euo pipefail
+          E2E_EXIT="$(tr -d '\n\r' < .e2e-exit-code)"
+          if ! printf '%s' "$E2E_EXIT" | grep -Eq '^[0-9]+$'; then
+            echo "::error::Invalid harness exit code"
+            exit 1
+          fi
+          echo "exit_code=${E2E_EXIT}" >> "$GITHUB_OUTPUT"
+          rm -f .e2e-exit-code
 
       - name: Reconfirm preview deployment SHA immediately after E2E
         id: post_e2e_deploy
@@ -498,6 +512,7 @@ jobs:
           fi
 
       - name: Revalidate PR head SHA after E2E
+        id: post_e2e_pr_head
         if: always() && steps.e2e.outcome != 'cancelled' && steps.post_e2e_deploy.outcome == 'success'
         env:
           PR_NUM: ${{ needs.trust-boundary-preflight.outputs.pull_request_number }}
@@ -525,16 +540,18 @@ jobs:
             exit 1
           fi
 
-      - name: Upload raw E2E output for isolated postprocess job
-        if: always() && steps.e2e.outcome != 'cancelled'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - name: Stage raw E2E output for isolated postprocess job
+        if: >-
+          steps.e2e.outcome != 'cancelled' &&
+          steps.e2e_exit.outcome == 'success' &&
+          steps.post_e2e_deploy.outcome == 'success' &&
+          steps.post_e2e_pr_head.outcome == 'success'
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
-          name: governed-ai-e2e-raw-pr${{ needs.trust-boundary-preflight.outputs.pull_request_number }}
+          key: governed-e2e-raw-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             pr-workspace/e2e-result.json
             pr-workspace/e2e-result.stderr
-          retention-days: 1
-          if-no-files-found: error
 
   governed-ai-pr-e2e-postprocess:
     name: Governed AI PR E2E postprocess
@@ -570,11 +587,12 @@ jobs:
         with:
           bun-version: 1.2.15
 
-      - name: Download raw E2E output from isolated E2E job
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+      - name: Restore raw E2E output from isolated E2E job
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
-          name: governed-ai-e2e-raw-pr${{ needs.trust-boundary-preflight.outputs.pull_request_number }}
+          key: governed-e2e-raw-${{ github.run_id }}-${{ github.run_attempt }}
           path: e2e-workspace
+          fail-on-cache-miss: true
 
       - name: Verify trusted runner ops integrity
         run: |
@@ -620,13 +638,18 @@ jobs:
         env:
           TRUSTED_CANONICAL_ORIGIN: ${{ needs.trust-boundary-preflight.outputs.preview_base_url }}
           TARGET_SHA: ${{ needs.trust-boundary-preflight.outputs.target_sha }}
+          E2E_EXIT_CODE: ${{ needs.governed-ai-pr-e2e.outputs.e2e_exit_code }}
         run: |
           set -euo pipefail
           if [ ! -f e2e-result-redacted.json ]; then
             echo "::error::Missing redacted E2E artifact"
             exit 1
           fi
-          VERDICT="$(bun ../apps/web/lib/ops/governed-ai-pr-e2e-runner.validate-e2e-verdict.mjs "${{ needs.governed-ai-pr-e2e.outputs.e2e_exit_code }}" e2e-result-redacted.json)"
+          if ! printf '%s' "$E2E_EXIT_CODE" | grep -Eq '^[0-9]+$'; then
+            echo "::error::Invalid E2E exit code from upstream job"
+            exit 1
+          fi
+          VERDICT="$(bun ../apps/web/lib/ops/governed-ai-pr-e2e-runner.validate-e2e-verdict.mjs "$E2E_EXIT_CODE" e2e-result-redacted.json)"
           echo "E2E verdict: ${VERDICT} (25/25 PASS required)"
 
       - name: Upload redacted E2E evidence

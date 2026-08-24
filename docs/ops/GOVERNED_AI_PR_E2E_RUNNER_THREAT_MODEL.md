@@ -84,14 +84,14 @@ Job 2 uses the **canonical URL from GitHub deployment metadata** only. Raw opera
 | Stale success after newer failure | Latest status selected by timestamp/id; non-success latest state fails binding |
 | Status drift after environment approval | Job 2 re-fetches all statuses and revalidates latest status creator/state/URL before PR checkout |
 | PR E2E script at verified SHA runs with QA personas | Fixed entrypoint path only; `bun install --ignore-scripts`; pinned QA project; disposable QA data; no service-role; protected staging approval; owner-reviewed dispatch; trusted redaction/verdict in **separate Job 3 VM** (not same process as PR harness) |
-| Bypass token in logs/artifacts | Header-only bypass; stdout/stderr captured to ephemeral files; redacted artifact only; harness `base`/`deployedSha7` overwritten from trusted deployment binding env before upload |
+| Bypass token in logs/artifacts | Header-only bypass; stdout/stderr captured to ephemeral files; raw harness output transferred via run-scoped cache (not downloadable artifact); redacted artifact only uploaded from Job 3 |
 | Wrong project mutated | **Required** `PILOT_SMOKE_PROJECT_ID_STAGING` variable; no auto-discovery |
 | Feature-branch workflow tampering | Job 1 + Job 2 require `github.ref == refs/heads/main`; Job 2 additionally requires protected staging preflight |
 | Unprotected staging environment | Job 1 fails with `BLOCKED_STAGING_ENVIRONMENT_UNPROTECTED` when misconfigured |
 | Over-privileged workflow token | `contents: read`, `pull-requests: read`, `deployments: read`; Job 2 drops PR write |
 | `pull_request_target` RCE | **Not used** |
 | False-green skipped E2E | Verdict job fails when secret-consuming E2E or postprocess job skipped |
-| PR harness tampers post-E2E trusted steps | Job 3 runs on fresh VM; no shared `GITHUB_PATH`/`BASH_ENV`/background processes from Job 2 |
+| PR harness tampers post-E2E trusted steps | Job 3 runs on fresh VM; no shared `GITHUB_PATH`/`BASH_ENV`/background processes from Job 2; harness exit code validated in trusted step and re-validated via `env:` allowlist in Job 3 |
 | False-green harness verdict | Success requires exit `0` + `PROVEN` + exactly 25/25 `PASS` + matching base/sha7 |
 | False-green partial optional steps | `BLOCKED_EXTERNAL` and non-`PASS` step statuses fail the runner contract |
 | TOCTOU after environment approval | Job 2 revalidates PR head + deployment + latest status binding before PR checkout |
