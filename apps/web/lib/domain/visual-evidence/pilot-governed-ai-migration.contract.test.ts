@@ -71,11 +71,3 @@ describe("pilot governed AI migration contract", () => {
     expect(checksum).toMatch(/^[a-f0-9]{64}$/);
   });
 });
-
-describe("pilot governed AI initplan forward migration", () => {
-  it("wraps auth.role() with select for service_role policies", () => {
-    const sql = readMigration("20260824160000_pilot_governed_ai_rls_initplan_hardening.sql");
-    expect(sql).toContain("(select auth.role()) = 'service_role'");
-    expect(sql).not.toMatch(/using \(auth\.role\(\) = 'service_role'\)/);
-  });
-});

@@ -1,30 +1,30 @@
 # Performance advisor audit — pilot governed AI PR tables (2026-08-24)
 
-Scope: Supabase staging `vthfrxehrursfloevnlp` performance advisors on objects introduced by PR #244 migrations (`20260824122312`–`20260824150000`).
+Scope: Supabase staging `vthfrxehrursfloevnlp` performance advisors on objects **introduced by PR #244**.
 
-**Important:** These tables and policies are **new in this PR**. Findings are not legacy repo debt; they are **pilot-scale performance advisories** on newly created objects.
+**Classification rule:** These are **PR-introduced findings using inherited project patterns** or **PR-introduced accepted performance debt**. They are **not** legacy/pre-existing repo debt — the tables, indexes, and policies did not exist before this PR.
 
-| # | Advisor | Object | Introduced in PR | Class | Pilot impact | Disposition | Remediation owner | Milestone |
-|---|---------|--------|------------------|-------|--------------|-------------|-------------------|-----------|
-| 1 | `unindexed_foreign_keys` | `ai_action_audit_records.project_id` → FK | `20260824122312` | performance-only | Low at pilot volume; admin/service reads by tenant | **Accepted debt** — partial index `idx_ai_action_audit_project` exists (`WHERE project_id IS NOT NULL`); advisor wants dedicated FK index | Platform | Post-pilot scale review |
-| 2 | `unindexed_foreign_keys` | `report_completeness_evaluations.report_id` → FK | `20260824122312` | performance-only | Low; unique `(tenant_id, report_id)` covers primary lookup | **Accepted debt** — `idx_report_completeness_report_fk` present; advisor may not recognize as FK-covering | Platform | Post-pilot scale review |
-| 3 | `unindexed_foreign_keys` | `visual_evidence_records.media_id` → FK | `20260824122312` | performance-only | Low; partial index `idx_visual_evidence_media_fk` exists | **Accepted debt** (partial index vs advisor heuristic) | Platform | Post-pilot scale review |
-| 4 | `unindexed_foreign_keys` | `visual_evidence_records.project_id` → FK | `20260824122312` | performance-only | Low; composite `idx_visual_evidence_tenant_project` covers tenant+project queries | **Accepted debt** | Platform | Post-pilot scale review |
-| 5 | `unindexed_foreign_keys` | `visual_evidence_records.task_id` → FK | `20260824122312` | performance-only | Low; partial `idx_visual_evidence_task` exists | **Accepted debt** | Platform | Post-pilot scale review |
-| 6 | `unindexed_foreign_keys` | `visual_evidence_records.upload_session_id` → FK | `20260824122312` | performance-only | Low; partial `idx_visual_evidence_upload_session_fk` exists | **Accepted debt** | Platform | Post-pilot scale review |
-| 7 | `auth_rls_initplan` | `ai_action_audit_records` policy `ai_action_audit_service_role` | `20260824122312` / hardened `20260824150000` | performance-only (RLS plan) | Medium at high write volume; **not a security defect** | **Fix prepared locally** — forward migration `20260824160000` wraps `(select auth.role())`; **not applied remote** (owner gate) | PR #244 author | After E2E PASS + owner approval |
-| 8 | `auth_rls_initplan` | `report_completeness_evaluations` policy `report_completeness_service_role` | same | performance-only | Medium at high write volume | **Fix prepared locally** — same `20260824160000` | PR #244 author | After E2E PASS + owner approval |
-| 9 | `unused_index` | `idx_visual_evidence_tenant_project` | `20260824122312` | performance-only | None — tables empty / no production traffic yet | **Accepted debt** — do **not** drop; needed for portal/tenant queries | Platform | Re-evaluate after pilot traffic |
-| 10 | `unused_index` | `idx_visual_evidence_pair_group` | `20260824122312` | performance-only | None pre-traffic | **Accepted debt** | Platform | Re-evaluate after pilot traffic |
-| 11 | `unused_index` | `idx_ai_action_audit_tenant` | `20260824122312` | performance-only | None pre-traffic | **Accepted debt** | Platform | Re-evaluate after pilot traffic |
-| 12 | `unused_index` | `idx_ai_action_audit_action` | `20260824122312` | performance-only | None pre-traffic | **Accepted debt** | Platform | Re-evaluate after pilot traffic |
-| 13 | `multiple_permissive_policies` | `ai_action_audit_records` SELECT for `authenticated` | `20260824150000` | performance-only | Low — intentional split: tenant read + service_role path | **Accepted debt** — RBAC design requires separate policies | Security/Platform | Document; consolidate only if proven safe |
-| 14 | `multiple_permissive_policies` | `report_completeness_evaluations` SELECT for `authenticated` | `20260824150000` | performance-only | Low — service writes vs tenant read | **Accepted debt** | Security/Platform | Document |
-| 15 | `multiple_permissive_policies` | `visual_evidence_records` SELECT for `authenticated` | `20260824150000` | performance-only | Low — internal vs stakeholder visibility split | **Accepted debt** — required for owner/stakeholder isolation | Security/Platform | No change pre-pilot |
-| 16 | `multiple_permissive_policies` | `visual_evidence_records` UPDATE for `authenticated` | `20260824150000` | performance-only | Low — worker update vs manager visibility update | **Accepted debt** — manager visibility guard relies on split | Security/Platform | No change pre-pilot |
+Migration gate **closed:** `20260824150000` applied on staging. Initplan follow-up deferred to `PERFORMANCE_ADVISOR_FOLLOWUP_PILOT_GOVERNED_AI_RLS_INITPLAN_2026-08-24.md`.
+
+| # | Advisor | Object | PR-introduced | Severity | Functional | Security | Pilot perf | Disposition | Follow-up owner | Milestone |
+|---|---------|--------|---------------|----------|------------|----------|------------|-------------|-----------------|-----------|
+| 1 | `unindexed_foreign_keys` | `ai_action_audit_records.project_id` FK | yes | INFO | none | none | low | **Accepted debt** — no dedicated leading-column FK index; composite `(tenant_id, executed_at)` indexes exist but do not cover FK-only lookups | Platform | Post-pilot: add `idx_ai_action_audit_project_id_fk ON (project_id)` if delete/update volume grows |
+| 2 | `unindexed_foreign_keys` | `report_completeness_evaluations.report_id` FK | yes | INFO | none | none | low | **Accepted debt** — unique `(tenant_id, report_id)` covers primary read path; FK-only cascade path may still scan | Platform | Post-pilot: dedicated FK index if advisor persists |
+| 3 | `unindexed_foreign_keys` | `visual_evidence_records.media_id` FK | yes | INFO | none | none | low | **Accepted debt** — partial index `idx_visual_evidence_media_fk ON (media_id) WHERE media_id IS NOT NULL` is not guaranteed FK-covering for all planner paths | Platform | Future index proposal |
+| 4 | `unindexed_foreign_keys` | `visual_evidence_records.project_id` FK | yes | INFO | none | none | low | **Accepted debt** — `(tenant_id, project_id)` composite does **not** lead with `project_id` alone | Platform | Future index proposal |
+| 5 | `unindexed_foreign_keys` | `visual_evidence_records.task_id` FK | yes | INFO | none | none | low | **Accepted debt** — partial `idx_visual_evidence_task` exists; FK-only path may still warn | Platform | Future index proposal |
+| 6 | `unindexed_foreign_keys` | `visual_evidence_records.upload_session_id` FK | yes | INFO | none | none | low | **Accepted debt** — partial FK index exists; advisor still flags | Platform | Future index proposal |
+| 7 | `auth_rls_initplan` | `ai_action_audit_service_role` | yes | WARN | none | none | low–medium at high write volume | **Deferred follow-up** — performance-only; service_role app path uses BYPASSRLS; policy is defensive | Platform | After PR #244 merge — see follow-up doc |
+| 8 | `auth_rls_initplan` | `report_completeness_service_role` | yes | WARN | none | none | low–medium | **Deferred follow-up** — same rationale as #7 | Platform | After PR #244 merge |
+| 9 | `unused_index` | `idx_visual_evidence_tenant_project` | yes | INFO | none | none | none (empty tables) | **Expected at pilot** — do not drop | Platform | Re-evaluate after QA/pilot traffic |
+| 10 | `unused_index` | `idx_visual_evidence_pair_group` | yes | INFO | none | none | none | **Expected at pilot** | Platform | Re-evaluate after traffic |
+| 11 | `unused_index` | `idx_ai_action_audit_tenant` | yes | INFO | none | none | none | **Expected at pilot** | Platform | Re-evaluate after traffic |
+| 12 | `unused_index` | `idx_ai_action_audit_action` | yes | INFO | none | none | none | **Expected at pilot** | Platform | Re-evaluate after traffic |
+| 13 | `multiple_permissive_policies` | `ai_action_audit_records` SELECT authenticated | yes | WARN | none | none | low | **Accepted performance debt** — tenant read OR service_role policy overlap; consolidation needs security review | Security/Platform | Post-pilot policy merge study |
+| 14 | `multiple_permissive_policies` | `report_completeness_evaluations` SELECT authenticated | yes | WARN | none | none | low | **Accepted performance debt** | Security/Platform | Post-pilot |
+| 15 | `multiple_permissive_policies` | `visual_evidence_records` SELECT authenticated | yes | WARN | none | none | low | **Accepted performance debt** — internal vs stakeholder OR branches | Security/Platform | Document OR semantics; merge only if proven safe |
+| 16 | `multiple_permissive_policies` | `visual_evidence_records` UPDATE authenticated | yes | WARN | none | none | low | **Accepted performance debt** — worker vs manager visibility update split | Security/Platform | Post-pilot |
 
 ## Verdict
 
-- **No functional or security blocker** from performance advisors at pilot scale.
-- **Two WARN initplan items** have a **local forward-fix migration prepared** (`20260824160000`); remote apply is a **separate owner-gated step**, not part of closed migration `50000` gate.
-- **Do not drop** unused indexes on empty pilot tables solely due to advisor noise.
+No functional or security blocker from performance advisors at pilot scale. No remote schema change required before authenticated E2E.

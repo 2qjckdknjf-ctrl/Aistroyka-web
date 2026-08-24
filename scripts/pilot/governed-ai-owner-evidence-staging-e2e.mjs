@@ -58,7 +58,7 @@ const BASE = (
 const BYPASS = pick("VERCEL_AUTOMATION_BYPASS_SECRET", "VERCEL_PROTECTION_BYPASS");
 const SUPABASE_URL = pick("NEXT_PUBLIC_SUPABASE_URL");
 const SUPABASE_ANON = pick("NEXT_PUBLIC_SUPABASE_ANON_KEY");
-const SERVICE_ROLE = pick("SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_SERVICE_ROLE_KEY_STAGING");
+const QA_PROJECT_ID = pick("PILOT_E2E_PROJECT_ID", "PILOT_SMOKE_PROJECT_ID_STAGING");
 
 const personas = {
   worker: {
@@ -242,23 +242,18 @@ async function preflightPreview() {
   };
 }
 
-async function cleanupFixtures() {
-  if (!SERVICE_ROLE || !SUPABASE_URL) {
-    return { status: "skipped_no_service_role", deleted: {} };
-  }
-  const deleted = { reports: 0, upload_sessions: 0 };
-  for (const reportId of createdFixtures.reportIds) {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/worker_reports?id=eq.${reportId}`, {
-      method: "DELETE",
-      headers: {
-        apikey: SERVICE_ROLE,
-        Authorization: `Bearer ${SERVICE_ROLE}`,
-        Prefer: "return=minimal",
-      },
-    });
-    if (res.ok || res.status === 204) deleted.reports += 1;
-  }
-  return { status: "attempted", deleted, retained_audit_ids: createdFixtures.auditRecordIds };
+async function cleanupViaApi(worker, reportId) {
+  // No service-role cleanup: disposable QA project retains marked fixtures.
+  return {
+    status: "api_only_no_service_role",
+    deleted: { reports: 0, upload_sessions: 0 },
+    retained: {
+      reportIds: createdFixtures.reportIds,
+      uploadSessionIds: createdFixtures.uploadSessionIds,
+      auditRecordIds: createdFixtures.auditRecordIds,
+    },
+    note: "Immutable audit may remain; reports on pinned QA project only",
+  };
 }
 
 function computeVerdict() {
@@ -300,6 +295,7 @@ async function main() {
   if (!personas.manager.email || !personas.manager.password) missingSecrets.push("PILOT_E2E_MANAGER_EMAIL/PILOT_E2E_MANAGER_PASSWORD");
   if (!personas.owner.email || !personas.owner.password) missingSecrets.push("STAKEHOLDER_SMOKE_EMAIL/STAKEHOLDER_SMOKE_PASSWORD");
   if (!BYPASS && BASE.includes("vercel.app")) missingSecrets.push("VERCEL_AUTOMATION_BYPASS_SECRET");
+  if (!QA_PROJECT_ID) missingSecrets.push("PILOT_SMOKE_PROJECT_ID_STAGING");
   if (missingSecrets.length > 0) {
     console.log(JSON.stringify({ verdict: "BLOCKED_EXTERNAL", missingSecrets, results }, null, 2));
     process.exit(2);
@@ -323,14 +319,12 @@ async function main() {
     if (!oLogin.ok) throw new Error("owner_auth_failed");
 
     const projectsRes = await worker.fetch("/api/v1/projects");
-    projectId =
-      pick("PILOT_E2E_PROJECT_ID", "E2E_PROJECT_ID", "PILOT_SMOKE_PROJECT_ID_STAGING") ||
-      projectsRes.body?.data?.[0]?.id;
-    if (!projectId) {
-      record(4, "worker", "create QA report", "project id", "missing", "FAILED");
-      throw new Error("no_project_id");
+    projectId = QA_PROJECT_ID;
+    const hasProject = (projectsRes.body?.data ?? []).some((p) => p.id === projectId);
+    if (!hasProject) {
+      record(4, "worker", "create QA report (pinned project)", "worker member", "not member", "FAILED");
+      throw new Error("qa_project_not_accessible");
     }
-
     const createRes = await worker.fetch("/api/v1/worker/report/create", {
       method: "POST",
       headers: { "x-idempotency-key": `${E2E_MARKER}-report-${Date.now()}` },
@@ -338,7 +332,7 @@ async function main() {
     });
     reportId = createRes.body?.reportId || createRes.body?.data?.id;
     if (reportId) createdFixtures.reportIds.push(reportId);
-    record(4, "worker", "create QA report", "report id", reportId || "missing", reportId ? "PASS" : "FAILED");
+    record(4, "worker", "create QA report (pinned project)", "report id", reportId || "missing", reportId ? "PASS" : "FAILED");
     if (!reportId) throw new Error("no_report");
 
     const before = await uploadReportEvidence(worker, personas.worker.email, personas.worker.password, "report_before");
@@ -474,7 +468,7 @@ async function main() {
     const idempotent = dryRun2.body?.data?.auditRecordId === auditId;
     record(25, "worker", "idempotent dry-run replay", "same auditRecordId", idempotent ? "match" : "diff", idempotent ? "PASS" : "FAILED", dryRun2.requestId);
   } finally {
-    cleanupResult = await cleanupFixtures();
+    cleanupResult = await cleanupViaApi(worker, reportId);
   }
 
   const verdict = computeVerdict();
