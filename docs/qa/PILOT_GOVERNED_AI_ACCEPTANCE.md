@@ -1,45 +1,53 @@
-# Pilot Governed AI — Acceptance Checklist
+# Pilot Governed AI — Acceptance Checklist (updated 2026-08-24)
 
-**Branch:** `feature/pilot-governed-ai-owner-evidence-2026-08-24`  
-**Date:** 2026-08-24
+**PR:** https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/244
+
+Status legend: `PASS_UNIT` | `PASS_LOCAL_INTEGRATION` | `PASS_CI` | `BLOCKED_STAGING` | `NOT_VERIFIED_LIVE`
 
 ## Acceptance gates
 
-| # | Gate | Target |
+| # | Gate | Status |
 |---|------|--------|
-| 1 | Existing report flow not broken | PASS (additive submit hooks) |
-| 2 | Evidence chain on real API contracts | PASS (`visual_evidence_records` + sync) |
-| 3 | Completeness computed server-side | PASS (`GET /api/v1/reports/:id/completeness`) |
-| 4 | AI actions have policy classification | PASS (`action-registry.ts`) |
-| 5 | Prohibited actions blocked in code | PASS (`prohibited-actions.ts` + tests) |
-| 6 | Consequential actions require approval | PASS (`draft_owner_message`) |
-| 7 | RBAC checked server-side | PASS (executor + existing routes) |
-| 8 | Tenant isolation negative tests | PARTIAL (unit-level; RLS migration local only) |
-| 9 | Audit log for AI actions | PASS (`ai_action_audit_records`) |
-| 10 | Owner sees only allowed data | PASS (finance guard + owner_visible filter) |
-| 11 | Stakeholder no internal data | PASS (existing RLS + no change to internal notes exposure) |
-| 12 | AI output labeled | PASS (portal UI badges) |
-| 13 | AI provider optional | PASS (deterministic paths without LLM) |
-| 14 | Web build | Verify in CI |
-| 15 | Mobile tests | PARTIAL (no iOS run in this slice) |
-| 16 | Migrations additive | PASS (local SQL review) |
-| 17 | Documentation matches code | PASS (this pack) |
-| 18 | No new P0 security issues | PASS (review) |
-| 19 | No placeholder success | PASS |
-| 20 | PR verification report | PASS (`PILOT_GOVERNED_AI_IMPLEMENTATION_REPORT_2026-08-24.md`) |
+| 1 | Report flow not broken | PASS_UNIT |
+| 2 | Evidence chain on APIs | PASS_UNIT |
+| 3 | Server completeness | PASS_UNIT |
+| 4 | AI policy classification | PASS_UNIT |
+| 5 | Prohibited actions blocked | PASS_UNIT |
+| 6 | Consequential → approval | PASS_UNIT |
+| 7 | RBAC server-side | PASS_UNIT |
+| 8 | Tenant isolation | PASS_LOCAL_INTEGRATION (route + contract tests; live RLS BLOCKED_STAGING) |
+| 9 | AI audit log | PASS_UNIT |
+| 10 | Owner allowed data only | PASS_UNIT |
+| 11 | Stakeholder no internal data | PASS_UNIT |
+| 12 | AI output labeled | PASS_UNIT |
+| 13 | AI provider optional | PASS_UNIT |
+| 14 | Web build | PASS_CI |
+| 15 | Mobile tests | PASS_UNIT (Android shared); iOS NOT_VERIFIED_LIVE |
+| 16 | Additive migrations | PASS_LOCAL_INTEGRATION |
+| 17 | Docs match code | PASS_UNIT |
+| 18 | No new P0 security issues | PASS_UNIT (review) |
+| 19 | No placeholder success | PASS_UNIT |
+| 20 | PR verification report | PASS_UNIT |
 
-## Required negative tests (mapped)
+## Owner visibility tests
 
-| Test | File / command |
-|------|----------------|
-| Prohibited AI action blocked | `action-executor.service.test.ts` |
-| Worker blocked from manager remind | `action-executor.service.test.ts` |
-| Idempotent replay | `action-executor.service.test.ts` |
-| Completeness incomplete without media | `report-completeness.service.test.ts` |
-| Portal finance guard | Existing portal route tests (unchanged) |
+| Scenario | Status |
+|----------|--------|
+| Approved report → eligible evidence visible | PASS_UNIT |
+| Unapproved → invisible | PASS_UNIT |
+| Rejected → hidden | PASS_UNIT |
+| Internal evidence → invisible | PASS_UNIT |
+| Idempotent re-approval | PASS_UNIT |
 
-## Manual QA (post-merge staging)
+## Signed media tests
 
-1. Worker submits report → completeness API returns reasons if incomplete.
-2. Manager calls `POST /api/v1/ai/governed-actions/execute` with `dry_run: true`.
-3. Stakeholder opens client portal → overview + visual progress sections load empty/error states gracefully.
+| Scenario | Status |
+|----------|--------|
+| Not owner_visible → no URL | PASS_UNIT |
+| Cross-tenant signing blocked | PASS_UNIT |
+| No object_path in portal JSON | PASS_UNIT |
+| UI handles unavailable image | PASS_UNIT |
+
+## Staging smoke
+
+All steps in `STAGING_MIGRATION_APPLY_MANIFEST_PILOT_GOVERNED_AI_2026-08-24.md` — **NOT_VERIFIED_LIVE**

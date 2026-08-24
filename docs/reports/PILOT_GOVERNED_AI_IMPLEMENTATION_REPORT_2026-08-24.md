@@ -1,82 +1,58 @@
-# Pilot Governed AI — Implementation Report — 2026-08-24
+# Pilot Governed AI — Implementation Report — 2026-08-24 (updated)
 
 **Branch:** `feature/pilot-governed-ai-owner-evidence-2026-08-24`  
-**Base SHA:** `3838726ab3521e19671118ef847936ee62ea5605`  
-**Verdict:** **PARTIAL** (local implementation + validation complete; remote migration apply + staging E2E + Memory OS blocked external)
+**PR:** https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/244  
+**Merge-base with main:** `587ef4c9821458510217fd83d734956675c2d03a` (post-merge)  
+**Verdict:** **READY_FOR_STAGING_APPLY** (local/CI gates; remote migration + live staging E2E remain owner-gated)
 
-## Summary
+## P0 fixes in this continuation
 
-Implemented governed AI pilot foundation, server-side report completeness, visual evidence metadata, owner portal vertical slice (overview + visual progress), and documentation pack — additive on `origin/main` without breaking existing report flows.
+| Risk | Fix | Verification level |
+|------|-----|-------------------|
+| `owner_visible` not wired | `owner-evidence-visibility.service.ts` on manager PATCH approve/reject | PASS_UNIT |
+| Public URLs in owner portal | `portal-media-projection.service.ts` via `createSignedUrlForPath` / `resolveAIMediaImage` | PASS_UNIT |
+| Tenant isolation partial | Route tests + migration contract + visibility tests | PASS_UNIT / PASS_LOCAL_INTEGRATION |
+| Migration gaps | `internal_only`, project consistency trigger, audit insert policy, completeness write policy | PASS_LOCAL_INTEGRATION |
 
-## Files changed (by area)
+## Migration
 
-### Governance
-- `apps/web/lib/ai-governance/pilot/*` — registry, prohibited actions, executor, audit repository, tests
-- `apps/web/app/api/v1/ai/governed-actions/execute/route.ts`
+| Field | Value |
+|-------|-------|
+| File | `20260824120000_pilot_governed_ai_evidence.sql` |
+| SHA-256 | `82f71ae9a916efa82deb58115626a0d7a63ff75fa6ccb344ff8ad8a5d568ee9a` |
+| Type | Additive |
+| Remote | **NOT APPLIED** |
+| Manifest | `docs/reports/STAGING_MIGRATION_APPLY_MANIFEST_PILOT_GOVERNED_AI_2026-08-24.md` |
 
-### Evidence + completeness
-- `apps/web/supabase/migrations/20260824120000_pilot_governed_ai_evidence.sql`
-- `apps/web/lib/domain/evidence/visual-evidence.service.ts`
-- `apps/web/lib/domain/reports/report-completeness.service.ts`
-- `apps/web/app/api/v1/reports/[id]/completeness/route.ts`
-- `apps/web/lib/domain/reports/report.service.ts` — sync evidence + completeness on submit
-- `packages/contracts/src/schemas/report-completeness.schema.ts`
+## Verification matrix
 
-### Owner portal
-- `apps/web/lib/domain/portal/owner-evidence.service.ts`
-- `apps/web/app/api/v1/portal/projects/[id]/overview/route.ts`
-- `apps/web/app/api/v1/portal/projects/[id]/visual-progress/route.ts`
-- `apps/web/app/.../client/ClientPortalOverviewSection.tsx`
-- `apps/web/app/.../client/ClientPortalVisualProgressSection.tsx`
-- `apps/web/app/.../client/ClientPortalViewClient.tsx`
-- i18n: `en.json`, `ru.json`, `es.json`, `it.json`
+| Gate | Level | Command | Result |
+|------|-------|---------|--------|
+| i18n | PASS_UNIT | `bun run i18n:check` | PASS |
+| lint | PASS_UNIT | `bun run lint` | PASS |
+| unit/integration | PASS_UNIT | `bun run test` | PASS (1832/1832) |
+| cf:build | PASS_CI | `bun run cf:build` | PASS |
+| visibility lifecycle | PASS_UNIT | `owner-evidence-visibility.service.test.ts` | PASS |
+| signed media projection | PASS_UNIT | `portal-media-projection.service.test.ts` | PASS |
+| migration contract | PASS_LOCAL_INTEGRATION | `pilot-governed-ai-migration.contract.test.ts` | PASS |
+| portal route isolation | PASS_UNIT | `visual-progress/route.test.ts` | PASS |
+| Android shared contracts | PASS_UNIT | `./gradlew :shared:testDebugUnitTest` | PASS (SDK via copied local.properties) |
+| iOS simulator build | NOT_VERIFIED_LIVE | Xcode not run in this slice | BLOCKED |
+| Live RLS Postgres | NOT_VERIFIED_LIVE | No local Supabase stack | BLOCKED_STAGING |
+| Staging E2E | NOT_VERIFIED_LIVE | Migration not applied remote | BLOCKED_STAGING |
 
-### Documentation
-- `docs/reports/PILOT_GOVERNED_AI_GAP_AUDIT_2026-08-24.md`
-- `docs/reports/PILOT_GOVERNED_AI_IMPLEMENTATION_REPORT_2026-08-24.md` (this file)
-- `docs/security/AI_GOVERNANCE_BASELINE.md`
-- `docs/product/OWNER_EVIDENCE_CHAIN.md`
-- `docs/product/PILOT_PACKAGING_RECOMMENDATION_2026-08-24.md`
-- `docs/architecture/ADR_FUTURE_AGENT_TOOL_LAYER.md`
-- `docs/qa/PILOT_GOVERNED_AI_ACCEPTANCE.md`
+## Residual risks (real)
 
-## Migrations
+1. **Public `media` bucket** may still be public at storage layer — app no longer emits permanent public URLs to owner/stakeholder portal APIs; bucket privatization on staging not verified live.
+2. **Remote migration not applied** — new tables/policies inactive until owner staging apply.
+3. **Historical backfill** defaults to reveal-nothing (`scripts/pilot/owner-evidence-backfill-manifest.mjs --dry-run`).
 
-| Name | Type | Local validation | Remote apply |
-|------|------|------------------|--------------|
-| `20260824120000_pilot_governed_ai_evidence.sql` | Additive | SQL review + build PASS | **NOT APPLIED** (owner gate) |
+## Staging apply readiness
 
-Tables added: `visual_evidence_records`, `ai_action_audit_records`, `report_completeness_evaluations`.
+**READY_FOR_STAGING_APPLY** when owner sets `STAGING_MIGRATION_APPLY=YES` and runs manifest preflight.
 
-## Verification
-
-| Check | Command | Result |
-|-------|---------|--------|
-| i18n | `bun run i18n:check` | PASS |
-| lint | `bun run lint` | PASS |
-| unit tests | `bun run test` | PASS (1815/1815) |
-| cf:build | `bun run cf:build` | PASS |
-| new governance tests | vitest on 3 files | PASS (10/10) |
-
-## External blockers
-
-| Blocker | Evidence | Impact |
-|---------|----------|--------|
-| Remote Supabase migration apply | Owner policy — no apply in branch | New tables not live until owner applies migration |
-| Sasha Memory OS | Connector not invoked / 403 if unavailable | Decision log not written to Memory OS |
-| Staging authenticated E2E | Not run in this slice | Portal/overview not live-verified on staging |
-| iOS/Android device smoke | Environment not run | Mobile contract sync not device-verified |
-
-## Remaining risks
-
-1. `owner_visible` defaults false — manager approval → owner visibility automation not fully wired.
-2. Public media URLs unchanged — signed URL layer still future work.
-3. RLS policies for new tables not live until migration applied.
-
-## Next milestone
-
-Apply migration to staging Supabase (owner-authorized), then run staging smoke: report submit → completeness API → governed action dry_run → stakeholder portal overview.
+**Not pilot-ready** until staging smoke (14 steps in manifest) executed on live DB.
 
 ## Closure verdict
 
-**PARTIAL YES** — code, tests, and docs complete locally; production readiness requires migration apply + staging proof.
+**PARTIAL YES locally → READY_FOR_STAGING_APPLY** — code/tests/docs/CI-ready; live proof pending owner migration + staging smoke.
