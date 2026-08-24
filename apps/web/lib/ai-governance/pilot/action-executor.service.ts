@@ -40,7 +40,7 @@ async function assertProjectMembership(
     .eq("tenant_id", tenantId)
     .eq("project_id", projectId)
     .eq("user_id", userId)
-    .is("revoked_at", null)
+    .eq("status", "active")
     .maybeSingle();
   return Boolean(stakeholder);
 }
@@ -254,6 +254,18 @@ export async function executeGovernedAiAction(
     target_resource_id: typeof req.input?.report_id === "string" ? req.input.report_id : null,
     details: { draft_keys: draft ? Object.keys(draft) : [] },
   });
+
+  if (!audit) {
+    return {
+      status: "blocked",
+      actionId: req.actionId,
+      policyVersion: AI_POLICY_VERSION,
+      riskClass: def.riskClass,
+      requiresHumanApproval: def.requiresHumanApproval,
+      warnings: ["Audit persistence failed — action not recorded"],
+      errorCategory: "audit_write_failed",
+    };
+  }
 
   if (dryRun) {
     return {

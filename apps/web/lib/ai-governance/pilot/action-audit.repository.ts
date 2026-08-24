@@ -1,8 +1,9 @@
 /**
- * AI action audit repository — append-only persistence.
+ * AI action audit repository — append-only persistence via service role only.
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getAdminClient } from "@/lib/supabase/admin";
 
 export interface AiActionAuditInsert {
   tenant_id: string;
@@ -47,10 +48,15 @@ export async function findByIdempotencyKey(
 }
 
 export async function insertAiActionAudit(
-  supabase: SupabaseClient,
+  _supabase: SupabaseClient,
   row: AiActionAuditInsert
 ): Promise<AiActionAuditRow | null> {
-  const { data, error } = await supabase
+  const admin = getAdminClient();
+  if (!admin) return null;
+
+  // Table types are generated post-migration; service-role insert is intentional.
+  const client = admin as SupabaseClient;
+  const { data, error } = await client
     .from("ai_action_audit_records")
     .insert({
       tenant_id: row.tenant_id,

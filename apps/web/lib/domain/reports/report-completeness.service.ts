@@ -4,6 +4,7 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getAdminClient } from "@/lib/supabase/admin";
 import * as reportRepo from "./report.repository";
 
 export const COMPLETENESS_RULES_VERSION = "pilot-v1";
@@ -156,18 +157,22 @@ export async function evaluateReportCompleteness(
     media_reference_valid: mediaReferenceValid,
   };
 
-  await supabase.from("report_completeness_evaluations").upsert(
-    {
-      tenant_id: tenantId,
-      report_id: reportId,
-      status: result.status,
-      reasons: result.reasons,
-      missing_fields: result.missing_fields,
-      rules_version: result.rules_version,
-      evaluated_at: result.evaluated_at,
-    },
-    { onConflict: "tenant_id,report_id" }
-  );
+  const admin = getAdminClient();
+  if (admin) {
+    const client = admin as SupabaseClient;
+    await client.from("report_completeness_evaluations").upsert(
+      {
+        tenant_id: tenantId,
+        report_id: reportId,
+        status: result.status,
+        reasons: result.reasons,
+        missing_fields: result.missing_fields,
+        rules_version: result.rules_version,
+        evaluated_at: result.evaluated_at,
+      },
+      { onConflict: "tenant_id,report_id" }
+    );
+  }
 
   return result;
 }
