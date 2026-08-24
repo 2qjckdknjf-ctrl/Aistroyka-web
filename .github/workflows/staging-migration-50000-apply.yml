@@ -1,0 +1,76 @@
+name: Apply staging migration 20260824150000 (manual)
+
+# Owner-gated: applies ONLY migration 20260824150000 to Supabase staging vthfrxehrursfloevnlp.
+# Requires repository secrets: SUPABASE_ACCESS_TOKEN
+# Optional: SUPABASE_PROJECT_REF (must match staging ref if set)
+
+on:
+  workflow_dispatch:
+    inputs:
+      project_ref:
+        description: "Supabase project ref (must be vthfrxehrursfloevnlp)"
+        required: true
+        default: "vthfrxehrursfloevnlp"
+        type: string
+      migration_version:
+        description: "Migration version to apply"
+        required: true
+        default: "20260824150000"
+        type: string
+      apply_confirmation:
+        description: "Type APPLY_TO_STAGING_ONLY to confirm"
+        required: true
+        type: string
+      owner_marker:
+        description: "Must be YES (STAGING_MIGRATION_20260824150000_APPLY)"
+        required: true
+        default: "YES"
+        type: string
+
+jobs:
+  apply-migration-50000:
+    name: Apply pilot security hardening migration
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: feature/pilot-governed-ai-owner-evidence-2026-08-24
+
+      - name: Validate workflow inputs
+        run: |
+          if [ "${{ inputs.project_ref }}" != "vthfrxehrursfloevnlp" ]; then
+            echo "::error::Refusing non-staging project ref"
+            exit 1
+          fi
+          if [ "${{ inputs.migration_version }}" != "20260824150000" ]; then
+            echo "::error::Only migration 20260824150000 is allowed"
+            exit 1
+          fi
+          if [ "${{ inputs.apply_confirmation }}" != "APPLY_TO_STAGING_ONLY" ]; then
+            echo "::error::apply_confirmation must be APPLY_TO_STAGING_ONLY"
+            exit 1
+          fi
+          if [ "${{ inputs.owner_marker }}" != "YES" ]; then
+            echo "::error::owner_marker must be YES"
+            exit 1
+          fi
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2.15
+
+      - name: Preflight and apply migration
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          STAGING_MIGRATION_20260824150000_APPLY: "YES"
+        run: node scripts/pilot/apply-staging-migration-50000.mjs | tee migration-apply-result.json
+
+      - name: Upload apply evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: staging-migration-50000-apply-evidence
+          path: migration-apply-result.json
+          retention-days: 14
