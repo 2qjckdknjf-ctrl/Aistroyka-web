@@ -69,6 +69,8 @@ function pick(...keys) {
   return null;
 }
 
+const BYPASS = pick("VERCEL_AUTOMATION_BYPASS_SECRET", "VERCEL_PROTECTION_BYPASS");
+
 const personas = {
   worker: {
     email: pick("PILOT_E2E_WORKER_EMAIL", "PILOT_E2E_EMAIL", "E2E_EMAIL", "E2E_USER_EMAIL", "PILOT_SMOKE_EMAIL_STAGING"),
@@ -79,8 +81,8 @@ const personas = {
     password: pick("PILOT_E2E_MANAGER_PASSWORD", "QA_MANAGER_PASSWORD"),
   },
   owner: {
-    email: pick("PILOT_E2E_OWNER_EMAIL", "QA_CLIENT_EMAIL", "QA_OWNER_EMAIL"),
-    password: pick("PILOT_E2E_OWNER_PASSWORD", "QA_CLIENT_PASSWORD", "QA_OWNER_PASSWORD"),
+    email: pick("PILOT_E2E_OWNER_EMAIL", "STAKEHOLDER_SMOKE_EMAIL", "QA_CLIENT_EMAIL", "QA_OWNER_EMAIL"),
+    password: pick("PILOT_E2E_OWNER_PASSWORD", "STAKEHOLDER_SMOKE_PASSWORD", "QA_CLIENT_PASSWORD", "QA_OWNER_PASSWORD"),
   },
   revokedStakeholder: {
     email: pick("PILOT_E2E_STAKEHOLDER_REVOKED_EMAIL"),
@@ -127,6 +129,7 @@ class SessionClient {
     }
     const cookie = [...this.cookieJar.entries()].map(([k, v]) => `${k}=${v}`).join("; ");
     if (cookie) headers.cookie = cookie;
+    if (BYPASS) headers["x-vercel-protection-bypass"] = BYPASS;
     const res = await fetch(url, { ...opts, headers, redirect: "manual" });
     this.#storeCookies(res);
     const text = await res.text();
