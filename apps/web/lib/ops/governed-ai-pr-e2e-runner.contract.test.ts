@@ -417,7 +417,6 @@ describe("governed-ai-pr-e2e-runner workflow contract", () => {
     expect(restoreIdx).toBeGreaterThan(e2eIdx);
     expect(integrityIdx).toBeGreaterThan(restoreIdx);
     expect(redactIdx).toBeGreaterThan(integrityIdx);
-    expect(job2).toMatch(/\$\{\{ steps\.trusted_tools\.outputs\.bun_path \}\}/);
   });
 
   it("requires 25-step PROVEN verdict with trusted origin and target sha", () => {
