@@ -9,7 +9,7 @@ Configure staging credentials **without pasting values into PRs, chat, or commit
 3. Enable **Required reviewers** for `staging` (owner approval before secrets deploy).
 4. Confirm `protection_rules` is **not empty** and deployment branches/tags are restricted to selected branch `main` (workflow preflight fails with `BLOCKED_STAGING_ENVIRONMENT_UNPROTECTED` until configured).
 5. **Only then** add environment secrets and the QA project variable below.
-6. Dispatch **Governed AI PR E2E runner** from **`main`** with exact PR head SHA and canonical Preview URL.
+6. Dispatch **Governed AI PR E2E runner** from **`main`** with exact PR head SHA, GitHub Deployment ID, and Preview URL matching deployment `environment_url`.
 7. When GitHub prompts for environment approval, **owner manually approves** the deployment.
 8. Review the **redacted** workflow artifact only (never paste secrets into dispatch inputs).
 
@@ -60,13 +60,21 @@ Optional (steps 23–24 only if dedicated personas exist):
 - `PILOT_E2E_STAKEHOLDER_REVOKED_EMAIL` / `PILOT_E2E_STAKEHOLDER_REVOKED_PASSWORD`
 - `PILOT_E2E_CROSS_TENANT_EMAIL` / `PILOT_E2E_CROSS_TENANT_PASSWORD`
 
-## Canonical Preview URL for dispatch
+## GitHub Deployment ID for dispatch
 
-Exact hostname only (no wildcards):
+1. Open the product PR → **Checks** / **Deployments**
+2. Locate the Vercel **Preview** deployment for the exact PR head SHA
+3. Copy the GitHub **Deployment ID** (numeric) and the **environment URL** from the latest **success** status
+4. Pass both as `deployment_id` and `preview_base_url` workflow inputs
 
-`https://aistroyka-web-web-v7jq-git-fea-3e326e-2qjckdknjf-ctrls-projects.vercel.app`
+Do **not** pin a static Preview hostname on `main`. Each new Preview deployment gets a new immutable URL; the runner binds trust via GitHub Deployment metadata.
 
-If Vercel changes the branch Preview alias, update `governed-ai-pr-e2e-runner.constants.ts` via a reviewed infra change.
+Example (PR #244 @ `628bb6b1…`):
+
+| Field | Value |
+|-------|-------|
+| `deployment_id` | `6064462333` |
+| `preview_base_url` | `https://aistroyka-web-web-v7jq-8of2zsc02-2qjckdknjf-ctrls-projects.vercel.app` |
 
 ## Not required
 

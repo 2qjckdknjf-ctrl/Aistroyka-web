@@ -4,7 +4,7 @@
 
 Run authenticated 25-step governed AI + owner evidence E2E against a **Vercel Preview** for an **open same-repo PR**, without merging product code to `main`.
 
-Workflow: `.github/workflows/governed-ai-pr-e2e-runner.yml` (must exist on **`main`** after infra PR #245 merge).
+Workflow: `.github/workflows/governed-ai-pr-e2e-runner.yml` (must exist on **`main`**).
 
 ## Architecture (three jobs)
 
@@ -13,31 +13,44 @@ Workflow: `.github/workflows/governed-ai-pr-e2e-runner.yml` (must exist on **`ma
 - **No** `environment: staging`
 - **No** secrets
 - Must run from **`refs/heads/main`** workflow definition only
-- Validates: confirmation string, numeric PR, 40-hex SHA, **exact** Preview hostname, open same-repo non-fork PR, SHA equals live PR head
-- Read-only GitHub Environment check: `staging` must exist with **non-empty** `protection_rules` including `required_reviewers`, plus a selected deployment branch policy allowing only `main`
-- Outputs **canonical** Preview base URL from trusted constants (never forwards raw operator input)
+- Validates: confirmation string, numeric PR, 40-hex SHA, positive decimal `deployment_id`, open same-repo non-fork PR, SHA equals live PR head
+- Fetches GitHub Deployment by ID; binds SHA/environment/Vercel integration/latest success status/`environment_url`
+- Compares operator `preview_base_url` to trusted deployment URL
+- Read-only GitHub Environment check: protected `staging` with required reviewers + main-only deployment branch policy
+- Outputs **canonical** Preview base URL from GitHub deployment metadata (never forwards raw operator input)
+- Uploads sanitized `deployment-binding-evidence.json` artifact (no secrets)
 
 ### Job 2 — `governed-ai-pr-e2e`
 
 - Runs only when Job 1 succeeds **and** `github.ref == refs/heads/main` **and** confirmation matches **and** staging environment is protected
 - **`environment: staging`** (owner must approve deployment before secrets are exposed)
+- Revalidates PR head + deployment binding **before** PR checkout
 - Checkout exact verified PR SHA into `pr-workspace/`
-- Trusted redaction helper checked out from workflow ref into `trusted-runner-ops/`
+- Trusted validation/redaction helpers checked out from workflow ref into `trusted-runner-ops/`
 - Vercel bypass preflight → E2E → redacted artifact
+- Success requires harness exit code **0** and exact verdict **`PROVEN`** (see harness on product PR)
 
 ### Job 3 — `governed-ai-pr-e2e-verdict`
 
 - Fail closed if Job 2 is skipped or failed (prevents false-green when secret job is blocked)
 
-## Canonical Preview hostname
+## Preview URL trust model
 
-Exact allowlist only — **no wildcards**:
+**Do not** pin a static Preview hostname on `main`.
 
-`https://aistroyka-web-web-v7jq-git-fea-3e326e-2qjckdknjf-ctrls-projects.vercel.app`
+For each dispatch, operator supplies the GitHub **Deployment ID** for the Vercel Preview (from PR deployment/checks). The runner validates:
 
-Source of truth: `apps/web/lib/ops/governed-ai-pr-e2e-runner.constants.ts`
+1. Deployment belongs to `2qjckdknjf-ctrl/Aistroyka-web`
+2. Deployment SHA = `target_sha`
+3. Environment = `Preview`
+4. Created by trusted Vercel GitHub integration
+5. Latest status = `success` with `environment_url`
+6. Operator `preview_base_url` exactly matches trusted URL
 
-Changing the Preview alias requires a reviewed constants + workflow update.
+Source of truth modules:
+
+- `apps/web/lib/ops/governed-ai-pr-e2e-runner.deployment-binding.ts`
+- `apps/web/lib/ops/governed-ai-pr-e2e-runner.constants.ts`
 
 ## Security
 
@@ -53,29 +66,34 @@ See `GOVERNED_AI_PR_E2E_RUNNER_THREAT_MODEL.md`.
 
 See `GOVERNED_AI_PR_E2E_OWNER_SECRET_SETUP.md`.
 
-1. Merge infra PR #245 to `main`
-2. Create/verify GitHub Environment `staging`
-3. Add **required reviewer** protection (`protection_rules` must not be empty) and a selected deployment branch policy for only `main`
-4. Confirm environment metadata via GitHub Settings (workflow fails with `BLOCKED_STAGING_ENVIRONMENT_UNPROTECTED` until configured)
-5. Add environment secrets (not repository-wide secrets when avoidable)
-6. Add `PILOT_SMOKE_PROJECT_ID_STAGING` environment variable
-7. Dispatch workflow from **`main`**
-8. Owner manually approves environment deployment when prompted
-9. Review redacted artifact only
-
 ## Dispatch inputs
 
 | Input | Example |
 |-------|---------|
 | `pull_request_number` | `244` |
 | `target_sha` | Full 40-char PR head SHA |
-| `preview_base_url` | Exact canonical URL above |
+| `deployment_id` | GitHub Deployment ID (e.g. `6064462333`) |
+| `preview_base_url` | Exact URL from deployment status `environment_url` |
 | `confirmation` | `RUN_GOVERNED_AI_STAGING_E2E` |
+
+### Example (do not run without owner gates)
+
+```bash
+gh workflow run "Governed AI PR E2E runner (manual)" \
+  --repo 2qjckdknjf-ctrl/Aistroyka-web \
+  --ref main \
+  -f pull_request_number=244 \
+  -f target_sha=628bb6b1ac08c1fffe9078ff6627774995c95fdb \
+  -f deployment_id=6064462333 \
+  -f preview_base_url=https://aistroyka-web-web-v7jq-8of2zsc02-2qjckdknjf-ctrls-projects.vercel.app \
+  -f confirmation=RUN_GOVERNED_AI_STAGING_E2E
+```
 
 ## Invalid targets
 
-- Wildcard or lookalike `vercel.app` hosts
-- `staging.aistroyka.ai` when SHA is `main`, not PR head
+- Deployment for a different SHA/repo/environment
+- Untrusted deployment creator
+- Wildcard or lookalike `vercel.app` hosts not matching GitHub deployment metadata
+- `staging.aistroyka.ai` when SHA is not PR head
 - Preview whose health SHA ≠ input `target_sha`
 - Dispatch from feature-branch workflow YAML
-- Dispatch while `staging` environment lacks required reviewers or an only-`main` deployment branch policy
