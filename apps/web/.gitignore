@@ -13,6 +13,7 @@ out
 # misc
 .DS_Store
 *.pem
+!lib/ops/governed-ai-pr-e2e-runner.seal-public-key.pem
 
 # debug
 npm-debug.log*
