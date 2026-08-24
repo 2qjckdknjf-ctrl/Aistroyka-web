@@ -44,7 +44,7 @@ echo "[6/6] forgot-password route probe"
 if bash scripts/pilot/verify_forgot_password_route.sh "$BASE_URL"; then
   echo "  forgot-password: LIVE"
 else
-  echo "  forgot-password: NOT DEPLOYED (expected until PR #229 merge)"
+  echo "  forgot-password: NOT DEPLOYED (expected until PR #240 merge)"
 fi
 
 echo ""

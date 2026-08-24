@@ -17,7 +17,7 @@ echo "  POST /api/v1/auth/forgot-password → HTTP $res"
 
 case "$res" in
   404)
-    echo "  NOT DEPLOYED — merge PR #229 and deploy staging"
+    echo "  NOT DEPLOYED — merge PR #240 and deploy staging"
     exit 1
     ;;
   400|200|429|503)
