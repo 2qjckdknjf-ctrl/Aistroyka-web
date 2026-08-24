@@ -67,6 +67,16 @@ describe("governed-ai-pr-e2e staging environment protection", () => {
     expect(result.ok).toBe(false);
   });
 
+  it("blocks environments that allow self-review", () => {
+    const result = evaluateStagingEnvironmentProtection({
+      name: "staging",
+      protection_rules: [{ type: "required_reviewers", prevent_self_review: false }],
+      deployment_branch_policy: { custom_branch_policies: true },
+      deployment_branch_policies: [{ name: "main" }],
+    });
+    expect(result.ok).toBe(false);
+  });
+
   it("blocks environments without a selected main deployment branch policy", () => {
     const result = evaluateStagingEnvironmentProtection({
       name: "staging",
@@ -92,7 +102,7 @@ describe("governed-ai-pr-e2e staging environment protection", () => {
   it("allows protected staging environment", () => {
     const result = evaluateStagingEnvironmentProtection({
       name: "staging",
-      protection_rules: [{ type: "required_reviewers" }],
+      protection_rules: [{ type: "required_reviewers", prevent_self_review: true }],
       deployment_branch_policy: { custom_branch_policies: true },
       deployment_branch_policies: [{ name: "main" }],
     });
@@ -166,6 +176,7 @@ describe("governed-ai-pr-e2e-runner workflow contract", () => {
 
   it("blocks unprotected staging environment before secret job", () => {
     expect(wf).toMatch(/BLOCKED_STAGING_ENVIRONMENT_UNPROTECTED/);
+    expect(wf).toMatch(/PREVENT_SELF_REVIEW/);
     expect(wf).toMatch(/environments\/staging/);
     expect(wf).toMatch(/required_reviewers/);
     expect(wf).toMatch(/deployment-branch-policies/);
@@ -252,7 +263,15 @@ describe("governed-ai-pr-e2e redaction helper", () => {
     const dir = mkdtempSync(join(tmpdir(), "gov-e2e-redact-"));
     const raw = {
       verdict: "PASS",
-      results: [{ evidence: "see https://example.com/secret?sig=abc" }],
+      cleanup: "see https://example.com/cleanup?sig=abc",
+      results: [
+        {
+          step: "login",
+          actual: "redirect https://example.com/token?sig=abc",
+          expected: "ok",
+          evidence: "see https://example.com/secret?sig=abc",
+        },
+      ],
     };
     writeFileSync(join(dir, "e2e-result.json"), JSON.stringify(raw));
     execFileSync(
@@ -264,6 +283,8 @@ describe("governed-ai-pr-e2e redaction helper", () => {
       },
     );
     const redacted = JSON.parse(readFileSync(join(dir, "e2e-result-redacted.json"), "utf8"));
+    expect(redacted.cleanup).toBe("see [redacted-url]");
+    expect(redacted.results[0].actual).toBe("redirect [redacted-url]");
     expect(redacted.results[0].evidence).toBe("see [redacted-url]");
     rmSync(dir, { recursive: true, force: true });
     expect(existsSync(dir)).toBe(false);

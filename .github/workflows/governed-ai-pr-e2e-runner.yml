@@ -94,12 +94,17 @@ jobs:
           ENV_NAME="$(echo "$ENV_JSON" | jq -r '.name // empty')"
           RULE_COUNT="$(echo "$ENV_JSON" | jq -r '.protection_rules | length')"
           REVIEWER_RULE_COUNT="$(echo "$ENV_JSON" | jq -r '[.protection_rules[]? | select(.type == "required_reviewers")] | length')"
+          PREVENT_SELF_REVIEW="$(echo "$ENV_JSON" | jq -r '[.protection_rules[]? | select(.type == "required_reviewers") | .prevent_self_review] | if length == 0 then false else all(. == true) end')"
           CUSTOM_BRANCH_POLICIES="$(echo "$ENV_JSON" | jq -r '.deployment_branch_policy.custom_branch_policies // false')"
           if [ "$ENV_NAME" != "staging" ]; then
             echo "::error::BLOCKED_STAGING_ENVIRONMENT_MISSING"
             exit 1
           fi
           if [ "$RULE_COUNT" -eq 0 ] || [ "$REVIEWER_RULE_COUNT" -eq 0 ]; then
+            echo "::error::BLOCKED_STAGING_ENVIRONMENT_UNPROTECTED"
+            exit 1
+          fi
+          if [ "$PREVENT_SELF_REVIEW" != "true" ]; then
             echo "::error::BLOCKED_STAGING_ENVIRONMENT_UNPROTECTED"
             exit 1
           fi

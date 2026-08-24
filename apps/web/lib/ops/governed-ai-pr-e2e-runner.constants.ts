@@ -103,7 +103,7 @@ export type StagingEnvironmentProtectionResult =
 
 export function evaluateStagingEnvironmentProtection(payload: {
   name?: string;
-  protection_rules?: Array<{ type?: string }>;
+  protection_rules?: Array<{ type?: string; prevent_self_review?: boolean }>;
   deployment_branch_policy?: {
     protected_branches?: boolean;
     custom_branch_policies?: boolean;
@@ -138,6 +138,14 @@ export function evaluateStagingEnvironmentProtection(payload: {
       ok: false,
       code: "BLOCKED_STAGING_ENVIRONMENT_UNPROTECTED",
       message: "staging environment must configure required reviewers",
+    };
+  }
+  const reviewerRules = rules.filter((rule) => rule.type === "required_reviewers");
+  if (!reviewerRules.every((rule) => rule.prevent_self_review === true)) {
+    return {
+      ok: false,
+      code: "BLOCKED_STAGING_ENVIRONMENT_UNPROTECTED",
+      message: "staging environment must prevent self-review on required reviewers",
     };
   }
   if (!payload.deployment_branch_policy?.custom_branch_policies) {
