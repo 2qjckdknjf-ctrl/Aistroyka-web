@@ -35,6 +35,7 @@ concurrency:
 jobs:
   governed-ai-pr-e2e:
     name: Governed AI PR preview E2E
+    if: ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: staging
@@ -160,16 +161,17 @@ jobs:
           BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
         run: |
           set -euo pipefail
-          BODY="$(curl -fsS \
-            -H "x-vercel-protection-bypass: ${BYPASS}" \
-            -H "x-vercel-set-bypass-cookie: true" \
-            "${PREVIEW_URL}/api/v1/health")"
-          HTTP_CODE="$(curl -sS -o /dev/null -w '%{http_code}' \
+          HTTP_CODE="$(curl -sS -o health-response.json -w '%{http_code}' \
             -H "x-vercel-protection-bypass: ${BYPASS}" \
             -H "x-vercel-set-bypass-cookie: true" \
             "${PREVIEW_URL}/api/v1/health")"
           if [ "$HTTP_CODE" = "302" ] || [ "$HTTP_CODE" = "401" ] || [ "$HTTP_CODE" = "403" ]; then
             echo "::error::Preview health blocked (HTTP ${HTTP_CODE}). Check VERCEL_AUTOMATION_BYPASS_SECRET."
+            exit 1
+          fi
+          BODY="$(cat health-response.json)"
+          if [ "$HTTP_CODE" != "200" ] && [ "$HTTP_CODE" != "503" ]; then
+            echo "::error::Preview health returned unexpected HTTP ${HTTP_CODE}"
             exit 1
           fi
           SHA7="$(echo "$BODY" | jq -r '.buildStamp.sha7 // empty')"
@@ -214,26 +216,76 @@ jobs:
           GOVERNED_E2E_MARKER: "qa-governed-e2e"
         run: |
           set -euo pipefail
-          node scripts/pilot/governed-ai-owner-evidence-staging-e2e.mjs | tee e2e-result.json
-          node -e "
+          E2E_EXIT_CODE=0
+          set +e
+          node scripts/pilot/governed-ai-owner-evidence-staging-e2e.mjs > e2e-result.json 2> e2e-result.stderr
+          E2E_EXIT_CODE=$?
+          set -e
+          E2E_EXIT_CODE="$E2E_EXIT_CODE" node -e "
             const fs = require('node:fs');
-            const raw = JSON.parse(fs.readFileSync('e2e-result.json','utf8'));
-            const redacted = {
-              verdict: raw.verdict,
-              base: raw.base,
-              startedAt: raw.startedAt,
-              deployedSha7: raw.deployedSha7,
-              projectId: raw.projectId ? raw.projectId.replace(/-/g,'').slice(0,8)+'…' : null,
-              reportId: raw.reportId ? raw.reportId.replace(/-/g,'').slice(0,8)+'…' : null,
-              cleanup: raw.cleanup,
-              results: (raw.results||[]).map(r => ({
-                step: r.step, persona: r.persona, action: r.action,
-                expected: r.expected, actual: r.actual, status: r.status,
-                evidence: typeof r.evidence === 'string' ? r.evidence.replace(/https?:\\/\\/\\S+/g,'[redacted-url]') : r.evidence,
-              })),
+            const exitCode = Number(process.env.E2E_EXIT_CODE || '0');
+            const fallback = {
+              verdict: exitCode === 0 ? 'unknown' : 'runner_failure',
+              base: process.env.GOVERNED_E2E_BASE_URL ?? null,
+              startedAt: null,
+              deployedSha7: null,
+              projectId: null,
+              reportId: null,
+              cleanup: null,
+              results: [],
+              runner: {
+                exitCode,
+                outputStatus: 'missing',
+              },
             };
+            const redactString = (value) =>
+              typeof value === 'string' ? value.replace(/https?:\\/\\/\\S+/g, '[redacted-url]') : value;
+            let redacted = fallback;
+            if (fs.existsSync('e2e-result.json')) {
+              const text = fs.readFileSync('e2e-result.json', 'utf8').trim();
+              if (text) {
+                try {
+                  const raw = JSON.parse(text);
+                  redacted = {
+                    verdict: raw.verdict,
+                    base: raw.base,
+                    startedAt: raw.startedAt,
+                    deployedSha7: raw.deployedSha7,
+                    projectId: raw.projectId ? raw.projectId.replace(/-/g, '').slice(0, 8) + '…' : null,
+                    reportId: raw.reportId ? raw.reportId.replace(/-/g, '').slice(0, 8) + '…' : null,
+                    cleanup: raw.cleanup,
+                    results: (raw.results || []).map((r) => ({
+                      step: r.step, persona: r.persona, action: r.action,
+                      expected: r.expected, actual: r.actual, status: r.status,
+                      evidence: redactString(r.evidence),
+                    })),
+                    runner: {
+                      exitCode,
+                      outputStatus: 'json',
+                    },
+                  };
+                } catch (error) {
+                  redacted = {
+                    ...fallback,
+                    runner: {
+                      exitCode,
+                      outputStatus: 'invalid-json',
+                    },
+                  };
+                }
+              } else {
+                redacted = {
+                  ...fallback,
+                  runner: {
+                    exitCode,
+                    outputStatus: 'empty',
+                  },
+                };
+              }
+            }
             fs.writeFileSync('e2e-result-redacted.json', JSON.stringify(redacted, null, 2));
           "
+          exit "$E2E_EXIT_CODE"
 
       - name: Upload redacted E2E evidence
         if: always()

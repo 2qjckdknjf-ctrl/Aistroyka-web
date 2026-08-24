@@ -9,13 +9,14 @@ The workflow file lives on **`main`** (`.github/workflows/governed-ai-pr-e2e-run
 ## Security properties
 
 - Trigger: `workflow_dispatch` only
+- Job runs only when dispatched from the repository default branch (`main`)
 - Protected environment: `staging`
 - Permissions: `contents: read`, `pull-requests: read` (no write permissions)
 - No `pull_request_target`
 - No migration apply, no production deploy, no PR merge
 - PR must be open, same-repo, non-fork; input `target_sha` must equal live PR head SHA (fail closed on drift)
 - Preview URL must be `https://*.vercel.app` without bypass query params
-- Secrets are never printed; artifacts are redacted (no cookies, tokens, signed URLs, or passwords)
+- Raw E2E output stays on the runner; only the redacted artifact is uploaded (no cookies, tokens, signed URLs, or passwords)
 - Third-party actions pinned by immutable commit SHA
 
 ## Required repository secrets
@@ -55,7 +56,7 @@ Optional (recommended):
 1. GitHub API validates PR #, open state, same-repo, non-fork, head SHA
 2. Checkout exact `target_sha`; verify `git rev-parse HEAD`
 3. Secret presence check (names only)
-4. `GET /api/v1/health` on Preview with bypass header — must not be 302; `buildStamp.sha7` must match `target_sha`; `db` must be `ok`
+4. `GET /api/v1/health` on Preview with bypass header — must not be 302/401/403; `buildStamp.sha7` must match `target_sha`; `db` must be `ok`
 5. Staging Supabase ref check via secret URL host (no value logged)
 
 ## Not valid E2E targets
