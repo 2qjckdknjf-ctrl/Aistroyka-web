@@ -1,6 +1,5 @@
--- Pilot governed AI + visual evidence metadata (additive, non-breaking).
+-- Pilot governed AI + visual evidence metadata (staging-compatible additive slice).
 
--- Visual evidence records: structured project record for photos/media.
 create table if not exists public.visual_evidence_records (
   id uuid primary key default gen_random_uuid(),
   tenant_id uuid not null references public.tenants(id) on delete cascade,
@@ -38,6 +37,12 @@ create index if not exists idx_visual_evidence_tenant_project
   on public.visual_evidence_records (tenant_id, project_id);
 create index if not exists idx_visual_evidence_report
   on public.visual_evidence_records (report_id) where report_id is not null;
+create index if not exists idx_visual_evidence_task
+  on public.visual_evidence_records (task_id) where task_id is not null;
+create index if not exists idx_visual_evidence_media_fk
+  on public.visual_evidence_records (media_id) where media_id is not null;
+create index if not exists idx_visual_evidence_upload_session_fk
+  on public.visual_evidence_records (upload_session_id) where upload_session_id is not null;
 create index if not exists idx_visual_evidence_pair_group
   on public.visual_evidence_records (pair_group_id) where pair_group_id is not null;
 create unique index if not exists idx_visual_evidence_media_unique
@@ -47,66 +52,6 @@ create unique index if not exists idx_visual_evidence_session_unique
 
 alter table public.visual_evidence_records enable row level security;
 
--- Internal tenant members: full CRUD within tenant.
-create policy visual_evidence_tenant_internal on public.visual_evidence_records
-  for all using (
-    tenant_id in (
-      select tm.tenant_id from public.tenant_members tm
-      where tm.user_id = auth.uid() and tm.role in ('owner', 'admin', 'manager', 'member')
-    )
-  )
-  with check (
-    tenant_id in (
-      select tm.tenant_id from public.tenant_members tm
-      where tm.user_id = auth.uid() and tm.role in ('owner', 'admin', 'manager', 'member', 'worker')
-    )
-  );
-
--- Stakeholders / project owners: read owner-visible evidence only.
-create policy visual_evidence_stakeholder_read on public.visual_evidence_records
-  for select using (
-    owner_visible = true
-    and internal_only = false
-    and retention_state = 'active'
-    and tenant_id in (select tenant_id from public.tenant_members where user_id = auth.uid())
-    and (
-      project_id in (select project_id from public.project_stakeholders where user_id = auth.uid() and revoked_at is null)
-      or project_id in (select project_id from public.project_members where user_id = auth.uid() and role = 'owner')
-    )
-  );
-
--- Cross-project linkage guard: report must belong to the same project.
-create or replace function public.validate_visual_evidence_project_consistency()
-returns trigger
-language plpgsql
-as $$
-declare
-  report_project uuid;
-begin
-  if NEW.report_id is null then
-    return NEW;
-  end if;
-
-  select coalesce(wt.project_id, wd.project_id) into report_project
-  from public.worker_reports wr
-  left join public.worker_tasks wt on wt.id = wr.task_id and wt.tenant_id = wr.tenant_id
-  left join public.worker_day wd on wd.id = wr.day_id and wd.tenant_id = wr.tenant_id
-  where wr.id = NEW.report_id and wr.tenant_id = NEW.tenant_id;
-
-  if report_project is not null and report_project <> NEW.project_id then
-    raise exception 'visual_evidence_records project mismatch for report %', NEW.report_id;
-  end if;
-
-  return NEW;
-end;
-$$;
-
-drop trigger if exists trg_visual_evidence_project_consistency on public.visual_evidence_records;
-create trigger trg_visual_evidence_project_consistency
-  before insert or update on public.visual_evidence_records
-  for each row execute function public.validate_visual_evidence_project_consistency();
-
--- AI action audit: append-only for product governance.
 create table if not exists public.ai_action_audit_records (
   id uuid primary key default gen_random_uuid(),
   tenant_id uuid not null references public.tenants(id) on delete cascade,
@@ -133,30 +78,14 @@ create table if not exists public.ai_action_audit_records (
 
 create index if not exists idx_ai_action_audit_tenant on public.ai_action_audit_records (tenant_id, executed_at desc);
 create index if not exists idx_ai_action_audit_action on public.ai_action_audit_records (action_id, executed_at desc);
+create index if not exists idx_ai_action_audit_project
+  on public.ai_action_audit_records (project_id) where project_id is not null;
 create unique index if not exists idx_ai_action_audit_idempotency
   on public.ai_action_audit_records (tenant_id, idempotency_key)
   where idempotency_key is not null;
 
 alter table public.ai_action_audit_records enable row level security;
 
--- Tenant admins/managers: read audit within tenant.
-create policy ai_action_audit_tenant_read on public.ai_action_audit_records
-  for select using (
-    tenant_id in (
-      select tm.tenant_id from public.tenant_members tm
-      where tm.user_id = auth.uid() and tm.role in ('owner', 'admin', 'manager')
-    )
-  );
-
--- Append-only insert for authenticated tenant members (no update/delete policies).
-create policy ai_action_audit_tenant_insert on public.ai_action_audit_records
-  for insert with check (
-    tenant_id in (select tenant_id from public.tenant_members where user_id = auth.uid())
-  );
-
--- No update/delete policies for authenticated users (append-only via service role / server).
-
--- Report completeness cache (server-computed, clients cannot self-declare complete).
 create table if not exists public.report_completeness_evaluations (
   id uuid primary key default gen_random_uuid(),
   tenant_id uuid not null references public.tenants(id) on delete cascade,
@@ -171,18 +100,119 @@ create table if not exists public.report_completeness_evaluations (
 
 create unique index if not exists idx_report_completeness_report
   on public.report_completeness_evaluations (tenant_id, report_id);
+create index if not exists idx_report_completeness_report_fk
+  on public.report_completeness_evaluations (report_id);
 
 alter table public.report_completeness_evaluations enable row level security;
 
-create policy report_completeness_tenant on public.report_completeness_evaluations
-  for select using (
-    tenant_id in (select tenant_id from public.tenant_members where user_id = auth.uid())
+-- Internal read for tenant members.
+create policy visual_evidence_internal_select on public.visual_evidence_records
+  for select to authenticated using (
+    tenant_id in (
+      select tm.tenant_id from public.tenant_members tm
+      where tm.user_id = (select auth.uid())
+        and tm.role in ('owner', 'admin', 'manager', 'member', 'worker')
+    )
   );
 
-create policy report_completeness_tenant_write on public.report_completeness_evaluations
-  for all using (
-    tenant_id in (select tenant_id from public.tenant_members where user_id = auth.uid())
-  )
-  with check (
-    tenant_id in (select tenant_id from public.tenant_members where user_id = auth.uid())
+create policy visual_evidence_worker_insert on public.visual_evidence_records
+  for insert to authenticated with check (
+    owner_visible = false
+    and manager_verified = false
+    and tenant_id in (
+      select tm.tenant_id from public.tenant_members tm
+      where tm.user_id = (select auth.uid())
+        and tm.role in ('owner', 'admin', 'manager', 'member', 'worker')
+    )
   );
+
+create policy visual_evidence_worker_update on public.visual_evidence_records
+  for update to authenticated using (
+    tenant_id in (
+      select tm.tenant_id from public.tenant_members tm
+      where tm.user_id = (select auth.uid())
+        and tm.role in ('owner', 'admin', 'manager', 'member', 'worker')
+    )
+  ) with check (
+    tenant_id in (
+      select tm.tenant_id from public.tenant_members tm
+      where tm.user_id = (select auth.uid())
+        and tm.role in ('owner', 'admin', 'manager', 'member', 'worker')
+    )
+  );
+
+create policy visual_evidence_stakeholder_read on public.visual_evidence_records
+  for select to authenticated using (
+    owner_visible = true
+    and internal_only = false
+    and retention_state = 'active'
+    and tenant_id in (
+      select tm.tenant_id from public.tenant_members tm
+      where tm.user_id = (select auth.uid())
+    )
+    and (
+      project_id in (
+        select ps.project_id from public.project_stakeholders ps
+        where ps.user_id = (select auth.uid()) and ps.status = 'active'
+      )
+      or project_id in (
+        select pm.project_id from public.project_members pm
+        where pm.user_id = (select auth.uid()) and pm.role = 'owner'
+      )
+    )
+  );
+
+create policy ai_action_audit_tenant_read on public.ai_action_audit_records
+  for select to authenticated using (
+    tenant_id in (
+      select tm.tenant_id from public.tenant_members tm
+      where tm.user_id = (select auth.uid())
+        and tm.role in ('owner', 'admin', 'manager')
+    )
+  );
+
+create policy ai_action_audit_service_role on public.ai_action_audit_records
+  for all using (auth.role() = 'service_role')
+  with check (auth.role() = 'service_role');
+
+create policy report_completeness_tenant_read on public.report_completeness_evaluations
+  for select to authenticated using (
+    tenant_id in (
+      select tm.tenant_id from public.tenant_members tm
+      where tm.user_id = (select auth.uid())
+    )
+  );
+
+create policy report_completeness_service_role on public.report_completeness_evaluations
+  for all using (auth.role() = 'service_role')
+  with check (auth.role() = 'service_role');
+
+create or replace function public.validate_visual_evidence_project_consistency()
+returns trigger
+language plpgsql
+as $$
+declare
+  report_project uuid;
+begin
+  if NEW.report_id is null then
+    return NEW;
+  end if;
+
+  select wt.project_id into report_project
+  from public.worker_reports wr
+  left join public.worker_tasks wt
+    on wt.id = wr.task_id and wt.tenant_id = wr.tenant_id
+  where wr.id = NEW.report_id and wr.tenant_id = NEW.tenant_id;
+
+  if report_project is not null and report_project <> NEW.project_id then
+    raise exception 'visual_evidence_records project mismatch for report %', NEW.report_id;
+  end if;
+
+  return NEW;
+end;
+$$;
+
+drop trigger if exists trg_visual_evidence_project_consistency on public.visual_evidence_records;
+create trigger trg_visual_evidence_project_consistency
+  before insert or update on public.visual_evidence_records
+  for each row execute function public.validate_visual_evidence_project_consistency();
