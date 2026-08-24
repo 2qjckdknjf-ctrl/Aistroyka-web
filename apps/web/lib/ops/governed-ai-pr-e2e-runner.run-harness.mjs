@@ -32,7 +32,11 @@ const resultJson = resolve(workspaceDir, "e2e-result.json");
 const resultStderr = resolve(workspaceDir, "e2e-result.stderr");
 const exitCodeFile = resolve(workspaceDir, ".e2e-exit-code");
 
-const nodePath = "/usr/bin/node";
+const nodePath = process.env.GOVERNED_E2E_NODE_PATH?.trim();
+if (!nodePath || !nodePath.startsWith("/")) {
+  console.error("missing or invalid GOVERNED_E2E_NODE_PATH");
+  process.exit(1);
+}
 const scriptPath = resolve(workspaceDir, entrypoint);
 
 const child = spawnSync(

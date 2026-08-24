@@ -20,7 +20,7 @@ describe("governed-ai harness environment isolation", () => {
     expect(GOVERNED_AI_E2E_HARNESS_ALLOWED_ENV).not.toContain("ACTIONS_RUNTIME_TOKEN");
     expect(GOVERNED_AI_E2E_HARNESS_ALLOWED_ENV).not.toContain("GITHUB_ENV");
     expect(GOVERNED_AI_E2E_HARNESS_ALLOWED_ENV).not.toContain("NODE_OPTIONS");
-    expect(GOVERNED_AI_E2E_HARNESS_ALLOWED_ENV).toContain("GOVERNED_E2E_BASE_URL");
+    expect(GOVERNED_AI_E2E_HARNESS_ALLOWED_ENV).toContain("GOVERNED_E2E_NODE_PATH");
   });
 
   it("clears shell startup poisoning vectors in safe shell env", () => {
@@ -31,8 +31,9 @@ describe("governed-ai harness environment isolation", () => {
     expect(GOVERNED_AI_E2E_SAFE_SHELL_ENV.GLOBIGNORE).toBe("*");
   });
 
-  it("run-harness uses fixed node path and disables shell", () => {
-    expect(runHarness).toMatch(/\/usr\/bin\/node/);
+  it("run-harness uses pinned node path from GOVERNED_E2E_NODE_PATH and disables shell", () => {
+    expect(runHarness).toMatch(/GOVERNED_E2E_NODE_PATH/);
+    expect(runHarness).not.toMatch(/\/usr\/bin\/node/);
     expect(runHarness).toMatch(/shell: false/);
     expect(runHarness).not.toMatch(/GITHUB_/);
     expect(runHarness).toMatch(/GOVERNED_AI_E2E_SAFE_SHELL_ENV/);

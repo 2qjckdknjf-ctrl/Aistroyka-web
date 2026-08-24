@@ -442,6 +442,9 @@ jobs:
           sparse-checkout: |
             apps/web/lib/ops/governed-ai-pr-e2e-runner.harness-env.ts
             apps/web/lib/ops/governed-ai-pr-e2e-runner.run-harness.mjs
+            apps/web/lib/ops/governed-ai-pr-e2e-runner.seal-crypto.ts
+            apps/web/lib/ops/governed-ai-pr-e2e-runner.seal-bundle.mjs
+            apps/web/lib/ops/governed-ai-pr-e2e-runner.seal-public-key.pem
           sparse-checkout-cone-mode: false
 
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
@@ -459,6 +462,17 @@ jobs:
             exit 1
           fi
           echo "bun_path=${BUN_PATH}" >> "$GITHUB_OUTPUT"
+
+      - name: Pin trusted node path for harness subprocess
+        id: pin_node
+        run: |
+          set -euo pipefail
+          NODE_PATH="$(command -v node)"
+          if [ -z "$NODE_PATH" ] || [ ! -x "$NODE_PATH" ]; then
+            echo "::error::Missing node executable on runner"
+            exit 1
+          fi
+          echo "node_path=${NODE_PATH}" >> "$GITHUB_OUTPUT"
 
       - name: Checkout verified PR head
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
@@ -568,6 +582,7 @@ jobs:
             NEXT_PUBLIC_SUPABASE_URL="${NEXT_PUBLIC_SUPABASE_URL}" \
             NEXT_PUBLIC_SUPABASE_ANON_KEY="${NEXT_PUBLIC_SUPABASE_ANON_KEY}" \
             GOVERNED_E2E_MARKER="${GOVERNED_E2E_MARKER}" \
+            GOVERNED_E2E_NODE_PATH="${{ steps.pin_node.outputs.node_path }}" \
             "${{ steps.pin_bun.outputs.bun_path }}" trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.run-harness.mjs \
               pr-workspace scripts/pilot/governed-ai-owner-evidence-staging-e2e.mjs
 
@@ -656,21 +671,45 @@ jobs:
             exit 1
           fi
 
-      - name: Stage harness transfer files for isolated seal job
+      - name: Seal harness output and upload ciphertext artifact only
         if: >-
           steps.e2e.outcome != 'cancelled' &&
           steps.e2e_exit.outcome == 'success' &&
           steps.post_e2e_deploy.outcome == 'success' &&
           steps.post_e2e_pr_head.outcome == 'success'
+        env:
+          GOVERNED_E2E_SEAL_REPOSITORY: 2qjckdknjf-ctrl/Aistroyka-web
+          GOVERNED_E2E_SEAL_WORKFLOW: .github/workflows/governed-ai-pr-e2e-runner.yml
+          GOVERNED_E2E_SEAL_RUN_ID: ${{ github.run_id }}
+          GOVERNED_E2E_SEAL_RUN_ATTEMPT: ${{ github.run_attempt }}
+          GOVERNED_E2E_SEAL_DISPATCH_SHA: ${{ github.sha }}
+          GOVERNED_E2E_SEAL_PULL_REQUEST_NUMBER: ${{ needs.trust-boundary-preflight.outputs.pull_request_number }}
+          GOVERNED_E2E_SEAL_TARGET_SHA: ${{ needs.trust-boundary-preflight.outputs.target_sha }}
+          GOVERNED_E2E_SEAL_DEPLOYMENT_ID: ${{ needs.trust-boundary-preflight.outputs.deployment_id }}
         run: |
           set -euo pipefail
-          mkdir -p harness-transfer
-          install -m 600 pr-workspace/e2e-result.json harness-transfer/e2e-result.json
-          install -m 600 pr-workspace/e2e-result.stderr harness-transfer/e2e-result.stderr
-          install -m 600 pr-workspace/.e2e-exit-code harness-transfer/.e2e-exit-code
+          mkdir -p e2e-transfer
+          /usr/bin/env -i \
+            HOME="${HOME:-/home/runner}" \
+            PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
+            LANG="${LANG:-C.UTF-8}" \
+            BASH_ENV=/dev/null \
+            ENV=/dev/null \
+            GOVERNED_E2E_SEAL_REPOSITORY="${GOVERNED_E2E_SEAL_REPOSITORY}" \
+            GOVERNED_E2E_SEAL_WORKFLOW="${GOVERNED_E2E_SEAL_WORKFLOW}" \
+            GOVERNED_E2E_SEAL_RUN_ID="${GOVERNED_E2E_SEAL_RUN_ID}" \
+            GOVERNED_E2E_SEAL_RUN_ATTEMPT="${GOVERNED_E2E_SEAL_RUN_ATTEMPT}" \
+            GOVERNED_E2E_SEAL_DISPATCH_SHA="${GOVERNED_E2E_SEAL_DISPATCH_SHA}" \
+            GOVERNED_E2E_SEAL_PULL_REQUEST_NUMBER="${GOVERNED_E2E_SEAL_PULL_REQUEST_NUMBER}" \
+            GOVERNED_E2E_SEAL_TARGET_SHA="${GOVERNED_E2E_SEAL_TARGET_SHA}" \
+            GOVERNED_E2E_SEAL_DEPLOYMENT_ID="${GOVERNED_E2E_SEAL_DEPLOYMENT_ID}" \
+            "${{ steps.pin_bun.outputs.bun_path }}" trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.seal-bundle.mjs \
+              pr-workspace e2e-transfer/governed-ai-e2e-sealed-bundle.json \
+              trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.seal-public-key.pem
           rm -f pr-workspace/e2e-result.json pr-workspace/e2e-result.stderr pr-workspace/.e2e-exit-code
+          test -f e2e-transfer/governed-ai-e2e-sealed-bundle.json
 
-      - name: Upload harness transfer bundle for trusted seal job only
+      - name: Upload harness ciphertext bundle for trusted seal job
         if: >-
           steps.e2e.outcome != 'cancelled' &&
           steps.e2e_exit.outcome == 'success' &&
@@ -678,8 +717,8 @@ jobs:
           steps.post_e2e_pr_head.outcome == 'success'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: governed-ai-e2e-harness-transfer-${{ github.run_id }}-${{ github.run_attempt }}
-          path: harness-transfer/
+          name: governed-ai-e2e-harness-sealed-${{ github.run_id }}-${{ github.run_attempt }}
+          path: e2e-transfer/governed-ai-e2e-sealed-bundle.json
           retention-days: 1
           if-no-files-found: error
 
@@ -710,7 +749,6 @@ jobs:
           path: trusted-runner-ops
           sparse-checkout: |
             apps/web/lib/ops/governed-ai-pr-e2e-runner.seal-crypto.ts
-            apps/web/lib/ops/governed-ai-pr-e2e-runner.seal-bundle.mjs
             apps/web/lib/ops/governed-ai-pr-e2e-runner.unseal-bundle.mjs
             apps/web/lib/ops/governed-ai-pr-e2e-runner.seal-preflight.mjs
             apps/web/lib/ops/governed-ai-pr-e2e-runner.seal-public-key.pem
@@ -738,29 +776,11 @@ jobs:
           GOVERNED_E2E_SEAL_PUBLIC_KEY_PATH: trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.seal-public-key.pem
         run: "${{ steps.pin_bun.outputs.bun_path }}" trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.seal-preflight.mjs
 
-      - name: Download harness transfer bundle
+      - name: Download harness ciphertext bundle
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
-          name: governed-ai-e2e-harness-transfer-${{ github.run_id }}-${{ github.run_attempt }}
-          path: harness-transfer
-
-      - name: Seal harness output on isolated trusted runner
-        env:
-          GOVERNED_E2E_SEAL_REPOSITORY: 2qjckdknjf-ctrl/Aistroyka-web
-          GOVERNED_E2E_SEAL_WORKFLOW: .github/workflows/governed-ai-pr-e2e-runner.yml
-          GOVERNED_E2E_SEAL_RUN_ID: ${{ github.run_id }}
-          GOVERNED_E2E_SEAL_RUN_ATTEMPT: ${{ github.run_attempt }}
-          GOVERNED_E2E_SEAL_DISPATCH_SHA: ${{ github.sha }}
-          GOVERNED_E2E_SEAL_PULL_REQUEST_NUMBER: ${{ needs.trust-boundary-preflight.outputs.pull_request_number }}
-          GOVERNED_E2E_SEAL_TARGET_SHA: ${{ needs.trust-boundary-preflight.outputs.target_sha }}
-          GOVERNED_E2E_SEAL_DEPLOYMENT_ID: ${{ needs.trust-boundary-preflight.outputs.deployment_id }}
-        run: |
-          set -euo pipefail
-          mkdir -p e2e-transfer
-          "${{ steps.pin_bun.outputs.bun_path }}" trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.seal-bundle.mjs \
-            harness-transfer e2e-transfer/governed-ai-e2e-sealed-bundle.json \
-            trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.seal-public-key.pem
-          rm -rf harness-transfer
+          name: governed-ai-e2e-harness-sealed-${{ github.run_id }}-${{ github.run_attempt }}
+          path: e2e-transfer
 
       - name: Verify sealed bundle binding and authentication on isolated runner
         env:
