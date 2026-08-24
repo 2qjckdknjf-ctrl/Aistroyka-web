@@ -540,39 +540,23 @@ jobs:
             exit 1
           fi
 
-      - name: Prepare encrypted E2E transfer bundle
+      - name: Upload raw E2E output for seal job
         if: >-
           steps.e2e.outcome != 'cancelled' &&
           steps.e2e_exit.outcome == 'success' &&
           steps.post_e2e_deploy.outcome == 'success' &&
           steps.post_e2e_pr_head.outcome == 'success'
-        env:
-          E2E_TRANSFER_KEY_MATERIAL: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}:${{ secrets.PILOT_SMOKE_PASSWORD_STAGING }}:${{ github.run_id }}:${{ github.run_attempt }}
-        run: |
-          set -euo pipefail
-          mkdir -p e2e-workspace
-          cp pr-workspace/e2e-result.json pr-workspace/e2e-result.stderr e2e-workspace/
-          rm -f pr-workspace/e2e-result.json pr-workspace/e2e-result.stderr
-          tar -C e2e-workspace -czf e2e-raw-bundle.tgz e2e-result.json e2e-result.stderr
-          rm -f e2e-workspace/e2e-result.json e2e-workspace/e2e-result.stderr
-          DERIVED_KEY="$(printf '%s' "$E2E_TRANSFER_KEY_MATERIAL" | sha256sum | awk '{print $1}')"
-          openssl enc -aes-256-cbc -pbkdf2 -iter 100000 -pass pass:"$DERIVED_KEY" \
-            -in e2e-raw-bundle.tgz -out e2e-raw-bundle.tgz.enc
-          rm -f e2e-raw-bundle.tgz
-
-      - name: Stage encrypted E2E output for isolated postprocess job
-        if: >-
-          steps.e2e.outcome != 'cancelled' &&
-          steps.e2e_exit.outcome == 'success' &&
-          steps.post_e2e_deploy.outcome == 'success' &&
-          steps.post_e2e_pr_head.outcome == 'success'
-        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          key: governed-e2e-raw-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.sha }}
-          path: e2e-raw-bundle.tgz.enc
+          name: governed-ai-e2e-raw-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            pr-workspace/e2e-result.json
+            pr-workspace/e2e-result.stderr
+          retention-days: 1
+          if-no-files-found: error
 
-  governed-ai-pr-e2e-postprocess:
-    name: Governed AI PR E2E postprocess
+  governed-ai-pr-e2e-seal:
+    name: Governed AI PR E2E seal
     needs:
       - trust-boundary-preflight
       - governed-ai-pr-e2e
@@ -580,6 +564,53 @@ jobs:
       ${{
         needs.trust-boundary-preflight.result == 'success' &&
         needs.governed-ai-pr-e2e.result == 'success' &&
+        github.ref == 'refs/heads/main' &&
+        inputs.confirmation == 'RUN_GOVERNED_AI_STAGING_E2E'
+      }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: staging
+    permissions:
+      contents: read
+    steps:
+      - name: Download raw E2E output from E2E job
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: governed-ai-e2e-raw-${{ github.run_id }}-${{ github.run_attempt }}
+          path: e2e-workspace
+
+      - name: Encrypt E2E transfer bundle on isolated runner
+        env:
+          E2E_TRANSFER_KEY_MATERIAL: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}:${{ secrets.PILOT_SMOKE_PASSWORD_STAGING }}:${{ github.run_id }}:${{ github.run_attempt }}
+        run: |
+          set -euo pipefail
+          test -f e2e-workspace/e2e-result.json
+          tar -C e2e-workspace -czf e2e-raw-bundle.tgz e2e-result.json e2e-result.stderr
+          rm -f e2e-workspace/e2e-result.json e2e-workspace/e2e-result.stderr
+          DERIVED_KEY="$(printf '%s' "$E2E_TRANSFER_KEY_MATERIAL" | sha256sum | awk '{print $1}')"
+          openssl enc -aes-256-cbc -pbkdf2 -iter 100000 -pass pass:"$DERIVED_KEY" \
+            -in e2e-raw-bundle.tgz -out e2e-raw-bundle.tgz.enc
+          rm -f e2e-raw-bundle.tgz
+
+      - name: Upload sealed E2E transfer bundle
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: governed-ai-e2e-sealed-${{ github.run_id }}-${{ github.run_attempt }}
+          path: e2e-raw-bundle.tgz.enc
+          retention-days: 1
+          if-no-files-found: error
+
+  governed-ai-pr-e2e-postprocess:
+    name: Governed AI PR E2E postprocess
+    needs:
+      - trust-boundary-preflight
+      - governed-ai-pr-e2e
+      - governed-ai-pr-e2e-seal
+    if: >-
+      ${{
+        needs.trust-boundary-preflight.result == 'success' &&
+        needs.governed-ai-pr-e2e.result == 'success' &&
+        needs.governed-ai-pr-e2e-seal.result == 'success' &&
         github.ref == 'refs/heads/main' &&
         inputs.confirmation == 'RUN_GOVERNED_AI_STAGING_E2E'
       }}
@@ -593,6 +624,7 @@ jobs:
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           ref: ${{ github.sha }}
+          path: trusted-runner-ops
           sparse-checkout: |
             apps/web/lib/ops/governed-ai-pr-e2e-runner.constants.ts
             apps/web/lib/ops/governed-ai-pr-e2e-runner.deployment-binding.ts
@@ -605,34 +637,32 @@ jobs:
         with:
           bun-version: 1.2.15
 
-      - name: Restore encrypted E2E output from isolated E2E job
-        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+      - name: Download sealed E2E transfer bundle
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
-          key: governed-e2e-raw-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.sha }}
-          path: .
-          fail-on-cache-miss: true
+          name: governed-ai-e2e-sealed-${{ github.run_id }}-${{ github.run_attempt }}
+          path: e2e-workspace
 
       - name: Decrypt E2E transfer bundle
         env:
           E2E_TRANSFER_KEY_MATERIAL: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}:${{ secrets.PILOT_SMOKE_PASSWORD_STAGING }}:${{ github.run_id }}:${{ github.run_attempt }}
         run: |
           set -euo pipefail
-          test -f e2e-raw-bundle.tgz.enc
+          test -f e2e-workspace/e2e-raw-bundle.tgz.enc
           DERIVED_KEY="$(printf '%s' "$E2E_TRANSFER_KEY_MATERIAL" | sha256sum | awk '{print $1}')"
           openssl enc -d -aes-256-cbc -pbkdf2 -iter 100000 -pass pass:"$DERIVED_KEY" \
-            -in e2e-raw-bundle.tgz.enc -out e2e-raw-bundle.tgz
-          mkdir -p e2e-workspace
-          tar -C e2e-workspace -xzf e2e-raw-bundle.tgz e2e-result.json e2e-result.stderr
-          rm -f e2e-raw-bundle.tgz e2e-raw-bundle.tgz.enc
+            -in e2e-workspace/e2e-raw-bundle.tgz.enc -out e2e-workspace/e2e-raw-bundle.tgz
+          tar -C e2e-workspace -xzf e2e-workspace/e2e-raw-bundle.tgz e2e-result.json e2e-result.stderr
+          rm -f e2e-workspace/e2e-raw-bundle.tgz e2e-workspace/e2e-raw-bundle.tgz.enc
           test -f e2e-workspace/e2e-result.json
 
       - name: Verify trusted runner ops integrity
         run: |
           set -euo pipefail
-          test -f apps/web/lib/ops/governed-ai-pr-e2e-runner.verdict.ts
-          grep -q 'GOVERNED_AI_E2E_REQUIRED_STEP_COUNT = 25' apps/web/lib/ops/governed-ai-pr-e2e-runner.verdict.ts
-          grep -q 'validateE2eSuccessContract' apps/web/lib/ops/governed-ai-pr-e2e-runner.validate-e2e-verdict.mjs
-          grep -q 'injectTrustedContractFields' apps/web/lib/ops/governed-ai-pr-e2e-runner.redact-e2e-result.mjs
+          test -f trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.verdict.ts
+          grep -q 'GOVERNED_AI_E2E_REQUIRED_STEP_COUNT = 25' trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.verdict.ts
+          grep -q 'validateE2eSuccessContract' trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.validate-e2e-verdict.mjs
+          grep -q 'injectTrustedContractFields' trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.redact-e2e-result.mjs
 
       - name: Redact E2E evidence
         id: redact
@@ -650,7 +680,7 @@ jobs:
         run: |
           set -euo pipefail
           rm -rf e2e-result-redacted.json
-          bun ../apps/web/lib/ops/governed-ai-pr-e2e-runner.redact-e2e-result.mjs
+          bun ../trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.redact-e2e-result.mjs
           if [ ! -f e2e-result-redacted.json ] || [ -L e2e-result-redacted.json ]; then
             echo "::error::Trusted redaction did not produce a regular file"
             exit 1
@@ -681,7 +711,7 @@ jobs:
             echo "::error::Invalid E2E exit code from upstream job"
             exit 1
           fi
-          VERDICT="$(bun ../apps/web/lib/ops/governed-ai-pr-e2e-runner.validate-e2e-verdict.mjs "$E2E_EXIT_CODE" e2e-result-redacted.json)"
+          VERDICT="$(bun ../trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.validate-e2e-verdict.mjs "$E2E_EXIT_CODE" e2e-result-redacted.json)"
           echo "E2E verdict: ${VERDICT} (25/25 PASS required)"
 
       - name: Upload redacted E2E evidence
@@ -697,6 +727,7 @@ jobs:
     needs:
       - trust-boundary-preflight
       - governed-ai-pr-e2e
+      - governed-ai-pr-e2e-seal
       - governed-ai-pr-e2e-postprocess
     if: always()
     runs-on: ubuntu-latest
@@ -714,6 +745,14 @@ jobs:
           fi
           if [ "${{ needs.governed-ai-pr-e2e.result }}" != "success" ]; then
             echo "::error::Governed AI E2E job failed"
+            exit 1
+          fi
+          if [ "${{ needs.governed-ai-pr-e2e-seal.result }}" = "skipped" ]; then
+            echo "::error::Trusted E2E seal job was skipped"
+            exit 1
+          fi
+          if [ "${{ needs.governed-ai-pr-e2e-seal.result }}" != "success" ]; then
+            echo "::error::Governed AI E2E seal job failed"
             exit 1
           fi
           if [ "${{ needs.governed-ai-pr-e2e-postprocess.result }}" = "skipped" ]; then
