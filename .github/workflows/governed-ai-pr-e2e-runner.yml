@@ -27,6 +27,7 @@ permissions:
   contents: read
   pull-requests: read
   deployments: read
+  actions: read
 
 concurrency:
   group: governed-ai-pr-e2e-${{ inputs.pull_request_number }}
@@ -238,9 +239,14 @@ jobs:
             exit 1
           fi
           DB="$(echo "$BODY" | jq -r '.db // empty')"
-          if [ "$HTTP_CODE" -lt 500 ] && [ -n "$DB" ] && [ "$DB" != "ok" ]; then
-            echo "::error::Preview health db=${DB}"
-            exit 1
+          if [ "$HTTP_CODE" -ge 400 ] && [ "$HTTP_CODE" -lt 500 ]; then
+            echo "Preview health returned HTTP ${HTTP_CODE}; continuing with body validation"
+          fi
+          if [ "$HTTP_CODE" -lt 500 ]; then
+            if [ -z "$DB" ] || [ "$DB" != "ok" ]; then
+              echo "::error::Preview health db=${DB:-missing}"
+              exit 1
+            fi
           fi
           if [ "$HTTP_CODE" -ge 500 ]; then
             echo "::error::FAILED_RUNTIME: Preview health HTTP ${HTTP_CODE}"

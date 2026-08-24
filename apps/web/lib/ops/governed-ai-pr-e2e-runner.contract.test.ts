@@ -111,6 +111,11 @@ describe("governed-ai-pr-e2e-runner workflow contract", () => {
     expect(wf).toMatch(/validate-preview-url\.mjs/);
   });
 
+  it("requests actions and deployments read for environment metadata", () => {
+    expect(wf).toMatch(/deployments:\s*read/);
+    expect(wf).toMatch(/actions:\s*read/);
+  });
+
   it("blocks unprotected staging environment before secret job", () => {
     expect(wf).toMatch(/BLOCKED_STAGING_ENVIRONMENT_UNPROTECTED/);
     expect(wf).toMatch(/environments\/staging/);
@@ -123,6 +128,7 @@ describe("governed-ai-pr-e2e-runner workflow contract", () => {
     expect(wf).toMatch(/RUN_GOVERNED_AI_STAGING_E2E/);
     expect(wf).toMatch(/BLOCKED_VERCEL_BYPASS/);
     expect(wf).toMatch(/FAILED_DEPLOYMENT_ALIGNMENT/);
+    expect(wf).toMatch(/Preview health db=\$\{DB:-missing\}/);
   });
 
   it("requires QA project variable and forbids service-role key", () => {
