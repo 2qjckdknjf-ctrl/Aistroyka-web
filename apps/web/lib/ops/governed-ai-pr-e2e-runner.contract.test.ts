@@ -1,0 +1,345 @@
+import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import {
+  GOVERNED_AI_PR_E2E_CANONICAL_PREVIEW_BASE_URL,
+  GOVERNED_AI_PR_E2E_CANONICAL_PREVIEW_HOSTNAME,
+  GOVERNED_AI_STAGING_SUPABASE_ORIGIN,
+  evaluateStagingEnvironmentProtection,
+  validatePreviewBaseUrl,
+  validateStagingSupabaseOrigin,
+} from "./governed-ai-pr-e2e-runner.constants";
+
+const root = resolve(__dirname, "../../../../");
+const wf = readFileSync(resolve(root, ".github/workflows/governed-ai-pr-e2e-runner.yml"), "utf8");
+const constantsSource = readFileSync(
+  resolve(root, "apps/web/lib/ops/governed-ai-pr-e2e-runner.constants.ts"),
+  "utf8",
+);
+
+describe("governed-ai-pr-e2e preview URL validation", () => {
+  it("accepts the exact canonical hostname", () => {
+    const result = validatePreviewBaseUrl(GOVERNED_AI_PR_E2E_CANONICAL_PREVIEW_BASE_URL);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.canonicalBaseUrl).toBe(GOVERNED_AI_PR_E2E_CANONICAL_PREVIEW_BASE_URL);
+    }
+  });
+
+  it.each([
+    ["attacker prefix", `https://aistroyka-web-web-v7jq-phish.vercel.app`],
+    ["allowed prefix on foreign slug", `https://aistroyka-web-web-v7jq.evil.vercel.app`],
+    ["subdomain trick", `https://sub.${GOVERNED_AI_PR_E2E_CANONICAL_PREVIEW_HOSTNAME}`],
+    ["http protocol", `http://${GOVERNED_AI_PR_E2E_CANONICAL_PREVIEW_HOSTNAME}`],
+    ["custom port", `https://${GOVERNED_AI_PR_E2E_CANONICAL_PREVIEW_HOSTNAME}:8443`],
+    ["username/password", `https://user:pass@${GOVERNED_AI_PR_E2E_CANONICAL_PREVIEW_HOSTNAME}`],
+    ["query bypass", `${GOVERNED_AI_PR_E2E_CANONICAL_PREVIEW_BASE_URL}?token=abc`],
+    ["fragment", `${GOVERNED_AI_PR_E2E_CANONICAL_PREVIEW_BASE_URL}#frag`],
+    ["trailing dot", `https://${GOVERNED_AI_PR_E2E_CANONICAL_PREVIEW_HOSTNAME}.`],
+    ["path suffix", `${GOVERNED_AI_PR_E2E_CANONICAL_PREVIEW_BASE_URL}/api`],
+    ["arbitrary vercel.app", "https://totally-unrelated.vercel.app"],
+  ])("rejects unsafe preview URL: %s", (_label, url) => {
+    expect(validatePreviewBaseUrl(url).ok).toBe(false);
+  });
+});
+
+describe("governed-ai-pr-e2e staging environment protection", () => {
+  it("blocks missing environment metadata", () => {
+    expect(evaluateStagingEnvironmentProtection(null).ok).toBe(false);
+  });
+
+  it("blocks empty protection rules", () => {
+    const result = evaluateStagingEnvironmentProtection({
+      name: "staging",
+      protection_rules: [],
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.code).toBe("BLOCKED_STAGING_ENVIRONMENT_UNPROTECTED");
+    }
+  });
+
+  it("blocks environments without required reviewers", () => {
+    const result = evaluateStagingEnvironmentProtection({
+      name: "staging",
+      protection_rules: [{ type: "wait_timer" }],
+      deployment_branch_policy: { custom_branch_policies: true },
+      deployment_branch_policies: [{ name: "main" }],
+    });
+    expect(result.ok).toBe(false);
+  });
+
+  it("blocks environments that allow self-review", () => {
+    const result = evaluateStagingEnvironmentProtection({
+      name: "staging",
+      protection_rules: [{ type: "required_reviewers", prevent_self_review: false }],
+      deployment_branch_policy: { custom_branch_policies: true },
+      deployment_branch_policies: [{ name: "main" }],
+    });
+    expect(result.ok).toBe(false);
+  });
+
+  it("blocks environments without a selected main deployment branch policy", () => {
+    const result = evaluateStagingEnvironmentProtection({
+      name: "staging",
+      protection_rules: [{ type: "required_reviewers" }],
+      deployment_branch_policy: null,
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.code).toBe("BLOCKED_STAGING_ENVIRONMENT_UNPROTECTED");
+    }
+  });
+
+  it("blocks environments with non-main deployment branch policies", () => {
+    const result = evaluateStagingEnvironmentProtection({
+      name: "staging",
+      protection_rules: [{ type: "required_reviewers" }],
+      deployment_branch_policy: { custom_branch_policies: true },
+      deployment_branch_policies: [{ name: "main" }, { name: "release/*" }],
+    });
+    expect(result.ok).toBe(false);
+  });
+
+  it("allows protected staging environment", () => {
+    const result = evaluateStagingEnvironmentProtection({
+      name: "staging",
+      protection_rules: [{ type: "required_reviewers", prevent_self_review: true }],
+      deployment_branch_policy: { custom_branch_policies: true },
+      deployment_branch_policies: [{ name: "main" }],
+    });
+    expect(result.ok).toBe(true);
+  });
+});
+
+describe("governed-ai-pr-e2e staging Supabase origin", () => {
+  it("accepts the exact AISTROYKA staging origin", () => {
+    expect(validateStagingSupabaseOrigin(GOVERNED_AI_STAGING_SUPABASE_ORIGIN).ok).toBe(true);
+    expect(validateStagingSupabaseOrigin(`${GOVERNED_AI_STAGING_SUPABASE_ORIGIN}/`).ok).toBe(true);
+  });
+
+  it("rejects substring-trick Supabase URLs", () => {
+    const trick = "https://evil.com/vthfrxehrursfloevnlp";
+    expect(validateStagingSupabaseOrigin(trick).ok).toBe(false);
+  });
+});
+
+describe("governed-ai-pr-e2e-runner workflow contract", () => {
+  it("uses workflow_dispatch only and three-job architecture", () => {
+    expect(wf).toMatch(/on:\s*\n\s*workflow_dispatch:/);
+    expect(wf).toMatch(/trust-boundary-preflight:/);
+    expect(wf).toMatch(/governed-ai-pr-e2e:/);
+    expect(wf).toMatch(/governed-ai-pr-e2e-verdict:/);
+    expect(wf).not.toMatch(/pull_request_target/);
+  });
+
+  it("job1 has no staging environment or secrets", () => {
+    const job1 = wf.split("trust-boundary-preflight:")[1].split("governed-ai-pr-e2e:")[0];
+    expect(job1).not.toMatch(/environment:\s*staging/);
+    expect(job1).not.toMatch(/secrets\./);
+    expect(job1).not.toMatch(/vars\./);
+  });
+
+  it("job2 uses staging environment with main guard and protected preflight output", () => {
+    const job2 = wf.split("governed-ai-pr-e2e:")[1].split("governed-ai-pr-e2e-verdict:")[0];
+    expect(job2).toMatch(/environment:\s*staging/);
+    expect(job2).toMatch(/github\.ref == 'refs\/heads\/main'/);
+    expect(job2).toMatch(/staging_environment_protected == 'true'/);
+    expect(job2).toMatch(/permissions:\s*\n\s*contents:\s*read/);
+    expect(job2).toMatch(/pull-requests:\s*read/);
+    expect(job2).not.toMatch(/contents:\s*write|pull-requests:\s*write|deployments:\s*write/);
+  });
+
+  it("job2 revalidates PR head with pull-requests read before any checkout or E2E", () => {
+    const job2 = wf.split("governed-ai-pr-e2e:")[1].split("governed-ai-pr-e2e-verdict:")[0];
+    expect(job2).toMatch(/permissions:\s*\n\s*contents:\s*read/);
+    expect(job2).toMatch(/pull-requests:\s*read/);
+    expect(job2).not.toMatch(
+      /contents:\s*write|pull-requests:\s*write|actions:\s*write|deployments:\s*write|issues:\s*write|checks:\s*write|id-token:\s*write/,
+    );
+
+    const revalidateIdx = job2.indexOf("Revalidate PR head SHA after environment approval");
+    const checkoutTrustedIdx = job2.indexOf("Checkout trusted runner ops from dispatch commit pin");
+    const checkoutPrIdx = job2.indexOf("Checkout verified PR head");
+    const e2eIdx = job2.indexOf("Run governed AI staging E2E (raw output file only)");
+    expect(revalidateIdx).toBeGreaterThan(-1);
+    expect(checkoutTrustedIdx).toBeGreaterThan(revalidateIdx);
+    expect(checkoutPrIdx).toBeGreaterThan(revalidateIdx);
+    expect(e2eIdx).toBeGreaterThan(revalidateIdx);
+    expect(job2).toMatch(/PR #\$\{PR_NUM\} is no longer open after environment approval/);
+    expect(job2).toMatch(/PR head moved after preflight: head=\$\{HEAD_SHA\} expected=\$\{TARGET_SHA\}/);
+    expect(job2).toMatch(/repos\/\$\{REPO\}\/pulls\/\$\{PR_NUM\}/);
+  });
+
+  it("uses trusted canonical preview URL output instead of raw input", () => {
+    expect(wf).toMatch(/validate-preview-url\.mjs/);
+    expect(wf).toMatch(/preview_base_url=\$\{CANONICAL_PREVIEW_URL\}/);
+    expect(wf).not.toMatch(/aistroyka-web-web-v7jq\[a-z0-9-\]\*/);
+    expect(wf).not.toMatch(/endsWith\("vercel\.app"\)/);
+  });
+
+  it("keeps canonical hostname in constants module used by validator", () => {
+    expect(constantsSource).toContain(GOVERNED_AI_PR_E2E_CANONICAL_PREVIEW_HOSTNAME);
+    expect(wf).toMatch(/validate-preview-url\.mjs/);
+  });
+
+  it("requests actions and deployments read for environment metadata", () => {
+    expect(wf).toMatch(/deployments:\s*read/);
+    expect(wf).toMatch(/actions:\s*read/);
+  });
+
+  it("blocks unprotected staging environment before secret job", () => {
+    expect(wf).toMatch(/BLOCKED_STAGING_ENVIRONMENT_UNPROTECTED/);
+    expect(wf).toMatch(/PREVENT_SELF_REVIEW/);
+    expect(wf).toMatch(/environments\/staging/);
+    expect(wf).toMatch(/required_reviewers/);
+    expect(wf).toMatch(/deployment-branch-policies/);
+    expect(wf).toMatch(/CUSTOM_BRANCH_POLICIES/);
+    expect(wf).toMatch(/MAIN_POLICY_COUNT/);
+  });
+
+  it("rejects fork, validates SHA format, and confirmation", () => {
+    expect(wf).toMatch(/Fork PRs are not allowed/);
+    expect(wf).toMatch(/target_sha must be exactly 40 lowercase hex/);
+    expect(wf).toMatch(/RUN_GOVERNED_AI_STAGING_E2E/);
+    expect(wf).toMatch(/BLOCKED_VERCEL_BYPASS/);
+    expect(wf).toMatch(/FAILED_DEPLOYMENT_ALIGNMENT/);
+    expect(wf).toMatch(/Preview health db=\$\{DB:-missing\}/);
+  });
+
+  it("requires QA project variable and forbids service-role key", () => {
+    expect(wf).toMatch(/vars\.PILOT_SMOKE_PROJECT_ID_STAGING/);
+    expect(wf).toMatch(/PILOT_SMOKE_PROJECT_ID_STAGING must be a valid UUID/);
+    expect(wf).not.toMatch(/SUPABASE_SERVICE_ROLE_KEY/);
+    expect(wf).toMatch(/EXPECTED_SUPABASE_ORIGIN="https:\/\/vthfrxehrursfloevnlp\.supabase\.co"/);
+    expect(wf).toMatch(/NORMALIZED_SUPABASE_URL=/);
+  });
+
+  it("pins third-party actions by immutable SHA", () => {
+    expect(wf).toMatch(/actions\/checkout@[0-9a-f]{40}/);
+    expect(wf).toMatch(/oven-sh\/setup-bun@[0-9a-f]{40}/);
+    expect(wf).toMatch(/actions\/upload-artifact@[0-9a-f]{40}/);
+    expect(wf).not.toMatch(/uses: actions\/checkout@v/);
+  });
+
+  it("contains raw E2E output without logging it and always redacts artifact", () => {
+    expect(wf).toMatch(/e2e-result-redacted\.json/);
+    expect(wf).toMatch(/redact-e2e-result\.mjs/);
+    expect(wf).toMatch(/REDACT_VERCEL_BYPASS:/);
+    expect(wf).toMatch(/REDACT_SUPABASE_ANON:/);
+    expect(wf).not.toMatch(/\|\s*tee e2e-result\.json/);
+    expect(wf).toMatch(/> e2e-result\.json 2> e2e-result\.stderr/);
+    expect(wf).toMatch(/rm -f e2e-result\.json e2e-result\.stderr/);
+    expect(wf).not.toMatch(/path: e2e-result\.json/);
+    expect(wf).toMatch(/if: steps\.redact\.outcome == 'success'/);
+  });
+
+  it("ignores package lifecycle scripts during PR workspace install", () => {
+    expect(wf).toMatch(/bun install --frozen-lockfile --ignore-scripts/);
+  });
+
+  it("separates trusted dispatch-pin ops from PR workspace checkout", () => {
+    expect(wf).toMatch(/path: trusted-runner-ops/);
+    expect(wf).toMatch(/ref: \$\{\{ github\.sha \}\}/);
+    expect(wf).toMatch(/path: pr-workspace/);
+    expect(wf).toMatch(/ref: \$\{\{ needs\.trust-boundary-preflight\.outputs\.target_sha \}\}/);
+    expect(wf).toMatch(/git rev-parse HEAD/);
+    expect(wf).toMatch(/governed-ai-owner-evidence-staging-e2e\.mjs/);
+  });
+
+  it("requires redacted verdict PASS and fixed E2E entrypoint", () => {
+    expect(wf).toMatch(/Governed AI E2E verdict is not PASS/);
+    expect(wf).toMatch(/scripts\/pilot\/governed-ai-owner-evidence-staging-e2e\.mjs/);
+    expect(wf).toMatch(/Verify E2E entrypoint path is fixed/);
+  });
+
+  it("reconfirms preview deployment SHA immediately before E2E", () => {
+    const job2 = wf.split("governed-ai-pr-e2e:")[1].split("governed-ai-pr-e2e-verdict:")[0];
+    const reconfirmIdx = job2.indexOf("Reconfirm preview deployment SHA immediately before E2E");
+    const e2eIdx = job2.indexOf("Run governed AI staging E2E (raw output file only)");
+    expect(reconfirmIdx).toBeGreaterThan(-1);
+    expect(e2eIdx).toBeGreaterThan(reconfirmIdx);
+    expect(job2).toMatch(/FAILED_DEPLOYMENT_ALIGNMENT: health sha7=\$\{SHA7\} expected=\$\{EXPECTED7\} before E2E/);
+  });
+
+  it("reconfirms preview deployment SHA immediately after E2E before verdict", () => {
+    const job2 = wf.split("governed-ai-pr-e2e:")[1].split("governed-ai-pr-e2e-verdict:")[0];
+    const e2eIdx = job2.indexOf("Run governed AI staging E2E (raw output file only)");
+    const postIdx = job2.indexOf("Reconfirm preview deployment SHA immediately after E2E");
+    const prRevalidateIdx = job2.indexOf("Revalidate PR head SHA after E2E");
+    const prepareIdx = job2.indexOf("Prepare trusted redaction output path");
+    const redactIdx = job2.indexOf("Redact E2E evidence");
+    const verdictIdx = job2.indexOf("Report redacted verdict only");
+    expect(postIdx).toBeGreaterThan(e2eIdx);
+    expect(prRevalidateIdx).toBeGreaterThan(postIdx);
+    expect(prepareIdx).toBeGreaterThan(prRevalidateIdx);
+    expect(redactIdx).toBeGreaterThan(prepareIdx);
+    expect(verdictIdx).toBeGreaterThan(redactIdx);
+    expect(job2).toMatch(/FAILED_DEPLOYMENT_ALIGNMENT: health sha7=\$\{SHA7\} expected=\$\{EXPECTED7\} after E2E/);
+    expect(job2).toMatch(/PR head moved during E2E/);
+    expect(job2).toMatch(/rm -rf e2e-result-redacted\.json/);
+    expect(job2).toMatch(/Trusted redaction did not produce a regular file/);
+  });
+
+  it("queues concurrent runs and pins trusted helper checkout to github.sha", () => {
+    expect(wf).toMatch(/cancel-in-progress:\s*false/);
+    expect(wf).toMatch(/group: governed-ai-pr-e2e-staging-shared-qa-project/);
+    expect(wf).not.toMatch(/group: governed-ai-pr-e2e-\$\{\{ inputs\.pull_request_number \}\}/);
+    expect(wf).toMatch(/ref: \$\{\{ github\.sha \}\}/);
+    expect(wf).toMatch(/Revalidate PR head SHA after environment approval/);
+  });
+
+  it("fails closed when secret-consuming job is skipped", () => {
+    expect(wf).toMatch(/Secret-consuming E2E job was skipped/);
+  });
+});
+
+describe("governed-ai-pr-e2e redaction helper", () => {
+  it("redacts signed URLs from evidence", async () => {
+    const { mkdtempSync, writeFileSync, readFileSync, rmSync, existsSync } = await import("node:fs");
+    const { tmpdir } = await import("node:os");
+    const { join } = await import("node:path");
+    const { execFileSync } = await import("node:child_process");
+    const dir = mkdtempSync(join(tmpdir(), "gov-e2e-redact-"));
+    const raw = {
+      verdict: "PASS",
+      cleanup: "see https://example.com/cleanup?sig=abc",
+      debug: {
+        password: "super-secret-password",
+        token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.payload.signature",
+      },
+      results: [
+        {
+          step: "login",
+          actual: "redirect https://example.com/token?sig=abc",
+          expected: "ok",
+          evidence: "see https://example.com/secret?sig=abc",
+          message: "failed with injected-bypass-token-value leak",
+        },
+      ],
+    };
+    writeFileSync(join(dir, "e2e-result.json"), JSON.stringify(raw));
+    execFileSync(
+      "bun",
+      [resolve(root, "apps/web/lib/ops/governed-ai-pr-e2e-runner.redact-e2e-result.mjs")],
+      {
+        cwd: dir,
+        stdio: "pipe",
+        env: {
+          ...process.env,
+          REDACT_WORKER_PASS: "injected-worker-password-value",
+          REDACT_VERCEL_BYPASS: "injected-bypass-token-value",
+        },
+      },
+    );
+    const redacted = JSON.parse(readFileSync(join(dir, "e2e-result-redacted.json"), "utf8"));
+    expect(redacted.cleanup).toBe("see [redacted-url]");
+    expect(redacted.results[0].actual).toBe("redirect [redacted-url]");
+    expect(redacted.results[0].evidence).toBe("see [redacted-url]");
+    expect(redacted.debug.password).toBe("[redacted-secret]");
+    expect(redacted.debug.token).toBe("[redacted-secret]");
+    expect(redacted.results[0].message).toBe("failed with [redacted-secret] leak");
+    rmSync(dir, { recursive: true, force: true });
+    expect(existsSync(dir)).toBe(false);
+  });
+});
