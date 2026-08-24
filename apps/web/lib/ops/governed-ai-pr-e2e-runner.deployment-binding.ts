@@ -349,10 +349,10 @@ export type DeploymentBindingEvidence = {
   deployment_task: string;
   environment: string;
   repository: string;
-  deployment_creator_login: string;
-  deployment_creator_id: number;
-  status_creator_login: string;
-  status_creator_id: number;
+  deployment_creator_login: string | null;
+  deployment_creator_id: number | null;
+  status_creator_login: string | null;
+  status_creator_id: number | null;
   observed_deployment_github_app_id: number | null;
   observed_deployment_github_app_slug: string | null;
   observed_status_github_app_id: number | null;
@@ -444,10 +444,10 @@ export function validateDeploymentBinding(params: {
     deployment_task: params.deployment.task ?? GOVERNED_AI_DEPLOYMENT_TASK,
     environment: params.deployment.environment ?? GOVERNED_AI_PREVIEW_ENVIRONMENT,
     repository: params.repositoryFullName,
-    deployment_creator_login: params.deployment.creator?.login ?? VERCEL_DEPLOYMENT_BOT_LOGIN,
-    deployment_creator_id: params.deployment.creator?.id ?? VERCEL_DEPLOYMENT_BOT_ID,
-    status_creator_login: latest.creator?.login ?? VERCEL_DEPLOYMENT_BOT_LOGIN,
-    status_creator_id: latest.creator?.id ?? VERCEL_DEPLOYMENT_BOT_ID,
+    deployment_creator_login: params.deployment.creator?.login ?? null,
+    deployment_creator_id: params.deployment.creator?.id ?? null,
+    status_creator_login: latest.creator?.login ?? null,
+    status_creator_id: latest.creator?.id ?? null,
     observed_deployment_github_app_id: params.deployment.performed_via_github_app?.id ?? null,
     observed_deployment_github_app_slug: params.deployment.performed_via_github_app?.slug ?? null,
     observed_status_github_app_id: latest.performed_via_github_app?.id ?? null,

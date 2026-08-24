@@ -403,14 +403,19 @@ describe("governed-ai-pr-e2e-runner workflow contract", () => {
 
   it("restores trusted runner ops after PR-controlled E2E before redaction", () => {
     const job2 = wf.split("governed-ai-pr-e2e:")[1].split("governed-ai-pr-e2e-verdict:")[0];
-    expect(job2).toMatch(/Harden trusted runner ops before PR-controlled E2E/);
+    expect(job2).toMatch(/Pin trusted tool paths before PR-controlled code/);
     expect(job2).toMatch(/Restore trusted runner ops after PR-controlled E2E/);
-    expect(job2).toMatch(/Replace trusted runner ops from dispatch pin/);
+    expect(job2).toMatch(/Verify trusted runner ops integrity after restore/);
+    expect(job2).toMatch(/GOVERNED_AI_E2E_REQUIRED_STEP_COUNT = 25/);
+    expect(job2).not.toMatch(/chmod -R a-w trusted-runner-ops/);
     const e2eIdx = job2.indexOf("Run governed AI staging E2E (raw output file only)");
     const restoreIdx = job2.indexOf("Restore trusted runner ops after PR-controlled E2E");
+    const integrityIdx = job2.indexOf("Verify trusted runner ops integrity after restore");
     const redactIdx = job2.indexOf("Redact E2E evidence");
     expect(restoreIdx).toBeGreaterThan(e2eIdx);
-    expect(redactIdx).toBeGreaterThan(restoreIdx);
+    expect(integrityIdx).toBeGreaterThan(restoreIdx);
+    expect(redactIdx).toBeGreaterThan(integrityIdx);
+    expect(job2).toMatch(/\$\{\{ steps\.trusted_tools\.outputs\.bun_path \}\}/);
   });
 
   it("requires 25-step PROVEN verdict with trusted origin and target sha", () => {
