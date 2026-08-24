@@ -32,10 +32,12 @@ photo capture → upload session (before/after purpose) → worker report media
 
 ## Server rules
 
-1. Evidence synced on report submit (`syncEvidenceFromReportMedia`).
-2. Completeness evaluated server-side (`evaluateReportCompleteness`) — clients cannot declare complete.
-3. Owner portal lists only `owner_visible = true` records.
-4. No storage paths in portal API responses (URLs only via existing media resolution).
+1. Evidence synced on report submit (`syncEvidenceFromReportMedia`) — always `owner_visible=false`.
+2. Manager approval triggers `applyOwnerVisibilityOnReportReview` (server-only; clients cannot set visibility).
+3. Reject/changes_requested hides evidence again (idempotent).
+4. Completeness evaluated server-side (`evaluateReportCompleteness`).
+5. Owner portal lists only `owner_visible=true` + `internal_only=false` + `retention_state=active`.
+6. Portal APIs return **signed URLs only** (`signed_image_url`, TTL 900s) via `createSignedUrlForPath` — no storage paths or public URLs.
 
 ## Customer safety
 
