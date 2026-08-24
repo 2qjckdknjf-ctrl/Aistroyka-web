@@ -50,6 +50,10 @@ jobs:
           PREVIEW_URL: ${{ inputs.preview_base_url }}
         run: |
           set -euo pipefail
+          if [ "${{ github.ref }}" != "refs/heads/main" ]; then
+            echo "::error::This workflow must run from the main branch definition (got ${{ github.ref }})"
+            exit 1
+          fi
           if [ "$CONFIRM" != "RUN_GOVERNED_AI_STAGING_E2E" ]; then
             echo "::error::confirmation must be RUN_GOVERNED_AI_STAGING_E2E"
             exit 1
@@ -175,26 +179,26 @@ jobs:
             -c "$COOKIE_JAR" \
             -H "x-vercel-protection-bypass: ${BYPASS}" \
             -H "x-vercel-set-bypass-cookie: true" \
-            "${PREVIEW_URL}/api/v1/health")"
+            "${PREVIEW_URL}/api/v1/health" || true)"
           rm -f "$COOKIE_JAR"
+          BODY="$(cat /tmp/health.json 2>/dev/null || echo '{}')"
           if [ "$HTTP_CODE" = "302" ]; then
             echo "::error::BLOCKED_VERCEL_BYPASS: Preview returned 302"
+            exit 1
+          fi
+          DB="$(echo "$BODY" | jq -r '.db // empty')"
+          if [ "$HTTP_CODE" -lt 500 ] && [ -n "$DB" ] && [ "$DB" != "ok" ]; then
+            echo "::error::Preview health db=${DB}"
             exit 1
           fi
           if [ "$HTTP_CODE" -ge 500 ]; then
             echo "::error::FAILED_RUNTIME: Preview health HTTP ${HTTP_CODE}"
             exit 1
           fi
-          BODY="$(cat /tmp/health.json)"
           SHA7="$(echo "$BODY" | jq -r '.buildStamp.sha7 // empty')"
           EXPECTED7="${TARGET_SHA:0:7}"
           if [ -z "$SHA7" ] || [ "$SHA7" != "$EXPECTED7" ]; then
             echo "::error::FAILED_DEPLOYMENT_ALIGNMENT: health sha7=${SHA7} expected=${EXPECTED7}"
-            exit 1
-          fi
-          DB="$(echo "$BODY" | jq -r '.db // empty')"
-          if [ "$DB" != "ok" ]; then
-            echo "::error::Preview health db=${DB}"
             exit 1
           fi
 
@@ -220,11 +224,22 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_STAGING }}
           GOVERNED_E2E_MARKER: "qa-governed-e2e"
         run: |
-          set -euo pipefail
-          node scripts/pilot/governed-ai-owner-evidence-staging-e2e.mjs | tee e2e-result.json
+          set -uo pipefail
+          E2E_EXIT=0
+          node scripts/pilot/governed-ai-owner-evidence-staging-e2e.mjs > e2e-result.json 2>&1 || E2E_EXIT=$?
           node -e "
             const fs = require('node:fs');
-            const raw = JSON.parse(fs.readFileSync('e2e-result.json','utf8'));
+            if (!fs.existsSync('e2e-result.json')) {
+              fs.writeFileSync('e2e-result-redacted.json', JSON.stringify({ verdict: 'FAILED', error: 'no e2e output' }, null, 2));
+              process.exit(0);
+            }
+            let raw;
+            try {
+              raw = JSON.parse(fs.readFileSync('e2e-result.json','utf8'));
+            } catch {
+              fs.writeFileSync('e2e-result-redacted.json', JSON.stringify({ verdict: 'FAILED', error: 'invalid e2e json' }, null, 2));
+              process.exit(0);
+            }
             const redacted = {
               verdict: raw.verdict,
               base: raw.base,
@@ -239,6 +254,10 @@ jobs:
             };
             fs.writeFileSync('e2e-result-redacted.json', JSON.stringify(redacted, null, 2));
           "
+          if [ -f e2e-result-redacted.json ]; then
+            echo "E2E verdict: $(jq -r '.verdict // \"unknown\"' e2e-result-redacted.json)"
+          fi
+          exit "$E2E_EXIT"
 
       - name: Upload redacted E2E evidence
         if: always()

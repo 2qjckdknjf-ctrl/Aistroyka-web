@@ -50,10 +50,16 @@ describe("governed-ai-pr-e2e-runner workflow contract", () => {
     expect(wf).not.toMatch(/uses: actions\/checkout@v/);
   });
 
-  it("uploads redacted artifact only", () => {
+  it("enforces default-branch dispatch only", () => {
+    expect(wf).toMatch(/github\.ref.*refs\/heads\/main/);
+    expect(wf).toMatch(/main branch definition/);
+  });
+
+  it("uploads redacted artifact only without logging raw E2E output", () => {
     expect(wf).toMatch(/e2e-result-redacted\.json/);
     expect(wf).toMatch(/redacted-url/);
-    expect(wf).not.toMatch(/tee e2e-result\.json[\s\S]*upload-artifact[\s\S]*e2e-result\.json/);
+    expect(wf).not.toMatch(/\|\s*tee e2e-result\.json/);
+    expect(wf).toMatch(/> e2e-result\.json 2>&1/);
   });
 
   it("checks out exact verified target SHA", () => {
