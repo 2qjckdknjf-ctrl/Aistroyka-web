@@ -169,6 +169,7 @@ jobs:
     environment: staging
     permissions:
       contents: read
+      pull-requests: read
     steps:
       - name: Revalidate PR head SHA after environment approval
         env:

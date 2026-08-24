@@ -122,7 +122,29 @@ describe("governed-ai-pr-e2e-runner workflow contract", () => {
     expect(job2).toMatch(/github\.ref == 'refs\/heads\/main'/);
     expect(job2).toMatch(/staging_environment_protected == 'true'/);
     expect(job2).toMatch(/permissions:\s*\n\s*contents:\s*read/);
+    expect(job2).toMatch(/pull-requests:\s*read/);
     expect(job2).not.toMatch(/contents:\s*write|pull-requests:\s*write|deployments:\s*write/);
+  });
+
+  it("job2 revalidates PR head with pull-requests read before any checkout or E2E", () => {
+    const job2 = wf.split("governed-ai-pr-e2e:")[1].split("governed-ai-pr-e2e-verdict:")[0];
+    expect(job2).toMatch(/permissions:\s*\n\s*contents:\s*read/);
+    expect(job2).toMatch(/pull-requests:\s*read/);
+    expect(job2).not.toMatch(
+      /contents:\s*write|pull-requests:\s*write|actions:\s*write|deployments:\s*write|issues:\s*write|checks:\s*write|id-token:\s*write/,
+    );
+
+    const revalidateIdx = job2.indexOf("Revalidate PR head SHA after environment approval");
+    const checkoutTrustedIdx = job2.indexOf("Checkout trusted runner ops from dispatch commit pin");
+    const checkoutPrIdx = job2.indexOf("Checkout verified PR head");
+    const e2eIdx = job2.indexOf("Run governed AI staging E2E (raw output file only)");
+    expect(revalidateIdx).toBeGreaterThan(-1);
+    expect(checkoutTrustedIdx).toBeGreaterThan(revalidateIdx);
+    expect(checkoutPrIdx).toBeGreaterThan(revalidateIdx);
+    expect(e2eIdx).toBeGreaterThan(revalidateIdx);
+    expect(job2).toMatch(/PR #\$\{PR_NUM\} is no longer open after environment approval/);
+    expect(job2).toMatch(/PR head moved after preflight: head=\$\{HEAD_SHA\} expected=\$\{TARGET_SHA\}/);
+    expect(job2).toMatch(/repos\/\$\{REPO\}\/pulls\/\$\{PR_NUM\}/);
   });
 
   it("uses trusted canonical preview URL output instead of raw input", () => {
