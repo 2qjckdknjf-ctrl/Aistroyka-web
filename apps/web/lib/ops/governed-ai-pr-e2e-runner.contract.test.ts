@@ -403,7 +403,9 @@ describe("governed-ai-pr-e2e-runner workflow contract", () => {
 
   it("restores trusted runner ops after PR-controlled E2E before redaction", () => {
     const job2 = wf.split("governed-ai-pr-e2e:")[1].split("governed-ai-pr-e2e-verdict:")[0];
-    expect(job2).toMatch(/Pin trusted tool paths before PR-controlled code/);
+    expect(job2).toMatch(/Reset runner file commands before trusted restore/);
+    expect(job2).toMatch(/verify_trusted_ops\.outcome == 'success'/);
+    expect(job2).toMatch(/trusted_tools_post_restore\.outputs\.bun_path/);
     expect(job2).toMatch(/Restore trusted runner ops after PR-controlled E2E/);
     expect(job2).toMatch(/Verify trusted runner ops integrity after restore/);
     expect(job2).toMatch(/GOVERNED_AI_E2E_REQUIRED_STEP_COUNT = 25/);
