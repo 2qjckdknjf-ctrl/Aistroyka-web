@@ -1,28 +1,8 @@
 #!/usr/bin/env node
 /**
- * Authenticated staging E2E for pilot governed AI + owner evidence chain.
- *
- * Usage:
- *   node scripts/pilot/governed-ai-owner-evidence-staging-e2e.mjs
- *
- * Base URL (first match):
- *   GOVERNED_E2E_BASE_URL | PILOT_E2E_BASE_URL | PLAYWRIGHT_BASE_URL | default https://staging.aistroyka.ai
- *
- * Personas (existing QA accounts only — do not create users):
- *   Worker:  PILOT_E2E_WORKER_EMAIL/PASSWORD or PILOT_E2E_EMAIL/PASSWORD or E2E_EMAIL/E2E_PASSWORD
- *   Manager: PILOT_E2E_MANAGER_EMAIL/PASSWORD (optional — falls back to worker for manager-only steps → SKIPPED)
- *   Owner:   PILOT_E2E_OWNER_EMAIL/PASSWORD or QA_CLIENT_EMAIL/QA_CLIENT_PASSWORD (optional)
- *   Revoked stakeholder: PILOT_E2E_STAKEHOLDER_REVOKED_EMAIL/PASSWORD (optional)
- *   Cross-tenant: PILOT_E2E_CROSS_TENANT_EMAIL/PASSWORD (optional)
- *
- * GitHub Actions staging smoke naming (when mapped in workflow):
- *   PILOT_SMOKE_EMAIL_STAGING / PILOT_SMOKE_PASSWORD_STAGING / PILOT_SMOKE_PROJECT_ID_STAGING
- *
- * Optional:
- *   PILOT_E2E_PROJECT_ID | E2E_PROJECT_ID | PILOT_SMOKE_PROJECT_ID_STAGING
- *   GOVERNED_E2E_REQUIRE_MIGRATION_50000=1 — exit BLOCKED if preflight detects missing forward-fix
- *
- * Auth: POST /api/auth/login (cookie session). Never logs secrets.
+ * Authenticated 25-step governed AI + owner evidence E2E.
+ * Target: Vercel Preview (not staging.aistroyka.ai@main).
+ * Never logs secrets, cookies, signed URLs, or row payloads.
  */
 
 import { readFileSync, existsSync } from "node:fs";
@@ -31,6 +11,20 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, "../..");
+
+function pick(...keys) {
+  for (const k of keys) {
+    const v = process.env[k];
+    if (v && String(v).trim()) return String(v).trim();
+  }
+  return null;
+}
+
+const E2E_MARKER = pick("GOVERNED_E2E_MARKER") || "qa-governed-e2e";
+const TINY_JPEG = Buffer.from(
+  "/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAr/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCwAA8A/9k=",
+  "base64"
+);
 
 function loadEnvFile(path) {
   if (!existsSync(path)) return;
@@ -61,28 +55,23 @@ const BASE = (
   "https://staging.aistroyka.ai"
 ).replace(/\/$/, "");
 
-function pick(...keys) {
-  for (const k of keys) {
-    const v = process.env[k];
-    if (v && String(v).trim()) return String(v).trim();
-  }
-  return null;
-}
-
 const BYPASS = pick("VERCEL_AUTOMATION_BYPASS_SECRET", "VERCEL_PROTECTION_BYPASS");
+const SUPABASE_URL = pick("NEXT_PUBLIC_SUPABASE_URL");
+const SUPABASE_ANON = pick("NEXT_PUBLIC_SUPABASE_ANON_KEY");
+const SERVICE_ROLE = pick("SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_SERVICE_ROLE_KEY_STAGING");
 
 const personas = {
   worker: {
-    email: pick("PILOT_E2E_WORKER_EMAIL", "PILOT_E2E_EMAIL", "E2E_EMAIL", "E2E_USER_EMAIL", "PILOT_SMOKE_EMAIL_STAGING"),
-    password: pick("PILOT_E2E_WORKER_PASSWORD", "PILOT_E2E_PASSWORD", "E2E_PASSWORD", "E2E_USER_PASSWORD", "PILOT_SMOKE_PASSWORD_STAGING"),
+    email: pick("PILOT_E2E_WORKER_EMAIL", "PILOT_E2E_EMAIL", "E2E_EMAIL", "PILOT_SMOKE_EMAIL_STAGING"),
+    password: pick("PILOT_E2E_WORKER_PASSWORD", "PILOT_E2E_PASSWORD", "E2E_PASSWORD", "PILOT_SMOKE_PASSWORD_STAGING"),
   },
   manager: {
     email: pick("PILOT_E2E_MANAGER_EMAIL", "QA_MANAGER_EMAIL"),
     password: pick("PILOT_E2E_MANAGER_PASSWORD", "QA_MANAGER_PASSWORD"),
   },
   owner: {
-    email: pick("PILOT_E2E_OWNER_EMAIL", "STAKEHOLDER_SMOKE_EMAIL", "QA_CLIENT_EMAIL", "QA_OWNER_EMAIL"),
-    password: pick("PILOT_E2E_OWNER_PASSWORD", "STAKEHOLDER_SMOKE_PASSWORD", "QA_CLIENT_PASSWORD", "QA_OWNER_PASSWORD"),
+    email: pick("PILOT_E2E_OWNER_EMAIL", "STAKEHOLDER_SMOKE_EMAIL", "QA_CLIENT_EMAIL"),
+    password: pick("PILOT_E2E_OWNER_PASSWORD", "STAKEHOLDER_SMOKE_PASSWORD", "QA_CLIENT_PASSWORD"),
   },
   revokedStakeholder: {
     email: pick("PILOT_E2E_STAKEHOLDER_REVOKED_EMAIL"),
@@ -95,10 +84,20 @@ const personas = {
 };
 
 const results = [];
-const createdFixtures = { reportIds: [], idempotencyKeys: [] };
+const httpTrace = [];
+const createdFixtures = {
+  reportIds: [],
+  uploadSessionIds: [],
+  idempotencyKeys: [],
+  auditRecordIds: [],
+};
 
 function record(step, persona, action, expected, actual, status, evidence = "") {
   results.push({ step, persona, action, expected, actual, status, evidence });
+}
+
+function jsonHasFinanceLeak(text) {
+  return /(\bmargin\b|\bprofitability\b|internal_cost|subcontractor_cost|budget_pressure)/i.test(text);
 }
 
 class SessionClient {
@@ -111,7 +110,7 @@ class SessionClient {
     const res = await fetch(`${BASE}/api/auth/login`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ email, password, traceId: `gov-e2e-${Date.now()}` }),
+      body: JSON.stringify({ email, password, traceId: `${E2E_MARKER}-${this.label}-${Date.now()}` }),
       redirect: "manual",
     });
     this.#storeCookies(res);
@@ -121,7 +120,7 @@ class SessionClient {
 
   async fetch(path, opts = {}) {
     const url = `${BASE}${path.startsWith("/") ? path : `/${path}`}`;
-    const headers = { ...(opts.headers || {}) };
+    const headers = { ...(opts.headers || {}), "x-client": opts.client || "ios_worker" };
     if (opts.json !== undefined) {
       headers["content-type"] = "application/json";
       opts.body = JSON.stringify(opts.json);
@@ -129,7 +128,10 @@ class SessionClient {
     }
     const cookie = [...this.cookieJar.entries()].map(([k, v]) => `${k}=${v}`).join("; ");
     if (cookie) headers.cookie = cookie;
-    if (BYPASS) headers["x-vercel-protection-bypass"] = BYPASS;
+    if (BYPASS) {
+      headers["x-vercel-protection-bypass"] = BYPASS;
+      headers["x-vercel-set-bypass-cookie"] = "true";
+    }
     const res = await fetch(url, { ...opts, headers, redirect: "manual" });
     this.#storeCookies(res);
     const text = await res.text();
@@ -140,6 +142,7 @@ class SessionClient {
       body = { raw: text.slice(0, 300) };
     }
     const requestId = res.headers.get("x-request-id") || res.headers.get("x-vercel-id") || "";
+    httpTrace.push({ path, status: res.status, requestId });
     return { status: res.status, body, headers: res.headers, requestId, text };
   }
 
@@ -153,23 +156,136 @@ class SessionClient {
   }
 }
 
-function jsonHasFinanceLeak(text) {
-  return /(\bmargin\b|\bprofitability\b|internal_cost|subcontractor_cost|budget_pressure)/i.test(text);
+async function getSupabaseJwt(email, password) {
+  if (!SUPABASE_URL || !SUPABASE_ANON) return null;
+  const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+    method: "POST",
+    headers: { apikey: SUPABASE_ANON, "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  if (!res.ok) return null;
+  const body = await res.json().catch(() => ({}));
+  return body.access_token || null;
+}
+
+async function uploadStorageObject(jwt, objectPath) {
+  if (!SUPABASE_URL || !SUPABASE_ANON || !jwt) return false;
+  const res = await fetch(`${SUPABASE_URL}/storage/v1/object/media/${objectPath}`, {
+    method: "POST",
+    headers: {
+      apikey: SUPABASE_ANON,
+      Authorization: `Bearer ${jwt}`,
+      "Content-Type": "image/jpeg",
+      "x-upsert": "true",
+    },
+    body: TINY_JPEG,
+  });
+  return res.ok || res.status === 409;
+}
+
+async function uploadReportEvidence(worker, workerEmail, workerPassword, purpose) {
+  const idem = `${E2E_MARKER}-${purpose}-${Date.now()}`;
+  createdFixtures.idempotencyKeys.push(idem);
+  const sessionRes = await worker.fetch("/api/v1/media/upload-sessions", {
+    method: "POST",
+    headers: { "x-idempotency-key": idem },
+    json: { purpose },
+  });
+  const sessionId = sessionRes.body?.data?.id;
+  const uploadPath = sessionRes.body?.data?.upload_path;
+  if (!sessionId || !uploadPath) {
+    return { ok: false, sessionRes };
+  }
+  createdFixtures.uploadSessionIds.push(sessionId);
+  const fullObjectPath = uploadPath.endsWith("/")
+    ? `${uploadPath}qa-${purpose}.jpg`
+    : `${uploadPath}/qa-${purpose}.jpg`;
+  const storageRelativePath = fullObjectPath.replace(/^media\//, "");
+  const jwt = await getSupabaseJwt(workerEmail, workerPassword);
+  const stored = await uploadStorageObject(jwt, storageRelativePath);
+  if (!stored) return { ok: false, reason: "storage_upload_failed", sessionId };
+  const finalizeRes = await worker.fetch(`/api/v1/media/upload-sessions/${sessionId}/finalize`, {
+    method: "POST",
+    headers: { "x-idempotency-key": `${idem}-fin` },
+    json: {
+      object_path: fullObjectPath,
+      mime_type: "image/jpeg",
+      size_bytes: TINY_JPEG.length,
+    },
+  });
+  return { ok: finalizeRes.status === 200 && finalizeRes.body?.ok === true, sessionId, finalizeRes };
+}
+
+async function preflightPreview() {
+  if (BASE.includes("staging.aistroyka.ai")) {
+    const health = await fetch(`${BASE}/api/v1/health`);
+    const body = await health.json().catch(() => ({}));
+    if (body?.buildStamp?.sha7 === "587ef4c") {
+      return { ok: false, reason: "refusing_staging_main_not_pr_preview" };
+    }
+  }
+  const headers = {};
+  if (BYPASS) {
+    headers["x-vercel-protection-bypass"] = BYPASS;
+    headers["x-vercel-set-bypass-cookie"] = "true";
+  }
+  const res = await fetch(`${BASE}/api/v1/health`, { headers, redirect: "manual" });
+  if ([301, 302, 401, 403].includes(res.status)) {
+    return { ok: false, reason: "preview_protection_blocked", status: res.status };
+  }
+  const body = await res.json().catch(() => ({}));
+  return {
+    ok: res.ok && body?.db === "ok",
+    sha7: body?.buildStamp?.sha7,
+    db: body?.db,
+    status: res.status,
+  };
+}
+
+async function cleanupFixtures() {
+  if (!SERVICE_ROLE || !SUPABASE_URL) {
+    return { status: "skipped_no_service_role", deleted: {} };
+  }
+  const deleted = { reports: 0, upload_sessions: 0 };
+  for (const reportId of createdFixtures.reportIds) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/worker_reports?id=eq.${reportId}`, {
+      method: "DELETE",
+      headers: {
+        apikey: SERVICE_ROLE,
+        Authorization: `Bearer ${SERVICE_ROLE}`,
+        Prefer: "return=minimal",
+      },
+    });
+    if (res.ok || res.status === 204) deleted.reports += 1;
+  }
+  return { status: "attempted", deleted, retained_audit_ids: createdFixtures.auditRecordIds };
+}
+
+function computeVerdict() {
+  const blocking = results.filter((r) => r.status === "FAILED");
+  const blocked = results.filter((r) => r.status === "BLOCKED" || r.status === "BLOCKED_EXTERNAL");
+  const requiredBlocked = blocked.filter((r) => [2, 3, 5, 6, 13, 16, 17, 21, 23, 24, 25].includes(r.step));
+  if (blocking.length > 0) return "FAILED";
+  if (requiredBlocked.length > 0 || blocked.length > 0) return "PARTIAL";
+  const unexpected5xx = httpTrace.filter((h) => h.status >= 500);
+  if (unexpected5xx.length > 0) return "FAILED";
+  return "PROVEN";
 }
 
 async function main() {
   const startedAt = new Date().toISOString();
+  let projectId = null;
+  let reportId = null;
+  let cleanupResult = { status: "not_run" };
 
-  if (!personas.worker.email || !personas.worker.password) {
+  const preview = await preflightPreview();
+  if (!preview.ok) {
     console.log(
       JSON.stringify(
         {
-          verdict: "BLOCKED_EXTERNAL",
-          reason: "missing_worker_credentials",
-          required_env: [
-            "PILOT_E2E_EMAIL + PILOT_E2E_PASSWORD (or E2E_EMAIL + E2E_PASSWORD)",
-            "Optional: PILOT_E2E_MANAGER_*, PILOT_E2E_OWNER_*, PILOT_E2E_STAKEHOLDER_REVOKED_*",
-          ],
+          verdict: preview.reason === "preview_protection_blocked" ? "BLOCKED_EXTERNAL" : "FAILED",
+          reason: preview.reason,
+          preview,
           results,
         },
         null,
@@ -179,196 +295,201 @@ async function main() {
     process.exit(2);
   }
 
+  const missingSecrets = [];
+  if (!personas.worker.email || !personas.worker.password) missingSecrets.push("PILOT_SMOKE_EMAIL_STAGING/PILOT_E2E_WORKER_*");
+  if (!personas.manager.email || !personas.manager.password) missingSecrets.push("PILOT_E2E_MANAGER_EMAIL/PILOT_E2E_MANAGER_PASSWORD");
+  if (!personas.owner.email || !personas.owner.password) missingSecrets.push("STAKEHOLDER_SMOKE_EMAIL/STAKEHOLDER_SMOKE_PASSWORD");
+  if (!BYPASS && BASE.includes("vercel.app")) missingSecrets.push("VERCEL_AUTOMATION_BYPASS_SECRET");
+  if (missingSecrets.length > 0) {
+    console.log(JSON.stringify({ verdict: "BLOCKED_EXTERNAL", missingSecrets, results }, null, 2));
+    process.exit(2);
+  }
+
   const worker = new SessionClient("worker");
   const manager = new SessionClient("manager");
   const owner = new SessionClient("owner");
 
-  const wLogin = await worker.login(personas.worker.email, personas.worker.password);
-  record(1, "worker", "POST /api/auth/login", "200", `${wLogin.status}`, wLogin.ok ? "PROVEN" : "FAILED", wLogin.body?.traceId ?? "");
+  try {
+    const wLogin = await worker.login(personas.worker.email, personas.worker.password);
+    record(1, "worker", "POST /api/auth/login", "200", `${wLogin.status}`, wLogin.ok ? "PASS" : "FAILED");
+    if (!wLogin.ok) throw new Error("worker_auth_failed");
 
-  if (!wLogin.ok) {
-    console.log(JSON.stringify({ verdict: "FAILED", reason: "worker_auth_failed", results }, null, 2));
-    process.exit(1);
-  }
-
-  let managerReady = false;
-  if (personas.manager.email && personas.manager.password) {
     const mLogin = await manager.login(personas.manager.email, personas.manager.password);
-    record(2, "manager", "POST /api/auth/login", "200", `${mLogin.status}`, mLogin.ok ? "PROVEN" : "FAILED");
-    managerReady = mLogin.ok;
-  } else {
-    record(2, "manager", "POST /api/auth/login", "200", "skipped", "BLOCKED_EXTERNAL", "PILOT_E2E_MANAGER_* missing");
-  }
+    record(2, "manager", "POST /api/auth/login", "200", `${mLogin.status}`, mLogin.ok ? "PASS" : "FAILED");
+    if (!mLogin.ok) throw new Error("manager_auth_failed");
 
-  let ownerReady = false;
-  if (personas.owner.email && personas.owner.password) {
     const oLogin = await owner.login(personas.owner.email, personas.owner.password);
-    record(3, "owner", "POST /api/auth/login", "200", `${oLogin.status}`, oLogin.ok ? "PROVEN" : "FAILED");
-    ownerReady = oLogin.ok;
-  } else {
-    record(3, "owner", "POST /api/auth/login", "200", "skipped", "BLOCKED_EXTERNAL", "PILOT_E2E_OWNER_* missing");
-  }
+    record(3, "owner", "POST /api/auth/login", "200", `${oLogin.status}`, oLogin.ok ? "PASS" : "FAILED");
+    if (!oLogin.ok) throw new Error("owner_auth_failed");
 
-  const projectsRes = await worker.fetch("/api/v1/projects");
-  const projectId =
-    pick("PILOT_E2E_PROJECT_ID", "E2E_PROJECT_ID", "PILOT_SMOKE_PROJECT_ID_STAGING") ||
-    projectsRes.body?.data?.[0]?.id ||
-    projectsRes.body?.projects?.[0]?.id;
+    const projectsRes = await worker.fetch("/api/v1/projects");
+    projectId =
+      pick("PILOT_E2E_PROJECT_ID", "E2E_PROJECT_ID", "PILOT_SMOKE_PROJECT_ID_STAGING") ||
+      projectsRes.body?.data?.[0]?.id;
+    if (!projectId) {
+      record(4, "worker", "create QA report", "project id", "missing", "FAILED");
+      throw new Error("no_project_id");
+    }
 
-  record(4, "worker", "GET /api/v1/projects", "200 + project", `${projectsRes.status}`, projectId ? "PROVEN" : "FAILED");
-
-  if (!projectId) {
-    console.log(JSON.stringify({ verdict: "PARTIAL", reason: "no_project_id", results }, null, 2));
-    process.exit(1);
-  }
-
-  const reportsRes = await worker.fetch(`/api/v1/reports?project_id=${projectId}&status=draft&limit=5`);
-  let reportId = reportsRes.body?.data?.[0]?.id;
-
-  if (!reportId) {
     const createRes = await worker.fetch("/api/v1/worker/report/create", {
       method: "POST",
+      headers: { "x-idempotency-key": `${E2E_MARKER}-report-${Date.now()}` },
       json: { project_id: projectId },
     });
-    reportId = createRes.body?.reportId || createRes.body?.data?.id || createRes.body?.id;
+    reportId = createRes.body?.reportId || createRes.body?.data?.id;
     if (reportId) createdFixtures.reportIds.push(reportId);
-    record(5, "worker", "create draft report", "report id", reportId ? "ok" : "fail", reportId ? "PROVEN" : "FAILED");
-  } else {
-    record(5, "worker", "reuse draft report", "report id", reportId, "PROVEN");
-  }
+    record(4, "worker", "create QA report", "report id", reportId || "missing", reportId ? "PASS" : "FAILED");
+    if (!reportId) throw new Error("no_report");
 
-  if (!reportId) {
-    console.log(JSON.stringify({ verdict: "PARTIAL", reason: "no_report", results }, null, 2));
-    process.exit(1);
-  }
+    const before = await uploadReportEvidence(worker, personas.worker.email, personas.worker.password, "report_before");
+    record(5, "worker", "before evidence upload", "session+finalize", before.ok ? "ok" : "fail", before.ok ? "PASS" : "FAILED", before.sessionRes?.requestId);
+    const after = await uploadReportEvidence(worker, personas.worker.email, personas.worker.password, "report_after");
+    record(6, "worker", "after evidence upload", "session+finalize", after.ok ? "ok" : "fail", after.ok ? "PASS" : "FAILED", after.finalizeRes?.requestId);
 
-  // Evidence: reuse existing media if present; otherwise note NOT_TESTED (upload is multi-step)
-  const reportDetail = await worker.fetch(`/api/v1/reports/${reportId}`);
-  const mediaCount = reportDetail.body?.data?.media?.length ?? 0;
-  record(6, "worker", "before/after evidence", "media linked", `count=${mediaCount}`, mediaCount > 0 ? "PROVEN" : "NOT_TESTED", "requires existing QA media or upload flow");
+    if (before.ok && before.sessionId) {
+      await worker.fetch("/api/v1/worker/report/add-media", {
+        method: "POST",
+        headers: { "x-idempotency-key": `${E2E_MARKER}-add-before-${Date.now()}` },
+        json: { report_id: reportId, upload_session_id: before.sessionId },
+      });
+    }
+    if (after.ok && after.sessionId) {
+      await worker.fetch("/api/v1/worker/report/add-media", {
+        method: "POST",
+        headers: { "x-idempotency-key": `${E2E_MARKER}-add-after-${Date.now()}` },
+        json: { report_id: reportId, upload_session_id: after.sessionId },
+      });
+    }
 
-  const submitRes = await worker.fetch("/api/v1/worker/report/submit", {
-    method: "POST",
-    json: { report_id: reportId, worker_note: "QA governed AI E2E disposable" },
-  });
-  record(7, "worker", "POST /api/v1/worker/report/submit", "200", `${submitRes.status}`, submitRes.status === 200 ? "PROVEN" : mediaCount === 0 ? "NOT_TESTED" : "FAILED", submitRes.requestId);
+    const submitRes = await worker.fetch("/api/v1/worker/report/submit", {
+      method: "POST",
+      json: { report_id: reportId, worker_note: `${E2E_MARKER} disposable` },
+    });
+    record(7, "worker", "POST /api/v1/worker/report/submit", "200", `${submitRes.status}`, submitRes.status === 200 ? "PASS" : "FAILED", submitRes.requestId);
 
-  const completeness1 = await worker.fetch(`/api/v1/reports/${reportId}/completeness`);
-  record(8, "worker", "GET completeness", "200 + status", `${completeness1.status}`, completeness1.status === 200 ? "PROVEN" : "FAILED", completeness1.requestId);
+    const completeness1 = await worker.fetch(`/api/v1/reports/${reportId}/completeness`);
+    record(8, "worker", "GET /api/v1/reports/:id/completeness", "200", `${completeness1.status}`, completeness1.status === 200 ? "PASS" : "FAILED", completeness1.requestId);
 
-  const completeness2 = await worker.fetch(`/api/v1/reports/${reportId}/completeness`);
-  const persisted =
-    completeness1.status === 200 &&
-    completeness2.status === 200 &&
-    completeness1.body?.data?.evaluated_at &&
-    completeness1.body?.data?.evaluated_at === completeness2.body?.data?.evaluated_at;
-  record(9, "worker", "completeness persistence", "stable evaluated_at", persisted ? "stable" : "changed", persisted ? "PROVEN" : "PARTIAL");
+    const completeness2 = await worker.fetch(`/api/v1/reports/${reportId}/completeness`);
+    const persisted =
+      completeness1.status === 200 &&
+      completeness2.status === 200 &&
+      completeness1.body?.data?.evaluated_at === completeness2.body?.data?.evaluated_at;
+    record(9, "worker", "completeness persistence", "stable evaluated_at", persisted ? "stable" : "changed", persisted ? "PASS" : "FAILED");
 
-  const idemKey = `qa-governed-${Date.now()}`;
-  createdFixtures.idempotencyKeys.push(idemKey);
-  const dryRun1 = await worker.fetch("/api/v1/ai/governed-actions/execute", {
-    method: "POST",
-    json: {
-      action_id: "validate_report_required_fields",
-      project_id: projectId,
-      dry_run: true,
-      input: { report_id: reportId },
-      idempotency_key: idemKey,
-    },
-  });
-  const auditId = dryRun1.body?.data?.auditRecordId;
-  record(10, "worker", "governed AI dry_run", "200 + auditRecordId", `${dryRun1.status}`, dryRun1.status === 200 && auditId ? "PROVEN" : "FAILED", dryRun1.requestId);
+    const idemKey = `${E2E_MARKER}-${Date.now()}`;
+    createdFixtures.idempotencyKeys.push(idemKey);
+    const dryRun1 = await worker.fetch("/api/v1/ai/governed-actions/execute", {
+      method: "POST",
+      json: {
+        action_id: "validate_report_required_fields",
+        project_id: projectId,
+        dry_run: true,
+        input: { report_id: reportId },
+        idempotency_key: idemKey,
+      },
+    });
+    const auditId = dryRun1.body?.data?.auditRecordId;
+    if (auditId) createdFixtures.auditRecordIds.push(auditId);
+    record(10, "worker", "governed AI dry-run", "200", `${dryRun1.status}`, dryRun1.status === 200 ? "PASS" : "FAILED", dryRun1.requestId);
+    record(11, "worker", "audit record created", "auditRecordId present", auditId ? "present" : "missing", auditId ? "PASS" : "FAILED");
+    record(12, "worker", "no consequential writes", "status=dry_run", dryRun1.body?.data?.status ?? "n/a", dryRun1.body?.data?.status === "dry_run" ? "PASS" : "FAILED");
 
-  record(11, "worker", "no consequential writes on dry_run", "dry_run status", dryRun1.body?.data?.status ?? "n/a", dryRun1.body?.data?.status === "dry_run" ? "PROVEN" : "FAILED");
+    const preVisual = await owner.fetch(`/api/v1/portal/projects/${projectId}/visual-progress`, { client: "web" });
+    const preCount = preVisual.body?.data?.items?.length ?? preVisual.body?.data?.evidence?.length ?? 0;
+    record(22, "owner", "internal evidence hidden pre-approve", "0 owner-visible items", `${preCount}`, preCount === 0 ? "PASS" : "FAILED", preVisual.requestId);
 
-  const dryRun2 = await worker.fetch("/api/v1/ai/governed-actions/execute", {
-    method: "POST",
-    json: {
-      action_id: "validate_report_required_fields",
-      project_id: projectId,
-      dry_run: true,
-      input: { report_id: reportId },
-      idempotency_key: idemKey,
-    },
-  });
-  const idempotent = dryRun2.body?.data?.auditRecordId === auditId;
-  record(24, "worker", "idempotent dry_run replay", "same auditRecordId", idempotent ? "match" : "diff", idempotent ? "PROVEN" : "FAILED");
+    const approveRes = await manager.fetch(`/api/v1/reports/${reportId}`, {
+      method: "PATCH",
+      json: { status: "approved", manager_note: `${E2E_MARKER} approve` },
+    });
+    record(13, "manager", "PATCH /api/v1/reports/:id approve", "200", `${approveRes.status}`, approveRes.status === 200 ? "PASS" : "FAILED", approveRes.requestId);
 
-  const reviewClient = managerReady ? manager : worker;
-  const approveRes = await reviewClient.fetch(`/api/v1/reports/${reportId}`, {
-    method: "PATCH",
-    json: { status: "approved", manager_note: "QA E2E approve" },
-  });
-  record(12, "manager", "PATCH report approve", "200", `${approveRes.status}`, managerReady ? (approveRes.status === 200 ? "PROVEN" : "FAILED") : "BLOCKED_EXTERNAL", approveRes.requestId);
+    const postApprove = await manager.fetch(`/api/v1/reports/${reportId}`, { client: "web" });
+    const evidenceRows = postApprove.body?.data?.visual_evidence ?? postApprove.body?.data?.evidence ?? [];
+    const allVerified = Array.isArray(evidenceRows) && evidenceRows.length > 0 && evidenceRows.every((e) => e.manager_verified === true);
+    record(14, "manager", "manager_verified=true", "all eligible true", allVerified ? "true" : "check", allVerified ? "PASS" : evidenceRows.length === 0 ? "BLOCKED" : "FAILED");
 
-  if (ownerReady) {
-    const overview = await owner.fetch(`/api/v1/portal/projects/${projectId}/overview`);
-    const overviewText = JSON.stringify(overview.body ?? {});
-    record(14, "owner", "GET portal overview", "200 no finance leak", `${overview.status}`, overview.status === 200 && !jsonHasFinanceLeak(overviewText) ? "PROVEN" : "FAILED", overview.requestId);
+    const ownerVisibleCount = Array.isArray(evidenceRows) ? evidenceRows.filter((e) => e.owner_visible === true && !e.internal_only).length : 0;
+    record(15, "manager", "owner_visible eligible only", ">=1 eligible", `${ownerVisibleCount}`, ownerVisibleCount > 0 ? "PASS" : "FAILED");
 
-    const visual = await owner.fetch(`/api/v1/portal/projects/${projectId}/visual-progress`);
+    const overview = await owner.fetch(`/api/v1/portal/projects/${projectId}/overview`, { client: "web" });
+    record(16, "owner", "GET portal overview", "200 no finance leak", `${overview.status}`, overview.status === 200 && !jsonHasFinanceLeak(JSON.stringify(overview.body ?? {})) ? "PASS" : "FAILED", overview.requestId);
+
+    const visual = await owner.fetch(`/api/v1/portal/projects/${projectId}/visual-progress`, { client: "web" });
     const visualText = JSON.stringify(visual.body ?? {});
-    const hasSigned = visualText.includes("signed_image_url");
-    const leaks = /object_path|"file_url"/.test(visualText);
-    record(15, "owner", "GET visual-progress", "signed_image_url, no paths", hasSigned && !leaks ? "ok" : "check", visual.status === 200 && !leaks ? (hasSigned ? "PROVEN" : "PARTIAL") : "FAILED", visual.requestId);
-
-    record(16, "owner", "no object_path/file_url", "absent", leaks ? "leak" : "absent", !leaks ? "PROVEN" : "FAILED");
-    record(23, "owner", "finance/internal guard", "no internal fields", jsonHasFinanceLeak(visualText) ? "leak" : "clean", !jsonHasFinanceLeak(visualText) ? "PROVEN" : "FAILED");
+    const items = visual.body?.data?.items ?? visual.body?.data?.evidence ?? [];
+    const hasSigned = items.some((i) => typeof i.signed_image_url === "string" && i.signed_image_url.startsWith("http"));
+    record(17, "owner", "GET visual-progress", "200", `${visual.status}`, visual.status === 200 ? "PASS" : "FAILED", visual.requestId);
+    record(18, "owner", "signed_image_url present", "present", hasSigned ? "present" : "missing", hasSigned ? "PASS" : "FAILED");
+    const leaksPath = /object_path|"file_url"/.test(visualText);
+    record(19, "owner", "object_path absent", "absent", leaksPath ? "leak" : "absent", !leaksPath ? "PASS" : "FAILED");
+    record(20, "owner", "permanent file_url absent", "absent", /"file_url"/.test(visualText) ? "leak" : "absent", !/"file_url"/.test(visualText) ? "PASS" : "FAILED");
 
     if (hasSigned) {
-      const signedUrl = visual.body?.data?.items?.[0]?.signed_image_url || visual.body?.data?.evidence?.[0]?.signed_image_url;
-      if (typeof signedUrl === "string" && signedUrl.startsWith("http")) {
-        const img = await fetch(signedUrl, { method: "HEAD" });
-        record(19, "owner", "signed URL HEAD", "2xx before expiry", `${img.status}`, img.ok ? "PROVEN" : "FAILED");
+      const signedUrl = items.find((i) => i.signed_image_url)?.signed_image_url;
+      const img = await fetch(signedUrl, { method: "HEAD" });
+      record(21, "owner", "signed URL HEAD", "2xx", `${img.status}`, img.ok ? "PASS" : "FAILED");
+    } else {
+      record(21, "owner", "signed URL HEAD", "2xx", "no url", "FAILED");
+    }
+
+    if (personas.revokedStakeholder.email && personas.revokedStakeholder.password) {
+      const revoked = new SessionClient("revoked");
+      const rLogin = await revoked.login(personas.revokedStakeholder.email, personas.revokedStakeholder.password);
+      if (rLogin.ok) {
+        const denied = await revoked.fetch(`/api/v1/portal/projects/${projectId}/visual-progress`, { client: "web" });
+        record(23, "revoked stakeholder", "portal visual-progress", "403/404", `${denied.status}`, [403, 404].includes(denied.status) ? "PASS" : "FAILED", denied.requestId);
       } else {
-        record(19, "owner", "signed URL HEAD", "2xx", "no url", "NOT_TESTED");
+        record(23, "revoked stakeholder", "login", "200", `${rLogin.status}`, "FAILED");
       }
+    } else {
+      record(23, "revoked stakeholder", "portal visual-progress", "403/404", "skipped", "BLOCKED_EXTERNAL", "PILOT_E2E_STAKEHOLDER_REVOKED_* missing");
     }
-  } else {
-    record(14, "owner", "portal overview", "200", "skipped", "BLOCKED_EXTERNAL");
-    record(15, "owner", "visual-progress", "200", "skipped", "BLOCKED_EXTERNAL");
+
+    if (personas.crossTenant.email && personas.crossTenant.password) {
+      const other = new SessionClient("cross_tenant");
+      const xLogin = await other.login(personas.crossTenant.email, personas.crossTenant.password);
+      if (xLogin.ok) {
+        const denied = await other.fetch(`/api/v1/portal/projects/${projectId}/visual-progress`, { client: "web" });
+        record(24, "cross-tenant", "portal visual-progress", "403/404", `${denied.status}`, [403, 404].includes(denied.status) ? "PASS" : "FAILED", denied.requestId);
+      } else {
+        record(24, "cross-tenant", "login", "200", `${xLogin.status}`, "FAILED");
+      }
+    } else {
+      const denied = await worker.fetch("/api/v1/portal/projects/00000000-0000-0000-0000-000000000001/visual-progress", { client: "web" });
+      record(24, "cross-tenant", "portal visual-progress", "403/404", `${denied.status}`, [403, 404].includes(denied.status) ? "PASS" : "FAILED", denied.requestId);
+    }
+
+    const dryRun2 = await worker.fetch("/api/v1/ai/governed-actions/execute", {
+      method: "POST",
+      json: {
+        action_id: "validate_report_required_fields",
+        project_id: projectId,
+        dry_run: true,
+        input: { report_id: reportId },
+        idempotency_key: idemKey,
+      },
+    });
+    const idempotent = dryRun2.body?.data?.auditRecordId === auditId;
+    record(25, "worker", "idempotent dry-run replay", "same auditRecordId", idempotent ? "match" : "diff", idempotent ? "PASS" : "FAILED", dryRun2.requestId);
+  } finally {
+    cleanupResult = await cleanupFixtures();
   }
 
-  const cross = await worker.fetch("/api/v1/portal/projects/00000000-0000-0000-0000-000000000001/visual-progress");
-  record(22, "worker", "cross-tenant portal", "403/404", `${cross.status}`, [403, 404].includes(cross.status) ? "PROVEN" : "FAILED", cross.requestId);
-
-  if (personas.revokedStakeholder.email && personas.revokedStakeholder.password) {
-    const revoked = new SessionClient("revoked");
-    const rLogin = await revoked.login(personas.revokedStakeholder.email, personas.revokedStakeholder.password);
-    if (rLogin.ok) {
-      const denied = await revoked.fetch(`/api/v1/portal/projects/${projectId}/visual-progress`);
-      record(21, "revoked stakeholder", "portal visual-progress", "403/404", `${denied.status}`, [403, 404].includes(denied.status) ? "PROVEN" : "FAILED");
-    }
-  } else {
-    record(21, "revoked stakeholder", "portal access denied", "403/404", "skipped", "BLOCKED_EXTERNAL");
-  }
-
-  if (personas.crossTenant.email && personas.crossTenant.password) {
-    const other = new SessionClient("cross_tenant");
-    const xLogin = await other.login(personas.crossTenant.email, personas.crossTenant.password);
-    if (xLogin.ok) {
-      const denied = await other.fetch(`/api/v1/portal/projects/${projectId}/visual-progress`);
-      record(22, "cross-tenant", "portal visual-progress", "403/404", `${denied.status}`, [403, 404].includes(denied.status) ? "PROVEN" : "FAILED");
-    }
-  }
-
-  record(25, "all", "runtime 5xx scan", "no 5xx in sampled calls", "manual", "NOT_TESTED", "use Vercel runtime logs correlation by requestId");
-
-  const blocking = results.filter((r) => r.status === "FAILED");
-  const blocked = results.filter((r) => r.status === "BLOCKED_EXTERNAL");
-  const verdict =
-    blocking.length > 0 ? "FAILED" : blocked.some((r) => [2, 3, 12, 14, 15, 21].includes(r.step)) ? "PARTIAL" : "PROVEN";
-
+  const verdict = computeVerdict();
   console.log(
     JSON.stringify(
       {
         verdict,
         base: BASE,
+        deployedSha7: preview.sha7,
         startedAt,
         projectId,
         reportId,
         createdFixtures,
-        cleanup: "manual — revert QA report to draft or delete disposable rows if created",
+        cleanup: cleanupResult,
+        httpTrace: httpTrace.map((h) => ({ path: h.path, status: h.status, requestId: h.requestId })),
         results,
       },
       null,
