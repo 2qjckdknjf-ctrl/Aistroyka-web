@@ -93,6 +93,25 @@ describe("GET /api/v1/tasks/:id/messages", () => {
     const json = await res.json();
     expect(json.code).toBe("task_not_assigned");
   });
+
+  it("forwards tail=1 so clients can load the newest chat window", async () => {
+    vi.mocked(listTaskMessages).mockResolvedValue({
+      result: { data: [], nextCursor: null },
+      error: "",
+      status: 200,
+    });
+    const res = await GET(
+      new Request("https://test/api/v1/tasks/task-1/messages?limit=80&tail=1"),
+      { params: Promise.resolve({ id: "task-1" }) }
+    );
+    expect(res.status).toBe(200);
+    expect(listTaskMessages).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      "task-1",
+      expect.objectContaining({ limit: 80, tail: true })
+    );
+  });
 });
 
 describe("POST /api/v1/tasks/:id/messages", () => {
