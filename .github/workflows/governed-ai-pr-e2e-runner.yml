@@ -441,7 +441,7 @@ jobs:
             exit 1
           fi
 
-      - name: Run governed AI staging E2E (encrypt transfer bundle atomically)
+      - name: Run governed AI staging E2E (capture output files only)
         id: e2e
         working-directory: pr-workspace
         env:
@@ -461,18 +461,11 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_STAGING }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_STAGING }}
           GOVERNED_E2E_MARKER: "qa-governed-e2e"
-          E2E_TRANSFER_KEY_MATERIAL: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}:${{ secrets.PILOT_SMOKE_PASSWORD_STAGING }}:${{ github.run_id }}:${{ github.run_attempt }}
         run: |
           set -uo pipefail
           E2E_EXIT=0
           /usr/bin/env node scripts/pilot/governed-ai-owner-evidence-staging-e2e.mjs > e2e-result.json 2> e2e-result.stderr || E2E_EXIT=$?
           printf '%s' "$E2E_EXIT" > .e2e-exit-code
-          /usr/bin/tar -czf e2e-raw-bundle.tgz e2e-result.json e2e-result.stderr
-          rm -f e2e-result.json e2e-result.stderr
-          DERIVED_KEY="$(printf '%s' "$E2E_TRANSFER_KEY_MATERIAL" | /usr/bin/sha256sum | awk '{print $1}')"
-          /usr/bin/openssl enc -aes-256-cbc -pbkdf2 -iter 100000 -pass pass:"$DERIVED_KEY" \
-            -in e2e-raw-bundle.tgz -out e2e-raw-bundle.tgz.enc
-          rm -f e2e-raw-bundle.tgz
           exit 0
 
       - name: Record validated E2E exit code
@@ -547,12 +540,47 @@ jobs:
             exit 1
           fi
 
-      - name: Upload encrypted E2E transfer bundle for seal job
+      - name: Seal E2E transfer bundle immediately before upload
+        id: seal_bundle
         if: >-
           steps.e2e.outcome != 'cancelled' &&
           steps.e2e_exit.outcome == 'success' &&
           steps.post_e2e_deploy.outcome == 'success' &&
           steps.post_e2e_pr_head.outcome == 'success'
+        working-directory: pr-workspace
+        env:
+          E2E_TRANSFER_KEY_MATERIAL: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}:${{ secrets.PILOT_SMOKE_PASSWORD_STAGING }}:${{ github.run_id }}:${{ github.run_attempt }}
+        run: |
+          set -euo pipefail
+          test -f e2e-result.json
+          /usr/bin/tar -czf e2e-raw-bundle.tgz e2e-result.json e2e-result.stderr
+          rm -f e2e-result.json e2e-result.stderr
+          DERIVED_KEY="$(printf '%s' "$E2E_TRANSFER_KEY_MATERIAL" | /usr/bin/sha256sum | awk '{print $1}')"
+          /usr/bin/openssl enc -aes-256-cbc -pbkdf2 -iter 100000 -pass pass:"$DERIVED_KEY" \
+            -in e2e-raw-bundle.tgz -out e2e-raw-bundle.tgz.enc
+          rm -f e2e-raw-bundle.tgz
+          BUNDLE_SHA256="$(/usr/bin/sha256sum e2e-raw-bundle.tgz.enc | awk '{print $1}')"
+          echo "bundle_sha256=${BUNDLE_SHA256}" >> "$GITHUB_OUTPUT"
+
+      - name: Verify sealed bundle integrity before upload
+        if: steps.seal_bundle.outcome == 'success'
+        working-directory: pr-workspace
+        env:
+          EXPECTED_SHA256: ${{ steps.seal_bundle.outputs.bundle_sha256 }}
+        run: |
+          set -euo pipefail
+          if [ -z "$EXPECTED_SHA256" ]; then
+            echo "::error::Missing sealed bundle digest"
+            exit 1
+          fi
+          ACTUAL_SHA256="$(/usr/bin/sha256sum e2e-raw-bundle.tgz.enc | awk '{print $1}')"
+          if [ "$ACTUAL_SHA256" != "$EXPECTED_SHA256" ]; then
+            echo "::error::Sealed bundle digest mismatch before artifact upload"
+            exit 1
+          fi
+
+      - name: Upload encrypted E2E transfer bundle for seal job
+        if: steps.seal_bundle.outcome == 'success'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: governed-ai-e2e-encrypted-${{ github.run_id }}-${{ github.run_attempt }}
@@ -601,7 +629,7 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: governed-ai-e2e-sealed-${{ github.run_id }}-${{ github.run_attempt }}
-          path: e2e-raw-bundle.tgz.enc
+          path: e2e-workspace/e2e-raw-bundle.tgz.enc
           retention-days: 1
           if-no-files-found: error
 
