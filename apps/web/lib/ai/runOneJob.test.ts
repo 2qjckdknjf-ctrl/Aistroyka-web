@@ -6,23 +6,55 @@ function createMockSupabase(overrides: {
   media?: { data: unknown; error: { message: string } | null };
   claim?: { data: unknown; error: { message: string } | null };
   complete?: { error: unknown };
+  tenantQueued?: { data: unknown; error: { message: string } | null };
+  tenantClaim?: { data: unknown; error: { message: string } | null };
 }) {
-  const selectChain = {
+  const mediaChain = {
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
     single: vi.fn().mockImplementation(() =>
       Promise.resolve(overrides.media ?? { data: null, error: null })
     ),
   };
-  const updateChain = {
+
+  const failUpdateChain = {
     update: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
     in: vi.fn().mockResolvedValue({ error: null }),
   };
 
+  const tenantListChain = {
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    order: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockImplementation(() =>
+      Promise.resolve(overrides.tenantQueued ?? { data: [], error: null })
+    ),
+  };
+
+  const tenantClaimChain = {
+    update: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    select: vi.fn().mockReturnThis(),
+    maybeSingle: vi.fn().mockImplementation(() =>
+      Promise.resolve(overrides.tenantClaim ?? { data: null, error: null })
+    ),
+  };
+
+  let analysisJobsCall = 0;
   const fromMock = vi.fn().mockImplementation((table: string) => {
-    if (table === "analysis_jobs") return updateChain;
-    return selectChain;
+    if (table === "media") return mediaChain;
+    if (table === "analysis_jobs") {
+      analysisJobsCall += 1;
+      // Tenant path: first call lists queued jobs; second claims one.
+      // Global path / mark failed: update chain without select/limit.
+      if (overrides.tenantQueued || overrides.tenantClaim) {
+        if (analysisJobsCall === 1) return tenantListChain;
+        if (analysisJobsCall === 2) return tenantClaimChain;
+      }
+      return failUpdateChain;
+    }
+    return mediaChain;
   });
 
   return {
@@ -91,6 +123,7 @@ describe("processOneJob", () => {
           file_url: "https://storage/photo.jpg",
           project_id: "proj-1",
           type: "image",
+          tenant_id: "tenant-a",
         },
         error: null,
       },
@@ -109,6 +142,7 @@ describe("processOneJob", () => {
           file_url: "https://storage/photo.jpg",
           project_id: "proj-1",
           type: "video",
+          tenant_id: "tenant-a",
         },
         error: null,
       },
@@ -141,6 +175,7 @@ describe("processOneJob", () => {
           file_url: "https://storage/photo.jpg",
           project_id: "proj-1",
           type: "image",
+          tenant_id: "tenant-a",
         },
         error: null,
       },
@@ -180,6 +215,7 @@ describe("processOneJob", () => {
           file_url: "https://storage/photo.jpg",
           project_id: "proj-1",
           type: "image",
+          tenant_id: "tenant-a",
         },
         error: null,
       },
@@ -189,5 +225,67 @@ describe("processOneJob", () => {
     vi.unstubAllGlobals();
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(out).toEqual({ ok: true, jobId, status: "completed" });
+  });
+
+  it("with tenantId claims only that tenant's queued job and never calls global dequeue", async () => {
+    const jobId = "job-tenant";
+    const validResult = {
+      stage: "framing",
+      completion_percent: 50,
+      risk_level: "low" as const,
+      detected_issues: [] as string[],
+      recommendations: [] as string[],
+    };
+    vi.stubEnv("CRON_SECRET", "test-cron-secret");
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(validResult),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const { processOneJob: processOne } = await import("./runOneJob");
+    const supabase = createMockSupabase({
+      tenantQueued: {
+        data: [{ id: jobId, media_id: "media-1", tenant_id: "tenant-a" }],
+        error: null,
+      },
+      tenantClaim: {
+        data: { id: jobId, media_id: "media-1", tenant_id: "tenant-a" },
+        error: null,
+      },
+      media: {
+        data: {
+          file_url: "https://storage/photo.jpg",
+          project_id: "proj-1",
+          type: "image",
+          tenant_id: "tenant-a",
+        },
+        error: null,
+      },
+      claim: { data: true, error: null },
+    });
+    const out = await processOne(supabase, "https://api.example.com/analyze", {
+      tenantId: "tenant-a",
+    });
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+    expect(supabase.rpc).not.toHaveBeenCalledWith("dequeue_job", expect.anything());
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.example.com/analyze",
+      expect.objectContaining({
+        headers: expect.objectContaining({ "x-cron-secret": "test-cron-secret" }),
+      })
+    );
+    expect(out).toEqual({ ok: true, jobId, status: "completed" });
+  });
+
+  it("with tenantId returns no_job when tenant has no queued jobs", async () => {
+    const supabase = createMockSupabase({
+      tenantQueued: { data: [], error: null },
+    });
+    const out = await processOneJob(supabase, "https://api.example.com/analyze", {
+      tenantId: "tenant-a",
+    });
+    expect(out).toEqual({ ok: false, reason: "no_job" });
+    expect(supabase.rpc).not.toHaveBeenCalledWith("dequeue_job", expect.anything());
   });
 });

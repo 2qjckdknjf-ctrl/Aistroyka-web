@@ -1,27 +1,63 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi, beforeEach } from "vitest";
 
-vi.mock("@/lib/supabase/server", () => ({
-  createClient: vi.fn().mockResolvedValue({}),
-  getSessionUser: vi.fn().mockResolvedValue({ id: "test-user", email: undefined }),
-}));
+const getTenantContextFromRequest = vi.fn();
+const mockProcessOneJob = vi.fn();
+
+vi.mock("@/lib/tenant", () => {
+  class TenantRequiredError extends Error {
+    constructor(message = "Authentication required") {
+      super(message);
+      this.name = "TenantRequiredError";
+    }
+  }
+  return {
+    getTenantContextFromRequest: (...args: unknown[]) => getTenantContextFromRequest(...args),
+    requireTenant: (ctx: { tenantId?: string | null }) => {
+      if (!ctx.tenantId) throw new TenantRequiredError();
+    },
+    TenantRequiredError,
+  };
+});
 
 vi.mock("@/lib/supabase/admin", () => ({
   getAdminClient: vi.fn().mockReturnValue({}),
 }));
 
-const mockProcessOneJob = vi.fn();
-vi.mock("@/lib/ai/runOneJob", () => ({ processOneJob: mockProcessOneJob }));
+vi.mock("@/lib/ai/runOneJob", () => ({ processOneJob: (...args: unknown[]) => mockProcessOneJob(...args) }));
 
 describe("POST /api/v1/analysis/process", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getTenantContextFromRequest.mockResolvedValue({
+      tenantId: "tenant-a",
+      userId: "user-1",
+      role: "owner",
+    });
+  });
+
   it("returns 401 when user is not authenticated", async () => {
-    const { getSessionUser } = await import("@/lib/supabase/server");
-    vi.mocked(getSessionUser).mockResolvedValueOnce(null);
+    getTenantContextFromRequest.mockResolvedValueOnce({
+      tenantId: null,
+      userId: null,
+      role: null,
+    });
     const { POST } = await import("./route");
     const res = await POST(new Request("http://test/api/v1/analysis/process", { method: "POST" }));
     expect(res.status).toBe(401);
     const data = (await res.json()) as { ok?: boolean; error?: string };
     expect(data.ok).toBe(false);
-    expect(data.error).toBe("Unauthorized");
+    expect(data.error).toBeDefined();
+  });
+
+  it("scopes processOneJob to the caller tenant", async () => {
+    mockProcessOneJob.mockResolvedValueOnce({ ok: false, reason: "no_job" });
+    const { POST } = await import("./route");
+    await POST(new Request("http://test/api/v1/analysis/process", { method: "POST" }));
+    expect(mockProcessOneJob).toHaveBeenCalledWith(
+      expect.anything(),
+      undefined,
+      expect.objectContaining({ tenantId: "tenant-a" })
+    );
   });
 
   it("returns 503 when processOneJob returns no_url", async () => {
