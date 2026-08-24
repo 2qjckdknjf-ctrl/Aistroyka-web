@@ -17,8 +17,8 @@ const KNOWN_SECRET_ENV_KEYS = [
   "REDACT_SUPABASE_ANON",
 ];
 
-/** Top-level harness contract fields required for post-redaction verdict validation. */
-const PRESERVED_CONTRACT_KEYS = new Set(["base", "deployedSha7", "verdict"]);
+/** Root-level verdict string is not secret-bearing; still validated downstream. */
+const PRESERVED_ROOT_KEYS = new Set(["verdict"]);
 
 function collectKnownSecrets() {
   return KNOWN_SECRET_ENV_KEYS.map((key) => process.env[key])
@@ -46,30 +46,46 @@ function redactString(value, key = "", knownSecrets = []) {
   return scrubKnownSecrets(out, knownSecrets);
 }
 
-function redactContractString(value, knownSecrets = []) {
+function redactVerdictString(value, knownSecrets = []) {
   return scrubKnownSecrets(value, knownSecrets);
 }
 
-function redactValue(value, key = "", knownSecrets = [], preserveContractFields = false) {
+function redactValue(value, key = "", knownSecrets = [], isRootChild = false) {
   if (typeof value === "string") {
-    if (preserveContractFields && PRESERVED_CONTRACT_KEYS.has(key)) {
-      return redactContractString(value, knownSecrets);
+    if (isRootChild && PRESERVED_ROOT_KEYS.has(key)) {
+      return redactVerdictString(value, knownSecrets);
     }
     return redactString(value, key, knownSecrets);
   }
   if (Array.isArray(value)) {
-    return value.map((item) => redactValue(item, key, knownSecrets, preserveContractFields));
+    return value.map((item) => redactValue(item, key, knownSecrets, false));
   }
   if (value && typeof value === "object") {
-    const nextPreserve = preserveContractFields || key === "";
+    const rootObject = key === "";
     return Object.fromEntries(
       Object.entries(value).map(([nestedKey, nested]) => [
         nestedKey,
-        redactValue(nested, nestedKey, knownSecrets, nextPreserve),
+        redactValue(nested, nestedKey, knownSecrets, rootObject),
       ]),
     );
   }
   return value;
+}
+
+function normalizeOrigin(input) {
+  return input.trim().replace(/\/+$/, "");
+}
+
+function injectTrustedContractFields(record) {
+  const trustedOrigin = process.env.TRUSTED_CANONICAL_ORIGIN?.trim();
+  const targetSha = process.env.TARGET_SHA?.trim();
+  if (trustedOrigin) {
+    record.base = normalizeOrigin(trustedOrigin);
+  }
+  if (targetSha && /^[a-f0-9]{40}$/i.test(targetSha)) {
+    record.deployedSha7 = targetSha.slice(0, 7);
+  }
+  return record;
 }
 
 function writeFailure(error) {
@@ -91,5 +107,5 @@ try {
   process.exit(0);
 }
 
-const redacted = redactValue(raw, "", knownSecrets);
+const redacted = injectTrustedContractFields(redactValue(raw, "", knownSecrets));
 writeFileSync(redactedPath, JSON.stringify(redacted, null, 2));

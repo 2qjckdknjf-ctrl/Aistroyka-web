@@ -413,7 +413,7 @@ describe("governed-ai-pr-e2e redaction helper", () => {
     rmSync(dir, { recursive: true, force: true });
   });
 
-  it("preserves top-level base and deployedSha7 for post-redaction verdict validation", async () => {
+  it("injects trusted base and deployedSha7 after redacting harness output", async () => {
     const { mkdtempSync, writeFileSync, readFileSync, rmSync } = await import("node:fs");
     const { tmpdir } = await import("node:os");
     const { join } = await import("node:path");
@@ -423,17 +423,25 @@ describe("governed-ai-pr-e2e redaction helper", () => {
       join(dir, "e2e-result.json"),
       JSON.stringify({
         ...provenPayload(),
-        detail: `visited ${TRUSTED_PREVIEW_URL}/dashboard with token eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIn0.sig`,
+        base: `${TRUSTED_PREVIEW_URL}?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIn0.sig`,
+        detail: `visited ${TRUSTED_PREVIEW_URL}/dashboard`,
+        nested: { base: `${TRUSTED_PREVIEW_URL}/evil` },
       }),
     );
     execFileSync("bun", [resolve(root, "apps/web/lib/ops/governed-ai-pr-e2e-runner.redact-e2e-result.mjs")], {
       cwd: dir,
       stdio: "pipe",
+      env: {
+        ...process.env,
+        TRUSTED_CANONICAL_ORIGIN: TRUSTED_PREVIEW_URL,
+        TARGET_SHA,
+      },
     });
     const redacted = JSON.parse(readFileSync(join(dir, "e2e-result-redacted.json"), "utf8"));
     expect(redacted.base).toBe(TRUSTED_PREVIEW_URL);
     expect(redacted.deployedSha7).toBe(TARGET_SHA.slice(0, 7));
     expect(redacted.detail).toContain("[redacted-url]");
+    expect(redacted.nested.base).toContain("[redacted-url]");
     const verdict = validateE2eSuccessContract(0, redacted, {
       trustedCanonicalOrigin: TRUSTED_PREVIEW_URL,
       targetSha: TARGET_SHA,

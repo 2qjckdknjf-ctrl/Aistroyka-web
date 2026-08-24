@@ -538,6 +538,8 @@ jobs:
         if: always() && steps.e2e.outcome != 'cancelled'
         working-directory: pr-workspace
         env:
+          TRUSTED_CANONICAL_ORIGIN: ${{ steps.redeploy_check.outputs.canonical_preview_url }}
+          TARGET_SHA: ${{ needs.trust-boundary-preflight.outputs.target_sha }}
           REDACT_VERCEL_BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
           REDACT_WORKER_PASS: ${{ secrets.PILOT_SMOKE_PASSWORD_STAGING }}
           REDACT_MANAGER_PASS: ${{ secrets.PILOT_E2E_MANAGER_PASSWORD }}
