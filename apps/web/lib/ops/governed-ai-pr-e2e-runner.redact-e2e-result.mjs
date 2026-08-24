@@ -20,6 +20,56 @@ const KNOWN_SECRET_ENV_KEYS = [
 /** Root-level contract fields are never preserved from harness output. */
 const PRESERVED_ROOT_KEYS = new Set();
 
+const ALLOWED_ROOT_KEYS = new Set(["verdict", "base", "deployedSha7", "results", "error"]);
+
+function redactResultEntry(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+  const step = value.step;
+  const status = value.status;
+  if (typeof step !== "number" || !Number.isInteger(step) || step < 1 || step > 25) {
+    return null;
+  }
+  if (typeof status !== "string") {
+    return null;
+  }
+  return {
+    step,
+    status: redactString(status, "status"),
+  };
+}
+
+function redactRootRecord(value, knownSecrets) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return { verdict: "FAILED", error: "invalid e2e root" };
+  }
+  const record = {};
+  for (const [key, nested] of Object.entries(value)) {
+    if (!ALLOWED_ROOT_KEYS.has(key)) {
+      continue;
+    }
+    if (key === "results") {
+      if (!Array.isArray(nested)) {
+        record.results = [];
+        continue;
+      }
+      record.results = nested
+        .map((entry) => redactResultEntry(entry))
+        .filter((entry) => entry !== null);
+      continue;
+    }
+    if (typeof nested !== "string") {
+      continue;
+    }
+    record[key] = redactString(nested, key, knownSecrets);
+  }
+  if (!Array.isArray(record.results)) {
+    record.results = [];
+  }
+  return record;
+}
+
 function collectKnownSecrets() {
   return KNOWN_SECRET_ENV_KEYS.map((key) => process.env[key])
     .filter((value) => typeof value === "string" && value.length >= 8)
@@ -103,5 +153,5 @@ try {
   process.exit(0);
 }
 
-const redacted = injectTrustedContractFields(redactValue(raw, "", knownSecrets));
+const redacted = injectTrustedContractFields(redactRootRecord(raw, knownSecrets));
 writeFileSync(redactedPath, JSON.stringify(redacted, null, 2));

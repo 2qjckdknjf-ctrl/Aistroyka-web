@@ -539,13 +539,44 @@ describe("governed-ai-pr-e2e redaction helper", () => {
     const redacted = JSON.parse(readFileSync(join(dir, "e2e-result-redacted.json"), "utf8"));
     expect(redacted.base).toBe(TRUSTED_PREVIEW_URL);
     expect(redacted.deployedSha7).toBe(TARGET_SHA.slice(0, 7));
-    expect(redacted.detail).toContain("[redacted-url]");
-    expect(redacted.nested.base).toContain("[redacted-url]");
+    expect(redacted.detail).toBeUndefined();
+    expect(redacted.nested).toBeUndefined();
     const verdict = validateE2eSuccessContract(0, redacted, {
       trustedCanonicalOrigin: TRUSTED_PREVIEW_URL,
       targetSha: TARGET_SHA,
     });
     expect(verdict.ok).toBe(true);
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it("drops untyped and unknown fields from harness output before artifact upload", async () => {
+    const { mkdtempSync, writeFileSync, readFileSync, rmSync } = await import("node:fs");
+    const { tmpdir } = await import("node:os");
+    const { join } = await import("node:path");
+    const { execFileSync } = await import("node:child_process");
+    const dir = mkdtempSync(join(tmpdir(), "gov-e2e-redact-allowlist-"));
+    writeFileSync(
+      join(dir, "e2e-result.json"),
+      JSON.stringify({
+        ...provenPayload(),
+        leaked: [72, 73, 66, 80],
+        nested: { tokenCodes: [115, 101, 99, 114, 101, 116] },
+        verdict: "PROVEN",
+      }),
+    );
+    execFileSync("bun", [resolve(root, "apps/web/lib/ops/governed-ai-pr-e2e-runner.redact-e2e-result.mjs")], {
+      cwd: dir,
+      stdio: "pipe",
+      env: {
+        ...process.env,
+        TRUSTED_CANONICAL_ORIGIN: TRUSTED_PREVIEW_URL,
+        TARGET_SHA,
+      },
+    });
+    const redacted = JSON.parse(readFileSync(join(dir, "e2e-result-redacted.json"), "utf8"));
+    expect(redacted.leaked).toBeUndefined();
+    expect(redacted.nested).toBeUndefined();
+    expect(redacted.verdict).toBe(GOVERNED_AI_E2E_SUCCESS_VERDICT);
     rmSync(dir, { recursive: true, force: true });
   });
 
