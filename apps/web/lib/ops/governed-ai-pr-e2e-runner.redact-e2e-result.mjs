@@ -17,6 +17,9 @@ const KNOWN_SECRET_ENV_KEYS = [
   "REDACT_SUPABASE_ANON",
 ];
 
+/** Top-level harness contract fields required for post-redaction verdict validation. */
+const PRESERVED_CONTRACT_KEYS = new Set(["base", "deployedSha7", "verdict"]);
+
 function collectKnownSecrets() {
   return KNOWN_SECRET_ENV_KEYS.map((key) => process.env[key])
     .filter((value) => typeof value === "string" && value.length >= 8)
@@ -43,16 +46,27 @@ function redactString(value, key = "", knownSecrets = []) {
   return scrubKnownSecrets(out, knownSecrets);
 }
 
-function redactValue(value, key = "", knownSecrets = []) {
+function redactContractString(value, knownSecrets = []) {
+  return scrubKnownSecrets(value, knownSecrets);
+}
+
+function redactValue(value, key = "", knownSecrets = [], preserveContractFields = false) {
   if (typeof value === "string") {
+    if (preserveContractFields && PRESERVED_CONTRACT_KEYS.has(key)) {
+      return redactContractString(value, knownSecrets);
+    }
     return redactString(value, key, knownSecrets);
   }
   if (Array.isArray(value)) {
-    return value.map((item) => redactValue(item, key, knownSecrets));
+    return value.map((item) => redactValue(item, key, knownSecrets, preserveContractFields));
   }
   if (value && typeof value === "object") {
+    const nextPreserve = preserveContractFields || key === "";
     return Object.fromEntries(
-      Object.entries(value).map(([nestedKey, nested]) => [nestedKey, redactValue(nested, nestedKey, knownSecrets)]),
+      Object.entries(value).map(([nestedKey, nested]) => [
+        nestedKey,
+        redactValue(nested, nestedKey, knownSecrets, nextPreserve),
+      ]),
     );
   }
   return value;

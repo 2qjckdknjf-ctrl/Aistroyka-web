@@ -412,4 +412,33 @@ describe("governed-ai-pr-e2e redaction helper", () => {
     expect(redacted.verdict).toBe(GOVERNED_AI_E2E_SUCCESS_VERDICT);
     rmSync(dir, { recursive: true, force: true });
   });
+
+  it("preserves top-level base and deployedSha7 for post-redaction verdict validation", async () => {
+    const { mkdtempSync, writeFileSync, readFileSync, rmSync } = await import("node:fs");
+    const { tmpdir } = await import("node:os");
+    const { join } = await import("node:path");
+    const { execFileSync } = await import("node:child_process");
+    const dir = mkdtempSync(join(tmpdir(), "gov-e2e-redact-contract-"));
+    writeFileSync(
+      join(dir, "e2e-result.json"),
+      JSON.stringify({
+        ...provenPayload(),
+        detail: `visited ${TRUSTED_PREVIEW_URL}/dashboard with token eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIn0.sig`,
+      }),
+    );
+    execFileSync("bun", [resolve(root, "apps/web/lib/ops/governed-ai-pr-e2e-runner.redact-e2e-result.mjs")], {
+      cwd: dir,
+      stdio: "pipe",
+    });
+    const redacted = JSON.parse(readFileSync(join(dir, "e2e-result-redacted.json"), "utf8"));
+    expect(redacted.base).toBe(TRUSTED_PREVIEW_URL);
+    expect(redacted.deployedSha7).toBe(TARGET_SHA.slice(0, 7));
+    expect(redacted.detail).toContain("[redacted-url]");
+    const verdict = validateE2eSuccessContract(0, redacted, {
+      trustedCanonicalOrigin: TRUSTED_PREVIEW_URL,
+      targetSha: TARGET_SHA,
+    });
+    expect(verdict.ok).toBe(true);
+    rmSync(dir, { recursive: true, force: true });
+  });
 });
