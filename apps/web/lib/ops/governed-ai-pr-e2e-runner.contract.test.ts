@@ -243,8 +243,22 @@ describe("governed-ai-pr-e2e-runner workflow contract", () => {
     expect(job2).toMatch(/FAILED_DEPLOYMENT_ALIGNMENT: health sha7=\$\{SHA7\} expected=\$\{EXPECTED7\} before E2E/);
   });
 
+  it("reconfirms preview deployment SHA immediately after E2E before verdict", () => {
+    const job2 = wf.split("governed-ai-pr-e2e:")[1].split("governed-ai-pr-e2e-verdict:")[0];
+    const e2eIdx = job2.indexOf("Run governed AI staging E2E (raw output file only)");
+    const postIdx = job2.indexOf("Reconfirm preview deployment SHA immediately after E2E");
+    const redactIdx = job2.indexOf("Redact E2E evidence");
+    const verdictIdx = job2.indexOf("Report redacted verdict only");
+    expect(postIdx).toBeGreaterThan(e2eIdx);
+    expect(redactIdx).toBeGreaterThan(postIdx);
+    expect(verdictIdx).toBeGreaterThan(postIdx);
+    expect(job2).toMatch(/FAILED_DEPLOYMENT_ALIGNMENT: health sha7=\$\{SHA7\} expected=\$\{EXPECTED7\} after E2E/);
+  });
+
   it("queues concurrent runs and pins trusted helper checkout to github.sha", () => {
     expect(wf).toMatch(/cancel-in-progress:\s*false/);
+    expect(wf).toMatch(/group: governed-ai-pr-e2e-staging-shared-qa-project/);
+    expect(wf).not.toMatch(/group: governed-ai-pr-e2e-\$\{\{ inputs\.pull_request_number \}\}/);
     expect(wf).toMatch(/ref: \$\{\{ github\.sha \}\}/);
     expect(wf).toMatch(/Revalidate PR head SHA after environment approval/);
   });

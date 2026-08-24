@@ -30,7 +30,7 @@ permissions:
   actions: read
 
 concurrency:
-  group: governed-ai-pr-e2e-${{ inputs.pull_request_number }}
+  group: governed-ai-pr-e2e-staging-shared-qa-project
   cancel-in-progress: false
 
 jobs:
@@ -378,6 +378,34 @@ jobs:
           node scripts/pilot/governed-ai-owner-evidence-staging-e2e.mjs > e2e-result.json 2> e2e-result.stderr || E2E_EXIT=$?
           echo "exit_code=${E2E_EXIT}" >> "$GITHUB_OUTPUT"
           exit 0
+
+      - name: Reconfirm preview deployment SHA immediately after E2E
+        if: always() && steps.e2e.outcome != 'cancelled'
+        env:
+          PREVIEW_URL: ${{ needs.trust-boundary-preflight.outputs.preview_base_url }}
+          TARGET_SHA: ${{ needs.trust-boundary-preflight.outputs.target_sha }}
+          BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        run: |
+          set -euo pipefail
+          HTTP_CODE="$(curl -sS --globoff -o /tmp/health-post-e2e.json -w '%{http_code}' \
+            -H "x-vercel-protection-bypass: ${BYPASS}" \
+            "${PREVIEW_URL}/api/v1/health" || true)"
+          BODY="$(cat /tmp/health-post-e2e.json 2>/dev/null || echo '{}')"
+          if [ "$HTTP_CODE" -ge 500 ]; then
+            echo "::error::FAILED_RUNTIME: Preview health HTTP ${HTTP_CODE} after E2E"
+            exit 1
+          fi
+          DB="$(echo "$BODY" | jq -r '.db // empty')"
+          if [ -z "$DB" ] || [ "$DB" != "ok" ]; then
+            echo "::error::Preview health db=${DB:-missing} after E2E"
+            exit 1
+          fi
+          SHA7="$(echo "$BODY" | jq -r '.buildStamp.sha7 // empty')"
+          EXPECTED7="${TARGET_SHA:0:7}"
+          if [ -z "$SHA7" ] || [ "$SHA7" != "$EXPECTED7" ]; then
+            echo "::error::FAILED_DEPLOYMENT_ALIGNMENT: health sha7=${SHA7} expected=${EXPECTED7} after E2E"
+            exit 1
+          fi
 
       - name: Redact E2E evidence
         if: always() && steps.e2e.outcome != 'cancelled'
