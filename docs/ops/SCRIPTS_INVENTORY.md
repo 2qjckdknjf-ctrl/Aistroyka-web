@@ -50,6 +50,17 @@
 | `kill-hanging-dev.sh` | Kill stuck dev processes | Yes | No | No | Local only |
 | `verify-prod-*.sh`, `prod-verify.sh` | Production verification probes | Yes | Conditional | some | No |
 
+## Pilot / Day-0 additions (2026-08)
+
+Read-only probes. Do not treat HTTP 200 on forgot-password as mailbox-delivery proof.
+
+| Path | Purpose | Local | Cloud | Secrets | Destructive |
+|---|---|---|---|---|---|
+| `scripts/pilot/verify_forgot_password_route.sh` | `POST /api/v1/auth/forgot-password` live-or-404 (`400`/`200`/`429`/`503` = route live) | Yes | Yes | No | No |
+| `scripts/pilot/run_day0_staging_rehearsal.sh` | Staging Day-0 rehearsal (includes forgot-password probe) | Yes | Conditional | env / intake file | No |
+
+Password recovery runbook: `docs/auth/PASSWORD_RECOVERY.md`.
+
 ## Duplicate-suffixed scripts (cleanup candidates — not modified)
 
 - `scripts/release-readiness-check (1).mjs`
