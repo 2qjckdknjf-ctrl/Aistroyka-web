@@ -406,14 +406,17 @@ describe("governed-ai-pr-e2e-runner workflow contract", () => {
     const job3 = wf.split("governed-ai-pr-e2e-postprocess:")[1].split("governed-ai-pr-e2e-verdict:")[0];
     expect(job2).not.toMatch(/Redact E2E evidence/);
     expect(job2).not.toMatch(/Report redacted verdict only/);
-    expect(job2).toMatch(/Stage raw E2E output for isolated postprocess job/);
+    expect(job2).toMatch(/Stage encrypted E2E output for isolated postprocess job/);
+    expect(job2).toMatch(/Prepare encrypted E2E transfer bundle/);
+    expect(job2).toMatch(/openssl enc -aes-256-gcm/);
     expect(job2).toMatch(/actions\/cache\/save/);
     expect(job2).toMatch(/Record validated E2E exit code/);
     expect(job2).not.toMatch(/upload-artifact/);
     expect(job2).not.toMatch(/chmod -R a-w trusted-runner-ops/);
     expect(job3).toMatch(/name: Governed AI PR E2E postprocess/);
     expect(job3).toMatch(/actions\/cache\/restore/);
-    expect(job3).toMatch(/fail-on-cache-miss: true/);
+    expect(job3).toMatch(/Decrypt E2E transfer bundle/);
+    expect(job3).toMatch(/governed-e2e-raw-\$\{\{ github.run_id \}\}-\$\{\{ github.run_attempt \}\}-\$\{\{ github.sha \}\}/);
     expect(job3).toMatch(/Verify trusted runner ops integrity/);
     expect(job3).toMatch(/GOVERNED_AI_E2E_REQUIRED_STEP_COUNT = 25/);
     expect(job3).toMatch(/Redact E2E evidence/);
@@ -422,7 +425,7 @@ describe("governed-ai-pr-e2e-runner workflow contract", () => {
     expect(job3).toMatch(/Report redacted verdict only/);
     expect(job3).toMatch(/environment:\s*staging/);
     const e2eIdx = job2.indexOf("Run governed AI staging E2E (raw output file only)");
-    const rawStageIdx = job2.indexOf("Stage raw E2E output for isolated postprocess job");
+    const rawStageIdx = job2.indexOf("Stage encrypted E2E output for isolated postprocess job");
     const redactIdx = job3.indexOf("Redact E2E evidence");
     const verdictIdx = job3.indexOf("Report redacted verdict only");
     expect(rawStageIdx).toBeGreaterThan(e2eIdx);

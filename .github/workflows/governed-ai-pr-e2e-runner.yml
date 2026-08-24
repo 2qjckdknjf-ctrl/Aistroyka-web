@@ -540,7 +540,27 @@ jobs:
             exit 1
           fi
 
-      - name: Stage raw E2E output for isolated postprocess job
+      - name: Prepare encrypted E2E transfer bundle
+        if: >-
+          steps.e2e.outcome != 'cancelled' &&
+          steps.e2e_exit.outcome == 'success' &&
+          steps.post_e2e_deploy.outcome == 'success' &&
+          steps.post_e2e_pr_head.outcome == 'success'
+        env:
+          E2E_TRANSFER_KEY_MATERIAL: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}:${{ secrets.PILOT_SMOKE_PASSWORD_STAGING }}:${{ github.run_id }}:${{ github.run_attempt }}
+        run: |
+          set -euo pipefail
+          mkdir -p e2e-workspace
+          cp pr-workspace/e2e-result.json pr-workspace/e2e-result.stderr e2e-workspace/
+          rm -f pr-workspace/e2e-result.json pr-workspace/e2e-result.stderr
+          tar -C e2e-workspace -czf e2e-raw-bundle.tgz e2e-result.json e2e-result.stderr
+          rm -f e2e-workspace/e2e-result.json e2e-workspace/e2e-result.stderr
+          DERIVED_KEY="$(printf '%s' "$E2E_TRANSFER_KEY_MATERIAL" | sha256sum | awk '{print $1}')"
+          openssl enc -aes-256-gcm -pbkdf2 -iter 100000 -pass pass:"$DERIVED_KEY" \
+            -in e2e-raw-bundle.tgz -out e2e-raw-bundle.tgz.enc
+          rm -f e2e-raw-bundle.tgz
+
+      - name: Stage encrypted E2E output for isolated postprocess job
         if: >-
           steps.e2e.outcome != 'cancelled' &&
           steps.e2e_exit.outcome == 'success' &&
@@ -548,10 +568,8 @@ jobs:
           steps.post_e2e_pr_head.outcome == 'success'
         uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
-          key: governed-e2e-raw-${{ github.run_id }}-${{ github.run_attempt }}
-          path: |
-            pr-workspace/e2e-result.json
-            pr-workspace/e2e-result.stderr
+          key: governed-e2e-raw-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.sha }}
+          path: e2e-raw-bundle.tgz.enc
 
   governed-ai-pr-e2e-postprocess:
     name: Governed AI PR E2E postprocess
@@ -587,12 +605,26 @@ jobs:
         with:
           bun-version: 1.2.15
 
-      - name: Restore raw E2E output from isolated E2E job
+      - name: Restore encrypted E2E output from isolated E2E job
         uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
-          key: governed-e2e-raw-${{ github.run_id }}-${{ github.run_attempt }}
-          path: e2e-workspace
+          key: governed-e2e-raw-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.sha }}
+          path: .
           fail-on-cache-miss: true
+
+      - name: Decrypt E2E transfer bundle
+        env:
+          E2E_TRANSFER_KEY_MATERIAL: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}:${{ secrets.PILOT_SMOKE_PASSWORD_STAGING }}:${{ github.run_id }}:${{ github.run_attempt }}
+        run: |
+          set -euo pipefail
+          test -f e2e-raw-bundle.tgz.enc
+          DERIVED_KEY="$(printf '%s' "$E2E_TRANSFER_KEY_MATERIAL" | sha256sum | awk '{print $1}')"
+          openssl enc -d -aes-256-gcm -pbkdf2 -iter 100000 -pass pass:"$DERIVED_KEY" \
+            -in e2e-raw-bundle.tgz.enc -out e2e-raw-bundle.tgz
+          mkdir -p e2e-workspace
+          tar -C e2e-workspace -xzf e2e-raw-bundle.tgz e2e-result.json e2e-result.stderr
+          rm -f e2e-raw-bundle.tgz e2e-raw-bundle.tgz.enc
+          test -f e2e-workspace/e2e-result.json
 
       - name: Verify trusted runner ops integrity
         run: |
