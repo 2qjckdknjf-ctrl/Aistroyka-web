@@ -301,9 +301,9 @@ jobs:
             exit 1
           fi
 
-      - name: Install dependencies
+      - name: Install dependencies (ignore lifecycle scripts)
         working-directory: pr-workspace
-        run: bun install --frozen-lockfile
+        run: bun install --frozen-lockfile --ignore-scripts
 
       - name: Verify E2E entrypoint path is fixed (not operator-controlled)
         working-directory: pr-workspace

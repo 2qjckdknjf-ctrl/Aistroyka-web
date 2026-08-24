@@ -182,11 +182,17 @@ describe("governed-ai-pr-e2e-runner workflow contract", () => {
     expect(wf).not.toMatch(/path: e2e-result\.json/);
   });
 
-  it("checks out exact verified target SHA in isolated workspace", () => {
+  it("ignores package lifecycle scripts during PR workspace install", () => {
+    expect(wf).toMatch(/bun install --frozen-lockfile --ignore-scripts/);
+  });
+
+  it("separates trusted dispatch-pin ops from PR workspace checkout", () => {
+    expect(wf).toMatch(/path: trusted-runner-ops/);
+    expect(wf).toMatch(/ref: \$\{\{ github\.sha \}\}/);
+    expect(wf).toMatch(/path: pr-workspace/);
     expect(wf).toMatch(/ref: \$\{\{ needs\.trust-boundary-preflight\.outputs\.target_sha \}\}/);
     expect(wf).toMatch(/git rev-parse HEAD/);
     expect(wf).toMatch(/governed-ai-owner-evidence-staging-e2e\.mjs/);
-    expect(wf).toMatch(/path: pr-workspace/);
   });
 
   it("requires redacted verdict PASS and fixed E2E entrypoint", () => {
