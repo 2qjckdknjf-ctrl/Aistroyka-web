@@ -14,8 +14,12 @@ on:
         description: "Exact PR head SHA to checkout and test (40 hex chars)"
         required: true
         type: string
+      deployment_id:
+        description: "GitHub Deployment ID for the Vercel Preview (positive decimal integer)"
+        required: true
+        type: string
       preview_base_url:
-        description: "Exact canonical Vercel Preview base URL (no trailing slash, no bypass query params)"
+        description: "Preview base URL that must match trusted deployment environment_url (no trailing slash, no bypass query params)"
         required: true
         type: string
       confirmation:
@@ -41,6 +45,7 @@ jobs:
     outputs:
       pull_request_number: ${{ steps.export.outputs.pull_request_number }}
       target_sha: ${{ steps.export.outputs.target_sha }}
+      deployment_id: ${{ steps.export.outputs.deployment_id }}
       preview_base_url: ${{ steps.export.outputs.preview_base_url }}
       staging_environment_protected: ${{ steps.export.outputs.staging_environment_protected }}
     steps:
@@ -50,7 +55,8 @@ jobs:
           ref: ${{ github.sha }}
           sparse-checkout: |
             apps/web/lib/ops/governed-ai-pr-e2e-runner.constants.ts
-            apps/web/lib/ops/governed-ai-pr-e2e-runner.validate-preview-url.mjs
+            apps/web/lib/ops/governed-ai-pr-e2e-runner.deployment-binding.ts
+            apps/web/lib/ops/governed-ai-pr-e2e-runner.validate-deployment-binding.mjs
           sparse-checkout-cone-mode: false
 
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
@@ -63,6 +69,7 @@ jobs:
           CONFIRM: ${{ inputs.confirmation }}
           PR_NUM: ${{ inputs.pull_request_number }}
           TARGET_SHA: ${{ inputs.target_sha }}
+          DEPLOYMENT_ID: ${{ inputs.deployment_id }}
           PREVIEW_URL: ${{ inputs.preview_base_url }}
         run: |
           set -euo pipefail
@@ -82,7 +89,10 @@ jobs:
             echo "::error::target_sha must be exactly 40 lowercase hex characters"
             exit 1
           fi
-          CANONICAL_PREVIEW_URL="$(bun apps/web/lib/ops/governed-ai-pr-e2e-runner.validate-preview-url.mjs "$PREVIEW_URL")"
+          if ! echo "$DEPLOYMENT_ID" | grep -Eq '^[1-9][0-9]{0,18}$'; then
+            echo "::error::deployment_id must be a positive decimal integer"
+            exit 1
+          fi
           ENV_JSON="$(curl -fsS \
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${{ github.token }}" \
@@ -152,12 +162,26 @@ jobs:
             echo "::error::target_sha mismatch: PR head=${HEAD_SHA} input=${TARGET_SHA}"
             exit 1
           fi
+          CANONICAL_PREVIEW_URL="$(GITHUB_TOKEN="${{ github.token }}" \
+            TARGET_SHA="$TARGET_SHA" \
+            DEPLOYMENT_ID="$DEPLOYMENT_ID" \
+            PREVIEW_URL="$PREVIEW_URL" \
+            DEPLOYMENT_BINDING_EVIDENCE_PATH="deployment-binding-evidence.json" \
+            bun apps/web/lib/ops/governed-ai-pr-e2e-runner.validate-deployment-binding.mjs)"
           {
             echo "pull_request_number=${PR_NUM}"
             echo "target_sha=${TARGET_SHA}"
+            echo "deployment_id=${DEPLOYMENT_ID}"
             echo "preview_base_url=${CANONICAL_PREVIEW_URL}"
             echo "staging_environment_protected=true"
           } >> "$GITHUB_OUTPUT"
+
+      - name: Upload deployment binding evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: governed-ai-deployment-binding-pr${{ inputs.pull_request_number }}
+          path: deployment-binding-evidence.json
+          retention-days: 14
 
   governed-ai-pr-e2e:
     name: Governed AI PR preview E2E
@@ -175,29 +199,8 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
+      deployments: read
     steps:
-      - name: Revalidate PR head SHA after environment approval
-        env:
-          PR_NUM: ${{ needs.trust-boundary-preflight.outputs.pull_request_number }}
-          TARGET_SHA: ${{ needs.trust-boundary-preflight.outputs.target_sha }}
-        run: |
-          set -euo pipefail
-          REPO="2qjckdknjf-ctrl/Aistroyka-web"
-          PR_JSON="$(curl -fsSL \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${{ github.token }}" \
-            "https://api.github.com/repos/${REPO}/pulls/${PR_NUM}")"
-          STATE="$(echo "$PR_JSON" | jq -r '.state')"
-          HEAD_SHA="$(echo "$PR_JSON" | jq -r '.head.sha')"
-          if [ "$STATE" != "open" ]; then
-            echo "::error::PR #${PR_NUM} is no longer open after environment approval"
-            exit 1
-          fi
-          if [ "$HEAD_SHA" != "$TARGET_SHA" ]; then
-            echo "::error::PR head moved after preflight: head=${HEAD_SHA} expected=${TARGET_SHA}"
-            exit 1
-          fi
-
       - name: Checkout trusted runner ops from dispatch commit pin
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
@@ -205,8 +208,67 @@ jobs:
           path: trusted-runner-ops
           sparse-checkout: |
             apps/web/lib/ops/governed-ai-pr-e2e-runner.constants.ts
+            apps/web/lib/ops/governed-ai-pr-e2e-runner.deployment-binding.ts
+            apps/web/lib/ops/governed-ai-pr-e2e-runner.verdict.ts
             apps/web/lib/ops/governed-ai-pr-e2e-runner.redact-e2e-result.mjs
+            apps/web/lib/ops/governed-ai-pr-e2e-runner.validate-deployment-binding.mjs
+            apps/web/lib/ops/governed-ai-pr-e2e-runner.validate-e2e-verdict.mjs
           sparse-checkout-cone-mode: false
+
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: 1.2.15
+
+      - name: Revalidate PR head and deployment binding after environment approval
+        id: redeploy_check
+        env:
+          PR_NUM: ${{ needs.trust-boundary-preflight.outputs.pull_request_number }}
+          TARGET_SHA: ${{ needs.trust-boundary-preflight.outputs.target_sha }}
+          DEPLOYMENT_ID: ${{ needs.trust-boundary-preflight.outputs.deployment_id }}
+          PREVIEW_URL: ${{ needs.trust-boundary-preflight.outputs.preview_base_url }}
+        run: |
+          set -euo pipefail
+          if [ "${{ github.ref }}" != "refs/heads/main" ]; then
+            echo "::error::This workflow must run from the main branch definition (got ${{ github.ref }})"
+            exit 1
+          fi
+          REPO="2qjckdknjf-ctrl/Aistroyka-web"
+          PR_JSON="$(curl -fsSL \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ github.token }}" \
+            "https://api.github.com/repos/${REPO}/pulls/${PR_NUM}")"
+          STATE="$(echo "$PR_JSON" | jq -r '.state')"
+          HEAD_SHA="$(echo "$PR_JSON" | jq -r '.head.sha')"
+          HEAD_REPO="$(echo "$PR_JSON" | jq -r '.head.repo.full_name')"
+          BASE_REPO="$(echo "$PR_JSON" | jq -r '.base.repo.full_name')"
+          IS_FORK="$(echo "$PR_JSON" | jq -r '.head.repo.fork')"
+          if [ "$STATE" != "open" ]; then
+            echo "::error::PR #${PR_NUM} is no longer open after environment approval"
+            exit 1
+          fi
+          if [ "$HEAD_REPO" != "$REPO" ] || [ "$BASE_REPO" != "$REPO" ]; then
+            echo "::error::PR must remain same-repository (non-fork)"
+            exit 1
+          fi
+          if [ "$IS_FORK" = "true" ]; then
+            echo "::error::Fork PRs are not allowed"
+            exit 1
+          fi
+          if [ "$HEAD_SHA" != "$TARGET_SHA" ]; then
+            echo "::error::PR head moved after preflight: head=${HEAD_SHA} expected=${TARGET_SHA}"
+            exit 1
+          fi
+          CANONICAL_PREVIEW_URL="$(GITHUB_TOKEN="${{ github.token }}" \
+            TARGET_SHA="$TARGET_SHA" \
+            DEPLOYMENT_ID="$DEPLOYMENT_ID" \
+            PREVIEW_URL="$PREVIEW_URL" \
+            DEPLOYMENT_BINDING_EVIDENCE_PATH="deployment-binding-evidence-post-approval.json" \
+            bun trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.validate-deployment-binding.mjs)"
+          if [ "$CANONICAL_PREVIEW_URL" != "$PREVIEW_URL" ]; then
+            echo "::error::Trusted deployment URL drifted after environment approval"
+            exit 1
+          fi
+          echo "canonical_preview_url=${CANONICAL_PREVIEW_URL}" >> "$GITHUB_OUTPUT"
 
       - name: Checkout verified PR head
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
@@ -226,10 +288,6 @@ jobs:
             exit 1
           fi
           test -f scripts/pilot/governed-ai-owner-evidence-staging-e2e.mjs
-
-      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
-        with:
-          bun-version: 1.2.15
 
       - name: Secret and QA project preflight (names only)
         env:
@@ -271,7 +329,7 @@ jobs:
 
       - name: Vercel bypass and deployment SHA preflight
         env:
-          PREVIEW_URL: ${{ needs.trust-boundary-preflight.outputs.preview_base_url }}
+          PREVIEW_URL: ${{ steps.redeploy_check.outputs.canonical_preview_url }}
           TARGET_SHA: ${{ needs.trust-boundary-preflight.outputs.target_sha }}
           BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
         run: |
@@ -329,7 +387,7 @@ jobs:
 
       - name: Reconfirm preview deployment SHA immediately before E2E
         env:
-          PREVIEW_URL: ${{ needs.trust-boundary-preflight.outputs.preview_base_url }}
+          PREVIEW_URL: ${{ steps.redeploy_check.outputs.canonical_preview_url }}
           TARGET_SHA: ${{ needs.trust-boundary-preflight.outputs.target_sha }}
           BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
         run: |
@@ -358,7 +416,7 @@ jobs:
         id: e2e
         working-directory: pr-workspace
         env:
-          GOVERNED_E2E_BASE_URL: ${{ needs.trust-boundary-preflight.outputs.preview_base_url }}
+          GOVERNED_E2E_BASE_URL: ${{ steps.redeploy_check.outputs.canonical_preview_url }}
           VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
           PILOT_E2E_WORKER_EMAIL: ${{ secrets.PILOT_SMOKE_EMAIL_STAGING }}
           PILOT_E2E_WORKER_PASSWORD: ${{ secrets.PILOT_SMOKE_PASSWORD_STAGING }}
@@ -385,7 +443,7 @@ jobs:
         id: post_e2e_deploy
         if: always() && steps.e2e.outcome != 'cancelled'
         env:
-          PREVIEW_URL: ${{ needs.trust-boundary-preflight.outputs.preview_base_url }}
+          PREVIEW_URL: ${{ steps.redeploy_check.outputs.canonical_preview_url }}
           TARGET_SHA: ${{ needs.trust-boundary-preflight.outputs.target_sha }}
           BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
         run: |
@@ -439,7 +497,7 @@ jobs:
           fi
 
       - name: Prepare trusted redaction output path
-        if: always() && steps.e2e.outcome != 'cancelled' && steps.post_e2e_deploy.outcome == 'success'
+        if: always() && steps.e2e.outcome != 'cancelled'
         working-directory: pr-workspace
         run: |
           set -euo pipefail
@@ -447,7 +505,7 @@ jobs:
 
       - name: Redact E2E evidence
         id: redact
-        if: always() && steps.e2e.outcome != 'cancelled' && steps.post_e2e_deploy.outcome == 'success'
+        if: always() && steps.e2e.outcome != 'cancelled'
         working-directory: pr-workspace
         env:
           REDACT_VERCEL_BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
@@ -482,19 +540,11 @@ jobs:
             echo "::error::Missing redacted E2E artifact"
             exit 1
           fi
-          VERDICT="$(jq -r '.verdict // "unknown"' e2e-result-redacted.json)"
+          VERDICT="$(bun ../trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.validate-e2e-verdict.mjs "${{ steps.e2e.outputs.exit_code }}" e2e-result-redacted.json)"
           echo "E2E verdict: ${VERDICT}"
-          if [ "$VERDICT" != "PASS" ]; then
-            echo "::error::Governed AI E2E verdict is not PASS"
-            exit 1
-          fi
-          EXIT_CODE="${{ steps.e2e.outputs.exit_code }}"
-          if [ "${EXIT_CODE:-0}" -ne 0 ]; then
-            exit "${EXIT_CODE}"
-          fi
 
       - name: Upload redacted E2E evidence
-        if: steps.redact.outcome == 'success'
+        if: always() && steps.redact.outcome == 'success'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: governed-ai-pr-e2e-evidence-pr${{ needs.trust-boundary-preflight.outputs.pull_request_number }}

@@ -1,12 +1,24 @@
 /**
- * Canonical trust boundary for governed AI PR Preview E2E.
- * Changing the Preview hostname requires a reviewed workflow/constants update.
+ * Trust boundary constants for governed AI PR Preview E2E.
+ * Preview URL authority comes from GitHub Deployment binding, not static hostnames.
  */
-export const GOVERNED_AI_PR_E2E_CANONICAL_PREVIEW_HOSTNAME =
-  "aistroyka-web-web-v7jq-git-fea-3e326e-2qjckdknjf-ctrls-projects.vercel.app" as const;
+export const GOVERNED_AI_REPOSITORY_FULL_NAME = "2qjckdknjf-ctrl/Aistroyka-web" as const;
 
-export const GOVERNED_AI_PR_E2E_CANONICAL_PREVIEW_BASE_URL =
-  `https://${GOVERNED_AI_PR_E2E_CANONICAL_PREVIEW_HOSTNAME}` as const;
+export const GOVERNED_AI_PREVIEW_ENVIRONMENT = "Preview" as const;
+
+/** Defense-in-depth: Vercel project slug segment in Preview hostnames. */
+export const GOVERNED_AI_VERCEL_PROJECT_HOSTNAME_PREFIX = "aistroyka-web-web-v7jq-" as const;
+
+/** Defense-in-depth: Vercel team/projects suffix for this repository. */
+export const GOVERNED_AI_VERCEL_TEAM_HOSTNAME_SUFFIX = "-2qjckdknjf-ctrls-projects.vercel.app" as const;
+
+/** Official Vercel for GitHub GitHub App (https://github.com/apps/vercel). */
+export const VERCEL_GITHUB_APP_ID = 8329 as const;
+export const VERCEL_GITHUB_APP_SLUG = "vercel" as const;
+
+/** Deployment records for this repository are created by vercel[bot]. */
+export const VERCEL_DEPLOYMENT_BOT_LOGIN = "vercel[bot]" as const;
+export const VERCEL_DEPLOYMENT_BOT_ID = 35613825 as const;
 
 export const GOVERNED_AI_PR_E2E_STAGING_ENVIRONMENT = "staging" as const;
 
@@ -37,86 +49,6 @@ export function validateStagingSupabaseOrigin(input: string): StagingSupabaseOri
     };
   }
   return { ok: true };
-}
-
-export type PreviewUrlValidationFailure = {
-  ok: false;
-  code: string;
-  message: string;
-};
-
-export type PreviewUrlValidationSuccess = {
-  ok: true;
-  canonicalBaseUrl: typeof GOVERNED_AI_PR_E2E_CANONICAL_PREVIEW_BASE_URL;
-};
-
-export type PreviewUrlValidationResult =
-  | PreviewUrlValidationSuccess
-  | PreviewUrlValidationFailure;
-
-function fail(code: string, message: string): PreviewUrlValidationFailure {
-  return { ok: false, code, message };
-}
-
-/**
- * Fail-closed Preview base URL validation. Returns the trusted canonical URL on success.
- */
-export function validatePreviewBaseUrl(input: string): PreviewUrlValidationResult {
-  const raw = input.trim();
-  if (raw !== input) {
-    return fail("PREVIEW_URL_WHITESPACE", "preview_base_url must not contain leading or trailing whitespace");
-  }
-  if (raw.includes("\\")) {
-    return fail("PREVIEW_URL_ENCODED_TRICK", "preview_base_url must not contain backslashes");
-  }
-  if (raw.endsWith(".")) {
-    return fail("PREVIEW_URL_TRAILING_DOT", "preview_base_url must not end with a trailing dot");
-  }
-  if (raw.includes("#")) {
-    return fail("PREVIEW_URL_FRAGMENT", "preview_base_url must not contain a fragment");
-  }
-  if (raw.includes("?")) {
-    return fail("PREVIEW_URL_QUERY", "preview_base_url must not contain a query string");
-  }
-  if (raw.includes("@")) {
-    return fail("PREVIEW_URL_USERINFO", "preview_base_url must not contain username or password");
-  }
-
-  let parsed: URL;
-  try {
-    parsed = new URL(raw);
-  } catch {
-    return fail("PREVIEW_URL_PARSE", "preview_base_url is not a valid URL");
-  }
-
-  if (parsed.protocol !== "https:") {
-    return fail("PREVIEW_URL_PROTOCOL", "preview_base_url must use https");
-  }
-  if (parsed.username || parsed.password) {
-    return fail("PREVIEW_URL_USERINFO", "preview_base_url must not contain username or password");
-  }
-  if (parsed.port) {
-    return fail("PREVIEW_URL_PORT", "preview_base_url must not specify a port");
-  }
-  if (parsed.search) {
-    return fail("PREVIEW_URL_QUERY", "preview_base_url must not contain a query string");
-  }
-  if (parsed.hash) {
-    return fail("PREVIEW_URL_FRAGMENT", "preview_base_url must not contain a fragment");
-  }
-  if (parsed.pathname !== "" && parsed.pathname !== "/") {
-    return fail("PREVIEW_URL_PATH", "preview_base_url must not contain a path");
-  }
-
-  const hostname = parsed.hostname.toLowerCase();
-  if (hostname !== GOVERNED_AI_PR_E2E_CANONICAL_PREVIEW_HOSTNAME) {
-    return fail(
-      "PREVIEW_URL_HOST_MISMATCH",
-      `preview_base_url hostname must exactly match ${GOVERNED_AI_PR_E2E_CANONICAL_PREVIEW_HOSTNAME}`,
-    );
-  }
-
-  return { ok: true, canonicalBaseUrl: GOVERNED_AI_PR_E2E_CANONICAL_PREVIEW_BASE_URL };
 }
 
 export type StagingEnvironmentProtectionResult =
