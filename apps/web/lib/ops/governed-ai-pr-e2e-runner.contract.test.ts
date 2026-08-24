@@ -225,6 +225,8 @@ describe("governed-ai-pr-e2e-runner workflow contract", () => {
   it("contains raw E2E output without logging it and always redacts artifact", () => {
     expect(wf).toMatch(/e2e-result-redacted\.json/);
     expect(wf).toMatch(/redact-e2e-result\.mjs/);
+    expect(wf).toMatch(/REDACT_VERCEL_BYPASS:/);
+    expect(wf).toMatch(/REDACT_SUPABASE_ANON:/);
     expect(wf).not.toMatch(/\|\s*tee e2e-result\.json/);
     expect(wf).toMatch(/> e2e-result\.json 2> e2e-result\.stderr/);
     expect(wf).toMatch(/rm -f e2e-result\.json e2e-result\.stderr/);
@@ -304,6 +306,7 @@ describe("governed-ai-pr-e2e redaction helper", () => {
           actual: "redirect https://example.com/token?sig=abc",
           expected: "ok",
           evidence: "see https://example.com/secret?sig=abc",
+          message: "failed with injected-bypass-token-value leak",
         },
       ],
     };
@@ -314,6 +317,11 @@ describe("governed-ai-pr-e2e redaction helper", () => {
       {
         cwd: dir,
         stdio: "pipe",
+        env: {
+          ...process.env,
+          REDACT_WORKER_PASS: "injected-worker-password-value",
+          REDACT_VERCEL_BYPASS: "injected-bypass-token-value",
+        },
       },
     );
     const redacted = JSON.parse(readFileSync(join(dir, "e2e-result-redacted.json"), "utf8"));
@@ -322,6 +330,7 @@ describe("governed-ai-pr-e2e redaction helper", () => {
     expect(redacted.results[0].evidence).toBe("see [redacted-url]");
     expect(redacted.debug.password).toBe("[redacted-secret]");
     expect(redacted.debug.token).toBe("[redacted-secret]");
+    expect(redacted.results[0].message).toBe("failed with [redacted-secret] leak");
     rmSync(dir, { recursive: true, force: true });
     expect(existsSync(dir)).toBe(false);
   });

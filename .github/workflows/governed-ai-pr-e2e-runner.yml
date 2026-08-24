@@ -412,6 +412,14 @@ jobs:
       - name: Redact E2E evidence
         if: always() && steps.e2e.outcome != 'cancelled'
         working-directory: pr-workspace
+        env:
+          REDACT_VERCEL_BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+          REDACT_WORKER_PASS: ${{ secrets.PILOT_SMOKE_PASSWORD_STAGING }}
+          REDACT_MANAGER_PASS: ${{ secrets.PILOT_E2E_MANAGER_PASSWORD }}
+          REDACT_OWNER_PASS: ${{ secrets.STAKEHOLDER_SMOKE_PASSWORD }}
+          REDACT_STAKEHOLDER_REVOKED_PASS: ${{ secrets.PILOT_E2E_STAKEHOLDER_REVOKED_PASSWORD }}
+          REDACT_CROSS_TENANT_PASS: ${{ secrets.PILOT_E2E_CROSS_TENANT_PASSWORD }}
+          REDACT_SUPABASE_ANON: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_STAGING }}
         run: bun ../trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.redact-e2e-result.mjs
 
       - name: Cleanup raw E2E files
