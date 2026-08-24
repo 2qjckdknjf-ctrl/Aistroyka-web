@@ -5,6 +5,8 @@
 **Runtime match (2026-08-23):** staging + production `a714424` — **MATCH**  
 **Classification:** `production-capable / controlled-pilot candidate` — **not Public GA**
 
+**Pilot governed AI slice (2026-08-24):** branch `feature/pilot-governed-ai-owner-evidence-2026-08-24` — audit `docs/reports/PILOT_GOVERNED_AI_GAP_AUDIT_2026-08-24.md`; implementation `docs/reports/PILOT_GOVERNED_AI_IMPLEMENTATION_REPORT_2026-08-24.md` — **local code complete; remote migration not applied**.
+
 ## 0. 100% Readiness program (current)
 
 | Field | Value |
