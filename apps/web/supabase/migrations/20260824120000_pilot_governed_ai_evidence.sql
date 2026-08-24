@@ -15,11 +15,12 @@ create table if not exists public.visual_evidence_records (
   source_kind text not null default 'photo'
     check (source_kind in ('photo', 'video', 'panorama_360', 'drone', 'sensor', 'equipment', 'robot')),
   before_after_kind text check (before_after_kind in ('before', 'after', 'unpaired')),
-  pair_group_id uuid,
+  pair_group_id text,
   issue_id uuid,
   capture_timestamp timestamptz,
   uploader_user_id uuid,
   device_source text,
+  internal_only boolean not null default false,
   owner_visible boolean not null default false,
   manager_verified boolean not null default false,
   ai_analysis_status text not null default 'none'
@@ -65,12 +66,45 @@ create policy visual_evidence_tenant_internal on public.visual_evidence_records
 create policy visual_evidence_stakeholder_read on public.visual_evidence_records
   for select using (
     owner_visible = true
+    and internal_only = false
+    and retention_state = 'active'
     and tenant_id in (select tenant_id from public.tenant_members where user_id = auth.uid())
     and (
       project_id in (select project_id from public.project_stakeholders where user_id = auth.uid() and revoked_at is null)
       or project_id in (select project_id from public.project_members where user_id = auth.uid() and role = 'owner')
     )
   );
+
+-- Cross-project linkage guard: report must belong to the same project.
+create or replace function public.validate_visual_evidence_project_consistency()
+returns trigger
+language plpgsql
+as $$
+declare
+  report_project uuid;
+begin
+  if NEW.report_id is null then
+    return NEW;
+  end if;
+
+  select coalesce(wt.project_id, wd.project_id) into report_project
+  from public.worker_reports wr
+  left join public.worker_tasks wt on wt.id = wr.task_id and wt.tenant_id = wr.tenant_id
+  left join public.worker_day wd on wd.id = wr.day_id and wd.tenant_id = wr.tenant_id
+  where wr.id = NEW.report_id and wr.tenant_id = NEW.tenant_id;
+
+  if report_project is not null and report_project <> NEW.project_id then
+    raise exception 'visual_evidence_records project mismatch for report %', NEW.report_id;
+  end if;
+
+  return NEW;
+end;
+$$;
+
+drop trigger if exists trg_visual_evidence_project_consistency on public.visual_evidence_records;
+create trigger trg_visual_evidence_project_consistency
+  before insert or update on public.visual_evidence_records
+  for each row execute function public.validate_visual_evidence_project_consistency();
 
 -- AI action audit: append-only for product governance.
 create table if not exists public.ai_action_audit_records (
@@ -114,6 +148,12 @@ create policy ai_action_audit_tenant_read on public.ai_action_audit_records
     )
   );
 
+-- Append-only insert for authenticated tenant members (no update/delete policies).
+create policy ai_action_audit_tenant_insert on public.ai_action_audit_records
+  for insert with check (
+    tenant_id in (select tenant_id from public.tenant_members where user_id = auth.uid())
+  );
+
 -- No update/delete policies for authenticated users (append-only via service role / server).
 
 -- Report completeness cache (server-computed, clients cannot self-declare complete).
@@ -136,5 +176,13 @@ alter table public.report_completeness_evaluations enable row level security;
 
 create policy report_completeness_tenant on public.report_completeness_evaluations
   for select using (
+    tenant_id in (select tenant_id from public.tenant_members where user_id = auth.uid())
+  );
+
+create policy report_completeness_tenant_write on public.report_completeness_evaluations
+  for all using (
+    tenant_id in (select tenant_id from public.tenant_members where user_id = auth.uid())
+  )
+  with check (
     tenant_id in (select tenant_id from public.tenant_members where user_id = auth.uid())
   );

@@ -31,6 +31,7 @@ export interface VisualEvidenceRecord {
   capture_timestamp: string | null;
   uploader_user_id: string | null;
   device_source: string | null;
+  internal_only: boolean;
   owner_visible: boolean;
   manager_verified: boolean;
   ai_analysis_status: string;
@@ -52,8 +53,10 @@ export interface UpsertVisualEvidenceInput {
   captureTimestamp?: string | null;
   uploaderUserId?: string | null;
   deviceSource?: string | null;
+  /** Ignored on upsert — visibility is set only by owner-evidence-visibility.service after manager review. */
   ownerVisible?: boolean;
   managerVerified?: boolean;
+  internalOnly?: boolean;
   provenance?: Record<string, unknown>;
   checksum?: string | null;
 }
@@ -78,8 +81,9 @@ export async function upsertVisualEvidence(
     capture_timestamp: input.captureTimestamp ?? null,
     uploader_user_id: input.uploaderUserId ?? null,
     device_source: input.deviceSource ?? null,
-    owner_visible: input.ownerVisible ?? false,
-    manager_verified: input.managerVerified ?? false,
+    internal_only: input.internalOnly ?? false,
+    owner_visible: false,
+    manager_verified: false,
     provenance: input.provenance ?? {},
     checksum: input.checksum ?? null,
     updated_at: new Date().toISOString(),
@@ -190,8 +194,6 @@ export async function syncEvidenceFromReportMedia(
       beforeAfterKind: beforeAfter,
       pairGroupId,
       uploaderUserId,
-      ownerVisible: false,
-      managerVerified: false,
       sourceKind: "photo",
       provenance: { synced_from: "worker_report_media" },
     });
