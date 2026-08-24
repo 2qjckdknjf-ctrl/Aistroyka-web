@@ -1,8 +1,9 @@
 # AISTROYKA Current Project Truth Index
 
 **Last updated:** 2026-08-24  
-**100% Readiness RC:** `v1.0.0-rc.1` @ `a7144249ed0cf1f049cfbdaa9e36e722b1bcfcc8` (`buildStamp.sha7=a714424`)  
-**Runtime match (2026-08-24):** staging + production `a714424` — **MATCH**  
+**Main tip:** `3838726ab3521e19671118ef847936ee62ea5605` (`3838726a`)  
+**100% Readiness RC tag:** `v1.0.0-rc.1` @ `a7144249` (tag unchanged; main advanced post-tag)  
+**Runtime match:** staging deploy **PENDING** post-#240 merge — verify via `buildStamp.sha7`  
 **Classification:** `production-capable / controlled-pilot candidate` — **not Public GA**
 
 ## 0. 100% Readiness program (current)
@@ -10,14 +11,12 @@
 | Field | Value |
 |-------|-------|
 | Active phases closed | 5–11 CONDITIONAL YES; 12 launch **NO** |
-| Consolidated merge PR | [#240](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/240) — auth recovery + Day-0 operator pack (CI green) |
-| Critical fix PR | [#242](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/242) — tenant membership priority for dual contractor/stakeholder role |
-| Docs stack PR | [#241](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/241) |
+| Merged to main | [#242](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/242) tenant priority · [#240](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/240) auth + Day-0 pack |
+| Open docs PR | [#241](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/241) |
 | Execution log | `docs/reports/AISTROYKA_100_PERCENT_EXECUTION_LOG.md` |
 | STATUS | `STATUS.md` |
-| Merge blocker | `BLOCKED_EXTERNAL_REVIEWER_SESSION_REQUIRED` (`GITHUB_REVIEWER_TOKEN` HTTP 401) |
 | Phase 12 launch | **NO** — real client intake not filed |
-| Staging forgot-password | **404** until #240 merge + deploy |
+| Post-merge verify | `verify_forgot_password_route.sh` + Day-0 rehearsal after staging deploy |
 
 ---
 

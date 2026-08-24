@@ -60,6 +60,8 @@ fi
 echo
 if have E2E_EMAIL && have E2E_PASSWORD; then
   echo "[e2e:pilot] E2E_EMAIL / E2E_PASSWORD: set"
+elif have SMOKE_EMAIL && have SMOKE_PASSWORD; then
+  echo "[e2e:pilot] E2E_EMAIL / E2E_PASSWORD: missing — SMOKE_EMAIL+SMOKE_PASSWORD present (usable for staging E2E if exported)"
 else
   echo "[e2e:pilot] E2E_EMAIL / E2E_PASSWORD: missing (see apps/web/tests/e2e/_helpers/auth.ts, .env.pilot.example)"
   MISSING+=("e2e_auth")

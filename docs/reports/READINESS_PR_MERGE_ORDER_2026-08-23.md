@@ -1,17 +1,27 @@
 # Readiness PR merge order (100% program)
 
 **Updated:** 2026-08-24  
-**RC:** `v1.0.0-rc.1` @ `a7144249`
+**Main tip:** `3838726a`
 
-Merge after non-author `APPROVED` on each PR head.
+## Completed merges
 
-## Approval
+| PR | Topic | SHA |
+|----|-------|-----|
+| [#242](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/242) | Dual-role tenant priority | `c9621cc5` |
+| [#240](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/240) | Auth recovery + Day-0 operator pack | `3838726a` |
 
-**Blocker:** `GITHUB_REVIEWER_TOKEN` returns HTTP 401 — `BLOCKED_EXTERNAL_REVIEWER_SESSION_REQUIRED`. Only `2qjckdknjf-ctrl` gh session active locally.
+## Remaining
 
-Merge order:
-1. **[#240](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/240)** — code (auth + operator pack) — **primary**
-2. **[#242](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/242)** — fix dual-role tenant priority (contractor loses cabinet when also stakeholder)
-3. **[#241](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/241)** — docs stack (phases 3–12 reports) — docs-only
+| PR | Topic |
+|----|-------|
+| [#241](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/241) | Docs stack phases 3–12 (merge after conflict resolve) |
 
-Legacy #228–#239 may close after #240/#242/#241 land.
+Legacy #228–#239 may close as superseded.
+
+## Post-merge verification
+
+```bash
+curl -sS https://staging.aistroyka.ai/api/v1/health | jq .buildStamp.sha7
+bash scripts/pilot/verify_forgot_password_route.sh https://staging.aistroyka.ai
+bash scripts/pilot/run_day0_staging_rehearsal.sh
+```
