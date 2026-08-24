@@ -27,6 +27,7 @@ function LoginForm() {
   const locale = useLocale();
   const searchParams = useSearchParams();
   const next = searchParams?.get("next") ?? "/dashboard";
+  const resetSuccess = searchParams?.get("reset") === "success";
   const registerHref = next ? `/register?next=${encodeURIComponent(next)}` : "/register";
   const t = useTranslations("auth");
   const [email, setEmail] = useState("");
@@ -141,6 +142,9 @@ function LoginForm() {
             <h1 className="text-aistroyka-title2 font-bold tracking-tight text-aistroyka-text-primary sm:text-aistroyka-title">{t("login")}</h1>
             <p className="mt-aistroyka-1 text-aistroyka-subheadline text-aistroyka-text-secondary">{t("tagline")}</p>
           </div>
+          {resetSuccess ? (
+            <Alert message={t("passwordUpdated")} style="success" className="mb-aistroyka-4" />
+          ) : null}
           {envOk === false && (
             <Alert
               message="Supabase env missing. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY (e.g. in .env.local or Cloudflare build env)."
@@ -189,6 +193,14 @@ function LoginForm() {
               enterKeyHint="go"
               required
             />
+            <p className="text-right">
+              <Link
+                href="/forgot-password"
+                className="text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline focus:outline-none focus:ring-2 focus:ring-aistroyka-accent focus:ring-offset-2 rounded-aistroyka-sm"
+              >
+                {t("forgotPassword")}
+              </Link>
+            </p>
             {error && (
               <div className="space-y-2">
                 <Alert message={error} style="error" />

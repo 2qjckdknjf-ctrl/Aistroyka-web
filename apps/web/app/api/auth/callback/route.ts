@@ -5,14 +5,9 @@ import {
   hasTenantMembership,
   linkIdentityRow,
 } from "@/lib/auth/multi-provider";
+import { toSafeRelativePath } from "@/lib/auth/password-recovery";
 
 export const dynamic = "force-dynamic";
-
-function toSafeRelativePath(input: string | null | undefined, fallback: string): string {
-  const value = (input ?? "").trim();
-  if (!value.startsWith("/") || value.startsWith("//") || value.includes("\\")) return fallback;
-  return value;
-}
 
 function localeFromPath(pathname: string): string {
   const match = pathname.match(/^\/(ru|en|es|it)(?=\/|$)/);
@@ -34,6 +29,12 @@ export async function GET(request: NextRequest) {
   const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
   if (exchangeError) {
     return NextResponse.redirect(new URL(`/${locale}/login?error=oauth_exchange_failed`, request.url));
+  }
+
+  const isRecovery = url.searchParams.get("recovery") === "1";
+  if (isRecovery) {
+    const recoveryPath = toSafeRelativePath(url.searchParams.get("callback"), `/${locale}/reset-password`);
+    return NextResponse.redirect(new URL(recoveryPath, request.url));
   }
 
   const { data: userData } = await supabase.auth.getUser();

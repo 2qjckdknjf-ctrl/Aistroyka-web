@@ -34,6 +34,7 @@
     "smoke:pilot:check": "bash scripts/smoke/check_pilot_prereqs.sh",
     "smoke:security-headers": "bash scripts/smoke/security_headers.sh",
     "audit:pilot": "bash scripts/audit/run-pilot-audit.sh",
+    "pilot:intake:validate": "node scripts/pilot/validate_pilot_intake.mjs",
     "release:check": "node scripts/release-readiness-check.mjs",
     "postinstall": "node scripts/ensure-swc-native.cjs"
   },
