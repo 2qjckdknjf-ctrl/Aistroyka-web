@@ -6,7 +6,7 @@ Run authenticated 25-step governed AI + owner evidence E2E against a **Vercel Pr
 
 Workflow: `.github/workflows/governed-ai-pr-e2e-runner.yml` (must exist on **`main`**).
 
-## Architecture (three jobs)
+## Architecture (four jobs)
 
 ### Job 1 — `trust-boundary-preflight`
 
@@ -26,14 +26,22 @@ Workflow: `.github/workflows/governed-ai-pr-e2e-runner.yml` (must exist on **`ma
 - **`environment: staging`** (owner must approve deployment before secrets are exposed)
 - Revalidates PR head + deployment binding **before** PR checkout
 - Checkout exact verified PR SHA into `pr-workspace/`
-- Trusted validation/redaction helpers checked out from workflow ref into `trusted-runner-ops/`
-- Vercel bypass preflight → E2E → redacted artifact
-- Success requires harness exit code **0**, exact verdict **`PROVEN`**, and **25/25 step results with exact status `PASS`**
+- Trusted deployment-binding helpers checked out from workflow ref into `trusted-runner-ops/`
+- Vercel bypass preflight → E2E harness only (raw `e2e-result.json` uploaded for Job 3; retention 1 day)
+- **Does not** run trusted redaction or verdict validation in-process with PR-controlled code
+
+### Job 3 — `governed-ai-pr-e2e-postprocess`
+
+- Fresh runner VM (process isolation from PR-controlled E2E)
+- **`environment: staging`** (for `REDACT_*` secrets only)
+- Downloads raw E2E artifact; checks out trusted redactor/verdict from workflow ref
+- Redacts evidence; validates harness exit code **0**, exact verdict **`PROVEN`**, and **25/25 step results with exact status `PASS`**
+- Uploads redacted artifact only (14-day retention); deletes raw files before finish
 - `BLOCKED_EXTERNAL` / partial optional steps are **blockers**, not acceptable warnings
 
-### Job 3 — `governed-ai-pr-e2e-verdict`
+### Job 4 — `governed-ai-pr-e2e-verdict`
 
-- Fail closed if Job 2 is skipped or failed (prevents false-green when secret job is blocked)
+- Fail closed if Job 2 or Job 3 is skipped or failed (prevents false-green when secret jobs are blocked)
 
 ## Preview URL trust model
 
@@ -61,7 +69,7 @@ See `GOVERNED_AI_PR_E2E_RUNNER_THREAT_MODEL.md`.
 - No `SUPABASE_SERVICE_ROLE_KEY` (PR-checked-out code must not receive service role)
 - Pinned action SHAs; minimal permissions
 - Required `PILOT_SMOKE_PROJECT_ID_STAGING` **variable** (no auto project discovery)
-- Raw E2E stdout/stderr never printed to job logs; raw files deleted before upload
+- Raw E2E stdout/stderr never printed to job logs; raw files deleted in Job 3 before redacted upload
 
 ## Owner setup sequence
 

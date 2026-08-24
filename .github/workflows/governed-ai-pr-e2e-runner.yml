@@ -203,6 +203,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: staging
+    outputs:
+      e2e_exit_code: ${{ steps.e2e.outputs.exit_code }}
     permissions:
       contents: read
       pull-requests: read
@@ -216,10 +218,7 @@ jobs:
           sparse-checkout: |
             apps/web/lib/ops/governed-ai-pr-e2e-runner.constants.ts
             apps/web/lib/ops/governed-ai-pr-e2e-runner.deployment-binding.ts
-            apps/web/lib/ops/governed-ai-pr-e2e-runner.verdict.ts
-            apps/web/lib/ops/governed-ai-pr-e2e-runner.redact-e2e-result.mjs
             apps/web/lib/ops/governed-ai-pr-e2e-runner.validate-deployment-binding.mjs
-            apps/web/lib/ops/governed-ai-pr-e2e-runner.validate-e2e-verdict.mjs
           sparse-checkout-cone-mode: false
 
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
@@ -442,14 +441,6 @@ jobs:
             exit 1
           fi
 
-      - name: Pin trusted tool paths before PR-controlled code
-        id: trusted_tools
-        run: |
-          set -euo pipefail
-          BUN_PATH="$(command -v bun)"
-          echo "bun_path=${BUN_PATH}" >> "$GITHUB_OUTPUT"
-          echo "PATH=/usr/local/bin:/usr/bin:/bin:$(dirname "${BUN_PATH}")" >> "$GITHUB_ENV"
-
       - name: Run governed AI staging E2E (raw output file only)
         id: e2e
         working-directory: pr-workspace
@@ -476,50 +467,6 @@ jobs:
           node scripts/pilot/governed-ai-owner-evidence-staging-e2e.mjs > e2e-result.json 2> e2e-result.stderr || E2E_EXIT=$?
           echo "exit_code=${E2E_EXIT}" >> "$GITHUB_OUTPUT"
           exit 0
-
-      - name: Reset runner file commands before trusted restore
-        id: reset_runner_file_commands
-        if: always() && steps.e2e.outcome != 'cancelled'
-        run: |
-          set -euo pipefail
-          echo "PATH=/usr/local/bin:/usr/bin:/bin" >> "$GITHUB_ENV"
-
-      - name: Restore trusted runner ops after PR-controlled E2E
-        id: restore_trusted_ops
-        if: always() && steps.e2e.outcome != 'cancelled' && steps.reset_runner_file_commands.outcome == 'success'
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
-        with:
-          ref: ${{ github.sha }}
-          path: trusted-runner-ops
-          sparse-checkout: |
-            apps/web/lib/ops/governed-ai-pr-e2e-runner.constants.ts
-            apps/web/lib/ops/governed-ai-pr-e2e-runner.deployment-binding.ts
-            apps/web/lib/ops/governed-ai-pr-e2e-runner.verdict.ts
-            apps/web/lib/ops/governed-ai-pr-e2e-runner.redact-e2e-result.mjs
-            apps/web/lib/ops/governed-ai-pr-e2e-runner.validate-deployment-binding.mjs
-            apps/web/lib/ops/governed-ai-pr-e2e-runner.validate-e2e-verdict.mjs
-          sparse-checkout-cone-mode: false
-
-      - name: Verify trusted runner ops integrity after restore
-        id: verify_trusted_ops
-        if: always() && steps.e2e.outcome != 'cancelled' && steps.restore_trusted_ops.outcome == 'success'
-        run: |
-          set -euo pipefail
-          echo "PATH=/usr/local/bin:/usr/bin:/bin" >> "$GITHUB_ENV"
-          test -f trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.verdict.ts
-          grep -q 'GOVERNED_AI_E2E_REQUIRED_STEP_COUNT = 25' trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.verdict.ts
-          grep -q 'validateE2eSuccessContract' trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.validate-e2e-verdict.mjs
-          grep -q 'injectTrustedContractFields' trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.redact-e2e-result.mjs
-
-      - name: Re-pin trusted bun after integrity verification
-        id: trusted_tools_post_restore
-        if: always() && steps.verify_trusted_ops.outcome == 'success'
-        run: |
-          set -euo pipefail
-          BUN_PATH="$(/usr/bin/env -i PATH=/usr/local/bin:/usr/bin:/bin HOME="$HOME" command -v bun)"
-          test -x "$BUN_PATH"
-          echo "bun_path=${BUN_PATH}" >> "$GITHUB_OUTPUT"
-          echo "PATH=/usr/local/bin:/usr/bin:/bin:$(dirname "${BUN_PATH}")" >> "$GITHUB_ENV"
 
       - name: Reconfirm preview deployment SHA immediately after E2E
         id: post_e2e_deploy
@@ -578,19 +525,70 @@ jobs:
             exit 1
           fi
 
-      - name: Prepare trusted redaction output path
-        if: always() && steps.verify_trusted_ops.outcome == 'success'
-        working-directory: pr-workspace
+      - name: Upload raw E2E output for isolated postprocess job
+        if: always() && steps.e2e.outcome != 'cancelled'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: governed-ai-e2e-raw-pr${{ needs.trust-boundary-preflight.outputs.pull_request_number }}
+          path: |
+            pr-workspace/e2e-result.json
+            pr-workspace/e2e-result.stderr
+          retention-days: 1
+          if-no-files-found: error
+
+  governed-ai-pr-e2e-postprocess:
+    name: Governed AI PR E2E postprocess
+    needs:
+      - trust-boundary-preflight
+      - governed-ai-pr-e2e
+    if: >-
+      ${{
+        needs.trust-boundary-preflight.result == 'success' &&
+        needs.governed-ai-pr-e2e.result == 'success' &&
+        github.ref == 'refs/heads/main' &&
+        inputs.confirmation == 'RUN_GOVERNED_AI_STAGING_E2E'
+      }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: staging
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout trusted runner ops from dispatch commit pin
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ github.sha }}
+          sparse-checkout: |
+            apps/web/lib/ops/governed-ai-pr-e2e-runner.constants.ts
+            apps/web/lib/ops/governed-ai-pr-e2e-runner.deployment-binding.ts
+            apps/web/lib/ops/governed-ai-pr-e2e-runner.verdict.ts
+            apps/web/lib/ops/governed-ai-pr-e2e-runner.redact-e2e-result.mjs
+            apps/web/lib/ops/governed-ai-pr-e2e-runner.validate-e2e-verdict.mjs
+          sparse-checkout-cone-mode: false
+
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: 1.2.15
+
+      - name: Download raw E2E output from isolated E2E job
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: governed-ai-e2e-raw-pr${{ needs.trust-boundary-preflight.outputs.pull_request_number }}
+          path: e2e-workspace
+
+      - name: Verify trusted runner ops integrity
         run: |
           set -euo pipefail
-          rm -rf e2e-result-redacted.json
+          test -f apps/web/lib/ops/governed-ai-pr-e2e-runner.verdict.ts
+          grep -q 'GOVERNED_AI_E2E_REQUIRED_STEP_COUNT = 25' apps/web/lib/ops/governed-ai-pr-e2e-runner.verdict.ts
+          grep -q 'validateE2eSuccessContract' apps/web/lib/ops/governed-ai-pr-e2e-runner.validate-e2e-verdict.mjs
+          grep -q 'injectTrustedContractFields' apps/web/lib/ops/governed-ai-pr-e2e-runner.redact-e2e-result.mjs
 
       - name: Redact E2E evidence
         id: redact
-        if: always() && steps.verify_trusted_ops.outcome == 'success'
-        working-directory: pr-workspace
+        working-directory: e2e-workspace
         env:
-          TRUSTED_CANONICAL_ORIGIN: ${{ steps.redeploy_check.outputs.canonical_preview_url }}
+          TRUSTED_CANONICAL_ORIGIN: ${{ needs.trust-boundary-preflight.outputs.preview_base_url }}
           TARGET_SHA: ${{ needs.trust-boundary-preflight.outputs.target_sha }}
           REDACT_VERCEL_BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
           REDACT_WORKER_PASS: ${{ secrets.PILOT_SMOKE_PASSWORD_STAGING }}
@@ -601,25 +599,26 @@ jobs:
           REDACT_SUPABASE_ANON: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_STAGING }}
         run: |
           set -euo pipefail
-          "${{ steps.trusted_tools_post_restore.outputs.bun_path }}" ../trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.redact-e2e-result.mjs
+          rm -rf e2e-result-redacted.json
+          bun ../apps/web/lib/ops/governed-ai-pr-e2e-runner.redact-e2e-result.mjs
           if [ ! -f e2e-result-redacted.json ] || [ -L e2e-result-redacted.json ]; then
             echo "::error::Trusted redaction did not produce a regular file"
             exit 1
           fi
 
       - name: Cleanup raw E2E files
-        if: always() && steps.verify_trusted_ops.outcome == 'success'
-        working-directory: pr-workspace
+        if: always() && steps.redact.outcome == 'success'
+        working-directory: e2e-workspace
         run: |
           set -euo pipefail
           rm -f e2e-result.json e2e-result.stderr
 
       - name: Report redacted verdict only
         id: report_verdict
-        if: always() && steps.verify_trusted_ops.outcome == 'success' && steps.redact.outcome == 'success'
-        working-directory: pr-workspace
+        if: steps.redact.outcome == 'success'
+        working-directory: e2e-workspace
         env:
-          TRUSTED_CANONICAL_ORIGIN: ${{ steps.redeploy_check.outputs.canonical_preview_url }}
+          TRUSTED_CANONICAL_ORIGIN: ${{ needs.trust-boundary-preflight.outputs.preview_base_url }}
           TARGET_SHA: ${{ needs.trust-boundary-preflight.outputs.target_sha }}
         run: |
           set -euo pipefail
@@ -627,15 +626,15 @@ jobs:
             echo "::error::Missing redacted E2E artifact"
             exit 1
           fi
-          VERDICT="$("${{ steps.trusted_tools_post_restore.outputs.bun_path }}" ../trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.validate-e2e-verdict.mjs "${{ steps.e2e.outputs.exit_code }}" e2e-result-redacted.json)"
+          VERDICT="$(bun ../apps/web/lib/ops/governed-ai-pr-e2e-runner.validate-e2e-verdict.mjs "${{ needs.governed-ai-pr-e2e.outputs.e2e_exit_code }}" e2e-result-redacted.json)"
           echo "E2E verdict: ${VERDICT} (25/25 PASS required)"
 
       - name: Upload redacted E2E evidence
-        if: always() && steps.redact.outcome == 'success'
+        if: steps.redact.outcome == 'success'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: governed-ai-pr-e2e-evidence-pr${{ needs.trust-boundary-preflight.outputs.pull_request_number }}
-          path: pr-workspace/e2e-result-redacted.json
+          path: e2e-workspace/e2e-result-redacted.json
           retention-days: 14
 
   governed-ai-pr-e2e-verdict:
@@ -643,6 +642,7 @@ jobs:
     needs:
       - trust-boundary-preflight
       - governed-ai-pr-e2e
+      - governed-ai-pr-e2e-postprocess
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -659,6 +659,14 @@ jobs:
           fi
           if [ "${{ needs.governed-ai-pr-e2e.result }}" != "success" ]; then
             echo "::error::Governed AI E2E job failed"
+            exit 1
+          fi
+          if [ "${{ needs.governed-ai-pr-e2e-postprocess.result }}" = "skipped" ]; then
+            echo "::error::Trusted E2E postprocess job was skipped"
+            exit 1
+          fi
+          if [ "${{ needs.governed-ai-pr-e2e-postprocess.result }}" != "success" ]; then
+            echo "::error::Governed AI E2E postprocess job failed"
             exit 1
           fi
           echo "Governed AI PR E2E completed successfully"

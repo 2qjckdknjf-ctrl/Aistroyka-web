@@ -393,7 +393,7 @@ describe("governed-ai-pr-e2e-runner workflow contract", () => {
   });
 
   it("post-approval step revalidates status creator and state before PR checkout", () => {
-    const job2 = wf.split("governed-ai-pr-e2e:")[1].split("governed-ai-pr-e2e-verdict:")[0];
+    const job2 = wf.split("governed-ai-pr-e2e:")[1].split("governed-ai-pr-e2e-postprocess:")[0];
     expect(job2).toMatch(/Latest deployment status drifted/);
     expect(job2).toMatch(/status_creator_login/);
     const revalidateIdx = job2.indexOf("Revalidate PR head and deployment binding after environment approval");
@@ -401,22 +401,34 @@ describe("governed-ai-pr-e2e-runner workflow contract", () => {
     expect(checkoutPrIdx).toBeGreaterThan(revalidateIdx);
   });
 
-  it("restores trusted runner ops after PR-controlled E2E before redaction", () => {
-    const job2 = wf.split("governed-ai-pr-e2e:")[1].split("governed-ai-pr-e2e-verdict:")[0];
-    expect(job2).toMatch(/Reset runner file commands before trusted restore/);
-    expect(job2).toMatch(/verify_trusted_ops\.outcome == 'success'/);
-    expect(job2).toMatch(/trusted_tools_post_restore\.outputs\.bun_path/);
-    expect(job2).toMatch(/Restore trusted runner ops after PR-controlled E2E/);
-    expect(job2).toMatch(/Verify trusted runner ops integrity after restore/);
-    expect(job2).toMatch(/GOVERNED_AI_E2E_REQUIRED_STEP_COUNT = 25/);
+  it("isolates trusted redaction and verdict in a separate postprocess job", () => {
+    const job2 = wf.split("governed-ai-pr-e2e:")[1].split("governed-ai-pr-e2e-postprocess:")[0];
+    const job3 = wf.split("governed-ai-pr-e2e-postprocess:")[1].split("governed-ai-pr-e2e-verdict:")[0];
+    expect(job2).not.toMatch(/Redact E2E evidence/);
+    expect(job2).not.toMatch(/Report redacted verdict only/);
+    expect(job2).toMatch(/Upload raw E2E output for isolated postprocess job/);
     expect(job2).not.toMatch(/chmod -R a-w trusted-runner-ops/);
+    expect(job3).toMatch(/name: Governed AI PR E2E postprocess/);
+    expect(job3).toMatch(/Download raw E2E output from isolated E2E job/);
+    expect(job3).toMatch(/Verify trusted runner ops integrity/);
+    expect(job3).toMatch(/GOVERNED_AI_E2E_REQUIRED_STEP_COUNT = 25/);
+    expect(job3).toMatch(/Redact E2E evidence/);
+    expect(job3).toMatch(/Report redacted verdict only/);
+    expect(job3).toMatch(/environment:\s*staging/);
     const e2eIdx = job2.indexOf("Run governed AI staging E2E (raw output file only)");
-    const restoreIdx = job2.indexOf("Restore trusted runner ops after PR-controlled E2E");
-    const integrityIdx = job2.indexOf("Verify trusted runner ops integrity after restore");
-    const redactIdx = job2.indexOf("Redact E2E evidence");
-    expect(restoreIdx).toBeGreaterThan(e2eIdx);
-    expect(integrityIdx).toBeGreaterThan(restoreIdx);
-    expect(redactIdx).toBeGreaterThan(integrityIdx);
+    const rawUploadIdx = job2.indexOf("Upload raw E2E output for isolated postprocess job");
+    const redactIdx = job3.indexOf("Redact E2E evidence");
+    const verdictIdx = job3.indexOf("Report redacted verdict only");
+    expect(rawUploadIdx).toBeGreaterThan(e2eIdx);
+    expect(redactIdx).toBeGreaterThan(0);
+    expect(verdictIdx).toBeGreaterThan(redactIdx);
+  });
+
+  it("verdict job fails closed when postprocess is skipped or failed", () => {
+    const verdictJob = wf.split("governed-ai-pr-e2e-verdict:")[1];
+    expect(verdictJob).toMatch(/governed-ai-pr-e2e-postprocess/);
+    expect(verdictJob).toMatch(/Trusted E2E postprocess job was skipped/);
+    expect(verdictJob).toMatch(/Governed AI E2E postprocess job failed/);
   });
 
   it("requires 25-step PROVEN verdict with trusted origin and target sha", () => {

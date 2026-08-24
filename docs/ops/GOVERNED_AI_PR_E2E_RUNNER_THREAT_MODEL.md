@@ -12,8 +12,9 @@
 | Zone | Access |
 |------|--------|
 | Job 1 `trust-boundary-preflight` | GitHub token + read-only environment/deployment metadata; **no** staging secrets |
-| Job 2 `governed-ai-pr-e2e` | Protected `staging` environment after Job 1 success and main-ref guard |
-| Job 3 `governed-ai-pr-e2e-verdict` | No secrets; fail closed on skipped secret job |
+| Job 2 `governed-ai-pr-e2e` | Protected `staging` environment after Job 1 success and main-ref guard; PR-controlled E2E only |
+| Job 3 `governed-ai-pr-e2e-postprocess` | Fresh VM; protected `staging` for redaction secrets; trusted redactor/verdict from workflow ref |
+| Job 4 `governed-ai-pr-e2e-verdict` | No secrets; fail closed on skipped/failed secret or postprocess jobs |
 | PR checkout code | Exact SHA validated against live PR head via GitHub API |
 | Trusted runner ops | Validation/redaction scripts from workflow ref (`main`), not PR code |
 
@@ -82,14 +83,15 @@ Job 2 uses the **canonical URL from GitHub deployment metadata** only. Raw opera
 | Status from non-Vercel identity | Latest status must be `vercel[bot]` id `35613825`; App metadata when present must match Vercel app; evidence records observed App ids/slugs (nullable) plus explicit `*_provenance_method` |
 | Stale success after newer failure | Latest status selected by timestamp/id; non-success latest state fails binding |
 | Status drift after environment approval | Job 2 re-fetches all statuses and revalidates latest status creator/state/URL before PR checkout |
-| PR E2E script at verified SHA runs with QA personas | Fixed entrypoint path only; `bun install --ignore-scripts`; pinned QA project; disposable QA data; no service-role; protected staging approval; owner-reviewed dispatch; trusted runner ops re-checked out after PR E2E — see residual risk |
+| PR E2E script at verified SHA runs with QA personas | Fixed entrypoint path only; `bun install --ignore-scripts`; pinned QA project; disposable QA data; no service-role; protected staging approval; owner-reviewed dispatch; trusted redaction/verdict in **separate Job 3 VM** (not same process as PR harness) |
 | Bypass token in logs/artifacts | Header-only bypass; stdout/stderr captured to ephemeral files; redacted artifact only; harness `base`/`deployedSha7` overwritten from trusted deployment binding env before upload |
 | Wrong project mutated | **Required** `PILOT_SMOKE_PROJECT_ID_STAGING` variable; no auto-discovery |
 | Feature-branch workflow tampering | Job 1 + Job 2 require `github.ref == refs/heads/main`; Job 2 additionally requires protected staging preflight |
 | Unprotected staging environment | Job 1 fails with `BLOCKED_STAGING_ENVIRONMENT_UNPROTECTED` when misconfigured |
 | Over-privileged workflow token | `contents: read`, `pull-requests: read`, `deployments: read`; Job 2 drops PR write |
 | `pull_request_target` RCE | **Not used** |
-| False-green skipped E2E | Verdict job fails when secret-consuming job skipped |
+| False-green skipped E2E | Verdict job fails when secret-consuming E2E or postprocess job skipped |
+| PR harness tampers post-E2E trusted steps | Job 3 runs on fresh VM; no shared `GITHUB_PATH`/`BASH_ENV`/background processes from Job 2 |
 | False-green harness verdict | Success requires exit `0` + `PROVEN` + exactly 25/25 `PASS` + matching base/sha7 |
 | False-green partial optional steps | `BLOCKED_EXTERNAL` and non-`PASS` step statuses fail the runner contract |
 | TOCTOU after environment approval | Job 2 revalidates PR head + deployment + latest status binding before PR checkout |
