@@ -408,7 +408,7 @@ describe("governed-ai-pr-e2e-runner workflow contract", () => {
     expect(job2).not.toMatch(/Report redacted verdict only/);
     expect(job2).toMatch(/Stage encrypted E2E output for isolated postprocess job/);
     expect(job2).toMatch(/Prepare encrypted E2E transfer bundle/);
-    expect(job2).toMatch(/openssl enc -aes-256-gcm/);
+    expect(job2).toMatch(/openssl enc -aes-256-cbc/);
     expect(job2).toMatch(/actions\/cache\/save/);
     expect(job2).toMatch(/Record validated E2E exit code/);
     expect(job2).not.toMatch(/upload-artifact/);

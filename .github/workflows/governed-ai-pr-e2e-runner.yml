@@ -556,7 +556,7 @@ jobs:
           tar -C e2e-workspace -czf e2e-raw-bundle.tgz e2e-result.json e2e-result.stderr
           rm -f e2e-workspace/e2e-result.json e2e-workspace/e2e-result.stderr
           DERIVED_KEY="$(printf '%s' "$E2E_TRANSFER_KEY_MATERIAL" | sha256sum | awk '{print $1}')"
-          openssl enc -aes-256-gcm -pbkdf2 -iter 100000 -pass pass:"$DERIVED_KEY" \
+          openssl enc -aes-256-cbc -pbkdf2 -iter 100000 -pass pass:"$DERIVED_KEY" \
             -in e2e-raw-bundle.tgz -out e2e-raw-bundle.tgz.enc
           rm -f e2e-raw-bundle.tgz
 
@@ -619,7 +619,7 @@ jobs:
           set -euo pipefail
           test -f e2e-raw-bundle.tgz.enc
           DERIVED_KEY="$(printf '%s' "$E2E_TRANSFER_KEY_MATERIAL" | sha256sum | awk '{print $1}')"
-          openssl enc -d -aes-256-gcm -pbkdf2 -iter 100000 -pass pass:"$DERIVED_KEY" \
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 100000 -pass pass:"$DERIVED_KEY" \
             -in e2e-raw-bundle.tgz.enc -out e2e-raw-bundle.tgz
           mkdir -p e2e-workspace
           tar -C e2e-workspace -xzf e2e-raw-bundle.tgz e2e-result.json e2e-result.stderr
