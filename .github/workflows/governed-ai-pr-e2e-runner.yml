@@ -263,6 +263,20 @@ jobs:
         working-directory: pr-workspace
         run: bun install --frozen-lockfile
 
+      - name: Verify E2E entrypoint path is fixed (not operator-controlled)
+        working-directory: pr-workspace
+        run: |
+          set -euo pipefail
+          ENTRYPOINT="scripts/pilot/governed-ai-owner-evidence-staging-e2e.mjs"
+          if [ ! -f "$ENTRYPOINT" ]; then
+            echo "::error::Missing fixed E2E entrypoint"
+            exit 1
+          fi
+          case "$ENTRYPOINT" in
+            scripts/pilot/governed-ai-owner-evidence-staging-e2e.mjs) ;;
+            *) echo "::error::Unexpected E2E entrypoint"; exit 1 ;;
+          esac
+
       - name: Run governed AI staging E2E (raw output file only)
         id: e2e
         working-directory: pr-workspace
@@ -307,11 +321,20 @@ jobs:
         working-directory: pr-workspace
         run: |
           set -euo pipefail
-          if [ -f e2e-result-redacted.json ]; then
-            echo "E2E verdict: $(jq -r '.verdict // "unknown"' e2e-result-redacted.json)"
+          if [ ! -f e2e-result-redacted.json ]; then
+            echo "::error::Missing redacted E2E artifact"
+            exit 1
+          fi
+          VERDICT="$(jq -r '.verdict // "unknown"' e2e-result-redacted.json)"
+          echo "E2E verdict: ${VERDICT}"
+          if [ "$VERDICT" != "PASS" ]; then
+            echo "::error::Governed AI E2E verdict is not PASS"
+            exit 1
           fi
           EXIT_CODE="${{ steps.e2e.outputs.exit_code }}"
-          exit "${EXIT_CODE:-0}"
+          if [ "${EXIT_CODE:-0}" -ne 0 ]; then
+            exit "${EXIT_CODE}"
+          fi
 
       - name: Upload redacted E2E evidence
         if: always() && steps.e2e.outcome != 'cancelled'
