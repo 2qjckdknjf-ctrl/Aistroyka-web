@@ -382,6 +382,7 @@ jobs:
           exit 0
 
       - name: Reconfirm preview deployment SHA immediately after E2E
+        id: post_e2e_deploy
         if: always() && steps.e2e.outcome != 'cancelled'
         env:
           PREVIEW_URL: ${{ needs.trust-boundary-preflight.outputs.preview_base_url }}
@@ -409,8 +410,44 @@ jobs:
             exit 1
           fi
 
+      - name: Revalidate PR head SHA after E2E
+        if: always() && steps.e2e.outcome != 'cancelled' && steps.post_e2e_deploy.outcome == 'success'
+        env:
+          PR_NUM: ${{ needs.trust-boundary-preflight.outputs.pull_request_number }}
+          TARGET_SHA: ${{ needs.trust-boundary-preflight.outputs.target_sha }}
+        run: |
+          set -euo pipefail
+          REPO="2qjckdknjf-ctrl/Aistroyka-web"
+          PR_JSON="$(curl -fsSL \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ github.token }}" \
+            "https://api.github.com/repos/${REPO}/pulls/${PR_NUM}")"
+          STATE="$(echo "$PR_JSON" | jq -r '.state')"
+          HEAD_SHA="$(echo "$PR_JSON" | jq -r '.head.sha')"
+          HEAD_REPO="$(echo "$PR_JSON" | jq -r '.head.repo.full_name')"
+          if [ "$STATE" != "open" ]; then
+            echo "::error::PR #${PR_NUM} is no longer open after E2E"
+            exit 1
+          fi
+          if [ "$HEAD_REPO" != "$REPO" ]; then
+            echo "::error::PR source repository changed after E2E"
+            exit 1
+          fi
+          if [ "$HEAD_SHA" != "$TARGET_SHA" ]; then
+            echo "::error::PR head moved during E2E: head=${HEAD_SHA} expected=${TARGET_SHA}"
+            exit 1
+          fi
+
+      - name: Prepare trusted redaction output path
+        if: always() && steps.e2e.outcome != 'cancelled' && steps.post_e2e_deploy.outcome == 'success'
+        working-directory: pr-workspace
+        run: |
+          set -euo pipefail
+          rm -rf e2e-result-redacted.json
+
       - name: Redact E2E evidence
-        if: always() && steps.e2e.outcome != 'cancelled'
+        id: redact
+        if: always() && steps.e2e.outcome != 'cancelled' && steps.post_e2e_deploy.outcome == 'success'
         working-directory: pr-workspace
         env:
           REDACT_VERCEL_BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
@@ -420,7 +457,13 @@ jobs:
           REDACT_STAKEHOLDER_REVOKED_PASS: ${{ secrets.PILOT_E2E_STAKEHOLDER_REVOKED_PASSWORD }}
           REDACT_CROSS_TENANT_PASS: ${{ secrets.PILOT_E2E_CROSS_TENANT_PASSWORD }}
           REDACT_SUPABASE_ANON: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_STAGING }}
-        run: bun ../trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.redact-e2e-result.mjs
+        run: |
+          set -euo pipefail
+          bun ../trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.redact-e2e-result.mjs
+          if [ ! -f e2e-result-redacted.json ] || [ -L e2e-result-redacted.json ]; then
+            echo "::error::Trusted redaction did not produce a regular file"
+            exit 1
+          fi
 
       - name: Cleanup raw E2E files
         if: always() && steps.e2e.outcome != 'cancelled'
@@ -430,7 +473,8 @@ jobs:
           rm -f e2e-result.json e2e-result.stderr
 
       - name: Report redacted verdict only
-        if: always() && steps.e2e.outcome != 'cancelled'
+        id: report_verdict
+        if: always() && steps.e2e.outcome != 'cancelled' && steps.redact.outcome == 'success'
         working-directory: pr-workspace
         run: |
           set -euo pipefail
@@ -450,7 +494,7 @@ jobs:
           fi
 
       - name: Upload redacted E2E evidence
-        if: always() && steps.e2e.outcome != 'cancelled'
+        if: steps.redact.outcome == 'success'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: governed-ai-pr-e2e-evidence-pr${{ needs.trust-boundary-preflight.outputs.pull_request_number }}

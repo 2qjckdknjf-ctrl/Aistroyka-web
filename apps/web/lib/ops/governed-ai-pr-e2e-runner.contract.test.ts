@@ -231,6 +231,7 @@ describe("governed-ai-pr-e2e-runner workflow contract", () => {
     expect(wf).toMatch(/> e2e-result\.json 2> e2e-result\.stderr/);
     expect(wf).toMatch(/rm -f e2e-result\.json e2e-result\.stderr/);
     expect(wf).not.toMatch(/path: e2e-result\.json/);
+    expect(wf).toMatch(/if: steps\.redact\.outcome == 'success'/);
   });
 
   it("ignores package lifecycle scripts during PR workspace install", () => {
@@ -265,12 +266,19 @@ describe("governed-ai-pr-e2e-runner workflow contract", () => {
     const job2 = wf.split("governed-ai-pr-e2e:")[1].split("governed-ai-pr-e2e-verdict:")[0];
     const e2eIdx = job2.indexOf("Run governed AI staging E2E (raw output file only)");
     const postIdx = job2.indexOf("Reconfirm preview deployment SHA immediately after E2E");
+    const prRevalidateIdx = job2.indexOf("Revalidate PR head SHA after E2E");
+    const prepareIdx = job2.indexOf("Prepare trusted redaction output path");
     const redactIdx = job2.indexOf("Redact E2E evidence");
     const verdictIdx = job2.indexOf("Report redacted verdict only");
     expect(postIdx).toBeGreaterThan(e2eIdx);
-    expect(redactIdx).toBeGreaterThan(postIdx);
-    expect(verdictIdx).toBeGreaterThan(postIdx);
+    expect(prRevalidateIdx).toBeGreaterThan(postIdx);
+    expect(prepareIdx).toBeGreaterThan(prRevalidateIdx);
+    expect(redactIdx).toBeGreaterThan(prepareIdx);
+    expect(verdictIdx).toBeGreaterThan(redactIdx);
     expect(job2).toMatch(/FAILED_DEPLOYMENT_ALIGNMENT: health sha7=\$\{SHA7\} expected=\$\{EXPECTED7\} after E2E/);
+    expect(job2).toMatch(/PR head moved during E2E/);
+    expect(job2).toMatch(/rm -rf e2e-result-redacted\.json/);
+    expect(job2).toMatch(/Trusted redaction did not produce a regular file/);
   });
 
   it("queues concurrent runs and pins trusted helper checkout to github.sha", () => {
