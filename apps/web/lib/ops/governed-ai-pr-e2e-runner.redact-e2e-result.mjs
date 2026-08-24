@@ -4,19 +4,28 @@ import { readFileSync, writeFileSync, existsSync } from "node:fs";
 const rawPath = "e2e-result.json";
 const redactedPath = "e2e-result-redacted.json";
 
-function redactString(value) {
-  return value.replace(/https?:\/\/\S+/g, "[redacted-url]");
+const SENSITIVE_KEY =
+  /(?:password|secret|token|api[_-]?key|bypass|authorization|anon[_-]?key|credential)/i;
+
+function redactString(value, key = "") {
+  if (SENSITIVE_KEY.test(key)) {
+    return "[redacted-secret]";
+  }
+  let out = value.replace(/https?:\/\/\S+/g, "[redacted-url]");
+  out = out.replace(/\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/g, "[redacted-jwt]");
+  out = out.replace(/\b(?:sk|pk)_(?:live|test)_[A-Za-z0-9]+\b/g, "[redacted-token]");
+  return out;
 }
 
-function redactValue(value) {
+function redactValue(value, key = "") {
   if (typeof value === "string") {
-    return redactString(value);
+    return redactString(value, key);
   }
   if (Array.isArray(value)) {
-    return value.map(redactValue);
+    return value.map((item) => redactValue(item));
   }
   if (value && typeof value === "object") {
-    return Object.fromEntries(Object.entries(value).map(([key, nested]) => [key, redactValue(nested)]));
+    return Object.fromEntries(Object.entries(value).map(([nestedKey, nested]) => [nestedKey, redactValue(nested, nestedKey)]));
   }
   return value;
 }

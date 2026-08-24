@@ -262,8 +262,10 @@ jobs:
             echo "::error::PILOT_SMOKE_PROJECT_ID_STAGING must be a valid UUID"
             exit 1
           fi
-          if ! echo "$SUPABASE_URL" | grep -q 'vthfrxehrursfloevnlp'; then
-            echo "::error::Staging Supabase URL not aligned to AISTROYKA staging ref"
+          EXPECTED_SUPABASE_ORIGIN="https://vthfrxehrursfloevnlp.supabase.co"
+          NORMALIZED_SUPABASE_URL="$(printf '%s' "$SUPABASE_URL" | sed 's#/*$##')"
+          if [ "$NORMALIZED_SUPABASE_URL" != "$EXPECTED_SUPABASE_ORIGIN" ]; then
+            echo "::error::Staging Supabase URL must be exactly ${EXPECTED_SUPABASE_ORIGIN}"
             exit 1
           fi
 

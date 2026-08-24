@@ -12,6 +12,33 @@ export const GOVERNED_AI_PR_E2E_STAGING_ENVIRONMENT = "staging" as const;
 
 export const GOVERNED_AI_PR_E2E_CONFIRMATION = "RUN_GOVERNED_AI_STAGING_E2E" as const;
 
+export const GOVERNED_AI_STAGING_SUPABASE_ORIGIN =
+  "https://vthfrxehrursfloevnlp.supabase.co" as const;
+
+export type StagingSupabaseOriginValidationFailure = {
+  ok: false;
+  code: "BLOCKED_STAGING_SUPABASE_ORIGIN";
+  message: string;
+};
+
+export type StagingSupabaseOriginValidationSuccess = { ok: true };
+
+export type StagingSupabaseOriginValidationResult =
+  | StagingSupabaseOriginValidationSuccess
+  | StagingSupabaseOriginValidationFailure;
+
+export function validateStagingSupabaseOrigin(input: string): StagingSupabaseOriginValidationResult {
+  const normalized = input.trim().replace(/\/+$/, "");
+  if (normalized !== GOVERNED_AI_STAGING_SUPABASE_ORIGIN) {
+    return {
+      ok: false,
+      code: "BLOCKED_STAGING_SUPABASE_ORIGIN",
+      message: `staging Supabase URL must be exactly ${GOVERNED_AI_STAGING_SUPABASE_ORIGIN}`,
+    };
+  }
+  return { ok: true };
+}
+
 export type PreviewUrlValidationFailure = {
   ok: false;
   code: string;

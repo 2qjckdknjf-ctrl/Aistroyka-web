@@ -4,8 +4,10 @@ import { resolve } from "node:path";
 import {
   GOVERNED_AI_PR_E2E_CANONICAL_PREVIEW_BASE_URL,
   GOVERNED_AI_PR_E2E_CANONICAL_PREVIEW_HOSTNAME,
+  GOVERNED_AI_STAGING_SUPABASE_ORIGIN,
   evaluateStagingEnvironmentProtection,
   validatePreviewBaseUrl,
+  validateStagingSupabaseOrigin,
 } from "./governed-ai-pr-e2e-runner.constants";
 
 const root = resolve(__dirname, "../../../../");
@@ -110,6 +112,18 @@ describe("governed-ai-pr-e2e staging environment protection", () => {
   });
 });
 
+describe("governed-ai-pr-e2e staging Supabase origin", () => {
+  it("accepts the exact AISTROYKA staging origin", () => {
+    expect(validateStagingSupabaseOrigin(GOVERNED_AI_STAGING_SUPABASE_ORIGIN).ok).toBe(true);
+    expect(validateStagingSupabaseOrigin(`${GOVERNED_AI_STAGING_SUPABASE_ORIGIN}/`).ok).toBe(true);
+  });
+
+  it("rejects substring-trick Supabase URLs", () => {
+    const trick = "https://evil.com/vthfrxehrursfloevnlp";
+    expect(validateStagingSupabaseOrigin(trick).ok).toBe(false);
+  });
+});
+
 describe("governed-ai-pr-e2e-runner workflow contract", () => {
   it("uses workflow_dispatch only and three-job architecture", () => {
     expect(wf).toMatch(/on:\s*\n\s*workflow_dispatch:/);
@@ -197,6 +211,8 @@ describe("governed-ai-pr-e2e-runner workflow contract", () => {
     expect(wf).toMatch(/vars\.PILOT_SMOKE_PROJECT_ID_STAGING/);
     expect(wf).toMatch(/PILOT_SMOKE_PROJECT_ID_STAGING must be a valid UUID/);
     expect(wf).not.toMatch(/SUPABASE_SERVICE_ROLE_KEY/);
+    expect(wf).toMatch(/EXPECTED_SUPABASE_ORIGIN="https:\/\/vthfrxehrursfloevnlp\.supabase\.co"/);
+    expect(wf).toMatch(/NORMALIZED_SUPABASE_URL=/);
   });
 
   it("pins third-party actions by immutable SHA", () => {
@@ -278,6 +294,10 @@ describe("governed-ai-pr-e2e redaction helper", () => {
     const raw = {
       verdict: "PASS",
       cleanup: "see https://example.com/cleanup?sig=abc",
+      debug: {
+        password: "super-secret-password",
+        token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.payload.signature",
+      },
       results: [
         {
           step: "login",
@@ -300,6 +320,8 @@ describe("governed-ai-pr-e2e redaction helper", () => {
     expect(redacted.cleanup).toBe("see [redacted-url]");
     expect(redacted.results[0].actual).toBe("redirect [redacted-url]");
     expect(redacted.results[0].evidence).toBe("see [redacted-url]");
+    expect(redacted.debug.password).toBe("[redacted-secret]");
+    expect(redacted.debug.token).toBe("[redacted-secret]");
     rmSync(dir, { recursive: true, force: true });
     expect(existsSync(dir)).toBe(false);
   });
