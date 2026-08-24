@@ -145,6 +145,8 @@ const REGISTRY: Record<PilotAiActionId, PilotAiActionDefinition> = {
   },
 };
 
+export const PILOT_AI_ACTION_IDS = Object.keys(REGISTRY) as PilotAiActionId[];
+
 export function getPilotActionDefinition(actionId: string): PilotAiActionDefinition | null {
   return REGISTRY[actionId as PilotAiActionId] ?? null;
 }

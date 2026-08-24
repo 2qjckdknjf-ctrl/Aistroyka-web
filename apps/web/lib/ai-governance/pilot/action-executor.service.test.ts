@@ -1,6 +1,25 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi, beforeEach } from "vitest";
 import { executeGovernedAiAction } from "./action-executor.service";
+import { PILOT_AI_ACTION_IDS } from "./action-registry";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getAdminClient } from "@/lib/supabase/admin";
+
+vi.mock("@/lib/supabase/admin", () => ({ getAdminClient: vi.fn() }));
+
+vi.mock("@/lib/domain/reports/report-completeness.service", () => ({
+  evaluateReportCompleteness: vi.fn(async () => ({
+    report_id: "r1",
+    status: "incomplete",
+    reasons: ["worker_note_missing"],
+    missing_fields: ["worker_note"],
+    rules_version: "pilot-v1",
+    evaluated_at: new Date().toISOString(),
+    has_before: false,
+    has_after: false,
+    before_after_pair_valid: false,
+    media_reference_valid: false,
+  })),
+}));
 
 function makeSupabase(opts: { member?: boolean; idempotency?: boolean }) {
   return {
@@ -24,7 +43,7 @@ function makeSupabase(opts: { member?: boolean; idempotency?: boolean }) {
             eq: () => ({
               eq: () => ({
                 eq: () => ({
-                  is: () => ({
+                  eq: () => ({
                     maybeSingle: async () => ({ data: null }),
                   }),
                 }),
@@ -43,11 +62,6 @@ function makeSupabase(opts: { member?: boolean; idempotency?: boolean }) {
               }),
             }),
           }),
-          insert: () => ({
-            select: () => ({
-              single: async () => ({ data: { id: "audit-new" }, error: null }),
-            }),
-          }),
         };
       }
       return {};
@@ -55,7 +69,24 @@ function makeSupabase(opts: { member?: boolean; idempotency?: boolean }) {
   } as unknown as SupabaseClient;
 }
 
+function mockAdminInsert(id = "audit-new") {
+  vi.mocked(getAdminClient).mockReturnValue({
+    from: vi.fn(() => ({
+      insert: vi.fn(() => ({
+        select: vi.fn(() => ({
+          single: vi.fn(async () => ({ data: { id }, error: null })),
+        })),
+      })),
+    })),
+  } as unknown as ReturnType<typeof getAdminClient>);
+}
+
 describe("executeGovernedAiAction", () => {
+  beforeEach(() => {
+    vi.mocked(getAdminClient).mockReset();
+    mockAdminInsert();
+  });
+
   it("blocks prohibited actions", async () => {
     const result = await executeGovernedAiAction(makeSupabase({}), {
       actionId: "approve_report",
@@ -101,5 +132,35 @@ describe("executeGovernedAiAction", () => {
       idempotencyKey: "key-1",
     });
     expect(result.warnings.some((w) => w.includes("Idempotent"))).toBe(true);
+  });
+
+  it("executes dry-run for all registry actions with audit record", async () => {
+    for (const actionId of PILOT_AI_ACTION_IDS) {
+      const result = await executeGovernedAiAction(makeSupabase({ member: true }), {
+        actionId,
+        tenantId: "t1",
+        projectId: "p1",
+        initiatedBy: "u1",
+        userRole: "manager",
+        dryRun: true,
+        input: { report_id: "r1" },
+      });
+      expect(result.status).toBe("dry_run");
+      expect(result.auditRecordId).toBeTruthy();
+    }
+  });
+
+  it("blocks when audit write fails", async () => {
+    vi.mocked(getAdminClient).mockReturnValue(null);
+    const result = await executeGovernedAiAction(makeSupabase({ member: true }), {
+      actionId: "remind_missing_daily_report",
+      tenantId: "t1",
+      projectId: "p1",
+      initiatedBy: "u1",
+      userRole: "manager",
+      dryRun: true,
+    });
+    expect(result.status).toBe("blocked");
+    expect(result.errorCategory).toBe("audit_write_failed");
   });
 });
