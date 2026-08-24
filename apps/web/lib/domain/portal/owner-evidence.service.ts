@@ -7,7 +7,10 @@ import type { TenantContext } from "@/lib/tenant/tenant.types";
 import { canReadClientPortalView } from "@/lib/domain/stakeholders/stakeholders.policy";
 import * as projectRepo from "@/lib/domain/projects/project.repository";
 import { listOwnerVisibleEvidence } from "@/lib/domain/visual-evidence/visual-evidence.service";
-import * as reportRepo from "@/lib/domain/reports/report.repository";
+import {
+  projectSignedMediaForEvidence,
+  assertPortalMediaPayloadSafe,
+} from "@/lib/domain/portal/portal-media-projection.service";
 
 export interface OwnerPortalOverview {
   project: { id: string; name: string };
@@ -30,7 +33,9 @@ export interface OwnerVisualProgressItem {
   report_id: string | null;
   issue_id: string | null;
   manager_verified: boolean;
-  image_url: string | null;
+  signed_image_url: string | null;
+  signed_url_expires_in_sec: number | null;
+  image_unavailable_reason: string | null;
   ai_generated: boolean;
   ai_confidence: number | null;
   source_label: string;
@@ -143,20 +148,7 @@ export async function getOwnerPortalVisualProgress(
   let lastUpdated: string | null = null;
 
   for (const ev of evidence) {
-    let imageUrl: string | null = null;
-    if (ev.report_id) {
-      const media = await reportRepo.listMediaByReportIdWithUrls(
-        supabase,
-        ev.report_id,
-        ctx.tenantId
-      );
-      const match = media.find(
-        (m) =>
-          (ev.media_id && m.media_id === ev.media_id) ||
-          (ev.upload_session_id && m.upload_session_id === ev.upload_session_id)
-      );
-      imageUrl = match?.file_url ?? null;
-    }
+    const projection = await projectSignedMediaForEvidence(supabase, ctx.tenantId, projectId, ev);
 
     if (ev.capture_timestamp && (!lastUpdated || ev.capture_timestamp > lastUpdated)) {
       lastUpdated = ev.capture_timestamp;
@@ -170,20 +162,28 @@ export async function getOwnerPortalVisualProgress(
       report_id: ev.report_id,
       issue_id: ev.issue_id,
       manager_verified: ev.manager_verified,
-      image_url: imageUrl,
+      signed_image_url: projection.signed_url,
+      signed_url_expires_in_sec: projection.signed_url ? projection.expires_in_sec : null,
+      image_unavailable_reason: projection.unavailable_reason,
       ai_generated: ev.ai_analysis_status === "complete",
       ai_confidence: null,
       source_label: ev.report_id ? `Report ${ev.report_id.slice(0, 8)}` : "Visual evidence",
     });
   }
 
+  const payload = {
+    project: { id: project.id, name: project.name },
+    items,
+    stale: freshnessFromDate(lastUpdated) === "stale",
+    last_updated_at: lastUpdated,
+  };
+
+  if (!assertPortalMediaPayloadSafe(payload)) {
+    return { data: null, error: "Portal media payload failed safety guard" };
+  }
+
   return {
-    data: {
-      project: { id: project.id, name: project.name },
-      items,
-      stale: freshnessFromDate(lastUpdated) === "stale",
-      last_updated_at: lastUpdated,
-    },
+    data: payload,
     error: "",
   };
 }

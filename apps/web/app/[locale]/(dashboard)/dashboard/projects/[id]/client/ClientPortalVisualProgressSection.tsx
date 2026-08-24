@@ -12,7 +12,9 @@ type VisualProgressPayload = {
     before_after_kind: "before" | "after" | "unpaired" | null;
     capture_timestamp: string | null;
     manager_verified: boolean;
-    image_url: string | null;
+    signed_image_url: string | null;
+    signed_url_expires_in_sec: number | null;
+    image_unavailable_reason: string | null;
     ai_generated: boolean;
     source_label: string;
   }>;
@@ -66,10 +68,10 @@ export function ClientPortalVisualProgressSection({ projectId }: { projectId: st
         <ul className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {d.items.map((item) => (
             <li key={item.id} className="overflow-hidden rounded-lg border border-aistroyka-border/40">
-              {item.image_url ? (
+              {item.signed_image_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={item.image_url}
+                  src={item.signed_image_url}
                   alt={item.zone_label ?? item.source_label}
                   className="aspect-video w-full object-cover"
                 />
