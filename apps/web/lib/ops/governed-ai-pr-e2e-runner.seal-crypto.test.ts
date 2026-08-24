@@ -6,6 +6,7 @@ import {
   sealGovernedAiE2ePayload,
   unsealGovernedAiE2eBundle,
   validateGovernedAiE2eSealManifest,
+  verifyGovernedAiE2eSealKeyPair,
   type GovernedAiE2eSealBindingContext,
 } from "./governed-ai-pr-e2e-runner.seal-crypto";
 
@@ -211,5 +212,12 @@ describe("governed-ai seal bundle parsing", () => {
       keys.publicKey,
     );
     expect(() => unsealGovernedAiE2eBundle(bundle, ctx, keys.privateKey)).toThrow(/SEAL_PAYLOAD_SHAPE_INVALID/);
+  });
+
+  it("verifies matching public/private key pair and rejects mismatch", () => {
+    const keys = keyPair();
+    const other = keyPair();
+    expect(() => verifyGovernedAiE2eSealKeyPair(keys.privateKey, keys.publicKey)).not.toThrow();
+    expect(() => verifyGovernedAiE2eSealKeyPair(keys.privateKey, other.publicKey)).toThrow(/SEAL_KEY_PAIR_MISMATCH/);
   });
 });

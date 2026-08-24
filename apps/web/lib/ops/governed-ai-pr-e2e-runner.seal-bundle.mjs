@@ -2,7 +2,6 @@
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import {
-  buildGovernedAiE2eCacheKey,
   readGovernedAiE2eSealPublicKey,
   sealGovernedAiE2ePayload,
 } from "./governed-ai-pr-e2e-runner.seal-crypto.ts";
@@ -73,8 +72,3 @@ const bundle = sealGovernedAiE2ePayload(
 );
 
 writeFileSync(outputPath, JSON.stringify(bundle), { encoding: "utf8", mode: 0o600 });
-writeFileSync(
-  `${outputPath}.cache-key`,
-  buildGovernedAiE2eCacheKey(binding),
-  { encoding: "utf8", mode: 0o600 },
-);

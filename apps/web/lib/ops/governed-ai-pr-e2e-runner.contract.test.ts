@@ -404,9 +404,9 @@ describe("governed-ai-pr-e2e-runner workflow contract", () => {
     const harness = wf.split("governed-ai-pr-e2e-harness:")[1].split("governed-ai-pr-e2e-seal:")[0];
     expect(gate).toMatch(/Latest deployment status drifted/);
     expect(gate).toMatch(/status_creator_login/);
-    const revalidateIdx = gate.indexOf("Revalidate PR head and deployment binding after environment approval");
-    const checkoutPrIdx = harness.indexOf("Checkout verified PR head");
-    expect(checkoutPrIdx).toBeGreaterThan(revalidateIdx);
+    expect(gate).toMatch(/Revalidate PR head and deployment binding after environment approval/);
+    expect(gate).not.toMatch(/Checkout verified PR head/);
+    expect(harness).toMatch(/Checkout verified PR head/);
   });
 
   it("isolates harness, seal, and postprocess across fresh VMs", () => {
@@ -420,26 +420,33 @@ describe("governed-ai-pr-e2e-runner workflow contract", () => {
     expect(harness).toContain("BASH_ENV=/dev/null");
     expect(harness).toContain("ENV=/dev/null");
     expect(harness).toMatch(/run-harness\.mjs/);
-    expect(harness).toMatch(/Seal harness output with trusted public key/);
+    expect(harness).not.toMatch(/seal-bundle\.mjs/);
+    expect(harness).not.toMatch(/seal-public-key\.pem/);
     expect(harness).not.toMatch(/actions\/cache\//);
-    expect(harness).toMatch(/Upload harness sealed bundle \(encrypted only\)/);
+    expect(harness).toMatch(/Upload harness transfer bundle for trusted seal job only/);
+    expect(harness).toMatch(/governed-ai-e2e-harness-transfer-/);
     expect(jobSeal).not.toMatch(/path: pr-workspace/);
+    expect(jobSeal).toMatch(/Seal harness output on isolated trusted runner/);
+    expect(jobSeal).toMatch(/seal-bundle\.mjs/);
     expect(jobSeal).toMatch(/Verify sealed bundle binding and authentication/);
-    expect(jobSeal).toMatch(/actions\/cache\/save@/);
-    expect(jobSeal).not.toMatch(/upload-artifact@/);
-    expect(jobPost).toMatch(/actions\/cache\/restore@/);
-    expect(jobPost).toMatch(/fail-on-cache-miss: true/);
+    expect(jobSeal).not.toMatch(/actions\/cache\//);
+    expect(jobSeal).toMatch(/Upload authenticated sealed bundle for postprocess/);
+    expect(jobPost).toMatch(/Download authenticated sealed bundle from seal job/);
+    expect(jobPost).not.toMatch(/actions\/cache\//);
     expect(jobPost).toMatch(/unseal-bundle\.mjs/);
     expect(jobPost).toMatch(/Redact E2E evidence/);
     expect(jobPost).toMatch(/E2E_EXIT_CODE:/);
     expect(jobPost).toMatch(/Report redacted verdict only/);
+    expect(jobPost).toMatch(/REDACT_WORKER_EMAIL/);
     const e2eIdx = harness.indexOf("Run governed AI staging E2E (sanitized harness subprocess)");
-    const sealIdx = harness.indexOf("Seal harness output with trusted public key");
-    const uploadIdx = harness.indexOf("Upload harness sealed bundle (encrypted only)");
+    const stageIdx = harness.indexOf("Stage harness transfer files for isolated seal job");
+    const uploadIdx = harness.indexOf("Upload harness transfer bundle for trusted seal job only");
+    const sealIdx = jobSeal.indexOf("Seal harness output on isolated trusted runner");
     const redactIdx = jobPost.indexOf("Redact E2E evidence");
     const verdictIdx = jobPost.indexOf("Report redacted verdict only");
-    expect(sealIdx).toBeGreaterThan(e2eIdx);
-    expect(uploadIdx).toBeGreaterThan(sealIdx);
+    expect(stageIdx).toBeGreaterThan(e2eIdx);
+    expect(uploadIdx).toBeGreaterThan(stageIdx);
+    expect(sealIdx).toBeGreaterThan(0);
     expect(redactIdx).toBeGreaterThan(0);
     expect(verdictIdx).toBeGreaterThan(redactIdx);
   });
@@ -447,32 +454,36 @@ describe("governed-ai-pr-e2e-runner workflow contract", () => {
   it("harness never publishes raw output paths in artifact or cache steps", () => {
     const harness = wf.split("governed-ai-pr-e2e-harness:")[1].split("governed-ai-pr-e2e-seal:")[0];
     expect(harness).not.toMatch(/actions\/cache\//);
-    const uploadBlock = harness.split("Upload harness sealed bundle (encrypted only)")[1] ?? "";
-    expect(uploadBlock).toMatch(/governed-ai-e2e-sealed-bundle\.json/);
+    expect(harness).not.toMatch(/seal-bundle\.mjs/);
+    const uploadBlock = harness.split("Upload harness transfer bundle for trusted seal job only")[1] ?? "";
+    expect(uploadBlock).toMatch(/harness-transfer\//);
+    expect(uploadBlock).not.toMatch(/governed-ai-e2e-sealed-bundle\.json/);
     expect(uploadBlock).not.toMatch(/e2e-result\.json/);
     expect(uploadBlock).not.toMatch(/e2e-result\.stderr/);
   });
 
-  it("uses RSA public-key seal and exact cache key from harness output", () => {
-    const harness = wf.split("governed-ai-pr-e2e-harness:")[1].split("governed-ai-pr-e2e-seal:")[0];
-    const sealStep = harness.split("Seal harness output with trusted public key")[1]?.split(
-      "Upload harness sealed bundle",
+  it("seal job performs RSA public-key seal on isolated trusted runner", () => {
+    const jobSeal = wf.split("governed-ai-pr-e2e-seal:")[1].split("governed-ai-pr-e2e-postprocess:")[0];
+    const sealStep = jobSeal.split("Seal harness output on isolated trusted runner")[1]?.split(
+      "Verify sealed bundle binding",
     )[0];
     expect(sealStep).toMatch(/seal-bundle\.mjs/);
     expect(sealStep).toMatch(/seal-public-key\.pem/);
     expect(sealStep).toMatch(/GOVERNED_E2E_SEAL_RUN_ID/);
     expect(sealStep).toMatch(/GOVERNED_E2E_SEAL_DEPLOYMENT_ID/);
     expect(sealStep).not.toMatch(/openssl enc/);
-    const cacheSave = wf.split("governed-ai-pr-e2e-seal:")[1].split("governed-ai-pr-e2e-postprocess:")[0];
-    expect(cacheSave).toMatch(/key: \$\{\{ needs\.governed-ai-pr-e2e-harness\.outputs\.sealed_cache_key \}\}/);
-    expect(cacheSave).not.toMatch(/restore-keys/);
+    expect(jobSeal).not.toMatch(/actions\/cache\/save@/);
+    expect(jobSeal).not.toMatch(/restore-keys/);
+    expect(jobSeal).toMatch(/permissions:\s*\n\s*contents: read\s*\n/);
+    expect(jobSeal).not.toMatch(/actions: write/);
   });
 
-  it("postprocess restores exact cache key and does not download raw harness artifact", () => {
+  it("postprocess downloads sealed artifact from seal job (no Actions cache)", () => {
     const jobPost = wf.split("governed-ai-pr-e2e-postprocess:")[1].split("governed-ai-pr-e2e-verdict:")[0];
-    expect(jobPost).toMatch(/key: \$\{\{ needs\.governed-ai-pr-e2e-harness\.outputs\.sealed_cache_key \}\}/);
-    expect(jobPost).not.toMatch(/download-artifact@/);
+    expect(jobPost).toMatch(/governed-ai-e2e-sealed-\$\{\{ github\.run_id \}\}/);
+    expect(jobPost).not.toMatch(/actions\/cache\//);
     expect(jobPost).not.toMatch(/restore-keys/);
+    expect(jobPost).not.toMatch(/sealed_cache_key/);
   });
 
   it("verdict job fails closed when gate, harness, seal, or postprocess is skipped or failed", () => {
@@ -577,6 +588,36 @@ describe("governed-ai-pr-e2e redaction helper", () => {
     expect(redacted.leaked).toBeUndefined();
     expect(redacted.nested).toBeUndefined();
     expect(redacted.verdict).toBe(GOVERNED_AI_E2E_SUCCESS_VERDICT);
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it("redacts QA persona emails from REDACT_* env before artifact upload", async () => {
+    const { mkdtempSync, writeFileSync, readFileSync, rmSync } = await import("node:fs");
+    const { tmpdir } = await import("node:os");
+    const { join } = await import("node:path");
+    const { execFileSync } = await import("node:child_process");
+    const workerEmail = "worker.qa@example.com";
+    const dir = mkdtempSync(join(tmpdir(), "gov-e2e-redact-email-"));
+    writeFileSync(
+      join(dir, "e2e-result.json"),
+      JSON.stringify({
+        ...provenPayload(),
+        error: `login failed for ${workerEmail}`,
+      }),
+    );
+    execFileSync("bun", [resolve(root, "apps/web/lib/ops/governed-ai-pr-e2e-runner.redact-e2e-result.mjs")], {
+      cwd: dir,
+      stdio: "pipe",
+      env: {
+        ...process.env,
+        TRUSTED_CANONICAL_ORIGIN: TRUSTED_PREVIEW_URL,
+        TARGET_SHA,
+        REDACT_WORKER_EMAIL: workerEmail,
+      },
+    });
+    const redacted = JSON.parse(readFileSync(join(dir, "e2e-result-redacted.json"), "utf8"));
+    expect(redacted.error).toContain("[redacted-secret]");
+    expect(redacted.error).not.toContain(workerEmail);
     rmSync(dir, { recursive: true, force: true });
   });
 

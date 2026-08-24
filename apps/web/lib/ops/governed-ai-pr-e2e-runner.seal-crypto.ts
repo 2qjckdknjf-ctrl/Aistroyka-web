@@ -170,6 +170,26 @@ export function validateGovernedAiE2eSealManifest(
   }
 }
 
+export function verifyGovernedAiE2eSealKeyPair(privateKeyPem: string, publicKeyPem: string): void {
+  const challenge = randomBytes(32);
+  const wrapped = publicEncrypt(
+    { key: publicKeyPem, padding: RSA_PADDING, oaepHash: "sha256" },
+    challenge,
+  );
+  let unwrapped: Buffer;
+  try {
+    unwrapped = privateDecrypt(
+      { key: privateKeyPem, padding: RSA_PADDING, oaepHash: "sha256" },
+      wrapped,
+    );
+  } catch {
+    throw new Error("SEAL_KEY_PAIR_MISMATCH");
+  }
+  if (!challenge.equals(unwrapped)) {
+    throw new Error("SEAL_KEY_PAIR_MISMATCH");
+  }
+}
+
 export function readGovernedAiE2eSealPublicKey(publicKeyPath: string): string {
   const pem = readFileSync(publicKeyPath, "utf8");
   if (!pem.includes("BEGIN PUBLIC KEY")) {

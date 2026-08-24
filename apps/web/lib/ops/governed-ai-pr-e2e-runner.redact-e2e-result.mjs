@@ -5,7 +5,7 @@ const rawPath = "e2e-result.json";
 const redactedPath = "e2e-result-redacted.json";
 
 const SENSITIVE_KEY =
-  /(?:password|secret|token|api[_-]?key|bypass|authorization|anon[_-]?key|credential)/i;
+  /(?:password|secret|token|api[_-]?key|bypass|authorization|anon[_-]?key|credential|email)/i;
 
 const KNOWN_SECRET_ENV_KEYS = [
   "REDACT_VERCEL_BYPASS",
@@ -15,6 +15,11 @@ const KNOWN_SECRET_ENV_KEYS = [
   "REDACT_STAKEHOLDER_REVOKED_PASS",
   "REDACT_CROSS_TENANT_PASS",
   "REDACT_SUPABASE_ANON",
+  "REDACT_WORKER_EMAIL",
+  "REDACT_MANAGER_EMAIL",
+  "REDACT_OWNER_EMAIL",
+  "REDACT_STAKEHOLDER_REVOKED_EMAIL",
+  "REDACT_CROSS_TENANT_EMAIL",
 ];
 
 /** Root-level contract fields are never preserved from harness output. */
@@ -72,7 +77,7 @@ function redactRootRecord(value, knownSecrets) {
 
 function collectKnownSecrets() {
   return KNOWN_SECRET_ENV_KEYS.map((key) => process.env[key])
-    .filter((value) => typeof value === "string" && value.length >= 8)
+    .filter((value) => typeof value === "string" && value.length >= 3)
     .sort((a, b) => b.length - a.length);
 }
 

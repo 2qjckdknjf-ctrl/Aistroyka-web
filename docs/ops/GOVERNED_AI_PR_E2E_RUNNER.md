@@ -35,22 +35,23 @@ Workflow: `.github/workflows/governed-ai-pr-e2e-runner.yml` (must exist on **`ma
 - Trusted harness runner ops from workflow ref in `trusted-runner-ops/`
 - E2E via sanitized `env -i` subprocess (`run-harness.mjs`) — no `GITHUB_*` / `ACTIONS_*` passed to PR-controlled `node`
 - Post-E2E deployment + PR head revalidation
-- Seal harness output with RSA-OAEP + AES-256-GCM (public key in repo); upload **encrypted bundle artifact only**
-- **Does not** save Actions cache or run redaction/verdict
+- Stage raw harness transfer files (`e2e-result.json`, stderr, exit code); upload **harness transfer artifact only** (no encryption in harness UID)
+- **Does not** seal, save Actions cache, or run redaction/verdict
 
 ### Job 4 — `governed-ai-pr-e2e-seal`
 
-- Fresh runner VM; **no PR checkout**
-- Trusted dispatch-pinned unseal ops only
-- Downloads harness sealed artifact; verifies manifest binding + AEAD authentication with `GOVERNED_E2E_SEAL_PRIVATE_KEY`
-- Trusted `actions/cache/save` with exact run-bound key (no `restore-keys`)
+- Fresh runner VM; **no PR checkout**; `contents: read` only (no `actions: write`)
+- Trusted dispatch-pinned seal ops only
+- Downloads harness transfer artifact; seals with RSA-OAEP + AES-256-GCM (committed public key)
+- Verifies manifest binding + AEAD authentication with `GOVERNED_E2E_SEAL_PRIVATE_KEY`
+- Uploads **authenticated sealed bundle artifact** for postprocess (no Actions cache)
 
 ### Job 5 — `governed-ai-pr-e2e-postprocess`
 
 - Fresh runner VM
 - **`environment: staging`** (for `REDACT_*` + seal private key)
-- Exact cache restore (`fail-on-cache-miss`); unseal to private workspace
-- Trusted redactor/verdict from workflow ref
+- Downloads sealed artifact from seal job (run-scoped name); unseal to private workspace
+- Trusted redactor/verdict from workflow ref (`REDACT_*` includes QA persona emails)
 - Uploads redacted artifact only (14-day retention); deletes raw files before finish
 
 ### Job 6 — `governed-ai-pr-e2e-verdict`
