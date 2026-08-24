@@ -48,6 +48,7 @@ Do not append bypass tokens to Preview URLs in workflow inputs or documentation.
 | `STAKEHOLDER_SMOKE_PASSWORD` | Owner/stakeholder QA password |
 | `NEXT_PUBLIC_SUPABASE_URL_STAGING` | Staging Supabase (must reference `vthfrxehrursfloevnlp`) |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY_STAGING` | Staging anon key |
+| `GOVERNED_E2E_SEAL_PRIVATE_KEY` | RSA private key (PKCS#8 PEM) for inter-job E2E bundle unseal — **required**; public half is committed at `apps/web/lib/ops/governed-ai-pr-e2e-runner.seal-public-key.pem` |
 
 6. Add **Environment variable** (not secret):
 
@@ -88,6 +89,17 @@ Example (PR #244 @ `628bb6b1…`):
 |------|---------|
 | `BLOCKED_STAGING_ENVIRONMENT_UNPROTECTED` | Add required reviewers and selected branch policy `main` to `staging` |
 | `BLOCKED_STAGING_ENVIRONMENT_METADATA` | Environment API unavailable or misconfigured |
+| `BLOCKED_SEAL_PRIVATE_KEY_MISSING` | Add `GOVERNED_E2E_SEAL_PRIVATE_KEY` to protected `staging` (see provisioning manifest below) |
 | Missing secret names | Add required Environment secrets/variable |
+
+## Seal key provisioning manifest (owner action — not automated by this PR)
+
+Generate an RSA-2048 keypair locally. Commit **only** the public PEM to `apps/web/lib/ops/governed-ai-pr-e2e-runner.seal-public-key.pem` (already in repo). Store the PKCS#8 private PEM as protected Environment secret:
+
+| Secret | Format | Scope |
+|--------|--------|-------|
+| `GOVERNED_E2E_SEAL_PRIVATE_KEY` | `-----BEGIN PRIVATE KEY-----` … PKCS#8 PEM | `staging` environment only |
+
+Until provisioned, staging-gate preflight fails closed with `BLOCKED_SEAL_PRIVATE_KEY_MISSING`. Do not paste key material into PRs, chat, or workflow inputs.
 
 See also: `docs/ops/GOVERNED_AI_PR_E2E_RUNNER.md`, `docs/ops/GOVERNED_AI_PR_E2E_RUNNER_THREAT_MODEL.md`

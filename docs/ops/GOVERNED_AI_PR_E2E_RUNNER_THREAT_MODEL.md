@@ -12,10 +12,11 @@
 | Zone | Access |
 |------|--------|
 | Job 1 `trust-boundary-preflight` | GitHub token + read-only environment/deployment metadata; **no** staging secrets |
-| Job 2 `governed-ai-pr-e2e` | Protected `staging` environment after Job 1 success and main-ref guard; PR-controlled E2E; encrypts output to run-scoped cache only (**no** downloadable artifact) |
-| Job 3 `governed-ai-pr-e2e-seal` | Fresh VM; protected `staging` for decrypt verification; restores encrypted cache entry; verifies decrypt; publishes sealed encrypted artifact only |
-| Job 4 `governed-ai-pr-e2e-postprocess` | Fresh VM; protected `staging` for redaction secrets; trusted redactor/verdict from workflow ref (`github.sha` dispatch pin) |
-| Job 5 `governed-ai-pr-e2e-verdict` | No secrets; fail closed on skipped/failed secret, seal, or postprocess jobs |
+| Job 2 `governed-ai-pr-e2e-staging-gate` | Protected `staging` after Job 1; secret-name preflight + seal private-key preflight; deployment revalidation; **no PR checkout** |
+| Job 3 `governed-ai-pr-e2e-harness` | Protected `staging`; PR checkout (`persist-credentials: false`); sanitized `env -i` harness subprocess; RSA-OAEP + AES-256-GCM seal with committed public key; uploads **encrypted bundle artifact only**; **no** cache save |
+| Job 4 `governed-ai-pr-e2e-seal` | Fresh VM; trusted dispatch-pinned ops only (**no PR checkout**); downloads harness sealed artifact; verifies manifest binding + AEAD auth; trusted `actions/cache/save` with exact run-bound key |
+| Job 5 `governed-ai-pr-e2e-postprocess` | Fresh VM; exact cache restore (`fail-on-cache-miss`); unseals with `GOVERNED_E2E_SEAL_PRIVATE_KEY`; trusted redactor/verdict from workflow ref |
+| Job 6 `governed-ai-pr-e2e-verdict` | No secrets; fail closed on skipped/failed gate, harness, seal, or postprocess jobs |
 | PR checkout code | Exact SHA validated against live PR head via GitHub API |
 | Trusted runner ops | Validation/redaction scripts from workflow ref (`main`), not PR code |
 
@@ -85,14 +86,16 @@ Job 2 uses the **canonical URL from GitHub deployment metadata** only. Raw opera
 | Stale success after newer failure | Latest status selected by timestamp/id; non-success latest state fails binding |
 | Status drift after environment approval | Job 2 re-fetches all statuses and revalidates latest status creator/state/URL before PR checkout |
 | PR E2E script at verified SHA runs with QA personas | Fixed entrypoint path only; `bun install --ignore-scripts`; pinned QA project; disposable QA data; no service-role; protected staging approval; owner-reviewed dispatch; trusted redaction/verdict in **separate Job 3 VM** (not same process as PR harness) |
-| Bypass token in logs/artifacts | Header-only bypass; stdout/stderr captured to ephemeral files; Job 2 encrypts after post-E2E checks and stages only `e2e-raw-bundle.tgz.enc` via run-scoped cache (no Job 2 artifact); seal job restores cache on a fresh VM, verifies decrypt, and publishes the sealed encrypted bundle; redacted artifact only uploaded from postprocess job |
+| Bypass token in logs/artifacts | Header-only bypass; harness runs in sanitized subprocess; plaintext deleted before encrypted artifact upload; seal job verifies AEAD + manifest binding on fresh VM; cache save only after auth; postprocess uploads redacted artifact only |
+| PR harness poisons trusted shell via BASH_ENV/GITHUB_ENV/PATH | Harness launched via `env -i` with `BASH_ENV=/dev/null` and `ENV=/dev/null`; trusted PATH allowlist; post-harness step resets poisoning vectors before trusted steps; seal/postprocess on fresh VMs without PR code |
+| Cache replay / wrong-run restore | Cache key binds `run_id`, `run_attempt`, `dispatch_sha`, `target_sha`, `pull_request_number`, `deployment_id`; no `restore-keys`; miss → fail; manifest inside ciphertext must match trusted GitHub context |
 | Wrong project mutated | **Required** `PILOT_SMOKE_PROJECT_ID_STAGING` variable; no auto-discovery |
 | Feature-branch workflow tampering | Job 1 + Job 2 require `github.ref == refs/heads/main`; Job 2 additionally requires protected staging preflight |
 | Unprotected staging environment | Job 1 fails with `BLOCKED_STAGING_ENVIRONMENT_UNPROTECTED` when misconfigured |
 | Over-privileged workflow token | `contents: read`, `pull-requests: read`, `deployments: read`; Job 2 drops PR write |
 | `pull_request_target` RCE | **Not used** |
 | False-green skipped E2E | Verdict job fails when secret-consuming E2E or postprocess job skipped |
-| PR harness tampers post-E2E trusted steps | Job 3 runs on fresh VM; no shared `GITHUB_PATH`/`BASH_ENV`/background processes from Job 2; harness exit code validated in trusted step and re-validated via `env:` allowlist in Job 3 |
+| PR harness tampers post-E2E trusted steps | Seal and postprocess run on fresh VMs; harness exit code validated and passed via job output allowlist; redaction/verdict never run in harness UID |
 | False-green harness verdict | Success requires exit `0` + `PROVEN` + exactly 25/25 `PASS` + matching base/sha7 |
 | False-green partial optional steps | `BLOCKED_EXTERNAL` and non-`PASS` step statuses fail the runner contract |
 | TOCTOU after environment approval | Job 2 revalidates PR head + deployment + latest status binding before PR checkout |

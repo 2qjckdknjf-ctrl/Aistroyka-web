@@ -6,7 +6,7 @@ Run authenticated 25-step governed AI + owner evidence E2E against a **Vercel Pr
 
 Workflow: `.github/workflows/governed-ai-pr-e2e-runner.yml` (must exist on **`main`**).
 
-## Architecture (five jobs)
+## Architecture (six jobs)
 
 ### Job 1 — `trust-boundary-preflight`
 
@@ -20,35 +20,42 @@ Workflow: `.github/workflows/governed-ai-pr-e2e-runner.yml` (must exist on **`ma
 - Outputs **canonical** Preview base URL from GitHub deployment metadata (never forwards raw operator input)
 - Uploads sanitized `deployment-binding-evidence.json` artifact (no secrets)
 
-### Job 2 — `governed-ai-pr-e2e`
+### Job 2 — `governed-ai-pr-e2e-staging-gate`
 
 - Runs only when Job 1 succeeds **and** `github.ref == refs/heads/main` **and** confirmation matches **and** staging environment is protected
 - **`environment: staging`** (owner must approve deployment before secrets are exposed)
-- Revalidates PR head + deployment binding **before** PR checkout
-- Checkout exact verified PR SHA into `pr-workspace/`
-- Trusted deployment-binding helpers checked out from workflow ref into `trusted-runner-ops/`
-- Vercel bypass preflight → E2E harness; raw stdout/stderr encrypted after post-E2E checks (AES-256-CBC + PBKDF2, staging-derived key) and staged via run-scoped `actions/cache/save` only — **no** downloadable artifact from Job 2
-- **Does not** run trusted redaction or verdict validation in-process with PR-controlled code
+- Revalidates PR head + deployment binding — **no PR checkout**
+- Secret-name preflight including `GOVERNED_E2E_SEAL_PRIVATE_KEY` (fail closed if missing)
+- Vercel bypass + deployment SHA preflight
 
-### Job 3 — `governed-ai-pr-e2e-seal`
+### Job 3 — `governed-ai-pr-e2e-harness`
 
-- Fresh runner VM (isolated from PR-controlled E2E process)
-- **`environment: staging`** (for decrypt verification key material only)
-- Downloads encrypted transfer bundle from run-scoped cache; verifies decrypt + archive structure on clean VM
-- Re-uploads sealed `e2e-raw-bundle.tgz.enc` for postprocess
+- **`environment: staging`**
+- Checkout exact verified PR SHA into `pr-workspace/` with `persist-credentials: false`
+- Trusted harness runner ops from workflow ref in `trusted-runner-ops/`
+- E2E via sanitized `env -i` subprocess (`run-harness.mjs`) — no `GITHUB_*` / `ACTIONS_*` passed to PR-controlled `node`
+- Post-E2E deployment + PR head revalidation
+- Seal harness output with RSA-OAEP + AES-256-GCM (public key in repo); upload **encrypted bundle artifact only**
+- **Does not** save Actions cache or run redaction/verdict
 
-### Job 4 — `governed-ai-pr-e2e-postprocess`
+### Job 4 — `governed-ai-pr-e2e-seal`
 
-- Fresh runner VM (process isolation from PR-controlled E2E)
-- **`environment: staging`** (for `REDACT_*` secrets only)
-- Downloads sealed encrypted bundle; checks out trusted redactor/verdict from workflow ref
-- Redacts evidence; validates harness exit code **0**, exact verdict **`PROVEN`**, and **25/25 step results with exact status `PASS`**
+- Fresh runner VM; **no PR checkout**
+- Trusted dispatch-pinned unseal ops only
+- Downloads harness sealed artifact; verifies manifest binding + AEAD authentication with `GOVERNED_E2E_SEAL_PRIVATE_KEY`
+- Trusted `actions/cache/save` with exact run-bound key (no `restore-keys`)
+
+### Job 5 — `governed-ai-pr-e2e-postprocess`
+
+- Fresh runner VM
+- **`environment: staging`** (for `REDACT_*` + seal private key)
+- Exact cache restore (`fail-on-cache-miss`); unseal to private workspace
+- Trusted redactor/verdict from workflow ref
 - Uploads redacted artifact only (14-day retention); deletes raw files before finish
-- `BLOCKED_EXTERNAL` / partial optional steps are **blockers**, not acceptable warnings
 
-### Job 5 — `governed-ai-pr-e2e-verdict`
+### Job 6 — `governed-ai-pr-e2e-verdict`
 
-- Fail closed if Job 2, seal, or postprocess is skipped or failed (prevents false-green when secret jobs are blocked)
+- Fail closed if staging gate, harness, seal, or postprocess is skipped or failed
 
 ## Preview URL trust model
 
@@ -67,6 +74,7 @@ Source of truth modules:
 
 - `apps/web/lib/ops/governed-ai-pr-e2e-runner.deployment-binding.ts`
 - `apps/web/lib/ops/governed-ai-pr-e2e-runner.constants.ts`
+- `apps/web/lib/ops/governed-ai-pr-e2e-runner.seal-crypto.ts`
 
 ## Security
 
@@ -76,40 +84,19 @@ See `GOVERNED_AI_PR_E2E_RUNNER_THREAT_MODEL.md`.
 - No `SUPABASE_SERVICE_ROLE_KEY` (PR-checked-out code must not receive service role)
 - Pinned action SHAs; minimal permissions
 - Required `PILOT_SMOKE_PROJECT_ID_STAGING` **variable** (no auto project discovery)
-- Raw E2E stdout/stderr never printed to job logs; raw files deleted in Job 3 before redacted upload
-
-## Owner setup sequence
-
-See `GOVERNED_AI_PR_E2E_OWNER_SECRET_SETUP.md`.
+- Required `GOVERNED_E2E_SEAL_PRIVATE_KEY` on protected `staging` (see `GOVERNED_AI_PR_E2E_OWNER_SECRET_SETUP.md`)
+- Raw E2E stdout/stderr never printed to job logs; plaintext deleted before encrypted artifact upload
 
 ## Dispatch inputs
 
-| Input | Example |
-|-------|---------|
-| `pull_request_number` | `244` |
-| `target_sha` | Full 40-char PR head SHA |
-| `deployment_id` | GitHub Deployment ID (e.g. `6064462333`) |
-| `preview_base_url` | Exact URL from deployment status `environment_url` |
-| `confirmation` | `RUN_GOVERNED_AI_STAGING_E2E` |
+| Input | Required | Notes |
+|-------|----------|-------|
+| `pull_request_number` | yes | Open same-repo PR |
+| `target_sha` | yes | 40 lowercase hex chars; must equal live PR head |
+| `deployment_id` | yes | Positive decimal GitHub Deployment ID |
+| `preview_base_url` | yes | Must match deployment latest success `environment_url` |
+| `confirmation` | yes | Exact `RUN_GOVERNED_AI_STAGING_E2E` |
 
-### Example (do not run without owner gates)
+## Owner setup
 
-```bash
-gh workflow run "Governed AI PR E2E runner (manual)" \
-  --repo 2qjckdknjf-ctrl/Aistroyka-web \
-  --ref main \
-  -f pull_request_number=244 \
-  -f target_sha=628bb6b1ac08c1fffe9078ff6627774995c95fdb \
-  -f deployment_id=6064462333 \
-  -f preview_base_url=https://aistroyka-web-web-v7jq-8of2zsc02-2qjckdknjf-ctrls-projects.vercel.app \
-  -f confirmation=RUN_GOVERNED_AI_STAGING_E2E
-```
-
-## Invalid targets
-
-- Deployment for a different SHA/repo/environment
-- Untrusted deployment creator
-- Wildcard or lookalike `vercel.app` hosts not matching GitHub deployment metadata
-- `staging.aistroyka.ai` when SHA is not PR head
-- Preview whose health SHA ≠ input `target_sha`
-- Dispatch from feature-branch workflow YAML
+See `GOVERNED_AI_PR_E2E_OWNER_SECRET_SETUP.md`.
