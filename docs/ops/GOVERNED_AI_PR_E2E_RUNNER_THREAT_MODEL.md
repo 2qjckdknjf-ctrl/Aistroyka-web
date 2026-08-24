@@ -36,7 +36,7 @@ Operator input is validated by `validate-preview-url.mjs` against `governed-ai-p
 | Bypass token in logs/artifacts | Header-only bypass; stdout/stderr captured to ephemeral files; redacted artifact only |
 | Wrong project mutated | **Required** `PILOT_SMOKE_PROJECT_ID_STAGING` variable; no auto-discovery |
 | Feature-branch workflow tampering | Job 1 + Job 2 require `github.ref == refs/heads/main`; Job 2 additionally requires protected staging preflight |
-| Unprotected staging environment | Job 1 fails with `BLOCKED_STAGING_ENVIRONMENT_UNPROTECTED` when `protection_rules` empty or missing required reviewers |
+| Unprotected staging environment | Job 1 fails with `BLOCKED_STAGING_ENVIRONMENT_UNPROTECTED` when `protection_rules` are empty, required reviewers are missing, or deployment branches are not restricted to only `main` |
 | Over-privileged workflow token | `contents: read`, `pull-requests: read`, `deployments: read`; Job 2 drops PR write |
 | `pull_request_target` RCE | **Not used** |
 | False-green skipped E2E | Verdict job fails when secret-consuming job skipped |

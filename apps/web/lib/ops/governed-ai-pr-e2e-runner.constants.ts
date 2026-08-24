@@ -93,12 +93,22 @@ export function validatePreviewBaseUrl(input: string): PreviewUrlValidationResul
 }
 
 export type StagingEnvironmentProtectionResult =
-  | { ok: true; protectionRuleCount: number; reviewerRuleCount: number }
+  | {
+      ok: true;
+      protectionRuleCount: number;
+      reviewerRuleCount: number;
+      deploymentBranchPolicyCount: number;
+    }
   | { ok: false; code: string; message: string };
 
 export function evaluateStagingEnvironmentProtection(payload: {
   name?: string;
   protection_rules?: Array<{ type?: string }>;
+  deployment_branch_policy?: {
+    protected_branches?: boolean;
+    custom_branch_policies?: boolean;
+  } | null;
+  deployment_branch_policies?: Array<{ name?: string }>;
 } | null): StagingEnvironmentProtectionResult {
   if (!payload || typeof payload !== "object") {
     return {
@@ -130,5 +140,25 @@ export function evaluateStagingEnvironmentProtection(payload: {
       message: "staging environment must configure required reviewers",
     };
   }
-  return { ok: true, protectionRuleCount: rules.length, reviewerRuleCount };
+  if (!payload.deployment_branch_policy?.custom_branch_policies) {
+    return {
+      ok: false,
+      code: "BLOCKED_STAGING_ENVIRONMENT_UNPROTECTED",
+      message: "staging environment must restrict deployments to selected branches",
+    };
+  }
+  const mainBranchPolicies = payload.deployment_branch_policies?.filter((policy) => policy.name === "main") ?? [];
+  if (mainBranchPolicies.length !== 1 || payload.deployment_branch_policies?.length !== 1) {
+    return {
+      ok: false,
+      code: "BLOCKED_STAGING_ENVIRONMENT_UNPROTECTED",
+      message: "staging environment deployment branch policy must allow only main",
+    };
+  }
+  return {
+    ok: true,
+    protectionRuleCount: rules.length,
+    reviewerRuleCount,
+    deploymentBranchPolicyCount: mainBranchPolicies.length,
+  };
 }

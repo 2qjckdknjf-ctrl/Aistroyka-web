@@ -61,6 +61,30 @@ describe("governed-ai-pr-e2e staging environment protection", () => {
     const result = evaluateStagingEnvironmentProtection({
       name: "staging",
       protection_rules: [{ type: "wait_timer" }],
+      deployment_branch_policy: { custom_branch_policies: true },
+      deployment_branch_policies: [{ name: "main" }],
+    });
+    expect(result.ok).toBe(false);
+  });
+
+  it("blocks environments without a selected main deployment branch policy", () => {
+    const result = evaluateStagingEnvironmentProtection({
+      name: "staging",
+      protection_rules: [{ type: "required_reviewers" }],
+      deployment_branch_policy: null,
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.code).toBe("BLOCKED_STAGING_ENVIRONMENT_UNPROTECTED");
+    }
+  });
+
+  it("blocks environments with non-main deployment branch policies", () => {
+    const result = evaluateStagingEnvironmentProtection({
+      name: "staging",
+      protection_rules: [{ type: "required_reviewers" }],
+      deployment_branch_policy: { custom_branch_policies: true },
+      deployment_branch_policies: [{ name: "main" }, { name: "release/*" }],
     });
     expect(result.ok).toBe(false);
   });
@@ -69,6 +93,8 @@ describe("governed-ai-pr-e2e staging environment protection", () => {
     const result = evaluateStagingEnvironmentProtection({
       name: "staging",
       protection_rules: [{ type: "required_reviewers" }],
+      deployment_branch_policy: { custom_branch_policies: true },
+      deployment_branch_policies: [{ name: "main" }],
     });
     expect(result.ok).toBe(true);
   });
@@ -120,6 +146,9 @@ describe("governed-ai-pr-e2e-runner workflow contract", () => {
     expect(wf).toMatch(/BLOCKED_STAGING_ENVIRONMENT_UNPROTECTED/);
     expect(wf).toMatch(/environments\/staging/);
     expect(wf).toMatch(/required_reviewers/);
+    expect(wf).toMatch(/deployment-branch-policies/);
+    expect(wf).toMatch(/CUSTOM_BRANCH_POLICIES/);
+    expect(wf).toMatch(/MAIN_POLICY_COUNT/);
   });
 
   it("rejects fork, validates SHA format, and confirmation", () => {

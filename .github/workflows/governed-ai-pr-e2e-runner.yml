@@ -93,6 +93,7 @@ jobs:
           ENV_NAME="$(echo "$ENV_JSON" | jq -r '.name // empty')"
           RULE_COUNT="$(echo "$ENV_JSON" | jq -r '.protection_rules | length')"
           REVIEWER_RULE_COUNT="$(echo "$ENV_JSON" | jq -r '[.protection_rules[]? | select(.type == "required_reviewers")] | length')"
+          CUSTOM_BRANCH_POLICIES="$(echo "$ENV_JSON" | jq -r '.deployment_branch_policy.custom_branch_policies // false')"
           if [ "$ENV_NAME" != "staging" ]; then
             echo "::error::BLOCKED_STAGING_ENVIRONMENT_MISSING"
             exit 1
@@ -101,7 +102,25 @@ jobs:
             echo "::error::BLOCKED_STAGING_ENVIRONMENT_UNPROTECTED"
             exit 1
           fi
+          if [ "$CUSTOM_BRANCH_POLICIES" != "true" ]; then
+            echo "::error::BLOCKED_STAGING_ENVIRONMENT_UNPROTECTED"
+            exit 1
+          fi
           REPO="2qjckdknjf-ctrl/Aistroyka-web"
+          BRANCH_POLICY_JSON="$(curl -fsS \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ github.token }}" \
+            "https://api.github.com/repos/${REPO}/environments/staging/deployment-branch-policies?per_page=100" || true)"
+          if [ -z "$BRANCH_POLICY_JSON" ] || ! echo "$BRANCH_POLICY_JSON" | jq -e '.branch_policies' >/dev/null 2>&1; then
+            echo "::error::BLOCKED_STAGING_ENVIRONMENT_UNPROTECTED"
+            exit 1
+          fi
+          POLICY_COUNT="$(echo "$BRANCH_POLICY_JSON" | jq -r '.total_count // (.branch_policies | length)')"
+          MAIN_POLICY_COUNT="$(echo "$BRANCH_POLICY_JSON" | jq -r '[.branch_policies[]? | select(.name == "main")] | length')"
+          if [ "$POLICY_COUNT" -ne 1 ] || [ "$MAIN_POLICY_COUNT" -ne 1 ]; then
+            echo "::error::BLOCKED_STAGING_ENVIRONMENT_UNPROTECTED"
+            exit 1
+          fi
           PR_JSON="$(curl -fsSL \
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${{ github.token }}" \

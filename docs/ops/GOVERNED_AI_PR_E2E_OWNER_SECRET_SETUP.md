@@ -7,7 +7,7 @@ Configure staging credentials **without pasting values into PRs, chat, or commit
 1. **Merge infra PR #245** into `main` (registers workflow on default branch).
 2. Open GitHub → repository **Settings** → **Environments** → create or verify **`staging`**.
 3. Enable **Required reviewers** for `staging` (owner approval before secrets deploy).
-4. Confirm `protection_rules` is **not empty** (workflow preflight fails with `BLOCKED_STAGING_ENVIRONMENT_UNPROTECTED` until configured).
+4. Confirm `protection_rules` is **not empty** and deployment branches/tags are restricted to selected branch `main` (workflow preflight fails with `BLOCKED_STAGING_ENVIRONMENT_UNPROTECTED` until configured).
 5. **Only then** add environment secrets and the QA project variable below.
 6. Dispatch **Governed AI PR E2E runner** from **`main`** with exact PR head SHA and canonical Preview URL.
 7. When GitHub prompts for environment approval, **owner manually approves** the deployment.
@@ -29,7 +29,8 @@ Do not append bypass tokens to Preview URLs in workflow inputs or documentation.
 
 1. Repository **Settings** → **Environments** → **`staging`**
 2. **Required reviewers** — add at least one owner reviewer (mandatory before first dispatch)
-3. Add **Environment secrets**:
+3. **Deployment branches and tags** — choose selected branches/tags and allow only `main`
+4. Add **Environment secrets**:
 
 | Secret | Purpose |
 |--------|---------|
@@ -37,7 +38,7 @@ Do not append bypass tokens to Preview URLs in workflow inputs or documentation.
 | `PILOT_E2E_MANAGER_EMAIL` | Manager QA account (distinct from worker) |
 | `PILOT_E2E_MANAGER_PASSWORD` | Manager QA password |
 
-4. Verify these exist (move to Environment if currently repository-level):
+5. Verify these exist (move to Environment if currently repository-level):
 
 | Secret | Purpose |
 |--------|---------|
@@ -48,7 +49,7 @@ Do not append bypass tokens to Preview URLs in workflow inputs or documentation.
 | `NEXT_PUBLIC_SUPABASE_URL_STAGING` | Staging Supabase (must reference `vthfrxehrursfloevnlp`) |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY_STAGING` | Staging anon key |
 
-5. Add **Environment variable** (not secret):
+6. Add **Environment variable** (not secret):
 
 | Variable | Purpose |
 |----------|---------|
@@ -75,7 +76,7 @@ If Vercel changes the branch Preview alias, update `governed-ai-pr-e2e-runner.co
 
 | Code | Meaning |
 |------|---------|
-| `BLOCKED_STAGING_ENVIRONMENT_UNPROTECTED` | Add required reviewers to `staging` |
+| `BLOCKED_STAGING_ENVIRONMENT_UNPROTECTED` | Add required reviewers and selected branch policy `main` to `staging` |
 | `BLOCKED_STAGING_ENVIRONMENT_METADATA` | Environment API unavailable or misconfigured |
 | Missing secret names | Add required Environment secrets/variable |
 

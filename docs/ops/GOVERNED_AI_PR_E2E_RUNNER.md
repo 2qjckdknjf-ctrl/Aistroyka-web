@@ -14,7 +14,7 @@ Workflow: `.github/workflows/governed-ai-pr-e2e-runner.yml` (must exist on **`ma
 - **No** secrets
 - Must run from **`refs/heads/main`** workflow definition only
 - Validates: confirmation string, numeric PR, 40-hex SHA, **exact** Preview hostname, open same-repo non-fork PR, SHA equals live PR head
-- Read-only GitHub Environment check: `staging` must exist with **non-empty** `protection_rules` including `required_reviewers`
+- Read-only GitHub Environment check: `staging` must exist with **non-empty** `protection_rules` including `required_reviewers`, plus a selected deployment branch policy allowing only `main`
 - Outputs **canonical** Preview base URL from trusted constants (never forwards raw operator input)
 
 ### Job 2 — `governed-ai-pr-e2e`
@@ -55,7 +55,7 @@ See `GOVERNED_AI_PR_E2E_OWNER_SECRET_SETUP.md`.
 
 1. Merge infra PR #245 to `main`
 2. Create/verify GitHub Environment `staging`
-3. Add **required reviewer** protection (`protection_rules` must not be empty)
+3. Add **required reviewer** protection (`protection_rules` must not be empty) and a selected deployment branch policy for only `main`
 4. Confirm environment metadata via GitHub Settings (workflow fails with `BLOCKED_STAGING_ENVIRONMENT_UNPROTECTED` until configured)
 5. Add environment secrets (not repository-wide secrets when avoidable)
 6. Add `PILOT_SMOKE_PROJECT_ID_STAGING` environment variable
@@ -78,4 +78,4 @@ See `GOVERNED_AI_PR_E2E_OWNER_SECRET_SETUP.md`.
 - `staging.aistroyka.ai` when SHA is `main`, not PR head
 - Preview whose health SHA ≠ input `target_sha`
 - Dispatch from feature-branch workflow YAML
-- Dispatch while `staging` environment has empty `protection_rules`
+- Dispatch while `staging` environment lacks required reviewers or an only-`main` deployment branch policy
