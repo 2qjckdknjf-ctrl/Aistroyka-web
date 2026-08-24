@@ -32,6 +32,7 @@ import {
   validateLatestStatusState,
   validatePreviewUrlMatchesTrusted,
   validateStatusProvenance,
+  resolveProvenanceMethod,
   type GitHubDeploymentRecord,
   type GitHubDeploymentStatusRecord,
 } from "./governed-ai-pr-e2e-runner.deployment-binding";
@@ -142,6 +143,18 @@ describe("governed-ai deployment provenance", () => {
 
   it("rejects wrong task", () => {
     expect(validateDeploymentProvenance(trustedDeployment({ task: "deploy:production" })).ok).toBe(false);
+  });
+
+  it("records exact-bot fallback when GitHub App metadata is absent", () => {
+    const deployment = trustedDeployment({ performed_via_github_app: null });
+    expect(resolveProvenanceMethod(deployment)).toBe("exact_bot_identity_fallback");
+    const result = bind(TRUSTED_PREVIEW_URL, deployment);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.evidence.observed_deployment_github_app_id).toBeNull();
+      expect(result.evidence.deployment_provenance_method).toBe("exact_bot_identity_fallback");
+      expect(result.evidence.status_provenance_method).toBe("exact_bot_identity_fallback");
+    }
   });
 });
 
@@ -447,6 +460,29 @@ describe("governed-ai-pr-e2e redaction helper", () => {
       targetSha: TARGET_SHA,
     });
     expect(verdict.ok).toBe(true);
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it("redacts malicious JWT content in harness verdict before artifact upload", async () => {
+    const { mkdtempSync, writeFileSync, readFileSync, rmSync } = await import("node:fs");
+    const { tmpdir } = await import("node:os");
+    const { join } = await import("node:path");
+    const { execFileSync } = await import("node:child_process");
+    const dir = mkdtempSync(join(tmpdir(), "gov-e2e-redact-verdict-"));
+    const maliciousVerdict = `PROVEN eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIn0.sig`;
+    writeFileSync(join(dir, "e2e-result.json"), JSON.stringify({ ...provenPayload(), verdict: maliciousVerdict }));
+    execFileSync("bun", [resolve(root, "apps/web/lib/ops/governed-ai-pr-e2e-runner.redact-e2e-result.mjs")], {
+      cwd: dir,
+      stdio: "pipe",
+      env: {
+        ...process.env,
+        TRUSTED_CANONICAL_ORIGIN: TRUSTED_PREVIEW_URL,
+        TARGET_SHA,
+      },
+    });
+    const redacted = JSON.parse(readFileSync(join(dir, "e2e-result-redacted.json"), "utf8"));
+    expect(redacted.verdict).toContain("[redacted-jwt]");
+    expect(redacted.verdict).not.toContain("eyJ");
     rmSync(dir, { recursive: true, force: true });
   });
 });

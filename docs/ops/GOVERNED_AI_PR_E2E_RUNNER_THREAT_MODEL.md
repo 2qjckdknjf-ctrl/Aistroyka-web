@@ -79,7 +79,7 @@ Job 2 uses the **canonical URL from GitHub deployment metadata** only. Raw opera
 | SHA confusion / stale Preview | Input SHA must equal live PR head; deployment SHA must match; health `buildStamp.sha7` must match |
 | Attacker-owned lookalike Preview host | GitHub Deployment ID binding + independent status provenance + exact `environment_url` match + project/team hostname defense-in-depth |
 | Static hostname drift on new Preview deployments | No static hostname trust root; new deployments only need correct `deployment_id` + matching URL from GitHub API |
-| Status from non-Vercel identity | Latest status must be `vercel[bot]` id `35613825`; App metadata when present must match Vercel app |
+| Status from non-Vercel identity | Latest status must be `vercel[bot]` id `35613825`; App metadata when present must match Vercel app; evidence records observed App ids/slugs (nullable) plus explicit `*_provenance_method` |
 | Stale success after newer failure | Latest status selected by timestamp/id; non-success latest state fails binding |
 | Status drift after environment approval | Job 2 re-fetches all statuses and revalidates latest status creator/state/URL before PR checkout |
 | PR E2E script at verified SHA runs with QA personas | Fixed entrypoint path only; `bun install --ignore-scripts`; pinned QA project; disposable QA data; no service-role; protected staging approval; owner-reviewed dispatch — see residual risk |

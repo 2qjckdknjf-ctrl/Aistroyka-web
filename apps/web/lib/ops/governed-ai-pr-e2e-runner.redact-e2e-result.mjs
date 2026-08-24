@@ -17,8 +17,8 @@ const KNOWN_SECRET_ENV_KEYS = [
   "REDACT_SUPABASE_ANON",
 ];
 
-/** Root-level verdict string is not secret-bearing; still validated downstream. */
-const PRESERVED_ROOT_KEYS = new Set(["verdict"]);
+/** Root-level contract fields are never preserved from harness output. */
+const PRESERVED_ROOT_KEYS = new Set();
 
 function collectKnownSecrets() {
   return KNOWN_SECRET_ENV_KEYS.map((key) => process.env[key])
@@ -46,14 +46,10 @@ function redactString(value, key = "", knownSecrets = []) {
   return scrubKnownSecrets(out, knownSecrets);
 }
 
-function redactVerdictString(value, knownSecrets = []) {
-  return scrubKnownSecrets(value, knownSecrets);
-}
-
 function redactValue(value, key = "", knownSecrets = [], isRootChild = false) {
   if (typeof value === "string") {
     if (isRootChild && PRESERVED_ROOT_KEYS.has(key)) {
-      return redactVerdictString(value, knownSecrets);
+      return scrubKnownSecrets(value, knownSecrets);
     }
     return redactString(value, key, knownSecrets);
   }

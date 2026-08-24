@@ -219,6 +219,18 @@ export function isTrustedVercelGithubApp(app: { id?: number; slug?: string } | n
   return app.id === VERCEL_GITHUB_APP_ID && app.slug === VERCEL_GITHUB_APP_SLUG;
 }
 
+export type ProvenanceMethod = "github_app_metadata" | "exact_bot_identity_fallback";
+
+export function resolveProvenanceMethod(record: {
+  creator?: { login?: string; id?: number } | null;
+  performed_via_github_app?: { id?: number; slug?: string } | null;
+}): ProvenanceMethod {
+  if (isTrustedVercelGithubApp(record.performed_via_github_app)) {
+    return "github_app_metadata";
+  }
+  return "exact_bot_identity_fallback";
+}
+
 export function validateDeploymentProvenance(deployment: GitHubDeploymentRecord): ValidationResult<true> {
   const repoFromDeployment = repositoryFullNameFromApiUrl(deployment.repository_url);
   if (repoFromDeployment !== GOVERNED_AI_REPOSITORY_FULL_NAME) {
@@ -341,8 +353,12 @@ export type DeploymentBindingEvidence = {
   deployment_creator_id: number;
   status_creator_login: string;
   status_creator_id: number;
-  vercel_github_app_id: number;
-  vercel_github_app_slug: string;
+  observed_deployment_github_app_id: number | null;
+  observed_deployment_github_app_slug: string | null;
+  observed_status_github_app_id: number | null;
+  observed_status_github_app_slug: string | null;
+  deployment_provenance_method: ProvenanceMethod;
+  status_provenance_method: ProvenanceMethod;
   latest_status_id: number;
   latest_status_state: string;
   latest_status_created_at: string;
@@ -432,8 +448,12 @@ export function validateDeploymentBinding(params: {
     deployment_creator_id: params.deployment.creator?.id ?? VERCEL_DEPLOYMENT_BOT_ID,
     status_creator_login: latest.creator?.login ?? VERCEL_DEPLOYMENT_BOT_LOGIN,
     status_creator_id: latest.creator?.id ?? VERCEL_DEPLOYMENT_BOT_ID,
-    vercel_github_app_id: VERCEL_GITHUB_APP_ID,
-    vercel_github_app_slug: VERCEL_GITHUB_APP_SLUG,
+    observed_deployment_github_app_id: params.deployment.performed_via_github_app?.id ?? null,
+    observed_deployment_github_app_slug: params.deployment.performed_via_github_app?.slug ?? null,
+    observed_status_github_app_id: latest.performed_via_github_app?.id ?? null,
+    observed_status_github_app_slug: latest.performed_via_github_app?.slug ?? null,
+    deployment_provenance_method: resolveProvenanceMethod(params.deployment),
+    status_provenance_method: resolveProvenanceMethod(latest),
     latest_status_id: latest.id ?? 0,
     latest_status_state: latest.state ?? "unknown",
     latest_status_created_at: latest.created_at ?? "",
