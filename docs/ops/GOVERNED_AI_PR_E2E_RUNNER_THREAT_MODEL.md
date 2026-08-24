@@ -12,9 +12,10 @@
 | Zone | Access |
 |------|--------|
 | Job 1 `trust-boundary-preflight` | GitHub token + read-only environment/deployment metadata; **no** staging secrets |
-| Job 2 `governed-ai-pr-e2e` | Protected `staging` environment after Job 1 success and main-ref guard; PR-controlled E2E only |
-| Job 3 `governed-ai-pr-e2e-postprocess` | Fresh VM; protected `staging` for redaction secrets; trusted redactor/verdict from workflow ref |
-| Job 4 `governed-ai-pr-e2e-verdict` | No secrets; fail closed on skipped/failed secret or postprocess jobs |
+| Job 2 `governed-ai-pr-e2e` | Protected `staging` environment after Job 1 success and main-ref guard; PR-controlled E2E; encrypts output to run-scoped cache only (**no** downloadable artifact) |
+| Job 3 `governed-ai-pr-e2e-seal` | Fresh VM; protected `staging` for decrypt verification; restores encrypted cache entry; verifies decrypt; publishes sealed encrypted artifact only |
+| Job 4 `governed-ai-pr-e2e-postprocess` | Fresh VM; protected `staging` for redaction secrets; trusted redactor/verdict from workflow ref (`github.sha` dispatch pin) |
+| Job 5 `governed-ai-pr-e2e-verdict` | No secrets; fail closed on skipped/failed secret, seal, or postprocess jobs |
 | PR checkout code | Exact SHA validated against live PR head via GitHub API |
 | Trusted runner ops | Validation/redaction scripts from workflow ref (`main`), not PR code |
 
