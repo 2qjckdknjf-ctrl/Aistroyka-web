@@ -1,0 +1,244 @@
+name: Governed AI PR E2E runner (manual)
+
+# Universal manual runner on default branch. Checks out an exact verified same-repo PR SHA
+# and executes scripts/pilot/governed-ai-owner-evidence-staging-e2e.mjs from that commit.
+# Does NOT merge PRs, apply migrations, or deploy production.
+
+on:
+  workflow_dispatch:
+    inputs:
+      pull_request_number:
+        description: "Open PR number in 2qjckdknjf-ctrl/Aistroyka-web"
+        required: true
+        type: string
+      target_sha:
+        description: "Exact PR head SHA to checkout and test"
+        required: true
+        type: string
+      preview_base_url:
+        description: "Vercel Preview base URL (no trailing slash, no bypass query params)"
+        required: true
+        type: string
+      confirmation:
+        description: "Type RUN_GOVERNED_AI_STAGING_E2E to confirm"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: governed-ai-pr-e2e-${{ inputs.pull_request_number }}
+  cancel-in-progress: true
+
+jobs:
+  governed-ai-pr-e2e:
+    name: Governed AI PR preview E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: staging
+    steps:
+      - name: Validate confirmation input
+        env:
+          CONFIRM: ${{ inputs.confirmation }}
+        run: |
+          if [ "$CONFIRM" != "RUN_GOVERNED_AI_STAGING_E2E" ]; then
+            echo "::error::confirmation must be RUN_GOVERNED_AI_STAGING_E2E"
+            exit 1
+          fi
+
+      - name: Validate PR trust boundary (GitHub API)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUM: ${{ inputs.pull_request_number }}
+          TARGET_SHA: ${{ inputs.target_sha }}
+          PREVIEW_URL: ${{ inputs.preview_base_url }}
+        run: |
+          set -euo pipefail
+          REPO="2qjckdknjf-ctrl/Aistroyka-web"
+          if ! echo "$PREVIEW_URL" | grep -Eq '^https://[a-z0-9.-]+\.vercel\.app$'; then
+            echo "::error::preview_base_url must be https://*.vercel.app without query params"
+            exit 1
+          fi
+          PR_JSON="$(curl -fsSL \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            "https://api.github.com/repos/${REPO}/pulls/${PR_NUM}")"
+          STATE="$(echo "$PR_JSON" | jq -r '.state')"
+          HEAD_SHA="$(echo "$PR_JSON" | jq -r '.head.sha')"
+          HEAD_REPO="$(echo "$PR_JSON" | jq -r '.head.repo.full_name')"
+          BASE_REPO="$(echo "$PR_JSON" | jq -r '.base.repo.full_name')"
+          IS_FORK="$(echo "$PR_JSON" | jq -r '.head.repo.fork')"
+          if [ "$STATE" != "open" ]; then
+            echo "::error::PR #${PR_NUM} is not open (state=${STATE})"
+            exit 1
+          fi
+          if [ "$HEAD_REPO" != "$REPO" ] || [ "$BASE_REPO" != "$REPO" ]; then
+            echo "::error::PR head/base repository must be ${REPO}"
+            exit 1
+          fi
+          if [ "$IS_FORK" = "true" ]; then
+            echo "::error::Fork PRs are not allowed"
+            exit 1
+          fi
+          if [ "$HEAD_SHA" != "$TARGET_SHA" ]; then
+            echo "::error::target_sha mismatch: PR head=${HEAD_SHA} input=${TARGET_SHA}"
+            exit 1
+          fi
+          echo "PR trust boundary validated for #${PR_NUM} @ ${TARGET_SHA}"
+
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ inputs.target_sha }}
+
+      - name: Verify checked-out SHA and script presence
+        env:
+          TARGET_SHA: ${{ inputs.target_sha }}
+        run: |
+          set -euo pipefail
+          CURRENT="$(git rev-parse HEAD)"
+          if [ "$CURRENT" != "$TARGET_SHA" ]; then
+            echo "::error::Checkout SHA mismatch: got=${CURRENT} expected=${TARGET_SHA}"
+            exit 1
+          fi
+          SCRIPT="scripts/pilot/governed-ai-owner-evidence-staging-e2e.mjs"
+          if [ ! -f "$SCRIPT" ]; then
+            echo "::error::Missing ${SCRIPT} at ${TARGET_SHA}"
+            exit 1
+          fi
+
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: 1.2.15
+
+      - name: Secret presence preflight (names only)
+        env:
+          BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+          WORKER_EMAIL: ${{ secrets.PILOT_SMOKE_EMAIL_STAGING }}
+          WORKER_PASS: ${{ secrets.PILOT_SMOKE_PASSWORD_STAGING }}
+          MANAGER_EMAIL: ${{ secrets.PILOT_E2E_MANAGER_EMAIL }}
+          MANAGER_PASS: ${{ secrets.PILOT_E2E_MANAGER_PASSWORD }}
+          OWNER_EMAIL: ${{ secrets.STAKEHOLDER_SMOKE_EMAIL }}
+          OWNER_PASS: ${{ secrets.STAKEHOLDER_SMOKE_PASSWORD }}
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_STAGING }}
+          SUPABASE_ANON: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_STAGING }}
+        run: |
+          set -euo pipefail
+          missing=0
+          require() {
+            local name="$1"
+            local value="$2"
+            if [ -z "$value" ]; then
+              echo "::error::Missing required secret: ${name}"
+              missing=1
+            else
+              echo "${name}=PRESENT"
+            fi
+          }
+          require VERCEL_AUTOMATION_BYPASS_SECRET "$BYPASS"
+          require PILOT_SMOKE_EMAIL_STAGING "$WORKER_EMAIL"
+          require PILOT_SMOKE_PASSWORD_STAGING "$WORKER_PASS"
+          require PILOT_E2E_MANAGER_EMAIL "$MANAGER_EMAIL"
+          require PILOT_E2E_MANAGER_PASSWORD "$MANAGER_PASS"
+          require STAKEHOLDER_SMOKE_EMAIL "$OWNER_EMAIL"
+          require STAKEHOLDER_SMOKE_PASSWORD "$OWNER_PASS"
+          require NEXT_PUBLIC_SUPABASE_URL_STAGING "$SUPABASE_URL"
+          require NEXT_PUBLIC_SUPABASE_ANON_KEY_STAGING "$SUPABASE_ANON"
+          if [ "$missing" -ne 0 ]; then
+            exit 1
+          fi
+          if ! echo "$SUPABASE_URL" | grep -q 'vthfrxehrursfloevnlp'; then
+            echo "::error::NEXT_PUBLIC_SUPABASE_URL_STAGING is not aligned to staging project ref"
+            exit 1
+          fi
+
+      - name: Preview bypass and deployment SHA preflight
+        env:
+          PREVIEW_URL: ${{ inputs.preview_base_url }}
+          TARGET_SHA: ${{ inputs.target_sha }}
+          BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        run: |
+          set -euo pipefail
+          BODY="$(curl -fsS \
+            -H "x-vercel-protection-bypass: ${BYPASS}" \
+            -H "x-vercel-set-bypass-cookie: true" \
+            "${PREVIEW_URL}/api/v1/health")"
+          HTTP_CODE="$(curl -sS -o /dev/null -w '%{http_code}' \
+            -H "x-vercel-protection-bypass: ${BYPASS}" \
+            -H "x-vercel-set-bypass-cookie: true" \
+            "${PREVIEW_URL}/api/v1/health")"
+          if [ "$HTTP_CODE" = "302" ] || [ "$HTTP_CODE" = "401" ] || [ "$HTTP_CODE" = "403" ]; then
+            echo "::error::Preview health blocked (HTTP ${HTTP_CODE}). Check VERCEL_AUTOMATION_BYPASS_SECRET."
+            exit 1
+          fi
+          SHA7="$(echo "$BODY" | jq -r '.buildStamp.sha7 // empty')"
+          EXPECTED7="${TARGET_SHA:0:7}"
+          if [ -z "$SHA7" ]; then
+            echo "::error::Preview health missing buildStamp.sha7"
+            exit 1
+          fi
+          if [ "$SHA7" != "$EXPECTED7" ]; then
+            echo "::error::Preview SHA mismatch: health=${SHA7} expected=${EXPECTED7}"
+            exit 1
+          fi
+          DB="$(echo "$BODY" | jq -r '.db // empty')"
+          if [ "$DB" != "ok" ]; then
+            echo "::error::Preview health db=${DB} (expected ok)"
+            exit 1
+          fi
+          echo "Preview preflight OK: sha7=${SHA7} db=${DB}"
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run governed AI staging E2E
+        env:
+          GOVERNED_E2E_BASE_URL: ${{ inputs.preview_base_url }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+          PILOT_E2E_WORKER_EMAIL: ${{ secrets.PILOT_SMOKE_EMAIL_STAGING }}
+          PILOT_E2E_WORKER_PASSWORD: ${{ secrets.PILOT_SMOKE_PASSWORD_STAGING }}
+          PILOT_E2E_MANAGER_EMAIL: ${{ secrets.PILOT_E2E_MANAGER_EMAIL }}
+          PILOT_E2E_MANAGER_PASSWORD: ${{ secrets.PILOT_E2E_MANAGER_PASSWORD }}
+          PILOT_E2E_OWNER_EMAIL: ${{ secrets.STAKEHOLDER_SMOKE_EMAIL }}
+          PILOT_E2E_OWNER_PASSWORD: ${{ secrets.STAKEHOLDER_SMOKE_PASSWORD }}
+          PILOT_E2E_PROJECT_ID: ${{ secrets.PILOT_SMOKE_PROJECT_ID_STAGING }}
+          PILOT_E2E_STAKEHOLDER_REVOKED_EMAIL: ${{ secrets.PILOT_E2E_STAKEHOLDER_REVOKED_EMAIL }}
+          PILOT_E2E_STAKEHOLDER_REVOKED_PASSWORD: ${{ secrets.PILOT_E2E_STAKEHOLDER_REVOKED_PASSWORD }}
+          PILOT_E2E_CROSS_TENANT_EMAIL: ${{ secrets.PILOT_E2E_CROSS_TENANT_EMAIL }}
+          PILOT_E2E_CROSS_TENANT_PASSWORD: ${{ secrets.PILOT_E2E_CROSS_TENANT_PASSWORD }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_STAGING }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_STAGING }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY_STAGING }}
+          GOVERNED_E2E_REQUIRE_MIGRATION_50000: "1"
+          GOVERNED_E2E_MARKER: "qa-governed-e2e"
+        run: |
+          set -euo pipefail
+          node scripts/pilot/governed-ai-owner-evidence-staging-e2e.mjs | tee e2e-result.json
+          node -e "
+            const fs = require('node:fs');
+            const raw = JSON.parse(fs.readFileSync('e2e-result.json','utf8'));
+            const redacted = {
+              verdict: raw.verdict,
+              base: raw.base,
+              startedAt: raw.startedAt,
+              deployedSha7: raw.deployedSha7,
+              projectId: raw.projectId ? raw.projectId.replace(/-/g,'').slice(0,8)+'…' : null,
+              reportId: raw.reportId ? raw.reportId.replace(/-/g,'').slice(0,8)+'…' : null,
+              cleanup: raw.cleanup,
+              results: (raw.results||[]).map(r => ({
+                step: r.step, persona: r.persona, action: r.action,
+                expected: r.expected, actual: r.actual, status: r.status,
+                evidence: typeof r.evidence === 'string' ? r.evidence.replace(/https?:\\/\\/\\S+/g,'[redacted-url]') : r.evidence,
+              })),
+            };
+            fs.writeFileSync('e2e-result-redacted.json', JSON.stringify(redacted, null, 2));
+          "
+
+      - name: Upload redacted E2E evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: governed-ai-pr-e2e-evidence-pr${{ inputs.pull_request_number }}
+          path: e2e-result-redacted.json
+          retention-days: 14
