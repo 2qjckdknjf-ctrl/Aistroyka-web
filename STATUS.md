@@ -4,18 +4,19 @@
 
 ---
 
-**Last updated:** 2026-08-23  
-**RC:** `v1.0.0-rc.1` @ `a7144249` (staging + prod MATCH)
+**Last updated:** 2026-08-24  
+**Main tip:** `3838726a` (merged #240 + #242)
 
 ## Now
 
 | Field | Value |
 |---|---|
-| Consolidated PR | [#240](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/240) — **Phase 2 auth + Day-0 operator pack** |
-| Local gates | i18n, lint, **1798** tests, build, cf:build — **PASS** |
-| Day-0 rehearsal | **PASS** (forgot-password 404 until deploy) |
+| Merged | [#242](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/242) tenant priority · [#240](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/240) auth + Day-0 pack |
+| Open PR | [#241](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/241) — docs stack (conflict resolve in progress) |
+| Local gates (#240) | i18n, lint, **1805** tests, build, cf:build — **PASS** |
+| Day-0 rehearsal | **PASS_WITH_WARNINGS** (2026-08-24) |
+| Staging deploy | **PENDING** — verify `buildStamp` after GitHub staging workflow |
 | Phase 12 launch | **NO** — real intake missing |
-| Merge blocker | **WAITING_FOR_NON_AUTHOR_APPROVAL** |
 
 ## Operator
 
@@ -25,10 +26,11 @@ bun run pilot:intake:validate -- docs/launch/pilot-intake.real.local.json
 bash scripts/pilot/run_day0_staging_rehearsal.sh
 ```
 
-## After merge + staging deploy
+## After staging deploy
 
 ```bash
 bash scripts/pilot/verify_forgot_password_route.sh https://staging.aistroyka.ai
+curl -sS https://staging.aistroyka.ai/api/v1/health | jq .buildStamp.sha7
 ```
 
 ---

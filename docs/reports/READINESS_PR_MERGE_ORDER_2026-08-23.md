@@ -1,19 +1,27 @@
 # Readiness PR merge order (100% program)
 
-**Updated:** 2026-08-23  
-**RC:** `v1.0.0-rc.1` @ `a7144249`
+**Updated:** 2026-08-24  
+**Main tip:** `3838726a`
 
-Merge **bottom-up** after non-author `APPROVED` on each PR head.
+## Completed merges
 
-| Order | PR | Type | Notes |
-|-------|-----|------|-------|
-| 1 | [#228](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/228) | docs + Phase 1 fixes | Foundation |
-| 2 | [#229](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/229) | **code** auth recovery | Security hardening pushed `a95cf9ed`; needs review |
-| 3 | [#230](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/230) | docs security | |
-| 4 | [#231](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/231) | docs web | |
-| 5 | [#232](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/232)–[#237](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/237) | docs phases 5–10 | Can batch after #231 |
-| 6 | [#240](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/240) | **code** pilot Day-0 pack | Operator tooling |
-| 7 | [#238](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/238) | docs RC manifest | Tag `v1.0.0-rc.1` already on `a7144249` |
-| 8 | [#239](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/239) | docs Phase 12 NO-GO | Evidence |
+| PR | Topic | SHA |
+|----|-------|-----|
+| [#242](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/242) | Dual-role tenant priority | `c9621cc5` |
+| [#240](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/240) | Auth recovery + Day-0 operator pack | `3838726a` |
 
-**Blockers:** non-author approval on protected `main` (`GITHUB_REVIEWER_TOKEN` returned 401 on 2026-08-23 — `WAITING_FOR_NON_AUTHOR_APPROVAL`); real client intake for Phase 12 YES.
+## Remaining
+
+| PR | Topic |
+|----|-------|
+| [#241](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/241) | Docs stack phases 3–12 (merge after conflict resolve) |
+
+Legacy #228–#239 may close as superseded.
+
+## Post-merge verification
+
+```bash
+curl -sS https://staging.aistroyka.ai/api/v1/health | jq .buildStamp.sha7
+bash scripts/pilot/verify_forgot_password_route.sh https://staging.aistroyka.ai
+bash scripts/pilot/run_day0_staging_rehearsal.sh
+```
