@@ -5,7 +5,13 @@
 
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabase/admin";
-import { verifyWebhookEvent, handleSubscriptionUpdated, handleCheckoutCompleted, isWebhookConfigured } from "@/lib/platform/billing/webhooks.handler";
+import {
+  verifyWebhookEvent,
+  handleSubscriptionUpdated,
+  handleSubscriptionDeleted,
+  handleCheckoutCompleted,
+  isWebhookConfigured,
+} from "@/lib/platform/billing/webhooks.handler";
 import { BILLING_503_BODY } from "@/lib/platform/billing/billing-responses";
 
 export const dynamic = "force-dynamic";
@@ -45,6 +51,13 @@ export async function POST(request: Request) {
         current_period_end?: number;
       };
       await handleSubscriptionUpdated(admin, sub);
+    } else if (event.type === "customer.subscription.deleted") {
+      const sub = event.data.object as {
+        id: string;
+        customer: string;
+        items?: { data?: Array<{ price?: { id?: string } }> };
+      };
+      await handleSubscriptionDeleted(admin, sub);
     }
   } catch {
     return NextResponse.json({ error: "Processing failed" }, { status: 500 });

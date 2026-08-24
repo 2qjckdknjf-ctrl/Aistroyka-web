@@ -31,6 +31,23 @@ type GateEntitlementsRow = {
 const ACTIVE_BILLING_STATUSES = new Set(["active", "trialing"]);
 const PAID_TIERS = new Set(["PRO", "ENTERPRISE"]);
 
+/**
+ * Whether billing/entitlements alone grant paid dashboard access.
+ * - Active/trialing Stripe status → yes
+ * - Known inactive Stripe status (canceled, past_due, unpaid, …) → no, even if entitlements tier is still PRO
+ * - No billing row yet → allow manual paid-tier grants (admin/pilot setup without Stripe)
+ */
+export function hasPaidAccessFromBillingAndTier(
+  billingStatus: string | null,
+  tier: string | null
+): boolean {
+  const status = billingStatus?.toLowerCase() ?? null;
+  const normalizedTier = tier?.toUpperCase() ?? null;
+  if (status != null && ACTIVE_BILLING_STATUSES.has(status)) return true;
+  if (status != null) return false;
+  return normalizedTier != null && PAID_TIERS.has(normalizedTier);
+}
+
 /** Paid/trial billing OR billing-pilot workspace. Exported for tests. */
 export function dashboardAccessFromBillingAndPilot(
   hasActiveSubscription: boolean,
@@ -95,9 +112,7 @@ export async function getActiveSubscriptionStateForUser(
   const billingStatus = (billing as GateBillingRow | null)?.status?.toLowerCase() ?? null;
   const tier = (entitlements as GateEntitlementsRow | null)?.tier?.toUpperCase() ?? null;
 
-  const hasActiveSubscription =
-    (billingStatus != null && ACTIVE_BILLING_STATUSES.has(billingStatus)) ||
-    (tier != null && PAID_TIERS.has(tier));
+  const hasActiveSubscription = hasPaidAccessFromBillingAndTier(billingStatus, tier);
   const inBillingPilotCohort = pilot.inCohort;
 
   return {
