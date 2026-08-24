@@ -407,11 +407,12 @@ describe("governed-ai-pr-e2e-runner workflow contract", () => {
     const job3 = wf.split("governed-ai-pr-e2e-postprocess:")[1].split("governed-ai-pr-e2e-verdict:")[0];
     expect(job2).not.toMatch(/Redact E2E evidence/);
     expect(job2).not.toMatch(/Report redacted verdict only/);
+    expect(job2).toMatch(/Reset runner file commands after PR harness/);
     expect(job2).toMatch(/Seal E2E transfer bundle immediately before upload/);
-    expect(job2).toMatch(/Verify sealed bundle integrity before upload/);
-    expect(job2).toMatch(/Upload encrypted E2E transfer bundle for seal job/);
-    expect(job2).not.toMatch(/Upload raw E2E output/);
-    expect(job2).not.toMatch(/actions\/cache\//);
+    expect(job2).toMatch(/Save encrypted E2E transfer bundle to run-scoped cache/);
+    expect(job2).not.toMatch(/Upload encrypted E2E transfer bundle/);
+    expect(job2).not.toMatch(/upload-artifact@/);
+    expect(jobSeal).toMatch(/Restore encrypted E2E transfer bundle from run-scoped cache/);
     expect(jobSeal).toMatch(/name: Governed AI PR E2E seal/);
     expect(jobSeal).toMatch(/Verify encrypted E2E transfer bundle on isolated runner/);
     expect(jobSeal).not.toMatch(/Encrypt E2E transfer bundle on isolated runner/);
@@ -426,51 +427,51 @@ describe("governed-ai-pr-e2e-runner workflow contract", () => {
     expect(job3).toMatch(/environment:\s*staging/);
     const e2eIdx = job2.indexOf("Run governed AI staging E2E (capture output files only)");
     const sealIdx = job2.indexOf("Seal E2E transfer bundle immediately before upload");
-    const encryptedUploadIdx = job2.indexOf("Upload encrypted E2E transfer bundle for seal job");
+    const cacheSaveIdx = job2.indexOf("Save encrypted E2E transfer bundle to run-scoped cache");
     const redactIdx = job3.indexOf("Redact E2E evidence");
     const verdictIdx = job3.indexOf("Report redacted verdict only");
     expect(sealIdx).toBeGreaterThan(e2eIdx);
-    expect(encryptedUploadIdx).toBeGreaterThan(sealIdx);
+    expect(cacheSaveIdx).toBeGreaterThan(sealIdx);
     expect(redactIdx).toBeGreaterThan(0);
     expect(verdictIdx).toBeGreaterThan(redactIdx);
   });
 
-  it("job2 never publishes raw harness stdout/stderr as a downloadable artifact", () => {
+  it("job2 never publishes raw or encrypted E2E output as a downloadable artifact", () => {
     const job2 = wf.split("governed-ai-pr-e2e:")[1].split("governed-ai-pr-e2e-seal:")[0];
+    expect(job2).not.toMatch(/upload-artifact@/);
     expect(job2).toMatch(/e2e-raw-bundle\.tgz\.enc/);
-    const uploadBlock = job2.split("Upload encrypted E2E transfer bundle for seal job")[1] ?? "";
-    expect(uploadBlock).toMatch(/e2e-raw-bundle\.tgz\.enc/);
-    expect(uploadBlock).not.toMatch(/e2e-result\.json/);
-    expect(uploadBlock).not.toMatch(/e2e-result\.stderr/);
+    const cacheBlock = job2.split("Save encrypted E2E transfer bundle to run-scoped cache")[1] ?? "";
+    expect(cacheBlock).toMatch(/e2e-transfer\/e2e-raw-bundle\.tgz\.enc/);
+    expect(cacheBlock).not.toMatch(/e2e-result\.json/);
   });
 
-  it("job2 encrypts harness output only after post-E2E checks and immediately before upload", () => {
+  it("job2 encrypts harness output only after post-E2E checks and before cache save", () => {
     const job2 = wf.split("governed-ai-pr-e2e:")[1].split("governed-ai-pr-e2e-seal:")[0];
     const sealStep = job2.split("Seal E2E transfer bundle immediately before upload")[1]?.split(
-      "Verify sealed bundle integrity before upload",
+      "Verify sealed bundle integrity before cache save",
     )[0];
     expect(sealStep).toMatch(/openssl enc -aes-256-cbc/);
     expect(sealStep).toMatch(/rm -f e2e-result\.json e2e-result\.stderr/);
     const postPrIdx = job2.indexOf("Revalidate PR head SHA after E2E");
     const sealIdx = job2.indexOf("Seal E2E transfer bundle immediately before upload");
-    const uploadIdx = job2.indexOf("Upload encrypted E2E transfer bundle for seal job");
+    const uploadIdx = job2.indexOf("Save encrypted E2E transfer bundle to run-scoped cache");
     expect(sealIdx).toBeGreaterThan(postPrIdx);
     expect(uploadIdx).toBeGreaterThan(sealIdx);
     expect(job2).toMatch(/bundle_sha256/);
   });
 
-  it("seal job uploads the verified bundle from its download directory", () => {
+  it("seal job uploads the verified bundle from its transfer directory", () => {
     const jobSeal = wf.split("governed-ai-pr-e2e-seal:")[1].split("governed-ai-pr-e2e-postprocess:")[0];
     const uploadBlock = jobSeal.split("Upload sealed E2E transfer bundle")[1] ?? "";
-    expect(uploadBlock).toMatch(/e2e-workspace\/e2e-raw-bundle\.tgz\.enc/);
+    expect(uploadBlock).toMatch(/path: e2e-raw-bundle\.tgz\.enc/);
   });
 
-  it("secret-bearing jobs do not restore shared Actions cache", () => {
+  it("job2 stages encrypted output to cache and postprocess job does not restore cache", () => {
     const job2 = wf.split("governed-ai-pr-e2e:")[1].split("governed-ai-pr-e2e-seal:")[0];
     const jobSeal = wf.split("governed-ai-pr-e2e-seal:")[1].split("governed-ai-pr-e2e-postprocess:")[0];
     const job3 = wf.split("governed-ai-pr-e2e-postprocess:")[1].split("governed-ai-pr-e2e-verdict:")[0];
-    expect(job2).not.toMatch(/actions\/cache\//);
-    expect(jobSeal).not.toMatch(/actions\/cache\//);
+    expect(job2).toMatch(/actions\/cache\/save@/);
+    expect(jobSeal).toMatch(/actions\/cache\/restore@/);
     expect(job3).not.toMatch(/actions\/cache\//);
   });
 

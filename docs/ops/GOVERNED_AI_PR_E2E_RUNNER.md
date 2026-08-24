@@ -27,14 +27,14 @@ Workflow: `.github/workflows/governed-ai-pr-e2e-runner.yml` (must exist on **`ma
 - Revalidates PR head + deployment binding **before** PR checkout
 - Checkout exact verified PR SHA into `pr-workspace/`
 - Trusted deployment-binding helpers checked out from workflow ref into `trusted-runner-ops/`
-- Vercel bypass preflight → E2E harness; raw stdout/stderr encrypted **atomically in the same step** (AES-256-CBC + PBKDF2, staging-derived key) and only `e2e-raw-bundle.tgz.enc` is uploaded for the seal job — **no** downloadable raw artifact
+- Vercel bypass preflight → E2E harness; raw stdout/stderr encrypted after post-E2E checks (AES-256-CBC + PBKDF2, staging-derived key) and staged via run-scoped `actions/cache/save` only — **no** downloadable artifact from Job 2
 - **Does not** run trusted redaction or verdict validation in-process with PR-controlled code
 
 ### Job 3 — `governed-ai-pr-e2e-seal`
 
 - Fresh runner VM (isolated from PR-controlled E2E process)
 - **`environment: staging`** (for decrypt verification key material only)
-- Downloads encrypted transfer bundle; verifies decrypt + archive structure on clean VM
+- Downloads encrypted transfer bundle from run-scoped cache; verifies decrypt + archive structure on clean VM
 - Re-uploads sealed `e2e-raw-bundle.tgz.enc` for postprocess
 
 ### Job 4 — `governed-ai-pr-e2e-postprocess`

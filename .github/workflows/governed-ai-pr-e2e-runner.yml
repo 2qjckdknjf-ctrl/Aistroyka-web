@@ -468,6 +468,12 @@ jobs:
           printf '%s' "$E2E_EXIT" > .e2e-exit-code
           exit 0
 
+      - name: Reset runner file commands after PR harness
+        if: steps.e2e.outcome != 'cancelled'
+        run: |
+          set -euo pipefail
+          echo "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" >> "$GITHUB_ENV"
+
       - name: Record validated E2E exit code
         id: e2e_exit
         if: steps.e2e.outcome != 'cancelled'
@@ -561,10 +567,11 @@ jobs:
           rm -f e2e-raw-bundle.tgz
           BUNDLE_SHA256="$(/usr/bin/sha256sum e2e-raw-bundle.tgz.enc | awk '{print $1}')"
           echo "bundle_sha256=${BUNDLE_SHA256}" >> "$GITHUB_OUTPUT"
+          mkdir -p ../e2e-transfer
+          mv e2e-raw-bundle.tgz.enc ../e2e-transfer/e2e-raw-bundle.tgz.enc
 
-      - name: Verify sealed bundle integrity before upload
+      - name: Verify sealed bundle integrity before cache save
         if: steps.seal_bundle.outcome == 'success'
-        working-directory: pr-workspace
         env:
           EXPECTED_SHA256: ${{ steps.seal_bundle.outputs.bundle_sha256 }}
         run: |
@@ -573,20 +580,18 @@ jobs:
             echo "::error::Missing sealed bundle digest"
             exit 1
           fi
-          ACTUAL_SHA256="$(/usr/bin/sha256sum e2e-raw-bundle.tgz.enc | awk '{print $1}')"
+          ACTUAL_SHA256="$(/usr/bin/sha256sum e2e-transfer/e2e-raw-bundle.tgz.enc | awk '{print $1}')"
           if [ "$ACTUAL_SHA256" != "$EXPECTED_SHA256" ]; then
-            echo "::error::Sealed bundle digest mismatch before artifact upload"
+            echo "::error::Sealed bundle digest mismatch before cache save"
             exit 1
           fi
 
-      - name: Upload encrypted E2E transfer bundle for seal job
+      - name: Save encrypted E2E transfer bundle to run-scoped cache
         if: steps.seal_bundle.outcome == 'success'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc6fc33 # v4.2.0
         with:
-          name: governed-ai-e2e-encrypted-${{ github.run_id }}-${{ github.run_attempt }}
-          path: pr-workspace/e2e-raw-bundle.tgz.enc
-          retention-days: 1
-          if-no-files-found: error
+          path: e2e-transfer/e2e-raw-bundle.tgz.enc
+          key: governed-e2e-encrypted-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.sha }}
 
   governed-ai-pr-e2e-seal:
     name: Governed AI PR E2E seal
@@ -606,30 +611,34 @@ jobs:
     permissions:
       contents: read
     steps:
-      - name: Download encrypted E2E transfer bundle from E2E job
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+      - name: Restore encrypted E2E transfer bundle from run-scoped cache
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc6fc33 # v4.2.0
         with:
-          name: governed-ai-e2e-encrypted-${{ github.run_id }}-${{ github.run_attempt }}
-          path: e2e-workspace
+          path: e2e-transfer/e2e-raw-bundle.tgz.enc
+          key: governed-e2e-encrypted-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.sha }}
+          fail-on-cache-miss: true
 
       - name: Verify encrypted E2E transfer bundle on isolated runner
         env:
           E2E_TRANSFER_KEY_MATERIAL: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}:${{ secrets.PILOT_SMOKE_PASSWORD_STAGING }}:${{ github.run_id }}:${{ github.run_attempt }}
         run: |
           set -euo pipefail
-          test -f e2e-workspace/e2e-raw-bundle.tgz.enc
+          test -f e2e-transfer/e2e-raw-bundle.tgz.enc
           DERIVED_KEY="$(printf '%s' "$E2E_TRANSFER_KEY_MATERIAL" | /usr/bin/sha256sum | awk '{print $1}')"
           VERIFY_TGZ="$(mktemp)"
           /usr/bin/openssl enc -d -aes-256-cbc -pbkdf2 -iter 100000 -pass pass:"$DERIVED_KEY" \
-            -in e2e-workspace/e2e-raw-bundle.tgz.enc -out "$VERIFY_TGZ"
+            -in e2e-transfer/e2e-raw-bundle.tgz.enc -out "$VERIFY_TGZ"
           /usr/bin/tar -tzf "$VERIFY_TGZ" e2e-result.json >/dev/null
           rm -f "$VERIFY_TGZ"
+
+      - name: Stage sealed bundle for postprocess artifact
+        run: cp e2e-transfer/e2e-raw-bundle.tgz.enc e2e-raw-bundle.tgz.enc
 
       - name: Upload sealed E2E transfer bundle
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: governed-ai-e2e-sealed-${{ github.run_id }}-${{ github.run_attempt }}
-          path: e2e-workspace/e2e-raw-bundle.tgz.enc
+          path: e2e-raw-bundle.tgz.enc
           retention-days: 1
           if-no-files-found: error
 
