@@ -29,14 +29,29 @@ Operator dispatch must include:
 | `target_sha` | Exact 40-char PR head SHA |
 | `preview_base_url` | Must exactly match trusted `environment_url` from that deployment's latest **success** status |
 
-Job 1 fetches deployment + statuses via GitHub API and validates:
+### Status provenance (authoritative `environment_url`)
 
-- Repository = `2qjckdknjf-ctrl/Aistroyka-web`
-- Deployment SHA = `target_sha`
-- Environment = `Preview`
-- Creator = official Vercel integration (`vercel[bot]`, id `35613825`) or GitHub App `vercel` (id `8329`)
-- Latest status state = `success`
-- Normalized `environment_url` equals operator `preview_base_url`
+Latest deployment status is validated **independently** from deployment creation:
+
+| Check | Requirement |
+|-------|-------------|
+| Belongs to deployment | `deployment_url` ends with `/deployments/{deployment_id}` when present |
+| Creator login | exact `vercel[bot]` |
+| Creator immutable ID | exact `35613825` |
+| Creator type | `Bot` |
+| GitHub App (when present) | id `8329`, slug `vercel` |
+| State | latest by `created_at`, tie-break numeric status id |
+| Latest state value | exact `success` only |
+| Environment | `Preview` when field present |
+| `environment_url` | present; canonical Preview origin source |
+
+**Fail-closed fallback:** when `performed_via_github_app` is null on status (observed on deployment `6064462333`), exact bot login+id is mandatory. Residual risk: a compromised `vercel[bot]` account could post status URLs — mitigated by repository-scoped deployment ID + SHA binding and defense-in-depth hostname checks.
+
+Statuses are fetched with pagination (`per_page=100`, follow `Link: rel="next"`) up to 20 pages; truncated pagination fails closed.
+
+### Final E2E acceptance
+
+Workflow success requires harness exit code `0`, exact verdict `PROVEN`, and **25/25 steps with exact status `PASS`**. Optional harness behaviors (`BLOCKED_EXTERNAL`, steps 23–24 skip paths) are **not** accepted as warnings — they fail the runner contract.
 
 **Defense-in-depth hostname constraints** (not the trust root):
 
@@ -62,8 +77,11 @@ Job 2 uses the **canonical URL from GitHub deployment metadata** only. Raw opera
 |--------|------------|
 | Malicious PR from fork | Reject fork PRs; same-repo head required |
 | SHA confusion / stale Preview | Input SHA must equal live PR head; deployment SHA must match; health `buildStamp.sha7` must match |
-| Attacker-owned lookalike Preview host | GitHub Deployment ID binding + exact `environment_url` match + project/team hostname defense-in-depth |
+| Attacker-owned lookalike Preview host | GitHub Deployment ID binding + independent status provenance + exact `environment_url` match + project/team hostname defense-in-depth |
 | Static hostname drift on new Preview deployments | No static hostname trust root; new deployments only need correct `deployment_id` + matching URL from GitHub API |
+| Status from non-Vercel identity | Latest status must be `vercel[bot]` id `35613825`; App metadata when present must match Vercel app |
+| Stale success after newer failure | Latest status selected by timestamp/id; non-success latest state fails binding |
+| Status drift after environment approval | Job 2 re-fetches all statuses and revalidates latest status creator/state/URL before PR checkout |
 | PR E2E script at verified SHA runs with QA personas | Fixed entrypoint path only; `bun install --ignore-scripts`; pinned QA project; disposable QA data; no service-role; protected staging approval; owner-reviewed dispatch — see residual risk |
 | Bypass token in logs/artifacts | Header-only bypass; stdout/stderr captured to ephemeral files; redacted artifact only |
 | Wrong project mutated | **Required** `PILOT_SMOKE_PROJECT_ID_STAGING` variable; no auto-discovery |
@@ -72,8 +90,9 @@ Job 2 uses the **canonical URL from GitHub deployment metadata** only. Raw opera
 | Over-privileged workflow token | `contents: read`, `pull-requests: read`, `deployments: read`; Job 2 drops PR write |
 | `pull_request_target` RCE | **Not used** |
 | False-green skipped E2E | Verdict job fails when secret-consuming job skipped |
-| False-green harness verdict | Success requires exit code 0 **and** exact structured verdict `PROVEN` |
-| TOCTOU after environment approval | Job 2 revalidates PR head + deployment binding before PR checkout |
+| False-green harness verdict | Success requires exit `0` + `PROVEN` + exactly 25/25 `PASS` + matching base/sha7 |
+| False-green partial optional steps | `BLOCKED_EXTERNAL` and non-`PASS` step statuses fail the runner contract |
+| TOCTOU after environment approval | Job 2 revalidates PR head + deployment + latest status binding before PR checkout |
 | Draft PR accidental run | Operator must dispatch manually with confirmation string |
 
 ## Residual risk

@@ -21,6 +21,9 @@ if (!existsSync(jsonPath)) {
   process.exit(1);
 }
 
+const trustedCanonicalOrigin = process.env.TRUSTED_CANONICAL_ORIGIN ?? "";
+const targetSha = process.env.TARGET_SHA ?? "";
+
 let payload: unknown;
 try {
   payload = JSON.parse(readFileSync(jsonPath, "utf8"));
@@ -29,7 +32,12 @@ try {
   process.exit(1);
 }
 
-const result = validateE2eSuccessContract(exitCode, payload);
+const context =
+  trustedCanonicalOrigin && /^[a-f0-9]{40}$/.test(targetSha)
+    ? { trustedCanonicalOrigin, targetSha }
+    : undefined;
+
+const result = validateE2eSuccessContract(exitCode, payload, context);
 if (!result.ok) {
   console.error(`${result.code}: ${result.message}`);
   process.exit(1);

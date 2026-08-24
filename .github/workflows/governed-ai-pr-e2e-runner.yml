@@ -46,6 +46,7 @@ jobs:
       pull_request_number: ${{ steps.export.outputs.pull_request_number }}
       target_sha: ${{ steps.export.outputs.target_sha }}
       deployment_id: ${{ steps.export.outputs.deployment_id }}
+      latest_status_id: ${{ steps.export.outputs.latest_status_id }}
       preview_base_url: ${{ steps.export.outputs.preview_base_url }}
       staging_environment_protected: ${{ steps.export.outputs.staging_environment_protected }}
     steps:
@@ -168,10 +169,16 @@ jobs:
             PREVIEW_URL="$PREVIEW_URL" \
             DEPLOYMENT_BINDING_EVIDENCE_PATH="deployment-binding-evidence.json" \
             bun apps/web/lib/ops/governed-ai-pr-e2e-runner.validate-deployment-binding.mjs)"
+          LATEST_STATUS_ID="$(jq -r '.latest_status_id // empty' deployment-binding-evidence.json)"
+          if [ -z "$LATEST_STATUS_ID" ]; then
+            echo "::error::deployment binding evidence missing latest_status_id"
+            exit 1
+          fi
           {
             echo "pull_request_number=${PR_NUM}"
             echo "target_sha=${TARGET_SHA}"
             echo "deployment_id=${DEPLOYMENT_ID}"
+            echo "latest_status_id=${LATEST_STATUS_ID}"
             echo "preview_base_url=${CANONICAL_PREVIEW_URL}"
             echo "staging_environment_protected=true"
           } >> "$GITHUB_OUTPUT"
@@ -225,6 +232,7 @@ jobs:
           PR_NUM: ${{ needs.trust-boundary-preflight.outputs.pull_request_number }}
           TARGET_SHA: ${{ needs.trust-boundary-preflight.outputs.target_sha }}
           DEPLOYMENT_ID: ${{ needs.trust-boundary-preflight.outputs.deployment_id }}
+          PREFLIGHT_STATUS_ID: ${{ needs.trust-boundary-preflight.outputs.latest_status_id }}
           PREVIEW_URL: ${{ needs.trust-boundary-preflight.outputs.preview_base_url }}
         run: |
           set -euo pipefail
@@ -264,11 +272,33 @@ jobs:
             PREVIEW_URL="$PREVIEW_URL" \
             DEPLOYMENT_BINDING_EVIDENCE_PATH="deployment-binding-evidence-post-approval.json" \
             bun trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.validate-deployment-binding.mjs)"
+          LATEST_STATUS_ID="$(jq -r '.latest_status_id // empty' deployment-binding-evidence-post-approval.json)"
+          STATUS_STATE="$(jq -r '.latest_status_state // empty' deployment-binding-evidence-post-approval.json)"
+          STATUS_CREATOR_LOGIN="$(jq -r '.status_creator_login // empty' deployment-binding-evidence-post-approval.json)"
+          STATUS_CREATOR_ID="$(jq -r '.status_creator_id // empty' deployment-binding-evidence-post-approval.json)"
+          if [ -z "$LATEST_STATUS_ID" ] || [ -z "$STATUS_STATE" ]; then
+            echo "::error::Post-approval deployment binding evidence incomplete"
+            exit 1
+          fi
+          if [ "$STATUS_STATE" != "success" ]; then
+            echo "::error::Latest deployment status drifted to ${STATUS_STATE} after environment approval"
+            exit 1
+          fi
+          if [ "$STATUS_CREATOR_LOGIN" != "vercel[bot]" ] || [ "$STATUS_CREATOR_ID" != "35613825" ]; then
+            echo "::error::Latest deployment status creator drifted after environment approval"
+            exit 1
+          fi
           if [ "$CANONICAL_PREVIEW_URL" != "$PREVIEW_URL" ]; then
             echo "::error::Trusted deployment URL drifted after environment approval"
             exit 1
           fi
-          echo "canonical_preview_url=${CANONICAL_PREVIEW_URL}" >> "$GITHUB_OUTPUT"
+          if [ "$LATEST_STATUS_ID" != "$PREFLIGHT_STATUS_ID" ]; then
+            echo "Post-approval latest_status_id=${LATEST_STATUS_ID} (preflight=${PREFLIGHT_STATUS_ID}); binding revalidated"
+          fi
+          {
+            echo "canonical_preview_url=${CANONICAL_PREVIEW_URL}"
+            echo "latest_status_id=${LATEST_STATUS_ID}"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Checkout verified PR head
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
@@ -534,6 +564,9 @@ jobs:
         id: report_verdict
         if: always() && steps.e2e.outcome != 'cancelled' && steps.redact.outcome == 'success'
         working-directory: pr-workspace
+        env:
+          TRUSTED_CANONICAL_ORIGIN: ${{ steps.redeploy_check.outputs.canonical_preview_url }}
+          TARGET_SHA: ${{ needs.trust-boundary-preflight.outputs.target_sha }}
         run: |
           set -euo pipefail
           if [ ! -f e2e-result-redacted.json ]; then
@@ -541,7 +574,7 @@ jobs:
             exit 1
           fi
           VERDICT="$(bun ../trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.validate-e2e-verdict.mjs "${{ steps.e2e.outputs.exit_code }}" e2e-result-redacted.json)"
-          echo "E2E verdict: ${VERDICT}"
+          echo "E2E verdict: ${VERDICT} (25/25 PASS required)"
 
       - name: Upload redacted E2E evidence
         if: always() && steps.redact.outcome == 'success'

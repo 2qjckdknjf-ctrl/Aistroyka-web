@@ -67,7 +67,9 @@ Optional (steps 23–24 only if dedicated personas exist):
 3. Copy the GitHub **Deployment ID** (numeric) and the **environment URL** from the latest **success** status
 4. Pass both as `deployment_id` and `preview_base_url` workflow inputs
 
-Do **not** pin a static Preview hostname on `main`. Each new Preview deployment gets a new immutable URL; the runner binds trust via GitHub Deployment metadata.
+Do **not** pin a static Preview hostname on `main`. Each new Preview deployment gets a new immutable URL; the runner binds trust via GitHub Deployment metadata and independent latest-status provenance.
+
+Final authenticated acceptance requires **25/25 PASS** in the redacted artifact. Secrets are not provisioned by this infra PR; workflow is not E2E-dispatch-ready until a separate owner provisioning + dispatch gate.
 
 Example (PR #244 @ `628bb6b1…`):
 

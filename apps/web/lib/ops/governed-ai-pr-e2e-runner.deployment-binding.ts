@@ -9,7 +9,19 @@ import {
   VERCEL_DEPLOYMENT_BOT_LOGIN,
 } from "./governed-ai-pr-e2e-runner.constants";
 
+export const GOVERNED_AI_DEPLOYMENT_TASK = "deploy" as const;
+
 export const DEPLOYMENT_ID_MAX_LENGTH = 19;
+
+/** GitHub deployment status states that fail binding when latest. */
+export const DEPLOYMENT_STATUS_NON_SUCCESS_STATES = [
+  "error",
+  "failure",
+  "inactive",
+  "queued",
+  "pending",
+  "in_progress",
+] as const;
 
 export type ValidationFailure = {
   ok: false;
@@ -174,6 +186,7 @@ export type DeploymentCreator = {
 export type GitHubDeploymentRecord = {
   id?: number;
   sha?: string;
+  task?: string;
   environment?: string;
   repository_url?: string;
   creator?: DeploymentCreator;
@@ -187,11 +200,12 @@ export type GitHubDeploymentStatusRecord = {
   environment_url?: string | null;
   target_url?: string | null;
   created_at?: string;
+  deployment_url?: string;
   creator?: DeploymentCreator;
   performed_via_github_app?: { id?: number; slug?: string } | null;
 };
 
-export function isTrustedVercelDeploymentActor(actor: DeploymentCreator | undefined | null): boolean {
+export function isExactTrustedVercelBot(actor: DeploymentCreator | undefined | null): boolean {
   if (!actor || actor.type !== "Bot") {
     return false;
   }
@@ -203,6 +217,69 @@ export function isTrustedVercelGithubApp(app: { id?: number; slug?: string } | n
     return false;
   }
   return app.id === VERCEL_GITHUB_APP_ID && app.slug === VERCEL_GITHUB_APP_SLUG;
+}
+
+export function validateDeploymentProvenance(deployment: GitHubDeploymentRecord): ValidationResult<true> {
+  const repoFromDeployment = repositoryFullNameFromApiUrl(deployment.repository_url);
+  if (repoFromDeployment !== GOVERNED_AI_REPOSITORY_FULL_NAME) {
+    return fail("DEPLOYMENT_REPO_MISMATCH", "deployment does not belong to the trusted repository");
+  }
+  if (deployment.task !== GOVERNED_AI_DEPLOYMENT_TASK) {
+    return fail("DEPLOYMENT_TASK_MISMATCH", `deployment task must be exactly ${GOVERNED_AI_DEPLOYMENT_TASK}`);
+  }
+  if (deployment.environment !== GOVERNED_AI_PREVIEW_ENVIRONMENT) {
+    return fail("DEPLOYMENT_ENV_MISMATCH", `deployment environment must be exactly ${GOVERNED_AI_PREVIEW_ENVIRONMENT}`);
+  }
+
+  const botTrusted = isExactTrustedVercelBot(deployment.creator);
+  const appTrusted = isTrustedVercelGithubApp(deployment.performed_via_github_app);
+  if (!botTrusted && !appTrusted) {
+    if (deployment.creator?.login === VERCEL_DEPLOYMENT_BOT_LOGIN && deployment.creator.id !== VERCEL_DEPLOYMENT_BOT_ID) {
+      return fail("DEPLOYMENT_CREATOR_ID_MISMATCH", "deployment creator login/id pair is inconsistent with Vercel bot");
+    }
+    if (deployment.creator?.id === VERCEL_DEPLOYMENT_BOT_ID && deployment.creator.login !== VERCEL_DEPLOYMENT_BOT_LOGIN) {
+      return fail("DEPLOYMENT_CREATOR_LOGIN_MISMATCH", "deployment creator login/id pair is inconsistent with Vercel bot");
+    }
+    if (deployment.performed_via_github_app && !appTrusted) {
+      return fail("DEPLOYMENT_APP_UNTRUSTED", "deployment GitHub App identity is not the trusted Vercel app");
+    }
+    return fail(
+      "DEPLOYMENT_CREATOR_UNTRUSTED",
+      `deployment must be created by ${VERCEL_DEPLOYMENT_BOT_LOGIN} (id ${VERCEL_DEPLOYMENT_BOT_ID}) or GitHub App ${VERCEL_GITHUB_APP_SLUG} (id ${VERCEL_GITHUB_APP_ID})`,
+    );
+  }
+  if (deployment.performed_via_github_app && !appTrusted) {
+    return fail("DEPLOYMENT_APP_UNTRUSTED", "deployment GitHub App identity is not the trusted Vercel app");
+  }
+
+  return { ok: true, value: true };
+}
+
+/**
+ * Authoritative deployment status must be created by exact Vercel bot login+id.
+ * When performed_via_github_app is present it must match Vercel app id/slug.
+ * When App metadata is absent, exact bot identity is the fail-closed fallback.
+ */
+export function validateStatusProvenance(status: GitHubDeploymentStatusRecord): ValidationResult<true> {
+  if (!isExactTrustedVercelBot(status.creator)) {
+    if (status.creator?.login === VERCEL_DEPLOYMENT_BOT_LOGIN && status.creator.id !== VERCEL_DEPLOYMENT_BOT_ID) {
+      return fail("STATUS_CREATOR_ID_MISMATCH", "status creator login matches but immutable bot id differs");
+    }
+    if (status.creator?.id === VERCEL_DEPLOYMENT_BOT_ID && status.creator.login !== VERCEL_DEPLOYMENT_BOT_LOGIN) {
+      return fail("STATUS_CREATOR_LOGIN_MISMATCH", "status creator id matches but login differs");
+    }
+    return fail(
+      "STATUS_CREATOR_UNTRUSTED",
+      `latest deployment status must be created by ${VERCEL_DEPLOYMENT_BOT_LOGIN} (id ${VERCEL_DEPLOYMENT_BOT_ID})`,
+    );
+  }
+  if (status.performed_via_github_app != null && !isTrustedVercelGithubApp(status.performed_via_github_app)) {
+    return fail("STATUS_APP_UNTRUSTED", "latest deployment status GitHub App identity is not the trusted Vercel app");
+  }
+  if (status.environment && status.environment !== GOVERNED_AI_PREVIEW_ENVIRONMENT) {
+    return fail("STATUS_ENV_MISMATCH", `latest deployment status environment must be ${GOVERNED_AI_PREVIEW_ENVIRONMENT}`);
+  }
+  return { ok: true, value: true };
 }
 
 export function repositoryFullNameFromApiUrl(repositoryUrl: string | undefined): string | null {
@@ -218,34 +295,57 @@ export function repositoryFullNameFromApiUrl(repositoryUrl: string | undefined):
   return tail.length > 0 ? tail : null;
 }
 
+export function compareLatestDeploymentStatus(
+  a: GitHubDeploymentStatusRecord,
+  b: GitHubDeploymentStatusRecord,
+): number {
+  const aTime = Date.parse(a.created_at ?? "") || 0;
+  const bTime = Date.parse(b.created_at ?? "") || 0;
+  if (bTime !== aTime) {
+    return bTime - aTime;
+  }
+  return (b.id ?? 0) - (a.id ?? 0);
+}
+
 export function selectLatestDeploymentStatus(
   statuses: GitHubDeploymentStatusRecord[],
 ): GitHubDeploymentStatusRecord | null {
   if (!Array.isArray(statuses) || statuses.length === 0) {
     return null;
   }
-  const sorted = [...statuses].sort((a, b) => {
-    const aTime = Date.parse(a.created_at ?? "") || 0;
-    const bTime = Date.parse(b.created_at ?? "") || 0;
-    if (bTime !== aTime) {
-      return bTime - aTime;
-    }
-    return (b.id ?? 0) - (a.id ?? 0);
-  });
+  const sorted = [...statuses].sort(compareLatestDeploymentStatus);
   return sorted[0] ?? null;
+}
+
+export function validateLatestStatusState(state: string | undefined): ValidationResult<true> {
+  if (!state) {
+    return fail("DEPLOYMENT_STATUS_STATE_MISSING", "latest deployment status must include state");
+  }
+  if (state !== "success") {
+    const normalized = state.toLowerCase();
+    if ((DEPLOYMENT_STATUS_NON_SUCCESS_STATES as readonly string[]).includes(normalized)) {
+      return fail("DEPLOYMENT_STATUS_NOT_SUCCESS", `latest deployment status must be success (got ${state})`);
+    }
+    return fail("DEPLOYMENT_STATUS_UNKNOWN", `latest deployment status state is not trusted (got ${state})`);
+  }
+  return { ok: true, value: true };
 }
 
 export type DeploymentBindingEvidence = {
   deployment_id: string;
   deployment_sha: string;
+  deployment_task: string;
   environment: string;
   repository: string;
-  trusted_creator_login: string;
-  trusted_creator_id: number;
+  deployment_creator_login: string;
+  deployment_creator_id: number;
+  status_creator_login: string;
+  status_creator_id: number;
   vercel_github_app_id: number;
   vercel_github_app_slug: string;
   latest_status_id: number;
   latest_status_state: string;
+  latest_status_created_at: string;
   canonical_preview_url: string;
   input_preview_url: string;
 };
@@ -265,45 +365,50 @@ export function validateDeploymentBinding(params: {
   inputPreviewUrl: string;
   deployment: GitHubDeploymentRecord;
   statuses: GitHubDeploymentStatusRecord[];
+  statusesFullyPaginated?: boolean;
 }): DeploymentBindingResult {
   const idValidation = validateDeploymentId(params.deploymentId);
   if (!idValidation.ok) {
     return idValidation;
   }
+  if (params.statusesFullyPaginated === false) {
+    return fail("DEPLOYMENT_STATUS_PAGINATION_TRUNCATED", "deployment statuses pagination was truncated");
+  }
   if (params.deployment.id !== Number(params.deploymentId)) {
     return fail("DEPLOYMENT_ID_MISMATCH", "GitHub deployment id does not match deployment_id input");
-  }
-  const repoFromDeployment = repositoryFullNameFromApiUrl(params.deployment.repository_url);
-  if (repoFromDeployment !== params.repositoryFullName || repoFromDeployment !== GOVERNED_AI_REPOSITORY_FULL_NAME) {
-    return fail("DEPLOYMENT_REPO_MISMATCH", "deployment does not belong to the trusted repository");
   }
   if (params.deployment.sha !== params.targetSha) {
     return fail("DEPLOYMENT_SHA_MISMATCH", "deployment SHA must exactly equal target_sha");
   }
-  if (params.deployment.environment !== GOVERNED_AI_PREVIEW_ENVIRONMENT) {
-    return fail("DEPLOYMENT_ENV_MISMATCH", `deployment environment must be exactly ${GOVERNED_AI_PREVIEW_ENVIRONMENT}`);
+  if (params.repositoryFullName !== GOVERNED_AI_REPOSITORY_FULL_NAME) {
+    return fail("DEPLOYMENT_REPO_MISMATCH", "repositoryFullName must match trusted repository");
   }
-  const deploymentCreatorTrusted = isTrustedVercelDeploymentActor(params.deployment.creator);
-  const deploymentAppTrusted = isTrustedVercelGithubApp(params.deployment.performed_via_github_app);
-  if (!deploymentCreatorTrusted && !deploymentAppTrusted) {
-    return fail(
-      "DEPLOYMENT_CREATOR_UNTRUSTED",
-      `deployment must be created by ${VERCEL_DEPLOYMENT_BOT_LOGIN} (id ${VERCEL_DEPLOYMENT_BOT_ID}) or GitHub App ${VERCEL_GITHUB_APP_SLUG} (id ${VERCEL_GITHUB_APP_ID})`,
-    );
+
+  const deploymentProv = validateDeploymentProvenance(params.deployment);
+  if (!deploymentProv.ok) {
+    return deploymentProv;
   }
 
   const latest = selectLatestDeploymentStatus(params.statuses);
   if (!latest) {
     return fail("DEPLOYMENT_STATUS_MISSING", "deployment has no statuses");
   }
-  if (latest.state !== "success") {
-    return fail("DEPLOYMENT_STATUS_NOT_SUCCESS", "latest deployment status must be success");
+
+  const expectedDeploymentUrlSuffix = `/deployments/${params.deploymentId}`;
+  if (latest.deployment_url && !latest.deployment_url.endsWith(expectedDeploymentUrlSuffix)) {
+    return fail("STATUS_DEPLOYMENT_URL_MISMATCH", "latest status does not belong to the requested deployment");
   }
-  const statusCreatorTrusted = isTrustedVercelDeploymentActor(latest.creator);
-  const statusAppTrusted = isTrustedVercelGithubApp(latest.performed_via_github_app);
-  if (!statusCreatorTrusted && !statusAppTrusted) {
-    return fail("DEPLOYMENT_STATUS_CREATOR_UNTRUSTED", "latest deployment status creator is not trusted Vercel integration");
+
+  const stateValidation = validateLatestStatusState(latest.state);
+  if (!stateValidation.ok) {
+    return stateValidation;
   }
+
+  const statusProv = validateStatusProvenance(latest);
+  if (!statusProv.ok) {
+    return statusProv;
+  }
+
   if (!latest.environment_url) {
     return fail("DEPLOYMENT_ENVIRONMENT_URL_MISSING", "latest deployment status must include environment_url");
   }
@@ -320,14 +425,18 @@ export function validateDeploymentBinding(params: {
   const evidence: DeploymentBindingEvidence = {
     deployment_id: params.deploymentId,
     deployment_sha: params.deployment.sha ?? params.targetSha,
+    deployment_task: params.deployment.task ?? GOVERNED_AI_DEPLOYMENT_TASK,
     environment: params.deployment.environment ?? GOVERNED_AI_PREVIEW_ENVIRONMENT,
     repository: params.repositoryFullName,
-    trusted_creator_login: params.deployment.creator?.login ?? VERCEL_DEPLOYMENT_BOT_LOGIN,
-    trusted_creator_id: params.deployment.creator?.id ?? VERCEL_DEPLOYMENT_BOT_ID,
+    deployment_creator_login: params.deployment.creator?.login ?? VERCEL_DEPLOYMENT_BOT_LOGIN,
+    deployment_creator_id: params.deployment.creator?.id ?? VERCEL_DEPLOYMENT_BOT_ID,
+    status_creator_login: latest.creator?.login ?? VERCEL_DEPLOYMENT_BOT_LOGIN,
+    status_creator_id: latest.creator?.id ?? VERCEL_DEPLOYMENT_BOT_ID,
     vercel_github_app_id: VERCEL_GITHUB_APP_ID,
     vercel_github_app_slug: VERCEL_GITHUB_APP_SLUG,
     latest_status_id: latest.id ?? 0,
     latest_status_state: latest.state ?? "unknown",
+    latest_status_created_at: latest.created_at ?? "",
     canonical_preview_url: trustedUrl.value.origin,
     input_preview_url: inputMatch.value,
   };

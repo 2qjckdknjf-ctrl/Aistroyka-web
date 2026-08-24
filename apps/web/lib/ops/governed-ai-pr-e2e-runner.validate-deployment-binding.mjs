@@ -37,6 +37,52 @@ if (!owner || !repo) {
   fail("REPOSITORY_FULL_NAME must be owner/repo");
 }
 
+function parseLinkNext(linkHeader: string | null): string | null {
+  if (!linkHeader) {
+    return null;
+  }
+  for (const part of linkHeader.split(",")) {
+    const section = part.trim();
+    if (section.endsWith('rel="next"')) {
+      const match = section.match(/<([^>]+)>/);
+      return match?.[1] ?? null;
+    }
+  }
+  return null;
+}
+
+async function fetchAllDeploymentStatuses(
+  deploymentApiUrl: string,
+  token: string,
+): Promise<{ statuses: GitHubDeploymentStatusRecord[]; fullyPaginated: boolean }> {
+  const statuses: GitHubDeploymentStatusRecord[] = [];
+  let nextUrl: string | null = `${deploymentApiUrl}/statuses?per_page=100`;
+  let pages = 0;
+  const maxPages = 20;
+
+  while (nextUrl) {
+    pages += 1;
+    if (pages > maxPages) {
+      return { statuses, fullyPaginated: false };
+    }
+    const res = await fetch(nextUrl, {
+      headers: {
+        Accept: "application/vnd.github+json",
+        Authorization: `Bearer ${token}`,
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+    });
+    if (!res.ok) {
+      fail(`GitHub deployment statuses fetch failed with HTTP ${res.status}`);
+    }
+    const batch = (await res.json()) as GitHubDeploymentStatusRecord[];
+    statuses.push(...batch);
+    nextUrl = parseLinkNext(res.headers.get("link"));
+  }
+
+  return { statuses, fullyPaginated: true };
+}
+
 const deploymentApiUrl = `https://api.github.com/repos/${owner}/${repo}/deployments/${deploymentId}`;
 const deploymentRes = await fetch(deploymentApiUrl, {
   headers: {
@@ -50,17 +96,7 @@ if (!deploymentRes.ok) {
 }
 const deployment = (await deploymentRes.json()) as GitHubDeploymentRecord;
 
-const statusesRes = await fetch(`${deploymentApiUrl}/statuses`, {
-  headers: {
-    Accept: "application/vnd.github+json",
-    Authorization: `Bearer ${githubToken}`,
-    "X-GitHub-Api-Version": "2022-11-28",
-  },
-});
-if (!statusesRes.ok) {
-  fail(`GitHub deployment statuses fetch failed with HTTP ${statusesRes.status}`);
-}
-const statuses = (await statusesRes.json()) as GitHubDeploymentStatusRecord[];
+const { statuses, fullyPaginated } = await fetchAllDeploymentStatuses(deploymentApiUrl, githubToken);
 
 const result = validateDeploymentBinding({
   repositoryFullName,
@@ -69,6 +105,7 @@ const result = validateDeploymentBinding({
   inputPreviewUrl,
   deployment,
   statuses,
+  statusesFullyPaginated: fullyPaginated,
 });
 
 if (!result.ok) {

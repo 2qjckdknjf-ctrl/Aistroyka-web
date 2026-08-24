@@ -28,7 +28,8 @@ Workflow: `.github/workflows/governed-ai-pr-e2e-runner.yml` (must exist on **`ma
 - Checkout exact verified PR SHA into `pr-workspace/`
 - Trusted validation/redaction helpers checked out from workflow ref into `trusted-runner-ops/`
 - Vercel bypass preflight → E2E → redacted artifact
-- Success requires harness exit code **0** and exact verdict **`PROVEN`** (see harness on product PR)
+- Success requires harness exit code **0**, exact verdict **`PROVEN`**, and **25/25 step results with exact status `PASS`**
+- `BLOCKED_EXTERNAL` / partial optional steps are **blockers**, not acceptable warnings
 
 ### Job 3 — `governed-ai-pr-e2e-verdict`
 
