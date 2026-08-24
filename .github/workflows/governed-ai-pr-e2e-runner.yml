@@ -441,7 +441,7 @@ jobs:
             exit 1
           fi
 
-      - name: Run governed AI staging E2E (raw output file only)
+      - name: Run governed AI staging E2E (encrypt transfer bundle atomically)
         id: e2e
         working-directory: pr-workspace
         env:
@@ -461,11 +461,18 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_STAGING }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_STAGING }}
           GOVERNED_E2E_MARKER: "qa-governed-e2e"
+          E2E_TRANSFER_KEY_MATERIAL: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}:${{ secrets.PILOT_SMOKE_PASSWORD_STAGING }}:${{ github.run_id }}:${{ github.run_attempt }}
         run: |
           set -uo pipefail
           E2E_EXIT=0
-          node scripts/pilot/governed-ai-owner-evidence-staging-e2e.mjs > e2e-result.json 2> e2e-result.stderr || E2E_EXIT=$?
+          /usr/bin/env node scripts/pilot/governed-ai-owner-evidence-staging-e2e.mjs > e2e-result.json 2> e2e-result.stderr || E2E_EXIT=$?
           printf '%s' "$E2E_EXIT" > .e2e-exit-code
+          /usr/bin/tar -czf e2e-raw-bundle.tgz e2e-result.json e2e-result.stderr
+          rm -f e2e-result.json e2e-result.stderr
+          DERIVED_KEY="$(printf '%s' "$E2E_TRANSFER_KEY_MATERIAL" | /usr/bin/sha256sum | awk '{print $1}')"
+          /usr/bin/openssl enc -aes-256-cbc -pbkdf2 -iter 100000 -pass pass:"$DERIVED_KEY" \
+            -in e2e-raw-bundle.tgz -out e2e-raw-bundle.tgz.enc
+          rm -f e2e-raw-bundle.tgz
           exit 0
 
       - name: Record validated E2E exit code
@@ -540,7 +547,7 @@ jobs:
             exit 1
           fi
 
-      - name: Upload raw E2E output for seal job
+      - name: Upload encrypted E2E transfer bundle for seal job
         if: >-
           steps.e2e.outcome != 'cancelled' &&
           steps.e2e_exit.outcome == 'success' &&
@@ -548,10 +555,8 @@ jobs:
           steps.post_e2e_pr_head.outcome == 'success'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: governed-ai-e2e-raw-${{ github.run_id }}-${{ github.run_attempt }}
-          path: |
-            pr-workspace/e2e-result.json
-            pr-workspace/e2e-result.stderr
+          name: governed-ai-e2e-encrypted-${{ github.run_id }}-${{ github.run_attempt }}
+          path: pr-workspace/e2e-raw-bundle.tgz.enc
           retention-days: 1
           if-no-files-found: error
 
@@ -573,24 +578,24 @@ jobs:
     permissions:
       contents: read
     steps:
-      - name: Download raw E2E output from E2E job
+      - name: Download encrypted E2E transfer bundle from E2E job
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
-          name: governed-ai-e2e-raw-${{ github.run_id }}-${{ github.run_attempt }}
+          name: governed-ai-e2e-encrypted-${{ github.run_id }}-${{ github.run_attempt }}
           path: e2e-workspace
 
-      - name: Encrypt E2E transfer bundle on isolated runner
+      - name: Verify encrypted E2E transfer bundle on isolated runner
         env:
           E2E_TRANSFER_KEY_MATERIAL: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}:${{ secrets.PILOT_SMOKE_PASSWORD_STAGING }}:${{ github.run_id }}:${{ github.run_attempt }}
         run: |
           set -euo pipefail
-          test -f e2e-workspace/e2e-result.json
-          tar -C e2e-workspace -czf e2e-raw-bundle.tgz e2e-result.json e2e-result.stderr
-          rm -f e2e-workspace/e2e-result.json e2e-workspace/e2e-result.stderr
-          DERIVED_KEY="$(printf '%s' "$E2E_TRANSFER_KEY_MATERIAL" | sha256sum | awk '{print $1}')"
-          openssl enc -aes-256-cbc -pbkdf2 -iter 100000 -pass pass:"$DERIVED_KEY" \
-            -in e2e-raw-bundle.tgz -out e2e-raw-bundle.tgz.enc
-          rm -f e2e-raw-bundle.tgz
+          test -f e2e-workspace/e2e-raw-bundle.tgz.enc
+          DERIVED_KEY="$(printf '%s' "$E2E_TRANSFER_KEY_MATERIAL" | /usr/bin/sha256sum | awk '{print $1}')"
+          VERIFY_TGZ="$(mktemp)"
+          /usr/bin/openssl enc -d -aes-256-cbc -pbkdf2 -iter 100000 -pass pass:"$DERIVED_KEY" \
+            -in e2e-workspace/e2e-raw-bundle.tgz.enc -out "$VERIFY_TGZ"
+          /usr/bin/tar -tzf "$VERIFY_TGZ" e2e-result.json >/dev/null
+          rm -f "$VERIFY_TGZ"
 
       - name: Upload sealed E2E transfer bundle
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4

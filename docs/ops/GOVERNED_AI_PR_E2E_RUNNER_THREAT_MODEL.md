@@ -84,7 +84,7 @@ Job 2 uses the **canonical URL from GitHub deployment metadata** only. Raw opera
 | Stale success after newer failure | Latest status selected by timestamp/id; non-success latest state fails binding |
 | Status drift after environment approval | Job 2 re-fetches all statuses and revalidates latest status creator/state/URL before PR checkout |
 | PR E2E script at verified SHA runs with QA personas | Fixed entrypoint path only; `bun install --ignore-scripts`; pinned QA project; disposable QA data; no service-role; protected staging approval; owner-reviewed dispatch; trusted redaction/verdict in **separate Job 3 VM** (not same process as PR harness) |
-| Bypass token in logs/artifacts | Header-only bypass; stdout/stderr captured to ephemeral files; raw harness output encrypted (AES-256-CBC + PBKDF2, staging-derived key) and transferred via run-scoped cache; redacted artifact only uploaded from Job 3 |
+| Bypass token in logs/artifacts | Header-only bypass; stdout/stderr captured to ephemeral files; raw harness output encrypted atomically in Job 2 (AES-256-CBC + PBKDF2, staging-derived key) before any artifact upload; seal job verifies ciphertext on a fresh VM; redacted artifact only uploaded from postprocess job |
 | Wrong project mutated | **Required** `PILOT_SMOKE_PROJECT_ID_STAGING` variable; no auto-discovery |
 | Feature-branch workflow tampering | Job 1 + Job 2 require `github.ref == refs/heads/main`; Job 2 additionally requires protected staging preflight |
 | Unprotected staging environment | Job 1 fails with `BLOCKED_STAGING_ENVIRONMENT_UNPROTECTED` when misconfigured |
