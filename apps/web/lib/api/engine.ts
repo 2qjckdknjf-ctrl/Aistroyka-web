@@ -5,6 +5,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createContractorWorkspaceForUser } from "@/lib/account/account-workspace.service";
+import { pickPrimaryTenantMembership } from "@/lib/tenant/tenant-membership-priority";
 import { createAnalysisJobRpc } from "./rpcClient";
 import { getAdminClient } from "@/lib/supabase/admin";
 
@@ -22,7 +23,7 @@ export async function getOrCreateTenantForCurrentUser(
 
 /**
  * Returns the active tenant for current user.
- * Priority: owned tenant -> tenant_members membership.
+ * Priority: owned tenant -> strongest tenant_members row (internal beats stakeholder).
  */
 export async function getTenantForCurrentUser(
   supabase: SupabaseClient
@@ -39,13 +40,14 @@ export async function getTenantForCurrentUser(
       .maybeSingle();
     if (!e1 && ownTenant?.id) return ownTenant.id;
 
-    const { data: memberRow, error: e2 } = await supabase
+    const { data: memberRows, error: e2 } = await supabase
       .from("tenant_members")
-      .select("tenant_id")
-      .eq("user_id", user.id)
-      .limit(1)
-      .maybeSingle();
-    if (!e2 && memberRow?.tenant_id) return memberRow.tenant_id;
+      .select("tenant_id, role")
+      .eq("user_id", user.id);
+    if (!e2) {
+      const primary = pickPrimaryTenantMembership(memberRows ?? []);
+      if (primary?.tenant_id) return primary.tenant_id;
+    }
 
     // If user has a pending invitation, do not auto-create a personal tenant.
     const normalizedEmail = (user.email ?? "").trim().toLowerCase();
