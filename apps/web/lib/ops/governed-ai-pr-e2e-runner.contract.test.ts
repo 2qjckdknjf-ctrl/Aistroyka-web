@@ -189,6 +189,12 @@ describe("governed-ai-pr-e2e-runner workflow contract", () => {
     expect(wf).toMatch(/path: pr-workspace/);
   });
 
+  it("requires redacted verdict PASS and fixed E2E entrypoint", () => {
+    expect(wf).toMatch(/Governed AI E2E verdict is not PASS/);
+    expect(wf).toMatch(/scripts\/pilot\/governed-ai-owner-evidence-staging-e2e\.mjs/);
+    expect(wf).toMatch(/Verify E2E entrypoint path is fixed/);
+  });
+
   it("fails closed when secret-consuming job is skipped", () => {
     expect(wf).toMatch(/Secret-consuming E2E job was skipped/);
   });

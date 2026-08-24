@@ -32,7 +32,7 @@ Operator input is validated by `validate-preview-url.mjs` against `governed-ai-p
 | Malicious PR from fork | Reject fork PRs; same-repo head required |
 | SHA confusion / stale Preview | Input SHA must equal live PR head; health `buildStamp.sha7` must match |
 | Attacker-owned lookalike Preview host | **Exact** hostname allowlist; no wildcard/substring/`endsWith("vercel.app")` |
-| Secret exfiltration via PR code | **No** `SUPABASE_SERVICE_ROLE_KEY`; PR script runs with cookie/API personas only; redaction helper from trusted ref |
+| PR E2E script at verified SHA runs with QA personas | Fixed entrypoint path only; pinned QA project; disposable QA data; no service-role; protected staging approval; exact Preview hostname; threat accepted for open PR validation — see residual risk |
 | Bypass token in logs/artifacts | Header-only bypass; stdout/stderr captured to ephemeral files; redacted artifact only |
 | Wrong project mutated | **Required** `PILOT_SMOKE_PROJECT_ID_STAGING` variable; no auto-discovery |
 | Feature-branch workflow tampering | Job 1 + Job 2 require `github.ref == refs/heads/main`; Job 2 additionally requires protected staging preflight |
