@@ -175,10 +175,7 @@ export async function syncEvidenceFromReportMedia(
       else if (purpose === "report_after") beforeAfter = "after";
     }
 
-    const pairGroupId =
-      beforeAfter === "before" || beforeAfter === "after"
-        ? `${reportId}-${beforeAfter}`
-        : null;
+    const pairGroupId = beforeAfter === "before" || beforeAfter === "after" ? reportId : null;
 
     const record = await upsertVisualEvidence(supabase, {
       tenantId,

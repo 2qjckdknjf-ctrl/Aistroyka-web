@@ -5,9 +5,14 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { AI_POLICY_VERSION, getPilotActionDefinition } from "./action-registry";
-import type { AiActionExecutionRequest, AiActionExecutionResult } from "./action-registry.types";
+import type {
+  AiActionExecutionRequest,
+  AiActionExecutionResult,
+  AiActionExecutionStatus,
+} from "./action-registry.types";
 import { assertAiActionNotProhibited } from "./prohibited-actions";
 import { findByIdempotencyKey, insertAiActionAudit } from "./action-audit.repository";
+import type { AiActionAuditRow } from "./action-audit.repository";
 import { evaluateReportCompleteness } from "@/lib/domain/reports/report-completeness.service";
 
 const ALLOWED_TENANT_ROLES = new Set([
@@ -47,6 +52,31 @@ async function assertProjectMembership(
 
 function roleAllowed(defRoles: string[], userRole: string): boolean {
   return defRoles.includes(userRole);
+}
+
+function isExecutionStatus(value: unknown): value is AiActionExecutionStatus {
+  return (
+    value === "blocked" ||
+    value === "dry_run" ||
+    value === "draft_ready" ||
+    value === "pending_approval" ||
+    value === "executed" ||
+    value === "error"
+  );
+}
+
+function getReplayStatus(
+  existing: AiActionAuditRow,
+  def: { riskClass: string; requiresHumanApproval: boolean }
+): AiActionExecutionStatus {
+  const storedStatus = existing.details?.execution_status;
+  if (isExecutionStatus(storedStatus)) return storedStatus;
+  if (existing.dry_run || existing.outcome === "dry_run") return "dry_run";
+  if (existing.outcome === "blocked") return "blocked";
+  if (existing.outcome === "error") return "error";
+  if (def.requiresHumanApproval) return "pending_approval";
+  if (def.riskClass === "DRAFT_ONLY") return "draft_ready";
+  return "executed";
 }
 
 async function executePilotActionBody(
@@ -226,7 +256,7 @@ export async function executeGovernedAiAction(
     const existing = await findByIdempotencyKey(supabase, req.tenantId, req.idempotencyKey);
     if (existing) {
       return {
-        status: existing.dry_run ? "dry_run" : existing.outcome === "blocked" ? "blocked" : "executed",
+        status: getReplayStatus(existing, def),
         actionId: req.actionId,
         policyVersion: AI_POLICY_VERSION,
         riskClass: def.riskClass,
@@ -239,6 +269,13 @@ export async function executeGovernedAiAction(
 
   const dryRun = req.dryRun === true;
   const { draft, warnings } = await executePilotActionBody(supabase, req);
+  const status: AiActionExecutionStatus = dryRun
+    ? "dry_run"
+    : def.requiresHumanApproval
+      ? "pending_approval"
+      : def.riskClass === "DRAFT_ONLY"
+        ? "draft_ready"
+        : "executed";
 
   const audit = await insertAiActionAudit(supabase, {
     tenant_id: req.tenantId,
@@ -252,12 +289,15 @@ export async function executeGovernedAiAction(
     idempotency_key: req.idempotencyKey ?? null,
     target_resource_type: typeof req.input?.report_id === "string" ? "report" : null,
     target_resource_id: typeof req.input?.report_id === "string" ? req.input.report_id : null,
-    details: { draft_keys: draft ? Object.keys(draft) : [] },
+    details: {
+      draft_keys: draft ? Object.keys(draft) : [],
+      execution_status: status,
+    },
   });
 
-  if (dryRun) {
+  if (status === "dry_run") {
     return {
-      status: "dry_run",
+      status,
       actionId: req.actionId,
       policyVersion: AI_POLICY_VERSION,
       riskClass: def.riskClass,
@@ -268,9 +308,9 @@ export async function executeGovernedAiAction(
     };
   }
 
-  if (def.requiresHumanApproval) {
+  if (status === "pending_approval") {
     return {
-      status: "pending_approval",
+      status,
       actionId: req.actionId,
       policyVersion: AI_POLICY_VERSION,
       riskClass: def.riskClass,
@@ -282,7 +322,7 @@ export async function executeGovernedAiAction(
   }
 
   return {
-    status: def.riskClass === "DRAFT_ONLY" ? "draft_ready" : "executed",
+    status,
     actionId: req.actionId,
     policyVersion: AI_POLICY_VERSION,
     riskClass: def.riskClass,

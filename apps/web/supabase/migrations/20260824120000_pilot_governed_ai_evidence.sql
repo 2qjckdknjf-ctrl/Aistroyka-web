@@ -51,7 +51,7 @@ create policy visual_evidence_tenant_internal on public.visual_evidence_records
   for all using (
     tenant_id in (
       select tm.tenant_id from public.tenant_members tm
-      where tm.user_id = auth.uid() and tm.role in ('owner', 'admin', 'manager', 'member')
+      where tm.user_id = auth.uid() and tm.role in ('owner', 'admin', 'manager', 'member', 'worker')
     )
   )
   with check (
@@ -114,7 +114,17 @@ create policy ai_action_audit_tenant_read on public.ai_action_audit_records
     )
   );
 
--- No update/delete policies for authenticated users (append-only via service role / server).
+create policy ai_action_audit_tenant_insert on public.ai_action_audit_records
+  for insert with check (
+    tenant_id in (
+      select tm.tenant_id from public.tenant_members tm
+      where tm.user_id = auth.uid() and tm.role in ('owner', 'admin', 'manager', 'member', 'worker', 'stakeholder')
+    )
+    and (initiated_by is null or initiated_by = auth.uid())
+    and (approved_by is null or approved_by = auth.uid())
+  );
+
+-- No update/delete policies for authenticated users (append-only).
 
 -- Report completeness cache (server-computed, clients cannot self-declare complete).
 create table if not exists public.report_completeness_evaluations (
@@ -137,4 +147,26 @@ alter table public.report_completeness_evaluations enable row level security;
 create policy report_completeness_tenant on public.report_completeness_evaluations
   for select using (
     tenant_id in (select tenant_id from public.tenant_members where user_id = auth.uid())
+  );
+
+create policy report_completeness_tenant_insert on public.report_completeness_evaluations
+  for insert with check (
+    tenant_id in (
+      select tm.tenant_id from public.tenant_members tm
+      where tm.user_id = auth.uid() and tm.role in ('owner', 'admin', 'manager', 'member', 'worker')
+    )
+  );
+
+create policy report_completeness_tenant_update on public.report_completeness_evaluations
+  for update using (
+    tenant_id in (
+      select tm.tenant_id from public.tenant_members tm
+      where tm.user_id = auth.uid() and tm.role in ('owner', 'admin', 'manager', 'member', 'worker')
+    )
+  )
+  with check (
+    tenant_id in (
+      select tm.tenant_id from public.tenant_members tm
+      where tm.user_id = auth.uid() and tm.role in ('owner', 'admin', 'manager', 'member', 'worker')
+    )
   );

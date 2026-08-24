@@ -2,7 +2,10 @@ import { describe, expect, it, vi } from "vitest";
 import { executeGovernedAiAction } from "./action-executor.service";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-function makeSupabase(opts: { member?: boolean; idempotency?: boolean }) {
+function makeSupabase(opts: {
+  member?: boolean;
+  existingAudit?: Record<string, unknown> | null;
+}) {
   return {
     from: vi.fn((table: string) => {
       if (table === "project_members") {
@@ -38,8 +41,7 @@ function makeSupabase(opts: { member?: boolean; idempotency?: boolean }) {
           select: () => ({
             eq: () => ({
               eq: () => ({
-                maybeSingle: async () =>
-                  opts.idempotency ? { data: { id: "audit1", dry_run: false, outcome: "success" } } : { data: null },
+                maybeSingle: async () => ({ data: opts.existingAudit ?? null }),
               }),
             }),
           }),
@@ -92,14 +94,95 @@ describe("executeGovernedAiAction", () => {
   });
 
   it("replays idempotent requests without duplicate execution", async () => {
-    const result = await executeGovernedAiAction(makeSupabase({ member: true, idempotency: true }), {
+    const result = await executeGovernedAiAction(
+      makeSupabase({
+        member: true,
+        existingAudit: {
+          id: "audit1",
+          dry_run: false,
+          outcome: "success",
+          details: { execution_status: "executed" },
+        },
+      }),
+      {
       actionId: "remind_missing_daily_report",
       tenantId: "t1",
       projectId: "p1",
       initiatedBy: "u1",
       userRole: "manager",
       idempotencyKey: "key-1",
-    });
+      }
+    );
     expect(result.warnings.some((w) => w.includes("Idempotent"))).toBe(true);
+    expect(result.status).toBe("executed");
+  });
+
+  it("replays idempotent pending approvals with the stored status", async () => {
+    const result = await executeGovernedAiAction(
+      makeSupabase({
+        member: true,
+        existingAudit: {
+          id: "audit1",
+          dry_run: false,
+          outcome: "success",
+          details: { execution_status: "pending_approval" },
+        },
+      }),
+      {
+        actionId: "draft_owner_message",
+        tenantId: "t1",
+        projectId: "p1",
+        initiatedBy: "u1",
+        userRole: "manager",
+        idempotencyKey: "key-2",
+      }
+    );
+    expect(result.status).toBe("pending_approval");
+  });
+
+  it("maps legacy success audits back to pending approval when no stored status exists", async () => {
+    const result = await executeGovernedAiAction(
+      makeSupabase({
+        member: true,
+        existingAudit: {
+          id: "audit1",
+          dry_run: false,
+          outcome: "success",
+          details: {},
+        },
+      }),
+      {
+        actionId: "draft_owner_message",
+        tenantId: "t1",
+        projectId: "p1",
+        initiatedBy: "u1",
+        userRole: "manager",
+        idempotencyKey: "key-3",
+      }
+    );
+    expect(result.status).toBe("pending_approval");
+  });
+
+  it("maps audit error outcomes back to error on replay", async () => {
+    const result = await executeGovernedAiAction(
+      makeSupabase({
+        member: true,
+        existingAudit: {
+          id: "audit1",
+          dry_run: false,
+          outcome: "error",
+          details: {},
+        },
+      }),
+      {
+        actionId: "remind_missing_daily_report",
+        tenantId: "t1",
+        projectId: "p1",
+        initiatedBy: "u1",
+        userRole: "manager",
+        idempotencyKey: "key-4",
+      }
+    );
+    expect(result.status).toBe("error");
   });
 });

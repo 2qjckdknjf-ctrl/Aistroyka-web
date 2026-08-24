@@ -15,7 +15,21 @@ import { listPilotActions } from "@/lib/ai-governance/pilot/action-registry";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: Request) {
+  let ctx: Awaited<ReturnType<typeof getTenantContextFromRequest>>;
+  try {
+    ctx = await getTenantContextFromRequest(request);
+  } catch (e) {
+    if (e instanceof TenantForbiddenError) return NextResponse.json({ error: e.message }, { status: 403 });
+    throw e;
+  }
+  try {
+    requireTenant(ctx);
+  } catch (e) {
+    if (e instanceof TenantRequiredError) return NextResponse.json({ error: e.message }, { status: 401 });
+    throw e;
+  }
+
   return NextResponse.json({ data: { actions: listPilotActions() } });
 }
 
