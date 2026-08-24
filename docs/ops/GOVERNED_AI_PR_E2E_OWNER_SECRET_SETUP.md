@@ -9,7 +9,7 @@ Configure staging credentials **without pasting values into PRs, chat, or commit
 3. Enable **Required reviewers** for `staging` (owner approval before secrets deploy).
 4. Confirm `protection_rules` is **not empty** and deployment branches/tags are restricted to selected branch `main` (workflow preflight fails with `BLOCKED_STAGING_ENVIRONMENT_UNPROTECTED` until configured).
 5. **Only then** add environment secrets and the QA project variable below.
-6. Dispatch **Governed AI PR E2E runner** from **`main`** with exact PR head SHA and canonical Preview URL.
+6. Dispatch **Governed AI PR E2E runner** from **`main`** with exact PR head SHA, GitHub Deployment ID, and Preview URL matching deployment `environment_url`.
 7. When GitHub prompts for environment approval, **owner manually approves** the deployment.
 8. Review the **redacted** workflow artifact only (never paste secrets into dispatch inputs).
 
@@ -48,6 +48,7 @@ Do not append bypass tokens to Preview URLs in workflow inputs or documentation.
 | `STAKEHOLDER_SMOKE_PASSWORD` | Owner/stakeholder QA password |
 | `NEXT_PUBLIC_SUPABASE_URL_STAGING` | Staging Supabase (must reference `vthfrxehrursfloevnlp`) |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY_STAGING` | Staging anon key |
+| `GOVERNED_E2E_SEAL_PRIVATE_KEY` | RSA private key (PKCS#8 PEM) for inter-job E2E bundle unseal — **required**; public half is committed at `apps/web/lib/ops/governed-ai-pr-e2e-runner.seal-public-key.pem` |
 
 6. Add **Environment variable** (not secret):
 
@@ -60,13 +61,23 @@ Optional (steps 23–24 only if dedicated personas exist):
 - `PILOT_E2E_STAKEHOLDER_REVOKED_EMAIL` / `PILOT_E2E_STAKEHOLDER_REVOKED_PASSWORD`
 - `PILOT_E2E_CROSS_TENANT_EMAIL` / `PILOT_E2E_CROSS_TENANT_PASSWORD`
 
-## Canonical Preview URL for dispatch
+## GitHub Deployment ID for dispatch
 
-Exact hostname only (no wildcards):
+1. Open the product PR → **Checks** / **Deployments**
+2. Locate the Vercel **Preview** deployment for the exact PR head SHA
+3. Copy the GitHub **Deployment ID** (numeric) and the **environment URL** from the latest **success** status
+4. Pass both as `deployment_id` and `preview_base_url` workflow inputs
 
-`https://aistroyka-web-web-v7jq-git-fea-3e326e-2qjckdknjf-ctrls-projects.vercel.app`
+Do **not** pin a static Preview hostname on `main`. Each new Preview deployment gets a new immutable URL; the runner binds trust via GitHub Deployment metadata and independent latest-status provenance.
 
-If Vercel changes the branch Preview alias, update `governed-ai-pr-e2e-runner.constants.ts` via a reviewed infra change.
+Final authenticated acceptance requires **25/25 PASS** in the redacted artifact. Secrets are not provisioned by this infra PR; workflow is not E2E-dispatch-ready until a separate owner provisioning + dispatch gate.
+
+Example (PR #244 @ `628bb6b1…`):
+
+| Field | Value |
+|-------|-------|
+| `deployment_id` | `6064462333` |
+| `preview_base_url` | `https://aistroyka-web-web-v7jq-8of2zsc02-2qjckdknjf-ctrls-projects.vercel.app` |
 
 ## Not required
 
@@ -78,6 +89,17 @@ If Vercel changes the branch Preview alias, update `governed-ai-pr-e2e-runner.co
 |------|---------|
 | `BLOCKED_STAGING_ENVIRONMENT_UNPROTECTED` | Add required reviewers and selected branch policy `main` to `staging` |
 | `BLOCKED_STAGING_ENVIRONMENT_METADATA` | Environment API unavailable or misconfigured |
+| `BLOCKED_SEAL_PRIVATE_KEY_MISSING` | Add `GOVERNED_E2E_SEAL_PRIVATE_KEY` to protected `staging` (see provisioning manifest below) |
 | Missing secret names | Add required Environment secrets/variable |
+
+## Seal key provisioning manifest (owner action — not automated by this PR)
+
+Generate an RSA-2048 keypair locally. Commit **only** the public PEM to `apps/web/lib/ops/governed-ai-pr-e2e-runner.seal-public-key.pem` (already in repo). Store the PKCS#8 private PEM as protected Environment secret:
+
+| Secret | Format | Scope |
+|--------|--------|-------|
+| `GOVERNED_E2E_SEAL_PRIVATE_KEY` | `-----BEGIN PRIVATE KEY-----` … PKCS#8 PEM | `staging` environment only |
+
+Until provisioned, staging-gate preflight fails closed with `BLOCKED_SEAL_PRIVATE_KEY_MISSING`. Do not paste key material into PRs, chat, or workflow inputs.
 
 See also: `docs/ops/GOVERNED_AI_PR_E2E_RUNNER.md`, `docs/ops/GOVERNED_AI_PR_E2E_RUNNER_THREAT_MODEL.md`

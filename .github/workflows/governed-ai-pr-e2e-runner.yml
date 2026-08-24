@@ -1,7 +1,9 @@
 name: Governed AI PR E2E runner (manual)
 
 # Default-branch trusted runner. Job 1 validates trust boundary without secrets.
-# Job 2 runs in protected staging environment with secrets only after preflight passes.
+# Job 2 staging-gate runs in protected staging with secrets but never checks out PR code.
+# Job 3 harness runs PR-controlled E2E in a sanitized subprocess only.
+# Jobs 4–6 seal, postprocess, and verdict run on fresh VMs with trusted dispatch-pinned ops.
 
 on:
   workflow_dispatch:
@@ -14,8 +16,12 @@ on:
         description: "Exact PR head SHA to checkout and test (40 hex chars)"
         required: true
         type: string
+      deployment_id:
+        description: "GitHub Deployment ID for the Vercel Preview (positive decimal integer)"
+        required: true
+        type: string
       preview_base_url:
-        description: "Exact canonical Vercel Preview base URL (no trailing slash, no bypass query params)"
+        description: "Preview base URL that must match trusted deployment environment_url (no trailing slash, no bypass query params)"
         required: true
         type: string
       confirmation:
@@ -41,6 +47,8 @@ jobs:
     outputs:
       pull_request_number: ${{ steps.export.outputs.pull_request_number }}
       target_sha: ${{ steps.export.outputs.target_sha }}
+      deployment_id: ${{ steps.export.outputs.deployment_id }}
+      latest_status_id: ${{ steps.export.outputs.latest_status_id }}
       preview_base_url: ${{ steps.export.outputs.preview_base_url }}
       staging_environment_protected: ${{ steps.export.outputs.staging_environment_protected }}
     steps:
@@ -50,12 +58,25 @@ jobs:
           ref: ${{ github.sha }}
           sparse-checkout: |
             apps/web/lib/ops/governed-ai-pr-e2e-runner.constants.ts
-            apps/web/lib/ops/governed-ai-pr-e2e-runner.validate-preview-url.mjs
+            apps/web/lib/ops/governed-ai-pr-e2e-runner.deployment-binding.ts
+            apps/web/lib/ops/governed-ai-pr-e2e-runner.validate-deployment-binding.mjs
           sparse-checkout-cone-mode: false
 
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        id: setup_bun
         with:
           bun-version: 1.2.15
+
+      - name: Pin trusted bun path from setup-bun
+        id: pin_bun
+        run: |
+          set -euo pipefail
+          BUN_PATH="$(command -v bun)"
+          if [ -z "$BUN_PATH" ] || [ ! -x "$BUN_PATH" ]; then
+            echo "::error::Missing bun executable after setup-bun"
+            exit 1
+          fi
+          echo "bun_path=${BUN_PATH}" >> "$GITHUB_OUTPUT"
 
       - name: Validate inputs and staging environment (no secrets)
         id: export
@@ -63,6 +84,7 @@ jobs:
           CONFIRM: ${{ inputs.confirmation }}
           PR_NUM: ${{ inputs.pull_request_number }}
           TARGET_SHA: ${{ inputs.target_sha }}
+          DEPLOYMENT_ID: ${{ inputs.deployment_id }}
           PREVIEW_URL: ${{ inputs.preview_base_url }}
         run: |
           set -euo pipefail
@@ -82,7 +104,10 @@ jobs:
             echo "::error::target_sha must be exactly 40 lowercase hex characters"
             exit 1
           fi
-          CANONICAL_PREVIEW_URL="$(bun apps/web/lib/ops/governed-ai-pr-e2e-runner.validate-preview-url.mjs "$PREVIEW_URL")"
+          if ! echo "$DEPLOYMENT_ID" | grep -Eq '^[1-9][0-9]{0,18}$'; then
+            echo "::error::deployment_id must be a positive decimal integer"
+            exit 1
+          fi
           ENV_JSON="$(curl -fsS \
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${{ github.token }}" \
@@ -152,15 +177,35 @@ jobs:
             echo "::error::target_sha mismatch: PR head=${HEAD_SHA} input=${TARGET_SHA}"
             exit 1
           fi
+          CANONICAL_PREVIEW_URL="$(GITHUB_TOKEN="${{ github.token }}" \
+            TARGET_SHA="$TARGET_SHA" \
+            DEPLOYMENT_ID="$DEPLOYMENT_ID" \
+            PREVIEW_URL="$PREVIEW_URL" \
+            DEPLOYMENT_BINDING_EVIDENCE_PATH="deployment-binding-evidence.json" \
+            bun apps/web/lib/ops/governed-ai-pr-e2e-runner.validate-deployment-binding.mjs)"
+          LATEST_STATUS_ID="$(jq -r '.latest_status_id // empty' deployment-binding-evidence.json)"
+          if [ -z "$LATEST_STATUS_ID" ]; then
+            echo "::error::deployment binding evidence missing latest_status_id"
+            exit 1
+          fi
           {
             echo "pull_request_number=${PR_NUM}"
             echo "target_sha=${TARGET_SHA}"
+            echo "deployment_id=${DEPLOYMENT_ID}"
+            echo "latest_status_id=${LATEST_STATUS_ID}"
             echo "preview_base_url=${CANONICAL_PREVIEW_URL}"
             echo "staging_environment_protected=true"
           } >> "$GITHUB_OUTPUT"
 
-  governed-ai-pr-e2e:
-    name: Governed AI PR preview E2E
+      - name: Upload deployment binding evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: governed-ai-deployment-binding-pr${{ inputs.pull_request_number }}
+          path: deployment-binding-evidence.json
+          retention-days: 14
+
+  governed-ai-pr-e2e-staging-gate:
+    name: Governed AI PR E2E staging gate
     needs: trust-boundary-preflight
     if: >-
       ${{
@@ -170,34 +215,16 @@ jobs:
         needs.trust-boundary-preflight.outputs.staging_environment_protected == 'true'
       }}
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
     environment: staging
+    outputs:
+      canonical_preview_url: ${{ steps.redeploy_check.outputs.canonical_preview_url }}
+      latest_status_id: ${{ steps.redeploy_check.outputs.latest_status_id }}
     permissions:
       contents: read
       pull-requests: read
+      deployments: read
     steps:
-      - name: Revalidate PR head SHA after environment approval
-        env:
-          PR_NUM: ${{ needs.trust-boundary-preflight.outputs.pull_request_number }}
-          TARGET_SHA: ${{ needs.trust-boundary-preflight.outputs.target_sha }}
-        run: |
-          set -euo pipefail
-          REPO="2qjckdknjf-ctrl/Aistroyka-web"
-          PR_JSON="$(curl -fsSL \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${{ github.token }}" \
-            "https://api.github.com/repos/${REPO}/pulls/${PR_NUM}")"
-          STATE="$(echo "$PR_JSON" | jq -r '.state')"
-          HEAD_SHA="$(echo "$PR_JSON" | jq -r '.head.sha')"
-          if [ "$STATE" != "open" ]; then
-            echo "::error::PR #${PR_NUM} is no longer open after environment approval"
-            exit 1
-          fi
-          if [ "$HEAD_SHA" != "$TARGET_SHA" ]; then
-            echo "::error::PR head moved after preflight: head=${HEAD_SHA} expected=${TARGET_SHA}"
-            exit 1
-          fi
-
       - name: Checkout trusted runner ops from dispatch commit pin
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
@@ -205,31 +232,102 @@ jobs:
           path: trusted-runner-ops
           sparse-checkout: |
             apps/web/lib/ops/governed-ai-pr-e2e-runner.constants.ts
-            apps/web/lib/ops/governed-ai-pr-e2e-runner.redact-e2e-result.mjs
+            apps/web/lib/ops/governed-ai-pr-e2e-runner.deployment-binding.ts
+            apps/web/lib/ops/governed-ai-pr-e2e-runner.validate-deployment-binding.mjs
+            apps/web/lib/ops/governed-ai-pr-e2e-runner.seal-preflight.mjs
+            apps/web/lib/ops/governed-ai-pr-e2e-runner.seal-crypto.ts
+            apps/web/lib/ops/governed-ai-pr-e2e-runner.seal-public-key.pem
           sparse-checkout-cone-mode: false
 
-      - name: Checkout verified PR head
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
-        with:
-          ref: ${{ needs.trust-boundary-preflight.outputs.target_sha }}
-          path: pr-workspace
-
-      - name: Verify checked-out SHA and E2E entrypoint
-        working-directory: pr-workspace
-        env:
-          TARGET_SHA: ${{ needs.trust-boundary-preflight.outputs.target_sha }}
-        run: |
-          set -euo pipefail
-          CURRENT="$(git rev-parse HEAD)"
-          if [ "$CURRENT" != "$TARGET_SHA" ]; then
-            echo "::error::Checkout SHA mismatch"
-            exit 1
-          fi
-          test -f scripts/pilot/governed-ai-owner-evidence-staging-e2e.mjs
-
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        id: setup_bun
         with:
           bun-version: 1.2.15
+
+      - name: Pin trusted bun path from setup-bun
+        id: pin_bun
+        run: |
+          set -euo pipefail
+          BUN_PATH="$(command -v bun)"
+          if [ -z "$BUN_PATH" ] || [ ! -x "$BUN_PATH" ]; then
+            echo "::error::Missing bun executable after setup-bun"
+            exit 1
+          fi
+          echo "bun_path=${BUN_PATH}" >> "$GITHUB_OUTPUT"
+
+      - name: Revalidate PR head and deployment binding after environment approval
+        id: redeploy_check
+        env:
+          PR_NUM: ${{ needs.trust-boundary-preflight.outputs.pull_request_number }}
+          TARGET_SHA: ${{ needs.trust-boundary-preflight.outputs.target_sha }}
+          DEPLOYMENT_ID: ${{ needs.trust-boundary-preflight.outputs.deployment_id }}
+          PREFLIGHT_STATUS_ID: ${{ needs.trust-boundary-preflight.outputs.latest_status_id }}
+          PREVIEW_URL: ${{ needs.trust-boundary-preflight.outputs.preview_base_url }}
+        run: |
+          set -euo pipefail
+          if [ "${{ github.ref }}" != "refs/heads/main" ]; then
+            echo "::error::This workflow must run from the main branch definition (got ${{ github.ref }})"
+            exit 1
+          fi
+          REPO="2qjckdknjf-ctrl/Aistroyka-web"
+          PR_JSON="$(curl -fsSL \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ github.token }}" \
+            "https://api.github.com/repos/${REPO}/pulls/${PR_NUM}")"
+          STATE="$(echo "$PR_JSON" | jq -r '.state')"
+          HEAD_SHA="$(echo "$PR_JSON" | jq -r '.head.sha')"
+          HEAD_REPO="$(echo "$PR_JSON" | jq -r '.head.repo.full_name')"
+          BASE_REPO="$(echo "$PR_JSON" | jq -r '.base.repo.full_name')"
+          IS_FORK="$(echo "$PR_JSON" | jq -r '.head.repo.fork')"
+          if [ "$STATE" != "open" ]; then
+            echo "::error::PR #${PR_NUM} is no longer open after environment approval"
+            exit 1
+          fi
+          if [ "$HEAD_REPO" != "$REPO" ] || [ "$BASE_REPO" != "$REPO" ]; then
+            echo "::error::PR must remain same-repository (non-fork)"
+            exit 1
+          fi
+          if [ "$IS_FORK" = "true" ]; then
+            echo "::error::Fork PRs are not allowed"
+            exit 1
+          fi
+          if [ "$HEAD_SHA" != "$TARGET_SHA" ]; then
+            echo "::error::PR head moved after preflight: head=${HEAD_SHA} expected=${TARGET_SHA}"
+            exit 1
+          fi
+          CANONICAL_PREVIEW_URL="$(GITHUB_TOKEN="${{ github.token }}" \
+            TARGET_SHA="$TARGET_SHA" \
+            DEPLOYMENT_ID="$DEPLOYMENT_ID" \
+            PREVIEW_URL="$PREVIEW_URL" \
+            DEPLOYMENT_BINDING_EVIDENCE_PATH="deployment-binding-evidence-post-approval.json" \
+            bun trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.validate-deployment-binding.mjs)"
+          LATEST_STATUS_ID="$(jq -r '.latest_status_id // empty' deployment-binding-evidence-post-approval.json)"
+          STATUS_STATE="$(jq -r '.latest_status_state // empty' deployment-binding-evidence-post-approval.json)"
+          STATUS_CREATOR_LOGIN="$(jq -r '.status_creator_login // empty' deployment-binding-evidence-post-approval.json)"
+          STATUS_CREATOR_ID="$(jq -r '.status_creator_id // empty' deployment-binding-evidence-post-approval.json)"
+          if [ -z "$LATEST_STATUS_ID" ] || [ -z "$STATUS_STATE" ]; then
+            echo "::error::Post-approval deployment binding evidence incomplete"
+            exit 1
+          fi
+          if [ "$STATUS_STATE" != "success" ]; then
+            echo "::error::Latest deployment status drifted to ${STATUS_STATE} after environment approval"
+            exit 1
+          fi
+          if [ "$STATUS_CREATOR_LOGIN" != "vercel[bot]" ] || [ "$STATUS_CREATOR_ID" != "35613825" ]; then
+            echo "::error::Latest deployment status creator drifted after environment approval"
+            exit 1
+          fi
+          if [ "$CANONICAL_PREVIEW_URL" != "$PREVIEW_URL" ]; then
+            echo "::error::Trusted deployment URL drifted after environment approval"
+            exit 1
+          fi
+          if [ "$LATEST_STATUS_ID" != "$PREFLIGHT_STATUS_ID" ]; then
+            echo "Post-approval latest_status_id=${LATEST_STATUS_ID} (preflight=${PREFLIGHT_STATUS_ID}); binding revalidated"
+          fi
+          {
+            echo "canonical_preview_url=${CANONICAL_PREVIEW_URL}"
+            echo "latest_status_id=${LATEST_STATUS_ID}"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Secret and QA project preflight (names only)
         env:
@@ -243,6 +341,7 @@ jobs:
           SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_STAGING }}
           SUPABASE_ANON: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_STAGING }}
           QA_PROJECT_ID: ${{ vars.PILOT_SMOKE_PROJECT_ID_STAGING }}
+          SEAL_PRIVATE_KEY: ${{ secrets.GOVERNED_E2E_SEAL_PRIVATE_KEY }}
         run: |
           set -euo pipefail
           missing=0
@@ -257,6 +356,7 @@ jobs:
           require NEXT_PUBLIC_SUPABASE_URL_STAGING "$SUPABASE_URL"
           require NEXT_PUBLIC_SUPABASE_ANON_KEY_STAGING "$SUPABASE_ANON"
           require PILOT_SMOKE_PROJECT_ID_STAGING "$QA_PROJECT_ID"
+          require GOVERNED_E2E_SEAL_PRIVATE_KEY "$SEAL_PRIVATE_KEY"
           if [ "$missing" -ne 0 ]; then exit 1; fi
           if ! echo "$QA_PROJECT_ID" | grep -Eq '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'; then
             echo "::error::PILOT_SMOKE_PROJECT_ID_STAGING must be a valid UUID"
@@ -268,10 +368,13 @@ jobs:
             echo "::error::Staging Supabase URL must be exactly ${EXPECTED_SUPABASE_ORIGIN}"
             exit 1
           fi
+          GOVERNED_E2E_SEAL_PRIVATE_KEY="$SEAL_PRIVATE_KEY" \
+            GOVERNED_E2E_SEAL_PUBLIC_KEY_PATH="trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.seal-public-key.pem" \
+            "${{ steps.pin_bun.outputs.bun_path }}" trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.seal-preflight.mjs
 
       - name: Vercel bypass and deployment SHA preflight
         env:
-          PREVIEW_URL: ${{ needs.trust-boundary-preflight.outputs.preview_base_url }}
+          PREVIEW_URL: ${{ steps.redeploy_check.outputs.canonical_preview_url }}
           TARGET_SHA: ${{ needs.trust-boundary-preflight.outputs.target_sha }}
           BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
         run: |
@@ -309,6 +412,88 @@ jobs:
             exit 1
           fi
 
+  governed-ai-pr-e2e-harness:
+    name: Governed AI PR E2E harness
+    needs:
+      - trust-boundary-preflight
+      - governed-ai-pr-e2e-staging-gate
+    if: >-
+      ${{
+        needs.trust-boundary-preflight.result == 'success' &&
+        needs.governed-ai-pr-e2e-staging-gate.result == 'success' &&
+        github.ref == 'refs/heads/main' &&
+        inputs.confirmation == 'RUN_GOVERNED_AI_STAGING_E2E'
+      }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: staging
+    outputs:
+      e2e_exit_code: ${{ steps.e2e_exit.outputs.exit_code }}
+    permissions:
+      contents: read
+      pull-requests: read
+      deployments: read
+    steps:
+      - name: Checkout trusted harness runner ops from dispatch commit pin
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ github.sha }}
+          path: trusted-runner-ops
+          sparse-checkout: |
+            apps/web/lib/ops/governed-ai-pr-e2e-runner.harness-env.ts
+            apps/web/lib/ops/governed-ai-pr-e2e-runner.run-harness.mjs
+            apps/web/lib/ops/governed-ai-pr-e2e-runner.seal-crypto.ts
+            apps/web/lib/ops/governed-ai-pr-e2e-runner.seal-bundle.mjs
+            apps/web/lib/ops/governed-ai-pr-e2e-runner.seal-public-key.pem
+          sparse-checkout-cone-mode: false
+
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        id: setup_bun
+        with:
+          bun-version: 1.2.15
+
+      - name: Pin trusted bun path from setup-bun
+        id: pin_bun
+        run: |
+          set -euo pipefail
+          BUN_PATH="$(command -v bun)"
+          if [ -z "$BUN_PATH" ] || [ ! -x "$BUN_PATH" ]; then
+            echo "::error::Missing bun executable after setup-bun"
+            exit 1
+          fi
+          echo "bun_path=${BUN_PATH}" >> "$GITHUB_OUTPUT"
+
+      - name: Pin trusted node path for harness subprocess
+        id: pin_node
+        run: |
+          set -euo pipefail
+          NODE_PATH="$(command -v node)"
+          if [ -z "$NODE_PATH" ] || [ ! -x "$NODE_PATH" ]; then
+            echo "::error::Missing node executable on runner"
+            exit 1
+          fi
+          echo "node_path=${NODE_PATH}" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout verified PR head
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ needs.trust-boundary-preflight.outputs.target_sha }}
+          path: pr-workspace
+          persist-credentials: false
+
+      - name: Verify checked-out SHA and E2E entrypoint
+        working-directory: pr-workspace
+        env:
+          TARGET_SHA: ${{ needs.trust-boundary-preflight.outputs.target_sha }}
+        run: |
+          set -euo pipefail
+          CURRENT="$(git rev-parse HEAD)"
+          if [ "$CURRENT" != "$TARGET_SHA" ]; then
+            echo "::error::Checkout SHA mismatch"
+            exit 1
+          fi
+          test -f scripts/pilot/governed-ai-owner-evidence-staging-e2e.mjs
+
       - name: Install dependencies (ignore lifecycle scripts)
         working-directory: pr-workspace
         run: bun install --frozen-lockfile --ignore-scripts
@@ -329,7 +514,7 @@ jobs:
 
       - name: Reconfirm preview deployment SHA immediately before E2E
         env:
-          PREVIEW_URL: ${{ needs.trust-boundary-preflight.outputs.preview_base_url }}
+          PREVIEW_URL: ${{ needs.governed-ai-pr-e2e-staging-gate.outputs.canonical_preview_url }}
           TARGET_SHA: ${{ needs.trust-boundary-preflight.outputs.target_sha }}
           BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
         run: |
@@ -354,11 +539,10 @@ jobs:
             exit 1
           fi
 
-      - name: Run governed AI staging E2E (raw output file only)
+      - name: Run governed AI staging E2E (sanitized harness subprocess)
         id: e2e
-        working-directory: pr-workspace
         env:
-          GOVERNED_E2E_BASE_URL: ${{ needs.trust-boundary-preflight.outputs.preview_base_url }}
+          GOVERNED_E2E_BASE_URL: ${{ needs.governed-ai-pr-e2e-staging-gate.outputs.canonical_preview_url }}
           VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
           PILOT_E2E_WORKER_EMAIL: ${{ secrets.PILOT_SMOKE_EMAIL_STAGING }}
           PILOT_E2E_WORKER_PASSWORD: ${{ secrets.PILOT_SMOKE_PASSWORD_STAGING }}
@@ -375,17 +559,65 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_STAGING }}
           GOVERNED_E2E_MARKER: "qa-governed-e2e"
         run: |
-          set -uo pipefail
-          E2E_EXIT=0
-          node scripts/pilot/governed-ai-owner-evidence-staging-e2e.mjs > e2e-result.json 2> e2e-result.stderr || E2E_EXIT=$?
+          set -euo pipefail
+            /usr/bin/env -i \
+            HOME="${HOME:-/home/runner}" \
+            PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
+            LANG="${LANG:-C.UTF-8}" \
+            BASH_ENV=/dev/null \
+            ENV=/dev/null \
+            GOVERNED_E2E_BASE_URL="${GOVERNED_E2E_BASE_URL}" \
+            VERCEL_AUTOMATION_BYPASS_SECRET="${VERCEL_AUTOMATION_BYPASS_SECRET}" \
+            PILOT_E2E_WORKER_EMAIL="${PILOT_E2E_WORKER_EMAIL}" \
+            PILOT_E2E_WORKER_PASSWORD="${PILOT_E2E_WORKER_PASSWORD}" \
+            PILOT_E2E_MANAGER_EMAIL="${PILOT_E2E_MANAGER_EMAIL}" \
+            PILOT_E2E_MANAGER_PASSWORD="${PILOT_E2E_MANAGER_PASSWORD}" \
+            PILOT_E2E_OWNER_EMAIL="${PILOT_E2E_OWNER_EMAIL}" \
+            PILOT_E2E_OWNER_PASSWORD="${PILOT_E2E_OWNER_PASSWORD}" \
+            PILOT_E2E_PROJECT_ID="${PILOT_E2E_PROJECT_ID}" \
+            PILOT_E2E_STAKEHOLDER_REVOKED_EMAIL="${PILOT_E2E_STAKEHOLDER_REVOKED_EMAIL:-}" \
+            PILOT_E2E_STAKEHOLDER_REVOKED_PASSWORD="${PILOT_E2E_STAKEHOLDER_REVOKED_PASSWORD:-}" \
+            PILOT_E2E_CROSS_TENANT_EMAIL="${PILOT_E2E_CROSS_TENANT_EMAIL:-}" \
+            PILOT_E2E_CROSS_TENANT_PASSWORD="${PILOT_E2E_CROSS_TENANT_PASSWORD:-}" \
+            NEXT_PUBLIC_SUPABASE_URL="${NEXT_PUBLIC_SUPABASE_URL}" \
+            NEXT_PUBLIC_SUPABASE_ANON_KEY="${NEXT_PUBLIC_SUPABASE_ANON_KEY}" \
+            GOVERNED_E2E_MARKER="${GOVERNED_E2E_MARKER}" \
+            GOVERNED_E2E_NODE_PATH="${{ steps.pin_node.outputs.node_path }}" \
+            "${{ steps.pin_bun.outputs.bun_path }}" trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.run-harness.mjs \
+              pr-workspace scripts/pilot/governed-ai-owner-evidence-staging-e2e.mjs
+
+      - name: Reset trusted runner shell environment after PR harness
+        if: steps.e2e.outcome != 'cancelled'
+        run: |
+          set -euo pipefail
+          {
+            echo "BASH_ENV=/dev/null"
+            echo "ENV=/dev/null"
+            echo "CDPATH="
+            echo "GLOBIGNORE=*"
+            echo "NODE_OPTIONS="
+            echo "BUN_OPTIONS="
+            echo "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+          } >> "$GITHUB_ENV"
+
+      - name: Record validated E2E exit code
+        id: e2e_exit
+        if: steps.e2e.outcome != 'cancelled'
+        working-directory: pr-workspace
+        run: |
+          set -euo pipefail
+          E2E_EXIT="$(tr -d '\n\r' < .e2e-exit-code)"
+          if ! printf '%s' "$E2E_EXIT" | grep -Eq '^[0-9]+$'; then
+            echo "::error::Invalid harness exit code"
+            exit 1
+          fi
           echo "exit_code=${E2E_EXIT}" >> "$GITHUB_OUTPUT"
-          exit 0
 
       - name: Reconfirm preview deployment SHA immediately after E2E
         id: post_e2e_deploy
         if: always() && steps.e2e.outcome != 'cancelled'
         env:
-          PREVIEW_URL: ${{ needs.trust-boundary-preflight.outputs.preview_base_url }}
+          PREVIEW_URL: ${{ needs.governed-ai-pr-e2e-staging-gate.outputs.canonical_preview_url }}
           TARGET_SHA: ${{ needs.trust-boundary-preflight.outputs.target_sha }}
           BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
         run: |
@@ -411,6 +643,7 @@ jobs:
           fi
 
       - name: Revalidate PR head SHA after E2E
+        id: post_e2e_pr_head
         if: always() && steps.e2e.outcome != 'cancelled' && steps.post_e2e_deploy.outcome == 'success'
         env:
           PR_NUM: ${{ needs.trust-boundary-preflight.outputs.pull_request_number }}
@@ -438,18 +671,237 @@ jobs:
             exit 1
           fi
 
-      - name: Prepare trusted redaction output path
-        if: always() && steps.e2e.outcome != 'cancelled' && steps.post_e2e_deploy.outcome == 'success'
-        working-directory: pr-workspace
+      - name: Seal harness output and upload ciphertext artifact only
+        if: >-
+          steps.e2e.outcome != 'cancelled' &&
+          steps.e2e_exit.outcome == 'success' &&
+          steps.post_e2e_deploy.outcome == 'success' &&
+          steps.post_e2e_pr_head.outcome == 'success'
+        env:
+          GOVERNED_E2E_SEAL_REPOSITORY: 2qjckdknjf-ctrl/Aistroyka-web
+          GOVERNED_E2E_SEAL_WORKFLOW: .github/workflows/governed-ai-pr-e2e-runner.yml
+          GOVERNED_E2E_SEAL_RUN_ID: ${{ github.run_id }}
+          GOVERNED_E2E_SEAL_RUN_ATTEMPT: ${{ github.run_attempt }}
+          GOVERNED_E2E_SEAL_DISPATCH_SHA: ${{ github.sha }}
+          GOVERNED_E2E_SEAL_PULL_REQUEST_NUMBER: ${{ needs.trust-boundary-preflight.outputs.pull_request_number }}
+          GOVERNED_E2E_SEAL_TARGET_SHA: ${{ needs.trust-boundary-preflight.outputs.target_sha }}
+          GOVERNED_E2E_SEAL_DEPLOYMENT_ID: ${{ needs.trust-boundary-preflight.outputs.deployment_id }}
         run: |
           set -euo pipefail
-          rm -rf e2e-result-redacted.json
+          mkdir -p e2e-transfer
+          /usr/bin/env -i \
+            HOME="${HOME:-/home/runner}" \
+            PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
+            LANG="${LANG:-C.UTF-8}" \
+            BASH_ENV=/dev/null \
+            ENV=/dev/null \
+            GOVERNED_E2E_SEAL_REPOSITORY="${GOVERNED_E2E_SEAL_REPOSITORY}" \
+            GOVERNED_E2E_SEAL_WORKFLOW="${GOVERNED_E2E_SEAL_WORKFLOW}" \
+            GOVERNED_E2E_SEAL_RUN_ID="${GOVERNED_E2E_SEAL_RUN_ID}" \
+            GOVERNED_E2E_SEAL_RUN_ATTEMPT="${GOVERNED_E2E_SEAL_RUN_ATTEMPT}" \
+            GOVERNED_E2E_SEAL_DISPATCH_SHA="${GOVERNED_E2E_SEAL_DISPATCH_SHA}" \
+            GOVERNED_E2E_SEAL_PULL_REQUEST_NUMBER="${GOVERNED_E2E_SEAL_PULL_REQUEST_NUMBER}" \
+            GOVERNED_E2E_SEAL_TARGET_SHA="${GOVERNED_E2E_SEAL_TARGET_SHA}" \
+            GOVERNED_E2E_SEAL_DEPLOYMENT_ID="${GOVERNED_E2E_SEAL_DEPLOYMENT_ID}" \
+            "${{ steps.pin_bun.outputs.bun_path }}" trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.seal-bundle.mjs \
+              pr-workspace e2e-transfer/governed-ai-e2e-sealed-bundle.json \
+              trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.seal-public-key.pem
+          rm -f pr-workspace/e2e-result.json pr-workspace/e2e-result.stderr pr-workspace/.e2e-exit-code
+          test -f e2e-transfer/governed-ai-e2e-sealed-bundle.json
+
+      - name: Upload harness ciphertext bundle for trusted seal job
+        if: >-
+          steps.e2e.outcome != 'cancelled' &&
+          steps.e2e_exit.outcome == 'success' &&
+          steps.post_e2e_deploy.outcome == 'success' &&
+          steps.post_e2e_pr_head.outcome == 'success'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: governed-ai-e2e-harness-sealed-${{ github.run_id }}-${{ github.run_attempt }}
+          path: e2e-transfer/governed-ai-e2e-sealed-bundle.json
+          retention-days: 1
+          if-no-files-found: error
+
+  governed-ai-pr-e2e-seal:
+    name: Governed AI PR E2E seal
+    needs:
+      - trust-boundary-preflight
+      - governed-ai-pr-e2e-staging-gate
+      - governed-ai-pr-e2e-harness
+    if: >-
+      ${{
+        needs.trust-boundary-preflight.result == 'success' &&
+        needs.governed-ai-pr-e2e-staging-gate.result == 'success' &&
+        needs.governed-ai-pr-e2e-harness.result == 'success' &&
+        github.ref == 'refs/heads/main' &&
+        inputs.confirmation == 'RUN_GOVERNED_AI_STAGING_E2E'
+      }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: staging
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout trusted seal ops from dispatch commit pin
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ github.sha }}
+          path: trusted-runner-ops
+          sparse-checkout: |
+            apps/web/lib/ops/governed-ai-pr-e2e-runner.seal-crypto.ts
+            apps/web/lib/ops/governed-ai-pr-e2e-runner.unseal-bundle.mjs
+            apps/web/lib/ops/governed-ai-pr-e2e-runner.seal-preflight.mjs
+            apps/web/lib/ops/governed-ai-pr-e2e-runner.seal-public-key.pem
+          sparse-checkout-cone-mode: false
+
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        id: setup_bun
+        with:
+          bun-version: 1.2.15
+
+      - name: Pin trusted bun path from setup-bun
+        id: pin_bun
+        run: |
+          set -euo pipefail
+          BUN_PATH="$(command -v bun)"
+          if [ -z "$BUN_PATH" ] || [ ! -x "$BUN_PATH" ]; then
+            echo "::error::Missing bun executable after setup-bun"
+            exit 1
+          fi
+          echo "bun_path=${BUN_PATH}" >> "$GITHUB_OUTPUT"
+
+      - name: Seal private key preflight
+        env:
+          GOVERNED_E2E_SEAL_PRIVATE_KEY: ${{ secrets.GOVERNED_E2E_SEAL_PRIVATE_KEY }}
+          GOVERNED_E2E_SEAL_PUBLIC_KEY_PATH: trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.seal-public-key.pem
+        run: "${{ steps.pin_bun.outputs.bun_path }}" trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.seal-preflight.mjs
+
+      - name: Download harness ciphertext bundle
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: governed-ai-e2e-harness-sealed-${{ github.run_id }}-${{ github.run_attempt }}
+          path: e2e-transfer
+
+      - name: Verify sealed bundle binding and authentication on isolated runner
+        env:
+          GOVERNED_E2E_SEAL_PRIVATE_KEY: ${{ secrets.GOVERNED_E2E_SEAL_PRIVATE_KEY }}
+          GOVERNED_E2E_SEAL_REPOSITORY: 2qjckdknjf-ctrl/Aistroyka-web
+          GOVERNED_E2E_SEAL_WORKFLOW: .github/workflows/governed-ai-pr-e2e-runner.yml
+          GOVERNED_E2E_SEAL_RUN_ID: ${{ github.run_id }}
+          GOVERNED_E2E_SEAL_RUN_ATTEMPT: ${{ github.run_attempt }}
+          GOVERNED_E2E_SEAL_DISPATCH_SHA: ${{ github.sha }}
+          GOVERNED_E2E_SEAL_PULL_REQUEST_NUMBER: ${{ needs.trust-boundary-preflight.outputs.pull_request_number }}
+          GOVERNED_E2E_SEAL_TARGET_SHA: ${{ needs.trust-boundary-preflight.outputs.target_sha }}
+          GOVERNED_E2E_SEAL_DEPLOYMENT_ID: ${{ needs.trust-boundary-preflight.outputs.deployment_id }}
+        run: |
+          set -euo pipefail
+          test -f e2e-transfer/governed-ai-e2e-sealed-bundle.json
+          VERIFY_DIR="$(mktemp -d)"
+          "${{ steps.pin_bun.outputs.bun_path }}" trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.unseal-bundle.mjs \
+            e2e-transfer/governed-ai-e2e-sealed-bundle.json "$VERIFY_DIR"
+          rm -rf "$VERIFY_DIR"
+
+      - name: Upload authenticated sealed bundle for postprocess
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: governed-ai-e2e-sealed-${{ github.run_id }}-${{ github.run_attempt }}
+          path: e2e-transfer/governed-ai-e2e-sealed-bundle.json
+          retention-days: 1
+          if-no-files-found: error
+
+  governed-ai-pr-e2e-postprocess:
+    name: Governed AI PR E2E postprocess
+    needs:
+      - trust-boundary-preflight
+      - governed-ai-pr-e2e-staging-gate
+      - governed-ai-pr-e2e-harness
+      - governed-ai-pr-e2e-seal
+    if: >-
+      ${{
+        needs.trust-boundary-preflight.result == 'success' &&
+        needs.governed-ai-pr-e2e-staging-gate.result == 'success' &&
+        needs.governed-ai-pr-e2e-harness.result == 'success' &&
+        needs.governed-ai-pr-e2e-seal.result == 'success' &&
+        github.ref == 'refs/heads/main' &&
+        inputs.confirmation == 'RUN_GOVERNED_AI_STAGING_E2E'
+      }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: staging
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout trusted runner ops from dispatch commit pin
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ github.sha }}
+          path: trusted-runner-ops
+          sparse-checkout: |
+            apps/web/lib/ops/governed-ai-pr-e2e-runner.constants.ts
+            apps/web/lib/ops/governed-ai-pr-e2e-runner.deployment-binding.ts
+            apps/web/lib/ops/governed-ai-pr-e2e-runner.verdict.ts
+            apps/web/lib/ops/governed-ai-pr-e2e-runner.redact-e2e-result.mjs
+            apps/web/lib/ops/governed-ai-pr-e2e-runner.validate-e2e-verdict.mjs
+            apps/web/lib/ops/governed-ai-pr-e2e-runner.seal-crypto.ts
+            apps/web/lib/ops/governed-ai-pr-e2e-runner.unseal-bundle.mjs
+          sparse-checkout-cone-mode: false
+
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        id: setup_bun
+        with:
+          bun-version: 1.2.15
+
+      - name: Pin trusted bun path from setup-bun
+        id: pin_bun
+        run: |
+          set -euo pipefail
+          BUN_PATH="$(command -v bun)"
+          if [ -z "$BUN_PATH" ] || [ ! -x "$BUN_PATH" ]; then
+            echo "::error::Missing bun executable after setup-bun"
+            exit 1
+          fi
+          echo "bun_path=${BUN_PATH}" >> "$GITHUB_OUTPUT"
+
+      - name: Download authenticated sealed bundle from seal job
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: governed-ai-e2e-sealed-${{ github.run_id }}-${{ github.run_attempt }}
+          path: e2e-transfer
+
+      - name: Unseal E2E transfer bundle into private temp workspace
+        env:
+          GOVERNED_E2E_SEAL_PRIVATE_KEY: ${{ secrets.GOVERNED_E2E_SEAL_PRIVATE_KEY }}
+          GOVERNED_E2E_SEAL_REPOSITORY: 2qjckdknjf-ctrl/Aistroyka-web
+          GOVERNED_E2E_SEAL_WORKFLOW: .github/workflows/governed-ai-pr-e2e-runner.yml
+          GOVERNED_E2E_SEAL_RUN_ID: ${{ github.run_id }}
+          GOVERNED_E2E_SEAL_RUN_ATTEMPT: ${{ github.run_attempt }}
+          GOVERNED_E2E_SEAL_DISPATCH_SHA: ${{ github.sha }}
+          GOVERNED_E2E_SEAL_PULL_REQUEST_NUMBER: ${{ needs.trust-boundary-preflight.outputs.pull_request_number }}
+          GOVERNED_E2E_SEAL_TARGET_SHA: ${{ needs.trust-boundary-preflight.outputs.target_sha }}
+          GOVERNED_E2E_SEAL_DEPLOYMENT_ID: ${{ needs.trust-boundary-preflight.outputs.deployment_id }}
+        run: |
+          set -euo pipefail
+          test -f e2e-transfer/governed-ai-e2e-sealed-bundle.json
+          mkdir -p e2e-workspace
+          "${{ steps.pin_bun.outputs.bun_path }}" trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.unseal-bundle.mjs \
+            e2e-transfer/governed-ai-e2e-sealed-bundle.json e2e-workspace
+          rm -f e2e-transfer/governed-ai-e2e-sealed-bundle.json
+          test -f e2e-workspace/e2e-result.json
+
+      - name: Verify trusted runner ops integrity
+        run: |
+          set -euo pipefail
+          test -f trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.verdict.ts
+          grep -q 'GOVERNED_AI_E2E_REQUIRED_STEP_COUNT = 25' trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.verdict.ts
+          grep -q 'validateE2eSuccessContract' trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.validate-e2e-verdict.mjs
+          grep -q 'injectTrustedContractFields' trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.redact-e2e-result.mjs
 
       - name: Redact E2E evidence
         id: redact
-        if: always() && steps.e2e.outcome != 'cancelled' && steps.post_e2e_deploy.outcome == 'success'
-        working-directory: pr-workspace
+        working-directory: e2e-workspace
         env:
+          TRUSTED_CANONICAL_ORIGIN: ${{ needs.trust-boundary-preflight.outputs.preview_base_url }}
+          TARGET_SHA: ${{ needs.trust-boundary-preflight.outputs.target_sha }}
           REDACT_VERCEL_BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
           REDACT_WORKER_PASS: ${{ secrets.PILOT_SMOKE_PASSWORD_STAGING }}
           REDACT_MANAGER_PASS: ${{ secrets.PILOT_E2E_MANAGER_PASSWORD }}
@@ -457,55 +909,64 @@ jobs:
           REDACT_STAKEHOLDER_REVOKED_PASS: ${{ secrets.PILOT_E2E_STAKEHOLDER_REVOKED_PASSWORD }}
           REDACT_CROSS_TENANT_PASS: ${{ secrets.PILOT_E2E_CROSS_TENANT_PASSWORD }}
           REDACT_SUPABASE_ANON: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_STAGING }}
+          REDACT_WORKER_EMAIL: ${{ secrets.PILOT_SMOKE_EMAIL_STAGING }}
+          REDACT_MANAGER_EMAIL: ${{ secrets.PILOT_E2E_MANAGER_EMAIL }}
+          REDACT_OWNER_EMAIL: ${{ secrets.STAKEHOLDER_SMOKE_EMAIL }}
+          REDACT_STAKEHOLDER_REVOKED_EMAIL: ${{ secrets.PILOT_E2E_STAKEHOLDER_REVOKED_EMAIL }}
+          REDACT_CROSS_TENANT_EMAIL: ${{ secrets.PILOT_E2E_CROSS_TENANT_EMAIL }}
         run: |
           set -euo pipefail
-          bun ../trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.redact-e2e-result.mjs
+          rm -rf e2e-result-redacted.json
+          "${{ steps.pin_bun.outputs.bun_path }}" ../trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.redact-e2e-result.mjs
           if [ ! -f e2e-result-redacted.json ] || [ -L e2e-result-redacted.json ]; then
             echo "::error::Trusted redaction did not produce a regular file"
             exit 1
           fi
 
       - name: Cleanup raw E2E files
-        if: always() && steps.e2e.outcome != 'cancelled'
-        working-directory: pr-workspace
+        if: always() && steps.redact.outcome == 'success'
+        working-directory: e2e-workspace
         run: |
           set -euo pipefail
           rm -f e2e-result.json e2e-result.stderr
 
       - name: Report redacted verdict only
         id: report_verdict
-        if: always() && steps.e2e.outcome != 'cancelled' && steps.redact.outcome == 'success'
-        working-directory: pr-workspace
+        if: steps.redact.outcome == 'success'
+        working-directory: e2e-workspace
+        env:
+          TRUSTED_CANONICAL_ORIGIN: ${{ needs.trust-boundary-preflight.outputs.preview_base_url }}
+          TARGET_SHA: ${{ needs.trust-boundary-preflight.outputs.target_sha }}
+          E2E_EXIT_CODE: ${{ needs.governed-ai-pr-e2e-harness.outputs.e2e_exit_code }}
         run: |
           set -euo pipefail
           if [ ! -f e2e-result-redacted.json ]; then
             echo "::error::Missing redacted E2E artifact"
             exit 1
           fi
-          VERDICT="$(jq -r '.verdict // "unknown"' e2e-result-redacted.json)"
-          echo "E2E verdict: ${VERDICT}"
-          if [ "$VERDICT" != "PASS" ]; then
-            echo "::error::Governed AI E2E verdict is not PASS"
+          if ! printf '%s' "$E2E_EXIT_CODE" | grep -Eq '^[0-9]+$'; then
+            echo "::error::Invalid E2E exit code from upstream job"
             exit 1
           fi
-          EXIT_CODE="${{ steps.e2e.outputs.exit_code }}"
-          if [ "${EXIT_CODE:-0}" -ne 0 ]; then
-            exit "${EXIT_CODE}"
-          fi
+          VERDICT="$("${{ steps.pin_bun.outputs.bun_path }}" ../trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.validate-e2e-verdict.mjs "$E2E_EXIT_CODE" e2e-result-redacted.json)"
+          echo "E2E verdict: ${VERDICT} (25/25 PASS required)"
 
       - name: Upload redacted E2E evidence
         if: steps.redact.outcome == 'success'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: governed-ai-pr-e2e-evidence-pr${{ needs.trust-boundary-preflight.outputs.pull_request_number }}
-          path: pr-workspace/e2e-result-redacted.json
+          path: e2e-workspace/e2e-result-redacted.json
           retention-days: 14
 
   governed-ai-pr-e2e-verdict:
     name: Governed AI PR E2E verdict
     needs:
       - trust-boundary-preflight
-      - governed-ai-pr-e2e
+      - governed-ai-pr-e2e-staging-gate
+      - governed-ai-pr-e2e-harness
+      - governed-ai-pr-e2e-seal
+      - governed-ai-pr-e2e-postprocess
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -516,12 +977,36 @@ jobs:
             echo "::error::Trust boundary preflight failed"
             exit 1
           fi
-          if [ "${{ needs.governed-ai-pr-e2e.result }}" = "skipped" ]; then
-            echo "::error::Secret-consuming E2E job was skipped (blocked run)"
+          if [ "${{ needs.governed-ai-pr-e2e-staging-gate.result }}" = "skipped" ]; then
+            echo "::error::Staging gate job was skipped (blocked run)"
             exit 1
           fi
-          if [ "${{ needs.governed-ai-pr-e2e.result }}" != "success" ]; then
-            echo "::error::Governed AI E2E job failed"
+          if [ "${{ needs.governed-ai-pr-e2e-staging-gate.result }}" != "success" ]; then
+            echo "::error::Governed AI staging gate failed"
+            exit 1
+          fi
+          if [ "${{ needs.governed-ai-pr-e2e-harness.result }}" = "skipped" ]; then
+            echo "::error::Secret-consuming E2E harness job was skipped (blocked run)"
+            exit 1
+          fi
+          if [ "${{ needs.governed-ai-pr-e2e-harness.result }}" != "success" ]; then
+            echo "::error::Governed AI E2E harness job failed"
+            exit 1
+          fi
+          if [ "${{ needs.governed-ai-pr-e2e-seal.result }}" = "skipped" ]; then
+            echo "::error::Trusted E2E seal job was skipped"
+            exit 1
+          fi
+          if [ "${{ needs.governed-ai-pr-e2e-seal.result }}" != "success" ]; then
+            echo "::error::Governed AI E2E seal job failed"
+            exit 1
+          fi
+          if [ "${{ needs.governed-ai-pr-e2e-postprocess.result }}" = "skipped" ]; then
+            echo "::error::Trusted E2E postprocess job was skipped"
+            exit 1
+          fi
+          if [ "${{ needs.governed-ai-pr-e2e-postprocess.result }}" != "success" ]; then
+            echo "::error::Governed AI E2E postprocess job failed"
             exit 1
           fi
           echo "Governed AI PR E2E completed successfully"

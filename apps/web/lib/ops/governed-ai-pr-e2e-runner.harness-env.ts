@@ -1,0 +1,38 @@
+/** Environment variable names allowed to reach the PR-controlled E2E harness process. */
+export const GOVERNED_AI_E2E_HARNESS_ALLOWED_ENV = [
+  "GOVERNED_E2E_BASE_URL",
+  "VERCEL_AUTOMATION_BYPASS_SECRET",
+  "PILOT_E2E_WORKER_EMAIL",
+  "PILOT_E2E_WORKER_PASSWORD",
+  "PILOT_E2E_MANAGER_EMAIL",
+  "PILOT_E2E_MANAGER_PASSWORD",
+  "PILOT_E2E_OWNER_EMAIL",
+  "PILOT_E2E_OWNER_PASSWORD",
+  "PILOT_E2E_PROJECT_ID",
+  "PILOT_E2E_STAKEHOLDER_REVOKED_EMAIL",
+  "PILOT_E2E_STAKEHOLDER_REVOKED_PASSWORD",
+  "PILOT_E2E_CROSS_TENANT_EMAIL",
+  "PILOT_E2E_CROSS_TENANT_PASSWORD",
+  "NEXT_PUBLIC_SUPABASE_URL",
+  "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+  "GOVERNED_E2E_MARKER",
+  "GOVERNED_E2E_NODE_PATH",
+  "HOME",
+  "PATH",
+  "LANG",
+  "LC_ALL",
+  "TMPDIR",
+] as const;
+
+export const GOVERNED_AI_E2E_TRUSTED_PATH =
+  "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin";
+
+export const GOVERNED_AI_E2E_SAFE_SHELL_ENV = {
+  BASH_ENV: "/dev/null",
+  ENV: "/dev/null",
+  CDPATH: "",
+  GLOBIGNORE: "*",
+  NODE_OPTIONS: "",
+  BUN_OPTIONS: "",
+  NODE_NO_WARNINGS: "1",
+} as const;

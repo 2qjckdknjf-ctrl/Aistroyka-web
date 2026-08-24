@@ -5,7 +5,7 @@ const rawPath = "e2e-result.json";
 const redactedPath = "e2e-result-redacted.json";
 
 const SENSITIVE_KEY =
-  /(?:password|secret|token|api[_-]?key|bypass|authorization|anon[_-]?key|credential)/i;
+  /(?:password|secret|token|api[_-]?key|bypass|authorization|anon[_-]?key|credential|email)/i;
 
 const KNOWN_SECRET_ENV_KEYS = [
   "REDACT_VERCEL_BYPASS",
@@ -15,11 +15,69 @@ const KNOWN_SECRET_ENV_KEYS = [
   "REDACT_STAKEHOLDER_REVOKED_PASS",
   "REDACT_CROSS_TENANT_PASS",
   "REDACT_SUPABASE_ANON",
+  "REDACT_WORKER_EMAIL",
+  "REDACT_MANAGER_EMAIL",
+  "REDACT_OWNER_EMAIL",
+  "REDACT_STAKEHOLDER_REVOKED_EMAIL",
+  "REDACT_CROSS_TENANT_EMAIL",
 ];
+
+/** Root-level contract fields are never preserved from harness output. */
+const PRESERVED_ROOT_KEYS = new Set();
+
+const ALLOWED_ROOT_KEYS = new Set(["verdict", "base", "deployedSha7", "results", "error"]);
+
+function redactResultEntry(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+  const step = value.step;
+  const status = value.status;
+  if (typeof step !== "number" || !Number.isInteger(step) || step < 1 || step > 25) {
+    return null;
+  }
+  if (typeof status !== "string") {
+    return null;
+  }
+  return {
+    step,
+    status: redactString(status, "status"),
+  };
+}
+
+function redactRootRecord(value, knownSecrets) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return { verdict: "FAILED", error: "invalid e2e root" };
+  }
+  const record = {};
+  for (const [key, nested] of Object.entries(value)) {
+    if (!ALLOWED_ROOT_KEYS.has(key)) {
+      continue;
+    }
+    if (key === "results") {
+      if (!Array.isArray(nested)) {
+        record.results = [];
+        continue;
+      }
+      record.results = nested
+        .map((entry) => redactResultEntry(entry))
+        .filter((entry) => entry !== null);
+      continue;
+    }
+    if (typeof nested !== "string") {
+      continue;
+    }
+    record[key] = redactString(nested, key, knownSecrets);
+  }
+  if (!Array.isArray(record.results)) {
+    record.results = [];
+  }
+  return record;
+}
 
 function collectKnownSecrets() {
   return KNOWN_SECRET_ENV_KEYS.map((key) => process.env[key])
-    .filter((value) => typeof value === "string" && value.length >= 8)
+    .filter((value) => typeof value === "string" && value.length >= 3)
     .sort((a, b) => b.length - a.length);
 }
 
@@ -43,19 +101,42 @@ function redactString(value, key = "", knownSecrets = []) {
   return scrubKnownSecrets(out, knownSecrets);
 }
 
-function redactValue(value, key = "", knownSecrets = []) {
+function redactValue(value, key = "", knownSecrets = [], isRootChild = false) {
   if (typeof value === "string") {
+    if (isRootChild && PRESERVED_ROOT_KEYS.has(key)) {
+      return scrubKnownSecrets(value, knownSecrets);
+    }
     return redactString(value, key, knownSecrets);
   }
   if (Array.isArray(value)) {
-    return value.map((item) => redactValue(item, key, knownSecrets));
+    return value.map((item) => redactValue(item, key, knownSecrets, false));
   }
   if (value && typeof value === "object") {
+    const rootObject = key === "";
     return Object.fromEntries(
-      Object.entries(value).map(([nestedKey, nested]) => [nestedKey, redactValue(nested, nestedKey, knownSecrets)]),
+      Object.entries(value).map(([nestedKey, nested]) => [
+        nestedKey,
+        redactValue(nested, nestedKey, knownSecrets, rootObject),
+      ]),
     );
   }
   return value;
+}
+
+function normalizeOrigin(input) {
+  return input.trim().replace(/\/+$/, "");
+}
+
+function injectTrustedContractFields(record) {
+  const trustedOrigin = process.env.TRUSTED_CANONICAL_ORIGIN?.trim();
+  const targetSha = process.env.TARGET_SHA?.trim();
+  if (trustedOrigin) {
+    record.base = normalizeOrigin(trustedOrigin);
+  }
+  if (targetSha && /^[a-f0-9]{40}$/i.test(targetSha)) {
+    record.deployedSha7 = targetSha.slice(0, 7);
+  }
+  return record;
 }
 
 function writeFailure(error) {
@@ -77,5 +158,5 @@ try {
   process.exit(0);
 }
 
-const redacted = redactValue(raw, "", knownSecrets);
+const redacted = injectTrustedContractFields(redactRootRecord(raw, knownSecrets));
 writeFileSync(redactedPath, JSON.stringify(redacted, null, 2));
