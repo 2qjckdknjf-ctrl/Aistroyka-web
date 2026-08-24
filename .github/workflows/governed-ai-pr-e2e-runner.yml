@@ -31,7 +31,7 @@ permissions:
 
 concurrency:
   group: governed-ai-pr-e2e-${{ inputs.pull_request_number }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   trust-boundary-preflight:
@@ -44,9 +44,10 @@ jobs:
       preview_base_url: ${{ steps.export.outputs.preview_base_url }}
       staging_environment_protected: ${{ steps.export.outputs.staging_environment_protected }}
     steps:
-      - name: Checkout trusted validator (same ref as workflow definition)
+      - name: Checkout trusted validator (dispatch commit pin)
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
+          ref: ${{ github.sha }}
           sparse-checkout: |
             apps/web/lib/ops/governed-ai-pr-e2e-runner.constants.ts
             apps/web/lib/ops/governed-ai-pr-e2e-runner.validate-preview-url.mjs
@@ -169,10 +170,32 @@ jobs:
     permissions:
       contents: read
     steps:
-      - name: Checkout trusted runner ops from workflow ref
+      - name: Revalidate PR head SHA after environment approval
+        env:
+          PR_NUM: ${{ needs.trust-boundary-preflight.outputs.pull_request_number }}
+          TARGET_SHA: ${{ needs.trust-boundary-preflight.outputs.target_sha }}
+        run: |
+          set -euo pipefail
+          REPO="2qjckdknjf-ctrl/Aistroyka-web"
+          PR_JSON="$(curl -fsSL \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ github.token }}" \
+            "https://api.github.com/repos/${REPO}/pulls/${PR_NUM}")"
+          STATE="$(echo "$PR_JSON" | jq -r '.state')"
+          HEAD_SHA="$(echo "$PR_JSON" | jq -r '.head.sha')"
+          if [ "$STATE" != "open" ]; then
+            echo "::error::PR #${PR_NUM} is no longer open after environment approval"
+            exit 1
+          fi
+          if [ "$HEAD_SHA" != "$TARGET_SHA" ]; then
+            echo "::error::PR head moved after preflight: head=${HEAD_SHA} expected=${TARGET_SHA}"
+            exit 1
+          fi
+
+      - name: Checkout trusted runner ops from dispatch commit pin
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
-          ref: ${{ github.ref }}
+          ref: ${{ github.sha }}
           path: trusted-runner-ops
           sparse-checkout: |
             apps/web/lib/ops/governed-ai-pr-e2e-runner.constants.ts

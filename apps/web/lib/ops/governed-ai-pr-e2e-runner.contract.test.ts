@@ -195,6 +195,12 @@ describe("governed-ai-pr-e2e-runner workflow contract", () => {
     expect(wf).toMatch(/Verify E2E entrypoint path is fixed/);
   });
 
+  it("queues concurrent runs and pins trusted helper checkout to github.sha", () => {
+    expect(wf).toMatch(/cancel-in-progress:\s*false/);
+    expect(wf).toMatch(/ref: \$\{\{ github\.sha \}\}/);
+    expect(wf).toMatch(/Revalidate PR head SHA after environment approval/);
+  });
+
   it("fails closed when secret-consuming job is skipped", () => {
     expect(wf).toMatch(/Secret-consuming E2E job was skipped/);
   });
