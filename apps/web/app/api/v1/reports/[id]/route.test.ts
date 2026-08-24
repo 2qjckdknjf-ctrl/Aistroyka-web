@@ -21,6 +21,17 @@ const getProjectIdForReport = vi.fn().mockResolvedValue("project-1");
 const updateReview = vi.fn();
 const listMediaByReportIdWithUrls = vi.fn().mockResolvedValue([]);
 const emitAudit = vi.fn().mockResolvedValue(undefined);
+const applyOwnerVisibilityOnReportReview = vi.fn().mockResolvedValue({
+  updated_count: 0,
+  report_id: "r1",
+  review_status: "approved",
+  idempotent: true,
+});
+
+vi.mock("@/lib/domain/visual-evidence/owner-evidence-visibility.service", () => ({
+  applyOwnerVisibilityOnReportReview: (...args: unknown[]) =>
+    applyOwnerVisibilityOnReportReview(...args),
+}));
 
 vi.mock("@/lib/tenant", () => ({
   getTenantContextFromRequest: (...args: unknown[]) => getTenantContextFromRequest(...args),

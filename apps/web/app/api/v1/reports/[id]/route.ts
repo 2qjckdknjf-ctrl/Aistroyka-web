@@ -8,6 +8,7 @@ import type { ReportReviewStatus } from "@/lib/domain/reports/report.repository"
 import { emitAudit } from "@/lib/observability/audit.service";
 import { getProjectMembership } from "@/lib/domain/projects/project-access";
 import type { TenantContext } from "@/lib/tenant/tenant.types";
+import { applyOwnerVisibilityOnReportReview } from "@/lib/domain/visual-evidence/owner-evidence-visibility.service";
 
 export const dynamic = "force-dynamic";
 
@@ -148,6 +149,18 @@ export async function PATCH(
     resource_id: id,
     details: { status, has_note: Boolean(normalizedNote) },
   });
+
+  const projectId = await reportRepo.getProjectIdForReport(supabase, ctx.tenantId, updated);
+  if (projectId) {
+    await applyOwnerVisibilityOnReportReview(supabase, {
+      tenantId: ctx.tenantId,
+      reportId: id,
+      projectId,
+      reviewerId: ctx.userId,
+      reviewStatus: status as ReportReviewStatus,
+      traceId: ctx.traceId ?? null,
+    });
+  }
 
   const media = await reportRepo.listMediaByReportIdWithUrls(supabase, id, ctx.tenantId);
   return NextResponse.json({ data: { ...updated, media } });
