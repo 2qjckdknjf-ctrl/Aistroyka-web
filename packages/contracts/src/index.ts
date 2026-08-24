@@ -57,6 +57,11 @@ export {
   type FinalizeUploadSessionRequest,
 } from "./schemas/worker.schema";
 export {
+  ReportCompletenessStatusSchema,
+  ReportCompletenessResultSchema,
+  type ReportCompletenessResult,
+} from "./schemas/report-completeness.schema";
+export {
   PlanCodeSchema,
   AddOnCodeSchema,
   EntitlementLimitsSchema,

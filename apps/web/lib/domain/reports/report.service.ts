@@ -9,6 +9,8 @@ import { enqueueJob } from "@/lib/platform/jobs/job.service";
 import { emitAudit } from "@/lib/observability/audit.service";
 import { emitChange } from "@/lib/sync/change-log.repository";
 import { notifyProjectManagers, notifyTenantManagers } from "@/lib/domain/notifications/manager-notifications.repository";
+import { syncEvidenceFromReportMedia } from "@/lib/domain/visual-evidence/visual-evidence.service";
+import { evaluateReportCompleteness } from "@/lib/domain/reports/report-completeness.service";
 
 /** Returns { ok, code? }. code = task_invalid | task_not_assigned when not ok. */
 export async function validateTaskForReportLink(
@@ -115,6 +117,17 @@ export async function submitReport(
   });
 
   const projectId = await repo.getProjectIdForReport(supabase, ctx.tenantId, report);
+  if (projectId) {
+    await syncEvidenceFromReportMedia(
+      supabase,
+      ctx.tenantId,
+      reportId,
+      projectId,
+      taskId ?? report.task_id ?? null,
+      ctx.userId
+    );
+    await evaluateReportCompleteness(supabase, ctx.tenantId, reportId);
+  }
   const input = {
     type: "report_submitted" as const,
     title: "New report submitted",
