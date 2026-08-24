@@ -82,7 +82,7 @@ Job 2 uses the **canonical URL from GitHub deployment metadata** only. Raw opera
 | Status from non-Vercel identity | Latest status must be `vercel[bot]` id `35613825`; App metadata when present must match Vercel app; evidence records observed App ids/slugs (nullable) plus explicit `*_provenance_method` |
 | Stale success after newer failure | Latest status selected by timestamp/id; non-success latest state fails binding |
 | Status drift after environment approval | Job 2 re-fetches all statuses and revalidates latest status creator/state/URL before PR checkout |
-| PR E2E script at verified SHA runs with QA personas | Fixed entrypoint path only; `bun install --ignore-scripts`; pinned QA project; disposable QA data; no service-role; protected staging approval; owner-reviewed dispatch — see residual risk |
+| PR E2E script at verified SHA runs with QA personas | Fixed entrypoint path only; `bun install --ignore-scripts`; pinned QA project; disposable QA data; no service-role; protected staging approval; owner-reviewed dispatch; trusted runner ops re-checked out after PR E2E — see residual risk |
 | Bypass token in logs/artifacts | Header-only bypass; stdout/stderr captured to ephemeral files; redacted artifact only; harness `base`/`deployedSha7` overwritten from trusted deployment binding env before upload |
 | Wrong project mutated | **Required** `PILOT_SMOKE_PROJECT_ID_STAGING` variable; no auto-discovery |
 | Feature-branch workflow tampering | Job 1 + Job 2 require `github.ref == refs/heads/main`; Job 2 additionally requires protected staging preflight |

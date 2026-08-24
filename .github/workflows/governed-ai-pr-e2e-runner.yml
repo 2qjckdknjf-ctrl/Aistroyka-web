@@ -442,6 +442,9 @@ jobs:
             exit 1
           fi
 
+      - name: Harden trusted runner ops before PR-controlled E2E
+        run: chmod -R a-w trusted-runner-ops
+
       - name: Run governed AI staging E2E (raw output file only)
         id: e2e
         working-directory: pr-workspace
@@ -468,6 +471,29 @@ jobs:
           node scripts/pilot/governed-ai-owner-evidence-staging-e2e.mjs > e2e-result.json 2> e2e-result.stderr || E2E_EXIT=$?
           echo "exit_code=${E2E_EXIT}" >> "$GITHUB_OUTPUT"
           exit 0
+
+      - name: Restore trusted runner ops after PR-controlled E2E
+        if: always() && steps.e2e.outcome != 'cancelled'
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ github.sha }}
+          path: trusted-runner-ops-restored
+          sparse-checkout: |
+            apps/web/lib/ops/governed-ai-pr-e2e-runner.constants.ts
+            apps/web/lib/ops/governed-ai-pr-e2e-runner.deployment-binding.ts
+            apps/web/lib/ops/governed-ai-pr-e2e-runner.verdict.ts
+            apps/web/lib/ops/governed-ai-pr-e2e-runner.redact-e2e-result.mjs
+            apps/web/lib/ops/governed-ai-pr-e2e-runner.validate-deployment-binding.mjs
+            apps/web/lib/ops/governed-ai-pr-e2e-runner.validate-e2e-verdict.mjs
+          sparse-checkout-cone-mode: false
+
+      - name: Replace trusted runner ops from dispatch pin
+        if: always() && steps.e2e.outcome != 'cancelled'
+        run: |
+          set -euo pipefail
+          rm -f trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.*
+          cp trusted-runner-ops-restored/apps/web/lib/ops/governed-ai-pr-e2e-runner.* trusted-runner-ops/apps/web/lib/ops/
+          rm -rf trusted-runner-ops-restored
 
       - name: Reconfirm preview deployment SHA immediately after E2E
         id: post_e2e_deploy
