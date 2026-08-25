@@ -1,55 +1,111 @@
 import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
+import { Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
-import { V41InnerPage } from "@/components/public/v41";
+import { V41_ASSETS } from "@/components/public/v41";
+import { ConstructionMedia, FeatureStageNav, FinalPilotCta, InternalPageHero, ProductWindow, WorkflowRail } from "@/components/public/v43";
 
 type Props = { params: Promise<{ locale: string }> };
 
-const FEATURES = [
-  "projectManagement",
-  "tasks",
-  "dailyReports",
-  "photoVideo",
-  "aiAnalytics",
-  "teamRoles",
-  "dashboards",
-  "integrations",
+const STAGES = [
+  {
+    id: "planning",
+    n: "01",
+    kind: "product" as const,
+    asset: "commandCenter" as const,
+    objectPosition: "50% 12%",
+  },
+  {
+    id: "site",
+    n: "02",
+    kind: "photo" as const,
+    asset: "hero" as const,
+  },
+  {
+    id: "control",
+    n: "03",
+    kind: "product" as const,
+    asset: "commandCenter" as const,
+    objectPosition: "50% 88%",
+  },
+  {
+    id: "ai",
+    n: "04",
+    kind: "product" as const,
+    asset: "aiAnalytics" as const,
+    objectPosition: undefined,
+  },
 ] as const;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: "public.features" });
-  return {
-    title: t("title"),
-    description: t("metaDescription"),
-  };
+  const t = await getTranslations({ locale, namespace: "public.v43.features" });
+  return { title: t("title"), description: t("lead") };
 }
 
 export default async function FeaturesPage({ params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const t = await getTranslations("public.features");
+  const t = await getTranslations("public.v43.features");
   const tV41 = await getTranslations("public.v41");
 
   return (
-    <V41InnerPage
-      eyebrow={t("title")}
-      title={t("title")}
-      lead={t("metaDescription")}
-      ctaLabel={tV41("launchPilot")}
-      secondaryHref="/platform"
-      secondaryLabel={tV41("storyLink")}
-    >
-      <div className="v41-inner-grid cols-2">
-        {FEATURES.map((key) => (
-          <article key={key} className="v41-inner-card v41-glass">
-            <h2>{t(key)}</h2>
-            <p>{t(`${key}Desc`)}</p>
-          </article>
-        ))}
-      </div>
-    </V41InnerPage>
+    <>
+      <InternalPageHero
+        eyebrow={t("eyebrow")}
+        title={t("h1")}
+        lead={t("lead")}
+        primaryLabel={t("watchCta")}
+        primaryHref="#site"
+        secondaryHref="/platform"
+        secondaryLabel={tV41("storyLink")}
+      />
+      <FeatureStageNav
+        label={t("stageNav")}
+        stages={STAGES.map((stage) => ({ id: stage.id, n: stage.n, label: t(`${stage.id}Nav`) }))}
+      />
+      {STAGES.map((stage) => (
+        <section key={stage.id} id={stage.id} className="v41-page v41-section v43-feature-stage">
+          <div>
+            <p className="v41-eyebrow">
+              {stage.n} {t(`${stage.id}Nav`)}
+            </p>
+            <h2>{t(`${stage.id}Title`)}</h2>
+            <p>{t(`${stage.id}Lead`)}</p>
+            <WorkflowRail
+              steps={[
+                { n: "1", title: t(`${stage.id}Step1Title`), text: t(`${stage.id}Step1Text`) },
+                { n: "2", title: t(`${stage.id}Step2Title`), text: t(`${stage.id}Step2Text`) },
+                { n: "3", title: t(`${stage.id}Step3Title`), text: t(`${stage.id}Step3Text`) },
+              ]}
+            />
+            <p>
+              <Link href={stage.id === "ai" ? "/ai-construction-control" : "/platform"}>{t(`${stage.id}Link`)}</Link>
+            </p>
+          </div>
+          {stage.kind === "photo" ? (
+            <ConstructionMedia src={V41_ASSETS[stage.asset]} alt={tV41("heroAlt")} />
+          ) : (
+            <ProductWindow
+              src={V41_ASSETS[stage.asset]}
+              alt={t(`${stage.id}ProductAlt`)}
+              objectPosition={stage.kind === "product" ? stage.objectPosition : undefined}
+            />
+          )}
+        </section>
+      ))}
+      <FinalPilotCta
+        copy={{
+          eyebrow: tV41("pilotEyebrow"),
+          title: tV41("pilotTitle"),
+          lead: tV41("pilotLead"),
+          launchPilot: tV41("launchPilot"),
+          contact: tV41("contactUs"),
+          note: tV41("pilotNote"),
+        }}
+      />
+    </>
   );
 }
 

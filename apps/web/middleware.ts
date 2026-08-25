@@ -13,6 +13,7 @@ import { applyApiSecurityHeadersToHeaders } from "@/lib/security-headers";
 import { getActiveTenantRoleForUser } from "@/lib/tenant/tenant-role.server";
 import { isPortalOnlyTenantRole } from "@/lib/tenant/tenant.policy";
 import { redirectIfStakeholderBlockedPath } from "@/lib/tenant/stakeholder-dashboard-paths";
+import { matchesPathPrefix } from "@/lib/routing/matches-path-prefix";
 
 const intlMiddleware = createIntlMiddleware(routing);
 
@@ -58,8 +59,10 @@ function pathWithoutLocale(pathname: string): { path: string; locale: string } {
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+  const localeFromPath = pathWithoutLocale(pathname).locale;
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-aistroyka-pathname", pathname);
+  requestHeaders.set("x-next-intl-locale", localeFromPath);
   const requestWithPath = new NextRequest(request.url, {
     headers: requestHeaders,
     method: request.method,
@@ -150,13 +153,14 @@ export async function middleware(request: NextRequest) {
   const pathnameForLoc = request.nextUrl.pathname;
   const { path: pathWithoutLoc, locale } = pathWithoutLocale(pathnameForLoc);
 
-  const isProtected = PROTECTED_PREFIXES.some((p) => pathWithoutLoc.startsWith(p));
+  const isProtected = PROTECTED_PREFIXES.some((p) => matchesPathPrefix(pathWithoutLoc, p));
   const isPlatformAdminPageAfterIntl = isPlatformAdminPagePath(pathWithoutLoc);
-  const isAuthPage = AUTH_PREFIXES.some((p) => pathWithoutLoc.startsWith(p));
+  const isAuthPage = AUTH_PREFIXES.some((p) => matchesPathPrefix(pathWithoutLoc, p));
 
   if (!user && (isProtected || isPlatformAdminPageAfterIntl)) {
     const loginUrl = new URL(`/${locale}/login`, request.url);
-    loginUrl.searchParams.set("next", pathnameForLoc);
+    const nextTarget = `${pathnameForLoc}${request.nextUrl.search}`;
+    loginUrl.searchParams.set("next", nextTarget);
     const redir = NextResponse.redirect(loginUrl);
     mergeSupabaseSessionIntoResponse(sessionResponse, redir);
     redir.headers.set(

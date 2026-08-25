@@ -8,6 +8,7 @@ type V41PilotButtonProps = {
   className?: string;
   testId?: string;
   type?: "button" | "submit";
+  plan?: string;
 };
 
 export function V41PilotButton({
@@ -15,10 +16,11 @@ export function V41PilotButton({
   className = "v41-btn v41-btn-primary",
   testId,
   type = "button",
+  plan,
 }: V41PilotButtonProps) {
   const { open } = useV41Pilot();
   return (
-    <button type={type} className={className} onClick={open} data-testid={testId}>
+    <button type={type} className={className} onClick={() => open(plan ? { plan } : undefined)} data-testid={testId}>
       {children}
     </button>
   );

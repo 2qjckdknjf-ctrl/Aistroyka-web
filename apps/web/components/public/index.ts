@@ -1,5 +1,6 @@
 export { PublicHeader } from "./PublicHeader";
 export { PublicFooter } from "./PublicFooter";
+export { PublicLocaleSwitcher } from "./PublicLocaleSwitcher";
 export { PublicAmbientField } from "./PublicAmbientField";
 export { PublicLiquidGlassRoot } from "./PublicLiquidGlassRoot";
 export { PublicHeroCTA, PUBLIC_CTA_HREFS, type PublicCtaLabels, type PublicHeroCTAProps } from "./PublicHeroCTA";
