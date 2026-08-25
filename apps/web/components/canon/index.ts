@@ -1,5 +1,6 @@
 export { CanonSidebarNav } from "./CanonSidebarNav";
 export { CanonTopBar } from "./CanonTopBar";
+export { CanonNotificationBell } from "./CanonNotificationBell";
 export { CanonFooterBar } from "./CanonFooterBar";
 export { CanonTasksAiPanel } from "./CanonTasksAiPanel";
 export { DashboardTasksCanonPage } from "./DashboardTasksCanonPage";
