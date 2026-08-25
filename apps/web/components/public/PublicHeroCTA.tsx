@@ -43,7 +43,7 @@ export function PublicHeroCTA({
     <button
       type="button"
       className="v41-btn v41-btn-primary min-w-0 flex-1 sm:flex-none"
-      onClick={pilot.open}
+      onClick={() => pilot.open()}
       data-testid={`${testIdPrefix}.launch-pilot`}
     >
       {primaryLabel}

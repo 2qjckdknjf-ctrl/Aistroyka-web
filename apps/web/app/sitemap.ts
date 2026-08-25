@@ -35,7 +35,7 @@ const PUBLIC_PATHS = [
   "/integrations",
   "/api",
   "/workflows",
-  "/enterprise",
+  "/pricing/enterprise",
   "/implementation",
   "/partners",
 ];

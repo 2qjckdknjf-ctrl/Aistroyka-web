@@ -10,9 +10,10 @@ const OBJECT_RANGE_KEYS = ["range1", "range2", "range3"] as const;
 
 type PilotModalProps = {
   onClose: () => void;
+  plan?: string;
 };
 
-export function PilotModal({ onClose }: PilotModalProps) {
+export function PilotModal({ onClose, plan = "" }: PilotModalProps) {
   const t = useTranslations("public.v41.pilot");
   const titleId = useId();
   const panelRef = useRef<HTMLElement>(null);
@@ -59,6 +60,7 @@ export function PilotModal({ onClose }: PilotModalProps) {
       email: String(data.get("email") ?? ""),
       company: String(data.get("company") ?? ""),
       objectsRange: String(data.get("objectsRange") ?? ""),
+      plan,
     });
     setStatus("sending");
     setErrorMessage(null);

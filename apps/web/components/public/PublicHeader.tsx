@@ -1,18 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, usePathname } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { ArrowRight, Menu, X } from "lucide-react";
 import { V41PilotButton } from "./v41/V41PilotButton";
 import { V41_ASSETS } from "./v41/v41-assets";
+import { PublicLocaleSwitcher } from "./PublicLocaleSwitcher";
 
 const PRIMARY_NAV = [
   { href: "/platform", key: "platform" as const },
   { href: "/features", key: "features" as const },
   { href: "/solutions", key: "solutions" as const },
   { href: "/pricing", key: "pricing" as const },
-  { href: "/enterprise", key: "enterprise" as const },
+  { href: "/about", key: "about" as const },
 ] as const;
 
 export function PublicHeader() {
@@ -20,9 +21,28 @@ export function PublicHeader() {
   const tCta = useTranslations("public.cta");
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    function onScroll() {
+      setScrolled(window.scrollY > 12);
+    }
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [mobileMenuOpen]);
 
   return (
-    <header className="v41-header v41-glass">
+    <header className={`v41-header v41-glass${scrolled ? " is-scrolled" : ""}`}>
       <Link href="/" aria-label="AISTROYKA">
         <img className="v41-logo" src={V41_ASSETS.wordmark} alt="AISTROYKA" width={160} height={32} />
       </Link>
@@ -37,6 +57,7 @@ export function PublicHeader() {
         })}
       </nav>
       <div className="v41-header-actions">
+        <PublicLocaleSwitcher />
         <Link href="/dashboard" className="v41-cabinet-link" data-testid="cta.public.header.cabinet">
           {t("cabinet")}
         </Link>
@@ -71,6 +92,7 @@ export function PublicHeader() {
             {t("login")}
           </Link>
           <V41PilotButton className="v41-btn v41-btn-primary">{tCta("launchPilot")}</V41PilotButton>
+          <PublicLocaleSwitcher compact />
         </nav>
       ) : null}
     </header>

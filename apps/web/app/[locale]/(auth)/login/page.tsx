@@ -30,6 +30,7 @@ function LoginForm() {
   const resetSuccess = searchParams?.get("reset") === "success";
   const registerHref = next ? `/register?next=${encodeURIComponent(next)}` : "/register";
   const t = useTranslations("auth");
+  const tCommon = useTranslations("common");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -82,7 +83,7 @@ function LoginForm() {
         log("signIn", "error", isAuth ? "auth" : "server", data.message);
         const msg = (data.message ?? "").toLowerCase();
         if (isTimeout || (data.message ?? "").includes("timed out")) {
-          setError(data.message ?? "Request timed out. Please try again.");
+          setError(data.message ?? t("requestTimedOutShort"));
         } else if (isAuth && (msg.includes("invalid") || msg.includes("credentials"))) {
           setError(t("invalidCredentials"));
         } else if (isAuth && (msg.includes("email not confirmed") || msg.includes("confirm"))) {
@@ -115,7 +116,7 @@ function LoginForm() {
       const errMsg = thrown instanceof Error ? thrown.message : String(thrown);
       log("signIn", "error", isAbort ? "timeout" : "unknown", errMsg);
       if (isAbort) {
-        setError("Request timed out. Please check your connection and try again.");
+        setError(t("requestTimedOut"));
       } else if (errMsg && errMsg.length < 200 && !errMsg.toLowerCase().includes("password")) {
         setError(errMsg);
       } else {
@@ -205,7 +206,7 @@ function LoginForm() {
               <div className="space-y-2">
                 <Alert message={error} style="error" />
                 <Button type="button" variant="secondary" className="w-full" onClick={() => doSignIn()}>
-                  Retry
+                  {tCommon("retry")}
                 </Button>
               </div>
             )}
