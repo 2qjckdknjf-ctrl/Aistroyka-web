@@ -974,6 +974,13 @@
     "create": "Create",
     "creating": "Creating…",
     "projectNamePlaceholder": "Project name",
+    "addressOptional": "Address (optional)",
+    "addressPlaceholder": "Site address or city",
+    "clientOptional": "Client (optional)",
+    "clientPlaceholder": "Client or owner name",
+    "notesOptional": "Setup notes (optional)",
+    "notesPlaceholder": "Kickoff notes — kept locally until project detail fields expand",
+    "richCreateHint": "Name is required. Address and client are included in the project title until dedicated fields ship in the API.",
     "nameTooLong": "Project name must be at most 200 characters."
   },
   "projectDetail": {

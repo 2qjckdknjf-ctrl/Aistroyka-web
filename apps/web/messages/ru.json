@@ -975,6 +975,13 @@
     "create": "Создать",
     "creating": "Создание…",
     "projectNamePlaceholder": "Название проекта",
+    "addressOptional": "Адрес (необязательно)",
+    "addressPlaceholder": "Адрес объекта или город",
+    "clientOptional": "Клиент (необязательно)",
+    "clientPlaceholder": "Имя клиента или заказчика",
+    "notesOptional": "Заметки (необязательно)",
+    "notesPlaceholder": "Заметки к старту — локально, пока API не расширят поля проекта",
+    "richCreateHint": "Название обязательно. Адрес и клиент добавляются в название, пока отдельные поля не появятся в API.",
     "nameTooLong": "Название проекта не более 200 символов."
   },
   "projectDetail": {

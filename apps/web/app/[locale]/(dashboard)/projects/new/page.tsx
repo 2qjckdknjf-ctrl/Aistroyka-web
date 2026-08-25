@@ -1,26 +1,20 @@
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { CreateProjectForm } from "../CreateProjectForm";
+import { DashboardCanonRouteShell } from "@/components/canon/DashboardCanonRouteShell";
 
 export default async function NewProjectPage() {
   const t = await getTranslations("projects");
   return (
-    <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-      <Link
-        href="/dashboard/projects"
-        className="mb-6 inline-block text-sm font-medium text-aistroyka-text-secondary hover:text-aistroyka-accent"
-      >
-        {t("backToProjects")}
-      </Link>
-      <div className="card">
-        <h1 className="text-xl font-bold tracking-tight text-aistroyka-text-primary sm:text-2xl">
-          {t("newProject")}
-        </h1>
-        <p className="mt-1 text-sm text-aistroyka-text-tertiary">{t("newProjectHint")}</p>
-        <div className="mt-6">
-          <CreateProjectForm />
-        </div>
+    <DashboardCanonRouteShell title={t("newProject")} subtitle={t("newProjectHint")}>
+      <div className="mb-4">
+        <Link href="/dashboard/projects" className="text-sm text-[var(--canon-cyan)] hover:underline">
+          {t("backToProjects")}
+        </Link>
       </div>
-    </main>
+      <div className="canon-glass max-w-xl p-4 sm:p-6">
+        <CreateProjectForm skin="canon" />
+      </div>
+    </DashboardCanonRouteShell>
   );
 }

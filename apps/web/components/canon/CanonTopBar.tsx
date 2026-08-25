@@ -1,8 +1,9 @@
 "use client";
 
+import { useState, type FormEvent, type KeyboardEvent } from "react";
 import { HelpCircle, Menu, MessageCircle, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Link } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import { LocaleSwitcher } from "./CanonLocaleSwitcher";
 import { CanonNotificationBell } from "./CanonNotificationBell";
 
@@ -33,6 +34,22 @@ export function CanonTopBar({
   showMenuButton = false,
 }: CanonTopBarProps) {
   const t = useTranslations("canon");
+  const router = useRouter();
+  const [query, setQuery] = useState("");
+
+  function runSearch(e?: FormEvent) {
+    e?.preventDefault();
+    const q = query.trim();
+    if (!q) {
+      router.push("/dashboard/tasks");
+      return;
+    }
+    router.push(`/dashboard/tasks?q=${encodeURIComponent(q)}`);
+  }
+
+  function onSearchKeyDown(e: KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Enter") runSearch();
+  }
 
   return (
     <header className="canon-topbar sticky top-0 z-20">
@@ -49,15 +66,18 @@ export function CanonTopBar({
             </button>
           ) : null}
 
-          <label className="canon-search-field mx-auto w-full md:max-w-xl">
+          <form className="canon-search-field mx-auto w-full md:max-w-xl" onSubmit={runSearch}>
             <Search size={18} className="shrink-0 text-[var(--canon-text-muted)]" aria-hidden />
             <input
               type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={onSearchKeyDown}
               placeholder={t("globalSearchPlaceholder")}
               aria-label={t("globalSearch")}
             />
             <span className="canon-kbd canon-hide-mobile">⌘K</span>
-          </label>
+          </form>
         </div>
 
         <div className="canon-topbar-actions flex shrink-0 items-center gap-0.5 sm:gap-2">
@@ -70,7 +90,9 @@ export function CanonTopBar({
           </Link>
           <LocaleSwitcher />
           <div className="canon-user-chip">
-            <span className="canon-user-avatar" aria-hidden>{initialsFromEmail(userEmail)}</span>
+            <span className="canon-user-avatar" aria-hidden>
+              {initialsFromEmail(userEmail)}
+            </span>
             <span className="hidden min-w-0 lg:block">
               <span className="block truncate text-sm font-semibold text-[var(--canon-text-primary)]">
                 {displayNameFromEmail(userEmail)}

@@ -271,7 +271,7 @@ export function DashboardTasksClient({
 
   const exportCsv = () => {
     const headers = ["ID", "Title", "Project", "Status", "Assigned", "Due", "Report", "Created"];
-    const rows = data.slice(0, 500).map((r) => [
+    const rows = displayData.slice(0, 500).map((r) => [
       r.id,
       r.title,
       r.project_id ?? "",
@@ -284,11 +284,30 @@ export function DashboardTasksClient({
     exportTableToCsv(headers, rows, "tasks.csv");
   };
 
-  const boardGroups = useMemo(() => groupTasksByBoardColumn(data), [data]);
-  const phonePriorityTasks = useMemo(
-    () => sortTasksForPhonePriority(data, todayIso),
-    [data, todayIso],
-  );
+  const boardGroups = useMemo(() => {
+    const scope = searchParams?.get("scope");
+    const scoped =
+      scope === "overdue"
+        ? data.filter((r) => isTaskOverdue(r.status, r.due_date, todayIso))
+        : data;
+    return groupTasksByBoardColumn(scoped);
+  }, [data, searchParams, todayIso]);
+  const phonePriorityTasks = useMemo(() => {
+    const scope = searchParams?.get("scope");
+    const scoped =
+      scope === "overdue"
+        ? data.filter((r) => isTaskOverdue(r.status, r.due_date, todayIso))
+        : data;
+    return sortTasksForPhonePriority(scoped, todayIso);
+  }, [data, searchParams, todayIso]);
+
+  const displayData = useMemo(() => {
+    const scope = searchParams?.get("scope");
+    if (scope === "overdue") {
+      return data.filter((r) => isTaskOverdue(r.status, r.due_date, todayIso));
+    }
+    return data;
+  }, [data, searchParams, todayIso]);
 
   if (error) {
     return (
@@ -336,7 +355,7 @@ export function DashboardTasksClient({
           </TableRow>
         </TableHead>
         <TableBody>
-          {data.map((r) => {
+          {displayData.map((r) => {
             const selected = selectedTaskId === r.id;
             const overdue = isTaskOverdue(r.status, r.due_date, todayIso);
             return (
