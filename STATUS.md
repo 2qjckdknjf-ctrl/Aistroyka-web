@@ -4,7 +4,8 @@
 
 ---
 
-**Last updated:** 2026-08-24  
+**Last updated:** 2026-08-25  
+**Active mobile slice:** `mobile/ios-worker-v4-3` — closable tails done (notify project_id, issue PATCH, iOS 16 nav, analysis poll). Owner-gated: deploy, SMS, TestFlight, live E2E  
 **Main tip:** `bae89752`  
 **Staging:** `buildStamp.sha7=bae8975` — **MATCH**
 

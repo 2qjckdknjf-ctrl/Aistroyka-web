@@ -6,16 +6,16 @@
 import SwiftUI
 
 enum WorkerSemanticColors {
-    static let pageBackground = Color(red: 11.0 / 255.0, green: 15.0 / 255.0, blue: 25.0 / 255.0)
-    static let inputSurface = Color(red: 31.0 / 255.0, green: 41.0 / 255.0, blue: 55.0 / 255.0)
-    static let surfaceMuted = inputSurface
-    static let primary = Color.accentColor
-    static let onPrimary = Color(red: 11.0 / 255.0, green: 15.0 / 255.0, blue: 25.0 / 255.0)
-    static let primaryDisabled = Color(red: 156.0 / 255.0, green: 163.0 / 255.0, blue: 175.0 / 255.0)
-    static let success = Color(red: 52.0 / 255.0, green: 199.0 / 255.0, blue: 89.0 / 255.0)
-    static let warning = Color(red: 255.0 / 255.0, green: 149.0 / 255.0, blue: 0.0 / 255.0)
-    static let warningSurface = Color.orange.opacity(0.15)
-    static let info = Color(red: 59.0 / 255.0, green: 130.0 / 255.0, blue: 246.0 / 255.0)
-    static let error = Color(red: 255.0 / 255.0, green: 59.0 / 255.0, blue: 48.0 / 255.0)
-    static let neutral = Color(red: 156.0 / 255.0, green: 163.0 / 255.0, blue: 175.0 / 255.0)
+    static let pageBackground = WorkerV43.bg
+    static let inputSurface = WorkerV43.cardStrong
+    static let surfaceMuted = WorkerV43.card
+    static let primary = WorkerV43.yellow
+    static let onPrimary = WorkerV43.yellowInk
+    static let primaryDisabled = WorkerV43.textSecondary
+    static let success = WorkerV43.success
+    static let warning = WorkerV43.warning
+    static let warningSurface = WorkerV43.warning.opacity(0.15)
+    static let info = WorkerV43.dataBlue
+    static let error = WorkerV43.danger
+    static let neutral = WorkerV43.textSecondary
 }

@@ -89,6 +89,13 @@
 "mgr_loading_workers" = "Загрузка сотрудников…";
 "mgr_manager_note" = "Заметка менеджера";
 "mgr_worker_note" = "Комментарий работника";
+"mgr_planned_volume" = "Плановый объём";
+"mgr_actual_volume" = "Фактический объём";
+"mgr_volume_m3_fmt" = "%.0f м³";
+"mgr_volume_pair_fmt" = "%.0f / %.0f м³";
+"mgr_ai_status" = "Статус ИИ";
+"mgr_ai_photos" = "Фото ИИ";
+"mgr_ai_photos_fmt" = "Проанализировано %d из %d";
 "mgr_mark_reviewed" = "Отметить проверенным";
 "mgr_media_count_fmt" = "Медиа (%d)";
 "mgr_evidence_load_failed_fmt" = "Не удалось загрузить фото %d.";
@@ -122,6 +129,13 @@
 "mgr_notification" = "Уведомление";
 "mgr_notifications_placeholder" = "Уведомления — заглушка";
 "mgr_open_reports" = "Открытые отчёты";
+"mgr_open_issues" = "Открытые проблемы";
+"mgr_issues" = "Проблемы";
+"mgr_loading_issues" = "Загрузка проблем…";
+"mgr_no_issues_title" = "Проблем нет";
+"mgr_no_issues_subtitle" = "Здесь появятся замечания, которые подал рабочий.";
+"mgr_issue_evidence" = "Фото-доказательство";
+"mgr_issue_status" = "Статус";
 "mgr_open_shift" = "Открытая смена";
 "mgr_overtime" = "Переработка";
 "mgr_photos_count_fmt" = "%d фото";

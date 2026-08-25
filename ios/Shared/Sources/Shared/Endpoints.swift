@@ -14,6 +14,11 @@ public struct ConfigResponse: Decodable {
 public struct ProjectDTO: Decodable {
     public let id: String
     public let name: String?
+
+    public init(id: String, name: String?) {
+        self.id = id
+        self.name = name
+    }
 }
 
 public struct ProjectsResponse: Decodable {
@@ -28,6 +33,36 @@ public struct TaskDTO: Decodable {
     public let dueDate: String?
     public let createdAt: String?
     public let assignedTo: String?
+    public let description: String?
+    public let reportRequired: Bool?
+    public let reportId: String?
+    public let reportStatus: String?
+
+    public init(
+        id: String,
+        title: String,
+        status: String,
+        projectId: String? = nil,
+        dueDate: String? = nil,
+        createdAt: String? = nil,
+        assignedTo: String? = nil,
+        description: String? = nil,
+        reportRequired: Bool? = nil,
+        reportId: String? = nil,
+        reportStatus: String? = nil
+    ) {
+        self.id = id
+        self.title = title
+        self.status = status
+        self.projectId = projectId
+        self.dueDate = dueDate
+        self.createdAt = createdAt
+        self.assignedTo = assignedTo
+        self.description = description
+        self.reportRequired = reportRequired
+        self.reportId = reportId
+        self.reportStatus = reportStatus
+    }
 }
 
 public struct TasksTodayResponse: Decodable {

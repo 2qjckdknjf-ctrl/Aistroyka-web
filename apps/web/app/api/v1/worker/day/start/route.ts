@@ -33,7 +33,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: msg }, { status: 400 });
   }
   const supabase = await createClientFromRequest(request);
-  const { data, error } = await startDay(supabase, ctx);
+  const evidence = parsed.data ?? undefined;
+  const { data, error } = await startDay(supabase, ctx, evidence);
   if (error) return NextResponse.json({ error }, { status: 403 });
   await storeLiteIdempotency(request, ctx, ROUTE_KEY, { data }, 200);
   return NextResponse.json({ data });

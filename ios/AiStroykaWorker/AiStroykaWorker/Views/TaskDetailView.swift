@@ -47,33 +47,7 @@ struct TaskDetailView: View {
             TaskChatView(
                 taskId: task.id,
                 currentUserId: currentUserId,
-                enqueueOfflineText: { taskId, body, clientId in
-                    let now = ISO8601DateFormatter().string(from: Date())
-                    let op = QueuedOperation(
-                        id: UUID().uuidString,
-                        type: .sendTaskMessage,
-                        payload: OperationPayload(
-                            taskId: taskId,
-                            messageBody: body,
-                            clientId: clientId
-                        ),
-                        idempotencyKey: clientId,
-                        dependsOn: [],
-                        state: .queued,
-                        attemptCount: 0,
-                        nextAttemptAt: nil,
-                        lastErrorCode: nil,
-                        lastErrorMessage: nil,
-                        createdAt: now,
-                        updatedAt: now,
-                        resultReportId: nil,
-                        resultSessionId: nil,
-                        resultUploadPath: nil
-                    )
-                    OperationQueueStore.shared.add(op)
-                    OperationQueueExecutor.shared.runLoop()
-                    return true
-                }
+                enqueueOfflineText: WorkerTaskChatActions.enqueueOfflineText
             )
                 .accessibilityIdentifier("pilot_worker_task_chat")
         }

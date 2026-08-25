@@ -46,7 +46,7 @@ export async function listForBootstrap(
 }
 
 const REPORT_SELECT =
-  "id, tenant_id, user_id, day_id, status, created_at, submitted_at, task_id, reviewed_at, reviewed_by, manager_note, worker_note";
+  "id, tenant_id, user_id, day_id, status, created_at, submitted_at, task_id, reviewed_at, reviewed_by, manager_note, worker_note, actual_volume, planned_volume";
 
 export async function getById(
   supabase: SupabaseClient,
@@ -84,11 +84,14 @@ export async function submit(
   reportId: string,
   tenantId: string,
   taskId?: string | null,
-  workerNote?: string | null
+  workerNote?: string | null,
+  volume?: { actual?: number | null; planned?: number | null }
 ): Promise<boolean> {
   const updates: Record<string, unknown> = { status: "submitted", submitted_at: new Date().toISOString() };
   if (taskId != null && taskId !== "") (updates as Record<string, unknown>).task_id = taskId;
   if (workerNote != null) (updates as Record<string, unknown>).worker_note = workerNote;
+  if (volume?.actual != null) updates.actual_volume = volume.actual;
+  if (volume?.planned != null) updates.planned_volume = volume.planned;
   const { error } = await supabase
     .from("worker_reports")
     .update(updates)
@@ -104,11 +107,14 @@ export async function resubmit(
   reportId: string,
   tenantId: string,
   taskId?: string | null,
-  workerNote?: string | null
+  workerNote?: string | null,
+  volume?: { actual?: number | null; planned?: number | null }
 ): Promise<boolean> {
   const updates: Record<string, unknown> = { status: "submitted", submitted_at: new Date().toISOString() };
   if (taskId != null && taskId !== "") (updates as Record<string, unknown>).task_id = taskId;
   if (workerNote != null) (updates as Record<string, unknown>).worker_note = workerNote;
+  if (volume?.actual != null) updates.actual_volume = volume.actual;
+  if (volume?.planned != null) updates.planned_volume = volume.planned;
   const { error } = await supabase
     .from("worker_reports")
     .update(updates)

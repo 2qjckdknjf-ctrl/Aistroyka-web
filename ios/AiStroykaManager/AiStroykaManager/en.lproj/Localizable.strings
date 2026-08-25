@@ -89,6 +89,13 @@
 "mgr_loading_workers" = "Loading workers…";
 "mgr_manager_note" = "Manager note";
 "mgr_worker_note" = "Worker note";
+"mgr_planned_volume" = "Planned volume";
+"mgr_actual_volume" = "Actual volume";
+"mgr_volume_m3_fmt" = "%.0f m³";
+"mgr_volume_pair_fmt" = "%.0f / %.0f m³";
+"mgr_ai_status" = "AI status";
+"mgr_ai_photos" = "AI photos";
+"mgr_ai_photos_fmt" = "%d of %d analyzed";
 "mgr_mark_reviewed" = "Mark reviewed";
 "mgr_media_count_fmt" = "Media (%d)";
 "mgr_evidence_load_failed_fmt" = "Could not load photo %d.";
@@ -122,6 +129,13 @@
 "mgr_notification" = "Notification";
 "mgr_notifications_placeholder" = "Notifications — placeholder";
 "mgr_open_reports" = "Open reports";
+"mgr_open_issues" = "Open issues";
+"mgr_issues" = "Issues";
+"mgr_loading_issues" = "Loading issues…";
+"mgr_no_issues_title" = "No issues";
+"mgr_no_issues_subtitle" = "Worker-filed issues for this project will appear here.";
+"mgr_issue_evidence" = "Photo evidence";
+"mgr_issue_status" = "Status";
 "mgr_open_shift" = "Open shift";
 "mgr_overtime" = "Overtime";
 "mgr_photos_count_fmt" = "%d photo(s)";

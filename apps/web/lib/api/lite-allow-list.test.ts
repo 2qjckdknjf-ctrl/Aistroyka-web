@@ -37,6 +37,10 @@ describe("checkLiteAllowList", () => {
   it("returns null for lite client on allowed path /api/v1/worker/*", () => {
     expect(checkLiteAllowList("/api/v1/worker/tasks/today", "GET", "ios_lite")).toBeNull();
     expect(checkLiteAllowList("/api/v1/worker", "GET", "android_lite")).toBeNull();
+    expect(checkLiteAllowList("/api/v1/worker/issues", "GET", "ios_worker")).toBeNull();
+    expect(checkLiteAllowList("/api/v1/worker/issues", "POST", "ios_worker")).toBeNull();
+    expect(checkLiteAllowList("/api/v1/worker/documents", "GET", "ios_worker")).toBeNull();
+    expect(checkLiteAllowList("/api/v1/worker/site-join", "POST", "ios_lite")).toBeNull();
   });
 
   it("returns null for lite client on allowed path /api/v1/sync/*", () => {
@@ -72,6 +76,15 @@ describe("checkLiteAllowList", () => {
 
   it("returns null for lite client on /api/v1/devices/*", () => {
     expect(checkLiteAllowList("/api/v1/devices/register", "POST", "ios_lite")).toBeNull();
+  });
+
+  it("returns null for lite user-scoped notifications inbox", () => {
+    expect(checkLiteAllowList("/api/v1/notifications", "GET", "ios_worker")).toBeNull();
+    expect(checkLiteAllowList("/api/v1/notifications/unread-count", "GET", "ios_lite")).toBeNull();
+    expect(checkLiteAllowList("/api/v1/notifications/read-all", "POST", "android_worker")).toBeNull();
+    expect(checkLiteAllowList("/api/v1/notifications/read-all", "PATCH", "ios_lite")).toBeNull();
+    expect(checkLiteAllowList("/api/v1/notifications/n1/read", "PATCH", "ios_lite")).toBeNull();
+    expect(checkLiteAllowList("/api/v1/notifications", "POST", "ios_lite")).not.toBeNull();
   });
 
   it("returns null for lite activation + help paths (worker intelligence surfaces)", () => {

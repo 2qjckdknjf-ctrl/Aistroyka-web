@@ -40,6 +40,27 @@
 		WRK034 /* WorkerSemanticColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = WRK134 /* WorkerSemanticColors.swift */; };
 		WRKUT01 /* WorkerSmokeUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = WRKUT11 /* WorkerSmokeUITests.swift */; };
 		WRKUT02 /* PilotE2ECredentials.swift in Sources */ = {isa = PBXBuildFile; fileRef = WRKUT12 /* PilotE2ECredentials.swift */; };
+		WRK200 /* WorkerV43Tokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = WRK300; };
+		WRK201 /* WorkerV43Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = WRK301; };
+		WRK202 /* WorkerV43Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = WRK302; };
+		WRK203 /* WorkerV43API.swift in Sources */ = {isa = PBXBuildFile; fileRef = WRK303; };
+		WRK204 /* WorkerLocationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = WRK304; };
+		WRK205 /* WorkerTabShell.swift in Sources */ = {isa = PBXBuildFile; fileRef = WRK305; };
+		WRK206 /* QRScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = WRK306; };
+		WRK207 /* ShiftStartSafetyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = WRK307; };
+		WRK208 /* TodayHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = WRK308; };
+		WRK209 /* MyTasksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = WRK309; };
+		WRK210 /* TaskDetailV43View.swift in Sources */ = {isa = PBXBuildFile; fileRef = WRK310; };
+		WRK211 /* WorkInProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = WRK311; };
+		WRK212 /* CameraEvidenceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = WRK312; };
+		WRK213 /* DailyReportFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = WRK313; };
+		WRK214 /* IssuesListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = WRK314; };
+		WRK215 /* DocumentsDrawingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = WRK315; };
+		WRK216 /* MessagesHubView.swift in Sources */ = {isa = PBXBuildFile; fileRef = WRK316; };
+		WRK217 /* ProfileOfflineSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = WRK317; };
+		WRK218 /* WorkerV43PreviewCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = WRK318; };
+		WRK219 /* DocumentPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = WRK319; };
+		WRKUT14 /* WorkerV43UITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = WRKUT15; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -83,6 +104,27 @@
 		WRKUT10 /* AiStroykaWorkerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AiStroykaWorkerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		WRKUT11 /* WorkerSmokeUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerSmokeUITests.swift; sourceTree = "<group>"; };
 		WRKUT12 /* PilotE2ECredentials.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PilotE2ECredentials.swift; sourceTree = "<group>"; };
+		WRK300 /* WorkerV43Tokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerV43Tokens.swift; sourceTree = "<group>"; };
+		WRK301 /* WorkerV43Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerV43Components.swift; sourceTree = "<group>"; };
+		WRK302 /* WorkerV43Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerV43Models.swift; sourceTree = "<group>"; };
+		WRK303 /* WorkerV43API.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerV43API.swift; sourceTree = "<group>"; };
+		WRK304 /* WorkerLocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerLocationService.swift; sourceTree = "<group>"; };
+		WRK305 /* WorkerTabShell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerTabShell.swift; sourceTree = "<group>"; };
+		WRK306 /* QRScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRScannerView.swift; sourceTree = "<group>"; };
+		WRK307 /* ShiftStartSafetyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShiftStartSafetyView.swift; sourceTree = "<group>"; };
+		WRK308 /* TodayHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayHomeView.swift; sourceTree = "<group>"; };
+		WRK309 /* MyTasksView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyTasksView.swift; sourceTree = "<group>"; };
+		WRK310 /* TaskDetailV43View.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskDetailV43View.swift; sourceTree = "<group>"; };
+		WRK311 /* WorkInProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkInProgressView.swift; sourceTree = "<group>"; };
+		WRK312 /* CameraEvidenceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraEvidenceView.swift; sourceTree = "<group>"; };
+		WRK313 /* DailyReportFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyReportFormView.swift; sourceTree = "<group>"; };
+		WRK314 /* IssuesListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IssuesListView.swift; sourceTree = "<group>"; };
+		WRK315 /* DocumentsDrawingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentsDrawingsView.swift; sourceTree = "<group>"; };
+		WRK316 /* MessagesHubView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessagesHubView.swift; sourceTree = "<group>"; };
+		WRK317 /* ProfileOfflineSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileOfflineSettingsView.swift; sourceTree = "<group>"; };
+		WRK318 /* WorkerV43PreviewCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerV43PreviewCatalog.swift; sourceTree = "<group>"; };
+		WRK319 /* DocumentPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentPreviewView.swift; sourceTree = "<group>"; };
+		WRKUT15 /* WorkerV43UITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerV43UITests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -112,6 +154,7 @@
 				WRK103 /* AppState.swift */,
 				WRK104 /* RootView.swift */,
 				WRK134 /* WorkerSemanticColors.swift */,
+				WRK051D /* Design */,
 				WRK133 /* UITestLaunchHooks.swift */,
 				WRK051P /* Persistence */,
 				WRK051S /* Services */,
@@ -123,6 +166,15 @@
 				WRK051Preview /* Preview Content */,
 			);
 			path = AiStroykaWorker;
+			sourceTree = "<group>";
+		};
+		WRK051D /* Design */ = {
+			isa = PBXGroup;
+			children = (
+				WRK300 /* WorkerV43Tokens.swift */,
+				WRK301 /* WorkerV43Components.swift */,
+			);
+			path = Design;
 			sourceTree = "<group>";
 		};
 		WRK051P /* Persistence */ = {
@@ -153,6 +205,10 @@
 				WRK112 /* OperationQueueExecutor.swift */,
 				WRK113 /* PushRegistrationService.swift */,
 				WRK114 /* LocalReminderService.swift */,
+				WRK302 /* WorkerV43Models.swift */,
+				WRK303 /* WorkerV43API.swift */,
+				WRK318 /* WorkerV43PreviewCatalog.swift */,
+				WRK304 /* WorkerLocationService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -171,6 +227,20 @@
 				WRK121 /* ImagePicker.swift */,
 				WRK122 /* CameraPicker.swift */,
 				WRK123 /* DiagnosticsView.swift */,
+				WRK305 /* WorkerTabShell.swift */,
+				WRK306 /* QRScannerView.swift */,
+				WRK307 /* ShiftStartSafetyView.swift */,
+				WRK308 /* TodayHomeView.swift */,
+				WRK309 /* MyTasksView.swift */,
+				WRK310 /* TaskDetailV43View.swift */,
+				WRK311 /* WorkInProgressView.swift */,
+				WRK312 /* CameraEvidenceView.swift */,
+				WRK313 /* DailyReportFormView.swift */,
+				WRK314 /* IssuesListView.swift */,
+				WRK315 /* DocumentsDrawingsView.swift */,
+				WRK316 /* MessagesHubView.swift */,
+				WRK317 /* ProfileOfflineSettingsView.swift */,
+				WRK319 /* DocumentPreviewView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -189,6 +259,7 @@
 			children = (
 				WRKUT12 /* PilotE2ECredentials.swift */,
 				WRKUT11 /* WorkerSmokeUITests.swift */,
+				WRKUT15 /* WorkerV43UITests.swift */,
 			);
 			path = AiStroykaWorkerUITests;
 			sourceTree = "<group>";
@@ -329,6 +400,7 @@
 				WRK022 /* CameraPicker.swift in Sources */,
 				WRK023 /* DiagnosticsView.swift in Sources */,
 				WRK029B /* UITestLaunchHooks.swift in Sources */,
+				WRK200, WRK201, WRK202, WRK203, WRK204, WRK205, WRK206, WRK207, WRK208, WRK209, WRK210, WRK211, WRK212, WRK213, WRK214, WRK215, WRK216, WRK217, WRK218, WRK219,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -338,6 +410,7 @@
 			files = (
 				WRKUT02 /* PilotE2ECredentials.swift in Sources */,
 				WRKUT01 /* WorkerSmokeUITests.swift in Sources */,
+				WRKUT14 /* WorkerV43UITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

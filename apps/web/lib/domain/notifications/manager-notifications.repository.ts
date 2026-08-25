@@ -131,6 +131,17 @@ async function insertNotifications(
   );
 }
 
+/** Insert a single inbox row for one user (worker or manager). Best-effort. */
+export async function notifyUser(
+  supabase: SupabaseClient,
+  tenantId: string,
+  userId: string,
+  input: CreateManagerNotificationInput
+): Promise<void> {
+  if (!userId) return;
+  await insertNotifications(supabase, tenantId, [userId], input);
+}
+
 /**
  * Insert one notification per project manager (project_members.role in ('manager', 'owner') for that project).
  * Use when project_id is known and only project managers should be notified.

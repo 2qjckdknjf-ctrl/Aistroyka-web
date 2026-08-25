@@ -136,6 +136,19 @@ struct ReportRowView: View {
                         .foregroundStyle(.secondary)
                 }
             }
+            if let actual = report.actualVolume, let planned = report.plannedVolume {
+                Text(String(format: NSLocalizedString("mgr_volume_pair_fmt", comment: ""), actual, planned))
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            } else if let actual = report.actualVolume {
+                Text(String(format: NSLocalizedString("mgr_volume_m3_fmt", comment: ""), actual))
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            } else if let planned = report.plannedVolume {
+                Text(String(format: NSLocalizedString("mgr_volume_m3_fmt", comment: ""), planned))
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
             if let a = report.analysisStatus, !a.isEmpty {
                 Text(String(format: NSLocalizedString("mgr_analysis_fmt", comment: ""), a))
                     .font(.caption2)
@@ -164,6 +177,7 @@ struct ReportDetailReviewView: View {
     @State private var reviewActionLoading = false
     @State private var reviewActionError: String?
     @State private var managerNoteText = ""
+    @State private var analysis: ManagerAnalysisStatusDTO?
 
     var body: some View {
         Group {
@@ -184,6 +198,27 @@ struct ReportDetailReviewView: View {
                         }
                         if let wnote = r.workerNote, !wnote.isEmpty {
                             LabeledContent(NSLocalizedString("mgr_worker_note", comment: ""), value: wnote)
+                        }
+                        if let planned = r.plannedVolume {
+                            LabeledContent(
+                                NSLocalizedString("mgr_planned_volume", comment: ""),
+                                value: String(format: NSLocalizedString("mgr_volume_m3_fmt", comment: ""), planned)
+                            )
+                        }
+                        if let actual = r.actualVolume {
+                            LabeledContent(
+                                NSLocalizedString("mgr_actual_volume", comment: ""),
+                                value: String(format: NSLocalizedString("mgr_volume_m3_fmt", comment: ""), actual)
+                            )
+                        }
+                        if let analysis {
+                            LabeledContent(NSLocalizedString("mgr_ai_status", comment: ""), value: analysis.status)
+                            if let total = analysis.summary?.mediaTotal, let done = analysis.summary?.analyzed {
+                                LabeledContent(
+                                    NSLocalizedString("mgr_ai_photos", comment: ""),
+                                    value: String(format: NSLocalizedString("mgr_ai_photos_fmt", comment: ""), done, total)
+                                )
+                            }
                         }
                     }
                     if let media = r.media, !media.isEmpty {
@@ -294,7 +329,10 @@ struct ReportDetailReviewView: View {
             setLoading: { isLoading = $0 },
             setErrorMessage: { errorMessage = $0 }
         ) {
-            report = try await ManagerAPI.reportDetail(id: reportId)
+            async let detail = ManagerAPI.reportDetail(id: reportId)
+            async let status = ManagerAPI.analysisStatus(reportId: reportId)
+            report = try await detail
+            analysis = try? await status
         }
     }
 

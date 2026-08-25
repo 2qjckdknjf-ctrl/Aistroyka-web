@@ -99,3 +99,22 @@ export async function getTaskForWorker(
   const task = await repo.getByIdWithReports(supabase, taskId, ctx.tenantId);
   return task ? { data: task, error: "" } : { data: null, error: "Not found" };
 }
+
+/** Assigned worker may mark a task in_progress. Done/cancelled stay manager-owned. */
+export async function startAssignedTask(
+  supabase: SupabaseClient,
+  ctx: TenantContext,
+  taskId: string
+): Promise<{ data: Task | null; error: string; code?: string }> {
+  const existing = await getTaskForWorker(supabase, ctx, taskId);
+  if (existing.error || !existing.data) return existing;
+  if (existing.data.status === "done" || existing.data.status === "cancelled") {
+    return { data: null, error: "Task is closed", code: "task_closed" };
+  }
+  if (existing.data.status === "in_progress") {
+    return { data: existing.data, error: "" };
+  }
+  if (!ctx.tenantId) return { data: null, error: "Tenant required" };
+  const task = await repo.update(supabase, taskId, ctx.tenantId, { status: "in_progress" });
+  return task ? { data: task, error: "" } : { data: null, error: "Update failed" };
+}

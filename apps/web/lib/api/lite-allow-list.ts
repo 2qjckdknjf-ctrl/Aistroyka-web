@@ -32,6 +32,11 @@ function isPathAllowed(pathname: string, method: string): boolean {
   if (pathname === "/api/v1/help/hints" && m === "POST") return true;
   if (pathname === "/api/v1/help/assistant" && m === "POST") return true;
   if (pathname === "/api/v1/help/assistant/events" && m === "POST") return true;
+  // Inbox is user-scoped in the handler (manager_notifications.user_id = caller).
+  if (pathname === "/api/v1/notifications" && m === "GET") return true;
+  if (pathname === "/api/v1/notifications/unread-count" && m === "GET") return true;
+  if (pathname === "/api/v1/notifications/read-all" && (m === "PATCH" || m === "POST")) return true;
+  if (m === "PATCH" && /^\/api\/v1\/notifications\/[^/]+\/read$/.test(pathname)) return true;
   return false;
 }
 

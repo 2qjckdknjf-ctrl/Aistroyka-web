@@ -11,7 +11,8 @@ import Shared
 
 enum UITestLaunchHooks {
     static var isEnabled: Bool {
-        ProcessInfo.processInfo.environment["AISTROYKA_UI_TEST"] == "1"
+        WorkerV43LaunchFlags.isOn("AISTROYKA_UI_TEST")
+            || ProcessInfo.processInfo.environment["AISTROYKA_UI_TEST"] == "preview"
     }
 
     /// Live pilot E2E: skip intro; optional `AISTROYKA_E2E_PROJECT_ID` auto-selects project in HomeContainerView.

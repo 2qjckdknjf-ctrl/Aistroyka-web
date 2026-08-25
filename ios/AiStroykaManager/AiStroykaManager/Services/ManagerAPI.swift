@@ -60,6 +60,10 @@ enum ManagerAPI {
         return r.data ?? []
     }
 
+    static func analysisStatus(reportId: String) async throws -> ManagerAnalysisStatusDTO {
+        try await APIClient.shared.request(path: "reports/\(reportId)/analysis-status", keyDecoding: .useDefaultKeys)
+    }
+
     /// GET /api/v1/reports/:id — report detail with media.
     static func reportDetail(id: String) async throws -> ReportDetailDTO {
         let r: ReportDetailResponse = try await APIClient.shared.request(path: "reports/\(id)")
@@ -121,6 +125,25 @@ enum ManagerAPI {
     }
 
     /// GET /api/v1/projects/:id/summary — project summary counts.
+    static func issues(projectId: String) async throws -> [ManagerIssueDTO] {
+        let r: ManagerIssuesResponse = try await APIClient.shared.request(path: "projects/\(projectId)/issues")
+        return r.data ?? []
+    }
+
+    static func patchIssueStatus(projectId: String, issueId: String, status: String) async throws -> ManagerIssueDTO {
+        struct Body: Encodable { let status: String }
+        struct Envelope: Decodable { let data: ManagerIssueDTO? }
+        let r: Envelope = try await APIClient.shared.request(
+            path: "projects/\(projectId)/issues/\(issueId)",
+            method: "PATCH",
+            body: Body(status: status)
+        )
+        guard let data = r.data else {
+            throw APIError(statusCode: nil, code: nil, message: "No issue data")
+        }
+        return data
+    }
+
     static func projectSummary(projectId: String) async throws -> ProjectSummaryDTO {
         // Backend returns camelCase counts; default client decoder uses convertFromSnakeCase.
         let r: ProjectSummaryResponse = try await APIClient.shared.request(
@@ -274,6 +297,8 @@ struct ReportListItemDTO: Decodable {
     let createdAt: String?
     let mediaCount: Int?
     let analysisStatus: String?
+    let actualVolume: Double?
+    let plannedVolume: Double?
     enum CodingKeys: String, CodingKey {
         case id
         case projectId = "project_id"
@@ -281,6 +306,8 @@ struct ReportListItemDTO: Decodable {
         case createdAt = "created_at"
         case mediaCount = "media_count"
         case analysisStatus = "analysis_status"
+        case actualVolume = "actual_volume"
+        case plannedVolume = "planned_volume"
     }
 }
 
@@ -384,14 +411,31 @@ struct ReportDetailDTO: Decodable {
     let reviewedBy: String?
     let managerNote: String?
     let workerNote: String?
+    let actualVolume: Double?
+    let plannedVolume: Double?
     let media: [ReportMediaItem]?
     enum CodingKeys: String, CodingKey {
         case id; case tenantId = "tenant_id"; case userId = "user_id"; case taskId = "task_id"
         case status; case createdAt = "created_at"; case submittedAt = "submitted_at"
         case reviewedAt = "reviewed_at"; case reviewedBy = "reviewed_by"; case managerNote = "manager_note"
         case workerNote = "worker_note"
+        case actualVolume = "actual_volume"
+        case plannedVolume = "planned_volume"
         case media
     }
+}
+
+struct ManagerAnalysisStatusDTO: Decodable {
+    let status: String
+    let reportId: String?
+    let jobCount: Int?
+    let summary: ManagerAnalysisSummaryDTO?
+}
+
+struct ManagerAnalysisSummaryDTO: Decodable {
+    let mediaTotal: Int?
+    let analyzed: Int?
+    let failed: Int?
 }
 struct ReportMediaItem: Decodable {
     let mediaId: String?
@@ -437,7 +481,26 @@ struct ProjectSummaryDTO: Decodable {
     let activeWorkers: Int?
     let openReports: Int?
     let aiAnalyses: Int?
+    let openIssuesCount: Int?
 }
+
+struct ManagerIssueDTO: Decodable, Identifiable {
+    let id: String
+    let title: String?
+    let description: String?
+    let status: String?
+    let createdAt: String?
+    let evidenceUrl: String?
+    let evidenceUploadSessionId: String?
+    enum CodingKeys: String, CodingKey {
+        case id, title, description, status
+        case createdAt = "created_at"
+        case evidenceUrl = "evidence_url"
+        case evidenceUploadSessionId = "evidence_upload_session_id"
+    }
+}
+
+struct ManagerIssuesResponse: Decodable { let data: [ManagerIssueDTO]? }
 struct ProjectSummaryResponse: Decodable { let data: ProjectSummaryDTO? }
 
 /// GET /api/v1/projects/:id/ai — project AI row (analysis_jobs).
@@ -477,10 +540,12 @@ struct NotificationInboxItemDTO: Decodable {
     let readAt: String?
     let targetType: String?
     let targetId: String?
+    let projectId: String?
     enum CodingKeys: String, CodingKey {
         case id; case type; case title; case body
         case createdAt = "created_at"; case readAt = "read_at"
         case targetType = "target_type"; case targetId = "target_id"
+        case projectId = "project_id"
     }
 }
 struct NotificationsListResponse: Decodable { let data: [NotificationInboxItemDTO]?; let total: Int? }

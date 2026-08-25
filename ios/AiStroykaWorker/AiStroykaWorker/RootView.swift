@@ -15,6 +15,13 @@ struct RootView: View {
             if UITestLaunchHooks.isE2EEnabled, appState.isE2EBootstrapping {
                 ProgressView(NSLocalizedString("worker_signing_in", comment: ""))
                     .accessibilityIdentifier("pilot_worker_e2e_bootstrapping")
+            } else if WorkerV43Preview.showsCatalogWithoutAuth {
+                WorkerTabShell(
+                    project: ProjectDTO(id: "preview-project", name: WorkerV43PreviewCatalog.projectName),
+                    onLogout: {},
+                    onLeaveProject: {}
+                )
+                .environmentObject(appState)
             } else if appState.isLoggedIn {
                 if UITestLaunchHooks.isE2EEnabled,
                    UITestLaunchHooks.e2eOpenReportDraft,
@@ -53,6 +60,12 @@ struct RootView: View {
                 }
                 if appState.isLoggedIn { PushRegistrationService.registerIfNeeded() }
             }
+        }
+        .overlay(alignment: .topLeading) {
+            Color.clear
+                .frame(width: 8, height: 8)
+                .accessibilityIdentifier(WorkerV43Preview.isEnabled ? "pilot_worker_v43_preview_on" : "pilot_worker_v43_preview_off")
+                .accessibilityLabel(WorkerV43Preview.isEnabled ? "preview-on" : "preview-off")
         }
         .onReceive(NotificationCenter.default.publisher(for: .apiClientDidReceiveUnauthorized)) { output in
             guard !UITestLaunchHooks.isE2EEnabled else { return }
