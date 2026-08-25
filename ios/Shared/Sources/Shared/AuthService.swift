@@ -169,9 +169,13 @@ public actor AuthService {
               let uid = user["id"] as? String else {
             throw APIError(statusCode: nil, code: nil, message: "Invalid token response")
         }
-        _ = KeychainHelper.set(key: KeychainHelper.sessionTokenKey, value: accessToken)
-        _ = KeychainHelper.set(key: KeychainHelper.sessionUserIdKey, value: uid)
-        cachedSession = (accessToken, AuthUser(id: uid, email: user["email"] as? String))
+        persistSession(
+            accessToken: accessToken,
+            userId: uid,
+            email: user["email"] as? String,
+            refreshToken: json?["refresh_token"] as? String,
+            expiresAt: Self.expiresAt(from: json)
+        )
     }
 
     public func signOut() async {

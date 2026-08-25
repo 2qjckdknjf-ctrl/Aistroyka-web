@@ -3,7 +3,7 @@
 > Live project status. Keep this short and mobile-readable.
 
 **Last updated:** 2026-08-25  
-**Updated by:** iOS Worker V4.3 live-sync PR [#256](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/256)
+**Updated by:** iOS live work tails on `mobile/ios-live-work-tails`
 
 ---
 
@@ -11,16 +11,16 @@
 
 | Field | Value |
 |---|---|
-| **Active slice** | Ship `mobile/ios-worker-v4-3`: Worker V4.3 + live field APIs |
-| **Branch / worktree** | `mobile/ios-worker-v4-3` @ `/Users/alex/Projects/AISTROYKA-ios-worker-v4-3` |
-| **PR** | [#256](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/256) |
-| **Base** | `origin/main` |
-| **Checks** | Worker + Manager BUILD SUCCEEDED; WorkerV43UITests 10/10; i18n OK |
-| **Next** | CI Check + non-author APPROVED → staging deploy. Owner: OTP token, E2E creds, TestFlight MODE B |
+| **Active slice** | Close live Manager/Worker field tails after #255 and merge Worker V4.3 from `main` |
+| **Branch / worktree** | `mobile/ios-live-work-tails` @ `/Users/alex/Projects/AISTROYKA-ios-manager-v4-3` |
+| **PR** | not opened yet |
+| **Base** | `origin/main` (includes #256 Worker V4.3) |
+| **Checks** | Shared 10/10; Manager BUILD SUCCEEDED; Worker BUILD SUCCEEDED |
+| **Next** | Push + PR; non-author APPROVED; do not self-approve. `GITHUB_REVIEWER_TOKEN` last seen 401 |
 
 ## Notes
 
-Primary checkout `/Users/alex/Projects/AISTROYKA` was not modified. Live credentials are not in the repo.
+Primary checkout `/Users/alex/Projects/AISTROYKA` was not modified. Live credentials are not in the repo. Task cache + JWT refresh now sit on Worker V4.3 `TodayHomeView` / `MyTasksView`, not only the unused `HomeView`.
 
 ---
 

@@ -9,6 +9,7 @@ import Shared
 struct TodayHomeView: View {
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var router: WorkerTabRouter
+    @Environment(\.scenePhase) private var scenePhase
     let project: ProjectDTO
     let onLeaveProject: () -> Void
     @ObservedObject private var store = AppStateStoreManager.shared
@@ -58,7 +59,15 @@ struct TodayHomeView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(.hidden, for: .navigationBar)
             .refreshable { load() }
-            .onAppear { load() }
+            .onAppear {
+                if todayTasks.isEmpty, !store.state.cachedTodayTasks.isEmpty {
+                    todayTasks = store.state.cachedTodayTasks
+                }
+                load()
+            }
+            .onChange(of: scenePhase) { phase in
+                if phase == .active { load() }
+            }
             .sheet(isPresented: $showReport) {
                 NavigationStack {
                     DailyReportFormView(
@@ -432,11 +441,18 @@ struct TodayHomeView: View {
                     WorkerInboxBadgeStore.shared.count = inboxCount
                     assistantSummary = assistant
                     tasksLoading = false
+                    errorMessage = nil
+                    store.save { $0.cachedTodayTasks = list }
                 }
             } catch {
                 await MainActor.run {
-                    errorMessage = WorkerV43Copy.userFacing(error)
+                    if todayTasks.isEmpty {
+                        todayTasks = store.state.cachedTodayTasks
+                    }
                     tasksLoading = false
+                    if todayTasks.isEmpty {
+                        errorMessage = WorkerV43Copy.userFacing(error)
+                    }
                 }
             }
         }

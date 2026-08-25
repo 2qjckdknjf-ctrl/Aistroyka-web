@@ -33,6 +33,9 @@ struct MyTasksView: View {
             .toolbar(.hidden, for: .navigationBar)
             .refreshable { load() }
             .onAppear {
+                if tasks.isEmpty, !store.state.cachedTodayTasks.isEmpty {
+                    tasks = store.state.cachedTodayTasks
+                }
                 load()
                 openPendingTask()
             }
@@ -224,11 +227,18 @@ struct MyTasksView: View {
                 await MainActor.run {
                     tasks = list
                     loading = false
+                    errorMessage = nil
+                    store.save { $0.cachedTodayTasks = list }
                 }
             } catch {
                 await MainActor.run {
-                    errorMessage = WorkerV43Copy.userFacing(error)
+                    if tasks.isEmpty {
+                        tasks = store.state.cachedTodayTasks
+                    }
                     loading = false
+                    if tasks.isEmpty {
+                        errorMessage = WorkerV43Copy.userFacing(error)
+                    }
                 }
             }
         }
