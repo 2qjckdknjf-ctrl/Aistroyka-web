@@ -40,6 +40,7 @@ describe("Cabinet visibility / dashboard stability policy (source asserts)", () 
   });
 
   it("guest access to dashboard sends user to localized login preserving next path", () => {
-    expect(middlewareSrc).toContain('loginUrl.searchParams.set("next", pathnameForLoc)');
+    expect(middlewareSrc).toContain('loginUrl.searchParams.set("next", nextTarget)');
+    expect(middlewareSrc).toContain("pathnameForLoc}${request.nextUrl.search}");
   });
 });

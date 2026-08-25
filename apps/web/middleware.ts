@@ -156,7 +156,8 @@ export async function middleware(request: NextRequest) {
 
   if (!user && (isProtected || isPlatformAdminPageAfterIntl)) {
     const loginUrl = new URL(`/${locale}/login`, request.url);
-    loginUrl.searchParams.set("next", pathnameForLoc);
+    const nextTarget = `${pathnameForLoc}${request.nextUrl.search}`;
+    loginUrl.searchParams.set("next", nextTarget);
     const redir = NextResponse.redirect(loginUrl);
     mergeSupabaseSessionIntoResponse(sessionResponse, redir);
     redir.headers.set(

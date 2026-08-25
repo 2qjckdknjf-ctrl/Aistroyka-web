@@ -32,6 +32,8 @@ describe("sanitizeNextRoute", () => {
   it("preserves query string for invite flow", () => {
     expect(sanitizeNextRoute("/en/invite/accept?token=abc", BASE)).toBe("/en/invite/accept?token=abc");
     expect(sanitizeNextRoute("/invite/accept?token=xyz", BASE, "en")).toBe("/en/invite/accept?token=xyz");
+    expect(sanitizeNextRoute("/ru/subscribe?plan=pro", BASE)).toBe("/ru/subscribe?plan=pro");
+    expect(sanitizeNextRoute("/subscribe?plan=starter", BASE, "en")).toBe("/en/subscribe?plan=starter");
   });
 
   it("rejects protocol-relative URLs (open redirect)", () => {

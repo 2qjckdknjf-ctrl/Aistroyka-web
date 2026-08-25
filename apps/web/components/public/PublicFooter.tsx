@@ -8,6 +8,7 @@ const PRODUCT_LINKS = [
   { href: "/platform", key: "platform" as const },
   { href: "/features", key: "features" as const },
   { href: "/solutions", key: "solutions" as const },
+  { href: "/pricing", key: "pricing" as const },
 ] as const;
 
 const COMPANY_LINKS = [
