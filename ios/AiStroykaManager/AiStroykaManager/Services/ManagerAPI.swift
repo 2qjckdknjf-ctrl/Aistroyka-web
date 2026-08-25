@@ -156,6 +156,10 @@ enum ManagerAPI {
         return (r.data ?? []).filter { !$0.userId.isEmpty }
     }
 
+    static func analysisStatus(reportId: String) async throws -> ManagerAnalysisStatusDTO {
+        try await APIClient.shared.request(path: "reports/\(reportId)/analysis-status", keyDecoding: .useDefaultKeys)
+    }
+
     /// GET /api/v1/reports/:id — report detail with media.
     static func reportDetail(id: String) async throws -> ReportDetailDTO {
         let r: ReportDetailResponse = try await APIClient.shared.request(path: "reports/\(id)")
@@ -479,6 +483,25 @@ enum ManagerAPI {
     }
 
     /// GET /api/v1/projects/:id/summary — project summary counts.
+    static func issues(projectId: String) async throws -> [ManagerIssueDTO] {
+        let r: ManagerIssuesResponse = try await APIClient.shared.request(path: "projects/\(projectId)/issues")
+        return r.data ?? []
+    }
+
+    static func patchIssueStatus(projectId: String, issueId: String, status: String) async throws -> ManagerIssueDTO {
+        struct Body: Encodable { let status: String }
+        struct Envelope: Decodable { let data: ManagerIssueDTO? }
+        let r: Envelope = try await APIClient.shared.request(
+            path: "projects/\(projectId)/issues/\(issueId)",
+            method: "PATCH",
+            body: Body(status: status)
+        )
+        guard let data = r.data else {
+            throw APIError(statusCode: nil, code: nil, message: "No issue data")
+        }
+        return data
+    }
+
     static func projectSummary(projectId: String) async throws -> ProjectSummaryDTO {
         // Backend returns camelCase counts; default client decoder uses convertFromSnakeCase.
         let r: ProjectSummaryResponse = try await APIClient.shared.request(
@@ -669,6 +692,8 @@ struct ReportListItemDTO: Codable {
     let submittedAt: String?
     let mediaCount: Int?
     let analysisStatus: String?
+    let actualVolume: Double?
+    let plannedVolume: Double?
 }
 
 struct ReportsListResponse: Decodable {
@@ -774,7 +799,22 @@ struct ReportDetailDTO: Decodable {
     let reviewedBy: String?
     let managerNote: String?
     let workerNote: String?
+    let actualVolume: Double?
+    let plannedVolume: Double?
     let media: [ReportMediaItem]?
+}
+
+struct ManagerAnalysisStatusDTO: Decodable {
+    let status: String
+    let reportId: String?
+    let jobCount: Int?
+    let summary: ManagerAnalysisSummaryDTO?
+}
+
+struct ManagerAnalysisSummaryDTO: Decodable {
+    let mediaTotal: Int?
+    let analyzed: Int?
+    let failed: Int?
 }
 struct ReportMediaItem: Decodable {
     let mediaId: String?
@@ -840,7 +880,26 @@ struct ProjectSummaryDTO: Decodable {
     let activeWorkers: Int?
     let openReports: Int?
     let aiAnalyses: Int?
+    let openIssuesCount: Int?
 }
+
+struct ManagerIssueDTO: Decodable, Identifiable {
+    let id: String
+    let title: String?
+    let description: String?
+    let status: String?
+    let createdAt: String?
+    let evidenceUrl: String?
+    let evidenceUploadSessionId: String?
+    enum CodingKeys: String, CodingKey {
+        case id, title, description, status
+        case createdAt = "created_at"
+        case evidenceUrl = "evidence_url"
+        case evidenceUploadSessionId = "evidence_upload_session_id"
+    }
+}
+
+struct ManagerIssuesResponse: Decodable { let data: [ManagerIssueDTO]? }
 struct ProjectSummaryResponse: Decodable { let data: ProjectSummaryDTO? }
 
 /// GET /api/v1/projects/:id/ai — project AI row (analysis_jobs).
@@ -875,6 +934,7 @@ struct NotificationInboxItemDTO: Codable {
     let readAt: String?
     let targetType: String?
     let targetId: String?
+    let projectId: String?
 }
 struct NotificationsListResponse: Decodable { let data: [NotificationInboxItemDTO]?; let total: Int? }
 

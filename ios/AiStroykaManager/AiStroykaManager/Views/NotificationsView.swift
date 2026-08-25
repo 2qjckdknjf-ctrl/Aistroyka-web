@@ -7,7 +7,8 @@ import SwiftUI
 import Shared
 
 struct NotificationsView: View {
-    var onOpenTarget: ((_ targetType: String, _ targetId: String) -> Void)? = nil
+    /// When provided (e.g. from More tab), tapping a notification with target_type/target_id navigates to task/report/project/issue.
+    var onOpenTarget: ((_ targetType: String, _ targetId: String, _ projectId: String?) -> Void)? = nil
     @EnvironmentObject var router: ManagerTabRouter
 
     @StateObject private var network = NetworkMonitor.shared
@@ -263,7 +264,7 @@ struct NotificationsView: View {
         guard let type = item.targetType?.trimmingCharacters(in: .whitespacesAndNewlines),
               let id = item.targetId?.trimmingCharacters(in: .whitespacesAndNewlines),
               !type.isEmpty, !id.isEmpty else { return }
-        onOpenTarget?(type, id)
+        onOpenTarget?(type, id, item.projectId)
     }
 
     private func markRead(_ id: String) {

@@ -26,6 +26,8 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>AiStroyka Worker needs camera access to capture before/after photos for reports.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>AiStroyka Worker uses your location only while starting or ending a shift, to record that you were on site.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>AiStroyka Worker needs microphone access to send voice messages in task chat.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

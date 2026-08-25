@@ -231,10 +231,10 @@ enum ManagerDemoCatalog {
 
     static var reports: [ReportListItemDTO] {
         [
-            ReportListItemDTO(id: "demo-report-1", projectId: featuredProjectId, taskId: "demo-task-rebar", userId: "demo-ivan", status: "submitted", createdAt: ISO8601DateFormatter().string(from: Date()), submittedAt: nil, mediaCount: 8, analysisStatus: "flagged_deviation"),
-            ReportListItemDTO(id: "demo-report-2", projectId: featuredProjectId, taskId: nil, userId: nil, status: "submitted", createdAt: ISO8601DateFormatter().string(from: Date()), submittedAt: nil, mediaCount: 5, analysisStatus: "ok"),
-            ReportListItemDTO(id: "demo-report-3", projectId: featuredProjectId, taskId: nil, userId: nil, status: "changes_requested", createdAt: ISO8601DateFormatter().string(from: Date()), submittedAt: nil, mediaCount: 3, analysisStatus: "ok"),
-            ReportListItemDTO(id: "demo-report-4", projectId: featuredProjectId, taskId: nil, userId: nil, status: "approved", createdAt: ISO8601DateFormatter().string(from: Date()), submittedAt: nil, mediaCount: 6, analysisStatus: "ok"),
+            ReportListItemDTO(id: "demo-report-1", projectId: featuredProjectId, taskId: "demo-task-rebar", userId: "demo-ivan", status: "submitted", createdAt: ISO8601DateFormatter().string(from: Date()), submittedAt: nil, mediaCount: 8, analysisStatus: "flagged_deviation", actualVolume: 36, plannedVolume: 40),
+            ReportListItemDTO(id: "demo-report-2", projectId: featuredProjectId, taskId: nil, userId: nil, status: "submitted", createdAt: ISO8601DateFormatter().string(from: Date()), submittedAt: nil, mediaCount: 5, analysisStatus: "ok", actualVolume: nil, plannedVolume: nil),
+            ReportListItemDTO(id: "demo-report-3", projectId: featuredProjectId, taskId: nil, userId: nil, status: "changes_requested", createdAt: ISO8601DateFormatter().string(from: Date()), submittedAt: nil, mediaCount: 3, analysisStatus: "ok", actualVolume: nil, plannedVolume: nil),
+            ReportListItemDTO(id: "demo-report-4", projectId: featuredProjectId, taskId: nil, userId: nil, status: "approved", createdAt: ISO8601DateFormatter().string(from: Date()), submittedAt: nil, mediaCount: 6, analysisStatus: "ok", actualVolume: nil, plannedVolume: nil),
         ]
     }
 
@@ -247,8 +247,8 @@ enum ManagerDemoCatalog {
 
     static var notifications: [NotificationInboxItemDTO] {
         [
-            NotificationInboxItemDTO(id: "demo-n1", type: "risk", title: NSLocalizedString("mgr_v43_high_risk", comment: ""), body: NSLocalizedString("mgr_v43_risk_rebar_summary", comment: ""), createdAt: ISO8601DateFormatter().string(from: Date()), readAt: nil, targetType: "project", targetId: featuredProjectId),
-            NotificationInboxItemDTO(id: "demo-n2", type: "report", title: NSLocalizedString("mgr_v43_ai_found_deviation", comment: ""), body: NSLocalizedString("mgr_v43_risk_rebar_summary", comment: ""), createdAt: ISO8601DateFormatter().string(from: Date()), readAt: nil, targetType: "report", targetId: "demo-report-1"),
+            NotificationInboxItemDTO(id: "demo-n1", type: "risk", title: NSLocalizedString("mgr_v43_high_risk", comment: ""), body: NSLocalizedString("mgr_v43_risk_rebar_summary", comment: ""), createdAt: ISO8601DateFormatter().string(from: Date()), readAt: nil, targetType: "project", targetId: featuredProjectId, projectId: featuredProjectId),
+            NotificationInboxItemDTO(id: "demo-n2", type: "report", title: NSLocalizedString("mgr_v43_ai_found_deviation", comment: ""), body: NSLocalizedString("mgr_v43_risk_rebar_summary", comment: ""), createdAt: ISO8601DateFormatter().string(from: Date()), readAt: nil, targetType: "report", targetId: "demo-report-1", projectId: featuredProjectId),
         ]
     }
 

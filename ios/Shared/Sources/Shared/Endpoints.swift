@@ -35,6 +35,8 @@ public struct TaskDTO: Codable, Equatable {
     public let assignedTo: String?
     public let description: String?
     public let reportRequired: Bool?
+    public let reportId: String?
+    public let reportStatus: String?
     public let priority: String?
 
     public init(
@@ -47,6 +49,8 @@ public struct TaskDTO: Codable, Equatable {
         assignedTo: String? = nil,
         description: String? = nil,
         reportRequired: Bool? = nil,
+        reportId: String? = nil,
+        reportStatus: String? = nil,
         priority: String? = nil
     ) {
         self.id = id
@@ -58,6 +62,8 @@ public struct TaskDTO: Codable, Equatable {
         self.assignedTo = assignedTo
         self.description = description
         self.reportRequired = reportRequired
+        self.reportId = reportId
+        self.reportStatus = reportStatus
         self.priority = priority
     }
 }

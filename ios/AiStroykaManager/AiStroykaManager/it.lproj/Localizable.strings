@@ -90,6 +90,13 @@
 "mgr_loading_workers" = "Caricamento operatori…";
 "mgr_manager_note" = "Nota del manager";
 "mgr_worker_note" = "Nota del operaio";
+"mgr_planned_volume" = "Volume pianificato";
+"mgr_actual_volume" = "Volume effettivo";
+"mgr_volume_m3_fmt" = "%.0f m³";
+"mgr_volume_pair_fmt" = "%.0f / %.0f m³";
+"mgr_ai_status" = "Stato IA";
+"mgr_ai_photos" = "Foto IA";
+"mgr_ai_photos_fmt" = "%d di %d analizzate";
 "mgr_mark_reviewed" = "Segna come revisionato";
 "mgr_media_count_fmt" = "Media (%d)";
 "mgr_evidence_load_failed_fmt" = "Impossibile caricare la foto %d.";
@@ -123,6 +130,13 @@
 "mgr_notification" = "Notifica";
 "mgr_notifications_placeholder" = "Notifiche — segnaposto";
 "mgr_open_reports" = "Report aperti";
+"mgr_open_issues" = "Issue aperte";
+"mgr_issues" = "Issue";
+"mgr_loading_issues" = "Caricamento issue…";
+"mgr_no_issues_title" = "Nessuna issue";
+"mgr_no_issues_subtitle" = "Le issue segnalate dal worker appariranno qui.";
+"mgr_issue_evidence" = "Evidenza fotografica";
+"mgr_issue_status" = "Stato";
 "mgr_open_shift" = "Turno aperto";
 "mgr_overtime" = "Straordinario";
 "mgr_photos_count_fmt" = "%d foto";

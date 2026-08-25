@@ -29,6 +29,8 @@ export interface ReportReviewCanonData {
   reviewed_by?: string | null;
   manager_note?: string | null;
   worker_note?: string | null;
+  actual_volume?: number | null;
+  planned_volume?: number | null;
   media: { media_id: string | null; upload_session_id: string | null; file_url?: string | null }[];
 }
 
@@ -68,6 +70,13 @@ export function ReportReviewCanonView({
   const beforeUrl = mediaUrls[0];
   const afterUrl = mediaUrls[1] ?? mediaUrls[0];
   const gradient = getCanonProjectGradient(report.id);
+  const plannedVolume = report.planned_volume;
+  const actualVolume = report.actual_volume;
+  const hasVolume = plannedVolume != null || actualVolume != null;
+  const volumeLabel = (value: number | null | undefined) =>
+    value == null ? "—" : t("reportVolumeM3Fmt", { value: Math.round(value) });
+  const deviation =
+    plannedVolume != null && actualVolume != null ? actualVolume - plannedVolume : null;
 
   const workflowSteps = [
     { key: "info", label: t("reportStepInfo"), state: "done" as const },
@@ -201,14 +210,20 @@ export function ReportReviewCanonView({
             <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
               <div>
                 <dt className="text-[var(--canon-text-muted)]">{t("reportPlannedVolume")}</dt>
-                <dd className="font-semibold tabular-nums text-[var(--canon-text-primary)]">—</dd>
+                <dd className="font-semibold tabular-nums text-[var(--canon-text-primary)]">
+                  {volumeLabel(plannedVolume)}
+                </dd>
               </div>
               <div>
                 <dt className="text-[var(--canon-text-muted)]">{t("reportActualVolume")}</dt>
-                <dd className="font-semibold tabular-nums text-[var(--canon-text-primary)]">—</dd>
+                <dd className="font-semibold tabular-nums text-[var(--canon-text-primary)]">
+                  {volumeLabel(actualVolume)}
+                </dd>
               </div>
             </dl>
-            <p className="mt-3 text-xs text-[var(--canon-text-muted)]">{t("reportVolumesPending")}</p>
+            {!hasVolume ? (
+              <p className="mt-3 text-xs text-[var(--canon-text-muted)]">{t("reportVolumesPending")}</p>
+            ) : null}
           </div>
         </section>
 
@@ -298,11 +313,23 @@ export function ReportReviewCanonView({
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td colSpan={5} className="text-center text-[var(--canon-text-muted)]">
-                    {t("reportVolumesPending")}
-                  </td>
-                </tr>
+                {hasVolume ? (
+                  <tr>
+                    <td>{report.worker_note?.slice(0, 80) || t("reportNoWorksListed")}</td>
+                    <td>{t("reportVolumeUnit")}</td>
+                    <td className="tabular-nums">{volumeLabel(plannedVolume)}</td>
+                    <td className="tabular-nums">{volumeLabel(actualVolume)}</td>
+                    <td className="tabular-nums">
+                      {deviation == null ? "—" : t("reportVolumeM3Fmt", { value: Math.round(deviation) })}
+                    </td>
+                  </tr>
+                ) : (
+                  <tr>
+                    <td colSpan={5} className="text-center text-[var(--canon-text-muted)]">
+                      {t("reportVolumesPending")}
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

@@ -17,6 +17,7 @@ enum ManagerMoreDestination: Hashable {
     case task(id: String)
     case report(id: String)
     case project(id: String)
+    case issues(projectId: String, issueId: String?)
 }
 
 struct ManagerMoreView: View {
@@ -106,10 +107,13 @@ struct ManagerMoreView: View {
                 case .settings:
                     ManagerSettingsView()
                 case .notifications:
-                    NotificationsView(onOpenTarget: { targetType, targetId in
+                    NotificationsView(onOpenTarget: { targetType, targetId, projectId in
                         let t = targetType.lowercased()
                         if t == "task" { path.append(.task(id: targetId)) }
                         else if t == "report" { path.append(.report(id: targetId)) }
+                        else if t == "issue", let projectId {
+                            path.append(.issues(projectId: projectId, issueId: targetId))
+                        }
                         else if t == "project" { path.append(.project(id: targetId)) }
                     })
                 case .reports:
@@ -129,6 +133,8 @@ struct ManagerMoreView: View {
                     ReportDetailReviewView(reportId: id)
                 case .project(let id):
                     ProjectDetailView(projectId: id, projectName: nil)
+                case .issues(let projectId, let issueId):
+                    ProjectIssuesForProjectView(projectId: projectId, focusIssueId: issueId)
                 }
             }
             .onChange(of: router.openNotifications) { open in
@@ -279,7 +285,7 @@ struct ManagerMoreView: View {
         case .decisions: return "pilot_manager_more_decisions"
         case .notifications: return "pilot_manager_more_notifications"
         case .settings: return "pilot_manager_more_settings"
-        case .task, .report, .project: return ""
+        case .task, .report, .project, .issues: return ""
         }
     }
 

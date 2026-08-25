@@ -81,6 +81,8 @@ interface Issue {
   description?: string | null;
   status: string;
   created_at: string;
+  evidence_upload_session_id?: string | null;
+  evidence_url?: string | null;
 }
 
 interface Document {
@@ -1095,6 +1097,7 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
                   <TableHeaderCell>{tDetail("title")}</TableHeaderCell>
                   <TableHeaderCell>{tDetail("status")}</TableHeaderCell>
                   <TableHeaderCell>{tDetail("created")}</TableHeaderCell>
+                  <TableHeaderCell>{tDetail("issueEvidence")}</TableHeaderCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -1105,6 +1108,22 @@ export function OwnerViewClient({ projectId }: { projectId: string }) {
                       <Badge className={issueStatusBadgeClass(i.status)}>{formatPortalStatus(i.status, "issue", tPortal)}</Badge>
                     </TableCell>
                     <TableCell>{new Date(i.created_at).toLocaleDateString()}</TableCell>
+                    <TableCell>
+                      {i.evidence_url ? (
+                        <a
+                          href={i.evidence_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-sm text-aistroyka-info underline underline-offset-2"
+                        >
+                          {tDetail("issueEvidenceOpen")}
+                        </a>
+                      ) : i.evidence_upload_session_id ? (
+                        <span className="text-xs text-aistroyka-text-tertiary">{tDetail("issueEvidence")}</span>
+                      ) : (
+                        <span className="text-xs text-aistroyka-text-tertiary">—</span>
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

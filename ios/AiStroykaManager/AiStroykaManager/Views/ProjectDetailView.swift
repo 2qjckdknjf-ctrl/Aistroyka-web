@@ -76,6 +76,11 @@ struct ProjectDetailView: View {
                                 .font(.caption)
                                 .foregroundStyle(ManagerV43.textSecondary)
                         }
+                        if let n = summary?.openIssuesCount {
+                            Text("\(NSLocalizedString("mgr_open_issues", comment: "")): \(n)")
+                                .font(.caption)
+                                .foregroundStyle(ManagerV43.textSecondary)
+                        }
                         if let workers = summary?.activeWorkers {
                             Text("\(NSLocalizedString("mgr_v43_workers", comment: "")): \(workers)")
                                 .font(.caption)
@@ -127,6 +132,10 @@ struct ProjectDetailView: View {
                 NavigationLink(destination: ReportsInboxView(initialProjectId: projectId)) {
                     labelRow("doc.text", NSLocalizedString("mgr_tab_reports", comment: ""))
                 }
+                NavigationLink(destination: ProjectIssuesForProjectView(projectId: projectId)) {
+                    labelRow("exclamationmark.triangle", NSLocalizedString("mgr_issues", comment: ""))
+                }
+                .accessibilityIdentifier("pilot_manager_project_issues_link")
                 NavigationLink(destination: ProjectAIView(projectId: projectId, projectName: p.name ?? NSLocalizedString("mgr_project", comment: ""))) {
                     labelRow("sparkles", NSLocalizedString("mgr_ai_jobs_link", comment: ""))
                 }
@@ -444,3 +453,154 @@ struct TasksListForProjectView: View {
     }
 }
 
+struct ProjectIssuesForProjectView: View {
+    let projectId: String
+    var focusIssueId: String? = nil
+    @State private var issues: [ManagerIssueDTO] = []
+    @State private var isLoading = true
+    @State private var errorMessage: String?
+    @State private var focusedIssue: ManagerIssueDTO?
+
+    var body: some View {
+        Group {
+            if isLoading && issues.isEmpty && errorMessage == nil {
+                LoadingStateView(message: NSLocalizedString("mgr_loading_issues", comment: ""))
+            } else if let err = errorMessage, issues.isEmpty {
+                ErrorStateView(message: err, retry: { load() })
+            } else if issues.isEmpty {
+                EmptyStateView(
+                    title: NSLocalizedString("mgr_no_issues_title", comment: ""),
+                    subtitle: NSLocalizedString("mgr_no_issues_subtitle", comment: "")
+                )
+            } else {
+                List(issues) { issue in
+                    NavigationLink(destination: ManagerIssueDetailView(projectId: projectId, issue: issue)) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(issue.title ?? issue.id)
+                                .font(.subheadline)
+                            Text(issue.status ?? "—")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            if issue.evidenceUrl != nil || issue.evidenceUploadSessionId != nil {
+                                Text(NSLocalizedString("mgr_issue_evidence", comment: ""))
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .padding(.vertical, 4)
+                    }
+                    .accessibilityIdentifier("pilot_manager_issue_\(issue.id)")
+                }
+                .aistroykaListChrome(
+                    pageBackground: ManagerSemanticColors.pageBackground,
+                    surfaceMuted: ManagerSemanticColors.surfaceMuted
+                )
+            }
+        }
+        .aistroykaPageBackground(ManagerSemanticColors.pageBackground)
+        .navigationTitle(NSLocalizedString("mgr_issues", comment: ""))
+        .refreshable { await loadAsync() }
+        .onAppear { loadIfNeeded() }
+        .background(
+            NavigationLink(
+                destination: Group {
+                    if let focusedIssue {
+                        ManagerIssueDetailView(projectId: projectId, issue: focusedIssue)
+                    }
+                },
+                isActive: Binding(
+                    get: { focusedIssue != nil },
+                    set: { if !$0 { focusedIssue = nil } }
+                )
+            ) { EmptyView() }
+            .hidden()
+        )
+    }
+
+    private func load() {
+        errorMessage = nil
+        isLoading = true
+        Task { await loadAsync() }
+    }
+
+    private func loadIfNeeded() {
+        guard shouldLoadInitially(items: issues, errorMessage: errorMessage) else { return }
+        load()
+    }
+
+    private func loadAsync() async {
+        await runManagerLoad(
+            setLoading: { isLoading = $0 },
+            setErrorMessage: { errorMessage = $0 }
+        ) {
+            issues = try await ManagerAPI.issues(projectId: projectId)
+            if focusedIssue == nil, let focusIssueId {
+                focusedIssue = issues.first(where: { $0.id == focusIssueId })
+            }
+        }
+    }
+}
+
+struct ManagerIssueDetailView: View {
+    let projectId: String
+    @State private var issue: ManagerIssueDTO
+    @State private var actionError: String?
+    @State private var isSaving = false
+
+    init(projectId: String, issue: ManagerIssueDTO) {
+        self.projectId = projectId
+        _issue = State(initialValue: issue)
+    }
+
+    private let statuses = ["open", "in_review", "resolved", "closed"]
+
+    var body: some View {
+        List {
+            Section(NSLocalizedString("mgr_issues", comment: "")) {
+                LabeledContent(NSLocalizedString("mgr_name", comment: ""), value: issue.title ?? issue.id)
+                LabeledContent(NSLocalizedString("mgr_status", comment: ""), value: issue.status ?? "—")
+                if let description = issue.description, !description.isEmpty {
+                    Text(description)
+                }
+                if let created = issue.createdAt {
+                    LabeledContent(NSLocalizedString("mgr_created", comment: ""), value: created)
+                }
+                if let urlString = issue.evidenceUrl, let url = URL(string: urlString) {
+                    Link(NSLocalizedString("mgr_issue_evidence", comment: ""), destination: url)
+                }
+            }
+            Section(NSLocalizedString("mgr_issue_status", comment: "")) {
+                ForEach(statuses, id: \.self) { status in
+                    Button(status) { patch(status) }
+                        .disabled(isSaving || issue.status == status)
+                        .accessibilityIdentifier("pilot_manager_issue_status_\(status)")
+                }
+                if let actionError {
+                    Text(actionError)
+                        .font(.caption)
+                        .foregroundStyle(ManagerSemanticColors.error)
+                }
+            }
+        }
+        .aistroykaListChrome(
+            pageBackground: ManagerSemanticColors.pageBackground,
+            surfaceMuted: ManagerSemanticColors.surfaceMuted
+        )
+        .navigationTitle(issue.title ?? NSLocalizedString("mgr_issues", comment: ""))
+    }
+
+    private func patch(_ status: String) {
+        isSaving = true
+        actionError = nil
+        Task {
+            do {
+                issue = try await ManagerAPI.patchIssueStatus(projectId: projectId, issueId: issue.id, status: status)
+            } catch let apiError as APIError {
+                actionError = apiError.message
+            } catch {
+                actionError = error.localizedDescription
+            }
+            isSaving = false
+        }
+    }
+}

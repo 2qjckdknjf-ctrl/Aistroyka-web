@@ -14,4 +14,6 @@ export interface Report {
   manager_note?: string | null;
   /** Worker narrative at submit/resubmit */
   worker_note?: string | null;
+  actual_volume?: number | null;
+  planned_volume?: number | null;
 }

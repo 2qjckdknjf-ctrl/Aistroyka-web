@@ -5,6 +5,8 @@ export const WorkerReportSubmitRequestSchema = z.object({
   report_id: z.string().min(1, "report_id required"),
   task_id: z.string().optional(),
   worker_note: z.string().max(2000).optional(),
+  actual_volume: z.number().nonnegative().max(1_000_000).optional(),
+  planned_volume: z.number().nonnegative().max(1_000_000).optional(),
 });
 
 /** POST /api/v1/worker/report/create */
@@ -36,15 +38,22 @@ export const DeviceUnregisterRequestSchema = z.object({
   device_id: z.string().min(1, "device_id required"),
 });
 
-/** POST /api/v1/worker/day/start — empty body optional */
-export const WorkerDayStartRequestSchema = z.object({}).strict().optional();
+/** POST /api/v1/worker/day/start — empty body or optional on-device location evidence */
+export const WorkerDayStartRequestSchema = z
+  .object({
+    latitude: z.number().gte(-90).lte(90).optional(),
+    longitude: z.number().gte(-180).lte(180).optional(),
+    accuracy_m: z.number().nonnegative().optional(),
+  })
+  .strict()
+  .optional();
 
 /** POST /api/v1/worker/day/end — empty body optional */
 export const WorkerDayEndRequestSchema = z.object({}).strict().optional();
 
 /** POST /api/v1/media/upload-sessions */
 export const CreateUploadSessionRequestSchema = z.object({
-  purpose: z.enum(["report_before", "report_after", "project_media", "task_chat"]).optional(),
+  purpose: z.enum(["report_before", "report_after", "project_media", "task_chat", "issue_evidence"]).optional(),
 });
 
 /** POST /api/v1/media/upload-sessions/[id]/finalize */
