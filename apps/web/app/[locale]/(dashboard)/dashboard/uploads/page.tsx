@@ -1,4 +1,4 @@
-import { UploadsCanonPage } from "./UploadsCanonPage";
+import { UploadsCanonPage } from "../UploadsCanonPage";
 
 export default async function UploadsPage() {
   return <UploadsCanonPage />;
