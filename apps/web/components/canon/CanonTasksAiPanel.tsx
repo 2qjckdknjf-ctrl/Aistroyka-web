@@ -16,20 +16,27 @@ export function CanonTasksAiPanel() {
         <div>
           <p className="font-medium text-[var(--canon-text-primary)]">{t("tasksAiRec1Title")}</p>
           <p className="mt-1 text-[var(--canon-text-muted)]">{t("tasksAiRec1Impact")}</p>
-          <button type="button" className="canon-ghost-btn mt-2 !text-xs">{t("tasksAiShowTasks")}</button>
+          <Link href="/dashboard/tasks?scope=overdue" className="canon-ghost-btn mt-2 !text-xs inline-flex">
+            {t("tasksAiShowTasks")}
+          </Link>
         </div>
         <div>
           <p className="font-medium text-[var(--canon-text-primary)]">{t("tasksAiRec2Title")}</p>
           <p className="mt-1 text-[var(--canon-text-muted)]">{t("tasksAiRec2Impact")}</p>
-          <button type="button" className="canon-ghost-btn mt-2 !text-xs">{t("tasksAiOpenTask")}</button>
+          <Link href="/dashboard/tasks?scope=review" className="canon-ghost-btn mt-2 !text-xs inline-flex">
+            {t("tasksAiOpenTask")}
+          </Link>
         </div>
       </div>
       <Link href="/dashboard/ai" className="canon-ai-panel-btn mt-4">
         {t("openAiCenter")} →
       </Link>
-      <button type="button" className="mt-3 text-xs text-[var(--canon-text-muted)] hover:text-[var(--canon-text-primary)]">
+      <Link
+        href="/dashboard/help"
+        className="mt-3 block text-xs text-[var(--canon-text-muted)] hover:text-[var(--canon-text-primary)]"
+      >
         {t("configureRecommendations")}
-      </button>
+      </Link>
     </aside>
   );
 }

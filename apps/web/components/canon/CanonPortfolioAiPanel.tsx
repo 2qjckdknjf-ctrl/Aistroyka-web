@@ -14,7 +14,6 @@ type Insight = {
   icon: typeof CircleAlert;
   tone: "danger" | "warning" | "info" | "success" | "purple";
   title: string;
-  detail?: string;
 };
 
 export function CanonPortfolioAiPanel({
@@ -29,8 +28,11 @@ export function CanonPortfolioAiPanel({
   const insights: Insight[] = [
     {
       icon: CircleAlert,
-      tone: "danger",
-      title: t("aiInsightHighRisk", { count: highRiskCount || 1 }),
+      tone: highRiskCount > 0 ? "danger" : "success",
+      title:
+        highRiskCount > 0
+          ? t("aiInsightHighRisk", { count: highRiskCount })
+          : t("aiInsightNoHighRisk"),
     },
     {
       icon: AlertTriangle,

@@ -110,7 +110,7 @@ export function DashboardAiRisksCanonPage() {
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <div className="canon-glass flex items-center gap-3 p-4">
-          <CanonProgressRing value={riskCount > 0 ? Math.min(100, riskCount * 8) : 12} size={72} label={t("aiKpiRisks")} />
+          <CanonProgressRing value={riskCount > 0 ? Math.min(100, riskCount * 8) : 0} size={72} label={t("aiKpiRisks")} />
           <div>
             <p className="text-xs text-[var(--canon-text-muted)]">{t("aiKpiRisks")}</p>
             <p className="text-2xl font-semibold tabular-nums text-[var(--canon-danger)]">{riskCount}</p>
