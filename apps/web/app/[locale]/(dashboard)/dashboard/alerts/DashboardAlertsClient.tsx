@@ -7,7 +7,7 @@ import { useTranslations } from "next-intl";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { AlertFeed, type AlertItemData } from "@/components/intelligence";
 import { Skeleton, ErrorState } from "@/components/ui";
-import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
+import { CanonSurface } from "@/components/canon/CanonSurface";
 import {
   countAlertsBySeverity,
   countAlertsByStatus,
@@ -32,9 +32,10 @@ async function fetchAlerts(): Promise<AlertItemData[]> {
   return json.data ?? [];
 }
 
-export function DashboardAlertsClient() {
+export function DashboardAlertsClient({ skin = "default" }: { skin?: "default" | "canon" }) {
   const t = useTranslations("dashboard");
   const tDetail = useTranslations("dashboardDetail");
+  const isCanon = skin === "canon";
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
@@ -114,16 +115,18 @@ export function DashboardAlertsClient() {
 
   return (
     <>
-      <header className="mb-6">
-        <h1 className="text-aistroyka-title font-bold tracking-tight text-aistroyka-text-primary">
-          {t("alertsPageTitle")}
-        </h1>
-        <p className="mt-1 text-aistroyka-subheadline text-aistroyka-text-secondary">
-          {t("alertsPageSubtitle")}
-        </p>
-      </header>
+      {!isCanon ? (
+        <header className="mb-6">
+          <h1 className="text-aistroyka-title font-bold tracking-tight text-aistroyka-text-primary">
+            {t("alertsPageTitle")}
+          </h1>
+          <p className="mt-1 text-aistroyka-subheadline text-aistroyka-text-secondary">
+            {t("alertsPageSubtitle")}
+          </p>
+        </header>
+      ) : null}
 
-      <DashboardGlassCard contentClassName="space-y-3 p-4">
+      <CanonSurface isCanon={isCanon} contentClassName="space-y-3 p-4">
         <div
           role="group"
           aria-label={t("alertsStatusFilter")}
@@ -178,15 +181,15 @@ export function DashboardAlertsClient() {
             );
           })}
         </div>
-      </DashboardGlassCard>
+      </CanonSurface>
 
       <div className="mt-4">
         {isPending ? (
-          <DashboardGlassCard>
+          <CanonSurface isCanon={isCanon}>
             <Skeleton className="mb-4 h-8 w-48" />
             <Skeleton className="h-4 w-full" />
             <Skeleton className="mt-2 h-4 w-2/3" />
-          </DashboardGlassCard>
+          </CanonSurface>
         ) : (
           <AlertFeed
             alerts={visible}

@@ -10,7 +10,7 @@ import {
   Modal,
   Select,
 } from "@/components/ui";
-import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
+import { CanonSurface } from "@/components/canon/CanonSurface";
 import { TaskChatPanel } from "@/components/dashboard/TaskChatPanel";
 
 interface TaskDetail {
@@ -40,8 +40,15 @@ function statusVariant(s: string): "neutral" | "success" | "warning" | "danger" 
   }
 }
 
-export function DashboardTaskDetailClient({ taskId }: { taskId: string }) {
+export function DashboardTaskDetailClient({
+  taskId,
+  skin = "default",
+}: {
+  taskId: string;
+  skin?: "default" | "canon";
+}) {
   const tDetail = useTranslations("dashboardDetail");
+  const isCanon = skin === "canon";
   const [task, setTask] = useState<TaskDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -120,23 +127,23 @@ export function DashboardTaskDetailClient({ taskId }: { taskId: string }) {
 
   if (loading && !task) {
     return (
-      <DashboardGlassCard>
+      <CanonSurface isCanon={isCanon}>
         <Skeleton lines={6} />
-      </DashboardGlassCard>
+      </CanonSurface>
     );
   }
 
   if (error || !task) {
     return (
-      <DashboardGlassCard>
+      <CanonSurface isCanon={isCanon}>
         <p className="text-aistroyka-text-secondary">{error ?? "Not found"}</p>
-      </DashboardGlassCard>
+      </CanonSurface>
     );
   }
 
   return (
     <>
-      <DashboardGlassCard contentClassName="space-y-4 p-4">
+      <CanonSurface isCanon={isCanon} contentClassName="space-y-4 p-4">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
             <h2 className="text-aistroyka-title3 font-semibold text-aistroyka-text-primary">
@@ -207,7 +214,7 @@ export function DashboardTaskDetailClient({ taskId }: { taskId: string }) {
             </dd>
           </div>
         </dl>
-      </DashboardGlassCard>
+      </CanonSurface>
 
       <TaskChatPanel taskId={taskId} />
 

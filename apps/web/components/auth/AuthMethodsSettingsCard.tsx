@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Button, Alert } from "@/components/ui";
 import { AuthProviderButtons } from "@/components/auth/AuthProviderButtons";
-import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
+import { CanonSurface } from "@/components/canon/CanonSurface";
 
 type MethodsResponse = {
   methods: {
@@ -37,8 +37,9 @@ async function unlinkProvider(provider: "apple" | "telegram"): Promise<MethodsRe
   return data as MethodsResponse;
 }
 
-export function AuthMethodsSettingsCard() {
+export function AuthMethodsSettingsCard({ skin = "default" }: { skin?: "default" | "canon" }) {
   const t = useTranslations("auth");
+  const isCanon = skin === "canon";
   const locale = useLocale();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<MethodsResponse | null>(null);
@@ -79,7 +80,7 @@ export function AuthMethodsSettingsCard() {
   const nextToComeBack = `/${locale}/dashboard/settings/auth`;
 
   return (
-    <DashboardGlassCard className="p-5">
+    <CanonSurface isCanon={isCanon} className="p-5">
       <h1 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">
         {t("linkedMethodsTitle")}
       </h1>
@@ -147,6 +148,6 @@ export function AuthMethodsSettingsCard() {
           }}
         />
       </div>
-    </DashboardGlassCard>
+    </CanonSurface>
   );
 }

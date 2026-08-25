@@ -18,8 +18,9 @@ async function fetchDirectory(params: { q: string; specialization: string }): Pr
   return json.data ?? [];
 }
 
-export function ContractorsDirectoryClient() {
+export function ContractorsDirectoryClient({ skin = "default" }: { skin?: "default" | "canon" }) {
   const t = useTranslations("contractorDirectory");
+  const isCanon = skin === "canon";
   const [q, setQ] = useState("");
   const [spec, setSpec] = useState("");
   const [applied, setApplied] = useState({ q: "", specialization: "" });
@@ -32,7 +33,9 @@ export function ContractorsDirectoryClient() {
   const applyFilters = () => setApplied({ q, specialization: spec });
 
   if (query.isPending) {
-    return (
+    return isCanon ? (
+      <div className="canon-glass p-4"><Skeleton className="h-40" /></div>
+    ) : (
       <DashboardGlassCard>
         <Skeleton className="h-40" />
       </DashboardGlassCard>
@@ -40,7 +43,9 @@ export function ContractorsDirectoryClient() {
   }
 
   if (query.isError) {
-    return (
+    return isCanon ? (
+      <div className="canon-glass p-4 text-[var(--canon-danger)] text-sm">{t("loadFailed")}</div>
+    ) : (
       <DashboardGlassCard className="p-4">
         <p className="text-aistroyka-error text-sm">{t("loadFailed")}</p>
       </DashboardGlassCard>
@@ -51,34 +56,106 @@ export function ContractorsDirectoryClient() {
 
   return (
     <div className="space-y-4">
-      <DashboardGlassCard className="p-4">
-        <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-end">
-          <div className="min-w-[200px] flex-1">
-            <Input
-              id="cd-search"
-              label={t("searchLabel")}
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder={t("searchPlaceholder")}
-            />
+      {isCanon ? (
+        <div className="canon-glass p-4">
+          <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-end">
+            <div className="min-w-[200px] flex-1">
+              <Input
+                id="cd-search"
+                label={t("searchLabel")}
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder={t("searchPlaceholder")}
+              />
+            </div>
+            <div className="min-w-[180px] flex-1">
+              <Input
+                id="cd-spec"
+                label={t("filterSpecialization")}
+                value={spec}
+                onChange={(e) => setSpec(e.target.value)}
+                placeholder={t("specializationPlaceholder")}
+              />
+            </div>
+            <button type="button" className="canon-gold-btn" onClick={applyFilters}>
+              {t("applyFilters")}
+            </button>
           </div>
-          <div className="min-w-[180px] flex-1">
-            <Input
-              id="cd-spec"
-              label={t("filterSpecialization")}
-              value={spec}
-              onChange={(e) => setSpec(e.target.value)}
-              placeholder={t("specializationPlaceholder")}
-            />
-          </div>
-          <Button type="button" onClick={applyFilters}>
-            {t("applyFilters")}
-          </Button>
         </div>
-      </DashboardGlassCard>
+      ) : (
+        <DashboardGlassCard className="p-4">
+          <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-end">
+            <div className="min-w-[200px] flex-1">
+              <Input
+                id="cd-search"
+                label={t("searchLabel")}
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder={t("searchPlaceholder")}
+              />
+            </div>
+            <div className="min-w-[180px] flex-1">
+              <Input
+                id="cd-spec"
+                label={t("filterSpecialization")}
+                value={spec}
+                onChange={(e) => setSpec(e.target.value)}
+                placeholder={t("specializationPlaceholder")}
+              />
+            </div>
+            <Button type="button" onClick={applyFilters}>
+              {t("applyFilters")}
+            </Button>
+          </div>
+        </DashboardGlassCard>
+      )}
 
       {rows.length === 0 ? (
         <EmptyState icon={<span className="text-2xl">📇</span>} title={t("emptyTitle")} subtitle={t("emptySubtitle")} />
+      ) : isCanon ? (
+        <div className="canon-glass overflow-hidden">
+          <div className="canon-data-table-wrap">
+            <table className="canon-data-table">
+              <thead>
+                <tr>
+                  <th>{t("colContractor")}</th>
+                  <th>{t("colQuality")}</th>
+                  <th className="canon-hide-mobile">{t("colProjects")}</th>
+                  <th className="canon-hide-mobile">{t("colTasksDone")}</th>
+                  <th className="canon-hide-mobile">{t("colReports")}</th>
+                  <th>{t("colActions")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row) => {
+                  const label =
+                    row.profile?.company_name?.trim() ||
+                    `${row.user_id.slice(0, 8)}…`;
+                  return (
+                    <tr key={row.user_id}>
+                      <td>
+                        <p className="font-medium text-[var(--canon-text-primary)]">{label}</p>
+                        <p className="text-xs font-mono text-[var(--canon-text-muted)]">{row.user_id}</p>
+                      </td>
+                      <td className="tabular-nums">{row.metrics.quality_score}</td>
+                      <td className="canon-hide-mobile tabular-nums">{row.metrics.active_projects}</td>
+                      <td className="canon-hide-mobile tabular-nums">{row.metrics.tasks_completed}</td>
+                      <td className="canon-hide-mobile tabular-nums">{row.metrics.reports_submitted}</td>
+                      <td>
+                        <Link
+                          href={`/dashboard/contractors/${row.user_id}`}
+                          className="text-sm text-[var(--canon-cyan)] hover:underline"
+                        >
+                          {t("openProfile")}
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
       ) : (
         <DashboardGlassCard className="overflow-x-auto" contentClassName="p-0">
           <Table aria-label={t("tableAria")}>

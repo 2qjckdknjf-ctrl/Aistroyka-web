@@ -1,8 +1,5 @@
-import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
-import { Link } from "@/i18n/navigation";
-import { SectionHeader } from "@/components/ui";
-import { DashboardTaskDetailClient } from "./DashboardTaskDetailClient";
+import { TaskDetailCanonPage } from "./TaskDetailCanonPage";
 
 export default async function DashboardTaskDetailPage({
   params,
@@ -10,18 +7,6 @@ export default async function DashboardTaskDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const t = await getTranslations("nav");
-  const tPage = await getTranslations("dashboardPageMeta");
   if (!id) notFound();
-  return (
-    <>
-      <div className="mb-4 flex items-center justify-between">
-        <SectionHeader title={t("tasks")} subtitle={tPage("taskDetailSubtitle")} />
-        <Link href="/dashboard/tasks" className="text-aistroyka-accent hover:underline">
-          {tPage("backToTasks")}
-        </Link>
-      </div>
-      <DashboardTaskDetailClient taskId={id} />
-    </>
-  );
+  return <TaskDetailCanonPage taskId={id} />;
 }

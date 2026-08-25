@@ -6,12 +6,10 @@ import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import {
-  SectionHeader,
-  Tabs,
-  Tab,
   TabPanel,
   Skeleton,
   EmptyState,
+  SectionHeader,
   Table,
   TableHead,
   TableBody,
@@ -22,37 +20,26 @@ import {
   Button,
 } from "@/components/ui";
 import { ProjectIntelligenceClient } from "./ProjectIntelligenceClient";
-import { ProjectSchedulePanel } from "./ProjectSchedulePanel";
-import { ProjectDocumentsPanel } from "./ProjectDocumentsPanel";
+import { ProjectScheduleCanonPanel } from "@/components/canon/ProjectScheduleCanonPanel";
+import { ProjectDocumentsCanonPanel } from "@/components/canon/ProjectDocumentsCanonPanel";
 import { ProjectCostsPanel } from "./ProjectCostsPanel";
 import { ProjectEstimatePanel } from "./ProjectEstimatePanel";
 import { ProjectDecisionsPanel } from "./ProjectDecisionsPanel";
 import { TelegramConnectCard } from "@/components/integrations/TelegramConnectCard";
 import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 import { AiActionPanel } from "@/components/ai/AiActionPanel";
+import {
+  CanonPageHeader,
+  CanonProjectTabBar,
+  ProjectCommandCenterOverview,
+} from "@/components/canon";
 import { ProjectVideoDailyAnalysisPanel } from "../../../projects/ProjectVideoDailyAnalysisPanel";
 import { downloadProjectReportsExport } from "@/components/projects/reports-export-ui";
 import {
   DEFAULT_PROJECT_DETAIL_TAB,
-  PROJECT_COMMAND_TAB_ORDER,
   resolveProjectDetailTab,
   type ProjectCommandTab,
 } from "./project-detail-tabs";
-
-const TAB_LABEL_KEYS: Record<ProjectCommandTab, string> = {
-  overview: "overview",
-  reports: "reports",
-  documents: "documents",
-  schedule: "schedule",
-  decisions: "decisions",
-  workers: "workers",
-  contractors: "contractors",
-  costs: "costs",
-  estimate: "estimate",
-  intelligence: "intelligence",
-  ai: "ai",
-  uploads: "uploads",
-};
 
 const PAGE_SIZE = 10;
 
@@ -135,7 +122,7 @@ export function DashboardProjectDetailClient({
   projectId: string;
   canExportReports?: boolean;
 }) {
-  const tPage = useTranslations("dashboardPageMeta");
+  const t = useTranslations("canon");
   const tDetail = useTranslations("dashboardDetail");
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -231,55 +218,45 @@ export function DashboardProjectDetailClient({
   }
 
   return (
-    <>
-      <div className="mb-4">
-        <Link
-          href="/dashboard/projects"
-          className="text-aistroyka-subheadline text-aistroyka-accent hover:underline focus:outline-none focus:ring-2 focus:ring-aistroyka-accent focus:ring-offset-2 rounded"
-        >
+    <div className="space-y-6">
+      <nav className="text-sm text-[var(--canon-text-muted)]">
+        <Link href="/dashboard/projects" className="hover:text-[var(--canon-cyan)]">
           {tDetail("projects")}
         </Link>
-      </div>
-      <SectionHeader title={project.name} subtitle={tPage("projectOverviewSubtitle")} />
+        <span className="mx-2">/</span>
+        <span className="text-[var(--canon-text-secondary)]">{project.name}</span>
+      </nav>
 
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6" aria-label={tDetail("projectSummary")}>
-        <DashboardGlassCard className="border-l-4 border-l-aistroyka-accent">
-          <p className="text-aistroyka-caption font-medium uppercase tracking-wide text-aistroyka-text-tertiary">{tDetail("activeWorkers")}</p>
-          <p className="mt-1 text-aistroyka-title3 font-semibold text-aistroyka-text-primary">{summary.activeWorkers}</p>
-        </DashboardGlassCard>
-        <DashboardGlassCard className="border-l-4 border-l-aistroyka-info">
-          <p className="text-aistroyka-caption font-medium uppercase tracking-wide text-aistroyka-text-tertiary">{tDetail("openReports")}</p>
-          <p className="mt-1 text-aistroyka-title3 font-semibold text-aistroyka-text-primary">{summary.openReports}</p>
-        </DashboardGlassCard>
-        <DashboardGlassCard className="border-l-4 border-l-aistroyka-success">
-          <p className="text-aistroyka-caption font-medium uppercase tracking-wide text-aistroyka-text-tertiary">{tDetail("aiAnalyses")}</p>
-          <p className="mt-1 text-aistroyka-title3 font-semibold text-aistroyka-text-primary">{summary.aiAnalyses}</p>
-        </DashboardGlassCard>
-        <DashboardGlassCard className="border-l-4 border-l-aistroyka-warning">
-          <p className="text-aistroyka-caption font-medium uppercase tracking-wide text-aistroyka-text-tertiary">{tDetail("pendingUploads")}</p>
-          <p className="mt-1 text-aistroyka-title3 font-semibold text-aistroyka-text-primary">—</p>
-        </DashboardGlassCard>
-      </section>
-
-      <TelegramConnectCard className="mb-6" />
-
-      <DashboardGlassCard contentClassName="p-0">
-        <Tabs aria-label={tDetail("projectSections")}>
-          {PROJECT_COMMAND_TAB_ORDER.map((tab) => (
-            <Tab
-              key={tab}
-              id={`tab-${tab}`}
-              selected={activeTab === tab}
-              onSelect={() => selectTab(tab)}
-              aria-controls={`panel-${tab}`}
+      <CanonPageHeader
+        title={t("projectCommandCenter")}
+        subtitle={t("screen03Label")}
+        actions={
+          <>
+            <span className="canon-risk-badge canon-risk-badge--low">{t("statusInProgress")}</span>
+            <button type="button" className="canon-ghost-btn" aria-label={t("moreActions")}>⋯</button>
+            <Link
+              href={`/dashboard/tasks?project_id=${encodeURIComponent(projectId)}`}
+              className="canon-gold-btn"
             >
-              {tDetail(TAB_LABEL_KEYS[tab])}
-            </Tab>
-          ))}
-        </Tabs>
+              {t("createTask")}
+            </Link>
+          </>
+        }
+      />
+
+      <div className="canon-glass overflow-hidden">
+        <CanonProjectTabBar
+          projectId={projectId}
+          activeTab={activeTab}
+          onSelectTab={selectTab}
+        />
 
         <TabPanel id="panel-overview" selected={activeTab === "overview"} aria-labelledby="tab-overview">
-          <ProjectOverviewPanel projectId={projectId} />
+          <ProjectCommandCenterOverview
+            projectId={projectId}
+            projectName={project.name}
+            summary={summary}
+          />
         </TabPanel>
         <TabPanel id="panel-workers" selected={activeTab === "workers"} aria-labelledby="tab-workers">
           <ProjectWorkersPanel
@@ -323,44 +300,28 @@ export function DashboardProjectDetailClient({
           />
         </TabPanel>
         <TabPanel id="panel-intelligence" selected={activeTab === "intelligence"} aria-labelledby="tab-intelligence">
-          <ProjectIntelligenceClient projectId={projectId} />
+          <ProjectIntelligenceClient projectId={projectId} skin="canon" />
         </TabPanel>
         <TabPanel id="panel-schedule" selected={activeTab === "schedule"} aria-labelledby="tab-schedule">
-          <ProjectSchedulePanel projectId={projectId} />
+          <ProjectScheduleCanonPanel projectId={projectId} />
         </TabPanel>
         <TabPanel id="panel-documents" selected={activeTab === "documents"} aria-labelledby="tab-documents">
-          <ProjectDocumentsPanel projectId={projectId} />
+          <ProjectDocumentsCanonPanel projectId={projectId} />
         </TabPanel>
         <TabPanel id="panel-decisions" selected={activeTab === "decisions"} aria-labelledby="tab-decisions">
           <ProjectDecisionsPanel projectId={projectId} />
         </TabPanel>
         <TabPanel id="panel-costs" selected={activeTab === "costs"} aria-labelledby="tab-costs">
-          <ProjectCostsPanel projectId={projectId} />
+          <ProjectCostsPanel projectId={projectId} skin="canon" />
         </TabPanel>
         <TabPanel id="panel-estimate" selected={activeTab === "estimate"} aria-labelledby="tab-estimate">
-          <ProjectEstimatePanel projectId={projectId} />
+          <ProjectEstimatePanel projectId={projectId} skin="canon" />
         </TabPanel>
-      </DashboardGlassCard>
-    </>
-  );
-}
+      </div>
 
-function ProjectOverviewPanel({
-  projectId,
-}: {
-  projectId: string;
-}) {
-  const tDetail = useTranslations("dashboardDetail");
-
-  return (
-    <div className="space-y-4 p-4">
-      <p className="text-aistroyka-subheadline text-aistroyka-text-secondary">{tDetail("projectSummary")}</p>
-      <Link
-        href={`/dashboard/tasks?project_id=${encodeURIComponent(projectId)}`}
-        className="inline-flex text-aistroyka-subheadline font-medium text-aistroyka-accent hover:underline focus:outline-none focus:ring-2 focus:ring-aistroyka-accent focus:ring-offset-2 rounded"
-      >
-        {tDetail("viewTasks")}
-      </Link>
+      {activeTab === "overview" ? (
+        <TelegramConnectCard className="mt-4 opacity-80" />
+      ) : null}
     </div>
   );
 }

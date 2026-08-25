@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Skeleton, EmptyState, Button, Input } from "@/components/ui";
 import { CustomerEstimatesManagerPanel } from "./CustomerEstimatesManagerPanel";
-import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
+import { CanonSurface } from "@/components/canon/CanonSurface";
 
 interface BudgetSummary {
   planned_total: number;
@@ -79,8 +79,15 @@ function formatEstimateError(message: string, tDetail: (key: string) => string):
   }
 }
 
-export function ProjectEstimatePanel({ projectId }: { projectId: string }) {
+export function ProjectEstimatePanel({
+  projectId,
+  skin = "default",
+}: {
+  projectId: string;
+  skin?: "default" | "canon";
+}) {
   const tDetail = useTranslations("dashboardDetail");
+  const isCanon = skin === "canon";
   const queryClient = useQueryClient();
   const [imageUrl, setImageUrl] = useState("");
 
@@ -130,7 +137,7 @@ export function ProjectEstimatePanel({ projectId }: { projectId: string }) {
       </p>
 
       {budget && (
-        <DashboardGlassCard className="border-l-4 border-l-aistroyka-info">
+        <CanonSurface isCanon={isCanon} className="border-l-4 border-l-aistroyka-info">
           <h3 className="font-medium text-aistroyka-text-primary">{tDetail("recordedBudget")}</h3>
           <p className="text-aistroyka-caption text-aistroyka-text-tertiary mt-1">
             {tDetail("fromCostItemsPlannedVsActual")}
@@ -150,19 +157,19 @@ export function ProjectEstimatePanel({ projectId }: { projectId: string }) {
             )}
             <span>{budget.over_budget ? tDetail("overBudget") : tDetail("onBudget")}</span>
           </div>
-        </DashboardGlassCard>
+        </CanonSurface>
       )}
 
       {!budget && (
-        <DashboardGlassCard className="border-l-4 border-l-aistroyka-warning">
+        <CanonSurface isCanon={isCanon} className="border-l-4 border-l-aistroyka-warning">
           <p className="text-aistroyka-text-secondary">
             {tDetail("noRecordedBudgetYetHint")}
           </p>
-        </DashboardGlassCard>
+        </CanonSurface>
       )}
 
       {latest && (
-        <DashboardGlassCard className="border-l-4 border-l-aistroyka-accent">
+        <CanonSurface isCanon={isCanon} className="border-l-4 border-l-aistroyka-accent">
           <h3 className="font-medium text-aistroyka-text-primary">{tDetail("latestEstimateAi")}</h3>
           <p className="text-aistroyka-caption text-aistroyka-text-tertiary mt-1">
             {tDetail("source")}: {latest.source_type}
@@ -195,20 +202,20 @@ export function ProjectEstimatePanel({ projectId }: { projectId: string }) {
               </p>
             )}
           </div>
-        </DashboardGlassCard>
+        </CanonSurface>
       )}
 
       {!latest && summary?.estimate_results?.length === 0 && (
-        <DashboardGlassCard>
+        <CanonSurface isCanon={isCanon}>
           <EmptyState
             icon={<span className="text-2xl">📐</span>}
             title={tDetail("noAiEstimateYet")}
             subtitle={tDetail("pasteImageUrlHint")}
           />
-        </DashboardGlassCard>
+        </CanonSurface>
       )}
 
-      <DashboardGlassCard>
+      <CanonSurface isCanon={isCanon}>
         <h3 className="font-medium text-aistroyka-text-primary">{tDetail("estimateFromImage")}</h3>
         <p className="text-aistroyka-caption text-aistroyka-text-tertiary mt-1">
           {tDetail("publicImageUrlHint")}
@@ -236,10 +243,10 @@ export function ProjectEstimatePanel({ projectId }: { projectId: string }) {
               : tDetail("estimateFailed")}
           </p>
         )}
-      </DashboardGlassCard>
+      </CanonSurface>
 
       {docs.length > 0 && (
-        <DashboardGlassCard>
+        <CanonSurface isCanon={isCanon}>
           <h3 className="font-medium text-aistroyka-text-primary">{tDetail("sourceDocuments")}</h3>
           <p className="text-aistroyka-caption text-aistroyka-text-tertiary mt-1">
             {tDetail("sourceDocumentsHint")}
@@ -251,7 +258,7 @@ export function ProjectEstimatePanel({ projectId }: { projectId: string }) {
               </li>
             ))}
           </ul>
-        </DashboardGlassCard>
+        </CanonSurface>
       )}
     </div>
   );

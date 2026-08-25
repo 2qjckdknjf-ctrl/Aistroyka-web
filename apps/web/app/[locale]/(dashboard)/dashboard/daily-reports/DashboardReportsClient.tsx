@@ -51,7 +51,13 @@ function formatAge(dateStr: string, t: (key: string, values?: Record<string, str
 
 const DEFAULT_REPORTS_BASE = "/dashboard/daily-reports";
 
-export function DashboardReportsClient({ basePath = DEFAULT_REPORTS_BASE }: { basePath?: string }) {
+export function DashboardReportsClient({
+  basePath = DEFAULT_REPORTS_BASE,
+  skin = "default",
+}: {
+  basePath?: string;
+  skin?: "default" | "canon";
+}) {
   const tDashboard = useTranslations("dashboard");
   const tDetail = useTranslations("dashboardDetail");
   const reportStatusOptions = [
@@ -121,8 +127,15 @@ export function DashboardReportsClient({ basePath = DEFAULT_REPORTS_BASE }: { ba
     [data],
   );
 
+  const isCanon = skin === "canon";
+  const shellClass = isCanon ? "canon-glass overflow-hidden" : undefined;
+
   if (loading && !data) {
-    return (
+    return isCanon ? (
+      <div className="canon-glass p-4">
+        <Skeleton lines={5} />
+      </div>
+    ) : (
       <DashboardGlassCard>
         <Skeleton lines={5} />
       </DashboardGlassCard>
@@ -130,7 +143,9 @@ export function DashboardReportsClient({ basePath = DEFAULT_REPORTS_BASE }: { ba
   }
 
   if (error) {
-    return (
+    return isCanon ? (
+      <div className="canon-glass p-4 text-[var(--canon-text-secondary)]">{error}</div>
+    ) : (
       <DashboardGlassCard>
         <p className="text-aistroyka-text-secondary p-4">{error}</p>
       </DashboardGlassCard>
@@ -138,7 +153,15 @@ export function DashboardReportsClient({ basePath = DEFAULT_REPORTS_BASE }: { ba
   }
 
   if (!data?.length) {
-    return (
+    return isCanon ? (
+      <div className="canon-glass p-8">
+        <EmptyState
+          icon={<span className="text-2xl">📋</span>}
+          title={tDetail("noReportsYet")}
+          subtitle={tDetail("dailyReportsAppear")}
+        />
+      </div>
+    ) : (
       <DashboardGlassCard>
         <EmptyState
           icon={<span className="text-2xl">📋</span>}
@@ -181,38 +204,132 @@ export function DashboardReportsClient({ basePath = DEFAULT_REPORTS_BASE }: { ba
         />
       </div>
       {pendingReviewCount > 0 ? (
-        <DashboardGlassCard
-          className="mb-4 border-l-4 border-l-aistroyka-warning"
-          contentClassName="flex flex-wrap items-center justify-between gap-3 p-4"
-          aria-label={tDashboard("queueReportsReview")}
-        >
-          <div>
-            <p className="text-aistroyka-caption font-medium uppercase tracking-wide text-aistroyka-text-tertiary">
-              {tDashboard("queueReportsReview")}
-            </p>
-            <p className="mt-1 text-aistroyka-title3 font-semibold tabular-nums text-aistroyka-text-primary">
-              {pendingReviewCount}
-            </p>
+        isCanon ? (
+          <div
+            className="canon-glass mb-4 flex flex-wrap items-center justify-between gap-3 border-l-4 border-l-[var(--canon-gold)] p-4"
+            aria-label={tDashboard("queueReportsReview")}
+          >
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wide text-[var(--canon-text-muted)]">
+                {tDashboard("queueReportsReview")}
+              </p>
+              <p className="mt-1 text-2xl font-semibold tabular-nums text-[var(--canon-gold)]">
+                {pendingReviewCount}
+              </p>
+            </div>
+            {params.status !== "submitted" ? (
+              <button
+                type="button"
+                className="canon-ghost-btn !text-xs"
+                onClick={() => {
+                  setParam("status", "submitted");
+                  setParam("page", "1");
+                }}
+              >
+                {tDashboard("viewAll")}
+              </button>
+            ) : null}
           </div>
-          {params.status !== "submitted" ? (
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => {
-                setParam("status", "submitted");
-                setParam("page", "1");
-              }}
-            >
-              {tDashboard("viewAll")}
-            </Button>
-          ) : null}
-        </DashboardGlassCard>
+        ) : (
+          <DashboardGlassCard
+            className="mb-4 border-l-4 border-l-aistroyka-warning"
+            contentClassName="flex flex-wrap items-center justify-between gap-3 p-4"
+            aria-label={tDashboard("queueReportsReview")}
+          >
+            <div>
+              <p className="text-aistroyka-caption font-medium uppercase tracking-wide text-aistroyka-text-tertiary">
+                {tDashboard("queueReportsReview")}
+              </p>
+              <p className="mt-1 text-aistroyka-title3 font-semibold tabular-nums text-aistroyka-text-primary">
+                {pendingReviewCount}
+              </p>
+            </div>
+            {params.status !== "submitted" ? (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  setParam("status", "submitted");
+                  setParam("page", "1");
+                }}
+              >
+                {tDashboard("viewAll")}
+              </Button>
+            ) : null}
+          </DashboardGlassCard>
+        )
       ) : null}
-      <DashboardGlassCard contentClassName="p-0 overflow-hidden">
-        <div className="p-2 flex justify-end">
-          <Button variant="secondary" onClick={exportCsv} className="text-sm">{tDetail("exportCsv")}</Button>
+      {isCanon ? (
+        <div className={shellClass ?? "canon-glass overflow-hidden"}>
+          <div className="flex justify-end p-2">
+            <button type="button" className="canon-ghost-btn !text-xs" onClick={exportCsv}>
+              {tDetail("exportCsv")}
+            </button>
+          </div>
+          <div className="canon-data-table-wrap">
+            <table className="canon-data-table">
+              <thead>
+                <tr>
+                  <th>{tDetail("report")}</th>
+                  <th>{tDetail("status")}</th>
+                  <th className="canon-hide-mobile">{tDetail("worker")}</th>
+                  <th className="canon-hide-mobile">{tDetail("project")}</th>
+                  <th>{tDetail("age")}</th>
+                  <th>{tDetail("action")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pageData.rows.map((r) => (
+                  <tr key={r.id}>
+                    <td>
+                      <Link
+                        href={`${basePath}/${r.id}`}
+                        className="font-mono text-xs text-[var(--canon-cyan)] hover:underline"
+                      >
+                        {r.id.slice(0, 8)}…
+                      </Link>
+                    </td>
+                    <td>
+                      <span className={`canon-risk-badge ${
+                        r.status === "approved"
+                          ? "canon-risk-badge--low"
+                          : r.status === "rejected"
+                            ? "canon-risk-badge--high"
+                            : "canon-risk-badge--medium"
+                      }`}>
+                        {r.status}
+                      </span>
+                    </td>
+                    <td className="canon-hide-mobile font-mono text-xs">
+                      {r.user_id.slice(0, 8)}…
+                    </td>
+                    <td className="canon-hide-mobile font-mono text-xs">
+                      {r.project_id ? r.project_id.slice(0, 8) + "…" : "—"}
+                    </td>
+                    <td className="text-xs tabular-nums">{formatAge(r.created_at, tDetail)}</td>
+                    <td>
+                      <Link href={`${basePath}/${r.id}`} className="text-[var(--canon-cyan)] hover:underline">
+                        {tDetail("view")}
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <TablePagination
+            page={page}
+            pageSize={pageSize}
+            totalCount={pageData.total}
+            onPageChange={(p) => setParam("page", String(p))}
+          />
         </div>
-        <Table aria-label={tDetail("reports")}>
+      ) : (
+        <DashboardGlassCard contentClassName="p-0 overflow-hidden">
+          <div className="p-2 flex justify-end">
+            <Button variant="secondary" onClick={exportCsv} className="text-sm">{tDetail("exportCsv")}</Button>
+          </div>
+          <Table aria-label={tDetail("reports")}>
         <TableHead>
           <TableRow>
             <TableHeaderCell>{tDetail("report")}</TableHeaderCell>
@@ -277,6 +394,7 @@ export function DashboardReportsClient({ basePath = DEFAULT_REPORTS_BASE }: { ba
         onPageChange={(p) => setParam("page", String(p))}
       />
       </DashboardGlassCard>
+      )}
     </>
   );
 }

@@ -18,7 +18,7 @@ import {
 } from "@/components/ui";
 import type { WorkloadInboxResult, WorkloadItem } from "@/lib/domain/workload/workload.types";
 import { formatWorkloadPriority, workloadPriorityBadgeClass } from "./statusBadgeStyles";
-import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
+import { CanonSurface } from "@/components/canon/CanonSurface";
 import {
   countWorkloadByPriority,
   filterWorkloadByPriority,
@@ -41,8 +41,9 @@ function priBadge(p: string) {
   return <Badge className={workloadPriorityBadgeClass(p)}>{formatWorkloadPriority(p)}</Badge>;
 }
 
-export function WorkloadInboxClient() {
+export function WorkloadInboxClient({ skin = "default" }: { skin?: "default" | "canon" }) {
   const tDetail = useTranslations("dashboardDetail");
+  const isCanon = skin === "canon";
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
@@ -106,10 +107,10 @@ export function WorkloadInboxClient() {
 
   if (loading) {
     return (
-      <DashboardGlassCard className="p-4">
+      <CanonSurface isCanon={isCanon} className="p-4">
         <Skeleton className="mb-4 h-8 w-64" />
         <Skeleton className="h-48 w-full" />
-      </DashboardGlassCard>
+      </CanonSurface>
     );
   }
 
@@ -122,7 +123,7 @@ export function WorkloadInboxClient() {
 
   return (
     <div className="space-y-8">
-      <DashboardGlassCard contentClassName="p-4">
+      <CanonSurface isCanon={isCanon} contentClassName="p-4">
         <div
           role="group"
           aria-label={tDetail("workloadPriorityFilter")}
@@ -151,14 +152,14 @@ export function WorkloadInboxClient() {
             );
           })}
         </div>
-      </DashboardGlassCard>
+      </CanonSurface>
 
       <section aria-label={tDetail("managerExecutionInbox")}>
         <h2 className="mb-2 text-aistroyka-subheadline font-semibold text-aistroyka-text-primary">
           {tDetail("executionInbox")}
         </h2>
         <p className="mb-3 text-sm text-aistroyka-text-secondary">{tDetail("executionInboxHint")}</p>
-        <WorkloadList items={managerItems} empty={tDetail("nothingNeedsAttentionFilter")} tDetail={tDetail} />
+        <WorkloadList items={managerItems} empty={tDetail("nothingNeedsAttentionFilter")} tDetail={tDetail} isCanon={isCanon} />
       </section>
 
       {leadershipItems.length > 0 ? (
@@ -173,6 +174,7 @@ export function WorkloadInboxClient() {
             items={leadershipItems}
             empty={tDetail("noCriticalPortfolioProjects")}
             tDetail={tDetail}
+            isCanon={isCanon}
           />
         </section>
       ) : null}
@@ -184,16 +186,18 @@ function WorkloadList({
   items,
   empty,
   tDetail,
+  isCanon,
 }: {
   items: WorkloadItem[];
   empty: string;
   tDetail: ReturnType<typeof useTranslations>;
+  isCanon: boolean;
 }) {
   if (items.length === 0) {
     return (
-      <DashboardGlassCard contentClassName="p-4">
+      <CanonSurface isCanon={isCanon} contentClassName="p-4">
         <p className="text-sm text-aistroyka-text-tertiary">{empty}</p>
-      </DashboardGlassCard>
+      </CanonSurface>
     );
   }
 
@@ -203,7 +207,7 @@ function WorkloadList({
       <ul className="space-y-2 sm:hidden">
         {items.map((w) => (
           <li key={w.id}>
-            <DashboardGlassCard contentClassName="space-y-2 p-3">
+            <CanonSurface isCanon={isCanon} contentClassName="space-y-2 p-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 {priBadge(w.priority)}
                 <Link
@@ -218,14 +222,14 @@ function WorkloadList({
               <p className="text-xs text-aistroyka-text-secondary">
                 {w.project_name ?? "—"}
               </p>
-            </DashboardGlassCard>
+            </CanonSurface>
           </li>
         ))}
       </ul>
 
       {/* Tablet/desktop table */}
       <div className="hidden sm:block">
-        <DashboardGlassCard contentClassName="overflow-hidden p-0">
+        <CanonSurface isCanon={isCanon} contentClassName="overflow-hidden p-0">
           <Table>
             <TableHead>
               <TableRow>
@@ -256,7 +260,7 @@ function WorkloadList({
               ))}
             </TableBody>
           </Table>
-        </DashboardGlassCard>
+        </CanonSurface>
       </div>
     </>
   );

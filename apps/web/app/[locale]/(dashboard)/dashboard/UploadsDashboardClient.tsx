@@ -76,8 +76,9 @@ function referenceLabel(row: UploadSessionRow, tDetail: ReturnType<typeof useTra
   return "—";
 }
 
-export function UploadsDashboardClient() {
+export function UploadsDashboardClient({ skin = "default" }: { skin?: "default" | "canon" }) {
   const tDetail = useTranslations("dashboardDetail");
+  const isCanon = skin === "canon";
   const UPLOAD_STATUS_OPTIONS = [
     { value: "created", label: tDetail("created") },
     { value: "uploaded", label: tDetail("uploaded") },
@@ -143,9 +144,13 @@ export function UploadsDashboardClient() {
     return (
       <>
         {filterBar}
-        <DashboardGlassCard>
-          <Skeleton lines={5} />
-        </DashboardGlassCard>
+        {isCanon ? (
+          <div className="canon-glass p-4"><Skeleton lines={5} /></div>
+        ) : (
+          <DashboardGlassCard>
+            <Skeleton lines={5} />
+          </DashboardGlassCard>
+        )}
       </>
     );
   }
@@ -154,9 +159,13 @@ export function UploadsDashboardClient() {
     return (
       <>
         {filterBar}
-        <DashboardGlassCard>
-          <p className="p-4 text-aistroyka-text-secondary">{error}</p>
-        </DashboardGlassCard>
+        {isCanon ? (
+          <div className="canon-glass p-4 text-[var(--canon-text-secondary)]">{error}</div>
+        ) : (
+          <DashboardGlassCard>
+            <p className="p-4 text-aistroyka-text-secondary">{error}</p>
+          </DashboardGlassCard>
+        )}
       </>
     );
   }
@@ -165,88 +174,154 @@ export function UploadsDashboardClient() {
     return (
       <>
         {filterBar}
-        <DashboardGlassCard>
-          <EmptyState
-            icon={<span className="text-2xl">⇧</span>}
-            title={stuck ? tDetail("noStuckUploadSessions") : tDetail("noUploadSessions")}
-            subtitle={
-              stuck
-                ? tDetail("stuckUploadSessionsAppear")
-                : tDetail("uploadSessionsAppear")
-            }
-          />
-        </DashboardGlassCard>
+        {isCanon ? (
+          <div className="canon-glass p-8">
+            <EmptyState
+              icon={<span className="text-2xl">⇧</span>}
+              title={stuck ? tDetail("noStuckUploadSessions") : tDetail("noUploadSessions")}
+              subtitle={stuck ? tDetail("stuckUploadSessionsAppear") : tDetail("uploadSessionsAppear")}
+            />
+          </div>
+        ) : (
+          <DashboardGlassCard>
+            <EmptyState
+              icon={<span className="text-2xl">⇧</span>}
+              title={stuck ? tDetail("noStuckUploadSessions") : tDetail("noUploadSessions")}
+              subtitle={stuck ? tDetail("stuckUploadSessionsAppear") : tDetail("uploadSessionsAppear")}
+            />
+          </DashboardGlassCard>
+        )}
       </>
     );
   }
 
+  const stuckBanner = stuck ? (
+    isCanon ? (
+      <div className="canon-glass mb-4 border-l-4 border-l-[var(--canon-warning)] p-4">
+        <p className="text-sm font-medium text-[var(--canon-text-primary)]">{tDetail("showingStuckUploadSessions")}</p>
+        <p className="mt-1 text-xs text-[var(--canon-text-secondary)]">{tDetail("clearUrlFilterUploadSessions")}</p>
+      </div>
+    ) : (
+      <DashboardGlassCard className="mb-4 border-l-4 border-l-aistroyka-warning">
+        <p className="text-aistroyka-subheadline font-medium text-aistroyka-text-primary">
+          {tDetail("showingStuckUploadSessions")}
+        </p>
+        <p className="mt-1 text-aistroyka-caption text-aistroyka-text-secondary">
+          {tDetail("clearUrlFilterUploadSessions")}
+        </p>
+      </DashboardGlassCard>
+    )
+  ) : null;
+
+  const tableBody = isCanon ? (
+    <div className="canon-glass overflow-hidden">
+      <div className="canon-data-table-wrap">
+        <table className="canon-data-table">
+          <thead>
+            <tr>
+              <th>{tDetail("session")}</th>
+              <th>{tDetail("status")}</th>
+              <th className="canon-hide-mobile">{tDetail("purpose")}</th>
+              <th className="canon-hide-mobile">{tDetail("worker")}</th>
+              <th>{tDetail("created")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(data ?? []).map((row) => (
+              <tr key={row.id}>
+                <td className="font-mono text-xs">{row.id.slice(0, 8)}…</td>
+                <td>
+                  <span className={`canon-risk-badge ${
+                    row.status === "finalized"
+                      ? "canon-risk-badge--low"
+                      : row.status === "expired"
+                        ? "canon-risk-badge--high"
+                        : "canon-risk-badge--medium"
+                  }`}>
+                    {row.status}
+                  </span>
+                </td>
+                <td className="canon-hide-mobile">{purposeLabel(row.purpose, tDetail)}</td>
+                <td className="canon-hide-mobile">
+                  <Link href={`/dashboard/workers/${row.user_id}`} className="text-[var(--canon-cyan)] hover:underline">
+                    {row.user_id.slice(0, 8)}…
+                  </Link>
+                </td>
+                <td className="text-xs tabular-nums">{formatDate(row.created_at)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <TablePagination
+        page={page}
+        pageSize={pageSize}
+        totalCount={total}
+        onPageChange={(p) => setParam("page", String(p))}
+      />
+    </div>
+  ) : (
+    <DashboardGlassCard contentClassName="overflow-hidden p-0">
+      <Table aria-label={tDetail("uploadSessions")}>
+        <TableHead>
+          <TableRow>
+            <TableHeaderCell>{tDetail("session")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("status")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("purpose")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("worker")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("reference")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("created")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("updatedOrExpires")}</TableHeaderCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {(data ?? []).map((row) => (
+            <TableRow key={row.id}>
+              <TableCell>
+                <span className="font-mono text-aistroyka-caption" title={row.id}>
+                  {row.id.slice(0, 8)}…
+                </span>
+              </TableCell>
+              <TableCell>
+                <Badge variant={statusVariant(row.status)}>{row.status}</Badge>
+              </TableCell>
+              <TableCell>{purposeLabel(row.purpose, tDetail)}</TableCell>
+              <TableCell>
+                <Link
+                  href={`/dashboard/workers/${row.user_id}`}
+                  className="font-mono text-aistroyka-caption text-aistroyka-accent hover:underline"
+                  title={row.user_id}
+                >
+                  {row.user_id.slice(0, 8)}…
+                </Link>
+              </TableCell>
+              <TableCell className="font-mono text-aistroyka-caption text-aistroyka-text-secondary">
+                {referenceLabel(row, tDetail)}
+              </TableCell>
+              <TableCell className="tabular-nums text-aistroyka-text-secondary">
+                {formatDate(row.created_at)}
+              </TableCell>
+              <TableCell className="tabular-nums text-aistroyka-text-secondary">
+                {row.updated_at ? formatDate(row.updated_at) : formatDate(row.expires_at)}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+      <TablePagination
+        page={page}
+        pageSize={pageSize}
+        totalCount={total}
+        onPageChange={(p) => setParam("page", String(p))}
+      />
+    </DashboardGlassCard>
+  );
+
   return (
     <>
       {filterBar}
-      {stuck && (
-        <DashboardGlassCard className="mb-4 border-l-4 border-l-aistroyka-warning">
-          <p className="text-aistroyka-subheadline font-medium text-aistroyka-text-primary">
-              {tDetail("showingStuckUploadSessions")}
-          </p>
-          <p className="mt-1 text-aistroyka-caption text-aistroyka-text-secondary">
-              {tDetail("clearUrlFilterUploadSessions")}
-          </p>
-        </DashboardGlassCard>
-      )}
-      <DashboardGlassCard contentClassName="overflow-hidden p-0">
-        <Table aria-label={tDetail("uploadSessions")}>
-          <TableHead>
-            <TableRow>
-              <TableHeaderCell>{tDetail("session")}</TableHeaderCell>
-              <TableHeaderCell>{tDetail("status")}</TableHeaderCell>
-              <TableHeaderCell>{tDetail("purpose")}</TableHeaderCell>
-              <TableHeaderCell>{tDetail("worker")}</TableHeaderCell>
-              <TableHeaderCell>{tDetail("reference")}</TableHeaderCell>
-              <TableHeaderCell>{tDetail("created")}</TableHeaderCell>
-              <TableHeaderCell>{tDetail("updatedOrExpires")}</TableHeaderCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {(data ?? []).map((row) => (
-              <TableRow key={row.id}>
-                <TableCell>
-                  <span className="font-mono text-aistroyka-caption" title={row.id}>
-                    {row.id.slice(0, 8)}…
-                  </span>
-                </TableCell>
-                <TableCell>
-                  <Badge variant={statusVariant(row.status)}>{row.status}</Badge>
-                </TableCell>
-                <TableCell>{purposeLabel(row.purpose, tDetail)}</TableCell>
-                <TableCell>
-                  <Link
-                    href={`/dashboard/workers/${row.user_id}`}
-                    className="font-mono text-aistroyka-caption text-aistroyka-accent hover:underline"
-                    title={row.user_id}
-                  >
-                    {row.user_id.slice(0, 8)}…
-                  </Link>
-                </TableCell>
-                <TableCell className="font-mono text-aistroyka-caption text-aistroyka-text-secondary">
-                  {referenceLabel(row, tDetail)}
-                </TableCell>
-                <TableCell className="tabular-nums text-aistroyka-text-secondary">
-                  {formatDate(row.created_at)}
-                </TableCell>
-                <TableCell className="tabular-nums text-aistroyka-text-secondary">
-                  {row.updated_at ? formatDate(row.updated_at) : formatDate(row.expires_at)}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        <TablePagination
-          page={page}
-          pageSize={pageSize}
-          totalCount={total}
-          onPageChange={(p) => setParam("page", String(p))}
-        />
-      </DashboardGlassCard>
+      {stuckBanner}
+      {tableBody}
     </>
   );
 }

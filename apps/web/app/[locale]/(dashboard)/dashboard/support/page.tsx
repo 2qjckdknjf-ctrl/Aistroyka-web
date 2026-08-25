@@ -1,5 +1,5 @@
-import { SupportClient } from "./SupportClient";
+import { SupportCanonPage } from "./SupportCanonPage";
 
 export default function DashboardSupportPage() {
-  return <SupportClient />;
+  return <SupportCanonPage />;
 }

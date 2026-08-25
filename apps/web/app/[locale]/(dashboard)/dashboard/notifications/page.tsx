@@ -1,5 +1,5 @@
-import { NotificationsClient } from "./NotificationsClient";
+import { NotificationsCanonPage } from "./NotificationsCanonPage";
 
 export default function NotificationsPage() {
-  return <NotificationsClient />;
+  return <NotificationsCanonPage />;
 }

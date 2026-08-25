@@ -1,9 +1,5 @@
-import { AuthMethodsSettingsCard } from "@/components/auth/AuthMethodsSettingsCard";
+import { SettingsAuthCanonPage } from "./SettingsAuthCanonPage";
 
 export default function DashboardAuthSettingsPage() {
-  return (
-    <section className="mx-auto max-w-2xl">
-      <AuthMethodsSettingsCard />
-    </section>
-  );
+  return <SettingsAuthCanonPage />;
 }

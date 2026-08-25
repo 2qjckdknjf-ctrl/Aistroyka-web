@@ -16,7 +16,7 @@ import {
   TableHeaderCell,
   TableCell,
 } from "@/components/ui";
-import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
+import { CanonSurface } from "@/components/canon/CanonSurface";
 import {
   buildNotificationHref,
   countNotificationsByReadState,
@@ -65,9 +65,10 @@ async function markAllRead(): Promise<void> {
   if (!res.ok) throw new Error("Failed to mark all as read");
 }
 
-export function NotificationsClient() {
+export function NotificationsClient({ skin = "default" }: { skin?: "default" | "canon" }) {
   const t = useTranslations("notificationsPage");
   const tCommon = useTranslations("common");
+  const isCanon = skin === "canon";
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -124,15 +125,15 @@ export function NotificationsClient() {
 
   if (isPending) {
     return (
-      <DashboardGlassCard>
+      <CanonSurface isCanon={isCanon}>
         <Skeleton className="h-48" />
-      </DashboardGlassCard>
+      </CanonSurface>
     );
   }
 
   if (isError) {
     return (
-      <DashboardGlassCard>
+      <CanonSurface isCanon={isCanon}>
         <EmptyState
           icon={<span className="text-2xl">⚠️</span>}
           title={t("loadFailed")}
@@ -146,13 +147,14 @@ export function NotificationsClient() {
             </Button>
           }
         />
-      </DashboardGlassCard>
+      </CanonSurface>
     );
   }
 
   return (
     <>
-      <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
+      {!isCanon ? (
+        <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-aistroyka-title font-bold tracking-tight text-aistroyka-text-primary">
             {t("title")}
@@ -172,8 +174,9 @@ export function NotificationsClient() {
           </Button>
         ) : null}
       </header>
+      ) : null}
 
-      <DashboardGlassCard contentClassName="mb-4 p-4">
+      <CanonSurface isCanon={isCanon} contentClassName="mb-4 p-4">
         <div
           role="group"
           aria-label={t("readFilter")}
@@ -201,22 +204,23 @@ export function NotificationsClient() {
             );
           })}
         </div>
-      </DashboardGlassCard>
+      </CanonSurface>
 
       {notifications.length === 0 ? (
-        <DashboardGlassCard>
+        <CanonSurface isCanon={isCanon}>
           <EmptyState
             icon={<span className="text-2xl">📋</span>}
             title={t("emptyTitle")}
             subtitle={readFilter === "all" ? t("emptySubtitle") : t("emptyForFilter")}
           />
-        </DashboardGlassCard>
+        </CanonSurface>
       ) : (
         <>
           <ul className="space-y-2 sm:hidden">
             {notifications.map((n) => (
               <li key={n.id}>
-                <DashboardGlassCard
+                <CanonSurface
+                  isCanon={isCanon}
                   contentClassName={`space-y-2 p-3 ${!n.read_at ? "border-l-4 border-l-aistroyka-accent" : ""}`}
                 >
                   <Link
@@ -251,12 +255,12 @@ export function NotificationsClient() {
                       {t("view")}
                     </Link>
                   )}
-                </DashboardGlassCard>
+                </CanonSurface>
               </li>
             ))}
           </ul>
 
-          <DashboardGlassCard className="hidden sm:block" contentClassName="overflow-hidden p-0">
+          <CanonSurface isCanon={isCanon} className="hidden sm:block" contentClassName="overflow-hidden p-0">
             <Table aria-label={t("tableAria")}>
               <TableHead>
                 <TableRow>
@@ -318,7 +322,7 @@ export function NotificationsClient() {
                 ))}
               </TableBody>
             </Table>
-          </DashboardGlassCard>
+          </CanonSurface>
         </>
       )}
     </>
