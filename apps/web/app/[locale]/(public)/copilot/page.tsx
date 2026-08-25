@@ -1,8 +1,8 @@
 import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
-import { Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
+import { SimpleMarketingPage } from "@/components/public/v43";
 import { CopilotMockUI } from "./CopilotMockUI";
 
 type Props = { params: Promise<{ locale: string }> };
@@ -22,69 +22,45 @@ export default async function CopilotPage({ params }: Props) {
   const patterns = ["pat1", "pat2", "pat3", "pat4", "pat5"] as const;
 
   return (
-    <div className="mx-auto min-w-0 max-w-5xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-      <section className="text-center">
-        <h1 className="text-[var(--aistroyka-font-title)] font-bold text-[var(--aistroyka-text-primary)]">
-          {t("title")}
-        </h1>
-        <p className="mt-4 text-lg text-[var(--aistroyka-text-secondary)]">{t("heroTitle")}</p>
-        <p className="mt-2 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-secondary)]">
-          {t("heroSubtitle")}
-        </p>
-        <div className="mx-auto mt-8 flex min-w-0 max-w-full flex-wrap justify-center gap-3 sm:gap-4">
-          <Link href="/contact" className="btn-primary max-w-full min-w-0 sm:max-w-none">
-            {t("ctaDemo")}
-          </Link>
-          <Link href="/platform" className="btn-secondary max-w-full min-w-0 sm:max-w-none">
-            {t("ctaPlatform")}
-          </Link>
-        </div>
-      </section>
-
-      <section className="mt-16">
-        <h2 className="text-[var(--aistroyka-font-title2)] font-semibold text-[var(--aistroyka-text-primary)]">
-          {t("capabilitiesTitle")}
-        </h2>
-        <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+    <SimpleMarketingPage
+      title={t("title")}
+      lead={t("heroSubtitle")}
+      primaryLabel={t("ctaDemo")}
+      primaryHref="/contact"
+      secondaryLabel={t("ctaPlatform")}
+      secondaryHref="/platform"
+    >
+      <section className="v41-page v41-section">
+        <h2>{t("capabilitiesTitle")}</h2>
+        <ul className="v43-module-grid">
           {caps.map((key) => (
-            <li key={key} className="rounded-[var(--aistroyka-radius-lg)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] p-4">
+            <li key={key} className="v43-plan-card v41-glass">
               {t(key)}
             </li>
           ))}
         </ul>
       </section>
-
-      <section className="mt-16">
-        <h2 className="text-[var(--aistroyka-font-title2)] font-semibold text-[var(--aistroyka-text-primary)]">
-          {t("patternsTitle")}
-        </h2>
-        <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+      <section className="v41-page v41-section">
+        <h2>{t("patternsTitle")}</h2>
+        <ul className="v43-module-grid">
           {patterns.map((key) => (
-            <li key={key} className="rounded-[var(--aistroyka-radius-lg)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] p-4">
+            <li key={key} className="v43-plan-card v41-glass">
               {t(key)}
             </li>
           ))}
         </ul>
       </section>
-
-      <section className="mt-16">
-        <h2 className="text-[var(--aistroyka-font-title3)] font-semibold text-[var(--aistroyka-text-primary)]">
-          {t("mockAssistantUi")}
-        </h2>
-        <div className="mt-4">
-          <CopilotMockUI />
-        </div>
+      <section className="v41-page v41-section">
+        <h2>{t("mockAssistantUi")}</h2>
+        <CopilotMockUI />
       </section>
-
-      <section className="mt-16 rounded-[var(--aistroyka-radius-card)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] p-6">
-        <h2 className="text-[var(--aistroyka-font-title3)] font-semibold text-[var(--aistroyka-text-primary)]">
-          {t("humanTitle")}
-        </h2>
-        <p className="mt-3 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-secondary)]">
-          {t("humanBody")}
-        </p>
+      <section className="v41-page v41-section">
+        <article className="v43-plan-card v41-glass">
+          <h2>{t("humanTitle")}</h2>
+          <p>{t("humanBody")}</p>
+        </article>
       </section>
-    </div>
+    </SimpleMarketingPage>
   );
 }
 

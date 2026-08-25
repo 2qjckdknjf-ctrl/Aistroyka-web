@@ -3,17 +3,20 @@
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { V41_ASSETS } from "./v41/v41-assets";
+import { PublicLocaleSwitcher } from "./PublicLocaleSwitcher";
 
 const PRODUCT_LINKS = [
   { href: "/platform", key: "platform" as const },
   { href: "/features", key: "features" as const },
   { href: "/solutions", key: "solutions" as const },
+  { href: "/pricing", key: "pricing" as const },
 ] as const;
 
 const COMPANY_LINKS = [
   { href: "/about", key: "about" as const },
   { href: "/contact", key: "contact" as const },
   { href: "/partners", key: "partners" as const },
+  { href: "/security", key: "security" as const },
 ] as const;
 
 const LEGAL_LINKS = [
@@ -62,6 +65,7 @@ export function PublicFooter() {
       </div>
       <div className="v41-page v41-footer-bottom">
         <span>{tFooter("copyright", { year: new Date().getFullYear() })}</span>
+        <PublicLocaleSwitcher />
         <span>{tV41("footerLine")}</span>
       </div>
     </footer>

@@ -1,13 +1,18 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Button, Alert } from "@/components/ui";
+import { Alert } from "@/components/ui";
 import { Link } from "@/i18n/navigation";
-import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
-
-type PlanKey = "starter" | "business" | "enterprise";
+import { CheckoutSummary } from "@/components/public/v43/CheckoutSummary";
+import {
+  formatPlanPrice,
+  getPublicPlan,
+  getSelfServePlans,
+  type SelfServePlanId,
+  type StripeCheckoutPlanKey,
+} from "@/lib/public/pricing-catalog";
 
 type Props = {
   locale: string;
@@ -15,6 +20,7 @@ type Props = {
   billingStatus: string | null;
   checkoutState: "idle" | "success" | "cancel";
   showDashboardAccessNotice?: boolean;
+  selectedPlanId?: SelfServePlanId | null;
 };
 
 export function SubscribePlansClient({
@@ -23,25 +29,20 @@ export function SubscribePlansClient({
   billingStatus,
   checkoutState,
   showDashboardAccessNotice = false,
+  selectedPlanId = null,
 }: Props) {
   const router = useRouter();
   const t = useTranslations("subscriptionOnboarding");
-  const [loadingPlan, setLoadingPlan] = useState<PlanKey | null>(null);
+  const tCheckout = useTranslations("public.v43.checkout");
+  const tPricing = useTranslations("public.v43.pricing");
+  const [loadingPlan, setLoadingPlan] = useState<StripeCheckoutPlanKey | null>(null);
   const [error, setError] = useState<string | null>(null);
   const pollAttemptsRef = useRef(0);
   const awaitingActivation = checkoutState === "success" && !hasActiveSubscription;
+  const selected = selectedPlanId ? getPublicPlan(selectedPlanId) : null;
+  const selectedSelfServe = selected && selected.checkoutEnabled ? selected : null;
 
-  const plans = useMemo(
-    () =>
-      (["starter", "business", "enterprise"] as const).map((key) => ({
-        key,
-        title: t(`plans.${key}.title`),
-        description: t(`plans.${key}.description`),
-      })),
-    [t]
-  );
-
-  async function startCheckout(planKey: PlanKey) {
+  async function startCheckout(planKey: StripeCheckoutPlanKey) {
     if (hasActiveSubscription || awaitingActivation) return;
     setLoadingPlan(planKey);
     setError(null);
@@ -86,64 +87,92 @@ export function SubscribePlansClient({
   }, [awaitingActivation, router]);
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-10">
-      <DashboardGlassCard className="mb-6 border-l-4 border-l-aistroyka-accent">
-        <h1 className="text-aistroyka-title2 font-semibold text-aistroyka-text-primary">
-          {t("title")}
-        </h1>
-        <p className="mt-2 text-aistroyka-subheadline text-aistroyka-text-secondary">
-          {t("subtitle")}
+    <div className="v43-checkout-page">
+      <div className="v41-page">
+        <p>
+          <Link href="/pricing">{tCheckout("back")}</Link>
         </p>
-        {showDashboardAccessNotice ? (
-          <p className="mt-4 text-aistroyka-subheadline text-aistroyka-text-primary">
-            {t("dashboardAccessNotice")}
-          </p>
+        <h1>{selectedSelfServe ? tCheckout("title", { plan: selectedSelfServe.name }) : t("title")}</h1>
+        <p className="v41-lead">{t("subtitle")}</p>
+        {showDashboardAccessNotice ? <p>{t("dashboardAccessNotice")}</p> : null}
+        <p>{t("status", { status: billingStatus ?? "none" })}</p>
+        {checkoutState === "success" && !hasActiveSubscription ? (
+          <>
+            <Alert message={t("checkoutSuccess")} style="success" />
+            <p>{t("checkingStatus")}</p>
+          </>
         ) : null}
-        <p className="mt-3 text-aistroyka-caption text-aistroyka-text-tertiary">
-          {t("status", { status: billingStatus ?? "none" })}
-        </p>
-      </DashboardGlassCard>
+        {checkoutState === "cancel" ? <Alert message={t("checkoutCancel")} style="error" /> : null}
+        {error ? <Alert message={error} style="error" /> : null}
 
-      {checkoutState === "success" && !hasActiveSubscription ? (
-        <>
-          <Alert message={t("checkoutSuccess")} style="success" />
-          <p className="mt-2 text-aistroyka-caption text-aistroyka-text-secondary">
-            {t("checkingStatus")}
-          </p>
-        </>
-      ) : null}
-      {checkoutState === "cancel" ? <Alert message={t("checkoutCancel")} style="error" /> : null}
-      {error ? <Alert message={error} style="error" /> : null}
-
-      <div className="mt-6 grid gap-4 sm:grid-cols-3">
-        {plans.map((plan) => (
-          <DashboardGlassCard key={plan.key}>
-            <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">
-              {plan.title}
-            </h2>
-            <p className="mt-2 text-aistroyka-subheadline text-aistroyka-text-secondary">
-              {plan.description}
-            </p>
-            {hasActiveSubscription ? (
-              <div className="mt-4">
-                <Link href="/dashboard" className="inline-block">
-                  <Button variant="primary">{t("openDashboard")}</Button>
-                </Link>
-              </div>
-            ) : (
-              <div className="mt-4">
-                <Button
-                  variant="primary"
-                  onClick={() => startCheckout(plan.key)}
-                  disabled={loadingPlan !== null || awaitingActivation}
-                  loading={loadingPlan === plan.key}
-                >
-                  {loadingPlan === plan.key ? t("checkoutLoading") : t("checkoutButton")}
-                </Button>
-              </div>
-            )}
-          </DashboardGlassCard>
-        ))}
+        {selectedSelfServe ? (
+          <div className="v43-checkout-grid">
+            <article className="v43-plan-card v41-glass">
+              <h2>{selectedSelfServe.name}</h2>
+              <p>{tPricing(`${selectedSelfServe.id}Desc`)}</p>
+              <p className="v43-plan-price">
+                {formatPlanPrice(selectedSelfServe, locale)}/{tPricing("perMonth")}
+              </p>
+              <ul>
+                <li>{tPricing(`${selectedSelfServe.id}F1`)}</li>
+                <li>{tPricing(`${selectedSelfServe.id}F2`)}</li>
+                <li>{tPricing(`${selectedSelfServe.id}F3`)}</li>
+              </ul>
+            </article>
+            <CheckoutSummary
+              plan={selectedSelfServe}
+              locale={locale}
+              title={tCheckout("order")}
+              changeLabel={tCheckout("change")}
+              features={[
+                tPricing(`${selectedSelfServe.id}F1`),
+                tPricing(`${selectedSelfServe.id}F2`),
+                tPricing(`${selectedSelfServe.id}F3`),
+              ]}
+              periodLabel={tCheckout("period")}
+              periodValue={tCheckout("monthly")}
+              totalLabel={tCheckout("dueToday")}
+              payLabel={tCheckout("pay")}
+              terms={tCheckout("terms")}
+              onPay={() => startCheckout(selectedSelfServe.checkoutPlanKey)}
+              loading={loadingPlan === selectedSelfServe.checkoutPlanKey}
+              disabled={hasActiveSubscription || awaitingActivation}
+            />
+          </div>
+        ) : (
+          <div className="v43-pricing-grid">
+            {getSelfServePlans().map((plan) => (
+              <article key={plan.id} className="v43-plan-card v41-glass">
+                <h2>{plan.name}</h2>
+                <p>{tPricing(`${plan.id}Desc`)}</p>
+                <p className="v43-plan-price">
+                  {formatPlanPrice(plan, locale)}/{tPricing("perMonth")}
+                </p>
+                {hasActiveSubscription ? (
+                  <Link className="v41-btn v41-btn-primary" href="/dashboard">
+                    {t("openDashboard")}
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    className="v41-btn v41-btn-primary"
+                    onClick={() => startCheckout(plan.checkoutPlanKey)}
+                    disabled={loadingPlan !== null || awaitingActivation}
+                  >
+                    {loadingPlan === plan.checkoutPlanKey ? t("checkoutLoading") : tCheckout("pay")} {formatPlanPrice(plan, locale)}
+                  </button>
+                )}
+              </article>
+            ))}
+            <article className="v43-plan-card v41-glass">
+              <h2>{tPricing("enterpriseName")}</h2>
+              <p>{tPricing("enterpriseDesc")}</p>
+              <Link className="v41-btn v41-btn-secondary" href="/pricing/enterprise">
+                {tPricing("enterpriseCta")}
+              </Link>
+            </article>
+          </div>
+        )}
       </div>
     </div>
   );

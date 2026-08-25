@@ -2,6 +2,7 @@ import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 import { routing } from "@/i18n/routing";
+import { FaqAccordion, SimpleMarketingPage } from "@/components/public/v43";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -28,29 +29,9 @@ export default async function FaqPage({ params }: Props) {
   const t = await getTranslations("public.faq");
 
   return (
-    <div className="mx-auto min-w-0 max-w-3xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-      <h1 className="text-[var(--aistroyka-font-title)] font-bold text-[var(--aistroyka-text-primary)]">
-        {t("title")}
-      </h1>
-      <p className="mt-4 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-secondary)]">
-        {t("metaDescription")}
-      </p>
-      <dl className="mt-12 space-y-6">
-        {FAQ_ITEMS.map(({ q, a }) => (
-          <div
-            key={q}
-            className="card rounded-[var(--aistroyka-radius-card)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] p-6 shadow-[var(--aistroyka-shadow-e1)]"
-          >
-            <dt className="text-[var(--aistroyka-font-headline)] font-semibold text-[var(--aistroyka-text-primary)]">
-              {t(q)}
-            </dt>
-            <dd className="mt-2 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-secondary)]">
-              {t(a)}
-            </dd>
-          </div>
-        ))}
-      </dl>
-    </div>
+    <SimpleMarketingPage title={t("title")} lead={t("metaDescription")}>
+      <FaqAccordion items={FAQ_ITEMS.map(({ q, a }) => ({ q: t(q), a: t(a) }))} />
+    </SimpleMarketingPage>
   );
 }
 

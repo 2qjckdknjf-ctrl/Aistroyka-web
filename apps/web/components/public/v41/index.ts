@@ -12,4 +12,3 @@ export { AiAnalytics } from "./AiAnalytics";
 export { RoleSolutions } from "./RoleSolutions";
 export { SecuritySection } from "./SecuritySection";
 export { PilotCta } from "./PilotCta";
-export { V41InnerPage } from "./V41InnerPage";

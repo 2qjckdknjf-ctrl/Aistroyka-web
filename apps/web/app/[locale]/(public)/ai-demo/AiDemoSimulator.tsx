@@ -36,12 +36,10 @@ export function AiDemoSimulator() {
   }
 
   return (
-    <div className="rounded-[var(--aistroyka-radius-card)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] p-6 shadow-[var(--aistroyka-shadow-e2)]">
-      <div className="grid gap-6 lg:grid-cols-2">
+    <div className="v43-plan-card v41-glass">
+      <div className="v43-two-col">
         <div>
-          <h3 className="text-[var(--aistroyka-font-headline)] font-semibold text-[var(--aistroyka-text-primary)]">
-            {t("uploadPhoto")}
-          </h3>
+          <h3>{t("uploadPhoto")}</h3>
           <input
             ref={inputRef}
             type="file"
@@ -54,87 +52,50 @@ export function AiDemoSimulator() {
             type="button"
             onClick={handleTryDemo}
             disabled={step === "analyzing"}
-            className="mt-3 flex min-h-[200px] w-full flex-col items-center justify-center rounded-[var(--aistroyka-radius-lg)] border-2 border-dashed border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-bg-primary)] transition-colors hover:border-[var(--aistroyka-accent)] hover:bg-[var(--aistroyka-accent-light)]/30 disabled:opacity-70"
+            className="v41-btn v41-btn-secondary mt-3 flex min-h-[200px] w-full flex-col items-center justify-center"
           >
             {previewUrl && step !== "upload" ? (
-              <img
-                src={previewUrl}
-                alt={t("previewAlt")}
-                className="max-h-[200px] w-full object-contain object-center"
-              />
+              <img src={previewUrl} alt={t("previewAlt")} />
             ) : (
-              <span className="text-[var(--aistroyka-text-secondary)]">
-                {step === "analyzing" ? t("analyzing") : t("clickOrDropPhoto")}
-              </span>
+              <span>{step === "analyzing" ? t("analyzing") : t("clickOrDropPhoto")}</span>
             )}
           </button>
-          <p className="mt-2 text-[var(--aistroyka-font-caption)] text-[var(--aistroyka-text-tertiary)]">
-            {t("demoUsesMockOutput")}
-          </p>
+          <p>{t("demoUsesMockOutput")}</p>
         </div>
-        <div className="space-y-4">
-          {step === "results" && (
+        <div>
+          {step === "results" ? (
             <>
               <div>
-                <h4 className="text-[var(--aistroyka-font-footnote)] font-semibold text-[var(--aistroyka-text-secondary)]">
-                  {t("detectedElements")}
-                </h4>
-                <ul className="mt-1 flex flex-wrap gap-2">
+                <h4>{t("detectedElements")}</h4>
+                <ul>
                   {MOCK_RESULTS.detectedElements.map((el) => (
-                    <li
-                      key={el}
-                      className="rounded-[var(--aistroyka-radius-sm)] bg-[var(--aistroyka-accent-light)] px-2 py-1 text-[var(--aistroyka-font-footnote)] text-[var(--aistroyka-accent)]"
-                    >
-                      {t(el)}
-                    </li>
+                    <li key={el}>{t(el)}</li>
                   ))}
                 </ul>
               </div>
               <div>
-                <h4 className="text-[var(--aistroyka-font-footnote)] font-semibold text-[var(--aistroyka-text-secondary)]">
-                  {t("progressAnalysis")}
-                </h4>
-                <p className="mt-1 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-primary)]">
-                  {t(MOCK_RESULTS.progressAnalysis)}
-                </p>
+                <h4>{t("progressAnalysis")}</h4>
+                <p>{t(MOCK_RESULTS.progressAnalysis)}</p>
               </div>
               <div>
-                <h4 className="text-[var(--aistroyka-font-footnote)] font-semibold text-[var(--aistroyka-text-secondary)]">
-                  {t("riskDetection")}
-                </h4>
-                <p className="mt-1 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-primary)]">
-                  {t(MOCK_RESULTS.riskDetection)}
-                </p>
+                <h4>{t("riskDetection")}</h4>
+                <p>{t(MOCK_RESULTS.riskDetection)}</p>
               </div>
               <div>
-                <h4 className="text-[var(--aistroyka-font-footnote)] font-semibold text-[var(--aistroyka-text-secondary)]">
-                  {t("delayPrediction")}
-                </h4>
-                <p className="mt-1 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-primary)]">
-                  {t(MOCK_RESULTS.delayPrediction)}
-                </p>
+                <h4>{t("delayPrediction")}</h4>
+                <p>{t(MOCK_RESULTS.delayPrediction)}</p>
               </div>
               <div>
-                <h4 className="text-[var(--aistroyka-font-footnote)] font-semibold text-[var(--aistroyka-text-secondary)]">
-                  {t("aiSummary")}
-                </h4>
-                <p className="mt-1 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-primary)]">
-                  {t(MOCK_RESULTS.aiSummary)}
-                </p>
+                <h4>{t("aiSummary")}</h4>
+                <p>{t(MOCK_RESULTS.aiSummary)}</p>
               </div>
-              <button type="button" onClick={handleTryDemo} className="btn-secondary mt-2 text-sm">
+              <button type="button" onClick={handleTryDemo} className="v41-btn v41-btn-secondary">
                 {t("tryAnotherPhoto")}
               </button>
             </>
-          )}
-          {step === "upload" && (
-            <p className="text-[var(--aistroyka-text-secondary)]">
-              {t("uploadPhotoHint")}
-            </p>
-          )}
-          {step === "analyzing" && (
-            <p className="text-[var(--aistroyka-text-secondary)]">{t("runningAnalysis")}</p>
-          )}
+          ) : null}
+          {step === "upload" ? <p>{t("uploadPhotoHint")}</p> : null}
+          {step === "analyzing" ? <p>{t("runningAnalysis")}</p> : null}
         </div>
       </div>
     </div>
