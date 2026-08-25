@@ -1,0 +1,82 @@
+name: Governed AI PR Preview E2E (manual)
+
+# Authenticated E2E against Vercel Preview for PR #244 (not staging.aistroyka.ai).
+# Requires migration 20260824150000 applied on Supabase staging first.
+
+on:
+  workflow_dispatch:
+    inputs:
+      preview_base_url:
+        description: "Vercel Preview base URL (no trailing slash)"
+        required: true
+        type: string
+      head_sha:
+        description: "Expected git HEAD SHA for this run"
+        required: true
+        type: string
+
+jobs:
+  governed-ai-preview-e2e:
+    name: Governed AI preview E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: feature/pilot-governed-ai-owner-evidence-2026-08-24
+
+      - name: Verify HEAD SHA
+        run: |
+          CURRENT="$(git rev-parse HEAD)"
+          if [ "$CURRENT" != "${{ inputs.head_sha }}" ]; then
+            echo "::error::HEAD mismatch: checkout=$CURRENT expected=${{ inputs.head_sha }}"
+            exit 1
+          fi
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2.15
+
+      - name: Require persona secrets
+        env:
+          WORKER_EMAIL: ${{ secrets.PILOT_SMOKE_EMAIL_STAGING }}
+          WORKER_PASS: ${{ secrets.PILOT_SMOKE_PASSWORD_STAGING }}
+          OWNER_EMAIL: ${{ secrets.STAKEHOLDER_SMOKE_EMAIL }}
+          OWNER_PASS: ${{ secrets.STAKEHOLDER_SMOKE_PASSWORD }}
+        run: |
+          if [ -z "$WORKER_EMAIL" ] || [ -z "$WORKER_PASS" ]; then
+            echo "::error::Missing PILOT_SMOKE_EMAIL_STAGING / PILOT_SMOKE_PASSWORD_STAGING"
+            exit 1
+          fi
+          if [ -z "$OWNER_EMAIL" ] || [ -z "$OWNER_PASS" ]; then
+            echo "::error::Missing STAKEHOLDER_SMOKE_EMAIL / STAKEHOLDER_SMOKE_PASSWORD for owner persona"
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run governed AI preview E2E
+        env:
+          GOVERNED_E2E_BASE_URL: ${{ inputs.preview_base_url }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+          PILOT_E2E_WORKER_EMAIL: ${{ secrets.PILOT_SMOKE_EMAIL_STAGING }}
+          PILOT_E2E_WORKER_PASSWORD: ${{ secrets.PILOT_SMOKE_PASSWORD_STAGING }}
+          PILOT_E2E_MANAGER_EMAIL: ${{ secrets.PILOT_E2E_MANAGER_EMAIL }}
+          PILOT_E2E_MANAGER_PASSWORD: ${{ secrets.PILOT_E2E_MANAGER_PASSWORD }}
+          PILOT_E2E_OWNER_EMAIL: ${{ secrets.STAKEHOLDER_SMOKE_EMAIL }}
+          PILOT_E2E_OWNER_PASSWORD: ${{ secrets.STAKEHOLDER_SMOKE_PASSWORD }}
+          PILOT_E2E_PROJECT_ID: ${{ secrets.PILOT_SMOKE_PROJECT_ID_STAGING }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_STAGING }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_STAGING }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY_STAGING }}
+        run: node scripts/pilot/governed-ai-owner-evidence-staging-e2e.mjs | tee e2e-result.json
+
+      - name: Upload E2E evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: governed-ai-preview-e2e-evidence
+          path: e2e-result.json
+          retention-days: 14

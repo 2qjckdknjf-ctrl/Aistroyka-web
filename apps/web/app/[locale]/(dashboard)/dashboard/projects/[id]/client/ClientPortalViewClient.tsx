@@ -10,6 +10,8 @@ import { translateApiError } from "@/lib/i18n/api-error-messages";
 import { formatPortalStatus } from "@/lib/i18n/portal-status-labels";
 import { ClientPortalActivitySection } from "./ClientPortalActivitySection";
 import { ClientPortalNotificationsSection } from "./ClientPortalNotificationsSection";
+import { ClientPortalOverviewSection } from "./ClientPortalOverviewSection";
+import { ClientPortalVisualProgressSection } from "./ClientPortalVisualProgressSection";
 import { ClientPortalRequestsSection } from "./ClientPortalRequestsSection";
 import { ClientPortalCustomerEstimatesSection } from "./ClientPortalCustomerEstimatesSection";
 import { ClientPortalWorkloadSection } from "./ClientPortalWorkloadSection";
@@ -115,6 +117,9 @@ export function ClientPortalViewClient({ projectId }: { projectId: string }) {
           )}
         </DashboardGlassCard>
       ) : null}
+
+      <ClientPortalOverviewSection projectId={projectId} />
+      <ClientPortalVisualProgressSection projectId={projectId} />
 
       <div className="grid gap-4 sm:grid-cols-2">
         <DashboardGlassCard className="border-l-4 border-l-aistroyka-accent">
