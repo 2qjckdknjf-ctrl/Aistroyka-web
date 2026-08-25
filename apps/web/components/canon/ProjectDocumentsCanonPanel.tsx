@@ -77,8 +77,8 @@ function DocumentPreviewPane({
       if (!res.ok) throw new Error("INTELLIGENCE_FAILED");
       return res.json() as {
         data?: {
-          executive_summary?: { summary?: string };
-          missing_evidence?: { items?: Array<{ title?: string; detail?: string }> };
+          executiveSummary?: { summary?: string };
+          missingEvidenceInsights?: Array<{ title?: string; detail?: string }>;
           recommendations?: Array<{ title?: string; detail?: string }>;
         };
       };
@@ -93,9 +93,9 @@ function DocumentPreviewPane({
   });
 
   const intelligenceSummary =
-    intelligenceQuery.data?.data?.executive_summary?.summary ??
+    intelligenceQuery.data?.data?.executiveSummary?.summary ??
     intelligenceQuery.data?.data?.recommendations?.[0]?.detail ??
-    intelligenceQuery.data?.data?.missing_evidence?.items?.[0]?.detail;
+    intelligenceQuery.data?.data?.missingEvidenceInsights?.[0]?.detail;
 
   const canSubmitReview =
     doc.object_path && (doc.status === "draft" || doc.status === "uploaded");
