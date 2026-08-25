@@ -89,8 +89,10 @@ public enum ManagerV43Formatters {
             return "returned"
         case "submitted", "pending_review", "in_review", "review":
             return "review"
+        case "draft":
+            return "draft"
         default:
-            return normalized.isEmpty ? "review" : "review"
+            return normalized.isEmpty ? "other" : "other"
         }
     }
 

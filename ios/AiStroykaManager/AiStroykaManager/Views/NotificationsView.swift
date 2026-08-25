@@ -278,9 +278,7 @@ struct NotificationsView: View {
         guard !markingAll else { return }
         markingAll = true
         Task {
-            for item in unread {
-                try? await ManagerAPI.markNotificationRead(id: item.id)
-            }
+            try? await ManagerAPI.markAllNotificationsRead()
             ManagerLiveSync.post(ManagerLiveSync.notificationsChanged)
             await loadAsync()
             markingAll = false

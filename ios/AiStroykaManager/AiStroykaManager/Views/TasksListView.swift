@@ -516,6 +516,7 @@ struct TaskDetailManagerView: View {
     @State private var assignSuccessMessage: String?
     @State private var isAssigning = false
     @State private var isPatching = false
+    @State private var showEditFields = false
     @State private var managerUserId: String?
     @State private var members: [TenantMemberDTO] = []
 
@@ -605,7 +606,29 @@ struct TaskDetailManagerView: View {
                 }
                 .aistroykaPageBackground(ManagerSemanticColors.pageBackground)
                 .navigationTitle(t.title ?? NSLocalizedString("mgr_task_section", comment: ""))
+                .toolbar {
+                    ToolbarItem(placement: .primaryAction) {
+                        Button(NSLocalizedString("mgr_v43_edit_task", comment: "")) {
+                            showEditFields = true
+                        }
+                        .disabled(isPatching)
+                        .accessibilityIdentifier("pilot_manager_task_edit")
+                    }
+                }
                 .refreshable { await loadAsync() }
+                .sheet(isPresented: $showEditFields) {
+                    TaskFieldsEditSheet(
+                        title: t.title ?? "",
+                        details: t.description ?? "",
+                        due: parsedDue(t.dueDate) ?? Date(),
+                        hasDue: t.dueDate != nil
+                    ) { title, details, dueAt in
+                        showEditFields = false
+                        patchFields(title: title, description: details, dueAt: dueAt)
+                    } onDismiss: {
+                        showEditFields = false
+                    }
+                }
                 .sheet(isPresented: $showAssignPicker) {
                     TaskAssigneePickerView(
                         taskId: taskId,
@@ -729,6 +752,40 @@ struct TaskDetailManagerView: View {
         }
     }
 
+    private func parsedDue(_ raw: String?) -> Date? {
+        guard let raw, !raw.isEmpty else { return nil }
+        let iso = ISO8601DateFormatter()
+        iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let date = iso.date(from: raw) { return date }
+        iso.formatOptions = [.withInternetDateTime]
+        if let date = iso.date(from: raw) { return date }
+        let day = DateFormatter()
+        day.locale = Locale(identifier: "en_US_POSIX")
+        day.dateFormat = "yyyy-MM-dd"
+        return day.date(from: raw)
+    }
+
+    private func patchFields(title: String, description: String, dueAt: String?) {
+        Task {
+            let success = await runManagerAction(
+                setLoading: { isPatching = $0 },
+                setErrorMessage: { assignError = $0 }
+            ) {
+                try await ManagerAPI.patchTask(
+                    taskId: taskId,
+                    title: title,
+                    description: description,
+                    dueAt: dueAt,
+                    idempotencyKey: UUID().uuidString
+                )
+            }
+            if success {
+                ManagerLiveSync.post(ManagerLiveSync.tasksChanged)
+                await loadAsync()
+            }
+        }
+    }
+
     private func patchStatus(_ status: String) {
         Task {
             let success = await runManagerAction(
@@ -759,6 +816,51 @@ struct TaskDetailManagerView: View {
             reportRequired: current.reportRequired,
             priority: current.priority
         )
+    }
+}
+
+private struct TaskFieldsEditSheet: View {
+    @State var title: String
+    @State var details: String
+    @State var due: Date
+    @State var hasDue: Bool
+    let onSave: (String, String, String?) -> Void
+    let onDismiss: () -> Void
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                TextField(NSLocalizedString("mgr_task_title_placeholder", comment: ""), text: $title)
+                    .accessibilityIdentifier("pilot_manager_edit_task_title")
+                TextField(NSLocalizedString("mgr_v43_description_placeholder", comment: ""), text: $details, axis: .vertical)
+                    .lineLimit(3...6)
+                Toggle(NSLocalizedString("mgr_due", comment: ""), isOn: $hasDue)
+                if hasDue {
+                    DatePicker(NSLocalizedString("mgr_due", comment: ""), selection: $due, displayedComponents: [.date, .hourAndMinute])
+                }
+            }
+            .navigationTitle(NSLocalizedString("mgr_v43_edit_task", comment: ""))
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(NSLocalizedString("mgr_cancel", comment: ""), action: onDismiss)
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(NSLocalizedString("mgr_v43_save_task", comment: "")) {
+                        let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
+                        guard !trimmed.isEmpty else { return }
+                        var dueAt: String?
+                        if hasDue {
+                            let iso = ISO8601DateFormatter()
+                            iso.formatOptions = [.withInternetDateTime]
+                            dueAt = iso.string(from: due)
+                        }
+                        onSave(trimmed, details.trimmingCharacters(in: .whitespacesAndNewlines), dueAt)
+                    }
+                    .accessibilityIdentifier("pilot_manager_edit_task_save")
+                    .disabled(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+            }
+        }
     }
 }
 

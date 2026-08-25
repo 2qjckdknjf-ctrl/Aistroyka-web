@@ -245,9 +245,14 @@ struct HomeView: View {
             if phase == .active {
                 loadTodayTasks()
                 loadFeedbackReports()
+                OperationQueueExecutor.shared.runLoop()
+                syncService.runSyncIfOnline()
             }
         }
         .onAppear {
+            if todayTasks.isEmpty, !store.state.cachedTodayTasks.isEmpty {
+                todayTasks = store.state.cachedTodayTasks
+            }
             loadTodayTasks()
             loadFeedbackReports()
             loadHelpHints()
@@ -460,12 +465,19 @@ struct HomeView: View {
                     todayTasks = list
                     unreadChatByTaskId = unread
                     tasksLoading = false
+                    errorMessage = nil
+                    store.save { $0.cachedTodayTasks = list }
                 }
             } catch {
                 await MainActor.run {
-                    todayTasks = []
+                    if todayTasks.isEmpty {
+                        todayTasks = store.state.cachedTodayTasks
+                    }
                     unreadChatByTaskId = [:]
                     tasksLoading = false
+                    if todayTasks.isEmpty {
+                        errorMessage = NSLocalizedString("worker_tasks_load_error", comment: "")
+                    }
                 }
             }
         }

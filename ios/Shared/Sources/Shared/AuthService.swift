@@ -52,7 +52,13 @@ public actor AuthService {
               let uid = user["id"] as? String else {
             throw APIError(statusCode: nil, code: nil, message: "Invalid token response")
         }
-        persistSession(accessToken: accessToken, userId: uid, email: (user["email"] as? String) ?? email)
+        persistSession(
+            accessToken: accessToken,
+            userId: uid,
+            email: (user["email"] as? String) ?? email,
+            refreshToken: json?["refresh_token"] as? String,
+            expiresAt: Self.expiresAt(from: json)
+        )
     }
 
     public func signInWithApple(idToken: String, nonce: String?, fullName: String?) async throws {
@@ -91,7 +97,13 @@ public actor AuthService {
               let uid = user["id"] as? String else {
             throw APIError(statusCode: nil, code: nil, message: "Invalid token response")
         }
-        persistSession(accessToken: accessToken, userId: uid, email: user["email"] as? String)
+        persistSession(
+            accessToken: accessToken,
+            userId: uid,
+            email: user["email"] as? String,
+            refreshToken: json?["refresh_token"] as? String,
+            expiresAt: Self.expiresAt(from: json)
+        )
 
         if let fullName, !fullName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             await updateAuthUserMetadata(accessToken: accessToken, fullName: fullName)
@@ -100,7 +112,7 @@ public actor AuthService {
 
     /// Live E2E: seed session from host-prefetched Supabase token (see `run-ios-e2e-integration-local.sh`).
     public func seedE2ESession(accessToken: String, userId: String, email: String?) {
-        persistSession(accessToken: accessToken, userId: userId, email: email)
+        persistSession(accessToken: accessToken, userId: userId, email: email, refreshToken: nil, expiresAt: nil)
     }
 
     public func signOut() async {
@@ -108,9 +120,17 @@ public actor AuthService {
         KeychainHelper.delete(key: KeychainHelper.sessionTokenKey)
         KeychainHelper.delete(key: KeychainHelper.sessionUserIdKey)
         KeychainHelper.delete(key: KeychainHelper.sessionEmailKey)
+        KeychainHelper.delete(key: KeychainHelper.sessionRefreshTokenKey)
+        KeychainHelper.delete(key: KeychainHelper.sessionExpiresAtKey)
     }
 
-    private func persistSession(accessToken: String, userId: String, email: String?) {
+    private func persistSession(
+        accessToken: String,
+        userId: String,
+        email: String?,
+        refreshToken: String?,
+        expiresAt: TimeInterval?
+    ) {
         cachedSession = (accessToken, AuthUser(id: userId, email: email))
         _ = KeychainHelper.set(key: KeychainHelper.sessionTokenKey, value: accessToken)
         _ = KeychainHelper.set(key: KeychainHelper.sessionUserIdKey, value: userId)
@@ -119,10 +139,83 @@ public actor AuthService {
         } else {
             KeychainHelper.delete(key: KeychainHelper.sessionEmailKey)
         }
+        if let refreshToken, !refreshToken.isEmpty {
+            _ = KeychainHelper.set(key: KeychainHelper.sessionRefreshTokenKey, value: refreshToken)
+        }
+        if let expiresAt {
+            _ = KeychainHelper.set(key: KeychainHelper.sessionExpiresAtKey, value: String(expiresAt))
+        } else {
+            KeychainHelper.delete(key: KeychainHelper.sessionExpiresAtKey)
+        }
     }
 
     public func getAccessToken() async -> String? {
-        await currentSession()?.token
+        _ = await refreshIfExpiring()
+        return await currentSession()?.token
+    }
+
+    /// One refresh after a 401. Returns true when a new access token was stored.
+    public func refreshAfterUnauthorized() async -> Bool {
+        await performRefresh()
+    }
+
+    private func refreshIfExpiring() async -> Bool {
+        guard let raw = KeychainHelper.get(key: KeychainHelper.sessionExpiresAtKey),
+              let expiresAt = TimeInterval(raw) else {
+            return false
+        }
+        guard expiresAt <= Date().timeIntervalSince1970 + 60 else { return false }
+        return await performRefresh()
+    }
+
+    private func performRefresh() async -> Bool {
+        guard let refresh = KeychainHelper.get(key: KeychainHelper.sessionRefreshTokenKey), !refresh.isEmpty else {
+            return false
+        }
+        let raw = Config.supabaseURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        let base = raw.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        guard !base.isEmpty,
+              let url = URL(string: "\(base)/auth/v1/token?grant_type=refresh_token") else {
+            return false
+        }
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.setValue(Config.supabaseAnonKey, forHTTPHeaderField: "apikey")
+        req.httpBody = try? JSONSerialization.data(withJSONObject: ["refresh_token": refresh])
+        guard let (data, res) = try? await URLSession.shared.data(for: req),
+              let http = res as? HTTPURLResponse,
+              http.statusCode == 200,
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let accessToken = json["access_token"] as? String else {
+            return false
+        }
+        let user = json["user"] as? [String: Any]
+        let uid = (user?["id"] as? String)
+            ?? KeychainHelper.get(key: KeychainHelper.sessionUserIdKey)
+            ?? ""
+        guard !uid.isEmpty else { return false }
+        persistSession(
+            accessToken: accessToken,
+            userId: uid,
+            email: (user?["email"] as? String) ?? KeychainHelper.get(key: KeychainHelper.sessionEmailKey),
+            refreshToken: json["refresh_token"] as? String ?? refresh,
+            expiresAt: Self.expiresAt(from: json)
+        )
+        return true
+    }
+
+    private static func expiresAt(from json: [String: Any]?) -> TimeInterval? {
+        if let exp = json?["expires_at"] as? TimeInterval { return exp }
+        if let exp = json?["expires_at"] as? Int { return TimeInterval(exp) }
+        if let exp = json?["expires_at"] as? Double { return exp }
+        if let seconds = json?["expires_in"] as? Int {
+            return Date().timeIntervalSince1970 + TimeInterval(seconds)
+        }
+        if let seconds = json?["expires_in"] as? Double {
+            return Date().timeIntervalSince1970 + seconds
+        }
+        return nil
     }
 
     private func updateAuthUserMetadata(accessToken: String, fullName: String) async {

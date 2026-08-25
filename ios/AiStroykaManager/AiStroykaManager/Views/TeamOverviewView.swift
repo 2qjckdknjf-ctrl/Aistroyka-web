@@ -76,7 +76,18 @@ struct TeamOverviewView: View {
 
     private var filtered: [WorkerRowDTO] {
         workers.filter { worker in
-            query.isEmpty || worker.userId.localizedCaseInsensitiveContains(query)
+            guard !query.isEmpty else { return true }
+            if worker.userId.localizedCaseInsensitiveContains(query) { return true }
+            let email = members.first(where: { $0.userId == worker.userId })?.email ?? ""
+            return email.localizedCaseInsensitiveContains(query)
+        }
+    }
+
+    private var filteredMembers: [TenantMemberDTO] {
+        members.filter { member in
+            guard !query.isEmpty else { return true }
+            if member.userId.localizedCaseInsensitiveContains(query) { return true }
+            return (member.email ?? "").localizedCaseInsensitiveContains(query)
         }
     }
 
@@ -179,8 +190,8 @@ struct TeamOverviewView: View {
                         }
                     }
                 }
-                if !members.isEmpty && segment == "roles" {
-                    ForEach(members) { member in
+                if !filteredMembers.isEmpty && segment == "roles" {
+                    ForEach(filteredMembers) { member in
                         ManagerV43Card {
                             HStack {
                                 Text(member.email.flatMap { $0.isEmpty ? nil : $0 } ?? ManagerV43Formatters.shortIdentifier(member.userId))

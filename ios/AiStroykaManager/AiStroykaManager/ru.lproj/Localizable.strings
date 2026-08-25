@@ -446,3 +446,8 @@
 "mgr_v43_activity" = "Активность";
 "mgr_v43_no_activity" = "Нет недавней активности";
 "mgr_v43_workload" = "Очередь";
+"mgr_v43_edit_task" = "Изменить задачу";
+"mgr_v43_save_task" = "Сохранить";
+"mgr_v43_doc_approve" = "Утвердить";
+"mgr_v43_doc_reject" = "Отклонить";
+"mgr_v43_doc_request_changes" = "Вернуть";

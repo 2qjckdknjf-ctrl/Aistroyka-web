@@ -58,6 +58,7 @@
 
 - Shared: `ManagerAPIDecodeStrategyTests` + `ManagerV43FormattersTests` — **10/10 PASS**
 - Live AI: `scripts/smoke/ai_live_provider.sh --require-live` — **GO** (vision_router / gpt-4o-mini)
+- Live work tails (post-deploy): draft reports out of review queue; task field PATCH; document decisions; JWT refresh; Worker upload requeue + cached today tasks
 - Preview: `ManagerV43UITests` login + 5 tabs + More→Reports — **3/3 PASS**
 - Live walk с новым decode в этом проходе **не гонялся** (нужен отдельный слот после reboot)
 

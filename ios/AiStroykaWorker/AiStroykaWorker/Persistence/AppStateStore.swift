@@ -50,6 +50,7 @@ struct AppStateStore: Codable, Equatable {
     var draftReportCreateKey: [String: String]
     /// Phase 2: first-run intro; missing in legacy JSON → true (do not show intro upgrades).
     var hasCompletedWorkerIntro: Bool
+    var cachedTodayTasks: [TaskDTO]
     var updatedAt: String
 
     enum CodingKeys: String, CodingKey {
@@ -57,9 +58,10 @@ struct AppStateStore: Codable, Equatable {
         case shiftIdempotencyKeys
         case draftReportCreateKey
         case hasCompletedWorkerIntro
+        case cachedTodayTasks
     }
 
-    init(selectedProjectId: String?, shift: ShiftState, draftReportId: String?, draftTaskId: String?, pendingUploads: [PendingUploadItem], lastSyncCursor: String?, shiftIdempotencyKeys: [String: ShiftIdempotencyKeys], draftReportCreateKey: [String: String], hasCompletedWorkerIntro: Bool, updatedAt: String) {
+    init(selectedProjectId: String?, shift: ShiftState, draftReportId: String?, draftTaskId: String?, pendingUploads: [PendingUploadItem], lastSyncCursor: String?, shiftIdempotencyKeys: [String: ShiftIdempotencyKeys], draftReportCreateKey: [String: String], hasCompletedWorkerIntro: Bool, cachedTodayTasks: [TaskDTO] = [], updatedAt: String) {
         self.selectedProjectId = selectedProjectId
         self.shift = shift
         self.draftReportId = draftReportId
@@ -69,6 +71,7 @@ struct AppStateStore: Codable, Equatable {
         self.shiftIdempotencyKeys = shiftIdempotencyKeys
         self.draftReportCreateKey = draftReportCreateKey
         self.hasCompletedWorkerIntro = hasCompletedWorkerIntro
+        self.cachedTodayTasks = cachedTodayTasks
         self.updatedAt = updatedAt
     }
 
@@ -83,6 +86,7 @@ struct AppStateStore: Codable, Equatable {
         shiftIdempotencyKeys = try c.decodeIfPresent([String: ShiftIdempotencyKeys].self, forKey: .shiftIdempotencyKeys) ?? [:]
         draftReportCreateKey = try c.decodeIfPresent([String: String].self, forKey: .draftReportCreateKey) ?? [:]
         hasCompletedWorkerIntro = try c.decodeIfPresent(Bool.self, forKey: .hasCompletedWorkerIntro) ?? true
+        cachedTodayTasks = try c.decodeIfPresent([TaskDTO].self, forKey: .cachedTodayTasks) ?? []
         updatedAt = try c.decode(String.self, forKey: .updatedAt)
     }
 
@@ -97,6 +101,7 @@ struct AppStateStore: Codable, Equatable {
         try c.encode(shiftIdempotencyKeys, forKey: .shiftIdempotencyKeys)
         try c.encode(draftReportCreateKey, forKey: .draftReportCreateKey)
         try c.encode(hasCompletedWorkerIntro, forKey: .hasCompletedWorkerIntro)
+        try c.encode(cachedTodayTasks, forKey: .cachedTodayTasks)
         try c.encode(updatedAt, forKey: .updatedAt)
     }
 

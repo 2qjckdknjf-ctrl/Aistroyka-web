@@ -24,6 +24,7 @@ struct DocumentsHubView: View {
     @StateObject private var networkMonitor = NetworkMonitor.shared
     @State private var lastSync: Date?
     @State private var didLoad = false
+    @State private var decidingDocumentId: String?
 
     var body: some View {
         Group {
@@ -132,32 +133,56 @@ struct DocumentsHubView: View {
                     .frame(minHeight: 180)
                 } else {
                     ForEach(filtered) { doc in
-                        Button {
-                            openDocument(doc)
-                        } label: {
-                            HStack(spacing: 12) {
-                                Image(systemName: "doc.fill").foregroundStyle(ManagerV43.danger)
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(doc.title ?? doc.id)
-                                        .font(.system(size: 15, weight: .semibold))
-                                        .foregroundStyle(ManagerV43.textPrimary)
-                                    Text("\(doc.type ?? "document") · \(doc.status ?? "")")
-                                        .font(.caption)
-                                        .foregroundStyle(ManagerV43.textSecondary)
-                                }
-                                Spacer()
-                                statusPill(doc.status)
-                                if ManagerAPI.documentFileURL(objectPath: doc.objectPath) != nil {
-                                    Image(systemName: "arrow.up.right")
-                                        .foregroundStyle(ManagerV43.textSecondary)
+                        VStack(alignment: .leading, spacing: 8) {
+                            Button {
+                                openDocument(doc)
+                            } label: {
+                                HStack(spacing: 12) {
+                                    Image(systemName: "doc.fill").foregroundStyle(ManagerV43.danger)
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text(doc.title ?? doc.id)
+                                            .font(.system(size: 15, weight: .semibold))
+                                            .foregroundStyle(ManagerV43.textPrimary)
+                                        Text("\(doc.type ?? "document") · \(doc.status ?? "")")
+                                            .font(.caption)
+                                            .foregroundStyle(ManagerV43.textSecondary)
+                                    }
+                                    Spacer()
+                                    statusPill(doc.status)
+                                    if ManagerAPI.documentFileURL(objectPath: doc.objectPath) != nil {
+                                        Image(systemName: "arrow.up.right")
+                                            .foregroundStyle(ManagerV43.textSecondary)
+                                    }
                                 }
                             }
-                            .padding(12)
-                            .background(ManagerV43.card)
-                            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                            .buttonStyle(.plain)
+                            .accessibilityHint(NSLocalizedString("mgr_v43_open_document", comment: ""))
+                            if (doc.status ?? "").lowercased() == "under_review" {
+                                HStack(spacing: 8) {
+                                    documentDecisionButton(
+                                        doc,
+                                        action: "approve",
+                                        title: NSLocalizedString("mgr_v43_doc_approve", comment: ""),
+                                        color: ManagerV43.success
+                                    )
+                                    documentDecisionButton(
+                                        doc,
+                                        action: "reject",
+                                        title: NSLocalizedString("mgr_v43_doc_reject", comment: ""),
+                                        color: ManagerV43.danger
+                                    )
+                                    documentDecisionButton(
+                                        doc,
+                                        action: "request_changes",
+                                        title: NSLocalizedString("mgr_v43_doc_request_changes", comment: ""),
+                                        color: ManagerV43.warning
+                                    )
+                                }
+                            }
                         }
-                        .buttonStyle(.plain)
-                        .accessibilityHint(NSLocalizedString("mgr_v43_open_document", comment: ""))
+                        .padding(12)
+                        .background(ManagerV43.card)
+                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                     }
                 }
 
@@ -268,6 +293,48 @@ struct DocumentsHubView: View {
             await loadAsync()
         } catch {
             errorMessage = localizedManagerError(error)
+        }
+    }
+
+    private func documentDecisionButton(
+        _ doc: ProjectDocumentDTO,
+        action: String,
+        title: String,
+        color: Color
+    ) -> some View {
+        let busy = decidingDocumentId == doc.id
+        return Button {
+            decide(doc, action: action)
+        } label: {
+            Text(title)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(color)
+                .frame(maxWidth: .infinity, minHeight: 36)
+                .background(color.opacity(0.14))
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .disabled(busy || decidingDocumentId != nil)
+        .accessibilityIdentifier("pilot_manager_doc_\(action)_\(doc.id)")
+    }
+
+    private func decide(_ doc: ProjectDocumentDTO, action: String) {
+        guard let projectId = doc.projectId ?? selectedProjectId else { return }
+        decidingDocumentId = doc.id
+        Task {
+            defer { decidingDocumentId = nil }
+            do {
+                try await ManagerAPI.decideDocument(
+                    projectId: projectId,
+                    documentId: doc.id,
+                    action: action,
+                    idempotencyKey: UUID().uuidString
+                )
+                ManagerLiveSync.post(ManagerLiveSync.documentsChanged)
+                await loadAsync()
+            } catch {
+                errorMessage = localizedManagerError(error)
+            }
         }
     }
 

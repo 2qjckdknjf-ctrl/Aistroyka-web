@@ -25,7 +25,7 @@ public struct ProjectsResponse: Decodable {
     public let data: [ProjectDTO]?
 }
 
-public struct TaskDTO: Codable {
+public struct TaskDTO: Codable, Equatable {
     public let id: String
     public let title: String
     public let status: String

@@ -16,6 +16,7 @@
 "worker_end_shift" = "Завершить смену";
 "worker_loading_tasks" = "Загрузка задач…";
 "worker_todays_tasks" = "Задачи на сегодня";
+"worker_tasks_load_error" = "Не удалось загрузить задачи. Потяните, чтобы повторить.";
 "worker_new_report" = "Новый отчёт";
 "worker_support" = "Поддержка";
 "worker_sign_out" = "Выйти";

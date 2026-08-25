@@ -445,3 +445,8 @@
 "mgr_v43_activity" = "Actividad";
 "mgr_v43_no_activity" = "Sin actividad reciente";
 "mgr_v43_workload" = "Bandeja";
+"mgr_v43_edit_task" = "Editar tarea";
+"mgr_v43_save_task" = "Guardar";
+"mgr_v43_doc_approve" = "Aprobar";
+"mgr_v43_doc_reject" = "Rechazar";
+"mgr_v43_doc_request_changes" = "Pedir cambios";
