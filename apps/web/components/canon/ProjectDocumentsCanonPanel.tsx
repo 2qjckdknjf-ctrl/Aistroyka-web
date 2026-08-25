@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link } from "@/i18n/navigation";
 import { EmptyState, Skeleton } from "@/components/ui";
 import { formatPortalStatus } from "@/lib/i18n/portal-status-labels";
 import {
@@ -27,6 +28,7 @@ import {
   PROJECT_DOCUMENTS_MAX_UPLOAD_MB,
   projectDocumentFileUrl,
   uploadProjectDocumentFile,
+  updateProjectDocument,
   type ProjectDocumentRow,
 } from "@/app/[locale]/(dashboard)/dashboard/projects/[id]/project-documents.api";
 import { CanonCreateDocumentModal } from "./CanonCreateDocumentModal";
@@ -48,20 +50,66 @@ function statusBadgeClass(status: string): string {
 }
 
 function DocumentPreviewPane({
+  projectId,
   doc,
   onClose,
   mobile,
+  onDocumentUpdated,
 }: {
+  projectId: string;
   doc: ProjectDocumentRow;
   onClose?: () => void;
   mobile?: boolean;
+  onDocumentUpdated?: () => void;
 }) {
   const t = useTranslations("canon");
   const tCommon = useTranslations("common");
   const tDetail = useTranslations("dashboardDetail");
   const tPortal = useTranslations("portalStatus");
+  const [shareHint, setShareHint] = useState<string | null>(null);
   const url = projectDocumentFileUrl(doc.object_path);
   const fileName = fileNameFromObjectPath(doc.object_path);
+
+  const intelligenceQuery = useQuery({
+    queryKey: ["project-intelligence-doc-preview", projectId],
+    queryFn: async () => {
+      const res = await fetch(`/api/v1/projects/${projectId}/intelligence`, { credentials: "include" });
+      if (!res.ok) throw new Error("INTELLIGENCE_FAILED");
+      return res.json() as {
+        data?: {
+          executiveSummary?: { summary?: string };
+          missingEvidenceInsights?: Array<{ title?: string; detail?: string }>;
+          recommendations?: Array<{ title?: string; detail?: string }>;
+        };
+      };
+    },
+    enabled: !!projectId,
+    staleTime: 120_000,
+  });
+
+  const submitReviewMutation = useMutation({
+    mutationFn: () => updateProjectDocument(projectId, doc.id, { status: "under_review" }),
+    onSuccess: () => onDocumentUpdated?.(),
+  });
+
+  const intelligenceSummary =
+    intelligenceQuery.data?.data?.executiveSummary?.summary ??
+    intelligenceQuery.data?.data?.recommendations?.[0]?.detail ??
+    intelligenceQuery.data?.data?.missingEvidenceInsights?.[0]?.detail;
+
+  const canSubmitReview =
+    doc.object_path && (doc.status === "draft" || doc.status === "uploaded");
+
+  async function handleShare() {
+    if (!url) return;
+    try {
+      await navigator.clipboard.writeText(url);
+      setShareHint(t("docShareCopied"));
+      window.setTimeout(() => setShareHint(null), 2500);
+    } catch {
+      setShareHint(t("docShareFailed"));
+    }
+  }
 
   const shellClass = mobile
     ? "canon-mobile-preview-sheet canon-glass p-4"
@@ -114,7 +162,31 @@ function DocumentPreviewPane({
 
       <div className="canon-ai-panel mt-4 rounded-xl p-3">
         <p className="text-sm font-semibold text-[var(--canon-text-primary)]">{t("docAiAnalysis")}</p>
-        <p className="mt-2 text-xs text-[var(--canon-text-secondary)]">{t("docAiAnalysisHint")}</p>
+        {intelligenceQuery.isPending ? (
+          <p className="mt-2 text-xs text-[var(--canon-text-muted)]">{t("docAiLoading")}</p>
+        ) : intelligenceSummary ? (
+          <p className="mt-2 text-xs text-[var(--canon-text-secondary)]">{intelligenceSummary}</p>
+        ) : (
+          <p className="mt-2 text-xs text-[var(--canon-text-secondary)]">{t("docAiAnalysisHint")}</p>
+        )}
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Link
+            href={`/dashboard/projects/${projectId}?tab=intelligence`}
+            className="canon-ghost-btn !text-xs"
+          >
+            {t("docOpenIntelligence")}
+          </Link>
+          {canSubmitReview ? (
+            <button
+              type="button"
+              className="canon-gold-btn !text-xs"
+              disabled={submitReviewMutation.isPending}
+              onClick={() => submitReviewMutation.mutate()}
+            >
+              {submitReviewMutation.isPending ? tDetail("saving") : t("docSubmitReview")}
+            </button>
+          ) : null}
+        </div>
       </div>
     </div>
   );
@@ -133,6 +205,11 @@ export function ProjectDocumentsCanonPanel({ projectId }: { projectId: string })
   const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
   const [foldersOpen, setFoldersOpen] = useState(true);
   const [createError, setCreateError] = useState<string | null>(null);
+  const [shareHint, setShareHint] = useState<string | null>(null);
+
+  const refreshDocuments = () => {
+    queryClient.invalidateQueries({ queryKey: ["project-documents", projectId] });
+  };
 
   const query = useQuery({
     queryKey: ["project-documents", projectId],
@@ -156,7 +233,8 @@ export function ProjectDocumentsCanonPanel({ projectId }: { projectId: string })
       return uploadProjectDocumentFile(projectId, doc.id, file);
     },
     onSuccess: (doc) => {
-      queryClient.invalidateQueries({ queryKey: ["project-documents", projectId] });
+      refreshDocuments();
+      fetch("/api/v1/analysis/process", { method: "POST", credentials: "include" }).catch(() => {});
       setCreateOpen(false);
       setCreateError(null);
       setSelectedId(doc.id);
@@ -216,10 +294,28 @@ export function ProjectDocumentsCanonPanel({ projectId }: { projectId: string })
         showFavorite={false}
         actions={
           <>
-            <button type="button" className="canon-ghost-btn !text-xs">
+            <button
+              type="button"
+              className="canon-ghost-btn !text-xs"
+              disabled={!selected?.object_path}
+              onClick={async () => {
+                const shareUrl = selected ? projectDocumentFileUrl(selected.object_path) : null;
+                if (!shareUrl) return;
+                try {
+                  await navigator.clipboard.writeText(shareUrl);
+                  setShareHint(t("docShareCopied"));
+                  window.setTimeout(() => setShareHint(null), 2500);
+                } catch {
+                  setShareHint(t("docShareFailed"));
+                }
+              }}
+            >
               <Share2 size={16} aria-hidden />
               <span className="hidden sm:inline">{t("share")}</span>
             </button>
+            {shareHint ? (
+              <span className="text-xs text-[var(--canon-cyan)]" role="status">{shareHint}</span>
+            ) : null}
             <button type="button" className="canon-gold-btn" onClick={() => setCreateOpen(true)}>
               <Upload size={18} aria-hidden />
               {t("uploadFiles")}
@@ -400,7 +496,11 @@ export function ProjectDocumentsCanonPanel({ projectId }: { projectId: string })
 
         {selected ? (
           <div className="canon-documents-preview-col">
-            <DocumentPreviewPane doc={selected} />
+            <DocumentPreviewPane
+              projectId={projectId}
+              doc={selected}
+              onDocumentUpdated={refreshDocuments}
+            />
           </div>
         ) : (
           <div className="canon-documents-preview-col canon-glass flex min-h-[200px] items-center justify-center p-6 text-sm text-[var(--canon-text-muted)]">
@@ -418,8 +518,10 @@ export function ProjectDocumentsCanonPanel({ projectId }: { projectId: string })
             onClick={() => setMobilePreviewOpen(false)}
           />
           <DocumentPreviewPane
+            projectId={projectId}
             doc={selected}
             mobile
+            onDocumentUpdated={refreshDocuments}
             onClose={() => setMobilePreviewOpen(false)}
           />
         </>

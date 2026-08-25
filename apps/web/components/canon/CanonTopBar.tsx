@@ -1,9 +1,10 @@
 "use client";
 
-import { Bell, HelpCircle, Menu, MessageCircle, Search } from "lucide-react";
+import { HelpCircle, Menu, MessageCircle, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { LocaleSwitcher } from "./CanonLocaleSwitcher";
+import { CanonNotificationBell } from "./CanonNotificationBell";
 
 type CanonTopBarProps = {
   userEmail?: string;
@@ -60,17 +61,9 @@ export function CanonTopBar({
         </div>
 
         <div className="canon-topbar-actions flex shrink-0 items-center gap-0.5 sm:gap-2">
-          <Link
-            href="/dashboard/notifications"
-            className="canon-notify-btn"
-            aria-label={t("notifications")}
-          >
-            <Bell size={20} aria-hidden />
-            <span className="canon-notify-badge">8</span>
-          </Link>
+          <CanonNotificationBell />
           <Link href="/dashboard/support" className="canon-notify-btn" aria-label={t("messages")}>
             <MessageCircle size={20} aria-hidden />
-            <span className="canon-notify-badge">3</span>
           </Link>
           <Link href="/dashboard/help" className="canon-notify-btn canon-hide-mobile" aria-label={t("help")}>
             <HelpCircle size={20} aria-hidden />
