@@ -8,13 +8,13 @@ type Props = { params: Promise<{ locale: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: "public.home" });
+  const t = await getTranslations({ locale, namespace: "public.v41" });
   return {
-    title: { absolute: `Aistroyka — ${t("heroTitle")}` },
-    description: t("heroSubtitle"),
+    title: { absolute: `Aistroyka — ${t("heroTitle1")} ${t("heroTitle2")}` },
+    description: t("heroLead"),
     openGraph: {
-      title: `Aistroyka — ${t("heroTitle")}`,
-      description: t("heroSubtitle"),
+      title: `Aistroyka — ${t("heroTitle1")} ${t("heroTitle2")}`,
+      description: t("heroLead"),
     },
   };
 }

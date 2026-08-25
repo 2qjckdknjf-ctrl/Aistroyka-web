@@ -1,8 +1,8 @@
 import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
-import { Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
+import { V41InnerPage } from "@/components/public/v41";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -19,54 +19,32 @@ export default async function PartnersPage({ params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("public.partners");
+  const tV41 = await getTranslations("public.v41");
 
   return (
-    <div className="mx-auto min-w-0 max-w-5xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-      <section className="text-center">
-        <h1 className="text-[var(--aistroyka-font-title)] font-bold text-[var(--aistroyka-text-primary)]">
-          {t("title")}
-        </h1>
-        <p className="mt-4 text-lg text-[var(--aistroyka-text-secondary)]">{t("heroTitle")}</p>
-      </section>
-
-      <section className="mt-12">
-        <h2 className="text-[var(--aistroyka-font-title2)] font-semibold text-[var(--aistroyka-text-primary)]">
-          Partner types
-        </h2>
-        <div className="mt-6 grid gap-4 sm:grid-cols-2">
-          {TYPES.map((key) => (
-            <div
-              key={key}
-              className="rounded-[var(--aistroyka-radius-card)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] p-4"
-            >
-              {t(key)}
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="mt-16">
-        <h2 className="text-[var(--aistroyka-font-title2)] font-semibold text-[var(--aistroyka-text-primary)]">
-          Benefits
-        </h2>
-        <div className="mt-6 grid gap-4 sm:grid-cols-2">
-          {BENEFITS.map((key) => (
-            <div
-              key={key}
-              className="rounded-[var(--aistroyka-radius-card)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] p-4"
-            >
-              {t(key)}
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="mt-12 flex justify-center">
-        <Link href="/contact" className="btn-primary max-w-full">
-          {t("cta")}
-        </Link>
-      </section>
-    </div>
+    <V41InnerPage
+      eyebrow={t("title")}
+      title={t("heroTitle")}
+      lead={t("metaDescription")}
+      ctaLabel={t("cta")}
+      secondaryHref="/contact"
+      secondaryLabel={tV41("contactUs")}
+    >
+      <div className="v41-inner-grid cols-2">
+        {TYPES.map((key) => (
+          <article key={key} className="v41-inner-card v41-glass">
+            <p>{t(key)}</p>
+          </article>
+        ))}
+      </div>
+      <div className="v41-inner-grid cols-2">
+        {BENEFITS.map((key) => (
+          <article key={key} className="v41-inner-card v41-glass">
+            <p>{t(key)}</p>
+          </article>
+        ))}
+      </div>
+    </V41InnerPage>
   );
 }
 

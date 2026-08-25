@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 import { routing } from "@/i18n/routing";
 import { ContactForm } from "./ContactForm";
+import { V41InnerPage } from "@/components/public/v41";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -19,34 +20,21 @@ export default async function ContactPage({ params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("public.contact");
+  const tV41 = await getTranslations("public.v41");
 
   return (
-    <div className="mx-auto min-w-0 max-w-3xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-      <h1 className="text-[var(--aistroyka-font-title)] font-bold text-[var(--aistroyka-text-primary)]">
-        {t("title")}
-      </h1>
-      <p className="mt-4 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-secondary)]">
-        {t("metaDescription")}
-      </p>
-
-      <section className="mt-12">
-        <h2 className="text-[var(--aistroyka-font-title3)] font-semibold text-[var(--aistroyka-text-primary)]">
-          {t("formTitle")}
-        </h2>
-        <div className="mt-4 rounded-[var(--aistroyka-radius-card)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] p-6 shadow-[var(--aistroyka-shadow-e1)]">
+    <V41InnerPage eyebrow={t("title")} title={t("title")} lead={t("metaDescription")} ctaLabel={tV41("launchPilot")}>
+      <article className="v41-inner-card v41-glass">
+        <h2>{t("formTitle")}</h2>
+        <div className="mt-4">
           <ContactForm />
         </div>
-      </section>
-
-      <section className="mt-12 rounded-[var(--aistroyka-radius-card)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] p-6">
-        <h2 className="text-[var(--aistroyka-font-title3)] font-semibold text-[var(--aistroyka-text-primary)]">
-          {t("demoBlockTitle")}
-        </h2>
-        <p className="mt-2 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-secondary)]">
-          {t("businessCtaDetails")}
-        </p>
-      </section>
-    </div>
+      </article>
+      <article className="v41-inner-card v41-glass">
+        <h2>{t("demoBlockTitle")}</h2>
+        <p>{t("businessCtaDetails")}</p>
+      </article>
+    </V41InnerPage>
   );
 }
 
