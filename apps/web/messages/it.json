@@ -974,6 +974,13 @@
     "create": "Crea",
     "creating": "Creazione…",
     "projectNamePlaceholder": "Nome del progetto",
+    "addressOptional": "Indirizzo (opzionale)",
+    "addressPlaceholder": "Indirizzo cantiere o città",
+    "clientOptional": "Cliente (opzionale)",
+    "clientPlaceholder": "Nome cliente o commitente",
+    "notesOptional": "Note (opzionale)",
+    "notesPlaceholder": "Note di avvio — locali finché l’API non espande i campi",
+    "richCreateHint": "Il nome è obbligatorio. Indirizzo e cliente vanno nel titolo finché non ci sono campi dedicati nell’API.",
     "nameTooLong": "Il nome del progetto deve essere di massimo 200 caratteri."
   },
   "projectDetail": {

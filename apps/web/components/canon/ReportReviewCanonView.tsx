@@ -100,7 +100,13 @@ export function ReportReviewCanonView({
             <span className="canon-risk-badge canon-risk-badge--medium">
               {statusReviewBadge(report.status, t)}
             </span>
-            <button type="button" className="canon-ghost-btn !text-xs">
+            <button
+              type="button"
+              className="canon-ghost-btn !text-xs"
+              onClick={() => {
+                if (typeof window !== "undefined") window.print();
+              }}
+            >
               <Download size={16} aria-hidden />
               <span className="hidden sm:inline">{t("exportPdf")}</span>
             </button>
