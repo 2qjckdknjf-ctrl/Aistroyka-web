@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { LayoutGrid, List, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useQuery, useQueries } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
@@ -29,6 +29,8 @@ export function DashboardProjectsCanonGrid() {
   const t = useTranslations("canon");
   const tNav = useTranslations("nav");
   const [tab, setTab] = useState<TabKey>("all");
+  const [page, setPage] = useState(1);
+  const pageSize = 6;
   const projectsQuery = useProjects();
   const prefetchProject = usePrefetchProject();
   const portfolioQuery = useQuery({
@@ -58,7 +60,13 @@ export function DashboardProjectsCanonGrid() {
     });
   }, [projects, controlById, tab]);
 
-  const visible = filtered.slice(0, 6);
+  const visible = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filtered.slice(start, start + pageSize);
+  }, [filtered, page]);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const pageFrom = filtered.length === 0 ? 0 : (page - 1) * pageSize + 1;
+  const pageTo = Math.min(page * pageSize, filtered.length);
   const summaryQueries = useQueries({
     queries: visible.map((p) => ({
       queryKey: ["project-summary", p.id],
@@ -97,19 +105,6 @@ export function DashboardProjectsCanonGrid() {
         subtitle={t("screen02Label")}
         actions={
           <>
-            <div className="flex rounded-lg border border-[var(--canon-border-glass)] p-0.5">
-              <button type="button" className="canon-notify-btn !w-9" aria-label={t("viewGrid")}>
-                <LayoutGrid size={18} aria-hidden />
-              </button>
-              <button
-                type="button"
-                className="canon-notify-btn !w-9 text-[var(--canon-gold)]"
-                aria-label={t("viewList")}
-              >
-                <List size={18} aria-hidden />
-              </button>
-            </div>
-            <button type="button" className="canon-ghost-btn">{t("sortByUpdate")} ▾</button>
             <Link href="/projects/new" className="canon-gold-btn">
               <Plus size={18} aria-hidden />
               {t("createProject")}
@@ -125,7 +120,10 @@ export function DashboardProjectsCanonGrid() {
           <button
             key={item.key}
             type="button"
-            onClick={() => setTab(item.key)}
+            onClick={() => {
+              setTab(item.key);
+              setPage(1);
+            }}
             className={`px-3 py-1.5 text-sm font-medium transition-colors ${
               tab === item.key
                 ? "text-[var(--canon-gold)] border-b-2 border-[var(--canon-gold)]"
@@ -232,15 +230,35 @@ export function DashboardProjectsCanonGrid() {
               </table>
             </div>
           )}
-          <div className="flex items-center justify-between border-t border-[var(--canon-border-glass)] px-4 py-3 text-xs text-[var(--canon-text-muted)]">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[var(--canon-border-glass)] px-4 py-3 text-xs text-[var(--canon-text-muted)]">
             <span>
               {t("paginationDemo", {
-                from: filtered.length ? 1 : 0,
-                to: Math.min(6, filtered.length),
+                from: pageFrom,
+                to: pageTo,
                 total: filtered.length,
               })}
             </span>
-            <span>{t("perPage", { count: 6 })}</span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="canon-ghost-btn !text-xs"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+              >
+                {t("paginationPrev")}
+              </button>
+              <span>
+                {page}/{totalPages}
+              </span>
+              <button
+                type="button"
+                className="canon-ghost-btn !text-xs"
+                disabled={page >= totalPages}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              >
+                {t("paginationNext")}
+              </button>
+            </div>
           </div>
         </section>
 

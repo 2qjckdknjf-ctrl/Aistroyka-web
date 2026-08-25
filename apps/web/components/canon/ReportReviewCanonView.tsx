@@ -110,7 +110,6 @@ export function ReportReviewCanonView({
               <Download size={16} aria-hidden />
               <span className="hidden sm:inline">{t("exportPdf")}</span>
             </button>
-            <button type="button" className="canon-ghost-btn !text-xs">{t("moreActions")} ▾</button>
           </>
         }
       />
@@ -197,7 +196,7 @@ export function ReportReviewCanonView({
           </ul>
           <div className="border-t border-[var(--canon-border-glass)] pt-4">
             <p className="text-sm text-[var(--canon-text-secondary)]">
-              {report.worker_note ?? t("reportWorkDemo")}
+              {report.worker_note ?? t("reportNoWorksListed")}
             </p>
             <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
               <div>
@@ -216,10 +215,16 @@ export function ReportReviewCanonView({
         <section className="canon-glass p-4 space-y-4 min-w-0">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="canon-section-title">{t("reportEvidence")}</h2>
-            <div className="flex gap-2">
-              <button type="button" className="canon-ghost-btn !text-xs">{t("fullscreen")}</button>
-              <button type="button" className="canon-ghost-btn !text-xs">{t("annotations")}</button>
-            </div>
+            {beforeUrl ? (
+              <a
+                href={beforeUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="canon-ghost-btn !text-xs"
+              >
+                {t("fullscreen")}
+              </a>
+            ) : null}
           </div>
 
           <div className="canon-before-after">
@@ -351,7 +356,18 @@ export function ReportReviewCanonView({
                 <FileText size={14} aria-hidden />
                 {t("reportAttachments")}
               </h3>
-              <button type="button" className="text-xs text-[var(--canon-cyan)]">{t("downloadAll")}</button>
+              <button
+                type="button"
+                className="text-xs text-[var(--canon-cyan)] disabled:opacity-40"
+                disabled={!mediaUrls.length}
+                onClick={() => {
+                  for (const url of mediaUrls) {
+                    window.open(url, "_blank", "noopener,noreferrer");
+                  }
+                }}
+              >
+                {t("downloadAll")}
+              </button>
             </div>
             <ul className="mt-2 space-y-2 text-sm">
               {report.media?.length
@@ -360,7 +376,13 @@ export function ReportReviewCanonView({
                       <span className="truncate font-mono text-xs">
                         {m.media_id?.slice(0, 12) ?? m.upload_session_id?.slice(0, 12) ?? "file"}…
                       </span>
-                      <Download size={14} className="shrink-0 text-[var(--canon-text-muted)]" aria-hidden />
+                      {m.file_url ? (
+                        <a href={m.file_url} target="_blank" rel="noopener noreferrer" aria-label={t("downloadAll")}>
+                          <Download size={14} className="shrink-0 text-[var(--canon-cyan)]" />
+                        </a>
+                      ) : (
+                        <Download size={14} className="shrink-0 text-[var(--canon-text-muted)]" aria-hidden />
+                      )}
                     </li>
                   ))
                 : (
