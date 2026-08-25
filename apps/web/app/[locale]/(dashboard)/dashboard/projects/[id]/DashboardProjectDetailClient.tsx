@@ -25,6 +25,10 @@ import { ProjectDocumentsCanonPanel } from "@/components/canon/ProjectDocumentsC
 import { ProjectCostsPanel } from "./ProjectCostsPanel";
 import { ProjectEstimatePanel } from "./ProjectEstimatePanel";
 import { ProjectDecisionsPanel } from "./ProjectDecisionsPanel";
+import { DefectsProjectTab } from "./DefectsProjectTab";
+import { ChangeOrdersManagerPanel } from "./ChangeOrdersManagerPanel";
+import { HandoverManagerPanel } from "./HandoverManagerPanel";
+import { ProjectReviewPackPanel } from "./ProjectReviewPackPanel";
 import { TelegramConnectCard } from "@/components/integrations/TelegramConnectCard";
 import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
 import { AiActionPanel } from "@/components/ai/AiActionPanel";
@@ -310,6 +314,18 @@ export function DashboardProjectDetailClient({
         </TabPanel>
         <TabPanel id="panel-decisions" selected={activeTab === "decisions"} aria-labelledby="tab-decisions">
           <ProjectDecisionsPanel projectId={projectId} />
+        </TabPanel>
+        <TabPanel id="panel-defects" selected={activeTab === "defects"} aria-labelledby="tab-defects">
+          <DefectsProjectTab projectId={projectId} />
+        </TabPanel>
+        <TabPanel id="panel-change-orders" selected={activeTab === "change-orders"} aria-labelledby="tab-change-orders">
+          <ChangeOrdersManagerPanel projectId={projectId} />
+        </TabPanel>
+        <TabPanel id="panel-handover" selected={activeTab === "handover"} aria-labelledby="tab-handover">
+          <HandoverManagerPanel projectId={projectId} />
+        </TabPanel>
+        <TabPanel id="panel-review-pack" selected={activeTab === "review-pack"} aria-labelledby="tab-review-pack">
+          <ProjectReviewPackPanel projectId={projectId} />
         </TabPanel>
         <TabPanel id="panel-costs" selected={activeTab === "costs"} aria-labelledby="tab-costs">
           <ProjectCostsPanel projectId={projectId} skin="canon" />

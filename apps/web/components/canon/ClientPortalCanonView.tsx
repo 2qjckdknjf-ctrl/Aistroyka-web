@@ -55,6 +55,39 @@ export function ClientPortalCanonView({
         <p className="mt-1 text-sm text-[var(--canon-text-secondary)]">{t("portalHeroHint")}</p>
       </div>
 
+      <nav className="canon-glass flex flex-wrap gap-2 p-3" aria-label={t("portalQuickLinks")}>
+        <Link
+          href={`/dashboard/projects/${projectId}/client/discussions`}
+          className="canon-ghost-btn !text-xs"
+        >
+          {tDetail("discussions")}
+        </Link>
+        <Link
+          href={`/dashboard/projects/${projectId}/client/defects`}
+          className="canon-ghost-btn !text-xs"
+        >
+          {tDetail("punchList")}
+        </Link>
+        <Link
+          href={`/dashboard/projects/${projectId}/client/change-orders`}
+          className="canon-ghost-btn !text-xs"
+        >
+          {tDetail("changeOrders")}
+        </Link>
+        <Link
+          href={`/dashboard/projects/${projectId}/client/service-requests`}
+          className="canon-ghost-btn !text-xs"
+        >
+          {tDetail("aftercareWarranty")}
+        </Link>
+        <Link
+          href={`/dashboard/projects/${projectId}/handover/pack`}
+          className="canon-ghost-btn !text-xs"
+        >
+          {tDetail("handoverPackPageTitle")}
+        </Link>
+      </nav>
+
       <div className="canon-portal-rings grid gap-4 sm:grid-cols-3">
         <div className="canon-glass flex flex-col items-center gap-2 p-4 text-center">
           <CanonProgressRing value={progressPct} size={96} label={tDetail("progress")} />

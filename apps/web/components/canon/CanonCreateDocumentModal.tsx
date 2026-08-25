@@ -36,6 +36,7 @@ export function CanonCreateDocumentModal({
     e.preventDefault();
     const trimmed = title.trim();
     if (!trimmed) return;
+    if (!file) return;
     await onSubmit(
       {
         type,
@@ -106,7 +107,7 @@ export function CanonCreateDocumentModal({
           <button type="button" className="canon-ghost-btn" onClick={onClose} disabled={isSubmitting}>
             {tCommon("cancel")}
           </button>
-          <button type="submit" className="canon-gold-btn" disabled={isSubmitting || !title.trim()}>
+          <button type="submit" className="canon-gold-btn" disabled={isSubmitting || !title.trim() || !file}>
             {isSubmitting ? tDash("creating") : t("uploadFiles")}
           </button>
         </div>
