@@ -99,6 +99,10 @@
 "worker_task_title" = "Tarea";
 "worker_task_due_fmt" = "Vence: %@";
 "worker_task_status_fmt" = "Estado: %@";
+"worker_task_priority_fmt" = "Prioridad: %@";
+"worker_priority_high" = "Alta";
+"worker_priority_medium" = "Media";
+"worker_priority_low" = "Baja";
 "worker_start_report" = "Iniciar informe";
 "worker_report_id_short_fmt" = "Informe …%@";
 "worker_report_status_fmt" = "Estado: %@";

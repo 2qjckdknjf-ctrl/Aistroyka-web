@@ -23,6 +23,8 @@ struct ManagerRootView: View {
                 ManagerOnboardingView {
                     sessionState.checkSession()
                 }
+            } else if ManagerV43Preview.showsCatalogWithoutAuth {
+                ManagerTabShell()
             } else if !sessionState.isLoggedIn {
                 ManagerLoginView()
             } else if !sessionState.isAuthorizedRole {

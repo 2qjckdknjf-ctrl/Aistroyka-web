@@ -23,6 +23,7 @@ playwright-report/
 apps/web/test-results/
 
 # iOS derived builds
+ios/Shared/.build/
 ios/build/
 ios/**/build/
 ios/ci_derived/

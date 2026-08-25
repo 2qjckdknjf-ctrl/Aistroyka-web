@@ -7,51 +7,72 @@ import SwiftUI
 import Shared
 
 struct ManagerTabShell: View {
-    @State private var selectedTab = 0
+    @StateObject private var router = ManagerTabRouter()
+    @State private var visited: Set<ManagerTab> = [.home]
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
-        if let projectId = ManagerUITestLaunchHooks.e2eProjectId {
-            NavigationStack {
-                ProjectDetailView(projectId: projectId, projectName: nil)
+        Group {
+            if let projectId = ManagerUITestLaunchHooks.e2eProjectId {
+                NavigationStack {
+                    ProjectDetailView(projectId: projectId, projectName: nil)
+                }
+                .accessibilityElement(children: .contain)
+                .accessibilityIdentifier("pilot_manager_e2e_deeplink_shell")
+            } else {
+                managerTabs
             }
-            .accessibilityElement(children: .contain)
-            .accessibilityIdentifier("pilot_manager_e2e_deeplink_shell")
-        } else {
-            managerTabs
         }
+        .environmentObject(router)
+        .tint(ManagerV43.yellow)
+        .preferredColorScheme(.dark)
     }
 
     private var managerTabs: some View {
-        TabView(selection: $selectedTab) {
-            HomeDashboardView()
-                .tabItem { Label(NSLocalizedString("mgr_tab_home", comment: ""), systemImage: "house.fill") }
-                .tag(0)
-            ProjectsListView()
-                .accessibilityIdentifier("pilot_manager_projects_tab")
-                .tabItem { Label(NSLocalizedString("mgr_tab_projects", comment: ""), systemImage: "folder.fill") }
-                .tag(1)
-            TasksListView()
-                .tabItem { Label(NSLocalizedString("mgr_tab_tasks", comment: ""), systemImage: "checklist") }
-                .tag(2)
-            ReportsInboxView()
-                .tabItem { Label(NSLocalizedString("mgr_tab_reports", comment: ""), systemImage: "doc.text.fill") }
-                .tag(3)
-                .accessibilityIdentifier("pilot_manager_tab_reports")
-            TeamOverviewView()
-                .tabItem { Label(NSLocalizedString("mgr_tab_team", comment: ""), systemImage: "person.3.fill") }
-                .tag(4)
-            AITabView()
-                .tabItem { Label(NSLocalizedString("mgr_tab_ai", comment: ""), systemImage: "sparkles") }
-                .tag(5)
-            ManagerMoreView()
-                .tabItem { Label(NSLocalizedString("mgr_tab_more", comment: ""), systemImage: "ellipsis.circle.fill") }
-                .tag(6)
+        VStack(spacing: 0) {
+            ZStack {
+                if visited.contains(.home) {
+                    tabPage(HomeDashboardView(), .home)
+                }
+                if visited.contains(.projects) {
+                    tabPage(ProjectsListView(), .projects)
+                        .accessibilityIdentifier("pilot_manager_projects_tab")
+                }
+                if visited.contains(.tasks) {
+                    tabPage(TasksListView(), .tasks)
+                }
+                if visited.contains(.ai) {
+                    tabPage(AITabView(), .ai)
+                }
+                if visited.contains(.more) {
+                    tabPage(ManagerMoreView(), .more)
+                }
+            }
+            ManagerV43TabBar(selection: $router.selectedTab, tasksBadge: router.tasksBadge)
+                .padding(.horizontal, 10)
+                .padding(.bottom, 4)
         }
-        .accessibilityIdentifier("pilot_manager_tab_shell")
-        .tint(.accentColor)
+        .background(ManagerV43.bg.ignoresSafeArea())
+        .onChange(of: router.selectedTab) { tab in
+            visited.insert(tab)
+        }
         .onReceive(NotificationCenter.default.publisher(for: .aiStroykaManagerOpenTaskChat)) { _ in
-            selectedTab = 2
+            router.selectedTab = .tasks
+            visited.insert(.tasks)
         }
+        .onChange(of: scenePhase) { phase in
+            if phase == .active {
+                ManagerLiveSync.post(ManagerLiveSync.appBecameActive)
+            }
+        }
+    }
+
+    private func tabPage<Content: View>(_ content: Content, _ tab: ManagerTab) -> some View {
+        content
+            .opacity(router.selectedTab == tab ? 1 : 0)
+            .zIndex(router.selectedTab == tab ? 1 : 0)
+            .allowsHitTesting(router.selectedTab == tab)
+            .accessibilityHidden(router.selectedTab != tab)
     }
 }
 

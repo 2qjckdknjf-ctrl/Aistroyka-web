@@ -8,7 +8,7 @@ import {
   storeResponse,
   IDEMPOTENCY_HEADER,
 } from "@/lib/platform/idempotency/idempotency.service";
-import type { CreateTaskInput } from "@/lib/domain/tasks/task.types";
+import { parseTaskPriority, type CreateTaskInput } from "@/lib/domain/tasks/task.types";
 
 export const dynamic = "force-dynamic";
 
@@ -96,6 +96,11 @@ export async function POST(request: Request) {
         : undefined,
     report_required: typeof body.report_required === "boolean" ? body.report_required : undefined,
   };
+  if (body.priority !== undefined && body.priority !== null && body.priority !== "") {
+    const priority = parseTaskPriority(body.priority);
+    if (!priority) return NextResponse.json({ error: "Invalid priority" }, { status: 400 });
+    input.priority = priority;
+  }
 
   const supabase = await createClientFromRequest(request);
   const { data, error } = await createTask(supabase, ctx, input);

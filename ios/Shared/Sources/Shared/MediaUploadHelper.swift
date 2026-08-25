@@ -58,4 +58,22 @@ public enum MediaUploadHelper {
         )
         return sessionId
     }
+
+    /// Detect image MIME/extension from magic bytes. Unknown payloads stay JPEG.
+    public static func detectImageKind(data: Data) -> (mimeType: String, fileExtension: String) {
+        if data.count >= 8,
+           data[0] == 0x89, data[1] == 0x50, data[2] == 0x4E, data[3] == 0x47 {
+            return ("image/png", "png")
+        }
+        if data.count >= 3, data[0] == 0xFF, data[1] == 0xD8, data[2] == 0xFF {
+            return ("image/jpeg", "jpg")
+        }
+        if data.count >= 12 {
+            let brand = data.subdata(in: 4..<8)
+            if brand == Data("ftyp".utf8) {
+                return ("image/heic", "heic")
+            }
+        }
+        return ("image/jpeg", "jpg")
+    }
 }

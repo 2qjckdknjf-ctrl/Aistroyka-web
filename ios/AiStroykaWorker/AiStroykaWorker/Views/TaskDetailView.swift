@@ -30,6 +30,11 @@ struct TaskDetailView: View {
                 Text(String(format: NSLocalizedString("worker_task_status_fmt", comment: ""), task.status))
                     .font(.caption)
                     .foregroundColor(.secondary)
+                if let priority = task.priority, !priority.isEmpty {
+                    Text(String(format: NSLocalizedString("worker_task_priority_fmt", comment: ""), localizedWorkerPriority(priority)))
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
                 Button(NSLocalizedString("worker_start_report", comment: "")) {
                     store.save { $0.draftTaskId = task.id }
                     navigateToReport = true
@@ -94,5 +99,16 @@ struct TaskDetailView: View {
                 currentUserId = session.user.id
             }
         }
+    }
+}
+
+func localizedWorkerPriority(_ raw: String) -> String {
+    switch raw.lowercased() {
+    case "high":
+        return NSLocalizedString("worker_priority_high", comment: "")
+    case "low":
+        return NSLocalizedString("worker_priority_low", comment: "")
+    default:
+        return NSLocalizedString("worker_priority_medium", comment: "")
     }
 }

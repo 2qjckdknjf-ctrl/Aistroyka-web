@@ -14,5 +14,10 @@ let package = Package(
             name: "Shared",
             path: "Sources/Shared"
         ),
+        .testTarget(
+            name: "SharedTests",
+            dependencies: ["Shared"],
+            path: "Tests/SharedTests"
+        ),
     ]
 )

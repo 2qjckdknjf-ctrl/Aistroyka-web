@@ -13,6 +13,10 @@ struct ProjectDetailView: View {
     let projectName: String?
     @State private var project: ProjectDetailDTO?
     @State private var summary: ProjectSummaryDTO?
+    @State private var estimate: ProjectEstimateSummaryDTO?
+    @State private var todayTasks: [TaskDTO] = []
+    @State private var intelligence: ProjectIntelligenceDataDTO?
+    @State private var timeline: [ProjectTimelineItemDTO] = []
     @State private var isLoading = true
     @State private var errorMessage: String?
 
@@ -35,53 +39,206 @@ struct ProjectDetailView: View {
         .navigationTitle(project?.name ?? projectName ?? NSLocalizedString("mgr_project", comment: ""))
         .refreshable { await loadAsync() }
         .onAppear { loadIfNeeded() }
+        .onReceive(NotificationCenter.default.publisher(for: ManagerLiveSync.appBecameActive)) { _ in
+            load()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: ManagerLiveSync.projectsChanged)) { _ in
+            load()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: ManagerLiveSync.tasksChanged)) { _ in
+            load()
+        }
     }
 
     private func content(project p: ProjectDetailDTO) -> some View {
-        List {
-            Section(NSLocalizedString("mgr_project_section", comment: "")) {
-                LabeledContent(NSLocalizedString("mgr_name", comment: ""), value: p.name ?? "—")
-                LabeledContent(NSLocalizedString("mgr_id", comment: ""), value: p.id)
-                if let c = p.createdAt { LabeledContent(NSLocalizedString("mgr_created", comment: ""), value: formatDate(c)) }
-            }
-            if let s = summary {
-                Section(NSLocalizedString("mgr_summary_section", comment: "")) {
-                    if let n = s.activeWorkers { LabeledContent(NSLocalizedString("mgr_active_workers", comment: ""), value: "\(n)") }
-                    if let n = s.openReports { LabeledContent(NSLocalizedString("mgr_open_reports", comment: ""), value: "\(n)") }
-                    if let n = s.aiAnalyses { LabeledContent(NSLocalizedString("mgr_ai_analyses", comment: ""), value: "\(n)") }
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                commandHeader(p)
+                HStack(alignment: .center, spacing: 16) {
+                    if let progress = displayedProgress {
+                        ManagerProgressRing(progress: progress, size: 100)
+                    }
+                    VStack(alignment: .leading, spacing: 8) {
+                        if let planned = estimate?.budgetSummary?.plannedTotal {
+                            Text(NSLocalizedString("mgr_v43_project_budget", comment: ""))
+                                .font(.caption)
+                                .foregroundStyle(ManagerV43.textSecondary)
+                            Text(ManagerV43Formatters.compactCurrency(planned, currencyCode: estimate?.budgetSummary?.currency ?? "RUB"))
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundStyle(ManagerV43.textPrimary)
+                        } else if ManagerV43Preview.isEnabled {
+                            Text(ManagerV43Formatters.compactCurrency(ManagerDemoCatalog.featuredBudget, currencyCode: "RUB"))
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundStyle(ManagerV43.textPrimary)
+                        }
+                        if let n = summary?.openReports {
+                            Text("\(NSLocalizedString("mgr_open_reports", comment: "")): \(n)")
+                                .font(.caption)
+                                .foregroundStyle(ManagerV43.textSecondary)
+                        }
+                        if let workers = summary?.activeWorkers {
+                            Text("\(NSLocalizedString("mgr_v43_workers", comment: "")): \(workers)")
+                                .font(.caption)
+                                .foregroundStyle(ManagerV43.textSecondary)
+                        }
+                    }
+                    Spacer()
                 }
-            }
-            Section(NSLocalizedString("mgr_quick_links_section", comment: "")) {
+                .padding(16)
+                .background(ManagerV43.card)
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+
+                VStack(alignment: .leading, spacing: 10) {
+                    Text(NSLocalizedString("mgr_v43_activity", comment: ""))
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(ManagerV43.textPrimary)
+                    if timeline.isEmpty {
+                        Text(NSLocalizedString("mgr_v43_no_activity", comment: ""))
+                            .font(.caption)
+                            .foregroundStyle(ManagerV43.textSecondary)
+                    } else {
+                        ForEach(timeline.prefix(8)) { item in
+                            timelineRow(item)
+                        }
+                    }
+                }
+
+                if !todayTasks.isEmpty {
+                    Text(NSLocalizedString("mgr_v43_today_on_sites", comment: ""))
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(ManagerV43.textPrimary)
+                    ForEach(todayTasks.prefix(3), id: \.id) { task in
+                        NavigationLink(destination: TaskDetailManagerView(taskId: task.id)) {
+                            TaskRowView(task: task, projectName: p.name)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+
+                NavigationLink(destination: DocumentsHubView(initialProjectId: projectId)) {
+                    labelRow("folder", NSLocalizedString("mgr_v43_documents", comment: ""))
+                }
+                NavigationLink(destination: ProjectAnalyticsView(projectId: projectId, projectName: p.name)) {
+                    labelRow("chart.xyaxis.line", NSLocalizedString("mgr_v43_analytics", comment: ""))
+                }
                 NavigationLink(destination: TasksListForProjectView(projectId: projectId)) {
-                    Label(NSLocalizedString("mgr_tab_tasks", comment: ""), systemImage: "checklist")
+                    labelRow("checklist", NSLocalizedString("mgr_tab_tasks", comment: ""))
                 }
-                NavigationLink(destination: ReportsInboxForProjectView(projectId: projectId)) {
-                    Label(NSLocalizedString("mgr_tab_reports", comment: ""), systemImage: "doc.text")
+                NavigationLink(destination: ReportsInboxView(initialProjectId: projectId)) {
+                    labelRow("doc.text", NSLocalizedString("mgr_tab_reports", comment: ""))
                 }
                 NavigationLink(destination: ProjectAIView(projectId: projectId, projectName: p.name ?? NSLocalizedString("mgr_project", comment: ""))) {
-                    Label(NSLocalizedString("mgr_ai_jobs_link", comment: ""), systemImage: "sparkles")
+                    labelRow("sparkles", NSLocalizedString("mgr_ai_jobs_link", comment: ""))
                 }
                 NavigationLink(destination: ProjectIntelligenceView(
                     projectId: projectId,
                     projectName: p.name ?? NSLocalizedString("mgr_project", comment: "")
                 )) {
-                    Label(NSLocalizedString("mgr_intelligence_link", comment: ""), systemImage: "chart.bar.doc.horizontal")
-                        .accessibilityIdentifier("pilot_manager_project_intelligence_link")
+                    labelRow("chart.bar.doc.horizontal", NSLocalizedString("mgr_intelligence_link", comment: ""))
                 }
+                .accessibilityIdentifier("pilot_manager_project_intelligence_link")
                 NavigationLink(destination: ProjectCopilotChatView(
                     projectId: projectId,
                     projectName: p.name ?? NSLocalizedString("mgr_project", comment: ""),
-                    intelligence: nil
+                    intelligence: intelligence
                 )) {
-                    Label(NSLocalizedString("mgr_copilot_link", comment: ""), systemImage: "bubble.left.and.bubble.right")
-                        .accessibilityIdentifier("pilot_manager_project_copilot_link")
+                    labelRow("bubble.left.and.bubble.right", NSLocalizedString("mgr_copilot_link", comment: ""))
+                }
+                .accessibilityIdentifier("pilot_manager_project_copilot_link")
+            }
+            .padding(ManagerV43.screenX)
+            .padding(.bottom, 24)
+        }
+        .background(ManagerV43.bg)
+    }
+
+    private func commandHeader(_ p: ProjectDetailDTO) -> some View {
+        HStack {
+            Text(p.name ?? projectName ?? "")
+                .font(.system(size: 22, weight: .semibold))
+                .foregroundStyle(ManagerV43.textPrimary)
+            if ManagerV43Preview.isEnabled {
+                ManagerV43StatusPill(text: NSLocalizedString("mgr_v43_in_progress", comment: ""), kind: .success)
+            }
+            Spacer()
+        }
+    }
+
+    @ViewBuilder
+    private func timelineRow(_ item: ProjectTimelineItemDTO) -> some View {
+        let entity = (item.entityType ?? "").lowercased()
+        let entityId = item.entityId?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if entity == "report", !entityId.isEmpty {
+            NavigationLink(destination: ReportDetailReviewView(reportId: entityId, projectName: project?.name ?? projectName)) {
+                timelineRowContent(item)
+            }
+            .buttonStyle(.plain)
+        } else if entity == "task", !entityId.isEmpty {
+            NavigationLink(destination: TaskDetailManagerView(taskId: entityId)) {
+                timelineRowContent(item)
+            }
+            .buttonStyle(.plain)
+        } else {
+            timelineRowContent(item)
+        }
+    }
+
+    private func timelineRowContent(_ item: ProjectTimelineItemDTO) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(item.title ?? item.eventType ?? NSLocalizedString("mgr_v43_activity", comment: ""))
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(ManagerV43.textPrimary)
+                    .lineLimit(2)
+                Spacer()
+                if let occurred = ManagerV43Formatters.parseISODate(item.occurredAt) {
+                    Text(ManagerV43Formatters.relativeTime(occurred))
+                        .font(.caption)
+                        .foregroundStyle(ManagerV43.textSecondary)
                 }
             }
+            if let actor = item.actorLabel, !actor.isEmpty {
+                Text(actor)
+                    .font(.caption)
+                    .foregroundStyle(ManagerV43.textSecondary)
+                    .lineLimit(1)
+            } else if let description = item.description, !description.isEmpty {
+                Text(description)
+                    .font(.caption)
+                    .foregroundStyle(ManagerV43.textSecondary)
+                    .lineLimit(2)
+            }
         }
-        .aistroykaListChrome(
-            pageBackground: ManagerSemanticColors.pageBackground,
-            surfaceMuted: ManagerSemanticColors.surfaceMuted
-        )
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(ManagerV43.card)
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    private func labelRow(_ icon: String, _ title: String) -> some View {
+        HStack {
+            Image(systemName: icon).foregroundStyle(ManagerV43.dataBlue)
+            Text(title).foregroundStyle(ManagerV43.textPrimary)
+            Spacer()
+            Image(systemName: "chevron.right").foregroundStyle(ManagerV43.textSecondary)
+        }
+        .padding(12)
+        .background(ManagerV43.card)
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    private var displayedProgress: Double? {
+        if let planned = estimate?.budgetSummary?.plannedTotal, planned > 0,
+           let actual = estimate?.budgetSummary?.actualTotal {
+            return ManagerV43Formatters.clampedProgress(actual / planned)
+        }
+        if ManagerV43Preview.isEnabled { return ManagerDemoCatalog.featuredProgress }
+        let done = todayTasks.filter {
+            let status = $0.status.lowercased()
+            return status == "done" || status == "completed"
+        }.count
+        guard !todayTasks.isEmpty else { return nil }
+        return Double(done) / Double(todayTasks.count)
     }
 
     private func load() {
@@ -115,10 +272,20 @@ struct ProjectDetailView: View {
             }
             await runManagerLoad(
                 setLoading: { isLoading = $0 },
-                setErrorMessage: { errorMessage = $0 }
+                setErrorMessage: { errorMessage = $0 },
+                previewFallback: {
+                    project = ProjectDetailDTO(id: projectId, name: projectName ?? ManagerDemoCatalog.featuredProjectName, tenantId: nil, createdAt: nil)
+                    todayTasks = ManagerDemoCatalog.tasks
+                    timeline = []
+                }
             ) {
                 project = try await ManagerAPI.projectDetail(id: projectId)
                 summary = try? await ManagerAPI.projectSummary(projectId: projectId)
+                estimate = try? await ManagerAPI.projectEstimate(projectId: projectId)
+                let day = ManagerV43Formatters.dayISO()
+                todayTasks = (try? await ManagerAPI.tasks(projectId: projectId, from: day, to: day, limit: 8)) ?? []
+                intelligence = try? await ManagerCopilotService.projectIntelligence(projectId: projectId)
+                timeline = (try? await ManagerAPI.projectTimeline(projectId: projectId, limit: 12)) ?? []
             }
             if project != nil { return }
             lastLoadError = errorMessage
@@ -236,18 +403,21 @@ struct TasksListForProjectView: View {
                     subtitle: NSLocalizedString("mgr_no_tasks_from_tab_subtitle", comment: "")
                 )
             } else {
-                List(tasks, id: \.id) { t in
-                    NavigationLink(destination: TaskDetailManagerView(taskId: t.id)) {
-                        TaskRowView(task: t)
+                ScrollView {
+                    VStack(spacing: 10) {
+                        ForEach(tasks, id: \.id) { task in
+                            NavigationLink(destination: TaskDetailManagerView(taskId: task.id)) {
+                                TaskRowView(task: task)
+                            }
+                            .buttonStyle(.plain)
+                        }
                     }
+                    .padding(ManagerV43.screenX)
+                    .padding(.bottom, 24)
                 }
-                .aistroykaListChrome(
-                    pageBackground: ManagerSemanticColors.pageBackground,
-                    surfaceMuted: ManagerSemanticColors.surfaceMuted
-                )
             }
         }
-        .aistroykaPageBackground(ManagerSemanticColors.pageBackground)
+        .background(ManagerV43.bg.ignoresSafeArea())
         .navigationTitle(NSLocalizedString("mgr_tab_tasks", comment: ""))
         .refreshable { await loadAsync() }
         .onAppear { loadIfNeeded() }
@@ -274,59 +444,3 @@ struct TasksListForProjectView: View {
     }
 }
 
-/// Reports list scoped to a project (pushed from project detail; no inner NavigationStack).
-struct ReportsInboxForProjectView: View {
-    let projectId: String
-    @State private var reports: [ReportListItemDTO] = []
-    @State private var isLoading = true
-    @State private var errorMessage: String?
-
-    var body: some View {
-        Group {
-            if isLoading && reports.isEmpty && errorMessage == nil {
-                LoadingStateView(message: NSLocalizedString("mgr_loading_reports", comment: ""))
-            } else if let err = errorMessage, reports.isEmpty {
-                ErrorStateView(message: err, retry: { load() })
-            } else if reports.isEmpty {
-                EmptyStateView(
-                    title: NSLocalizedString("mgr_no_reports_title", comment: ""),
-                    subtitle: NSLocalizedString("mgr_no_reports_project_subtitle", comment: "")
-                )
-            } else {
-                List(reports, id: \.id) { r in
-                    NavigationLink(destination: ReportDetailReviewView(reportId: r.id)) {
-                        ReportRowView(report: r)
-                    }
-                }
-                .aistroykaListChrome(
-                    pageBackground: ManagerSemanticColors.pageBackground,
-                    surfaceMuted: ManagerSemanticColors.surfaceMuted
-                )
-            }
-        }
-        .aistroykaPageBackground(ManagerSemanticColors.pageBackground)
-        .navigationTitle(NSLocalizedString("mgr_tab_reports", comment: ""))
-        .refreshable { await loadAsync() }
-        .onAppear { loadIfNeeded() }
-    }
-
-    private func load() {
-        errorMessage = nil
-        isLoading = true
-        Task { await loadAsync() }
-    }
-
-    private func loadIfNeeded() {
-        guard shouldLoadInitially(items: reports, errorMessage: errorMessage) else { return }
-        load()
-    }
-
-    private func loadAsync() async {
-        await runManagerLoad(
-            setLoading: { isLoading = $0 },
-            setErrorMessage: { errorMessage = $0 }
-        ) {
-            reports = try await ManagerAPI.reports(projectId: projectId, limit: 100)
-        }
-    }
-}
