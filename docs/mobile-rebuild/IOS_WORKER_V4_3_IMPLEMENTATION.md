@@ -25,18 +25,19 @@ Worker stays the existing SwiftUI app (`AiStroykaWorker` + Shared). V4.3 adds th
 | Vitest worker issues/documents/site-join/day-start + lite allow-list + issue service | PASS (34) |
 | Screens vs renders 01–16 | Structure matches; hero is still a dusk gradient, not a site photo. Preview report/feedback stay local (no live auth error). |
 
-## Remaining blockers (owner-gated — not closable in this worktree)
+## Remaining blockers (owner-gated)
 
-- Staging/production API still serve `main` until this branch is merged and deployed. Live DB already has volume + issue-evidence columns.
-- Phone OTP: client calls Supabase `/auth/v1/otp`. This worktree has no `SUPABASE_ACCESS_TOKEN`; live SMS still needs Twilio/MessageBird plus `apps/web/scripts/enable-auth-phone-otp.mjs`.
-- TestFlight MODE B: `APPROVE_TESTFLIGHT_UPLOAD` is unset; ASC key/id/issuer unset. Debug device install is not a store upload.
-- Live Worker ↔ Manager E2E/push loop was not run: no `ios/Config/.uitest-e2e-credentials` in this worktree, and staging would still be `main`.
+- Phone OTP: client calls Supabase `/auth/v1/otp`. No `SUPABASE_ACCESS_TOKEN` in this worktree; live SMS still needs Twilio/MessageBird plus `apps/web/scripts/enable-auth-phone-otp.mjs`.
+- TestFlight MODE B: `APPROVE_TESTFLIGHT_UPLOAD` is not `YES`; ASC key/id/issuer unset.
+- Live Worker ↔ Manager E2E/push loop was not run: no `ios/Config/.uitest-e2e-credentials`.
 - WIP steps stay on-device (no task-progress API — not invented).
 - Announcements stay empty (no announcements API — not invented).
 - No new push type for issue status; inbox row is enough (`PushMessageType` is closed).
 - Android Worker V4.3 is out of scope.
 
-**Verdict: NO** for full prompt closure (deploy + SMS + live E2E + TestFlight still owner-gated). **YES** for catalog UITest, login smoke, closable code tails on this branch, and screens 01–16 vs renders.
+**Shipped:** PR [#256](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/256) on `main`. Staging and production `buildStamp.sha7` = `0e0f3e6`.
+
+**Verdict: NO** for SMS + live E2E + TestFlight (owner-gated). **YES** for catalog UITest, login smoke, closable code tails, screens 01–16 vs renders, and production deploy of the Worker V4.3 APIs.
 
 ## Not claimed
 

@@ -214,4 +214,93 @@ describe("issue.service", () => {
     expect(data).toBeNull();
     expect(error).toBe("Insufficient rights");
   });
+
+  it("updateWorkerReportedIssue rejects another project reader", async () => {
+    const policy = await import("@/lib/tenant/tenant.policy");
+    const repo = await import("./issue.repository");
+    vi.mocked(policy.canReadProjects).mockReturnValue(true);
+    vi.mocked(repo.getById).mockResolvedValue({
+      id: "i6",
+      project_id: "proj-1",
+      tenant_id: "t1",
+      title: "Fence",
+      description: null,
+      status: "open",
+      task_id: null,
+      milestone_id: null,
+      created_by: "other-worker",
+      resolved_at: null,
+      resolved_by: null,
+      created_at: "",
+      updated_at: "",
+    });
+    vi.mocked(repo.update).mockClear();
+    const { data, error } = await updateWorkerReportedIssue(noopSupabase, ctx, "i6", {
+      description: "not mine",
+    });
+    expect(data).toBeNull();
+    expect(error).toBe("Insufficient rights");
+    expect(repo.update).not.toHaveBeenCalled();
+  });
+
+  it("updateWorkerReportedIssue allows the reporter", async () => {
+    const policy = await import("@/lib/tenant/tenant.policy");
+    const repo = await import("./issue.repository");
+    vi.mocked(policy.canReadProjects).mockReturnValue(true);
+    const existing = {
+      id: "i7",
+      project_id: "proj-1",
+      tenant_id: "t1",
+      title: "Fence",
+      description: null,
+      status: "open" as const,
+      task_id: null,
+      milestone_id: null,
+      created_by: "u1",
+      resolved_at: null,
+      resolved_by: null,
+      created_at: "",
+      updated_at: "",
+    };
+    vi.mocked(repo.getById).mockResolvedValue(existing);
+    vi.mocked(repo.update).mockResolvedValue({ ...existing, status: "in_review" });
+    const { data, error } = await updateWorkerReportedIssue(noopSupabase, ctx, "i7", {
+      status: "in_review",
+    });
+    expect(error).toBe("");
+    expect(data?.id).toBe("i7");
+  });
+
+  it("updateWorkerReportedIssue allows the assigned worker", async () => {
+    const policy = await import("@/lib/tenant/tenant.policy");
+    const tasks = await import("@/lib/domain/tasks/task.repository");
+    const repo = await import("./issue.repository");
+    vi.mocked(policy.canReadProjects).mockReturnValue(true);
+    vi.mocked(tasks.getById).mockResolvedValue({
+      id: "task-7",
+      assigned_to: "u1",
+    } as never);
+    const existing = {
+      id: "i8",
+      project_id: "proj-1",
+      tenant_id: "t1",
+      title: "Fence",
+      description: null,
+      status: "open" as const,
+      task_id: "task-7",
+      milestone_id: null,
+      created_by: "other-worker",
+      resolved_at: null,
+      resolved_by: null,
+      created_at: "",
+      updated_at: "",
+    };
+    vi.mocked(repo.getById).mockResolvedValue(existing);
+    vi.mocked(repo.update).mockResolvedValue({ ...existing, description: "photo added" });
+    const { data, error } = await updateWorkerReportedIssue(noopSupabase, ctx, "i8", {
+      description: "photo added",
+    });
+    expect(error).toBe("");
+    expect(data?.id).toBe("i8");
+  });
 });
