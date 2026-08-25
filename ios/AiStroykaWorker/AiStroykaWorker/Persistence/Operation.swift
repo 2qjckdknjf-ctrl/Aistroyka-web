@@ -47,6 +47,8 @@ struct OperationPayload: Codable, Equatable {
     /// Task chat text body / client id for offline send.
     var messageBody: String?
     var clientId: String?
+    var actualVolume: Double?
+    var plannedVolume: Double?
 
     init(
         dayId: String? = nil,
@@ -63,7 +65,9 @@ struct OperationPayload: Codable, Equatable {
         cursor: Int? = nil,
         workerNote: String? = nil,
         messageBody: String? = nil,
-        clientId: String? = nil
+        clientId: String? = nil,
+        actualVolume: Double? = nil,
+        plannedVolume: Double? = nil
     ) {
         self.dayId = dayId
         self.taskId = taskId
@@ -80,6 +84,8 @@ struct OperationPayload: Codable, Equatable {
         self.workerNote = workerNote
         self.messageBody = messageBody
         self.clientId = clientId
+        self.actualVolume = actualVolume
+        self.plannedVolume = plannedVolume
     }
 }
 

@@ -52,7 +52,7 @@ struct HomeContainerView: View {
                 .accessibilityElement(children: .contain)
                 .accessibilityIdentifier("pilot_worker_e2e_report_draft_shell")
             } else {
-                HomeView(
+                WorkerTabShell(
                     project: selectedProject!,
                     onLogout: { appState.logout() },
                     onLeaveProject: {
@@ -60,10 +60,10 @@ struct HomeContainerView: View {
                         store.save { $0.selectedProjectId = nil }
                     }
                 )
-                .accessibilityIdentifier("pilot_worker_home")
             }
         }
         .aistroykaPageBackground(WorkerSemanticColors.pageBackground)
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("pilot_worker_home_container")
         .onAppear {
             loadProjects()
@@ -123,7 +123,7 @@ struct HomeContainerView: View {
                 }
             } catch {
                 await MainActor.run {
-                    errorMessage = (error as? APIError)?.message ?? error.localizedDescription
+                    errorMessage = WorkerV43Copy.userFacing(error)
                     loading = false
                 }
             }

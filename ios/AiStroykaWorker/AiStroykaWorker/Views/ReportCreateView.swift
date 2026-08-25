@@ -16,6 +16,9 @@ struct ReportCreateView: View {
     /// Server task UUID when report is for a specific task; sent as task_id to report/create and report/submit.
     var taskId: String? = nil
     var taskTitle: String? = nil
+    var showsNavigationTitle: Bool = true
+    var autoCreateOnAppear: Bool = false
+    var hidesLegacySubmit: Bool = false
     @StateObject private var opStore = OperationQueueStore.shared
     @State private var draftId: String?
     @State private var reportId: String?
@@ -92,9 +95,11 @@ struct ReportCreateView: View {
                             .textFieldStyle(.roundedBorder)
                             .accessibilityIdentifier("pilot_worker_report_note")
                     }
-                    Button(NSLocalizedString("worker_submit_report", comment: "")) { enqueueSubmitReport() }
-                        .disabled(submitEnqueued && !submitFailed)
-                        .accessibilityIdentifier("pilot_worker_submit_report")
+                    if !hidesLegacySubmit {
+                        Button(NSLocalizedString("worker_submit_report", comment: "")) { enqueueSubmitReport() }
+                            .disabled(submitEnqueued && !submitFailed)
+                            .accessibilityIdentifier("pilot_worker_submit_report")
+                    }
                 }
             }
             if let err = errorMessage { Text(err).foregroundColor(.red).font(.caption) }
@@ -107,7 +112,7 @@ struct ReportCreateView: View {
         .aistroykaPageBackground(WorkerSemanticColors.pageBackground)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("pilot_worker_report_compose")
-        .navigationTitle(NSLocalizedString("worker_new_report", comment: ""))
+        .navigationTitle(showsNavigationTitle ? NSLocalizedString("worker_new_report", comment: "") : "")
         .navigationBarTitleDisplayMode(.inline)
         .confirmationDialog(NSLocalizedString("worker_photo_dialog_before", comment: ""), isPresented: $showImageSourceBefore) {
             Button(NSLocalizedString("worker_take_photo", comment: "")) { showCameraBefore = true }
@@ -124,11 +129,26 @@ struct ReportCreateView: View {
         .fullScreenCover(isPresented: $showCameraBefore) { CameraPicker(image: $beforeImage) }
         .fullScreenCover(isPresented: $showCameraAfter) { CameraPicker(image: $afterImage) }
         .onAppear {
-            if let draft = draftReportId {
+            if workerNoteText.isEmpty, let taskId {
+                workerNoteText = WorkerTaskProgressStore.load(taskId: taskId).managerNote()
+            }
+            if let draft = draftReportId ?? store.state.draftReportId {
                 draftId = draft
                 reportId = opStore.operation(id: createReportOpId(draftId: draft))?.resultReportId
                 store.save { $0.draftReportId = draft }
             }
+            if beforeImage == nil {
+                beforeImage = WorkerPhotoEvidence.pendingImage(purpose: WorkerPhotoKind.before.rawValue)
+            }
+            if afterImage == nil {
+                afterImage = WorkerPhotoEvidence.pendingImage(purpose: WorkerPhotoKind.after.rawValue)
+            }
+            if autoCreateOnAppear, draftId == nil {
+                enqueueCreateReport()
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .workerV43SubmitReport)) { _ in
+            handleExternalSubmit()
         }
         .onChange(of: opStore.operations) { _ in
             if let did = draftId {
@@ -220,12 +240,23 @@ struct ReportCreateView: View {
         }
     }
 
-    private func createReportOpId(draftId: String) -> String { "createReport-\(draftId)" }
+    private func handleExternalSubmit() {
+        if draftId == nil {
+            enqueueCreateReport()
+        }
+        guard canSubmitReport else {
+            errorMessage = NSLocalizedString("worker_error_proof_required", comment: "")
+            return
+        }
+        enqueueSubmitReport()
+    }
+
+    private func createReportOpId(draftId: String) -> String { WorkerReportOpIds.createReport(draftId: draftId) }
     private func createSessionOpId(photoItemId: String) -> String { "createSession-\(photoItemId)" }
     private func uploadBinaryOpId(photoItemId: String) -> String { "uploadBinary-\(photoItemId)" }
     private func finalizeOpId(photoItemId: String) -> String { "finalize-\(photoItemId)" }
     private func attachMediaOpId(photoItemId: String) -> String { "attachMedia-\(photoItemId)" }
-    private func submitReportOpId(draftId: String) -> String { "submitReport-\(draftId)" }
+    private func submitReportOpId(draftId: String) -> String { WorkerReportOpIds.submitReport(draftId: draftId) }
 
     private func enqueueCreateReport() {
         errorMessage = nil
@@ -257,6 +288,12 @@ struct ReportCreateView: View {
         )
         opStore.add(op)
         OperationQueueExecutor.shared.runLoop()
+        if let img = beforeImage, beforeItemId == nil {
+            addPhoto(purpose: WorkerPhotoKind.before.rawValue, image: img) { beforeItemId = $0 }
+        }
+        if let img = afterImage, afterItemId == nil {
+            addPhoto(purpose: WorkerPhotoKind.after.rawValue, image: img) { afterItemId = $0 }
+        }
     }
 
     private func addPhoto(purpose: String, image: UIImage, setItemId: @escaping (String) -> Void) {
@@ -344,6 +381,7 @@ struct ReportCreateView: View {
         let now = ISO8601DateFormatter().string(from: Date())
         let trimmedNote = workerNoteText.trimmingCharacters(in: .whitespacesAndNewlines)
         let noteForSubmit: String? = trimmedNote.isEmpty ? nil : String(trimmedNote.prefix(2000))
+        let progress = WorkerTaskProgressStore.load(taskId: taskIdForSubmit ?? "preview-task-1")
         let op = QueuedOperation(
             id: submitReportOpId(draftId: did),
             type: .submitReport,
@@ -360,7 +398,9 @@ struct ReportCreateView: View {
                 sizeBytes: nil,
                 imageDataBase64: nil,
                 cursor: nil,
-                workerNote: noteForSubmit
+                workerNote: noteForSubmit,
+                actualVolume: progress.actualVolume,
+                plannedVolume: progress.plannedVolume
             ),
             idempotencyKey: key,
             dependsOn: [createReportOpId(draftId: did), attachMediaOpId(photoItemId: beforeId), attachMediaOpId(photoItemId: afterId)],

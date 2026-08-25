@@ -8,6 +8,9 @@ import type { ReportReviewStatus } from "@/lib/domain/reports/report.repository"
 import { emitAudit } from "@/lib/observability/audit.service";
 import { getProjectMembership } from "@/lib/domain/projects/project-access";
 import type { TenantContext } from "@/lib/tenant/tenant.types";
+import { notifyUser } from "@/lib/domain/notifications/manager-notifications.repository";
+import { enqueuePushToUser } from "@/lib/platform/push/push.service";
+import { getAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 
@@ -148,6 +151,32 @@ export async function PATCH(
     resource_id: id,
     details: { status, has_note: Boolean(normalizedNote) },
   });
+
+  if (updated.user_id) {
+    const title =
+      status === "approved"
+        ? "Report approved"
+        : status === "rejected"
+          ? "Report rejected"
+          : "Manager requested changes";
+    await notifyUser(supabase, ctx.tenantId, updated.user_id, {
+      type: "report_reviewed",
+      title,
+      body: normalizedNote?.slice(0, 160) ?? `Report ${id.slice(0, 8)}…`,
+      target_type: "report",
+      target_id: id,
+      project_id: await reportRepo.getProjectIdForReport(supabase, ctx.tenantId, updated),
+    });
+    const admin = getAdminClient();
+    if (admin) {
+      await enqueuePushToUser(admin, {
+        tenantId: ctx.tenantId,
+        userId: updated.user_id,
+        type: "report_ready",
+        payload: { report_id: id, status },
+      });
+    }
+  }
 
   const media = await reportRepo.listMediaByReportIdWithUrls(supabase, id, ctx.tenantId);
   return NextResponse.json({ data: { ...updated, media } });

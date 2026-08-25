@@ -185,7 +185,9 @@ final class OperationQueueExecutor: ObservableObject {
                     reportId: reportId,
                     taskId: op.payload.taskId,
                     workerNote: op.payload.workerNote,
-                    idempotencyKey: op.idempotencyKey
+                    idempotencyKey: op.idempotencyKey,
+                    actualVolume: op.payload.actualVolume,
+                    plannedVolume: op.payload.plannedVolume
                 )
                 appStore.save { $0.draftReportId = nil; $0.pendingUploads = [] }
                 return .success

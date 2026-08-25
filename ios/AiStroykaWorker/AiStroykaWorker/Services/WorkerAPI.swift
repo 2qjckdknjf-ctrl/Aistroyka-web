@@ -70,12 +70,33 @@ enum WorkerAPI {
             struct Day: Decodable { let id: String? }
             let data: Day?
         }
-        let response: Response = try await APIClient.shared.request(
-            path: "worker/day/start",
-            method: "POST",
-            body: EmptyBody(),
-            idempotencyKey: idempotencyKey
-        )
+        struct LocationBody: Encodable {
+            let latitude: Double
+            let longitude: Double
+            let accuracyM: Double?
+            enum CodingKeys: String, CodingKey {
+                case latitude
+                case longitude
+                case accuracyM = "accuracy_m"
+            }
+        }
+        let evidence = WorkerShiftEvidenceStore.load()
+        let response: Response
+        if let lat = evidence.latitude, let lon = evidence.longitude {
+            response = try await APIClient.shared.request(
+                path: "worker/day/start",
+                method: "POST",
+                body: LocationBody(latitude: lat, longitude: lon, accuracyM: evidence.locationAccuracy),
+                idempotencyKey: idempotencyKey
+            )
+        } else {
+            response = try await APIClient.shared.request(
+                path: "worker/day/start",
+                method: "POST",
+                body: EmptyBody(),
+                idempotencyKey: idempotencyKey
+            )
+        }
         return response.data?.id
     }
     
@@ -121,15 +142,26 @@ enum WorkerAPI {
         )
     }
     
-    static func submitReport(reportId: String, taskId: String?, workerNote: String?, idempotencyKey: String) async throws {
+    static func submitReport(
+        reportId: String,
+        taskId: String?,
+        workerNote: String?,
+        idempotencyKey: String,
+        actualVolume: Double? = nil,
+        plannedVolume: Double? = nil
+    ) async throws {
         struct Body: Encodable {
             let reportId: String
             let taskId: String?
             let workerNote: String?
+            let actualVolume: Double?
+            let plannedVolume: Double?
             enum CodingKeys: String, CodingKey {
                 case reportId = "report_id"
                 case taskId = "task_id"
                 case workerNote = "worker_note"
+                case actualVolume = "actual_volume"
+                case plannedVolume = "planned_volume"
             }
         }
         let trimmed = workerNote?.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -137,7 +169,13 @@ enum WorkerAPI {
             guard let t = trimmed, !t.isEmpty else { return nil }
             return String(t.prefix(2000))
         }()
-        let body = Body(reportId: reportId, taskId: taskId, workerNote: notePayload)
+        let body = Body(
+            reportId: reportId,
+            taskId: taskId,
+            workerNote: notePayload,
+            actualVolume: actualVolume,
+            plannedVolume: plannedVolume
+        )
         try await APIClient.shared.requestVoid(
             path: "worker/report/submit",
             method: "POST",
@@ -284,6 +322,77 @@ enum WorkerAPI {
         return env.data?.reports ?? []
     }
 
+    static func startAssignedTask(taskId: String, idempotencyKey: String) async throws {
+        struct Body: Encodable {
+            let status: String
+        }
+        try await APIClient.shared.requestVoid(
+            path: "worker/tasks/\(taskId)",
+            method: "PATCH",
+            body: Body(status: "in_progress"),
+            idempotencyKey: idempotencyKey
+        )
+    }
+
+    static func analysisStatus(reportId: String) async throws -> WorkerAnalysisStatusDTO {
+        try await APIClient.shared.request(path: "reports/\(reportId)/analysis-status", keyDecoding: .useDefaultKeys)
+    }
+
+    static func notifications(limit: Int = 50) async throws -> [WorkerNotificationDTO] {
+        let env: WorkerNotificationEnvelope = try await APIClient.shared.request(path: "notifications?limit=\(limit)")
+        return env.data ?? []
+    }
+
+    static func unreadNotificationCount() async throws -> Int {
+        struct Body: Decodable { let count: Int? }
+        let env: Body = try await APIClient.shared.request(path: "notifications/unread-count")
+        return env.count ?? 0
+    }
+
+    static func markNotificationRead(id: String) async {
+        struct Empty: Decodable {}
+        _ = try? await APIClient.shared.request(
+            path: "notifications/\(id)/read",
+            method: "PATCH",
+            body: EmptyBody()
+        ) as Empty
+    }
+
+    static func markAllNotificationsRead() async {
+        struct Ack: Decodable { let ok: Bool?; let marked: Int? }
+        _ = try? await APIClient.shared.request(
+            path: "notifications/read-all",
+            method: "PATCH",
+            body: EmptyBody()
+        ) as Ack
+    }
+
+    static func uploadEvidence(purpose: String, jpeg: Data) async throws -> String {
+        guard let token = await AuthService.shared.getAccessToken() else {
+            throw APIError(statusCode: 401, code: "unauthorized", message: "Not signed in")
+        }
+        let (sessionId, uploadPath) = try await createUploadSession(
+            purpose: purpose,
+            idempotencyKey: DeviceContext.newIdempotencyKey()
+        )
+        let pathInBucket = uploadPath.hasPrefix("media/") ? String(uploadPath.dropFirst("media/".count)) : uploadPath
+        let storagePath = "\(pathInBucket)/\(UUID().uuidString.prefix(8)).jpg"
+        try await MediaUploadHelper.uploadObject(
+            storagePath: storagePath,
+            data: jpeg,
+            mimeType: "image/jpeg",
+            token: token
+        )
+        try await finalizeUploadSession(
+            sessionId: sessionId,
+            objectPath: "media/\(storagePath)",
+            mimeType: "image/jpeg",
+            sizeBytes: jpeg.count,
+            idempotencyKey: DeviceContext.newIdempotencyKey()
+        )
+        return sessionId
+    }
+
     /// GET /api/v1/reports/:id — own report detail (manager note visible to worker).
     static func reportDetail(id: String) async throws -> WorkerReportDetailData {
         let env: WorkerReportDetailEnvelope = try await APIClient.shared.request(path: "reports/\(id)")
@@ -378,6 +487,8 @@ struct WorkerReportDetailData: Decodable {
     let taskId: String?
     let workerNote: String?
     let media: [WorkerReportMediaItem]?
+    let actualVolume: Double?
+    let plannedVolume: Double?
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -386,7 +497,38 @@ struct WorkerReportDetailData: Decodable {
         case taskId = "task_id"
         case workerNote = "worker_note"
         case media
+        case actualVolume = "actual_volume"
+        case plannedVolume = "planned_volume"
     }
+}
+
+struct WorkerAnalysisStatusDTO: Decodable {
+    let status: String
+    let reportId: String?
+    let jobCount: Int?
+    let summary: WorkerAnalysisSummaryDTO?
+}
+
+struct WorkerAnalysisSummaryDTO: Decodable {
+    let mediaTotal: Int?
+    let analyzed: Int?
+    let failed: Int?
+}
+
+struct WorkerNotificationDTO: Decodable, Identifiable {
+    let id: String
+    let type: String
+    let title: String
+    let body: String?
+    let createdAt: String?
+    let readAt: String?
+    let targetType: String?
+    let targetId: String?
+    let projectId: String?
+}
+
+private struct WorkerNotificationEnvelope: Decodable {
+    let data: [WorkerNotificationDTO]?
 }
 
 private struct WorkerReportDetailEnvelope: Decodable {

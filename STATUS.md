@@ -3,7 +3,7 @@
 > Live project status. Keep this short and mobile-readable.
 
 **Last updated:** 2026-08-25  
-**Updated by:** iOS Manager deep live-sync pass (`mobile/ios-manager-v4-3`)
+**Updated by:** iOS Worker V4.3 live-sync PR [#256](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/256)
 
 ---
 
@@ -11,12 +11,12 @@
 
 | Field | Value |
 |---|---|
-| **Active slice** | Ship mobile/ios-manager-v4-3: members email, cabinet parity, live AI GO |
-| **Branch / worktree** | `mobile/ios-manager-v4-3` @ `/Users/alex/Projects/AISTROYKA-ios-manager-v4-3` |
-| **Base** | `origin/main` `1e690098` |
-| **Checks** | Manager BUILD SUCCEEDED |
-| **Plan** | `docs/mobile-rebuild/IOS_MANAGER_V4_3_FOLLOWUP_PLAN.md` |
-| **Next** | Owner commit/PR when asked |
+| **Active slice** | Ship `mobile/ios-worker-v4-3`: Worker V4.3 + live field APIs |
+| **Branch / worktree** | `mobile/ios-worker-v4-3` @ `/Users/alex/Projects/AISTROYKA-ios-worker-v4-3` |
+| **PR** | [#256](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/256) |
+| **Base** | `origin/main` |
+| **Checks** | Worker + Manager BUILD SUCCEEDED; WorkerV43UITests 10/10; i18n OK |
+| **Next** | CI Check + non-author APPROVED → staging deploy. Owner: OTP token, E2E creds, TestFlight MODE B |
 
 ## Notes
 

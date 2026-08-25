@@ -170,7 +170,8 @@ describe("report.service task link", () => {
         "rpt-1",
         tenantId,
         "task-1",
-        "updated"
+        "updated",
+        { actual: null, planned: null }
       );
       expect(repo.submit).not.toHaveBeenCalled();
     });

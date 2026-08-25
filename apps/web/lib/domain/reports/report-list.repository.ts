@@ -9,6 +9,8 @@ export interface ReportListRow {
   submitted_at: string | null;
   project_id: string | null;
   task_id: string | null;
+  actual_volume?: number | null;
+  planned_volume?: number | null;
 }
 
 /**
@@ -22,7 +24,7 @@ export async function listReportsForManager(
   const limit = opts.limit ?? 50;
   let query = supabase
     .from("worker_reports")
-    .select("id, user_id, day_id, status, created_at, submitted_at, task_id")
+    .select("id, user_id, day_id, status, created_at, submitted_at, task_id, actual_volume, planned_volume")
     .eq("tenant_id", tenantId)
     .order("created_at", { ascending: false })
     .limit(limit * 2);
@@ -31,7 +33,8 @@ export async function listReportsForManager(
   if (opts.to) query = query.lte("created_at", opts.to);
   if (opts.userId) query = query.eq("user_id", opts.userId);
 
-  const { data: rows } = await query;
+  const { data: rows, error } = await query;
+  if (error) throw error;
   if (!rows?.length) return [];
 
   const dayIds = Array.from(new Set((rows as { day_id: string | null }[]).map((r) => r.day_id).filter(Boolean))) as string[];
@@ -61,7 +64,17 @@ export async function listReportsForManager(
     );
   }
 
-  let result: ReportListRow[] = (rows as { id: string; user_id: string; day_id: string | null; status: string; created_at: string; submitted_at: string | null; task_id: string | null }[]).map((r) => {
+  let result: ReportListRow[] = (rows as {
+    id: string;
+    user_id: string;
+    day_id: string | null;
+    status: string;
+    created_at: string;
+    submitted_at: string | null;
+    task_id: string | null;
+    actual_volume?: number | null;
+    planned_volume?: number | null;
+  }[]).map((r) => {
     const fromDay = r.day_id ? dayProjectMap[r.day_id] ?? null : null;
     const fromTask = r.task_id ? taskProjectMap[r.task_id] ?? null : null;
     const project_id = fromDay ?? fromTask ?? null;

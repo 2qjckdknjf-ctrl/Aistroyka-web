@@ -56,6 +56,18 @@ vi.mock("@/lib/observability/audit.service", () => ({
   emitAudit: (...args: unknown[]) => emitAudit(...args),
 }));
 
+vi.mock("@/lib/domain/notifications/manager-notifications.repository", () => ({
+  notifyUser: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("@/lib/supabase/admin", () => ({
+  getAdminClient: () => null,
+}));
+
+vi.mock("@/lib/platform/push/push.service", () => ({
+  enqueuePushToUser: vi.fn().mockResolvedValue(0),
+}));
+
 describe("PATCH /api/v1/reports/:id", () => {
   beforeEach(() => {
     getTenantContextFromRequest.mockResolvedValue(tenantContext);
@@ -297,6 +309,41 @@ describe("PATCH /api/v1/reports/:id", () => {
     expect(body.data.status).toBe(status);
     expect(body.data.reviewed_by).toBe("manager-1");
     expect(body.data.media).toHaveLength(1);
+  });
+
+  it("notifies the worker after a successful review", async () => {
+    const { notifyUser } = await import("@/lib/domain/notifications/manager-notifications.repository");
+    vi.mocked(notifyUser).mockClear();
+    updateReview.mockResolvedValue({
+      id: "r1",
+      user_id: "worker-1",
+      status: "approved",
+      reviewed_by: "manager-1",
+      reviewed_at: "2026-05-20T00:00:00.000Z",
+      manager_note: null,
+    });
+
+    const response = await PATCH(
+      new Request("https://test/api/v1/reports/r1", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ status: "approved" }),
+      }),
+      { params: Promise.resolve({ id: "r1" }) }
+    );
+
+    expect(response.status).toBe(200);
+    expect(notifyUser).toHaveBeenCalledWith(
+      expect.anything(),
+      "tenant-1",
+      "worker-1",
+      expect.objectContaining({
+        type: "report_reviewed",
+        target_type: "report",
+        target_id: "r1",
+        project_id: "project-1",
+      })
+    );
   });
 });
 

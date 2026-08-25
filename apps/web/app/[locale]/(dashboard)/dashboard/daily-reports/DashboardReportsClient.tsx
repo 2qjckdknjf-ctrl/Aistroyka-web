@@ -35,6 +35,19 @@ interface ReportRow {
   project_id: string | null;
   media_count?: number;
   analysis_status?: "none" | "queued" | "running" | "success" | "failed";
+  actual_volume?: number | null;
+  planned_volume?: number | null;
+}
+
+function formatReportVolume(
+  actual: number | null | undefined,
+  planned: number | null | undefined,
+  t: (key: string, values?: Record<string, string | number | Date>) => string
+): string {
+  if (actual != null && planned != null) return t("volumePairFmt", { actual, planned });
+  if (actual != null) return t("volumeSingleFmt", { value: actual });
+  if (planned != null) return t("volumeSingleFmt", { value: planned });
+  return "—";
 }
 
 function formatAge(dateStr: string, t: (key: string, values?: Record<string, string | number | Date>) => string): string {
@@ -173,13 +186,16 @@ export function DashboardReportsClient({
   }
 
   const exportCsv = () => {
-    const headers = [tDetail("reportId"), tDetail("status"), tDetail("worker"), tDetail("project"), tDetail("ai"), tDetail("media"), tDetail("age"), tDetail("created")];
+    const headers = [tDetail("reportId"), tDetail("status"), tDetail("worker"), tDetail("project"), tDetail("ai"), tDetail("volume"), tDetail("media"), tDetail("age"), tDetail("created")];
     const rows = data.slice(0, 500).map((r) => [
       r.id,
       r.status,
       r.user_id,
       r.project_id ?? "",
       r.analysis_status ?? "",
+      r.actual_volume != null || r.planned_volume != null
+        ? formatReportVolume(r.actual_volume, r.planned_volume, tDetail)
+        : "",
       String(r.media_count ?? 0),
       formatAge(r.created_at, tDetail),
       new Date(r.created_at).toISOString(),
@@ -272,6 +288,7 @@ export function DashboardReportsClient({
                 <tr>
                   <th>{tDetail("report")}</th>
                   <th>{tDetail("status")}</th>
+                  <th className="canon-hide-mobile">{tDetail("volume")}</th>
                   <th className="canon-hide-mobile">{tDetail("worker")}</th>
                   <th className="canon-hide-mobile">{tDetail("project")}</th>
                   <th>{tDetail("age")}</th>
@@ -299,6 +316,9 @@ export function DashboardReportsClient({
                       }`}>
                         {r.status}
                       </span>
+                    </td>
+                    <td className="canon-hide-mobile text-xs tabular-nums">
+                      {formatReportVolume(r.actual_volume, r.planned_volume, tDetail)}
                     </td>
                     <td className="canon-hide-mobile font-mono text-xs">
                       {r.user_id.slice(0, 8)}…
@@ -337,6 +357,7 @@ export function DashboardReportsClient({
             <TableHeaderCell>{tDetail("worker")}</TableHeaderCell>
             <TableHeaderCell>{tDetail("project")}</TableHeaderCell>
             <TableHeaderCell>{tDetail("ai")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("volume")}</TableHeaderCell>
             <TableHeaderCell>{tDetail("media")}</TableHeaderCell>
             <TableHeaderCell>{tDetail("age")}</TableHeaderCell>
             <TableHeaderCell>{tDetail("action")}</TableHeaderCell>
@@ -375,6 +396,9 @@ export function DashboardReportsClient({
                 ) : (
                   "—"
                 )}
+              </TableCell>
+              <TableCell className="tabular-nums">
+                {formatReportVolume(r.actual_volume, r.planned_volume, tDetail)}
               </TableCell>
               <TableCell className="tabular-nums">{r.media_count ?? 0}</TableCell>
               <TableCell className="text-aistroyka-text-secondary tabular-nums">{formatAge(r.created_at, tDetail)}</TableCell>

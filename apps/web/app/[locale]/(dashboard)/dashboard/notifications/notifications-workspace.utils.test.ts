@@ -14,6 +14,10 @@ describe("notifications-workspace.utils", () => {
     expect(buildNotificationHref({ target_type: "task", target_id: "t1" })).toBe(
       "/dashboard/tasks/t1",
     );
+    expect(buildNotificationHref({ target_type: "issue", target_id: "iss-1", project_id: "p1" })).toBe(
+      "/dashboard/projects/p1?tab=issues",
+    );
+    expect(buildNotificationHref({ target_type: "issue", target_id: "iss-1" })).toBe("/dashboard");
     expect(buildNotificationHref({})).toBe("/dashboard");
   });
 

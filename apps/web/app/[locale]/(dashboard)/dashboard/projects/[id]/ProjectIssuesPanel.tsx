@@ -30,6 +30,8 @@ interface Issue {
   task_id?: string | null;
   milestone_id?: string | null;
   created_at: string;
+  evidence_upload_session_id?: string | null;
+  evidence_url?: string | null;
 }
 
 export function ProjectIssuesPanel({
@@ -124,6 +126,7 @@ export function ProjectIssuesPanel({
             <TableHeaderCell>{tDetail("title")}</TableHeaderCell>
             <TableHeaderCell>{tDetail("status")}</TableHeaderCell>
             <TableHeaderCell>{tDetail("created")}</TableHeaderCell>
+            <TableHeaderCell>{tDetail("issueEvidence")}</TableHeaderCell>
             <TableHeaderCell>{tDetail("actions")}</TableHeaderCell>
           </TableRow>
         </TableHead>
@@ -141,6 +144,22 @@ export function ProjectIssuesPanel({
               </TableCell>
               <TableCell className="text-aistroyka-text-secondary">
                 {new Date(i.created_at).toLocaleDateString()}
+              </TableCell>
+              <TableCell>
+                {i.evidence_url ? (
+                  <a
+                    href={i.evidence_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-sm text-aistroyka-info underline underline-offset-2"
+                  >
+                    {tDetail("issueEvidenceOpen")}
+                  </a>
+                ) : i.evidence_upload_session_id ? (
+                  <span className="text-xs text-aistroyka-text-tertiary">{tDetail("issueEvidence")}</span>
+                ) : (
+                  <span className="text-xs text-aistroyka-text-tertiary">—</span>
+                )}
               </TableCell>
               <TableCell>
                 {["open", "in_review"].includes(i.status) && (

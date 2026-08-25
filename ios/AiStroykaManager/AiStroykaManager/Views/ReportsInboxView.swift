@@ -337,6 +337,19 @@ struct ReportCanonCard: View {
                     statusChip
                 }
             }
+            if let actual = report.actualVolume, let planned = report.plannedVolume {
+                Text(String(format: NSLocalizedString("mgr_volume_pair_fmt", comment: ""), actual, planned))
+                    .font(.caption2)
+                    .foregroundStyle(ManagerV43.textSecondary)
+            } else if let actual = report.actualVolume {
+                Text(String(format: NSLocalizedString("mgr_volume_m3_fmt", comment: ""), actual))
+                    .font(.caption2)
+                    .foregroundStyle(ManagerV43.textSecondary)
+            } else if let planned = report.plannedVolume {
+                Text(String(format: NSLocalizedString("mgr_volume_m3_fmt", comment: ""), planned))
+                    .font(.caption2)
+                    .foregroundStyle(ManagerV43.textSecondary)
+            }
         }
     }
 
@@ -456,6 +469,20 @@ struct ReportDetailReviewView: View {
                                 .foregroundStyle(ManagerV43.dataBlue)
                             Text(note)
                                 .foregroundStyle(ManagerV43.textPrimary)
+                        }
+                    }
+                    if r.actualVolume != nil || r.plannedVolume != nil {
+                        ManagerV43Card {
+                            if let actual = r.actualVolume, let planned = r.plannedVolume {
+                                Text(String(format: NSLocalizedString("mgr_volume_pair_fmt", comment: ""), actual, planned))
+                                    .foregroundStyle(ManagerV43.textPrimary)
+                            } else if let actual = r.actualVolume {
+                                Text(String(format: NSLocalizedString("mgr_volume_m3_fmt", comment: ""), actual))
+                                    .foregroundStyle(ManagerV43.textPrimary)
+                            } else if let planned = r.plannedVolume {
+                                Text(String(format: NSLocalizedString("mgr_volume_m3_fmt", comment: ""), planned))
+                                    .foregroundStyle(ManagerV43.textPrimary)
+                            }
                         }
                     }
 
@@ -689,6 +716,8 @@ struct ReportDetailReviewView: View {
                     reviewedBy: nil,
                     managerNote: nil,
                     workerNote: NSLocalizedString("mgr_v43_risk_rebar_summary", comment: ""),
+                    actualVolume: nil,
+                    plannedVolume: nil,
                     media: []
                 )
             }

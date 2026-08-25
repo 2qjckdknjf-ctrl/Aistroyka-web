@@ -39,7 +39,7 @@ struct ReportResubmitView: View {
                     ProgressView(NSLocalizedString("worker_loading_report", comment: ""))
                 }
                 if let loadError {
-                    Text(loadError).foregroundColor(.red).font(.caption)
+                    Text(WorkerV43Copy.userFacing(loadError)).foregroundColor(.red).font(.caption)
                 }
 
                 Text(String(format: NSLocalizedString("worker_report_id_short_fmt", comment: ""), String(reportId.prefix(8))))
@@ -51,6 +51,20 @@ struct ReportResubmitView: View {
                         .font(.subheadline).fontWeight(.semibold)
                     Text(wn)
                         .font(.body)
+                }
+
+                if let actual = detail?.actualVolume, let planned = detail?.plannedVolume {
+                    Text(String(format: NSLocalizedString("wrk_v43_volume_pair_fmt", comment: ""), actual, planned))
+                        .font(.subheadline)
+                        .foregroundStyle(WorkerV43.textPrimary)
+                } else if let actual = detail?.actualVolume {
+                    Text(String(format: NSLocalizedString("wrk_v43_volume_m3_fmt", comment: ""), actual))
+                        .font(.subheadline)
+                        .foregroundStyle(WorkerV43.textPrimary)
+                } else if let planned = detail?.plannedVolume {
+                    Text(String(format: NSLocalizedString("wrk_v43_volume_m3_fmt", comment: ""), planned))
+                        .font(.subheadline)
+                        .foregroundStyle(WorkerV43.textPrimary)
                 }
 
                 if let note = detail?.managerNote, !note.isEmpty {
@@ -134,6 +148,12 @@ struct ReportResubmitView: View {
     }
 
     private func loadDetail() {
+        if WorkerV43Preview.showsCatalogWithoutAuth {
+            detail = WorkerV43PreviewCatalog.reportDetail(id: reportId)
+            loading = false
+            loadError = nil
+            return
+        }
         Task {
             do {
                 let d = try await WorkerAPI.reportDetail(id: reportId)
@@ -144,7 +164,7 @@ struct ReportResubmitView: View {
                 }
             } catch {
                 await MainActor.run {
-                    loadError = (error as? APIError)?.message ?? error.localizedDescription
+                    loadError = WorkerV43Copy.userFacing(error)
                     loading = false
                 }
             }
@@ -152,6 +172,10 @@ struct ReportResubmitView: View {
     }
 
     private func enqueueSubmit() {
+        if WorkerV43Preview.showsCatalogWithoutAuth {
+            submitted = true
+            return
+        }
         let jobId = "submitResubmit-\(reportId)-\(UUID().uuidString)"
         submitJobId = jobId
         let taskId = detail?.taskId

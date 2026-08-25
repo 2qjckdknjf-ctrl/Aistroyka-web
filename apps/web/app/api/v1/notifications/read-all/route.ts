@@ -32,3 +32,6 @@ export async function PATCH(request: Request) {
   const marked = await markAllRead(supabase, ctx.tenantId, ctx.userId);
   return NextResponse.json({ ok: true, marked });
 }
+
+/** POST kept as an alias — lite allow-list already permits both verbs. */
+export const POST = PATCH;

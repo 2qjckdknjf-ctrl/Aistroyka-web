@@ -103,6 +103,65 @@ public actor AuthService {
         persistSession(accessToken: accessToken, userId: userId, email: email)
     }
 
+    public func requestPhoneOtp(phone: String) async throws {
+        let raw = Config.supabaseURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        let base = raw.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        guard !base.isEmpty,
+              let url = URL(string: "\(base)/auth/v1/otp"),
+              url.scheme != nil, url.host != nil else {
+            throw APIError(statusCode: nil, code: nil, message: "Supabase URL not configured. Set SUPABASE_URL in Config/Secrets.xcconfig or Scheme environment.")
+        }
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.setValue(Config.supabaseAnonKey, forHTTPHeaderField: "apikey")
+        struct OtpBody: Encodable {
+            let phone: String
+            let createUser = true
+            let channel = "sms"
+            enum CodingKeys: String, CodingKey {
+                case phone
+                case createUser = "create_user"
+                case channel
+            }
+        }
+        req.httpBody = try JSONEncoder().encode(OtpBody(phone: phone))
+        let (data, res) = try await URLSession.shared.data(for: req)
+        guard let http = res as? HTTPURLResponse else { throw APIError(statusCode: nil, code: nil, message: "Invalid response") }
+        guard http.statusCode == 200 else {
+            throw APIError.from(data: data, response: res)
+        }
+    }
+
+    public func verifyPhoneOtp(phone: String, token: String) async throws {
+        let raw = Config.supabaseURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        let base = raw.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        guard !base.isEmpty,
+              let url = URL(string: "\(base)/auth/v1/verify"),
+              url.scheme != nil, url.host != nil else {
+            throw APIError(statusCode: nil, code: nil, message: "Supabase URL not configured. Set SUPABASE_URL in Config/Secrets.xcconfig or Scheme environment.")
+        }
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.setValue(Config.supabaseAnonKey, forHTTPHeaderField: "apikey")
+        req.httpBody = try JSONEncoder().encode(["type": "sms", "phone": phone, "token": token])
+        let (data, res) = try await URLSession.shared.data(for: req)
+        guard let http = res as? HTTPURLResponse else { throw APIError(statusCode: nil, code: nil, message: "Invalid response") }
+        guard http.statusCode == 200 else {
+            throw APIError.from(data: data, response: res)
+        }
+        let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        guard let accessToken = json?["access_token"] as? String,
+              let user = json?["user"] as? [String: Any],
+              let uid = user["id"] as? String else {
+            throw APIError(statusCode: nil, code: nil, message: "Invalid token response")
+        }
+        _ = KeychainHelper.set(key: KeychainHelper.sessionTokenKey, value: accessToken)
+        _ = KeychainHelper.set(key: KeychainHelper.sessionUserIdKey, value: uid)
+        cachedSession = (accessToken, AuthUser(id: uid, email: user["email"] as? String))
+    }
+
     public func signOut() async {
         cachedSession = nil
         KeychainHelper.delete(key: KeychainHelper.sessionTokenKey)
