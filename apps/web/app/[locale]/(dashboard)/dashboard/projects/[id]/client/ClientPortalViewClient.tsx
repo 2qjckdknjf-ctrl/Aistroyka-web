@@ -15,6 +15,7 @@ import { ClientPortalCustomerEstimatesSection } from "./ClientPortalCustomerEsti
 import { ClientPortalWorkloadSection } from "./ClientPortalWorkloadSection";
 import { TelegramConnectCard } from "@/components/integrations/TelegramConnectCard";
 import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
+import { ClientPortalCanonView } from "@/components/canon/ClientPortalCanonView";
 import { usePortalOnlyShell } from "@/components/DashboardShell";
 
 async function fetchClientView(projectId: string, tErr: (k: string) => string): Promise<ClientProjectView> {
@@ -79,6 +80,11 @@ export function ClientPortalViewClient({ projectId }: { projectId: string }) {
   }
 
   const d = query.data!;
+
+  if (portalOnly) {
+    return <ClientPortalCanonView data={d} projectId={projectId} />;
+  }
+
   const nextMilestone = pickNextClientMilestone(d.milestones);
 
   return (

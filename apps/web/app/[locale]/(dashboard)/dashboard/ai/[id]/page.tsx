@@ -4,8 +4,8 @@ import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { Link } from "@/i18n/navigation";
-import { SectionHeader, Skeleton, EmptyState, Badge, Button } from "@/components/ui";
-import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
+import { Skeleton, EmptyState, Badge, Button } from "@/components/ui";
+import { CanonPageHeader } from "@/components/canon";
 
 interface AIDetail {
   id: string;
@@ -93,34 +93,34 @@ export default function AIRequestDetailPage() {
 
   if (!id) {
     return (
-      <DashboardGlassCard>
-        <p className="text-aistroyka-text-secondary p-4">{tDetail("missingRequestId")}</p>
-      </DashboardGlassCard>
+      <div className="canon-glass p-4">
+        <p className="text-[var(--canon-text-secondary)]">{tDetail("missingRequestId")}</p>
+      </div>
     );
   }
 
   if (loading && !data) {
     return (
-      <DashboardGlassCard>
+      <div className="canon-glass p-4">
         <Skeleton lines={6} />
-      </DashboardGlassCard>
+      </div>
     );
   }
 
   if (error || !data) {
     return (
-      <DashboardGlassCard>
+      <div className="canon-glass p-4">
         <EmptyState
           icon={<span className="text-2xl" aria-hidden>⚠️</span>}
           title={tDetail("requestNotFound")}
           subtitle={error ?? tDetail("accessDeniedHint")}
           action={
-            <Link href="/dashboard/ai" className="text-aistroyka-accent hover:underline">
+            <Link href="/dashboard/ai" className="text-[var(--canon-cyan)] hover:underline">
               {tDetail("backToAi")}
             </Link>
           }
         />
-      </DashboardGlassCard>
+      </div>
     );
   }
 
@@ -128,32 +128,30 @@ export default function AIRequestDetailPage() {
     data.status === "failed" || data.status === "dead" || data.status === "queued";
 
   return (
-    <>
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <Link
-          href="/dashboard/ai"
-          className="text-aistroyka-subheadline text-aistroyka-accent hover:underline"
-        >
-          {tDetail("aiShort")}
-        </Link>
-        <CopyIdButton id={data.id} label={tDetail("copyId")} copiedLabel={tDetail("copied")} />
-      </div>
-      <SectionHeader
+    <div className="space-y-6">
+      <CanonPageHeader
         title={`${tNav("ai")} ${data.id.slice(0, 8)}…`}
         subtitle={tPage("aiRequestDetailSubtitle")}
+        showFavorite={false}
+        actions={
+          <>
+            <Link href="/dashboard/ai" className="canon-ghost-btn text-sm">
+              {tDetail("backToAi")}
+            </Link>
+            <CopyIdButton id={data.id} label={tDetail("copyId")} copiedLabel={tDetail("copied")} />
+          </>
+        }
       />
 
-      <DashboardGlassCard className="mb-4">
-        <p className="text-aistroyka-subheadline text-aistroyka-text-secondary mb-4">
-          {friendlyMessage(tDetail, data)}
-        </p>
-        <dl className="grid gap-2 sm:grid-cols-2">
+      <div className="canon-glass p-4">
+        <p className="mb-4 text-sm text-[var(--canon-text-secondary)]">{friendlyMessage(tDetail, data)}</p>
+        <dl className="grid gap-2 sm:grid-cols-2 text-sm">
           <div>
-            <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("type")}</dt>
-            <dd>{data.type}</dd>
+            <dt className="text-xs font-bold uppercase tracking-wide text-[var(--canon-text-muted)]">{tDetail("type")}</dt>
+            <dd className="text-[var(--canon-text-primary)]">{data.type}</dd>
           </div>
           <div>
-            <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">{tDetail("status")}</dt>
+            <dt className="text-xs font-bold uppercase tracking-wide text-[var(--canon-text-muted)]">{tDetail("status")}</dt>
             <dd>
               <Badge
                 variant={
@@ -169,58 +167,44 @@ export default function AIRequestDetailPage() {
             </dd>
           </div>
           <div>
-            <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">
-              {tDetail("attempts")}
-            </dt>
-            <dd className="tabular-nums">
+            <dt className="text-xs font-bold uppercase tracking-wide text-[var(--canon-text-muted)]">{tDetail("attempts")}</dt>
+            <dd className="tabular-nums text-[var(--canon-text-primary)]">
               {data.attempts}
               {data.max_attempts != null ? ` / ${data.max_attempts}` : ""}
             </dd>
           </div>
           <div>
-            <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">
-              {tDetail("created")}
-            </dt>
-            <dd className="tabular-nums">{new Date(data.created_at).toLocaleString()}</dd>
+            <dt className="text-xs font-bold uppercase tracking-wide text-[var(--canon-text-muted)]">{tDetail("created")}</dt>
+            <dd className="tabular-nums text-[var(--canon-text-primary)]">{new Date(data.created_at).toLocaleString()}</dd>
           </div>
           <div>
-            <dt className="text-aistroyka-caption text-aistroyka-text-tertiary">
-              {tDetail("updated")}
-            </dt>
-            <dd className="tabular-nums">{new Date(data.updated_at).toLocaleString()}</dd>
+            <dt className="text-xs font-bold uppercase tracking-wide text-[var(--canon-text-muted)]">{tDetail("updated")}</dt>
+            <dd className="tabular-nums text-[var(--canon-text-primary)]">{new Date(data.updated_at).toLocaleString()}</dd>
           </div>
         </dl>
-      </DashboardGlassCard>
+      </div>
 
-      {showTechnical && (data.last_error_type || data.last_error) && (
-        <DashboardGlassCard className="mb-4 border-l-4 border-l-aistroyka-error">
-          <h3 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary mb-2">
-            {tDetail("aiSafeDiagnostics")}
-          </h3>
-          {data.last_error_type && (
-            <p className="text-aistroyka-caption text-aistroyka-text-tertiary mb-1">
+      {showTechnical && (data.last_error_type || data.last_error) ? (
+        <div className="canon-glass border-l-4 border-l-[var(--canon-warning)] p-4">
+          <h3 className="font-semibold text-[var(--canon-text-primary)] mb-2">{tDetail("aiSafeDiagnostics")}</h3>
+          {data.last_error_type ? (
+            <p className="text-xs text-[var(--canon-text-muted)] mb-1">
               {tDetail("aiErrorCode")}: {data.last_error_type}
             </p>
-          )}
-          {data.last_error && (
-            <p className="text-aistroyka-subheadline text-aistroyka-text-secondary whitespace-pre-wrap">
-              {data.last_error}
-            </p>
-          )}
-          <p className="mt-2 text-aistroyka-caption text-aistroyka-text-tertiary">
-            {tDetail("aiAdminDiagnosticsHint")}
-          </p>
-        </DashboardGlassCard>
-      )}
+          ) : null}
+          {data.last_error ? (
+            <p className="text-sm text-[var(--canon-text-secondary)] whitespace-pre-wrap">{data.last_error}</p>
+          ) : null}
+          <p className="mt-2 text-xs text-[var(--canon-text-muted)]">{tDetail("aiAdminDiagnosticsHint")}</p>
+        </div>
+      ) : null}
 
-      <DashboardGlassCard>
-        <h3 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary mb-2">
-          {tDetail("payloadMetadata")}
-        </h3>
-        <pre className="text-aistroyka-caption font-mono bg-aistroyka-surface-muted p-4 rounded overflow-x-auto whitespace-pre-wrap">
+      <div className="canon-glass p-4">
+        <h3 className="font-semibold text-[var(--canon-text-primary)] mb-2">{tDetail("payloadMetadata")}</h3>
+        <pre className="text-xs font-mono rounded-lg bg-[rgba(0,0,0,0.25)] p-4 overflow-x-auto whitespace-pre-wrap text-[var(--canon-text-secondary)]">
           {JSON.stringify(data.payload ?? {}, null, 2)}
         </pre>
-      </DashboardGlassCard>
-    </>
+      </div>
+    </div>
   );
 }

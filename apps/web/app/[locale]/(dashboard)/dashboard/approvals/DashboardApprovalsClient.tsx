@@ -54,8 +54,9 @@ function formatAge(
   return t("daysAgoShort", { count: diffD });
 }
 
-export function DashboardApprovalsClient() {
+export function DashboardApprovalsClient({ skin = "default" }: { skin?: "default" | "canon" }) {
   const tDetail = useTranslations("dashboardDetail");
+  const isCanon = skin === "canon";
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
@@ -94,7 +95,9 @@ export function DashboardApprovalsClient() {
   }, [selected, visible]);
 
   if (isPending) {
-    return (
+    return isCanon ? (
+      <div className="canon-glass p-4"><Skeleton lines={6} /></div>
+    ) : (
       <DashboardGlassCard>
         <Skeleton lines={6} />
       </DashboardGlassCard>
@@ -102,7 +105,9 @@ export function DashboardApprovalsClient() {
   }
 
   if (isError) {
-    return (
+    return isCanon ? (
+      <div className="canon-glass p-4 text-[var(--canon-text-secondary)]">{tDetail("failedLoadPendingApprovals")}</div>
+    ) : (
       <DashboardGlassCard>
         <p className="p-4 text-aistroyka-text-secondary">{tDetail("failedLoadPendingApprovals")}</p>
       </DashboardGlassCard>
@@ -110,7 +115,20 @@ export function DashboardApprovalsClient() {
   }
 
   if (!items?.length) {
-    return (
+    return isCanon ? (
+      <div className="canon-glass p-8">
+        <EmptyState
+          icon={<span className="text-2xl">✓</span>}
+          title={tDetail("noPendingApprovals")}
+          subtitle={tDetail("allReportsReviewed")}
+          action={
+            <Link href="/dashboard/reports" className="text-[var(--canon-cyan)] hover:underline">
+              {tDetail("viewAllReportsArrow")}
+            </Link>
+          }
+        />
+      </div>
+    ) : (
       <DashboardGlassCard>
         <EmptyState
           icon={<span className="text-2xl">✓</span>}
@@ -132,7 +150,81 @@ export function DashboardApprovalsClient() {
     { id: "document", label: tDetail("documentReview") },
   ];
 
-  const queueList = (
+  const queueList = isCanon ? (
+    <div className="canon-glass overflow-hidden">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--canon-border-glass)] p-4">
+        <p className="text-sm text-[var(--canon-text-secondary)]">
+          <strong className="text-[var(--canon-text-primary)]">{visible.length}</strong> {tDetail("itemsAwaitingApproval")}
+        </p>
+        <div role="group" aria-label={tDetail("approvalsKindFilter")} className="flex flex-wrap gap-1">
+          {filterChips.map((chip) => {
+            const pressed = kindFilter === chip.id;
+            return (
+              <button
+                key={chip.id}
+                type="button"
+                aria-pressed={pressed}
+                onClick={() => setQueryParam("kind", chip.id === "all" ? null : chip.id)}
+                className={`canon-ghost-btn !text-xs ${pressed ? "!border-[var(--canon-gold)] !text-[var(--canon-gold)]" : ""}`}
+              >
+                {chip.label}
+                <span className="ml-1 tabular-nums">({counts[chip.id]})</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      {visible.length === 0 ? (
+        <p className="p-4 text-sm text-[var(--canon-text-secondary)]">{tDetail("approvalsEmptyForFilter")}</p>
+      ) : (
+        <ul className="divide-y divide-[var(--canon-border-glass)]">
+          {visible.map((item) => {
+            const key = approvalSelectionKey(item);
+            const isSelected = selectedItem?.kind === item.kind && selectedItem.id === item.id;
+            return (
+              <li key={key}>
+                <button
+                  type="button"
+                  onClick={() => setQueryParam("focus", key)}
+                  className={`flex w-full flex-wrap items-center justify-between gap-2 p-4 text-left transition-colors hover:bg-[rgba(255,255,255,0.04)] ${
+                    isSelected ? "bg-[rgba(255,193,7,0.08)]" : ""
+                  }`}
+                >
+                  <div className="flex min-w-0 flex-wrap items-center gap-2">
+                    <span className="truncate font-mono text-xs text-[var(--canon-cyan)]">{item.id.slice(0, 8)}…</span>
+                    <span className="canon-risk-badge canon-risk-badge--medium">
+                      {item.kind === "report" ? tDetail("reportReview") : tDetail("documentReview")}
+                    </span>
+                    {item.kind === "report" && item.worker_id ? (
+                      <span className="text-xs text-[var(--canon-text-muted)]">
+                        {tDetail("worker")} {item.worker_id.slice(0, 8)}…
+                      </span>
+                    ) : null}
+                    {item.kind === "document" && item.title ? (
+                      <span className="max-w-[260px] truncate text-xs text-[var(--canon-text-muted)]">{item.title}</span>
+                    ) : null}
+                    {item.project_id ? (
+                      <span className="text-xs text-[var(--canon-text-muted)]">
+                        · {tDetail("project")} {item.project_id.slice(0, 8)}…
+                      </span>
+                    ) : null}
+                  </div>
+                  <span className="tabular-nums text-xs text-[var(--canon-text-muted)]">
+                    {item.pending_at ? formatAge(item.pending_at, tDetail) : "—"}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      <div className="border-t border-[var(--canon-border-glass)] p-4">
+        <Link href="/dashboard/reports" className="text-sm font-medium text-[var(--canon-cyan)] hover:underline">
+          {tDetail("viewAllReportsArrow")}
+        </Link>
+      </div>
+    </div>
+  ) : (
     <DashboardGlassCard contentClassName="overflow-hidden p-0">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-aistroyka-border p-4">
         <p className="text-aistroyka-subheadline text-aistroyka-text-secondary">
@@ -228,7 +320,48 @@ export function DashboardApprovalsClient() {
     </DashboardGlassCard>
   );
 
-  const decisionPane = (
+  const decisionPane = isCanon ? (
+    <div
+      className={`canon-glass space-y-3 p-4 ${selectedItem ? "border-l-4 border-l-[var(--canon-gold)]" : ""}`}
+    >
+      <h3 className="font-semibold text-[var(--canon-text-primary)]">{tDetail("approvalsDecisionPane")}</h3>
+      {selectedItem ? (
+        <>
+          <p className="text-sm text-[var(--canon-text-secondary)]">
+            {selectedItem.kind === "report"
+              ? tDetail("approvalsDecisionHintReport")
+              : tDetail("approvalsDecisionHintDocument")}
+          </p>
+          <dl className="grid gap-2 text-xs">
+            <div>
+              <dt className="text-[var(--canon-text-muted)]">{tDetail("status")}</dt>
+              <dd>
+                <span className="canon-risk-badge canon-risk-badge--medium">{selectedItem.status}</span>
+              </dd>
+            </div>
+            <div>
+              <dt className="text-[var(--canon-text-muted)]">{tDetail("pendingSince")}</dt>
+              <dd className="tabular-nums text-[var(--canon-text-secondary)]">
+                {selectedItem.pending_at
+                  ? `${formatAge(selectedItem.pending_at, tDetail)} · ${new Date(selectedItem.pending_at).toLocaleString()}`
+                  : "—"}
+              </dd>
+            </div>
+          </dl>
+          <div className="flex flex-wrap gap-2">
+            <Link href={approvalHref(selectedItem)} className="canon-gold-btn !text-xs">
+              {tDetail("approvalsOpenReview")}
+            </Link>
+            <button type="button" className="canon-ghost-btn !text-xs" onClick={() => setQueryParam("focus", null)}>
+              {tDetail("approvalsClearSelection")}
+            </button>
+          </div>
+        </>
+      ) : (
+        <p className="text-sm text-[var(--canon-text-secondary)]">{tDetail("approvalsSelectHint")}</p>
+      )}
+    </div>
+  ) : (
     <DashboardGlassCard
       className={selectedItem ? "border-l-4 border-l-aistroyka-warning" : undefined}
       contentClassName="space-y-3 p-4"

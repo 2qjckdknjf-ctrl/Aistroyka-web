@@ -30,8 +30,9 @@ interface DeviceRow {
   disabled_at: string | null;
 }
 
-export function DashboardDevicesClient() {
+export function DashboardDevicesClient({ skin = "default" }: { skin?: "default" | "canon" }) {
   const tDetail = useTranslations("dashboardDetail");
+  const isCanon = skin === "canon";
   const DEVICE_PLATFORM_OPTIONS = [
     { value: "ios", label: tDetail("ios") },
     { value: "android", label: tDetail("android") },
@@ -112,7 +113,11 @@ export function DashboardDevicesClient() {
     return (
       <>
         {filterBar}
-        <DashboardGlassCard><Skeleton lines={5} /></DashboardGlassCard>
+        {isCanon ? (
+          <div className="canon-glass p-4"><Skeleton lines={5} /></div>
+        ) : (
+          <DashboardGlassCard><Skeleton lines={5} /></DashboardGlassCard>
+        )}
       </>
     );
   }
@@ -120,7 +125,11 @@ export function DashboardDevicesClient() {
     return (
       <>
         {filterBar}
-        <DashboardGlassCard><p className="text-aistroyka-text-secondary p-4">{error}</p></DashboardGlassCard>
+        {isCanon ? (
+          <div className="canon-glass p-4 text-[var(--canon-text-secondary)]">{error}</div>
+        ) : (
+          <DashboardGlassCard><p className="text-aistroyka-text-secondary p-4">{error}</p></DashboardGlassCard>
+        )}
       </>
     );
   }
@@ -128,25 +137,79 @@ export function DashboardDevicesClient() {
     return (
       <>
         {filterBar}
-        <DashboardGlassCard>
-          <EmptyState
-            icon={<span className="text-2xl">📱</span>}
-            title={tDetail("noDevices")}
-            subtitle={tDetail("registeredDevicesAppear")}
-          />
-        </DashboardGlassCard>
+        {isCanon ? (
+          <div className="canon-glass p-8">
+            <EmptyState
+              icon={<span className="text-2xl">📱</span>}
+              title={tDetail("noDevices")}
+              subtitle={tDetail("registeredDevicesAppear")}
+            />
+          </div>
+        ) : (
+          <DashboardGlassCard>
+            <EmptyState
+              icon={<span className="text-2xl">📱</span>}
+              title={tDetail("noDevices")}
+              subtitle={tDetail("registeredDevicesAppear")}
+            />
+          </DashboardGlassCard>
+        )}
       </>
     );
   }
 
-  return (
-    <>
-      {filterBar}
-      <DashboardGlassCard contentClassName="p-0 overflow-hidden">
-        <div className="p-2 flex justify-end">
-          <Button variant="secondary" onClick={exportCsv} className="text-sm">{tDetail("exportCsv")}</Button>
-        </div>
-        <Table aria-label={tDetail("devices")}>
+  const tableSection = isCanon ? (
+    <div className="canon-glass overflow-hidden">
+      <div className="flex justify-end p-2">
+        <button type="button" className="canon-ghost-btn !text-xs" onClick={exportCsv}>
+          {tDetail("exportCsv")}
+        </button>
+      </div>
+      <div className="canon-data-table-wrap">
+        <table className="canon-data-table">
+          <thead>
+            <tr>
+              <th>{tDetail("deviceId")}</th>
+              <th>{tDetail("platform")}</th>
+              <th className="canon-hide-mobile">{tDetail("owner")}</th>
+              <th>{tDetail("health")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(data ?? []).map((r) => (
+              <tr key={`${r.user_id}-${r.device_id}`}>
+                <td className="font-mono text-xs">{r.device_id.slice(0, 12)}…</td>
+                <td>{r.platform}</td>
+                <td className="canon-hide-mobile">
+                  <Link href={`/dashboard/workers/${r.user_id}`} className="text-[var(--canon-cyan)] hover:underline">
+                    {r.user_id.slice(0, 8)}…
+                  </Link>
+                </td>
+                <td>
+                  {r.disabled_at ? (
+                    <span className="canon-risk-badge canon-risk-badge--high">{tDetail("disabled")}</span>
+                  ) : (
+                    <span className="canon-risk-badge canon-risk-badge--low">{tDetail("active")}</span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <TablePagination
+        page={page}
+        pageSize={pageSize}
+        totalCount={total}
+        onPageChange={(p) => setParam("page", String(p))}
+      />
+    </div>
+  ) : (
+    <DashboardGlassCard contentClassName="p-0 overflow-hidden">
+      <div className="p-2 flex justify-end">
+        <Button variant="secondary" onClick={exportCsv} className="text-sm">{tDetail("exportCsv")}</Button>
+      </div>
+      <Table aria-label={tDetail("devices")}>
         <TableHead>
           <TableRow>
             <TableHeaderCell>{tDetail("deviceId")}</TableHeaderCell>
@@ -187,6 +250,12 @@ export function DashboardDevicesClient() {
         onPageChange={(p) => setParam("page", String(p))}
       />
     </DashboardGlassCard>
+  );
+
+  return (
+    <>
+      {filterBar}
+      {tableSection}
     </>
   );
 }

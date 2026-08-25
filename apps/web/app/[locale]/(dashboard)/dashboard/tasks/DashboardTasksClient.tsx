@@ -66,13 +66,13 @@ function columnLabelKey(column: TaskBoardColumnId): "pending" | "inProgress" | "
   }
 }
 
-export function DashboardTasksClient() {
+export function DashboardTasksClient({ skin = "default" }: { skin?: "default" | "canon" }) {
   const tDetail = useTranslations("dashboardDetail");
   const { params, setParam } = useFilterParams();
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
-  const view = parseTasksWorkspaceView(searchParams?.get("view"));
+  const view = skin === "canon" ? "board" : parseTasksWorkspaceView(searchParams?.get("view"));
   const selectedTaskId = searchParams?.get("task")?.trim() || null;
   const todayIso = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
@@ -413,26 +413,62 @@ export function DashboardTasksClient() {
   );
 
   const boardView = (
-    <div className="flex gap-3 overflow-x-auto p-3 pb-4">
+    <div className={skin === "canon" ? "canon-kanban-board" : "flex gap-3 overflow-x-auto p-3 pb-4"}>
       {TASK_BOARD_COLUMNS.map((column) => {
         const columnTasks = boardGroups[column];
+        const columnTone =
+          column === "pending"
+            ? "canon-kanban-column--todo"
+            : column === "in_progress"
+              ? "canon-kanban-column--progress"
+              : column === "done"
+                ? "canon-kanban-column--done"
+                : "canon-kanban-column--review";
         return (
           <section
             key={column}
-            className="flex w-[min(18rem,85vw)] shrink-0 flex-col rounded-[var(--aistroyka-radius-lg)] border border-aistroyka-border-subtle bg-aistroyka-surface-muted/30"
+            className={
+              skin === "canon"
+                ? `canon-kanban-column ${columnTone} flex flex-col`
+                : "flex w-[min(18rem,85vw)] shrink-0 flex-col rounded-[var(--aistroyka-radius-lg)] border border-aistroyka-border-subtle bg-aistroyka-surface-muted/30"
+            }
             aria-label={tDetail(columnLabelKey(column))}
           >
-            <header className="flex items-center justify-between gap-2 border-b border-aistroyka-border-subtle px-3 py-2">
-              <h3 className="text-aistroyka-caption font-semibold uppercase tracking-wide text-aistroyka-text-tertiary">
-                {tDetail(columnLabelKey(column))}
+            <header
+              className={
+                skin === "canon"
+                  ? "flex items-center justify-between gap-2 border-b border-[var(--canon-border-glass)] px-3 py-2"
+                  : "flex items-center justify-between gap-2 border-b border-aistroyka-border-subtle px-3 py-2"
+              }
+            >
+              <h3
+                className={
+                  skin === "canon"
+                    ? "text-xs font-bold uppercase tracking-wide text-[var(--canon-text-muted)]"
+                    : "text-aistroyka-caption font-semibold uppercase tracking-wide text-aistroyka-text-tertiary"
+                }
+              >
+                {skin === "canon" ? tDetail(columnLabelKey(column)) : tDetail(columnLabelKey(column))}
               </h3>
-              <span className="tabular-nums text-aistroyka-caption text-aistroyka-text-secondary">
+              <span
+                className={
+                  skin === "canon"
+                    ? "text-xs tabular-nums text-[var(--canon-text-secondary)]"
+                    : "tabular-nums text-aistroyka-caption text-aistroyka-text-secondary"
+                }
+              >
                 {columnTasks.length}
               </span>
             </header>
             <ul className="flex max-h-[min(70vh,36rem)] flex-col gap-2 overflow-y-auto p-2">
               {columnTasks.length === 0 ? (
-                <li className="px-1 py-4 text-center text-aistroyka-caption text-aistroyka-text-tertiary">
+                <li
+                  className={
+                    skin === "canon"
+                      ? "px-1 py-4 text-center text-xs text-[var(--canon-text-muted)]"
+                      : "px-1 py-4 text-center text-aistroyka-caption text-aistroyka-text-tertiary"
+                  }
+                >
                   {tDetail("boardColumnEmpty")}
                 </li>
               ) : (
@@ -444,25 +480,47 @@ export function DashboardTasksClient() {
                       <button
                         type="button"
                         onClick={() => selectTask(r.id)}
-                        className={`w-full rounded-[var(--aistroyka-radius-md)] border p-3 text-left transition-colors ${
-                          selected
-                            ? "border-aistroyka-accent bg-aistroyka-accent-light/50"
-                            : "border-aistroyka-border-subtle bg-aistroyka-bg-primary hover:border-aistroyka-accent/40"
-                        }`}
+                        className={
+                          skin === "canon"
+                            ? `canon-kanban-card w-full ${selected ? "canon-kanban-card--selected" : ""}`
+                            : `w-full rounded-[var(--aistroyka-radius-md)] border p-3 text-left transition-colors ${
+                                selected
+                                  ? "border-aistroyka-accent bg-aistroyka-accent-light/50"
+                                  : "border-aistroyka-border-subtle bg-aistroyka-bg-primary hover:border-aistroyka-accent/40"
+                              }`
+                        }
                       >
-                        <p className="font-medium text-aistroyka-text-primary">{r.title}</p>
-                        <p className="mt-1 text-aistroyka-caption text-aistroyka-text-secondary">
+                        <p
+                          className={
+                            skin === "canon"
+                              ? "font-medium text-[var(--canon-text-primary)]"
+                              : "font-medium text-aistroyka-text-primary"
+                          }
+                        >
+                          {r.title}
+                        </p>
+                        <p
+                          className={
+                            skin === "canon"
+                              ? "mt-1 text-xs text-[var(--canon-text-muted)]"
+                              : "mt-1 text-aistroyka-caption text-aistroyka-text-secondary"
+                          }
+                        >
                           {r.due_date ? new Date(r.due_date).toLocaleDateString() : "—"}
                           {overdue ? ` · ${tDetail("overdue")}` : ""}
                         </p>
                       </button>
-                      <div className="mt-1 flex flex-wrap gap-1 px-1">{renderTaskActions(r)}</div>
-                      <Link
-                        href={`/dashboard/tasks/${r.id}`}
-                        className="mt-1 inline-block px-1 text-aistroyka-caption text-aistroyka-accent hover:underline lg:hidden"
-                      >
-                        {tDetail("openFullTask")}
-                      </Link>
+                      {skin !== "canon" ? (
+                        <>
+                          <div className="mt-1 flex flex-wrap gap-1 px-1">{renderTaskActions(r)}</div>
+                          <Link
+                            href={`/dashboard/tasks/${r.id}`}
+                            className="mt-1 inline-block px-1 text-aistroyka-caption text-aistroyka-accent hover:underline lg:hidden"
+                          >
+                            {tDetail("openFullTask")}
+                          </Link>
+                        </>
+                      ) : null}
                     </li>
                   );
                 })
@@ -474,21 +532,49 @@ export function DashboardTasksClient() {
     </div>
   );
 
+  const cardShellClass = skin === "canon" ? "canon-glass overflow-hidden" : undefined;
+
   return (
     <>
-      <FilterBar
-        projects={projects}
-        workers={workersForFilter}
-        showProject={true}
-        showWorker={true}
-        showDateRange={true}
-        showStatus={true}
-        statusOptions={STATUS_OPTIONS}
-        showSearch={true}
-        searchPlaceholder={tDetail("searchTasks")}
-        showSavedViews={false}
-      />
-      <div className={`grid gap-4 ${selectedTaskId ? "lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.9fr)]" : ""}`}>
+      {skin !== "canon" ? (
+        <FilterBar
+          projects={projects}
+          workers={workersForFilter}
+          showProject={true}
+          showWorker={true}
+          showDateRange={true}
+          showStatus={true}
+          statusOptions={STATUS_OPTIONS}
+          showSearch={true}
+          searchPlaceholder={tDetail("searchTasks")}
+          showSavedViews={false}
+        />
+      ) : null}
+      <div
+        className={`grid gap-4 ${
+          selectedTaskId && skin !== "canon" ? "lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.9fr)]" : ""
+        }`}
+      >
+        {skin === "canon" ? (
+          <div className={cardShellClass}>
+            {loading && data.length === 0 ? (
+              <div className="p-4">
+                <Skeleton lines={6} />
+              </div>
+            ) : data.length === 0 ? (
+              <div className="p-8">
+                <EmptyState
+                  icon={<span className="text-2xl">📋</span>}
+                  title={tDetail("noTasks")}
+                  subtitle={tDetail("createTaskOrAdjustFilters")}
+                  action={<Button onClick={() => setCreateOpen(true)}>{tDetail("createTask")}</Button>}
+                />
+              </div>
+            ) : (
+              boardView
+            )}
+          </div>
+        ) : (
         <DashboardGlassCard contentClassName="p-0 overflow-hidden">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-aistroyka-border-subtle px-4 py-3">
             <h2 className="text-aistroyka-headline font-semibold text-aistroyka-text-primary">{tDetail("tasks")}</h2>
@@ -553,8 +639,9 @@ export function DashboardTasksClient() {
             </>
           )}
         </DashboardGlassCard>
+        )}
 
-        {selectedTaskId ? (
+        {selectedTaskId && skin !== "canon" ? (
           <aside className="hidden min-w-0 lg:block" aria-label={tDetail("tasks")}>
             <div className="sticky top-20 space-y-3">
               <DashboardGlassCard contentClassName="flex flex-wrap items-center justify-between gap-2 p-3">

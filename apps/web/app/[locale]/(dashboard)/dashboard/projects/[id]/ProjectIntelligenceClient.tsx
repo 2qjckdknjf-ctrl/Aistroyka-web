@@ -18,7 +18,7 @@ import {
   type ProjectIntelligenceData,
 } from "@/components/intelligence";
 import { Skeleton, ErrorState } from "@/components/ui";
-import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
+import { CanonSurface } from "@/components/canon/CanonSurface";
 
 class IntelligenceFetchError extends Error {
   status: number;
@@ -84,8 +84,15 @@ function intelligenceErrorMessage(err: unknown): { title: string; hint: string; 
   };
 }
 
-export function ProjectIntelligenceClient({ projectId }: { projectId: string }) {
+export function ProjectIntelligenceClient({
+  projectId,
+  skin = "default",
+}: {
+  projectId: string;
+  skin?: "default" | "canon";
+}) {
   const tDetail = useTranslations("dashboardDetail");
+  const isCanon = skin === "canon";
   const { data, isPending, isError, error, refetch } = useQuery({
     queryKey: ["project-intelligence", projectId],
     queryFn: () => fetchIntelligence(projectId),
@@ -98,14 +105,14 @@ export function ProjectIntelligenceClient({ projectId }: { projectId: string }) 
     return (
       <section className="space-y-4" aria-label={tDetail("intelligenceError")}>
         <ErrorState message={title} onRetry={() => refetch()} />
-        <DashboardGlassCard className="border-l-4 border-l-aistroyka-info">
+        <CanonSurface isCanon={isCanon} className="border-l-4 border-l-aistroyka-info">
           <p className="text-sm text-aistroyka-text-secondary">{hint}</p>
           {ref && (
             <p className="mt-2 text-xs font-mono text-aistroyka-text-tertiary">
               {tDetail("referenceForAdmin")}: {ref}
             </p>
           )}
-        </DashboardGlassCard>
+        </CanonSurface>
       </section>
     );
   }
@@ -113,18 +120,18 @@ export function ProjectIntelligenceClient({ projectId }: { projectId: string }) 
   if (isPending || !data) {
     return (
       <section className="space-y-4" aria-label={tDetail("intelligenceLoading")}>
-        <DashboardGlassCard>
+        <CanonSurface isCanon={isCanon}>
           <Skeleton className="h-6 w-48 mb-3" />
           <Skeleton className="h-4 w-full" />
           <Skeleton className="h-4 w-3/4 mt-2" />
-        </DashboardGlassCard>
+        </CanonSurface>
         <div className="grid gap-4 sm:grid-cols-2">
-          <DashboardGlassCard>
+          <CanonSurface isCanon={isCanon}>
             <Skeleton className="h-24" />
-          </DashboardGlassCard>
-          <DashboardGlassCard>
+          </CanonSurface>
+          <CanonSurface isCanon={isCanon}>
             <Skeleton className="h-24" />
-          </DashboardGlassCard>
+          </CanonSurface>
         </div>
       </section>
     );

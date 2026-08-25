@@ -11,10 +11,12 @@ export function ClientPortalCustomerEstimatesSection({
   projectId,
   estimates,
   canRespond,
+  surface = "default",
 }: {
   projectId: string;
   estimates: CustomerEstimatePublic[];
   canRespond: boolean;
+  surface?: "default" | "canon";
 }) {
   const t = useTranslations("dashboardDetail");
   const tPortal = useTranslations("portalStatus");
@@ -45,20 +47,34 @@ export function ClientPortalCustomerEstimatesSection({
 
   if (estimates.length === 0) return null;
 
+  const isCanon = surface === "canon";
+  const sectionClass = isCanon
+    ? "canon-glass p-4 border-l-4 border-l-[var(--canon-gold)]"
+    : "rounded-lg border border-aistroyka-border-subtle bg-aistroyka-surface p-4 border-l-4 border-l-aistroyka-accent";
+  const headingClass = isCanon
+    ? "font-semibold text-[var(--canon-text-primary)]"
+    : "font-semibold text-aistroyka-text-primary";
+  const hintClass = isCanon ? "mt-1 text-sm text-[var(--canon-text-secondary)]" : "mt-1 text-sm text-aistroyka-text-secondary";
+  const itemClass = isCanon
+    ? "rounded-md border border-[var(--canon-border-glass)] p-3 text-sm"
+    : "rounded-md border border-aistroyka-border-subtle p-3 text-sm";
+
   return (
     <section
       id="portal-customer-estimates"
-      className="rounded-lg border border-aistroyka-border-subtle bg-aistroyka-surface p-4 border-l-4 border-l-aistroyka-accent"
+      className={sectionClass}
       aria-labelledby="portal-estimates-heading"
     >
-      <h3 id="portal-estimates-heading" className="font-semibold text-aistroyka-text-primary">
+      <h3 id="portal-estimates-heading" className={headingClass}>
         {t("customerEstimatesHeading")}
       </h3>
-      <p className="mt-1 text-sm text-aistroyka-text-secondary">{t("customerEstimatesCustomerHint")}</p>
+      <p className={hintClass}>{t("customerEstimatesCustomerHint")}</p>
       <ul className="mt-4 space-y-4">
         {estimates.map((e) => (
-          <li key={e.id} className="rounded-md border border-aistroyka-border-subtle p-3 text-sm">
-            <p className="font-medium text-aistroyka-text-primary">{e.title}</p>
+          <li key={e.id} className={itemClass}>
+            <p className={isCanon ? "font-medium text-[var(--canon-text-primary)]" : "font-medium text-aistroyka-text-primary"}>
+              {e.title}
+            </p>
             {e.description ? (
               <p className="mt-1 text-aistroyka-text-secondary whitespace-pre-wrap">{e.description}</p>
             ) : null}
@@ -74,30 +90,57 @@ export function ClientPortalCustomerEstimatesSection({
             {e.status === "sent" && canRespond ? (
               <div className="mt-3 space-y-2">
                 <textarea
-                  className="w-full rounded border border-aistroyka-border-subtle bg-aistroyka-surface px-3 py-2 text-aistroyka-text-primary min-h-[72px]"
+                  className={
+                    isCanon
+                      ? "canon-field min-h-[72px] w-full"
+                      : "w-full rounded border border-aistroyka-border-subtle bg-aistroyka-surface px-3 py-2 text-aistroyka-text-primary min-h-[72px]"
+                  }
                   placeholder={t("customerEstimatesNotePlaceholder")}
                   value={notes[e.id] ?? ""}
                   onChange={(ev) => setNotes((prev) => ({ ...prev, [e.id]: ev.target.value }))}
                 />
                 <div className="flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="primary"
-                    disabled={respondMutation.isPending}
-                    onClick={() => respondMutation.mutate({ estimateId: e.id, decision: "approve" })}
-                  >
-                    {t("customerEstimatesApprove")}
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="secondary"
-                    disabled={respondMutation.isPending}
-                    onClick={() => respondMutation.mutate({ estimateId: e.id, decision: "reject" })}
-                  >
-                    {t("customerEstimatesReject")}
-                  </Button>
+                  {isCanon ? (
+                    <>
+                      <button
+                        type="button"
+                        className="canon-gold-btn !text-xs"
+                        disabled={respondMutation.isPending}
+                        onClick={() => respondMutation.mutate({ estimateId: e.id, decision: "approve" })}
+                      >
+                        {t("customerEstimatesApprove")}
+                      </button>
+                      <button
+                        type="button"
+                        className="canon-ghost-btn !text-xs"
+                        disabled={respondMutation.isPending}
+                        onClick={() => respondMutation.mutate({ estimateId: e.id, decision: "reject" })}
+                      >
+                        {t("customerEstimatesReject")}
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="primary"
+                        disabled={respondMutation.isPending}
+                        onClick={() => respondMutation.mutate({ estimateId: e.id, decision: "approve" })}
+                      >
+                        {t("customerEstimatesApprove")}
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="secondary"
+                        disabled={respondMutation.isPending}
+                        onClick={() => respondMutation.mutate({ estimateId: e.id, decision: "reject" })}
+                      >
+                        {t("customerEstimatesReject")}
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
             ) : null}

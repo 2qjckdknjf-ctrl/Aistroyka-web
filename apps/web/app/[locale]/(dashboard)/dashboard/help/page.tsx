@@ -1,5 +1,5 @@
-import { HelpCenterClient } from "@/components/help/HelpCenterClient";
+import { HelpCanonPage } from "./HelpCanonPage";
 
 export default function DashboardHelpPage() {
-  return <HelpCenterClient />;
+  return <HelpCanonPage />;
 }

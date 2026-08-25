@@ -3,6 +3,30 @@
  * Routes and RBAC unchanged; presentation only.
  */
 
+export type PortalShellNavItem = {
+  href: "/portal/projects";
+  key: "portalProjects";
+  testId: "cta.portal.nav.projects";
+};
+
+export function getPortalOnlyNavItems(): readonly PortalShellNavItem[] {
+  return [
+    {
+      href: "/portal/projects",
+      key: "portalProjects",
+      testId: "cta.portal.nav.projects",
+    },
+  ] as const;
+}
+
+export function getDashboardShellHomeHref(portalOnly: boolean): "/portal/projects" | "/dashboard" {
+  return portalOnly ? "/portal/projects" : "/dashboard";
+}
+
+export function getDashboardNavIncludesInternalOps(portalOnly: boolean): boolean {
+  return !portalOnly;
+}
+
 export type DashboardNavKey =
   | "overview"
   | "portfolio"

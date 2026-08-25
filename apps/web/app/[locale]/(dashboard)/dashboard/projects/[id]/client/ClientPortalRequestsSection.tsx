@@ -17,10 +17,12 @@ export function ClientPortalRequestsSection({
   projectId,
   requests,
   canRespondToRequests,
+  surface = "default",
 }: {
   projectId: string;
   requests: ClientRequestPublic[];
   canRespondToRequests: boolean;
+  surface?: "default" | "canon";
 }) {
   const tDetail = useTranslations("dashboardDetail");
   const tPortal = useTranslations("portalStatus");
@@ -65,15 +67,27 @@ export function ClientPortalRequestsSection({
     return null;
   }
 
-  return (
-    <DashboardGlassCard className="p-4 border-l-4 border-l-aistroyka-info">
-      <h3 className="font-semibold text-aistroyka-text-primary">{tDetail("requestsFromYourProjectTeam")}</h3>
-      <p className="mt-1 text-sm text-aistroyka-text-secondary">
+  const isCanon = surface === "canon";
+  const shellClass = isCanon
+    ? "canon-glass p-4 border-l-4 border-l-[var(--canon-cyan)]"
+    : "p-4 border-l-4 border-l-aistroyka-info";
+  const headingClass = isCanon
+    ? "font-semibold text-[var(--canon-text-primary)]"
+    : "font-semibold text-aistroyka-text-primary";
+  const itemClass = isCanon
+    ? "rounded-lg border border-[var(--canon-border-glass)] p-3"
+    : "rounded-lg border border-aistroyka-border-subtle p-3";
+  const fieldClass = isCanon ? "canon-field mt-1 w-full" : "mt-1 w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm";
+
+  const content = (
+    <>
+      <h3 className={headingClass}>{tDetail("requestsFromYourProjectTeam")}</h3>
+      <p className={isCanon ? "mt-1 text-sm text-[var(--canon-text-secondary)]" : "mt-1 text-sm text-aistroyka-text-secondary"}>
         {tDetail("requestsFromTeamHint")}
       </p>
       <ul className="mt-4 space-y-4">
         {requests.map((r) => (
-          <li key={r.id} className="rounded-lg border border-aistroyka-border-subtle p-3">
+          <li key={r.id} className={itemClass}>
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div>
                 <p className="font-medium text-aistroyka-text-primary">{r.title}</p>
@@ -99,56 +113,101 @@ export function ClientPortalRequestsSection({
 
             {r.status === "open" && r.action_mode === "action_required" && canRespondToRequests ? (
               expandedId === r.id ? (
-                <div className="mt-3 space-y-3 border-t border-aistroyka-border-subtle pt-3">
+                <div className={`mt-3 space-y-3 border-t pt-3 ${isCanon ? "border-[var(--canon-border-glass)]" : "border-aistroyka-border-subtle"}`}>
                   {r.kind === "approve_or_reject" ? (
                     <div className="flex flex-wrap gap-2">
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="primary"
-                        disabled={respondMutation.isPending}
-                        onClick={() =>
-                          respondMutation.mutate({ requestId: r.id, body: { decision: "approve", note: note || null } })
-                        }
-                      >
-                        {tDetail("approve")}
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="secondary"
-                        disabled={respondMutation.isPending}
-                        onClick={() =>
-                          respondMutation.mutate({ requestId: r.id, body: { decision: "reject", note: note || null } })
-                        }
-                      >
-                        {tDetail("reject")}
-                      </Button>
+                      {isCanon ? (
+                        <>
+                          <button
+                            type="button"
+                            className="canon-gold-btn !text-xs"
+                            disabled={respondMutation.isPending}
+                            onClick={() =>
+                              respondMutation.mutate({ requestId: r.id, body: { decision: "approve", note: note || null } })
+                            }
+                          >
+                            {tDetail("approve")}
+                          </button>
+                          <button
+                            type="button"
+                            className="canon-ghost-btn !text-xs"
+                            disabled={respondMutation.isPending}
+                            onClick={() =>
+                              respondMutation.mutate({ requestId: r.id, body: { decision: "reject", note: note || null } })
+                            }
+                          >
+                            {tDetail("reject")}
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="primary"
+                            disabled={respondMutation.isPending}
+                            onClick={() =>
+                              respondMutation.mutate({ requestId: r.id, body: { decision: "approve", note: note || null } })
+                            }
+                          >
+                            {tDetail("approve")}
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="secondary"
+                            disabled={respondMutation.isPending}
+                            onClick={() =>
+                              respondMutation.mutate({ requestId: r.id, body: { decision: "reject", note: note || null } })
+                            }
+                          >
+                            {tDetail("reject")}
+                          </Button>
+                        </>
+                      )}
                     </div>
                   ) : null}
                   {r.kind === "feedback" ? (
                     <div>
-                      <label className="text-xs font-medium text-aistroyka-text-secondary">{tDetail("yourFeedback")}</label>
+                      <label className={isCanon ? "text-xs font-medium text-[var(--canon-text-secondary)]" : "text-xs font-medium text-aistroyka-text-secondary"}>
+                        {tDetail("yourFeedback")}
+                      </label>
                       <textarea
-                        className="mt-1 w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-elevated p-2 text-sm"
+                        className={`${fieldClass} min-h-[72px]`}
                         rows={3}
                         value={feedbackText}
                         onChange={(e) => setFeedbackText(e.target.value)}
                       />
-                      <Button
-                        type="button"
-                        size="sm"
-                        className="mt-2"
-                        disabled={respondMutation.isPending || feedbackText.trim().length < 1}
-                        onClick={() =>
-                          respondMutation.mutate({
-                            requestId: r.id,
-                            body: { feedback_text: feedbackText.trim(), note: note || null },
-                          })
-                        }
-                      >
-                        {tDetail("submitFeedback")}
-                      </Button>
+                      {isCanon ? (
+                        <button
+                          type="button"
+                          className="canon-gold-btn !text-xs mt-2"
+                          disabled={respondMutation.isPending || feedbackText.trim().length < 1}
+                          onClick={() =>
+                            respondMutation.mutate({
+                              requestId: r.id,
+                              body: { feedback_text: feedbackText.trim(), note: note || null },
+                            })
+                          }
+                        >
+                          {tDetail("submitFeedback")}
+                        </button>
+                      ) : (
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="mt-2"
+                          disabled={respondMutation.isPending || feedbackText.trim().length < 1}
+                          onClick={() =>
+                            respondMutation.mutate({
+                              requestId: r.id,
+                              body: { feedback_text: feedbackText.trim(), note: note || null },
+                            })
+                          }
+                        >
+                          {tDetail("submitFeedback")}
+                        </Button>
+                      )}
                     </div>
                   ) : null}
                   {r.kind === "acknowledge" ? (
@@ -220,6 +279,10 @@ export function ClientPortalRequestsSection({
                     {tDetail("cancel")}
                   </Button>
                 </div>
+              ) : isCanon ? (
+                <button type="button" className="canon-gold-btn !text-xs mt-3" onClick={() => setExpandedId(r.id)}>
+                  {tDetail("respond")}
+                </button>
               ) : (
                 <Button type="button" size="sm" className="mt-3" onClick={() => setExpandedId(r.id)}>
                   {tDetail("respond")}
@@ -242,6 +305,16 @@ export function ClientPortalRequestsSection({
           </li>
         ))}
       </ul>
-    </DashboardGlassCard>
+    </>
   );
+
+  if (isCanon) {
+    return (
+      <div id="portal-client-requests" className={shellClass}>
+        {content}
+      </div>
+    );
+  }
+
+  return <DashboardGlassCard className={shellClass}>{content}</DashboardGlassCard>;
 }

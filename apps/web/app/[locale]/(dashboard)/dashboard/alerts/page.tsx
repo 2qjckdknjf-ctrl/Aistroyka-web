@@ -1,5 +1,5 @@
-import { DashboardAlertsClient } from "./DashboardAlertsClient";
+import { AlertsCanonPage } from "./AlertsCanonPage";
 
 export default function DashboardAlertsPage() {
-  return <DashboardAlertsClient />;
+  return <AlertsCanonPage />;
 }

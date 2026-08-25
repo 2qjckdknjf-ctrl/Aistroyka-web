@@ -6,10 +6,11 @@ import { useMutation } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui";
 import { Link } from "@/i18n/navigation";
-import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
+import { CanonSurface } from "@/components/canon/CanonSurface";
 
-export function StakeholderInviteClient() {
+export function StakeholderInviteClient({ skin = "default" }: { skin?: "default" | "canon" }) {
   const tDetail = useTranslations("dashboardDetail");
+  const isCanon = skin === "canon";
   const sp = useSearchParams();
   const router = useRouter();
   const token = sp?.get("token") ?? "";
@@ -35,7 +36,7 @@ export function StakeholderInviteClient() {
   });
 
   return (
-    <DashboardGlassCard className="border-l-4 border-l-aistroyka-info p-6 max-w-lg mx-auto mt-8">
+    <CanonSurface isCanon={isCanon} className="border-l-4 border-l-aistroyka-info p-6 max-w-lg mx-auto mt-8">
       <h1 className="text-lg font-semibold text-aistroyka-text-primary">{tDetail("projectInvitation")}</h1>
       <p className="mt-2 text-sm text-aistroyka-text-secondary">
         {tDetail("projectInvitationHint")}
@@ -57,6 +58,6 @@ export function StakeholderInviteClient() {
           {tDetail("signIn")}
         </Link>
       </p>
-    </DashboardGlassCard>
+    </CanonSurface>
   );
 }

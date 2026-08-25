@@ -13,7 +13,7 @@ import {
 } from "@/components/ui";
 import type { ContractorDirectoryDetail } from "@/lib/domain/contractor-directory/contractor-directory.types";
 import { useState, useEffect } from "react";
-import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
+import { CanonSurface } from "@/components/canon/CanonSurface";
 
 async function fetchDetail(userId: string): Promise<ContractorDirectoryDetail> {
   const res = await fetch(`/api/v1/contractors/directory/${encodeURIComponent(userId)}`, {
@@ -34,8 +34,15 @@ async function saveProfile(userId: string, body: Record<string, unknown>): Promi
   if (!res.ok) throw new Error("save_failed");
 }
 
-export function ContractorDetailClient({ userId }: { userId: string }) {
+export function ContractorDetailClient({
+  userId,
+  skin = "default",
+}: {
+  userId: string;
+  skin?: "default" | "canon";
+}) {
   const t = useTranslations("contractorDirectory");
+  const isCanon = skin === "canon";
   const qc = useQueryClient();
   const q = useQuery({
     queryKey: ["contractor-directory-detail", userId],
@@ -79,9 +86,9 @@ export function ContractorDetailClient({ userId }: { userId: string }) {
 
   if (q.isPending) {
     return (
-      <DashboardGlassCard>
+      <CanonSurface isCanon={isCanon}>
         <Skeleton className="h-48" />
-      </DashboardGlassCard>
+      </CanonSurface>
     );
   }
 
@@ -115,7 +122,7 @@ export function ContractorDetailClient({ userId }: { userId: string }) {
         </Link>
       </div>
 
-      <DashboardGlassCard className="p-4">
+      <CanonSurface isCanon={isCanon} className="p-4">
         <h2 className="text-lg font-semibold text-aistroyka-text-primary">{t("metricsSection")}</h2>
         <p className="mt-1 text-sm text-aistroyka-text-secondary">{t("metricsHint")}</p>
         <dl className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 text-sm">
@@ -150,9 +157,9 @@ export function ContractorDetailClient({ userId }: { userId: string }) {
             </dd>
           </div>
         </dl>
-      </DashboardGlassCard>
+      </CanonSurface>
 
-      <DashboardGlassCard className="p-4">
+      <CanonSurface isCanon={isCanon} className="p-4">
         <h2 className="text-lg font-semibold text-aistroyka-text-primary">{t("profileSection")}</h2>
         <p className="mt-1 text-sm text-aistroyka-text-secondary">{t("profileHint")}</p>
         <form
@@ -188,7 +195,7 @@ export function ContractorDetailClient({ userId }: { userId: string }) {
           </Button>
           {save.isError ? <p className="text-sm text-aistroyka-error">{t("saveFailed")}</p> : null}
         </form>
-      </DashboardGlassCard>
+      </CanonSurface>
     </div>
   );
 }
