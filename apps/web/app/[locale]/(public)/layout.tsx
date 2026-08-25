@@ -1,10 +1,16 @@
 import { setRequestLocale, getTranslations } from "next-intl/server";
+import { Manrope } from "next/font/google";
 import { PublicHeader } from "@/components/public";
 import { PublicFooter } from "@/components/public";
-import { PublicAmbientField } from "@/components/public/PublicAmbientField";
-import { PublicLiquidGlassRoot } from "@/components/public/PublicLiquidGlassRoot";
+import { V41PilotProvider } from "@/components/public/v41";
 import { getAppUrl } from "@/lib/app-url";
 import { routing } from "@/i18n/routing";
+
+const manrope = Manrope({
+  subsets: ["latin", "cyrillic"],
+  variable: "--font-v41",
+  display: "swap",
+});
 
 type Props = {
   children: React.ReactNode;
@@ -48,9 +54,7 @@ export default async function PublicLayout({ children, params }: Props) {
   };
 
   return (
-    <div className="public-ambient-shell flex min-h-screen flex-col bg-aistroyka-bg-primary">
-      <PublicAmbientField />
-      <PublicLiquidGlassRoot />
+    <div className={`v41-site ${manrope.variable} flex min-h-screen flex-col`}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
@@ -63,11 +67,13 @@ export default async function PublicLayout({ children, params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
       />
-      <div className="relative z-10 flex min-h-screen flex-col">
-        <PublicHeader />
-        <main className="min-w-0 flex-1 overflow-x-clip">{children}</main>
-        <PublicFooter />
-      </div>
+      <V41PilotProvider>
+        <div className="relative z-10 flex min-h-screen flex-col">
+          <PublicHeader />
+          <main className="min-w-0 flex-1 overflow-x-clip">{children}</main>
+          <PublicFooter />
+        </div>
+      </V41PilotProvider>
     </div>
   );
 }

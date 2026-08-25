@@ -1,0 +1,15 @@
+export { V41_ASSETS } from "./v41-assets";
+export { buildPilotLeadPayload } from "./v41-pilot-message";
+export { V41PilotProvider, useV41Pilot, useOptionalV41Pilot } from "./V41PilotContext";
+export { V41PilotButton } from "./V41PilotButton";
+export { PilotModal } from "./PilotModal";
+export { HomeHero } from "./HomeHero";
+export { OutcomeStrip } from "./OutcomeStrip";
+export { Workflow } from "./Workflow";
+export { ProductStory } from "./ProductStory";
+export { FeatureGrid } from "./FeatureGrid";
+export { AiAnalytics } from "./AiAnalytics";
+export { RoleSolutions } from "./RoleSolutions";
+export { SecuritySection } from "./SecuritySection";
+export { PilotCta } from "./PilotCta";
+export { V41InnerPage } from "./V41InnerPage";

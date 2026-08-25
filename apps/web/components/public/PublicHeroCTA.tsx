@@ -1,6 +1,7 @@
 "use client";
 
 import { GlassLink } from "@/components/design/liquid-glass";
+import { useOptionalV41Pilot } from "./v41/V41PilotContext";
 
 /** Canonical public marketing CTA routes — aligned with `public.cta.*Href` i18n keys. */
 export const PUBLIC_CTA_HREFS = {
@@ -37,18 +38,32 @@ export function PublicHeroCTA({
   presentationHref = PUBLIC_CTA_HREFS.presentation,
   testIdPrefix = "cta.public",
 }: PublicHeroCTAProps) {
+  const pilot = useOptionalV41Pilot();
+  const primary = pilot ? (
+    <button
+      type="button"
+      className="v41-btn v41-btn-primary min-w-0 flex-1 sm:flex-none"
+      onClick={pilot.open}
+      data-testid={`${testIdPrefix}.launch-pilot`}
+    >
+      {primaryLabel}
+    </button>
+  ) : (
+    <GlassLink
+      href={primaryHref}
+      className="min-w-0 flex-1 sm:flex-none"
+      linkClassName="text-center"
+      data-testid={`${testIdPrefix}.launch-pilot`}
+    >
+      {primaryLabel}
+    </GlassLink>
+  );
+
   return (
     <div
       className={`flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center ${className}`.trim()}
     >
-      <GlassLink
-        href={primaryHref}
-        className="min-w-0 flex-1 sm:flex-none"
-        linkClassName="text-center"
-        data-testid={`${testIdPrefix}.launch-pilot`}
-      >
-        {primaryLabel}
-      </GlassLink>
+      {primary}
       {showSecondary ? (
         <GlassLink
           href={secondaryHref}

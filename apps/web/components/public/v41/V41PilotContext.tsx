@@ -1,0 +1,38 @@
+"use client";
+
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
+import { PilotModal } from "./PilotModal";
+
+type V41PilotContextValue = {
+  open: () => void;
+  close: () => void;
+  isOpen: boolean;
+};
+
+const V41PilotContext = createContext<V41PilotContextValue | null>(null);
+
+export function V41PilotProvider({ children }: { children: ReactNode }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const open = useCallback(() => setIsOpen(true), []);
+  const close = useCallback(() => setIsOpen(false), []);
+  const value = useMemo(() => ({ open, close, isOpen }), [open, close, isOpen]);
+
+  return (
+    <V41PilotContext.Provider value={value}>
+      {children}
+      {isOpen ? <PilotModal onClose={close} /> : null}
+    </V41PilotContext.Provider>
+  );
+}
+
+export function useV41Pilot(): V41PilotContextValue {
+  const ctx = useContext(V41PilotContext);
+  if (!ctx) {
+    throw new Error("useV41Pilot must be used within V41PilotProvider");
+  }
+  return ctx;
+}
+
+export function useOptionalV41Pilot(): V41PilotContextValue | null {
+  return useContext(V41PilotContext);
+}
