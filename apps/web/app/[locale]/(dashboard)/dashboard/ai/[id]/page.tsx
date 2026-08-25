@@ -46,6 +46,22 @@ function CopyIdButton({
   );
 }
 
+function riskDecisionLabel(
+  tDetail: ReturnType<typeof useTranslations<"dashboardDetail">>,
+  decision: string
+): string {
+  switch (decision) {
+    case "accept":
+      return tDetail("riskDecision_accept");
+    case "assign":
+      return tDetail("riskDecision_assign");
+    case "reject":
+      return tDetail("riskDecision_reject");
+    default:
+      return decision;
+  }
+}
+
 function friendlyMessage(
   tDetail: ReturnType<typeof useTranslations<"dashboardDetail">>,
   data: AIDetail
@@ -72,6 +88,8 @@ export default function AIRequestDetailPage() {
   const [data, setData] = useState<AIDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [decision, setDecision] = useState<string | null>(null);
+  const [decisionBusy, setDecisionBusy] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -89,7 +107,30 @@ export default function AIRequestDetailPage() {
         setData(null);
       })
       .finally(() => setLoading(false));
+    fetch(`/api/v1/ai/risk-decisions?job_id=${encodeURIComponent(id)}&limit=1`, { credentials: "include" })
+      .then((res) => (res.ok ? res.json() : { data: [] }))
+      .then((json: { data?: { decision?: string }[] }) => {
+        setDecision(json.data?.[0]?.decision ?? null);
+      })
+      .catch(() => setDecision(null));
   }, [id]);
+
+  const submitDecision = (next: "accept" | "assign" | "reject") => {
+    if (!id || decisionBusy) return;
+    setDecisionBusy(true);
+    fetch("/api/v1/ai/risk-decisions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ job_id: id, decision: next, title: data?.type ?? "" }),
+    })
+      .then((res) => (res.ok ? res.json() : Promise.reject()))
+      .then((json: { data?: { decision?: string } }) => {
+        setDecision(json.data?.decision ?? next);
+      })
+      .catch(() => {})
+      .finally(() => setDecisionBusy(false));
+  };
 
   if (!id) {
     return (
@@ -142,6 +183,28 @@ export default function AIRequestDetailPage() {
           </>
         }
       />
+
+      <div className="canon-glass p-4 space-y-3">
+        <p className="text-sm font-semibold text-[var(--canon-text-primary)]">{tDetail("riskDecisions")}</p>
+        {decision ? (
+          <p className="text-sm text-[var(--canon-text-secondary)]">
+            {tDetail("riskDecisionSaved")}: {riskDecisionLabel(tDetail, decision)}
+          </p>
+        ) : (
+          <p className="text-sm text-[var(--canon-text-muted)]">{tDetail("riskDecisionHint")}</p>
+        )}
+        <div className="flex flex-wrap gap-2">
+          <Button variant="secondary" size="sm" disabled={decisionBusy} onClick={() => submitDecision("accept")}>
+            {tDetail("riskDecision_accept")}
+          </Button>
+          <Button variant="secondary" size="sm" disabled={decisionBusy} onClick={() => submitDecision("assign")}>
+            {tDetail("riskDecision_assign")}
+          </Button>
+          <Button variant="secondary" size="sm" disabled={decisionBusy} onClick={() => submitDecision("reject")}>
+            {tDetail("riskDecision_reject")}
+          </Button>
+        </div>
+      </div>
 
       <div className="canon-glass p-4">
         <p className="mb-4 text-sm text-[var(--canon-text-secondary)]">{friendlyMessage(tDetail, data)}</p>

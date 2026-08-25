@@ -15,21 +15,110 @@ enum ManagerAPI {
         try await APIClient.shared.request(path: "me")
     }
 
+    /// Workspace title: GET `/tenant/profile`, then additive `GET /me.tenant_name`.
+    static func resolvedWorkspaceName() async -> String? {
+        if let name = try? await tenantProfile() {
+            return name
+        }
+        if let me = try? await me() {
+            let name = me.data?.tenantName?.trimmingCharacters(in: .whitespacesAndNewlines)
+            if let name, !name.isEmpty { return name }
+        }
+        return nil
+    }
+
+    /// GET /api/v1/tenant/profile — workspace name.
+    static func tenantProfile() async throws -> String? {
+        struct Response: Decodable {
+            let data: Payload?
+            struct Payload: Decodable { let name: String? }
+        }
+        let r: Response = try await APIClient.shared.request(path: "tenant/profile")
+        let name = r.data?.name?.trimmingCharacters(in: .whitespacesAndNewlines)
+        return (name?.isEmpty == false) ? name : nil
+    }
+
+    /// PATCH /api/v1/tenant/profile — rename workspace (`tenant:settings`).
+    static func updateTenantProfile(name: String) async throws -> String? {
+        struct Body: Encodable { let name: String }
+        struct Response: Decodable {
+            let data: Payload?
+            struct Payload: Decodable { let name: String? }
+        }
+        let r: Response = try await APIClient.shared.request(
+            path: "tenant/profile",
+            method: "PATCH",
+            body: Body(name: name)
+        )
+        let updated = r.data?.name?.trimmingCharacters(in: .whitespacesAndNewlines)
+        return (updated?.isEmpty == false) ? updated : name
+    }
+
+    static func documentFileURL(objectPath: String?) -> URL? {
+        guard let objectPath, !objectPath.isEmpty else { return nil }
+        let base = Config.supabaseURL.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        let trimmed = objectPath.hasPrefix("media/") ? String(objectPath.dropFirst("media/".count)) : objectPath
+        return URL(string: "\(base)/storage/v1/object/public/media/\(trimmed)")
+    }
+
     /// GET /api/v1/projects — list projects (tenant-scoped).
     static func projects() async throws -> [ProjectDTO] {
         let r: ProjectsResponse = try await APIClient.shared.request(path: "projects")
         return r.data ?? []
     }
 
+    /// POST /api/v1/projects — create project (`CreateProjectRequestSchema`).
+    static func createProject(name: String, idempotencyKey: String) async throws -> String {
+        struct Body: Encodable { let name: String }
+        struct Response: Decodable {
+            let success: Bool?
+            let data: Created?
+            struct Created: Decodable { let id: String }
+        }
+        let r: Response = try await APIClient.shared.request(
+            path: "projects",
+            method: "POST",
+            body: Body(name: name),
+            idempotencyKey: idempotencyKey
+        )
+        guard let id = r.data?.id, !id.isEmpty else {
+            throw APIError(statusCode: nil, code: nil, message: "No data")
+        }
+        return id
+    }
+
+    /// POST /api/v1/tenant/invite — email invite (`admin` | `member` | `viewer`).
+    static func inviteTeammate(email: String, role: String) async throws {
+        struct Body: Encodable { let email: String; let role: String }
+        try await APIClient.shared.requestVoid(
+            path: "tenant/invite",
+            method: "POST",
+            body: Body(email: email, role: role)
+        )
+    }
+
     /// GET /api/v1/tasks — list tasks. Query: project_id, from, to, status, q, limit, offset.
-    static func tasks(projectId: String? = nil, status: String? = nil, limit: Int? = nil, offset: Int? = nil) async throws -> [TaskDTO] {
+    static func tasks(
+        projectId: String? = nil,
+        status: String? = nil,
+        from: String? = nil,
+        to: String? = nil,
+        query: String? = nil,
+        limit: Int? = nil,
+        offset: Int? = nil
+    ) async throws -> [TaskDTO] {
         var components = [String]()
         if let id = projectId, !id.isEmpty { components.append("project_id=\(id.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? id)") }
         if let s = status, !s.isEmpty { components.append("status=\(s.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? s)") }
+        if let from, !from.isEmpty { components.append("from=\(from)") }
+        if let to, !to.isEmpty { components.append("to=\(to)") }
+        if let query, !query.isEmpty {
+            components.append("q=\(query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? query)")
+        }
         if let l = limit { components.append("limit=\(l)") }
         if let o = offset { components.append("offset=\(o)") }
-        let query = components.isEmpty ? "" : "?" + components.joined(separator: "&")
-        let r: TasksListResponse = try await APIClient.shared.request(path: "tasks\(query)")
+        let queryString = components.isEmpty ? "" : "?" + components.joined(separator: "&")
+        let r: TasksListResponse = try await APIClient.shared.request(path: "tasks\(queryString)")
         return r.data ?? []
     }
 
@@ -52,12 +141,19 @@ enum ManagerAPI {
         return try await APIClient.shared.request(path: "ops/overview\(query)")
     }
 
+    /// GET /api/v1/workers/:userId/summary — assigned/overdue/review counts.
+    static func workerSummary(userId: String) async throws -> WorkerSummaryDTO {
+        let r: WorkerSummaryResponse = try await APIClient.shared.request(path: "workers/\(userId)/summary")
+        guard let data = r.data else { throw APIError(statusCode: nil, code: nil, message: "No data") }
+        return data
+    }
+
     /// GET /api/v1/workers — list workers with last activity (tenant-scoped).
     static func workers(limit: Int? = nil) async throws -> [WorkerRowDTO] {
         var path = "workers"
         if let l = limit { path += "?limit=\(l)" }
         let r: WorkersListResponse = try await APIClient.shared.request(path: path)
-        return r.data ?? []
+        return (r.data ?? []).filter { !$0.userId.isEmpty }
     }
 
     static func analysisStatus(reportId: String) async throws -> ManagerAnalysisStatusDTO {
@@ -96,14 +192,268 @@ enum ManagerAPI {
 
     /// POST /api/v1/tasks — create task.
     static func createTask(projectId: String, title: String, idempotencyKey: String) async throws -> TaskDetailDTO {
+        try await createTask(
+            projectId: projectId,
+            title: title,
+            description: nil,
+            dueAt: nil,
+            reportRequired: nil,
+            requiredPhotos: nil,
+            priority: nil,
+            idempotencyKey: idempotencyKey
+        )
+    }
+
+    /// POST /api/v1/tasks — create task with optional manager fields from CreateTaskInput.
+    static func createTask(
+        projectId: String,
+        title: String,
+        description: String?,
+        dueAt: String?,
+        reportRequired: Bool?,
+        requiredPhotos: [String: Int]?,
+        priority: String?,
+        idempotencyKey: String
+    ) async throws -> TaskDetailDTO {
         struct Body: Encodable {
             let projectId: String
             let title: String
-            enum CodingKeys: String, CodingKey { case projectId = "project_id"; case title }
+            let description: String?
+            let dueAt: String?
+            let reportRequired: Bool?
+            let requiredPhotos: [String: Int]?
+            let priority: String?
+            enum CodingKeys: String, CodingKey {
+                case projectId = "project_id"
+                case title
+                case description
+                case dueAt = "due_at"
+                case reportRequired = "report_required"
+                case requiredPhotos = "required_photos"
+                case priority
+            }
+
+            func encode(to encoder: Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(projectId, forKey: .projectId)
+                try container.encode(title, forKey: .title)
+                if let description { try container.encode(description, forKey: .description) }
+                if let dueAt { try container.encode(dueAt, forKey: .dueAt) }
+                if let reportRequired { try container.encode(reportRequired, forKey: .reportRequired) }
+                if let requiredPhotos { try container.encode(requiredPhotos, forKey: .requiredPhotos) }
+                if let priority { try container.encode(priority, forKey: .priority) }
+            }
         }
-        let r: TaskDetailResponse = try await APIClient.shared.request(path: "tasks", method: "POST", body: Body(projectId: projectId, title: title), idempotencyKey: idempotencyKey)
+        let r: TaskDetailResponse = try await APIClient.shared.request(
+            path: "tasks",
+            method: "POST",
+            body: Body(
+                projectId: projectId,
+                title: title,
+                description: description,
+                dueAt: dueAt,
+                reportRequired: reportRequired,
+                requiredPhotos: requiredPhotos,
+                priority: priority
+            ),
+            idempotencyKey: idempotencyKey
+        )
         guard let data = r.data else { throw APIError(statusCode: nil, code: nil, message: "No data") }
         return data
+    }
+
+    /// GET /api/v1/projects/:id/documents
+    static func projectDocuments(projectId: String) async throws -> [ProjectDocumentDTO] {
+        let r: ProjectDocumentsResponse = try await APIClient.shared.request(path: "projects/\(projectId)/documents")
+        return r.data ?? []
+    }
+
+    /// POST /api/v1/projects/:id/documents — create draft metadata row.
+    static func createDocument(projectId: String, title: String, type: String, idempotencyKey: String) async throws -> String {
+        struct Body: Encodable {
+            let type: String
+            let title: String
+        }
+        struct Response: Decodable {
+            let data: Created?
+            struct Created: Decodable { let id: String }
+        }
+        let r: Response = try await APIClient.shared.request(
+            path: "projects/\(projectId)/documents",
+            method: "POST",
+            body: Body(type: type, title: title),
+            idempotencyKey: idempotencyKey
+        )
+        guard let id = r.data?.id, !id.isEmpty else {
+            throw APIError(statusCode: nil, code: nil, message: "No data")
+        }
+        return id
+    }
+
+    /// POST /api/v1/projects/:id/documents/:documentId/upload — multipart `file`.
+    static func uploadDocumentFile(
+        projectId: String,
+        documentId: String,
+        fileData: Data,
+        fileName: String,
+        mimeType: String,
+        idempotencyKey: String
+    ) async throws {
+        try await APIClient.shared.uploadMultipartFile(
+            path: "projects/\(projectId)/documents/\(documentId)/upload",
+            fileData: fileData,
+            fileName: fileName,
+            mimeType: mimeType,
+            idempotencyKey: idempotencyKey
+        )
+    }
+
+    /// PATCH /api/v1/tasks/:id — same fields as cabinet (`UpdateTaskInput`).
+    static func patchTask(
+        taskId: String,
+        status: String? = nil,
+        title: String? = nil,
+        description: String? = nil,
+        dueAt: String? = nil,
+        reportRequired: Bool? = nil,
+        priority: String? = nil,
+        idempotencyKey: String
+    ) async throws {
+        struct Body: Encodable {
+            let status: String?
+            let title: String?
+            let description: String?
+            let dueAt: String?
+            let reportRequired: Bool?
+            let priority: String?
+            enum CodingKeys: String, CodingKey {
+                case status, title, description
+                case dueAt = "due_at"
+                case reportRequired = "report_required"
+                case priority
+            }
+
+            func encode(to encoder: Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                if let status { try container.encode(status, forKey: .status) }
+                if let title { try container.encode(title, forKey: .title) }
+                if let description { try container.encode(description, forKey: .description) }
+                if let dueAt { try container.encode(dueAt, forKey: .dueAt) }
+                if let reportRequired { try container.encode(reportRequired, forKey: .reportRequired) }
+                if let priority { try container.encode(priority, forKey: .priority) }
+            }
+        }
+        try await APIClient.shared.requestVoid(
+            path: "tasks/\(taskId)",
+            method: "PATCH",
+            body: Body(
+                status: status,
+                title: title,
+                description: description,
+                dueAt: dueAt,
+                reportRequired: reportRequired,
+                priority: priority
+            ),
+            idempotencyKey: idempotencyKey
+        )
+    }
+
+    /// POST /api/v1/ai/risk-decisions — persist manager accept/assign/reject.
+    static func submitRiskDecision(
+        jobId: String,
+        decision: String,
+        comment: String?,
+        title: String?
+    ) async throws {
+        struct Body: Encodable {
+            let jobId: String
+            let decision: String
+            let comment: String?
+            let title: String?
+            enum CodingKeys: String, CodingKey {
+                case jobId = "job_id"
+                case decision, comment, title
+            }
+        }
+        try await APIClient.shared.requestVoid(
+            path: "ai/risk-decisions",
+            method: "POST",
+            body: Body(jobId: jobId, decision: decision, comment: comment, title: title)
+        )
+    }
+
+    /// GET /api/v1/ai/risk-decisions
+    static func riskDecisions(jobId: String? = nil) async throws -> [RiskDecisionDTO] {
+        var path = "ai/risk-decisions?limit=100"
+        if let jobId, !jobId.isEmpty {
+            path += "&job_id=\(jobId)"
+        }
+        let r: RiskDecisionsResponse = try await APIClient.shared.request(path: path)
+        return r.data ?? []
+    }
+
+    /// GET /api/v1/projects/:id/workers
+    static func projectWorkers(projectId: String, limit: Int = 100) async throws -> [ProjectWorkerDTO] {
+        let r: ProjectWorkersResponse = try await APIClient.shared.request(
+            path: "projects/\(projectId)/workers?limit=\(limit)"
+        )
+        return r.data ?? []
+    }
+
+    /// GET /api/v1/tenant/members
+    static func tenantMembers() async throws -> [TenantMemberDTO] {
+        let r: TenantMembersResponse = try await APIClient.shared.request(path: "tenant/members")
+        return r.data ?? []
+    }
+
+    /// GET /api/v1/tenant/invitations
+    static func tenantInvitations() async throws -> [TenantInvitationDTO] {
+        let r: TenantInvitationsResponse = try await APIClient.shared.request(path: "tenant/invitations")
+        return r.data ?? []
+    }
+
+    /// GET /api/v1/notifications/unread-count
+    static func unreadNotificationCount() async throws -> Int {
+        struct Response: Decodable { let count: Int? }
+        let r: Response = try await APIClient.shared.request(path: "notifications/unread-count")
+        return r.count ?? 0
+    }
+
+    /// GET /api/v1/reports/:id/analysis-status
+    static func reportAnalysisStatus(reportId: String) async throws -> ReportAnalysisStatusDTO {
+        try await APIClient.shared.request(path: "reports/\(reportId)/analysis-status")
+    }
+
+    /// GET /api/v1/reports/:id/approval-history
+    static func reportApprovalHistory(reportId: String) async throws -> [ReportApprovalEventDTO] {
+        struct Response: Decodable {
+            let data: Payload?
+            struct Payload: Decodable {
+                let events: [ReportApprovalEventDTO]?
+            }
+        }
+        let r: Response = try await APIClient.shared.request(path: "reports/\(reportId)/approval-history")
+        return r.data?.events ?? []
+    }
+
+    /// POST /api/v1/devices/unregister — same contract as Worker before sign-out.
+    static func unregisterDevice() async throws {
+        struct Body: Encodable {
+            let deviceId: String
+            enum CodingKeys: String, CodingKey { case deviceId = "device_id" }
+        }
+        try await APIClient.shared.requestVoid(
+            path: "devices/unregister",
+            method: "POST",
+            body: Body(deviceId: DeviceContext.deviceId),
+            idempotencyKey: DeviceContext.idempotencyKeyDeviceUnregister()
+        )
+    }
+
+    /// GET /api/v1/projects/:id/estimate — manager commercial estimate/budget summary (not customer portal).
+    static func projectEstimate(projectId: String) async throws -> ProjectEstimateSummaryDTO? {
+        let r: ProjectEstimateResponse = try await APIClient.shared.request(path: "projects/\(projectId)/estimate")
+        return r.data
     }
 
     /// GET /api/v1/ai/requests — list AI jobs (tenant-scoped).
@@ -114,6 +464,14 @@ enum ManagerAPI {
         if let s = status, !s.isEmpty { components.append("status=\(s.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? s)") }
         let query = components.isEmpty ? "" : "?" + components.joined(separator: "&")
         let r: AIRequestsResponse = try await APIClient.shared.request(path: "ai/requests\(query)")
+        return r.data ?? []
+    }
+
+    /// GET /api/v1/projects/:id/timeline — project activity feed.
+    static func projectTimeline(projectId: String, limit: Int = 20) async throws -> [ProjectTimelineItemDTO] {
+        let r: ProjectTimelineResponse = try await APIClient.shared.request(
+            path: "projects/\(projectId)/timeline?limit=\(limit)"
+        )
         return r.data ?? []
     }
 
@@ -220,6 +578,13 @@ enum ManagerAPI {
         let _: MarkReadResponse = try await APIClient.shared.request(path: "notifications/\(id)/read", method: "PATCH")
     }
 
+    /// GET /api/v1/workload?audience=manager — operational inbox (existing manager read model).
+    static func workload(audience: String = "manager") async throws -> WorkloadInboxDTO {
+        let encoded = audience.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? audience
+        let r: WorkloadResponse = try await APIClient.shared.request(path: "workload?audience=\(encoded)")
+        return r.data ?? WorkloadInboxDTO(items: [], counts: nil)
+    }
+
     /// GET /api/v1/activation/status — onboarding/checklist progress.
     static func activationStatus() async throws -> ActivationStatusDTO {
         try await APIClient.shared.request(path: "activation/status")
@@ -290,25 +655,18 @@ enum ManagerAPI {
 
 // MARK: - Manager-specific DTOs (backend contract)
 
-struct ReportListItemDTO: Decodable {
+struct ReportListItemDTO: Codable {
     let id: String
     let projectId: String?
+    let taskId: String?
+    let userId: String?
     let status: String?
     let createdAt: String?
+    let submittedAt: String?
     let mediaCount: Int?
     let analysisStatus: String?
     let actualVolume: Double?
     let plannedVolume: Double?
-    enum CodingKeys: String, CodingKey {
-        case id
-        case projectId = "project_id"
-        case status
-        case createdAt = "created_at"
-        case mediaCount = "media_count"
-        case analysisStatus = "analysis_status"
-        case actualVolume = "actual_volume"
-        case plannedVolume = "planned_volume"
-    }
 }
 
 struct ReportsListResponse: Decodable {
@@ -328,11 +686,7 @@ struct MeResponse: Decodable {
         let tenantId: String?
         let userId: String?
         let role: String?
-        enum CodingKeys: String, CodingKey {
-            case tenantId = "tenant_id"
-            case userId = "user_id"
-            case role
-        }
+        let tenantName: String?
     }
 }
 
@@ -351,18 +705,6 @@ struct OpsOverviewDTO: Decodable {
         let tasksCompletedToday: Int?
         let tasksOpenToday: Int?
         let tasksOverdue: Int?
-        enum CodingKeys: String, CodingKey {
-            case activeProjects
-            case activeWorkersToday
-            case reportsToday
-            case stuckUploads
-            case offlineDevices
-            case failedJobs24h
-            case tasksAssignedToday = "tasks_assigned_today"
-            case tasksCompletedToday = "tasks_completed_today"
-            case tasksOpenToday = "tasks_open_today"
-            case tasksOverdue = "tasks_overdue"
-        }
     }
     struct OpsOverviewQueues: Decodable {
         let reportsPendingReview: [QueueItem]?
@@ -370,31 +712,50 @@ struct OpsOverviewDTO: Decodable {
         let tasksOpenToday: [TaskQueueItem]?
     }
 }
-struct QueueItem: Decodable { let id: String?; let status: String?; let createdAt: String?; enum CodingKeys: String, CodingKey { case id; case status; case createdAt = "created_at" } }
-struct TaskQueueItem: Decodable { let id: String?; let title: String?; let dueDate: String?; enum CodingKeys: String, CodingKey { case id; case title; case dueDate = "due_date" } }
+struct QueueItem: Decodable { let id: String?; let status: String?; let createdAt: String? }
+struct TaskQueueItem: Decodable { let id: String?; let title: String?; let dueDate: String? }
 
 /// GET /api/v1/workers — worker row.
-struct WorkerRowDTO: Decodable {
+/// Keys stay camelCase so `APIClient`'s default `.convertFromSnakeCase` can map `user_id`.
+struct WorkerRowDTO: Codable {
     let userId: String
     let lastDayDate: String?
     let lastStartedAt: String?
     let lastEndedAt: String?
     let lastReportSubmittedAt: String?
     let anomalies: WorkerAnomalies?
-    enum CodingKeys: String, CodingKey {
-        case userId = "user_id"
-        case lastDayDate = "last_day_date"
-        case lastStartedAt = "last_started_at"
-        case lastEndedAt = "last_ended_at"
-        case lastReportSubmittedAt = "last_report_submitted_at"
-        case anomalies
+
+    init(
+        userId: String,
+        lastDayDate: String? = nil,
+        lastStartedAt: String? = nil,
+        lastEndedAt: String? = nil,
+        lastReportSubmittedAt: String? = nil,
+        anomalies: WorkerAnomalies? = nil
+    ) {
+        self.userId = userId
+        self.lastDayDate = lastDayDate
+        self.lastStartedAt = lastStartedAt
+        self.lastEndedAt = lastEndedAt
+        self.lastReportSubmittedAt = lastReportSubmittedAt
+        self.anomalies = anomalies
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let rawId = try c.decodeIfPresent(String.self, forKey: .userId)
+        userId = rawId ?? ""
+        lastDayDate = try c.decodeIfPresent(String.self, forKey: .lastDayDate)
+        lastStartedAt = try c.decodeIfPresent(String.self, forKey: .lastStartedAt)
+        lastEndedAt = try c.decodeIfPresent(String.self, forKey: .lastEndedAt)
+        lastReportSubmittedAt = try c.decodeIfPresent(String.self, forKey: .lastReportSubmittedAt)
+        anomalies = try c.decodeIfPresent(WorkerAnomalies.self, forKey: .anomalies)
     }
 }
-struct WorkerAnomalies: Decodable {
+struct WorkerAnomalies: Codable {
     let openShift: Bool?
     let overtime: Bool?
     let noActivity: Bool?
-    enum CodingKeys: String, CodingKey { case openShift = "open_shift"; case overtime; case noActivity = "no_activity" }
 }
 struct WorkersListResponse: Decodable { let data: [WorkerRowDTO]? }
 
@@ -414,15 +775,6 @@ struct ReportDetailDTO: Decodable {
     let actualVolume: Double?
     let plannedVolume: Double?
     let media: [ReportMediaItem]?
-    enum CodingKeys: String, CodingKey {
-        case id; case tenantId = "tenant_id"; case userId = "user_id"; case taskId = "task_id"
-        case status; case createdAt = "created_at"; case submittedAt = "submitted_at"
-        case reviewedAt = "reviewed_at"; case reviewedBy = "reviewed_by"; case managerNote = "manager_note"
-        case workerNote = "worker_note"
-        case actualVolume = "actual_volume"
-        case plannedVolume = "planned_volume"
-        case media
-    }
 }
 
 struct ManagerAnalysisStatusDTO: Decodable {
@@ -441,11 +793,6 @@ struct ReportMediaItem: Decodable {
     let mediaId: String?
     let uploadSessionId: String?
     let fileUrl: String?
-    enum CodingKeys: String, CodingKey {
-        case mediaId = "media_id"
-        case uploadSessionId = "upload_session_id"
-        case fileUrl = "file_url"
-    }
 }
 struct ReportDetailResponse: Decodable { let data: ReportDetailDTO? }
 
@@ -459,12 +806,38 @@ struct TaskDetailDTO: Decodable {
     let assignedTo: String?
     let reportId: String?
     let reportStatus: String?
-    enum CodingKeys: String, CodingKey {
-        case id; case title; case status; case projectId = "project_id"; case dueDate = "due_date"
-        case assignedTo = "assigned_to"; case reportId = "report_id"; case reportStatus = "report_status"
-    }
+    let description: String?
+    let reportRequired: Bool?
+    let priority: String?
 }
+
+struct RiskDecisionDTO: Decodable, Identifiable {
+    let id: String
+    let jobId: String?
+    let decision: String?
+    let comment: String?
+    let title: String?
+    let actor: String?
+    let createdAt: String?
+}
+
+struct RiskDecisionsResponse: Decodable { let data: [RiskDecisionDTO]? }
 struct TaskDetailResponse: Decodable { let data: TaskDetailDTO? }
+
+struct ProjectTimelineItemDTO: Decodable, Identifiable {
+    let id: String
+    let eventType: String?
+    let occurredAt: String?
+    let actorLabel: String?
+    let title: String?
+    let description: String?
+    let entityType: String?
+    let entityId: String?
+}
+
+struct ProjectTimelineResponse: Decodable {
+    let data: [ProjectTimelineItemDTO]?
+}
 
 /// GET /api/v1/projects/:id — project detail.
 struct ProjectDetailDTO: Decodable {
@@ -472,7 +845,6 @@ struct ProjectDetailDTO: Decodable {
     let name: String?
     let tenantId: String?
     let createdAt: String?
-    enum CodingKeys: String, CodingKey { case id; case name; case tenantId = "tenant_id"; case createdAt = "created_at" }
 }
 struct ProjectDetailResponse: Decodable { let data: ProjectDetailDTO? }
 
@@ -509,7 +881,6 @@ struct ProjectAIRowDTO: Decodable {
     let mediaId: String?
     let status: String?
     let createdAt: String?
-    enum CodingKeys: String, CodingKey { case id; case mediaId = "media_id"; case status; case createdAt = "created_at" }
 }
 struct ProjectAIResponse: Decodable { let data: [ProjectAIRowDTO]? }
 
@@ -523,15 +894,11 @@ struct DeviceRowDTO: Decodable {
     let platform: String?
     let createdAt: String?
     let disabledAt: String?
-    enum CodingKeys: String, CodingKey {
-        case userId = "user_id"; case deviceId = "device_id"; case platform
-        case createdAt = "created_at"; case disabledAt = "disabled_at"
-    }
 }
 struct DevicesListResponse: Decodable { let data: [DeviceRowDTO]?; let total: Int? }
 
 /// GET /api/v1/notifications — inbox item.
-struct NotificationInboxItemDTO: Decodable {
+struct NotificationInboxItemDTO: Codable {
     let id: String
     let type: String?
     let title: String?
@@ -541,14 +908,37 @@ struct NotificationInboxItemDTO: Decodable {
     let targetType: String?
     let targetId: String?
     let projectId: String?
-    enum CodingKeys: String, CodingKey {
-        case id; case type; case title; case body
-        case createdAt = "created_at"; case readAt = "read_at"
-        case targetType = "target_type"; case targetId = "target_id"
-        case projectId = "project_id"
-    }
 }
 struct NotificationsListResponse: Decodable { let data: [NotificationInboxItemDTO]?; let total: Int? }
+
+struct WorkloadItemDTO: Decodable, Identifiable {
+    let id: String
+    let kind: String?
+    let priority: String?
+    let title: String?
+    let reason: String?
+    let projectId: String?
+    let projectName: String?
+    let linkedEntityType: String?
+    let linkedEntityId: String?
+    let dueState: String?
+    let statusBucket: String?
+}
+
+struct WorkloadCountsDTO: Decodable {
+    let urgent: Int?
+    let high: Int?
+    let normal: Int?
+}
+
+struct WorkloadInboxDTO: Decodable {
+    let items: [WorkloadItemDTO]?
+    let counts: WorkloadCountsDTO?
+}
+
+struct WorkloadResponse: Decodable {
+    let data: WorkloadInboxDTO?
+}
 struct MarkReadResponse: Decodable { let ok: Bool? }
 
 /// GET /api/v1/ai/requests — AI job row.
@@ -561,12 +951,55 @@ struct AIJobDTO: Decodable {
     let lastError: String?
     let createdAt: String?
     let updatedAt: String?
-    enum CodingKeys: String, CodingKey {
-        case id; case type; case status; case entity
-        case attempts; case lastError = "last_error"; case createdAt = "created_at"; case updatedAt = "updated_at"
-    }
 }
 struct AIRequestsResponse: Decodable { let data: [AIJobDTO]? }
+
+struct ProjectWorkerDTO: Decodable {
+    let userId: String
+    let role: String?
+    let status: String?
+}
+
+struct ProjectWorkersResponse: Decodable {
+    let data: [ProjectWorkerDTO]?
+}
+
+struct TenantMemberDTO: Decodable, Identifiable {
+    let userId: String
+    let role: String?
+    let createdAt: String?
+    let isOwner: Bool?
+    let email: String?
+    var id: String { userId }
+}
+
+struct TenantMembersResponse: Decodable {
+    let data: [TenantMemberDTO]?
+}
+
+struct TenantInvitationDTO: Decodable, Identifiable {
+    let id: String
+    let email: String?
+    let role: String?
+    let expiresAt: String?
+    let createdAt: String?
+}
+
+struct TenantInvitationsResponse: Decodable {
+    let data: [TenantInvitationDTO]?
+}
+
+struct ReportAnalysisStatusDTO: Decodable {
+    let status: String?
+    let reportId: String?
+    let jobCount: Int?
+}
+
+struct ReportApprovalEventDTO: Decodable, Hashable {
+    let action: String?
+    let createdAt: String?
+    let userId: String?
+}
 
 // MARK: - Help/Activation DTOs
 
@@ -617,4 +1050,17 @@ struct HelpAssistantResponseDTO: Decodable {
 
 struct HelpAssistantEventAckDTO: Decodable {
     let ok: Bool?
+}
+
+struct WorkerSummaryDTO: Decodable {
+    let reportsCount: Int?
+    let mediaCount: Int?
+    let isContractor: Bool?
+    let tasksAssigned: Int?
+    let tasksOverdue: Int?
+    let reportsPendingReview: Int?
+}
+
+struct WorkerSummaryResponse: Decodable {
+    let data: WorkerSummaryDTO?
 }

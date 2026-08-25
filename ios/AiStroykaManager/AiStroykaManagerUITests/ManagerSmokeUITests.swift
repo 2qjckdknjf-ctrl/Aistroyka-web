@@ -117,6 +117,8 @@ final class ManagerSmokeUITests: XCTestCase {
         let detailError = app.descendants(matching: .any)["pilot_manager_project_detail_error"]
         let detailRetry = app.buttons["pilot_manager_error_retry"]
         let tabBar = app.tabBars.firstMatch
+        let tabShell = app.otherElements["pilot_manager_tab_shell"]
+        let homeTab = app.buttons["pilot_manager_tab_home"]
 
         let deadline = Date().addingTimeInterval(timeout)
         while Date() < deadline {
@@ -133,7 +135,7 @@ final class ManagerSmokeUITests: XCTestCase {
             if deeplinkShell.exists {
                 return true
             }
-            if !expectsDeepLink, tabBar.exists, !signIn.exists, !unauthorized.exists {
+            if !expectsDeepLink, (tabBar.exists || tabShell.exists || homeTab.exists), !signIn.exists, !unauthorized.exists {
                 return true
             }
             if detailError.exists, detailRetry.exists {
@@ -155,7 +157,28 @@ final class ManagerSmokeUITests: XCTestCase {
                 || detailLoading.exists || detailError.exists
         }
         return deeplinkShell.exists || e2eIntelLink.exists || e2eProjectDetail.exists
-            || detailLoading.exists || detailError.exists || (tabBar.exists && !signIn.exists)
+            || detailLoading.exists || detailError.exists
+            || ((tabBar.exists || tabShell.exists || homeTab.exists) && !signIn.exists)
+    }
+
+    private func tapManagerTab(_ app: XCUIApplication, index: Int) {
+        let ids = [
+            "pilot_manager_tab_home",
+            "pilot_manager_tab_projects",
+            "pilot_manager_tab_tasks",
+            "pilot_manager_tab_ai",
+            "pilot_manager_tab_more",
+        ]
+        if index < ids.count {
+            let button = app.buttons[ids[index]]
+            if button.waitForExistence(timeout: 4) {
+                button.tap()
+                return
+            }
+        }
+        if app.tabBars.buttons.count > index {
+            app.tabBars.buttons.element(boundBy: index).tap()
+        }
     }
 
     func testLoginScreen_reachableWithPilotIdentifiers() throws {
@@ -187,11 +210,10 @@ final class ManagerSmokeUITests: XCTestCase {
             "Expected manager tab shell after live login (reports tab, inbox row, or tab bar)"
         )
 
-        if app.tabBars.buttons.count > 3 {
-            app.tabBars.buttons.element(boundBy: 3).tap()
-        } else {
-            let reportsTab = app.tabBars.buttons["pilot_manager_tab_reports"]
-            if reportsTab.exists { reportsTab.tap() }
+        tapManagerTab(app, index: 4)
+        let reports = app.descendants(matching: .any)["pilot_manager_tab_reports"]
+        if reports.waitForExistence(timeout: 10) {
+            reports.tap()
         }
         _ = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'pilot_manager_report_'")).firstMatch
             .waitForExistence(timeout: 60)
@@ -226,10 +248,22 @@ final class ManagerSmokeUITests: XCTestCase {
         return intel.exists
     }
 
-    private func openProjectsTab(app: XCUIApplication) {
-        if app.tabBars.buttons.count > 1 {
-            app.tabBars.buttons.element(boundBy: 1).tap()
+    private func tapFirstAvailable(_ elements: XCUIElement...) {
+        for element in elements where element.exists {
+            if element.isHittable {
+                element.tap()
+                return
+            }
         }
+        for element in elements where element.exists {
+            element.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+            return
+        }
+        XCTFail("No tappable element in \(elements.map(\.identifier))")
+    }
+
+    private func openProjectsTab(app: XCUIApplication) {
+        tapManagerTab(app, index: 1)
         _ = app.otherElements["pilot_manager_projects_tab"].waitForExistence(timeout: 30)
     }
 
@@ -312,13 +346,12 @@ final class ManagerSmokeUITests: XCTestCase {
 
         openProjectDetail(app: app)
 
-        let intelLink = app.descendants(matching: .any)["pilot_manager_project_intelligence_link"]
+        let intelLink = app.descendants(matching: .any)["pilot_manager_project_intelligence_link"].firstMatch
         XCTAssertTrue(intelLink.waitForExistence(timeout: 30))
-        if intelLink.isHittable {
-            intelLink.tap()
-        } else {
-            app.buttons["pilot_manager_project_intelligence_link"].firstMatch.tap()
-        }
+        tapFirstAvailable(
+            app.buttons["pilot_manager_project_intelligence_link"].firstMatch,
+            intelLink
+        )
 
         let openCopilot = app.buttons["pilot_manager_open_copilot"].firstMatch
         let intelligence = app.descendants(matching: .any)["pilot_manager_intelligence"]
@@ -337,12 +370,15 @@ final class ManagerSmokeUITests: XCTestCase {
         )
 
         if openCopilot.waitForExistence(timeout: 5) {
-            openCopilot.tap()
+            tapFirstAvailable(openCopilot)
         } else {
-            app.navigationBars.buttons.element(boundBy: 0).tap()
-            let copilotLink = app.buttons["pilot_manager_project_copilot_link"].firstMatch
-            XCTAssertTrue(copilotLink.waitForExistence(timeout: 15))
-            copilotLink.tap()
+            if app.navigationBars.buttons.count > 0 {
+                app.navigationBars.buttons.element(boundBy: 0).tap()
+            }
+            tapFirstAvailable(
+                app.buttons["pilot_manager_project_copilot_link"].firstMatch,
+                app.descendants(matching: .any)["pilot_manager_project_copilot_link"].firstMatch
+            )
         }
 
         let copilotSend = app.buttons["pilot_manager_copilot_send"]

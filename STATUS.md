@@ -1,32 +1,26 @@
 # STATUS — AISTROYKA
 
-> Live project status — 100% Readiness program.
-
----
+> Live project status. Keep this short and mobile-readable.
 
 **Last updated:** 2026-08-25  
-**Active mobile slice:** `mobile/ios-worker-v4-3` — closable tails done (notify project_id, issue PATCH, iOS 16 nav, analysis poll). Owner-gated: deploy, SMS, TestFlight, live E2E  
-**Main tip:** `bae89752`  
-**Staging:** `buildStamp.sha7=bae8975` — **MATCH**
+**Updated by:** iOS Worker V4.3 live-sync PR [#256](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/256)
+
+---
 
 ## Now
 
 | Field | Value |
 |---|---|
-| Merged | [#242](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/242) tenant priority · [#240](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/240) auth + Day-0 · [#241](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/241) docs stack |
-| Staging forgot-password | **LIVE** (HTTP 200) |
-| Day-0 rehearsal | **PASS_WITH_WARNINGS** (2026-08-24, post-deploy) |
-| Phase 12 launch | **NO** — real client intake missing |
-| Next gate | Owner fills `pilot-intake.real.local.json` + device smoke |
+| **Active slice** | Ship `mobile/ios-worker-v4-3`: Worker V4.3 + live field APIs |
+| **Branch / worktree** | `mobile/ios-worker-v4-3` @ `/Users/alex/Projects/AISTROYKA-ios-worker-v4-3` |
+| **PR** | [#256](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/256) |
+| **Base** | `origin/main` |
+| **Checks** | Worker + Manager BUILD SUCCEEDED; WorkerV43UITests 10/10; i18n OK |
+| **Next** | CI Check + non-author APPROVED → staging deploy. Owner: OTP token, E2E creds, TestFlight MODE B |
 
-## Operator
+## Notes
 
-```bash
-cp docs/launch/pilot-intake.template.json docs/launch/pilot-intake.real.local.json
-bun run pilot:intake:validate -- docs/launch/pilot-intake.real.local.json
-bash scripts/pilot/run_day0_staging_rehearsal.sh
-bash scripts/pilot/verify_forgot_password_route.sh https://staging.aistroyka.ai
-```
+Primary checkout `/Users/alex/Projects/AISTROYKA` was not modified. Live credentials are not in the repo.
 
 ---
 

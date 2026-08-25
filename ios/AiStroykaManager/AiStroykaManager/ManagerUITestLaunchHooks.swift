@@ -19,6 +19,10 @@ enum ManagerUITestLaunchHooks {
             || ProcessInfo.processInfo.arguments.contains("-AISTROYKA_E2E")
     }
 
+    static var isV43Preview: Bool {
+        ManagerV43Preview.isEnabled
+    }
+
     /// When set with `AISTROYKA_E2E=1`, opens project detail via sheet (skips projects list in UITest).
     static var e2eProjectId: String? {
         guard isE2EEnabled else { return nil }

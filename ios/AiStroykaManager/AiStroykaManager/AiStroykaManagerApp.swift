@@ -22,7 +22,7 @@ struct AiStroykaManagerApp: App {
             ManagerRootView()
                 .environmentObject(sessionState)
                 .preferredColorScheme(.dark)
-                .background(ManagerSemanticColors.pageBackground)
+                .background(ManagerV43.bg)
         }
     }
 }

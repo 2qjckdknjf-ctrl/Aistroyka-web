@@ -113,6 +113,46 @@ public actor APIClient {
         let _: EmptyJSON = try await request(path: path, method: method, body: body, idempotencyKey: idempotencyKey)
     }
 
+    /// POST multipart `file` field (cabinet document upload).
+    public func uploadMultipartFile(
+        path: String,
+        fileData: Data,
+        fileName: String,
+        mimeType: String,
+        fieldName: String = "file",
+        idempotencyKey: String? = nil
+    ) async throws {
+        guard let base = Config.apiBaseURL else { throw APIError(statusCode: nil, code: nil, message: "Invalid base URL") }
+        let pathTrimmed = path.hasPrefix("/") ? String(path.dropFirst()) : path
+        guard let url = URL(string: pathTrimmed, relativeTo: base) else { throw APIError(statusCode: nil, code: nil, message: "Invalid path") }
+        let boundary = "Boundary-\(UUID().uuidString)"
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue(DeviceContext.deviceId, forHTTPHeaderField: "x-device-id")
+        request.setValue(clientProfile, forHTTPHeaderField: "x-client")
+        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        if let key = idempotencyKey {
+            request.setValue(key, forHTTPHeaderField: "x-idempotency-key")
+        }
+        if let token = await tokenProvider?() {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        var body = Data()
+        body.append(Data("--\(boundary)\r\n".utf8))
+        body.append(Data("Content-Disposition: form-data; name=\"\(fieldName)\"; filename=\"\(fileName)\"\r\n".utf8))
+        body.append(Data("Content-Type: \(mimeType)\r\n\r\n".utf8))
+        body.append(fileData)
+        body.append(Data("\r\n--\(boundary)--\r\n".utf8))
+        request.httpBody = body
+        let (data, response) = try await session.data(for: request)
+        if let code = (response as? HTTPURLResponse)?.statusCode, code >= 400 {
+            if code == 401 {
+                await notifySessionInvalidIfNeeded()
+            }
+            throw APIError.from(data: data, response: response)
+        }
+    }
+
     /// Returns raw data and status for sync/changes so caller can decode 409 body (SyncConflictBody).
     public func requestDataAndResponse(path: String, method: String = "GET") async throws -> (Data, Int) {
         guard let base = Config.apiBaseURL else { throw APIError(statusCode: nil, code: nil, message: "Invalid base URL") }

@@ -99,6 +99,10 @@
 "worker_task_title" = "Задача";
 "worker_task_due_fmt" = "Срок: %@";
 "worker_task_status_fmt" = "Статус: %@";
+"worker_task_priority_fmt" = "Приоритет: %@";
+"worker_priority_high" = "Высокий";
+"worker_priority_medium" = "Средний";
+"worker_priority_low" = "Низкий";
 "worker_start_report" = "Начать отчёт";
 "worker_report_id_short_fmt" = "Отчёт …%@";
 "worker_report_status_fmt" = "Статус: %@";

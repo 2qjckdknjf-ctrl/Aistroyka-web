@@ -25,7 +25,7 @@ public struct ProjectsResponse: Decodable {
     public let data: [ProjectDTO]?
 }
 
-public struct TaskDTO: Decodable {
+public struct TaskDTO: Codable {
     public let id: String
     public let title: String
     public let status: String
@@ -37,6 +37,7 @@ public struct TaskDTO: Decodable {
     public let reportRequired: Bool?
     public let reportId: String?
     public let reportStatus: String?
+    public let priority: String?
 
     public init(
         id: String,
@@ -49,7 +50,8 @@ public struct TaskDTO: Decodable {
         description: String? = nil,
         reportRequired: Bool? = nil,
         reportId: String? = nil,
-        reportStatus: String? = nil
+        reportStatus: String? = nil,
+        priority: String? = nil
     ) {
         self.id = id
         self.title = title
@@ -62,6 +64,7 @@ public struct TaskDTO: Decodable {
         self.reportRequired = reportRequired
         self.reportId = reportId
         self.reportStatus = reportStatus
+        self.priority = priority
     }
 }
 
@@ -85,10 +88,6 @@ public struct UploadSessionResponse: Decodable {
     public struct UploadSessionData: Decodable {
         public let id: String
         public let uploadPath: String?
-        enum CodingKeys: String, CodingKey {
-            case id
-            case uploadPath = "upload_path"
-        }
     }
 }
 
