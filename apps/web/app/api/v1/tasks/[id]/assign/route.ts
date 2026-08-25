@@ -65,7 +65,7 @@ export async function POST(
     }
   }
 
-  let body: { worker_id?: string; assignee_id?: string } = {};
+  let body: { worker_id?: string; assignee_id?: string; user_id?: string } = {};
   try {
     body = await request.json();
   } catch {
@@ -77,7 +77,7 @@ export async function POST(
       userId: ctx.userId,
     });
   }
-  const workerId = (body.worker_id ?? body.assignee_id)?.trim();
+  const workerId = (body.worker_id ?? body.assignee_id ?? body.user_id)?.trim();
   if (!workerId) {
     return withRequestIdAndTiming(request, NextResponse.json({ error: "worker_id or assignee_id required" }, { status: 400 }), {
       route: routeKey,

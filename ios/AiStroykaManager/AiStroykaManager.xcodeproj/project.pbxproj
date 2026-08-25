@@ -47,6 +47,13 @@
 		MGR041B /* ProjectCopilotChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR137 /* ProjectCopilotChatView.swift */; };
 		MGRUT01 /* ManagerSmokeUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGRUT11 /* ManagerSmokeUITests.swift */; };
 		MGRUT02 /* PilotE2ECredentials.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGRUT12 /* PilotE2ECredentials.swift */; };
+		MGR200 /* ManagerV43Tokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR300; };
+		MGR201 /* ManagerV43Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR301; };
+		MGR202 /* ManagerV43Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR302; };
+		MGR203 /* DocumentsHubView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR303; };
+		MGR204 /* ProjectAnalyticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR304; };
+		MGR205 /* AIRiskDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGR305; };
+		MGRUT14 /* ManagerV43UITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGRUT15; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -96,6 +103,13 @@
 		MGRUT10 /* AiStroykaManagerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AiStroykaManagerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		MGRUT11 /* ManagerSmokeUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManagerSmokeUITests.swift; sourceTree = "<group>"; };
 		MGRUT12 /* PilotE2ECredentials.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PilotE2ECredentials.swift; sourceTree = "<group>"; };
+		MGR300 /* ManagerV43Tokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManagerV43Tokens.swift; sourceTree = "<group>"; };
+		MGR301 /* ManagerV43Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManagerV43Components.swift; sourceTree = "<group>"; };
+		MGR302 /* ManagerV43Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManagerV43Models.swift; sourceTree = "<group>"; };
+		MGR303 /* DocumentsHubView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentsHubView.swift; sourceTree = "<group>"; };
+		MGR304 /* ProjectAnalyticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectAnalyticsView.swift; sourceTree = "<group>"; };
+		MGR305 /* AIRiskDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIRiskDetailView.swift; sourceTree = "<group>"; };
+		MGRUT15 /* ManagerV43UITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManagerV43UITests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -123,19 +137,19 @@
 		};
 		MGR051S /* Services */ = {
 			isa = PBXGroup;
-			children = ( MGR104, MGR134, MGR135 );
+			children = ( MGR104, MGR134, MGR135, MGR302 );
 			path = Services;
 			sourceTree = "<group>";
 		};
 		MGR051D /* Design */ = {
 			isa = PBXGroup;
-			children = ( MGR105, MGR106, MGR107, MGR108, MGR109, MGR175 );
+			children = ( MGR105, MGR106, MGR107, MGR108, MGR109, MGR175, MGR300, MGR301 );
 			path = Design;
 			sourceTree = "<group>";
 		};
 		MGR051V /* Views */ = {
 			isa = PBXGroup;
-			children = ( MGR110, MGR111, MGR112, MGR113, MGR114, MGR115, MGR116, MGR117, MGR118, MGR119, MGR120, MGR121, MGR122, MGR123, MGR124, MGR132, MGR125, MGR126, MGR127, MGR136, MGR137 );
+			children = ( MGR110, MGR111, MGR112, MGR113, MGR114, MGR115, MGR116, MGR117, MGR118, MGR119, MGR120, MGR121, MGR122, MGR123, MGR124, MGR132, MGR125, MGR126, MGR127, MGR136, MGR137, MGR303, MGR304, MGR305 );
 			path = Views;
 			sourceTree = "<group>";
 		};
@@ -153,6 +167,7 @@
 			children = (
 				MGRUT12 /* PilotE2ECredentials.swift */,
 				MGRUT11 /* ManagerSmokeUITests.swift */,
+				MGRUT15 /* ManagerV43UITests.swift */,
 			);
 			path = AiStroykaManagerUITests;
 			sourceTree = "<group>";
@@ -241,7 +256,7 @@
 		MGR030 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
-			files = ( MGR001, MGR043 /* AiStroykaManagerAppDelegate.swift in Sources */, MGR002, MGR003, MGR004, MGR005, MGR006, MGR042, MGR007, MGR008, MGR009, MGR010, MGR011, MGR012, MGR013, MGR014, MGR015, MGR016, MGR017, MGR018, MGR019, MGR020, MGR021, MGR022, MGR023, MGR036, MGR024, MGR025, MGR026, MGR027, MGR037, MGR038, MGR039, MGR040, MGR041B );
+			files = ( MGR001, MGR043 /* AiStroykaManagerAppDelegate.swift in Sources */, MGR002, MGR003, MGR004, MGR005, MGR006, MGR042, MGR007, MGR008, MGR009, MGR010, MGR011, MGR012, MGR013, MGR014, MGR015, MGR016, MGR017, MGR018, MGR019, MGR020, MGR021, MGR022, MGR023, MGR036, MGR024, MGR025, MGR026, MGR027, MGR037, MGR038, MGR039, MGR040, MGR041B, MGR200, MGR201, MGR202, MGR203, MGR204, MGR205 );
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		MGRUT21 /* Sources */ = {
@@ -250,6 +265,7 @@
 			files = (
 				MGRUT02 /* PilotE2ECredentials.swift in Sources */,
 				MGRUT01 /* ManagerSmokeUITests.swift in Sources */,
+				MGRUT14 /* ManagerV43UITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -332,7 +348,7 @@
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = AiStroykaManager/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = ( "$(inherited)", "@executable_path/Frameworks" );
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 4.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = ai.aistroyka.manager;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -352,7 +368,7 @@
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = AiStroykaManager/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = ( "$(inherited)", "@executable_path/Frameworks" );
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 4.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = ai.aistroyka.manager;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -369,7 +385,7 @@
 				DEVELOPMENT_TEAM = 43A4KW5BKB;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 4.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = ai.aistroyka.manager.uitests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
@@ -387,7 +403,7 @@
 				DEVELOPMENT_TEAM = 43A4KW5BKB;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 4.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = ai.aistroyka.manager.uitests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;

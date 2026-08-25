@@ -138,6 +138,27 @@ export async function listAuditLogs(
   return (data ?? []) as AuditLogRow[];
 }
 
+/** List audit events for one action (e.g. manager AI risk decisions). */
+export async function listAuditLogsByAction(
+  supabase: SupabaseClient,
+  tenantId: string,
+  action: string,
+  options: { resourceId?: string; limit?: number } = {}
+): Promise<AuditLogRow[]> {
+  const limit = Math.min(Math.max(options.limit ?? 50, 1), 200);
+  let query = supabase
+    .from("audit_logs")
+    .select("id, tenant_id, user_id, trace_id, action, resource_type, resource_id, details, created_at")
+    .eq("tenant_id", tenantId)
+    .eq("action", action);
+  if (options.resourceId?.trim()) {
+    query = query.eq("resource_id", options.resourceId.trim());
+  }
+  const { data, error } = await query.order("created_at", { ascending: false }).limit(limit);
+  if (error) return [];
+  return (data ?? []) as AuditLogRow[];
+}
+
 /** List audit events for a single resource (e.g. report approval history). */
 export async function listAuditLogsForResource(
   supabase: SupabaseClient,

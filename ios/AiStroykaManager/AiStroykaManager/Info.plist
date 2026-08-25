@@ -19,11 +19,13 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0</string>
+	<string>4.3.0</string>
 	<key>CFBundleVersion</key>
 	<string>2026063001</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>AiStroyka Manager uses the camera to attach photos when creating tasks and reviewing site reports.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>AiStroyka Manager needs microphone access to send voice messages in task chat.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
@@ -46,9 +48,6 @@
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
-		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 	</array>
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>

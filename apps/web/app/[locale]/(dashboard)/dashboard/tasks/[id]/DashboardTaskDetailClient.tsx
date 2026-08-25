@@ -25,6 +25,7 @@ interface TaskDetail {
   report_status?: string | null;
   created_at?: string;
   updated_at?: string;
+  priority?: string | null;
 }
 
 function statusVariant(s: string): "neutral" | "success" | "warning" | "danger" {
@@ -55,6 +56,7 @@ export function DashboardTaskDetailClient({
   const [assignOpen, setAssignOpen] = useState(false);
   const [workers, setWorkers] = useState<{ user_id: string }[]>([]);
   const [assigningWorkerId, setAssigningWorkerId] = useState("");
+  const [savingPriority, setSavingPriority] = useState(false);
 
   const fetchTask = () => {
     setLoading(true);
@@ -114,6 +116,20 @@ export function DashboardTaskDetailClient({
       .catch(() => {});
   };
 
+  const patchPriority = (priority: string) => {
+    if (savingPriority) return;
+    setSavingPriority(true);
+    fetch(`/api/v1/tasks/${taskId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ priority }),
+    })
+      .then((r) => (r.ok ? fetchTask() : Promise.reject()))
+      .catch(() => {})
+      .finally(() => setSavingPriority(false));
+  };
+
   const patchStatus = (status: string) => {
     fetch(`/api/v1/tasks/${taskId}`, {
       method: "PATCH",
@@ -152,6 +168,19 @@ export function DashboardTaskDetailClient({
             <Badge variant={statusVariant(task.status)} className="mt-1">
               {task.status}
             </Badge>
+            <label className="mt-2 flex items-center gap-2 text-aistroyka-caption text-aistroyka-text-secondary">
+              <span>{tDetail("priority")}</span>
+              <Select
+                value={task.priority === "low" || task.priority === "high" ? task.priority : "medium"}
+                disabled={savingPriority}
+                onChange={(e) => patchPriority(e.target.value)}
+                aria-label={tDetail("priority")}
+              >
+                <option value="low">{tDetail("priorityLow")}</option>
+                <option value="medium">{tDetail("priorityMedium")}</option>
+                <option value="high">{tDetail("priorityHigh")}</option>
+              </Select>
+            </label>
           </div>
           <div className="flex gap-2">
             {(task.status === "pending" || task.status === "in_progress") && (

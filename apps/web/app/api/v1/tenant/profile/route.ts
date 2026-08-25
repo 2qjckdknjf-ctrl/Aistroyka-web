@@ -1,13 +1,38 @@
 /**
- * PATCH /api/tenant/profile — update tenant profile (workspace name).
- * Requires tenant:settings (admin or owner).
+ * GET /api/v1/tenant/profile — read workspace name (any tenant member).
+ * PATCH /api/v1/tenant/profile — update workspace name (tenant:settings).
  */
 
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClientFromRequest } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError, authorize } from "@/lib/tenant";
 
 const MAX_NAME_LENGTH = 200;
+
+export async function GET(request: Request) {
+  const ctx = await getTenantContextFromRequest(request);
+  try {
+    requireTenant(ctx);
+  } catch (e) {
+    if (e instanceof TenantRequiredError) {
+      return NextResponse.json({ error: e.message }, { status: e.message.includes("membership") ? 403 : 401 });
+    }
+    throw e;
+  }
+
+  const supabase = await createClientFromRequest(request);
+  const { data, error } = await supabase
+    .from("tenants")
+    .select("name")
+    .eq("id", ctx.tenantId)
+    .maybeSingle();
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ data: { name: typeof data?.name === "string" ? data.name : null } });
+}
 
 export async function PATCH(request: Request) {
   const ctx = await getTenantContextFromRequest(request);
@@ -29,7 +54,7 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "Name too long" }, { status: 400 });
   }
 
-  const supabase = await createClient();
+  const supabase = await createClientFromRequest(request);
   const { error } = await supabase
     .from("tenants")
     .update({ name: name || null })

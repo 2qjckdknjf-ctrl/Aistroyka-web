@@ -1,31 +1,26 @@
 # STATUS — AISTROYKA
 
-> Live project status — 100% Readiness program.
+> Live project status. Keep this short and mobile-readable.
+
+**Last updated:** 2026-08-25  
+**Updated by:** iOS Manager deep live-sync pass (`mobile/ios-manager-v4-3`)
 
 ---
-
-**Last updated:** 2026-08-24  
-**Main tip:** `bae89752`  
-**Staging:** `buildStamp.sha7=bae8975` — **MATCH**
 
 ## Now
 
 | Field | Value |
 |---|---|
-| Merged | [#242](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/242) tenant priority · [#240](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/240) auth + Day-0 · [#241](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/241) docs stack |
-| Staging forgot-password | **LIVE** (HTTP 200) |
-| Day-0 rehearsal | **PASS_WITH_WARNINGS** (2026-08-24, post-deploy) |
-| Phase 12 launch | **NO** — real client intake missing |
-| Next gate | Owner fills `pilot-intake.real.local.json` + device smoke |
+| **Active slice** | Ship mobile/ios-manager-v4-3: members email, cabinet parity, live AI GO |
+| **Branch / worktree** | `mobile/ios-manager-v4-3` @ `/Users/alex/Projects/AISTROYKA-ios-manager-v4-3` |
+| **Base** | `origin/main` `1e690098` |
+| **Checks** | Manager BUILD SUCCEEDED |
+| **Plan** | `docs/mobile-rebuild/IOS_MANAGER_V4_3_FOLLOWUP_PLAN.md` |
+| **Next** | Owner commit/PR when asked |
 
-## Operator
+## Notes
 
-```bash
-cp docs/launch/pilot-intake.template.json docs/launch/pilot-intake.real.local.json
-bun run pilot:intake:validate -- docs/launch/pilot-intake.real.local.json
-bash scripts/pilot/run_day0_staging_rehearsal.sh
-bash scripts/pilot/verify_forgot_password_route.sh https://staging.aistroyka.ai
-```
+Primary checkout `/Users/alex/Projects/AISTROYKA` was not modified. Live credentials are not in the repo.
 
 ---
 

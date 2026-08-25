@@ -47,6 +47,20 @@ interface TaskRow {
   report_id?: string | null;
   report_status?: string | null;
   created_at?: string;
+  priority?: string | null;
+}
+
+function priorityLabelKey(priority: string): "priorityLow" | "priorityMedium" | "priorityHigh" {
+  switch (priority) {
+    case "low":
+      return "priorityLow";
+    case "high":
+      return "priorityHigh";
+    case "medium":
+      return "priorityMedium";
+    default:
+      return "priorityMedium";
+  }
 }
 
 function columnLabelKey(column: TaskBoardColumnId): "pending" | "inProgress" | "done" | "cancelled" {
@@ -208,6 +222,7 @@ export function DashboardTasksClient({
     const description = (form.querySelector('[name="description"]') as HTMLInputElement)?.value?.trim();
     const due_at = (form.querySelector('[name="due_at"]') as HTMLInputElement)?.value;
     const assign_to = (form.querySelector('[name="assign_to"]') as HTMLSelectElement)?.value;
+    const priority = (form.querySelector('[name="priority"]') as HTMLSelectElement)?.value;
     if (!project_id || !title) return;
     fetch("/api/v1/tasks", {
       method: "POST",
@@ -219,6 +234,7 @@ export function DashboardTasksClient({
         description: description || undefined,
         due_at: due_at || undefined,
         report_required: true,
+        priority: priority || undefined,
       }),
     })
       .then(async (r) => {
@@ -230,7 +246,7 @@ export function DashboardTasksClient({
             method: "POST",
             headers: { "Content-Type": "application/json" },
             credentials: "include",
-            body: JSON.stringify({ user_id: assign_to }),
+            body: JSON.stringify({ worker_id: assign_to }),
           });
         }
         return json;
@@ -370,6 +386,11 @@ export function DashboardTasksClient({
                     className="hidden text-left font-medium text-aistroyka-accent hover:underline lg:inline"
                   >
                     {r.title}
+                    {r.priority ? (
+                      <span className="ml-2 text-aistroyka-caption text-aistroyka-text-secondary">
+                        {tDetail("priority")}: {tDetail(priorityLabelKey(r.priority))}
+                      </span>
+                    ) : null}
                   </button>
                   <Link
                     href={`/dashboard/tasks/${r.id}`}
@@ -454,6 +475,7 @@ export function DashboardTasksClient({
               <p className="mt-1 text-aistroyka-caption text-aistroyka-text-secondary">
                 {r.due_date ? new Date(r.due_date).toLocaleDateString() : "—"}
                 {overdue ? ` · ${tDetail("overdue")}` : ""}
+                {r.priority ? ` · ${tDetail("priority")}: ${tDetail(priorityLabelKey(r.priority))}` : ""}
               </p>
               <div className="mt-2 flex flex-wrap gap-1">{renderTaskActions(r)}</div>
             </div>
@@ -739,6 +761,14 @@ export function DashboardTasksClient({
                 {tDetail("dueDate")}
               </label>
               <Input name="due_at" type="date" />
+              <label className="block text-aistroyka-caption font-medium text-aistroyka-text-secondary">
+                {tDetail("priority")}
+              </label>
+              <Select name="priority" defaultValue="medium">
+                <option value="low">{tDetail("priorityLow")}</option>
+                <option value="medium">{tDetail("priorityMedium")}</option>
+                <option value="high">{tDetail("priorityHigh")}</option>
+              </Select>
               <label className="block text-aistroyka-caption font-medium text-aistroyka-text-secondary">
                 {tDetail("worker")}
               </label>

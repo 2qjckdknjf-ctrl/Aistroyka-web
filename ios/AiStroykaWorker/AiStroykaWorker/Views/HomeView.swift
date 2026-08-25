@@ -30,6 +30,7 @@ struct HomeView: View {
     @State private var guideRiskSignals: [WorkerHelpAssistantRiskSignalDTO] = []
     @State private var feedbackReports: [WorkerSyncReportRow] = []
     @State private var unreadChatByTaskId: [String: Bool] = [:]
+    @Environment(\.scenePhase) private var scenePhase
 
     private var shiftStarted: Bool { store.state.shift.isStarted }
     private var dayId: String? { store.state.shift.dayId }
@@ -116,6 +117,11 @@ struct HomeView: View {
                                         .fill(Color.accentColor)
                                         .frame(width: 8, height: 8)
                                         .accessibilityLabel(NSLocalizedString("task_chat_unread", comment: ""))
+                                }
+                                if let priority = task.priority, !priority.isEmpty {
+                                    Text(localizedWorkerPriority(priority))
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
                                 }
                                 Text(task.status).font(.caption).foregroundColor(.secondary)
                             }
@@ -228,6 +234,17 @@ struct HomeView: View {
             }
             .navigationDestination(for: String.self) { rid in
                 ReportResubmitView(reportId: rid)
+            }
+        }
+        .refreshable {
+            loadTodayTasks()
+            loadFeedbackReports()
+            syncService.runSyncIfOnline()
+        }
+        .onChange(of: scenePhase) { phase in
+            if phase == .active {
+                loadTodayTasks()
+                loadFeedbackReports()
             }
         }
         .onAppear {
