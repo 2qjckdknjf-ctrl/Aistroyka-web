@@ -1,6 +1,7 @@
 export { InternalPageHero } from "./InternalPageHero";
 export { ProductWindow, ConstructionMedia } from "./ProductWindow";
 export { WorkflowRail } from "./WorkflowRail";
+export { FeatureStageNav } from "./FeatureStageNav";
 export { FaqAccordion } from "./FaqAccordion";
 export { EnterpriseTeaser, PilotTimeline } from "./EnterpriseTeaser";
 export { FinalPilotCta } from "./FinalPilotCta";

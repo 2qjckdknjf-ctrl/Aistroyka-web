@@ -1597,6 +1597,10 @@ body:has(.v41-modal-backdrop) {
   text-align: left;
 }
 
+.v43-faq-body[hidden] {
+  display: none;
+}
+
 .v43-legal-toc,
 .v43-legal-aside {
   position: sticky;

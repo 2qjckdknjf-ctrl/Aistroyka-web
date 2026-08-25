@@ -31,11 +31,15 @@ export function FaqAccordion({ title, items }: { title: string; items: FaqItem[]
                   <ChevronDown size={18} />
                 </button>
               </h3>
-              {isOpen ? (
-                <p id={panelId} role="region" aria-labelledby={buttonId} className="v43-faq-body">
-                  {item.a}
-                </p>
-              ) : null}
+              <p
+                id={panelId}
+                role="region"
+                aria-labelledby={buttonId}
+                className="v43-faq-body"
+                hidden={!isOpen}
+              >
+                {item.a}
+              </p>
             </div>
           );
         })}

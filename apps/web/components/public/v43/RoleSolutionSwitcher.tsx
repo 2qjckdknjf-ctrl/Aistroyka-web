@@ -9,8 +9,7 @@ import {
   solutionsRoleHref,
   type SolutionRole,
 } from "@/lib/public/solutions-roles";
-import { ProductWindow } from "./ProductWindow";
-import { ConstructionMedia } from "./ProductWindow";
+import { ConstructionMedia, ProductWindow } from "./ProductWindow";
 import { WorkflowRail } from "./WorkflowRail";
 
 export type RoleSolutionCopy = {

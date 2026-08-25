@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { V41_ASSETS } from "@/components/public/v41";
-import { ConstructionMedia, FinalPilotCta, InternalPageHero, ProductWindow, WorkflowRail } from "@/components/public/v43";
+import { ConstructionMedia, FeatureStageNav, FinalPilotCta, InternalPageHero, ProductWindow, WorkflowRail } from "@/components/public/v43";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -39,13 +39,10 @@ export default async function FeaturesPage({ params }: Props) {
         secondaryLabel={tV41("storyLink")}
         visual={<ConstructionMedia src={V41_ASSETS.hero} alt={tV41("heroAlt")} />}
       />
-      <nav className="v41-page v43-stage-nav v41-glass" aria-label={t("stageNav")}>
-        {STAGES.map((stage) => (
-          <Link key={stage.id} href={`#${stage.id}`}>
-            {stage.n} {t(`${stage.id}Nav`)}
-          </Link>
-        ))}
-      </nav>
+      <FeatureStageNav
+        label={t("stageNav")}
+        stages={STAGES.map((stage) => ({ id: stage.id, n: stage.n, label: t(`${stage.id}Nav`) }))}
+      />
       {STAGES.map((stage) => (
         <section key={stage.id} id={stage.id} className="v41-page v41-section v43-feature-stage">
           <div>
