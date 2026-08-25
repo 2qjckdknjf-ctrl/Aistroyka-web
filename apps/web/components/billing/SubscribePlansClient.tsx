@@ -87,7 +87,7 @@ export function SubscribePlansClient({
   }, [awaitingActivation, router]);
 
   return (
-    <div className="v41-site v43-checkout-page">
+    <div className="v43-checkout-page">
       <div className="v41-page">
         <p>
           <Link href="/pricing">{tCheckout("back")}</Link>

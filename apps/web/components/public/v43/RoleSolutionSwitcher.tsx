@@ -12,6 +12,13 @@ import {
 import { ConstructionMedia, ProductWindow } from "./ProductWindow";
 import { WorkflowRail } from "./WorkflowRail";
 
+export type RoleSolutionVisual = {
+  kind: "product" | "photo";
+  src: string;
+  objectPosition?: string;
+  alt?: string;
+};
+
 export type RoleSolutionCopy = {
   label: string;
   title: string;
@@ -27,13 +34,11 @@ export type RoleSolutionCopy = {
 export function RoleSolutionSwitcher({
   tablistLabel,
   roles,
-  productSrc,
-  photoSrc,
+  visuals,
 }: {
   tablistLabel: string;
   roles: Record<SolutionRole, RoleSolutionCopy>;
-  productSrc: string;
-  photoSrc: string;
+  visuals: Record<SolutionRole, RoleSolutionVisual>;
 }) {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -102,10 +107,19 @@ export function RoleSolutionSwitcher({
           <p className="v41-eyebrow">{copy.workflowTitle}</p>
           <WorkflowRail steps={copy.workflow} />
         </div>
-        <div>
-          <ProductWindow src={productSrc} alt={copy.productAlt} />
-            <ConstructionMedia src={photoSrc} alt={copy.photoAlt} />
-        </div>
+        {visuals[current].kind === "photo" ? (
+          <ConstructionMedia
+            src={visuals[current].src}
+            alt={visuals[current].alt ?? copy.photoAlt}
+            objectPosition={visuals[current].objectPosition}
+          />
+        ) : (
+          <ProductWindow
+            src={visuals[current].src}
+            alt={visuals[current].alt ?? copy.productAlt}
+            objectPosition={visuals[current].objectPosition}
+          />
+        )}
       </div>
     </section>
   );

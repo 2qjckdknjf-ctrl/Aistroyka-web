@@ -40,8 +40,11 @@ export default async function SolutionsPage({ params }: Props) {
         <RoleSolutionSwitcher
           tablistLabel={t("tablist")}
           roles={roles}
-          productSrc={V41_ASSETS.aiAnalytics}
-          photoSrc={V41_ASSETS.hero}
+          visuals={{
+            business: { kind: "product", src: V41_ASSETS.aiAnalytics, alt: tV41("aiImageAlt") },
+            manager: { kind: "product", src: V41_ASSETS.commandCenter, objectPosition: "50% 38%", alt: tV41("commandCenterAlt") },
+            field: { kind: "photo", src: V41_ASSETS.hero, alt: tV41("heroAlt") },
+          }}
         />
       </Suspense>
       <EnterpriseTeaser title={t("enterpriseTitle")} lead={t("enterpriseLead")} cta={t("enterpriseCta")} />

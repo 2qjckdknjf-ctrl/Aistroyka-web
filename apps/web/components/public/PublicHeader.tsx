@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { ArrowRight, Menu, X } from "lucide-react";
 import { V41PilotButton } from "./v41/V41PilotButton";
 import { V41_ASSETS } from "./v41/v41-assets";
+import { PublicLocaleSwitcher } from "./PublicLocaleSwitcher";
 
 const PRIMARY_NAV = [
   { href: "/platform", key: "platform" as const },
@@ -56,6 +57,7 @@ export function PublicHeader() {
         })}
       </nav>
       <div className="v41-header-actions">
+        <PublicLocaleSwitcher />
         <Link href="/dashboard" className="v41-cabinet-link" data-testid="cta.public.header.cabinet">
           {t("cabinet")}
         </Link>
@@ -90,6 +92,7 @@ export function PublicHeader() {
             {t("login")}
           </Link>
           <V41PilotButton className="v41-btn v41-btn-primary">{tCta("launchPilot")}</V41PilotButton>
+          <PublicLocaleSwitcher compact />
         </nav>
       ) : null}
     </header>

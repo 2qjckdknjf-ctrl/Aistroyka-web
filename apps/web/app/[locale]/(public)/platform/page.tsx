@@ -4,7 +4,6 @@ import type { Metadata } from "next";
 import { routing } from "@/i18n/routing";
 import { V41_ASSETS } from "@/components/public/v41";
 import {
-  ConstructionMedia,
   FaqAccordion,
   FinalPilotCta,
   InternalPageHero,
@@ -60,17 +59,16 @@ export default async function PlatformPage({ params }: Props) {
           ))}
         </div>
       </section>
-      <section className="v41-page v41-section v43-two-col">
-        <div>
-          <h2>{t("surfacesTitle")}</h2>
+      <section className="v41-page v41-section">
+        <h2>{t("surfacesTitle")}</h2>
+        <div className="v43-module-grid">
           {surfaces.map((key) => (
-            <article key={key}>
+            <article key={key} className="v43-plan-card v41-glass">
               <h3>{t(`${key}Title`)}</h3>
               <p>{t(`${key}Text`)}</p>
             </article>
           ))}
         </div>
-        <ConstructionMedia src={V41_ASSETS.hero} alt={tV41("heroAlt")} />
       </section>
       <FaqAccordion
         title={t("faqTitle")}

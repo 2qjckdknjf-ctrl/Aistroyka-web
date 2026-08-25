@@ -62,7 +62,9 @@ export default async function RootLayout({
   let lang: (typeof LOCALES)[number] = "ru";
   try {
     const headersList = await headers();
-    const locale = headersList.get("x-next-intl-locale") ?? "ru";
+    const fromHeader = headersList.get("x-next-intl-locale")?.trim();
+    const fromPath = headersList.get("x-aistroyka-pathname")?.match(/^\/(ru|en|es|it)(?=\/|$)/)?.[1];
+    const locale = fromHeader || fromPath || "ru";
     lang = LOCALES.includes(locale as (typeof LOCALES)[number])
       ? (locale as (typeof LOCALES)[number])
       : "ru";

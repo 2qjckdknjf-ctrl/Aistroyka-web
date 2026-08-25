@@ -645,6 +645,8 @@
     "invalidCredentials": "Invalid email or password.",
     "emailNotConfirmed": "Please confirm your email before signing in.",
     "defaultError": "Something went wrong. Please try again.",
+    "requestTimedOut": "Request timed out. Please check your connection and try again.",
+    "requestTimedOutShort": "Request timed out. Please try again.",
     "loginStep": "Login step",
     "authProviders": "Authentication providers",
     "continueWithEmail": "Continue with Email",
@@ -1103,7 +1105,7 @@
       "faq": "FAQ",
       "privacy": "Privacy",
       "terms": "Terms",
-      "cabinet": "Dashboard",
+      "cabinet": "Cabinet",
       "requestDemo": "Launch pilot",
       "login": "Log in",
       "tryPlatform": "Try platform",
@@ -1125,7 +1127,8 @@
       "more": "More",
       "main": "Main",
       "mainMobile": "Main mobile",
-      "contactUs": "Contact us"
+      "contactUs": "Contact us",
+      "language": "Language"
     },
     "home": {
       "heroTitle": "AI Construction Intelligence",
@@ -1441,6 +1444,7 @@
     },
     "docs": {
       "title": "Documentation",
+      "articleMetaTitle": "{article} | Aistroyka",
       "metaDescription": "Help center and product documentation.",
       "gettingStarted": "Getting started",
       "projects": "Projects",
@@ -1552,6 +1556,7 @@
       "statusAvailable": "Available",
       "archTitle": "Architecture",
       "archBody": "API-first direction, tenant-safe adapters, event-driven design. Integrations respect your data boundaries and audit requirements.",
+      "categoriesTitle": "Integration categories",
       "ctaEnterprise": "Discuss enterprise integration",
       "ctaWorkflow": "Request custom workflow"
     },
@@ -1572,6 +1577,7 @@
       "dxRest": "REST / webhooks",
       "dxVersion": "Versioning",
       "dxSandbox": "Sandbox direction",
+      "examplesTitle": "Example requests",
       "ctaAccess": "Request API access",
       "ctaEnterprise": "Talk to enterprise team",
       "positioning": "API access is available for enterprise and early-access partners. Public developer program is planned."
@@ -1615,6 +1621,7 @@
       "title": "Implementation",
       "heroTitle": "How Aistroyka is implemented",
       "metaDescription": "Discovery, setup, onboarding, pilot, scale. Implementation phases.",
+      "phasesTitle": "Phases",
       "phase1": "Discovery",
       "phase2": "Setup",
       "phase3": "Data structure",
@@ -2251,7 +2258,7 @@
   },
   "subscriptionOnboarding": {
     "title": "Choose a plan to activate your workspace",
-    "subtitle": "After payment is confirmed, you will be redirected to the dashboard setup.",
+    "subtitle": "After payment is confirmed, you will be redirected to the cabinet setup.",
     "dashboardAccessNotice": "You were redirected because opening the cabinet requires an active subscription or an approved pilot/workspace. Choose a plan below, or contact support if your access should already be active.",
     "status": "Subscription status: {status}",
     "checkoutSuccess": "Payment was received. We are waiting for subscription confirmation from billing.",
@@ -2259,7 +2266,7 @@
     "checkoutCancel": "Checkout was canceled. Select a plan to continue.",
     "checkoutButton": "Continue to checkout",
     "checkoutLoading": "Redirecting…",
-    "openDashboard": "Open dashboard",
+    "openDashboard": "Open cabinet",
     "plans": {
       "starter": {
         "title": "Starter",

@@ -10,3 +10,4 @@ export { PricingCard, PricingComparison } from "./PricingCard";
 export { LegalDocument } from "./LegalDocument";
 export { PilotForm } from "./PilotForm";
 export { CheckoutSummary } from "./CheckoutSummary";
+export { SimpleMarketingPage } from "./SimpleMarketingPage";

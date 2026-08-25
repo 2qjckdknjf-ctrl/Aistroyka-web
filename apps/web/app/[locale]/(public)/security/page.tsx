@@ -2,8 +2,7 @@ import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 import { routing } from "@/i18n/routing";
-import { V41_ASSETS } from "@/components/public/v41";
-import { FaqAccordion, FinalPilotCta, InternalPageHero, ProductWindow, WorkflowRail } from "@/components/public/v43";
+import { FaqAccordion, FinalPilotCta, InternalPageHero, WorkflowRail } from "@/components/public/v43";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -28,7 +27,6 @@ export default async function SecurityPage({ params }: Props) {
         primaryLabel={t("discussCta")}
         secondaryHref="/pricing/enterprise"
         secondaryLabel={t("modelCta")}
-        visual={<ProductWindow src={V41_ASSETS.commandCenter} alt={tV41("commandCenterAlt")} />}
       />
       <section className="v41-page v41-section">
         <h2>{t("layersTitle")}</h2>

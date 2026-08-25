@@ -3,7 +3,7 @@ import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 import { routing } from "@/i18n/routing";
 import { V41_ASSETS } from "@/components/public/v41";
-import { ConstructionMedia, FinalPilotCta, InternalPageHero, PilotTimeline } from "@/components/public/v43";
+import { ConstructionMedia, FinalPilotCta, InternalPageHero, PilotTimeline, ProductWindow } from "@/components/public/v43";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -55,7 +55,7 @@ export default async function AboutPage({ params }: Props) {
           <h2>{t("buildTitle")}</h2>
           <p>{t("buildLead")}</p>
         </div>
-        <ConstructionMedia src={V41_ASSETS.commandCenter} alt={tV41("commandCenterAlt")} />
+        <ProductWindow src={V41_ASSETS.commandCenter} alt={tV41("commandCenterAlt")} />
       </section>
       <FinalPilotCta
         copy={{

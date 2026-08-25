@@ -5,7 +5,7 @@ import { Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { V41_ASSETS } from "@/components/public/v41";
 import { V41PilotButton } from "@/components/public/v41/V41PilotButton";
-import { ConstructionMedia, FaqAccordion, InternalPageHero, PilotTimeline, ProductWindow } from "@/components/public/v43";
+import { FaqAccordion, InternalPageHero, PilotTimeline, ProductWindow } from "@/components/public/v43";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -60,7 +60,7 @@ export default async function EnterprisePlanPage({ params }: Props) {
           <h2>{t("archTitle")}</h2>
           <p>{t("archLead")}</p>
         </div>
-        <ConstructionMedia src={V41_ASSETS.hero} alt={tV41("heroAlt")} />
+        <ProductWindow src={V41_ASSETS.aiAnalytics} alt={tV41("aiImageAlt")} />
       </section>
       <PilotTimeline
         title={t("rolloutTitle")}

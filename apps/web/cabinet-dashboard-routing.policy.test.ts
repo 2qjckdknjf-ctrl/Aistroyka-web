@@ -14,6 +14,10 @@ describe("Cabinet visibility / dashboard stability policy (source asserts)", () 
     expect(headerSrc).toContain('t("cabinet")');
   });
 
+  it("public marketing header exposes a locale switcher for en/ru/es/it", () => {
+    expect(headerSrc).toContain("PublicLocaleSwitcher");
+  });
+
   it("authenticated auth pages redirect via resolvePostAuthEntry without subscribe fallback", () => {
     expect(middlewareSrc).toContain("resolvePostAuthEntry({ locale, next, baseUrl: request.url })");
     expect(middlewareSrc).not.toContain("{ path: `/${locale}/subscribe`");
@@ -35,12 +39,22 @@ describe("Cabinet visibility / dashboard stability policy (source asserts)", () 
   });
 
   it("subscribe page redirects dashboard-eligible users (subscription or pilot cohort)", () => {
-    const subSrc = readFileSync(join(__dirname, "app/[locale]/subscribe/page.tsx"), "utf8");
+    const subSrc = readFileSync(join(__dirname, "app/[locale]/(public)/subscribe/page.tsx"), "utf8");
     expect(subSrc).toContain("tenantId && hasDashboardAccess");
   });
 
   it("guest access to dashboard sends user to localized login preserving next path", () => {
     expect(middlewareSrc).toContain('loginUrl.searchParams.set("next", nextTarget)');
     expect(middlewareSrc).toContain("pathnameForLoc}${request.nextUrl.search}");
+  });
+
+  it("protected prefixes use segment matching so /projects-showcase stays public", () => {
+    expect(middlewareSrc).toContain('from "@/lib/routing/matches-path-prefix"');
+    expect(middlewareSrc).toContain("PROTECTED_PREFIXES.some((p) => matchesPathPrefix(pathWithoutLoc, p))");
+    expect(middlewareSrc).not.toContain("PROTECTED_PREFIXES.some((p) => pathWithoutLoc.startsWith(p))");
+  });
+
+  it("forwards the URL locale so <html lang> is not stuck on ru", () => {
+    expect(middlewareSrc).toContain('requestHeaders.set("x-next-intl-locale", localeFromPath)');
   });
 });

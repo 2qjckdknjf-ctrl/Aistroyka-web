@@ -5,13 +5,13 @@ import { ChevronDown } from "lucide-react";
 
 export type FaqItem = { q: string; a: string };
 
-export function FaqAccordion({ title, items }: { title: string; items: FaqItem[] }) {
+export function FaqAccordion({ title, items }: { title?: string; items: FaqItem[] }) {
   const baseId = useId();
   const [open, setOpen] = useState(0);
 
   return (
     <section className="v41-page v41-section">
-      <h2>{title}</h2>
+      {title ? <h2>{title}</h2> : null}
       <div className="v43-faq v41-glass">
         {items.map((item, index) => {
           const panelId = `${baseId}-panel-${index}`;

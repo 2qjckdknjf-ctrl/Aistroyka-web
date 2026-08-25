@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 import { Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
+import { SimpleMarketingPage } from "@/components/public/v43";
 
 const DOC_SLUGS = [
   "getting-started",
@@ -41,26 +42,19 @@ export default async function DocsPage({ params }: Props) {
   const t = await getTranslations("public.docs");
 
   return (
-    <div className="mx-auto min-w-0 max-w-4xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-      <h1 className="text-[var(--aistroyka-font-title)] font-bold text-[var(--aistroyka-text-primary)]">
-        {t("title")}
-      </h1>
-      <p className="mt-4 text-[var(--aistroyka-font-body)] text-[var(--aistroyka-text-secondary)]">
-        {t("metaDescription")}
-      </p>
-      <ul className="mt-12 space-y-3">
-        {DOC_SLUGS.map((slug) => (
-          <li key={slug}>
-            <Link
-              href={`/docs/${slug}`}
-              className="block rounded-[var(--aistroyka-radius-lg)] border border-[var(--aistroyka-border-subtle)] bg-[var(--aistroyka-surface)] p-4 transition-colors hover:bg-[var(--aistroyka-surface-raised)]"
-            >
-              {t(DOC_TITLE_KEYS[slug])}
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <SimpleMarketingPage title={t("title")} lead={t("metaDescription")}>
+      <section className="v41-page v41-section">
+        <ul className="v43-module-grid">
+          {DOC_SLUGS.map((slug) => (
+            <li key={slug}>
+              <Link href={`/docs/${slug}`} className="v43-plan-card v41-glass">
+                {t(DOC_TITLE_KEYS[slug])}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </SimpleMarketingPage>
   );
 }
 

@@ -9,10 +9,33 @@ import { ConstructionMedia, FeatureStageNav, FinalPilotCta, InternalPageHero, Pr
 type Props = { params: Promise<{ locale: string }> };
 
 const STAGES = [
-  { id: "planning", n: "01", product: "commandCenter" as const },
-  { id: "site", n: "02", product: "hero" as const },
-  { id: "control", n: "03", product: "commandCenter" as const },
-  { id: "ai", n: "04", product: "aiAnalytics" as const },
+  {
+    id: "planning",
+    n: "01",
+    kind: "product" as const,
+    asset: "commandCenter" as const,
+    objectPosition: "50% 12%",
+  },
+  {
+    id: "site",
+    n: "02",
+    kind: "photo" as const,
+    asset: "hero" as const,
+  },
+  {
+    id: "control",
+    n: "03",
+    kind: "product" as const,
+    asset: "commandCenter" as const,
+    objectPosition: "50% 88%",
+  },
+  {
+    id: "ai",
+    n: "04",
+    kind: "product" as const,
+    asset: "aiAnalytics" as const,
+    objectPosition: undefined,
+  },
 ] as const;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -37,7 +60,6 @@ export default async function FeaturesPage({ params }: Props) {
         primaryHref="#site"
         secondaryHref="/platform"
         secondaryLabel={tV41("storyLink")}
-        visual={<ConstructionMedia src={V41_ASSETS.hero} alt={tV41("heroAlt")} />}
       />
       <FeatureStageNav
         label={t("stageNav")}
@@ -62,13 +84,15 @@ export default async function FeaturesPage({ params }: Props) {
               <Link href={stage.id === "ai" ? "/ai-construction-control" : "/platform"}>{t(`${stage.id}Link`)}</Link>
             </p>
           </div>
-          <div>
+          {stage.kind === "photo" ? (
+            <ConstructionMedia src={V41_ASSETS[stage.asset]} alt={tV41("heroAlt")} />
+          ) : (
             <ProductWindow
-              src={stage.product === "hero" ? V41_ASSETS.hero : V41_ASSETS[stage.product]}
+              src={V41_ASSETS[stage.asset]}
               alt={t(`${stage.id}ProductAlt`)}
+              objectPosition={stage.kind === "product" ? stage.objectPosition : undefined}
             />
-            <ConstructionMedia src={V41_ASSETS.hero} alt={t(`${stage.id}PhotoAlt`)} />
-          </div>
+          )}
         </section>
       ))}
       <FinalPilotCta
