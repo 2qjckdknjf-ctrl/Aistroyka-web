@@ -7,5 +7,5 @@ export default async function ProjectPage({
   params: Promise<{ locale: string; id: string }>;
 }) {
   const { locale, id } = await params;
-  redirect(`/${locale}/dashboard/projects/${id}?tab=intelligence`);
+  redirect(`/${locale}/dashboard/projects/${id}`);
 }

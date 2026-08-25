@@ -19,6 +19,10 @@ describe("resolveProjectDetailTab", () => {
     expect(resolveProjectDetailTab("documents")).toBe("documents");
     expect(resolveProjectDetailTab("schedule")).toBe("schedule");
     expect(resolveProjectDetailTab("decisions")).toBe("decisions");
+    expect(resolveProjectDetailTab("defects")).toBe("defects");
+    expect(resolveProjectDetailTab("change-orders")).toBe("change-orders");
+    expect(resolveProjectDetailTab("handover")).toBe("handover");
+    expect(resolveProjectDetailTab("review-pack")).toBe("review-pack");
     expect(resolveProjectDetailTab("workers")).toBe("workers");
     expect(resolveProjectDetailTab("uploads")).toBe("uploads");
     expect(resolveProjectDetailTab("ai")).toBe("ai");

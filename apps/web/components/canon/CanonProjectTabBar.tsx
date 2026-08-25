@@ -22,8 +22,15 @@ export function getCanonProjectTabItems(projectId: string): CanonProjectTabItem[
     { id: "schedule", labelKey: "projectTabSchedule", commandTab: "schedule" },
     { id: "costs", labelKey: "projectTabBudget", commandTab: "costs" },
     { id: "documents", labelKey: "projectTabDocuments", commandTab: "documents" },
+    { id: "defects", labelKey: "projectTabDefects", commandTab: "defects" },
+    {
+      id: "change-orders",
+      labelKey: "projectTabChangeOrders",
+      commandTab: "change-orders",
+    },
     { id: "uploads", labelKey: "projectTabSite", commandTab: "uploads" },
     { id: "workers", labelKey: "projectTabTeam", commandTab: "workers" },
+    { id: "handover", labelKey: "projectTabHandover", commandTab: "handover" },
     { id: "ai", labelKey: "projectTabRisks", commandTab: "ai" },
   ];
 }

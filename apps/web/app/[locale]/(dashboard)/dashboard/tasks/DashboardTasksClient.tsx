@@ -66,7 +66,13 @@ function columnLabelKey(column: TaskBoardColumnId): "pending" | "inProgress" | "
   }
 }
 
-export function DashboardTasksClient({ skin = "default" }: { skin?: "default" | "canon" }) {
+export function DashboardTasksClient({
+  skin = "default",
+  onRegisterCreateHandler,
+}: {
+  skin?: "default" | "canon";
+  onRegisterCreateHandler?: (openCreate: () => void) => void;
+}) {
   const tDetail = useTranslations("dashboardDetail");
   const { params, setParam } = useFilterParams();
   const searchParams = useSearchParams();
@@ -92,6 +98,12 @@ export function DashboardTasksClient({ skin = "default" }: { skin?: "default" | 
   const [assignTaskId, setAssignTaskId] = useState<string | null>(null);
   const [workers, setWorkers] = useState<{ user_id: string }[]>([]);
   const [assigningWorkerId, setAssigningWorkerId] = useState<string>("");
+
+  useEffect(() => {
+    if (onRegisterCreateHandler) {
+      onRegisterCreateHandler(() => setCreateOpen(true));
+    }
+  }, [onRegisterCreateHandler]);
 
   const setWorkspaceParam = useCallback(
     (key: "view" | "task", value: string | null) => {
@@ -169,39 +181,59 @@ export function DashboardTasksClient({ skin = "default" }: { skin?: "default" | 
   }, [fetchTasks]);
 
   useEffect(() => {
-    if (assignTaskId) {
-      const task = data.find((t) => t.id === assignTaskId);
-      const projectId = task?.project_id;
-      if (projectId) {
-        fetch(`/api/v1/projects/${projectId}/workers?limit=100`, { credentials: "include" })
-          .then((r) => (r.ok ? r.json() : { data: [] }))
-          .then((json: { data?: { user_id: string }[] }) => setWorkers(json.data ?? []));
-      } else {
-        fetch("/api/v1/workers", { credentials: "include" })
-          .then((r) => (r.ok ? r.json() : { data: [] }))
-          .then((json: { data?: { user_id: string }[] }) => setWorkers(json.data ?? []));
-      }
-    } else {
+    if (!assignTaskId && !createOpen) {
       setWorkers([]);
       setAssigningWorkerId("");
+      return;
     }
-  }, [assignTaskId, data]);
+    const task = assignTaskId ? data.find((t) => t.id === assignTaskId) : null;
+    const projectId = task?.project_id ?? searchParams?.get("project_id")?.trim() ?? undefined;
+
+    if (projectId) {
+      fetch(`/api/v1/projects/${projectId}/workers?limit=100`, { credentials: "include" })
+        .then((r) => (r.ok ? r.json() : { data: [] }))
+        .then((json: { data?: { user_id: string }[] }) => setWorkers(json.data ?? []));
+    } else {
+      fetch("/api/v1/workers", { credentials: "include" })
+        .then((r) => (r.ok ? r.json() : { data: [] }))
+        .then((json: { data?: { user_id: string }[] }) => setWorkers(json.data ?? []));
+    }
+  }, [assignTaskId, createOpen, data, searchParams]);
 
   const handleCreate = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
     const project_id = (form.querySelector('[name="project_id"]') as HTMLSelectElement)?.value;
     const title = (form.querySelector('[name="title"]') as HTMLInputElement)?.value?.trim();
+    const description = (form.querySelector('[name="description"]') as HTMLInputElement)?.value?.trim();
+    const due_at = (form.querySelector('[name="due_at"]') as HTMLInputElement)?.value;
+    const assign_to = (form.querySelector('[name="assign_to"]') as HTMLSelectElement)?.value;
     if (!project_id || !title) return;
     fetch("/api/v1/tasks", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ project_id, title, report_required: true }),
+      body: JSON.stringify({
+        project_id,
+        title,
+        description: description || undefined,
+        due_at: due_at || undefined,
+        report_required: true,
+      }),
     })
-      .then((r) => {
+      .then(async (r) => {
         if (!r.ok) throw new Error(r.statusText);
-        return r.json();
+        const json = (await r.json()) as { data?: { id?: string } };
+        const taskId = json.data?.id;
+        if (taskId && assign_to) {
+          await fetch(`/api/v1/tasks/${taskId}/assign`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ user_id: assign_to }),
+          });
+        }
+        return json;
       })
       .then(() => {
         setCreateOpen(false);
@@ -680,6 +712,25 @@ export function DashboardTasksClient({ skin = "default" }: { skin?: "default" | 
                 {tDetail("title")}
               </label>
               <Input name="title" required placeholder={tDetail("taskTitle")} />
+              <label className="block text-aistroyka-caption font-medium text-aistroyka-text-secondary">
+                {tDetail("descriptionOptional")}
+              </label>
+              <Input name="description" placeholder={tDetail("descriptionOptional")} />
+              <label className="block text-aistroyka-caption font-medium text-aistroyka-text-secondary">
+                {tDetail("dueDate")}
+              </label>
+              <Input name="due_at" type="date" />
+              <label className="block text-aistroyka-caption font-medium text-aistroyka-text-secondary">
+                {tDetail("worker")}
+              </label>
+              <Select name="assign_to">
+                <option value="">{tDetail("unassigned")}</option>
+                {workers.map((w) => (
+                  <option key={w.user_id} value={w.user_id}>
+                    {w.user_id.slice(0, 8)}…
+                  </option>
+                ))}
+              </Select>
             </div>
             <div className="mt-4 flex justify-end gap-2">
               <Button type="button" variant="secondary" onClick={() => setCreateOpen(false)}>

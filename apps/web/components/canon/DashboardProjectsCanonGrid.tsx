@@ -179,7 +179,7 @@ export function DashboardProjectsCanonGrid() {
                       <tr key={p.id}>
                         <td>
                           <Link
-                            href={`/projects/${p.id}`}
+                            href={`/dashboard/projects/${p.id}`}
                             onMouseEnter={() => prefetchProject(p.id)}
                             className="flex items-center gap-3 group min-w-[200px]"
                           >
