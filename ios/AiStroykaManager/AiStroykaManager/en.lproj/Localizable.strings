@@ -460,3 +460,8 @@
 "mgr_v43_activity" = "Activity";
 "mgr_v43_no_activity" = "No recent activity";
 "mgr_v43_workload" = "Inbox";
+"mgr_v43_edit_task" = "Edit task";
+"mgr_v43_save_task" = "Save";
+"mgr_v43_doc_approve" = "Approve";
+"mgr_v43_doc_reject" = "Reject";
+"mgr_v43_doc_request_changes" = "Request changes";

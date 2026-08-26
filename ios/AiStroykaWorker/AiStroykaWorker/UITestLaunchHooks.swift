@@ -50,6 +50,7 @@ enum UITestLaunchHooks {
                 $0.hasCompletedWorkerIntro = true
                 $0.draftReportId = nil
                 $0.pendingUploads = []
+                $0.clearCachedTodayTasks()
             }
             await AuthService.shared.signOut()
             appState.isLoggedIn = false
@@ -57,7 +58,10 @@ enum UITestLaunchHooks {
             return
         }
         guard isEnabled else { return }
-        store.save { $0.hasCompletedWorkerIntro = true }
+        store.save {
+            $0.hasCompletedWorkerIntro = true
+            $0.clearCachedTodayTasks()
+        }
         await AuthService.shared.signOut()
         appState.isLoggedIn = false
         appState.currentUser = nil

@@ -578,6 +578,33 @@ enum ManagerAPI {
         let _: MarkReadResponse = try await APIClient.shared.request(path: "notifications/\(id)/read", method: "PATCH")
     }
 
+    /// PATCH /api/v1/notifications/read-all — same as cabinet mark-all-read.
+    static func markAllNotificationsRead() async throws {
+        struct Response: Decodable { var marked: Int? }
+        let _: Response = try await APIClient.shared.request(path: "notifications/read-all", method: "PATCH")
+    }
+
+    /// POST /api/v1/projects/:id/documents/:documentId/decision
+    static func decideDocument(
+        projectId: String,
+        documentId: String,
+        action: String,
+        comment: String? = nil,
+        idempotencyKey: String
+    ) async throws {
+        struct Body: Encodable {
+            let action: String
+            let comment: String?
+        }
+        struct Response: Decodable { var data: ProjectDocumentDTO? }
+        let _: Response = try await APIClient.shared.request(
+            path: "projects/\(projectId)/documents/\(documentId)/decision",
+            method: "POST",
+            body: Body(action: action, comment: comment),
+            idempotencyKey: idempotencyKey
+        )
+    }
+
     /// GET /api/v1/workload?audience=manager — operational inbox (existing manager read model).
     static func workload(audience: String = "manager") async throws -> WorkloadInboxDTO {
         let encoded = audience.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? audience

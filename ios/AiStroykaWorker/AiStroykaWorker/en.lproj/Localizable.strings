@@ -16,6 +16,7 @@
 "worker_end_shift" = "End shift";
 "worker_loading_tasks" = "Loading tasks…";
 "worker_todays_tasks" = "Today's tasks";
+"worker_tasks_load_error" = "Could not load today's tasks. Pull to retry.";
 "worker_new_report" = "New report";
 "worker_support" = "Support";
 "worker_sign_out" = "Sign out";

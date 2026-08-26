@@ -88,6 +88,20 @@ final class OperationQueueStore: ObservableObject {
         persistQueue.async { [weak self] in self?.persistSync(list) }
     }
 
+    /// App kill can leave `uploadBinary` stuck in `.running`; those never become runnable again.
+    func requeueStaleRunningUploads() {
+        lock.lock()
+        var changed = false
+        for idx in backing.indices where backing[idx].state == .running {
+            backing[idx].state = .queued
+            backing[idx].updatedAt = ISO8601DateFormatter().string(from: Date())
+            changed = true
+        }
+        let copy = backing
+        lock.unlock()
+        if changed { publishAndPersist(copy) }
+    }
+
     func pendingCount() -> Int {
         lock.lock()
         defer { lock.unlock() }

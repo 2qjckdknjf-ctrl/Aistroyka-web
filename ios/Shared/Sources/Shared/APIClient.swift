@@ -45,22 +45,14 @@ public actor APIClient {
         if let key = idempotencyKey {
             request.setValue(key, forHTTPHeaderField: "x-idempotency-key")
         }
-        if let token = await tokenProvider?() {
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        }
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
         if let body = body {
             request.httpBody = try JSONEncoder().encode(AnyEncodable(body))
         }
 
-        let (data, response) = try await session.data(for: request)
-        let http = response as? HTTPURLResponse
-
-        if let code = http?.statusCode, code >= 400 {
-            if code == 401 {
-                await notifySessionInvalidIfNeeded()
-            }
+        let (data, response) = try await performData(request)
+        if let code = (response as? HTTPURLResponse)?.statusCode, code >= 400 {
             throw APIError.from(data: data, response: response)
         }
 
@@ -83,16 +75,10 @@ public actor APIClient {
         request.setValue(clientProfile, forHTTPHeaderField: "x-client")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("text/event-stream", forHTTPHeaderField: "Accept")
-        if let token = await tokenProvider?() {
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        }
         request.httpBody = try JSONEncoder().encode(AnyEncodable(body))
-        let (bytes, response) = try await session.bytes(for: request)
+        let (bytes, response) = try await performBytes(request)
         guard let http = response as? HTTPURLResponse else {
             throw APIError(statusCode: nil, code: nil, message: "Invalid response")
-        }
-        if http.statusCode == 401 {
-            await notifySessionInvalidIfNeeded()
         }
         if http.statusCode >= 400 {
             var data = Data()
@@ -134,9 +120,6 @@ public actor APIClient {
         if let key = idempotencyKey {
             request.setValue(key, forHTTPHeaderField: "x-idempotency-key")
         }
-        if let token = await tokenProvider?() {
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        }
         var body = Data()
         body.append(Data("--\(boundary)\r\n".utf8))
         body.append(Data("Content-Disposition: form-data; name=\"\(fieldName)\"; filename=\"\(fileName)\"\r\n".utf8))
@@ -144,11 +127,8 @@ public actor APIClient {
         body.append(fileData)
         body.append(Data("\r\n--\(boundary)--\r\n".utf8))
         request.httpBody = body
-        let (data, response) = try await session.data(for: request)
+        let (data, response) = try await performData(request)
         if let code = (response as? HTTPURLResponse)?.statusCode, code >= 400 {
-            if code == 401 {
-                await notifySessionInvalidIfNeeded()
-            }
             throw APIError.from(data: data, response: response)
         }
     }
@@ -162,15 +142,47 @@ public actor APIClient {
         request.httpMethod = method
         request.setValue(DeviceContext.deviceId, forHTTPHeaderField: "x-device-id")
         request.setValue(clientProfile, forHTTPHeaderField: "x-client")
+        let (data, response) = try await performData(request)
+        let code = (response as? HTTPURLResponse)?.statusCode ?? 0
+        return (data, code)
+    }
+
+    private func applyAuth(_ request: inout URLRequest) async {
         if let token = await tokenProvider?() {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
-        let (data, response) = try await session.data(for: request)
-        let code = (response as? HTTPURLResponse)?.statusCode ?? 0
-        if code == 401 {
-            await notifySessionInvalidIfNeeded()
+    }
+
+    private func performData(_ request: URLRequest) async throws -> (Data, URLResponse) {
+        var req = request
+        await applyAuth(&req)
+        var result = try await session.data(for: req)
+        if (result.1 as? HTTPURLResponse)?.statusCode == 401 {
+            if await AuthService.shared.refreshAfterUnauthorized() {
+                await applyAuth(&req)
+                result = try await session.data(for: req)
+            }
+            if (result.1 as? HTTPURLResponse)?.statusCode == 401 {
+                await notifySessionInvalidIfNeeded()
+            }
         }
-        return (data, code)
+        return result
+    }
+
+    private func performBytes(_ request: URLRequest) async throws -> (URLSession.AsyncBytes, URLResponse) {
+        var req = request
+        await applyAuth(&req)
+        var result = try await session.bytes(for: req)
+        if (result.1 as? HTTPURLResponse)?.statusCode == 401 {
+            if await AuthService.shared.refreshAfterUnauthorized() {
+                await applyAuth(&req)
+                result = try await session.bytes(for: req)
+            }
+            if (result.1 as? HTTPURLResponse)?.statusCode == 401 {
+                await notifySessionInvalidIfNeeded()
+            }
+        }
+        return result
     }
 
     /// 401: notify host apps so they can sign out and avoid a stuck authenticated UI (Worker queue pauses without this).

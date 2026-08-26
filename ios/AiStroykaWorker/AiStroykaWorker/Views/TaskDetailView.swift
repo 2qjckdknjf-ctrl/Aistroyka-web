@@ -35,6 +35,11 @@ struct TaskDetailView: View {
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
+                if let description = task.description, !description.isEmpty {
+                    Text(description)
+                        .font(.subheadline)
+                        .foregroundColor(.primary)
+                }
                 Button(NSLocalizedString("worker_start_report", comment: "")) {
                     store.save { $0.draftTaskId = task.id }
                     navigateToReport = true
