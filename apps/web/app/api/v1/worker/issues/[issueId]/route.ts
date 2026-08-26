@@ -88,6 +88,7 @@ export async function PATCH(
   }
 
   const { data, error } = await updateWorkerReportedIssue(supabase, ctx, issueId, input);
+  if (error === "Issue is closed") return NextResponse.json({ error }, { status: 409 });
   if (error) return NextResponse.json({ error }, { status: 403 });
   if (!data) return NextResponse.json({ error: "Update failed" }, { status: 500 });
   await storeLiteIdempotency(request, ctx, PATCH_KEY, { data }, 200);

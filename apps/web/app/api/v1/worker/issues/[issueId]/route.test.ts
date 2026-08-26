@@ -121,6 +121,19 @@ describe("PATCH /api/v1/worker/issues/:issueId", () => {
     expect(updateWorkerReportedIssue).not.toHaveBeenCalled();
   });
 
+  it("returns 409 when the issue is already closed", async () => {
+    updateWorkerReportedIssue.mockResolvedValueOnce({ data: null, error: "Issue is closed" });
+    const res = await PATCH(
+      new Request("https://test/api/v1/worker/issues/iss-1?project_id=proj-1", {
+        method: "PATCH",
+        headers: { "content-type": "application/json", "x-idempotency-key": "k-closed" },
+        body: JSON.stringify({ status: "in_review" }),
+      }),
+      { params: Promise.resolve({ issueId: "iss-1" }) }
+    );
+    expect(res.status).toBe(409);
+  });
+
   it("rejects a project mismatch", async () => {
     const res = await PATCH(
       new Request("https://test/api/v1/worker/issues/iss-1?project_id=other", {

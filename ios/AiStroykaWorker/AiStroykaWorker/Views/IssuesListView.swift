@@ -378,8 +378,6 @@ struct IssueResolutionView: View {
         let typed = comment.trimmingCharacters(in: .whitespacesAndNewlines)
         if !typed.isEmpty {
             parts.append(typed)
-        } else if let existing = issue.description, !existing.isEmpty {
-            parts.append(existing)
         }
         if image != nil {
             parts.append(NSLocalizedString("wrk_v43_issue_photo_queued", comment: ""))
