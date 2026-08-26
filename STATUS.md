@@ -3,7 +3,7 @@
 > Live project status. Keep this short and mobile-readable.
 
 **Last updated:** 2026-08-25  
-**Updated by:** iOS Worker V4.3 live-sync PR [#256](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/256)
+**Updated by:** Worker issue write-boundary follow-up after PR [#256](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/256)
 
 ---
 
@@ -11,12 +11,11 @@
 
 | Field | Value |
 |---|---|
-| **Active slice** | Ship `mobile/ios-worker-v4-3`: Worker V4.3 + live field APIs |
-| **Branch / worktree** | `mobile/ios-worker-v4-3` @ `/Users/alex/Projects/AISTROYKA-ios-worker-v4-3` |
-| **PR** | [#256](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/256) |
-| **Base** | `origin/main` |
-| **Checks** | Worker + Manager BUILD SUCCEEDED; WorkerV43UITests 10/10; i18n OK |
-| **Next** | CI Check + non-author APPROVED → staging deploy. Owner: OTP token, E2E creds, TestFlight MODE B |
+| **Active slice** | Tighten worker issue PATCH to reporter or assigned worker |
+| **Branch / worktree** | `fix/worker-issue-write-boundary` @ `/Users/alex/Projects/AISTROYKA-ios-worker-v4-3` |
+| **Base** | `origin/main` @ `0e0f3e6b` (PR #256 on staging + production) |
+| **Runtime** | `GET /api/v1/health` `buildStamp.sha7` = `0e0f3e6` on staging and production |
+| **Next** | Land this slice. Owner still: OTP token, E2E creds, TestFlight MODE B |
 
 ## Notes
 
