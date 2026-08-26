@@ -3,7 +3,7 @@
 > Live project status. Keep this short and mobile-readable.
 
 **Last updated:** 2026-08-26  
-**Updated by:** iOS live work tails on `mobile/ios-live-work-tails`
+**Updated by:** Worker issue mutate-UI follow-up after PR [#257](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/257)
 
 ---
 
@@ -11,16 +11,16 @@
 
 | Field | Value |
 |---|---|
-| **Active slice** | Close live Manager/Worker field tails after #255 and merge Worker V4.3 from `main` |
-| **Branch / worktree** | `mobile/ios-live-work-tails` @ `/Users/alex/Projects/AISTROYKA-ios-manager-v4-3` |
-| **PR** | [#258](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/258) |
-| **Base** | `origin/main` (includes #256 Worker V4.3 and #257 issue write-boundary) |
-| **Checks** | Shared 14/14; Manager BUILD SUCCEEDED; Worker BUILD SUCCEEDED. Non-author APPROVED from `6262265-cpu` on prior head |
-| **Next** | CI on merge+security head; merge only if review stays APPROVED. Do not self-approve |
+| **Active slice** | Hide Worker issue resolve actions unless the signed-in user reported the issue |
+| **Branch / worktree** | `fix/worker-issue-mutate-ui` @ `/Users/alex/Projects/AISTROYKA-ios-worker-v4-3` |
+| **PR** | [#260](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/260) |
+| **Runtime** | staging + production `buildStamp.sha7` = `a739614` (PR #257) |
+| **Other open** | [#258](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/258) live tails on manager worktree |
+| **Next** | CI + non-author APPROVED. Phone provider is on; Twilio SID/token still empty. Reviewer PAT needs Pull requests write |
 
 ## Notes
 
-Primary checkout `/Users/alex/Projects/AISTROYKA` was not modified. Live credentials are not in the repo. Task cache is user-scoped and cleared on logout. JWT refresh is dropped after logout or session switch.
+Primary checkout `/Users/alex/Projects/AISTROYKA` was not modified. This worktree `APPROVE_TESTFLIGHT_UPLOAD` is `NO`.
 
 ---
 
