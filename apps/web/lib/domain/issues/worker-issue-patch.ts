@@ -10,9 +10,9 @@ export function workerIssuePatchError(existing: { status: string }): string | nu
 /** Empty incoming notes are omitted so a PATCH cannot wipe the defect text. */
 export function nextWorkerIssueDescription(
   existing: string | null | undefined,
-  incoming: string | undefined
+  incoming: string | null | undefined
 ): string | undefined {
-  if (incoming === undefined) return undefined;
+  if (incoming == null) return undefined;
   const note = incoming.trim();
   if (!note) return undefined;
   const current = existing?.trim() ?? "";

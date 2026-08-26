@@ -21,6 +21,7 @@ describe("nextWorkerIssueDescription", () => {
   it("omits an empty note so the existing text is not wiped", () => {
     expect(nextWorkerIssueDescription("Fence missing", "  ")).toBeUndefined();
     expect(nextWorkerIssueDescription("Fence missing", undefined)).toBeUndefined();
+    expect(nextWorkerIssueDescription("Fence missing", null)).toBeUndefined();
   });
 
   it("appends a new note instead of replacing", () => {
