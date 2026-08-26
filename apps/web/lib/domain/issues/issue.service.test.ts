@@ -23,6 +23,9 @@ vi.mock("@/lib/domain/notifications/manager-notifications.repository", () => ({
 vi.mock("@/lib/domain/tasks/task.repository", () => ({
   getById: vi.fn(() => Promise.resolve(null)),
 }));
+vi.mock("@/lib/domain/upload-session/upload-session.repository", () => ({
+  getById: vi.fn(() => Promise.resolve(null)),
+}));
 vi.mock("./issue.repository", () => ({
   listByProject: vi.fn(() => Promise.resolve([])),
   getById: vi.fn(() => Promise.resolve(null)),
@@ -213,5 +216,167 @@ describe("issue.service", () => {
     });
     expect(data).toBeNull();
     expect(error).toBe("Insufficient rights");
+  });
+
+  it("updateWorkerReportedIssue rejects reopening a resolved issue", async () => {
+    const policy = await import("@/lib/tenant/tenant.policy");
+    const repo = await import("./issue.repository");
+    vi.mocked(policy.canReadProjects).mockReturnValue(true);
+    vi.mocked(repo.update).mockClear();
+    vi.mocked(repo.getById).mockResolvedValue({
+      id: "i6",
+      project_id: "proj-1",
+      tenant_id: "t1",
+      title: "Fence",
+      description: "Missing guardrail on floor 3",
+      status: "resolved",
+      task_id: null,
+      milestone_id: null,
+      created_by: "manager-1",
+      resolved_at: "",
+      resolved_by: "manager-1",
+      created_at: "",
+      updated_at: "",
+    });
+    const { data, error } = await updateWorkerReportedIssue(noopSupabase, ctx, "i6", {
+      status: "open",
+      description: "cannot fix",
+    });
+    expect(data).toBeNull();
+    expect(error).toBe("Issue is closed");
+    expect(repo.update).not.toHaveBeenCalled();
+  });
+
+  it("updateWorkerReportedIssue does not wipe description and appends a resolution note", async () => {
+    const policy = await import("@/lib/tenant/tenant.policy");
+    const repo = await import("./issue.repository");
+    vi.mocked(policy.canReadProjects).mockReturnValue(true);
+    vi.mocked(repo.getById).mockResolvedValue({
+      id: "i7",
+      project_id: "proj-1",
+      tenant_id: "t1",
+      title: "Fence",
+      description: "Missing guardrail on floor 3",
+      status: "open",
+      task_id: null,
+      milestone_id: null,
+      created_by: "manager-1",
+      resolved_at: null,
+      resolved_by: null,
+      created_at: "",
+      updated_at: "",
+    });
+    vi.mocked(repo.update).mockResolvedValue({
+      id: "i7",
+      project_id: "proj-1",
+      tenant_id: "t1",
+      title: "Fence",
+      description: "Missing guardrail on floor 3\n\nfixed",
+      status: "in_review",
+      task_id: null,
+      milestone_id: null,
+      created_by: "manager-1",
+      resolved_at: null,
+      resolved_by: null,
+      created_at: "",
+      updated_at: "",
+    });
+    const { error } = await updateWorkerReportedIssue(noopSupabase, ctx, "i7", {
+      status: "in_review",
+      description: "fixed",
+    });
+    expect(error).toBe("");
+    expect(repo.update).toHaveBeenCalledWith(
+      noopSupabase,
+      "i7",
+      "t1",
+      expect.objectContaining({
+        status: "in_review",
+        description: "Missing guardrail on floor 3\n\nfixed",
+      })
+    );
+  });
+
+  it("updateWorkerReportedIssue ignores empty description so the original text is kept", async () => {
+    const policy = await import("@/lib/tenant/tenant.policy");
+    const repo = await import("./issue.repository");
+    vi.mocked(policy.canReadProjects).mockReturnValue(true);
+    vi.mocked(repo.update).mockClear();
+    vi.mocked(repo.getById).mockResolvedValue({
+      id: "i8",
+      project_id: "proj-1",
+      tenant_id: "t1",
+      title: "Fence",
+      description: "Missing guardrail on floor 3",
+      status: "open",
+      task_id: null,
+      milestone_id: null,
+      created_by: "manager-1",
+      resolved_at: null,
+      resolved_by: null,
+      created_at: "",
+      updated_at: "",
+    });
+    vi.mocked(repo.update).mockResolvedValue({
+      id: "i8",
+      project_id: "proj-1",
+      tenant_id: "t1",
+      title: "Fence",
+      description: "Missing guardrail on floor 3",
+      status: "in_review",
+      task_id: null,
+      milestone_id: null,
+      created_by: "manager-1",
+      resolved_at: null,
+      resolved_by: null,
+      created_at: "",
+      updated_at: "",
+    });
+    await updateWorkerReportedIssue(noopSupabase, ctx, "i8", {
+      status: "in_review",
+      description: "",
+    });
+    expect(repo.update).toHaveBeenCalledWith(noopSupabase, "i8", "t1", { status: "in_review" });
+  });
+
+  it("updateWorkerReportedIssue rejects foreign or non-issue upload sessions", async () => {
+    const policy = await import("@/lib/tenant/tenant.policy");
+    const repo = await import("./issue.repository");
+    const sessions = await import("@/lib/domain/upload-session/upload-session.repository");
+    vi.mocked(policy.canReadProjects).mockReturnValue(true);
+    vi.mocked(repo.update).mockClear();
+    vi.mocked(repo.getById).mockResolvedValue({
+      id: "i9",
+      project_id: "proj-1",
+      tenant_id: "t1",
+      title: "Fence",
+      description: null,
+      status: "open",
+      task_id: null,
+      milestone_id: null,
+      created_by: "u1",
+      resolved_at: null,
+      resolved_by: null,
+      created_at: "",
+      updated_at: "",
+    });
+    vi.mocked(sessions.getById).mockResolvedValue({
+      id: "sess-report",
+      tenant_id: "t1",
+      user_id: "other-worker",
+      purpose: "report_after",
+      status: "finalized",
+      object_path: "media/t1/sess-report/a.jpg",
+      mime_type: "image/jpeg",
+      size_bytes: 12,
+      created_at: "",
+      expires_at: "",
+    });
+    const { data, error } = await updateWorkerReportedIssue(noopSupabase, ctx, "i9", {
+      evidence_upload_session_id: "sess-report",
+    });
+    expect(data).toBeNull();
+    expect(error).toBe("Invalid evidence");
+    expect(repo.update).not.toHaveBeenCalled();
   });
 });

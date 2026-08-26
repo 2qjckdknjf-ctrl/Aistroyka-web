@@ -4,8 +4,14 @@ import { canReadProjects, canManageProjects } from "@/lib/tenant/tenant.policy";
 import { getById as getProjectById } from "@/lib/domain/projects/project.repository";
 import { notifyProjectManagers, notifyUser } from "@/lib/domain/notifications/manager-notifications.repository";
 import { getById as getTaskById } from "@/lib/domain/tasks/task.repository";
+import { getById as getUploadSessionById } from "@/lib/domain/upload-session/upload-session.repository";
 import * as repo from "./issue.repository";
-import type { ProjectIssue, CreateIssueInput, IssueStatus, UpdateIssueInput } from "./issue.types";
+import {
+  isWorkerAllowedIssueStatus,
+  nextWorkerIssueDescription,
+  workerMayMutateIssue,
+} from "./issue.worker-patch";
+import type { ProjectIssue, CreateIssueInput, UpdateIssueInput } from "./issue.types";
 
 export async function listIssues(
   supabase: SupabaseClient,
@@ -115,8 +121,6 @@ export async function updateIssue(
     : { data: null, error: "Update failed" };
 }
 
-const WORKER_ISSUE_STATUSES: IssueStatus[] = ["open", "in_review"];
-
 /** Worker may comment and send for review; resolve/close stays manager-only. */
 export async function updateWorkerReportedIssue(
   supabase: SupabaseClient,
@@ -126,14 +130,35 @@ export async function updateWorkerReportedIssue(
 ): Promise<{ data: ProjectIssue | null; error: string }> {
   if (!canReadProjects(ctx)) return { data: null, error: "Insufficient rights" };
   if (!ctx.tenantId) return { data: null, error: "Tenant required" };
-  if (input.status && !WORKER_ISSUE_STATUSES.includes(input.status)) {
+  if (input.status && !isWorkerAllowedIssueStatus(input.status)) {
     return { data: null, error: "Insufficient rights" };
   }
 
   const existing = await repo.getById(supabase, issueId, ctx.tenantId);
   if (!existing) return { data: null, error: "Not found" };
+  if (!workerMayMutateIssue(existing.status)) {
+    return { data: null, error: "Issue is closed" };
+  }
 
-  const data = await repo.update(supabase, issueId, ctx.tenantId, input);
+  const updateInput: UpdateIssueInput = {};
+  if (input.status) updateInput.status = input.status;
+  const nextDescription = nextWorkerIssueDescription(existing.description, input.description);
+  if (nextDescription !== undefined) updateInput.description = nextDescription;
+
+  if (input.evidence_upload_session_id) {
+    const session = await getUploadSessionById(supabase, input.evidence_upload_session_id, ctx.tenantId);
+    if (
+      !session ||
+      session.user_id !== ctx.userId ||
+      session.status !== "finalized" ||
+      session.purpose !== "issue_evidence"
+    ) {
+      return { data: null, error: "Invalid evidence" };
+    }
+    updateInput.evidence_upload_session_id = input.evidence_upload_session_id;
+  }
+
+  const data = await repo.update(supabase, issueId, ctx.tenantId, updateInput);
   if (data && input.status === "in_review") {
     await notifyProjectManagers(supabase, ctx.tenantId, data.project_id, {
       type: "issue_status_changed",
