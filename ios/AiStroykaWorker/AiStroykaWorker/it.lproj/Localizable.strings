@@ -242,6 +242,7 @@
 "wrk_v43_mine" = "Mine";
 "wrk_v43_closed" = "Closed";
 "wrk_v43_assigned_you" = "Assigned to you";
+"wrk_v43_issue_view_only" = "Solo lettura. Solo chi ha segnalato può inviare la risoluzione.";
 "wrk_v43_take_result_photo" = "Take a result photo";
 "wrk_v43_issue_comment" = "Comment";
 "wrk_v43_send_review" = "Send for review";

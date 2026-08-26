@@ -19,6 +19,7 @@ struct IssuesListView: View {
     @State private var createTitle = ""
     @State private var createDetail = ""
     @State private var creating = false
+    @State private var currentUserId: String?
 
     var body: some View {
         NavigationStack {
@@ -48,6 +49,7 @@ struct IssuesListView: View {
                 issues = WorkerV43API.cachedIssues(projectId: project.id)
                 load()
                 if initialReport { showCreate = true }
+                Task { currentUserId = await AuthService.shared.currentSession()?.user.id }
             }
             .sheet(isPresented: $showCreate) { createSheet }
             .accessibilityIdentifier("pilot_worker_issues_list")
@@ -59,7 +61,7 @@ struct IssuesListView: View {
             let statusOk: Bool
             switch filter {
             case .open: statusOk = issue.status == "open" || issue.status == "in_review"
-            case .mine: statusOk = issue.taskId != nil
+            case .mine: statusOk = issue.isMine(currentUserId: currentUserId)
             case .closed: statusOk = issue.status == "resolved" || issue.status == "closed"
             }
             guard statusOk else { return false }
@@ -277,7 +279,12 @@ struct IssueResolutionView: View {
     @State private var showCamera = false
     @State private var sending = false
     @State private var message: String?
+    @State private var currentUserId: String?
     @ObservedObject private var network = NetworkMonitor.shared
+
+    private var canMutate: Bool {
+        issue.workerMayMutate(currentUserId: currentUserId)
+    }
 
     var body: some View {
         ScrollView {
@@ -287,7 +294,9 @@ struct IssueResolutionView: View {
                     .foregroundStyle(WorkerV43.textPrimary)
                 HStack {
                     WorkerV43StatusPill(text: WorkerV43Copy.issueStatus(issue.status), kind: .danger)
-                    WorkerV43StatusPill(text: NSLocalizedString("wrk_v43_assigned_you", comment: ""), kind: .info)
+                    if canMutate {
+                        WorkerV43StatusPill(text: NSLocalizedString("wrk_v43_assigned_you", comment: ""), kind: .info)
+                    }
                 }
                 if let description = issue.description {
                     Text(description).foregroundStyle(WorkerV43.textSecondary)
@@ -315,37 +324,43 @@ struct IssueResolutionView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                     .accessibilityLabel(NSLocalizedString("wrk_v43_issue_evidence", comment: ""))
                 }
-                WorkerV43PrimaryButton(
-                    title: NSLocalizedString("wrk_v43_take_result_photo", comment: ""),
-                    systemImage: "camera",
-                    fill: WorkerV43.warning
-                ) { showCamera = true }
-                TextField(NSLocalizedString("wrk_v43_issue_comment", comment: ""), text: $comment, axis: .vertical)
-                    .padding()
-                    .background(WorkerV43.card)
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    .foregroundStyle(WorkerV43.textPrimary)
                 if !network.isConnected {
                     WorkerV43OfflineBanner()
                 }
                 if let message {
                     Text(message).font(.caption).foregroundStyle(WorkerV43.success)
                 }
-                WorkerV43PrimaryButton(
-                    title: NSLocalizedString("wrk_v43_send_review", comment: ""),
-                    systemImage: "paperplane.fill",
-                    enabled: !sending,
-                    loading: sending,
-                    fill: WorkerV43.success,
-                    ink: .white
-                ) { send() }
-                .accessibilityIdentifier("pilot_worker_issue_send_review")
-                WorkerV43OutlineButton(
-                    title: NSLocalizedString("wrk_v43_cannot_fix", comment: ""),
-                    systemImage: "exclamationmark.triangle",
-                    tint: WorkerV43.danger
-                ) { send(cannotFix: true) }
-                .accessibilityIdentifier("pilot_worker_issue_cannot_fix")
+                if canMutate {
+                    WorkerV43PrimaryButton(
+                        title: NSLocalizedString("wrk_v43_take_result_photo", comment: ""),
+                        systemImage: "camera",
+                        fill: WorkerV43.warning
+                    ) { showCamera = true }
+                    TextField(NSLocalizedString("wrk_v43_issue_comment", comment: ""), text: $comment, axis: .vertical)
+                        .padding()
+                        .background(WorkerV43.card)
+                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        .foregroundStyle(WorkerV43.textPrimary)
+                    WorkerV43PrimaryButton(
+                        title: NSLocalizedString("wrk_v43_send_review", comment: ""),
+                        systemImage: "paperplane.fill",
+                        enabled: !sending,
+                        loading: sending,
+                        fill: WorkerV43.success,
+                        ink: .white
+                    ) { send() }
+                    .accessibilityIdentifier("pilot_worker_issue_send_review")
+                    WorkerV43OutlineButton(
+                        title: NSLocalizedString("wrk_v43_cannot_fix", comment: ""),
+                        systemImage: "exclamationmark.triangle",
+                        tint: WorkerV43.danger
+                    ) { send(cannotFix: true) }
+                    .accessibilityIdentifier("pilot_worker_issue_cannot_fix")
+                } else {
+                    Text(NSLocalizedString("wrk_v43_issue_view_only", comment: ""))
+                        .font(.caption)
+                        .foregroundStyle(WorkerV43.textSecondary)
+                }
             }
             .padding(WorkerV43.screenX)
         }
@@ -353,6 +368,9 @@ struct IssueResolutionView: View {
         .accessibilityIdentifier("pilot_worker_issue_resolution")
         .navigationTitle(NSLocalizedString("wrk_v43_issues", comment: ""))
         .fullScreenCover(isPresented: $showCamera) { CameraPicker(image: $image) }
+        .onAppear {
+            Task { currentUserId = await AuthService.shared.currentSession()?.user.id }
+        }
     }
 
     private func resolutionDescription() -> String {
@@ -370,6 +388,7 @@ struct IssueResolutionView: View {
     }
 
     private func send(cannotFix: Bool = false) {
+        guard canMutate else { return }
         if let image {
             WorkerPhotoEvidence.persistPending(image: image, purpose: WorkerPhotoKind.issue.rawValue, taskId: issue.taskId)
         }

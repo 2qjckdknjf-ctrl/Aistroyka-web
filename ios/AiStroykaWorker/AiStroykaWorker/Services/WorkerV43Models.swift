@@ -250,6 +250,7 @@ struct WorkerIssueDTO: Identifiable, Hashable, Codable {
     var description: String?
     var status: String
     var taskId: String?
+    var createdBy: String? = nil
     var createdAt: String?
     var updatedAt: String?
     var evidenceUploadSessionId: String? = nil
@@ -262,10 +263,24 @@ struct WorkerIssueDTO: Identifiable, Hashable, Codable {
         case description
         case status
         case taskId = "task_id"
+        case createdBy = "created_by"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
         case evidenceUploadSessionId = "evidence_upload_session_id"
         case evidenceUrl = "evidence_url"
+    }
+
+    func workerMayMutate(currentUserId: String?) -> Bool {
+        if WorkerV43Preview.isEnabled { return true }
+        guard let currentUserId, !currentUserId.isEmpty, let createdBy, !createdBy.isEmpty else {
+            return false
+        }
+        return createdBy == currentUserId
+    }
+
+    func isMine(currentUserId: String?) -> Bool {
+        if WorkerV43Preview.isEnabled { return taskId != nil }
+        return workerMayMutate(currentUserId: currentUserId)
     }
 }
 

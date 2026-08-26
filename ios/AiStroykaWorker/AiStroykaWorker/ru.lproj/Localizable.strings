@@ -242,6 +242,7 @@
 "wrk_v43_mine" = "Мои";
 "wrk_v43_closed" = "Закрытые";
 "wrk_v43_assigned_you" = "Назначено вам";
+"wrk_v43_issue_view_only" = "Можно только смотреть. Отправить решение может автор проблемы.";
 "wrk_v43_take_result_photo" = "Снять фото результата";
 "wrk_v43_issue_comment" = "Комментарий";
 "wrk_v43_send_review" = "Отправить на проверку";
