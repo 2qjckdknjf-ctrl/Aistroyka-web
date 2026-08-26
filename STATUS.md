@@ -3,7 +3,7 @@
 > Live project status. Keep this short and mobile-readable.
 
 **Last updated:** 2026-08-26  
-**Updated by:** Worker issue PATCH safety after [#260](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/260)
+**Updated by:** [#261](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/261) live on production
 
 ---
 
@@ -11,10 +11,10 @@
 
 | Field | Value |
 |---|---|
-| **Active slice** | Stop worker issue PATCH from wiping defect text or reopening closed rows |
-| **Branch / worktree** | `fix/worker-issue-patch-safe` @ `/Users/alex/Projects/AISTROYKA-ios-worker-v4-3` |
-| **Runtime** | staging + production `buildStamp.sha7` = `d2e22f9` (PR #260) |
-| **Next** | Land this slice. Twilio SID/token still empty. Reviewer PAT still cannot approve |
+| **Active slice** | Worker issue PATCH safety landed — notes append, closed rows stay closed |
+| **Branch / worktree** | `/Users/alex/Projects/AISTROYKA-ios-worker-v4-3` (slice merged) |
+| **Runtime** | staging + production `buildStamp.sha7` = `ed1b7e2` (PR #261) |
+| **Next** | Twilio SID/token still empty. Reviewer PAT still cannot approve. TestFlight stays `NO` here |
 
 ## Notes
 
