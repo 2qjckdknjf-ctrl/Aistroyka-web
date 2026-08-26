@@ -7,6 +7,11 @@ import { getById as getTaskById } from "@/lib/domain/tasks/task.repository";
 import * as repo from "./issue.repository";
 import type { ProjectIssue, CreateIssueInput, IssueStatus, UpdateIssueInput } from "./issue.types";
 import { workerMayMutateIssue } from "./worker-issue-access";
+import {
+  nextWorkerIssueDescription,
+  workerIssuePatchError,
+  workerIssueUpdatePayload,
+} from "./worker-issue-patch";
 
 export async function listIssues(
   supabase: SupabaseClient,
@@ -142,8 +147,12 @@ export async function updateWorkerReportedIssue(
   if (!workerMayMutateIssue({ userId: ctx.userId, createdBy: existing.created_by, assignedTo })) {
     return { data: null, error: "Insufficient rights" };
   }
+  const closed = workerIssuePatchError(existing);
+  if (closed) return { data: null, error: closed };
 
-  const data = await repo.update(supabase, issueId, ctx.tenantId, input);
+  const description = nextWorkerIssueDescription(existing.description, input.description);
+  const safeInput = workerIssueUpdatePayload(input, description);
+  const data = await repo.update(supabase, issueId, ctx.tenantId, safeInput);
   if (data && input.status === "in_review") {
     await notifyProjectManagers(supabase, ctx.tenantId, data.project_id, {
       type: "issue_status_changed",

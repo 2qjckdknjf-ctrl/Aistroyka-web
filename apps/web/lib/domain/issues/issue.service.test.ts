@@ -205,6 +205,71 @@ describe("issue.service", () => {
     expect(data?.evidence_url).toBe("https://cdn.example/e.jpg");
   });
 
+  it("updateWorkerReportedIssue appends a note instead of replacing the defect text", async () => {
+    const policy = await import("@/lib/tenant/tenant.policy");
+    const repo = await import("./issue.repository");
+    vi.mocked(policy.canReadProjects).mockReturnValue(true);
+    const existing = {
+      id: "i9",
+      project_id: "proj-1",
+      tenant_id: "t1",
+      title: "Fence",
+      description: "Missing panels on axis 3",
+      status: "open" as const,
+      task_id: null,
+      milestone_id: null,
+      created_by: "u1",
+      resolved_at: null,
+      resolved_by: null,
+      created_at: "",
+      updated_at: "",
+    };
+    vi.mocked(repo.getById).mockResolvedValue(existing);
+    vi.mocked(repo.update).mockResolvedValue({
+      ...existing,
+      description: "Missing panels on axis 3\nfixed",
+      status: "in_review",
+    });
+    const { error } = await updateWorkerReportedIssue(noopSupabase, ctx, "i9", {
+      status: "in_review",
+      description: "fixed",
+      title: "should not apply",
+    });
+    expect(error).toBe("");
+    expect(repo.update).toHaveBeenCalledWith(noopSupabase, "i9", "t1", {
+      status: "in_review",
+      description: "Missing panels on axis 3\nfixed",
+    });
+  });
+
+  it("updateWorkerReportedIssue rejects a patch on a closed issue", async () => {
+    const policy = await import("@/lib/tenant/tenant.policy");
+    const repo = await import("./issue.repository");
+    vi.mocked(policy.canReadProjects).mockReturnValue(true);
+    vi.mocked(repo.getById).mockResolvedValue({
+      id: "i10",
+      project_id: "proj-1",
+      tenant_id: "t1",
+      title: "Fence",
+      description: "done",
+      status: "resolved",
+      task_id: null,
+      milestone_id: null,
+      created_by: "u1",
+      resolved_at: "",
+      resolved_by: "mgr",
+      created_at: "",
+      updated_at: "",
+    });
+    vi.mocked(repo.update).mockClear();
+    const { data, error } = await updateWorkerReportedIssue(noopSupabase, ctx, "i10", {
+      status: "in_review",
+    });
+    expect(data).toBeNull();
+    expect(error).toBe("Issue is closed");
+    expect(repo.update).not.toHaveBeenCalled();
+  });
+
   it("updateWorkerReportedIssue rejects resolve", async () => {
     const policy = await import("@/lib/tenant/tenant.policy");
     vi.mocked(policy.canReadProjects).mockReturnValue(true);

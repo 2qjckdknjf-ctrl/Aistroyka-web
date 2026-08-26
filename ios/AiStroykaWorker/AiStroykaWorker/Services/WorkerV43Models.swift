@@ -271,6 +271,7 @@ struct WorkerIssueDTO: Identifiable, Hashable, Codable {
     }
 
     func workerMayMutate(currentUserId: String?) -> Bool {
+        if status == "resolved" || status == "closed" { return false }
         if WorkerV43Preview.isEnabled { return true }
         guard let currentUserId, !currentUserId.isEmpty, let createdBy, !createdBy.isEmpty else {
             return false
