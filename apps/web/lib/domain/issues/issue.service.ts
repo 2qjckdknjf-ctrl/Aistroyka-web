@@ -6,6 +6,7 @@ import { notifyProjectManagers, notifyUser } from "@/lib/domain/notifications/ma
 import { getById as getTaskById } from "@/lib/domain/tasks/task.repository";
 import * as repo from "./issue.repository";
 import type { ProjectIssue, CreateIssueInput, IssueStatus, UpdateIssueInput } from "./issue.types";
+import { workerMayMutateIssue } from "./worker-issue-access";
 
 export async function listIssues(
   supabase: SupabaseClient,
@@ -117,7 +118,7 @@ export async function updateIssue(
 
 const WORKER_ISSUE_STATUSES: IssueStatus[] = ["open", "in_review"];
 
-/** Worker may comment and send for review; resolve/close stays manager-only. */
+/** Worker may comment and send for review if they reported it or are assigned on the linked task. Resolve/close stays manager-only. */
 export async function updateWorkerReportedIssue(
   supabase: SupabaseClient,
   ctx: TenantContext,
@@ -132,6 +133,15 @@ export async function updateWorkerReportedIssue(
 
   const existing = await repo.getById(supabase, issueId, ctx.tenantId);
   if (!existing) return { data: null, error: "Not found" };
+
+  let assignedTo: string | null = null;
+  if (existing.task_id) {
+    const task = await getTaskById(supabase, existing.task_id, ctx.tenantId);
+    assignedTo = task?.assigned_to ?? null;
+  }
+  if (!workerMayMutateIssue({ userId: ctx.userId, createdBy: existing.created_by, assignedTo })) {
+    return { data: null, error: "Insufficient rights" };
+  }
 
   const data = await repo.update(supabase, issueId, ctx.tenantId, input);
   if (data && input.status === "in_review") {
