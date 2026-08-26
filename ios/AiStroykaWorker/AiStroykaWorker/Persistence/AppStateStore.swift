@@ -51,6 +51,8 @@ struct AppStateStore: Codable, Equatable {
     /// Phase 2: first-run intro; missing in legacy JSON → true (do not show intro upgrades).
     var hasCompletedWorkerIntro: Bool
     var cachedTodayTasks: [TaskDTO]
+    /// Owner of `cachedTodayTasks`. Missing/legacy JSON is treated as unscoped and never hydrated.
+    var cachedTodayTasksUserId: String?
     var updatedAt: String
 
     enum CodingKeys: String, CodingKey {
@@ -59,9 +61,10 @@ struct AppStateStore: Codable, Equatable {
         case draftReportCreateKey
         case hasCompletedWorkerIntro
         case cachedTodayTasks
+        case cachedTodayTasksUserId
     }
 
-    init(selectedProjectId: String?, shift: ShiftState, draftReportId: String?, draftTaskId: String?, pendingUploads: [PendingUploadItem], lastSyncCursor: String?, shiftIdempotencyKeys: [String: ShiftIdempotencyKeys], draftReportCreateKey: [String: String], hasCompletedWorkerIntro: Bool, cachedTodayTasks: [TaskDTO] = [], updatedAt: String) {
+    init(selectedProjectId: String?, shift: ShiftState, draftReportId: String?, draftTaskId: String?, pendingUploads: [PendingUploadItem], lastSyncCursor: String?, shiftIdempotencyKeys: [String: ShiftIdempotencyKeys], draftReportCreateKey: [String: String], hasCompletedWorkerIntro: Bool, cachedTodayTasks: [TaskDTO] = [], cachedTodayTasksUserId: String? = nil, updatedAt: String) {
         self.selectedProjectId = selectedProjectId
         self.shift = shift
         self.draftReportId = draftReportId
@@ -72,6 +75,7 @@ struct AppStateStore: Codable, Equatable {
         self.draftReportCreateKey = draftReportCreateKey
         self.hasCompletedWorkerIntro = hasCompletedWorkerIntro
         self.cachedTodayTasks = cachedTodayTasks
+        self.cachedTodayTasksUserId = cachedTodayTasksUserId
         self.updatedAt = updatedAt
     }
 
@@ -87,6 +91,7 @@ struct AppStateStore: Codable, Equatable {
         draftReportCreateKey = try c.decodeIfPresent([String: String].self, forKey: .draftReportCreateKey) ?? [:]
         hasCompletedWorkerIntro = try c.decodeIfPresent(Bool.self, forKey: .hasCompletedWorkerIntro) ?? true
         cachedTodayTasks = try c.decodeIfPresent([TaskDTO].self, forKey: .cachedTodayTasks) ?? []
+        cachedTodayTasksUserId = try c.decodeIfPresent(String.self, forKey: .cachedTodayTasksUserId)
         updatedAt = try c.decode(String.self, forKey: .updatedAt)
     }
 
@@ -102,7 +107,23 @@ struct AppStateStore: Codable, Equatable {
         try c.encode(draftReportCreateKey, forKey: .draftReportCreateKey)
         try c.encode(hasCompletedWorkerIntro, forKey: .hasCompletedWorkerIntro)
         try c.encode(cachedTodayTasks, forKey: .cachedTodayTasks)
+        try c.encodeIfPresent(cachedTodayTasksUserId, forKey: .cachedTodayTasksUserId)
         try c.encode(updatedAt, forKey: .updatedAt)
+    }
+
+    func cachedTodayTasks(forUserId userId: String?) -> [TaskDTO] {
+        guard let userId, !userId.isEmpty, cachedTodayTasksUserId == userId else { return [] }
+        return cachedTodayTasks
+    }
+
+    mutating func replaceCachedTodayTasks(_ list: [TaskDTO], userId: String) {
+        cachedTodayTasks = list
+        cachedTodayTasksUserId = userId
+    }
+
+    mutating func clearCachedTodayTasks() {
+        cachedTodayTasks = []
+        cachedTodayTasksUserId = nil
     }
 
     static func empty() -> AppStateStore {
@@ -197,5 +218,9 @@ final class AppStateStoreManager: ObservableObject {
 
     var pendingCount: Int {
         state.pendingUploads.filter { $0.phase != "done" }.count
+    }
+
+    func clearSessionScopedCache() {
+        save { $0.clearCachedTodayTasks() }
     }
 }

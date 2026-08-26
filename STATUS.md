@@ -2,7 +2,7 @@
 
 > Live project status. Keep this short and mobile-readable.
 
-**Last updated:** 2026-08-25  
+**Last updated:** 2026-08-26  
 **Updated by:** iOS live work tails on `mobile/ios-live-work-tails`
 
 ---
@@ -15,8 +15,8 @@
 | **Branch / worktree** | `mobile/ios-live-work-tails` @ `/Users/alex/Projects/AISTROYKA-ios-manager-v4-3` |
 | **PR** | [#258](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/258) |
 | **Base** | `origin/main` (includes #256 Worker V4.3) |
-| **Checks** | Shared 10/10; Manager BUILD SUCCEEDED; Worker BUILD SUCCEEDED |
-| **Next** | Push + PR; non-author APPROVED; do not self-approve. `GITHUB_REVIEWER_TOKEN` last seen 401 |
+| **Checks** | Shared 14/14; Manager BUILD SUCCEEDED; Worker BUILD SUCCEEDED. CI Check + iOS UI smoke were green on previous head |
+| **Next** | Security mediums pushed; wait CI + non-author APPROVED. Do not self-approve |
 
 ## Notes
 

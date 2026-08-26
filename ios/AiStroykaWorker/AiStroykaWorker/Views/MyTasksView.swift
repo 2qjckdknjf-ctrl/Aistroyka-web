@@ -33,8 +33,9 @@ struct MyTasksView: View {
             .toolbar(.hidden, for: .navigationBar)
             .refreshable { load() }
             .onAppear {
-                if tasks.isEmpty, !store.state.cachedTodayTasks.isEmpty {
-                    tasks = store.state.cachedTodayTasks
+                let cached = store.state.cachedTodayTasks(forUserId: KeychainHelper.get(key: KeychainHelper.sessionUserIdKey))
+                if tasks.isEmpty, !cached.isEmpty {
+                    tasks = cached
                 }
                 load()
                 openPendingTask()
@@ -228,12 +229,14 @@ struct MyTasksView: View {
                     tasks = list
                     loading = false
                     errorMessage = nil
-                    store.save { $0.cachedTodayTasks = list }
+                    if let userId = KeychainHelper.get(key: KeychainHelper.sessionUserIdKey) {
+                        store.save { $0.replaceCachedTodayTasks(list, userId: userId) }
+                    }
                 }
             } catch {
                 await MainActor.run {
                     if tasks.isEmpty {
-                        tasks = store.state.cachedTodayTasks
+                        tasks = store.state.cachedTodayTasks(forUserId: KeychainHelper.get(key: KeychainHelper.sessionUserIdKey))
                     }
                     loading = false
                     if tasks.isEmpty {

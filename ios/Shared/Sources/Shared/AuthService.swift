@@ -9,6 +9,8 @@ import Foundation
 public actor AuthService {
     public static let shared = AuthService()
     private var cachedSession: (token: String, user: AuthUser)?
+    /// Bumped on logout and user switch so an in-flight refresh cannot restore a stale session.
+    private var sessionEpoch: UInt64 = 0
 
     public struct AuthUser {
         public let id: String
@@ -179,12 +181,25 @@ public actor AuthService {
     }
 
     public func signOut() async {
+        sessionEpoch &+= 1
         cachedSession = nil
         KeychainHelper.delete(key: KeychainHelper.sessionTokenKey)
         KeychainHelper.delete(key: KeychainHelper.sessionUserIdKey)
         KeychainHelper.delete(key: KeychainHelper.sessionEmailKey)
         KeychainHelper.delete(key: KeychainHelper.sessionRefreshTokenKey)
         KeychainHelper.delete(key: KeychainHelper.sessionExpiresAtKey)
+    }
+
+    /// True only when the refresh that started is still the current session.
+    public static func canPersistRefreshedSession(
+        startedEpoch: UInt64,
+        currentEpoch: UInt64,
+        startedRefreshToken: String,
+        currentRefreshToken: String?
+    ) -> Bool {
+        currentEpoch == startedEpoch
+            && !startedRefreshToken.isEmpty
+            && currentRefreshToken == startedRefreshToken
     }
 
     private func persistSession(
@@ -194,6 +209,10 @@ public actor AuthService {
         refreshToken: String?,
         expiresAt: TimeInterval?
     ) {
+        let previousUserId = cachedSession?.user.id ?? KeychainHelper.get(key: KeychainHelper.sessionUserIdKey)
+        if previousUserId != userId {
+            sessionEpoch &+= 1
+        }
         cachedSession = (accessToken, AuthUser(id: userId, email: email))
         _ = KeychainHelper.set(key: KeychainHelper.sessionTokenKey, value: accessToken)
         _ = KeychainHelper.set(key: KeychainHelper.sessionUserIdKey, value: userId)
@@ -232,6 +251,7 @@ public actor AuthService {
     }
 
     private func performRefresh() async -> Bool {
+        let epoch = sessionEpoch
         guard let refresh = KeychainHelper.get(key: KeychainHelper.sessionRefreshTokenKey), !refresh.isEmpty else {
             return false
         }
@@ -251,6 +271,14 @@ public actor AuthService {
               http.statusCode == 200,
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let accessToken = json["access_token"] as? String else {
+            return false
+        }
+        guard Self.canPersistRefreshedSession(
+            startedEpoch: epoch,
+            currentEpoch: sessionEpoch,
+            startedRefreshToken: refresh,
+            currentRefreshToken: KeychainHelper.get(key: KeychainHelper.sessionRefreshTokenKey)
+        ) else {
             return false
         }
         let user = json["user"] as? [String: Any]

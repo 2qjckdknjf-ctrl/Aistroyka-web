@@ -60,8 +60,9 @@ struct TodayHomeView: View {
             .toolbar(.hidden, for: .navigationBar)
             .refreshable { load() }
             .onAppear {
-                if todayTasks.isEmpty, !store.state.cachedTodayTasks.isEmpty {
-                    todayTasks = store.state.cachedTodayTasks
+                let cached = store.state.cachedTodayTasks(forUserId: KeychainHelper.get(key: KeychainHelper.sessionUserIdKey))
+                if todayTasks.isEmpty, !cached.isEmpty {
+                    todayTasks = cached
                 }
                 load()
             }
@@ -442,12 +443,14 @@ struct TodayHomeView: View {
                     assistantSummary = assistant
                     tasksLoading = false
                     errorMessage = nil
-                    store.save { $0.cachedTodayTasks = list }
+                    if let userId = KeychainHelper.get(key: KeychainHelper.sessionUserIdKey) {
+                        store.save { $0.replaceCachedTodayTasks(list, userId: userId) }
+                    }
                 }
             } catch {
                 await MainActor.run {
                     if todayTasks.isEmpty {
-                        todayTasks = store.state.cachedTodayTasks
+                        todayTasks = store.state.cachedTodayTasks(forUserId: KeychainHelper.get(key: KeychainHelper.sessionUserIdKey))
                     }
                     tasksLoading = false
                     if todayTasks.isEmpty {
