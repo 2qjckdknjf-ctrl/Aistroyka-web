@@ -12,6 +12,8 @@ public enum KeychainHelper {
     public static let sessionTokenKey = "com.workerlite.sessionToken"
     public static let sessionUserIdKey = "com.workerlite.sessionUserId"
     public static let sessionEmailKey = "com.workerlite.sessionEmail"
+    public static let sessionRefreshTokenKey = "com.workerlite.sessionRefreshToken"
+    public static let sessionExpiresAtKey = "com.workerlite.sessionExpiresAt"
     public static let pushTokenKey = "com.workerlite.pushToken"
 
     public static func get(key: String) -> String? {

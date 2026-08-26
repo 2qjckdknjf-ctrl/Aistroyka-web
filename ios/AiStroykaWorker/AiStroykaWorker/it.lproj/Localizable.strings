@@ -16,6 +16,7 @@
 "worker_end_shift" = "Termina turno";
 "worker_loading_tasks" = "Caricamento attività…";
 "worker_todays_tasks" = "Attività di oggi";
+"worker_tasks_load_error" = "Impossibile caricare le attività. Trascina per riprovare.";
 "worker_new_report" = "Nuovo report";
 "worker_support" = "Assistenza";
 "worker_sign_out" = "Esci";

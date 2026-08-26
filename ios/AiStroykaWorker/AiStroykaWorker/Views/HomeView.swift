@@ -245,9 +245,15 @@ struct HomeView: View {
             if phase == .active {
                 loadTodayTasks()
                 loadFeedbackReports()
+                OperationQueueExecutor.shared.runLoop()
+                syncService.runSyncIfOnline()
             }
         }
         .onAppear {
+            let cached = store.state.cachedTodayTasks(forUserId: KeychainHelper.get(key: KeychainHelper.sessionUserIdKey))
+            if todayTasks.isEmpty, !cached.isEmpty {
+                todayTasks = cached
+            }
             loadTodayTasks()
             loadFeedbackReports()
             loadHelpHints()
@@ -460,12 +466,21 @@ struct HomeView: View {
                     todayTasks = list
                     unreadChatByTaskId = unread
                     tasksLoading = false
+                    errorMessage = nil
+                    if let userId = KeychainHelper.get(key: KeychainHelper.sessionUserIdKey) {
+                        store.save { $0.replaceCachedTodayTasks(list, userId: userId) }
+                    }
                 }
             } catch {
                 await MainActor.run {
-                    todayTasks = []
+                    if todayTasks.isEmpty {
+                        todayTasks = store.state.cachedTodayTasks(forUserId: KeychainHelper.get(key: KeychainHelper.sessionUserIdKey))
+                    }
                     unreadChatByTaskId = [:]
                     tasksLoading = false
+                    if todayTasks.isEmpty {
+                        errorMessage = NSLocalizedString("worker_tasks_load_error", comment: "")
+                    }
                 }
             }
         }

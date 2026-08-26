@@ -39,8 +39,7 @@ Live APIs stay the source of business data. Preview fixtures (`AISTROYKA_MANAGER
 
 ## Remaining (honest)
 
-- Task create still has no media upload API; UI states this and sends `report_required` only.
-- Team invite / add-project have no in-app APIs; alerts tell the truth (web/admin).
+- Invite, create-project, create-task photos, priority persist, and AI risk-decisions are live (see follow-up plan).
 - Live AI-risk detail (`10`) exists only when live jobs exist; empty AI center is honest.
 - Analytics week/month/quarter picker does not change the series (no timeseries API).
 - Full Dynamic Type XL / VoiceOver / landscape / slow-network suite was not run.

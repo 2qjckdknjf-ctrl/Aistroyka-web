@@ -16,6 +16,7 @@
 "worker_end_shift" = "Finalizar turno";
 "worker_loading_tasks" = "Cargando tareas…";
 "worker_todays_tasks" = "Tareas de hoy";
+"worker_tasks_load_error" = "No se pudieron cargar las tareas. Desliza para reintentar.";
 "worker_new_report" = "Nuevo informe";
 "worker_support" = "Soporte";
 "worker_sign_out" = "Cerrar sesión";

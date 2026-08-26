@@ -21,6 +21,9 @@ final class AiStroykaWorkerAppDelegate: NSObject, UIApplicationDelegate {
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
         requestPushPermissionAndRegister(application: application)
+        BackgroundUploadService.shared.recreateSessionIfNeeded()
+        OperationQueueStore.shared.requeueStaleRunningUploads()
+        OperationQueueExecutor.shared.runLoop()
         return true
     }
 
