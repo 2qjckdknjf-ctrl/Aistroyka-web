@@ -22,7 +22,7 @@ AISTROYKA (existing Next.js / Supabase / Cloudflare Worker)
     ├── Construction Graph       construction_entities / construction_relations
     ├── Agent Action Envelope    lib/agentic/envelope
     ├── Policy / Approval        lib/agentic/policy (+ existing evaluateActionPolicy)
-    ├── Evidence Contract        lib/agentic/evidence
+    ├── Evidence Contract        lib/agentic/contracts
     └── Audit Trail              audit_logs + agent_runs
 ```
 
