@@ -8,6 +8,7 @@ import { V41PilotProvider } from "@/components/public/v41";
 import { getAppUrl } from "@/lib/app-url";
 import { routing } from "@/i18n/routing";
 import { publicCanonicalUrl, publicLocaleAlternates } from "@/lib/seo/public-canonical";
+import { publicOpenGraph } from "@/lib/seo/public-open-graph";
 import { PublicFunnelBeacon } from "@/components/public/PublicFunnelBeacon";
 
 const manrope = Manrope({
@@ -26,8 +27,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const headerList = await headers();
   const pathname = headerList.get("x-aistroyka-pathname") ?? `/${locale}`;
   const origin = getAppUrl();
-  const ogLocale =
-    locale === "ru" ? "ru_RU" : locale === "es" ? "es_ES" : locale === "it" ? "it_IT" : "en_US";
   const canonical = publicCanonicalUrl({ origin, pathname });
   return {
     alternates: {
@@ -39,10 +38,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         defaultLocale: routing.defaultLocale,
       }),
     },
-    openGraph: {
-      locale: ogLocale,
-      url: canonical,
-    },
+    openGraph: publicOpenGraph({ locale, canonical }),
   };
 }
 
