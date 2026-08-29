@@ -190,7 +190,12 @@ struct TodayHomeView: View {
     }
 
     private var projectCard: some View {
-        WorkerV43HeroPhoto(height: 132, systemImage: "building.2.fill", imageURL: sitePhotoURL) {
+        WorkerV43HeroPhoto(
+            height: 132,
+            systemImage: "building.2.fill",
+            imageURL: sitePhotoURL,
+            loadedImageAccessibilityIdentifier: "pilot_worker_site_photo"
+        ) {
             HStack {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(project.name ?? project.id)
@@ -210,11 +215,6 @@ struct TodayHomeView: View {
                 }
                 .accessibilityLabel(NSLocalizedString("worker_nav_projects", comment: ""))
             }
-        }
-        .overlay(alignment: .topLeading) {
-            Color.clear
-                .frame(width: 1, height: 1)
-                .accessibilityIdentifier("pilot_worker_site_photo")
         }
     }
 
