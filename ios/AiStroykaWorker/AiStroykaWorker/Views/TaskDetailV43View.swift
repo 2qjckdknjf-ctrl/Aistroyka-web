@@ -28,7 +28,8 @@ struct TaskDetailV43View: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
                 HStack {
-                    WorkerV43StatusPill(text: NSLocalizedString("wrk_v43_priority_high", comment: ""), kind: .danger, systemImage: "exclamationmark.triangle")
+                    let priority = WorkerV43Copy.taskPriority(task.priority)
+                    WorkerV43StatusPill(text: priority.text, kind: priority.kind, systemImage: "exclamationmark.triangle")
                     WorkerV43StatusPill(text: WorkerV43Copy.taskStatus(task.status), kind: .success)
                     WorkerV43StatusPill(text: task.dueDate ?? NSLocalizedString("wrk_v43_today", comment: ""), kind: .info, systemImage: "clock")
                 }

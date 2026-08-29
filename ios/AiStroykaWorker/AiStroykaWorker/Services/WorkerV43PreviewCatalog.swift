@@ -69,6 +69,17 @@ enum WorkerV43Copy {
         }
     }
 
+    static func taskPriority(_ raw: String?) -> (text: String, kind: WorkerV43StatusPill.Kind) {
+        switch (raw ?? "").lowercased() {
+        case "high", "urgent", "critical":
+            return (NSLocalizedString("worker_priority_high", comment: ""), .danger)
+        case "low":
+            return (NSLocalizedString("worker_priority_low", comment: ""), .neutral)
+        default:
+            return (NSLocalizedString("worker_priority_medium", comment: ""), .warning)
+        }
+    }
+
     static func documentType(_ type: String) -> String {
         switch type.lowercased() {
         case "drawing", "draw":
@@ -160,7 +171,8 @@ enum WorkerV43PreviewCatalog {
                 status: "in_progress",
                 projectId: projectId,
                 dueDate: "09:00–16:00",
-                assignedTo: NSLocalizedString("wrk_v43_manager", comment: "")
+                assignedTo: NSLocalizedString("wrk_v43_manager", comment: ""),
+                priority: "high"
             ),
             TaskDTO(
                 id: "preview-task-2",

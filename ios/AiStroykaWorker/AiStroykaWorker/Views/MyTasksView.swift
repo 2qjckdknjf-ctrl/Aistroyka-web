@@ -62,10 +62,10 @@ struct MyTasksView: View {
 
     private var filtered: [TaskDTO] {
         switch filter {
-        case .today:
-            return tasks
-        case .week:
-            return tasks
+        case .today, .week:
+            return tasks.filter {
+                WorkerTaskDayMatch.matches(dueRaw: $0.dueDate, selected: selectedDay, filter: filter)
+            }
         case .done:
             return tasks.filter { $0.status.lowercased().contains("done") || $0.status.lowercased().contains("complete") }
         }
@@ -141,7 +141,10 @@ struct MyTasksView: View {
             HStack(spacing: 8) {
                 ForEach(days, id: \.self) { day in
                     let on = Calendar.current.isDate(day, inSameDayAs: selectedDay)
-                    Button { selectedDay = day } label: {
+                    Button {
+                        selectedDay = day
+                        filter = .week
+                    } label: {
                         Text(shortDay(day))
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundStyle(on ? WorkerV43.yellowInk : WorkerV43.textPrimary)

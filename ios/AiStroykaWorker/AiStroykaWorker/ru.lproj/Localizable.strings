@@ -247,6 +247,8 @@
 "wrk_v43_issues_empty" = "Открытых проблем нет";
 "wrk_v43_issue_title" = "Название проблемы";
 "wrk_v43_issue_detail" = "Что произошло";
+"wrk_v43_issue_attach_photo" = "Добавить фото";
+"wrk_v43_issue_create_photo_queued" = "Фото проблемы поставлено в очередь на отправку.";
 "wrk_v43_open_fmt" = "Открытые %d";
 "wrk_v43_mine" = "Мои";
 "wrk_v43_closed" = "Закрытые";

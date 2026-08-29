@@ -51,7 +51,9 @@ final class WorkerV43UITests: XCTestCase {
         app.launchEnvironment["AISTROYKA_WORKER_V43_SCREEN"] = "issues"
         app.launch()
         XCTAssertTrue(app.descendants(matching: .any)["pilot_worker_issues_list"].waitForExistence(timeout: 20))
-        XCTAssertTrue(app.descendants(matching: .any)["pilot_worker_issue_create"].exists)
+        XCTAssertTrue(app.descendants(matching: .any)["pilot_worker_issue_create"].waitForExistence(timeout: 5))
+        app.descendants(matching: .any)["pilot_worker_issue_create"].firstMatch.tap()
+        XCTAssertTrue(app.descendants(matching: .any)["pilot_worker_issue_create_photo"].waitForExistence(timeout: 5))
 
         app.terminate()
         app.launchEnvironment["AISTROYKA_WORKER_V43_SCREEN"] = "documents"
@@ -160,6 +162,12 @@ final class WorkerV43UITests: XCTestCase {
         XCTAssertEqual(Self.docOffline(hasFile: true, server: "b", cached: "a"), "outdated")
         XCTAssertEqual(Self.docOffline(hasFile: true, server: "a", cached: "a"), "onDevice")
         XCTAssertEqual(Self.docOffline(hasFile: true, server: nil, cached: nil), "onDevice")
+        XCTAssertTrue(Self.dayMatch(due: "2026-08-29", selected: "2026-08-29", filter: "today", now: "2026-08-29"))
+        XCTAssertFalse(Self.dayMatch(due: "2026-08-28", selected: "2026-08-29", filter: "today", now: "2026-08-29"))
+        XCTAssertTrue(Self.dayMatch(due: nil, selected: "2026-08-29", filter: "today", now: "2026-08-29"))
+        XCTAssertTrue(Self.dayMatch(due: "09:00", selected: "2026-08-29", filter: "week", now: "2026-08-29"))
+        XCTAssertFalse(Self.dayMatch(due: "09:00", selected: "2026-08-28", filter: "week", now: "2026-08-29"))
+        XCTAssertTrue(Self.dayMatch(due: "2026-08-28", selected: "2026-08-28", filter: "week", now: "2026-08-29"))
     }
 
     func testPhoneNormalization() {
@@ -235,6 +243,30 @@ final class WorkerV43UITests: XCTestCase {
         let cachedValue = cached?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         if !serverValue.isEmpty, !cachedValue.isEmpty, serverValue != cachedValue { return "outdated" }
         return "onDevice"
+    }
+
+    private static func dayMatch(due: String?, selected: String, filter: String, now: String) -> Bool {
+        func day(_ raw: String) -> Date? {
+            let formatter = DateFormatter()
+            formatter.calendar = Calendar(identifier: .gregorian)
+            formatter.locale = Locale(identifier: "en_US_POSIX")
+            formatter.timeZone = TimeZone(secondsFromGMT: 0)
+            formatter.dateFormat = "yyyy-MM-dd"
+            return formatter.date(from: String(raw.prefix(10)))
+        }
+        let calendar = Calendar(identifier: .gregorian)
+        let selectedDay = day(selected) ?? Date()
+        let nowDay = day(now) ?? Date()
+        switch filter {
+        case "today":
+            if let due, let parsed = day(due) { return calendar.isDate(parsed, inSameDayAs: nowDay) }
+            return due == nil || day(due ?? "") == nil
+        case "week":
+            if let due, let parsed = day(due) { return calendar.isDate(parsed, inSameDayAs: selectedDay) }
+            return calendar.isDate(selectedDay, inSameDayAs: nowDay)
+        default:
+            return true
+        }
     }
 
     private static func phone(_ raw: String) -> String? {
