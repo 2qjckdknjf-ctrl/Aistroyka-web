@@ -47,6 +47,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ received: true, skipped: result.reason }, { status: 200 });
     case "processed":
       return NextResponse.json({ received: true, eventId: result.eventId }, { status: 200 });
+    case "failed":
+      // 500 so Stripe retries; ingress re-applies failed/pending rows on retry.
+      return NextResponse.json({ error: result.reason, eventId: result.eventId }, { status: 500 });
     default: {
       const _: never = result;
       return NextResponse.json({ error: "Processing failed" }, { status: 500 });

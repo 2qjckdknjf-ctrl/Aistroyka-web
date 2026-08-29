@@ -12,6 +12,8 @@ vi.mock("./billing-readiness.repository", () => ({
   markBillingEventProcessed: vi.fn(),
 }));
 
+// getCurrentBillingSubscription is used by completeSandboxCheckout for completed-session recovery.
+
 const {
   getBillingCheckoutSession,
   getBillingEventById,
@@ -33,7 +35,7 @@ describe("billing-sandbox service", () => {
       expect(error).toBe("Session not found");
     });
 
-    it("returns success when session already completed", async () => {
+    it("returns success when session already completed and subscription exists", async () => {
       vi.mocked(getBillingCheckoutSession).mockResolvedValue({
         id: "sess-1",
         workspaceId: "w1",
@@ -48,8 +50,10 @@ describe("billing-sandbox service", () => {
         expiresAt: null,
         metadata: {},
       });
+      vi.mocked(getCurrentBillingSubscription).mockResolvedValue({ id: "sub-1" } as never);
       const { success } = await completeSandboxCheckout(noopSupabase, "sess-1");
       expect(success).toBe(true);
+      expect(createBillingEventRecord).not.toHaveBeenCalled();
     });
 
     it("completes session and creates subscription when none exists", async () => {

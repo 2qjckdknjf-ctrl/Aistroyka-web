@@ -136,54 +136,81 @@ async function applyReconciliation(
       if (!session) {
         return { status: "failed", updatedSubscriptionId: null, updatedCheckoutSessionId: null, notes: ["Session not found"], idempotentHit: false, error: "Session not found" };
       }
-      if (session.status === "completed") {
-        const existing = await getCurrentBillingSubscription(supabase, session.workspaceId);
-        return {
-          status: "processed",
-          updatedSubscriptionId: existing?.id ?? null,
-          updatedCheckoutSessionId: session.id,
-          notes: ["Already completed; idempotent"],
-          idempotentHit: true,
-        };
-      }
       if (["cancelled", "expired", "failed"].includes(session.status)) {
         return { status: "failed", updatedSubscriptionId: null, updatedCheckoutSessionId: null, notes: [`Session already ${session.status}`], idempotentHit: false, error: `Session already ${session.status}` };
       }
 
+      // Ensure subscription exists before (or when recovering after) marking session completed.
+      // Marking completed first then failing create used to make retries permanently no-op.
+      let existing = await getCurrentBillingSubscription(supabase, session.workspaceId);
+      let subscriptionId = existing?.id ?? null;
+      let createdSubscription = false;
+
+      if (!existing) {
+        const billingProvider = translated.providerKind === "stripe" ? ("stripe" as const) : SANDBOX_PROVIDER;
+        const stripeSubId =
+          billingProvider === "stripe"
+            ? (translated.payload?.data as Record<string, unknown> | undefined)?.object as { subscription?: string } | undefined
+            : undefined;
+        const providerSubRef =
+          billingProvider === "stripe"
+            ? (stripeSubId?.subscription ?? `stripe_${hint.sessionId}`)
+            : `sandbox_${hint.sessionId}`;
+        const { data: sub, error: subErr } = await createBillingSubscription(supabase, {
+          workspaceId: session.workspaceId,
+          canonicalPlanCode: hint.planCode,
+          billingProvider,
+          providerSubscriptionRef: providerSubRef,
+          status: "active",
+          billingCycle: hint.billingCycle,
+          currentPeriodStart: new Date().toISOString(),
+          currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        });
+        if (subErr) {
+          return {
+            status: "failed",
+            updatedSubscriptionId: null,
+            updatedCheckoutSessionId: session.id,
+            notes: [subErr],
+            idempotentHit: false,
+            error: subErr,
+          };
+        }
+        subscriptionId = sub?.id ?? null;
+        createdSubscription = true;
+        notes.push(session.status === "completed" ? "Recovered missing subscription after completed session" : "Created subscription");
+      } else {
+        notes.push("Subscription already exists; no duplicate");
+      }
+
+      if (session.status === "completed") {
+        return {
+          status: "processed",
+          updatedSubscriptionId: subscriptionId,
+          updatedCheckoutSessionId: session.id,
+          notes: createdSubscription ? notes : ["Already completed; idempotent", ...notes],
+          idempotentHit: !createdSubscription,
+        };
+      }
+
       const { error: updateErr } = await updateBillingCheckoutSessionStatus(supabase, session.id, "completed");
       if (updateErr) {
-        return { status: "failed", updatedSubscriptionId: null, updatedCheckoutSessionId: null, notes: [updateErr], idempotentHit: false, error: updateErr };
+        return {
+          status: "failed",
+          updatedSubscriptionId: subscriptionId,
+          updatedCheckoutSessionId: session.id,
+          notes: [...notes, updateErr],
+          idempotentHit: false,
+          error: updateErr,
+        };
       }
-
-      const existing = await getCurrentBillingSubscription(supabase, session.workspaceId);
-      if (existing) {
-        notes.push("Subscription already exists; no duplicate");
-        return { status: "processed", updatedSubscriptionId: existing.id, updatedCheckoutSessionId: session.id, notes, idempotentHit: true };
-      }
-
-      const billingProvider = translated.providerKind === "stripe" ? ("stripe" as const) : SANDBOX_PROVIDER;
-      const stripeSubId =
-        billingProvider === "stripe"
-          ? (translated.payload?.data as Record<string, unknown> | undefined)?.object as { subscription?: string } | undefined
-          : undefined;
-      const providerSubRef =
-        billingProvider === "stripe"
-          ? (stripeSubId?.subscription ?? `stripe_${hint.sessionId}`)
-          : `sandbox_${hint.sessionId}`;
-      const { data: sub, error: subErr } = await createBillingSubscription(supabase, {
-        workspaceId: session.workspaceId,
-        canonicalPlanCode: hint.planCode,
-        billingProvider,
-        providerSubscriptionRef: providerSubRef,
-        status: "active",
-        billingCycle: hint.billingCycle,
-        currentPeriodStart: new Date().toISOString(),
-        currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-      });
-      if (subErr) {
-        return { status: "failed", updatedSubscriptionId: null, updatedCheckoutSessionId: session.id, notes: [subErr], idempotentHit: false, error: subErr };
-      }
-      return { status: "processed", updatedSubscriptionId: sub?.id ?? null, updatedCheckoutSessionId: session.id, notes, idempotentHit: false };
+      return {
+        status: "processed",
+        updatedSubscriptionId: subscriptionId,
+        updatedCheckoutSessionId: session.id,
+        notes,
+        idempotentHit: !createdSubscription,
+      };
     }
 
     case "checkout_cancel": {

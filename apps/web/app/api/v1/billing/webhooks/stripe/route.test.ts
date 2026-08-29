@@ -127,4 +127,24 @@ describe("POST /api/v1/billing/webhooks/stripe (Step 17)", () => {
     expect(body.received).toBe(true);
     expect(body.skipped).toBeDefined();
   });
+
+  it("returns 500 when processing failed so Stripe retries", async () => {
+    vi.mocked(ingestStripeWebhook).mockResolvedValue({
+      status: "failed",
+      eventId: "evt-1",
+      reason: "Session not found",
+    });
+    const { POST } = await import("./route");
+    const res = await POST(
+      new Request("https://x/webhooks/stripe", {
+        method: "POST",
+        body: "{}",
+        headers: { "stripe-signature": "sig" },
+      })
+    );
+    expect(res.status).toBe(500);
+    const body = await res.json();
+    expect(body.error).toBe("Session not found");
+    expect(body.eventId).toBe("evt-1");
+  });
 });
