@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { findRunByIdempotency, persistAgentRun } from "./agent-runs.repository";
+import { findRunByIdempotency, persistAgentRun, redactSensitiveText } from "./agent-runs.repository";
 import type { AgentExecutionContext } from "../types";
 
 function ctx(over: Partial<AgentExecutionContext> = {}): AgentExecutionContext {
@@ -49,7 +49,7 @@ describe("agent run persistence", () => {
       runId: "run-1",
       context: ctx({ userId: "user-a" }),
       status: "COMPLETED",
-      request: { message: "hi" },
+      request: { message: "password=hunter2 https://x.example/file?token=abc" },
       skillsCalled: [],
       structuredResult: { runId: "run-1", answer: "ok" },
       latencyMs: 1,
@@ -58,6 +58,8 @@ describe("agent run persistence", () => {
     });
     expect(inserted[0]).toMatchObject({ actor_user_id: "user-a" });
     expect(inserted[0]).not.toMatchObject({ actor_user_id: "user-b" });
+    expect((inserted[0] as { request: { message: string } }).request.message).not.toContain("hunter2");
+    expect((inserted[0] as { request: { message: string } }).request.message).toContain("[redacted");
   });
 
   it("does not replay a run from another project even if the row leaks", async () => {
@@ -106,5 +108,13 @@ describe("agent run persistence", () => {
       idempotencyKey: "abc",
     });
     expect(found).toBeNull();
+  });
+});
+
+describe("redactSensitiveText", () => {
+  it("redacts secrets and signed URLs from persisted prompt text", () => {
+    expect(redactSensitiveText("password=hunter2 and sk-abcdefghijklmnopqrstuvwxyz")).toContain("[redacted");
+    expect(redactSensitiveText("https://x.example/file?token=abc")).toBe("[redacted-url]");
+    expect(redactSensitiveText("hello world")).toBe("hello world");
   });
 });

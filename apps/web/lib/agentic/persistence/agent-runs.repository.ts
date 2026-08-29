@@ -41,7 +41,7 @@ export async function persistAgentRun(supabase: SupabaseClient, input: PersistRu
     project_id: input.context.projectId,
     actor_user_id: input.context.userId,
     agent_type: "project_delivery",
-    request: redactRequest(input.request),
+    request: redactAgentRequest(input.request),
     status: input.status,
     model_provider: input.modelProvider ?? null,
     model_name: input.modelName ?? null,
@@ -135,16 +135,26 @@ export async function findRunByIdempotency(
   return { id: row.id, structured_result: row.structured_result, status: row.status };
 }
 
-function redactRequest(request: Record<string, unknown>): Record<string, unknown> {
+export function redactAgentRequest(request: Record<string, unknown>): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(request)) {
     const lower = k.toLowerCase();
     if (lower.includes("token") || lower.includes("secret") || lower.includes("password")) continue;
-    if (typeof v === "string" && v.startsWith("http") && v.includes("token=")) {
-      out[k] = "[redacted-url]";
+    if (typeof v === "string") {
+      out[k] = redactSensitiveText(v);
       continue;
     }
     out[k] = v;
   }
   return out;
+}
+
+export function redactSensitiveText(value: string): string {
+  const clipped = value.length > 500 ? value.slice(0, 500) : value;
+  return clipped
+    .replace(/https?:\/\/[^\s]+/gi, (url) =>
+      /([?&](token|sig|signature|access_token|X-Amz-Signature)=)/i.test(url) ? "[redacted-url]" : url
+    )
+    .replace(/\b(sk-|rk-|xox[baprs]-)[A-Za-z0-9_-]{10,}/g, "[redacted-secret]")
+    .replace(/\b(api[_-]?key|password|secret|bearer)\s*[:=]\s*\S+/gi, "[redacted-credential]");
 }
