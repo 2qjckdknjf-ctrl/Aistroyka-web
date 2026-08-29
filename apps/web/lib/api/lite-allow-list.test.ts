@@ -17,6 +17,13 @@ describe("checkLiteAllowList", () => {
     expect(checkLiteAllowList("/api/v1/projects", "GET", "android_lite")).toBeNull();
   });
 
+  it("returns null for lite GET /api/v1/projects/:id/media (site photo, read-only)", () => {
+    expect(checkLiteAllowList("/api/v1/projects/p1/media", "GET", "ios_lite")).toBeNull();
+    expect(checkLiteAllowList("/api/v1/projects/p1/media", "GET", "ios_worker")).toBeNull();
+    expect(checkLiteAllowList("/api/v1/projects/p1/media", "POST", "ios_lite")).not.toBeNull();
+    expect(checkLiteAllowList("/api/v1/projects/p1", "GET", "ios_lite")).not.toBeNull();
+  });
+
   it("returns 403 for lite client POST /api/v1/projects", () => {
     const r = checkLiteAllowList("/api/v1/projects", "POST", "ios_lite");
     expect(r).not.toBeNull();

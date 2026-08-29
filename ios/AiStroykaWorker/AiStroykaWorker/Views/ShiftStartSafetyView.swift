@@ -16,6 +16,7 @@ struct ShiftStartSafetyView: View {
     @State private var safety: WorkerSafetyCheckState
     @State private var starting = false
     @State private var errorMessage: String?
+    @State private var sitePhotoURL: URL?
 
     init(project: ProjectDTO, onFinished: @escaping () -> Void) {
         self.project = project
@@ -41,7 +42,7 @@ struct ShiftStartSafetyView: View {
                     .font(.system(size: 14))
                     .foregroundStyle(WorkerV43.cyan)
 
-                    WorkerV43HeroPhoto(height: 148, systemImage: "building.2.fill") {
+                    WorkerV43HeroPhoto(height: 148, systemImage: "building.2.fill", imageURL: sitePhotoURL) {
                         VStack(alignment: .leading, spacing: 8) {
                             HStack {
                                 Image(systemName: "mappin.and.ellipse")
@@ -121,6 +122,14 @@ struct ShiftStartSafetyView: View {
         }
         .onAppear {
             location.requestIfNeeded(scope: WorkerSettingsStore.load().geoScope)
+            if !WorkerV43Preview.isEnabled {
+                sitePhotoURL = WorkerV43API.cachedSitePhotoURL(projectId: project.id)
+                Task {
+                    if let photo = try? await WorkerV43API.latestSitePhotoURL(projectId: project.id) {
+                        await MainActor.run { sitePhotoURL = photo }
+                    }
+                }
+            }
         }
         .onChange(of: safety) { value in
             WorkerSafetyStore.save(value)

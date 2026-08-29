@@ -25,6 +25,7 @@ struct TodayHomeView: View {
     @State private var showReport = false
     @State private var resumeDraftReportId: String?
     @State private var assistantSummary: String?
+    @State private var sitePhotoURL: URL?
 
     private var shiftStarted: Bool {
         WorkerV43Preview.isEnabled || store.state.shift.isStarted
@@ -63,6 +64,9 @@ struct TodayHomeView: View {
                 let cached = store.state.cachedTodayTasks(forUserId: KeychainHelper.get(key: KeychainHelper.sessionUserIdKey))
                 if todayTasks.isEmpty, !cached.isEmpty {
                     todayTasks = cached
+                }
+                if !WorkerV43Preview.isEnabled {
+                    sitePhotoURL = WorkerV43API.cachedSitePhotoURL(projectId: project.id)
                 }
                 load()
             }
@@ -186,7 +190,7 @@ struct TodayHomeView: View {
     }
 
     private var projectCard: some View {
-        WorkerV43HeroPhoto(height: 132, systemImage: "building.2.fill") {
+        WorkerV43HeroPhoto(height: 132, systemImage: "building.2.fill", imageURL: sitePhotoURL) {
             HStack {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(project.name ?? project.id)
@@ -206,6 +210,11 @@ struct TodayHomeView: View {
                 }
                 .accessibilityLabel(NSLocalizedString("worker_nav_projects", comment: ""))
             }
+        }
+        .overlay(alignment: .topLeading) {
+            Color.clear
+                .frame(width: 1, height: 1)
+                .accessibilityIdentifier("pilot_worker_site_photo")
         }
     }
 
@@ -416,6 +425,7 @@ struct TodayHomeView: View {
                 }
                 let reports = (try? await WorkerAPI.workerSync()) ?? []
                 let inboxCount = (try? await WorkerAPI.unreadNotificationCount()) ?? 0
+                let photo = try? await WorkerV43API.latestSitePhotoURL(projectId: project.id)
                 let assistant: String?
                 if WorkerSettingsStore.load().aiAssistant {
                     let locale = Self.helpLocale()
@@ -442,6 +452,7 @@ struct TodayHomeView: View {
                     feedbackReports = reports.filter { $0.status == "changes_requested" }
                     WorkerInboxBadgeStore.shared.count = inboxCount
                     assistantSummary = assistant
+                    if let photo { sitePhotoURL = photo }
                     tasksLoading = false
                     errorMessage = nil
                     if let userId = KeychainHelper.get(key: KeychainHelper.sessionUserIdKey) {

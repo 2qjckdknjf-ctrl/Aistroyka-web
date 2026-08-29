@@ -9,6 +9,7 @@ import Shared
 struct WorkerV43HeroPhoto<Overlay: View>: View {
     var height: CGFloat = 168
     var systemImage: String = "building.2.fill"
+    var imageURL: URL? = nil
     @ViewBuilder var overlay: () -> Overlay
 
     var body: some View {
@@ -22,6 +23,16 @@ struct WorkerV43HeroPhoto<Overlay: View>: View {
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
+            if let imageURL {
+                AsyncImage(url: imageURL) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image.resizable().scaledToFill()
+                    default:
+                        Color.clear
+                    }
+                }
+            }
             Image(systemName: systemImage)
                 .font(.system(size: 86, weight: .light))
                 .foregroundStyle(.white.opacity(0.12))
@@ -36,6 +47,7 @@ struct WorkerV43HeroPhoto<Overlay: View>: View {
         }
         .frame(maxWidth: .infinity)
         .frame(height: height)
+        .clipped()
         .clipShape(RoundedRectangle(cornerRadius: WorkerV43.radiusCard, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: WorkerV43.radiusCard, style: .continuous)

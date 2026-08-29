@@ -130,6 +130,31 @@ enum WorkerV43API {
         )
     }
 
+    /// GET /api/v1/projects/:id/media — latest site photo (tenant-scoped, read-only).
+    static func latestSitePhotoURL(projectId: String) async throws -> URL? {
+        struct Item: Decodable {
+            let id: String?
+            let fileUrl: String?
+            let type: String?
+        }
+        struct Envelope: Decodable { let data: [Item]? }
+        let env: Envelope = try await APIClient.shared.request(
+            path: "projects/\(enc(projectId))/media?limit=1"
+        )
+        let raw = env.data?.compactMap { $0.fileUrl?.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .first { $0.lowercased().hasPrefix("http") }
+        if let raw, let url = URL(string: raw) {
+            WorkerCacheStore.save(raw, key: cacheKey("cover", projectId))
+            return url
+        }
+        return cachedSitePhotoURL(projectId: projectId)
+    }
+
+    static func cachedSitePhotoURL(projectId: String) -> URL? {
+        guard let raw = WorkerCacheStore.load(String.self, key: cacheKey("cover", projectId)) else { return nil }
+        return URL(string: raw)
+    }
+
     private static func enc(_ value: String) -> String {
         value.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? value
     }

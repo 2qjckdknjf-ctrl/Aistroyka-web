@@ -16,6 +16,7 @@ struct TaskDetailV43View: View {
     @State private var showWIP = false
     @State private var showCamera = false
     @State private var showChat = false
+    @State private var sitePhotoURL: URL?
 
     init(task: TaskDTO, projectId: String, dayId: String?) {
         self.task = task
@@ -33,7 +34,7 @@ struct TaskDetailV43View: View {
                     WorkerV43StatusPill(text: WorkerV43Copy.taskStatus(task.status), kind: .success)
                     WorkerV43StatusPill(text: task.dueDate ?? NSLocalizedString("wrk_v43_today", comment: ""), kind: .info, systemImage: "clock")
                 }
-                WorkerV43HeroPhoto(height: 160, systemImage: "building.2.fill") {
+                WorkerV43HeroPhoto(height: 160, systemImage: "building.2.fill", imageURL: sitePhotoURL) {
                     Text(task.title)
                         .font(.caption.weight(.semibold))
                         .padding(.horizontal, 8)
@@ -130,7 +131,16 @@ struct TaskDetailV43View: View {
             }
         }
         .onAppear {
-            Task { currentUserId = await AuthService.shared.currentSession()?.user.id }
+            if !WorkerV43Preview.isEnabled {
+                sitePhotoURL = WorkerV43API.cachedSitePhotoURL(projectId: projectId)
+            }
+            Task {
+                currentUserId = await AuthService.shared.currentSession()?.user.id
+                guard !WorkerV43Preview.isEnabled else { return }
+                if let photo = try? await WorkerV43API.latestSitePhotoURL(projectId: projectId) {
+                    await MainActor.run { sitePhotoURL = photo }
+                }
+            }
         }
     }
 

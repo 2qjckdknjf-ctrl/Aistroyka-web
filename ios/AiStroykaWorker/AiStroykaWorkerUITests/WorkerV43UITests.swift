@@ -17,6 +17,7 @@ final class WorkerV43UITests: XCTestCase {
         XCTAssertTrue(app.descendants(matching: .any)["pilot_worker_tab_tasks"].exists)
         XCTAssertTrue(app.descendants(matching: .any)["pilot_worker_v43_catalog"].exists)
         XCTAssertTrue(app.descendants(matching: .any)["pilot_worker_v43_main_task"].exists)
+        XCTAssertTrue(app.descendants(matching: .any)["pilot_worker_site_photo"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.staticTexts["Authentication required"].exists)
 
         app.descendants(matching: .any)["pilot_worker_tab_tasks"].firstMatch.tap()
