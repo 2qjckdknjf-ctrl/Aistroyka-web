@@ -76,6 +76,12 @@ export function presentAIRequestRow(row: {
     type: row.type,
     status: row.status,
     entity,
+    report_id: typeof payload.report_id === "string" && payload.report_id.trim()
+      ? payload.report_id.trim()
+      : null,
+    media_id: typeof payload.media_id === "string" && payload.media_id.trim()
+      ? payload.media_id.trim()
+      : null,
     attempts: row.attempts,
     max_attempts: row.max_attempts ?? null,
     // Tenant-safe: code + sanitized short text; raw stack/paths stripped.

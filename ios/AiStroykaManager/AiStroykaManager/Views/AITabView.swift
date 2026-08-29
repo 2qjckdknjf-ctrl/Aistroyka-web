@@ -59,18 +59,22 @@ struct AITabView: View {
     private var risks: [ManagerAIRiskItem] {
         let live: [ManagerAIRiskItem] = jobs.prefix(8).compactMap { job in
             guard let id = job.id ?? job.entity else { return nil }
+            let status = (job.status ?? "").lowercased()
+            let failed = status == "failed" || status == "dead"
+            let reportId = job.reportId?.trimmingCharacters(in: .whitespacesAndNewlines)
             return ManagerAIRiskItem(
                 id: id,
                 title: localizedJobTitle(job.type),
                 projectName: projectName(for: job),
-                severity: (job.status ?? "").contains("fail") ? "high" : "medium",
-                probability: 50,
+                severity: failed ? "high" : "medium",
+                probability: 0,
                 delayDays: 0,
                 budgetImpact: nil,
-                confidence: 70,
-                summary: job.lastError ?? job.entity ?? job.type ?? "",
+                confidence: 0,
+                summary: liveJobSummary(job),
                 recommendation: NSLocalizedString("mgr_v43_ai_disclaimer", comment: ""),
-                jobStatus: job.status
+                jobStatus: job.status,
+                reportId: (reportId?.isEmpty == false) ? reportId : nil
             )
         }
         if live.isEmpty && ManagerV43Preview.isEnabled {
@@ -116,7 +120,9 @@ struct AITabView: View {
                                         .lineLimit(3)
                                 }
                                 Spacer(minLength: 8)
-                                ManagerProgressRing(progress: Double(top.confidence) / 100, size: 56, tint: ManagerV43.aiViolet)
+                                if top.confidence > 0 {
+                                    ManagerProgressRing(progress: Double(top.confidence) / 100, size: 56, tint: ManagerV43.aiViolet)
+                                }
                             }
                             Text(NSLocalizedString("mgr_v43_open_solution", comment: ""))
                                 .font(.subheadline.weight(.semibold))
@@ -176,6 +182,15 @@ struct AITabView: View {
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
+    private func liveJobSummary(_ job: AIJobDTO) -> String {
+        let error = (job.lastError ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        if !error.isEmpty { return error }
+        if let status = job.status, !status.isEmpty {
+            return String(format: NSLocalizedString("mgr_v43_ai_job_status_fmt", comment: ""), status)
+        }
+        return job.type ?? NSLocalizedString("mgr_v43_ai_job", comment: "")
+    }
+
     private func localizedJobTitle(_ type: String?) -> String {
         guard let type, !type.isEmpty else {
             return NSLocalizedString("mgr_v43_ai_job", comment: "")
@@ -187,7 +202,7 @@ struct AITabView: View {
     }
 
     private func projectName(for job: AIJobDTO) -> String {
-        if let entity = job.entity, let name = reportProjectNames[entity], !name.isEmpty {
+        if let rid = job.reportId ?? job.entity, let name = reportProjectNames[rid], !name.isEmpty {
             return name
         }
         return projects.first?.name ?? "—"

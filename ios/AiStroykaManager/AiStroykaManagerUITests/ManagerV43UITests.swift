@@ -93,6 +93,10 @@ final class ManagerV43UITests: XCTestCase {
         saveShot("09-ai-center-risks")
         tapIfHittable(app.descendants(matching: .any).matching(NSPredicate(format: "identifier BEGINSWITH 'pilot_manager_ai_risk_'")).firstMatch) {
             saveShot("10-ai-risk-detail")
+            tapIfHittable(app.descendants(matching: .any)["pilot_manager_open_report"].firstMatch) {
+                saveShot("10b-ai-open-report")
+                if app.navigationBars.buttons.count > 0 { app.navigationBars.buttons.firstMatch.tap() }
+            }
             if app.navigationBars.buttons.count > 0 { app.navigationBars.buttons.firstMatch.tap() }
         }
 
@@ -204,6 +208,11 @@ final class ManagerV43UITests: XCTestCase {
         saveShot("09-ai-center-risks", live: true)
         tapIfHittable(app.descendants(matching: .any).matching(NSPredicate(format: "identifier BEGINSWITH 'pilot_manager_ai_risk_'")).firstMatch) {
             saveShot("10-ai-risk-detail", live: true)
+            _ = app.descendants(matching: .any)["pilot_manager_open_report"].waitForExistence(timeout: 4)
+            tapIfHittable(app.descendants(matching: .any)["pilot_manager_open_report"].firstMatch) {
+                saveShot("10b-ai-open-report", live: true)
+                if app.navigationBars.buttons.count > 0 { app.navigationBars.buttons.firstMatch.tap() }
+            }
             if app.navigationBars.buttons.count > 0 { app.navigationBars.buttons.firstMatch.tap() }
         }
 

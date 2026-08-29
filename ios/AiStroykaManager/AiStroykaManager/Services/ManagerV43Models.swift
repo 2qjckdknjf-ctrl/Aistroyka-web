@@ -158,6 +158,8 @@ struct ManagerAIRiskItem: Identifiable, Hashable {
     var summary: String
     var recommendation: String
     var jobStatus: String?
+    /// Present when GET /ai/requests payload includes report_id (not media-only entity).
+    var reportId: String? = nil
 }
 
 struct ManagerDocumentItem: Identifiable, Hashable {
@@ -329,7 +331,8 @@ enum ManagerDemoCatalog {
                 confidence: 86,
                 summary: NSLocalizedString("mgr_v43_risk_rebar_summary", comment: ""),
                 recommendation: NSLocalizedString("mgr_v43_risk_rebar_reco", comment: ""),
-                jobStatus: nil
+                jobStatus: nil,
+                reportId: "demo-report-1"
             ),
             ManagerAIRiskItem(
                 id: "demo-budget",
