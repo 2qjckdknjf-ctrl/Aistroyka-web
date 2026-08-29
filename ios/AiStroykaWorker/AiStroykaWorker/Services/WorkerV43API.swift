@@ -130,8 +130,24 @@ enum WorkerV43API {
         )
     }
 
-    /// GET /api/v1/projects/:id/media — latest site photo (tenant-scoped, read-only).
+    /// GET /api/v1/projects/:id/media — latest assigned-project photo.
+    /// The server returns a short-lived signed URL; this optional request is bounded so it cannot hold core task UI.
     static func latestSitePhotoURL(projectId: String) async throws -> URL? {
+        try await withThrowingTaskGroup(of: URL?.self) { group in
+            group.addTask {
+                try await fetchLatestSitePhotoURL(projectId: projectId)
+            }
+            group.addTask {
+                try await Task.sleep(nanoseconds: 5_000_000_000)
+                throw URLError(.timedOut)
+            }
+            guard let first = try await group.next() else { return nil }
+            group.cancelAll()
+            return first
+        }
+    }
+
+    private static func fetchLatestSitePhotoURL(projectId: String) async throws -> URL? {
         struct Item: Decodable {
             let id: String?
             let fileUrl: String?
@@ -142,17 +158,31 @@ enum WorkerV43API {
             path: "projects/\(enc(projectId))/media?limit=1"
         )
         let raw = env.data?.compactMap { $0.fileUrl?.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .first { $0.lowercased().hasPrefix("http") }
+            .first { $0.lowercased().hasPrefix("https://") }
         if let raw, let url = URL(string: raw) {
-            WorkerCacheStore.save(raw, key: cacheKey("cover", projectId))
+            if let key = userScopedCacheKey("cover", projectId) {
+                WorkerCacheStore.save(raw, key: key)
+            }
             return url
         }
         return cachedSitePhotoURL(projectId: projectId)
     }
 
     static func cachedSitePhotoURL(projectId: String) -> URL? {
-        guard let raw = WorkerCacheStore.load(String.self, key: cacheKey("cover", projectId)) else { return nil }
+        guard
+            let key = userScopedCacheKey("cover", projectId),
+            let raw = WorkerCacheStore.load(String.self, key: key)
+        else { return nil }
         return URL(string: raw)
+    }
+
+    private static func userScopedCacheKey(_ kind: String, _ projectId: String) -> String? {
+        guard
+            let userId = KeychainHelper.get(key: KeychainHelper.sessionUserIdKey)?
+                .trimmingCharacters(in: .whitespacesAndNewlines),
+            !userId.isEmpty
+        else { return nil }
+        return "wrk.v43.\(kind).\(userId).\(projectId)"
     }
 
     private static func enc(_ value: String) -> String {
