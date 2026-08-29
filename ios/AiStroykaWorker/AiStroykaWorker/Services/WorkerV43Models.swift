@@ -302,6 +302,7 @@ struct WorkerIssueDTO: Identifiable, Hashable, Codable {
     var status: String
     var taskId: String?
     var createdBy: String? = nil
+    var assignedTo: String? = nil
     var createdAt: String?
     var updatedAt: String?
     var evidenceUploadSessionId: String? = nil
@@ -315,6 +316,7 @@ struct WorkerIssueDTO: Identifiable, Hashable, Codable {
         case status
         case taskId = "task_id"
         case createdBy = "created_by"
+        case assignedTo = "assigned_to"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
         case evidenceUploadSessionId = "evidence_upload_session_id"
@@ -322,12 +324,28 @@ struct WorkerIssueDTO: Identifiable, Hashable, Codable {
     }
 
     func workerMayMutate(currentUserId: String?) -> Bool {
+        Self.workerMayMutate(
+            status: status,
+            currentUserId: currentUserId,
+            createdBy: createdBy,
+            assignedTo: assignedTo,
+            preview: WorkerV43Preview.isEnabled
+        )
+    }
+
+    static func workerMayMutate(
+        status: String,
+        currentUserId: String?,
+        createdBy: String?,
+        assignedTo: String?,
+        preview: Bool
+    ) -> Bool {
         if status == "resolved" || status == "closed" { return false }
-        if WorkerV43Preview.isEnabled { return true }
-        guard let currentUserId, !currentUserId.isEmpty, let createdBy, !createdBy.isEmpty else {
-            return false
-        }
-        return createdBy == currentUserId
+        if preview { return true }
+        guard let currentUserId, !currentUserId.isEmpty else { return false }
+        if createdBy == currentUserId { return true }
+        if assignedTo == currentUserId { return true }
+        return false
     }
 
     func isMine(currentUserId: String?) -> Bool {

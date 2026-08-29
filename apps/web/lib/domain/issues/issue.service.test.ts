@@ -38,11 +38,13 @@ describe("issue.service", () => {
   beforeEach(async () => {
     const projectRepo = await import("@/lib/domain/projects/project.repository");
     const repo = await import("./issue.repository");
+    const tasks = await import("@/lib/domain/tasks/task.repository");
     vi.mocked(projectRepo.getById).mockResolvedValue({
       id: "proj-1",
       name: "Test",
       tenant_id: "t1",
     } as never);
+    vi.mocked(tasks.getById).mockResolvedValue(null);
     vi.mocked(repo.attachEvidenceUrls).mockImplementation(async (_supabase, issues) => issues);
   });
 
@@ -70,6 +72,38 @@ describe("issue.service", () => {
     expect(error).toBe("");
     expect(data).toHaveLength(1);
     expect(data[0].title).toBe("Bug");
+    expect(data[0].assigned_to).toBeNull();
+  });
+
+  it("listIssues attaches assigned_to from the linked task", async () => {
+    const repo = await import("./issue.repository");
+    const tasks = await import("@/lib/domain/tasks/task.repository");
+    vi.mocked(tasks.getById).mockResolvedValue({
+      id: "task-9",
+      assigned_to: "assignee-9",
+    } as never);
+    vi.mocked(repo.listByProject).mockResolvedValue([
+      {
+        id: "i-linked",
+        project_id: "proj-1",
+        tenant_id: "t1",
+        title: "Fence",
+        description: null,
+        status: "open",
+        task_id: "task-9",
+        milestone_id: null,
+        created_by: "reporter-1",
+        resolved_at: null,
+        resolved_by: null,
+        created_at: "",
+        updated_at: "",
+      },
+    ]);
+
+    const { data, error } = await listIssues(noopSupabase, ctx, "proj-1");
+    expect(error).toBe("");
+    expect(data[0]?.assigned_to).toBe("assignee-9");
+    expect(tasks.getById).toHaveBeenCalledWith(noopSupabase, "task-9", "t1");
   });
 
   it("createIssue returns error when title empty", async () => {

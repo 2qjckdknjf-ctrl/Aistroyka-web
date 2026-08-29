@@ -441,6 +441,13 @@
 "mgr_v43_task_cancel_status" = "Cancelar tarea";
 "mgr_v43_pending_invites" = "Invitaciones pendientes";
 "mgr_v43_analysis_status" = "Análisis de IA";
+"mgr_v43_ai_pipeline_queued" = "Comprobaciones IA en cola";
+"mgr_v43_ai_pipeline_running" = "La IA está revisando las fotos";
+"mgr_v43_ai_pipeline_done" = "Comprobaciones IA finalizadas";
+"mgr_v43_ai_pipeline_failed" = "Fallaron las comprobaciones IA";
+"mgr_v43_ai_pipeline_waiting" = "Esperando el pipeline de IA";
+"mgr_v43_ai_jobs_fmt" = "%d de %d fotos analizadas";
+"mgr_v43_ai_job_count_fmt" = "%d trabajos de IA";
 "mgr_v43_approval_history" = "Historial de aprobación";
 "mgr_v43_unassigned" = "Sin asignar";
 "mgr_v43_open_linked_report" = "Abrir informe vinculado";

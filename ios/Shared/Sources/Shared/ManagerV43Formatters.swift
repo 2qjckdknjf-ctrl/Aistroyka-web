@@ -116,6 +116,21 @@ public enum ManagerV43Formatters {
             || normalized.contains("reject")
     }
 
+    public static func analysisPipelineKind(_ status: String?) -> String {
+        switch (status ?? "").lowercased() {
+        case "success":
+            return "success"
+        case "running":
+            return "running"
+        case "failed", "dead":
+            return "failed"
+        case "queued":
+            return "queued"
+        default:
+            return "unknown"
+        }
+    }
+
     public static func workerPresence(
         openShift: Bool?,
         noActivity: Bool?,

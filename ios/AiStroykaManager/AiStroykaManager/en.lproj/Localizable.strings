@@ -442,6 +442,13 @@
 "mgr_v43_task_cancel_status" = "Cancel task";
 "mgr_v43_pending_invites" = "Pending invitations";
 "mgr_v43_analysis_status" = "AI analysis";
+"mgr_v43_ai_pipeline_queued" = "AI checks queued";
+"mgr_v43_ai_pipeline_running" = "AI is checking photos";
+"mgr_v43_ai_pipeline_done" = "AI checks finished";
+"mgr_v43_ai_pipeline_failed" = "AI checks failed";
+"mgr_v43_ai_pipeline_waiting" = "Waiting for the AI pipeline";
+"mgr_v43_ai_jobs_fmt" = "%d of %d photos analyzed";
+"mgr_v43_ai_job_count_fmt" = "%d AI jobs";
 "mgr_v43_approval_history" = "Approval history";
 "mgr_v43_unassigned" = "Unassigned";
 "mgr_v43_open_linked_report" = "Open linked report";

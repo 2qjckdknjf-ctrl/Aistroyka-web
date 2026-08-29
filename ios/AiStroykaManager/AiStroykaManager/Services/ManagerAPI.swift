@@ -1020,6 +1020,7 @@ struct ReportAnalysisStatusDTO: Decodable {
     let status: String?
     let reportId: String?
     let jobCount: Int?
+    let summary: ManagerAnalysisSummaryDTO?
 }
 
 struct ReportApprovalEventDTO: Decodable, Hashable {

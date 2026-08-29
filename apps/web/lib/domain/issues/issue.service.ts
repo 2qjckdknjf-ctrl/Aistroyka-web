@@ -26,7 +26,7 @@ export async function listIssues(
   if (!project) return { data: [], error: "Project not found" };
 
   const data = await repo.listByProject(supabase, projectId, ctx.tenantId, opts);
-  return { data: await withEvidenceUrls(supabase, data), error: "" };
+  return { data: await presentIssues(supabase, ctx.tenantId, data), error: "" };
 }
 
 async function insertIssue(
@@ -55,7 +55,7 @@ async function insertIssue(
       target_id: data.id,
       project_id: input.project_id,
     });
-    return { data: await withEvidenceUrl(supabase, data), error: "" };
+    return { data: await presentIssue(supabase, ctx.tenantId, data), error: "" };
   }
   return { data: null, error: "Create failed" };
 }
@@ -117,7 +117,7 @@ export async function updateIssue(
     await notifyIssueWorkers(supabase, ctx.tenantId, ctx.userId, data, title, body);
   }
   return data
-    ? { data: await withEvidenceUrl(supabase, data), error: "" }
+    ? { data: await presentIssue(supabase, ctx.tenantId, data), error: "" }
     : { data: null, error: "Update failed" };
 }
 
@@ -164,7 +164,7 @@ export async function updateWorkerReportedIssue(
     });
   }
   return data
-    ? { data: await withEvidenceUrl(supabase, data), error: "" }
+    ? { data: await presentIssue(supabase, ctx.tenantId, data), error: "" }
     : { data: null, error: "Update failed" };
 }
 
@@ -177,7 +177,7 @@ export async function getIssueById(
   if (!ctx.tenantId) return { data: null, error: "Tenant required" };
 
   const data = await repo.getById(supabase, issueId, ctx.tenantId);
-  return { data: await withEvidenceUrl(supabase, data), error: "" };
+  return { data: await presentIssue(supabase, ctx.tenantId, data), error: "" };
 }
 
 async function notifyIssueWorkers(
@@ -210,18 +210,49 @@ async function notifyIssueWorkers(
   }
 }
 
-async function withEvidenceUrls(
+async function presentIssues(
   supabase: SupabaseClient,
+  tenantId: string | undefined,
   issues: ProjectIssue[]
 ): Promise<ProjectIssue[]> {
-  return repo.attachEvidenceUrls(supabase, issues);
+  const withUrls = await repo.attachEvidenceUrls(supabase, issues);
+  return withTaskAssignees(supabase, tenantId, withUrls);
 }
 
-async function withEvidenceUrl(
+async function presentIssue(
   supabase: SupabaseClient,
+  tenantId: string | undefined,
   issue: ProjectIssue | null
 ): Promise<ProjectIssue | null> {
   if (!issue) return null;
-  const [withUrl] = await repo.attachEvidenceUrls(supabase, [issue]);
-  return withUrl ?? issue;
+  const [presented] = await presentIssues(supabase, tenantId, [issue]);
+  return presented ?? issue;
+}
+
+/** Fill `assigned_to` from the linked task so Worker UI matches PATCH access. */
+async function withTaskAssignees(
+  supabase: SupabaseClient,
+  tenantId: string | undefined,
+  issues: ProjectIssue[]
+): Promise<ProjectIssue[]> {
+  if (!tenantId || issues.length === 0) {
+    return issues.map((issue) => ({ ...issue, assigned_to: issue.assigned_to ?? null }));
+  }
+  const taskIds = [
+    ...new Set(issues.map((issue) => issue.task_id).filter((id): id is string => Boolean(id))),
+  ];
+  if (taskIds.length === 0) {
+    return issues.map((issue) => ({ ...issue, assigned_to: null }));
+  }
+  const assignedByTask = new Map<string, string | null>();
+  await Promise.all(
+    taskIds.map(async (taskId) => {
+      const task = await getTaskById(supabase, taskId, tenantId);
+      assignedByTask.set(taskId, task?.assigned_to ?? null);
+    })
+  );
+  return issues.map((issue) => ({
+    ...issue,
+    assigned_to: issue.task_id ? (assignedByTask.get(issue.task_id) ?? null) : null,
+  }));
 }

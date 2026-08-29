@@ -63,6 +63,11 @@ final class ManagerV43FormattersTests: XCTestCase {
         XCTAssertFalse(ManagerV43Formatters.isReportPendingReview(nil))
         XCTAssertTrue(ManagerV43Formatters.reportHasAIRemarks(analysisStatus: "flagged_deviation"))
         XCTAssertFalse(ManagerV43Formatters.reportHasAIRemarks(analysisStatus: "ok"))
+        XCTAssertEqual(ManagerV43Formatters.analysisPipelineKind("queued"), "queued")
+        XCTAssertEqual(ManagerV43Formatters.analysisPipelineKind("RUNNING"), "running")
+        XCTAssertEqual(ManagerV43Formatters.analysisPipelineKind("success"), "success")
+        XCTAssertEqual(ManagerV43Formatters.analysisPipelineKind("dead"), "failed")
+        XCTAssertEqual(ManagerV43Formatters.analysisPipelineKind(nil), "unknown")
     }
 
     func testWorkerPresenceAndNotificationAction() {

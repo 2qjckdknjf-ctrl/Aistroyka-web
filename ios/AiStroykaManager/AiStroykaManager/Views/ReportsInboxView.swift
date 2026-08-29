@@ -395,6 +395,11 @@ struct ReportDetailReviewView: View {
                 EmptyStateView(title: NSLocalizedString("mgr_report_not_found", comment: ""), subtitle: nil)
             }
         }
+        .overlay(alignment: .topLeading) {
+            Color.clear
+                .frame(width: 1, height: 1)
+                .accessibilityIdentifier("pilot_manager_report_review")
+        }
         .background(ManagerV43.bg.ignoresSafeArea())
         .navigationTitle(navigationTitle)
         .navigationBarTitleDisplayMode(.inline)
@@ -486,15 +491,8 @@ struct ReportDetailReviewView: View {
                         }
                     }
 
-                    if let analysis, let status = analysis.status, !status.isEmpty {
-                        ManagerV43Card {
-                            Text(NSLocalizedString("mgr_v43_analysis_status", comment: ""))
-                                .font(.caption)
-                                .foregroundStyle(ManagerV43.textSecondary)
-                            Text(status)
-                                .foregroundStyle(ManagerV43.textPrimary)
-                        }
-                    }
+                    analysisCard
+
                     if !approvalHistory.isEmpty {
                         ManagerV43Card {
                             Text(NSLocalizedString("mgr_v43_approval_history", comment: ""))
@@ -512,22 +510,6 @@ struct ReportDetailReviewView: View {
                                     }
                                 }
                             }
-                        }
-                    }
-                    if ManagerV43Preview.isEnabled {
-                        ManagerV43Card(borderColor: ManagerV43.aiViolet.opacity(0.55)) {
-                            HStack {
-                                ManagerAIBadge(size: 28)
-                                Text(NSLocalizedString("mgr_v43_ai_found_deviation", comment: ""))
-                                    .font(.headline)
-                                    .foregroundStyle(ManagerV43.textPrimary)
-                            }
-                            Text(NSLocalizedString("mgr_v43_risk_rebar_summary", comment: ""))
-                                .font(.subheadline)
-                                .foregroundStyle(ManagerV43.textSecondary)
-                            Text(NSLocalizedString("mgr_v43_confidence", comment: "") + " 82%")
-                                .font(.caption)
-                                .foregroundStyle(ManagerV43.aiViolet)
                         }
                     }
 
@@ -595,6 +577,60 @@ struct ReportDetailReviewView: View {
             if managerNoteText.count > 500 { managerNoteText = String(managerNoteText.prefix(500)) }
             if reviewActionError != nil { reviewActionError = nil }
         }
+    }
+
+    private var analysisCard: some View {
+        ManagerV43Card(borderColor: ManagerV43.aiViolet.opacity(0.55)) {
+            HStack(alignment: .top, spacing: 12) {
+                ManagerAIBadge(size: 28)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(analysisTitle)
+                        .font(.headline)
+                        .foregroundStyle(ManagerV43.textPrimary)
+                        .accessibilityIdentifier("pilot_manager_report_analysis")
+                    Text(analysisDetail)
+                        .font(.subheadline)
+                        .foregroundStyle(ManagerV43.textSecondary)
+                }
+                Spacer(minLength: 0)
+            }
+        }
+        .overlay(alignment: .topLeading) {
+            Color.clear
+                .frame(width: 1, height: 1)
+                .accessibilityIdentifier("pilot_manager_report_analysis")
+        }
+    }
+
+    private var analysisTitle: String {
+        if ManagerV43Preview.isEnabled {
+            return NSLocalizedString("mgr_v43_ai_found_deviation", comment: "")
+        }
+        switch ManagerV43Formatters.analysisPipelineKind(analysis?.status) {
+        case "success":
+            return NSLocalizedString("mgr_v43_ai_pipeline_done", comment: "")
+        case "running":
+            return NSLocalizedString("mgr_v43_ai_pipeline_running", comment: "")
+        case "failed":
+            return NSLocalizedString("mgr_v43_ai_pipeline_failed", comment: "")
+        case "queued":
+            return NSLocalizedString("mgr_v43_ai_pipeline_queued", comment: "")
+        default:
+            return NSLocalizedString("mgr_v43_analysis_status", comment: "")
+        }
+    }
+
+    private var analysisDetail: String {
+        if ManagerV43Preview.isEnabled {
+            return NSLocalizedString("mgr_v43_risk_rebar_summary", comment: "")
+        }
+        if let summary = analysis?.summary, let total = summary.mediaTotal, let done = summary.analyzed {
+            return String(format: NSLocalizedString("mgr_v43_ai_jobs_fmt", comment: ""), done, total)
+        }
+        if let jobs = analysis?.jobCount, jobs > 0 {
+            return String(format: NSLocalizedString("mgr_v43_ai_job_count_fmt", comment: ""), jobs)
+        }
+        return NSLocalizedString("mgr_v43_ai_pipeline_waiting", comment: "")
     }
 
     private func gallery(_ media: [ReportMediaItem]) -> some View {
@@ -725,6 +761,19 @@ struct ReportDetailReviewView: View {
             report = try await ManagerAPI.reportDetail(id: reportId)
             analysis = try? await ManagerAPI.reportAnalysisStatus(reportId: reportId)
             approvalHistory = (try? await ManagerAPI.reportApprovalHistory(reportId: reportId)) ?? []
+        }
+        await pollAnalysisIfNeeded()
+    }
+
+    private func pollAnalysisIfNeeded() async {
+        guard !ManagerV43Preview.isEnabled else { return }
+        for _ in 0..<6 {
+            let kind = ManagerV43Formatters.analysisPipelineKind(analysis?.status)
+            if kind != "queued" && kind != "running" { return }
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            if Task.isCancelled { return }
+            let latest = try? await ManagerAPI.reportAnalysisStatus(reportId: reportId)
+            analysis = latest
         }
     }
 }
