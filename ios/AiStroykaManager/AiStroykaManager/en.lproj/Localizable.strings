@@ -474,4 +474,5 @@
 "mgr_v43_doc_request_changes" = "Request changes";
 "mgr_v43_ai_poll_timeout" = "AI analysis is taking longer than expected. Refresh the status.";
 "mgr_v43_ai_status_error" = "AI status could not be refreshed. Check the connection and try again.";
+"mgr_v43_ai_not_enqueued" = "AI analysis did not start. Ask the Worker to resubmit the report or contact support.";
 "mgr_v43_ai_retry_status" = "Refresh AI status";
