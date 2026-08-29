@@ -218,6 +218,8 @@
 "wrk_v43_normal" = "В норме";
 "wrk_v43_photo_after_title" = "Фото ПОСЛЕ";
 "wrk_v43_photo_before_title" = "Фото ДО";
+"wrk_v43_compare_before" = "ДО";
+"wrk_v43_compare_after" = "ПОСЛЕ";
 "wrk_v43_repeat_angle" = "Повторите ракурс фото ДО";
 "wrk_v43_capture_overview" = "Снимите общий вид рабочей зоны";
 "wrk_v43_gps_ok" = "GPS подтверждён";

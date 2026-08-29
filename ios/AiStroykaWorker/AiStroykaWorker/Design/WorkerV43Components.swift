@@ -44,6 +44,123 @@ struct WorkerV43HeroPhoto<Overlay: View>: View {
     }
 }
 
+struct WorkerV43PhotoComparisonFrame: View {
+    let kind: WorkerPhotoKind
+    let captured: UIImage?
+    let beforeReference: UIImage?
+    let angleOK: Bool?
+
+    private var mode: WorkerPhotoComparisonMode {
+        WorkerPhotoComparisonMode.resolve(
+            kind: kind,
+            hasCaptured: captured != nil,
+            hasBeforeReference: beforeReference != nil
+        )
+    }
+
+    private var frameTint: Color {
+        switch angleOK {
+        case true:
+            return WorkerV43.success
+        case false:
+            return WorkerV43.warning
+        case nil:
+            return kind == .after ? WorkerV43.yellow : WorkerV43.border
+        }
+    }
+
+    var body: some View {
+        ZStack {
+            switch mode {
+            case .split:
+                if let captured, let beforeReference {
+                    HStack(spacing: 3) {
+                        pane(beforeReference, caption: NSLocalizedString("wrk_v43_compare_before", comment: ""))
+                        pane(captured, caption: NSLocalizedString("wrk_v43_compare_after", comment: ""))
+                    }
+                    .accessibilityIdentifier("pilot_worker_camera_split")
+                }
+            case .capturedOnly:
+                if let captured {
+                    Image(uiImage: captured)
+                        .resizable()
+                        .scaledToFill()
+                }
+            case .ghostBefore:
+                ghost
+            case .placeholder:
+                placeholder
+            }
+        }
+        .frame(maxWidth: .infinity, minHeight: 280)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(frameTint, lineWidth: kind == .after ? 1.5 : 1)
+        )
+    }
+
+    private var ghost: some View {
+        ZStack {
+            if let beforeReference {
+                Image(uiImage: beforeReference)
+                    .resizable()
+                    .scaledToFill()
+                    .opacity(0.4)
+            }
+            LinearGradient(
+                colors: [.clear, WorkerV43.bg.opacity(0.55)],
+                startPoint: .center,
+                endPoint: .bottom
+            )
+            VStack(spacing: 8) {
+                Image(systemName: "camera.viewfinder")
+                    .font(.system(size: 28))
+                    .foregroundStyle(WorkerV43.yellow)
+                Text(NSLocalizedString("wrk_v43_repeat_angle", comment: ""))
+                    .foregroundStyle(WorkerV43.textPrimary)
+                    .multilineTextAlignment(.center)
+            }
+            .padding()
+        }
+    }
+
+    private var placeholder: some View {
+        ZStack {
+            WorkerV43.cardStrong
+            VStack(spacing: 8) {
+                Image(systemName: "camera.viewfinder")
+                    .font(.system(size: 28))
+                    .foregroundStyle(WorkerV43.yellow)
+                Text(kind == .after
+                     ? NSLocalizedString("wrk_v43_repeat_angle", comment: "")
+                     : NSLocalizedString("wrk_v43_capture_overview", comment: ""))
+                    .foregroundStyle(WorkerV43.textPrimary)
+                    .multilineTextAlignment(.center)
+            }
+            .padding()
+        }
+    }
+
+    private func pane(_ image: UIImage, caption: String) -> some View {
+        ZStack(alignment: .bottomLeading) {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFill()
+            Text(caption)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(WorkerV43.textPrimary)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(WorkerV43.bg.opacity(0.72))
+                .clipShape(Capsule())
+                .padding(8)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .clipped()
+    }
+}
+
 struct WorkerV43Card<Content: View>: View {
     var padding: CGFloat = WorkerV43.space4
     var radius: CGFloat = WorkerV43.radiusCard

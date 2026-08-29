@@ -78,6 +78,8 @@ final class WorkerV43UITests: XCTestCase {
         app.launchEnvironment["AISTROYKA_WORKER_V43_SCREEN"] = "after"
         app.launch()
         XCTAssertTrue(app.descendants(matching: .any)["pilot_worker_preview_after"].waitForExistence(timeout: 20))
+        XCTAssertTrue(app.descendants(matching: .any)["pilot_worker_camera_after"].waitForExistence(timeout: 8))
+        XCTAssertTrue(app.descendants(matching: .any)["pilot_worker_camera_ghost"].waitForExistence(timeout: 5))
 
         app.terminate()
         app.launchEnvironment["AISTROYKA_WORKER_V43_SCREEN"] = "report"
@@ -148,6 +150,11 @@ final class WorkerV43UITests: XCTestCase {
         XCTAssertFalse(Self.isLowStorage(availableBytes: 80_000_000))
         XCTAssertNil(Self.angleMatch(hasCurrent: false, hasReference: true))
         XCTAssertNil(Self.angleMatch(hasCurrent: true, hasReference: false))
+        XCTAssertEqual(Self.comparisonMode(kindAfter: true, captured: false, before: true), "ghostBefore")
+        XCTAssertEqual(Self.comparisonMode(kindAfter: true, captured: true, before: true), "split")
+        XCTAssertEqual(Self.comparisonMode(kindAfter: true, captured: true, before: false), "capturedOnly")
+        XCTAssertEqual(Self.comparisonMode(kindAfter: false, captured: false, before: true), "placeholder")
+        XCTAssertEqual(Self.comparisonMode(kindAfter: false, captured: true, before: false), "capturedOnly")
     }
 
     func testPhoneNormalization() {
@@ -209,6 +216,12 @@ final class WorkerV43UITests: XCTestCase {
     private static func angleMatch(hasCurrent: Bool, hasReference: Bool) -> Bool? {
         guard hasCurrent, hasReference else { return nil }
         return true
+    }
+
+    private static func comparisonMode(kindAfter: Bool, captured: Bool, before: Bool) -> String {
+        if captured { return kindAfter && before ? "split" : "capturedOnly" }
+        if kindAfter && before { return "ghostBefore" }
+        return "placeholder"
     }
 
     private static func phone(_ raw: String) -> String? {
