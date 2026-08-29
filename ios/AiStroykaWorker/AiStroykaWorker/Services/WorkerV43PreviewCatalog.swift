@@ -88,9 +88,35 @@ enum WorkerV43Copy {
             return NSLocalizedString("wrk_v43_doc_status_downloaded", comment: "")
         case "read":
             return NSLocalizedString("wrk_v43_doc_status_read", comment: "")
+        case "outdated":
+            return NSLocalizedString("wrk_v43_doc_status_outdated", comment: "")
+        case "draft":
+            return NSLocalizedString("wrk_v43_doc_status_draft", comment: "")
+        case "uploaded":
+            return NSLocalizedString("wrk_v43_doc_status_uploaded", comment: "")
+        case "under_review", "review":
+            return NSLocalizedString("wrk_v43_status_review", comment: "")
+        case "approved":
+            return NSLocalizedString("wrk_v43_doc_status_approved", comment: "")
+        case "rejected":
+            return NSLocalizedString("wrk_v43_doc_status_rejected", comment: "")
+        case "changes_requested":
+            return NSLocalizedString("wrk_v43_returned", comment: "")
+        case "archived":
+            return NSLocalizedString("wrk_v43_doc_status_archived", comment: "")
         default:
             return status
         }
+    }
+
+    static func documentOfflineLabel(_ document: WorkerDocumentDTO) -> String {
+        if WorkerDocumentPinStore.isOutdated(document) {
+            return NSLocalizedString("wrk_v43_doc_status_outdated", comment: "")
+        }
+        if WorkerDocumentPinStore.cachedFileURL(for: document) != nil {
+            return NSLocalizedString("wrk_v43_doc_status_downloaded", comment: "")
+        }
+        return documentStatus(document.status)
     }
 
     static func issueStatus(_ status: String) -> String {

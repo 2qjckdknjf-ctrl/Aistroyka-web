@@ -2,8 +2,8 @@
 
 > Live project status. Keep this short and mobile-readable.
 
-**Last updated:** 2026-08-26  
-**Updated by:** [#261](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/261) live on production
+**Last updated:** 2026-08-29  
+**Updated by:** Worker document offline pin on `fix/worker-document-offline-pin`
 
 ---
 
@@ -11,14 +11,14 @@
 
 | Field | Value |
 |---|---|
-| **Active slice** | Worker issue PATCH safety landed — notes append, closed rows stay closed |
-| **Branch / worktree** | `/Users/alex/Projects/AISTROYKA-ios-worker-v4-3` (slice merged) |
+| **Active slice** | Persist pinned Worker drawings and count real offline files (render 14) |
+| **Branch / worktree** | `fix/worker-document-offline-pin` @ `/Users/alex/Projects/AISTROYKA-ios-worker-v4-3` |
 | **Runtime** | staging + production `buildStamp.sha7` = `ed1b7e2` (PR #261) |
-| **Next** | Twilio SID/token still empty. Reviewer PAT still cannot approve. TestFlight stays `NO` here |
+| **Next** | Land this slice and [#263](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/263). Reviewer PAT still cannot approve. Twilio SID/token empty. TestFlight `NO` here |
 
 ## Notes
 
-Primary checkout `/Users/alex/Projects/AISTROYKA` was not modified. This worktree `APPROVE_TESTFLIGHT_UPLOAD` is `NO`.
+Primary checkout `/Users/alex/Projects/AISTROYKA` was not modified. Camera overlay [#263](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/263) is a separate PR (conflict with #262 resolved).
 
 ---
 

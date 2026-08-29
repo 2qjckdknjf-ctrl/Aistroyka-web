@@ -57,6 +57,7 @@ final class WorkerV43UITests: XCTestCase {
         app.launchEnvironment["AISTROYKA_WORKER_V43_SCREEN"] = "documents"
         app.launch()
         XCTAssertTrue(app.descendants(matching: .any)["pilot_worker_documents"].waitForExistence(timeout: 20))
+        XCTAssertTrue(app.descendants(matching: .any)["pilot_worker_docs_offline"].waitForExistence(timeout: 5))
 
         app.terminate()
         app.launchEnvironment["AISTROYKA_WORKER_V43_SCREEN"] = "shift"
@@ -148,6 +149,10 @@ final class WorkerV43UITests: XCTestCase {
         XCTAssertFalse(Self.isLowStorage(availableBytes: 80_000_000))
         XCTAssertNil(Self.angleMatch(hasCurrent: false, hasReference: true))
         XCTAssertNil(Self.angleMatch(hasCurrent: true, hasReference: false))
+        XCTAssertEqual(Self.docOffline(hasFile: false, server: "b", cached: "a"), "remote")
+        XCTAssertEqual(Self.docOffline(hasFile: true, server: "b", cached: "a"), "outdated")
+        XCTAssertEqual(Self.docOffline(hasFile: true, server: "a", cached: "a"), "onDevice")
+        XCTAssertEqual(Self.docOffline(hasFile: true, server: nil, cached: nil), "onDevice")
     }
 
     func testPhoneNormalization() {
@@ -209,6 +214,14 @@ final class WorkerV43UITests: XCTestCase {
     private static func angleMatch(hasCurrent: Bool, hasReference: Bool) -> Bool? {
         guard hasCurrent, hasReference else { return nil }
         return true
+    }
+
+    private static func docOffline(hasFile: Bool, server: String?, cached: String?) -> String {
+        guard hasFile else { return "remote" }
+        let serverValue = server?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let cachedValue = cached?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !serverValue.isEmpty, !cachedValue.isEmpty, serverValue != cachedValue { return "outdated" }
+        return "onDevice"
     }
 
     private static func phone(_ raw: String) -> String? {

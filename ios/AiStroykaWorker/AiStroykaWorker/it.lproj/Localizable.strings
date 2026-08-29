@@ -203,6 +203,12 @@
 "wrk_v43_doc_type_act" = "Atto";
 "wrk_v43_doc_status_downloaded" = "Sul dispositivo";
 "wrk_v43_doc_status_read" = "Letto";
+"wrk_v43_doc_status_outdated" = "Aggiornamento disponibile";
+"wrk_v43_doc_status_draft" = "Bozza";
+"wrk_v43_doc_status_uploaded" = "Caricato";
+"wrk_v43_doc_status_approved" = "Approvato";
+"wrk_v43_doc_status_rejected" = "Rifiutato";
+"wrk_v43_doc_status_archived" = "In archivio";
 "wrk_v43_crew_fmt" = "Crew %d";
 "wrk_v43_report_issue" = "Report a problem";
 "wrk_v43_continue_step_fmt" = "Continue · step %d of %d";
