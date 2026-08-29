@@ -1545,7 +1545,7 @@
       "humanInTheLoopDesc": "Las decisiones siguen siendo humanas; la IA apoya con análisis y sugerencias."
     },
     "mobile": {
-      "title": "Móvil",
+      "title": "Apps de responsable y de obra para construcción",
       "metaDescription": "App responsable, app trabajador, informes de obra y flujos móviles rápidos.",
       "managerApp": "App responsable",
       "workerApp": "App trabajador o contratista",
@@ -1591,7 +1591,7 @@
       "businessCtaDetails": "Para consultas comerciales, usa el formulario de arriba e indica tu interés en piloto o presentación, o te contactaremos para agendar una llamada."
     },
     "faq": {
-      "title": "FAQ",
+      "title": "Preguntas frecuentes",
       "metaDescription": "Preguntas frecuentes sobre Aistroyka.",
       "whatIs": "¿Qué es Aistroyka?",
       "whatIsA": "Aistroyka es una plataforma de inteligencia de construcción con IA: gestión de proyectos, tareas, informes diarios, evidencia fotográfica y análisis IA en un solo lugar.",
@@ -1790,7 +1790,7 @@
     },
     "v43": {
       "platform": {
-        "title": "Plataforma",
+        "title": "Plataforma de control de obras para oficina y campo",
         "eyebrow": "Plataforma",
         "h1": "Toda la obra — en un solo circuito operativo",
         "lead": "Planes, informes de campo, documentos, riesgos de IA y decisiones quedan en un contexto compartido para oficina y obra.",
@@ -1829,7 +1829,7 @@
         "faq3A": "Una persona. La IA explica y recomienda; no cierra la decisión."
       },
       "features": {
-        "title": "Capacidades",
+        "title": "Tareas, partes de obra y evidencia fotográfica",
         "eyebrow": "Capacidades",
         "h1": "Del plan al resultado demostrado",
         "lead": "Tareas, informes, fotos, documentos, fechas y riesgos de IA quedan enlazados — no dispersos en chats.",
@@ -1885,7 +1885,7 @@
         "aiPhotoAlt": "Foto de obra usada como evidencia"
       },
       "solutions": {
-        "title": "Soluciones",
+        "title": "Control de obra para negocio, jefes de proyecto y campo",
         "eyebrow": "Soluciones",
         "h1": "Una obra. Tres niveles de control.",
         "lead": "Elige el rol y verás cómo AISTROYKA cambia el trabajo diario — sin un sistema aparte para cada equipo.",
@@ -1935,7 +1935,7 @@
         "fieldStep3Text": "La oficina ve el mismo ítem, no un álbum reenviado."
       },
       "pricing": {
-        "title": "Precios",
+        "title": "Planes de software de construcción para una obra o una cartera",
         "eyebrow": "Precios",
         "h1": "Elige el nivel de control para tu equipo",
         "lead": "Empieza con una obra y escala AISTROYKA en la cartera. Los planes de autoservicio muestran el precio de lista real; Business y Enterprise se acotan con nosotros.",
@@ -2160,7 +2160,7 @@
         "g3Text": "Tú eliges qué significa «mejor» antes de empezar el trabajo."
       },
       "about": {
-        "title": "Sobre nosotros",
+        "title": "Sobre AISTROYKA — software de control de obras",
         "eyebrow": "Sobre la empresa",
         "h1": "La construcción se vuelve transparente cuando el hecho no se pierde",
         "lead": "Construimos el circuito de trabajo entre obra y oficina — con evidencia, responsabilidad clara y decisiones sobre datos.",
