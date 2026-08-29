@@ -472,3 +472,5 @@
 "mgr_v43_doc_approve" = "Approve";
 "mgr_v43_doc_reject" = "Reject";
 "mgr_v43_doc_request_changes" = "Request changes";
+"mgr_v43_ai_poll_timeout" = "AI analysis is taking longer than expected. Refresh the status.";
+"mgr_v43_ai_retry_status" = "Refresh AI status";
