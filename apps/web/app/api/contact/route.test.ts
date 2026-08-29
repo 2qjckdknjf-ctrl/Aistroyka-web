@@ -67,14 +67,18 @@ describe("POST /api/contact", () => {
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data.ok).toBe(true);
-    expect(mockInsert).toHaveBeenCalledWith({
-      name: "Jane Doe",
-      email: "jane@example.com",
-      company: "Acme",
-      message: "Hello",
-      source: "contact_form",
-      status: "new",
-    });
+    expect(mockInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: "Jane Doe",
+        email: "jane@example.com",
+        company: "Acme",
+        message: "Hello",
+        source: "contact_form",
+        status: "new",
+        utm_source: null,
+        landing_page: null,
+      }),
+    );
   });
 
   it("returns 200 and inserts with null company when company omitted", async () => {
@@ -96,6 +100,38 @@ describe("POST /api/contact", () => {
         source: "contact_form",
         status: "new",
       })
+    );
+  });
+
+  it("persists sanitized UTM attribution without overwriting lead fields", async () => {
+    mockInsert.mockResolvedValueOnce({ error: null });
+    const res = await POST(
+      new Request("http://x/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "Jane Doe",
+          email: "jane@example.com",
+          message: "Hello",
+          utm_source: "google",
+          utm_medium: "organic",
+          landing_page: "/en/pricing",
+          referrer: "javascript:alert(1)",
+          locale: "en",
+        }),
+      }),
+    );
+    expect(res.status).toBe(200);
+    expect(mockInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: "Jane Doe",
+        source: "contact_form",
+        utm_source: "google",
+        utm_medium: "organic",
+        landing_page: "/en/pricing",
+        referrer: null,
+        locale: "en",
+      }),
     );
   });
 

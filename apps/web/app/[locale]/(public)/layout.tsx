@@ -1,3 +1,5 @@
+import { headers } from "next/headers";
+import type { Metadata } from "next";
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import { Manrope } from "next/font/google";
 import { PublicHeader } from "@/components/public";
@@ -5,6 +7,8 @@ import { PublicFooter } from "@/components/public";
 import { V41PilotProvider } from "@/components/public/v41";
 import { getAppUrl } from "@/lib/app-url";
 import { routing } from "@/i18n/routing";
+import { publicCanonicalUrl, publicLocaleAlternates } from "@/lib/seo/public-canonical";
+import { PublicFunnelBeacon } from "@/components/public/PublicFunnelBeacon";
 
 const manrope = Manrope({
   subsets: ["latin", "cyrillic"],
@@ -17,6 +21,24 @@ type Props = {
   params: Promise<{ locale: string }>;
 };
 
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale } = await params;
+  const headerList = await headers();
+  const pathname = headerList.get("x-aistroyka-pathname") ?? `/${locale}`;
+  const origin = getAppUrl();
+  return {
+    alternates: {
+      canonical: publicCanonicalUrl({ origin, pathname }),
+      languages: publicLocaleAlternates({
+        origin,
+        pathname,
+        locales: routing.locales,
+        defaultLocale: routing.defaultLocale,
+      }),
+    },
+  };
+}
+
 /**
  * Layout for all public marketing pages: header + footer, no auth required.
  * Does not wrap (dashboard) or (auth) routes.
@@ -25,6 +47,8 @@ export default async function PublicLayout({ children, params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: "public.layout" });
+  const headerList = await headers();
+  const pathname = headerList.get("x-aistroyka-pathname") ?? `/${locale}`;
   const baseUrl = getAppUrl();
   const organizationSchema = {
     "@context": "https://schema.org",
@@ -67,6 +91,7 @@ export default async function PublicLayout({ children, params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
       />
+      <PublicFunnelBeacon locale={locale} pathname={pathname} />
       <V41PilotProvider>
         <div className="relative z-10 flex min-h-screen flex-col">
           <PublicHeader />
