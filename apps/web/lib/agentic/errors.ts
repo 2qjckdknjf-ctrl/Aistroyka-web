@@ -15,6 +15,7 @@ export const AGENT_ERROR_CODES = [
   "AGENT_UNKNOWN_SKILL",
   "AGENT_RESTRICTED_ACTION",
   "AGENT_MALFORMED_OUTPUT",
+  "AGENT_GOVERNANCE_UNAVAILABLE",
 ] as const;
 
 export type AgentErrorCode = (typeof AGENT_ERROR_CODES)[number];

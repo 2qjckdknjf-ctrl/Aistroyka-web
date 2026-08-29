@@ -43,6 +43,52 @@ export const AgentResponseSchema = z.object({
 
 export type AgentStructuredResponse = z.infer<typeof AgentResponseSchema>;
 
+export const AgentEvidenceRefSchema = z.object({
+  evidenceId: z.string(),
+  type: z.string(),
+  sourceEntityType: z.string().optional(),
+  sourceEntityId: z.string().optional(),
+});
+
+export const AgentPublicProposedActionSchema = z.object({
+  actionType: z.string(),
+  skillName: z.string().optional(),
+  reason: z.string().optional(),
+  expectedEffect: z.string().optional(),
+  payload: z.record(z.unknown()).optional(),
+  riskLevel: z.string().optional(),
+  approvalRequired: z.boolean().optional(),
+});
+
+export const AgentPublicResponseSchema = z.object({
+  schemaVersion: z.literal(1).optional(),
+  runId: z.string().min(1),
+  answer: z.string(),
+  health: z
+    .object({
+      score: z.number().min(0).max(100).optional(),
+      band: z.enum(["GREEN", "AMBER", "RED"]).optional(),
+    })
+    .optional(),
+  risks: z.array(AgentRiskItemSchema).default([]),
+  blockers: z.array(AgentBlockerItemSchema).default([]),
+  evidence: z.array(AgentEvidenceRefSchema).default([]),
+  proposedActions: z.array(AgentPublicProposedActionSchema).default([]),
+  limitations: z.array(z.string()).default([]),
+  confidence: z.string().optional(),
+  runStatus: z
+    .enum(["COMPLETED", "COMPLETED_WITH_LIMITATIONS", "INSUFFICIENT_EVIDENCE", "FAILED"])
+    .optional(),
+  synthesisSource: z.enum(["llm", "deterministic"]).optional(),
+});
+
+export type AgentPublicResponse = z.infer<typeof AgentPublicResponseSchema>;
+
+export function parseAgentPublicResponse(value: unknown): AgentPublicResponse | null {
+  const parsed = AgentPublicResponseSchema.safeParse(value);
+  return parsed.success ? parsed.data : null;
+}
+
 const BANNED_PAYLOAD_KEYS = new Set([
   "sql",
   "query",

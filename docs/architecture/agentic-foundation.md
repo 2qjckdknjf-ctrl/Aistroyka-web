@@ -50,11 +50,15 @@ Open PR #244 (pilot governed AI) is **not merged**; this slice does not copy tha
 ## Security model
 
 - Tenant identity comes only from `AgentExecutionContext` (request tenant), never from model JSON.
+- Tenant role, project role, and agent capability roles are distinct. Tenant `member` is not mapped to manager.
 - Unknown skill names → `AGENT_UNKNOWN_SKILL` / reject.
 - No eval, dynamic handlers, model SQL, or arbitrary URL fetch.
 - Worker `x-client` profiles are not on the lite allow-list for this route.
 - Restricted actions (`payment`, `project_delete`, …) cannot execute; Slice 01 does not execute writes at all.
 - Proposed actions strip `tenantId` / `projectId` / SQL / URL payloads.
+- Authenticated clients are **SELECT-only** on `agent_runs`, `agent_run_steps`, `proposed_agent_actions`, and graph tables. Writes go through the Next.js orchestrator with the **service role**. `actor_user_id` is always the authenticated request user.
+- Idempotency is scoped to `tenant + project + actor + route + key`. Replay JSON is re-validated with `AgentPublicResponseSchema`; malformed rows are a cache miss.
+- Governance: missing admin client → `AGENT_GOVERNANCE_UNAVAILABLE` (503). Quota/rate-limit denials do not call the provider. Successful provider calls record usage via the existing Copilot `recordUsage` path; replay and deterministic fallback do not.
 
 ## Human-in-control policy
 
@@ -108,7 +112,9 @@ DB row `feature_flags.key = AGENTIC_FOUNDATION_ENABLED`, `rollout_percent = 0`.
 
 ## Failure handling
 
-Stable codes: `AGENT_FEATURE_DISABLED`, `AGENT_PROJECT_ACCESS_DENIED`, `AGENT_UNKNOWN_SKILL`, `AGENT_POLICY_DENIED`, `AGENT_RESTRICTED_ACTION`, `AGENT_INSUFFICIENT_EVIDENCE`, `AGENT_PROVIDER_UNAVAILABLE` (limitation when synthesis falls back), `AGENT_INVALID_INPUT`.
+Stable codes: `AGENT_FEATURE_DISABLED`, `AGENT_PROJECT_ACCESS_DENIED`, `AGENT_UNKNOWN_SKILL`, `AGENT_POLICY_DENIED`, `AGENT_RESTRICTED_ACTION`, `AGENT_INSUFFICIENT_EVIDENCE`, `AGENT_PROVIDER_UNAVAILABLE` (limitation when synthesis falls back), `AGENT_GOVERNANCE_UNAVAILABLE`, `AGENT_INVALID_INPUT`.
+
+Required skill query failures do not become empty counts. Run status may be `COMPLETED_WITH_LIMITATIONS`, `INSUFFICIENT_EVIDENCE`, or `FAILED`.
 
 UI does not show stack traces.
 

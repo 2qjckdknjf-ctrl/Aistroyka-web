@@ -13,15 +13,17 @@ import { getOrCreateRequestId, addRequestIdToResponse } from "@/lib/observabilit
 import { checkLiteAllowList } from "@/lib/api/lite-allow-list";
 import { IDEMPOTENCY_HEADER, getCachedResponse, storeResponse } from "@/lib/platform/idempotency/idempotency.service";
 import { gateTenantAiRequest } from "@/lib/copilot/copilot-ai-gate";
+import { recordUsage, checkBudgetAlert } from "@/lib/platform/ai-usage/ai-usage.service";
+import { estimateCostUsd } from "@/lib/platform/ai-usage/cost-estimator";
 import { isAgenticFoundationEnabled } from "@/lib/agentic/feature-flag";
 import { buildAgentExecutionContext } from "@/lib/agentic/context";
 import { runProjectAgent } from "@/lib/agentic/orchestrator/orchestrator";
-import { AgentError, isAgentError } from "@/lib/agentic/errors";
+import { parseAgentPublicResponse } from "@/lib/agentic/orchestrator/structured-output";
+import { agentIdempotencyRoute } from "@/lib/agentic/idempotency";
+import { isAgentError } from "@/lib/agentic/errors";
 import { logAgentMetric } from "@/lib/agentic/observability/metrics";
 
 export const dynamic = "force-dynamic";
-
-const ROUTE = "POST /api/v1/projects/:id/agent";
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   const requestId = getOrCreateRequestId(request);
@@ -78,33 +80,48 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     return jsonError(requestId, "AGENT_INVALID_INPUT", "message required", 400);
   }
 
+  const idempotencyRoute = agentIdempotencyRoute(projectId);
   const idempotencyKey = request.headers.get(IDEMPOTENCY_HEADER)?.trim() || null;
   if (idempotencyKey) {
-    const cached = await getCachedResponse(supabase, idempotencyKey, tenantCtx.tenantId, tenantCtx.userId, ROUTE);
-    if (cached) {
-      return addRequestIdToResponse(NextResponse.json(cached.response, { status: cached.statusCode }), requestId);
+    const cached = await getCachedResponse(
+      supabase,
+      idempotencyKey,
+      tenantCtx.tenantId,
+      tenantCtx.userId,
+      idempotencyRoute
+    );
+    const replayed = cached ? parseAgentPublicResponse(cached.response) : null;
+    if (replayed) {
+      return addRequestIdToResponse(NextResponse.json(cached!.response, { status: cached!.statusCode }), requestId);
     }
   }
 
   const admin = getAdminClient();
-  if (admin) {
-    const gate = await gateTenantAiRequest(admin, {
-      tenantId: tenantCtx.tenantId,
-      userId: tenantCtx.userId,
-      subscriptionTier: tenantCtx.subscriptionTier,
+  if (!admin) {
+    return jsonError(
       requestId,
-      endpoint: ROUTE,
-      request,
-    });
-    if (!gate.ok) {
-      return addRequestIdToResponse(
-        NextResponse.json({ error: gate.message, code: gate.code ?? "AGENT_POLICY_DENIED" }, { status: gate.httpStatus }),
-        requestId
-      );
-    }
+      "AGENT_GOVERNANCE_UNAVAILABLE",
+      "Agent requires service configuration for AI usage tracking.",
+      503
+    );
   }
 
-  const locale = request.headers.get("x-locale") || "en";
+  const gate = await gateTenantAiRequest(admin, {
+    tenantId: tenantCtx.tenantId,
+    userId: tenantCtx.userId,
+    subscriptionTier: tenantCtx.subscriptionTier,
+    requestId,
+    endpoint: idempotencyRoute,
+    request,
+  });
+  if (!gate.ok) {
+    return addRequestIdToResponse(
+      NextResponse.json({ error: gate.message, code: gate.code ?? "AGENT_POLICY_DENIED" }, { status: gate.httpStatus }),
+      requestId
+    );
+  }
+
+  const locale = request.headers.get("x-locale")?.trim() || "en";
   try {
     const agentCtx = await buildAgentExecutionContext({
       supabase,
@@ -113,23 +130,58 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       requestId,
       locale,
     });
-    const result = await runProjectAgent(supabase, agentCtx, {
-      message,
-      idempotencyKey,
-    });
+    const result = await runProjectAgent(
+      supabase,
+      agentCtx,
+      {
+        message,
+        idempotencyKey,
+      },
+      {
+        persistClient: admin,
+        recordUsage: async (usage) => {
+          const costUsd = estimateCostUsd(usage.model, usage.promptTokens, usage.completionTokens);
+          await recordUsage(admin, {
+            tenant_id: tenantCtx.tenantId,
+            user_id: tenantCtx.userId,
+            trace_id: requestId,
+            provider: usage.provider,
+            model: usage.model,
+            tokens_input: usage.promptTokens,
+            tokens_output: usage.completionTokens,
+            tokens_total: usage.promptTokens + usage.completionTokens,
+            cost_usd: costUsd,
+            status: "success",
+            duration_ms: usage.durationMs,
+          });
+          await checkBudgetAlert(admin, tenantCtx.tenantId, costUsd);
+        },
+      }
+    );
     const payload = {
+      schemaVersion: 1 as const,
       runId: result.runId,
       answer: result.answer,
-      health: result.health ?? {},
+      health: result.health,
       risks: result.risks,
       blockers: result.blockers,
       evidence: result.evidence,
       proposedActions: result.proposedActions,
       limitations: result.limitations,
       confidence: result.confidence,
+      runStatus: result.runStatus,
+      synthesisSource: result.synthesisSource,
     };
     if (idempotencyKey) {
-      await storeResponse(supabase, idempotencyKey, tenantCtx.tenantId, tenantCtx.userId, ROUTE, payload, 200);
+      await storeResponse(
+        supabase,
+        idempotencyKey,
+        tenantCtx.tenantId,
+        tenantCtx.userId,
+        idempotencyRoute,
+        payload,
+        200
+      );
     }
     return addRequestIdToResponse(NextResponse.json(payload), requestId);
   } catch (err) {

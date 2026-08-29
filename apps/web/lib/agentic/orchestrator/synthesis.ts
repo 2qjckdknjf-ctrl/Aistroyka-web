@@ -21,25 +21,37 @@ export interface SynthesisResult {
   providerUnavailable: boolean;
 }
 
-function deterministicSynthesis(contextJson: string): AgentStructuredResponse {
+function deterministicSynthesis(
+  contextJson: string,
+  failedRequiredSkills: string[] = []
+): AgentStructuredResponse {
   let parsed: Record<string, unknown> = {};
   try {
     parsed = JSON.parse(contextJson) as Record<string, unknown>;
   } catch {
     parsed = {};
   }
-  const health = (parsed.calculate_project_health ?? parsed.health) as
-    | { score?: number; band?: "GREEN" | "AMBER" | "RED" }
-    | null
-    | undefined;
-  const blockers = (parsed.find_project_blockers as { items?: Array<{ title?: string; why?: string }> } | undefined)
-    ?.items ?? [];
-  const risks = (parsed.get_project_risks as { items?: Array<{ title?: string; severity?: string; explanation?: string }> } | undefined)
-    ?.items ?? [];
-  const insufficient = Boolean(parsed.insufficientEvidence);
+  const failed = new Set(failedRequiredSkills);
+  const health = failed.has("calculate_project_health")
+    ? undefined
+    : ((parsed.calculate_project_health ?? parsed.health) as
+        | { score?: number; band?: "GREEN" | "AMBER" | "RED" }
+        | null
+        | undefined);
+  const blockers = failed.has("find_project_blockers")
+    ? []
+    : ((parsed.find_project_blockers as { items?: Array<{ title?: string; why?: string }> } | undefined)?.items ??
+      []);
+  const risks = failed.has("get_project_risks")
+    ? []
+    : ((parsed.get_project_risks as
+        | { items?: Array<{ title?: string; severity?: string; explanation?: string }> }
+        | undefined)?.items ?? []);
+  const insufficient = Boolean(parsed.insufficientEvidence) || failed.size > 0;
+  const failureLimitations = failedRequiredSkills.map((s) => `AGENT_SKILL_FAILED:${s}`);
   return {
     summary: insufficient
-      ? "Insufficient structured project evidence to judge delivery risk."
+      ? "Insufficient structured project evidence to judge delivery risk. Missing or failed skill results must not be treated as empty counts."
       : "Structured project signals were assembled from skills. Review blockers and overdue work before drawing conclusions.",
     health: health?.score != null ? { score: health.score, band: health.band } : undefined,
     risks: risks.slice(0, 8).map((r) => ({
@@ -50,9 +62,10 @@ function deterministicSynthesis(contextJson: string): AgentStructuredResponse {
     blockers: blockers.slice(0, 8).map((b) => ({ title: b.title ?? "Blocker", why: b.why })),
     observations: [],
     proposedActions: [],
-    limitations: insufficient
-      ? ["INSUFFICIENT_EVIDENCE"]
-      : ["Deterministic synthesis: LLM provider was not used or was unavailable."],
+    limitations: [
+      ...(insufficient ? ["INSUFFICIENT_EVIDENCE"] : ["Deterministic synthesis: LLM provider was not used or was unavailable."]),
+      ...failureLimitations,
+    ],
     confidence: insufficient ? "low" : "medium",
   };
 }
@@ -61,14 +74,16 @@ export async function synthesizeAgentAnswer(input: {
   locale: string;
   userMessage: string;
   structuredContext: Record<string, unknown>;
+  failedRequiredSkills?: string[];
 }): Promise<SynthesisResult> {
   const promptVersion = SYNTHESIS_PROMPT_VERSION;
   const contextJson = JSON.stringify(input.structuredContext);
   const started = Date.now();
+  const failedRequiredSkills = input.failedRequiredSkills ?? [];
   const cfg = getServerConfig();
   if (!cfg.OPENAI_API_KEY) {
     return {
-      response: deterministicSynthesis(contextJson),
+      response: deterministicSynthesis(contextJson, failedRequiredSkills),
       source: "deterministic",
       promptVersion,
       latencyMs: Date.now() - started,
@@ -105,7 +120,9 @@ export async function synthesizeAgentAnswer(input: {
     });
 
     const parsed = AgentResponseSchema.safeParse(out.structured);
-    const response = parsed.success ? parsed.data : fallbackFromPartial(out.structured, contextJson);
+    const response = parsed.success
+      ? parsed.data
+      : fallbackFromPartial(out.structured, contextJson, failedRequiredSkills);
     return {
       response,
       source: parsed.success ? "llm" : "deterministic",
@@ -121,7 +138,7 @@ export async function synthesizeAgentAnswer(input: {
     };
   } catch {
     return {
-      response: deterministicSynthesis(contextJson),
+      response: deterministicSynthesis(contextJson, failedRequiredSkills),
       source: "deterministic",
       provider: "openai",
       model: cfg.OPENAI_COPILOT_MODEL,
@@ -132,8 +149,12 @@ export async function synthesizeAgentAnswer(input: {
   }
 }
 
-function fallbackFromPartial(structured: Record<string, unknown>, contextJson: string): AgentStructuredResponse {
-  const base = deterministicSynthesis(contextJson);
+function fallbackFromPartial(
+  structured: Record<string, unknown>,
+  contextJson: string,
+  failedRequiredSkills: string[]
+): AgentStructuredResponse {
+  const base = deterministicSynthesis(contextJson, failedRequiredSkills);
   const attempt = AgentResponseSchema.safeParse({
     ...base,
     summary: typeof structured.summary === "string" ? structured.summary : base.summary,

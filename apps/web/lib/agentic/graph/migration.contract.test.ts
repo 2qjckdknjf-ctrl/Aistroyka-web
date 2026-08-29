@@ -21,4 +21,28 @@ describe("agentic foundation migration contract", () => {
     expect(sql).toContain("construction_entities_source_unique");
     expect(sql).toContain("AGENTIC_FOUNDATION_ENABLED");
   });
+
+  it("binds idempotency to tenant + project + actor", () => {
+    expect(sql).toContain("unique (tenant_id, project_id, actor_user_id, idempotency_key)");
+  });
+
+  it("is SELECT-only for authenticated; writes are service_role", () => {
+    expect(sql).toMatch(/grant select on public\.agent_runs to authenticated/);
+    expect(sql).toMatch(/grant select on public\.agent_run_steps to authenticated/);
+    expect(sql).toMatch(/grant select on public\.proposed_agent_actions to authenticated/);
+    expect(sql).not.toMatch(/grant insert on public\.agent_runs to authenticated/i);
+    expect(sql).not.toMatch(/grant update on public\.agent_runs to authenticated/i);
+    expect(sql).not.toMatch(/grant delete on public\.agent_runs to authenticated/i);
+    expect(sql).not.toMatch(/grant insert on public\.proposed_agent_actions to authenticated/i);
+    expect(sql).not.toMatch(/grant update on public\.proposed_agent_actions to authenticated/i);
+    expect(sql).toMatch(/grant all on public\.agent_runs to service_role/);
+    expect(sql).toMatch(/grant all on public\.proposed_agent_actions to service_role/);
+    const created = sql.match(/create policy [\s\S]+?;/gi) ?? [];
+    expect(created.length).toBeGreaterThan(0);
+    for (const policy of created) {
+      expect(policy.toLowerCase()).not.toContain(" for insert");
+      expect(policy.toLowerCase()).not.toContain(" for update");
+      expect(policy.toLowerCase()).not.toContain(" for delete");
+    }
+  });
 });

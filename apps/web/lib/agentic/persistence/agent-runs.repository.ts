@@ -105,19 +105,34 @@ export async function persistAgentRun(supabase: SupabaseClient, input: PersistRu
 
 export async function findRunByIdempotency(
   supabase: SupabaseClient,
-  tenantId: string,
-  userId: string,
-  idempotencyKey: string
+  input: {
+    tenantId: string;
+    projectId: string;
+    userId: string;
+    idempotencyKey: string;
+  }
 ): Promise<{ id: string; structured_result: unknown; status: string } | null> {
   const { data, error } = await supabase
     .from("agent_runs")
-    .select("id, structured_result, status")
-    .eq("tenant_id", tenantId)
-    .eq("actor_user_id", userId)
-    .eq("idempotency_key", idempotencyKey)
+    .select("id, tenant_id, project_id, actor_user_id, structured_result, status")
+    .eq("tenant_id", input.tenantId)
+    .eq("project_id", input.projectId)
+    .eq("actor_user_id", input.userId)
+    .eq("idempotency_key", input.idempotencyKey)
     .maybeSingle();
   if (error || !data) return null;
-  return data as { id: string; structured_result: unknown; status: string };
+  const row = data as {
+    id: string;
+    tenant_id: string;
+    project_id: string;
+    actor_user_id: string | null;
+    structured_result: unknown;
+    status: string;
+  };
+  if (row.tenant_id !== input.tenantId) return null;
+  if (row.project_id !== input.projectId) return null;
+  if (row.actor_user_id !== input.userId) return null;
+  return { id: row.id, structured_result: row.structured_result, status: row.status };
 }
 
 function redactRequest(request: Record<string, unknown>): Record<string, unknown> {

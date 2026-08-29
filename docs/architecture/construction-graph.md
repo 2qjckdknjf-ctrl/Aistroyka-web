@@ -12,6 +12,7 @@ Unique source bind: `(tenant_id, project_id, source_type, source_id)`.
 ## Rules
 
 - Traversal is always `tenant_id` + `project_id`. RLS requires `is_internal_tenant_reader_for_tenant` **and** `can_read_project_membership` (tenant owner/admin or active project member). Stakeholders cannot read graph/agent rows.
+- Authenticated clients have **SELECT** only. Graph bind and agent persist use `service_role`. There is no authenticated INSERT/UPDATE on `proposed_agent_actions` (PROPOSED → APPROVED/EXECUTED is not a client mutation in Slice 01).
 - Binding is idempotent (`upsert` on the unique source key).
 - A `Task` node points at `worker_tasks.id`; the task row remains authoritative.
 

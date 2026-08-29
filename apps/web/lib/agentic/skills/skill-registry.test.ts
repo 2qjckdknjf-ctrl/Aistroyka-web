@@ -11,6 +11,8 @@ function ctx(roles: AgentExecutionContext["roles"] = ["manager"]): AgentExecutio
     projectId: "p1",
     userId: "u1",
     actorType: "user",
+    tenantRole: "member",
+    projectRole: "manager",
     roles,
     permissions: [],
     requestId: "r1",

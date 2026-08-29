@@ -87,9 +87,10 @@ create table if not exists public.agent_runs (
   idempotency_key text,
   created_at timestamptz not null default now(),
   constraint agent_runs_status_check check (status in (
-    'PENDING_APPROVAL', 'APPROVED', 'REJECTED', 'EXECUTING', 'COMPLETED', 'FAILED', 'CANCELLED'
+    'PENDING_APPROVAL', 'APPROVED', 'REJECTED', 'EXECUTING', 'COMPLETED',
+    'COMPLETED_WITH_LIMITATIONS', 'INSUFFICIENT_EVIDENCE', 'FAILED', 'CANCELLED'
   )),
-  constraint agent_runs_idempotency_unique unique (tenant_id, actor_user_id, idempotency_key)
+  constraint agent_runs_idempotency_unique unique (tenant_id, project_id, actor_user_id, idempotency_key)
 );
 
 create index if not exists idx_agent_runs_project
@@ -155,10 +156,10 @@ comment on table public.proposed_agent_actions is
   'Human-in-control proposed actions. Slice 01 stores SUGGEST/PREPARE only; no autonomous writes.';
 
 -- ---------------------------------------------------------------------------
--- RLS: internal tenant readers only. No portal/stakeholder access.
--- Cross-tenant traversal is impossible: every policy requires tenant membership.
--- Project isolation: tenant members/viewers need can_read_project_membership
--- (tenant owner/admin or active project member). Stakeholders stay excluded.
+-- RLS: authenticated clients are SELECT-only. All writes go through service_role
+-- (Next.js orchestrator). Slice 01 has no client write/approval API.
+-- SELECT is project-scoped. agent_runs rows are further bound to auth.uid()
+-- (or tenant owner/admin) so one member cannot read another user's replay payload.
 -- ---------------------------------------------------------------------------
 alter table public.construction_entities enable row level security;
 alter table public.construction_relations enable row level security;
@@ -184,27 +185,9 @@ create policy construction_entities_select on public.construction_entities
     public.is_internal_tenant_reader_for_tenant(tenant_id)
     and public.can_read_project_membership(tenant_id, project_id)
   );
-create policy construction_entities_write on public.construction_entities
-  for all using (
-    public.is_internal_tenant_reader_for_tenant(tenant_id)
-    and public.can_read_project_membership(tenant_id, project_id)
-  )
-  with check (
-    public.is_internal_tenant_reader_for_tenant(tenant_id)
-    and public.can_read_project_membership(tenant_id, project_id)
-  );
 
 create policy construction_relations_select on public.construction_relations
   for select using (
-    public.is_internal_tenant_reader_for_tenant(tenant_id)
-    and public.can_read_project_membership(tenant_id, project_id)
-  );
-create policy construction_relations_write on public.construction_relations
-  for all using (
-    public.is_internal_tenant_reader_for_tenant(tenant_id)
-    and public.can_read_project_membership(tenant_id, project_id)
-  )
-  with check (
     public.is_internal_tenant_reader_for_tenant(tenant_id)
     and public.can_read_project_membership(tenant_id, project_id)
   );
@@ -213,69 +196,57 @@ create policy agent_runs_select on public.agent_runs
   for select using (
     public.is_internal_tenant_reader_for_tenant(tenant_id)
     and public.can_read_project_membership(tenant_id, project_id)
-  );
-create policy agent_runs_insert on public.agent_runs
-  for insert with check (
-    public.is_internal_tenant_reader_for_tenant(tenant_id)
-    and public.can_read_project_membership(tenant_id, project_id)
-  );
-create policy agent_runs_update on public.agent_runs
-  for update using (
-    public.is_internal_tenant_reader_for_tenant(tenant_id)
-    and public.can_read_project_membership(tenant_id, project_id)
-  )
-  with check (
-    public.is_internal_tenant_reader_for_tenant(tenant_id)
-    and public.can_read_project_membership(tenant_id, project_id)
+    and (
+      actor_user_id = (select auth.uid())
+      or public.can_manage_project_membership(tenant_id, project_id)
+    )
   );
 
 create policy agent_run_steps_select on public.agent_run_steps
   for select using (
     public.is_internal_tenant_reader_for_tenant(tenant_id)
     and public.can_read_project_membership(tenant_id, project_id)
-  );
-create policy agent_run_steps_insert on public.agent_run_steps
-  for insert with check (
-    public.is_internal_tenant_reader_for_tenant(tenant_id)
-    and public.can_read_project_membership(tenant_id, project_id)
+    and exists (
+      select 1 from public.agent_runs r
+      where r.id = agent_run_id
+        and r.tenant_id = agent_run_steps.tenant_id
+        and r.project_id = agent_run_steps.project_id
+        and (
+          r.actor_user_id = (select auth.uid())
+          or public.can_manage_project_membership(r.tenant_id, r.project_id)
+        )
+    )
   );
 
 create policy proposed_agent_actions_select on public.proposed_agent_actions
   for select using (
     public.is_internal_tenant_reader_for_tenant(tenant_id)
     and public.can_read_project_membership(tenant_id, project_id)
-  );
-create policy proposed_agent_actions_insert on public.proposed_agent_actions
-  for insert with check (
-    public.is_internal_tenant_reader_for_tenant(tenant_id)
-    and public.can_read_project_membership(tenant_id, project_id)
-  );
-create policy proposed_agent_actions_update on public.proposed_agent_actions
-  for update using (
-    public.is_internal_tenant_reader_for_tenant(tenant_id)
-    and public.can_read_project_membership(tenant_id, project_id)
-  )
-  with check (
-    public.is_internal_tenant_reader_for_tenant(tenant_id)
-    and public.can_read_project_membership(tenant_id, project_id)
+    and (
+      created_by = (select auth.uid())
+      or public.can_manage_project_membership(tenant_id, project_id)
+    )
   );
 
-revoke all on table public.construction_entities from public, anon;
-grant select, insert, update on public.construction_entities to authenticated;
+-- No INSERT/UPDATE/DELETE policies for authenticated. RLS deny-by-default.
+-- Status transitions (PROPOSED → APPROVED/EXECUTED) are not client-writable in Slice 01.
+
+revoke all on table public.construction_entities from public, anon, authenticated;
+grant select on public.construction_entities to authenticated;
 grant all on public.construction_entities to service_role;
 
-revoke all on table public.construction_relations from public, anon;
-grant select, insert, update on public.construction_relations to authenticated;
+revoke all on table public.construction_relations from public, anon, authenticated;
+grant select on public.construction_relations to authenticated;
 grant all on public.construction_relations to service_role;
 
-revoke all on table public.agent_runs from public, anon;
-grant select, insert, update on public.agent_runs to authenticated;
+revoke all on table public.agent_runs from public, anon, authenticated;
+grant select on public.agent_runs to authenticated;
 grant all on public.agent_runs to service_role;
 
-revoke all on table public.agent_run_steps from public, anon;
-grant select, insert on public.agent_run_steps to authenticated;
+revoke all on table public.agent_run_steps from public, anon, authenticated;
+grant select on public.agent_run_steps to authenticated;
 grant all on public.agent_run_steps to service_role;
 
-revoke all on table public.proposed_agent_actions from public, anon;
-grant select, insert, update on public.proposed_agent_actions to authenticated;
+revoke all on table public.proposed_agent_actions from public, anon, authenticated;
+grant select on public.proposed_agent_actions to authenticated;
 grant all on public.proposed_agent_actions to service_role;

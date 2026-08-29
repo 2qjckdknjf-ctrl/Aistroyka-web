@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { AgentResponseSchema, sanitizeProposedActions } from "./structured-output";
+import { AgentResponseSchema, parseAgentPublicResponse, sanitizeProposedActions } from "./structured-output";
 
 describe("structured output", () => {
   it("accepts valid agent response", () => {
@@ -50,6 +50,19 @@ describe("structured output", () => {
     expect(rejected.length).toBeGreaterThan(0);
     expect(accepted[0]?.payload.tenantId).toBeUndefined();
     expect(accepted[0]?.payload.taskId).toBe("t1");
+  });
+
+  it("rejects untrusted persisted replay JSON", () => {
+    expect(parseAgentPublicResponse({ health: "I invented this" })).toBeNull();
+    expect(parseAgentPublicResponse({ schemaVersion: 99, runId: "r1", answer: "x" })).toBeNull();
+    expect(
+      parseAgentPublicResponse({
+        schemaVersion: 1,
+        runId: "run-1",
+        answer: "ok",
+        health: { score: 40, band: "AMBER" },
+      })
+    ).not.toBeNull();
   });
 
   it("rejects unknown skill names from the model", () => {

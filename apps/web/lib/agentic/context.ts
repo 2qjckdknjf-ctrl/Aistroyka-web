@@ -1,5 +1,6 @@
 /**
  * Build AgentExecutionContext from tenant + project membership. Never from model output.
+ * Tenant role and project role stay distinct; capability roles are derived, not union-escalated.
  */
 
 import type { TenantContext } from "@/lib/tenant/tenant.types";
@@ -27,22 +28,50 @@ export function mapClientProfileToSource(profile: string): AgentSource {
   }
 }
 
-export function tenantRoleToAgentRole(role: TenantContext["role"]): AgentExecutionRole {
-  switch (role) {
+/**
+ * Capability roles for skill policy.
+ * Tenant `member` is not manager. Project worker stays worker.
+ * Tenant owner/admin get `admin` (explicit tenant-admin capability).
+ * Project manager/owner get `manager`.
+ */
+export function deriveAgentCapabilityRoles(input: {
+  tenantRole: TenantContext["role"];
+  projectRole: string | null;
+}): AgentExecutionRole[] {
+  const roles: AgentExecutionRole[] = [];
+  switch (input.tenantRole) {
     case "owner":
     case "admin":
-      return "admin";
-    case "member":
-      return "manager";
+      roles.push("admin");
+      break;
     case "viewer":
-      return "viewer";
+      roles.push("viewer");
+      break;
     case "stakeholder":
-      return "client";
+      roles.push("client");
+      break;
+    case "member":
+      break;
     default: {
-      const _exhaustive: never = role;
+      const _exhaustive: never = input.tenantRole;
       return _exhaustive;
     }
   }
+
+  switch (input.projectRole) {
+    case "manager":
+    case "owner":
+      roles.push("manager");
+      break;
+    case "worker":
+    case "contractor":
+      roles.push("worker");
+      break;
+    default:
+      break;
+  }
+
+  return [...new Set(roles)];
 }
 
 export async function buildAgentExecutionContext(input: {
@@ -58,18 +87,19 @@ export async function buildAgentExecutionContext(input: {
     input.projectId,
     input.tenant.userId
   );
-  const roles: AgentExecutionRole[] = [tenantRoleToAgentRole(input.tenant.role)];
-  if (membership?.role === "worker") roles.push("worker");
-  if (membership?.role === "manager" || membership?.role === "owner") roles.push("manager");
-  if (membership?.role === "contractor") roles.push("worker");
-
-  const unique = [...new Set(roles)];
+  const projectRole = membership?.role ?? null;
+  const roles = deriveAgentCapabilityRoles({
+    tenantRole: input.tenant.role,
+    projectRole,
+  });
   return {
     tenantId: input.tenant.tenantId,
     projectId: input.projectId,
     userId: input.tenant.userId,
     actorType: "user",
-    roles: unique,
+    tenantRole: input.tenant.role,
+    projectRole,
+    roles,
     permissions: input.tenant.permissionSet ? [...input.tenant.permissionSet] : [],
     requestId: input.requestId,
     traceId: input.tenant.traceId || input.requestId,

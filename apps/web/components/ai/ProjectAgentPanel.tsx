@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui";
 
 interface AgentApiResponse {
@@ -20,6 +20,7 @@ interface AgentApiResponse {
 
 export function ProjectAgentPanel({ projectId }: { projectId: string }) {
   const t = useTranslations("dashboardDetail");
+  const locale = useLocale();
   const [message, setMessage] = useState("");
   const [pending, setPending] = useState(false);
   const [result, setResult] = useState<AgentApiResponse | null>(null);
@@ -44,7 +45,11 @@ export function ProjectAgentPanel({ projectId }: { projectId: string }) {
         const res = await fetch(`/api/v1/projects/${projectId}/agent`, {
           method: "POST",
           credentials: "include",
-          headers: { "Content-Type": "application/json", "x-idempotency-key": crypto.randomUUID() },
+          headers: {
+            "Content-Type": "application/json",
+            "x-idempotency-key": crypto.randomUUID(),
+            "x-locale": locale,
+          },
           body: JSON.stringify({ message: q }),
         });
         const body = (await res.json()) as AgentApiResponse;
@@ -63,7 +68,7 @@ export function ProjectAgentPanel({ projectId }: { projectId: string }) {
         setPending(false);
       }
     },
-    [projectId, t]
+    [projectId, t, locale]
   );
 
   return (

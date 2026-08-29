@@ -29,6 +29,8 @@ function ctx(roles: AgentExecutionContext["roles"]): AgentExecutionContext {
     projectId: "p1",
     userId: "u1",
     actorType: "user",
+    tenantRole: "member",
+    projectRole: roles.includes("worker") ? "worker" : "manager",
     roles,
     permissions: [],
     requestId: "r1",

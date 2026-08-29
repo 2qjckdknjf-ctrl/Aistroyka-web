@@ -31,6 +31,8 @@ export type AgentRunStatus =
   | "REJECTED"
   | "EXECUTING"
   | "COMPLETED"
+  | "COMPLETED_WITH_LIMITATIONS"
+  | "INSUFFICIENT_EVIDENCE"
   | "FAILED"
   | "CANCELLED";
 
@@ -49,6 +51,10 @@ export interface AgentExecutionContext {
   projectId: string;
   userId: string;
   actorType: AgentActorType;
+  /** Tenant DB role (owner/admin/member/viewer/stakeholder). Not a skill capability. */
+  tenantRole: string;
+  /** Project membership role, or null when the actor is tenant admin/owner without a membership row. */
+  projectRole: string | null;
   roles: AgentExecutionRole[];
   permissions: string[];
   requestId: string;

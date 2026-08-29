@@ -18,6 +18,8 @@ function ctx(over: Partial<AgentExecutionContext> = {}): AgentExecutionContext {
     projectId: "project-a",
     userId: "user-a",
     actorType: "user",
+    tenantRole: "admin",
+    projectRole: "manager",
     roles: ["manager"],
     permissions: [],
     requestId: "r1",

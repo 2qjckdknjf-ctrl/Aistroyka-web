@@ -55,3 +55,7 @@ export function skillsForIntent(intent: AgentIntent): ReadSkillId[] {
     }
   }
 }
+
+export function isRequiredSkill(intent: AgentIntent, skill: string): boolean {
+  return skillsForIntent(intent).includes(skill as ReadSkillId);
+}

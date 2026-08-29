@@ -12,13 +12,11 @@ import { assembleProjectTruthSnapshot } from "@/lib/ai-brain/phase-a";
 import { getProjectHealthScore } from "@/lib/ai-brain/services/project-health-v2.service";
 import { getTopRiskInsights } from "@/lib/ai-brain/services/top-risks.service";
 import { getMissingEvidenceInsights } from "@/lib/ai-brain/services/missing-evidence.service";
-import { getTaskSignals } from "@/lib/ai-brain/mappers/task-signals.mapper";
 import { listReportsForManager } from "@/lib/domain/reports/report-list.repository";
-import { listByProject as listDefectsByProject } from "@/lib/domain/defects/defects.repository";
-import { listByProject as listIssuesByProject } from "@/lib/domain/issues/issue.repository";
 import { scoreToBand, type ProjectHealthV1 } from "../health/project-health";
 import { findProjectBlockers, type ProjectBlocker } from "../blockers/find-blockers";
 import { EmptySkillInputSchema, type AgentSkill, type SkillDefinition, type SkillResult } from "./skill.types";
+import { assertQueryOk } from "./query";
 
 const SKILL_LIMIT = 20;
 
@@ -130,10 +128,33 @@ export function createReadSkills(supabase: SupabaseClient): AgentSkill[] {
     }),
 
     readSkill(baseDef("get_open_issues", "Open punch-list defects and field issues"), async (ctx) => {
-      const [defects, issues] = await Promise.all([
-        listDefectsByProject(supabase, ctx.projectId, ctx.tenantId, { limit: SKILL_LIMIT }),
-        listIssuesByProject(supabase, ctx.projectId, ctx.tenantId, { status: "open" }),
+      const [defectsRes, issuesRes] = await Promise.all([
+        supabase
+          .from("project_defects")
+          .select("id, title, status, is_blocking, due_date")
+          .eq("project_id", ctx.projectId)
+          .eq("tenant_id", ctx.tenantId)
+          .order("updated_at", { ascending: false })
+          .limit(SKILL_LIMIT),
+        supabase
+          .from("project_issues")
+          .select("id, title, status")
+          .eq("project_id", ctx.projectId)
+          .eq("tenant_id", ctx.tenantId)
+          .eq("status", "open")
+          .order("created_at", { ascending: false })
+          .limit(SKILL_LIMIT),
       ]);
+      assertQueryOk(defectsRes.error, "get_open_issues");
+      assertQueryOk(issuesRes.error, "get_open_issues");
+      const defects = (defectsRes.data ?? []) as Array<{
+        id: string;
+        title: string;
+        status: string;
+        is_blocking: boolean;
+        due_date: string | null;
+      }>;
+      const issues = (issuesRes.data ?? []) as Array<{ id: string; title: string; status: string }>;
       const openDefects = defects.filter((d) =>
         ["open", "in_progress", "ready_for_verification"].includes(d.status)
       );
@@ -176,7 +197,7 @@ export function createReadSkills(supabase: SupabaseClient): AgentSkill[] {
 
     readSkill(baseDef("get_overdue_tasks", "Overdue worker tasks (bounded)"), async (ctx) => {
       const today = new Date().toISOString().slice(0, 10);
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("worker_tasks")
         .select("id, title, status, due_date, assigned_to, priority")
         .eq("tenant_id", ctx.tenantId)
@@ -185,6 +206,7 @@ export function createReadSkills(supabase: SupabaseClient): AgentSkill[] {
         .lt("due_date", today)
         .order("due_date", { ascending: true })
         .limit(SKILL_LIMIT);
+      assertQueryOk(error, "get_overdue_tasks");
       const rows = (data ?? []) as Array<{
         id: string;
         title: string;
@@ -219,11 +241,16 @@ export function createReadSkills(supabase: SupabaseClient): AgentSkill[] {
     readSkill(baseDef("get_recent_reports", "Recent submitted reports (7 days, bounded)"), async (ctx) => {
       const from = new Date();
       from.setDate(from.getDate() - 7);
-      const rows = await listReportsForManager(supabase, ctx.tenantId, {
-        projectId: ctx.projectId,
-        from: from.toISOString(),
-        limit: SKILL_LIMIT,
-      });
+      let rows;
+      try {
+        rows = await listReportsForManager(supabase, ctx.tenantId, {
+          projectId: ctx.projectId,
+          from: from.toISOString(),
+          limit: SKILL_LIMIT,
+        });
+      } catch {
+        throw new AgentError("AGENT_SKILL_FAILED", "query_failed:get_recent_reports", 503);
+      }
       return {
         output: {
           count: rows.length,
@@ -248,13 +275,14 @@ export function createReadSkills(supabase: SupabaseClient): AgentSkill[] {
     readSkill(
       baseDef("get_project_members", "Active project members", { managerOnly: true }),
       async (ctx) => {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from("project_members")
           .select("user_id, role, status")
           .eq("tenant_id", ctx.tenantId)
           .eq("project_id", ctx.projectId)
           .eq("status", "active")
           .limit(SKILL_LIMIT);
+        assertQueryOk(error, "get_project_members");
         const rows = (data ?? []) as Array<{ user_id: string; role: string; status: string }>;
         return {
           output: {
@@ -275,11 +303,12 @@ export function createReadSkills(supabase: SupabaseClient): AgentSkill[] {
 
     readSkill(baseDef("get_project_evidence", "Evidence coverage and gaps"), async (ctx) => {
       const insights = await getMissingEvidenceInsights(supabase, ctx.projectId, ctx.tenantId);
-      const { count } = await supabase
+      const { count, error } = await supabase
         .from("media")
         .select("id", { count: "exact", head: true })
         .eq("tenant_id", ctx.tenantId)
         .eq("project_id", ctx.projectId);
+      assertQueryOk(error, "get_project_evidence");
       return {
         output: {
           mediaCount: count ?? 0,
@@ -362,11 +391,49 @@ export function createReadSkills(supabase: SupabaseClient): AgentSkill[] {
     }),
 
     readSkill(baseDef("find_project_blockers", "Delivery blockers from verified signals only"), async (ctx) => {
-      const [taskSignals, defects, missing] = await Promise.all([
-        getTaskSignals(supabase, ctx.projectId, ctx.tenantId),
-        listDefectsByProject(supabase, ctx.projectId, ctx.tenantId, { limit: SKILL_LIMIT }),
+      const [tasksRes, defectsRes, missing] = await Promise.all([
+        supabase
+          .from("worker_tasks")
+          .select("id, status, due_date, assigned_to, title")
+          .eq("project_id", ctx.projectId)
+          .eq("tenant_id", ctx.tenantId)
+          .in("status", ["pending", "in_progress"]),
+        supabase
+          .from("project_defects")
+          .select("id, title, status, is_blocking")
+          .eq("project_id", ctx.projectId)
+          .eq("tenant_id", ctx.tenantId)
+          .limit(SKILL_LIMIT),
         getMissingEvidenceInsights(supabase, ctx.projectId, ctx.tenantId),
       ]);
+      assertQueryOk(tasksRes.error, "find_project_blockers");
+      assertQueryOk(defectsRes.error, "find_project_blockers");
+      const tasks = (tasksRes.data ?? []) as Array<{
+        id: string;
+        status: string;
+        due_date: string | null;
+        assigned_to: string | null;
+        title: string;
+      }>;
+      const defects = (defectsRes.data ?? []) as Array<{
+        id: string;
+        title: string;
+        status: string;
+        is_blocking: boolean;
+      }>;
+      const today = new Date().toISOString().slice(0, 10);
+      const taskSignals = tasks.map((t) => {
+        const overdue = Boolean(t.due_date && t.due_date < today);
+        const daysOverdue = t.due_date
+          ? Math.floor((Date.now() - new Date(t.due_date).getTime()) / 86400000)
+          : 0;
+        return {
+          taskId: t.id,
+          type: t.status === "in_progress" && overdue ? "blocked" : overdue ? "overdue" : "open",
+          severity: daysOverdue > 7 ? "high" : daysOverdue > 2 ? "medium" : "low",
+          message: t.title,
+        };
+      });
       const blockers: ProjectBlocker[] = findProjectBlockers({
         taskSignals,
         defects: defects.map((d) => ({
