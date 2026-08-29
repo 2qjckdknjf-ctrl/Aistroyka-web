@@ -39,12 +39,31 @@ export function sanitizeLeadAttribution(input: Partial<LeadAttribution> | Record
   };
 }
 
+const STORAGE_KEY = "aistroyka_first_touch_attribution";
+
+export function mergeFirstTouchAttribution(
+  current: LeadAttribution,
+  stored: LeadAttribution | null,
+): LeadAttribution {
+  const first = stored ?? current;
+  return sanitizeLeadAttribution({
+    utm_source: first.utm_source ?? current.utm_source,
+    utm_medium: first.utm_medium ?? current.utm_medium,
+    utm_campaign: first.utm_campaign ?? current.utm_campaign,
+    utm_content: first.utm_content ?? current.utm_content,
+    utm_term: first.utm_term ?? current.utm_term,
+    landing_page: first.landing_page ?? current.landing_page,
+    referrer: first.referrer ?? current.referrer,
+    locale: current.locale ?? first.locale,
+  });
+}
+
 export function readAttributionFromBrowser(): LeadAttribution {
   if (typeof window === "undefined") {
     return sanitizeLeadAttribution({});
   }
   const params = new URLSearchParams(window.location.search);
-  return sanitizeLeadAttribution({
+  const current = sanitizeLeadAttribution({
     utm_source: params.get("utm_source") ?? undefined,
     utm_medium: params.get("utm_medium") ?? undefined,
     utm_campaign: params.get("utm_campaign") ?? undefined,
@@ -53,4 +72,18 @@ export function readAttributionFromBrowser(): LeadAttribution {
     landing_page: `${window.location.pathname}${window.location.search}`,
     referrer: document.referrer || undefined,
   });
+  let stored: LeadAttribution | null = null;
+  try {
+    const raw = window.sessionStorage.getItem(STORAGE_KEY);
+    stored = raw ? sanitizeLeadAttribution(JSON.parse(raw) as Record<string, unknown>) : null;
+  } catch {
+    stored = null;
+  }
+  const merged = mergeFirstTouchAttribution(current, stored);
+  try {
+    window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+  } catch {
+    // Private mode or quota: keep the in-memory merge only.
+  }
+  return merged;
 }
