@@ -20,6 +20,7 @@ function isPathAllowed(pathname: string, method: string): boolean {
   if (m === "GET" && /^\/api\/v1\/reports\/[^/]+$/.test(pathname)) return true;
   // Worker/iOS+Android lite apps list tenant projects (tenant-scoped; same as dashboard read).
   if (pathname === "/api/v1/projects" && method === "GET") return true;
+  if (m === "GET" && /^\/api\/v1\/projects\/[^/]+\/media$/.test(pathname)) return true;
   if (pathname === "/api/v1/config") return true;
   if (pathname.startsWith("/api/v1/worker")) return true;
   if (pathname.startsWith("/api/v1/sync")) return true;

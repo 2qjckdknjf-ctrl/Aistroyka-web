@@ -9,6 +9,8 @@ import Shared
 struct WorkerV43HeroPhoto<Overlay: View>: View {
     var height: CGFloat = 168
     var systemImage: String = "building.2.fill"
+    var imageURL: URL? = nil
+    var loadedImageAccessibilityIdentifier: String? = nil
     @ViewBuilder var overlay: () -> Overlay
 
     var body: some View {
@@ -22,6 +24,26 @@ struct WorkerV43HeroPhoto<Overlay: View>: View {
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
+            if WorkerV43Preview.isEnabled,
+               imageURL == nil,
+               loadedImageAccessibilityIdentifier != nil {
+                loadedImage(
+                    Image(systemName: "photo.fill")
+                        .resizable()
+                )
+                .scaledToFit()
+                .padding(28)
+                .foregroundStyle(.white.opacity(0.34))
+            } else if let imageURL {
+                AsyncImage(url: imageURL) { phase in
+                    switch phase {
+                    case .success(let image):
+                        loadedImage(image)
+                    default:
+                        Color.clear
+                    }
+                }
+            }
             Image(systemName: systemImage)
                 .font(.system(size: 86, weight: .light))
                 .foregroundStyle(.white.opacity(0.12))
@@ -36,11 +58,26 @@ struct WorkerV43HeroPhoto<Overlay: View>: View {
         }
         .frame(maxWidth: .infinity)
         .frame(height: height)
+        .clipped()
         .clipShape(RoundedRectangle(cornerRadius: WorkerV43.radiusCard, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: WorkerV43.radiusCard, style: .continuous)
                 .stroke(WorkerV43.border, lineWidth: 1)
         )
+    }
+
+    @ViewBuilder
+    private func loadedImage(_ image: Image) -> some View {
+        if let loadedImageAccessibilityIdentifier {
+            image
+                .resizable()
+                .scaledToFill()
+                .accessibilityIdentifier(loadedImageAccessibilityIdentifier)
+        } else {
+            image
+                .resizable()
+                .scaledToFill()
+        }
     }
 }
 

@@ -25,6 +25,7 @@ struct TodayHomeView: View {
     @State private var showReport = false
     @State private var resumeDraftReportId: String?
     @State private var assistantSummary: String?
+    @State private var sitePhotoURL: URL?
 
     private var shiftStarted: Bool {
         WorkerV43Preview.isEnabled || store.state.shift.isStarted
@@ -63,6 +64,9 @@ struct TodayHomeView: View {
                 let cached = store.state.cachedTodayTasks(forUserId: KeychainHelper.get(key: KeychainHelper.sessionUserIdKey))
                 if todayTasks.isEmpty, !cached.isEmpty {
                     todayTasks = cached
+                }
+                if !WorkerV43Preview.isEnabled {
+                    sitePhotoURL = WorkerV43API.cachedSitePhotoURL(projectId: project.id)
                 }
                 load()
             }
@@ -186,7 +190,12 @@ struct TodayHomeView: View {
     }
 
     private var projectCard: some View {
-        WorkerV43HeroPhoto(height: 132, systemImage: "building.2.fill") {
+        WorkerV43HeroPhoto(
+            height: 132,
+            systemImage: "building.2.fill",
+            imageURL: sitePhotoURL,
+            loadedImageAccessibilityIdentifier: "pilot_worker_site_photo"
+        ) {
             HStack {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(project.name ?? project.id)
@@ -398,6 +407,7 @@ struct TodayHomeView: View {
             return
         }
         tasksLoading = todayTasks.isEmpty
+        loadSitePhoto()
         OperationQueueExecutor.shared.runLoop()
         if syncService.status == .idle || syncService.status == .offline {
             syncService.runSyncIfOnline()
@@ -459,6 +469,17 @@ struct TodayHomeView: View {
                     }
                 }
             }
+        }
+    }
+
+    private func loadSitePhoto() {
+        guard !WorkerV43Preview.isEnabled else { return }
+        if sitePhotoURL == nil {
+            sitePhotoURL = WorkerV43API.cachedSitePhotoURL(projectId: project.id)
+        }
+        Task {
+            guard let photo = try? await WorkerV43API.latestSitePhotoURL(projectId: project.id) else { return }
+            await MainActor.run { sitePhotoURL = photo }
         }
     }
 
