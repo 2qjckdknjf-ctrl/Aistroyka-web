@@ -378,6 +378,8 @@ struct ReportDetailReviewView: View {
     @State private var zoomURL: URL?
     @State private var analysis: ReportAnalysisStatusDTO?
     @State private var analysisPollingTimedOut = false
+    @State private var analysisStatusNeedsRetry = false
+    @State private var detailLoadGeneration = 0
     @State private var approvalHistory: [ReportApprovalEventDTO] = []
 
     var body: some View {
@@ -404,7 +406,11 @@ struct ReportDetailReviewView: View {
         .background(ManagerV43.bg.ignoresSafeArea())
         .navigationTitle(navigationTitle)
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear { loadIfNeeded() }
+        .task(id: detailLoadGeneration) {
+            if detailLoadGeneration > 0 || shouldLoadInitially(item: report, errorMessage: errorMessage) {
+                await loadAsync()
+            }
+        }
         .onReceive(NotificationCenter.default.publisher(for: ManagerLiveSync.appBecameActive)) { _ in
             load()
         }
@@ -592,10 +598,11 @@ struct ReportDetailReviewView: View {
                     Text(analysisDetail)
                         .font(.subheadline)
                         .foregroundStyle(ManagerV43.textSecondary)
-                    if analysisPollingTimedOut {
+                    if analysisPollingTimedOut || analysisStatusNeedsRetry {
                         Button(NSLocalizedString("mgr_v43_ai_retry_status", comment: "")) {
                             analysisPollingTimedOut = false
-                            Task { await pollAnalysisIfNeeded() }
+                            analysisStatusNeedsRetry = false
+                            load()
                         }
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(ManagerV43.dataBlue)
@@ -633,6 +640,9 @@ struct ReportDetailReviewView: View {
     private var analysisDetail: String {
         if ManagerV43Preview.isEnabled {
             return NSLocalizedString("mgr_v43_risk_rebar_summary", comment: "")
+        }
+        if analysisStatusNeedsRetry {
+            return NSLocalizedString("mgr_v43_ai_status_error", comment: "")
         }
         if analysisPollingTimedOut {
             return NSLocalizedString("mgr_v43_ai_poll_timeout", comment: "")
@@ -740,12 +750,7 @@ struct ReportDetailReviewView: View {
     private func load() {
         errorMessage = nil
         isLoading = true
-        Task { await loadAsync() }
-    }
-
-    private func loadIfNeeded() {
-        guard shouldLoadInitially(item: report, errorMessage: errorMessage) else { return }
-        load()
+        detailLoadGeneration += 1
     }
 
     private func loadAsync() async {
@@ -773,23 +778,38 @@ struct ReportDetailReviewView: View {
         ) {
             report = try await ManagerAPI.reportDetail(id: reportId)
             analysisPollingTimedOut = false
-            analysis = try? await ManagerAPI.reportAnalysisStatus(reportId: reportId)
+            do {
+                analysis = try await ManagerAPI.reportAnalysisStatus(reportId: reportId)
+                analysisStatusNeedsRetry = false
+            } catch {
+                analysis = nil
+                analysisStatusNeedsRetry = true
+            }
             approvalHistory = (try? await ManagerAPI.reportApprovalHistory(reportId: reportId)) ?? []
         }
+        guard report != nil, errorMessage == nil else { return }
         await pollAnalysisIfNeeded()
     }
 
     private func pollAnalysisIfNeeded() async {
-        guard !ManagerV43Preview.isEnabled else { return }
+        guard !ManagerV43Preview.isEnabled, !analysisStatusNeedsRetry else { return }
         analysisPollingTimedOut = false
-        // Keep the live view current for up to two minutes, then expose an explicit retry.
+        // This method is awaited by the SwiftUI .task above, so navigation and reloads cancel it.
         for _ in 0..<60 {
             let kind = ManagerV43Formatters.analysisPipelineKind(analysis?.status)
             if kind != "queued" && kind != "running" { return }
-            try? await Task.sleep(nanoseconds: 2_000_000_000)
-            if Task.isCancelled { return }
-            if let latest = try? await ManagerAPI.reportAnalysisStatus(reportId: reportId) {
-                analysis = latest
+            do {
+                try await Task.sleep(nanoseconds: 2_000_000_000)
+            } catch {
+                return
+            }
+            guard !Task.isCancelled else { return }
+            do {
+                analysis = try await ManagerAPI.reportAnalysisStatus(reportId: reportId)
+                analysisStatusNeedsRetry = false
+            } catch {
+                analysisStatusNeedsRetry = true
+                return
             }
         }
         let kind = ManagerV43Formatters.analysisPipelineKind(analysis?.status)
