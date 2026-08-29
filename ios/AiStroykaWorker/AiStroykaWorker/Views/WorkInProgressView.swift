@@ -33,9 +33,11 @@ struct WorkInProgressView: View {
                         Text(String(format: NSLocalizedString("wrk_v43_steps_fmt", comment: ""), progress.completedStepIndexes.count, 5))
                             .font(.system(size: 22, weight: .semibold))
                             .foregroundStyle(WorkerV43.textPrimary)
-                        Text(NSLocalizedString("wrk_v43_photo_before_ready", comment: ""))
+                        Text(beforeReady
+                             ? NSLocalizedString("wrk_v43_photo_before_ready", comment: "")
+                             : NSLocalizedString("wrk_v43_gate_need_before", comment: ""))
                             .font(.caption)
-                            .foregroundStyle(WorkerV43.success)
+                            .foregroundStyle(beforeReady ? WorkerV43.success : WorkerV43.warning)
                     }
                     Spacer()
                 }
@@ -103,6 +105,10 @@ struct WorkInProgressView: View {
         .onAppear { markTaskStarted() }
     }
 
+    private var beforeReady: Bool {
+        WorkerPhotoEvidence.loadReference(taskId: task.id, kind: .before) != nil
+    }
+
     private func stepRow(_ idx: Int) -> some View {
         let done = progress.completedStepIndexes.contains(idx)
         let current = idx == progress.completedStepIndexes.count
@@ -148,7 +154,7 @@ struct WorkInProgressView: View {
         if progress.completedStepIndexes.count >= 4 {
             let reason = WorkerReportGate.blockedReason(
                 requiredStepsDone: progress.completedStepIndexes.count >= 4,
-                beforeReady: true,
+                beforeReady: beforeReady,
                 afterReady: false
             )
             if let reason, progress.completedStepIndexes.count >= 5 {

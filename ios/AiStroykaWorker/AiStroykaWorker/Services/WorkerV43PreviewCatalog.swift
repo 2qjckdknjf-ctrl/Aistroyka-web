@@ -69,6 +69,17 @@ enum WorkerV43Copy {
         }
     }
 
+    static func taskPriority(_ raw: String?) -> (text: String, kind: WorkerV43StatusPill.Kind) {
+        switch (raw ?? "").lowercased() {
+        case "high", "urgent", "critical":
+            return (NSLocalizedString("worker_priority_high", comment: ""), .danger)
+        case "low":
+            return (NSLocalizedString("worker_priority_low", comment: ""), .neutral)
+        default:
+            return (NSLocalizedString("worker_priority_medium", comment: ""), .warning)
+        }
+    }
+
     static func documentType(_ type: String) -> String {
         switch type.lowercased() {
         case "drawing", "draw":
@@ -134,7 +145,8 @@ enum WorkerV43PreviewCatalog {
                 status: "in_progress",
                 projectId: projectId,
                 dueDate: "09:00–16:00",
-                assignedTo: NSLocalizedString("wrk_v43_manager", comment: "")
+                assignedTo: NSLocalizedString("wrk_v43_manager", comment: ""),
+                priority: "high"
             ),
             TaskDTO(
                 id: "preview-task-2",
@@ -303,6 +315,23 @@ enum WorkerV43PreviewCatalog {
             actualVolume: 36,
             plannedVolume: 48
         )
+    }
+
+    /// Structured stand-in for a BEFORE frame so the AFTER ghost overlay is visible in catalog.
+    static func beforeReferenceImage() -> UIImage {
+        let size = CGSize(width: 390, height: 280)
+        let renderer = UIGraphicsImageRenderer(size: size)
+        return renderer.image { ctx in
+            let rect = CGRect(origin: .zero, size: size)
+            UIColor(red: 18 / 255, green: 36 / 255, blue: 58 / 255, alpha: 1).setFill()
+            ctx.fill(rect)
+            UIColor(red: 48 / 255, green: 78 / 255, blue: 108 / 255, alpha: 1).setFill()
+            ctx.fill(CGRect(x: 36, y: 48, width: 140, height: 180))
+            UIColor(red: 72 / 255, green: 108 / 255, blue: 138 / 255, alpha: 1).setFill()
+            ctx.fill(CGRect(x: 190, y: 72, width: 164, height: 156))
+            UIColor(red: 1, green: 196 / 255, blue: 0, alpha: 0.35).setFill()
+            ctx.fill(CGRect(x: 0, y: 236, width: 390, height: 44))
+        }
     }
 
     static func seedProgressIfNeeded() {

@@ -181,6 +181,37 @@ enum WorkerTaskFilter: String, CaseIterable {
     case done
 }
 
+enum WorkerTaskDayMatch {
+    static func parseDay(_ raw: String?) -> Date? {
+        guard let raw else { return nil }
+        let prefix = String(raw.prefix(10))
+        let formatter = DateFormatter()
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.date(from: prefix)
+    }
+
+    static func matches(dueRaw: String?, selected: Date, filter: WorkerTaskFilter, now: Date = Date()) -> Bool {
+        let calendar = Calendar.current
+        switch filter {
+        case .done:
+            return true
+        case .today:
+            if let day = parseDay(dueRaw) {
+                return calendar.isDate(day, inSameDayAs: now)
+            }
+            return true
+        case .week:
+            if let day = parseDay(dueRaw) {
+                return calendar.isDate(day, inSameDayAs: selected)
+            }
+            return calendar.isDate(selected, inSameDayAs: now)
+        }
+    }
+}
+
 enum WorkerIssueFilter: String, CaseIterable {
     case open
     case mine
@@ -205,6 +236,26 @@ enum WorkerPhotoKind: String {
     case before = "report_before"
     case after = "report_after"
     case issue = "issue_evidence"
+}
+
+enum WorkerPhotoComparisonMode: String, Equatable {
+    case placeholder
+    case ghostBefore
+    case split
+    case capturedOnly
+
+    static func resolve(
+        kind: WorkerPhotoKind,
+        hasCaptured: Bool,
+        hasBeforeReference: Bool
+    ) -> WorkerPhotoComparisonMode {
+        if hasCaptured {
+            if kind == .after && hasBeforeReference { return .split }
+            return .capturedOnly
+        }
+        if kind == .after && hasBeforeReference { return .ghostBefore }
+        return .placeholder
+    }
 }
 
 enum WorkerSyncLabel {
@@ -539,7 +590,7 @@ enum WorkerPhotoEvidence {
     }
 
     static func isSharp(_ image: UIImage?) -> Bool {
-        guard let image else { return true }
+        guard let image else { return false }
         let pixels = image.size.width * image.size.height * max(image.scale, 1)
         if pixels < minPixelCount { return false }
         return laplacianVariance(image) >= minLaplacianVariance || pixels >= 400_000

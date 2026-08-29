@@ -218,6 +218,8 @@
 "wrk_v43_normal" = "В норме";
 "wrk_v43_photo_after_title" = "Фото ПОСЛЕ";
 "wrk_v43_photo_before_title" = "Фото ДО";
+"wrk_v43_compare_before" = "ДО";
+"wrk_v43_compare_after" = "ПОСЛЕ";
 "wrk_v43_repeat_angle" = "Повторите ракурс фото ДО";
 "wrk_v43_capture_overview" = "Снимите общий вид рабочей зоны";
 "wrk_v43_gps_ok" = "GPS подтверждён";
@@ -239,6 +241,8 @@
 "wrk_v43_issues_empty" = "Открытых проблем нет";
 "wrk_v43_issue_title" = "Название проблемы";
 "wrk_v43_issue_detail" = "Что произошло";
+"wrk_v43_issue_attach_photo" = "Добавить фото";
+"wrk_v43_issue_create_photo_queued" = "Фото проблемы поставлено в очередь на отправку.";
 "wrk_v43_open_fmt" = "Открытые %d";
 "wrk_v43_mine" = "Мои";
 "wrk_v43_closed" = "Закрытые";

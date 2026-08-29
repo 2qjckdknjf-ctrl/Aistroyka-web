@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { ArrowRight, CheckCircle, Lock, X } from "lucide-react";
 import { getFocusableElements, getNextFocusIndex } from "@/components/ui/modal-focus";
 import { buildPilotLeadPayload } from "./v41-pilot-message";
+import { postPublicContactLead } from "@/lib/public/post-public-contact-lead";
+import { trackGrowthEvent } from "@/lib/growth/track-event";
 
 const OBJECT_RANGE_KEYS = ["range1", "range2", "range3"] as const;
 
@@ -15,11 +17,13 @@ type PilotModalProps = {
 
 export function PilotModal({ onClose, plan = "" }: PilotModalProps) {
   const t = useTranslations("public.v41.pilot");
+  const locale = useLocale();
   const titleId = useId();
   const panelRef = useRef<HTMLElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
   const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [started, setStarted] = useState(false);
 
   useEffect(() => {
     previouslyFocused.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -65,15 +69,10 @@ export function PilotModal({ onClose, plan = "" }: PilotModalProps) {
     setStatus("sending");
     setErrorMessage(null);
     try {
-      const res = await fetch("/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) {
+      const result = await postPublicContactLead(payload, locale);
+      if (!result.ok) {
         setStatus("error");
-        setErrorMessage(typeof json.error === "string" ? json.error : t("error"));
+        setErrorMessage(result.error ?? t("error"));
         return;
       }
       setStatus("success");
@@ -81,6 +80,14 @@ export function PilotModal({ onClose, plan = "" }: PilotModalProps) {
       setStatus("error");
       setErrorMessage(t("error"));
     }
+  }
+
+  function markStarted() {
+    if (started) {
+      return;
+    }
+    setStarted(true);
+    void trackGrowthEvent("contact_lead.started", { page: window.location.pathname, locale });
   }
 
   return (
@@ -114,7 +121,14 @@ export function PilotModal({ onClose, plan = "" }: PilotModalProps) {
             <form onSubmit={handleSubmit}>
               <label>
                 {t("name")}
-                <input name="name" required maxLength={200} placeholder={t("namePlaceholder")} disabled={status === "sending"} />
+                <input
+                  name="name"
+                  required
+                  maxLength={200}
+                  placeholder={t("namePlaceholder")}
+                  disabled={status === "sending"}
+                  onFocus={markStarted}
+                />
               </label>
               <label>
                 {t("email")}

@@ -67,14 +67,18 @@ describe("POST /api/v1/contact", () => {
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data.ok).toBe(true);
-    expect(mockInsert).toHaveBeenCalledWith({
-      name: "Jane Doe",
-      email: "jane@example.com",
-      company: "Acme",
-      message: "Hello",
-      source: "contact_form",
-      status: "new",
-    });
+    expect(mockInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: "Jane Doe",
+        email: "jane@example.com",
+        company: "Acme",
+        message: "Hello",
+        source: "contact_form",
+        status: "new",
+        utm_source: null,
+        landing_page: null,
+      }),
+    );
   });
 
   it("returns 200 and inserts with null company when company omitted", async () => {

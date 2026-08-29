@@ -2,9 +2,11 @@
 
 import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { ArrowRight, Lock } from "lucide-react";
 import { buildPilotLeadPayload } from "../v41/v41-pilot-message";
+import { postPublicContactLead } from "@/lib/public/post-public-contact-lead";
+import { trackGrowthEvent } from "@/lib/growth/track-event";
 
 const OBJECT_RANGE_KEYS = ["range1", "range2", "range3"] as const;
 const ROLE_KEYS = ["rolePm", "roleOwner", "roleField", "roleOther"] as const;
@@ -13,11 +15,13 @@ const CHANNEL_KEYS = ["channelCall", "channelEmail", "channelMeet"] as const;
 export function PilotForm() {
   const t = useTranslations("public.v43.contact");
   const tPilot = useTranslations("public.v41.pilot");
+  const locale = useLocale();
   const searchParams = useSearchParams();
   const plan = searchParams.get("plan")?.trim() || "";
   const [step, setStep] = useState<1 | 2>(1);
   const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [started, setStarted] = useState(false);
   const [values, setValues] = useState({
     name: "",
     email: "",
@@ -45,6 +49,14 @@ export function PilotForm() {
     return errors;
   }, [step, t, tPilot, values]);
 
+  function markStarted() {
+    if (started) {
+      return;
+    }
+    setStarted(true);
+    void trackGrowthEvent("contact_lead.started", { page: window.location.pathname, locale });
+  }
+
   function update(name: keyof typeof values, value: string) {
     setValues((current) => ({ ...current, [name]: value }));
   }
@@ -63,15 +75,10 @@ export function PilotForm() {
       goals: values.goals,
     });
     try {
-      const res = await fetch("/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) {
+      const result = await postPublicContactLead(payload, locale);
+      if (!result.ok) {
         setStatus("error");
-        setErrorMessage(typeof json.error === "string" ? json.error : tPilot("error"));
+        setErrorMessage(result.error ?? tPilot("error"));
         return;
       }
       setStatus("success");
@@ -116,6 +123,7 @@ export function PilotForm() {
             <input
               value={values.name}
               onChange={(event) => update("name", event.target.value)}
+              onFocus={markStarted}
               required
               maxLength={200}
               placeholder={tPilot("namePlaceholder")}

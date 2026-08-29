@@ -218,6 +218,8 @@
 "wrk_v43_normal" = "OK";
 "wrk_v43_photo_after_title" = "AFTER photo";
 "wrk_v43_photo_before_title" = "BEFORE photo";
+"wrk_v43_compare_before" = "BEFORE";
+"wrk_v43_compare_after" = "AFTER";
 "wrk_v43_repeat_angle" = "Repeat the BEFORE angle";
 "wrk_v43_capture_overview" = "Capture the work area overview";
 "wrk_v43_gps_ok" = "GPS confirmed";
@@ -239,6 +241,8 @@
 "wrk_v43_issues_empty" = "No open issues";
 "wrk_v43_issue_title" = "Issue title";
 "wrk_v43_issue_detail" = "What happened";
+"wrk_v43_issue_attach_photo" = "Add a photo";
+"wrk_v43_issue_create_photo_queued" = "Issue photo queued for upload.";
 "wrk_v43_open_fmt" = "Open %d";
 "wrk_v43_mine" = "Mine";
 "wrk_v43_closed" = "Closed";
