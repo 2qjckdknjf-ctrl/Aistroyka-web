@@ -974,8 +974,11 @@ struct AIJobDTO: Decodable {
     let type: String?
     let status: String?
     let entity: String?
+    let reportId: String?
+    let mediaId: String?
     let attempts: Int?
     let lastError: String?
+    let userMessageKey: String?
     let createdAt: String?
     let updatedAt: String?
 }

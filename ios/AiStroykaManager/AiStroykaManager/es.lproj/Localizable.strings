@@ -321,6 +321,8 @@
 "mgr_v43_under_watch" = "en observación";
 "mgr_v43_on_time" = "a tiempo";
 "mgr_v43_open_solution" = "Abrir solución";
+"mgr_v43_open_report" = "Abrir informe";
+"mgr_v43_ai_job_status_fmt" = "Estado del trabajo: %@";
 "mgr_v43_key_risks" = "Riesgos clave";
 "mgr_v43_work" = "Trabajo";
 "mgr_v43_security" = "Seguridad";

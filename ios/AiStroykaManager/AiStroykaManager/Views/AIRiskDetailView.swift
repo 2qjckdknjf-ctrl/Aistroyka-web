@@ -20,7 +20,11 @@ struct AIRiskDetailView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 HStack {
-                    ManagerV43StatusPill(text: NSLocalizedString("mgr_v43_high_risk", comment: ""), kind: .danger)
+                    if let jobStatus = risk.jobStatus, !jobStatus.isEmpty {
+                        ManagerV43StatusPill(text: jobStatus, kind: risk.severity == "high" ? .danger : .neutral)
+                    } else {
+                        ManagerV43StatusPill(text: NSLocalizedString("mgr_v43_high_risk", comment: ""), kind: .danger)
+                    }
                     ManagerV43StatusPill(text: risk.projectName, kind: .neutral)
                     Spacer()
                 }
@@ -29,12 +33,32 @@ struct AIRiskDetailView: View {
                         .font(.system(size: 20, weight: .semibold))
                         .foregroundStyle(ManagerV43.textPrimary)
                     Spacer()
-                    ManagerProgressRing(progress: Double(risk.confidence) / 100, size: 84, tint: ManagerV43.aiViolet)
+                    if risk.confidence > 0 {
+                        ManagerProgressRing(progress: Double(risk.confidence) / 100, size: 84, tint: ManagerV43.aiViolet)
+                    }
                 }
-                HStack {
-                    metric(NSLocalizedString("mgr_v43_probability", comment: ""), "\(risk.probability)%", ManagerV43.danger)
-                    metric(NSLocalizedString("mgr_due", comment: ""), "+\(risk.delayDays)", ManagerV43.warning)
-                    metric(NSLocalizedString("mgr_v43_project_budget", comment: ""), budget, ManagerV43.yellow)
+                if risk.jobStatus == nil {
+                    HStack {
+                        metric(NSLocalizedString("mgr_v43_probability", comment: ""), "\(risk.probability)%", ManagerV43.danger)
+                        metric(NSLocalizedString("mgr_due", comment: ""), "+\(risk.delayDays)", ManagerV43.warning)
+                        metric(NSLocalizedString("mgr_v43_project_budget", comment: ""), budget, ManagerV43.yellow)
+                    }
+                }
+                if let reportId = risk.reportId, !reportId.isEmpty {
+                    NavigationLink(destination: ReportDetailReviewView(reportId: reportId, projectName: risk.projectName)) {
+                        Text(NSLocalizedString("mgr_v43_open_report", comment: ""))
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity, minHeight: 44)
+                            .background(ManagerV43.aiViolet)
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                    .overlay(alignment: .topLeading) {
+                        Color.clear
+                            .frame(width: 1, height: 1)
+                            .accessibilityIdentifier("pilot_manager_open_report")
+                    }
                 }
                 VStack(alignment: .leading, spacing: 8) {
                     Text(NSLocalizedString("mgr_v43_why_ai", comment: ""))
@@ -45,17 +69,19 @@ struct AIRiskDetailView: View {
                         .foregroundStyle(ManagerV43.textSecondary)
                 }
 
-                ManagerV43Card(borderColor: ManagerV43.aiViolet.opacity(0.5)) {
-                    HStack {
-                        ManagerAIBadge(size: 28)
-                        Text(risk.recommendation)
-                            .font(.subheadline)
-                            .foregroundStyle(ManagerV43.textPrimary)
-                    }
-                    HStack {
-                        ManagerV43StatusPill(text: NSLocalizedString("mgr_v43_risk_down", comment: ""), kind: .success)
-                        if let budgetImpact = risk.budgetImpact {
-                            ManagerV43StatusPill(text: ManagerV43Formatters.compactCurrency(budgetImpact, currencyCode: "RUB"), kind: .ai)
+                if risk.jobStatus == nil {
+                    ManagerV43Card(borderColor: ManagerV43.aiViolet.opacity(0.5)) {
+                        HStack {
+                            ManagerAIBadge(size: 28)
+                            Text(risk.recommendation)
+                                .font(.subheadline)
+                                .foregroundStyle(ManagerV43.textPrimary)
+                        }
+                        HStack {
+                            ManagerV43StatusPill(text: NSLocalizedString("mgr_v43_risk_down", comment: ""), kind: .success)
+                            if let budgetImpact = risk.budgetImpact {
+                                ManagerV43StatusPill(text: ManagerV43Formatters.compactCurrency(budgetImpact, currencyCode: "RUB"), kind: .ai)
+                            }
                         }
                     }
                 }

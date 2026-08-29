@@ -322,6 +322,8 @@
 "mgr_v43_under_watch" = "под наблюдением";
 "mgr_v43_on_time" = "в срок";
 "mgr_v43_open_solution" = "Открыть решение";
+"mgr_v43_open_report" = "Открыть отчёт";
+"mgr_v43_ai_job_status_fmt" = "Статус задачи: %@";
 "mgr_v43_key_risks" = "Ключевые риски";
 "mgr_v43_work" = "Работа";
 "mgr_v43_security" = "Безопасность";

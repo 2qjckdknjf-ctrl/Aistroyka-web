@@ -37,5 +37,22 @@ describe("ai-request-presentation", () => {
     expect(row.user_message_key).toBe("aiStatusTemporary");
     expect(row.last_error).not.toContain("sk-");
     expect(row.entity).toBe("r1");
+    expect(row.report_id).toBe("r1");
+    expect(row.media_id).toBeNull();
+  });
+
+  it("exposes report_id and media_id without inventing a new route", () => {
+    const row = presentAIRequestRow({
+      id: "job-2",
+      type: "ai_analyze_media",
+      status: "success",
+      payload: { report_id: "rep-9", media_id: "med-3" },
+      attempts: 1,
+      created_at: "2026-08-02T12:00:00Z",
+      updated_at: "2026-08-02T12:01:00Z",
+    });
+    expect(row.report_id).toBe("rep-9");
+    expect(row.media_id).toBe("med-3");
+    expect(row.entity).toBe("rep-9");
   });
 });
