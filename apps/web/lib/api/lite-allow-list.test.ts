@@ -92,6 +92,10 @@ describe("checkLiteAllowList", () => {
     expect(checkLiteAllowList("/api/v1/help/hints", "POST", "android_lite")).toBeNull();
     expect(checkLiteAllowList("/api/v1/help/assistant", "POST", "ios_lite")).toBeNull();
     expect(checkLiteAllowList("/api/v1/help/assistant/events", "POST", "android_lite")).toBeNull();
+
+    const agentDenied = checkLiteAllowList("/api/v1/projects/abc/agent", "POST", "ios_worker");
+    expect(agentDenied?.status).toBe(403);
+
   });
 
   it("returns 403 for lite client on manager AI routes (copilot, intelligence, analyze-image)", () => {
@@ -101,6 +105,7 @@ describe("checkLiteAllowList", () => {
       ["/api/v1/projects/p1/intelligence", "GET"],
       ["/api/v1/ai/analyze-image", "POST"],
       ["/api/v1/ai/memory/context", "GET"],
+      ["/api/v1/projects/p1/agent", "POST"],
     ] as const;
     for (const [path, method] of blocked) {
       const r = checkLiteAllowList(path, method, "ios_lite");
