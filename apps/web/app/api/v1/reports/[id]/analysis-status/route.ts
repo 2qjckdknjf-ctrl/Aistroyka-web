@@ -49,8 +49,14 @@ export async function GET(
   else if (byStatus.dead || byStatus.failed) status = "failed";
   else if (byStatus.success) status = "success";
 
-  const mediaTotal = list.filter((j) => j.type === "ai_analyze_media").length;
-  const successCount = byStatus.success ?? 0;
+  // Report-level sentinel jobs are orchestration records, not photos.
+  // Count only ai_analyze_media rows so progress can never exceed mediaTotal.
+  const mediaJobs = list.filter((job) => job.type === "ai_analyze_media");
+  const mediaTotal = mediaJobs.length;
+  const analyzed = mediaJobs.filter((job) => job.status === "success").length;
+  const failed = mediaJobs.filter(
+    (job) => job.status === "failed" || job.status === "dead"
+  ).length;
 
   return NextResponse.json({
     status,
@@ -58,7 +64,7 @@ export async function GET(
     jobCount: list.length,
     summary:
       status === "success" || status === "failed"
-        ? { mediaTotal, analyzed: successCount, failed: (byStatus.failed ?? 0) + (byStatus.dead ?? 0) }
+        ? { mediaTotal, analyzed, failed }
         : null,
   });
 }
