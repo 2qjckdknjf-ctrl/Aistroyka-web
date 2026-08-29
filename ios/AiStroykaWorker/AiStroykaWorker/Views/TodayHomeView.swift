@@ -407,6 +407,7 @@ struct TodayHomeView: View {
             return
         }
         tasksLoading = todayTasks.isEmpty
+        loadSitePhoto()
         OperationQueueExecutor.shared.runLoop()
         if syncService.status == .idle || syncService.status == .offline {
             syncService.runSyncIfOnline()
@@ -425,7 +426,6 @@ struct TodayHomeView: View {
                 }
                 let reports = (try? await WorkerAPI.workerSync()) ?? []
                 let inboxCount = (try? await WorkerAPI.unreadNotificationCount()) ?? 0
-                let photo = try? await WorkerV43API.latestSitePhotoURL(projectId: project.id)
                 let assistant: String?
                 if WorkerSettingsStore.load().aiAssistant {
                     let locale = Self.helpLocale()
@@ -452,7 +452,6 @@ struct TodayHomeView: View {
                     feedbackReports = reports.filter { $0.status == "changes_requested" }
                     WorkerInboxBadgeStore.shared.count = inboxCount
                     assistantSummary = assistant
-                    if let photo { sitePhotoURL = photo }
                     tasksLoading = false
                     errorMessage = nil
                     if let userId = KeychainHelper.get(key: KeychainHelper.sessionUserIdKey) {
@@ -470,6 +469,17 @@ struct TodayHomeView: View {
                     }
                 }
             }
+        }
+    }
+
+    private func loadSitePhoto() {
+        guard !WorkerV43Preview.isEnabled else { return }
+        if sitePhotoURL == nil {
+            sitePhotoURL = WorkerV43API.cachedSitePhotoURL(projectId: project.id)
+        }
+        Task {
+            guard let photo = try? await WorkerV43API.latestSitePhotoURL(projectId: project.id) else { return }
+            await MainActor.run { sitePhotoURL = photo }
         }
     }
 
