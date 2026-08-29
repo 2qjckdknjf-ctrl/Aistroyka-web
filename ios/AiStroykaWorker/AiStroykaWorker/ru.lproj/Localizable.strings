@@ -203,6 +203,12 @@
 "wrk_v43_doc_type_act" = "Акт";
 "wrk_v43_doc_status_downloaded" = "На устройстве";
 "wrk_v43_doc_status_read" = "Прочитан";
+"wrk_v43_doc_status_outdated" = "Есть обновление";
+"wrk_v43_doc_status_draft" = "Черновик";
+"wrk_v43_doc_status_uploaded" = "Загружен";
+"wrk_v43_doc_status_approved" = "Утверждён";
+"wrk_v43_doc_status_rejected" = "Отклонён";
+"wrk_v43_doc_status_archived" = "В архиве";
 "wrk_v43_crew_fmt" = "Бригада %d";
 "wrk_v43_report_issue" = "Сообщить проблему";
 "wrk_v43_continue_step_fmt" = "Продолжить · шаг %d из %d";

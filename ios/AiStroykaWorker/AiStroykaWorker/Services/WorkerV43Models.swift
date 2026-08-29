@@ -424,6 +424,107 @@ enum WorkerCacheStore {
     }
 }
 
+enum WorkerDocumentOfflineState: String, Equatable {
+    case remote
+    case onDevice
+    case outdated
+
+    static func resolve(hasLocalFile: Bool, serverUpdatedAt: String?, cachedUpdatedAt: String?) -> WorkerDocumentOfflineState {
+        guard hasLocalFile else { return .remote }
+        let server = serverUpdatedAt?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let cached = cachedUpdatedAt?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !server.isEmpty, !cached.isEmpty, server != cached { return .outdated }
+        return .onDevice
+    }
+}
+
+private struct WorkerDocumentPinRecord: Codable, Equatable {
+    var documentId: String
+    var updatedAt: String?
+    var fileName: String
+}
+
+enum WorkerDocumentPinStore {
+    private static let key = "wrk.v43.doc.pins.v1"
+
+    static func pinnedIds() -> Set<String> {
+        Set(records().map(\.documentId))
+    }
+
+    static func isPinned(_ id: String) -> Bool {
+        records().contains { $0.documentId == id }
+    }
+
+    static func offlineCount() -> Int {
+        records().filter { FileManager.default.fileExists(atPath: fileURL(fileName: $0.fileName).path) }.count
+    }
+
+    static func cachedFileURL(for document: WorkerDocumentDTO) -> URL? {
+        if let remote = document.previewURL, remote.isFileURL, FileManager.default.fileExists(atPath: remote.path) {
+            return remote
+        }
+        guard let record = records().first(where: { $0.documentId == document.id }) else { return nil }
+        let url = fileURL(fileName: record.fileName)
+        return FileManager.default.fileExists(atPath: url.path) ? url : nil
+    }
+
+    static func isOutdated(_ document: WorkerDocumentDTO) -> Bool {
+        WorkerDocumentOfflineState.resolve(
+            hasLocalFile: cachedFileURL(for: document) != nil,
+            serverUpdatedAt: document.updatedAt,
+            cachedUpdatedAt: records().first(where: { $0.documentId == document.id })?.updatedAt
+        ) == .outdated
+    }
+
+    static func pinMetadata(_ document: WorkerDocumentDTO, fileName: String) {
+        var next = records().filter { $0.documentId != document.id }
+        next.append(WorkerDocumentPinRecord(documentId: document.id, updatedAt: document.updatedAt, fileName: fileName))
+        save(next)
+    }
+
+    static func persistFile(data: Data, document: WorkerDocumentDTO, ext: String) throws -> URL {
+        let safeExt = ext.trimmingCharacters(in: CharacterSet(charactersIn: ".")).isEmpty ? "pdf" : ext
+        let fileName = "\(document.id).\(safeExt)"
+        let url = fileURL(fileName: fileName)
+        try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try data.write(to: url, options: .atomic)
+        pinMetadata(document, fileName: fileName)
+        return url
+    }
+
+    static func pinLocalFile(_ document: WorkerDocumentDTO) {
+        guard let remote = document.previewURL, remote.isFileURL,
+              let data = try? Data(contentsOf: remote) else { return }
+        let ext = remote.pathExtension.isEmpty ? "pdf" : remote.pathExtension
+        _ = try? persistFile(data: data, document: document, ext: ext)
+    }
+
+    static func unpin(_ id: String) {
+        let next = records().filter { $0.documentId != id }
+        if let record = records().first(where: { $0.documentId == id }) {
+            try? FileManager.default.removeItem(at: fileURL(fileName: record.fileName))
+        }
+        save(next)
+    }
+
+    private static func records() -> [WorkerDocumentPinRecord] {
+        guard let data = UserDefaults.standard.data(forKey: key) else { return [] }
+        return (try? JSONDecoder().decode([WorkerDocumentPinRecord].self, from: data)) ?? []
+    }
+
+    private static func save(_ value: [WorkerDocumentPinRecord]) {
+        if let data = try? JSONEncoder().encode(value) {
+            UserDefaults.standard.set(data, forKey: key)
+        }
+    }
+
+    private static func fileURL(fileName: String) -> URL {
+        let root = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("wrk-v43-docs", isDirectory: true)
+        return root.appendingPathComponent(fileName)
+    }
+}
+
 struct WorkerSafetyCheckState: Codable, Equatable {
     var helmet: Bool
     var harness: Bool

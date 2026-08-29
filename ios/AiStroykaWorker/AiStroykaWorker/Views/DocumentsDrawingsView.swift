@@ -13,7 +13,6 @@ struct DocumentsDrawingsView: View {
     @State private var errorMessage: String?
     @State private var query = ""
     @State private var tab: WorkerDocumentTab = .myTasks
-    @State private var pinned: Set<String> = []
     @State private var opened: WorkerDocumentDTO?
 
     var body: some View {
@@ -34,7 +33,17 @@ struct DocumentsDrawingsView: View {
                 documents = WorkerV43API.cachedDocuments(projectId: project.id)
                 load()
             }
-            .accessibilityIdentifier("pilot_worker_documents")
+            .overlay(alignment: .topLeading) {
+                Color.clear
+                    .frame(width: 8, height: 8)
+                    .accessibilityIdentifier("pilot_worker_documents")
+            }
+            .overlay(alignment: .topTrailing) {
+                Color.clear
+                    .frame(width: 8, height: 8)
+                    .accessibilityIdentifier("pilot_worker_docs_offline")
+                    .accessibilityValue("\(WorkerDocumentPinStore.offlineCount())")
+            }
             .background(
                 NavigationLink(
                     destination: Group {
@@ -64,6 +73,11 @@ struct DocumentsDrawingsView: View {
         }
     }
 
+    private var pinnedDrawing: WorkerDocumentDTO? {
+        let pinned = documents.filter { WorkerDocumentPinStore.isPinned($0.id) }
+        return pinned.first { $0.type.contains("draw") } ?? pinned.first ?? filtered.first { $0.type.contains("draw") }
+    }
+
     private var content: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
@@ -86,7 +100,7 @@ struct DocumentsDrawingsView: View {
                     HStack {
                         Image(systemName: "checkmark.icloud.fill").foregroundStyle(WorkerV43.success)
                         VStack(alignment: .leading) {
-                            Text(String(format: NSLocalizedString("wrk_v43_docs_offline_fmt", comment: ""), documents.count))
+                            Text(String(format: NSLocalizedString("wrk_v43_docs_offline_fmt", comment: ""), WorkerDocumentPinStore.offlineCount()))
                                 .foregroundStyle(WorkerV43.textPrimary)
                             Text(NSLocalizedString("wrk_v43_available_offline", comment: ""))
                                 .font(.caption)
@@ -97,7 +111,7 @@ struct DocumentsDrawingsView: View {
                             .foregroundStyle(WorkerV43.cyan)
                     }
                 }
-                if let first = filtered.first {
+                if let first = pinnedDrawing {
                     WorkerV43Card(borderColor: WorkerV43.yellow.opacity(0.4)) {
                         VStack(alignment: .leading, spacing: 8) {
                             Text(NSLocalizedString("wrk_v43_pinned_drawing", comment: ""))
@@ -107,7 +121,6 @@ struct DocumentsDrawingsView: View {
                                 .font(.system(size: 16, weight: .semibold))
                                 .foregroundStyle(WorkerV43.textPrimary)
                             WorkerV43PrimaryButton(title: NSLocalizedString("wrk_v43_open_drawing", comment: ""), systemImage: "book") {
-                                pinned.insert(first.id)
                                 opened = first
                             }
                         }
@@ -116,13 +129,10 @@ struct DocumentsDrawingsView: View {
                 ForEach(filtered) { doc in
                     WorkerV43Row(
                         title: doc.title,
-                        subtitle: "\(WorkerV43Copy.documentType(doc.type)) · \(WorkerV43Copy.documentStatus(doc.status))",
-                        systemImage: "doc.fill",
-                        trailing: WorkerV43Copy.documentStatus(doc.status),
-                        action: {
-                            pinned.insert(doc.id)
-                            opened = doc
-                        }
+                        subtitle: "\(WorkerV43Copy.documentType(doc.type)) · \(WorkerV43Copy.documentOfflineLabel(doc))",
+                        systemImage: WorkerDocumentPinStore.isPinned(doc.id) ? "pin.fill" : "doc.fill",
+                        trailing: WorkerV43Copy.documentOfflineLabel(doc),
+                        action: { opened = doc }
                     )
                 }
                 if filtered.isEmpty {
@@ -149,6 +159,7 @@ struct DocumentsDrawingsView: View {
         errorMessage = nil
         if WorkerV43Preview.isEnabled {
             documents = WorkerV43PreviewCatalog.documents(projectId: project.id)
+            documents.prefix(1).forEach { WorkerDocumentPinStore.pinLocalFile($0) }
             loading = false
             return
         }

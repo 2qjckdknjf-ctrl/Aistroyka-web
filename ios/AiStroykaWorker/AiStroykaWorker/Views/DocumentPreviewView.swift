@@ -18,7 +18,7 @@ struct DocumentPreviewView: View {
             Text(document.title)
                 .font(.system(size: 22, weight: .semibold))
                 .foregroundStyle(WorkerV43.textPrimary)
-            Text("\(WorkerV43Copy.documentType(document.type)) · \(WorkerV43Copy.documentStatus(document.status))")
+            Text("\(WorkerV43Copy.documentType(document.type)) · \(WorkerV43Copy.documentOfflineLabel(document))")
                 .font(.system(size: 14))
                 .foregroundStyle(WorkerV43.cyan)
             if let errorMessage {
@@ -51,9 +51,20 @@ struct DocumentPreviewView: View {
     }
 
     private func load() {
-        guard let remote = document.previewURL else { return }
+        guard let remote = document.previewURL else {
+            if let cached = WorkerDocumentPinStore.cachedFileURL(for: document) {
+                localURL = cached
+            }
+            return
+        }
         if remote.isFileURL {
             localURL = remote
+            WorkerDocumentPinStore.pinLocalFile(document)
+            return
+        }
+        if let cached = WorkerDocumentPinStore.cachedFileURL(for: document),
+           !WorkerDocumentPinStore.isOutdated(document) {
+            localURL = cached
             return
         }
         loading = true
@@ -62,15 +73,16 @@ struct DocumentPreviewView: View {
             do {
                 let (data, response) = try await URLSession.shared.data(from: remote)
                 let ext = (response.url?.pathExtension).flatMap { $0.isEmpty ? nil : $0 } ?? "pdf"
-                let file = FileManager.default.temporaryDirectory
-                    .appendingPathComponent("\(document.id).\(ext)")
-                try data.write(to: file, options: .atomic)
+                let file = try WorkerDocumentPinStore.persistFile(data: data, document: document, ext: ext)
                 await MainActor.run {
                     localURL = file
                     loading = false
                 }
             } catch {
                 await MainActor.run {
+                    if let cached = WorkerDocumentPinStore.cachedFileURL(for: document) {
+                        localURL = cached
+                    }
                     errorMessage = WorkerV43Copy.userFacing(error)
                     loading = false
                 }
