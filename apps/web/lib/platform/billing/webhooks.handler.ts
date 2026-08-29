@@ -31,11 +31,38 @@ export function verifyWebhookEvent(payload: string | Buffer, signature: string |
   }
 }
 
-/** Map Stripe plan/price to tier. */
-function planToTier(planId: string): string {
+/**
+ * Map Stripe price id → entitlement tier using configured checkout env vars.
+ * Real Stripe ids are opaque (`price_1…`) and never contain "pro"/"enterprise",
+ * so substring heuristics alone silently downgrade every paid checkout to FREE.
+ */
+function tierFromConfiguredPriceId(planId: string): string | null {
+  const id = planId.trim();
+  if (!id) return null;
+  const envEquals = (key: string): boolean => {
+    const v = process.env[key]?.trim();
+    return !!v && v === id;
+  };
+  if (envEquals("STRIPE_PRICE_ENTERPRISE")) return "ENTERPRISE";
+  // Subscribe plans starter/business and legacy single-price checkout all grant PRO.
+  if (
+    envEquals("STRIPE_PRICE_BUSINESS") ||
+    envEquals("STRIPE_PRICE_STARTER") ||
+    envEquals("STRIPE_PRICE_ID")
+  ) {
+    return "PRO";
+  }
+  return null;
+}
+
+/** Map Stripe plan/price to tier. Exported for tests. */
+export function planToTier(planId: string): string {
+  const fromEnv = tierFromConfiguredPriceId(planId);
+  if (fromEnv) return fromEnv;
   const p = planId.toLowerCase();
   if (p.includes("enterprise")) return "ENTERPRISE";
-  if (p.includes("pro")) return "PRO";
+  // Named/test price ids may embed plan keywords (not real Stripe Dashboard ids).
+  if (p.includes("pro") || p.includes("business") || p.includes("starter")) return "PRO";
   return "FREE";
 }
 
