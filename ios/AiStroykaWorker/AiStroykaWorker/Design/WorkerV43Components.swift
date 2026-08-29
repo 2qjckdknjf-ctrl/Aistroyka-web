@@ -10,6 +10,7 @@ struct WorkerV43HeroPhoto<Overlay: View>: View {
     var height: CGFloat = 168
     var systemImage: String = "building.2.fill"
     var imageURL: URL? = nil
+    var loadedImageAccessibilityIdentifier: String? = nil
     @ViewBuilder var overlay: () -> Overlay
 
     var body: some View {
@@ -23,11 +24,21 @@ struct WorkerV43HeroPhoto<Overlay: View>: View {
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
-            if let imageURL {
+            if WorkerV43Preview.isEnabled,
+               imageURL == nil,
+               loadedImageAccessibilityIdentifier != nil {
+                loadedImage(
+                    Image(systemName: "photo.fill")
+                        .resizable()
+                )
+                .scaledToFit()
+                .padding(28)
+                .foregroundStyle(.white.opacity(0.34))
+            } else if let imageURL {
                 AsyncImage(url: imageURL) { phase in
                     switch phase {
                     case .success(let image):
-                        image.resizable().scaledToFill()
+                        loadedImage(image)
                     default:
                         Color.clear
                     }
@@ -53,6 +64,20 @@ struct WorkerV43HeroPhoto<Overlay: View>: View {
             RoundedRectangle(cornerRadius: WorkerV43.radiusCard, style: .continuous)
                 .stroke(WorkerV43.border, lineWidth: 1)
         )
+    }
+
+    @ViewBuilder
+    private func loadedImage(_ image: Image) -> some View {
+        if let loadedImageAccessibilityIdentifier {
+            image
+                .resizable()
+                .scaledToFill()
+                .accessibilityIdentifier(loadedImageAccessibilityIdentifier)
+        } else {
+            image
+                .resizable()
+                .scaledToFill()
+        }
     }
 }
 
