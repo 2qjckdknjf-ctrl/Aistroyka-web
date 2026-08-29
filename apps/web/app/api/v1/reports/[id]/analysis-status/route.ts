@@ -32,10 +32,11 @@ export async function GET(
   const list = await jobRepo.listJobsByReportId(client, reportId, ctx.tenantId);
   if (list.length === 0) {
     return NextResponse.json({
-      status: "queued" as AnalysisStatus,
+      status: "failed" as AnalysisStatus,
       reportId,
       jobCount: 0,
-      summary: null,
+      failureReason: "not_enqueued",
+      summary: { mediaTotal: 0, analyzed: 0, failed: 0 },
     });
   }
   const byStatus: Record<string, number> = {};
