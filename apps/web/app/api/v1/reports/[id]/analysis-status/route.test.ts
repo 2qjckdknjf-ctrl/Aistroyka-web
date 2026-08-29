@@ -43,6 +43,25 @@ describe("GET /api/v1/reports/:id/analysis-status", () => {
     getReportById.mockResolvedValue({ id: "report-1" });
   });
 
+  it("fails closed when no analysis jobs were enqueued", async () => {
+    listJobsByReportId.mockResolvedValue([]);
+
+    const res = await GET(
+      new Request("https://test/api/v1/reports/report-1/analysis-status"),
+      { params: Promise.resolve({ id: "report-1" }) }
+    );
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body).toMatchObject({
+      status: "failed",
+      reportId: "report-1",
+      jobCount: 0,
+      failureReason: "not_enqueued",
+      summary: { mediaTotal: 0, analyzed: 0, failed: 0 },
+    });
+  });
+
   it("does not count the report sentinel as an analyzed photo", async () => {
     listJobsByReportId.mockResolvedValue([
       { id: "report-job", type: "ai_analyze_report", status: "success" },
