@@ -76,17 +76,18 @@ export async function GET(
   const candidates = await listByProject(supabase, projectId, ctx.tenantId!, {
     limit: WORKER_MEDIA_CANDIDATE_LIMIT,
   });
-  const photo = candidates.find(isWorkerSitePhoto);
-  if (!photo) return NextResponse.json({ data: [] });
+  for (const photo of candidates.filter(isWorkerSitePhoto)) {
+    const signed = await resolveAIMediaImage(supabase, {
+      tenantId: ctx.tenantId!,
+      mediaId: photo.id,
+      projectIdClaim: projectId,
+    });
+    if (!signed.ok) continue;
 
-  const signed = await resolveAIMediaImage(supabase, {
-    tenantId: ctx.tenantId!,
-    mediaId: photo.id,
-    projectIdClaim: projectId,
-  });
-  if (!signed.ok) return NextResponse.json({ data: [] });
+    return NextResponse.json({
+      data: [{ ...photo, file_url: signed.imageUrl }],
+    });
+  }
 
-  return NextResponse.json({
-    data: [{ ...photo, file_url: signed.imageUrl }],
-  });
+  return NextResponse.json({ data: [] });
 }
