@@ -441,6 +441,13 @@
 "mgr_v43_task_cancel_status" = "Annulla attività";
 "mgr_v43_pending_invites" = "Inviti in attesa";
 "mgr_v43_analysis_status" = "Analisi AI";
+"mgr_v43_ai_pipeline_queued" = "Controlli IA in coda";
+"mgr_v43_ai_pipeline_running" = "L'IA sta controllando le foto";
+"mgr_v43_ai_pipeline_done" = "Controlli IA completati";
+"mgr_v43_ai_pipeline_failed" = "Controlli IA non riusciti";
+"mgr_v43_ai_pipeline_waiting" = "In attesa della pipeline IA";
+"mgr_v43_ai_jobs_fmt" = "%d di %d foto analizzate";
+"mgr_v43_ai_job_count_fmt" = "%d job IA";
 "mgr_v43_approval_history" = "Storico approvazioni";
 "mgr_v43_unassigned" = "Non assegnata";
 "mgr_v43_open_linked_report" = "Apri report collegato";
@@ -464,3 +471,7 @@
 "mgr_v43_doc_approve" = "Approva";
 "mgr_v43_doc_reject" = "Rifiuta";
 "mgr_v43_doc_request_changes" = "Richiedi modifiche";
+"mgr_v43_ai_poll_timeout" = "L'analisi AI sta richiedendo più tempo del previsto. Aggiorna lo stato.";
+"mgr_v43_ai_status_error" = "Impossibile aggiornare lo stato dell'IA. Controlla la connessione e riprova.";
+"mgr_v43_ai_not_enqueued" = "L'analisi IA non è stata avviata. Chiedi al Worker di inviare di nuovo il rapporto o contatta l'assistenza.";
+"mgr_v43_ai_retry_status" = "Aggiorna stato AI";

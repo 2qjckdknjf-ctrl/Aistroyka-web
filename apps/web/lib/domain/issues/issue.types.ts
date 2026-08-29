@@ -17,6 +17,8 @@ export interface ProjectIssue {
   updated_at: string;
   evidence_upload_session_id?: string | null;
   evidence_url?: string | null;
+  /** Linked task assignee. Presentation-only; not stored on project_issues. */
+  assigned_to?: string | null;
 }
 
 export interface CreateIssueInput {

@@ -104,6 +104,11 @@ final class ManagerV43UITests: XCTestCase {
             saveShot("07-reports-review-queue")
             tapIfHittable(app.descendants(matching: .any).matching(NSPredicate(format: "identifier BEGINSWITH 'pilot_manager_report_'")).firstMatch) {
                 saveShot("08-report-review")
+                XCTAssertTrue(
+                    app.descendants(matching: .any)["pilot_manager_report_review"].waitForExistence(timeout: 8)
+                        || app.descendants(matching: .any)["pilot_manager_report_analysis"].waitForExistence(timeout: 2),
+                    "Report review must show the AI analysis surface"
+                )
                 if app.navigationBars.buttons.count > 0 { app.navigationBars.buttons.firstMatch.tap() }
             }
             if app.navigationBars.buttons.count > 0 { app.navigationBars.buttons.firstMatch.tap() }
@@ -222,6 +227,7 @@ final class ManagerV43UITests: XCTestCase {
             saveShot("07-reports-review-queue", live: true)
             tapIfHittable(app.descendants(matching: .any).matching(NSPredicate(format: "identifier BEGINSWITH 'pilot_manager_report_'")).firstMatch) {
                 saveShot("08-report-review", live: true)
+                _ = app.descendants(matching: .any)["pilot_manager_report_analysis"].waitForExistence(timeout: 8)
                 if app.navigationBars.buttons.count > 0 { app.navigationBars.buttons.firstMatch.tap() }
             }
             if app.navigationBars.buttons.count > 0 { app.navigationBars.buttons.firstMatch.tap() }

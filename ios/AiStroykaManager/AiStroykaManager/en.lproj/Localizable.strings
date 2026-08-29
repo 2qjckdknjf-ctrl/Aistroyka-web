@@ -442,6 +442,13 @@
 "mgr_v43_task_cancel_status" = "Cancel task";
 "mgr_v43_pending_invites" = "Pending invitations";
 "mgr_v43_analysis_status" = "AI analysis";
+"mgr_v43_ai_pipeline_queued" = "AI checks queued";
+"mgr_v43_ai_pipeline_running" = "AI is checking photos";
+"mgr_v43_ai_pipeline_done" = "AI checks finished";
+"mgr_v43_ai_pipeline_failed" = "AI checks failed";
+"mgr_v43_ai_pipeline_waiting" = "Waiting for the AI pipeline";
+"mgr_v43_ai_jobs_fmt" = "%d of %d photos analyzed";
+"mgr_v43_ai_job_count_fmt" = "%d AI jobs";
 "mgr_v43_approval_history" = "Approval history";
 "mgr_v43_unassigned" = "Unassigned";
 "mgr_v43_open_linked_report" = "Open linked report";
@@ -465,3 +472,7 @@
 "mgr_v43_doc_approve" = "Approve";
 "mgr_v43_doc_reject" = "Reject";
 "mgr_v43_doc_request_changes" = "Request changes";
+"mgr_v43_ai_poll_timeout" = "AI analysis is taking longer than expected. Refresh the status.";
+"mgr_v43_ai_status_error" = "AI status could not be refreshed. Check the connection and try again.";
+"mgr_v43_ai_not_enqueued" = "AI analysis did not start. Ask the Worker to resubmit the report or contact support.";
+"mgr_v43_ai_retry_status" = "Refresh AI status";

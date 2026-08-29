@@ -442,6 +442,13 @@
 "mgr_v43_task_cancel_status" = "Отменить задачу";
 "mgr_v43_pending_invites" = "Ожидают приглашения";
 "mgr_v43_analysis_status" = "AI-анализ";
+"mgr_v43_ai_pipeline_queued" = "Проверки ИИ в очереди";
+"mgr_v43_ai_pipeline_running" = "ИИ проверяет фото";
+"mgr_v43_ai_pipeline_done" = "Проверки ИИ завершены";
+"mgr_v43_ai_pipeline_failed" = "Проверки ИИ не прошли";
+"mgr_v43_ai_pipeline_waiting" = "Ожидание конвейера ИИ";
+"mgr_v43_ai_jobs_fmt" = "Проанализировано %d из %d фото";
+"mgr_v43_ai_job_count_fmt" = "AI-задач: %d";
 "mgr_v43_approval_history" = "История согласования";
 "mgr_v43_unassigned" = "Не назначена";
 "mgr_v43_open_linked_report" = "Открыть связанный отчёт";
@@ -465,3 +472,7 @@
 "mgr_v43_doc_approve" = "Утвердить";
 "mgr_v43_doc_reject" = "Отклонить";
 "mgr_v43_doc_request_changes" = "Вернуть";
+"mgr_v43_ai_poll_timeout" = "AI-анализ занимает больше времени, чем ожидалось. Обновите статус.";
+"mgr_v43_ai_status_error" = "Не удалось обновить статус ИИ. Проверьте соединение и повторите попытку.";
+"mgr_v43_ai_not_enqueued" = "Анализ ИИ не запустился. Попросите Worker повторно отправить отчёт или обратитесь в поддержку.";
+"mgr_v43_ai_retry_status" = "Обновить статус AI";

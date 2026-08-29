@@ -165,6 +165,15 @@ final class WorkerV43UITests: XCTestCase {
         XCTAssertTrue(Self.dayMatch(due: "2026-08-28", selected: "2026-08-28", filter: "week", now: "2026-08-29"))
     }
 
+    func testWorkerMayMutateAssignedOrReporter() {
+        XCTAssertTrue(Self.mayMutate(status: "open", user: "u1", createdBy: "u1", assignedTo: nil, preview: false))
+        XCTAssertTrue(Self.mayMutate(status: "open", user: "a2", createdBy: "u1", assignedTo: "a2", preview: false))
+        XCTAssertFalse(Self.mayMutate(status: "open", user: "x", createdBy: "u1", assignedTo: "a2", preview: false))
+        XCTAssertFalse(Self.mayMutate(status: "resolved", user: "u1", createdBy: "u1", assignedTo: "u1", preview: false))
+        XCTAssertFalse(Self.mayMutate(status: "open", user: nil, createdBy: "u1", assignedTo: "a2", preview: false))
+        XCTAssertTrue(Self.mayMutate(status: "open", user: nil, createdBy: "u1", assignedTo: "a2", preview: true))
+    }
+
     func testPhoneNormalization() {
         XCTAssertEqual(Self.phone("89151234567"), "+79151234567")
         XCTAssertEqual(Self.phone("+7 915 123-45-67"), "+79151234567")
@@ -262,5 +271,20 @@ final class WorkerV43UITests: XCTestCase {
         if digits.hasPrefix("8"), digits.count == 11 { return "+7\(digits.dropFirst())" }
         if digits.hasPrefix("7"), digits.count == 11 { return "+\(digits)" }
         return "+\(digits)"
+    }
+
+    private static func mayMutate(
+        status: String,
+        user: String?,
+        createdBy: String?,
+        assignedTo: String?,
+        preview: Bool
+    ) -> Bool {
+        if status == "resolved" || status == "closed" { return false }
+        if preview { return true }
+        guard let user, !user.isEmpty else { return false }
+        if createdBy == user { return true }
+        if assignedTo == user { return true }
+        return false
     }
 }
