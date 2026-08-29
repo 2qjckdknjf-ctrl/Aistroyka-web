@@ -647,6 +647,9 @@ struct ReportDetailReviewView: View {
         if analysisPollingTimedOut {
             return NSLocalizedString("mgr_v43_ai_poll_timeout", comment: "")
         }
+        if analysis?.failureReason == "not_enqueued" {
+            return NSLocalizedString("mgr_v43_ai_not_enqueued", comment: "")
+        }
         if let summary = analysis?.summary, let total = summary.mediaTotal, let done = summary.analyzed {
             return String(format: NSLocalizedString("mgr_v43_ai_jobs_fmt", comment: ""), done, total)
         }
