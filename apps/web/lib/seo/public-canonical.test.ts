@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { canonicalMatchesLocaleSelf, publicCanonicalUrl, publicLocaleAlternates } from "./public-canonical";
+import { PUBLIC_PATHS_EXCLUDED_FROM_SITEMAP, PUBLIC_SITEMAP_PATHS } from "./public-paths";
+import { buildPublicSitemapEntries } from "./public-sitemap";
 
 const ORIGIN = "https://www.aistroyka.ai";
 const LOCALES = ["ru", "en", "es", "it"] as const;
@@ -75,5 +77,25 @@ describe("publicCanonicalUrl", () => {
     expect(languages.it).toBe(`${ORIGIN}/it/pricing`);
     expect(languages["x-default"]).toBe(`${ORIGIN}/ru/pricing`);
     expect(new Set([languages.en, languages.ru, languages.es, languages.it]).size).toBe(4);
+  });
+});
+
+describe("public sitemap entries", () => {
+  it("omits lastmod, stub paths, and includes reciprocal hreflang", () => {
+    const entries = buildPublicSitemapEntries({
+      origin: ORIGIN,
+      locales: LOCALES,
+      defaultLocale: "ru",
+    });
+    expect(entries.some((entry) => "lastModified" in entry && entry.lastModified != null)).toBe(false);
+    for (const stub of PUBLIC_PATHS_EXCLUDED_FROM_SITEMAP) {
+      expect(entries.some((entry) => entry.url.includes(stub))).toBe(false);
+    }
+    const home = entries.find((entry) => entry.url === `${ORIGIN}/en`);
+    expect(home?.alternates?.languages?.ru).toBe(`${ORIGIN}/ru`);
+    expect(home?.alternates?.languages?.["x-default"]).toBe(`${ORIGIN}/ru`);
+    expect(home?.alternates?.languages?.es).toBe(`${ORIGIN}/es`);
+    expect(entries.filter((entry) => entry.url.endsWith("/en/solutions")).length).toBe(1);
+    expect(entries.length).toBe(PUBLIC_SITEMAP_PATHS.length * LOCALES.length);
   });
 });

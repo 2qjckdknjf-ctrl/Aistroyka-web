@@ -1260,7 +1260,7 @@
       "humanInTheLoopDesc": "Decisions stay with humans; AI supports with analysis and suggestions."
     },
     "mobile": {
-      "title": "Mobile",
+      "title": "Manager and worker apps for construction sites",
       "metaDescription": "Manager app, worker app, field reporting, and fast mobile workflows.",
       "managerApp": "Manager app",
       "workerApp": "Worker / contractor app",
@@ -1306,7 +1306,7 @@
       "businessCtaDetails": "For business inquiries, use the form above and mention your pilot or presentation request, or we will follow up to schedule a call."
     },
     "faq": {
-      "title": "FAQ",
+      "title": "Questions about AISTROYKA construction software",
       "metaDescription": "Frequently asked questions about Aistroyka.",
       "whatIs": "What is Aistroyka?",
       "whatIsA": "Aistroyka is an AI-powered construction intelligence platform: project management, tasks, daily reports, photo evidence, and AI analytics in one place.",
@@ -1790,7 +1790,7 @@
     },
     "v43": {
       "platform": {
-        "title": "Platform",
+        "title": "Construction operations platform for office and site",
         "eyebrow": "Platform",
         "h1": "The whole site — in one operating circuit",
         "lead": "Plans, field reports, documents, AI risks and decisions stay in one shared context for office and site teams.",
@@ -1829,7 +1829,7 @@
         "faq3A": "A person. AI explains and recommends; it does not close the decision."
       },
       "features": {
-        "title": "Capabilities",
+        "title": "Construction tasks, daily reports, and site evidence",
         "eyebrow": "Capabilities",
         "h1": "From plan to proven result",
         "lead": "Tasks, reports, photos, documents, dates and AI risks stay linked — not scattered across chats.",
@@ -1885,7 +1885,7 @@
         "aiPhotoAlt": "Site photo used as evidence"
       },
       "solutions": {
-        "title": "Solutions",
+        "title": "Construction site control for business, managers, and field teams",
         "eyebrow": "Solutions",
         "h1": "One site. Three levels of control.",
         "lead": "Choose the role and see how AISTROYKA changes the daily work — without a separate system for each team.",
@@ -1935,7 +1935,7 @@
         "fieldStep3Text": "The office sees the same item, not a forwarded album."
       },
       "pricing": {
-        "title": "Pricing",
+        "title": "Construction software plans for one site or a portfolio",
         "eyebrow": "Pricing",
         "h1": "Choose the level of control for your team",
         "lead": "Start with one site and scale AISTROYKA across the portfolio. Self-serve plans show the live list price; Business and Enterprise are scoped with us.",
@@ -2160,7 +2160,7 @@
         "g3Text": "You choose what “better” means before the work starts."
       },
       "about": {
-        "title": "About",
+        "title": "About AISTROYKA — construction site-to-office software",
         "eyebrow": "About the company",
         "h1": "Construction becomes transparent when the fact is not lost",
         "lead": "We build the working circuit between site and office — with evidence, clear ownership and decisions on data.",

@@ -26,15 +26,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const headerList = await headers();
   const pathname = headerList.get("x-aistroyka-pathname") ?? `/${locale}`;
   const origin = getAppUrl();
+  const ogLocale =
+    locale === "ru" ? "ru_RU" : locale === "es" ? "es_ES" : locale === "it" ? "it_IT" : "en_US";
+  const canonical = publicCanonicalUrl({ origin, pathname });
   return {
     alternates: {
-      canonical: publicCanonicalUrl({ origin, pathname }),
+      canonical,
       languages: publicLocaleAlternates({
         origin,
         pathname,
         locales: routing.locales,
         defaultLocale: routing.defaultLocale,
       }),
+    },
+    openGraph: {
+      locale: ogLocale,
+      url: canonical,
     },
   };
 }
@@ -50,11 +57,12 @@ export default async function PublicLayout({ children, params }: Props) {
   const headerList = await headers();
   const pathname = headerList.get("x-aistroyka-pathname") ?? `/${locale}`;
   const baseUrl = getAppUrl();
+  const localeHome = publicCanonicalUrl({ origin: baseUrl, pathname: `/${locale}` });
   const organizationSchema = {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "Aistroyka",
-    url: baseUrl,
+    url: localeHome,
     logo: `${baseUrl}/brand/aistroyka-logo.png`,
     description: t("schemaOrgDescription"),
   };
@@ -65,14 +73,14 @@ export default async function PublicLayout({ children, params }: Props) {
     applicationCategory: "BusinessApplication",
     operatingSystem: "Web, iOS",
     description: t("schemaSoftwareDescription"),
-    url: baseUrl,
+    url: localeHome,
     image: `${baseUrl}/brand/aistroyka-logo.png`,
   };
   const websiteSchema = {
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: "Aistroyka",
-    url: baseUrl,
+    url: localeHome,
     inLanguage: routing.locales,
     description: t("schemaOrgDescription"),
   };
