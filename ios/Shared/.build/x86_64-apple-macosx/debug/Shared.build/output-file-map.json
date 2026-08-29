@@ -1,0 +1,53 @@
+{
+  "": {
+    "swift-dependencies": "/Users/alex/Projects/AISTROYKA/ios/Shared/.build/x86_64-apple-macosx/debug/Shared.build/master.swiftdeps"
+  },
+  "/Users/alex/Projects/AISTROYKA/ios/Shared/Sources/Shared/APIClient.swift": {
+    "dependencies": "/Users/alex/Projects/AISTROYKA/ios/Shared/.build/x86_64-apple-macosx/debug/Shared.build/APIClient.d",
+    "object": "/Users/alex/Projects/AISTROYKA/ios/Shared/.build/x86_64-apple-macosx/debug/Shared.build/APIClient.swift.o",
+    "swiftmodule": "/Users/alex/Projects/AISTROYKA/ios/Shared/.build/x86_64-apple-macosx/debug/Shared.build/APIClient~partial.swiftmodule",
+    "swift-dependencies": "/Users/alex/Projects/AISTROYKA/ios/Shared/.build/x86_64-apple-macosx/debug/Shared.build/APIClient.swiftdeps"
+  },
+  "/Users/alex/Projects/AISTROYKA/ios/Shared/Sources/Shared/APIError.swift": {
+    "dependencies": "/Users/alex/Projects/AISTROYKA/ios/Shared/.build/x86_64-apple-macosx/debug/Shared.build/APIError.d",
+    "object": "/Users/alex/Projects/AISTROYKA/ios/Shared/.build/x86_64-apple-macosx/debug/Shared.build/APIError.swift.o",
+    "swiftmodule": "/Users/alex/Projects/AISTROYKA/ios/Shared/.build/x86_64-apple-macosx/debug/Shared.build/APIError~partial.swiftmodule",
+    "swift-dependencies": "/Users/alex/Projects/AISTROYKA/ios/Shared/.build/x86_64-apple-macosx/debug/Shared.build/APIError.swiftdeps"
+  },
+  "/Users/alex/Projects/AISTROYKA/ios/Shared/Sources/Shared/AuthService.swift": {
+    "dependencies": "/Users/alex/Projects/AISTROYKA/ios/Shared/.build/x86_64-apple-macosx/debug/Shared.build/AuthService.d",
+    "object": "/Users/alex/Projects/AISTROYKA/ios/Shared/.build/x86_64-apple-macosx/debug/Shared.build/AuthService.swift.o",
+    "swiftmodule": "/Users/alex/Projects/AISTROYKA/ios/Shared/.build/x86_64-apple-macosx/debug/Shared.build/AuthService~partial.swiftmodule",
+    "swift-dependencies": "/Users/alex/Projects/AISTROYKA/ios/Shared/.build/x86_64-apple-macosx/debug/Shared.build/AuthService.swiftdeps"
+  },
+  "/Users/alex/Projects/AISTROYKA/ios/Shared/Sources/Shared/Config.swift": {
+    "dependencies": "/Users/alex/Projects/AISTROYKA/ios/Shared/.build/x86_64-apple-macosx/debug/Shared.build/Config.d",
+    "object": "/Users/alex/Projects/AISTROYKA/ios/Shared/.build/x86_64-apple-macosx/debug/Shared.build/Config.swift.o",
+    "swiftmodule": "/Users/alex/Projects/AISTROYKA/ios/Shared/.build/x86_64-apple-macosx/debug/Shared.build/Config~partial.swiftmodule",
+    "swift-dependencies": "/Users/alex/Projects/AISTROYKA/ios/Shared/.build/x86_64-apple-macosx/debug/Shared.build/Config.swiftdeps"
+  },
+  "/Users/alex/Projects/AISTROYKA/ios/Shared/Sources/Shared/DeviceContext.swift": {
+    "dependencies": "/Users/alex/Projects/AISTROYKA/ios/Shared/.build/x86_64-apple-macosx/debug/Shared.build/DeviceContext.d",
+    "object": "/Users/alex/Projects/AISTROYKA/ios/Shared/.build/x86_64-apple-macosx/debug/Shared.build/DeviceContext.swift.o",
+    "swiftmodule": "/Users/alex/Projects/AISTROYKA/ios/Shared/.build/x86_64-apple-macosx/debug/Shared.build/DeviceContext~partial.swiftmodule",
+    "swift-dependencies": "/Users/alex/Projects/AISTROYKA/ios/Shared/.build/x86_64-apple-macosx/debug/Shared.build/DeviceContext.swiftdeps"
+  },
+  "/Users/alex/Projects/AISTROYKA/ios/Shared/Sources/Shared/Endpoints.swift": {
+    "dependencies": "/Users/alex/Projects/AISTROYKA/ios/Shared/.build/x86_64-apple-macosx/debug/Shared.build/Endpoints.d",
+    "object": "/Users/alex/Projects/AISTROYKA/ios/Shared/.build/x86_64-apple-macosx/debug/Shared.build/Endpoints.swift.o",
+    "swiftmodule": "/Users/alex/Projects/AISTROYKA/ios/Shared/.build/x86_64-apple-macosx/debug/Shared.build/Endpoints~partial.swiftmodule",
+    "swift-dependencies": "/Users/alex/Projects/AISTROYKA/ios/Shared/.build/x86_64-apple-macosx/debug/Shared.build/Endpoints.swiftdeps"
+  },
+  "/Users/alex/Projects/AISTROYKA/ios/Shared/Sources/Shared/KeychainHelper.swift": {
+    "dependencies": "/Users/alex/Projects/AISTROYKA/ios/Shared/.build/x86_64-apple-macosx/debug/Shared.build/KeychainHelper.d",
+    "object": "/Users/alex/Projects/AISTROYKA/ios/Shared/.build/x86_64-apple-macosx/debug/Shared.build/KeychainHelper.swift.o",
+    "swiftmodule": "/Users/alex/Projects/AISTROYKA/ios/Shared/.build/x86_64-apple-macosx/debug/Shared.build/KeychainHelper~partial.swiftmodule",
+    "swift-dependencies": "/Users/alex/Projects/AISTROYKA/ios/Shared/.build/x86_64-apple-macosx/debug/Shared.build/KeychainHelper.swiftdeps"
+  },
+  "/Users/alex/Projects/AISTROYKA/ios/Shared/Sources/Shared/NetworkMonitor.swift": {
+    "dependencies": "/Users/alex/Projects/AISTROYKA/ios/Shared/.build/x86_64-apple-macosx/debug/Shared.build/NetworkMonitor.d",
+    "object": "/Users/alex/Projects/AISTROYKA/ios/Shared/.build/x86_64-apple-macosx/debug/Shared.build/NetworkMonitor.swift.o",
+    "swiftmodule": "/Users/alex/Projects/AISTROYKA/ios/Shared/.build/x86_64-apple-macosx/debug/Shared.build/NetworkMonitor~partial.swiftmodule",
+    "swift-dependencies": "/Users/alex/Projects/AISTROYKA/ios/Shared/.build/x86_64-apple-macosx/debug/Shared.build/NetworkMonitor.swiftdeps"
+  }
+}
