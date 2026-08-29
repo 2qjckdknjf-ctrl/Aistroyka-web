@@ -173,6 +173,7 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: https://vthfrxehrursfloevnlp.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_STAGING }}
           NEXT_PUBLIC_APP_URL: https://staging.aistroyka.ai
+          NEXT_PUBLIC_GROWTH_OS_EVENTS_URL: ${{ secrets.NEXT_PUBLIC_GROWTH_OS_EVENTS_URL }}
         run: bun run cf:build
 
       - name: Verify build output and app source
