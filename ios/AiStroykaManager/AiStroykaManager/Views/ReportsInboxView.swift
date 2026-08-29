@@ -377,6 +377,7 @@ struct ReportDetailReviewView: View {
     @State private var selectedMedia = 0
     @State private var zoomURL: URL?
     @State private var analysis: ReportAnalysisStatusDTO?
+    @State private var analysisPollingTimedOut = false
     @State private var approvalHistory: [ReportApprovalEventDTO] = []
 
     var body: some View {
@@ -591,6 +592,15 @@ struct ReportDetailReviewView: View {
                     Text(analysisDetail)
                         .font(.subheadline)
                         .foregroundStyle(ManagerV43.textSecondary)
+                    if analysisPollingTimedOut {
+                        Button(NSLocalizedString("mgr_v43_ai_retry_status", comment: "")) {
+                            analysisPollingTimedOut = false
+                            Task { await pollAnalysisIfNeeded() }
+                        }
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(ManagerV43.dataBlue)
+                        .accessibilityIdentifier("pilot_manager_ai_retry_status")
+                    }
                 }
                 Spacer(minLength: 0)
             }
@@ -623,6 +633,9 @@ struct ReportDetailReviewView: View {
     private var analysisDetail: String {
         if ManagerV43Preview.isEnabled {
             return NSLocalizedString("mgr_v43_risk_rebar_summary", comment: "")
+        }
+        if analysisPollingTimedOut {
+            return NSLocalizedString("mgr_v43_ai_poll_timeout", comment: "")
         }
         if let summary = analysis?.summary, let total = summary.mediaTotal, let done = summary.analyzed {
             return String(format: NSLocalizedString("mgr_v43_ai_jobs_fmt", comment: ""), done, total)
@@ -759,6 +772,7 @@ struct ReportDetailReviewView: View {
             }
         ) {
             report = try await ManagerAPI.reportDetail(id: reportId)
+            analysisPollingTimedOut = false
             analysis = try? await ManagerAPI.reportAnalysisStatus(reportId: reportId)
             approvalHistory = (try? await ManagerAPI.reportApprovalHistory(reportId: reportId)) ?? []
         }
@@ -767,14 +781,19 @@ struct ReportDetailReviewView: View {
 
     private func pollAnalysisIfNeeded() async {
         guard !ManagerV43Preview.isEnabled else { return }
-        for _ in 0..<6 {
+        analysisPollingTimedOut = false
+        // Keep the live view current for up to two minutes, then expose an explicit retry.
+        for _ in 0..<60 {
             let kind = ManagerV43Formatters.analysisPipelineKind(analysis?.status)
             if kind != "queued" && kind != "running" { return }
             try? await Task.sleep(nanoseconds: 2_000_000_000)
             if Task.isCancelled { return }
-            let latest = try? await ManagerAPI.reportAnalysisStatus(reportId: reportId)
-            analysis = latest
+            if let latest = try? await ManagerAPI.reportAnalysisStatus(reportId: reportId) {
+                analysis = latest
+            }
         }
+        let kind = ManagerV43Formatters.analysisPipelineKind(analysis?.status)
+        analysisPollingTimedOut = kind == "queued" || kind == "running"
     }
 }
 
