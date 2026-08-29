@@ -2,8 +2,8 @@
 
 > Live project status. Keep this short and mobile-readable.
 
-**Last updated:** 2026-08-26  
-**Updated by:** Worker issue PATCH safety after [#260](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/260)
+**Last updated:** 2026-08-29  
+**Updated by:** Worker AFTER-photo comparison overlay on `fix/worker-after-photo-comparison`
 
 ---
 
@@ -11,14 +11,14 @@
 
 | Field | Value |
 |---|---|
-| **Active slice** | Stop worker issue PATCH from wiping defect text or reopening closed rows |
-| **Branch / worktree** | `fix/worker-issue-patch-safe` @ `/Users/alex/Projects/AISTROYKA-ios-worker-v4-3` |
-| **Runtime** | staging + production `buildStamp.sha7` = `d2e22f9` (PR #260) |
-| **Next** | Land this slice. Twilio SID/token still empty. Reviewer PAT still cannot approve |
+| **Active slice** | Show BEFORE ghost / split on Worker AFTER camera (render 08) |
+| **Branch / worktree** | `fix/worker-after-photo-comparison` @ `/Users/alex/Projects/AISTROYKA-ios-worker-v4-3` |
+| **Runtime** | staging + production `buildStamp.sha7` = `ed1b7e2` (PR #261) |
+| **Next** | Land this slice. Docs STATUS [#262](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/262) still needs non-author APPROVED. Twilio SID/token empty. TestFlight `NO` here |
 
 ## Notes
 
-Primary checkout `/Users/alex/Projects/AISTROYKA` was not modified. This worktree `APPROVE_TESTFLIGHT_UPLOAD` is `NO`.
+Primary checkout `/Users/alex/Projects/AISTROYKA` was not modified. Draft [#259](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/259) closed as superseded by #261.
 
 ---
 

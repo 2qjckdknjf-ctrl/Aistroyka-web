@@ -37,31 +37,11 @@ struct CameraEvidenceView: View {
                 }
                 Spacer()
             }
-            ZStack {
-                if let image {
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFill()
-                } else {
-                    WorkerV43.cardStrong
-                    VStack(spacing: 8) {
-                        Image(systemName: "camera.viewfinder")
-                            .font(.system(size: 28))
-                            .foregroundStyle(WorkerV43.yellow)
-                        Text(kind == .after
-                             ? NSLocalizedString("wrk_v43_repeat_angle", comment: "")
-                             : NSLocalizedString("wrk_v43_capture_overview", comment: ""))
-                            .foregroundStyle(WorkerV43.textPrimary)
-                            .multilineTextAlignment(.center)
-                    }
-                    .padding()
-                }
-            }
-            .frame(maxWidth: .infinity, minHeight: 280)
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .stroke(WorkerV43.border, lineWidth: 1)
+            WorkerV43PhotoComparisonFrame(
+                kind: kind,
+                captured: image,
+                beforeReference: beforeReference,
+                angleOK: angleOK
             )
             HStack {
                 Image(systemName: "mappin")
@@ -80,7 +60,11 @@ struct CameraEvidenceView: View {
             .clipShape(Capsule())
 
             check(NSLocalizedString("wrk_v43_angle_ok", comment: ""), ok: angleOK == true, warning: angleOK == false)
-            check(NSLocalizedString("wrk_v43_sharp_ok", comment: ""), ok: WorkerPhotoEvidence.isSharp(image))
+            check(
+                NSLocalizedString("wrk_v43_sharp_ok", comment: ""),
+                ok: image != nil && WorkerPhotoEvidence.isSharp(image),
+                warning: image == nil
+            )
             if kind == .after {
                 check(NSLocalizedString("wrk_v43_need_closeup", comment: ""), ok: image != nil, warning: image == nil)
             }
@@ -122,12 +106,28 @@ struct CameraEvidenceView: View {
         }
         .padding(WorkerV43.screenX)
         .background(WorkerV43.bg.ignoresSafeArea())
-        .accessibilityIdentifier(kind == .after ? "pilot_worker_camera_after" : "pilot_worker_camera_before")
+        .overlay(alignment: .topLeading) {
+            Color.clear
+                .frame(width: 8, height: 8)
+                .accessibilityIdentifier(kind == .after ? "pilot_worker_camera_after" : "pilot_worker_camera_before")
+        }
+        .overlay(alignment: .topTrailing) {
+            if kind == .after, beforeReference != nil, image == nil {
+                Color.clear
+                    .frame(width: 8, height: 8)
+                    .accessibilityIdentifier("pilot_worker_camera_ghost")
+                    .accessibilityLabel("before-ghost")
+            }
+        }
         .onAppear {
             location.requestIfNeeded(scope: WorkerSettingsStore.load().geoScope)
             cameraDenied = WorkerPhotoEvidence.cameraDenied
             lowStorage = WorkerPhotoEvidence.isLowStorage()
             beforeReference = WorkerPhotoEvidence.loadReference(taskId: task.id, kind: .before)
+            if beforeReference == nil, kind == .after,
+               WorkerV43Preview.isEnabled || task.id.hasPrefix("preview-task") {
+                beforeReference = WorkerV43PreviewCatalog.beforeReferenceImage()
+            }
         }
         .fullScreenCover(isPresented: $showCamera) {
             CameraPicker(image: $image)
