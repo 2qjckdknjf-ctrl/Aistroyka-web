@@ -25,8 +25,7 @@ export const metadata: Metadata = {
     default: "Aistroyka — AI Construction Intelligence",
     template: "%s | Aistroyka",
   },
-  description: "AI Construction Intelligence — control progress, risks, and quality on site. AI construction platform, construction intelligence, AI project management.",
-  keywords: ["AI construction platform", "construction intelligence", "AI project management", "construction analytics", "construction AI"],
+  description: "AI Construction Intelligence — control progress, risks, and quality on site.",
   openGraph: {
     type: "website",
     locale: "en_US",

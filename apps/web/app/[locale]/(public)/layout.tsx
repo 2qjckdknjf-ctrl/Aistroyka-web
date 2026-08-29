@@ -8,6 +8,7 @@ import { V41PilotProvider } from "@/components/public/v41";
 import { getAppUrl } from "@/lib/app-url";
 import { routing } from "@/i18n/routing";
 import { publicCanonicalUrl, publicLocaleAlternates } from "@/lib/seo/public-canonical";
+import { publicOpenGraph } from "@/lib/seo/public-open-graph";
 import { PublicFunnelBeacon } from "@/components/public/PublicFunnelBeacon";
 
 const manrope = Manrope({
@@ -26,9 +27,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const headerList = await headers();
   const pathname = headerList.get("x-aistroyka-pathname") ?? `/${locale}`;
   const origin = getAppUrl();
+  const canonical = publicCanonicalUrl({ origin, pathname });
   return {
     alternates: {
-      canonical: publicCanonicalUrl({ origin, pathname }),
+      canonical,
       languages: publicLocaleAlternates({
         origin,
         pathname,
@@ -36,6 +38,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         defaultLocale: routing.defaultLocale,
       }),
     },
+    openGraph: publicOpenGraph({ locale, canonical }),
   };
 }
 
@@ -50,11 +53,12 @@ export default async function PublicLayout({ children, params }: Props) {
   const headerList = await headers();
   const pathname = headerList.get("x-aistroyka-pathname") ?? `/${locale}`;
   const baseUrl = getAppUrl();
+  const localeHome = publicCanonicalUrl({ origin: baseUrl, pathname: `/${locale}` });
   const organizationSchema = {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "Aistroyka",
-    url: baseUrl,
+    url: localeHome,
     logo: `${baseUrl}/brand/aistroyka-logo.png`,
     description: t("schemaOrgDescription"),
   };
@@ -65,14 +69,14 @@ export default async function PublicLayout({ children, params }: Props) {
     applicationCategory: "BusinessApplication",
     operatingSystem: "Web, iOS",
     description: t("schemaSoftwareDescription"),
-    url: baseUrl,
+    url: localeHome,
     image: `${baseUrl}/brand/aistroyka-logo.png`,
   };
   const websiteSchema = {
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: "Aistroyka",
-    url: baseUrl,
+    url: localeHome,
     inLanguage: routing.locales,
     description: t("schemaOrgDescription"),
   };

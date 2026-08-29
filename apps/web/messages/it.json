@@ -1545,7 +1545,7 @@
       "humanInTheLoopDesc": "Le decisioni restano umane; l’IA supporta con analisi e suggerimenti."
     },
     "mobile": {
-      "title": "Mobile",
+      "title": "App per capocantiere e operai in edilizia",
       "metaDescription": "App responsabile, app lavoratore, reportistica di cantiere e flussi mobile rapidi.",
       "managerApp": "App responsabile",
       "workerApp": "App lavoratore o contractor",
@@ -1591,7 +1591,7 @@
       "businessCtaDetails": "Per richieste commerciali, usa il modulo qui sopra e indica il tuo interesse per pilota o presentazione, oppure ti ricontatteremo per fissare una chiamata."
     },
     "faq": {
-      "title": "FAQ",
+      "title": "Domande frequenti",
       "metaDescription": "Domande frequenti su Aistroyka.",
       "whatIs": "Cos'è Aistroyka?",
       "whatIsA": "Aistroyka è una piattaforma di intelligenza per l'edilizia con IA: gestione progetti, attività, report giornalieri, evidenze fotografiche e analisi IA in un unico posto.",
@@ -1790,7 +1790,7 @@
     },
     "v43": {
       "platform": {
-        "title": "Piattaforma",
+        "title": "Piattaforma operativa per cantiere e ufficio",
         "eyebrow": "Piattaforma",
         "h1": "Tutto il cantiere — in un solo circuito operativo",
         "lead": "Piani, report di campo, documenti, rischi IA e decisioni restano in un contesto condiviso per ufficio e cantiere.",
@@ -1829,7 +1829,7 @@
         "faq3A": "Una persona. L’IA spiega e raccomanda; non chiude la decisione."
       },
       "features": {
-        "title": "Capacità",
+        "title": "Attività, report giornalieri ed evidenze di cantiere",
         "eyebrow": "Capacità",
         "h1": "Dal piano al risultato dimostrato",
         "lead": "Attività, report, foto, documenti, date e rischi IA restano collegati — non sparsi nelle chat.",
@@ -1885,7 +1885,7 @@
         "aiPhotoAlt": "Foto di cantiere usata come evidenza"
       },
       "solutions": {
-        "title": "Soluzioni",
+        "title": "Controllo di cantiere per business, capi cantiere e campo",
         "eyebrow": "Soluzioni",
         "h1": "Un cantiere. Tre livelli di controllo.",
         "lead": "Scegli il ruolo e vedi come AISTROYKA cambia il lavoro quotidiano — senza un sistema separato per ogni team.",
@@ -1935,7 +1935,7 @@
         "fieldStep3Text": "L’ufficio vede lo stesso elemento, non un album inoltrato."
       },
       "pricing": {
-        "title": "Prezzi",
+        "title": "Piani software per edilizia: un cantiere o un portafoglio",
         "eyebrow": "Prezzi",
         "h1": "Scegli il livello di controllo per il tuo team",
         "lead": "Parti da un cantiere e scala AISTROYKA sul portafoglio. I piani in autoservizio mostrano il listino reale; Business ed Enterprise si definiscono con noi.",
@@ -2160,7 +2160,7 @@
         "g3Text": "Scegli tu cosa significa «meglio» prima che parta il lavoro."
       },
       "about": {
-        "title": "Chi siamo",
+        "title": "Chi siamo — software per il controllo di cantiere",
         "eyebrow": "Sull’azienda",
         "h1": "La costruzione diventa trasparente quando il fatto non si perde",
         "lead": "Costruiamo il circuito di lavoro tra cantiere e ufficio — con evidenza, responsabilità chiara e decisioni sui dati.",

@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { canonicalMatchesLocaleSelf, publicCanonicalUrl, publicLocaleAlternates } from "./public-canonical";
+import { PUBLIC_PATHS_EXCLUDED_FROM_SITEMAP, PUBLIC_SITEMAP_PATHS } from "./public-paths";
+import { buildPublicSitemapEntries } from "./public-sitemap";
+import { AISTROYKA_OG_IMAGE, openGraphLocale, publicOpenGraph } from "./public-open-graph";
 
 const ORIGIN = "https://www.aistroyka.ai";
 const LOCALES = ["ru", "en", "es", "it"] as const;
@@ -75,5 +78,52 @@ describe("publicCanonicalUrl", () => {
     expect(languages.it).toBe(`${ORIGIN}/it/pricing`);
     expect(languages["x-default"]).toBe(`${ORIGIN}/ru/pricing`);
     expect(new Set([languages.en, languages.ru, languages.es, languages.it]).size).toBe(4);
+  });
+});
+
+describe("public sitemap entries", () => {
+  it("omits lastmod, ignored ranking folklore, stub paths, and sitemap hreflang", () => {
+    const entries = buildPublicSitemapEntries({
+      origin: ORIGIN,
+      locales: LOCALES,
+      defaultLocale: "ru",
+    });
+    expect(entries.some((entry) => "lastModified" in entry && entry.lastModified != null)).toBe(false);
+    expect(entries.some((entry) => entry.changeFrequency != null)).toBe(false);
+    expect(entries.some((entry) => entry.priority != null)).toBe(false);
+    expect(entries.some((entry) => entry.alternates != null)).toBe(false);
+    for (const stub of PUBLIC_PATHS_EXCLUDED_FROM_SITEMAP) {
+      expect(entries.some((entry) => entry.url.includes(stub))).toBe(false);
+    }
+    expect(entries.filter((entry) => entry.url.endsWith("/en/solutions")).length).toBe(1);
+    expect(entries.length).toBe(PUBLIC_SITEMAP_PATHS.length * LOCALES.length);
+  });
+});
+
+describe("public Open Graph", () => {
+  it("keeps production image, site name, locale, and canonical URL without English title on localized pages", () => {
+    const canonical = `${ORIGIN}/es/solutions`;
+    const og = publicOpenGraph({ locale: "es", canonical });
+    expect(og.type).toBe("website");
+    expect(og.siteName).toBe("Aistroyka");
+    expect(og.locale).toBe("es_ES");
+    expect(og.url).toBe(canonical);
+    expect(og.images[0]?.url).toBe(AISTROYKA_OG_IMAGE.url);
+    expect(og.title).toBeUndefined();
+    expect(og.description).toBeUndefined();
+    expect(openGraphLocale("ru")).toBe("ru_RU");
+    expect(openGraphLocale("it")).toBe("it_IT");
+  });
+
+  it("attaches localized title and description only when the page supplies them", () => {
+    const og = publicOpenGraph({
+      locale: "es",
+      canonical: `${ORIGIN}/es`,
+      title: "Control de obra para negocio, jefes de proyecto y campo",
+      description: "Una obra. Tres niveles de control.",
+    });
+    expect(og.title).toMatch(/obra/);
+    expect(og.description).toMatch(/obra/);
+    expect(og.images[0]?.url).toBe(AISTROYKA_OG_IMAGE.url);
   });
 });

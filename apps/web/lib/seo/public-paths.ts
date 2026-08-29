@@ -1,0 +1,42 @@
+/** Indexable marketing paths included in /sitemap.xml. Locale prefix is applied separately. */
+export const PUBLIC_SITEMAP_PATHS = [
+  "",
+  "/features",
+  "/solutions",
+  "/ai-construction-control",
+  "/ai-demo",
+  "/mobile",
+  "/pricing",
+  "/about",
+  "/contact",
+  "/faq",
+  "/privacy",
+  "/terms",
+  "/cases",
+  "/docs",
+  "/projects-showcase",
+  "/platform",
+  "/security",
+  "/copilot",
+  "/integrations",
+  "/api",
+  "/workflows",
+  "/pricing/enterprise",
+  "/implementation",
+  "/partners",
+] as const;
+
+/** Thin stub routes kept live but omitted from the sitemap until they have real bodies. */
+export const PUBLIC_PATHS_EXCLUDED_FROM_SITEMAP = [
+  "/cases/residential",
+  "/cases/commercial",
+  "/cases/infrastructure",
+  "/cases/renovation",
+  "/docs/getting-started",
+  "/docs/projects",
+  "/docs/tasks",
+  "/docs/reports",
+  "/docs/ai-analytics",
+  "/docs/mobile-apps",
+  "/docs/users-and-roles",
+] as const;
