@@ -808,6 +808,7 @@ struct ManagerAnalysisStatusDTO: Decodable {
     let status: String
     let reportId: String?
     let jobCount: Int?
+    let failureReason: String?
     let summary: ManagerAnalysisSummaryDTO?
 }
 
@@ -1020,6 +1021,7 @@ struct ReportAnalysisStatusDTO: Decodable {
     let status: String?
     let reportId: String?
     let jobCount: Int?
+    let failureReason: String?
     let summary: ManagerAnalysisSummaryDTO?
 }
 
