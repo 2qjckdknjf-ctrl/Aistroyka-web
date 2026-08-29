@@ -132,6 +132,55 @@ describe("GET /api/v1/projects/:id/media", () => {
     );
   });
 
+  it("falls back to an older photo when the newest candidate cannot be signed", async () => {
+    listByProject.mockResolvedValue([
+      {
+        id: "photo-new-stale",
+        project_id: "project-a",
+        tenant_id: "tenant-1",
+        type: "site_photo",
+        file_url: "tenant-1/deleted.jpg",
+      },
+      {
+        id: "photo-older-valid",
+        project_id: "project-a",
+        tenant_id: "tenant-1",
+        type: "before",
+        file_url: "tenant-1/valid.jpg",
+      },
+    ]);
+    resolveAIMediaImage
+      .mockResolvedValueOnce({ ok: false, error: "Object not found" })
+      .mockResolvedValueOnce({
+        ok: true,
+        imageUrl: "https://signed.example/older-photo",
+        source: "media",
+        objectPath: "tenant-1/valid.jpg",
+        trustedProjectId: "project-a",
+      });
+
+    const res = await GET(request(), params);
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.data).toEqual([
+      expect.objectContaining({
+        id: "photo-older-valid",
+        file_url: "https://signed.example/older-photo",
+      }),
+    ]);
+    expect(resolveAIMediaImage).toHaveBeenNthCalledWith(
+      1,
+      supabase,
+      expect.objectContaining({ mediaId: "photo-new-stale", projectIdClaim: "project-a" })
+    );
+    expect(resolveAIMediaImage).toHaveBeenNthCalledWith(
+      2,
+      supabase,
+      expect.objectContaining({ mediaId: "photo-older-valid", projectIdClaim: "project-a" })
+    );
+  });
+
   it("keeps the existing manager catalog behavior", async () => {
     tenantContext = { ...tenantContext, role: "admin", clientProfile: "ios_manager" };
     const rows = [
