@@ -471,3 +471,5 @@
 "mgr_v43_doc_approve" = "Approva";
 "mgr_v43_doc_reject" = "Rifiuta";
 "mgr_v43_doc_request_changes" = "Richiedi modifiche";
+"mgr_v43_ai_poll_timeout" = "L'analisi AI sta richiedendo più tempo del previsto. Aggiorna lo stato.";
+"mgr_v43_ai_retry_status" = "Aggiorna stato AI";
