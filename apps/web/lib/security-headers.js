@@ -4,7 +4,7 @@
  */
 const BASE_CSP_DIRECTIVES = [
   "default-src 'self'",
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://growth-os-sable-psi.vercel.app",
   "img-src 'self' data: https:",
   "style-src 'self' 'unsafe-inline'",
   "frame-ancestors 'none'",

@@ -5,6 +5,7 @@ import {
   SECURITY_HEADERS,
   REQUIRED_PAGE_SECURITY_HEADER_KEYS,
   REQUIRED_API_SECURITY_HEADER_KEYS,
+  buildCspValue,
   getApiSecurityHeaders,
   getPageSecurityHeaders,
   applySecurityHeadersToResponse,
@@ -25,6 +26,10 @@ describe("security-headers", () => {
       expect(keys).toContain(required);
     }
     expect(keys).not.toContain("Content-Security-Policy");
+  });
+
+  it("allows Growth OS ingest over connect-src", () => {
+    expect(buildCspValue(false)).toContain("https://growth-os-sable-psi.vercel.app");
   });
 
   it("X-Content-Type-Options is nosniff on page profile", () => {
