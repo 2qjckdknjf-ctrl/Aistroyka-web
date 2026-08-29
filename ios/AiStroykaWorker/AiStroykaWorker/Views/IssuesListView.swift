@@ -18,6 +18,8 @@ struct IssuesListView: View {
     @State private var showCreate = false
     @State private var createTitle = ""
     @State private var createDetail = ""
+    @State private var createImage: UIImage?
+    @State private var showCreateCamera = false
     @State private var creating = false
     @State private var currentUserId: String?
 
@@ -163,18 +165,42 @@ struct IssuesListView: View {
             Form {
                 TextField(NSLocalizedString("wrk_v43_issue_title", comment: ""), text: $createTitle)
                 TextField(NSLocalizedString("wrk_v43_issue_detail", comment: ""), text: $createDetail, axis: .vertical)
+                Section {
+                    if let createImage {
+                        Image(uiImage: createImage)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(height: 160)
+                            .clipped()
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    }
+                    Button {
+                        showCreateCamera = true
+                    } label: {
+                        Label(
+                            NSLocalizedString("wrk_v43_issue_attach_photo", comment: ""),
+                            systemImage: "camera.fill"
+                        )
+                    }
+                    .accessibilityIdentifier("pilot_worker_issue_create_photo")
+                }
             }
             .scrollContentBackground(.hidden)
             .background(WorkerV43.bg)
             .navigationTitle(NSLocalizedString("wrk_v43_report_issue", comment: ""))
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button(NSLocalizedString("worker_cancel", comment: "")) { showCreate = false }
+                    Button(NSLocalizedString("worker_cancel", comment: "")) {
+                        resetCreate()
+                    }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(NSLocalizedString("worker_submit_report", comment: "")) { create() }
                         .disabled(createTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || creating)
                 }
+            }
+            .fullScreenCover(isPresented: $showCreateCamera) {
+                CameraPicker(image: $createImage)
             }
         }
     }
@@ -222,16 +248,37 @@ struct IssuesListView: View {
         }
     }
 
+    private func createDescription() -> String? {
+        var parts: [String] = []
+        let typed = createDetail.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !typed.isEmpty { parts.append(typed) }
+        if createImage != nil {
+            parts.append(NSLocalizedString("wrk_v43_issue_create_photo_queued", comment: ""))
+        }
+        return parts.isEmpty ? nil : parts.joined(separator: "\n")
+    }
+
+    private func resetCreate() {
+        showCreate = false
+        createTitle = ""
+        createDetail = ""
+        createImage = nil
+    }
+
     private func create() {
         let title = createTitle.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !title.isEmpty else { return }
+        if let createImage {
+            WorkerPhotoEvidence.persistPending(image: createImage, purpose: WorkerPhotoKind.issue.rawValue, taskId: linkedTaskId)
+        }
+        let description = createDescription()
         if WorkerV43Preview.isEnabled {
             issues.insert(
                 WorkerIssueDTO(
                     id: "preview-issue-\(UUID().uuidString.prefix(8))",
                     projectId: project.id,
                     title: title,
-                    description: createDetail.isEmpty ? nil : createDetail,
+                    description: description,
                     status: "open",
                     taskId: linkedTaskId,
                     createdAt: nil,
@@ -239,9 +286,7 @@ struct IssuesListView: View {
                 ),
                 at: 0
             )
-            showCreate = false
-            createTitle = ""
-            createDetail = ""
+            resetCreate()
             return
         }
         creating = true
@@ -249,16 +294,14 @@ struct IssuesListView: View {
             do {
                 _ = try await WorkerV43API.createIssue(
                     projectId: project.id,
-                    title: createTitle,
-                    description: createDetail,
+                    title: title,
+                    description: description,
                     taskId: linkedTaskId,
                     idempotencyKey: DeviceContext.newIdempotencyKey()
                 )
                 await MainActor.run {
                     creating = false
-                    showCreate = false
-                    createTitle = ""
-                    createDetail = ""
+                    resetCreate()
                     load()
                 }
             } catch {
