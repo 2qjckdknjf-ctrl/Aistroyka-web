@@ -1,11 +1,12 @@
 # AISTROYKA Multi-Provider Auth Inventory
 
-Updated: 2026-05-26
+Updated: 2026-08-24 (password recovery + dual-role primary membership)
 
 ## Current Auth Flow (Before Multi-Provider Extension)
 
 - Web login uses `POST /api/auth/login` (`/api/v1/auth/login` re-export), then sets Supabase `sb-*` session cookies via `@supabase/ssr`.
 - Register page uses Supabase browser `signUp` directly and relies on Supabase confirmation/session behavior.
+- Password recovery (Phase 2 / PR #240): `/{locale}/forgot-password` and `/{locale}/reset-password` call `POST /api/v1/auth/forgot-password` and `POST /api/v1/auth/reset-password`. The email `redirectTo` is `{origin}/api/auth/callback?callback=/{locale}/reset-password&recovery=1`. Runbook: `docs/auth/PASSWORD_RECOVERY.md`.
 - Middleware (`apps/web/middleware.ts`) calls `updateSession()` and gates protected routes by authenticated user presence.
 - API authorization is tenant-aware through `getTenantContextFromRequest()` -> `tenant_members` / `tenants.user_id` checks.
 - Authenticated status alone does **not** grant tenant/project access:
@@ -32,17 +33,25 @@ Updated: 2026-05-26
 ## Tenant / Project Access Logic
 
 - Tenant membership resolution:
-  - `tenant.context.ts` checks owned tenant (`tenants.user_id`) or `tenant_members`.
+  - Owned tenant (`tenants.user_id`) wins as `owner`.
+  - Otherwise `pickPrimaryTenantMembership()` in `tenant-membership-priority.ts` ranks `tenant_members` rows: `owner` > `admin` > `member` > `viewer` > `stakeholder`. Equal rank keeps the first matching row.
+  - Internal roles always beat portal-only `stakeholder`, so a contractor who is also a client stakeholder keeps cabinet (`/dashboard`) instead of being gated to `/portal/projects`.
+- Same helper is used by `getTenantContextFromRequest`, `getActiveTenantRoleForUser` (middleware / dashboard layout), billing subscription gate, and the API engine.
 - `requireTenant()` enforces membership for protected API routes.
 - Role and permission checks are layered on top (`authz.service`, `authorize(...)`).
 - Mobile `/api/v1/*` bearer flow still resolves through same tenant context rules (no bypass).
+- Post-auth landing + stakeholder path gate: `docs/architecture/ENTRY_ROUTING_POLICY.md`.
 
 ## Middleware and Callback Surfaces
 
-- No OAuth callback route existed for provider exchange at inventory time.
-- Auth pages: `/(auth)/login`, `/(auth)/register`.
-- Protected route prefixes: `/dashboard`, `/projects`, `/admin`, etc.
-- Logged-in users are redirected away from auth pages by `resolvePostAuthEntry`.
+- OAuth / recovery callback: `GET /api/auth/callback` (`apps/web/app/api/auth/callback/route.ts`).
+  - Normal sign-in: exchange `code`, optional Apple identity link, ensure onboarding profile, then `next` or dashboard.
+  - Recovery: `recovery=1` redirects to the sanitized `callback` (reset-password) and skips onboarding / identity linking.
+- Auth pages: `/(auth)/login`, `/(auth)/register`, `/(auth)/forgot-password`.
+- `/(auth)/reset-password` is **not** an auth-page bounce target (recovery session must stay).
+- Protected route prefixes: `/dashboard`, `/portal`, `/projects`, `/billing`, `/admin`, `/portfolio`, `/subscribe`.
+- Logged-in users hitting login / register / forgot-password are redirected by `resolvePostAuthEntry`.
+- Portal-only `stakeholder` users are redirected off contractor paths by `redirectIfStakeholderBlockedPath` after `getActiveTenantRoleForUser`. Role-lookup errors fail **open** (must not lock contractor dashboards).
 
 ## iOS Auth Flow Inventory
 
@@ -61,8 +70,10 @@ Updated: 2026-05-26
 
 1. `POST /api/auth/login` (email/password cookie login).
 2. Edge middleware session refresh and protected-route gating.
-3. Tenant context derivation (`tenant_members` + `tenants.user_id`).
-4. API route `requireTenant()` protections.
-5. Onboarding gating when user has no tenant membership.
-6. Mobile bearer token flow and manager role checks.
-7. Existing Telegram notifications linking/webhook paths under `/api/v1/integrations/telegram/*`.
+3. Tenant context derivation (`tenant_members` + `tenants.user_id` + primary-membership rank).
+4. Dual-role contractors keeping `/dashboard` when they also have a `stakeholder` row.
+5. Password recovery (`forgot-password` / callback `recovery=1` / `reset-password`) without adding `/reset-password` to `AUTH_PREFIXES`.
+6. API route `requireTenant()` protections.
+7. Onboarding gating when user has no tenant membership.
+8. Mobile bearer token flow and manager role checks.
+9. Existing Telegram notifications linking/webhook paths under `/api/v1/integrations/telegram/*`.
