@@ -181,6 +181,37 @@ enum WorkerTaskFilter: String, CaseIterable {
     case done
 }
 
+enum WorkerTaskDayMatch {
+    static func parseDay(_ raw: String?) -> Date? {
+        guard let raw else { return nil }
+        let prefix = String(raw.prefix(10))
+        let formatter = DateFormatter()
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.date(from: prefix)
+    }
+
+    static func matches(dueRaw: String?, selected: Date, filter: WorkerTaskFilter, now: Date = Date()) -> Bool {
+        let calendar = Calendar.current
+        switch filter {
+        case .done:
+            return true
+        case .today:
+            if let day = parseDay(dueRaw) {
+                return calendar.isDate(day, inSameDayAs: now)
+            }
+            return true
+        case .week:
+            if let day = parseDay(dueRaw) {
+                return calendar.isDate(day, inSameDayAs: selected)
+            }
+            return calendar.isDate(selected, inSameDayAs: now)
+        }
+    }
+}
+
 enum WorkerIssueFilter: String, CaseIterable {
     case open
     case mine

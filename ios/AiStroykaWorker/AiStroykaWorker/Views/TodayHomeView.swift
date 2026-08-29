@@ -233,14 +233,15 @@ struct TodayHomeView: View {
                         .font(.system(size: 22, weight: .semibold))
                         .foregroundStyle(WorkerV43.textPrimary)
                         .accessibilityIdentifier("pilot_worker_v43_main_task")
+                    let priority = WorkerV43Copy.taskPriority(task.priority)
                     HStack(spacing: 8) {
                         Image(systemName: "mappin.and.ellipse")
                         Text(project.name ?? NSLocalizedString("wrk_v43_today", comment: ""))
                         Image(systemName: "clock")
                         Text(task.dueDate ?? NSLocalizedString("wrk_v43_today", comment: ""))
                         WorkerV43StatusPill(
-                            text: NSLocalizedString("wrk_v43_priority_high", comment: ""),
-                            kind: .danger,
+                            text: priority.text,
+                            kind: priority.kind,
                             systemImage: "exclamationmark.triangle"
                         )
                     }
