@@ -81,20 +81,19 @@ describe("publicCanonicalUrl", () => {
 });
 
 describe("public sitemap entries", () => {
-  it("omits lastmod, stub paths, and includes reciprocal hreflang", () => {
+  it("omits lastmod, ignored ranking folklore, stub paths, and sitemap hreflang", () => {
     const entries = buildPublicSitemapEntries({
       origin: ORIGIN,
       locales: LOCALES,
       defaultLocale: "ru",
     });
     expect(entries.some((entry) => "lastModified" in entry && entry.lastModified != null)).toBe(false);
+    expect(entries.some((entry) => entry.changeFrequency != null)).toBe(false);
+    expect(entries.some((entry) => entry.priority != null)).toBe(false);
+    expect(entries.some((entry) => entry.alternates != null)).toBe(false);
     for (const stub of PUBLIC_PATHS_EXCLUDED_FROM_SITEMAP) {
       expect(entries.some((entry) => entry.url.includes(stub))).toBe(false);
     }
-    const home = entries.find((entry) => entry.url === `${ORIGIN}/en`);
-    expect(home?.alternates?.languages?.ru).toBe(`${ORIGIN}/ru`);
-    expect(home?.alternates?.languages?.["x-default"]).toBe(`${ORIGIN}/ru`);
-    expect(home?.alternates?.languages?.es).toBe(`${ORIGIN}/es`);
     expect(entries.filter((entry) => entry.url.endsWith("/en/solutions")).length).toBe(1);
     expect(entries.length).toBe(PUBLIC_SITEMAP_PATHS.length * LOCALES.length);
   });
