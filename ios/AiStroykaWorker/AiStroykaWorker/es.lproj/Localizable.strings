@@ -224,6 +224,8 @@
 "wrk_v43_normal" = "OK";
 "wrk_v43_photo_after_title" = "AFTER photo";
 "wrk_v43_photo_before_title" = "BEFORE photo";
+"wrk_v43_compare_before" = "ANTES";
+"wrk_v43_compare_after" = "DESPUÉS";
 "wrk_v43_repeat_angle" = "Repeat the BEFORE angle";
 "wrk_v43_capture_overview" = "Capture the work area overview";
 "wrk_v43_gps_ok" = "GPS confirmed";
