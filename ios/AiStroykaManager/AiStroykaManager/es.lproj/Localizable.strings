@@ -473,4 +473,5 @@
 "mgr_v43_doc_request_changes" = "Pedir cambios";
 "mgr_v43_ai_poll_timeout" = "El análisis de IA está tardando más de lo esperado. Actualiza el estado.";
 "mgr_v43_ai_status_error" = "No se pudo actualizar el estado de la IA. Comprueba la conexión e inténtalo de nuevo.";
+"mgr_v43_ai_not_enqueued" = "El análisis de IA no se inició. Pide al Worker que vuelva a enviar el informe o contacta con soporte.";
 "mgr_v43_ai_retry_status" = "Actualizar estado de IA";
