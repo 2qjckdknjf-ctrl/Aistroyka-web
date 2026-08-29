@@ -12,5 +12,5 @@ export function PublicFunnelBeacon({ locale, pathname }: { locale: string; pathn
     }
     void trackGrowthEvent(name, { page: pathname, locale });
   }, [locale, pathname]);
-  return null;
+  return <span hidden data-growth-os-funnel="public" />;
 }

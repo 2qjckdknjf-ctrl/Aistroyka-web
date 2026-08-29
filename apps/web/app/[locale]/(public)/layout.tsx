@@ -7,7 +7,7 @@ import { PublicFooter } from "@/components/public";
 import { V41PilotProvider } from "@/components/public/v41";
 import { getAppUrl } from "@/lib/app-url";
 import { routing } from "@/i18n/routing";
-import { publicCanonicalUrl } from "@/lib/seo/public-canonical";
+import { publicCanonicalUrl, publicLocaleAlternates } from "@/lib/seo/public-canonical";
 import { PublicFunnelBeacon } from "@/components/public/PublicFunnelBeacon";
 
 const manrope = Manrope({
@@ -25,9 +25,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const headerList = await headers();
   const pathname = headerList.get("x-aistroyka-pathname") ?? `/${locale}`;
+  const origin = getAppUrl();
   return {
     alternates: {
-      canonical: publicCanonicalUrl({ origin: getAppUrl(), pathname }),
+      canonical: publicCanonicalUrl({ origin, pathname }),
+      languages: publicLocaleAlternates({
+        origin,
+        pathname,
+        locales: routing.locales,
+        defaultLocale: routing.defaultLocale,
+      }),
     },
   };
 }

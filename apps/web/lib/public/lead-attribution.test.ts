@@ -15,4 +15,15 @@ describe("sanitizeLeadAttribution", () => {
     expect(clean.referrer).toBeNull();
     expect(clean.locale).toBe("en");
   });
+
+  it("does not copy email or other PII fields into attribution", () => {
+    const clean = sanitizeLeadAttribution({
+      utm_source: "google",
+      email: "person@example.com",
+      name: "Jane",
+    } as Record<string, unknown>);
+    expect(clean.utm_source).toBe("google");
+    expect(JSON.stringify(clean)).not.toContain("person@example.com");
+    expect(JSON.stringify(clean)).not.toContain("Jane");
+  });
 });
