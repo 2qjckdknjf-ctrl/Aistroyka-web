@@ -4,7 +4,7 @@
 
 import { z } from "zod";
 import type { AgentExecutionContext, SkillExecutionMode, SkillRiskLevel } from "../types";
-import type { AgentEvidence } from "../evidence/evidence.types";
+import type { AgentEvidence } from "../contracts/evidence.types";
 
 export interface SkillDefinition {
   id: string;

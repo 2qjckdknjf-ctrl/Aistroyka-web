@@ -3,7 +3,7 @@
  * Does not invent task dependencies (no dependency table in production schema).
  */
 
-import type { AgentEvidenceType } from "../evidence/evidence.types";
+import type { AgentEvidenceType } from "../contracts/evidence.types";
 
 export type BlockerKind =
   | "overdue_critical_task"

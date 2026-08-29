@@ -6,7 +6,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { AgentError } from "../errors";
-import { toAgentEvidence } from "../evidence/evidence.types";
+import { toAgentEvidence } from "../contracts/evidence.types";
 import type { AgentExecutionContext } from "../types";
 import { assembleProjectTruthSnapshot } from "@/lib/ai-brain/phase-a";
 import { getProjectHealthScore } from "@/lib/ai-brain/services/project-health-v2.service";

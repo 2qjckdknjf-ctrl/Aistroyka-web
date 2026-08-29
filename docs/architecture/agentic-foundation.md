@@ -88,7 +88,7 @@ See [construction-graph.md](./construction-graph.md). Source of truth remains `w
 
 ## Evidence
 
-Factual claims must cite `AgentEvidence` with `sourceEntityType` + `sourceEntityId`. Signed URLs are not stored. Missing data → `INSUFFICIENT_EVIDENCE` in `limitations`.
+Factual claims must cite `AgentEvidence` with `sourceEntityType` + `sourceEntityId` (`lib/agentic/contracts/evidence.types.ts`). Signed URLs are not stored. Missing data → `INSUFFICIENT_EVIDENCE` in `limitations`.
 
 ## Audit
 

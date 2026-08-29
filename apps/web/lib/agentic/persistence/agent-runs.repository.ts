@@ -4,7 +4,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AgentExecutionContext, AgentRunStatus, SkillRiskLevel } from "../types";
-import type { AgentEvidence } from "../evidence/evidence.types";
+import type { AgentEvidence } from "../contracts/evidence.types";
 import type { ProposedAgentAction } from "../envelope/action-envelope";
 import { logAgentMetric } from "../observability/metrics";
 

@@ -16,7 +16,7 @@ import { persistAgentRun, findRunByIdempotency } from "../persistence/agent-runs
 import { auditAgentRun } from "../persistence/audit";
 import { logAgentMetric } from "../observability/metrics";
 import { bindSourceEntity } from "../graph/graph.repository";
-import type { AgentEvidence } from "../evidence/evidence.types";
+import type { AgentEvidence } from "../contracts/evidence.types";
 import type { ProposedAgentAction } from "../envelope/action-envelope";
 import { buildActionEnvelope } from "../envelope/action-envelope";
 

@@ -3,7 +3,7 @@
  */
 
 import type { AgentRunStatus, SkillExecutionMode, SkillRiskLevel } from "../types";
-import type { AgentEvidence } from "../evidence/evidence.types";
+import type { AgentEvidence } from "../contracts/evidence.types";
 
 export interface ProposedAgentAction {
   actionType: string;
