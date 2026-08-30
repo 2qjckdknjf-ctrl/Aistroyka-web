@@ -72,4 +72,28 @@ describe("GET/POST /api/v1/worker/issues", () => {
     expect(createWorkerReportedIssue).toHaveBeenCalled();
     expect(storeLiteIdempotency).toHaveBeenCalled();
   });
+
+  it("binds a finalized evidence session when the worker attaches a photo", async () => {
+    const res = await POST(
+      new Request("https://test/api/v1/worker/issues", {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-idempotency-key": "k-photo" },
+        body: JSON.stringify({
+          project_id: "proj-1",
+          title: "Unsecured fence",
+          evidence_upload_session_id: "  sess-issue-1  ",
+        }),
+      })
+    );
+    expect(res.status).toBe(201);
+    expect(createWorkerReportedIssue).toHaveBeenCalledWith(
+      { client: "request-bound" },
+      tenantContext,
+      expect.objectContaining({
+        project_id: "proj-1",
+        title: "Unsecured fence",
+        evidence_upload_session_id: "sess-issue-1",
+      })
+    );
+  });
 });

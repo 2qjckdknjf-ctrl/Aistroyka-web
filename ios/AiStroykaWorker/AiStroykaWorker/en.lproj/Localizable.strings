@@ -243,6 +243,7 @@
 "wrk_v43_issue_detail" = "What happened";
 "wrk_v43_issue_attach_photo" = "Add a photo";
 "wrk_v43_issue_create_photo_queued" = "Issue photo queued for upload.";
+"wrk_v43_issue_photo_encode_failed" = "Could not save the issue photo. Try taking it again.";
 "wrk_v43_open_fmt" = "Open %d";
 "wrk_v43_mine" = "Mine";
 "wrk_v43_closed" = "Closed";

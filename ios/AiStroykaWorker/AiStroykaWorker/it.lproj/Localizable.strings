@@ -243,6 +243,7 @@
 "wrk_v43_issue_detail" = "What happened";
 "wrk_v43_issue_attach_photo" = "Aggiungi una foto";
 "wrk_v43_issue_create_photo_queued" = "Foto del problema in coda per l'invio.";
+"wrk_v43_issue_photo_encode_failed" = "Impossibile salvare la foto del problema. Riprova a scattarla.";
 "wrk_v43_open_fmt" = "Open %d";
 "wrk_v43_mine" = "Mine";
 "wrk_v43_closed" = "Closed";

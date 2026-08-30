@@ -39,4 +39,28 @@ describe("issue.repository", () => {
     expect(inserted.title).toBe("Defect in wall");
     expect(inserted.status).toBe("open");
   });
+
+  it("create stores evidence_upload_session_id with the new issue", async () => {
+    const inserted: Record<string, unknown> = {};
+    const supabase = {
+      from: () => ({
+        insert: (row: Record<string, unknown>) => {
+          Object.assign(inserted, row);
+          return {
+            select: () => ({
+              single: () => Promise.resolve({ data: { id: "issue-2", ...row }, error: null }),
+            }),
+          };
+        },
+      }),
+    } as unknown as Parameters<typeof repo.create>[0];
+    const result = await repo.create(supabase, "tenant-1", "user-1", {
+      project_id: "proj-1",
+      title: "Unsecured fence",
+      evidence_upload_session_id: "  sess-issue-1  ",
+    });
+    expect(result).not.toBeNull();
+    expect(inserted.evidence_upload_session_id).toBe("sess-issue-1");
+    expect(result?.evidence_upload_session_id).toBe("sess-issue-1");
+  });
 });

@@ -45,24 +45,33 @@ enum WorkerV43API {
         title: String,
         description: String?,
         taskId: String?,
-        idempotencyKey: String
+        idempotencyKey: String,
+        evidenceUploadSessionId: String? = nil
     ) async throws -> WorkerIssueDTO {
         struct Body: Encodable {
             let projectId: String
             let title: String
             let description: String?
             let taskId: String?
+            let evidenceUploadSessionId: String?
             enum CodingKeys: String, CodingKey {
                 case projectId = "project_id"
                 case title
                 case description
                 case taskId = "task_id"
+                case evidenceUploadSessionId = "evidence_upload_session_id"
             }
         }
         let env: Envelope<WorkerIssueDTO> = try await APIClient.shared.request(
             path: "worker/issues",
             method: "POST",
-            body: Body(projectId: projectId, title: title, description: description, taskId: taskId),
+            body: Body(
+                projectId: projectId,
+                title: title,
+                description: description,
+                taskId: taskId,
+                evidenceUploadSessionId: evidenceUploadSessionId
+            ),
             idempotencyKey: idempotencyKey,
             keyDecoding: .useDefaultKeys
         )
