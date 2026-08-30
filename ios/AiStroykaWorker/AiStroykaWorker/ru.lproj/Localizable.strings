@@ -243,6 +243,7 @@
 "wrk_v43_issue_detail" = "Что произошло";
 "wrk_v43_issue_attach_photo" = "Добавить фото";
 "wrk_v43_issue_create_photo_queued" = "Фото проблемы поставлено в очередь на отправку.";
+"wrk_v43_issue_photo_encode_failed" = "Не удалось сохранить фото проблемы. Сделайте снимок ещё раз.";
 "wrk_v43_open_fmt" = "Открытые %d";
 "wrk_v43_mine" = "Мои";
 "wrk_v43_closed" = "Закрытые";

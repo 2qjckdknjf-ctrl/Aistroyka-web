@@ -109,6 +109,41 @@ describe("issue.service", () => {
     expect(data?.id).toBe("i2");
   });
 
+  it("createWorkerReportedIssue persists evidence session on insert", async () => {
+    const policy = await import("@/lib/tenant/tenant.policy");
+    vi.mocked(policy.canManageProjects).mockReturnValue(false);
+    vi.mocked(policy.canReadProjects).mockReturnValue(true);
+    const repo = await import("./issue.repository");
+    vi.mocked(repo.create).mockResolvedValue({
+      id: "i2b",
+      project_id: "proj-1",
+      tenant_id: "t1",
+      title: "Fence",
+      description: null,
+      status: "open",
+      task_id: null,
+      milestone_id: null,
+      created_by: "u1",
+      resolved_at: null,
+      resolved_by: null,
+      created_at: "",
+      updated_at: "",
+      evidence_upload_session_id: "sess-issue-1",
+    });
+    const { data, error } = await createWorkerReportedIssue(noopSupabase, ctx, {
+      project_id: "proj-1",
+      title: "Fence",
+      evidence_upload_session_id: "sess-issue-1",
+    });
+    expect(error).toBe("");
+    expect(data?.evidence_upload_session_id).toBe("sess-issue-1");
+    expect(repo.create).toHaveBeenCalledWith(noopSupabase, "t1", "u1", {
+      project_id: "proj-1",
+      title: "Fence",
+      evidence_upload_session_id: "sess-issue-1",
+    });
+  });
+
   it("updateIssue notifies the reporter when a manager changes status", async () => {
     const policy = await import("@/lib/tenant/tenant.policy");
     const notifications = await import("@/lib/domain/notifications/manager-notifications.repository");

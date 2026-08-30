@@ -61,6 +61,7 @@ export async function create(
       task_id: input.task_id ?? null,
       milestone_id: input.milestone_id ?? null,
       created_by: userId,
+      evidence_upload_session_id: input.evidence_upload_session_id?.trim() || null,
     })
     .select(ISSUE_SELECT)
     .single();

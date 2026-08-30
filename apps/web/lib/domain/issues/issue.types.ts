@@ -25,6 +25,7 @@ export interface CreateIssueInput {
   description?: string | null;
   task_id?: string | null;
   milestone_id?: string | null;
+  evidence_upload_session_id?: string | null;
 }
 
 export interface UpdateIssueInput {

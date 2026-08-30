@@ -184,6 +184,11 @@ struct IssuesListView: View {
                     }
                     .accessibilityIdentifier("pilot_worker_issue_create_photo")
                 }
+                if let errorMessage {
+                    Text(errorMessage)
+                        .font(.caption)
+                        .foregroundStyle(WorkerV43.danger)
+                }
             }
             .scrollContentBackground(.hidden)
             .background(WorkerV43.bg)
@@ -249,13 +254,8 @@ struct IssuesListView: View {
     }
 
     private func createDescription() -> String? {
-        var parts: [String] = []
         let typed = createDetail.trimmingCharacters(in: .whitespacesAndNewlines)
-        if !typed.isEmpty { parts.append(typed) }
-        if createImage != nil {
-            parts.append(NSLocalizedString("wrk_v43_issue_create_photo_queued", comment: ""))
-        }
-        return parts.isEmpty ? nil : parts.joined(separator: "\n")
+        return typed.isEmpty ? nil : typed
     }
 
     private func resetCreate() {
@@ -263,14 +263,13 @@ struct IssuesListView: View {
         createTitle = ""
         createDetail = ""
         createImage = nil
+        errorMessage = nil
     }
 
     private func create() {
         let title = createTitle.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !title.isEmpty else { return }
-        if let createImage {
-            WorkerPhotoEvidence.persistPending(image: createImage, purpose: WorkerPhotoKind.issue.rawValue, taskId: linkedTaskId)
-        }
+        let photo = createImage
         let description = createDescription()
         if WorkerV43Preview.isEnabled {
             issues.insert(
@@ -282,7 +281,8 @@ struct IssuesListView: View {
                     status: "open",
                     taskId: linkedTaskId,
                     createdAt: nil,
-                    updatedAt: nil
+                    updatedAt: nil,
+                    evidenceUploadSessionId: photo == nil ? nil : "preview-issue-photo"
                 ),
                 at: 0
             )
@@ -290,14 +290,23 @@ struct IssuesListView: View {
             return
         }
         creating = true
+        errorMessage = nil
         Task {
             do {
+                var sessionId: String?
+                if let photo {
+                    guard let jpeg = photo.jpegData(compressionQuality: 0.85) else {
+                        throw APIError(statusCode: nil, code: nil, message: NSLocalizedString("wrk_v43_issue_photo_encode_failed", comment: ""))
+                    }
+                    sessionId = try await WorkerAPI.uploadEvidence(purpose: WorkerPhotoKind.issue.rawValue, jpeg: jpeg)
+                }
                 _ = try await WorkerV43API.createIssue(
                     projectId: project.id,
                     title: title,
                     description: description,
                     taskId: linkedTaskId,
-                    idempotencyKey: DeviceContext.newIdempotencyKey()
+                    idempotencyKey: DeviceContext.newIdempotencyKey(),
+                    evidenceUploadSessionId: sessionId
                 )
                 await MainActor.run {
                     creating = false
