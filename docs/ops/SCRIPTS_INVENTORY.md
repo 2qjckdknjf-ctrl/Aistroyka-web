@@ -50,6 +50,30 @@
 | `kill-hanging-dev.sh` | Kill stuck dev processes | Yes | No | No | Local only |
 | `verify-prod-*.sh`, `prod-verify.sh` | Production verification probes | Yes | Conditional | some | No |
 
+## Pilot / Day-0 additions (2026-08)
+
+Read-only probes. Do not treat HTTP 200 on forgot-password as mailbox-delivery proof.
+
+| Path | Purpose | Local | Cloud | Secrets | Destructive |
+|---|---|---|---|---|---|
+| `scripts/pilot/verify_forgot_password_route.sh` | `POST /api/v1/auth/forgot-password` live-or-404 (`400`/`200`/`429`/`503` = route live) | Yes | Yes | No | No |
+| `scripts/pilot/run_day0_staging_rehearsal.sh` | Staging Day-0 rehearsal (includes forgot-password probe) | Yes | Conditional | env / intake file | No |
+
+Password recovery runbook: `docs/auth/PASSWORD_RECOVERY.md`.
+
+## Auth provider operator scripts (2026-08)
+
+These PATCH live Supabase Auth on project `vthfrxehrursfloevnlp`. Operator-only. Never invent Apple/Google/SMS credentials.
+
+| Path | Purpose | Local | Cloud | Secrets | Destructive |
+|---|---|---|---|---|---|
+| `apps/web/scripts/set-supabase-auth-urls.mjs` | **Merge** Site URL + Redirect URLs (keeps iOS schemes) | Operator | **No** | `SUPABASE_ACCESS_TOKEN` | **Yes (Auth URLs)** |
+| `apps/web/scripts/enable-auth-apple.mjs` | Enable Apple provider from an existing `.p8` | Operator | **No** | token + `.p8` | **Yes (Auth)** |
+| `apps/web/scripts/enable-auth-google.mjs` | Enable Google provider from existing OAuth client | Operator | **No** | token + client id/secret | **Yes (Auth)** |
+| `apps/web/scripts/enable-auth-phone-otp.mjs` | Phone OTP `--status` / `--disable` / `--enable` (enable refuses without SMS creds) | Operator | `--status` only | token | `--enable`/`--disable` **Yes** |
+
+Website acquisition: `docs/growth/WEBSITE_ACQUISITION.md`. Auth inventory: `docs/auth/MULTI_PROVIDER_AUTH_INVENTORY.md`.
+
 ## Duplicate-suffixed scripts (cleanup candidates — not modified)
 
 - `scripts/release-readiness-check (1).mjs`
