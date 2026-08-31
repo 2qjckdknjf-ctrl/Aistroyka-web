@@ -193,7 +193,9 @@ final class WorkerV43UITests: XCTestCase {
         XCTAssertTrue(app.buttons["pilot_worker_sign_in"].exists)
         XCTAssertTrue(app.buttons["pilot_worker_scan_qr"].exists)
         XCTAssertTrue(app.buttons["pilot_worker_google_sign_in"].exists)
-        XCTAssertTrue(app.textFields["pilot_worker_phone"].exists)
+        XCTAssertTrue(app.buttons["pilot_worker_apple_sign_in"].exists)
+        XCTAssertFalse(app.textFields["pilot_worker_phone"].exists)
+        XCTAssertFalse(app.buttons["pilot_worker_phone_submit"].exists)
     }
 
     func testInviteTokenParsingRejectsProjectIds() {

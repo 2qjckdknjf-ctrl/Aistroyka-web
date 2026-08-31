@@ -91,4 +91,16 @@ public enum Config {
     public static var oauthRedirectURL: String {
         "\(oauthCallbackScheme)://auth-callback"
     }
+
+    /// Optional Worker SMS OTP. Default off until a real SMS provider is configured.
+    /// Enable with `AISTROYKA_PHONE_OTP=1` (env or Info.plist). Not a launch or CI gate.
+    public static var phoneOtpEnabled: Bool {
+        func isOn(_ raw: String?) -> Bool {
+            guard let value = raw?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased(),
+                  !value.isEmpty else { return false }
+            return value == "1" || value == "true" || value == "yes"
+        }
+        if isOn(ProcessInfo.processInfo.environment["AISTROYKA_PHONE_OTP"]) { return true }
+        return isOn(stringInfo("AISTROYKA_PHONE_OTP"))
+    }
 }
