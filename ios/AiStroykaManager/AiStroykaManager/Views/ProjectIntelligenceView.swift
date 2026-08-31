@@ -77,8 +77,8 @@ struct ProjectIntelligenceView: View {
                     intelligence: d
                 )) {
                     Label(NSLocalizedString("mgr_open_copilot", comment: ""), systemImage: "bubble.left.and.bubble.right")
+                        .accessibilityIdentifier("pilot_manager_open_copilot")
                 }
-                .accessibilityIdentifier("pilot_manager_open_copilot")
             }
         }
         .aistroykaListChrome(

@@ -147,16 +147,18 @@ struct ProjectDetailView: View {
                     projectName: p.name ?? NSLocalizedString("mgr_project", comment: "")
                 )) {
                     labelRow("chart.bar.doc.horizontal", NSLocalizedString("mgr_intelligence_link", comment: ""))
+                        .accessibilityIdentifier("pilot_manager_project_intelligence_link")
                 }
-                .accessibilityIdentifier("pilot_manager_project_intelligence_link")
+                .buttonStyle(.plain)
                 NavigationLink(destination: ProjectCopilotChatView(
                     projectId: projectId,
                     projectName: p.name ?? NSLocalizedString("mgr_project", comment: ""),
                     intelligence: intelligence
                 )) {
                     labelRow("bubble.left.and.bubble.right", NSLocalizedString("mgr_copilot_link", comment: ""))
+                        .accessibilityIdentifier("pilot_manager_project_copilot_link")
                 }
-                .accessibilityIdentifier("pilot_manager_project_copilot_link")
+                .buttonStyle(.plain)
             }
             .padding(ManagerV43.screenX)
             .padding(.bottom, 24)
