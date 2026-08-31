@@ -124,12 +124,13 @@ export async function unlinkIdentityRow(
   provider: IdentityProvider
 ): Promise<boolean> {
   const db = supabase as DbLike;
-  const { error } = await db
+  const { data, error } = await db
     .from("user_identities")
     .delete()
     .eq("user_id", userId)
-    .eq("provider", provider);
-  return !error;
+    .eq("provider", provider)
+    .select("id");
+  return !error && Array.isArray(data) && data.length > 0;
 }
 
 export async function unlinkSupabaseAuthProvider(
