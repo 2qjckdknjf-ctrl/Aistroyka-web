@@ -91,7 +91,7 @@
 "worker_feedback_report_fmt" = "Report …%@";
 "worker_report_resubmit_title" = "Aggiorna report";
 "worker_manager_note_title" = "Messaggio del manager";
-"worker_resubmit_hint" = "Invia di nuovo dopo aver gestito il feedback. Per nuove foto crea un nuovo report dalla home; questa schermata reinvia solo con prove già caricate.";
+"worker_resubmit_hint" = "Scatta una foto di correzione se il responsabile l’ha chiesta, poi invia di nuovo. Le foto già allegate restano come prova.";
 "worker_evidence_section_title" = "Le tue foto in questa segnalazione";
 "worker_evidence_load_failed_fmt" = "Impossibile caricare la foto %d.";
 "worker_evidence_no_preview_fmt" = "Foto %d — anteprima non disponibile (id: %@).";
@@ -251,7 +251,8 @@
 "wrk_v43_closed" = "Closed";
 "wrk_v43_assigned_you" = "Assigned to you";
 "wrk_v43_issue_view_only" = "Solo lettura. Solo chi ha segnalato può inviare la risoluzione.";
-"wrk_v43_take_result_photo" = "Take a result photo";
+"wrk_v43_take_result_photo" = "Scatta la foto del risultato";
+"wrk_v43_resubmit_photo" = "Scatta la foto di correzione";
 "wrk_v43_issue_comment" = "Comment";
 "wrk_v43_send_review" = "Send for review";
 "wrk_v43_cannot_fix" = "Cannot fix";

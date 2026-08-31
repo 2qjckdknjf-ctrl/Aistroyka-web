@@ -91,7 +91,7 @@
 "worker_feedback_report_fmt" = "Отчёт …%@";
 "worker_report_resubmit_title" = "Доработка отчёта";
 "worker_manager_note_title" = "Сообщение менеджера";
-"worker_resubmit_hint" = "Отправьте снова, когда учтёте замечания. Новые фото — только через новый отчёт с главного экрана; здесь повторная отправка с уже прикреплёнными файлами.";
+"worker_resubmit_hint" = "Снимите исправленное фото, если руководитель его просил, и отправьте снова. Уже прикреплённые файлы остаются доказательством.";
 "worker_evidence_section_title" = "Ваши фото в этом отчёте";
 "worker_evidence_load_failed_fmt" = "Не удалось загрузить фото %d.";
 "worker_evidence_no_preview_fmt" = "Фото %d — предпросмотр недоступен (id: %@).";
@@ -252,6 +252,7 @@
 "wrk_v43_assigned_you" = "Назначено вам";
 "wrk_v43_issue_view_only" = "Можно только смотреть. Отправить решение может автор проблемы.";
 "wrk_v43_take_result_photo" = "Снять фото результата";
+"wrk_v43_resubmit_photo" = "Снять фото исправления";
 "wrk_v43_issue_comment" = "Комментарий";
 "wrk_v43_send_review" = "Отправить на проверку";
 "wrk_v43_cannot_fix" = "Не могу устранить";

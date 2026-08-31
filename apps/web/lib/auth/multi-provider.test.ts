@@ -1,5 +1,10 @@
-import { describe, expect, it } from "vitest";
-import { summarizeAuthMethods, type IdentityRow } from "./multi-provider";
+import { describe, expect, it, vi } from "vitest";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  summarizeAuthMethods,
+  unlinkSupabaseAuthProvider,
+  type IdentityRow,
+} from "./multi-provider";
 
 function identity(provider: IdentityRow["provider"]): IdentityRow {
   return {
@@ -38,5 +43,37 @@ describe("summarizeAuthMethods", () => {
     expect(summary.email).toBe(false);
     expect(summary.google).toBe(true);
     expect(summary.linkedCount).toBe(1);
+  });
+});
+
+describe("unlinkSupabaseAuthProvider", () => {
+  it("unlinks the matching Auth identity", async () => {
+    const identity = {
+      id: "gid",
+      user_id: "user-1",
+      identity_id: "gid",
+      provider: "google",
+    };
+    const unlinkIdentity = vi.fn().mockResolvedValue({ error: null });
+    const supabase = {
+      auth: {
+        getUser: vi.fn().mockResolvedValue({ data: { user: { identities: [identity] } }, error: null }),
+        unlinkIdentity,
+      },
+    } as unknown as SupabaseClient;
+    await expect(unlinkSupabaseAuthProvider(supabase, "google")).resolves.toBe(true);
+    expect(unlinkIdentity).toHaveBeenCalledWith(identity);
+  });
+
+  it("succeeds when Auth has no matching identity", async () => {
+    const unlinkIdentity = vi.fn();
+    const supabase = {
+      auth: {
+        getUser: vi.fn().mockResolvedValue({ data: { user: { identities: [] } }, error: null }),
+        unlinkIdentity,
+      },
+    } as unknown as SupabaseClient;
+    await expect(unlinkSupabaseAuthProvider(supabase, "apple")).resolves.toBe(true);
+    expect(unlinkIdentity).not.toHaveBeenCalled();
   });
 });

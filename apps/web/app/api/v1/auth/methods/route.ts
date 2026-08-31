@@ -5,6 +5,7 @@ import {
   getUserIdentities,
   summarizeAuthMethods,
   unlinkIdentityRow,
+  unlinkSupabaseAuthProvider,
   type IdentityProvider,
 } from "@/lib/auth/multi-provider";
 
@@ -59,10 +60,8 @@ export async function POST(request: Request) {
   switch (provider) {
     case "apple":
     case "google": {
-      const unlinkResult = await (supabase.auth as { unlinkIdentity?: (args: { provider: string }) => Promise<{ error?: unknown } | undefined> }).unlinkIdentity?.({
-        provider,
-      });
-      if (unlinkResult?.error) {
+      const unlinked = await unlinkSupabaseAuthProvider(supabase, provider);
+      if (!unlinked) {
         return NextResponse.json({ error: "unlink_failed" }, { status: 400 });
       }
       break;

@@ -129,6 +129,17 @@ export async function unlinkIdentityRow(
   return !error;
 }
 
+export async function unlinkSupabaseAuthProvider(
+  supabase: SupabaseClient,
+  provider: Exclude<IdentityProvider, "telegram">
+): Promise<boolean> {
+  const { data } = await supabase.auth.getUser();
+  const identity = data.user?.identities?.find((item) => item.provider === provider);
+  if (!identity) return true;
+  const { error } = await supabase.auth.unlinkIdentity(identity);
+  return !error;
+}
+
 export async function ensureOnboardingProfileExists(
   supabase: SupabaseClient,
   userId: string,

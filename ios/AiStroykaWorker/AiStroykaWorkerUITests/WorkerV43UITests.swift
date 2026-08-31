@@ -175,6 +175,7 @@ final class WorkerV43UITests: XCTestCase {
         XCTAssertTrue(app.descendants(matching: .any)["pilot_worker_feedback_resubmit"].waitForExistence(timeout: 8))
         XCTAssertFalse(app.staticTexts["Authentication required"].exists)
         XCTAssertTrue(app.buttons["pilot_worker_submit_again"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["pilot_worker_resubmit_camera"].waitForExistence(timeout: 5))
 
         app.terminate()
         app.launchEnvironment["AISTROYKA_WORKER_V43_SCREEN"] = "issue"
