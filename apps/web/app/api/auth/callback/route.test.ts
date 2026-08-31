@@ -78,4 +78,28 @@ describe("GET /api/auth/callback", () => {
     expect(response.status).toBe(307);
     expect(response.headers.get("location")).toContain("/en/dashboard?onboarding=1");
   });
+
+  it("links a Google identity after OAuth exchange", async () => {
+    getUser.mockResolvedValue({
+      data: {
+        user: {
+          id: "user-1",
+          email: "user@example.com",
+          app_metadata: { provider: "google" },
+          user_metadata: { sub: "google-sub-1", name: "Alex Builder", picture: "https://example.com/a.png" },
+        },
+      },
+    });
+    const request = new Request("https://aistroyka.ai/api/auth/callback?code=test-code");
+    const response = await GET(request as never);
+    expect(response.status).toBe(307);
+    expect(linkIdentityRow).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        user_id: "user-1",
+        provider: "google",
+        provider_user_id: "google-sub-1",
+      })
+    );
+  });
 });

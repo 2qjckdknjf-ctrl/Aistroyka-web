@@ -34,6 +34,7 @@ final class WorkerV43UITests: XCTestCase {
         XCTAssertTrue(app.buttons["pilot_worker_more_issues"].exists)
         XCTAssertTrue(app.buttons["pilot_worker_more_documents"].exists)
         XCTAssertTrue(app.buttons["pilot_worker_more_reports"].exists)
+        XCTAssertTrue(app.buttons["pilot_worker_more_scan_qr"].exists)
     }
 
     func testPreviewCatalog_tapsCameraQuickActionsAndMore() {
@@ -190,6 +191,7 @@ final class WorkerV43UITests: XCTestCase {
         XCTAssertTrue(app.textFields["pilot_worker_email"].waitForExistence(timeout: 20))
         XCTAssertTrue(app.buttons["pilot_worker_sign_in"].exists)
         XCTAssertTrue(app.buttons["pilot_worker_scan_qr"].exists)
+        XCTAssertTrue(app.buttons["pilot_worker_google_sign_in"].exists)
         XCTAssertTrue(app.textFields["pilot_worker_phone"].exists)
     }
 

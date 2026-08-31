@@ -116,6 +116,8 @@
 "task_chat_unread" = "Chat sin leer";
 
 "worker_apple_sign_in_failed" = "Apple sign-in failed. Try again.";
+"wrk_v43_continue_google" = "Continuar con Google";
+"wrk_v43_google_sign_in_failed" = "El inicio con Google falló. Inténtelo de nuevo.";
 "wrk_v43_hours_short" = "h";
 "wrk_v43_minutes_short" = "min";
 "wrk_v43_sync_never" = "Never synced";
@@ -137,6 +139,7 @@
 "wrk_v43_qr_invalid" = "This code is not a valid site invite.";
 "wrk_v43_qr_hint" = "Scan the site QR from your manager";
 "wrk_v43_qr_saved" = "Invite saved. Sign in to join the site.";
+"wrk_v43_qr_joined" = "Te uniste a la obra. Elige el proyecto si es necesario.";
 "wrk_v43_low_storage" = "Poco espacio en el dispositivo. Libere memoria o la foto podría no guardarse.";
 "wrk_v43_camera_denied" = "Camera access denied";
 "wrk_v43_camera_denied_detail" = "Enable camera in Settings to capture proof photos.";

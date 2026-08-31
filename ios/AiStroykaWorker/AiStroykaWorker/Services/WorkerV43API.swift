@@ -130,6 +130,36 @@ enum WorkerV43API {
         )
     }
 
+    /// Join immediately, then refresh the project list. On failure the token is kept for retry.
+    static func joinFromInviteToken(_ token: String) async throws {
+        do {
+            try await joinSite(token: token, idempotencyKey: DeviceContext.newIdempotencyKey())
+            var settings = WorkerSettingsStore.load()
+            settings.pendingInviteToken = nil
+            WorkerSettingsStore.save(settings)
+            await MainActor.run {
+                NotificationCenter.default.post(name: .workerProjectsChanged, object: nil)
+            }
+        } catch {
+            var settings = WorkerSettingsStore.load()
+            settings.pendingInviteToken = token
+            WorkerSettingsStore.save(settings)
+            throw error
+        }
+    }
+
+    static func applyPendingInviteIfNeeded() async {
+        let settings = WorkerSettingsStore.load()
+        guard let token = settings.pendingInviteToken?.trimmingCharacters(in: .whitespacesAndNewlines), !token.isEmpty else {
+            return
+        }
+        do {
+            try await joinFromInviteToken(token)
+        } catch {
+            // Keep the token for a later retry once the session can call site-join.
+        }
+    }
+
     private static func enc(_ value: String) -> String {
         value.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? value
     }

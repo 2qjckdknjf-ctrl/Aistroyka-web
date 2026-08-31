@@ -5,7 +5,6 @@
 
 import SwiftUI
 import AuthenticationServices
-import CryptoKit
 import Shared
 
 struct ManagerLoginView: View {
@@ -183,15 +182,34 @@ struct ManagerLoginView: View {
                     }
 
                     SignInWithAppleButton(.signIn) { request in
-                        appleNonce = Self.randomNonce()
+                        appleNonce = AuthNonce.random()
                         request.requestedScopes = [.fullName, .email]
-                        request.nonce = Self.sha256(appleNonce)
+                        request.nonce = AuthNonce.sha256Hex(appleNonce)
                     } onCompletion: { result in
                         handleAppleSignIn(result)
                     }
                     .signInWithAppleButtonStyle(.whiteOutline)
                     .frame(height: ManagerV43.touch)
                     .disabled(isLoading)
+                    .accessibilityIdentifier("pilot_manager_apple_sign_in")
+
+                    Button(action: startGoogleSignIn) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "g.circle")
+                            Text(NSLocalizedString("mgr_v43_continue_google", comment: ""))
+                                .font(.system(size: 16, weight: .semibold))
+                        }
+                        .foregroundStyle(ManagerV43.textPrimary)
+                        .frame(maxWidth: .infinity)
+                        .frame(minHeight: ManagerV43.touch)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .stroke(ManagerV43.border, lineWidth: 1.5)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(isLoading)
+                    .accessibilityIdentifier("pilot_manager_google_sign_in")
 
                     HStack(spacing: 6) {
                         Image(systemName: "lock.shield")
@@ -315,26 +333,21 @@ struct ManagerLoginView: View {
         }
     }
 
-    private static func randomNonce(length: Int = 32) -> String {
-        let charset: [Character] = Array("0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._")
-        var result = ""
-        var remaining = length
-        while remaining > 0 {
-            let randoms: [UInt8] = (0 ..< 16).map { _ in UInt8.random(in: 0 ... 255) }
-            randoms.forEach { random in
-                if remaining == 0 { return }
-                if random < charset.count {
-                    result.append(charset[Int(random)])
-                    remaining -= 1
-                }
+    private func startGoogleSignIn() {
+        errorMessage = nil
+        isLoading = true
+        Task { @MainActor in
+            defer { isLoading = false }
+            do {
+                try await AuthOAuthSession.shared.signIn(provider: .google)
+                sessionState.checkSession()
+            } catch AuthOAuthError.canceled {
+                return
+            } catch let apiError as APIError {
+                errorMessage = apiError.message
+            } catch {
+                errorMessage = NSLocalizedString("mgr_err_google_sign_in", comment: "")
             }
         }
-        return result
-    }
-
-    private static func sha256(_ input: String) -> String {
-        let inputData = Data(input.utf8)
-        let hashedData = SHA256.hash(data: inputData)
-        return hashedData.map { String(format: "%02x", $0) }.joined()
     }
 }

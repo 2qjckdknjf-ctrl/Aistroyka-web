@@ -8,6 +8,9 @@ import Shared
 
 struct DocumentsDrawingsView: View {
     let project: ProjectDTO
+    var initialTab: WorkerDocumentTab = .myTasks
+    var focusDocumentId: String? = nil
+    @ObservedObject private var store = AppStateStoreManager.shared
     @State private var documents: [WorkerDocumentDTO] = []
     @State private var loading = true
     @State private var errorMessage: String?
@@ -31,7 +34,9 @@ struct DocumentsDrawingsView: View {
             .navigationTitle(NSLocalizedString("wrk_v43_documents", comment: ""))
             .refreshable { load() }
             .onAppear {
+                tab = initialTab
                 documents = WorkerV43API.cachedDocuments(projectId: project.id)
+                openFocusedDocumentIfNeeded()
                 load()
             }
             .accessibilityIdentifier("pilot_worker_documents")
@@ -56,7 +61,11 @@ struct DocumentsDrawingsView: View {
         documents.filter { doc in
             if !query.isEmpty, !doc.title.localizedCaseInsensitiveContains(query) { return false }
             switch tab {
-            case .myTasks: return true
+            case .myTasks:
+                if let draft = store.state.draftTaskId, !draft.isEmpty {
+                    return doc.taskId == draft
+                }
+                return !(doc.taskId ?? "").isEmpty
             case .drawings: return doc.type.contains("draw") || doc.title.localizedCaseInsensitiveContains("кж")
             case .instructions: return doc.type.contains("instruct") || doc.title.localizedCaseInsensitiveContains("инстр")
             case .acts: return doc.type == "act"
@@ -145,11 +154,17 @@ struct DocumentsDrawingsView: View {
         }
     }
 
+    private func openFocusedDocumentIfNeeded() {
+        guard let focusDocumentId, !focusDocumentId.isEmpty, opened == nil else { return }
+        opened = documents.first(where: { $0.id == focusDocumentId })
+    }
+
     private func load() {
         errorMessage = nil
         if WorkerV43Preview.isEnabled {
             documents = WorkerV43PreviewCatalog.documents(projectId: project.id)
             loading = false
+            openFocusedDocumentIfNeeded()
             return
         }
         loading = documents.isEmpty
@@ -159,6 +174,7 @@ struct DocumentsDrawingsView: View {
                 await MainActor.run {
                     documents = list
                     loading = false
+                    openFocusedDocumentIfNeeded()
                 }
             } catch {
                 await MainActor.run {

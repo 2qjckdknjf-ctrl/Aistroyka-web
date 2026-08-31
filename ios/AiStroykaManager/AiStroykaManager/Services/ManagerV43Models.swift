@@ -42,8 +42,14 @@ final class ManagerTabRouter: ObservableObject {
     @Published var inboxSheet: ManagerInboxSheet?
     @Published var pendingRiskId: String?
     @Published var pendingProjectId: String?
+    @Published var pendingTaskId: String?
+    @Published var pendingReportId: String?
+    @Published var pendingDocumentsProjectId: String?
+    @Published var pendingIssueProjectId: String?
+    @Published var pendingIssueId: String?
     @Published var openCreateProject = false
     @Published var openCreateTask = false
+    @Published var pendingAssigneeUserId: String?
     @Published var tasksBadge = 0
     @Published var notificationsBadge = 0
 
@@ -67,7 +73,8 @@ final class ManagerTabRouter: ObservableObject {
         selectedTab = .projects
     }
 
-    func openNewTask() {
+    func openNewTask(assignedTo: String? = nil) {
+        pendingAssigneeUserId = assignedTo
         openCreateTask = true
         selectedTab = .tasks
     }
@@ -85,6 +92,30 @@ final class ManagerTabRouter: ObservableObject {
     func openProject(_ id: String) {
         pendingProjectId = id
         selectedTab = .projects
+    }
+
+    func routeNotification(type: String, id: String, projectId: String?) {
+        switch type.lowercased() {
+        case "task":
+            pendingTaskId = id
+            selectedTab = .tasks
+        case "report":
+            pendingReportId = id
+            selectedTab = .more
+        case "project":
+            openProject(id)
+        case "document":
+            pendingDocumentsProjectId = projectId ?? id
+            selectedTab = .more
+        case "issue":
+            if let projectId, !projectId.isEmpty {
+                pendingIssueProjectId = projectId
+                pendingIssueId = id
+            }
+            selectedTab = .more
+        default:
+            break
+        }
     }
 }
 
@@ -271,6 +302,13 @@ enum ManagerDemoCatalog {
         [
             WorkerRowDTO(userId: "demo-ivan", lastDayDate: "2026-08-25", lastStartedAt: ISO8601DateFormatter().string(from: Date()), lastEndedAt: nil, lastReportSubmittedAt: nil, anomalies: WorkerAnomalies(openShift: true, overtime: false, noActivity: false)),
             WorkerRowDTO(userId: "demo-maria", lastDayDate: "2026-08-25", lastStartedAt: nil, lastEndedAt: ISO8601DateFormatter().string(from: Date()), lastReportSubmittedAt: nil, anomalies: WorkerAnomalies(openShift: false, overtime: false, noActivity: false)),
+        ]
+    }
+
+    static var members: [TenantMemberDTO] {
+        [
+            TenantMemberDTO(userId: "demo-ivan", role: "member", createdAt: nil, isOwner: false, email: "ivan.demo@aistroyka.ai"),
+            TenantMemberDTO(userId: "demo-maria", role: "member", createdAt: nil, isOwner: false, email: "maria.demo@aistroyka.ai"),
         ]
     }
 

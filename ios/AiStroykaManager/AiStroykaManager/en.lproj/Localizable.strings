@@ -37,6 +37,8 @@
 "mgr_err_offline_signin" = "No internet connection. Sign in is unavailable offline.";
 "mgr_err_empty_credentials" = "Enter email and password.";
 "mgr_err_apple_sign_in" = "Apple Sign In failed. Try again or use email.";
+"mgr_err_google_sign_in" = "Google sign-in failed. Try again or use email.";
+"mgr_v43_continue_google" = "Continue with Google";
 "mgr_active_workers" = "Active workers";
 "mgr_ai_analyses" = "AI analyses";
 "mgr_ai_copilot_placeholder" = "AI Copilot — project AI and insights";
@@ -134,7 +136,7 @@
 "mgr_issues" = "Issues";
 "mgr_loading_issues" = "Loading issues…";
 "mgr_no_issues_title" = "No issues";
-"mgr_no_issues_subtitle" = "Worker-filed issues for this project will appear here.";
+"mgr_no_issues_subtitle" = "Worker-filed and manager-created issues for this project appear here.";
 "mgr_issue_evidence" = "Photo evidence";
 "mgr_issue_status" = "Status";
 "mgr_open_shift" = "Open shift";
@@ -283,6 +285,9 @@
 "mgr_v43_ai_check" = "AI checks task completeness";
 "mgr_v43_optional" = "Optional";
 "mgr_v43_create_task" = "Create task";
+"mgr_v43_create_issue" = "Create issue";
+"mgr_v43_issue_title_placeholder" = "What needs attention";
+"mgr_v43_task_from_remark" = "Create task from remark";
 "mgr_v43_loading_docs" = "Loading documents…";
 "mgr_v43_upload" = "Upload";
 "mgr_v43_doc_search" = "Name or document number";
@@ -398,6 +403,7 @@
 "mgr_v43_zoom" = "Zoom photo";
 "mgr_v43_media_index_fmt" = "%d / %d";
 "mgr_v43_copy_id" = "Copy identifier";
+"mgr_v43_contact" = "Contact";
 "mgr_v43_role_manager" = "Project manager";
 "mgr_v43_role_engineer" = "Chief engineer";
 "mgr_v43_auth_required" = "Sign in to load live workspace data.";

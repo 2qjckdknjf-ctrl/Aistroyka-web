@@ -82,4 +82,13 @@ public enum Config {
         let b = baseURL.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
         return URL(string: "\(b)/api/v1/")
     }
+
+    /// Custom URL scheme for Supabase OAuth return (`CFBundleURLTypes`).
+    public static var oauthCallbackScheme: String {
+        Bundle.main.bundleIdentifier ?? "ai.aistroyka.worker"
+    }
+
+    public static var oauthRedirectURL: String {
+        "\(oauthCallbackScheme)://auth-callback"
+    }
 }

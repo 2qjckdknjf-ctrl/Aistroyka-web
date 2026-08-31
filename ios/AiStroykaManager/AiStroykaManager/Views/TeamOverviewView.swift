@@ -208,6 +208,7 @@ struct TeamOverviewView: View {
                                     text: member.role ?? "member",
                                     kind: member.isOwner == true ? .success : .warning
                                 )
+                                WorkerContactButton(email: member.email, userId: member.userId)
                             }
                         }
                     }
@@ -228,13 +229,12 @@ struct TeamOverviewView: View {
                     .frame(minHeight: 160)
                 } else {
                     ForEach(filtered, id: \.userId) { worker in
-                        NavigationLink(destination: WorkerDetailView(worker: worker)) {
-                            WorkerCanonRow(
-                                worker: worker,
-                                role: members.first(where: { $0.userId == worker.userId })?.role
-                            )
-                        }
-                        .buttonStyle(.plain)
+                        let member = members.first(where: { $0.userId == worker.userId })
+                        WorkerCanonRow(
+                            worker: worker,
+                            role: member?.role,
+                            email: member?.email
+                        )
                     }
                 }
 
@@ -337,6 +337,7 @@ struct TeamOverviewView: View {
             previewFallback: {
                 workers = ManagerDemoCatalog.workers
                 projects = ManagerDemoCatalog.projects
+                members = ManagerDemoCatalog.members
                 lastSync = Date()
             }
         ) {
@@ -360,32 +361,32 @@ struct TeamOverviewView: View {
 struct WorkerCanonRow: View {
     let worker: WorkerRowDTO
     var role: String? = nil
+    var email: String? = nil
 
     var body: some View {
         ManagerV43Card {
             HStack(spacing: 12) {
-                Circle()
-                    .fill(ManagerV43.cardStrong)
-                    .frame(width: 40, height: 40)
-                    .overlay(Text(initials).font(.caption.weight(.bold)).foregroundStyle(ManagerV43.textPrimary))
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(ManagerV43Formatters.shortIdentifier(worker.userId))
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(ManagerV43.textPrimary)
-                    Text(role ?? NSLocalizedString("mgr_v43_field_worker", comment: ""))
-                        .font(.caption)
-                        .foregroundStyle(ManagerV43.textSecondary)
+                NavigationLink(destination: WorkerDetailView(worker: worker, email: email)) {
+                    HStack(spacing: 12) {
+                        Circle()
+                            .fill(ManagerV43.cardStrong)
+                            .frame(width: 40, height: 40)
+                            .overlay(Text(initials).font(.caption.weight(.bold)).foregroundStyle(ManagerV43.textPrimary))
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(ManagerV43Formatters.shortIdentifier(worker.userId))
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(ManagerV43.textPrimary)
+                            Text(role ?? NSLocalizedString("mgr_v43_field_worker", comment: ""))
+                                .font(.caption)
+                                .foregroundStyle(ManagerV43.textSecondary)
+                        }
+                        Spacer(minLength: 8)
+                        ManagerV43StatusPill(text: presenceLabel, kind: presenceKind)
+                    }
                 }
-                Spacer()
-                ManagerV43StatusPill(text: presenceLabel, kind: presenceKind)
-                Button {
-                    UIPasteboard.general.string = worker.userId
-                } label: {
-                    Image(systemName: "phone")
-                        .foregroundStyle(ManagerV43.dataBlue)
-                        .frame(width: ManagerV43.touch, height: ManagerV43.touch)
-                }
-                .accessibilityLabel(NSLocalizedString("mgr_v43_copy_id", comment: ""))
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("pilot_manager_worker_\(worker.userId)")
+                WorkerContactButton(email: email, userId: worker.userId)
             }
         }
     }
@@ -426,7 +427,9 @@ struct WorkerRowView: View {
 }
 
 struct WorkerDetailView: View {
+    @EnvironmentObject var router: ManagerTabRouter
     let worker: WorkerRowDTO
+    var email: String? = nil
     @State private var summary: WorkerSummaryDTO?
 
     var body: some View {
@@ -450,12 +453,51 @@ struct WorkerDetailView: View {
                 }
                 ManagerV43Card {
                     LabeledContent(NSLocalizedString("mgr_user_id", comment: ""), value: worker.userId)
+                    if let email, !email.isEmpty {
+                        LabeledContent(NSLocalizedString("mgr_v43_contact", comment: ""), value: email)
+                    }
                     if let day = worker.lastDayDate {
                         LabeledContent(NSLocalizedString("mgr_day", comment: ""), value: day)
                     }
                     if let s = worker.lastStartedAt { LabeledContent(NSLocalizedString("mgr_started", comment: ""), value: formatDate(s)) }
                     if let e = worker.lastEndedAt { LabeledContent(NSLocalizedString("mgr_ended", comment: ""), value: formatDate(e)) }
                     if let r = worker.lastReportSubmittedAt { LabeledContent(NSLocalizedString("mgr_last_report", comment: ""), value: formatDate(r)) }
+                }
+                ManagerV43PrimaryButton(
+                    title: NSLocalizedString("mgr_v43_contact", comment: ""),
+                    systemImage: "phone"
+                ) {
+                    ManagerTeamContact.open(email: email, fallback: worker.userId)
+                }
+                .accessibilityIdentifier("pilot_manager_worker_contact_detail")
+                ManagerV43PrimaryButton(
+                    title: NSLocalizedString("mgr_v43_assign", comment: ""),
+                    systemImage: "person.badge.plus",
+                    fill: ManagerV43.dataBlue,
+                    ink: .white
+                ) {
+                    router.openNewTask(assignedTo: worker.userId)
+                }
+                .accessibilityIdentifier("pilot_manager_worker_assign")
+                ManagerV43PrimaryButton(
+                    title: NSLocalizedString("mgr_v43_all_tasks", comment: ""),
+                    systemImage: "checklist"
+                ) {
+                    if (summary?.tasksOverdue ?? 0) > 0 {
+                        router.openOverdueTasks()
+                    } else {
+                        router.selectedTab = .tasks
+                    }
+                }
+                if (summary?.reportsPendingReview ?? 0) > 0 {
+                    ManagerV43PrimaryButton(
+                        title: NSLocalizedString("mgr_tab_reports", comment: ""),
+                        systemImage: "doc.text",
+                        fill: ManagerV43.dataBlue,
+                        ink: .white
+                    ) {
+                        router.openReportsReview()
+                    }
                 }
                 if let a = worker.anomalies {
                     ManagerV43Card {
@@ -484,6 +526,49 @@ struct WorkerDetailView: View {
             return d.formatted(date: .abbreviated, time: .shortened)
         }
         return s
+    }
+}
+
+private struct WorkerContactButton: View {
+    let email: String?
+    let userId: String
+
+    var body: some View {
+        Button {
+            ManagerTeamContact.open(email: email, fallback: userId)
+        } label: {
+            Image(systemName: "phone")
+                .foregroundStyle(ManagerV43.dataBlue)
+                .frame(width: ManagerV43.touch, height: ManagerV43.touch)
+        }
+        .buttonStyle(.borderless)
+        .accessibilityLabel(
+            NSLocalizedString(
+                (email?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false) ? "mgr_v43_contact" : "mgr_v43_copy_id",
+                comment: ""
+            )
+        )
+        .accessibilityIdentifier("pilot_manager_worker_contact")
+    }
+}
+
+enum ManagerTeamContact {
+    static func open(email: String?, fallback: String) {
+        let trimmed = email?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if ManagerUITestLaunchHooks.isEnabled {
+            UIPasteboard.general.string = trimmed.isEmpty ? fallback : trimmed
+            return
+        }
+        if !trimmed.isEmpty {
+            var allowed = CharacterSet.urlQueryAllowed
+            allowed.remove(charactersIn: "&?")
+            if let encoded = trimmed.addingPercentEncoding(withAllowedCharacters: allowed),
+               let url = URL(string: "mailto:\(encoded)") {
+                UIApplication.shared.open(url)
+                return
+            }
+        }
+        UIPasteboard.general.string = fallback
     }
 }
 

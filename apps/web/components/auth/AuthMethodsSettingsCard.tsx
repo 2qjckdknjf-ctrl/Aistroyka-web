@@ -11,6 +11,7 @@ type MethodsResponse = {
     email: boolean;
     apple: boolean;
     telegram: boolean;
+    google: boolean;
   };
   linkedCount: number;
 };
@@ -23,7 +24,7 @@ async function fetchMethods(): Promise<MethodsResponse> {
   return res.json();
 }
 
-async function unlinkProvider(provider: "apple" | "telegram"): Promise<MethodsResponse> {
+async function unlinkProvider(provider: "apple" | "telegram" | "google"): Promise<MethodsResponse> {
   const res = await fetch("/api/v1/auth/methods", {
     method: "POST",
     credentials: "include",
@@ -44,7 +45,7 @@ export function AuthMethodsSettingsCard({ skin = "default" }: { skin?: "default"
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<MethodsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [unlinking, setUnlinking] = useState<"apple" | "telegram" | null>(null);
+  const [unlinking, setUnlinking] = useState<"apple" | "telegram" | "google" | null>(null);
 
   useEffect(() => {
     void fetchMethods()
@@ -59,7 +60,7 @@ export function AuthMethodsSettingsCard({ skin = "default" }: { skin?: "default"
       });
   }, [t]);
 
-  async function handleUnlink(provider: "apple" | "telegram") {
+  async function handleUnlink(provider: "apple" | "telegram" | "google") {
     setError(null);
     setUnlinking(provider);
     try {
@@ -109,6 +110,24 @@ export function AuthMethodsSettingsCard({ skin = "default" }: { skin?: "default"
                   loading={unlinking === "apple"}
                   onClick={() => {
                     void handleUnlink("apple");
+                  }}
+                >
+                  {t("unlink")}
+                </Button>
+              ) : null}
+            </div>
+          </div>
+          <div className="flex items-center justify-between rounded-[var(--aistroyka-radius-md)] border border-aistroyka-border-subtle px-3 py-2">
+            <span>{t("methodGoogle")}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-aistroyka-text-secondary">{data.methods.google ? t("methodLinked") : t("methodNotLinked")}</span>
+              {data.methods.google ? (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  loading={unlinking === "google"}
+                  onClick={() => {
+                    void handleUnlink("google");
                   }}
                 >
                   {t("unlink")}

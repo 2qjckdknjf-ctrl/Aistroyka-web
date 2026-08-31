@@ -58,7 +58,12 @@ struct ManagerTabShell: View {
             NavigationStack {
                 switch sheet {
                 case .notifications:
-                    NotificationsView()
+                    NotificationsView(onOpenTarget: { type, id, projectId in
+                        presentedInbox = nil
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                            router.routeNotification(type: type, id: id, projectId: projectId)
+                        }
+                    })
                         .toolbar {
                             ToolbarItem(placement: .cancellationAction) {
                                 Button(NSLocalizedString("mgr_close", comment: "")) {

@@ -17,12 +17,14 @@ vi.mock("@/lib/auth/multi-provider", () => ({
   summarizeAuthMethods: (email: string | undefined, identities: Array<{ provider?: string }>) => {
     const hasApple = identities.some((identity) => identity.provider === "apple");
     const hasTelegram = identities.some((identity) => identity.provider === "telegram");
+    const hasGoogle = identities.some((identity) => identity.provider === "google");
     const hasEmail = Boolean(email);
     return {
       email: hasEmail,
       apple: hasApple,
       telegram: hasTelegram,
-      linkedCount: Number(hasEmail) + Number(hasApple) + Number(hasTelegram),
+      google: hasGoogle,
+      linkedCount: Number(hasEmail) + Number(hasApple) + Number(hasTelegram) + Number(hasGoogle),
     };
   },
 }));

@@ -5,7 +5,6 @@
 
 import SwiftUI
 import AuthenticationServices
-import CryptoKit
 import Shared
 
 struct LoginView: View {
@@ -143,15 +142,24 @@ struct LoginView: View {
             emailBlock
 
             SignInWithAppleButton(.signIn) { request in
-                appleNonce = Self.randomNonce()
+                appleNonce = AuthNonce.random()
                 request.requestedScopes = [.fullName, .email]
-                request.nonce = Self.sha256(appleNonce)
+                request.nonce = AuthNonce.sha256Hex(appleNonce)
             } onCompletion: { result in
                 handleAppleSignIn(result)
             }
             .signInWithAppleButtonStyle(.black)
             .frame(height: 48)
             .disabled(loading)
+            .accessibilityIdentifier("pilot_worker_apple_sign_in")
+
+            WorkerV43OutlineButton(
+                title: NSLocalizedString("wrk_v43_continue_google", comment: ""),
+                systemImage: "g.circle",
+                tint: WorkerV43.textPrimary,
+                enabled: !loading
+            ) { startGoogleSignIn() }
+            .accessibilityIdentifier("pilot_worker_google_sign_in")
 
             HStack(spacing: 8) {
                 Image(systemName: "checkmark.shield")
@@ -299,15 +307,7 @@ struct LoginView: View {
     }
 
     private func applyPendingInviteIfNeeded() async {
-        var settings = WorkerSettingsStore.load()
-        guard let token = settings.pendingInviteToken else { return }
-        do {
-            try await WorkerV43API.joinSite(token: token, idempotencyKey: DeviceContext.newIdempotencyKey())
-            settings.pendingInviteToken = nil
-            WorkerSettingsStore.save(settings)
-        } catch {
-            // Keep token for a later retry after the session is usable.
-        }
+        await WorkerV43API.applyPendingInviteIfNeeded()
     }
 
     private func handleAppleSignIn(_ result: Result<ASAuthorization, Error>) {
@@ -352,26 +352,28 @@ struct LoginView: View {
         }
     }
 
-    private static func randomNonce(length: Int = 32) -> String {
-        let charset: [Character] = Array("0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._")
-        var result = ""
-        var remaining = length
-        while remaining > 0 {
-            let randoms: [UInt8] = (0 ..< 16).map { _ in UInt8.random(in: 0 ... 255) }
-            randoms.forEach { random in
-                if remaining == 0 { return }
-                if random < charset.count {
-                    result.append(charset[Int(random)])
-                    remaining -= 1
+    private func startGoogleSignIn() {
+        errorMessage = nil
+        loading = true
+        Task {
+            do {
+                try await AuthOAuthSession.shared.signIn(provider: .google)
+                await applyPendingInviteIfNeeded()
+                await MainActor.run {
+                    focusedField = nil
+                    appState.checkSession()
+                    loading = false
+                }
+            } catch AuthOAuthError.canceled {
+                await MainActor.run { loading = false }
+            } catch {
+                await MainActor.run {
+                    errorMessage = (error as? APIError)?.message
+                        ?? (error as? AuthOAuthError).map { _ in NSLocalizedString("wrk_v43_google_sign_in_failed", comment: "") }
+                        ?? error.localizedDescription
+                    loading = false
                 }
             }
         }
-        return result
-    }
-
-    private static func sha256(_ input: String) -> String {
-        let inputData = Data(input.utf8)
-        let hashedData = SHA256.hash(data: inputData)
-        return hashedData.map { String(format: "%02x", $0) }.joined()
     }
 }

@@ -25,6 +25,10 @@ struct TodayHomeView: View {
     @State private var showReport = false
     @State private var resumeDraftReportId: String?
     @State private var assistantSummary: String?
+    @State private var showIssues = false
+    @State private var showDocuments = false
+    @State private var documentsTab: WorkerDocumentTab = .drawings
+    @State private var openedFeedbackReportId: String?
 
     private var shiftStarted: Bool {
         WorkerV43Preview.isEnabled || store.state.shift.isStarted
@@ -65,6 +69,7 @@ struct TodayHomeView: View {
                     todayTasks = cached
                 }
                 load()
+                consumeTodayDestination()
             }
             .onChange(of: scenePhase) { phase in
                 if phase == .active { load() }
@@ -80,6 +85,41 @@ struct TodayHomeView: View {
                     )
                 }
                 .accessibilityIdentifier("pilot_worker_report_compose_sheet")
+            }
+            .background(
+                ZStack {
+                    NavigationLink(
+                        destination: IssuesListView(
+                            project: project,
+                            linkedTaskId: router.pendingTaskId,
+                            focusIssueId: router.pendingIssueId
+                        ),
+                        isActive: $showIssues
+                    ) { EmptyView() }
+                    NavigationLink(
+                        destination: DocumentsDrawingsView(
+                            project: project,
+                            initialTab: documentsTab,
+                            focusDocumentId: router.pendingDocumentId
+                        ),
+                        isActive: $showDocuments
+                    ) { EmptyView() }
+                    NavigationLink(
+                        destination: Group {
+                            if let openedFeedbackReportId {
+                                ManagerFeedbackResubmitView(reportId: openedFeedbackReportId)
+                            }
+                        },
+                        isActive: Binding(
+                            get: { openedFeedbackReportId != nil },
+                            set: { if !$0 { openedFeedbackReportId = nil } }
+                        )
+                    ) { EmptyView() }
+                }
+                .hidden()
+            )
+            .onChange(of: router.todayDestination) { _ in
+                consumeTodayDestination()
             }
         }
         .accessibilityIdentifier("pilot_worker_home_scroll")
@@ -140,7 +180,7 @@ struct TodayHomeView: View {
                 .foregroundStyle(WorkerV43.textSecondary)
             }
             Spacer()
-            Button { router.openMessages() } label: {
+            Button { router.openMessages(segment: .notifications) } label: {
                 ZStack(alignment: .topTrailing) {
                     Image(systemName: "bell")
                         .foregroundStyle(WorkerV43.textPrimary)
@@ -461,6 +501,24 @@ struct TodayHomeView: View {
                         errorMessage = WorkerV43Copy.userFacing(error)
                     }
                 }
+            }
+        }
+    }
+
+    private func consumeTodayDestination() {
+        switch router.consumeTodayDestination() {
+        case .none:
+            break
+        case .issues:
+            showIssues = true
+        case .documents:
+            documentsTab = .drawings
+            showDocuments = true
+        case .reports:
+            if let id = router.consumePendingReportId() {
+                openedFeedbackReportId = id
+            } else {
+                showReport = true
             }
         }
     }

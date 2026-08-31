@@ -10,7 +10,7 @@ import {
 
 const UnlinkSchema = z.object({
   action: z.literal("unlink"),
-  provider: z.enum(["apple", "telegram"]),
+  provider: z.enum(["apple", "telegram", "google"]),
 });
 
 function toResponse(methods: ReturnType<typeof summarizeAuthMethods>) {
@@ -19,6 +19,7 @@ function toResponse(methods: ReturnType<typeof summarizeAuthMethods>) {
       email: methods.email,
       apple: methods.apple,
       telegram: methods.telegram,
+      google: methods.google,
     },
     linkedCount: methods.linkedCount,
   };
@@ -55,12 +56,22 @@ export async function POST(request: Request) {
   }
 
   const provider = parsed.data.provider as IdentityProvider;
-  if (provider === "apple") {
-    const unlinkResult = await (supabase.auth as any).unlinkIdentity({
-      provider: "apple",
-    });
-    if (unlinkResult?.error) {
-      return NextResponse.json({ error: "unlink_failed" }, { status: 400 });
+  switch (provider) {
+    case "apple":
+    case "google": {
+      const unlinkResult = await (supabase.auth as { unlinkIdentity?: (args: { provider: string }) => Promise<{ error?: unknown } | undefined> }).unlinkIdentity?.({
+        provider,
+      });
+      if (unlinkResult?.error) {
+        return NextResponse.json({ error: "unlink_failed" }, { status: 400 });
+      }
+      break;
+    }
+    case "telegram":
+      break;
+    default: {
+      const _exhaustive: never = provider;
+      return NextResponse.json({ error: `unhandled ${_exhaustive}` }, { status: 400 });
     }
   }
 

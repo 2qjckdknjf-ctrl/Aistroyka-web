@@ -44,6 +44,10 @@ struct WorkerTabShell: View {
         .onAppear {
             applyLaunchScreen()
             refreshUnreadInbox()
+            retryPendingInvite()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .aiStroykaWorkerPushPayload)) { notification in
+            handlePush(notification.userInfo)
         }
         .overlay(alignment: .topLeading) {
             Color.clear
@@ -53,12 +57,66 @@ struct WorkerTabShell: View {
         }
     }
 
+    private func retryPendingInvite() {
+        guard !WorkerV43Preview.isEnabled else { return }
+        Task { await WorkerV43API.applyPendingInviteIfNeeded() }
+    }
+
     private func refreshUnreadInbox() {
         guard !WorkerV43Preview.isEnabled else { return }
         Task {
             let count = (try? await WorkerAPI.unreadNotificationCount()) ?? 0
             await MainActor.run { WorkerInboxBadgeStore.shared.count = count }
         }
+    }
+
+    private func handlePush(_ userInfo: [AnyHashable: Any]?) {
+        refreshUnreadInbox()
+        let type = (userInfo?["type"] as? String)?.lowercased() ?? ""
+        let taskId = pushString(userInfo, "task_id")
+        let targetType = (pushString(userInfo, "target_type") ?? "").lowercased()
+        let targetId = pushString(userInfo, "target_id")
+        let reportId = pushString(userInfo, "report_id")
+        let issueId = pushString(userInfo, "issue_id")
+        let documentId = pushString(userInfo, "document_id")
+
+        if let taskId, !taskId.isEmpty {
+            router.openTask(taskId)
+            return
+        }
+        switch targetType {
+        case "task":
+            if let targetId, !targetId.isEmpty { router.openTask(targetId) }
+        case "issue":
+            router.pendingIssueId = targetId ?? issueId
+            router.openIssues()
+        case "report":
+            router.pendingReportId = targetId ?? reportId
+            router.openReports()
+        case "document":
+            router.pendingDocumentId = targetId ?? documentId
+            router.openDocuments()
+        default:
+            if let issueId, !issueId.isEmpty {
+                router.pendingIssueId = issueId
+                router.openIssues()
+            } else if let reportId, !reportId.isEmpty {
+                router.pendingReportId = reportId
+                router.openReports()
+            } else if let documentId, !documentId.isEmpty {
+                router.pendingDocumentId = documentId
+                router.openDocuments()
+            } else if ["task_assigned", "task_updated", "task_message"].contains(type) {
+                router.selectedTab = .tasks
+            } else if !type.isEmpty {
+                router.openMessages(segment: .notifications)
+            }
+        }
+    }
+
+    private func pushString(_ userInfo: [AnyHashable: Any]?, _ key: String) -> String? {
+        guard let value = userInfo?[key] as? String, !value.isEmpty else { return nil }
+        return value
     }
 
     private func applyLaunchScreen() {
@@ -205,8 +263,10 @@ struct CameraContextSheet: View {
                     accessibilityId: "pilot_worker_camera_context_report"
                 ) {
                     router.cameraContext = .report
-                    router.openReports()
                     dismiss()
+                    DispatchQueue.main.async {
+                        router.openReports()
+                    }
                 }
                 contextRow(
                     title: NSLocalizedString("wrk_v43_camera_context_issue", comment: ""),
@@ -215,8 +275,10 @@ struct CameraContextSheet: View {
                     accessibilityId: "pilot_worker_camera_context_issue"
                 ) {
                     router.cameraContext = .issue
-                    router.openIssues()
                     dismiss()
+                    DispatchQueue.main.async {
+                        router.openIssues()
+                    }
                 }
                 Spacer()
             }

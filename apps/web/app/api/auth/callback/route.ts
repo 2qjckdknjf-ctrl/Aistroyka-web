@@ -44,22 +44,26 @@ export async function GET(request: NextRequest) {
   }
 
   const provider = user.app_metadata?.provider;
-  if (provider === "apple") {
+  if (provider === "apple" || provider === "google") {
     await linkIdentityRow(supabase, {
       user_id: user.id,
-      provider: "apple",
+      provider,
       provider_user_id: String(user.user_metadata?.sub ?? user.id),
       email: user.email ?? null,
       full_name:
         typeof user.user_metadata?.full_name === "string"
           ? user.user_metadata.full_name
-          : null,
+          : typeof user.user_metadata?.name === "string"
+            ? user.user_metadata.name
+            : null,
       avatar_url:
         typeof user.user_metadata?.avatar_url === "string"
           ? user.user_metadata.avatar_url
-          : null,
+          : typeof user.user_metadata?.picture === "string"
+            ? user.user_metadata.picture
+            : null,
       metadata: {
-        provider: "apple",
+        provider,
       },
     });
   }

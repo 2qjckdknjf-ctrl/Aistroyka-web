@@ -28,6 +28,7 @@ final class ManagerV43UITests: XCTestCase {
         XCTAssertTrue(app.textFields["pilot_manager_email"].waitForExistence(timeout: 25))
         XCTAssertTrue(app.buttons["pilot_manager_sign_in"].exists)
         XCTAssertTrue(app.textFields["pilot_manager_password"].exists)
+        XCTAssertTrue(app.buttons["pilot_manager_google_sign_in"].waitForExistence(timeout: 5))
         saveShot("01-login")
     }
 
@@ -139,6 +140,20 @@ final class ManagerV43UITests: XCTestCase {
             app.descendants(matching: .any)["pilot_manager_team"].waitForExistence(timeout: 10),
             "More → Team must open the team overview"
         )
+        XCTAssertTrue(
+            app.buttons["pilot_manager_worker_contact"].waitForExistence(timeout: 8),
+            "Team contact action must be reachable"
+        )
+        let workerRow = app.descendants(matching: .any)["pilot_manager_worker_demo-ivan"].firstMatch
+        waitUntilHittable(workerRow, timeout: 6)
+        tapIfHittable(workerRow)
+        XCTAssertTrue(
+            app.buttons["pilot_manager_worker_assign"].waitForExistence(timeout: 8),
+            "Worker profile must expose assign"
+        )
+        if app.navigationBars.buttons.count > 0 {
+            app.navigationBars.buttons.firstMatch.tap()
+        }
         if app.navigationBars.buttons.count > 0 {
             app.navigationBars.buttons.firstMatch.tap()
         }
@@ -150,6 +165,30 @@ final class ManagerV43UITests: XCTestCase {
         XCTAssertTrue(
             app.descendants(matching: .any)["pilot_manager_notifications"].waitForExistence(timeout: 10),
             "More → Notifications must open the inbox"
+        )
+    }
+
+    func testPreviewCatalog_teamAssignOpensCreateTask() {
+        continueAfterFailure = false
+        let app = launchPreviewCatalog()
+        XCTAssertTrue(waitForCustomTabs(app), "Preview catalog should open the 5-tab shell")
+        tapTab(app, "pilot_manager_tab_more")
+        let team = app.descendants(matching: .any)["pilot_manager_more_team"].firstMatch
+        XCTAssertTrue(team.waitForExistence(timeout: 8), "More → Team must be reachable")
+        waitUntilHittable(team, timeout: 4)
+        if !team.isHittable { app.swipeUp() }
+        tapIfHittable(team)
+        let workerRow = app.descendants(matching: .any)["pilot_manager_worker_demo-ivan"].firstMatch
+        XCTAssertTrue(workerRow.waitForExistence(timeout: 8), "Preview team must list demo-ivan")
+        waitUntilHittable(workerRow, timeout: 4)
+        tapIfHittable(workerRow)
+        let assign = app.buttons["pilot_manager_worker_assign"]
+        XCTAssertTrue(assign.waitForExistence(timeout: 8), "Worker profile must expose assign")
+        waitUntilHittable(assign, timeout: 4)
+        tapIfHittable(assign)
+        XCTAssertTrue(
+            app.textFields["pilot_manager_create_task_title"].waitForExistence(timeout: 8),
+            "Assign must open create-task"
         )
     }
 

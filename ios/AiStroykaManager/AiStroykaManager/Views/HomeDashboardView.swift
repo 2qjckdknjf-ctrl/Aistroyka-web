@@ -27,6 +27,8 @@ struct HomeDashboardView: View {
     @State private var openedTaskId: String?
     @State private var openedProjectId: String?
     @State private var openedDocumentsProjectId: String?
+    @State private var openedIssueProjectId: String?
+    @State private var openedIssueId: String?
     @State private var showNotifications = false
     @State private var workloadItems: [WorkloadItemDTO] = []
     @AppStorage("mgr.v43.aiAssistantOn") private var aiAssistantOn = true
@@ -115,9 +117,19 @@ struct HomeDashboardView: View {
             )) {
                 DocumentsHubView(initialProjectId: openedDocumentsProjectId)
             }
+            .navigationDestination(isPresented: Binding(
+                get: { openedIssueId != nil && openedIssueProjectId != nil },
+                set: { if !$0 { openedIssueId = nil; openedIssueProjectId = nil } }
+            )) {
+                if let projectId = openedIssueProjectId {
+                    ProjectIssuesForProjectView(projectId: projectId, focusIssueId: openedIssueId)
+                }
+            }
             .fullScreenCover(isPresented: $showNotifications) {
                 NavigationStack {
-                    NotificationsView()
+                    NotificationsView(onOpenTarget: { type, id, projectId in
+                        openNotificationTarget(type: type, id: id, projectId: projectId)
+                    })
                         .toolbar {
                             ToolbarItem(placement: .cancellationAction) {
                                 Button(NSLocalizedString("mgr_close", comment: "")) {
@@ -341,7 +353,7 @@ struct HomeDashboardView: View {
                         tint: ManagerV43.danger,
                         title: String(format: NSLocalizedString("mgr_v43_high_risks_fmt", comment: ""), max(risks, ManagerV43Preview.showsCatalogWithoutAuth ? 3 : 0)),
                         subtitle: NSLocalizedString("mgr_v43_high_risks_sub", comment: "")
-                    ) { router.selectedTab = .ai }
+                    ) { openAttentionRisks() }
                     attentionCard(
                         icon: "clock.badge.exclamationmark",
                         tint: ManagerV43.yellow,
@@ -373,6 +385,14 @@ struct HomeDashboardView: View {
             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
         .buttonStyle(.plain)
+    }
+
+    private func openAttentionRisks() {
+        if let id = guideRiskSignals.first(where: { !$0.id.isEmpty })?.id {
+            router.openAIRisk(id)
+        } else {
+            router.selectedTab = .ai
+        }
     }
 
     private func openAttentionReports() {
@@ -461,12 +481,41 @@ struct HomeDashboardView: View {
             case "project":
                 openedProjectId = entityId
                 return
+            case "issue":
+                openedIssueProjectId = item.projectId
+                openedIssueId = entityId
+                return
+            case "document":
+                openedDocumentsProjectId = item.projectId ?? entityId
+                return
             default:
                 break
             }
         }
         if let projectId = item.projectId, !projectId.isEmpty {
             openedProjectId = projectId
+        }
+    }
+
+    private func openNotificationTarget(type: String, id: String, projectId: String?) {
+        showNotifications = false
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+            switch type.lowercased() {
+            case "task":
+                openedTaskId = id
+            case "report":
+                openedReportId = id
+            case "project":
+                openedProjectId = id
+            case "document":
+                openedDocumentsProjectId = projectId ?? id
+            case "issue":
+                guard let projectId, !projectId.isEmpty else { return }
+                openedIssueProjectId = projectId
+                openedIssueId = id
+            default:
+                break
+            }
         }
     }
 

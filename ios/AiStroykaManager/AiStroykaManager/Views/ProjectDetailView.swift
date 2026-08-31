@@ -132,6 +132,9 @@ struct ProjectDetailView: View {
                 NavigationLink(destination: ReportsInboxView(initialProjectId: projectId)) {
                     labelRow("doc.text", NSLocalizedString("mgr_tab_reports", comment: ""))
                 }
+                NavigationLink(destination: TeamOverviewView()) {
+                    labelRow("person.3", NSLocalizedString("mgr_tab_team", comment: ""))
+                }
                 NavigationLink(destination: ProjectIssuesForProjectView(projectId: projectId)) {
                     labelRow("exclamationmark.triangle", NSLocalizedString("mgr_issues", comment: ""))
                 }
@@ -184,6 +187,16 @@ struct ProjectDetailView: View {
             .buttonStyle(.plain)
         } else if entity == "task", !entityId.isEmpty {
             NavigationLink(destination: TaskDetailManagerView(taskId: entityId)) {
+                timelineRowContent(item)
+            }
+            .buttonStyle(.plain)
+        } else if entity == "issue", !entityId.isEmpty {
+            NavigationLink(destination: ProjectIssuesForProjectView(projectId: projectId, focusIssueId: entityId)) {
+                timelineRowContent(item)
+            }
+            .buttonStyle(.plain)
+        } else if entity == "document" {
+            NavigationLink(destination: DocumentsHubView(initialProjectId: projectId)) {
                 timelineRowContent(item)
             }
             .buttonStyle(.plain)
@@ -460,6 +473,7 @@ struct ProjectIssuesForProjectView: View {
     @State private var isLoading = true
     @State private var errorMessage: String?
     @State private var focusedIssue: ManagerIssueDTO?
+    @State private var showCreate = false
 
     var body: some View {
         Group {
@@ -470,7 +484,9 @@ struct ProjectIssuesForProjectView: View {
             } else if issues.isEmpty {
                 EmptyStateView(
                     title: NSLocalizedString("mgr_no_issues_title", comment: ""),
-                    subtitle: NSLocalizedString("mgr_no_issues_subtitle", comment: "")
+                    subtitle: NSLocalizedString("mgr_no_issues_subtitle", comment: ""),
+                    actionTitle: NSLocalizedString("mgr_v43_create_issue", comment: ""),
+                    action: { showCreate = true }
                 )
             } else {
                 List(issues) { issue in
@@ -499,6 +515,21 @@ struct ProjectIssuesForProjectView: View {
         }
         .aistroykaPageBackground(ManagerSemanticColors.pageBackground)
         .navigationTitle(NSLocalizedString("mgr_issues", comment: ""))
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button { showCreate = true } label: {
+                    Image(systemName: "plus")
+                }
+                .accessibilityLabel(NSLocalizedString("mgr_v43_create_issue", comment: ""))
+                .accessibilityIdentifier("pilot_manager_create_issue")
+            }
+        }
+        .sheet(isPresented: $showCreate) {
+            ManagerCreateIssueSheet(projectId: projectId) { created in
+                issues.insert(created, at: 0)
+                showCreate = false
+            }
+        }
         .refreshable { await loadAsync() }
         .onAppear { loadIfNeeded() }
         .background(
@@ -531,12 +562,104 @@ struct ProjectIssuesForProjectView: View {
     private func loadAsync() async {
         await runManagerLoad(
             setLoading: { isLoading = $0 },
-            setErrorMessage: { errorMessage = $0 }
+            setErrorMessage: { errorMessage = $0 },
+            previewFallback: { issues = [] }
         ) {
             issues = try await ManagerAPI.issues(projectId: projectId)
             if focusedIssue == nil, let focusIssueId {
                 focusedIssue = issues.first(where: { $0.id == focusIssueId })
             }
+        }
+    }
+}
+
+struct ManagerCreateIssueSheet: View {
+    let projectId: String
+    var onCreated: (ManagerIssueDTO) -> Void
+    @Environment(\.dismiss) private var dismiss
+    @State private var title = ""
+    @State private var description = ""
+    @State private var isSaving = false
+    @State private var errorMessage: String?
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 16) {
+                TextField(NSLocalizedString("mgr_v43_issue_title_placeholder", comment: ""), text: $title)
+                    .textInputAutocapitalization(.sentences)
+                    .padding(12)
+                    .frame(minHeight: ManagerV43.touch)
+                    .background(ManagerV43.card)
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .foregroundStyle(ManagerV43.textPrimary)
+                    .accessibilityIdentifier("pilot_manager_create_issue_title")
+                TextField(NSLocalizedString("mgr_v43_description_placeholder", comment: ""), text: $description, axis: .vertical)
+                    .lineLimit(3...6)
+                    .padding(12)
+                    .background(ManagerV43.card)
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .foregroundStyle(ManagerV43.textPrimary)
+                    .accessibilityIdentifier("pilot_manager_create_issue_description")
+                if let errorMessage {
+                    Text(errorMessage)
+                        .font(.caption)
+                        .foregroundStyle(ManagerV43.danger)
+                }
+                ManagerV43PrimaryButton(
+                    title: NSLocalizedString("mgr_v43_create_issue", comment: ""),
+                    enabled: !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !isSaving,
+                    loading: isSaving
+                ) {
+                    Task { await create() }
+                }
+                .accessibilityIdentifier("pilot_manager_create_issue_submit")
+                Spacer()
+            }
+            .padding(ManagerV43.screenX)
+            .background(ManagerV43.bg.ignoresSafeArea())
+            .navigationTitle(NSLocalizedString("mgr_v43_create_issue", comment: ""))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(NSLocalizedString("mgr_cancel", comment: "")) { dismiss() }
+                        .accessibilityIdentifier("pilot_manager_create_issue_cancel")
+                }
+            }
+        }
+    }
+
+    private func create() async {
+        let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        let note = description.trimmingCharacters(in: .whitespacesAndNewlines)
+        isSaving = true
+        defer { isSaving = false }
+        if ManagerV43Preview.isEnabled {
+            onCreated(
+                ManagerIssueDTO(
+                    id: "preview-issue-\(UUID().uuidString)",
+                    title: trimmed,
+                    description: note.isEmpty ? nil : note,
+                    status: "open",
+                    createdAt: ISO8601DateFormatter().string(from: Date()),
+                    evidenceUrl: nil,
+                    evidenceUploadSessionId: nil
+                )
+            )
+            return
+        }
+        do {
+            let created = try await ManagerAPI.createIssue(
+                projectId: projectId,
+                title: trimmed,
+                description: note.isEmpty ? nil : note,
+                idempotencyKey: UUID().uuidString
+            )
+            onCreated(created)
+        } catch let apiError as APIError {
+            errorMessage = apiError.userFacingMessage
+        } catch {
+            errorMessage = error.localizedDescription
         }
     }
 }

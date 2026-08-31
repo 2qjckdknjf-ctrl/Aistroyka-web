@@ -368,6 +368,7 @@ struct ReportCanonCard: View {
 struct ReportDetailReviewView: View {
     let reportId: String
     var projectName: String? = nil
+    @EnvironmentObject var router: ManagerTabRouter
     @State private var report: ReportDetailDTO?
     @State private var isLoading = true
     @State private var errorMessage: String?
@@ -589,6 +590,20 @@ struct ReportDetailReviewView: View {
                     .disabled(reviewActionLoading)
                     .accessibilityIdentifier("pilot_manager_review_reject")
                     .padding(.bottom, 8)
+            }
+
+            if ManagerV43Formatters.reportQueueBucket(from: r.status) == "returned" {
+                Button { router.openNewTask() } label: {
+                    Label(NSLocalizedString("mgr_v43_task_from_remark", comment: ""), systemImage: "plus.circle")
+                        .frame(maxWidth: .infinity)
+                        .frame(minHeight: ManagerV43.touch)
+                        .foregroundStyle(ManagerV43.yellowInk)
+                        .background(ManagerV43.yellow)
+                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                }
+                .accessibilityIdentifier("pilot_manager_review_create_task")
+                .padding(.horizontal, ManagerV43.screenX)
+                .padding(.bottom, 10)
             }
         }
         .onChange(of: managerNoteText) { _ in

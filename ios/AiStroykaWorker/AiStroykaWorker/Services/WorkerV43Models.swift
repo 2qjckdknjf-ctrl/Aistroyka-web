@@ -87,6 +87,7 @@ final class WorkerTabRouter: ObservableObject {
     @Published var pendingDocumentId: String?
     @Published var messagesSegment: WorkerMessagesSegment = .chats
     @Published var moreDestination: WorkerMoreDestination = .none
+    @Published var todayDestination: WorkerMoreDestination = .none
     @Published var previewSurface: WorkerV43PreviewSurface? = WorkerTabRouter.initialSurface()
 
     private static func initialSurface() -> WorkerV43PreviewSurface? {
@@ -117,30 +118,49 @@ final class WorkerTabRouter: ObservableObject {
         selectedTab = .tasks
     }
 
-    func openMessages() {
+    func openMessages(segment: WorkerMessagesSegment = .chats) {
+        messagesSegment = segment
         selectedTab = .messages
     }
 
     func openIssues(taskId: String? = nil) {
         if let taskId { pendingTaskId = taskId }
-        moreDestination = .issues
-        selectedTab = .more
+        routeFieldDestination(.issues)
     }
 
     func openDocuments() {
-        moreDestination = .documents
-        selectedTab = .more
+        routeFieldDestination(.documents)
     }
 
     func openReports() {
-        moreDestination = .reports
-        selectedTab = .more
+        routeFieldDestination(.reports)
     }
 
     func consumeMoreDestination() -> WorkerMoreDestination {
         let value = moreDestination
         moreDestination = .none
         return value
+    }
+
+    func consumeTodayDestination() -> WorkerMoreDestination {
+        let value = todayDestination
+        todayDestination = .none
+        return value
+    }
+
+    func consumePendingReportId() -> String? {
+        guard let id = pendingReportId, !id.isEmpty else { return nil }
+        pendingReportId = nil
+        return id
+    }
+
+    private func routeFieldDestination(_ destination: WorkerMoreDestination) {
+        if selectedTab == .today {
+            todayDestination = destination
+            return
+        }
+        moreDestination = destination
+        selectedTab = .more
     }
 }
 
@@ -302,6 +322,7 @@ struct WorkerIssueDTO: Identifiable, Hashable, Codable {
     var status: String
     var taskId: String?
     var createdBy: String? = nil
+    var assignedTo: String? = nil
     var createdAt: String?
     var updatedAt: String?
     var evidenceUploadSessionId: String? = nil
@@ -315,6 +336,7 @@ struct WorkerIssueDTO: Identifiable, Hashable, Codable {
         case status
         case taskId = "task_id"
         case createdBy = "created_by"
+        case assignedTo = "assigned_to"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
         case evidenceUploadSessionId = "evidence_upload_session_id"
@@ -324,15 +346,18 @@ struct WorkerIssueDTO: Identifiable, Hashable, Codable {
     func workerMayMutate(currentUserId: String?) -> Bool {
         if status == "resolved" || status == "closed" { return false }
         if WorkerV43Preview.isEnabled { return true }
-        guard let currentUserId, !currentUserId.isEmpty, let createdBy, !createdBy.isEmpty else {
-            return false
-        }
-        return createdBy == currentUserId
+        guard let currentUserId, !currentUserId.isEmpty else { return false }
+        if createdBy == currentUserId { return true }
+        if assignedTo == currentUserId { return true }
+        return false
     }
 
     func isMine(currentUserId: String?) -> Bool {
         if WorkerV43Preview.isEnabled { return taskId != nil }
-        return workerMayMutate(currentUserId: currentUserId)
+        guard let currentUserId, !currentUserId.isEmpty else { return false }
+        if createdBy == currentUserId { return true }
+        if assignedTo == currentUserId { return true }
+        return false
     }
 }
 
@@ -509,6 +534,7 @@ struct WorkerTaskProgress: Codable, Equatable {
 
 extension Notification.Name {
     static let workerV43SubmitReport = Notification.Name("ai.aistroyka.worker.v43.submitReport")
+    static let workerProjectsChanged = Notification.Name("ai.aistroyka.worker.v43.projectsChanged")
 }
 
 enum WorkerReportOpIds {

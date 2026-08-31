@@ -502,6 +502,30 @@ enum ManagerAPI {
         return data
     }
 
+    /// POST /api/v1/projects/:id/issues — create issue. Body: title, description?
+    static func createIssue(
+        projectId: String,
+        title: String,
+        description: String?,
+        idempotencyKey: String
+    ) async throws -> ManagerIssueDTO {
+        struct Body: Encodable {
+            let title: String
+            let description: String?
+        }
+        struct Envelope: Decodable { let data: ManagerIssueDTO? }
+        let r: Envelope = try await APIClient.shared.request(
+            path: "projects/\(projectId)/issues",
+            method: "POST",
+            body: Body(title: title, description: description),
+            idempotencyKey: idempotencyKey
+        )
+        guard let data = r.data else {
+            throw APIError(statusCode: nil, code: nil, message: "No issue data")
+        }
+        return data
+    }
+
     static func projectSummary(projectId: String) async throws -> ProjectSummaryDTO {
         // Backend returns camelCase counts; default client decoder uses convertFromSnakeCase.
         let r: ProjectSummaryResponse = try await APIClient.shared.request(
@@ -998,6 +1022,14 @@ struct TenantMemberDTO: Decodable, Identifiable {
     let isOwner: Bool?
     let email: String?
     var id: String { userId }
+
+    init(userId: String, role: String? = nil, createdAt: String? = nil, isOwner: Bool? = nil, email: String? = nil) {
+        self.userId = userId
+        self.role = role
+        self.createdAt = createdAt
+        self.isOwner = isOwner
+        self.email = email
+    }
 }
 
 struct TenantMembersResponse: Decodable {

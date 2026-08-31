@@ -37,6 +37,8 @@
 "mgr_err_offline_signin" = "Sin conexión. El inicio de sesión no está disponible sin red.";
 "mgr_err_empty_credentials" = "Introduce correo y contraseña.";
 "mgr_err_apple_sign_in" = "El inicio con Apple falló. Inténtelo de nuevo o use el correo.";
+"mgr_err_google_sign_in" = "El inicio con Google falló. Inténtelo de nuevo o use el correo.";
+"mgr_v43_continue_google" = "Continuar con Google";
 "mgr_active_workers" = "Operarios activos";
 "mgr_ai_analyses" = "Análisis de IA";
 "mgr_ai_copilot_placeholder" = "Copiloto IA — IA del proyecto e insights";
@@ -134,7 +136,7 @@
 "mgr_issues" = "Incidencias";
 "mgr_loading_issues" = "Cargando incidencias…";
 "mgr_no_issues_title" = "Sin incidencias";
-"mgr_no_issues_subtitle" = "Las incidencias del trabajador aparecerán aquí.";
+"mgr_no_issues_subtitle" = "Las incidencias del trabajador y las que crees aparecerán aquí.";
 "mgr_issue_evidence" = "Evidencia fotográfica";
 "mgr_issue_status" = "Estado";
 "mgr_open_shift" = "Turno abierto";
@@ -282,6 +284,9 @@
 "mgr_v43_ai_check" = "La IA comprueba que la tarea esté completa";
 "mgr_v43_optional" = "Opcional";
 "mgr_v43_create_task" = "Crear tarea";
+"mgr_v43_create_issue" = "Crear incidencia";
+"mgr_v43_issue_title_placeholder" = "Qué hay que corregir";
+"mgr_v43_task_from_remark" = "Crear tarea a partir del comentario";
 "mgr_v43_loading_docs" = "Cargando documentos…";
 "mgr_v43_upload" = "Subir";
 "mgr_v43_doc_search" = "Nombre o número de documento";
@@ -397,6 +402,7 @@
 "mgr_v43_zoom" = "Ampliar foto";
 "mgr_v43_media_index_fmt" = "%d / %d";
 "mgr_v43_copy_id" = "Copiar identificador";
+"mgr_v43_contact" = "Contactar";
 "mgr_v43_role_manager" = "Jefe de proyecto";
 "mgr_v43_role_engineer" = "Ingeniero jefe";
 "mgr_v43_auth_required" = "Inicie sesión para cargar los datos reales del espacio de trabajo.";
