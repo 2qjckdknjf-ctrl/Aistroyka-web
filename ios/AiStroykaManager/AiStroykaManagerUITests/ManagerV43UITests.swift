@@ -41,6 +41,82 @@ final class ManagerV43UITests: XCTestCase {
         XCTAssertTrue(app.buttons["pilot_manager_tab_more"].exists)
     }
 
+    func testPreviewCatalog_homeButtonsOpenTasksAndAI() {
+        continueAfterFailure = false
+        let app = launchPreviewCatalog()
+        XCTAssertTrue(waitForCustomTabs(app), "Preview catalog should open the 5-tab shell")
+        let allTasks = app.descendants(matching: .any)["pilot_manager_home_all_tasks"].firstMatch
+        XCTAssertTrue(allTasks.waitForExistence(timeout: 12), "Home All tasks must be reachable")
+        waitUntilHittable(allTasks, timeout: 8)
+        if !allTasks.isHittable {
+            for _ in 0..<6 {
+                app.swipeUp()
+                waitUntilHittable(allTasks, timeout: 1)
+                if allTasks.isHittable { break }
+            }
+        }
+        XCTAssertTrue(allTasks.isHittable, "Home All tasks must be hittable")
+        allTasks.tap()
+        XCTAssertTrue(
+            app.descendants(matching: .any)["pilot_manager_tasks_ready"].waitForExistence(timeout: 10),
+            "Home All tasks must open the tasks tab"
+        )
+
+        tapTab(app, "pilot_manager_tab_home")
+        XCTAssertTrue(app.buttons["pilot_manager_tab_home"].waitForExistence(timeout: 8))
+        let openAI = app.descendants(matching: .any)["pilot_manager_home_open_ai"].firstMatch
+        var foundAI = openAI.waitForExistence(timeout: 4)
+        if !foundAI {
+            for _ in 0..<8 {
+                app.swipeUp()
+                if openAI.waitForExistence(timeout: 1) {
+                    foundAI = true
+                    break
+                }
+            }
+        }
+        XCTAssertTrue(foundAI, "Home AI CTA must be reachable")
+        waitUntilHittable(openAI, timeout: 6)
+        if openAI.isHittable {
+            openAI.tap()
+        } else {
+            openAI.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        }
+        XCTAssertTrue(
+            app.descendants(matching: .any)["pilot_manager_ai_center"].waitForExistence(timeout: 10),
+            "Home AI CTA must open the AI tab"
+        )
+
+        tapTab(app, "pilot_manager_tab_home")
+        for _ in 0..<4 { app.swipeDown() }
+        let bell = app.descendants(matching: .any)["pilot_manager_home_notifications"].firstMatch
+        XCTAssertTrue(bell.waitForExistence(timeout: 8), "Home bell must be reachable")
+        waitUntilHittable(bell, timeout: 6)
+        if bell.isHittable {
+            bell.tap()
+        } else {
+            bell.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        }
+        XCTAssertTrue(
+            app.descendants(matching: .any)["pilot_manager_notifications"].waitForExistence(timeout: 10),
+            "Home bell must open the notifications inbox"
+        )
+        dismissPresentedInbox(app)
+
+        let profile = app.descendants(matching: .any)["pilot_manager_home_profile"].firstMatch
+        XCTAssertTrue(profile.waitForExistence(timeout: 6), "Home profile avatar must be reachable")
+        waitUntilHittable(profile, timeout: 4)
+        if profile.isHittable {
+            profile.tap()
+        } else {
+            profile.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        }
+        XCTAssertTrue(
+            app.descendants(matching: .any)["pilot_manager_more_root"].waitForExistence(timeout: 10),
+            "Home profile must open the More tab"
+        )
+    }
+
     func testPreviewCatalog_moreReportsTeamAndNotifications() {
         let app = launchPreviewCatalog()
         XCTAssertTrue(waitForCustomTabs(app))
@@ -53,6 +129,28 @@ final class ManagerV43UITests: XCTestCase {
         if app.navigationBars.buttons.count > 0 {
             app.navigationBars.buttons.firstMatch.tap()
         }
+
+        let team = app.descendants(matching: .any)["pilot_manager_more_team"].firstMatch
+        XCTAssertTrue(team.waitForExistence(timeout: 8), "More → Team must be reachable")
+        waitUntilHittable(team, timeout: 4)
+        if !team.isHittable { app.swipeUp() }
+        tapIfHittable(team)
+        XCTAssertTrue(
+            app.descendants(matching: .any)["pilot_manager_team"].waitForExistence(timeout: 10),
+            "More → Team must open the team overview"
+        )
+        if app.navigationBars.buttons.count > 0 {
+            app.navigationBars.buttons.firstMatch.tap()
+        }
+
+        let notes = app.descendants(matching: .any)["pilot_manager_more_notifications"].firstMatch
+        XCTAssertTrue(notes.waitForExistence(timeout: 8), "More → Notifications must be reachable")
+        waitUntilHittable(notes, timeout: 4)
+        tapIfHittable(notes)
+        XCTAssertTrue(
+            app.descendants(matching: .any)["pilot_manager_notifications"].waitForExistence(timeout: 10),
+            "More → Notifications must open the inbox"
+        )
     }
 
     func testPreviewCatalog_captureCanonScreenshots() throws {
@@ -258,10 +356,31 @@ final class ManagerV43UITests: XCTestCase {
             || app.tabBars.firstMatch.waitForExistence(timeout: 2)
     }
 
+    private func dismissPresentedInbox(_ app: XCUIApplication) {
+        let close = app.buttons["pilot_manager_inbox_close"]
+        if close.waitForExistence(timeout: 3) {
+            if close.isHittable {
+                close.tap()
+            } else {
+                close.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+            }
+            return
+        }
+        if app.navigationBars.buttons.count > 0 {
+            app.navigationBars.buttons.firstMatch.tap()
+            return
+        }
+        app.swipeDown()
+    }
+
     private func tapTab(_ app: XCUIApplication, _ identifier: String) {
         let button = app.buttons[identifier]
         guard button.waitForExistence(timeout: 6) else { return }
-        button.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        if button.isHittable {
+            button.tap()
+        } else {
+            button.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        }
     }
 
     private func tapIfHittable(_ element: XCUIElement, timeout: TimeInterval = 4, then body: () -> Void = {}) {
@@ -281,7 +400,13 @@ final class ManagerV43UITests: XCTestCase {
     private func openMoreIdentifier(_ app: XCUIApplication, _ identifier: String) {
         tapTab(app, "pilot_manager_tab_more")
         _ = app.descendants(matching: .any)["pilot_manager_more_root"].waitForExistence(timeout: 6)
-        tapIfHittable(app.buttons[identifier])
+        let target = app.descendants(matching: .any)[identifier].firstMatch
+        waitUntilHittable(target, timeout: 4)
+        if !target.isHittable {
+            app.swipeUp()
+            waitUntilHittable(target, timeout: 3)
+        }
+        tapIfHittable(target)
     }
 
     private func saveShot(_ name: String, live: Bool = false) {

@@ -45,6 +45,13 @@ struct TeamOverviewView: View {
             }
         }
         .background(ManagerV43.bg.ignoresSafeArea())
+        .overlay(alignment: .topLeading) {
+            Text("team-overview")
+                .font(.system(size: 1))
+                .foregroundStyle(.clear)
+                .accessibilityIdentifier("pilot_manager_team")
+                .accessibilityLabel("team-overview")
+        }
         .navigationTitle(NSLocalizedString("mgr_tab_team", comment: ""))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

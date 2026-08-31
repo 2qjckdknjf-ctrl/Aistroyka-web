@@ -48,6 +48,11 @@ struct TasksListView: View {
                 }
             }
             .background(ManagerV43.bg.ignoresSafeArea())
+            .overlay(alignment: .topLeading) {
+                Color.clear
+                    .frame(width: 1, height: 1)
+                    .accessibilityIdentifier("pilot_manager_tasks_ready")
+            }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(.hidden, for: .navigationBar)
             .refreshable { await refreshAsync() }
@@ -67,12 +72,16 @@ struct TasksListView: View {
             .onChange(of: router.selectedTab) { tab in
                 if tab != .tasks { showCreate = false }
             }
+            .onChange(of: router.openCreateTask) { open in
+                if open { consumeOpenCreateTask() }
+            }
             .onAppear {
                 if let id = initialProjectId, selectedProjectId == nil { selectedProjectId = id }
                 if router.tasksFocusOverdue {
                     chip = .overdue
                     router.tasksFocusOverdue = false
                 }
+                consumeOpenCreateTask()
                 if tasks.isEmpty, let cached = ManagerCacheStore.load([TaskDTO].self, key: "mgr.v43.tasks") {
                     tasks = cached
                     lastSync = ManagerCacheStore.lastSync(key: "mgr.v43.tasks")
@@ -199,7 +208,6 @@ struct TasksListView: View {
             }
             .padding(.bottom, 88)
         }
-        .accessibilityIdentifier("pilot_manager_tasks_ready")
         .safeAreaInset(edge: .bottom) {
             createButton
         }
@@ -326,6 +334,12 @@ struct TasksListView: View {
             .padding(.horizontal, ManagerV43.screenX)
             .padding(.bottom, 8)
             .accessibilityIdentifier("pilot_manager_create_task")
+    }
+
+    private func consumeOpenCreateTask() {
+        guard router.openCreateTask else { return }
+        router.openCreateTask = false
+        showCreate = true
     }
 
     @MainActor

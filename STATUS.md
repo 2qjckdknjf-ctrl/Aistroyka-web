@@ -2,8 +2,8 @@
 
 > Live project status. Keep this short and mobile-readable.
 
-**Last updated:** 2026-08-29  
-**Updated by:** Worker issue create photo + task day/priority tails on `fix/worker-issue-create-photo`
+**Last updated:** 2026-08-31  
+**Updated by:** Visual-walk CTA wiring on `fix/mobile-visual-walk`
 
 ---
 
@@ -11,14 +11,14 @@
 
 | Field | Value |
 |---|---|
-| **Active slice** | Camera on new issue, real task priority, week-day filter, BEFORE-photo WIP gate |
-| **Branch / worktree** | `fix/worker-issue-create-photo` @ `/Users/alex/Projects/AISTROYKA-ios-worker-v4-3` |
-| **Runtime** | Camera overlay [#263](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/263) on `main`. Production health still `ed1b7e2` until deploy |
-| **Next** | Land this slice and [#264](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/264). Reviewer PAT still cannot approve |
+| **Active slice** | Mobile visual-walk: remaining Home/More/Worker CTAs wired + UITests |
+| **Branch / worktree** | `fix/mobile-visual-walk` @ `/Users/alex/Projects/AISTROYKA-ios-worker-v4-3` |
+| **Runtime** | Manager V43 UITests: 6 executed, 1 skipped (live), 0 failures. Worker V43 UITests: 11 executed, 0 failures. Android `connectedDebugAndroidTest` BUILD SUCCESSFUL on Pilot_ARM64_API34 |
+| **Next** | Draft PR for this slice. Owner-gated: SMS OTP, TestFlight, live E2E credentials |
 
 ## Notes
 
-Primary checkout `/Users/alex/Projects/AISTROYKA` was not modified.
+Home profile opens More. Invite opens Team sheet. Get-started create project/task opens the real sheets. Worker Today header is pinned so the bell stays tappable. Primary checkout was not modified.
 
 ---
 

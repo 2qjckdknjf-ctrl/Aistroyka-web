@@ -57,6 +57,13 @@ struct MessagesHubView: View {
                 .padding(WorkerV43.screenX)
             }
             .background(WorkerV43.bg.ignoresSafeArea())
+            .overlay(alignment: .topLeading) {
+                Text("messages-hub")
+                    .font(.system(size: 1))
+                    .foregroundStyle(.clear)
+                    .accessibilityIdentifier("pilot_worker_messages")
+                    .accessibilityLabel("messages-hub")
+            }
             .toolbar(.hidden, for: .navigationBar)
             .refreshable { load() }
             .onAppear { load() }

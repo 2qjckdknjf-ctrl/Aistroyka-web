@@ -187,7 +187,8 @@ struct CameraContextSheet: View {
                 contextRow(
                     title: NSLocalizedString("wrk_v43_camera_context_task", comment: ""),
                     image: "camera.viewfinder",
-                    tint: WorkerV43.dataBlue
+                    tint: WorkerV43.dataBlue,
+                    accessibilityId: "pilot_worker_camera_context_task"
                 ) {
                     router.cameraContext = .task
                     if cameraTask != nil {
@@ -200,7 +201,8 @@ struct CameraContextSheet: View {
                 contextRow(
                     title: NSLocalizedString("wrk_v43_camera_context_report", comment: ""),
                     image: "doc.viewfinder",
-                    tint: WorkerV43.cyan
+                    tint: WorkerV43.cyan,
+                    accessibilityId: "pilot_worker_camera_context_report"
                 ) {
                     router.cameraContext = .report
                     router.openReports()
@@ -209,7 +211,8 @@ struct CameraContextSheet: View {
                 contextRow(
                     title: NSLocalizedString("wrk_v43_camera_context_issue", comment: ""),
                     image: "exclamationmark.triangle",
-                    tint: WorkerV43.warning
+                    tint: WorkerV43.warning,
+                    accessibilityId: "pilot_worker_camera_context_issue"
                 ) {
                     router.cameraContext = .issue
                     router.openIssues()
@@ -219,10 +222,16 @@ struct CameraContextSheet: View {
             }
             .padding(WorkerV43.screenX)
             .background(WorkerV43.bg.ignoresSafeArea())
+            .overlay(alignment: .topLeading) {
+                Color.clear
+                    .frame(width: 1, height: 1)
+                    .accessibilityIdentifier("pilot_worker_camera_context")
+            }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button(NSLocalizedString("worker_cancel", comment: "")) { dismiss() }
                         .foregroundStyle(WorkerV43.yellow)
+                        .accessibilityIdentifier("pilot_worker_camera_context_cancel")
                 }
             }
             .background(
@@ -256,7 +265,7 @@ struct CameraContextSheet: View {
         }
     }
 
-    private func contextRow(title: String, image: String, tint: Color, action: @escaping () -> Void) -> some View {
+    private func contextRow(title: String, image: String, tint: Color, accessibilityId: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 12) {
                 Image(systemName: image)
@@ -277,5 +286,6 @@ struct CameraContextSheet: View {
         }
         .buttonStyle(.plain)
         .frame(minHeight: WorkerV43.fieldTouch)
+        .accessibilityIdentifier(accessibilityId)
     }
 }

@@ -31,6 +31,77 @@ final class WorkerV43UITests: XCTestCase {
         app.descendants(matching: .any)["pilot_worker_tab_more"].firstMatch.tap()
         XCTAssertTrue(app.descendants(matching: .any)["pilot_worker_end_shift"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.descendants(matching: .any)["pilot_worker_start_shift"].exists)
+        XCTAssertTrue(app.buttons["pilot_worker_more_issues"].exists)
+        XCTAssertTrue(app.buttons["pilot_worker_more_documents"].exists)
+        XCTAssertTrue(app.buttons["pilot_worker_more_reports"].exists)
+    }
+
+    func testPreviewCatalog_tapsCameraQuickActionsAndMore() {
+        let app = XCUIApplication()
+        app.launchEnvironment["AISTROYKA_WORKER_V43_PREVIEW"] = "1"
+        app.launch()
+        XCTAssertTrue(app.descendants(matching: .any)["pilot_worker_home_scroll"].waitForExistence(timeout: 20))
+
+        let bell = app.descendants(matching: .any)["pilot_worker_home_notifications"].firstMatch
+        XCTAssertTrue(bell.waitForExistence(timeout: 8), "Today bell must stay pinned and reachable")
+        if bell.isHittable {
+            bell.tap()
+        } else {
+            bell.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        }
+        XCTAssertTrue(
+            app.descendants(matching: .any)["pilot_worker_messages"].waitForExistence(timeout: 10)
+                || app.descendants(matching: .any)["pilot_worker_chat_preview-task-1"].waitForExistence(timeout: 4),
+            "Today bell must open Messages"
+        )
+        app.descendants(matching: .any)["pilot_worker_tab_today"].firstMatch.tap()
+
+        app.descendants(matching: .any)["pilot_worker_tab_camera"].firstMatch.tap()
+        XCTAssertTrue(app.descendants(matching: .any)["pilot_worker_camera_context"].waitForExistence(timeout: 8), "Camera tab must open the in-app context sheet")
+        XCTAssertTrue(app.buttons["pilot_worker_camera_context_task"].exists)
+        XCTAssertTrue(app.buttons["pilot_worker_camera_context_report"].exists)
+        XCTAssertTrue(app.buttons["pilot_worker_camera_context_issue"].exists)
+
+        app.buttons["pilot_worker_camera_context_task"].firstMatch.tap()
+        XCTAssertTrue(
+            app.descendants(matching: .any)["pilot_worker_camera_before"].waitForExistence(timeout: 10)
+                || app.descendants(matching: .any)["pilot_worker_photo_before_pick"].waitForExistence(timeout: 2),
+            "Camera → task must open BEFORE capture, not a dead sheet"
+        )
+        if app.navigationBars.buttons.count > 0 {
+            app.navigationBars.buttons.firstMatch.tap()
+        }
+        let cancel = app.buttons["pilot_worker_camera_context_cancel"]
+        if cancel.waitForExistence(timeout: 3) {
+            cancel.tap()
+        }
+
+        XCTAssertTrue(app.descendants(matching: .any)["pilot_worker_home_scroll"].waitForExistence(timeout: 8))
+        app.descendants(matching: .any)["pilot_worker_quick_issue"].firstMatch.tap()
+        XCTAssertTrue(app.descendants(matching: .any)["pilot_worker_issues_list"].waitForExistence(timeout: 10), "Quick issue must open the issues list")
+        if app.navigationBars.buttons.count > 0 {
+            app.navigationBars.buttons.firstMatch.tap()
+        }
+
+        app.descendants(matching: .any)["pilot_worker_tab_today"].firstMatch.tap()
+        XCTAssertTrue(app.descendants(matching: .any)["pilot_worker_quick_drawing"].waitForExistence(timeout: 8))
+        app.descendants(matching: .any)["pilot_worker_quick_drawing"].firstMatch.tap()
+        XCTAssertTrue(app.descendants(matching: .any)["pilot_worker_documents"].waitForExistence(timeout: 10), "Quick drawing must open the drawings hub")
+        if app.navigationBars.buttons.count > 0 {
+            app.navigationBars.buttons.firstMatch.tap()
+        }
+
+        app.descendants(matching: .any)["pilot_worker_tab_more"].firstMatch.tap()
+        XCTAssertTrue(app.buttons["pilot_worker_more_documents"].waitForExistence(timeout: 8))
+        app.buttons["pilot_worker_more_documents"].firstMatch.tap()
+        XCTAssertTrue(app.descendants(matching: .any)["pilot_worker_documents"].waitForExistence(timeout: 10), "More → documents must open the drawings hub")
+        if app.navigationBars.buttons.count > 0 {
+            app.navigationBars.buttons.firstMatch.tap()
+        }
+
+        XCTAssertTrue(app.buttons["pilot_worker_more_reports"].waitForExistence(timeout: 8))
+        app.buttons["pilot_worker_more_reports"].firstMatch.tap()
+        XCTAssertTrue(app.descendants(matching: .any)["pilot_worker_daily_report"].waitForExistence(timeout: 10), "More → reports must open the daily report form")
     }
 
     func testPreviewOpensTaskDetailAndWIP() {

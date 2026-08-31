@@ -221,6 +221,13 @@ struct AITabView: View {
         errorMessage = nil
         isLoading = true
         defer { isLoading = false }
+        if ManagerV43Preview.showsCatalogWithoutAuth {
+            projects = ManagerDemoCatalog.projects
+            lastSync = Date()
+            errorMessage = nil
+            openPendingRisk(router.pendingRiskId)
+            return
+        }
         do {
             jobs = try await ManagerAPI.aiRequests(limit: 100)
             projects = (try? await ManagerAPI.projects()) ?? []

@@ -19,6 +19,9 @@ appId: ai.aistroyka.worker
 - hideKeyboard
 - tapOn:
     id: pilot_worker_sign_in
+- tapOn:
+    id: pilot_worker_guide_start
+    optional: true
 - extendedWaitUntil:
     visible: "Projects"
     timeout: 90000

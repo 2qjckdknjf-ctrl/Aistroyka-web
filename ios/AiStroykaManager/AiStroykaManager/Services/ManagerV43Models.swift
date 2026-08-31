@@ -15,6 +15,14 @@ enum ManagerTab: Int, Hashable {
     case more = 4
 }
 
+enum ManagerInboxSheet: String, Identifiable {
+    case notifications
+    case reports
+    case team
+
+    var id: String { rawValue }
+}
+
 enum ManagerV43Preview {
     static var isEnabled: Bool {
         ProcessInfo.processInfo.environment["AISTROYKA_MANAGER_V43_PREVIEW"] == "1"
@@ -31,16 +39,37 @@ enum ManagerV43Preview {
 final class ManagerTabRouter: ObservableObject {
     @Published var selectedTab: ManagerTab = .home
     @Published var tasksFocusOverdue = false
-    @Published var reportsFocusReview = false
+    @Published var inboxSheet: ManagerInboxSheet?
     @Published var pendingRiskId: String?
     @Published var pendingProjectId: String?
-    @Published var openNotifications = false
+    @Published var openCreateProject = false
+    @Published var openCreateTask = false
     @Published var tasksBadge = 0
     @Published var notificationsBadge = 0
 
+    func openNotificationsInbox() {
+        inboxSheet = .notifications
+        NotificationCenter.default.post(name: .aiStroykaManagerOpenNotifications, object: nil)
+    }
+
     func openReportsReview() {
-        reportsFocusReview = true
-        selectedTab = .more
+        inboxSheet = .reports
+        NotificationCenter.default.post(name: .aiStroykaManagerOpenReports, object: nil)
+    }
+
+    func openTeam() {
+        inboxSheet = .team
+        NotificationCenter.default.post(name: .aiStroykaManagerOpenTeam, object: nil)
+    }
+
+    func openNewProject() {
+        openCreateProject = true
+        selectedTab = .projects
+    }
+
+    func openNewTask() {
+        openCreateTask = true
+        selectedTab = .tasks
     }
 
     func openOverdueTasks() {

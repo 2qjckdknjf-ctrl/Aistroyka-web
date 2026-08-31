@@ -39,18 +39,21 @@ struct ProfileOfflineSettingsView: View {
                             title: NSLocalizedString("wrk_v43_daily_reports", comment: ""),
                             systemImage: "doc.text",
                             badge: store.state.draftReportId == nil ? nil : NSLocalizedString("wrk_v43_draft", comment: ""),
-                            action: { showReports = true }
+                            action: { showReports = true },
+                            accessibilityId: "pilot_worker_more_reports"
                         )
                         WorkerV43Row(
                             title: NSLocalizedString("wrk_v43_issues", comment: ""),
                             systemImage: "exclamationmark.triangle",
                             iconTint: WorkerV43.warning,
-                            action: { showIssues = true }
+                            action: { showIssues = true },
+                            accessibilityId: "pilot_worker_more_issues"
                         )
                         WorkerV43Row(
                             title: NSLocalizedString("wrk_v43_documents", comment: ""),
                             systemImage: "folder",
-                            action: { showDocuments = true }
+                            action: { showDocuments = true },
+                            accessibilityId: "pilot_worker_more_documents"
                         )
                         WorkerV43Row(
                             title: NSLocalizedString("wrk_v43_briefings", comment: ""),

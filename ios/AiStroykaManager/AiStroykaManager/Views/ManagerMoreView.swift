@@ -137,18 +137,6 @@ struct ManagerMoreView: View {
                     ProjectIssuesForProjectView(projectId: projectId, focusIssueId: issueId)
                 }
             }
-            .onChange(of: router.openNotifications) { open in
-                if open {
-                    router.openNotifications = false
-                    path.append(.notifications)
-                }
-            }
-            .onChange(of: router.reportsFocusReview) { focus in
-                if focus {
-                    router.reportsFocusReview = false
-                    path.append(.reports)
-                }
-            }
             .task { await loadMeta() }
             .onReceive(NotificationCenter.default.publisher(for: ManagerLiveSync.reportsChanged)) { _ in
                 Task { await loadMeta() }

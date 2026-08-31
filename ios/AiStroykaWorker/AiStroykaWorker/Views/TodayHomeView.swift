@@ -86,37 +86,39 @@ struct TodayHomeView: View {
     }
 
     private var content: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                header
-                if !network.isConnected {
-                    WorkerV43OfflineBanner(queued: opStore.pendingCount(), retry: { load() })
-                }
-                projectCard
-                if let assistantSummary, WorkerSettingsStore.load().aiAssistant {
-                    WorkerV43Card(borderColor: WorkerV43.aiViolet.opacity(0.45), fill: WorkerV43.aiViolet.opacity(0.12)) {
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text(NSLocalizedString("wrk_v43_assistant", comment: ""))
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(WorkerV43.aiViolet)
-                            Text(assistantSummary)
-                                .font(.system(size: 14))
-                                .foregroundStyle(WorkerV43.textPrimary)
+        VStack(spacing: 0) {
+            header
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    if !network.isConnected {
+                        WorkerV43OfflineBanner(queued: opStore.pendingCount(), retry: { load() })
+                    }
+                    projectCard
+                    if let assistantSummary, WorkerSettingsStore.load().aiAssistant {
+                        WorkerV43Card(borderColor: WorkerV43.aiViolet.opacity(0.45), fill: WorkerV43.aiViolet.opacity(0.12)) {
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text(NSLocalizedString("wrk_v43_assistant", comment: ""))
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(WorkerV43.aiViolet)
+                                Text(assistantSummary)
+                                    .font(.system(size: 14))
+                                    .foregroundStyle(WorkerV43.textPrimary)
+                            }
                         }
                     }
+                    mainTaskCard
+                    quickActions
+                    if !nextTasks.isEmpty {
+                        nextSection
+                    }
+                    if !feedbackReports.isEmpty {
+                        feedbackSection
+                    }
+                    WorkerV43SyncPill(status: WorkerSyncLabel.from(status: syncService.status, lastSync: nil).0)
                 }
-                mainTaskCard
-                quickActions
-                if !nextTasks.isEmpty {
-                    nextSection
-                }
-                if !feedbackReports.isEmpty {
-                    feedbackSection
-                }
-                WorkerV43SyncPill(status: WorkerSyncLabel.from(status: syncService.status, lastSync: nil).0)
+                .padding(.horizontal, WorkerV43.screenX)
+                .padding(.bottom, 24)
             }
-            .padding(.horizontal, WorkerV43.screenX)
-            .padding(.bottom, 24)
         }
     }
 
@@ -157,6 +159,7 @@ struct TodayHomeView: View {
                 }
             }
             .accessibilityLabel(NSLocalizedString("wrk_v43_tab_messages", comment: ""))
+            .accessibilityIdentifier("pilot_worker_home_notifications")
         }
     }
 

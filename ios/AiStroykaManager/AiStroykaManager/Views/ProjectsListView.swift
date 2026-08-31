@@ -49,7 +49,11 @@ struct ProjectsListView: View {
                 if !ManagerV43Preview.isEnabled, filter == .risk || filter == .done {
                     filter = .all
                 }
+                consumeOpenCreateProject()
                 loadIfNeeded()
+            }
+            .onChange(of: router.openCreateProject) { open in
+                if open { consumeOpenCreateProject() }
             }
             .onReceive(NotificationCenter.default.publisher(for: ManagerLiveSync.projectsChanged)) { _ in
                 load()
@@ -84,6 +88,12 @@ struct ProjectsListView: View {
         }
     }
 
+    private func consumeOpenCreateProject() {
+        guard router.openCreateProject else { return }
+        router.openCreateProject = false
+        showAddProject = true
+    }
+
     private var filtered: [ProjectDTO] {
         projects.filter { project in
             let matchesQuery = query.isEmpty || (project.name ?? project.id).localizedCaseInsensitiveContains(query)
@@ -103,8 +113,7 @@ struct ProjectsListView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
                 ManagerScreenHeader(title: NSLocalizedString("mgr_tab_projects", comment: ""), showsBell: true, unread: router.notificationsBadge) {
-                    router.openNotifications = true
-                    router.selectedTab = .more
+                    router.openNotificationsInbox()
                 }
                 if !networkMonitor.isConnected {
                     ManagerV43OfflineBanner(lastSync: lastSync, retry: { load() })
@@ -162,6 +171,7 @@ struct ProjectsListView: View {
             .buttonStyle(.plain)
             .padding(20)
             .accessibilityLabel(NSLocalizedString("mgr_v43_add_project", comment: ""))
+            .accessibilityIdentifier("pilot_manager_add_project")
         }
         .accessibilityIdentifier("pilot_manager_projects_list")
     }

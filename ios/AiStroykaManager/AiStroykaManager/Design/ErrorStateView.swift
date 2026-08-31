@@ -88,14 +88,13 @@ func runManagerLoad(
     setErrorMessage(nil)
     setLoading(true)
     defer { setLoading(false) }
+    if ManagerV43Preview.showsCatalogWithoutAuth, let previewFallback {
+        previewFallback()
+        return
+    }
     do {
         try await operation()
     } catch {
-        if ManagerV43Preview.showsCatalogWithoutAuth, let previewFallback {
-            previewFallback()
-            setErrorMessage(nil)
-            return
-        }
         setErrorMessage(localizedManagerError(error))
     }
 }
