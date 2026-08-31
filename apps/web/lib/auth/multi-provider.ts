@@ -6,6 +6,7 @@ export type IdentityRow = {
   id: string;
   user_id: string;
   provider: IdentityProvider;
+  identity_id: string | null;
   provider_user_id: string;
   email: string | null;
   username: string | null;
@@ -35,7 +36,7 @@ export async function getUserIdentities(
   const db = supabase as DbLike;
   const { data, error } = await db
     .from("user_identities")
-    .select("id, user_id, provider, provider_user_id, email, username, full_name, avatar_url, metadata, created_at, updated_at")
+    .select("id, user_id, provider, identity_id, provider_user_id, email, username, full_name, avatar_url, metadata, created_at, updated_at")
     .eq("user_id", userId)
     .order("created_at", { ascending: true });
   if (error || !data) return [];
@@ -77,6 +78,7 @@ export async function linkIdentityRow(
   row: {
     user_id: string;
     provider: IdentityProvider;
+    identity_id?: string | null;
     provider_user_id: string;
     email?: string | null;
     username?: string | null;
@@ -101,6 +103,7 @@ export async function linkIdentityRow(
     {
       user_id: row.user_id,
       provider: row.provider,
+      identity_id: row.identity_id ?? null,
       provider_user_id: row.provider_user_id,
       email: row.email ?? null,
       username: row.username ?? null,
