@@ -21,8 +21,12 @@ struct ProfileOfflineSettingsView: View {
     @State private var showDiagnostics = false
     @State private var showIssues = false
     @State private var showDocuments = false
+    @State private var documentsTab: WorkerDocumentTab = .myTasks
     @State private var showReports = false
+    @State private var openedFeedbackReportId: String?
     @State private var ending = false
+    @State private var showQR = false
+    @State private var joinBanner: String?
 
     var body: some View {
         NavigationStack {
@@ -32,6 +36,11 @@ struct ProfileOfflineSettingsView: View {
                         .font(.system(size: 32, weight: .semibold))
                         .foregroundStyle(WorkerV43.textPrimary)
                     profileCard
+                    if let joinBanner {
+                        Text(joinBanner)
+                            .font(.caption)
+                            .foregroundStyle(WorkerV43.textSecondary)
+                    }
                     shiftCard
                     syncCard
                     section(NSLocalizedString("wrk_v43_work", comment: "")) {
@@ -39,31 +48,46 @@ struct ProfileOfflineSettingsView: View {
                             title: NSLocalizedString("wrk_v43_daily_reports", comment: ""),
                             systemImage: "doc.text",
                             badge: store.state.draftReportId == nil ? nil : NSLocalizedString("wrk_v43_draft", comment: ""),
-                            action: { showReports = true }
+                            action: { showReports = true },
+                            accessibilityId: "pilot_worker_more_reports"
                         )
                         WorkerV43Row(
                             title: NSLocalizedString("wrk_v43_issues", comment: ""),
                             systemImage: "exclamationmark.triangle",
                             iconTint: WorkerV43.warning,
-                            action: { showIssues = true }
+                            action: { showIssues = true },
+                            accessibilityId: "pilot_worker_more_issues"
                         )
                         WorkerV43Row(
                             title: NSLocalizedString("wrk_v43_documents", comment: ""),
                             systemImage: "folder",
-                            action: { showDocuments = true }
+                            action: {
+                                documentsTab = .myTasks
+                                showDocuments = true
+                            },
+                            accessibilityId: "pilot_worker_more_documents"
                         )
                         WorkerV43Row(
                             title: NSLocalizedString("wrk_v43_briefings", comment: ""),
                             systemImage: "book",
                             iconTint: WorkerV43.aiViolet,
-                            action: { showDocuments = true }
+                            action: {
+                                documentsTab = .instructions
+                                showDocuments = true
+                            }
+                        )
+                        WorkerV43Row(
+                            title: NSLocalizedString("wrk_v43_scan_qr", comment: ""),
+                            systemImage: "qrcode.viewfinder",
+                            action: { showQR = true },
+                            accessibilityId: "pilot_worker_more_scan_qr"
                         )
                     }
                     section(NSLocalizedString("wrk_v43_settings", comment: "")) {
                         WorkerV43Row(
                             title: NSLocalizedString("wrk_v43_notifications", comment: ""),
                             systemImage: "bell",
-                            action: { router.openMessages() }
+                            action: { router.openMessages(segment: .notifications) }
                         )
                         qualityRow
                         geoRow
@@ -107,14 +131,28 @@ struct ProfileOfflineSettingsView: View {
             .sheet(isPresented: $showDiagnostics) {
                 NavigationStack { DiagnosticsView().environmentObject(appState) }
             }
+            .sheet(isPresented: $showQR) {
+                QRScannerView(
+                    onToken: { token in joinScannedToken(token) },
+                    onInvalid: { joinBanner = $0 }
+                )
+            }
             .background(
                 ZStack {
                     NavigationLink(
-                        destination: IssuesListView(project: project, linkedTaskId: router.pendingTaskId),
+                        destination: IssuesListView(
+                            project: project,
+                            linkedTaskId: router.pendingTaskId,
+                            focusIssueId: router.pendingIssueId
+                        ),
                         isActive: $showIssues
                     ) { EmptyView() }
                     NavigationLink(
-                        destination: DocumentsDrawingsView(project: project),
+                        destination: DocumentsDrawingsView(
+                            project: project,
+                            initialTab: documentsTab,
+                            focusDocumentId: router.pendingDocumentId
+                        ),
                         isActive: $showDocuments
                     ) { EmptyView() }
                     NavigationLink(
@@ -126,6 +164,17 @@ struct ProfileOfflineSettingsView: View {
                             taskTitle: nil
                         ),
                         isActive: $showReports
+                    ) { EmptyView() }
+                    NavigationLink(
+                        destination: Group {
+                            if let openedFeedbackReportId {
+                                ManagerFeedbackResubmitView(reportId: openedFeedbackReportId)
+                            }
+                        },
+                        isActive: Binding(
+                            get: { openedFeedbackReportId != nil },
+                            set: { if !$0 { openedFeedbackReportId = nil } }
+                        )
                     ) { EmptyView() }
                 }
                 .hidden()
@@ -308,9 +357,31 @@ struct ProfileOfflineSettingsView: View {
         case .issues:
             showIssues = true
         case .documents:
+            documentsTab = .myTasks
             showDocuments = true
         case .reports:
-            showReports = true
+            if let id = router.consumePendingReportId() {
+                openedFeedbackReportId = id
+            } else {
+                showReports = true
+            }
+        }
+    }
+
+    private func joinScannedToken(_ token: String) {
+        guard !WorkerV43Preview.showsCatalogWithoutAuth else { return }
+        Task {
+            do {
+                try await WorkerV43API.joinFromInviteToken(token)
+                await MainActor.run {
+                    joinBanner = NSLocalizedString("wrk_v43_qr_joined", comment: "")
+                    onLeaveProject()
+                }
+            } catch {
+                await MainActor.run {
+                    joinBanner = WorkerV43Copy.userFacing(error)
+                }
+            }
         }
     }
 

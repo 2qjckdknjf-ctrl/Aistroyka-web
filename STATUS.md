@@ -2,8 +2,8 @@
 
 > Live project status. Keep this short and mobile-readable.
 
-**Last updated:** 2026-08-29  
-**Updated by:** Worker issue create photo + task day/priority tails on `fix/worker-issue-create-photo`
+**Last updated:** 2026-08-31  
+**Updated by:** PR #277 marked ready; review requested from 6262265-cpu
 
 ---
 
@@ -11,14 +11,14 @@
 
 | Field | Value |
 |---|---|
-| **Active slice** | Camera on new issue, real task priority, week-day filter, BEFORE-photo WIP gate |
-| **Branch / worktree** | `fix/worker-issue-create-photo` @ `/Users/alex/Projects/AISTROYKA-ios-worker-v4-3` |
-| **Runtime** | Camera overlay [#263](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/263) on `main`. Production health still `ed1b7e2` until deploy |
-| **Next** | Land this slice and [#264](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/264). Reviewer PAT still cannot approve |
+| **Active slice** | PR #277 — visual-walk CTAs, Apple/Google, phone OTP disabled-optional |
+| **Branch / worktree** | `fix/mobile-visual-walk` @ `/Users/alex/Projects/AISTROYKA-ios-worker-v4-3` |
+| **Runtime** | Auth: email, Apple, Google, QR, Telegram where enabled. Phone OTP hidden/disabled. Twilio is not a launch gate. |
+| **Next** | Non-author `APPROVED` from `6262265-cpu` (review requested; reviewer PAT still lacks Pull requests: Write for API approve). Then merge. Owner-gated: TestFlight MODE B. |
 
 ## Notes
 
-Primary checkout `/Users/alex/Projects/AISTROYKA` was not modified.
+PR https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/277 is ready for review. Canonical gates passed on `df335aec`. Did not self-approve. Phone OTP remains optional/disabled.
 
 ---
 

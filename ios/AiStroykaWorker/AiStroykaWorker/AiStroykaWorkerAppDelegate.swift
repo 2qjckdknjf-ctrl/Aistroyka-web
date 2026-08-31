@@ -73,15 +73,25 @@ final class AiStroykaWorkerAppDelegate: NSObject, UIApplicationDelegate {
     }
 
     private func handlePushPayload(_ userInfo: [AnyHashable: Any]) {
-        let type = (userInfo["type"] as? String) ?? ""
-        var payload: [AnyHashable: Any] = ["type": type]
-        if let taskId = userInfo["task_id"] as? String { payload["task_id"] = taskId }
+        var payload: [AnyHashable: Any] = [:]
+        takePushStrings(from: userInfo, into: &payload)
+        if let nested = userInfo["data"] as? [AnyHashable: Any] {
+            takePushStrings(from: nested, into: &payload)
+        }
         DispatchQueue.main.async {
             NotificationCenter.default.post(
                 name: .aiStroykaWorkerPushPayload,
                 object: nil,
                 userInfo: payload
             )
+        }
+    }
+
+    private func takePushStrings(from source: [AnyHashable: Any], into payload: inout [AnyHashable: Any]) {
+        for key in ["type", "task_id", "target_type", "target_id", "project_id", "report_id", "issue_id", "document_id"] {
+            if payload[key] == nil, let value = source[key] as? String, !value.isEmpty {
+                payload[key] = value
+            }
         }
     }
 }

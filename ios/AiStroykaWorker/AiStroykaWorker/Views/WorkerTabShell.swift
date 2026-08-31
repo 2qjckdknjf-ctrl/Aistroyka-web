@@ -44,6 +44,10 @@ struct WorkerTabShell: View {
         .onAppear {
             applyLaunchScreen()
             refreshUnreadInbox()
+            retryPendingInvite()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .aiStroykaWorkerPushPayload)) { notification in
+            handlePush(notification.userInfo)
         }
         .overlay(alignment: .topLeading) {
             Color.clear
@@ -53,12 +57,66 @@ struct WorkerTabShell: View {
         }
     }
 
+    private func retryPendingInvite() {
+        guard !WorkerV43Preview.isEnabled else { return }
+        Task { await WorkerV43API.applyPendingInviteIfNeeded() }
+    }
+
     private func refreshUnreadInbox() {
         guard !WorkerV43Preview.isEnabled else { return }
         Task {
             let count = (try? await WorkerAPI.unreadNotificationCount()) ?? 0
             await MainActor.run { WorkerInboxBadgeStore.shared.count = count }
         }
+    }
+
+    private func handlePush(_ userInfo: [AnyHashable: Any]?) {
+        refreshUnreadInbox()
+        let type = (userInfo?["type"] as? String)?.lowercased() ?? ""
+        let taskId = pushString(userInfo, "task_id")
+        let targetType = (pushString(userInfo, "target_type") ?? "").lowercased()
+        let targetId = pushString(userInfo, "target_id")
+        let reportId = pushString(userInfo, "report_id")
+        let issueId = pushString(userInfo, "issue_id")
+        let documentId = pushString(userInfo, "document_id")
+
+        if let taskId, !taskId.isEmpty {
+            router.openTask(taskId)
+            return
+        }
+        switch targetType {
+        case "task":
+            if let targetId, !targetId.isEmpty { router.openTask(targetId) }
+        case "issue":
+            router.pendingIssueId = targetId ?? issueId
+            router.openIssues()
+        case "report":
+            router.pendingReportId = targetId ?? reportId
+            router.openReports()
+        case "document":
+            router.pendingDocumentId = targetId ?? documentId
+            router.openDocuments()
+        default:
+            if let issueId, !issueId.isEmpty {
+                router.pendingIssueId = issueId
+                router.openIssues()
+            } else if let reportId, !reportId.isEmpty {
+                router.pendingReportId = reportId
+                router.openReports()
+            } else if let documentId, !documentId.isEmpty {
+                router.pendingDocumentId = documentId
+                router.openDocuments()
+            } else if ["task_assigned", "task_updated", "task_message"].contains(type) {
+                router.selectedTab = .tasks
+            } else if !type.isEmpty {
+                router.openMessages(segment: .notifications)
+            }
+        }
+    }
+
+    private func pushString(_ userInfo: [AnyHashable: Any]?, _ key: String) -> String? {
+        guard let value = userInfo?[key] as? String, !value.isEmpty else { return nil }
+        return value
     }
 
     private func applyLaunchScreen() {
@@ -187,7 +245,8 @@ struct CameraContextSheet: View {
                 contextRow(
                     title: NSLocalizedString("wrk_v43_camera_context_task", comment: ""),
                     image: "camera.viewfinder",
-                    tint: WorkerV43.dataBlue
+                    tint: WorkerV43.dataBlue,
+                    accessibilityId: "pilot_worker_camera_context_task"
                 ) {
                     router.cameraContext = .task
                     if cameraTask != nil {
@@ -200,29 +259,41 @@ struct CameraContextSheet: View {
                 contextRow(
                     title: NSLocalizedString("wrk_v43_camera_context_report", comment: ""),
                     image: "doc.viewfinder",
-                    tint: WorkerV43.cyan
+                    tint: WorkerV43.cyan,
+                    accessibilityId: "pilot_worker_camera_context_report"
                 ) {
                     router.cameraContext = .report
-                    router.openReports()
                     dismiss()
+                    DispatchQueue.main.async {
+                        router.openReports()
+                    }
                 }
                 contextRow(
                     title: NSLocalizedString("wrk_v43_camera_context_issue", comment: ""),
                     image: "exclamationmark.triangle",
-                    tint: WorkerV43.warning
+                    tint: WorkerV43.warning,
+                    accessibilityId: "pilot_worker_camera_context_issue"
                 ) {
                     router.cameraContext = .issue
-                    router.openIssues()
                     dismiss()
+                    DispatchQueue.main.async {
+                        router.openIssues()
+                    }
                 }
                 Spacer()
             }
             .padding(WorkerV43.screenX)
             .background(WorkerV43.bg.ignoresSafeArea())
+            .overlay(alignment: .topLeading) {
+                Color.clear
+                    .frame(width: 1, height: 1)
+                    .accessibilityIdentifier("pilot_worker_camera_context")
+            }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button(NSLocalizedString("worker_cancel", comment: "")) { dismiss() }
                         .foregroundStyle(WorkerV43.yellow)
+                        .accessibilityIdentifier("pilot_worker_camera_context_cancel")
                 }
             }
             .background(
@@ -256,7 +327,7 @@ struct CameraContextSheet: View {
         }
     }
 
-    private func contextRow(title: String, image: String, tint: Color, action: @escaping () -> Void) -> some View {
+    private func contextRow(title: String, image: String, tint: Color, accessibilityId: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 12) {
                 Image(systemName: image)
@@ -277,5 +348,6 @@ struct CameraContextSheet: View {
         }
         .buttonStyle(.plain)
         .frame(minHeight: WorkerV43.fieldTouch)
+        .accessibilityIdentifier(accessibilityId)
     }
 }

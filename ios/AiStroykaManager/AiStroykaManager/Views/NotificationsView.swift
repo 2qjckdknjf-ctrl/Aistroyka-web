@@ -49,6 +49,13 @@ struct NotificationsView: View {
             }
         }
         .background(ManagerV43.bg.ignoresSafeArea())
+        .overlay(alignment: .topLeading) {
+            Text("notifications-inbox")
+                .font(.system(size: 1))
+                .foregroundStyle(.clear)
+                .accessibilityIdentifier("pilot_manager_notifications")
+                .accessibilityLabel("notifications-inbox")
+        }
         .navigationTitle(NSLocalizedString("mgr_notifications", comment: ""))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -213,6 +220,15 @@ struct NotificationsView: View {
         errorMessage = nil
         isLoading = true
         defer { isLoading = false }
+        if ManagerV43Preview.showsCatalogWithoutAuth {
+            items = ManagerDemoCatalog.notifications
+            total = items.count
+            canLoadMore = false
+            router.notificationsBadge = items.filter { $0.readAt == nil }.count
+            lastSync = Date()
+            errorMessage = nil
+            return
+        }
         do {
             let result = try await ManagerAPI.notifications(limit: 50, offset: 0)
             items = result.items

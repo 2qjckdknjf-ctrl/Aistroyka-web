@@ -432,6 +432,7 @@ struct WorkerV43Row: View {
     var badge: String?
     var badgeTint: Color = WorkerV43.dataBlue
     var action: (() -> Void)?
+    var accessibilityId: String? = nil
 
     var body: some View {
         Button(action: { action?() }) {
@@ -479,6 +480,19 @@ struct WorkerV43Row: View {
         .buttonStyle(.plain)
         .disabled(action == nil)
         .frame(minHeight: WorkerV43.fieldTouch)
+        .modifier(OptionalAccessibilityIdentifier(id: accessibilityId))
+    }
+}
+
+private struct OptionalAccessibilityIdentifier: ViewModifier {
+    let id: String?
+
+    func body(content: Content) -> some View {
+        if let id, !id.isEmpty {
+            content.accessibilityIdentifier(id)
+        } else {
+            content
+        }
     }
 }
 

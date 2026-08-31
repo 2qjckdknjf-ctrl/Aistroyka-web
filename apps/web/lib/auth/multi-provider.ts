@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export type IdentityProvider = "apple" | "telegram";
+export type IdentityProvider = "apple" | "telegram" | "google";
 
 export type IdentityRow = {
   id: string;
@@ -20,6 +20,7 @@ export type AuthMethodSummary = {
   email: boolean;
   apple: boolean;
   telegram: boolean;
+  google: boolean;
   linkedCount: number;
 };
 
@@ -42,16 +43,31 @@ export async function getUserIdentities(
 }
 
 export function summarizeAuthMethods(userEmail: string | undefined, identities: IdentityRow[]): AuthMethodSummary {
-  const methods = new Set<"email" | "apple" | "telegram">();
+  const methods = new Set<"email" | "apple" | "telegram" | "google">();
   if ((userEmail ?? "").trim().length > 0) methods.add("email");
   for (const identity of identities) {
-    if (identity.provider === "apple") methods.add("apple");
-    if (identity.provider === "telegram") methods.add("telegram");
+    switch (identity.provider) {
+      case "apple":
+        methods.add("apple");
+        break;
+      case "telegram":
+        methods.add("telegram");
+        break;
+      case "google":
+        methods.add("google");
+        break;
+      default: {
+        const _exhaustive: never = identity.provider;
+        void _exhaustive;
+        break;
+      }
+    }
   }
   return {
     email: methods.has("email"),
     apple: methods.has("apple"),
     telegram: methods.has("telegram"),
+    google: methods.has("google"),
     linkedCount: methods.size,
   };
 }
@@ -110,6 +126,17 @@ export async function unlinkIdentityRow(
     .delete()
     .eq("user_id", userId)
     .eq("provider", provider);
+  return !error;
+}
+
+export async function unlinkSupabaseAuthProvider(
+  supabase: SupabaseClient,
+  provider: Exclude<IdentityProvider, "telegram">
+): Promise<boolean> {
+  const { data } = await supabase.auth.getUser();
+  const identity = data.user?.identities?.find((item) => item.provider === provider);
+  if (!identity) return true;
+  const { error } = await supabase.auth.unlinkIdentity(identity);
   return !error;
 }
 

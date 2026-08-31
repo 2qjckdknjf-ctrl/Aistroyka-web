@@ -322,6 +322,16 @@ enum WorkerAPI {
         return env.data?.reports ?? []
     }
 
+    /// GET /api/v1/tasks/:id — assigned worker or viewer (lite-allowed).
+    static func task(id: String) async throws -> TaskDTO {
+        struct Envelope: Decodable { let data: TaskDTO? }
+        let env: Envelope = try await APIClient.shared.request(path: "tasks/\(id)")
+        guard let data = env.data else {
+            throw APIError(statusCode: nil, code: nil, message: "No task data")
+        }
+        return data
+    }
+
     static func startAssignedTask(taskId: String, idempotencyKey: String) async throws {
         struct Body: Encodable {
             let status: String

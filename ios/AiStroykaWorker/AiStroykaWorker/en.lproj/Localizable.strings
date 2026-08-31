@@ -91,7 +91,7 @@
 "worker_feedback_report_fmt" = "Report …%@";
 "worker_report_resubmit_title" = "Update report";
 "worker_manager_note_title" = "Manager message";
-"worker_resubmit_hint" = "Submit again when you have addressed this feedback. To attach new photos you need a new report from the home screen—this screen only resubmits with proof already on file.";
+"worker_resubmit_hint" = "Take a correction photo if the manager asked for it, then submit again. Existing photos on this report stay as proof.";
 "worker_evidence_section_title" = "Your photos on this report";
 "worker_evidence_load_failed_fmt" = "Could not load photo %d.";
 "worker_evidence_no_preview_fmt" = "Photo %d — preview unavailable (id: %@).";
@@ -116,6 +116,8 @@
 "task_chat_unread" = "Unread chat";
 
 "worker_apple_sign_in_failed" = "Apple sign-in failed. Try again.";
+"wrk_v43_continue_google" = "Continue with Google";
+"wrk_v43_google_sign_in_failed" = "Google sign-in failed. Try again.";
 "wrk_v43_hours_short" = "h";
 "wrk_v43_minutes_short" = "min";
 "wrk_v43_sync_never" = "Never synced";
@@ -137,6 +139,7 @@
 "wrk_v43_qr_invalid" = "This code is not a valid site invite.";
 "wrk_v43_qr_hint" = "Scan the site QR from your manager";
 "wrk_v43_qr_saved" = "Invite saved. Sign in to join the site.";
+"wrk_v43_qr_joined" = "You joined the site. Switch project if needed.";
 "wrk_v43_low_storage" = "Low storage on this device. Free space or the photo may not save.";
 "wrk_v43_camera_denied" = "Camera access denied";
 "wrk_v43_camera_denied_detail" = "Enable camera in Settings to capture proof photos.";
@@ -249,6 +252,7 @@
 "wrk_v43_assigned_you" = "Assigned to you";
 "wrk_v43_issue_view_only" = "You can view this issue. Only the reporter can send a resolution.";
 "wrk_v43_take_result_photo" = "Take a result photo";
+"wrk_v43_resubmit_photo" = "Take a correction photo";
 "wrk_v43_issue_comment" = "Comment";
 "wrk_v43_send_review" = "Send for review";
 "wrk_v43_cannot_fix" = "Cannot fix";

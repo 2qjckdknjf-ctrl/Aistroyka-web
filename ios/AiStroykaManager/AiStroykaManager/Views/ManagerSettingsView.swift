@@ -79,7 +79,15 @@ struct ManagerSettingsView: View {
                     labeled(NSLocalizedString("mgr_build", comment: ""), buildNumber)
                     labeled(NSLocalizedString("mgr_tenant_id", comment: ""), meData?.tenantId ?? (meLoadFailed ? "—" : "…"))
                     labeled(NSLocalizedString("mgr_role", comment: ""), meData?.role ?? (meLoadFailed ? "—" : "…"))
-                    labeled(NSLocalizedString("mgr_v43_language", comment: ""), Locale.current.identifier)
+                    Button {
+                        if let url = URL(string: UIApplication.openSettingsURLString) {
+                            UIApplication.shared.open(url)
+                        }
+                    } label: {
+                        labeled(NSLocalizedString("mgr_v43_language", comment: ""), Locale.current.identifier)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(NSLocalizedString("mgr_v43_language", comment: ""))
                 }
 
                 if !sessionState.isLoggedIn {

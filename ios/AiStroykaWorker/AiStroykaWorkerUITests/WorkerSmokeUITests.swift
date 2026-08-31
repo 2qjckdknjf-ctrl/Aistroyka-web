@@ -129,6 +129,8 @@ final class WorkerSmokeUITests: XCTestCase {
 
         XCTAssertTrue(app.textFields["pilot_worker_password"].exists, "Debug uses TextField for password so UI tests can type on Simulator")
         XCTAssertTrue(app.buttons["pilot_worker_sign_in"].exists)
+        XCTAssertFalse(app.textFields["pilot_worker_phone"].exists)
+        XCTAssertFalse(app.buttons["pilot_worker_phone_submit"].exists)
     }
 
     /// Layer B: live API login and worker home/report entry (no photo upload in simulator).

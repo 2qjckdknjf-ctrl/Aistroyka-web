@@ -17,6 +17,9 @@ appId: ai.aistroyka.manager
 - hideKeyboard
 - tapOn:
     id: pilot_manager_sign_in
+- tapOn:
+    id: pilot_manager_guide_start
+    optional: true
 - extendedWaitUntil:
     visible:
       id: pilot_manager_reports_inbox

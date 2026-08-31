@@ -16,6 +16,7 @@ struct ShiftStartSafetyView: View {
     @State private var safety: WorkerSafetyCheckState
     @State private var starting = false
     @State private var errorMessage: String?
+    @State private var showBriefing = false
 
     init(project: ProjectDTO, onFinished: @escaping () -> Void) {
         self.project = project
@@ -69,20 +70,27 @@ struct ShiftStartSafetyView: View {
                     checkRow("tools", title: NSLocalizedString("wrk_v43_safety_tools", comment: ""), image: "wrench.and.screwdriver", bound: $safety.tools)
                     checkRow("zone", title: NSLocalizedString("wrk_v43_safety_zone", comment: ""), image: "cone.fill", bound: $safety.zone)
 
-                    WorkerV43Card(borderColor: WorkerV43.warning.opacity(0.4)) {
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack {
-                                Image(systemName: "checkmark.shield")
-                                    .foregroundStyle(WorkerV43.warning)
-                                Text(NSLocalizedString("wrk_v43_briefing_title", comment: ""))
-                                    .font(.system(size: 16, weight: .semibold))
-                                    .foregroundStyle(WorkerV43.textPrimary)
+                    Button { showBriefing = true } label: {
+                        WorkerV43Card(borderColor: WorkerV43.warning.opacity(0.4)) {
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack {
+                                    Image(systemName: "checkmark.shield")
+                                        .foregroundStyle(WorkerV43.warning)
+                                    Text(NSLocalizedString("wrk_v43_briefing_title", comment: ""))
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundStyle(WorkerV43.textPrimary)
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
+                                        .foregroundStyle(WorkerV43.textSecondary)
+                                }
+                                Text(NSLocalizedString("wrk_v43_briefing_body", comment: ""))
+                                    .font(.system(size: 14))
+                                    .foregroundStyle(WorkerV43.textSecondary)
                             }
-                            Text(NSLocalizedString("wrk_v43_briefing_body", comment: ""))
-                                .font(.system(size: 14))
-                                .foregroundStyle(WorkerV43.textSecondary)
                         }
                     }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(NSLocalizedString("wrk_v43_briefing_title", comment: ""))
 
                     if let errorMessage {
                         Text(errorMessage).font(.caption).foregroundStyle(WorkerV43.danger)
@@ -112,6 +120,13 @@ struct ShiftStartSafetyView: View {
             }
             .background(WorkerV43.bg.ignoresSafeArea())
             .accessibilityIdentifier("pilot_worker_shift_start")
+            .background(
+                NavigationLink(
+                    destination: DocumentsDrawingsView(project: project, initialTab: .instructions),
+                    isActive: $showBriefing
+                ) { EmptyView() }
+                .hidden()
+            )
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button { onFinished() } label: { Image(systemName: "chevron.left") }

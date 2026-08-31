@@ -37,6 +37,8 @@
 "mgr_err_offline_signin" = "Нет подключения к интернету. Вход офлайн недоступен.";
 "mgr_err_empty_credentials" = "Введите почту и пароль.";
 "mgr_err_apple_sign_in" = "Вход через Apple не удался. Повторите или войдите по почте.";
+"mgr_err_google_sign_in" = "Вход через Google не удался. Повторите или войдите по почте.";
+"mgr_v43_continue_google" = "Продолжить с Google";
 "mgr_active_workers" = "Активные сотрудники";
 "mgr_ai_analyses" = "ИИ-анализы";
 "mgr_ai_copilot_placeholder" = "ИИ-копилот — проектный ИИ и инсайты";
@@ -134,7 +136,7 @@
 "mgr_issues" = "Проблемы";
 "mgr_loading_issues" = "Загрузка проблем…";
 "mgr_no_issues_title" = "Проблем нет";
-"mgr_no_issues_subtitle" = "Здесь появятся замечания, которые подал рабочий.";
+"mgr_no_issues_subtitle" = "Здесь появятся замечания рабочих и те, что вы создадите сами.";
 "mgr_issue_evidence" = "Фото-доказательство";
 "mgr_issue_status" = "Статус";
 "mgr_open_shift" = "Открытая смена";
@@ -283,6 +285,9 @@
 "mgr_v43_ai_check" = "AI проверит полноту задачи";
 "mgr_v43_optional" = "Опционально";
 "mgr_v43_create_task" = "Создать задачу";
+"mgr_v43_create_issue" = "Создать замечание";
+"mgr_v43_issue_title_placeholder" = "Что нужно исправить";
+"mgr_v43_task_from_remark" = "Создать задачу по замечанию";
 "mgr_v43_loading_docs" = "Загрузка документов…";
 "mgr_v43_upload" = "Загрузить";
 "mgr_v43_doc_search" = "Название или номер документа";
@@ -398,6 +403,7 @@
 "mgr_v43_zoom" = "Увеличить фото";
 "mgr_v43_media_index_fmt" = "%d / %d";
 "mgr_v43_copy_id" = "Скопировать идентификатор";
+"mgr_v43_contact" = "Связаться";
 "mgr_v43_role_manager" = "Руководитель проекта";
 "mgr_v43_role_engineer" = "Главный инженер";
 "mgr_v43_auth_required" = "Войдите, чтобы загрузить живые данные рабочего пространства.";

@@ -11,9 +11,11 @@ import ai.aistroyka.shared.SessionStore
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -43,9 +45,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -53,6 +59,10 @@ import java.util.Locale
 
 private const val WORKER_PREFS = "aistroyka_worker_prefs"
 private const val WORKER_FIRST_LAUNCH_KEY = "first_launch_guide_seen"
+
+@OptIn(ExperimentalComposeUiApi::class)
+private fun Modifier.pilotAutomatorTag(tag: String): Modifier =
+    semantics { testTagsAsResourceId = true }.testTag(tag)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -135,7 +145,7 @@ fun WorkerApp() {
                 )
             }
 
-            if (showGuide) {
+            if (showGuide && state.screen != "login") {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -172,7 +182,8 @@ fun WorkerApp() {
                             Button(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(top = 12.dp),
+                                    .padding(top = 12.dp)
+                                    .pilotAutomatorTag("pilot_worker_guide_start"),
                                 onClick = {
                                     prefs.edit().putBoolean(WORKER_FIRST_LAUNCH_KEY, true).apply()
                                     showGuide = false
@@ -247,7 +258,9 @@ private fun WorkerHomeScaffold(
                 Button(
                     onClick = { vm.startShift() },
                     enabled = state.shiftDayId == null && !state.busy,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .pilotAutomatorTag("pilot_worker_start_shift"),
                 ) {
                     Text(stringResource(R.string.worker_start_shift))
                 }
@@ -255,7 +268,9 @@ private fun WorkerHomeScaffold(
                 OutlinedButton(
                     onClick = { vm.endShift() },
                     enabled = state.shiftDayId != null && !state.busy,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .pilotAutomatorTag("pilot_worker_end_shift"),
                 ) {
                     Text(stringResource(R.string.worker_end_shift))
                 }
@@ -265,11 +280,19 @@ private fun WorkerHomeScaffold(
             if (state.projects.isEmpty()) {
                 Text(stringResource(R.string.projects_empty), style = MaterialTheme.typography.bodySmall)
             } else {
-                state.projects.forEach { p ->
+                state.projects.forEachIndexed { index, p ->
                     val selected = p.id == state.selectedProjectId
-                    TextButton(onClick = { vm.selectProject(p.id) }) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .pilotAutomatorTag("pilot_worker_project_row_$index")
+                            .clickable { vm.selectProject(p.id) }
+                            .padding(vertical = 4.dp),
+                    ) {
                         Text(
                             if (selected) "✓ ${p.name ?: p.id}" else "${p.name ?: p.id}",
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.bodyLarge,
                         )
                     }
                 }
@@ -334,7 +357,9 @@ private fun WorkerHomeScaffold(
             }
             Button(
                 onClick = { vm.startNewReport() },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .pilotAutomatorTag("pilot_worker_create_report"),
                 enabled = !state.busy,
             ) {
                 Text(stringResource(R.string.action_create_report_photo))
@@ -423,7 +448,9 @@ private fun WorkerLoginScreen(vm: WorkerViewModel, state: WorkerUiState) {
             onValueChange = { vm.setEmail(it) },
             label = { Text(stringResource(R.string.label_email)) },
             singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .pilotAutomatorTag("pilot_worker_email"),
         )
         OutlinedTextField(
             value = state.password,
@@ -431,11 +458,15 @@ private fun WorkerLoginScreen(vm: WorkerViewModel, state: WorkerUiState) {
             label = { Text(stringResource(R.string.label_password)) },
             singleLine = true,
             visualTransformation = PasswordVisualTransformation(),
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .pilotAutomatorTag("pilot_worker_password"),
         )
         Button(
             onClick = { vm.login() },
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .pilotAutomatorTag("pilot_worker_sign_in"),
             enabled = !state.busy,
         ) {
             Text(stringResource(R.string.action_sign_in))
@@ -454,7 +485,10 @@ private fun WorkerReportScreen(vm: WorkerViewModel, state: WorkerUiState) {
             TopAppBar(
                 title = { Text(stringResource(R.string.report_draft_title)) },
                 actions = {
-                    TextButton(onClick = { vm.backToHome() }) {
+                    TextButton(
+                        onClick = { vm.backToHome() },
+                        modifier = Modifier.pilotAutomatorTag("pilot_worker_back_home"),
+                    ) {
                         Text(stringResource(R.string.action_back_home))
                     }
                 },
@@ -478,7 +512,11 @@ private fun WorkerReportScreen(vm: WorkerViewModel, state: WorkerUiState) {
             )
             state.pipelineStatus?.let { Text(it) }
             state.banner?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-            Button(onClick = { pickImage.launch("image/*") }, enabled = !state.busy) {
+            Button(
+                onClick = { pickImage.launch("image/*") },
+                enabled = !state.busy,
+                modifier = Modifier.pilotAutomatorTag("pilot_worker_choose_photo"),
+            ) {
                 Text(stringResource(R.string.action_choose_photo))
             }
             OutlinedTextField(
@@ -489,15 +527,21 @@ private fun WorkerReportScreen(vm: WorkerViewModel, state: WorkerUiState) {
                 minLines = 2,
             )
             state.submitMessage?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-            state.doneMessage?.let { Text(it, color = WorkerSemanticColors.success()) }
             Button(
                 onClick = { vm.submitReport() },
                 enabled = !state.busy && state.doneMessage == null,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .pilotAutomatorTag("pilot_worker_submit_report"),
             ) {
                 Text(stringResource(R.string.action_submit_report))
             }
             if (state.doneMessage != null) {
+                Text(
+                    state.doneMessage,
+                    color = WorkerSemanticColors.success(),
+                    modifier = Modifier.pilotAutomatorTag("pilot_worker_submit_success"),
+                )
                 Button(onClick = { vm.dismissDone() }, modifier = Modifier.fillMaxWidth()) {
                     Text(stringResource(R.string.action_dismiss))
                 }

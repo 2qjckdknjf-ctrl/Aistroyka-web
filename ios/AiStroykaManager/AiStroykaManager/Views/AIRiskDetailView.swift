@@ -10,6 +10,7 @@ import Shared
 struct AIRiskDetailView: View {
     let risk: ManagerAIRiskItem
     @EnvironmentObject var sessionState: ManagerSessionState
+    @EnvironmentObject var router: ManagerTabRouter
     @State private var decision: ManagerRiskDecision?
     @State private var comment = ""
     @State private var isSaving = false
@@ -87,6 +88,7 @@ struct AIRiskDetailView: View {
                     loading: isSaving,
                     action: save
                 )
+                .accessibilityIdentifier("pilot_manager_record_decision")
                 HStack {
                     Image(systemName: "checkmark.shield")
                     Text(NSLocalizedString("mgr_v43_ai_disclaimer", comment: ""))
@@ -159,6 +161,7 @@ struct AIRiskDetailView: View {
             .overlay(RoundedRectangle(cornerRadius: 14).stroke(decision == value ? color : ManagerV43.border, lineWidth: 1.5))
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier("pilot_manager_risk_decision_\(value.rawValue)")
         .accessibilityAddTraits(decision == value ? .isSelected : [])
     }
 
@@ -200,6 +203,9 @@ struct AIRiskDetailView: View {
             }
             if success {
                 UINotificationFeedbackGenerator().notificationOccurred(.success)
+                if decision == .assign {
+                    router.openNewTask()
+                }
             }
         }
     }

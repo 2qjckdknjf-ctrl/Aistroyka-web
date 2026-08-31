@@ -57,6 +57,13 @@ struct MessagesHubView: View {
                 .padding(WorkerV43.screenX)
             }
             .background(WorkerV43.bg.ignoresSafeArea())
+            .overlay(alignment: .topLeading) {
+                Text("messages-hub")
+                    .font(.system(size: 1))
+                    .foregroundStyle(.clear)
+                    .accessibilityIdentifier("pilot_worker_messages")
+                    .accessibilityLabel("messages-hub")
+            }
             .toolbar(.hidden, for: .navigationBar)
             .refreshable { load() }
             .onAppear { load() }
@@ -114,18 +121,39 @@ struct MessagesHubView: View {
                 .accessibilityIdentifier("pilot_worker_mark_all_read")
             }
             ForEach(inbox) { item in
-                if item.targetType == "report", let targetId = item.targetId {
+                let target = (item.targetType ?? "").lowercased()
+                if target == "report", let targetId = item.targetId {
                     NavigationLink {
                         ManagerFeedbackResubmitView(reportId: targetId, notificationId: item.id)
                     } label: {
                         inboxCard(title: item.title, detail: item.body, unread: isUnread(item))
                     }
                     .simultaneousGesture(TapGesture().onEnded { markRead(item) })
-                } else if item.targetType == "issue", let targetId = item.targetId {
+                } else if target == "issue", let targetId = item.targetId {
                     NavigationLink {
                         IssueInboxDestination(
                             project: ProjectDTO(id: item.projectId ?? project.id, name: project.name),
                             issueId: targetId
+                        )
+                    } label: {
+                        inboxCard(title: item.title, detail: item.body, unread: isUnread(item))
+                    }
+                    .simultaneousGesture(TapGesture().onEnded { markRead(item) })
+                } else if target == "task", let targetId = item.targetId {
+                    NavigationLink {
+                        TaskInboxDestination(
+                            project: ProjectDTO(id: item.projectId ?? project.id, name: project.name),
+                            taskId: targetId
+                        )
+                    } label: {
+                        inboxCard(title: item.title, detail: item.body, unread: isUnread(item))
+                    }
+                    .simultaneousGesture(TapGesture().onEnded { markRead(item) })
+                } else if target == "document", let targetId = item.targetId {
+                    NavigationLink {
+                        DocumentInboxDestination(
+                            project: ProjectDTO(id: item.projectId ?? project.id, name: project.name),
+                            documentId: targetId
                         )
                     } label: {
                         inboxCard(title: item.title, detail: item.body, unread: isUnread(item))
@@ -270,6 +298,98 @@ struct IssueInboxDestination: View {
         }
         do {
             issue = try await WorkerV43API.issue(projectId: project.id, issueId: issueId)
+        } catch {
+            errorMessage = WorkerV43Copy.userFacing(error)
+        }
+    }
+}
+
+struct TaskInboxDestination: View {
+    let project: ProjectDTO
+    let taskId: String
+    @ObservedObject private var store = AppStateStoreManager.shared
+    @State private var task: TaskDTO?
+    @State private var errorMessage: String?
+
+    var body: some View {
+        Group {
+            if let task {
+                TaskDetailV43View(task: task, projectId: project.id, dayId: store.state.shift.dayId)
+            } else if let errorMessage {
+                WorkerV43EmptyState(
+                    title: WorkerV43Copy.userFacing(errorMessage),
+                    retry: { Task { await load() } }
+                )
+            } else {
+                ProgressView()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+        .background(WorkerV43.bg.ignoresSafeArea())
+        .task { await load() }
+    }
+
+    private func load() async {
+        if WorkerV43Preview.isEnabled {
+            let catalog = WorkerV43PreviewCatalog.tasks(projectId: project.id)
+            task = catalog.first(where: { $0.id == taskId }) ?? catalog.first
+            return
+        }
+        do {
+            task = try await WorkerAPI.task(id: taskId)
+        } catch {
+            let today = (try? await WorkerAPI.tasksToday(projectId: project.id)) ?? []
+            if let match = today.first(where: { $0.id == taskId }) {
+                task = match
+            } else {
+                errorMessage = WorkerV43Copy.userFacing(error)
+            }
+        }
+    }
+}
+
+struct DocumentInboxDestination: View {
+    let project: ProjectDTO
+    let documentId: String
+    @State private var document: WorkerDocumentDTO?
+    @State private var errorMessage: String?
+
+    var body: some View {
+        Group {
+            if let document {
+                DocumentPreviewView(document: document)
+            } else if let errorMessage {
+                WorkerV43EmptyState(
+                    title: WorkerV43Copy.userFacing(errorMessage),
+                    retry: { Task { await load() } }
+                )
+            } else {
+                ProgressView()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+        .background(WorkerV43.bg.ignoresSafeArea())
+        .task { await load() }
+    }
+
+    private func load() async {
+        let cached = WorkerV43API.cachedDocuments(projectId: project.id)
+        if let match = cached.first(where: { $0.id == documentId }) {
+            document = match
+            return
+        }
+        if WorkerV43Preview.isEnabled {
+            let catalog = WorkerV43PreviewCatalog.documents(projectId: project.id)
+            document = catalog.first(where: { $0.id == documentId }) ?? catalog.first
+            return
+        }
+        do {
+            let list = try await WorkerV43API.documents(projectId: project.id)
+            if let match = list.first(where: { $0.id == documentId }) {
+                document = match
+            } else {
+                errorMessage = NSLocalizedString("wrk_v43_doc_preview_pending", comment: "")
+            }
         } catch {
             errorMessage = WorkerV43Copy.userFacing(error)
         }

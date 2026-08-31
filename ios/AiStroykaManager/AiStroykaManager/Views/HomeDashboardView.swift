@@ -27,6 +27,9 @@ struct HomeDashboardView: View {
     @State private var openedTaskId: String?
     @State private var openedProjectId: String?
     @State private var openedDocumentsProjectId: String?
+    @State private var openedIssueProjectId: String?
+    @State private var openedIssueId: String?
+    @State private var showNotifications = false
     @State private var workloadItems: [WorkloadItemDTO] = []
     @AppStorage("mgr.v43.aiAssistantOn") private var aiAssistantOn = true
 
@@ -114,6 +117,32 @@ struct HomeDashboardView: View {
             )) {
                 DocumentsHubView(initialProjectId: openedDocumentsProjectId)
             }
+            .navigationDestination(isPresented: Binding(
+                get: { openedIssueId != nil && openedIssueProjectId != nil },
+                set: { if !$0 { openedIssueId = nil; openedIssueProjectId = nil } }
+            )) {
+                if let projectId = openedIssueProjectId {
+                    ProjectIssuesForProjectView(projectId: projectId, focusIssueId: openedIssueId)
+                }
+            }
+            .fullScreenCover(isPresented: $showNotifications) {
+                NavigationStack {
+                    NotificationsView(onOpenTarget: { type, id, projectId in
+                        openNotificationTarget(type: type, id: id, projectId: projectId)
+                    })
+                        .toolbar {
+                            ToolbarItem(placement: .cancellationAction) {
+                                Button(NSLocalizedString("mgr_close", comment: "")) {
+                                    showNotifications = false
+                                }
+                                .accessibilityIdentifier("pilot_manager_inbox_close")
+                            }
+                        }
+                }
+                .environmentObject(router)
+                .preferredColorScheme(.dark)
+                .tint(ManagerV43.yellow)
+            }
         }
     }
 
@@ -123,21 +152,23 @@ struct HomeDashboardView: View {
     }
 
     private var content: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                header
-                if !networkMonitor.isConnected {
-                    ManagerV43OfflineBanner(lastSync: lastSync, retry: { load() })
-                        .padding(.horizontal, ManagerV43.screenX)
+        VStack(spacing: 0) {
+            header
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    if !networkMonitor.isConnected {
+                        ManagerV43OfflineBanner(lastSync: lastSync, retry: { load() })
+                            .padding(.horizontal, ManagerV43.screenX)
+                    }
+                    featuredCard
+                    attentionRow
+                    workloadSection
+                    getStartedSection
+                    todaySection
+                    aiSummaryCard
                 }
-                featuredCard
-                attentionRow
-                workloadSection
-                getStartedSection
-                todaySection
-                aiSummaryCard
+                .padding(.bottom, 88)
             }
-            .padding(.bottom, 24)
         }
     }
 
@@ -165,7 +196,9 @@ struct HomeDashboardView: View {
                     .foregroundStyle(ManagerV43.textSecondary)
             }
             Spacer()
-            Button { router.selectedTab = .more; router.openNotifications = true } label: {
+            Button {
+                showNotifications = true
+            } label: {
                 ZStack(alignment: .topTrailing) {
                     Image(systemName: "bell")
                         .foregroundStyle(ManagerV43.textPrimary)
@@ -175,11 +208,19 @@ struct HomeDashboardView: View {
                     }
                 }
             }
+            .buttonStyle(.plain)
+            .contentShape(Rectangle())
             .accessibilityLabel(NSLocalizedString("mgr_notifications", comment: ""))
-            Circle()
-                .fill(ManagerV43.cardStrong)
-                .frame(width: 36, height: 36)
-                .overlay(Image(systemName: "person.fill").foregroundStyle(ManagerV43.textSecondary))
+            .accessibilityIdentifier("pilot_manager_home_notifications")
+            Button { router.selectedTab = .more } label: {
+                Circle()
+                    .fill(ManagerV43.cardStrong)
+                    .frame(width: 36, height: 36)
+                    .overlay(Image(systemName: "person.fill").foregroundStyle(ManagerV43.textSecondary))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(NSLocalizedString("mgr_tab_more", comment: ""))
+            .accessibilityIdentifier("pilot_manager_home_profile")
         }
         .padding(.horizontal, ManagerV43.screenX)
         .padding(.top, 8)
@@ -312,7 +353,7 @@ struct HomeDashboardView: View {
                         tint: ManagerV43.danger,
                         title: String(format: NSLocalizedString("mgr_v43_high_risks_fmt", comment: ""), max(risks, ManagerV43Preview.showsCatalogWithoutAuth ? 3 : 0)),
                         subtitle: NSLocalizedString("mgr_v43_high_risks_sub", comment: "")
-                    ) { router.selectedTab = .ai }
+                    ) { openAttentionRisks() }
                     attentionCard(
                         icon: "clock.badge.exclamationmark",
                         tint: ManagerV43.yellow,
@@ -344,6 +385,14 @@ struct HomeDashboardView: View {
             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
         .buttonStyle(.plain)
+    }
+
+    private func openAttentionRisks() {
+        if let id = guideRiskSignals.first(where: { !$0.id.isEmpty })?.id {
+            router.openAIRisk(id)
+        } else {
+            router.selectedTab = .ai
+        }
     }
 
     private func openAttentionReports() {
@@ -432,12 +481,41 @@ struct HomeDashboardView: View {
             case "project":
                 openedProjectId = entityId
                 return
+            case "issue":
+                openedIssueProjectId = item.projectId
+                openedIssueId = entityId
+                return
+            case "document":
+                openedDocumentsProjectId = item.projectId ?? entityId
+                return
             default:
                 break
             }
         }
         if let projectId = item.projectId, !projectId.isEmpty {
             openedProjectId = projectId
+        }
+    }
+
+    private func openNotificationTarget(type: String, id: String, projectId: String?) {
+        showNotifications = false
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+            switch type.lowercased() {
+            case "task":
+                openedTaskId = id
+            case "report":
+                openedReportId = id
+            case "project":
+                openedProjectId = id
+            case "document":
+                openedDocumentsProjectId = projectId ?? id
+            case "issue":
+                guard let projectId, !projectId.isEmpty else { return }
+                openedIssueProjectId = projectId
+                openedIssueId = id
+            default:
+                break
+            }
         }
     }
 
@@ -453,13 +531,13 @@ struct HomeDashboardView: View {
         guard let gs = activationStatus?.getStarted else { return [] }
         var rows: [(String, () -> Void)] = []
         if gs.createProject != true {
-            rows.append((NSLocalizedString("mgr_v43_step_create_project", comment: ""), { router.selectedTab = .projects }))
+            rows.append((NSLocalizedString("mgr_v43_step_create_project", comment: ""), { router.openNewProject() }))
         }
         if gs.inviteTeam != true {
-            rows.append((NSLocalizedString("mgr_v43_step_invite", comment: ""), { router.selectedTab = .more }))
+            rows.append((NSLocalizedString("mgr_v43_step_invite", comment: ""), { router.openTeam() }))
         }
         if gs.addTask != true {
-            rows.append((NSLocalizedString("mgr_v43_step_add_task", comment: ""), { router.selectedTab = .tasks }))
+            rows.append((NSLocalizedString("mgr_v43_step_add_task", comment: ""), { router.openNewTask() }))
         }
         if gs.uploadReport != true {
             rows.append((NSLocalizedString("mgr_v43_step_upload_report", comment: ""), { router.openReportsReview() }))
@@ -506,9 +584,18 @@ struct HomeDashboardView: View {
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundStyle(ManagerV43.textPrimary)
                 Spacer()
-                Button(NSLocalizedString("mgr_v43_all_tasks", comment: "")) { router.selectedTab = .tasks }
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(ManagerV43.dataBlue)
+                Button {
+                    router.selectedTab = .tasks
+                } label: {
+                    Text(NSLocalizedString("mgr_v43_all_tasks", comment: ""))
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(ManagerV43.dataBlue)
+                        .padding(.horizontal, 10)
+                        .frame(minHeight: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("pilot_manager_home_all_tasks")
             }
             .padding(.horizontal, ManagerV43.screenX)
             if todayTasks.isEmpty {
@@ -561,6 +648,7 @@ struct HomeDashboardView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
             .buttonStyle(.plain)
+            .accessibilityIdentifier("pilot_manager_home_open_ai")
         }
         .padding(16)
         .background(
@@ -583,6 +671,19 @@ struct HomeDashboardView: View {
     }
 
     private func loadAsync() async {
+        if ManagerV43Preview.showsCatalogWithoutAuth {
+            overview = ManagerDemoCatalog.overview
+            projects = ManagerDemoCatalog.projects
+            todayTasks = ManagerDemoCatalog.tasks
+            lastSync = Date()
+            router.tasksBadge = overview?.kpis?.tasksOverdue ?? 0
+            router.notificationsBadge = ManagerDemoCatalog.notifications.filter { $0.readAt == nil }.count
+            reviewReportsCount = ManagerDemoCatalog.reports.filter { ManagerV43Formatters.reportQueueBucket(from: $0.status) == "review" }.count
+            workloadItems = ManagerDemoCatalog.workload
+            errorMessage = nil
+            isLoading = false
+            return
+        }
         await runManagerLoad(
             setLoading: { isLoading = $0 },
             setErrorMessage: { errorMessage = $0 },

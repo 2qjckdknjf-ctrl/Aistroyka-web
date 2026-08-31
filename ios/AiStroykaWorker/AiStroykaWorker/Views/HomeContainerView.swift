@@ -13,6 +13,8 @@ struct HomeContainerView: View {
     @State private var projects: [ProjectDTO] = []
     @State private var loading = true
     @State private var errorMessage: String?
+    @State private var showQR = false
+    @State private var joinMessage: String?
     
     var body: some View {
         Group {
@@ -25,12 +27,22 @@ struct HomeContainerView: View {
                     retryTitle: NSLocalizedString("worker_retry", comment: "")
                 ) { loadProjects() }
             } else if projects.isEmpty {
-                VStack(spacing: 8) {
+                VStack(spacing: 12) {
                     Text(NSLocalizedString("worker_no_projects", comment: ""))
                     Text(NSLocalizedString("worker_no_projects_subtitle", comment: ""))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
+                    if let joinMessage {
+                        Text(joinMessage)
+                            .font(.caption)
+                            .foregroundStyle(WorkerSemanticColors.error)
+                            .multilineTextAlignment(.center)
+                    }
+                    WorkerV43PrimaryButton(title: NSLocalizedString("wrk_v43_scan_qr", comment: "")) {
+                        showQR = true
+                    }
+                    .accessibilityIdentifier("pilot_worker_scan_qr")
                 }
                 .padding()
             } else if selectedProject == nil, projects.count == 1 {
@@ -40,7 +52,11 @@ struct HomeContainerView: View {
                         saveSelectedProjectId(projects[0].id)
                     }
             } else if selectedProject == nil {
-                ProjectPickerView(projects: projects, selected: $selectedProject)
+                ProjectPickerView(
+                    projects: projects,
+                    selected: $selectedProject,
+                    onScanQR: { showQR = true }
+                )
             } else if UITestLaunchHooks.isE2EEnabled, UITestLaunchHooks.e2eOpenReportDraft {
                 ReportCreateView(
                     projectId: selectedProject!.id,
@@ -65,16 +81,40 @@ struct HomeContainerView: View {
         .aistroykaPageBackground(WorkerSemanticColors.pageBackground)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("pilot_worker_home_container")
+        .sheet(isPresented: $showQR) {
+            QRScannerView(
+                onToken: { token in joinScannedToken(token) },
+                onInvalid: { joinMessage = $0 }
+            )
+        }
         .onAppear {
             loadProjects()
             restoreSelectedProject()
             applyE2EProjectSelectionIfNeeded()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .workerProjectsChanged)) { _ in
+            loadProjects()
         }
         .onChange(of: selectedProject?.id) { new in
             if let id = new { saveSelectedProjectId(id) }
         }
         .onChange(of: projects.count) { _ in
             _ = applyE2EProjectSelectionIfNeeded()
+        }
+    }
+
+    private func joinScannedToken(_ token: String) {
+        Task {
+            do {
+                try await WorkerV43API.joinFromInviteToken(token)
+                await MainActor.run {
+                    joinMessage = NSLocalizedString("wrk_v43_qr_joined", comment: "")
+                }
+            } catch {
+                await MainActor.run {
+                    joinMessage = WorkerV43Copy.userFacing(error)
+                }
+            }
         }
     }
     

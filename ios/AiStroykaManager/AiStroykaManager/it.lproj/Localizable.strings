@@ -37,6 +37,8 @@
 "mgr_err_offline_signin" = "Nessuna connessione. Accesso non disponibile offline.";
 "mgr_err_empty_credentials" = "Inserisci email e password.";
 "mgr_err_apple_sign_in" = "Accesso con Apple non riuscito. Riprova o usa l'email.";
+"mgr_err_google_sign_in" = "Accesso con Google non riuscito. Riprova o usa l'email.";
+"mgr_v43_continue_google" = "Continua con Google";
 "mgr_active_workers" = "Operatori attivi";
 "mgr_ai_analyses" = "Analisi IA";
 "mgr_ai_copilot_placeholder" = "Copilota IA — IA di progetto e insight";
@@ -134,7 +136,7 @@
 "mgr_issues" = "Issue";
 "mgr_loading_issues" = "Caricamento issue…";
 "mgr_no_issues_title" = "Nessuna issue";
-"mgr_no_issues_subtitle" = "Le issue segnalate dal worker appariranno qui.";
+"mgr_no_issues_subtitle" = "Le issue del worker e quelle che crei appariranno qui.";
 "mgr_issue_evidence" = "Evidenza fotografica";
 "mgr_issue_status" = "Stato";
 "mgr_open_shift" = "Turno aperto";
@@ -282,6 +284,9 @@
 "mgr_v43_ai_check" = "L'AI verifica la completezza dell'attività";
 "mgr_v43_optional" = "Opzionale";
 "mgr_v43_create_task" = "Crea attività";
+"mgr_v43_create_issue" = "Crea issue";
+"mgr_v43_issue_title_placeholder" = "Cosa va corretto";
+"mgr_v43_task_from_remark" = "Crea attività dal rilievo";
 "mgr_v43_loading_docs" = "Caricamento documenti…";
 "mgr_v43_upload" = "Carica";
 "mgr_v43_doc_search" = "Nome o numero documento";
@@ -397,6 +402,7 @@
 "mgr_v43_zoom" = "Ingrandisci foto";
 "mgr_v43_media_index_fmt" = "%d / %d";
 "mgr_v43_copy_id" = "Copia identificatore";
+"mgr_v43_contact" = "Contatta";
 "mgr_v43_role_manager" = "Project manager";
 "mgr_v43_role_engineer" = "Ingegnere capo";
 "mgr_v43_auth_required" = "Accedi per caricare i dati live dello spazio di lavoro.";

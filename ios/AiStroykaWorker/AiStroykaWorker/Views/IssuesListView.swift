@@ -10,6 +10,7 @@ struct IssuesListView: View {
     let project: ProjectDTO
     var initialReport: Bool = false
     var linkedTaskId: String? = nil
+    var focusIssueId: String? = nil
     @State private var issues: [WorkerIssueDTO] = []
     @State private var loading = true
     @State private var errorMessage: String?
@@ -22,6 +23,7 @@ struct IssuesListView: View {
     @State private var showCreateCamera = false
     @State private var creating = false
     @State private var currentUserId: String?
+    @State private var focusedIssue: WorkerIssueDTO?
 
     var body: some View {
         NavigationStack {
@@ -49,11 +51,26 @@ struct IssuesListView: View {
             .refreshable { load() }
             .onAppear {
                 issues = WorkerV43API.cachedIssues(projectId: project.id)
+                openFocusedIssueIfNeeded()
                 load()
                 if initialReport { showCreate = true }
                 Task { currentUserId = await AuthService.shared.currentSession()?.user.id }
             }
             .sheet(isPresented: $showCreate) { createSheet }
+            .background(
+                NavigationLink(
+                    destination: Group {
+                        if let focusedIssue {
+                            IssueResolutionView(project: project, issue: focusedIssue)
+                        }
+                    },
+                    isActive: Binding(
+                        get: { focusedIssue != nil },
+                        set: { if !$0 { focusedIssue = nil } }
+                    )
+                ) { EmptyView() }
+                .hidden()
+            )
             .accessibilityIdentifier("pilot_worker_issues_list")
         }
     }
@@ -222,11 +239,26 @@ struct IssuesListView: View {
         }
     }
 
+    private func openFocusedIssueIfNeeded() {
+        guard let focusIssueId, !focusIssueId.isEmpty, focusedIssue == nil else { return }
+        if let match = issues.first(where: { $0.id == focusIssueId }) {
+            focusedIssue = match
+            return
+        }
+        guard !WorkerV43Preview.isEnabled else { return }
+        Task {
+            if let issue = try? await WorkerV43API.issue(projectId: project.id, issueId: focusIssueId) {
+                await MainActor.run { focusedIssue = issue }
+            }
+        }
+    }
+
     private func load() {
         errorMessage = nil
         if WorkerV43Preview.isEnabled {
             issues = WorkerV43PreviewCatalog.issues(projectId: project.id)
             loading = false
+            openFocusedIssueIfNeeded()
             return
         }
         loading = issues.isEmpty
@@ -236,6 +268,7 @@ struct IssuesListView: View {
                 await MainActor.run {
                     issues = list
                     loading = false
+                    openFocusedIssueIfNeeded()
                 }
             } catch {
                 await MainActor.run {
@@ -249,13 +282,8 @@ struct IssuesListView: View {
     }
 
     private func createDescription() -> String? {
-        var parts: [String] = []
         let typed = createDetail.trimmingCharacters(in: .whitespacesAndNewlines)
-        if !typed.isEmpty { parts.append(typed) }
-        if createImage != nil {
-            parts.append(NSLocalizedString("wrk_v43_issue_create_photo_queued", comment: ""))
-        }
-        return parts.isEmpty ? nil : parts.joined(separator: "\n")
+        return typed.isEmpty ? nil : typed
     }
 
     private func resetCreate() {
@@ -292,13 +320,27 @@ struct IssuesListView: View {
         creating = true
         Task {
             do {
-                _ = try await WorkerV43API.createIssue(
+                let created = try await WorkerV43API.createIssue(
                     projectId: project.id,
                     title: title,
                     description: description,
                     taskId: linkedTaskId,
                     idempotencyKey: DeviceContext.newIdempotencyKey()
                 )
+                if let createImage, let jpeg = createImage.jpegData(compressionQuality: 0.85) {
+                    let sessionId = try await WorkerAPI.uploadEvidence(
+                        purpose: WorkerPhotoKind.issue.rawValue,
+                        jpeg: jpeg
+                    )
+                    _ = try await WorkerV43API.updateIssue(
+                        projectId: project.id,
+                        issueId: created.id,
+                        status: nil,
+                        description: nil,
+                        idempotencyKey: DeviceContext.newIdempotencyKey(),
+                        evidenceUploadSessionId: sessionId
+                    )
+                }
                 await MainActor.run {
                     creating = false
                     resetCreate()
@@ -323,10 +365,11 @@ struct IssueResolutionView: View {
     @State private var sending = false
     @State private var message: String?
     @State private var currentUserId: String?
+    @State private var assignedToMe = false
     @ObservedObject private var network = NetworkMonitor.shared
 
     private var canMutate: Bool {
-        issue.workerMayMutate(currentUserId: currentUserId)
+        issue.workerMayMutate(currentUserId: currentUserId) || assignedToMe
     }
 
     var body: some View {
@@ -412,7 +455,21 @@ struct IssueResolutionView: View {
         .navigationTitle(NSLocalizedString("wrk_v43_issues", comment: ""))
         .fullScreenCover(isPresented: $showCamera) { CameraPicker(image: $image) }
         .onAppear {
-            Task { currentUserId = await AuthService.shared.currentSession()?.user.id }
+            Task {
+                let userId = await AuthService.shared.currentSession()?.user.id
+                var assigneeMatch = false
+                if let taskId = issue.taskId, !taskId.isEmpty, !WorkerV43Preview.isEnabled {
+                    if let task = try? await WorkerAPI.task(id: taskId),
+                       let userId,
+                       task.assignedTo == userId {
+                        assigneeMatch = true
+                    }
+                }
+                await MainActor.run {
+                    currentUserId = userId
+                    assignedToMe = assigneeMatch
+                }
+            }
         }
     }
 

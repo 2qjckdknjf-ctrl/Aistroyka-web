@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import UIKit
 import Shared
 
 enum ManagerMoreDestination: Hashable {
@@ -32,6 +33,7 @@ struct ManagerMoreView: View {
     @State private var reportsBadge: Int?
     @State private var lastSync: Date?
     @State private var meEmail: String?
+    @State private var documentsProjectId: String?
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -115,12 +117,16 @@ struct ManagerMoreView: View {
                             path.append(.issues(projectId: projectId, issueId: targetId))
                         }
                         else if t == "project" { path.append(.project(id: targetId)) }
+                        else if t == "document" {
+                            documentsProjectId = projectId ?? targetId
+                            path.append(.documents)
+                        }
                     })
                 case .reports:
                     ReportsInboxView()
                         .accessibilityIdentifier("pilot_manager_tab_reports")
                 case .documents:
-                    DocumentsHubView()
+                    DocumentsHubView(initialProjectId: documentsProjectId)
                 case .team:
                     TeamOverviewView()
                 case .analytics:
@@ -137,19 +143,11 @@ struct ManagerMoreView: View {
                     ProjectIssuesForProjectView(projectId: projectId, focusIssueId: issueId)
                 }
             }
-            .onChange(of: router.openNotifications) { open in
-                if open {
-                    router.openNotifications = false
-                    path.append(.notifications)
-                }
-            }
-            .onChange(of: router.reportsFocusReview) { focus in
-                if focus {
-                    router.reportsFocusReview = false
-                    path.append(.reports)
-                }
-            }
             .task { await loadMeta() }
+            .onAppear { consumeRouterDeepLinks() }
+            .onChange(of: router.pendingReportId) { _ in consumeRouterDeepLinks() }
+            .onChange(of: router.pendingDocumentsProjectId) { _ in consumeRouterDeepLinks() }
+            .onChange(of: router.pendingIssueId) { _ in consumeRouterDeepLinks() }
             .onReceive(NotificationCenter.default.publisher(for: ManagerLiveSync.reportsChanged)) { _ in
                 Task { await loadMeta() }
             }
@@ -205,7 +203,7 @@ struct ManagerMoreView: View {
                     .foregroundStyle(network.isConnected ? ManagerV43.success : ManagerV43.warning)
             }
             Spacer()
-            NavigationLink(value: ManagerMoreDestination.settings) {
+            Button(action: openCabinetDashboard) {
                 Text(NSLocalizedString("mgr_v43_manage_plan", comment: ""))
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(ManagerV43.yellow)
@@ -231,24 +229,39 @@ struct ManagerMoreView: View {
                     moreRow("bell", NSLocalizedString("mgr_notifications", comment: ""), nil, NSLocalizedString("mgr_v43_notifications_sub", comment: ""))
                 }
                 .accessibilityIdentifier("pilot_manager_more_notifications")
-                moreRow(
-                    "icloud.and.arrow.down",
-                    NSLocalizedString("mgr_v43_offline_data", comment: ""),
-                    nil,
-                    lastSync.map { String(format: NSLocalizedString("mgr_v43_last_sync_fmt", comment: ""), ManagerV43Formatters.relativeTime($0)) }
-                )
+                Button {
+                    Task { await loadMeta() }
+                } label: {
+                    moreRow(
+                        "icloud.and.arrow.down",
+                        NSLocalizedString("mgr_v43_offline_data", comment: ""),
+                        nil,
+                        lastSync.map { String(format: NSLocalizedString("mgr_v43_last_sync_fmt", comment: ""), ManagerV43Formatters.relativeTime($0)) }
+                    )
+                }
+                .buttonStyle(.plain)
                 NavigationLink(value: ManagerMoreDestination.settings) {
                     moreRow("lock.shield", NSLocalizedString("mgr_v43_security", comment: ""), nil, nil)
                 }
-                HStack {
-                    Image(systemName: "globe").foregroundStyle(ManagerV43.dataBlue).frame(width: 24)
-                    Text(NSLocalizedString("mgr_v43_language", comment: "")).foregroundStyle(ManagerV43.textPrimary)
-                    Spacer()
-                    Text(Locale.current.localizedString(forIdentifier: Locale.current.identifier) ?? Locale.current.identifier)
-                        .foregroundStyle(ManagerV43.textSecondary)
+                .accessibilityIdentifier("pilot_manager_more_settings")
+                Button {
+                    if let url = URL(string: UIApplication.openSettingsURLString) {
+                        UIApplication.shared.open(url)
+                    }
+                } label: {
+                    HStack {
+                        Image(systemName: "globe").foregroundStyle(ManagerV43.dataBlue).frame(width: 24)
+                        Text(NSLocalizedString("mgr_v43_language", comment: "")).foregroundStyle(ManagerV43.textPrimary)
+                        Spacer()
+                        Text(Locale.current.localizedString(forIdentifier: Locale.current.identifier) ?? Locale.current.identifier)
+                            .foregroundStyle(ManagerV43.textSecondary)
+                        Image(systemName: "chevron.right").foregroundStyle(ManagerV43.textSecondary)
+                    }
+                    .padding(.horizontal, 14)
+                    .frame(minHeight: ManagerV43.touch)
                 }
-                .padding(.horizontal, 14)
-                .frame(minHeight: ManagerV43.touch)
+                .buttonStyle(.plain)
+                .accessibilityLabel(NSLocalizedString("mgr_v43_language", comment: ""))
             }
             .background(ManagerV43.card)
             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
@@ -352,6 +365,33 @@ struct ManagerMoreView: View {
         return workspaceName ?? NSLocalizedString("mgr_v43_workspace", comment: "")
     }
 
+    private func consumeRouterDeepLinks() {
+        if let id = router.pendingReportId, !id.isEmpty {
+            router.pendingReportId = nil
+            path.append(.report(id: id))
+        }
+        if let id = router.pendingDocumentsProjectId, !id.isEmpty {
+            router.pendingDocumentsProjectId = nil
+            documentsProjectId = id
+            path.append(.documents)
+        }
+        if let issueId = router.pendingIssueId, !issueId.isEmpty,
+           let projectId = router.pendingIssueProjectId, !projectId.isEmpty {
+            router.pendingIssueId = nil
+            router.pendingIssueProjectId = nil
+            path.append(.issues(projectId: projectId, issueId: issueId))
+        }
+    }
+
+    private func openCabinetDashboard() {
+        let raw = Locale.current.language.languageCode?.identifier ?? "en"
+        let locale = ["en", "ru", "es", "it"].contains(raw) ? raw : "en"
+        let base = Config.baseURL.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        if let url = URL(string: "\(base)/\(locale)/dashboard") {
+            UIApplication.shared.open(url)
+        }
+    }
+
     private var profileTitle: String {
         if ManagerV43Preview.showsCatalogWithoutAuth {
             return NSLocalizedString("mgr_v43_profile_name", comment: "")
@@ -370,6 +410,7 @@ struct ManagerMoreView: View {
 }
 
 struct ManagerDecisionsView: View {
+    @EnvironmentObject var router: ManagerTabRouter
     @State private var events: [ManagerRiskAuditEvent] = []
 
     var body: some View {
@@ -383,22 +424,30 @@ struct ManagerDecisionsView: View {
                 ScrollView {
                     VStack(spacing: 10) {
                         ForEach(events) { event in
-                            ManagerV43Card {
-                                Text(NSLocalizedString(event.decision.labelKey, comment: ""))
-                                    .foregroundStyle(ManagerV43.textPrimary)
-                                Text(event.comment)
-                                    .font(.caption)
+                            Button {
+                                if !event.riskId.isEmpty {
+                                    router.openAIRisk(event.riskId)
+                                }
+                            } label: {
+                                ManagerV43Card {
+                                    Text(NSLocalizedString(event.decision.labelKey, comment: ""))
+                                        .foregroundStyle(ManagerV43.textPrimary)
+                                    Text(event.comment)
+                                        .font(.caption)
+                                        .foregroundStyle(ManagerV43.textSecondary)
+                                    Text(ManagerV43Formatters.riskDecisionAuditLine(
+                                        actor: event.actor,
+                                        decision: event.decision.rawValue,
+                                        comment: event.comment,
+                                        source: event.source,
+                                        at: event.createdAt
+                                    ))
+                                    .font(.caption2)
                                     .foregroundStyle(ManagerV43.textSecondary)
-                                Text(ManagerV43Formatters.riskDecisionAuditLine(
-                                    actor: event.actor,
-                                    decision: event.decision.rawValue,
-                                    comment: event.comment,
-                                    source: event.source,
-                                    at: event.createdAt
-                                ))
-                                .font(.caption2)
-                                .foregroundStyle(ManagerV43.textSecondary)
+                                }
                             }
+                            .buttonStyle(.plain)
+                            .disabled(event.riskId.isEmpty)
                         }
                     }
                     .padding(ManagerV43.screenX)

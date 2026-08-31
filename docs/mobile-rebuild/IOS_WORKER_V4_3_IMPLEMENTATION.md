@@ -9,7 +9,7 @@
 Worker stays the existing SwiftUI app (`AiStroykaWorker` + Shared). V4.3 adds the field tab shell and the 16-screen navigation from the canon package, wired to live Worker APIs.
 
 - Tab bar: Today / Tasks / Camera / Messages / More
-- Login: phone OTP + QR invite + existing email/Apple (E2E IDs preserved)
+- Login: email + Apple + Google + QR invite (E2E IDs preserved). Phone OTP is an optional Worker path, hidden unless `AISTROYKA_PHONE_OTP=1`. It is not a production blocker and Twilio is not required for launch.
 - Shift start safety checklist; location stored locally as shift evidence (day start contract remains empty-body)
 - Today, tasks, task detail, work-in-progress, before/after camera, daily report, review, manager return
 - Issues, documents, messages hub, profile/offline settings
@@ -27,7 +27,6 @@ Worker stays the existing SwiftUI app (`AiStroykaWorker` + Shared). V4.3 adds th
 
 ## Remaining blockers (owner-gated)
 
-- Phone OTP: client calls Supabase `/auth/v1/otp`. No `SUPABASE_ACCESS_TOKEN` in this worktree; live SMS still needs Twilio/MessageBird plus `apps/web/scripts/enable-auth-phone-otp.mjs`.
 - TestFlight MODE B: `APPROVE_TESTFLIGHT_UPLOAD` is not `YES`; ASC key/id/issuer unset.
 - Live Worker ↔ Manager E2E/push loop was not run: no `ios/Config/.uitest-e2e-credentials`.
 - WIP steps stay on-device (no task-progress API — not invented).
@@ -37,7 +36,9 @@ Worker stays the existing SwiftUI app (`AiStroykaWorker` + Shared). V4.3 adds th
 
 **Shipped:** PR [#256](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/256) on `main`. Staging and production `buildStamp.sha7` = `0e0f3e6`.
 
-**Verdict: NO** for SMS + live E2E + TestFlight (owner-gated). **YES** for catalog UITest, login smoke, closable code tails, screens 01–16 vs renders, and production deploy of the Worker V4.3 APIs.
+**Optional later (not a launch gate):** Worker phone OTP (`AuthService.requestPhoneOtp` / `verifyPhoneOtp`) may be re-enabled if product demand justifies it, after a real SMS provider is configured and `external_phone_enabled=true`. Twilio setup is **not** an owner-gated launch requirement. Do not add `TWILIO_*` env, CI secrets, or fake credentials.
+
+**Verdict: NO** for live E2E + TestFlight (owner-gated). **YES** for catalog UITest, login smoke, closable code tails, screens 01–16 vs renders, and production deploy of the Worker V4.3 APIs. Phone OTP is optional and currently disabled.
 
 ## Not claimed
 

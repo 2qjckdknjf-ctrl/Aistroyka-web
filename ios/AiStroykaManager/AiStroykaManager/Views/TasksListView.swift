@@ -18,6 +18,7 @@ struct TasksListView: View {
     @State private var chip: TaskChip = .all
     @State private var viewMode: TaskViewMode = .list
     @State private var showCreate = false
+    @State private var pendingCreateAssignee: String?
     @State private var isLoading = true
     @State private var errorMessage: String?
     @State private var loadGeneration = 0
@@ -48,6 +49,11 @@ struct TasksListView: View {
                 }
             }
             .background(ManagerV43.bg.ignoresSafeArea())
+            .overlay(alignment: .topLeading) {
+                Color.clear
+                    .frame(width: 1, height: 1)
+                    .accessibilityIdentifier("pilot_manager_tasks_ready")
+            }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(.hidden, for: .navigationBar)
             .refreshable { await refreshAsync() }
@@ -67,12 +73,20 @@ struct TasksListView: View {
             .onChange(of: router.selectedTab) { tab in
                 if tab != .tasks { showCreate = false }
             }
+            .onChange(of: router.openCreateTask) { open in
+                if open { consumeOpenCreateTask() }
+            }
+            .onChange(of: router.pendingTaskId) { _ in
+                consumePendingTask()
+            }
             .onAppear {
                 if let id = initialProjectId, selectedProjectId == nil { selectedProjectId = id }
                 if router.tasksFocusOverdue {
                     chip = .overdue
                     router.tasksFocusOverdue = false
                 }
+                consumeOpenCreateTask()
+                consumePendingTask()
                 if tasks.isEmpty, let cached = ManagerCacheStore.load([TaskDTO].self, key: "mgr.v43.tasks") {
                     tasks = cached
                     lastSync = ManagerCacheStore.lastSync(key: "mgr.v43.tasks")
@@ -87,7 +101,16 @@ struct TasksListView: View {
             }
             .sheet(isPresented: $showCreate) {
                 if let proj = projects.first(where: { $0.id == selectedProjectId }) ?? projects.first {
-                    TaskCreateEditView(projectId: proj.id, projectName: proj.name, onDismiss: { showCreate = false; load() })
+                    TaskCreateEditView(
+                        projectId: proj.id,
+                        projectName: proj.name,
+                        initialAssignedTo: pendingCreateAssignee,
+                        onDismiss: {
+                            showCreate = false
+                            pendingCreateAssignee = nil
+                            load()
+                        }
+                    )
                 } else {
                     NavigationStack {
                         VStack(spacing: 16) {
@@ -199,7 +222,6 @@ struct TasksListView: View {
             }
             .padding(.bottom, 88)
         }
-        .accessibilityIdentifier("pilot_manager_tasks_ready")
         .safeAreaInset(edge: .bottom) {
             createButton
         }
@@ -326,6 +348,20 @@ struct TasksListView: View {
             .padding(.horizontal, ManagerV43.screenX)
             .padding(.bottom, 8)
             .accessibilityIdentifier("pilot_manager_create_task")
+    }
+
+    private func consumeOpenCreateTask() {
+        guard router.openCreateTask else { return }
+        router.openCreateTask = false
+        pendingCreateAssignee = router.pendingAssigneeUserId
+        router.pendingAssigneeUserId = nil
+        showCreate = true
+    }
+
+    private func consumePendingTask() {
+        guard let id = router.pendingTaskId, !id.isEmpty else { return }
+        router.pendingTaskId = nil
+        deepLinkTaskId = id
     }
 
     @MainActor
@@ -980,6 +1016,7 @@ struct TaskAssigneePickerView: View {
 struct TaskCreateEditView: View {
     let projectId: String
     let projectName: String?
+    var initialAssignedTo: String? = nil
     let onDismiss: () -> Void
     @State private var title = ""
     @State private var details = ""
@@ -1105,6 +1142,11 @@ struct TaskCreateEditView: View {
                     },
                     onDismiss: { showAssigneePicker = false }
                 )
+            }
+            .onAppear {
+                if assignedWorkerId == nil, let initialAssignedTo, !initialAssignedTo.isEmpty {
+                    assignedWorkerId = initialAssignedTo
+                }
             }
         }
     }

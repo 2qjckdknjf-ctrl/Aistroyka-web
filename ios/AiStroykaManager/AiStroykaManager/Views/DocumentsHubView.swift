@@ -187,23 +187,36 @@ struct DocumentsHubView: View {
                 }
 
                 if ManagerV43Preview.isEnabled {
-                    ManagerV43Card {
-                        HStack {
-                            Image("DemoBlueprint")
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: 92, height: 72)
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text(NSLocalizedString("mgr_v43_current_drawing", comment: ""))
-                                    .font(.caption)
+                    Button {
+                        if let first = filtered.first {
+                            openDocument(first)
+                        } else {
+                            showImporter = true
+                        }
+                    } label: {
+                        ManagerV43Card {
+                            HStack {
+                                Image("DemoBlueprint")
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: 92, height: 72)
+                                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text(NSLocalizedString("mgr_v43_current_drawing", comment: ""))
+                                        .font(.caption)
+                                        .foregroundStyle(ManagerV43.textSecondary)
+                                    Text(NSLocalizedString("mgr_v43_open_drawing", comment: ""))
+                                        .font(.subheadline.weight(.semibold))
+                                        .foregroundStyle(ManagerV43.yellow)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
                                     .foregroundStyle(ManagerV43.textSecondary)
-                                Text(NSLocalizedString("mgr_v43_open_drawing", comment: ""))
-                                    .font(.subheadline.weight(.semibold))
-                                    .foregroundStyle(ManagerV43.yellow)
                             }
                         }
                     }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(NSLocalizedString("mgr_v43_open_drawing", comment: ""))
                 }
 
                 ManagerV43PrimaryButton(

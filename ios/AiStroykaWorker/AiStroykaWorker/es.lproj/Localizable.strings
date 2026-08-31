@@ -91,7 +91,7 @@
 "worker_feedback_report_fmt" = "Informe …%@";
 "worker_report_resubmit_title" = "Actualizar informe";
 "worker_manager_note_title" = "Mensaje del manager";
-"worker_resubmit_hint" = "Vuelve a enviar cuando hayas atendido el feedback. Para fotos nuevas crea otro informe desde inicio; esta pantalla solo reenvía con pruebas ya guardadas.";
+"worker_resubmit_hint" = "Haz una foto de corrección si el manager la pidió y vuelve a enviar. Las fotos ya adjuntas siguen como prueba.";
 "worker_evidence_section_title" = "Tus fotos en este informe";
 "worker_evidence_load_failed_fmt" = "No se pudo cargar la foto %d.";
 "worker_evidence_no_preview_fmt" = "Foto %d — vista previa no disponible (id: %@).";
@@ -116,6 +116,8 @@
 "task_chat_unread" = "Chat sin leer";
 
 "worker_apple_sign_in_failed" = "Apple sign-in failed. Try again.";
+"wrk_v43_continue_google" = "Continuar con Google";
+"wrk_v43_google_sign_in_failed" = "El inicio con Google falló. Inténtelo de nuevo.";
 "wrk_v43_hours_short" = "h";
 "wrk_v43_minutes_short" = "min";
 "wrk_v43_sync_never" = "Never synced";
@@ -137,6 +139,7 @@
 "wrk_v43_qr_invalid" = "This code is not a valid site invite.";
 "wrk_v43_qr_hint" = "Scan the site QR from your manager";
 "wrk_v43_qr_saved" = "Invite saved. Sign in to join the site.";
+"wrk_v43_qr_joined" = "Te uniste a la obra. Elige el proyecto si es necesario.";
 "wrk_v43_low_storage" = "Poco espacio en el dispositivo. Libere memoria o la foto podría no guardarse.";
 "wrk_v43_camera_denied" = "Camera access denied";
 "wrk_v43_camera_denied_detail" = "Enable camera in Settings to capture proof photos.";
@@ -248,7 +251,8 @@
 "wrk_v43_closed" = "Closed";
 "wrk_v43_assigned_you" = "Assigned to you";
 "wrk_v43_issue_view_only" = "Solo lectura. Solo el autor puede enviar la resolución.";
-"wrk_v43_take_result_photo" = "Take a result photo";
+"wrk_v43_take_result_photo" = "Hacer foto del resultado";
+"wrk_v43_resubmit_photo" = "Hacer foto de corrección";
 "wrk_v43_issue_comment" = "Comment";
 "wrk_v43_send_review" = "Send for review";
 "wrk_v43_cannot_fix" = "Cannot fix";

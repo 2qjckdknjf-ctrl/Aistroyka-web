@@ -7,15 +7,15 @@ import SwiftUI
 import Shared
 
 struct TaskDetailV43View: View {
-    @EnvironmentObject var router: WorkerTabRouter
     let task: TaskDTO
     let projectId: String
     let dayId: String?
     @State private var progress: WorkerTaskProgress
-    @State private var currentUserId: String?
     @State private var showWIP = false
     @State private var showCamera = false
     @State private var showChat = false
+    @State private var showIssues = false
+    @State private var showDocuments = false
 
     init(task: TaskDTO, projectId: String, dayId: String?) {
         self.task = task
@@ -80,7 +80,7 @@ struct TaskDetailV43View: View {
                         showCamera = true
                     }
                     meta(NSLocalizedString("wrk_v43_preview_doc_kj", comment: ""), "doc.text", WorkerV43.aiViolet) {
-                        router.openDocuments()
+                        showDocuments = true
                     }
                     meta(String(format: NSLocalizedString("wrk_v43_volume_fmt", comment: ""), Int(progress.plannedVolume)), "cube", WorkerV43.dataBlue)
                     meta(String(format: NSLocalizedString("wrk_v43_crew_fmt", comment: ""), progress.crewCount), "person.3", WorkerV43.yellow)
@@ -89,7 +89,7 @@ struct TaskDetailV43View: View {
                     title: NSLocalizedString("wrk_v43_report_issue", comment: ""),
                     systemImage: "exclamationmark.triangle",
                     tint: WorkerV43.danger
-                ) { router.openIssues(taskId: task.id) }
+                ) { showIssues = true }
                 WorkerV43PrimaryButton(
                     title: String(format: NSLocalizedString("wrk_v43_continue_step_fmt", comment: ""), min(progress.completedStepIndexes.count + 1, 5), 5)
                 ) { showWIP = true }
@@ -121,6 +121,20 @@ struct TaskDetailV43View: View {
                     destination: CameraEvidenceView(kind: .before, task: task, projectId: projectId, dayId: dayId),
                     isActive: $showCamera
                 ) { EmptyView() }
+                NavigationLink(
+                    destination: IssuesListView(
+                        project: ProjectDTO(id: projectId, name: nil),
+                        linkedTaskId: task.id
+                    ),
+                    isActive: $showIssues
+                ) { EmptyView() }
+                NavigationLink(
+                    destination: DocumentsDrawingsView(
+                        project: ProjectDTO(id: projectId, name: nil),
+                        initialTab: .drawings
+                    ),
+                    isActive: $showDocuments
+                ) { EmptyView() }
             }
             .hidden()
         )
@@ -128,9 +142,6 @@ struct TaskDetailV43View: View {
             NavigationStack {
                 WorkerTaskChatScreen(task: task)
             }
-        }
-        .onAppear {
-            Task { currentUserId = await AuthService.shared.currentSession()?.user.id }
         }
     }
 

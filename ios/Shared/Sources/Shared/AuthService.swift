@@ -64,52 +64,42 @@ public actor AuthService {
     }
 
     public func signInWithApple(idToken: String, nonce: String?, fullName: String?) async throws {
-        let raw = Config.supabaseURL.trimmingCharacters(in: .whitespacesAndNewlines)
-        let base = raw.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-        guard !base.isEmpty,
-              let url = URL(string: "\(base)/auth/v1/token?grant_type=id_token"),
-              url.scheme != nil, url.host != nil else {
-            throw APIError(statusCode: nil, code: nil, message: "Supabase URL not configured. Set SUPABASE_URL in Config/Secrets.xcconfig or Scheme environment.")
+        try await signInWithIdToken(provider: "apple", idToken: idToken, nonce: nonce, accessToken: nil)
+        if let fullName, !fullName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+           let token = await currentSession()?.token {
+            await updateAuthUserMetadata(accessToken: token, fullName: fullName)
         }
+    }
 
+    public func signInWithIdToken(
+        provider: String,
+        idToken: String,
+        nonce: String?,
+        accessToken: String?
+    ) async throws {
+        let url = try tokenURL(grantType: "id_token")
         var payload: [String: Any] = [
-            "provider": "apple",
+            "provider": provider,
             "id_token": idToken
         ]
         if let nonce, !nonce.isEmpty {
             payload["nonce"] = nonce
         }
-
-        var req = URLRequest(url: url)
-        req.httpMethod = "POST"
-        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        req.setValue(Config.supabaseAnonKey, forHTTPHeaderField: "apikey")
-        req.httpBody = try JSONSerialization.data(withJSONObject: payload)
-
-        let (data, res) = try await URLSession.shared.data(for: req)
-        guard let http = res as? HTTPURLResponse else { throw APIError(statusCode: nil, code: nil, message: "Invalid response") }
-        guard http.statusCode == 200 else {
-            let err = APIError.from(data: data, response: res)
-            throw err
+        if let accessToken, !accessToken.isEmpty {
+            payload["access_token"] = accessToken
         }
+        try await postToken(url: url, payload: payload)
+    }
 
-        let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
-        guard let accessToken = json?["access_token"] as? String,
-              let user = json?["user"] as? [String: Any],
-              let uid = user["id"] as? String else {
-            throw APIError(statusCode: nil, code: nil, message: "Invalid token response")
-        }
-        persistSession(
-            accessToken: accessToken,
-            userId: uid,
-            email: user["email"] as? String,
-            refreshToken: json?["refresh_token"] as? String,
-            expiresAt: Self.expiresAt(from: json)
+    public func exchangePKCE(authCode: String, codeVerifier: String) async throws {
+        let url = try tokenURL(grantType: "pkce")
+        try await postToken(
+            url: url,
+            payload: [
+                "auth_code": authCode,
+                "code_verifier": codeVerifier
+            ]
         )
-
-        if let fullName, !fullName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            await updateAuthUserMetadata(accessToken: accessToken, fullName: fullName)
-        }
     }
 
     /// Live E2E: seed session from host-prefetched Supabase token (see `run-ios-e2e-integration-local.sh`).
@@ -200,6 +190,61 @@ public actor AuthService {
         currentEpoch == startedEpoch
             && !startedRefreshToken.isEmpty
             && currentRefreshToken == startedRefreshToken
+    }
+
+    private func supabaseBaseURL() throws -> String {
+        let raw = Config.supabaseURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        let base = raw.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        guard !base.isEmpty else {
+            throw APIError(
+                statusCode: nil,
+                code: nil,
+                message: "Supabase URL not configured. Set SUPABASE_URL in Config/Secrets.xcconfig or Scheme environment."
+            )
+        }
+        return base
+    }
+
+    private func tokenURL(grantType: String) throws -> URL {
+        let base = try supabaseBaseURL()
+        guard let url = URL(string: "\(base)/auth/v1/token?grant_type=\(grantType)"),
+              url.scheme != nil, url.host != nil else {
+            throw APIError(
+                statusCode: nil,
+                code: nil,
+                message: "Supabase URL not configured. Set SUPABASE_URL in Config/Secrets.xcconfig or Scheme environment."
+            )
+        }
+        return url
+    }
+
+    private func postToken(url: URL, payload: [String: Any]) async throws {
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.setValue(Config.supabaseAnonKey, forHTTPHeaderField: "apikey")
+        req.httpBody = try JSONSerialization.data(withJSONObject: payload)
+
+        let (data, res) = try await URLSession.shared.data(for: req)
+        guard let http = res as? HTTPURLResponse else {
+            throw APIError(statusCode: nil, code: nil, message: "Invalid response")
+        }
+        guard http.statusCode == 200 else {
+            throw APIError.from(data: data, response: res)
+        }
+        let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        guard let accessToken = json?["access_token"] as? String,
+              let user = json?["user"] as? [String: Any],
+              let uid = user["id"] as? String else {
+            throw APIError(statusCode: nil, code: nil, message: "Invalid token response")
+        }
+        persistSession(
+            accessToken: accessToken,
+            userId: uid,
+            email: user["email"] as? String,
+            refreshToken: json?["refresh_token"] as? String,
+            expiresAt: Self.expiresAt(from: json)
+        )
     }
 
     private func persistSession(
@@ -310,9 +355,8 @@ public actor AuthService {
     }
 
     private func updateAuthUserMetadata(accessToken: String, fullName: String) async {
-        let raw = Config.supabaseURL.trimmingCharacters(in: .whitespacesAndNewlines)
-        let base = raw.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-        guard !base.isEmpty, let url = URL(string: "\(base)/auth/v1/user") else { return }
+        guard let base = try? supabaseBaseURL(),
+              let url = URL(string: "\(base)/auth/v1/user") else { return }
         var req = URLRequest(url: url)
         req.httpMethod = "PUT"
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
