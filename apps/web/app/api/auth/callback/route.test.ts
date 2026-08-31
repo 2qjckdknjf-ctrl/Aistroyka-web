@@ -29,6 +29,14 @@ describe("GET /api/auth/callback", () => {
           email: "user@example.com",
           app_metadata: { provider: "apple" },
           user_metadata: { sub: "apple-sub-1", full_name: "Alex Builder" },
+          identities: [
+            {
+              id: "apple-auth-id",
+              identity_id: "apple-identity-id",
+              provider: "apple",
+              identity_data: { sub: "apple-sub-1", email: "user@example.com" },
+            },
+          ],
         },
       },
     });
@@ -79,18 +87,39 @@ describe("GET /api/auth/callback", () => {
     expect(response.headers.get("location")).toContain("/en/dashboard?onboarding=1");
   });
 
-  it("links a Google identity after OAuth exchange", async () => {
+  it("links requested Google identity even when Apple remains the primary provider", async () => {
     getUser.mockResolvedValue({
       data: {
         user: {
           id: "user-1",
           email: "user@example.com",
-          app_metadata: { provider: "google" },
-          user_metadata: { sub: "google-sub-1", name: "Alex Builder", picture: "https://example.com/a.png" },
+          app_metadata: { provider: "apple" },
+          user_metadata: { full_name: "Alex Builder" },
+          identities: [
+            {
+              id: "apple-auth-id",
+              identity_id: "apple-identity-id",
+              provider: "apple",
+              identity_data: { sub: "apple-sub-1" },
+            },
+            {
+              id: "google-auth-id",
+              identity_id: "google-identity-id",
+              provider: "google",
+              identity_data: {
+                sub: "google-sub-1",
+                email: "user@example.com",
+                name: "Alex Builder",
+                picture: "https://example.com/a.png",
+              },
+            },
+          ],
         },
       },
     });
-    const request = new Request("https://aistroyka.ai/api/auth/callback?code=test-code");
+    const request = new Request(
+      "https://aistroyka.ai/api/auth/callback?code=test-code&intent=link&provider=google&callback=%2Fen%2Fdashboard%2Fsettings%2Fauth"
+    );
     const response = await GET(request as never);
     expect(response.status).toBe(307);
     expect(linkIdentityRow).toHaveBeenCalledWith(
@@ -98,6 +127,7 @@ describe("GET /api/auth/callback", () => {
       expect.objectContaining({
         user_id: "user-1",
         provider: "google",
+        identity_id: "google-identity-id",
         provider_user_id: "google-sub-1",
       })
     );
