@@ -59,7 +59,10 @@ export async function addMediaToReport(
   const report = await repo.getById(supabase, reportId, ctx.tenantId);
   if (!report) return { ok: false, error: "Report not found" };
   if (report.user_id !== ctx.userId) return { ok: false, error: "Not your report" };
-  if (report.status !== "draft") return { ok: false, error: "Report already submitted" };
+  // Same write window as submit: workers attach correction photos after changes_requested.
+  if (report.status !== "draft" && report.status !== "changes_requested") {
+    return { ok: false, error: "Report already submitted" };
+  }
   const ok = await repo.addMedia(supabase, reportId, opts);
   return { ok, error: ok ? "" : "Failed to add media" };
 }
