@@ -26,6 +26,7 @@ const ADMIN_HOST_MARKETING_PREFIXES = [
   "/security",
   "/solutions",
   "/terms",
+  "/account-deletion",
   "/workflows",
 ] as const;
 

@@ -1,7 +1,8 @@
 # Pilot Day 0 — GO / NO-GO
 
-**Date:** 2026-08-23 (updated)  
-**RC baseline:** `v1.0.0-rc.1` @ `a7144249` (`buildStamp.sha7=a714424`)  
+**Date:** 2026-08-31 (runtime refresh)  
+**RC baseline:** `v1.0.0-rc.1` @ `a7144249` (`buildStamp.sha7=a714424`) — certification SHA  
+**Live runtime:** staging + production `buildStamp.sha7=143930f` (PR #277, 2026-08-31)  
 **Phase:** 100% Readiness — Phase 12 Client Day-0
 
 ---
@@ -14,8 +15,9 @@
 | Pilot intake operator pack on `main` | **PASS** (this PR) |
 | Client intake complete (real) | **FAIL** — `pilot-intake.real.local.json` missing |
 | Client tenant / project | **NOT CREATED** |
-| Android requirement | **NO** (deferred) |
+| Android requirement | **NO** (deferred — `docs/mobile/P3_ANDROID_DEFER_DECISION.md`) |
 | Device / TestFlight smoke | **BLOCKED** |
+| Forgot-password API on production | **PASS** — `POST /api/v1/auth/forgot-password` live on `143930f` (Phase 8 “404 / PR #229” is stale) |
 | **Launch allowed** | **NO** |
 
 ---
@@ -48,9 +50,10 @@ Detail: `PILOT_DAY0_STAGING_DRY_RUN.md`
 
 | Item | Status |
 |------|--------|
-| Owner authorized production pilot tenant | **NO** |
+| Platform deploy @ `143930f` | **YES** — workflow 33378769893 success; health sha7 match |
+| Owner authorized production **pilot tenant** | **NO** |
 | Production tenant created | **NO** |
-| Production data mutated | **NO** |
+| Production data mutated | **NO** (platform deploy only) |
 
 ---
 
@@ -59,10 +62,11 @@ Detail: `PILOT_DAY0_STAGING_DRY_RUN.md`
 1. **Real client intake missing** — fill `docs/launch/pilot-intake.real.local.json` (gitignored) from template
 2. **No client tenant/project/accounts** on staging
 3. **Physical TestFlight smoke not executed**
-4. **Stakeholder finance sanity** — `STAKEHOLDER_SMOKE_*` not exercised
+4. **Stakeholder finance sanity on the named client tenant** — production CI job passed on smoke path; client-tenant re-proof still required if portal users are in scope
 5. **Support email not finalized** for named client
 6. **Owner + client sign-off missing**
-7. **PR #229** forgot-password — not on staging until merge
+
+Closed vs 2026-08-23: **PR #229 / app forgot-password** — merged via #240 stack; live on `143930f`.
 
 ---
 

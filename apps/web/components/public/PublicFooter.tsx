@@ -22,6 +22,7 @@ const COMPANY_LINKS = [
 const LEGAL_LINKS = [
   { href: "/privacy", key: "privacy" as const },
   { href: "/terms", key: "terms" as const },
+  { href: "/account-deletion", key: "accountDeletion" as const },
 ] as const;
 
 export function PublicFooter() {

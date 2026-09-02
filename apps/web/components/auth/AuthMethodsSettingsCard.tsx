@@ -5,6 +5,8 @@ import { useLocale, useTranslations } from "next-intl";
 import { Button, Alert } from "@/components/ui";
 import { AuthProviderButtons } from "@/components/auth/AuthProviderButtons";
 import { CanonSurface } from "@/components/canon/CanonSurface";
+import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "@/i18n/navigation";
 
 type MethodsResponse = {
   methods: {
@@ -42,10 +44,12 @@ export function AuthMethodsSettingsCard({ skin = "default" }: { skin?: "default"
   const t = useTranslations("auth");
   const isCanon = skin === "canon";
   const locale = useLocale();
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<MethodsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [unlinking, setUnlinking] = useState<"apple" | "telegram" | "google" | null>(null);
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
   useEffect(() => {
     void fetchMethods()
@@ -75,6 +79,33 @@ export function AuthMethodsSettingsCard({ skin = "default" }: { skin?: "default"
       }
     } finally {
       setUnlinking(null);
+    }
+  }
+
+  async function handleDeleteAccount() {
+    if (typeof window !== "undefined" && !window.confirm(t("deleteAccountConfirm"))) {
+      return;
+    }
+    setError(null);
+    setDeletingAccount(true);
+    try {
+      const res = await fetch("/api/v1/me", {
+        method: "DELETE",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirm: "DELETE" }),
+      });
+      if (!res.ok) {
+        throw new Error("delete_failed");
+      }
+      const supabase = createClient();
+      await supabase.auth.signOut();
+      router.push("/login");
+      router.refresh();
+    } catch {
+      setError(t("deleteAccountFailed"));
+    } finally {
+      setDeletingAccount(false);
     }
   }
 
@@ -166,6 +197,23 @@ export function AuthMethodsSettingsCard({ skin = "default" }: { skin?: "default"
             // no-op in settings; email is already the primary method
           }}
         />
+      </div>
+
+      <div className="mt-8 border-t border-aistroyka-border-subtle pt-5">
+        <h2 className="text-sm font-semibold text-aistroyka-text-primary">{t("deleteAccountTitle")}</h2>
+        <p className="mt-1 text-sm text-aistroyka-text-secondary">{t("deleteAccountHint")}</p>
+        <Button
+          className="mt-3"
+          size="sm"
+          variant="destructive"
+          loading={deletingAccount}
+          data-testid="cta.dashboard.deleteAccount"
+          onClick={() => {
+            void handleDeleteAccount();
+          }}
+        >
+          {t("deleteAccountButton")}
+        </Button>
       </div>
     </CanonSurface>
   );

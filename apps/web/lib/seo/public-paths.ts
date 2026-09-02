@@ -12,6 +12,7 @@ export const PUBLIC_SITEMAP_PATHS = [
   "/faq",
   "/privacy",
   "/terms",
+  "/account-deletion",
   "/cases",
   "/docs",
   "/projects-showcase",

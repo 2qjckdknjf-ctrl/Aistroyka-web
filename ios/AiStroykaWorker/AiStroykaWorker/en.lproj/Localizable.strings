@@ -20,6 +20,11 @@
 "worker_new_report" = "New report";
 "worker_support" = "Support";
 "worker_sign_out" = "Sign out";
+"worker_delete_account" = "Delete account";
+"worker_delete_account_title" = "Delete account?";
+"worker_delete_account_message" = "This signs you out and removes your login. Project records stay with the company.";
+"worker_delete_account_confirm" = "Delete account";
+"worker_delete_account_failed" = "Could not delete the account. Try again.";
 "worker_nav_projects" = "Projects";
 "worker_done" = "Done";
 "sync_status_idle" = "Sync";
@@ -156,6 +161,8 @@
 "wrk_v43_scan_qr" = "Scan site QR code";
 "wrk_v43_login_audit" = "Sign-in is protected. Your actions are written to the project log.";
 "wrk_v43_login_legal" = "By continuing you accept the Terms and Privacy Policy.";
+"wrk_v43_privacy_policy" = "Privacy Policy";
+"wrk_v43_terms" = "Terms of Service";
 "wrk_v43_phone_invalid" = "Enter a valid phone number.";
 "wrk_v43_shift_start_title" = "Start of shift";
 "wrk_v43_on_site" = "You are on site";

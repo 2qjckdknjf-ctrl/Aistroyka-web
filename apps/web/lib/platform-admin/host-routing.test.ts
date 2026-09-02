@@ -34,6 +34,7 @@ describe("host-routing", () => {
       reason: "platform_admin_landing",
     });
     expect(isAdminHostMarketingPath("/pricing")).toBe(true);
+    expect(isAdminHostMarketingPath("/account-deletion")).toBe(true);
   });
 
   it("redirects admin host tenant paths to platform-admin landing", () => {

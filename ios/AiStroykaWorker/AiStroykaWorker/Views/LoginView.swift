@@ -234,11 +234,18 @@ struct LoginView: View {
     }
 
     private var legal: some View {
-        Text(NSLocalizedString("wrk_v43_login_legal", comment: ""))
-            .font(.system(size: 12))
-            .foregroundStyle(WorkerV43.textSecondary)
-            .frame(maxWidth: .infinity)
-            .multilineTextAlignment(.center)
+        VStack(spacing: 8) {
+            Text(NSLocalizedString("wrk_v43_login_legal", comment: ""))
+                .font(.system(size: 12))
+                .foregroundStyle(WorkerV43.textSecondary)
+                .frame(maxWidth: .infinity)
+                .multilineTextAlignment(.center)
+            PublicLegalLinks(
+                privacyTitle: NSLocalizedString("wrk_v43_privacy_policy", comment: ""),
+                termsTitle: NSLocalizedString("wrk_v43_terms", comment: "")
+            )
+            .foregroundStyle(WorkerV43.dataBlue)
+        }
     }
 
     private func requestPhone() {

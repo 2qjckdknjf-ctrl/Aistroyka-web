@@ -15,6 +15,9 @@ struct ManagerSettingsView: View {
     @State private var isSavingWorkspace = false
     @State private var workspaceMessage: String?
     @State private var workspaceError: String?
+    @State private var showDeleteAccount = false
+    @State private var deletingAccount = false
+    @State private var deleteAccountError: String?
 
     private var appVersion: String {
         (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) ?? "—"
@@ -59,6 +62,16 @@ struct ManagerSettingsView: View {
                     if sessionState.isAuthorizedRole == false, let msg = sessionState.roleFailureMessage {
                         Text(msg).font(.caption).foregroundStyle(ManagerV43.warning)
                     }
+                    if sessionState.isLoggedIn {
+                        if let deleteAccountError {
+                            Text(deleteAccountError).font(.caption).foregroundStyle(ManagerV43.danger)
+                        }
+                        Button(NSLocalizedString("mgr_delete_account", comment: ""), role: .destructive) {
+                            showDeleteAccount = true
+                        }
+                        .disabled(deletingAccount)
+                        .accessibilityIdentifier("pilot_delete_account")
+                    }
                 }
 
                 ManagerV43Card {
@@ -88,6 +101,24 @@ struct ManagerSettingsView: View {
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel(NSLocalizedString("mgr_v43_language", comment: ""))
+                    if let privacy = Config.privacyPolicyURL {
+                        Button {
+                            UIApplication.shared.open(privacy)
+                        } label: {
+                            labeled(NSLocalizedString("mgr_legal_privacy", comment: ""), privacy.host ?? "")
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityIdentifier("pilot_legal_privacy")
+                    }
+                    if let terms = Config.termsOfServiceURL {
+                        Button {
+                            UIApplication.shared.open(terms)
+                        } label: {
+                            labeled(NSLocalizedString("mgr_legal_terms", comment: ""), terms.host ?? "")
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityIdentifier("pilot_legal_terms")
+                    }
                 }
 
                 if !sessionState.isLoggedIn {
@@ -102,6 +133,17 @@ struct ManagerSettingsView: View {
         }
         .background(ManagerV43.bg.ignoresSafeArea())
         .navigationTitle(NSLocalizedString("mgr_settings", comment: ""))
+        .confirmationDialog(
+            NSLocalizedString("mgr_delete_account_title", comment: ""),
+            isPresented: $showDeleteAccount,
+            titleVisibility: .visible
+        ) {
+            Button(NSLocalizedString("mgr_delete_account_confirm", comment: ""), role: .destructive) {
+                Task { await performDeleteAccount() }
+            }
+        } message: {
+            Text(NSLocalizedString("mgr_delete_account_message", comment: ""))
+        }
         .task {
             guard sessionState.isLoggedIn else { return }
             do {
@@ -151,5 +193,17 @@ struct ManagerSettingsView: View {
             Text(value).foregroundStyle(ManagerV43.textPrimary).lineLimit(1)
         }
         .font(.subheadline)
+    }
+
+    private func performDeleteAccount() async {
+        deletingAccount = true
+        deleteAccountError = nil
+        defer { deletingAccount = false }
+        do {
+            try await AuthService.shared.deleteOwnAccount()
+            await sessionState.signOut()
+        } catch {
+            deleteAccountError = NSLocalizedString("mgr_delete_account_failed", comment: "")
+        }
     }
 }

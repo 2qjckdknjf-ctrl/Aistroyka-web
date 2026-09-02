@@ -18,6 +18,11 @@
 "mgr_reports_pending" = "Report in attesa di revisione";
 "mgr_unauthorized" = "Non autorizzato";
 "mgr_sign_out" = "Esci";
+"mgr_delete_account" = "Elimina account";
+"mgr_delete_account_title" = "Eliminare l’account?";
+"mgr_delete_account_message" = "Verrai disconnesso e l’accesso verrà rimosso. I dati di cantiere restano all’azienda.";
+"mgr_delete_account_confirm" = "Elimina account";
+"mgr_delete_account_failed" = "Impossibile eliminare l’account. Riprova.";
 "mgr_loading_dashboard" = "Caricamento dashboard…";
 "mgr_nav_home" = "Home";
 "mgr_kpi_active_projects" = "Progetti attivi";
@@ -242,6 +247,9 @@
 "mgr_v43_workspace_found" = "Spazio di lavoro trovato";
 "mgr_v43_or" = "oppure";
 "mgr_v43_login_secure" = "I dati sono protetti e trasmessi in modo cifrato";
+"mgr_v43_login_legal" = "Continuando accetti i Termini e l’Informativa sulla privacy.";
+"mgr_legal_privacy" = "Informativa sulla privacy";
+"mgr_legal_terms" = "Termini di servizio";
 "mgr_v43_offline" = "Offline. Vengono mostrati gli ultimi dati sincronizzati.";
 "mgr_v43_last_sync_fmt" = "Ultima sincronizzazione: %@";
 "mgr_v43_progress" = "Avanzamento";

@@ -1,22 +1,23 @@
 # AISTROYKA Current Project Truth Index
 
-**Last updated:** 2026-08-24  
-**Main tip:** `3838726ab3521e19671118ef847936ee62ea5605` (`3838726a`)  
+**Last updated:** 2026-08-31  
+**Main tip:** `143930fdc1bccb6d0785c4412e7e19cd593dd50f` (`143930f`)  
 **100% Readiness RC tag:** `v1.0.0-rc.1` @ `a7144249` (tag unchanged; main advanced post-tag)  
-**Runtime match:** staging deploy **PENDING** post-#240 merge — verify via `buildStamp.sha7`  
-**Classification:** `production-capable / controlled-pilot candidate` — **not Public GA**
+**Runtime match:** staging + production `GET /api/v1/health` → `buildStamp.sha7=143930f` (2026-08-31)  
+**Classification:** `production-capable / controlled-pilot candidate` — **not Public GA** · Day-0 **NO-GO**
 
 ## 0. 100% Readiness program (current)
 
 | Field | Value |
 |-------|-------|
 | Active phases closed | 5–11 CONDITIONAL YES; 12 launch **NO** |
-| Merged to main | [#242](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/242) tenant priority · [#240](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/240) auth + Day-0 pack |
-| Open docs PR | [#241](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/241) |
+| Live main | [#277](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/277) visual-walk / Apple+Google / phone OTP optional |
+| First-client gap | `docs/audit/FIRST_CLIENT_GAP_AUDIT_2026-08-31.md` · plan `docs/launch/FIRST_CLIENT_ENGINEERING_PLAN_2026-08-31.md` |
+| Android Day-0 | **Deferred** — `docs/mobile/P3_ANDROID_DEFER_DECISION.md` |
 | Execution log | `docs/reports/AISTROYKA_100_PERCENT_EXECUTION_LOG.md` |
 | STATUS | `STATUS.md` |
 | Phase 12 launch | **NO** — real client intake not filed |
-| Post-merge verify | `verify_forgot_password_route.sh` + Day-0 rehearsal after staging deploy |
+| Production deploy | [33378769893](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/actions/runs/33378769893) **success** |
 
 ---
 

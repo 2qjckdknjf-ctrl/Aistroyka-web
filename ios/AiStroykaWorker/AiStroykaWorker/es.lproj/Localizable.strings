@@ -20,6 +20,11 @@
 "worker_new_report" = "Nuevo informe";
 "worker_support" = "Soporte";
 "worker_sign_out" = "Cerrar sesión";
+"worker_delete_account" = "Eliminar cuenta";
+"worker_delete_account_title" = "¿Eliminar la cuenta?";
+"worker_delete_account_message" = "Se cerrará la sesión y se eliminará el acceso. Los registros del proyecto quedan en la empresa.";
+"worker_delete_account_confirm" = "Eliminar cuenta";
+"worker_delete_account_failed" = "No se pudo eliminar la cuenta. Inténtalo de nuevo.";
 "worker_nav_projects" = "Proyectos";
 "worker_done" = "Hecho";
 "sync_status_idle" = "Sinc.";
@@ -156,6 +161,8 @@
 "wrk_v43_scan_qr" = "Scan site QR code";
 "wrk_v43_login_audit" = "Sign-in is protected. Your actions are written to the project log.";
 "wrk_v43_login_legal" = "By continuing you accept the Terms and Privacy Policy.";
+"wrk_v43_privacy_policy" = "Política de privacidad";
+"wrk_v43_terms" = "Términos del servicio";
 "wrk_v43_phone_invalid" = "Enter a valid phone number.";
 "wrk_v43_shift_start_title" = "Start of shift";
 "wrk_v43_on_site" = "You are on site";

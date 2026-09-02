@@ -20,6 +20,11 @@
 "worker_new_report" = "Новый отчёт";
 "worker_support" = "Поддержка";
 "worker_sign_out" = "Выйти";
+"worker_delete_account" = "Удалить аккаунт";
+"worker_delete_account_title" = "Удалить аккаунт?";
+"worker_delete_account_message" = "Вы выйдете из приложения, логин будет удалён. Записи по объекту останутся у компании.";
+"worker_delete_account_confirm" = "Удалить аккаунт";
+"worker_delete_account_failed" = "Не удалось удалить аккаунт. Попробуйте ещё раз.";
 "worker_nav_projects" = "Проекты";
 "worker_done" = "Готово";
 "sync_status_idle" = "Синхр.";
@@ -156,6 +161,8 @@
 "wrk_v43_scan_qr" = "Сканировать QR-код объекта";
 "wrk_v43_login_audit" = "Вход защищён. Ваши действия записываются в журнал проекта.";
 "wrk_v43_login_legal" = "Продолжая, вы принимаете Условия и Политику конфиденциальности.";
+"wrk_v43_privacy_policy" = "Политика конфиденциальности";
+"wrk_v43_terms" = "Условия использования";
 "wrk_v43_phone_invalid" = "Введите корректный номер телефона.";
 "wrk_v43_shift_start_title" = "Начало смены";
 "wrk_v43_on_site" = "Вы на объекте";

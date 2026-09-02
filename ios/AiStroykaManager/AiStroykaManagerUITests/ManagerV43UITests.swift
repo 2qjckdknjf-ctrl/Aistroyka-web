@@ -28,6 +28,8 @@ final class ManagerV43UITests: XCTestCase {
         XCTAssertTrue(app.textFields["pilot_manager_email"].waitForExistence(timeout: 25))
         XCTAssertTrue(app.buttons["pilot_manager_sign_in"].exists)
         XCTAssertTrue(app.textFields["pilot_manager_password"].exists)
+        XCTAssertTrue(app.descendants(matching: .any)["pilot_legal_privacy"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.descendants(matching: .any)["pilot_legal_terms"].exists)
         XCTAssertTrue(app.buttons["pilot_manager_google_sign_in"].waitForExistence(timeout: 5))
         saveShot("01-login")
     }
@@ -40,6 +42,19 @@ final class ManagerV43UITests: XCTestCase {
         XCTAssertTrue(app.buttons["pilot_manager_tab_tasks"].exists)
         XCTAssertTrue(app.buttons["pilot_manager_tab_ai"].exists)
         XCTAssertTrue(app.buttons["pilot_manager_tab_more"].exists)
+    }
+
+    func testPreviewMoreExposesDeleteAccountWithoutTappingConfirm() {
+        let app = launchPreviewCatalog()
+        XCTAssertTrue(waitForCustomTabs(app), "Preview catalog should open the 5-tab shell")
+        tapTab(app, "pilot_manager_tab_more")
+        XCTAssertTrue(app.descendants(matching: .any)["pilot_manager_more_root"].waitForExistence(timeout: 10))
+        app.swipeUp()
+        app.swipeUp()
+        XCTAssertTrue(
+            app.descendants(matching: .any)["pilot_delete_account"].waitForExistence(timeout: 8),
+            "More must expose Delete account without confirming"
+        )
     }
 
     func testPreviewCatalog_homeButtonsOpenTasksAndAI() {

@@ -18,6 +18,11 @@
 "mgr_reports_pending" = "Отчёты на проверке";
 "mgr_unauthorized" = "Нет доступа";
 "mgr_sign_out" = "Выйти";
+"mgr_delete_account" = "Удалить аккаунт";
+"mgr_delete_account_title" = "Удалить аккаунт?";
+"mgr_delete_account_message" = "Вы выйдете из приложения, логин будет удалён. Записи по объекту останутся у компании.";
+"mgr_delete_account_confirm" = "Удалить аккаунт";
+"mgr_delete_account_failed" = "Не удалось удалить аккаунт. Попробуйте ещё раз.";
 "mgr_loading_dashboard" = "Загрузка дашборда…";
 "mgr_nav_home" = "Главная";
 "mgr_kpi_active_projects" = "Активные проекты";
@@ -243,6 +248,9 @@
 "mgr_v43_workspace_found" = "Рабочее пространство найдено";
 "mgr_v43_or" = "или";
 "mgr_v43_login_secure" = "Данные защищены и передаются в зашифрованном виде";
+"mgr_v43_login_legal" = "Продолжая, вы принимаете Условия и Политику конфиденциальности.";
+"mgr_legal_privacy" = "Политика конфиденциальности";
+"mgr_legal_terms" = "Условия использования";
 "mgr_v43_offline" = "Нет сети. Показаны последние синхронизированные данные.";
 "mgr_v43_last_sync_fmt" = "Последняя синхронизация: %@";
 "mgr_v43_progress" = "Прогресс";

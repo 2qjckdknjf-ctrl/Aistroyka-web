@@ -30,6 +30,12 @@ describe("checkLiteAllowList", () => {
     expect(r!.status).toBe(403);
   });
 
+  it("returns null for lite GET/DELETE /api/v1/me (self account)", () => {
+    expect(checkLiteAllowList("/api/v1/me", "GET", "ios_lite")).toBeNull();
+    expect(checkLiteAllowList("/api/v1/me", "DELETE", "ios_worker")).toBeNull();
+    expect(checkLiteAllowList("/api/v1/me", "PATCH", "ios_lite")).not.toBeNull();
+  });
+
   it("returns null for lite client on allowed path /api/v1/config", () => {
     expect(checkLiteAllowList("/api/v1/config", "GET", "ios_lite")).toBeNull();
   });

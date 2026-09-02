@@ -34,6 +34,9 @@ struct ManagerMoreView: View {
     @State private var lastSync: Date?
     @State private var meEmail: String?
     @State private var documentsProjectId: String?
+    @State private var showDeleteAccount = false
+    @State private var deletingAccount = false
+    @State private var deleteAccountError: String?
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -97,10 +100,36 @@ struct ManagerMoreView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 8)
+
+                    if sessionState.isLoggedIn || ManagerV43Preview.showsCatalogWithoutAuth {
+                        if let deleteAccountError {
+                            Text(deleteAccountError)
+                                .font(.caption)
+                                .foregroundStyle(ManagerV43.danger)
+                                .padding(.horizontal, ManagerV43.screenX)
+                        }
+                        Button(NSLocalizedString("mgr_delete_account", comment: ""), role: .destructive) {
+                            showDeleteAccount = true
+                        }
+                        .frame(maxWidth: .infinity)
+                        .disabled(deletingAccount)
+                        .accessibilityIdentifier("pilot_delete_account")
+                    }
                 }
                 .padding(.bottom, 24)
             }
             .accessibilityIdentifier("pilot_manager_more_root")
+            .confirmationDialog(
+                NSLocalizedString("mgr_delete_account_title", comment: ""),
+                isPresented: $showDeleteAccount,
+                titleVisibility: .visible
+            ) {
+                Button(NSLocalizedString("mgr_delete_account_confirm", comment: ""), role: .destructive) {
+                    Task { await performDeleteAccount() }
+                }
+            } message: {
+                Text(NSLocalizedString("mgr_delete_account_message", comment: ""))
+            }
             .background(ManagerV43.bg.ignoresSafeArea())
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(.hidden, for: .navigationBar)
@@ -266,6 +295,18 @@ struct ManagerMoreView: View {
             .background(ManagerV43.card)
             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
             .padding(.horizontal, ManagerV43.screenX)
+        }
+    }
+
+    private func performDeleteAccount() async {
+        deletingAccount = true
+        deleteAccountError = nil
+        defer { deletingAccount = false }
+        do {
+            try await AuthService.shared.deleteOwnAccount()
+            await sessionState.signOut()
+        } catch {
+            deleteAccountError = NSLocalizedString("mgr_delete_account_failed", comment: "")
         }
     }
 

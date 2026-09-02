@@ -180,6 +180,25 @@ public actor AuthService {
         KeychainHelper.delete(key: KeychainHelper.sessionExpiresAtKey)
     }
 
+    /// DELETE /api/v1/me with confirm DELETE, then clear the local session.
+    public func deleteOwnAccount() async throws {
+        struct Confirm: Encodable {
+            let confirm = "DELETE"
+        }
+        struct Result: Decodable {
+            let ok: Bool
+        }
+        let result: Result = try await APIClient.shared.request(
+            path: "me",
+            method: "DELETE",
+            body: Confirm()
+        )
+        guard result.ok else {
+            throw APIError(statusCode: nil, code: "delete_failed", message: "Account deletion failed")
+        }
+        await signOut()
+    }
+
     /// True only when the refresh that started is still the current session.
     public static func canPersistRefreshedSession(
         startedEpoch: UInt64,

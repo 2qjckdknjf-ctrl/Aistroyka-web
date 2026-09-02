@@ -37,6 +37,22 @@ final class WorkerV43UITests: XCTestCase {
         XCTAssertTrue(app.buttons["pilot_worker_more_scan_qr"].exists)
     }
 
+    func testPreviewMoreExposesDeleteAccountWithoutTappingConfirm() {
+        let app = XCUIApplication()
+        app.launchEnvironment["AISTROYKA_WORKER_V43_PREVIEW"] = "1"
+        app.launch()
+
+        XCTAssertTrue(app.descendants(matching: .any)["pilot_worker_home_scroll"].waitForExistence(timeout: 20))
+        app.descendants(matching: .any)["pilot_worker_tab_more"].firstMatch.tap()
+        XCTAssertTrue(app.descendants(matching: .any)["pilot_worker_end_shift"].waitForExistence(timeout: 8))
+        app.swipeUp()
+        app.swipeUp()
+        XCTAssertTrue(
+            app.descendants(matching: .any)["pilot_delete_account"].waitForExistence(timeout: 8),
+            "More must expose Delete account without opening Safari or confirming"
+        )
+    }
+
     func testPreviewCatalog_tapsCameraQuickActionsAndMore() {
         let app = XCUIApplication()
         app.launchEnvironment["AISTROYKA_WORKER_V43_PREVIEW"] = "1"
@@ -196,6 +212,8 @@ final class WorkerV43UITests: XCTestCase {
         XCTAssertTrue(app.buttons["pilot_worker_apple_sign_in"].exists)
         XCTAssertFalse(app.textFields["pilot_worker_phone"].exists)
         XCTAssertFalse(app.buttons["pilot_worker_phone_submit"].exists)
+        XCTAssertTrue(app.descendants(matching: .any)["pilot_legal_privacy"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.descendants(matching: .any)["pilot_legal_terms"].exists)
     }
 
     func testInviteTokenParsingRejectsProjectIds() {

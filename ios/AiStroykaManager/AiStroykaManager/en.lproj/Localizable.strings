@@ -18,6 +18,11 @@
 "mgr_reports_pending" = "Reports pending review";
 "mgr_unauthorized" = "Not authorized";
 "mgr_sign_out" = "Sign out";
+"mgr_delete_account" = "Delete account";
+"mgr_delete_account_title" = "Delete account?";
+"mgr_delete_account_message" = "This signs you out and removes your login. Project records stay with the company.";
+"mgr_delete_account_confirm" = "Delete account";
+"mgr_delete_account_failed" = "Could not delete the account. Try again.";
 "mgr_loading_dashboard" = "Loading dashboard…";
 "mgr_nav_home" = "Home";
 "mgr_kpi_active_projects" = "Active projects";
@@ -243,6 +248,9 @@
 "mgr_v43_workspace_found" = "Workspace found";
 "mgr_v43_or" = "or";
 "mgr_v43_login_secure" = "Data is protected and transmitted encrypted";
+"mgr_v43_login_legal" = "By continuing you accept the Terms and Privacy Policy.";
+"mgr_legal_privacy" = "Privacy Policy";
+"mgr_legal_terms" = "Terms of Service";
 "mgr_v43_offline" = "Offline. Showing last synced data.";
 "mgr_v43_last_sync_fmt" = "Last sync: %@";
 "mgr_v43_progress" = "Progress";

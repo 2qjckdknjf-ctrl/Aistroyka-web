@@ -2,8 +2,8 @@
 
 > Live project status. Keep this short and mobile-readable.
 
-**Last updated:** 2026-08-31  
-**Updated by:** PR #277 marked ready; review requested from 6262265-cpu
+**Last updated:** 2026-09-02  
+**Updated by:** First-client Track 2 closeout — public account-deletion page + UITests
 
 ---
 
@@ -11,14 +11,14 @@
 
 | Field | Value |
 |---|---|
-| **Active slice** | PR #277 — visual-walk CTAs, Apple/Google, phone OTP disabled-optional |
-| **Branch / worktree** | `fix/mobile-visual-walk` @ `/Users/alex/Projects/AISTROYKA-ios-worker-v4-3` |
-| **Runtime** | Auth: email, Apple, Google, QR, Telegram where enabled. Phone OTP hidden/disabled. Twilio is not a launch gate. |
-| **Next** | Non-author `APPROVED` from `6262265-cpu` (review requested; reviewer PAT still lacks Pull requests: Write for API approve). Then merge. Owner-gated: TestFlight MODE B. |
+| **Active slice** | Track 2 closeout: public `/account-deletion`, iOS More UITests, dashboard test id. Launch still **NO-GO**. |
+| **Branch / worktree** | `ops/first-client-day0-engineering` @ `/Users/alex/Projects/AISTROYKA-ios-worker-v4-3` |
+| **Runtime** | Staging + production `sha7=143930f` (deletion not live until merge/deploy) |
+| **Next** | Owner Track 3: intake → tenant → TestFlight. ASC Account Deletion URL after deploy: `https://aistroyka.ai/en/account-deletion`. |
 
 ## Notes
 
-PR https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/277 is ready for review. Canonical gates passed on `df335aec`. Did not self-approve. Phone OTP remains optional/disabled.
+Plan: `docs/launch/FIRST_CLIENT_ENGINEERING_PLAN_2026-08-31.md`. Audit: `docs/audit/FIRST_CLIENT_GAP_AUDIT_2026-08-31.md`. Android Day-0: `docs/mobile/P3_ANDROID_DEFER_DECISION.md`.
 
 ---
 

@@ -36,5 +36,9 @@ test.describe("Auth recovery smoke", () => {
     await page.goto("/en/terms");
     await expect(page.getByRole("heading", { name: /Terms of Service/i })).toBeVisible();
     await expect(page.getByText(/Placeholder — legal content/i)).toHaveCount(0);
+
+    await page.goto("/en/account-deletion");
+    await expect(page.getByRole("heading", { name: /Delete your account/i })).toBeVisible();
+    await expect(page.getByRole("link", { name: /Log in/i }).first()).toBeVisible();
   });
 });

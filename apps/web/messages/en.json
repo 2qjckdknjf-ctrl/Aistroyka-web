@@ -676,7 +676,12 @@
     "methodNotLinked": "Not linked",
     "unlink": "Unlink",
     "unlinkFailed": "Could not unlink this method.",
-    "unlinkLastMethodForbidden": "Cannot unlink the last remaining sign-in method."
+    "unlinkLastMethodForbidden": "Cannot unlink the last remaining sign-in method.",
+    "deleteAccountTitle": "Delete account",
+    "deleteAccountHint": "Removes your login. Project records stay with the company.",
+    "deleteAccountButton": "Delete my account",
+    "deleteAccountConfirm": "This cannot be undone. Delete your account?",
+    "deleteAccountFailed": "Could not delete the account. Try again."
   },
   "dashboard": {
     "title": "Dashboard",
@@ -1110,6 +1115,7 @@
       "faq": "FAQ",
       "privacy": "Privacy",
       "terms": "Terms",
+      "accountDeletion": "Delete account",
       "cabinet": "Cabinet",
       "requestDemo": "Launch pilot",
       "login": "Log in",
@@ -1347,6 +1353,18 @@
       "section2Body": "You must use the platform lawfully, protect account credentials, and not attempt to bypass tenant isolation, scrape other customers' data, or disrupt service availability.",
       "section3Title": "3. Service scope and contact",
       "section3Body": "Features may evolve during pilot programs; material changes will be communicated through product notices. For terms questions, contact us via the Contact page."
+    },
+    "accountDeletion": {
+      "title": "Delete your account",
+      "metaDescription": "How to delete your Aistroyka login from the website or the iOS apps.",
+      "lead": "You can remove your login from Aistroyka. Project records stay with the company.",
+      "webTitle": "On the website",
+      "webBody": "Sign in, open Settings, then Delete my account. Confirm when asked. This cannot be undone.",
+      "appTitle": "In Worker or Manager",
+      "appBody": "Open More or Settings and tap Delete account. Confirm the dialog. You will be signed out.",
+      "scopeTitle": "What is removed",
+      "scopeBody": "Your login, memberships, and device tokens are removed. Photos, reports, and project records stay with the company workspace.",
+      "settingsCta": "Open settings"
     },
     "footer": {
       "product": "Product",

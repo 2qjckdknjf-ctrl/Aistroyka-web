@@ -9,7 +9,7 @@
 
 | ID | Блокер | Доказательство / контекст | Что сделать |
 |----|--------|---------------------------|-------------|
-| P0-DOC-1 | **Конфликт требований: Android** | `AISTROYKA_TZ.md` §4.1 / §6.4 — Android deferred/foundation; `docs/launch/FIRST_CLIENT_SCOPE_LOCK.md` — Android обязателен для первого клиента | Продуктовое решение: какой документ главный для текущей поставки; обновить второй источник |
+| P0-DOC-1 | **Конфликт требований: Android** | **CLOSED 2026-08-31** — Day-0: Android **deferred** (`docs/mobile/P3_ANDROID_DEFER_DECISION.md`). March `FIRST_CLIENT_SCOPE_LOCK.md` is historical only. | Не открывать Android rescue ради первого клиента |
 | P0-UX-1 | **Android Worker не является пользовательским продуктом** | `WorkerApp.kt` — заглушка; `MainActivity` не использует `WorkerViewModel` | Подключить UI к ViewModel (минимальный MVP) или зафиксировать waiver по активной программе |
 | P0-REL-1 | **Воспроизводимость iOS в репо** | В снимке workspace **нет** `*.xcodeproj` | Уточнить: репозиторий неполный, проект в другом месте, или `.gitignore`; иначе CI/релиз iOS непрозрачны |
 

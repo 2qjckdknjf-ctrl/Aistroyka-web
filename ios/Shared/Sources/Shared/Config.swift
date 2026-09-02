@@ -103,4 +103,29 @@ public enum Config {
         if isOn(ProcessInfo.processInfo.environment["AISTROYKA_PHONE_OTP"]) { return true }
         return isOn(stringInfo("AISTROYKA_PHONE_OTP"))
     }
+
+    /// Public-site locale segment for `/en|ru|es|it/...`. Unknown languages fall back to English.
+    public static func publicLocaleCode(from locale: Locale = .current) -> String {
+        let raw = locale.language.languageCode?.identifier ?? "en"
+        switch raw {
+        case "ru", "es", "it", "en":
+            return raw
+        default:
+            return "en"
+        }
+    }
+
+    /// `{BASE_URL}/{locale}/{slug}` for live Privacy/Terms pages (same host as the API).
+    public static func publicPageURL(slug: String, locale: Locale = .current) -> URL? {
+        let trimmedSlug = slug.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedSlug.isEmpty else { return nil }
+        let base = baseURL.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        guard !base.isEmpty else { return nil }
+        return URL(string: "\(base)/\(publicLocaleCode(from: locale))/\(trimmedSlug)")
+    }
+
+    public static var privacyPolicyURL: URL? { publicPageURL(slug: "privacy") }
+
+    public static var termsOfServiceURL: URL? { publicPageURL(slug: "terms") }
 }

@@ -211,6 +211,17 @@ struct ManagerLoginView: View {
                     .disabled(isLoading)
                     .accessibilityIdentifier("pilot_manager_google_sign_in")
 
+                    Text(NSLocalizedString("mgr_v43_login_legal", comment: ""))
+                        .font(.caption)
+                        .foregroundStyle(ManagerV43.textSecondary)
+                        .frame(maxWidth: .infinity)
+                        .multilineTextAlignment(.center)
+                    PublicLegalLinks(
+                        privacyTitle: NSLocalizedString("mgr_legal_privacy", comment: ""),
+                        termsTitle: NSLocalizedString("mgr_legal_terms", comment: "")
+                    )
+                    .foregroundStyle(ManagerV43.dataBlue)
+
                     HStack(spacing: 6) {
                         Image(systemName: "lock.shield")
                             .foregroundStyle(ManagerV43.dataBlue)

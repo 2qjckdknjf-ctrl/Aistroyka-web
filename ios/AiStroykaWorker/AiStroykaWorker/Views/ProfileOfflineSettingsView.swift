@@ -27,6 +27,9 @@ struct ProfileOfflineSettingsView: View {
     @State private var ending = false
     @State private var showQR = false
     @State private var joinBanner: String?
+    @State private var showDeleteAccount = false
+    @State private var deletingAccount = false
+    @State private var deleteAccountError: String?
 
     var body: some View {
         NavigationStack {
@@ -97,6 +100,18 @@ struct ProfileOfflineSettingsView: View {
                         }
                         .tint(WorkerV43.dataBlue)
                         languageRow
+                        WorkerV43Row(
+                            title: NSLocalizedString("wrk_v43_privacy_policy", comment: ""),
+                            systemImage: "lock.shield",
+                            action: { openPublicPage(Config.privacyPolicyURL) },
+                            accessibilityId: "pilot_legal_privacy"
+                        )
+                        WorkerV43Row(
+                            title: NSLocalizedString("wrk_v43_terms", comment: ""),
+                            systemImage: "doc.text",
+                            action: { openPublicPage(Config.termsOfServiceURL) },
+                            accessibilityId: "pilot_legal_terms"
+                        )
                     }
                     aiCard
                     section(NSLocalizedString("wrk_v43_safety_help", comment: "")) {
@@ -123,11 +138,34 @@ struct ProfileOfflineSettingsView: View {
                         .frame(maxWidth: .infinity)
                         .frame(minHeight: WorkerV43.fieldTouch)
                         .accessibilityIdentifier("pilot_worker_sign_out")
+                    if let deleteAccountError {
+                        Text(deleteAccountError)
+                            .font(.caption)
+                            .foregroundStyle(WorkerV43.danger)
+                    }
+                    Button(NSLocalizedString("worker_delete_account", comment: ""), role: .destructive) {
+                        showDeleteAccount = true
+                    }
+                    .frame(maxWidth: .infinity)
+                    .frame(minHeight: WorkerV43.fieldTouch)
+                    .accessibilityIdentifier("pilot_delete_account")
+                    .disabled(deletingAccount)
                 }
                 .padding(WorkerV43.screenX)
             }
             .background(WorkerV43.bg.ignoresSafeArea())
             .toolbar(.hidden, for: .navigationBar)
+            .confirmationDialog(
+                NSLocalizedString("worker_delete_account_title", comment: ""),
+                isPresented: $showDeleteAccount,
+                titleVisibility: .visible
+            ) {
+                Button(NSLocalizedString("worker_delete_account_confirm", comment: ""), role: .destructive) {
+                    Task { await performDeleteAccount() }
+                }
+            } message: {
+                Text(NSLocalizedString("worker_delete_account_message", comment: ""))
+            }
             .sheet(isPresented: $showDiagnostics) {
                 NavigationStack { DiagnosticsView().environmentObject(appState) }
             }
@@ -388,6 +426,25 @@ struct ProfileOfflineSettingsView: View {
     private func confirmEmergency() {
         guard let url = URL(string: "tel://112") else { return }
         UIApplication.shared.open(url)
+    }
+
+    private func openPublicPage(_ url: URL?) {
+        guard let url else { return }
+        UIApplication.shared.open(url)
+    }
+
+    private func performDeleteAccount() async {
+        deletingAccount = true
+        deleteAccountError = nil
+        defer { deletingAccount = false }
+        do {
+            try await AuthService.shared.deleteOwnAccount()
+            await MainActor.run { onLogout() }
+        } catch {
+            await MainActor.run {
+                deleteAccountError = NSLocalizedString("worker_delete_account_failed", comment: "")
+            }
+        }
     }
 
     private func endShift() {

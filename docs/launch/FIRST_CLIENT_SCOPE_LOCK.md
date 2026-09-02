@@ -1,13 +1,15 @@
 # First-client launch — scope lock (STAGE 0)
 
+> **SUPERSEDED for Day-0 (2026-08-31).** Android is **not** mandatory for the first client. Authoritative: `docs/mobile/P3_ANDROID_DEFER_DECISION.md` and `docs/launch/PILOT_DAY0_GO_NO_GO.md`. This file remains a 2026-03-24 historical lock (one-week Android+iOS mandate). Do not use it to start an Android rescue.
+
 **Program:** Controlled first-client delivery (Aistroyka)  
 **Date locked:** 2026-03-24  
-**Business constraint (external):** First client waiting; **1-week delivery pressure**; **Android + iOS** both mandatory for Manager and Worker; operational contour **Worker → report/media → AI analysis → Manager review/action**.
+**Business constraint (external, historical):** First client waiting; **1-week delivery pressure**; **Android + iOS** both mandatory for Manager and Worker; operational contour **Worker → report/media → AI analysis → Manager review/action**.
 
 ## 1. Strategic override (authoritative for execution)
 
-- Historical docs that deferred Android or treated it as foundation-only are **not** the current directive.
-- **Android must become a real launch-critical product surface**, not a placeholder.
+- **Current Day-0:** iOS-primary; Android deferred — see P3. The bullets below describe the **March 2026** lock only.
+- Historical docs that deferred Android were **overridden here in March 2026**; that override itself is now superseded by Phase 12 / P3 (August 2026).
 - This program does **not** expand customer module, B2B2C, budget/cost, broad documents platform, or speculative AI architecture.
 
 ## 2. In-scope (launch-critical operational core)

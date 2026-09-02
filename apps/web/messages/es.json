@@ -676,7 +676,12 @@
     "methodNotLinked": "No vinculado",
     "unlink": "Desvincular",
     "unlinkFailed": "No se pudo desvincular este método.",
-    "unlinkLastMethodForbidden": "No se puede desvincular el último método de acceso."
+    "unlinkLastMethodForbidden": "No se puede desvincular el último método de acceso.",
+    "deleteAccountTitle": "Eliminar cuenta",
+    "deleteAccountHint": "Elimina tu acceso. Los registros del proyecto quedan en la empresa.",
+    "deleteAccountButton": "Eliminar mi cuenta",
+    "deleteAccountConfirm": "Esto no se puede deshacer. ¿Eliminar la cuenta?",
+    "deleteAccountFailed": "No se pudo eliminar la cuenta. Inténtalo de nuevo."
   },
   "onboarding": {
     "step": "Paso",
@@ -1110,6 +1115,7 @@
       "faq": "FAQ",
       "privacy": "Privacidad",
       "terms": "Términos",
+      "accountDeletion": "Eliminar cuenta",
       "cabinet": "Gabinete",
       "requestDemo": "Lanzar piloto",
       "login": "Entrar",
@@ -1632,6 +1638,18 @@
       "section2Body": "Debes usar el servicio conforme a la ley aplicable y no hacer un uso indebido de la plataforma ni de otros usuarios.",
       "section3Title": "3. Contacto",
       "section3Body": "Las funciones pueden evolucionar en los programas piloto; los cambios materiales se comunican mediante avisos del producto. Para consultas sobre términos, usa la página de Contacto."
+    },
+    "accountDeletion": {
+      "title": "Eliminar tu cuenta",
+      "metaDescription": "Cómo eliminar el acceso a Aistroyka en la web o en las apps iOS.",
+      "lead": "Puedes quitar tu acceso. Los registros del proyecto quedan en la empresa.",
+      "webTitle": "En el sitio",
+      "webBody": "Inicia sesión, abre Ajustes y pulsa Eliminar mi cuenta. Confirma cuando se te pida. No se puede deshacer.",
+      "appTitle": "En Worker o Manager",
+      "appBody": "Abre Más o Ajustes y pulsa Eliminar cuenta. Confirma el diálogo. Se cerrará la sesión.",
+      "scopeTitle": "Qué se elimina",
+      "scopeBody": "Se elimina el acceso, las membresías y los tokens del dispositivo. Fotos, informes y registros del proyecto quedan en la empresa.",
+      "settingsCta": "Abrir ajustes"
     },
     "footer": {
       "product": "Producto",

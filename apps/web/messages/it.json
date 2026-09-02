@@ -676,7 +676,12 @@
     "methodNotLinked": "Non collegato",
     "unlink": "Scollega",
     "unlinkFailed": "Impossibile scollegare questo metodo.",
-    "unlinkLastMethodForbidden": "Impossibile scollegare l'ultimo metodo di accesso rimasto."
+    "unlinkLastMethodForbidden": "Impossibile scollegare l'ultimo metodo di accesso rimasto.",
+    "deleteAccountTitle": "Elimina account",
+    "deleteAccountHint": "Rimuove l’accesso. I dati di cantiere restano all’azienda.",
+    "deleteAccountButton": "Elimina il mio account",
+    "deleteAccountConfirm": "Operazione irreversibile. Eliminare l’account?",
+    "deleteAccountFailed": "Impossibile eliminare l’account. Riprova."
   },
   "onboarding": {
     "step": "Passo",
@@ -1110,6 +1115,7 @@
       "faq": "FAQ",
       "privacy": "Privacy",
       "terms": "Termini",
+      "accountDeletion": "Elimina account",
       "cabinet": "Cabinet",
       "requestDemo": "Avvia pilota",
       "login": "Accedi",
@@ -1632,6 +1638,18 @@
       "section2Body": "Devi usare il servizio nel rispetto della legge applicabile e senza abuso della piattaforma o di altri utenti.",
       "section3Title": "3. Contatti",
       "section3Body": "Le funzioni possono evolvere nei programmi pilota; i cambiamenti rilevanti vengono comunicati con avvisi di prodotto. Per richieste sui termini, usa la pagina Contatti."
+    },
+    "accountDeletion": {
+      "title": "Elimina l’account",
+      "metaDescription": "Come eliminare l’accesso Aistroyka dal sito o dalle app iOS.",
+      "lead": "Puoi rimuovere l’accesso. I dati di cantiere restano all’azienda.",
+      "webTitle": "Sul sito",
+      "webBody": "Accedi, apri Impostazioni e tocca Elimina il mio account. Conferma quando richiesto. Operazione irreversibile.",
+      "appTitle": "In Worker o Manager",
+      "appBody": "Apri Altro o Impostazioni e tocca Elimina account. Conferma la finestra. Verrai disconnesso.",
+      "scopeTitle": "Cosa viene rimosso",
+      "scopeBody": "Vengono rimossi accesso, membership e token del dispositivo. Foto, report e dati di cantiere restano all’azienda.",
+      "settingsCta": "Apri impostazioni"
     },
     "footer": {
       "product": "Prodotto",
