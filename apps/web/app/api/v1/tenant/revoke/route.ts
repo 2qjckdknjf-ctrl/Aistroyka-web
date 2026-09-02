@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient, getSessionUser } from "@/lib/supabase/server";
+import { getAdminClient } from "@/lib/supabase/admin";
 import { getOrCreateTenantForCurrentUser } from "@/lib/api/engine";
 import { hasMinRole, getRoleInTenant } from "@/lib/auth/tenant";
 
@@ -47,14 +48,32 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Only owner can revoke an admin" }, { status: 403 });
   }
 
-  const { error } = await supabase
+  // Idempotent: already offboarded.
+  if (!targetMember) {
+    return NextResponse.json({ data: { ok: true } });
+  }
+
+  // Authenticated RLS has no tenant_members DELETE policy (hardening dropped
+  // service placeholders and never added an admin delete). A user-scoped
+  // delete matches 0 rows with error=null, so the Team UI treated revoke as
+  // success while the member kept access. Delete via service role after authz.
+  const admin = getAdminClient();
+  if (!admin) {
+    return NextResponse.json({ error: "Revoke requires server credentials" }, { status: 503 });
+  }
+
+  const { data: deleted, error } = await admin
     .from("tenant_members")
     .delete()
     .eq("tenant_id", tenantId)
-    .eq("user_id", targetUserId);
+    .eq("user_id", targetUserId)
+    .select("user_id");
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+  if (!deleted?.length) {
+    return NextResponse.json({ error: "Revoke failed" }, { status: 500 });
   }
 
   return NextResponse.json({ data: { ok: true } });
