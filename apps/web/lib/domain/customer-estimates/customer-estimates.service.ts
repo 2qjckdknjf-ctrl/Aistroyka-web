@@ -240,8 +240,12 @@ export async function respondToCustomerEstimate(
 
   // Customer decision writes are server-only after the stakeholder authorization above.
   // This keeps the direct PostgREST client-request/estimate write policies manager-scoped.
-  const writer = getAdminClient();
-  if (!writer) return { data: null, error: "Service writer unavailable" };
+  const admin = getAdminClient();
+  if (!admin) return { data: null, error: "Service writer unavailable" };
+  // The generated Database type does not yet include these additive Wave-4 tables.
+  // Runtime schema access is valid; use the service-role client through the same loose
+  // SupabaseClient contract used by the rest of this domain service.
+  const writer = admin as unknown as SupabaseClient;
 
   if (row.linked_decision_request_id) {
     const dec = await respondToClientRequest(writer, ctx, projectId, row.linked_decision_request_id, {
