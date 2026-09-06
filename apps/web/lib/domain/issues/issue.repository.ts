@@ -61,6 +61,7 @@ export async function create(
       task_id: input.task_id ?? null,
       milestone_id: input.milestone_id ?? null,
       created_by: userId,
+      evidence_upload_session_id: input.evidence_upload_session_id?.trim() || null,
     })
     .select(ISSUE_SELECT)
     .single();
@@ -119,45 +120,23 @@ export async function countOpenByProject(
 /** Display URL from a finalized `issue_evidence` upload session. Same public-media helper reports use. */
 export async function attachEvidenceUrls(
   supabase: SupabaseClient,
-  issues: ProjectIssue[]
+  rows: ProjectIssue[]
 ): Promise<ProjectIssue[]> {
-  const sessionIds = [
-    ...new Set(
-      issues
-        .map((issue) => issue.evidence_upload_session_id)
-        .filter((id): id is string => typeof id === "string" && id.length > 0)
-    ),
-  ];
-  if (sessionIds.length === 0) {
-    return issues.map((issue) => ({ ...issue, evidence_url: issue.evidence_url ?? null }));
-  }
-
+  const sessionIds = [...new Set(rows.map((row) => row.evidence_upload_session_id).filter(Boolean) as string[])];
+  if (sessionIds.length === 0) return rows;
   const { data } = await supabase
     .from("upload_sessions")
-    .select("id, object_path, status")
+    .select("id, object_key, status")
     .in("id", sessionIds);
-
-  const pathBySessionId = new Map<string, string>();
-  for (const row of data ?? []) {
-    const session = row as { id: string; object_path?: string | null; status?: string | null };
-    if (session.status === "finalized" && typeof session.object_path === "string" && session.object_path) {
-      pathBySessionId.set(session.id, session.object_path);
+  const baseUrl = getPublicConfig().supabaseUrl;
+  const urls = new Map<string, string>();
+  for (const row of (data ?? []) as Array<{ id: string; object_key: string | null; status: string | null }>) {
+    if (row.status === "finalized" && row.object_key) {
+      urls.set(row.id, publicMediaObjectUrl(baseUrl, row.object_key));
     }
   }
-
-  let baseUrl = "";
-  try {
-    baseUrl = getPublicConfig().NEXT_PUBLIC_SUPABASE_URL ?? "";
-  } catch {
-    baseUrl = "";
-  }
-
-  return issues.map((issue) => {
-    const sessionId = issue.evidence_upload_session_id;
-    const objectPath = sessionId ? pathBySessionId.get(sessionId) : undefined;
-    return {
-      ...issue,
-      evidence_url: objectPath && baseUrl ? publicMediaObjectUrl(baseUrl, objectPath) : null,
-    };
+  return rows.map((row) => {
+    const id = row.evidence_upload_session_id;
+    return id && urls.has(id) ? { ...row, evidence_url: urls.get(id)! } : row;
   });
 }
