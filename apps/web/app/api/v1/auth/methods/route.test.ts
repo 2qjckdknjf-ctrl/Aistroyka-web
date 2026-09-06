@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { GET, POST } from "./route";
 
 const createClient = vi.fn();
-const getSessionUser = vi.fn();
+const authGetUser = vi.fn();
 const getUserIdentities = vi.fn();
 const linkIdentityRow = vi.fn();
 const unlinkIdentityRow = vi.fn();
@@ -10,7 +10,6 @@ const unlinkSupabaseAuthProvider = vi.fn();
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: (...args: unknown[]) => createClient(...args),
-  getSessionUser: (...args: unknown[]) => getSessionUser(...args),
 }));
 
 vi.mock("@/lib/auth/multi-provider", () => ({
@@ -50,15 +49,24 @@ function row(provider: "apple" | "telegram" | "google") {
   };
 }
 
+function authUser(identities: Array<{ provider: string }>) {
+  return {
+    data: {
+      user: {
+        id: "user-1",
+        email: "a@b.com",
+        identities,
+      },
+    },
+    error: null,
+  };
+}
+
 describe("POST /api/v1/auth/methods", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    createClient.mockResolvedValue({ auth: {} });
-    getSessionUser.mockResolvedValue({
-      id: "user-1",
-      email: "a@b.com",
-      identities: [{ provider: "email" }],
-    });
+    createClient.mockResolvedValue({ auth: { getUser: authGetUser } });
+    authGetUser.mockResolvedValue(authUser([{ provider: "email" }]));
     getUserIdentities.mockResolvedValue([row("telegram")]);
     linkIdentityRow.mockResolvedValue({ ok: true });
     unlinkIdentityRow.mockResolvedValue(true);
@@ -71,14 +79,11 @@ describe("POST /api/v1/auth/methods", () => {
     const body = await response.json();
     expect(body.methods.email).toBe(true);
     expect(body.methods.telegram).toBe(true);
+    expect(authGetUser).toHaveBeenCalledTimes(1);
   });
 
   it("does not count an OAuth email address as a password method", async () => {
-    getSessionUser.mockResolvedValue({
-      id: "user-1",
-      email: "a@b.com",
-      identities: [{ provider: "google" }],
-    });
+    authGetUser.mockResolvedValue(authUser([{ provider: "google" }]));
     getUserIdentities.mockResolvedValue([row("google")]);
     const response = await GET();
     const body = await response.json();
@@ -87,12 +92,30 @@ describe("POST /api/v1/auth/methods", () => {
     expect(body.linkedCount).toBe(1);
   });
 
+  it("preserves a real email method alongside OAuth for unlink eligibility", async () => {
+    authGetUser.mockResolvedValue(authUser([{ provider: "email" }, { provider: "google" }]));
+    getUserIdentities
+      .mockResolvedValueOnce([row("google")])
+      .mockResolvedValueOnce([]);
+
+    const response = await POST(
+      new Request("https://aistroyka.ai/api/v1/auth/methods", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "unlink", provider: "google" }),
+      })
+    );
+
+    expect(response.status).toBe(200);
+    expect(unlinkIdentityRow).toHaveBeenCalledWith(expect.anything(), "user-1", "google");
+    const body = await response.json();
+    expect(body.methods.email).toBe(true);
+    expect(body.methods.google).toBe(false);
+    expect(body.linkedCount).toBe(1);
+  });
+
   it("forbids unlinking the last remaining real method", async () => {
-    getSessionUser.mockResolvedValue({
-      id: "user-1",
-      email: "a@b.com",
-      identities: [{ provider: "google" }],
-    });
+    authGetUser.mockResolvedValue(authUser([{ provider: "google" }]));
     getUserIdentities.mockResolvedValue([row("google")]);
     const response = await POST(
       new Request("https://aistroyka.ai/api/v1/auth/methods", {
@@ -141,5 +164,11 @@ describe("POST /api/v1/auth/methods", () => {
       expect.anything(),
       expect.objectContaining({ provider: "google", provider_user_id: "google-sub" })
     );
+  });
+
+  it("returns 401 when auth lookup fails", async () => {
+    authGetUser.mockRejectedValue(new Error("auth unavailable"));
+    const response = await GET();
+    expect(response.status).toBe(401);
   });
 });
