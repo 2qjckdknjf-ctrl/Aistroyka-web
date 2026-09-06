@@ -28,8 +28,11 @@ describe("customer decision service-role writer contract", () => {
   });
 
   it("estimate-linked client decision uses the same service writer", () => {
-    expect(estimateService).toContain("const writer = getAdminClient()");
+    expect(estimateService).toContain("const admin = getAdminClient()");
     expect(estimateService).toContain('error: "Service writer unavailable"');
+    expect(estimateService).toContain(
+      "const writer = admin as unknown as SupabaseClient"
+    );
     expect(estimateService).toContain(
       "respondToClientRequest(writer, ctx, projectId, row.linked_decision_request_id"
     );
