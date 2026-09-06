@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { TenantContext } from "@/lib/tenant/tenant.types";
-import { canManageProjects } from "@/lib/tenant/tenant.policy";
+import { getAdminClient } from "@/lib/supabase/admin";
+import { canManageClientRequests } from "@/lib/domain/client-requests/client-requests.policy";
 import { canReadClientPortalView, canRespondToClientRequests } from "@/lib/domain/stakeholders/stakeholders.policy";
 import { createClientRequest, respondToClientRequest } from "@/lib/domain/client-requests/client-requests.service";
 import type {
@@ -32,8 +33,12 @@ function toPublic(row: CustomerEstimateRow): CustomerEstimatePublic {
   };
 }
 
-async function canManageEstimate(ctx: TenantContext): Promise<boolean> {
-  return !!ctx.tenantId && !!ctx.userId && canManageProjects(ctx);
+async function canManageEstimate(
+  supabase: SupabaseClient,
+  ctx: TenantContext,
+  projectId: string
+): Promise<boolean> {
+  return canManageClientRequests(supabase, ctx, projectId);
 }
 
 export async function patchCustomerEstimate(
@@ -44,7 +49,9 @@ export async function patchCustomerEstimate(
   patch: PatchCustomerEstimateInput
 ): Promise<{ data: CustomerEstimateRow | null; error: string }> {
   if (!ctx.tenantId || !ctx.userId) return { data: null, error: "Tenant required" };
-  if (!(await canManageEstimate(ctx))) return { data: null, error: "Insufficient rights" };
+  if (!(await canManageEstimate(supabase, ctx, projectId))) {
+    return { data: null, error: "Insufficient rights" };
+  }
 
   const { data: existing } = await supabase
     .from("customer_estimates")
@@ -108,7 +115,9 @@ export async function createCustomerEstimate(
   input: CreateCustomerEstimateInput
 ): Promise<{ data: CustomerEstimateRow | null; error: string }> {
   if (!ctx.tenantId || !ctx.userId) return { data: null, error: "Tenant required" };
-  if (!(await canManageEstimate(ctx))) return { data: null, error: "Insufficient rights" };
+  if (!(await canManageEstimate(supabase, ctx, projectId))) {
+    return { data: null, error: "Insufficient rights" };
+  }
   const title = input.title.trim();
   if (!title || !Number.isFinite(input.total_amount) || input.total_amount < 0) {
     return { data: null, error: "title and valid total_amount are required" };
@@ -140,7 +149,9 @@ export async function listCustomerEstimates(
 ): Promise<{ data: Array<CustomerEstimateRow | CustomerEstimatePublic>; error: string }> {
   if (!ctx.tenantId || !ctx.userId) return { data: [], error: "Tenant required" };
   if (viewer === "manager") {
-    if (!(await canManageEstimate(ctx))) return { data: [], error: "Insufficient rights" };
+    if (!(await canManageEstimate(supabase, ctx, projectId))) {
+      return { data: [], error: "Insufficient rights" };
+    }
   } else if (!(await canReadClientPortalView(supabase, ctx, projectId))) {
     return { data: [], error: "Insufficient rights" };
   }
@@ -164,7 +175,9 @@ export async function sendCustomerEstimate(
   estimateId: string
 ): Promise<{ data: CustomerEstimateRow | null; error: string }> {
   if (!ctx.tenantId || !ctx.userId) return { data: null, error: "Tenant required" };
-  if (!(await canManageEstimate(ctx))) return { data: null, error: "Insufficient rights" };
+  if (!(await canManageEstimate(supabase, ctx, projectId))) {
+    return { data: null, error: "Insufficient rights" };
+  }
   const { data: existing } = await supabase
     .from("customer_estimates")
     .select(ROW_SELECT)
@@ -225,8 +238,13 @@ export async function respondToCustomerEstimate(
   if (!row) return { data: null, error: "Not found" };
   if (row.status !== "sent") return { data: null, error: "Estimate is not awaiting response" };
 
+  // Customer decision writes are server-only after the stakeholder authorization above.
+  // This keeps the direct PostgREST client-request/estimate write policies manager-scoped.
+  const writer = getAdminClient();
+  if (!writer) return { data: null, error: "Service writer unavailable" };
+
   if (row.linked_decision_request_id) {
-    const dec = await respondToClientRequest(supabase, ctx, projectId, row.linked_decision_request_id, {
+    const dec = await respondToClientRequest(writer, ctx, projectId, row.linked_decision_request_id, {
       decision,
       note,
     });
@@ -235,7 +253,7 @@ export async function respondToCustomerEstimate(
 
   const nextStatus: CustomerEstimateStatus = decision === "approve" ? "approved" : "rejected";
   const now = new Date().toISOString();
-  const { data, error } = await supabase
+  const { data, error } = await writer
     .from("customer_estimates")
     .update({
       status: nextStatus,
@@ -251,7 +269,7 @@ export async function respondToCustomerEstimate(
   const updated = data as CustomerEstimateRow;
 
   if (decision === "approve") {
-    await supabase.from("project_commercial_items").insert({
+    await writer.from("project_commercial_items").insert({
       tenant_id: ctx.tenantId,
       project_id: projectId,
       kind: "expected_revenue",
