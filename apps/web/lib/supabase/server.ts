@@ -6,6 +6,12 @@ import { getPublicEnv } from "@/lib/env";
 
 export type CookieToSet = { name: string; value: string; options?: Record<string, unknown> };
 
+export type SessionUser = {
+  id: string;
+  email?: string;
+  identities?: Array<{ provider?: string }>;
+};
+
 /** Thrown when request sends a service_role JWT; API must return 403. */
 export class ServiceRoleForbiddenError extends Error {
   constructor() {
@@ -49,13 +55,21 @@ export async function createClientFromRequest(request: Request) {
 
 /**
  * Get current user from Supabase auth without throwing.
- * Use in Server Components/layouts/API to avoid crashes when getUser() fails or returns null data.
+ * Keep the auth identity provider list: it is required to distinguish a real
+ * password/email login method from the email claim attached to Apple/Google OAuth.
  */
-export async function getSessionUser(supabase: SupabaseClient): Promise<{ id: string; email?: string } | null> {
+export async function getSessionUser(supabase: SupabaseClient): Promise<SessionUser | null> {
   try {
     const res = await supabase.auth.getUser();
     const user = res?.data?.user ?? null;
-    return user ? { id: user.id, email: user.email ?? undefined } : null;
+    if (!user) return null;
+    return {
+      id: user.id,
+      email: user.email ?? undefined,
+      identities: Array.isArray(user.identities)
+        ? user.identities.map((identity) => ({ provider: identity.provider }))
+        : undefined,
+    };
   } catch {
     return null;
   }
