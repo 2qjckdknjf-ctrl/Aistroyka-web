@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { TenantContext } from "@/lib/tenant/tenant.types";
 import * as docRepo from "@/lib/domain/documents/document.repository";
 import * as milestoneRepo from "@/lib/domain/milestones/milestone.repository";
+import { getAdminClient } from "@/lib/supabase/admin";
 import * as repo from "./client-requests.repository";
 import {
   canManageClientRequests,
@@ -344,7 +345,10 @@ export async function respondToClientRequest(
     }
   }
 
-  const updated = await repo.updateRequest(supabase, requestId, ctx.tenantId, {
+  // Portal decision-makers pass app authz but RLS only allows UPDATE/INSERT for
+  // internal tenant readers — write via service role after the gate above.
+  const writer = getAdminClient() ?? supabase;
+  const updated = await repo.updateRequest(writer, requestId, ctx.tenantId, {
     status: "responded",
     responded_at: new Date().toISOString(),
     responded_by: ctx.userId,
@@ -353,7 +357,7 @@ export async function respondToClientRequest(
   });
   if (!updated) return { data: null, error: "Update failed" };
 
-  await repo.insertEvent(supabase, {
+  await repo.insertEvent(writer, {
     tenant_id: ctx.tenantId,
     project_id: projectId,
     request_id: requestId,

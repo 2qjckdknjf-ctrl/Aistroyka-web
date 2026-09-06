@@ -208,12 +208,37 @@ extension BackgroundUploadService: URLSessionDelegate {
 }
 
 extension BackgroundUploadService: URLSessionTaskDelegate {
+    /// Transport / connectivity failures should retry; only clearly permanent URL errors fail closed.
+    static func isRetryableUploadError(_ error: Error) -> Bool {
+        let ns = error as NSError
+        guard ns.domain == NSURLErrorDomain else { return false }
+        switch ns.code {
+        case NSURLErrorCancelled,
+             NSURLErrorBadURL,
+             NSURLErrorUnsupportedURL,
+             NSURLErrorUserCancelledAuthentication,
+             NSURLErrorUserAuthenticationRequired,
+             NSURLErrorFileDoesNotExist,
+             NSURLErrorFileIsDirectory,
+             NSURLErrorNoPermissionsToReadFile,
+             NSURLErrorDataLengthExceedsMaximum,
+             NSURLErrorCannotCreateFile,
+             NSURLErrorCannotOpenFile,
+             NSURLErrorCannotWriteToFile,
+             NSURLErrorCannotRemoveFile,
+             NSURLErrorCannotMoveFile:
+            return false
+        default:
+            return true
+        }
+    }
+
     func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
         let taskId = task.taskIdentifier
         guard let operationId = mappingStore.operationId(for: taskId) else { return }
 
         if let err = error {
-            let retryable = (err as NSError).code == NSURLErrorNetworkConnectionLost || (err as NSError).code == NSURLErrorTimedOut
+            let retryable = Self.isRetryableUploadError(err)
             markUploadFailed(operationId: operationId, taskId: taskId, retryable: retryable, message: err.localizedDescription)
             return
         }

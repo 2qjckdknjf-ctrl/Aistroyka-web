@@ -3,6 +3,7 @@ import type { TenantContext } from "@/lib/tenant/tenant.types";
 import { canManageProjects } from "@/lib/tenant/tenant.policy";
 import { canReadClientPortalView, canRespondToClientRequests } from "@/lib/domain/stakeholders/stakeholders.policy";
 import { createClientRequest, respondToClientRequest } from "@/lib/domain/client-requests/client-requests.service";
+import { getAdminClient } from "@/lib/supabase/admin";
 import type {
   CreateCustomerEstimateInput,
   CustomerEstimatePublic,
@@ -233,9 +234,12 @@ export async function respondToCustomerEstimate(
     if (dec.error || !dec.data) return { data: null, error: dec.error || "Decision respond failed" };
   }
 
+  // Same RLS gap as client-request respond: portal decision-makers are not
+  // internal readers, so estimate/commercial writes need service role after authz.
+  const writer = getAdminClient() ?? supabase;
   const nextStatus: CustomerEstimateStatus = decision === "approve" ? "approved" : "rejected";
   const now = new Date().toISOString();
-  const { data, error } = await supabase
+  const { data, error } = await writer
     .from("customer_estimates")
     .update({
       status: nextStatus,
@@ -251,7 +255,7 @@ export async function respondToCustomerEstimate(
   const updated = data as CustomerEstimateRow;
 
   if (decision === "approve") {
-    await supabase.from("project_commercial_items").insert({
+    await writer.from("project_commercial_items").insert({
       tenant_id: ctx.tenantId,
       project_id: projectId,
       kind: "expected_revenue",
