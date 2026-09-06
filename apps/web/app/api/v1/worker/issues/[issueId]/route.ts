@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClientFromRequest } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { getIssueById, updateWorkerReportedIssue } from "@/lib/domain/issues/issue.service";
+import { validateIssueEvidenceSession } from "@/lib/domain/issues/issue-evidence";
 import type { IssueStatus, UpdateIssueInput } from "@/lib/domain/issues/issue.types";
 import { requireLiteIdempotency, storeLiteIdempotency } from "@/lib/api/lite-idempotency";
 
@@ -84,7 +85,12 @@ export async function PATCH(
     input.status = body.status as IssueStatus;
   }
   if (typeof body.evidence_upload_session_id === "string" && body.evidence_upload_session_id.trim()) {
-    input.evidence_upload_session_id = body.evidence_upload_session_id.trim();
+    const sessionId = body.evidence_upload_session_id.trim();
+    const evidence = await validateIssueEvidenceSession(supabase, ctx, sessionId);
+    if (!evidence.ok) {
+      return NextResponse.json({ error: evidence.error }, { status: evidence.status });
+    }
+    input.evidence_upload_session_id = sessionId;
   }
 
   const { data, error } = await updateWorkerReportedIssue(supabase, ctx, issueId, input);
