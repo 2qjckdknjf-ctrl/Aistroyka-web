@@ -11,6 +11,7 @@ function identity(provider: IdentityRow["provider"]): IdentityRow {
     id: `${provider}-1`,
     user_id: "user-1",
     provider,
+    identity_id: `${provider}-identity-1`,
     provider_user_id: `${provider}-sub`,
     email: null,
     username: null,
