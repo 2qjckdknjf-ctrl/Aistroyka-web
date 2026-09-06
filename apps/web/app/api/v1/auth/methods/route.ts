@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createClient, getSessionUser } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import {
   getUserIdentities,
   linkIdentityRow,
@@ -16,6 +16,12 @@ const UnlinkSchema = z.object({
   provider: z.enum(["apple", "telegram", "google"]),
 });
 
+type AuthUserForMethods = {
+  id: string;
+  email?: string | null;
+  identities?: Array<{ provider?: string }> | null;
+};
+
 function toResponse(methods: ReturnType<typeof summarizeAuthMethods>) {
   return {
     methods: {
@@ -28,9 +34,26 @@ function toResponse(methods: ReturnType<typeof summarizeAuthMethods>) {
   };
 }
 
-function realEmailMethod(user: { email?: string | null; identities?: Array<{ provider?: string }> | null }): string | undefined {
+function realEmailMethod(user: AuthUserForMethods): string | undefined {
   const hasEmailIdentity = user.identities?.some((identity) => identity.provider === "email") ?? false;
   return hasEmailIdentity ? user.email ?? undefined : undefined;
+}
+
+async function getFullSessionUser(
+  supabase: Awaited<ReturnType<typeof createClient>>
+): Promise<AuthUserForMethods | null> {
+  try {
+    const res = await supabase.auth.getUser();
+    const user = res?.data?.user ?? null;
+    if (!user?.id) return null;
+    return {
+      id: user.id,
+      email: user.email ?? undefined,
+      identities: user.identities?.map((identity) => ({ provider: identity.provider })) ?? null,
+    };
+  } catch {
+    return null;
+  }
 }
 
 async function restoreIdentityRow(
@@ -53,7 +76,7 @@ async function restoreIdentityRow(
 
 export async function GET() {
   const supabase = await createClient();
-  const user = await getSessionUser(supabase);
+  const user = await getFullSessionUser(supabase);
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -64,7 +87,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const supabase = await createClient();
-  const user = await getSessionUser(supabase);
+  const user = await getFullSessionUser(supabase);
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
