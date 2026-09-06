@@ -238,15 +238,19 @@ export async function respondToCustomerEstimate(
   if (!row) return { data: null, error: "Not found" };
   if (row.status !== "sent") return { data: null, error: "Estimate is not awaiting response" };
 
+  // Customer decision writes are server-only after the stakeholder authorization above.
+  // This keeps the direct PostgREST client-request/estimate write policies manager-scoped.
+  const writer = getAdminClient();
+  if (!writer) return { data: null, error: "Service writer unavailable" };
+
   if (row.linked_decision_request_id) {
-    const dec = await respondToClientRequest(supabase, ctx, projectId, row.linked_decision_request_id, {
+    const dec = await respondToClientRequest(writer, ctx, projectId, row.linked_decision_request_id, {
       decision,
       note,
     });
     if (dec.error || !dec.data) return { data: null, error: dec.error || "Decision respond failed" };
   }
 
-  const writer = getAdminClient() ?? supabase;
   const nextStatus: CustomerEstimateStatus = decision === "approve" ? "approved" : "rejected";
   const now = new Date().toISOString();
   const { data, error } = await writer
