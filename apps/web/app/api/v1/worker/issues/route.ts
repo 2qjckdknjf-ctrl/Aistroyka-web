@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClientFromRequest } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { createWorkerReportedIssue, listIssues } from "@/lib/domain/issues/issue.service";
+import { validateIssueEvidenceSession } from "@/lib/domain/issues/issue-evidence";
 import { requireLiteIdempotency, storeLiteIdempotency } from "@/lib/api/lite-idempotency";
 
 export const dynamic = "force-dynamic";
@@ -66,6 +67,13 @@ export async function POST(request: Request) {
     typeof body.evidence_upload_session_id === "string" ? body.evidence_upload_session_id.trim() : "";
 
   const supabase = await createClientFromRequest(request);
+  if (evidenceSession) {
+    const evidence = await validateIssueEvidenceSession(supabase, ctx, evidenceSession);
+    if (!evidence.ok) {
+      return NextResponse.json({ error: evidence.error }, { status: evidence.status });
+    }
+  }
+
   const { data, error } = await createWorkerReportedIssue(supabase, ctx, {
     project_id: projectId,
     title,
