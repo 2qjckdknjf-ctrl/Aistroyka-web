@@ -42,7 +42,7 @@ export function AuthProviderButtons({
     const failedKey = provider === "apple" ? "oauthAppleFailed" : "oauthGoogleFailed";
     try {
       const supabase = createClient();
-      const redirectTo = `${window.location.origin}/api/auth/callback?callback=${encodeURIComponent(`/${locale}/dashboard`)}&next=${encodeURIComponent(safeNext)}&intent=${encodeURIComponent(appleIntent)}`;
+      const redirectTo = `${window.location.origin}/api/auth/callback?callback=${encodeURIComponent(`/${locale}/dashboard`)}&next=${encodeURIComponent(safeNext)}&intent=${encodeURIComponent(appleIntent)}&provider=${encodeURIComponent(provider)}`;
       const result = appleIntent === "link"
         ? await (supabase.auth as { linkIdentity: (args: { provider: OAuthProvider; options: { redirectTo: string } }) => Promise<{ error?: { message?: string } | null }> }).linkIdentity({
             provider,
