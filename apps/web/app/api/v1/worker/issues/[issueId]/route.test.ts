@@ -21,6 +21,7 @@ const updateWorkerReportedIssue = vi.fn().mockResolvedValue({
   data: { id: "iss-1", project_id: "proj-1", title: "Fence", status: "in_review" },
   error: "",
 });
+const validateIssueEvidenceSession = vi.fn().mockResolvedValue({ ok: true });
 const requireLiteIdempotency = vi.fn().mockResolvedValue({ ok: true });
 const storeLiteIdempotency = vi.fn().mockResolvedValue(undefined);
 
@@ -37,6 +38,10 @@ vi.mock("@/lib/supabase/server", () => ({
 vi.mock("@/lib/domain/issues/issue.service", () => ({
   getIssueById: (...args: unknown[]) => getIssueById(...args),
   updateWorkerReportedIssue: (...args: unknown[]) => updateWorkerReportedIssue(...args),
+}));
+
+vi.mock("@/lib/domain/issues/issue-evidence", () => ({
+  validateIssueEvidenceSession: (...args: unknown[]) => validateIssueEvidenceSession(...args),
 }));
 
 vi.mock("@/lib/api/lite-idempotency", () => ({
@@ -68,6 +73,8 @@ describe("PATCH /api/v1/worker/issues/:issueId", () => {
     requireTenant.mockReset();
     getIssueById.mockClear();
     updateWorkerReportedIssue.mockClear();
+    validateIssueEvidenceSession.mockReset();
+    validateIssueEvidenceSession.mockResolvedValue({ ok: true });
     requireLiteIdempotency.mockResolvedValue({ ok: true });
   });
 
@@ -90,7 +97,7 @@ describe("PATCH /api/v1/worker/issues/:issueId", () => {
     expect(storeLiteIdempotency).toHaveBeenCalled();
   });
 
-  it("accepts evidence_upload_session_id", async () => {
+  it("accepts a validated evidence_upload_session_id", async () => {
     const res = await PATCH(
       new Request("https://test/api/v1/worker/issues/iss-1?project_id=proj-1", {
         method: "PATCH",
@@ -100,12 +107,35 @@ describe("PATCH /api/v1/worker/issues/:issueId", () => {
       { params: Promise.resolve({ issueId: "iss-1" }) }
     );
     expect(res.status).toBe(200);
+    expect(validateIssueEvidenceSession).toHaveBeenCalledWith(
+      { client: "request-bound" },
+      tenantContext,
+      "sess-1"
+    );
     expect(updateWorkerReportedIssue).toHaveBeenCalledWith(
       expect.anything(),
       expect.anything(),
       "iss-1",
       expect.objectContaining({ evidence_upload_session_id: "sess-1" })
     );
+  });
+
+  it("rejects invalid evidence before the issue update", async () => {
+    validateIssueEvidenceSession.mockResolvedValueOnce({
+      ok: false,
+      error: "Invalid evidence purpose",
+      status: 400,
+    });
+    const res = await PATCH(
+      new Request("https://test/api/v1/worker/issues/iss-1?project_id=proj-1", {
+        method: "PATCH",
+        headers: { "content-type": "application/json", "x-idempotency-key": "k-bad-ev" },
+        body: JSON.stringify({ status: "in_review", evidence_upload_session_id: "sess-report" }),
+      }),
+      { params: Promise.resolve({ issueId: "iss-1" }) }
+    );
+    expect(res.status).toBe(400);
+    expect(updateWorkerReportedIssue).not.toHaveBeenCalled();
   });
 
   it("rejects resolve/close before the service runs", async () => {
