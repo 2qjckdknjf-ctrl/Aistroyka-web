@@ -1,16 +1,19 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { TenantContext } from "@/lib/tenant/tenant.types";
-import { canManageProjects, canReadProjects } from "@/lib/tenant/tenant.policy";
+import { canReadProjects } from "@/lib/tenant/tenant.policy";
+import { canManageClientRequests } from "@/lib/domain/client-requests/client-requests.policy";
 import { canReadClientPortalView } from "@/lib/domain/stakeholders/stakeholders.policy";
 
+/**
+ * Manager cohort for commercial change orders: tenant owner/admin or
+ * project manager/owner on the target project (same as client requests).
+ */
 export async function canManageChangeOrders(
   supabase: SupabaseClient,
   ctx: TenantContext,
   projectId: string
 ): Promise<boolean> {
-  void supabase;
-  void projectId;
-  return !!ctx.tenantId && !!ctx.userId && canManageProjects(ctx);
+  return canManageClientRequests(supabase, ctx, projectId);
 }
 
 export async function canReadChangeOrders(
