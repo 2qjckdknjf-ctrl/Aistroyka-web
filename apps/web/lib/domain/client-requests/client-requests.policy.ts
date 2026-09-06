@@ -2,13 +2,15 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { TenantContext } from "@/lib/tenant/tenant.types";
 import { canManageProjects } from "@/lib/tenant/tenant.policy";
 import { getMembership } from "@/lib/domain/project-members/project-members.repository";
+import { getById as getProjectById } from "@/lib/domain/projects/project.repository";
 import {
   canReadClientPortalView,
   canRespondToClientRequests,
 } from "@/lib/domain/stakeholders/stakeholders.policy";
 
 /**
- * Same cohort as client portal settings: tenant owner/admin or project manager.
+ * Same cohort as client portal settings: tenant owner/admin or project manager/owner.
+ * Always requires the project to belong to the caller's tenant (blocks cross-tenant IDs).
  */
 export async function canManageClientRequests(
   supabase: SupabaseClient,
@@ -17,9 +19,13 @@ export async function canManageClientRequests(
 ): Promise<boolean> {
   if (!ctx.tenantId || !ctx.userId) return false;
   if (!canManageProjects(ctx)) return false;
+
+  const project = await getProjectById(supabase, projectId, ctx.tenantId);
+  if (!project) return false;
+
   if (ctx.role === "owner" || ctx.role === "admin") return true;
   const m = await getMembership(supabase, ctx.tenantId, projectId, ctx.userId);
-  return m?.role === "manager";
+  return m?.role === "manager" || m?.role === "owner";
 }
 
 /**
