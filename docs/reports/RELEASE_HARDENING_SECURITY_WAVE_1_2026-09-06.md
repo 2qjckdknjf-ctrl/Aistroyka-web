@@ -53,6 +53,17 @@ Fix: `20260906104000_project_write_authorization_hardening.sql`:
 - rewires generic write policies for projects, documents, milestones, client requests, handover, issues, risks, governance, worker day/reports/tasks and worker-report media;
 - keeps Worker/member write semantics intact while separating the read and write cohorts.
 
+### 5. Worker/project ops tenant-project skew — STILL_REPRODUCIBLE on base (#213 class)
+
+Several operational tables carry both `tenant_id` and `project_id`. Blocking `viewer` is insufficient if an authenticated writer can pair a writable tenant with a foreign project id.
+
+Fix: `20260906110000_project_ops_tenant_consistency.sql`:
+- `worker_tasks` and `worker_day`: when `project_id` is present it must belong to `tenant_id`;
+- `project_issues`, `project_risks`, `project_handover` inserts/updates require `project_belongs_to_tenant`;
+- `project_handover_events` inserts require writer authorization plus tenant/project consistency.
+
+This covers the current-main #213 viewer-write and tenant/project-consistency class without merging the stale historical PR.
+
 ## Regression coverage
 
 - `lib/domain/client-requests/client-requests.policy.test.ts`
@@ -61,12 +72,13 @@ Fix: `20260906104000_project_write_authorization_hardening.sql`:
 - `lib/tenant/project-commercial-rls.hardening.test.ts`
 - `lib/tenant/tenant-writer-rls.hardening.test.ts`
 - `lib/tenant/project-members-tenant-match.rls.test.ts`
+- `lib/tenant/project-ops-tenant-consistency.rls.test.ts`
 
 ## Non-goals / remaining work
 
 - No production migration apply in this PR.
 - No merge of historical #209/#210/#212/#213/#216 branches.
-- This wave removes `viewer` from generic writes but does **not** yet claim every owner/admin/member write surface is perfectly project-scoped. Remaining historical findings still require current-main classification in #282.
+- This wave removes `viewer` from a broad generic write cohort and closes #213-class tenant/project skew on key ops tables, but does **not** yet claim every owner/admin/member write surface is perfectly project-scoped. Remaining historical findings still require current-main classification in #282.
 - No #265/#244 feature work.
 - No mobile field-flow fixes (#266/#276/#278/#280/#281) are merged in this wave.
 
@@ -77,6 +89,7 @@ Fix: `20260906104000_project_write_authorization_hardening.sql`:
 3. Verify tenant invite and stakeholder accept flows are not regressed.
 4. Verify viewer cannot mutate generic project/worker tables through direct PostgREST.
 5. Verify worker/member cannot manage change orders/commercial/proof-pack paths without project manager/owner membership.
-6. Verify tenant owner/admin and project manager/owner retain expected management paths.
-7. Prepare explicit migration apply/rollback steps; production apply remains a separate controlled release action.
-8. Do not mark the security finding closed in production until migrations are proven applied there.
+6. Verify tenant/project mismatch writes are rejected on the hardened operational surfaces.
+7. Verify tenant owner/admin and project manager/owner retain expected management paths.
+8. Prepare explicit migration apply/rollback steps; production apply remains a separate controlled release action.
+9. Do not mark the security finding closed in production until migrations are proven applied there.
