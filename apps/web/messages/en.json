@@ -3134,6 +3134,10 @@
     "reject": "Reject",
     "yourFeedback": "Your feedback",
     "submitFeedback": "Submit feedback",
+    "copilotOptionalFeedbackSummary": "Optional AI feedback",
+    "copilotOptionalFeedbackHint": "Optional: suggest a better answer for internal AI quality capture. No fields are required.",
+    "copilotCorrectionOptional": "Optional correction (leave empty for score-only feedback)",
+    "copilotFeedbackSaved": "Feedback saved",
     "iAcknowledge": "I acknowledge",
     "submitChoice": "Submit choice",
     "confirmReview": "Confirm review",
@@ -3930,6 +3934,23 @@
     "createFailed": "Failed to create case",
     "updateFailed": "Failed to update case",
     "error": "Error"
+  },
+  "aiFlywheel": {
+    "consent": {
+      "title": "AI training data consent",
+      "description": "When enabled, AISTROYKA may use this tenant’s sanitized, de-identified construction AI interactions to improve models. Raw photos, free-text with personal data, and internal finance are excluded by policy.",
+      "toggleLabel": "Allow AISTROYKA to use this tenant’s sanitized data to improve AISTROYKA’s construction AI",
+      "revocationTitle": "If you turn this off later",
+      "revocationFuture": "Future dataset exports will automatically exclude this tenant.",
+      "revocationModels": "Already-trained model versions are not automatically rolled back.",
+      "revocationSnapshot": "Export and model cards record the consent snapshot date.",
+      "loading": "Loading consent settings…",
+      "save": "Save consent",
+      "saving": "Saving…",
+      "saved": "Consent saved.",
+      "loadError": "Unable to load consent settings.",
+      "saveError": "Unable to save consent settings."
+    }
   },
   "errors": {
     "insufficientRights": "Insufficient rights",
