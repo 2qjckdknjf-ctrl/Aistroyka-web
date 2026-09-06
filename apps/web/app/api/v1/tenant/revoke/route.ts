@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient, getSessionUser } from "@/lib/supabase/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { getOrCreateTenantForCurrentUser } from "@/lib/api/engine";
@@ -67,7 +68,7 @@ export async function POST(request: Request) {
   // All remaining mutations require server credentials. Do not return an early
   // idempotent success only because tenant_members is already gone: account/project
   // memberships may still need cleanup from an earlier partial revoke.
-  const admin = getAdminClient();
+  const admin = getAdminClient() as SupabaseClient | null;
   if (!admin) {
     return NextResponse.json({ error: "Revoke requires server credentials" }, { status: 503 });
   }
