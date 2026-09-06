@@ -202,13 +202,6 @@ struct ReportResubmitView: View {
 
     private func enqueueSubmit() {
         if WorkerV43Preview.showsCatalogWithoutAuth {
-            if let correctionImage {
-                WorkerPhotoEvidence.persistPending(
-                    image: correctionImage,
-                    purpose: WorkerPhotoKind.after.rawValue,
-                    taskId: detail?.taskId
-                )
-            }
             submitted = true
             return
         }
@@ -219,11 +212,6 @@ struct ReportResubmitView: View {
     @MainActor
     private func attachCorrectionThenSubmit() async {
         if let correctionImage, attachedSessionId == nil {
-            WorkerPhotoEvidence.persistPending(
-                image: correctionImage,
-                purpose: WorkerPhotoKind.after.rawValue,
-                taskId: detail?.taskId
-            )
             attachingPhoto = true
             attachError = nil
             do {
