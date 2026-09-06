@@ -2,18 +2,19 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { GET, POST } from "./route";
 
 const createClient = vi.fn();
-const getSessionUser = vi.fn();
+const authGetUser = vi.fn();
 const getUserIdentities = vi.fn();
+const linkIdentityRow = vi.fn();
 const unlinkIdentityRow = vi.fn();
 const unlinkSupabaseAuthProvider = vi.fn();
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: (...args: unknown[]) => createClient(...args),
-  getSessionUser: (...args: unknown[]) => getSessionUser(...args),
 }));
 
 vi.mock("@/lib/auth/multi-provider", () => ({
   getUserIdentities: (...args: unknown[]) => getUserIdentities(...args),
+  linkIdentityRow: (...args: unknown[]) => linkIdentityRow(...args),
   unlinkIdentityRow: (...args: unknown[]) => unlinkIdentityRow(...args),
   unlinkSupabaseAuthProvider: (...args: unknown[]) => unlinkSupabaseAuthProvider(...args),
   summarizeAuthMethods: (email: string | undefined, identities: Array<{ provider?: string }>) => {
@@ -31,12 +32,43 @@ vi.mock("@/lib/auth/multi-provider", () => ({
   },
 }));
 
+function row(provider: "apple" | "telegram" | "google") {
+  return {
+    id: `${provider}-row`,
+    user_id: "user-1",
+    provider,
+    identity_id: `${provider}-identity`,
+    provider_user_id: `${provider}-sub`,
+    email: "a@b.com",
+    username: null,
+    full_name: null,
+    avatar_url: null,
+    metadata: {},
+    created_at: "",
+    updated_at: "",
+  };
+}
+
+function authUser(identities: Array<{ provider: string }>) {
+  return {
+    data: {
+      user: {
+        id: "user-1",
+        email: "a@b.com",
+        identities,
+      },
+    },
+    error: null,
+  };
+}
+
 describe("POST /api/v1/auth/methods", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    createClient.mockResolvedValue({ auth: {} });
-    getSessionUser.mockResolvedValue({ id: "user-1", email: "a@b.com" });
-    getUserIdentities.mockResolvedValue([{ provider: "telegram" }]);
+    createClient.mockResolvedValue({ auth: { getUser: authGetUser } });
+    authGetUser.mockResolvedValue(authUser([{ provider: "email" }]));
+    getUserIdentities.mockResolvedValue([row("telegram")]);
+    linkIdentityRow.mockResolvedValue({ ok: true });
     unlinkIdentityRow.mockResolvedValue(true);
     unlinkSupabaseAuthProvider.mockResolvedValue(true);
   });
@@ -47,27 +79,61 @@ describe("POST /api/v1/auth/methods", () => {
     const body = await response.json();
     expect(body.methods.email).toBe(true);
     expect(body.methods.telegram).toBe(true);
+    expect(authGetUser).toHaveBeenCalledTimes(1);
   });
 
-  it("forbids unlinking the last remaining method", async () => {
-    getSessionUser.mockResolvedValue({ id: "user-1", email: undefined });
-    getUserIdentities.mockResolvedValue([{ provider: "telegram" }]);
+  it("does not count an OAuth email address as a password method", async () => {
+    authGetUser.mockResolvedValue(authUser([{ provider: "google" }]));
+    getUserIdentities.mockResolvedValue([row("google")]);
+    const response = await GET();
+    const body = await response.json();
+    expect(body.methods.email).toBe(false);
+    expect(body.methods.google).toBe(true);
+    expect(body.linkedCount).toBe(1);
+  });
+
+  it("preserves a real email method alongside OAuth for unlink eligibility", async () => {
+    authGetUser.mockResolvedValue(authUser([{ provider: "email" }, { provider: "google" }]));
+    getUserIdentities
+      .mockResolvedValueOnce([row("google")])
+      .mockResolvedValueOnce([]);
+
     const response = await POST(
       new Request("https://aistroyka.ai/api/v1/auth/methods", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "unlink", provider: "telegram" }),
+        body: JSON.stringify({ action: "unlink", provider: "google" }),
+      })
+    );
+
+    expect(response.status).toBe(200);
+    expect(unlinkIdentityRow).toHaveBeenCalledWith(expect.anything(), "user-1", "google");
+    const body = await response.json();
+    expect(body.methods.email).toBe(true);
+    expect(body.methods.google).toBe(false);
+    expect(body.linkedCount).toBe(1);
+  });
+
+  it("forbids unlinking the last remaining real method", async () => {
+    authGetUser.mockResolvedValue(authUser([{ provider: "google" }]));
+    getUserIdentities.mockResolvedValue([row("google")]);
+    const response = await POST(
+      new Request("https://aistroyka.ai/api/v1/auth/methods", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "unlink", provider: "google" }),
       })
     );
     expect(response.status).toBe(400);
     const body = await response.json();
     expect(body.error).toBe("last_method_forbidden");
+    expect(unlinkIdentityRow).not.toHaveBeenCalled();
   });
 
-  it("unlinks google through supabase auth then identity row", async () => {
+  it("deletes google row before Auth unlink and returns updated methods", async () => {
     getUserIdentities
-      .mockResolvedValueOnce([{ provider: "google" }, { provider: "apple" }])
-      .mockResolvedValueOnce([{ provider: "apple" }]);
+      .mockResolvedValueOnce([row("google"), row("apple")])
+      .mockResolvedValueOnce([row("apple")]);
     const response = await POST(
       new Request("https://aistroyka.ai/api/v1/auth/methods", {
         method: "POST",
@@ -76,10 +142,33 @@ describe("POST /api/v1/auth/methods", () => {
       })
     );
     expect(response.status).toBe(200);
-    expect(unlinkSupabaseAuthProvider).toHaveBeenCalledWith(expect.anything(), "google");
     expect(unlinkIdentityRow).toHaveBeenCalledWith(expect.anything(), "user-1", "google");
+    expect(unlinkSupabaseAuthProvider).toHaveBeenCalledWith(expect.anything(), "google");
     const body = await response.json();
     expect(body.methods.google).toBe(false);
     expect(body.methods.apple).toBe(true);
+  });
+
+  it("restores the database row when Supabase Auth unlink fails", async () => {
+    getUserIdentities.mockResolvedValue([row("google"), row("apple")]);
+    unlinkSupabaseAuthProvider.mockResolvedValue(false);
+    const response = await POST(
+      new Request("https://aistroyka.ai/api/v1/auth/methods", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "unlink", provider: "google" }),
+      })
+    );
+    expect(response.status).toBe(500);
+    expect(linkIdentityRow).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ provider: "google", provider_user_id: "google-sub" })
+    );
+  });
+
+  it("returns 401 when auth lookup fails", async () => {
+    authGetUser.mockRejectedValue(new Error("auth unavailable"));
+    const response = await GET();
+    expect(response.status).toBe(401);
   });
 });

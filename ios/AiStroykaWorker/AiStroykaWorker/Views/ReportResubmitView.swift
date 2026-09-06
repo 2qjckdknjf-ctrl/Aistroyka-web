@@ -202,13 +202,6 @@ struct ReportResubmitView: View {
 
     private func enqueueSubmit() {
         if WorkerV43Preview.showsCatalogWithoutAuth {
-            if let correctionImage {
-                WorkerPhotoEvidence.persistPending(
-                    image: correctionImage,
-                    purpose: WorkerPhotoKind.after.rawValue,
-                    taskId: detail?.taskId
-                )
-            }
             submitted = true
             return
         }
@@ -219,28 +212,28 @@ struct ReportResubmitView: View {
     @MainActor
     private func attachCorrectionThenSubmit() async {
         if let correctionImage, attachedSessionId == nil {
-            WorkerPhotoEvidence.persistPending(
-                image: correctionImage,
-                purpose: WorkerPhotoKind.after.rawValue,
-                taskId: detail?.taskId
-            )
             attachingPhoto = true
             attachError = nil
             do {
-                if let jpeg = correctionImage.jpegData(compressionQuality: 0.85) {
-                    let sessionId = try await WorkerAPI.uploadEvidence(
-                        purpose: WorkerPhotoKind.after.rawValue,
-                        jpeg: jpeg
-                    )
-                    try await WorkerAPI.addMedia(
-                        reportId: reportId,
-                        uploadSessionId: sessionId,
-                        idempotencyKey: DeviceContext.newIdempotencyKey()
-                    )
-                    attachedSessionId = sessionId
+                guard let jpeg = correctionImage.jpegData(compressionQuality: 0.85) else {
+                    attachError = NSLocalizedString("worker_error_generic", comment: "")
+                    attachingPhoto = false
+                    return
                 }
+                let sessionId = try await WorkerAPI.uploadEvidence(
+                    purpose: WorkerPhotoKind.after.rawValue,
+                    jpeg: jpeg
+                )
+                try await WorkerAPI.addMedia(
+                    reportId: reportId,
+                    uploadSessionId: sessionId,
+                    idempotencyKey: DeviceContext.newIdempotencyKey()
+                )
+                attachedSessionId = sessionId
             } catch {
                 attachError = WorkerV43Copy.userFacing(error)
+                attachingPhoto = false
+                return
             }
             attachingPhoto = false
         }
