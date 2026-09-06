@@ -27,17 +27,19 @@ describe("membership privilege-escalation RLS", () => {
     expect(migration).toContain("new.role = 'stakeholder'");
   });
 
-  it("splits project_stakeholders broad access and blocks invitee INSERT", () => {
+  it("scopes project_stakeholder creation/deletion to project managers", () => {
     expect(migration).toContain("drop policy if exists project_stakeholders_access");
     expect(migration).toContain("create policy project_stakeholders_select");
     expect(migration).toContain("create policy project_stakeholders_insert_internal");
     expect(migration).toContain("create policy project_stakeholders_update");
     expect(migration).toContain("create policy project_stakeholders_delete_internal");
+
     const insertPolicy = migration.match(
       /create policy project_stakeholders_insert_internal[\s\S]*?;/
     )?.[0];
     expect(insertPolicy).toBeTruthy();
-    expect(insertPolicy).toContain("is_internal_tenant_reader_for_tenant");
+    expect(insertPolicy).toContain("can_manage_project_membership");
+    expect(insertPolicy).not.toContain("is_internal_tenant_reader_for_tenant");
     expect(insertPolicy).not.toContain("auth.jwt()");
   });
 
