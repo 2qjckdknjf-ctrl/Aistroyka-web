@@ -4,7 +4,12 @@
 
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
+import {
+  canManageProjects,
+  getTenantContextFromRequest,
+  requireTenant,
+  TenantRequiredError,
+} from "@/lib/tenant";
 import { emitChange } from "@/lib/sync/change-log.repository";
 
 export const dynamic = "force-dynamic";
@@ -19,6 +24,10 @@ export async function PATCH(
   } catch (e) {
     if (e instanceof TenantRequiredError) return NextResponse.json({ error: e.message }, { status: 401 });
     throw e;
+  }
+  // media:upload >= member — viewers must not mutate annotations.
+  if (!canManageProjects(ctx)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   const ifMatch = request.headers.get("if-match");
   const versionMatch = ifMatch?.trim().match(/^\s*(\d+)\s*$/);
