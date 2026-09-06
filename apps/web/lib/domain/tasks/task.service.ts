@@ -19,7 +19,7 @@ export async function listTasksForToday(
     }
     return { data, error: null };
   } catch {
-    return { data: [], error: null };
+    return { data: [], error: "Task list failed" };
   }
 }
 
