@@ -23,7 +23,12 @@ export async function listTasksForUser(
     .lte("due_date", today)
     .in("status", ["pending", "in_progress"]);
   const { data: byAssignedTo, error: e1 } = await base.eq("assigned_to", userId);
-  if (e1) return [];
+  // Fail closed: an empty array is a valid "no work today" snapshot. The Worker
+  // persists HTTP 200 `{ data: [] }` over its offline Today cache, so query
+  // failure must not be collapsed into that success shape.
+  if (e1) {
+    throw new Error("Task list failed");
+  }
   const fromLegacy = (byAssignedTo ?? []) as Task[];
   if (assignedIds.length === 0) return fromLegacy;
   const legacyIds = new Set(fromLegacy.map((t) => t.id));
@@ -188,8 +193,6 @@ export async function list(
   const { data, error, count } = await q;
   if (error) return { data: [], total: 0 };
   const rows = (data ?? []) as Task[];
-  const linkedReportIds = new Set<string>();
-  for (const t of rows) linkedReportIds.add(t.id);
   if (rows.length > 0) {
     const { data: reportRows } = await supabase
       .from("worker_reports")
