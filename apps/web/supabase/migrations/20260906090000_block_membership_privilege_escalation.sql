@@ -1,13 +1,9 @@
 -- RELEASE HARDENING WAVE 1
 -- Close authenticated privilege escalation on tenant_members and project_stakeholders.
---
--- Current-main finding:
--- tenant_members_update_self only constrained user_id = auth.uid(), so an authenticated
--- user could change their own role. Invite insertion also did not bind the inserted role
--- to the invitation. project_stakeholders had broad write semantics for invitees.
+-- Additive forward-fix for current main; historical migrations are not rewritten.
 
 -- ---------------------------------------------------------------------------
--- tenant_members: bind INSERT role to a matching invitation (or own-tenant bootstrap)
+-- tenant_members: bind INSERT role to tenant ownership or matching invitation
 -- ---------------------------------------------------------------------------
 
 drop policy if exists tenant_members_insert_self_or_invited on public.tenant_members;
@@ -48,7 +44,7 @@ create policy tenant_members_insert_self_or_invited
   );
 
 -- ---------------------------------------------------------------------------
--- tenant_members: prevent authenticated privilege escalation on UPDATE
+-- tenant_members: prevent authenticated role / identity mutation
 -- ---------------------------------------------------------------------------
 
 create or replace function public.enforce_tenant_members_role_change()
@@ -58,7 +54,6 @@ security definer
 set search_path = public
 as $$
 begin
-  -- service_role bypasses RLS but still fires triggers; allow trusted server paths.
   if coalesce(auth.role(), '') = 'service_role' then
     return new;
   end if;
@@ -74,7 +69,6 @@ begin
     return new;
   end if;
 
-  -- Re-accept / role refresh only when a matching live invitation authorizes the new role.
   if exists (
     select 1
     from public.tenant_invitations ti
@@ -86,7 +80,6 @@ begin
     return new;
   end if;
 
-  -- Portal accept may promote a legacy viewer to stakeholder for a pending invite.
   if old.role = 'viewer'
      and new.role = 'stakeholder'
      and exists (
@@ -113,66 +106,60 @@ create trigger tenant_members_enforce_role_change
 revoke all on function public.enforce_tenant_members_role_change() from public;
 
 comment on function public.enforce_tenant_members_role_change() is
-  'Blocks PostgREST self-escalation of tenant_members.role; allows invite-matched and viewer-to-stakeholder portal acceptance.';
+  'Blocks authenticated self-escalation of tenant_members.role and identity-column mutation.';
 
 -- ---------------------------------------------------------------------------
--- project_stakeholders: split read/write access and protect privileged columns
+-- project_stakeholders: split broad access; only project managers may create/delete.
+-- Invitees may read/update their own invitation, but privileged columns are immutable.
 -- ---------------------------------------------------------------------------
 
 drop policy if exists project_stakeholders_access on public.project_stakeholders;
-
 drop policy if exists project_stakeholders_select on public.project_stakeholders;
+drop policy if exists project_stakeholders_insert_internal on public.project_stakeholders;
+drop policy if exists project_stakeholders_update on public.project_stakeholders;
+drop policy if exists project_stakeholders_delete_internal on public.project_stakeholders;
+
 create policy project_stakeholders_select
   on public.project_stakeholders
   for select
   to authenticated
   using (
-    public.is_internal_tenant_reader_for_tenant(tenant_id)
-    or tenant_id in (select id from public.tenants where user_id = (select auth.uid()))
+    public.can_manage_project_membership(tenant_id, project_id)
     or user_id = (select auth.uid())
     or lower(trim(coalesce(email, ''))) = lower(trim(coalesce((select auth.jwt() ->> 'email'), '')))
   );
 
-drop policy if exists project_stakeholders_insert_internal on public.project_stakeholders;
 create policy project_stakeholders_insert_internal
   on public.project_stakeholders
   for insert
   to authenticated
   with check (
-    public.is_internal_tenant_reader_for_tenant(tenant_id)
-    or tenant_id in (select id from public.tenants where user_id = (select auth.uid()))
+    public.can_manage_project_membership(tenant_id, project_id)
   );
 
-drop policy if exists project_stakeholders_update on public.project_stakeholders;
 create policy project_stakeholders_update
   on public.project_stakeholders
   for update
   to authenticated
   using (
-    public.is_internal_tenant_reader_for_tenant(tenant_id)
-    or tenant_id in (select id from public.tenants where user_id = (select auth.uid()))
+    public.can_manage_project_membership(tenant_id, project_id)
     or user_id = (select auth.uid())
     or lower(trim(coalesce(email, ''))) = lower(trim(coalesce((select auth.jwt() ->> 'email'), '')))
   )
   with check (
-    public.is_internal_tenant_reader_for_tenant(tenant_id)
-    or tenant_id in (select id from public.tenants where user_id = (select auth.uid()))
+    public.can_manage_project_membership(tenant_id, project_id)
     or user_id = (select auth.uid())
     or lower(trim(coalesce(email, ''))) = lower(trim(coalesce((select auth.jwt() ->> 'email'), '')))
   );
 
-drop policy if exists project_stakeholders_delete_internal on public.project_stakeholders;
 create policy project_stakeholders_delete_internal
   on public.project_stakeholders
   for delete
   to authenticated
   using (
-    public.is_internal_tenant_reader_for_tenant(tenant_id)
-    or tenant_id in (select id from public.tenants where user_id = (select auth.uid()))
+    public.can_manage_project_membership(tenant_id, project_id)
   );
 
--- Invitees may only mutate acceptance lifecycle fields; privileged routing/role columns
--- remain immutable to authenticated PostgREST clients.
 revoke update on table public.project_stakeholders from authenticated;
 grant update (status, user_id, accepted_at, updated_at)
   on public.project_stakeholders
