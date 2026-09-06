@@ -23,7 +23,12 @@ export async function listTasksForUser(
     .lte("due_date", today)
     .in("status", ["pending", "in_progress"]);
   const { data: byAssignedTo, error: e1 } = await base.eq("assigned_to", userId);
-  if (e1) return [];
+  // Fail closed: an empty array is a valid "no work today" snapshot. V4.3 Worker
+  // persists HTTP 200 `{ data: [] }` over the offline Today cache, so a query
+  // error must not be collapsed into that success shape.
+  if (e1) {
+    throw new Error("Task list failed");
+  }
   const fromLegacy = (byAssignedTo ?? []) as Task[];
   if (assignedIds.length === 0) return fromLegacy;
   const legacyIds = new Set(fromLegacy.map((t) => t.id));
