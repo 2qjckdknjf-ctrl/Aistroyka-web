@@ -774,7 +774,8 @@ jobs:
         env:
           GOVERNED_E2E_SEAL_PRIVATE_KEY: ${{ secrets.GOVERNED_E2E_SEAL_PRIVATE_KEY }}
           GOVERNED_E2E_SEAL_PUBLIC_KEY_PATH: trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.seal-public-key.pem
-        run: "${{ steps.pin_bun.outputs.bun_path }}" trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.seal-preflight.mjs
+        run: |
+          "${{ steps.pin_bun.outputs.bun_path }}" trusted-runner-ops/apps/web/lib/ops/governed-ai-pr-e2e-runner.seal-preflight.mjs
 
       - name: Download harness ciphertext bundle
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
