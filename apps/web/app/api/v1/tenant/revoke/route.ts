@@ -1,9 +1,17 @@
 import { NextResponse } from "next/server";
 import { createClient, getSessionUser } from "@/lib/supabase/server";
+import { getAdminClient } from "@/lib/supabase/admin";
 import { getOrCreateTenantForCurrentUser } from "@/lib/api/engine";
 import { hasMinRole, getRoleInTenant } from "@/lib/auth/tenant";
 
-/** POST: revoke member. Body: { user_id: string }. Admin+ can revoke; cannot revoke owner. */
+/**
+ * POST: revoke an internal tenant member. Body: { user_id: string }.
+ * Admin+ can revoke; cannot revoke the tenant owner; only owner can revoke admin.
+ *
+ * Effective offboarding removes project_members first, then tenant_members. Portal
+ * stakeholder access is a separate customer-facing identity and is intentionally
+ * not mutated by this internal Team action.
+ */
 export async function POST(request: Request) {
   const supabase = await createClient();
   const user = await getSessionUser(supabase);
@@ -47,14 +55,40 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Only owner can revoke an admin" }, { status: 403 });
   }
 
-  const { error } = await supabase
-    .from("tenant_members")
+  const admin = getAdminClient();
+  if (!admin) {
+    return NextResponse.json({ error: "Revoke requires server credentials" }, { status: 503 });
+  }
+
+  // Project membership is independently trusted by project-scoped authorization
+  // helpers. Remove it first so a partial failure can only reduce access.
+  const { error: projectMembershipError } = await admin
+    .from("project_members")
     .delete()
     .eq("tenant_id", tenantId)
     .eq("user_id", targetUserId);
+  if (projectMembershipError) {
+    return NextResponse.json({ error: projectMembershipError.message }, { status: 500 });
+  }
+
+  // Idempotent cleanup: if the tenant membership is already absent, the project
+  // membership cleanup above still repairs any stale effective access.
+  if (!targetMember) {
+    return NextResponse.json({ data: { ok: true } });
+  }
+
+  const { data: deleted, error } = await admin
+    .from("tenant_members")
+    .delete()
+    .eq("tenant_id", tenantId)
+    .eq("user_id", targetUserId)
+    .select("user_id");
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+  if (!deleted?.length) {
+    return NextResponse.json({ error: "Revoke failed" }, { status: 500 });
   }
 
   return NextResponse.json({ data: { ok: true } });
