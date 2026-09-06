@@ -45,29 +45,41 @@ enum WorkerV43API {
         title: String,
         description: String?,
         taskId: String?,
-        idempotencyKey: String
+        idempotencyKey: String,
+        evidenceUploadSessionId: String? = nil
     ) async throws -> WorkerIssueDTO {
         struct Body: Encodable {
             let projectId: String
             let title: String
             let description: String?
             let taskId: String?
+            let evidenceUploadSessionId: String?
             enum CodingKeys: String, CodingKey {
                 case projectId = "project_id"
                 case title
                 case description
                 case taskId = "task_id"
+                case evidenceUploadSessionId = "evidence_upload_session_id"
             }
         }
         let env: Envelope<WorkerIssueDTO> = try await APIClient.shared.request(
             path: "worker/issues",
             method: "POST",
-            body: Body(projectId: projectId, title: title, description: description, taskId: taskId),
+            body: Body(
+                projectId: projectId,
+                title: title,
+                description: description,
+                taskId: taskId,
+                evidenceUploadSessionId: evidenceUploadSessionId
+            ),
             idempotencyKey: idempotencyKey,
             keyDecoding: .useDefaultKeys
         )
         guard let data = env.data else {
             throw APIError(statusCode: nil, code: nil, message: env.error ?? "No issue data")
+        }
+        if evidenceUploadSessionId != nil {
+            removeLatestPendingIssueEvidence()
         }
         return data
     }
@@ -99,6 +111,9 @@ enum WorkerV43API {
         )
         guard let data = env.data else {
             throw APIError(statusCode: nil, code: nil, message: env.error ?? "No issue data")
+        }
+        if evidenceUploadSessionId != nil {
+            removeLatestPendingIssueEvidence()
         }
         return data
     }
@@ -157,6 +172,15 @@ enum WorkerV43API {
             try await joinFromInviteToken(token)
         } catch {
             // Keep the token for a later retry once the session can call site-join.
+        }
+    }
+
+    private static func removeLatestPendingIssueEvidence() {
+        let store = AppStateStoreManager.shared
+        store.save {
+            if let index = $0.pendingUploads.lastIndex(where: { $0.purpose == WorkerPhotoKind.issue.rawValue }) {
+                $0.pendingUploads.remove(at: index)
+            }
         }
     }
 

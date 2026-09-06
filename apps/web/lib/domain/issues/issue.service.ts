@@ -4,6 +4,7 @@ import { canReadProjects, canManageProjects } from "@/lib/tenant/tenant.policy";
 import { getById as getProjectById } from "@/lib/domain/projects/project.repository";
 import { notifyProjectManagers, notifyUser } from "@/lib/domain/notifications/manager-notifications.repository";
 import { getById as getTaskById } from "@/lib/domain/tasks/task.repository";
+import * as uploadSessionRepo from "@/lib/domain/upload-session/upload-session.repository";
 import * as repo from "./issue.repository";
 import type { ProjectIssue, CreateIssueInput, IssueStatus, UpdateIssueInput } from "./issue.types";
 import { workerMayMutateIssue } from "./worker-issue-access";
@@ -12,6 +13,23 @@ import {
   workerIssuePatchError,
   workerIssueUpdatePayload,
 } from "./worker-issue-patch";
+
+const INVALID_ISSUE_EVIDENCE = "Invalid issue evidence";
+
+async function validIssueEvidenceSession(
+  supabase: SupabaseClient,
+  ctx: TenantContext,
+  sessionId: string
+): Promise<boolean> {
+  if (!ctx.tenantId || !ctx.userId) return false;
+  const normalized = sessionId.trim();
+  if (!normalized) return false;
+  const session = await uploadSessionRepo.getById(supabase, normalized, ctx.tenantId);
+  return !!session
+    && session.user_id === ctx.userId
+    && session.purpose === "issue_evidence"
+    && session.status === "finalized";
+}
 
 export async function listIssues(
   supabase: SupabaseClient,
@@ -42,9 +60,15 @@ async function insertIssue(
   const trimmed = input.title?.trim();
   if (!trimmed) return { data: null, error: "title required" };
 
+  const evidenceSessionId = input.evidence_upload_session_id?.trim() || undefined;
+  if (evidenceSessionId && !(await validIssueEvidenceSession(supabase, ctx, evidenceSessionId))) {
+    return { data: null, error: INVALID_ISSUE_EVIDENCE };
+  }
+
   const data = await repo.create(supabase, ctx.tenantId, ctx.userId ?? null, {
     ...input,
     title: trimmed,
+    evidence_upload_session_id: evidenceSessionId,
   });
   if (data) {
     await notifyProjectManagers(supabase, ctx.tenantId, input.project_id, {
@@ -150,8 +174,16 @@ export async function updateWorkerReportedIssue(
   const closed = workerIssuePatchError(existing);
   if (closed) return { data: null, error: closed };
 
+  const evidenceSessionId = input.evidence_upload_session_id?.trim() || undefined;
+  if (evidenceSessionId && !(await validIssueEvidenceSession(supabase, ctx, evidenceSessionId))) {
+    return { data: null, error: INVALID_ISSUE_EVIDENCE };
+  }
+
   const description = nextWorkerIssueDescription(existing.description, input.description);
-  const safeInput = workerIssueUpdatePayload(input, description);
+  const safeInput = workerIssueUpdatePayload(
+    { ...input, evidence_upload_session_id: evidenceSessionId },
+    description
+  );
   const data = await repo.update(supabase, issueId, ctx.tenantId, safeInput);
   if (data && input.status === "in_review") {
     await notifyProjectManagers(supabase, ctx.tenantId, data.project_id, {
