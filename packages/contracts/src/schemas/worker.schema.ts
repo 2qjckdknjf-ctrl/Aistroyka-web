@@ -38,9 +38,10 @@ export const DeviceUnregisterRequestSchema = z.object({
   device_id: z.string().min(1, "device_id required"),
 });
 
-/** POST /api/v1/worker/day/start — empty body or optional on-device location evidence */
+/** POST /api/v1/worker/day/start — optional project context + on-device location evidence */
 export const WorkerDayStartRequestSchema = z
   .object({
+    project_id: z.string().min(1, "project_id required").optional(),
     latitude: z.number().gte(-90).lte(90).optional(),
     longitude: z.number().gte(-180).lte(180).optional(),
     accuracy_m: z.number().nonnegative().optional(),
@@ -68,5 +69,6 @@ export type WorkerReportCreateRequest = z.infer<typeof WorkerReportCreateRequest
 export type WorkerReportAddMediaRequest = z.infer<typeof WorkerReportAddMediaRequestSchema>;
 export type DeviceRegisterRequest = z.infer<typeof DeviceRegisterRequestSchema>;
 export type DeviceUnregisterRequest = z.infer<typeof DeviceUnregisterRequestSchema>;
+export type WorkerDayStartRequest = z.infer<typeof WorkerDayStartRequestSchema>;
 export type CreateUploadSessionRequest = z.infer<typeof CreateUploadSessionRequestSchema>;
 export type FinalizeUploadSessionRequest = z.infer<typeof FinalizeUploadSessionRequestSchema>;
