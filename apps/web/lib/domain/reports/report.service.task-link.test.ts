@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { createReport, submitReport, validateTaskForReportLink } from "./report.service";
+import { addMediaToReport, createReport, submitReport, validateTaskForReportLink } from "./report.service";
 import * as taskRepo from "@/lib/domain/tasks/task.repository";
 import { isTaskAssignedTo } from "@/lib/domain/task-assignments";
 import * as repo from "./report.repository";
@@ -174,6 +174,49 @@ describe("report.service task link", () => {
         { actual: null, planned: null }
       );
       expect(repo.submit).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("addMediaToReport", () => {
+    const ctx = { tenantId, userId, role: "member" } as const;
+
+    it("rejects media on submitted reports", async () => {
+      vi.mocked(repo.getById).mockResolvedValue({
+        id: "rpt-1",
+        tenant_id: tenantId,
+        user_id: userId,
+        status: "submitted",
+      } as any);
+      const result = await addMediaToReport({} as any, ctx as any, "rpt-1", { uploadSessionId: "sess-1" });
+      expect(result.ok).toBe(false);
+      expect(result.error).toBe("Report already submitted");
+      expect(repo.addMedia).not.toHaveBeenCalled();
+    });
+
+    it("attaches media on a draft report", async () => {
+      vi.mocked(repo.getById).mockResolvedValue({
+        id: "rpt-1",
+        tenant_id: tenantId,
+        user_id: userId,
+        status: "draft",
+      } as any);
+      vi.mocked(repo.addMedia).mockResolvedValue(true);
+      const result = await addMediaToReport({} as any, ctx as any, "rpt-1", { uploadSessionId: "sess-1" });
+      expect(result.ok).toBe(true);
+      expect(repo.addMedia).toHaveBeenCalled();
+    });
+
+    it("attaches media while the report is waiting on worker changes", async () => {
+      vi.mocked(repo.getById).mockResolvedValue({
+        id: "rpt-1",
+        tenant_id: tenantId,
+        user_id: userId,
+        status: "changes_requested",
+      } as any);
+      vi.mocked(repo.addMedia).mockResolvedValue(true);
+      const result = await addMediaToReport({} as any, ctx as any, "rpt-1", { uploadSessionId: "sess-1" });
+      expect(result).toEqual({ ok: true, error: "" });
+      expect(repo.addMedia).toHaveBeenCalledWith({} as any, "rpt-1", { uploadSessionId: "sess-1" });
     });
   });
 });

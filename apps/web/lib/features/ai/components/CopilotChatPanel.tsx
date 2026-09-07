@@ -6,8 +6,6 @@ import { createClient } from "@/lib/supabase/client";
 import type { DecisionContextPayload } from "@/lib/engine/types";
 import type { EngineError } from "@/lib/engine/errors";
 import { useCopilotThread } from "../api/useCopilotThread";
-import { useThreadSummary } from "../api/useThreadSummary";
-import { requestMemoryRefresh } from "../api/chatApi";
 import { AiErrorBanner } from "@/components/ai/AiErrorBanner";
 import { LowConfidenceNotice } from "@/components/ai/LowConfidenceNotice";
 import { CopyRequestIdButton } from "@/components/ai/CopyRequestIdButton";
@@ -66,7 +64,7 @@ export function CopilotChatPanel({
   const abortRef = useRef<AbortController | null>(null);
   const ctx = decisionContext ?? DEFAULT_CONTEXT;
 
-  const { thread, threadId, sendMessageMutation, clearChat, clearChatMutation } = useCopilotThread(projectId);
+  const { thread, sendMessageMutation, clearChat, clearChatMutation } = useCopilotThread(projectId);
   const messages = thread?.messages ?? [];
   const displayMessages = streamingContent
     ? [...messages, { id: "_streaming", role: "assistant" as const, content: streamingContent }]
@@ -86,32 +84,6 @@ export function CopilotChatPanel({
       return null;
     }
   }, []);
-
-  const getAuthTokenStable = useCallback(async () => {
-    const supabase = createClient();
-    try {
-      const res = await supabase.auth.getSession();
-      const session = res?.data?.session ?? null;
-      return session?.access_token ?? null;
-    } catch {
-      return null;
-    }
-  }, []);
-
-  const summaryQuery = useThreadSummary(threadId, getAuthTokenStable);
-  const threadSummary = summaryQuery.data ?? null;
-
-  const [refreshRequestPending, setRefreshRequestPending] = useState(false);
-  const handleRequestRefresh = useCallback(async () => {
-    if (!threadId || refreshRequestPending) return;
-    setRefreshRequestPending(true);
-    try {
-      await requestMemoryRefresh(threadId, getAuthTokenStable);
-      await summaryQuery.refetch();
-    } finally {
-      setRefreshRequestPending(false);
-    }
-  }, [threadId, getAuthTokenStable, refreshRequestPending, summaryQuery]);
 
   const handleCancel = useCallback(() => {
     if (abortRef.current) {
@@ -170,33 +142,11 @@ export function CopilotChatPanel({
           >
             Clear chat
           </Button>
-          {threadId && (
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              onClick={handleRequestRefresh}
-              disabled={refreshRequestPending}
-            >
-              {refreshRequestPending ? "Requesting…" : "Refresh summary"}
-            </Button>
-          )}
           {lastRequestId && (
             <CopyRequestIdButton requestId={lastRequestId} />
           )}
         </div>
       </div>
-
-      {threadSummary?.summary && (
-        <details className="mb-3 rounded border border-aistroyka-border-subtle bg-aistroyka-surface-muted/50 p-2">
-          <summary className="cursor-pointer text-sm font-medium text-aistroyka-text-secondary">
-            Thread summary
-          </summary>
-          <p className="mt-2 whitespace-pre-wrap text-sm text-aistroyka-text-primary">
-            {threadSummary.summary}
-          </p>
-        </details>
-      )}
 
       <div
         ref={listRef}

@@ -1,9 +1,8 @@
 /**
- * POST /api/v1/projects/:id/client-requests/:requestId/respond — project owner (stakeholder) only.
+ * POST /api/v1/projects/:id/client-requests/:requestId/respond — authorized stakeholder decision path.
  */
 
 import { NextResponse } from "next/server";
-import { createClientFromRequest } from "@/lib/supabase/server";
 import {
   getTenantContextFromRequest,
   requireTenant,
@@ -60,13 +59,20 @@ export async function POST(
     note: typeof body.note === "string" ? body.note : null,
   };
 
-  const supabase = await createClientFromRequest(request);
-  const { data, error } = await respondToClientRequest(supabase, ctx, projectId, requestId, input);
+  // The caller is authenticated and tenant-scoped above. The domain service still
+  // applies canRespondToClientRequests(ctx, projectId). After that app-level gate,
+  // use the server-only service-role client so customer decisions do not require a
+  // permissive direct-PostgREST UPDATE policy for stakeholders.
+  const admin = getAdminClient();
+  if (!admin) {
+    return NextResponse.json({ error: "Service writer unavailable" }, { status: 503 });
+  }
+
+  const { data, error } = await respondToClientRequest(admin, ctx, projectId, requestId, input);
   if (error === "Insufficient rights") return NextResponse.json({ error }, { status: 403 });
   if (!data) return NextResponse.json({ error: error || "Respond failed" }, { status: 400 });
 
-  const admin = getAdminClient();
-  if (admin && ctx.tenantId) {
+  if (ctx.tenantId) {
     await notifyProjectManagers(admin, ctx.tenantId, projectId, {
       type: "client_request_responded",
       title: `Client responded: ${data.title}`,

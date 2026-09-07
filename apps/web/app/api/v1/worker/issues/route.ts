@@ -62,13 +62,18 @@ export async function POST(request: Request) {
   if (!projectId) return NextResponse.json({ error: "project_id required" }, { status: 400 });
   if (!title) return NextResponse.json({ error: "title required" }, { status: 400 });
 
+  const evidenceSession =
+    typeof body.evidence_upload_session_id === "string" ? body.evidence_upload_session_id.trim() : "";
+
   const supabase = await createClientFromRequest(request);
   const { data, error } = await createWorkerReportedIssue(supabase, ctx, {
     project_id: projectId,
     title,
     description: typeof body.description === "string" ? body.description : undefined,
     task_id: typeof body.task_id === "string" ? body.task_id : undefined,
+    evidence_upload_session_id: evidenceSession || undefined,
   });
+  if (error === "Invalid issue evidence") return NextResponse.json({ error }, { status: 400 });
   if (error && error !== "Project not found") return NextResponse.json({ error }, { status: 403 });
   if (error === "Project not found") return NextResponse.json({ error }, { status: 404 });
   if (!data) return NextResponse.json({ error: "Create failed" }, { status: 500 });
