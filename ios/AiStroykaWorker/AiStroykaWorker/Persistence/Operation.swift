@@ -31,6 +31,7 @@ enum OperationType: String, Codable {
 /// Minimal payload: only fields needed for execution. All optional; decode by type.
 struct OperationPayload: Codable, Equatable {
     var dayId: String?
+    var projectId: String?
     var taskId: String?
     var reportId: String?
     var purpose: String?
@@ -52,6 +53,7 @@ struct OperationPayload: Codable, Equatable {
 
     init(
         dayId: String? = nil,
+        projectId: String? = nil,
         taskId: String? = nil,
         reportId: String? = nil,
         purpose: String? = nil,
@@ -70,6 +72,7 @@ struct OperationPayload: Codable, Equatable {
         plannedVolume: Double? = nil
     ) {
         self.dayId = dayId
+        self.projectId = projectId
         self.taskId = taskId
         self.reportId = reportId
         self.purpose = purpose
