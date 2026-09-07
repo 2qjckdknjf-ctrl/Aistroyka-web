@@ -10,8 +10,23 @@ export async function startDay(
   evidence?: WorkerDayStartEvidence
 ): Promise<{ data: WorkerDay | null; error: string }> {
   if (!canManageWorkerDay(ctx)) return { data: null, error: "Insufficient rights" };
+
+  const projectId = evidence?.project_id?.trim() || null;
+  if (projectId) {
+    const { data: project, error: projectError } = await supabase
+      .from("projects")
+      .select("id")
+      .eq("id", projectId)
+      .eq("tenant_id", ctx.tenantId)
+      .maybeSingle();
+    if (projectError || !project) return { data: null, error: "Invalid project" };
+  }
+
   const dayDate = new Date().toISOString().slice(0, 10);
-  const data = await repo.setStarted(supabase, ctx.tenantId, ctx.userId, dayDate, evidence);
+  const normalizedEvidence = evidence
+    ? { ...evidence, ...(projectId ? { project_id: projectId } : {}) }
+    : undefined;
+  const data = await repo.setStarted(supabase, ctx.tenantId, ctx.userId, dayDate, normalizedEvidence);
   if (!data) return { data: null, error: "Failed to start day" };
   return { data, error: "" };
 }
