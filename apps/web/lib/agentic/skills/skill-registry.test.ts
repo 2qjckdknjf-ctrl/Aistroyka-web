@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { SkillRegistry, selectSkillsFromAllowlist } from "./skill-registry";
+import { executeRegisteredSkill, SkillRegistry, selectSkillsFromAllowlist } from "./skill-registry";
 import { AgentError } from "../errors";
 import type { AgentSkill } from "./skill.types";
 import type { AgentExecutionContext } from "../types";
 
-function ctx(roles: AgentExecutionContext["roles"] = ["manager"]): AgentExecutionContext {
+function ctx(
+  roles: AgentExecutionContext["roles"] = ["manager"],
+  permissions: string[] = []
+): AgentExecutionContext {
   return {
     tenantId: "t1",
     projectId: "p1",
@@ -14,7 +17,7 @@ function ctx(roles: AgentExecutionContext["roles"] = ["manager"]): AgentExecutio
     tenantRole: "member",
     projectRole: "manager",
     roles,
-    permissions: [],
+    permissions,
     requestId: "r1",
     traceId: "tr1",
     locale: "en",
@@ -23,7 +26,11 @@ function ctx(roles: AgentExecutionContext["roles"] = ["manager"]): AgentExecutio
   };
 }
 
-function fakeSkill(name: string, managerOnly = false): AgentSkill {
+function fakeSkill(
+  name: string,
+  managerOnly = false,
+  requiredPermissions: string[] = []
+): AgentSkill {
   const definition = {
     id: name,
     name,
@@ -31,7 +38,7 @@ function fakeSkill(name: string, managerOnly = false): AgentSkill {
     description: name,
     riskLevel: "LOW" as const,
     executionMode: "READ" as const,
-    requiredPermissions: [],
+    requiredPermissions,
     inputSchema: z.object({}).strict(),
     outputSchema: z.unknown(),
     requiresProject: true,
@@ -60,6 +67,10 @@ describe("SkillRegistry", () => {
     }
   });
 
+  it("fails closed on duplicate skill names instead of silently overwriting", () => {
+    expect(() => new SkillRegistry([fakeSkill("same_skill"), fakeSkill("same_skill")])).toThrow(AgentError);
+  });
+
   it("rejects model-proposed unknown skills from allowlist helper", () => {
     const registry = new SkillRegistry([fakeSkill("get_open_issues")]);
     const { accepted, rejected } = selectSkillsFromAllowlist(
@@ -76,5 +87,28 @@ describe("SkillRegistry", () => {
     const allowed = registry.allowedReadSkills(ctx(["worker"]));
     expect(allowed).toContain("get_open_issues");
     expect(allowed).not.toContain("get_project_members");
+  });
+
+  it("denies execution when the user permission is missing", async () => {
+    const registry = new SkillRegistry([fakeSkill("get_project_state", false, ["project:read"])]);
+
+    await expect(executeRegisteredSkill(registry, ctx(["manager"], []), "get_project_state", {})).rejects.toMatchObject({
+      code: "AGENT_UNAUTHORIZED",
+    });
+  });
+
+  it("returns authorization trace and evidence pack for a governed execution", async () => {
+    const registry = new SkillRegistry([fakeSkill("get_project_state", false, ["project:read"])]);
+
+    const executed = await executeRegisteredSkill(
+      registry,
+      ctx(["manager"], ["read"]),
+      "get_project_state",
+      {}
+    );
+
+    expect(executed.authorization.status).toBe("ALLOW");
+    expect(executed.evidencePack.authorization.policyVersion).toBe("agentic-runtime-authz-v1");
+    expect(executed.evidencePack.skill.name).toBe("get_project_state");
   });
 });
