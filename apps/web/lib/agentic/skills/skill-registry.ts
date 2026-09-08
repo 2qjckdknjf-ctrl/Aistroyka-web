@@ -5,10 +5,20 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { AgentError } from "../errors";
-import { assertPolicyAllowed } from "../policy/policy-resolver";
 import type { AgentExecutionContext } from "../types";
 import type { AgentSkill, SkillDefinition, SkillResult } from "./skill.types";
 import { createReadSkills } from "./read-skills";
+import {
+  assertRuntimeAuthorized,
+  DEFAULT_PROJECT_AGENT_PERMISSIONS,
+  resolveRuntimeAuthorization,
+  type RuntimeApproval,
+  type RuntimeAuthorizationAllowed,
+} from "../security/runtime-authorization";
+import {
+  buildAgentExecutionEvidencePack,
+  type AgentExecutionEvidencePack,
+} from "../contracts/execution-evidence-pack";
 
 export const READ_SKILL_IDS = [
   "get_project_state",
@@ -27,11 +37,28 @@ export type ReadSkillId = (typeof READ_SKILL_IDS)[number];
 
 export class SkillRegistry {
   private readonly byName: Map<string, AgentSkill>;
+  private readonly identities: Set<string>;
 
   constructor(skills: AgentSkill[]) {
     this.byName = new Map();
+    this.identities = new Set();
+
     for (const skill of skills) {
-      this.byName.set(skill.definition.name, skill);
+      const { id, name, version } = skill.definition;
+      if (!id.trim() || !name.trim() || !version.trim()) {
+        throw new AgentError("AGENT_GOVERNANCE_UNAVAILABLE", "invalid_skill_identity", 500);
+      }
+
+      const identity = `${id}@${version}`;
+      if (this.byName.has(name)) {
+        throw new AgentError("AGENT_GOVERNANCE_UNAVAILABLE", `duplicate_skill_name:${name}`, 500);
+      }
+      if (this.identities.has(identity)) {
+        throw new AgentError("AGENT_GOVERNANCE_UNAVAILABLE", `duplicate_skill_identity:${identity}`, 500);
+      }
+
+      this.byName.set(name, skill);
+      this.identities.add(identity);
     }
   }
 
@@ -55,18 +82,19 @@ export class SkillRegistry {
     return this.byName.has(name);
   }
 
-  allowedReadSkills(context: AgentExecutionContext): string[] {
+  allowedReadSkills(
+    context: AgentExecutionContext,
+    agentPermissions: readonly string[] = DEFAULT_PROJECT_AGENT_PERMISSIONS
+  ): string[] {
     return this.listDefinitions()
       .filter((d) => d.executionMode === "READ")
-      .filter((d) => {
-        const decision = { skill: this.require(d.name).definition, context };
-        try {
-          assertPolicyAllowed(decision);
-          return true;
-        } catch {
-          return false;
-        }
-      })
+      .filter((d) =>
+        resolveRuntimeAuthorization({
+          skill: this.require(d.name).definition,
+          context,
+          agentPermissions,
+        }).allowed
+      )
       .map((d) => d.name);
   }
 }
@@ -75,18 +103,46 @@ export function createSkillRegistry(supabase: SupabaseClient): SkillRegistry {
   return new SkillRegistry(createReadSkills(supabase));
 }
 
+export interface ExecuteRegisteredSkillOptions {
+  /** Explicit capability grant for the agent runtime. Defaults to the Slice-01 read-only profile. */
+  agentPermissions?: readonly string[];
+  /** Approval evidence must come from a trusted approval store, never model output. */
+  approval?: RuntimeApproval | null;
+  actionType?: string;
+}
+
 export async function executeRegisteredSkill(
   registry: SkillRegistry,
   context: AgentExecutionContext,
   name: string,
-  input: unknown
-): Promise<{ definition: SkillDefinition; result: SkillResult }> {
+  input: unknown,
+  options: ExecuteRegisteredSkillOptions = {}
+): Promise<{
+  definition: SkillDefinition;
+  result: SkillResult;
+  authorization: RuntimeAuthorizationAllowed;
+  evidencePack: AgentExecutionEvidencePack;
+}> {
   const skill = registry.require(name);
-  assertPolicyAllowed({ skill: skill.definition, context });
+  const authorization = assertRuntimeAuthorized({
+    skill: skill.definition,
+    context,
+    agentPermissions: options.agentPermissions ?? DEFAULT_PROJECT_AGENT_PERMISSIONS,
+    approval: options.approval,
+    actionType: options.actionType,
+  });
+
   const parsed = skill.validateInput(input);
   await skill.authorize(context);
   const result = await skill.execute(context, parsed);
-  return { definition: skill.definition, result };
+  const evidencePack = buildAgentExecutionEvidencePack({
+    context,
+    skill: skill.definition,
+    authorization,
+    result,
+  });
+
+  return { definition: skill.definition, result, authorization, evidencePack };
 }
 
 /**
