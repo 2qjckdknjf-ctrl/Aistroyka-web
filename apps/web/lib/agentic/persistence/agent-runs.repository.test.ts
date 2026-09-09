@@ -53,7 +53,8 @@ function successfulMutation() {
 function governancePack(): AgentExecutionEvidencePack {
   return {
     schemaVersion: EXECUTION_EVIDENCE_PACK_VERSION,
-    executionId: "trace-1:inspect_project:1",
+    runId: "run-1",
+    executionId: "run-1:inspect_project:1",
     requestId: "request-1",
     traceId: "trace-1",
     tenantId: "tenant-1",
@@ -193,6 +194,8 @@ describe("agent run persistence", () => {
     const inserted = (stepRows[0] as Array<Record<string, unknown>>)[0]!;
     const persisted = inserted.governance_evidence as AgentExecutionEvidencePack;
     expect(persisted.schemaVersion).toBe(EXECUTION_EVIDENCE_PACK_VERSION);
+    expect(persisted.runId).toBe("run-1");
+    expect(persisted.executionId).toBe("run-1:inspect_project:1");
     expect(persisted.authorization.policyVersion).toBe(RUNTIME_AUTHZ_POLICY_VERSION);
     expect(persisted.authorization.actionType).toBeNull();
     expect(persisted.failureCode).toBeNull();
@@ -296,7 +299,7 @@ describe("agent run persistence", () => {
       code: "AGENT_GOVERNANCE_UNAVAILABLE",
       message: "agent_run_finalize_failed",
     });
-    expect(updateCount).toBe(2); // finalization + best-effort failure marker
+    expect(updateCount).toBe(2);
   });
 
   it("throws instead of presenting success when the parent run cannot be persisted", async () => {
@@ -374,6 +377,7 @@ describe("governance evidence sanitization", () => {
     const sanitized = sanitizeGovernanceEvidencePack(source);
 
     expect(sanitized).not.toBe(source);
+    expect(sanitized.runId).toBe("run-1");
     expect(sanitized.evidence[0]?.sourceUrl).toBeNull();
     expect(sanitized.evidence[0]?.storageObject).toBeNull();
     expect(sanitized.evidence[0]?.metadata).toEqual({});
