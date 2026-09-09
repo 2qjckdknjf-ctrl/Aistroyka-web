@@ -39,6 +39,10 @@ interface AnalysisRow {
  *
  * Tenant/project scope is established by first selecting canonical `media` rows. The
  * analysis query is then restricted to those media ids. No graph writes occur here.
+ *
+ * `media.uploaded_at` is treated as the media provenance time. Analysis creation time
+ * is never substituted for media capture/upload provenance. Malformed DB analysis
+ * timestamps fail closed rather than falling back to the current wall clock.
  */
 export async function listPersistedImageSiteObservations(
   supabase: SupabaseClient,
@@ -92,6 +96,15 @@ export async function listPersistedImageSiteObservations(
     if (seenMedia.has(row.media_id) || !mediaById.has(row.media_id)) continue;
     seenMedia.add(row.media_id);
 
+    const analysisCreatedAt = canonicalPersistedTimestamp(row.created_at);
+    if (!analysisCreatedAt) {
+      throw new AgentError(
+        "AGENT_SKILL_FAILED",
+        "invalid_persisted_timestamp:get_site_observations:analysis",
+        503
+      );
+    }
+
     const result: AnalysisResult = {
       stage: row.stage?.trim() || "unknown",
       completion_percent:
@@ -105,7 +118,8 @@ export async function listPersistedImageSiteObservations(
     const observation = normalizeImageSiteObservation(result, {
       projectId: input.projectId,
       mediaId: row.media_id,
-      capturedAt: media.uploaded_at ?? row.created_at,
+      // Do not substitute analysisCreatedAt: it is not media capture/upload provenance.
+      capturedAt: media.uploaded_at ?? undefined,
     });
 
     observation.evidence.push(
@@ -113,11 +127,12 @@ export async function listPersistedImageSiteObservations(
         type: "DATABASE_STATE",
         sourceEntityType: "ai_analysis",
         sourceEntityId: row.id,
-        capturedAt: row.created_at,
+        capturedAt: analysisCreatedAt,
         metadata: {
           mediaId: row.media_id,
           jobId: row.job_id,
           persistentSource: true,
+          observationProvenanceComplete: !observation.insufficientEvidence,
         },
       })
     );
@@ -125,7 +140,7 @@ export async function listPersistedImageSiteObservations(
     out.push({
       analysisId: row.id,
       jobId: row.job_id,
-      analysisCreatedAt: row.created_at,
+      analysisCreatedAt,
       observation,
     });
 
@@ -145,4 +160,15 @@ function normalizeRiskLevel(value: string | null): "low" | "medium" | "high" {
 
 function stringArray(value: string[] | null): string[] {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
+}
+
+function canonicalPersistedTimestamp(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const normalized = value.trim();
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})$/.test(normalized)) {
+    return null;
+  }
+  const parsed = new Date(normalized);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed.toISOString();
 }
