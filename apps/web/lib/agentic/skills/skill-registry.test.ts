@@ -1,9 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import { executeRegisteredSkill, SkillRegistry, selectSkillsFromAllowlist } from "./skill-registry";
 import { AgentError } from "../errors";
-import type { AgentSkill } from "./skill.types";
+import type { AgentSkill, SkillDefinition } from "./skill.types";
 import type { AgentExecutionContext } from "../types";
+import { RUNTIME_AUTHZ_POLICY_VERSION } from "../security/runtime-authorization";
+import { hashRuntimeSkillInput } from "../security/runtime-operation";
 
 function ctx(
   roles: AgentExecutionContext["roles"] = ["manager"],
@@ -22,22 +24,24 @@ function ctx(
     traceId: "tr1",
     locale: "en",
     source: "WEB",
-    timestamp: new Date().toISOString(),
+    timestamp: "2026-09-09T00:00:00.000Z",
   };
 }
 
 function fakeSkill(
   name: string,
   managerOnly = false,
-  requiredPermissions: string[] = []
+  requiredPermissions: string[] = [],
+  overrides: Partial<SkillDefinition> = {},
+  execute = vi.fn(async () => ({ output: { ok: true }, evidence: [], insufficientEvidence: false }))
 ): AgentSkill {
-  const definition = {
+  const definition: SkillDefinition = {
     id: name,
     name,
     version: "1",
     description: name,
-    riskLevel: "LOW" as const,
-    executionMode: "READ" as const,
+    riskLevel: "LOW",
+    executionMode: "READ",
     requiredPermissions,
     inputSchema: z.object({}).strict(),
     outputSchema: z.unknown(),
@@ -46,12 +50,13 @@ function fakeSkill(
     requiresApproval: false,
     handler: name,
     managerOnly,
+    ...overrides,
   };
   return {
     definition,
     validateInput: () => ({}),
     authorize: async () => undefined,
-    execute: async () => ({ output: { ok: true }, evidence: [], insufficientEvidence: false }),
+    execute,
   };
 }
 
@@ -108,7 +113,130 @@ describe("SkillRegistry", () => {
     );
 
     expect(executed.authorization.status).toBe("ALLOW");
-    expect(executed.evidencePack.authorization.policyVersion).toBe("agentic-runtime-authz-v1");
+    expect(executed.evidencePack.authorization.policyVersion).toBe(RUNTIME_AUTHZ_POLICY_VERSION);
     expect(executed.evidencePack.skill.name).toBe("get_project_state");
+  });
+
+  it("never invokes an approval-gated handler without an atomic claim", async () => {
+    const execute = vi.fn(async () => ({ output: { ok: true }, evidence: [], insufficientEvidence: false }));
+    const governed = fakeSkill(
+      "prepare_change",
+      false,
+      ["project:read"],
+      { executionMode: "EXECUTE", requiresApproval: true },
+      execute
+    );
+    const registry = new SkillRegistry([governed]);
+    const inputHash = await hashRuntimeSkillInput({});
+
+    await expect(
+      executeRegisteredSkill(registry, ctx(["manager"], ["read"]), "prepare_change", {}, {
+        agentPermissions: ["mode:execute", "project:read"],
+        operationId: "operation-1",
+        actionType: "update_project",
+        approval: {
+          approvalId: "approval-1",
+          tenantId: "t1",
+          projectId: "p1",
+          skillName: "prepare_change",
+          operationId: "operation-1",
+          actionType: "update_project",
+          inputHash,
+          skillVersion: "1",
+          status: "APPROVED",
+          approvedBy: "owner-1",
+          approvedAt: "2026-09-09T00:00:00.000Z",
+        },
+      })
+    ).rejects.toMatchObject({ code: "AGENT_POLICY_DENIED", message: "approval_atomic_claim_required" });
+
+    expect(execute).not.toHaveBeenCalled();
+  });
+
+  it("denies replay when the atomic claim reports an already-consumed approval", async () => {
+    const execute = vi.fn(async () => ({ output: { ok: true }, evidence: [], insufficientEvidence: false }));
+    const governed = fakeSkill(
+      "prepare_change",
+      false,
+      ["project:read"],
+      { executionMode: "EXECUTE", requiresApproval: true },
+      execute
+    );
+    const registry = new SkillRegistry([governed]);
+    const inputHash = await hashRuntimeSkillInput({});
+    const claimApproval = vi.fn().mockResolvedValue({ claimed: false, reason: "approval_already_consumed" });
+
+    await expect(
+      executeRegisteredSkill(registry, ctx(["manager"], ["read"]), "prepare_change", {}, {
+        agentPermissions: ["mode:execute", "project:read"],
+        operationId: "operation-1",
+        actionType: "update_project",
+        approval: {
+          approvalId: "approval-1",
+          tenantId: "t1",
+          projectId: "p1",
+          skillName: "prepare_change",
+          operationId: "operation-1",
+          actionType: "update_project",
+          inputHash,
+          skillVersion: "1",
+          status: "APPROVED",
+          approvedBy: "owner-1",
+          approvedAt: "2026-09-09T00:00:00.000Z",
+        },
+        claimApproval,
+      })
+    ).rejects.toMatchObject({ code: "AGENT_POLICY_DENIED", message: "approval_already_consumed" });
+
+    expect(claimApproval).toHaveBeenCalledTimes(1);
+    expect(execute).not.toHaveBeenCalled();
+  });
+
+  it("records consumed approval before invoking an approval-gated handler", async () => {
+    const execute = vi.fn(async () => ({ output: { ok: true }, evidence: [], insufficientEvidence: false }));
+    const governed = fakeSkill(
+      "prepare_change",
+      false,
+      ["project:read"],
+      { executionMode: "EXECUTE", requiresApproval: true },
+      execute
+    );
+    const registry = new SkillRegistry([governed]);
+    const inputHash = await hashRuntimeSkillInput({});
+    const claimApproval = vi.fn().mockResolvedValue({
+      claimed: true,
+      consumedAt: "2026-09-09T00:01:00.000Z",
+    });
+
+    const executed = await executeRegisteredSkill(
+      registry,
+      ctx(["manager"], ["read"]),
+      "prepare_change",
+      {},
+      {
+        agentPermissions: ["mode:execute", "project:read"],
+        operationId: "operation-1",
+        actionType: "update_project",
+        approval: {
+          approvalId: "approval-1",
+          tenantId: "t1",
+          projectId: "p1",
+          skillName: "prepare_change",
+          operationId: "operation-1",
+          actionType: "update_project",
+          inputHash,
+          skillVersion: "1",
+          status: "APPROVED",
+          approvedBy: "owner-1",
+          approvedAt: "2026-09-09T00:00:00.000Z",
+        },
+        claimApproval,
+      }
+    );
+
+    expect(claimApproval).toHaveBeenCalledTimes(1);
+    expect(execute).toHaveBeenCalledTimes(1);
+    expect(executed.authorization.approvalConsumedAt).toBe("2026-09-09T00:01:00.000Z");
+    expect(executed.evidencePack.authorization.approvalConsumedAt).toBe("2026-09-09T00:01:00.000Z");
   });
 });
