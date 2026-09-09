@@ -91,6 +91,10 @@ export async function runProjectAgent(
     }
   }
 
+  // Generate the immutable server-side run identity before any skill executes so every
+  // governance pack is cryptographically/audit-bound to the exact parent run that will
+  // later persist it. Client-controlled request/trace IDs are not sufficient identity.
+  const runId = crypto.randomUUID();
   const registry = createSkillRegistry(supabase);
   const intent = resolveAgentIntent(message);
   const required = skillsForIntent(intent);
@@ -109,7 +113,13 @@ export async function runProjectAgent(
     const skillStarted = Date.now();
     const requiredSkill = isRequiredSkill(intent, skillName);
     try {
-      const { result, evidencePack } = await executeRegisteredSkill(registry, context, skillName, {});
+      const { result, evidencePack } = await executeRegisteredSkill(
+        registry,
+        context,
+        skillName,
+        {},
+        { runId }
+      );
       skillOutputs[skillName] = result.output;
       evidence.push(...result.evidence);
       if (
@@ -257,7 +267,6 @@ export async function runProjectAgent(
   const confidence =
     failedRequired.length > 0 || runStatus !== "COMPLETED" ? "low" : synthesis.response.confidence;
 
-  const runId = crypto.randomUUID();
   const response: AgentOrchestratorResponse = {
     schemaVersion: 1,
     runId,
