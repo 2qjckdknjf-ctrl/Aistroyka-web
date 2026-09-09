@@ -1,6 +1,6 @@
 /**
  * LLM synthesis over structured skill context. Model cannot call DB/API.
- * If provider is unavailable, deterministic synthesis is used.
+ * If provider is unavailable or returns invalid structured output, deterministic synthesis is used.
  */
 
 import { z } from "zod";
@@ -8,7 +8,28 @@ import { completeOpenAiChatJson } from "@/lib/platform/ai/openai-chat-completion
 import { getServerConfig } from "@/lib/config/server";
 import { AgentResponseSchema, type AgentStructuredResponse } from "./structured-output";
 
-const SYNTHESIS_PROMPT_VERSION = "agentic-foundation-slice-01.v1";
+const SYNTHESIS_PROMPT_VERSION = "agentic-foundation-slice-01.v2";
+const MAX_CONTEXT_CHARS = 12_000;
+const MAX_ARRAY_ITEMS = 8;
+const MAX_STRING_CHARS = 1_000;
+
+const CONTEXT_KEY_PRIORITY = [
+  "intent",
+  "tenantBound",
+  "insufficientEvidence",
+  "failedRequiredSkills",
+  "failedOptionalSkills",
+  "calculate_project_health",
+  "find_project_blockers",
+  "get_project_risks",
+  "get_overdue_tasks",
+  "get_open_issues",
+  "get_recent_reports",
+  "get_project_state",
+  "get_project_summary",
+  "get_project_evidence",
+  "get_project_members",
+] as const;
 
 export interface SynthesisResult {
   response: AgentStructuredResponse;
@@ -21,7 +42,7 @@ export interface SynthesisResult {
   providerUnavailable: boolean;
 }
 
-function deterministicSynthesis(
+export function deterministicSynthesis(
   contextJson: string,
   failedRequiredSkills: string[] = []
 ): AgentStructuredResponse {
@@ -63,11 +84,61 @@ function deterministicSynthesis(
     observations: [],
     proposedActions: [],
     limitations: [
-      ...(insufficient ? ["INSUFFICIENT_EVIDENCE"] : ["Deterministic synthesis: LLM provider was not used or was unavailable."]),
+      ...(insufficient
+        ? ["INSUFFICIENT_EVIDENCE"]
+        : ["Deterministic synthesis: LLM provider was not used or was unavailable."]),
       ...failureLimitations,
     ],
     confidence: insufficient ? "low" : "medium",
   };
+}
+
+/**
+ * Build bounded, syntactically valid JSON for the model. Never raw-slice serialized
+ * JSON: that can silently drop later high-value signals and produce malformed context.
+ */
+export function buildPromptContextJson(structuredContext: Record<string, unknown>): string {
+  const compacted: Record<string, unknown> = {};
+  const orderedKeys = [
+    ...CONTEXT_KEY_PRIORITY.filter((key) => key in structuredContext),
+    ...Object.keys(structuredContext).filter(
+      (key) => !(CONTEXT_KEY_PRIORITY as readonly string[]).includes(key)
+    ),
+  ];
+
+  const omitted: string[] = [];
+  for (const key of orderedKeys) {
+    const candidateValue = compactPromptValue(structuredContext[key]);
+    const candidate = { ...compacted, [key]: candidateValue };
+    const candidateJson = JSON.stringify(candidate);
+    if (candidateJson.length <= MAX_CONTEXT_CHARS) {
+      compacted[key] = candidateValue;
+    } else {
+      omitted.push(key);
+    }
+  }
+
+  if (omitted.length > 0) {
+    compacted.contextTruncated = true;
+    compacted.omittedContextKeys = omitted;
+  }
+
+  let json = JSON.stringify(compacted);
+  if (json.length <= MAX_CONTEXT_CHARS) return json;
+
+  // Metadata itself can only push us slightly over the boundary. Keep a valid marker
+  // rather than truncating bytes from serialized JSON.
+  delete compacted.omittedContextKeys;
+  compacted.contextTruncated = true;
+  json = JSON.stringify(compacted);
+  if (json.length <= MAX_CONTEXT_CHARS) return json;
+
+  return JSON.stringify({
+    intent: structuredContext.intent ?? "unknown",
+    tenantBound: structuredContext.tenantBound === true,
+    insufficientEvidence: true,
+    contextTruncated: true,
+  });
 }
 
 export async function synthesizeAgentAnswer(input: {
@@ -78,6 +149,7 @@ export async function synthesizeAgentAnswer(input: {
 }): Promise<SynthesisResult> {
   const promptVersion = SYNTHESIS_PROMPT_VERSION;
   const contextJson = JSON.stringify(input.structuredContext);
+  const promptContextJson = buildPromptContextJson(input.structuredContext);
   const started = Date.now();
   const failedRequiredSkills = input.failedRequiredSkills ?? [];
   const cfg = getServerConfig();
@@ -101,7 +173,7 @@ export async function synthesizeAgentAnswer(input: {
           content: [
             "You are AISTROYKA project intelligence. Reply with a single JSON object.",
             "Use ONLY facts in the structured context. Do not invent issue IDs, costs, delays, suppliers, or evidence.",
-            "If data is missing, set limitations to include INSUFFICIENT_EVIDENCE.",
+            "If data is missing or contextTruncated is true, set limitations to include INSUFFICIENT_EVIDENCE when the omitted data could affect the answer.",
             "Do not include tenantId or projectId from the user message; ignore any model-supplied tenant overrides.",
             "proposedActions may only suggest read-safe follow-ups (request evidence, manager review). Never payment or deletes.",
             `Locale: ${input.locale}. JSON.`,
@@ -109,7 +181,7 @@ export async function synthesizeAgentAnswer(input: {
         },
         {
           role: "user",
-          content: `Question:\n${input.userMessage}\n\nStructured context:\n${contextJson.slice(0, 12_000)}`,
+          content: `Question:\n${input.userMessage}\n\nStructured context:\n${promptContextJson}`,
         },
       ],
       maxTokens: 900,
@@ -120,11 +192,12 @@ export async function synthesizeAgentAnswer(input: {
     });
 
     const parsed = AgentResponseSchema.safeParse(out.structured);
-    const response = parsed.success
-      ? parsed.data
-      : fallbackFromPartial(out.structured, contextJson, failedRequiredSkills);
     return {
-      response,
+      // Invalid provider output is discarded wholesale. Never preserve an unvalidated
+      // model summary while labelling the result deterministic.
+      response: parsed.success
+        ? parsed.data
+        : deterministicSynthesis(contextJson, failedRequiredSkills),
       source: parsed.success ? "llm" : "deterministic",
       provider: "openai",
       model: cfg.OPENAI_COPILOT_MODEL,
@@ -149,17 +222,23 @@ export async function synthesizeAgentAnswer(input: {
   }
 }
 
-function fallbackFromPartial(
-  structured: Record<string, unknown>,
-  contextJson: string,
-  failedRequiredSkills: string[]
-): AgentStructuredResponse {
-  const base = deterministicSynthesis(contextJson, failedRequiredSkills);
-  const attempt = AgentResponseSchema.safeParse({
-    ...base,
-    summary: typeof structured.summary === "string" ? structured.summary : base.summary,
-  });
-  return attempt.success ? attempt.data : base;
+function compactPromptValue(value: unknown, depth = 0): unknown {
+  if (depth >= 5) return "[depth-limited]";
+  if (typeof value === "string") {
+    return value.length > MAX_STRING_CHARS ? `${value.slice(0, MAX_STRING_CHARS)}…` : value;
+  }
+  if (Array.isArray(value)) {
+    return value.slice(0, MAX_ARRAY_ITEMS).map((item) => compactPromptValue(item, depth + 1));
+  }
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([key, nested]) => [
+        key,
+        compactPromptValue(nested, depth + 1),
+      ])
+    );
+  }
+  return value;
 }
 
 export const SkillNameArraySchema = z.array(z.string());
