@@ -81,13 +81,14 @@ function okResult(
   };
 }
 
-function governedFailure() {
+function governedFailure(runId: string) {
   return {
     governedFailure: true,
     originalError: new AgentError("AGENT_SKILL_FAILED", "partial_mutation_failed", 503),
     evidencePack: {
-      schemaVersion: 6,
-      executionId: "tr1:get_overdue_tasks:1",
+      schemaVersion: 7,
+      runId,
+      executionId: `${runId}:get_overdue_tasks:1`,
       requestId: "r1",
       traceId: "tr1",
       tenantId: "tenant-1",
@@ -171,22 +172,46 @@ describe("runProjectAgent", () => {
     );
   });
 
+  it("passes one server-generated run identity to every skill and persistence", async () => {
+    executeRegisteredSkill.mockResolvedValue(okResult({ ok: true }));
+    const result = await runProjectAgent({} as never, ctx(), { message: "overdue tasks" }, { persistClient, recordUsage });
+
+    expect(result.runId).toEqual(expect.any(String));
+    expect(result.runId.length).toBeGreaterThan(0);
+    for (const call of executeRegisteredSkill.mock.calls) {
+      expect(call[4]).toMatchObject({ runId: result.runId });
+    }
+    expect(persistAgentRun).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ runId: result.runId })
+    );
+  });
+
   it("persists governed authorization evidence when a handler fails after execution was authorized", async () => {
-    executeRegisteredSkill.mockImplementation(async (_r: unknown, _c: unknown, skill: string) => {
-      if (skill === "get_overdue_tasks") throw governedFailure();
-      return okResult({ ok: true });
-    });
+    executeRegisteredSkill.mockImplementation(
+      async (_r: unknown, _c: unknown, skill: string, _input: unknown, options: { runId?: string }) => {
+        if (skill === "get_overdue_tasks") throw governedFailure(options.runId ?? "missing-run");
+        return okResult({ ok: true });
+      }
+    );
 
     const result = await runProjectAgent({} as never, ctx(), { message: "overdue tasks" }, { persistClient, recordUsage });
     expect(result.runStatus).toBe("COMPLETED_WITH_LIMITATIONS");
 
     const persistCall = persistAgentRun.mock.calls.at(-1)?.[1] as {
-      steps: Array<{ skill: string; status: string; governanceEvidence?: { outcome: string; authorization: unknown } }>;
+      runId: string;
+      steps: Array<{
+        skill: string;
+        status: string;
+        governanceEvidence?: { runId: string; executionId: string; outcome: string; authorization: unknown };
+      }>;
     };
     const failedStep = persistCall.steps.find((step) => step.skill === "get_overdue_tasks");
     expect(failedStep).toMatchObject({
       status: "FAILED",
       governanceEvidence: {
+        runId: persistCall.runId,
+        executionId: `${persistCall.runId}:get_overdue_tasks:1`,
         outcome: "FAILED",
         authorization: expect.objectContaining({
           approvalId: "approval-1",
