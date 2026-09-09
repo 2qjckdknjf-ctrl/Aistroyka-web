@@ -3,8 +3,10 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { AgentError } from "../errors";
 import type { AgentExecutionContext, AgentRunStatus, SkillRiskLevel } from "../types";
 import type { AgentEvidence } from "../contracts/evidence.types";
+import type { AgentExecutionEvidencePack } from "../contracts/execution-evidence-pack";
 import type { ProposedAgentAction } from "../envelope/action-envelope";
 import { logAgentMetric } from "../observability/metrics";
 
@@ -29,11 +31,18 @@ export interface PersistRunInput {
     status: "COMPLETED" | "FAILED" | "DENIED" | "SKIPPED";
     durationMs: number;
     evidence: AgentEvidence[];
+    governanceEvidence?: AgentExecutionEvidencePack | null;
     errorCode?: string;
   }>;
   proposed: Array<ProposedAgentAction & { riskLevel: SkillRiskLevel }>;
 }
 
+/**
+ * Persistence is staged fail-closed: the parent row starts as EXECUTING and is only
+ * finalized to the caller-visible terminal status after governed steps and proposed
+ * actions are durably stored. Any child/finalization error is propagated, preventing
+ * the orchestrator from auditing or returning a successful run without its evidence.
+ */
 export async function persistAgentRun(supabase: SupabaseClient, input: PersistRunInput): Promise<void> {
   const { error } = await supabase.from("agent_runs").insert({
     id: input.runId,
@@ -42,27 +51,27 @@ export async function persistAgentRun(supabase: SupabaseClient, input: PersistRu
     actor_user_id: input.context.userId,
     agent_type: "project_delivery",
     request: redactAgentRequest(input.request),
-    status: input.status,
+    status: "EXECUTING",
     model_provider: input.modelProvider ?? null,
     model_name: input.modelName ?? null,
     prompt_version: input.promptVersion ?? null,
     skills_called: input.skillsCalled,
-    structured_result: input.structuredResult,
+    structured_result: null,
     token_usage: input.tokenUsage ?? null,
     latency_ms: input.latencyMs,
     started_at: input.context.timestamp,
-    completed_at: new Date().toISOString(),
+    completed_at: null,
     trace_id: input.context.traceId,
-    error_code: input.errorCode ?? null,
+    error_code: null,
     idempotency_key: input.idempotencyKey ?? null,
   });
   if (error) {
     logAgentMetric("agentic.persist_failed", { table: "agent_runs" });
-    return;
+    throw new AgentError("AGENT_GOVERNANCE_UNAVAILABLE", "agent_run_persist_failed", 503);
   }
 
   if (input.steps.length > 0) {
-    await supabase.from("agent_run_steps").insert(
+    const { error: stepsError } = await supabase.from("agent_run_steps").insert(
       input.steps.map((s) => ({
         tenant_id: input.context.tenantId,
         project_id: input.context.projectId,
@@ -72,19 +81,22 @@ export async function persistAgentRun(supabase: SupabaseClient, input: PersistRu
         output: s.output,
         status: s.status,
         duration_ms: s.durationMs,
-        evidence_refs: s.evidence.map((e) => ({
-          evidenceId: e.evidenceId,
-          type: e.type,
-          sourceEntityType: e.sourceEntityType,
-          sourceEntityId: e.sourceEntityId,
-        })),
+        evidence_refs: buildPersistedEvidenceRefs(s.evidence),
+        governance_evidence: s.governanceEvidence
+          ? sanitizeGovernanceEvidencePack(s.governanceEvidence)
+          : null,
         error_code: s.errorCode ?? null,
       }))
     );
+    if (stepsError) {
+      logAgentMetric("agentic.persist_failed", { table: "agent_run_steps" });
+      await markRunPersistenceFailed(supabase, input, "AGENT_GOVERNANCE_STEP_PERSIST_FAILED");
+      throw new AgentError("AGENT_GOVERNANCE_UNAVAILABLE", "agent_run_steps_persist_failed", 503);
+    }
   }
 
   if (input.proposed.length > 0) {
-    await supabase.from("proposed_agent_actions").insert(
+    const { error: proposedError } = await supabase.from("proposed_agent_actions").insert(
       input.proposed.map((p) => ({
         tenant_id: input.context.tenantId,
         project_id: input.context.projectId,
@@ -100,7 +112,103 @@ export async function persistAgentRun(supabase: SupabaseClient, input: PersistRu
         created_by: input.context.userId,
       }))
     );
+    if (proposedError) {
+      logAgentMetric("agentic.persist_failed", { table: "proposed_agent_actions" });
+      await markRunPersistenceFailed(supabase, input, "AGENT_PROPOSED_ACTION_PERSIST_FAILED");
+      throw new AgentError("AGENT_GOVERNANCE_UNAVAILABLE", "proposed_agent_actions_persist_failed", 503);
+    }
   }
+
+  const { error: finalizeError } = await scopedRunUpdate(supabase, input, {
+    status: input.status,
+    structured_result: input.structuredResult,
+    completed_at: new Date().toISOString(),
+    error_code: input.errorCode ?? null,
+  });
+  if (finalizeError) {
+    logAgentMetric("agentic.persist_failed", { table: "agent_runs_finalize" });
+    await markRunPersistenceFailed(supabase, input, "AGENT_RUN_FINALIZE_FAILED");
+    throw new AgentError("AGENT_GOVERNANCE_UNAVAILABLE", "agent_run_finalize_failed", 503);
+  }
+}
+
+async function markRunPersistenceFailed(
+  supabase: SupabaseClient,
+  input: Pick<PersistRunInput, "runId" | "context">,
+  errorCode: string
+): Promise<void> {
+  const { error } = await scopedRunUpdate(supabase, input, {
+    status: "FAILED",
+    structured_result: null,
+    completed_at: new Date().toISOString(),
+    error_code: errorCode,
+  });
+  if (error) {
+    logAgentMetric("agentic.persist_failed", { table: "agent_runs_failure_marker" });
+  }
+}
+
+/**
+ * PostgREST can report a successful UPDATE that matched zero rows. Request the row
+ * representation and require the exact scoped run ID so a deleted/mismatched parent
+ * can never be mistaken for a durable finalization.
+ */
+async function scopedRunUpdate(
+  supabase: SupabaseClient,
+  input: Pick<PersistRunInput, "runId" | "context">,
+  patch: Record<string, unknown>
+): Promise<{ error: unknown }> {
+  const result = await supabase
+    .from("agent_runs")
+    .update(patch)
+    .eq("id", input.runId)
+    .eq("tenant_id", input.context.tenantId)
+    .eq("project_id", input.context.projectId)
+    .select("id")
+    .maybeSingle();
+  const row = result.data as { id?: string } | null;
+  if (result.error) return { error: result.error };
+  if (row?.id !== input.runId) {
+    return { error: { message: "agent_run_update_cardinality_mismatch" } };
+  }
+  return { error: null };
+}
+
+function buildPersistedEvidenceRefs(evidence: AgentEvidence[]): Array<Record<string, unknown>> {
+  return evidence.map((e) => ({
+    evidenceId: e.evidenceId,
+    type: e.type,
+    sourceEntityType: e.sourceEntityType,
+    sourceEntityId: e.sourceEntityId,
+  }));
+}
+
+/**
+ * Governance evidence is persisted as a re-validatable pack, but evidence locators
+ * and arbitrary metadata are intentionally stripped. Those fields may contain
+ * signed URLs, storage paths, provider data, or secrets and are not required by
+ * `validateAgentExecutionEvidencePack`.
+ */
+export function sanitizeGovernanceEvidencePack(
+  pack: AgentExecutionEvidencePack
+): AgentExecutionEvidencePack {
+  return {
+    ...pack,
+    authorization: {
+      ...pack.authorization,
+      effectivePermissions: [...pack.authorization.effectivePermissions],
+    },
+    evidence: pack.evidence.map((e) => ({
+      evidenceId: e.evidenceId,
+      type: e.type,
+      sourceEntityType: e.sourceEntityType,
+      sourceEntityId: e.sourceEntityId,
+      sourceUrl: null,
+      storageObject: null,
+      capturedAt: e.capturedAt,
+      metadata: {},
+    })),
+  };
 }
 
 export async function findRunByIdempotency(

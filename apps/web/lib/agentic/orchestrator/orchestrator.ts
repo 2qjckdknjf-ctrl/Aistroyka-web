@@ -6,7 +6,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { AgentError, isAgentError } from "../errors";
 import type { AgentExecutionContext, AgentRunStatus } from "../types";
-import { createSkillRegistry, executeRegisteredSkill } from "../skills/skill-registry";
+import {
+  createSkillRegistry,
+  executeRegisteredSkill,
+  isGovernedSkillExecutionError,
+} from "../skills/skill-registry";
 import { isRequiredSkill, resolveAgentIntent, skillsForIntent } from "./intent";
 import { synthesizeAgentAnswer } from "./synthesis";
 import {
@@ -87,6 +91,10 @@ export async function runProjectAgent(
     }
   }
 
+  // Generate the immutable server-side run identity before any skill executes so every
+  // governance pack is cryptographically/audit-bound to the exact parent run that will
+  // later persist it. Client-controlled request/trace IDs are not sufficient identity.
+  const runId = crypto.randomUUID();
   const registry = createSkillRegistry(supabase);
   const intent = resolveAgentIntent(message);
   const required = skillsForIntent(intent);
@@ -105,10 +113,22 @@ export async function runProjectAgent(
     const skillStarted = Date.now();
     const requiredSkill = isRequiredSkill(intent, skillName);
     try {
-      const { result } = await executeRegisteredSkill(registry, context, skillName, {});
+      const { result, evidencePack } = await executeRegisteredSkill(
+        registry,
+        context,
+        skillName,
+        {},
+        { runId }
+      );
       skillOutputs[skillName] = result.output;
       evidence.push(...result.evidence);
-      if (result.insufficientEvidence) insufficient = true;
+      if (
+        result.insufficientEvidence ||
+        evidencePack.insufficientEvidence ||
+        evidencePack.outcome === "INSUFFICIENT_EVIDENCE"
+      ) {
+        insufficient = true;
+      }
       steps.push({
         skill: skillName,
         input: {},
@@ -116,15 +136,26 @@ export async function runProjectAgent(
         status: "COMPLETED",
         durationMs: Date.now() - skillStarted,
         evidence: result.evidence,
+        governanceEvidence: evidencePack,
       });
       logAgentMetric("agentic.skill_executed", {
         skill: skillName,
         duration_ms: Date.now() - skillStarted,
       });
     } catch (err) {
-      const code = isAgentError(err) ? err.code : "AGENT_SKILL_FAILED";
+      const governedFailure = isGovernedSkillExecutionError(err) ? err : null;
+      const underlying = governedFailure?.originalError ?? err;
+      const code = isAgentError(underlying) ? underlying.code : "AGENT_SKILL_FAILED";
       logAgentMetric("agentic.skill_failed", { skill: skillName, error_code: code });
-      if (isAgentError(err) && (err.code === "AGENT_SKILL_NOT_ALLOWED" || err.code === "AGENT_POLICY_DENIED")) {
+
+      // A policy denial before handler invocation is a DENIED step. A governed handler
+      // failure is always FAILED, even if the handler itself threw an AgentError with a
+      // policy-like code, because execution was already authorized/attempted.
+      if (
+        !governedFailure &&
+        isAgentError(underlying) &&
+        (underlying.code === "AGENT_SKILL_NOT_ALLOWED" || underlying.code === "AGENT_POLICY_DENIED")
+      ) {
         steps.push({
           skill: skillName,
           input: {},
@@ -132,17 +163,21 @@ export async function runProjectAgent(
           status: "DENIED",
           durationMs: Date.now() - skillStarted,
           evidence: [],
-          errorCode: err.code,
+          errorCode: underlying.code,
         });
         continue;
       }
+
+      const failureEvidence = governedFailure?.evidencePack.evidence ?? [];
+      evidence.push(...failureEvidence);
       steps.push({
         skill: skillName,
         input: {},
         output: { queryFailed: true },
         status: "FAILED",
         durationMs: Date.now() - skillStarted,
-        evidence: [],
+        evidence: failureEvidence,
+        governanceEvidence: governedFailure?.evidencePack,
         errorCode: code,
       });
       if (requiredSkill) failedRequired.push(skillName);
@@ -232,7 +267,6 @@ export async function runProjectAgent(
   const confidence =
     failedRequired.length > 0 || runStatus !== "COMPLETED" ? "low" : synthesis.response.confidence;
 
-  const runId = crypto.randomUUID();
   const response: AgentOrchestratorResponse = {
     schemaVersion: 1,
     runId,
@@ -315,6 +349,23 @@ export function resolveRunStatus(input: {
 }
 
 function toOrchestratorResponse(parsed: AgentPublicResponse): AgentOrchestratorResponse {
+  const replayEvidence: AgentEvidence[] = parsed.evidence.flatMap((e) => {
+    if (!e.capturedAt) return [];
+    return [
+      {
+        evidenceId: e.evidenceId,
+        type: (e.type as AgentEvidence["type"]) ?? "DATABASE_STATE",
+        sourceEntityType: e.sourceEntityType ?? "unknown",
+        sourceEntityId: e.sourceEntityId ?? "",
+        sourceUrl: null,
+        storageObject: null,
+        capturedAt: e.capturedAt,
+        metadata: {},
+      },
+    ];
+  });
+  const droppedReplayEvidence = parsed.evidence.length - replayEvidence.length;
+
   return {
     schemaVersion: 1,
     runId: parsed.runId,
@@ -322,16 +373,7 @@ function toOrchestratorResponse(parsed: AgentPublicResponse): AgentOrchestratorR
     health: parsed.health,
     risks: parsed.risks,
     blockers: parsed.blockers,
-    evidence: parsed.evidence.map((e) => ({
-      evidenceId: e.evidenceId,
-      type: (e.type as AgentEvidence["type"]) ?? "DATABASE_STATE",
-      sourceEntityType: e.sourceEntityType ?? "unknown",
-      sourceEntityId: e.sourceEntityId ?? "",
-      sourceUrl: null,
-      storageObject: null,
-      capturedAt: new Date().toISOString(),
-      metadata: {},
-    })),
+    evidence: replayEvidence,
     proposedActions: parsed.proposedActions.map((p) => ({
       actionType: p.actionType,
       skillName: p.skillName ?? "suggest",
@@ -341,7 +383,12 @@ function toOrchestratorResponse(parsed: AgentPublicResponse): AgentOrchestratorR
       expectedEffect: p.expectedEffect ?? "",
       approvalRequired: p.approvalRequired ?? true,
     })),
-    limitations: parsed.limitations,
+    limitations: [
+      ...new Set([
+        ...parsed.limitations,
+        ...(droppedReplayEvidence > 0 ? ["IDEMPOTENCY_REPLAY_EVIDENCE_TIMESTAMP_UNAVAILABLE"] : []),
+      ]),
+    ],
     confidence: parsed.confidence,
     synthesisSource: parsed.synthesisSource ?? "deterministic",
     runStatus: parsed.runStatus ?? "COMPLETED",

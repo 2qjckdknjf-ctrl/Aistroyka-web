@@ -24,6 +24,8 @@ vi.mock("../skills/skill-registry", () => ({
     }),
   }),
   executeRegisteredSkill: (...args: unknown[]) => executeRegisteredSkill(...args),
+  isGovernedSkillExecutionError: (value: unknown) =>
+    Boolean(value && typeof value === "object" && (value as { governedFailure?: boolean }).governedFailure),
 }));
 
 vi.mock("../persistence/agent-runs.repository", () => ({
@@ -61,10 +63,65 @@ function ctx(): AgentExecutionContext {
   };
 }
 
-function okResult(output: unknown): { definition: SkillDefinition; result: SkillResult } {
+function okResult(
+  output: unknown,
+  packInsufficient = false
+): {
+  definition: SkillDefinition;
+  result: SkillResult;
+  evidencePack: { insufficientEvidence: boolean; outcome: "COMPLETED" | "INSUFFICIENT_EVIDENCE" };
+} {
   return {
     definition: { name: "x" } as SkillDefinition,
     result: { output, evidence: [], insufficientEvidence: false },
+    evidencePack: {
+      insufficientEvidence: packInsufficient,
+      outcome: packInsufficient ? "INSUFFICIENT_EVIDENCE" : "COMPLETED",
+    },
+  };
+}
+
+function governedFailure(runId: string) {
+  return {
+    governedFailure: true,
+    originalError: new AgentError("AGENT_SKILL_FAILED", "partial_mutation_failed", 503),
+    evidencePack: {
+      schemaVersion: 7,
+      runId,
+      executionId: `${runId}:get_overdue_tasks:1`,
+      requestId: "r1",
+      traceId: "tr1",
+      tenantId: "tenant-1",
+      projectId: "project-a",
+      userId: "user-a",
+      skill: {
+        id: "get_overdue_tasks",
+        name: "get_overdue_tasks",
+        version: "1",
+        executionMode: "EXECUTE",
+        riskLevel: "HIGH",
+      },
+      authorization: {
+        status: "ALLOW",
+        policyVersion: "agentic-runtime-authz-v3",
+        effectivePermissions: ["mode:execute", "project:read"],
+        approvalRequired: true,
+        approvalId: "approval-1",
+        approvalApprovedBy: "owner-1",
+        approvalApprovedAt: "2026-09-09T00:00:00.000Z",
+        approvalConsumedAt: "2026-09-09T00:01:00.000Z",
+        approvalExpiresAt: "2026-09-09T01:00:00.000Z",
+        level: "LEVEL_3_EXECUTE_AFTER_APPROVAL",
+        operationId: "operation-1",
+        actionType: "update_project",
+        inputHash: "hash-1",
+      },
+      outcome: "FAILED",
+      failureCode: "AGENT_SKILL_FAILED",
+      evidence: [],
+      insufficientEvidence: false,
+      createdAt: "2026-09-09T00:01:01.000Z",
+    },
   };
 }
 
@@ -111,9 +168,77 @@ describe("runProjectAgent", () => {
     expect(result.limitations.some((l) => l.includes("get_overdue_tasks"))).toBe(true);
     expect(result.confidence).toBe("low");
     expect(synthesizeAgentAnswer).toHaveBeenCalledWith(
-      expect.objectContaining({
-        failedRequiredSkills: expect.arrayContaining(["get_overdue_tasks"]),
-      })
+      expect.objectContaining({ failedRequiredSkills: expect.arrayContaining(["get_overdue_tasks"]) })
+    );
+  });
+
+  it("passes one server-generated run identity to every skill and persistence", async () => {
+    executeRegisteredSkill.mockResolvedValue(okResult({ ok: true }));
+    const result = await runProjectAgent({} as never, ctx(), { message: "overdue tasks" }, { persistClient, recordUsage });
+
+    expect(result.runId).toEqual(expect.any(String));
+    expect(result.runId.length).toBeGreaterThan(0);
+    for (const call of executeRegisteredSkill.mock.calls) {
+      expect(call[4]).toMatchObject({ runId: result.runId });
+    }
+    expect(persistAgentRun).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ runId: result.runId })
+    );
+  });
+
+  it("persists governed authorization evidence when a handler fails after execution was authorized", async () => {
+    executeRegisteredSkill.mockImplementation(
+      async (_r: unknown, _c: unknown, skill: string, _input: unknown, options: { runId?: string }) => {
+        if (skill === "get_overdue_tasks") throw governedFailure(options.runId ?? "missing-run");
+        return okResult({ ok: true });
+      }
+    );
+
+    const result = await runProjectAgent({} as never, ctx(), { message: "overdue tasks" }, { persistClient, recordUsage });
+    expect(result.runStatus).toBe("COMPLETED_WITH_LIMITATIONS");
+
+    const persistCall = persistAgentRun.mock.calls.at(-1)?.[1] as {
+      runId: string;
+      steps: Array<{
+        skill: string;
+        status: string;
+        governanceEvidence?: { runId: string; executionId: string; outcome: string; authorization: unknown };
+      }>;
+    };
+    const failedStep = persistCall.steps.find((step) => step.skill === "get_overdue_tasks");
+    expect(failedStep).toMatchObject({
+      status: "FAILED",
+      governanceEvidence: {
+        runId: persistCall.runId,
+        executionId: `${persistCall.runId}:get_overdue_tasks:1`,
+        outcome: "FAILED",
+        authorization: expect.objectContaining({
+          approvalId: "approval-1",
+          approvalConsumedAt: "2026-09-09T00:01:00.000Z",
+          operationId: "operation-1",
+        }),
+      },
+    });
+  });
+
+  it("propagates Evidence Pack insufficient outcome even when the raw skill result forgot the flag", async () => {
+    executeRegisteredSkill.mockResolvedValue(okResult({ ok: true }, true));
+    const result = await runProjectAgent(
+      {} as never,
+      ctx(),
+      { message: "overdue tasks" },
+      { persistClient, recordUsage }
+    );
+    expect(result.runStatus).toBe("INSUFFICIENT_EVIDENCE");
+    expect(result.confidence).toBe("low");
+    expect(result.limitations).toContain("INSUFFICIENT_EVIDENCE");
+    expect(synthesizeAgentAnswer).toHaveBeenCalledWith(
+      expect.objectContaining({ structuredContext: expect.objectContaining({ insufficientEvidence: true }) })
+    );
+    expect(persistAgentRun).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ status: "INSUFFICIENT_EVIDENCE" })
     );
   });
 
@@ -143,6 +268,80 @@ describe("runProjectAgent", () => {
     await runProjectAgent({} as never, ctx(), { message: "hello", idempotencyKey: "abc" }, { persistClient, recordUsage });
     expect(recordUsage).not.toHaveBeenCalled();
     expect(synthesizeAgentAnswer).toHaveBeenCalledTimes(1);
+  });
+
+  it("replays the original evidence timestamp instead of using replay wall-clock time", async () => {
+    findRunByIdempotency.mockResolvedValueOnce({
+      id: "run-evidence",
+      status: "COMPLETED",
+      structured_result: {
+        schemaVersion: 1,
+        runId: "run-evidence",
+        answer: "cached",
+        risks: [],
+        blockers: [],
+        evidence: [
+          {
+            evidenceId: "PHOTO:media-1",
+            type: "PHOTO",
+            sourceEntityType: "media",
+            sourceEntityId: "media-1",
+            capturedAt: "2026-09-09T08:30:00.000Z",
+          },
+        ],
+        proposedActions: [],
+        limitations: [],
+        runStatus: "COMPLETED",
+        synthesisSource: "llm",
+      },
+    });
+
+    const replay = await runProjectAgent(
+      {} as never,
+      ctx(),
+      { message: "hello", idempotencyKey: "evidence" },
+      { persistClient, recordUsage }
+    );
+    expect(replay.evidence).toHaveLength(1);
+    expect(replay.evidence[0]?.capturedAt).toBe("2026-09-09T08:30:00.000Z");
+    expect(replay.limitations).not.toContain("IDEMPOTENCY_REPLAY_EVIDENCE_TIMESTAMP_UNAVAILABLE");
+    expect(executeRegisteredSkill).not.toHaveBeenCalled();
+  });
+
+  it("drops legacy replay evidence without a timestamp rather than fabricating one", async () => {
+    findRunByIdempotency.mockResolvedValueOnce({
+      id: "run-legacy",
+      status: "COMPLETED",
+      structured_result: {
+        schemaVersion: 1,
+        runId: "run-legacy",
+        answer: "cached legacy",
+        risks: [],
+        blockers: [],
+        evidence: [
+          {
+            evidenceId: "DATABASE_STATE:legacy",
+            type: "DATABASE_STATE",
+            sourceEntityType: "projects",
+            sourceEntityId: "project-a",
+          },
+        ],
+        proposedActions: [],
+        limitations: [],
+        runStatus: "COMPLETED",
+        synthesisSource: "llm",
+      },
+    });
+
+    const replay = await runProjectAgent(
+      {} as never,
+      ctx(),
+      { message: "hello", idempotencyKey: "legacy" },
+      { persistClient, recordUsage }
+    );
+    expect(replay.evidence).toEqual([]);
+    expect(replay.limitations).toContain("IDEMPOTENCY_REPLAY_EVIDENCE_TIMESTAMP_UNAVAILABLE");
+    expect(executeRegisteredSkill).not.toHaveBeenCalled();
   });
 
   it("does not record usage for deterministic fallback without a provider call", async () => {
