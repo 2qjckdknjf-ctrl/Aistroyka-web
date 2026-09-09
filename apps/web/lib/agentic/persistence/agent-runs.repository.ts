@@ -3,6 +3,8 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { IDEMPOTENCY_TTL_HOURS } from "@/lib/platform/idempotency/idempotency.types";
+import { AgentError } from "../errors";
 import type { AgentExecutionContext, AgentRunStatus, SkillRiskLevel } from "../types";
 import type { AgentEvidence } from "../contracts/evidence.types";
 import type { ProposedAgentAction } from "../envelope/action-envelope";
@@ -34,6 +36,11 @@ export interface PersistRunInput {
   proposed: Array<ProposedAgentAction & { riskLevel: SkillRiskLevel }>;
 }
 
+/**
+ * Slice-01 persistence is fail-closed: the API must never return an auditable runId
+ * when its parent/steps/proposed actions could not be stored. The governance child
+ * slice strengthens this further with staged finalization and versioned evidence.
+ */
 export async function persistAgentRun(supabase: SupabaseClient, input: PersistRunInput): Promise<void> {
   const { error } = await supabase.from("agent_runs").insert({
     id: input.runId,
@@ -58,11 +65,11 @@ export async function persistAgentRun(supabase: SupabaseClient, input: PersistRu
   });
   if (error) {
     logAgentMetric("agentic.persist_failed", { table: "agent_runs" });
-    return;
+    throw new AgentError("AGENT_GOVERNANCE_UNAVAILABLE", "agent_run_persist_failed", 503);
   }
 
   if (input.steps.length > 0) {
-    await supabase.from("agent_run_steps").insert(
+    const { error: stepsError } = await supabase.from("agent_run_steps").insert(
       input.steps.map((s) => ({
         tenant_id: input.context.tenantId,
         project_id: input.context.projectId,
@@ -81,10 +88,14 @@ export async function persistAgentRun(supabase: SupabaseClient, input: PersistRu
         error_code: s.errorCode ?? null,
       }))
     );
+    if (stepsError) {
+      logAgentMetric("agentic.persist_failed", { table: "agent_run_steps" });
+      throw new AgentError("AGENT_GOVERNANCE_UNAVAILABLE", "agent_run_steps_persist_failed", 503);
+    }
   }
 
   if (input.proposed.length > 0) {
-    await supabase.from("proposed_agent_actions").insert(
+    const { error: proposedError } = await supabase.from("proposed_agent_actions").insert(
       input.proposed.map((p) => ({
         tenant_id: input.context.tenantId,
         project_id: input.context.projectId,
@@ -100,6 +111,10 @@ export async function persistAgentRun(supabase: SupabaseClient, input: PersistRu
         created_by: input.context.userId,
       }))
     );
+    if (proposedError) {
+      logAgentMetric("agentic.persist_failed", { table: "proposed_agent_actions" });
+      throw new AgentError("AGENT_GOVERNANCE_UNAVAILABLE", "proposed_agent_actions_persist_failed", 503);
+    }
   }
 }
 
@@ -110,15 +125,19 @@ export async function findRunByIdempotency(
     projectId: string;
     userId: string;
     idempotencyKey: string;
+    now?: Date;
   }
 ): Promise<{ id: string; structured_result: unknown; status: string } | null> {
+  const now = input.now ?? new Date();
+  const cutoff = new Date(now.getTime() - IDEMPOTENCY_TTL_HOURS * 60 * 60 * 1000).toISOString();
   const { data, error } = await supabase
     .from("agent_runs")
-    .select("id, tenant_id, project_id, actor_user_id, structured_result, status")
+    .select("id, tenant_id, project_id, actor_user_id, structured_result, status, created_at")
     .eq("tenant_id", input.tenantId)
     .eq("project_id", input.projectId)
     .eq("actor_user_id", input.userId)
     .eq("idempotency_key", input.idempotencyKey)
+    .gte("created_at", cutoff)
     .maybeSingle();
   if (error || !data) return null;
   const row = data as {
@@ -128,10 +147,14 @@ export async function findRunByIdempotency(
     actor_user_id: string | null;
     structured_result: unknown;
     status: string;
+    created_at: string | null;
   };
   if (row.tenant_id !== input.tenantId) return null;
   if (row.project_id !== input.projectId) return null;
   if (row.actor_user_id !== input.userId) return null;
+  if (!row.created_at) return null;
+  const createdAt = Date.parse(row.created_at);
+  if (!Number.isFinite(createdAt) || createdAt < Date.parse(cutoff) || createdAt > now.getTime()) return null;
   return { id: row.id, structured_result: row.structured_result, status: row.status };
 }
 
