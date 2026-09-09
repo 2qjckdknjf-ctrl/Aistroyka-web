@@ -72,6 +72,16 @@ function approval(overrides: Partial<RuntimeApproval> = {}): RuntimeApproval {
   };
 }
 
+function executeSkill(): SkillDefinition {
+  return skill({
+    id: "prepare_change",
+    name: "prepare_change",
+    executionMode: "EXECUTE",
+    requiredPermissions: ["project:read"],
+    requiresApproval: true,
+  });
+}
+
 describe("runtime authorization", () => {
   it("allows only when user, agent, skill and deterministic policy intersect", () => {
     const decision = resolveRuntimeAuthorization({
@@ -129,15 +139,8 @@ describe("runtime authorization", () => {
   });
 
   it("default read-only style grants cannot authorize execute mode", () => {
-    const executeSkill = skill({
-      id: "prepare_change",
-      name: "prepare_change",
-      executionMode: "EXECUTE",
-      requiresApproval: true,
-    });
-
     const decision = resolveRuntimeAuthorization({
-      skill: executeSkill,
+      skill: executeSkill(),
       context: ctx(),
       agentPermissions: ["mode:read", "project:read"],
       operation,
@@ -151,16 +154,8 @@ describe("runtime authorization", () => {
   });
 
   it("requires trusted approval for execute mode", () => {
-    const executeSkill = skill({
-      id: "prepare_change",
-      name: "prepare_change",
-      executionMode: "EXECUTE",
-      requiredPermissions: ["project:read"],
-      requiresApproval: true,
-    });
-
     const decision = resolveRuntimeAuthorization({
-      skill: executeSkill,
+      skill: executeSkill(),
       context: ctx(),
       agentPermissions: ["mode:execute", "project:read"],
       operation,
@@ -171,16 +166,8 @@ describe("runtime authorization", () => {
   });
 
   it("accepts only scope-matching, non-expired, unconsumed approval evidence", () => {
-    const executeSkill = skill({
-      id: "prepare_change",
-      name: "prepare_change",
-      executionMode: "EXECUTE",
-      requiredPermissions: ["project:read"],
-      requiresApproval: true,
-    });
-
     const decision = resolveRuntimeAuthorization({
-      skill: executeSkill,
+      skill: executeSkill(),
       context: ctx(),
       agentPermissions: ["mode:execute", "project:read"],
       operation,
@@ -194,16 +181,24 @@ describe("runtime authorization", () => {
     expect(decision.inputHash).toBe("hash-1");
   });
 
-  it("rejects approval evidence that was already consumed", () => {
-    const executeSkill = skill({
-      id: "prepare_change",
-      name: "prepare_change",
-      executionMode: "EXECUTE",
-      requiresApproval: true,
+  it("fails closed on malformed approval expiry timestamps", () => {
+    const decision = resolveRuntimeAuthorization({
+      skill: executeSkill(),
+      context: ctx(),
+      agentPermissions: ["mode:execute", "project:read"],
+      operation,
+      now: new Date("2026-09-08T01:00:00.000Z"),
+      approval: approval({ expiresAt: "not-a-timestamp" }),
     });
 
+    expect(decision.allowed).toBe(false);
+    expect(decision.status).toBe("REQUIRE_APPROVAL");
+    if (!decision.allowed) expect(decision.reason).toBe("approval_expiry_invalid");
+  });
+
+  it("rejects approval evidence that was already consumed", () => {
     const decision = resolveRuntimeAuthorization({
-      skill: executeSkill,
+      skill: executeSkill(),
       context: ctx(),
       agentPermissions: ["mode:execute", "project:read"],
       operation,
@@ -215,15 +210,8 @@ describe("runtime authorization", () => {
   });
 
   it("does not allow approval evidence from another project", () => {
-    const executeSkill = skill({
-      id: "prepare_change",
-      name: "prepare_change",
-      executionMode: "EXECUTE",
-      requiresApproval: true,
-    });
-
     const decision = resolveRuntimeAuthorization({
-      skill: executeSkill,
+      skill: executeSkill(),
       context: ctx(),
       agentPermissions: ["mode:execute", "project:read"],
       operation,
@@ -235,15 +223,8 @@ describe("runtime authorization", () => {
   });
 
   it("does not allow approval bound to different validated input", () => {
-    const executeSkill = skill({
-      id: "prepare_change",
-      name: "prepare_change",
-      executionMode: "EXECUTE",
-      requiresApproval: true,
-    });
-
     const decision = resolveRuntimeAuthorization({
-      skill: executeSkill,
+      skill: executeSkill(),
       context: ctx(),
       agentPermissions: ["mode:execute", "project:read"],
       operation: { ...operation, inputHash: "hash-2" },
