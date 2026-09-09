@@ -17,7 +17,7 @@ import { resolveAgentActionPolicy } from "../policy/policy-resolver";
 import type { SkillDefinition } from "../skills/skill.types";
 import type { AgentExecutionContext, PolicyLevel, SkillExecutionMode } from "../types";
 
-export const RUNTIME_AUTHZ_POLICY_VERSION = "agentic-runtime-authz-v2" as const;
+export const RUNTIME_AUTHZ_POLICY_VERSION = "agentic-runtime-authz-v3" as const;
 
 export type AgentModeCapability =
   | "mode:read"
@@ -35,6 +35,8 @@ export interface RuntimeOperationBinding {
   skillVersion: string;
 }
 
+export type RuntimeApprovalStatus = "APPROVED" | "CONSUMED" | "REJECTED" | "EXPIRED";
+
 export interface RuntimeApproval {
   approvalId: string;
   tenantId: string;
@@ -44,9 +46,11 @@ export interface RuntimeApproval {
   actionType: string;
   inputHash: string;
   skillVersion: string;
+  status: RuntimeApprovalStatus;
   approvedBy: string;
   approvedAt: string;
   expiresAt?: string | null;
+  consumedAt?: string | null;
 }
 
 export interface RuntimeAuthorizationInput {
@@ -65,6 +69,7 @@ interface RuntimeAuthorizationBase {
   effectivePermissions: string[];
   approvalRequired: boolean;
   approvalId: string | null;
+  approvalConsumedAt: string | null;
   level: PolicyLevel | null;
   operationId: string | null;
   inputHash: string | null;
@@ -162,6 +167,7 @@ export function resolveRuntimeAuthorization(input: RuntimeAuthorizationInput): R
         effectivePermissions,
         approvalRequired: true,
         approvalId: null,
+        approvalConsumedAt: null,
         level: base.level,
         operationId: input.operation?.operationId ?? null,
         inputHash: input.operation?.inputHash ?? null,
@@ -175,6 +181,7 @@ export function resolveRuntimeAuthorization(input: RuntimeAuthorizationInput): R
       effectivePermissions,
       approvalRequired: true,
       approvalId: input.approval?.approvalId ?? null,
+      approvalConsumedAt: null,
       level: base.level,
       operationId: input.operation?.operationId ?? null,
       inputHash: input.operation?.inputHash ?? null,
@@ -188,6 +195,7 @@ export function resolveRuntimeAuthorization(input: RuntimeAuthorizationInput): R
     effectivePermissions,
     approvalRequired: false,
     approvalId: null,
+    approvalConsumedAt: null,
     level: base.level,
     operationId: input.operation?.operationId ?? null,
     inputHash: input.operation?.inputHash ?? null,
@@ -229,6 +237,10 @@ function validateApproval(
 
   const approval = input.approval;
   if (!approval) return { valid: false, reason: "approval_required" };
+  if (approval.status !== "APPROVED") {
+    return { valid: false, reason: `approval_not_claimable:${approval.status.toLowerCase()}` };
+  }
+  if (approval.consumedAt) return { valid: false, reason: "approval_already_consumed" };
   if (approval.tenantId !== input.context.tenantId) return { valid: false, reason: "approval_tenant_mismatch" };
   if (approval.projectId !== input.context.projectId) return { valid: false, reason: "approval_project_mismatch" };
   if (approval.skillName !== input.skill.name) return { valid: false, reason: "approval_skill_mismatch" };
@@ -276,6 +288,7 @@ function deny(
     effectivePermissions,
     approvalRequired,
     approvalId: null,
+    approvalConsumedAt: null,
     level,
     operationId: operation?.operationId ?? null,
     inputHash: operation?.inputHash ?? null,
