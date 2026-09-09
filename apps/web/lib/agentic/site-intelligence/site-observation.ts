@@ -2,15 +2,14 @@ import type { AnalysisResult, DailyWorkVideoAnalysis } from "@aistroyka/contract
 import { toAgentEvidence, type AgentEvidence } from "../contracts/evidence.types";
 
 /**
- * Site Intelligence Slice 01.
+ * Site Intelligence observation contract.
  *
- * This is a deterministic normalization contract over existing vision outputs.
- * It does not call an LLM, write to the Construction Graph, or promote model output
- * into a system-of-record fact. Graph projection is intentionally deferred until
- * the source analysis itself has durable provenance.
+ * Deterministic normalization only: no model call, no graph write, no system-of-record
+ * promotion. Visual facts are evidence-eligible only when project, media and capture
+ * timestamp provenance are all present.
  */
 
-export const SITE_OBSERVATION_SCHEMA_VERSION = 1 as const;
+export const SITE_OBSERVATION_SCHEMA_VERSION = 2 as const;
 
 export type SiteObservationSource = "IMAGE_ANALYSIS" | "VIDEO_DAILY_ANALYSIS";
 export type SiteObservationSignalKind = "ACTIVITY" | "ISSUE" | "MATERIAL" | "VISIBILITY";
@@ -40,7 +39,7 @@ export interface SiteObservation {
 export interface SiteObservationScope {
   projectId?: string | null;
   mediaId?: string | null;
-  capturedAt?: string;
+  capturedAt?: string | null;
 }
 
 const MAX_SIGNALS = 32;
@@ -53,7 +52,8 @@ export function normalizeImageSiteObservation(
 ): SiteObservation {
   const projectId = normalizeId(scope.projectId);
   const mediaId = normalizeId(scope.mediaId);
-  const limitations = scopeLimitations(projectId, mediaId);
+  const capturedAt = normalizeCapturedAt(scope.capturedAt);
+  const limitations = scopeLimitations(projectId, mediaId, capturedAt);
   const stage = normalizeStage(result.stage);
 
   const observations = uniqueSignals(
@@ -76,8 +76,8 @@ export function normalizeImageSiteObservation(
     observations,
     recommendations: boundedStrings(result.recommendations, MAX_RECOMMENDATIONS),
     limitations,
-    evidence: buildMediaEvidence("IMAGE_ANALYSIS", projectId, mediaId, scope.capturedAt),
-    insufficientEvidence: !projectId || !mediaId,
+    evidence: buildMediaEvidence("IMAGE_ANALYSIS", projectId, mediaId, capturedAt),
+    insufficientEvidence: !projectId || !mediaId || !capturedAt,
   };
 }
 
@@ -87,8 +87,9 @@ export function normalizeVideoDailySiteObservation(
 ): SiteObservation {
   const projectId = normalizeId(scope.projectId);
   const mediaId = normalizeId(scope.mediaId);
+  const capturedAt = normalizeCapturedAt(scope.capturedAt);
   const workDate = normalizeWorkDate(result.work_date);
-  const limitations = scopeLimitations(projectId, mediaId);
+  const limitations = scopeLimitations(projectId, mediaId, capturedAt);
   if (!workDate) limitations.push("UNKNOWN_WORK_DATE");
 
   const observations = uniqueSignals([
@@ -126,8 +127,8 @@ export function normalizeVideoDailySiteObservation(
     observations,
     recommendations: boundedStrings(result.recommendations, MAX_RECOMMENDATIONS),
     limitations,
-    evidence: buildMediaEvidence("VIDEO_DAILY_ANALYSIS", projectId, mediaId, scope.capturedAt),
-    insufficientEvidence: !projectId || !mediaId,
+    evidence: buildMediaEvidence("VIDEO_DAILY_ANALYSIS", projectId, mediaId, capturedAt),
+    insufficientEvidence: !projectId || !mediaId || !capturedAt,
   };
 }
 
@@ -144,9 +145,9 @@ function buildMediaEvidence(
   source: SiteObservationSource,
   projectId: string | null,
   mediaId: string | null,
-  capturedAt?: string
+  capturedAt: string | null
 ): AgentEvidence[] {
-  if (!projectId || !mediaId) return [];
+  if (!projectId || !mediaId || !capturedAt) return [];
   return [
     toAgentEvidence({
       type: source === "IMAGE_ANALYSIS" ? "PHOTO" : "VIDEO",
@@ -162,10 +163,15 @@ function buildMediaEvidence(
   ];
 }
 
-function scopeLimitations(projectId: string | null, mediaId: string | null): string[] {
+function scopeLimitations(
+  projectId: string | null,
+  mediaId: string | null,
+  capturedAt: string | null
+): string[] {
   const limitations: string[] = [];
   if (!projectId) limitations.push("UNSCOPED_PROJECT");
   if (!mediaId) limitations.push("MISSING_MEDIA_EVIDENCE");
+  if (!capturedAt) limitations.push("MISSING_CAPTURE_TIME");
   return limitations;
 }
 
@@ -173,6 +179,15 @@ function normalizeId(value?: string | null): string | null {
   if (typeof value !== "string") return null;
   const normalized = value.trim();
   return normalized.length > 0 ? normalized : null;
+}
+
+function normalizeCapturedAt(value?: string | null): string | null {
+  if (typeof value !== "string") return null;
+  const normalized = value.trim();
+  if (!normalized) return null;
+  const parsedMs = Date.parse(normalized);
+  if (!Number.isFinite(parsedMs)) return null;
+  return new Date(parsedMs).toISOString();
 }
 
 function normalizeStage(value: string): string | null {
