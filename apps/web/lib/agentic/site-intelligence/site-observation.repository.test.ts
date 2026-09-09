@@ -115,9 +115,19 @@ describe("listPersistedImageSiteObservations", () => {
 
     expect(rows.map((row) => row.analysisId)).toEqual(["a1-new", "a2"]);
     expect(analysisMediaQueries).toEqual(["media-1", "media-2"]);
+    expect(rows[0]?.observation.evidenceTime).toBe("2026-09-09T01:00:00.000Z");
+    expect(rows[0]?.observation.evidenceTimeSemantics).toBe("MEDIA_UPLOADED_AT");
+    expect(rows[0]?.observation.limitations).toContain("CAPTURE_TIME_UNVERIFIED");
     expect(rows[0]?.observation.evidence).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ type: "PHOTO", sourceEntityId: "media-1" }),
+        expect.objectContaining({
+          type: "PHOTO",
+          sourceEntityId: "media-1",
+          metadata: expect.objectContaining({
+            timestampSemantics: "MEDIA_UPLOADED_AT",
+            captureTimeVerified: false,
+          }),
+        }),
         expect.objectContaining({ type: "DATABASE_STATE", sourceEntityId: "a1-new" }),
       ])
     );
@@ -154,7 +164,7 @@ describe("listPersistedImageSiteObservations", () => {
     expect(rows[1]?.analysisId).toBe("m2-latest");
   });
 
-  it("never substitutes analysis creation time for missing media capture provenance", async () => {
+  it("never substitutes analysis creation time when the media has no usable timestamp", async () => {
     const { supabase } = makeSupabase({
       media: [{ id: "media-1", uploaded_at: null }],
       analyses: [analysis("a1", "media-1", "2026-09-09T01:00:00Z")],
@@ -166,7 +176,9 @@ describe("listPersistedImageSiteObservations", () => {
     });
 
     expect(rows[0]?.observation.insufficientEvidence).toBe(true);
-    expect(rows[0]?.observation.limitations).toContain("MISSING_CAPTURE_TIME");
+    expect(rows[0]?.observation.evidenceTime).toBeNull();
+    expect(rows[0]?.observation.evidenceTimeSemantics).toBeNull();
+    expect(rows[0]?.observation.limitations).toContain("MISSING_EVIDENCE_TIME");
     expect(rows[0]?.observation.evidence.some((e) => e.type === "PHOTO")).toBe(false);
     expect(rows[0]?.observation.evidence).toEqual(
       expect.arrayContaining([
