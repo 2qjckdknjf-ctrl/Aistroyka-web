@@ -62,6 +62,8 @@ export function createSiteIntelligenceSkills(supabase: SupabaseClient): AgentSki
             jobId: row.jobId,
             analysisCreatedAt: row.analysisCreatedAt,
             mediaId: row.observation.mediaId,
+            evidenceTime: row.observation.evidenceTime,
+            evidenceTimeSemantics: row.observation.evidenceTimeSemantics,
             stage: row.observation.stage,
             completionPercent: row.observation.completionPercent,
             riskLevel: row.observation.riskLevel,
