@@ -6,16 +6,17 @@
  */
 
 import { AgentError } from "../errors";
-import { isRestrictedActionType } from "../policy/policy-levels";
+import { isRestrictedActionType, policyLevelForMode } from "../policy/policy-levels";
 import type { SkillDefinition, SkillResult } from "../skills/skill.types";
 import type { AgentExecutionContext, SkillExecutionMode } from "../types";
 import { hasSupportingEvidence, type AgentEvidence } from "./evidence.types";
-import type {
-  RuntimeAuthorizationAllowed,
-  RuntimeAuthorizationDecision,
+import {
+  RUNTIME_AUTHZ_POLICY_VERSION,
+  type RuntimeAuthorizationAllowed,
+  type RuntimeAuthorizationDecision,
 } from "../security/runtime-authorization";
 
-export const EXECUTION_EVIDENCE_PACK_VERSION = 4 as const;
+export const EXECUTION_EVIDENCE_PACK_VERSION = 5 as const;
 
 export type SkillExecutionOutcome = "COMPLETED" | "INSUFFICIENT_EVIDENCE";
 
@@ -41,6 +42,7 @@ export interface AgentExecutionEvidencePack {
     approvalRequired: boolean;
     approvalId: string | null;
     approvalConsumedAt: string | null;
+    approvalExpiresAt: string | null;
     level: RuntimeAuthorizationAllowed["level"];
     operationId: string | null;
     actionType: string | null;
@@ -59,6 +61,8 @@ interface AuthorizationEvidenceLike {
   approvalRequired: boolean;
   approvalId: string | null;
   approvalConsumedAt: string | null;
+  approvalExpiresAt: string | null;
+  level: RuntimeAuthorizationAllowed["level"];
   operationId: string | null;
   actionType: string | null;
   inputHash: string | null;
@@ -126,6 +130,7 @@ export function buildAgentExecutionEvidencePack(input: {
       approvalRequired: input.authorization.approvalRequired,
       approvalId: input.authorization.approvalId,
       approvalConsumedAt: input.authorization.approvalConsumedAt,
+      approvalExpiresAt: input.authorization.approvalExpiresAt,
       level: input.authorization.level,
       operationId: input.authorization.operationId,
       actionType: input.authorization.actionType,
@@ -199,14 +204,24 @@ function validateAuthorizationEvidence(
   const errors: string[] = [];
   const trustedApprovalRequired = approvalRequiredBySkill(skill);
   const requiredModeCapability = modeCapabilityFor(skill.executionMode);
+  const expectedPolicyLevel = policyLevelForMode(skill.executionMode);
   const policyVersion = normalizedText(authorization.policyVersion);
   const approvalId = normalizedText(authorization.approvalId);
   const operationId = normalizedText(authorization.operationId);
   const actionType = normalizedText(authorization.actionType);
   const inputHash = normalizedText(authorization.inputHash);
+  const approvalConsumedAt = normalizedText(authorization.approvalConsumedAt);
+  const approvalExpiresAt = normalizedText(authorization.approvalExpiresAt);
 
   if (authorization.status !== "ALLOW") errors.push("authorization_not_allowed");
-  if (!policyVersion) errors.push("missing_policy_version");
+  if (!policyVersion) {
+    errors.push("missing_policy_version");
+  } else if (policyVersion !== RUNTIME_AUTHZ_POLICY_VERSION) {
+    errors.push(`unsupported_policy_version:${policyVersion}`);
+  }
+  if (authorization.level !== expectedPolicyLevel) {
+    errors.push(`authorization_policy_level_mismatch:${expectedPolicyLevel}`);
+  }
   if (!authorization.effectivePermissions.includes(requiredModeCapability)) {
     errors.push(`missing_effective_mode_capability:${requiredModeCapability}`);
   }
@@ -233,12 +248,26 @@ function validateAuthorizationEvidence(
   if (trustedApprovalRequired && !inputHash) {
     errors.push("missing_approved_input_hash");
   }
-  if (
-    trustedApprovalRequired &&
-    options.requireConsumedApproval &&
-    !normalizedText(authorization.approvalConsumedAt)
-  ) {
+  if (trustedApprovalRequired && options.requireConsumedApproval && !approvalConsumedAt) {
     errors.push("approval_not_consumed");
+  }
+
+  const consumedAtMs = approvalConsumedAt ? Date.parse(approvalConsumedAt) : null;
+  if (approvalConsumedAt && !Number.isFinite(consumedAtMs)) {
+    errors.push("approval_consumed_at_invalid");
+  }
+  const expiresAtMs = approvalExpiresAt ? Date.parse(approvalExpiresAt) : null;
+  if (approvalExpiresAt && !Number.isFinite(expiresAtMs)) {
+    errors.push("approval_expiry_invalid");
+  }
+  if (
+    consumedAtMs !== null &&
+    expiresAtMs !== null &&
+    Number.isFinite(consumedAtMs) &&
+    Number.isFinite(expiresAtMs) &&
+    consumedAtMs >= expiresAtMs
+  ) {
+    errors.push("approval_consumed_at_or_after_expiry");
   }
 
   return errors;
