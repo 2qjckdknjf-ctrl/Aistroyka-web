@@ -10,7 +10,7 @@ import { toAgentEvidence, type AgentEvidence } from "../contracts/evidence.types
  * the source analysis itself has durable provenance.
  */
 
-export const SITE_OBSERVATION_SCHEMA_VERSION = 1 as const;
+export const SITE_OBSERVATION_SCHEMA_VERSION = 2 as const;
 
 export type SiteObservationSource = "IMAGE_ANALYSIS" | "VIDEO_DAILY_ANALYSIS";
 export type SiteObservationSignalKind = "ACTIVITY" | "ISSUE" | "MATERIAL" | "VISIBILITY";
@@ -40,6 +40,7 @@ export interface SiteObservation {
 export interface SiteObservationScope {
   projectId?: string | null;
   mediaId?: string | null;
+  /** Trusted media capture/upload timestamp. Missing/invalid provenance fails closed. */
   capturedAt?: string;
 }
 
@@ -53,7 +54,8 @@ export function normalizeImageSiteObservation(
 ): SiteObservation {
   const projectId = normalizeId(scope.projectId);
   const mediaId = normalizeId(scope.mediaId);
-  const limitations = scopeLimitations(projectId, mediaId);
+  const capturedAt = normalizeCapturedAt(scope.capturedAt);
+  const limitations = scopeLimitations(projectId, mediaId, capturedAt);
   const stage = normalizeStage(result.stage);
 
   const observations = uniqueSignals(
@@ -76,8 +78,8 @@ export function normalizeImageSiteObservation(
     observations,
     recommendations: boundedStrings(result.recommendations, MAX_RECOMMENDATIONS),
     limitations,
-    evidence: buildMediaEvidence("IMAGE_ANALYSIS", projectId, mediaId, scope.capturedAt),
-    insufficientEvidence: !projectId || !mediaId,
+    evidence: buildMediaEvidence("IMAGE_ANALYSIS", projectId, mediaId, capturedAt),
+    insufficientEvidence: !projectId || !mediaId || !capturedAt,
   };
 }
 
@@ -87,31 +89,40 @@ export function normalizeVideoDailySiteObservation(
 ): SiteObservation {
   const projectId = normalizeId(scope.projectId);
   const mediaId = normalizeId(scope.mediaId);
+  const capturedAt = normalizeCapturedAt(scope.capturedAt);
   const workDate = normalizeWorkDate(result.work_date);
-  const limitations = scopeLimitations(projectId, mediaId);
+  const limitations = scopeLimitations(projectId, mediaId, capturedAt);
   if (!workDate) limitations.push("UNKNOWN_WORK_DATE");
 
+  // Safety-relevant signals are ordered first. The upstream video sanitizer allows
+  // up to 24 issue entries plus one visibility note, so the 32-item overall cap
+  // cannot be exhausted by activities/materials before hazards are retained.
+  const issueSignals = boundedStrings(result.issues_and_risks, MAX_SIGNALS).map((text) => ({
+    kind: "ISSUE" as const,
+    text,
+    sourceField: "issues_and_risks",
+  }));
+  const visibilitySignals = boundedStrings(result.visibility_notes ? [result.visibility_notes] : [], 1).map((text) => ({
+    kind: "VISIBILITY" as const,
+    text,
+    sourceField: "visibility_notes",
+  }));
+  const activitySignals = boundedStrings(result.activities_observed, MAX_SIGNALS).map((text) => ({
+    kind: "ACTIVITY" as const,
+    text,
+    sourceField: "activities_observed",
+  }));
+  const materialSignals = boundedStrings(result.materials_or_equipment_visible ?? [], MAX_SIGNALS).map((text) => ({
+    kind: "MATERIAL" as const,
+    text,
+    sourceField: "materials_or_equipment_visible",
+  }));
+
   const observations = uniqueSignals([
-    ...boundedStrings(result.activities_observed, MAX_SIGNALS).map((text) => ({
-      kind: "ACTIVITY" as const,
-      text,
-      sourceField: "activities_observed",
-    })),
-    ...boundedStrings(result.materials_or_equipment_visible ?? [], MAX_SIGNALS).map((text) => ({
-      kind: "MATERIAL" as const,
-      text,
-      sourceField: "materials_or_equipment_visible",
-    })),
-    ...boundedStrings(result.issues_and_risks, MAX_SIGNALS).map((text) => ({
-      kind: "ISSUE" as const,
-      text,
-      sourceField: "issues_and_risks",
-    })),
-    ...boundedStrings(result.visibility_notes ? [result.visibility_notes] : [], 1).map((text) => ({
-      kind: "VISIBILITY" as const,
-      text,
-      sourceField: "visibility_notes",
-    })),
+    ...issueSignals,
+    ...visibilitySignals,
+    ...activitySignals,
+    ...materialSignals,
   ]).slice(0, MAX_SIGNALS);
 
   return {
@@ -126,15 +137,15 @@ export function normalizeVideoDailySiteObservation(
     observations,
     recommendations: boundedStrings(result.recommendations, MAX_RECOMMENDATIONS),
     limitations,
-    evidence: buildMediaEvidence("VIDEO_DAILY_ANALYSIS", projectId, mediaId, scope.capturedAt),
-    insufficientEvidence: !projectId || !mediaId,
+    evidence: buildMediaEvidence("VIDEO_DAILY_ANALYSIS", projectId, mediaId, capturedAt),
+    insufficientEvidence: !projectId || !mediaId || !capturedAt,
   };
 }
 
 /**
  * A normalized observation is eligible for a later governed graph-projection step
- * only when it is bound to an existing project and media object. This function does
- * not perform that projection.
+ * only when it is bound to an existing project/media object and real capture time.
+ * This function does not perform that projection.
  */
 export function isSiteObservationProjectionEligible(observation: SiteObservation): boolean {
   return Boolean(
@@ -149,9 +160,9 @@ function buildMediaEvidence(
   source: SiteObservationSource,
   projectId: string | null,
   mediaId: string | null,
-  capturedAt?: string
+  capturedAt: string | null
 ): AgentEvidence[] {
-  if (!projectId || !mediaId) return [];
+  if (!projectId || !mediaId || !capturedAt) return [];
   return [
     toAgentEvidence({
       type: source === "IMAGE_ANALYSIS" ? "PHOTO" : "VIDEO",
@@ -167,10 +178,15 @@ function buildMediaEvidence(
   ];
 }
 
-function scopeLimitations(projectId: string | null, mediaId: string | null): string[] {
+function scopeLimitations(
+  projectId: string | null,
+  mediaId: string | null,
+  capturedAt: string | null
+): string[] {
   const limitations: string[] = [];
   if (!projectId) limitations.push("UNSCOPED_PROJECT");
   if (!mediaId) limitations.push("MISSING_MEDIA_EVIDENCE");
+  if (!capturedAt) limitations.push("MISSING_CAPTURE_TIME");
   return limitations;
 }
 
@@ -189,7 +205,26 @@ function normalizeStage(value: string): string | null {
 function normalizeWorkDate(value: string): string | null {
   const normalized = value.trim();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(normalized)) return null;
-  return normalized;
+  const parsed = new Date(`${normalized}T00:00:00.000Z`);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed.toISOString().slice(0, 10) === normalized ? normalized : null;
+}
+
+/**
+ * Evidence timestamps must be real, stable provenance. Accept strict UTC RFC3339
+ * timestamps only; callers with DB timestamptz values should canonicalize them first.
+ */
+function normalizeCapturedAt(value?: string | null): string | null {
+  if (typeof value !== "string") return null;
+  const normalized = value.trim();
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/.test(normalized)) return null;
+  const parsed = new Date(normalized);
+  if (Number.isNaN(parsed.getTime())) return null;
+
+  const iso = parsed.toISOString();
+  const inputSecond = normalized.slice(0, 19);
+  if (iso.slice(0, 19) !== inputSecond) return null;
+  return iso;
 }
 
 function normalizePercent(value: number): number {
