@@ -248,8 +248,10 @@ function validateApproval(
   if (approval.actionType !== operation.actionType) return { valid: false, reason: "approval_action_mismatch" };
   if (approval.inputHash !== operation.inputHash) return { valid: false, reason: "approval_input_mismatch" };
   if (approval.skillVersion !== operation.skillVersion) return { valid: false, reason: "approval_skill_version_mismatch" };
-  if (approval.expiresAt && new Date(approval.expiresAt).getTime() <= now.getTime()) {
-    return { valid: false, reason: "approval_expired" };
+  if (approval.expiresAt) {
+    const expiresAtMs = Date.parse(approval.expiresAt);
+    if (!Number.isFinite(expiresAtMs)) return { valid: false, reason: "approval_expiry_invalid" };
+    if (expiresAtMs <= now.getTime()) return { valid: false, reason: "approval_expired" };
   }
   return { valid: true };
 }
