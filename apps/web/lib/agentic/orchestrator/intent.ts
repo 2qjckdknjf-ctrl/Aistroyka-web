@@ -11,6 +11,7 @@ export type AgentIntent =
   | "critical_issues"
   | "attention"
   | "last_7_days"
+  | "site_status"
   | "general";
 
 const DELIVERY_PACK: ReadSkillId[] = [
@@ -23,6 +24,12 @@ const DELIVERY_PACK: ReadSkillId[] = [
   "find_project_blockers",
 ];
 
+const SITE_STATUS_PACK: ReadSkillId[] = [
+  "get_project_state",
+  "get_recent_reports",
+  "get_site_observations",
+];
+
 export function resolveAgentIntent(message: string): AgentIntent {
   const m = message.toLowerCase();
   if (
@@ -33,6 +40,11 @@ export function resolveAgentIntent(message: string): AgentIntent {
   if (/просроч|overdue|over-due/.test(m)) return "overdue_tasks";
   if (/критич|critical|blocking|punch/.test(m)) return "critical_issues";
   if (/вниман|attention|requires attention/.test(m)) return "attention";
+  if (
+    /площадк|что видно|по фото|по видео|визуальн|site status|site progress|visual progress|photo evidence|video evidence/.test(m)
+  ) {
+    return "site_status";
+  }
   if (/7 дн|last 7|последн/.test(m)) return "last_7_days";
   return "general";
 }
@@ -49,6 +61,8 @@ export function skillsForIntent(intent: AgentIntent): ReadSkillId[] {
       return ["get_open_issues", "get_project_risks", "find_project_blockers"];
     case "last_7_days":
       return ["get_project_state", "get_recent_reports", "get_project_evidence"];
+    case "site_status":
+      return SITE_STATUS_PACK;
     default: {
       const _exhaustive: never = intent;
       return _exhaustive;
