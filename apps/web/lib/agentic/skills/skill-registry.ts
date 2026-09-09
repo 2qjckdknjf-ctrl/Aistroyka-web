@@ -111,6 +111,8 @@ export interface RuntimeApprovalClaimInput {
   operation: RuntimeOperationBinding;
   context: AgentExecutionContext;
   skill: Pick<SkillDefinition, "id" | "name" | "version" | "executionMode">;
+  /** Caller wall-clock immediately before the claim; useful for audit/cross-checking. */
+  claimRequestedAt: string;
 }
 
 export type RuntimeApprovalClaimResult =
@@ -119,8 +121,11 @@ export type RuntimeApprovalClaimResult =
 
 /**
  * Must atomically transition the trusted approval from APPROVED to CONSUMED for
- * exactly the supplied approval + operation binding. Returning claimed=false is
- * treated as a replay/concurrency denial. The handler is never invoked on failure.
+ * exactly the supplied approval + operation binding. The atomic predicate MUST also
+ * verify that the stored approval is still unconsumed and unexpired at database claim
+ * time. Returning claimed=false is treated as a replay/concurrency/expiry denial.
+ * `consumedAt` must be the timestamp written by that same atomic claim. The handler is
+ * never invoked if the returned consumption timestamp proves the approval had expired.
  */
 export type RuntimeApprovalClaimer = (
   input: RuntimeApprovalClaimInput
@@ -135,7 +140,7 @@ export interface ExecuteRegisteredSkillOptions {
   operationId?: string;
   /** Trusted action type for policy + approval binding. Required whenever approval is required. */
   actionType?: string;
-  /** Required for approval-gated execution. Must perform an atomic single-use claim. */
+  /** Required for approval-gated execution. Must perform an atomic single-use, unexpired claim. */
   claimApproval?: RuntimeApprovalClaimer;
 }
 
@@ -180,6 +185,9 @@ export async function executeRegisteredSkill(
       throw new AgentError("AGENT_POLICY_DENIED", "approval_atomic_claim_required", 403);
     }
 
+    const claimRequestedAt = new Date().toISOString();
+    assertApprovalUnexpiredAt(options.approval, claimRequestedAt, "approval_expired_before_claim");
+
     const claim = await options.claimApproval({
       approval: options.approval,
       operation,
@@ -190,6 +198,7 @@ export async function executeRegisteredSkill(
         version: skill.definition.version,
         executionMode: skill.definition.executionMode,
       },
+      claimRequestedAt,
     });
 
     if (!claim.claimed) {
@@ -201,9 +210,14 @@ export async function executeRegisteredSkill(
     }
 
     const consumedAt = claim.consumedAt?.trim();
-    if (!consumedAt || Number.isNaN(Date.parse(consumedAt))) {
+    const consumedAtMs = consumedAt ? Date.parse(consumedAt) : Number.NaN;
+    if (!consumedAt || !Number.isFinite(consumedAtMs)) {
       throw new AgentError("AGENT_GOVERNANCE_UNAVAILABLE", "approval_claim_missing_timestamp", 500);
     }
+
+    // Defense-in-depth postcondition: even a broken claimer cannot cause the handler
+    // to run when its atomically written consumption timestamp is at/after expiry.
+    assertApprovalUnexpiredAt(options.approval, consumedAt, "approval_expired_during_claim");
 
     authorization = { ...authorization, approvalConsumedAt: consumedAt };
     // Re-check the final authorization record before invoking the handler. From this
@@ -241,6 +255,22 @@ async function buildRuntimeOperationBinding(
     inputHash: await hashRuntimeSkillInput(parsedInput),
     skillVersion: skill.version,
   };
+}
+
+function assertApprovalUnexpiredAt(
+  approval: RuntimeApproval,
+  at: string,
+  expiredReason: string
+): void {
+  if (!approval.expiresAt) return;
+  const expiresAtMs = Date.parse(approval.expiresAt);
+  const atMs = Date.parse(at);
+  if (!Number.isFinite(expiresAtMs) || !Number.isFinite(atMs)) {
+    throw new AgentError("AGENT_POLICY_DENIED", "approval_expiry_invalid", 403);
+  }
+  if (expiresAtMs <= atMs) {
+    throw new AgentError("AGENT_POLICY_DENIED", expiredReason, 403);
+  }
 }
 
 /**
