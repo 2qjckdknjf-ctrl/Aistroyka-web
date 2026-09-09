@@ -17,8 +17,13 @@ export const RESTRICTED_ACTION_TYPES = [
 
 export type RestrictedActionType = (typeof RESTRICTED_ACTION_TYPES)[number];
 
+/** Canonical policy identity for free-form action types. */
+export function normalizeActionType(actionType: string): string {
+  return actionType.trim().toLowerCase();
+}
+
 export function isRestrictedActionType(actionType: string): boolean {
-  return (RESTRICTED_ACTION_TYPES as readonly string[]).includes(actionType);
+  return (RESTRICTED_ACTION_TYPES as readonly string[]).includes(normalizeActionType(actionType));
 }
 
 export function policyLevelForMode(mode: SkillExecutionMode): PolicyLevel {
