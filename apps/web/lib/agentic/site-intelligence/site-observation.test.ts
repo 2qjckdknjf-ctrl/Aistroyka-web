@@ -49,7 +49,7 @@ describe("site observation normalization", () => {
     expect(isSiteObservationProjectionEligible(observation)).toBe(true);
   });
 
-  it("uses legacy media upload time without pretending it is capture time", () => {
+  it("uses legacy media upload time only as database-state evidence", () => {
     const observation = normalizeImageSiteObservation(
       {
         stage: "finishing",
@@ -69,13 +69,16 @@ describe("site observation normalization", () => {
     expect(observation.evidenceTimeSemantics).toBe("MEDIA_UPLOADED_AT");
     expect(observation.limitations).toContain("CAPTURE_TIME_UNVERIFIED");
     expect(observation.evidence[0]).toMatchObject({
-      type: "PHOTO",
+      type: "DATABASE_STATE",
+      sourceEntityType: "media",
+      sourceEntityId: "media-1",
       capturedAt: "2026-09-09T01:00:00.000Z",
       metadata: {
         timestampSemantics: "MEDIA_UPLOADED_AT",
         captureTimeVerified: false,
       },
     });
+    expect(observation.evidence.some((e) => e.type === "PHOTO" || e.type === "VIDEO")).toBe(false);
     expect(observation.insufficientEvidence).toBe(false);
     expect(isSiteObservationProjectionEligible(observation)).toBe(false);
   });
