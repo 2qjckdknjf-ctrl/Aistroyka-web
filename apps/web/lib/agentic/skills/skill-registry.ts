@@ -4,7 +4,8 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { AgentError } from "../errors";
+import { AgentError, isAgentError } from "../errors";
+import { normalizeActionType } from "../policy/policy-levels";
 import type { AgentExecutionContext } from "../types";
 import type { AgentSkill, SkillDefinition, SkillResult } from "./skill.types";
 import { createReadSkills } from "./read-skills";
@@ -20,6 +21,7 @@ import { hashRuntimeSkillInput } from "../security/runtime-operation";
 import {
   assertExecutionAuthorizationForSkill,
   buildAgentExecutionEvidencePack,
+  buildAgentExecutionFailureEvidencePack,
   type AgentExecutionEvidencePack,
 } from "../contracts/execution-evidence-pack";
 
@@ -125,7 +127,7 @@ export type RuntimeApprovalClaimResult =
  * verify that the stored approval is still unconsumed and unexpired at database claim
  * time. Returning claimed=false is treated as a replay/concurrency/expiry denial.
  * `consumedAt` must be the timestamp written by that same atomic claim. The handler is
- * never invoked if the returned consumption timestamp proves the approval had expired.
+ * never invoked if the returned consumption timestamp proves invalid chronology.
  */
 export type RuntimeApprovalClaimer = (
   input: RuntimeApprovalClaimInput
@@ -142,6 +144,26 @@ export interface ExecuteRegisteredSkillOptions {
   actionType?: string;
   /** Required for approval-gated execution. Must perform an atomic single-use, unexpired claim. */
   claimApproval?: RuntimeApprovalClaimer;
+}
+
+/**
+ * Handler errors after authorization carry their governed failure pack so callers can
+ * durably record the consumed approval and exact operation even when execution fails.
+ */
+export class GovernedSkillExecutionError extends Error {
+  readonly originalError: unknown;
+  readonly evidencePack: AgentExecutionEvidencePack;
+
+  constructor(originalError: unknown, evidencePack: AgentExecutionEvidencePack) {
+    super(originalError instanceof Error ? originalError.message : "governed_skill_execution_failed");
+    this.name = "GovernedSkillExecutionError";
+    this.originalError = originalError;
+    this.evidencePack = evidencePack;
+  }
+}
+
+export function isGovernedSkillExecutionError(value: unknown): value is GovernedSkillExecutionError {
+  return value instanceof GovernedSkillExecutionError;
 }
 
 export async function executeRegisteredSkill(
@@ -171,13 +193,10 @@ export async function executeRegisteredSkill(
     operation,
   });
 
-  // Static pack/skill invariants are checked before any approval is consumed or any
-  // mutation-capable handler runs. This prevents post-side-effect governance failure.
   assertExecutionAuthorizationForSkill(authorization, skill.definition);
 
-  // Skill-local authorization is still evaluated before consuming approval, so a
-  // failed scope/role check cannot burn a valid approval. The atomic claim happens
-  // immediately before the mutation-capable handler is invoked.
+  // Skill-local authorization runs before approval consumption, so a scope/role denial
+  // cannot burn a valid approval.
   await skill.authorize(context);
 
   if (authorization.approvalRequired) {
@@ -215,20 +234,27 @@ export async function executeRegisteredSkill(
       throw new AgentError("AGENT_GOVERNANCE_UNAVAILABLE", "approval_claim_missing_timestamp", 500);
     }
 
-    // Defense-in-depth postcondition: even a broken claimer cannot cause the handler
-    // to run when its atomically written consumption timestamp is at/after expiry.
-    assertApprovalUnexpiredAt(options.approval, consumedAt, "approval_expired_during_claim");
-
-    authorization = { ...authorization, approvalConsumedAt: consumedAt };
-    // Re-check the final authorization record before invoking the handler. From this
-    // point forward, post-execution evidence omissions degrade to INSUFFICIENT_EVIDENCE
-    // rather than throwing after a side effect has already occurred.
+    assertApprovalConsumptionChronology(options.approval, consumedAt);
+    authorization = { ...authorization, approvalConsumedAt: new Date(consumedAtMs).toISOString() };
     assertExecutionAuthorizationForSkill(authorization, skill.definition, {
       requireConsumedApproval: true,
     });
   }
 
-  const result = await skill.execute(context, parsed);
+  let result: SkillResult;
+  try {
+    result = await skill.execute(context, parsed);
+  } catch (err) {
+    const failureCode = isAgentError(err) ? err.code : "AGENT_SKILL_FAILED";
+    const evidencePack = buildAgentExecutionFailureEvidencePack({
+      context,
+      skill: skill.definition,
+      authorization,
+      failureCode,
+    });
+    throw new GovernedSkillExecutionError(err, evidencePack);
+  }
+
   const evidencePack = buildAgentExecutionEvidencePack({
     context,
     skill: skill.definition,
@@ -251,7 +277,7 @@ async function buildRuntimeOperationBinding(
 
   return {
     operationId: options.operationId.trim(),
-    actionType: options.actionType.trim(),
+    actionType: normalizeActionType(options.actionType),
     inputHash: await hashRuntimeSkillInput(parsedInput),
     skillVersion: skill.version,
   };
@@ -271,6 +297,18 @@ function assertApprovalUnexpiredAt(
   if (expiresAtMs <= atMs) {
     throw new AgentError("AGENT_POLICY_DENIED", expiredReason, 403);
   }
+}
+
+function assertApprovalConsumptionChronology(approval: RuntimeApproval, consumedAt: string): void {
+  const approvedAtMs = Date.parse(approval.approvedAt);
+  const consumedAtMs = Date.parse(consumedAt);
+  if (!Number.isFinite(approvedAtMs) || !Number.isFinite(consumedAtMs)) {
+    throw new AgentError("AGENT_POLICY_DENIED", "approval_chronology_invalid", 403);
+  }
+  if (approvedAtMs > consumedAtMs) {
+    throw new AgentError("AGENT_POLICY_DENIED", "approval_consumed_before_approval", 403);
+  }
+  assertApprovalUnexpiredAt(approval, consumedAt, "approval_expired_during_claim");
 }
 
 /**
