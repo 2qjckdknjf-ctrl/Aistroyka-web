@@ -148,6 +148,11 @@ async function markRunPersistenceFailed(
   }
 }
 
+/**
+ * PostgREST can report a successful UPDATE that matched zero rows. Request the row
+ * representation and require the exact scoped run ID so a deleted/mismatched parent
+ * can never be mistaken for a durable finalization.
+ */
 async function scopedRunUpdate(
   supabase: SupabaseClient,
   input: Pick<PersistRunInput, "runId" | "context">,
@@ -158,8 +163,15 @@ async function scopedRunUpdate(
     .update(patch)
     .eq("id", input.runId)
     .eq("tenant_id", input.context.tenantId)
-    .eq("project_id", input.context.projectId);
-  return { error: result.error };
+    .eq("project_id", input.context.projectId)
+    .select("id")
+    .maybeSingle();
+  const row = result.data as { id?: string } | null;
+  if (result.error) return { error: result.error };
+  if (row?.id !== input.runId) {
+    return { error: { message: "agent_run_update_cardinality_mismatch" } };
+  }
+  return { error: null };
 }
 
 function buildPersistedEvidenceRefs(evidence: AgentEvidence[]): Array<Record<string, unknown>> {
