@@ -5,6 +5,7 @@ import {
   redactSensitiveText,
   sanitizeGovernanceEvidencePack,
 } from "./agent-runs.repository";
+import { AgentError } from "../errors";
 import type { AgentExecutionContext } from "../types";
 import type { AgentExecutionEvidencePack } from "../contracts/execution-evidence-pack";
 import { EXECUTION_EVIDENCE_PACK_VERSION } from "../contracts/execution-evidence-pack";
@@ -37,6 +38,16 @@ function chain(result: { data: unknown; error: unknown }) {
   return api;
 }
 
+function mutationChain(result: { error: unknown }) {
+  const api: Record<string, unknown> = {};
+  api.eq = () => api;
+  api.then = (
+    onFulfilled: (value: { error: unknown }) => unknown,
+    onRejected?: (reason: unknown) => unknown
+  ) => Promise.resolve(result).then(onFulfilled, onRejected);
+  return api;
+}
+
 function governancePack(): AgentExecutionEvidencePack {
   return {
     schemaVersion: EXECUTION_EVIDENCE_PACK_VERSION,
@@ -60,6 +71,7 @@ function governancePack(): AgentExecutionEvidencePack {
       approvalRequired: false,
       approvalId: null,
       approvalConsumedAt: null,
+      approvalExpiresAt: null,
       level: "LEVEL_0_READ",
       operationId: null,
       actionType: null,
@@ -87,8 +99,9 @@ function governancePack(): AgentExecutionEvidencePack {
 }
 
 describe("agent run persistence", () => {
-  it("binds actor_user_id from trusted context, not a client-supplied victim id", async () => {
+  it("binds actor_user_id from trusted context and finalizes only after children persist", async () => {
     const inserted: unknown[] = [];
+    const updates: unknown[] = [];
     const supabase = {
       from: (table: string) => {
         if (table === "agent_runs") {
@@ -96,6 +109,10 @@ describe("agent run persistence", () => {
             insert: (row: unknown) => {
               inserted.push(row);
               return Promise.resolve({ error: null });
+            },
+            update: (patch: unknown) => {
+              updates.push(patch);
+              return mutationChain({ error: null });
             },
           };
         }
@@ -113,10 +130,11 @@ describe("agent run persistence", () => {
       steps: [],
       proposed: [],
     });
-    expect(inserted[0]).toMatchObject({ actor_user_id: "user-a" });
+    expect(inserted[0]).toMatchObject({ actor_user_id: "user-a", status: "EXECUTING", structured_result: null });
     expect(inserted[0]).not.toMatchObject({ actor_user_id: "user-b" });
     expect((inserted[0] as { request: { message: string } }).request.message).not.toContain("hunter2");
     expect((inserted[0] as { request: { message: string } }).request.message).toContain("[redacted");
+    expect(updates).toContainEqual(expect.objectContaining({ status: "COMPLETED", structured_result: { runId: "run-1", answer: "ok" } }));
   });
 
   it("persists a sanitized but re-validatable governance pack", async () => {
@@ -124,7 +142,10 @@ describe("agent run persistence", () => {
     const supabase = {
       from: (table: string) => {
         if (table === "agent_runs") {
-          return { insert: async () => ({ error: null }) };
+          return {
+            insert: async () => ({ error: null }),
+            update: () => mutationChain({ error: null }),
+          };
         }
         if (table === "agent_run_steps") {
           return {
@@ -176,6 +197,82 @@ describe("agent run persistence", () => {
     expect(JSON.stringify(persisted)).not.toContain("secret-token");
     expect(JSON.stringify(persisted)).not.toContain("signed-object");
     expect(JSON.stringify(persisted)).not.toContain("secret-provider-token");
+  });
+
+  it("marks the parent failed and throws when governed step persistence fails", async () => {
+    const updates: Array<Record<string, unknown>> = [];
+    const supabase = {
+      from: (table: string) => {
+        if (table === "agent_runs") {
+          return {
+            insert: async () => ({ error: null }),
+            update: (patch: Record<string, unknown>) => {
+              updates.push(patch);
+              return mutationChain({ error: null });
+            },
+          };
+        }
+        if (table === "agent_run_steps") {
+          return { insert: async () => ({ error: { message: "column unavailable" } }) };
+        }
+        return { insert: async () => ({ error: null }) };
+      },
+    };
+
+    await expect(
+      persistAgentRun(supabase as never, {
+        runId: "run-1",
+        context: ctx(),
+        status: "COMPLETED",
+        request: { message: "inspect" },
+        skillsCalled: ["inspect_project"],
+        structuredResult: { answer: "must-not-finalize" },
+        latencyMs: 1,
+        proposed: [],
+        steps: [
+          {
+            skill: "inspect_project",
+            input: {},
+            output: { ok: true },
+            status: "COMPLETED",
+            durationMs: 1,
+            evidence: [],
+            governanceEvidence: governancePack(),
+          },
+        ],
+      })
+    ).rejects.toMatchObject({
+      code: "AGENT_GOVERNANCE_UNAVAILABLE",
+      message: "agent_run_steps_persist_failed",
+    });
+
+    expect(updates).toEqual([
+      expect.objectContaining({
+        status: "FAILED",
+        structured_result: null,
+        error_code: "AGENT_GOVERNANCE_STEP_PERSIST_FAILED",
+      }),
+    ]);
+  });
+
+  it("throws instead of presenting success when the parent run cannot be persisted", async () => {
+    const supabase = {
+      from: () => ({ insert: async () => ({ error: { message: "db unavailable" } }) }),
+    };
+
+    await expect(
+      persistAgentRun(supabase as never, {
+        runId: "run-1",
+        context: ctx(),
+        status: "COMPLETED",
+        request: { message: "inspect" },
+        skillsCalled: [],
+        structuredResult: { answer: "must-not-return" },
+        latencyMs: 1,
+        proposed: [],
+        steps: [],
+      })
+    ).rejects.toBeInstanceOf(AgentError);
   });
 
   it("does not replay a run from another project even if the row leaks", async () => {
