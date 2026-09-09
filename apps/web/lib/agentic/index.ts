@@ -27,6 +27,19 @@ export {
   EXECUTION_EVIDENCE_PACK_VERSION,
 } from "./contracts/execution-evidence-pack";
 export type { AgentExecutionEvidencePack } from "./contracts/execution-evidence-pack";
+export {
+  normalizeImageSiteObservation,
+  normalizeVideoDailySiteObservation,
+  isSiteObservationProjectionEligible,
+  SITE_OBSERVATION_SCHEMA_VERSION,
+} from "./site-intelligence/site-observation";
+export type {
+  SiteObservation,
+  SiteObservationScope,
+  SiteObservationSignal,
+  SiteObservationSignalKind,
+  SiteObservationSource,
+} from "./site-intelligence/site-observation";
 export { runProjectAgent } from "./orchestrator/orchestrator";
 export { AgentResponseSchema } from "./orchestrator/structured-output";
 export { CONSTRUCTION_CONTEXT_MAPPING } from "./graph/construction-context";
