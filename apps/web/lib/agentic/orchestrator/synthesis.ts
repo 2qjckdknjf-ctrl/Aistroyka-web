@@ -94,6 +94,24 @@ export function deterministicSynthesis(
 }
 
 /**
+ * This is the trust boundary for provider output: schema-invalid model content is
+ * discarded wholesale. In particular, an invalid response cannot smuggle a summary
+ * into a result labelled `deterministic`.
+ */
+export function selectSynthesisResponse(
+  structured: Record<string, unknown>,
+  contextJson: string,
+  failedRequiredSkills: string[] = []
+): { response: AgentStructuredResponse; source: "llm" | "deterministic" } {
+  const parsed = AgentResponseSchema.safeParse(structured);
+  if (parsed.success) return { response: parsed.data, source: "llm" };
+  return {
+    response: deterministicSynthesis(contextJson, failedRequiredSkills),
+    source: "deterministic",
+  };
+}
+
+/**
  * Build bounded, syntactically valid JSON for the model. Never raw-slice serialized
  * JSON: that can silently drop later high-value signals and produce malformed context.
  */
@@ -126,8 +144,6 @@ export function buildPromptContextJson(structuredContext: Record<string, unknown
   let json = JSON.stringify(compacted);
   if (json.length <= MAX_CONTEXT_CHARS) return json;
 
-  // Metadata itself can only push us slightly over the boundary. Keep a valid marker
-  // rather than truncating bytes from serialized JSON.
   delete compacted.omittedContextKeys;
   compacted.contextTruncated = true;
   json = JSON.stringify(compacted);
@@ -191,14 +207,10 @@ export async function synthesizeAgentAnswer(input: {
       maxRetries: cfg.OPENAI_COPILOT_MAX_RETRIES,
     });
 
-    const parsed = AgentResponseSchema.safeParse(out.structured);
+    const selected = selectSynthesisResponse(out.structured, contextJson, failedRequiredSkills);
     return {
-      // Invalid provider output is discarded wholesale. Never preserve an unvalidated
-      // model summary while labelling the result deterministic.
-      response: parsed.success
-        ? parsed.data
-        : deterministicSynthesis(contextJson, failedRequiredSkills),
-      source: parsed.success ? "llm" : "deterministic",
+      response: selected.response,
+      source: selected.source,
       provider: "openai",
       model: cfg.OPENAI_COPILOT_MODEL,
       promptVersion,
