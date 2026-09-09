@@ -33,7 +33,7 @@ function persistedObservation(insufficientEvidence = false) {
     jobId: "job-1",
     analysisCreatedAt: "2026-09-09T00:00:00.000Z",
     observation: {
-      schemaVersion: 2,
+      schemaVersion: 3,
       source: "IMAGE_ANALYSIS",
       projectId: "project-1",
       mediaId: "media-1",
@@ -45,7 +45,11 @@ function persistedObservation(insufficientEvidence = false) {
         { kind: "ISSUE", text: "Open edge", sourceField: "detected_issues" },
       ],
       recommendations: ["Install protection"],
-      limitations: insufficientEvidence ? ["MISSING_CAPTURE_TIME"] : [],
+      limitations: insufficientEvidence
+        ? ["MISSING_EVIDENCE_TIME"]
+        : ["CAPTURE_TIME_UNVERIFIED"],
+      evidenceTime: insufficientEvidence ? null : "2026-09-09T00:00:00.000Z",
+      evidenceTimeSemantics: insufficientEvidence ? null : "MEDIA_UPLOADED_AT",
       evidence: [
         {
           evidenceId: "DATABASE_STATE:analysis-1",
@@ -68,7 +72,10 @@ function persistedObservation(insufficientEvidence = false) {
                 sourceUrl: null,
                 storageObject: null,
                 capturedAt: "2026-09-09T00:00:00.000Z",
-                metadata: {},
+                metadata: {
+                  timestampSemantics: "MEDIA_UPLOADED_AT",
+                  captureTimeVerified: false,
+                },
               },
             ]),
       ],
@@ -82,7 +89,7 @@ describe("get_site_observations skill", () => {
     listPersistedImageSiteObservations.mockReset();
   });
 
-  it("returns bounded persistent observations with complete media evidence", async () => {
+  it("returns bounded persistent observations and exposes timestamp semantics", async () => {
     listPersistedImageSiteObservations.mockResolvedValueOnce([persistedObservation(false)]);
 
     const skill = createSiteIntelligenceSkills({} as never)[0]!;
@@ -102,10 +109,17 @@ describe("get_site_observations skill", () => {
     expect(result.output).toMatchObject({
       count: 1,
       withheldForInsufficientProvenance: 0,
+      items: [
+        expect.objectContaining({
+          evidenceTime: "2026-09-09T00:00:00.000Z",
+          evidenceTimeSemantics: "MEDIA_UPLOADED_AT",
+          limitations: ["CAPTURE_TIME_UNVERIFIED"],
+        }),
+      ],
     });
   });
 
-  it("withholds model-derived site facts when media capture provenance is incomplete", async () => {
+  it("withholds model-derived site facts when evidence time provenance is missing", async () => {
     listPersistedImageSiteObservations.mockResolvedValueOnce([persistedObservation(true)]);
 
     const skill = createSiteIntelligenceSkills({} as never)[0]!;
