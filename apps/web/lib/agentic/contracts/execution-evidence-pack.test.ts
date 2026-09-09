@@ -74,6 +74,7 @@ function authorization(overrides: Partial<RuntimeAuthorizationAllowed> = {}): Ru
     approvalRequired: false,
     approvalId: null,
     approvalConsumedAt: null,
+    approvalExpiresAt: null,
     level: "LEVEL_0_READ",
     operationId: null,
     actionType: null,
@@ -90,6 +91,7 @@ function approvedAuthorization(
     approvalRequired: true,
     approvalId: "approval-1",
     approvalConsumedAt: "2026-09-08T00:00:30.000Z",
+    approvalExpiresAt: "2026-09-08T01:00:00.000Z",
     level: "LEVEL_3_EXECUTE_AFTER_APPROVAL",
     operationId: "operation-1",
     actionType: "update_project",
@@ -122,6 +124,7 @@ function completedReadPack(): AgentExecutionEvidencePack {
       approvalRequired: false,
       approvalId: null,
       approvalConsumedAt: null,
+      approvalExpiresAt: null,
       level: "LEVEL_0_READ",
       operationId: null,
       actionType: null,
@@ -184,6 +187,26 @@ describe("agent execution evidence pack", () => {
     expect(validateAgentExecutionEvidencePack(forged, definition)).toContain("authorization_not_allowed");
   });
 
+  it("rejects an unknown recorded authorization policy version", () => {
+    const definition = skill();
+    const forged = completedReadPack();
+    forged.authorization.policyVersion = "agentic-runtime-authz-v999";
+
+    expect(validateAgentExecutionEvidencePack(forged, definition)).toContain(
+      "unsupported_policy_version:agentic-runtime-authz-v999"
+    );
+  });
+
+  it("rejects a policy level that the trusted skill mode could not have produced", () => {
+    const definition = skill();
+    const forged = completedReadPack();
+    forged.authorization.level = "LEVEL_3_EXECUTE_AFTER_APPROVAL";
+
+    expect(validateAgentExecutionEvidencePack(forged, definition)).toContain(
+      "authorization_policy_level_mismatch:LEVEL_0_READ"
+    );
+  });
+
   it("rejects a persisted pack missing the skill execution-mode capability", () => {
     const definition = skill();
     const forged = completedReadPack();
@@ -235,7 +258,7 @@ describe("agent execution evidence pack", () => {
     ).toThrow();
   });
 
-  it("records immutable approved operation, action type, input hash and consumption timestamp", () => {
+  it("records immutable approved operation, action type, input hash, expiry and consumption timestamp", () => {
     const definition = approvalSkill();
     const result: SkillResult = { output: {}, evidence: [], insufficientEvidence: false };
 
@@ -249,9 +272,47 @@ describe("agent execution evidence pack", () => {
     expect(pack.skill.executionMode).toBe("EXECUTE");
     expect(pack.authorization.approvalId).toBe("approval-1");
     expect(pack.authorization.approvalConsumedAt).toBe("2026-09-08T00:00:30.000Z");
+    expect(pack.authorization.approvalExpiresAt).toBe("2026-09-08T01:00:00.000Z");
     expect(pack.authorization.operationId).toBe("operation-1");
     expect(pack.authorization.actionType).toBe("update_project");
     expect(pack.authorization.inputHash).toBe("hash-1");
+  });
+
+  it("rejects a persisted approval chronology consumed at or after expiry", () => {
+    const definition = approvalSkill();
+    const valid = buildAgentExecutionEvidencePack({
+      context: ctx(),
+      skill: definition,
+      authorization: approvedAuthorization(),
+      result: { output: {}, evidence: [], insufficientEvidence: false },
+    });
+    const forged: AgentExecutionEvidencePack = {
+      ...valid,
+      authorization: {
+        ...valid.authorization,
+        approvalConsumedAt: "2026-09-08T01:00:00.000Z",
+      },
+    };
+
+    expect(validateAgentExecutionEvidencePack(forged, definition)).toContain(
+      "approval_consumed_at_or_after_expiry"
+    );
+  });
+
+  it("rejects malformed persisted approval expiry", () => {
+    const definition = approvalSkill();
+    const valid = buildAgentExecutionEvidencePack({
+      context: ctx(),
+      skill: definition,
+      authorization: approvedAuthorization(),
+      result: { output: {}, evidence: [], insufficientEvidence: false },
+    });
+    const forged: AgentExecutionEvidencePack = {
+      ...valid,
+      authorization: { ...valid.authorization, approvalExpiresAt: "not-a-timestamp" },
+    };
+
+    expect(validateAgentExecutionEvidencePack(forged, definition)).toContain("approval_expiry_invalid");
   });
 
   it("rejects an approval-gated pack that omits the approved action type", () => {
@@ -316,6 +377,7 @@ describe("agent execution evidence pack", () => {
         approvalRequired: false,
         approvalId: null,
         approvalConsumedAt: null,
+        approvalExpiresAt: null,
         operationId: null,
         actionType: null,
         inputHash: null,
