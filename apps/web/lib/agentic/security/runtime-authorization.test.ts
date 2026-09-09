@@ -94,6 +94,7 @@ describe("runtime authorization", () => {
     expect(decision.status).toBe("ALLOW");
     expect(decision.policyVersion).toBe(RUNTIME_AUTHZ_POLICY_VERSION);
     expect(decision.effectivePermissions).toEqual(["mode:read", "project:read"]);
+    expect(decision.actionType).toBeNull();
   });
 
   it("fails closed when the agent lacks the execution-mode capability", () => {
@@ -163,6 +164,7 @@ describe("runtime authorization", () => {
 
     expect(decision.allowed).toBe(false);
     expect(decision.status).toBe("REQUIRE_APPROVAL");
+    expect(decision.actionType).toBe("update_project");
   });
 
   it("accepts only scope-matching, non-expired, unconsumed approval evidence", () => {
@@ -178,6 +180,7 @@ describe("runtime authorization", () => {
     expect(decision.allowed).toBe(true);
     expect(decision.approvalId).toBe("approval-1");
     expect(decision.operationId).toBe("operation-1");
+    expect(decision.actionType).toBe("update_project");
     expect(decision.inputHash).toBe("hash-1");
   });
 
