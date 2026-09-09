@@ -46,12 +46,22 @@ export function createSiteIntelligenceSkills(supabase: SupabaseClient): AgentSki
         projectId: context.projectId,
         limit: SITE_OBSERVATION_LIMIT,
       });
-      const evidence = dedupeEvidence(rows.flatMap((row) => row.observation.evidence));
+
+      // A persisted DB row alone is not enough to assert a visual site fact. Only
+      // observations with complete project/media/capture provenance are surfaced as
+      // factual items and supporting evidence. Incomplete rows are counted only as
+      // withheld diagnostics so the caller can explain the limitation.
+      const usableRows = rows.filter((row) => !row.observation.insufficientEvidence);
+      const withheldCount = rows.length - usableRows.length;
+      const evidence = dedupeEvidence(
+        usableRows.flatMap((row) => row.observation.evidence)
+      );
 
       return {
         output: {
-          count: rows.length,
-          items: rows.map((row) => ({
+          count: usableRows.length,
+          withheldForInsufficientProvenance: withheldCount,
+          items: usableRows.map((row) => ({
             analysisId: row.analysisId,
             jobId: row.jobId,
             analysisCreatedAt: row.analysisCreatedAt,
@@ -65,7 +75,7 @@ export function createSiteIntelligenceSkills(supabase: SupabaseClient): AgentSki
           })),
         },
         evidence,
-        insufficientEvidence: rows.length === 0 || evidence.length === 0,
+        insufficientEvidence: usableRows.length === 0 || evidence.length === 0,
       };
     },
   };
