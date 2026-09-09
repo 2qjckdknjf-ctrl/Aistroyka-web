@@ -6,7 +6,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { AgentError, isAgentError } from "../errors";
 import type { AgentExecutionContext, AgentRunStatus } from "../types";
-import { createSkillRegistry, executeRegisteredSkill } from "../skills/skill-registry";
+import {
+  createSkillRegistry,
+  executeRegisteredSkill,
+  isGovernedSkillExecutionError,
+} from "../skills/skill-registry";
 import { isRequiredSkill, resolveAgentIntent, skillsForIntent } from "./intent";
 import { synthesizeAgentAnswer } from "./synthesis";
 import {
@@ -129,9 +133,19 @@ export async function runProjectAgent(
         duration_ms: Date.now() - skillStarted,
       });
     } catch (err) {
-      const code = isAgentError(err) ? err.code : "AGENT_SKILL_FAILED";
+      const governedFailure = isGovernedSkillExecutionError(err) ? err : null;
+      const underlying = governedFailure?.originalError ?? err;
+      const code = isAgentError(underlying) ? underlying.code : "AGENT_SKILL_FAILED";
       logAgentMetric("agentic.skill_failed", { skill: skillName, error_code: code });
-      if (isAgentError(err) && (err.code === "AGENT_SKILL_NOT_ALLOWED" || err.code === "AGENT_POLICY_DENIED")) {
+
+      // A policy denial before handler invocation is a DENIED step. A governed handler
+      // failure is always FAILED, even if the handler itself threw an AgentError with a
+      // policy-like code, because execution was already authorized/attempted.
+      if (
+        !governedFailure &&
+        isAgentError(underlying) &&
+        (underlying.code === "AGENT_SKILL_NOT_ALLOWED" || underlying.code === "AGENT_POLICY_DENIED")
+      ) {
         steps.push({
           skill: skillName,
           input: {},
@@ -139,17 +153,21 @@ export async function runProjectAgent(
           status: "DENIED",
           durationMs: Date.now() - skillStarted,
           evidence: [],
-          errorCode: err.code,
+          errorCode: underlying.code,
         });
         continue;
       }
+
+      const failureEvidence = governedFailure?.evidencePack.evidence ?? [];
+      evidence.push(...failureEvidence);
       steps.push({
         skill: skillName,
         input: {},
         output: { queryFailed: true },
         status: "FAILED",
         durationMs: Date.now() - skillStarted,
-        evidence: [],
+        evidence: failureEvidence,
+        governanceEvidence: governedFailure?.evidencePack,
         errorCode: code,
       });
       if (requiredSkill) failedRequired.push(skillName);
@@ -323,8 +341,6 @@ export function resolveRunStatus(input: {
 
 function toOrchestratorResponse(parsed: AgentPublicResponse): AgentOrchestratorResponse {
   const replayEvidence: AgentEvidence[] = parsed.evidence.flatMap((e) => {
-    // Historical persisted responses may predate capturedAt in AgentEvidenceRefSchema.
-    // Never substitute replay wall-clock time: omit unverifiable refs instead.
     if (!e.capturedAt) return [];
     return [
       {
