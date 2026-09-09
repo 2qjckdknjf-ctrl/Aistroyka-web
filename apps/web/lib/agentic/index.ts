@@ -30,3 +30,18 @@ export type { AgentExecutionEvidencePack } from "./contracts/execution-evidence-
 export { runProjectAgent } from "./orchestrator/orchestrator";
 export { AgentResponseSchema } from "./orchestrator/structured-output";
 export { CONSTRUCTION_CONTEXT_MAPPING } from "./graph/construction-context";
+export {
+  SITE_OBSERVATION_SCHEMA_VERSION,
+  normalizeImageSiteObservation,
+  normalizeVideoDailySiteObservation,
+  isSiteObservationProjectionEligible,
+} from "./site-intelligence/site-observation";
+export type {
+  SiteObservation,
+  SiteObservationSignal,
+  SiteObservationSignalKind,
+  SiteObservationSource,
+  SiteObservationTimeSemantics,
+} from "./site-intelligence/site-observation";
+export { listPersistedImageSiteObservations } from "./site-intelligence/site-observation.repository";
+export type { PersistedSiteObservation } from "./site-intelligence/site-observation.repository";

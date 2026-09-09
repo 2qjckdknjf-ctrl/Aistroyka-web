@@ -8,6 +8,7 @@ import { AgentError } from "../errors";
 import type { AgentExecutionContext } from "../types";
 import type { AgentSkill, SkillDefinition, SkillResult } from "./skill.types";
 import { createReadSkills } from "./read-skills";
+import { createSiteIntelligenceSkills } from "./site-intelligence-skills";
 import {
   assertRuntimeAuthorized,
   DEFAULT_PROJECT_AGENT_PERMISSIONS,
@@ -34,6 +35,7 @@ export const READ_SKILL_IDS = [
   "get_project_risks",
   "calculate_project_health",
   "find_project_blockers",
+  "get_site_observations",
 ] as const;
 
 export type ReadSkillId = (typeof READ_SKILL_IDS)[number];
@@ -103,7 +105,10 @@ export class SkillRegistry {
 }
 
 export function createSkillRegistry(supabase: SupabaseClient): SkillRegistry {
-  return new SkillRegistry(createReadSkills(supabase));
+  return new SkillRegistry([
+    ...createReadSkills(supabase),
+    ...createSiteIntelligenceSkills(supabase),
+  ]);
 }
 
 export interface RuntimeApprovalClaimInput {
