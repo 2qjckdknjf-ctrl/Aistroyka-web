@@ -62,6 +62,7 @@ function governancePack(): AgentExecutionEvidencePack {
       approvalConsumedAt: null,
       level: "LEVEL_0_READ",
       operationId: null,
+      actionType: null,
       inputHash: null,
     },
     outcome: "COMPLETED",
@@ -163,6 +164,7 @@ describe("agent run persistence", () => {
     const persisted = inserted.governance_evidence as AgentExecutionEvidencePack;
     expect(persisted.schemaVersion).toBe(EXECUTION_EVIDENCE_PACK_VERSION);
     expect(persisted.authorization.policyVersion).toBe(RUNTIME_AUTHZ_POLICY_VERSION);
+    expect(persisted.authorization.actionType).toBeNull();
     expect(persisted.evidence[0]).toMatchObject({
       evidenceId: "PHOTO:media-1",
       type: "PHOTO",
