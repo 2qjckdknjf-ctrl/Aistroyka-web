@@ -114,7 +114,8 @@ function buildPersistedObservation(
   const observation = normalizeImageSiteObservation(result, {
     projectId,
     mediaId: media.id,
-    capturedAt: media.uploaded_at ?? undefined,
+    // Legacy `media` has uploaded_at but no verified camera capture timestamp.
+    uploadedAt: media.uploaded_at ?? undefined,
   });
 
   observation.evidence.push(
@@ -128,6 +129,7 @@ function buildPersistedObservation(
         jobId: row.job_id,
         persistentSource: true,
         observationProvenanceComplete: !observation.insufficientEvidence,
+        mediaTimeSemantics: observation.evidenceTimeSemantics,
       },
     })
   );
