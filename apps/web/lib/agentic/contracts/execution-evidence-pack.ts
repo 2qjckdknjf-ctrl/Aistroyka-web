@@ -20,17 +20,18 @@ import {
   type RuntimeAuthorizationDecision,
 } from "../security/runtime-authorization";
 
-export const EXECUTION_EVIDENCE_PACK_VERSION = 6 as const;
+export const EXECUTION_EVIDENCE_PACK_VERSION = 7 as const;
 
 export type SkillExecutionOutcome = "COMPLETED" | "INSUFFICIENT_EVIDENCE" | "FAILED";
 
 export type AgentExecutionEvidenceTrustedContext = Pick<
   AgentExecutionContext,
   "requestId" | "traceId" | "tenantId" | "projectId" | "userId"
->;
+> & { runId: string };
 
 export interface AgentExecutionEvidencePack {
   schemaVersion: typeof EXECUTION_EVIDENCE_PACK_VERSION;
+  runId: string;
   executionId: string;
   requestId: string;
   traceId: string;
@@ -106,6 +107,7 @@ export function assertExecutionAuthorizationForSkill(
 }
 
 export function buildAgentExecutionEvidencePack(input: {
+  runId: string;
   context: AgentExecutionContext;
   skill: SkillDefinition;
   authorization: RuntimeAuthorizationAllowed;
@@ -116,11 +118,15 @@ export function buildAgentExecutionEvidencePack(input: {
     requireConsumedApproval: approvalRequiredBySkill(input.skill),
   });
 
+  const runId = normalizedText(input.runId);
+  if (!runId) throw new AgentError("AGENT_GOVERNANCE_UNAVAILABLE", "missing_run_identity", 500);
+
   const missingRequiredEvidence =
     input.skill.requiresEvidence && !hasSupportingEvidence(input.result.evidence);
   const insufficientEvidence = input.result.insufficientEvidence || missingRequiredEvidence;
 
   const pack = buildBasePack({
+    runId,
     context: input.context,
     skill: input.skill,
     authorization: input.authorization,
@@ -130,7 +136,7 @@ export function buildAgentExecutionEvidencePack(input: {
     insufficientEvidence,
     createdAt: input.createdAt,
   });
-  assertValidAgentExecutionEvidencePack(pack, input.skill, input.context);
+  assertValidAgentExecutionEvidencePack(pack, input.skill, { ...input.context, runId });
   return pack;
 }
 
@@ -140,6 +146,7 @@ export function buildAgentExecutionEvidencePack(input: {
  * side effects, so the authorization/approval record must not disappear with the error.
  */
 export function buildAgentExecutionFailureEvidencePack(input: {
+  runId: string;
   context: AgentExecutionContext;
   skill: SkillDefinition;
   authorization: RuntimeAuthorizationAllowed;
@@ -150,8 +157,11 @@ export function buildAgentExecutionFailureEvidencePack(input: {
   assertExecutionAuthorizationForSkill(input.authorization, input.skill, {
     requireConsumedApproval: approvalRequiredBySkill(input.skill),
   });
+  const runId = normalizedText(input.runId);
+  if (!runId) throw new AgentError("AGENT_GOVERNANCE_UNAVAILABLE", "missing_run_identity", 500);
   const failureCode = input.failureCode.trim() || "AGENT_SKILL_FAILED";
   const pack = buildBasePack({
+    runId,
     context: input.context,
     skill: input.skill,
     authorization: input.authorization,
@@ -161,7 +171,7 @@ export function buildAgentExecutionFailureEvidencePack(input: {
     insufficientEvidence: false,
     createdAt: input.createdAt,
   });
-  assertValidAgentExecutionEvidencePack(pack, input.skill, input.context);
+  assertValidAgentExecutionEvidencePack(pack, input.skill, { ...input.context, runId });
   return pack;
 }
 
@@ -172,13 +182,20 @@ export function validateAgentExecutionEvidencePack(
 ): string[] {
   const errors: string[] = [];
   const trustedApprovalRequired = approvalRequiredBySkill(skill);
-  const expectedExecutionId = `${trustedContext.traceId}:${skill.name}:${skill.version}`;
+  const trustedRunId = normalizedText(trustedContext.runId);
+  const expectedExecutionId = trustedRunId
+    ? `${trustedRunId}:${skill.name}:${skill.version}`
+    : null;
   const createdAtMs = Date.parse(pack.createdAt);
 
   if (pack.schemaVersion !== EXECUTION_EVIDENCE_PACK_VERSION) errors.push("unsupported_schema_version");
-  if (!pack.executionId || !pack.requestId || !pack.traceId) errors.push("missing_execution_identity");
+  if (!pack.runId || !pack.executionId || !pack.requestId || !pack.traceId) {
+    errors.push("missing_execution_identity");
+  }
+  if (!trustedRunId) errors.push("missing_trusted_run_identity");
   if (!pack.tenantId || !pack.projectId || !pack.userId) errors.push("missing_execution_scope");
-  if (pack.executionId !== expectedExecutionId) errors.push("execution_id_mismatch");
+  if (trustedRunId && pack.runId !== trustedRunId) errors.push("run_id_mismatch");
+  if (expectedExecutionId && pack.executionId !== expectedExecutionId) errors.push("execution_id_mismatch");
   if (pack.requestId !== trustedContext.requestId) errors.push("request_id_mismatch");
   if (pack.traceId !== trustedContext.traceId) errors.push("trace_id_mismatch");
   if (pack.tenantId !== trustedContext.tenantId) errors.push("tenant_scope_mismatch");
@@ -234,6 +251,7 @@ export function assertValidAgentExecutionEvidencePack(
 }
 
 function buildBasePack(input: {
+  runId: string;
   context: AgentExecutionContext;
   skill: SkillDefinition;
   authorization: RuntimeAuthorizationAllowed;
@@ -245,7 +263,8 @@ function buildBasePack(input: {
 }): AgentExecutionEvidencePack {
   return {
     schemaVersion: EXECUTION_EVIDENCE_PACK_VERSION,
-    executionId: `${input.context.traceId}:${input.skill.name}:${input.skill.version}`,
+    runId: input.runId,
+    executionId: `${input.runId}:${input.skill.name}:${input.skill.version}`,
     requestId: input.context.requestId,
     traceId: input.context.traceId,
     tenantId: input.context.tenantId,
