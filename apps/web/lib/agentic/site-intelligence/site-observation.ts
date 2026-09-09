@@ -5,14 +5,16 @@ import { toAgentEvidence, type AgentEvidence } from "../contracts/evidence.types
  * Site Intelligence observation contract.
  *
  * Deterministic normalization only: no model call, no graph write, no system-of-record
- * promotion. Visual facts are evidence-eligible only when project, media and capture
- * timestamp provenance are all present.
+ * promotion. Legacy media currently exposes `uploaded_at`, not a verified camera capture
+ * timestamp. The contract therefore records timestamp semantics explicitly and never
+ * promotes upload time into a verified capture-time fact.
  */
 
-export const SITE_OBSERVATION_SCHEMA_VERSION = 2 as const;
+export const SITE_OBSERVATION_SCHEMA_VERSION = 3 as const;
 
 export type SiteObservationSource = "IMAGE_ANALYSIS" | "VIDEO_DAILY_ANALYSIS";
 export type SiteObservationSignalKind = "ACTIVITY" | "ISSUE" | "MATERIAL" | "VISIBILITY";
+export type SiteObservationTimeSemantics = "CAPTURED_AT" | "MEDIA_UPLOADED_AT";
 
 export interface SiteObservationSignal {
   kind: SiteObservationSignalKind;
@@ -32,6 +34,8 @@ export interface SiteObservation {
   observations: SiteObservationSignal[];
   recommendations: string[];
   limitations: string[];
+  evidenceTime: string | null;
+  evidenceTimeSemantics: SiteObservationTimeSemantics | null;
   evidence: AgentEvidence[];
   insufficientEvidence: boolean;
 }
@@ -40,6 +44,12 @@ export interface SiteObservationScope {
   projectId?: string | null;
   mediaId?: string | null;
   capturedAt?: string | null;
+  uploadedAt?: string | null;
+}
+
+interface ResolvedEvidenceTime {
+  value: string;
+  semantics: SiteObservationTimeSemantics;
 }
 
 const MAX_SIGNALS = 32;
@@ -52,8 +62,8 @@ export function normalizeImageSiteObservation(
 ): SiteObservation {
   const projectId = normalizeId(scope.projectId);
   const mediaId = normalizeId(scope.mediaId);
-  const capturedAt = normalizeCapturedAt(scope.capturedAt);
-  const limitations = scopeLimitations(projectId, mediaId, capturedAt);
+  const evidenceTime = resolveEvidenceTime(scope);
+  const limitations = scopeLimitations(projectId, mediaId, evidenceTime);
   const stage = normalizeStage(result.stage);
 
   const observations = uniqueSignals(
@@ -76,8 +86,10 @@ export function normalizeImageSiteObservation(
     observations,
     recommendations: boundedStrings(result.recommendations, MAX_RECOMMENDATIONS),
     limitations,
-    evidence: buildMediaEvidence("IMAGE_ANALYSIS", projectId, mediaId, capturedAt),
-    insufficientEvidence: !projectId || !mediaId || !capturedAt,
+    evidenceTime: evidenceTime?.value ?? null,
+    evidenceTimeSemantics: evidenceTime?.semantics ?? null,
+    evidence: buildMediaEvidence("IMAGE_ANALYSIS", projectId, mediaId, evidenceTime),
+    insufficientEvidence: !projectId || !mediaId || !evidenceTime,
   };
 }
 
@@ -87,9 +99,9 @@ export function normalizeVideoDailySiteObservation(
 ): SiteObservation {
   const projectId = normalizeId(scope.projectId);
   const mediaId = normalizeId(scope.mediaId);
-  const capturedAt = normalizeCapturedAt(scope.capturedAt);
+  const evidenceTime = resolveEvidenceTime(scope);
   const workDate = normalizeWorkDate(result.work_date);
-  const limitations = scopeLimitations(projectId, mediaId, capturedAt);
+  const limitations = scopeLimitations(projectId, mediaId, evidenceTime);
   if (!workDate) limitations.push("UNKNOWN_WORK_DATE");
 
   const observations = uniqueSignals([
@@ -127,17 +139,25 @@ export function normalizeVideoDailySiteObservation(
     observations,
     recommendations: boundedStrings(result.recommendations, MAX_RECOMMENDATIONS),
     limitations,
-    evidence: buildMediaEvidence("VIDEO_DAILY_ANALYSIS", projectId, mediaId, capturedAt),
-    insufficientEvidence: !projectId || !mediaId || !capturedAt,
+    evidenceTime: evidenceTime?.value ?? null,
+    evidenceTimeSemantics: evidenceTime?.semantics ?? null,
+    evidence: buildMediaEvidence("VIDEO_DAILY_ANALYSIS", projectId, mediaId, evidenceTime),
+    insufficientEvidence: !projectId || !mediaId || !evidenceTime,
   };
 }
 
+/**
+ * Graph projection is stricter than read-only evidence use: legacy upload timestamps
+ * are acceptable for displaying/analyzing persisted media, but cannot establish when
+ * the photographed condition actually existed. Projection waits for verified capture time.
+ */
 export function isSiteObservationProjectionEligible(observation: SiteObservation): boolean {
   return Boolean(
     observation.projectId &&
       observation.mediaId &&
       observation.evidence.length > 0 &&
-      !observation.insufficientEvidence
+      !observation.insufficientEvidence &&
+      observation.evidenceTimeSemantics === "CAPTURED_AT"
   );
 }
 
@@ -145,19 +165,23 @@ function buildMediaEvidence(
   source: SiteObservationSource,
   projectId: string | null,
   mediaId: string | null,
-  capturedAt: string | null
+  evidenceTime: ResolvedEvidenceTime | null
 ): AgentEvidence[] {
-  if (!projectId || !mediaId || !capturedAt) return [];
+  if (!projectId || !mediaId || !evidenceTime) return [];
   return [
     toAgentEvidence({
       type: source === "IMAGE_ANALYSIS" ? "PHOTO" : "VIDEO",
       sourceEntityType: "media",
       sourceEntityId: mediaId,
-      capturedAt,
+      // AgentEvidence historically names this field `capturedAt`. For legacy rows we
+      // preserve the only durable media timestamp but explicitly label its semantics.
+      capturedAt: evidenceTime.value,
       metadata: {
         projectId,
         siteObservationSource: source,
         modelDerived: true,
+        timestampSemantics: evidenceTime.semantics,
+        captureTimeVerified: evidenceTime.semantics === "CAPTURED_AT",
       },
     }),
   ];
@@ -166,13 +190,26 @@ function buildMediaEvidence(
 function scopeLimitations(
   projectId: string | null,
   mediaId: string | null,
-  capturedAt: string | null
+  evidenceTime: ResolvedEvidenceTime | null
 ): string[] {
   const limitations: string[] = [];
   if (!projectId) limitations.push("UNSCOPED_PROJECT");
   if (!mediaId) limitations.push("MISSING_MEDIA_EVIDENCE");
-  if (!capturedAt) limitations.push("MISSING_CAPTURE_TIME");
+  if (!evidenceTime) limitations.push("MISSING_EVIDENCE_TIME");
+  if (evidenceTime?.semantics === "MEDIA_UPLOADED_AT") {
+    limitations.push("CAPTURE_TIME_UNVERIFIED");
+  }
   return limitations;
+}
+
+function resolveEvidenceTime(scope: SiteObservationScope): ResolvedEvidenceTime | null {
+  const capturedAt = normalizeTimestamp(scope.capturedAt);
+  if (capturedAt) return { value: capturedAt, semantics: "CAPTURED_AT" };
+
+  const uploadedAt = normalizeTimestamp(scope.uploadedAt);
+  if (uploadedAt) return { value: uploadedAt, semantics: "MEDIA_UPLOADED_AT" };
+
+  return null;
 }
 
 function normalizeId(value?: string | null): string | null {
@@ -181,7 +218,7 @@ function normalizeId(value?: string | null): string | null {
   return normalized.length > 0 ? normalized : null;
 }
 
-function normalizeCapturedAt(value?: string | null): string | null {
+function normalizeTimestamp(value?: string | null): string | null {
   if (typeof value !== "string") return null;
   const normalized = value.trim();
   if (!normalized) return null;
