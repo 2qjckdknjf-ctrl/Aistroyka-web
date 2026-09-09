@@ -232,12 +232,18 @@ export async function runProjectAgent(
   const confidence =
     failedRequired.length > 0 || runStatus !== "COMPLETED" ? "low" : synthesis.response.confidence;
 
+  // Health is a deterministic domain calculation. The LLM may explain it, but may
+  // never replace the score/band with another schema-valid value.
+  const authoritativeHealth = failedRequired.includes("calculate_project_health")
+    ? undefined
+    : toAuthoritativeHealth(skillOutputs.calculate_project_health);
+
   const runId = crypto.randomUUID();
   const response: AgentOrchestratorResponse = {
     schemaVersion: 1,
     runId,
     answer: synthesis.response.summary,
-    health: failedRequired.includes("calculate_project_health") ? undefined : synthesis.response.health,
+    health: authoritativeHealth,
     risks: failedRequired.includes("get_project_risks") ? [] : synthesis.response.risks,
     blockers: failedRequired.includes("find_project_blockers") ? [] : synthesis.response.blockers,
     evidence: dedupeEvidence(evidence),
@@ -312,6 +318,14 @@ export function resolveRunStatus(input: {
   if (input.failedRequiredCount > 0) return "COMPLETED_WITH_LIMITATIONS";
   if (input.insufficient) return "INSUFFICIENT_EVIDENCE";
   return "COMPLETED";
+}
+
+function toAuthoritativeHealth(value: unknown): AgentStructuredResponse["health"] {
+  if (!value || typeof value !== "object") return undefined;
+  const candidate = value as { score?: unknown; band?: unknown };
+  if (typeof candidate.score !== "number" || !Number.isFinite(candidate.score)) return undefined;
+  if (candidate.band !== "GREEN" && candidate.band !== "AMBER" && candidate.band !== "RED") return undefined;
+  return { score: candidate.score, band: candidate.band };
 }
 
 function toOrchestratorResponse(parsed: AgentPublicResponse): AgentOrchestratorResponse {
