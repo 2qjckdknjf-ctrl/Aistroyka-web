@@ -48,6 +48,10 @@ export const AgentEvidenceRefSchema = z.object({
   type: z.string(),
   sourceEntityType: z.string().optional(),
   sourceEntityId: z.string().optional(),
+  // Keep the original evidence timestamp in persisted/replayed public responses.
+  // Optional preserves compatibility with historical rows; replay drops legacy refs
+  // lacking a trustworthy timestamp instead of fabricating one.
+  capturedAt: z.string().datetime({ offset: true }).optional(),
 });
 
 export const AgentPublicProposedActionSchema = z.object({
