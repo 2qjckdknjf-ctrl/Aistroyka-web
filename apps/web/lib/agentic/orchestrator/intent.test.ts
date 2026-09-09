@@ -17,4 +17,19 @@ describe("intent routing", () => {
     expect(isRequiredSkill("overdue_tasks", "get_project_members")).toBe(false);
     expect(isRequiredSkill("critical_issues", "get_open_issues")).toBe(true);
   });
+
+  it("routes visual site questions to the bounded Site Intelligence pack", () => {
+    expect(resolveAgentIntent("Что сейчас видно на площадке по фото?")).toBe("site_status");
+    expect(resolveAgentIntent("Show me visual progress from photo evidence")).toBe("site_status");
+    expect(resolveAgentIntent("Покажи за последние 7 дней по видео что видно на площадке")).toBe("site_status");
+
+    const skills = skillsForIntent("site_status");
+    expect(skills).toEqual([
+      "get_project_state",
+      "get_recent_reports",
+      "get_site_observations",
+    ]);
+    expect(isRequiredSkill("site_status", "get_site_observations")).toBe(true);
+    expect(skills).not.toContain("get_project_members");
+  });
 });
