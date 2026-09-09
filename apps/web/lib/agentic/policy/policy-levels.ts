@@ -17,9 +17,17 @@ export const RESTRICTED_ACTION_TYPES = [
 
 export type RestrictedActionType = (typeof RESTRICTED_ACTION_TYPES)[number];
 
-/** Canonical policy identity for free-form action types. */
+/**
+ * Canonical policy identity for free-form action types.
+ * Case and separator variants must collapse to one identity so restricted operations
+ * cannot bypass policy via spellings such as `Project:Delete` or `project-delete`.
+ */
 export function normalizeActionType(actionType: string): string {
-  return actionType.trim().toLowerCase();
+  return actionType
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
 }
 
 export function isRestrictedActionType(actionType: string): boolean {
