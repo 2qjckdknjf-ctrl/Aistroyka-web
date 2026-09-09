@@ -121,16 +121,22 @@ describe("listPersistedImageSiteObservations", () => {
     expect(rows[0]?.observation.evidence).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          type: "PHOTO",
+          type: "DATABASE_STATE",
+          sourceEntityType: "media",
           sourceEntityId: "media-1",
           metadata: expect.objectContaining({
             timestampSemantics: "MEDIA_UPLOADED_AT",
             captureTimeVerified: false,
           }),
         }),
-        expect.objectContaining({ type: "DATABASE_STATE", sourceEntityId: "a1-new" }),
+        expect.objectContaining({
+          type: "DATABASE_STATE",
+          sourceEntityType: "ai_analysis",
+          sourceEntityId: "a1-new",
+        }),
       ])
     );
+    expect(rows[0]?.observation.evidence.some((e) => e.type === "PHOTO" || e.type === "VIDEO")).toBe(false);
     expect(rows[1]?.observation.riskLevel).toBe("medium");
   });
 
@@ -179,7 +185,7 @@ describe("listPersistedImageSiteObservations", () => {
     expect(rows[0]?.observation.evidenceTime).toBeNull();
     expect(rows[0]?.observation.evidenceTimeSemantics).toBeNull();
     expect(rows[0]?.observation.limitations).toContain("MISSING_EVIDENCE_TIME");
-    expect(rows[0]?.observation.evidence.some((e) => e.type === "PHOTO")).toBe(false);
+    expect(rows[0]?.observation.evidence.some((e) => e.type === "PHOTO" || e.type === "VIDEO")).toBe(false);
     expect(rows[0]?.observation.evidence).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ type: "DATABASE_STATE", capturedAt: "2026-09-09T01:00:00.000Z" }),
