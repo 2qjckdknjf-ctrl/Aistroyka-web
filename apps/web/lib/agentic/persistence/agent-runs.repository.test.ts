@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { findRunByIdempotency, persistAgentRun, redactSensitiveText } from "./agent-runs.repository";
+import {
+  findRunByIdempotency,
+  persistAgentRun,
+  redactSensitiveText,
+  sanitizeGovernanceEvidencePack,
+} from "./agent-runs.repository";
 import type { AgentExecutionContext } from "../types";
+import type { AgentExecutionEvidencePack } from "../contracts/execution-evidence-pack";
+import { EXECUTION_EVIDENCE_PACK_VERSION } from "../contracts/execution-evidence-pack";
+import { RUNTIME_AUTHZ_POLICY_VERSION } from "../security/runtime-authorization";
 
 function ctx(over: Partial<AgentExecutionContext> = {}): AgentExecutionContext {
   return {
@@ -27,6 +35,54 @@ function chain(result: { data: unknown; error: unknown }) {
   for (const k of ["select", "eq", "in", "lt", "order", "limit"]) api[k] = self;
   api.maybeSingle = async () => result;
   return api;
+}
+
+function governancePack(): AgentExecutionEvidencePack {
+  return {
+    schemaVersion: EXECUTION_EVIDENCE_PACK_VERSION,
+    executionId: "execution-1",
+    requestId: "request-1",
+    traceId: "trace-1",
+    tenantId: "tenant-1",
+    projectId: "project-a",
+    userId: "user-a",
+    skill: {
+      id: "inspect_project",
+      name: "inspect_project",
+      version: "1",
+      executionMode: "READ",
+      riskLevel: "LOW",
+    },
+    authorization: {
+      status: "ALLOW",
+      policyVersion: RUNTIME_AUTHZ_POLICY_VERSION,
+      effectivePermissions: ["mode:read", "project:read"],
+      approvalRequired: false,
+      approvalId: null,
+      approvalConsumedAt: null,
+      level: "LEVEL_0_READ",
+      operationId: null,
+      inputHash: null,
+    },
+    outcome: "COMPLETED",
+    evidence: [
+      {
+        evidenceId: "PHOTO:media-1",
+        type: "PHOTO",
+        sourceEntityType: "media",
+        sourceEntityId: "media-1",
+        sourceUrl: "https://storage.example/file?token=secret-token",
+        storageObject: "private/tenant-1/signed-object",
+        capturedAt: "2026-09-09T10:00:00.000Z",
+        metadata: {
+          signedUrl: "https://storage.example/file?X-Amz-Signature=secret",
+          providerToken: "secret-provider-token",
+        },
+      },
+    ],
+    insufficientEvidence: false,
+    createdAt: "2026-09-09T10:01:00.000Z",
+  };
 }
 
 describe("agent run persistence", () => {
@@ -60,6 +116,64 @@ describe("agent run persistence", () => {
     expect(inserted[0]).not.toMatchObject({ actor_user_id: "user-b" });
     expect((inserted[0] as { request: { message: string } }).request.message).not.toContain("hunter2");
     expect((inserted[0] as { request: { message: string } }).request.message).toContain("[redacted");
+  });
+
+  it("persists a sanitized but re-validatable governance pack", async () => {
+    const stepRows: unknown[] = [];
+    const supabase = {
+      from: (table: string) => {
+        if (table === "agent_runs") {
+          return { insert: async () => ({ error: null }) };
+        }
+        if (table === "agent_run_steps") {
+          return {
+            insert: async (rows: unknown) => {
+              stepRows.push(rows);
+              return { error: null };
+            },
+          };
+        }
+        return { insert: async () => ({ error: null }) };
+      },
+    };
+
+    await persistAgentRun(supabase as never, {
+      runId: "run-1",
+      context: ctx(),
+      status: "COMPLETED",
+      request: { message: "inspect" },
+      skillsCalled: ["inspect_project"],
+      structuredResult: { answer: "ok" },
+      latencyMs: 1,
+      proposed: [],
+      steps: [
+        {
+          skill: "inspect_project",
+          input: {},
+          output: { ok: true },
+          status: "COMPLETED",
+          durationMs: 1,
+          evidence: governancePack().evidence,
+          governanceEvidence: governancePack(),
+        },
+      ],
+    });
+
+    const inserted = (stepRows[0] as Array<Record<string, unknown>>)[0]!;
+    const persisted = inserted.governance_evidence as AgentExecutionEvidencePack;
+    expect(persisted.schemaVersion).toBe(EXECUTION_EVIDENCE_PACK_VERSION);
+    expect(persisted.authorization.policyVersion).toBe(RUNTIME_AUTHZ_POLICY_VERSION);
+    expect(persisted.evidence[0]).toMatchObject({
+      evidenceId: "PHOTO:media-1",
+      type: "PHOTO",
+      sourceEntityId: "media-1",
+      sourceUrl: null,
+      storageObject: null,
+      metadata: {},
+    });
+    expect(JSON.stringify(persisted)).not.toContain("secret-token");
+    expect(JSON.stringify(persisted)).not.toContain("signed-object");
+    expect(JSON.stringify(persisted)).not.toContain("secret-provider-token");
   });
 
   it("does not replay a run from another project even if the row leaks", async () => {
@@ -108,6 +222,19 @@ describe("agent run persistence", () => {
       idempotencyKey: "abc",
     });
     expect(found).toBeNull();
+  });
+});
+
+describe("governance evidence sanitization", () => {
+  it("strips locators and arbitrary metadata without mutating the source pack", () => {
+    const source = governancePack();
+    const sanitized = sanitizeGovernanceEvidencePack(source);
+
+    expect(sanitized).not.toBe(source);
+    expect(sanitized.evidence[0]?.sourceUrl).toBeNull();
+    expect(sanitized.evidence[0]?.storageObject).toBeNull();
+    expect(sanitized.evidence[0]?.metadata).toEqual({});
+    expect(source.evidence[0]?.sourceUrl).toContain("token=secret-token");
   });
 });
 
