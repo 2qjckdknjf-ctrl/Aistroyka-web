@@ -159,6 +159,48 @@ describe("site observation normalization", () => {
     expect(isSiteObservationProjectionEligible(observation)).toBe(false);
   });
 
+  it("rejects impossible capture timestamps and impossible work dates", () => {
+    const image = normalizeImageSiteObservation(
+      {
+        stage: "finishing",
+        completion_percent: 80,
+        risk_level: "medium",
+        detected_issues: [],
+        recommendations: [],
+      },
+      {
+        projectId: "project-1",
+        mediaId: "media-1",
+        capturedAt: "2026-02-31T10:00:00Z",
+      }
+    );
+
+    expect(image.evidenceTime).toBeNull();
+    expect(image.evidence).toEqual([]);
+    expect(image.limitations).toContain("MISSING_EVIDENCE_TIME");
+    expect(image.insufficientEvidence).toBe(true);
+
+    const video = normalizeVideoDailySiteObservation(
+      {
+        work_date: "2026-02-31",
+        summary: "Work visible.",
+        activities_observed: [],
+        completion_estimate_percent: 10,
+        risk_level: "low",
+        issues_and_risks: [],
+        recommendations: [],
+      },
+      {
+        projectId: "project-1",
+        mediaId: "video-1",
+        capturedAt: "2026-09-09T08:30:00.000Z",
+      }
+    );
+
+    expect(video.workDate).toBeNull();
+    expect(video.limitations).toContain("UNKNOWN_WORK_DATE");
+  });
+
   it("marks an unknown video work date instead of guessing one", () => {
     const observation = normalizeVideoDailySiteObservation(
       {
