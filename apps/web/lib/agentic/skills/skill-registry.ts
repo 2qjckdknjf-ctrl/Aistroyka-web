@@ -105,6 +105,26 @@ export function createSkillRegistry(supabase: SupabaseClient): SkillRegistry {
   return new SkillRegistry(createReadSkills(supabase));
 }
 
+export interface RuntimeApprovalClaimInput {
+  approval: RuntimeApproval;
+  operation: RuntimeOperationBinding;
+  context: AgentExecutionContext;
+  skill: Pick<SkillDefinition, "id" | "name" | "version" | "executionMode">;
+}
+
+export type RuntimeApprovalClaimResult =
+  | { claimed: true; consumedAt: string }
+  | { claimed: false; reason?: string };
+
+/**
+ * Must atomically transition the trusted approval from APPROVED to CONSUMED for
+ * exactly the supplied approval + operation binding. Returning claimed=false is
+ * treated as a replay/concurrency denial. The handler is never invoked on failure.
+ */
+export type RuntimeApprovalClaimer = (
+  input: RuntimeApprovalClaimInput
+) => Promise<RuntimeApprovalClaimResult>;
+
 export interface ExecuteRegisteredSkillOptions {
   /** Explicit capability grant for the agent runtime. Defaults to the Slice-01 read-only profile. */
   agentPermissions?: readonly string[];
@@ -114,6 +134,8 @@ export interface ExecuteRegisteredSkillOptions {
   operationId?: string;
   /** Trusted action type for policy + approval binding. Required whenever approval is required. */
   actionType?: string;
+  /** Required for approval-gated execution. Must perform an atomic single-use claim. */
+  claimApproval?: RuntimeApprovalClaimer;
 }
 
 export async function executeRegisteredSkill(
@@ -134,7 +156,7 @@ export async function executeRegisteredSkill(
   // input the handler will execute, not raw or model-controlled request material.
   const parsed = skill.validateInput(input);
   const operation = await buildRuntimeOperationBinding(skill.definition, parsed, options);
-  const authorization = assertRuntimeAuthorized({
+  let authorization = assertRuntimeAuthorized({
     skill: skill.definition,
     context,
     agentPermissions: options.agentPermissions ?? DEFAULT_PROJECT_AGENT_PERMISSIONS,
@@ -143,7 +165,44 @@ export async function executeRegisteredSkill(
     operation,
   });
 
+  // Skill-local authorization is still evaluated before consuming approval, so a
+  // failed scope/role check cannot burn a valid approval. The atomic claim happens
+  // immediately before the mutation-capable handler is invoked.
   await skill.authorize(context);
+
+  if (authorization.approvalRequired) {
+    if (!options.approval || !operation || !options.claimApproval) {
+      throw new AgentError("AGENT_POLICY_DENIED", "approval_atomic_claim_required", 403);
+    }
+
+    const claim = await options.claimApproval({
+      approval: options.approval,
+      operation,
+      context,
+      skill: {
+        id: skill.definition.id,
+        name: skill.definition.name,
+        version: skill.definition.version,
+        executionMode: skill.definition.executionMode,
+      },
+    });
+
+    if (!claim.claimed) {
+      throw new AgentError(
+        "AGENT_POLICY_DENIED",
+        claim.reason?.trim() || "approval_claim_failed_or_replayed",
+        403
+      );
+    }
+
+    const consumedAt = claim.consumedAt?.trim();
+    if (!consumedAt || Number.isNaN(Date.parse(consumedAt))) {
+      throw new AgentError("AGENT_GOVERNANCE_UNAVAILABLE", "approval_claim_missing_timestamp", 500);
+    }
+
+    authorization = { ...authorization, approvalConsumedAt: consumedAt };
+  }
+
   const result = await skill.execute(context, parsed);
   const evidencePack = buildAgentExecutionEvidencePack({
     context,
