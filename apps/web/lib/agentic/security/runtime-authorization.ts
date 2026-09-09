@@ -13,6 +13,7 @@
 
 import { ACTION_TO_PERMISSION } from "@/lib/authz/authz.policy";
 import { AgentError, type AgentErrorCode } from "../errors";
+import { normalizeActionType } from "../policy/policy-levels";
 import { resolveAgentActionPolicy } from "../policy/policy-resolver";
 import type { SkillDefinition } from "../skills/skill.types";
 import type { AgentExecutionContext, PolicyLevel, SkillExecutionMode } from "../types";
@@ -69,6 +70,8 @@ interface RuntimeAuthorizationBase {
   effectivePermissions: string[];
   approvalRequired: boolean;
   approvalId: string | null;
+  approvalApprovedBy: string | null;
+  approvalApprovedAt: string | null;
   approvalConsumedAt: string | null;
   approvalExpiresAt: string | null;
   level: PolicyLevel | null;
@@ -91,8 +94,19 @@ export interface RuntimeAuthorizationDenied extends RuntimeAuthorizationBase {
 
 export type RuntimeAuthorizationDecision = RuntimeAuthorizationAllowed | RuntimeAuthorizationDenied;
 
+type ValidApprovalEvidence = {
+  valid: true;
+  approvalId: string;
+  approvedBy: string;
+  approvedAt: string;
+  expiresAt: string | null;
+};
+type InvalidApprovalEvidence = { valid: false; reason: string };
+
 export function resolveRuntimeAuthorization(input: RuntimeAuthorizationInput): RuntimeAuthorizationDecision {
-  const actionType = input.operation?.actionType ?? input.actionType;
+  const operation = normalizeOperationBinding(input.operation);
+  const requestedActionType = input.actionType === undefined ? undefined : normalizeActionType(input.actionType);
+  const actionType = operation?.actionType ?? requestedActionType;
   const base = resolveAgentActionPolicy({
     skill: input.skill,
     context: input.context,
@@ -101,17 +115,17 @@ export function resolveRuntimeAuthorization(input: RuntimeAuthorizationInput): R
   });
 
   if (!base.allowed) {
-    return deny(base.code, base.reason, [], false, null, input.operation ?? null);
+    return deny(base.code, base.reason, [], false, null, operation);
   }
 
-  if (input.actionType && input.operation && input.actionType !== input.operation.actionType) {
+  if (requestedActionType !== undefined && operation && requestedActionType !== operation.actionType) {
     return deny(
       "AGENT_POLICY_DENIED",
       "operation_action_mismatch",
       [],
       base.approvalRequired,
       base.level,
-      input.operation
+      operation
     );
   }
 
@@ -126,7 +140,7 @@ export function resolveRuntimeAuthorization(input: RuntimeAuthorizationInput): R
       effectivePermissions,
       base.approvalRequired,
       base.level,
-      input.operation ?? null
+      operation
     );
   }
   effectivePermissions.push(requiredModeCapability);
@@ -139,7 +153,7 @@ export function resolveRuntimeAuthorization(input: RuntimeAuthorizationInput): R
         effectivePermissions,
         base.approvalRequired,
         base.level,
-        input.operation ?? null
+        operation
       );
     }
 
@@ -150,7 +164,7 @@ export function resolveRuntimeAuthorization(input: RuntimeAuthorizationInput): R
         effectivePermissions,
         base.approvalRequired,
         base.level,
-        input.operation ?? null
+        operation
       );
     }
 
@@ -158,7 +172,7 @@ export function resolveRuntimeAuthorization(input: RuntimeAuthorizationInput): R
   }
 
   if (base.approvalRequired) {
-    const approvalCheck = validateApproval(input, input.now ?? new Date());
+    const approvalCheck = validateApproval(input, operation, input.now ?? new Date());
     if (!approvalCheck.valid) {
       return {
         allowed: false,
@@ -169,12 +183,14 @@ export function resolveRuntimeAuthorization(input: RuntimeAuthorizationInput): R
         effectivePermissions,
         approvalRequired: true,
         approvalId: null,
+        approvalApprovedBy: null,
+        approvalApprovedAt: null,
         approvalConsumedAt: null,
-        approvalExpiresAt: input.approval?.expiresAt?.trim() || null,
+        approvalExpiresAt: null,
         level: base.level,
-        operationId: input.operation?.operationId ?? null,
-        actionType: input.operation?.actionType ?? null,
-        inputHash: input.operation?.inputHash ?? null,
+        operationId: operation?.operationId ?? null,
+        actionType: operation?.actionType ?? null,
+        inputHash: operation?.inputHash ?? null,
       };
     }
 
@@ -184,13 +200,15 @@ export function resolveRuntimeAuthorization(input: RuntimeAuthorizationInput): R
       policyVersion: RUNTIME_AUTHZ_POLICY_VERSION,
       effectivePermissions,
       approvalRequired: true,
-      approvalId: input.approval?.approvalId ?? null,
+      approvalId: approvalCheck.approvalId,
+      approvalApprovedBy: approvalCheck.approvedBy,
+      approvalApprovedAt: approvalCheck.approvedAt,
       approvalConsumedAt: null,
-      approvalExpiresAt: input.approval?.expiresAt?.trim() || null,
+      approvalExpiresAt: approvalCheck.expiresAt,
       level: base.level,
-      operationId: input.operation?.operationId ?? null,
-      actionType: input.operation?.actionType ?? null,
-      inputHash: input.operation?.inputHash ?? null,
+      operationId: operation?.operationId ?? null,
+      actionType: operation?.actionType ?? null,
+      inputHash: operation?.inputHash ?? null,
     };
   }
 
@@ -201,12 +219,14 @@ export function resolveRuntimeAuthorization(input: RuntimeAuthorizationInput): R
     effectivePermissions,
     approvalRequired: false,
     approvalId: null,
+    approvalApprovedBy: null,
+    approvalApprovedAt: null,
     approvalConsumedAt: null,
     approvalExpiresAt: null,
     level: base.level,
-    operationId: input.operation?.operationId ?? null,
-    actionType: input.operation?.actionType ?? null,
-    inputHash: input.operation?.inputHash ?? null,
+    operationId: operation?.operationId ?? null,
+    actionType: operation?.actionType ?? null,
+    inputHash: operation?.inputHash ?? null,
   };
 }
 
@@ -227,9 +247,9 @@ function userHasRequiredPermission(context: AgentExecutionContext, required: str
 
 function validateApproval(
   input: RuntimeAuthorizationInput,
+  operation: RuntimeOperationBinding | null,
   now: Date
-): { valid: true } | { valid: false; reason: string } {
-  const operation = input.operation;
+): ValidApprovalEvidence | InvalidApprovalEvidence {
   if (!operation) return { valid: false, reason: "operation_binding_required" };
   if (
     !operation.operationId.trim() ||
@@ -243,8 +263,15 @@ function validateApproval(
     return { valid: false, reason: "operation_skill_version_mismatch" };
   }
 
+  const nowMs = now.getTime();
+  if (!Number.isFinite(nowMs)) return { valid: false, reason: "authorization_clock_invalid" };
+
   const approval = input.approval;
   if (!approval) return { valid: false, reason: "approval_required" };
+  const approvalId = approval.approvalId.trim();
+  const approvedBy = approval.approvedBy.trim();
+  if (!approvalId) return { valid: false, reason: "approval_id_invalid" };
+  if (!approvedBy) return { valid: false, reason: "approval_approver_invalid" };
   if (approval.status !== "APPROVED") {
     return { valid: false, reason: `approval_not_claimable:${approval.status.toLowerCase()}` };
   }
@@ -253,15 +280,42 @@ function validateApproval(
   if (approval.projectId !== input.context.projectId) return { valid: false, reason: "approval_project_mismatch" };
   if (approval.skillName !== input.skill.name) return { valid: false, reason: "approval_skill_mismatch" };
   if (approval.operationId !== operation.operationId) return { valid: false, reason: "approval_operation_mismatch" };
-  if (approval.actionType !== operation.actionType) return { valid: false, reason: "approval_action_mismatch" };
+  if (normalizeActionType(approval.actionType) !== operation.actionType) {
+    return { valid: false, reason: "approval_action_mismatch" };
+  }
   if (approval.inputHash !== operation.inputHash) return { valid: false, reason: "approval_input_mismatch" };
   if (approval.skillVersion !== operation.skillVersion) return { valid: false, reason: "approval_skill_version_mismatch" };
+
+  const approvedAtMs = Date.parse(approval.approvedAt);
+  if (!Number.isFinite(approvedAtMs)) return { valid: false, reason: "approval_approved_at_invalid" };
+  if (approvedAtMs > nowMs) return { valid: false, reason: "approval_approved_at_future" };
+
+  let expiresAt: string | null = null;
   if (approval.expiresAt) {
     const expiresAtMs = Date.parse(approval.expiresAt);
     if (!Number.isFinite(expiresAtMs)) return { valid: false, reason: "approval_expiry_invalid" };
-    if (expiresAtMs <= now.getTime()) return { valid: false, reason: "approval_expired" };
+    if (approvedAtMs >= expiresAtMs) return { valid: false, reason: "approval_grant_chronology_invalid" };
+    if (expiresAtMs <= nowMs) return { valid: false, reason: "approval_expired" };
+    expiresAt = new Date(expiresAtMs).toISOString();
   }
-  return { valid: true };
+
+  return {
+    valid: true,
+    approvalId,
+    approvedBy,
+    approvedAt: new Date(approvedAtMs).toISOString(),
+    expiresAt,
+  };
+}
+
+function normalizeOperationBinding(operation?: RuntimeOperationBinding | null): RuntimeOperationBinding | null {
+  if (!operation) return null;
+  return {
+    operationId: operation.operationId.trim(),
+    actionType: normalizeActionType(operation.actionType),
+    inputHash: operation.inputHash.trim(),
+    skillVersion: operation.skillVersion.trim(),
+  };
 }
 
 function modeCapabilityFor(mode: SkillExecutionMode): AgentModeCapability {
@@ -298,6 +352,8 @@ function deny(
     effectivePermissions,
     approvalRequired,
     approvalId: null,
+    approvalApprovedBy: null,
+    approvalApprovedAt: null,
     approvalConsumedAt: null,
     approvalExpiresAt: null,
     level,
