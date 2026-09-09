@@ -395,7 +395,7 @@ export async function POST(request: Request) {
       latency_ms: durationMs,
       error_kind: "unknown_internal_error",
       http_status: 500,
-      ...r(),
+      ...r,
     });
     if (tenantCtx.tenantId) {
       void emitAiRuntimeAudit(userSupabase, {
@@ -410,7 +410,7 @@ export async function POST(request: Request) {
           latency_ms: durationMs,
           output_type: "video_daily",
           error_kind: "unknown_internal_error",
-          ...rel(),
+          ...r,
         },
       });
     }
