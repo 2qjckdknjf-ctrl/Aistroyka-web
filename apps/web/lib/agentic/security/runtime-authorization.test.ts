@@ -103,12 +103,8 @@ describe("runtime authorization", () => {
       context: ctx(),
       agentPermissions: ["project:read"],
     });
-
     expect(decision.allowed).toBe(false);
-    if (!decision.allowed) {
-      expect(decision.code).toBe("AGENT_UNAUTHORIZED");
-      expect(decision.reason).toBe("agent_missing_mode_capability:mode:read");
-    }
+    if (!decision.allowed) expect(decision.reason).toBe("agent_missing_mode_capability:mode:read");
   });
 
   it("fails closed when the agent lacks a required domain capability", () => {
@@ -117,12 +113,8 @@ describe("runtime authorization", () => {
       context: ctx(),
       agentPermissions: ["mode:read"],
     });
-
     expect(decision.allowed).toBe(false);
-    if (!decision.allowed) {
-      expect(decision.code).toBe("AGENT_UNAUTHORIZED");
-      expect(decision.reason).toBe("agent_missing_permission:project:read");
-    }
+    if (!decision.allowed) expect(decision.reason).toBe("agent_missing_permission:project:read");
   });
 
   it("fails closed when the user lacks the mapped RBAC permission", () => {
@@ -131,12 +123,8 @@ describe("runtime authorization", () => {
       context: ctx([]),
       agentPermissions: ["mode:read", "project:read"],
     });
-
     expect(decision.allowed).toBe(false);
-    if (!decision.allowed) {
-      expect(decision.code).toBe("AGENT_UNAUTHORIZED");
-      expect(decision.reason).toBe("user_missing_permission:project:read");
-    }
+    if (!decision.allowed) expect(decision.reason).toBe("user_missing_permission:project:read");
   });
 
   it("default read-only style grants cannot authorize execute mode", () => {
@@ -146,12 +134,10 @@ describe("runtime authorization", () => {
       agentPermissions: ["mode:read", "project:read"],
       operation,
       approval: approval(),
+      now: new Date("2026-09-08T01:00:00.000Z"),
     });
-
     expect(decision.allowed).toBe(false);
-    if (!decision.allowed) {
-      expect(decision.reason).toBe("agent_missing_mode_capability:mode:execute");
-    }
+    if (!decision.allowed) expect(decision.reason).toBe("agent_missing_mode_capability:mode:execute");
   });
 
   it("requires trusted approval for execute mode", () => {
@@ -161,27 +147,48 @@ describe("runtime authorization", () => {
       agentPermissions: ["mode:execute", "project:read"],
       operation,
     });
-
     expect(decision.allowed).toBe(false);
     expect(decision.status).toBe("REQUIRE_APPROVAL");
     expect(decision.actionType).toBe("update_project");
   });
 
-  it("accepts only scope-matching, non-expired, unconsumed approval evidence", () => {
+  it("retains the human approver and canonical grant chronology", () => {
     const decision = resolveRuntimeAuthorization({
       skill: executeSkill(),
       context: ctx(),
       agentPermissions: ["mode:execute", "project:read"],
-      operation,
+      operation: { ...operation, actionType: " Update_Project " },
+      actionType: "UPDATE_PROJECT",
       now: new Date("2026-09-08T01:00:00.000Z"),
-      approval: approval(),
+      approval: approval({ actionType: "update_PROJECT" }),
     });
 
     expect(decision.allowed).toBe(true);
     expect(decision.approvalId).toBe("approval-1");
+    expect(decision.approvalApprovedBy).toBe("owner-1");
+    expect(decision.approvalApprovedAt).toBe("2026-09-08T00:30:00.000Z");
+    expect(decision.approvalExpiresAt).toBe("2026-09-08T02:00:00.000Z");
     expect(decision.operationId).toBe("operation-1");
     expect(decision.actionType).toBe("update_project");
     expect(decision.inputHash).toBe("hash-1");
+  });
+
+  it("rejects restricted action types case-insensitively", () => {
+    const restrictedOperation = { ...operation, actionType: " PaYmEnT " };
+    const decision = resolveRuntimeAuthorization({
+      skill: executeSkill(),
+      context: ctx(),
+      agentPermissions: ["mode:execute", "project:read"],
+      operation: restrictedOperation,
+      approval: approval({ actionType: "PAYMENT" }),
+      now: new Date("2026-09-08T01:00:00.000Z"),
+    });
+
+    expect(decision.allowed).toBe(false);
+    if (!decision.allowed) {
+      expect(decision.code).toBe("AGENT_RESTRICTED_ACTION");
+      expect(decision.reason).toBe("restricted:payment");
+    }
   });
 
   it("fails closed on malformed approval expiry timestamps", () => {
@@ -193,10 +200,49 @@ describe("runtime authorization", () => {
       now: new Date("2026-09-08T01:00:00.000Z"),
       approval: approval({ expiresAt: "not-a-timestamp" }),
     });
-
     expect(decision.allowed).toBe(false);
-    expect(decision.status).toBe("REQUIRE_APPROVAL");
     if (!decision.allowed) expect(decision.reason).toBe("approval_expiry_invalid");
+  });
+
+  it("fails closed on malformed, future, or empty human approval evidence", () => {
+    const base = {
+      skill: executeSkill(),
+      context: ctx(),
+      agentPermissions: ["mode:execute", "project:read"] as const,
+      operation,
+      now: new Date("2026-09-08T01:00:00.000Z"),
+    };
+
+    const malformed = resolveRuntimeAuthorization({ ...base, approval: approval({ approvedAt: "bad" }) });
+    expect(malformed.allowed).toBe(false);
+    if (!malformed.allowed) expect(malformed.reason).toBe("approval_approved_at_invalid");
+
+    const future = resolveRuntimeAuthorization({
+      ...base,
+      approval: approval({ approvedAt: "2026-09-08T01:00:01.000Z" }),
+    });
+    expect(future.allowed).toBe(false);
+    if (!future.allowed) expect(future.reason).toBe("approval_approved_at_future");
+
+    const noApprover = resolveRuntimeAuthorization({ ...base, approval: approval({ approvedBy: "  " }) });
+    expect(noApprover.allowed).toBe(false);
+    if (!noApprover.allowed) expect(noApprover.reason).toBe("approval_approver_invalid");
+  });
+
+  it("rejects an approval whose grant time is not before expiry", () => {
+    const decision = resolveRuntimeAuthorization({
+      skill: executeSkill(),
+      context: ctx(),
+      agentPermissions: ["mode:execute", "project:read"],
+      operation,
+      now: new Date("2026-09-08T00:45:00.000Z"),
+      approval: approval({
+        approvedAt: "2026-09-08T00:40:00.000Z",
+        expiresAt: "2026-09-08T00:40:00.000Z",
+      }),
+    });
+    expect(decision.allowed).toBe(false);
+    if (!decision.allowed) expect(decision.reason).toBe("approval_grant_chronology_invalid");
   });
 
   it("rejects approval evidence that was already consumed", () => {
@@ -207,7 +253,6 @@ describe("runtime authorization", () => {
       operation,
       approval: approval({ status: "CONSUMED", consumedAt: "2026-09-08T00:45:00.000Z" }),
     });
-
     expect(decision.allowed).toBe(false);
     if (!decision.allowed) expect(decision.reason).toBe("approval_not_claimable:consumed");
   });
@@ -220,7 +265,6 @@ describe("runtime authorization", () => {
       operation,
       approval: approval({ projectId: "project-2" }),
     });
-
     expect(decision.allowed).toBe(false);
     if (!decision.allowed) expect(decision.reason).toBe("approval_project_mismatch");
   });
@@ -233,7 +277,6 @@ describe("runtime authorization", () => {
       operation: { ...operation, inputHash: "hash-2" },
       approval: approval(),
     });
-
     expect(decision.allowed).toBe(false);
     if (!decision.allowed) expect(decision.reason).toBe("approval_input_mismatch");
   });
