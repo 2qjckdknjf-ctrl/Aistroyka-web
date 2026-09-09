@@ -6,6 +6,7 @@
  */
 
 import { AgentError } from "../errors";
+import { isRestrictedActionType } from "../policy/policy-levels";
 import type { SkillDefinition, SkillResult } from "../skills/skill.types";
 import type { AgentExecutionContext, SkillExecutionMode } from "../types";
 import { hasSupportingEvidence, type AgentEvidence } from "./evidence.types";
@@ -198,9 +199,14 @@ function validateAuthorizationEvidence(
   const errors: string[] = [];
   const trustedApprovalRequired = approvalRequiredBySkill(skill);
   const requiredModeCapability = modeCapabilityFor(skill.executionMode);
+  const policyVersion = normalizedText(authorization.policyVersion);
+  const approvalId = normalizedText(authorization.approvalId);
+  const operationId = normalizedText(authorization.operationId);
+  const actionType = normalizedText(authorization.actionType);
+  const inputHash = normalizedText(authorization.inputHash);
 
   if (authorization.status !== "ALLOW") errors.push("authorization_not_allowed");
-  if (!authorization.policyVersion) errors.push("missing_policy_version");
+  if (!policyVersion) errors.push("missing_policy_version");
   if (!authorization.effectivePermissions.includes(requiredModeCapability)) {
     errors.push(`missing_effective_mode_capability:${requiredModeCapability}`);
   }
@@ -212,27 +218,36 @@ function validateAuthorizationEvidence(
   if (authorization.approvalRequired !== trustedApprovalRequired) {
     errors.push("approval_requirement_mismatch");
   }
-  if (trustedApprovalRequired && !authorization.approvalId) {
+  if (trustedApprovalRequired && !approvalId) {
     errors.push("missing_approval_evidence");
   }
-  if (trustedApprovalRequired && !authorization.operationId) {
+  if (trustedApprovalRequired && !operationId) {
     errors.push("missing_approved_operation");
   }
-  if (trustedApprovalRequired && !authorization.actionType) {
+  if (trustedApprovalRequired && !actionType) {
     errors.push("missing_approved_action_type");
   }
-  if (trustedApprovalRequired && !authorization.inputHash) {
+  if (trustedApprovalRequired && actionType && isRestrictedActionType(actionType)) {
+    errors.push(`restricted_approved_action_type:${actionType}`);
+  }
+  if (trustedApprovalRequired && !inputHash) {
     errors.push("missing_approved_input_hash");
   }
   if (
     trustedApprovalRequired &&
     options.requireConsumedApproval &&
-    !authorization.approvalConsumedAt
+    !normalizedText(authorization.approvalConsumedAt)
   ) {
     errors.push("approval_not_consumed");
   }
 
   return errors;
+}
+
+function normalizedText(value: string | null): string | null {
+  if (typeof value !== "string") return null;
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
 }
 
 function approvalRequiredBySkill(skill: SkillDefinition): boolean {
