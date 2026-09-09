@@ -94,6 +94,8 @@ export function validateAgentExecutionEvidencePack(
   skill: SkillDefinition
 ): string[] {
   const errors: string[] = [];
+  const trustedApprovalRequired =
+    skill.requiresApproval || skill.executionMode === "PREPARE" || skill.executionMode === "EXECUTE";
 
   if (pack.schemaVersion !== EXECUTION_EVIDENCE_PACK_VERSION) errors.push("unsupported_schema_version");
   if (!pack.executionId || !pack.requestId || !pack.traceId) errors.push("missing_execution_identity");
@@ -101,18 +103,23 @@ export function validateAgentExecutionEvidencePack(
   if (pack.skill.id !== skill.id || pack.skill.name !== skill.name || pack.skill.version !== skill.version) {
     errors.push("skill_identity_mismatch");
   }
+  if (pack.skill.executionMode !== skill.executionMode) errors.push("skill_execution_mode_mismatch");
+  if (pack.skill.riskLevel !== skill.riskLevel) errors.push("skill_risk_level_mismatch");
   if (pack.authorization.status !== "ALLOW") errors.push("authorization_not_allowed");
   if (!pack.authorization.policyVersion) errors.push("missing_policy_version");
-  if (pack.authorization.approvalRequired && !pack.authorization.approvalId) {
+  if (pack.authorization.approvalRequired !== trustedApprovalRequired) {
+    errors.push("approval_requirement_mismatch");
+  }
+  if (trustedApprovalRequired && !pack.authorization.approvalId) {
     errors.push("missing_approval_evidence");
   }
-  if (pack.authorization.approvalRequired && !pack.authorization.operationId) {
+  if (trustedApprovalRequired && !pack.authorization.operationId) {
     errors.push("missing_approved_operation");
   }
-  if (pack.authorization.approvalRequired && !pack.authorization.inputHash) {
+  if (trustedApprovalRequired && !pack.authorization.inputHash) {
     errors.push("missing_approved_input_hash");
   }
-  if (pack.authorization.approvalRequired && !pack.authorization.approvalConsumedAt) {
+  if (trustedApprovalRequired && !pack.authorization.approvalConsumedAt) {
     errors.push("approval_not_consumed");
   }
 
