@@ -18,6 +18,7 @@ import {
 } from "../security/runtime-authorization";
 import { hashRuntimeSkillInput } from "../security/runtime-operation";
 import {
+  assertExecutionAuthorizationForSkill,
   buildAgentExecutionEvidencePack,
   type AgentExecutionEvidencePack,
 } from "../contracts/execution-evidence-pack";
@@ -165,6 +166,10 @@ export async function executeRegisteredSkill(
     operation,
   });
 
+  // Static pack/skill invariants are checked before any approval is consumed or any
+  // mutation-capable handler runs. This prevents post-side-effect governance failure.
+  assertExecutionAuthorizationForSkill(authorization, skill.definition);
+
   // Skill-local authorization is still evaluated before consuming approval, so a
   // failed scope/role check cannot burn a valid approval. The atomic claim happens
   // immediately before the mutation-capable handler is invoked.
@@ -201,6 +206,12 @@ export async function executeRegisteredSkill(
     }
 
     authorization = { ...authorization, approvalConsumedAt: consumedAt };
+    // Re-check the final authorization record before invoking the handler. From this
+    // point forward, post-execution evidence omissions degrade to INSUFFICIENT_EVIDENCE
+    // rather than throwing after a side effect has already occurred.
+    assertExecutionAuthorizationForSkill(authorization, skill.definition, {
+      requireConsumedApproval: true,
+    });
   }
 
   const result = await skill.execute(context, parsed);
