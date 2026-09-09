@@ -1,7 +1,8 @@
 /**
  * Governed evidence pack for a single skill execution.
- * A completed execution cannot be represented as governed/valid without
- * authorization trace and any evidence required by the skill contract.
+ * Static authorization invariants are validated before execution. After a handler
+ * has run, missing supporting evidence degrades the outcome to INSUFFICIENT_EVIDENCE
+ * instead of turning an already-completed operation into an unaudited exception.
  */
 
 import { AgentError } from "../errors";
@@ -46,6 +47,54 @@ export interface AgentExecutionEvidencePack {
   createdAt: string;
 }
 
+/**
+ * Validate authorization fields against the trusted skill contract before the
+ * mutation-capable handler is invoked. Call once before approval claim and again
+ * after claim with requireConsumedApproval=true.
+ */
+export function validateExecutionAuthorizationForSkill(
+  authorization: RuntimeAuthorizationAllowed,
+  skill: SkillDefinition,
+  options: { requireConsumedApproval?: boolean } = {}
+): string[] {
+  const errors: string[] = [];
+  const trustedApprovalRequired = approvalRequiredBySkill(skill);
+
+  if (authorization.status !== "ALLOW") errors.push("authorization_not_allowed");
+  if (!authorization.policyVersion) errors.push("missing_policy_version");
+  if (authorization.approvalRequired !== trustedApprovalRequired) {
+    errors.push("approval_requirement_mismatch");
+  }
+  if (trustedApprovalRequired && !authorization.approvalId) {
+    errors.push("missing_approval_evidence");
+  }
+  if (trustedApprovalRequired && !authorization.operationId) {
+    errors.push("missing_approved_operation");
+  }
+  if (trustedApprovalRequired && !authorization.inputHash) {
+    errors.push("missing_approved_input_hash");
+  }
+  if (
+    trustedApprovalRequired &&
+    options.requireConsumedApproval &&
+    !authorization.approvalConsumedAt
+  ) {
+    errors.push("approval_not_consumed");
+  }
+
+  return errors;
+}
+
+export function assertExecutionAuthorizationForSkill(
+  authorization: RuntimeAuthorizationAllowed,
+  skill: SkillDefinition,
+  options: { requireConsumedApproval?: boolean } = {}
+): void {
+  const errors = validateExecutionAuthorizationForSkill(authorization, skill, options);
+  if (errors.length === 0) return;
+  throw new AgentError("AGENT_GOVERNANCE_UNAVAILABLE", errors.join(","), 500);
+}
+
 export function buildAgentExecutionEvidencePack(input: {
   context: AgentExecutionContext;
   skill: SkillDefinition;
@@ -53,6 +102,16 @@ export function buildAgentExecutionEvidencePack(input: {
   result: SkillResult;
   createdAt?: string;
 }): AgentExecutionEvidencePack {
+  // This is a static invariant and must already have been checked before handler
+  // execution. Re-check here to make persisted/imported packs self-validating.
+  assertExecutionAuthorizationForSkill(input.authorization, input.skill, {
+    requireConsumedApproval: approvalRequiredBySkill(input.skill),
+  });
+
+  const missingRequiredEvidence =
+    input.skill.requiresEvidence && !hasSupportingEvidence(input.result.evidence);
+  const insufficientEvidence = input.result.insufficientEvidence || missingRequiredEvidence;
+
   const pack: AgentExecutionEvidencePack = {
     schemaVersion: EXECUTION_EVIDENCE_PACK_VERSION,
     executionId: `${input.context.traceId}:${input.skill.name}:${input.skill.version}`,
@@ -79,9 +138,9 @@ export function buildAgentExecutionEvidencePack(input: {
       operationId: input.authorization.operationId,
       inputHash: input.authorization.inputHash,
     },
-    outcome: input.result.insufficientEvidence ? "INSUFFICIENT_EVIDENCE" : "COMPLETED",
+    outcome: insufficientEvidence ? "INSUFFICIENT_EVIDENCE" : "COMPLETED",
     evidence: [...input.result.evidence],
-    insufficientEvidence: input.result.insufficientEvidence,
+    insufficientEvidence,
     createdAt: input.createdAt ?? new Date().toISOString(),
   };
 
@@ -94,8 +153,7 @@ export function validateAgentExecutionEvidencePack(
   skill: SkillDefinition
 ): string[] {
   const errors: string[] = [];
-  const trustedApprovalRequired =
-    skill.requiresApproval || skill.executionMode === "PREPARE" || skill.executionMode === "EXECUTE";
+  const trustedApprovalRequired = approvalRequiredBySkill(skill);
 
   if (pack.schemaVersion !== EXECUTION_EVIDENCE_PACK_VERSION) errors.push("unsupported_schema_version");
   if (!pack.executionId || !pack.requestId || !pack.traceId) errors.push("missing_execution_identity");
@@ -105,32 +163,35 @@ export function validateAgentExecutionEvidencePack(
   }
   if (pack.skill.executionMode !== skill.executionMode) errors.push("skill_execution_mode_mismatch");
   if (pack.skill.riskLevel !== skill.riskLevel) errors.push("skill_risk_level_mismatch");
-  if (pack.authorization.status !== "ALLOW") errors.push("authorization_not_allowed");
-  if (!pack.authorization.policyVersion) errors.push("missing_policy_version");
-  if (pack.authorization.approvalRequired !== trustedApprovalRequired) {
-    errors.push("approval_requirement_mismatch");
-  }
-  if (trustedApprovalRequired && !pack.authorization.approvalId) {
-    errors.push("missing_approval_evidence");
-  }
-  if (trustedApprovalRequired && !pack.authorization.operationId) {
-    errors.push("missing_approved_operation");
-  }
-  if (trustedApprovalRequired && !pack.authorization.inputHash) {
-    errors.push("missing_approved_input_hash");
-  }
-  if (trustedApprovalRequired && !pack.authorization.approvalConsumedAt) {
-    errors.push("approval_not_consumed");
-  }
+  errors.push(
+    ...validateExecutionAuthorizationForSkill(
+      {
+        allowed: true,
+        status: "ALLOW",
+        policyVersion: pack.authorization.policyVersion as RuntimeAuthorizationAllowed["policyVersion"],
+        effectivePermissions: pack.authorization.effectivePermissions,
+        approvalRequired: pack.authorization.approvalRequired,
+        approvalId: pack.authorization.approvalId,
+        approvalConsumedAt: pack.authorization.approvalConsumedAt,
+        level: pack.authorization.level,
+        operationId: pack.authorization.operationId,
+        inputHash: pack.authorization.inputHash,
+      },
+      skill,
+      { requireConsumedApproval: trustedApprovalRequired }
+    )
+  );
 
   if (pack.outcome === "COMPLETED") {
     if (pack.insufficientEvidence) errors.push("completed_with_insufficient_evidence");
     if (skill.requiresEvidence && !hasSupportingEvidence(pack.evidence)) {
       errors.push("missing_supporting_evidence");
     }
+  } else if (!pack.insufficientEvidence) {
+    errors.push("insufficient_outcome_without_flag");
   }
 
-  return errors;
+  return [...new Set(errors)];
 }
 
 export function assertValidAgentExecutionEvidencePack(
@@ -145,4 +206,8 @@ export function assertValidAgentExecutionEvidencePack(
   }
 
   throw new AgentError("AGENT_GOVERNANCE_UNAVAILABLE", errors.join(","), 500);
+}
+
+function approvalRequiredBySkill(skill: SkillDefinition): boolean {
+  return skill.requiresApproval || skill.executionMode === "PREPARE" || skill.executionMode === "EXECUTE";
 }
