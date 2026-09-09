@@ -7,11 +7,14 @@
 
 import { AgentError } from "../errors";
 import type { SkillDefinition, SkillResult } from "../skills/skill.types";
-import type { AgentExecutionContext } from "../types";
+import type { AgentExecutionContext, SkillExecutionMode } from "../types";
 import { hasSupportingEvidence, type AgentEvidence } from "./evidence.types";
-import type { RuntimeAuthorizationAllowed } from "../security/runtime-authorization";
+import type {
+  RuntimeAuthorizationAllowed,
+  RuntimeAuthorizationDecision,
+} from "../security/runtime-authorization";
 
-export const EXECUTION_EVIDENCE_PACK_VERSION = 3 as const;
+export const EXECUTION_EVIDENCE_PACK_VERSION = 4 as const;
 
 export type SkillExecutionOutcome = "COMPLETED" | "INSUFFICIENT_EVIDENCE";
 
@@ -31,7 +34,7 @@ export interface AgentExecutionEvidencePack {
     riskLevel: SkillDefinition["riskLevel"];
   };
   authorization: {
-    status: "ALLOW";
+    status: RuntimeAuthorizationDecision["status"];
     policyVersion: string;
     effectivePermissions: string[];
     approvalRequired: boolean;
@@ -39,12 +42,25 @@ export interface AgentExecutionEvidencePack {
     approvalConsumedAt: string | null;
     level: RuntimeAuthorizationAllowed["level"];
     operationId: string | null;
+    actionType: string | null;
     inputHash: string | null;
   };
   outcome: SkillExecutionOutcome;
   evidence: AgentEvidence[];
   insufficientEvidence: boolean;
   createdAt: string;
+}
+
+interface AuthorizationEvidenceLike {
+  status: RuntimeAuthorizationDecision["status"];
+  policyVersion: string;
+  effectivePermissions: readonly string[];
+  approvalRequired: boolean;
+  approvalId: string | null;
+  approvalConsumedAt: string | null;
+  operationId: string | null;
+  actionType: string | null;
+  inputHash: string | null;
 }
 
 /**
@@ -57,32 +73,7 @@ export function validateExecutionAuthorizationForSkill(
   skill: SkillDefinition,
   options: { requireConsumedApproval?: boolean } = {}
 ): string[] {
-  const errors: string[] = [];
-  const trustedApprovalRequired = approvalRequiredBySkill(skill);
-
-  if (authorization.status !== "ALLOW") errors.push("authorization_not_allowed");
-  if (!authorization.policyVersion) errors.push("missing_policy_version");
-  if (authorization.approvalRequired !== trustedApprovalRequired) {
-    errors.push("approval_requirement_mismatch");
-  }
-  if (trustedApprovalRequired && !authorization.approvalId) {
-    errors.push("missing_approval_evidence");
-  }
-  if (trustedApprovalRequired && !authorization.operationId) {
-    errors.push("missing_approved_operation");
-  }
-  if (trustedApprovalRequired && !authorization.inputHash) {
-    errors.push("missing_approved_input_hash");
-  }
-  if (
-    trustedApprovalRequired &&
-    options.requireConsumedApproval &&
-    !authorization.approvalConsumedAt
-  ) {
-    errors.push("approval_not_consumed");
-  }
-
-  return errors;
+  return validateAuthorizationEvidence(authorization, skill, options);
 }
 
 export function assertExecutionAuthorizationForSkill(
@@ -128,7 +119,7 @@ export function buildAgentExecutionEvidencePack(input: {
       riskLevel: input.skill.riskLevel,
     },
     authorization: {
-      status: "ALLOW",
+      status: input.authorization.status,
       policyVersion: input.authorization.policyVersion,
       effectivePermissions: [...input.authorization.effectivePermissions],
       approvalRequired: input.authorization.approvalRequired,
@@ -136,6 +127,7 @@ export function buildAgentExecutionEvidencePack(input: {
       approvalConsumedAt: input.authorization.approvalConsumedAt,
       level: input.authorization.level,
       operationId: input.authorization.operationId,
+      actionType: input.authorization.actionType,
       inputHash: input.authorization.inputHash,
     },
     outcome: insufficientEvidence ? "INSUFFICIENT_EVIDENCE" : "COMPLETED",
@@ -163,23 +155,13 @@ export function validateAgentExecutionEvidencePack(
   }
   if (pack.skill.executionMode !== skill.executionMode) errors.push("skill_execution_mode_mismatch");
   if (pack.skill.riskLevel !== skill.riskLevel) errors.push("skill_risk_level_mismatch");
+
+  // Validate the authorization record exactly as persisted. Never coerce a recorded
+  // DENY/REQUIRE_APPROVAL decision into ALLOW during evidence-pack validation.
   errors.push(
-    ...validateExecutionAuthorizationForSkill(
-      {
-        allowed: true,
-        status: "ALLOW",
-        policyVersion: pack.authorization.policyVersion as RuntimeAuthorizationAllowed["policyVersion"],
-        effectivePermissions: pack.authorization.effectivePermissions,
-        approvalRequired: pack.authorization.approvalRequired,
-        approvalId: pack.authorization.approvalId,
-        approvalConsumedAt: pack.authorization.approvalConsumedAt,
-        level: pack.authorization.level,
-        operationId: pack.authorization.operationId,
-        inputHash: pack.authorization.inputHash,
-      },
-      skill,
-      { requireConsumedApproval: trustedApprovalRequired }
-    )
+    ...validateAuthorizationEvidence(pack.authorization, skill, {
+      requireConsumedApproval: trustedApprovalRequired,
+    })
   );
 
   if (pack.outcome === "COMPLETED") {
@@ -208,6 +190,68 @@ export function assertValidAgentExecutionEvidencePack(
   throw new AgentError("AGENT_GOVERNANCE_UNAVAILABLE", errors.join(","), 500);
 }
 
+function validateAuthorizationEvidence(
+  authorization: AuthorizationEvidenceLike,
+  skill: SkillDefinition,
+  options: { requireConsumedApproval?: boolean } = {}
+): string[] {
+  const errors: string[] = [];
+  const trustedApprovalRequired = approvalRequiredBySkill(skill);
+  const requiredModeCapability = modeCapabilityFor(skill.executionMode);
+
+  if (authorization.status !== "ALLOW") errors.push("authorization_not_allowed");
+  if (!authorization.policyVersion) errors.push("missing_policy_version");
+  if (!authorization.effectivePermissions.includes(requiredModeCapability)) {
+    errors.push(`missing_effective_mode_capability:${requiredModeCapability}`);
+  }
+  for (const required of skill.requiredPermissions) {
+    if (!authorization.effectivePermissions.includes(required)) {
+      errors.push(`missing_effective_permission:${required}`);
+    }
+  }
+  if (authorization.approvalRequired !== trustedApprovalRequired) {
+    errors.push("approval_requirement_mismatch");
+  }
+  if (trustedApprovalRequired && !authorization.approvalId) {
+    errors.push("missing_approval_evidence");
+  }
+  if (trustedApprovalRequired && !authorization.operationId) {
+    errors.push("missing_approved_operation");
+  }
+  if (trustedApprovalRequired && !authorization.actionType) {
+    errors.push("missing_approved_action_type");
+  }
+  if (trustedApprovalRequired && !authorization.inputHash) {
+    errors.push("missing_approved_input_hash");
+  }
+  if (
+    trustedApprovalRequired &&
+    options.requireConsumedApproval &&
+    !authorization.approvalConsumedAt
+  ) {
+    errors.push("approval_not_consumed");
+  }
+
+  return errors;
+}
+
 function approvalRequiredBySkill(skill: SkillDefinition): boolean {
   return skill.requiresApproval || skill.executionMode === "PREPARE" || skill.executionMode === "EXECUTE";
+}
+
+function modeCapabilityFor(mode: SkillExecutionMode): string {
+  switch (mode) {
+    case "READ":
+      return "mode:read";
+    case "SUGGEST":
+      return "mode:suggest";
+    case "PREPARE":
+      return "mode:prepare";
+    case "EXECUTE":
+      return "mode:execute";
+    default: {
+      const exhaustive: never = mode;
+      return exhaustive;
+    }
+  }
 }
