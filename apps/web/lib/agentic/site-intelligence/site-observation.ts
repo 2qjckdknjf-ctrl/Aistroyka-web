@@ -211,20 +211,52 @@ function normalizeWorkDate(value: string): string | null {
 }
 
 /**
- * Evidence timestamps must be real, stable provenance. Accept strict UTC RFC3339
- * timestamps only; callers with DB timestamptz values should canonicalize them first.
+ * Evidence timestamps must be real, stable provenance. Accept RFC3339 timestamps
+ * with either Z or an explicit numeric offset, validate calendar/time components,
+ * then canonicalize to UTC so retries produce identical evidence.
  */
 function normalizeCapturedAt(value?: string | null): string | null {
   if (typeof value !== "string") return null;
   const normalized = value.trim();
-  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/.test(normalized)) return null;
-  const parsed = new Date(normalized);
-  if (Number.isNaN(parsed.getTime())) return null;
+  const match = normalized.match(
+    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,3}))?(Z|([+-])(\d{2}):(\d{2}))$/
+  );
+  if (!match) return null;
 
-  const iso = parsed.toISOString();
-  const inputSecond = normalized.slice(0, 19);
-  if (iso.slice(0, 19) !== inputSecond) return null;
-  return iso;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const hour = Number(match[4]);
+  const minute = Number(match[5]);
+  const second = Number(match[6]);
+  const millisecond = Number((match[7] ?? "0").padEnd(3, "0"));
+
+  if (year < 1970 || year > 9999) return null;
+  if (month < 1 || month > 12) return null;
+  if (day < 1 || day > daysInMonth(year, month)) return null;
+  if (hour < 0 || hour > 23 || minute < 0 || minute > 59 || second < 0 || second > 59) return null;
+
+  let offsetMinutes = 0;
+  if (match[8] !== "Z") {
+    const offsetHour = Number(match[10]);
+    const offsetMinute = Number(match[11]);
+    if (offsetHour < 0 || offsetHour > 23 || offsetMinute < 0 || offsetMinute > 59) return null;
+    const sign = match[9] === "-" ? -1 : 1;
+    offsetMinutes = sign * (offsetHour * 60 + offsetMinute);
+  }
+
+  const localAsUtc = Date.UTC(year, month - 1, day, hour, minute, second, millisecond);
+  const utcMs = localAsUtc - offsetMinutes * 60_000;
+  const parsed = new Date(utcMs);
+  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+}
+
+function daysInMonth(year: number, month: number): number {
+  if (month === 2) {
+    const leap = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+    return leap ? 29 : 28;
+  }
+  return [4, 6, 9, 11].includes(month) ? 30 : 31;
 }
 
 function normalizePercent(value: number): number {
