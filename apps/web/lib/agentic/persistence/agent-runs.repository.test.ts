@@ -38,20 +38,22 @@ function chain(result: { data: unknown; error: unknown }) {
   return api;
 }
 
-function mutationChain(result: { error: unknown }) {
+function mutationChain(result: { data: unknown; error: unknown }) {
   const api: Record<string, unknown> = {};
   api.eq = () => api;
-  api.then = (
-    onFulfilled: (value: { error: unknown }) => unknown,
-    onRejected?: (reason: unknown) => unknown
-  ) => Promise.resolve(result).then(onFulfilled, onRejected);
+  api.select = () => api;
+  api.maybeSingle = async () => result;
   return api;
+}
+
+function successfulMutation() {
+  return mutationChain({ data: { id: "run-1" }, error: null });
 }
 
 function governancePack(): AgentExecutionEvidencePack {
   return {
     schemaVersion: EXECUTION_EVIDENCE_PACK_VERSION,
-    executionId: "execution-1",
+    executionId: "trace-1:inspect_project:1",
     requestId: "request-1",
     traceId: "trace-1",
     tenantId: "tenant-1",
@@ -70,6 +72,8 @@ function governancePack(): AgentExecutionEvidencePack {
       effectivePermissions: ["mode:read", "project:read"],
       approvalRequired: false,
       approvalId: null,
+      approvalApprovedBy: null,
+      approvalApprovedAt: null,
       approvalConsumedAt: null,
       approvalExpiresAt: null,
       level: "LEVEL_0_READ",
@@ -78,6 +82,7 @@ function governancePack(): AgentExecutionEvidencePack {
       inputHash: null,
     },
     outcome: "COMPLETED",
+    failureCode: null,
     evidence: [
       {
         evidenceId: "PHOTO:media-1",
@@ -112,13 +117,14 @@ describe("agent run persistence", () => {
             },
             update: (patch: unknown) => {
               updates.push(patch);
-              return mutationChain({ error: null });
+              return successfulMutation();
             },
           };
         }
         return { insert: async () => ({ error: null }) };
       },
     };
+
     await persistAgentRun(supabase as never, {
       runId: "run-1",
       context: ctx({ userId: "user-a" }),
@@ -130,11 +136,14 @@ describe("agent run persistence", () => {
       steps: [],
       proposed: [],
     });
+
     expect(inserted[0]).toMatchObject({ actor_user_id: "user-a", status: "EXECUTING", structured_result: null });
     expect(inserted[0]).not.toMatchObject({ actor_user_id: "user-b" });
     expect((inserted[0] as { request: { message: string } }).request.message).not.toContain("hunter2");
     expect((inserted[0] as { request: { message: string } }).request.message).toContain("[redacted");
-    expect(updates).toContainEqual(expect.objectContaining({ status: "COMPLETED", structured_result: { runId: "run-1", answer: "ok" } }));
+    expect(updates).toContainEqual(
+      expect.objectContaining({ status: "COMPLETED", structured_result: { runId: "run-1", answer: "ok" } })
+    );
   });
 
   it("persists a sanitized but re-validatable governance pack", async () => {
@@ -144,7 +153,7 @@ describe("agent run persistence", () => {
         if (table === "agent_runs") {
           return {
             insert: async () => ({ error: null }),
-            update: () => mutationChain({ error: null }),
+            update: () => successfulMutation(),
           };
         }
         if (table === "agent_run_steps") {
@@ -186,6 +195,7 @@ describe("agent run persistence", () => {
     expect(persisted.schemaVersion).toBe(EXECUTION_EVIDENCE_PACK_VERSION);
     expect(persisted.authorization.policyVersion).toBe(RUNTIME_AUTHZ_POLICY_VERSION);
     expect(persisted.authorization.actionType).toBeNull();
+    expect(persisted.failureCode).toBeNull();
     expect(persisted.evidence[0]).toMatchObject({
       evidenceId: "PHOTO:media-1",
       type: "PHOTO",
@@ -208,7 +218,7 @@ describe("agent run persistence", () => {
             insert: async () => ({ error: null }),
             update: (patch: Record<string, unknown>) => {
               updates.push(patch);
-              return mutationChain({ error: null });
+              return successfulMutation();
             },
           };
         }
@@ -253,6 +263,40 @@ describe("agent run persistence", () => {
         error_code: "AGENT_GOVERNANCE_STEP_PERSIST_FAILED",
       }),
     ]);
+  });
+
+  it("throws when finalization matches zero parent rows", async () => {
+    let updateCount = 0;
+    const supabase = {
+      from: (table: string) => {
+        if (table !== "agent_runs") return { insert: async () => ({ error: null }) };
+        return {
+          insert: async () => ({ error: null }),
+          update: () => {
+            updateCount += 1;
+            return mutationChain({ data: null, error: null });
+          },
+        };
+      },
+    };
+
+    await expect(
+      persistAgentRun(supabase as never, {
+        runId: "run-1",
+        context: ctx(),
+        status: "COMPLETED",
+        request: { message: "inspect" },
+        skillsCalled: [],
+        structuredResult: { answer: "must-not-return" },
+        latencyMs: 1,
+        proposed: [],
+        steps: [],
+      })
+    ).rejects.toMatchObject({
+      code: "AGENT_GOVERNANCE_UNAVAILABLE",
+      message: "agent_run_finalize_failed",
+    });
+    expect(updateCount).toBe(2); // finalization + best-effort failure marker
   });
 
   it("throws instead of presenting success when the parent run cannot be persisted", async () => {
