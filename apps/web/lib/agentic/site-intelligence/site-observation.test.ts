@@ -6,7 +6,7 @@ import {
 } from "./site-observation";
 
 describe("site observation normalization", () => {
-  it("normalizes image output without inventing physical location facts", () => {
+  it("normalizes image output with verified capture-time semantics", () => {
     const observation = normalizeImageSiteObservation(
       {
         stage: " finishing ",
@@ -22,9 +22,11 @@ describe("site observation normalization", () => {
       }
     );
 
-    expect(observation.schemaVersion).toBe(2);
+    expect(observation.schemaVersion).toBe(3);
     expect(observation.projectId).toBe("project-1");
     expect(observation.mediaId).toBe("media-1");
+    expect(observation.evidenceTime).toBe("2026-09-09T01:00:00.000Z");
+    expect(observation.evidenceTimeSemantics).toBe("CAPTURED_AT");
     expect(observation.stage).toBe("finishing");
     expect(observation.completionPercent).toBe(100);
     expect(observation.observations).toEqual([
@@ -38,9 +40,44 @@ describe("site observation normalization", () => {
       sourceEntityType: "media",
       sourceEntityId: "media-1",
       capturedAt: "2026-09-09T01:00:00.000Z",
+      metadata: {
+        timestampSemantics: "CAPTURED_AT",
+        captureTimeVerified: true,
+      },
     });
     expect(observation.insufficientEvidence).toBe(false);
     expect(isSiteObservationProjectionEligible(observation)).toBe(true);
+  });
+
+  it("uses legacy media upload time without pretending it is capture time", () => {
+    const observation = normalizeImageSiteObservation(
+      {
+        stage: "finishing",
+        completion_percent: 80,
+        risk_level: "medium",
+        detected_issues: ["Open edge"],
+        recommendations: [],
+      },
+      {
+        projectId: "project-1",
+        mediaId: "media-1",
+        uploadedAt: "2026-09-09T03:00:00+02:00",
+      }
+    );
+
+    expect(observation.evidenceTime).toBe("2026-09-09T01:00:00.000Z");
+    expect(observation.evidenceTimeSemantics).toBe("MEDIA_UPLOADED_AT");
+    expect(observation.limitations).toContain("CAPTURE_TIME_UNVERIFIED");
+    expect(observation.evidence[0]).toMatchObject({
+      type: "PHOTO",
+      capturedAt: "2026-09-09T01:00:00.000Z",
+      metadata: {
+        timestampSemantics: "MEDIA_UPLOADED_AT",
+        captureTimeVerified: false,
+      },
+    });
+    expect(observation.insufficientEvidence).toBe(false);
+    expect(isSiteObservationProjectionEligible(observation)).toBe(false);
   });
 
   it("keeps observed video signals separate from recommendations", () => {
@@ -93,13 +130,13 @@ describe("site observation normalization", () => {
     expect(observation.limitations).toEqual([
       "UNSCOPED_PROJECT",
       "MISSING_MEDIA_EVIDENCE",
-      "MISSING_CAPTURE_TIME",
+      "MISSING_EVIDENCE_TIME",
     ]);
     expect(observation.insufficientEvidence).toBe(true);
     expect(isSiteObservationProjectionEligible(observation)).toBe(false);
   });
 
-  it("does not fabricate capture time when media timestamp is missing", () => {
+  it("does not fabricate an evidence timestamp when both capture and upload time are missing", () => {
     const observation = normalizeImageSiteObservation(
       {
         stage: "finishing",
@@ -111,8 +148,10 @@ describe("site observation normalization", () => {
       { projectId: "project-1", mediaId: "media-1" }
     );
 
+    expect(observation.evidenceTime).toBeNull();
+    expect(observation.evidenceTimeSemantics).toBeNull();
     expect(observation.evidence).toEqual([]);
-    expect(observation.limitations).toContain("MISSING_CAPTURE_TIME");
+    expect(observation.limitations).toContain("MISSING_EVIDENCE_TIME");
     expect(observation.insufficientEvidence).toBe(true);
     expect(isSiteObservationProjectionEligible(observation)).toBe(false);
   });
