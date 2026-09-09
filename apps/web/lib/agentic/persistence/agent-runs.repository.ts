@@ -74,7 +74,8 @@ export async function persistAgentRun(supabase: SupabaseClient, input: PersistRu
         output: s.output,
         status: s.status,
         duration_ms: s.durationMs,
-        evidence_refs: buildPersistedEvidenceRefs(s.evidence, s.governanceEvidence ?? null),
+        evidence_refs: buildPersistedEvidenceRefs(s.evidence),
+        governance_evidence: s.governanceEvidence ?? null,
         error_code: s.errorCode ?? null,
       }))
     );
@@ -100,40 +101,13 @@ export async function persistAgentRun(supabase: SupabaseClient, input: PersistRu
   }
 }
 
-function buildPersistedEvidenceRefs(
-  evidence: AgentEvidence[],
-  governanceEvidence: AgentExecutionEvidencePack | null
-): Array<Record<string, unknown>> {
-  const refs: Array<Record<string, unknown>> = evidence.map((e) => ({
+function buildPersistedEvidenceRefs(evidence: AgentEvidence[]): Array<Record<string, unknown>> {
+  return evidence.map((e) => ({
     evidenceId: e.evidenceId,
     type: e.type,
     sourceEntityType: e.sourceEntityType,
     sourceEntityId: e.sourceEntityId,
   }));
-
-  if (governanceEvidence) {
-    refs.push({
-      evidenceId: `authz:${governanceEvidence.executionId}`,
-      type: "AUTHORIZATION",
-      sourceEntityType: "agent_execution",
-      sourceEntityId: governanceEvidence.executionId,
-      schemaVersion: governanceEvidence.schemaVersion,
-      skillId: governanceEvidence.skill.id,
-      skillVersion: governanceEvidence.skill.version,
-      executionMode: governanceEvidence.skill.executionMode,
-      policyVersion: governanceEvidence.authorization.policyVersion,
-      effectivePermissions: governanceEvidence.authorization.effectivePermissions,
-      approvalRequired: governanceEvidence.authorization.approvalRequired,
-      approvalId: governanceEvidence.authorization.approvalId,
-      approvalConsumedAt: governanceEvidence.authorization.approvalConsumedAt,
-      operationId: governanceEvidence.authorization.operationId,
-      inputHash: governanceEvidence.authorization.inputHash,
-      policyLevel: governanceEvidence.authorization.level,
-      outcome: governanceEvidence.outcome,
-    });
-  }
-
-  return refs;
 }
 
 export async function findRunByIdempotency(
