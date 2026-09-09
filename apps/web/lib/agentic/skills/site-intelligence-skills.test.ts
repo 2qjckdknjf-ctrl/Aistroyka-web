@@ -65,8 +65,8 @@ function persistedObservation(insufficientEvidence = false) {
           ? []
           : [
               {
-                evidenceId: "PHOTO:media-1",
-                type: "PHOTO",
+                evidenceId: "DATABASE_STATE:media-1",
+                type: "DATABASE_STATE",
                 sourceEntityType: "media",
                 sourceEntityId: "media-1",
                 sourceUrl: null,
@@ -102,10 +102,19 @@ describe("get_site_observations skill", () => {
     expect(result.insufficientEvidence).toBe(false);
     expect(result.evidence).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ type: "PHOTO", sourceEntityId: "media-1" }),
-        expect.objectContaining({ type: "DATABASE_STATE", sourceEntityId: "analysis-1" }),
+        expect.objectContaining({
+          type: "DATABASE_STATE",
+          sourceEntityType: "media",
+          sourceEntityId: "media-1",
+        }),
+        expect.objectContaining({
+          type: "DATABASE_STATE",
+          sourceEntityType: "ai_analysis",
+          sourceEntityId: "analysis-1",
+        }),
       ])
     );
+    expect(result.evidence.some((e) => e.type === "PHOTO" || e.type === "VIDEO")).toBe(false);
     expect(result.output).toMatchObject({
       count: 1,
       withheldForInsufficientProvenance: 0,
