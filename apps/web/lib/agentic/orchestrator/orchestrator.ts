@@ -108,7 +108,13 @@ export async function runProjectAgent(
       const { result, evidencePack } = await executeRegisteredSkill(registry, context, skillName, {});
       skillOutputs[skillName] = result.output;
       evidence.push(...result.evidence);
-      if (result.insufficientEvidence) insufficient = true;
+      if (
+        result.insufficientEvidence ||
+        evidencePack.insufficientEvidence ||
+        evidencePack.outcome === "INSUFFICIENT_EVIDENCE"
+      ) {
+        insufficient = true;
+      }
       steps.push({
         skill: skillName,
         input: {},
