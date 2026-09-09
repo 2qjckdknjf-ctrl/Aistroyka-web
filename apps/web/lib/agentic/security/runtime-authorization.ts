@@ -70,6 +70,7 @@ interface RuntimeAuthorizationBase {
   approvalRequired: boolean;
   approvalId: string | null;
   approvalConsumedAt: string | null;
+  approvalExpiresAt: string | null;
   level: PolicyLevel | null;
   operationId: string | null;
   actionType: string | null;
@@ -169,6 +170,7 @@ export function resolveRuntimeAuthorization(input: RuntimeAuthorizationInput): R
         approvalRequired: true,
         approvalId: null,
         approvalConsumedAt: null,
+        approvalExpiresAt: input.approval?.expiresAt?.trim() || null,
         level: base.level,
         operationId: input.operation?.operationId ?? null,
         actionType: input.operation?.actionType ?? null,
@@ -184,6 +186,7 @@ export function resolveRuntimeAuthorization(input: RuntimeAuthorizationInput): R
       approvalRequired: true,
       approvalId: input.approval?.approvalId ?? null,
       approvalConsumedAt: null,
+      approvalExpiresAt: input.approval?.expiresAt?.trim() || null,
       level: base.level,
       operationId: input.operation?.operationId ?? null,
       actionType: input.operation?.actionType ?? null,
@@ -199,6 +202,7 @@ export function resolveRuntimeAuthorization(input: RuntimeAuthorizationInput): R
     approvalRequired: false,
     approvalId: null,
     approvalConsumedAt: null,
+    approvalExpiresAt: null,
     level: base.level,
     operationId: input.operation?.operationId ?? null,
     actionType: input.operation?.actionType ?? null,
@@ -295,6 +299,7 @@ function deny(
     approvalRequired,
     approvalId: null,
     approvalConsumedAt: null,
+    approvalExpiresAt: null,
     level,
     operationId: operation?.operationId ?? null,
     actionType: operation?.actionType ?? null,
