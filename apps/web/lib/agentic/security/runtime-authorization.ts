@@ -72,6 +72,7 @@ interface RuntimeAuthorizationBase {
   approvalConsumedAt: string | null;
   level: PolicyLevel | null;
   operationId: string | null;
+  actionType: string | null;
   inputHash: string | null;
 }
 
@@ -170,6 +171,7 @@ export function resolveRuntimeAuthorization(input: RuntimeAuthorizationInput): R
         approvalConsumedAt: null,
         level: base.level,
         operationId: input.operation?.operationId ?? null,
+        actionType: input.operation?.actionType ?? null,
         inputHash: input.operation?.inputHash ?? null,
       };
     }
@@ -184,6 +186,7 @@ export function resolveRuntimeAuthorization(input: RuntimeAuthorizationInput): R
       approvalConsumedAt: null,
       level: base.level,
       operationId: input.operation?.operationId ?? null,
+      actionType: input.operation?.actionType ?? null,
       inputHash: input.operation?.inputHash ?? null,
     };
   }
@@ -198,6 +201,7 @@ export function resolveRuntimeAuthorization(input: RuntimeAuthorizationInput): R
     approvalConsumedAt: null,
     level: base.level,
     operationId: input.operation?.operationId ?? null,
+    actionType: input.operation?.actionType ?? null,
     inputHash: input.operation?.inputHash ?? null,
   };
 }
@@ -293,6 +297,7 @@ function deny(
     approvalConsumedAt: null,
     level,
     operationId: operation?.operationId ?? null,
+    actionType: operation?.actionType ?? null,
     inputHash: operation?.inputHash ?? null,
   };
 }
