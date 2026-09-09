@@ -105,7 +105,7 @@ export async function runProjectAgent(
     const skillStarted = Date.now();
     const requiredSkill = isRequiredSkill(intent, skillName);
     try {
-      const { result } = await executeRegisteredSkill(registry, context, skillName, {});
+      const { result, evidencePack } = await executeRegisteredSkill(registry, context, skillName, {});
       skillOutputs[skillName] = result.output;
       evidence.push(...result.evidence);
       if (result.insufficientEvidence) insufficient = true;
@@ -116,6 +116,7 @@ export async function runProjectAgent(
         status: "COMPLETED",
         durationMs: Date.now() - skillStarted,
         evidence: result.evidence,
+        governanceEvidence: evidencePack,
       });
       logAgentMetric("agentic.skill_executed", {
         skill: skillName,
