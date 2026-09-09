@@ -2,9 +2,13 @@ import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import type { AgentExecutionContext } from "../types";
 import type { SkillDefinition, SkillResult } from "../skills/skill.types";
-import type { RuntimeAuthorizationAllowed } from "../security/runtime-authorization";
+import {
+  RUNTIME_AUTHZ_POLICY_VERSION,
+  type RuntimeAuthorizationAllowed,
+} from "../security/runtime-authorization";
 import {
   buildAgentExecutionEvidencePack,
+  EXECUTION_EVIDENCE_PACK_VERSION,
   validateAgentExecutionEvidencePack,
   type AgentExecutionEvidencePack,
 } from "./execution-evidence-pack";
@@ -50,11 +54,14 @@ function authorization(overrides: Partial<RuntimeAuthorizationAllowed> = {}): Ru
   return {
     allowed: true,
     status: "ALLOW",
-    policyVersion: "agentic-runtime-authz-v1",
-    effectivePermissions: ["project:read"],
+    policyVersion: RUNTIME_AUTHZ_POLICY_VERSION,
+    effectivePermissions: ["mode:read", "project:read"],
     approvalRequired: false,
     approvalId: null,
+    approvalConsumedAt: null,
     level: "LEVEL_0_READ",
+    operationId: null,
+    inputHash: null,
     ...overrides,
   };
 }
@@ -81,15 +88,16 @@ describe("agent execution evidence pack", () => {
       createdAt: "2026-09-08T00:01:00.000Z",
     });
 
+    expect(pack.schemaVersion).toBe(EXECUTION_EVIDENCE_PACK_VERSION);
     expect(pack.outcome).toBe("COMPLETED");
-    expect(pack.authorization.policyVersion).toBe("agentic-runtime-authz-v1");
+    expect(pack.authorization.policyVersion).toBe(RUNTIME_AUTHZ_POLICY_VERSION);
     expect(pack.evidence).toHaveLength(1);
   });
 
   it("rejects a completed evidence-required execution without supporting evidence", () => {
     const definition = skill();
     const pack: AgentExecutionEvidencePack = {
-      schemaVersion: 1,
+      schemaVersion: EXECUTION_EVIDENCE_PACK_VERSION,
       executionId: "e1",
       requestId: "r1",
       traceId: "t1",
@@ -105,11 +113,14 @@ describe("agent execution evidence pack", () => {
       },
       authorization: {
         status: "ALLOW",
-        policyVersion: "agentic-runtime-authz-v1",
-        effectivePermissions: ["project:read"],
+        policyVersion: RUNTIME_AUTHZ_POLICY_VERSION,
+        effectivePermissions: ["mode:read", "project:read"],
         approvalRequired: false,
         approvalId: null,
+        approvalConsumedAt: null,
         level: "LEVEL_0_READ",
+        operationId: null,
+        inputHash: null,
       },
       outcome: "COMPLETED",
       evidence: [],
@@ -128,10 +139,59 @@ describe("agent execution evidence pack", () => {
       buildAgentExecutionEvidencePack({
         context: ctx(),
         skill: definition,
-        authorization: authorization({ approvalRequired: true, approvalId: null }),
+        authorization: authorization({
+          approvalRequired: true,
+          approvalId: null,
+          approvalConsumedAt: null,
+          operationId: "operation-1",
+          inputHash: "hash-1",
+        }),
         result,
       })
     ).toThrow();
+  });
+
+  it("rejects a governed completion when approval was not atomically consumed", () => {
+    const definition = skill(false);
+    const result: SkillResult = { output: {}, evidence: [], insufficientEvidence: false };
+
+    expect(() =>
+      buildAgentExecutionEvidencePack({
+        context: ctx(),
+        skill: definition,
+        authorization: authorization({
+          approvalRequired: true,
+          approvalId: "approval-1",
+          approvalConsumedAt: null,
+          operationId: "operation-1",
+          inputHash: "hash-1",
+        }),
+        result,
+      })
+    ).toThrow();
+  });
+
+  it("records the immutable approved operation and consumption timestamp", () => {
+    const definition = skill(false);
+    const result: SkillResult = { output: {}, evidence: [], insufficientEvidence: false };
+
+    const pack = buildAgentExecutionEvidencePack({
+      context: ctx(),
+      skill: definition,
+      authorization: authorization({
+        approvalRequired: true,
+        approvalId: "approval-1",
+        approvalConsumedAt: "2026-09-08T00:00:30.000Z",
+        operationId: "operation-1",
+        inputHash: "hash-1",
+      }),
+      result,
+    });
+
+    expect(pack.authorization.approvalId).toBe("approval-1");
+    expect(pack.authorization.approvalConsumedAt).toBe("2026-09-08T00:00:30.000Z");
+    expect(pack.authorization.operationId).toBe("operation-1");
+    expect(pack.authorization.inputHash).toBe("hash-1");
   });
 
   it("allows an explicit insufficient-evidence outcome without pretending success", () => {
