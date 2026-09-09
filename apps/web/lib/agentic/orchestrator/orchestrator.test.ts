@@ -111,10 +111,28 @@ describe("runProjectAgent", () => {
     expect(result.limitations.some((l) => l.includes("get_overdue_tasks"))).toBe(true);
     expect(result.confidence).toBe("low");
     expect(synthesizeAgentAnswer).toHaveBeenCalledWith(
-      expect.objectContaining({
-        failedRequiredSkills: expect.arrayContaining(["get_overdue_tasks"]),
-      })
+      expect.objectContaining({ failedRequiredSkills: expect.arrayContaining(["get_overdue_tasks"]) })
     );
+  });
+
+  it("keeps deterministic project health authoritative over a conflicting LLM value", async () => {
+    executeRegisteredSkill.mockImplementation(async (_r: unknown, _c: unknown, skill: string) => {
+      if (skill === "calculate_project_health") {
+        return okResult({ score: 55, band: "RED", reasons: ["Delay"], blockers: [], confidence: "high" });
+      }
+      return okResult({ items: [] });
+    });
+
+    const result = await runProjectAgent(
+      {} as never,
+      ctx(),
+      { message: "What is the project health?" },
+      { persistClient, recordUsage }
+    );
+
+    expect(synthesizeAgentAnswer).toHaveBeenCalled();
+    expect(result.health).toEqual({ score: 55, band: "RED" });
+    expect(result.health).not.toEqual({ score: 90, band: "GREEN" });
   });
 
   it("records usage once for a real provider call and not on replay", async () => {
