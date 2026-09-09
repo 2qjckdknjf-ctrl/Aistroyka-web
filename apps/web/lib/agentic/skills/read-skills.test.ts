@@ -34,7 +34,7 @@ function ctx(): AgentExecutionContext {
   };
 }
 
-function chain(result: { data: unknown; error: unknown }) {
+function chain(result: { data: unknown; error: unknown; count?: number | null }) {
   const api: Record<string, unknown> = {};
   const self = () => api;
   for (const k of ["select", "eq", "in", "lt", "order", "limit", "not", "gte"]) api[k] = self;
@@ -60,6 +60,31 @@ describe("read skills query errors", () => {
       message: "query_failed:get_overdue_tasks",
     });
     await expect(skill!.execute(ctx(), {})).rejects.toBeInstanceOf(AgentError);
+  });
+
+  it("reports the exact overdue total separately from the bounded page", async () => {
+    const rows = Array.from({ length: 20 }, (_, i) => ({
+      id: `t${i}`,
+      title: `Task ${i}`,
+      status: "in_progress",
+      due_date: "2026-09-01",
+      assigned_to: null,
+      priority: "medium",
+    }));
+    const supabase = {
+      from: (table: string) =>
+        table === "worker_tasks"
+          ? chain({ data: rows, error: null, count: 37 })
+          : chain({ data: [], error: null }),
+    };
+    const skill = createReadSkills(supabase as never).find((s) => s.definition.name === "get_overdue_tasks");
+    const result = await skill!.execute(ctx(), {});
+    expect(result.output).toMatchObject({
+      count: 37,
+      returnedCount: 20,
+      truncated: true,
+    });
+    expect((result.output as { items: unknown[] }).items).toHaveLength(20);
   });
 
   it("does not convert an issues query error into zero issues", async () => {
@@ -89,10 +114,7 @@ describe("read skills query errors", () => {
           });
         }
         if (table === "worker_reports") {
-          return chain({
-            data: [{ task_id: "t1" }],
-            error: null,
-          });
+          return chain({ data: [{ task_id: "t1" }], error: null });
         }
         return chain({ data: [], error: null });
       },
@@ -108,7 +130,10 @@ describe("read skills query errors", () => {
     const supabase = {
       from: (table: string) => {
         const api = chain({
-          data: table === "project_defects" ? [{ id: "d1", title: "Leak", status: "open", is_blocking: true, due_date: null }] : [],
+          data:
+            table === "project_defects"
+              ? [{ id: "d1", title: "Leak", status: "open", is_blocking: true, due_date: null }]
+              : [],
           error: null,
         });
         const origIn = api.in as () => unknown;
