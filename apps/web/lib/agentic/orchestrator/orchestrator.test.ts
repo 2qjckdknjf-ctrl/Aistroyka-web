@@ -61,10 +61,21 @@ function ctx(): AgentExecutionContext {
   };
 }
 
-function okResult(output: unknown): { definition: SkillDefinition; result: SkillResult } {
+function okResult(
+  output: unknown,
+  packInsufficient = false
+): {
+  definition: SkillDefinition;
+  result: SkillResult;
+  evidencePack: { insufficientEvidence: boolean; outcome: "COMPLETED" | "INSUFFICIENT_EVIDENCE" };
+} {
   return {
     definition: { name: "x" } as SkillDefinition,
     result: { output, evidence: [], insufficientEvidence: false },
+    evidencePack: {
+      insufficientEvidence: packInsufficient,
+      outcome: packInsufficient ? "INSUFFICIENT_EVIDENCE" : "COMPLETED",
+    },
   };
 }
 
@@ -114,6 +125,30 @@ describe("runProjectAgent", () => {
       expect.objectContaining({
         failedRequiredSkills: expect.arrayContaining(["get_overdue_tasks"]),
       })
+    );
+  });
+
+  it("propagates Evidence Pack insufficient outcome even when the raw skill result forgot the flag", async () => {
+    executeRegisteredSkill.mockResolvedValue(okResult({ ok: true }, true));
+
+    const result = await runProjectAgent(
+      {} as never,
+      ctx(),
+      { message: "overdue tasks" },
+      { persistClient, recordUsage }
+    );
+
+    expect(result.runStatus).toBe("INSUFFICIENT_EVIDENCE");
+    expect(result.confidence).toBe("low");
+    expect(result.limitations).toContain("INSUFFICIENT_EVIDENCE");
+    expect(synthesizeAgentAnswer).toHaveBeenCalledWith(
+      expect.objectContaining({
+        structuredContext: expect.objectContaining({ insufficientEvidence: true }),
+      })
+    );
+    expect(persistAgentRun).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ status: "INSUFFICIENT_EVIDENCE" })
     );
   });
 
