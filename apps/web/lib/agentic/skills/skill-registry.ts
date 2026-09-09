@@ -136,6 +136,8 @@ export type RuntimeApprovalClaimer = (
 export interface ExecuteRegisteredSkillOptions {
   /** Explicit capability grant for the agent runtime. Defaults to the Slice-01 read-only profile. */
   agentPermissions?: readonly string[];
+  /** Server-generated parent run identity. A unique fallback is generated for non-orchestrator callers. */
+  runId?: string;
   /** Approval evidence must come from a trusted approval store, never model output. */
   approval?: RuntimeApproval | null;
   /** Trusted immutable proposed-action identity. Required whenever approval is required. */
@@ -179,6 +181,7 @@ export async function executeRegisteredSkill(
   evidencePack: AgentExecutionEvidencePack;
 }> {
   const skill = registry.require(name);
+  const executionRunId = options.runId?.trim() || crypto.randomUUID();
 
   // Validate before hashing/authorization so approval is bound to the exact canonical
   // input the handler will execute, not raw or model-controlled request material.
@@ -219,6 +222,7 @@ export async function executeRegisteredSkill(
       },
       claimRequestedAt,
     });
+    const claimVerifiedAt = new Date().toISOString();
 
     if (!claim.claimed) {
       throw new AgentError(
@@ -234,7 +238,7 @@ export async function executeRegisteredSkill(
       throw new AgentError("AGENT_GOVERNANCE_UNAVAILABLE", "approval_claim_missing_timestamp", 500);
     }
 
-    assertApprovalConsumptionChronology(options.approval, consumedAt);
+    assertApprovalConsumptionChronology(options.approval, consumedAt, claimVerifiedAt);
     authorization = { ...authorization, approvalConsumedAt: new Date(consumedAtMs).toISOString() };
     assertExecutionAuthorizationForSkill(authorization, skill.definition, {
       requireConsumedApproval: true,
@@ -247,6 +251,7 @@ export async function executeRegisteredSkill(
   } catch (err) {
     const failureCode = isAgentError(err) ? err.code : "AGENT_SKILL_FAILED";
     const evidencePack = buildAgentExecutionFailureEvidencePack({
+      runId: executionRunId,
       context,
       skill: skill.definition,
       authorization,
@@ -256,6 +261,7 @@ export async function executeRegisteredSkill(
   }
 
   const evidencePack = buildAgentExecutionEvidencePack({
+    runId: executionRunId,
     context,
     skill: skill.definition,
     authorization,
@@ -299,14 +305,22 @@ function assertApprovalUnexpiredAt(
   }
 }
 
-function assertApprovalConsumptionChronology(approval: RuntimeApproval, consumedAt: string): void {
+function assertApprovalConsumptionChronology(
+  approval: RuntimeApproval,
+  consumedAt: string,
+  verifiedAt: string
+): void {
   const approvedAtMs = Date.parse(approval.approvedAt);
   const consumedAtMs = Date.parse(consumedAt);
-  if (!Number.isFinite(approvedAtMs) || !Number.isFinite(consumedAtMs)) {
+  const verifiedAtMs = Date.parse(verifiedAt);
+  if (!Number.isFinite(approvedAtMs) || !Number.isFinite(consumedAtMs) || !Number.isFinite(verifiedAtMs)) {
     throw new AgentError("AGENT_POLICY_DENIED", "approval_chronology_invalid", 403);
   }
   if (approvedAtMs > consumedAtMs) {
     throw new AgentError("AGENT_POLICY_DENIED", "approval_consumed_before_approval", 403);
+  }
+  if (consumedAtMs > verifiedAtMs) {
+    throw new AgentError("AGENT_POLICY_DENIED", "approval_consumed_in_future", 403);
   }
   assertApprovalUnexpiredAt(approval, consumedAt, "approval_expired_during_claim");
 }
