@@ -75,7 +75,9 @@ export async function persistAgentRun(supabase: SupabaseClient, input: PersistRu
         status: s.status,
         duration_ms: s.durationMs,
         evidence_refs: buildPersistedEvidenceRefs(s.evidence),
-        governance_evidence: s.governanceEvidence ?? null,
+        governance_evidence: s.governanceEvidence
+          ? sanitizeGovernanceEvidencePack(s.governanceEvidence)
+          : null,
         error_code: s.errorCode ?? null,
       }))
     );
@@ -108,6 +110,34 @@ function buildPersistedEvidenceRefs(evidence: AgentEvidence[]): Array<Record<str
     sourceEntityType: e.sourceEntityType,
     sourceEntityId: e.sourceEntityId,
   }));
+}
+
+/**
+ * Governance evidence is persisted as a re-validatable pack, but evidence locators
+ * and arbitrary metadata are intentionally stripped. Those fields may contain
+ * signed URLs, storage paths, provider data, or secrets and are not required by
+ * `validateAgentExecutionEvidencePack`.
+ */
+export function sanitizeGovernanceEvidencePack(
+  pack: AgentExecutionEvidencePack
+): AgentExecutionEvidencePack {
+  return {
+    ...pack,
+    authorization: {
+      ...pack.authorization,
+      effectivePermissions: [...pack.authorization.effectivePermissions],
+    },
+    evidence: pack.evidence.map((e) => ({
+      evidenceId: e.evidenceId,
+      type: e.type,
+      sourceEntityType: e.sourceEntityType,
+      sourceEntityId: e.sourceEntityId,
+      sourceUrl: null,
+      storageObject: null,
+      capturedAt: e.capturedAt,
+      metadata: {},
+    })),
+  };
 }
 
 export async function findRunByIdempotency(

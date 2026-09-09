@@ -36,8 +36,8 @@ function skill(
   };
 }
 
-function approvalSkill(): SkillDefinition {
-  return skill(false, {
+function approvalSkill(requiresEvidence = false): SkillDefinition {
+  return skill(requiresEvidence, {
     id: "apply_project_change",
     name: "apply_project_change",
     executionMode: "EXECUTE",
@@ -124,7 +124,7 @@ describe("agent execution evidence pack", () => {
     expect(pack.evidence).toHaveLength(1);
   });
 
-  it("rejects a completed evidence-required execution without supporting evidence", () => {
+  it("rejects a forged completed evidence-required pack without supporting evidence", () => {
     const definition = skill();
     const pack: AgentExecutionEvidencePack = {
       schemaVersion: EXECUTION_EVIDENCE_PACK_VERSION,
@@ -208,6 +208,19 @@ describe("agent execution evidence pack", () => {
     expect(pack.authorization.approvalConsumedAt).toBe("2026-09-08T00:00:30.000Z");
     expect(pack.authorization.operationId).toBe("operation-1");
     expect(pack.authorization.inputHash).toBe("hash-1");
+  });
+
+  it("degrades an approved evidence-required result to insufficient evidence instead of throwing post-execution", () => {
+    const pack = buildAgentExecutionEvidencePack({
+      context: ctx(),
+      skill: approvalSkill(true),
+      authorization: approvedAuthorization(),
+      result: { output: { mutationCommitted: true }, evidence: [], insufficientEvidence: false },
+    });
+
+    expect(pack.outcome).toBe("INSUFFICIENT_EVIDENCE");
+    expect(pack.insufficientEvidence).toBe(true);
+    expect(pack.evidence).toEqual([]);
   });
 
   it("rejects a pack that falsely declares approval unnecessary for an executable skill", () => {
