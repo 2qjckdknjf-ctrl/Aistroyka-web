@@ -316,6 +316,25 @@ export function resolveRunStatus(input: {
 }
 
 function toOrchestratorResponse(parsed: AgentPublicResponse): AgentOrchestratorResponse {
+  const replayEvidence: AgentEvidence[] = parsed.evidence.flatMap((e) => {
+    // Historical persisted responses may predate capturedAt in AgentEvidenceRefSchema.
+    // Never substitute replay wall-clock time: omit unverifiable refs instead.
+    if (!e.capturedAt) return [];
+    return [
+      {
+        evidenceId: e.evidenceId,
+        type: (e.type as AgentEvidence["type"]) ?? "DATABASE_STATE",
+        sourceEntityType: e.sourceEntityType ?? "unknown",
+        sourceEntityId: e.sourceEntityId ?? "",
+        sourceUrl: null,
+        storageObject: null,
+        capturedAt: e.capturedAt,
+        metadata: {},
+      },
+    ];
+  });
+  const droppedReplayEvidence = parsed.evidence.length - replayEvidence.length;
+
   return {
     schemaVersion: 1,
     runId: parsed.runId,
@@ -323,16 +342,7 @@ function toOrchestratorResponse(parsed: AgentPublicResponse): AgentOrchestratorR
     health: parsed.health,
     risks: parsed.risks,
     blockers: parsed.blockers,
-    evidence: parsed.evidence.map((e) => ({
-      evidenceId: e.evidenceId,
-      type: (e.type as AgentEvidence["type"]) ?? "DATABASE_STATE",
-      sourceEntityType: e.sourceEntityType ?? "unknown",
-      sourceEntityId: e.sourceEntityId ?? "",
-      sourceUrl: null,
-      storageObject: null,
-      capturedAt: new Date().toISOString(),
-      metadata: {},
-    })),
+    evidence: replayEvidence,
     proposedActions: parsed.proposedActions.map((p) => ({
       actionType: p.actionType,
       skillName: p.skillName ?? "suggest",
@@ -342,7 +352,12 @@ function toOrchestratorResponse(parsed: AgentPublicResponse): AgentOrchestratorR
       expectedEffect: p.expectedEffect ?? "",
       approvalRequired: p.approvalRequired ?? true,
     })),
-    limitations: parsed.limitations,
+    limitations: [
+      ...new Set([
+        ...parsed.limitations,
+        ...(droppedReplayEvidence > 0 ? ["IDEMPOTENCY_REPLAY_EVIDENCE_TIMESTAMP_UNAVAILABLE"] : []),
+      ]),
+    ],
     confidence: parsed.confidence,
     synthesisSource: parsed.synthesisSource ?? "deterministic",
     runStatus: parsed.runStatus ?? "COMPLETED",

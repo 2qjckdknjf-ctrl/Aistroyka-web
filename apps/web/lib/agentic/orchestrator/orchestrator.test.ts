@@ -145,6 +145,82 @@ describe("runProjectAgent", () => {
     expect(synthesizeAgentAnswer).toHaveBeenCalledTimes(1);
   });
 
+  it("replays the original evidence timestamp instead of using replay wall-clock time", async () => {
+    findRunByIdempotency.mockResolvedValueOnce({
+      id: "run-evidence",
+      status: "COMPLETED",
+      structured_result: {
+        schemaVersion: 1,
+        runId: "run-evidence",
+        answer: "cached",
+        risks: [],
+        blockers: [],
+        evidence: [
+          {
+            evidenceId: "PHOTO:media-1",
+            type: "PHOTO",
+            sourceEntityType: "media",
+            sourceEntityId: "media-1",
+            capturedAt: "2026-09-09T08:30:00.000Z",
+          },
+        ],
+        proposedActions: [],
+        limitations: [],
+        runStatus: "COMPLETED",
+        synthesisSource: "llm",
+      },
+    });
+
+    const replay = await runProjectAgent(
+      {} as never,
+      ctx(),
+      { message: "hello", idempotencyKey: "evidence" },
+      { persistClient, recordUsage }
+    );
+
+    expect(replay.evidence).toHaveLength(1);
+    expect(replay.evidence[0]?.capturedAt).toBe("2026-09-09T08:30:00.000Z");
+    expect(replay.limitations).not.toContain("IDEMPOTENCY_REPLAY_EVIDENCE_TIMESTAMP_UNAVAILABLE");
+    expect(executeRegisteredSkill).not.toHaveBeenCalled();
+  });
+
+  it("drops legacy replay evidence without a timestamp rather than fabricating one", async () => {
+    findRunByIdempotency.mockResolvedValueOnce({
+      id: "run-legacy",
+      status: "COMPLETED",
+      structured_result: {
+        schemaVersion: 1,
+        runId: "run-legacy",
+        answer: "cached legacy",
+        risks: [],
+        blockers: [],
+        evidence: [
+          {
+            evidenceId: "DATABASE_STATE:legacy",
+            type: "DATABASE_STATE",
+            sourceEntityType: "projects",
+            sourceEntityId: "project-a",
+          },
+        ],
+        proposedActions: [],
+        limitations: [],
+        runStatus: "COMPLETED",
+        synthesisSource: "llm",
+      },
+    });
+
+    const replay = await runProjectAgent(
+      {} as never,
+      ctx(),
+      { message: "hello", idempotencyKey: "legacy" },
+      { persistClient, recordUsage }
+    );
+
+    expect(replay.evidence).toEqual([]);
+    expect(replay.limitations).toContain("IDEMPOTENCY_REPLAY_EVIDENCE_TIMESTAMP_UNAVAILABLE");
+    expect(executeRegisteredSkill).not.toHaveBeenCalled();
+  });
+
   it("does not record usage for deterministic fallback without a provider call", async () => {
     executeRegisteredSkill.mockResolvedValue(okResult({ ok: true }));
     synthesizeAgentAnswer.mockResolvedValueOnce({
