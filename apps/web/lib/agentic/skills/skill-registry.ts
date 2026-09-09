@@ -14,7 +14,9 @@ import {
   resolveRuntimeAuthorization,
   type RuntimeApproval,
   type RuntimeAuthorizationAllowed,
+  type RuntimeOperationBinding,
 } from "../security/runtime-authorization";
+import { hashRuntimeSkillInput } from "../security/runtime-operation";
 import {
   buildAgentExecutionEvidencePack,
   type AgentExecutionEvidencePack,
@@ -108,6 +110,9 @@ export interface ExecuteRegisteredSkillOptions {
   agentPermissions?: readonly string[];
   /** Approval evidence must come from a trusted approval store, never model output. */
   approval?: RuntimeApproval | null;
+  /** Trusted immutable proposed-action identity. Required whenever approval is required. */
+  operationId?: string;
+  /** Trusted action type for policy + approval binding. Required whenever approval is required. */
   actionType?: string;
 }
 
@@ -124,15 +129,20 @@ export async function executeRegisteredSkill(
   evidencePack: AgentExecutionEvidencePack;
 }> {
   const skill = registry.require(name);
+
+  // Validate before hashing/authorization so approval is bound to the exact canonical
+  // input the handler will execute, not raw or model-controlled request material.
+  const parsed = skill.validateInput(input);
+  const operation = await buildRuntimeOperationBinding(skill.definition, parsed, options);
   const authorization = assertRuntimeAuthorized({
     skill: skill.definition,
     context,
     agentPermissions: options.agentPermissions ?? DEFAULT_PROJECT_AGENT_PERMISSIONS,
     approval: options.approval,
     actionType: options.actionType,
+    operation,
   });
 
-  const parsed = skill.validateInput(input);
   await skill.authorize(context);
   const result = await skill.execute(context, parsed);
   const evidencePack = buildAgentExecutionEvidencePack({
@@ -143,6 +153,24 @@ export async function executeRegisteredSkill(
   });
 
   return { definition: skill.definition, result, authorization, evidencePack };
+}
+
+async function buildRuntimeOperationBinding(
+  skill: SkillDefinition,
+  parsedInput: unknown,
+  options: ExecuteRegisteredSkillOptions
+): Promise<RuntimeOperationBinding | null> {
+  if (!options.operationId && !options.actionType) return null;
+  if (!options.operationId?.trim() || !options.actionType?.trim()) {
+    throw new AgentError("AGENT_POLICY_DENIED", "operation_binding_incomplete", 403);
+  }
+
+  return {
+    operationId: options.operationId.trim(),
+    actionType: options.actionType.trim(),
+    inputHash: await hashRuntimeSkillInput(parsedInput),
+    skillVersion: skill.version,
+  };
 }
 
 /**
