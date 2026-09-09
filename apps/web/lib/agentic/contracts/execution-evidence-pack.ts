@@ -10,7 +10,7 @@ import type { AgentExecutionContext } from "../types";
 import { hasSupportingEvidence, type AgentEvidence } from "./evidence.types";
 import type { RuntimeAuthorizationAllowed } from "../security/runtime-authorization";
 
-export const EXECUTION_EVIDENCE_PACK_VERSION = 2 as const;
+export const EXECUTION_EVIDENCE_PACK_VERSION = 3 as const;
 
 export type SkillExecutionOutcome = "COMPLETED" | "INSUFFICIENT_EVIDENCE";
 
@@ -35,6 +35,7 @@ export interface AgentExecutionEvidencePack {
     effectivePermissions: string[];
     approvalRequired: boolean;
     approvalId: string | null;
+    approvalConsumedAt: string | null;
     level: RuntimeAuthorizationAllowed["level"];
     operationId: string | null;
     inputHash: string | null;
@@ -73,6 +74,7 @@ export function buildAgentExecutionEvidencePack(input: {
       effectivePermissions: [...input.authorization.effectivePermissions],
       approvalRequired: input.authorization.approvalRequired,
       approvalId: input.authorization.approvalId,
+      approvalConsumedAt: input.authorization.approvalConsumedAt,
       level: input.authorization.level,
       operationId: input.authorization.operationId,
       inputHash: input.authorization.inputHash,
@@ -109,6 +111,9 @@ export function validateAgentExecutionEvidencePack(
   }
   if (pack.authorization.approvalRequired && !pack.authorization.inputHash) {
     errors.push("missing_approved_input_hash");
+  }
+  if (pack.authorization.approvalRequired && !pack.authorization.approvalConsumedAt) {
+    errors.push("approval_not_consumed");
   }
 
   if (pack.outcome === "COMPLETED") {
