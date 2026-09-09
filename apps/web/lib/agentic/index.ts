@@ -39,7 +39,9 @@ export {
 export type {
   SiteObservation,
   SiteObservationSignal,
+  SiteObservationSignalKind,
   SiteObservationSource,
+  SiteObservationTimeSemantics,
 } from "./site-intelligence/site-observation";
 export { listPersistedImageSiteObservations } from "./site-intelligence/site-observation.repository";
 export type { PersistedSiteObservation } from "./site-intelligence/site-observation.repository";
