@@ -15,6 +15,8 @@ import {
 } from "./execution-evidence-pack";
 import { toAgentEvidence } from "./evidence.types";
 
+const RUN_ID = "run-1";
+
 function skill(
   requiresEvidence = true,
   overrides: Partial<SkillDefinition> = {}
@@ -67,6 +69,10 @@ function ctx(overrides: Partial<AgentExecutionContext> = {}): AgentExecutionCont
   };
 }
 
+function trusted(overrides: Partial<AgentExecutionContext> = {}, runId = RUN_ID) {
+  return { ...ctx(overrides), runId };
+}
+
 function authorization(overrides: Partial<RuntimeAuthorizationAllowed> = {}): RuntimeAuthorizationAllowed {
   return {
     allowed: true,
@@ -110,7 +116,8 @@ function completedReadPack(): AgentExecutionEvidencePack {
   const definition = skill();
   return {
     schemaVersion: EXECUTION_EVIDENCE_PACK_VERSION,
-    executionId: "trace-1:inspect_project:1",
+    runId: RUN_ID,
+    executionId: `${RUN_ID}:inspect_project:1`,
     requestId: "request-1",
     traceId: "trace-1",
     tenantId: "tenant-1",
@@ -153,7 +160,7 @@ function completedReadPack(): AgentExecutionEvidencePack {
 }
 
 function validate(pack: AgentExecutionEvidencePack, definition: SkillDefinition = skill()): string[] {
-  return validateAgentExecutionEvidencePack(pack, definition, ctx());
+  return validateAgentExecutionEvidencePack(pack, definition, trusted());
 }
 
 describe("agent execution evidence pack", () => {
@@ -171,6 +178,7 @@ describe("agent execution evidence pack", () => {
     };
 
     const pack = buildAgentExecutionEvidencePack({
+      runId: RUN_ID,
       context: ctx(),
       skill: skill(),
       authorization: authorization(),
@@ -179,6 +187,8 @@ describe("agent execution evidence pack", () => {
     });
 
     expect(pack.schemaVersion).toBe(EXECUTION_EVIDENCE_PACK_VERSION);
+    expect(pack.runId).toBe(RUN_ID);
+    expect(pack.executionId).toBe(`${RUN_ID}:inspect_project:1`);
     expect(pack.outcome).toBe("COMPLETED");
     expect(pack.failureCode).toBeNull();
     expect(pack.authorization.policyVersion).toBe(RUNTIME_AUTHZ_POLICY_VERSION);
@@ -187,16 +197,20 @@ describe("agent execution evidence pack", () => {
 
   it("rejects a copied pack from another tenant/project/user or run context", () => {
     const pack = completedReadPack();
-    const wrongContext = ctx({
-      tenantId: "tenant-2",
-      projectId: "project-2",
-      userId: "user-2",
-      requestId: "request-2",
-      traceId: "trace-2",
-    });
+    const wrongContext = trusted(
+      {
+        tenantId: "tenant-2",
+        projectId: "project-2",
+        userId: "user-2",
+        requestId: "request-2",
+        traceId: "trace-2",
+      },
+      "run-2"
+    );
     const errors = validateAgentExecutionEvidencePack(pack, skill(), wrongContext);
     expect(errors).toEqual(
       expect.arrayContaining([
+        "run_id_mismatch",
         "execution_id_mismatch",
         "request_id_mismatch",
         "trace_id_mismatch",
@@ -205,6 +219,15 @@ describe("agent execution evidence pack", () => {
         "user_scope_mismatch",
       ])
     );
+  });
+
+  it("rejects a copied pack between runs even when client request and trace IDs repeat", () => {
+    const pack = completedReadPack();
+    const errors = validateAgentExecutionEvidencePack(pack, skill(), trusted({}, "run-2"));
+    expect(errors).toContain("run_id_mismatch");
+    expect(errors).toContain("execution_id_mismatch");
+    expect(errors).not.toContain("request_id_mismatch");
+    expect(errors).not.toContain("trace_id_mismatch");
   });
 
   it("rejects a forged completed evidence-required pack without supporting evidence", () => {
@@ -246,6 +269,7 @@ describe("agent execution evidence pack", () => {
     const result: SkillResult = { output: {}, evidence: [], insufficientEvidence: false };
     expect(() =>
       buildAgentExecutionEvidencePack({
+        runId: RUN_ID,
         context: ctx(),
         skill: definition,
         authorization: approvedAuthorization({
@@ -262,6 +286,7 @@ describe("agent execution evidence pack", () => {
   it("records human approver, full chronology and immutable operation binding", () => {
     const definition = approvalSkill();
     const pack = buildAgentExecutionEvidencePack({
+      runId: RUN_ID,
       context: ctx(),
       skill: definition,
       authorization: approvedAuthorization(),
@@ -284,6 +309,7 @@ describe("agent execution evidence pack", () => {
   it("rejects invalid persisted approval chronology", () => {
     const definition = approvalSkill();
     const valid = buildAgentExecutionEvidencePack({
+      runId: RUN_ID,
       context: ctx(),
       skill: definition,
       authorization: approvedAuthorization(),
@@ -296,7 +322,7 @@ describe("agent execution evidence pack", () => {
       authorization: { ...valid.authorization, approvalConsumedAt: "2026-09-08T01:00:00.000Z" },
       createdAt: "2026-09-08T01:00:01.000Z",
     };
-    expect(validateAgentExecutionEvidencePack(afterExpiry, definition, ctx())).toContain(
+    expect(validateAgentExecutionEvidencePack(afterExpiry, definition, trusted())).toContain(
       "approval_consumed_at_or_after_expiry"
     );
 
@@ -304,7 +330,7 @@ describe("agent execution evidence pack", () => {
       ...valid,
       authorization: { ...valid.authorization, approvalApprovedAt: "2026-09-08T00:00:31.000Z" },
     };
-    expect(validateAgentExecutionEvidencePack(approvedAfterConsumed, definition, ctx())).toContain(
+    expect(validateAgentExecutionEvidencePack(approvedAfterConsumed, definition, trusted())).toContain(
       "approval_after_consumption"
     );
   });
@@ -312,6 +338,7 @@ describe("agent execution evidence pack", () => {
   it("rejects malformed persisted approval timestamps", () => {
     const definition = approvalSkill();
     const valid = buildAgentExecutionEvidencePack({
+      runId: RUN_ID,
       context: ctx(),
       skill: definition,
       authorization: approvedAuthorization(),
@@ -320,32 +347,37 @@ describe("agent execution evidence pack", () => {
     });
 
     const badExpiry = { ...valid, authorization: { ...valid.authorization, approvalExpiresAt: "bad" } };
-    expect(validateAgentExecutionEvidencePack(badExpiry, definition, ctx())).toContain("approval_expiry_invalid");
+    expect(validateAgentExecutionEvidencePack(badExpiry, definition, trusted())).toContain("approval_expiry_invalid");
 
     const badApproved = { ...valid, authorization: { ...valid.authorization, approvalApprovedAt: "bad" } };
-    expect(validateAgentExecutionEvidencePack(badApproved, definition, ctx())).toContain("approval_approved_at_invalid");
+    expect(validateAgentExecutionEvidencePack(badApproved, definition, trusted())).toContain("approval_approved_at_invalid");
   });
 
-  it("rejects restricted action types case-insensitively", () => {
+  it("rejects restricted action types across case and separator variants", () => {
     const definition = approvalSkill();
     const valid = buildAgentExecutionEvidencePack({
+      runId: RUN_ID,
       context: ctx(),
       skill: definition,
       authorization: approvedAuthorization(),
       result: { output: {}, evidence: [], insufficientEvidence: false },
       createdAt: "2026-09-08T00:00:45.000Z",
     });
-    const forged = {
-      ...valid,
-      authorization: { ...valid.authorization, actionType: " PaYmEnT " },
-    };
-    expect(validateAgentExecutionEvidencePack(forged, definition, ctx())).toContain(
-      "restricted_approved_action_type:payment"
-    );
+
+    for (const variant of [" PaYmEnT ", "project:delete", "project-delete", "PROJECT DELETE"]) {
+      const forged = {
+        ...valid,
+        authorization: { ...valid.authorization, actionType: variant },
+      };
+      expect(validateAgentExecutionEvidencePack(forged, definition, trusted())).toContain(
+        `restricted_approved_action_type:${variant.toLowerCase().includes("payment") ? "payment" : "project_delete"}`
+      );
+    }
   });
 
   it("degrades missing required evidence after execution instead of throwing", () => {
     const pack = buildAgentExecutionEvidencePack({
+      runId: RUN_ID,
       context: ctx(),
       skill: approvalSkill(true),
       authorization: approvedAuthorization(),
@@ -359,6 +391,7 @@ describe("agent execution evidence pack", () => {
   it("builds a re-validatable governed FAILED pack for a handler error", () => {
     const definition = approvalSkill();
     const pack = buildAgentExecutionFailureEvidencePack({
+      runId: RUN_ID,
       context: ctx(),
       skill: definition,
       authorization: approvedAuthorization(),
@@ -368,12 +401,13 @@ describe("agent execution evidence pack", () => {
     expect(pack.outcome).toBe("FAILED");
     expect(pack.failureCode).toBe("AGENT_SKILL_FAILED");
     expect(pack.authorization.approvalConsumedAt).toBe("2026-09-08T00:00:30.000Z");
-    expect(validateAgentExecutionEvidencePack(pack, definition, ctx())).toEqual([]);
+    expect(validateAgentExecutionEvidencePack(pack, definition, trusted())).toEqual([]);
   });
 
   it("rejects a pack that falsely declares approval unnecessary", () => {
     const definition = approvalSkill();
     const valid = buildAgentExecutionEvidencePack({
+      runId: RUN_ID,
       context: ctx(),
       skill: definition,
       authorization: approvedAuthorization(),
@@ -395,7 +429,7 @@ describe("agent execution evidence pack", () => {
         inputHash: null,
       },
     };
-    const errors = validateAgentExecutionEvidencePack(forged, definition, ctx());
+    const errors = validateAgentExecutionEvidencePack(forged, definition, trusted());
     expect(errors).toEqual(
       expect.arrayContaining([
         "approval_requirement_mismatch",
@@ -412,6 +446,7 @@ describe("agent execution evidence pack", () => {
 
   it("allows an explicit insufficient-evidence outcome without pretending success", () => {
     const pack = buildAgentExecutionEvidencePack({
+      runId: RUN_ID,
       context: ctx(),
       skill: skill(),
       authorization: authorization(),
