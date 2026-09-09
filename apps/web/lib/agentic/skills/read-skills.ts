@@ -259,9 +259,9 @@ export function createReadSkills(supabase: SupabaseClient): AgentSkill[] {
 
     readSkill(baseDef("get_overdue_tasks", "Overdue worker tasks (bounded)"), async (ctx) => {
       const today = new Date().toISOString().slice(0, 10);
-      const { data, error } = await supabase
+      const { data, error, count } = await supabase
         .from("worker_tasks")
-        .select("id, title, status, due_date, assigned_to, priority")
+        .select("id, title, status, due_date, assigned_to, priority", { count: "exact" })
         .eq("tenant_id", ctx.tenantId)
         .eq("project_id", ctx.projectId)
         .in("status", ["pending", "in_progress"])
@@ -277,9 +277,12 @@ export function createReadSkills(supabase: SupabaseClient): AgentSkill[] {
         assigned_to: string | null;
         priority: string | null;
       }>;
+      const totalCount = count ?? rows.length;
       return {
         output: {
-          count: rows.length,
+          count: totalCount,
+          returnedCount: rows.length,
+          truncated: totalCount > rows.length,
           items: rows.map((t) => ({
             id: t.id,
             title: t.title,
