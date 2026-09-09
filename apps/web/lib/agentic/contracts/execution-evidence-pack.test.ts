@@ -270,6 +270,24 @@ describe("agent execution evidence pack", () => {
     expect(validateAgentExecutionEvidencePack(forged, definition)).toContain("missing_approved_action_type");
   });
 
+  it("rejects an impossible stored authorization for a restricted action type", () => {
+    const definition = approvalSkill();
+    const valid = buildAgentExecutionEvidencePack({
+      context: ctx(),
+      skill: definition,
+      authorization: approvedAuthorization(),
+      result: { output: {}, evidence: [], insufficientEvidence: false },
+    });
+    const forged: AgentExecutionEvidencePack = {
+      ...valid,
+      authorization: { ...valid.authorization, actionType: " payment " },
+    };
+
+    expect(validateAgentExecutionEvidencePack(forged, definition)).toContain(
+      "restricted_approved_action_type:payment"
+    );
+  });
+
   it("degrades an approved evidence-required result to insufficient evidence instead of throwing post-execution", () => {
     const pack = buildAgentExecutionEvidencePack({
       context: ctx(),
