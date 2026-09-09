@@ -60,6 +60,23 @@ function fakeSkill(
   };
 }
 
+function approval(inputHash: string, overrides: Record<string, unknown> = {}) {
+  return {
+    approvalId: "approval-1",
+    tenantId: "t1",
+    projectId: "p1",
+    skillName: "prepare_change",
+    operationId: "operation-1",
+    actionType: "update_project",
+    inputHash,
+    skillVersion: "1",
+    status: "APPROVED" as const,
+    approvedBy: "owner-1",
+    approvedAt: "2026-09-09T00:00:00.000Z",
+    ...overrides,
+  };
+}
+
 describe("SkillRegistry", () => {
   it("rejects unknown skills", () => {
     const registry = new SkillRegistry([fakeSkill("get_open_issues")]);
@@ -134,19 +151,7 @@ describe("SkillRegistry", () => {
         agentPermissions: ["mode:execute", "project:read"],
         operationId: "operation-1",
         actionType: "update_project",
-        approval: {
-          approvalId: "approval-1",
-          tenantId: "t1",
-          projectId: "p1",
-          skillName: "prepare_change",
-          operationId: "operation-1",
-          actionType: "update_project",
-          inputHash,
-          skillVersion: "1",
-          status: "APPROVED",
-          approvedBy: "owner-1",
-          approvedAt: "2026-09-09T00:00:00.000Z",
-        },
+        approval: approval(inputHash),
       })
     ).rejects.toMatchObject({ code: "AGENT_POLICY_DENIED", message: "approval_atomic_claim_required" });
 
@@ -171,19 +176,7 @@ describe("SkillRegistry", () => {
         agentPermissions: ["mode:execute", "project:read"],
         operationId: "operation-1",
         actionType: "update_project",
-        approval: {
-          approvalId: "approval-1",
-          tenantId: "t1",
-          projectId: "p1",
-          skillName: "prepare_change",
-          operationId: "operation-1",
-          actionType: "update_project",
-          inputHash,
-          skillVersion: "1",
-          status: "APPROVED",
-          approvedBy: "owner-1",
-          approvedAt: "2026-09-09T00:00:00.000Z",
-        },
+        approval: approval(inputHash),
         claimApproval,
       })
     ).rejects.toMatchObject({ code: "AGENT_POLICY_DENIED", message: "approval_already_consumed" });
@@ -217,26 +210,53 @@ describe("SkillRegistry", () => {
         agentPermissions: ["mode:execute", "project:read"],
         operationId: "operation-1",
         actionType: "update_project",
-        approval: {
-          approvalId: "approval-1",
-          tenantId: "t1",
-          projectId: "p1",
-          skillName: "prepare_change",
-          operationId: "operation-1",
-          actionType: "update_project",
-          inputHash,
-          skillVersion: "1",
-          status: "APPROVED",
-          approvedBy: "owner-1",
-          approvedAt: "2026-09-09T00:00:00.000Z",
-        },
+        approval: approval(inputHash),
         claimApproval,
       }
     );
 
     expect(claimApproval).toHaveBeenCalledTimes(1);
+    expect(claimApproval).toHaveBeenCalledWith(
+      expect.objectContaining({
+        claimRequestedAt: expect.any(String),
+        operation: expect.objectContaining({ actionType: "update_project" }),
+      })
+    );
     expect(execute).toHaveBeenCalledTimes(1);
     expect(executed.authorization.approvalConsumedAt).toBe("2026-09-09T00:01:00.000Z");
     expect(executed.evidencePack.authorization.approvalConsumedAt).toBe("2026-09-09T00:01:00.000Z");
+  });
+
+  it("never invokes the handler when atomic consumption proves the approval expired", async () => {
+    const execute = vi.fn(async () => ({ output: { ok: true }, evidence: [], insufficientEvidence: false }));
+    const governed = fakeSkill(
+      "prepare_change",
+      false,
+      ["project:read"],
+      { executionMode: "EXECUTE", requiresApproval: true },
+      execute
+    );
+    const registry = new SkillRegistry([governed]);
+    const inputHash = await hashRuntimeSkillInput({});
+    const claimApproval = vi.fn().mockResolvedValue({
+      claimed: true,
+      consumedAt: "2100-01-01T00:00:00.000Z",
+    });
+
+    await expect(
+      executeRegisteredSkill(registry, ctx(["manager"], ["read"]), "prepare_change", {}, {
+        agentPermissions: ["mode:execute", "project:read"],
+        operationId: "operation-1",
+        actionType: "update_project",
+        approval: approval(inputHash, { expiresAt: "2099-12-31T23:59:59.000Z" }),
+        claimApproval,
+      })
+    ).rejects.toMatchObject({
+      code: "AGENT_POLICY_DENIED",
+      message: "approval_expired_during_claim",
+    });
+
+    expect(claimApproval).toHaveBeenCalledTimes(1);
+    expect(execute).not.toHaveBeenCalled();
   });
 });
