@@ -168,20 +168,27 @@ function buildMediaEvidence(
   evidenceTime: ResolvedEvidenceTime | null
 ): AgentEvidence[] {
   if (!projectId || !mediaId || !evidenceTime) return [];
+
+  const isVerifiedCapture = evidenceTime.semantics === "CAPTURED_AT";
   return [
     toAgentEvidence({
-      type: source === "IMAGE_ANALYSIS" ? "PHOTO" : "VIDEO",
+      // Never put a legacy upload timestamp into PHOTO/VIDEO capture evidence. For
+      // unverified legacy rows, persist only the fact that the media row existed at
+      // its upload timestamp; the SiteObservation carries the explicit semantics.
+      type: isVerifiedCapture
+        ? source === "IMAGE_ANALYSIS"
+          ? "PHOTO"
+          : "VIDEO"
+        : "DATABASE_STATE",
       sourceEntityType: "media",
       sourceEntityId: mediaId,
-      // AgentEvidence historically names this field `capturedAt`. For legacy rows we
-      // preserve the only durable media timestamp but explicitly label its semantics.
       capturedAt: evidenceTime.value,
       metadata: {
         projectId,
         siteObservationSource: source,
         modelDerived: true,
         timestampSemantics: evidenceTime.semantics,
-        captureTimeVerified: evidenceTime.semantics === "CAPTURED_AT",
+        captureTimeVerified: isVerifiedCapture,
       },
     }),
   ];
