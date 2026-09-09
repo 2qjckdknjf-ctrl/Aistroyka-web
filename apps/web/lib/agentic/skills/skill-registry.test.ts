@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import { executeRegisteredSkill, SkillRegistry, selectSkillsFromAllowlist } from "./skill-registry";
+import {
+  executeRegisteredSkill,
+  isGovernedSkillExecutionError,
+  SkillRegistry,
+  selectSkillsFromAllowlist,
+} from "./skill-registry";
 import { AgentError } from "../errors";
 import type { AgentSkill, SkillDefinition } from "./skill.types";
 import type { AgentExecutionContext } from "../types";
@@ -77,6 +82,16 @@ function approval(inputHash: string, overrides: Record<string, unknown> = {}) {
   };
 }
 
+function governedSkill(execute = vi.fn(async () => ({ output: { ok: true }, evidence: [], insufficientEvidence: false }))) {
+  return fakeSkill(
+    "prepare_change",
+    false,
+    ["project:read"],
+    { executionMode: "EXECUTE", riskLevel: "HIGH", requiresApproval: true },
+    execute
+  );
+}
+
 describe("SkillRegistry", () => {
   it("rejects unknown skills", () => {
     const registry = new SkillRegistry([fakeSkill("get_open_issues")]);
@@ -113,7 +128,6 @@ describe("SkillRegistry", () => {
 
   it("denies execution when the user permission is missing", async () => {
     const registry = new SkillRegistry([fakeSkill("get_project_state", false, ["project:read"])]);
-
     await expect(executeRegisteredSkill(registry, ctx(["manager"], []), "get_project_state", {})).rejects.toMatchObject({
       code: "AGENT_UNAUTHORIZED",
     });
@@ -121,13 +135,7 @@ describe("SkillRegistry", () => {
 
   it("returns authorization trace and evidence pack for a governed execution", async () => {
     const registry = new SkillRegistry([fakeSkill("get_project_state", false, ["project:read"])]);
-
-    const executed = await executeRegisteredSkill(
-      registry,
-      ctx(["manager"], ["read"]),
-      "get_project_state",
-      {}
-    );
+    const executed = await executeRegisteredSkill(registry, ctx(["manager"], ["read"]), "get_project_state", {});
 
     expect(executed.authorization.status).toBe("ALLOW");
     expect(executed.evidencePack.authorization.policyVersion).toBe(RUNTIME_AUTHZ_POLICY_VERSION);
@@ -136,14 +144,7 @@ describe("SkillRegistry", () => {
 
   it("never invokes an approval-gated handler without an atomic claim", async () => {
     const execute = vi.fn(async () => ({ output: { ok: true }, evidence: [], insufficientEvidence: false }));
-    const governed = fakeSkill(
-      "prepare_change",
-      false,
-      ["project:read"],
-      { executionMode: "EXECUTE", requiresApproval: true },
-      execute
-    );
-    const registry = new SkillRegistry([governed]);
+    const registry = new SkillRegistry([governedSkill(execute)]);
     const inputHash = await hashRuntimeSkillInput({});
 
     await expect(
@@ -154,20 +155,12 @@ describe("SkillRegistry", () => {
         approval: approval(inputHash),
       })
     ).rejects.toMatchObject({ code: "AGENT_POLICY_DENIED", message: "approval_atomic_claim_required" });
-
     expect(execute).not.toHaveBeenCalled();
   });
 
   it("denies replay when the atomic claim reports an already-consumed approval", async () => {
     const execute = vi.fn(async () => ({ output: { ok: true }, evidence: [], insufficientEvidence: false }));
-    const governed = fakeSkill(
-      "prepare_change",
-      false,
-      ["project:read"],
-      { executionMode: "EXECUTE", requiresApproval: true },
-      execute
-    );
-    const registry = new SkillRegistry([governed]);
+    const registry = new SkillRegistry([governedSkill(execute)]);
     const inputHash = await hashRuntimeSkillInput({});
     const claimApproval = vi.fn().mockResolvedValue({ claimed: false, reason: "approval_already_consumed" });
 
@@ -185,21 +178,11 @@ describe("SkillRegistry", () => {
     expect(execute).not.toHaveBeenCalled();
   });
 
-  it("records consumed approval before invoking an approval-gated handler", async () => {
+  it("records the human approval chronology before invoking the handler", async () => {
     const execute = vi.fn(async () => ({ output: { ok: true }, evidence: [], insufficientEvidence: false }));
-    const governed = fakeSkill(
-      "prepare_change",
-      false,
-      ["project:read"],
-      { executionMode: "EXECUTE", requiresApproval: true },
-      execute
-    );
-    const registry = new SkillRegistry([governed]);
+    const registry = new SkillRegistry([governedSkill(execute)]);
     const inputHash = await hashRuntimeSkillInput({});
-    const claimApproval = vi.fn().mockResolvedValue({
-      claimed: true,
-      consumedAt: "2026-09-09T00:01:00.000Z",
-    });
+    const claimApproval = vi.fn().mockResolvedValue({ claimed: true, consumedAt: "2026-09-09T00:01:00.000Z" });
 
     const executed = await executeRegisteredSkill(
       registry,
@@ -209,13 +192,12 @@ describe("SkillRegistry", () => {
       {
         agentPermissions: ["mode:execute", "project:read"],
         operationId: "operation-1",
-        actionType: "update_project",
-        approval: approval(inputHash),
+        actionType: "Update_Project",
+        approval: approval(inputHash, { actionType: "UPDATE_PROJECT" }),
         claimApproval,
       }
     );
 
-    expect(claimApproval).toHaveBeenCalledTimes(1);
     expect(claimApproval).toHaveBeenCalledWith(
       expect.objectContaining({
         claimRequestedAt: expect.any(String),
@@ -223,25 +205,38 @@ describe("SkillRegistry", () => {
       })
     );
     expect(execute).toHaveBeenCalledTimes(1);
-    expect(executed.authorization.approvalConsumedAt).toBe("2026-09-09T00:01:00.000Z");
+    expect(executed.authorization).toMatchObject({
+      approvalApprovedBy: "owner-1",
+      approvalApprovedAt: "2026-09-09T00:00:00.000Z",
+      approvalConsumedAt: "2026-09-09T00:01:00.000Z",
+      actionType: "update_project",
+    });
     expect(executed.evidencePack.authorization.approvalConsumedAt).toBe("2026-09-09T00:01:00.000Z");
+  });
+
+  it("never invokes the handler when atomic consumption precedes approval", async () => {
+    const execute = vi.fn(async () => ({ output: { ok: true }, evidence: [], insufficientEvidence: false }));
+    const registry = new SkillRegistry([governedSkill(execute)]);
+    const inputHash = await hashRuntimeSkillInput({});
+    const claimApproval = vi.fn().mockResolvedValue({ claimed: true, consumedAt: "2026-09-08T23:59:59.000Z" });
+
+    await expect(
+      executeRegisteredSkill(registry, ctx(["manager"], ["read"]), "prepare_change", {}, {
+        agentPermissions: ["mode:execute", "project:read"],
+        operationId: "operation-1",
+        actionType: "update_project",
+        approval: approval(inputHash),
+        claimApproval,
+      })
+    ).rejects.toMatchObject({ code: "AGENT_POLICY_DENIED", message: "approval_consumed_before_approval" });
+    expect(execute).not.toHaveBeenCalled();
   });
 
   it("never invokes the handler when atomic consumption proves the approval expired", async () => {
     const execute = vi.fn(async () => ({ output: { ok: true }, evidence: [], insufficientEvidence: false }));
-    const governed = fakeSkill(
-      "prepare_change",
-      false,
-      ["project:read"],
-      { executionMode: "EXECUTE", requiresApproval: true },
-      execute
-    );
-    const registry = new SkillRegistry([governed]);
+    const registry = new SkillRegistry([governedSkill(execute)]);
     const inputHash = await hashRuntimeSkillInput({});
-    const claimApproval = vi.fn().mockResolvedValue({
-      claimed: true,
-      consumedAt: "2100-01-01T00:00:00.000Z",
-    });
+    const claimApproval = vi.fn().mockResolvedValue({ claimed: true, consumedAt: "2100-01-01T00:00:00.000Z" });
 
     await expect(
       executeRegisteredSkill(registry, ctx(["manager"], ["read"]), "prepare_change", {}, {
@@ -251,12 +246,47 @@ describe("SkillRegistry", () => {
         approval: approval(inputHash, { expiresAt: "2099-12-31T23:59:59.000Z" }),
         claimApproval,
       })
-    ).rejects.toMatchObject({
-      code: "AGENT_POLICY_DENIED",
-      message: "approval_expired_during_claim",
-    });
-
-    expect(claimApproval).toHaveBeenCalledTimes(1);
+    ).rejects.toMatchObject({ code: "AGENT_POLICY_DENIED", message: "approval_expired_during_claim" });
     expect(execute).not.toHaveBeenCalled();
+  });
+
+  it("preserves consumed governance evidence when an approval-gated handler throws", async () => {
+    const execute = vi.fn(async () => {
+      throw new AgentError("AGENT_SKILL_FAILED", "partial_mutation_failed", 503);
+    });
+    const registry = new SkillRegistry([governedSkill(execute)]);
+    const inputHash = await hashRuntimeSkillInput({});
+    const claimApproval = vi.fn().mockResolvedValue({ claimed: true, consumedAt: "2026-09-09T00:01:00.000Z" });
+
+    let caught: unknown;
+    try {
+      await executeRegisteredSkill(registry, ctx(["manager"], ["read"]), "prepare_change", {}, {
+        agentPermissions: ["mode:execute", "project:read"],
+        operationId: "operation-1",
+        actionType: "update_project",
+        approval: approval(inputHash),
+        claimApproval,
+      });
+    } catch (err) {
+      caught = err;
+    }
+
+    expect(isGovernedSkillExecutionError(caught)).toBe(true);
+    if (!isGovernedSkillExecutionError(caught)) throw new Error("expected governed failure");
+    expect(caught.originalError).toMatchObject({ code: "AGENT_SKILL_FAILED" });
+    expect(caught.evidencePack).toMatchObject({
+      outcome: "FAILED",
+      failureCode: "AGENT_SKILL_FAILED",
+      authorization: {
+        approvalId: "approval-1",
+        approvalApprovedBy: "owner-1",
+        approvalApprovedAt: "2026-09-09T00:00:00.000Z",
+        approvalConsumedAt: "2026-09-09T00:01:00.000Z",
+        operationId: "operation-1",
+        actionType: "update_project",
+        inputHash,
+      },
+    });
+    expect(execute).toHaveBeenCalledTimes(1);
   });
 });
