@@ -5,6 +5,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AgentExecutionContext, AgentRunStatus, SkillRiskLevel } from "../types";
 import type { AgentEvidence } from "../contracts/evidence.types";
+import type { AgentExecutionEvidencePack } from "../contracts/execution-evidence-pack";
 import type { ProposedAgentAction } from "../envelope/action-envelope";
 import { logAgentMetric } from "../observability/metrics";
 
@@ -29,6 +30,7 @@ export interface PersistRunInput {
     status: "COMPLETED" | "FAILED" | "DENIED" | "SKIPPED";
     durationMs: number;
     evidence: AgentEvidence[];
+    governanceEvidence?: AgentExecutionEvidencePack | null;
     errorCode?: string;
   }>;
   proposed: Array<ProposedAgentAction & { riskLevel: SkillRiskLevel }>;
@@ -72,12 +74,7 @@ export async function persistAgentRun(supabase: SupabaseClient, input: PersistRu
         output: s.output,
         status: s.status,
         duration_ms: s.durationMs,
-        evidence_refs: s.evidence.map((e) => ({
-          evidenceId: e.evidenceId,
-          type: e.type,
-          sourceEntityType: e.sourceEntityType,
-          sourceEntityId: e.sourceEntityId,
-        })),
+        evidence_refs: buildPersistedEvidenceRefs(s.evidence, s.governanceEvidence ?? null),
         error_code: s.errorCode ?? null,
       }))
     );
@@ -101,6 +98,42 @@ export async function persistAgentRun(supabase: SupabaseClient, input: PersistRu
       }))
     );
   }
+}
+
+function buildPersistedEvidenceRefs(
+  evidence: AgentEvidence[],
+  governanceEvidence: AgentExecutionEvidencePack | null
+): Array<Record<string, unknown>> {
+  const refs: Array<Record<string, unknown>> = evidence.map((e) => ({
+    evidenceId: e.evidenceId,
+    type: e.type,
+    sourceEntityType: e.sourceEntityType,
+    sourceEntityId: e.sourceEntityId,
+  }));
+
+  if (governanceEvidence) {
+    refs.push({
+      evidenceId: `authz:${governanceEvidence.executionId}`,
+      type: "AUTHORIZATION",
+      sourceEntityType: "agent_execution",
+      sourceEntityId: governanceEvidence.executionId,
+      schemaVersion: governanceEvidence.schemaVersion,
+      skillId: governanceEvidence.skill.id,
+      skillVersion: governanceEvidence.skill.version,
+      executionMode: governanceEvidence.skill.executionMode,
+      policyVersion: governanceEvidence.authorization.policyVersion,
+      effectivePermissions: governanceEvidence.authorization.effectivePermissions,
+      approvalRequired: governanceEvidence.authorization.approvalRequired,
+      approvalId: governanceEvidence.authorization.approvalId,
+      approvalConsumedAt: governanceEvidence.authorization.approvalConsumedAt,
+      operationId: governanceEvidence.authorization.operationId,
+      inputHash: governanceEvidence.authorization.inputHash,
+      policyLevel: governanceEvidence.authorization.level,
+      outcome: governanceEvidence.outcome,
+    });
+  }
+
+  return refs;
 }
 
 export async function findRunByIdempotency(
