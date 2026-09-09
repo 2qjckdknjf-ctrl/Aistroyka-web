@@ -154,7 +154,7 @@ function buildMediaEvidence(
   if (!projectId || !mediaId) return [];
   return [
     toAgentEvidence({
-      type: "VIDEO",
+      type: source === "IMAGE_ANALYSIS" ? "PHOTO" : "VIDEO",
       sourceEntityType: "media",
       sourceEntityId: mediaId,
       capturedAt,
