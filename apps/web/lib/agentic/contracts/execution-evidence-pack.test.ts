@@ -76,6 +76,7 @@ function authorization(overrides: Partial<RuntimeAuthorizationAllowed> = {}): Ru
     approvalConsumedAt: null,
     level: "LEVEL_0_READ",
     operationId: null,
+    actionType: null,
     inputHash: null,
     ...overrides,
   };
@@ -91,9 +92,52 @@ function approvedAuthorization(
     approvalConsumedAt: "2026-09-08T00:00:30.000Z",
     level: "LEVEL_3_EXECUTE_AFTER_APPROVAL",
     operationId: "operation-1",
+    actionType: "update_project",
     inputHash: "hash-1",
     ...overrides,
   });
+}
+
+function completedReadPack(): AgentExecutionEvidencePack {
+  const definition = skill();
+  return {
+    schemaVersion: EXECUTION_EVIDENCE_PACK_VERSION,
+    executionId: "e1",
+    requestId: "r1",
+    traceId: "t1",
+    tenantId: "tenant-1",
+    projectId: "project-1",
+    userId: "user-1",
+    skill: {
+      id: definition.id,
+      name: definition.name,
+      version: definition.version,
+      executionMode: definition.executionMode,
+      riskLevel: definition.riskLevel,
+    },
+    authorization: {
+      status: "ALLOW",
+      policyVersion: RUNTIME_AUTHZ_POLICY_VERSION,
+      effectivePermissions: ["mode:read", "project:read"],
+      approvalRequired: false,
+      approvalId: null,
+      approvalConsumedAt: null,
+      level: "LEVEL_0_READ",
+      operationId: null,
+      actionType: null,
+      inputHash: null,
+    },
+    outcome: "COMPLETED",
+    evidence: [
+      toAgentEvidence({
+        type: "DATABASE_STATE",
+        sourceEntityType: "projects",
+        sourceEntityId: "project-1",
+      }),
+    ],
+    insufficientEvidence: false,
+    createdAt: "2026-09-08T00:01:00.000Z",
+  };
 }
 
 describe("agent execution evidence pack", () => {
@@ -126,39 +170,38 @@ describe("agent execution evidence pack", () => {
 
   it("rejects a forged completed evidence-required pack without supporting evidence", () => {
     const definition = skill();
-    const pack: AgentExecutionEvidencePack = {
-      schemaVersion: EXECUTION_EVIDENCE_PACK_VERSION,
-      executionId: "e1",
-      requestId: "r1",
-      traceId: "t1",
-      tenantId: "tenant-1",
-      projectId: "project-1",
-      userId: "user-1",
-      skill: {
-        id: definition.id,
-        name: definition.name,
-        version: definition.version,
-        executionMode: definition.executionMode,
-        riskLevel: definition.riskLevel,
-      },
-      authorization: {
-        status: "ALLOW",
-        policyVersion: RUNTIME_AUTHZ_POLICY_VERSION,
-        effectivePermissions: ["mode:read", "project:read"],
-        approvalRequired: false,
-        approvalId: null,
-        approvalConsumedAt: null,
-        level: "LEVEL_0_READ",
-        operationId: null,
-        inputHash: null,
-      },
-      outcome: "COMPLETED",
-      evidence: [],
-      insufficientEvidence: false,
-      createdAt: "2026-09-08T00:01:00.000Z",
-    };
+    const pack = completedReadPack();
+    pack.evidence = [];
 
     expect(validateAgentExecutionEvidencePack(pack, definition)).toContain("missing_supporting_evidence");
+  });
+
+  it("rejects a persisted pack whose actual authorization decision is not ALLOW", () => {
+    const definition = skill();
+    const forged = completedReadPack();
+    forged.authorization.status = "DENY";
+
+    expect(validateAgentExecutionEvidencePack(forged, definition)).toContain("authorization_not_allowed");
+  });
+
+  it("rejects a persisted pack missing the skill execution-mode capability", () => {
+    const definition = skill();
+    const forged = completedReadPack();
+    forged.authorization.effectivePermissions = ["project:read"];
+
+    expect(validateAgentExecutionEvidencePack(forged, definition)).toContain(
+      "missing_effective_mode_capability:mode:read"
+    );
+  });
+
+  it("rejects a persisted pack missing a trusted skill domain permission", () => {
+    const definition = skill();
+    const forged = completedReadPack();
+    forged.authorization.effectivePermissions = ["mode:read"];
+
+    expect(validateAgentExecutionEvidencePack(forged, definition)).toContain(
+      "missing_effective_permission:project:read"
+    );
   });
 
   it("rejects a governed completion when approval was required but not evidenced", () => {
@@ -192,7 +235,7 @@ describe("agent execution evidence pack", () => {
     ).toThrow();
   });
 
-  it("records the immutable approved operation and consumption timestamp", () => {
+  it("records immutable approved operation, action type, input hash and consumption timestamp", () => {
     const definition = approvalSkill();
     const result: SkillResult = { output: {}, evidence: [], insufficientEvidence: false };
 
@@ -207,7 +250,24 @@ describe("agent execution evidence pack", () => {
     expect(pack.authorization.approvalId).toBe("approval-1");
     expect(pack.authorization.approvalConsumedAt).toBe("2026-09-08T00:00:30.000Z");
     expect(pack.authorization.operationId).toBe("operation-1");
+    expect(pack.authorization.actionType).toBe("update_project");
     expect(pack.authorization.inputHash).toBe("hash-1");
+  });
+
+  it("rejects an approval-gated pack that omits the approved action type", () => {
+    const definition = approvalSkill();
+    const valid = buildAgentExecutionEvidencePack({
+      context: ctx(),
+      skill: definition,
+      authorization: approvedAuthorization(),
+      result: { output: {}, evidence: [], insufficientEvidence: false },
+    });
+    const forged: AgentExecutionEvidencePack = {
+      ...valid,
+      authorization: { ...valid.authorization, actionType: null },
+    };
+
+    expect(validateAgentExecutionEvidencePack(forged, definition)).toContain("missing_approved_action_type");
   });
 
   it("degrades an approved evidence-required result to insufficient evidence instead of throwing post-execution", () => {
@@ -239,6 +299,7 @@ describe("agent execution evidence pack", () => {
         approvalId: null,
         approvalConsumedAt: null,
         operationId: null,
+        actionType: null,
         inputHash: null,
       },
     };
@@ -247,6 +308,7 @@ describe("agent execution evidence pack", () => {
     expect(errors).toContain("approval_requirement_mismatch");
     expect(errors).toContain("missing_approval_evidence");
     expect(errors).toContain("missing_approved_operation");
+    expect(errors).toContain("missing_approved_action_type");
     expect(errors).toContain("missing_approved_input_hash");
     expect(errors).toContain("approval_not_consumed");
   });
