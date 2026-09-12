@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { findRunByIdempotency, persistAgentRun, redactSensitiveText } from "./agent-runs.repository";
+import {
+  findRunByIdempotency,
+  persistAgentRun,
+  redactSensitiveText,
+  sanitizePersistedValue,
+} from "./agent-runs.repository";
 import { AgentError } from "../errors";
 import type { AgentExecutionContext } from "../types";
 
@@ -30,6 +35,18 @@ function chain(result: { data: unknown; error: unknown }) {
   return api;
 }
 
+function mutationChain(result: { data: unknown; error: unknown }) {
+  const api: Record<string, unknown> = {};
+  api.eq = () => api;
+  api.select = () => api;
+  api.maybeSingle = async () => result;
+  return api;
+}
+
+function successfulMutation(runId = "run-1") {
+  return mutationChain({ data: { id: runId }, error: null });
+}
+
 function replayRow(createdAt: string) {
   return {
     id: "run-a",
@@ -43,21 +60,27 @@ function replayRow(createdAt: string) {
 }
 
 describe("agent run persistence", () => {
-  it("binds actor_user_id from trusted context and redacts prompt secrets", async () => {
+  it("stages the parent and only finalizes after children are durable", async () => {
     const inserted: unknown[] = [];
+    const updates: unknown[] = [];
     const supabase = {
       from: (table: string) => {
         if (table === "agent_runs") {
           return {
-            insert: (row: unknown) => {
+            insert: async (row: unknown) => {
               inserted.push(row);
-              return Promise.resolve({ error: null });
+              return { error: null };
+            },
+            update: (patch: unknown) => {
+              updates.push(patch);
+              return successfulMutation();
             },
           };
         }
         return { insert: async () => ({ error: null }) };
       },
     };
+
     await persistAgentRun(supabase as never, {
       runId: "run-1",
       context: ctx({ userId: "user-a" }),
@@ -69,10 +92,20 @@ describe("agent run persistence", () => {
       steps: [],
       proposed: [],
     });
-    expect(inserted[0]).toMatchObject({ actor_user_id: "user-a" });
-    expect(inserted[0]).not.toMatchObject({ actor_user_id: "user-b" });
+
+    expect(inserted[0]).toMatchObject({
+      actor_user_id: "user-a",
+      status: "EXECUTING",
+      structured_result: null,
+      completed_at: null,
+    });
     expect((inserted[0] as { request: { message: string } }).request.message).not.toContain("hunter2");
-    expect((inserted[0] as { request: { message: string } }).request.message).toContain("[redacted");
+    expect(updates).toContainEqual(
+      expect.objectContaining({
+        status: "COMPLETED",
+        structured_result: { runId: "run-1", answer: "ok" },
+      })
+    );
   });
 
   it("fails the request when the parent run cannot be persisted", async () => {
@@ -97,10 +130,19 @@ describe("agent run persistence", () => {
     });
   });
 
-  it("fails closed when step persistence fails", async () => {
+  it("marks the staged parent failed when child persistence fails", async () => {
+    const updates: Array<Record<string, unknown>> = [];
     const supabase = {
       from: (table: string) => {
-        if (table === "agent_runs") return { insert: async () => ({ error: null }) };
+        if (table === "agent_runs") {
+          return {
+            insert: async () => ({ error: null }),
+            update: (patch: Record<string, unknown>) => {
+              updates.push(patch);
+              return successfulMutation();
+            },
+          };
+        }
         if (table === "agent_run_steps") return { insert: async () => ({ error: { message: "step failure" } }) };
         return { insert: async () => ({ error: null }) };
       },
@@ -127,6 +169,87 @@ describe("agent run persistence", () => {
         proposed: [],
       })
     ).rejects.toBeInstanceOf(AgentError);
+
+    expect(updates).toContainEqual(
+      expect.objectContaining({
+        status: "FAILED",
+        structured_result: null,
+        error_code: "AGENT_GOVERNANCE_PERSISTENCE_FAILED",
+      })
+    );
+  });
+
+  it("fails when scoped finalization updates no parent row", async () => {
+    let updates = 0;
+    const supabase = {
+      from: (table: string) => {
+        if (table !== "agent_runs") return { insert: async () => ({ error: null }) };
+        return {
+          insert: async () => ({ error: null }),
+          update: () => {
+            updates += 1;
+            return mutationChain({ data: null, error: null });
+          },
+        };
+      },
+    };
+
+    await expect(
+      persistAgentRun(supabase as never, {
+        runId: "run-1",
+        context: ctx(),
+        status: "COMPLETED",
+        request: {},
+        skillsCalled: [],
+        structuredResult: { answer: "must-not-return" },
+        latencyMs: 1,
+        steps: [],
+        proposed: [],
+      })
+    ).rejects.toMatchObject({ message: "agent_run_finalize_failed" });
+    expect(updates).toBe(2);
+  });
+
+  it("removes only an expired matching idempotency row before inserting a replacement", async () => {
+    const calls: string[] = [];
+    const deleteApi: Record<string, unknown> = {};
+    for (const method of ["eq", "lt"]) {
+      deleteApi[method] = () => {
+        calls.push(method);
+        return deleteApi;
+      };
+    }
+    Object.assign(deleteApi, { error: null });
+    deleteApi.then = (resolve: (value: unknown) => unknown) => Promise.resolve({ error: null }).then(resolve);
+
+    const supabase = {
+      from: (table: string) => {
+        if (table === "agent_runs") {
+          return {
+            delete: () => deleteApi,
+            insert: async () => ({ error: null }),
+            update: () => successfulMutation(),
+          };
+        }
+        return { insert: async () => ({ error: null }) };
+      },
+    };
+
+    await persistAgentRun(supabase as never, {
+      runId: "run-1",
+      context: ctx(),
+      status: "COMPLETED",
+      request: {},
+      skillsCalled: [],
+      structuredResult: { answer: "fresh" },
+      latencyMs: 1,
+      idempotencyKey: "same-key",
+      now: new Date("2026-09-09T12:00:00.000Z"),
+      steps: [],
+      proposed: [],
+    });
+    expect(calls.filter((call) => call === "eq")).toHaveLength(4);
+    expect(calls).toContain("lt");
   });
 
   it("does not replay a run from another project even if the row leaks", async () => {
@@ -196,9 +319,37 @@ describe("agent run persistence", () => {
       })
     ).resolves.toBeNull();
   });
+
+  it("never replays staged or failed parents", async () => {
+    const now = new Date("2026-09-09T12:00:00.000Z");
+    for (const status of ["EXECUTING", "FAILED"]) {
+      const client = {
+        from: () => chain({ data: { ...replayRow("2026-09-09T11:00:00.000Z"), status }, error: null }),
+      };
+      await expect(
+        findRunByIdempotency(client as never, {
+          tenantId: "tenant-1",
+          projectId: "project-a",
+          userId: "user-a",
+          idempotencyKey: "abc",
+          now,
+        })
+      ).resolves.toBeNull();
+    }
+  });
 });
 
-describe("redactSensitiveText", () => {
+describe("persistence redaction", () => {
+  it("redacts nested provider echoes and secret-shaped fields", () => {
+    const sanitized = sanitizePersistedValue({
+      summary: "password=hunter2",
+      nested: { access_token: "secret", url: "https://x.example/a?X-Amz-Signature=abc" },
+    });
+    expect(JSON.stringify(sanitized)).not.toContain("hunter2");
+    expect(JSON.stringify(sanitized)).not.toContain("X-Amz-Signature");
+    expect(JSON.stringify(sanitized)).not.toContain('"secret"');
+  });
+
   it("redacts secrets and signed URLs from persisted prompt text", () => {
     expect(redactSensitiveText("password=hunter2 and sk-abcdefghijklmnopqrstuvwxyz")).toContain("[redacted");
     expect(redactSensitiveText("https://x.example/file?token=abc")).toBe("[redacted-url]");
