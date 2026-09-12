@@ -13,7 +13,7 @@ import { getOrCreateRequestId, addRequestIdToResponse } from "@/lib/observabilit
 import { checkLiteAllowList } from "@/lib/api/lite-allow-list";
 import { IDEMPOTENCY_HEADER, getCachedResponse, storeResponse } from "@/lib/platform/idempotency/idempotency.service";
 import { gateTenantAiRequest } from "@/lib/copilot/copilot-ai-gate";
-import { recordUsage, checkBudgetAlert } from "@/lib/platform/ai-usage/ai-usage.service";
+import { recordUsageAtomic, checkBudgetAlert } from "@/lib/platform/ai-usage/ai-usage.service";
 import { estimateCostUsd } from "@/lib/platform/ai-usage/cost-estimator";
 import { isAgenticFoundationEnabled } from "@/lib/agentic/feature-flag";
 import { buildAgentExecutionContext } from "@/lib/agentic/context";
@@ -141,7 +141,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
         persistClient: admin,
         recordUsage: async (usage) => {
           const costUsd = estimateCostUsd(usage.model, usage.promptTokens, usage.completionTokens);
-          await recordUsage(admin, {
+          await recordUsageAtomic(admin, {
             tenant_id: tenantCtx.tenantId,
             user_id: tenantCtx.userId,
             trace_id: requestId,
