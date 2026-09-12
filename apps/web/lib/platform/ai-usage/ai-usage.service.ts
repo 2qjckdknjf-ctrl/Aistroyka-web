@@ -54,21 +54,37 @@ export async function checkBudgetAlert(
 }
 
 /**
- * Persist usage after an AI request. Tenant-scoped usage is committed through one
- * transactional RPC with the spent_usd increment so the two records cannot diverge.
+ * Legacy/shared usage path used by existing product surfaces. It deliberately remains
+ * migration-independent in this agent foundation PR so Stage-0 code cannot introduce
+ * a new RPC requirement into Copilot/transcribe/vision before the migration owner gate.
  */
 export async function recordUsage(
   supabase: SupabaseClient,
   record: AiUsageRecord
 ): Promise<void> {
-  if (record.tenant_id) {
-    await repo.recordUsageAndSpendAtomic(supabase, {
-      ...record,
-      tenant_id: record.tenant_id,
-    });
+  await repo.insertUsage(supabase, record);
+  if (record.tenant_id && record.cost_usd > 0) {
+    await repo.addSpent(supabase, record.tenant_id, record.cost_usd);
+  }
+}
+
+/**
+ * Governed agent usage path. Usage row + tenant spend increment commit in one database
+ * transaction through a service-role-only RPC. Call only after the additive migration
+ * has been applied for the Agentic Foundation rollout.
+ */
+export async function recordUsageAtomic(
+  supabase: SupabaseClient,
+  record: AiUsageRecord
+): Promise<void> {
+  if (!record.tenant_id) {
+    await repo.insertUsage(supabase, record);
     return;
   }
-  await repo.insertUsage(supabase, record);
+  await repo.recordUsageAndSpendAtomic(supabase, {
+    ...record,
+    tenant_id: record.tenant_id,
+  });
 }
 
 /** Estimate cost for vision request (no token count until response). Use rough default. */
