@@ -203,10 +203,10 @@ export function createReadSkills(supabase: SupabaseClient): AgentSkill[] {
     }),
 
     readSkill(baseDef("get_open_issues", "Open punch-list defects and field issues"), async (ctx) => {
-      const [defectsRes, issuesRes] = await Promise.all([
+      const [defectsRes, issuesRes, blockingDefectsRes] = await Promise.all([
         supabase
           .from("project_defects")
-          .select("id, title, status, is_blocking, due_date")
+          .select("id, title, status, is_blocking, due_date", { count: "exact" })
           .eq("project_id", ctx.projectId)
           .eq("tenant_id", ctx.tenantId)
           .in("status", OPEN_DEFECT_STATUSES)
@@ -214,15 +214,23 @@ export function createReadSkills(supabase: SupabaseClient): AgentSkill[] {
           .limit(SKILL_LIMIT),
         supabase
           .from("project_issues")
-          .select("id, title, status")
+          .select("id, title, status", { count: "exact" })
           .eq("project_id", ctx.projectId)
           .eq("tenant_id", ctx.tenantId)
           .eq("status", "open")
           .order("created_at", { ascending: false })
           .limit(SKILL_LIMIT),
+        supabase
+          .from("project_defects")
+          .select("id", { count: "exact", head: true })
+          .eq("project_id", ctx.projectId)
+          .eq("tenant_id", ctx.tenantId)
+          .in("status", OPEN_DEFECT_STATUSES)
+          .eq("is_blocking", true),
       ]);
       assertQueryOk(defectsRes.error, "get_open_issues");
       assertQueryOk(issuesRes.error, "get_open_issues");
+      assertQueryOk(blockingDefectsRes.error, "get_open_issues");
       const defects = (defectsRes.data ?? []) as Array<{
         id: string;
         title: string;
@@ -230,9 +238,12 @@ export function createReadSkills(supabase: SupabaseClient): AgentSkill[] {
         is_blocking: boolean;
         due_date: string | null;
       }>;
-      const issues = (issuesRes.data ?? []) as Array<{ id: string; title: string; status: string }>;
+      const fieldIssues = (issuesRes.data ?? []) as Array<{ id: string; title: string; status: string }>;
       const openDefects = defects.filter((d) => OPEN_DEFECT_STATUSES.includes(d.status));
-      const fieldIssues = issues.slice(0, SKILL_LIMIT);
+      const openDefectCount = defectsRes.count ?? openDefects.length;
+      const fieldIssueCount = issuesRes.count ?? fieldIssues.length;
+      const totalOpen = openDefectCount + fieldIssueCount;
+      const returnedCount = openDefects.length + fieldIssues.length;
       const evidence = [
         ...openDefects.slice(0, 8).map((d) =>
           toAgentEvidence({
@@ -253,9 +264,13 @@ export function createReadSkills(supabase: SupabaseClient): AgentSkill[] {
       ];
       return {
         output: {
-          open: openDefects.length + fieldIssues.length,
-          critical: openDefects.filter((d) => d.is_blocking).length,
-          defects: openDefects.slice(0, SKILL_LIMIT).map((d) => ({
+          open: totalOpen,
+          critical: blockingDefectsRes.count ?? openDefects.filter((d) => d.is_blocking).length,
+          returnedCount,
+          truncated: totalOpen > returnedCount,
+          defectCount: openDefectCount,
+          fieldIssueCount,
+          defects: openDefects.map((d) => ({
             id: d.id,
             title: d.title,
             status: d.status,
