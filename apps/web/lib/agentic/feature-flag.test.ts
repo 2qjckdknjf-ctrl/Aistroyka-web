@@ -1,16 +1,18 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { isAgenticFoundationEnabled, resolveAgenticFoundationMode } from "./feature-flag";
 
+const flagRepoMocks = vi.hoisted(() => ({
+  listFlags: vi.fn(),
+  getTenantOverrides: vi.fn(),
+}));
+
 vi.mock("@/lib/platform/flags/flags.service", () => ({
   evaluateFlags: vi.fn().mockResolvedValue({ AGENTIC_FOUNDATION_ENABLED: { enabled: true } }),
 }));
 
-const listFlags = vi.fn();
-const getTenantOverrides = vi.fn();
-vi.mock("@/lib/platform/flags/flags.repository", () => ({
-  listFlags,
-  getTenantOverrides,
-}));
+vi.mock("@/lib/platform/flags/flags.repository", () => flagRepoMocks);
+
+const { listFlags, getTenantOverrides } = flagRepoMocks;
 
 describe("agentic feature flag", () => {
   afterEach(() => {
