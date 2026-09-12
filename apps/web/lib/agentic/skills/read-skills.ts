@@ -18,15 +18,23 @@ import { EmptySkillInputSchema, type AgentSkill, type SkillDefinition, type Skil
 import { assertQueryOk } from "./query";
 
 const SKILL_LIMIT = 20;
+const REPORT_SCOPE_CHUNK_SIZE = 100;
 const OPEN_DEFECT_STATUSES = ["open", "in_progress", "ready_for_verification"];
 const BLOCKED_NO_REPORT_DAYS = 14;
+
+type SubmittedProjectReport = {
+  id: string;
+  status: string;
+  submitted_at: string | null;
+  task_id: string | null;
+};
 
 async function listSubmittedProjectReports(
   supabase: SupabaseClient,
   ctx: AgentExecutionContext,
   fromIso: string,
   skill: string
-): Promise<Array<{ id: string; status: string; submitted_at: string | null; task_id: string | null }>> {
+): Promise<{ rows: SubmittedProjectReport[]; truncated: boolean }> {
   const [tasksRes, daysRes] = await Promise.all([
     supabase.from("worker_tasks").select("id").eq("tenant_id", ctx.tenantId).eq("project_id", ctx.projectId),
     supabase.from("worker_day").select("id").eq("tenant_id", ctx.tenantId).eq("project_id", ctx.projectId),
@@ -35,52 +43,56 @@ async function listSubmittedProjectReports(
   assertQueryOk(daysRes.error, skill);
   const taskIds = ((tasksRes.data ?? []) as { id: string }[]).map((r) => r.id);
   const dayIds = ((daysRes.data ?? []) as { id: string }[]).map((r) => r.id);
-  if (taskIds.length === 0 && dayIds.length === 0) return [];
+  if (taskIds.length === 0 && dayIds.length === 0) return { rows: [], truncated: false };
 
-  const byId = new Map<string, { id: string; status: string; submitted_at: string | null; task_id: string | null }>();
-  if (taskIds.length > 0) {
-    const { data, error } = await supabase
+  const byId = new Map<string, SubmittedProjectReport>();
+  let truncated = false;
+
+  for (const ids of chunkIds(taskIds, REPORT_SCOPE_CHUNK_SIZE)) {
+    const { data, error, count } = await supabase
       .from("worker_reports")
-      .select("id, status, submitted_at, task_id")
+      .select("id, status, submitted_at, task_id", { count: "exact" })
       .eq("tenant_id", ctx.tenantId)
       .eq("status", "submitted")
       .not("submitted_at", "is", null)
       .gte("submitted_at", fromIso)
-      .in("task_id", taskIds.slice(0, 200))
+      .in("task_id", ids)
       .order("submitted_at", { ascending: false })
       .limit(SKILL_LIMIT);
     assertQueryOk(error, skill);
-    for (const row of (data ?? []) as Array<{
-      id: string;
-      status: string;
-      submitted_at: string | null;
-      task_id: string | null;
-    }>) {
-      byId.set(row.id, row);
-    }
+    const rows = (data ?? []) as SubmittedProjectReport[];
+    if ((count ?? rows.length) > rows.length) truncated = true;
+    for (const row of rows) byId.set(row.id, row);
   }
-  if (dayIds.length > 0) {
-    const { data, error } = await supabase
+
+  for (const ids of chunkIds(dayIds, REPORT_SCOPE_CHUNK_SIZE)) {
+    const { data, error, count } = await supabase
       .from("worker_reports")
-      .select("id, status, submitted_at, task_id")
+      .select("id, status, submitted_at, task_id", { count: "exact" })
       .eq("tenant_id", ctx.tenantId)
       .eq("status", "submitted")
       .not("submitted_at", "is", null)
       .gte("submitted_at", fromIso)
-      .in("day_id", dayIds.slice(0, 200))
+      .in("day_id", ids)
       .order("submitted_at", { ascending: false })
       .limit(SKILL_LIMIT);
     assertQueryOk(error, skill);
-    for (const row of (data ?? []) as Array<{
-      id: string;
-      status: string;
-      submitted_at: string | null;
-      task_id: string | null;
-    }>) {
-      byId.set(row.id, row);
-    }
+    const rows = (data ?? []) as SubmittedProjectReport[];
+    if ((count ?? rows.length) > rows.length) truncated = true;
+    for (const row of rows) byId.set(row.id, row);
   }
-  return [...byId.values()].slice(0, SKILL_LIMIT);
+
+  const allRows = [...byId.values()].sort((a, b) =>
+    String(b.submitted_at ?? "").localeCompare(String(a.submitted_at ?? ""))
+  );
+  if (allRows.length > SKILL_LIMIT) truncated = true;
+  return { rows: allRows.slice(0, SKILL_LIMIT), truncated };
+}
+
+function chunkIds(ids: string[], size: number): string[][] {
+  const chunks: string[][] = [];
+  for (let i = 0; i < ids.length; i += size) chunks.push(ids.slice(i, i + size));
+  return chunks;
 }
 
 function baseDef(
@@ -306,18 +318,19 @@ export function createReadSkills(supabase: SupabaseClient): AgentSkill[] {
     readSkill(baseDef("get_recent_reports", "Recent submitted reports (7 days, bounded)"), async (ctx) => {
       const from = new Date();
       from.setDate(from.getDate() - 7);
-      const rows = await listSubmittedProjectReports(supabase, ctx, from.toISOString(), "get_recent_reports");
+      const reports = await listSubmittedProjectReports(supabase, ctx, from.toISOString(), "get_recent_reports");
       return {
         output: {
-          count: rows.length,
-          items: rows.map((r) => ({
+          count: reports.rows.length,
+          truncated: reports.truncated,
+          items: reports.rows.map((r) => ({
             id: r.id,
             status: r.status,
             submittedAt: r.submitted_at,
             taskId: r.task_id,
           })),
         },
-        evidence: rows.slice(0, 8).map((r) =>
+        evidence: reports.rows.slice(0, 8).map((r) =>
           toAgentEvidence({
             type: "REPORT",
             sourceEntityType: "worker_reports",
@@ -483,7 +496,7 @@ export function createReadSkills(supabase: SupabaseClient): AgentSkill[] {
       const blockedSince = new Date();
       blockedSince.setDate(blockedSince.getDate() - BLOCKED_NO_REPORT_DAYS);
       const recentReportTaskIds = new Set<string>();
-      if (tasks.length > 0) {
+      for (const ids of chunkIds(tasks.map((t) => t.id), REPORT_SCOPE_CHUNK_SIZE)) {
         const reportsRes = await supabase
           .from("worker_reports")
           .select("task_id")
@@ -491,10 +504,7 @@ export function createReadSkills(supabase: SupabaseClient): AgentSkill[] {
           .eq("status", "submitted")
           .not("submitted_at", "is", null)
           .gte("submitted_at", blockedSince.toISOString())
-          .in(
-            "task_id",
-            tasks.map((t) => t.id)
-          );
+          .in("task_id", ids);
         assertQueryOk(reportsRes.error, "find_project_blockers");
         for (const r of (reportsRes.data ?? []) as { task_id: string | null }[]) {
           if (r.task_id) recentReportTaskIds.add(r.task_id);
