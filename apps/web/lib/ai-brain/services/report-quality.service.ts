@@ -32,28 +32,31 @@ export async function getReportQualitySignals(
   const at = new Date().toISOString();
   const signals: ReportQualitySignal[] = [];
 
-  const { data: projectTasks } = await supabase
+  const { data: projectTasks, error: projectTasksError } = await supabase
     .from("worker_tasks")
     .select("id")
     .eq("project_id", projectId)
     .eq("tenant_id", tenantId);
+  if (projectTasksError) throw new Error("report_quality_project_tasks_query_failed");
   const taskIdsForProject = (projectTasks ?? []).map((t) => (t as { id: string }).id);
   if (taskIdsForProject.length === 0) return signals;
 
-  const { data: reports } = await supabase
+  const { data: reports, error: reportsError } = await supabase
     .from("worker_reports")
     .select("id, task_id")
     .eq("tenant_id", tenantId)
     .in("status", ["draft", "submitted"])
     .in("task_id", taskIdsForProject);
+  if (reportsError) throw new Error("report_quality_reports_query_failed");
 
   if (!reports?.length) return signals;
 
   const reportIds = (reports as { id: string; task_id: string | null }[]).map((r) => r.id);
-  const { data: mediaRows } = await supabase
+  const { data: mediaRows, error: mediaError } = await supabase
     .from("worker_report_media")
     .select("report_id, media_id")
     .in("report_id", reportIds);
+  if (mediaError) throw new Error("report_quality_media_query_failed");
 
   const mediaByReport = new Map<string, number>();
   for (const m of (mediaRows ?? []) as { report_id: string; media_id: string }[]) {
@@ -68,12 +71,13 @@ export async function getReportQualitySignals(
         .filter((id): id is string => !!id && taskIdsForProject.includes(id))
     ),
   ];
-  let taskRequired = new Map<string, number>();
+  const taskRequired = new Map<string, number>();
   if (taskIds.length > 0) {
-    const { data: tasks } = await supabase
+    const { data: tasks, error: tasksError } = await supabase
       .from("worker_tasks")
       .select("id, required_photos")
       .in("id", taskIds);
+    if (tasksError) throw new Error("report_quality_required_photos_query_failed");
     for (const t of (tasks ?? []) as { id: string; required_photos: unknown }[]) {
       taskRequired.set(t.id, requiredPhotoCount(t.required_photos));
     }
