@@ -144,6 +144,45 @@ describe("read skills query errors", () => {
     });
   });
 
+  it("reports exact open and critical issue totals separately from bounded pages", async () => {
+    let defectQuery = 0;
+    const defectRows = Array.from({ length: 20 }, (_, i) => ({
+      id: `d${i}`,
+      title: `Defect ${i}`,
+      status: "open",
+      is_blocking: i < 2,
+      due_date: null,
+    }));
+    const issueRows = Array.from({ length: 20 }, (_, i) => ({
+      id: `i${i}`,
+      title: `Issue ${i}`,
+      status: "open",
+    }));
+    const supabase = {
+      from: (table: string) => {
+        if (table === "project_defects") {
+          defectQuery += 1;
+          return defectQuery === 1
+            ? chain({ data: defectRows, error: null, count: 33 })
+            : chain({ data: null, error: null, count: 7 });
+        }
+        if (table === "project_issues") return chain({ data: issueRows, error: null, count: 29 });
+        return chain({ data: [], error: null });
+      },
+    };
+
+    const skill = createReadSkills(supabase as never).find((s) => s.definition.name === "get_open_issues");
+    const result = await skill!.execute(ctx(), {});
+    expect(result.output).toMatchObject({
+      open: 62,
+      critical: 7,
+      returnedCount: 40,
+      truncated: true,
+      defectCount: 33,
+      fieldIssueCount: 29,
+    });
+  });
+
   it("does not label an overdue in-progress task blocked without report evidence", async () => {
     const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
     const supabase = {
