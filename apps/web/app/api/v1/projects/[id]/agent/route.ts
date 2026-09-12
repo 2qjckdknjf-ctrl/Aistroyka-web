@@ -20,10 +20,17 @@ import { buildAgentExecutionContext } from "@/lib/agentic/context";
 import { runProjectAgent } from "@/lib/agentic/orchestrator/orchestrator";
 import { parseAgentPublicResponse } from "@/lib/agentic/orchestrator/structured-output";
 import { agentIdempotencyRoute } from "@/lib/agentic/idempotency";
+import {
+  claimAgentIdempotencyKey,
+  releaseAgentIdempotencyKey,
+  type AgentIdempotencyScope,
+} from "@/lib/agentic/idempotency-claim";
 import { isAgentError } from "@/lib/agentic/errors";
 import { logAgentMetric } from "@/lib/agentic/observability/metrics";
 
 export const dynamic = "force-dynamic";
+export const AGENT_MESSAGE_MAX_CHARS = 4_000;
+export const AGENT_BODY_MAX_CHARS = 16_000;
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   const requestId = getOrCreateRequestId(request);
@@ -32,6 +39,11 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   const lite = checkLiteAllowList(pathname, request.method, request.headers.get("x-client"));
   if (lite) {
     return addRequestIdToResponse(NextResponse.json(lite.body, { status: lite.status }), requestId);
+  }
+
+  const declaredLength = Number(request.headers.get("content-length") ?? "0");
+  if (Number.isFinite(declaredLength) && declaredLength > AGENT_BODY_MAX_CHARS * 4) {
+    return jsonError(requestId, "AGENT_INVALID_INPUT", "request body too large", 400);
   }
 
   const tenantCtx = await getTenantContextFromRequest(request);
@@ -69,30 +81,27 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     }
   }
 
-  let body: { message?: string };
-  try {
-    body = (await request.json()) as { message?: string };
-  } catch {
-    return jsonError(requestId, "AGENT_INVALID_INPUT", "Invalid JSON body", 400);
+  const parsedBody = await parseAgentRequestBody(request);
+  if (!parsedBody.ok) {
+    return jsonError(requestId, "AGENT_INVALID_INPUT", parsedBody.error, 400);
   }
-  const message = typeof body.message === "string" ? body.message.trim() : "";
-  if (!message) {
-    return jsonError(requestId, "AGENT_INVALID_INPUT", "message required", 400);
-  }
+  const message = parsedBody.message;
 
   const idempotencyRoute = agentIdempotencyRoute(projectId);
   const idempotencyKey = request.headers.get(IDEMPOTENCY_HEADER)?.trim() || null;
   if (idempotencyKey) {
-    const cached = await getCachedResponse(
+    const replay = await getValidCachedReplay(
       supabase,
       idempotencyKey,
       tenantCtx.tenantId,
       tenantCtx.userId,
       idempotencyRoute
     );
-    const replayed = cached ? parseAgentPublicResponse(cached.response) : null;
-    if (replayed) {
-      return addRequestIdToResponse(NextResponse.json(cached!.response, { status: cached!.statusCode }), requestId);
+    if (replay) {
+      return addRequestIdToResponse(
+        NextResponse.json(replay.response, { status: replay.statusCode }),
+        requestId
+      );
     }
   }
 
@@ -119,6 +128,41 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       NextResponse.json({ error: gate.message, code: gate.code ?? "AGENT_POLICY_DENIED" }, { status: gate.httpStatus }),
       requestId
     );
+  }
+
+  let claimScope: AgentIdempotencyScope | null = null;
+  let claimToken: string | null = null;
+  if (idempotencyKey) {
+    claimScope = {
+      tenantId: tenantCtx.tenantId,
+      projectId,
+      userId: tenantCtx.userId,
+      key: idempotencyKey,
+    };
+    claimToken = await claimAgentIdempotencyKey(admin, claimScope);
+    if (!claimToken) {
+      // The winning request may have completed between the first cache read and our
+      // failed claim. Recheck once before returning an in-progress conflict.
+      const replay = await getValidCachedReplay(
+        supabase,
+        idempotencyKey,
+        tenantCtx.tenantId,
+        tenantCtx.userId,
+        idempotencyRoute
+      );
+      if (replay) {
+        return addRequestIdToResponse(
+          NextResponse.json(replay.response, { status: replay.statusCode }),
+          requestId
+        );
+      }
+      return jsonError(
+        requestId,
+        "AGENT_IDEMPOTENCY_IN_PROGRESS",
+        "A request with this idempotency key is already in progress or reserved.",
+        409
+      );
+    }
   }
 
   const locale = request.headers.get("x-locale")?.trim() || "en";
@@ -183,6 +227,17 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
         200
       );
     }
+
+    // Release only after the durable run exists and the response cache write was
+    // attempted. If orchestration/accounting/persistence fails, keep the claim until
+    // TTL so an identical retry cannot duplicate a possibly paid provider call.
+    if (claimScope && claimToken) {
+      try {
+        await releaseAgentIdempotencyKey(admin, claimScope, claimToken);
+      } catch {
+        logAgentMetric("agentic.idempotency_release_failed", { request_id: requestId });
+      }
+    }
     return addRequestIdToResponse(NextResponse.json(payload), requestId);
   } catch (err) {
     logAgentMetric("agentic.orchestration_failure", {
@@ -194,6 +249,53 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     }
     return jsonError(requestId, "AGENT_SKILL_FAILED", "Agent run failed", 500);
   }
+}
+
+async function getValidCachedReplay(
+  supabase: Awaited<ReturnType<typeof createClientFromRequest>>,
+  key: string,
+  tenantId: string,
+  userId: string,
+  route: string
+): Promise<{ response: unknown; statusCode: number } | null> {
+  const cached = await getCachedResponse(supabase, key, tenantId, userId, route);
+  if (!cached) return null;
+  return parseAgentPublicResponse(cached.response) ? cached : null;
+}
+
+export async function parseAgentRequestBody(
+  request: Request
+): Promise<{ ok: true; message: string } | { ok: false; error: string }> {
+  let raw: string;
+  try {
+    raw = await request.text();
+  } catch {
+    return { ok: false, error: "Invalid request body" };
+  }
+  if (raw.length > AGENT_BODY_MAX_CHARS) {
+    return { ok: false, error: "request body too large" };
+  }
+
+  let value: unknown;
+  try {
+    value = JSON.parse(raw);
+  } catch {
+    return { ok: false, error: "Invalid JSON body" };
+  }
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return { ok: false, error: "JSON body must be an object" };
+  }
+
+  const messageValue = (value as Record<string, unknown>).message;
+  const message = typeof messageValue === "string" ? messageValue.trim() : "";
+  if (!message) return { ok: false, error: "message required" };
+  if (message.length > AGENT_MESSAGE_MAX_CHARS) {
+    return {
+      ok: false,
+      error: `message exceeds ${AGENT_MESSAGE_MAX_CHARS} characters`,
+    };
+  }
+  return { ok: true, message };
 }
 
 function jsonError(requestId: string, code: string, error: string, status: number) {
