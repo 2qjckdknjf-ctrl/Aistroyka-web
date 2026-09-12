@@ -87,6 +87,47 @@ describe("read skills query errors", () => {
     expect((result.output as { items: unknown[] }).items).toHaveLength(20);
   });
 
+  it("scans all project task IDs when collecting recent reports", async () => {
+    const taskRows = Array.from({ length: 205 }, (_, i) => ({ id: `task-${i}` }));
+    const taskScopeCalls: string[][] = [];
+    let reportQuery = 0;
+    const supabase = {
+      from: (table: string) => {
+        if (table === "worker_tasks") return chain({ data: taskRows, error: null });
+        if (table === "worker_day") return chain({ data: [], error: null });
+        if (table === "worker_reports") {
+          reportQuery += 1;
+          const api = chain({
+            data: [
+              {
+                id: `report-${reportQuery}`,
+                status: "submitted",
+                submitted_at: `2026-09-0${reportQuery}T10:00:00.000Z`,
+                task_id: `task-${(reportQuery - 1) * 100}`,
+              },
+            ],
+            error: null,
+            count: 1,
+          });
+          const originalIn = api.in as (col: string, values: unknown) => unknown;
+          api.in = (col: string, values: unknown) => {
+            if (col === "task_id" && Array.isArray(values)) taskScopeCalls.push(values as string[]);
+            return originalIn(col, values);
+          };
+          return api;
+        }
+        return chain({ data: [], error: null });
+      },
+    };
+
+    const skill = createReadSkills(supabase as never).find((s) => s.definition.name === "get_recent_reports");
+    const result = await skill!.execute(ctx(), {});
+
+    expect(taskScopeCalls.map((ids) => ids.length)).toEqual([100, 100, 5]);
+    expect(taskScopeCalls.flat()).toContain("task-204");
+    expect((result.output as { items: unknown[] }).items).toHaveLength(3);
+  });
+
   it("does not convert an issues query error into zero issues", async () => {
     const supabase = {
       from: (table: string) => {
