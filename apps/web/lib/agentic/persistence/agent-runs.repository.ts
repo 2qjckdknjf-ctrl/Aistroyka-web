@@ -215,6 +215,8 @@ export async function findRunByIdempotency(
     .eq("actor_user_id", input.userId)
     .eq("idempotency_key", input.idempotencyKey)
     .gte("created_at", cutoff)
+    .order("created_at", { ascending: false })
+    .limit(1)
     .maybeSingle();
   if (error || !data) return null;
   const row = data as {
