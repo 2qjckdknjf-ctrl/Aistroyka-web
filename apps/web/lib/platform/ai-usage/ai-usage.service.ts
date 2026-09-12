@@ -53,15 +53,22 @@ export async function checkBudgetAlert(
   }
 }
 
-/** Persist usage and increment tenant spent. Call after AI request. */
+/**
+ * Persist usage after an AI request. Tenant-scoped usage is committed through one
+ * transactional RPC with the spent_usd increment so the two records cannot diverge.
+ */
 export async function recordUsage(
   supabase: SupabaseClient,
   record: AiUsageRecord
 ): Promise<void> {
-  await repo.insertUsage(supabase, record);
-  if (record.tenant_id && record.cost_usd > 0) {
-    await repo.addSpent(supabase, record.tenant_id, record.cost_usd);
+  if (record.tenant_id) {
+    await repo.recordUsageAndSpendAtomic(supabase, {
+      ...record,
+      tenant_id: record.tenant_id,
+    });
+    return;
   }
+  await repo.insertUsage(supabase, record);
 }
 
 /** Estimate cost for vision request (no token count until response). Use rough default. */
