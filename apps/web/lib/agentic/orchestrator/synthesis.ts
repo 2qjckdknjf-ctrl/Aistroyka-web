@@ -31,6 +31,47 @@ const CONTEXT_KEY_PRIORITY = [
   "get_project_members",
 ] as const;
 
+const FALLBACK_COPY = {
+  en: {
+    insufficient:
+      "Insufficient structured project evidence to judge delivery risk. Missing or failed skill results must not be treated as empty counts.",
+    ready:
+      "Structured project signals were assembled from verified skills. Review blockers and overdue work before drawing conclusions.",
+    deterministic: "Deterministic synthesis: the AI provider was not used or was unavailable.",
+    risk: "Risk",
+    blocker: "Blocker",
+  },
+  ru: {
+    insufficient:
+      "Недостаточно проверенных данных проекта для оценки риска выполнения. Отсутствующие или ошибочные результаты навыков нельзя считать нулевыми значениями.",
+    ready:
+      "Сигналы проекта собраны из проверенных навыков. Перед выводами проверьте блокеры и просроченные работы.",
+    deterministic: "Детерминированный ответ: AI-провайдер не использовался или был недоступен.",
+    risk: "Риск",
+    blocker: "Блокер",
+  },
+  es: {
+    insufficient:
+      "No hay suficientes datos verificados del proyecto para evaluar el riesgo de ejecución. Los resultados ausentes o fallidos no deben interpretarse como valores cero.",
+    ready:
+      "Las señales del proyecto se recopilaron a partir de capacidades verificadas. Revise los bloqueos y trabajos atrasados antes de sacar conclusiones.",
+    deterministic: "Respuesta determinista: el proveedor de IA no se utilizó o no estaba disponible.",
+    risk: "Riesgo",
+    blocker: "Bloqueo",
+  },
+  it: {
+    insufficient:
+      "Non ci sono dati verificati sufficienti per valutare il rischio di esecuzione del progetto. I risultati mancanti o non riusciti non devono essere trattati come valori zero.",
+    ready:
+      "I segnali del progetto sono stati raccolti da capacità verificate. Verifica blocchi e attività in ritardo prima di trarre conclusioni.",
+    deterministic: "Risposta deterministica: il provider AI non è stato utilizzato o non era disponibile.",
+    risk: "Rischio",
+    blocker: "Blocco",
+  },
+} as const;
+
+type SupportedFallbackLocale = keyof typeof FALLBACK_COPY;
+
 export interface SynthesisResult {
   response: AgentStructuredResponse;
   source: "llm" | "deterministic";
@@ -44,7 +85,8 @@ export interface SynthesisResult {
 
 export function deterministicSynthesis(
   contextJson: string,
-  failedRequiredSkills: string[] = []
+  failedRequiredSkills: string[] = [],
+  locale = "en"
 ): AgentStructuredResponse {
   let parsed: Record<string, unknown> = {};
   try {
@@ -52,6 +94,7 @@ export function deterministicSynthesis(
   } catch {
     parsed = {};
   }
+  const copy = FALLBACK_COPY[normalizeFallbackLocale(locale)];
   const failed = new Set(failedRequiredSkills);
   const health = failed.has("calculate_project_health")
     ? undefined
@@ -71,25 +114,21 @@ export function deterministicSynthesis(
   const insufficient = Boolean(parsed.insufficientEvidence) || failed.size > 0;
   const failureLimitations = failedRequiredSkills.map((s) => `AGENT_SKILL_FAILED:${s}`);
   return {
-    summary: insufficient
-      ? "Insufficient structured project evidence to judge delivery risk. Missing or failed skill results must not be treated as empty counts."
-      : "Structured project signals were assembled from skills. Review blockers and overdue work before drawing conclusions.",
+    summary: insufficient ? copy.insufficient : copy.ready,
     health: health?.score != null ? { score: health.score, band: health.band } : undefined,
     risks: risks.slice(0, 8).map((r) => ({
-      title: r.title ?? "Risk",
+      title: r.title ?? copy.risk,
       severity: (r.severity as "low" | "medium" | "high" | undefined) ?? undefined,
       why: r.explanation,
     })),
     blockers: blockers.slice(0, 8).map((b) => ({
-      title: b.title ?? b.message ?? "Blocker",
+      title: b.title ?? b.message ?? copy.blocker,
       why: b.why,
     })),
     observations: [],
     proposedActions: [],
     limitations: [
-      ...(insufficient
-        ? ["INSUFFICIENT_EVIDENCE"]
-        : ["Deterministic synthesis: LLM provider was not used or was unavailable."]),
+      ...(insufficient ? ["INSUFFICIENT_EVIDENCE"] : [copy.deterministic]),
       ...failureLimitations,
     ],
     confidence: insufficient ? "low" : "medium",
@@ -104,9 +143,10 @@ export function deterministicSynthesis(
 export function selectSynthesisResponse(
   structured: Record<string, unknown>,
   contextJson: string,
-  failedRequiredSkills: string[] = []
+  failedRequiredSkills: string[] = [],
+  locale = "en"
 ): { response: AgentStructuredResponse; source: "llm" | "deterministic" } {
-  const authoritative = deterministicSynthesis(contextJson, failedRequiredSkills);
+  const authoritative = deterministicSynthesis(contextJson, failedRequiredSkills, locale);
   const parsed = AgentResponseSchema.safeParse(structured);
   if (parsed.success) {
     return {
@@ -188,7 +228,7 @@ export async function synthesizeAgentAnswer(input: {
   const cfg = getServerConfig();
   if (!cfg.OPENAI_API_KEY) {
     return {
-      response: deterministicSynthesis(contextJson, failedRequiredSkills),
+      response: deterministicSynthesis(contextJson, failedRequiredSkills, input.locale),
       source: "deterministic",
       promptVersion,
       latencyMs: Date.now() - started,
@@ -225,7 +265,12 @@ export async function synthesizeAgentAnswer(input: {
       maxRetries: cfg.OPENAI_COPILOT_MAX_RETRIES,
     });
 
-    const selected = selectSynthesisResponse(out.structured, contextJson, failedRequiredSkills);
+    const selected = selectSynthesisResponse(
+      out.structured,
+      contextJson,
+      failedRequiredSkills,
+      input.locale
+    );
     return {
       response: selected.response,
       source: selected.source,
@@ -241,7 +286,7 @@ export async function synthesizeAgentAnswer(input: {
     };
   } catch {
     return {
-      response: deterministicSynthesis(contextJson, failedRequiredSkills),
+      response: deterministicSynthesis(contextJson, failedRequiredSkills, input.locale),
       source: "deterministic",
       provider: "openai",
       model: cfg.OPENAI_COPILOT_MODEL,
@@ -250,6 +295,11 @@ export async function synthesizeAgentAnswer(input: {
       providerUnavailable: true,
     };
   }
+}
+
+function normalizeFallbackLocale(locale: string): SupportedFallbackLocale {
+  const primary = locale.trim().toLowerCase().split(/[-_]/)[0];
+  return primary === "ru" || primary === "es" || primary === "it" ? primary : "en";
 }
 
 function compactPromptValue(value: unknown, depth = 0): unknown {
