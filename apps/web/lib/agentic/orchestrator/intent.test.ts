@@ -12,6 +12,15 @@ describe("intent routing", () => {
     expect(skills).toContain("calculate_project_health");
   });
 
+  it("routes shipped Spanish and Italian quick prompts deterministically", () => {
+    expect(resolveAgentIntent("Tareas atrasadas")).toBe("overdue_tasks");
+    expect(resolveAgentIntent("Attività in ritardo")).toBe("overdue_tasks");
+    expect(resolveAgentIntent("Problemas críticos")).toBe("critical_issues");
+    expect(resolveAgentIntent("Problemi critici")).toBe("critical_issues");
+    expect(resolveAgentIntent("Últimos 7 días")).toBe("last_7_days");
+    expect(resolveAgentIntent("Ultimi 7 giorni")).toBe("last_7_days");
+  });
+
   it("treats get_project_members as optional, not required for overdue intent", () => {
     expect(isRequiredSkill("overdue_tasks", "get_overdue_tasks")).toBe(true);
     expect(isRequiredSkill("overdue_tasks", "get_project_members")).toBe(false);
