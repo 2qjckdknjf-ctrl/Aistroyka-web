@@ -6,12 +6,13 @@
  * - disabled: always off (Stage 0)
  * - internal: enabled outside production
  * - staging: enabled on staging env, otherwise DB evaluation
- * - selected_tenant: DB allowlist / tenant override only
+ * - selected_tenant: tenant override / allowlist only (never percentage rollout)
  * - production: DB evaluation (rollout_percent / allowlist / override)
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { evaluateFlags } from "@/lib/platform/flags/flags.service";
+import { getTenantOverrides, listFlags } from "@/lib/platform/flags/flags.repository";
 import { AGENTIC_FOUNDATION_FLAG_KEY, type AgenticFoundationMode } from "./types";
 
 export function resolveAgenticFoundationMode(): AgenticFoundationMode {
@@ -57,6 +58,7 @@ export async function isAgenticFoundationEnabled(
       if (isStagingRuntime()) return true;
       return evaluateDbFlag(supabase, tenantId);
     case "selected_tenant":
+      return evaluateSelectedTenantFlag(supabase, tenantId);
     case "production":
       return evaluateDbFlag(supabase, tenantId);
     default: {
@@ -72,4 +74,25 @@ async function evaluateDbFlag(
 ): Promise<boolean> {
   const flags = await evaluateFlags(supabase, tenantId);
   return flags[AGENTIC_FOUNDATION_FLAG_KEY]?.enabled === true;
+}
+
+/**
+ * Selected-tenant rollout is intentionally stricter than production rollout.
+ * Explicit tenant override wins; otherwise only the flag allowlist may enable it.
+ * Percentage rollout is ignored so switching back from production cannot
+ * accidentally leave unrelated tenants enabled.
+ */
+async function evaluateSelectedTenantFlag(
+  supabase: SupabaseClient,
+  tenantId: string | null
+): Promise<boolean> {
+  if (!tenantId) return false;
+  const [flags, overrides] = await Promise.all([
+    listFlags(supabase),
+    getTenantOverrides(supabase, tenantId),
+  ]);
+  const override = overrides.find((row) => row.key === AGENTIC_FOUNDATION_FLAG_KEY);
+  if (override) return override.enabled === true;
+  const flag = flags.find((row) => row.key === AGENTIC_FOUNDATION_FLAG_KEY);
+  return flag?.allowlist_tenant_ids?.includes(tenantId) === true;
 }
