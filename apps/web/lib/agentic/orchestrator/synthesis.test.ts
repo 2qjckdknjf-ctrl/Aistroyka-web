@@ -91,6 +91,22 @@ describe("agent synthesis trust boundary", () => {
     expect(selected.response.observations).toEqual([]);
   });
 
+  it("localizes deterministic fallback prose while keeping stable limitation codes", () => {
+    const context = JSON.stringify({ insufficientEvidence: false });
+    expect(deterministicSynthesis(context, [], "ru").summary).toContain("Сигналы проекта");
+    expect(deterministicSynthesis(context, [], "es").summary).toContain("señales del proyecto");
+    expect(deterministicSynthesis(context, [], "it").summary).toContain("segnali del progetto");
+
+    const insufficient = deterministicSynthesis(
+      JSON.stringify({ insufficientEvidence: true }),
+      ["get_project_state"],
+      "ru-RU"
+    );
+    expect(insufficient.summary).toContain("Недостаточно проверенных данных");
+    expect(insufficient.limitations).toContain("INSUFFICIENT_EVIDENCE");
+    expect(insufficient.limitations).toContain("AGENT_SKILL_FAILED:get_project_state");
+  });
+
   it("omits failed deterministic health rather than treating it as empty or healthy", () => {
     const response = deterministicSynthesis(
       JSON.stringify({ calculate_project_health: { score: 90, band: "GREEN" } }),
