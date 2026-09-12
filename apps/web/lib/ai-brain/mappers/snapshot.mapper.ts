@@ -69,13 +69,13 @@ export async function buildProjectSnapshot(
   if (mediaRowsRes.error) throw new Error("project_snapshot_media_query_failed");
   const mediaIds = (mediaRowsRes.data ?? []).map((m: { id: string }) => m.id);
   let analysisCountVal = 0;
-  if (mediaIds.length > 0) {
+  for (const ids of chunk(mediaIds, ID_CHUNK_SIZE)) {
     const analysisRes = await supabase
       .from("analysis_jobs")
       .select("id", { count: "exact", head: true })
-      .in("media_id", mediaIds);
+      .in("media_id", ids);
     if (analysisRes.error) throw new Error("project_snapshot_analysis_query_failed");
-    analysisCountVal = analysisRes.count ?? 0;
+    analysisCountVal += analysisRes.count ?? 0;
   }
 
   const at = new Date().toISOString();
