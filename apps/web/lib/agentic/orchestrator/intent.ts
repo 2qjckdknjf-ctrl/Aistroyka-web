@@ -25,15 +25,17 @@ const DELIVERY_PACK: ReadSkillId[] = [
 
 export function resolveAgentIntent(message: string): AgentIntent {
   const m = message.toLowerCase();
-  if (
-    /угрожа|сдач|срок|deadline|delay|handover|delivery/.test(m)
-  ) {
+  if (/угрожа|сдач|срок|deadline|delay|handover|delivery|entrega|ritardo consegna|consegna/.test(m)) {
     return "delivery_threat";
   }
-  if (/просроч|overdue|over-due/.test(m)) return "overdue_tasks";
-  if (/критич|critical|blocking|punch/.test(m)) return "critical_issues";
-  if (/вниман|attention|requires attention/.test(m)) return "attention";
-  if (/7 дн|last 7|последн/.test(m)) return "last_7_days";
+  if (/просроч|overdue|over-due|atrasad[oa]s?|vencid[oa]s?|in ritardo/.test(m)) {
+    return "overdue_tasks";
+  }
+  if (/критич|critical|blocking|punch|crític[oa]s?|critic[oihe]?/.test(m)) {
+    return "critical_issues";
+  }
+  if (/вниман|attention|requires attention|atención|attenzione/.test(m)) return "attention";
+  if (/7 дн|last 7|последн|últim[oa]s? 7 días|ultimi 7 giorni/.test(m)) return "last_7_days";
   return "general";
 }
 
