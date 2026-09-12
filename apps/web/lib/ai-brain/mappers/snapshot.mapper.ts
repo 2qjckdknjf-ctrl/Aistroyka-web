@@ -8,6 +8,8 @@ import type { ProjectSnapshot } from "../domain";
 import { getProjectSummary } from "@/lib/domain/projects/project-summary.repository";
 import { getById as getProjectById } from "@/lib/domain/projects/project.repository";
 
+const ID_CHUNK_SIZE = 100;
+
 export async function buildProjectSnapshot(
   supabase: SupabaseClient,
   projectId: string,
@@ -18,22 +20,24 @@ export async function buildProjectSnapshot(
 
   // Health is exposed as authoritative project intelligence, so its critical source
   // tables must be readable before aggregate helpers are allowed to turn failures into
-  // zero-like values. Any RLS/schema/database failure aborts snapshot construction.
-  const [workerDaysCheck, reportsCheck] = await Promise.all([
-    supabase
-      .from("worker_day")
-      .select("id", { count: "exact", head: true })
-      .eq("project_id", projectId)
-      .eq("tenant_id", tenantId),
-    supabase
+  // zero-like values. worker_reports is project-scoped through worker_day.day_id.
+  const workerDaysCheck = await supabase
+    .from("worker_day")
+    .select("id")
+    .eq("project_id", projectId)
+    .eq("tenant_id", tenantId);
+  if (workerDaysCheck.error) throw new Error("project_snapshot_worker_days_query_failed");
+
+  const dayIds = ((workerDaysCheck.data ?? []) as Array<{ id: string }>).map((row) => row.id);
+  for (const ids of chunk(dayIds, ID_CHUNK_SIZE)) {
+    const reportsCheck = await supabase
       .from("worker_reports")
       .select("id", { count: "exact", head: true })
-      .eq("project_id", projectId)
       .eq("tenant_id", tenantId)
-      .in("status", ["draft", "submitted"]),
-  ]);
-  if (workerDaysCheck.error) throw new Error("project_snapshot_worker_days_query_failed");
-  if (reportsCheck.error) throw new Error("project_snapshot_reports_query_failed");
+      .in("status", ["draft", "submitted"])
+      .in("day_id", ids);
+    if (reportsCheck.error) throw new Error("project_snapshot_reports_query_failed");
+  }
 
   const summary = await getProjectSummary(supabase, projectId, tenantId);
 
@@ -88,4 +92,10 @@ export async function buildProjectSnapshot(
     mediaCount: mediaCountRes.count ?? 0,
     analysisCount: analysisCountVal,
   };
+}
+
+function chunk<T>(items: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
+  return out;
 }
