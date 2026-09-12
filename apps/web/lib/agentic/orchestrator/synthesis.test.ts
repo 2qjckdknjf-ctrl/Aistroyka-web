@@ -53,6 +53,44 @@ describe("agent synthesis trust boundary", () => {
     expect(selected.response.health).toEqual({ score: 55, band: "RED" });
   });
 
+  it("keeps health, risks and blockers authoritative even for schema-valid provider JSON", () => {
+    const contextJson = JSON.stringify({
+      calculate_project_health: { score: 55, band: "RED" },
+      get_project_risks: {
+        items: [{ title: "Verified delay", severity: "high", explanation: "Task evidence" }],
+      },
+      find_project_blockers: {
+        items: [{ title: "Verified blocker", why: "Blocking defect" }],
+      },
+      insufficientEvidence: false,
+    });
+
+    const selected = selectSynthesisResponse(
+      {
+        summary: "Manager-facing summary",
+        health: { score: 99, band: "GREEN" },
+        risks: [{ title: "Invented risk", severity: "low", why: "model only" }],
+        blockers: [{ title: "Invented blocker", why: "model only" }],
+        observations: [{ title: "Invented observation" }],
+        proposedActions: [],
+        limitations: [],
+        confidence: "high",
+      },
+      contextJson
+    );
+
+    expect(selected.source).toBe("llm");
+    expect(selected.response.summary).toBe("Manager-facing summary");
+    expect(selected.response.health).toEqual({ score: 55, band: "RED" });
+    expect(selected.response.risks).toEqual([
+      { title: "Verified delay", severity: "high", why: "Task evidence" },
+    ]);
+    expect(selected.response.blockers).toEqual([
+      { title: "Verified blocker", why: "Blocking defect" },
+    ]);
+    expect(selected.response.observations).toEqual([]);
+  });
+
   it("omits failed deterministic health rather than treating it as empty or healthy", () => {
     const response = deterministicSynthesis(
       JSON.stringify({ calculate_project_health: { score: 90, band: "GREEN" } }),
