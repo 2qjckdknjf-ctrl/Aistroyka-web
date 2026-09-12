@@ -71,7 +71,7 @@ describe("agent synthesis trust boundary", () => {
         health: { score: 99, band: "GREEN" },
         risks: [{ title: "Invented risk", severity: "low", why: "model only" }],
         blockers: [{ title: "Invented blocker", why: "model only" }],
-        observations: [{ title: "Invented observation" }],
+        observations: ["Invented observation"],
         proposedActions: [],
         limitations: [],
         confidence: "high",
