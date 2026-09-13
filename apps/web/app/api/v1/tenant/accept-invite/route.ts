@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient, getSessionUser } from "@/lib/supabase/server";
 import {
+  acceptInternalTenantInviteMembership,
   AccountWorkspaceError,
-  syncAccountMemberForInternalTenantRole,
 } from "@/lib/account/account-workspace.service";
 import { mapInvitationDbError } from "@/lib/tenant/invitation-errors";
 
@@ -50,25 +50,8 @@ export async function POST(request: Request) {
     );
   }
 
-  const { error: insertError } = await supabase.from("tenant_members").upsert(
-    {
-      tenant_id: inv.tenant_id,
-      user_id: user.id,
-      role: inv.role,
-    },
-    { onConflict: "tenant_id,user_id" }
-  );
-
-  if (insertError) {
-    const mapped = mapInvitationDbError(insertError);
-    if (mapped) {
-      return NextResponse.json({ error: mapped.message }, { status: mapped.status });
-    }
-    return NextResponse.json({ error: "Unable to join the workspace. Try again or contact support." }, { status: 500 });
-  }
-
   try {
-    await syncAccountMemberForInternalTenantRole({
+    await acceptInternalTenantInviteMembership({
       tenantId: inv.tenant_id,
       userId: user.id,
       tenantRole: inv.role,
