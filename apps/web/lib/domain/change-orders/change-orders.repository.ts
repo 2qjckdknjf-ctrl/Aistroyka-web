@@ -140,12 +140,16 @@ export async function updateChangeOrder(
     implemented_by: string | null;
   }>
 ): Promise<boolean> {
-  const { error } = await supabase
+  // Require a returned row so RLS-filtered 0-row updates fail closed (PostgREST
+  // returns no error when UPDATE matches zero rows).
+  const { data, error } = await supabase
     .from("project_change_orders")
     .update({ ...patch, updated_at: new Date().toISOString() })
     .eq("id", id)
-    .eq("tenant_id", tenantId);
-  return !error;
+    .eq("tenant_id", tenantId)
+    .select("id")
+    .maybeSingle();
+  return !error && !!data;
 }
 
 export async function listEvents(
