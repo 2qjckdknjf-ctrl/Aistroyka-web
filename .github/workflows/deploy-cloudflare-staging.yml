@@ -15,7 +15,6 @@ on:
       - 'AGENTS.md'
       - 'README.md'
       - 'docs/**'
-      - '**/*.md'
   workflow_dispatch:
     inputs:
       ref:
