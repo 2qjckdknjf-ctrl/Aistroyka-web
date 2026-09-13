@@ -206,8 +206,10 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
                     }
                 } catch (e: SyncConflictError) {
                     if (e.mustBootstrap) {
-                        cursor = e.serverCursor
-                        saveCursor(cursor)
+                        // Reset to 0 until bootstrap succeeds — adopting serverCursor early
+                        // skips bootstrap on the next cold sync if bootstrap fails mid-recovery.
+                        cursor = 0
+                        saveCursor(0)
                         needsBootstrap = true
                         continue
                     }
