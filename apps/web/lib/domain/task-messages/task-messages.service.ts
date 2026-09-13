@@ -62,10 +62,18 @@ export async function listTaskMessages(
   const access = await assertTaskChatAccess(supabase, ctx, taskId);
   if (!access.ok) return { result: null, error: access.error, status: access.status, code: access.code };
 
-  const { data, nextCursor } = await repo.listByTask(supabase, ctx.tenantId!, taskId, {
-    limit: opts.limit ?? 50,
-    cursor: opts.cursor,
-  });
+  const { data, nextCursor, error: listError } = await repo.listByTask(
+    supabase,
+    ctx.tenantId!,
+    taskId,
+    {
+      limit: opts.limit ?? 50,
+      cursor: opts.cursor,
+    }
+  );
+  if (listError) {
+    return { result: null, error: "Failed to load messages", status: 500, code: "list_failed" };
+  }
   return { result: { data, nextCursor }, error: "", status: 200 };
 }
 
