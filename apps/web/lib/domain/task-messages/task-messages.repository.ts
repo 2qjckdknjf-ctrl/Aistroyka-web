@@ -69,24 +69,42 @@ export function decodeMessageCursor(cursor: string): { createdAt: string; id: st
   }
 }
 
+/**
+ * Convert a newest-first DB page into ascending display order (oldest→newest
+ * within the latest window). Pure helper for chat "tail" loads.
+ */
+export function materializeTailPage<T>(
+  newestFirstRows: T[],
+  limit: number
+): { page: T[]; hasOlder: boolean } {
+  const hasOlder = newestFirstRows.length > limit;
+  const windowNewestFirst = newestFirstRows.slice(0, limit);
+  return { page: [...windowNewestFirst].reverse(), hasOlder };
+}
+
 export async function listByTask(
   supabase: SupabaseClient,
   tenantId: string,
   taskId: string,
-  opts: { limit: number; cursor?: string | null }
+  opts: { limit: number; cursor?: string | null; tail?: boolean }
 ): Promise<{ data: TaskMessage[]; nextCursor: string | null }> {
   const limit = Math.min(Math.max(opts.limit, 1), 100);
+  const tail = opts.tail === true;
+
+  // Tail mode: return the newest `limit` rows (ascending within the window) so
+  // chat UIs open on recent conversation instead of the oldest page.
+  // Forward `cursor` is ignored in tail mode (iOS oldest→newest paging unchanged).
   let query = supabase
     .from("task_messages")
     .select(MESSAGE_SELECT)
     .eq("tenant_id", tenantId)
     .eq("task_id", taskId)
     .is("deleted_at", null)
-    .order("created_at", { ascending: true })
-    .order("id", { ascending: true })
+    .order("created_at", { ascending: !tail })
+    .order("id", { ascending: !tail })
     .limit(limit + 1);
 
-  if (opts.cursor) {
+  if (!tail && opts.cursor) {
     const decoded = decodeMessageCursor(opts.cursor);
     if (decoded) {
       const ts = quoteFilterValue(decoded.createdAt);
@@ -100,15 +118,26 @@ export async function listByTask(
   if (error || !data) return { data: [], nextCursor: null };
 
   const rows = data as MessageRow[];
-  const page = rows.slice(0, limit);
+  let page: MessageRow[];
+  let nextCursor: string | null = null;
+
+  if (tail) {
+    const materialised = materializeTailPage(rows, limit);
+    page = materialised.page;
+    // No older-history cursor yet — chat panel only needs the latest window.
+    nextCursor = null;
+  } else {
+    page = rows.slice(0, limit);
+    const last = page[page.length - 1];
+    nextCursor =
+      rows.length > limit && last ? encodeMessageCursor(last.created_at, last.id) : null;
+  }
+
   const enriched = await attachUploadMeta(
     supabase,
     tenantId,
     page.map((row) => mapRow(row))
   );
-  const last = page[page.length - 1];
-  const nextCursor =
-    rows.length > limit && last ? encodeMessageCursor(last.created_at, last.id) : null;
   return { data: enriched, nextCursor };
 }
 

@@ -57,7 +57,7 @@ export async function listTaskMessages(
   supabase: SupabaseClient,
   ctx: TenantContext,
   taskId: string,
-  opts: { limit?: number; cursor?: string | null } = {}
+  opts: { limit?: number; cursor?: string | null; tail?: boolean } = {}
 ): Promise<{ result: ListTaskMessagesResult | null; error: string; status: number; code?: string }> {
   const access = await assertTaskChatAccess(supabase, ctx, taskId);
   if (!access.ok) return { result: null, error: access.error, status: access.status, code: access.code };
@@ -65,6 +65,7 @@ export async function listTaskMessages(
   const { data, nextCursor } = await repo.listByTask(supabase, ctx.tenantId!, taskId, {
     limit: opts.limit ?? 50,
     cursor: opts.cursor,
+    tail: opts.tail,
   });
   return { result: { data, nextCursor }, error: "", status: 200 };
 }
