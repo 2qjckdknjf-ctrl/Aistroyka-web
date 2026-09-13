@@ -8,6 +8,14 @@ name: Deploy Cloudflare (Staging)
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'STATUS.md'
+      - 'PROJECT_CONTEXT.md'
+      - 'PROJECT_DASHBOARD.md'
+      - 'AGENTS.md'
+      - 'README.md'
+      - 'docs/**'
+      - '**/*.md'
   workflow_dispatch:
     inputs:
       ref:
