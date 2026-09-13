@@ -7,6 +7,11 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { getRunRecordIdByRunId } from "../run/run.repository";
 import { createFeedbackRecord } from "./feedback.repository";
 import { logPhaseDFeedbackRecorded } from "../telemetry/phase-d-telemetry";
+import {
+  parseFeedbackPreferencePair,
+  tryCaptureFeedbackPreferencePair,
+  type FeedbackPreferencePairPayload,
+} from "@/lib/platform/ai-flywheel/feedback-wire";
 import type {
   CreateFeedbackInput,
   FeedbackCategory,
@@ -48,7 +53,8 @@ export function validateLinkedRefs(v: unknown): LinkedRef[] {
 
 export async function submitFeedback(
   supabase: SupabaseClient,
-  input: CreateFeedbackInput
+  input: CreateFeedbackInput,
+  options?: { adminClient?: SupabaseClient | null }
 ): Promise<SubmitFeedbackResult> {
   if (!input.runId?.trim()) {
     return { success: false, error: "runId required" };
@@ -85,5 +91,17 @@ export async function submitFeedback(
     sourceKind: input.sourceKind,
     feedbackCategory: input.feedbackCategory,
   });
+
+  await tryCaptureFeedbackPreferencePair(
+    options?.adminClient ?? null,
+    input.tenantId,
+    input.preferencePair ?? null
+  );
+
   return { success: true, feedbackId: feedback.id };
+}
+
+/** Parse optional preference pair fields from API body. */
+export function parsePreferencePairFromBody(body: Record<string, unknown>): FeedbackPreferencePairPayload | null {
+  return parseFeedbackPreferencePair(body);
 }

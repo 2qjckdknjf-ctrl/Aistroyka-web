@@ -221,6 +221,12 @@
 "mgr_copilot_input_placeholder" = "Ask about this project…";
 "mgr_copilot_welcome" = "Ask a question about schedule, risks, or field evidence. Answers use live project intelligence context.";
 "mgr_copilot_fallback_fmt" = "Copilot used fallback mode (%@). Retry later for full model guidance.";
+"mgr_copilot_optional_feedback" = "Optional AI feedback";
+"mgr_copilot_feedback_hint" = "Optional: suggest a better answer for internal AI quality capture.";
+"mgr_copilot_correction_optional" = "Optional correction (leave empty for score-only feedback)";
+"mgr_copilot_submit_feedback" = "Submit feedback";
+"mgr_copilot_feedback_saved" = "Feedback saved";
+"mgr_copilot_feedback_failed" = "Could not save feedback";
 "mgr_ai_jobs_link" = "AI analysis jobs";
 "mgr_ai_jobs_section" = "Analysis jobs";
 "mgr_ai_tab_copilot_hint" = "Open a project → Intelligence or Copilot for full AI assistant.";
