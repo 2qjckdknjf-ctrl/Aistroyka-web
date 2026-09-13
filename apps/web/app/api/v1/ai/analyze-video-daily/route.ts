@@ -3,13 +3,19 @@
  *
  * Request: JSON { video_url (required), work_date? (YYYY-MM-DD), media_id?, project_id? }.
  * Response: 200 DailyWorkVideoAnalysis (see @aistroyka/contracts).
+ * Requires tenant auth (or valid x-cron-secret for internal job workers).
  * Requires Gemini (GOOGLE_AI_API_KEY or GEMINI_API_KEY). No OpenAI/Anthropic fallback for native video.
  */
 
 import { NextResponse } from "next/server";
-import { getTenantContextFromRequest } from "@/lib/tenant";
+import {
+  getTenantContextFromRequest,
+  requireTenant,
+  TenantRequiredError,
+} from "@/lib/tenant";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { createClientFromRequest } from "@/lib/supabase/server";
+import { hasValidCronSecret } from "@/lib/api/cron-auth";
 import { checkRateLimit } from "@/lib/platform/rate-limit/rate-limit.service";
 import { checkQuota, checkBudgetAlert, estimateGeminiVideoDailyQuotaReserveUsd } from "@/lib/platform/ai-usage/ai-usage.service";
 import { analyzeVideoDailyWork, AIPolicyBlockedError, AIVideoDailyFailedError } from "@/lib/platform/ai/ai.service";
@@ -132,6 +138,33 @@ export async function POST(request: Request) {
 
   const tenantCtx = await getTenantContextFromRequest(request);
   const userSupabase = await createClientFromRequest(request);
+  const cronAuthorized = hasValidCronSecret(request);
+
+  try {
+    requireTenant(tenantCtx);
+  } catch (e) {
+    if (e instanceof TenantRequiredError) {
+      if (!cronAuthorized) {
+        logVisionAnalyzeError({
+          request_id: requestId,
+          route: ROUTE_KEY,
+          tenant_id: tenantCtx.tenantId,
+          latency_ms: Date.now() - start,
+          error_kind: "auth_failure",
+          http_status: 401,
+          ...rel(),
+        });
+        return wrap(
+          NextResponse.json({ error: e.message, request_id: requestId }, { status: 401 }),
+          tenantCtx.tenantId,
+          tenantCtx.userId
+        );
+      }
+    } else {
+      throw e;
+    }
+  }
+
   const admin = getAdminClient();
   if (admin) {
     try {

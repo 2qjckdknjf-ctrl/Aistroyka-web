@@ -1,5 +1,29 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi, beforeEach } from "vitest";
 import { POST } from "./route";
+
+const getTenantContextFromRequest = vi.fn();
+
+vi.mock("@/lib/tenant", () => {
+  class TenantRequiredError extends Error {
+    constructor(message = "Authentication required") {
+      super(message);
+      this.name = "TenantRequiredError";
+    }
+  }
+  return {
+    getTenantContextFromRequest: (...args: unknown[]) => getTenantContextFromRequest(...args),
+    requireTenant: (ctx: { tenantId?: string | null; userId?: string | null }) => {
+      if (!ctx.tenantId) {
+        throw new TenantRequiredError(ctx.userId ? "User has no tenant membership" : "Authentication required");
+      }
+    },
+    TenantRequiredError,
+  };
+});
+
+vi.mock("@/lib/supabase/server", () => ({
+  createClientFromRequest: vi.fn().mockResolvedValue({}),
+}));
 
 function jsonRequest(body: object) {
   return new Request("http://test/api/ai/analyze-image", {
@@ -10,6 +34,22 @@ function jsonRequest(body: object) {
 }
 
 describe("POST /api/ai/analyze-image", () => {
+  beforeEach(() => {
+    getTenantContextFromRequest.mockResolvedValue({
+      tenantId: null,
+      userId: null,
+      role: null,
+      subscriptionTier: "free",
+    });
+  });
+
+  it("returns 401 when unauthenticated and no cron secret", async () => {
+    vi.stubEnv("OPENAI_API_KEY", "sk-test");
+    const req = jsonRequest({ image_url: "https://example.com/photo.jpg" });
+    const res = await POST(req);
+    expect(res.status).toBe(401);
+  });
+
   it("returns 503 when no vision provider is configured", async () => {
     vi.stubEnv("OPENAI_API_KEY", "");
     vi.stubEnv("ANTHROPIC_API_KEY", "");

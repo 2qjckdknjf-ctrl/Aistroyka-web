@@ -3,7 +3,7 @@
  *
  * Contract:
  * - Request: POST JSON { image_url (required), media_id?, project_id? }.
- * - When project_id is set: requires tenant auth and project membership (403 Insufficient rights).
+ * - Requires tenant auth (or valid x-cron-secret for internal job workers). When project_id is set: also requires project membership (403 Insufficient rights).
  * - Response: 200 with AnalysisResult { stage, completion_percent, risk_level, detected_issues, recommendations }.
  * - Degraded success: 200 deterministic AnalysisResult when vision routers fail but `AI_VISION_DETERMINISTIC_FALLBACK` is enabled (default); `X-AI-Fallback-Reason` header set.
  * - Errors: 400 (bad body), 413 (body too large), 402 (quota), 429 (rate limit), 403 (policy block), 502/504 (AI when fallback disabled), 503 (no vision provider configured).
@@ -15,12 +15,14 @@
 import { NextResponse } from "next/server";
 import {
   getTenantContextFromRequest,
+  isTenantContextPresent,
   requireTenant,
   TenantRequiredError,
 } from "@/lib/tenant";
 import { getProjectForInternalWorkspace } from "@/lib/domain/projects/project.service";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { createClientFromRequest } from "@/lib/supabase/server";
+import { hasValidCronSecret } from "@/lib/api/cron-auth";
 import { checkRateLimit } from "@/lib/platform/rate-limit/rate-limit.service";
 import { checkQuota, checkBudgetAlert, estimateMaxVisionCostUsd } from "@/lib/platform/ai-usage/ai-usage.service";
 import { analyzeImage, AIPolicyBlockedError, AIVisionFailedError } from "@/lib/platform/ai/ai.service";
@@ -160,18 +162,17 @@ export async function POST(request: Request) {
 
   const tenantCtx = await getTenantContextFromRequest(request);
   const userSupabase = await createClientFromRequest(request);
+  const cronAuthorized = hasValidCronSecret(request);
 
-  const projectId = parsed.data.project_id?.trim() || null;
-  if (projectId) {
-    try {
-      requireTenant(tenantCtx);
-    } catch (e) {
-      if (e instanceof TenantRequiredError) {
+  try {
+    requireTenant(tenantCtx);
+  } catch (e) {
+    if (e instanceof TenantRequiredError) {
+      if (!cronAuthorized) {
         logVisionAnalyzeError({
           request_id: requestId,
           route: ROUTE_KEY,
           tenant_id: tenantCtx.tenantId,
-          project_id: projectId,
           latency_ms: Date.now() - start,
           error_kind: "auth_failure",
           http_status: 401,
@@ -183,8 +184,13 @@ export async function POST(request: Request) {
           tenantCtx.userId
         );
       }
+    } else {
       throw e;
     }
+  }
+
+  const projectId = parsed.data.project_id?.trim() || null;
+  if (projectId && isTenantContextPresent(tenantCtx)) {
     const { data: project, error: projectError } = await getProjectForInternalWorkspace(
       userSupabase,
       tenantCtx,

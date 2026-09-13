@@ -39,3 +39,11 @@ export function requireCronSecretIfEnabled(request: Request): NextResponse | nul
   }
   return null;
 }
+
+/** True when the request presents a configured cron secret that matches exactly. */
+export function hasValidCronSecret(request: Request): boolean {
+  const expected = process.env.CRON_SECRET?.trim();
+  if (!expected) return false;
+  const provided = request.headers.get(CRON_SECRET_HEADER)?.trim();
+  return !!provided && provided === expected;
+}
