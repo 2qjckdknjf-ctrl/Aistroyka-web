@@ -1,0 +1,16 @@
+---
+description: Ordered AISTROYKA AI/intelligence roadmap; pilot-first and evidence-first
+alwaysApply: true
+---
+
+For any AI, Copilot, vision, client-intake, contractor-matching, materials or agentic work:
+
+1. Read `/AGENTS.md`, `/PROJECT_CONTEXT.md`, `/STATUS.md`.
+2. Read `/docs/roadmap/AISTROYKA_AI_INTELLIGENCE_SEQUENCE.md`.
+3. Current contractor-ops pilot/release gates stay P0. Do not widen to FULL/portal or new major AI UX merely because a later roadmap item exists.
+4. Select the relevant dependency-satisfied `AIS-*` task and hard-audit existing primitives first.
+5. Reuse Construction Graph, AgentExecutionContext, Skill Registry, evidence and proposed-action primitives where they already exist; do not build parallel engines.
+6. `RESULT CLAIM != EVIDENCE`. AI observations require provenance/confidence; privileged/critical state transitions require evidence and human/ROMA gates as designed.
+7. Manager/human approval remains authoritative for work acceptance, finance-sensitive decisions and customer commitments.
+8. Runtime/model providers are replaceable; do not persist domain truth in provider-specific state.
+9. Implement one additive slice, test it, record evidence/handoff, and stop at its gate rather than silently starting the next blocked task.

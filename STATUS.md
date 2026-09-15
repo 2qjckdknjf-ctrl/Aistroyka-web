@@ -2,8 +2,8 @@
 
 > Live project status. Keep this short and mobile-readable.
 
-**Last updated:** 2026-09-14  
-**Updated by:** docs — scope freeze contractor-ops-only (Grow OS TASK-AISTROYKA-002)
+**Last updated:** 2026-09-15  
+**Updated by:** docs — AI development alignment; current contractor-ops scope unchanged
 
 ---
 
@@ -30,6 +30,7 @@
 
 ## Notes
 
-Deploy SoT: Cloudflare Workers (Vercel = preview only). Docs merges: prefer `[skip-staging-deploy]` in commit message; STATUS.md is also under staging `paths-ignore` (#343).
+- Deploy SoT: Cloudflare Workers (Vercel = preview only). Docs merges: prefer `[skip-staging-deploy]` in commit message; STATUS.md is also under staging `paths-ignore` (#343).
+- Strategic AI/intelligence work is ordered in `docs/roadmap/AISTROYKA_AI_INTELLIGENCE_SEQUENCE.md`. It is **not the active production slice** and does not override contractor-ops pilot gates. Agents must follow `AIS-PILOT-001 -> AIS-EVID-002 -> ...` dependencies rather than jumping to client video/matching/materials features.
 
 ---

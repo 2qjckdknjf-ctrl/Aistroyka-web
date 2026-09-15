@@ -2,13 +2,14 @@
 
 > Master, **safe-to-share** context for any Cursor agent (desktop or cloud). Contains **no secrets**.
 > If anything here conflicts with reality you observe, trust the live code/runtime and update this file.
-> Last reviewed: 2026-06-30.
+> Last reviewed: 2026-09-15.
 
 ## 1. Project
 
 - **Name:** AISTROYKA.
 - **Purpose:** construction-management platform — web app + iOS + Android, with an AI/Copilot layer, serving contractors and (separately) customers/owners/stakeholders.
 - **Authoritative roadmap:** `docs/roadmap/AISTROYKA_MEGA_ROADMAP_CUSTOMER_FINANCE_SAFE.md`. Work sequentially by roadmap phases.
+- **Authoritative AI/intelligence sequence:** `docs/roadmap/AISTROYKA_AI_INTELLIGENCE_SEQUENCE.md`. It is subordinate to current pilot/release gates and must not be used to skip them.
 
 ## 2. Non-negotiable rules (read before any work)
 
@@ -19,6 +20,8 @@
 5. **No faking success** — no fake builds/metrics; back claims with evidence (`buildStamp`, smoke output, CI runs).
 6. **Don't delete** files/branches without explicit necessity and the gated archival flow.
 7. **Additive billing/account layer is gated** — keep production billing behavior identical; do not flip `ENTITLEMENT_RESOLUTION_SOURCE` to account-first until shadow/staging/production gates pass.
+8. **AI development order is gated** — finish/stabilize contractor-ops pilot before major new AI UX; reuse existing Construction Graph / AgentExecutionContext / Skill Registry / proposed-action primitives after audit; do not create parallel agent/evidence/state engines.
+9. **AI claims are not evidence** — privileged/critical state transitions require evidence and, where applicable, independent ROMA verification; manager/human approval remains authoritative for work acceptance and finance-sensitive decisions.
 
 ## 3. Tech stack
 
@@ -81,11 +84,14 @@ See live `STATUS.md` (root) — single source of "what's happening right now".
 - **Branch/worktree sprawl** (194 local / 142 remote branches, 38 worktrees) — biggest obstacle to safe cloud-agent work. Mitigation: always trust `STATUS.md` for the active branch, never guess.
 - Supabase CLI not installed locally (DB CLI ops blocked; MCP alternative exists).
 - Migration repo↔remote timestamp skew (reconcile before CLI push/diff).
+- Daily AI/news discoveries are roadmap inputs, not permission to widen the current pilot scope. Add them to the ordered AI sequence and respect dependencies.
 
 ## 11. How a cloud agent should start work
 
 1. Read this file, then `STATUS.md`, then the latest `docs/handoff/*`.
 2. Read `docs/ops/CLOUD_AGENT_WORKFLOW.md` and follow it exactly.
-3. Work only inside a scoped branch from `origin/main`; open a `docs/tasks/*` file from the template.
-4. Run validation (`docs/ops/VALIDATION_CHECKLIST.md`); never deploy or apply DB migrations without explicit approval.
-5. Write a `docs/handoff/*` file and update `STATUS.md` before ending.
+3. For AI/intelligence work, read `docs/roadmap/AISTROYKA_AI_INTELLIGENCE_SEQUENCE.md`, select the relevant dependency-satisfied `AIS-*` task, and audit existing primitives before coding.
+4. Work only inside a scoped branch from `origin/main`; open a `docs/tasks/*` file from the template.
+5. Run validation (`docs/ops/VALIDATION_CHECKLIST.md`); never deploy or apply DB migrations without explicit approval.
+6. Write a `docs/handoff/*` file and update `STATUS.md` before ending.
+7. Do not silently start the next blocked intelligence task after closing the current slice.
