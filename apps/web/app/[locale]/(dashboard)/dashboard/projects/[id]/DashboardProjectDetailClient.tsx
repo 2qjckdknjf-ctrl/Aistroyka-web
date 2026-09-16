@@ -38,6 +38,7 @@ import {
   ProjectCommandCenterOverview,
 } from "@/components/canon";
 import { ProjectVideoDailyAnalysisPanel } from "../../../projects/ProjectVideoDailyAnalysisPanel";
+import { ProjectFieldDailyLogPanel } from "../../../projects/ProjectFieldDailyLogPanel";
 import { downloadProjectReportsExport } from "@/components/projects/reports-export-ui";
 import {
   DEFAULT_PROJECT_DETAIL_TAB,
@@ -665,6 +666,13 @@ function ProjectAiPanel({
         <SectionHeader title={tProject("videoDailyTitle")} subtitle={tProject("videoDailySubtitle")} />
         <DashboardGlassCard>
           <ProjectVideoDailyAnalysisPanel projectId={projectId} />
+        </DashboardGlassCard>
+      </section>
+
+      <section>
+        <SectionHeader title={tProject("fieldDailyTitle")} subtitle={tProject("fieldDailySubtitle")} />
+        <DashboardGlassCard>
+          <ProjectFieldDailyLogPanel projectId={projectId} />
         </DashboardGlassCard>
       </section>
 
