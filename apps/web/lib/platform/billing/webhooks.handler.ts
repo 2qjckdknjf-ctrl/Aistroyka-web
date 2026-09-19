@@ -48,7 +48,7 @@ export async function handleSubscriptionUpdated(
   if (!tenantId) return;
   const planId = subscription.items?.data?.[0]?.price?.id ?? "";
   const tier = planToTier(planId);
-  await supabase.from("billing_customers").upsert(
+  const { error: billingError } = await supabase.from("billing_customers").upsert(
     {
       tenant_id: tenantId,
       stripe_subscription_id: subscription.id,
@@ -63,7 +63,13 @@ export async function handleSubscriptionUpdated(
     },
     { onConflict: "tenant_id" }
   );
-  await upsertEntitlements(supabase, { tenant_id: tenantId, tier });
+  if (billingError) {
+    throw new Error(billingError.message ?? "billing_customers upsert failed");
+  }
+  const { error: entitlementsError } = await upsertEntitlements(supabase, { tenant_id: tenantId, tier });
+  if (entitlementsError) {
+    throw new Error(entitlementsError);
+  }
 }
 
 async function resolveTenantByStripeCustomer(supabase: SupabaseClient, stripeCustomerId: string): Promise<string | null> {
@@ -83,11 +89,14 @@ export async function handleCheckoutCompleted(
   const tenantId = session.client_reference_id ?? null;
   const customerId = session.customer as string | null;
   if (!tenantId || !customerId) return;
-  await supabase.from("billing_customers").upsert(
+  const { error } = await supabase.from("billing_customers").upsert(
     {
       tenant_id: tenantId,
       stripe_customer_id: customerId,
     },
     { onConflict: "tenant_id" }
   );
+  if (error) {
+    throw new Error(error.message ?? "billing_customers upsert failed");
+  }
 }
