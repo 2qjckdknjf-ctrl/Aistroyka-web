@@ -1,6 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { TenantContext } from "@/lib/tenant/tenant.types";
-import { canReadProjects, isPortalOnlyStakeholderRole } from "@/lib/tenant/tenant.policy";
+import {
+  canManageProjects,
+  canReadProjects,
+  isPortalOnlyStakeholderRole,
+} from "@/lib/tenant/tenant.policy";
 import { getById as getProjectById } from "@/lib/domain/projects/project.repository";
 import * as repo from "./field-daily-log.repository";
 import {
@@ -21,6 +25,14 @@ function requireReader(ctx: TenantContext): string | null {
   const portal = denyPortal(ctx);
   if (portal) return portal;
   if (!canReadProjects(ctx)) return "Insufficient rights";
+  if (!ctx.tenantId) return "Tenant required";
+  return null;
+}
+
+function requireWriter(ctx: TenantContext): string | null {
+  const portal = denyPortal(ctx);
+  if (portal) return portal;
+  if (!canManageProjects(ctx)) return "Insufficient rights";
   if (!ctx.tenantId) return "Tenant required";
   return null;
 }
@@ -57,7 +69,7 @@ export async function createFieldDailyLogDraft(
   ctx: TenantContext,
   input: CreateFieldDailyLogInput
 ): Promise<{ data: FieldDailyLog | null; error: string }> {
-  const gate = requireReader(ctx);
+  const gate = requireWriter(ctx);
   if (gate) return { data: null, error: gate };
 
   if (!isValidWorkDate(input.work_date)) {
@@ -82,7 +94,7 @@ export async function updateFieldDailyLogDraft(
   logId: string,
   input: UpdateFieldDailyLogDraftInput
 ): Promise<{ data: FieldDailyLog | null; error: string }> {
-  const gate = requireReader(ctx);
+  const gate = requireWriter(ctx);
   if (gate) return { data: null, error: gate };
 
   const existing = await repo.getById(supabase, logId, ctx.tenantId!);
@@ -108,7 +120,7 @@ export async function confirmFieldDailyLog(
   projectId: string,
   logId: string
 ): Promise<{ data: FieldDailyLog | null; error: string }> {
-  const gate = requireReader(ctx);
+  const gate = requireWriter(ctx);
   if (gate) return { data: null, error: gate };
 
   const existing = await repo.getById(supabase, logId, ctx.tenantId!);
