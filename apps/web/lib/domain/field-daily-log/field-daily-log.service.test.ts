@@ -13,6 +13,7 @@ import {
 
 vi.mock("@/lib/tenant/tenant.policy", () => ({
   canReadProjects: vi.fn(() => true),
+  canManageProjects: vi.fn(() => true),
   isPortalOnlyStakeholderRole: vi.fn(() => false),
 }));
 vi.mock("@/lib/domain/projects/project.repository", () => ({
@@ -64,9 +65,11 @@ describe("field-daily-log pure gates", () => {
 
 describe("field-daily-log.service", () => {
   beforeEach(async () => {
+    vi.clearAllMocks();
     const policy = await import("@/lib/tenant/tenant.policy");
     const projectRepo = await import("@/lib/domain/projects/project.repository");
     vi.mocked(policy.canReadProjects).mockReturnValue(true);
+    vi.mocked(policy.canManageProjects).mockReturnValue(true);
     vi.mocked(policy.isPortalOnlyStakeholderRole).mockReturnValue(false);
     vi.mocked(projectRepo.getById).mockResolvedValue({
       id: "proj-1",
@@ -163,5 +166,45 @@ describe("field-daily-log.service", () => {
     const { data, error } = await confirmFieldDailyLog(noopSupabase, ctx, "proj-1", "log-1");
     expect(data).toBeNull();
     expect(error).toBe("Only draft logs can be confirmed");
+  });
+
+  it("listFieldDailyLogs still allows viewers", async () => {
+    const policy = await import("@/lib/tenant/tenant.policy");
+    const repo = await import("./field-daily-log.repository");
+    vi.mocked(policy.canManageProjects).mockReturnValue(false);
+    vi.mocked(policy.canReadProjects).mockReturnValue(true);
+    vi.mocked(repo.listByProject).mockResolvedValue([draftLog()]);
+
+    const { data, error } = await listFieldDailyLogs(noopSupabase, ctx, "proj-1");
+    expect(error).toBe("");
+    expect(data).toHaveLength(1);
+  });
+
+  it("create/update/confirm reject viewer writes", async () => {
+    const policy = await import("@/lib/tenant/tenant.policy");
+    const repo = await import("./field-daily-log.repository");
+    vi.mocked(policy.canManageProjects).mockReturnValue(false);
+    vi.mocked(policy.canReadProjects).mockReturnValue(true);
+
+    const created = await createFieldDailyLogDraft(noopSupabase, ctx, {
+      project_id: "proj-1",
+      work_date: "2026-09-16",
+      note: "viewer should not write",
+    });
+    expect(created.data).toBeNull();
+    expect(created.error).toBe("Insufficient rights");
+    expect(repo.create).not.toHaveBeenCalled();
+
+    const updated = await updateFieldDailyLogDraft(noopSupabase, ctx, "proj-1", "log-1", {
+      note: "nope",
+    });
+    expect(updated.data).toBeNull();
+    expect(updated.error).toBe("Insufficient rights");
+    expect(repo.updateDraft).not.toHaveBeenCalled();
+
+    const confirmed = await confirmFieldDailyLog(noopSupabase, ctx, "proj-1", "log-1");
+    expect(confirmed.data).toBeNull();
+    expect(confirmed.error).toBe("Insufficient rights");
+    expect(repo.confirm).not.toHaveBeenCalled();
   });
 });
