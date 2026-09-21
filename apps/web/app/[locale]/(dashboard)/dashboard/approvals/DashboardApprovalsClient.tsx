@@ -34,7 +34,9 @@ async function fetchPendingApprovals(): Promise<PendingApprovalRow[]> {
   const res = await fetch("/api/v1/approvals/pending?limit=50", {
     credentials: "include",
   });
-  if (!res.ok) return [];
+  if (!res.ok) {
+    throw new Error("Failed to load pending approvals");
+  }
   const json = await res.json();
   return json.data ?? [];
 }
