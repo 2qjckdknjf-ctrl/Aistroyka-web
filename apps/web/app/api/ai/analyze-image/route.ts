@@ -3,8 +3,9 @@
  *
  * Contract:
  * - Request: POST JSON { image_url (required), media_id?, project_id? }.
+ * - Requires tenant auth (or valid x-cron-secret for internal job workers).
  * - Response: 200 with AnalysisResult { stage, completion_percent, risk_level, detected_issues, recommendations }.
- * - Errors: 400 (bad body), 413 (body too large), 402 (quota), 429 (rate limit), 403 (policy block), 502/504 (AI), 503 (no vision provider configured).
+ * - Errors: 400 (bad body), 401 (unauthenticated), 413 (body too large), 402 (quota), 429 (rate limit), 403 (policy block), 502/504 (AI), 503 (no vision provider configured).
  *
  * All AI calls go through AIService (Policy Engine → Provider Router → usage).
  * Phase 8: vision telemetry + audit (no image URLs or prompts in logs).
@@ -12,9 +13,14 @@
 
 import { NextResponse } from "next/server";
 import { setLegacyApiHeaders } from "@/lib/api/deprecation-headers";
-import { getTenantContextFromRequest } from "@/lib/tenant";
+import {
+  getTenantContextFromRequest,
+  requireTenant,
+  TenantRequiredError,
+} from "@/lib/tenant";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { createClientFromRequest } from "@/lib/supabase/server";
+import { hasValidCronSecret } from "@/lib/api/cron-auth";
 import { checkRateLimit } from "@/lib/platform/rate-limit/rate-limit.service";
 import { checkQuota, checkBudgetAlert, estimateMaxVisionCostUsd } from "@/lib/platform/ai-usage/ai-usage.service";
 import { analyzeImage, AIPolicyBlockedError, AIVisionFailedError } from "@/lib/platform/ai/ai.service";
@@ -136,6 +142,33 @@ export async function POST(request: Request) {
 
   const tenantCtx = await getTenantContextFromRequest(request);
   const userSupabase = await createClientFromRequest(request);
+  const cronAuthorized = hasValidCronSecret(request);
+
+  try {
+    requireTenant(tenantCtx);
+  } catch (e) {
+    if (e instanceof TenantRequiredError) {
+      if (!cronAuthorized) {
+        logVisionAnalyzeError({
+          request_id: requestId,
+          route: ROUTE_KEY,
+          tenant_id: tenantCtx.tenantId,
+          latency_ms: Date.now() - start,
+          error_kind: "auth_failure",
+          http_status: 401,
+          ...rel(),
+        });
+        return wrap(
+          NextResponse.json({ error: e.message, request_id: requestId }, { status: 401 }),
+          tenantCtx.tenantId,
+          tenantCtx.userId
+        );
+      }
+    } else {
+      throw e;
+    }
+  }
+
   const admin = getAdminClient();
   if (admin) {
     try {

@@ -4,17 +4,25 @@ import { POST } from "./route";
 const getTenantContextFromRequest = vi.fn();
 const getProjectForInternalWorkspace = vi.fn();
 
-vi.mock("@/lib/tenant", () => ({
-  getTenantContextFromRequest: (...args: unknown[]) => getTenantContextFromRequest(...args),
-  requireTenant: (ctx: { tenantId?: string | null }) => {
-    if (!ctx.tenantId) throw new Error("Tenant required");
-  },
-  TenantRequiredError: class TenantRequiredError extends Error {
-    constructor(message = "Tenant required") {
+vi.mock("@/lib/tenant", () => {
+  class TenantRequiredError extends Error {
+    constructor(message = "Authentication required") {
       super(message);
+      this.name = "TenantRequiredError";
     }
-  },
-}));
+  }
+  return {
+    getTenantContextFromRequest: (...args: unknown[]) => getTenantContextFromRequest(...args),
+    isTenantContextPresent: (ctx: { tenantId?: string | null; userId?: string | null; role?: string | null }) =>
+      Boolean(ctx.tenantId && ctx.userId && ctx.role),
+    requireTenant: (ctx: { tenantId?: string | null; userId?: string | null }) => {
+      if (!ctx.tenantId) {
+        throw new TenantRequiredError(ctx.userId ? "User has no tenant membership" : "Authentication required");
+      }
+    },
+    TenantRequiredError,
+  };
+});
 
 vi.mock("@/lib/domain/projects/project.service", () => ({
   getProjectForInternalWorkspace: (...args: unknown[]) => getProjectForInternalWorkspace(...args),
@@ -46,11 +54,27 @@ describe("POST /api/v1/ai/analyze-image", () => {
     getProjectForInternalWorkspace.mockResolvedValue({ data: { id: "p1" }, error: null });
   });
 
+  it("returns 401 when unauthenticated and no cron secret", async () => {
+    vi.stubEnv("OPENAI_API_KEY", "sk-test");
+    getTenantContextFromRequest.mockResolvedValueOnce({
+      tenantId: null,
+      userId: null,
+      role: null,
+      subscriptionTier: "free",
+    });
+    const req = jsonRequest({ image_url: "https://example.com/photo.jpg" });
+    const res = await POST(req);
+    expect(res.status).toBe(401);
+    const data = (await res.json()) as { error?: string };
+    expect(data.error).toMatch(/Authentication|Tenant|membership/i);
+  });
+
   it("returns 403 when project_id is outside tenant rights", async () => {
     vi.stubEnv("OPENAI_API_KEY", "sk-test");
     getTenantContextFromRequest.mockResolvedValueOnce({
       tenantId: "tenant-a",
       userId: "user-1",
+      role: "owner",
       subscriptionTier: "free",
     });
     getProjectForInternalWorkspace.mockResolvedValueOnce({
