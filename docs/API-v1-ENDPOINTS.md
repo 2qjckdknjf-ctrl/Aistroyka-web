@@ -14,6 +14,22 @@ Base path: `/api/v1`. All endpoints that require auth use TenantContext (JWT + t
 
 ---
 
+## Auth
+
+Canonical `/api/v1/auth/*` handlers re-export `/api/auth/*` where noted. Cookie session (`sb-*`) for web. See `docs/auth/PASSWORD_RECOVERY.md` and `docs/auth/MULTI_PROVIDER_AUTH_INVENTORY.md`.
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/api/v1/auth/login` | No | Email/password cookie login. Body: `{ email, password, traceId? }`. Success `{ ok: true }` + `Set-Cookie`. Rate-limited **5/min/IP** when admin client exists. 400 missing fields; 429 limited; 503 missing Supabase env. Re-export of `/api/auth/login`. |
+| POST | `/api/v1/auth/forgot-password` | No | Request reset email. Body: `{ email, locale? }` (`en`/`ru`/`es`/`it`). Valid email + Supabase accept → `{ ok: true }` (does not prove the mailbox exists). Rate-limited **10/min/IP**. 400 invalid email; 429; 500 Supabase error; 503 missing env. Re-export of `/api/auth/forgot-password`. |
+| POST | `/api/v1/auth/reset-password` | Recovery session | Set new password. Body: `{ password, confirmPassword }` (min 8, must match). Calls `updateUser` then `signOut`. 401 invalid/expired link; 400 validation or Supabase update error. Re-export of `/api/auth/reset-password`. |
+| GET | `/api/v1/auth/methods` | Yes | Linked methods `{ methods: { email, apple, telegram }, linkedCount }`. |
+| POST | `/api/v1/auth/methods` | Yes | Unlink `apple` or `telegram`. Body: `{ action: "unlink", provider }`. Rejects last remaining method (`last_method_forbidden`). |
+
+Related (not under `/api/v1`): `GET /api/auth/callback` (OAuth + `recovery=1`), `GET /api/auth/diag` (`docs/AUTH_DIAG.md`).
+
+---
+
 ## Projects
 
 | Method | Endpoint | Auth | Description |
