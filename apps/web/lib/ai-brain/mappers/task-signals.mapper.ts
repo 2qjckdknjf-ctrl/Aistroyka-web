@@ -7,6 +7,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { TaskSignal } from "../domain";
 
 const BLOCKED_NO_REPORT_DAYS = 14;
+const ID_CHUNK_SIZE = 100;
 
 export async function getTaskSignals(
   supabase: SupabaseClient,
@@ -19,26 +20,28 @@ export async function getTaskSignals(
   blockedSince.setDate(blockedSince.getDate() - BLOCKED_NO_REPORT_DAYS);
   const blockedSinceIso = blockedSince.toISOString().slice(0, 10);
 
-  const { data: tasks } = await supabase
+  const { data: tasks, error: tasksError } = await supabase
     .from("worker_tasks")
     .select("id, status, due_date, assigned_to, title")
     .eq("project_id", projectId)
     .eq("tenant_id", tenantId)
     .in("status", ["pending", "in_progress"]);
+  if (tasksError) throw new Error("task_signals_tasks_query_failed");
 
   const signals: TaskSignal[] = [];
   const taskIds = (tasks ?? []).map((t) => (t as { id: string }).id);
 
-  let tasksWithRecentReport = new Set<string>();
-  if (taskIds.length > 0) {
-    const { data: reports } = await supabase
+  const tasksWithRecentReport = new Set<string>();
+  for (const ids of chunk(taskIds, ID_CHUNK_SIZE)) {
+    const { data: reports, error: reportsError } = await supabase
       .from("worker_reports")
       .select("task_id, submitted_at")
       .eq("tenant_id", tenantId)
-      .in("task_id", taskIds)
+      .in("task_id", ids)
       .not("submitted_at", "is", null)
       .gte("submitted_at", blockedSinceIso);
-    for (const r of (reports ?? []) as { task_id: string }[]) {
+    if (reportsError) throw new Error("task_signals_reports_query_failed");
+    for (const r of (reports ?? []) as { task_id: string | null }[]) {
       if (r.task_id) tasksWithRecentReport.add(r.task_id);
     }
   }
@@ -51,7 +54,7 @@ export async function getTaskSignals(
     title: string;
   }[]) {
     const dueDate = t.due_date;
-    const overdue = dueDate && dueDate < today;
+    const overdue = Boolean(dueDate && dueDate < today);
     const hasRecentReport = tasksWithRecentReport.has(t.id);
     const appearsBlocked = overdue && t.status === "in_progress" && !hasRecentReport;
 
@@ -93,4 +96,10 @@ export async function getTaskSignals(
     }
   }
   return signals;
+}
+
+function chunk<T>(items: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
+  return out;
 }
