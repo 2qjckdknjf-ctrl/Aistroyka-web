@@ -8,6 +8,8 @@ import {
 } from "./change-orders.service";
 import * as repo from "./change-orders.repository";
 import * as policy from "./change-orders.policy";
+import { canRespondToClientRequests } from "@/lib/domain/stakeholders/stakeholders.policy";
+import { getAdminClient } from "@/lib/supabase/admin";
 
 vi.mock("./change-orders.repository", () => ({
   insertChangeOrder: vi.fn(),
@@ -24,12 +26,21 @@ vi.mock("./change-orders.policy", () => ({
   canReadChangeOrders: vi.fn(),
 }));
 
+vi.mock("@/lib/domain/stakeholders/stakeholders.policy", () => ({
+  canRespondToClientRequests: vi.fn(),
+}));
+
+vi.mock("@/lib/supabase/admin", () => ({
+  getAdminClient: vi.fn().mockReturnValue(null),
+}));
+
 describe("change-orders.service", () => {
   const ctx = { tenantId: "t1", userId: "u1", role: "owner" } as never;
   const supabase = {} as never;
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(getAdminClient).mockReturnValue(null);
   });
 
   it("listChangeOrders excludes draft for non-manager", async () => {
@@ -135,7 +146,7 @@ describe("change-orders.service", () => {
   });
 
   it("respondToChangeOrderByCustomer rejects managers", async () => {
-    vi.mocked(policy.canReadChangeOrders).mockResolvedValue(true);
+    vi.mocked(canRespondToClientRequests).mockResolvedValue(true);
     vi.mocked(policy.canManageChangeOrders).mockResolvedValue(true);
     const r = await respondToChangeOrderByCustomer(supabase, ctx, "p1", "c1", "approve");
     expect(r.data).toBeNull();
@@ -143,9 +154,20 @@ describe("change-orders.service", () => {
     expect(repo.getById).not.toHaveBeenCalled();
   });
 
-  it("respondToChangeOrderByCustomer approves from proposed for stakeholder", async () => {
-    vi.mocked(policy.canReadChangeOrders).mockResolvedValue(true);
+  it("respondToChangeOrderByCustomer rejects viewers who can only read", async () => {
+    vi.mocked(canRespondToClientRequests).mockResolvedValue(false);
     vi.mocked(policy.canManageChangeOrders).mockResolvedValue(false);
+    const r = await respondToChangeOrderByCustomer(supabase, ctx, "p1", "c1", "approve");
+    expect(r.data).toBeNull();
+    expect(r.error).toBe("Insufficient rights");
+    expect(repo.updateChangeOrder).not.toHaveBeenCalled();
+  });
+
+  it("respondToChangeOrderByCustomer approves from proposed for decision-maker", async () => {
+    vi.mocked(canRespondToClientRequests).mockResolvedValue(true);
+    vi.mocked(policy.canManageChangeOrders).mockResolvedValue(false);
+    const admin = { admin: true } as never;
+    vi.mocked(getAdminClient).mockReturnValue(admin);
     const baseRow = {
       id: "c1",
       project_id: "p1",
@@ -180,12 +202,15 @@ describe("change-orders.service", () => {
     expect(r.error).toBe("");
     expect(r.data?.status).toBe("approved");
     expect(repo.updateChangeOrder).toHaveBeenCalledWith(
-      supabase,
+      admin,
       "c1",
       "t1",
       expect.objectContaining({ status: "approved", approved_by_customer: "u1" })
     );
-    expect(repo.insertEvent).toHaveBeenCalled();
+    expect(repo.insertEvent).toHaveBeenCalledWith(
+      admin,
+      expect.objectContaining({ change_order_id: "c1", to_status: "approved" })
+    );
   });
 
   it("updateChangeOrderContent rejects when locked", async () => {
