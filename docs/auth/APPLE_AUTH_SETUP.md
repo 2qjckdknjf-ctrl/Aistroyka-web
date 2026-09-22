@@ -38,20 +38,38 @@ In Supabase Auth -> Providers -> Apple:
 
 ## AISTROYKA Application Wiring
 
-- Web login/register now expose `Continue with Apple`.
-- Redirect target is `GET /api/auth/callback` with safe `next` handling.
-- Callback performs:
-  - code -> session exchange
+- Web login/register expose `Continue with Apple` (and Google) via `AuthProviderButtons`.
+- Redirect target is `GET /api/auth/callback` with safe `next` / `callback` handling.
+- Callback (non-recovery) performs:
+  - code → session exchange
   - onboarding profile bootstrap (if missing)
-  - provider identity mirror into `public.user_identities`
+  - provider identity mirror into `public.user_identities` when `app_metadata.provider` is `apple` or `google`
   - tenant-membership-aware routing (`/dashboard` or `/dashboard?onboarding=1`)
+- Recovery (`recovery=1`) skips identity linking. See `docs/auth/PASSWORD_RECOVERY.md`.
+
+Operator script (does not invent Apple keys; requires an existing `.p8` and `SUPABASE_ACCESS_TOKEN`):
+
+`node apps/web/scripts/enable-auth-apple.mjs`
+
+Defaults in that script match the live team: Services ID `ai.aistroyka.web`, additional Client IDs `ai.aistroyka.worker,ai.aistroyka.manager`, Team `43A4KW5BKB`.
 
 ## iOS Native Notes
 
-- Manager and Worker login views now include native `SignInWithAppleButton`.
-- Shared `AuthService.signInWithApple(...)` exchanges Apple `id_token` against Supabase.
+- Manager and Worker include entitlement `com.apple.developer.applesignin` and a native `SignInWithAppleButton`.
+- Shared `AuthService.signInWithApple(...)` exchanges Apple `id_token` against Supabase (`grant_type=id_token`), **not** web OAuth.
 - Full name (available only at first Apple consent) is forwarded into Supabase user metadata.
 - Existing email/password login remains intact.
+
+## Google (sibling provider)
+
+Do not reuse the Apple Services ID. Google uses a Web application OAuth client in GCP project `aistroyka-auth`.
+
+- Web: same callback as Apple (`/api/auth/callback`).
+- iOS: PKCE + `ASWebAuthenticationSession` (`AuthOAuthSession` / `AuthPKCE`) returning to `ai.aistroyka.worker://auth-callback` or `ai.aistroyka.manager://auth-callback`.
+- Enable: `node apps/web/scripts/enable-auth-google.mjs` with `GOOGLE_OAUTH_CLIENT_ID` + `GOOGLE_OAUTH_CLIENT_SECRET`.
+- Keep those custom schemes in the Supabase Redirect URL allow-list (`set-supabase-auth-urls.mjs` merges).
+
+Inventory: `docs/auth/MULTI_PROVIDER_AUTH_INVENTORY.md`.
 
 ## Security Notes
 

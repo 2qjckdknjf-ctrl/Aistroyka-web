@@ -3,6 +3,8 @@
 **Phase 8 — Pilot Rollout & Growth**  
 **Minimal, privacy-safe product analytics for pilot and growth.**
 
+**Status (2026-08-31):** The **in-app** events in this document (`login_success`, `task_assigned`, `report_submitted`, …) are still a design — there is no product_events emitter for them. The **public website** funnel (Growth OS beacons + `contact_leads` UTM) **is** implemented; see `docs/growth/WEBSITE_ACQUISITION.md`. Do not cite this plan as proof that product events are live.
+
 ---
 
 ## Tracked events
