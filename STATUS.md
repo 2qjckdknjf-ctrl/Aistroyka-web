@@ -33,3 +33,7 @@
 Deploy SoT: Cloudflare Workers (Vercel = preview only). Docs merges: prefer `[skip-staging-deploy]` in commit message; STATUS.md is also under staging `paths-ignore` (#343).
 
 ---
+
+## Planning update — 2026-09-23
+
+Docs branch: `docs/roadmap-consolidation-2026-09-23`, based on main `25b33d841189b31ff43538762b72a4f7024d701f`. [Handoff](docs/handoff/2026-09-23-roadmap-consolidation.md). New roadmap is future backlog; contractor-ops-only pilot remains the active scope. Runtime status above is historical and was not re-certified by this docs update. Next: fresh pilot/security gap audit before customer expansion.
