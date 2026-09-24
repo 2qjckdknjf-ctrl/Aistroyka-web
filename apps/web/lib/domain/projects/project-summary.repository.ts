@@ -25,6 +25,89 @@ export interface ProjectSummary {
   commercialOutstandingAmount: number;
 }
 
+const PENDING_REPORT_COUNT_FAILED = "Pending report count failed";
+
+type IdProjectRow = { id: string; project_id: string | null };
+
+/**
+ * `worker_reports` has no `project_id`. Match the report list: the day's project
+ * wins, otherwise the linked task's project.
+ */
+export async function countSubmittedReportsForProject(
+  supabase: SupabaseClient,
+  tenantId: string,
+  projectId: string,
+  projectDayIds: string[]
+): Promise<number> {
+  const dayIdSet = new Set(projectDayIds);
+  const ids = new Set<string>();
+
+  if (projectDayIds.length > 0) {
+    const { data, error } = await supabase
+      .from("worker_reports")
+      .select("id")
+      .eq("tenant_id", tenantId)
+      .eq("status", "submitted")
+      .in("day_id", projectDayIds);
+    if (error) throw new Error(PENDING_REPORT_COUNT_FAILED);
+    for (const row of (data ?? []) as { id: string }[]) ids.add(row.id);
+  }
+
+  const { data: taskRows, error: taskError } = await supabase
+    .from("worker_tasks")
+    .select("id")
+    .eq("tenant_id", tenantId)
+    .eq("project_id", projectId);
+  if (taskError) throw new Error(PENDING_REPORT_COUNT_FAILED);
+  const taskIds = ((taskRows ?? []) as { id: string }[]).map((row) => row.id);
+  if (taskIds.length === 0) return ids.size;
+
+  const { data: taskReports, error: taskReportError } = await supabase
+    .from("worker_reports")
+    .select("id, day_id")
+    .eq("tenant_id", tenantId)
+    .eq("status", "submitted")
+    .in("task_id", taskIds);
+  if (taskReportError) throw new Error(PENDING_REPORT_COUNT_FAILED);
+
+  const otherDayIds = [
+    ...new Set(
+      ((taskReports ?? []) as { day_id: string | null }[])
+        .map((row) => row.day_id)
+        .filter((dayId): dayId is string => Boolean(dayId) && !dayIdSet.has(dayId))
+    ),
+  ];
+  const otherDayProject = await projectIdByRowId(supabase, tenantId, otherDayIds);
+
+  for (const row of (taskReports ?? []) as { id: string; day_id: string | null }[]) {
+    if (ids.has(row.id) || !row.day_id || dayIdSet.has(row.day_id)) {
+      ids.add(row.id);
+      continue;
+    }
+    const dayProject = otherDayProject[row.day_id];
+    if (dayProject == null || dayProject === projectId) ids.add(row.id);
+  }
+
+  return ids.size;
+}
+
+async function projectIdByRowId(
+  supabase: SupabaseClient,
+  tenantId: string,
+  ids: string[]
+): Promise<Record<string, string>> {
+  if (ids.length === 0) return {};
+  const { data, error } = await supabase
+    .from("worker_day")
+    .select("id, project_id")
+    .eq("tenant_id", tenantId)
+    .in("id", ids);
+  if (error) throw new Error(PENDING_REPORT_COUNT_FAILED);
+  return Object.fromEntries(
+    ((data ?? []) as IdProjectRow[]).map((row) => [row.id, row.project_id ?? ""])
+  );
+}
+
 /**
  * Read-only aggregate counts for a project (tenant-scoped).
  * Used by dashboard project detail. RLS enforces tenant isolation.
@@ -41,7 +124,6 @@ export async function getProjectSummary(
     tasksDoneRes,
     tasksInProgressRes,
     milestonesRes,
-    pendingApprovalsRes,
     issuesRes,
     docsUnderReviewRes,
     costItemsRes,
@@ -80,12 +162,6 @@ export async function getProjectSummary(
       .eq("project_id", projectId)
       .eq("tenant_id", tenantId),
     supabase
-      .from("worker_reports")
-      .select("id", { count: "exact", head: true })
-      .eq("project_id", projectId)
-      .eq("tenant_id", tenantId)
-      .eq("status", "submitted"),
-    supabase
       .from("project_issues")
       .select("id", { count: "exact", head: true })
       .eq("project_id", projectId)
@@ -111,8 +187,17 @@ export async function getProjectSummary(
 
   const activeWorkers = new Set((workerDays ?? []).map((r) => r.user_id)).size;
 
+  if (dayIdsRes.error) throw new Error(PENDING_REPORT_COUNT_FAILED);
+  const projectDayIds = ((dayIdsRes.data ?? []) as { id: string }[]).map((row) => row.id);
+  const pendingReportApprovalsCount = await countSubmittedReportsForProject(
+    supabase,
+    tenantId,
+    projectId,
+    projectDayIds
+  );
+
   let openReports = 0;
-  const dayIds = dayIdsRes.data ?? [];
+  const dayIds = projectDayIds.map((id) => ({ id }));
   if (dayIds.length > 0) {
     const { count } = await supabase
       .from("worker_reports")
@@ -201,7 +286,7 @@ export async function getProjectSummary(
     tasksDone,
     milestonesCount,
     overdueMilestonesCount,
-    pendingReportApprovalsCount: pendingApprovalsRes.count ?? 0,
+    pendingReportApprovalsCount,
     openIssuesCount: issuesRes.count ?? 0,
     pendingDecisionsCount: docsUnderReviewRes.count ?? 0,
     budgetOverBudget,
