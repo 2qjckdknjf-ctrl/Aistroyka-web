@@ -32,3 +32,71 @@ JSON schema validation и traceability report сначала локально/ad
 Для каждого PR: scope, dependency, AC, negative cases, evidence SHA, независимый verdict, ограничения.
 Новости и названия будущих моделей — непроверенные research inputs, не основание для vendor lock-in или отмены текущих P0.
 
+## Уточнение плана — 2026-09-24
+
+Статус всех пунктов ниже: PLANNED. Это детализация существующих ROMA-POL/EXEC/GUARD/EVAL/OBS, а не параллельный security stack. Внешние новости, версии моделей, цены и benchmarks из дайджестов 23–24 сентября не проверены; в backlog переносим инженерные требования, не утверждения о релизах.
+
+### ROMA-TRACE-002 — OTel-compatible Execution Trace (P0 contracts, P1 adapter)
+Родитель ROMA-OBS-001; зависит от ROMA-EXEC-001 и egress contract.
+Использовать OpenTelemetry как формат транспортировки execution spans; отдельный ROMA evidence record остаётся источником проверяемого verdict. Трасса сама по себе не доказывает correctness.
+Связи session/run → model request → tool call → result; task/requirement/evidence связываются trace/span IDs и links. Cross-runtime adapter объявляет поддерживаемые поля; отсутствие native OTel у runtime не выдавать за готовую интеграцию.
+
+Минимум: execution_id, task_id, agent_id, provider/model version, capability/tool version, environment, start/end/duration, outcome/error, usage и cost с валютой/источником тарифа. Unknown cost = null, не 0.
+ROMA attributes: roma.project_id, roma.requirement_id, roma.risk_level, roma.autonomy_level, roma.environment, roma.capability_digest, roma.approval_id, roma.policy_decision, roma.evidence_id, roma.policy_revision. При реализации сверить актуальные официальные OTel semantic conventions; custom namespace/version сохранять.
+Prompt/response, tool payloads, credentials, PII по умолчанию не экспортировать; allowlist attributes и redaction до exporter, tenant isolation и retention обязательны. Высокая cardinality IDs остаётся в traces, не metric labels.
+AC: trace одного synthetic task восстанавливает последовательность вызовов; propagated IDs переживают retry; cancelled/denied/error различимы; секретные canary values отсутствуют в export. Loss/sampling помечают неполное evidence; security audit events не зависят от sampling. Bounded retry/backpressure и collector outage проверены; privileged actions при недоступном обязательном durable audit следуют fail-closed policy.
+
+### ROMA-RISK-002 — R0–R5 Action Risk & Approval (P0 schema/fixtures)
+Родитель ROMA-POL-001. Risk относится к конкретной операции/данным/окружению, не к бренду модели или названию tool.
+Таблица задаёт минимальную проектную политику, не предоставляет новых разрешений:
+
+| Risk | Условие выполнения | Пример при соблюдении scope |
+|---|---|---|
+| R0 | Existing authorization + policy allow | Чтение несекретного разрешённого repo; unit tests только в изолированной среде без side effects |
+| R1 | Policy allow + audit | Изменение своей ветки, создание draft PR без release effects |
+| R2 | Explicit policy rule + scoped authorization; иначе escalation | Ограниченная reversible external MCP write; произвольная внешняя запись не считается автоматически разрешённой |
+| R3 | Explicit human approval + existing gates | Staging migration, protected PR merge |
+| R4 | Owner approval + strong auth + resource-bound authorization | Production deploy/migration, изменение security policy |
+| R5 | Forbidden automation; отдельный break-glass вне обычного agent flow | Отключение audit/RLS; dual approval само по себе запрет не снимает |
+
+Эти примеры повышаются по фактическим эффектам: tests исполняют код, PR может запускать CI, docs могут менять инструкции/security policy. Неизвестный риск = deny/escalate. Existing stricter repo/org policy всегда побеждает; R0/R1 не отменяют user authorization.
+Approval связывается с action/args digest, plan revision, resource/environment, approver, policy revision, budget, expiry и одноразовым использованием для side effects. Смена scope аннулирует approval. AC: expired/replayed/cross-resource approval, изменённый tool digest и disguised production write отвергаются. Policy не изменяется исполнителем ради продолжения задачи.
+
+### ROMA-PLAN-002 — Context Package → Plan Check → Execution (P0 contract)
+Родитель ROMA-EXEC-001. Context Package: requirement/revision, AC, relevant files + baseline SHA, ADRs, dependencies, forbidden operations, data/environment constraints, test/evidence expectations.
+Plan Check до первого изменения файлов проверяет scope/write set, security/DB/API/migration impact, зависимости, rollback, tests и AC. Результат: PASS / NEEDS_CHANGES / BLOCKED с причинами и plan digest. Approval человека требуется согласно risk policy; низкорисковая уже авторизованная работа не требует нового ручного подтверждения каждого шага.
+Plan check в ROMA сначала advisory по ADR-0007. Исполнимый gate требует отдельного ADR; текущие platform permissions не обходятся.
+AC: изменение плана/базового SHA после approval требует revalidation; scope drift останавливает дальнейшие privileged steps; plan approval не равно merge/deploy approval.
+
+### ROMA-SANDBOX-002 — Project Sandbox Policy (P0 schema; P1 enforcement)
+Родитель ROMA-GUARD-001. Зависимости: capability/environment/egress/risk contracts, runtime adapter и ADR о границе enforcement. Проектный policy — верхняя граница; task/session может только сужать права.
+Manifest без секретных значений:
+- schema_version, policy_id/revision/digest, project_id, task_id/run_id, risk_level, environment;
+- filesystem: canonical read/write roots, deny roots;
+- network: default deny, internet/local_network policy, allow_hosts/deny_hosts, ports/protocols;
+- credentials: разрешённые secret references для git/GitHub/Supabase/Vercel/Cloudflare, account/resource scope и TTL;
+- capabilities: pinned digests, tool/subprocess permissions; limits: duration/processes/storage/egress;
+- fail_closed: true; enforcement backend/version и поддерживаемые controls.
+
+Перед запуском runtime доказывает, что ОС/backend обеспечивает ВСЕ обязательные ограничения. Неподдерживаемый control, недоступный sandbox или невалидная policy → DO NOT EXECUTE; advisory verdict ROMA не превращает обязательную runtime изоляцию в необязательную.
+Пример Customer App task: write только в isolated worktree, тестовые endpoints; staging credential только если нужен и разрешён конкретной задачей. Production credentials отсутствуют; доступ к production и metadata endpoints закрыт. Нельзя автоматически монтировать весь домашний каталог/SSH agent/env или Docker socket.
+AC: path traversal/symlink escape, subprocess inheritance, localhost/LAN/metadata access, DNS/redirect bypass, credential exfiltration и sandbox teardown проверены отрицательными тестами. Deny имеет приоритет, policy hash привязан к trace/evidence. Нельзя fallback к unrestricted execution.
+Первый enforcement pilot — synthetic repo + fixture credentials, не product production.
+
+### ROMA-EFFORT-002 — risk-based verification (P1)
+Родитель ROMA-EVAL-001. LIGHT для обычных docs/UI copy; STANDARD для bounded features; HIGH для auth/API/RLS/security/migrations; CRITICAL для production infra/trading execution. Классификация учитывает содержимое diff, data surface, environment и incident history; docs с policy changes могут быть HIGH/CRITICAL.
+Effort определяет дополнительную глубину проверки, не отменяет required CI/tests/reviewer gates. Фиксировать причины, версию policy, выбранного verifier и независимость от executor.
+AC: mixed change получает максимальный обязательный уровень; rename/расширение файла не скрывает security change; unknown surface escalates. Использование другой модели/provider желательно, но не заменяет независимость доступа и проверку artifacts.
+
+### GROW-MODEL-ARENA-001 — provider-neutral Model Arena (P1 offline)
+Родители ROMA-POL-001 и ROMA-OBS-001. Model Router учитывает task complexity/risk, confidence target, context, latency, budget и data policy. Нельзя привязывать все docs к одному названию модели.
+Одинаковые bounded tasks/context/AC, pinned repo/dataset/config, одинаковые разрешения и бюджеты; независимый verifier, повторные runs и отчёт по failures/rework/incidents. Метрики: verified success, tokens/cache usage, end-to-end latency, total cost включая retries и verification, cost/verified result. При нуле успешных задач стоимость на результат = unavailable/infinite, не 0.
+Сравнивать доступные подтверждённые runtime/model IDs из registry. Упомянутые Claude/GPT/Grok — только кандидаты до проверки API, условий обработки данных и тарифов. Public leaderboard используется для shortlist, не для promotion.
+AC: holdout tasks не использованы в tuning; фиксированы stop/budget rules; cache/cold runs разделены; failure costs включены; неизвестная цена явно отмечена. Promotion после local evidence, никакого массового переключения по новости.
+
+### Порядок Cursor после первого Assurance Graph slice
+1. Дополнить schema/fixtures: context+plan, action risk, sandbox manifest, OTel mapping.
+2. Реализовать offline plan/risk checks и adapter trace на synthetic runs.
+3. После согласованного ADR — fail-closed sandbox/broker enforcement с negative tests.
+4. Подключить effort policy и offline Model Arena; затем scoped product adapter.
+Не считать одну валидную JSON schema доказательством работающего sandbox. Все runtime permissions остаются ограничены текущими правилами.

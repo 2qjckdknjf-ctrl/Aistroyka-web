@@ -8,3 +8,7 @@ Customer iOS and async/live intake are future backlog. Existing Owner portal and
 Next Cursor task: AIS-PILOT-001 read-only baseline/gap audit, then smallest confirmed issue; ROMA first slice schema/fixtures/staleness report in advisory mode. No production readiness was re-certified. Vendor news/model versions are unverified research inputs.
 
 Documentation validation: whitespace/diff and local links; no application tests needed for docs-only scope. Remote branch/PR publication is the handoff delivery mechanism. Merge requires normal review and CI.
+
+## Follow-up — 2026-09-24
+
+Existing PR updated with OTel trace, action risk R0–R5, context/plan check, fail-closed project sandbox, verification effort and offline Model Arena contracts. Product amendment adds Owner AI Report and spatial context acceptance criteria. All PLANNED; no implementation or deployment. Continue Assurance Graph first, then contract fixtures and synthetic adapter/sandbox pilot; product safety audit remains first for customer work. Validation is documentation scope/content verification, not runtime certification.

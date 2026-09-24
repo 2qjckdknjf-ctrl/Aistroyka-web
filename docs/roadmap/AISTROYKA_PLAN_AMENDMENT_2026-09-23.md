@@ -45,3 +45,14 @@ Spike должен подтвердить официальные API, досту
 Не переписывай уже существующие portal/daily-log модули. Первый implementation PR — минимальный подтверждённый security/contract gap.
 Перед следующим slice зафиксируй requirements, AC, зависимости, команды проверки, evidence SHA и handoff. Этот документ не разрешает merge/deploy/store upload.
 
+## Уточнение Customer/AI Digest — 2026-09-24
+Статус PLANNED; уточнение AIS-OWNER-002, AIS-EVID-002, AIS-GRAPH-004 и фазы 7 AI Daily Digest, без новой параллельной фичи.
+
+**Owner AI Report:** field evidence + verified progress + issues + approved commercial changes → draft weekly/daily summary → project human review → публикация в Customer App/portal.
+AC: каждое утверждение/количество связано с разрешённым источником и периодом; unfinished/unknown не считается completed; delays требуют проверенного baseline schedule. Отчёт отличает факт, AI interpretation и pending decision. Человек исправляет/отклоняет draft; новая версия источников помечает draft/report stale и требует повторной проверки. Повтор публикации идемпотентен, есть version/audit trail.
+Финансовый раздел показывает только customer-approved commercial totals и согласованные change orders; никакого внутреннего бюджета, costs/margin или прогноза финансов подрядчика. Customer projection применяется ДО LLM context assembly; post-filter недостаточен. Проверки foreign project, revoked access, media URLs, exports, notification preview и AI-summary leakage обязательны.
+
+**Spatial context:** observation связывается с project → floor → room/zone → element → work item; drawing revision и source timestamp/region сохраняются. Неизвестное местоположение явно unresolved; нельзя выдумывать этаж/элемент. Пользователь подтверждает и исправляет привязку; graph поддерживает переименование/перенос без потери source lineage.
+Live intake по-прежнему после Graph; async intake может пользоваться draft IDs. Существующий contractor-ops-only pilot не расширяется этим планом.
+
+Reference из переписки: OpenSpace visual-agent/owner-report pattern. Заявленные сроки релиза, проценты готовности отчёта и экономия времени не проверены и не являются нашими KPI. Нового construction продукта или отдельной подсистемы не создавать.
