@@ -56,3 +56,14 @@ AC: каждое утверждение/количество связано с �
 Live intake по-прежнему после Graph; async intake может пользоваться draft IDs. Существующий contractor-ops-only pilot не расширяется этим планом.
 
 Reference из переписки: OpenSpace visual-agent/owner-report pattern. Заявленные сроки релиза, проценты готовности отчёта и экономия времени не проверены и не являются нашими KPI. Нового construction продукта или отдельной подсистемы не создавать.
+
+## Action/Approval contract — 2026-09-25
+Статус PLANNED; дополнение AIS-OWNER-001/002, фаз 3–5/9 и существующих release gates. Общий PresenceProof contract: ROMA-AUTH-002 в ROMA execution plan.
+
+**AIS-APPROVAL-003 (P1, после access/decision contracts):** явное подтверждение привязано к project/tenant, environment, action, resource/version, artifact SHA или digest коммерческого документа, actor, expiry. AI готовит draft/evidence, человек подтверждает конкретную версию. Для выбранных значимых действий policy требует fresh auth: change order/additional work, contractor selection, customer payment approval (только если этот workflow уже предусмотрен), acceptance of handover. Это не добавляет payment execution или юридическую квалификацию электронной подписи.
+UI показывает условия, scope, сумму/валюту и версию до подтверждения. Смена суммы/контрагента/версии делает прошлое согласие невалидным; право actor на проект перепроверяется сервером, nonce одноразовый, retries идемпотентны. Отказ/истечение auth сохраняет draft без side effects. AC: чужой проект/отозванный доступ/replayed proof/изменённый документ отвергаются; audit не раскрывает внутренние финансы подрядчика.
+
+**Release integration (после общего enforcement ADR):** owner approval deploy конкретного SHA не даёт права на migration, RLS/auth-provider change или credential rotation. Каждая операция имеет собственный action/resource binding и текущие CI/reviewer/owner gates; недоступный fresh-auth механизм блокирует требующее его действие. Docs update не меняет существующий deploy workflow.
+
+**Construction MCP/API adapters — WATCH / LATER:** drawings, estimating, suppliers, BIM, accounting, documents — кандидаты интеграции, не новые фичи текущего pilot. До подключения: inventory существующих API, CapabilityManifest/lifecycle, sandbox compatibility, egress/customer-finance boundaries и ROMA evidence. Новый tool/version default DENY; MCP transport не доказывает доверие. Отдельного Bluebeam SDK/коннектора по новости не добавлять; claims о внешнем продукте не проверены.
+Customer App → async intake → Graph → live сохраняется; contractor-ops-only pilot не расширяется.

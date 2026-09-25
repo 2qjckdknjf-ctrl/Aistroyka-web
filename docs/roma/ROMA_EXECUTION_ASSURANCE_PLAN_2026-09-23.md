@@ -100,3 +100,38 @@ AC: holdout tasks не использованы в tuning; фиксирован�
 3. После согласованного ADR — fail-closed sandbox/broker enforcement с negative tests.
 4. Подключить effort policy и offline Model Arena; затем scoped product adapter.
 Не считать одну валидную JSON schema доказательством работающего sandbox. Все runtime permissions остаются ограничены текущими правилами.
+
+## Уточнение execution contracts — 2026-09-25
+
+Статус: PLANNED. Дополняет существующие ROMA-AUTH-001, ROMA-RISK-002, ROMA-CAP-001 и Model Arena. Новые независимые security подсистемы не создаются. Сведения о релизах GitHub и benchmark цифрах из дайджеста не проверены и не служат доказательством реализации.
+
+### ROMA-AUTH-002 — PresenceProof (P0 contract/fixtures; P1 enforcement)
+ROMA-AUTH-001 ранее LATER: подготовка его контракта и негативных fixtures переносится в ближайший contract slice; production enforcement остаётся после ADR, sandbox/broker integration и проверки identity provider.
+Раздельные сущности: capability разрешает инструмент; policy разрешает конкретное действие; Approval фиксирует осознанное согласие; PresenceProof подтверждает свежую интерактивную аутентификацию нужного человека. Ни один из этих объектов не заменяет остальные.
+
+PresenceProof: proof_id, issuer/audience, actor_id, action_id, project_id, environment, resource_id, action_args_digest, artifact_sha, approval_id, policy_revision, authenticated_at, auth_strength, expires_at, nonce, evidence_id. Proof выдаёт доверенный сервер после проверки IdP/WebAuthn/MFA assertion; self-reported JSON агента, session cookie, access token и owner_approved=true не являются proof.
+Криптографически проверять issuer/audience/signature и freshness; время берётся на сервере. TTL задаёт versioned policy с ограничением clock skew; пример 10 минут не является универсальным default.
+Approval UI показывает действие, ресурс, окружение и artifact/version/amount при наличии; свежий login без подтверждения этих деталей не означает согласия на действие.
+
+R4 требует explicit owner approval + достаточный fresh auth; R3 — explicit approval с дополнительным step-up по policy; R0–R2 сохраняют scoped authorization и текущие правила. R5 запрещённые действия остаются запрещены даже при fresh auth/dual approval.
+Проверять approval/proof/resource/action match непосредственно перед execution; changed SHA/args/tenant/environment/policy или revoked role инвалидируют разрешение. Nonce потребляется атомарно вместе с durable operation record; concurrent/replayed calls отвергаются. Idempotency key позволяет получить результат уже исполненной операции, но не выполнить её повторно.
+Если результат операции после timeout неизвестен — reconciliation до retry; после expiry требуется новый proof для нового исполнения. Недоступный IdP/verifier, отсутствующие обязательные поля, неподдерживаемый strength → fail closed. В traces только proof ID/outcome, без raw assertion/token.
+
+AC: forged/expired/future-dated/wrong-audience proof, cross-actor/project/environment/action, changed artifact, revoked membership, nonce race/replay и verifier outage не дают side effect. Approval deploy SHA A не разрешает migration или deploy SHA B. Привилегированный agent не может сам выдать себе proof. Synthetic fixtures не являются human-presence production evidence.
+Внедрять сначала fixtures и advisory ROMA report; mandatory enforcement только в разрешённом executor boundary по отдельному ADR. Текущие gates продолжают действовать.
+
+### ROMA-CAP-002 — Capability lifecycle (P0 contract; P1 registry integration)
+Родитель ROMA-CAP-001. Новые и изменённые capabilities: default DENY, в том числе MCP servers, plugins, preview features, новые tools существующего сервера.
+Состояния: DISCOVERED → UNTRUSTED → EVALUATION → APPROVED → ENABLED; из активных состояний допустимы SUSPENDED/REVOKED. APPROVED не означает автоматически ENABLED.
+Registry key: publisher/source + pinned version/revision + content/schema digest. Evaluation record: requested permissions, dependencies, network/egress targets, environments, sandbox compatibility, provenance, tests/evidence + reviewer. Решение scoped по project/tenant/environment и expires_at; actor и transition reason аудируются.
+
+Новая версия/digest/permissions/dependency/tool schema требует нового review, без наследования enabled status. Alias latest и server-side tool discovery не обходят проверку. Effective permissions — пересечение org/project/task/session policies; любой deny приоритетен. Enable выполняется уполномоченным actor по risk/approval policy, не самим executor.
+Suspend немедленно запрещает новые calls и изолирует активную сессию; уже выполненные side effects требуют reconciliation. Revocation распространяется на pinned dependency users; re-enable только с новым evaluation/approval. Недоступный registry или неопределённый статус не дают fallback allow.
+AC: unknown tool/new server version, permission expansion, stale evidence, cross-environment approval, revoked dependency и mid-run suspension блокируют вызов. Approved-but-disabled capability не исполняется; runtime обновление не включает новые функции молча.
+
+### GROW-MODEL-ARENA-001 — уточнение метрик
+Кроме cost/verified result фиксировать human interventions, policy violations и Verified Success Rate @ zero policy violations: число runs с PASS всех AC и нулём нарушений / все eligible attempted runs, включая failed/aborted. Неполная audit trace исключает run из verified numerator, но не скрывает его из denominator.
+Одинаковые Context Package, AC, sandbox policy, tools и budgets; цены/валюты и conversion date сохраняются. Модель с лучшим leaderboard не становится default без local evidence и promotion review.
+
+### Следующий Cursor slice
+После Assurance Graph включить PresenceProof/lifecycle schemas и negative fixtures в уже запланированный contract PR. Затем registry/identity adapters и synthetic fail-closed integration. Не расширять security scope следующими слоями до проверки этих компонентов. Данный docs update не включает capability и не меняет permissions.

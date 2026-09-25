@@ -41,3 +41,7 @@ Docs branch: `docs/roadmap-consolidation-2026-09-23`, based on main `25b33d84118
 ## Planning follow-up — 2026-09-24
 
 Same docs branch/PR #350: ROMA execution-assurance contracts and Owner AI Report/spatial context AC expanded in the linked amendments. All remain PLANNED. Current pilot scope and historical runtime status above unchanged; [handoff](docs/handoff/2026-09-23-roadmap-consolidation.md) updated.
+
+## Planning follow-up — 2026-09-25
+
+PR #350 on the same docs branch now includes PresenceProof, capability lifecycle/default deny and action-bound customer/release approvals. See existing linked amendments and handoff. All PLANNED; active contractor-ops-only pilot and historical runtime status remain unchanged.

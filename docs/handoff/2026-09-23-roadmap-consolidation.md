@@ -12,3 +12,7 @@ Documentation validation: whitespace/diff and local links; no application tests 
 ## Follow-up — 2026-09-24
 
 Existing PR updated with OTel trace, action risk R0–R5, context/plan check, fail-closed project sandbox, verification effort and offline Model Arena contracts. Product amendment adds Owner AI Report and spatial context acceptance criteria. All PLANNED; no implementation or deployment. Continue Assurance Graph first, then contract fixtures and synthetic adapter/sandbox pilot; product safety audit remains first for customer work. Validation is documentation scope/content verification, not runtime certification.
+
+## Follow-up — 2026-09-25
+
+PresenceProof (ROMA-AUTH-002) and capability lifecycle/default deny (ROMA-CAP-002) refine existing contracts; AUTH schema/fixtures move from LATER into the next contract slice, with enforcement still gated by ADR and identity/sandbox integration. Customer/release approvals and watch-only construction adapters added to product amendment. Existing Assurance Graph first-slice ordering remains. All PLANNED; no runtime/permission/deployment changes. Verification: documentation scope and read-after-write content checks, no application tests or runtime certification.
