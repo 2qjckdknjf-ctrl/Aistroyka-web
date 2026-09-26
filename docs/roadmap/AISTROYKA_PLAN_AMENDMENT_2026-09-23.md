@@ -1,5 +1,7 @@
 # AISTROYKA — дополнение к плану, 2026-09-23
 
+> Последняя корректировка: 2026-09-26. Актуальные уточнения и порядок работ — в разделе за 2026-09-26 ниже; предыдущие gates сохраняются.
+
 Статус: PLANNED. Документ задаёт backlog, не подтверждает готовность функций.
 Канонический продуктовый план: [Mega roadmap](AISTROYKA_MEGA_ROADMAP_CUSTOMER_FINANCE_SAFE.md).
 Реализация новых пунктов начинается с повторной сверки main, открытых PR и runtime.
@@ -67,3 +69,22 @@ UI показывает условия, scope, сумму/валюту и вер
 
 **Construction MCP/API adapters — WATCH / LATER:** drawings, estimating, suppliers, BIM, accounting, documents — кандидаты интеграции, не новые фичи текущего pilot. До подключения: inventory существующих API, CapabilityManifest/lifecycle, sandbox compatibility, egress/customer-finance boundaries и ROMA evidence. Новый tool/version default DENY; MCP transport не доказывает доверие. Отдельного Bluebeam SDK/коннектора по новости не добавлять; claims о внешнем продукте не проверены.
 Customer App → async intake → Graph → live сохраняется; contractor-ops-only pilot не расширяется.
+
+## Materials Supply — уточнение 2026-09-26
+AIS-MATERIAL-008 остаётся LATER после pilot и Construction Graph. Реализовать как persistent domain agent в существующем Materials контуре, а не отдельный marketplace или только поиск товаров.
+
+Inputs: graph work packages, утверждённые quantities/units/specifications, schedule/dependencies, delivery location и approved supplier sources.
+Цикл: requirement → supplier search/availability/alternatives/price/lead time → versioned proposal → Manager approval → отдельно разрешённый order workflow.
+Агент отслеживает изменение stock/price/delivery/schedule и создаёт новое предложение; не меняет согласованный заказ автоматически. Price/availability имеют source URL/API, fetched_at, currency/taxes/shipping, validity и confidence; неизвестное остаётся unknown. Альтернативы требуют проверки технической совместимости человеком.
+Задачи наблюдения используют scoped AgentIdentity, approved package/runtime, aggregate budget, разрешённые triggers, TTL, pause/revoke и audit. Нет бесконечного polling; rate limits, backoff, dedupe и incident escalation обязательны.
+
+AC:
+- Изменение schedule/цены/количества/поставщика инвалидирует затронутую версию approval; новый proposal с diff и evidence.
+- Supplier page/API — недоверенный input, не инструкция агенту; только разрешённые egress hosts и поля.
+- Повтор event/restart не создаёт duplicate proposal/order/message; неизвестный outcome требует reconciliation.
+- Внешние запросы поставщикам, follow-ups, встречи и сообщения требуют отдельного явного разрешения на коммуникацию; разрешение мониторинга его не заменяет.
+- Orders/payments/cancellation — только через существующие capability/risk/approval/PresenceProof gates. Первый slice исключительно read/draft с fixtures, без реальных заказов.
+- Manager видит внутренний procurement контекст; Customer получает только специально разрешённые commercial projections, не supplier costs/margin.
+- KPI: актуальность подтверждённых availability/lead-time данных, proposal acceptance/correction, delay detection, стоимость на reviewed proposal; baseline перед целями.
+
+Microsoft supplier-review pattern — непроверенный reference из дайджеста, не новая vendor dependency. Customer App/Graph/Live порядок и contractor-ops-only pilot остаются без изменений.

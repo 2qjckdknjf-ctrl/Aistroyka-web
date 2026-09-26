@@ -16,3 +16,7 @@ Existing PR updated with OTel trace, action risk R0–R5, context/plan check, fa
 ## Follow-up — 2026-09-25
 
 PresenceProof (ROMA-AUTH-002) and capability lifecycle/default deny (ROMA-CAP-002) refine existing contracts; AUTH schema/fixtures move from LATER into the next contract slice, with enforcement still gated by ADR and identity/sandbox integration. Customer/release approvals and watch-only construction adapters added to product amendment. Existing Assurance Graph first-slice ordering remains. All PLANNED; no runtime/permission/deployment changes. Verification: documentation scope and read-after-write content checks, no application tests or runtime certification.
+
+## Follow-up — 2026-09-26
+
+Execution plane contracts added: AgentIdentity, local/cloud/CI runtime, immutable package/attestation and budget ledger. Read the latest implementation order in the ROMA plan before selecting tasks; P0 contract work is not production execution. Materials Supply remains LATER and becomes a persistent read/draft-first domain agent. HiAir priorities unchanged; portfolio Trading Arena now has four independent suites. Documentation only, content verified after publication; no runtime tests or readiness claim.

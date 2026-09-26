@@ -45,3 +45,7 @@ Same docs branch/PR #350: ROMA execution-assurance contracts and Owner AI Report
 ## Planning follow-up — 2026-09-25
 
 PR #350 on the same docs branch now includes PresenceProof, capability lifecycle/default deny and action-bound customer/release approvals. See existing linked amendments and handoff. All PLANNED; active contractor-ops-only pilot and historical runtime status remain unchanged.
+
+## Planning follow-up — 2026-09-26
+
+PR #350 updated with execution-plane contracts and an explicit implementation order; AIS-MATERIAL-008 refined as a persistent Supply Agent after pilot/Graph. Existing roadmap links lead to current sections. All PLANNED; contractor-ops-only pilot, runtime status and release gates unchanged.

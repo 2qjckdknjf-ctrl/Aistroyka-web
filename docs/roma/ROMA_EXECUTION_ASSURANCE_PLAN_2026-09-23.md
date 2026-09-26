@@ -1,5 +1,7 @@
 # ROMA / инженерный Grow OS — Execution Assurance, 2026-09-23
 
+> Последняя корректировка: 2026-09-26. Актуальные уточнения и порядок работ — в разделе за 2026-09-26 ниже; предыдущие gates сохраняются.
+
 Статус: PLANNED; расширение [ROMA roadmap](ROMA_ROADMAP.md), не новая параллельная система.
 Сохранить ADR-0007 recommendation-only и существующие product/release gates. Блокирующий режим возможен только отдельным ADR и проверенным executor integration.
 Инженерный Grow OS не равен маркетинговому репозиторию growth-os. Канонический отдельный engineering repo пока не установлен; этот документ — ROMA contract/backlog, не объявление созданного runtime.
@@ -135,3 +137,40 @@ AC: unknown tool/new server version, permission expansion, stale evidence, cross
 
 ### Следующий Cursor slice
 После Assurance Graph включить PresenceProof/lifecycle schemas и negative fixtures в уже запланированный contract PR. Затем registry/identity adapters и synthetic fail-closed integration. Не расширять security scope следующими слоями до проверки этих компонентов. Данный docs update не включает capability и не меняет permissions.
+
+## Execution plane — корректировка 2026-09-26
+
+PLANNED. Model, agent identity и runtime — разные сущности. Расширяем ROMA-EXEC/POL/CAP/GUARD/OBS/PAR; не создаём ещё один orchestration framework. Microsoft/Docker/OCI Kits/benchmark claims из дайджеста не проверены; ни миграция поставщика, ни покупка cloud runtime этим документом не утверждены.
+
+| ID | Очередь / связь | Deliverable и acceptance criteria |
+|---|---|---|
+| GROW-IDENTITY-001 | P0 contract, родитель ROMA-EXEC-001 | AgentIdentity: agent_id, role, accountable owner, project/tenant scope, approved capability refs, memory namespace, workspace binding, environment, budget policy, autonomy level, policy version, lifecycle/revocation. Stable logical identity отделена от run/session и workload credential. Owner ≠ агент; identity не является human PresenceProof. Проверки cross-tenant memory/workspace, revoked identity и scope escalation блокируют доступ. |
+| GROW-RUNTIME-002 | P0 interface, P1 synthetic backend; ROMA-EXEC-001 + ROMA-SANDBOX-002 | Provider-neutral local/cloud/CI runtime contract: create, policy validation, start, status, checkpoint, resume, cancel, collect artifacts, destroy. Объявлять supported controls, platform/architecture, isolation class, egress/data residency, credential delivery, budgets и TTL. Нет silent fallback к более слабой изоляции. |
+| ROMA-PACKAGE-001 | P0 schema, P1 packaging; ROMA-CAP-001/002 | Immutable Agent Package: manifest, instructions, skills, pinned tool/MCP definitions, dependency lock/SBOM, sandbox/network policies, secret binding references, model requirements, tests, version и content digest. Никаких secret values, пользовательской памяти или workspace data внутри package. Digest покрывает все исполняемые inputs; latest tags не источник доверия. OCI-compatible carrier — кандидат реализации после официальной спецификации/compatibility spike. |
+| ROMA-PACKAGE-002 | P1 после package + evidence | Подписанная verification attestation: package digest, test suite/evidence SHAs, policy/model/runtime versions, evaluator identity, scope, timestamp/expiry и revocation status. Проверять trusted signer, signature, digest и свежесть evidence перед запуском. Подпись доказывает provenance, не безопасность всех будущих действий. |
+| GROW-BUDGET-001 | P0 contract, P1 ledger; ROMA-POL/OBS | AgentBudget: max_task_cost, daily/monthly limits, token/runtime/search limits, model allowlist, currency, billing period/timezone, policy version. Атомарный reserve→settle ledger для parallel workers/retries; parent task и children делят один aggregate cap. Нет новых paid calls при exhausted/unknown budget без разрешённой bounded policy. |
+| ROMA-PAR-001 | LATER, порядок сохранён | Coordinator→workers на task graph; каждому свой identity/session/workspace, package digest, policy и выделенный budget. Write sets/dependencies контролируются; integration run отдельно проверяет совместный результат. Не запускать persistent agents или parallel jobs этим docs PR. |
+
+### Identity, память и unattended lifecycle
+Долгоживущий agent имеет состояние ACTIVE/PAUSED/REVOKED, owner, расписание/trigger policy, heartbeat/lease, kill switch и максимальный срок run. Memory хранит source/provenance/retention и access scope; внешние документы/старые заметки не могут менять permissions или становиться системными инструкциями.
+Без присутствия пользователя разрешены только ранее авторизованные операции в пределах policy/budget; action, требующий нового PresenceProof, ставит run в WAITING_FOR_APPROVAL. Proof нельзя продлить или восстановить из checkpoint. Revocation прекращает новые tool calls и отзывает session credentials.
+
+### Перенос local → cloud и microVM
+Checkpoint содержит versioned state, repo SHA, package/policy digests, artifact references и operation ledger, но не bearer credentials/PresenceProof. При resume: revalidate identity, policy, capabilities, environment, region/egress, budget и evidence; получить новые scoped credentials. Смена runtime — проверяемый handoff, не обещание прозрачной live migration.
+Lease/fencing предотвращает одновременное исполнение старой и новой сессии. AC: network partition, crash after side effect, duplicated resume и cancel не создают повторные записи; uncertain outcome требует reconciliation.
+MicroVM — поддерживаемый isolation backend, не автоматическая гарантия безопасности. Нужен threat model и negative tests конкретной реализации. Если risk policy требует VM-level boundary, plain container не считается эквивалентом. Cloud недоступен или не соответствует policy → blocked.
+Linux cloud runner не доказывает возможность iOS build/device QA: platform/toolchain/signing requirements проверяются, Mac/device задачи маршрутизируются в подходящий approved runner.
+
+### Package verification и FinOps
+ROMA “certification” означает только внутренний scoped verification verdict, не внешнюю сертификацию и не бессрочный PASS. Изменение instructions/tool/dependency/policy/model requirements создаёт новый digest и evaluation. Approved package всё равно проходит per-action risk, approval, capability и PresenceProof gates.
+AC: tampered/unsigned/untrusted/revoked/expired attestation, несовместимый runtime и отсутствующая dependency provenance запрещают execution. Independent signer/verifier не использует credentials executor.
+Budget учитывает model/cache, runtime/storage, tools/search, retries и verification. Оценка и actual billing различаются; unknown actual cost остаётся pending, не 0. Тарифа/оценки верхней границы нет → paid run blocked либо заранее утверждённый ограниченный режим. При угрозе перерасхода остановить новые calls, сохранить checkpoint и сверить ledger; не обещать абсолютный cap внешнего billing без поддержки provider.
+AC: concurrent reservations, delayed billing, retry, failed run, exhausted child budget и boundary daily/monthly periods; OTel связывает usage/reservations с task/run. Cost per verified successful task включает все затраты и неудачные попытки.
+
+### Актуальный порядок реализации (заменяет неоднозначное “всё сейчас”)
+1. Assurance Graph/staleness — существующий первый slice.
+2. Один согласованный contract/fixture slice: Context/Plan, Risk, Presence, Capability lifecycle, Identity, Package, Budget, Sandbox и trace mapping. Схемы ссылаются на общие IDs; не дублируют policy.
+3. Synthetic local runtime: enforcement после ADR, scoped credentials, lease/idempotency, budgets и trace; independent verification.
+4. Package attestations и второй cloud/CI adapter: equivalent policy tests, checkpoint/resume/cancel и platform compatibility.
+5. Scoped product adapter, Model Arena/effort routing; затем persistent scheduling и controlled parallel workers.
+P0 означает подготовку контракта, не разрешение немедленного autonomous production execution. Текущие pilot/release gates остаются приоритетом.
