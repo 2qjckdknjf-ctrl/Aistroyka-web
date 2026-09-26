@@ -33,3 +33,19 @@
 Deploy SoT: Cloudflare Workers (Vercel = preview only). Docs merges: prefer `[skip-staging-deploy]` in commit message; STATUS.md is also under staging `paths-ignore` (#343).
 
 ---
+
+## Planning update — 2026-09-23
+
+Docs branch: `docs/roadmap-consolidation-2026-09-23`, based on main `25b33d841189b31ff43538762b72a4f7024d701f`. [Handoff](docs/handoff/2026-09-23-roadmap-consolidation.md). New roadmap is future backlog; contractor-ops-only pilot remains the active scope. Runtime status above is historical and was not re-certified by this docs update. Next: fresh pilot/security gap audit before customer expansion.
+
+## Planning follow-up — 2026-09-24
+
+Same docs branch/PR #350: ROMA execution-assurance contracts and Owner AI Report/spatial context AC expanded in the linked amendments. All remain PLANNED. Current pilot scope and historical runtime status above unchanged; [handoff](docs/handoff/2026-09-23-roadmap-consolidation.md) updated.
+
+## Planning follow-up — 2026-09-25
+
+PR #350 on the same docs branch now includes PresenceProof, capability lifecycle/default deny and action-bound customer/release approvals. See existing linked amendments and handoff. All PLANNED; active contractor-ops-only pilot and historical runtime status remain unchanged.
+
+## Planning follow-up — 2026-09-26
+
+PR #350 updated with execution-plane contracts and an explicit implementation order; AIS-MATERIAL-008 refined as a persistent Supply Agent after pilot/Graph. Existing roadmap links lead to current sections. All PLANNED; contractor-ops-only pilot, runtime status and release gates unchanged.

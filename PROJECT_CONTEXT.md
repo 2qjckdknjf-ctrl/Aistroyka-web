@@ -89,3 +89,7 @@ See live `STATUS.md` (root) — single source of "what's happening right now".
 3. Work only inside a scoped branch from `origin/main`; open a `docs/tasks/*` file from the template.
 4. Run validation (`docs/ops/VALIDATION_CHECKLIST.md`); never deploy or apply DB migrations without explicit approval.
 5. Write a `docs/handoff/*` file and update `STATUS.md` before ending.
+
+## Planning amendment — 2026-09-23
+
+Before new feature work read [Customer/Intake plan](docs/roadmap/AISTROYKA_PLAN_AMENDMENT_2026-09-23.md) and [ROMA assurance plan](docs/roma/ROMA_EXECUTION_ASSURANCE_PLAN_2026-09-23.md). Future backlog; current contractor-ops-only pilot scope and release gates remain unchanged.
