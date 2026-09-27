@@ -81,7 +81,7 @@ export function ReportReviewCanonView({
   const workflowSteps = [
     { key: "info", label: t("reportStepInfo"), state: "done" as const },
     { key: "media", label: t("reportStepMedia", { count: mediaCount }), state: "done" as const },
-    { key: "norms", label: t("reportStepNorms"), state: "done" as const },
+    { key: "norms", label: t("reportStepNorms"), state: "pending" as const },
     { key: "verify", label: t("reportStepVerify"), state: "current" as const },
     { key: "decision", label: t("reportStepDecision"), state: "pending" as const },
   ];
@@ -333,7 +333,9 @@ export function ReportReviewCanonView({
               </tbody>
             </table>
           </div>
-          <p className="text-xs text-[var(--canon-text-muted)]">{t("deviationNote")}</p>
+          {hasVolume ? (
+            <p className="text-xs text-[var(--canon-text-muted)]">{t("deviationNote")}</p>
+          ) : null}
         </section>
 
         <section className="canon-report-decision-col canon-glass p-4 space-y-4 min-w-0 canon-report-decision-sticky lg:sticky lg:top-[calc(var(--canon-topbar-h)+12px)] lg:self-start">

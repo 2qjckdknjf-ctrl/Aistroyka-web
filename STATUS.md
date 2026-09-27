@@ -3,7 +3,7 @@
 > Live project status. Keep this short and mobile-readable.
 
 **Last updated:** 2026-09-27  
-**Updated by:** public claim remediation on production (PR #354 and follow-up)
+**Updated by:** fake metric removal on the report review screen and public demo
 
 ---
 
@@ -11,13 +11,13 @@
 
 | Field | Value |
 |---|---|
-| **Active slice** | Public claim tails — controlled-pilot wording on marketing pages |
-| **Live artifact** | sha7 `883c000` on staging + prod (MATCH) at follow-up start; this docs/copy change deploys after merge |
-| **Branch tip** | `main` @ `883c000` before this follow-up |
+| **Active slice** | Remove hardcoded confidence and tolerance claims from live report review; label the public AI demo as example output |
+| **Live artifact** | sha7 `eedfdf8` on staging + prod (MATCH) before this slice |
+| **Branch tip** | `main` @ `eedfdf81` before this slice |
 | **Pilot scope** | **contractor-ops-only** — NOT FULL / NOT portal |
 | **Runtime** | Auth: email, Apple, Google, QR. Telegram login is hidden unless a bot username is configured. Phone OTP hidden. Twilio is not a launch gate. |
 | **Next** | Counsel-approved privacy/terms stay **BLOCKED_EXTERNAL**. Do not invent legal text or growth baselines. |
-| **Closed** | PR #354 public copy on production; contractor-ops READY 2026-09-14 remains the product-scope freeze |
+| **Closed** | PR #354 and PR #355 public copy on production `eedfdf8` |
 
 ## Not approved / forbidden claims
 
@@ -29,6 +29,6 @@
 
 ## Notes
 
-Deploy SoT: Cloudflare Workers (Vercel = preview only). Docs-only merges: prefer `[skip-staging-deploy]` in the commit message. This follow-up changes public copy, so staging deploy is expected.
+Deploy SoT: Cloudflare Workers (Vercel = preview only). This slice changes product copy and the report review screen, so a staging deploy is expected.
 
 ---
