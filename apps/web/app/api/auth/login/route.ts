@@ -11,6 +11,7 @@ import { hasSupabaseEnv, getPublicConfig } from "@/lib/config";
 import { getOrCreateTraceId, logStructured } from "@/lib/observability";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { checkRateLimit } from "@/lib/platform/rate-limit/rate-limit.service";
+import { recordLoginSuccess } from "@/lib/growth/product-events";
 
 type CookieToSet = { name: string; value: string; options?: Record<string, unknown> };
 
@@ -129,6 +130,10 @@ export async function POST(request: NextRequest) {
   }
 
   logStructured({ event: "auth_login", traceId, route: "/api/auth/login", status: 200, duration_ms: Date.now() - startMs });
+  const userId = data.user?.id;
+  if (userId) {
+    await recordLoginSuccess(supabase, userId, request.headers.get("x-client"));
+  }
   const response = NextResponse.json({ ok: true });
   cookiesToSet.forEach((c) => {
     response.cookies.set(c.name, c.value, (c.options as Record<string, unknown>) ?? {});

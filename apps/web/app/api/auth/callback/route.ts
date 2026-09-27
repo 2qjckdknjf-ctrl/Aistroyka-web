@@ -7,6 +7,7 @@ import {
   type IdentityProvider,
 } from "@/lib/auth/multi-provider";
 import { toSafeRelativePath } from "@/lib/auth/password-recovery";
+import { recordLoginSuccess } from "@/lib/growth/product-events";
 
 export const dynamic = "force-dynamic";
 
@@ -116,5 +117,6 @@ export async function GET(request: NextRequest) {
     ? `/${locale}/dashboard`
     : `/${locale}/dashboard?onboarding=1`;
   const next = toSafeRelativePath(explicitNext, fallbackTarget);
+  await recordLoginSuccess(supabase, user.id, request.headers.get("x-client"));
   return NextResponse.redirect(new URL(next, request.url));
 }
