@@ -282,7 +282,7 @@
     "docFolderAll": "Todos los archivos",
     "docFolderProjectDocs": "Documentación del proyecto",
     "docFolderStructural": "Soluciones estructurales",
-    "docFolderContracts": "Contratos y actas",
+    "docFolderContracts": "Contratos",
     "docTabAllFiles": "Todos ({count})",
     "docTabDocuments": "Documentos",
     "docTabDrawings": "Planos",
@@ -366,7 +366,12 @@
     "portalMobileNav": "Navegación del portal",
     "portalNavProjects": "Proyectos",
     "portalNavDocuments": "Documentos",
-    "portalNavApprovals": "Aprobaciones"
+    "portalNavApprovals": "Aprobaciones",
+    "docFolderActs": "Actas",
+    "docTabActs": "Actas",
+    "docTabContracts": "Contratos",
+    "docProjectSummary": "Resumen del proyecto",
+    "docProjectSummaryEmpty": "Todavía no hay un resumen del proyecto. No es una lectura del archivo seleccionado."
   },
   "nav": {
     "dashboard": "Panel",

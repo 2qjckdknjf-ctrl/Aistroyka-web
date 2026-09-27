@@ -282,7 +282,7 @@
     "docFolderAll": "Все файлы",
     "docFolderProjectDocs": "Проектная документация",
     "docFolderStructural": "Конструктивные решения",
-    "docFolderContracts": "Контракты и акты",
+    "docFolderContracts": "Договоры",
     "docTabAllFiles": "Все ({count})",
     "docTabDocuments": "Документы",
     "docTabDrawings": "Чертежи",
@@ -366,7 +366,12 @@
     "portalMobileNav": "Навигация портала",
     "portalNavProjects": "Проекты",
     "portalNavDocuments": "Документы",
-    "portalNavApprovals": "Согласования"
+    "portalNavApprovals": "Согласования",
+    "docFolderActs": "Акты",
+    "docTabActs": "Акты",
+    "docTabContracts": "Договоры",
+    "docProjectSummary": "Сводка проекта",
+    "docProjectSummaryEmpty": "Сводки проекта пока нет. Это не разбор выбранного файла."
   },
   "nav": {
     "dashboard": "Кабинет",
