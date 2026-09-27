@@ -26,6 +26,7 @@ import {
   portfolioStateToRisk,
   taskProgressPct,
 } from "@/components/canon/canon-live-data";
+import { portfolioReasonMessageKey } from "@/components/canon/portfolio-reason-label";
 import { useProjects } from "@/lib/projects/useProjects";
 import { usePrefetchProject } from "@/lib/projects/prefetchProject";
 
@@ -286,7 +287,10 @@ export function DashboardCanonHome() {
                             <span className={riskClass(risk)}>{riskLabel}</span>
                           </td>
                           <td className="text-xs max-w-[120px] truncate" title={control?.primaryReason ?? ""}>
-                            {control?.primaryReason ?? "—"}
+                            {(() => {
+                              const key = portfolioReasonMessageKey(control?.primaryReason);
+                              return key ? t(key) : (control?.primaryReason ?? "—");
+                            })()}
                           </td>
                         </tr>
                       );
