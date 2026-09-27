@@ -341,14 +341,8 @@ export function ProjectDocumentsCanonPanel({ projectId }: { projectId: string })
         ))}
       </div>
 
-      <div className="canon-scroll-x flex flex-wrap gap-2">
-        {["project", "type", "status", "author", "date"].map((key) => (
-          <button key={key} type="button" className="canon-ghost-btn shrink-0 !text-xs">
-            {t(`docFilter_${key}`)} ▾
-          </button>
-        ))}
-        <button type="button" className="text-xs text-[var(--canon-text-muted)]">{t("resetFilters")}</button>
-        <div className="ml-auto flex rounded-lg border border-[var(--canon-border-glass)] p-0.5">
+      <div className="flex justify-end">
+        <div className="flex rounded-lg border border-[var(--canon-border-glass)] p-0.5">
           <button
             type="button"
             className={`canon-notify-btn !w-9 ${viewMode === "list" ? "text-[var(--canon-gold)]" : ""}`}

@@ -178,10 +178,7 @@ export function DashboardCanonHome() {
         title={tDash("title")}
         subtitle={t("screen01Label")}
         actions={
-          <>
-            <button type="button" className="canon-ghost-btn">{t("filters")}</button>
-            <Link href="/projects/new" className="canon-gold-btn">{t("createProject")}</Link>
-          </>
+          <Link href="/projects/new" className="canon-gold-btn">{t("createProject")}</Link>
         }
       />
 
@@ -218,11 +215,8 @@ export function DashboardCanonHome() {
       <div className="grid gap-6 xl:grid-cols-[1fr_300px]">
         <div className="space-y-6">
           <section className="canon-glass overflow-hidden">
-            <div className="flex items-center justify-between border-b border-[var(--canon-border-glass)] px-4 py-3">
+            <div className="border-b border-[var(--canon-border-glass)] px-4 py-3">
               <h2 className="canon-section-title">{t("activeProjects")}</h2>
-              <button type="button" className="text-xs font-medium text-[var(--canon-text-muted)]">
-                {t("viewCards")} ▾
-              </button>
             </div>
             {projectsQuery.isPending ? (
               <div className="p-8 text-center text-[var(--canon-text-muted)]">{tDash("loading")}</div>
