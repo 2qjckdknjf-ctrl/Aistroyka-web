@@ -11,8 +11,8 @@
 
 | Field | Value |
 |---|---|
-| **Active slice** | Remove hardcoded confidence and tolerance claims from live report review; label the public AI demo as example output |
-| **Live artifact** | sha7 `eedfdf8` on staging + prod (MATCH) before this slice |
+| **Active slice** | Cabinet portfolio panel shows only live risk, progress, and budget — no fixed 60% or “2 projects” |
+| **Live artifact** | sha7 `50762c7` on staging + prod (MATCH) before this slice |
 | **Branch tip** | `main` @ `eedfdf81` before this slice |
 | **Pilot scope** | **contractor-ops-only** — NOT FULL / NOT portal |
 | **Runtime** | Auth: email, Apple, Google, QR. Telegram login is hidden unless a bot username is configured. Phone OTP hidden. Twilio is not a launch gate. |
