@@ -371,7 +371,9 @@
     "docTabActs": "Actas",
     "docTabContracts": "Contratos",
     "docProjectSummary": "Resumen del proyecto",
-    "docProjectSummaryEmpty": "Todavía no hay un resumen del proyecto. No es una lectura del archivo seleccionado."
+    "docProjectSummaryEmpty": "Todavía no hay un resumen del proyecto. No es una lectura del archivo seleccionado.",
+    "budgetWithinPlan": "Dentro del presupuesto previsto",
+    "portalRecentActivity": "Actividad reciente"
   },
   "nav": {
     "dashboard": "Panel",

@@ -371,7 +371,9 @@
     "docTabActs": "Acts",
     "docTabContracts": "Contracts",
     "docProjectSummary": "Project summary",
-    "docProjectSummaryEmpty": "No project summary yet. This is not a reading of the selected file."
+    "docProjectSummaryEmpty": "No project summary yet. This is not a reading of the selected file.",
+    "budgetWithinPlan": "Within the planned budget",
+    "portalRecentActivity": "Recent activity"
   },
   "nav": {
     "dashboard": "Dashboard",
