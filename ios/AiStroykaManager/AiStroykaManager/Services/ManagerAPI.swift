@@ -602,6 +602,12 @@ enum ManagerAPI {
         let _: MarkReadResponse = try await APIClient.shared.request(path: "notifications/\(id)/read", method: "PATCH")
     }
 
+    /// POST /api/v1/notifications/:id/opened — first open of the notification target. Not mark-read.
+    static func recordNotificationOpened(id: String) async {
+        struct Ack: Decodable { var ok: Bool? }
+        _ = try? await APIClient.shared.request(path: "notifications/\(id)/opened", method: "POST") as Ack
+    }
+
     /// PATCH /api/v1/notifications/read-all — same as cabinet mark-all-read.
     static func markAllNotificationsRead() async throws {
         struct Response: Decodable { var marked: Int? }

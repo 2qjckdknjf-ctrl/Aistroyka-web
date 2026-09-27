@@ -19,6 +19,8 @@ import {
 import { CanonSurface } from "@/components/canon/CanonSurface";
 import {
   buildNotificationHref,
+  notificationOpenIsRoutable,
+  reportNotificationOpened,
   countNotificationsByReadState,
   filterNotificationsByReadState,
   parseNotificationReadFilter,
@@ -225,6 +227,9 @@ export function NotificationsClient({ skin = "default" }: { skin?: "default" | "
                 >
                   <Link
                     href={buildNotificationHref(n)}
+                    onClick={() => {
+                      if (notificationOpenIsRoutable(n)) reportNotificationOpened(n.id);
+                    }}
                     className={`font-medium hover:underline ${
                       !n.read_at ? "text-aistroyka-text-primary" : "text-aistroyka-text-secondary"
                     }`}
@@ -250,6 +255,9 @@ export function NotificationsClient({ skin = "default" }: { skin?: "default" | "
                   ) : (
                     <Link
                       href={buildNotificationHref(n)}
+                      onClick={() => {
+                      if (notificationOpenIsRoutable(n)) reportNotificationOpened(n.id);
+                    }}
                       className="text-sm text-aistroyka-accent hover:underline"
                     >
                       {t("view")}
@@ -279,6 +287,9 @@ export function NotificationsClient({ skin = "default" }: { skin?: "default" | "
                     <TableCell>
                       <Link
                         href={buildNotificationHref(n)}
+                        onClick={() => {
+                      if (notificationOpenIsRoutable(n)) reportNotificationOpened(n.id);
+                    }}
                         className={`font-medium hover:underline ${
                           !n.read_at
                             ? "text-aistroyka-text-primary"
@@ -312,6 +323,9 @@ export function NotificationsClient({ skin = "default" }: { skin?: "default" | "
                       ) : (
                         <Link
                           href={buildNotificationHref(n)}
+                          onClick={() => {
+                      if (notificationOpenIsRoutable(n)) reportNotificationOpened(n.id);
+                    }}
                           className="text-sm text-aistroyka-accent hover:underline"
                         >
                           {t("view")}

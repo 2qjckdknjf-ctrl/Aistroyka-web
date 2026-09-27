@@ -277,10 +277,19 @@ struct NotificationsView: View {
 
     private func openTarget(_ item: NotificationInboxItemDTO) {
         if item.readAt == nil { markRead(item.id) }
-        guard let type = item.targetType?.trimmingCharacters(in: .whitespacesAndNewlines),
+        guard let type = item.targetType?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased(),
               let id = item.targetId?.trimmingCharacters(in: .whitespacesAndNewlines),
-              !type.isEmpty, !id.isEmpty else { return }
-        onOpenTarget?(type, id, item.projectId)
+              !type.isEmpty, !id.isEmpty,
+              let onOpenTarget else { return }
+        let routable: Set<String> = ["task", "report", "project", "document", "issue"]
+        guard routable.contains(type) else { return }
+        let trimmedProjectId = item.projectId?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let projectId = trimmedProjectId?.isEmpty == false ? trimmedProjectId : nil
+        if type == "issue", projectId == nil {
+            return
+        }
+        onOpenTarget(type, id, projectId)
+        Task { await ManagerAPI.recordNotificationOpened(id: item.id) }
     }
 
     private func markRead(_ id: String) {

@@ -152,11 +152,128 @@ export async function recordLoginSuccess(
   admin?: SupabaseClient | null,
   timeoutMs = 2000,
 ): Promise<void> {
+  await boundedProductWrite(() => writeFirstLogin(supabase, userId, clientHeader, admin), timeoutMs);
+}
+
+/** Caps a product-event write. Failures and stalls resolve; they never reject. */
+export async function boundedProductWrite(work: () => Promise<void>, timeoutMs = 2000): Promise<void> {
   await new Promise<void>((resolve) => {
     const timer = setTimeout(resolve, timeoutMs);
-    void writeFirstLogin(supabase, userId, clientHeader, admin).then(() => {
-      clearTimeout(timer);
-      resolve();
-    });
+    void work().then(
+      () => {
+        clearTimeout(timer);
+        resolve();
+      },
+      () => {
+        clearTimeout(timer);
+        resolve();
+      },
+    );
   });
+}
+
+const CATEGORY = /^[a-z0-9_]{1,40}$/;
+
+/**
+ * notification_opened: the user activated one inbox notification to open its target.
+ * Not delivery, list fetch, render, mark-read, or mark-all-read.
+ * Push taps that only carry a task id are not this event.
+ * Android FCM currently has no open/deep-link path (NOT_APPLICABLE_CURRENT_RUNTIME).
+ * One row per tenant + user + notification id.
+ */
+export function notificationOpenDetails(input: {
+  client?: string | null;
+  role?: string | null;
+  notificationType?: string | null;
+  destinationKind?: string | null;
+}): Record<string, string> {
+  const details: Record<string, string> = {};
+  const client = categoricalToken(input.client, CLIENTS);
+  const role = categoricalToken(input.role, ROLES);
+  const notificationType = categoricalSlug(input.notificationType);
+  const destinationKind = categoricalSlug(input.destinationKind);
+  if (client) details.client = client;
+  if (role) details.role = role;
+  if (notificationType) details.notification_type = notificationType;
+  if (destinationKind) {
+    details.destination_kind = destinationKind;
+    details.target_type = destinationKind;
+  }
+  details.source = "inbox";
+  return details;
+}
+
+function categoricalSlug(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const token = value.trim().toLowerCase();
+  if (!CATEGORY.test(token) || token.includes("@")) return null;
+  return token;
+}
+
+export async function recordNotificationOpened(input: {
+  writer: SupabaseClient;
+  admin?: SupabaseClient | null;
+  tenantId: string;
+  userId: string;
+  notificationId: string;
+  role?: string | null;
+  clientHeader?: string | null;
+  notificationType?: string | null;
+  destinationKind?: string | null;
+  timeoutMs?: number;
+}): Promise<void> {
+  await boundedProductWrite(() => writeNotificationOpened(input), input.timeoutMs ?? 2000);
+}
+
+async function writeNotificationOpened(input: {
+  writer: SupabaseClient;
+  admin?: SupabaseClient | null;
+  tenantId: string;
+  userId: string;
+  notificationId: string;
+  role?: string | null;
+  clientHeader?: string | null;
+  notificationType?: string | null;
+  destinationKind?: string | null;
+}): Promise<void> {
+  try {
+    if (!/^[0-9a-f-]{36}$/i.test(input.notificationId)) return;
+    const writer = input.admin ?? input.writer;
+    if (input.admin && (await notificationOpenAlreadyRecorded(input.admin, input.tenantId, input.userId, input.notificationId))) {
+      return;
+    }
+    const { error } = await writer.from("audit_logs").insert({
+      tenant_id: input.tenantId,
+      user_id: input.userId,
+      action: "notification_opened",
+      resource_type: "notification",
+      resource_id: input.notificationId,
+      details: notificationOpenDetails({
+        client: input.clientHeader,
+        role: input.role,
+        notificationType: input.notificationType,
+        destinationKind: input.destinationKind,
+      }),
+    });
+    if (error && error.code !== "23505") return;
+  } catch {
+    return;
+  }
+}
+
+async function notificationOpenAlreadyRecorded(
+  admin: SupabaseClient,
+  tenantId: string,
+  userId: string,
+  notificationId: string,
+): Promise<boolean> {
+  const { data } = await admin
+    .from("audit_logs")
+    .select("id")
+    .eq("tenant_id", tenantId)
+    .eq("user_id", userId)
+    .eq("action", "notification_opened")
+    .eq("resource_id", notificationId)
+    .limit(1);
+  return Array.isArray(data) && data.length > 0;
 }

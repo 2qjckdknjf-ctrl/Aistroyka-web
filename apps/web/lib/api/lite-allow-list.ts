@@ -37,6 +37,7 @@ function isPathAllowed(pathname: string, method: string): boolean {
   if (pathname === "/api/v1/notifications/unread-count" && m === "GET") return true;
   if (pathname === "/api/v1/notifications/read-all" && (m === "PATCH" || m === "POST")) return true;
   if (m === "PATCH" && /^\/api\/v1\/notifications\/[^/]+\/read$/.test(pathname)) return true;
+  if (m === "POST" && /^\/api\/v1\/notifications\/[^/]+\/opened$/.test(pathname)) return true;
   return false;
 }
 

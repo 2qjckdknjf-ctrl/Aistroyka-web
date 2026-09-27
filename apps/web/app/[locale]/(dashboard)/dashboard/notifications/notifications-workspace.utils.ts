@@ -83,3 +83,37 @@ export function buildNotificationHref(n: {
   if (n.project_id) return `/dashboard/projects/${n.project_id}`;
   return "/dashboard";
 }
+
+/** True only when the inbox item navigates to that target, not a generic dashboard fallback. */
+export function notificationOpenIsRoutable(n: {
+  target_type?: string;
+  target_id?: string;
+  project_id?: string;
+}): boolean {
+  const hasTargetId = Boolean(n.target_id?.trim());
+  const hasProjectId = Boolean(n.project_id?.trim());
+
+  switch (n.target_type) {
+    case "task":
+    case "report":
+    case "project":
+      return hasTargetId;
+    case "document":
+    case "issue":
+      return hasTargetId && hasProjectId;
+    default:
+      return false;
+  }
+}
+
+/** Fire-and-forget first-open telemetry. Navigation must not wait on it. */
+export function reportNotificationOpened(
+  id: string,
+  fetchImpl: typeof fetch = fetch,
+): void {
+  void fetchImpl(`/api/v1/notifications/${encodeURIComponent(id)}/opened`, {
+    method: "POST",
+    credentials: "include",
+    keepalive: true,
+  }).catch(() => undefined);
+}
