@@ -42,8 +42,22 @@ describe("notifications-workspace.utils", () => {
 
   it("treats only supported targets as opens", () => {
     expect(notificationOpenIsRoutable({ target_type: "task", target_id: "t1" })).toBe(true);
-    expect(notificationOpenIsRoutable({ target_type: "issue", target_id: "i1", project_id: "p1" })).toBe(true);
-    expect(notificationOpenIsRoutable({ target_type: "client_request", target_id: "r1", project_id: "p1" })).toBe(false);
+    expect(
+      notificationOpenIsRoutable({ target_type: "issue", target_id: "i1", project_id: "p1" }),
+    ).toBe(true);
+    expect(
+      notificationOpenIsRoutable({ target_type: "document", target_id: "d1", project_id: "p1" }),
+    ).toBe(true);
+    expect(notificationOpenIsRoutable({ target_type: "project", project_id: "p1" })).toBe(false);
+    expect(notificationOpenIsRoutable({ target_type: "issue", project_id: "p1" })).toBe(false);
+    expect(notificationOpenIsRoutable({ target_type: "document", target_id: "d1" })).toBe(false);
+    expect(
+      notificationOpenIsRoutable({
+        target_type: "client_request",
+        target_id: "r1",
+        project_id: "p1",
+      }),
+    ).toBe(false);
     expect(notificationOpenIsRoutable({})).toBe(false);
   });
 
