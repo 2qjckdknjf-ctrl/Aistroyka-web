@@ -52,7 +52,7 @@ export async function POST(
       userId: ctx.userId,
       notificationId: id,
       role: ctx.role,
-      clientHeader: request.headers.get("x-client"),
+      clientHeader: ctx.clientProfile,
       notificationType: facts.type,
       destinationKind: facts.target_type,
     });

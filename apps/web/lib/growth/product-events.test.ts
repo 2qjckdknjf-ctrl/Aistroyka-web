@@ -192,22 +192,33 @@ describe("notification_opened", () => {
   });
 
   it("writes one open and skips the same notification", async () => {
-    vi.mocked(emitAudit).mockClear();
-    const writer = {} as SupabaseClient;
-    const admin = {
-      from() {
-        const chain = {
-          eq() {
-            return chain;
-          },
-          limit: async () => ({ data: [] as { id: string }[] }),
-        };
-        return { select: () => chain };
-      },
-    } as unknown as SupabaseClient;
+    const inserts: unknown[] = [];
+    function client(existing: boolean): SupabaseClient {
+      return {
+        from() {
+          const chain = {
+            eq() {
+              return chain;
+            },
+            limit: async () => ({ data: existing ? [{ id: "existing" }] : [] }),
+            insert: async (row: unknown) => {
+              inserts.push(row);
+              return { error: null };
+            },
+          };
+          return {
+            select() {
+              return chain;
+            },
+            insert: chain.insert,
+          };
+        },
+      } as unknown as SupabaseClient;
+    }
+    const fresh = client(false);
     await recordNotificationOpened({
-      writer,
-      admin,
+      writer: fresh,
+      admin: fresh,
       tenantId: "tenant-1",
       userId: "user-1",
       notificationId: NOTIFICATION_ID,
@@ -216,22 +227,12 @@ describe("notification_opened", () => {
       notificationType: "task_assigned",
       destinationKind: "task",
     });
-    expect(emitAudit).toHaveBeenCalledTimes(1);
-    expect(JSON.stringify(vi.mocked(emitAudit).mock.calls[0]?.[1])).not.toContain("@");
+    expect(inserts).toHaveLength(1);
+    expect(JSON.stringify(inserts[0])).not.toContain("@");
 
-    const seen = {
-      from() {
-        const chain = {
-          eq() {
-            return chain;
-          },
-          limit: async () => ({ data: [{ id: "existing" }] }),
-        };
-        return { select: () => chain };
-      },
-    } as unknown as SupabaseClient;
+    const seen = client(true);
     await recordNotificationOpened({
-      writer,
+      writer: seen,
       admin: seen,
       tenantId: "tenant-1",
       userId: "user-1",
@@ -239,11 +240,11 @@ describe("notification_opened", () => {
       role: "member",
       clientHeader: "web",
     });
-    expect(emitAudit).toHaveBeenCalledTimes(1);
+    expect(inserts).toHaveLength(1);
 
     await recordNotificationOpened({
-      writer,
-      admin,
+      writer: fresh,
+      admin: fresh,
       tenantId: "tenant-1",
       userId: "user-1",
       notificationId: OTHER_NOTIFICATION_ID,
@@ -252,18 +253,28 @@ describe("notification_opened", () => {
       notificationType: "report_ready",
       destinationKind: "report",
     });
-    expect(emitAudit).toHaveBeenCalledTimes(2);
+    expect(inserts).toHaveLength(2);
   });
 
   it("does not write an invalid notification id and returns when the lookup stalls", async () => {
-    vi.mocked(emitAudit).mockClear();
+    const inserts: unknown[] = [];
+    const writer = {
+      from() {
+        return {
+          insert: async (row: unknown) => {
+            inserts.push(row);
+            return { error: null };
+          },
+        };
+      },
+    } as unknown as SupabaseClient;
     await recordNotificationOpened({
-      writer: {} as SupabaseClient,
+      writer,
       tenantId: "tenant-1",
       userId: "user-1",
       notificationId: "not-an-id",
     });
-    expect(emitAudit).not.toHaveBeenCalled();
+    expect(inserts).toHaveLength(0);
 
     const hung = {
       from() {

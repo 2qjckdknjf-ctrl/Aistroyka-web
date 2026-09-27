@@ -235,10 +235,11 @@ async function writeNotificationOpened(input: {
 }): Promise<void> {
   try {
     if (!/^[0-9a-f-]{36}$/i.test(input.notificationId)) return;
+    const writer = input.admin ?? input.writer;
     if (input.admin && (await notificationOpenAlreadyRecorded(input.admin, input.tenantId, input.userId, input.notificationId))) {
       return;
     }
-    await emitAudit(input.writer, {
+    const { error } = await writer.from("audit_logs").insert({
       tenant_id: input.tenantId,
       user_id: input.userId,
       action: "notification_opened",
@@ -251,6 +252,7 @@ async function writeNotificationOpened(input: {
         destinationKind: input.destinationKind,
       }),
     });
+    if (error && error.code !== "23505") return;
   } catch {
     return;
   }
