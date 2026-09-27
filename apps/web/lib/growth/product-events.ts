@@ -18,10 +18,13 @@ const ROLES = new Set(["owner", "admin", "member", "viewer", "stakeholder"]);
 
 const ACTIVATION_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 
+const ACTIVATION_EXCLUDED_ROLES = new Set(["viewer", "stakeholder"]);
+
 export type ProductAuditRow = {
   user_id: string | null;
   action: string;
   created_at: string;
+  role?: string | null;
 };
 
 export type ActivationBaseline = {
@@ -63,6 +66,7 @@ export function activationBaseline(rows: readonly ProductAuditRow[]): Activation
   const firstLogin = new Map<string, number>();
   for (const row of rows) {
     if (!row.user_id || row.action !== "login") continue;
+    if (row.role && ACTIVATION_EXCLUDED_ROLES.has(row.role)) continue;
     const at = Date.parse(row.created_at);
     if (Number.isNaN(at)) continue;
     const previous = firstLogin.get(row.user_id);
@@ -121,7 +125,7 @@ async function writeFirstLogin(
 ): Promise<void> {
   try {
     const workspace = await resolveWorkspace(supabase, userId);
-    if (!workspace) return;
+    if (!workspace || ACTIVATION_EXCLUDED_ROLES.has(workspace.role)) return;
     if (admin && (await loginAlreadyRecorded(admin, workspace.tenantId, userId))) return;
     await emitAudit(admin ?? supabase, {
       tenant_id: workspace.tenantId,

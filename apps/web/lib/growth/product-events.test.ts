@@ -55,6 +55,16 @@ describe("activationBaseline", () => {
     ).toEqual({ loginUsers: 0, activatedUsers: 0, rate: null });
   });
 
+  it("leaves viewer and stakeholder logins out of the denominator", () => {
+    expect(
+      activationBaseline([
+        { user_id: "u1", action: "login", created_at: "2026-09-01T00:00:00.000Z", role: "stakeholder" },
+        { user_id: "u2", action: "login", created_at: "2026-09-01T00:00:00.000Z", role: "member" },
+        { user_id: "u2", action: "report_submit", created_at: "2026-09-02T00:00:00.000Z" },
+      ]),
+    ).toEqual({ loginUsers: 1, activatedUsers: 1, rate: 1 });
+  });
+
   it("counts a core action only after the first login and within seven days", () => {
     expect(
       activationBaseline([
