@@ -23,3 +23,13 @@ export function portfolioReasonMessageKey(reason: string | null | undefined): Po
   if (!reason) return null;
   return PORTFOLIO_REASON_KEYS[reason as keyof typeof PORTFOLIO_REASON_KEYS] ?? null;
 }
+
+/** Visible cell text and tooltip must be the same localized string. */
+export function portfolioReasonCell(
+  reason: string | null | undefined,
+  translate: (key: PortfolioReasonMessageKey) => string,
+): { text: string; title: string } {
+  const key = portfolioReasonMessageKey(reason);
+  const text = key ? translate(key) : (reason ?? "—");
+  return { text, title: text };
+}

@@ -16,7 +16,7 @@ import {
   portfolioStateToRisk,
   taskProgressPct,
 } from "@/components/canon/canon-live-data";
-import { portfolioReasonMessageKey } from "@/components/canon/portfolio-reason-label";
+import { portfolioReasonCell } from "@/components/canon/portfolio-reason-label";
 import { useProjects } from "@/lib/projects/useProjects";
 import { usePrefetchProject } from "@/lib/projects/prefetchProject";
 
@@ -213,12 +213,14 @@ export function DashboardProjectsCanonGrid() {
                           <span className={riskClass(risk)}>{riskLabel}</span>
                         </td>
                         <td className="text-xs">—</td>
-                        <td className="text-xs max-w-[140px] truncate" title={control?.primaryReason ?? ""}>
                           {(() => {
-                            const key = portfolioReasonMessageKey(control?.primaryReason);
-                            return key ? t(key) : (control?.primaryReason ?? "—");
+                            const reason = portfolioReasonCell(control?.primaryReason, (key) => t(key));
+                            return (
+                              <td className="text-xs max-w-[140px] truncate" title={reason.title}>
+                                {reason.text}
+                              </td>
+                            );
                           })()}
-                        </td>
                         <td>
                           <Link
                             href={`/dashboard/projects/${p.id}`}
