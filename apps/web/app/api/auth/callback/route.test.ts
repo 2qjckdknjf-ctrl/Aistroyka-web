@@ -7,15 +7,26 @@ const createClient = vi.fn();
 const ensureOnboardingProfileExists = vi.fn();
 const hasTenantMembership = vi.fn();
 const linkIdentityRow = vi.fn();
+const recordLoginSuccess = vi.fn();
+const adminClient = { from: vi.fn() };
+const getAdminClient = vi.fn(() => adminClient);
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: () => createClient(),
+}));
+
+vi.mock("@/lib/supabase/admin", () => ({
+  getAdminClient: () => getAdminClient(),
 }));
 
 vi.mock("@/lib/auth/multi-provider", () => ({
   ensureOnboardingProfileExists: (...args: unknown[]) => ensureOnboardingProfileExists(...args),
   hasTenantMembership: (...args: unknown[]) => hasTenantMembership(...args),
   linkIdentityRow: (...args: unknown[]) => linkIdentityRow(...args),
+}));
+
+vi.mock("@/lib/growth/product-events", () => ({
+  recordLoginSuccess: (...args: unknown[]) => recordLoginSuccess(...args),
 }));
 
 describe("GET /api/auth/callback", () => {
@@ -77,6 +88,7 @@ describe("GET /api/auth/callback", () => {
     expect(response.status).toBe(307);
     expect(response.headers.get("location")).toContain("/en/dashboard");
     expect(hasTenantMembership).toHaveBeenCalled();
+    expect(recordLoginSuccess).toHaveBeenCalledWith(expect.anything(), "user-1", null, adminClient);
   });
 
   it("redirects to onboarding flow when membership is absent", async () => {
@@ -131,5 +143,6 @@ describe("GET /api/auth/callback", () => {
         provider_user_id: "google-sub-1",
       })
     );
+    expect(recordLoginSuccess).not.toHaveBeenCalled();
   });
 });
