@@ -115,14 +115,8 @@ export function ProjectScheduleCanonPanel({ projectId }: { projectId: string }) 
         }
       />
 
-      <div className="canon-scroll-x flex flex-wrap items-center gap-2">
-        {["phase", "status", "assignee", "date"].map((key) => (
-          <button key={key} type="button" className="canon-ghost-btn shrink-0 !text-xs">
-            {t(`scheduleFilter_${key}`)} ▾
-          </button>
-        ))}
-        <button type="button" className="text-xs text-[var(--canon-text-muted)]">{t("resetFilters")}</button>
-        <div className="ml-auto flex rounded-lg border border-[var(--canon-border-glass)] p-0.5">
+      <div className="flex justify-end">
+        <div className="flex rounded-lg border border-[var(--canon-border-glass)] p-0.5">
           {(
             [
               { mode: "gantt" as const, icon: CalendarDays, label: t("scheduleViewGantt") },
