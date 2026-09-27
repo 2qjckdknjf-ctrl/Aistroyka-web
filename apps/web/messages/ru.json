@@ -371,7 +371,9 @@
     "docTabActs": "Акты",
     "docTabContracts": "Договоры",
     "docProjectSummary": "Сводка проекта",
-    "docProjectSummaryEmpty": "Сводки проекта пока нет. Это не разбор выбранного файла."
+    "docProjectSummaryEmpty": "Сводки проекта пока нет. Это не разбор выбранного файла.",
+    "budgetWithinPlan": "В пределах плана",
+    "portalRecentActivity": "Недавние события"
   },
   "nav": {
     "dashboard": "Кабинет",
