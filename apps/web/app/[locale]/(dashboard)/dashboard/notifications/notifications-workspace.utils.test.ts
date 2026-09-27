@@ -4,6 +4,7 @@ import {
   countNotificationsByReadState,
   filterNotificationsByReadState,
   parseNotificationReadFilter,
+  notificationOpenIsRoutable,
   reportNotificationOpened,
   sortNotificationsByAttention,
 } from "./notifications-workspace.utils";
@@ -37,6 +38,13 @@ describe("notifications-workspace.utils", () => {
       { id: "new-read", created_at: "2026-08-21T10:00:00Z", read_at: "2026-08-21T11:00:00Z" },
     ]);
     expect(sorted.map((n) => n.id)).toEqual(["old-unread", "new-read"]);
+  });
+
+  it("treats only supported targets as opens", () => {
+    expect(notificationOpenIsRoutable({ target_type: "task", target_id: "t1" })).toBe(true);
+    expect(notificationOpenIsRoutable({ target_type: "issue", target_id: "i1", project_id: "p1" })).toBe(true);
+    expect(notificationOpenIsRoutable({ target_type: "client_request", target_id: "r1", project_id: "p1" })).toBe(false);
+    expect(notificationOpenIsRoutable({})).toBe(false);
   });
 
   it("reports an open without waiting, and ignores a failed request", async () => {

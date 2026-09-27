@@ -84,6 +84,20 @@ export function buildNotificationHref(n: {
   return "/dashboard";
 }
 
+const ROUTABLE_NOTIFICATION_TARGETS = new Set(["task", "report", "project", "document", "issue"]);
+
+/** True only when the inbox item navigates to that target, not a generic dashboard fallback. */
+export function notificationOpenIsRoutable(n: {
+  target_type?: string;
+  target_id?: string;
+  project_id?: string;
+}): boolean {
+  const type = (n.target_type ?? "").trim().toLowerCase();
+  if (!ROUTABLE_NOTIFICATION_TARGETS.has(type)) return false;
+  if (type === "issue" || type === "document") return Boolean(n.project_id?.trim());
+  return Boolean(n.target_id?.trim());
+}
+
 /** Fire-and-forget first-open telemetry. Navigation must not wait on it. */
 export function reportNotificationOpened(
   id: string,
