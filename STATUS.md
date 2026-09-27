@@ -2,8 +2,8 @@
 
 > Live project status. Keep this short and mobile-readable.
 
-**Last updated:** 2026-09-14  
-**Updated by:** docs — scope freeze contractor-ops-only (Grow OS TASK-AISTROYKA-002)
+**Last updated:** 2026-09-27  
+**Updated by:** public claim remediation on production (PR #354 and follow-up)
 
 ---
 
@@ -11,25 +11,24 @@
 
 | Field | Value |
 |---|---|
-| **Active slice** | Contractor-ops pilot baseline — TASK-AISTROYKA-002 **READY** (soft gate) |
-| **Live artifact** | sha7 `09f7bcd` on staging + prod (MATCH) |
-| **Branch tip** | `main` (git tip may be ahead of Worker build; trust live `buildStamp.sha7`) |
+| **Active slice** | Public claim tails — controlled-pilot wording on marketing pages |
+| **Live artifact** | sha7 `883c000` on staging + prod (MATCH) at follow-up start; this docs/copy change deploys after merge |
+| **Branch tip** | `main` @ `883c000` before this follow-up |
 | **Pilot scope** | **contractor-ops-only** — NOT FULL / NOT portal |
-| **Gate** | AC-002-1 PASS · AC-002-2 **N/A** · AC-002-3 CLOSED · AC-002-4 PASS @ live |
-| **Runtime** | Auth: email, Apple, Google, QR, Telegram where enabled. Phone OTP hidden/disabled. Twilio is not a launch gate. |
-| **Next** | Hold portal/stakeholder until new scope decision; HiAir Play/ASC separate; keep entitlement account-first OFF |
-| **Closed** | PR #277; PR #342 STATUS refresh; PR #343 paths-ignore; contractor-ops READY 2026-09-14 |
+| **Runtime** | Auth: email, Apple, Google, QR. Telegram login is hidden unless a bot username is configured. Phone OTP hidden. Twilio is not a launch gate. |
+| **Next** | Counsel-approved privacy/terms stay **BLOCKED_EXTERNAL**. Do not invent legal text or growth baselines. |
+| **Closed** | PR #354 public copy on production; contractor-ops READY 2026-09-14 remains the product-scope freeze |
 
 ## Not approved / forbidden claims
 
 - **Not approved:** stakeholder / client **portal READY**
 - **Not approved:** **FULL** (contractor + portal) pilot READY
-- **Not approved:** finance-boundary proof for portal users (AC-002-2 N/A — not closed, out of scope)
-- **Not approved:** new production feature deploys beyond current live artifact (this STATUS is docs only)
+- **Not approved:** Public GA, GDPR certification, App Store / Google Play availability
+- **Not approved:** marketing AI analysis, Telegram login, or unverified KPI numbers as live facts
 - Re-widen to FULL only with explicit Sasha/Commander decision + stakeholder smoke
 
 ## Notes
 
-Deploy SoT: Cloudflare Workers (Vercel = preview only). Docs merges: prefer `[skip-staging-deploy]` in commit message; STATUS.md is also under staging `paths-ignore` (#343).
+Deploy SoT: Cloudflare Workers (Vercel = preview only). Docs-only merges: prefer `[skip-staging-deploy]` in the commit message. This follow-up changes public copy, so staging deploy is expected.
 
 ---
