@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
   logStructured({ event: "auth_login", traceId, route: "/api/auth/login", status: 200, duration_ms: Date.now() - startMs });
   const userId = data.user?.id;
   if (userId) {
-    await recordLoginSuccess(supabase, userId, request.headers.get("x-client"));
+    await recordLoginSuccess(supabase, userId, request.headers.get("x-client"), admin);
   }
   const response = NextResponse.json({ ok: true });
   cookiesToSet.forEach((c) => {

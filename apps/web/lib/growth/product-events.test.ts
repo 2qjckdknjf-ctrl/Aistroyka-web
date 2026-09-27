@@ -49,19 +49,20 @@ describe("activationBaseline", () => {
   it("returns a null rate when no login rows exist", () => {
     expect(
       activationBaseline([
-        { user_id: "u1", action: "task_assignment" },
-        { user_id: null, action: "login" },
+        { user_id: "u1", action: "task_assignment", created_at: "2026-09-02T00:00:00.000Z" },
+        { user_id: null, action: "login", created_at: "2026-09-01T00:00:00.000Z" },
       ]),
     ).toEqual({ loginUsers: 0, activatedUsers: 0, rate: null });
   });
 
-  it("counts activation only from stored login plus core actions", () => {
+  it("counts a core action only after the first login and within seven days", () => {
     expect(
       activationBaseline([
-        { user_id: "u1", action: "login" },
-        { user_id: "u1", action: "report_submit" },
-        { user_id: "u2", action: "login" },
-        { user_id: "u3", action: "task_assignment" },
+        { user_id: "u1", action: "task_assignment", created_at: "2026-08-01T00:00:00.000Z" },
+        { user_id: "u1", action: "login", created_at: "2026-09-01T00:00:00.000Z" },
+        { user_id: "u1", action: "report_submit", created_at: "2026-09-03T00:00:00.000Z" },
+        { user_id: "u2", action: "login", created_at: "2026-09-01T00:00:00.000Z" },
+        { user_id: "u2", action: "report_review", created_at: "2026-09-20T00:00:00.000Z" },
       ]),
     ).toEqual({ loginUsers: 2, activatedUsers: 1, rate: 0.5 });
   });
@@ -105,6 +106,23 @@ describe("recordLoginSuccess", () => {
       },
     } as unknown as SupabaseClient;
     await recordLoginSuccess(empty, "user-1", "web");
+    expect(emitAudit).not.toHaveBeenCalled();
+  });
+
+  it("keeps the first stored login when the service client already has one", async () => {
+    vi.mocked(emitAudit).mockClear();
+    const admin = {
+      from() {
+        const chain = {
+          eq() {
+            return chain;
+          },
+          limit: async () => ({ data: [{ id: "existing" }] }),
+        };
+        return { select: () => chain };
+      },
+    } as unknown as SupabaseClient;
+    await recordLoginSuccess(supabaseWithMembership(), "user-1", "ios_worker", admin);
     expect(emitAudit).not.toHaveBeenCalled();
   });
 });

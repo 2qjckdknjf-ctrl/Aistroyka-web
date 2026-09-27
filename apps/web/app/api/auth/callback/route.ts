@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getAdminClient } from "@/lib/supabase/admin";
 import {
   ensureOnboardingProfileExists,
   hasTenantMembership,
@@ -117,6 +118,8 @@ export async function GET(request: NextRequest) {
     ? `/${locale}/dashboard`
     : `/${locale}/dashboard?onboarding=1`;
   const next = toSafeRelativePath(explicitNext, fallbackTarget);
-  await recordLoginSuccess(supabase, user.id, request.headers.get("x-client"));
+  if (url.searchParams.get("intent") !== "link") {
+    await recordLoginSuccess(supabase, user.id, request.headers.get("x-client"), getAdminClient());
+  }
   return NextResponse.redirect(new URL(next, request.url));
 }
