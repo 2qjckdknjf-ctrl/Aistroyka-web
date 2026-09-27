@@ -380,7 +380,12 @@ export function DashboardCanonHome() {
               {t("openAiCenter")} →
             </Link>
           </div>
-          <CanonPortfolioAiPanel projectCount={projects.length} highRiskCount={highRiskCount} />
+          <CanonPortfolioAiPanel
+            projectCount={projects.length}
+            highRiskCount={highRiskCount}
+            progressPct={summaries.length ? avgProgress : null}
+            budgetUtilizationPct={budgetAgg.planned > 0 ? budgetAgg.utilizationPct : null}
+          />
         </aside>
       </div>
     </div>
