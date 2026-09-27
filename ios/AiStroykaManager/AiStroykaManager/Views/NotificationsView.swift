@@ -279,14 +279,17 @@ struct NotificationsView: View {
         if item.readAt == nil { markRead(item.id) }
         guard let type = item.targetType?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased(),
               let id = item.targetId?.trimmingCharacters(in: .whitespacesAndNewlines),
-              !type.isEmpty, !id.isEmpty else { return }
+              !type.isEmpty, !id.isEmpty,
+              let onOpenTarget else { return }
         let routable: Set<String> = ["task", "report", "project", "document", "issue"]
         guard routable.contains(type) else { return }
-        if type == "issue", (item.projectId ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+        let trimmedProjectId = item.projectId?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let projectId = trimmedProjectId?.isEmpty == false ? trimmedProjectId : nil
+        if type == "issue", projectId == nil {
             return
         }
+        onOpenTarget(type, id, projectId)
         Task { await ManagerAPI.recordNotificationOpened(id: item.id) }
-        onOpenTarget?(type, id, item.projectId)
     }
 
     private func markRead(_ id: String) {
