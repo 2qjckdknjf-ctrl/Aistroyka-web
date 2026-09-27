@@ -10,7 +10,6 @@ export function CanonTasksAiPanel() {
     <aside className="canon-glass canon-ai-panel p-4">
       <div className="flex items-center gap-2">
         <p className="canon-section-title">{t("tasksAiPriorities")}</p>
-        <span className="canon-ai-panel-badge">AI</span>
       </div>
       <div className="mt-4 space-y-4 text-sm">
         <div>
@@ -30,12 +29,6 @@ export function CanonTasksAiPanel() {
       </div>
       <Link href="/dashboard/ai" className="canon-ai-panel-btn mt-4">
         {t("openAiCenter")} →
-      </Link>
-      <Link
-        href="/dashboard/help"
-        className="mt-3 block text-xs text-[var(--canon-text-muted)] hover:text-[var(--canon-text-primary)]"
-      >
-        {t("configureRecommendations")}
       </Link>
     </aside>
   );
