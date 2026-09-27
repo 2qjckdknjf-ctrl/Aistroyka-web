@@ -338,6 +338,21 @@
   position: relative;
 }
 
+.v41-example-note {
+  position: absolute;
+  top: 18px;
+  left: 0;
+  z-index: 2;
+  margin: 0;
+  max-width: 220px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1.35;
+  text-transform: uppercase;
+}
+
 .v41-signal {
   position: absolute;
   width: 250px;
@@ -1397,6 +1412,7 @@ body:has(.v41-modal-backdrop) {
   display: grid;
   gap: 28px;
 }
+
 
 .v43-hero-grid,
 .v43-split,

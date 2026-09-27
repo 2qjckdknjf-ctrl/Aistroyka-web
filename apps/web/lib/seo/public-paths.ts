@@ -9,6 +9,7 @@ export const PUBLIC_SITEMAP_PATHS = [
   "/pricing",
   "/about",
   "/contact",
+  "/support",
   "/faq",
   "/privacy",
   "/terms",

@@ -19,7 +19,7 @@ export type HomeHeroCopy = {
   signalPhotoMeta: string;
   productAlt: string;
   heroAlt: string;
-  syncLabel: string;
+  exampleLabel: string;
   syncDate: string;
 };
 
@@ -56,7 +56,8 @@ export function HomeHero({ copy }: { copy: HomeHeroCopy }) {
             <ShieldCheck size={21} /> {copy.humanControl}
           </p>
         </div>
-        <div className="v41-site-lens" aria-label={copy.syncLabel}>
+        <div className="v41-site-lens" aria-label={copy.exampleLabel}>
+          <p className="v41-example-note">{copy.exampleLabel}</p>
           <div className="v41-signal v41-signal-blue v41-glass">
             <Building2 size={20} />
             <span>
@@ -82,9 +83,7 @@ export function HomeHero({ copy }: { copy: HomeHeroCopy }) {
         <div className="v41-product-window v41-glass">
           <img src={V41_ASSETS.commandCenter} alt={copy.productAlt} width={1280} height={800} />
           <div className="v41-product-window-meta">
-            <span>
-              <span className="v41-live-dot" /> {copy.syncLabel}
-            </span>
+            <span>{copy.exampleLabel}</span>
             <span>{copy.syncDate}</span>
           </div>
         </div>

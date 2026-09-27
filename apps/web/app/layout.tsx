@@ -22,17 +22,17 @@ const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.aistroyka.ai";
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
   title: {
-    default: "Aistroyka — AI Construction Intelligence",
+    default: "Aistroyka — construction operations for a controlled pilot",
     template: "%s | Aistroyka",
   },
-  description: "AI Construction Intelligence — control progress, risks, and quality on site.",
+  description: "Controlled-pilot construction operations: projects, field reports, and photo evidence. A person decides.",
   openGraph: {
     type: "website",
     locale: "en_US",
     url: "/",
     siteName: "Aistroyka",
-    title: "Aistroyka — AI Construction Intelligence",
-    description: "AI-powered construction intelligence platform: projects, tasks, daily reports, photo evidence, and AI analytics.",
+    title: "Aistroyka — construction operations for a controlled pilot",
+    description: "Controlled-pilot construction operations: projects, tasks, daily reports, and photo evidence. A person decides.",
     images: [{ url: "/brand/social/aistroyka-og.png", width: 1200, height: 630, alt: "AISTROYKA" }],
   },
   icons: {

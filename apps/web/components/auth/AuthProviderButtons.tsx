@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui";
+import { isTelegramLoginUiEnabled } from "@/lib/auth/telegram-login-ui";
 import { createClient } from "@/lib/supabase/client";
 
 type OAuthProvider = "apple" | "google";
@@ -35,6 +36,7 @@ export function AuthProviderButtons({
   const [oauthError, setOauthError] = useState<string | null>(null);
   const safeNext = useMemo(() => makeSafePath(nextPath, locale), [locale, nextPath]);
   const telegramStartHref = `/${locale}/telegram/start?next=${encodeURIComponent(safeNext)}`;
+  const telegramEnabled = isTelegramLoginUiEnabled();
 
   async function continueWithOAuth(provider: OAuthProvider) {
     setOauthError(null);
@@ -92,12 +94,14 @@ export function AuthProviderButtons({
       >
         {t("continueWithGoogle")}
       </Button>
-      <a
-        href={telegramStartHref}
-        className="inline-flex min-h-[var(--aistroyka-touch-min)] w-full items-center justify-center rounded-[var(--aistroyka-radius-lg)] border border-[var(--aistroyka-button-secondary-border)] bg-[var(--aistroyka-button-secondary-bg)] px-[var(--aistroyka-space-4)] py-2.5 text-center text-[var(--aistroyka-font-headline)] font-semibold text-[var(--aistroyka-button-secondary-text)] transition-colors hover:bg-aistroyka-surface-raised"
-      >
-        {t("continueWithTelegram")}
-      </a>
+      {telegramEnabled ? (
+        <a
+          href={telegramStartHref}
+          className="inline-flex min-h-[var(--aistroyka-touch-min)] w-full items-center justify-center rounded-[var(--aistroyka-radius-lg)] border border-[var(--aistroyka-button-secondary-border)] bg-[var(--aistroyka-button-secondary-bg)] px-[var(--aistroyka-space-4)] py-2.5 text-center text-[var(--aistroyka-font-headline)] font-semibold text-[var(--aistroyka-button-secondary-text)] transition-colors hover:bg-aistroyka-surface-raised"
+        >
+          {t("continueWithTelegram")}
+        </a>
+      ) : null}
       {oauthError ? (
         <p className="text-sm text-aistroyka-error" role="alert">
           {oauthError}
