@@ -387,7 +387,9 @@
     "portfolioReasonIssues": "Hay incidencias abiertas del proyecto.",
     "portfolioReasonReports": "Los partes de obra esperan revisión.",
     "portfolioReasonCritical": "Varias señales de riesgo: revise el resumen del proyecto.",
-    "portfolioReasonFollowUp": "Conviene un seguimiento."
+    "portfolioReasonFollowUp": "Conviene un seguimiento.",
+    "budgetWithinPlan": "Dentro del presupuesto previsto",
+    "portalRecentActivity": "Actividad reciente"
   },
   "nav": {
     "dashboard": "Panel",

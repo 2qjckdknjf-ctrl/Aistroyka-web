@@ -387,7 +387,9 @@
     "portfolioReasonIssues": "Open project issues.",
     "portfolioReasonReports": "Field reports awaiting review.",
     "portfolioReasonCritical": "Several risk signals — review the project summary.",
-    "portfolioReasonFollowUp": "Some follow-up is recommended."
+    "portfolioReasonFollowUp": "Some follow-up is recommended.",
+    "budgetWithinPlan": "Within the planned budget",
+    "portalRecentActivity": "Recent activity"
   },
   "nav": {
     "dashboard": "Dashboard",

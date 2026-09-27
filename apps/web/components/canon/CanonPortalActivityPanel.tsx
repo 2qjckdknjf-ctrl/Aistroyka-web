@@ -42,7 +42,7 @@ export function CanonPortalActivityPanel({ projectId }: { projectId: string }) {
 
   return (
     <div className="canon-portal-gallery canon-glass p-4">
-      <h3 className="font-semibold text-[var(--canon-text-primary)]">{t("portalPhotoGallery")}</h3>
+      <h3 className="font-semibold text-[var(--canon-text-primary)]">{t("portalRecentActivity")}</h3>
       <p className="mt-1 text-xs text-[var(--canon-text-muted)]">{tDetail("requestsResponsesPortalAccessHint")}</p>
 
       {q.isPending ? (

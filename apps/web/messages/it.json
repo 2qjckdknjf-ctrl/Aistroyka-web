@@ -387,7 +387,9 @@
     "portfolioReasonIssues": "Ci sono questioni aperte sul progetto.",
     "portfolioReasonReports": "I report di cantiere attendono revisione.",
     "portfolioReasonCritical": "Più segnali di rischio: apri il riepilogo del progetto.",
-    "portfolioReasonFollowUp": "È utile un seguito."
+    "portfolioReasonFollowUp": "È utile un seguito.",
+    "budgetWithinPlan": "Dentro del budget previsto",
+    "portalRecentActivity": "Attività recente"
   },
   "nav": {
     "dashboard": "Cabinet",

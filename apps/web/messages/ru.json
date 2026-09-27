@@ -387,7 +387,9 @@
     "portfolioReasonIssues": "Есть открытые вопросы по проекту.",
     "portfolioReasonReports": "Полевые отчёты ждут проверки.",
     "portfolioReasonCritical": "Несколько сигналов риска — откройте сводку проекта.",
-    "portfolioReasonFollowUp": "Нужно некоторое сопровождение."
+    "portfolioReasonFollowUp": "Нужно некоторое сопровождение.",
+    "budgetWithinPlan": "В пределах плана",
+    "portalRecentActivity": "Недавние события"
   },
   "nav": {
     "dashboard": "Кабинет",
