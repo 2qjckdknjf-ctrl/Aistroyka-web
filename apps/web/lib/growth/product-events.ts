@@ -195,7 +195,10 @@ export function notificationOpenDetails(input: {
   if (client) details.client = client;
   if (role) details.role = role;
   if (notificationType) details.notification_type = notificationType;
-  if (destinationKind) details.destination_kind = destinationKind;
+  if (destinationKind) {
+    details.destination_kind = destinationKind;
+    details.target_type = destinationKind;
+  }
   details.source = "inbox";
   return details;
 }

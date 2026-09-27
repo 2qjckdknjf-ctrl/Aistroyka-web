@@ -179,6 +179,7 @@ describe("notification_opened", () => {
       role: "admin",
       notification_type: "task_assigned",
       destination_kind: "task",
+      target_type: "task",
       source: "inbox",
     });
     const dirty = notificationOpenDetails({
