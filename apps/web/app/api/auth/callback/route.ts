@@ -24,6 +24,7 @@ export async function GET(request: NextRequest) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
   const explicitNext = url.searchParams.get("next");
+  const isLinkIntent = url.searchParams.get("intent") === "link";
   const callbackPath = toSafeRelativePath(url.searchParams.get("callback"), "/en/dashboard");
   const locale = localeFromPath(callbackPath);
 
@@ -98,10 +99,10 @@ export async function GET(request: NextRequest) {
         identity_id: authIdentity.identity_id || authIdentity.id,
       },
     });
-    if (!linkResult.ok && url.searchParams.get("intent") === "link") {
+    if (!linkResult.ok && isLinkIntent) {
       return NextResponse.redirect(new URL(`${callbackPath}?error=oauth_link_persist_failed`, request.url));
     }
-  } else if (url.searchParams.get("intent") === "link" && requestedProvider) {
+  } else if (isLinkIntent && requestedProvider) {
     return NextResponse.redirect(new URL(`${callbackPath}?error=oauth_identity_missing`, request.url));
   }
 
@@ -117,6 +118,8 @@ export async function GET(request: NextRequest) {
     ? `/${locale}/dashboard`
     : `/${locale}/dashboard?onboarding=1`;
   const next = toSafeRelativePath(explicitNext, fallbackTarget);
-  await recordLoginSuccess(supabase, user.id, request.headers.get("x-client"));
+  if (!isLinkIntent) {
+    await recordLoginSuccess(supabase, user.id, request.headers.get("x-client"));
+  }
   return NextResponse.redirect(new URL(next, request.url));
 }
