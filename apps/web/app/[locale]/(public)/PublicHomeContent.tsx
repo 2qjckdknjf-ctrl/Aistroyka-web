@@ -33,7 +33,7 @@ export async function PublicHomeContent() {
           signalPhotoMeta: t("signalPhotoMeta"),
           productAlt: t("commandCenterAlt"),
           heroAlt: t("heroAlt"),
-          syncLabel: t("syncLabel"),
+          exampleLabel: t("exampleLabel"),
           syncDate: t("syncDate"),
         }}
       />
