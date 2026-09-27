@@ -78,6 +78,12 @@ export function DashboardTasksCanonPage() {
     }
   }, [scope, meQuery.data?.user_id, params.worker_id, setParam]);
 
+  useEffect(() => {
+    if (scope === "review" && params.status !== "in_progress") {
+      setParam("status", "in_progress");
+    }
+  }, [scope, params.status, setParam]);
+
   const tabs: { key: TaskScope; label: string }[] = [
     { key: "all", label: t("taskTabAll") },
     { key: "mine", label: t("taskTabMine") },

@@ -22,7 +22,7 @@ export function CanonTasksAiPanel() {
         <div>
           <p className="font-medium text-[var(--canon-text-primary)]">{t("tasksAiRec2Title")}</p>
           <p className="mt-1 text-[var(--canon-text-muted)]">{t("tasksAiRec2Impact")}</p>
-          <Link href="/dashboard/tasks?scope=review" className="canon-ghost-btn mt-2 !text-xs inline-flex">
+          <Link href="/dashboard/tasks?scope=review&status=in_progress" className="canon-ghost-btn mt-2 !text-xs inline-flex">
             {t("tasksAiOpenTask")}
           </Link>
         </div>
