@@ -282,7 +282,7 @@
     "docFolderAll": "All files",
     "docFolderProjectDocs": "Project documentation",
     "docFolderStructural": "Structural solutions",
-    "docFolderContracts": "Contracts & acts",
+    "docFolderContracts": "Contracts",
     "docTabAllFiles": "All ({count})",
     "docTabDocuments": "Documents",
     "docTabDrawings": "Drawings",
@@ -366,7 +366,12 @@
     "portalMobileNav": "Portal navigation",
     "portalNavProjects": "Projects",
     "portalNavDocuments": "Documents",
-    "portalNavApprovals": "Approvals"
+    "portalNavApprovals": "Approvals",
+    "docFolderActs": "Acts",
+    "docTabActs": "Acts",
+    "docTabContracts": "Contracts",
+    "docProjectSummary": "Project summary",
+    "docProjectSummaryEmpty": "No project summary yet. This is not a reading of the selected file."
   },
   "nav": {
     "dashboard": "Dashboard",

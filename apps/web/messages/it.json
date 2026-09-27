@@ -282,7 +282,7 @@
     "docFolderAll": "Tutti i file",
     "docFolderProjectDocs": "Documentazione di progetto",
     "docFolderStructural": "Soluzioni strutturali",
-    "docFolderContracts": "Contratti e atti",
+    "docFolderContracts": "Contratti",
     "docTabAllFiles": "Tutti ({count})",
     "docTabDocuments": "Documenti",
     "docTabDrawings": "Disegni",
@@ -366,7 +366,12 @@
     "portalMobileNav": "Navigazione portale",
     "portalNavProjects": "Progetti",
     "portalNavDocuments": "Documenti",
-    "portalNavApprovals": "Approvazioni"
+    "portalNavApprovals": "Approvazioni",
+    "docFolderActs": "Atti",
+    "docTabActs": "Atti",
+    "docTabContracts": "Contratti",
+    "docProjectSummary": "Riepilogo del progetto",
+    "docProjectSummaryEmpty": "Non c’è ancora un riepilogo del progetto. Non è una lettura del file selezionato."
   },
   "nav": {
     "dashboard": "Cabinet",
