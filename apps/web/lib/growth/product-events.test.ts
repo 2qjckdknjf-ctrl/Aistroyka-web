@@ -125,4 +125,23 @@ describe("recordLoginSuccess", () => {
     await recordLoginSuccess(supabaseWithMembership(), "user-1", "ios_worker", admin);
     expect(emitAudit).not.toHaveBeenCalled();
   });
+
+  it("returns when the workspace lookup stalls", async () => {
+    const hung = {
+      from() {
+        return {
+          select() {
+            return {
+              eq() {
+                return { maybeSingle: () => new Promise(() => undefined) };
+              },
+            };
+          },
+        };
+      },
+    } as unknown as SupabaseClient;
+    const started = Date.now();
+    await recordLoginSuccess(hung, "user-1", "web", null, 40);
+    expect(Date.now() - started).toBeLessThan(500);
+  });
 });

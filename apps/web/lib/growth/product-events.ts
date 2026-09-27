@@ -113,12 +113,7 @@ async function loginAlreadyRecorded(
   return Array.isArray(data) && data.length > 0;
 }
 
-/**
- * Best-effort first login row in audit_logs. Does not throw and stores no email.
- * Pass the service-role client when the caller may run more than once (mobile
- * activation status); the first stored login is kept.
- */
-export async function recordLoginSuccess(
+async function writeFirstLogin(
   supabase: SupabaseClient,
   userId: string,
   clientHeader: string | null,
@@ -138,4 +133,26 @@ export async function recordLoginSuccess(
   } catch {
     return;
   }
+}
+
+/**
+ * Best-effort first login row in audit_logs. Does not throw and stores no email.
+ * Pass the service-role client when the caller may run more than once (mobile
+ * activation status); the first stored login is kept.
+ * The wait is capped so a stalled audit query cannot hold login or activation open.
+ */
+export async function recordLoginSuccess(
+  supabase: SupabaseClient,
+  userId: string,
+  clientHeader: string | null,
+  admin?: SupabaseClient | null,
+  timeoutMs = 2000,
+): Promise<void> {
+  await new Promise<void>((resolve) => {
+    const timer = setTimeout(resolve, timeoutMs);
+    void writeFirstLogin(supabase, userId, clientHeader, admin).then(() => {
+      clearTimeout(timer);
+      resolve();
+    });
+  });
 }
