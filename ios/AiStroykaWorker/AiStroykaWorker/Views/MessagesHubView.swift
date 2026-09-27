@@ -128,7 +128,10 @@ struct MessagesHubView: View {
                     } label: {
                         inboxCard(title: item.title, detail: item.body, unread: isUnread(item))
                     }
-                    .simultaneousGesture(TapGesture().onEnded { markRead(item) })
+                    .simultaneousGesture(TapGesture().onEnded {
+                        markRead(item)
+                        Task { await WorkerAPI.recordNotificationOpened(id: item.id) }
+                    })
                 } else if target == "issue", let targetId = item.targetId {
                     NavigationLink {
                         IssueInboxDestination(
@@ -138,7 +141,10 @@ struct MessagesHubView: View {
                     } label: {
                         inboxCard(title: item.title, detail: item.body, unread: isUnread(item))
                     }
-                    .simultaneousGesture(TapGesture().onEnded { markRead(item) })
+                    .simultaneousGesture(TapGesture().onEnded {
+                        markRead(item)
+                        Task { await WorkerAPI.recordNotificationOpened(id: item.id) }
+                    })
                 } else if target == "task", let targetId = item.targetId {
                     NavigationLink {
                         TaskInboxDestination(
@@ -148,7 +154,10 @@ struct MessagesHubView: View {
                     } label: {
                         inboxCard(title: item.title, detail: item.body, unread: isUnread(item))
                     }
-                    .simultaneousGesture(TapGesture().onEnded { markRead(item) })
+                    .simultaneousGesture(TapGesture().onEnded {
+                        markRead(item)
+                        Task { await WorkerAPI.recordNotificationOpened(id: item.id) }
+                    })
                 } else if target == "document", let targetId = item.targetId {
                     NavigationLink {
                         DocumentInboxDestination(
@@ -158,7 +167,10 @@ struct MessagesHubView: View {
                     } label: {
                         inboxCard(title: item.title, detail: item.body, unread: isUnread(item))
                     }
-                    .simultaneousGesture(TapGesture().onEnded { markRead(item) })
+                    .simultaneousGesture(TapGesture().onEnded {
+                        markRead(item)
+                        Task { await WorkerAPI.recordNotificationOpened(id: item.id) }
+                    })
                 } else {
                     Button { markRead(item) } label: {
                         inboxCard(title: item.title, detail: item.body, unread: isUnread(item))

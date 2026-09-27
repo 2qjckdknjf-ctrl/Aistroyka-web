@@ -1,6 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { activationBaseline, loginAuditDetails, recordLoginSuccess } from "./product-events";
+import {
+  activationBaseline,
+  loginAuditDetails,
+  notificationOpenDetails,
+  recordLoginSuccess,
+  recordNotificationOpened,
+} from "./product-events";
 
 vi.mock("@/lib/observability/audit.service", () => ({
   emitAudit: vi.fn(async () => undefined),
@@ -152,6 +158,133 @@ describe("recordLoginSuccess", () => {
     } as unknown as SupabaseClient;
     const started = Date.now();
     await recordLoginSuccess(hung, "user-1", "web", null, 40);
+    expect(Date.now() - started).toBeLessThan(500);
+  });
+});
+
+const NOTIFICATION_ID = "11111111-1111-4111-8111-111111111111";
+const OTHER_NOTIFICATION_ID = "22222222-2222-4222-8222-222222222222";
+
+describe("notification_opened", () => {
+  it("keeps only categorical open details", () => {
+    expect(
+      notificationOpenDetails({
+        client: "ios_manager",
+        role: "admin",
+        notificationType: "task_assigned",
+        destinationKind: "task",
+      }),
+    ).toEqual({
+      client: "ios_manager",
+      role: "admin",
+      notification_type: "task_assigned",
+      destination_kind: "task",
+      source: "inbox",
+    });
+    const dirty = notificationOpenDetails({
+      client: "user@example.com",
+      role: "not-a-role",
+      notificationType: "Hello title",
+      destinationKind: "https://example.com/file.pdf",
+    });
+    expect(dirty).toEqual({ source: "inbox" });
+    expect(JSON.stringify(dirty)).not.toContain("@");
+  });
+
+  it("writes one open and skips the same notification", async () => {
+    vi.mocked(emitAudit).mockClear();
+    const writer = {} as SupabaseClient;
+    const admin = {
+      from() {
+        const chain = {
+          eq() {
+            return chain;
+          },
+          limit: async () => ({ data: [] as { id: string }[] }),
+        };
+        return { select: () => chain };
+      },
+    } as unknown as SupabaseClient;
+    await recordNotificationOpened({
+      writer,
+      admin,
+      tenantId: "tenant-1",
+      userId: "user-1",
+      notificationId: NOTIFICATION_ID,
+      role: "member",
+      clientHeader: "web",
+      notificationType: "task_assigned",
+      destinationKind: "task",
+    });
+    expect(emitAudit).toHaveBeenCalledTimes(1);
+    expect(JSON.stringify(vi.mocked(emitAudit).mock.calls[0]?.[1])).not.toContain("@");
+
+    const seen = {
+      from() {
+        const chain = {
+          eq() {
+            return chain;
+          },
+          limit: async () => ({ data: [{ id: "existing" }] }),
+        };
+        return { select: () => chain };
+      },
+    } as unknown as SupabaseClient;
+    await recordNotificationOpened({
+      writer,
+      admin: seen,
+      tenantId: "tenant-1",
+      userId: "user-1",
+      notificationId: NOTIFICATION_ID,
+      role: "member",
+      clientHeader: "web",
+    });
+    expect(emitAudit).toHaveBeenCalledTimes(1);
+
+    await recordNotificationOpened({
+      writer,
+      admin,
+      tenantId: "tenant-1",
+      userId: "user-1",
+      notificationId: OTHER_NOTIFICATION_ID,
+      role: "member",
+      clientHeader: "android_worker",
+      notificationType: "report_ready",
+      destinationKind: "report",
+    });
+    expect(emitAudit).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not write an invalid notification id and returns when the lookup stalls", async () => {
+    vi.mocked(emitAudit).mockClear();
+    await recordNotificationOpened({
+      writer: {} as SupabaseClient,
+      tenantId: "tenant-1",
+      userId: "user-1",
+      notificationId: "not-an-id",
+    });
+    expect(emitAudit).not.toHaveBeenCalled();
+
+    const hung = {
+      from() {
+        const chain = {
+          eq() {
+            return chain;
+          },
+          limit: () => new Promise(() => undefined),
+        };
+        return { select: () => chain };
+      },
+    } as unknown as SupabaseClient;
+    const started = Date.now();
+    await recordNotificationOpened({
+      writer: hung,
+      admin: hung,
+      tenantId: "tenant-1",
+      userId: "user-1",
+      notificationId: NOTIFICATION_ID,
+      timeoutMs: 40,
+    });
     expect(Date.now() - started).toBeLessThan(500);
   });
 });

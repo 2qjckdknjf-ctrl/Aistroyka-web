@@ -4,6 +4,7 @@ import {
   countNotificationsByReadState,
   filterNotificationsByReadState,
   parseNotificationReadFilter,
+  reportNotificationOpened,
   sortNotificationsByAttention,
 } from "./notifications-workspace.utils";
 
@@ -36,5 +37,19 @@ describe("notifications-workspace.utils", () => {
       { id: "new-read", created_at: "2026-08-21T10:00:00Z", read_at: "2026-08-21T11:00:00Z" },
     ]);
     expect(sorted.map((n) => n.id)).toEqual(["old-unread", "new-read"]);
+  });
+
+  it("reports an open without waiting, and ignores a failed request", async () => {
+    const calls: string[] = [];
+    reportNotificationOpened("n1", (async (url: RequestInfo | URL) => {
+      calls.push(String(url));
+      return new Response(null, { status: 200 });
+    }) as typeof fetch);
+    expect(calls).toEqual(["/api/v1/notifications/n1/opened"]);
+
+    expect(() =>
+      reportNotificationOpened("n2", (() => Promise.reject(new Error("offline"))) as typeof fetch),
+    ).not.toThrow();
+    await new Promise((resolve) => setTimeout(resolve, 0));
   });
 });

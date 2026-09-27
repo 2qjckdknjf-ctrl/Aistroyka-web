@@ -276,6 +276,7 @@ struct NotificationsView: View {
     }
 
     private func openTarget(_ item: NotificationInboxItemDTO) {
+        Task { await ManagerAPI.recordNotificationOpened(id: item.id) }
         if item.readAt == nil { markRead(item.id) }
         guard let type = item.targetType?.trimmingCharacters(in: .whitespacesAndNewlines),
               let id = item.targetId?.trimmingCharacters(in: .whitespacesAndNewlines),

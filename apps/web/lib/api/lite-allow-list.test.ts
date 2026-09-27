@@ -84,6 +84,8 @@ describe("checkLiteAllowList", () => {
     expect(checkLiteAllowList("/api/v1/notifications/read-all", "POST", "android_worker")).toBeNull();
     expect(checkLiteAllowList("/api/v1/notifications/read-all", "PATCH", "ios_lite")).toBeNull();
     expect(checkLiteAllowList("/api/v1/notifications/n1/read", "PATCH", "ios_lite")).toBeNull();
+    expect(checkLiteAllowList("/api/v1/notifications/n1/opened", "POST", "ios_worker")).toBeNull();
+    expect(checkLiteAllowList("/api/v1/notifications/n1/opened", "POST", "android_worker")).toBeNull();
     expect(checkLiteAllowList("/api/v1/notifications", "POST", "ios_lite")).not.toBeNull();
   });
 

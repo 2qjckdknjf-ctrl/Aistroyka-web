@@ -63,6 +63,27 @@ export async function unreadCount(
   return count ?? 0;
 }
 
+/** Owned notification facts for an open event. Titles and bodies are not selected. */
+export async function openFactsForUser(
+  supabase: SupabaseClient,
+  notificationId: string,
+  tenantId: string,
+  userId: string,
+): Promise<{ type: string; target_type: string | null } | null> {
+  const { data, error } = await supabase
+    .from("manager_notifications")
+    .select("type, target_type")
+    .eq("id", notificationId)
+    .eq("tenant_id", tenantId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error || !data || typeof data.type !== "string") return null;
+  return {
+    type: data.type,
+    target_type: typeof data.target_type === "string" ? data.target_type : null,
+  };
+}
+
 /**
  * Mark notification as read. Returns true if updated (and row belonged to tenant+user).
  */
