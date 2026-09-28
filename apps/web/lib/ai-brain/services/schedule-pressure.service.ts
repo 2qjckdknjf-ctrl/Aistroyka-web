@@ -25,13 +25,14 @@ export async function getSchedulePressureSignal(
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
   const sevenDaysAgoStr = sevenDaysAgo.toISOString().slice(0, 10);
 
-  const { data: tasks } = await supabase
+  const { data: tasks, error } = await supabase
     .from("worker_tasks")
     .select("id, due_date")
     .eq("project_id", projectId)
     .eq("tenant_id", tenantId)
     .in("status", ["pending", "in_progress"])
     .lt("due_date", today);
+  if (error) throw new Error("schedule_pressure_tasks_query_failed");
 
   const overdue = (tasks ?? []) as { due_date: string }[];
   const overdueCount = overdue.length;

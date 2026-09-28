@@ -5,32 +5,49 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { RiskSignal } from "../domain";
-import { getBudgetSummary } from "@/lib/domain/costs/cost.repository";
 
 export async function getCostRiskSignals(
   supabase: SupabaseClient,
   projectId: string,
   tenantId: string
 ): Promise<RiskSignal[]> {
-  const summary = await getBudgetSummary(supabase, projectId, tenantId);
-  if (!summary || summary.item_count === 0) return [];
+  const { data: items, error } = await supabase
+    .from("project_cost_items")
+    .select("id, title, planned_amount, actual_amount, currency, status")
+    .eq("project_id", projectId)
+    .eq("tenant_id", tenantId)
+    .neq("status", "archived");
+  if (error) throw new Error("cost_risk_items_query_failed");
+
+  const rows = (items ?? []) as Array<{
+    id: string;
+    title: string;
+    planned_amount: number;
+    actual_amount: number;
+    currency: string;
+    status: string;
+  }>;
+  if (rows.length === 0) return [];
 
   const at = new Date().toISOString();
   const risks: RiskSignal[] = [];
+  const currency = rows[0]?.currency ?? "RUB";
+  const plannedTotal = rows.reduce((sum, r) => sum + Number(r.planned_amount ?? 0), 0);
+  const actualTotal = rows.reduce((sum, r) => sum + Number(r.actual_amount ?? 0), 0);
 
-  if (summary.over_budget) {
+  if (actualTotal > plannedTotal) {
     risks.push({
       projectId,
       source: "budget_overrun",
       severity: "high",
       title: "Project over budget",
-      description: `Actual (${summary.actual_total.toFixed(0)} ${summary.currency}) exceeds planned (${summary.planned_total.toFixed(0)} ${summary.currency})`,
+      description: `Actual (${actualTotal.toFixed(0)} ${currency}) exceeds planned (${plannedTotal.toFixed(0)} ${currency})`,
       at,
       resourceType: "project_budget",
       resourceId: projectId,
     });
-  } else if (summary.planned_total > 0) {
-    const ratio = summary.actual_total / summary.planned_total;
+  } else if (plannedTotal > 0) {
+    const ratio = actualTotal / plannedTotal;
     if (ratio >= 0.9) {
       risks.push({
         projectId,
@@ -45,14 +62,6 @@ export async function getCostRiskSignals(
     }
   }
 
-  const { data: items } = await supabase
-    .from("project_cost_items")
-    .select("id, title, planned_amount, actual_amount, currency")
-    .eq("project_id", projectId)
-    .eq("tenant_id", tenantId)
-    .neq("status", "archived");
-
-  const rows = (items ?? []) as { id: string; title: string; planned_amount: number; actual_amount: number; currency: string }[];
   for (const r of rows) {
     const planned = Number(r.planned_amount ?? 0);
     const actual = Number(r.actual_amount ?? 0);
