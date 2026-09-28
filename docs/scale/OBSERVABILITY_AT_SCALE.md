@@ -29,7 +29,7 @@
 - **Error rate:** Count of 4xx/5xx and error_captured by route and category. Target: < 1% 5xx.
 - **Latency:** p50, p95, p99 duration_ms by route. Target: p95 < 3s for API routes (excluding long-running AI).
 - **Throughput:** Requests/sec or/min by route; job processing rate (jobs completed per minute).
-- **Activation/usage (product):** From product_events if implemented: logins, task_assigned, report_submitted, report_reviewed (see PRODUCT_ANALYTICS_PLAN).
+- **Activation/usage (product):** `audit_logs` actions `login`, `notification_opened`, `task_assignment`, `report_submit`, `report_review` (see PRODUCT_ANALYTICS_PLAN). There is no `product_events` table and no public activation-rate route.
 
 ---
 
