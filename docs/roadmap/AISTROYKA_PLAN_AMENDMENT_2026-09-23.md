@@ -1,6 +1,6 @@
 # AISTROYKA — дополнение к плану, 2026-09-23
 
-> Последняя корректировка: 2026-09-26. Актуальные уточнения и порядок работ — в разделе за 2026-09-26 ниже; предыдущие gates сохраняются.
+> Последняя корректировка: 2026-10-02. Актуальная очередь и новые AC — в разделе за 2026-10-02; предыдущие gates сохраняются.
 
 Статус: PLANNED. Документ задаёт backlog, не подтверждает готовность функций.
 Канонический продуктовый план: [Mega roadmap](AISTROYKA_MEGA_ROADMAP_CUSTOMER_FINANCE_SAFE.md).
@@ -88,3 +88,20 @@ AC:
 - KPI: актуальность подтверждённых availability/lead-time данных, proposal acceptance/correction, delay detection, стоимость на reviewed proposal; baseline перед целями.
 
 Microsoft supplier-review pattern — непроверенный reference из дайджеста, не новая vendor dependency. Customer App/Graph/Live порядок и contractor-ops-only pilot остаются без изменений.
+
+## Construction feedback и Supply intelligence — 2026-10-02
+
+**AIS-CORRECTION-009 — P1 contract/storage slice, расширяет AIS-EVID-002/VISION-003/GRAPH-004.**
+После текущих pilot/security gaps добавить durable corrections в существующие review flows. Отдельная UI-система и training model сейчас не нужны.
+CorrectionEvent: tenant/project, prediction_id/version, source media/evidence refs, room/element/work-package IDs (или unresolved), work type, domain (vision/progress/scope/estimate/supply), proposed result, accepted/rejected/edited result, reason code/comment, reviewer/role, timestamps, model/package version и source lineage. Связать с decision/superseded version, не перезаписывать original prediction.
+Human correction — кандидат evaluation signal, не согласие на training/provider transfer. Disagreements, revoked corrections, missing reason и uncertainty сохраняются.
+AC: duplicate submit/retry идемпотентен; cross-project/revoked membership запрещены; units/currency/version фиксируются; original source и correction lineage воспроизводимы; stale source вызывает revalidation. “Не наблюдается на видео” не означает “не выполнено” без coverage evidence.
+
+**Construction Eval Corpus:** tenant-isolated storage с access/retention/delete policy; real pilot media/PII не хранить в git. Offline ROMA получает sanitized/synthetic export с dataset digest, frozen split и provenance. Vision eval покрывает progress/defects/scope/quantity uncertainty, source timestamp/region и human review; held-out проекты не используются для tuning. Сбор разрешённых review данных раньше, training/promotion — отдельный reviewed slice.
+
+**AIS-MATERIAL-008 — proactive Supply Agent:**
+Observer читает approved schedule, requirements, inventory и supplier updates; считает need-by date с lead time/buffer и выявляет shortage/delay/price change. Только разрешённые read/search/compare и draft cart/order proposal; commitment/payment/communication через gates.
+Сохранять lineage: proposal/alternatives/version, source price/lead time, schedule constraint, manager choice/reason, approved terms, actual delivery/cost. Actual costs — защищённые internal данные. Отсутствующее actual delivery не выдумывать; cheapest не означает best без delivery/spec constraints. Schedule/stock/version change делает proposal stale, rerun идемпотентен. Предпочтение одного manager не универсальное правило; обучение отдельно от evaluation.
+
+**Graph foundation:** stable IDs для space/element/work item/material/quantity/price/contractor/schedule/evidence/issue/change, units/version/provenance и protected relations. Findings ссылаются на объекты и источники; собственного CAD не строить, future BIM/CAD imports через adapters.
+Customer/intake/Graph/live порядок и finance isolation сохраняются. Baseline 23 сентября исторический; main на 2026-10-02: 0e3b1ede624183ac5e5d47ab3f72ad739553ebb7. Перед implementation проверить актуальные main/open PR/deployed evidence; deployment этим docs update не проверялся.

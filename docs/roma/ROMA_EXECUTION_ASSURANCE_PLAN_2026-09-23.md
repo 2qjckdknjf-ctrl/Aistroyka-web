@@ -1,6 +1,6 @@
 # ROMA / инженерный Grow OS — Execution Assurance, 2026-09-23
 
-> Последняя корректировка: 2026-09-26. Актуальные уточнения и порядок работ — в разделе за 2026-09-26 ниже; предыдущие gates сохраняются.
+> Последняя корректировка: 2026-10-02. Актуальная очередь и новые AC — в разделе за 2026-10-02; предыдущие gates сохраняются.
 
 Статус: PLANNED; расширение [ROMA roadmap](ROMA_ROADMAP.md), не новая параллельная система.
 Сохранить ADR-0007 recommendation-only и существующие product/release gates. Блокирующий режим возможен только отдельным ADR и проверенным executor integration.
@@ -174,3 +174,39 @@ AC: concurrent reservations, delayed billing, retry, failed run, exhausted child
 4. Package attestations и второй cloud/CI adapter: equivalent policy tests, checkpoint/resume/cancel и platform compatibility.
 5. Scoped product adapter, Model Arena/effort routing; затем persistent scheduling и controlled parallel workers.
 P0 означает подготовку контракта, не разрешение немедленного autonomous production execution. Текущие pilot/release gates остаются приоритетом.
+
+## Сводная корректировка по сигналам 30 сентября — 1 октября, записана 2026-10-02
+
+Статус: PLANNED. Расширение существующих ROMA-INC/EVAL/OBS, GROW-MODEL-ARENA и ROMA-PAR; прежние task IDs и gates сохраняются. Ниже актуальная очередь новых slices. Новости о Dots, OpenClaw Enterprise, CoreWeave, моделях и регуляторах — непроверенные research inputs, не зависимости и не юридические требования.
+
+| ID | Связь / порядок | Deliverable и критерии приёмки |
+|---|---|---|
+| GROW-OBSERVER-003 | GROW-IDENTITY-001 + ROMA-OBS; P0 schema, P1 read-only pilot | Project Observer получает разрешённые CI/PR/task/runtime события; нормализует event_id, source, tenant/project, event_time/received_at, repo/ref/SHA, run/check identity, payload digest и trust status. Webhook signature/source authentication, дедупликация, replay protection, bounded polling/backoff, stale/out-of-order events и quota проверены. Нет запуска из недоверенного текста события. |
+| GROW-SCHEDULER-004 | ROMA-PAR-001 + Observer; P0 state machine, P1 single-worker pilot; parallel later | Event-driven Task DAG: dependencies/write sets, durable state, lease/fencing, aggregate budgets и resume queue. Task states READY/RUNNING/WAITING_CI/WAITING_APPROVAL/BLOCKED/FAILED/CANCELLED/DONE. При WAITING_CI worker освобождается для независимой авторизованной задачи; CI событие возвращает старую задачу в очередь, а не автоматически в DONE/merge. |
+| ROMA-FAIL-003 | ROMA-INC-001 + ROMA-EVAL/OBS; P0 schema, P1 offline report | Failure Intelligence: failure_id, package/model/tool/capability versions, task class, environment, evidence/trace signature, severity, failure class, suspected cause/confidence, candidate fix, regression refs, resolved_by_version. Cluster/association — гипотеза, не доказанная причинность. Повторяющиеся failures группируются с сохранением отдельных runs и denominator. |
+| ROMA-CORPUS-004 | ROMA-FAIL-003 + existing Model Arena; P1 после privacy/trace contracts | Continuous Agent Evaluation: sanitized/replayable tasks и human corrections → versioned eval corpus → controlled candidate runs → independent verdict → reviewed promotion. Единственный eval framework, не вторая Arena. Работает offline, без доступа к production endpoints и credentials. |
+| GROW-ADOPT-SPIKE-005 | До дублирования generic control-plane code; TIMEBOXED RESEARCH | Build-vs-adopt matrix для кандидата OpenClaw Enterprise и альтернатив: identity/lifecycle, tenancy, permissions, sandbox, OTel, durable tasks/events/DAG, budgets, upgrade/revocation и audit. Проверить официальный repo, license конкретного commit, maintenance, supply chain, export/exit path и совместимость. Результат ADR: adopt adapter / reuse parts / build; никаких installs/deploys vendor stack по новости. |
+
+### Proactive background contract и Cursor CI workflow
+Background по умолчанию READ/ANALYZE/PROPOSE в разрешённом project scope и budget. Branch edits, запуск кода/tests, external writes и remediation имеют side effects и требуют существующего bounded task authorization + plan/policy checks. Уже разрешённый low-risk branch slice может продолжаться без повторного вопроса после каждого шага; production/merge/store и внешние сообщения не получают разрешение от CI GREEN.
+AC scheduler: GREEN принимается только для expected repo/head SHA и актуального required-check set; событие старого commit, повтор webhook, check-name spoofing, superseded run и out-of-order update не закрывают task. После restart lease истекает безопасно, задача не исполняется дважды. Failure/timeout/cancel имеют bounded retries и escalation, WAITING_APPROVAL не занимает worker. Dependent задачи остаются blocked до проверенного prerequisite; независимые выполняются в отдельных workspaces без конфликтов.
+Первый pilot — synthetic CI events + один worker. Parallel workers включаются позднее после conflict/integration tests и runtime isolation. Изменение DAG/policy после approval требует revalidation.
+
+### Failure → improvement governance
+Pipeline: sanitized trace → reviewed failure label/cluster → root-cause hypothesis → proposed remediation plan → candidate branch/package → replay/regression + holdout → independent review → controlled promotion.
+Не делать self-modifying/self-deploying ROMA. Immutable verifier N и фиксированный regression corpus проверяют candidate N+1; доверенная deterministic contract suite и независимый reviewer дополняют оценку старой модели. Executor/candidate verifier не меняет rubric, corpus или своё approval. Предыдущая версия доступна для rollback; изменение policy, eval или signer — отдельный scoped review.
+AC: fix закрывает целевой regression без ухудшения guard/privacy/other AC; spoofed trace, incomplete audit и неверные labels не становятся trusted PASS. Повторный incident после “resolved” открывает revalidation, а не стирает историю. Production failure не запускает production hotfix без gates.
+
+### Eval corpus и routing evidence
+Сохранять task/AC/baseline SHA, package/runtime/policy/model versions, artifact lineage, expected checks и redacted observations. Production data не копируются в git: consent/legal access, tenant isolation, retention/delete и sanitization до export обязательны. Если sanitized replay теряет смысл — synthetic equivalent или restricted evaluation с explicit policy, не утечка оригинала.
+Replay замораживает tool results/data cutoffs, не повторяет orders/messages/DB writes. Fixtures выполняются только в disposable sandbox. Train/tuning/regression/holdout разделены по времени/проектам/родственным задачам; corpus digest/version фиксированы, duplicates и contamination проверены. Human label — review signal с confidence/disagreement, не безусловная truth.
+Metrics: verified success, defects/severity, policy violations, latency, tokens, retries, rework/human interventions, total cost и corpus coverage. Router получает только reviewed versioned reports; promotion не автоматическое и failure set не заменяет representative task sampling.
+GPT-6.1 Sol, Sonnet 5.5, Opus 5.5 и current Cursor runtime — research shortlist из переписки. Перед eval подтвердить реальные model IDs/availability/data policy/цену; не hardcode и не менять default. CoreWeave — later optional runtime backend spike через GROW-RUNTIME-002; claims GA/performance не проверены.
+
+### Актуальная очередь для Cursor
+1. Fresh repo/pilot gap audit и первый Assurance Graph/staleness slice.
+2. Общие contract fixtures: предыдущие identity/package/budget/security contracts + Observer/DAG/Failure schema.
+3. Read-only Observer, synthetic CI scheduler и offline Failure report; bounded branch work по существующим permissions.
+4. Sanitized corpus/replay внутри existing Arena; adopt spike до новых generic runtime services.
+5. Independent candidate promotion; затем второй sandbox backend и controlled parallel/persistent scheduling.
+Запись этой очереди не запускает background workers и не объявляет security/runtime реализованными.

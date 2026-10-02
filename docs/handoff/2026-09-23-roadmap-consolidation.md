@@ -20,3 +20,7 @@ PresenceProof (ROMA-AUTH-002) and capability lifecycle/default deny (ROMA-CAP-00
 ## Follow-up — 2026-09-26
 
 Execution plane contracts added: AgentIdentity, local/cloud/CI runtime, immutable package/attestation and budget ledger. Read the latest implementation order in the ROMA plan before selecting tasks; P0 contract work is not production execution. Materials Supply remains LATER and becomes a persistent read/draft-first domain agent. HiAir priorities unchanged; portfolio Trading Arena now has four independent suites. Documentation only, content verified after publication; no runtime tests or readiness claim.
+
+## Follow-up — 2026-10-02
+
+Read latest plan sections before implementation: Observer/event-driven DAG, Failure Intelligence and continuous replay corpus extend existing contracts; AISTROYKA correction signals extend review/evidence, Trading data registry/ledger precede shadow/live, HiAir feedback is FUTURE. New tasks have IDs/dependencies/AC. Next: fresh baseline/gap audit, Assurance Graph, shared fixture slice, read-only Observer/synthetic CI pilot and offline reports. No scheduler/jobs/implementation/deploy started. Main has advanced since this branch base; reconcile current STATUS/context on integration, preserve intervening changes. Documentation content verification only; no runtime certification.

@@ -49,3 +49,7 @@ PR #350 on the same docs branch now includes PresenceProof, capability lifecycle
 ## Planning follow-up — 2026-09-26
 
 PR #350 updated with execution-plane contracts and an explicit implementation order; AIS-MATERIAL-008 refined as a persistent Supply Agent after pilot/Graph. Existing roadmap links lead to current sections. All PLANNED; contractor-ops-only pilot, runtime status and release gates unchanged.
+
+## Planning follow-up — 2026-10-02
+
+Existing PR #350 adds Observer/DAG, Failure/eval corpus and Construction corrections contracts. All PLANNED. Read latest dated sections via existing roadmap links. Main observed at `0e3b1ede624183ac5e5d47ab3f72ad739553ebb7`; runtime not checked. Older pilot/deploy status in this branch is historical, not a current readiness verdict. Before implementation/integration reconcile latest main/STATUS and preserve newer work.
