@@ -3,6 +3,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui";
+import {
+  fieldDailyLogDraftBody,
+  persistThenConfirmFieldDailyLog,
+} from "@/lib/domain/field-daily-log/field-daily-log-form";
 
 type FieldDailyLogStatus = "draft" | "confirmed";
 
@@ -127,20 +131,16 @@ export function ProjectFieldDailyLogPanel({ projectId }: { projectId: string }) 
     setError(null);
     setMessage(null);
     try {
-      const media_refs = mediaRef.trim() ? [mediaRef.trim()] : [];
       const res = await fetch(`/api/v1/projects/${projectId}/field-daily-logs/${selectedId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({
-          work_date: workDate,
-          note,
-          summary,
-          work_done: workDone,
-          blockers,
-          weather,
-          media_refs,
-        }),
+        body: JSON.stringify(
+          fieldDailyLogDraftBody(
+            { workDate, note, summary, workDone, blockers, weather, mediaRef },
+            selected?.media_refs
+          )
+        ),
       });
       const json = (await res.json()) as { data?: FieldDailyLog; error?: string };
       if (!res.ok) throw new Error(json.error ?? t("fieldDailyError"));
@@ -158,6 +158,7 @@ export function ProjectFieldDailyLogPanel({ projectId }: { projectId: string }) 
     mediaRef,
     note,
     projectId,
+    selected?.media_refs,
     selectedId,
     summary,
     t,
@@ -172,12 +173,14 @@ export function ProjectFieldDailyLogPanel({ projectId }: { projectId: string }) 
     setError(null);
     setMessage(null);
     try {
-      const res = await fetch(
-        `/api/v1/projects/${projectId}/field-daily-logs/${selectedId}/confirm`,
-        { method: "POST", credentials: "include" }
+      const result = await persistThenConfirmFieldDailyLog(
+        fetch,
+        projectId,
+        selectedId,
+        { workDate, note, summary, workDone, blockers, weather, mediaRef },
+        selected?.media_refs
       );
-      const json = (await res.json()) as { data?: FieldDailyLog; error?: string };
-      if (!res.ok) throw new Error(json.error ?? t("fieldDailyError"));
+      if (!result.ok) throw new Error(result.error || t("fieldDailyError"));
       setMessage(t("fieldDailyConfirmed"));
       await load();
     } catch (e) {
@@ -185,7 +188,21 @@ export function ProjectFieldDailyLogPanel({ projectId }: { projectId: string }) 
     } finally {
       setLoading(false);
     }
-  }, [isDraft, load, projectId, selectedId, t]);
+  }, [
+    blockers,
+    isDraft,
+    load,
+    mediaRef,
+    note,
+    projectId,
+    selected?.media_refs,
+    selectedId,
+    summary,
+    t,
+    weather,
+    workDate,
+    workDone,
+  ]);
 
   const resetNew = () => {
     setSelectedId(null);
