@@ -52,6 +52,18 @@ alter table public.customer_intake_drafts
   add constraint customer_intake_drafts_media_refs_array
   check (jsonb_typeof(media_refs) = 'array');
 
+alter table public.customer_intake_drafts
+  drop constraint if exists customer_intake_drafts_title_nonblank;
+alter table public.customer_intake_drafts
+  add constraint customer_intake_drafts_title_nonblank
+  check (char_length(regexp_replace(title, '^[[:space:]]+|[[:space:]]+$', '', 'g')) >= 1);
+
+alter table public.customer_intake_drafts
+  drop constraint if exists customer_intake_drafts_description_nonblank;
+alter table public.customer_intake_drafts
+  add constraint customer_intake_drafts_description_nonblank
+  check (char_length(regexp_replace(description, '^[[:space:]]+|[[:space:]]+$', '', 'g')) >= 1);
+
 create or replace function public.customer_intake_tenant_account_active(p_tenant_id uuid)
 returns boolean
 language sql
@@ -93,6 +105,27 @@ as $$
     ), true);
 $$;
 
+create or replace function public.customer_intake_media_id_value_valid(p jsonb)
+returns boolean
+language sql
+stable
+set search_path = public
+as $$
+  select jsonb_typeof(p) = 'string'
+    and char_length(regexp_replace(p #>> '{}', '^[[:space:]]+|[[:space:]]+$', '', 'g')) between 1 and 128;
+$$;
+
+create or replace function public.customer_intake_media_url_value_valid(p jsonb)
+returns boolean
+language sql
+stable
+set search_path = public
+as $$
+  select jsonb_typeof(p) = 'string'
+    and char_length(regexp_replace(p #>> '{}', '^[[:space:]]+|[[:space:]]+$', '', 'g')) between 1 and 2048
+    and regexp_replace(p #>> '{}', '^[[:space:]]+|[[:space:]]+$', '', 'g') ~ '^https://[^[:space:]/?#]+(/[^[:space:]]*)?$';
+$$;
+
 create or replace function public.customer_intake_media_refs_valid(p jsonb)
 returns boolean
 language sql
@@ -115,16 +148,11 @@ as $$
             and jsonb_typeof(e->'kind') = 'string'
             and (e->>'kind') in ('image', 'video', 'document')
             and (
-              (
-                e ? 'media_id'
-                and jsonb_typeof(e->'media_id') = 'string'
-                and char_length(regexp_replace(e->>'media_id', '^[[:space:]]+|[[:space:]]+$', '', 'g')) between 1 and 128
-              )
-              or (
-                e ? 'url'
-                and jsonb_typeof(e->'url') = 'string'
-                and char_length(btrim(e->>'url')) between 1 and 2048
-                and btrim(e->>'url') ~ '^https://[^[:space:]/?#]+(/[^[:space:]]*)?$'
+              (not (e ? 'media_id') or public.customer_intake_media_id_value_valid(e->'media_id'))
+              and (not (e ? 'url') or public.customer_intake_media_url_value_valid(e->'url'))
+              and (
+                (e ? 'media_id' and public.customer_intake_media_id_value_valid(e->'media_id'))
+                or (e ? 'url' and public.customer_intake_media_url_value_valid(e->'url'))
               )
             )
           )

@@ -108,15 +108,111 @@ describe("parseCreateCustomerIntakeInput", () => {
         media_refs: [{ kind: "image" }],
       })
     ).toEqual({ error: "media_refs requires media_id or url" });
+    expect(
+      parseCreateCustomerIntakeInput({
+        title: "Kitchen",
+        description: "Need remodel",
+        media_refs: [{ kind: "image", media_id: "ok", url: "http://invalid" }],
+      })
+    ).toEqual({ error: "media_refs.url must be https" });
+    expect(
+      parseCreateCustomerIntakeInput({
+        title: "Kitchen",
+        description: "Need remodel",
+        media_refs: [{ kind: "image", media_id: "\n", url: "https://cdn.example/a.jpg" }],
+      })
+    ).toEqual({ error: "media_refs.media_id is invalid" });
+    expect(
+      parseCreateCustomerIntakeInput({
+        title: "Kitchen",
+        description: "Need remodel",
+        media_refs: [{ kind: "image", url: "https://" }],
+      })
+    ).toEqual({ error: "media_refs.url is invalid" });
+    expect(
+      parseCreateCustomerIntakeInput({
+        title: "Kitchen",
+        description: "Need remodel",
+        media_refs: [{ kind: "image", url: `https://cdn.example/${"a".repeat(2100)}` }],
+      })
+    ).toEqual({ error: "media_refs.url is too long" });
   });
 
-  it("accepts valid media_refs", () => {
-    const parsed = parseCreateCustomerIntakeInput({
-      title: "Kitchen",
-      description: "Need remodel",
-      media_refs: [{ kind: "image", media_id: "img-1" }],
+  it("accepts valid media_refs combinations", () => {
+    expect(
+      parseCreateCustomerIntakeInput({
+        title: "Kitchen",
+        description: "Need remodel",
+        media_refs: [{ kind: "image", media_id: "img-1" }],
+      })
+    ).toMatchObject({ input: { media_refs: [{ kind: "image", media_id: "img-1" }] } });
+    expect(
+      parseCreateCustomerIntakeInput({
+        title: "Kitchen",
+        description: "Need remodel",
+        media_refs: [{ kind: "image", url: "https://cdn.example/a.jpg" }],
+      })
+    ).toMatchObject({
+      input: { media_refs: [{ kind: "image", url: "https://cdn.example/a.jpg" }] },
     });
-    expect(parsed).toMatchObject({ input: { media_refs: [{ kind: "image", media_id: "img-1" }] } });
+    expect(
+      parseCreateCustomerIntakeInput({
+        title: "Kitchen",
+        description: "Need remodel",
+        media_refs: [{ kind: "image", media_id: "img-1", url: "https://cdn.example/a.jpg" }],
+      })
+    ).toMatchObject({
+      input: { media_refs: [{ kind: "image", media_id: "img-1", url: "https://cdn.example/a.jpg" }] },
+    });
+  });
+
+  it("rejects malformed optional scalar fields instead of coercing them to null", () => {
+    expect(
+      parseCreateCustomerIntakeInput({
+        title: "Kitchen",
+        description: "Need remodel",
+        requested_work_type: 7,
+      })
+    ).toEqual({ error: "requested_work_type must be a string or null" });
+    expect(
+      parseCreateCustomerIntakeInput({
+        title: "Kitchen",
+        description: "Need remodel",
+        budget_range: {},
+      })
+    ).toEqual({ error: "budget_range must be a string or null" });
+    expect(
+      parseCreateCustomerIntakeInput({
+        title: "Kitchen",
+        description: "Need remodel",
+        site_context: true,
+      })
+    ).toEqual({ error: "site_context must be a string or null" });
+    expect(
+      parseCreateCustomerIntakeInput({
+        title: "Kitchen",
+        description: "Need remodel",
+        desired_start: "soon",
+      })
+    ).toEqual({ error: "desired_start must be an ISO date" });
+    expect(
+      parseCreateCustomerIntakeInput({
+        title: "Kitchen",
+        description: "Need remodel",
+        desired_end: 20260101,
+      })
+    ).toEqual({ error: "desired_end must be a date string or null" });
+    expect(
+      parseCreateCustomerIntakeInput({
+        title: "Kitchen",
+        description: "Need remodel",
+        requested_work_type: null,
+        budget_range: "  mid  ",
+        desired_start: "2026-10-03",
+      })
+    ).toMatchObject({
+      input: { requested_work_type: null, budget_range: "mid", desired_start: "2026-10-03" },
+    });
   });
 });
 
@@ -292,6 +388,21 @@ describe("draftFromStorageRow", () => {
         location: { precision: "city" },
         questions: [],
         media_refs: [{ kind: "unknown" }],
+        status: "draft",
+      })
+    ).toBeNull();
+  });
+
+  it("rejects blank stored titles at read conversion", () => {
+    expect(
+      draftFromStorageRow({
+        id: "d1",
+        tenant_id: "t1",
+        title: "   ",
+        description: "Need remodel",
+        location: { precision: "city" },
+        questions: [],
+        media_refs: [],
         status: "draft",
       })
     ).toBeNull();

@@ -21,6 +21,43 @@ const MAX_MEDIA_ID_LENGTH = 128;
 const MAX_MEDIA_URL_LENGTH = 2048;
 const MEDIA_KEYS = new Set(["kind", "url", "media_id"]);
 
+function hasOwn(obj: Record<string, unknown>, key: string): boolean {
+  return Object.prototype.hasOwnProperty.call(obj, key);
+}
+
+function parseOptionalNullableString(
+  body: Record<string, unknown>,
+  field: string
+): { value: string | null | undefined } | { error: string } {
+  if (!hasOwn(body, field)) return { value: undefined };
+  const raw = body[field];
+  if (raw === null) return { value: null };
+  if (typeof raw !== "string") return { error: `${field} must be a string or null` };
+  const trimmed = raw.trim();
+  return { value: trimmed ? trimmed : null };
+}
+
+function parseOptionalIsoDate(
+  body: Record<string, unknown>,
+  field: string
+): { value: string | null | undefined } | { error: string } {
+  if (!hasOwn(body, field)) return { value: undefined };
+  const raw = body[field];
+  if (raw === null) return { value: null };
+  if (typeof raw !== "string") return { error: `${field} must be a date string or null` };
+  const trimmed = raw.trim();
+  if (!trimmed) return { value: null };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return { error: `${field} must be an ISO date` };
+  const year = Number(trimmed.slice(0, 4));
+  const month = Number(trimmed.slice(5, 7));
+  const day = Number(trimmed.slice(8, 10));
+  const dt = new Date(Date.UTC(year, month - 1, day));
+  if (dt.getUTCFullYear() !== year || dt.getUTCMonth() !== month - 1 || dt.getUTCDate() !== day) {
+    return { error: `${field} must be an ISO date` };
+  }
+  return { value: trimmed };
+}
+
 function parseLocation(value: unknown): { location: CustomerIntakeLocation } | { error: string } {
   if (value == null) return { location: { precision: "city" } };
   if (typeof value !== "object" || Array.isArray(value)) {
@@ -33,9 +70,22 @@ function parseLocation(value: unknown): { location: CustomerIntakeLocation } | {
   const location: CustomerIntakeLocation = {
     precision: raw.precision as CustomerIntakeLocation["precision"],
   };
-  if (typeof raw.label === "string") location.label = raw.label;
-  if (typeof raw.lat === "number" && Number.isFinite(raw.lat)) location.lat = raw.lat;
-  if (typeof raw.lng === "number" && Number.isFinite(raw.lng)) location.lng = raw.lng;
+  if (hasOwn(raw, "label")) {
+    if (typeof raw.label !== "string") return { error: "location.label must be a string" };
+    location.label = raw.label;
+  }
+  if (hasOwn(raw, "lat")) {
+    if (typeof raw.lat !== "number" || !Number.isFinite(raw.lat)) {
+      return { error: "location.lat must be a number" };
+    }
+    location.lat = raw.lat;
+  }
+  if (hasOwn(raw, "lng")) {
+    if (typeof raw.lng !== "number" || !Number.isFinite(raw.lng)) {
+      return { error: "location.lng must be a number" };
+    }
+    location.lng = raw.lng;
+  }
   return { location };
 }
 
@@ -90,6 +140,7 @@ export function parseMediaRefs(value: unknown): { media_refs: CustomerIntakeMedi
         return { error: "media_refs.url is invalid" };
       }
       if (parsed.protocol !== "https:") return { error: "media_refs.url must be https" };
+      if (!parsed.hostname) return { error: "media_refs.url is invalid" };
       ref.url = parsed.toString();
     }
     if (!ref.media_id && !ref.url) return { error: "media_refs requires media_id or url" };
@@ -107,12 +158,14 @@ export function draftFromStorageRow(row: Record<string, unknown>): CustomerIntak
   if ("error" in media_refs) return null;
   const status = row.status;
   if (status !== "draft" && status !== "submitted" && status !== "withdrawn") return null;
+  if (typeof row.title !== "string" || !row.title.trim()) return null;
+  if (typeof row.description !== "string" || !row.description.trim()) return null;
   return {
     id: String(row.id ?? ""),
     tenant_id: String(row.tenant_id ?? ""),
     project_id: (row.project_id as string | null) ?? null,
-    title: String(row.title ?? ""),
-    description: String(row.description ?? ""),
+    title: row.title.trim(),
+    description: row.description.trim(),
     site_context: (row.site_context as string | null) ?? null,
     location: location.location,
     requested_work_type: (row.requested_work_type as string | null) ?? null,
@@ -152,8 +205,19 @@ export function parseCreateCustomerIntakeInput(
   const description = requireNonEmptyString(body.description, "description");
   if ("error" in description) return description;
 
+  const site_context = parseOptionalNullableString(body, "site_context");
+  if ("error" in site_context) return site_context;
+  const requested_work_type = parseOptionalNullableString(body, "requested_work_type");
+  if ("error" in requested_work_type) return requested_work_type;
+  const budget_range = parseOptionalNullableString(body, "budget_range");
+  if ("error" in budget_range) return budget_range;
+  const desired_start = parseOptionalIsoDate(body, "desired_start");
+  if ("error" in desired_start) return desired_start;
+  const desired_end = parseOptionalIsoDate(body, "desired_end");
+  if ("error" in desired_end) return desired_end;
+
   let project_id: string | null | undefined;
-  if (Object.prototype.hasOwnProperty.call(body, "project_id")) {
+  if (hasOwn(body, "project_id")) {
     if (body.project_id === null) {
       project_id = null;
     } else if (typeof body.project_id === "string" && body.project_id.trim()) {
@@ -173,16 +237,16 @@ export function parseCreateCustomerIntakeInput(
   const input: CreateCustomerIntakeInput = {
     title: title.value,
     description: description.value,
-    site_context: typeof body.site_context === "string" ? body.site_context : null,
     location: location.location,
-    requested_work_type: typeof body.requested_work_type === "string" ? body.requested_work_type : null,
-    budget_range: typeof body.budget_range === "string" ? body.budget_range : null,
-    desired_start: typeof body.desired_start === "string" ? body.desired_start : null,
-    desired_end: typeof body.desired_end === "string" ? body.desired_end : null,
     media_refs: media_refs.media_refs,
     questions: questions.questions,
   };
   if (project_id !== undefined) input.project_id = project_id;
+  if (site_context.value !== undefined) input.site_context = site_context.value;
+  if (requested_work_type.value !== undefined) input.requested_work_type = requested_work_type.value;
+  if (budget_range.value !== undefined) input.budget_range = budget_range.value;
+  if (desired_start.value !== undefined) input.desired_start = desired_start.value;
+  if (desired_end.value !== undefined) input.desired_end = desired_end.value;
   return { input };
 }
 
@@ -292,10 +356,22 @@ export async function updateCustomerIntakeDraft(
     if ("error" in media_refs) return { data: null, error: media_refs.error };
     patch.media_refs = media_refs.media_refs;
   }
-  if (Object.prototype.hasOwnProperty.call(body, "location")) {
+  if (hasOwn(body, "location")) {
     const location = parseLocation(body.location);
     if ("error" in location) return { data: null, error: location.error };
     patch.location = location.location;
+  }
+  for (const field of ["site_context", "requested_work_type", "budget_range"] as const) {
+    if (!hasOwn(body, field)) continue;
+    const parsed = parseOptionalNullableString(body, field);
+    if ("error" in parsed) return { data: null, error: parsed.error };
+    patch[field] = parsed.value ?? null;
+  }
+  for (const field of ["desired_start", "desired_end"] as const) {
+    if (!hasOwn(body, field)) continue;
+    const parsed = parseOptionalIsoDate(body, field);
+    if ("error" in parsed) return { data: null, error: parsed.error };
+    patch[field] = parsed.value ?? null;
   }
 
   const { data, error } = await supabase

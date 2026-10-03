@@ -98,6 +98,26 @@ describe("POST /api/v1/portal/intake", () => {
       })
     );
     expect(media.status).toBe(400);
+    const optional = await POST(
+      new Request("https://test/api/v1/portal/intake", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: "Kitchen", description: "Remodel", requested_work_type: 7 }),
+      })
+    );
+    expect(optional.status).toBe(400);
+    const mixedMedia = await POST(
+      new Request("https://test/api/v1/portal/intake", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: "Kitchen",
+          description: "Remodel",
+          media_refs: [{ kind: "image", media_id: "ok", url: "http://invalid" }],
+        }),
+      })
+    );
+    expect(mixedMedia.status).toBe(400);
   });
 
   it("returns 403 when tenant context is forbidden", async () => {
