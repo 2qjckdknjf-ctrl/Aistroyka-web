@@ -8,6 +8,7 @@ const CLIENTS = new Set([
   "ios_lite",
   "ios_worker",
   "ios_manager",
+  "ios_customer",
   "android_full",
   "android_lite",
   "android_worker",

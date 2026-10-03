@@ -1,0 +1,17 @@
+"cust_login_headline" = "Customer portal";
+"cust_login_subhead" = "Sign in to view the projects you were invited to.";
+"cust_email_placeholder" = "Email";
+"cust_password_placeholder" = "Password";
+"cust_sign_in" = "Sign in";
+"cust_signing_in" = "Signing in…";
+"cust_continue_google" = "Continue with Google";
+"cust_sign_out" = "Sign out";
+"cust_checking_session" = "Checking session…";
+"cust_home_title" = "Your projects";
+"cust_home_empty" = "No customer projects are available in this first slice. After sign-in, later slices will load portal projects from the AISTROYKA API.";
+"cust_err_empty_credentials" = "Enter email and password.";
+"cust_err_apple_sign_in" = "Apple Sign-In did not return a token.";
+"cust_err_google_sign_in" = "Google Sign-In failed.";
+"cust_err_session_expired" = "Session expired. Sign in again.";
+"cust_err_not_customer" = "This account is not a customer stakeholder. Use the portal invite or sign in with a customer account.";
+"cust_err_use_manager" = "This account belongs to a contractor workspace. Use AiStroyka Manager.";
