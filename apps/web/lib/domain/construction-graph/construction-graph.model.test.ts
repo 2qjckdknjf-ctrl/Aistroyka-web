@@ -6,7 +6,7 @@ describe("buildConstructionGraphFromSources", () => {
     const graph = buildConstructionGraphFromSources("tenant-1", "project-1", {
       project: { id: "project-1", name: "Villa" },
       tasks: [{ id: "task-1", title: "Pour slab", assigned_to: "user-w" }],
-      reports: [{ id: "rep-1", task_id: "task-1", created_by: "user-w" }],
+      reports: [{ id: "rep-1", task_id: "task-1", user_id: "user-w" }],
       media: [{ id: "media-1", type: "image" }],
       defects: [{ id: "def-1", title: "Crack" }],
       documents: [{ id: "doc-1", title: "Permit", status: "approved" }],
@@ -26,7 +26,7 @@ describe("buildConstructionGraphFromSources", () => {
     const graph = buildConstructionGraphFromSources("t", "p", {
       project: { id: "p", name: "P" },
       tasks: [],
-      reports: [{ id: "rep-x", task_id: "missing-task", created_by: null }],
+      reports: [{ id: "rep-x", task_id: "missing-task", user_id: null }],
       media: [],
       defects: [],
       documents: [],

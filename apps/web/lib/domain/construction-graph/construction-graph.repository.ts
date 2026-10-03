@@ -22,7 +22,7 @@ export async function queryProjectConstructionGraph(
     .maybeSingle();
   if (error || !project?.id) return null;
 
-  const [tasksRes, mediaRes, defectsRes, documentsRes] = await Promise.all([
+  const [tasksRes, mediaRes, defectsRes, documentsRes, daysRes] = await Promise.all([
     supabase
       .from("worker_tasks")
       .select("id, title, assigned_to")
@@ -47,6 +47,12 @@ export async function queryProjectConstructionGraph(
       .eq("project_id", projectId)
       .eq("tenant_id", tenantId)
       .limit(200),
+    supabase
+      .from("worker_day")
+      .select("id")
+      .eq("project_id", projectId)
+      .eq("tenant_id", tenantId)
+      .limit(200),
   ]);
 
   const tasks = (tasksRes.data ?? []) as Array<{
@@ -55,16 +61,31 @@ export async function queryProjectConstructionGraph(
     assigned_to: string | null;
   }>;
   const taskIds = tasks.map((t) => t.id);
-  const reportsRes =
-    taskIds.length === 0
-      ? { data: [] as Array<{ id: string; task_id: string | null; created_by: string | null }> }
-      : await supabase.from("worker_reports").select("id, task_id, created_by").in("task_id", taskIds).limit(200);
+  const dayIds = ((daysRes.data ?? []) as Array<{ id: string }>).map((d) => d.id);
 
-  const reports = ((reportsRes.data ?? []) as Array<{
-    id: string;
-    task_id: string | null;
-    created_by: string | null;
-  }>).map((r) => ({ id: r.id, task_id: r.task_id, created_by: r.created_by }));
+  type ReportRow = { id: string; task_id: string | null; user_id: string | null };
+  const reportById = new Map<string, ReportRow>();
+  if (taskIds.length > 0) {
+    const { data } = await supabase
+      .from("worker_reports")
+      .select("id, task_id, user_id")
+      .eq("tenant_id", tenantId)
+      .in("task_id", taskIds)
+      .limit(200);
+    for (const row of (data ?? []) as ReportRow[]) reportById.set(row.id, row);
+  }
+  if (dayIds.length > 0) {
+    const { data } = await supabase
+      .from("worker_reports")
+      .select("id, task_id, user_id")
+      .eq("tenant_id", tenantId)
+      .in("day_id", dayIds)
+      .limit(200);
+    for (const row of (data ?? []) as ReportRow[]) {
+      if (!reportById.has(row.id)) reportById.set(row.id, row);
+    }
+  }
+  const reports = Array.from(reportById.values());
 
   return buildConstructionGraphFromSources(tenantId, projectId, {
     project: { id: project.id, name: project.name ?? null },
