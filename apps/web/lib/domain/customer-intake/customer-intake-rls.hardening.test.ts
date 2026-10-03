@@ -6,6 +6,10 @@ const sql = readFileSync(
   resolve(__dirname, "../../../supabase/migrations/20261003170000_customer_intake_drafts.sql"),
   "utf8"
 );
+const membershipSql = readFileSync(
+  resolve(__dirname, "../../../supabase/migrations/20261003221500_restore_active_stakeholder_membership.sql"),
+  "utf8"
+);
 
 type Grant = { tenantId: string; projectId: string; status: "active" | "revoked" };
 
@@ -113,7 +117,7 @@ describe("customer intake draft RLS SQL", () => {
     expect(sql).toMatch(/jsonb_object_keys\(e\)/);
     expect(sql).toMatch(/where media_key\.key not in \('kind', 'media_id', 'url'\)/);
     expect(sql).toMatch(/%\[0-9A-Fa-f\]\{2\}/);
-    expect(sql).toMatch(/regexp_replace\(e #>> '\{\}', '\^\[\[:space:\]\]\+/);
+    expect(sql).toMatch(/customer_intake_js_trim/);
     expect(sql).toMatch(/customer_intake_js_length/);
     expect(sql).not.toMatch(/\^https:\/\/\[\^\[:space:\]\/\?#\]\+/);
   });
@@ -322,6 +326,13 @@ function sqlHttpsUrlValid(raw: string | null): boolean {
   if (!SQL_HTTPS_URL.test(trimmed)) return false;
   const afterScheme = trimmed.replace(/^https:\/\//, "").replace(/^[^@/]+@/, "");
   const host = afterScheme.split(/[/:?#]/, 1)[0] ?? "";
+  if (
+    host !== "localhost" &&
+    !/^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$/.test(host) &&
+    !/[A-Za-z]/.test(host)
+  ) {
+    return false;
+  }
   if (/^(?:\d+\.){3}\d+$/.test(host) && !/^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$/.test(host)) {
     return false;
   }
@@ -377,6 +388,22 @@ describe("customer intake media URL storage contract", () => {
     expect(sqlHttpsUrlValid("https://%@example.com/file.jpg")).toBe(false);
     expect(sqlHttpsUrlValid("https://999.999.999.999/file")).toBe(false);
     expect(sqlHttpsUrlValid("https://example.com:99999/file")).toBe(false);
+    expect(sqlHttpsUrlValid("https://4294967296/")).toBe(false);
+    expect(sqlHttpsUrlValid("https://999.1/")).toBe(false);
     expect(sqlHttpsUrlValid(`https://example.com/${"a".repeat(2040)}`)).toBe(false);
+  });
+});
+
+describe("customer intake JavaScript trim contract", () => {
+  it("treats U+FEFF as empty after trim like String.prototype.trim", () => {
+    expect("\uFEFF".trim()).toBe("");
+    expect(sql.includes("chr(65279)")).toBe(true);
+  });
+});
+
+describe("active stakeholder membership restore", () => {
+  it("lets an active matching user_id restore stakeholder tenant membership", () => {
+    expect(membershipSql).toMatch(/ps\.status = 'active' and ps\.user_id = \(select auth\.uid\(\)\)/);
+    expect(membershipSql).toMatch(/ps\.status = 'invited' and ps\.expires_at > now\(\)/);
   });
 });

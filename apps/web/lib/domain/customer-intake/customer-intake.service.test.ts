@@ -163,6 +163,13 @@ describe("parseCreateCustomerIntakeInput", () => {
         questions: ["😀".repeat(300)],
       })
     ).toEqual({ error: "question is too long" });
+    expect(
+      parseCreateCustomerIntakeInput({
+        title: "Kitchen",
+        description: "Need remodel",
+        questions: ["\uFEFF"],
+      })
+    ).toEqual({ error: "questions entries must be non-empty strings" });
   });
 
   it("rejects invalid media_refs", () => {
@@ -482,6 +489,12 @@ describe("parseMediaRefs URL contract", () => {
       error: "media_refs.url is invalid",
     });
     expect(parseMediaRefs([{ kind: "image", url: "https://example.com:99999/file" }])).toEqual({
+      error: "media_refs.url is invalid",
+    });
+    expect(parseMediaRefs([{ kind: "image", url: "https://4294967296/" }])).toEqual({
+      error: "media_refs.url is invalid",
+    });
+    expect(parseMediaRefs([{ kind: "image", url: "https://999.1/" }])).toEqual({
       error: "media_refs.url is invalid",
     });
     expect(parseMediaRefs([{ kind: "image", url: `https://example.com/${"a".repeat(2040)}` }])).toEqual({

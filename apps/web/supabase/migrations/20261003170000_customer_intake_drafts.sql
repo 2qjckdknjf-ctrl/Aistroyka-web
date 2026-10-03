@@ -92,17 +92,54 @@ alter table public.customer_intake_drafts
   add constraint customer_intake_drafts_media_refs_array
   check (jsonb_typeof(media_refs) = 'array');
 
+create or replace function public.customer_intake_js_trim(p text)
+returns text
+language sql
+immutable
+set search_path = public
+as $$
+  select regexp_replace(
+    regexp_replace(
+      coalesce(p, ''),
+      '^[' || chr(9) || chr(10) || chr(11) || chr(12) || chr(13) || chr(32) || chr(133) || chr(160) || chr(5760)
+        || chr(8192) || chr(8193) || chr(8194) || chr(8195) || chr(8196) || chr(8197) || chr(8198) || chr(8199)
+        || chr(8200) || chr(8201) || chr(8202) || chr(8232) || chr(8233) || chr(8239) || chr(8287) || chr(12288)
+        || chr(65279) || ']+',
+      ''
+    ),
+    '[' || chr(9) || chr(10) || chr(11) || chr(12) || chr(13) || chr(32) || chr(133) || chr(160) || chr(5760)
+      || chr(8192) || chr(8193) || chr(8194) || chr(8195) || chr(8196) || chr(8197) || chr(8198) || chr(8199)
+      || chr(8200) || chr(8201) || chr(8202) || chr(8232) || chr(8233) || chr(8239) || chr(8287) || chr(12288)
+      || chr(65279) || ']+$',
+    ''
+  );
+$$;
+
+create or replace function public.customer_intake_js_length(p text)
+returns integer
+language sql
+immutable
+set search_path = public
+as $$
+  select coalesce(
+    char_length(p)
+      + char_length(p)
+      - char_length(regexp_replace(p, E'[\\U00010000-\\U0010FFFF]', '', 'g')),
+    0
+  );
+$$;
+
 alter table public.customer_intake_drafts
   drop constraint if exists customer_intake_drafts_title_nonblank;
 alter table public.customer_intake_drafts
   add constraint customer_intake_drafts_title_nonblank
-  check (char_length(regexp_replace(title, '^[[:space:]]+|[[:space:]]+$', '', 'g')) >= 1);
+  check (public.customer_intake_js_length(public.customer_intake_js_trim(title)) >= 1);
 
 alter table public.customer_intake_drafts
   drop constraint if exists customer_intake_drafts_description_nonblank;
 alter table public.customer_intake_drafts
   add constraint customer_intake_drafts_description_nonblank
-  check (char_length(regexp_replace(description, '^[[:space:]]+|[[:space:]]+$', '', 'g')) >= 1);
+  check (public.customer_intake_js_length(public.customer_intake_js_trim(description)) >= 1);
 
 create or replace function public.customer_intake_tenant_account_active(p_tenant_id uuid)
 returns boolean
@@ -126,20 +163,6 @@ comment on function public.customer_intake_tenant_account_active(uuid) is
 revoke all on function public.customer_intake_tenant_account_active(uuid) from public;
 grant execute on function public.customer_intake_tenant_account_active(uuid) to authenticated;
 
-create or replace function public.customer_intake_js_length(p text)
-returns integer
-language sql
-immutable
-set search_path = public
-as $$
-  select coalesce(
-    char_length(p)
-      + char_length(p)
-      - char_length(regexp_replace(p, E'[\\U00010000-\\U0010FFFF]', '', 'g')),
-    0
-  );
-$$;
-
 create or replace function public.customer_intake_questions_valid(p jsonb)
 returns boolean
 language sql
@@ -151,7 +174,7 @@ as $$
     and coalesce((
       select bool_and(
         case
-          when jsonb_typeof(e) = 'string' then public.customer_intake_js_length(regexp_replace(e #>> '{}', '^[[:space:]]+|[[:space:]]+$', '', 'g')) between 1 and 500
+          when jsonb_typeof(e) = 'string' then public.customer_intake_js_length(public.customer_intake_js_trim(e #>> '{}')) between 1 and 500
           else false
         end
       )
@@ -166,7 +189,7 @@ stable
 set search_path = public
 as $$
   select jsonb_typeof(p) = 'string'
-    and public.customer_intake_js_length(regexp_replace(p #>> '{}', '^[[:space:]]+|[[:space:]]+$', '', 'g')) between 1 and 128;
+    and public.customer_intake_js_length(public.customer_intake_js_trim(p #>> '{}')) between 1 and 128;
 $$;
 
 create or replace function public.customer_intake_https_url_text_valid(p text)
@@ -176,12 +199,17 @@ immutable
 set search_path = public
 as $$
   with u as (
-    select regexp_replace(p, '^[[:space:]]+|[[:space:]]+$', '', 'g') as t
+    select public.customer_intake_js_trim(p) as t
+  ),
+  parsed as (
+    select
+      t,
+      substring(t from '^https://(?:(?:%[0-9A-Fa-f]{2}|[A-Za-z0-9._~!$&''()*+,;=:-])+@)?([^/:?#]+)') as host
+    from u
   )
   select coalesce(
-    char_length(u.t) between 1 and 2048
-    and public.customer_intake_js_length(u.t) between 1 and 2048
-    and u.t ~ (
+    public.customer_intake_js_length(parsed.t) between 1 and 2048
+    and parsed.t ~ (
       '^https://'
       || '(?:(?:%[0-9A-Fa-f]{2}|[A-Za-z0-9._~!$&''()*+,;=:-])+@)?'
       || '(?:localhost|(?:(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])|(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)(?:\.(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?))*)'
@@ -190,13 +218,18 @@ as $$
       || '$'
     )
     and (
-      u.t !~ (
+      parsed.host = 'localhost'
+      or parsed.host ~ '^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$'
+      or parsed.host ~ '[A-Za-z]'
+    )
+    and (
+      parsed.t !~ (
         '^https://'
         || '(?:(?:%[0-9A-Fa-f]{2}|[A-Za-z0-9._~!$&''()*+,;=:-])+@)?'
         || '(?:[0-9]+\.){3}[0-9]+'
         || '(?::[0-9]+)?(?:[/?#]|$)'
       )
-      or u.t ~ (
+      or parsed.t ~ (
         '^https://'
         || '(?:(?:%[0-9A-Fa-f]{2}|[A-Za-z0-9._~!$&''()*+,;=:-])+@)?'
         || '(?:(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])'
@@ -207,7 +240,7 @@ as $$
     ),
     false
   )
-  from u;
+  from parsed;
 $$;
 
 create or replace function public.customer_intake_media_url_value_valid(p jsonb)
