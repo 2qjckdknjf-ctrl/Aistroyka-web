@@ -13,5 +13,7 @@
 "cust_err_apple_sign_in" = "Inicio de sesión con Apple no devolvió un token.";
 "cust_err_google_sign_in" = "Falló el inicio de sesión con Google.";
 "cust_err_session_expired" = "La sesión caducó. Inicie sesión de nuevo.";
+"cust_err_session_retry" = "No se pudo verificar la sesión. Compruebe la conexión e inténtelo de nuevo.";
+"cust_retry" = "Reintentar";
 "cust_err_not_customer" = "Esta cuenta no es de cliente. Use la invitación al portal.";
 "cust_err_use_manager" = "Esta cuenta es de contratista. Use AiStroyka Manager.";

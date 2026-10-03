@@ -13,5 +13,7 @@
 "cust_err_apple_sign_in" = "Apple Sign-In did not return a token.";
 "cust_err_google_sign_in" = "Google Sign-In failed.";
 "cust_err_session_expired" = "Session expired. Sign in again.";
+"cust_err_session_retry" = "Could not verify this session. Check your connection and try again.";
+"cust_retry" = "Retry";
 "cust_err_not_customer" = "This account is not a customer stakeholder. Use the portal invite or sign in with a customer account.";
 "cust_err_use_manager" = "This account belongs to a contractor workspace. Use AiStroyka Manager.";

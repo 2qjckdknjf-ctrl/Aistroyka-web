@@ -38,6 +38,8 @@ const REQUIRED_REDIRECTS = [
   "ai.aistroyka.worker://**",
   "ai.aistroyka.manager://auth-callback",
   "ai.aistroyka.manager://**",
+  "ai.aistroyka.customer://auth-callback",
+  "ai.aistroyka.customer://**",
 ];
 
 const token = process.env.SUPABASE_ACCESS_TOKEN;

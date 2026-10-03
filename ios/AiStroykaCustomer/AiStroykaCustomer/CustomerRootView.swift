@@ -11,6 +11,15 @@ struct CustomerRootView: View {
                     .accessibilityIdentifier("pilot_customer_checking_session")
             } else if !sessionState.isLoggedIn {
                 CustomerLoginView()
+            } else if sessionState.sessionCheckFailed {
+                CustomerStatusView(
+                    kind: .error,
+                    message: sessionState.authErrorMessage ?? NSLocalizedString("cust_err_session_retry", comment: ""),
+                    actionTitle: NSLocalizedString("cust_retry", comment: "")
+                ) {
+                    sessionState.checkSession()
+                }
+                .accessibilityIdentifier("pilot_customer_session_retry")
             } else if !sessionState.isAuthorizedRole {
                 CustomerStatusView(
                     kind: .unauthorized,

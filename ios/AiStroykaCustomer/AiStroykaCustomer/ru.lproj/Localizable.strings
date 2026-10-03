@@ -13,5 +13,7 @@
 "cust_err_apple_sign_in" = "Вход через Apple не вернул токен.";
 "cust_err_google_sign_in" = "Не удалось войти через Google.";
 "cust_err_session_expired" = "Сессия истекла. Войдите снова.";
+"cust_err_session_retry" = "Не удалось проверить сессию. Проверьте соединение и повторите попытку.";
+"cust_retry" = "Повторить";
 "cust_err_not_customer" = "Этот аккаунт не является заказчиком. Используйте приглашение в портал.";
 "cust_err_use_manager" = "Этот аккаунт относится к подрядчику. Используйте AiStroyka Manager.";

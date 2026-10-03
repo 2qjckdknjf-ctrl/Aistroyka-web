@@ -8,6 +8,7 @@ final class CustomerSessionState: ObservableObject {
     @Published var isCheckingSession = false
     @Published var authErrorMessage: String?
     @Published var roleFailureMessage: String?
+    @Published var sessionCheckFailed = false
     @Published var signedInEmail: String?
 
     private var unauthorizedObserver: NSObjectProtocol?
@@ -45,6 +46,7 @@ final class CustomerSessionState: ObservableObject {
         isAuthorizedRole = false
         signedInEmail = nil
         roleFailureMessage = nil
+        sessionCheckFailed = false
         authErrorMessage = nil
     }
 
@@ -57,6 +59,7 @@ final class CustomerSessionState: ObservableObject {
         isCheckingSession = true
         defer { isCheckingSession = false }
         roleFailureMessage = nil
+        sessionCheckFailed = false
         guard await AuthService.shared.getAccessToken() != nil else {
             isLoggedIn = false
             isAuthorizedRole = false
@@ -80,7 +83,8 @@ final class CustomerSessionState: ObservableObject {
             }
         } catch {
             isAuthorizedRole = false
-            roleFailureMessage = NSLocalizedString("cust_err_session_expired", comment: "")
+            sessionCheckFailed = true
+            authErrorMessage = NSLocalizedString("cust_err_session_retry", comment: "")
         }
     }
 }
