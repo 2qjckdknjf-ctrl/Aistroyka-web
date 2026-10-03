@@ -28,10 +28,18 @@ export interface ProjectSummary {
 const PENDING_REPORT_COUNT_FAILED = "Pending report count failed";
 
 type IdProjectRow = { id: string; project_id: string | null };
+type SubmittedTaskReportRow = { id: string; day_id: string | null };
+
+function presentDayId(dayId: string | null | undefined): dayId is string {
+  return typeof dayId === "string" && dayId.length > 0;
+}
 
 /**
  * `worker_reports` has no `project_id`. Match the report list: the day's project
  * wins, otherwise the linked task's project.
+ *
+ * A worker_day row with `project_id = null` is unusable for attribution and
+ * must not fall through to the task. A missing day row may still use the task.
  */
 export async function countSubmittedReportsForProject(
   supabase: SupabaseClient,
@@ -70,22 +78,28 @@ export async function countSubmittedReportsForProject(
     .in("task_id", taskIds);
   if (taskReportError) throw new Error(PENDING_REPORT_COUNT_FAILED);
 
+  const reports = (taskReports ?? []) as SubmittedTaskReportRow[];
   const otherDayIds = [
     ...new Set(
-      ((taskReports ?? []) as { day_id: string | null }[])
-        .map((row) => row.day_id)
-        .filter((dayId): dayId is string => Boolean(dayId) && !dayIdSet.has(dayId))
+      reports.map((row) => row.day_id).filter((dayId): dayId is string => presentDayId(dayId) && !dayIdSet.has(dayId))
     ),
   ];
   const otherDayProject = await projectIdByRowId(supabase, tenantId, otherDayIds);
 
-  for (const row of (taskReports ?? []) as { id: string; day_id: string | null }[]) {
-    if (ids.has(row.id) || !row.day_id || dayIdSet.has(row.day_id)) {
+  for (const row of reports) {
+    if (ids.has(row.id) || !presentDayId(row.day_id)) {
       ids.add(row.id);
       continue;
     }
-    const dayProject = otherDayProject[row.day_id];
-    if (dayProject == null || dayProject === projectId) ids.add(row.id);
+    if (dayIdSet.has(row.day_id)) {
+      ids.add(row.id);
+      continue;
+    }
+    if (!otherDayProject.has(row.day_id)) {
+      ids.add(row.id);
+      continue;
+    }
+    if (otherDayProject.get(row.day_id) === projectId) ids.add(row.id);
   }
 
   return ids.size;
@@ -95,17 +109,19 @@ async function projectIdByRowId(
   supabase: SupabaseClient,
   tenantId: string,
   ids: string[]
-): Promise<Record<string, string>> {
-  if (ids.length === 0) return {};
+): Promise<Map<string, string | null>> {
+  const byId = new Map<string, string | null>();
+  if (ids.length === 0) return byId;
   const { data, error } = await supabase
     .from("worker_day")
     .select("id, project_id")
     .eq("tenant_id", tenantId)
     .in("id", ids);
   if (error) throw new Error(PENDING_REPORT_COUNT_FAILED);
-  return Object.fromEntries(
-    ((data ?? []) as IdProjectRow[]).map((row) => [row.id, row.project_id ?? ""])
-  );
+  for (const row of (data ?? []) as IdProjectRow[]) {
+    byId.set(row.id, row.project_id);
+  }
+  return byId;
 }
 
 /**
