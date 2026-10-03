@@ -46,6 +46,10 @@ function canSelect(args: {
   return args.createdBySelf && stakeholderAuthorized(args.grants, args.tenantId, args.projectId, args.projectTenantId);
 }
 
+function isInternalWriter(role: string): boolean {
+  return role === "owner" || role === "admin" || role === "member";
+}
+
 function canWrite(args: {
   role: string;
   createdBySelf: boolean;
@@ -55,7 +59,7 @@ function canWrite(args: {
   grants: Grant[];
 }): boolean {
   if (!args.createdBySelf) return false;
-  if (isInternal(args.role)) return true;
+  if (isInternalWriter(args.role)) return true;
   return stakeholderAuthorized(args.grants, args.tenantId, args.projectId, args.projectTenantId);
 }
 
@@ -66,14 +70,15 @@ const revoked: Grant[] = [{ tenantId: tenant, projectId: project, status: "revok
 
 describe("customer intake draft RLS SQL", () => {
   it("does not treat tenant_members as current stakeholder access", () => {
-    expect(sql).not.toMatch(/from public\.tenant_members tm/);
+    expect(sql).not.toMatch(/role = 'stakeholder'/);
     expect(sql).toMatch(/has_active_stakeholder_grant_in_tenant/);
     expect(sql).toMatch(/ps\.status = 'active'/);
   });
 
   it("separates internal reader/writer from portal grants", () => {
     expect(sql).toMatch(/is_internal_intake_reader/);
-    expect(sql).toMatch(/is_internal_intake_writer/);
+    expect(sql).toMatch(/tm\.role in \('owner', 'admin', 'member'\)/);
+    expect(sql).not.toMatch(/tm\.role in \('owner', 'admin', 'member', 'viewer'\)/);
     expect(sql).toMatch(/customer_intake_stakeholder_authorized/);
   });
 
@@ -191,7 +196,7 @@ describe("customer intake draft RLS matrix", () => {
     }
   });
 
-  it("8. viewer remains an internal reader/writer", () => {
+  it("8. viewer can read but cannot write intake drafts", () => {
     expect(
       canSelect({
         role: "viewer",
@@ -211,7 +216,7 @@ describe("customer intake draft RLS matrix", () => {
         projectTenantId: null,
         grants: [],
       })
-    ).toBe(true);
+    ).toBe(false);
   });
 
   it("9. foreign tenant project_id is denied", () => {

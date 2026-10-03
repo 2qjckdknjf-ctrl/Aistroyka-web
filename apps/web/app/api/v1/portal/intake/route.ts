@@ -4,7 +4,9 @@ import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from 
 import {
   createCustomerIntakeDraft,
   listCustomerIntakeDrafts,
+  parseCreateCustomerIntakeInput,
 } from "@/lib/domain/customer-intake/customer-intake.service";
+import { resolvePortalIntakeTenant } from "@/lib/domain/customer-intake/portal-intake-tenant";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +19,12 @@ export async function GET(request: Request) {
     throw e;
   }
   const supabase = await createClientFromRequest(request);
-  const { data, error } = await listCustomerIntakeDrafts(supabase, ctx);
+  const resolved = await resolvePortalIntakeTenant(supabase, ctx, request, null);
+  if ("error" in resolved) {
+    return NextResponse.json({ error: resolved.error }, { status: resolved.status });
+  }
+  const scoped = { ...ctx, tenantId: resolved.tenantId };
+  const { data, error } = await listCustomerIntakeDrafts(supabase, scoped);
   if (error) return NextResponse.json({ error }, { status: error === "Tenant required" ? 401 : 400 });
   return NextResponse.json({ data });
 }
@@ -36,8 +43,17 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
+  const parsed = parseCreateCustomerIntakeInput(body ?? {});
+  if ("error" in parsed) {
+    return NextResponse.json({ error: parsed.error }, { status: 400 });
+  }
   const supabase = await createClientFromRequest(request);
-  const { data, error } = await createCustomerIntakeDraft(supabase, ctx, body ?? {});
+  const resolved = await resolvePortalIntakeTenant(supabase, ctx, request, parsed.input.project_id ?? null);
+  if ("error" in resolved) {
+    return NextResponse.json({ error: resolved.error }, { status: resolved.status });
+  }
+  const scoped = { ...ctx, tenantId: resolved.tenantId };
+  const { data, error } = await createCustomerIntakeDraft(supabase, scoped, parsed.input);
   if (!data) return NextResponse.json({ error: error || "Create failed" }, { status: 400 });
   return NextResponse.json({ data }, { status: 201 });
 }

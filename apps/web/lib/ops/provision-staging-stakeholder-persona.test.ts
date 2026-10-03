@@ -62,7 +62,12 @@ describe("provision staging stakeholder persona", () => {
         return new Response(JSON.stringify({ data: { role: "stakeholder" } }), { status: 200 });
       }
       if (String(url).includes("/api/v1/portal/intake")) {
+        const headers = new Headers(init?.headers);
+        expect(headers.get("x-tenant-id")).toBe("tenant-1");
         return new Response(JSON.stringify({ data: { id: "draft-1" } }), { status: 201 });
+      }
+      if (String(url).includes("/api/v1/projects/project-1") && (init?.method || "GET") === "GET") {
+        return new Response(JSON.stringify({ data: { id: "project-1", tenant_id: "tenant-1" } }), { status: 200 });
       }
       return new Response("nope", { status: 500 });
     };
@@ -77,6 +82,42 @@ describe("provision staging stakeholder persona", () => {
     expect(calls.some((c) => c.includes("/stakeholder-invites/accept"))).toBe(true);
   });
 
+  it("revalidates /me and projectless intake when the membership is already active", async () => {
+    const calls: string[] = [];
+    const fetchImpl = async (url: string, init?: RequestInit) => {
+      calls.push(`${init?.method || "GET"} ${url}`);
+      if (String(url).includes("/auth/v1/token")) {
+        return new Response(JSON.stringify({ access_token: "tok" }), { status: 200 });
+      }
+      if (String(url).includes("/stakeholders") && (init?.method || "GET") === "GET") {
+        return new Response(
+          JSON.stringify({ data: [{ email: "owner@example.com", status: "active", id: "sh1" }] }),
+          { status: 200 }
+        );
+      }
+      if (String(url).includes("/api/v1/me")) {
+        return new Response(JSON.stringify({ data: { role: "stakeholder" } }), { status: 200 });
+      }
+      if (String(url).includes("/api/v1/portal/intake")) {
+        return new Response(JSON.stringify({ data: { id: "draft-1" } }), { status: 201 });
+      }
+      if (String(url).includes("/api/v1/projects/project-1")) {
+        return new Response(JSON.stringify({ data: { id: "project-1", tenant_id: "tenant-1" } }), { status: 200 });
+      }
+      return new Response("nope", { status: 500 });
+    };
+    const result = await provisionStagingStakeholder({
+      env: stagingEnv,
+      argv: ["node", "script", "ignored"],
+      fetchImpl,
+    });
+    expect(result.status).toBe("SUCCESS");
+    expect(result.reason).toMatch(/already active/);
+    expect(calls.some((c) => c.includes("/api/v1/me"))).toBe(true);
+    expect(calls.some((c) => c.includes("/api/v1/portal/intake"))).toBe(true);
+    expect(calls.some((c) => c.includes("/stakeholder-invites/accept"))).toBe(false);
+  });
+
   it("revokes an existing membership when --revoke is set", async () => {
     const fetchImpl = async (url: string, init?: RequestInit) => {
       if (String(url).includes("/auth/v1/token")) {
@@ -88,10 +129,16 @@ describe("provision staging stakeholder persona", () => {
       if (String(url).includes("/api/v1/portal/intake")) {
         return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403 });
       }
-      return new Response(
-        JSON.stringify({ data: [{ email: "owner@example.com", status: "active", id: "sh1" }] }),
-        { status: 200 }
-      );
+      if (String(url).includes("/stakeholders")) {
+        return new Response(
+          JSON.stringify({ data: [{ email: "owner@example.com", status: "active", id: "sh1" }] }),
+          { status: 200 }
+        );
+      }
+      if (String(url).includes("/api/v1/projects/project-1")) {
+        return new Response(JSON.stringify({ data: { id: "project-1", tenant_id: "tenant-1" } }), { status: 200 });
+      }
+      return new Response("nope", { status: 500 });
     };
     const result = await provisionStagingStakeholder({
       env: stagingEnv,
@@ -113,10 +160,16 @@ describe("provision staging stakeholder persona", () => {
       if (String(url).includes("/api/v1/portal/intake")) {
         return new Response(JSON.stringify({ data: { id: "leaked" } }), { status: 201 });
       }
-      return new Response(
-        JSON.stringify({ data: [{ email: "owner@example.com", status: "active", id: "sh1" }] }),
-        { status: 200 }
-      );
+      if (String(url).includes("/stakeholders")) {
+        return new Response(
+          JSON.stringify({ data: [{ email: "owner@example.com", status: "active", id: "sh1" }] }),
+          { status: 200 }
+        );
+      }
+      if (String(url).includes("/api/v1/projects/project-1")) {
+        return new Response(JSON.stringify({ data: { id: "project-1", tenant_id: "tenant-1" } }), { status: 200 });
+      }
+      return new Response("nope", { status: 500 });
     };
     const result = await provisionStagingStakeholder({
       env: stagingEnv,

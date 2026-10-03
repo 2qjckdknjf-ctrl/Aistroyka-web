@@ -40,7 +40,7 @@ export async function POST(request: Request) {
   const token = typeof body.token === "string" ? body.token.trim() : "";
   if (!token) return NextResponse.json({ error: "token is required" }, { status: 400 });
 
-  const { data, error } = await acceptStakeholderInvite(supabase, user.id, user.email, token);
+  const { data, error, activated } = await acceptStakeholderInvite(supabase, user.id, user.email, token);
   if (!data) {
     const status =
       error.includes("not found") || error.includes("no longer")
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
   }
 
   const admin = getAdminClient();
-  if (admin) {
+  if (admin && activated) {
     await notifyProjectManagers(admin, data.tenant_id, data.project_id, {
       type: "stakeholder_invite_accepted",
       title: "Client portal invitation accepted",

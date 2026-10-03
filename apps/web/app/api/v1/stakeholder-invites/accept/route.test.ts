@@ -15,7 +15,7 @@ vi.mock("@/lib/supabase/server", () => ({
 }));
 
 vi.mock("@/lib/supabase/admin", () => ({
-  getAdminClient: vi.fn(() => null),
+  getAdminClient: vi.fn(() => ({ admin: true })),
 }));
 
 const { acceptStakeholderInvite } = vi.hoisted(() => ({
@@ -26,8 +26,12 @@ vi.mock("@/lib/domain/stakeholders/stakeholders.service", () => ({
   acceptStakeholderInvite,
 }));
 
-vi.mock("@/lib/domain/notifications/manager-notifications.repository", () => ({
+const { notifyProjectManagers } = vi.hoisted(() => ({
   notifyProjectManagers: vi.fn(),
+}));
+
+vi.mock("@/lib/domain/notifications/manager-notifications.repository", () => ({
+  notifyProjectManagers,
 }));
 
 function requestWithBearer(body: unknown) {
@@ -50,6 +54,7 @@ describe("POST /api/v1/stakeholder-invites/accept", () => {
     acceptStakeholderInvite.mockResolvedValue({
       data: { project_id: "p1", tenant_id: "t1", stakeholder_role: "client_viewer" },
       error: "",
+      activated: true,
     });
     const req = requestWithBearer({ token: "invite-token" });
     const res = await POST(req);
@@ -69,6 +74,7 @@ describe("POST /api/v1/stakeholder-invites/accept", () => {
     acceptStakeholderInvite.mockResolvedValue({
       data: { project_id: "p1", tenant_id: "t1", stakeholder_role: "client_viewer" },
       error: "",
+      activated: true,
     });
     const req = new Request("https://test/api/v1/stakeholder-invites/accept", {
       method: "POST",
@@ -109,5 +115,27 @@ describe("POST /api/v1/stakeholder-invites/accept", () => {
     acceptStakeholderInvite.mockResolvedValue({ data: null, error: "Invitation is no longer valid" });
     const res = await POST(requestWithBearer({ token: "invite-token" }));
     expect(res.status).toBe(404);
+  });
+
+  it("notifies managers only on first activation", async () => {
+    getSessionUser.mockResolvedValue({ id: "u1", email: "a@b.com" });
+    acceptStakeholderInvite.mockResolvedValue({
+      data: { project_id: "p1", tenant_id: "t1", stakeholder_role: "client_viewer" },
+      error: "",
+      activated: true,
+    });
+    await POST(requestWithBearer({ token: "invite-token" }));
+    expect(notifyProjectManagers).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not notify managers on idempotent already-active accept", async () => {
+    getSessionUser.mockResolvedValue({ id: "u1", email: "a@b.com" });
+    acceptStakeholderInvite.mockResolvedValue({
+      data: { project_id: "p1", tenant_id: "t1", stakeholder_role: "client_viewer" },
+      error: "",
+      activated: false,
+    });
+    await POST(requestWithBearer({ token: "invite-token" }));
+    expect(notifyProjectManagers).not.toHaveBeenCalled();
   });
 });

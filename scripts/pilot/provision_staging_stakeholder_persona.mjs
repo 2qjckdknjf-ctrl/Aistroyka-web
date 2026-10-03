@@ -146,17 +146,103 @@ async function passwordGrant(fetchImpl, { supabaseUrl, anonKey, email, password 
   return { error: "", token };
 }
 
-async function api(fetchImpl, { base, token, method, path, body }) {
+async function api(fetchImpl, { base, token, method, path, body, extraHeaders = {} }) {
   const res = await fetchImpl(`${String(base).replace(/\/$/, "")}${path}`, {
     method,
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
       Origin: String(base).replace(/\/$/, ""),
+      ...extraHeaders,
     },
     body: body == null ? undefined : JSON.stringify(body),
   });
   return jsonOf(res);
+}
+
+async function resolveProjectTenantId(fetchImpl, plan, contractorToken) {
+  const project = await api(fetchImpl, {
+    base: plan.base,
+    token: contractorToken,
+    method: "GET",
+    path: `/api/v1/projects/${plan.projectId}`,
+  });
+  const tenantId = project.body?.data?.tenant_id || project.body?.tenant_id || "";
+  return { tenantId: String(tenantId || ""), status: project.status };
+}
+
+async function verifyActiveStakeholderPersona(fetchImpl, plan, { contractorToken, stakeholderToken, lines }) {
+  const verified = await api(fetchImpl, {
+    base: plan.base,
+    token: contractorToken,
+    method: "GET",
+    path: `/api/v1/projects/${plan.projectId}/stakeholders`,
+  });
+  const verifiedRow = findStakeholder(verified.body?.data, plan.stakeholderEmail);
+  if (verifiedRow?.status !== "active") {
+    return { exitCode: 1, status: "ERROR", reason: "membership verify failed", lines };
+  }
+
+  const portalMe = await api(fetchImpl, {
+    base: plan.base,
+    token: stakeholderToken,
+    method: "GET",
+    path: "/api/v1/me",
+  });
+  const role = portalMe.body?.data?.role ?? portalMe.body?.role;
+  if (!portalMe.ok || role !== "stakeholder") {
+    return {
+      exitCode: 1,
+      status: "ERROR",
+      reason: `portal-only verify failed (${portalMe.status})`,
+      lines,
+    };
+  }
+
+  const { tenantId } = await resolveProjectTenantId(fetchImpl, plan, contractorToken);
+  if (!tenantId) {
+    return { exitCode: 1, status: "ERROR", reason: "project tenant_id lookup failed", lines };
+  }
+
+  const intakeOk = await api(fetchImpl, {
+    base: plan.base,
+    token: stakeholderToken,
+    method: "POST",
+    path: "/api/v1/portal/intake",
+    extraHeaders: { "x-tenant-id": tenantId },
+    body: { title: "Staging persona check", description: "Projectless intake probe" },
+  });
+  if (intakeOk.status < 200 || intakeOk.status >= 300) {
+    return {
+      exitCode: 1,
+      status: "ERROR",
+      reason: `active stakeholder projectless intake failed (${intakeOk.status})`,
+      lines,
+    };
+  }
+
+  return { exitCode: 0, status: "SUCCESS", reason: "", lines };
+}
+
+async function assertRevokedCannotWriteIntake(fetchImpl, plan, { contractorToken, stakeholderToken, lines }) {
+  const { tenantId } = await resolveProjectTenantId(fetchImpl, plan, contractorToken);
+  const intakeDenied = await api(fetchImpl, {
+    base: plan.base,
+    token: stakeholderToken,
+    method: "POST",
+    path: "/api/v1/portal/intake",
+    extraHeaders: tenantId ? { "x-tenant-id": tenantId } : {},
+    body: { title: "Revoked persona check", description: "Must fail after revoke" },
+  });
+  if (intakeDenied.status >= 200 && intakeDenied.status < 300) {
+    return {
+      exitCode: 1,
+      status: "ERROR",
+      reason: "revoked stakeholder still wrote projectless intake",
+      lines,
+    };
+  }
+  return { exitCode: 0, status: "SUCCESS", reason: "stakeholder revoked", lines };
 }
 
 function findStakeholder(list, email) {
@@ -226,26 +312,32 @@ export async function provisionStagingStakeholder({ env = process.env, argv = pr
       password: plan.stakeholderPassword,
     });
     if (!stakeholder.error) {
-      const intakeDenied = await api(fetchImpl, {
-        base: plan.base,
-        token: stakeholder.token,
-        method: "POST",
-        path: "/api/v1/portal/intake",
-        body: { title: "Revoked persona check", description: "Must fail after revoke" },
+      const denied = await assertRevokedCannotWriteIntake(fetchImpl, plan, {
+        contractorToken: contractor.token,
+        stakeholderToken: stakeholder.token,
+        lines,
       });
-      if (intakeDenied.status >= 200 && intakeDenied.status < 300) {
-        return {
-          exitCode: 1,
-          status: "ERROR",
-          reason: "revoked stakeholder still wrote projectless intake",
-          lines,
-        };
-      }
+      if (denied.exitCode !== 0) return denied;
     }
     return { exitCode: 0, status: "SUCCESS", reason: "stakeholder revoked", lines };
   }
 
   if (row?.status === "active") {
+    const stakeholder = await passwordGrant(fetchImpl, {
+      supabaseUrl: plan.supabaseUrl,
+      anonKey: plan.anonKey,
+      email: plan.stakeholderEmail,
+      password: plan.stakeholderPassword,
+    });
+    if (stakeholder.error) {
+      return { exitCode: 1, status: "BLOCKED_EXTERNAL", reason: stakeholder.error, lines };
+    }
+    const verified = await verifyActiveStakeholderPersona(fetchImpl, plan, {
+      contractorToken: contractor.token,
+      stakeholderToken: stakeholder.token,
+      lines,
+    });
+    if (verified.exitCode !== 0) return verified;
     return { exitCode: 0, status: "SUCCESS", reason: "stakeholder already active (idempotent)", lines };
   }
 
@@ -295,48 +387,12 @@ export async function provisionStagingStakeholder({ env = process.env, argv = pr
     return { exitCode: 1, status: "ERROR", reason: `accept failed (${accepted.status})`, lines };
   }
 
-  const verified = await api(fetchImpl, {
-    base: plan.base,
-    token: contractor.token,
-    method: "GET",
-    path: `/api/v1/projects/${plan.projectId}/stakeholders`,
+  const verified = await verifyActiveStakeholderPersona(fetchImpl, plan, {
+    contractorToken: contractor.token,
+    stakeholderToken: stakeholder.token,
+    lines,
   });
-  const verifiedRow = findStakeholder(verified.body?.data, plan.stakeholderEmail);
-  if (verifiedRow?.status !== "active") {
-    return { exitCode: 1, status: "ERROR", reason: "membership verify failed", lines };
-  }
-
-  const portalMe = await api(fetchImpl, {
-    base: plan.base,
-    token: stakeholder.token,
-    method: "GET",
-    path: "/api/v1/me",
-  });
-  const role = portalMe.body?.data?.role ?? portalMe.body?.role;
-  if (!portalMe.ok || role !== "stakeholder") {
-    return {
-      exitCode: 1,
-      status: "ERROR",
-      reason: `portal-only verify failed (${portalMe.status})`,
-      lines,
-    };
-  }
-
-  const intakeOk = await api(fetchImpl, {
-    base: plan.base,
-    token: stakeholder.token,
-    method: "POST",
-    path: "/api/v1/portal/intake",
-    body: { title: "Staging persona check", description: "Projectless intake probe" },
-  });
-  if (intakeOk.status < 200 || intakeOk.status >= 300) {
-    return {
-      exitCode: 1,
-      status: "ERROR",
-      reason: `active stakeholder projectless intake failed (${intakeOk.status})`,
-      lines,
-    };
-  }
+  if (verified.exitCode !== 0) return verified;
 
   return { exitCode: 0, status: "SUCCESS", reason: "stakeholder invited and accepted", lines };
 }

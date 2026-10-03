@@ -190,12 +190,13 @@ export async function listCustomerIntakeDrafts(
   ctx: TenantContext
 ): Promise<{ data: CustomerIntakeDraft[]; error: string }> {
   if (!ctx.tenantId || !ctx.userId) return { data: [], error: "Tenant required" };
-  const { data, error } = await supabase
+  const query = supabase
     .from("customer_intake_drafts")
     .select("*")
-    .eq("tenant_id", ctx.tenantId)
-    .eq("created_by", ctx.userId)
-    .order("created_at", { ascending: false });
+    .eq("tenant_id", ctx.tenantId);
+  const scoped =
+    ctx.role === "stakeholder" ? query.eq("created_by", ctx.userId) : query;
+  const { data, error } = await scoped.order("created_at", { ascending: false });
   if (error) return { data: [], error: error.message };
   return { data: (data ?? []).map((row) => asDraft(row as Record<string, unknown>)), error: "" };
 }

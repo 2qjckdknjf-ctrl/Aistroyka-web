@@ -73,8 +73,9 @@ describe("stakeholders.service", () => {
       updated_at: "",
     } as never);
 
-    const { data, error } = await acceptStakeholderInvite(supabase, "u1", "inv@x.com", "tok");
+    const { data, error, activated } = await acceptStakeholderInvite(supabase, "u1", "inv@x.com", "tok");
     expect(error).toBe("");
+    expect(activated).toBe(false);
     expect(data?.project_id).toBe("p1");
     expect(repo.updateRow).not.toHaveBeenCalled();
   });

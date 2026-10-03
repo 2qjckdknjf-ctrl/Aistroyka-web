@@ -50,14 +50,23 @@ create or replace function public.is_internal_intake_writer(p_tenant_id uuid)
 returns boolean
 language sql
 stable
-security invoker
+security definer
 set search_path = public
 as $$
-  select public.is_internal_tenant_reader_for_tenant(p_tenant_id);
+  select exists (
+    select 1 from public.tenants t
+    where t.id = p_tenant_id and t.user_id = (select auth.uid())
+  )
+  or exists (
+    select 1 from public.tenant_members tm
+    where tm.tenant_id = p_tenant_id
+      and tm.user_id = (select auth.uid())
+      and tm.role in ('owner', 'admin', 'member')
+  );
 $$;
 
 comment on function public.is_internal_intake_writer(uuid) is
-  'Internal intake writer. Same role set as internal reader so viewer write semantics stay unchanged.';
+  'Internal intake writer: tenant owner or tenant_members owner/admin/member. Viewers cannot insert or update.';
 
 revoke all on function public.is_internal_intake_writer(uuid) from public;
 grant execute on function public.is_internal_intake_writer(uuid) to authenticated;

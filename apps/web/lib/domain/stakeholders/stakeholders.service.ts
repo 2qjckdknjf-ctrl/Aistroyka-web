@@ -114,21 +114,25 @@ export async function acceptStakeholderInvite(
   userId: string,
   userEmail: string | null | undefined,
   token: string
-): Promise<{ data: { project_id: string; tenant_id: string; stakeholder_role: StakeholderRole } | null; error: string }> {
+): Promise<{
+  data: { project_id: string; tenant_id: string; stakeholder_role: StakeholderRole } | null;
+  error: string;
+  activated: boolean;
+}> {
   const row = await repo.getByToken(supabase, token);
-  if (!row) return { data: null, error: "Invitation not found" };
+  if (!row) return { data: null, error: "Invitation not found", activated: false };
 
   const inviteEmail = repo.normalizeEmail(row.email);
   const u = repo.normalizeEmail(userEmail ?? "");
   if (!u || u !== inviteEmail) {
-    return { data: null, error: "Sign in with the email address this invitation was sent to." };
+    return { data: null, error: "Sign in with the email address this invitation was sent to.", activated: false };
   }
 
   if (row.status === "active" && row.user_id === userId) {
-    return { data: acceptedPayload(row), error: "" };
+    return { data: acceptedPayload(row), error: "", activated: false };
   }
-  if (row.status !== "invited") return { data: null, error: "Invitation is no longer valid" };
-  if (new Date(row.expires_at) < new Date()) return { data: null, error: "Invitation expired" };
+  if (row.status !== "invited") return { data: null, error: "Invitation is no longer valid", activated: false };
+  if (new Date(row.expires_at) < new Date()) return { data: null, error: "Invitation expired", activated: false };
 
   const { data: tenantRow } = await supabase.from("tenants").select("user_id").eq("id", row.tenant_id).maybeSingle();
   const isTenantOwner = tenantRow?.user_id === userId;
@@ -145,14 +149,14 @@ export async function acceptStakeholderInvite(
         user_id: userId,
         role: "stakeholder",
       });
-      if (tmError) return { data: null, error: "Unable to join workspace for this project" };
+      if (tmError) return { data: null, error: "Unable to join workspace for this project", activated: false };
     } else if (existingTm.role === "viewer") {
       const { error: upErr } = await supabase
         .from("tenant_members")
         .update({ role: "stakeholder" })
         .eq("id", existingTm.id)
         .eq("tenant_id", row.tenant_id);
-      if (upErr) return { data: null, error: "Unable to update workspace role for portal access" };
+      if (upErr) return { data: null, error: "Unable to update workspace role for portal access", activated: false };
     }
   }
 
@@ -161,7 +165,7 @@ export async function acceptStakeholderInvite(
     user_id: userId,
     accepted_at: new Date().toISOString(),
   });
-  if (!updated) return { data: null, error: "Activation failed" };
+  if (!updated) return { data: null, error: "Activation failed", activated: false };
 
-  return { data: acceptedPayload(updated), error: "" };
+  return { data: acceptedPayload(updated), error: "", activated: true };
 }
