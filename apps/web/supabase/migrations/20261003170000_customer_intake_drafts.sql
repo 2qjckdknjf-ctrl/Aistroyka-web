@@ -36,6 +36,7 @@ alter table public.customer_intake_drafts
   add constraint customer_intake_drafts_location_precision
   check (
     jsonb_typeof(location) = 'object'
+    and location ? 'precision'
     and (location->>'precision') in ('address', 'city', 'region', 'coordinates')
   );
 
@@ -117,7 +118,7 @@ as $$
               (
                 e ? 'media_id'
                 and jsonb_typeof(e->'media_id') = 'string'
-                and char_length(btrim(e->>'media_id')) between 1 and 128
+                and char_length(regexp_replace(e->>'media_id', '^[[:space:]]+|[[:space:]]+$', '', 'g')) between 1 and 128
               )
               or (
                 e ? 'url'
