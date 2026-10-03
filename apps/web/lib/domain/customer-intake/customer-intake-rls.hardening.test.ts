@@ -321,7 +321,7 @@ function sqlLocationValid(raw: unknown): boolean {
 }
 
 const SQL_HTTPS_URL =
-  /^https:\/\/(?:(?:%[0-9A-Fa-f]{2}|[A-Za-z0-9._~!$&'()*+,;=:-])+@)?(?:localhost|(?:(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])|(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)(?:\.(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?))*)(?::(?:6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-5][0-9]{4}|[1-9][0-9]{0,3}|0))?(?:[/?#](?:%[0-9A-Fa-f]{2}|[\][A-Za-z0-9._~!$&'()*+,;=:@/?-])*)?$/;
+  /^https:\/\/(?:(?:%[0-9A-Fa-f]{2}|[A-Za-z0-9._~!$&'()*+,;=:-])+@)?(?:localhost|(?:(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])|(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)(?:\.(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?))*)(?::(?:6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-5][0-9]{4}|[1-9][0-9]{0,3}|0))?(?:[/?#](?:%[0-9A-Fa-f]{2}|[^\s\x00-\x1F\x7F%])*)?$/;
 
 function sqlHttpsUrlValid(raw: string | null): boolean {
   if (raw == null) return false;
@@ -376,7 +376,7 @@ describe("customer intake question storage length contract", () => {
 
 describe("customer intake media URL storage contract", () => {
   it("stores WHATWG path and query characters including brackets", () => {
-    expect(sql).toMatch(/\[\]\[A-Za-z0-9\._~!\$&''\(\)\*\+,;=:@\/\?-\]/);
+    expect(sql).toContain("[^[:cntrl:][:space:]%]");
   });
 
   it("accepts absolute https URLs with a host and optional query", () => {
@@ -386,6 +386,8 @@ describe("customer intake media URL storage contract", () => {
     expect(sqlHttpsUrlValid("https://%41@example.com/file.jpg")).toBe(true);
     expect(sqlHttpsUrlValid("https://example.com/?tags[]=photo")).toBe(true);
     expect(sqlHttpsUrlValid("https://example.com/[preview]")).toBe(true);
+    expect(sqlHttpsUrlValid("https://example.com/?q=|")).toBe(true);
+    expect(sqlHttpsUrlValid("https://example.com/?q=^")).toBe(true);
   });
 
   it("rejects empty hosts, http, spaces, malformed percent encoding, and overlong URLs", () => {
@@ -408,6 +410,8 @@ describe("customer intake JavaScript trim contract", () => {
   it("treats U+FEFF as empty after trim like String.prototype.trim", () => {
     expect("\uFEFF".trim()).toBe("");
     expect(sql.includes("chr(65279)")).toBe(true);
+    expect(sql.includes("chr(133)")).toBe(false);
+    expect("\u0085".trim()).toBe("\u0085");
   });
 });
 
