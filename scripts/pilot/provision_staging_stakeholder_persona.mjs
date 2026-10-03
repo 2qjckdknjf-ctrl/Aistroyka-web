@@ -27,6 +27,10 @@ function present(v) {
   return Boolean(v && String(v).trim());
 }
 
+function normalizeEmail(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
 export function canonicalHttpsOrigin(url) {
   try {
     const parsed = new URL(String(url).trim());
@@ -99,7 +103,11 @@ export function evaluateProvisionPlan({ argv = [], env = {} } = {}) {
   if (PRODUCTION_HOSTS.includes(host.replace(/\.$/, ""))) {
     return { status: "BLOCKED", reason: "production host refused", dryRun, revokeOnly, host };
   }
-  if (contractorEmail && stakeholderEmail && contractorEmail.toLowerCase() === stakeholderEmail.toLowerCase()) {
+  if (
+    contractorEmail &&
+    stakeholderEmail &&
+    normalizeEmail(contractorEmail) === normalizeEmail(stakeholderEmail)
+  ) {
     return {
       status: "BLOCKED",
       reason: "contractor and stakeholder emails must be distinct personas",

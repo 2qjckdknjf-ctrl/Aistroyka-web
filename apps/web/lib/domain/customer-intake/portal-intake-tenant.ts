@@ -6,14 +6,19 @@ const ACTIVE_TENANT_COOKIE = "aistroyka_active_tenant";
 
 export const INTERNAL_INTAKE_ROLES = ["owner", "admin", "member", "viewer"] as const;
 
-function cookieValue(header: string | null, name: string): string | null {
+function cookieValue(header: string | null, name: string): { present: boolean; value: string } | null {
   if (!header) return null;
   for (const part of header.split(";")) {
     const trimmed = part.trim();
     const eq = trimmed.indexOf("=");
     if (eq < 1) continue;
     if (trimmed.slice(0, eq) !== name) continue;
-    return decodeURIComponent(trimmed.slice(eq + 1).trim());
+    const raw = trimmed.slice(eq + 1).trim();
+    try {
+      return { present: true, value: decodeURIComponent(raw) };
+    } catch {
+      return { present: true, value: "" };
+    }
   }
   return null;
 }
@@ -22,8 +27,8 @@ export function readExplicitTenantClaim(request: Request): { present: boolean; v
   if (request.headers.has(PORTAL_INTAKE_TENANT_HEADER)) {
     return { present: true, value: request.headers.get(PORTAL_INTAKE_TENANT_HEADER)?.trim() ?? "" };
   }
-  const fromCookie = cookieValue(request.headers.get("cookie"), ACTIVE_TENANT_COOKIE)?.trim() ?? "";
-  if (fromCookie) return { present: true, value: fromCookie };
+  const fromCookie = cookieValue(request.headers.get("cookie"), ACTIVE_TENANT_COOKIE);
+  if (fromCookie?.present) return { present: true, value: fromCookie.value.trim() };
   return { present: false, value: "" };
 }
 

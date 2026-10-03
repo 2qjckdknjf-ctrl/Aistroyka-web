@@ -165,4 +165,14 @@ describe("portal intake tenant resolution", () => {
     const resolved = await resolvePortalIntakeTenant(supabase as never, stakeholderCtx, req, "p1");
     expect(resolved).toEqual({ tenantId: "t-from-project" });
   });
+
+  it("treats a malformed active-tenant cookie as an invalid tenant claim", async () => {
+    const req = new Request("https://test/api/v1/portal/intake", {
+      method: "POST",
+      headers: { cookie: "aistroyka_active_tenant=%" },
+    });
+    expect(readExplicitTenantClaim(req)).toEqual({ present: true, value: "" });
+    const resolved = await resolvePortalIntakeTenant({} as never, stakeholderCtx, req, null);
+    expect(resolved).toMatchObject({ status: 400 });
+  });
 });

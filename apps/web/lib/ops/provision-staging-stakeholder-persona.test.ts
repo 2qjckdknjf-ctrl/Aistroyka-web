@@ -255,4 +255,17 @@ describe("provision staging stakeholder persona", () => {
     });
     expect(result.status).toBe("BLOCKED_EXTERNAL");
   });
+
+  it("blocks contractor and stakeholder emails that differ only by whitespace or case", () => {
+    const plan = evaluateProvisionPlan({
+      argv: [],
+      env: {
+        ...stagingEnv,
+        E2E_EMAIL: "  Owner@Example.com ",
+        STAKEHOLDER_SMOKE_EMAIL: "owner@example.com",
+      },
+    });
+    expect(plan.status).toBe("BLOCKED");
+    expect(plan.reason).toMatch(/distinct personas/);
+  });
 });
