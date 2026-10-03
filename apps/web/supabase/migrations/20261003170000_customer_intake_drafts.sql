@@ -183,6 +183,10 @@ create policy customer_intake_drafts_insert on public.customer_intake_drafts
   with check (
     created_by = (select auth.uid())
     and (
+      project_id is null
+      or public.project_belongs_to_tenant(project_id, tenant_id)
+    )
+    and (
       public.is_internal_intake_writer(tenant_id)
       or public.customer_intake_stakeholder_authorized(project_id, tenant_id)
     )
@@ -195,12 +199,20 @@ create policy customer_intake_drafts_update on public.customer_intake_drafts
   using (
     created_by = (select auth.uid())
     and (
+      project_id is null
+      or public.project_belongs_to_tenant(project_id, tenant_id)
+    )
+    and (
       public.is_internal_intake_writer(tenant_id)
       or public.customer_intake_stakeholder_authorized(project_id, tenant_id)
     )
   )
   with check (
     created_by = (select auth.uid())
+    and (
+      project_id is null
+      or public.project_belongs_to_tenant(project_id, tenant_id)
+    )
     and (
       public.is_internal_intake_writer(tenant_id)
       or public.customer_intake_stakeholder_authorized(project_id, tenant_id)

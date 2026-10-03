@@ -59,6 +59,7 @@ function canWrite(args: {
   grants: Grant[];
 }): boolean {
   if (!args.createdBySelf) return false;
+  if (args.projectId != null && args.projectTenantId !== args.tenantId) return false;
   if (isInternalWriter(args.role)) return true;
   return stakeholderAuthorized(args.grants, args.tenantId, args.projectId, args.projectTenantId);
 }
@@ -80,6 +81,7 @@ describe("customer intake draft RLS SQL", () => {
     expect(sql).toMatch(/tm\.role in \('owner', 'admin', 'member'\)/);
     expect(sql).not.toMatch(/tm\.role in \('owner', 'admin', 'member', 'viewer'\)/);
     expect(sql).toMatch(/customer_intake_stakeholder_authorized/);
+    expect(sql).toMatch(/project_id is null[\s\S]*project_belongs_to_tenant\(project_id, tenant_id\)/);
   });
 
   it("denies delete explicitly", () => {
@@ -228,6 +230,16 @@ describe("customer intake draft RLS matrix", () => {
         projectId: project,
         projectTenantId: "other-tenant",
         grants: active,
+      })
+    ).toBe(false);
+    expect(
+      canWrite({
+        role: "member",
+        createdBySelf: true,
+        tenantId: tenant,
+        projectId: project,
+        projectTenantId: "other-tenant",
+        grants: [],
       })
     ).toBe(false);
   });

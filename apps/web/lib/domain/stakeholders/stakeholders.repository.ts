@@ -121,15 +121,16 @@ export async function updateRow(
     status: StakeholderStatus;
     user_id: string | null;
     accepted_at: string | null;
-  }>
+  }>,
+  expectedStatus?: StakeholderStatus
 ): Promise<ProjectStakeholderRow | null> {
-  const { data, error } = await supabase
+  let query = supabase
     .from("project_stakeholders")
     .update(patch)
     .eq("id", id)
-    .eq("tenant_id", tenantId)
-    .select(ROW)
-    .single();
+    .eq("tenant_id", tenantId);
+  if (expectedStatus) query = query.eq("status", expectedStatus);
+  const { data, error } = await query.select(ROW).maybeSingle();
   if (error || !data) return null;
   return data as ProjectStakeholderRow;
 }

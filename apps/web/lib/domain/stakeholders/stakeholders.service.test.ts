@@ -79,4 +79,43 @@ describe("stakeholders.service", () => {
     expect(data?.project_id).toBe("p1");
     expect(repo.updateRow).not.toHaveBeenCalled();
   });
+
+  it("acceptStakeholderInvite treats a lost invited-status race as idempotent", async () => {
+    const invited = {
+      id: "s1",
+      tenant_id: "t1",
+      project_id: "p1",
+      email: "inv@x.com",
+      stakeholder_role: "client_viewer",
+      token: "tok",
+      status: "invited",
+      user_id: null,
+      invited_by: null,
+      expires_at: new Date(Date.now() + 86400000).toISOString(),
+      accepted_at: null,
+      created_at: "",
+      updated_at: "",
+    };
+    const activeSameUser = { ...invited, status: "active", user_id: "u1" };
+    vi.mocked(repo.getByToken).mockResolvedValueOnce(invited as never).mockResolvedValueOnce(activeSameUser as never);
+    vi.mocked(repo.updateRow).mockResolvedValue(null);
+    const chain = {
+      select: () => chain,
+      eq: () => chain,
+      maybeSingle: async () => ({ data: { id: "tm1", role: "stakeholder", user_id: "u1" } }),
+    };
+    (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue(chain);
+
+    const { data, error, activated } = await acceptStakeholderInvite(supabase, "u1", "inv@x.com", "tok");
+    expect(error).toBe("");
+    expect(activated).toBe(false);
+    expect(data?.project_id).toBe("p1");
+    expect(repo.updateRow).toHaveBeenCalledWith(
+      expect.anything(),
+      "s1",
+      "t1",
+      expect.objectContaining({ status: "active", user_id: "u1" }),
+      "invited"
+    );
+  });
 });

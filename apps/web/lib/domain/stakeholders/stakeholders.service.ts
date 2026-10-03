@@ -160,12 +160,22 @@ export async function acceptStakeholderInvite(
     }
   }
 
-  const updated = await repo.updateRow(supabase, row.id, row.tenant_id, {
-    status: "active",
-    user_id: userId,
-    accepted_at: new Date().toISOString(),
-  });
-  if (!updated) return { data: null, error: "Activation failed", activated: false };
+  const updated = await repo.updateRow(
+    supabase,
+    row.id,
+    row.tenant_id,
+    {
+      status: "active",
+      user_id: userId,
+      accepted_at: new Date().toISOString(),
+    },
+    "invited"
+  );
+  if (updated) return { data: acceptedPayload(updated), error: "", activated: true };
 
-  return { data: acceptedPayload(updated), error: "", activated: true };
+  const latest = await repo.getByToken(supabase, token);
+  if (latest?.status === "active" && latest.user_id === userId) {
+    return { data: acceptedPayload(latest), error: "", activated: false };
+  }
+  return { data: null, error: "Activation failed", activated: false };
 }
