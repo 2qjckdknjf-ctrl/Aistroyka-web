@@ -201,6 +201,7 @@ public actor APIClient {
     private var shouldEmitSessionExpiredNotification: Bool {
         clientProfile == MobileClientProfile.manager.rawValue
             || clientProfile == MobileClientProfile.worker.rawValue
+            || clientProfile == MobileClientProfile.customer.rawValue
     }
 }
 
