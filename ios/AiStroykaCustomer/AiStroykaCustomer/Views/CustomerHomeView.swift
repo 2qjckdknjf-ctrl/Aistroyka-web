@@ -30,7 +30,7 @@ struct CustomerHomeView: View {
                     )
                     .accessibilityIdentifier("pilot_customer_projects_error")
                 case .empty:
-                    CustomerStatusView(kind: .error, message: NSLocalizedString("cust_projects_empty", comment: ""))
+                    CustomerStatusView(kind: .error, message: NSLocalizedString("cust_home_empty", comment: ""))
                         .accessibilityIdentifier("pilot_customer_home_empty")
                 case .loaded:
                     List(projects) { project in
@@ -67,18 +67,37 @@ struct CustomerHomeView: View {
     private func loadProjects() async {
         loadGeneration += 1
         let generation = loadGeneration
-        loadState = .loading
+        switch loadState {
+        case .loaded, .empty:
+            break
+        case .loading, .failed:
+            loadState = .loading
+        }
         do {
             let rows = try await CustomerAPI.portalProjects()
             guard generation == loadGeneration else { return }
             projects = rows
             loadState = rows.isEmpty ? .empty : .loaded
+        } catch is CancellationError {
+            return
+        } catch let urlError as URLError where urlError.code == .cancelled {
+            return
         } catch let apiError as APIError {
             guard generation == loadGeneration else { return }
-            loadState = .failed(apiError.message)
+            switch loadState {
+            case .loaded, .empty:
+                return
+            case .loading, .failed:
+                loadState = .failed(apiError.message)
+            }
         } catch {
             guard generation == loadGeneration else { return }
-            loadState = .failed(NSLocalizedString("cust_projects_error", comment: ""))
+            switch loadState {
+            case .loaded, .empty:
+                return
+            case .loading, .failed:
+                loadState = .failed(NSLocalizedString("cust_projects_error", comment: ""))
+            }
         }
     }
 }

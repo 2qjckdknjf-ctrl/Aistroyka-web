@@ -7,6 +7,7 @@ struct CustomerProjectDetailView: View {
     @State private var view: CustomerAPI.PortalProjectView?
     @State private var message: String?
     @State private var loading = true
+    @State private var loadGeneration = 0
 
     var body: some View {
         Group {
@@ -100,17 +101,34 @@ struct CustomerProjectDetailView: View {
     }
 
     private func load() async {
-        loading = true
-        message = nil
-        do {
-            view = try await CustomerAPI.portalProject(id: projectId)
-        } catch let apiError as APIError {
-            message = apiError.message
-            view = nil
-        } catch {
-            message = NSLocalizedString("cust_project_error", comment: "")
-            view = nil
+        loadGeneration += 1
+        let generation = loadGeneration
+        if view == nil {
+            loading = true
+            message = nil
         }
-        loading = false
+        do {
+            let next = try await CustomerAPI.portalProject(id: projectId)
+            guard generation == loadGeneration else { return }
+            view = next
+            message = nil
+        } catch is CancellationError {
+            return
+        } catch let urlError as URLError where urlError.code == .cancelled {
+            return
+        } catch let apiError as APIError {
+            guard generation == loadGeneration else { return }
+            if view == nil {
+                message = apiError.message
+            }
+        } catch {
+            guard generation == loadGeneration else { return }
+            if view == nil {
+                message = NSLocalizedString("cust_project_error", comment: "")
+            }
+        }
+        if generation == loadGeneration {
+            loading = false
+        }
     }
 }
