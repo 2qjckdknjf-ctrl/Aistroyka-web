@@ -19,7 +19,8 @@
 | **Deployed (apex/staging)** | sha7 `0e3b1ed` · **MATCH main** (observed 2026-10-03) |
 | **PR #350** | DRAFT docs backlog HEAD `b7db4208` — reconciled, not blindly merged |
 | **Pilot scope** | **contractor-ops-only** — portal/customer expansion needs its own verified slice |
-| **This branch** | `audit/100-percent-completion-2026-10-03` — P0 video authz + stakeholder/daily-log RLS + submitted-report visibility |
+| **AI live smoke (this session)** | `scripts/smoke/ai_live_provider.sh --require-live` **GO** locally (`docs/audit/evidence/ai-live-provider-2026-10-03.json`). Not a production-host claim. |
+| **PR #371** | https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/371 — security/ops slice; merge needs CI + non-author APPROVED |
 | **Worktree** | `/Users/alex/Projects/AISTROYKA-100pct-completion` |
 
 ## Not approved / forbidden claims
@@ -34,7 +35,7 @@
 - LEGAL = WAITING_EXTERNAL
 - GROWTH_BASELINE = WAITING_FOR_REAL_DATA
 - iOS/Android store upload = OWNER_GATE
-- Remote apply of new RLS migrations = required before those items are PROVEN live
+- RLS migrations `harden_field_daily_logs_rls` and `block_stakeholder_self_reactivation` **applied** to the linked live Supabase project (MCP) 2026-10-03; app-route video authz still needs PR #371 merge + deploy before that hole is live-closed.
 
 ## Notes
 
