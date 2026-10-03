@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { createClientFromRequest } from "@/lib/supabase/server";
-import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
+import {
+  getTenantContextFromRequest,
+  requireTenant,
+  TenantForbiddenError,
+  TenantRequiredError,
+} from "@/lib/tenant";
 import {
   createCustomerIntakeDraft,
   listCustomerIntakeDrafts,
@@ -10,8 +15,21 @@ import { resolvePortalIntakeTenant } from "@/lib/domain/customer-intake/portal-i
 
 export const dynamic = "force-dynamic";
 
+async function tenantContext(request: Request) {
+  try {
+    return await getTenantContextFromRequest(request);
+  } catch (e) {
+    if (e instanceof TenantForbiddenError) {
+      return NextResponse.json({ error: e.message }, { status: 403 });
+    }
+    throw e;
+  }
+}
+
 export async function GET(request: Request) {
-  const ctx = await getTenantContextFromRequest(request);
+  const ctxOrDenied = await tenantContext(request);
+  if (ctxOrDenied instanceof NextResponse) return ctxOrDenied;
+  const ctx = ctxOrDenied;
   try {
     requireTenant(ctx);
   } catch (e) {
@@ -30,7 +48,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const ctx = await getTenantContextFromRequest(request);
+  const ctxOrDenied = await tenantContext(request);
+  if (ctxOrDenied instanceof NextResponse) return ctxOrDenied;
+  const ctx = ctxOrDenied;
   try {
     requireTenant(ctx);
   } catch (e) {

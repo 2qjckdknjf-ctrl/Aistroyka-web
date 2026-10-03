@@ -106,6 +106,7 @@ describe("customer intake draft RLS SQL", () => {
     expect(sql).toMatch(/jsonb_object_keys\(e\)/);
     expect(sql).toMatch(/where media_key\.key not in \('kind', 'media_id', 'url'\)/);
     expect(sql).toMatch(/char_length\(btrim\(e->>'url'\)\) between 1 and 2048/);
+    expect(sql).toMatch(/\^https:\/\/\[\^\[:space:\]\/\?#\]\+/);
   });
 });
 

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { POST } from "./route";
+import { GET, POST } from "./route";
 
 vi.mock("@/lib/supabase/server", () => ({
   createClientFromRequest: vi.fn().mockResolvedValue({}),
@@ -15,6 +15,7 @@ vi.mock("@/lib/tenant", () => ({
   }),
   requireTenant: vi.fn(),
   TenantRequiredError: class TenantRequiredError extends Error {},
+  TenantForbiddenError: class TenantForbiddenError extends Error {},
 }));
 
 const { resolvePortalIntakeTenant } = vi.hoisted(() => ({
@@ -97,5 +98,32 @@ describe("POST /api/v1/portal/intake", () => {
       })
     );
     expect(media.status).toBe(400);
+  });
+
+  it("returns 403 when tenant context is forbidden", async () => {
+    const { getTenantContextFromRequest, TenantForbiddenError } = await import("@/lib/tenant");
+    vi.mocked(getTenantContextFromRequest).mockRejectedValueOnce(new TenantForbiddenError());
+    const res = await POST(
+      new Request("https://test/api/v1/portal/intake", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: "Kitchen", description: "Remodel" }),
+      })
+    );
+    expect(res.status).toBe(403);
+  });
+});
+
+describe("GET /api/v1/portal/intake", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    resolvePortalIntakeTenant.mockResolvedValue({ tenantId: "t1" });
+  });
+
+  it("returns 403 when tenant context is forbidden", async () => {
+    const { getTenantContextFromRequest, TenantForbiddenError } = await import("@/lib/tenant");
+    vi.mocked(getTenantContextFromRequest).mockRejectedValueOnce(new TenantForbiddenError());
+    const res = await GET(new Request("https://test/api/v1/portal/intake"));
+    expect(res.status).toBe(403);
   });
 });

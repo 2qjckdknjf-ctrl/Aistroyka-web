@@ -123,7 +123,7 @@ as $$
                 e ? 'url'
                 and jsonb_typeof(e->'url') = 'string'
                 and char_length(btrim(e->>'url')) between 1 and 2048
-                and btrim(e->>'url') like 'https://%'
+                and btrim(e->>'url') ~ '^https://[^[:space:]/?#]+(/[^[:space:]]*)?$'
               )
             )
           )
