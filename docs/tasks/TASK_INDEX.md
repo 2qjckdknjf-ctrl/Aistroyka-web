@@ -4,6 +4,7 @@
 
 | Date | File | Goal | Branch | Status |
 |---|---|---|---|---|
+| 2026-09-23 | [docs-roadmap-consolidation.md](docs-roadmap-consolidation.md) | Customer and ROMA planning amendments | `docs/roadmap-consolidation-2026-09-23` | docs prepared; PR review pending |
 | 2026-06-30 | _(this PR)_ | Development OS setup | `docs/development-os` | in progress |
 
 ## Template location

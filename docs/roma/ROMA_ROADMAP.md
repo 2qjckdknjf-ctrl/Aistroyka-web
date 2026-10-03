@@ -451,3 +451,7 @@ Reduce manual council friction; optional read-only dashboard.
 | 1.2 | 2026-07-03 | Stage 2A Intelligence Core; Stage 2B/2C schemas added to roadmap |
 | 1.3 | 2026-07-03 | Stage 2B complete — `.schema.md` contracts, ADR-0008 |
 | 1.4 | 2026-07-03 | Stage 2C ROMA OS; machine schemas → Stage 2D |
+
+## Execution assurance amendment — 2026-09-23
+
+[Requirement evidence, staleness and executor assurance backlog](ROMA_EXECUTION_ASSURANCE_PLAN_2026-09-23.md), mapped to Stages 2D/3/4/7/8. PLANNED; ADR-0007 advisory posture remains in force.
