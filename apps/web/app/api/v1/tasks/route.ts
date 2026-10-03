@@ -10,7 +10,7 @@ import {
 } from "@/lib/platform/idempotency/idempotency.service";
 import { parseTaskPriority, type CreateTaskInput } from "@/lib/domain/tasks/task.types";
 import { emitAudit } from "@/lib/observability/audit.service";
-import { taskCreatedAuditDetails } from "@/lib/growth/product-events";
+import { boundedProductWrite, taskCreatedAuditDetails } from "@/lib/growth/product-events";
 
 export const dynamic = "force-dynamic";
 
@@ -110,10 +110,10 @@ export async function POST(request: Request) {
   if (!data) return NextResponse.json({ error: "Create failed" }, { status: 500 });
 
   if (ctx.tenantId && ctx.userId && data.id) {
-    try {
-      await emitAudit(supabase, {
-        tenant_id: ctx.tenantId,
-        user_id: ctx.userId,
+    await boundedProductWrite(() =>
+      emitAudit(supabase, {
+        tenant_id: ctx.tenantId!,
+        user_id: ctx.userId!,
         trace_id: ctx.traceId ?? null,
         action: "task_created",
         resource_type: "task",
@@ -126,10 +126,8 @@ export async function POST(request: Request) {
           hasDueDate: Boolean(data.due_date),
           priority: data.priority,
         }),
-      });
-    } catch {
-      // Creation already succeeded. Audit is best-effort.
-    }
+      }),
+    );
   }
 
   const res = NextResponse.json({ data }, { status: 201 });

@@ -156,6 +156,18 @@ describe("POST /api/v1/tasks task_created", () => {
     expect(emitAudit).not.toHaveBeenCalled();
   });
 
+  it("still returns the created task when audit insertion stalls", async () => {
+    createTask.mockResolvedValue({
+      data: { id: "task-3", project_id: "project-1", priority: "low" },
+      error: "",
+    });
+    emitAudit.mockImplementation(() => new Promise(() => undefined));
+    const started = Date.now();
+    const res = await post({ project_id: "project-1", title: "T" });
+    expect(res.status).toBe(201);
+    expect(Date.now() - started).toBeLessThan(4000);
+  });
+
   it("still returns the created task when audit insertion throws", async () => {
     createTask.mockResolvedValue({
       data: { id: "task-2", project_id: "project-1", title: "Secret title", priority: "medium" },
