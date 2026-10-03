@@ -39,6 +39,108 @@ alter table public.customer_intake_drafts
     and (location->>'precision') in ('address', 'city', 'region', 'coordinates')
   );
 
+alter table public.customer_intake_drafts
+  drop constraint if exists customer_intake_drafts_questions_array;
+alter table public.customer_intake_drafts
+  add constraint customer_intake_drafts_questions_array
+  check (jsonb_typeof(questions) = 'array');
+
+alter table public.customer_intake_drafts
+  drop constraint if exists customer_intake_drafts_media_refs_array;
+alter table public.customer_intake_drafts
+  add constraint customer_intake_drafts_media_refs_array
+  check (jsonb_typeof(media_refs) = 'array');
+
+create or replace function public.customer_intake_tenant_account_active(p_tenant_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.tenants t
+    join public.accounts a on a.id = t.account_id
+    where t.id = p_tenant_id
+      and a.status = 'active'
+  );
+$$;
+
+comment on function public.customer_intake_tenant_account_active(uuid) is
+  'Fail closed when the tenant account is missing, suspended, or closed.';
+
+revoke all on function public.customer_intake_tenant_account_active(uuid) from public;
+grant execute on function public.customer_intake_tenant_account_active(uuid) to authenticated;
+
+create or replace function public.customer_intake_questions_valid(p jsonb)
+returns boolean
+language sql
+stable
+set search_path = public
+as $$
+  select jsonb_typeof(p) = 'array'
+    and jsonb_array_length(p) <= 20
+    and coalesce((
+      select bool_and(
+        jsonb_typeof(e) = 'string'
+        and char_length(trim(both '"' from e::text)) between 1 and 500
+      )
+      from jsonb_array_elements(p) e
+    ), true);
+$$;
+
+create or replace function public.customer_intake_media_refs_valid(p jsonb)
+returns boolean
+language sql
+stable
+set search_path = public
+as $$
+  select jsonb_typeof(p) = 'array'
+    and jsonb_array_length(p) <= 20
+    and coalesce((
+      select bool_and(
+        jsonb_typeof(e) = 'object'
+        and (e->>'kind') in ('image', 'video', 'document')
+        and (
+          (
+            e ? 'media_id'
+            and jsonb_typeof(e->'media_id') = 'string'
+            and char_length(e->>'media_id') between 1 and 128
+          )
+          or (
+            e ? 'url'
+            and jsonb_typeof(e->'url') = 'string'
+            and (e->>'url') like 'https://%'
+          )
+        )
+      )
+      from jsonb_array_elements(p) e
+    ), true);
+$$;
+
+create or replace function public.customer_intake_drafts_validate_arrays()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+  if not public.customer_intake_questions_valid(new.questions) then
+    raise exception 'customer_intake_drafts.questions is invalid';
+  end if;
+  if not public.customer_intake_media_refs_valid(new.media_refs) then
+    raise exception 'customer_intake_drafts.media_refs is invalid';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists customer_intake_drafts_validate_arrays on public.customer_intake_drafts;
+create trigger customer_intake_drafts_validate_arrays
+  before insert or update on public.customer_intake_drafts
+  for each row
+  execute function public.customer_intake_drafts_validate_arrays();
+
 drop function if exists public.customer_intake_has_current_tenant_access(uuid);
 drop function if exists public.customer_intake_project_scope_ok(uuid, uuid);
 
@@ -181,10 +283,13 @@ create policy customer_intake_drafts_select on public.customer_intake_drafts
   for select
   to authenticated
   using (
-    public.is_internal_intake_reader(tenant_id)
-    or (
-      created_by = (select auth.uid())
-      and public.customer_intake_stakeholder_authorized(project_id, tenant_id)
+    public.customer_intake_tenant_account_active(tenant_id)
+    and (
+      public.is_internal_intake_reader(tenant_id)
+      or (
+        created_by = (select auth.uid())
+        and public.customer_intake_stakeholder_authorized(project_id, tenant_id)
+      )
     )
   );
 
@@ -193,7 +298,8 @@ create policy customer_intake_drafts_insert on public.customer_intake_drafts
   for insert
   to authenticated
   with check (
-    created_by = (select auth.uid())
+    public.customer_intake_tenant_account_active(tenant_id)
+    and created_by = (select auth.uid())
     and (
       project_id is null
       or public.project_belongs_to_tenant(project_id, tenant_id)
@@ -209,7 +315,8 @@ create policy customer_intake_drafts_update on public.customer_intake_drafts
   for update
   to authenticated
   using (
-    created_by = (select auth.uid())
+    public.customer_intake_tenant_account_active(tenant_id)
+    and created_by = (select auth.uid())
     and (
       project_id is null
       or public.project_belongs_to_tenant(project_id, tenant_id)
@@ -220,7 +327,8 @@ create policy customer_intake_drafts_update on public.customer_intake_drafts
     )
   )
   with check (
-    created_by = (select auth.uid())
+    public.customer_intake_tenant_account_active(tenant_id)
+    and created_by = (select auth.uid())
     and (
       project_id is null
       or public.project_belongs_to_tenant(project_id, tenant_id)

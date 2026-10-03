@@ -41,7 +41,9 @@ function canSelect(args: {
   projectId: string | null;
   projectTenantId: string | null;
   grants: Grant[];
+  accountActive?: boolean;
 }): boolean {
+  if (args.accountActive === false) return false;
   if (isInternal(args.role)) return true;
   return args.createdBySelf && stakeholderAuthorized(args.grants, args.tenantId, args.projectId, args.projectTenantId);
 }
@@ -57,7 +59,9 @@ function canWrite(args: {
   projectId: string | null;
   projectTenantId: string | null;
   grants: Grant[];
+  accountActive?: boolean;
 }): boolean {
+  if (args.accountActive === false) return false;
   if (!args.createdBySelf) return false;
   if (args.projectId != null && args.projectTenantId !== args.tenantId) return false;
   if (isInternalWriter(args.role)) return true;
@@ -93,6 +97,11 @@ describe("customer intake draft RLS SQL", () => {
     expect(sql).toMatch(/before update on public\.customer_intake_drafts/);
     expect(sql).toMatch(/customer_intake_drafts_location_precision/);
     expect(sql).toMatch(/precision.*city/);
+    expect(sql).toMatch(/customer_intake_tenant_account_active/);
+    expect(sql).toMatch(/a\.status = 'active'/);
+    expect(sql).toMatch(/customer_intake_questions_valid/);
+    expect(sql).toMatch(/customer_intake_media_refs_valid/);
+    expect(sql).toMatch(/customer_intake_drafts_validate_arrays/);
   });
 });
 
@@ -249,5 +258,30 @@ describe("customer intake draft RLS matrix", () => {
   it("10. moving a draft between tenants is denied by the immutable tenant_id trigger", () => {
     expect(sql).toMatch(/new\.tenant_id is distinct from old\.tenant_id/);
     expect(sql).toMatch(/customer_intake_drafts\.tenant_id is immutable/);
+  });
+
+  it("11. suspended account denies select and write", () => {
+    expect(
+      canSelect({
+        role: "owner",
+        createdBySelf: true,
+        tenantId: tenant,
+        projectId: null,
+        projectTenantId: null,
+        grants: [],
+        accountActive: false,
+      })
+    ).toBe(false);
+    expect(
+      canWrite({
+        role: "member",
+        createdBySelf: true,
+        tenantId: tenant,
+        projectId: null,
+        projectTenantId: null,
+        grants: [],
+        accountActive: false,
+      })
+    ).toBe(false);
   });
 });
