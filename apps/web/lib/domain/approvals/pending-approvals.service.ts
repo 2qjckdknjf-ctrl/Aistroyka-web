@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { resolveWorkerReportProjectId } from "@/lib/domain/reports/report-project-id";
 
 /** worker_reports has no project_id; resolve via task_id / day_id after fetch. */
 export const WORKER_REPORTS_PENDING_SELECT = "id, user_id, status, submitted_at, task_id, day_id";
@@ -97,27 +98,28 @@ export async function listPendingApprovals(
       : Promise.resolve({ data: [] as { id: string; project_id: string | null }[], error: null }),
   ]);
 
+  if (taskRes.error) {
+    throw new Error(taskRes.error.message || "Failed to load report task projects");
+  }
+  if (dayRes.error) {
+    throw new Error(dayRes.error.message || "Failed to load report day projects");
+  }
+
   const taskProjectMap = Object.fromEntries(
-    ((taskRes.data ?? []) as { id: string; project_id: string | null }[]).map((t) => [
-      t.id,
-      t.project_id ?? "",
-    ])
+    ((taskRes.data ?? []) as { id: string; project_id: string | null }[]).map((t) => [t.id, t.project_id])
   );
   const dayProjectMap = Object.fromEntries(
-    ((dayRes.data ?? []) as { id: string; project_id: string | null }[]).map((d) => [
-      d.id,
-      d.project_id ?? "",
-    ])
+    ((dayRes.data ?? []) as { id: string; project_id: string | null }[]).map((d) => [d.id, d.project_id])
   );
 
   const reports = reportRows.map<PendingApprovalItem>((r) => {
-    const fromTask = r.task_id ? taskProjectMap[r.task_id] || null : null;
-    const fromDay = r.day_id ? dayProjectMap[r.day_id] || null : null;
+    const fromTask = r.task_id ? taskProjectMap[r.task_id] ?? null : null;
+    const fromDay = r.day_id ? dayProjectMap[r.day_id] ?? null : null;
     return {
       kind: "report",
       id: r.id,
       status: r.status,
-      project_id: fromTask ?? fromDay,
+      project_id: resolveWorkerReportProjectId(fromDay, fromTask),
       pending_at: r.submitted_at ?? new Date().toISOString(),
       worker_id: r.user_id,
     };

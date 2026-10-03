@@ -38,8 +38,9 @@ function presentDayId(dayId: string | null | undefined): dayId is string {
  * `worker_reports` has no `project_id`. Match the report list: the day's project
  * wins, otherwise the linked task's project.
  *
- * A worker_day row with `project_id = null` is unusable for attribution and
- * must not fall through to the task. A missing day row may still use the task.
+ * A worker_day row with `project_id = null` is treated as missing day
+ * attribution, so the task project is used (`fromDay ?? fromTask`).
+ * A day row pointing at a different project wins and excludes this task path.
  */
 export async function countSubmittedReportsForProject(
   supabase: SupabaseClient,
@@ -87,19 +88,18 @@ export async function countSubmittedReportsForProject(
   const otherDayProject = await projectIdByRowId(supabase, tenantId, otherDayIds);
 
   for (const row of reports) {
-    if (ids.has(row.id) || !presentDayId(row.day_id)) {
+    if (ids.has(row.id)) continue;
+    if (!presentDayId(row.day_id) || dayIdSet.has(row.day_id)) {
       ids.add(row.id);
       continue;
     }
-    if (dayIdSet.has(row.day_id)) {
+    const dayProject = otherDayProject.get(row.day_id);
+    // Missing day row or null day.project_id → task fallback (matches report list: fromDay ?? fromTask).
+    if (dayProject == null || dayProject === "") {
       ids.add(row.id);
       continue;
     }
-    if (!otherDayProject.has(row.day_id)) {
-      ids.add(row.id);
-      continue;
-    }
-    if (otherDayProject.get(row.day_id) === projectId) ids.add(row.id);
+    if (dayProject === projectId) ids.add(row.id);
   }
 
   return ids.size;

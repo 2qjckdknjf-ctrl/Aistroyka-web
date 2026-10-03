@@ -6,7 +6,43 @@ import {
 
 type QueryResult<T> = Promise<{ data: T[] | null; error: { message: string } | null }>;
 
-function createMockSupabase(opts?: { reportsError?: string; docsError?: string }) {
+function createMockSupabase(opts?: {
+  reportsError?: string;
+  docsError?: string;
+  taskError?: string;
+  dayError?: string;
+  reports?: Array<{
+    id: string;
+    user_id: string;
+    status: string;
+    submitted_at: string | null;
+    task_id: string | null;
+    day_id: string | null;
+  }>;
+  tasks?: Array<{ id: string; project_id: string | null }>;
+  days?: Array<{ id: string; project_id: string | null }>;
+}) {
+  const reports =
+    opts?.reports ??
+    [
+      {
+        id: "rpt-old",
+        user_id: "worker-1",
+        status: "submitted",
+        submitted_at: "2026-04-17T08:00:00.000Z",
+        task_id: "task-1",
+        day_id: null,
+      },
+      {
+        id: "rpt-new",
+        user_id: "worker-2",
+        status: "submitted",
+        submitted_at: "2026-04-18T09:00:00.000Z",
+        task_id: null,
+        day_id: "day-2",
+      },
+    ];
+
   return {
     from(table: string) {
       if (table === "worker_reports") {
@@ -20,41 +56,14 @@ function createMockSupabase(opts?: { reportsError?: string; docsError?: string }
                     return {
                       order() {
                         return {
-                          limit(): QueryResult<{
-                            id: string;
-                            user_id: string;
-                            status: string;
-                            submitted_at: string | null;
-                            task_id: string | null;
-                            day_id: string | null;
-                          }> {
+                          limit(): QueryResult<(typeof reports)[number]> {
                             if (opts?.reportsError) {
                               return Promise.resolve({
                                 data: null,
                                 error: { message: opts.reportsError },
                               });
                             }
-                            return Promise.resolve({
-                              data: [
-                                {
-                                  id: "rpt-old",
-                                  user_id: "worker-1",
-                                  status: "submitted",
-                                  submitted_at: "2026-04-17T08:00:00.000Z",
-                                  task_id: "task-1",
-                                  day_id: null,
-                                },
-                                {
-                                  id: "rpt-new",
-                                  user_id: "worker-2",
-                                  status: "submitted",
-                                  submitted_at: "2026-04-18T09:00:00.000Z",
-                                  task_id: null,
-                                  day_id: "day-2",
-                                },
-                              ],
-                              error: null,
-                            });
+                            return Promise.resolve({ data: reports, error: null });
                           },
                         };
                       },
@@ -121,8 +130,11 @@ function createMockSupabase(opts?: { reportsError?: string; docsError?: string }
               eq() {
                 return {
                   in(): QueryResult<{ id: string; project_id: string | null }> {
+                    if (opts?.taskError) {
+                      return Promise.resolve({ data: null, error: { message: opts.taskError } });
+                    }
                     return Promise.resolve({
-                      data: [{ id: "task-1", project_id: "proj-1" }],
+                      data: opts?.tasks ?? [{ id: "task-1", project_id: "proj-1" }],
                       error: null,
                     });
                   },
@@ -139,8 +151,11 @@ function createMockSupabase(opts?: { reportsError?: string; docsError?: string }
               eq() {
                 return {
                   in(): QueryResult<{ id: string; project_id: string | null }> {
+                    if (opts?.dayError) {
+                      return Promise.resolve({ data: null, error: { message: opts.dayError } });
+                    }
                     return Promise.resolve({
-                      data: [{ id: "day-2", project_id: "proj-2" }],
+                      data: opts?.days ?? [{ id: "day-2", project_id: "proj-2" }],
                       error: null,
                     });
                   },
@@ -172,10 +187,44 @@ describe("listPendingApprovals", () => {
     expect(rows[2]).toMatchObject({ kind: "report", project_id: "proj-2" });
   });
 
+  it("uses day project when task.project_id and day.project_id disagree", async () => {
+    const supabase = createMockSupabase({
+      reports: [
+        {
+          id: "rpt-mismatch",
+          user_id: "worker-1",
+          status: "submitted",
+          submitted_at: "2026-04-17T08:00:00.000Z",
+          task_id: "task-1",
+          day_id: "day-9",
+        },
+      ],
+      tasks: [{ id: "task-1", project_id: "task-project" }],
+      days: [{ id: "day-9", project_id: "day-project" }],
+    });
+    const rows = await listPendingApprovals(supabase as never, "tenant-1", 50);
+    const report = rows.find((r) => r.kind === "report");
+    expect(report).toMatchObject({ id: "rpt-mismatch", project_id: "day-project" });
+  });
+
   it("does not collapse report query failures to an empty report list", async () => {
     const supabase = createMockSupabase({ reportsError: "column worker_reports.project_id does not exist" });
     await expect(listPendingApprovals(supabase as never, "tenant-1", 50)).rejects.toThrow(
       /project_id does not exist/
+    );
+  });
+
+  it("propagates worker_tasks lookup failures instead of omitting reports", async () => {
+    const supabase = createMockSupabase({ taskError: "task lookup failed" });
+    await expect(listPendingApprovals(supabase as never, "tenant-1", 50)).rejects.toThrow(
+      /task lookup failed/
+    );
+  });
+
+  it("propagates worker_day lookup failures instead of omitting reports", async () => {
+    const supabase = createMockSupabase({ dayError: "day lookup failed" });
+    await expect(listPendingApprovals(supabase as never, "tenant-1", 50)).rejects.toThrow(
+      /day lookup failed/
     );
   });
 });

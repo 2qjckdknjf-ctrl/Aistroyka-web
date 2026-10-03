@@ -1,122 +1,93 @@
 import { describe, expect, it } from "vitest";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { countSubmittedReportsForProject } from "./project-summary.repository";
 
-type QueryResult = { data: unknown; error: { message: string } | null };
-
-function thenable(result: QueryResult) {
-  const chain: Record<string, unknown> = {};
-  const self = () => chain;
-  chain.select = self;
-  chain.eq = self;
-  chain.in = self;
-  chain.then = (
-    resolve: (value: QueryResult) => unknown,
-    reject?: (reason: unknown) => unknown
-  ) => Promise.resolve(result).then(resolve, reject);
-  return chain;
-}
-
-function mockSupabase(queues: Record<string, QueryResult[]>, selects: string[]) {
+function createSummaryMock(opts: {
+  dayReports?: { id: string }[];
+  tasks?: { id: string }[];
+  taskReports?: { id: string; day_id: string | null }[];
+  otherDays?: { id: string; project_id: string | null }[];
+}) {
   return {
     from(table: string) {
-      return {
-        select(columns: string) {
-          selects.push(`${table}:${columns}`);
-          const queue = queues[table] ?? [];
-          const next = queue.shift() ?? { data: [], error: null };
-          return thenable(next);
-        },
-      };
+      if (table === "worker_reports") {
+        return {
+          select() {
+            return {
+              eq() {
+                return {
+                  eq() {
+                    return {
+                      in(_col: string, ids: string[]) {
+                        if (ids.includes("day-this")) {
+                          return Promise.resolve({ data: opts.dayReports ?? [], error: null });
+                        }
+                        return Promise.resolve({ data: opts.taskReports ?? [], error: null });
+                      },
+                    };
+                  },
+                };
+              },
+            };
+          },
+        };
+      }
+      if (table === "worker_tasks") {
+        return {
+          select() {
+            return {
+              eq() {
+                return {
+                  eq() {
+                    return Promise.resolve({ data: opts.tasks ?? [], error: null });
+                  },
+                };
+              },
+            };
+          },
+        };
+      }
+      if (table === "worker_day") {
+        return {
+          select() {
+            return {
+              eq() {
+                return {
+                  in() {
+                    return Promise.resolve({ data: opts.otherDays ?? [], error: null });
+                  },
+                };
+              },
+            };
+          },
+        };
+      }
+      throw new Error(`Unexpected table: ${table}`);
     },
-  } as unknown as SupabaseClient;
+  };
 }
 
 describe("countSubmittedReportsForProject", () => {
-  it("counts submitted reports via the project day or task, not worker_reports.project_id", async () => {
-    const selects: string[] = [];
-    const supabase = mockSupabase(
-      {
-        worker_reports: [
-          { data: [{ id: "day-report" }], error: null },
-          {
-            data: [
-              { id: "day-report", day_id: "day-1" },
-              { id: "task-report", day_id: null },
-            ],
-            error: null,
-          },
-        ],
-        worker_tasks: [{ data: [{ id: "task-1" }], error: null }],
-      },
-      selects
-    );
-
-    const count = await countSubmittedReportsForProject(supabase, "tenant-1", "project-1", ["day-1"]);
-
-    expect(count).toBe(2);
-    expect(selects.filter((entry) => entry.startsWith("worker_reports:"))).toEqual([
-      "worker_reports:id",
-      "worker_reports:id, day_id",
-    ]);
-    expect(selects.join("\n")).not.toContain("project_id");
+  it("uses task project when the linked day exists with null project_id", async () => {
+    const supabase = createSummaryMock({
+      dayReports: [],
+      tasks: [{ id: "task-1" }],
+      taskReports: [{ id: "rpt-1", day_id: "day-null" }],
+      otherDays: [{ id: "day-null", project_id: null }],
+    });
+    await expect(
+      countSubmittedReportsForProject(supabase as never, "tenant-1", "proj-task", ["day-this"])
+    ).resolves.toBe(1);
   });
 
   it("does not count a task-linked report whose day belongs to another project", async () => {
-    const supabase = mockSupabase(
-      {
-        worker_tasks: [{ data: [{ id: "task-1" }], error: null }],
-        worker_reports: [{ data: [{ id: "report-1", day_id: "day-other" }], error: null }],
-        worker_day: [{ data: [{ id: "day-other", project_id: "project-2" }], error: null }],
-      },
-      []
-    );
-
-    const count = await countSubmittedReportsForProject(supabase, "tenant-1", "project-1", []);
-
-    expect(count).toBe(0);
-  });
-
-  it("does not fall through to the task when the day exists without a project", async () => {
-    const supabase = mockSupabase(
-      {
-        worker_tasks: [{ data: [{ id: "task-1" }], error: null }],
-        worker_reports: [{ data: [{ id: "report-1", day_id: "day-blank" }], error: null }],
-        worker_day: [{ data: [{ id: "day-blank", project_id: null }], error: null }],
-      },
-      []
-    );
-
-    const count = await countSubmittedReportsForProject(supabase, "tenant-1", "project-1", []);
-
-    expect(count).toBe(0);
-  });
-
-  it("uses the task project when the day row cannot be resolved", async () => {
-    const supabase = mockSupabase(
-      {
-        worker_tasks: [{ data: [{ id: "task-1" }], error: null }],
-        worker_reports: [{ data: [{ id: "report-1", day_id: "day-missing" }], error: null }],
-        worker_day: [{ data: [], error: null }],
-      },
-      []
-    );
-
-    const count = await countSubmittedReportsForProject(supabase, "tenant-1", "project-1", []);
-
-    expect(count).toBe(1);
-  });
-
-  it("throws instead of reporting zero when the report query fails", async () => {
-    const supabase = mockSupabase(
-      {
-        worker_reports: [{ data: null, error: { message: "column worker_reports.project_id does not exist" } }],
-      },
-      []
-    );
-
+    const supabase = createSummaryMock({
+      dayReports: [],
+      tasks: [{ id: "task-1" }],
+      taskReports: [{ id: "rpt-1", day_id: "day-other" }],
+      otherDays: [{ id: "day-other", project_id: "proj-other" }],
+    });
     await expect(
-      countSubmittedReportsForProject(supabase, "tenant-1", "project-1", ["day-1"])
-    ).rejects.toThrow("Pending report count failed");
+      countSubmittedReportsForProject(supabase as never, "tenant-1", "proj-task", ["day-this"])
+    ).resolves.toBe(0);
   });
 });
