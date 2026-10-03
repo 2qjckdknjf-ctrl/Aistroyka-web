@@ -18,6 +18,10 @@ describe("ProjectFieldDailyLogPanel write chrome", () => {
     expect(panelSrc).toMatch(/canWrite && selected && isDraft/);
   });
 
+  it("keeps the note field read-only for non-writers", () => {
+    expect(panelSrc).toMatch(/id="field-daily-note"[\s\S]*disabled=\{!canWrite \|\| \(!!selected && !isDraft\)\}/);
+  });
+
   it("does not show mutation controls for viewer", () => {
     expect(canWriteFieldDailyLogs("viewer")).toBe(false);
   });

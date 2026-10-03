@@ -269,7 +269,7 @@ export function ProjectFieldDailyLogPanel({
           rows={3}
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          disabled={!!selected && !isDraft}
+          disabled={!canWrite || (!!selected && !isDraft)}
           placeholder={t("fieldDailyNotePlaceholder")}
           className="w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-primary px-3 py-2 text-sm text-aistroyka-text-primary placeholder:text-aistroyka-text-tertiary focus:outline-none focus:ring-2 focus:ring-aistroyka-accent focus:ring-offset-2 disabled:opacity-60"
         />
