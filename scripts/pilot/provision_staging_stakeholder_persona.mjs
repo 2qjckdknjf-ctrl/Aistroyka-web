@@ -225,15 +225,26 @@ async function verifyActiveStakeholderPersona(fetchImpl, plan, { contractorToken
 }
 
 async function assertRevokedCannotWriteIntake(fetchImpl, plan, { contractorToken, stakeholderToken, lines }) {
-  const { tenantId } = await resolveProjectTenantId(fetchImpl, plan, contractorToken);
+  const { tenantId, status } = await resolveProjectTenantId(fetchImpl, plan, contractorToken);
+  if (!tenantId) {
+    return {
+      exitCode: 1,
+      status: "ERROR",
+      reason: `project tenant_id lookup failed (${status})`,
+      lines,
+    };
+  }
   const intakeDenied = await api(fetchImpl, {
     base: plan.base,
     token: stakeholderToken,
     method: "POST",
     path: "/api/v1/portal/intake",
-    extraHeaders: tenantId ? { "x-tenant-id": tenantId } : {},
+    extraHeaders: { "x-tenant-id": tenantId },
     body: { title: "Revoked persona check", description: "Must fail after revoke" },
   });
+  if (intakeDenied.status === 401 || intakeDenied.status === 403) {
+    return { exitCode: 0, status: "SUCCESS", reason: "stakeholder revoked", lines };
+  }
   if (intakeDenied.status >= 200 && intakeDenied.status < 300) {
     return {
       exitCode: 1,
@@ -242,7 +253,12 @@ async function assertRevokedCannotWriteIntake(fetchImpl, plan, { contractorToken
       lines,
     };
   }
-  return { exitCode: 0, status: "SUCCESS", reason: "stakeholder revoked", lines };
+  return {
+    exitCode: 1,
+    status: "ERROR",
+    reason: `revoked intake probe unexpected status (${intakeDenied.status})`,
+    lines,
+  };
 }
 
 function findStakeholder(list, email) {

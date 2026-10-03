@@ -1,6 +1,35 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { TenantContext } from "@/lib/tenant/tenant.types";
-import type { CreateCustomerIntakeInput, CustomerIntakeDraft } from "./customer-intake.types";
+import type {
+  CreateCustomerIntakeInput,
+  CustomerIntakeDraft,
+  CustomerIntakeLocation,
+} from "./customer-intake.types";
+
+const LOCATION_PRECISIONS: CustomerIntakeLocation["precision"][] = [
+  "address",
+  "city",
+  "region",
+  "coordinates",
+];
+
+function parseLocation(value: unknown): { location: CustomerIntakeLocation } | { error: string } {
+  if (value == null) return { location: { precision: "city" } };
+  if (typeof value !== "object" || Array.isArray(value)) {
+    return { error: "location must be an object" };
+  }
+  const raw = value as Record<string, unknown>;
+  if (!LOCATION_PRECISIONS.includes(raw.precision as CustomerIntakeLocation["precision"])) {
+    return { error: "location.precision is invalid" };
+  }
+  const location: CustomerIntakeLocation = {
+    precision: raw.precision as CustomerIntakeLocation["precision"],
+  };
+  if (typeof raw.label === "string") location.label = raw.label;
+  if (typeof raw.lat === "number" && Number.isFinite(raw.lat)) location.lat = raw.lat;
+  if (typeof raw.lng === "number" && Number.isFinite(raw.lng)) location.lng = raw.lng;
+  return { location };
+}
 
 function asDraft(row: Record<string, unknown>): CustomerIntakeDraft {
   return {
@@ -55,16 +84,16 @@ export function parseCreateCustomerIntakeInput(
     }
   }
 
+  const location = parseLocation(body.location);
+  if ("error" in location) return location;
+
   return {
     input: {
       title: title.value,
       description: description.value,
       project_id,
       site_context: typeof body.site_context === "string" ? body.site_context : null,
-      location:
-        body.location && typeof body.location === "object" && !Array.isArray(body.location)
-          ? (body.location as CreateCustomerIntakeInput["location"])
-          : { precision: "city" },
+      location: location.location,
       requested_work_type: typeof body.requested_work_type === "string" ? body.requested_work_type : null,
       budget_range: typeof body.budget_range === "string" ? body.budget_range : null,
       desired_start: typeof body.desired_start === "string" ? body.desired_start : null,

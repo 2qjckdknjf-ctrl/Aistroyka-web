@@ -23,6 +23,22 @@ function chain(result: { data: unknown }) {
 }
 
 describe("portal intake tenant resolution", () => {
+  it("honors explicit tenant for mixed internal/stakeholder callers", async () => {
+    const supabase = {
+      from: (table: string) => {
+        if (table === "tenants") return chain({ data: null });
+        if (table === "tenant_members") return chain({ data: { id: "tm-b" } });
+        return chain({ data: null });
+      },
+    };
+    const req = new Request("https://test/api/v1/portal/intake", {
+      method: "POST",
+      headers: { "x-tenant-id": "t-stakeholder" },
+    });
+    const resolved = await resolvePortalIntakeTenant(supabase as never, memberCtx, req, null);
+    expect(resolved).toEqual({ tenantId: "t-stakeholder" });
+  });
+
   it("keeps internal tenant context without requiring a header", async () => {
     const req = new Request("https://test/api/v1/portal/intake", { method: "POST" });
     const resolved = await resolvePortalIntakeTenant({} as never, memberCtx, req, null);

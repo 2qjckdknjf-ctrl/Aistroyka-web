@@ -46,7 +46,22 @@ describe("parseCreateCustomerIntakeInput", () => {
 
   it("trims valid strings", () => {
     const parsed = parseCreateCustomerIntakeInput({ title: "  Kitchen  ", description: "  Need remodel  " });
-    expect(parsed).toMatchObject({ input: { title: "Kitchen", description: "Need remodel" } });
+    expect(parsed).toMatchObject({
+      input: { title: "Kitchen", description: "Need remodel", location: { precision: "city" } },
+    });
+  });
+
+  it("rejects empty or unknown location.precision", () => {
+    expect(
+      parseCreateCustomerIntakeInput({ title: "Kitchen", description: "Need remodel", location: {} })
+    ).toEqual({ error: "location.precision is invalid" });
+    expect(
+      parseCreateCustomerIntakeInput({
+        title: "Kitchen",
+        description: "Need remodel",
+        location: { precision: "unknown" },
+      })
+    ).toEqual({ error: "location.precision is invalid" });
   });
 });
 
