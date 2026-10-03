@@ -31,10 +31,6 @@ export async function resolvePortalIntakeTenant(
   request: Request,
   projectId: string | null | undefined
 ): Promise<{ tenantId: string } | { error: string; status: number }> {
-  if (ctx.role !== "stakeholder") {
-    return { tenantId: ctx.tenantId };
-  }
-
   const claim = readExplicitTenantClaim(request);
   if (claim.present) {
     if (!claim.value) {
@@ -56,6 +52,10 @@ export async function resolvePortalIntakeTenant(
     const allowed = await callerHasTenantAccess(supabase, ctx.userId, String(data.tenant_id));
     if (!allowed) return { error: "Insufficient rights", status: 403 };
     return { tenantId: String(data.tenant_id) };
+  }
+
+  if (ctx.role !== "stakeholder") {
+    return { tenantId: ctx.tenantId };
   }
 
   return {

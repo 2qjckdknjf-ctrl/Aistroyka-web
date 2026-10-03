@@ -29,6 +29,36 @@ describe("portal intake tenant resolution", () => {
     expect(resolved).toEqual({ tenantId: "t-primary" });
   });
 
+  it("honors an explicit tenant claim before the internal role shortcut", async () => {
+    const supabase = {
+      from: (table: string) => {
+        if (table === "tenants") return chain({ data: null });
+        if (table === "tenant_members") return chain({ data: { id: "tm-explicit" } });
+        return chain({ data: null });
+      },
+    };
+    const req = new Request("https://test/api/v1/portal/intake", {
+      method: "POST",
+      headers: { "x-tenant-id": "t-explicit" },
+    });
+    const resolved = await resolvePortalIntakeTenant(supabase as never, memberCtx, req, null);
+    expect(resolved).toEqual({ tenantId: "t-explicit" });
+  });
+
+  it("honors project_id tenant context before the internal role shortcut", async () => {
+    const supabase = {
+      from: (table: string) => {
+        if (table === "projects") return chain({ data: { id: "p1", tenant_id: "t-from-project" } });
+        if (table === "tenants") return chain({ data: null });
+        if (table === "tenant_members") return chain({ data: { id: "tm-project" } });
+        return chain({ data: null });
+      },
+    };
+    const req = new Request("https://test/api/v1/portal/intake", { method: "POST" });
+    const resolved = await resolvePortalIntakeTenant(supabase as never, memberCtx, req, "p1");
+    expect(resolved).toEqual({ tenantId: "t-from-project" });
+  });
+
   it("requires x-tenant-id or project_id for projectless stakeholder intake", async () => {
     const req = new Request("https://test/api/v1/portal/intake", { method: "POST" });
     const resolved = await resolvePortalIntakeTenant({} as never, stakeholderCtx, req, null);
