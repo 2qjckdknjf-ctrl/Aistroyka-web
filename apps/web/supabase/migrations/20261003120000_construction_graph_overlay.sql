@@ -11,7 +11,7 @@ create table if not exists public.construction_graph_nodes (
   source_id uuid not null,
   provenance jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now(),
-  unique (tenant_id, source_table, source_id)
+  unique (tenant_id, project_id, source_table, source_id)
 );
 
 create table if not exists public.construction_graph_edges (

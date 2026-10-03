@@ -42,12 +42,13 @@ export interface ConstructionGraphQuery {
   tenant_id: string;
   nodes: ConstructionGraphNode[];
   edges: ConstructionGraphEdge[];
+  truncated: boolean;
 }
 
 export interface ConstructionGraphSourceRows {
   project: { id: string; name: string | null };
   tasks: Array<{ id: string; title: string | null; assigned_to: string | null }>;
-  reports: Array<{ id: string; task_id: string | null; created_by: string | null }>;
+  reports: Array<{ id: string; task_id: string | null; user_id: string | null }>;
   media: Array<{ id: string; type: string | null }>;
   defects: Array<{ id: string; title: string | null }>;
   documents: Array<{ id: string; title: string | null; status: string | null }>;
@@ -217,5 +218,5 @@ export function buildConstructionGraphFromSources(
     });
   }
 
-  return { project_id: projectId, tenant_id: tenantId, nodes, edges };
+  return { project_id: projectId, tenant_id: tenantId, nodes, edges, truncated: false };
 }
