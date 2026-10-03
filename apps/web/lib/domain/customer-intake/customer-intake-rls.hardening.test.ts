@@ -98,8 +98,8 @@ describe("customer intake draft RLS SQL", () => {
     expect(sql).toMatch(/customer_intake_location_valid/);
     expect(sql).toMatch(/jsonb_typeof\(p->'precision'\) = 'string'/);
     expect(sql).toMatch(/jsonb_typeof\(p->'label'\) = 'string'/);
-    expect(sql).toMatch(/jsonb_typeof\(p->'lat'\) = 'number'/);
-    expect(sql).toMatch(/jsonb_typeof\(p->'lng'\) = 'number'/);
+    expect(sql).toMatch(/customer_intake_jsonb_finite_number/);
+    expect(sql).toMatch(/jsonb_typeof\(p\) = 'number'/);
     expect(sql).toMatch(/customer_intake_drafts_location_shape/);
     expect(sql).toMatch(/customer_intake_location_valid\(location\) is true/);
     expect(sql).toMatch(/customer_intake_https_url_text_valid/);
@@ -307,19 +307,25 @@ function sqlLocationValid(raw: unknown): boolean {
   if (!has("precision") || typeof p.precision !== "string") return false;
   if (!["address", "city", "region", "coordinates"].includes(p.precision)) return false;
   if (has("label") && typeof p.label !== "string") return false;
-  if (has("lat") && typeof p.lat !== "number") return false;
-  if (has("lng") && typeof p.lng !== "number") return false;
+  if (has("lat") && (typeof p.lat !== "number" || !Number.isFinite(p.lat))) return false;
+  if (has("lng") && (typeof p.lng !== "number" || !Number.isFinite(p.lng))) return false;
   return true;
 }
 
 const SQL_HTTPS_URL =
-  /^https:\/\/(?:(?:%[0-9A-Fa-f]{2}|[A-Za-z0-9._~!$&'()*+,;=:-])+@)?(?:localhost|(?:[0-9]{1,3}\.){3}[0-9]{1,3}|(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)(?:\.(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?))*)(?::[0-9]{1,5})?(?:[/?#](?:%[0-9A-Fa-f]{2}|[A-Za-z0-9._~!$&'()*+,;=:@/?-])*)?$/;
+  /^https:\/\/(?:(?:%[0-9A-Fa-f]{2}|[A-Za-z0-9._~!$&'()*+,;=:-])+@)?(?:localhost|(?:(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])|(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)(?:\.(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?))*)(?::(?:6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-5][0-9]{4}|[1-9][0-9]{0,3}|0))?(?:[/?#](?:%[0-9A-Fa-f]{2}|[A-Za-z0-9._~!$&'()*+,;=:@/?-])*)?$/;
 
 function sqlHttpsUrlValid(raw: string | null): boolean {
   if (raw == null) return false;
   const trimmed = raw.replace(/^\s+|\s+$/g, "");
   if (trimmed.length < 1 || trimmed.length > 2048) return false;
-  return SQL_HTTPS_URL.test(trimmed);
+  if (!SQL_HTTPS_URL.test(trimmed)) return false;
+  const afterScheme = trimmed.replace(/^https:\/\//, "").replace(/^[^@/]+@/, "");
+  const host = afterScheme.split(/[/:?#]/, 1)[0] ?? "";
+  if (/^(?:\d+\.){3}\d+$/.test(host) && !/^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$/.test(host)) {
+    return false;
+  }
+  return true;
 }
 
 describe("customer intake location storage contract", () => {
@@ -335,6 +341,7 @@ describe("customer intake location storage contract", () => {
     expect(sqlLocationValid({ precision: "city", lng: {} })).toBe(false);
     expect(sqlLocationValid({ precision: "city", label: 12 })).toBe(false);
     expect(sqlLocationValid({ precision: "city", lat: null })).toBe(false);
+    expect(sqlLocationValid({ precision: "city", lat: Number.POSITIVE_INFINITY })).toBe(false);
     expect(sqlLocationValid({})).toBe(false);
     expect(sqlLocationValid({ precision: "exact" })).toBe(false);
   });
@@ -356,6 +363,8 @@ describe("customer intake media URL storage contract", () => {
     expect(sqlHttpsUrlValid("https://example.com/%zz")).toBe(false);
     expect(sqlHttpsUrlValid("https://%zz@example.com/file.jpg")).toBe(false);
     expect(sqlHttpsUrlValid("https://%@example.com/file.jpg")).toBe(false);
+    expect(sqlHttpsUrlValid("https://999.999.999.999/file")).toBe(false);
+    expect(sqlHttpsUrlValid("https://example.com:99999/file")).toBe(false);
     expect(sqlHttpsUrlValid(`https://example.com/${"a".repeat(2040)}`)).toBe(false);
   });
 });

@@ -73,10 +73,74 @@ describe("stakeholders.service", () => {
       updated_at: "",
     } as never);
 
+    const insert = vi.fn();
+    (supabase.from as ReturnType<typeof vi.fn>).mockImplementation((table: string) => {
+      if (table === "tenants") {
+        return {
+          select: () => ({
+            eq: () => ({ maybeSingle: async () => ({ data: { user_id: "owner" } }) }),
+          }),
+        };
+      }
+      return {
+        select: () => ({
+          eq: () => ({
+            eq: () => ({ maybeSingle: async () => ({ data: { id: "tm1", role: "stakeholder" } }) }),
+          }),
+        }),
+        insert,
+      };
+    });
+
     const { data, error, activated } = await acceptStakeholderInvite(supabase, "u1", "inv@x.com", "tok");
     expect(error).toBe("");
     expect(activated).toBe(false);
     expect(data?.project_id).toBe("p1");
+    expect(repo.updateRow).not.toHaveBeenCalled();
+    expect(insert).not.toHaveBeenCalled();
+  });
+
+  it("acceptStakeholderInvite restores missing tenant membership on idempotent retry", async () => {
+    vi.mocked(repo.getByToken).mockResolvedValue({
+      id: "s1",
+      tenant_id: "t1",
+      project_id: "p1",
+      email: "inv@x.com",
+      stakeholder_role: "client_viewer",
+      token: "tok",
+      status: "active",
+      user_id: "u1",
+      invited_by: null,
+      expires_at: new Date(Date.now() + 86400000).toISOString(),
+      accepted_at: "",
+      created_at: "",
+      updated_at: "",
+    } as never);
+
+    const insert = vi.fn().mockResolvedValue({ error: null });
+    (supabase.from as ReturnType<typeof vi.fn>).mockImplementation((table: string) => {
+      if (table === "tenants") {
+        return {
+          select: () => ({
+            eq: () => ({ maybeSingle: async () => ({ data: { user_id: "owner" } }) }),
+          }),
+        };
+      }
+      return {
+        select: () => ({
+          eq: () => ({
+            eq: () => ({ maybeSingle: async () => ({ data: null }) }),
+          }),
+        }),
+        insert,
+      };
+    });
+
+    const { data, error, activated } = await acceptStakeholderInvite(supabase, "u1", "inv@x.com", "tok");
+    expect(error).toBe("");
+    expect(activated).toBe(false);
+    expect(data?.project_id).toBe("p1");
+    expect(insert).toHaveBeenCalledWith({ tenant_id: "t1", user_id: "u1", role: "stakeholder" });
     expect(repo.updateRow).not.toHaveBeenCalled();
   });
 

@@ -35,6 +35,20 @@ alter table public.customer_intake_drafts
 alter table public.customer_intake_drafts
   drop constraint if exists customer_intake_drafts_location_shape;
 
+create or replace function public.customer_intake_jsonb_finite_number(p jsonb)
+returns boolean
+language sql
+immutable
+set search_path = public
+as $$
+  select coalesce(
+    jsonb_typeof(p) = 'number'
+    and (p #>> '{}')::double precision
+      between -1.7976931348623157e+308 and 1.7976931348623157e+308,
+    false
+  );
+$$;
+
 create or replace function public.customer_intake_location_valid(p jsonb)
 returns boolean
 language sql
@@ -52,11 +66,11 @@ as $$
     )
     and (
       (p ? 'lat') is not true
-      or jsonb_typeof(p->'lat') = 'number'
+      or public.customer_intake_jsonb_finite_number(p->'lat')
     )
     and (
       (p ? 'lng') is not true
-      or jsonb_typeof(p->'lng') = 'number'
+      or public.customer_intake_jsonb_finite_number(p->'lng')
     ),
     false
   );
@@ -147,19 +161,38 @@ language sql
 immutable
 set search_path = public
 as $$
+  with u as (
+    select regexp_replace(p, '^[[:space:]]+|[[:space:]]+$', '', 'g') as t
+  )
   select coalesce(
-    char_length(regexp_replace(p, '^[[:space:]]+|[[:space:]]+$', '', 'g')) between 1 and 2048
-    and regexp_replace(p, '^[[:space:]]+|[[:space:]]+$', '', 'g')
-      ~ (
+    char_length(u.t) between 1 and 2048
+    and u.t ~ (
+      '^https://'
+      || '(?:(?:%[0-9A-Fa-f]{2}|[A-Za-z0-9._~!$&''()*+,;=:-])+@)?'
+      || '(?:localhost|(?:(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])|(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)(?:\.(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?))*)'
+      || '(?::(?:6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-5][0-9]{4}|[1-9][0-9]{0,3}|0))?'
+      || '(?:[/?#](?:%[0-9A-Fa-f]{2}|[A-Za-z0-9._~!$&''()*+,;=:@/?-])*)?'
+      || '$'
+    )
+    and (
+      u.t !~ (
         '^https://'
         || '(?:(?:%[0-9A-Fa-f]{2}|[A-Za-z0-9._~!$&''()*+,;=:-])+@)?'
-        || '(?:localhost|(?:[0-9]{1,3}\.){3}[0-9]{1,3}|(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)(?:\.(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?))*)'
-        || '(?::[0-9]{1,5})?'
+        || '(?:[0-9]+\.){3}[0-9]+'
+        || '(?::[0-9]+)?(?:[/?#]|$)'
+      )
+      or u.t ~ (
+        '^https://'
+        || '(?:(?:%[0-9A-Fa-f]{2}|[A-Za-z0-9._~!$&''()*+,;=:-])+@)?'
+        || '(?:(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])'
+        || '(?::(?:6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-5][0-9]{4}|[1-9][0-9]{0,3}|0))?'
         || '(?:[/?#](?:%[0-9A-Fa-f]{2}|[A-Za-z0-9._~!$&''()*+,;=:@/?-])*)?'
         || '$'
-      ),
+      )
+    ),
     false
-  );
+  )
+  from u;
 $$;
 
 create or replace function public.customer_intake_media_url_value_valid(p jsonb)

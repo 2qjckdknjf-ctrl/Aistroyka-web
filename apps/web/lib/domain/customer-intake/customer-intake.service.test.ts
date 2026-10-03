@@ -125,6 +125,13 @@ describe("parseCreateCustomerIntakeInput", () => {
         location: { precision: "city", lat: null },
       })
     ).toEqual({ error: "location.lat must be a number" });
+    expect(
+      parseCreateCustomerIntakeInput({
+        title: "Kitchen",
+        description: "Need remodel",
+        location: JSON.parse('{"precision":"city","lat":1e1000}'),
+      })
+    ).toEqual({ error: "location.lat must be a number" });
   });
 
   it("rejects questions that are not an array of strings", () => {
@@ -459,6 +466,12 @@ describe("parseMediaRefs URL contract", () => {
       error: "media_refs.url is invalid",
     });
     expect(parseMediaRefs([{ kind: "image", url: "https://%@example.com/file.jpg" }])).toEqual({
+      error: "media_refs.url is invalid",
+    });
+    expect(parseMediaRefs([{ kind: "image", url: "https://999.999.999.999/file" }])).toEqual({
+      error: "media_refs.url is invalid",
+    });
+    expect(parseMediaRefs([{ kind: "image", url: "https://example.com:99999/file" }])).toEqual({
       error: "media_refs.url is invalid",
     });
     expect(parseMediaRefs([{ kind: "image", url: `https://example.com/${"a".repeat(2040)}` }])).toEqual({

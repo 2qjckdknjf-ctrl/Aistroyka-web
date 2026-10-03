@@ -109,6 +109,40 @@ function acceptedPayload(row: {
   };
 }
 
+async function ensurePortalTenantMembership(
+  supabase: SupabaseClient,
+  userId: string,
+  tenantId: string
+): Promise<{ error: string }> {
+  const { data: tenantRow } = await supabase.from("tenants").select("user_id").eq("id", tenantId).maybeSingle();
+  const isTenantOwner = tenantRow?.user_id === userId;
+  if (isTenantOwner) return { error: "" };
+  const { data: existingTm } = await supabase
+    .from("tenant_members")
+    .select("id, role")
+    .eq("tenant_id", tenantId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (!existingTm) {
+    const { error: tmError } = await supabase.from("tenant_members").insert({
+      tenant_id: tenantId,
+      user_id: userId,
+      role: "stakeholder",
+    });
+    if (tmError) return { error: "Unable to join workspace for this project" };
+    return { error: "" };
+  }
+  if (existingTm.role === "viewer") {
+    const { error: upErr } = await supabase
+      .from("tenant_members")
+      .update({ role: "stakeholder" })
+      .eq("id", existingTm.id)
+      .eq("tenant_id", tenantId);
+    if (upErr) return { error: "Unable to update workspace role for portal access" };
+  }
+  return { error: "" };
+}
+
 export async function acceptStakeholderInvite(
   supabase: SupabaseClient,
   userId: string,
@@ -129,36 +163,15 @@ export async function acceptStakeholderInvite(
   }
 
   if (row.status === "active" && row.user_id === userId) {
+    const membership = await ensurePortalTenantMembership(supabase, userId, row.tenant_id);
+    if (membership.error) return { data: null, error: membership.error, activated: false };
     return { data: acceptedPayload(row), error: "", activated: false };
   }
   if (row.status !== "invited") return { data: null, error: "Invitation is no longer valid", activated: false };
   if (new Date(row.expires_at) < new Date()) return { data: null, error: "Invitation expired", activated: false };
 
-  const { data: tenantRow } = await supabase.from("tenants").select("user_id").eq("id", row.tenant_id).maybeSingle();
-  const isTenantOwner = tenantRow?.user_id === userId;
-  if (!isTenantOwner) {
-    const { data: existingTm } = await supabase
-      .from("tenant_members")
-      .select("id, role")
-      .eq("tenant_id", row.tenant_id)
-      .eq("user_id", userId)
-      .maybeSingle();
-    if (!existingTm) {
-      const { error: tmError } = await supabase.from("tenant_members").insert({
-        tenant_id: row.tenant_id,
-        user_id: userId,
-        role: "stakeholder",
-      });
-      if (tmError) return { data: null, error: "Unable to join workspace for this project", activated: false };
-    } else if (existingTm.role === "viewer") {
-      const { error: upErr } = await supabase
-        .from("tenant_members")
-        .update({ role: "stakeholder" })
-        .eq("id", existingTm.id)
-        .eq("tenant_id", row.tenant_id);
-      if (upErr) return { data: null, error: "Unable to update workspace role for portal access", activated: false };
-    }
-  }
+  const membership = await ensurePortalTenantMembership(supabase, userId, row.tenant_id);
+  if (membership.error) return { data: null, error: membership.error, activated: false };
 
   const updated = await repo.updateRow(
     supabase,
