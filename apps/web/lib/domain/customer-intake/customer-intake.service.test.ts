@@ -50,6 +50,10 @@ describe("parseCreateCustomerIntakeInput", () => {
     expect(parsed).toMatchObject({
       input: { title: "Kitchen", description: "Need remodel", location: { precision: "city" } },
     });
+    expect("project_id" in (parsed as { input: object }).input).toBe(false);
+    expect(parseCreateCustomerIntakeInput((parsed as { input: object }).input)).toMatchObject({
+      input: { title: "Kitchen", description: "Need remodel" },
+    });
   });
 
   it("rejects empty or unknown location.precision", () => {

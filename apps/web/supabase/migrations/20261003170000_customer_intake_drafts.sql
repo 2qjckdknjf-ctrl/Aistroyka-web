@@ -84,7 +84,7 @@ as $$
     and coalesce((
       select bool_and(
         case
-          when jsonb_typeof(e) = 'string' then char_length(btrim(e #>> '{}')) between 1 and 500
+          when jsonb_typeof(e) = 'string' then char_length(regexp_replace(e #>> '{}', '^[[:space:]]+|[[:space:]]+$', '', 'g')) between 1 and 500
           else false
         end
       )

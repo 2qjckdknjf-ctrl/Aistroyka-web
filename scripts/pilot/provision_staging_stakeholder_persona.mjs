@@ -22,6 +22,7 @@ import path from "node:path";
 
 export const PRODUCTION_HOSTS = ["aistroyka.ai", "www.aistroyka.ai"];
 export const STAGING_MUTATION_ORIGIN = "https://staging.aistroyka.ai";
+export const CANONICAL_SUPABASE_ORIGIN = "https://vthfrxehrursfloevnlp.supabase.co";
 
 function present(v) {
   return Boolean(v && String(v).trim());
@@ -48,6 +49,10 @@ export function canonicalHttpsOrigin(url) {
 
 export function isApprovedStagingMutationOrigin(url) {
   return canonicalHttpsOrigin(url) === STAGING_MUTATION_ORIGIN;
+}
+
+export function isApprovedSupabaseOrigin(url) {
+  return canonicalHttpsOrigin(url) === CANONICAL_SUPABASE_ORIGIN;
 }
 
 export function hostOf(url) {
@@ -95,6 +100,15 @@ export function evaluateProvisionPlan({ argv = [], env = {} } = {}) {
     return {
       status: "BLOCKED",
       reason: "mutation origin must be https://staging.aistroyka.ai",
+      dryRun,
+      revokeOnly,
+      host,
+    };
+  }
+  if (!dryRun && !isApprovedSupabaseOrigin(supabaseUrl)) {
+    return {
+      status: "BLOCKED",
+      reason: "supabase origin must be https://vthfrxehrursfloevnlp.supabase.co",
       dryRun,
       revokeOnly,
       host,

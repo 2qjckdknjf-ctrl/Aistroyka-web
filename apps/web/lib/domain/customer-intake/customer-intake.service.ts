@@ -170,21 +170,20 @@ export function parseCreateCustomerIntakeInput(
   const media_refs = parseMediaRefs(body.media_refs);
   if ("error" in media_refs) return media_refs;
 
-  return {
-    input: {
-      title: title.value,
-      description: description.value,
-      project_id,
-      site_context: typeof body.site_context === "string" ? body.site_context : null,
-      location: location.location,
-      requested_work_type: typeof body.requested_work_type === "string" ? body.requested_work_type : null,
-      budget_range: typeof body.budget_range === "string" ? body.budget_range : null,
-      desired_start: typeof body.desired_start === "string" ? body.desired_start : null,
-      desired_end: typeof body.desired_end === "string" ? body.desired_end : null,
-      media_refs: media_refs.media_refs,
-      questions: questions.questions,
-    },
+  const input: CreateCustomerIntakeInput = {
+    title: title.value,
+    description: description.value,
+    site_context: typeof body.site_context === "string" ? body.site_context : null,
+    location: location.location,
+    requested_work_type: typeof body.requested_work_type === "string" ? body.requested_work_type : null,
+    budget_range: typeof body.budget_range === "string" ? body.budget_range : null,
+    desired_start: typeof body.desired_start === "string" ? body.desired_start : null,
+    desired_end: typeof body.desired_end === "string" ? body.desired_end : null,
+    media_refs: media_refs.media_refs,
+    questions: questions.questions,
   };
+  if (project_id !== undefined) input.project_id = project_id;
+  return { input };
 }
 
 async function assertProjectBelongsToTenant(

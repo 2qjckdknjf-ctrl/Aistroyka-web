@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  CANONICAL_SUPABASE_ORIGIN,
   evaluateProvisionPlan,
   PRODUCTION_HOSTS,
   STAGING_MUTATION_ORIGIN,
@@ -13,7 +14,7 @@ const stagingEnv = {
   STAKEHOLDER_SMOKE_EMAIL: "owner@example.com",
   STAKEHOLDER_SMOKE_PASSWORD: "owner-pass",
   E2E_PROJECT_ID: "project-1",
-  NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
+  NEXT_PUBLIC_SUPABASE_URL: "https://vthfrxehrursfloevnlp.supabase.co",
   NEXT_PUBLIC_SUPABASE_ANON_KEY: "anon",
   STAGING_STAKEHOLDER_PROVISION: "YES",
 };
@@ -267,5 +268,15 @@ describe("provision staging stakeholder persona", () => {
     });
     expect(plan.status).toBe("BLOCKED");
     expect(plan.reason).toMatch(/distinct personas/);
+  });
+
+  it("blocks mutation when the Supabase origin is not the canonical AISTROYKA project", () => {
+    expect(CANONICAL_SUPABASE_ORIGIN).toBe("https://vthfrxehrursfloevnlp.supabase.co");
+    const plan = evaluateProvisionPlan({
+      argv: [],
+      env: { ...stagingEnv, NEXT_PUBLIC_SUPABASE_URL: "https://evil.supabase.co" },
+    });
+    expect(plan.status).toBe("BLOCKED");
+    expect(plan.reason).toMatch(/supabase origin/);
   });
 });
