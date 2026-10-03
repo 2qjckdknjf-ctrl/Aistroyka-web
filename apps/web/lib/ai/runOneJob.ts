@@ -8,7 +8,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { getServerConfig } from "@/lib/config/server";
 import { logStructured } from "@/lib/observability";
 import { isAnalysisResult, type AnalysisResult } from "./types";
-import { classifyVisionFailure } from "@/lib/domain/vision-jobs/vision-job-lifecycle";
+import {
+  classifyVisionFailure,
+  VisionProviderError,
+} from "@/lib/domain/vision-jobs/vision-job-lifecycle";
 
 const VIDEO_NOT_IMPLEMENTED = "Video processing not implemented yet";
 const AI_RETRY_DELAY_MS = 2000;
@@ -69,9 +72,15 @@ async function callAiAnalysis(
         return data;
       }
 
-      const text = await res.text();
-      const err = new Error(`AI analysis failed: ${res.status} ${text}`);
-      if (res.status >= 500 && attempt < AI_RETRY_ATTEMPTS) {
+      const classified = classifyVisionFailure({ message: `AI analysis failed: ${res.status}`, httpStatus: res.status });
+      const err = new VisionProviderError({
+        message: `AI analysis failed: ${res.status}`,
+        httpStatus: res.status,
+        errorType: classified.errorType,
+        retryable: classified.retryable,
+      });
+      const retryThisRound = classified.retryable && (res.status === 429 || res.status >= 500) && attempt < AI_RETRY_ATTEMPTS;
+      if (retryThisRound) {
         lastError = err;
         await sleep(AI_RETRY_DELAY_MS * attempt);
         continue;
@@ -79,6 +88,18 @@ async function callAiAnalysis(
       throw err;
     } catch (err) {
       clearTimeout(timeoutId);
+      if (err instanceof VisionProviderError) {
+        if (
+          err.retryable &&
+          (err.httpStatus === 429 || (err.httpStatus ?? 0) >= 500) &&
+          attempt < AI_RETRY_ATTEMPTS
+        ) {
+          lastError = err;
+          await sleep(AI_RETRY_DELAY_MS * attempt);
+          continue;
+        }
+        throw err;
+      }
       const isRetryable =
         err instanceof Error &&
         (err.name === "AbortError" ||
@@ -105,17 +126,16 @@ async function markJobFailed(
   jobId: string,
   message: string,
   errorType: string
-): Promise<void> {
-  await supabase
-    .from("analysis_jobs")
-    .update({
-      status: "failed",
-      error_message: message,
-      error_type: errorType,
-      finished_at: new Date().toISOString(),
-    })
-    .eq("id", jobId)
-    .in("status", ["pending", "processing"]);
+): Promise<number> {
+  const { data, error } = await supabase.rpc("record_analysis_job_failure", {
+    p_job_id: jobId,
+    p_error_message: message,
+    p_error_type: errorType,
+  });
+  if (error) {
+    throw error;
+  }
+  return typeof data === "number" ? data : 0;
 }
 
 /**
@@ -223,13 +243,16 @@ export async function processOneJob(
     });
     return { ok: true, jobId, status: "completed" };
   } catch (err) {
+    const classified =
+      err instanceof VisionProviderError
+        ? { errorType: err.errorType, retryable: err.retryable }
+        : classifyVisionFailure(err instanceof Error ? err.message : "Analysis failed");
     const message = err instanceof Error ? err.message : "Analysis failed";
-    const classified = classifyVisionFailure(message);
-    await markJobFailed(supabase, jobId, message, classified.errorType);
+    const attempts = await markJobFailed(supabase, jobId, message, classified.errorType);
     logJobLifecycle("job_failed", {
       job_id: jobId,
       duration_ms: Date.now() - startMs,
-      attempts: 1,
+      attempts,
       retryable: classified.retryable,
       error_code: classified.errorType,
       request_id: traceId,

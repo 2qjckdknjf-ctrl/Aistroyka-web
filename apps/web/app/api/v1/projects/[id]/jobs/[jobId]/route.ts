@@ -1,27 +1,48 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { getProjectById } from "@/lib/supabase/rpc";
+import { createClientFromRequest } from "@/lib/supabase/server";
+import {
+  getTenantContextFromRequest,
+  requireTenant,
+  TenantRequiredError,
+  canReadProjects,
+} from "@/lib/tenant";
+import { getProject } from "@/lib/domain/projects/project.service";
 import { mapAnalysisJobToLifecycle } from "@/lib/domain/vision-jobs/vision-job-lifecycle";
 
 /**
  * GET /api/v1/projects/:id/jobs/:jobId — poll a single vision/analysis job.
- * Never reports success unless analysis_jobs.status is completed.
+ * Internal readers only. Never reports success unless analysis_jobs.status is completed.
  */
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string; jobId: string }> }
 ) {
   const { id: projectId, jobId } = await params;
-  const supabase = await createClient();
+  const ctx = await getTenantContextFromRequest(request);
+  try {
+    requireTenant(ctx);
+  } catch (e) {
+    if (e instanceof TenantRequiredError) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+    throw e;
+  }
+  if (!canReadProjects(ctx)) {
+    return NextResponse.json({ success: false, error: "Insufficient rights" }, { status: 403 });
+  }
 
-  const { data: project } = await getProjectById(supabase, projectId);
+  const supabase = await createClientFromRequest(request);
+  const { data: project, error: projectError } = await getProject(supabase, ctx, projectId);
+  if (projectError === "Insufficient rights") {
+    return NextResponse.json({ success: false, error: "Insufficient rights" }, { status: 403 });
+  }
   if (!project) {
     return NextResponse.json({ success: false, error: "Project not found" }, { status: 404 });
   }
 
   const { data: job, error: jobErr } = await supabase
     .from("analysis_jobs")
-    .select("id, tenant_id, media_id, status, error_type, error_message, started_at, finished_at")
+    .select("id, tenant_id, media_id, status, error_type, error_message, attempt_count, started_at, finished_at")
     .eq("id", jobId)
     .maybeSingle();
 
@@ -46,6 +67,7 @@ export async function GET(
   const lifecycle = mapAnalysisJobToLifecycle({
     status: job.status as string | null,
     error_type: (job.error_type as string | null) ?? null,
+    attempts: typeof job.attempt_count === "number" ? job.attempt_count : 0,
   });
 
   return NextResponse.json({
@@ -55,6 +77,7 @@ export async function GET(
       status: job.status,
       lifecycle,
       error_type: job.error_type ?? null,
+      attempt_count: typeof job.attempt_count === "number" ? job.attempt_count : 0,
       error_message: job.error_message ?? null,
       started_at: job.started_at ?? null,
       finished_at: job.finished_at ?? null,
