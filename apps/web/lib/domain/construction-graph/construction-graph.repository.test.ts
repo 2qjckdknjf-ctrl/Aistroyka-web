@@ -120,4 +120,27 @@ describe("queryProjectConstructionGraph", () => {
     expect(graph?.truncated).toBe(true);
     expect(graph?.nodes.filter((n) => n.family === "task")).toHaveLength(CONSTRUCTION_GRAPH_SOURCE_PAGE);
   });
+
+  it("does not turn a malformed source page into graph nodes", async () => {
+    const supabase = {
+      from: vi.fn((table: string) => {
+        if (table === "projects") {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnValue({
+                  maybeSingle: vi.fn().mockResolvedValue({ data: { id: "p1", name: "Villa" }, error: null }),
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === "worker_tasks") return pageResult(["not-a-row"]);
+        return pageResult([]);
+      }),
+    };
+    const { graph, error } = await queryProjectConstructionGraph(supabase as never, "ten", "p1");
+    expect(graph).toBeNull();
+    expect(error).toMatch(/Malformed/);
+  });
 });
