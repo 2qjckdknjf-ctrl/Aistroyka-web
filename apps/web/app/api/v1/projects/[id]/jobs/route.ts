@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClientFromRequest } from "@/lib/supabase/server";
-import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
+import { getTenantContextFromRequest, requireTenant, TenantRequiredError, authorize } from "@/lib/tenant";
 import { getProject } from "@/lib/domain/projects/project.service";
 import { createVisionAnalysisJob } from "@/lib/domain/vision-jobs/create-vision-job.service";
 
@@ -41,6 +41,12 @@ export async function POST(
   if (projectError || !project) {
     const status = projectError === "Insufficient rights" ? 403 : 404;
     return NextResponse.json({ error: projectError ?? "Not found" }, { status });
+  }
+  if (!authorize(ctx, "analysis:trigger")) {
+    return NextResponse.json(
+      { error: "Insufficient rights: only member and above can run analysis" },
+      { status: 403 }
+    );
   }
 
   const result = await createVisionAnalysisJob(supabase, {
