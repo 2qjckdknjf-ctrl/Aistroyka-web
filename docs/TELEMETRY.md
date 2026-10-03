@@ -18,6 +18,17 @@ Telemetry events are emitted for product and system behavior. Currently they are
 - `copilot_invoked`
 - `risk_detected`
 
+## `task_created` in `audit_logs`
+
+A successful `POST /api/v1/tasks` that inserts a new `worker_tasks` row also writes one `audit_logs` row:
+
+- `action`: `task_created`
+- `resource_type`: `task`
+- `resource_id`: the new task id
+- `tenant_id` / `user_id`: the authenticated server context, not the request body
+
+`task_created` means the task row was created. It is not assignment, view, start, or completion. An idempotent replay that returns the cached response does not write another row. Details are categorical only (`client`, `role`, `has_project`, `has_assignee`, `has_due_date`, `priority`, `source`). No title, description, or name is stored. A failed audit insert does not fail task creation. No task-creation rate is published.
+
 ## Usage
 
 ```ts
