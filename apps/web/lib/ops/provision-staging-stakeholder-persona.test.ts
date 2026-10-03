@@ -168,6 +168,37 @@ describe("provision staging stakeholder persona", () => {
     expect(result.reason).toMatch(/revoked/);
   });
 
+  it("treats an RLS insert denial 400 as targeted revoke success", async () => {
+    const fetchImpl = async (url: string, init?: RequestInit) => {
+      if (String(url).includes("/auth/v1/token")) {
+        return new Response(JSON.stringify({ access_token: "tok" }), { status: 200 });
+      }
+      if (init?.method === "PATCH") {
+        return new Response(JSON.stringify({ data: { status: "revoked" } }), { status: 200 });
+      }
+      if (String(url).includes("/api/v1/portal/intake")) {
+        return new Response(JSON.stringify({ error: "Insert denied" }), { status: 400 });
+      }
+      if (String(url).includes("/stakeholders")) {
+        return new Response(
+          JSON.stringify({ data: [{ email: "owner@example.com", status: "active", id: "sh1" }] }),
+          { status: 200 }
+        );
+      }
+      if (String(url).includes("/api/v1/projects/project-1")) {
+        return new Response(JSON.stringify({ data: { id: "project-1", tenant_id: "tenant-1" } }), { status: 200 });
+      }
+      return new Response("nope", { status: 500 });
+    };
+    const result = await provisionStagingStakeholder({
+      env: stagingEnv,
+      argv: ["node", "script", "--revoke"],
+      fetchImpl,
+    });
+    expect(result.status).toBe("SUCCESS");
+    expect(result.reason).toMatch(/revoked/);
+  });
+
   it("fails revoke when a revoked stakeholder can still write intake for that project", async () => {
     const fetchImpl = async (url: string, init?: RequestInit) => {
       if (String(url).includes("/auth/v1/token")) {

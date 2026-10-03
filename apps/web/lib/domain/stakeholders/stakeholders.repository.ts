@@ -74,15 +74,15 @@ export async function listByProject(
   supabase: SupabaseClient,
   tenantId: string,
   projectId: string
-): Promise<ProjectStakeholderRow[]> {
+): Promise<{ rows: ProjectStakeholderRow[]; error: string }> {
   const { data, error } = await supabase
     .from("project_stakeholders")
     .select(ROW)
     .eq("tenant_id", tenantId)
     .eq("project_id", projectId)
     .order("created_at", { ascending: false });
-  if (error) return [];
-  return (data ?? []) as ProjectStakeholderRow[];
+  if (error) return { rows: [], error: error.message || "List failed" };
+  return { rows: (data ?? []) as ProjectStakeholderRow[], error: "" };
 }
 
 export async function insertInvite(

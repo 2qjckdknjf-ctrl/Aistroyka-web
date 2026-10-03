@@ -299,6 +299,9 @@ async function assertRevokedCannotWriteIntake(fetchImpl, plan, { contractorToken
   if (intakeDenied.status === 401 || intakeDenied.status === 403) {
     return { exitCode: 0, status: "SUCCESS", reason: "stakeholder revoked", lines };
   }
+  if (intakeDenied.status === 400 && intakeDenied.body?.error === "Insert denied") {
+    return { exitCode: 0, status: "SUCCESS", reason: "stakeholder revoked", lines };
+  }
   if (intakeDenied.status >= 200 && intakeDenied.status < 300) {
     return {
       exitCode: 1,

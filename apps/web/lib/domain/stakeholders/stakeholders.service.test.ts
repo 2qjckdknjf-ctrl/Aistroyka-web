@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { inviteStakeholder, acceptStakeholderInvite } from "./stakeholders.service";
+import { inviteStakeholder, acceptStakeholderInvite, listStakeholders } from "./stakeholders.service";
 
 vi.mock("./stakeholders.policy", () => ({
   canManageProjectStakeholders: vi.fn(),
@@ -9,6 +9,7 @@ vi.mock("./stakeholders.repository", () => ({
   insertInvite: vi.fn(),
   getByToken: vi.fn(),
   updateRow: vi.fn(),
+  listByProject: vi.fn(),
   normalizeEmail: (e: string) => e.trim().toLowerCase(),
 }));
 
@@ -181,5 +182,17 @@ describe("stakeholders.service", () => {
       expect.objectContaining({ status: "active", user_id: "u1" }),
       "invited"
     );
+  });
+
+  it("listStakeholders does not treat a database error as an empty grant list", async () => {
+    vi.mocked(policy.canManageProjectStakeholders).mockResolvedValue(true);
+    vi.mocked(repo.listByProject).mockResolvedValue({ rows: [], error: "db down" } as never);
+    const { data, error } = await listStakeholders(
+      supabase,
+      { tenantId: "t1", userId: "u1", role: "owner" } as never,
+      "p1"
+    );
+    expect(data).toBeNull();
+    expect(error).toBe("List failed");
   });
 });

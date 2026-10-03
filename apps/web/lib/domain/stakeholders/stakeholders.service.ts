@@ -71,8 +71,9 @@ export async function listStakeholders(
   if (!(await canManageProjectStakeholders(supabase, ctx, projectId))) {
     return { data: null, error: "Insufficient rights" };
   }
-  const rows = await repo.listByProject(supabase, ctx.tenantId, projectId);
-  return { data: rows.map(rowToListItem), error: "" };
+  const listed = await repo.listByProject(supabase, ctx.tenantId, projectId);
+  if (listed.error) return { data: null, error: "List failed" };
+  return { data: listed.rows.map(rowToListItem), error: "" };
 }
 
 export async function revokeStakeholder(
@@ -85,8 +86,9 @@ export async function revokeStakeholder(
   if (!(await canManageProjectStakeholders(supabase, ctx, projectId))) {
     return { data: null, error: "Insufficient rights" };
   }
-  const rows = await repo.listByProject(supabase, ctx.tenantId, projectId);
-  const hit = rows.find((r) => r.id === stakeholderId);
+  const listed = await repo.listByProject(supabase, ctx.tenantId, projectId);
+  if (listed.error) return { data: null, error: "List failed" };
+  const hit = listed.rows.find((r) => r.id === stakeholderId);
   if (!hit) return { data: null, error: "Not found" };
   const updated = await repo.updateRow(supabase, stakeholderId, ctx.tenantId, { status: "revoked" });
   if (!updated) return { data: null, error: "Revoke failed" };

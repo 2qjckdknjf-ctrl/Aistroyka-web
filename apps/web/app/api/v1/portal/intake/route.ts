@@ -74,6 +74,9 @@ export async function POST(request: Request) {
   }
   const scoped = { ...ctx, tenantId: resolved.tenantId };
   const { data, error } = await createCustomerIntakeDraft(supabase, scoped, parsed.input);
-  if (!data) return NextResponse.json({ error: error || "Create failed" }, { status: 400 });
+  if (!data) {
+    if (error === "Insert denied") return NextResponse.json({ error }, { status: 403 });
+    return NextResponse.json({ error: error || "Create failed" }, { status: 400 });
+  }
   return NextResponse.json({ data }, { status: 201 });
 }

@@ -346,6 +346,26 @@ describe("createCustomerIntakeDraft", () => {
     expect(r.error).toBe("Project lookup failed");
   });
 
+  it("maps RLS insert failures to Insert denied", async () => {
+    const maybeSingle = vi.fn().mockResolvedValue({
+      data: null,
+      error: { code: "42501", message: "new row violates row-level security policy" },
+    });
+    const supabase = {
+      from: vi.fn().mockReturnValue({
+        insert: () => ({
+          select: () => ({ maybeSingle }),
+        }),
+      }),
+    };
+    const r = await createCustomerIntakeDraft(supabase as never, { tenantId: "t1", userId: "revoked" } as never, {
+      title: "Kitchen",
+      description: "Need remodel",
+    });
+    expect(r.data).toBeNull();
+    expect(r.error).toBe("Insert denied");
+  });
+
   it("inserts a draft without AI fields", async () => {
     const maybeSingle = vi.fn().mockResolvedValue({
       data: {

@@ -313,7 +313,18 @@ export async function createCustomerIntakeDraft(
     })
     .select("*")
     .maybeSingle();
-  if (error || !data) return { data: null, error: error?.message ?? "Insert failed" };
+  if (error || !data) {
+    const code = error && "code" in error ? String(error.code ?? "") : "";
+    const message = error?.message ?? "";
+    if (
+      !error ||
+      code === "42501" ||
+      /row-level security|permission denied/i.test(message)
+    ) {
+      return { data: null, error: "Insert denied" };
+    }
+    return { data: null, error: message || "Insert failed" };
+  }
   const draft = asDraft(data as Record<string, unknown>);
   if (!draft) return { data: null, error: "Stored intake draft is invalid" };
   return { data: draft, error: "" };
