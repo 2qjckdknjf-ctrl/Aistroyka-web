@@ -4,6 +4,9 @@
  * Request: JSON { video_url (required), work_date? (YYYY-MM-DD), media_id?, project_id? }.
  * Response: 200 DailyWorkVideoAnalysis (see @aistroyka/contracts).
  * Requires Gemini (GOOGLE_AI_API_KEY or GEMINI_API_KEY). No OpenAI/Anthropic fallback for native video.
+ *
+ * Compatibility path: this handler still runs analysis synchronously. Canonical async create/start
+ * is POST /api/v1/projects/:id/jobs (analysis_jobs QUEUED → poll GET .../jobs/:jobId).
  */
 
 import { NextResponse } from "next/server";
