@@ -19,7 +19,8 @@ begin
   if old.status = 'invited'
      and new.status = 'active'
      and new.user_id = (select auth.uid())
-     and (old.user_id is null or old.user_id = (select auth.uid())) then
+     and (old.user_id is null or old.user_id = (select auth.uid()))
+     and old.expires_at > now() then
     return new;
   end if;
 

@@ -422,6 +422,7 @@ describe("project_stakeholders status transitions", () => {
   it("blocks invitees from restoring a revoked grant", () => {
     expect(statusSql).toMatch(/old\.status = 'invited'/);
     expect(statusSql).toMatch(/new\.status = 'active'/);
+    expect(statusSql).toMatch(/old\.expires_at > now\(\)/);
     expect(statusSql).toMatch(/project_stakeholders\.status change not permitted/);
     expect(statusSql).toMatch(/can_manage_project_membership/);
   });
