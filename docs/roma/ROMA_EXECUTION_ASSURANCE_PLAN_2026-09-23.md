@@ -1,6 +1,6 @@
 # ROMA / инженерный Grow OS — Execution Assurance, 2026-09-23
 
-> Последняя корректировка: 2026-10-02. Актуальная очередь и новые AC — в разделе за 2026-10-02; предыдущие gates сохраняются.
+> Последняя корректировка: 2026-10-03. Последние уточнения — в разделе за 2026-10-03; очередь 2026-10-02 и предыдущие gates сохраняются.
 
 Статус: PLANNED; расширение [ROMA roadmap](ROMA_ROADMAP.md), не новая параллельная система.
 Сохранить ADR-0007 recommendation-only и существующие product/release gates. Блокирующий режим возможен только отдельным ADR и проверенным executor integration.
@@ -210,3 +210,38 @@ GPT-6.1 Sol, Sonnet 5.5, Opus 5.5 и current Cursor runtime — research shortli
 4. Sanitized corpus/replay внутри existing Arena; adopt spike до новых generic runtime services.
 5. Independent candidate promotion; затем второй sandbox backend и controlled parallel/persistent scheduling.
 Запись этой очереди не запускает background workers и не объявляет security/runtime реализованными.
+
+## Уточнения за 2–3 октября — записано 2026-10-03
+Все пункты PLANNED, дополняют существующие contracts. Названия Argon/MAI, Apple changes и внешние benchmark/ценовые claims из дайджестов не проверены. Эти сигналы не означают approved vendor dependency.
+
+### GROW-ROUTING-006 — Capability Routing Matrix
+P0 eval schema; P1 offline analysis, родитель existing Model Arena/ROMA-CORPUS-004.
+Единица сравнения: task_class/fingerprint × executor/model version × runtime × verifier/version × toolset/package/policy. Сохранять baseline SHA, corpus split/version, risk/effort, verified result/defects, violations, retries, elapsed time, tokens/total cost и human rework.
+AC: routing report учитывает failed/aborted runs и uncertainty/sample size; недоступная модель/невалидный verifier не выбирается; mixed-risk задача получает обязательный verification level. Holdout и одинаковые permissions/budgets обязательны; model family diversity — полезная дополнительная проверка, не доказательство независимости. Verifier не получает execution credentials и не утверждает свои изменения.
+Promotion router rules только через reviewed versioned evidence; unknown task class — conservative permitted fallback либо blocked, без permission escalation. Argon — кандидат offline/security evaluation только после подтверждения доступности, API/data policy и approved capability.
+
+### GROW-BUDGET-001 — reasoning budget уточнение
+Добавить max_reasoning_tokens (если provider exposes), max_output_tokens, max_wall_clock, max_model_calls/tool_steps/retries и max_no_progress_cycles. Limиты на task + aggregate children; счётчики не сбрасываются при checkpoint/retry/provider switch.
+Скрытые reasoning tokens не выдумывать: unavailable + доступные usage/time/cost proxy. Бюджет поддерживает безопасный stop/checkpoint и escalation; timeout после side effect требует reconciliation.
+Не суммировать tokens + seconds + euros как величины одинаковой размерности. Reasoning efficiency — отдельно verified-success per token/cost/time и Pareto comparison по task class; denominator/quality rubric фиксировать. Длинный output сам по себе не quality.
+AC: runaway loop, slow provider, cache/token accounting, unknown usage и exhausted budget прекращают новые calls; обязательные checks нельзя отменить для экономии.
+
+### GROW-HOST-007 — HostCapabilityPolicy
+P0 contract/negative fixtures, P1 runtime enforcement; расширение ROMA-SANDBOX-002, не отдельная permission система.
+Default deny outside approved workspace: mail/messages/browser cookies/keychain/private SSH keys/full disk. Allowed workspace read/write, git/tests — scoped capabilities с subprocess/network constraints, не unrestricted shell.
+Task-bound grants содержат canonical paths/resource, operations, actor/run, expiry и policy digest. Read-only repo не даёт автоматически access к домашнему каталогу, symlink target, process env, SSH agent, local sockets/metadata или Xcode signing secrets.
+AC: traversal/symlink/mount escape, inherited env/credential helper/subprocess, browser profile access и grants expiry проверены. Runtime должен физически обеспечивать policy; unsupported controls → fail closed, просьба “не читать” не enforcement. Существующие platform permissions не меняются этим docs update. iOS signing/build при необходимости идут через отдельный approved runner/capability.
+
+### GROW-SECRETS-008 — Secret Broker / ephemeral credentials
+P0 schema, P1 synthetic broker, затем provider adapters; родитель GROW-RUNTIME-002 + PresenceProof.
+Agent запрашивает действие (repo push, preview deploy), broker проверяет identity/capability/risk/project/environment/TTL и выдаёт operation-bound execution grant. Предпочтительно broker выполняет privileged call без раскрытия secret worker. Если provider не поддерживает узкие/короткие токены, broker обеспечивает scope/revocation/proxy; не заявлять вымышленную нативную granularity.
+Secret values отсутствуют в package/checkpoint/prompt/trace/git; runtime injection ограничена процессом и revoke/expiry. Production secret.read deny; разрешённый deploy — отдельный broker action с artifact SHA, approvals и PresenceProof.
+AC: wrong repo/account/env/action, revoked identity, stale proof, token replay, logging/error leaks и broker outage блокируют операцию. Bootstrap/rotation broker secrets в trusted store; agent не читает их. Новый paid/external action не получает права от существующего local grant.
+
+### ROMA-DRIFT-005 — declared/granted/observed capabilities
+P1, внутри Continuous Evaluation/ROMA-TRACE/FAIL. Сравнивать package declaration, effective session grants, broker decisions и достоверные OS/network/tool observations; attempted denied call отличается от successful access.
+Функциональный PASS + подтверждённый unauthorized access → capability FAIL, общий verdict FAIL. Недостаточная telemetry coverage → UNKNOWN/INCOMPLETE, не clean PASS. Broker-only trace не доказывает отсутствие host bypass.
+AC: undeclared read/network/subprocess и outside-workspace access обнаруживаются; redacted evidence сохраняет resource class без sensitive payload. Unused grant → least-privilege recommendation с sample/window/coverage, не автоматическое снятие permission. Изменение grant policy идёт через reviewed tests и прежние gates.
+
+### Очередь Cursor
+Сначала текущие Assurance Graph и product P0. В contract slice добавить routing/reasoning/host/broker schemas; synthetic enforcement и drift fixtures после approved runtime ADR. Затем offline Arena report и reviewed routing rules. Observer/DAG/Failure/Corpus порядок из 2026-10-02 сохранён; не запускать autonomous production agents этим планом.

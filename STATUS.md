@@ -53,3 +53,7 @@ PR #350 updated with execution-plane contracts and an explicit implementation or
 ## Planning follow-up — 2026-10-02
 
 Existing PR #350 adds Observer/DAG, Failure/eval corpus and Construction corrections contracts. All PLANNED. Read latest dated sections via existing roadmap links. Main observed at `0e3b1ede624183ac5e5d47ab3f72ad739553ebb7`; runtime not checked. Older pilot/deploy status in this branch is historical, not a current readiness verdict. Before implementation/integration reconcile latest main/STATUS and preserve newer work.
+
+## Planning follow-up — 2026-10-03
+
+PR #350 plans updated for routing/reasoning, host/secret/capability drift and streaming/spatial Graph. Tasks have dependencies/AC in latest dated sections; all PLANNED. Runtime and historical readiness above not re-certified; reconcile current main/STATUS before implementation.

@@ -1,6 +1,6 @@
 # AISTROYKA — дополнение к плану, 2026-09-23
 
-> Последняя корректировка: 2026-10-02. Актуальная очередь и новые AC — в разделе за 2026-10-02; предыдущие gates сохраняются.
+> Последняя корректировка: 2026-10-03. Последние уточнения — в разделе за 2026-10-03; очередь 2026-10-02 и предыдущие gates сохраняются.
 
 Статус: PLANNED. Документ задаёт backlog, не подтверждает готовность функций.
 Канонический продуктовый план: [Mega roadmap](AISTROYKA_MEGA_ROADMAP_CUSTOMER_FINANCE_SAFE.md).
@@ -105,3 +105,20 @@ Observer читает approved schedule, requirements, inventory и supplier upd
 
 **Graph foundation:** stable IDs для space/element/work item/material/quantity/price/contractor/schedule/evidence/issue/change, units/version/provenance и protected relations. Findings ссылаются на объекты и источники; собственного CAD не строить, future BIM/CAD imports через adapters.
 Customer/intake/Graph/live порядок и finance isolation сохраняются. Baseline 23 сентября исторический; main на 2026-10-02: 0e3b1ede624183ac5e5d47ab3f72ad739553ebb7. Перед implementation проверить актуальные main/open PR/deployed evidence; deployment этим docs update не проверялся.
+
+## Streaming Evidence и пространственный Graph — 2026-10-03
+
+| ID | Очередь / зависимости | Deliverable |
+|---|---|---|
+| AIS-STREAM-010 | P1 interface/fixtures после evidence contracts; live UX после app/Graph | Provider-neutral SpeechProvider: stream start/partial/final, segment timestamps, language, confidence при наличии, cancel/reconnect/error. Синхронизировать audio/video capture clock и SourceEvent IDs; partial transcript provisional, final/versioned. |
+| AIS-SPATIAL-011 | Расширение AIS-GRAPH-004, P1 schema/fixtures | Spatial entities project/building/floor/zone/room + wall/floor/ceiling/door/window/MEP/equipment; geometry reference/type, coordinate frame/origin/units, position/dimensions uncertainty, calibration/source/revision и связи work/material/schedule/evidence/issues/documents. Не строить отдельную spatial DB/CAD. |
+| AIS-SPATIAL-PROVIDER-012 | Interface после spatial schema; backend LATER | SpatialModelProvider import/extract/create/modify/validate/export, capability/version support. Unsupported methods честно unavailable. IFC/BIM/vendor adapters выбираются отдельным spike; FORMAS/Tavus не approved dependencies. |
+| AIS-OWNER-3D-013 | FUTURE после Graph + Owner foundation | Read-only room/element visualization с progress/issues/evidence. 3D — проекция Graph; проверенные status/time/source доступны, неизвестное не рисуется как завершённое. Проверка devices/performance/accessibility и 2D/list fallback перед внедрением. |
+
+**Streaming AC:** consent и deny mic/camera, noisy/multilingual RU/ES terminology fixtures; partial/final ordering, silence/reconnect, duplicates, clock drift и unknown speaker/location. Speech timestamp ↔ video frame/source ↔ object/observation сохраняются; transcript не превращается в verified work автоматически. Confidence unavailable остаётся null. Worker walkthrough и Customer intake имеют разные auth/data projections.
+Interactive AI-guided capture позднее предлагает дополнительный ракурс/деталь, не подтверждает качество работы. Несущая стена, безопасность/разрешение демонтажа не определяются по ответу заказчика или видео: draft question с требованием профессиональной проверки. Recording/retention и ephemeral session/egress/budget gates из AIS-CLIENT-005B обязательны.
+Speech provider eval: строительная речь/шум, timestamps, terminology errors, RU/ES, latency p50/p95, reconnect/completion и total cost; доступность/цены/API проверить официально. Текущий provider не менять по дайджесту.
+
+**Spatial AC:** неизвестные размеры/геометрия explicitly unresolved; нельзя извлечь точный масштаб без calibration. Проверять coordinate systems/units/revisions, renamed rooms, overlapping zones и import source lineage. Extraction — draft с review/corrections AIS-CORRECTION-009; uncertainty не теряется при export.
+Будущая mutation “сместить стену” — versioned proposal → geometry/quantity estimate → schedule/commercial impact draft → approval, не автоматическое изменение baseline, заказов или internal/customer finance projections. Cost geometry links не раскрывают contractor margin.
+Owner 3D status основан на reviewed evidence и coverage; отвергнутый/stale prediction не выдаётся за progress. Новая UI-фича не опережает базовый Owner portal/iOS. Async intake → Graph → live порядок сохраняется; текущие pilot gates действуют.

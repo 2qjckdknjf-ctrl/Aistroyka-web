@@ -24,3 +24,7 @@ Execution plane contracts added: AgentIdentity, local/cloud/CI runtime, immutabl
 ## Follow-up — 2026-10-02
 
 Read latest plan sections before implementation: Observer/event-driven DAG, Failure Intelligence and continuous replay corpus extend existing contracts; AISTROYKA correction signals extend review/evidence, Trading data registry/ledger precede shadow/live, HiAir feedback is FUTURE. New tasks have IDs/dependencies/AC. Next: fresh baseline/gap audit, Assurance Graph, shared fixture slice, read-only Observer/synthetic CI pilot and offline reports. No scheduler/jobs/implementation/deploy started. Main has advanced since this branch base; reconcile current STATUS/context on integration, preserve intervening changes. Documentation content verification only; no runtime certification.
+
+## Follow-up — 2026-10-03
+
+Latest dated plan sections cover signals for Oct 2–3: executor/verifier routing, reasoning budget, host policy/secret broker and observed capability drift; streaming evidence/spatial Graph/provider/Owner visualization; market replay, churn attribution and reviewed strategy lessons. HiAir voice stays FUTURE. Read these sections via existing entrypoints. All PLANNED, no implementations/jobs/provider changes. First: fresh baseline audit and existing Assurance Graph/product P0, then contract fixtures. Documentation publication verified by read-after-write; application/runtime tests not claimed.
