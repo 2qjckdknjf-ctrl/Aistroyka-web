@@ -26,6 +26,10 @@ export async function GET(request: Request) {
   const limit = Math.min(parseInt(url.searchParams.get("limit") ?? "50", 10) || 50, 200);
 
   const supabase = await createClientFromRequest(request);
-  const data = await listPendingApprovals(supabase, ctx.tenantId!, limit);
-  return NextResponse.json({ data });
+  try {
+    const data = await listPendingApprovals(supabase, ctx.tenantId!, limit);
+    return NextResponse.json({ data });
+  } catch {
+    return NextResponse.json({ error: "Failed to load pending approvals" }, { status: 503 });
+  }
 }

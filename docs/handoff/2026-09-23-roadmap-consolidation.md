@@ -1,0 +1,30 @@
+# Roadmap handoff — 2026-09-23
+
+Branch: `docs/roadmap-consolidation-2026-09-23`; base main `25b33d841189b31ff43538762b72a4f7024d701f`.
+
+Read [product amendment](../roadmap/AISTROYKA_PLAN_AMENDMENT_2026-09-23.md) and [ROMA amendment](../roma/ROMA_EXECUTION_ASSURANCE_PLAN_2026-09-23.md).
+Customer iOS and async/live intake are future backlog. Existing Owner portal and field daily log should be reused. Current pilot remains contractor-ops-only; customer financial isolation and release gates stay unchanged.
+
+Next Cursor task: AIS-PILOT-001 read-only baseline/gap audit, then smallest confirmed issue; ROMA first slice schema/fixtures/staleness report in advisory mode. No production readiness was re-certified. Vendor news/model versions are unverified research inputs.
+
+Documentation validation: whitespace/diff and local links; no application tests needed for docs-only scope. Remote branch/PR publication is the handoff delivery mechanism. Merge requires normal review and CI.
+
+## Follow-up — 2026-09-24
+
+Existing PR updated with OTel trace, action risk R0–R5, context/plan check, fail-closed project sandbox, verification effort and offline Model Arena contracts. Product amendment adds Owner AI Report and spatial context acceptance criteria. All PLANNED; no implementation or deployment. Continue Assurance Graph first, then contract fixtures and synthetic adapter/sandbox pilot; product safety audit remains first for customer work. Validation is documentation scope/content verification, not runtime certification.
+
+## Follow-up — 2026-09-25
+
+PresenceProof (ROMA-AUTH-002) and capability lifecycle/default deny (ROMA-CAP-002) refine existing contracts; AUTH schema/fixtures move from LATER into the next contract slice, with enforcement still gated by ADR and identity/sandbox integration. Customer/release approvals and watch-only construction adapters added to product amendment. Existing Assurance Graph first-slice ordering remains. All PLANNED; no runtime/permission/deployment changes. Verification: documentation scope and read-after-write content checks, no application tests or runtime certification.
+
+## Follow-up — 2026-09-26
+
+Execution plane contracts added: AgentIdentity, local/cloud/CI runtime, immutable package/attestation and budget ledger. Read the latest implementation order in the ROMA plan before selecting tasks; P0 contract work is not production execution. Materials Supply remains LATER and becomes a persistent read/draft-first domain agent. HiAir priorities unchanged; portfolio Trading Arena now has four independent suites. Documentation only, content verified after publication; no runtime tests or readiness claim.
+
+## Follow-up — 2026-10-02
+
+Read latest plan sections before implementation: Observer/event-driven DAG, Failure Intelligence and continuous replay corpus extend existing contracts; AISTROYKA correction signals extend review/evidence, Trading data registry/ledger precede shadow/live, HiAir feedback is FUTURE. New tasks have IDs/dependencies/AC. Next: fresh baseline/gap audit, Assurance Graph, shared fixture slice, read-only Observer/synthetic CI pilot and offline reports. No scheduler/jobs/implementation/deploy started. Main has advanced since this branch base; reconcile current STATUS/context on integration, preserve intervening changes. Documentation content verification only; no runtime certification.
+
+## Follow-up — 2026-10-03
+
+Latest dated plan sections cover signals for Oct 2–3: executor/verifier routing, reasoning budget, host policy/secret broker and observed capability drift; streaming evidence/spatial Graph/provider/Owner visualization; market replay, churn attribution and reviewed strategy lessons. HiAir voice stays FUTURE. Read these sections via existing entrypoints. All PLANNED, no implementations/jobs/provider changes. First: fresh baseline audit and existing Assurance Graph/product P0, then contract fixtures. Documentation publication verified by read-after-write; application/runtime tests not claimed.
