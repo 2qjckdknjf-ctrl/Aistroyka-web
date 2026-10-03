@@ -9,6 +9,8 @@ import {
   IDEMPOTENCY_HEADER,
 } from "@/lib/platform/idempotency/idempotency.service";
 import { parseTaskPriority, type CreateTaskInput } from "@/lib/domain/tasks/task.types";
+import { emitAudit } from "@/lib/observability/audit.service";
+import { taskCreatedAuditDetails } from "@/lib/growth/product-events";
 
 export const dynamic = "force-dynamic";
 
@@ -106,6 +108,29 @@ export async function POST(request: Request) {
   const { data, error } = await createTask(supabase, ctx, input);
   if (error) return NextResponse.json({ error }, { status: error === "Insufficient rights" ? 403 : 400 });
   if (!data) return NextResponse.json({ error: "Create failed" }, { status: 500 });
+
+  if (ctx.tenantId && ctx.userId && data.id) {
+    try {
+      await emitAudit(supabase, {
+        tenant_id: ctx.tenantId,
+        user_id: ctx.userId,
+        trace_id: ctx.traceId ?? null,
+        action: "task_created",
+        resource_type: "task",
+        resource_id: data.id,
+        details: taskCreatedAuditDetails({
+          client: ctx.clientProfile,
+          role: ctx.role,
+          hasProject: Boolean(data.project_id),
+          hasAssignee: Boolean(data.assigned_to),
+          hasDueDate: Boolean(data.due_date),
+          priority: data.priority,
+        }),
+      });
+    } catch {
+      // Creation already succeeded. Audit is best-effort.
+    }
+  }
 
   const res = NextResponse.json({ data }, { status: 201 });
   if (idempotencyKey && ctx.tenantId && ctx.userId) {

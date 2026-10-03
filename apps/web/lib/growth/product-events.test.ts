@@ -6,6 +6,7 @@ import {
   notificationOpenDetails,
   recordLoginSuccess,
   recordNotificationOpened,
+  taskCreatedAuditDetails,
 } from "./product-events";
 
 vi.mock("@/lib/observability/audit.service", () => ({
@@ -38,6 +39,28 @@ function supabaseWithMembership(): SupabaseClient {
     },
   } as unknown as SupabaseClient;
 }
+
+describe("taskCreatedAuditDetails", () => {
+  it("drops free text and unknown priority", () => {
+    const details = taskCreatedAuditDetails({
+      client: "web",
+      role: "member",
+      hasProject: true,
+      hasAssignee: false,
+      hasDueDate: true,
+      priority: "Pour the slab",
+    });
+    expect(details).toEqual({
+      source: "task_create",
+      client: "web",
+      role: "member",
+      has_project: true,
+      has_assignee: false,
+      has_due_date: true,
+    });
+    expect(JSON.stringify(details)).not.toContain("Pour");
+  });
+});
 
 describe("loginAuditDetails", () => {
   it("keeps only categorical client and role", () => {

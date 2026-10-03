@@ -53,6 +53,32 @@ export function loginAuditDetails(input: {
   return details;
 }
 
+const TASK_PRIORITIES = new Set(["low", "medium", "high"]);
+
+/** Categorical facts for a successful new task. No title, description, or names. */
+export function taskCreatedAuditDetails(input: {
+  client?: string | null;
+  role?: string | null;
+  hasProject: boolean;
+  hasAssignee: boolean;
+  hasDueDate: boolean;
+  priority?: string | null;
+}): Record<string, string | boolean> {
+  const details: Record<string, string | boolean> = {
+    source: "task_create",
+    has_project: input.hasProject,
+    has_assignee: input.hasAssignee,
+    has_due_date: input.hasDueDate,
+  };
+  const client = categoricalToken(input.client, CLIENTS);
+  const role = categoricalToken(input.role, ROLES);
+  const priority = categoricalToken(input.priority, TASK_PRIORITIES);
+  if (client) details.client = client;
+  if (role) details.role = role;
+  if (priority) details.priority = priority;
+  return details;
+}
+
 function isCoreAction(action: string): boolean {
   return action === "task_assignment" || action === "report_submit" || action === "report_review";
 }
