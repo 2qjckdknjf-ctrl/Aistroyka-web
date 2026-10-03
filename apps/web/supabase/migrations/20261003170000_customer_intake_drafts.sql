@@ -29,8 +29,7 @@ drop policy if exists customer_intake_drafts_select on public.customer_intake_dr
 create policy customer_intake_drafts_select on public.customer_intake_drafts
   for select using (
     created_by = auth.uid()
-    or tenant_id in (select tm.tenant_id from public.tenant_members tm where tm.user_id = auth.uid())
-    or tenant_id in (select t.id from public.tenants t where t.user_id = auth.uid())
+    or public.is_internal_tenant_reader_for_tenant(tenant_id)
   );
 
 drop policy if exists customer_intake_drafts_insert on public.customer_intake_drafts;
@@ -40,6 +39,10 @@ create policy customer_intake_drafts_insert on public.customer_intake_drafts
     and (
       tenant_id in (select tm.tenant_id from public.tenant_members tm where tm.user_id = auth.uid())
       or tenant_id in (select t.id from public.tenants t where t.user_id = auth.uid())
+    )
+    and (
+      project_id is null
+      or public.project_belongs_to_tenant(project_id, tenant_id)
     )
   );
 

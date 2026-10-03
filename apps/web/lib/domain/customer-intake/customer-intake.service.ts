@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { TenantContext } from "@/lib/tenant/tenant.types";
+import { getById as getProjectById } from "@/lib/domain/projects/project.repository";
 import type { CreateCustomerIntakeInput, CustomerIntakeDraft } from "./customer-intake.types";
 
 function asDraft(row: Record<string, unknown>): CustomerIntakeDraft {
@@ -33,12 +34,18 @@ export async function createCustomerIntakeDraft(
   const description = input.description.trim();
   if (!title || !description) return { data: null, error: "title and description required" };
 
+  const projectId = input.project_id ?? null;
+  if (projectId) {
+    const project = await getProjectById(supabase, projectId, ctx.tenantId);
+    if (!project) return { data: null, error: "Project not found" };
+  }
+
   const { data, error } = await supabase
     .from("customer_intake_drafts")
     .insert({
       tenant_id: ctx.tenantId,
       created_by: ctx.userId,
-      project_id: input.project_id ?? null,
+      project_id: projectId,
       title,
       description,
       site_context: input.site_context ?? null,

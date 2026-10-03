@@ -46,4 +46,24 @@ describe("createCustomerIntakeDraft", () => {
     expect(r.data?.status).toBe("draft");
     expect(JSON.stringify(r.data)).not.toMatch(/analysis|matching|ai_result/i);
   });
+
+  it("rejects a project_id that does not belong to the tenant", async () => {
+    const maybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
+    const supabase = {
+      from: vi.fn().mockReturnValue({
+        select: () => ({
+          eq: () => ({
+            eq: () => ({ maybeSingle }),
+          }),
+        }),
+      }),
+    };
+    const r = await createCustomerIntakeDraft(supabase as never, { tenantId: "t", userId: "u" } as never, {
+      title: "Kitchen",
+      description: "Need remodel",
+      project_id: "other-tenant-project",
+    });
+    expect(r.error).toMatch(/project/i);
+    expect(r.data).toBeNull();
+  });
 });
