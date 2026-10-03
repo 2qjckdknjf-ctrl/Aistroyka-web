@@ -91,6 +91,8 @@ describe("customer intake draft RLS SQL", () => {
   it("keeps tenant_id and created_by immutable", () => {
     expect(sql).toMatch(/customer_intake_drafts\.tenant_id is immutable/);
     expect(sql).toMatch(/before update on public\.customer_intake_drafts/);
+    expect(sql).toMatch(/customer_intake_drafts_location_precision/);
+    expect(sql).toMatch(/precision.*city/);
   });
 });
 

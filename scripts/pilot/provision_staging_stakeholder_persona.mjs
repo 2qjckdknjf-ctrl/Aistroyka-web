@@ -207,12 +207,11 @@ async function verifyActiveStakeholderPersona(fetchImpl, plan, { contractorToken
   const intakeOk = await api(fetchImpl, {
     base: plan.base,
     token: stakeholderToken,
-    method: "POST",
+    method: "GET",
     path: "/api/v1/portal/intake",
     extraHeaders: { "x-tenant-id": tenantId },
-    body: { title: "Staging persona check", description: "Projectless intake probe" },
   });
-  if (intakeOk.status < 200 || intakeOk.status >= 300) {
+  if (!intakeOk.ok) {
     return {
       exitCode: 1,
       status: "ERROR",
@@ -327,14 +326,15 @@ export async function provisionStagingStakeholder({ env = process.env, argv = pr
       email: plan.stakeholderEmail,
       password: plan.stakeholderPassword,
     });
-    if (!stakeholder.error) {
-      const denied = await assertRevokedCannotWriteIntake(fetchImpl, plan, {
-        contractorToken: contractor.token,
-        stakeholderToken: stakeholder.token,
-        lines,
-      });
-      if (denied.exitCode !== 0) return denied;
+    if (stakeholder.error) {
+      return { exitCode: 1, status: "BLOCKED_EXTERNAL", reason: stakeholder.error, lines };
     }
+    const denied = await assertRevokedCannotWriteIntake(fetchImpl, plan, {
+      contractorToken: contractor.token,
+      stakeholderToken: stakeholder.token,
+      lines,
+    });
+    if (denied.exitCode !== 0) return denied;
     return { exitCode: 0, status: "SUCCESS", reason: "stakeholder revoked", lines };
   }
 

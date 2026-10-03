@@ -10,7 +10,7 @@ create table if not exists public.customer_intake_drafts (
   title text not null,
   description text not null,
   site_context text,
-  location jsonb not null default '{}'::jsonb,
+  location jsonb not null default '{"precision":"city"}'::jsonb,
   requested_work_type text,
   budget_range text,
   desired_start date,
@@ -26,6 +26,18 @@ create index if not exists idx_customer_intake_tenant_creator
   on public.customer_intake_drafts (tenant_id, created_by);
 
 alter table public.customer_intake_drafts enable row level security;
+
+alter table public.customer_intake_drafts
+  alter column location set default '{"precision":"city"}'::jsonb;
+
+alter table public.customer_intake_drafts
+  drop constraint if exists customer_intake_drafts_location_precision;
+alter table public.customer_intake_drafts
+  add constraint customer_intake_drafts_location_precision
+  check (
+    jsonb_typeof(location) = 'object'
+    and (location->>'precision') in ('address', 'city', 'region', 'coordinates')
+  );
 
 drop function if exists public.customer_intake_has_current_tenant_access(uuid);
 drop function if exists public.customer_intake_project_scope_ok(uuid, uuid);
