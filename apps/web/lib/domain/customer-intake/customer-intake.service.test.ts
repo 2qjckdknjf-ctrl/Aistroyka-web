@@ -155,6 +155,16 @@ describe("parseCreateCustomerIntakeInput", () => {
     expect(parsed).toMatchObject({ input: { questions: ["Timeline?"] } });
   });
 
+  it("rejects questions whose JavaScript length exceeds 500, including astral characters", () => {
+    expect(
+      parseCreateCustomerIntakeInput({
+        title: "Kitchen",
+        description: "Need remodel",
+        questions: ["😀".repeat(300)],
+      })
+    ).toEqual({ error: "question is too long" });
+  });
+
   it("rejects invalid media_refs", () => {
     expect(
       parseCreateCustomerIntakeInput({ title: "Kitchen", description: "Need remodel", media_refs: {} })
@@ -475,6 +485,9 @@ describe("parseMediaRefs URL contract", () => {
       error: "media_refs.url is invalid",
     });
     expect(parseMediaRefs([{ kind: "image", url: `https://example.com/${"a".repeat(2040)}` }])).toEqual({
+      error: "media_refs.url is too long",
+    });
+    expect(parseMediaRefs([{ kind: "image", url: `https://example.com/${"é".repeat(400)}` }])).toEqual({
       error: "media_refs.url is too long",
     });
   });

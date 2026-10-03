@@ -126,6 +126,20 @@ comment on function public.customer_intake_tenant_account_active(uuid) is
 revoke all on function public.customer_intake_tenant_account_active(uuid) from public;
 grant execute on function public.customer_intake_tenant_account_active(uuid) to authenticated;
 
+create or replace function public.customer_intake_js_length(p text)
+returns integer
+language sql
+immutable
+set search_path = public
+as $$
+  select coalesce(
+    char_length(p)
+      + char_length(p)
+      - char_length(regexp_replace(p, E'[\\U00010000-\\U0010FFFF]', '', 'g')),
+    0
+  );
+$$;
+
 create or replace function public.customer_intake_questions_valid(p jsonb)
 returns boolean
 language sql
@@ -137,7 +151,7 @@ as $$
     and coalesce((
       select bool_and(
         case
-          when jsonb_typeof(e) = 'string' then char_length(regexp_replace(e #>> '{}', '^[[:space:]]+|[[:space:]]+$', '', 'g')) between 1 and 500
+          when jsonb_typeof(e) = 'string' then public.customer_intake_js_length(regexp_replace(e #>> '{}', '^[[:space:]]+|[[:space:]]+$', '', 'g')) between 1 and 500
           else false
         end
       )
@@ -152,7 +166,7 @@ stable
 set search_path = public
 as $$
   select jsonb_typeof(p) = 'string'
-    and char_length(regexp_replace(p #>> '{}', '^[[:space:]]+|[[:space:]]+$', '', 'g')) between 1 and 128;
+    and public.customer_intake_js_length(regexp_replace(p #>> '{}', '^[[:space:]]+|[[:space:]]+$', '', 'g')) between 1 and 128;
 $$;
 
 create or replace function public.customer_intake_https_url_text_valid(p text)
@@ -166,6 +180,7 @@ as $$
   )
   select coalesce(
     char_length(u.t) between 1 and 2048
+    and public.customer_intake_js_length(u.t) between 1 and 2048
     and u.t ~ (
       '^https://'
       || '(?:(?:%[0-9A-Fa-f]{2}|[A-Za-z0-9._~!$&''()*+,;=:-])+@)?'

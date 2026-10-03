@@ -168,7 +168,7 @@ describe("provision staging stakeholder persona", () => {
     expect(result.reason).toMatch(/revoked/);
   });
 
-  it("fails revoke when a revoked stakeholder can still write projectless intake", async () => {
+  it("fails revoke when a revoked stakeholder can still write intake for that project", async () => {
     const fetchImpl = async (url: string, init?: RequestInit) => {
       if (String(url).includes("/auth/v1/token")) {
         return new Response(JSON.stringify({ access_token: "tok" }), { status: 200 });
@@ -196,7 +196,7 @@ describe("provision staging stakeholder persona", () => {
       fetchImpl,
     });
     expect(result.status).toBe("ERROR");
-    expect(result.reason).toMatch(/projectless intake/);
+    expect(result.reason).toMatch(/revoked project/);
   });
 
   it("fails revoke when the intake probe is a validation or server error, not an auth denial", async () => {

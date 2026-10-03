@@ -153,7 +153,9 @@ export function parseMediaRefs(value: unknown): { media_refs: CustomerIntakeMedi
         return { error: "media_refs.url is invalid" };
       }
       if (/%(?![0-9A-Fa-f]{2})/.test(url)) return { error: "media_refs.url is invalid" };
-      ref.url = parsed.toString();
+      const serialized = parsed.toString();
+      if (serialized.length > MAX_MEDIA_URL_LENGTH) return { error: "media_refs.url is too long" };
+      ref.url = serialized;
     }
     if (!ref.media_id && !ref.url) return { error: "media_refs requires media_id or url" };
     media_refs.push(ref);

@@ -114,7 +114,7 @@ describe("customer intake draft RLS SQL", () => {
     expect(sql).toMatch(/where media_key\.key not in \('kind', 'media_id', 'url'\)/);
     expect(sql).toMatch(/%\[0-9A-Fa-f\]\{2\}/);
     expect(sql).toMatch(/regexp_replace\(e #>> '\{\}', '\^\[\[:space:\]\]\+/);
-    expect(sql).toMatch(/customer_intake_https_url_text_valid\(p text\)/);
+    expect(sql).toMatch(/customer_intake_js_length/);
     expect(sql).not.toMatch(/\^https:\/\/\[\^\[:space:\]\/\?#\]\+/);
   });
 });
@@ -344,6 +344,18 @@ describe("customer intake location storage contract", () => {
     expect(sqlLocationValid({ precision: "city", lat: Number.POSITIVE_INFINITY })).toBe(false);
     expect(sqlLocationValid({})).toBe(false);
     expect(sqlLocationValid({ precision: "exact" })).toBe(false);
+  });
+});
+
+describe("customer intake question storage length contract", () => {
+  it("counts astral characters as two UTF-16 units like JavaScript", () => {
+    const question = "😀".repeat(300);
+    const codePoints = [...question].length;
+    const strippedPoints = [...question.replace(/[\u{10000}-\u{10FFFF}]/gu, "")].length;
+    const sqlJsLength = codePoints + (codePoints - strippedPoints);
+    expect(question.length).toBe(600);
+    expect(sqlJsLength).toBe(600);
+    expect(sqlJsLength > 500).toBe(true);
   });
 });
 

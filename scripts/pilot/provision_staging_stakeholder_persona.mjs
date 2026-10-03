@@ -290,7 +290,11 @@ async function assertRevokedCannotWriteIntake(fetchImpl, plan, { contractorToken
     method: "POST",
     path: "/api/v1/portal/intake",
     extraHeaders: { "x-tenant-id": tenantId },
-    body: { title: "Revoked persona check", description: "Must fail after revoke" },
+    body: {
+      title: "Revoked persona check",
+      description: "Must fail after revoke",
+      project_id: plan.projectId,
+    },
   });
   if (intakeDenied.status === 401 || intakeDenied.status === 403) {
     return { exitCode: 0, status: "SUCCESS", reason: "stakeholder revoked", lines };
@@ -299,7 +303,7 @@ async function assertRevokedCannotWriteIntake(fetchImpl, plan, { contractorToken
     return {
       exitCode: 1,
       status: "ERROR",
-      reason: "revoked stakeholder still wrote projectless intake",
+      reason: "revoked stakeholder still wrote intake for the revoked project",
       lines,
     };
   }
