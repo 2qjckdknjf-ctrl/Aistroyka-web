@@ -8,6 +8,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { getServerConfig } from "@/lib/config/server";
 import { logStructured } from "@/lib/observability";
 import { isAnalysisResult, type AnalysisResult } from "./types";
+import { classifyVisionFailure } from "@/lib/domain/vision-jobs/vision-job-lifecycle";
 
 const VIDEO_NOT_IMPLEMENTED = "Video processing not implemented yet";
 const AI_RETRY_DELAY_MS = 2000;
@@ -223,18 +224,14 @@ export async function processOneJob(
     return { ok: true, jobId, status: "completed" };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Analysis failed";
-    const errorCode = message.toLowerCase().includes("timeout")
-      ? "timeout"
-      : message.toLowerCase().includes("ai analysis failed")
-        ? "ai_failure"
-        : "unknown";
-    await markJobFailed(supabase, jobId, message, errorCode);
+    const classified = classifyVisionFailure(message);
+    await markJobFailed(supabase, jobId, message, classified.errorType);
     logJobLifecycle("job_failed", {
       job_id: jobId,
       duration_ms: Date.now() - startMs,
       attempts: 1,
-      retryable: false,
-      error_code: errorCode,
+      retryable: classified.retryable,
+      error_code: classified.errorType,
       request_id: traceId,
     });
     return { ok: true, jobId, status: "failed" };

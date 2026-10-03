@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient, getSessionUser } from "@/lib/supabase/server";
 import { getProjectById } from "@/lib/supabase/rpc";
+import { mapAnalysisJobToLifecycle } from "@/lib/domain/vision-jobs/vision-job-lifecycle";
 
 const PROCESSING_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -57,6 +58,13 @@ export async function GET(
 
   return NextResponse.json({
     ok: true,
-    data: { hasActiveJobs },
+    data: {
+      hasActiveJobs,
+      jobs: (jobs ?? []).map((j) => ({
+        jobId: j.id,
+        status: j.status,
+        lifecycle: mapAnalysisJobToLifecycle({ status: j.status as string | null }),
+      })),
+    },
   });
 }
