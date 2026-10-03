@@ -13,12 +13,25 @@ struct CustomerRootView: View {
                 CustomerLoginView()
             } else if !sessionState.isAuthorizedRole {
                 CustomerStatusView(
-                    kind: .unauthorized,
+                    kind: sessionState.canRetryRoleCheck ? .error : .unauthorized,
                     message: sessionState.roleFailureMessage ?? NSLocalizedString("cust_err_not_customer", comment: ""),
-                    actionTitle: NSLocalizedString("cust_sign_out", comment: "")
-                ) {
-                    Task { await sessionState.signOut() }
-                }
+                    actionTitle: sessionState.canRetryRoleCheck
+                        ? NSLocalizedString("cust_retry", comment: "")
+                        : NSLocalizedString("cust_sign_out", comment: ""),
+                    action: {
+                        if sessionState.canRetryRoleCheck {
+                            sessionState.checkSession()
+                        } else {
+                            Task { await sessionState.signOut() }
+                        }
+                    },
+                    secondaryActionTitle: sessionState.canRetryRoleCheck
+                        ? NSLocalizedString("cust_sign_out", comment: "")
+                        : nil,
+                    secondaryAction: sessionState.canRetryRoleCheck
+                        ? { Task { await sessionState.signOut() } }
+                        : nil
+                )
                 .accessibilityIdentifier("pilot_customer_unauthorized")
             } else {
                 CustomerHomeView()

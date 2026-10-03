@@ -6,6 +6,7 @@
 "cust_signing_in" = "Signing in…";
 "cust_continue_google" = "Continue with Google";
 "cust_sign_out" = "Sign out";
+"cust_retry" = "Retry";
 "cust_checking_session" = "Checking session…";
 "cust_home_title" = "Your projects";
 "cust_home_empty" = "No customer projects are available in this first slice. After sign-in, later slices will load portal projects from the AISTROYKA API.";

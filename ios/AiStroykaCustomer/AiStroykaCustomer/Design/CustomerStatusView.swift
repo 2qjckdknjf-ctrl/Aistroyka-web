@@ -7,6 +7,8 @@ struct CustomerStatusView: View {
     let message: String
     var actionTitle: String?
     var action: (() -> Void)?
+    var secondaryActionTitle: String?
+    var secondaryAction: (() -> Void)?
 
     var body: some View {
         VStack(spacing: 16) {
@@ -21,6 +23,10 @@ struct CustomerStatusView: View {
             if let actionTitle, let action {
                 Button(actionTitle, action: action)
                     .buttonStyle(.borderedProminent)
+            }
+            if let secondaryActionTitle, let secondaryAction {
+                Button(secondaryActionTitle, action: secondaryAction)
+                    .buttonStyle(.bordered)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

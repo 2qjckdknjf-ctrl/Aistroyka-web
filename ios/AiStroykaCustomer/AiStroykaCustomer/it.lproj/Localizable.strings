@@ -6,6 +6,7 @@
 "cust_signing_in" = "Accesso in corso…";
 "cust_continue_google" = "Continua con Google";
 "cust_sign_out" = "Esci";
+"cust_retry" = "Riprova";
 "cust_checking_session" = "Verifica sessione…";
 "cust_home_title" = "I tuoi progetti";
 "cust_home_empty" = "In questa prima versione l’elenco progetti non è ancora collegato. Dopo l’accesso, le versioni successive useranno le API AISTROYKA.";

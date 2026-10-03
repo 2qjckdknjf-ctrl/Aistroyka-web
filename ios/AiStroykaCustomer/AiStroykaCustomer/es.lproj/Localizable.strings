@@ -6,6 +6,7 @@
 "cust_signing_in" = "Iniciando sesión…";
 "cust_continue_google" = "Continuar con Google";
 "cust_sign_out" = "Cerrar sesión";
+"cust_retry" = "Reintentar";
 "cust_checking_session" = "Comprobando sesión…";
 "cust_home_title" = "Sus proyectos";
 "cust_home_empty" = "Esta primera versión aún no carga proyectos. Tras el inicio de sesión, las siguientes versiones usarán la API de AISTROYKA.";

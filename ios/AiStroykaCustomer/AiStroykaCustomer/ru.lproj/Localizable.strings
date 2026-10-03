@@ -6,6 +6,7 @@
 "cust_signing_in" = "Вход…";
 "cust_continue_google" = "Продолжить с Google";
 "cust_sign_out" = "Выйти";
+"cust_retry" = "Повторить";
 "cust_checking_session" = "Проверяем сессию…";
 "cust_home_title" = "Ваши проекты";
 "cust_home_empty" = "В этом срезе список проектов ещё не подключен. После входа следующие срезы загружают проекты портала из API AISTROYKA.";
