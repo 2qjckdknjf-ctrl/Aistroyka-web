@@ -27,51 +27,107 @@ create index if not exists idx_customer_intake_tenant_creator
 
 alter table public.customer_intake_drafts enable row level security;
 
-create or replace function public.customer_intake_has_current_tenant_access(p_tenant_id uuid)
+drop function if exists public.customer_intake_has_current_tenant_access(uuid);
+drop function if exists public.customer_intake_project_scope_ok(uuid, uuid);
+
+create or replace function public.is_internal_intake_reader(p_tenant_id uuid)
+returns boolean
+language sql
+stable
+security invoker
+set search_path = public
+as $$
+  select public.is_internal_tenant_reader_for_tenant(p_tenant_id);
+$$;
+
+comment on function public.is_internal_intake_reader(uuid) is
+  'Internal workspace reader (owner/admin/member/viewer). Never true for portal-only stakeholder.';
+
+revoke all on function public.is_internal_intake_reader(uuid) from public;
+grant execute on function public.is_internal_intake_reader(uuid) to authenticated;
+
+create or replace function public.is_internal_intake_writer(p_tenant_id uuid)
+returns boolean
+language sql
+stable
+security invoker
+set search_path = public
+as $$
+  select public.is_internal_tenant_reader_for_tenant(p_tenant_id);
+$$;
+
+comment on function public.is_internal_intake_writer(uuid) is
+  'Internal intake writer. Same role set as internal reader so viewer write semantics stay unchanged.';
+
+revoke all on function public.is_internal_intake_writer(uuid) from public;
+grant execute on function public.is_internal_intake_writer(uuid) to authenticated;
+
+create or replace function public.has_active_stakeholder_grant_in_tenant(p_tenant_id uuid)
 returns boolean
 language sql
 stable
 security definer
 set search_path = public
 as $$
-  select public.is_internal_tenant_reader_for_tenant(p_tenant_id)
-  or exists (
+  select exists (
     select 1
-    from public.tenant_members tm
-    where tm.tenant_id = p_tenant_id
-      and tm.user_id = (select auth.uid())
+    from public.project_stakeholders ps
+    where ps.tenant_id = p_tenant_id
+      and ps.user_id = (select auth.uid())
+      and ps.status = 'active'
   );
 $$;
 
-comment on function public.customer_intake_has_current_tenant_access(uuid) is
-  'True when auth user currently owns or belongs to the tenant. Used only with created_by = auth.uid(); not a tenant-wide read grant.';
+comment on function public.has_active_stakeholder_grant_in_tenant(uuid) is
+  'True only with at least one current project_stakeholders.status = active in the tenant. tenant_members.role = stakeholder is not enough.';
 
-revoke all on function public.customer_intake_has_current_tenant_access(uuid) from public;
-grant execute on function public.customer_intake_has_current_tenant_access(uuid) to authenticated;
+revoke all on function public.has_active_stakeholder_grant_in_tenant(uuid) from public;
+grant execute on function public.has_active_stakeholder_grant_in_tenant(uuid) to authenticated;
 
-create or replace function public.customer_intake_project_scope_ok(p_project_id uuid, p_tenant_id uuid)
+create or replace function public.has_active_stakeholder_grant_for_project(p_project_id uuid)
+returns boolean
+language sql
+stable
+security invoker
+set search_path = public
+as $$
+  select public.is_portal_stakeholder_for_project(p_project_id);
+$$;
+
+comment on function public.has_active_stakeholder_grant_for_project(uuid) is
+  'Alias for is_portal_stakeholder_for_project: active project_stakeholders grant for auth.uid().';
+
+revoke all on function public.has_active_stakeholder_grant_for_project(uuid) from public;
+grant execute on function public.has_active_stakeholder_grant_for_project(uuid) to authenticated;
+
+create or replace function public.customer_intake_stakeholder_authorized(p_project_id uuid, p_tenant_id uuid)
 returns boolean
 language sql
 stable
 security definer
 set search_path = public
 as $$
-  select
-    p_project_id is null
-    or (
+  select case
+    when p_project_id is null then
+      public.has_active_stakeholder_grant_in_tenant(p_tenant_id)
+    else
       public.project_belongs_to_tenant(p_project_id, p_tenant_id)
-      and (
-        public.is_internal_tenant_reader_for_tenant(p_tenant_id)
-        or public.is_portal_stakeholder_for_project(p_project_id)
+      and exists (
+        select 1
+        from public.project_stakeholders ps
+        where ps.project_id = p_project_id
+          and ps.tenant_id = p_tenant_id
+          and ps.user_id = (select auth.uid())
+          and ps.status = 'active'
       )
-    );
+  end;
 $$;
 
-comment on function public.customer_intake_project_scope_ok(uuid, uuid) is
-  'Null project is allowed; otherwise the project must belong to the tenant and the caller must be an internal reader or active portal stakeholder on that project.';
+comment on function public.customer_intake_stakeholder_authorized(uuid, uuid) is
+  'Project-linked drafts need an active grant on that project. Projectless drafts need any active grant in the tenant. Revoked grants deny.';
 
-revoke all on function public.customer_intake_project_scope_ok(uuid, uuid) from public;
-grant execute on function public.customer_intake_project_scope_ok(uuid, uuid) to authenticated;
+revoke all on function public.customer_intake_stakeholder_authorized(uuid, uuid) from public;
+grant execute on function public.customer_intake_stakeholder_authorized(uuid, uuid) to authenticated;
 
 create or replace function public.customer_intake_drafts_immutable_identity()
 returns trigger
@@ -104,11 +160,10 @@ create policy customer_intake_drafts_select on public.customer_intake_drafts
   for select
   to authenticated
   using (
-    public.is_internal_tenant_reader_for_tenant(tenant_id)
+    public.is_internal_intake_reader(tenant_id)
     or (
       created_by = (select auth.uid())
-      and public.customer_intake_has_current_tenant_access(tenant_id)
-      and public.customer_intake_project_scope_ok(project_id, tenant_id)
+      and public.customer_intake_stakeholder_authorized(project_id, tenant_id)
     )
   );
 
@@ -118,8 +173,10 @@ create policy customer_intake_drafts_insert on public.customer_intake_drafts
   to authenticated
   with check (
     created_by = (select auth.uid())
-    and public.customer_intake_has_current_tenant_access(tenant_id)
-    and public.customer_intake_project_scope_ok(project_id, tenant_id)
+    and (
+      public.is_internal_intake_writer(tenant_id)
+      or public.customer_intake_stakeholder_authorized(project_id, tenant_id)
+    )
   );
 
 drop policy if exists customer_intake_drafts_update on public.customer_intake_drafts;
@@ -128,11 +185,21 @@ create policy customer_intake_drafts_update on public.customer_intake_drafts
   to authenticated
   using (
     created_by = (select auth.uid())
-    and public.customer_intake_has_current_tenant_access(tenant_id)
-    and public.customer_intake_project_scope_ok(project_id, tenant_id)
+    and (
+      public.is_internal_intake_writer(tenant_id)
+      or public.customer_intake_stakeholder_authorized(project_id, tenant_id)
+    )
   )
   with check (
     created_by = (select auth.uid())
-    and public.customer_intake_has_current_tenant_access(tenant_id)
-    and public.customer_intake_project_scope_ok(project_id, tenant_id)
+    and (
+      public.is_internal_intake_writer(tenant_id)
+      or public.customer_intake_stakeholder_authorized(project_id, tenant_id)
+    )
   );
+
+drop policy if exists customer_intake_drafts_delete on public.customer_intake_drafts;
+create policy customer_intake_drafts_delete on public.customer_intake_drafts
+  for delete
+  to authenticated
+  using (false);

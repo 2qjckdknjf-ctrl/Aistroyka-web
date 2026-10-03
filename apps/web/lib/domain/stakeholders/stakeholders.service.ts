@@ -97,6 +97,18 @@ export async function revokeStakeholder(
  * Accept invite: ensures tenant_members(stakeholder) and activates stakeholder row.
  * Caller must be authenticated; tenant context may be absent until after upsert.
  */
+function acceptedPayload(row: {
+  project_id: string;
+  tenant_id: string;
+  stakeholder_role: StakeholderRole;
+}): { project_id: string; tenant_id: string; stakeholder_role: StakeholderRole } {
+  return {
+    project_id: row.project_id,
+    tenant_id: row.tenant_id,
+    stakeholder_role: row.stakeholder_role,
+  };
+}
+
 export async function acceptStakeholderInvite(
   supabase: SupabaseClient,
   userId: string,
@@ -105,14 +117,18 @@ export async function acceptStakeholderInvite(
 ): Promise<{ data: { project_id: string; tenant_id: string; stakeholder_role: StakeholderRole } | null; error: string }> {
   const row = await repo.getByToken(supabase, token);
   if (!row) return { data: null, error: "Invitation not found" };
-  if (row.status !== "invited") return { data: null, error: "Invitation is no longer valid" };
-  if (new Date(row.expires_at) < new Date()) return { data: null, error: "Invitation expired" };
 
   const inviteEmail = repo.normalizeEmail(row.email);
   const u = repo.normalizeEmail(userEmail ?? "");
   if (!u || u !== inviteEmail) {
     return { data: null, error: "Sign in with the email address this invitation was sent to." };
   }
+
+  if (row.status === "active" && row.user_id === userId) {
+    return { data: acceptedPayload(row), error: "" };
+  }
+  if (row.status !== "invited") return { data: null, error: "Invitation is no longer valid" };
+  if (new Date(row.expires_at) < new Date()) return { data: null, error: "Invitation expired" };
 
   const { data: tenantRow } = await supabase.from("tenants").select("user_id").eq("id", row.tenant_id).maybeSingle();
   const isTenantOwner = tenantRow?.user_id === userId;
@@ -147,12 +163,5 @@ export async function acceptStakeholderInvite(
   });
   if (!updated) return { data: null, error: "Activation failed" };
 
-  return {
-    data: {
-      project_id: row.project_id,
-      tenant_id: row.tenant_id,
-      stakeholder_role: row.stakeholder_role,
-    },
-    error: "",
-  };
+  return { data: acceptedPayload(updated), error: "" };
 }

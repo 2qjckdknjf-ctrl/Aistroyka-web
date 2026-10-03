@@ -55,4 +55,27 @@ describe("stakeholders.service", () => {
     expect(data).toBeNull();
     expect(error).toContain("Sign in");
   });
+
+  it("acceptStakeholderInvite is idempotent for the same active user", async () => {
+    vi.mocked(repo.getByToken).mockResolvedValue({
+      id: "s1",
+      tenant_id: "t1",
+      project_id: "p1",
+      email: "inv@x.com",
+      stakeholder_role: "client_viewer",
+      token: "tok",
+      status: "active",
+      user_id: "u1",
+      invited_by: null,
+      expires_at: new Date(Date.now() + 86400000).toISOString(),
+      accepted_at: "",
+      created_at: "",
+      updated_at: "",
+    } as never);
+
+    const { data, error } = await acceptStakeholderInvite(supabase, "u1", "inv@x.com", "tok");
+    expect(error).toBe("");
+    expect(data?.project_id).toBe("p1");
+    expect(repo.updateRow).not.toHaveBeenCalled();
+  });
 });

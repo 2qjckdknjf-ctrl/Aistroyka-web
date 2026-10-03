@@ -219,6 +219,29 @@ export async function provisionStagingStakeholder({ env = process.env, argv = pr
     if (!revoked.ok) {
       return { exitCode: 1, status: "ERROR", reason: `revoke failed (${revoked.status})`, lines };
     }
+    const stakeholder = await passwordGrant(fetchImpl, {
+      supabaseUrl: plan.supabaseUrl,
+      anonKey: plan.anonKey,
+      email: plan.stakeholderEmail,
+      password: plan.stakeholderPassword,
+    });
+    if (!stakeholder.error) {
+      const intakeDenied = await api(fetchImpl, {
+        base: plan.base,
+        token: stakeholder.token,
+        method: "POST",
+        path: "/api/v1/portal/intake",
+        body: { title: "Revoked persona check", description: "Must fail after revoke" },
+      });
+      if (intakeDenied.status >= 200 && intakeDenied.status < 300) {
+        return {
+          exitCode: 1,
+          status: "ERROR",
+          reason: "revoked stakeholder still wrote projectless intake",
+          lines,
+        };
+      }
+    }
     return { exitCode: 0, status: "SUCCESS", reason: "stakeholder revoked", lines };
   }
 
@@ -282,6 +305,39 @@ export async function provisionStagingStakeholder({ env = process.env, argv = pr
   if (verifiedRow?.status !== "active") {
     return { exitCode: 1, status: "ERROR", reason: "membership verify failed", lines };
   }
+
+  const portalMe = await api(fetchImpl, {
+    base: plan.base,
+    token: stakeholder.token,
+    method: "GET",
+    path: "/api/v1/me",
+  });
+  const role = portalMe.body?.data?.role ?? portalMe.body?.role;
+  if (!portalMe.ok || role !== "stakeholder") {
+    return {
+      exitCode: 1,
+      status: "ERROR",
+      reason: `portal-only verify failed (${portalMe.status})`,
+      lines,
+    };
+  }
+
+  const intakeOk = await api(fetchImpl, {
+    base: plan.base,
+    token: stakeholder.token,
+    method: "POST",
+    path: "/api/v1/portal/intake",
+    body: { title: "Staging persona check", description: "Projectless intake probe" },
+  });
+  if (intakeOk.status < 200 || intakeOk.status >= 300) {
+    return {
+      exitCode: 1,
+      status: "ERROR",
+      reason: `active stakeholder projectless intake failed (${intakeOk.status})`,
+      lines,
+    };
+  }
+
   return { exitCode: 0, status: "SUCCESS", reason: "stakeholder invited and accepted", lines };
 }
 
