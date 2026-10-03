@@ -83,8 +83,10 @@ as $$
     and jsonb_array_length(p) <= 20
     and coalesce((
       select bool_and(
-        jsonb_typeof(e) = 'string'
-        and char_length(trim(both '"' from e::text)) between 1 and 500
+        case
+          when jsonb_typeof(e) = 'string' then char_length(btrim(e #>> '{}')) between 1 and 500
+          else false
+        end
       )
       from jsonb_array_elements(p) e
     ), true);
@@ -100,20 +102,32 @@ as $$
     and jsonb_array_length(p) <= 20
     and coalesce((
       select bool_and(
-        jsonb_typeof(e) = 'object'
-        and (e->>'kind') in ('image', 'video', 'document')
-        and (
-          (
-            e ? 'media_id'
-            and jsonb_typeof(e->'media_id') = 'string'
-            and char_length(e->>'media_id') between 1 and 128
+        case
+          when jsonb_typeof(e) <> 'object' then false
+          else (
+            not exists (
+              select 1
+              from jsonb_object_keys(e) as media_key(key)
+              where media_key.key not in ('kind', 'media_id', 'url')
+            )
+            and e ? 'kind'
+            and jsonb_typeof(e->'kind') = 'string'
+            and (e->>'kind') in ('image', 'video', 'document')
+            and (
+              (
+                e ? 'media_id'
+                and jsonb_typeof(e->'media_id') = 'string'
+                and char_length(btrim(e->>'media_id')) between 1 and 128
+              )
+              or (
+                e ? 'url'
+                and jsonb_typeof(e->'url') = 'string'
+                and char_length(btrim(e->>'url')) between 1 and 2048
+                and btrim(e->>'url') like 'https://%'
+              )
+            )
           )
-          or (
-            e ? 'url'
-            and jsonb_typeof(e->'url') = 'string'
-            and (e->>'url') like 'https://%'
-          )
-        )
+        end
       )
       from jsonb_array_elements(p) e
     ), true);
