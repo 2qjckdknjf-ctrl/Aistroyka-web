@@ -37,11 +37,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
   const supabase = await createClientFromRequest(request);
-  const { data, error } = await createCustomerIntakeDraft(
-    supabase,
-    ctx,
-    (body ?? {}) as Parameters<typeof createCustomerIntakeDraft>[2]
-  );
+  const { data, error } = await createCustomerIntakeDraft(supabase, ctx, body ?? {});
   if (!data) return NextResponse.json({ error: error || "Create failed" }, { status: 400 });
   return NextResponse.json({ data }, { status: 201 });
 }
