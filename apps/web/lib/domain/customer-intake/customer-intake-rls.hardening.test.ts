@@ -95,7 +95,14 @@ describe("customer intake draft RLS SQL", () => {
   it("keeps tenant_id and created_by immutable", () => {
     expect(sql).toMatch(/customer_intake_drafts\.tenant_id is immutable/);
     expect(sql).toMatch(/before update on public\.customer_intake_drafts/);
-    expect(sql).toMatch(/location \? 'precision'/);
+    expect(sql).toMatch(/customer_intake_location_valid/);
+    expect(sql).toMatch(/jsonb_typeof\(p->'precision'\) = 'string'/);
+    expect(sql).toMatch(/jsonb_typeof\(p->'label'\) = 'string'/);
+    expect(sql).toMatch(/jsonb_typeof\(p->'lat'\) = 'number'/);
+    expect(sql).toMatch(/jsonb_typeof\(p->'lng'\) = 'number'/);
+    expect(sql).toMatch(/customer_intake_drafts_location_shape/);
+    expect(sql).toMatch(/customer_intake_location_valid\(location\) is true/);
+    expect(sql).toMatch(/customer_intake_https_url_text_valid/);
     expect(sql).toMatch(/customer_intake_media_id_value_valid/);
     expect(sql).toMatch(/customer_intake_tenant_account_active/);
     expect(sql).toMatch(/a\.status = 'active'/);
@@ -105,8 +112,10 @@ describe("customer intake draft RLS SQL", () => {
     expect(sql).toMatch(/not \(e \? 'url'\) or public\.customer_intake_media_url_value_valid/);
     expect(sql).toMatch(/jsonb_object_keys\(e\)/);
     expect(sql).toMatch(/where media_key\.key not in \('kind', 'media_id', 'url'\)/);
-    expect(sql).toMatch(/\^https:\/\/\[\^\[:space:\]\/\?#\]\+/);
+    expect(sql).toMatch(/%\[0-9A-Fa-f\]\{2\}/);
     expect(sql).toMatch(/regexp_replace\(e #>> '\{\}', '\^\[\[:space:\]\]\+/);
+    expect(sql).toMatch(/customer_intake_https_url_text_valid\(p text\)/);
+    expect(sql).not.toMatch(/\^https:\/\/\[\^\[:space:\]\/\?#\]\+/);
   });
 });
 
@@ -288,5 +297,61 @@ describe("customer intake draft RLS matrix", () => {
         accountActive: false,
       })
     ).toBe(false);
+  });
+});
+
+function sqlLocationValid(raw: unknown): boolean {
+  if (raw === null || typeof raw !== "object" || Array.isArray(raw)) return false;
+  const p = raw as Record<string, unknown>;
+  const has = (key: string) => Object.prototype.hasOwnProperty.call(p, key);
+  if (!has("precision") || typeof p.precision !== "string") return false;
+  if (!["address", "city", "region", "coordinates"].includes(p.precision)) return false;
+  if (has("label") && typeof p.label !== "string") return false;
+  if (has("lat") && typeof p.lat !== "number") return false;
+  if (has("lng") && typeof p.lng !== "number") return false;
+  return true;
+}
+
+const SQL_HTTPS_URL =
+  /^https:\/\/(?:[^/@\s]+@)?(?:localhost|(?:[0-9]{1,3}\.){3}[0-9]{1,3}|(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)(?:\.(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?))*)(?::[0-9]{1,5})?(?:[/?#](?:%[0-9A-Fa-f]{2}|[A-Za-z0-9._~!$&'()*+,;=:@/?-])*)?$/;
+
+function sqlHttpsUrlValid(raw: string | null): boolean {
+  if (raw == null) return false;
+  const trimmed = raw.replace(/^\s+|\s+$/g, "");
+  if (trimmed.length < 1 || trimmed.length > 2048) return false;
+  return SQL_HTTPS_URL.test(trimmed);
+}
+
+describe("customer intake location storage contract", () => {
+  it("accepts required precision and optional typed coordinates", () => {
+    expect(sqlLocationValid({ precision: "city" })).toBe(true);
+    expect(sqlLocationValid({ precision: "coordinates", label: "Barcelona", lat: 41.38, lng: 2.17 })).toBe(
+      true
+    );
+  });
+
+  it("rejects missing/invalid precision and wrong optional JSON types", () => {
+    expect(sqlLocationValid({ precision: "city", lat: "north" })).toBe(false);
+    expect(sqlLocationValid({ precision: "city", lng: {} })).toBe(false);
+    expect(sqlLocationValid({ precision: "city", label: 12 })).toBe(false);
+    expect(sqlLocationValid({ precision: "city", lat: null })).toBe(false);
+    expect(sqlLocationValid({})).toBe(false);
+    expect(sqlLocationValid({ precision: "exact" })).toBe(false);
+  });
+});
+
+describe("customer intake media URL storage contract", () => {
+  it("accepts absolute https URLs with a host and optional query", () => {
+    expect(sqlHttpsUrlValid("https://example.com/file.jpg")).toBe(true);
+    expect(sqlHttpsUrlValid("https://cdn.example.com/path?q=1")).toBe(true);
+  });
+
+  it("rejects empty hosts, http, spaces, malformed percent encoding, and overlong URLs", () => {
+    expect(sqlHttpsUrlValid("https://%/")).toBe(false);
+    expect(sqlHttpsUrlValid("https://")).toBe(false);
+    expect(sqlHttpsUrlValid("http://example.com")).toBe(false);
+    expect(sqlHttpsUrlValid("https://exa mple.com")).toBe(false);
+    expect(sqlHttpsUrlValid("https://example.com/%zz")).toBe(false);
+    expect(sqlHttpsUrlValid(`https://example.com/${"a".repeat(2040)}`)).toBe(false);
   });
 });

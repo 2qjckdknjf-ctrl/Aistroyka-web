@@ -33,12 +33,38 @@ alter table public.customer_intake_drafts
 alter table public.customer_intake_drafts
   drop constraint if exists customer_intake_drafts_location_precision;
 alter table public.customer_intake_drafts
-  add constraint customer_intake_drafts_location_precision
-  check (
-    jsonb_typeof(location) = 'object'
-    and location ? 'precision'
-    and (location->>'precision') in ('address', 'city', 'region', 'coordinates')
+  drop constraint if exists customer_intake_drafts_location_shape;
+
+create or replace function public.customer_intake_location_valid(p jsonb)
+returns boolean
+language sql
+immutable
+set search_path = public
+as $$
+  select coalesce(
+    jsonb_typeof(p) = 'object'
+    and (p ? 'precision') is true
+    and jsonb_typeof(p->'precision') = 'string'
+    and (p->>'precision') in ('address', 'city', 'region', 'coordinates')
+    and (
+      (p ? 'label') is not true
+      or jsonb_typeof(p->'label') = 'string'
+    )
+    and (
+      (p ? 'lat') is not true
+      or jsonb_typeof(p->'lat') = 'number'
+    )
+    and (
+      (p ? 'lng') is not true
+      or jsonb_typeof(p->'lng') = 'number'
+    ),
+    false
   );
+$$;
+
+alter table public.customer_intake_drafts
+  add constraint customer_intake_drafts_location_shape
+  check (public.customer_intake_location_valid(location) is true);
 
 alter table public.customer_intake_drafts
   drop constraint if exists customer_intake_drafts_questions_array;
@@ -115,15 +141,35 @@ as $$
     and char_length(regexp_replace(p #>> '{}', '^[[:space:]]+|[[:space:]]+$', '', 'g')) between 1 and 128;
 $$;
 
+create or replace function public.customer_intake_https_url_text_valid(p text)
+returns boolean
+language sql
+immutable
+set search_path = public
+as $$
+  select coalesce(
+    char_length(regexp_replace(p, '^[[:space:]]+|[[:space:]]+$', '', 'g')) between 1 and 2048
+    and regexp_replace(p, '^[[:space:]]+|[[:space:]]+$', '', 'g')
+      ~ (
+        '^https://'
+        || '(?:[^/@[:space:]]+@)?'
+        || '(?:localhost|(?:[0-9]{1,3}\.){3}[0-9]{1,3}|(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)(?:\.(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?))*)'
+        || '(?::[0-9]{1,5})?'
+        || '(?:[/?#](?:%[0-9A-Fa-f]{2}|[A-Za-z0-9._~!$&''()*+,;=:@/?-])*)?'
+        || '$'
+      ),
+    false
+  );
+$$;
+
 create or replace function public.customer_intake_media_url_value_valid(p jsonb)
 returns boolean
 language sql
-stable
+immutable
 set search_path = public
 as $$
   select jsonb_typeof(p) = 'string'
-    and char_length(regexp_replace(p #>> '{}', '^[[:space:]]+|[[:space:]]+$', '', 'g')) between 1 and 2048
-    and regexp_replace(p #>> '{}', '^[[:space:]]+|[[:space:]]+$', '', 'g') ~ '^https://[^[:space:]/?#]+(/[^[:space:]]*)?$';
+    and public.customer_intake_https_url_text_valid(p #>> '{}');
 $$;
 
 create or replace function public.customer_intake_media_refs_valid(p jsonb)
@@ -168,6 +214,9 @@ language plpgsql
 set search_path = public
 as $$
 begin
+  if not public.customer_intake_location_valid(new.location) then
+    raise exception 'customer_intake_drafts.location is invalid';
+  end if;
   if not public.customer_intake_questions_valid(new.questions) then
     raise exception 'customer_intake_drafts.questions is invalid';
   end if;

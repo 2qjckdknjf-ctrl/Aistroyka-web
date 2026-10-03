@@ -3,6 +3,7 @@ import {
   createCustomerIntakeDraft,
   draftFromStorageRow,
   parseCreateCustomerIntakeInput,
+  parseMediaRefs,
   updateCustomerIntakeDraft,
 } from "./customer-intake.service";
 
@@ -67,6 +68,63 @@ describe("parseCreateCustomerIntakeInput", () => {
         location: { precision: "unknown" },
       })
     ).toEqual({ error: "location.precision is invalid" });
+    expect(
+      parseCreateCustomerIntakeInput({
+        title: "Kitchen",
+        description: "Need remodel",
+        location: { precision: "exact" },
+      })
+    ).toEqual({ error: "location.precision is invalid" });
+  });
+
+  it("accepts location with required precision and optional typed fields", () => {
+    expect(
+      parseCreateCustomerIntakeInput({
+        title: "Kitchen",
+        description: "Need remodel",
+        location: { precision: "city" },
+      })
+    ).toMatchObject({ input: { location: { precision: "city" } } });
+    expect(
+      parseCreateCustomerIntakeInput({
+        title: "Kitchen",
+        description: "Need remodel",
+        location: { precision: "coordinates", label: "Barcelona", lat: 41.38, lng: 2.17 },
+      })
+    ).toMatchObject({
+      input: { location: { precision: "coordinates", label: "Barcelona", lat: 41.38, lng: 2.17 } },
+    });
+  });
+
+  it("rejects location optional fields with the wrong JSON types", () => {
+    expect(
+      parseCreateCustomerIntakeInput({
+        title: "Kitchen",
+        description: "Need remodel",
+        location: { precision: "city", lat: "north" },
+      })
+    ).toEqual({ error: "location.lat must be a number" });
+    expect(
+      parseCreateCustomerIntakeInput({
+        title: "Kitchen",
+        description: "Need remodel",
+        location: { precision: "city", lng: {} },
+      })
+    ).toEqual({ error: "location.lng must be a number" });
+    expect(
+      parseCreateCustomerIntakeInput({
+        title: "Kitchen",
+        description: "Need remodel",
+        location: { precision: "city", label: 12 },
+      })
+    ).toEqual({ error: "location.label must be a string" });
+    expect(
+      parseCreateCustomerIntakeInput({
+        title: "Kitchen",
+        description: "Need remodel",
+        location: { precision: "city", lat: null },
+      })
+    ).toEqual({ error: "location.lat must be a number" });
   });
 
   it("rejects questions that are not an array of strings", () => {
@@ -365,7 +423,64 @@ describe("updateCustomerIntakeDraft", () => {
   });
 });
 
+describe("parseMediaRefs URL contract", () => {
+  it("accepts absolute https URLs with a syntactic host and optional query", () => {
+    expect(parseMediaRefs([{ kind: "image", url: "https://example.com/file.jpg" }])).toEqual({
+      media_refs: [{ kind: "image", url: "https://example.com/file.jpg" }],
+    });
+    expect(parseMediaRefs([{ kind: "image", url: "https://cdn.example.com/path?q=1" }])).toEqual({
+      media_refs: [{ kind: "image", url: "https://cdn.example.com/path?q=1" }],
+    });
+  });
+
+  it("rejects URLs that WHATWG or the storage host contract cannot accept", () => {
+    expect(parseMediaRefs([{ kind: "image", url: "https://%/" }])).toEqual({
+      error: "media_refs.url is invalid",
+    });
+    expect(parseMediaRefs([{ kind: "image", url: "https://" }])).toEqual({
+      error: "media_refs.url is invalid",
+    });
+    expect(parseMediaRefs([{ kind: "image", url: "http://example.com" }])).toEqual({
+      error: "media_refs.url must be https",
+    });
+    expect(parseMediaRefs([{ kind: "image", url: "https://exa mple.com" }])).toEqual({
+      error: "media_refs.url is invalid",
+    });
+    expect(parseMediaRefs([{ kind: "image", url: "https://example.com/%zz" }])).toEqual({
+      error: "media_refs.url is invalid",
+    });
+    expect(parseMediaRefs([{ kind: "image", url: `https://example.com/${"a".repeat(2040)}` }])).toEqual({
+      error: "media_refs.url is too long",
+    });
+  });
+});
+
 describe("draftFromStorageRow", () => {
+  it("does not convert stored location rows with wrong optional types", () => {
+    const base = {
+      id: "d1",
+      tenant_id: "t1",
+      title: "Kitchen",
+      description: "Need remodel",
+      questions: [],
+      media_refs: [],
+      status: "draft",
+    };
+    expect(draftFromStorageRow({ ...base, location: { precision: "city", lat: "north" } })).toBeNull();
+    expect(draftFromStorageRow({ ...base, location: { precision: "city", lng: {} } })).toBeNull();
+    expect(draftFromStorageRow({ ...base, location: { precision: "city", label: 12 } })).toBeNull();
+    expect(draftFromStorageRow({ ...base, location: {} })).toBeNull();
+    expect(draftFromStorageRow({ ...base, location: { precision: "exact" } })).toBeNull();
+    expect(
+      draftFromStorageRow({
+        ...base,
+        location: { precision: "coordinates", label: "Barcelona", lat: 41.38, lng: 2.17 },
+      })
+    ).toMatchObject({
+      location: { precision: "coordinates", label: "Barcelona", lat: 41.38, lng: 2.17 },
+    });
+  });
+
   it("does not cast malformed stored questions or media_refs", () => {
     expect(
       draftFromStorageRow({

@@ -141,6 +141,18 @@ export function parseMediaRefs(value: unknown): { media_refs: CustomerIntakeMedi
       }
       if (parsed.protocol !== "https:") return { error: "media_refs.url must be https" };
       if (!parsed.hostname) return { error: "media_refs.url is invalid" };
+      const afterScheme = url.replace(/^https:\/\//i, "");
+      if (afterScheme.startsWith("/") || afterScheme.startsWith("?") || afterScheme.startsWith("#")) {
+        return { error: "media_refs.url is invalid" };
+      }
+      if (
+        !/^(localhost|(?:\d{1,3}\.){3}\d{1,3}|[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*)$/.test(
+          parsed.hostname
+        )
+      ) {
+        return { error: "media_refs.url is invalid" };
+      }
+      if (/%(?![0-9A-Fa-f]{2})/.test(url)) return { error: "media_refs.url is invalid" };
       ref.url = parsed.toString();
     }
     if (!ref.media_id && !ref.url) return { error: "media_refs requires media_id or url" };
