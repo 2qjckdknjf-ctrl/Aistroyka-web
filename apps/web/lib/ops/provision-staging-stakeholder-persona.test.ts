@@ -127,6 +127,8 @@ describe("provision staging stakeholder persona", () => {
         return new Response(JSON.stringify({ data: { status: "revoked" } }), { status: 200 });
       }
       if (String(url).includes("/api/v1/portal/intake")) {
+        const headers = new Headers(init?.headers);
+        expect(headers.get("x-tenant-id")).toBe("tenant-1");
         return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403 });
       }
       if (String(url).includes("/stakeholders")) {
@@ -148,6 +150,72 @@ describe("provision staging stakeholder persona", () => {
     expect(result.status).toBe("SUCCESS");
     expect(result.reason).toMatch(/revoked/);
   });
+
+  it("fails revoke when project tenant lookup fails", async () => {
+    const calls: string[] = [];
+    const fetchImpl = async (url: string, init?: RequestInit) => {
+      calls.push(`${init?.method || "GET"} ${url}`);
+      if (String(url).includes("/auth/v1/token")) {
+        return new Response(JSON.stringify({ access_token: "tok" }), { status: 200 });
+      }
+      if (init?.method === "PATCH") {
+        return new Response(JSON.stringify({ data: { status: "revoked" } }), { status: 200 });
+      }
+      if (String(url).includes("/stakeholders")) {
+        return new Response(
+          JSON.stringify({ data: [{ email: "owner@example.com", status: "active", id: "sh1" }] }),
+          { status: 200 }
+        );
+      }
+      if (String(url).includes("/api/v1/projects/project-1")) {
+        return new Response(JSON.stringify({ error: "Unavailable" }), { status: 503 });
+      }
+      return new Response("nope", { status: 500 });
+    };
+    const result = await provisionStagingStakeholder({
+      env: stagingEnv,
+      argv: ["node", "script", "--revoke"],
+      fetchImpl,
+    });
+    expect(result.status).toBe("ERROR");
+    expect(result.reason).toMatch(/project tenant_id lookup failed \(503\)/);
+    expect(calls.some((c) => c.includes("/api/v1/portal/intake"))).toBe(false);
+  });
+
+  for (const status of [400, 500]) {
+    it(`fails revoke when the denied intake probe returns ${status}`, async () => {
+      const fetchImpl = async (url: string, init?: RequestInit) => {
+        if (String(url).includes("/auth/v1/token")) {
+          return new Response(JSON.stringify({ access_token: "tok" }), { status: 200 });
+        }
+        if (init?.method === "PATCH") {
+          return new Response(JSON.stringify({ data: { status: "revoked" } }), { status: 200 });
+        }
+        if (String(url).includes("/api/v1/portal/intake")) {
+          const headers = new Headers(init?.headers);
+          expect(headers.get("x-tenant-id")).toBe("tenant-1");
+          return new Response(JSON.stringify({ error: "Unexpected" }), { status });
+        }
+        if (String(url).includes("/stakeholders")) {
+          return new Response(
+            JSON.stringify({ data: [{ email: "owner@example.com", status: "active", id: "sh1" }] }),
+            { status: 200 }
+          );
+        }
+        if (String(url).includes("/api/v1/projects/project-1")) {
+          return new Response(JSON.stringify({ data: { id: "project-1", tenant_id: "tenant-1" } }), { status: 200 });
+        }
+        return new Response("nope", { status: 500 });
+      };
+      const result = await provisionStagingStakeholder({
+        env: stagingEnv,
+        argv: ["node", "script", "--revoke"],
+        fetchImpl,
+      });
+      expect(result.status).toBe("ERROR");
+      expect(result.reason).toMatch(new RegExp(`unexpected status \\(${status}\\)`));
+    });
+  }
 
   it("fails revoke when a revoked stakeholder can still write projectless intake", async () => {
     const fetchImpl = async (url: string, init?: RequestInit) => {
