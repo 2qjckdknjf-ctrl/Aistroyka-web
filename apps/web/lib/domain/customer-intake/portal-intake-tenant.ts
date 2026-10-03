@@ -4,6 +4,8 @@ import type { TenantContext } from "@/lib/tenant/tenant.types";
 export const PORTAL_INTAKE_TENANT_HEADER = "x-tenant-id";
 const ACTIVE_TENANT_COOKIE = "aistroyka_active_tenant";
 
+export const INTERNAL_INTAKE_ROLES = ["owner", "admin", "member", "viewer"] as const;
+
 function cookieValue(header: string | null, name: string): string | null {
   if (!header) return null;
   for (const part of header.split(";")) {
@@ -36,7 +38,7 @@ export async function resolvePortalIntakeTenant(
     if (!claim.value) {
       return { error: "x-tenant-id is required", status: 400 };
     }
-    const allowed = await callerHasTenantAccess(supabase, ctx.userId, claim.value);
+    const allowed = await callerHasExplicitTenantAccess(supabase, ctx.userId, claim.value);
     if (!allowed) return { error: "Insufficient rights", status: 403 };
     return { tenantId: claim.value };
   }
@@ -49,7 +51,7 @@ export async function resolvePortalIntakeTenant(
       .maybeSingle();
     if (error) return { error: "Project lookup failed", status: 400 };
     if (!data?.tenant_id) return { error: "Project not found", status: 404 };
-    const allowed = await callerHasTenantAccess(supabase, ctx.userId, String(data.tenant_id));
+    const allowed = await callerHasExplicitTenantAccess(supabase, ctx.userId, String(data.tenant_id));
     if (!allowed) return { error: "Insufficient rights", status: 403 };
     return { tenantId: String(data.tenant_id) };
   }
@@ -64,7 +66,16 @@ export async function resolvePortalIntakeTenant(
   };
 }
 
-async function callerHasTenantAccess(
+async function callerHasExplicitTenantAccess(
+  supabase: SupabaseClient,
+  userId: string,
+  tenantId: string
+): Promise<boolean> {
+  if (await isInternalTenantPrincipal(supabase, userId, tenantId)) return true;
+  return hasActivePortalGrantInTenant(supabase, userId, tenantId);
+}
+
+async function isInternalTenantPrincipal(
   supabase: SupabaseClient,
   userId: string,
   tenantId: string
@@ -73,11 +84,19 @@ async function callerHasTenantAccess(
   if (owned?.id) return true;
   const { data: member } = await supabase
     .from("tenant_members")
-    .select("id")
+    .select("id, role")
     .eq("tenant_id", tenantId)
     .eq("user_id", userId)
     .maybeSingle();
-  if (member?.id) return true;
+  const role = typeof member?.role === "string" ? member.role : "";
+  return INTERNAL_INTAKE_ROLES.includes(role as (typeof INTERNAL_INTAKE_ROLES)[number]);
+}
+
+async function hasActivePortalGrantInTenant(
+  supabase: SupabaseClient,
+  userId: string,
+  tenantId: string
+): Promise<boolean> {
   const { data: grant } = await supabase
     .from("project_stakeholders")
     .select("id")

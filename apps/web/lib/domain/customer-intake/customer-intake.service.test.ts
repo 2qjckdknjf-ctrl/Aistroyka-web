@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   createCustomerIntakeDraft,
+  draftFromStorageRow,
   parseCreateCustomerIntakeInput,
   updateCustomerIntakeDraft,
 } from "./customer-intake.service";
@@ -62,6 +63,56 @@ describe("parseCreateCustomerIntakeInput", () => {
         location: { precision: "unknown" },
       })
     ).toEqual({ error: "location.precision is invalid" });
+  });
+
+  it("rejects questions that are not an array of strings", () => {
+    expect(
+      parseCreateCustomerIntakeInput({ title: "Kitchen", description: "Need remodel", questions: {} })
+    ).toEqual({ error: "questions must be an array of strings" });
+    expect(
+      parseCreateCustomerIntakeInput({ title: "Kitchen", description: "Need remodel", questions: [{}] })
+    ).toEqual({ error: "questions must be an array of strings" });
+    expect(
+      parseCreateCustomerIntakeInput({ title: "Kitchen", description: "Need remodel", questions: [1] })
+    ).toEqual({ error: "questions must be an array of strings" });
+  });
+
+  it("accepts trimmed valid questions", () => {
+    const parsed = parseCreateCustomerIntakeInput({
+      title: "Kitchen",
+      description: "Need remodel",
+      questions: ["  Timeline?  "],
+    });
+    expect(parsed).toMatchObject({ input: { questions: ["Timeline?"] } });
+  });
+
+  it("rejects invalid media_refs", () => {
+    expect(
+      parseCreateCustomerIntakeInput({ title: "Kitchen", description: "Need remodel", media_refs: {} })
+    ).toEqual({ error: "media_refs must be an array" });
+    expect(
+      parseCreateCustomerIntakeInput({
+        title: "Kitchen",
+        description: "Need remodel",
+        media_refs: [{ kind: "unknown", media_id: "m1" }],
+      })
+    ).toEqual({ error: "media_refs.kind is invalid" });
+    expect(
+      parseCreateCustomerIntakeInput({
+        title: "Kitchen",
+        description: "Need remodel",
+        media_refs: [{ kind: "image" }],
+      })
+    ).toEqual({ error: "media_refs requires media_id or url" });
+  });
+
+  it("accepts valid media_refs", () => {
+    const parsed = parseCreateCustomerIntakeInput({
+      title: "Kitchen",
+      description: "Need remodel",
+      media_refs: [{ kind: "image", media_id: "img-1" }],
+    });
+    expect(parsed).toMatchObject({ input: { media_refs: [{ kind: "image", media_id: "img-1" }] } });
   });
 });
 
@@ -211,5 +262,34 @@ describe("updateCustomerIntakeDraft", () => {
       description: "still trying",
     });
     expect(r.error).toBe("Update denied");
+  });
+});
+
+describe("draftFromStorageRow", () => {
+  it("does not cast malformed stored questions or media_refs", () => {
+    expect(
+      draftFromStorageRow({
+        id: "d1",
+        tenant_id: "t1",
+        title: "Kitchen",
+        description: "Need remodel",
+        location: { precision: "city" },
+        questions: [{}],
+        media_refs: [],
+        status: "draft",
+      })
+    ).toBeNull();
+    expect(
+      draftFromStorageRow({
+        id: "d1",
+        tenant_id: "t1",
+        title: "Kitchen",
+        description: "Need remodel",
+        location: { precision: "city" },
+        questions: [],
+        media_refs: [{ kind: "unknown" }],
+        status: "draft",
+      })
+    ).toBeNull();
   });
 });

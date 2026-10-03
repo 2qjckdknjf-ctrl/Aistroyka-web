@@ -79,4 +79,23 @@ describe("POST /api/v1/portal/intake", () => {
     expect(res.status).toBe(400);
     expect((await res.json()).error).toMatch(/x-tenant-id or project_id/);
   });
+
+  it("returns 400 for malformed questions and media_refs", async () => {
+    const questions = await POST(
+      new Request("https://test/api/v1/portal/intake", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: "Kitchen", description: "Remodel", questions: [{}] }),
+      })
+    );
+    expect(questions.status).toBe(400);
+    const media = await POST(
+      new Request("https://test/api/v1/portal/intake", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: "Kitchen", description: "Remodel", media_refs: [{ kind: "unknown" }] }),
+      })
+    );
+    expect(media.status).toBe(400);
+  });
 });

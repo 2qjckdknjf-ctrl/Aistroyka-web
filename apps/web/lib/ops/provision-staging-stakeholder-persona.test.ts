@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   evaluateProvisionPlan,
   PRODUCTION_HOSTS,
+  STAGING_MUTATION_ORIGIN,
   provisionStagingStakeholder,
 } from "../../../../scripts/pilot/provision_staging_stakeholder_persona.mjs";
 
@@ -24,8 +25,24 @@ describe("provision staging stakeholder persona", () => {
       env: { ...stagingEnv, PILOT_E2E_BASE_URL: "https://aistroyka.ai" },
     });
     expect(PRODUCTION_HOSTS).toContain("aistroyka.ai");
+    expect(STAGING_MUTATION_ORIGIN).toBe("https://staging.aistroyka.ai");
     expect(plan.status).toBe("BLOCKED");
-    expect(plan.reason).toMatch(/production/);
+  });
+
+  it.each([
+    ["https://staging.aistroyka.ai", "READY"],
+    ["https://aistroyka.ai", "BLOCKED"],
+    ["https://www.aistroyka.ai", "BLOCKED"],
+    ["https://aistroyka-web-web-v7jq.vercel.app", "BLOCKED"],
+    ["https://staging.aistroyka.com", "BLOCKED"],
+    ["https://staging.aistroyka.ai.", "BLOCKED"],
+    ["https://evil.example", "BLOCKED"],
+  ] as const)("mutation allowlist %s → %s", (url, status) => {
+    const plan = evaluateProvisionPlan({
+      argv: [],
+      env: { ...stagingEnv, PILOT_E2E_BASE_URL: url },
+    });
+    expect(plan.status).toBe(status);
   });
 
   it("stays dry-run without the mutation gate", () => {

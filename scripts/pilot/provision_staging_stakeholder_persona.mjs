@@ -21,9 +21,29 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 
 export const PRODUCTION_HOSTS = ["aistroyka.ai", "www.aistroyka.ai"];
+export const STAGING_MUTATION_ORIGIN = "https://staging.aistroyka.ai";
 
 function present(v) {
   return Boolean(v && String(v).trim());
+}
+
+export function canonicalHttpsOrigin(url) {
+  try {
+    const parsed = new URL(String(url).trim());
+    if (parsed.protocol !== "https:") return "";
+    if (parsed.username || parsed.password) return "";
+    if (parsed.hostname.endsWith(".")) return "";
+    const host = parsed.hostname.toLowerCase();
+    if (!host) return "";
+    if (parsed.port && parsed.port !== "443") return "";
+    return `https://${host}`;
+  } catch {
+    return "";
+  }
+}
+
+export function isApprovedStagingMutationOrigin(url) {
+  return canonicalHttpsOrigin(url) === STAGING_MUTATION_ORIGIN;
 }
 
 export function hostOf(url) {
@@ -67,7 +87,16 @@ export function evaluateProvisionPlan({ argv = [], env = {} } = {}) {
   if (!host) {
     return { status: "BLOCKED", reason: "PILOT_E2E_BASE_URL missing", dryRun, revokeOnly, host };
   }
-  if (PRODUCTION_HOSTS.includes(host)) {
+  if (!dryRun && !isApprovedStagingMutationOrigin(base)) {
+    return {
+      status: "BLOCKED",
+      reason: "mutation origin must be https://staging.aistroyka.ai",
+      dryRun,
+      revokeOnly,
+      host,
+    };
+  }
+  if (PRODUCTION_HOSTS.includes(host.replace(/\.$/, ""))) {
     return { status: "BLOCKED", reason: "production host refused", dryRun, revokeOnly, host };
   }
   if (contractorEmail && stakeholderEmail && contractorEmail.toLowerCase() === stakeholderEmail.toLowerCase()) {
