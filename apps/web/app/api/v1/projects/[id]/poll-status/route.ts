@@ -37,12 +37,12 @@ export async function GET(
     .eq("project_id", projectId);
   const mediaIds = (mediaRows ?? []).map((m) => m.id);
   if (mediaIds.length === 0) {
-    return NextResponse.json({ ok: true, data: { hasActiveJobs: false } });
+    return NextResponse.json({ ok: true, data: { hasActiveJobs: false, jobs: [] } });
   }
 
   const { data: jobs } = await supabase
     .from("analysis_jobs")
-    .select("id, media_id, status, started_at")
+    .select("id, media_id, status, error_type, started_at")
     .in("media_id", mediaIds);
 
   const now = Date.now();
@@ -63,7 +63,10 @@ export async function GET(
       jobs: (jobs ?? []).map((j) => ({
         jobId: j.id,
         status: j.status,
-        lifecycle: mapAnalysisJobToLifecycle({ status: j.status as string | null }),
+        lifecycle: mapAnalysisJobToLifecycle({
+          status: j.status as string | null,
+          error_type: (j.error_type as string | null) ?? null,
+        }),
       })),
     },
   });
