@@ -313,7 +313,7 @@ function sqlLocationValid(raw: unknown): boolean {
 }
 
 const SQL_HTTPS_URL =
-  /^https:\/\/(?:[^/@\s]+@)?(?:localhost|(?:[0-9]{1,3}\.){3}[0-9]{1,3}|(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)(?:\.(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?))*)(?::[0-9]{1,5})?(?:[/?#](?:%[0-9A-Fa-f]{2}|[A-Za-z0-9._~!$&'()*+,;=:@/?-])*)?$/;
+  /^https:\/\/(?:(?:%[0-9A-Fa-f]{2}|[A-Za-z0-9._~!$&'()*+,;=:-])+@)?(?:localhost|(?:[0-9]{1,3}\.){3}[0-9]{1,3}|(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)(?:\.(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?))*)(?::[0-9]{1,5})?(?:[/?#](?:%[0-9A-Fa-f]{2}|[A-Za-z0-9._~!$&'()*+,;=:@/?-])*)?$/;
 
 function sqlHttpsUrlValid(raw: string | null): boolean {
   if (raw == null) return false;
@@ -344,6 +344,8 @@ describe("customer intake media URL storage contract", () => {
   it("accepts absolute https URLs with a host and optional query", () => {
     expect(sqlHttpsUrlValid("https://example.com/file.jpg")).toBe(true);
     expect(sqlHttpsUrlValid("https://cdn.example.com/path?q=1")).toBe(true);
+    expect(sqlHttpsUrlValid("https://user@example.com/file.jpg")).toBe(true);
+    expect(sqlHttpsUrlValid("https://%41@example.com/file.jpg")).toBe(true);
   });
 
   it("rejects empty hosts, http, spaces, malformed percent encoding, and overlong URLs", () => {
@@ -352,6 +354,8 @@ describe("customer intake media URL storage contract", () => {
     expect(sqlHttpsUrlValid("http://example.com")).toBe(false);
     expect(sqlHttpsUrlValid("https://exa mple.com")).toBe(false);
     expect(sqlHttpsUrlValid("https://example.com/%zz")).toBe(false);
+    expect(sqlHttpsUrlValid("https://%zz@example.com/file.jpg")).toBe(false);
+    expect(sqlHttpsUrlValid("https://%@example.com/file.jpg")).toBe(false);
     expect(sqlHttpsUrlValid(`https://example.com/${"a".repeat(2040)}`)).toBe(false);
   });
 });

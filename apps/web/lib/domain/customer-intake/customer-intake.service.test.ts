@@ -431,6 +431,12 @@ describe("parseMediaRefs URL contract", () => {
     expect(parseMediaRefs([{ kind: "image", url: "https://cdn.example.com/path?q=1" }])).toEqual({
       media_refs: [{ kind: "image", url: "https://cdn.example.com/path?q=1" }],
     });
+    expect(parseMediaRefs([{ kind: "image", url: "https://user@example.com/file.jpg" }])).toEqual({
+      media_refs: [{ kind: "image", url: "https://user@example.com/file.jpg" }],
+    });
+    expect(parseMediaRefs([{ kind: "image", url: "https://%41@example.com/file.jpg" }])).toEqual({
+      media_refs: [{ kind: "image", url: "https://%41@example.com/file.jpg" }],
+    });
   });
 
   it("rejects URLs that WHATWG or the storage host contract cannot accept", () => {
@@ -447,6 +453,12 @@ describe("parseMediaRefs URL contract", () => {
       error: "media_refs.url is invalid",
     });
     expect(parseMediaRefs([{ kind: "image", url: "https://example.com/%zz" }])).toEqual({
+      error: "media_refs.url is invalid",
+    });
+    expect(parseMediaRefs([{ kind: "image", url: "https://%zz@example.com/file.jpg" }])).toEqual({
+      error: "media_refs.url is invalid",
+    });
+    expect(parseMediaRefs([{ kind: "image", url: "https://%@example.com/file.jpg" }])).toEqual({
       error: "media_refs.url is invalid",
     });
     expect(parseMediaRefs([{ kind: "image", url: `https://example.com/${"a".repeat(2040)}` }])).toEqual({
