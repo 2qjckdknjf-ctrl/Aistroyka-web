@@ -1,9 +1,22 @@
 # AISTROYKA Current Project Truth Index
 
-**Last updated:** 2026-08-24  
-**Main tip:** `3838726ab3521e19671118ef847936ee62ea5605` (`3838726a`)  
+**Last updated:** 2026-10-03  
+**Main tip:** `0e3b1ede624183ac5e5d47ab3f72ad739553ebb7` (`0e3b1ed`)  
+**Production / staging:** `buildStamp.sha7=0e3b1ed` **MATCH** (health observed 2026-10-03)  
+**Classification:** `production-capable / controlled-pilot candidate` — **not Public GA**  
+**Active audit:** `docs/audit/AISTROYKA_100_PERCENT_COMPLETION_AUDIT_2026-10-03.md`  
+**PR #350:** draft docs backlog HEAD `b7db4208` — reconciled into amendment/DAG; not a runtime certification  
+
+The 2026-08-24 “100% Readiness RC” block below is **historical**. Do not treat `3838726a` or `a7144249` as current main or production.
+
+---
+
+# Historical section — 2026-08-24 (superseded as current pointer)
+
+**Last updated (historical):** 2026-08-24  
+**Main tip (historical):** `3838726ab3521e19671118ef847936ee62ea5605` (`3838726a`)  
 **100% Readiness RC tag:** `v1.0.0-rc.1` @ `a7144249` (tag unchanged; main advanced post-tag)  
-**Runtime match:** staging deploy **PENDING** post-#240 merge — verify via `buildStamp.sha7`  
+**Runtime match (historical):** staging deploy **PENDING** post-#240 merge — verify via `buildStamp.sha7`  
 **Classification:** `production-capable / controlled-pilot candidate` — **not Public GA**
 
 ## 0. 100% Readiness program (current)

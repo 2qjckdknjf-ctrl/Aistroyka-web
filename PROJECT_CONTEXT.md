@@ -2,7 +2,7 @@
 
 > Master, **safe-to-share** context for any Cursor agent (desktop or cloud). Contains **no secrets**.
 > If anything here conflicts with reality you observe, trust the live code/runtime and update this file.
-> Last reviewed: 2026-06-30.
+> Last reviewed: 2026-10-03.
 
 ## 1. Project
 
@@ -26,8 +26,8 @@
 - **Runtime/deploy:** OpenNext → **Cloudflare Workers**. Vercel is preview/secondary only.
 - **DB/Auth:** Supabase (Postgres + Auth + RLS). Migrations in `apps/web/supabase/migrations/`.
 - **AI/Copilot:** in `apps/web` only (no repo Python backend). Live gate: `bash scripts/smoke/ai_live_provider.sh --require-live`.
-- **iOS:** `ios/` — AiStroykaManager + AiStroykaWorker + Shared (SPM), Xcode projects with UITest targets. Primary mobile contour.
-- **Android:** `android/` — Manager + Worker Compose scaffolds + shared (thinner than iOS).
+- **iOS:** `ios/` — AiStroykaManager + AiStroykaWorker + Shared (SPM), Xcode projects with UITest targets. Primary mobile contour. **Customer iOS is planned (AIS-OWNER-002) and is not a target on current main.**
+- **Android:** `android/` — Manager + Worker Compose apps + shared (thinner than iOS). First-pilot Android remains deferred unless the owner reverses that decision.
 - **Monorepo:** Bun 1.2.15 workspaces (`apps/web`, `packages/contracts`); shared libs in `packages/`.
 
 ## 4. Main surfaces
@@ -75,6 +75,8 @@ Full reference: `docs/ops/VALIDATION_CHECKLIST.md`.
 ## 9. Current known status
 
 See live `STATUS.md` (root) — single source of "what's happening right now".
+
+Observed 2026-10-03: `origin/main` `0e3b1ede…` MATCHES production and staging `buildStamp.sha7=0e3b1ed`. Latest customer/intake/ROMA backlog is `docs/roadmap/AISTROYKA_PLAN_AMENDMENT_2026-09-23.md` (reconciled from draft PR #350). Execution order: `docs/roadmap/AISTROYKA_100_PERCENT_EXECUTION_DAG_2026-10-03.md`.
 
 ## 10. Current risks
 

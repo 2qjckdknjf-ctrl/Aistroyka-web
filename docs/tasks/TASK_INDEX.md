@@ -3,6 +3,7 @@
 > Index of active and completed tasks. Newest first.
 
 | Date | File | Goal | Branch | Status |
+| 2026-10-03 | [docs-roadmap-consolidation.md](docs-roadmap-consolidation.md) | Reconciled Customer/ROMA planning onto current main | `audit/100-percent-completion-2026-10-03` | in progress |
 |---|---|---|---|---|
 | 2026-06-30 | _(this PR)_ | Development OS setup | `docs/development-os` | in progress |
 
