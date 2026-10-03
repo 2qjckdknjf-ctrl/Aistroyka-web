@@ -6,7 +6,7 @@ import {
 
 function overlayMissing(message: string | undefined): boolean {
   const m = (message ?? "").toLowerCase();
-  return m.includes("does not exist") || m.includes("schema cache") || m.includes("construction_graph");
+  return m.includes("does not exist") || m.includes("schema cache");
 }
 
 /**
@@ -105,7 +105,7 @@ export async function persistConstructionGraphOverlay(
 
   const upsert = await supabase
     .from("construction_graph_nodes")
-    .upsert(nodeRows, { onConflict: "tenant_id,source_table,source_id" })
+    .upsert(nodeRows, { onConflict: "tenant_id,project_id,source_table,source_id" })
     .select("id, source_table, source_id");
 
   if (upsert.error) {
@@ -128,7 +128,10 @@ export async function persistConstructionGraphOverlay(
     .delete()
     .eq("tenant_id", graph.tenant_id)
     .eq("project_id", graph.project_id);
-  if (del.error && !overlayMissing(del.error.message)) {
+  if (del.error) {
+    if (overlayMissing(del.error.message)) {
+      return { persisted: false, reason: "overlay_unavailable" };
+    }
     return { persisted: false, reason: del.error.message };
   }
 
@@ -153,7 +156,9 @@ export async function persistConstructionGraphOverlay(
     .filter((row): row is NonNullable<typeof row> => row !== null);
 
   if (edgeRows.length > 0) {
-    const ins = await supabase.from("construction_graph_edges").insert(edgeRows);
+    const ins = await supabase
+      .from("construction_graph_edges")
+      .upsert(edgeRows, { onConflict: "tenant_id,project_id,kind,from_node_id,to_node_id" });
     if (ins.error) {
       if (overlayMissing(ins.error.message)) return { persisted: false, reason: "overlay_unavailable" };
       return { persisted: false, reason: ins.error.message };
