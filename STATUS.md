@@ -19,7 +19,7 @@
 | **Deployed (apex/staging)** | sha7 `0e3b1ed` · **MATCH main** (observed 2026-10-03) |
 | **PR #350** | DRAFT docs backlog HEAD `b7db4208` — reconciled, not blindly merged |
 | **Pilot scope** | **contractor-ops-only** — portal/customer expansion needs its own verified slice |
-| **AI live smoke (this session)** | `scripts/smoke/ai_live_provider.sh --require-live` **GO** locally (`docs/audit/evidence/ai-live-provider-2026-10-03.json`). Not a production-host claim. |
+| **AI live smoke (this session)** | `scripts/smoke/ai_live_provider.sh --require-live` **GO** locally (`docs/audit/ai-live-provider-2026-10-03.json`). Not a production-host claim. |
 | **PR #371** | https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/371 — security/ops slice; merge needs CI + non-author APPROVED |
 | **Worktree** | `/Users/alex/Projects/AISTROYKA-100pct-completion` |
 

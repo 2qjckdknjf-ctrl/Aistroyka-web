@@ -1,0 +1,11 @@
+{
+  "canonical_gate": "scripts/smoke/ai_live_provider.sh --require-live",
+  "observed_at": "2026-10-03T09:41:00Z",
+  "exit_code": 0,
+  "verdict": "GO",
+  "live_provider_call_succeeded": true,
+  "fallback_count": 0,
+  "provider": "vision_router",
+  "model": "gpt-4o-mini",
+  "note": "Local canonical smoke against configured provider. Does not by itself prove production Worker path."
+}
