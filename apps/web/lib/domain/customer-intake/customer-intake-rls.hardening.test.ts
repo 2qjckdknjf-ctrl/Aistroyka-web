@@ -10,6 +10,10 @@ const membershipSql = readFileSync(
   resolve(__dirname, "../../../supabase/migrations/20261003221500_restore_active_stakeholder_membership.sql"),
   "utf8"
 );
+const statusSql = readFileSync(
+  resolve(__dirname, "../../../supabase/migrations/20261003223000_lock_stakeholder_status_transitions.sql"),
+  "utf8"
+);
 
 type Grant = { tenantId: string; projectId: string; status: "active" | "revoked" };
 
@@ -317,7 +321,7 @@ function sqlLocationValid(raw: unknown): boolean {
 }
 
 const SQL_HTTPS_URL =
-  /^https:\/\/(?:(?:%[0-9A-Fa-f]{2}|[A-Za-z0-9._~!$&'()*+,;=:-])+@)?(?:localhost|(?:(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])|(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)(?:\.(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?))*)(?::(?:6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-5][0-9]{4}|[1-9][0-9]{0,3}|0))?(?:[/?#](?:%[0-9A-Fa-f]{2}|[A-Za-z0-9._~!$&'()*+,;=:@/?-])*)?$/;
+  /^https:\/\/(?:(?:%[0-9A-Fa-f]{2}|[A-Za-z0-9._~!$&'()*+,;=:-])+@)?(?:localhost|(?:(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])|(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)(?:\.(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?))*)(?::(?:6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-5][0-9]{4}|[1-9][0-9]{0,3}|0))?(?:[/?#](?:%[0-9A-Fa-f]{2}|[\][A-Za-z0-9._~!$&'()*+,;=:@/?-])*)?$/;
 
 function sqlHttpsUrlValid(raw: string | null): boolean {
   if (raw == null) return false;
@@ -371,11 +375,17 @@ describe("customer intake question storage length contract", () => {
 });
 
 describe("customer intake media URL storage contract", () => {
+  it("stores WHATWG path and query characters including brackets", () => {
+    expect(sql).toMatch(/\[\]\[A-Za-z0-9\._~!\$&''\(\)\*\+,;=:@\/\?-\]/);
+  });
+
   it("accepts absolute https URLs with a host and optional query", () => {
     expect(sqlHttpsUrlValid("https://example.com/file.jpg")).toBe(true);
     expect(sqlHttpsUrlValid("https://cdn.example.com/path?q=1")).toBe(true);
     expect(sqlHttpsUrlValid("https://user@example.com/file.jpg")).toBe(true);
     expect(sqlHttpsUrlValid("https://%41@example.com/file.jpg")).toBe(true);
+    expect(sqlHttpsUrlValid("https://example.com/?tags[]=photo")).toBe(true);
+    expect(sqlHttpsUrlValid("https://example.com/[preview]")).toBe(true);
   });
 
   it("rejects empty hosts, http, spaces, malformed percent encoding, and overlong URLs", () => {
@@ -405,5 +415,14 @@ describe("active stakeholder membership restore", () => {
   it("lets an active matching user_id restore stakeholder tenant membership", () => {
     expect(membershipSql).toMatch(/ps\.status = 'active' and ps\.user_id = \(select auth\.uid\(\)\)/);
     expect(membershipSql).toMatch(/ps\.status = 'invited' and ps\.expires_at > now\(\)/);
+  });
+});
+
+describe("project_stakeholders status transitions", () => {
+  it("blocks invitees from restoring a revoked grant", () => {
+    expect(statusSql).toMatch(/old\.status = 'invited'/);
+    expect(statusSql).toMatch(/new\.status = 'active'/);
+    expect(statusSql).toMatch(/project_stakeholders\.status change not permitted/);
+    expect(statusSql).toMatch(/can_manage_project_membership/);
   });
 });

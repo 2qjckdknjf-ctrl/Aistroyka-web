@@ -455,6 +455,12 @@ describe("parseMediaRefs URL contract", () => {
     expect(parseMediaRefs([{ kind: "image", url: "https://cdn.example.com/path?q=1" }])).toEqual({
       media_refs: [{ kind: "image", url: "https://cdn.example.com/path?q=1" }],
     });
+    expect(parseMediaRefs([{ kind: "image", url: "https://example.com/?tags[]=photo" }])).toEqual({
+      media_refs: [{ kind: "image", url: "https://example.com/?tags[]=photo" }],
+    });
+    expect(parseMediaRefs([{ kind: "image", url: "https://example.com/[preview]" }])).toEqual({
+      media_refs: [{ kind: "image", url: "https://example.com/[preview]" }],
+    });
     expect(parseMediaRefs([{ kind: "image", url: "https://user@example.com/file.jpg" }])).toEqual({
       media_refs: [{ kind: "image", url: "https://user@example.com/file.jpg" }],
     });
