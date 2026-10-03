@@ -72,14 +72,25 @@ async function listAllRowIds(
 
 async function selectInChunks<T>(
   ids: string[],
-  loadChunk: (chunk: string[]) => Promise<{ data: T[] | null; error: { message?: string } | null }>
+  loadPage: (
+    chunk: string[],
+    from: number,
+    to: number
+  ) => Promise<{ data: T[] | null; error: { message?: string } | null }>
 ): Promise<T[]> {
   const acc: T[] = [];
   for (const chunk of chunkIds(ids)) {
     if (chunk.length === 0) continue;
-    const { data, error } = await loadChunk(chunk);
-    if (error) throw new Error(PENDING_REPORT_COUNT_FAILED);
-    acc.push(...(data ?? []));
+    let from = 0;
+    for (;;) {
+      const to = from + PROJECT_SUMMARY_ID_PAGE_SIZE - 1;
+      const { data, error } = await loadPage(chunk, from, to);
+      if (error) throw new Error(PENDING_REPORT_COUNT_FAILED);
+      const rows = data ?? [];
+      acc.push(...rows);
+      if (rows.length < PROJECT_SUMMARY_ID_PAGE_SIZE) break;
+      from += PROJECT_SUMMARY_ID_PAGE_SIZE;
+    }
   }
   return acc;
 }
@@ -106,13 +117,15 @@ export async function countSubmittedReportsForProject(
   const ids = new Set<string>();
 
   if (projectDayIds.length > 0) {
-    const dayReports = await selectInChunks<{ id: string }>(projectDayIds, async (chunk) => {
+    const dayReports = await selectInChunks<{ id: string }>(projectDayIds, async (chunk, from, to) => {
       const { data, error } = await supabase
         .from("worker_reports")
         .select("id")
         .eq("tenant_id", tenantId)
         .eq("status", "submitted")
-        .in("day_id", chunk);
+        .in("day_id", chunk)
+        .order("id", { ascending: true })
+        .range(from, to);
       return { data, error };
     });
     for (const row of dayReports) ids.add(row.id);
@@ -121,13 +134,15 @@ export async function countSubmittedReportsForProject(
   const taskIds = await listAllRowIds(supabase, "worker_tasks", tenantId, projectId);
   if (taskIds.length === 0) return ids.size;
 
-  const reports = await selectInChunks<SubmittedTaskReportRow>(taskIds, async (chunk) => {
+  const reports = await selectInChunks<SubmittedTaskReportRow>(taskIds, async (chunk, from, to) => {
     const { data, error } = await supabase
       .from("worker_reports")
       .select("id, day_id")
       .eq("tenant_id", tenantId)
       .eq("status", "submitted")
-      .in("task_id", chunk);
+      .in("task_id", chunk)
+      .order("id", { ascending: true })
+      .range(from, to);
     return { data, error };
   });
   const otherDayIds = [
@@ -162,12 +177,14 @@ async function projectIdByRowId(
 ): Promise<Map<string, string | null>> {
   const byId = new Map<string, string | null>();
   if (ids.length === 0) return byId;
-  const rows = await selectInChunks<IdProjectRow>(ids, async (chunk) => {
+  const rows = await selectInChunks<IdProjectRow>(ids, async (chunk, from, to) => {
     const { data, error } = await supabase
       .from("worker_day")
       .select("id, project_id")
       .eq("tenant_id", tenantId)
-      .in("id", chunk);
+      .in("id", chunk)
+      .order("id", { ascending: true })
+      .range(from, to);
     return { data, error };
   });
   for (const row of rows) {

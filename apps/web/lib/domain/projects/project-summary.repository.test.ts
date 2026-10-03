@@ -7,12 +7,17 @@ import {
 
 type TaskReport = { id: string; day_id: string | null; task_id: string };
 
+function pageRows<T extends { id: string }>(rows: T[], from: number, to: number): T[] {
+  return [...rows].sort((a, b) => a.id.localeCompare(b.id)).slice(from, to + 1);
+}
+
 function createSummaryMock(opts: {
   dayReports?: { id: string }[];
   tasks?: { id: string }[];
   taskReports?: TaskReport[];
   otherDays?: { id: string; project_id: string | null }[];
   failTaskChunk?: string;
+  failTaskReportPageFrom?: number;
 }) {
   const tasks = [...(opts.tasks ?? [])].sort((a, b) => a.id.localeCompare(b.id));
   return {
@@ -26,17 +31,30 @@ function createSummaryMock(opts: {
                   eq() {
                     return {
                       in(col: string, ids: string[]) {
-                        if (opts.failTaskChunk && col === "task_id" && ids.includes(opts.failTaskChunk)) {
-                          return Promise.resolve({ data: null, error: { message: "timeout" } });
-                        }
-                        if (col === "day_id") {
-                          if (ids.includes("day-this")) {
-                            return Promise.resolve({ data: opts.dayReports ?? [], error: null });
-                          }
-                          return Promise.resolve({ data: [], error: null });
-                        }
-                        const data = (opts.taskReports ?? []).filter((row) => ids.includes(row.task_id));
-                        return Promise.resolve({ data, error: null });
+                        return {
+                          order() {
+                            return {
+                              range(from: number, to: number) {
+                                if (opts.failTaskChunk && col === "task_id" && ids.includes(opts.failTaskChunk)) {
+                                  return Promise.resolve({ data: null, error: { message: "timeout" } });
+                                }
+                                if (
+                                  opts.failTaskReportPageFrom !== undefined &&
+                                  col === "task_id" &&
+                                  from >= opts.failTaskReportPageFrom
+                                ) {
+                                  return Promise.resolve({ data: null, error: { message: "timeout" } });
+                                }
+                                if (col === "day_id") {
+                                  const data = ids.includes("day-this") ? opts.dayReports ?? [] : [];
+                                  return Promise.resolve({ data: pageRows(data, from, to), error: null });
+                                }
+                                const data = (opts.taskReports ?? []).filter((row) => ids.includes(row.task_id));
+                                return Promise.resolve({ data: pageRows(data, from, to), error: null });
+                              },
+                            };
+                          },
+                        };
                       },
                     };
                   },
@@ -79,7 +97,15 @@ function createSummaryMock(opts: {
               eq() {
                 return {
                   in() {
-                    return Promise.resolve({ data: opts.otherDays ?? [], error: null });
+                    return {
+                      order() {
+                        return {
+                          range(from: number, to: number) {
+                            return Promise.resolve({ data: pageRows(opts.otherDays ?? [], from, to), error: null });
+                          },
+                        };
+                      },
+                    };
                   },
                 };
               },
@@ -146,6 +172,21 @@ describe("countSubmittedReportsForProject", () => {
     ).resolves.toBe(2);
   });
 
+  it("counts submitted task reports past the first result page", async () => {
+    const taskReports = Array.from({ length: PROJECT_SUMMARY_ID_PAGE_SIZE + 1 }, (_, i) => ({
+      id: `rpt-${String(i).padStart(4, "0")}`,
+      day_id: null,
+      task_id: "task-1",
+    }));
+    const supabase = createSummaryMock({
+      tasks: [{ id: "task-1" }],
+      taskReports,
+    });
+    await expect(
+      countSubmittedReportsForProject(supabase as never, "tenant-1", "proj-task", [])
+    ).resolves.toBe(PROJECT_SUMMARY_ID_PAGE_SIZE + 1);
+  });
+
   it("does not return a partial count when a later task chunk fails", async () => {
     const tasks = Array.from({ length: PROJECT_SUMMARY_ID_PAGE_SIZE + 1 }, (_, i) => ({
       id: `task-${String(i).padStart(4, "0")}`,
@@ -155,6 +196,22 @@ describe("countSubmittedReportsForProject", () => {
       tasks,
       taskReports: [{ id: "rpt-first", day_id: null, task_id: tasks[0]!.id }],
       failTaskChunk: lateTask,
+    });
+    await expect(
+      countSubmittedReportsForProject(supabase as never, "tenant-1", "proj-task", [])
+    ).rejects.toThrow("Pending report count failed");
+  });
+
+  it("does not return a partial count when a later report page fails", async () => {
+    const taskReports = Array.from({ length: PROJECT_SUMMARY_ID_PAGE_SIZE + 1 }, (_, i) => ({
+      id: `rpt-${String(i).padStart(4, "0")}`,
+      day_id: null,
+      task_id: "task-1",
+    }));
+    const supabase = createSummaryMock({
+      tasks: [{ id: "task-1" }],
+      taskReports,
+      failTaskReportPageFrom: PROJECT_SUMMARY_ID_PAGE_SIZE,
     });
     await expect(
       countSubmittedReportsForProject(supabase as never, "tenant-1", "proj-task", [])
