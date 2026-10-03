@@ -1,12 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { countSubmittedReportsForProject } from "./project-summary.repository";
+import {
+  chunkIds,
+  countSubmittedReportsForProject,
+  PROJECT_SUMMARY_ID_PAGE_SIZE,
+} from "./project-summary.repository";
+
+type TaskReport = { id: string; day_id: string | null; task_id: string };
 
 function createSummaryMock(opts: {
   dayReports?: { id: string }[];
   tasks?: { id: string }[];
-  taskReports?: { id: string; day_id: string | null }[];
+  taskReports?: TaskReport[];
   otherDays?: { id: string; project_id: string | null }[];
+  failTaskChunk?: string;
 }) {
+  const tasks = [...(opts.tasks ?? [])].sort((a, b) => a.id.localeCompare(b.id));
   return {
     from(table: string) {
       if (table === "worker_reports") {
@@ -17,11 +25,18 @@ function createSummaryMock(opts: {
                 return {
                   eq() {
                     return {
-                      in(_col: string, ids: string[]) {
-                        if (ids.includes("day-this")) {
-                          return Promise.resolve({ data: opts.dayReports ?? [], error: null });
+                      in(col: string, ids: string[]) {
+                        if (opts.failTaskChunk && col === "task_id" && ids.includes(opts.failTaskChunk)) {
+                          return Promise.resolve({ data: null, error: { message: "timeout" } });
                         }
-                        return Promise.resolve({ data: opts.taskReports ?? [], error: null });
+                        if (col === "day_id") {
+                          if (ids.includes("day-this")) {
+                            return Promise.resolve({ data: opts.dayReports ?? [], error: null });
+                          }
+                          return Promise.resolve({ data: [], error: null });
+                        }
+                        const data = (opts.taskReports ?? []).filter((row) => ids.includes(row.task_id));
+                        return Promise.resolve({ data, error: null });
                       },
                     };
                   },
@@ -38,7 +53,18 @@ function createSummaryMock(opts: {
               eq() {
                 return {
                   eq() {
-                    return Promise.resolve({ data: opts.tasks ?? [], error: null });
+                    return {
+                      order() {
+                        return {
+                          range(from: number, to: number) {
+                            return Promise.resolve({
+                              data: tasks.slice(from, to + 1),
+                              error: null,
+                            });
+                          },
+                        };
+                      },
+                    };
                   },
                 };
               },
@@ -66,12 +92,23 @@ function createSummaryMock(opts: {
   };
 }
 
+describe("chunkIds", () => {
+  it("splits into bounded disjoint pages", () => {
+    const ids = Array.from({ length: PROJECT_SUMMARY_ID_PAGE_SIZE + 1 }, (_, i) => `t-${i}`);
+    const chunks = chunkIds(ids);
+    expect(chunks).toHaveLength(2);
+    expect(chunks[0]).toHaveLength(PROJECT_SUMMARY_ID_PAGE_SIZE);
+    expect(chunks[1]).toEqual([`t-${PROJECT_SUMMARY_ID_PAGE_SIZE}`]);
+    expect(new Set(chunks.flat()).size).toBe(ids.length);
+  });
+});
+
 describe("countSubmittedReportsForProject", () => {
   it("uses task project when the linked day exists with null project_id", async () => {
     const supabase = createSummaryMock({
       dayReports: [],
       tasks: [{ id: "task-1" }],
-      taskReports: [{ id: "rpt-1", day_id: "day-null" }],
+      taskReports: [{ id: "rpt-1", day_id: "day-null", task_id: "task-1" }],
       otherDays: [{ id: "day-null", project_id: null }],
     });
     await expect(
@@ -83,11 +120,44 @@ describe("countSubmittedReportsForProject", () => {
     const supabase = createSummaryMock({
       dayReports: [],
       tasks: [{ id: "task-1" }],
-      taskReports: [{ id: "rpt-1", day_id: "day-other" }],
+      taskReports: [{ id: "rpt-1", day_id: "day-other", task_id: "task-1" }],
       otherDays: [{ id: "day-other", project_id: "proj-other" }],
     });
     await expect(
       countSubmittedReportsForProject(supabase as never, "tenant-1", "proj-task", ["day-this"])
     ).resolves.toBe(0);
+  });
+
+  it("counts a submitted report whose task is past the first page", async () => {
+    const tasks = Array.from({ length: PROJECT_SUMMARY_ID_PAGE_SIZE + 1 }, (_, i) => ({
+      id: `task-${String(i).padStart(4, "0")}`,
+    }));
+    const lateTask = tasks[PROJECT_SUMMARY_ID_PAGE_SIZE]!.id;
+    const supabase = createSummaryMock({
+      tasks,
+      taskReports: [
+        { id: "rpt-first", day_id: null, task_id: tasks[0]!.id },
+        { id: "rpt-late", day_id: null, task_id: lateTask },
+        { id: "rpt-late", day_id: null, task_id: lateTask },
+      ],
+    });
+    await expect(
+      countSubmittedReportsForProject(supabase as never, "tenant-1", "proj-task", [])
+    ).resolves.toBe(2);
+  });
+
+  it("does not return a partial count when a later task chunk fails", async () => {
+    const tasks = Array.from({ length: PROJECT_SUMMARY_ID_PAGE_SIZE + 1 }, (_, i) => ({
+      id: `task-${String(i).padStart(4, "0")}`,
+    }));
+    const lateTask = tasks[PROJECT_SUMMARY_ID_PAGE_SIZE]!.id;
+    const supabase = createSummaryMock({
+      tasks,
+      taskReports: [{ id: "rpt-first", day_id: null, task_id: tasks[0]!.id }],
+      failTaskChunk: lateTask,
+    });
+    await expect(
+      countSubmittedReportsForProject(supabase as never, "tenant-1", "proj-task", [])
+    ).rejects.toThrow("Pending report count failed");
   });
 });

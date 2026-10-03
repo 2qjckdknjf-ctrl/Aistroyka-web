@@ -27,8 +27,62 @@ export interface ProjectSummary {
 
 const PENDING_REPORT_COUNT_FAILED = "Pending report count failed";
 
+/** Bounded page for PostgREST `range` / `.in()` lists. Do not raise this to hide truncation. */
+export const PROJECT_SUMMARY_ID_PAGE_SIZE = 200;
+
 type IdProjectRow = { id: string; project_id: string | null };
 type SubmittedTaskReportRow = { id: string; day_id: string | null };
+
+export function chunkIds<T>(ids: readonly T[], size: number = PROJECT_SUMMARY_ID_PAGE_SIZE): T[][] {
+  if (size < 1) throw new Error(PENDING_REPORT_COUNT_FAILED);
+  const out: T[][] = [];
+  for (let i = 0; i < ids.length; i += size) {
+    out.push(ids.slice(i, i + size) as T[]);
+  }
+  return out;
+}
+
+async function listAllRowIds(
+  supabase: SupabaseClient,
+  table: "worker_tasks" | "worker_day",
+  tenantId: string,
+  projectId: string
+): Promise<string[]> {
+  const ids: string[] = [];
+  let from = 0;
+  for (;;) {
+    const to = from + PROJECT_SUMMARY_ID_PAGE_SIZE - 1;
+    const { data, error } = await supabase
+      .from(table)
+      .select("id")
+      .eq("tenant_id", tenantId)
+      .eq("project_id", projectId)
+      .order("id", { ascending: true })
+      .range(from, to);
+    if (error) throw new Error(PENDING_REPORT_COUNT_FAILED);
+    const rows = (data ?? []) as { id: string }[];
+    for (const row of rows) {
+      if (row.id) ids.push(row.id);
+    }
+    if (rows.length < PROJECT_SUMMARY_ID_PAGE_SIZE) break;
+    from += PROJECT_SUMMARY_ID_PAGE_SIZE;
+  }
+  return ids;
+}
+
+async function selectInChunks<T>(
+  ids: string[],
+  loadChunk: (chunk: string[]) => Promise<{ data: T[] | null; error: { message?: string } | null }>
+): Promise<T[]> {
+  const acc: T[] = [];
+  for (const chunk of chunkIds(ids)) {
+    if (chunk.length === 0) continue;
+    const { data, error } = await loadChunk(chunk);
+    if (error) throw new Error(PENDING_REPORT_COUNT_FAILED);
+    acc.push(...(data ?? []));
+  }
+  return acc;
+}
 
 function presentDayId(dayId: string | null | undefined): dayId is string {
   return typeof dayId === "string" && dayId.length > 0;
@@ -52,34 +106,30 @@ export async function countSubmittedReportsForProject(
   const ids = new Set<string>();
 
   if (projectDayIds.length > 0) {
-    const { data, error } = await supabase
-      .from("worker_reports")
-      .select("id")
-      .eq("tenant_id", tenantId)
-      .eq("status", "submitted")
-      .in("day_id", projectDayIds);
-    if (error) throw new Error(PENDING_REPORT_COUNT_FAILED);
-    for (const row of (data ?? []) as { id: string }[]) ids.add(row.id);
+    const dayReports = await selectInChunks<{ id: string }>(projectDayIds, async (chunk) => {
+      const { data, error } = await supabase
+        .from("worker_reports")
+        .select("id")
+        .eq("tenant_id", tenantId)
+        .eq("status", "submitted")
+        .in("day_id", chunk);
+      return { data, error };
+    });
+    for (const row of dayReports) ids.add(row.id);
   }
 
-  const { data: taskRows, error: taskError } = await supabase
-    .from("worker_tasks")
-    .select("id")
-    .eq("tenant_id", tenantId)
-    .eq("project_id", projectId);
-  if (taskError) throw new Error(PENDING_REPORT_COUNT_FAILED);
-  const taskIds = ((taskRows ?? []) as { id: string }[]).map((row) => row.id);
+  const taskIds = await listAllRowIds(supabase, "worker_tasks", tenantId, projectId);
   if (taskIds.length === 0) return ids.size;
 
-  const { data: taskReports, error: taskReportError } = await supabase
-    .from("worker_reports")
-    .select("id, day_id")
-    .eq("tenant_id", tenantId)
-    .eq("status", "submitted")
-    .in("task_id", taskIds);
-  if (taskReportError) throw new Error(PENDING_REPORT_COUNT_FAILED);
-
-  const reports = (taskReports ?? []) as SubmittedTaskReportRow[];
+  const reports = await selectInChunks<SubmittedTaskReportRow>(taskIds, async (chunk) => {
+    const { data, error } = await supabase
+      .from("worker_reports")
+      .select("id, day_id")
+      .eq("tenant_id", tenantId)
+      .eq("status", "submitted")
+      .in("task_id", chunk);
+    return { data, error };
+  });
   const otherDayIds = [
     ...new Set(
       reports.map((row) => row.day_id).filter((dayId): dayId is string => presentDayId(dayId) && !dayIdSet.has(dayId))
@@ -112,13 +162,15 @@ async function projectIdByRowId(
 ): Promise<Map<string, string | null>> {
   const byId = new Map<string, string | null>();
   if (ids.length === 0) return byId;
-  const { data, error } = await supabase
-    .from("worker_day")
-    .select("id, project_id")
-    .eq("tenant_id", tenantId)
-    .in("id", ids);
-  if (error) throw new Error(PENDING_REPORT_COUNT_FAILED);
-  for (const row of (data ?? []) as IdProjectRow[]) {
+  const rows = await selectInChunks<IdProjectRow>(ids, async (chunk) => {
+    const { data, error } = await supabase
+      .from("worker_day")
+      .select("id, project_id")
+      .eq("tenant_id", tenantId)
+      .in("id", chunk);
+    return { data, error };
+  });
+  for (const row of rows) {
     byId.set(row.id, row.project_id);
   }
   return byId;
@@ -135,7 +187,6 @@ export async function getProjectSummary(
 ): Promise<ProjectSummary> {
   const [
     { data: workerDays },
-    dayIdsRes,
     tasksTotalRes,
     tasksDoneRes,
     tasksInProgressRes,
@@ -148,11 +199,6 @@ export async function getProjectSummary(
     supabase
       .from("worker_day")
       .select("user_id")
-      .eq("project_id", projectId)
-      .eq("tenant_id", tenantId),
-    supabase
-      .from("worker_day")
-      .select("id")
       .eq("project_id", projectId)
       .eq("tenant_id", tenantId),
     supabase
@@ -203,8 +249,7 @@ export async function getProjectSummary(
 
   const activeWorkers = new Set((workerDays ?? []).map((r) => r.user_id)).size;
 
-  if (dayIdsRes.error) throw new Error(PENDING_REPORT_COUNT_FAILED);
-  const projectDayIds = ((dayIdsRes.data ?? []) as { id: string }[]).map((row) => row.id);
+  const projectDayIds = await listAllRowIds(supabase, "worker_day", tenantId, projectId);
   const pendingReportApprovalsCount = await countSubmittedReportsForProject(
     supabase,
     tenantId,

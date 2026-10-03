@@ -7,6 +7,8 @@ import {
   fieldDailyLogDraftBody,
   persistThenConfirmFieldDailyLog,
 } from "@/lib/domain/field-daily-log/field-daily-log-form";
+import { canWriteFieldDailyLogs } from "@/lib/domain/field-daily-log/field-daily-log-ui";
+import type { TenantRoleDb } from "@/lib/tenant/tenant.types";
 
 type FieldDailyLogStatus = "draft" | "confirmed";
 
@@ -35,8 +37,15 @@ function todayIsoDate(): string {
   return `${y}-${m}-${day}`;
 }
 
-export function ProjectFieldDailyLogPanel({ projectId }: { projectId: string }) {
+export function ProjectFieldDailyLogPanel({
+  projectId,
+  tenantRole = null,
+}: {
+  projectId: string;
+  tenantRole?: TenantRoleDb | null;
+}) {
   const t = useTranslations("projectDetail");
+  const canWrite = canWriteFieldDailyLogs(tenantRole);
   const [workDate, setWorkDate] = useState(todayIsoDate);
   const [note, setNote] = useState("");
   const [summary, setSummary] = useState("");
@@ -231,7 +240,7 @@ export function ProjectFieldDailyLogPanel({ projectId }: { projectId: string }) 
             type="date"
             value={workDate}
             onChange={(e) => setWorkDate(e.target.value)}
-            disabled={!!selected && !isDraft}
+            disabled={!canWrite || (!!selected && !isDraft)}
             className="max-w-xs rounded border border-aistroyka-border-subtle bg-aistroyka-bg-primary px-3 py-2 text-sm text-aistroyka-text-primary focus:outline-none focus:ring-2 focus:ring-aistroyka-accent focus:ring-offset-2 disabled:opacity-60"
           />
         </div>
@@ -244,7 +253,7 @@ export function ProjectFieldDailyLogPanel({ projectId }: { projectId: string }) 
             type="text"
             value={mediaRef}
             onChange={(e) => setMediaRef(e.target.value)}
-            disabled={!!selected && !isDraft}
+            disabled={!canWrite || (!!selected && !isDraft)}
             placeholder={t("fieldDailyMediaRefPlaceholder")}
             className="w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-primary px-3 py-2 text-sm text-aistroyka-text-primary placeholder:text-aistroyka-text-tertiary focus:outline-none focus:ring-2 focus:ring-aistroyka-accent focus:ring-offset-2 disabled:opacity-60"
           />
@@ -276,7 +285,7 @@ export function ProjectFieldDailyLogPanel({ projectId }: { projectId: string }) 
             rows={2}
             value={summary}
             onChange={(e) => setSummary(e.target.value)}
-            disabled={!!selected && !isDraft}
+            disabled={!canWrite || (!!selected && !isDraft)}
             className="w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-primary px-3 py-2 text-sm text-aistroyka-text-primary focus:outline-none focus:ring-2 focus:ring-aistroyka-accent focus:ring-offset-2 disabled:opacity-60"
           />
         </div>
@@ -289,7 +298,7 @@ export function ProjectFieldDailyLogPanel({ projectId }: { projectId: string }) 
             rows={2}
             value={workDone}
             onChange={(e) => setWorkDone(e.target.value)}
-            disabled={!!selected && !isDraft}
+            disabled={!canWrite || (!!selected && !isDraft)}
             className="w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-primary px-3 py-2 text-sm text-aistroyka-text-primary focus:outline-none focus:ring-2 focus:ring-aistroyka-accent focus:ring-offset-2 disabled:opacity-60"
           />
         </div>
@@ -302,7 +311,7 @@ export function ProjectFieldDailyLogPanel({ projectId }: { projectId: string }) 
             rows={2}
             value={blockers}
             onChange={(e) => setBlockers(e.target.value)}
-            disabled={!!selected && !isDraft}
+            disabled={!canWrite || (!!selected && !isDraft)}
             className="w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-primary px-3 py-2 text-sm text-aistroyka-text-primary focus:outline-none focus:ring-2 focus:ring-aistroyka-accent focus:ring-offset-2 disabled:opacity-60"
           />
         </div>
@@ -315,31 +324,51 @@ export function ProjectFieldDailyLogPanel({ projectId }: { projectId: string }) 
             type="text"
             value={weather}
             onChange={(e) => setWeather(e.target.value)}
-            disabled={!!selected && !isDraft}
+            disabled={!canWrite || (!!selected && !isDraft)}
             className="w-full rounded border border-aistroyka-border-subtle bg-aistroyka-bg-primary px-3 py-2 text-sm text-aistroyka-text-primary focus:outline-none focus:ring-2 focus:ring-aistroyka-accent focus:ring-offset-2 disabled:opacity-60"
           />
         </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        {!selected ? (
-          <Button type="button" onClick={createDraft} disabled={loading} loading={loading}>
+        {canWrite && !selected ? (
+          <Button
+            type="button"
+            onClick={createDraft}
+            disabled={loading}
+            loading={loading}
+            data-testid="field-daily-create"
+          >
             {t("fieldDailyCreateDraft")}
           </Button>
         ) : null}
-        {selected && isDraft ? (
+        {canWrite && selected && isDraft ? (
           <>
-            <Button type="button" onClick={saveDraft} disabled={loading} loading={loading}>
+            <Button
+              type="button"
+              onClick={saveDraft}
+              disabled={loading}
+              loading={loading}
+              data-testid="field-daily-save"
+            >
               {t("fieldDailySaveDraft")}
             </Button>
-            <Button type="button" onClick={confirmLog} disabled={loading} loading={loading}>
+            <Button
+              type="button"
+              onClick={confirmLog}
+              disabled={loading}
+              loading={loading}
+              data-testid="field-daily-confirm"
+            >
               {t("fieldDailyConfirm")}
             </Button>
           </>
         ) : null}
-        <Button type="button" variant="ghost" onClick={resetNew} disabled={loading}>
-          {t("fieldDailyNew")}
-        </Button>
+        {canWrite ? (
+          <Button type="button" variant="ghost" onClick={resetNew} disabled={loading} data-testid="field-daily-new">
+            {t("fieldDailyNew")}
+          </Button>
+        ) : null}
       </div>
 
       {error ? (
