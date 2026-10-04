@@ -47,3 +47,8 @@
 "cust_document_review_confirm" = "Conferma revisione documento";
 "cust_document_review_ok" = "Revisione documento confermata.";
 "cust_document_review_error" = "Impossibile confermare la revisione del documento.";
+
+"cust_feedback_placeholder" = "Il tuo feedback";
+"cust_feedback_submit" = "Invia feedback";
+"cust_feedback_ok" = "Feedback inviato.";
+"cust_feedback_error" = "Impossibile inviare il feedback.";
