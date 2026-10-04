@@ -43,3 +43,7 @@
 
 "cust_estimate_respond_ok" = "Ответ по смете отправлен.";
 "cust_estimate_respond_error" = "Не удалось отправить ответ по смете.";
+
+"cust_document_review_confirm" = "Подтвердить просмотр документа";
+"cust_document_review_ok" = "Просмотр документа подтверждён.";
+"cust_document_review_error" = "Не удалось подтвердить просмотр документа.";

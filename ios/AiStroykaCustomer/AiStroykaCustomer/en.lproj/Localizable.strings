@@ -43,3 +43,7 @@
 
 "cust_estimate_respond_ok" = "Estimate response sent.";
 "cust_estimate_respond_error" = "Could not send your estimate response.";
+
+"cust_document_review_confirm" = "Confirm document review";
+"cust_document_review_ok" = "Document review confirmed.";
+"cust_document_review_error" = "Could not confirm document review.";

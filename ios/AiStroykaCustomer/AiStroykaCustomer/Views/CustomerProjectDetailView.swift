@@ -130,15 +130,22 @@ struct CustomerProjectDetailView: View {
                             Button(NSLocalizedString("cust_request_approve", comment: "")) {
                                 Task { await respond(to: item, decision: "approve") }
                             }
-                            .disabled(respondingRequestId != nil)
+                            .disabled(respondingRequestId != nil || respondingEstimateId != nil)
                             .accessibilityIdentifier("pilot_customer_request_approve_\(item.id)")
                             Button(NSLocalizedString("cust_request_reject", comment: "")) {
                                 Task { await respond(to: item, decision: "reject") }
                             }
-                            .disabled(respondingRequestId != nil)
+                            .disabled(respondingRequestId != nil || respondingEstimateId != nil)
                             .accessibilityIdentifier("pilot_customer_request_reject_\(item.id)")
                         }
                         .buttonStyle(.bordered)
+                    } else if let portal = view, portal.canConfirmDocumentReview(to: item) {
+                        Button(NSLocalizedString("cust_document_review_confirm", comment: "")) {
+                            Task { await confirmDocumentReview(item) }
+                        }
+                        .disabled(respondingRequestId != nil || respondingEstimateId != nil)
+                        .buttonStyle(.bordered)
+                        .accessibilityIdentifier("pilot_customer_document_review_confirm_\(item.id)")
                     }
                 }
             }
@@ -161,6 +168,21 @@ struct CustomerProjectDetailView: View {
             respondMessage = apiError.message
         } catch {
             respondMessage = NSLocalizedString("cust_request_respond_error", comment: "")
+        }
+        respondingRequestId = nil
+    }
+
+    private func confirmDocumentReview(_ item: CustomerPortalProjectView.CustomerFacingRequest) async {
+        respondingRequestId = item.id
+        respondMessage = nil
+        do {
+            try await CustomerAPI.confirmDocumentReview(projectId: projectId, requestId: item.id)
+            respondMessage = NSLocalizedString("cust_document_review_ok", comment: "")
+            await load()
+        } catch let apiError as APIError {
+            respondMessage = apiError.message
+        } catch {
+            respondMessage = NSLocalizedString("cust_document_review_error", comment: "")
         }
         respondingRequestId = nil
     }

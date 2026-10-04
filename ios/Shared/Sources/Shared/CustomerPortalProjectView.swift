@@ -83,6 +83,11 @@ public struct CustomerPortalProjectView: Decodable, Sendable {
         public var supportsApproveReject: Bool {
             status == "open" && actionMode == "action_required" && kind == "approve_or_reject"
         }
+
+        /// Open action-required document_review requests (confirm-only).
+        public var supportsDocumentReviewConfirm: Bool {
+            status == "open" && actionMode == "action_required" && kind == "document_review"
+        }
     }
 
     public struct Capabilities: Decodable, Sendable {
@@ -97,6 +102,10 @@ public struct CustomerPortalProjectView: Decodable, Sendable {
     /// True when this portal view may approve/reject a sent customer estimate.
     public func canRespondApproveReject(to estimate: CustomerFacingEstimate) -> Bool {
         (capabilities?.canRespondToRequests ?? false) && estimate.supportsApproveReject
+    }
+
+    public func canConfirmDocumentReview(to request: CustomerFacingRequest) -> Bool {
+        (capabilities?.canRespondToRequests ?? false) && request.supportsDocumentReviewConfirm
     }
 
     public init(from decoder: Decoder) throws {

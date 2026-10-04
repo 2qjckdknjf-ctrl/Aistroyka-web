@@ -87,4 +87,23 @@ enum CustomerAPI {
             body: Body(decision: decision, note: note)
         )
     }
+
+    /// POST portal decisions respond with document_review_confirmed=true
+    static func confirmDocumentReview(projectId: String, requestId: String, note: String? = nil) async throws {
+        struct Body: Encodable {
+            let documentReviewConfirmed: Bool
+            let note: String?
+
+            enum CodingKeys: String, CodingKey {
+                case documentReviewConfirmed = "document_review_confirmed"
+                case note
+            }
+        }
+        struct EmptyData: Decodable {}
+        let _: Envelope<EmptyData> = try await APIClient.shared.request(
+            path: "portal/projects/\(projectId)/decisions/\(requestId)/respond",
+            method: "POST",
+            body: Body(documentReviewConfirmed: true, note: note)
+        )
+    }
 }
