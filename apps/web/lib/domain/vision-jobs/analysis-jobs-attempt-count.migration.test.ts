@@ -13,7 +13,11 @@ describe("analysis_jobs attempt_count", () => {
     expect(sql).toMatch(/record_analysis_job_failure/);
     expect(sql).toMatch(/attempt_count = attempt_count \+ 1/);
     expect(sql).toMatch(/status in \('pending', 'queued', 'processing'\)/);
+    expect(sql).toMatch(
+      /revoke all on function public\.record_analysis_job_failure\(uuid, text, text\) from public, anon, authenticated/
+    );
+    expect(sql).toMatch(/if auth\.role\(\) is distinct from 'service_role'/);
     expect(sql).toMatch(/grant execute on function public\.record_analysis_job_failure\(uuid, text, text\) to service_role/);
-    expect(sql).not.toMatch(/to authenticated/);
+    expect(sql).not.toMatch(/grant execute[^\n]*to authenticated/);
   });
 });

@@ -19,6 +19,10 @@ as $$
 declare
   n integer;
 begin
+  if auth.role() is distinct from 'service_role' then
+    raise exception 'not authorized';
+  end if;
+
   update public.analysis_jobs
   set
     status = 'failed',
@@ -40,5 +44,5 @@ $$;
 comment on function public.record_analysis_job_failure(uuid, text, text) is
   'Fail a live analysis job and increment attempt_count once. Concurrent callers cannot double-count a terminal row.';
 
-revoke all on function public.record_analysis_job_failure(uuid, text, text) from public;
+revoke all on function public.record_analysis_job_failure(uuid, text, text) from public, anon, authenticated;
 grant execute on function public.record_analysis_job_failure(uuid, text, text) to service_role;
