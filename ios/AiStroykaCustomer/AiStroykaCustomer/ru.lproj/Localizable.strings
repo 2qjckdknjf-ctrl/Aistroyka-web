@@ -23,6 +23,10 @@
 "cust_activity_empty" = "Нет событий, видимых заказчику.";
 "cust_documents_title" = "Документы";
 "cust_documents_empty" = "Документы ещё не открыты.";
+"cust_requests_title" = "Запросы для вас";
+"cust_requests_empty" = "Нет ожидающих запросов заказчика.";
+"cust_estimates_title" = "Предложения";
+"cust_estimates_empty" = "Заказчику ещё не открыты коммерческие предложения.";
 "cust_err_empty_credentials" = "Введите email и пароль.";
 "cust_err_apple_sign_in" = "Вход через Apple не вернул токен.";
 "cust_err_google_sign_in" = "Не удалось войти через Google.";
