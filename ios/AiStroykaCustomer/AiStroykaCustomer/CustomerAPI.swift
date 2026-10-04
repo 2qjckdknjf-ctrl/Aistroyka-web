@@ -49,4 +49,23 @@ enum CustomerAPI {
         let env: Envelope<PortalProjectView> = try await APIClient.shared.request(path: "portal/projects/\(id)")
         return env.data
     }
+
+    /// POST /api/v1/portal/projects/:id/decisions/:requestId/respond
+    static func respondToPortalDecision(
+        projectId: String,
+        requestId: String,
+        decision: String,
+        note: String? = nil
+    ) async throws {
+        struct Body: Encodable {
+            let decision: String
+            let note: String?
+        }
+        struct EmptyData: Decodable {}
+        let _: Envelope<EmptyData> = try await APIClient.shared.request(
+            path: "portal/projects/\(projectId)/decisions/\(requestId)/respond",
+            method: "POST",
+            body: Body(decision: decision, note: note)
+        )
+    }
 }

@@ -7,6 +7,8 @@ struct CustomerProjectDetailView: View {
     @State private var view: CustomerPortalProjectView?
     @State private var message: String?
     @State private var loading = true
+    @State private var respondingRequestId: String?
+    @State private var respondMessage: String?
 
     var body: some View {
         Group {
@@ -102,6 +104,12 @@ struct CustomerProjectDetailView: View {
             Text(NSLocalizedString("cust_requests_title", comment: ""))
                 .font(.headline)
                 .foregroundStyle(CustomerTokens.textPrimary)
+            if let respondMessage {
+                Text(respondMessage)
+                    .font(.caption)
+                    .foregroundStyle(CustomerTokens.textSecondary)
+                    .accessibilityIdentifier("pilot_customer_request_respond_status")
+            }
             if requests.isEmpty {
                 Text(NSLocalizedString("cust_requests_empty", comment: ""))
                     .foregroundStyle(CustomerTokens.textSecondary)
@@ -114,10 +122,46 @@ struct CustomerProjectDetailView: View {
                     else { return nil }
                     return CustomerPortalProjectView.formatCustomerAmount(amount: value, currency: code)
                 }()
-                labeled(item.title, value: amount.map { "\(item.status) · \($0)" } ?? item.status)
+                VStack(alignment: .leading, spacing: 8) {
+                    labeled(item.title, value: amount.map { "\(item.status) · \($0)" } ?? item.status)
+                    if let portal = view, portal.canRespondApproveReject(to: item) {
+                        HStack(spacing: 12) {
+                            Button(NSLocalizedString("cust_request_approve", comment: "")) {
+                                Task { await respond(to: item, decision: "approve") }
+                            }
+                            .disabled(respondingRequestId != nil)
+                            .accessibilityIdentifier("pilot_customer_request_approve_\(item.id)")
+                            Button(NSLocalizedString("cust_request_reject", comment: "")) {
+                                Task { await respond(to: item, decision: "reject") }
+                            }
+                            .disabled(respondingRequestId != nil)
+                            .accessibilityIdentifier("pilot_customer_request_reject_\(item.id)")
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                }
             }
         }
         .accessibilityIdentifier("pilot_customer_project_requests")
+    }
+
+    private func respond(to item: CustomerPortalProjectView.CustomerFacingRequest, decision: String) async {
+        respondingRequestId = item.id
+        respondMessage = nil
+        do {
+            try await CustomerAPI.respondToPortalDecision(
+                projectId: projectId,
+                requestId: item.id,
+                decision: decision
+            )
+            respondMessage = NSLocalizedString("cust_request_respond_ok", comment: "")
+            await load()
+        } catch let apiError as APIError {
+            respondMessage = apiError.message
+        } catch {
+            respondMessage = NSLocalizedString("cust_request_respond_error", comment: "")
+        }
+        respondingRequestId = nil
     }
 
     private func estimatesSection(_ estimates: [CustomerPortalProjectView.CustomerFacingEstimate]) -> some View {
