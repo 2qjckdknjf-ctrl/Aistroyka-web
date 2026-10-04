@@ -18,6 +18,11 @@ public enum AppRuntime {
         await APIClient.shared.setClientProfile(MobileClientProfile.manager.rawValue)
     }
 
+    /// Configure `APIClient` for AiStroyka Customer (`x-client: ios_customer`).
+    public static func configureSharedNetworkingForCustomer() async {
+        await APIClient.shared.setClientProfile(MobileClientProfile.customer.rawValue)
+    }
+
     // MARK: - Help API payloads
 
     /// `POST /help/hints` and `POST /help/assistant` use `LaunchRole` (`manager` | `admin` | `client` | `owner`). There is no `worker` key; field-worker apps use the manager hint pack.

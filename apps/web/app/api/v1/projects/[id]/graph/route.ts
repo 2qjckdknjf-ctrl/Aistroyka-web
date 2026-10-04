@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClientFromRequest } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
-import { getProject } from "@/lib/domain/projects/project.service";
+import { getById as getProjectRow } from "@/lib/domain/projects/project.repository";
 import { queryProjectConstructionGraph } from "@/lib/domain/construction-graph/construction-graph.repository";
 
 export const dynamic = "force-dynamic";
@@ -47,10 +47,11 @@ export async function GET(
   if (access.error) return NextResponse.json({ error: access.error }, { status: 500 });
   if (!access.ok) return NextResponse.json({ error: "Insufficient rights" }, { status: 403 });
 
-  const { data: project, error: projectError } = await getProject(supabase, ctx, id);
-  if (projectError || !project) {
-    const status = projectError === "Insufficient rights" ? 403 : 404;
-    return NextResponse.json({ error: projectError ?? "Not found" }, { status });
+  // Existence check only. Workspace vs portal authorization already ran above;
+  // getProject() would 403 stakeholders via canReadProjects (viewer+).
+  const project = await getProjectRow(supabase, id, ctx.tenantId!);
+  if (!project) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
   const { graph, error } = await queryProjectConstructionGraph(supabase, ctx.tenantId!, id);

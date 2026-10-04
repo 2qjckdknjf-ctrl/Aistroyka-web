@@ -23,6 +23,7 @@ describe("isLiteWorkerClient", () => {
     expect(isLiteWorkerClient(ctx("ios_manager"))).toBe(false);
     expect(isLiteWorkerClient(ctx("android_manager"))).toBe(false);
     expect(isLiteWorkerClient(ctx("ios_full"))).toBe(false);
+    expect(isLiteWorkerClient(ctx("ios_customer"))).toBe(false);
     expect(isLiteWorkerClient(ctx("android_full"))).toBe(false);
   });
 });
