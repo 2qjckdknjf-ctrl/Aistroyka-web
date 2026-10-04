@@ -17,6 +17,7 @@ class PreflightTests(unittest.TestCase):
         self.git('init', '-b', 'main')
         self.git('config', 'user.name', 'Test')
         self.git('config', 'user.email', 'test@example.com')
+        self.git('remote', 'add', 'origin', 'https://github.com/2qjckdknjf-ctrl/Aistroyka-web.git')
         (self.root / 'file.txt').write_text('first\n')
         self.git('add', 'file.txt')
         self.git('commit', '-m', 'first')
@@ -51,6 +52,10 @@ class PreflightTests(unittest.TestCase):
         self.git('update-ref', '-d', 'refs/remotes/origin/main')
         with self.assertRaises(RuntimeError):
             module.inspect(self.root)
+
+    def test_unrelated_repository_cannot_pass_as_aistroyka(self):
+        self.git('remote', 'set-url', 'origin', 'https://github.com/example/unrelated.git')
+        self.assertEqual(module.inspect(self.root)['verdict'], 'RECONCILE_FIRST')
 
 
 if __name__ == '__main__':

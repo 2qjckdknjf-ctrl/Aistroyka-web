@@ -21,6 +21,9 @@ def inspect(cwd, resume_pr=None):
     behind, ahead = map(int, git(root, 'rev-list', '--left-right', '--count', 'origin/main...HEAD').split())
     dirty = bool(git(root, 'status', '--porcelain', '--untracked-files=all'))
     problems = []
+    origin = git(root, 'remote', 'get-url', 'origin').lower().removesuffix('.git').rstrip('/')
+    if origin not in ['git@github.com:2qjckdknjf-ctrl/aistroyka-web', 'https://github.com/2qjckdknjf-ctrl/aistroyka-web', 'ssh://git@github.com/2qjckdknjf-ctrl/aistroyka-web']:
+        problems.append('Origin is not the canonical AISTROYKA repository; verify the workspace before continuing.')
     if behind:
         problems.append(f'Checkout is missing {behind} commits from origin/main; reconcile before new work.')
     if dirty:
