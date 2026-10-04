@@ -9,8 +9,10 @@
 
 ```sh
 python3 scripts/ops/workspace_preflight.py --refresh
-# Для продолжения конкретного PR:
-python3 scripts/ops/workspace_preflight.py --refresh --resume-pr 375
+# Для продолжения: подставьте номер ОТКРЫТОГО PR из актуального реестра.
+# Сначала перейдите в его чистую рабочую папку и ветку.
+read -r PR_NUMBER
+python3 scripts/ops/workspace_preflight.py --refresh --resume-pr "${PR_NUMBER:?Введите номер открытого PR}"
 ```
 
 `CURRENT_BASELINE` подтверждает актуальность исходной ветки. Это не проверка готовности функций. `RECONCILE_FIRST` требует сверки ветки или сохранения локальных изменений; не начинайте ещё одну реализацию.
