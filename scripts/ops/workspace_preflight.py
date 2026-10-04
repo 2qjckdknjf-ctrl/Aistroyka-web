@@ -20,6 +20,7 @@ def inspect(cwd, resume_pr=None):
     main = git(root, 'rev-parse', 'origin/main')
     behind, ahead = map(int, git(root, 'rev-list', '--left-right', '--count', 'origin/main...HEAD').split())
     dirty = bool(git(root, 'status', '--porcelain', '--untracked-files=all'))
+    branch = git(root, 'branch', '--show-current')
     problems = []
     origin = git(root, 'remote', 'get-url', 'origin').lower().removesuffix('.git').rstrip('/')
     if origin not in ['git@github.com:2qjckdknjf-ctrl/aistroyka-web', 'https://github.com/2qjckdknjf-ctrl/aistroyka-web', 'ssh://git@github.com/2qjckdknjf-ctrl/aistroyka-web']:
@@ -31,16 +32,20 @@ def inspect(cwd, resume_pr=None):
     if ahead and resume_pr is None:
         problems.append('This branch already contains committed work; resume its PR instead of starting another task here.')
     if resume_pr is not None:
-        result = subprocess.run(['gh', 'pr', 'view', str(resume_pr), '--repo', '2qjckdknjf-ctrl/Aistroyka-web', '--json', 'headRefOid,state'], capture_output=True, text=True)
+        if not branch:
+            problems.append('PR continuation requires an attached branch; switch to the PR branch before resuming.')
+        result = subprocess.run(['gh', 'pr', 'view', str(resume_pr), '--repo', '2qjckdknjf-ctrl/Aistroyka-web', '--json', 'headRefOid,headRefName,state'], capture_output=True, text=True)
         if result.returncode:
             problems.append('Cannot verify the requested PR; do not infer its current head from local state.')
         else:
             pr = json.loads(result.stdout)
             if pr['state'] != 'OPEN':
                 problems.append('Requested PR is already closed or merged; check main before repeating it.')
+            elif pr['headRefName'] != branch:
+                problems.append('Local branch differs from the PR branch; switch to the PR branch before resuming.')
             elif pr['headRefOid'] != head:
                 problems.append('Local HEAD differs from the current PR HEAD; reconcile before resuming.')
-    return {'path': str(root), 'branch': git(root, 'branch', '--show-current') or 'DETACHED', 'head': head, 'main': main, 'behind_main': behind, 'ahead_main': ahead, 'dirty': dirty, 'verdict': 'RECONCILE_FIRST' if problems else 'CURRENT_BASELINE', 'reasons': problems}
+    return {'path': str(root), 'branch': branch or 'DETACHED', 'head': head, 'main': main, 'behind_main': behind, 'ahead_main': ahead, 'dirty': dirty, 'verdict': 'RECONCILE_FIRST' if problems else 'CURRENT_BASELINE', 'reasons': problems}
 
 
 def main():

@@ -65,12 +65,12 @@ class PreflightTests(unittest.TestCase):
         self.git('commit', '-am', 'task work')
         return self.git('rev-parse', 'HEAD')
 
-    def inspect_with_pr(self, state, head):
+    def inspect_with_pr(self, state, head, branch='docs/existing-task'):
         original_run = subprocess.run
 
         def run(args, **kwargs):
             if args[0] == 'gh':
-                return subprocess.CompletedProcess(args, 0, stdout=json.dumps({'state': state, 'headRefOid': head}), stderr='')
+                return subprocess.CompletedProcess(args, 0, stdout=json.dumps({'state': state, 'headRefOid': head, 'headRefName': branch}), stderr='')
             return original_run(args, **kwargs)
 
         with patch.object(module.subprocess, 'run', side_effect=run):
@@ -85,6 +85,16 @@ class PreflightTests(unittest.TestCase):
     def test_current_open_pr_can_resume_committed_task(self):
         head = self.commit_task_work()
         self.assertEqual(self.inspect_with_pr('OPEN', head)['verdict'], 'CURRENT_BASELINE')
+
+    def test_detached_pr_head_cannot_resume(self):
+        head = self.commit_task_work()
+        self.git('switch', '--detach', head)
+        self.assertEqual(self.inspect_with_pr('OPEN', head)['verdict'], 'RECONCILE_FIRST')
+
+    def test_other_branch_at_pr_head_cannot_resume(self):
+        head = self.commit_task_work()
+        self.git('switch', '-c', 'docs/unrelated-task')
+        self.assertEqual(self.inspect_with_pr('OPEN', head)['verdict'], 'RECONCILE_FIRST')
 
     def test_closed_pr_cannot_resume_as_new_work(self):
         head = self.commit_task_work()
