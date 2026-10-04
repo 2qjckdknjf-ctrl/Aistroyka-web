@@ -26,7 +26,7 @@
 - **Runtime/deploy:** OpenNext → **Cloudflare Workers**. Vercel is preview/secondary only.
 - **DB/Auth:** Supabase (Postgres + Auth + RLS). Migrations in `apps/web/supabase/migrations/`.
 - **AI/Copilot:** in `apps/web` only (no repo Python backend). Live gate: `bash scripts/smoke/ai_live_provider.sh --require-live`.
-- **iOS:** `ios/` — AiStroykaManager + AiStroykaWorker + Shared (SPM), Xcode projects with UITest targets. Primary mobile contour. **Customer iOS auth foundation is on main after PR #372; project-list/detail work continues in PR #375. Presence of a target is not store/device certification.**
+- **iOS:** `ios/` — AiStroykaManager + AiStroykaWorker + Shared (SPM), Xcode projects with UITest targets. Primary mobile contour. **Customer iOS auth foundation is on main after PR #372; project-list/detail work is on main after PR #375. Next work requires device, deployment and access-flow verification before another slice. Presence of a target is not store/device certification.**
 - **Android:** `android/` — Manager + Worker Compose apps + shared (thinner than iOS). First-pilot Android remains deferred unless the owner reverses that decision.
 - **Monorepo:** Bun 1.2.15 workspaces (`apps/web`, `packages/contracts`); shared libs in `packages/`.
 
