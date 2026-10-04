@@ -53,7 +53,8 @@ begin
     end if;
     return new;
   end if;
-  if old.status in ('completed', 'failed') then
+  -- SUCCEEDED is immutable. FAILED_RETRYABLE must remain re-queueable via trigger_analysis (failed → queued).
+  if old.status = 'completed' then
     if new.status is distinct from old.status
       or new.error_message is distinct from old.error_message
       or new.error_type is distinct from old.error_type
@@ -61,7 +62,7 @@ begin
       or new.request_key is distinct from old.request_key
       or new.attempt_count is distinct from old.attempt_count
     then
-      raise exception 'analysis_jobs terminal rows are immutable';
+      raise exception 'analysis_jobs completed rows are immutable';
     end if;
   end if;
   return new;

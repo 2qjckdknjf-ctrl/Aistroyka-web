@@ -125,4 +125,14 @@ describe("createVisionAnalysisJob", () => {
       priority: "normal",
     });
   });
+
+  it("rejects a non-string request_key", async () => {
+    const r = await createVisionAnalysisJob({ from: vi.fn() } as never, {
+      tenantId: "t1",
+      projectId: "p1",
+      mediaId: "media-1",
+      requestKey: 1 as never,
+    });
+    expect(r).toMatchObject({ ok: false, status: 400 });
+  });
 });

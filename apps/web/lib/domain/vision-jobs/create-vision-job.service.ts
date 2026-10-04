@@ -49,6 +49,9 @@ export async function createVisionAnalysisJob(
   supabase: SupabaseClient,
   input: CreateVisionAnalysisJobInput
 ): Promise<CreateVisionAnalysisJobResult> {
+  if (input.requestKey != null && typeof input.requestKey !== "string") {
+    return { ok: false, error: "request_key must be a string", status: 400 };
+  }
   const { data: media, error: mediaErr } = await supabase
     .from("media")
     .select("id, tenant_id, project_id")

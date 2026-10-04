@@ -24,6 +24,9 @@ describe("analysis_jobs async identity migration", () => {
   it("rejects INSERT of terminal statuses and keeps completed rows immutable", () => {
     expect(sql).toMatch(/tg_op = 'INSERT'/);
     expect(sql).toMatch(/cannot be inserted in a terminal status/);
-    expect(sql).toMatch(/terminal rows are immutable/);
+    expect(sql).toMatch(/old\.status = 'completed'/);
+    expect(sql).toMatch(/completed rows are immutable/);
+    expect(sql).not.toMatch(/old\.status in \('completed', 'failed'\)/);
+    expect(sql).toMatch(/failed → queued/);
   });
 });
