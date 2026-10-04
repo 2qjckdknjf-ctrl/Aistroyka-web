@@ -11,7 +11,7 @@
 | Сохранение/архив/дубликаты | [результат](docs/reconciliation/workspace-2026-10-04/RESULT.md) |
 | Публикация | `/api/v1/health` production и staging; SHA в Git не доказывает развёртывание |
 
-Код #371, #373 (Construction Graph read slice), #374 (Vision lifecycle) уже в базовом main. Во время уборки также объединено основание Customer iOS #372. Не реализовывать заново по старым TODO. Customer iOS #375, Graph persistence #376, async Vision start #377, intake #378 и Agentic имеют существующие ветки; искать и продолжать их.
+Код #371, #373 (Construction Graph read slice), #374 (Vision lifecycle) уже в базовом main. Во время уборки также объединено основание Customer iOS #372. Не реализовывать заново по старым TODO. При заключительной сверке #375 (Customer iOS список/детали), #376 (Graph persistence), #377 (async Vision start) и #378 (Intake) также уже объединены в main. Проверять публикацию, миграции и устройства; не повторять эти реализации. Agentic и остальные незавершённые задачи искать в реестре.
 
 Пилотный scope остаётся `contractor-ops-only`, классификация `production-capable / controlled-pilot candidate`. Первый срез Graph/lifecycle не означает полноту продукта, portal READY или Public GA.
 

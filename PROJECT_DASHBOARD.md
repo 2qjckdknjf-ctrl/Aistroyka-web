@@ -4,10 +4,11 @@
 
 | Очередь | Уже в main | Продолжить существующее |
 |---|---|---|
-| Customer iOS | #372 основание/auth (объединено во время уборки) | #375 список/детали |
-| Construction Graph | #373 чтение графа | #376 сохранение overlay metadata |
-| Vision | #374 lifecycle | #377 создание/запуск async jobs |
-| Intake, Agentic, Site Intelligence, AI Flywheel, старые UI/mobile | Сверять конкретную функцию | [реестр](docs/tasks/ACTIVE_WORK_REGISTRY.csv), без новой параллельной реализации |
+| Customer iOS | #372 основание/auth, #375 список/детали | Проверка устройств и публикации |
+| Construction Graph | #373 чтение, #376 overlay persistence | Применённость миграций и live-сценарий |
+| Vision | #374 lifecycle, #377 async jobs | Применённость миграций и live-сценарий |
+| Intake | #378 draft intake | Миграции и сценарии доступа |
+| Agentic, Site Intelligence, AI Flywheel, старые UI/mobile | Сверять конкретную функцию | [реестр](docs/tasks/ACTIVE_WORK_REGISTRY.csv), без новой параллельной реализации |
 
 Открытые PR и статусы меняются. Перед продолжением проверить текущий HEAD, base, замечания review и обязательные проверки. Закрытие старого PR как заменённого не является подтверждением live-сценария.
 
