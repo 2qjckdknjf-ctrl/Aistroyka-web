@@ -124,7 +124,19 @@ describe("POST /api/v1/ai/analyze-video-daily", () => {
     aiMocks.analyzeVideoDailyWork.mockResolvedValue(validAnalysis);
   });
 
-  it("returns 503 when Gemini is not configured", async () => {
+  it("returns 401 for anonymous callers before Gemini config disclosure", async () => {
+    vi.stubEnv("GOOGLE_AI_API_KEY", "");
+    vi.stubEnv("GEMINI_API_KEY", "");
+    tenantMocks.getTenantContextFromRequest.mockResolvedValueOnce(absentTenant);
+    tenantMocks.requireTenant.mockImplementationOnce(() => {
+      throw new tenantMocks.TenantRequiredError("Tenant required");
+    });
+
+    const res = await POST(jsonRequest({ video_url: "https://example.com/a.mp4" }));
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 503 when Gemini is not configured for an authenticated tenant", async () => {
     vi.stubEnv("GOOGLE_AI_API_KEY", "");
     vi.stubEnv("GEMINI_API_KEY", "");
     const req = jsonRequest({ video_url: "https://example.com/a.mp4" });

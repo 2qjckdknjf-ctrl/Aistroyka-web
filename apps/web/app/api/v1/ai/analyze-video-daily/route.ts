@@ -3,7 +3,7 @@
  *
  * Request: JSON { video_url (required), work_date? (YYYY-MM-DD), media_id?, project_id? }.
  * Response: 200 DailyWorkVideoAnalysis (see @aistroyka/contracts).
- * Requires tenant auth. When project_id is set: also requires internal project access.
+ * Requires tenant auth before provider checks. When project_id is set: also requires internal project access.
  * Requires Gemini (GOOGLE_AI_API_KEY or GEMINI_API_KEY). No OpenAI/Anthropic fallback for native video.
  *
  * Compatibility path: this handler still runs analysis synchronously. Canonical async create/start
@@ -63,86 +63,8 @@ export async function POST(request: Request) {
 
   const rel = () => getAiReleaseCorrelation();
 
-  if (!isGeminiConfigured()) {
-    logVisionAnalyzeError({
-      request_id: requestId,
-      route: ROUTE_KEY,
-      latency_ms: Date.now() - start,
-      error_kind: "provider_unavailable",
-      http_status: 503,
-      ...rel(),
-    });
-    return wrap(
-      NextResponse.json(
-        { error: "Gemini is required for video daily analysis (set GOOGLE_AI_API_KEY or GEMINI_API_KEY)", request_id: requestId },
-        { status: 503 }
-      )
-    );
-  }
-
-  const contentLength = request.headers.get("content-length");
-  if (contentLength !== null && contentLength !== "" && Number(contentLength) > MAX_BODY_BYTES) {
-    logVisionAnalyzeError({
-      request_id: requestId,
-      route: ROUTE_KEY,
-      latency_ms: Date.now() - start,
-      error_kind: "validation_failure",
-      http_status: 413,
-      ...rel(),
-    });
-    return wrap(NextResponse.json({ error: "Request body too large", request_id: requestId }, { status: 413 }));
-  }
-
-  let rawBody: unknown;
-  try {
-    rawBody = await request.json();
-  } catch {
-    logVisionAnalyzeError({
-      request_id: requestId,
-      route: ROUTE_KEY,
-      latency_ms: Date.now() - start,
-      error_kind: "validation_failure",
-      http_status: 400,
-      ...rel(),
-    });
-    return wrap(NextResponse.json({ error: "Invalid JSON body", request_id: requestId }, { status: 400 }));
-  }
-
-  const parsed = AnalyzeVideoDailyRequestSchema.safeParse(rawBody);
-  if (!parsed.success) {
-    const msg =
-      parsed.error.flatten().formErrors[0] ??
-      parsed.error.flatten().fieldErrors.video_url?.[0] ??
-      "Invalid request body";
-    logVisionAnalyzeError({
-      request_id: requestId,
-      route: ROUTE_KEY,
-      latency_ms: Date.now() - start,
-      error_kind: "validation_failure",
-      http_status: 400,
-      ...rel(),
-    });
-    return wrap(NextResponse.json({ error: msg, request_id: requestId }, { status: 400 }));
-  }
-
-  const videoUrl = parsed.data.video_url.trim();
-  const urlCheck = validateVideoUrl(videoUrl);
-  if (!urlCheck.ok) {
-    logVisionAnalyzeError({
-      request_id: requestId,
-      route: ROUTE_KEY,
-      latency_ms: Date.now() - start,
-      error_kind: "validation_failure",
-      http_status: 400,
-      ...rel(),
-    });
-    return wrap(NextResponse.json({ error: urlCheck.error, request_id: requestId }, { status: 400 }));
-  }
-
+  // Fail closed on auth before provider/config disclosure or body work.
   const tenantCtx = await getTenantContextFromRequest(request);
-  const userSupabase = await createClientFromRequest(request);
-  const projectId = parsed.data.project_id?.trim() || null;
-
   try {
     requireTenant(tenantCtx);
   } catch (e) {
@@ -151,7 +73,6 @@ export async function POST(request: Request) {
         request_id: requestId,
         route: ROUTE_KEY,
         tenant_id: tenantCtx.tenantId,
-        project_id: projectId,
         latency_ms: Date.now() - start,
         error_kind: "auth_failure",
         http_status: 401,
@@ -165,6 +86,108 @@ export async function POST(request: Request) {
     }
     throw e;
   }
+
+  if (!isGeminiConfigured()) {
+    logVisionAnalyzeError({
+      request_id: requestId,
+      route: ROUTE_KEY,
+      tenant_id: tenantCtx.tenantId,
+      latency_ms: Date.now() - start,
+      error_kind: "provider_unavailable",
+      http_status: 503,
+      ...rel(),
+    });
+    return wrap(
+      NextResponse.json(
+        { error: "Gemini is required for video daily analysis (set GOOGLE_AI_API_KEY or GEMINI_API_KEY)", request_id: requestId },
+        { status: 503 }
+      ),
+      tenantCtx.tenantId,
+      tenantCtx.userId
+    );
+  }
+
+  const contentLength = request.headers.get("content-length");
+  if (contentLength !== null && contentLength !== "" && Number(contentLength) > MAX_BODY_BYTES) {
+    logVisionAnalyzeError({
+      request_id: requestId,
+      route: ROUTE_KEY,
+      tenant_id: tenantCtx.tenantId,
+      latency_ms: Date.now() - start,
+      error_kind: "validation_failure",
+      http_status: 413,
+      ...rel(),
+    });
+    return wrap(
+      NextResponse.json({ error: "Request body too large", request_id: requestId }, { status: 413 }),
+      tenantCtx.tenantId,
+      tenantCtx.userId
+    );
+  }
+
+  let rawBody: unknown;
+  try {
+    rawBody = await request.json();
+  } catch {
+    logVisionAnalyzeError({
+      request_id: requestId,
+      route: ROUTE_KEY,
+      tenant_id: tenantCtx.tenantId,
+      latency_ms: Date.now() - start,
+      error_kind: "validation_failure",
+      http_status: 400,
+      ...rel(),
+    });
+    return wrap(
+      NextResponse.json({ error: "Invalid JSON body", request_id: requestId }, { status: 400 }),
+      tenantCtx.tenantId,
+      tenantCtx.userId
+    );
+  }
+
+  const parsed = AnalyzeVideoDailyRequestSchema.safeParse(rawBody);
+  if (!parsed.success) {
+    const msg =
+      parsed.error.flatten().formErrors[0] ??
+      parsed.error.flatten().fieldErrors.video_url?.[0] ??
+      "Invalid request body";
+    logVisionAnalyzeError({
+      request_id: requestId,
+      route: ROUTE_KEY,
+      tenant_id: tenantCtx.tenantId,
+      latency_ms: Date.now() - start,
+      error_kind: "validation_failure",
+      http_status: 400,
+      ...rel(),
+    });
+    return wrap(
+      NextResponse.json({ error: msg, request_id: requestId }, { status: 400 }),
+      tenantCtx.tenantId,
+      tenantCtx.userId
+    );
+  }
+
+  const videoUrl = parsed.data.video_url.trim();
+  const urlCheck = validateVideoUrl(videoUrl);
+  if (!urlCheck.ok) {
+    logVisionAnalyzeError({
+      request_id: requestId,
+      route: ROUTE_KEY,
+      tenant_id: tenantCtx.tenantId,
+      latency_ms: Date.now() - start,
+      error_kind: "validation_failure",
+      http_status: 400,
+      ...rel(),
+    });
+    return wrap(
+      NextResponse.json({ error: urlCheck.error, request_id: requestId }, { status: 400 }),
+      tenantCtx.tenantId,
+      tenantCtx.userId
+    );
+  }
+
+  const userSupabase = await createClientFromRequest(request);
+  const projectId = parsed.data.project_id?.trim() || null;
 
   if (projectId) {
     const { data: project, error: projectError } = await getProjectForInternalWorkspace(
