@@ -12,6 +12,7 @@ import {
   IDEMPOTENCY_HEADER,
 } from "@/lib/platform/idempotency/idempotency.service";
 import { withRequestIdAndTiming } from "@/lib/observability";
+import { boundedProductWrite, taskAssignmentAuditDetails } from "@/lib/growth/product-events";
 
 export const dynamic = "force-dynamic";
 
@@ -101,15 +102,21 @@ export async function POST(
   }
 
   if (ctx.tenantId && ctx.userId) {
-    await emitAudit(supabase, {
-      tenant_id: ctx.tenantId,
-      user_id: ctx.userId,
-      trace_id: ctx.traceId ?? null,
-      action: "task_assignment",
-      resource_type: "task",
-      resource_id: taskId,
-      details: { assigned_to: workerId },
-    });
+    await boundedProductWrite(() =>
+      emitAudit(supabase, {
+        tenant_id: ctx.tenantId!,
+        user_id: ctx.userId!,
+        trace_id: ctx.traceId ?? null,
+        action: "task_assignment",
+        resource_type: "task",
+        resource_id: taskId,
+        details: taskAssignmentAuditDetails({
+          client: ctx.clientProfile,
+          role: ctx.role,
+          assignedTo: workerId,
+        }),
+      }),
+    );
   }
 
   const { data: task } = ctx.tenantId ? await getTaskById(supabase, ctx, taskId) : { data: null };

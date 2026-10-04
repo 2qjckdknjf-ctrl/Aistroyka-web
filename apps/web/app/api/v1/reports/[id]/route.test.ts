@@ -303,8 +303,16 @@ describe("PATCH /api/v1/reports/:id", () => {
       action: "report_review",
       resource_type: "report",
       resource_id: "r1",
-      details: { status, has_note: Boolean(expectedNote) },
+      details: {
+        source: "report_review",
+        client: "web",
+        role: "admin",
+        status,
+        has_note: Boolean(expectedNote),
+      },
     });
+    expect(JSON.stringify(emitAudit.mock.calls[0]?.[1])).not.toContain("needs correction");
+    expect(JSON.stringify(emitAudit.mock.calls[0]?.[1])).not.toContain("add more photos");
     const body = await response.json();
     expect(body.data.status).toBe(status);
     expect(body.data.reviewed_by).toBe("manager-1");
@@ -344,6 +352,62 @@ describe("PATCH /api/v1/reports/:id", () => {
         project_id: "project-1",
       })
     );
+  });
+
+  it("does not emit when the submitted-row update matches nothing", async () => {
+    updateReview.mockResolvedValueOnce(null);
+    const response = await PATCH(
+      new Request("https://test/api/v1/reports/r1", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ status: "approved" }),
+      }),
+      { params: Promise.resolve({ id: "r1" }) }
+    );
+    expect(response.status).toBe(404);
+    expect(emitAudit).not.toHaveBeenCalled();
+  });
+
+  it("still returns the reviewed report when audit insertion throws", async () => {
+    emitAudit.mockRejectedValueOnce(new Error("audit down"));
+    updateReview.mockResolvedValue({
+      id: "r1",
+      status: "approved",
+      reviewed_by: "manager-1",
+      reviewed_at: "2026-05-20T00:00:00.000Z",
+      manager_note: null,
+    });
+    const response = await PATCH(
+      new Request("https://test/api/v1/reports/r1", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ status: "approved" }),
+      }),
+      { params: Promise.resolve({ id: "r1" }) }
+    );
+    expect(response.status).toBe(200);
+  });
+
+  it("still returns the reviewed report when audit insertion stalls", async () => {
+    emitAudit.mockImplementationOnce(() => new Promise(() => undefined));
+    updateReview.mockResolvedValue({
+      id: "r1",
+      status: "approved",
+      reviewed_by: "manager-1",
+      reviewed_at: "2026-05-20T00:00:00.000Z",
+      manager_note: null,
+    });
+    const started = Date.now();
+    const response = await PATCH(
+      new Request("https://test/api/v1/reports/r1", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ status: "approved" }),
+      }),
+      { params: Promise.resolve({ id: "r1" }) }
+    );
+    expect(response.status).toBe(200);
+    expect(Date.now() - started).toBeLessThan(4000);
   });
 });
 

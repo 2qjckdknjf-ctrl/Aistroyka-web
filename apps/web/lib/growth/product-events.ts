@@ -53,6 +53,105 @@ export function loginAuditDetails(input: {
   return details;
 }
 
+const TASK_PRIORITIES = new Set(["low", "medium", "high"]);
+
+/** Categorical facts for a successful new task. No title, description, or names. */
+export function taskCreatedAuditDetails(input: {
+  client?: string | null;
+  role?: string | null;
+  hasProject: boolean;
+  hasAssignee: boolean;
+  hasDueDate: boolean;
+  priority?: string | null;
+}): Record<string, string | boolean> {
+  const details: Record<string, string | boolean> = {
+    source: "task_create",
+    has_project: input.hasProject,
+    has_assignee: input.hasAssignee,
+    has_due_date: input.hasDueDate,
+  };
+  const client = categoricalToken(input.client, CLIENTS);
+  const role = categoricalToken(input.role, ROLES);
+  const priority = categoricalToken(input.priority, TASK_PRIORITIES);
+  if (client) details.client = client;
+  if (role) details.role = role;
+  if (priority) details.priority = priority;
+  return details;
+}
+
+const GOVERNANCE_UUID =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const REPORT_REVIEW_STATUSES = new Set(["approved", "rejected", "changes_requested"]);
+
+/** Persist assignee id only when it is a canonical UUID. Never store names or emails. */
+export function governanceUserId(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const token = value.trim();
+  return GOVERNANCE_UUID.test(token) ? token : null;
+}
+
+/** Categorical facts for a successful task assignment persist. */
+export function taskAssignmentAuditDetails(input: {
+  client?: string | null;
+  role?: string | null;
+  assignedTo?: string | null;
+}): Record<string, string | boolean> {
+  const details: Record<string, string | boolean> = {
+    source: "task_assign",
+    has_assignee: true,
+    assignment_changed: true,
+  };
+  const client = categoricalToken(input.client, CLIENTS);
+  const role = categoricalToken(input.role, ROLES);
+  if (client) details.client = client;
+  if (role) details.role = role;
+  const assignedTo = governanceUserId(input.assignedTo);
+  if (assignedTo) details.assigned_to = assignedTo;
+  return details;
+}
+
+/** Categorical facts for a successful draft/changes_requested → submitted transition. */
+export function reportSubmitAuditDetails(input: {
+  client?: string | null;
+  role?: string | null;
+  hasTask: boolean;
+  hasDay: boolean;
+  hasMedia: boolean;
+}): Record<string, string | boolean> {
+  const details: Record<string, string | boolean> = {
+    source: "report_submit",
+    has_task: input.hasTask,
+    has_day: input.hasDay,
+    has_media: input.hasMedia,
+  };
+  const client = categoricalToken(input.client, CLIENTS);
+  const role = categoricalToken(input.role, ROLES);
+  if (client) details.client = client;
+  if (role) details.role = role;
+  return details;
+}
+
+/** Categorical facts for a successful submitted → review-status transition. */
+export function reportReviewAuditDetails(input: {
+  client?: string | null;
+  role?: string | null;
+  status?: string | null;
+  hasNote: boolean;
+}): Record<string, string | boolean> {
+  const details: Record<string, string | boolean> = {
+    source: "report_review",
+    has_note: input.hasNote,
+  };
+  const client = categoricalToken(input.client, CLIENTS);
+  const role = categoricalToken(input.role, ROLES);
+  const status = categoricalToken(input.status, REPORT_REVIEW_STATUSES);
+  if (client) details.client = client;
+  if (role) details.role = role;
+  if (status) details.status = status;
+  return details;
+}
+
 function isCoreAction(action: string): boolean {
   return action === "task_assignment" || action === "report_submit" || action === "report_review";
 }
