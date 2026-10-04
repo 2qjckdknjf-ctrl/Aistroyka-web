@@ -4,7 +4,7 @@ import Shared
 struct CustomerProjectDetailView: View {
     let projectId: String
     let fallbackName: String
-    @State private var view: CustomerAPI.PortalProjectView?
+    @State private var view: CustomerPortalProjectView?
     @State private var message: String?
     @State private var loading = true
 
@@ -22,6 +22,9 @@ struct CustomerProjectDetailView: View {
             } else if let view {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
+                        if let message {
+                            refreshFailureBanner(message)
+                        }
                         Text(view.project.name)
                             .font(.title2.weight(.semibold))
                             .foregroundStyle(CustomerTokens.textPrimary)
@@ -30,6 +33,8 @@ struct CustomerProjectDetailView: View {
                             labeled(NSLocalizedString("cust_project_status", comment: ""), value: handover.status)
                         }
                         activitySection(view)
+                        requestsSection(view.clientRequests)
+                        estimatesSection(view.customerEstimates)
                         documentsSection(view.documents)
                     }
                     .padding(24)
@@ -44,7 +49,22 @@ struct CustomerProjectDetailView: View {
         .task { await load() }
     }
 
-    private func progressBlock(_ progress: CustomerAPI.PortalProjectView.Progress) -> some View {
+    private func refreshFailureBanner(_ text: String) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(text)
+                .foregroundStyle(CustomerTokens.textPrimary)
+            Button(NSLocalizedString("cust_retry", comment: "")) {
+                Task { await load() }
+            }
+            .accessibilityIdentifier("pilot_customer_project_refresh_retry")
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(CustomerTokens.fieldFill)
+        .accessibilityIdentifier("pilot_customer_project_refresh_error")
+    }
+
+    private func progressBlock(_ progress: CustomerPortalProjectView.Progress) -> some View {
         let total = max(progress.tasksTotal, 0)
         let done = min(max(progress.tasksDone, 0), total)
         let label = total == 0
@@ -59,7 +79,7 @@ struct CustomerProjectDetailView: View {
         }
     }
 
-    private func activitySection(_ view: CustomerAPI.PortalProjectView) -> some View {
+    private func activitySection(_ view: CustomerPortalProjectView) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(NSLocalizedString("cust_activity_title", comment: ""))
                 .font(.headline)
@@ -77,7 +97,50 @@ struct CustomerProjectDetailView: View {
         }
     }
 
-    private func documentsSection(_ docs: [CustomerAPI.PortalProjectView.Document]) -> some View {
+    private func requestsSection(_ requests: [CustomerPortalProjectView.CustomerFacingRequest]) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(NSLocalizedString("cust_requests_title", comment: ""))
+                .font(.headline)
+                .foregroundStyle(CustomerTokens.textPrimary)
+            if requests.isEmpty {
+                Text(NSLocalizedString("cust_requests_empty", comment: ""))
+                    .foregroundStyle(CustomerTokens.textSecondary)
+            }
+            ForEach(requests.prefix(8)) { item in
+                let amount: String? = {
+                    guard let value = item.customerVisibleAmount,
+                          let code = item.customerVisibleCurrency?.trimmingCharacters(in: .whitespacesAndNewlines),
+                          !code.isEmpty
+                    else { return nil }
+                    return CustomerPortalProjectView.formatCustomerAmount(amount: value, currency: code)
+                }()
+                labeled(item.title, value: amount.map { "\(item.status) · \($0)" } ?? item.status)
+            }
+        }
+        .accessibilityIdentifier("pilot_customer_project_requests")
+    }
+
+    private func estimatesSection(_ estimates: [CustomerPortalProjectView.CustomerFacingEstimate]) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(NSLocalizedString("cust_estimates_title", comment: ""))
+                .font(.headline)
+                .foregroundStyle(CustomerTokens.textPrimary)
+            if estimates.isEmpty {
+                Text(NSLocalizedString("cust_estimates_empty", comment: ""))
+                    .foregroundStyle(CustomerTokens.textSecondary)
+            }
+            ForEach(estimates.prefix(8)) { item in
+                let amount = CustomerPortalProjectView.formatCustomerAmount(
+                    amount: item.totalAmount,
+                    currency: item.currency
+                )
+                labeled(item.title, value: "\(item.status) · \(amount)")
+            }
+        }
+        .accessibilityIdentifier("pilot_customer_project_estimates")
+    }
+
+    private func documentsSection(_ docs: [CustomerPortalProjectView.Document]) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(NSLocalizedString("cust_documents_title", comment: ""))
                 .font(.headline)
