@@ -115,9 +115,13 @@ export async function createVisionAnalysisJob(
       if (!admin) {
         return { ok: false, error: "Job create requires service role", status: 503 };
       }
+      const stamp = {
+        request_key: requestKey,
+        provider_metadata: { source: "vision_async" },
+      };
       const { error: keyErr } = await admin
         .from("analysis_jobs")
-        .update({ request_key: requestKey, provider_metadata: { source: "vision_async" } })
+        .update(stamp as never)
         .eq("id", created.id)
         .eq("tenant_id", input.tenantId);
       if (keyErr) {
