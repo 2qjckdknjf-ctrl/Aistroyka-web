@@ -20,6 +20,8 @@ describe("field_daily_logs confirmation provenance migration", () => {
   it("strips confirmation metadata from authenticated draft inserts", () => {
     expect(sql).toMatch(/if tg_op = 'INSERT'/);
     expect(sql).toMatch(/new\.status = 'draft'/);
+    expect(sql).toMatch(/new\.created_by := auth\.uid\(\)/);
+    expect(sql).toMatch(/new\.created_at := timezone\('utc', now\(\)\)/);
     expect(sql).toMatch(/new\.confirmed_by := null/);
     expect(sql).toMatch(/new\.confirmed_at := null/);
     expect(sql).toMatch(/before insert or update on public\.field_daily_logs/);

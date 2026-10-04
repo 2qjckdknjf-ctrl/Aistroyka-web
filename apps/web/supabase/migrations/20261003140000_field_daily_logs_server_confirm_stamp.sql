@@ -14,6 +14,8 @@ begin
 
   if tg_op = 'INSERT' then
     if new.status = 'draft' then
+      new.created_by := auth.uid();
+      new.created_at := timezone('utc', now());
       new.confirmed_by := null;
       new.confirmed_at := null;
     elsif new.status = 'confirmed' then
