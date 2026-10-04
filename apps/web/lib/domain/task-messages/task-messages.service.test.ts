@@ -94,6 +94,19 @@ describe("task-messages.service", () => {
     expect(res.result?.data).toHaveLength(1);
   });
 
+  it("does not return empty 200 when list query fails", async () => {
+    vi.mocked(canManageTasks).mockReturnValue(true);
+    vi.mocked(repo.listByTask).mockResolvedValue({
+      data: [],
+      nextCursor: null,
+      error: "JWT expired",
+    });
+    const res = await listTaskMessages(supabase, ctx, "task-1");
+    expect(res.status).toBe(500);
+    expect(res.code).toBe("list_failed");
+    expect(res.result).toBeNull();
+  });
+
   it("rejects create when worker not assigned", async () => {
     vi.mocked(canManageTasks).mockReturnValue(false);
     vi.mocked(validateTaskForReportLink).mockResolvedValue({ ok: false, code: "task_not_assigned" });
