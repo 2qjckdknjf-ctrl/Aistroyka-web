@@ -1,6 +1,6 @@
 # ADR-0010 — Customer iOS target (AIS-OWNER-002)
 
-**Status:** ACCEPTED as implementation direction — not shipped  
+**Status:** ACCEPTED as implementation direction — first executable slice in progress  
 **Date:** 2026-10-03  
 **Depends:** AIS-OWNER-001 portal contracts; Shared auth/network; customer-finance isolation  
 **Does not:** merge Manager and Worker; expand the live contractor-ops-only production pilot automatically
@@ -13,13 +13,13 @@ Do **not** create a separate backend. Customer APIs are the existing portal/clie
 
 Android Customer parity is later (same DEFERRED_BY_DECISION policy as first-pilot Android unless reversed).
 
-## Inventory (current main `0e3b1ede`)
+## Inventory (current main `bfcfe93a` plus this slice)
 
 | Target | Exists |
 |--------|--------|
 | AiStroykaManager | YES |
 | AiStroykaWorker | YES |
-| AiStroykaCustomer | NO |
+| AiStroykaCustomer | YES — login/auth shell only |
 | Web `/portal` | YES (not certified READY) |
 | Web self-serve intake workspace | NO |
 
@@ -31,7 +31,7 @@ Async intake (AIS-CLIENT-005A) and live intake (AIS-CLIENT-005B) land after evid
 
 ## Distribution
 
-Separate bundle ID (proposed `ai.aistroyka.customer`). App Store upload remains OWNER_GATE. Do not claim store presence from a compile.
+Separate bundle ID `ai.aistroyka.customer`. App Store upload remains OWNER_GATE. Do not claim store presence from a compile.
 
 ## Security
 
