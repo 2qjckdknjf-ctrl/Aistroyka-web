@@ -170,7 +170,8 @@ class WorkerViewModel(application: Application) : AndroidViewModel(application) 
                     )
                 }
             } catch (_: Exception) {
-                _state.update { it.copy(feedbackReports = emptyList()) }
+                // Keep last known feedback on refresh failure — clearing would hide
+                // manager changes_requested work until the next successful sync.
             }
         }
     }
