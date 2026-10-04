@@ -169,6 +169,13 @@ struct CustomerProjectDetailView: View {
                         )
                         .buttonStyle(.bordered)
                         .accessibilityIdentifier("pilot_customer_feedback_submit_\(item.id)")
+                    } else if let portal = view, portal.canAcknowledge(to: item) {
+                        Button(NSLocalizedString("cust_acknowledge", comment: "")) {
+                            Task { await acknowledge(item) }
+                        }
+                        .disabled(respondingRequestId != nil || respondingEstimateId != nil)
+                        .buttonStyle(.bordered)
+                        .accessibilityIdentifier("pilot_customer_acknowledge_\(item.id)")
                     }
                 }
             }
@@ -206,6 +213,22 @@ struct CustomerProjectDetailView: View {
             respondMessage = apiError.message
         } catch {
             respondMessage = NSLocalizedString("cust_document_review_error", comment: "")
+        }
+        respondingRequestId = nil
+    }
+
+
+    private func acknowledge(_ item: CustomerPortalProjectView.CustomerFacingRequest) async {
+        respondingRequestId = item.id
+        respondMessage = nil
+        do {
+            try await CustomerAPI.acknowledgeRequest(projectId: projectId, requestId: item.id)
+            respondMessage = NSLocalizedString("cust_acknowledge_ok", comment: "")
+            await load()
+        } catch let apiError as APIError {
+            respondMessage = apiError.message
+        } catch {
+            respondMessage = NSLocalizedString("cust_acknowledge_error", comment: "")
         }
         respondingRequestId = nil
     }

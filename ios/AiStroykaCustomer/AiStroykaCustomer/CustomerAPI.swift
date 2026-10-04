@@ -124,4 +124,18 @@ enum CustomerAPI {
             body: Body(feedbackText: feedbackText, note: note)
         )
     }
+
+    /// POST portal decisions respond with acknowledged=true
+    static func acknowledgeRequest(projectId: String, requestId: String, note: String? = nil) async throws {
+        struct Body: Encodable {
+            let acknowledged: Bool
+            let note: String?
+        }
+        struct EmptyData: Decodable {}
+        let _: Envelope<EmptyData> = try await APIClient.shared.request(
+            path: "portal/projects/\(projectId)/decisions/\(requestId)/respond",
+            method: "POST",
+            body: Body(acknowledged: true, note: note)
+        )
+    }
 }

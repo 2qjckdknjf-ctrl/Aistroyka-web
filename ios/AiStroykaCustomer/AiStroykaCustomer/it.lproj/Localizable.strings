@@ -52,3 +52,7 @@
 "cust_feedback_submit" = "Invia feedback";
 "cust_feedback_ok" = "Feedback inviato.";
 "cust_feedback_error" = "Impossibile inviare il feedback.";
+
+"cust_acknowledge" = "Conferma";
+"cust_acknowledge_ok" = "Confermato.";
+"cust_acknowledge_error" = "Impossibile confermare.";
