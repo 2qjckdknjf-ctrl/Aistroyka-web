@@ -35,6 +35,11 @@ describe("queryProjectConstructionGraph", () => {
     const reportSelect = vi.fn();
     const supabase = {
       from: vi.fn((table: string) => {
+        if (table === "construction_graph_nodes") {
+          return {
+            upsert: () => ({ select: async () => ({ data: [], error: { message: "does not exist" } }) }),
+          };
+        }
         if (table === "worker_reports") {
           const limit = vi.fn().mockImplementation(async () => {
             const col = reportSelect.mock.calls.length === 1 ? "task_id" : "day_id";
@@ -98,6 +103,11 @@ describe("queryProjectConstructionGraph", () => {
                 }),
               }),
             }),
+          };
+        }
+        if (table === "construction_graph_nodes") {
+          return {
+            upsert: () => ({ select: async () => ({ data: [], error: { message: "does not exist" } }) }),
           };
         }
         if (table === "worker_tasks") return pageResult(extra);
