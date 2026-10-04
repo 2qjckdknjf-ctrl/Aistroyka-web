@@ -15,7 +15,19 @@ import { createAnalysisJob } from "./engine";
 
 describe("createAnalysisJob", () => {
   const sessionClient = { tag: "session" };
-  const adminClient = { tag: "admin" };
+  const stamp = vi.fn(async () => ({ error: null }));
+  const adminClient = {
+    tag: "admin",
+    from: () => ({
+      update: () => ({
+        eq: () => ({
+          eq: () => ({
+            is: stamp,
+          }),
+        }),
+      }),
+    }),
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -56,6 +68,7 @@ describe("createAnalysisJob", () => {
       p_priority: "normal",
       p_request_key: "idem-1",
     });
+    expect(stamp).toHaveBeenCalled();
   });
 
   it("fails closed with a configuration error when service role key is unavailable", async () => {

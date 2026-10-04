@@ -12,6 +12,17 @@ import {
 
 const RPC_NOT_CONFIGURED_PREFIX = "RPC_NOT_CONFIGURED:";
 
+export function isMissingCreateAnalysisJobRequestKeyArg(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const err = error as { code?: unknown; message?: unknown };
+  const code = typeof err.code === "string" ? err.code : "";
+  const message = typeof err.message === "string" ? err.message : "";
+  if (code === "PGRST202" || code === "42883") {
+    return /create_analysis_job/i.test(message) || /p_request_key/i.test(message);
+  }
+  return /could not find the function/i.test(message) && /create_analysis_job/i.test(message);
+}
+
 export async function callRpc<TResult>(
   supabase: SupabaseClient,
   rpcName: keyof typeof ENGINE_RPC,
@@ -35,15 +46,32 @@ export async function createAnalysisJobRpc(
   supabase: SupabaseClient,
   params: CreateAnalysisJobParams
 ): Promise<AnalysisJobRow> {
+  const base = {
+    p_tenant_id: params.p_tenant_id,
+    p_media_id: params.p_media_id,
+    p_priority: params.p_priority ?? "normal",
+  };
+  const keyed = params.p_request_key
+    ? { ...base, p_request_key: params.p_request_key }
+    : base;
+  try {
+    return await invokeCreateAnalysisJob(supabase, keyed);
+  } catch (error) {
+    if (params.p_request_key && isMissingCreateAnalysisJobRequestKeyArg(error)) {
+      return invokeCreateAnalysisJob(supabase, base);
+    }
+    throw error;
+  }
+}
+
+async function invokeCreateAnalysisJob(
+  supabase: SupabaseClient,
+  params: Record<string, unknown>
+): Promise<AnalysisJobRow> {
   const raw = await callRpc<AnalysisJobRow | AnalysisJobRow[]>(
     supabase,
     "create_analysis_job",
-    {
-      p_tenant_id: params.p_tenant_id,
-      p_media_id: params.p_media_id,
-      p_priority: params.p_priority ?? "normal",
-      ...(params.p_request_key ? { p_request_key: params.p_request_key } : {}),
-    }
+    params
   );
   const row = Array.isArray(raw) ? raw[0] : raw;
   if (!row?.id) throw new Error("create_analysis_job returned no row");

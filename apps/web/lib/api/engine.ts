@@ -127,6 +127,17 @@ export async function createAnalysisJob(
     p_priority: params.priority ?? "normal",
     ...(params.request_key ? { p_request_key: params.request_key } : {}),
   });
+  if (params.request_key) {
+    const { error: stampErr } = await admin
+      .from("analysis_jobs")
+      .update({ request_key: params.request_key } as never)
+      .eq("id", row.id)
+      .eq("tenant_id", params.tenant_id)
+      .is("request_key", null);
+    if (stampErr && stampErr.code !== "23505") {
+      throw stampErr;
+    }
+  }
   return {
     id: row.id,
     media_id: row.media_id,
