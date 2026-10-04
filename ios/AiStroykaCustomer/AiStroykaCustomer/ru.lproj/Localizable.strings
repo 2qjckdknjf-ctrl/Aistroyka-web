@@ -35,3 +35,8 @@
 "cust_retry" = "Повторить";
 "cust_err_not_customer" = "Этот аккаунт не является заказчиком. Используйте приглашение в портал.";
 "cust_err_use_manager" = "Этот аккаунт относится к подрядчику. Используйте AiStroyka Manager.";
+
+"cust_request_approve" = "Одобрить";
+"cust_request_reject" = "Отклонить";
+"cust_request_respond_ok" = "Ответ отправлен.";
+"cust_request_respond_error" = "Не удалось отправить ответ.";

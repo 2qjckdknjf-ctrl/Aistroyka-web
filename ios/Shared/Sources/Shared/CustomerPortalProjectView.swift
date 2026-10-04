@@ -73,10 +73,20 @@ public struct CustomerPortalProjectView: Decodable, Sendable {
         public let customerVisibleAmount: Double?
         public let customerVisibleCurrency: String?
         public let dueAt: String?
+
+        /// Open action-required requests that use approve/reject (`approve_or_reject` kind only).
+        public var supportsApproveReject: Bool {
+            status == "open" && actionMode == "action_required" && kind == "approve_or_reject"
+        }
     }
 
     public struct Capabilities: Decodable, Sendable {
         public let canRespondToRequests: Bool
+    }
+
+    /// True when this portal view may submit approve/reject for the given request.
+    public func canRespondApproveReject(to request: CustomerFacingRequest) -> Bool {
+        (capabilities?.canRespondToRequests ?? false) && request.supportsApproveReject
     }
 
     public init(from decoder: Decoder) throws {

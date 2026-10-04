@@ -41,7 +41,42 @@ final class CustomerPortalProjectViewTests: XCTestCase {
         XCTAssertEqual(view.customerEstimates[0].totalAmount, 12000.5, accuracy: 0.001)
         XCTAssertEqual(view.clientRequests[0].customerVisibleAmount, 12000.5)
         XCTAssertEqual(view.capabilities?.canRespondToRequests, true)
+        XCTAssertTrue(view.canRespondApproveReject(to: view.clientRequests[0]))
         XCTAssertTrue(CustomerPortalProjectView.formatCustomerAmount(amount: 12000.5, currency: "EUR").contains("12"))
+    }
+
+    func testApproveRejectGateRespectsKindActionAndCapability() throws {
+        let data = Data("""
+        {
+          "project": {"id": "p1", "name": "Villa"},
+          "progress": {"tasks_done": 0, "tasks_total": 0},
+          "client_requests": [
+            {"id":"r1","kind":"approve_or_reject","action_mode":"action_required","status":"open","title":"A"},
+            {"id":"r2","kind":"approve_or_reject","action_mode":"info_only","status":"open","title":"B"},
+            {"id":"r3","kind":"feedback","action_mode":"action_required","status":"open","title":"C"},
+            {"id":"r4","kind":"approve_or_reject","action_mode":"action_required","status":"responded","title":"D"}
+          ],
+          "capabilities": {"can_respond_to_requests": true}
+        }
+        """.utf8)
+        let view = try CustomerPortalProjectView.decodePortalJSON(data)
+        XCTAssertTrue(view.canRespondApproveReject(to: view.clientRequests[0]))
+        XCTAssertFalse(view.canRespondApproveReject(to: view.clientRequests[1]))
+        XCTAssertFalse(view.canRespondApproveReject(to: view.clientRequests[2]))
+        XCTAssertFalse(view.canRespondApproveReject(to: view.clientRequests[3]))
+
+        let viewOnly = Data("""
+        {
+          "project": {"id": "p1", "name": "Villa"},
+          "progress": {"tasks_done": 0, "tasks_total": 0},
+          "client_requests": [
+            {"id":"r1","kind":"approve_or_reject","action_mode":"action_required","status":"open","title":"A"}
+          ],
+          "capabilities": {"can_respond_to_requests": false}
+        }
+        """.utf8)
+        let blocked = try CustomerPortalProjectView.decodePortalJSON(viewOnly)
+        XCTAssertFalse(blocked.canRespondApproveReject(to: blocked.clientRequests[0]))
     }
 
     func testMissingOptionalCollectionsDefaultEmpty() throws {

@@ -35,3 +35,8 @@
 "cust_retry" = "Retry";
 "cust_err_not_customer" = "This account is not a customer stakeholder. Use the portal invite or sign in with a customer account.";
 "cust_err_use_manager" = "This account belongs to a contractor workspace. Use AiStroyka Manager.";
+
+"cust_request_approve" = "Approve";
+"cust_request_reject" = "Reject";
+"cust_request_respond_ok" = "Response sent.";
+"cust_request_respond_error" = "Could not send your response.";
