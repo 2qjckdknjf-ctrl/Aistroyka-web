@@ -72,6 +72,27 @@ describe("stakeholders.policy", () => {
     await expect(canReadClientPortalView(supabase, ctx("stakeholder"), "project-2")).resolves.toBe(false);
   });
 
+  it("denies client-view when portal is disabled even if stakeholder is active", async () => {
+    vi.mocked(projectRepo.getById).mockResolvedValue({
+      id: "project-1",
+      tenant_id: "tenant-1",
+      name: "Build",
+      client_portal_enabled: false,
+    } as never);
+    vi.mocked(projectAccess.isProjectOwner).mockResolvedValue(false);
+    vi.mocked(stakeholdersRepo.getActiveForUserOnProject).mockResolvedValue({
+      id: "stakeholder-1",
+      status: "active",
+    } as never);
+
+    await expect(canReadClientPortalView(supabase, ctx("stakeholder"), "project-1")).resolves.toBe(false);
+  });
+
+  it("denies client-view when tenant context is missing", async () => {
+    const missing = { ...ctx("stakeholder"), tenantId: "", userId: "" };
+    await expect(canReadClientPortalView(supabase, missing, "project-1")).resolves.toBe(false);
+  });
+
   it("does not allow stakeholder to manage project stakeholders", async () => {
     vi.mocked(projectMembersRepo.getMembership).mockResolvedValue({ role: "manager" } as never);
 

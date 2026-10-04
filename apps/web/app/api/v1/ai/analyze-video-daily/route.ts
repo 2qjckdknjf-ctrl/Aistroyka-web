@@ -3,6 +3,7 @@
  *
  * Request: JSON { video_url (required), work_date? (YYYY-MM-DD), media_id?, project_id? }.
  * Response: 200 DailyWorkVideoAnalysis (see @aistroyka/contracts).
+ * When project_id is set: requires tenant auth and internal project access.
  * Requires Gemini (GOOGLE_AI_API_KEY or GEMINI_API_KEY). No OpenAI/Anthropic fallback for native video.
  *
  * Compatibility path: this handler still runs analysis synchronously. Canonical async create/start
@@ -10,7 +11,12 @@
  */
 
 import { NextResponse } from "next/server";
-import { getTenantContextFromRequest } from "@/lib/tenant";
+import {
+  getTenantContextFromRequest,
+  requireTenant,
+  TenantRequiredError,
+} from "@/lib/tenant";
+import { getProjectForInternalWorkspace } from "@/lib/domain/projects/project.service";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { createClientFromRequest } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/platform/rate-limit/rate-limit.service";
@@ -135,6 +141,57 @@ export async function POST(request: Request) {
 
   const tenantCtx = await getTenantContextFromRequest(request);
   const userSupabase = await createClientFromRequest(request);
+  const projectId = parsed.data.project_id?.trim() || null;
+
+  if (projectId) {
+    try {
+      requireTenant(tenantCtx);
+    } catch (e) {
+      if (e instanceof TenantRequiredError) {
+        logVisionAnalyzeError({
+          request_id: requestId,
+          route: ROUTE_KEY,
+          tenant_id: tenantCtx.tenantId,
+          project_id: projectId,
+          latency_ms: Date.now() - start,
+          error_kind: "auth_failure",
+          http_status: 401,
+          ...rel(),
+        });
+        return wrap(
+          NextResponse.json({ error: e.message, request_id: requestId }, { status: 401 }),
+          tenantCtx.tenantId,
+          tenantCtx.userId
+        );
+      }
+      throw e;
+    }
+
+    const { data: project, error: projectError } = await getProjectForInternalWorkspace(
+      userSupabase,
+      tenantCtx,
+      projectId
+    );
+    if (projectError || !project) {
+      const status = projectError === "Insufficient rights" ? 403 : 404;
+      logVisionAnalyzeError({
+        request_id: requestId,
+        route: ROUTE_KEY,
+        tenant_id: tenantCtx.tenantId,
+        project_id: projectId,
+        latency_ms: Date.now() - start,
+        error_kind: status === 403 ? "tenant_failure" : "validation_failure",
+        http_status: status,
+        ...rel(),
+      });
+      return wrap(
+        NextResponse.json({ error: projectError ?? "Not found", request_id: requestId }, { status }),
+        tenantCtx.tenantId,
+        tenantCtx.userId
+      );
+    }
+  }
+
   const admin = getAdminClient();
   if (admin) {
     try {
@@ -215,7 +272,7 @@ export async function POST(request: Request) {
       {
         videoUrl,
         workDate: parsed.data.work_date ?? null,
-        projectId: parsed.data.project_id ?? null,
+        projectId,
         mediaId: parsed.data.media_id ?? null,
       }
     );
@@ -226,7 +283,7 @@ export async function POST(request: Request) {
       request_id: requestId,
       route: ROUTE_KEY,
       tenant_id: tenantCtx.tenantId,
-      project_id: parsed.data.project_id ?? null,
+      project_id: projectId,
       user_id: tenantCtx.userId ?? null,
       latency_ms: durationMs,
       output_type: "video_daily",
@@ -240,7 +297,7 @@ export async function POST(request: Request) {
         tenant_id: tenantCtx.tenantId,
         user_id: tenantCtx.userId ?? null,
         trace_id: requestId,
-        project_id: parsed.data.project_id ?? null,
+        project_id: projectId,
         action: "ai_video_daily_complete",
         details: {
           request_id: requestId,
@@ -266,7 +323,7 @@ export async function POST(request: Request) {
         request_id: requestId,
         route: ROUTE_KEY,
         tenant_id: tenantCtx.tenantId,
-        project_id: parsed.data.project_id ?? null,
+        project_id: projectId,
         latency_ms: durationMs,
         error_kind: "output_validation_failure",
         http_status: 403,
@@ -277,7 +334,7 @@ export async function POST(request: Request) {
           tenant_id: tenantCtx.tenantId,
           user_id: tenantCtx.userId ?? null,
           trace_id: requestId,
-          project_id: parsed.data.project_id ?? null,
+          project_id: projectId,
           action: "ai_video_daily_error",
           details: {
             request_id: requestId,
@@ -302,7 +359,7 @@ export async function POST(request: Request) {
         request_id: requestId,
         route: ROUTE_KEY,
         tenant_id: tenantCtx.tenantId,
-        project_id: parsed.data.project_id ?? null,
+        project_id: projectId,
         latency_ms: durationMs,
         error_kind: ek,
         http_status: isTimeout ? 504 : 502,
@@ -313,7 +370,7 @@ export async function POST(request: Request) {
           tenant_id: tenantCtx.tenantId,
           user_id: tenantCtx.userId ?? null,
           trace_id: requestId,
-          project_id: parsed.data.project_id ?? null,
+          project_id: projectId,
           action: "ai_video_daily_error",
           details: {
             request_id: requestId,
@@ -337,7 +394,7 @@ export async function POST(request: Request) {
       request_id: requestId,
       route: ROUTE_KEY,
       tenant_id: tenantCtx.tenantId,
-      project_id: parsed.data.project_id ?? null,
+      project_id: projectId,
       latency_ms: durationMs,
       error_kind: "unknown_internal_error",
       http_status: 500,
@@ -348,7 +405,7 @@ export async function POST(request: Request) {
         tenant_id: tenantCtx.tenantId,
         user_id: tenantCtx.userId ?? null,
         trace_id: requestId,
-        project_id: parsed.data.project_id ?? null,
+        project_id: projectId,
         action: "ai_video_daily_error",
         details: {
           request_id: requestId,

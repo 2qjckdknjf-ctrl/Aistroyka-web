@@ -40,6 +40,7 @@ import {
 import { ProjectVideoDailyAnalysisPanel } from "../../../projects/ProjectVideoDailyAnalysisPanel";
 import { ProjectFieldDailyLogPanel } from "../../../projects/ProjectFieldDailyLogPanel";
 import { downloadProjectReportsExport } from "@/components/projects/reports-export-ui";
+import type { TenantRoleDb } from "@/lib/tenant/tenant.types";
 import {
   DEFAULT_PROJECT_DETAIL_TAB,
   resolveProjectDetailTab,
@@ -123,9 +124,11 @@ async function fetchProjectAi(projectId: string, page: number): Promise<{ data: 
 export function DashboardProjectDetailClient({
   projectId,
   canExportReports = false,
+  tenantRole = null,
 }: {
   projectId: string;
   canExportReports?: boolean;
+  tenantRole?: TenantRoleDb | null;
 }) {
   const t = useTranslations("canon");
   const tDetail = useTranslations("dashboardDetail");
@@ -299,6 +302,7 @@ export function DashboardProjectDetailClient({
           <ProjectAiPanel
             projectId={projectId}
             tenantId={project.tenant_id}
+            tenantRole={tenantRole}
             query={aiQuery}
             page={aiPage}
             onPageChange={setAiPage}
@@ -641,12 +645,14 @@ function ProjectUploadsPanel({
 function ProjectAiPanel({
   projectId,
   tenantId,
+  tenantRole,
   query,
   page,
   onPageChange,
 }: {
   projectId: string;
   tenantId: string;
+  tenantRole: TenantRoleDb | null;
   query: { data?: { data: { id: string; media_id: string; status: string; created_at: string }[]; total: number }; isPending: boolean; isError: boolean };
   page: number;
   onPageChange: (p: number) => void;
@@ -672,7 +678,7 @@ function ProjectAiPanel({
       <section>
         <SectionHeader title={tProject("fieldDailyTitle")} subtitle={tProject("fieldDailySubtitle")} />
         <DashboardGlassCard>
-          <ProjectFieldDailyLogPanel projectId={projectId} />
+          <ProjectFieldDailyLogPanel projectId={projectId} tenantRole={tenantRole} />
         </DashboardGlassCard>
       </section>
 

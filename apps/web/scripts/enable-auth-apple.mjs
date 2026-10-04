@@ -24,7 +24,7 @@ const teamId = process.env.APPLE_TEAM_ID?.trim() || "43A4KW5BKB";
 const keyId = process.env.APPLE_KEY_ID?.trim() || "P9MW477G96";
 const servicesId = process.env.APPLE_SERVICES_ID?.trim() || "ai.aistroyka.web";
 const additional = process.env.APPLE_ADDITIONAL_CLIENT_IDS?.trim()
-  || "ai.aistroyka.worker,ai.aistroyka.manager";
+  || "ai.aistroyka.worker,ai.aistroyka.manager,ai.aistroyka.customer";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const keyPath = process.env.APPLE_P8_PATH?.trim()
