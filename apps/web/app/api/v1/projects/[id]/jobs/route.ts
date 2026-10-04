@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { createClientFromRequest } from "@/lib/supabase/server";
-import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
+import {
+  authorize,
+  getTenantContextFromRequest,
+  requireTenant,
+  TenantRequiredError,
+} from "@/lib/tenant";
 import { getProject } from "@/lib/domain/projects/project.service";
 import { createVisionAnalysisJob } from "@/lib/domain/vision-jobs/create-vision-job.service";
 
@@ -8,8 +13,9 @@ export const dynamic = "force-dynamic";
 
 /**
  * POST /api/v1/projects/:id/jobs — create/start an analysis_jobs row (QUEUED).
- * Poll GET /api/v1/projects/:id/jobs/:jobId. Synchronous POST /api/v1/ai/analyze-video-daily
- * remains a compatibility path until callers cut over to this job lifecycle.
+ * Poll GET /api/v1/projects/:id/jobs/:jobId.
+ * Video media is still processed by POST /api/v1/ai/analyze-video-daily until the
+ * async worker implements video (runOneJob currently fails video as not implemented).
  */
 export async function POST(
   request: Request,
@@ -28,13 +34,21 @@ export async function POST(
     throw e;
   }
 
-  let body: { media_id?: string; request_key?: string; priority?: "high" | "normal" | "low" };
+  if (!authorize(ctx, "analysis:trigger")) {
+    return NextResponse.json({ error: "Insufficient rights" }, { status: 403 });
+  }
+
+  let body: unknown;
   try {
-    body = (await request.json()) as typeof body;
+    body = await request.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
-  if (!body.media_id) return NextResponse.json({ error: "media_id required" }, { status: 400 });
+  if (body === null || typeof body !== "object" || Array.isArray(body)) {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+  const payload = body as { media_id?: string; request_key?: string; priority?: "high" | "normal" | "low" };
+  if (!payload.media_id) return NextResponse.json({ error: "media_id required" }, { status: 400 });
 
   const supabase = await createClientFromRequest(request);
   const { data: project, error: projectError } = await getProject(supabase, ctx, projectId);
@@ -46,9 +60,9 @@ export async function POST(
   const result = await createVisionAnalysisJob(supabase, {
     tenantId: ctx.tenantId!,
     projectId,
-    mediaId: body.media_id,
-    requestKey: body.request_key ?? request.headers.get("x-idempotency-key"),
-    priority: body.priority,
+    mediaId: payload.media_id,
+    requestKey: payload.request_key ?? request.headers.get("x-idempotency-key"),
+    priority: payload.priority,
   });
   if (!result.ok) {
     return NextResponse.json({ error: result.error }, { status: result.status });

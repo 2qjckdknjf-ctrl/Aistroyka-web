@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { createAnalysisJobRpc } from "@/lib/api/rpcClient";
+import { createAnalysisJob } from "@/lib/api/engine";
+import { getAdminClient } from "@/lib/supabase/admin";
 import {
   mapAnalysisJobToLifecycle,
   type VisionJobLifecycle,
@@ -30,11 +31,17 @@ function asJob(row: Record<string, unknown> | null): {
   attempts: number | null;
 } | null {
   if (!row?.id) return null;
+  const attemptCount =
+    typeof row.attempt_count === "number"
+      ? row.attempt_count
+      : typeof row.attempts === "number"
+        ? row.attempts
+        : null;
   return {
     id: String(row.id),
     status: String(row.status ?? "queued"),
     error_type: (row.error_type as string | null) ?? null,
-    attempts: typeof row.attempts === "number" ? row.attempts : null,
+    attempts: attemptCount,
   };
 }
 
@@ -57,7 +64,7 @@ export async function createVisionAnalysisJob(
   if (requestKey) {
     const { data: existing, error: existingErr } = await supabase
       .from("analysis_jobs")
-      .select("id, status, error_type, attempts, media_id")
+      .select("id, status, error_type, attempt_count, media_id")
       .eq("tenant_id", input.tenantId)
       .eq("request_key", requestKey)
       .maybeSingle();
@@ -80,7 +87,7 @@ export async function createVisionAnalysisJob(
 
   const { data: active } = await supabase
     .from("analysis_jobs")
-    .select("id, status, error_type, attempts")
+    .select("id, status, error_type, attempt_count")
     .eq("media_id", input.mediaId)
     .in("status", ["pending", "queued", "processing"])
     .maybeSingle();
@@ -98,17 +105,42 @@ export async function createVisionAnalysisJob(
   }
 
   try {
-    const created = await createAnalysisJobRpc(supabase, {
-      p_tenant_id: input.tenantId,
-      p_media_id: input.mediaId,
-      p_priority: input.priority ?? "normal",
+    const created = await createAnalysisJob(supabase, {
+      tenant_id: input.tenantId,
+      media_id: input.mediaId,
+      priority: input.priority ?? "normal",
     });
     if (requestKey) {
-      await supabase
+      const admin = getAdminClient();
+      if (!admin) {
+        return { ok: false, error: "Job create requires service role", status: 503 };
+      }
+      const { error: keyErr } = await admin
         .from("analysis_jobs")
         .update({ request_key: requestKey, provider_metadata: { source: "vision_async" } })
         .eq("id", created.id)
         .eq("tenant_id", input.tenantId);
+      if (keyErr) {
+        if (keyErr.code === "23505") {
+          const { data: winner } = await admin
+            .from("analysis_jobs")
+            .select("id, status, error_type, attempt_count, media_id")
+            .eq("tenant_id", input.tenantId)
+            .eq("request_key", requestKey)
+            .maybeSingle();
+          const job = asJob((winner as Record<string, unknown> | null) ?? null);
+          if (job) {
+            return {
+              ok: true,
+              created: false,
+              jobId: job.id,
+              status: job.status,
+              lifecycle: mapAnalysisJobToLifecycle(job),
+            };
+          }
+        }
+        return { ok: false, error: keyErr.message, status: 503 };
+      }
     }
     return {
       ok: true,

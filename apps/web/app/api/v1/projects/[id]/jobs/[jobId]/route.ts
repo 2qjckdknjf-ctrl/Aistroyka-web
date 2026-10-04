@@ -42,7 +42,7 @@ export async function GET(
 
   const { data: job, error: jobErr } = await supabase
     .from("analysis_jobs")
-    .select("id, tenant_id, media_id, status, error_type, error_message, attempt_count, started_at, finished_at")
+    .select("id, tenant_id, media_id, status, error_type, attempt_count, started_at, finished_at")
     .eq("id", jobId)
     .maybeSingle();
 
@@ -78,7 +78,6 @@ export async function GET(
       lifecycle,
       error_type: job.error_type ?? null,
       attempt_count: typeof job.attempt_count === "number" ? job.attempt_count : 0,
-      error_message: job.error_message ?? null,
       started_at: job.started_at ?? null,
       finished_at: job.finished_at ?? null,
     },

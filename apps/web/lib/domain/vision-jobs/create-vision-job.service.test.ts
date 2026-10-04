@@ -1,19 +1,28 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createVisionAnalysisJob } from "./create-vision-job.service";
 
-vi.mock("@/lib/api/rpcClient", () => ({
-  createAnalysisJobRpc: vi.fn(async () => ({
-    id: "job-new",
-    media_id: "media-1",
-    tenant_id: "t1",
-    status: "queued",
-    started_at: "2026-10-03T00:00:00Z",
-    finished_at: null,
-    error_message: null,
+const createAnalysisJob = vi.fn();
+
+vi.mock("@/lib/api/engine", () => ({
+  createAnalysisJob: (...args: unknown[]) => createAnalysisJob(...args),
+}));
+
+vi.mock("@/lib/supabase/admin", () => ({
+  getAdminClient: vi.fn(() => ({
+    from: () => ({
+      update: () => ({
+        eq: () => ({
+          eq: async () => ({ error: null }),
+        }),
+      }),
+    }),
   })),
 }));
 
 describe("createVisionAnalysisJob", () => {
+  beforeEach(() => {
+    createAnalysisJob.mockReset();
+  });
   it("returns 404 when media is missing or belongs to another project", async () => {
     const supabase = {
       from: vi.fn().mockReturnValue({
@@ -30,6 +39,7 @@ describe("createVisionAnalysisJob", () => {
       mediaId: "m",
     });
     expect(r).toMatchObject({ ok: false, status: 404 });
+    expect(createAnalysisJob).not.toHaveBeenCalled();
   });
 
   it("reuses request_key without creating a second job", async () => {
@@ -55,7 +65,7 @@ describe("createVisionAnalysisJob", () => {
                   id: "job-existing",
                   status: "completed",
                   error_type: null,
-                  attempts: 1,
+                  attempt_count: 1,
                   media_id: "media-1",
                 },
                 error: null,
@@ -72,5 +82,47 @@ describe("createVisionAnalysisJob", () => {
       requestKey: "idem-1",
     });
     expect(r).toMatchObject({ ok: true, created: false, jobId: "job-existing", lifecycle: "SUCCEEDED" });
+    expect(createAnalysisJob).not.toHaveBeenCalled();
+  });
+
+  it("creates jobs through the service-role engine helper", async () => {
+    createAnalysisJob.mockResolvedValue({ id: "job-new", media_id: "media-1", status: "queued" });
+    const from = vi.fn((table: string) => {
+      if (table === "media") {
+        return {
+          select: () => ({
+            eq: () => ({
+              maybeSingle: async () => ({
+                data: { id: "media-1", tenant_id: "t1", project_id: "p1" },
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+      if (table === "analysis_jobs") {
+        return {
+          select: () => ({
+            eq: () => ({
+              in: () => ({
+                maybeSingle: async () => ({ data: null, error: null }),
+              }),
+            }),
+          }),
+        };
+      }
+      return {};
+    });
+    const r = await createVisionAnalysisJob({ from } as never, {
+      tenantId: "t1",
+      projectId: "p1",
+      mediaId: "media-1",
+    });
+    expect(r).toMatchObject({ ok: true, created: true, jobId: "job-new", lifecycle: "QUEUED" });
+    expect(createAnalysisJob).toHaveBeenCalledWith(expect.anything(), {
+      tenant_id: "t1",
+      media_id: "media-1",
+      priority: "normal",
+    });
   });
 });
