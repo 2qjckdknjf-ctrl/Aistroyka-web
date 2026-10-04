@@ -20,6 +20,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Workspace preflight safety tests
+        run: python3 scripts/ops/test_workspace_preflight.py
+
       # CI builds with bun; Vercel installs with npm from the root lock. Catch
       # npm-lock corruption (missing versions, macOS-only platform binaries)
       # here instead of on the next Vercel deploy.

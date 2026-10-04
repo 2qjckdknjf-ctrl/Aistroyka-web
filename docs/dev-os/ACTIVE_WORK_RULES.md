@@ -4,7 +4,7 @@
 - Run `python3 scripts/ops/workspace_preflight.py --refresh`; when resuming, add `--resume-pr <number>`.
 - Search main, existing PRs and local salvage by requirement ID before writing another implementation.
 - Track implementation, current-head review, main, staging, production, DB migration and mobile build independently.
-- Finish the three existing delivery queues before starting another product queue; a blocked gate does not authorize duplicate implementation.
+- Finish the current delivery and verification queues recorded in STATUS and the registry before starting another product queue; a blocked gate does not authorize duplicate implementation.
 - Registry rows are dated observations: refresh HEAD/state before any action. Historical audits are evidence, not a live queue.
 
 

@@ -10,4 +10,4 @@ Exact next step: refresh GitHub; Customer iOS #375, Graph persistence #376, asyn
 
 Phone: YES for registry/review work. Desktop: YES through START_HERE and preflight. Public GA, migration/live-flow closure and store upload are not claimed.
 
-Protected merge requires mandatory CI and a real non-author approval on current HEAD. Exact PR and final merge SHA are reported by the calling chat; the handoff does not manufacture a future merge result.
+Completed protected merges: [#381](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/381) at `c54ee2b4`, followed by [#383](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/383) at `9500a6b5`. Both had required CI success and current-head approval from the non-author reviewer. The canonical checkout was clean and equal to origin/main after completion; rerun preflight before the next task.
