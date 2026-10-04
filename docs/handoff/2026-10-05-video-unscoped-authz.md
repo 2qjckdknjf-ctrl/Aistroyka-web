@@ -6,7 +6,7 @@ Date: 2026-10-05. Do not treat this file as live GitHub truth; refresh PR HEAD/C
 
 | Item | Path | Branch | HEAD |
 |---|---|---|---|
-| Video authz | `/Users/alex/Projects/AISTROYKA-video-unscoped-authz` | `fix/ai-video-unscoped-authz-2026-10-05` | `fe681543` |
+| Video authz | `/Users/alex/Projects/AISTROYKA-video-unscoped-authz` | `fix/ai-video-unscoped-authz-2026-10-05` | `a2aed3e7` (code `fe681543`) |
 | Vision RPC | `/Users/alex/Projects/AISTROYKA-vision-request-key` | `feature/vision-request-key-atomic-2026-10-04` | `906c9ef7` |
 | Canonical clean | `/Users/alex/Projects/AISTROYKA-main-clean` | do not occupy for these PRs | `origin/main` `ee162ea4` |
 
