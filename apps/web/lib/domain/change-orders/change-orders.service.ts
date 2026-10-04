@@ -1,5 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { TenantContext } from "@/lib/tenant/tenant.types";
+import { canRespondToClientRequests } from "@/lib/domain/stakeholders/stakeholders.policy";
+import { getAdminClient } from "@/lib/supabase/admin";
 import * as repo from "./change-orders.repository";
 import { canManageChangeOrders, canReadChangeOrders } from "./change-orders.policy";
 import type {
@@ -354,8 +356,13 @@ export async function transitionChangeOrder(
 }
 
 /**
- * Portal stakeholder approves or rejects a change order awaiting customer decision.
+ * Portal decision-maker (or project owner) approves or rejects a change order
+ * awaiting customer decision. Same cohort as estimate/client-request respond.
  * Managers must use {@link transitionChangeOrder} instead.
+ *
+ * Writes go through the service-role client after app-level authz because RLS
+ * only grants UPDATE/INSERT on change orders to internal tenant readers — portal
+ * stakeholders would otherwise get silent 0-row updates.
  */
 export async function respondToChangeOrderByCustomer(
   supabase: SupabaseClient,
@@ -365,7 +372,7 @@ export async function respondToChangeOrderByCustomer(
   decision: "approve" | "reject"
 ): Promise<{ data: ChangeOrderPublicDetail | null; error: string }> {
   if (!ctx.tenantId || !ctx.userId) return { data: null, error: "Tenant required" };
-  if (!(await canReadChangeOrders(supabase, ctx, projectId))) {
+  if (!(await canRespondToClientRequests(supabase, ctx, projectId))) {
     return { data: null, error: "Insufficient rights" };
   }
   if (await canManageChangeOrders(supabase, ctx, projectId)) {
@@ -387,10 +394,11 @@ export async function respondToChangeOrderByCustomer(
       ? { status: toStatus, approved_by_customer: ctx.userId, approved_at: now }
       : { status: toStatus, approved_by_customer: null as string | null, approved_at: null as string | null };
 
-  const ok = await repo.updateChangeOrder(supabase, changeOrderId, ctx.tenantId, approvalPatch);
+  const writer = getAdminClient() ?? supabase;
+  const ok = await repo.updateChangeOrder(writer, changeOrderId, ctx.tenantId, approvalPatch);
   if (!ok) return { data: null, error: "Update failed" };
 
-  await repo.insertEvent(supabase, {
+  await repo.insertEvent(writer, {
     tenant_id: ctx.tenantId,
     project_id: projectId,
     change_order_id: changeOrderId,
@@ -400,8 +408,8 @@ export async function respondToChangeOrderByCustomer(
     note: decision === "approve" ? "Customer approved" : "Customer rejected",
   });
 
-  const fresh = await repo.getById(supabase, changeOrderId, ctx.tenantId);
+  const fresh = await repo.getById(writer, changeOrderId, ctx.tenantId);
   if (!fresh) return { data: null, error: "Not found" };
-  const events = await repo.listEvents(supabase, changeOrderId, ctx.tenantId);
+  const events = await repo.listEvents(writer, changeOrderId, ctx.tenantId);
   return { data: toPublicDetail(fresh, events), error: "" };
 }
