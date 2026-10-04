@@ -3,7 +3,7 @@
  *
  * Request: JSON { video_url (required), work_date? (YYYY-MM-DD), media_id?, project_id? }.
  * Response: 200 DailyWorkVideoAnalysis (see @aistroyka/contracts).
- * When project_id is set: requires tenant auth and internal project access.
+ * Requires tenant auth. When project_id is set: also requires internal project access.
  * Requires Gemini (GOOGLE_AI_API_KEY or GEMINI_API_KEY). No OpenAI/Anthropic fallback for native video.
  *
  * Compatibility path: this handler still runs analysis synchronously. Canonical async create/start
@@ -143,30 +143,30 @@ export async function POST(request: Request) {
   const userSupabase = await createClientFromRequest(request);
   const projectId = parsed.data.project_id?.trim() || null;
 
-  if (projectId) {
-    try {
-      requireTenant(tenantCtx);
-    } catch (e) {
-      if (e instanceof TenantRequiredError) {
-        logVisionAnalyzeError({
-          request_id: requestId,
-          route: ROUTE_KEY,
-          tenant_id: tenantCtx.tenantId,
-          project_id: projectId,
-          latency_ms: Date.now() - start,
-          error_kind: "auth_failure",
-          http_status: 401,
-          ...rel(),
-        });
-        return wrap(
-          NextResponse.json({ error: e.message, request_id: requestId }, { status: 401 }),
-          tenantCtx.tenantId,
-          tenantCtx.userId
-        );
-      }
-      throw e;
+  try {
+    requireTenant(tenantCtx);
+  } catch (e) {
+    if (e instanceof TenantRequiredError) {
+      logVisionAnalyzeError({
+        request_id: requestId,
+        route: ROUTE_KEY,
+        tenant_id: tenantCtx.tenantId,
+        project_id: projectId,
+        latency_ms: Date.now() - start,
+        error_kind: "auth_failure",
+        http_status: 401,
+        ...rel(),
+      });
+      return wrap(
+        NextResponse.json({ error: e.message, request_id: requestId }, { status: 401 }),
+        tenantCtx.tenantId,
+        tenantCtx.userId
+      );
     }
+    throw e;
+  }
 
+  if (projectId) {
     const { data: project, error: projectError } = await getProjectForInternalWorkspace(
       userSupabase,
       tenantCtx,

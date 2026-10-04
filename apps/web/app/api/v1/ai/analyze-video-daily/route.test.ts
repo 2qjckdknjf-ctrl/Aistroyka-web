@@ -220,18 +220,31 @@ describe("POST /api/v1/ai/analyze-video-daily", () => {
     expect(data.work_date).toBe("2026-04-27");
   });
 
-  it("preserves unscoped video analysis without forcing tenant auth", async () => {
+  it("returns 401 for unscoped video analysis without tenant auth", async () => {
     vi.stubEnv("GOOGLE_AI_API_KEY", "x");
     tenantMocks.getTenantContextFromRequest.mockResolvedValueOnce(absentTenant);
+    tenantMocks.requireTenant.mockImplementationOnce(() => {
+      throw new tenantMocks.TenantRequiredError("Tenant required");
+    });
+
+    const res = await POST(jsonRequest({ video_url: "https://example.com/site.mp4" }));
+
+    expect(res.status).toBe(401);
+    expect(projectMocks.getProjectForInternalWorkspace).not.toHaveBeenCalled();
+    expect(aiMocks.analyzeVideoDailyWork).not.toHaveBeenCalled();
+  });
+
+  it("allows authenticated unscoped analysis and still skips project lookup", async () => {
+    vi.stubEnv("GOOGLE_AI_API_KEY", "x");
 
     const res = await POST(jsonRequest({ video_url: "https://example.com/site.mp4" }));
 
     expect(res.status).toBe(200);
-    expect(tenantMocks.requireTenant).not.toHaveBeenCalled();
+    expect(tenantMocks.requireTenant).toHaveBeenCalled();
     expect(projectMocks.getProjectForInternalWorkspace).not.toHaveBeenCalled();
     expect(aiMocks.analyzeVideoDailyWork).toHaveBeenCalledWith(
       expect.anything(),
-      expect.objectContaining({ tenantId: null, userId: null }),
+      expect.objectContaining({ tenantId: "t1", userId: "u1" }),
       expect.objectContaining({ projectId: null })
     );
   });
