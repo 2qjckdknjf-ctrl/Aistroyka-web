@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createVisionAnalysisJob } from "./create-vision-job.service";
+import { createVisionAnalysisJob, visionJobCreateFailure } from "./create-vision-job.service";
 
 const createAnalysisJob = vi.fn();
 
@@ -231,5 +231,58 @@ describe("createVisionAnalysisJob", () => {
       requestKey: 1 as never,
     });
     expect(r).toMatchObject({ ok: false, status: 400 });
+  });
+
+  it("maps plain PostgREST 23505 objects to 409", async () => {
+    createAnalysisJob.mockRejectedValue({ code: "23505", message: "duplicate key value" });
+    const from = vi.fn((table: string) => {
+      if (table === "media") {
+        return {
+          select: () => ({
+            eq: () => ({
+              maybeSingle: async () => ({
+                data: { id: "media-1", tenant_id: "t1", project_id: "p1" },
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+      return {
+        select: () => ({
+          eq: () => ({
+            eq: () => ({
+              maybeSingle: async () => ({ data: null, error: null }),
+            }),
+            in: () => ({
+              maybeSingle: async () => ({ data: null, error: null }),
+            }),
+          }),
+        }),
+      };
+    });
+    const r = await createVisionAnalysisJob({ from } as never, {
+      tenantId: "t1",
+      projectId: "p1",
+      mediaId: "media-1",
+      requestKey: "idem-conflict",
+    });
+    expect(r).toMatchObject({ ok: false, status: 409, error: "Idempotency key already used" });
+  });
+});
+
+describe("visionJobCreateFailure", () => {
+  it("reads code and message from plain PostgREST error objects", () => {
+    expect(visionJobCreateFailure({ code: "23505", message: "duplicate key" })).toEqual({
+      message: "duplicate key",
+      conflict: true,
+    });
+    expect(visionJobCreateFailure(new Error("Idempotency key already used"))).toMatchObject({
+      conflict: true,
+    });
+    expect(visionJobCreateFailure({ code: "PGRST202", message: "missing fn" })).toEqual({
+      message: "missing fn",
+      conflict: false,
+    });
   });
 });

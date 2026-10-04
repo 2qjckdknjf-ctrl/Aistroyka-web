@@ -44,6 +44,19 @@ function asJob(row: Record<string, unknown> | null): {
   };
 }
 
+export function visionJobCreateFailure(err: unknown): { message: string; conflict: boolean } {
+  const code =
+    err && typeof err === "object" && "code" in err && typeof err.code === "string" ? err.code : "";
+  const message =
+    err instanceof Error
+      ? err.message
+      : err && typeof err === "object" && "message" in err && typeof err.message === "string"
+        ? err.message
+        : "Failed to create analysis job";
+  const conflict = code === "23505" || /23505|Idempotency key already used/i.test(message);
+  return { message, conflict };
+}
+
 export async function createVisionAnalysisJob(
   supabase: SupabaseClient,
   input: CreateVisionAnalysisJobInput
@@ -121,11 +134,11 @@ export async function createVisionAnalysisJob(
             ),
           };
         } catch (err) {
-          const message = err instanceof Error ? err.message : "Failed to create analysis job";
-          if (/23505|Idempotency key already used/i.test(message)) {
+          const failure = visionJobCreateFailure(err);
+          if (failure.conflict) {
             return { ok: false, error: "Idempotency key already used", status: 409 };
           }
-          return { ok: false, error: message, status: 503 };
+          return { ok: false, error: failure.message, status: 503 };
         }
       }
       return {
@@ -153,10 +166,10 @@ export async function createVisionAnalysisJob(
       lifecycle: mapAnalysisJobToLifecycle({ status: created.status ?? "queued" }),
     };
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to create analysis job";
-    if (/23505|Idempotency key already used/i.test(message)) {
+    const failure = visionJobCreateFailure(err);
+    if (failure.conflict) {
       return { ok: false, error: "Idempotency key already used", status: 409 };
     }
-    return { ok: false, error: message, status: 503 };
+    return { ok: false, error: failure.message, status: 503 };
   }
 }
