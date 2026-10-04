@@ -68,4 +68,23 @@ enum CustomerAPI {
             body: Body(decision: decision, note: note)
         )
     }
+
+    /// POST /api/v1/projects/:id/estimates/:estimateId/respond (customer-safe path used by web portal).
+    static func respondToEstimate(
+        projectId: String,
+        estimateId: String,
+        decision: String,
+        note: String? = nil
+    ) async throws {
+        struct Body: Encodable {
+            let decision: String
+            let note: String?
+        }
+        struct EmptyData: Decodable {}
+        let _: Envelope<EmptyData> = try await APIClient.shared.request(
+            path: "projects/\(projectId)/estimates/\(estimateId)/respond",
+            method: "POST",
+            body: Body(decision: decision, note: note)
+        )
+    }
 }

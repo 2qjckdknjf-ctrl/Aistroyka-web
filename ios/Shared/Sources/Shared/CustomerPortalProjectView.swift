@@ -61,6 +61,11 @@ public struct CustomerPortalProjectView: Decodable, Sendable {
         public let currency: String
         public let validUntil: String?
         public let customerNote: String?
+
+        /// Estimates awaiting customer decision (`sent` only).
+        public var supportsApproveReject: Bool {
+            status == "sent"
+        }
     }
 
     public struct CustomerFacingRequest: Decodable, Identifiable, Sendable {
@@ -87,6 +92,11 @@ public struct CustomerPortalProjectView: Decodable, Sendable {
     /// True when this portal view may submit approve/reject for the given request.
     public func canRespondApproveReject(to request: CustomerFacingRequest) -> Bool {
         (capabilities?.canRespondToRequests ?? false) && request.supportsApproveReject
+    }
+
+    /// True when this portal view may approve/reject a sent customer estimate.
+    public func canRespondApproveReject(to estimate: CustomerFacingEstimate) -> Bool {
+        (capabilities?.canRespondToRequests ?? false) && estimate.supportsApproveReject
     }
 
     public init(from decoder: Decoder) throws {

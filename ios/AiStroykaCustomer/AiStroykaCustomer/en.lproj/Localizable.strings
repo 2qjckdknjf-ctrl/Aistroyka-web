@@ -40,3 +40,6 @@
 "cust_request_reject" = "Reject";
 "cust_request_respond_ok" = "Response sent.";
 "cust_request_respond_error" = "Could not send your response.";
+
+"cust_estimate_respond_ok" = "Estimate response sent.";
+"cust_estimate_respond_error" = "Could not send your estimate response.";

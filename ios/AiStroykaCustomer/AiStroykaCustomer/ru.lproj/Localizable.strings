@@ -40,3 +40,6 @@
 "cust_request_reject" = "Отклонить";
 "cust_request_respond_ok" = "Ответ отправлен.";
 "cust_request_respond_error" = "Не удалось отправить ответ.";
+
+"cust_estimate_respond_ok" = "Ответ по смете отправлен.";
+"cust_estimate_respond_error" = "Не удалось отправить ответ по смете.";

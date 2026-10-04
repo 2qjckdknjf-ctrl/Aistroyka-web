@@ -42,7 +42,27 @@ final class CustomerPortalProjectViewTests: XCTestCase {
         XCTAssertEqual(view.clientRequests[0].customerVisibleAmount, 12000.5)
         XCTAssertEqual(view.capabilities?.canRespondToRequests, true)
         XCTAssertTrue(view.canRespondApproveReject(to: view.clientRequests[0]))
+        XCTAssertTrue(view.canRespondApproveReject(to: view.customerEstimates[0]))
         XCTAssertTrue(CustomerPortalProjectView.formatCustomerAmount(amount: 12000.5, currency: "EUR").contains("12"))
+    }
+
+    func testEstimateApproveRejectGateRequiresSentAndCapability() throws {
+        let data = Data("""
+        {
+          "project": {"id": "p1", "name": "Villa"},
+          "progress": {"tasks_done": 0, "tasks_total": 0},
+          "customer_estimates": [
+            {"id":"e1","title":"A","status":"sent","total_amount":1,"currency":"EUR"},
+            {"id":"e2","title":"B","status":"draft","total_amount":1,"currency":"EUR"},
+            {"id":"e3","title":"C","status":"approved","total_amount":1,"currency":"EUR"}
+          ],
+          "capabilities": {"can_respond_to_requests": true}
+        }
+        """.utf8)
+        let view = try CustomerPortalProjectView.decodePortalJSON(data)
+        XCTAssertTrue(view.canRespondApproveReject(to: view.customerEstimates[0]))
+        XCTAssertFalse(view.canRespondApproveReject(to: view.customerEstimates[1]))
+        XCTAssertFalse(view.canRespondApproveReject(to: view.customerEstimates[2]))
     }
 
     func testApproveRejectGateRespectsKindActionAndCapability() throws {

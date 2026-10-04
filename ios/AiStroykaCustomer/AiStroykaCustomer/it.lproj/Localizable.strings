@@ -40,3 +40,6 @@
 "cust_request_reject" = "Rifiuta";
 "cust_request_respond_ok" = "Risposta inviata.";
 "cust_request_respond_error" = "Impossibile inviare la risposta.";
+
+"cust_estimate_respond_ok" = "Risposta al preventivo inviata.";
+"cust_estimate_respond_error" = "Impossibile inviare la risposta al preventivo.";
