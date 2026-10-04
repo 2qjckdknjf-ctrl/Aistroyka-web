@@ -1,6 +1,9 @@
 /**
  * POST /api/v1/billing/webhook — Stripe webhook (signature verified; server-only).
  * No auth; verified by Stripe-Signature.
+ *
+ * Idempotency: apply handlers first, then record `processed_stripe_events`.
+ * Marking processed before apply permanently drops failed updates on Stripe retry.
  */
 
 import { NextResponse } from "next/server";
@@ -24,12 +27,6 @@ export async function POST(request: Request) {
   if (existing) {
     return NextResponse.json({ received: true });
   }
-  const { error: insertErr } = await (admin as any).from("processed_stripe_events").insert({ event_id: event.id });
-  if (insertErr) {
-    const conflict = insertErr.code === "23505";
-    if (conflict) return NextResponse.json({ received: true });
-    return NextResponse.json({ error: "Processing failed" }, { status: 500 });
-  }
 
   try {
     if (event.type === "checkout.session.completed") {
@@ -47,7 +44,19 @@ export async function POST(request: Request) {
       await handleSubscriptionUpdated(admin, sub);
     }
   } catch {
+    // Do not mark processed — Stripe will retry and entitlements can still be applied.
     return NextResponse.json({ error: "Processing failed" }, { status: 500 });
   }
+
+  const { error: insertErr } = await (admin as any).from("processed_stripe_events").insert({ event_id: event.id });
+  if (insertErr) {
+    const conflict = insertErr.code === "23505";
+    // Concurrent delivery already recorded success after its own apply.
+    if (conflict) return NextResponse.json({ received: true });
+    // Apply succeeded but idempotency write failed — return 500 so Stripe retries
+    // (handlers are upsert-idempotent).
+    return NextResponse.json({ error: "Processing failed" }, { status: 500 });
+  }
+
   return NextResponse.json({ received: true });
 }
