@@ -54,10 +54,13 @@ export async function GET(
   const url = new URL(request.url);
   const limit = Math.min(parseInt(url.searchParams.get("limit") ?? "50", 10) || 50, 100);
   const cursor = url.searchParams.get("cursor");
+  const tailParam = (url.searchParams.get("tail") ?? "").toLowerCase();
+  const tail = tailParam === "1" || tailParam === "true";
   const supabase = await createClientFromRequest(request);
   const { result, error, status, code } = await listTaskMessages(supabase, ctx, taskId, {
     limit,
     cursor,
+    tail,
   });
   if (error) {
     return withRequestIdAndTiming(
