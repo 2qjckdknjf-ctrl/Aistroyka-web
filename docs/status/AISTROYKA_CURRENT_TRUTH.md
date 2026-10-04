@@ -1,3 +1,5 @@
+> **Исторический снимок 2026-08-21.** Актуальный вход: [STATUS](../../STATUS.md) и [START_HERE](../../START_HERE.md). Этот файл сохранён для истории, его runtime SHA и verdicts не являются текущей сертификацией.
+
 # AISTROYKA — Current Truth Snapshot
 
 **Generated:** 2026-08-21 (Europe/Madrid)  

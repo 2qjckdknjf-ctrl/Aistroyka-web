@@ -1,3 +1,5 @@
+> **Текущая точка входа с 2026-10-04:** [STATUS](../STATUS.md), [START_HERE](../START_HERE.md), [реестр существующей разработки](tasks/ACTIVE_WORK_REGISTRY.csv). Текст ниже сохранён как исторический снимок: его SHA, открытые PR и readiness-статусы нельзя использовать как сегодняшние без повторной проверки.
+
 # AISTROYKA Current Project Truth Index
 
 **Last updated:** 2026-10-03  
