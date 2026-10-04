@@ -15,6 +15,7 @@ declare
   new_job public.analysis_jobs;
   v_priority text;
   v_request_key text;
+  v_active_id uuid;
 begin
   if not exists (
     select 1
@@ -51,16 +52,29 @@ begin
   limit 1;
 
   if new_job.id is not null then
+    v_active_id := new_job.id;
     if v_request_key is not null then
       if new_job.request_key is null then
         update public.analysis_jobs
         set
           request_key = v_request_key,
           provider_metadata = coalesce(provider_metadata, '{}'::jsonb) || jsonb_build_object('source', 'vision_async')
-        where id = new_job.id
+        where id = v_active_id
           and tenant_id = p_tenant_id
           and request_key is null
         returning * into new_job;
+        -- Concurrent bind can win the predicate; RETURNING then leaves new_job null.
+        if new_job.id is null then
+          select * into new_job
+          from public.analysis_jobs
+          where id = v_active_id;
+          if new_job.id is null then
+            raise;
+          end if;
+          if new_job.request_key is distinct from v_request_key then
+            raise exception 'Idempotency key already used' using errcode = '23505';
+          end if;
+        end if;
       elsif new_job.request_key is distinct from v_request_key then
         raise exception 'Idempotency key already used' using errcode = '23505';
       end if;
@@ -92,6 +106,10 @@ begin
   return new_job;
 exception
   when unique_violation then
+    -- Intentional 23505 (key already bound to another job/media) must not fall through.
+    if sqlerrm = 'Idempotency key already used' then
+      raise;
+    end if;
     if v_request_key is not null then
       select * into new_job
       from public.analysis_jobs
@@ -113,6 +131,12 @@ exception
     limit 1;
     if new_job.id is null then
       raise;
+    end if;
+    if v_request_key is not null
+      and new_job.request_key is not null
+      and new_job.request_key is distinct from v_request_key
+    then
+      raise exception 'Idempotency key already used' using errcode = '23505';
     end if;
     return new_job;
 end;

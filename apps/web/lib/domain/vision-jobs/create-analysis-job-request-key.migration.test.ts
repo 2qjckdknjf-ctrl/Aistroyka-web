@@ -20,6 +20,18 @@ describe("create_analysis_job request_key migration", () => {
     expect(sql).toMatch(/Idempotency key already used/);
   });
 
+  it("re-reads the active row when a concurrent request_key bind wins", () => {
+    expect(sql).toMatch(/v_active_id uuid/);
+    expect(sql).toMatch(/Concurrent bind can win the predicate/);
+    expect(sql).toMatch(/where id = v_active_id/);
+    expect(sql).toMatch(/if new_job\.request_key is distinct from v_request_key/);
+  });
+
+  it("does not swallow intentional idempotency unique_violations", () => {
+    expect(sql).toMatch(/if sqlerrm = 'Idempotency key already used' then/);
+    expect(sql).toMatch(/new_job\.request_key is distinct from v_request_key/);
+  });
+
   it("keeps execute on service_role only", () => {
     expect(sql).toMatch(/drop function if exists public\.create_analysis_job\(uuid, uuid, text\)/);
     expect(sql).toMatch(/revoke all on function public\.create_analysis_job\(uuid, uuid, text, text\)/);
