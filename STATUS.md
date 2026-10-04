@@ -1,14 +1,14 @@
 # STATUS — AISTROYKA
 
-Обновлено 2026-10-04. Статусы ниже — датированное наблюдение; перед действием обновите GitHub и health.
+Обновлено 2026-10-05. Статусы ниже — датированное наблюдение; перед действием обновите GitHub и health.
 
 | Что | Где проверить |
 |---|---|
-| Актуальный исходный код | `git fetch --no-prune origin` → `origin/main` (базовый снимок этой сверки `c81e12d8`) |
-| Рабочая папка Mac | `/Users/alex/Projects/AISTROYKA-main-clean`; [START_HERE](START_HERE.md) |
+| Актуальный исходный код | `git fetch --no-prune origin` → `origin/main` (опубликованный снимок `ee162ea4`, health `sha7=ee162ea`) |
+| Рабочая папка Mac | `/Users/alex/Projects/AISTROYKA-main-clean`; активные PR: `AISTROYKA-vision-request-key` (#385), `AISTROYKA-video-unscoped-authz` (#386) |
 | Активная очередь и backlog | [единый реестр PR](docs/tasks/ACTIVE_WORK_REGISTRY.csv) — обновить HEAD/state перед продолжением |
 | Завершённая сверка папок | [workspace reconciliation](docs/tasks/2026-10-04-workspace-reconciliation.md), объединена через #381/#383 |
-| Следующее существующее продолжение | Customer portal detail [#382](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/382), сверить текущий HEAD/review/CI перед продолжением |
+| Следующее существующее продолжение | [#385](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/385) vision RPC + [#386](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/386) video tenant auth; merge только после `check` SUCCESS и независимого APPROVED |
 | Сохранение/архив/дубликаты | [результат](docs/reconciliation/workspace-2026-10-04/RESULT.md) |
 | Публикация | `/api/v1/health` production и staging; SHA в Git не доказывает развёртывание |
 
