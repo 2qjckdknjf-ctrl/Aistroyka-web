@@ -108,7 +108,12 @@ export async function getDefaultTenantId(
  */
 export async function createAnalysisJob(
   _supabase: SupabaseClient,
-  params: { tenant_id: string; media_id: string; priority?: "high" | "normal" | "low" }
+  params: {
+    tenant_id: string;
+    media_id: string;
+    priority?: "high" | "normal" | "low";
+    request_key?: string | null;
+  }
 ): Promise<{ id: string; media_id: string; status: string }> {
   const admin = getAdminClient();
   if (!admin) {
@@ -120,6 +125,7 @@ export async function createAnalysisJob(
     p_tenant_id: params.tenant_id,
     p_media_id: params.media_id,
     p_priority: params.priority ?? "normal",
+    p_request_key: params.request_key ?? null,
   });
   return {
     id: row.id,

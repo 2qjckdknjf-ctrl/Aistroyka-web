@@ -42,6 +42,7 @@ export async function createAnalysisJobRpc(
       p_tenant_id: params.p_tenant_id,
       p_media_id: params.p_media_id,
       p_priority: params.p_priority ?? "normal",
+      p_request_key: params.p_request_key ?? null,
     }
   );
   const row = Array.isArray(raw) ? raw[0] : raw;

@@ -8,15 +8,7 @@ vi.mock("@/lib/api/engine", () => ({
 }));
 
 vi.mock("@/lib/supabase/admin", () => ({
-  getAdminClient: vi.fn(() => ({
-    from: () => ({
-      update: () => ({
-        eq: () => ({
-          eq: async () => ({ error: null }),
-        }),
-      }),
-    }),
-  })),
+  getAdminClient: vi.fn(() => null),
 }));
 
 describe("createVisionAnalysisJob", () => {
@@ -123,6 +115,62 @@ describe("createVisionAnalysisJob", () => {
       tenant_id: "t1",
       media_id: "media-1",
       priority: "normal",
+      request_key: null,
+    });
+  });
+
+  it("binds request_key through the engine RPC when reusing an active job", async () => {
+    createAnalysisJob.mockResolvedValue({ id: "job-active", media_id: "media-1", status: "queued" });
+    const from = vi.fn((table: string) => {
+      if (table === "media") {
+        return {
+          select: () => ({
+            eq: () => ({
+              maybeSingle: async () => ({
+                data: { id: "media-1", tenant_id: "t1", project_id: "p1" },
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+      if (table === "analysis_jobs") {
+        return {
+          select: () => ({
+            eq: () => ({
+              eq: () => ({
+                maybeSingle: async () => ({ data: null, error: null }),
+              }),
+              in: () => ({
+                maybeSingle: async () => ({
+                  data: {
+                    id: "job-active",
+                    status: "queued",
+                    error_type: null,
+                    attempt_count: 0,
+                    media_id: "media-1",
+                  },
+                  error: null,
+                }),
+              }),
+            }),
+          }),
+        };
+      }
+      return {};
+    });
+    const r = await createVisionAnalysisJob({ from } as never, {
+      tenantId: "t1",
+      projectId: "p1",
+      mediaId: "media-1",
+      requestKey: "idem-active",
+    });
+    expect(r).toMatchObject({ ok: true, created: false, jobId: "job-active", lifecycle: "QUEUED" });
+    expect(createAnalysisJob).toHaveBeenCalledWith(expect.anything(), {
+      tenant_id: "t1",
+      media_id: "media-1",
+      priority: "normal",
+      request_key: "idem-active",
     });
   });
 

@@ -1,6 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createAnalysisJob } from "@/lib/api/engine";
-import { getAdminClient } from "@/lib/supabase/admin";
 import {
   mapAnalysisJobToLifecycle,
   type VisionJobLifecycle,
@@ -97,6 +96,33 @@ export async function createVisionAnalysisJob(
   if (active?.id) {
     const job = asJob(active as Record<string, unknown>);
     if (job) {
+      if (requestKey) {
+        try {
+          const bound = await createAnalysisJob(supabase, {
+            tenant_id: input.tenantId,
+            media_id: input.mediaId,
+            priority: input.priority ?? "normal",
+            request_key: requestKey,
+          });
+          return {
+            ok: true,
+            created: false,
+            jobId: bound.id,
+            status: bound.status ?? job.status,
+            lifecycle: mapAnalysisJobToLifecycle({
+              status: bound.status ?? job.status,
+              error_type: job.error_type,
+              attempts: job.attempts,
+            }),
+          };
+        } catch (err) {
+          const message = err instanceof Error ? err.message : "Failed to create analysis job";
+          if (/23505|Idempotency key already used/i.test(message)) {
+            return { ok: false, error: "Idempotency key already used", status: 409 };
+          }
+          return { ok: false, error: message, status: 503 };
+        }
+      }
       return {
         ok: true,
         created: false,
@@ -112,43 +138,8 @@ export async function createVisionAnalysisJob(
       tenant_id: input.tenantId,
       media_id: input.mediaId,
       priority: input.priority ?? "normal",
+      request_key: requestKey,
     });
-    if (requestKey) {
-      const admin = getAdminClient();
-      if (!admin) {
-        return { ok: false, error: "Job create requires service role", status: 503 };
-      }
-      const stamp = {
-        request_key: requestKey,
-        provider_metadata: { source: "vision_async" },
-      };
-      const { error: keyErr } = await admin
-        .from("analysis_jobs")
-        .update(stamp as never)
-        .eq("id", created.id)
-        .eq("tenant_id", input.tenantId);
-      if (keyErr) {
-        if (keyErr.code === "23505") {
-          const { data: winner } = await admin
-            .from("analysis_jobs")
-            .select("id, status, error_type, attempt_count, media_id")
-            .eq("tenant_id", input.tenantId)
-            .eq("request_key", requestKey)
-            .maybeSingle();
-          const job = asJob((winner as Record<string, unknown> | null) ?? null);
-          if (job) {
-            return {
-              ok: true,
-              created: false,
-              jobId: job.id,
-              status: job.status,
-              lifecycle: mapAnalysisJobToLifecycle(job),
-            };
-          }
-        }
-        return { ok: false, error: keyErr.message, status: 503 };
-      }
-    }
     return {
       ok: true,
       created: true,
@@ -158,6 +149,9 @@ export async function createVisionAnalysisJob(
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to create analysis job";
+    if (/23505|Idempotency key already used/i.test(message)) {
+      return { ok: false, error: "Idempotency key already used", status: 409 };
+    }
     return { ok: false, error: message, status: 503 };
   }
 }

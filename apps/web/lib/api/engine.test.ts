@@ -36,6 +36,12 @@ describe("createAnalysisJob", () => {
     expect(createAnalysisJobRpc).toHaveBeenCalledTimes(1);
     expect(createAnalysisJobRpc.mock.calls[0][0]).toBe(adminClient);
     expect(createAnalysisJobRpc.mock.calls[0][0]).not.toBe(sessionClient);
+    expect(createAnalysisJobRpc.mock.calls[0][1]).toEqual({
+      p_tenant_id: "tenant-1",
+      p_media_id: "media-1",
+      p_priority: "normal",
+      p_request_key: null,
+    });
   });
 
   it("fails closed with a configuration error when service role key is unavailable", async () => {
