@@ -43,3 +43,7 @@
 
 "cust_estimate_respond_ok" = "Respuesta al presupuesto enviada.";
 "cust_estimate_respond_error" = "No se pudo enviar la respuesta al presupuesto.";
+
+"cust_document_review_confirm" = "Confirmar revisión del documento";
+"cust_document_review_ok" = "Revisión del documento confirmada.";
+"cust_document_review_error" = "No se pudo confirmar la revisión del documento.";

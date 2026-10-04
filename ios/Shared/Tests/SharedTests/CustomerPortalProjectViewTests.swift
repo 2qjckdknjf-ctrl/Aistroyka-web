@@ -46,6 +46,26 @@ final class CustomerPortalProjectViewTests: XCTestCase {
         XCTAssertTrue(CustomerPortalProjectView.formatCustomerAmount(amount: 12000.5, currency: "EUR").contains("12"))
     }
 
+    func testDocumentReviewConfirmGate() throws {
+        let data = Data("""
+        {
+          "project": {"id": "p1", "name": "Villa"},
+          "progress": {"tasks_done": 0, "tasks_total": 0},
+          "client_requests": [
+            {"id":"r1","kind":"document_review","action_mode":"action_required","status":"open","title":"Review plan"},
+            {"id":"r2","kind":"document_review","action_mode":"info_only","status":"open","title":"FYI"},
+            {"id":"r3","kind":"approve_or_reject","action_mode":"action_required","status":"open","title":"Approve"}
+          ],
+          "capabilities": {"can_respond_to_requests": true}
+        }
+        """.utf8)
+        let view = try CustomerPortalProjectView.decodePortalJSON(data)
+        XCTAssertTrue(view.canConfirmDocumentReview(to: view.clientRequests[0]))
+        XCTAssertFalse(view.canConfirmDocumentReview(to: view.clientRequests[1]))
+        XCTAssertFalse(view.canConfirmDocumentReview(to: view.clientRequests[2]))
+        XCTAssertTrue(view.canRespondApproveReject(to: view.clientRequests[2]))
+    }
+
     func testEstimateApproveRejectGateRequiresSentAndCapability() throws {
         let data = Data("""
         {

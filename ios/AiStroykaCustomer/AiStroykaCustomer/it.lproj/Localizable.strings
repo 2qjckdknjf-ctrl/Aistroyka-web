@@ -43,3 +43,7 @@
 
 "cust_estimate_respond_ok" = "Risposta al preventivo inviata.";
 "cust_estimate_respond_error" = "Impossibile inviare la risposta al preventivo.";
+
+"cust_document_review_confirm" = "Conferma revisione documento";
+"cust_document_review_ok" = "Revisione documento confermata.";
+"cust_document_review_error" = "Impossibile confermare la revisione del documento.";
