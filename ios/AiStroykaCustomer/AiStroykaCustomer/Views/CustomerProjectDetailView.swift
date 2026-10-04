@@ -100,16 +100,23 @@ struct CustomerProjectDetailView: View {
     }
 
     private func load() async {
-        loading = true
+        let keepVisibleView = view != nil
+        if !keepVisibleView {
+            loading = true
+        }
         message = nil
         do {
             view = try await CustomerAPI.portalProject(id: projectId)
         } catch let apiError as APIError {
             message = apiError.message
-            view = nil
+            if !keepVisibleView {
+                view = nil
+            }
         } catch {
             message = NSLocalizedString("cust_project_error", comment: "")
-            view = nil
+            if !keepVisibleView {
+                view = nil
+            }
         }
         loading = false
     }

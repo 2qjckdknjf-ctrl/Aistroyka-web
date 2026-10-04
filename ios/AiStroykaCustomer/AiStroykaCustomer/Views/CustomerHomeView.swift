@@ -30,8 +30,12 @@ struct CustomerHomeView: View {
                     )
                     .accessibilityIdentifier("pilot_customer_projects_error")
                 case .empty:
-                    CustomerStatusView(kind: .error, message: NSLocalizedString("cust_projects_empty", comment: ""))
-                        .accessibilityIdentifier("pilot_customer_home_empty")
+                    ScrollView {
+                        CustomerStatusView(kind: .error, message: NSLocalizedString("cust_home_empty", comment: ""))
+                            .frame(maxWidth: .infinity)
+                    }
+                    .refreshable { await loadProjects() }
+                    .accessibilityIdentifier("pilot_customer_home_empty")
                 case .loaded:
                     List(projects) { project in
                         NavigationLink(value: project) {
@@ -67,7 +71,16 @@ struct CustomerHomeView: View {
     private func loadProjects() async {
         loadGeneration += 1
         let generation = loadGeneration
-        loadState = .loading
+        let replaceWithFullPageLoading: Bool
+        switch loadState {
+        case .loaded, .empty:
+            replaceWithFullPageLoading = false
+        case .loading, .failed:
+            replaceWithFullPageLoading = true
+        }
+        if replaceWithFullPageLoading {
+            loadState = .loading
+        }
         do {
             let rows = try await CustomerAPI.portalProjects()
             guard generation == loadGeneration else { return }
