@@ -40,3 +40,6 @@
 "cust_request_reject" = "Rechazar";
 "cust_request_respond_ok" = "Respuesta enviada.";
 "cust_request_respond_error" = "No se pudo enviar la respuesta.";
+
+"cust_estimate_respond_ok" = "Respuesta al presupuesto enviada.";
+"cust_estimate_respond_error" = "No se pudo enviar la respuesta al presupuesto.";

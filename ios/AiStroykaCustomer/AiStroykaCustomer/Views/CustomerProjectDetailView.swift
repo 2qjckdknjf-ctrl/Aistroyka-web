@@ -8,6 +8,7 @@ struct CustomerProjectDetailView: View {
     @State private var message: String?
     @State private var loading = true
     @State private var respondingRequestId: String?
+    @State private var respondingEstimateId: String?
     @State private var respondMessage: String?
 
     var body: some View {
@@ -33,6 +34,12 @@ struct CustomerProjectDetailView: View {
                         progressBlock(view.progress)
                         if let handover = view.handover {
                             labeled(NSLocalizedString("cust_project_status", comment: ""), value: handover.status)
+                        }
+                        if let respondMessage {
+                            Text(respondMessage)
+                                .font(.caption)
+                                .foregroundStyle(CustomerTokens.textSecondary)
+                                .accessibilityIdentifier("pilot_customer_respond_status")
                         }
                         activitySection(view)
                         requestsSection(view.clientRequests)
@@ -104,12 +111,6 @@ struct CustomerProjectDetailView: View {
             Text(NSLocalizedString("cust_requests_title", comment: ""))
                 .font(.headline)
                 .foregroundStyle(CustomerTokens.textPrimary)
-            if let respondMessage {
-                Text(respondMessage)
-                    .font(.caption)
-                    .foregroundStyle(CustomerTokens.textSecondary)
-                    .accessibilityIdentifier("pilot_customer_request_respond_status")
-            }
             if requests.isEmpty {
                 Text(NSLocalizedString("cust_requests_empty", comment: ""))
                     .foregroundStyle(CustomerTokens.textSecondary)
@@ -178,10 +179,46 @@ struct CustomerProjectDetailView: View {
                     amount: item.totalAmount,
                     currency: item.currency
                 )
-                labeled(item.title, value: "\(item.status) · \(amount)")
+                VStack(alignment: .leading, spacing: 8) {
+                    labeled(item.title, value: "\(item.status) · \(amount)")
+                    if let portal = view, portal.canRespondApproveReject(to: item) {
+                        HStack(spacing: 12) {
+                            Button(NSLocalizedString("cust_request_approve", comment: "")) {
+                                Task { await respond(to: item, decision: "approve") }
+                            }
+                            .disabled(respondingEstimateId != nil || respondingRequestId != nil)
+                            .accessibilityIdentifier("pilot_customer_estimate_approve_\(item.id)")
+                            Button(NSLocalizedString("cust_request_reject", comment: "")) {
+                                Task { await respond(to: item, decision: "reject") }
+                            }
+                            .disabled(respondingEstimateId != nil || respondingRequestId != nil)
+                            .accessibilityIdentifier("pilot_customer_estimate_reject_\(item.id)")
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                }
             }
         }
         .accessibilityIdentifier("pilot_customer_project_estimates")
+    }
+
+    private func respond(to item: CustomerPortalProjectView.CustomerFacingEstimate, decision: String) async {
+        respondingEstimateId = item.id
+        respondMessage = nil
+        do {
+            try await CustomerAPI.respondToEstimate(
+                projectId: projectId,
+                estimateId: item.id,
+                decision: decision
+            )
+            respondMessage = NSLocalizedString("cust_estimate_respond_ok", comment: "")
+            await load()
+        } catch let apiError as APIError {
+            respondMessage = apiError.message
+        } catch {
+            respondMessage = NSLocalizedString("cust_estimate_respond_error", comment: "")
+        }
+        respondingEstimateId = nil
     }
 
     private func documentsSection(_ docs: [CustomerPortalProjectView.Document]) -> some View {
