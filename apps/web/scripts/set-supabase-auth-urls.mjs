@@ -98,3 +98,5 @@ console.log("  site_url:", data?.site_url ?? siteUrl);
 console.log("  redirect count:", allow.split(",").filter(Boolean).length);
 console.log("  worker callback:", allow.includes("ai.aistroyka.worker://auth-callback"));
 console.log("  manager callback:", allow.includes("ai.aistroyka.manager://auth-callback"));
+console.log("  customer callback:", allow.includes("ai.aistroyka.customer://auth-callback"));
+console.log("  customer wildcard:", allow.includes("ai.aistroyka.customer://**"));

@@ -33,6 +33,8 @@ function createMockSupabase(overrides: {
         return Promise.resolve(overrides.claim ?? { data: true, error: null });
       if (name === "complete_analysis_job")
         return Promise.resolve({ error: overrides.complete?.error ?? null });
+      if (name === "record_analysis_job_failure")
+        return Promise.resolve({ data: 1, error: null });
       return Promise.resolve({ data: null, error: null });
     }),
     from: fromMock,
@@ -189,5 +191,40 @@ describe("processOneJob", () => {
     vi.unstubAllGlobals();
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(out).toEqual({ ok: true, jobId, status: "completed" });
+  });
+
+  it("records 400 provider failures as invalid_request without retrying", async () => {
+    const jobId = "job-400";
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 400,
+      text: () => Promise.resolve("quota details must not leak"),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const { processOneJob: processOne } = await import("./runOneJob");
+    const supabase = createMockSupabase({
+      dequeue: { data: [{ id: jobId, media_id: "media-1" }], error: null },
+      media: {
+        data: {
+          file_url: "https://storage/photo.jpg",
+          project_id: "proj-1",
+          type: "image",
+        },
+        error: null,
+      },
+      claim: { data: true, error: null },
+    });
+    const out = await processOne(supabase, "https://api.example.com/analyze");
+    vi.unstubAllGlobals();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(out).toEqual({ ok: true, jobId, status: "failed" });
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "record_analysis_job_failure",
+      expect.objectContaining({
+        p_job_id: jobId,
+        p_error_type: "invalid_request",
+        p_error_message: "AI analysis failed: 400",
+      })
+    );
   });
 });
