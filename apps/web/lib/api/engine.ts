@@ -134,9 +134,24 @@ export async function createAnalysisJob(
       .eq("id", row.id)
       .eq("tenant_id", params.tenant_id)
       .is("request_key", null);
-    if (stampErr && stampErr.code !== "23505") {
-      throw stampErr;
+    if (stampErr?.code === "23505") {
+      const { data: existing, error: lookupErr } = await admin
+        .from("analysis_jobs")
+        .select("id, media_id, status")
+        .eq("tenant_id", params.tenant_id)
+        .eq("request_key", params.request_key)
+        .maybeSingle();
+      if (lookupErr) throw lookupErr;
+      if (!existing || existing.media_id !== params.media_id) {
+        throw stampErr;
+      }
+      return {
+        id: existing.id,
+        media_id: existing.media_id,
+        status: existing.status,
+      };
     }
+    if (stampErr) throw stampErr;
   }
   return {
     id: row.id,
