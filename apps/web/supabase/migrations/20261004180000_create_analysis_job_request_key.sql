@@ -141,15 +141,42 @@ exception
     where media_id = p_media_id
       and status in ('pending', 'queued', 'processing')
     order by started_at desc
-    limit 1;
+    limit 1
+    for update;
     if new_job.id is null then
       raise;
     end if;
-    if v_request_key is not null
-      and new_job.request_key is not null
-      and new_job.request_key is distinct from v_request_key
-    then
-      raise exception 'Idempotency key already used' using errcode = '23505';
+    if v_request_key is not null then
+      if new_job.request_key is null then
+        v_active_id := new_job.id;
+        update public.analysis_jobs
+        set
+          request_key = v_request_key,
+          provider_metadata = coalesce(provider_metadata, '{}'::jsonb) || jsonb_build_object('source', 'vision_async')
+        where id = v_active_id
+          and tenant_id = p_tenant_id
+          and request_key is null
+          and status in ('pending', 'queued', 'processing')
+        returning * into new_job;
+        if new_job.id is null then
+          select * into new_job
+          from public.analysis_jobs
+          where id = v_active_id;
+          if new_job.id is null then
+            raise;
+          end if;
+          if new_job.request_key is not null
+            and new_job.request_key is distinct from v_request_key
+          then
+            raise exception 'Idempotency key already used' using errcode = '23505';
+          end if;
+          if new_job.request_key is null then
+            raise;
+          end if;
+        end if;
+      elsif new_job.request_key is distinct from v_request_key then
+        raise exception 'Idempotency key already used' using errcode = '23505';
+      end if;
     end if;
     return new_job;
 end;

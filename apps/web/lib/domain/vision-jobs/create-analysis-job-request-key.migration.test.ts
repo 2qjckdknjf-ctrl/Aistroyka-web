@@ -30,7 +30,11 @@ describe("create_analysis_job request_key migration", () => {
 
   it("does not swallow intentional idempotency unique_violations", () => {
     expect(sql).toMatch(/if sqlerrm = 'Idempotency key already used' then/);
-    expect(sql).toMatch(/new_job\.request_key is distinct from v_request_key/);
+  });
+
+  it("binds a null-key active row in the unique_violation fallback", () => {
+    expect(sql).toMatch(/when unique_violation then/);
+    expect(sql).toMatch(/if new_job\.request_key is null then\s+raise;/);
   });
 
   it("keeps execute on service_role only", () => {

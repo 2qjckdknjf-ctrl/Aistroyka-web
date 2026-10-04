@@ -40,7 +40,21 @@ describe("createAnalysisJob", () => {
       p_tenant_id: "tenant-1",
       p_media_id: "media-1",
       p_priority: "normal",
-      p_request_key: null,
+    });
+  });
+
+  it("passes p_request_key only when a key is requested", async () => {
+    getAdminClient.mockReturnValue(adminClient);
+    await createAnalysisJob(sessionClient as never, {
+      tenant_id: "tenant-1",
+      media_id: "media-1",
+      request_key: "idem-1",
+    });
+    expect(createAnalysisJobRpc.mock.calls[0][1]).toEqual({
+      p_tenant_id: "tenant-1",
+      p_media_id: "media-1",
+      p_priority: "normal",
+      p_request_key: "idem-1",
     });
   });
 
