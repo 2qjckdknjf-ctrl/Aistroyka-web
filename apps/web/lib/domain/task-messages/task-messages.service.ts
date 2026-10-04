@@ -1,15 +1,14 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { TenantContext } from "@/lib/tenant/tenant.types";
 import { validateTaskForReportLink } from "@/lib/domain/reports/report.service";
-import { canManageTasks } from "@/lib/domain/tasks/task.policy";
 import * as taskRepo from "@/lib/domain/tasks/task.repository";
+import { getProjectMembership } from "@/lib/domain/projects/project-access";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { enqueuePushToUser } from "@/lib/platform/push/push.service";
 import {
   notifyProjectManagers,
   notifyTenantManagers,
 } from "@/lib/domain/notifications/manager-notifications.repository";
-import { isLiteWorkerClient } from "@/lib/tenant/client-profile";
 import { canAccessTaskChat, canSoftDeleteTaskMessage } from "./task-messages.policy";
 import * as repo from "./task-messages.repository";
 import {
@@ -20,25 +19,33 @@ import {
 } from "./task-messages.media";
 import type { CreateTaskMessageInput, ListTaskMessagesResult, TaskMessage } from "./task-messages.types";
 
-/** Manager/web surfaces only — lite worker clients always use assignment checks. */
-function isManagerTaskChatSurface(ctx: TenantContext): boolean {
-  return !isLiteWorkerClient(ctx) && canManageTasks(ctx);
+async function hasManagerTaskChatAccess(
+  supabase: SupabaseClient,
+  ctx: TenantContext,
+  projectId: string
+): Promise<boolean> {
+  if (ctx.role === "owner" || ctx.role === "admin") return true;
+  const membership = await getProjectMembership(supabase, ctx.tenantId, projectId, ctx.userId);
+  return membership?.role === "manager" || membership?.role === "owner";
 }
 
 async function assertTaskChatAccess(
   supabase: SupabaseClient,
   ctx: TenantContext,
   taskId: string
-): Promise<{ ok: true; projectId: string } | { ok: false; error: string; status: number; code?: string }> {
+): Promise<
+  | { ok: true; projectId: string; managerAccess: boolean }
+  | { ok: false; error: string; status: number; code?: string }
+> {
   if (!canAccessTaskChat(ctx)) return { ok: false, error: "Insufficient rights", status: 403 };
   if (!ctx.tenantId || !ctx.userId) return { ok: false, error: "Tenant required", status: 401 };
 
   const task = await taskRepo.getById(supabase, taskId, ctx.tenantId);
   if (!task?.project_id) return { ok: false, error: "Not found", status: 404 };
 
-  // Mirror GET /tasks/:id — lite field workers never get tenant-wide manager chat access.
-  if (isManagerTaskChatSurface(ctx)) {
-    return { ok: true, projectId: task.project_id };
+  const managerAccess = await hasManagerTaskChatAccess(supabase, ctx, task.project_id);
+  if (managerAccess) {
+    return { ok: true, projectId: task.project_id, managerAccess: true };
   }
 
   const v = await validateTaskForReportLink(supabase, ctx.tenantId, taskId, ctx.userId);
@@ -50,7 +57,7 @@ async function assertTaskChatAccess(
       code: v.code,
     };
   }
-  return { ok: true, projectId: task.project_id };
+  return { ok: true, projectId: task.project_id, managerAccess: false };
 }
 
 export async function listTaskMessages(
@@ -140,6 +147,7 @@ export async function createTaskMessage(
   void notifyTaskMessageRecipients(supabase, ctx, {
     taskId,
     projectId: access.projectId,
+    managerAccess: access.managerAccess,
     message: created,
   });
 
@@ -160,7 +168,7 @@ export async function softDeleteTaskMessage(
   const message = await repo.getById(admin, ctx.tenantId!, messageId);
   if (!message || message.task_id !== taskId) return { ok: false, error: "Not found", status: 404 };
   if (message.deleted_at) return { ok: true, error: "", status: 200 };
-  if (!canSoftDeleteTaskMessage(ctx, message.sender_user_id)) {
+  if (!canSoftDeleteTaskMessage(ctx, message.sender_user_id, access.managerAccess)) {
     return { ok: false, error: "Insufficient rights", status: 403 };
   }
 
@@ -171,7 +179,7 @@ export async function softDeleteTaskMessage(
 async function notifyTaskMessageRecipients(
   supabase: SupabaseClient,
   ctx: TenantContext,
-  params: { taskId: string; projectId: string; message: TaskMessage }
+  params: { taskId: string; projectId: string; managerAccess: boolean; message: TaskMessage }
 ): Promise<void> {
   try {
     const admin = getAdminClient() ?? supabase;
@@ -201,8 +209,8 @@ async function notifyTaskMessageRecipients(
             ? "Photo"
             : "Video";
 
-    // Worker / lite surfaces notify managers; manager surfaces notify assignees (already in set).
-    if (!isManagerTaskChatSurface(ctx)) {
+    // Assigned workers notify managers; managers notify assignees (already in set).
+    if (!params.managerAccess) {
       if (params.projectId) {
         await notifyProjectManagers(admin, ctx.tenantId!, params.projectId, {
           type: "task_message",
