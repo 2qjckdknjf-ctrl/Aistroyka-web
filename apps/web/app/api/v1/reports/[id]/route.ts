@@ -11,6 +11,7 @@ import type { TenantContext } from "@/lib/tenant/tenant.types";
 import { notifyUser } from "@/lib/domain/notifications/manager-notifications.repository";
 import { enqueuePushToUser } from "@/lib/platform/push/push.service";
 import { getAdminClient } from "@/lib/supabase/admin";
+import { boundedProductWrite, reportReviewAuditDetails } from "@/lib/growth/product-events";
 
 export const dynamic = "force-dynamic";
 
@@ -142,15 +143,22 @@ export async function PATCH(
     );
   }
 
-  await emitAudit(supabase, {
-    tenant_id: ctx.tenantId,
-    user_id: ctx.userId,
-    trace_id: ctx.traceId ?? null,
-    action: "report_review",
-    resource_type: "report",
-    resource_id: id,
-    details: { status, has_note: Boolean(normalizedNote) },
-  });
+  await boundedProductWrite(() =>
+    emitAudit(supabase, {
+      tenant_id: ctx.tenantId,
+      user_id: ctx.userId,
+      trace_id: ctx.traceId ?? null,
+      action: "report_review",
+      resource_type: "report",
+      resource_id: id,
+      details: reportReviewAuditDetails({
+        client: ctx.clientProfile,
+        role: ctx.role,
+        status,
+        hasNote: Boolean(normalizedNote),
+      }),
+    }),
+  );
 
   if (updated.user_id) {
     const title =
