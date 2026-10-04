@@ -10,6 +10,7 @@ struct CustomerProjectDetailView: View {
     @State private var respondingRequestId: String?
     @State private var respondingEstimateId: String?
     @State private var respondMessage: String?
+    @State private var feedbackDrafts: [String: String] = [:]
 
     var body: some View {
         Group {
@@ -146,6 +147,28 @@ struct CustomerProjectDetailView: View {
                         .disabled(respondingRequestId != nil || respondingEstimateId != nil)
                         .buttonStyle(.bordered)
                         .accessibilityIdentifier("pilot_customer_document_review_confirm_\(item.id)")
+                    } else if let portal = view, portal.canSubmitFeedback(to: item) {
+                        TextField(
+                            NSLocalizedString("cust_feedback_placeholder", comment: ""),
+                            text: Binding(
+                                get: { feedbackDrafts[item.id] ?? "" },
+                                set: { feedbackDrafts[item.id] = $0 }
+                            ),
+                            axis: .vertical
+                        )
+                        .lineLimit(2...4)
+                        .textFieldStyle(.roundedBorder)
+                        .accessibilityIdentifier("pilot_customer_feedback_field_\(item.id)")
+                        Button(NSLocalizedString("cust_feedback_submit", comment: "")) {
+                            Task { await submitFeedback(item) }
+                        }
+                        .disabled(
+                            respondingRequestId != nil
+                                || respondingEstimateId != nil
+                                || (feedbackDrafts[item.id] ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                        )
+                        .buttonStyle(.bordered)
+                        .accessibilityIdentifier("pilot_customer_feedback_submit_\(item.id)")
                     }
                 }
             }
@@ -183,6 +206,24 @@ struct CustomerProjectDetailView: View {
             respondMessage = apiError.message
         } catch {
             respondMessage = NSLocalizedString("cust_document_review_error", comment: "")
+        }
+        respondingRequestId = nil
+    }
+
+    private func submitFeedback(_ item: CustomerPortalProjectView.CustomerFacingRequest) async {
+        let text = (feedbackDrafts[item.id] ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return }
+        respondingRequestId = item.id
+        respondMessage = nil
+        do {
+            try await CustomerAPI.submitFeedback(projectId: projectId, requestId: item.id, feedbackText: text)
+            respondMessage = NSLocalizedString("cust_feedback_ok", comment: "")
+            feedbackDrafts[item.id] = nil
+            await load()
+        } catch let apiError as APIError {
+            respondMessage = apiError.message
+        } catch {
+            respondMessage = NSLocalizedString("cust_feedback_error", comment: "")
         }
         respondingRequestId = nil
     }

@@ -47,3 +47,8 @@
 "cust_document_review_confirm" = "Подтвердить просмотр документа";
 "cust_document_review_ok" = "Просмотр документа подтверждён.";
 "cust_document_review_error" = "Не удалось подтвердить просмотр документа.";
+
+"cust_feedback_placeholder" = "Ваш отзыв";
+"cust_feedback_submit" = "Отправить отзыв";
+"cust_feedback_ok" = "Отзыв отправлен.";
+"cust_feedback_error" = "Не удалось отправить отзыв.";

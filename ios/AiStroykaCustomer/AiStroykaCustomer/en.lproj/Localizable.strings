@@ -47,3 +47,8 @@
 "cust_document_review_confirm" = "Confirm document review";
 "cust_document_review_ok" = "Document review confirmed.";
 "cust_document_review_error" = "Could not confirm document review.";
+
+"cust_feedback_placeholder" = "Your feedback";
+"cust_feedback_submit" = "Send feedback";
+"cust_feedback_ok" = "Feedback sent.";
+"cust_feedback_error" = "Could not send feedback.";

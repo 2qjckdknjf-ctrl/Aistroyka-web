@@ -106,4 +106,22 @@ enum CustomerAPI {
             body: Body(documentReviewConfirmed: true, note: note)
         )
     }
+
+    /// POST portal decisions respond with feedback_text
+    static func submitFeedback(projectId: String, requestId: String, feedbackText: String, note: String? = nil) async throws {
+        struct Body: Encodable {
+            let feedbackText: String
+            let note: String?
+            enum CodingKeys: String, CodingKey {
+                case feedbackText = "feedback_text"
+                case note
+            }
+        }
+        struct EmptyData: Decodable {}
+        let _: Envelope<EmptyData> = try await APIClient.shared.request(
+            path: "portal/projects/\(projectId)/decisions/\(requestId)/respond",
+            method: "POST",
+            body: Body(feedbackText: feedbackText, note: note)
+        )
+    }
 }
