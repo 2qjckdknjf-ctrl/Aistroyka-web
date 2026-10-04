@@ -104,16 +104,21 @@ export async function createVisionAnalysisJob(
             priority: input.priority ?? "normal",
             request_key: requestKey,
           });
+          const created = bound.id !== job.id;
           return {
             ok: true,
-            created: false,
+            created,
             jobId: bound.id,
-            status: bound.status ?? job.status,
-            lifecycle: mapAnalysisJobToLifecycle({
-              status: bound.status ?? job.status,
-              error_type: job.error_type,
-              attempts: job.attempts,
-            }),
+            status: bound.status ?? (created ? "queued" : job.status),
+            lifecycle: mapAnalysisJobToLifecycle(
+              created
+                ? { status: bound.status ?? "queued" }
+                : {
+                    status: bound.status ?? job.status,
+                    error_type: job.error_type,
+                    attempts: job.attempts,
+                  }
+            ),
           };
         } catch (err) {
           const message = err instanceof Error ? err.message : "Failed to create analysis job";

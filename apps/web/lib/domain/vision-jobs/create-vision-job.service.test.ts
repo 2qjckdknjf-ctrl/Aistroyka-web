@@ -174,6 +174,55 @@ describe("createVisionAnalysisJob", () => {
     });
   });
 
+  it("reports created when the RPC inserts after the observed active job is gone", async () => {
+    createAnalysisJob.mockResolvedValue({ id: "job-new", media_id: "media-1", status: "queued" });
+    const from = vi.fn((table: string) => {
+      if (table === "media") {
+        return {
+          select: () => ({
+            eq: () => ({
+              maybeSingle: async () => ({
+                data: { id: "media-1", tenant_id: "t1", project_id: "p1" },
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+      if (table === "analysis_jobs") {
+        return {
+          select: () => ({
+            eq: () => ({
+              eq: () => ({
+                maybeSingle: async () => ({ data: null, error: null }),
+              }),
+              in: () => ({
+                maybeSingle: async () => ({
+                  data: {
+                    id: "job-stale",
+                    status: "queued",
+                    error_type: null,
+                    attempt_count: 0,
+                    media_id: "media-1",
+                  },
+                  error: null,
+                }),
+              }),
+            }),
+          }),
+        };
+      }
+      return {};
+    });
+    const r = await createVisionAnalysisJob({ from } as never, {
+      tenantId: "t1",
+      projectId: "p1",
+      mediaId: "media-1",
+      requestKey: "idem-new",
+    });
+    expect(r).toMatchObject({ ok: true, created: true, jobId: "job-new", lifecycle: "QUEUED" });
+  });
+
   it("rejects a non-string request_key", async () => {
     const r = await createVisionAnalysisJob({ from: vi.fn() } as never, {
       tenantId: "t1",
