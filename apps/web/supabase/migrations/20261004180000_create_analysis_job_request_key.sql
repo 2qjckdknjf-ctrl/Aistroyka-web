@@ -49,7 +49,8 @@ begin
   where media_id = p_media_id
     and status in ('pending', 'queued', 'processing')
   order by started_at desc
-  limit 1;
+  limit 1
+  for update;
 
   if new_job.id is not null then
     v_active_id := new_job.id;
@@ -62,6 +63,7 @@ begin
         where id = v_active_id
           and tenant_id = p_tenant_id
           and request_key is null
+          and status in ('pending', 'queued', 'processing')
         returning * into new_job;
         -- Concurrent bind can win the predicate; RETURNING then leaves new_job null.
         if new_job.id is null then
@@ -71,15 +73,26 @@ begin
           if new_job.id is null then
             raise;
           end if;
-          if new_job.request_key is distinct from v_request_key then
+          -- Same-key winner is success. A different non-null key is a conflict.
+          -- A still-null key means the row left the active set; insert instead.
+          if new_job.request_key is not null
+            and new_job.request_key is distinct from v_request_key
+          then
             raise exception 'Idempotency key already used' using errcode = '23505';
+          end if;
+          if new_job.request_key is null
+            or new_job.status not in ('pending', 'queued', 'processing')
+          then
+            new_job := null;
           end if;
         end if;
       elsif new_job.request_key is distinct from v_request_key then
         raise exception 'Idempotency key already used' using errcode = '23505';
       end if;
     end if;
-    return new_job;
+    if new_job.id is not null then
+      return new_job;
+    end if;
   end if;
 
   insert into public.analysis_jobs (

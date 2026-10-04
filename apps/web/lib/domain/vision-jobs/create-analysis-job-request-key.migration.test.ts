@@ -20,11 +20,12 @@ describe("create_analysis_job request_key migration", () => {
     expect(sql).toMatch(/Idempotency key already used/);
   });
 
-  it("re-reads the active row when a concurrent request_key bind wins", () => {
+  it("locks the selected active job and only binds while it stays active", () => {
+    expect(sql).toMatch(/limit 1\s+for update;/);
+    expect(sql).toMatch(/and request_key is null\s+and status in \('pending', 'queued', 'processing'\)/);
+    expect(sql).toMatch(/A still-null key means the row left the active set/);
+    expect(sql).toMatch(/or new_job\.status not in \('pending', 'queued', 'processing'\)/);
     expect(sql).toMatch(/v_active_id uuid/);
-    expect(sql).toMatch(/Concurrent bind can win the predicate/);
-    expect(sql).toMatch(/where id = v_active_id/);
-    expect(sql).toMatch(/if new_job\.request_key is distinct from v_request_key/);
   });
 
   it("does not swallow intentional idempotency unique_violations", () => {
