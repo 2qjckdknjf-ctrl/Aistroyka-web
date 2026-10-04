@@ -52,3 +52,7 @@
 "cust_feedback_submit" = "Отправить отзыв";
 "cust_feedback_ok" = "Отзыв отправлен.";
 "cust_feedback_error" = "Не удалось отправить отзыв.";
+
+"cust_acknowledge" = "Подтвердить";
+"cust_acknowledge_ok" = "Подтверждено.";
+"cust_acknowledge_error" = "Не удалось подтвердить.";

@@ -93,6 +93,11 @@ public struct CustomerPortalProjectView: Decodable, Sendable {
         public var supportsFeedback: Bool {
             status == "open" && actionMode == "action_required" && kind == "feedback"
         }
+
+        /// Open action-required acknowledge requests.
+        public var supportsAcknowledge: Bool {
+            status == "open" && actionMode == "action_required" && kind == "acknowledge"
+        }
     }
 
     public struct Capabilities: Decodable, Sendable {
@@ -115,6 +120,10 @@ public struct CustomerPortalProjectView: Decodable, Sendable {
 
     public func canSubmitFeedback(to request: CustomerFacingRequest) -> Bool {
         (capabilities?.canRespondToRequests ?? false) && request.supportsFeedback
+    }
+
+    public func canAcknowledge(to request: CustomerFacingRequest) -> Bool {
+        (capabilities?.canRespondToRequests ?? false) && request.supportsAcknowledge
     }
 
     public init(from decoder: Decoder) throws {

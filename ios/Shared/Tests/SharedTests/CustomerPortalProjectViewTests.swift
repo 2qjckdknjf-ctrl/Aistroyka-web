@@ -46,6 +46,21 @@ final class CustomerPortalProjectViewTests: XCTestCase {
         XCTAssertTrue(CustomerPortalProjectView.formatCustomerAmount(amount: 12000.5, currency: "EUR").contains("12"))
     }
 
+    func testAcknowledgeGate() throws {
+        let data = Data("""
+        {
+          "project": {"id": "p1", "name": "Villa"},
+          "progress": {"tasks_done": 0, "tasks_total": 0},
+          "client_requests": [
+            {"id":"r1","kind":"acknowledge","action_mode":"action_required","status":"open","title":"Got it?"}
+          ],
+          "capabilities": {"can_respond_to_requests": true}
+        }
+        """.utf8)
+        let view = try CustomerPortalProjectView.decodePortalJSON(data)
+        XCTAssertTrue(view.canAcknowledge(to: view.clientRequests[0]))
+    }
+
     func testFeedbackGate() throws {
         let data = Data("""
         {

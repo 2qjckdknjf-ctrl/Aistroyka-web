@@ -52,3 +52,7 @@
 "cust_feedback_submit" = "Send feedback";
 "cust_feedback_ok" = "Feedback sent.";
 "cust_feedback_error" = "Could not send feedback.";
+
+"cust_acknowledge" = "Acknowledge";
+"cust_acknowledge_ok" = "Acknowledged.";
+"cust_acknowledge_error" = "Could not acknowledge.";
