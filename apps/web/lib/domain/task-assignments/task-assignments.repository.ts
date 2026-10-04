@@ -53,10 +53,12 @@ export async function assign(
     assigned_by: assignedBy,
   });
   if (e1) return false;
-  const { error: e2 } = await supabase
+  const { data: taskRow, error: e2 } = await supabase
     .from("worker_tasks")
     .update({ assigned_to: userId, updated_at: new Date().toISOString() })
     .eq("id", taskId)
-    .eq("tenant_id", tenantId);
-  return !e2;
+    .eq("tenant_id", tenantId)
+    .select("id")
+    .maybeSingle();
+  return !e2 && Boolean(taskRow);
 }
