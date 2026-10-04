@@ -4,6 +4,7 @@ export type AuditAction =
   | "login"
   | "invite"
   | "role_change"
+  | "task_created"
   | "task_assignment"
   | "report_submit"
   | "report_review"

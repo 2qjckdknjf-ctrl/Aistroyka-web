@@ -9,7 +9,11 @@ describe("report.repository resubmit", () => {
       return {
         eq: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            eq: vi.fn().mockResolvedValue({ error: null }),
+            eq: vi.fn().mockReturnValue({
+              select: vi.fn().mockReturnValue({
+                maybeSingle: vi.fn().mockResolvedValue({ data: { id: "rpt-1" }, error: null }),
+              }),
+            }),
           }),
         }),
       };
@@ -23,5 +27,21 @@ describe("report.repository resubmit", () => {
     expect(result).toBe(true);
     expect(updatePayload.status).toBe("submitted");
     expect(updatePayload.submitted_at).toBeDefined();
+  });
+
+  it("returns false when no changes_requested row is updated", async () => {
+    const mockUpdate = vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            select: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+            }),
+          }),
+        }),
+      }),
+    });
+    const supabase = { from: vi.fn().mockReturnValue({ update: mockUpdate }) } as any;
+    expect(await repo.resubmit(supabase, "rpt-1", "tenant-1")).toBe(false);
   });
 });
