@@ -1,7 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { TenantContext } from "@/lib/tenant/tenant.types";
 import { validateTaskForReportLink } from "@/lib/domain/reports/report.service";
-import { canManageTasks } from "@/lib/domain/tasks/task.policy";
 import * as taskRepo from "@/lib/domain/tasks/task.repository";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { enqueuePushToUser } from "@/lib/platform/push/push.service";
@@ -9,8 +8,11 @@ import {
   notifyProjectManagers,
   notifyTenantManagers,
 } from "@/lib/domain/notifications/manager-notifications.repository";
-import { isLiteWorkerClient } from "@/lib/tenant/client-profile";
-import { canAccessTaskChat, canSoftDeleteTaskMessage } from "./task-messages.policy";
+import {
+  canAccessTaskChat,
+  canSoftDeleteTaskMessage,
+  isTaskChatManager,
+} from "./task-messages.policy";
 import * as repo from "./task-messages.repository";
 import {
   durationWithinLimit,
@@ -20,9 +22,9 @@ import {
 } from "./task-messages.media";
 import type { CreateTaskMessageInput, ListTaskMessagesResult, TaskMessage } from "./task-messages.types";
 
-/** Manager/web surfaces only — lite worker clients always use assignment checks. */
+/** Only manager roles receive tenant-wide access; client headers are caller-controlled. */
 function isManagerTaskChatSurface(ctx: TenantContext): boolean {
-  return !isLiteWorkerClient(ctx) && canManageTasks(ctx);
+  return isTaskChatManager(ctx);
 }
 
 async function assertTaskChatAccess(
@@ -36,7 +38,7 @@ async function assertTaskChatAccess(
   const task = await taskRepo.getById(supabase, taskId, ctx.tenantId);
   if (!task?.project_id) return { ok: false, error: "Not found", status: 404 };
 
-  // Mirror GET /tasks/:id — lite field workers never get tenant-wide manager chat access.
+  // Field workers always require assignment, regardless of the caller-supplied client profile.
   if (isManagerTaskChatSurface(ctx)) {
     return { ok: true, projectId: task.project_id };
   }

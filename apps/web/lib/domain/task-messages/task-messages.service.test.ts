@@ -10,10 +10,6 @@ vi.mock("@/lib/domain/tasks/task.policy", () => ({
   canReadTasks: vi.fn().mockReturnValue(true),
 }));
 
-vi.mock("@/lib/tenant/client-profile", () => ({
-  isLiteWorkerClient: vi.fn(),
-}));
-
 vi.mock("@/lib/domain/tasks/task.repository", () => ({
   getById: vi.fn(),
 }));
@@ -45,7 +41,6 @@ vi.mock("@/lib/domain/notifications/manager-notifications.repository", () => ({
 }));
 
 import { canManageTasks } from "@/lib/domain/tasks/task.policy";
-import { isLiteWorkerClient } from "@/lib/tenant/client-profile";
 import * as taskRepo from "@/lib/domain/tasks/task.repository";
 import { validateTaskForReportLink } from "@/lib/domain/reports/report.service";
 import * as repo from "./task-messages.repository";
@@ -56,7 +51,7 @@ const supabase = {} as any;
 describe("task-messages.service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(isLiteWorkerClient).mockReturnValue(false);
+    vi.mocked(validateTaskForReportLink).mockResolvedValue({ ok: true });
     vi.mocked(taskRepo.getById).mockResolvedValue({
       id: "task-1",
       project_id: "p1",
@@ -156,14 +151,61 @@ describe("task-messages.service", () => {
     expect(repo.softDelete).not.toHaveBeenCalled();
   });
 
-  it("lite worker with member role still requires assignment", async () => {
+  it("member with a spoofable web client profile still requires assignment", async () => {
     vi.mocked(canManageTasks).mockReturnValue(true);
-    vi.mocked(isLiteWorkerClient).mockReturnValue(true);
     vi.mocked(validateTaskForReportLink).mockResolvedValue({ ok: false, code: "task_not_assigned" });
-    const res = await listTaskMessages(supabase, ctx, "task-other");
+    const res = await listTaskMessages(
+      supabase,
+      { ...ctx, clientProfile: "web" },
+      "task-other"
+    );
     expect(res.status).toBe(403);
     expect(res.code).toBe("task_not_assigned");
     expect(validateTaskForReportLink).toHaveBeenCalled();
+  });
+
+  it("allows owner and admin roles tenant-wide without an assignment lookup", async () => {
+    vi.mocked(repo.listByTask).mockResolvedValue({ data: [], nextCursor: null });
+
+    for (const role of ["owner", "admin"] as const) {
+      vi.mocked(validateTaskForReportLink).mockClear();
+      const res = await listTaskMessages(
+        supabase,
+        { ...ctx, role, clientProfile: "ios_worker" },
+        "task-other"
+      );
+      expect(res.status).toBe(200);
+      expect(validateTaskForReportLink).not.toHaveBeenCalled();
+    }
+  });
+
+  it("does not let an assigned member moderate another sender's message", async () => {
+    vi.mocked(validateTaskForReportLink).mockResolvedValue({ ok: true });
+    vi.mocked(repo.getById).mockResolvedValue({
+      id: "m-other",
+      tenant_id: "t1",
+      project_id: "p1",
+      task_id: "task-1",
+      sender_user_id: "u-other",
+      kind: "text",
+      body: "private",
+      upload_session_id: null,
+      duration_ms: null,
+      client_id: null,
+      created_at: "2026-07-18T10:00:00Z",
+      edited_at: null,
+      deleted_at: null,
+    });
+
+    const res = await softDeleteTaskMessage(
+      supabase,
+      { ...ctx, clientProfile: "web" },
+      "task-1",
+      "m-other"
+    );
+
+    expect(res.status).toBe(403);
+    expect(repo.softDelete).not.toHaveBeenCalled();
   });
 
   it("rejects media when size_bytes missing", async () => {
