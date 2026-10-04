@@ -92,13 +92,15 @@ export async function submit(
   if (workerNote != null) (updates as Record<string, unknown>).worker_note = workerNote;
   if (volume?.actual != null) updates.actual_volume = volume.actual;
   if (volume?.planned != null) updates.planned_volume = volume.planned;
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("worker_reports")
     .update(updates)
     .eq("id", reportId)
     .eq("tenant_id", tenantId)
-    .eq("status", "draft");
-  return !error;
+    .eq("status", "draft")
+    .select("id")
+    .maybeSingle();
+  return !error && Boolean(data);
 }
 
 /** Resubmit after changes_requested. Keeps reviewed_at/reviewed_by/manager_note for history. */
@@ -115,13 +117,15 @@ export async function resubmit(
   if (workerNote != null) (updates as Record<string, unknown>).worker_note = workerNote;
   if (volume?.actual != null) updates.actual_volume = volume.actual;
   if (volume?.planned != null) updates.planned_volume = volume.planned;
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("worker_reports")
     .update(updates)
     .eq("id", reportId)
     .eq("tenant_id", tenantId)
-    .eq("status", "changes_requested");
-  return !error;
+    .eq("status", "changes_requested")
+    .select("id")
+    .maybeSingle();
+  return !error && Boolean(data);
 }
 
 /** Resolve project_id for a report (from task_id or day_id). */

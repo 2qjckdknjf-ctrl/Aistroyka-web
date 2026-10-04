@@ -7,6 +7,10 @@ import {
   recordLoginSuccess,
   recordNotificationOpened,
   taskCreatedAuditDetails,
+  taskAssignmentAuditDetails,
+  reportSubmitAuditDetails,
+  reportReviewAuditDetails,
+  governanceUserId,
 } from "./product-events";
 
 vi.mock("@/lib/observability/audit.service", () => ({
@@ -59,6 +63,82 @@ describe("taskCreatedAuditDetails", () => {
       has_due_date: true,
     });
     expect(JSON.stringify(details)).not.toContain("Pour");
+  });
+});
+
+describe("taskAssignmentAuditDetails", () => {
+  it("keeps a UUID assignee and drops names or emails", () => {
+    const workerId = "11111111-1111-4111-8111-111111111111";
+    expect(
+      taskAssignmentAuditDetails({
+        client: "ios_manager",
+        role: "admin",
+        assignedTo: workerId,
+      }),
+    ).toEqual({
+      source: "task_assign",
+      client: "ios_manager",
+      role: "admin",
+      has_assignee: true,
+      assignment_changed: true,
+      assigned_to: workerId,
+    });
+    const leaked = taskAssignmentAuditDetails({
+      client: "web",
+      role: "admin",
+      assignedTo: "Ivan Petrov <ivan@example.com>",
+    });
+    expect(leaked.assigned_to).toBeUndefined();
+    expect(JSON.stringify(leaked)).not.toContain("Ivan");
+    expect(JSON.stringify(leaked)).not.toContain("@");
+  });
+});
+
+describe("reportSubmitAuditDetails", () => {
+  it("stores only categorical flags and never report text", () => {
+    const details = reportSubmitAuditDetails({
+      client: "ios_worker",
+      role: "member",
+      hasTask: true,
+      hasDay: false,
+      hasMedia: true,
+    });
+    expect(details).toEqual({
+      source: "report_submit",
+      client: "ios_worker",
+      role: "member",
+      has_task: true,
+      has_day: false,
+      has_media: true,
+    });
+    expect(JSON.stringify(details)).not.toContain("note");
+  });
+});
+
+describe("reportReviewAuditDetails", () => {
+  it("stores bounded status and has_note, never the manager note", () => {
+    const details = reportReviewAuditDetails({
+      client: "web",
+      role: "admin",
+      status: "changes_requested",
+      hasNote: true,
+    });
+    expect(details).toEqual({
+      source: "report_review",
+      client: "web",
+      role: "admin",
+      status: "changes_requested",
+      has_note: true,
+    });
+    expect(
+      reportReviewAuditDetails({
+        client: "web",
+        role: "admin",
+        status: "please redo the north wall",
+        hasNote: true,
+      }).status,
+    ).toBeUndefined();
+    expect(governanceUserId("not-a-uuid")).toBeNull();
   });
 });
 

@@ -9,6 +9,7 @@ import { enqueueJob } from "@/lib/platform/jobs/job.service";
 import { emitAudit } from "@/lib/observability/audit.service";
 import { emitChange } from "@/lib/sync/change-log.repository";
 import { notifyProjectManagers, notifyTenantManagers } from "@/lib/domain/notifications/manager-notifications.repository";
+import { boundedProductWrite, reportSubmitAuditDetails } from "@/lib/growth/product-events";
 
 /** Returns { ok, code? }. code = task_invalid | task_not_assigned when not ok. */
 export async function validateTaskForReportLink(
@@ -109,14 +110,23 @@ export async function submitReport(
       : await repo.submit(supabase, reportId, ctx.tenantId, taskId ?? undefined, options?.workerNote ?? null, volume);
   if (!ok) return { ok: false, error: "Failed to submit" };
 
-  await emitAudit(supabase, {
-    tenant_id: ctx.tenantId,
-    user_id: ctx.userId,
-    trace_id: traceId ?? null,
-    action: "report_submit",
-    resource_type: "report",
-    resource_id: reportId,
-  });
+  await boundedProductWrite(() =>
+    emitAudit(supabase, {
+      tenant_id: ctx.tenantId,
+      user_id: ctx.userId,
+      trace_id: traceId ?? null,
+      action: "report_submit",
+      resource_type: "report",
+      resource_id: reportId,
+      details: reportSubmitAuditDetails({
+        client: ctx.clientProfile,
+        role: ctx.role,
+        hasTask: Boolean(taskId ?? report.task_id),
+        hasDay: Boolean(report.day_id),
+        hasMedia: hasPhotoProof,
+      }),
+    }),
+  );
   await emitChange(supabase, {
     tenant_id: ctx.tenantId,
     resource_type: "report",
