@@ -5,8 +5,8 @@
 ## 1. Startup (safe)
 
 ```bash
-cd /Users/alex/Projects/AISTROYKA   # or your active worktree
-git fetch origin
+cd /Users/alex/Projects/AISTROYKA-main-clean   # after checking this checkout is available
+python3 scripts/ops/workspace_preflight.py --refresh
 ```
 
 Read: `PROJECT_DASHBOARD.md` → `STATUS.md` → latest handoff → task file.
@@ -14,8 +14,9 @@ Read: `PROJECT_DASHBOARD.md` → `STATUS.md` → latest handoff → task file.
 ## 2. Resume active branch
 
 ```bash
-git checkout <active-branch>      # from handoff/STATUS
-git pull --ff-only origin <active-branch>   # if tracking remote
+# First inspect current remote PR HEAD and preserve any local changes.
+python3 scripts/ops/workspace_preflight.py --refresh --resume-pr <number>
+# If RECONCILE_FIRST: reconcile the existing task instead of starting a duplicate.
 ```
 
 If branch only exists locally, stay on it after fetch.
@@ -59,6 +60,6 @@ wrangler deploy / cf:deploy           # CI chain only
 supabase db push                      # owner approval only
 ```
 
-## Dirty worktree note
+## Preserved worktrees
 
-`main` at `/Users/alex/Projects/AISTROYKA-release-closure` is **dirty (306 files)** and stale. **Do not** checkout/reset there. Use `origin/main` as truth; work from other worktrees/branches.
+Primary `/Users/alex/Projects/AISTROYKA` is stale and dirty. `AISTROYKA-release-closure` is salvage-only. Cursor worktrees and mobile-store-m1 contain retained local material. Preserve them; use current origin/main through START_HERE.md. See workspace RESULT for archive paths and recovery.

@@ -1,35 +1,9 @@
-# Current Focus — Agent Memory
+# Current Focus
 
-> Durable pointer for agents. Update when active module changes. Not a secret store.
+Обновлено 2026-10-04. Рабочий статус: [STATUS](../../STATUS.md), открытая очередь: [ACTIVE_WORK_REGISTRY](../tasks/ACTIVE_WORK_REGISTRY.csv).
 
-**Last updated:** 2026-06-30
+Наведение порядка: сохранение локальной работы, сверка включённых PR, обратимое перемещение завершённых чистых worktrees и актуальная точка входа. Наведение порядка объединено через #381/#383. Customer iOS #375, Graph persistence #376, async Vision #377 и Intake #378 также уже в main; проверять публикацию, миграции и устройства. Customer portal detail #382 — существующее продолжение, сверять текущий GitHub перед работой. Новые реализации по старым TODO запрещены без проверки существующего кода и PR.
 
-## Active module
+Основная `/Users/alex/Projects/AISTROYKA` — сохранённый старый checkout и общий Git. Каноническая рабочая папка — `/Users/alex/Projects/AISTROYKA-main-clean`, только после `workspace_preflight.py --refresh`.
 
-**Development OS setup** — building `docs/dev-os/*`, `PROJECT_DASHBOARD.md`, agent-memory, indexes.
-
-## Recently completed (on main)
-
-- Project Operating System docs (PR #173)
-- Branch archival dry-run + policy (PR #173)
-- Branch cleanup Slice 1 (PR #174) — 5 local branches deleted
-- STATUS sync after Slice 1 (PR #175)
-- Dirty main worktree audit (PR #176)
-
-## Not started / blocked
-
-| Item | State |
-|---|---|
-| **Slice 2** branch cleanup | NOT approved — separate owner dry-run + go required |
-| **Dirty main worktree salvage** | Audit on main; owner must choose preserve/stash/clean/abandon |
-| **Supabase CLI** | Not installed locally |
-
-## Trusted pointers
-
-- Production: `origin/main` @ `fcbef354`
-- Status: `STATUS.md` on main
-- Dashboard: `PROJECT_DASHBOARD.md` (this Dev OS PR adds it)
-
-## Next agent action (after Dev OS lands)
-
-Follow `CLOUD_AGENT_STARTUP_PROTOCOL.md`; do not start Slice 2 or dirty-worktree cleanup without owner prompt.
+Точное продолжение и ограничения: [handoff](../handoff/2026-10-04-workspace-reconciliation.md).
