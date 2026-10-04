@@ -13,6 +13,7 @@
 		CST004 /* CustomerAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = CST104; };
 		CST005 /* CustomerLoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CST105; };
 		CST006 /* CustomerHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CST106; };
+		CST012 /* CustomerProjectDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CST110; };
 		CST007 /* CustomerStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CST107; };
 		CST008 /* CustomerTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = CST108; };
 		CST009 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CST109; };
@@ -29,6 +30,7 @@
 		CST104 /* CustomerAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerAPI.swift; sourceTree = "<group>"; };
 		CST105 /* CustomerLoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerLoginView.swift; sourceTree = "<group>"; };
 		CST106 /* CustomerHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerHomeView.swift; sourceTree = "<group>"; };
+		CST110 /* CustomerProjectDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerProjectDetailView.swift; sourceTree = "<group>"; };
 		CST107 /* CustomerStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerStatusView.swift; sourceTree = "<group>"; };
 		CST108 /* CustomerTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerTokens.swift; sourceTree = "<group>"; };
 		CST109 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -74,7 +76,7 @@
 		};
 		CST051V /* Views */ = {
 			isa = PBXGroup;
-			children = ( CST105, CST106 );
+			children = ( CST105, CST106, CST110 );
 			path = Views;
 			sourceTree = "<group>";
 		};
@@ -160,7 +162,7 @@
 		CST030 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
-			files = ( CST001, CST002, CST003, CST004, CST005, CST006, CST007, CST008 );
+			files = ( CST001, CST002, CST003, CST004, CST005, CST006, CST012, CST007, CST008 );
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		CSTUT21 /* Sources */ = {

@@ -17,3 +17,18 @@ describe("construction graph overlay uniqueness", () => {
     expect(sql).toMatch(/can_read_project_membership\(tenant_id, project_id\)/);
   });
 });
+
+const persistSql = readFileSync(
+  resolve(__dirname, "../../../supabase/migrations/20261003150000_construction_graph_overlay_persist.sql"),
+  "utf8"
+);
+
+describe("construction graph overlay persist writes", () => {
+  it("restricts overlay writes to managers and tenant-owned projects", () => {
+    expect(persistSql).toMatch(/can_manage_project_membership\(tenant_id, project_id\)/);
+    expect(persistSql).toMatch(/project_belongs_to_tenant\(project_id, tenant_id\)/);
+    expect(persistSql).not.toMatch(
+      /for insert with check \(public\.can_read_project_membership\(tenant_id, project_id\)\)/
+    );
+  });
+});
