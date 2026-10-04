@@ -13,7 +13,7 @@ Do **not** create a separate backend. Customer APIs are the existing portal/clie
 
 Android Customer parity is later (same DEFERRED_BY_DECISION policy as first-pilot Android unless reversed).
 
-## Inventory (current main `0e3b1ede` plus this slice)
+## Inventory (current main `bfcfe93a` plus this slice)
 
 | Target | Exists |
 |--------|--------|

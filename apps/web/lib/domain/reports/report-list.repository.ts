@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { resolveWorkerReportProjectId } from "./report-project-id";
 
 export interface ReportListRow {
   id: string;
@@ -38,21 +39,21 @@ export async function listReportsForManager(
   if (!rows?.length) return [];
 
   const dayIds = Array.from(new Set((rows as { day_id: string | null }[]).map((r) => r.day_id).filter(Boolean))) as string[];
-  let dayProjectMap: Record<string, string> = {};
+  let dayProjectMap: Record<string, string | null> = {};
   if (dayIds.length > 0) {
     const { data: dayRows } = await supabase
       .from("worker_day")
       .select("id, project_id")
       .in("id", dayIds);
     dayProjectMap = Object.fromEntries(
-      ((dayRows ?? []) as { id: string; project_id: string | null }[]).map((d) => [d.id, d.project_id ?? ""])
+      ((dayRows ?? []) as { id: string; project_id: string | null }[]).map((d) => [d.id, d.project_id])
     );
   }
 
   const taskIds = Array.from(
     new Set((rows as { task_id: string | null }[]).map((r) => r.task_id).filter(Boolean))
   ) as string[];
-  let taskProjectMap: Record<string, string> = {};
+  let taskProjectMap: Record<string, string | null> = {};
   if (taskIds.length > 0) {
     const { data: taskRows } = await supabase
       .from("worker_tasks")
@@ -60,7 +61,7 @@ export async function listReportsForManager(
       .eq("tenant_id", tenantId)
       .in("id", taskIds);
     taskProjectMap = Object.fromEntries(
-      ((taskRows ?? []) as { id: string; project_id: string | null }[]).map((t) => [t.id, t.project_id ?? ""])
+      ((taskRows ?? []) as { id: string; project_id: string | null }[]).map((t) => [t.id, t.project_id])
     );
   }
 
@@ -77,7 +78,7 @@ export async function listReportsForManager(
   }[]).map((r) => {
     const fromDay = r.day_id ? dayProjectMap[r.day_id] ?? null : null;
     const fromTask = r.task_id ? taskProjectMap[r.task_id] ?? null : null;
-    const project_id = fromDay ?? fromTask ?? null;
+    const project_id = resolveWorkerReportProjectId(fromDay, fromTask);
     return { ...r, project_id };
   });
 
