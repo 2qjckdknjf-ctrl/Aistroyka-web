@@ -1,16 +1,17 @@
-# iOS — AiStroyka Manager & Worker
+# iOS — AiStroyka Manager, Worker, and Customer
 
-Two separate apps and a shared layer.
+Three separate apps and a shared layer.
 
 - **AiStroykaManager** — `ios/AiStroykaManager/AiStroykaManager.xcodeproj` — Manager app (dashboard, projects, tasks, reports, team, AI).
 - **AiStroykaWorker** — `ios/AiStroykaWorker/AiStroykaWorker.xcodeproj` — Worker app (tasks, report, photo, offline sync).
-- **Shared** — `ios/Shared/` — Swift package used by both apps (add as local package dependency).
+- **AiStroykaCustomer** — `ios/AiStroykaCustomer/AiStroykaCustomer.xcodeproj` — Customer/owner app (login + authenticated shell; portal project list is a later slice). Bundle `ai.aistroyka.customer`. Sends `x-client: ios_customer`.
+- **Shared** — `ios/Shared/` — Swift package used by all apps (add as local package dependency).
 
-Open either `.xcodeproj` in Xcode. Set Development Team for signing. To use Shared: File → Add Package Dependencies → Add Local → select `ios/Shared`.
+Open a `.xcodeproj` in Xcode. Set Development Team for signing. To use Shared: File → Add Package Dependencies → Add Local → select `ios/Shared`.
 
 ## CI (simulator UITest smoke)
 
-Pull requests that change files under `ios/` (except **`ios/**/*.md` only** — then this job is skipped) run **AiStroykaWorker** and **AiStroykaManager** login-surface UITests on GitHub Actions (`.github/workflows/ios-ui-smoke.yml`). **workflow_dispatch** always runs on demand. Tests use ad-hoc simulator signing; no production API calls.
+Pull requests that change files under `ios/` (except **`ios/**/*.md` only** — then this job is skipped) run **AiStroykaWorker**, **AiStroykaManager**, and **AiStroykaCustomer** login-surface UITests on GitHub Actions (`.github/workflows/ios-ui-smoke.yml`). **workflow_dispatch** always runs on demand. Tests use ad-hoc simulator signing; no production API calls.
 
 **Scripts** (same Simulator pick logic as CI):
 

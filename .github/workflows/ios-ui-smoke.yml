@@ -19,7 +19,7 @@ concurrency:
 
 jobs:
   uitest:
-    name: Worker + Manager UI smoke
+    name: Worker + Manager + Customer UI smoke
     runs-on: macos-latest
     timeout-minutes: 45
     steps:
@@ -81,3 +81,18 @@ jobs:
             sleep 5
             run_manager_smoke
           fi
+
+      - name: AiStroykaCustomer UI smoke
+        timeout-minutes: 20
+        run: |
+          set -eo pipefail
+          xcodebuild test \
+            -project ios/AiStroykaCustomer/AiStroykaCustomer.xcodeproj \
+            -scheme AiStroykaCustomer \
+            -destination '${{ steps.sim.outputs.destination }}' \
+            -parallel-testing-enabled NO \
+            -maximum-parallel-testing-workers 1 \
+            -only-testing:AiStroykaCustomerUITests/CustomerSmokeUITests/testLoginScreen_reachableWithPilotIdentifiers \
+            SWIFT_STRICT_CONCURRENCY=minimal \
+            CODE_SIGN_IDENTITY=- \
+            CODE_SIGNING_REQUIRED=NO

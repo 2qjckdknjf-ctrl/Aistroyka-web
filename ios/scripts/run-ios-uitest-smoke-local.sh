@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run the same Worker + Manager UITest smoke targets as CI (login surface), using a picked Simulator.
+# Run the same Worker + Manager + Customer UITest smoke targets as CI (login surface), using a picked Simulator.
 # Requires macOS + Xcode; use your normal signing setup (Development Team in the project).
 # Optional: CI_SIGNING_HACK=1 to pass ad-hoc simulator flags (matches GitHub Actions).
 set -euo pipefail
@@ -49,4 +49,9 @@ if ! run_smoke_test \
     "AiStroykaManagerUITests/ManagerSmokeUITests/testLoginScreen_reachableWithPilotIdentifiers"
 fi
 
-echo "OK — Worker and Manager UITest smoke passed."
+run_smoke_test \
+  "$IOS_ROOT/AiStroykaCustomer/AiStroykaCustomer.xcodeproj" \
+  "AiStroykaCustomer" \
+  "AiStroykaCustomerUITests/CustomerSmokeUITests/testLoginScreen_reachableWithPilotIdentifiers"
+
+echo "OK — Worker, Manager, and Customer UITest smoke passed."
