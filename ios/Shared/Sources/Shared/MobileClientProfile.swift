@@ -13,4 +13,6 @@ public enum MobileClientProfile: String, Sendable {
     case worker = "ios_worker"
     /// Manager / foreman app (AiStroyka Manager).
     case manager = "ios_manager"
+    /// Customer / owner app (AiStroyka Customer). Not a field-worker lite profile.
+    case customer = "ios_customer"
 }
