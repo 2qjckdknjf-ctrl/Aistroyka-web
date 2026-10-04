@@ -4,13 +4,13 @@
 
 | Что | Где проверить |
 |---|---|
-| Актуальный исходный код | `git fetch --no-prune origin` → `origin/main` (снимок после #382 `ee162ea4`) |
-| Рабочая папка Mac | `/Users/alex/Projects/AISTROYKA-main-clean`; [START_HERE](START_HERE.md) |
+| Актуальный исходный код | `git fetch --no-prune origin` → `origin/main` (после #385 merge `0f6623f1`; staging/prod health last seen `sha7=ee162ea`) |
+| Рабочая папка Mac | `/Users/alex/Projects/AISTROYKA-main-clean`; активный PR: `AISTROYKA-video-unscoped-authz` (#386) |
 | Активная очередь и backlog | [единый реестр PR](docs/tasks/ACTIVE_WORK_REGISTRY.csv) — обновить HEAD/state перед продолжением |
 | Завершённая сверка папок | [workspace reconciliation](docs/tasks/2026-10-04-workspace-reconciliation.md), объединена через #381/#383/#384 |
-| Следующее существующее продолжение | Vision atomic `request_key` [#385](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/385); merge blocked on non-author current-head approval |
+| Следующее существующее продолжение | [#386](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/386) video tenant auth; merge только после exact-head `check` SUCCESS и независимого APPROVED |
 | Сохранение/архив/дубликаты | [результат](docs/reconciliation/workspace-2026-10-04/RESULT.md) |
-| Публикация | `/api/v1/health` production и staging; 2026-10-05 still `buildStamp.sha7=2c44b53` — #382 not yet proven deployed |
+| Публикация | `/api/v1/health` production и staging; verify `buildStamp.sha7` against intended main — do not assume deploy equals merge |
 
 Код #371, #373 (Construction Graph read slice), #374 (Vision lifecycle) уже в базовом main. Во время уборки также объединено основание Customer iOS #372. Не реализовывать заново по старым TODO. #375 (Customer iOS список/детали), #376 (Graph persistence), #377 (async Vision start), #378 (Intake) и #382 (Customer portal estimates/requests) также уже в main. Live DB: Graph overlay tables present; `analysis_jobs.request_key` present; `create_analysis_job` still 3-arg until #385 is applied; `customer_intake_drafts` absent (`OWNER_GATE`). Agentic и остальные незавершённые задачи искать в реестре.
 

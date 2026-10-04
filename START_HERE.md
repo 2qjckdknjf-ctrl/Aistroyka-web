@@ -21,7 +21,7 @@ python3 scripts/ops/workspace_preflight.py --refresh --resume-pr "${PR_NUMBER:?�
 4. Для новой согласованной задачи создайте отдельную ветку от обновлённого `origin/main`; не переключайте занятую или грязную папку.
 5. Закрывайте задачу через проверки → защищённое объединение → проверку staging → учёт БД/мобильной сборки → подтверждение публикации.
 
-Customer iOS #375/#382, Graph persistence #376, async Vision #377 и Intake #378 уже в main. Продолжение Vision idempotency — открытый [#385](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/385). Публикация #382, apply RPC `p_request_key` и таблицы intake, а также device smoke остаются отдельными проверками. Agentic/старые дизайн- и мобильные ветки остаются в реестре на сверку.
+Customer iOS #375/#382, Graph persistence #376, async Vision #377, Intake #378 и Vision `request_key` #385 уже в main. Открытая очередь: [#386](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/386) (tenant auth для unscoped video). Apply RPC `p_request_key`, таблицы intake и device smoke остаются OWNER_GATE / отдельными проверками. Agentic/старые дизайн- и мобильные ветки остаются в реестре на сверку.
 
 `/Users/alex/Projects/AISTROYKA` хранит общий Git и старую незаписанную работу. Это сохранённый исходник, а не актуальный кабинет. Старые датированные аудиты являются историей.
 
