@@ -170,6 +170,27 @@ export async function countSubmittedReportsForProject(
   return ids.size;
 }
 
+/** Exact counts over `.in(day_id)` must be chunked; PostgREST truncates oversized URL filters. */
+export async function countOpenReportsForDayIds(
+  supabase: SupabaseClient,
+  tenantId: string,
+  dayIds: readonly string[]
+): Promise<number> {
+  let total = 0;
+  for (const chunk of chunkIds(dayIds)) {
+    if (chunk.length === 0) continue;
+    const { count, error } = await supabase
+      .from("worker_reports")
+      .select("id", { count: "exact", head: true })
+      .eq("tenant_id", tenantId)
+      .in("status", ["draft", "submitted"])
+      .in("day_id", chunk);
+    if (error) throw new Error(PENDING_REPORT_COUNT_FAILED);
+    total += count ?? 0;
+  }
+  return total;
+}
+
 async function projectIdByRowId(
   supabase: SupabaseClient,
   tenantId: string,
@@ -274,17 +295,7 @@ export async function getProjectSummary(
     projectDayIds
   );
 
-  let openReports = 0;
-  const dayIds = projectDayIds.map((id) => ({ id }));
-  if (dayIds.length > 0) {
-    const { count } = await supabase
-      .from("worker_reports")
-      .select("id", { count: "exact", head: true })
-      .eq("tenant_id", tenantId)
-      .in("status", ["draft", "submitted"])
-      .in("day_id", dayIds.map((d) => d.id));
-    openReports = count ?? 0;
-  }
+  const openReports = await countOpenReportsForDayIds(supabase, tenantId, projectDayIds);
 
   let aiAnalyses = 0;
   const { data: mediaRows } = await supabase

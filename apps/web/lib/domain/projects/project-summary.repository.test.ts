@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   chunkIds,
+  countOpenReportsForDayIds,
   countSubmittedReportsForProject,
   PROJECT_SUMMARY_ID_PAGE_SIZE,
 } from "./project-summary.repository";
@@ -216,5 +217,67 @@ describe("countSubmittedReportsForProject", () => {
     await expect(
       countSubmittedReportsForProject(supabase as never, "tenant-1", "proj-task", [])
     ).rejects.toThrow("Pending report count failed");
+  });
+});
+
+describe("countOpenReportsForDayIds", () => {
+  it("chunks oversized day lists and sums exact counts", async () => {
+    const seen: number[] = [];
+    const dayIds = Array.from({ length: PROJECT_SUMMARY_ID_PAGE_SIZE + 3 }, (_, i) => `day-${i}`);
+    const supabase = {
+      from() {
+        return {
+          select() {
+            return {
+              eq() {
+                return {
+                  in() {
+                    return {
+                      in(_col: string, ids: string[]) {
+                        seen.push(ids.length);
+                        return Promise.resolve({ count: ids.length, error: null });
+                      },
+                    };
+                  },
+                };
+              },
+            };
+          },
+        };
+      },
+    };
+    await expect(countOpenReportsForDayIds(supabase as never, "tenant-1", dayIds)).resolves.toBe(dayIds.length);
+    expect(seen).toEqual([PROJECT_SUMMARY_ID_PAGE_SIZE, 3]);
+  });
+
+  it("does not return a partial open-report count when a later chunk fails", async () => {
+    let calls = 0;
+    const dayIds = Array.from({ length: PROJECT_SUMMARY_ID_PAGE_SIZE + 1 }, (_, i) => `day-${i}`);
+    const supabase = {
+      from() {
+        return {
+          select() {
+            return {
+              eq() {
+                return {
+                  in() {
+                    return {
+                      in() {
+                        calls += 1;
+                        if (calls > 1) return Promise.resolve({ count: null, error: { message: "timeout" } });
+                        return Promise.resolve({ count: PROJECT_SUMMARY_ID_PAGE_SIZE, error: null });
+                      },
+                    };
+                  },
+                };
+              },
+            };
+          },
+        };
+      },
+    };
+    await expect(countOpenReportsForDayIds(supabase as never, "tenant-1", dayIds)).rejects.toThrow(
+      "Pending report count failed"
+    );
   });
 });
