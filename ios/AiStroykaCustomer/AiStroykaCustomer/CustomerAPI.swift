@@ -34,49 +34,7 @@ enum CustomerAPI {
         let name: String
     }
 
-    /// Matches GET /api/v1/portal/projects/:id (`ClientProjectView`) with snake_case conversion.
-    struct PortalProjectView: Decodable {
-        let project: PortalProject
-        let progress: Progress
-        let milestones: [Milestone]
-        let documents: [Document]
-        let decisions: [Decision]
-        let handover: Handover?
-
-        struct Progress: Decodable {
-            let tasksDone: Int
-            let tasksTotal: Int
-        }
-
-        struct Milestone: Decodable, Identifiable {
-            let id: String
-            let title: String
-            let targetDate: String
-            let status: String
-        }
-
-        struct Document: Decodable, Identifiable {
-            let id: String
-            let title: String
-            let type: String
-            let status: String
-            let updatedAt: String
-        }
-
-        struct Decision: Decodable, Identifiable {
-            let id: String
-            let title: String
-            let type: String
-            let kind: String
-        }
-
-        struct Handover: Decodable {
-            let status: String
-            let handoverNotes: String?
-            let handedOverAt: String?
-            let completedAt: String?
-        }
-    }
+    typealias PortalProjectView = CustomerPortalProjectView
 
     static func me() async throws -> MeResponse {
         try await APIClient.shared.request(path: "me")
