@@ -221,6 +221,12 @@
 "mgr_copilot_input_placeholder" = "Спросите про этот объект…";
 "mgr_copilot_welcome" = "Задайте вопрос по срокам, рискам или полевым данным. Ответ опирается на intelligence проекта.";
 "mgr_copilot_fallback_fmt" = "Копилот в режиме fallback (%@). Повторите позже для полного ответа модели.";
+"mgr_copilot_optional_feedback" = "Необязательный отзыв об ИИ";
+"mgr_copilot_feedback_hint" = "Необязательно: предложите лучший ответ для внутреннего контроля качества ИИ.";
+"mgr_copilot_correction_optional" = "Необязательная правка (оставьте пустым для оценки без пары)";
+"mgr_copilot_submit_feedback" = "Отправить комментарий";
+"mgr_copilot_feedback_saved" = "Комментарий сохранён";
+"mgr_copilot_feedback_failed" = "Не удалось сохранить комментарий";
 "mgr_ai_jobs_link" = "Задачи ИИ-анализа";
 "mgr_ai_jobs_section" = "Задачи анализа";
 "mgr_ai_tab_copilot_hint" = "Откройте проект → Intelligence или Copilot для полного ассистента.";

@@ -2,6 +2,8 @@
  * AI Brain Phase D — Structured feedback types.
  */
 
+import type { FeedbackPreferencePairPayload } from "@/lib/platform/ai-flywheel/feedback-wire";
+
 export const FEEDBACK_SOURCE_KINDS = ["human", "system", "test"] as const;
 export type FeedbackSourceKind = (typeof FEEDBACK_SOURCE_KINDS)[number];
 
@@ -55,4 +57,5 @@ export interface CreateFeedbackInput {
   completenessScore?: FeedbackScore | number | null;
   comments?: string | null;
   linkedRefs?: LinkedRef[];
+  preferencePair?: FeedbackPreferencePairPayload | null;
 }
