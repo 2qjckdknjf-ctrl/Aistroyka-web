@@ -7,6 +7,8 @@ Platform-level AI: entrypoints, policy, routing, providers, budgets, observabili
 - **AIService** (`apps/web/lib/platform/ai/ai.service.ts`): Single façade for vision. `analyzeImage(admin, ctx, { imageUrl, ... })` → Policy → Router → normalize → usage. Used by:
   - `POST /api/ai/analyze-image` and `POST /api/v1/ai/analyze-image`
   - Job handler `ai_analyze_media`
+- **AI jobs ledger:** `GET /api/v1/ai/requests` (+ `/:id`) — tenant-scoped list/detail of `ai_analyze_media` / `ai_analyze_report` jobs. Returns unfiltered `summary` counts and `vision_configured` so `/dashboard/ai` can distinguish empty vs filtered vs provider-not-configured. Contract notes: [`../API-v1-ENDPOINTS.md`](../API-v1-ENDPOINTS.md).
+- **Media resolve (async jobs):** `lib/platform/ai/resolve-ai-media-image.ts` builds a signed image URL with cascade (`media_id` → `upload_session_id` → storage path). Signing goes through `createSignedUrlForPath(..., { tenantId })`; project-prefixed paths require DB proof via `verifyProjectBelongsToTenant` (`media-path-tenant-guard.ts`). A UUID `project_id` in the job payload is **not** authorization.
 - **Construction brain** (`apps/web/lib/ai/construction-brain/index.ts`): Re-exports prompts, normalize, types, riskCalibration for vision/analysis.
 - **Copilot (text):** `GET /api/v1/projects/:id/copilot` and `POST …/copilot/chat/stream` use `gateCopilotLlmRequest` (rate limit, quota reserve, policy) and `recordUsage` after OpenAI success. Streaming requires service role (`getAdminClient`) for billing persistence. Stream body may include `locale` (e.g. `en`, `ru`) to steer reply language.
 - **Speech-to-text:** `POST /api/v1/ai/transcribe` — multipart `file` or `audio` (≤25 MB), optional `locale` for Whisper language hint; same gate + `recordUsage` (cost from `verbose_json.duration` or byte-size fallback). Uses `OPENAI_TRANSCRIPTION_*` env and `lib/platform/ai/openai-transcription.ts`.
@@ -44,7 +46,9 @@ At least one provider must be configured; 503 when none.
 
 ## Troubleshooting
 
-- **503 "No AI vision provider is configured"** — set at least one of OPENAI_API_KEY, ANTHROPIC_API_KEY, GOOGLE_AI_API_KEY/GEMINI_API_KEY.
+- **503 "No AI vision provider is configured"** — set at least one of OPENAI_API_KEY, ANTHROPIC_API_KEY, GOOGLE_AI_API_KEY/GEMINI_API_KEY. Dashboard AI also surfaces this via `vision_configured: false` on `GET /api/v1/ai/requests`.
 - **403 ai_policy_denied** — policy blocked (tier limit, image count/size, or PII strict + untrusted image host). Check `ai_policy_decisions` and rule_hits.
 - **402 ai_budget_exceeded** — monthly budget exceeded; check tier limits and `tenant_billing_state` / `ai_usage`.
-- **502/504** — all providers failed or timeout; check `ai_provider_health` and provider keys.
+- **502/504** — all providers failed or timeout; check `ai_provider_health` and provider keys. Provider exhaustion is treated as **retryable** for `ai_analyze_media` (see P0 recovery).
+- **`Could not resolve image_url…` / dead `ai_analyze_media` jobs** — media resolve or path-tenant guard failed. Read [`P0_AI_PIPELINE_RECOVERY.md`](./P0_AI_PIPELINE_RECOVERY.md). Dry-run requeue first:
+  `node scripts/ops/requeue-dead-ai-analyze-media.mjs --tenant-id=<TENANT_UUID>` (add `--execute` only with owner approval).

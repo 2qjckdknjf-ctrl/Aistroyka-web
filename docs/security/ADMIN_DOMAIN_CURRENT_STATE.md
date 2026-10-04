@@ -1,9 +1,11 @@
 # Admin Domain — Current State Inventory
 
-**Date:** 2026-07-03  
-**Branch:** `security/platform-admin-separation`  
-**Scope:** Read-only inventory of repo + deploy posture for `admin.aistroyka.ai`  
-**Status:** Platform admin works on primary domain fallback; dedicated admin host **not deployed**
+**Date:** 2026-08-03
+**Baseline:** `origin/main` (post Phase 1–2 platform-admin separation; PRs #182–#186)
+**Scope:** Operator / developer inventory for `admin.aistroyka.ai` and platform-admin surfaces
+**Status:** Phase 1–2 **live**. Phase 3 (`OWNER_ALLOWED_HOSTS` hard cutover) **deferred**.
+
+> Supersedes the 2026-07-03 inventory that claimed DNS/Access/`isPlatformAdminHost` were unwired. That snapshot is obsolete — see §8 doc map.
 
 ---
 
@@ -11,225 +13,198 @@
 
 | Item | Current state |
 |------|---------------|
-| Canonical UI path | `/[locale]/platform-admin` on `aistroyka.ai` / `staging.aistroyka.ai` |
+| Canonical entry | `https://admin.aistroyka.ai/{locale}/platform-admin` |
 | Preferred host constant | `admin.aistroyka.ai` (`PLATFORM_ADMIN_PREFERRED_HOST`) |
-| DNS for admin host | **Not created** |
-| Cloudflare Worker route for admin host | **Not bound** |
-| `isPlatformAdminHost()` | **Exists, not wired** to middleware routing |
-| Host enforcement | Optional via `OWNER_ALLOWED_HOSTS` in owner gate (empty = all hosts allowed) |
-| Cloudflare Access | **Not configured** for admin subdomain |
-| Primary entry risk | Platform admin reachable on public host as fallback |
+| DNS / Worker / Access | Deployed and validated (Phase 1–2 reports) |
+| App host routing | **Wired** in `middleware.ts` via `host-routing.ts` + `host-policy.ts` |
+| Public-host fallback | `/{locale}/platform-admin` still works on `aistroyka.ai` while `OWNER_ALLOWED_HOSTS` unset |
+| Phase 3 hard cutover | Deferred — do **not** set `OWNER_ALLOWED_HOSTS` without an explicit cutover plan |
 
 ---
 
-## 2. Cloudflare / Worker topology
+## 2. Canonical entry and dual auth
 
-### Workers (from `apps/web/wrangler.toml`, `wrangler.deploy.toml`)
+### Entry URLs
 
-| Env | Worker name | `NEXT_PUBLIC_APP_URL` |
-|-----|-------------|------------------------|
-| production | `aistroyka-web-production` | `https://aistroyka.ai` |
-| staging | `aistroyka-web-staging` | `https://staging.aistroyka.ai` |
-| dev | `aistroyka-web-dev` | (local) |
+| Host | Path | Role |
+|------|------|------|
+| `admin.aistroyka.ai` | `/{locale}/platform-admin` | Canonical platform cabinet |
+| `admin.aistroyka.ai` | `/{locale}/platform-admin/testing` | ROMA Testing (read-only) |
+| `aistroyka.ai` / `staging.aistroyka.ai` | `/{locale}/platform-admin` | Compatibility fallback (Phase 3 not applied) |
 
-### Routes
+Default locale for admin-host landing redirects is `ru` (`resolvePlatformAdminLandingPath`).
 
-- Production routes (`aistroyka.ai`, `www.aistroyka.ai`) are **managed manually** in Cloudflare Dashboard.
-- `wrangler.toml` route blocks are **commented out** with note: *"Routes are managed manually in Cloudflare Dashboard. CI must not create/update/delete routes."*
-- **No** `admin.aistroyka.ai` route or custom domain binding exists in repo or documented deploy.
+### Dual auth (Access ≠ Supabase)
 
-### Entry / bootstrap
+Operators must clear **both** layers:
 
-- Worker entry: `worker-bootstrap.js` → patches `globalThis.require`, wraps fetch with API security headers.
-- OpenNext bundle: `.open-next/deploy/worker-bootstrap.js` (staging/production deploy).
-- Deploy path: GitHub **Deploy Cloudflare (Staging)** → **Deploy Cloudflare (Production)** (`docs/runbooks/DEPLOYMENT_SOURCE_OF_TRUTH.md`).
+1. **Cloudflare Access** on `admin.aistroyka.ai` (edge perimeter).
+2. **Supabase session** + row in `platform_owner_grants`.
 
-### Related domains
+Access login alone does **not** create a Supabase session. Unauthenticated page hits should redirect to `/{locale}/login?next=…` (middleware sets `X-Auth-Redirect: platform-admin-login`). Layout defense-in-depth (`assertPlatformOwnerPageAccess`):
 
-| Host | Role |
-|------|------|
-| `aistroyka.ai` / `www.aistroyka.ai` | Canonical public + product + tenant |
-| `staging.aistroyka.ai` | Staging |
-| `aistroyka.com` / `www.aistroyka.com` | 301 redirect to `.ai` (separate redirect worker) |
-| `admin.aistroyka.ai` | **Planned, not live** |
+- no / stale session → **redirect** to login
+- no grant / host/IP/surface deny → **forbidden**
+
+Incident archaeology: `docs/security/PLATFORM_ADMIN_FORBIDDEN_ROOT_CAUSE_REPORT.md`.
 
 ---
 
-## 3. Application routing (platform admin)
+## 3. Host routing truth table
+
+Code: `apps/web/lib/platform-admin/host-policy.ts`, `host-routing.ts`, wired in `apps/web/middleware.ts`.
+
+### Host classification
+
+| Helper | Behavior |
+|--------|----------|
+| `isPlatformAdminHost(host)` | If `OWNER_ALLOWED_HOSTS` set → host in comma list; else → `admin.aistroyka.ai` |
+| `resolveHostProfile(host)` | `platform_admin` \| `public_product` \| `unknown` → response header `X-Aistroyka-Host-Profile` |
+
+### Admin host — pages
+
+| Path (locale-stripped) | Behavior |
+|------------------------|----------|
+| `/`, marketing (`/features`, …), tenant (`/dashboard`, `/admin`, `/portal`, …) | **307** → `/{locale}/platform-admin`; header `X-Aistroyka-Host-Routing: platform_admin_landing` |
+| `/platform-admin/*`, `/owner/*` | Allow (owner gate applies) |
+| `/login`, `/register`, `/telegram/*` | Allow (auth) |
+
+### Admin host — APIs
+
+| Path | Behavior |
+|------|----------|
+| `/api/v1/health` | Allowed (Access still gates unauthenticated edge access) |
+| `/api/v1/platform/*` (and legacy `/api/v1/owner/*` paths classified as platform) | Allowed → `gateOwnerRequest` |
+| Other `/api/v1/*` | **403** `{ "error": "admin_host_api_forbidden" }` |
+
+### Public host
+
+Product routing unchanged. `/{locale}/platform-admin` retained as fallback until Phase 3.
+
+---
+
+## 4. Application surfaces
 
 ### Constants (`apps/web/lib/platform-admin/constants.ts`)
 
 ```
-PLATFORM_ADMIN_BASE_PATH     = "/platform-admin"
-PLATFORM_API_PREFIX          = "/api/v1/platform"
-LEGACY_OWNER_API_PREFIX      = "/api/v1/owner"
+PLATFORM_ADMIN_BASE_PATH      = "/platform-admin"
+PLATFORM_API_PREFIX           = "/api/v1/platform"
+LEGACY_OWNER_API_PREFIX       = "/api/v1/owner"
 PLATFORM_ADMIN_PREFERRED_HOST = "admin.aistroyka.ai"
 ```
 
 ### UI routes (`apps/web/app/[locale]/(platform-admin)/platform-admin/`)
 
-| Path | Page | Guard |
-|------|------|-------|
-| `/[locale]/platform-admin` | Overview console | layout + middleware |
-| `/[locale]/platform-admin/billing` | Billing pilot | same |
-| `/[locale]/platform-admin/leads` | Contact leads | same |
-| `/[locale]/platform-admin/leads/[id]` | Lead detail | same |
-| `/[locale]/platform-admin/testing` | ROMA Testing (read-only) | same |
+| Path | Page |
+|------|------|
+| `/[locale]/platform-admin` | Overview |
+| `/[locale]/platform-admin/billing` | Billing pilot |
+| `/[locale]/platform-admin/leads` | Contact leads |
+| `/[locale]/platform-admin/leads/[id]` | Lead detail |
+| `/[locale]/platform-admin/testing` | ROMA Testing |
 
-Layout (`layout.tsx`):
+Shell nav (`shell-nav.ts`): Overview · Billing pilot · Contact leads · **ROMA Testing**.
 
-- `assertPlatformOwnerPageAccess()` (defense in depth)
-- `robots: { index: false, follow: false }`
-- `PlatformAdminShell` nav: Overview · Billing pilot · Contact leads · ROMA Testing
+Legacy UI aliases still redirect into `/platform-admin` (`/owner`, selected `/admin/*` platform pages).
 
-### Legacy UI aliases (temporary)
+### Platform APIs
 
-| Legacy path | Behavior |
-|-------------|----------|
-| `/[locale]/owner` | Redirect → `/platform-admin` |
-| `/[locale]/admin/billing-pilot` | Tenant admin blocked; platform owner → `/platform-admin/billing` |
-| `/[locale]/admin/leads` | Same pattern → `/platform-admin/leads` |
-
-### Canonical platform APIs (`/api/v1/platform/*` — 22 routes)
-
-Includes: `overview`, `health`, `diagnostics`, `audit`, `users`, `tenants`, `support/tickets`, `billing/*`, `leads/*`, `testing/quality`, `critical/echo`.
-
-All use `requirePlatformOwnerApi(request, { mode: "read"|"write"|"critical" })`.
-
-### Deprecated API aliases
-
-| Prefix | Count | Behavior |
-|--------|-------|----------|
-| `/api/v1/owner/*` | 10 routes | Delegate to `/api/v1/platform/*`; `Deprecation: true` headers |
-| `/api/v1/admin/billing/*` | several | Delegate to platform billing |
-| `/api/v1/admin/leads/*` | several | Delegate to platform leads |
+Canonical prefix `/api/v1/platform/*` — all use `requirePlatformOwnerApi(request, { mode: "read"|"write"|"critical" })`.
+Deprecated aliases under `/api/v1/owner/*` and selected `/api/v1/admin/*` still delegate with `Deprecation` headers.
 
 ---
 
-## 4. Middleware and host policy
+## 5. ROMA Testing surface
 
-### Middleware (`apps/web/middleware.ts`)
+| Concern | Truth |
+|---------|--------|
+| Route | `/[locale]/platform-admin/testing` |
+| Server composition | `buildRomaQualityDashboard()` + `buildRomaEngineeringIntelligence(dashboard)` in the page RSC |
+| Client | `PlatformAdminTestingClient` — props only; **no** client-side quality fetch / run buttons |
+| Live probes | 15 sources in `LIVE_SOURCE_CATALOG` (`roma-live-probes.ts`) |
+| Execution | `testExecutionEnabled: false` (read-only dashboard) |
+| `adminHostDeployed` signal | `false` when `OWNER_ALLOWED_HOSTS` unset; `null` when set (dashboard field, not DNS truth) |
+| API | `GET /api/v1/platform/testing/quality` → `{ data: RomaQualityDashboard }` **only** — intelligence is page-side, not in this JSON |
 
-```
-Platform admin API paths  → updateSession → gateOwnerRequest → next
-Platform admin page paths → updateSession → gateOwnerRequest → intl middleware
-Other /api/v1/*           → lite allow-list only (no owner gate unless platform path)
-```
-
-Path detection (`lib/platform-admin/middleware-paths.ts`):
-
-- Pages: `/owner`, `/platform-admin`
-- APIs: `/api/v1/owner`, `/api/v1/platform`
-- Worker bypass exception: platform + owner API prefixes **do** run middleware (patched)
-
-### Host policy (`lib/platform-admin/host-policy.ts`)
-
-```typescript
-isPlatformAdminHost(host):
-  if OWNER_ALLOWED_HOSTS set → host in comma list
-  else → host === "admin.aistroyka.ai"
-```
-
-**Usage:** Grep shows `isPlatformAdminHost` is **only referenced in its own file and tests** — not in `middleware.ts`.
-
-### Owner gate (`lib/platform-owner/middleware-owner-gate.ts`)
-
-`ownerHostAllowed(request)`:
-
-- If `OWNER_ALLOWED_HOSTS` empty/unset → **returns true** (all hosts allowed)
-- If set → host must be in comma-separated list
-
-Gate order: host → IP allowlist → surface cookie (pages) → API secret (optional) → session → grant → method/role → rate limit.
-
-### API guard (`lib/platform-owner/require-platform-owner-api.ts`)
-
-Mirrors middleware rules + DB audit rows (`platform_owner_audit_log`), step-up for critical mode.
+Framework design docs under `docs/roma/` describe the ROMA OS concept layer — **not** this cabinet UI. Product/UI change reports live under `docs/audits/ROMA_*`.
 
 ---
 
-## 5. Authorization model (current)
-
-### Grant table
-
-- `platform_owner_grants` — one row per platform operator user
-- Roles: `OWNER`, `OWNER_OPERATOR`, `OWNER_READONLY`
-
-### Tenant admin separation
-
-- Tenant `/admin` uses `tenant_members` (`owner`/`admin` roles)
-- Platform admin requires `platform_owner_grants` — tenant admin **403** on platform pages/APIs (P0 lockdown verified in `PLATFORM_ADMIN_NO_TAIL_AUDIT.md`)
-
-### Optional env hardening (exist today, not required in prod)
+## 6. Optional env hardening
 
 | Variable | Purpose | Default if unset |
 |----------|---------|------------------|
-| `OWNER_ALLOWED_HOSTS` | Restrict owner/platform surfaces to listed hosts | All hosts allowed |
+| `OWNER_ALLOWED_HOSTS` | Restrict owner/platform surfaces + classify admin host | Empty = all hosts for owner gate; admin-host routing defaults to `admin.aistroyka.ai` |
 | `OWNER_IP_ALLOWLIST` | IP allowlist for owner gate | No IP filter |
 | `OWNER_GATE_SECRET` | `X-Owner-Key` for selected API paths | Not required |
 | `OWNER_STEP_UP_SECRET` | HMAC step-up for critical mutations | Critical routes 503 if missing |
 | `OWNER_TOTP_SECRET` | Optional TOTP header | Not enforced |
 | `OWNER_AUDIT_DENIED` | Audit denied API attempts to DB | Off |
 
----
-
-## 6. Security headers
-
-Source: `apps/web/lib/security-headers.ts`
-
-| Surface | Applied by |
-|---------|------------|
-| HTML pages | `middleware.ts` — CSP, X-Frame-Options DENY, nosniff, Referrer-Policy, Permissions-Policy, HSTS (prod) |
-| `/api/v1/*` | `worker-bootstrap.js` wrapper (OpenNext bypasses middleware for most API) |
-| Platform admin layout | `robots: noindex, nofollow` in metadata |
-
-Smoke: `bash scripts/smoke/security_headers.sh` (targets public `aistroyka.ai` today — **not** admin host).
+`OWNER_ALLOWED_HOSTS` is commented in `apps/web/wrangler.deploy.toml` as Phase 3. See also `docs/ENVIRONMENT-VARIABLES.md`.
 
 ---
 
-## 7. ROMA / Engineering Intelligence (context only)
+## 7. Local / CI validation
 
-- Route: `/[locale]/platform-admin/testing`
-- Server: `buildRomaQualityDashboard()` + `buildRomaEngineeringIntelligence()`
-- API: `GET /api/v1/platform/testing/quality` (read-only, `requirePlatformOwnerApi`)
-- ROMA dashboard notes `adminHostDeployed: false` when `OWNER_ALLOWED_HOSTS` unset
+```bash
+cd apps/web
+bunx vitest run \
+  lib/platform-admin/host-routing.test.ts \
+  middleware.host-routing.test.ts \
+  lib/platform-admin/host-policy.test.ts \
+  lib/platform-admin/middleware-paths.test.ts \
+  lib/platform-admin/roma-quality-dashboard.service.test.ts \
+  lib/platform-admin/roma-engineering-intelligence.test.ts \
+  lib/platform-admin/roma-live-probes.test.ts
+```
 
-**No ROMA UI changes in admin-domain plan.**
+Optional local Host-header smoke (dev server running):
+
+```bash
+curl -sI -H "Host: admin.aistroyka.ai" http://localhost:3000/
+# Expect: 307 Location …/ru/platform-admin, X-Aistroyka-Host-Routing: platform_admin_landing
+
+curl -sI -H "Host: aistroyka.ai" http://localhost:3000/
+# Expect: product locale redirect — not platform-admin landing
+```
+
+Operator checklist with live curl probes: `docs/security/ADMIN_DOMAIN_VALIDATION_CHECKLIST.md`.
+Security header smoke targets public hosts only today (`docs/ops/SECURITY_HEADERS_LIVE_SMOKE.md`) — admin host is Access-gated and is not in that allowlist.
 
 ---
 
-## 8. Existing documentation map
+## 8. Documentation map
 
-| Doc | Relevance |
-|-----|-----------|
-| `docs/audits/PLATFORM_ADMIN_P0_LOCKDOWN_REPORT.md` | P0 boundary baseline |
-| `docs/audits/PLATFORM_ADMIN_PHASE1_MIGRATION_REPORT.md` | Phase 1 migration; `ADMIN_HOST_READY = PARTIAL` |
-| `docs/audits/PLATFORM_ADMIN_PHASE1_POST_AUDIT.md` | Deploy readiness partial |
-| `docs/audits/PLATFORM_ADMIN_NO_TAIL_AUDIT.md` | `isPlatformAdminHost` not wired |
-| `docs/audits/PLATFORM_ADMIN_SECURITY_BOUNDARY_REPORT.md` | Target boundary diagram |
-| `docs/audits/PLATFORM_ADMIN_TARGET_RESTRUCTURE_PLAN.md` | Prior restructure plan |
-| `docs/security/PLATFORM_OWNER_CABINET_SECURITY_AUDIT.md` | Owner gate layers |
-| `docs/security/SECURITY_HEADERS_POLICY.md` | Header application model |
-| `docs/audits/ROMA_UX_TRUST_HARDENING_REPORT.md` | ROMA owner UX (recent) |
+| Doc | Role |
+|-----|------|
+| **This file** | Current inventory (start here) |
+| `ADMIN_DOMAIN_PHASE1_EXECUTION_REPORT.md` | DNS/TLS/Worker/Access evidence |
+| `ADMIN_DOMAIN_PHASE2_HOST_ROUTING_REPORT.md` | App routing implementation |
+| `ADMIN_DOMAIN_PHASE2_DEPLOY_VALIDATION_REPORT.md` | Production deploy validation |
+| `ADMIN_DOMAIN_VALIDATION_CHECKLIST.md` | Operator curl checklist |
+| `PLATFORM_ADMIN_FORBIDDEN_ROOT_CAUSE_REPORT.md` | Access vs Supabase incident RCA |
+| `ADMIN_DOMAIN_*_PLAN.md` / `*_ARCHITECTURE.md` / `*_SECURITY_MODEL.md` | Design / rollout (historical plans) |
+| `docs/audits/PLATFORM_ADMIN_*` | Boundary / migration audits (point-in-time) |
+| `docs/audits/ROMA_*` | ROMA Testing product change reports |
+| `docs/roma/*` | ROMA framework design — not the cabinet UI |
 
 ---
 
-## 9. Gap summary (current → target)
+## 9. Open gaps (Phase 3 only)
 
-| Gap | Severity | Notes |
-|-----|----------|-------|
-| No `admin.aistroyka.ai` DNS | P0 deploy blocker | Owner Cloudflare action |
-| No Worker route/custom domain | P0 deploy blocker | Same Worker as production |
-| No Cloudflare Access | P0 security gap | Zero Trust before app |
-| `isPlatformAdminHost` unwired | P1 code gap | Middleware uses generic `OWNER_ALLOWED_HOSTS` only |
-| Public host serves `/platform-admin` | P1 exposure | Fallback works; not canonical entry |
-| `OWNER_ALLOWED_HOSTS` optional | P1 | Must become `admin.aistroyka.ai` in prod |
-| `NEXT_PUBLIC_APP_URL` = public host | P2 | May need admin-aware URL helpers for redirects |
-| Security header smoke excludes admin host | P2 | Add admin host to validation checklist |
-| Legacy `/owner` + admin aliases | P3 | Deprecation cleanup post-cutover |
+| Gap | Notes |
+|-----|-------|
+| `OWNER_ALLOWED_HOSTS` unset | Owner gate still allows public host; admin-host routing still defaults to `admin.aistroyka.ai` |
+| Public `/platform-admin` fallback | Intentional until hard cutover |
+| Legacy `/owner` + admin aliases | Deprecation cleanup after cutover |
+| Security header live smoke | Does not probe Access-gated admin host |
 
 ---
 
 ## 10. Inventory verdict
 
-**Current state is functionally complete for platform admin on primary domain fallback.**  
-**Dedicated admin host architecture is designed but not implemented in DNS, Cloudflare, or middleware host routing.**
+**Phase 1–2 are implemented and deployed:** admin host is the canonical entry, middleware host routing is wired, Cloudflare Access is the edge perimeter, and platform admin remains available on the public host as a transitional fallback.
+
+**Phase 3 is not done:** do not claim hard host isolation until `OWNER_ALLOWED_HOSTS` is set and public-host fallback policy is explicitly changed.

@@ -1,6 +1,6 @@
 # AI Runtime Architecture Truth
 
-**Date:** 2026-06-04  
+**Date:** 2026-06-04
 **Project:** AISTROYKA monorepo
 
 ---
@@ -37,6 +37,9 @@ There is **no** `backend/` application tree, **no** `backend/.venv`, and **no** 
 | **Copilot (stream)** | `POST /api/v1/projects/:id/copilot/chat/stream` → OpenAI SSE |
 | **Intelligence (deterministic)** | `GET /api/v1/projects/:id/intelligence` → `lib/ai-brain/services/*` |
 | **Async jobs** | `ai_analyze_media` / `ai_analyze_report` job handlers |
+| **AI jobs ledger** | `GET /api/v1/ai/requests` (+ `/:id`) — `summary` + `vision_configured` |
+| **Media resolve chokepoint** | `lib/platform/ai/resolve-ai-media-image.ts` + `media-path-tenant-guard.ts` (tenant/project path proof before signed URL) |
+| **Dead-job recovery** | `scripts/ops/requeue-dead-ai-analyze-media.mjs` (dry-run default) — see [`P0_AI_PIPELINE_RECOVERY.md`](./P0_AI_PIPELINE_RECOVERY.md) |
 | **Persistence** | Supabase (`ai_chat_*`, `ai_usage`, `ai_analysis`, `audit_logs`, …) |
 
 Production traffic does **not** flow through a repo-local Python `backend/app`.
@@ -73,18 +76,18 @@ Keys are read in `apps/web/lib/config/server.ts` (`getServerConfig`, `isOpenAICo
 
 ## Current validation gaps
 
-1. **No in-repo Python AI backend** — any doc requiring `backend/` is stale.  
-2. **Local keys often absent** — live proof must target **deployed** `BASE_URL` or operator-supplied env.  
-3. **Copilot `event: done` ≠ live LLM** — stream completes on deterministic fallback too.  
-4. **Vision 200 ≠ live vision** — must check absence of `X-AI-Fallback-Reason` / `fallback_reason`.  
+1. **No in-repo Python AI backend** — any doc requiring `backend/` is stale.
+2. **Local keys often absent** — live proof must target **deployed** `BASE_URL` or operator-supplied env.
+3. **Copilot `event: done` ≠ live LLM** — stream completes on deterministic fallback too.
+4. **Vision 200 ≠ live vision** — must check absence of `X-AI-Fallback-Reason` / `fallback_reason`.
 5. **SLO docs referencing `ai_llm_logs`** — may not match web Worker telemetry (`audit_logs` + structured logs).
 
 ---
 
 ## Required action (completed in this pass)
 
-1. Add `scripts/smoke/ai_live_provider.sh` as canonical `--require-live` gate.  
-2. Rewrite `docs/ai/AUDIT_AI_VALIDATION_REPORT.md` to reference only that gate.  
+1. Add `scripts/smoke/ai_live_provider.sh` as canonical `--require-live` gate.
+2. Rewrite `docs/ai/AUDIT_AI_VALIDATION_REPORT.md` to reference only that gate.
 3. Align `AUDIT_AI_LIVE_VALIDATION.md`, `AUDIT_AI_MODULE_FINAL_VERDICT.md`, and publication-readiness cross-links.
 
 ---
