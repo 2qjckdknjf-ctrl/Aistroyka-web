@@ -87,7 +87,7 @@ function parseReportRow(row: Record<string, unknown>): ReportRow | null {
 
 function overlayMissing(message: string | undefined): boolean {
   const m = (message ?? "").toLowerCase();
-  return m.includes("does not exist") || m.includes("schema cache") || m.includes("construction_graph");
+  return m.includes("does not exist") || m.includes("schema cache");
 }
 
 /**
@@ -137,7 +137,9 @@ export async function queryProjectConstructionGraph(
     documents: documentsPage.rows,
   });
   graph.truncated = truncated;
-  await persistConstructionGraphOverlay(supabase, graph);
+  if (!truncated) {
+    await persistConstructionGraphOverlay(supabase, graph);
+  }
   return { graph, error: "" };
 }
 

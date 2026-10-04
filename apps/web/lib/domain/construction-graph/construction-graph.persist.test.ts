@@ -48,4 +48,18 @@ describe("persistConstructionGraphOverlay", () => {
     const result = await persistConstructionGraphOverlay({ from } as never, graph());
     expect(result).toEqual({ persisted: false, reason: "overlay_unavailable" });
   });
+
+  it("does not treat overlay RLS failures as a missing table", async () => {
+    const from = vi.fn().mockReturnValue({
+      upsert: () => ({
+        select: async () => ({
+          data: null,
+          error: { message: 'new row violates row-level security policy for table "construction_graph_nodes"' },
+        }),
+      }),
+    });
+    const result = await persistConstructionGraphOverlay({ from } as never, graph());
+    expect(result.persisted).toBe(false);
+    expect(result.reason).toMatch(/row-level security/i);
+  });
 });

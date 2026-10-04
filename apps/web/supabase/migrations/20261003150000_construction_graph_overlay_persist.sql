@@ -18,17 +18,32 @@ alter table public.construction_graph_edges
 
 drop policy if exists construction_graph_nodes_write on public.construction_graph_nodes;
 create policy construction_graph_nodes_write on public.construction_graph_nodes
-  for insert with check (public.can_read_project_membership(tenant_id, project_id));
+  for insert with check (
+    public.can_manage_project_membership(tenant_id, project_id)
+    and public.project_belongs_to_tenant(project_id, tenant_id)
+  );
 
 drop policy if exists construction_graph_nodes_update on public.construction_graph_nodes;
 create policy construction_graph_nodes_update on public.construction_graph_nodes
-  for update using (public.can_read_project_membership(tenant_id, project_id))
-  with check (public.can_read_project_membership(tenant_id, project_id));
+  for update using (
+    public.can_manage_project_membership(tenant_id, project_id)
+    and public.project_belongs_to_tenant(project_id, tenant_id)
+  )
+  with check (
+    public.can_manage_project_membership(tenant_id, project_id)
+    and public.project_belongs_to_tenant(project_id, tenant_id)
+  );
 
 drop policy if exists construction_graph_edges_write on public.construction_graph_edges;
 create policy construction_graph_edges_write on public.construction_graph_edges
-  for insert with check (public.can_read_project_membership(tenant_id, project_id));
+  for insert with check (
+    public.can_manage_project_membership(tenant_id, project_id)
+    and public.project_belongs_to_tenant(project_id, tenant_id)
+  );
 
 drop policy if exists construction_graph_edges_delete on public.construction_graph_edges;
 create policy construction_graph_edges_delete on public.construction_graph_edges
-  for delete using (public.can_read_project_membership(tenant_id, project_id));
+  for delete using (
+    public.can_manage_project_membership(tenant_id, project_id)
+    and public.project_belongs_to_tenant(project_id, tenant_id)
+  );
