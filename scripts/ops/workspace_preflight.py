@@ -28,6 +28,8 @@ def inspect(cwd, resume_pr=None):
         problems.append(f'Checkout is missing {behind} commits from origin/main; reconcile before new work.')
     if dirty:
         problems.append('Local changes exist; preserve and resume their task before starting another one.')
+    if ahead and resume_pr is None:
+        problems.append('This branch already contains committed work; resume its PR instead of starting another task here.')
     if resume_pr is not None:
         result = subprocess.run(['gh', 'pr', 'view', str(resume_pr), '--repo', '2qjckdknjf-ctrl/Aistroyka-web', '--json', 'headRefOid,state'], capture_output=True, text=True)
         if result.returncode:

@@ -1,8 +1,10 @@
 """Exercise safety decisions with real temporary Git repositories."""
 import importlib.util
+import json
 import subprocess
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 spec = importlib.util.spec_from_file_location('preflight', Path(__file__).with_name('workspace_preflight.py'))
@@ -56,6 +58,41 @@ class PreflightTests(unittest.TestCase):
     def test_unrelated_repository_cannot_pass_as_aistroyka(self):
         self.git('remote', 'set-url', 'origin', 'https://github.com/example/unrelated.git')
         self.assertEqual(module.inspect(self.root)['verdict'], 'RECONCILE_FIRST')
+
+    def commit_task_work(self):
+        self.git('switch', '-c', 'docs/existing-task')
+        (self.root / 'file.txt').write_text('committed task work\n')
+        self.git('commit', '-am', 'task work')
+        return self.git('rev-parse', 'HEAD')
+
+    def inspect_with_pr(self, state, head):
+        original_run = subprocess.run
+
+        def run(args, **kwargs):
+            if args[0] == 'gh':
+                return subprocess.CompletedProcess(args, 0, stdout=json.dumps({'state': state, 'headRefOid': head}), stderr='')
+            return original_run(args, **kwargs)
+
+        with patch.object(module.subprocess, 'run', side_effect=run):
+            return module.inspect(self.root, resume_pr=42)
+
+    def test_committed_task_cannot_start_another_task(self):
+        self.commit_task_work()
+        result = module.inspect(self.root)
+        self.assertEqual(result['ahead_main'], 1)
+        self.assertEqual(result['verdict'], 'RECONCILE_FIRST')
+
+    def test_current_open_pr_can_resume_committed_task(self):
+        head = self.commit_task_work()
+        self.assertEqual(self.inspect_with_pr('OPEN', head)['verdict'], 'CURRENT_BASELINE')
+
+    def test_closed_pr_cannot_resume_as_new_work(self):
+        head = self.commit_task_work()
+        self.assertEqual(self.inspect_with_pr('CLOSED', head)['verdict'], 'RECONCILE_FIRST')
+
+    def test_old_local_head_cannot_resume_current_pr(self):
+        self.commit_task_work()
+        self.assertEqual(self.inspect_with_pr('OPEN', self.first)['verdict'], 'RECONCILE_FIRST')
 
 
 if __name__ == '__main__':
