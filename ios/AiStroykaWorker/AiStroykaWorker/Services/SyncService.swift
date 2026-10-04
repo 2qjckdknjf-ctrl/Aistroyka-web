@@ -100,9 +100,12 @@ final class SyncService: ObservableObject {
                 }
             } catch let err as SyncConflictError {
                 if err.mustBootstrap {
+                    // Do not adopt serverCursor until bootstrap succeeds. Persisting a tip
+                    // cursor here means a failed bootstrap leaves cursor != 0 and the next
+                    // cold sync skips bootstrap (runbook: bootstrap first, then adopt cursor).
                     needsBootstrap = true
-                    saveCursor(err.serverCursor)
-                    cursor = err.serverCursor
+                    saveCursor(0)
+                    cursor = 0
                 } else {
                     lastError = "Sync conflict (hint: \(err.body.serverCursor ?? 0))"
                     status = .needsBootstrap
