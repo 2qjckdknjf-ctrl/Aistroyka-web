@@ -35,3 +35,8 @@
 "cust_retry" = "Reintentar";
 "cust_err_not_customer" = "Esta cuenta no es de cliente. Use la invitación al portal.";
 "cust_err_use_manager" = "Esta cuenta es de contratista. Use AiStroyka Manager.";
+
+"cust_request_approve" = "Aprobar";
+"cust_request_reject" = "Rechazar";
+"cust_request_respond_ok" = "Respuesta enviada.";
+"cust_request_respond_error" = "No se pudo enviar la respuesta.";
