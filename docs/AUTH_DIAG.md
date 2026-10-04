@@ -45,3 +45,9 @@ Returns JSON with safe, non-sensitive auth/config info for troubleshooting produ
 
 - No secret values are returned.  
 - Only masked anon key (first 6 + last 4) and hostnames/URLs are included.
+
+## Related
+
+- Password recovery (forgot → callback → reset): `docs/auth/PASSWORD_RECOVERY.md`
+- Supabase Site URL / Redirect URLs: `docs/SUPABASE_AUTH_PROD_SETUP.md`
+- Auth inventory (login, Apple/Google, tenant context): `docs/auth/MULTI_PROVIDER_AUTH_INVENTORY.md`

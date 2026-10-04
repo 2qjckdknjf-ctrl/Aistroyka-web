@@ -71,6 +71,18 @@ Vercel может встречаться как исторический/доп�
 
 ---
 
+## Website acquisition / Growth OS (опционально)
+
+Публичный маркетинг-сайт. Пустые значения = события не уходят; страницы остаются рабочими. Подробнее: `docs/growth/WEBSITE_ACQUISITION.md`.
+
+| Variable | Описание |
+|----------|----------|
+| `NEXT_PUBLIC_GROWTH_OS_EVENTS_URL` | URL ingest Growth OS (клиентский `fetch`). Задаётся на **build** (`cf:build`). Origin должен быть в `connect-src` (`apps/web/lib/security-headers.ts`; сейчас allowlist включает `https://growth-os-sable-psi.vercel.app`). |
+
+`SUPABASE_SERVICE_ROLE_KEY` нужен и для `POST /api/contact` (persist в `contact_leads`).
+
+---
+
 ## Telegram (опционально, Phase 10)
 
 | Variable | Описание |

@@ -23,7 +23,7 @@ Phase 8 established the **operational and growth foundation** for real pilot rol
 
 ## Growth foundation readiness
 
-- **Analytics:** PRODUCT_ANALYTICS_PLAN defines events, schema, attribution, privacy-safe logging, funnel and retention definitions, and time-to-first-value. **Not yet implemented** in code; design is ready for backend emission (login_success, task_assigned, report_submitted, report_reviewed at minimum).
+- **Analytics:** PRODUCT_ANALYTICS_PLAN defines **in-app** events, schema, attribution, privacy-safe logging, funnel and retention definitions, and time-to-first-value. Those product events are **still not emitted**. Separately, the public-site acquisition funnel (Growth OS + contact UTM) shipped later — see `docs/growth/WEBSITE_ACQUISITION.md`. Do not conflate the two.
 - **KPIs:** GROWTH_KPI_FRAMEWORK defines activation rate, WAM, WAW, reports per project, review turnaround time, pilot success score, and expansion readiness score. Depends on product events once implemented.
 - **Feedback:** FEEDBACK_ROADMAP_LOOP defines capture pipeline, feature scoring, bug/UX/feature triage, roadmap cadence, and decision log. Usable as process without new tooling.
 - **Pricing:** PRICING_AND_PACKAGING aligns with existing platform limits (Free/Pro/Enterprise); feature gating, usage limits, and pilot discounts are documented.
@@ -55,6 +55,7 @@ Phase 8 established the **operational and growth foundation** for real pilot rol
 - `docs/growth/PILOT_CLIENT_SELECTION.md`  
 - `docs/growth/PILOT_ROLLOUT_PLAYBOOK.md`  
 - `docs/growth/PRODUCT_ANALYTICS_PLAN.md`  
+- `docs/growth/WEBSITE_ACQUISITION.md` (later public-site funnel; not Phase 8)  
 - `docs/growth/CUSTOMER_SUCCESS_SYSTEM.md`  
 - `docs/growth/PRICING_AND_PACKAGING.md`  
 - `docs/growth/DEMO_AND_SALES_KIT.md`  

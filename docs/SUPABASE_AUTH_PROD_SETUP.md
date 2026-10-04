@@ -8,12 +8,24 @@ Exact steps so login works end-to-end with Cloudflare Worker + Supabase Auth. No
 
 1. Open **Supabase Dashboard** → your project → **Authentication** → **URL Configuration**.
 2. Set:
-   - **Site URL:** `https://aistroyka.ai`
+   - **Site URL:** `https://aistroyka.ai` (use `https://staging.aistroyka.ai` on the staging project / when testing recovery from staging)
    - **Redirect URLs:** add (one per line or as comma-separated depending on UI):
      - `https://aistroyka.ai/**`
      - `https://www.aistroyka.ai/**`
+     - Staging (required for forgot-password emails opened from staging): `https://staging.aistroyka.ai/**`
+     - iOS custom schemes (must stay): `ai.aistroyka.worker://auth-callback`, `ai.aistroyka.manager://auth-callback`
      - Optional (for debugging): your workers.dev URL, e.g. `https://aistroyka-web-production.<account>.workers.dev/**`
 3. Save.
+
+Password recovery `redirectTo` is `{request origin}/api/auth/callback?callback=/{locale}/reset-password&recovery=1` (see `docs/auth/PASSWORD_RECOVERY.md`). If the origin is missing from Redirect URLs, the email link fails with “invalid redirect URL” even when `POST /api/v1/auth/forgot-password` returned 200.
+
+**Merge, do not overwrite.** `apps/web/scripts/set-supabase-auth-urls.mjs` GETs the live `uri_allow_list` and PATCHes the union. A Dashboard replace that drops iOS schemes breaks Google PKCE / Apple return on device.
+
+Apple / Google provider enablement (operator, needs `SUPABASE_ACCESS_TOKEN` + real credentials — never invent keys):
+
+- `node apps/web/scripts/enable-auth-apple.mjs` — Services ID `ai.aistroyka.web` plus Worker/Manager bundle IDs as additional Client IDs.
+- `node apps/web/scripts/enable-auth-google.mjs` — `GOOGLE_OAUTH_CLIENT_ID` + `GOOGLE_OAUTH_CLIENT_SECRET` (Web application client).
+- Phone OTP stays optional: `node apps/web/scripts/enable-auth-phone-otp.mjs` (default `--status`). `--enable` refuses unless SMS credentials already exist. Twilio is not a launch gate.
 
 ---
 
