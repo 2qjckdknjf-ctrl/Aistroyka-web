@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClientFromRequest } from "@/lib/supabase/server";
 import { getTenantContextFromRequest, requireTenant, TenantRequiredError } from "@/lib/tenant";
 import { getById as getProjectRow } from "@/lib/domain/projects/project.repository";
+import { buildConstructionGraphAIContext } from "@/lib/domain/construction-graph/construction-graph.ai-context";
 import { queryProjectConstructionGraph } from "@/lib/domain/construction-graph/construction-graph.repository";
 
 export const dynamic = "force-dynamic";
@@ -57,5 +58,10 @@ export async function GET(
   const { graph, error } = await queryProjectConstructionGraph(supabase, ctx.tenantId!, id);
   if (error && error !== "Not found") return NextResponse.json({ error }, { status: 500 });
   if (!graph) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  const view = new URL(request.url).searchParams.get("view");
+  if (view === "ai_context") {
+    return NextResponse.json({ data: buildConstructionGraphAIContext(graph) });
+  }
   return NextResponse.json({ data: graph });
 }

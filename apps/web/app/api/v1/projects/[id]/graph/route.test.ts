@@ -79,4 +79,36 @@ describe("GET /api/v1/projects/:id/graph", () => {
     expect(res.status).toBe(200);
     expect(projectRepo.getById).toHaveBeenCalled();
   });
+
+  it("returns AI context projection when view=ai_context", async () => {
+    rpc.mockResolvedValueOnce({ data: true, error: null });
+    vi.mocked(graphRepo.queryProjectConstructionGraph).mockResolvedValue({
+      graph: {
+        project_id: "p1",
+        tenant_id: "t1",
+        truncated: false,
+        nodes: [
+          {
+            id: "projects:p1",
+            family: "project",
+            source_table: "projects",
+            source_id: "p1",
+            project_id: "p1",
+            tenant_id: "t1",
+            label: "Villa",
+            provenance: { kind: "sot_row", table: "projects", id: "p1" },
+          },
+        ],
+        edges: [],
+      },
+      error: "",
+    });
+    const res = await GET(new Request("https://test/api/v1/projects/p1/graph?view=ai_context"), {
+      params: Promise.resolve({ id: "p1" }),
+    });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.data.disclaimer).toBe("overlay_refs_only_not_contractual_truth");
+    expect(body.data.nodes[0].source).toEqual({ table: "projects", id: "p1" });
+  });
 });
