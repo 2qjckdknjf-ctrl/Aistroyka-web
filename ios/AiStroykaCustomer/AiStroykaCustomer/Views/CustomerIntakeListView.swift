@@ -185,16 +185,22 @@ struct CustomerIntakeListView: View {
         .refreshable { await load() }
     }
 
-    private func load() async {
+    private func load(preservingMessage: Bool = false) async {
         loading = true
-        message = nil
+        if !preservingMessage {
+            message = nil
+        }
         do {
             drafts = try await CustomerAPI.listIntakeDrafts()
         } catch let apiError as APIError {
-            message = apiError.message
+            if !preservingMessage {
+                message = apiError.message
+            }
             drafts = []
         } catch {
-            message = NSLocalizedString("cust_intake_load_error", comment: "")
+            if !preservingMessage {
+                message = NSLocalizedString("cust_intake_load_error", comment: "")
+            }
             drafts = []
         }
         loading = false
@@ -204,8 +210,9 @@ struct CustomerIntakeListView: View {
         message = nil
         do {
             _ = try await CustomerAPI.submitIntakeDraft(id: id)
-            message = NSLocalizedString("cust_intake_submit_ok", comment: "")
-            await load()
+            let confirmation = NSLocalizedString("cust_intake_submit_ok", comment: "")
+            await load(preservingMessage: true)
+            message = confirmation
         } catch let apiError as APIError {
             message = apiError.message
         } catch {
