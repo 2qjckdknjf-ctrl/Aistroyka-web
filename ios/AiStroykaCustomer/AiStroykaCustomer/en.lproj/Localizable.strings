@@ -89,6 +89,8 @@
 "cust_intake_desired_dates_hint" = "Preferred window only — not a contractual schedule.";
 "cust_intake_desired_date_invalid" = "Dates must use YYYY-MM-DD.";
 "cust_intake_desired_range" = "Desired: %@ → %@";
+"cust_intake_bound_project" = "Linked to project: %@";
+"cust_intake_row_project" = "Project %@";
 "cust_intake_create" = "Save draft";
 
 "cust_intake_list_title" = "Your drafts";

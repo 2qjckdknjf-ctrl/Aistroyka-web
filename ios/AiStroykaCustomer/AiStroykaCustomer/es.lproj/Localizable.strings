@@ -89,6 +89,8 @@
 "cust_intake_desired_dates_hint" = "Solo ventana preferida — no es un calendario contractual.";
 "cust_intake_desired_date_invalid" = "Las fechas deben usar AAAA-MM-DD.";
 "cust_intake_desired_range" = "Deseado: %@ → %@";
+"cust_intake_bound_project" = "Vinculado al proyecto: %@";
+"cust_intake_row_project" = "Proyecto %@";
 "cust_intake_create" = "Guardar borrador";
 
 "cust_intake_list_title" = "Sus borradores";

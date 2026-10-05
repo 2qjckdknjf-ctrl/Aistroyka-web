@@ -56,6 +56,19 @@ struct CustomerProjectDetailView: View {
             }
         }
         .navigationTitle(view?.project.name ?? fallbackName)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                NavigationLink {
+                    CustomerIntakeListView(
+                        boundProjectId: projectId,
+                        boundProjectName: view?.project.name ?? fallbackName
+                    )
+                } label: {
+                    Text(NSLocalizedString("cust_intake_nav", comment: ""))
+                }
+                .accessibilityIdentifier("pilot_customer_project_intake_nav")
+            }
+        }
         .task { await load() }
     }
 

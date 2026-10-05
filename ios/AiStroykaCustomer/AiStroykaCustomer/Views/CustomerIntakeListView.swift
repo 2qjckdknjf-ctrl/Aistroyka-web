@@ -2,6 +2,14 @@ import SwiftUI
 import Shared
 
 struct CustomerIntakeListView: View {
+    let boundProjectId: String?
+    let boundProjectName: String?
+
+    init(boundProjectId: String? = nil, boundProjectName: String? = nil) {
+        self.boundProjectId = boundProjectId
+        self.boundProjectName = boundProjectName
+    }
+
     @State private var drafts: [CustomerIntakeDraft] = []
     @State private var message: String?
     @State private var loading = true
@@ -21,6 +29,17 @@ struct CustomerIntakeListView: View {
             VStack(alignment: .leading, spacing: 16) {
                 Text(NSLocalizedString("cust_intake_intro", comment: ""))
                     .foregroundStyle(CustomerTokens.textSecondary)
+                if let boundProjectName, !boundProjectName.isEmpty {
+                    Text(
+                        String(
+                            format: NSLocalizedString("cust_intake_bound_project", comment: ""),
+                            boundProjectName
+                        )
+                    )
+                    .font(.caption)
+                    .foregroundStyle(CustomerTokens.textSecondary)
+                    .accessibilityIdentifier("pilot_customer_intake_bound_project")
+                }
                 if let message {
                     Text(message)
                         .font(.caption)
@@ -123,6 +142,16 @@ struct CustomerIntakeListView: View {
                                     .font(.caption2)
                                     .foregroundStyle(CustomerTokens.textSecondary)
                             }
+                            if let projectId = draft.projectId, !projectId.isEmpty {
+                                Text(
+                                    String(
+                                        format: NSLocalizedString("cust_intake_row_project", comment: ""),
+                                        projectId
+                                    )
+                                )
+                                .font(.caption2)
+                                .foregroundStyle(CustomerTokens.textSecondary)
+                            }
                             if let start = draft.desiredStart, !start.isEmpty {
                                 Text(
                                     String(
@@ -212,7 +241,8 @@ struct CustomerIntakeListView: View {
                 requestedWorkType: optionalTrimmed(requestedWorkType),
                 locationLabel: optionalTrimmed(locationLabel),
                 desiredStart: optionalISODate(desiredStart),
-                desiredEnd: optionalISODate(desiredEnd)
+                desiredEnd: optionalISODate(desiredEnd),
+                projectId: boundProjectId
             )
             title = ""
             description = ""

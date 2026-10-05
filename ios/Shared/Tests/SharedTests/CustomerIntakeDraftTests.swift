@@ -102,4 +102,18 @@ final class CustomerIntakeDraftTests: XCTestCase {
         XCTAssertEqual(drafts[0].desiredStart, "2026-11-01")
         XCTAssertEqual(drafts[0].desiredEnd, "2026-11-30")
     }
+
+    func testDecodesBoundProjectId() throws {
+        let data = Data("""
+        {"data":[{
+          "id":"d6",
+          "title":"Annex",
+          "description":"New room",
+          "status":"draft",
+          "project_id":"proj-9"
+        }]}
+        """.utf8)
+        let drafts = try CustomerIntakeDraft.decodeListJSON(data)
+        XCTAssertEqual(drafts[0].projectId, "proj-9")
+    }
 }
