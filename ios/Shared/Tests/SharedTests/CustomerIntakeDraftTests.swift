@@ -151,6 +151,7 @@ final class CustomerIntakeDraftTests: XCTestCase {
         XCTAssertTrue(json.contains("\"requested_work_type\":null"))
         XCTAssertTrue(json.contains("\"location\":null"))
         XCTAssertTrue(json.contains("\"desired_start\":null"))
+        XCTAssertTrue(json.contains("\"desired_end\":null"))
         XCTAssertFalse(json.contains("project_id"))
         XCTAssertTrue(json.contains("\"media_id\""))
     }
