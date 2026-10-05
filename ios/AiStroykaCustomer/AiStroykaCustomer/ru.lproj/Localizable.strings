@@ -89,6 +89,8 @@
 "cust_intake_desired_dates_hint" = "Только предпочтительное окно — не договорной график.";
 "cust_intake_desired_date_invalid" = "Даты должны быть в формате ГГГГ-ММ-ДД.";
 "cust_intake_desired_range" = "Желаемые сроки: %@ → %@";
+"cust_intake_bound_project" = "Привязано к проекту: %@";
+"cust_intake_row_project" = "Проект %@";
 "cust_intake_create" = "Сохранить черновик";
 
 "cust_intake_list_title" = "Ваши черновики";

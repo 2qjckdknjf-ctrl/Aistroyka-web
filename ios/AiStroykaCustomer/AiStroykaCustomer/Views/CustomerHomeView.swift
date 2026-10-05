@@ -57,7 +57,10 @@ struct CustomerHomeView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     NavigationLink {
-                        CustomerIntakeListView()
+                        CustomerIntakeListView(
+                            boundProjectId: projects.count == 1 ? projects[0].id : nil,
+                            boundProjectName: projects.count == 1 ? projects[0].name : nil
+                        )
                     } label: {
                         Text(NSLocalizedString("cust_intake_nav", comment: ""))
                     }
