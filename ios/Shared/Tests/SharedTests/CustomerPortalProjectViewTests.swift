@@ -46,6 +46,24 @@ final class CustomerPortalProjectViewTests: XCTestCase {
         XCTAssertTrue(CustomerPortalProjectView.formatCustomerAmount(amount: 12000.5, currency: "EUR").contains("12"))
     }
 
+    func testChoiceGate() throws {
+        let data = Data("""
+        {
+          "project": {"id": "p1", "name": "Villa"},
+          "progress": {"tasks_done": 0, "tasks_total": 0},
+          "client_requests": [
+            {"id":"r1","kind":"choice","action_mode":"action_required","status":"open","title":"Pick","choice_options":["A","B"]},
+            {"id":"r2","kind":"choice","action_mode":"action_required","status":"open","title":"Empty","choice_options":[]}
+          ],
+          "capabilities": {"can_respond_to_requests": true}
+        }
+        """.utf8)
+        let view = try CustomerPortalProjectView.decodePortalJSON(data)
+        XCTAssertEqual(view.clientRequests[0].choiceOptions, ["A", "B"])
+        XCTAssertTrue(view.canSubmitChoice(to: view.clientRequests[0]))
+        XCTAssertFalse(view.canSubmitChoice(to: view.clientRequests[1]))
+    }
+
     func testAcknowledgeGate() throws {
         let data = Data("""
         {

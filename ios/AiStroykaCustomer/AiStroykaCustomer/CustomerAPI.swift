@@ -138,4 +138,22 @@ enum CustomerAPI {
             body: Body(acknowledged: true, note: note)
         )
     }
+
+    /// POST portal decisions respond with choice_index
+    static func submitChoice(projectId: String, requestId: String, choiceIndex: Int, note: String? = nil) async throws {
+        struct Body: Encodable {
+            let choiceIndex: Int
+            let note: String?
+            enum CodingKeys: String, CodingKey {
+                case choiceIndex = "choice_index"
+                case note
+            }
+        }
+        struct EmptyData: Decodable {}
+        let _: Envelope<EmptyData> = try await APIClient.shared.request(
+            path: "portal/projects/\(projectId)/decisions/\(requestId)/respond",
+            method: "POST",
+            body: Body(choiceIndex: choiceIndex, note: note)
+        )
+    }
 }

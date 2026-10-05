@@ -78,6 +78,7 @@ public struct CustomerPortalProjectView: Decodable, Sendable {
         public let customerVisibleAmount: Double?
         public let customerVisibleCurrency: String?
         public let dueAt: String?
+        public let choiceOptions: [String]?
 
         /// Open action-required requests that use approve/reject (`approve_or_reject` kind only).
         public var supportsApproveReject: Bool {
@@ -97,6 +98,14 @@ public struct CustomerPortalProjectView: Decodable, Sendable {
         /// Open action-required acknowledge requests.
         public var supportsAcknowledge: Bool {
             status == "open" && actionMode == "action_required" && kind == "acknowledge"
+        }
+
+        /// Open action-required choice requests with options.
+        public var supportsChoice: Bool {
+            status == "open"
+                && actionMode == "action_required"
+                && kind == "choice"
+                && !(choiceOptions ?? []).isEmpty
         }
     }
 
@@ -126,6 +135,10 @@ public struct CustomerPortalProjectView: Decodable, Sendable {
         (capabilities?.canRespondToRequests ?? false) && request.supportsAcknowledge
     }
 
+    public func canSubmitChoice(to request: CustomerFacingRequest) -> Bool {
+        (capabilities?.canRespondToRequests ?? false) && request.supportsChoice
+    }
+
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         project = try c.decode(Project.self, forKey: .project)
@@ -136,6 +149,7 @@ public struct CustomerPortalProjectView: Decodable, Sendable {
         handover = try c.decodeIfPresent(Handover.self, forKey: .handover)
         customerEstimates = try c.decodeIfPresent([CustomerFacingEstimate].self, forKey: .customerEstimates) ?? []
         clientRequests = try c.decodeIfPresent([CustomerFacingRequest].self, forKey: .clientRequests) ?? []
+        // choiceOptions decoded on nested request via convertFromSnakeCase
         capabilities = try c.decodeIfPresent(Capabilities.self, forKey: .capabilities)
     }
 

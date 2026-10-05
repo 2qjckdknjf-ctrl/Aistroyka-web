@@ -56,3 +56,6 @@
 "cust_acknowledge" = "Confirmar";
 "cust_acknowledge_ok" = "Confirmado.";
 "cust_acknowledge_error" = "No se pudo confirmar.";
+
+"cust_choice_ok" = "Opción enviada.";
+"cust_choice_error" = "No se pudo enviar la opción.";

@@ -56,3 +56,6 @@
 "cust_acknowledge" = "Acknowledge";
 "cust_acknowledge_ok" = "Acknowledged.";
 "cust_acknowledge_error" = "Could not acknowledge.";
+
+"cust_choice_ok" = "Choice submitted.";
+"cust_choice_error" = "Could not submit choice.";

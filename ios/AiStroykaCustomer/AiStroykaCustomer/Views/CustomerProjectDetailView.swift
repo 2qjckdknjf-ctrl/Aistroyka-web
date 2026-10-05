@@ -176,6 +176,15 @@ struct CustomerProjectDetailView: View {
                         .disabled(respondingRequestId != nil || respondingEstimateId != nil)
                         .buttonStyle(.bordered)
                         .accessibilityIdentifier("pilot_customer_acknowledge_\(item.id)")
+                    } else if let portal = view, portal.canSubmitChoice(to: item), let options = item.choiceOptions {
+                        ForEach(Array(options.enumerated()), id: \.offset) { index, option in
+                            Button(option) {
+                                Task { await submitChoice(item, index: index) }
+                            }
+                            .disabled(respondingRequestId != nil || respondingEstimateId != nil)
+                            .buttonStyle(.bordered)
+                            .accessibilityIdentifier("pilot_customer_choice_\(item.id)_\(index)")
+                        }
                     }
                 }
             }
@@ -217,6 +226,22 @@ struct CustomerProjectDetailView: View {
         respondingRequestId = nil
     }
 
+
+
+    private func submitChoice(_ item: CustomerPortalProjectView.CustomerFacingRequest, index: Int) async {
+        respondingRequestId = item.id
+        respondMessage = nil
+        do {
+            try await CustomerAPI.submitChoice(projectId: projectId, requestId: item.id, choiceIndex: index)
+            respondMessage = NSLocalizedString("cust_choice_ok", comment: "")
+            await load()
+        } catch let apiError as APIError {
+            respondMessage = apiError.message
+        } catch {
+            respondMessage = NSLocalizedString("cust_choice_error", comment: "")
+        }
+        respondingRequestId = nil
+    }
 
     private func acknowledge(_ item: CustomerPortalProjectView.CustomerFacingRequest) async {
         respondingRequestId = item.id

@@ -56,3 +56,6 @@
 "cust_acknowledge" = "Подтвердить";
 "cust_acknowledge_ok" = "Подтверждено.";
 "cust_acknowledge_error" = "Не удалось подтвердить.";
+
+"cust_choice_ok" = "Выбор отправлен.";
+"cust_choice_error" = "Не удалось отправить выбор.";
