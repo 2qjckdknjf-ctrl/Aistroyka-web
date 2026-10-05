@@ -83,4 +83,23 @@ final class CustomerIntakeDraftTests: XCTestCase {
         let labels = Mirror(reflecting: drafts[0]).children.map { $0.label ?? "" }
         XCTAssertFalse(labels.contains("budgetRange"))
     }
+
+    func testISODateValidationAndDesiredDatesDecode() throws {
+        XCTAssertTrue(CustomerIntakeDraft.isISODate("2026-10-05"))
+        XCTAssertFalse(CustomerIntakeDraft.isISODate("2026-13-01"))
+        XCTAssertFalse(CustomerIntakeDraft.isISODate("05/10/2026"))
+        let data = Data("""
+        {"data":[{
+          "id":"d5",
+          "title":"Garden",
+          "description":"Fence",
+          "status":"draft",
+          "desired_start":"2026-11-01",
+          "desired_end":"2026-11-30"
+        }]}
+        """.utf8)
+        let drafts = try CustomerIntakeDraft.decodeListJSON(data)
+        XCTAssertEqual(drafts[0].desiredStart, "2026-11-01")
+        XCTAssertEqual(drafts[0].desiredEnd, "2026-11-30")
+    }
 }

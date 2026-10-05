@@ -12,6 +12,8 @@ struct CustomerIntakeListView: View {
     @State private var siteContext = ""
     @State private var locationLabel = ""
     @State private var requestedWorkType = ""
+    @State private var desiredStart = ""
+    @State private var desiredEnd = ""
     @State private var creating = false
 
     var body: some View {
@@ -46,6 +48,19 @@ struct CustomerIntakeListView: View {
                     TextField(NSLocalizedString("cust_intake_work_type_placeholder", comment: ""), text: $requestedWorkType)
                         .textFieldStyle(.roundedBorder)
                         .accessibilityIdentifier("pilot_customer_intake_work_type")
+                    TextField(NSLocalizedString("cust_intake_desired_start_placeholder", comment: ""), text: $desiredStart)
+                        .textFieldStyle(.roundedBorder)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .accessibilityIdentifier("pilot_customer_intake_desired_start")
+                    TextField(NSLocalizedString("cust_intake_desired_end_placeholder", comment: ""), text: $desiredEnd)
+                        .textFieldStyle(.roundedBorder)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .accessibilityIdentifier("pilot_customer_intake_desired_end")
+                    Text(NSLocalizedString("cust_intake_desired_dates_hint", comment: ""))
+                        .font(.caption2)
+                        .foregroundStyle(CustomerTokens.textSecondary)
                     TextField(NSLocalizedString("cust_intake_media_url_placeholder", comment: ""), text: $mediaURL)
                         .textFieldStyle(.roundedBorder)
                         .textInputAutocapitalization(.never)
@@ -108,6 +123,17 @@ struct CustomerIntakeListView: View {
                                     .font(.caption2)
                                     .foregroundStyle(CustomerTokens.textSecondary)
                             }
+                            if let start = draft.desiredStart, !start.isEmpty {
+                                Text(
+                                    String(
+                                        format: NSLocalizedString("cust_intake_desired_range", comment: ""),
+                                        start,
+                                        draft.desiredEnd ?? "—"
+                                    )
+                                )
+                                .font(.caption2)
+                                .foregroundStyle(CustomerTokens.textSecondary)
+                            }
                         }
                         .accessibilityIdentifier("pilot_customer_intake_row_\(draft.id)")
                     }
@@ -159,6 +185,23 @@ struct CustomerIntakeListView: View {
             let t = value.trimmingCharacters(in: .whitespacesAndNewlines)
             return t.isEmpty ? nil : t
         }
+        func optionalISODate(_ value: String) -> String? {
+            let t = value.trimmingCharacters(in: .whitespacesAndNewlines)
+            if t.isEmpty { return nil }
+            return CustomerIntakeDraft.isISODate(t) ? t : nil
+        }
+        if !desiredStart.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+           optionalISODate(desiredStart) == nil {
+            message = NSLocalizedString("cust_intake_desired_date_invalid", comment: "")
+            creating = false
+            return
+        }
+        if !desiredEnd.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+           optionalISODate(desiredEnd) == nil {
+            message = NSLocalizedString("cust_intake_desired_date_invalid", comment: "")
+            creating = false
+            return
+        }
         do {
             _ = try await CustomerAPI.createIntakeDraft(
                 title: title.trimmingCharacters(in: .whitespacesAndNewlines),
@@ -167,7 +210,9 @@ struct CustomerIntakeListView: View {
                 questions: questions,
                 siteContext: optionalTrimmed(siteContext),
                 requestedWorkType: optionalTrimmed(requestedWorkType),
-                locationLabel: optionalTrimmed(locationLabel)
+                locationLabel: optionalTrimmed(locationLabel),
+                desiredStart: optionalISODate(desiredStart),
+                desiredEnd: optionalISODate(desiredEnd)
             )
             title = ""
             description = ""
@@ -176,6 +221,8 @@ struct CustomerIntakeListView: View {
             siteContext = ""
             locationLabel = ""
             requestedWorkType = ""
+            desiredStart = ""
+            desiredEnd = ""
             message = NSLocalizedString("cust_intake_create_ok", comment: "")
             await load()
         } catch let apiError as APIError {

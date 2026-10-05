@@ -54,6 +54,8 @@ public struct CustomerIntakeDraft: Decodable, Identifiable, Sendable {
     public let siteContext: String?
     public let requestedWorkType: String?
     public let locationLabel: String?
+    public let desiredStart: String?
+    public let desiredEnd: String?
 
     public init(
         id: String,
@@ -66,7 +68,9 @@ public struct CustomerIntakeDraft: Decodable, Identifiable, Sendable {
         questions: [String] = [],
         siteContext: String? = nil,
         requestedWorkType: String? = nil,
-        locationLabel: String? = nil
+        locationLabel: String? = nil,
+        desiredStart: String? = nil,
+        desiredEnd: String? = nil
     ) {
         self.id = id
         self.title = title
@@ -79,6 +83,8 @@ public struct CustomerIntakeDraft: Decodable, Identifiable, Sendable {
         self.siteContext = siteContext
         self.requestedWorkType = requestedWorkType
         self.locationLabel = locationLabel
+        self.desiredStart = desiredStart
+        self.desiredEnd = desiredEnd
     }
 
     public init(from decoder: Decoder) throws {
@@ -98,6 +104,8 @@ public struct CustomerIntakeDraft: Decodable, Identifiable, Sendable {
         } else {
             locationLabel = nil
         }
+        desiredStart = try c.decodeIfPresent(String.self, forKey: .desiredStart)
+        desiredEnd = try c.decodeIfPresent(String.self, forKey: .desiredEnd)
     }
 
     private struct LocationDTO: Decodable {
@@ -106,7 +114,31 @@ public struct CustomerIntakeDraft: Decodable, Identifiable, Sendable {
 
     private enum CodingKeys: String, CodingKey {
         case id, title, description, status, projectId, updatedAt, mediaRefs, questions
-        case siteContext, requestedWorkType, location
+        case siteContext, requestedWorkType, location, desiredStart, desiredEnd
+    }
+
+    /// Validates optional YYYY-MM-DD desired date fields for portal intake create.
+    public static func isISODate(_ value: String) -> Bool {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.range(of: #"^\d{4}-\d{2}-\d{2}$"#, options: .regularExpression) != nil else {
+            return false
+        }
+        let parts = trimmed.split(separator: "-").compactMap { Int($0) }
+        guard parts.count == 3 else { return false }
+        let year = parts[0]
+        let month = parts[1]
+        let day = parts[2]
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(secondsFromGMT: 0)!
+        var comps = DateComponents()
+        comps.calendar = calendar
+        comps.timeZone = calendar.timeZone
+        comps.year = year
+        comps.month = month
+        comps.day = day
+        guard let date = calendar.date(from: comps) else { return false }
+        let back = calendar.dateComponents([.year, .month, .day], from: date)
+        return back.year == year && back.month == month && back.day == day
     }
 
     public static func decodeListJSON(_ data: Data) throws -> [CustomerIntakeDraft] {
