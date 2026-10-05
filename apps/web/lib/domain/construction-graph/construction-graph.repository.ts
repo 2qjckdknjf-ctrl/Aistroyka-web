@@ -253,6 +253,7 @@ export async function persistConstructionGraphOverlay(
   }>;
   const key = (table: string, id: string) => `${table}:${id}`;
   const idBySource = new Map(persisted.map((r) => [key(r.source_table, r.source_id), r.id]));
+  const keepNodeIds = persisted.map((r) => r.id);
 
   const del = await supabase
     .from("construction_graph_edges")
@@ -261,6 +262,20 @@ export async function persistConstructionGraphOverlay(
     .eq("project_id", graph.project_id);
   if (del.error && !overlayMissing(del.error.message)) {
     return { persisted: false, reason: del.error.message };
+  }
+
+  // Drop overlay nodes whose source refs are no longer in the rebuilt graph.
+  // Edges are cleared first so FK references to stale nodes cannot block prune.
+  if (keepNodeIds.length > 0) {
+    const prune = await supabase
+      .from("construction_graph_nodes")
+      .delete()
+      .eq("tenant_id", graph.tenant_id)
+      .eq("project_id", graph.project_id)
+      .not("id", "in", `(${keepNodeIds.join(",")})`);
+    if (prune.error && !overlayMissing(prune.error.message)) {
+      return { persisted: false, reason: prune.error.message };
+    }
   }
 
   const edgeRows = graph.edges
