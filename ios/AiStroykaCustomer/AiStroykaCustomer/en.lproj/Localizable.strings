@@ -70,6 +70,10 @@
 
 "cust_intake_description_placeholder" = "Describe the work";
 
+"cust_intake_media_url_placeholder" = "Optional https photo URL";
+"cust_intake_media_hint" = "Evidence link only — not a contractual quote.";
+"cust_intake_media_url_invalid" = "Photo URL must be https.";
+"cust_intake_media_count" = "%d evidence link(s)";
 "cust_intake_create" = "Save draft";
 
 "cust_intake_list_title" = "Your drafts";

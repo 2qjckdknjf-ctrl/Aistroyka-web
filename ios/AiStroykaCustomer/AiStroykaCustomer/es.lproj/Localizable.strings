@@ -70,6 +70,10 @@
 
 "cust_intake_description_placeholder" = "Describa el trabajo";
 
+"cust_intake_media_url_placeholder" = "URL https de foto (opcional)";
+"cust_intake_media_hint" = "Solo enlace de evidencia — no es una cotización contractual.";
+"cust_intake_media_url_invalid" = "La URL de la foto debe ser https.";
+"cust_intake_media_count" = "%d enlace(s) de evidencia";
 "cust_intake_create" = "Guardar borrador";
 
 "cust_intake_list_title" = "Sus borradores";
