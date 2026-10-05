@@ -189,8 +189,9 @@ struct CustomerIntakeListView: View {
         message = nil
         do {
             _ = try await CustomerAPI.withdrawIntakeDraft(id: id)
-            message = NSLocalizedString("cust_intake_withdraw_ok", comment: "")
-            await load()
+            let confirmation = NSLocalizedString("cust_intake_withdraw_ok", comment: "")
+            await load(preservingMessage: true)
+            message = confirmation
         } catch let apiError as APIError {
             message = apiError.message
         } catch {
@@ -198,16 +199,22 @@ struct CustomerIntakeListView: View {
         }
     }
 
-    private func load() async {
+    private func load(preservingMessage: Bool = false) async {
         loading = true
-        message = nil
+        if !preservingMessage {
+            message = nil
+        }
         do {
             drafts = try await CustomerAPI.listIntakeDrafts()
         } catch let apiError as APIError {
-            message = apiError.message
+            if !preservingMessage {
+                message = apiError.message
+            }
             drafts = []
         } catch {
-            message = NSLocalizedString("cust_intake_load_error", comment: "")
+            if !preservingMessage {
+                message = NSLocalizedString("cust_intake_load_error", comment: "")
+            }
             drafts = []
         }
         loading = false
