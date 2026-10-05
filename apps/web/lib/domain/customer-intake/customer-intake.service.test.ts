@@ -4,6 +4,7 @@ import {
   draftFromStorageRow,
   parseCreateCustomerIntakeInput,
   parseMediaRefs,
+  submitCustomerIntakeDraft,
   updateCustomerIntakeDraft,
 } from "./customer-intake.service";
 
@@ -604,5 +605,38 @@ describe("draftFromStorageRow", () => {
         status: "draft",
       })
     ).toBeNull();
+  });
+});
+
+describe("submitCustomerIntakeDraft", () => {
+  const row = {
+    id: "d1",
+    tenant_id: "t1",
+    project_id: null,
+    title: "Kitchen",
+    description: "Need remodel",
+    site_context: null,
+    location: { precision: "city" },
+    media_refs: [],
+    questions: [],
+    created_at: "2026-10-05T00:00:00Z",
+    updated_at: "2026-10-05T00:00:00Z",
+  };
+
+  it("returns the same row when already submitted", async () => {
+    const maybeSingle = vi.fn().mockResolvedValue({ data: { ...row, status: "submitted" }, error: null });
+    const eq = vi.fn(() => ({ eq, maybeSingle, select: () => ({ maybeSingle, eq }) }));
+    const supabase = { from: vi.fn(() => ({ select: () => ({ eq }) })) };
+    const r = await submitCustomerIntakeDraft(supabase as never, { tenantId: "t1", userId: "u" } as never, "d1");
+    expect(r.error).toBe("");
+    expect(r.data?.status).toBe("submitted");
+  });
+
+  it("rejects withdrawn drafts", async () => {
+    const maybeSingle = vi.fn().mockResolvedValue({ data: { ...row, status: "withdrawn" }, error: null });
+    const eq = vi.fn(() => ({ eq, maybeSingle, select: () => ({ maybeSingle, eq }) }));
+    const supabase = { from: vi.fn(() => ({ select: () => ({ eq }) })) };
+    const r = await submitCustomerIntakeDraft(supabase as never, { tenantId: "t1", userId: "u" } as never, "d1");
+    expect(r.error).toMatch(/Only draft intake/);
   });
 });
