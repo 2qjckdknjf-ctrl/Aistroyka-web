@@ -102,3 +102,6 @@
 "cust_intake_create_ok" = "Черновик сохранён.";
 
 "cust_intake_create_error" = "Не удалось сохранить черновик.";
+"cust_intake_withdraw" = "Отклонить черновик";
+"cust_intake_withdraw_ok" = "Черновик отклонён. Это не договор.";
+"cust_intake_withdraw_error" = "Не удалось отклонить черновик.";

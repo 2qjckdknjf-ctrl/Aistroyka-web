@@ -102,3 +102,6 @@
 "cust_intake_create_ok" = "Bozza salvata.";
 
 "cust_intake_create_error" = "Impossibile salvare la bozza.";
+"cust_intake_withdraw" = "Rifiuta bozza";
+"cust_intake_withdraw_ok" = "Bozza rifiutata. Questo non è un contratto.";
+"cust_intake_withdraw_error" = "Impossibile rifiutare la bozza.";

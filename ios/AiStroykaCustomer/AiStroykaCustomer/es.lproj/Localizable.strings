@@ -102,3 +102,6 @@
 "cust_intake_create_ok" = "Borrador guardado.";
 
 "cust_intake_create_error" = "No se pudo guardar el borrador.";
+"cust_intake_withdraw" = "Rechazar borrador";
+"cust_intake_withdraw_ok" = "Borrador rechazado. Esto no es un contrato.";
+"cust_intake_withdraw_error" = "No se pudo rechazar el borrador.";

@@ -163,6 +163,13 @@ struct CustomerIntakeListView: View {
                                 .font(.caption2)
                                 .foregroundStyle(CustomerTokens.textSecondary)
                             }
+                            if draft.status == "draft" {
+                                Button(NSLocalizedString("cust_intake_withdraw", comment: "")) {
+                                    Task { await withdrawDraft(draft.id) }
+                                }
+                                .buttonStyle(.bordered)
+                                .accessibilityIdentifier("pilot_customer_intake_withdraw_\(draft.id)")
+                            }
                         }
                         .accessibilityIdentifier("pilot_customer_intake_row_\(draft.id)")
                     }
@@ -176,6 +183,19 @@ struct CustomerIntakeListView: View {
         .accessibilityIdentifier("pilot_customer_intake")
         .task { await load() }
         .refreshable { await load() }
+    }
+
+    private func withdrawDraft(_ id: String) async {
+        message = nil
+        do {
+            _ = try await CustomerAPI.withdrawIntakeDraft(id: id)
+            message = NSLocalizedString("cust_intake_withdraw_ok", comment: "")
+            await load()
+        } catch let apiError as APIError {
+            message = apiError.message
+        } catch {
+            message = NSLocalizedString("cust_intake_withdraw_error", comment: "")
+        }
     }
 
     private func load() async {
