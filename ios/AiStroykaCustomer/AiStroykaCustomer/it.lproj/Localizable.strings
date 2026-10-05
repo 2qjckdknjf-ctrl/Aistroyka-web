@@ -104,3 +104,6 @@
 "cust_intake_create_ok" = "Bozza salvata.";
 
 "cust_intake_create_error" = "Impossibile salvare la bozza.";
+"cust_intake_submit" = "Invia in revisione";
+"cust_intake_submit_ok" = "Bozza inviata. Non è un contratto.";
+"cust_intake_submit_error" = "Impossibile inviare la bozza.";

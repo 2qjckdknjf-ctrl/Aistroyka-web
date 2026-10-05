@@ -135,62 +135,71 @@ struct CustomerIntakeListView: View {
                             .foregroundStyle(CustomerTokens.textSecondary)
                     }
                     ForEach(visibleDrafts.prefix(20)) { draft in
-                        Button {
-                            beginEdit(draft)
-                        } label: {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(draft.title).foregroundStyle(CustomerTokens.textPrimary)
-                            Text(draft.status).font(.caption).foregroundStyle(CustomerTokens.textSecondary)
-                            if !draft.mediaRefs.isEmpty {
-                                Text(
-                                    String(
-                                        format: NSLocalizedString("cust_intake_media_count", comment: ""),
-                                        draft.mediaRefs.count
-                                    )
-                                )
-                                .font(.caption2)
-                                .foregroundStyle(CustomerTokens.textSecondary)
+                        VStack(alignment: .leading, spacing: 8) {
+                            Button {
+                                beginEdit(draft)
+                            } label: {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(draft.title).foregroundStyle(CustomerTokens.textPrimary)
+                                    Text(draft.status).font(.caption).foregroundStyle(CustomerTokens.textSecondary)
+                                    if !draft.mediaRefs.isEmpty {
+                                        Text(
+                                            String(
+                                                format: NSLocalizedString("cust_intake_media_count", comment: ""),
+                                                draft.mediaRefs.count
+                                            )
+                                        )
+                                        .font(.caption2)
+                                        .foregroundStyle(CustomerTokens.textSecondary)
+                                    }
+                                    if !draft.questions.isEmpty {
+                                        Text(
+                                            String(
+                                                format: NSLocalizedString("cust_intake_questions_count", comment: ""),
+                                                draft.questions.count
+                                            )
+                                        )
+                                        .font(.caption2)
+                                        .foregroundStyle(CustomerTokens.textSecondary)
+                                    }
+                                    if let label = draft.locationLabel, !label.isEmpty {
+                                        Text(label)
+                                            .font(.caption2)
+                                            .foregroundStyle(CustomerTokens.textSecondary)
+                                    }
+                                    if let projectId = draft.projectId, !projectId.isEmpty {
+                                        Text(
+                                            String(
+                                                format: NSLocalizedString("cust_intake_row_project", comment: ""),
+                                                projectId
+                                            )
+                                        )
+                                        .font(.caption2)
+                                        .foregroundStyle(CustomerTokens.textSecondary)
+                                    }
+                                    if let start = draft.desiredStart, !start.isEmpty {
+                                        Text(
+                                            String(
+                                                format: NSLocalizedString("cust_intake_desired_range", comment: ""),
+                                                start,
+                                                draft.desiredEnd ?? "—"
+                                            )
+                                        )
+                                        .font(.caption2)
+                                        .foregroundStyle(CustomerTokens.textSecondary)
+                                    }
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
                             }
-                            if !draft.questions.isEmpty {
-                                Text(
-                                    String(
-                                        format: NSLocalizedString("cust_intake_questions_count", comment: ""),
-                                        draft.questions.count
-                                    )
-                                )
-                                .font(.caption2)
-                                .foregroundStyle(CustomerTokens.textSecondary)
-                            }
-                            if let label = draft.locationLabel, !label.isEmpty {
-                                Text(label)
-                                    .font(.caption2)
-                                    .foregroundStyle(CustomerTokens.textSecondary)
-                            }
-                            if let projectId = draft.projectId, !projectId.isEmpty {
-                                Text(
-                                    String(
-                                        format: NSLocalizedString("cust_intake_row_project", comment: ""),
-                                        projectId
-                                    )
-                                )
-                                .font(.caption2)
-                                .foregroundStyle(CustomerTokens.textSecondary)
-                            }
-                            if let start = draft.desiredStart, !start.isEmpty {
-                                Text(
-                                    String(
-                                        format: NSLocalizedString("cust_intake_desired_range", comment: ""),
-                                        start,
-                                        draft.desiredEnd ?? "—"
-                                    )
-                                )
-                                .font(.caption2)
-                                .foregroundStyle(CustomerTokens.textSecondary)
+                            .buttonStyle(.plain)
+                            if draft.status == "draft" {
+                                Button(NSLocalizedString("cust_intake_submit", comment: "")) {
+                                    Task { await submitDraft(draft.id) }
+                                }
+                                .buttonStyle(.bordered)
+                                .accessibilityIdentifier("pilot_customer_intake_submit_\(draft.id)")
                             }
                         }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-                        .buttonStyle(.plain)
                         .accessibilityIdentifier("pilot_customer_intake_row_\(draft.id)")
                     }
                 }
@@ -205,19 +214,39 @@ struct CustomerIntakeListView: View {
         .refreshable { await load() }
     }
 
-    private func load() async {
+    private func load(preservingMessage: Bool = false) async {
         loading = true
-        message = nil
+        if !preservingMessage {
+            message = nil
+        }
         do {
             drafts = try await CustomerAPI.listIntakeDrafts()
         } catch let apiError as APIError {
-            message = apiError.message
+            if !preservingMessage {
+                message = apiError.message
+            }
             drafts = []
         } catch {
-            message = NSLocalizedString("cust_intake_load_error", comment: "")
+            if !preservingMessage {
+                message = NSLocalizedString("cust_intake_load_error", comment: "")
+            }
             drafts = []
         }
         loading = false
+    }
+
+    private func submitDraft(_ id: String) async {
+        message = nil
+        do {
+            _ = try await CustomerAPI.submitIntakeDraft(id: id)
+            let confirmation = NSLocalizedString("cust_intake_submit_ok", comment: "")
+            await load(preservingMessage: true)
+            message = confirmation
+        } catch let apiError as APIError {
+            message = apiError.message
+        } catch {
+            message = NSLocalizedString("cust_intake_submit_error", comment: "")
+        }
     }
 
     private func beginEdit(_ draft: CustomerIntakeDraft) {
