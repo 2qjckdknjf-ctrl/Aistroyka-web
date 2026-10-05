@@ -116,4 +116,43 @@ final class CustomerIntakeDraftTests: XCTestCase {
         let drafts = try CustomerIntakeDraft.decodeListJSON(data)
         XCTAssertEqual(drafts[0].projectId, "proj-9")
     }
+
+    func testMergeEditedMediaURLKeepsExtraAndMediaIdRefs() {
+        let existing = [
+            CustomerIntakeMediaRef(kind: "video", url: "https://cdn.example/a.mp4", mediaId: "m1"),
+            CustomerIntakeMediaRef(kind: "document", mediaId: "m2"),
+        ]
+        let same = CustomerIntakeDraft.mergeEditedMediaURL(existing: existing, editedURL: "https://cdn.example/a.mp4")
+        XCTAssertEqual(same, existing)
+
+        let updated = CustomerIntakeDraft.mergeEditedMediaURL(existing: existing, editedURL: "https://cdn.example/b.mp4")
+        XCTAssertEqual(updated[0].kind, "video")
+        XCTAssertEqual(updated[0].url, "https://cdn.example/b.mp4")
+        XCTAssertEqual(updated[0].mediaId, "m1")
+        XCTAssertEqual(updated[1].mediaId, "m2")
+    }
+
+    func testPatchEncodesClearedOptionalsAsNullAndOmitsUnchangedProject() throws {
+        let patch = CustomerIntakeDraftPatch(
+            title: "Kitchen",
+            description: "Need remodel",
+            mediaRefs: [CustomerIntakeMediaRef(kind: "image", mediaId: "m1")],
+            questions: ["When?"],
+            siteContext: nil,
+            requestedWorkType: nil,
+            locationLabel: nil,
+            desiredStart: nil,
+            desiredEnd: nil,
+            projectId: nil
+        )
+        let data = try JSONEncoder().encode(patch)
+        let json = String(decoding: data, as: UTF8.self)
+        XCTAssertTrue(json.contains("\"site_context\":null"))
+        XCTAssertTrue(json.contains("\"requested_work_type\":null"))
+        XCTAssertTrue(json.contains("\"location\":null"))
+        XCTAssertTrue(json.contains("\"desired_start\":null"))
+        XCTAssertTrue(json.contains("\"desired_end\":null"))
+        XCTAssertFalse(json.contains("project_id"))
+        XCTAssertTrue(json.contains("\"media_id\""))
+    }
 }

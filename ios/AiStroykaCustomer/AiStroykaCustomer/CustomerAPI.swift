@@ -224,4 +224,36 @@ enum CustomerAPI {
         )
         return env.data
     }
+
+    static func updateIntakeDraft(
+        id: String,
+        title: String,
+        description: String,
+        mediaRefs: [CustomerIntakeMediaRef],
+        questions: [String] = [],
+        siteContext: String? = nil,
+        requestedWorkType: String? = nil,
+        locationLabel: String? = nil,
+        desiredStart: String? = nil,
+        desiredEnd: String? = nil,
+        projectId: String? = nil
+    ) async throws -> CustomerIntakeDraft {
+        let env: Envelope<CustomerIntakeDraft> = try await APIClient.shared.request(
+            path: "portal/intake/\(id)",
+            method: "PATCH",
+            body: CustomerIntakeDraftPatch(
+                title: title,
+                description: description,
+                mediaRefs: mediaRefs,
+                questions: questions,
+                siteContext: siteContext,
+                requestedWorkType: requestedWorkType,
+                locationLabel: locationLabel,
+                desiredStart: desiredStart,
+                desiredEnd: desiredEnd,
+                projectId: projectId
+            )
+        )
+        return env.data
+    }
 }

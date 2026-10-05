@@ -23,6 +23,14 @@ struct CustomerIntakeListView: View {
     @State private var desiredStart = ""
     @State private var desiredEnd = ""
     @State private var creating = false
+    @State private var editingDraftId: String?
+    @State private var editingProjectId: String?
+    @State private var editingMediaRefs: [CustomerIntakeMediaRef] = []
+
+    private var visibleDrafts: [CustomerIntakeDraft] {
+        guard let boundProjectId, !boundProjectId.isEmpty else { return drafts }
+        return drafts.filter { $0.projectId == boundProjectId }
+    }
 
     var body: some View {
         ScrollView {
@@ -96,12 +104,25 @@ struct CustomerIntakeListView: View {
                     Text(NSLocalizedString("cust_intake_questions_hint", comment: ""))
                         .font(.caption2)
                         .foregroundStyle(CustomerTokens.textSecondary)
-                    Button(NSLocalizedString("cust_intake_create", comment: "")) {
-                        Task { await createDraft() }
+                    Button(
+                        NSLocalizedString(
+                            editingDraftId == nil ? "cust_intake_create" : "cust_intake_update",
+                            comment: ""
+                        )
+                    ) {
+                        Task { await saveDraft() }
                     }
                     .disabled(creating || title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     .buttonStyle(.borderedProminent)
-                    .accessibilityIdentifier("pilot_customer_intake_create")
+                    .accessibilityIdentifier(
+                        editingDraftId == nil ? "pilot_customer_intake_create" : "pilot_customer_intake_update"
+                    )
+                    if editingDraftId != nil {
+                        Button(NSLocalizedString("cust_intake_cancel_edit", comment: "")) {
+                            clearForm()
+                        }
+                        .accessibilityIdentifier("pilot_customer_intake_cancel_edit")
+                    }
                 }
                 VStack(alignment: .leading, spacing: 8) {
                     Text(NSLocalizedString("cust_intake_list_title", comment: ""))
@@ -109,11 +130,14 @@ struct CustomerIntakeListView: View {
                         .foregroundStyle(CustomerTokens.textPrimary)
                     if loading {
                         ProgressView()
-                    } else if drafts.isEmpty {
+                    } else if visibleDrafts.isEmpty {
                         Text(NSLocalizedString("cust_intake_empty", comment: ""))
                             .foregroundStyle(CustomerTokens.textSecondary)
                     }
-                    ForEach(drafts.prefix(20)) { draft in
+                    ForEach(visibleDrafts.prefix(20)) { draft in
+                        Button {
+                            beginEdit(draft)
+                        } label: {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(draft.title).foregroundStyle(CustomerTokens.textPrimary)
                             Text(draft.status).font(.caption).foregroundStyle(CustomerTokens.textSecondary)
@@ -164,6 +188,9 @@ struct CustomerIntakeListView: View {
                                 .foregroundStyle(CustomerTokens.textSecondary)
                             }
                         }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .buttonStyle(.plain)
                         .accessibilityIdentifier("pilot_customer_intake_row_\(draft.id)")
                     }
                 }
@@ -193,19 +220,51 @@ struct CustomerIntakeListView: View {
         loading = false
     }
 
-    private func createDraft() async {
+    private func beginEdit(_ draft: CustomerIntakeDraft) {
+        editingDraftId = draft.id
+        editingProjectId = draft.projectId
+        title = draft.title
+        description = draft.description
+        siteContext = draft.siteContext ?? ""
+        locationLabel = draft.locationLabel ?? ""
+        requestedWorkType = draft.requestedWorkType ?? ""
+        desiredStart = draft.desiredStart ?? ""
+        desiredEnd = draft.desiredEnd ?? ""
+        questionsText = draft.questions.joined(separator: "\n")
+        editingMediaRefs = draft.mediaRefs
+        mediaURL = draft.mediaRefs.first?.url ?? ""
+        message = nil
+    }
+
+    private func clearForm() {
+        editingDraftId = nil
+        editingProjectId = nil
+        editingMediaRefs = []
+        title = ""
+        description = ""
+        mediaURL = ""
+        questionsText = ""
+        siteContext = ""
+        locationLabel = ""
+        requestedWorkType = ""
+        desiredStart = ""
+        desiredEnd = ""
+    }
+
+    private func saveDraft() async {
         creating = true
         message = nil
         let trimmedURL = mediaURL.trimmingCharacters(in: .whitespacesAndNewlines)
-        var refs: [CustomerIntakeMediaRef] = []
         if !trimmedURL.isEmpty {
             guard let parsed = URL(string: trimmedURL), parsed.scheme?.lowercased() == "https", parsed.host != nil else {
                 message = NSLocalizedString("cust_intake_media_url_invalid", comment: "")
                 creating = false
                 return
             }
-            refs = [CustomerIntakeMediaRef(kind: "image", url: trimmedURL)]
         }
+        let refs = editingDraftId == nil
+            ? (trimmedURL.isEmpty ? [] : [CustomerIntakeMediaRef(kind: "image", url: trimmedURL)])
+            : CustomerIntakeDraft.mergeEditedMediaURL(existing: editingMediaRefs, editedURL: trimmedURL)
         let questions = questionsText
             .split(whereSeparator: \.isNewline)
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
@@ -232,27 +291,35 @@ struct CustomerIntakeListView: View {
             return
         }
         do {
-            _ = try await CustomerAPI.createIntakeDraft(
-                title: title.trimmingCharacters(in: .whitespacesAndNewlines),
-                description: description.trimmingCharacters(in: .whitespacesAndNewlines),
-                mediaRefs: refs,
-                questions: questions,
-                siteContext: optionalTrimmed(siteContext),
-                requestedWorkType: optionalTrimmed(requestedWorkType),
-                locationLabel: optionalTrimmed(locationLabel),
-                desiredStart: optionalISODate(desiredStart),
-                desiredEnd: optionalISODate(desiredEnd),
-                projectId: boundProjectId
-            )
-            title = ""
-            description = ""
-            mediaURL = ""
-            questionsText = ""
-            siteContext = ""
-            locationLabel = ""
-            requestedWorkType = ""
-            desiredStart = ""
-            desiredEnd = ""
+            if let draftId = editingDraftId {
+                _ = try await CustomerAPI.updateIntakeDraft(
+                    id: draftId,
+                    title: title.trimmingCharacters(in: .whitespacesAndNewlines),
+                    description: description.trimmingCharacters(in: .whitespacesAndNewlines),
+                    mediaRefs: refs,
+                    questions: questions,
+                    siteContext: optionalTrimmed(siteContext),
+                    requestedWorkType: optionalTrimmed(requestedWorkType),
+                    locationLabel: optionalTrimmed(locationLabel),
+                    desiredStart: optionalISODate(desiredStart),
+                    desiredEnd: optionalISODate(desiredEnd),
+                    projectId: editingProjectId
+                )
+            } else {
+                _ = try await CustomerAPI.createIntakeDraft(
+                    title: title.trimmingCharacters(in: .whitespacesAndNewlines),
+                    description: description.trimmingCharacters(in: .whitespacesAndNewlines),
+                    mediaRefs: refs,
+                    questions: questions,
+                    siteContext: optionalTrimmed(siteContext),
+                    requestedWorkType: optionalTrimmed(requestedWorkType),
+                    locationLabel: optionalTrimmed(locationLabel),
+                    desiredStart: optionalISODate(desiredStart),
+                    desiredEnd: optionalISODate(desiredEnd),
+                    projectId: boundProjectId
+                )
+            }
+            clearForm()
             message = NSLocalizedString("cust_intake_create_ok", comment: "")
             await load()
         } catch let apiError as APIError {

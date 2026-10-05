@@ -147,4 +147,115 @@ public struct CustomerIntakeDraft: Decodable, Identifiable, Sendable {
         decoder.keyDecodingStrategy = .convertFromSnakeCase
         return try decoder.decode(Envelope.self, from: data).data
     }
+
+    /// Overlay a single optional https URL onto stored refs without dropping media_id-only or extra items.
+    public static func mergeEditedMediaURL(
+        existing: [CustomerIntakeMediaRef],
+        editedURL: String
+    ) -> [CustomerIntakeMediaRef] {
+        let trimmed = editedURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        let originalFirstURL = existing.first?.url ?? ""
+        guard trimmed != originalFirstURL else { return existing }
+        var refs = existing
+        if trimmed.isEmpty {
+            guard !refs.isEmpty else { return refs }
+            let first = refs[0]
+            if first.mediaId == nil {
+                refs.removeFirst()
+            } else {
+                refs[0] = CustomerIntakeMediaRef(kind: first.kind, url: nil, mediaId: first.mediaId)
+            }
+            return refs
+        }
+        if refs.isEmpty {
+            return [CustomerIntakeMediaRef(kind: "image", url: trimmed)]
+        }
+        let first = refs[0]
+        refs[0] = CustomerIntakeMediaRef(kind: first.kind, url: trimmed, mediaId: first.mediaId)
+        return refs
+    }
+}
+
+/// PATCH /api/v1/portal/intake/:id body. Nil optionals encode as JSON null so clears persist.
+public struct CustomerIntakeDraftPatch: Encodable, Sendable {
+    public var title: String
+    public var description: String
+    public var mediaRefs: [CustomerIntakeMediaRef]
+    public var questions: [String]
+    public var siteContext: String?
+    public var requestedWorkType: String?
+    public var locationLabel: String?
+    public var desiredStart: String?
+    public var desiredEnd: String?
+    public var projectId: String?
+
+    public init(
+        title: String,
+        description: String,
+        mediaRefs: [CustomerIntakeMediaRef],
+        questions: [String],
+        siteContext: String?,
+        requestedWorkType: String?,
+        locationLabel: String?,
+        desiredStart: String?,
+        desiredEnd: String?,
+        projectId: String?
+    ) {
+        self.title = title
+        self.description = description
+        self.mediaRefs = mediaRefs
+        self.questions = questions
+        self.siteContext = siteContext
+        self.requestedWorkType = requestedWorkType
+        self.locationLabel = locationLabel
+        self.desiredStart = desiredStart
+        self.desiredEnd = desiredEnd
+        self.projectId = projectId
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case title, description, questions, location
+        case mediaRefs = "media_refs"
+        case siteContext = "site_context"
+        case requestedWorkType = "requested_work_type"
+        case desiredStart = "desired_start"
+        case desiredEnd = "desired_end"
+        case projectId = "project_id"
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(title, forKey: .title)
+        try c.encode(description, forKey: .description)
+        try c.encode(mediaRefs, forKey: .mediaRefs)
+        try c.encode(questions, forKey: .questions)
+        if let siteContext {
+            try c.encode(siteContext, forKey: .siteContext)
+        } else {
+            try c.encodeNil(forKey: .siteContext)
+        }
+        if let requestedWorkType {
+            try c.encode(requestedWorkType, forKey: .requestedWorkType)
+        } else {
+            try c.encodeNil(forKey: .requestedWorkType)
+        }
+        if let locationLabel, !locationLabel.isEmpty {
+            try c.encode(["precision": "city", "label": locationLabel], forKey: .location)
+        } else {
+            try c.encodeNil(forKey: .location)
+        }
+        if let desiredStart {
+            try c.encode(desiredStart, forKey: .desiredStart)
+        } else {
+            try c.encodeNil(forKey: .desiredStart)
+        }
+        if let desiredEnd {
+            try c.encode(desiredEnd, forKey: .desiredEnd)
+        } else {
+            try c.encodeNil(forKey: .desiredEnd)
+        }
+        if let projectId {
+            try c.encode(projectId, forKey: .projectId)
+        }
+    }
 }
