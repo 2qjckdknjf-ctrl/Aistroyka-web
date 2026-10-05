@@ -156,4 +156,22 @@ enum CustomerAPI {
             body: Body(choiceIndex: choiceIndex, note: note)
         )
     }
+
+    static func listIntakeDrafts() async throws -> [CustomerIntakeDraft] {
+        let env: Envelope<[CustomerIntakeDraft]> = try await APIClient.shared.request(path: "portal/intake")
+        return env.data
+    }
+
+    static func createIntakeDraft(title: String, description: String) async throws -> CustomerIntakeDraft {
+        struct Body: Encodable {
+            let title: String
+            let description: String
+        }
+        let env: Envelope<CustomerIntakeDraft> = try await APIClient.shared.request(
+            path: "portal/intake",
+            method: "POST",
+            body: Body(title: title, description: description)
+        )
+        return env.data
+    }
 }
