@@ -25,6 +25,12 @@ struct CustomerIntakeListView: View {
     @State private var creating = false
     @State private var editingDraftId: String?
     @State private var editingProjectId: String?
+    @State private var editingMediaRefs: [CustomerIntakeMediaRef] = []
+
+    private var visibleDrafts: [CustomerIntakeDraft] {
+        guard let boundProjectId, !boundProjectId.isEmpty else { return drafts }
+        return drafts.filter { $0.projectId == boundProjectId }
+    }
 
     var body: some View {
         ScrollView {
@@ -124,11 +130,11 @@ struct CustomerIntakeListView: View {
                         .foregroundStyle(CustomerTokens.textPrimary)
                     if loading {
                         ProgressView()
-                    } else if drafts.isEmpty {
+                    } else if visibleDrafts.isEmpty {
                         Text(NSLocalizedString("cust_intake_empty", comment: ""))
                             .foregroundStyle(CustomerTokens.textSecondary)
                     }
-                    ForEach(drafts.prefix(20)) { draft in
+                    ForEach(visibleDrafts.prefix(20)) { draft in
                         Button {
                             beginEdit(draft)
                         } label: {
@@ -225,6 +231,7 @@ struct CustomerIntakeListView: View {
         desiredStart = draft.desiredStart ?? ""
         desiredEnd = draft.desiredEnd ?? ""
         questionsText = draft.questions.joined(separator: "\n")
+        editingMediaRefs = draft.mediaRefs
         mediaURL = draft.mediaRefs.first?.url ?? ""
         message = nil
     }
@@ -232,6 +239,7 @@ struct CustomerIntakeListView: View {
     private func clearForm() {
         editingDraftId = nil
         editingProjectId = nil
+        editingMediaRefs = []
         title = ""
         description = ""
         mediaURL = ""
@@ -247,15 +255,16 @@ struct CustomerIntakeListView: View {
         creating = true
         message = nil
         let trimmedURL = mediaURL.trimmingCharacters(in: .whitespacesAndNewlines)
-        var refs: [CustomerIntakeMediaRef] = []
         if !trimmedURL.isEmpty {
             guard let parsed = URL(string: trimmedURL), parsed.scheme?.lowercased() == "https", parsed.host != nil else {
                 message = NSLocalizedString("cust_intake_media_url_invalid", comment: "")
                 creating = false
                 return
             }
-            refs = [CustomerIntakeMediaRef(kind: "image", url: trimmedURL)]
         }
+        let refs = editingDraftId == nil
+            ? (trimmedURL.isEmpty ? [] : [CustomerIntakeMediaRef(kind: "image", url: trimmedURL)])
+            : CustomerIntakeDraft.mergeEditedMediaURL(existing: editingMediaRefs, editedURL: trimmedURL)
         let questions = questionsText
             .split(whereSeparator: \.isNewline)
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
@@ -282,7 +291,6 @@ struct CustomerIntakeListView: View {
             return
         }
         do {
-            let projectId = boundProjectId ?? editingProjectId
             if let draftId = editingDraftId {
                 _ = try await CustomerAPI.updateIntakeDraft(
                     id: draftId,
@@ -295,7 +303,7 @@ struct CustomerIntakeListView: View {
                     locationLabel: optionalTrimmed(locationLabel),
                     desiredStart: optionalISODate(desiredStart),
                     desiredEnd: optionalISODate(desiredEnd),
-                    projectId: projectId
+                    projectId: editingProjectId
                 )
             } else {
                 _ = try await CustomerAPI.createIntakeDraft(
@@ -308,7 +316,7 @@ struct CustomerIntakeListView: View {
                     locationLabel: optionalTrimmed(locationLabel),
                     desiredStart: optionalISODate(desiredStart),
                     desiredEnd: optionalISODate(desiredEnd),
-                    projectId: projectId
+                    projectId: boundProjectId
                 )
             }
             clearForm()
