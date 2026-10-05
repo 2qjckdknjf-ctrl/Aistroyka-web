@@ -16,6 +16,10 @@
 "cust_project_loading" = "Caricamento progetto…";
 "cust_project_error" = "Impossibile caricare il progetto.";
 "cust_project_status" = "Stato";
+"cust_handover_completed_at" = "Completato";
+"cust_handover_handed_over_at" = "Consegnato";
+"cust_handover_notes" = "Note";
+"cust_handover_title" = "Consegna";
 "cust_progress_title" = "Avanzamento";
 "cust_progress_none" = "Nessun avanzamento attività pubblicato.";
 "cust_progress_fmt" = "%d di %d attività completate";

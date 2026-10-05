@@ -16,6 +16,10 @@
 "cust_project_loading" = "Loading project…";
 "cust_project_error" = "Could not load this project.";
 "cust_project_status" = "Status";
+"cust_handover_completed_at" = "Completed";
+"cust_handover_handed_over_at" = "Handed over";
+"cust_handover_notes" = "Notes";
+"cust_handover_title" = "Handover";
 "cust_progress_title" = "Progress";
 "cust_progress_none" = "No task progress is published yet.";
 "cust_progress_fmt" = "%d of %d tasks complete";

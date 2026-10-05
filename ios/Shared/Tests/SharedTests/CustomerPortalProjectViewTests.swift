@@ -221,4 +221,29 @@ final class CustomerPortalProjectViewTests: XCTestCase {
         XCTAssertFalse(requestMirror.contains("internalCost"))
         XCTAssertNil(view.clientRequests[0].customerVisibleAmount)
     }
+    func testDecodesHandoverNotesAndTimestamps() throws {
+        let data = Data("""
+        {
+          "project": {"id":"p1","name":"Villa"},
+          "progress": {"tasks_done":1,"tasks_total":2},
+          "milestones": [],
+          "documents": [],
+          "decisions": [],
+          "customer_estimates": [],
+          "client_requests": [],
+          "handover": {
+            "status": "handed_over",
+            "handover_notes": "Keys with concierge",
+            "handed_over_at": "2026-10-01T12:00:00Z",
+            "completed_at": null
+          }
+        }
+        """.utf8)
+        let view = try CustomerPortalProjectView.decodePortalJSON(data)
+        XCTAssertEqual(view.handover?.status, "handed_over")
+        XCTAssertEqual(view.handover?.handoverNotes, "Keys with concierge")
+        XCTAssertEqual(view.handover?.handedOverAt, "2026-10-01T12:00:00Z")
+        XCTAssertNil(view.handover?.completedAt)
+    }
+
 }

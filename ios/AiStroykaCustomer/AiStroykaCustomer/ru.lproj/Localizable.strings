@@ -16,6 +16,10 @@
 "cust_project_loading" = "Загружаем проект…";
 "cust_project_error" = "Не удалось загрузить проект.";
 "cust_project_status" = "Статус";
+"cust_handover_completed_at" = "Завершено";
+"cust_handover_handed_over_at" = "Передано";
+"cust_handover_notes" = "Заметки";
+"cust_handover_title" = "Передача";
 "cust_progress_title" = "Прогресс";
 "cust_progress_none" = "Прогресс по задачам ещё не опубликован.";
 "cust_progress_fmt" = "Выполнено %d из %d задач";
