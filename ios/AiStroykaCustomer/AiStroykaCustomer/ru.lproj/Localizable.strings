@@ -59,3 +59,25 @@
 
 "cust_choice_ok" = "Выбор отправлен.";
 "cust_choice_error" = "Не удалось отправить выбор.";
+
+"cust_intake_nav" = "Заявка";
+
+"cust_intake_intro" = "Опишите работу. Ответ ИИ остаётся черновиком, пока вы не подтвердите.";
+
+"cust_intake_new_title" = "Новый черновик заявки";
+
+"cust_intake_title_placeholder" = "Название";
+
+"cust_intake_description_placeholder" = "Опишите работу";
+
+"cust_intake_create" = "Сохранить черновик";
+
+"cust_intake_list_title" = "Ваши черновики";
+
+"cust_intake_empty" = "Черновиков заявки пока нет.";
+
+"cust_intake_load_error" = "Не удалось загрузить черновики.";
+
+"cust_intake_create_ok" = "Черновик сохранён.";
+
+"cust_intake_create_error" = "Не удалось сохранить черновик.";

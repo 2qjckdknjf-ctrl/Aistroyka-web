@@ -59,3 +59,25 @@
 
 "cust_choice_ok" = "Opción enviada.";
 "cust_choice_error" = "No se pudo enviar la opción.";
+
+"cust_intake_nav" = "Solicitud";
+
+"cust_intake_intro" = "Describa el trabajo. La salida de IA permanece como borrador hasta que confirme.";
+
+"cust_intake_new_title" = "Nuevo borrador";
+
+"cust_intake_title_placeholder" = "Título";
+
+"cust_intake_description_placeholder" = "Describa el trabajo";
+
+"cust_intake_create" = "Guardar borrador";
+
+"cust_intake_list_title" = "Sus borradores";
+
+"cust_intake_empty" = "Aún no hay borradores.";
+
+"cust_intake_load_error" = "No se pudieron cargar los borradores.";
+
+"cust_intake_create_ok" = "Borrador guardado.";
+
+"cust_intake_create_error" = "No se pudo guardar el borrador.";

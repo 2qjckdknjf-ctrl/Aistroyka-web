@@ -55,6 +55,14 @@ struct CustomerHomeView: View {
                 CustomerProjectDetailView(projectId: project.id, fallbackName: project.name)
             }
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    NavigationLink {
+                        CustomerIntakeListView()
+                    } label: {
+                        Text(NSLocalizedString("cust_intake_nav", comment: ""))
+                    }
+                    .accessibilityIdentifier("pilot_customer_intake_nav")
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button(NSLocalizedString("cust_sign_out", comment: "")) {
                         Task { await sessionState.signOut() }

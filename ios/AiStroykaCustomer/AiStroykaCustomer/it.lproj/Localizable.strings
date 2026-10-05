@@ -59,3 +59,25 @@
 
 "cust_choice_ok" = "Scelta inviata.";
 "cust_choice_error" = "Impossibile inviare la scelta.";
+
+"cust_intake_nav" = "Richiesta";
+
+"cust_intake_intro" = "Descrivi il lavoro. L’output AI resta bozza finché non confermi.";
+
+"cust_intake_new_title" = "Nuova bozza";
+
+"cust_intake_title_placeholder" = "Titolo";
+
+"cust_intake_description_placeholder" = "Descrivi il lavoro";
+
+"cust_intake_create" = "Salva bozza";
+
+"cust_intake_list_title" = "Le tue bozze";
+
+"cust_intake_empty" = "Nessuna bozza ancora.";
+
+"cust_intake_load_error" = "Impossibile caricare le bozze.";
+
+"cust_intake_create_ok" = "Bozza salvata.";
+
+"cust_intake_create_error" = "Impossibile salvare la bozza.";

@@ -59,3 +59,25 @@
 
 "cust_choice_ok" = "Choice submitted.";
 "cust_choice_error" = "Could not submit choice.";
+
+"cust_intake_nav" = "Intake";
+
+"cust_intake_intro" = "Describe work you want. AI output stays a draft until you confirm.";
+
+"cust_intake_new_title" = "New intake draft";
+
+"cust_intake_title_placeholder" = "Title";
+
+"cust_intake_description_placeholder" = "Describe the work";
+
+"cust_intake_create" = "Save draft";
+
+"cust_intake_list_title" = "Your drafts";
+
+"cust_intake_empty" = "No intake drafts yet.";
+
+"cust_intake_load_error" = "Could not load intake drafts.";
+
+"cust_intake_create_ok" = "Draft saved.";
+
+"cust_intake_create_error" = "Could not save draft.";
