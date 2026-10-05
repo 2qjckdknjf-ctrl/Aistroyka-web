@@ -74,6 +74,9 @@
 "cust_intake_media_hint" = "Evidence link only — not a contractual quote.";
 "cust_intake_media_url_invalid" = "Photo URL must be https.";
 "cust_intake_media_count" = "%d evidence link(s)";
+"cust_intake_questions_placeholder" = "Optional questions (one per line)";
+"cust_intake_questions_hint" = "Open questions for the contractor — not AI contract text.";
+"cust_intake_questions_count" = "%d question(s)";
 "cust_intake_create" = "Save draft";
 
 "cust_intake_list_title" = "Your drafts";

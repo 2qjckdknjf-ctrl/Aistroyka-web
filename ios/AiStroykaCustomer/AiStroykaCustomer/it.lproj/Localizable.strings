@@ -74,6 +74,9 @@
 "cust_intake_media_hint" = "Solo link di evidenza — non un preventivo contrattuale.";
 "cust_intake_media_url_invalid" = "L’URL della foto deve essere https.";
 "cust_intake_media_count" = "%d link di evidenza";
+"cust_intake_questions_placeholder" = "Domande opzionali (una per riga)";
+"cust_intake_questions_hint" = "Domande aperte all’impresa — non testo contrattuale AI.";
+"cust_intake_questions_count" = "%d domanda/e";
 "cust_intake_create" = "Salva bozza";
 
 "cust_intake_list_title" = "Le tue bozze";

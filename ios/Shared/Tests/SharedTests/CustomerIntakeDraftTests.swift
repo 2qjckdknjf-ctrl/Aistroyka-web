@@ -49,4 +49,18 @@ final class CustomerIntakeDraftTests: XCTestCase {
         XCTAssertTrue(json.contains("\"media_id\""))
         XCTAssertFalse(json.contains("\"mediaId\""))
     }
+
+    func testDecodesQuestions() throws {
+        let data = Data("""
+        {"data":[{
+          "id":"d3",
+          "title":"Roof",
+          "description":"Leak",
+          "status":"draft",
+          "questions":["When can you start?","Need scaffolding?"]
+        }]}
+        """.utf8)
+        let drafts = try CustomerIntakeDraft.decodeListJSON(data)
+        XCTAssertEqual(drafts[0].questions, ["When can you start?", "Need scaffolding?"])
+    }
 }

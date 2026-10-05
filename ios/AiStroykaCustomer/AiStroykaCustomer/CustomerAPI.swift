@@ -165,22 +165,24 @@ enum CustomerAPI {
     static func createIntakeDraft(
         title: String,
         description: String,
-        mediaRefs: [CustomerIntakeMediaRef] = []
+        mediaRefs: [CustomerIntakeMediaRef] = [],
+        questions: [String] = []
     ) async throws -> CustomerIntakeDraft {
         struct Body: Encodable {
             let title: String
             let description: String
             let mediaRefs: [CustomerIntakeMediaRef]
+            let questions: [String]
 
             enum CodingKeys: String, CodingKey {
-                case title, description
+                case title, description, questions
                 case mediaRefs = "media_refs"
             }
         }
         let env: Envelope<CustomerIntakeDraft> = try await APIClient.shared.request(
             path: "portal/intake",
             method: "POST",
-            body: Body(title: title, description: description, mediaRefs: mediaRefs)
+            body: Body(title: title, description: description, mediaRefs: mediaRefs, questions: questions)
         )
         return env.data
     }

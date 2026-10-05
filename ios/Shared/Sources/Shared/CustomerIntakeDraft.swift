@@ -50,6 +50,7 @@ public struct CustomerIntakeDraft: Decodable, Identifiable, Sendable {
     public let projectId: String?
     public let updatedAt: String?
     public let mediaRefs: [CustomerIntakeMediaRef]
+    public let questions: [String]
 
     public init(
         id: String,
@@ -58,7 +59,8 @@ public struct CustomerIntakeDraft: Decodable, Identifiable, Sendable {
         status: String,
         projectId: String? = nil,
         updatedAt: String? = nil,
-        mediaRefs: [CustomerIntakeMediaRef] = []
+        mediaRefs: [CustomerIntakeMediaRef] = [],
+        questions: [String] = []
     ) {
         self.id = id
         self.title = title
@@ -67,6 +69,7 @@ public struct CustomerIntakeDraft: Decodable, Identifiable, Sendable {
         self.projectId = projectId
         self.updatedAt = updatedAt
         self.mediaRefs = mediaRefs
+        self.questions = questions
     }
 
     public init(from decoder: Decoder) throws {
@@ -78,10 +81,11 @@ public struct CustomerIntakeDraft: Decodable, Identifiable, Sendable {
         projectId = try c.decodeIfPresent(String.self, forKey: .projectId)
         updatedAt = try c.decodeIfPresent(String.self, forKey: .updatedAt)
         mediaRefs = try c.decodeIfPresent([CustomerIntakeMediaRef].self, forKey: .mediaRefs) ?? []
+        questions = try c.decodeIfPresent([String].self, forKey: .questions) ?? []
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, title, description, status, projectId, updatedAt, mediaRefs
+        case id, title, description, status, projectId, updatedAt, mediaRefs, questions
     }
 
     public static func decodeListJSON(_ data: Data) throws -> [CustomerIntakeDraft] {
