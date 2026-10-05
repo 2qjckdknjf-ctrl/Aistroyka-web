@@ -414,6 +414,57 @@ export async function updateCustomerIntakeDraft(
   return { data: draft, error: "" };
 }
 
+export async function submitCustomerIntakeDraft(
+  supabase: SupabaseClient,
+  ctx: TenantContext,
+  draftId: string
+): Promise<{ data: CustomerIntakeDraft | null; error: string }> {
+  if (!ctx.tenantId || !ctx.userId) return { data: null, error: "Tenant required" };
+  if (!draftId) return { data: null, error: "id required" };
+
+  const { data: existing, error: loadError } = await supabase
+    .from("customer_intake_drafts")
+    .select("*")
+    .eq("id", draftId)
+    .eq("tenant_id", ctx.tenantId)
+    .eq("created_by", ctx.userId)
+    .maybeSingle();
+  if (loadError) return { data: null, error: loadError.message };
+  if (!existing) return { data: null, error: "Update denied" };
+  const current = asDraft(existing as Record<string, unknown>);
+  if (!current) return { data: null, error: "Stored intake draft is invalid" };
+  if (current.status === "submitted") return { data: current, error: "" };
+  if (current.status === "withdrawn") {
+    return { data: null, error: "Only draft intake can be submitted" };
+  }
+
+  const { data, error } = await supabase
+    .from("customer_intake_drafts")
+    .update({ status: "submitted", updated_at: new Date().toISOString() })
+    .eq("id", draftId)
+    .eq("tenant_id", ctx.tenantId)
+    .eq("created_by", ctx.userId)
+    .eq("status", "draft")
+    .select("*")
+    .maybeSingle();
+  if (error) return { data: null, error: error.message };
+  if (!data) {
+    const { data: raced } = await supabase
+      .from("customer_intake_drafts")
+      .select("*")
+      .eq("id", draftId)
+      .eq("tenant_id", ctx.tenantId)
+      .eq("created_by", ctx.userId)
+      .maybeSingle();
+    const racedDraft = raced ? asDraft(raced as Record<string, unknown>) : null;
+    if (racedDraft?.status === "submitted") return { data: racedDraft, error: "" };
+    return { data: null, error: "Update denied" };
+  }
+  const draft = asDraft(data as Record<string, unknown>);
+  if (!draft) return { data: null, error: "Stored intake draft is invalid" };
+  return { data: draft, error: "" };
+}
+
 export async function withdrawCustomerIntakeDraft(
   supabase: SupabaseClient,
   ctx: TenantContext,

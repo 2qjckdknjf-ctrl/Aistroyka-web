@@ -257,6 +257,14 @@ enum CustomerAPI {
         return env.data
     }
 
+    static func submitIntakeDraft(id: String) async throws -> CustomerIntakeDraft {
+        let env: Envelope<CustomerIntakeDraft> = try await APIClient.shared.request(
+            path: "portal/intake/\(id)/submit",
+            method: "POST"
+        )
+        return env.data
+    }
+
     static func withdrawIntakeDraft(id: String) async throws -> CustomerIntakeDraft {
         let env: Envelope<CustomerIntakeDraft> = try await APIClient.shared.request(
             path: "portal/intake/\(id)/withdraw",
