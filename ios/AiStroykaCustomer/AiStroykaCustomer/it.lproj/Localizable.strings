@@ -77,6 +77,9 @@
 "cust_intake_questions_placeholder" = "Domande opzionali (una per riga)";
 "cust_intake_questions_hint" = "Domande aperte all’impresa — non testo contrattuale AI.";
 "cust_intake_questions_count" = "%d domanda/e";
+"cust_intake_site_context_placeholder" = "Contesto del sito (opzionale)";
+"cust_intake_location_placeholder" = "Città / zona (opzionale)";
+"cust_intake_work_type_placeholder" = "Tipo di lavoro (opzionale)";
 "cust_intake_create" = "Salva bozza";
 
 "cust_intake_list_title" = "Le tue bozze";

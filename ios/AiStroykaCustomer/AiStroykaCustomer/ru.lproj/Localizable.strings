@@ -77,6 +77,9 @@
 "cust_intake_questions_placeholder" = "Вопросы (по одному в строке, необязательно)";
 "cust_intake_questions_hint" = "Открытые вопросы подрядчику — не договорный текст ИИ.";
 "cust_intake_questions_count" = "Вопросов: %d";
+"cust_intake_site_context_placeholder" = "Контекст объекта (необязательно)";
+"cust_intake_location_placeholder" = "Город / район (необязательно)";
+"cust_intake_work_type_placeholder" = "Тип работ (необязательно)";
 "cust_intake_create" = "Сохранить черновик";
 
 "cust_intake_list_title" = "Ваши черновики";
