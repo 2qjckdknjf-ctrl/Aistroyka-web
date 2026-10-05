@@ -70,6 +70,13 @@
 
 "cust_intake_description_placeholder" = "Опишите работу";
 
+"cust_intake_media_url_placeholder" = "Необязательная https-ссылка на фото";
+"cust_intake_media_hint" = "Только ссылка на доказательство — не договорная цена.";
+"cust_intake_media_url_invalid" = "Ссылка на фото должна быть https.";
+"cust_intake_media_count" = "Ссылок на доказательства: %d";
+"cust_intake_questions_placeholder" = "Вопросы (по одному в строке, необязательно)";
+"cust_intake_questions_hint" = "Открытые вопросы подрядчику — не договорный текст ИИ.";
+"cust_intake_questions_count" = "Вопросов: %d";
 "cust_intake_create" = "Сохранить черновик";
 
 "cust_intake_list_title" = "Ваши черновики";
