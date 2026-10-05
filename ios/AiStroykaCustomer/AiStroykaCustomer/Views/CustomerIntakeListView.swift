@@ -163,6 +163,13 @@ struct CustomerIntakeListView: View {
                                 .font(.caption2)
                                 .foregroundStyle(CustomerTokens.textSecondary)
                             }
+                            if draft.status == "draft" {
+                                Button(NSLocalizedString("cust_intake_submit", comment: "")) {
+                                    Task { await submitDraft(draft.id) }
+                                }
+                                .buttonStyle(.bordered)
+                                .accessibilityIdentifier("pilot_customer_intake_submit_\(draft.id)")
+                            }
                         }
                         .accessibilityIdentifier("pilot_customer_intake_row_\(draft.id)")
                     }
@@ -191,6 +198,19 @@ struct CustomerIntakeListView: View {
             drafts = []
         }
         loading = false
+    }
+
+    private func submitDraft(_ id: String) async {
+        message = nil
+        do {
+            _ = try await CustomerAPI.submitIntakeDraft(id: id)
+            message = NSLocalizedString("cust_intake_submit_ok", comment: "")
+            await load()
+        } catch let apiError as APIError {
+            message = apiError.message
+        } catch {
+            message = NSLocalizedString("cust_intake_submit_error", comment: "")
+        }
     }
 
     private func createDraft() async {

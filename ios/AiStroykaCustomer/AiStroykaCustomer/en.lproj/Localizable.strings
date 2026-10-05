@@ -102,3 +102,6 @@
 "cust_intake_create_ok" = "Draft saved.";
 
 "cust_intake_create_error" = "Could not save draft.";
+"cust_intake_submit" = "Submit for review";
+"cust_intake_submit_ok" = "Draft submitted. This is not a contract.";
+"cust_intake_submit_error" = "Could not submit draft.";
