@@ -145,6 +145,53 @@ describe("stakeholders.service", () => {
     expect(repo.updateRow).not.toHaveBeenCalled();
   });
 
+  it("acceptStakeholderInvite does not demote an existing viewer on an already-active invite", async () => {
+    vi.mocked(repo.getByToken).mockResolvedValue({
+      id: "s1",
+      tenant_id: "t1",
+      project_id: "p1",
+      email: "inv@x.com",
+      stakeholder_role: "client_viewer",
+      token: "tok",
+      status: "active",
+      user_id: "u1",
+      invited_by: null,
+      expires_at: new Date(Date.now() + 86400000).toISOString(),
+      accepted_at: "",
+      created_at: "",
+      updated_at: "",
+    } as never);
+
+    const update = vi.fn().mockReturnValue({
+      eq: () => ({
+        eq: async () => ({ error: null }),
+      }),
+    });
+    (supabase.from as ReturnType<typeof vi.fn>).mockImplementation((table: string) => {
+      if (table === "tenants") {
+        return {
+          select: () => ({
+            eq: () => ({ maybeSingle: async () => ({ data: { user_id: "owner" } }) }),
+          }),
+        };
+      }
+      return {
+        select: () => ({
+          eq: () => ({
+            eq: () => ({ maybeSingle: async () => ({ data: { id: "tm1", role: "viewer" } }) }),
+          }),
+        }),
+        update,
+      };
+    });
+
+    const { data, error, activated } = await acceptStakeholderInvite(supabase, "u1", "inv@x.com", "tok");
+    expect(error).toBe("");
+    expect(activated).toBe(false);
+    expect(data?.project_id).toBe("p1");
+    expect(update).not.toHaveBeenCalled();
+  });
+
   it("acceptStakeholderInvite treats a lost invited-status race as idempotent", async () => {
     const invited = {
       id: "s1",
