@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "roma.schema.assurance_graph.ag_v1",
+  "title": "ROMA assurance graph",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "graph_id",
+    "requirement_id",
+    "requirement_revision",
+    "commit_sha",
+    "environment",
+    "generated_at",
+    "tool_version",
+    "origin",
+    "nodes",
+    "edges"
+  ],
+  "properties": {
+    "schema_version": { "const": "ag_v1" },
+    "graph_id": { "type": "string", "minLength": 1 },
+    "requirement_id": { "type": "string", "minLength": 1 },
+    "requirement_revision": { "type": "string", "minLength": 1 },
+    "commit_sha": { "type": "string", "minLength": 7 },
+    "environment": { "enum": ["local", "staging", "preprod", "production"] },
+    "generated_at": { "type": "string", "minLength": 1 },
+    "tool_version": { "type": "string", "minLength": 1 },
+    "origin": { "type": "string", "minLength": 1 },
+    "nodes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "type"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "type": {
+            "enum": [
+              "requirement",
+              "acceptance_criterion",
+              "verification_contract",
+              "observation",
+              "evidence",
+              "verifier",
+              "verdict"
+            ]
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["from", "to"],
+        "properties": {
+          "from": { "type": "string", "minLength": 1 },
+          "to": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}
