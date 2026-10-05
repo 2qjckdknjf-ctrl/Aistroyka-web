@@ -34,7 +34,7 @@ struct CustomerProjectDetailView: View {
                             .foregroundStyle(CustomerTokens.textPrimary)
                         progressBlock(view.progress)
                         if let handover = view.handover {
-                            labeled(NSLocalizedString("cust_project_status", comment: ""), value: handover.status)
+                            handoverSection(handover)
                         }
                         if let respondMessage {
                             Text(respondMessage)
@@ -330,6 +330,32 @@ struct CustomerProjectDetailView: View {
             respondMessage = NSLocalizedString("cust_estimate_respond_error", comment: "")
         }
         respondingEstimateId = nil
+    }
+
+    private func handoverSection(_ handover: CustomerPortalProjectView.Handover) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(NSLocalizedString("cust_handover_title", comment: ""))
+                .font(.headline)
+                .foregroundStyle(CustomerTokens.textPrimary)
+            labeled(NSLocalizedString("cust_project_status", comment: ""), value: handover.status)
+            if let notes = handover.handoverNotes?.trimmingCharacters(in: .whitespacesAndNewlines), !notes.isEmpty {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(NSLocalizedString("cust_handover_notes", comment: ""))
+                        .foregroundStyle(CustomerTokens.textPrimary)
+                    Text(notes)
+                        .font(.caption)
+                        .foregroundStyle(CustomerTokens.textSecondary)
+                }
+                .accessibilityIdentifier("pilot_customer_handover_notes")
+            }
+            if let handedOverAt = handover.handedOverAt, !handedOverAt.isEmpty {
+                labeled(NSLocalizedString("cust_handover_handed_over_at", comment: ""), value: handedOverAt)
+            }
+            if let completedAt = handover.completedAt, !completedAt.isEmpty {
+                labeled(NSLocalizedString("cust_handover_completed_at", comment: ""), value: completedAt)
+            }
+        }
+        .accessibilityIdentifier("pilot_customer_handover")
     }
 
     private func documentsSection(_ docs: [CustomerPortalProjectView.Document]) -> some View {
