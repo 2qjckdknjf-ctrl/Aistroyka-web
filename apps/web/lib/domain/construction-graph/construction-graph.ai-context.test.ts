@@ -38,4 +38,33 @@ describe("buildConstructionGraphAIContext", () => {
     expect(ctx.nodes.length).toBe(2);
     expect(ctx.edges.length).toBeLessThanOrEqual(2);
   });
+
+  it("keeps later graph families when the node cap would be consumed by tasks", () => {
+    const graph = buildConstructionGraphFromSources("t1", "p1", {
+      project: { id: "p1", name: "Villa" },
+      tasks: Array.from({ length: 40 }, (_, i) => ({
+        id: `task-${i}`,
+        title: `T${i}`,
+        assigned_to: null,
+      })),
+      reports: [{ id: "rep-1", task_id: "task-0", user_id: null }],
+      media: [{ id: "media-1", type: "image" }],
+      defects: [{ id: "def-1", title: "Crack" }],
+      documents: [{ id: "doc-1", title: "Permit", status: null }],
+    });
+    const ctx = buildConstructionGraphAIContext(graph, { maxNodes: 10, maxEdges: 20 });
+    expect(ctx.truncated).toBe(true);
+    expect(ctx.nodes.length).toBe(10);
+    expect(ctx.summary.families.report).toBe(1);
+    expect(ctx.summary.families.evidence).toBe(1);
+    expect(ctx.summary.families.issue).toBe(1);
+    expect(ctx.summary.families.document).toBe(1);
+    const projected = new Set(ctx.nodes.map((n) => n.family));
+    expect(projected.has("project")).toBe(true);
+    expect(projected.has("task")).toBe(true);
+    expect(projected.has("report")).toBe(true);
+    expect(projected.has("evidence")).toBe(true);
+    expect(projected.has("issue")).toBe(true);
+    expect(projected.has("document")).toBe(true);
+  });
 });

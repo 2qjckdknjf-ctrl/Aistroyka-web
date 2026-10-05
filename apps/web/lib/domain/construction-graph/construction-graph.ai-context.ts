@@ -31,6 +31,47 @@ export type ConstructionGraphAIContext = {
 const MAX_AI_NODES = 80;
 const MAX_AI_EDGES = 120;
 
+function takeFamilyBalancedNodes<T extends { id: string; family: string }>(
+  nodes: readonly T[],
+  maxNodes: number
+): T[] {
+  if (nodes.length <= maxNodes) {
+    return nodes.slice();
+  }
+
+  const byFamily = new Map<string, T[]>();
+  for (const node of nodes) {
+    const bucket = byFamily.get(node.family);
+    if (bucket) {
+      bucket.push(node);
+    } else {
+      byFamily.set(node.family, [node]);
+    }
+  }
+
+  const picked: T[] = [];
+  const offset = new Map<string, number>();
+  let addedInPass = true;
+  while (picked.length < maxNodes && addedInPass) {
+    addedInPass = false;
+    for (const [family, bucket] of byFamily) {
+      if (picked.length >= maxNodes) {
+        break;
+      }
+      const i = offset.get(family) ?? 0;
+      if (i < bucket.length) {
+        picked.push(bucket[i]);
+        offset.set(family, i + 1);
+        addedInPass = true;
+      }
+    }
+  }
+
+  const originalIndex = new Map(nodes.map((node, index) => [node.id, index]));
+  picked.sort((a, b) => (originalIndex.get(a.id) ?? 0) - (originalIndex.get(b.id) ?? 0));
+  return picked;
+}
+
 export function buildConstructionGraphAIContext(
   graph: ConstructionGraphQuery,
   options?: { maxNodes?: number; maxEdges?: number }
@@ -43,7 +84,7 @@ export function buildConstructionGraphAIContext(
     families[n.family] = (families[n.family] ?? 0) + 1;
   }
 
-  const nodes = graph.nodes.slice(0, maxNodes).map((n) => ({
+  const nodes = takeFamilyBalancedNodes(graph.nodes, maxNodes).map((n) => ({
     id: n.id,
     family: n.family,
     label: n.label,
