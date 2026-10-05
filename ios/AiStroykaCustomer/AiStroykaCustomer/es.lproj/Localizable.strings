@@ -77,6 +77,9 @@
 "cust_intake_questions_placeholder" = "Preguntas opcionales (una por línea)";
 "cust_intake_questions_hint" = "Preguntas abiertas al contratista — no texto contractual de IA.";
 "cust_intake_questions_count" = "%d pregunta(s)";
+"cust_intake_site_context_placeholder" = "Contexto del sitio (opcional)";
+"cust_intake_location_placeholder" = "Ciudad / zona (opcional)";
+"cust_intake_work_type_placeholder" = "Tipo de trabajo (opcional)";
 "cust_intake_create" = "Guardar borrador";
 
 "cust_intake_list_title" = "Sus borradores";

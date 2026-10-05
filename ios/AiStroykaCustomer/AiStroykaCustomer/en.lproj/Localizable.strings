@@ -77,6 +77,9 @@
 "cust_intake_questions_placeholder" = "Optional questions (one per line)";
 "cust_intake_questions_hint" = "Open questions for the contractor — not AI contract text.";
 "cust_intake_questions_count" = "%d question(s)";
+"cust_intake_site_context_placeholder" = "Site context (optional)";
+"cust_intake_location_placeholder" = "City / area (optional)";
+"cust_intake_work_type_placeholder" = "Requested work type (optional)";
 "cust_intake_create" = "Save draft";
 
 "cust_intake_list_title" = "Your drafts";

@@ -51,6 +51,9 @@ public struct CustomerIntakeDraft: Decodable, Identifiable, Sendable {
     public let updatedAt: String?
     public let mediaRefs: [CustomerIntakeMediaRef]
     public let questions: [String]
+    public let siteContext: String?
+    public let requestedWorkType: String?
+    public let locationLabel: String?
 
     public init(
         id: String,
@@ -60,7 +63,10 @@ public struct CustomerIntakeDraft: Decodable, Identifiable, Sendable {
         projectId: String? = nil,
         updatedAt: String? = nil,
         mediaRefs: [CustomerIntakeMediaRef] = [],
-        questions: [String] = []
+        questions: [String] = [],
+        siteContext: String? = nil,
+        requestedWorkType: String? = nil,
+        locationLabel: String? = nil
     ) {
         self.id = id
         self.title = title
@@ -70,6 +76,9 @@ public struct CustomerIntakeDraft: Decodable, Identifiable, Sendable {
         self.updatedAt = updatedAt
         self.mediaRefs = mediaRefs
         self.questions = questions
+        self.siteContext = siteContext
+        self.requestedWorkType = requestedWorkType
+        self.locationLabel = locationLabel
     }
 
     public init(from decoder: Decoder) throws {
@@ -82,10 +91,22 @@ public struct CustomerIntakeDraft: Decodable, Identifiable, Sendable {
         updatedAt = try c.decodeIfPresent(String.self, forKey: .updatedAt)
         mediaRefs = try c.decodeIfPresent([CustomerIntakeMediaRef].self, forKey: .mediaRefs) ?? []
         questions = try c.decodeIfPresent([String].self, forKey: .questions) ?? []
+        siteContext = try c.decodeIfPresent(String.self, forKey: .siteContext)
+        requestedWorkType = try c.decodeIfPresent(String.self, forKey: .requestedWorkType)
+        if let location = try c.decodeIfPresent(LocationDTO.self, forKey: .location) {
+            locationLabel = location.label
+        } else {
+            locationLabel = nil
+        }
+    }
+
+    private struct LocationDTO: Decodable {
+        let label: String?
     }
 
     private enum CodingKeys: String, CodingKey {
         case id, title, description, status, projectId, updatedAt, mediaRefs, questions
+        case siteContext, requestedWorkType, location
     }
 
     public static func decodeListJSON(_ data: Data) throws -> [CustomerIntakeDraft] {

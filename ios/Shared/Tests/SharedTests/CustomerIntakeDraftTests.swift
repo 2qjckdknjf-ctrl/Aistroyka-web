@@ -63,4 +63,24 @@ final class CustomerIntakeDraftTests: XCTestCase {
         let drafts = try CustomerIntakeDraft.decodeListJSON(data)
         XCTAssertEqual(drafts[0].questions, ["When can you start?", "Need scaffolding?"])
     }
+
+    func testDecodesSiteContextAndLocationLabel() throws {
+        let data = Data("""
+        {"data":[{
+          "id":"d4",
+          "title":"Facade",
+          "description":"Cracks",
+          "status":"draft",
+          "site_context":"Apartment block",
+          "requested_work_type":"repair",
+          "location":{"precision":"city","label":"Milan"}
+        }]}
+        """.utf8)
+        let drafts = try CustomerIntakeDraft.decodeListJSON(data)
+        XCTAssertEqual(drafts[0].siteContext, "Apartment block")
+        XCTAssertEqual(drafts[0].requestedWorkType, "repair")
+        XCTAssertEqual(drafts[0].locationLabel, "Milan")
+        let labels = Mirror(reflecting: drafts[0]).children.map { $0.label ?? "" }
+        XCTAssertFalse(labels.contains("budgetRange"))
+    }
 }

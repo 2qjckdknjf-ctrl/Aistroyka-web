@@ -9,6 +9,9 @@ struct CustomerIntakeListView: View {
     @State private var description = ""
     @State private var mediaURL = ""
     @State private var questionsText = ""
+    @State private var siteContext = ""
+    @State private var locationLabel = ""
+    @State private var requestedWorkType = ""
     @State private var creating = false
 
     var body: some View {
@@ -33,6 +36,16 @@ struct CustomerIntakeListView: View {
                         .lineLimit(3...6)
                         .textFieldStyle(.roundedBorder)
                         .accessibilityIdentifier("pilot_customer_intake_description")
+                    TextField(NSLocalizedString("cust_intake_site_context_placeholder", comment: ""), text: $siteContext, axis: .vertical)
+                        .lineLimit(2...4)
+                        .textFieldStyle(.roundedBorder)
+                        .accessibilityIdentifier("pilot_customer_intake_site_context")
+                    TextField(NSLocalizedString("cust_intake_location_placeholder", comment: ""), text: $locationLabel)
+                        .textFieldStyle(.roundedBorder)
+                        .accessibilityIdentifier("pilot_customer_intake_location")
+                    TextField(NSLocalizedString("cust_intake_work_type_placeholder", comment: ""), text: $requestedWorkType)
+                        .textFieldStyle(.roundedBorder)
+                        .accessibilityIdentifier("pilot_customer_intake_work_type")
                     TextField(NSLocalizedString("cust_intake_media_url_placeholder", comment: ""), text: $mediaURL)
                         .textFieldStyle(.roundedBorder)
                         .textInputAutocapitalization(.never)
@@ -90,6 +103,11 @@ struct CustomerIntakeListView: View {
                                 .font(.caption2)
                                 .foregroundStyle(CustomerTokens.textSecondary)
                             }
+                            if let label = draft.locationLabel, !label.isEmpty {
+                                Text(label)
+                                    .font(.caption2)
+                                    .foregroundStyle(CustomerTokens.textSecondary)
+                            }
                         }
                         .accessibilityIdentifier("pilot_customer_intake_row_\(draft.id)")
                     }
@@ -137,17 +155,27 @@ struct CustomerIntakeListView: View {
             .split(whereSeparator: \.isNewline)
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty }
+        func optionalTrimmed(_ value: String) -> String? {
+            let t = value.trimmingCharacters(in: .whitespacesAndNewlines)
+            return t.isEmpty ? nil : t
+        }
         do {
             _ = try await CustomerAPI.createIntakeDraft(
                 title: title.trimmingCharacters(in: .whitespacesAndNewlines),
                 description: description.trimmingCharacters(in: .whitespacesAndNewlines),
                 mediaRefs: refs,
-                questions: questions
+                questions: questions,
+                siteContext: optionalTrimmed(siteContext),
+                requestedWorkType: optionalTrimmed(requestedWorkType),
+                locationLabel: optionalTrimmed(locationLabel)
             )
             title = ""
             description = ""
             mediaURL = ""
             questionsText = ""
+            siteContext = ""
+            locationLabel = ""
+            requestedWorkType = ""
             message = NSLocalizedString("cust_intake_create_ok", comment: "")
             await load()
         } catch let apiError as APIError {
