@@ -114,7 +114,8 @@ function acceptedPayload(row: {
 async function ensurePortalTenantMembership(
   supabase: SupabaseClient,
   userId: string,
-  tenantId: string
+  tenantId: string,
+  options?: { downgradeViewer?: boolean }
 ): Promise<{ error: string }> {
   const { data: tenantRow } = await supabase.from("tenants").select("user_id").eq("id", tenantId).maybeSingle();
   const isTenantOwner = tenantRow?.user_id === userId;
@@ -134,7 +135,9 @@ async function ensurePortalTenantMembership(
     if (tmError) return { error: "Unable to join workspace for this project" };
     return { error: "" };
   }
-  if (existingTm.role === "viewer") {
+  // First accept of an invited grant may move viewer → stakeholder.
+  // Re-opening an already-active invite must not undo a later viewer grant.
+  if (existingTm.role === "viewer" && options?.downgradeViewer !== false) {
     const { error: upErr } = await supabase
       .from("tenant_members")
       .update({ role: "stakeholder" })
@@ -165,7 +168,9 @@ export async function acceptStakeholderInvite(
   }
 
   if (row.status === "active" && row.user_id === userId) {
-    const membership = await ensurePortalTenantMembership(supabase, userId, row.tenant_id);
+    const membership = await ensurePortalTenantMembership(supabase, userId, row.tenant_id, {
+      downgradeViewer: false,
+    });
     if (membership.error) return { data: null, error: membership.error, activated: false };
     return { data: acceptedPayload(row), error: "", activated: false };
   }
