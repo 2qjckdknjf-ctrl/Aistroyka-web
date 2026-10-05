@@ -10,6 +10,7 @@ final class CustomerSessionState: ObservableObject {
     @Published var roleFailureMessage: String?
     @Published var sessionCheckFailed = false
     @Published var signedInEmail: String?
+    @Published var tenantId: String?
 
     private var unauthorizedObserver: NSObjectProtocol?
 
@@ -45,6 +46,7 @@ final class CustomerSessionState: ObservableObject {
         isLoggedIn = false
         isAuthorizedRole = false
         signedInEmail = nil
+        tenantId = nil
         roleFailureMessage = nil
         sessionCheckFailed = false
         authErrorMessage = nil
@@ -63,6 +65,7 @@ final class CustomerSessionState: ObservableObject {
         guard await AuthService.shared.getAccessToken() != nil else {
             isLoggedIn = false
             isAuthorizedRole = false
+            tenantId = nil
             return
         }
         isLoggedIn = true
@@ -72,10 +75,12 @@ final class CustomerSessionState: ObservableObject {
             let role = me.data?.role
             if CustomerAuthGate.allowsCustomerSession(role: role) {
                 isAuthorizedRole = true
+                tenantId = me.data?.tenant_id
                 authErrorMessage = nil
                 return
             }
             isAuthorizedRole = false
+            tenantId = nil
             if CustomerAuthGate.contractorRoleUsingWrongApp(role) {
                 roleFailureMessage = NSLocalizedString("cust_err_use_manager", comment: "")
             } else {
@@ -83,6 +88,7 @@ final class CustomerSessionState: ObservableObject {
             }
         } catch {
             isAuthorizedRole = false
+            tenantId = nil
             sessionCheckFailed = true
             authErrorMessage = NSLocalizedString("cust_err_session_retry", comment: "")
         }

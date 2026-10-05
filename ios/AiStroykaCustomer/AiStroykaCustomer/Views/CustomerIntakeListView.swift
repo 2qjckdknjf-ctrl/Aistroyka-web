@@ -2,9 +2,13 @@ import SwiftUI
 import Shared
 
 struct CustomerIntakeListView: View {
+    @EnvironmentObject var sessionState: CustomerSessionState
     @State private var drafts: [CustomerIntakeDraft] = []
     @State private var message: String?
+    @State private var createMessage: String?
     @State private var loading = true
+    @State private var hasLoaded = false
+    @State private var loadGeneration = 0
     @State private var title = ""
     @State private var description = ""
     @State private var creating = false
@@ -14,11 +18,20 @@ struct CustomerIntakeListView: View {
             VStack(alignment: .leading, spacing: 16) {
                 Text(NSLocalizedString("cust_intake_intro", comment: ""))
                     .foregroundStyle(CustomerTokens.textSecondary)
-                if let message {
-                    Text(message)
-                        .font(.caption)
-                        .foregroundStyle(CustomerTokens.textSecondary)
-                        .accessibilityIdentifier("pilot_customer_intake_status")
+                if createMessage != nil || message != nil {
+                    VStack(alignment: .leading, spacing: 4) {
+                        if let createMessage {
+                            Text(createMessage)
+                                .font(.caption)
+                                .foregroundStyle(CustomerTokens.textSecondary)
+                        }
+                        if let message {
+                            Text(message)
+                                .font(.caption)
+                                .foregroundStyle(CustomerTokens.textSecondary)
+                        }
+                    }
+                    .accessibilityIdentifier("pilot_customer_intake_status")
                 }
                 VStack(alignment: .leading, spacing: 8) {
                     Text(NSLocalizedString("cust_intake_new_title", comment: ""))
@@ -42,7 +55,7 @@ struct CustomerIntakeListView: View {
                     Text(NSLocalizedString("cust_intake_list_title", comment: ""))
                         .font(.headline)
                         .foregroundStyle(CustomerTokens.textPrimary)
-                    if loading {
+                    if loading && !hasLoaded {
                         ProgressView()
                     } else if drafts.isEmpty {
                         Text(NSLocalizedString("cust_intake_empty", comment: ""))
@@ -67,37 +80,75 @@ struct CustomerIntakeListView: View {
         .refreshable { await load() }
     }
 
+    private func resolvedTenantId() -> String? {
+        let value = sessionState.tenantId?.trimmingCharacters(in: .whitespacesAndNewlines)
+        return (value?.isEmpty == false) ? value : nil
+    }
+
     private func load() async {
-        loading = true
-        message = nil
-        do {
-            drafts = try await CustomerAPI.listIntakeDrafts()
-        } catch let apiError as APIError {
-            message = apiError.message
-            drafts = []
-        } catch {
-            message = NSLocalizedString("cust_intake_load_error", comment: "")
-            drafts = []
+        loadGeneration += 1
+        let generation = loadGeneration
+        let keepVisibleList = hasLoaded
+        if !keepVisibleList {
+            loading = true
         }
-        loading = false
+        message = nil
+        guard let tenantId = resolvedTenantId() else {
+            guard generation == loadGeneration else { return }
+            message = NSLocalizedString("cust_intake_load_error", comment: "")
+            if !keepVisibleList {
+                drafts = []
+            }
+            if generation == loadGeneration {
+                loading = false
+            }
+            return
+        }
+        do {
+            let rows = try await CustomerAPI.listIntakeDrafts(tenantId: tenantId)
+            guard generation == loadGeneration else { return }
+            drafts = rows
+            hasLoaded = true
+        } catch let apiError as APIError {
+            guard generation == loadGeneration else { return }
+            message = apiError.message
+            if !keepVisibleList {
+                drafts = []
+            }
+        } catch {
+            guard generation == loadGeneration else { return }
+            message = NSLocalizedString("cust_intake_load_error", comment: "")
+            if !keepVisibleList {
+                drafts = []
+            }
+        }
+        if generation == loadGeneration {
+            loading = false
+        }
     }
 
     private func createDraft() async {
         creating = true
-        message = nil
+        createMessage = nil
+        guard let tenantId = resolvedTenantId() else {
+            createMessage = NSLocalizedString("cust_intake_create_error", comment: "")
+            creating = false
+            return
+        }
         do {
             _ = try await CustomerAPI.createIntakeDraft(
                 title: title.trimmingCharacters(in: .whitespacesAndNewlines),
-                description: description.trimmingCharacters(in: .whitespacesAndNewlines)
+                description: description.trimmingCharacters(in: .whitespacesAndNewlines),
+                tenantId: tenantId
             )
             title = ""
             description = ""
-            message = NSLocalizedString("cust_intake_create_ok", comment: "")
+            createMessage = NSLocalizedString("cust_intake_create_ok", comment: "")
             await load()
         } catch let apiError as APIError {
-            message = apiError.message
+            createMessage = apiError.message
         } catch {
-            message = NSLocalizedString("cust_intake_create_error", comment: "")
+            createMessage = NSLocalizedString("cust_intake_create_error", comment: "")
         }
         creating = false
     }

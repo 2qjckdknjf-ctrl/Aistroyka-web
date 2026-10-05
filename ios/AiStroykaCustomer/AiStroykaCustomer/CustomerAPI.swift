@@ -157,12 +157,15 @@ enum CustomerAPI {
         )
     }
 
-    static func listIntakeDrafts() async throws -> [CustomerIntakeDraft] {
-        let env: Envelope<[CustomerIntakeDraft]> = try await APIClient.shared.request(path: "portal/intake")
+    static func listIntakeDrafts(tenantId: String) async throws -> [CustomerIntakeDraft] {
+        let env: Envelope<[CustomerIntakeDraft]> = try await APIClient.shared.request(
+            path: "portal/intake",
+            headers: portalIntakeHeaders(tenantId: tenantId)
+        )
         return env.data
     }
 
-    static func createIntakeDraft(title: String, description: String) async throws -> CustomerIntakeDraft {
+    static func createIntakeDraft(title: String, description: String, tenantId: String) async throws -> CustomerIntakeDraft {
         struct Body: Encodable {
             let title: String
             let description: String
@@ -170,8 +173,13 @@ enum CustomerAPI {
         let env: Envelope<CustomerIntakeDraft> = try await APIClient.shared.request(
             path: "portal/intake",
             method: "POST",
-            body: Body(title: title, description: description)
+            body: Body(title: title, description: description),
+            headers: portalIntakeHeaders(tenantId: tenantId)
         )
         return env.data
+    }
+
+    private static func portalIntakeHeaders(tenantId: String) -> [String: String] {
+        ["x-tenant-id": tenantId]
     }
 }

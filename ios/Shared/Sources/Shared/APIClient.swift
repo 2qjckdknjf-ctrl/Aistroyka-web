@@ -33,6 +33,7 @@ public actor APIClient {
         method: String = "GET",
         body: Encodable? = nil,
         idempotencyKey: String? = nil,
+        headers: [String: String] = [:],
         keyDecoding: JSONDecoder.KeyDecodingStrategy = .convertFromSnakeCase
     ) async throws -> T {
         guard let base = Config.apiBaseURL else { throw APIError(statusCode: nil, code: nil, message: "Invalid base URL") }
@@ -44,6 +45,9 @@ public actor APIClient {
         request.setValue(clientProfile, forHTTPHeaderField: "x-client")
         if let key = idempotencyKey {
             request.setValue(key, forHTTPHeaderField: "x-idempotency-key")
+        }
+        for (field, value) in headers {
+            request.setValue(value, forHTTPHeaderField: field)
         }
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
