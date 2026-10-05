@@ -80,6 +80,11 @@
 "cust_intake_site_context_placeholder" = "Site context (optional)";
 "cust_intake_location_placeholder" = "City / area (optional)";
 "cust_intake_work_type_placeholder" = "Requested work type (optional)";
+"cust_intake_desired_start_placeholder" = "Desired start (YYYY-MM-DD, optional)";
+"cust_intake_desired_end_placeholder" = "Desired end (YYYY-MM-DD, optional)";
+"cust_intake_desired_dates_hint" = "Preferred window only — not a contractual schedule.";
+"cust_intake_desired_date_invalid" = "Dates must use YYYY-MM-DD.";
+"cust_intake_desired_range" = "Desired: %@ → %@";
 "cust_intake_create" = "Save draft";
 
 "cust_intake_list_title" = "Your drafts";

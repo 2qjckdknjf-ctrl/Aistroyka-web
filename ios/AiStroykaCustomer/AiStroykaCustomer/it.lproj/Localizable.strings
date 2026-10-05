@@ -80,6 +80,11 @@
 "cust_intake_site_context_placeholder" = "Contesto del sito (opzionale)";
 "cust_intake_location_placeholder" = "Città / zona (opzionale)";
 "cust_intake_work_type_placeholder" = "Tipo di lavoro (opzionale)";
+"cust_intake_desired_start_placeholder" = "Inizio desiderato (AAAA-MM-GG, opzionale)";
+"cust_intake_desired_end_placeholder" = "Fine desiderata (AAAA-MM-GG, opzionale)";
+"cust_intake_desired_dates_hint" = "Solo finestra preferita — non un calendario contrattuale.";
+"cust_intake_desired_date_invalid" = "Le date devono usare AAAA-MM-GG.";
+"cust_intake_desired_range" = "Desiderato: %@ → %@";
 "cust_intake_create" = "Salva bozza";
 
 "cust_intake_list_title" = "Le tue bozze";

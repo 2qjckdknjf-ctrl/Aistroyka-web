@@ -80,6 +80,11 @@
 "cust_intake_site_context_placeholder" = "Contexto del sitio (opcional)";
 "cust_intake_location_placeholder" = "Ciudad / zona (opcional)";
 "cust_intake_work_type_placeholder" = "Tipo de trabajo (opcional)";
+"cust_intake_desired_start_placeholder" = "Inicio deseado (AAAA-MM-DD, opcional)";
+"cust_intake_desired_end_placeholder" = "Fin deseado (AAAA-MM-DD, opcional)";
+"cust_intake_desired_dates_hint" = "Solo ventana preferida — no es un calendario contractual.";
+"cust_intake_desired_date_invalid" = "Las fechas deben usar AAAA-MM-DD.";
+"cust_intake_desired_range" = "Deseado: %@ → %@";
 "cust_intake_create" = "Guardar borrador";
 
 "cust_intake_list_title" = "Sus borradores";

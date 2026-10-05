@@ -169,7 +169,9 @@ enum CustomerAPI {
         questions: [String] = [],
         siteContext: String? = nil,
         requestedWorkType: String? = nil,
-        locationLabel: String? = nil
+        locationLabel: String? = nil,
+        desiredStart: String? = nil,
+        desiredEnd: String? = nil
     ) async throws -> CustomerIntakeDraft {
         struct LocationBody: Encodable {
             let precision: String
@@ -183,12 +185,16 @@ enum CustomerAPI {
             let siteContext: String?
             let requestedWorkType: String?
             let location: LocationBody?
+            let desiredStart: String?
+            let desiredEnd: String?
 
             enum CodingKeys: String, CodingKey {
                 case title, description, questions, location
                 case mediaRefs = "media_refs"
                 case siteContext = "site_context"
                 case requestedWorkType = "requested_work_type"
+                case desiredStart = "desired_start"
+                case desiredEnd = "desired_end"
             }
         }
         let location: LocationBody? = {
@@ -207,7 +213,9 @@ enum CustomerAPI {
                 questions: questions,
                 siteContext: siteContext,
                 requestedWorkType: requestedWorkType,
-                location: location
+                location: location,
+                desiredStart: desiredStart,
+                desiredEnd: desiredEnd
             )
         )
         return env.data
