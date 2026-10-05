@@ -92,6 +92,8 @@
 "cust_intake_bound_project" = "Linked to project: %@";
 "cust_intake_row_project" = "Project %@";
 "cust_intake_create" = "Save draft";
+"cust_intake_update" = "Update draft";
+"cust_intake_cancel_edit" = "Start a new draft";
 
 "cust_intake_list_title" = "Your drafts";
 

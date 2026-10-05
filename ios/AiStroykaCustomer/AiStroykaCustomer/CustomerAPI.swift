@@ -224,4 +224,68 @@ enum CustomerAPI {
         )
         return env.data
     }
+
+    static func updateIntakeDraft(
+        id: String,
+        title: String,
+        description: String,
+        mediaRefs: [CustomerIntakeMediaRef] = [],
+        questions: [String] = [],
+        siteContext: String? = nil,
+        requestedWorkType: String? = nil,
+        locationLabel: String? = nil,
+        desiredStart: String? = nil,
+        desiredEnd: String? = nil,
+        projectId: String? = nil
+    ) async throws -> CustomerIntakeDraft {
+        struct LocationBody: Encodable {
+            let precision: String
+            let label: String?
+        }
+        struct Body: Encodable {
+            let title: String
+            let description: String
+            let mediaRefs: [CustomerIntakeMediaRef]
+            let questions: [String]
+            let siteContext: String?
+            let requestedWorkType: String?
+            let location: LocationBody?
+            let desiredStart: String?
+            let desiredEnd: String?
+            let projectId: String?
+
+            enum CodingKeys: String, CodingKey {
+                case title, description, questions, location
+                case mediaRefs = "media_refs"
+                case siteContext = "site_context"
+                case requestedWorkType = "requested_work_type"
+                case desiredStart = "desired_start"
+                case desiredEnd = "desired_end"
+                case projectId = "project_id"
+            }
+        }
+        let location: LocationBody? = {
+            guard let label = locationLabel?.trimmingCharacters(in: .whitespacesAndNewlines), !label.isEmpty else {
+                return nil
+            }
+            return LocationBody(precision: "city", label: label)
+        }()
+        let env: Envelope<CustomerIntakeDraft> = try await APIClient.shared.request(
+            path: "portal/intake/\(id)",
+            method: "PATCH",
+            body: Body(
+                title: title,
+                description: description,
+                mediaRefs: mediaRefs,
+                questions: questions,
+                siteContext: siteContext,
+                requestedWorkType: requestedWorkType,
+                location: location,
+                desiredStart: desiredStart,
+                desiredEnd: desiredEnd,
+                projectId: projectId
+            )
+        )
+        return env.data
+    }
 }
