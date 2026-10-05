@@ -68,6 +68,21 @@ All require auth and at least member role for write; viewer for GET tasks/today.
 
 ---
 
+## Customer portal intake
+
+Structured request drafts for the signed-in creator. Submit changes `status` on that row only. Contract, tenant rules, and pitfalls: [CUSTOMER_INTAKE.md](./runbooks/CUSTOMER_INTAKE.md).
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/v1/portal/intake` | Yes | List drafts for the resolved tenant, newest first. Stakeholders are limited to their own rows. |
+| POST | `/api/v1/portal/intake` | Yes | Create a `draft`. **201** `{ "data": draft }`. |
+| PATCH | `/api/v1/portal/intake/:id` | Yes | Partial update by the creator. `tenant_id` and `created_by` are rejected. |
+| POST | `/api/v1/portal/intake/:id/submit` | Yes | Move `draft` → `submitted`. A second submit returns the same row. |
+
+Field-worker profiles `ios_worker`, `android_worker`, `ios_lite`, and `android_lite` receive **403** `{ "error": "forbidden", "code": "lite_client_path_forbidden" }`. `ios_customer` is outside that gate.
+
+---
+
 ## Error responses
 
 - **401 Unauthorized:** Missing or invalid auth; or no tenant membership.
