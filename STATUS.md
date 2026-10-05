@@ -4,18 +4,14 @@
 
 | Что | Где проверить |
 |---|---|
-| Актуальный исходный код | `git fetch --no-prune origin` → `origin/main` (после #385 merge `0f6623f1`; staging/prod health last seen `sha7=ee162ea`) |
-| Рабочая папка Mac | `/Users/alex/Projects/AISTROYKA-main-clean`; активный PR: `AISTROYKA-video-unscoped-authz` (#386) |
-| Активная очередь и backlog | [единый реестр PR](docs/tasks/ACTIVE_WORK_REGISTRY.csv) — обновить HEAD/state перед продолжением |
-| Завершённая сверка папок | [workspace reconciliation](docs/tasks/2026-10-04-workspace-reconciliation.md), объединена через #381/#383/#384 |
-| Следующее существующее продолжение | [#386](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/386) video tenant auth; merge только после exact-head `check` SUCCESS и независимого APPROVED |
-| Сохранение/архив/дубликаты | [результат](docs/reconciliation/workspace-2026-10-04/RESULT.md) |
-| Публикация | `/api/v1/health` production и staging; verify `buildStamp.sha7` against intended main — do not assume deploy equals merge |
+| Актуальный исходный код | `git fetch --no-prune origin` → `origin/main` (снимок этой сверки `0db34ede`) |
+| Рабочая папка Mac | `/Users/alex/Projects/AISTROYKA-main-clean`; [START_HERE](START_HERE.md) |
+| Активная очередь | [реестр PR](docs/tasks/ACTIVE_WORK_REGISTRY.csv) |
+| Открытое продолжение | Customer intake submit [#405](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/405) и withdraw [#406](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/406) — после #404 нужны non-author APPROVED на текущий HEAD |
+| Публикация | `/api/v1/health` production и staging; SHA в Git не доказывает развёртывание |
 
-Код #371, #373 (Construction Graph read slice), #374 (Vision lifecycle) уже в базовом main. Во время уборки также объединено основание Customer iOS #372. Не реализовывать заново по старым TODO. #375 (Customer iOS список/детали), #376 (Graph persistence), #377 (async Vision start), #378 (Intake) и #382 (Customer portal estimates/requests) также уже в main. Live DB: Graph overlay tables present; `analysis_jobs.request_key` present; `create_analysis_job` still 3-arg until #385 is applied; `customer_intake_drafts` absent (`OWNER_GATE`). Agentic и остальные незавершённые задачи искать в реестре.
+Сегодня в main: #408 D1 Android audit, #404 PATCH intake, #407 ROMA-VER-009 advisory. #403 viewer-replay ранее. A2–A5, video authz #386, vision #385 уже в main.
 
-Пилотный scope остаётся `contractor-ops-only`, классификация `production-capable / controlled-pilot candidate`. Первый срез Graph/lifecycle не означает полноту продукта, portal READY или Public GA.
+Не реализовывать заново. OWNER_GATE: live apply `create_analysis_job` 4-arg и `customer_intake_drafts`; stores; billing cutover; LEGAL; live AI E1. 005B live intake не начинать. 317/347/348/351/352 — RECONCILE_BACKLOG, не restack. B2 daily-log persist уже в cabinet (`persistThenConfirmFieldDailyLog`). D2 Android не стартовать.
 
-Внешние проверки: применённость новых миграций и отрицательные проверки доступа; portal/finance E2E; физические устройства; юридические тексты; реальные growth cohorts; магазинные и billing cutover gates. Эти статусы не закрываются уборкой репозитория. Исторические сведения о БД и live AI находятся в аудите #371; новая сертификация в этой задаче не выполнялась.
-
-Снимки 100% программы: [аудит](docs/audit/AISTROYKA_100_PERCENT_COMPLETION_AUDIT_2026-10-03.md), [матрица требований](docs/audit/AISTROYKA_100_PERCENT_COMPLETION_MATRIX_2026-10-03.csv), [план зависимостей](docs/roadmap/AISTROYKA_100_PERCENT_EXECUTION_DAG_2026-10-03.md). Это исходные датированные материалы; текущие этапы реализации фиксируются в реестре и handoff.
+Пилотный scope остаётся `contractor-ops-only`. DAG 100% не закрыт внешними гейтами.
