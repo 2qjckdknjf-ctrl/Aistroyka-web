@@ -92,6 +92,8 @@
 "cust_intake_bound_project" = "Collegato al progetto: %@";
 "cust_intake_row_project" = "Progetto %@";
 "cust_intake_create" = "Salva bozza";
+"cust_intake_update" = "Aggiorna bozza";
+"cust_intake_cancel_edit" = "Nuova bozza";
 
 "cust_intake_list_title" = "Le tue bozze";
 
