@@ -132,6 +132,23 @@ final class CustomerIntakeDraftTests: XCTestCase {
         XCTAssertEqual(updated[1].mediaId, "m2")
     }
 
+    func testPortalIntakePathsCarryBoundProjectAndEncodeReservedCharacters() {
+        XCTAssertEqual(CustomerIntakeDraft.portalIntakeListPath(projectId: nil), "portal/intake")
+        XCTAssertEqual(CustomerIntakeDraft.portalIntakeListPath(projectId: "  "), "portal/intake")
+        XCTAssertEqual(
+            CustomerIntakeDraft.portalIntakeListPath(projectId: "proj-9"),
+            "portal/intake?project_id=proj-9"
+        )
+        XCTAssertEqual(
+            CustomerIntakeDraft.portalIntakeSubmitPath(draftId: "d1", projectId: nil),
+            "portal/intake/d1/submit"
+        )
+        XCTAssertEqual(
+            CustomerIntakeDraft.portalIntakeSubmitPath(draftId: "d1", projectId: "a/b c"),
+            "portal/intake/d1/submit?project_id=a%2Fb%20c"
+        )
+    }
+
     func testPatchEncodesClearedOptionalsAsNullAndOmitsUnchangedProject() throws {
         let patch = CustomerIntakeDraftPatch(
             title: "Kitchen",

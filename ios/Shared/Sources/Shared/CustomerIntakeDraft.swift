@@ -117,6 +117,32 @@ public struct CustomerIntakeDraft: Decodable, Identifiable, Sendable {
         case siteContext, requestedWorkType, location, desiredStart, desiredEnd
     }
 
+    /// GET /api/v1/portal/intake, optionally scoped by the portal project the customer is viewing.
+    public static func portalIntakeListPath(projectId: String?) -> String {
+        guard let query = projectIdQuery(projectId) else { return "portal/intake" }
+        return "portal/intake?\(query)"
+    }
+
+    /// POST /api/v1/portal/intake/:id/submit. project_id lets a multi-tenant stakeholder resolve the draft tenant.
+    public static func portalIntakeSubmitPath(draftId: String, projectId: String?) -> String {
+        let id = percentEncode(draftId)
+        guard let query = projectIdQuery(projectId) else { return "portal/intake/\(id)/submit" }
+        return "portal/intake/\(id)/submit?\(query)"
+    }
+
+    private static func projectIdQuery(_ projectId: String?) -> String? {
+        guard let projectId else { return nil }
+        let trimmed = projectId.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        return "project_id=\(percentEncode(trimmed))"
+    }
+
+    private static func percentEncode(_ value: String) -> String {
+        var allowed = CharacterSet.alphanumerics
+        allowed.insert(charactersIn: "-._~")
+        return value.addingPercentEncoding(withAllowedCharacters: allowed) ?? value
+    }
+
     /// Validates optional YYYY-MM-DD desired date fields for portal intake create.
     public static func isISODate(_ value: String) -> Bool {
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)

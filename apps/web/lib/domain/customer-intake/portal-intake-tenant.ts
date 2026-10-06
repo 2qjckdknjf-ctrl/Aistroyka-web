@@ -65,10 +65,28 @@ export async function resolvePortalIntakeTenant(
     return { tenantId: ctx.tenantId };
   }
 
+  // Customer iOS is stakeholder-only and does not send x-tenant-id.
+  // A single active portal grant is unambiguous. Several grants stay fail-closed.
+  const sole = await soleActivePortalTenant(supabase, ctx.userId);
+  if ("error" in sole) return sole;
+  if (sole.tenantId) return { tenantId: sole.tenantId };
+
   return {
     error: "x-tenant-id or project_id is required for portal intake",
     status: 400,
   };
+}
+
+export function intakeProjectHintFromUrl(request: Request): string | null {
+  let raw: string | null;
+  try {
+    raw = new URL(request.url).searchParams.get("project_id");
+  } catch {
+    return null;
+  }
+  if (typeof raw !== "string") return null;
+  const trimmed = raw.trim();
+  return trimmed || null;
 }
 
 async function callerHasExplicitTenantAccess(
@@ -111,4 +129,23 @@ async function hasActivePortalGrantInTenant(
     .limit(1)
     .maybeSingle();
   return Boolean(grant?.id);
+}
+
+async function soleActivePortalTenant(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<{ tenantId: string | null } | { error: string; status: number }> {
+  const { data, error } = await supabase
+    .from("project_stakeholders")
+    .select("tenant_id")
+    .eq("user_id", userId)
+    .eq("status", "active");
+  if (error) return { error: "Portal tenant lookup failed", status: 400 };
+  const tenantIds = new Set<string>();
+  for (const row of data ?? []) {
+    const tenantId = typeof row.tenant_id === "string" ? row.tenant_id.trim() : "";
+    if (tenantId) tenantIds.add(tenantId);
+  }
+  if (tenantIds.size !== 1) return { tenantId: null };
+  return { tenantId: [...tenantIds][0] ?? null };
 }
