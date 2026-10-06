@@ -28,3 +28,8 @@ Read latest plan sections before implementation: Observer/event-driven DAG, Fail
 ## Follow-up — 2026-10-03
 
 Latest dated plan sections cover signals for Oct 2–3: executor/verifier routing, reasoning budget, host policy/secret broker and observed capability drift; streaming evidence/spatial Graph/provider/Owner visualization; market replay, churn attribution and reviewed strategy lessons. HiAir voice stays FUTURE. Read these sections via existing entrypoints. All PLANNED, no implementations/jobs/provider changes. First: fresh baseline audit and existing Assurance Graph/product P0, then contract fixtures. Documentation publication verified by read-after-write; application/runtime tests not claimed.
+
+## Follow-up — 2026-10-07
+
+Read latest dated product/ROMA sections: Outcome/abstention, hidden holdout and independent promotion, DataScope/DataFlowTrace, Intent/Design constraints, context delta/budgets and trusted Kill Handle. AISTROYKA adds completeness, SpatialEvidence/provider, scoped Graph Views, project-level eval split and reviewed Construction Rule Registry. Portfolio plan adds proposal/hypothesis/fingerprint, Capital Sandbox and deterministic StrategySpec compiler; HiAir only existing uncertainty research clarified.
+All PLANNED. No runtime implementation, vendor installation, capital/live enablement, merge or deployment. Entry links remain above. Cursor first reconciles current main/open PRs/runtime and current STATUS, then existing Assurance Graph/product P0 and shared contract fixtures. This historical docs branch is not a runtime readiness report; preserve intervening main changes during integration.

@@ -1,6 +1,6 @@
 # ROMA / инженерный Grow OS — Execution Assurance, 2026-09-23
 
-> Последняя корректировка: 2026-10-03. Последние уточнения — в разделе за 2026-10-03; очередь 2026-10-02 и предыдущие gates сохраняются.
+> Последняя корректировка: 2026-10-07. Актуальные дополнения по сигналам 4–6 октября — в разделе за 2026-10-07; прежние task IDs, очередь и gates сохраняются.
 
 Статус: PLANNED; расширение [ROMA roadmap](ROMA_ROADMAP.md), не новая параллельная система.
 Сохранить ADR-0007 recommendation-only и существующие product/release gates. Блокирующий режим возможен только отдельным ADR и проверенным executor integration.
@@ -245,3 +245,50 @@ AC: undeclared read/network/subprocess и outside-workspace access обнару�
 
 ### Очередь Cursor
 Сначала текущие Assurance Graph и product P0. В contract slice добавить routing/reasoning/host/broker schemas; synthetic enforcement и drift fixtures после approved runtime ADR. Затем offline Arena report и reviewed routing rules. Observer/DAG/Failure/Corpus порядок из 2026-10-02 сохранён; не запускать autonomous production agents этим планом.
+
+## Уточнения по сигналам 4–6 октября — записано 2026-10-07
+
+Статус PLANNED. Дополняют существующие задачи, без нового верхнеуровневого OS/eval framework. Внешние названия RRSI, MLCommons taxonomy, Atlassian workflow, Beam и численные vendor/news claims — непроверенные research inputs; перед использованием подтвердить первоисточник, версии, license/data policy. Не считать их release evidence.
+
+### Outcome Contract — ROMA-VER-009 / ROMA-EVAL-001 / GROW-ROUTING-006
+Versioned outcome: PASS (AC доказаны актуальным evidence), FAIL (доказанное нарушение), BLOCKED (policy/prerequisite запрещает выполнение), INSUFFICIENT_EVIDENCE (данных недостаточно для вывода), ABSTAIN (исполнитель явно воздержался от допустимого вывода/действия). Причина, evidence refs, coverage, verifier/version и policy digest обязательны. ABSTAIN не означает безопасное завершение задачи или PASS; unknown/stale telemetry остаётся существующим UNKNOWN/INCOMPLETE с reason и явным mapping в контракт. Это verdict/observation, а не замена scheduler states.
+Functional/capability/data-flow/privacy dimensions сохранять отдельно; доказанный FAIL любой обязательной dimension делает общий FAIL, недостаточное покрытие не позволяет общий PASS. Для ADR-0007 это recommendation verdict; enforcement вводится прежним отдельным ADR.
+AC: missing/stale/conflicting evidence, voluntary abstention, policy deny и proven defect различаются. Arena считает coverage, selective risk/error rate на answered cases, correct abstention и false abstention на независимо размеченных случаях; denominator, uncertainty и sample size фиксированы. Universal abstention не выигрывает verified-success metric; успешность с нулевыми policy violations остаётся обязательной.
+
+### ROMA-CORPUS-004 / ROMA-PACKAGE-002 — Hidden Holdout и Independent Promotion Gate
+P0 contract, P1 offline integration после trace/privacy fixtures. Разделить improvement/tuning corrections, visible regression, hidden holdout и adversarial suites; split/version/digest и lineage immutable. Родственные tasks/проекты/time windows группируются до split; duplicates и contamination проверяются. Исполнитель candidate не видит hidden tasks/expected answers, не выбирает rubric и не редактирует corpus/verifier.
+Trusted evaluator получает candidate digest, запускает frozen hidden suite в sandbox; candidate получает только ограниченный aggregate feedback. Защитить tool outputs/logs и fixture credentials от leakage. Повторная оптимизация по feedback расходует заранее заданный evaluation budget; использовать rotation/fresh sequestered sets, чтобы скрытый набор не стал tuning corpus.
+Independent promotion связывает package/model/runtime/policy/toolset digest, corpus versions, исходную baseline, regression/holdout/adversarial metrics и signed scoped verdict. Thresholds/sample sufficiency фиксировать ДО eval; improvement без holdout confirmation либо privacy/risk regression → promotion BLOCKED. Verifier не подписывает своё изменение; старый approved verifier + deterministic suite + независимый reviewer, reviewed rollback/canary. Никакого self-deploy.
+AC: hidden answer access, overlapping lineage, changed candidate after evaluation, tampered report, depleted holdout и swapped verifier отклоняются; все trials учитываются. Production canary только после отдельного authorization.
+
+### DataScope / DataFlowTrace — ROMA-CAP-001, ROMA-TRACE-002, ROMA-DRIFT-005
+P0 schema/negative fixtures; P1 enforcement вместе с approved runtime ADR и broker.
+CapabilityManifest DataScope: tenant/project/resource class, classification, allowed fields/operations, purpose, allowed recipients/destinations, transformations, retention/delete constraints и policy version. Grant пересекается с user/project permissions, никогда не расширяет их. Derived data, embeddings, summaries, exports и telemetry сохраняют classification/lineage; снижение classification только через reviewed transformation policy.
+DataFlowTrace фиксирует source_ref/classification, agent/run, tool/capability, destination identity/class, purpose, transformation/version, retention policy, decision/observed outcome и coverage. В trace — redacted refs/digests, без raw PII/secrets. Declared→granted→observed flows сравниваются с достоверными broker/runtime/network observations; отсутствие telemetry не доказывает отсутствие утечки.
+AC: permitted tool, но forbidden destination/purpose/fields → data-flow/privacy FAIL даже при functional PASS. Cross-tenant forwarding, summary laundering, external MCP, wrong retention и logging leakage проверены. Attempted denied flow отличается от successful exfiltration. Fail closed при неподдерживаемом mandatory control; отключение telemetry не даёт clean PASS.
+
+### GROW-INTENT-009 — Intent Ingest; расширение Observer/Task Graph
+P1 после contract slice, bounded draft-first. Voice/screen/Figma/issue → redacted source refs → structured task с requirement/AC, repo/baseline, permitted paths/write set, dependencies, risk/data scope, budget, verification и acceptance owner → task fingerprint → reviewed authorization → existing Capability Router/Scheduler.
+Untrusted screenshots/issue text — data, не инструкции для tools. Сохранять uncertainty/ambiguities, consent и retention для записей; возможный duplicate требует reconciliation. Новый ingest не даёт разрешения merge/deploy/messages. Уже авторизованный branch slice проходит без повторного вопроса на каждом reversible step.
+AC: voice misunderstanding/ambiguous screen, injected instructions, stale baseline, duplicate intent и несогласованное scope expansion не запускают task; показать reviewable proposed task и diff.
+
+### GROW-DESIGN-010 — Design-System Capability; existing coding policy
+P0 manifest/fixtures, P1 UI adapter. Machine-readable versioned allowed components/tokens/layout/navigation patterns, accessibility/localization rules и repo scope берутся из актуального approved design system. Existing component reuse по умолчанию; новый component/navigation primitive или изменение tokens — explicit design review в task scope. Запрет duplicate/ad-hoc CSS system не мешает уже авторизованному ограниченному изменению.
+AC: unknown/duplicate component, arbitrary token/style, new navigation, localization/accessibility regression обнаруживаются static checks + relevant UI review. Approved exception привязано к task/version; не объявлять все старые UI compliant. AISTROYKA active render/design packages и раздельные Manager/Worker interfaces сохраняются.
+
+### GROW-OBSERVER-003 / GROW-BUDGET-001 — delta context
+ProjectStateSnapshot: state/version/hash, baseline/source sequence, permissions/policy/corpus refs + event delta + selective retrieval. Missing sequence, stale snapshot или изменённые permissions требуют scoped reconciliation, не blind incremental update. Dedupe/restart/checkpoint сохраняют lineage; cache namespace разделён tenant/project/role, revoke/delete invalidates sensitive cache.
+Budget: max_cached_tokens/day, max_uncached_tokens/day, max_agent_cost/day + существующие task/child/time/call limits, reserve/settle. Provider usage unknown = pending/unavailable, не zero; cache может быть платным. Separate token counts and money, include retrieval/runtime/verification costs.
+Context Reuse Efficiency измерять только при заданной rubric useful_new_context/total_context_processed; полезность — estimate с method/uncertainty, не объективная token counter. Дополнительно snapshot reuse, stale-context errors, verified success и total cost.
+AC: lost/out-of-order event, poisoned delta, changed grants, concurrent reservations, retry/cache usage и budget exhaustion; mandatory verification не исключать ради экономии.
+
+### ROMA-GUARD-001 / GROW-IDENTITY-001 / GROW-SECRETS-008 — Agent Kill Handle
+Identity и broker — P0 prerequisites для будущего autonomous runtime, не разрешение обойти Assurance Graph/product P0.
+Trusted runtime control: pause/revoke/quarantine/kill/rotateCredentials/preserveEvidence(agent_id, run_id, scope). Control независим от worker/model; revoke grants/credential leases и stop environment через operator/control plane, а не просьбу агенту. Pause запрещает новые actions и безопасно checkpoint; kill не обещает rollback уже выполненного side effect.
+AC: unresponsive/compromised worker, spawned subprocess, queued calls, broker outage и stale/replayed grants; fencing блокирует subsequent privileged actions. In-flight external operation получает UNKNOWN до reconciliation; kill не автоматически liquidate/cancel trades. Evidence минимизировано и защищено, политика retention/delete сохраняется. Rotation shared underlying provider credential оценивает blast radius; native per-agent token scope не выдумывать.
+
+### Model Arena shortlist
+Beam — WATCH/OFFLINE CANDIDATE только после подтверждения реальных weights/API, license, hardware/cost/privacy, independent eval и tool/runtime compatibility. Availability/self-hosting учитывается в GROW-ROUTING-006 вместе с verified quality/cost/latency; open weights сами по себе не доказательство privacy. Current coding default не меняется по дайджесту.
+
+### Актуальная очередь Cursor
+Fresh main/runtime/pilot gap audit → существующий Assurance Graph/staleness slice → общий contract/negative fixtures (Outcome, DataScope/Flow, identity/broker/kill, package/holdout/budget) → synthetic trusted runtime и read-only Observer/delta → offline Arena/independent promotion → bounded Intent/Design adapter → scoped product integrations. Persistent/parallel execution и production canary — после прежних gates. Все пункты здесь PLANNED.

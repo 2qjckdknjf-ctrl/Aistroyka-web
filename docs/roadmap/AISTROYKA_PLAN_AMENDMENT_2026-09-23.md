@@ -1,6 +1,6 @@
 # AISTROYKA — дополнение к плану, 2026-09-23
 
-> Последняя корректировка: 2026-10-03. Последние уточнения — в разделе за 2026-10-03; очередь 2026-10-02 и предыдущие gates сохраняются.
+> Последняя корректировка: 2026-10-07. Актуальные дополнения по сигналам 4–6 октября — в разделе за 2026-10-07; прежние task IDs, очередь и gates сохраняются.
 
 Статус: PLANNED. Документ задаёт backlog, не подтверждает готовность функций.
 Канонический продуктовый план: [Mega roadmap](AISTROYKA_MEGA_ROADMAP_CUSTOMER_FINANCE_SAFE.md).
@@ -122,3 +122,40 @@ Speech provider eval: строительная речь/шум, timestamps, term
 **Spatial AC:** неизвестные размеры/геометрия explicitly unresolved; нельзя извлечь точный масштаб без calibration. Проверять coordinate systems/units/revisions, renamed rooms, overlapping zones и import source lineage. Extraction — draft с review/corrections AIS-CORRECTION-009; uncertainty не теряется при export.
 Будущая mutation “сместить стену” — versioned proposal → geometry/quantity estimate → schedule/commercial impact draft → approval, не автоматическое изменение baseline, заказов или internal/customer finance projections. Cost geometry links не раскрывают contractor margin.
 Owner 3D status основан на reviewed evidence и coverage; отвергнутый/stale prediction не выдаётся за progress. Новая UI-фича не опережает базовый Owner portal/iOS. Async intake → Graph → live порядок сохраняется; текущие pilot gates действуют.
+
+## Evidence / Graph / QA contracts — сигналы 4–6 октября, записано 2026-10-07
+
+PLANNED. Дополнение AIS-EVID-002, AIS-VISION-003, AIS-GRAPH-004, AIS-CORRECTION-009, AIS-STREAM-010 и AIS-SPATIAL-011/PROVIDER-012. OpenSpace/BIMlogiq — непроверенные research references; интеграция, покупка, собственный Revit/BIM editor этим планом не утверждены. Specialist-agent архитектура продолжается через существующий orchestrator/skills; сначала fresh module audit.
+
+### AIS-EVID-002 — Evidence Quality Gate / Capture Completeness
+Versioned requirements по work type/element: обязательные детали/ракурсы, timestamp/freshness, coverage, пригодность изображения/локализации, source provenance. Completeness содержит denominator/requirement version и missing items; confidence отдельно, unavailable = null.
+Capture quality verdict отделён от construction verdict. Хорошее фото не доказывает качество работ; плохое фото не доказывает дефект. При нехватке — INSUFFICIENT_EVIDENCE + конкретные recapture instructions, например показать примыкание трапа/порог; нельзя сертифицировать скрытую гидроизоляцию по общей фотографии.
+AC: missing/blurred/stale/duplicate/conflicting captures, неверный объект и partial coverage; targeted recapture не требует опасного доступа/разборки. Human review/corrections сохраняют исходную observation и версии. Связать timestamp/partial/final с AIS-STREAM-010, не выдавать transcript за verified work.
+
+### SpatialEvidence / EvidenceProvider — расширение AIS-SPATIAL-011 и PROVIDER-012
+P0 data contract, P1 phone/video vertical slice после shared evidence foundations; остальные sensors LATER.
+SpatialEvidence: tenant/project_id, capture_id, captured_at/received_at/timezone/clock uncertainty, space_id, element_ids/work_item_ids, optional contractor/schedule refs, source type/provider/version, coordinate system/units/calibration, geometry_ref, protected media_refs, observations/lineage, localization status, confidence/method, completeness/requirement version, analysis model/version, human verdict/reviewer/revision и retention/access policy.
+Source: phone/video/360/drone/scanner/BIM/future sensor. BIM/model reference отличается от measured field capture и имеет revision/as-designed/as-built status. Unknown spatial link/geometry остаётся unresolved, а не guessed precise coordinate. Capture immutable; correction создаёт revision/supersedes link.
+EvidenceProvider capability interface: capture/ingest/localize/timestamp/extractGeometry/extractObservations с supported/unsupported declarations, async job/cancel/idempotency/error и raw-to-normalized provenance. Не каждый provider умеет каждую операцию; server importer не обязан иметь camera capture. Normalized Graph независим от vendor.
+AC: unsupported method возвращает явный результат; units/coordinate/revision mismatch, clock skew, renamed room, duplicate import и partial upload не теряют lineage. Tenant-safe refs, consent/retention, archive/delete и geometry uncertainty обязательны. Phone/video first; 360/drone/scanner/BIM adapters только отдельным spike с actual data/license/security evidence.
+
+### Agent Graph Views — AIS-GRAPH-004 access contract
+Graph хранит operational truth и protected references, не копирует passport/bank/contacts/raw media во все contexts. Contact_ref защищён отдельным profile access; derived summaries сохраняют classification.
+Owner — customer-safe project projection; Supply — procurement-safe; Worker — assigned-work projection; остальные specialists — task-specific least privilege. Серверная projection/filter до передачи LLM, включая retrieval, tool responses, caches и exports. Role/tenant/project/assignment changes invalidate cached views.
+AC: guessed refs, cross-tenant joins, revoked membership, indirect financial inference и tool bypass запрещены. Owner не получает contractor costs/margin/internal state. DataScope/DataFlowTrace из ROMA фиксируют allowed recipients/purpose; missing telemetry не clean privacy PASS.
+
+### AIS-CORRECTION-009 — Construction Eval Corpus
+Corrections/improvement, regression, hidden project holdout, adversarial и отдельно future authorized new-building canary. Split по объекту/связанному пространству/серии captures ДО обработки кадров; frames одной ванной не делить между tuning и holdout. Related duplicates и temporal leakage проверять.
+Protected holdout хранится вне git/agent-readable workspace; consent/legal access, sanitization, retention/delete и label confidence/disagreement обязательны. Scope of consent не означает training permission. Frozen rubric различает real defect, insufficient evidence и uncertainty. Candidate prompt/capture/rule/model version не меняется во время eval.
+AC: улучшение на corrections без hidden-project confirmation не promotion; verifier не автор candidate/rubric, regression/holdout coverage и per-work-type errors доступны reviewer. Canary на объекте только после product/runtime authorization; unsafe findings требуют специалиста, не automated acceptance.
+
+### AIS-RULE-015 — Construction Rule Registry
+P0 schema/review workflow, P1 один bounded QA/QC work type после Evidence Gate + Graph links, до автоматических construction verdicts.
+Versioned ConstructionRule: id/version/status, jurisdiction/location, effective dates, work/element type, applicability/preconditions, typed condition/units, tolerance с provenance, severity, required evidence, source_document/revision/clause, verification method (deterministic/manual/expert/AI-assisted), reviewer/approval и supersession.
+Document/spec extraction создаёт proposed rule → квалифицированная human verification → approved immutable registry version. Source доступен по разрешённой ссылке; AI не выдумывает норму, threshold или jurisdiction. Contract/project specs и statutory requirements помечены отдельно; conflict/unknown applicability блокирует conclusion и требует review.
+AC: unsupported measurement, missing angles/scale, stale rule/source, contradictory jurisdiction и hidden work → INSUFFICIENT_EVIDENCE/BLOCKED по Outcome Contract, не PASS. Проверенные нарушения → FAIL с source/evidence; ABSTAIN не completion. Фото само по себе не доказывает нормативное соответствие/безопасность. No visual enforcement of precise dimensions without calibration; профессиональная проверка остаётся там, где необходима.
+QA Agent получает identity/capability/GraphView/EvidenceRequirements/ToolSet/OutcomeContract; ROMA независимая проверка, policy/privacy FAIL overrides functional PASS.
+
+### Coding handoff / порядок
+Intent Ingest и machine-readable design constraints описаны в общем ROMA плане (2026-10-07); использовать актуальные approved design/render packages, localization/accessibility и отдельные Manager/Worker apps. Customer iOS/Owner report/live intake остаются прежними backlog/dependencies.
+Cursor: fresh baseline/pilot/module audit → existing evidence/async vision + shared contract fixtures → phone/video SpatialEvidence/provider slice + completeness → Graph views → один reviewed rule pilot и project holdout → async intake/Graph/customer gates → future live/sensor integrations. Новые contracts не означают реализованную функцию или расширение contractor-ops-only pilot.

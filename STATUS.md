@@ -57,3 +57,7 @@ Existing PR #350 adds Observer/DAG, Failure/eval corpus and Construction correct
 ## Planning follow-up — 2026-10-03
 
 PR #350 plans updated for routing/reasoning, host/secret/capability drift and streaming/spatial Graph. Tasks have dependencies/AC in latest dated sections; all PLANNED. Runtime and historical readiness above not re-certified; reconcile current main/STATUS before implementation.
+
+## Planning follow-up — 2026-10-07
+
+PR #350 planning amendments cover signals Oct 4–6: Outcome/hidden holdout/promotion, data scope/flow, intent/design/delta budget and runtime kill controls; AISTROYKA evidence completeness/spatial providers/Graph Views/project holdout/Construction Rules. Read latest dated sections via existing roadmap/handoff links. All PLANNED. Runtime/deployment not checked; older status above remains historical. Reconcile current main and preserve its changes before implementation/integration.
