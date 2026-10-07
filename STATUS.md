@@ -61,3 +61,6 @@ PR #350 plans updated for routing/reasoning, host/secret/capability drift and st
 ## Planning follow-up — 2026-10-07
 
 PR #350 planning amendments cover signals Oct 4–6: Outcome/hidden holdout/promotion, data scope/flow, intent/design/delta budget and runtime kill controls; AISTROYKA evidence completeness/spatial providers/Graph Views/project holdout/Construction Rules. Read latest dated sections via existing roadmap/handoff links. All PLANNED. Runtime/deployment not checked; older status above remains historical. Reconcile current main and preserve its changes before implementation/integration.
+
+## Planning follow-up — 2026-10-07 evening
+PR #350 adds retrieval/Construction Memory, preventive artifact egress/destination contracts and deterministic skill verification in latest sections. All PLANNED; older runtime status not re-certified. Integration must preserve current main changes. Handoff links include Obraprecio planning PR #59 and portfolio/HiAir scope.

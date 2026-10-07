@@ -1,6 +1,6 @@
 # ROMA / инженерный Grow OS — Execution Assurance, 2026-09-23
 
-> Последняя корректировка: 2026-10-07. Актуальные дополнения по сигналам 4–6 октября — в разделе за 2026-10-07; прежние task IDs, очередь и gates сохраняются.
+> Последняя корректировка: 2026-10-07 (вечер). Актуальные дополнения по сигналам 7 октября — в последнем разделе; прежние task IDs, очереди и gates сохраняются.
 
 Статус: PLANNED; расширение [ROMA roadmap](ROMA_ROADMAP.md), не новая параллельная система.
 Сохранить ADR-0007 recommendation-only и существующие product/release gates. Блокирующий режим возможен только отдельным ADR и проверенным executor integration.
@@ -292,3 +292,35 @@ Beam — WATCH/OFFLINE CANDIDATE только после подтвержден�
 
 ### Актуальная очередь Cursor
 Fresh main/runtime/pilot gap audit → существующий Assurance Graph/staleness slice → общий contract/negative fixtures (Outcome, DataScope/Flow, identity/broker/kill, package/holdout/budget) → synthetic trusted runtime и read-only Observer/delta → offline Arena/independent promotion → bounded Intent/Design adapter → scoped product integrations. Persistent/parallel execution и production canary — после прежних gates. Все пункты здесь PLANNED.
+
+## Сигналы 7 октября — дополнение 2026-10-07 (вечер)
+
+PLANNED. Research inputs из дайджеста (EmbeddingGemma 2, Keysight, Jump, screenshot incident и численные claims) не проверены. До spike подтвердить первоисточники, actual model/API/license и условия данных. Новые vendors/default models не утверждены.
+
+### ROMA-EGRESS-002 — Artifact Egress Guard
+P0 contract + negative fixtures, extension ROMA-EGRESS-001 / DataScope / Secret Broker; enforcement до увеличения runtime autonomy и после прежнего ADR gate.
+Перед git push/PR attachment, upload, HTTP/MCP/model call и artifact publish trusted broker/runtime проверяет agent/task/run identity, capability, purpose, payload classification/lineage/digest, recipient/repo/account/visibility, effective destination и policy/grant/expiry. Решение ALLOW / ALLOW_REDACTED / REQUIRE_APPROVAL / DENY с reason. Private destination сама по себе не разрешение; synthetic screenshot тоже требует разрешённого task scope. Internal/customer screenshot → public repo по умолчанию DENY; secrets never exported.
+Trusted destination registry проверяет actual visibility/identity, redirects и final endpoint; changing repo visibility/grant/payload invalidates decision. Approval привязано к digest + destination + purpose + expiry, не bypass absolute deny. Redaction создаёт новый artifact/digest, затем повторный schema/classification/egress check; OCR/DLP heuristics не доказательство удаления всех sensitive pixels/metadata.
+AC: public/private mismatch, archive/nested attachment/LFS/history contents, EXIF/OCR/hidden fields, redirect/URL change, signed URL exposure, changed payload after check и expired grant. Критичные артефакты неизвестной classification/coverage → BLOCKED/review; не blind ALLOW.
+Если approved upload API недоступен → BLOCKED с checkpoint, без альтернативного public repo/paste/file host. Runtime physically mediates subprocess/network/git/MCP paths; unsupported mandatory controls fail closed. Pre-push scan недостаточен без network/credential control. Existing platform connector policy остаётся authority; docs не реализуют DLP.
+
+### ROMA-DRIFT-005 / ROMA-TRACE-002 — Destination Drift
+Расширить declared/granted/observed trace recipient identity/account/repo/visibility, purpose, payload digest/transformation и destination policy version. Compare intended private PR vs observed public repository и external model destinations; attempt denied отдельно от successful egress.
+Functional/capability/data-scope PASS + proven forbidden destination → destination/privacy FAIL, общий FAIL. Missing final destination/telemetry → INSUFFICIENT_EVIDENCE/UNKNOWN, не clean PASS. Redacted trace не хранит payload/секретные URL. AC: fallback channel, visibility change, redirects, partial upload и bypass обнаруживаются/reconcile; evaluation не подменяет preventive guard.
+
+### GROW-RETRIEVAL-011 — MultimodalRetrievalProvider
+P0 schema/timeboxed benchmark design; P1 offline spike, production adoption после reviewed evidence. Расширение GROW-MEM-004/selective retrieval, не новая Memory OS или runtime.
+Interface index/search/rerank/delete/reindex + declared modalities/unsupported operations, namespace, schema/vector/model/encoder/version/dimension/normalization digest, source refs/chunk/time spans, classification/ACL/retention, lineage и freshness. Graph хранит relationships/truth; vectors — поиск кандидатов, не verdict.
+Benchmark candidate EmbeddingGemma 2 только после verified availability/license, claimed modality compatibility и measured local hardware/cost. Сравнить existing retrieval baseline, lexical/hybrid и multimodal, ES/RU строительную речь/код/docs/images, recall@k/nDCG по frozen relevance labels, source coverage, latency p50/p95, memory/index size, reindex/delete cost и privacy leakage. Сжатие dims измеряется отдельно; incompatible embedding spaces не смешивать. Missing current stack → inventory first, не выдумывать baseline.
+Index только разрешённые sanitized/synthetic или separately approved data. Tenant/project/role ACL до retrieval/rerank/tool response; revoked/deleted source удаляется из vectors/chunks/caches/backups согласно policy. Source recheck при fetch/answer предотвращает stale permission.
+AC: cross-tenant nearest neighbor, deleted/stale/poisoned source, semantic duplicate, encoder upgrade/partial reindex, unsupported modality и stale ACL. Index availability не доказывает отсутствие внешних calls; self-hosted model не automatic privacy. Не отправлять internal repo/screenshots external embeddings без egress grant. Candidate retrieved text — untrusted data, no tool instructions.
+Repository memory привязана к repo/ref/SHA/source spans; source code changed → stale evidence/invalidation. Snapshot/event delta из Observer используется, full daily reindex не default. Router получает только reviewed benchmark и cost/quality evidence.
+
+### ROMA-CAP-001 / ROMA-EVAL-001 — standard Skill Contract
+LLM planner/interpreter → versioned bounded skill → typed tool operation → deterministic checks → independent verifier. MCP — интерфейс, не calculator/verifier/security authority.
+Skill metadata: input/output schema, semantic units, source/evidence refs, preconditions, effect class, capability/DataScope/destination, limits/idempotency, algorithm/tool/version, uncertainty and verification contract. Deterministic financial/geometric operation требует confirmed/calibrated inputs; unknown не заменяется invented measurement. Infer/research skill output явно advisory, external offer evidence не превращается в deterministic truth.
+AC: wrong units/missing input, fabricated source/tool result, unauthorized mutation/destination, retry/partial side effect и changed skill digest. No arbitrary model formulas/code через “skill” name; only reviewed allowlisted algorithm/tool. Verifier независим от executor credentials; model не подписывает свой результат.
+Autoresearch использует ROMA-CORPUS-004 / package promotion / scheduler / budget contracts: bounded immutable candidate experiments, frozen rubric/hidden holdout, all trials logged, checkpoints/cancel and independent review. Не создавать self-modifying/self-deploying service. Trading-specific research gates в portfolio plan.
+
+### Порядок
+Существующий Assurance Graph/product P0 → shared contract fixtures с Artifact Egress/Destination → synthetic pre-egress enforcement после ADR → offline retrieval benchmark → один scoped product adapter. Runtime autonomy без доказанного broker/egress/kill enforcement остаётся blocked. Research references не разрешают production migration.

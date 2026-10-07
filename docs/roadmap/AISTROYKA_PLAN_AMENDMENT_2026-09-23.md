@@ -1,6 +1,6 @@
 # AISTROYKA — дополнение к плану, 2026-09-23
 
-> Последняя корректировка: 2026-10-07. Актуальные дополнения по сигналам 4–6 октября — в разделе за 2026-10-07; прежние task IDs, очередь и gates сохраняются.
+> Последняя корректировка: 2026-10-07 (вечер). Актуальные дополнения по сигналам 7 октября — в последнем разделе; прежние task IDs, очереди и gates сохраняются.
 
 Статус: PLANNED. Документ задаёт backlog, не подтверждает готовность функций.
 Канонический продуктовый план: [Mega roadmap](AISTROYKA_MEGA_ROADMAP_CUSTOMER_FINANCE_SAFE.md).
@@ -159,3 +159,20 @@ QA Agent получает identity/capability/GraphView/EvidenceRequirements/Too
 ### Coding handoff / порядок
 Intent Ingest и machine-readable design constraints описаны в общем ROMA плане (2026-10-07); использовать актуальные approved design/render packages, localization/accessibility и отдельные Manager/Worker apps. Customer iOS/Owner report/live intake остаются прежними backlog/dependencies.
 Cursor: fresh baseline/pilot/module audit → existing evidence/async vision + shared contract fixtures → phone/video SpatialEvidence/provider slice + completeness → Graph views → один reviewed rule pilot и project holdout → async intake/Graph/customer gates → future live/sensor integrations. Новые contracts не означают реализованную функцию или расширение contractor-ops-only pilot.
+
+## Construction Memory / Skills — сигналы 7 октября, дополнение 2026-10-07 (вечер)
+
+PLANNED; extends AIS-EVID/GRAPH/SPATIAL contracts, не новый customer rollout.
+
+### AIS-MEM-016 — Construction Memory / multimodal retrieval
+P0 contract/benchmark, P1 один evidence-search slice после authorized Evidence + Graph Views; retrieval не опережает current pilot/module audit.
+Use GROW-RETRIEVAL-011 interface, independent product credentials/index namespace. Source text/doc clause/photo/video time segment/audio transcript/drawing → normalized evidence refs и Graph entity/work-package/room links. Graph остаётся operational truth; similarity только candidate relevance, не progress/quality/measurement verdict.
+Запрос по комнате/гидроизоляции возвращает разрешённые source refs/snippets/time spans, modality, capture/source/model revisions, freshness/coverage и unresolved location. AI summary с source attribution; no evidence → honest insufficient result. Before/after pair требует explicit linkage, не similarity inference.
+AC: server-side tenant/role/project-safe filtering до search/rerank/LLM, revoked source/delete cascade across vector/chunk/cache, partial indexing/model upgrade/coordinate revision и poisoned document; Owner projection не включает contractor costs/margin/private media. Retrieved text untrusted, egress policy до внешнего embedding/rerank. Real client media benchmark только после explicit data authorization; synthetic/sanitized first.
+EmbeddingGemma 2 candidate claims/license/modalities/hardware verify before spike; existing baseline/hybrid recall/privacy/cost compare, no production vendor choice by news. Local mode не proof no telemetry/network leakage.
+
+### Construction skills — existing registry, без дублирования
+Версионировать MeasureWall/Area/Length, MaterialQuantity, NormalizeUnit и PriceSearch в существующем Skill Registry после audit. Bind input/algorithm/output/evidence/calibration/units/version/verification refs; MCP adapter не расширяет permissions.
+Geometry from confirmed dimensions or approved calibrated adapter; deterministic area/length/waste/coverage/pack rounding, source product spec and product compatibility. Missing thickness/coverage/input → question, no invented number. PriceSearch returns normalized regional dated offers/source evidence with ambiguity/IVA/shipping/unit handling; model не financial authority.
+AC: unit conversion, openings, unknown scale, waste boundaries, pack size/rounding, conflicting product specifications и stale region prices. Output draft проходит professional review; tools не делают safety certification, orders или baseline mutation. Independent checks link Requirement→AC→Evidence→Verdict; estimated quantity отличается от measured actual consumption.
+AIS-MATERIAL-008 Supply Agent использует эти skills после прежних Graph/pilot gates, external messages/orders separately authorized. Spatial retrieval не включает 360/BIM vendor интеграцию автоматически.
