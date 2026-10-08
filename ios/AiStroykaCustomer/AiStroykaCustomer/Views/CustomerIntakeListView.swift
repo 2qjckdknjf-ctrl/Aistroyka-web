@@ -224,7 +224,7 @@ struct CustomerIntakeListView: View {
     private func withdrawDraft(_ id: String) async {
         message = nil
         do {
-            _ = try await CustomerAPI.withdrawIntakeDraft(id: id)
+            _ = try await CustomerAPI.withdrawIntakeDraft(id: id, projectId: boundProjectId)
             let confirmation = NSLocalizedString("cust_intake_withdraw_ok", comment: "")
             await load(preservingMessage: true)
             message = confirmation
@@ -241,7 +241,7 @@ struct CustomerIntakeListView: View {
             message = nil
         }
         do {
-            drafts = try await CustomerAPI.listIntakeDrafts()
+            drafts = try await CustomerAPI.listIntakeDrafts(projectId: boundProjectId)
         } catch let apiError as APIError {
             if !preservingMessage {
                 message = apiError.message
@@ -259,7 +259,7 @@ struct CustomerIntakeListView: View {
     private func submitDraft(_ id: String) async {
         message = nil
         do {
-            _ = try await CustomerAPI.submitIntakeDraft(id: id)
+            _ = try await CustomerAPI.submitIntakeDraft(id: id, projectId: boundProjectId)
             let confirmation = NSLocalizedString("cust_intake_submit_ok", comment: "")
             await load(preservingMessage: true)
             message = confirmation

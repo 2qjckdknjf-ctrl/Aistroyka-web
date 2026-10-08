@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { readExplicitTenantClaim, resolvePortalIntakeTenant } from "./portal-intake-tenant";
+import {
+  intakeProjectHintFromUrl,
+  readExplicitTenantClaim,
+  resolvePortalIntakeTenant,
+} from "./portal-intake-tenant";
 import type { TenantContext } from "@/lib/tenant/tenant.types";
 
 const memberCtx = {
@@ -27,6 +31,19 @@ function supabaseFrom(map: Record<string, { data: unknown }>) {
   return {
     from: (table: string) => chain(map[table] ?? { data: null }),
   };
+}
+
+function grantsSupabase(
+  rows: { tenant_id: string }[] | null,
+  error: { message: string } | null = null
+) {
+  const result = { data: rows, error };
+  const q: Record<string, unknown> = {};
+  const self = () => q;
+  q.select = self;
+  q.eq = self;
+  q.then = (resolve: (value: unknown) => unknown) => resolve(result);
+  return { from: () => q };
 }
 
 describe("portal intake tenant resolution", () => {
@@ -137,11 +154,51 @@ describe("portal intake tenant resolution", () => {
     expect(resolved).toEqual({ tenantId: "t-primary" });
   });
 
-  it("requires x-tenant-id or project_id for projectless stakeholder intake", async () => {
+  it("requires x-tenant-id or project_id when a stakeholder has no single portal tenant", async () => {
     const req = new Request("https://test/api/v1/portal/intake", { method: "POST" });
-    const resolved = await resolvePortalIntakeTenant({} as never, stakeholderCtx, req, null);
-    expect(resolved).toMatchObject({ status: 400 });
-    if ("error" in resolved) expect(resolved.error).toMatch(/x-tenant-id or project_id/);
+    const none = await resolvePortalIntakeTenant(grantsSupabase([]) as never, stakeholderCtx, req, null);
+    expect(none).toMatchObject({ status: 400 });
+    if ("error" in none) expect(none.error).toMatch(/x-tenant-id or project_id/);
+    const many = await resolvePortalIntakeTenant(
+      grantsSupabase([{ tenant_id: "t-a" }, { tenant_id: "t-b" }]) as never,
+      stakeholderCtx,
+      req,
+      null
+    );
+    expect(many).toMatchObject({ status: 400 });
+    if ("error" in many) expect(many.error).toMatch(/x-tenant-id or project_id/);
+  });
+
+  it("uses the only active portal tenant when a stakeholder omits x-tenant-id", async () => {
+    const req = new Request("https://test/api/v1/portal/intake", { method: "GET" });
+    const resolved = await resolvePortalIntakeTenant(
+      grantsSupabase([{ tenant_id: "t-only" }, { tenant_id: "t-only" }]) as never,
+      stakeholderCtx,
+      req,
+      null
+    );
+    expect(resolved).toEqual({ tenantId: "t-only" });
+  });
+
+  it("fails closed when the portal tenant lookup errors", async () => {
+    const req = new Request("https://test/api/v1/portal/intake", { method: "POST" });
+    const resolved = await resolvePortalIntakeTenant(
+      grantsSupabase(null, { message: "db down" }) as never,
+      stakeholderCtx,
+      req,
+      null
+    );
+    expect(resolved).toMatchObject({ status: 400, error: "Portal tenant lookup failed" });
+  });
+
+  it("reads a trimmed project_id query hint", () => {
+    expect(intakeProjectHintFromUrl(new Request("https://test/api/v1/portal/intake"))).toBeNull();
+    expect(
+      intakeProjectHintFromUrl(new Request("https://test/api/v1/portal/intake?project_id=%20%20"))
+    ).toBeNull();
+    expect(
+      intakeProjectHintFromUrl(new Request("https://test/api/v1/portal/intake?project_id=p1"))
+    ).toBe("p1");
   });
 
   it("treats an empty x-tenant-id header as present and invalid", async () => {

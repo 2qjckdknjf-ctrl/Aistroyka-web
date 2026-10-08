@@ -22,9 +22,13 @@ const { resolvePortalIntakeTenant } = vi.hoisted(() => ({
   resolvePortalIntakeTenant: vi.fn(),
 }));
 
-vi.mock("@/lib/domain/customer-intake/portal-intake-tenant", () => ({
-  resolvePortalIntakeTenant,
-}));
+vi.mock("@/lib/domain/customer-intake/portal-intake-tenant", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/domain/customer-intake/portal-intake-tenant")>();
+  return {
+    ...actual,
+    resolvePortalIntakeTenant,
+  };
+});
 
 describe("POST /api/v1/portal/intake", () => {
   beforeEach(() => {
@@ -145,5 +149,15 @@ describe("GET /api/v1/portal/intake", () => {
     vi.mocked(getTenantContextFromRequest).mockRejectedValueOnce(new TenantForbiddenError());
     const res = await GET(new Request("https://test/api/v1/portal/intake"));
     expect(res.status).toBe(403);
+  });
+
+  it("forwards a project_id query so a bound portal project can resolve tenant", async () => {
+    resolvePortalIntakeTenant.mockResolvedValue({
+      error: "x-tenant-id or project_id is required for portal intake",
+      status: 400,
+    });
+    const res = await GET(new Request("https://test/api/v1/portal/intake?project_id=p1"));
+    expect(res.status).toBe(400);
+    expect(resolvePortalIntakeTenant.mock.calls[0][3]).toBe("p1");
   });
 });
