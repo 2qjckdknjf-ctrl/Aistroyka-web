@@ -193,11 +193,18 @@ struct CustomerIntakeListView: View {
                             }
                             .buttonStyle(.plain)
                             if draft.status == "draft" {
-                                Button(NSLocalizedString("cust_intake_submit", comment: "")) {
-                                    Task { await submitDraft(draft.id) }
+                                HStack {
+                                    Button(NSLocalizedString("cust_intake_submit", comment: "")) {
+                                        Task { await submitDraft(draft.id) }
+                                    }
+                                    .buttonStyle(.bordered)
+                                    .accessibilityIdentifier("pilot_customer_intake_submit_\(draft.id)")
+                                    Button(NSLocalizedString("cust_intake_withdraw", comment: "")) {
+                                        Task { await withdrawDraft(draft.id) }
+                                    }
+                                    .buttonStyle(.bordered)
+                                    .accessibilityIdentifier("pilot_customer_intake_withdraw_\(draft.id)")
                                 }
-                                .buttonStyle(.bordered)
-                                .accessibilityIdentifier("pilot_customer_intake_submit_\(draft.id)")
                             }
                         }
                         .accessibilityIdentifier("pilot_customer_intake_row_\(draft.id)")
@@ -212,6 +219,20 @@ struct CustomerIntakeListView: View {
         .accessibilityIdentifier("pilot_customer_intake")
         .task { await load() }
         .refreshable { await load() }
+    }
+
+    private func withdrawDraft(_ id: String) async {
+        message = nil
+        do {
+            _ = try await CustomerAPI.withdrawIntakeDraft(id: id)
+            let confirmation = NSLocalizedString("cust_intake_withdraw_ok", comment: "")
+            await load(preservingMessage: true)
+            message = confirmation
+        } catch let apiError as APIError {
+            message = apiError.message
+        } catch {
+            message = NSLocalizedString("cust_intake_withdraw_error", comment: "")
+        }
     }
 
     private func load(preservingMessage: Bool = false) async {
