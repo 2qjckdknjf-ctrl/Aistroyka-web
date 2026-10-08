@@ -12,7 +12,7 @@ This is not a Manager clone. Contractor operations (task assignment, cost, crew,
 | Home | Answer “which of my projects?” | `GET /api/v1/portal/projects` |
 | Projects | Same as Home in this slice (list + empty/error) | portal list |
 | Project detail | Status, progress, recent activity | `GET /api/v1/portal/projects/:id` |
-| Intake | Describe requested work (later) | `GET/POST /api/v1/portal/intake` |
+| Intake | Draft, edit, and submit requested work | `GET/POST /api/v1/portal/intake`, `PATCH /api/v1/portal/intake/:id`, `POST .../submit`. See [CUSTOMER_INTAKE.md](../runbooks/CUSTOMER_INTAKE.md). |
 | Evidence / progress | Shared documents and published progress | portal documents + progress |
 | Decisions | Customer-visible decisions / requests | portal `decisions` |
 | Notifications | Project events the customer is allowed to see | later |
