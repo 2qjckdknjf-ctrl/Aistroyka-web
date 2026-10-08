@@ -224,7 +224,7 @@ struct CustomerIntakeListView: View {
     private func withdrawDraft(_ id: String) async {
         message = nil
         do {
-            _ = try await CustomerAPI.withdrawIntakeDraft(id: id)
+            _ = try await CustomerAPI.withdrawIntakeDraft(id: id, projectId: boundProjectId)
             let confirmation = NSLocalizedString("cust_intake_withdraw_ok", comment: "")
             await load(preservingMessage: true)
             message = confirmation

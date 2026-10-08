@@ -130,6 +130,13 @@ public struct CustomerIntakeDraft: Decodable, Identifiable, Sendable {
         return "portal/intake/\(id)/submit?\(query)"
     }
 
+    /// POST /api/v1/portal/intake/:id/withdraw. Same project_id hint as list/submit for multi-tenant stakeholders.
+    public static func portalIntakeWithdrawPath(draftId: String, projectId: String?) -> String {
+        let id = percentEncode(draftId)
+        guard let query = projectIdQuery(projectId) else { return "portal/intake/\(id)/withdraw" }
+        return "portal/intake/\(id)/withdraw?\(query)"
+    }
+
     private static func projectIdQuery(_ projectId: String?) -> String? {
         guard let projectId else { return nil }
         let trimmed = projectId.trimmingCharacters(in: .whitespacesAndNewlines)

@@ -147,6 +147,14 @@ final class CustomerIntakeDraftTests: XCTestCase {
             CustomerIntakeDraft.portalIntakeSubmitPath(draftId: "d1", projectId: "a/b c"),
             "portal/intake/d1/submit?project_id=a%2Fb%20c"
         )
+        XCTAssertEqual(
+            CustomerIntakeDraft.portalIntakeWithdrawPath(draftId: "d1", projectId: nil),
+            "portal/intake/d1/withdraw"
+        )
+        XCTAssertEqual(
+            CustomerIntakeDraft.portalIntakeWithdrawPath(draftId: "d1", projectId: "a/b c"),
+            "portal/intake/d1/withdraw?project_id=a%2Fb%20c"
+        )
     }
 
     func testPatchEncodesClearedOptionalsAsNullAndOmitsUnchangedProject() throws {
