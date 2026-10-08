@@ -1,6 +1,6 @@
 # ROMA / инженерный Grow OS — Execution Assurance, 2026-09-23
 
-> Последняя корректировка: 2026-10-03. Последние уточнения — в разделе за 2026-10-03; очередь 2026-10-02 и предыдущие gates сохраняются.
+> Последняя корректировка: 2026-10-07 (вечер). Актуальные дополнения по сигналам 7 октября — в последнем разделе; прежние task IDs, очереди и gates сохраняются.
 
 Статус: PLANNED; расширение [ROMA roadmap](ROMA_ROADMAP.md), не новая параллельная система.
 Сохранить ADR-0007 recommendation-only и существующие product/release gates. Блокирующий режим возможен только отдельным ADR и проверенным executor integration.
@@ -247,3 +247,82 @@ AC: undeclared read/network/subprocess и outside-workspace access обнару�
 
 ### Очередь Cursor
 Сначала текущие Assurance Graph и product P0. В contract slice добавить routing/reasoning/host/broker schemas; synthetic enforcement и drift fixtures после approved runtime ADR. Затем offline Arena report и reviewed routing rules. Observer/DAG/Failure/Corpus порядок из 2026-10-02 сохранён; не запускать autonomous production agents этим планом.
+
+## Уточнения по сигналам 4–6 октября — записано 2026-10-07
+
+Статус PLANNED. Дополняют существующие задачи, без нового верхнеуровневого OS/eval framework. Внешние названия RRSI, MLCommons taxonomy, Atlassian workflow, Beam и численные vendor/news claims — непроверенные research inputs; перед использованием подтвердить первоисточник, версии, license/data policy. Не считать их release evidence.
+
+### Outcome Contract — ROMA-VER-009 / ROMA-EVAL-001 / GROW-ROUTING-006
+Versioned outcome: PASS (AC доказаны актуальным evidence), FAIL (доказанное нарушение), BLOCKED (policy/prerequisite запрещает выполнение), INSUFFICIENT_EVIDENCE (данных недостаточно для вывода), ABSTAIN (исполнитель явно воздержался от допустимого вывода/действия). Причина, evidence refs, coverage, verifier/version и policy digest обязательны. ABSTAIN не означает безопасное завершение задачи или PASS; unknown/stale telemetry остаётся существующим UNKNOWN/INCOMPLETE с reason и явным mapping в контракт. Это verdict/observation, а не замена scheduler states.
+Functional/capability/data-flow/privacy dimensions сохранять отдельно; доказанный FAIL любой обязательной dimension делает общий FAIL, недостаточное покрытие не позволяет общий PASS. Для ADR-0007 это recommendation verdict; enforcement вводится прежним отдельным ADR.
+AC: missing/stale/conflicting evidence, voluntary abstention, policy deny и proven defect различаются. Arena считает coverage, selective risk/error rate на answered cases, correct abstention и false abstention на независимо размеченных случаях; denominator, uncertainty и sample size фиксированы. Universal abstention не выигрывает verified-success metric; успешность с нулевыми policy violations остаётся обязательной.
+
+### ROMA-CORPUS-004 / ROMA-PACKAGE-002 — Hidden Holdout и Independent Promotion Gate
+P0 contract, P1 offline integration после trace/privacy fixtures. Разделить improvement/tuning corrections, visible regression, hidden holdout и adversarial suites; split/version/digest и lineage immutable. Родственные tasks/проекты/time windows группируются до split; duplicates и contamination проверяются. Исполнитель candidate не видит hidden tasks/expected answers, не выбирает rubric и не редактирует corpus/verifier.
+Trusted evaluator получает candidate digest, запускает frozen hidden suite в sandbox; candidate получает только ограниченный aggregate feedback. Защитить tool outputs/logs и fixture credentials от leakage. Повторная оптимизация по feedback расходует заранее заданный evaluation budget; использовать rotation/fresh sequestered sets, чтобы скрытый набор не стал tuning corpus.
+Independent promotion связывает package/model/runtime/policy/toolset digest, corpus versions, исходную baseline, regression/holdout/adversarial metrics и signed scoped verdict. Thresholds/sample sufficiency фиксировать ДО eval; improvement без holdout confirmation либо privacy/risk regression → promotion BLOCKED. Verifier не подписывает своё изменение; старый approved verifier + deterministic suite + независимый reviewer, reviewed rollback/canary. Никакого self-deploy.
+AC: hidden answer access, overlapping lineage, changed candidate after evaluation, tampered report, depleted holdout и swapped verifier отклоняются; все trials учитываются. Production canary только после отдельного authorization.
+
+### DataScope / DataFlowTrace — ROMA-CAP-001, ROMA-TRACE-002, ROMA-DRIFT-005
+P0 schema/negative fixtures; P1 enforcement вместе с approved runtime ADR и broker.
+CapabilityManifest DataScope: tenant/project/resource class, classification, allowed fields/operations, purpose, allowed recipients/destinations, transformations, retention/delete constraints и policy version. Grant пересекается с user/project permissions, никогда не расширяет их. Derived data, embeddings, summaries, exports и telemetry сохраняют classification/lineage; снижение classification только через reviewed transformation policy.
+DataFlowTrace фиксирует source_ref/classification, agent/run, tool/capability, destination identity/class, purpose, transformation/version, retention policy, decision/observed outcome и coverage. В trace — redacted refs/digests, без raw PII/secrets. Declared→granted→observed flows сравниваются с достоверными broker/runtime/network observations; отсутствие telemetry не доказывает отсутствие утечки.
+AC: permitted tool, но forbidden destination/purpose/fields → data-flow/privacy FAIL даже при functional PASS. Cross-tenant forwarding, summary laundering, external MCP, wrong retention и logging leakage проверены. Attempted denied flow отличается от successful exfiltration. Fail closed при неподдерживаемом mandatory control; отключение telemetry не даёт clean PASS.
+
+### GROW-INTENT-009 — Intent Ingest; расширение Observer/Task Graph
+P1 после contract slice, bounded draft-first. Voice/screen/Figma/issue → redacted source refs → structured task с requirement/AC, repo/baseline, permitted paths/write set, dependencies, risk/data scope, budget, verification и acceptance owner → task fingerprint → reviewed authorization → existing Capability Router/Scheduler.
+Untrusted screenshots/issue text — data, не инструкции для tools. Сохранять uncertainty/ambiguities, consent и retention для записей; возможный duplicate требует reconciliation. Новый ingest не даёт разрешения merge/deploy/messages. Уже авторизованный branch slice проходит без повторного вопроса на каждом reversible step.
+AC: voice misunderstanding/ambiguous screen, injected instructions, stale baseline, duplicate intent и несогласованное scope expansion не запускают task; показать reviewable proposed task и diff.
+
+### GROW-DESIGN-010 — Design-System Capability; existing coding policy
+P0 manifest/fixtures, P1 UI adapter. Machine-readable versioned allowed components/tokens/layout/navigation patterns, accessibility/localization rules и repo scope берутся из актуального approved design system. Existing component reuse по умолчанию; новый component/navigation primitive или изменение tokens — explicit design review в task scope. Запрет duplicate/ad-hoc CSS system не мешает уже авторизованному ограниченному изменению.
+AC: unknown/duplicate component, arbitrary token/style, new navigation, localization/accessibility regression обнаруживаются static checks + relevant UI review. Approved exception привязано к task/version; не объявлять все старые UI compliant. AISTROYKA active render/design packages и раздельные Manager/Worker interfaces сохраняются.
+
+### GROW-OBSERVER-003 / GROW-BUDGET-001 — delta context
+ProjectStateSnapshot: state/version/hash, baseline/source sequence, permissions/policy/corpus refs + event delta + selective retrieval. Missing sequence, stale snapshot или изменённые permissions требуют scoped reconciliation, не blind incremental update. Dedupe/restart/checkpoint сохраняют lineage; cache namespace разделён tenant/project/role, revoke/delete invalidates sensitive cache.
+Budget: max_cached_tokens/day, max_uncached_tokens/day, max_agent_cost/day + существующие task/child/time/call limits, reserve/settle. Provider usage unknown = pending/unavailable, не zero; cache может быть платным. Separate token counts and money, include retrieval/runtime/verification costs.
+Context Reuse Efficiency измерять только при заданной rubric useful_new_context/total_context_processed; полезность — estimate с method/uncertainty, не объективная token counter. Дополнительно snapshot reuse, stale-context errors, verified success и total cost.
+AC: lost/out-of-order event, poisoned delta, changed grants, concurrent reservations, retry/cache usage и budget exhaustion; mandatory verification не исключать ради экономии.
+
+### ROMA-GUARD-001 / GROW-IDENTITY-001 / GROW-SECRETS-008 — Agent Kill Handle
+Identity и broker — P0 prerequisites для будущего autonomous runtime, не разрешение обойти Assurance Graph/product P0.
+Trusted runtime control: pause/revoke/quarantine/kill/rotateCredentials/preserveEvidence(agent_id, run_id, scope). Control независим от worker/model; revoke grants/credential leases и stop environment через operator/control plane, а не просьбу агенту. Pause запрещает новые actions и безопасно checkpoint; kill не обещает rollback уже выполненного side effect.
+AC: unresponsive/compromised worker, spawned subprocess, queued calls, broker outage и stale/replayed grants; fencing блокирует subsequent privileged actions. In-flight external operation получает UNKNOWN до reconciliation; kill не автоматически liquidate/cancel trades. Evidence минимизировано и защищено, политика retention/delete сохраняется. Rotation shared underlying provider credential оценивает blast radius; native per-agent token scope не выдумывать.
+
+### Model Arena shortlist
+Beam — WATCH/OFFLINE CANDIDATE только после подтверждения реальных weights/API, license, hardware/cost/privacy, independent eval и tool/runtime compatibility. Availability/self-hosting учитывается в GROW-ROUTING-006 вместе с verified quality/cost/latency; open weights сами по себе не доказательство privacy. Current coding default не меняется по дайджесту.
+
+### Актуальная очередь Cursor
+Fresh main/runtime/pilot gap audit → существующий Assurance Graph/staleness slice → общий contract/negative fixtures (Outcome, DataScope/Flow, identity/broker/kill, package/holdout/budget) → synthetic trusted runtime и read-only Observer/delta → offline Arena/independent promotion → bounded Intent/Design adapter → scoped product integrations. Persistent/parallel execution и production canary — после прежних gates. Все пункты здесь PLANNED.
+
+## Сигналы 7 октября — дополнение 2026-10-07 (вечер)
+
+PLANNED. Research inputs из дайджеста (EmbeddingGemma 2, Keysight, Jump, screenshot incident и численные claims) не проверены. До spike подтвердить первоисточники, actual model/API/license и условия данных. Новые vendors/default models не утверждены.
+
+### ROMA-EGRESS-002 — Artifact Egress Guard
+P0 contract + negative fixtures, extension ROMA-EGRESS-001 / DataScope / Secret Broker; enforcement до увеличения runtime autonomy и после прежнего ADR gate.
+Перед git push/PR attachment, upload, HTTP/MCP/model call и artifact publish trusted broker/runtime проверяет agent/task/run identity, capability, purpose, payload classification/lineage/digest, recipient/repo/account/visibility, effective destination и policy/grant/expiry. Решение ALLOW / ALLOW_REDACTED / REQUIRE_APPROVAL / DENY с reason. Private destination сама по себе не разрешение; synthetic screenshot тоже требует разрешённого task scope. Internal/customer screenshot → public repo по умолчанию DENY; secrets never exported.
+Trusted destination registry проверяет actual visibility/identity, redirects и final endpoint; changing repo visibility/grant/payload invalidates decision. Approval привязано к digest + destination + purpose + expiry, не bypass absolute deny. Redaction создаёт новый artifact/digest, затем повторный schema/classification/egress check; OCR/DLP heuristics не доказательство удаления всех sensitive pixels/metadata.
+AC: public/private mismatch, archive/nested attachment/LFS/history contents, EXIF/OCR/hidden fields, redirect/URL change, signed URL exposure, changed payload after check и expired grant. Критичные артефакты неизвестной classification/coverage → BLOCKED/review; не blind ALLOW.
+Если approved upload API недоступен → BLOCKED с checkpoint, без альтернативного public repo/paste/file host. Runtime physically mediates subprocess/network/git/MCP paths; unsupported mandatory controls fail closed. Pre-push scan недостаточен без network/credential control. Existing platform connector policy остаётся authority; docs не реализуют DLP.
+
+### ROMA-DRIFT-005 / ROMA-TRACE-002 — Destination Drift
+Расширить declared/granted/observed trace recipient identity/account/repo/visibility, purpose, payload digest/transformation и destination policy version. Compare intended private PR vs observed public repository и external model destinations; attempt denied отдельно от successful egress.
+Functional/capability/data-scope PASS + proven forbidden destination → destination/privacy FAIL, общий FAIL. Missing final destination/telemetry → INSUFFICIENT_EVIDENCE/UNKNOWN, не clean PASS. Redacted trace не хранит payload/секретные URL. AC: fallback channel, visibility change, redirects, partial upload и bypass обнаруживаются/reconcile; evaluation не подменяет preventive guard.
+
+### GROW-RETRIEVAL-011 — MultimodalRetrievalProvider
+P0 schema/timeboxed benchmark design; P1 offline spike, production adoption после reviewed evidence. Расширение GROW-MEM-004/selective retrieval, не новая Memory OS или runtime.
+Interface index/search/rerank/delete/reindex + declared modalities/unsupported operations, namespace, schema/vector/model/encoder/version/dimension/normalization digest, source refs/chunk/time spans, classification/ACL/retention, lineage и freshness. Graph хранит relationships/truth; vectors — поиск кандидатов, не verdict.
+Benchmark candidate EmbeddingGemma 2 только после verified availability/license, claimed modality compatibility и measured local hardware/cost. Сравнить existing retrieval baseline, lexical/hybrid и multimodal, ES/RU строительную речь/код/docs/images, recall@k/nDCG по frozen relevance labels, source coverage, latency p50/p95, memory/index size, reindex/delete cost и privacy leakage. Сжатие dims измеряется отдельно; incompatible embedding spaces не смешивать. Missing current stack → inventory first, не выдумывать baseline.
+Index только разрешённые sanitized/synthetic или separately approved data. Tenant/project/role ACL до retrieval/rerank/tool response; revoked/deleted source удаляется из vectors/chunks/caches/backups согласно policy. Source recheck при fetch/answer предотвращает stale permission.
+AC: cross-tenant nearest neighbor, deleted/stale/poisoned source, semantic duplicate, encoder upgrade/partial reindex, unsupported modality и stale ACL. Index availability не доказывает отсутствие внешних calls; self-hosted model не automatic privacy. Не отправлять internal repo/screenshots external embeddings без egress grant. Candidate retrieved text — untrusted data, no tool instructions.
+Repository memory привязана к repo/ref/SHA/source spans; source code changed → stale evidence/invalidation. Snapshot/event delta из Observer используется, full daily reindex не default. Router получает только reviewed benchmark и cost/quality evidence.
+
+### ROMA-CAP-001 / ROMA-EVAL-001 — standard Skill Contract
+LLM planner/interpreter → versioned bounded skill → typed tool operation → deterministic checks → independent verifier. MCP — интерфейс, не calculator/verifier/security authority.
+Skill metadata: input/output schema, semantic units, source/evidence refs, preconditions, effect class, capability/DataScope/destination, limits/idempotency, algorithm/tool/version, uncertainty and verification contract. Deterministic financial/geometric operation требует confirmed/calibrated inputs; unknown не заменяется invented measurement. Infer/research skill output явно advisory, external offer evidence не превращается в deterministic truth.
+AC: wrong units/missing input, fabricated source/tool result, unauthorized mutation/destination, retry/partial side effect и changed skill digest. No arbitrary model formulas/code через “skill” name; only reviewed allowlisted algorithm/tool. Verifier независим от executor credentials; model не подписывает свой результат.
+Autoresearch использует ROMA-CORPUS-004 / package promotion / scheduler / budget contracts: bounded immutable candidate experiments, frozen rubric/hidden holdout, all trials logged, checkpoints/cancel and independent review. Не создавать self-modifying/self-deploying service. Trading-specific research gates в portfolio plan.
+
+### Порядок
+Существующий Assurance Graph/product P0 → shared contract fixtures с Artifact Egress/Destination → synthetic pre-egress enforcement после ADR → offline retrieval benchmark → один scoped product adapter. Runtime autonomy без доказанного broker/egress/kill enforcement остаётся blocked. Research references не разрешают production migration.

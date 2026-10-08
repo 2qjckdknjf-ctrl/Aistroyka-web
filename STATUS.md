@@ -15,3 +15,5 @@
 Не реализовывать заново. OWNER_GATE: live apply `create_analysis_job` 4-arg и `customer_intake_drafts`; stores; billing cutover; LEGAL; live AI E1. 005B live intake не начинать. 317/347/348/351/352 — RECONCILE_BACKLOG, не restack. B2 daily-log persist уже в cabinet (`persistThenConfirmFieldDailyLog`). D2 Android не стартовать.
 
 Пилотный scope остаётся `contractor-ops-only`. DAG 100% не закрыт внешними гейтами.
+
+PR #350: [планирование Customer / ROMA](docs/handoff/2026-09-23-roadmap-consolidation.md), дополнения 2026-10-07 — PLANNED; runtime/deployment не перепроверены.
