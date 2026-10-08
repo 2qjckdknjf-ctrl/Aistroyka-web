@@ -12,6 +12,11 @@ describe("checkLiteAllowList", () => {
     expect(checkLiteAllowList("/api/v1/admin/jobs", "GET", "android_full")).toBeNull();
   });
 
+  it("does not treat ios_customer as a lite worker client", () => {
+    expect(checkLiteAllowList("/api/v1/portal/projects", "GET", "ios_customer")).toBeNull();
+    expect(checkLiteAllowList("/api/v1/admin/jobs", "GET", "ios_customer")).toBeNull();
+  });
+
   it("returns null for lite client GET /api/v1/projects (worker project list)", () => {
     expect(checkLiteAllowList("/api/v1/projects", "GET", "ios_lite")).toBeNull();
     expect(checkLiteAllowList("/api/v1/projects", "GET", "android_lite")).toBeNull();
@@ -84,6 +89,8 @@ describe("checkLiteAllowList", () => {
     expect(checkLiteAllowList("/api/v1/notifications/read-all", "POST", "android_worker")).toBeNull();
     expect(checkLiteAllowList("/api/v1/notifications/read-all", "PATCH", "ios_lite")).toBeNull();
     expect(checkLiteAllowList("/api/v1/notifications/n1/read", "PATCH", "ios_lite")).toBeNull();
+    expect(checkLiteAllowList("/api/v1/notifications/n1/opened", "POST", "ios_worker")).toBeNull();
+    expect(checkLiteAllowList("/api/v1/notifications/n1/opened", "POST", "android_worker")).toBeNull();
     expect(checkLiteAllowList("/api/v1/notifications", "POST", "ios_lite")).not.toBeNull();
   });
 

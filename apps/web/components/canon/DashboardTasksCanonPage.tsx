@@ -81,8 +81,8 @@ export function DashboardTasksCanonPage() {
   const tabs: { key: TaskScope; label: string }[] = [
     { key: "all", label: t("taskTabAll") },
     { key: "mine", label: t("taskTabMine") },
-    { key: "overdue", label: t("taskTabOverdue", { count: "…" }) },
-    { key: "review", label: t("taskTabReview", { count: "…" }) },
+    { key: "overdue", label: t("taskTabOverdue") },
+    { key: "review", label: t("taskTabReview") },
   ];
 
   return (

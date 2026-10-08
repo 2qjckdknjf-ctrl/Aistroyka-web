@@ -471,3 +471,13 @@
 "mgr_v43_doc_approve" = "Approve";
 "mgr_v43_doc_reject" = "Reject";
 "mgr_v43_doc_request_changes" = "Request changes";
+
+"mgr_graph_ai_section" = "Construction graph (AI context)";
+
+"mgr_graph_ai_disclaimer" = "Overlay source refs only — not contractual truth.";
+
+"mgr_graph_ai_nodes" = "Nodes";
+
+"mgr_graph_ai_edges" = "Edges";
+
+"mgr_graph_ai_truncated" = "Graph view truncated for size.";

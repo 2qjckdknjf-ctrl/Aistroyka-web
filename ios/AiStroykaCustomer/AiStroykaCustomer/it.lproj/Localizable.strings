@@ -1,0 +1,112 @@
+"cust_login_headline" = "Portale cliente";
+"cust_login_subhead" = "Accedi per vedere i progetti a cui sei stato invitato.";
+"cust_email_placeholder" = "Email";
+"cust_password_placeholder" = "Password";
+"cust_sign_in" = "Accedi";
+"cust_signing_in" = "Accesso in corso…";
+"cust_continue_google" = "Continua con Google";
+"cust_sign_out" = "Esci";
+"cust_checking_session" = "Verifica sessione…";
+"cust_home_title" = "I tuoi progetti";
+"cust_home_empty" = "Non ci sono ancora progetti cliente per questo account.";
+"cust_projects_loading" = "Caricamento progetti…";
+"cust_projects_error" = "Impossibile caricare i progetti.";
+"cust_retry" = "Riprova";
+"cust_project_open" = "Cosa sta succedendo";
+"cust_project_loading" = "Caricamento progetto…";
+"cust_project_error" = "Impossibile caricare il progetto.";
+"cust_project_status" = "Stato";
+"cust_handover_completed_at" = "Completato";
+"cust_handover_handed_over_at" = "Consegnato";
+"cust_handover_notes" = "Note";
+"cust_handover_title" = "Consegna";
+"cust_progress_title" = "Avanzamento";
+"cust_progress_none" = "Nessun avanzamento attività pubblicato.";
+"cust_progress_fmt" = "%d di %d attività completate";
+"cust_activity_title" = "Attività recente";
+"cust_activity_empty" = "Nessuna attività visibile al cliente.";
+"cust_documents_title" = "Documenti";
+"cust_documents_empty" = "Nessun documento condiviso.";
+"cust_requests_title" = "Richieste per te";
+"cust_requests_empty" = "Nessuna richiesta cliente in attesa.";
+"cust_estimates_title" = "Preventivi condivisi";
+"cust_estimates_empty" = "Nessun preventivo visibile al cliente.";
+"cust_err_empty_credentials" = "Inserisci email e password.";
+"cust_err_apple_sign_in" = "Apple Sign-In non ha restituito un token.";
+"cust_err_google_sign_in" = "Accesso Google non riuscito.";
+"cust_err_session_expired" = "Sessione scaduta. Accedi di nuovo.";
+"cust_err_session_retry" = "Impossibile verificare la sessione. Controlla la connessione e riprova.";
+"cust_retry" = "Riprova";
+"cust_err_not_customer" = "Questo account non è un cliente. Usa l’invito al portale.";
+"cust_err_use_manager" = "Questo account appartiene a un contraente. Usa AiStroyka Manager.";
+
+"cust_request_approve" = "Approva";
+"cust_request_reject" = "Rifiuta";
+"cust_request_respond_ok" = "Risposta inviata.";
+"cust_request_respond_error" = "Impossibile inviare la risposta.";
+
+"cust_estimate_respond_ok" = "Risposta al preventivo inviata.";
+"cust_estimate_respond_error" = "Impossibile inviare la risposta al preventivo.";
+
+"cust_document_review_confirm" = "Conferma revisione documento";
+"cust_document_review_ok" = "Revisione documento confermata.";
+"cust_document_review_error" = "Impossibile confermare la revisione del documento.";
+
+"cust_feedback_placeholder" = "Il tuo feedback";
+"cust_feedback_submit" = "Invia feedback";
+"cust_feedback_ok" = "Feedback inviato.";
+"cust_feedback_error" = "Impossibile inviare il feedback.";
+
+"cust_acknowledge" = "Conferma";
+"cust_acknowledge_ok" = "Confermato.";
+"cust_acknowledge_error" = "Impossibile confermare.";
+
+"cust_choice_ok" = "Scelta inviata.";
+"cust_choice_error" = "Impossibile inviare la scelta.";
+
+"cust_intake_nav" = "Richiesta";
+
+"cust_intake_intro" = "Descrivi il lavoro. L’output AI resta bozza finché non confermi.";
+
+"cust_intake_new_title" = "Nuova bozza";
+
+"cust_intake_title_placeholder" = "Titolo";
+
+"cust_intake_description_placeholder" = "Descrivi il lavoro";
+
+"cust_intake_media_url_placeholder" = "URL https foto (opzionale)";
+"cust_intake_media_hint" = "Solo link di evidenza — non un preventivo contrattuale.";
+"cust_intake_media_url_invalid" = "L’URL della foto deve essere https.";
+"cust_intake_media_count" = "%d link di evidenza";
+"cust_intake_questions_placeholder" = "Domande opzionali (una per riga)";
+"cust_intake_questions_hint" = "Domande aperte all’impresa — non testo contrattuale AI.";
+"cust_intake_questions_count" = "%d domanda/e";
+"cust_intake_site_context_placeholder" = "Contesto del sito (opzionale)";
+"cust_intake_location_placeholder" = "Città / zona (opzionale)";
+"cust_intake_work_type_placeholder" = "Tipo di lavoro (opzionale)";
+"cust_intake_desired_start_placeholder" = "Inizio desiderato (AAAA-MM-GG, opzionale)";
+"cust_intake_desired_end_placeholder" = "Fine desiderata (AAAA-MM-GG, opzionale)";
+"cust_intake_desired_dates_hint" = "Solo finestra preferita — non un calendario contrattuale.";
+"cust_intake_desired_date_invalid" = "Le date devono usare AAAA-MM-GG.";
+"cust_intake_desired_range" = "Desiderato: %@ → %@";
+"cust_intake_bound_project" = "Collegato al progetto: %@";
+"cust_intake_row_project" = "Progetto %@";
+"cust_intake_create" = "Salva bozza";
+"cust_intake_update" = "Aggiorna bozza";
+"cust_intake_cancel_edit" = "Nuova bozza";
+
+"cust_intake_list_title" = "Le tue bozze";
+
+"cust_intake_empty" = "Nessuna bozza ancora.";
+
+"cust_intake_load_error" = "Impossibile caricare le bozze.";
+
+"cust_intake_create_ok" = "Bozza salvata.";
+
+"cust_intake_create_error" = "Impossibile salvare la bozza.";
+"cust_intake_submit" = "Invia in revisione";
+"cust_intake_submit_ok" = "Bozza inviata. Non è un contratto.";
+"cust_intake_submit_error" = "Impossibile inviare la bozza.";
+"cust_intake_withdraw" = "Rifiuta bozza";
+"cust_intake_withdraw_ok" = "Bozza rifiutata. Questo non è un contratto.";
+"cust_intake_withdraw_error" = "Impossibile rifiutare la bozza.";

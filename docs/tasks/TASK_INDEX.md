@@ -1,24 +1,9 @@
 # Task Index
 
-> Index of active and completed tasks. Newest first.
-
 | Date | File | Goal | Branch | Status |
 |---|---|---|---|---|
+| 2026-10-04 | [workspace-reconciliation](2026-10-04-workspace-reconciliation.md) | Preserve existing work and prevent duplicate development | `docs/workspace-reconciliation-2026-10-04` | merged: [#381](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/381), context correction [#383](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/383) |
+| 2026-10-03 | [docs-roadmap-consolidation](docs-roadmap-consolidation.md) | Historical #371 planning/security slice | `audit/100-percent-completion-2026-10-03` | merged into baseline main |
 | 2026-09-23 | [docs-roadmap-consolidation.md](docs-roadmap-consolidation.md) | Customer and ROMA planning amendments | `docs/roadmap-consolidation-2026-09-23` | docs prepared; PR review pending |
-| 2026-06-30 | _(this PR)_ | Development OS setup | `docs/development-os` | in progress |
 
-## Template location
-
-- Full template: `docs/ops/TASK_TEMPLATE.md`
-- Dev OS rules: `docs/dev-os/ACTIVE_WORK_RULES.md`
-
-## Naming
-
-`docs/tasks/YYYY-MM-DD-<task-slug>.md`
-
-## Required sections
-
-- goal, branch, scope, out of scope
-- files allowed / forbidden
-- validation required, done criteria
-- rollback/recovery notes
+Current open development: [ACTIVE_WORK_REGISTRY.csv](ACTIVE_WORK_REGISTRY.csv). Refresh its PR HEAD and state before resuming. Task template: [TASK_TEMPLATE](../ops/TASK_TEMPLATE.md).

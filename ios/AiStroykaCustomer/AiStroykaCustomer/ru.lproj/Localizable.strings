@@ -1,0 +1,112 @@
+"cust_login_headline" = "Портал заказчика";
+"cust_login_subhead" = "Войдите, чтобы видеть проекты, к которым вас пригласили.";
+"cust_email_placeholder" = "Email";
+"cust_password_placeholder" = "Пароль";
+"cust_sign_in" = "Войти";
+"cust_signing_in" = "Вход…";
+"cust_continue_google" = "Продолжить с Google";
+"cust_sign_out" = "Выйти";
+"cust_checking_session" = "Проверяем сессию…";
+"cust_home_title" = "Ваши проекты";
+"cust_home_empty" = "Для этого аккаунта пока нет доступных проектов заказчика.";
+"cust_projects_loading" = "Загружаем проекты…";
+"cust_projects_error" = "Не удалось загрузить проекты.";
+"cust_retry" = "Повторить";
+"cust_project_open" = "Что происходит";
+"cust_project_loading" = "Загружаем проект…";
+"cust_project_error" = "Не удалось загрузить проект.";
+"cust_project_status" = "Статус";
+"cust_handover_completed_at" = "Завершено";
+"cust_handover_handed_over_at" = "Передано";
+"cust_handover_notes" = "Заметки";
+"cust_handover_title" = "Передача";
+"cust_progress_title" = "Прогресс";
+"cust_progress_none" = "Прогресс по задачам ещё не опубликован.";
+"cust_progress_fmt" = "Выполнено %d из %d задач";
+"cust_activity_title" = "Недавние события";
+"cust_activity_empty" = "Нет событий, видимых заказчику.";
+"cust_documents_title" = "Документы";
+"cust_documents_empty" = "Документы ещё не открыты.";
+"cust_requests_title" = "Запросы для вас";
+"cust_requests_empty" = "Нет ожидающих запросов заказчика.";
+"cust_estimates_title" = "Предложения";
+"cust_estimates_empty" = "Заказчику ещё не открыты коммерческие предложения.";
+"cust_err_empty_credentials" = "Введите email и пароль.";
+"cust_err_apple_sign_in" = "Вход через Apple не вернул токен.";
+"cust_err_google_sign_in" = "Не удалось войти через Google.";
+"cust_err_session_expired" = "Сессия истекла. Войдите снова.";
+"cust_err_session_retry" = "Не удалось проверить сессию. Проверьте соединение и повторите попытку.";
+"cust_retry" = "Повторить";
+"cust_err_not_customer" = "Этот аккаунт не является заказчиком. Используйте приглашение в портал.";
+"cust_err_use_manager" = "Этот аккаунт относится к подрядчику. Используйте AiStroyka Manager.";
+
+"cust_request_approve" = "Одобрить";
+"cust_request_reject" = "Отклонить";
+"cust_request_respond_ok" = "Ответ отправлен.";
+"cust_request_respond_error" = "Не удалось отправить ответ.";
+
+"cust_estimate_respond_ok" = "Ответ по смете отправлен.";
+"cust_estimate_respond_error" = "Не удалось отправить ответ по смете.";
+
+"cust_document_review_confirm" = "Подтвердить просмотр документа";
+"cust_document_review_ok" = "Просмотр документа подтверждён.";
+"cust_document_review_error" = "Не удалось подтвердить просмотр документа.";
+
+"cust_feedback_placeholder" = "Ваш отзыв";
+"cust_feedback_submit" = "Отправить отзыв";
+"cust_feedback_ok" = "Отзыв отправлен.";
+"cust_feedback_error" = "Не удалось отправить отзыв.";
+
+"cust_acknowledge" = "Подтвердить";
+"cust_acknowledge_ok" = "Подтверждено.";
+"cust_acknowledge_error" = "Не удалось подтвердить.";
+
+"cust_choice_ok" = "Выбор отправлен.";
+"cust_choice_error" = "Не удалось отправить выбор.";
+
+"cust_intake_nav" = "Заявка";
+
+"cust_intake_intro" = "Опишите работу. Ответ ИИ остаётся черновиком, пока вы не подтвердите.";
+
+"cust_intake_new_title" = "Новый черновик заявки";
+
+"cust_intake_title_placeholder" = "Название";
+
+"cust_intake_description_placeholder" = "Опишите работу";
+
+"cust_intake_media_url_placeholder" = "Необязательная https-ссылка на фото";
+"cust_intake_media_hint" = "Только ссылка на доказательство — не договорная цена.";
+"cust_intake_media_url_invalid" = "Ссылка на фото должна быть https.";
+"cust_intake_media_count" = "Ссылок на доказательства: %d";
+"cust_intake_questions_placeholder" = "Вопросы (по одному в строке, необязательно)";
+"cust_intake_questions_hint" = "Открытые вопросы подрядчику — не договорный текст ИИ.";
+"cust_intake_questions_count" = "Вопросов: %d";
+"cust_intake_site_context_placeholder" = "Контекст объекта (необязательно)";
+"cust_intake_location_placeholder" = "Город / район (необязательно)";
+"cust_intake_work_type_placeholder" = "Тип работ (необязательно)";
+"cust_intake_desired_start_placeholder" = "Желаемое начало (ГГГГ-ММ-ДД, необязательно)";
+"cust_intake_desired_end_placeholder" = "Желаемое окончание (ГГГГ-ММ-ДД, необязательно)";
+"cust_intake_desired_dates_hint" = "Только предпочтительное окно — не договорной график.";
+"cust_intake_desired_date_invalid" = "Даты должны быть в формате ГГГГ-ММ-ДД.";
+"cust_intake_desired_range" = "Желаемые сроки: %@ → %@";
+"cust_intake_bound_project" = "Привязано к проекту: %@";
+"cust_intake_row_project" = "Проект %@";
+"cust_intake_create" = "Сохранить черновик";
+"cust_intake_update" = "Обновить черновик";
+"cust_intake_cancel_edit" = "Новый черновик";
+
+"cust_intake_list_title" = "Ваши черновики";
+
+"cust_intake_empty" = "Черновиков заявки пока нет.";
+
+"cust_intake_load_error" = "Не удалось загрузить черновики.";
+
+"cust_intake_create_ok" = "Черновик сохранён.";
+
+"cust_intake_create_error" = "Не удалось сохранить черновик.";
+"cust_intake_submit" = "Отправить на рассмотрение";
+"cust_intake_submit_ok" = "Черновик отправлен. Это не договор.";
+"cust_intake_submit_error" = "Не удалось отправить черновик.";
+"cust_intake_withdraw" = "Отклонить черновик";
+"cust_intake_withdraw_ok" = "Черновик отклонён. Это не договор.";
+"cust_intake_withdraw_error" = "Не удалось отклонить черновик.";

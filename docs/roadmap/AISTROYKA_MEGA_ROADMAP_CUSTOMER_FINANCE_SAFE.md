@@ -1845,6 +1845,6 @@ Do not expose internal finance to customer.
 
 Build the trust loop first.
 
-## Amendment — 2026-09-23
+## Amendment — 2026-09-23 (reconciled 2026-10-03)
 
-[Customer iOS, async/live intake, evidence and Graph backlog](AISTROYKA_PLAN_AMENDMENT_2026-09-23.md). This extends the existing phases; it does not reopen completed phases or expand the active contractor-ops-only pilot.
+[Customer iOS, async/live intake, evidence and Graph backlog](AISTROYKA_PLAN_AMENDMENT_2026-09-23.md). This extends existing phases. It does not reopen completed phases or expand the active contractor-ops-only production pilot without a separate verified release slice.

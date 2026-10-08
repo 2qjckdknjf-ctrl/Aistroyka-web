@@ -2,12 +2,13 @@
 
 > Последняя корректировка: 2026-10-07 (вечер). Актуальные дополнения по сигналам 7 октября — в последнем разделе; прежние task IDs, очереди и gates сохраняются.
 
-Статус: PLANNED. Документ задаёт backlog, не подтверждает готовность функций.
+Статус: PLANNED backlog + 2026-10-03 runtime reconciliation. Документ задаёт очередь; наличие строк плана не подтверждает готовность функций.
 Канонический продуктовый план: [Mega roadmap](AISTROYKA_MEGA_ROADMAP_CUSTOMER_FINANCE_SAFE.md).
-Реализация новых пунктов начинается с повторной сверки main, открытых PR и runtime.
+Сверка 2026-10-03: `origin/main` = `0e3b1ede624183ac5e5d47ab3f72ad739553ebb7`; staging/production `buildStamp.sha7` = `0e3b1ed` (MATCH). PR #350 HEAD `b7db42084d330473b6ff1a67ca40b8909673a5c1` остаётся docs-only и **не** merged; этот файл перенесён на текущий main без исторических STATUS-утверждений сентября.
 
 ## Что установлено
-Проверенная main: 25b33d841189b31ff43538762b72a4f7024d701f.
+Историческая база PR #350: `25b33d841189b31ff43538762b72a4f7024d701f` (superseded).
+Текущая production-aligned main: `0e3b1ede624183ac5e5d47ab3f72ad739553ebb7`.
 Есть web Owner/Customer portal, отдельные Manager/Worker mobile и contractor field daily log draft→confirm.
 Отдельный Customer mobile target в предыдущем аудите не найден: перед созданием проверить актуальные targets и незамерженные ветки.
 Наличие кода и старые записи DEPLOYED не доказывают текущий production/device readiness.

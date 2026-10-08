@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { createClientFromRequest, getSessionUser } from "@/lib/supabase/server";
 import { getTenantForCurrentUser } from "@/lib/api/engine";
 import { shouldShowOnboarding } from "@/lib/onboarding/user-onboarding";
+import { recordLoginSuccess } from "@/lib/growth/product-events";
+import { getAdminClient } from "@/lib/supabase/admin";
 
 /**
  * GET /api/v1/activation/status
@@ -14,6 +16,9 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const tenantId = await getTenantForCurrentUser(supabase);
+  if (tenantId) {
+    await recordLoginSuccess(supabase, user.id, request.headers.get("x-client"), getAdminClient());
+  }
   if (!tenantId) {
     return NextResponse.json({
       projectCount: 0,

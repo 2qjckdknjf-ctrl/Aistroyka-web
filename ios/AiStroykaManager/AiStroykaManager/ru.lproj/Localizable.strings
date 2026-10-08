@@ -471,3 +471,13 @@
 "mgr_v43_doc_approve" = "Утвердить";
 "mgr_v43_doc_reject" = "Отклонить";
 "mgr_v43_doc_request_changes" = "Вернуть";
+
+"mgr_graph_ai_section" = "Граф строительства (контекст ИИ)";
+
+"mgr_graph_ai_disclaimer" = "Только ссылки оверлея — не договорная истина.";
+
+"mgr_graph_ai_nodes" = "Узлы";
+
+"mgr_graph_ai_edges" = "Рёбра";
+
+"mgr_graph_ai_truncated" = "Представление графа усечено по размеру.";

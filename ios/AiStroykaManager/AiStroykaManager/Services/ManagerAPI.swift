@@ -268,6 +268,15 @@ enum ManagerAPI {
         return r.data ?? []
     }
 
+    /// GET /api/v1/projects/:id/graph?view=ai_context — overlay source refs for AI (not contractual truth).
+    static func projectGraphAIContext(projectId: String) async throws -> ConstructionGraphAIContext {
+        struct Envelope: Decodable { let data: ConstructionGraphAIContext }
+        let env: Envelope = try await APIClient.shared.request(
+            path: "projects/\(projectId)/graph?view=ai_context"
+        )
+        return env.data
+    }
+
     /// POST /api/v1/projects/:id/documents — create draft metadata row.
     static func createDocument(projectId: String, title: String, type: String, idempotencyKey: String) async throws -> String {
         struct Body: Encodable {
@@ -600,6 +609,12 @@ enum ManagerAPI {
     /// PATCH /api/v1/notifications/:id/read — mark as read.
     static func markNotificationRead(id: String) async throws {
         let _: MarkReadResponse = try await APIClient.shared.request(path: "notifications/\(id)/read", method: "PATCH")
+    }
+
+    /// POST /api/v1/notifications/:id/opened — first open of the notification target. Not mark-read.
+    static func recordNotificationOpened(id: String) async {
+        struct Ack: Decodable { var ok: Bool? }
+        _ = try? await APIClient.shared.request(path: "notifications/\(id)/opened", method: "POST") as Ack
     }
 
     /// PATCH /api/v1/notifications/read-all — same as cabinet mark-all-read.

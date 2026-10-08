@@ -1,0 +1,112 @@
+"cust_login_headline" = "Portal del cliente";
+"cust_login_subhead" = "Inicie sesión para ver los proyectos a los que fue invitado.";
+"cust_email_placeholder" = "Correo";
+"cust_password_placeholder" = "Contraseña";
+"cust_sign_in" = "Iniciar sesión";
+"cust_signing_in" = "Iniciando sesión…";
+"cust_continue_google" = "Continuar con Google";
+"cust_sign_out" = "Cerrar sesión";
+"cust_checking_session" = "Comprobando sesión…";
+"cust_home_title" = "Sus proyectos";
+"cust_home_empty" = "Todavía no hay proyectos de cliente para esta cuenta.";
+"cust_projects_loading" = "Cargando proyectos…";
+"cust_projects_error" = "No se pudieron cargar los proyectos.";
+"cust_retry" = "Reintentar";
+"cust_project_open" = "Ver qué ocurre";
+"cust_project_loading" = "Cargando proyecto…";
+"cust_project_error" = "No se pudo cargar el proyecto.";
+"cust_project_status" = "Estado";
+"cust_handover_completed_at" = "Completado";
+"cust_handover_handed_over_at" = "Entregado";
+"cust_handover_notes" = "Notas";
+"cust_handover_title" = "Entrega";
+"cust_progress_title" = "Progreso";
+"cust_progress_none" = "Aún no hay progreso de tareas publicado.";
+"cust_progress_fmt" = "%d de %d tareas completadas";
+"cust_activity_title" = "Actividad reciente";
+"cust_activity_empty" = "No hay actividad visible para el cliente.";
+"cust_documents_title" = "Documentos";
+"cust_documents_empty" = "Todavía no hay documentos compartidos.";
+"cust_requests_title" = "Solicitudes para usted";
+"cust_requests_empty" = "No hay solicitudes de cliente pendientes.";
+"cust_estimates_title" = "Presupuestos compartidos";
+"cust_estimates_empty" = "Todavía no hay presupuestos visibles para el cliente.";
+"cust_err_empty_credentials" = "Introduzca correo y contraseña.";
+"cust_err_apple_sign_in" = "Inicio de sesión con Apple no devolvió un token.";
+"cust_err_google_sign_in" = "Falló el inicio de sesión con Google.";
+"cust_err_session_expired" = "La sesión caducó. Inicie sesión de nuevo.";
+"cust_err_session_retry" = "No se pudo verificar la sesión. Compruebe la conexión e inténtelo de nuevo.";
+"cust_retry" = "Reintentar";
+"cust_err_not_customer" = "Esta cuenta no es de cliente. Use la invitación al portal.";
+"cust_err_use_manager" = "Esta cuenta es de contratista. Use AiStroyka Manager.";
+
+"cust_request_approve" = "Aprobar";
+"cust_request_reject" = "Rechazar";
+"cust_request_respond_ok" = "Respuesta enviada.";
+"cust_request_respond_error" = "No se pudo enviar la respuesta.";
+
+"cust_estimate_respond_ok" = "Respuesta al presupuesto enviada.";
+"cust_estimate_respond_error" = "No se pudo enviar la respuesta al presupuesto.";
+
+"cust_document_review_confirm" = "Confirmar revisión del documento";
+"cust_document_review_ok" = "Revisión del documento confirmada.";
+"cust_document_review_error" = "No se pudo confirmar la revisión del documento.";
+
+"cust_feedback_placeholder" = "Sus comentarios";
+"cust_feedback_submit" = "Enviar comentarios";
+"cust_feedback_ok" = "Comentarios enviados.";
+"cust_feedback_error" = "No se pudieron enviar los comentarios.";
+
+"cust_acknowledge" = "Confirmar";
+"cust_acknowledge_ok" = "Confirmado.";
+"cust_acknowledge_error" = "No se pudo confirmar.";
+
+"cust_choice_ok" = "Opción enviada.";
+"cust_choice_error" = "No se pudo enviar la opción.";
+
+"cust_intake_nav" = "Solicitud";
+
+"cust_intake_intro" = "Describa el trabajo. La salida de IA permanece como borrador hasta que confirme.";
+
+"cust_intake_new_title" = "Nuevo borrador";
+
+"cust_intake_title_placeholder" = "Título";
+
+"cust_intake_description_placeholder" = "Describa el trabajo";
+
+"cust_intake_media_url_placeholder" = "URL https de foto (opcional)";
+"cust_intake_media_hint" = "Solo enlace de evidencia — no es una cotización contractual.";
+"cust_intake_media_url_invalid" = "La URL de la foto debe ser https.";
+"cust_intake_media_count" = "%d enlace(s) de evidencia";
+"cust_intake_questions_placeholder" = "Preguntas opcionales (una por línea)";
+"cust_intake_questions_hint" = "Preguntas abiertas al contratista — no texto contractual de IA.";
+"cust_intake_questions_count" = "%d pregunta(s)";
+"cust_intake_site_context_placeholder" = "Contexto del sitio (opcional)";
+"cust_intake_location_placeholder" = "Ciudad / zona (opcional)";
+"cust_intake_work_type_placeholder" = "Tipo de trabajo (opcional)";
+"cust_intake_desired_start_placeholder" = "Inicio deseado (AAAA-MM-DD, opcional)";
+"cust_intake_desired_end_placeholder" = "Fin deseado (AAAA-MM-DD, opcional)";
+"cust_intake_desired_dates_hint" = "Solo ventana preferida — no es un calendario contractual.";
+"cust_intake_desired_date_invalid" = "Las fechas deben usar AAAA-MM-DD.";
+"cust_intake_desired_range" = "Deseado: %@ → %@";
+"cust_intake_bound_project" = "Vinculado al proyecto: %@";
+"cust_intake_row_project" = "Proyecto %@";
+"cust_intake_create" = "Guardar borrador";
+"cust_intake_update" = "Actualizar borrador";
+"cust_intake_cancel_edit" = "Nuevo borrador";
+
+"cust_intake_list_title" = "Sus borradores";
+
+"cust_intake_empty" = "Aún no hay borradores.";
+
+"cust_intake_load_error" = "No se pudieron cargar los borradores.";
+
+"cust_intake_create_ok" = "Borrador guardado.";
+
+"cust_intake_create_error" = "No se pudo guardar el borrador.";
+"cust_intake_submit" = "Enviar a revisión";
+"cust_intake_submit_ok" = "Borrador enviado. Esto no es un contrato.";
+"cust_intake_submit_error" = "No se pudo enviar el borrador.";
+"cust_intake_withdraw" = "Rechazar borrador";
+"cust_intake_withdraw_ok" = "Borrador rechazado. Esto no es un contrato.";
+"cust_intake_withdraw_error" = "No se pudo rechazar el borrador.";

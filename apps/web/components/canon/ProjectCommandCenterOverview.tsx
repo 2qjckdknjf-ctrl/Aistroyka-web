@@ -174,9 +174,13 @@ export function ProjectCommandCenterOverview({
               ? `${detail.budgetVarianceAmount.toLocaleString()} ${detail.budgetCurrency}`
               : "—"}
           </p>
-          <p className="mt-1 flex items-center gap-1 text-xs text-[var(--canon-warning)]">
+          <p className={`mt-1 flex items-center gap-1 text-xs ${detail?.budgetOverBudget ? "text-[var(--canon-warning)]" : "text-[var(--canon-text-muted)]"}`}>
             <AlertTriangle size={14} aria-hidden />
-            {detail?.budgetOverBudget ? t("riskHigh") : t("criticalPath")}
+            {detail?.budgetOverBudget
+              ? t("riskHigh")
+              : detail?.budgetVarianceAmount != null && detail.budgetPlannedTotal > 0
+                ? t("budgetWithinPlan")
+                : t("budgetPending")}
           </p>
         </div>
       </div>

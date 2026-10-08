@@ -1,9 +1,7 @@
 "use client";
 
 import {
-  AlertTriangle,
   BarChart3,
-  Calendar,
   CircleAlert,
   Wallet,
 } from "lucide-react";
@@ -19,9 +17,13 @@ type Insight = {
 export function CanonPortfolioAiPanel({
   projectCount = 0,
   highRiskCount = 0,
+  progressPct = null,
+  budgetUtilizationPct = null,
 }: {
   projectCount?: number;
   highRiskCount?: number;
+  progressPct?: number | null;
+  budgetUtilizationPct?: number | null;
 }) {
   const t = useTranslations("canon");
 
@@ -34,27 +36,21 @@ export function CanonPortfolioAiPanel({
           ? t("aiInsightHighRisk", { count: highRiskCount })
           : t("aiInsightNoHighRisk"),
     },
-    {
-      icon: AlertTriangle,
-      tone: "warning",
-      title: t("aiInsightMediumRisk"),
-    },
-    {
+  ];
+  if (progressPct != null) {
+    insights.push({
       icon: BarChart3,
       tone: "info",
-      title: t("aiInsightProgress"),
-    },
-    {
+      title: t("aiInsightProgress", { pct: progressPct }),
+    });
+  }
+  if (budgetUtilizationPct != null) {
+    insights.push({
       icon: Wallet,
       tone: "success",
-      title: t("aiInsightBudget"),
-    },
-    {
-      icon: Calendar,
-      tone: "purple",
-      title: t("aiInsightDeadlines"),
-    },
-  ];
+      title: t("budgetUtilization", { pct: budgetUtilizationPct }),
+    });
+  }
 
   const toneClass: Record<Insight["tone"], string> = {
     danger: "text-[var(--canon-danger)]",

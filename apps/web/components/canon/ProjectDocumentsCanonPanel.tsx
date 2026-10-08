@@ -161,13 +161,13 @@ function DocumentPreviewPane({
       </dl>
 
       <div className="canon-ai-panel mt-4 rounded-xl p-3">
-        <p className="text-sm font-semibold text-[var(--canon-text-primary)]">{t("docAiAnalysis")}</p>
+        <p className="text-sm font-semibold text-[var(--canon-text-primary)]">{t("docProjectSummary")}</p>
         {intelligenceQuery.isPending ? (
           <p className="mt-2 text-xs text-[var(--canon-text-muted)]">{t("docAiLoading")}</p>
         ) : intelligenceSummary ? (
           <p className="mt-2 text-xs text-[var(--canon-text-secondary)]">{intelligenceSummary}</p>
         ) : (
-          <p className="mt-2 text-xs text-[var(--canon-text-secondary)]">{t("docAiAnalysisHint")}</p>
+          <p className="mt-2 text-xs text-[var(--canon-text-secondary)]">{t("docProjectSummaryEmpty")}</p>
         )}
         <div className="mt-3 flex flex-wrap gap-2">
           <Link
@@ -254,7 +254,7 @@ export function ProjectDocumentsCanonPanel({ projectId }: { projectId: string })
     () => [
       { id: "all" as DocTab, label: t("docFolderAll"), count: folderCounts.all },
       { id: "document" as DocTab, label: t("docFolderProjectDocs"), count: folderCounts.document },
-      { id: "act" as DocTab, label: t("docFolderStructural"), count: folderCounts.act },
+      { id: "act" as DocTab, label: t("docFolderActs"), count: folderCounts.act },
       { id: "contract" as DocTab, label: t("docFolderContracts"), count: folderCounts.contract },
     ],
     [folderCounts, t],
@@ -263,8 +263,8 @@ export function ProjectDocumentsCanonPanel({ projectId }: { projectId: string })
   const tabs: { key: DocTab; label: string }[] = [
     { key: "all", label: t("docTabAllFiles", { count: folderCounts.all }) },
     { key: "document", label: t("docTabDocuments") },
-    { key: "act", label: t("docTabDrawings") },
-    { key: "contract", label: t("docTabModels") },
+    { key: "act", label: t("docTabActs") },
+    { key: "contract", label: t("docTabContracts") },
   ];
 
   function selectDocument(id: string) {
@@ -341,14 +341,8 @@ export function ProjectDocumentsCanonPanel({ projectId }: { projectId: string })
         ))}
       </div>
 
-      <div className="canon-scroll-x flex flex-wrap gap-2">
-        {["project", "type", "status", "author", "date"].map((key) => (
-          <button key={key} type="button" className="canon-ghost-btn shrink-0 !text-xs">
-            {t(`docFilter_${key}`)} ▾
-          </button>
-        ))}
-        <button type="button" className="text-xs text-[var(--canon-text-muted)]">{t("resetFilters")}</button>
-        <div className="ml-auto flex rounded-lg border border-[var(--canon-border-glass)] p-0.5">
+      <div className="flex justify-end">
+        <div className="flex rounded-lg border border-[var(--canon-border-glass)] p-0.5">
           <button
             type="button"
             className={`canon-notify-btn !w-9 ${viewMode === "list" ? "text-[var(--canon-gold)]" : ""}`}

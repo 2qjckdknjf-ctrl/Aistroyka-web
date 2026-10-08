@@ -29,6 +29,8 @@
 JSON schema validation и traceability report сначала локально/advisory, без нового обязательного production gate. Данные схемы — обезличенные fixtures, не реальные секреты/трейсы.
 Первый PR: schema + fixtures + stale detection + report; следующие отдельно adapter, policy/boundary/egress, sandbox/guard и audit. Нельзя объявить весь safety stack завершённым после одной схемы.
 
+Локальный advisory-срез 2026-10-05: `docs/roma/schemas/assurance_graph.schema.md` + `.schema.json`, fixture `docs/roma/fixtures/assurance_graph.REQ-AUTH-PROJECT-001.json`, оценка в `apps/web/lib/roma/assurance-graph.advisory.ts`. Это не production gate.
+
 ## Cursor execution
 Сверить существующие ROMA schemas/ADRs/tests и Stage 2D/3/4/7 перед добавлением кода. Сохранить текущие task IDs, повторяющиеся пункты связать alias, не создавать двойные backlog entries.
 Для каждого PR: scope, dependency, AC, negative cases, evidence SHA, независимый verdict, ограничения.

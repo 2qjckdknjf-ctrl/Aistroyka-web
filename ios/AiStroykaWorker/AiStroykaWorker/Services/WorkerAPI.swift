@@ -368,6 +368,16 @@ enum WorkerAPI {
         ) as Empty
     }
 
+    /// POST /api/v1/notifications/:id/opened — user opened the notification target. Not mark-read.
+    static func recordNotificationOpened(id: String) async {
+        struct Ack: Decodable { let ok: Bool? }
+        _ = try? await APIClient.shared.request(
+            path: "notifications/\(id)/opened",
+            method: "POST",
+            body: EmptyBody()
+        ) as Ack
+    }
+
     static func markAllNotificationsRead() async {
         struct Ack: Decodable { let ok: Bool?; let marked: Int? }
         _ = try? await APIClient.shared.request(

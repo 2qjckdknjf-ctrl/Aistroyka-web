@@ -1,0 +1,112 @@
+"cust_login_headline" = "Customer portal";
+"cust_login_subhead" = "Sign in to view the projects you were invited to.";
+"cust_email_placeholder" = "Email";
+"cust_password_placeholder" = "Password";
+"cust_sign_in" = "Sign in";
+"cust_signing_in" = "Signing in…";
+"cust_continue_google" = "Continue with Google";
+"cust_sign_out" = "Sign out";
+"cust_checking_session" = "Checking session…";
+"cust_home_title" = "Your projects";
+"cust_home_empty" = "No customer projects are available for this account yet.";
+"cust_projects_loading" = "Loading your projects…";
+"cust_projects_error" = "Could not load projects.";
+"cust_retry" = "Retry";
+"cust_project_open" = "See what is happening";
+"cust_project_loading" = "Loading project…";
+"cust_project_error" = "Could not load this project.";
+"cust_project_status" = "Status";
+"cust_handover_completed_at" = "Completed";
+"cust_handover_handed_over_at" = "Handed over";
+"cust_handover_notes" = "Notes";
+"cust_handover_title" = "Handover";
+"cust_progress_title" = "Progress";
+"cust_progress_none" = "No task progress is published yet.";
+"cust_progress_fmt" = "%d of %d tasks complete";
+"cust_activity_title" = "Recent activity";
+"cust_activity_empty" = "No recent customer-visible activity.";
+"cust_documents_title" = "Documents";
+"cust_documents_empty" = "No documents are shared yet.";
+"cust_requests_title" = "Requests for you";
+"cust_requests_empty" = "No customer requests are waiting.";
+"cust_estimates_title" = "Shared estimates";
+"cust_estimates_empty" = "No customer-facing estimates are shared yet.";
+"cust_err_empty_credentials" = "Enter email and password.";
+"cust_err_apple_sign_in" = "Apple Sign-In did not return a token.";
+"cust_err_google_sign_in" = "Google Sign-In failed.";
+"cust_err_session_expired" = "Session expired. Sign in again.";
+"cust_err_session_retry" = "Could not verify this session. Check your connection and try again.";
+"cust_retry" = "Retry";
+"cust_err_not_customer" = "This account is not a customer stakeholder. Use the portal invite or sign in with a customer account.";
+"cust_err_use_manager" = "This account belongs to a contractor workspace. Use AiStroyka Manager.";
+
+"cust_request_approve" = "Approve";
+"cust_request_reject" = "Reject";
+"cust_request_respond_ok" = "Response sent.";
+"cust_request_respond_error" = "Could not send your response.";
+
+"cust_estimate_respond_ok" = "Estimate response sent.";
+"cust_estimate_respond_error" = "Could not send your estimate response.";
+
+"cust_document_review_confirm" = "Confirm document review";
+"cust_document_review_ok" = "Document review confirmed.";
+"cust_document_review_error" = "Could not confirm document review.";
+
+"cust_feedback_placeholder" = "Your feedback";
+"cust_feedback_submit" = "Send feedback";
+"cust_feedback_ok" = "Feedback sent.";
+"cust_feedback_error" = "Could not send feedback.";
+
+"cust_acknowledge" = "Acknowledge";
+"cust_acknowledge_ok" = "Acknowledged.";
+"cust_acknowledge_error" = "Could not acknowledge.";
+
+"cust_choice_ok" = "Choice submitted.";
+"cust_choice_error" = "Could not submit choice.";
+
+"cust_intake_nav" = "Intake";
+
+"cust_intake_intro" = "Describe work you want. AI output stays a draft until you confirm.";
+
+"cust_intake_new_title" = "New intake draft";
+
+"cust_intake_title_placeholder" = "Title";
+
+"cust_intake_description_placeholder" = "Describe the work";
+
+"cust_intake_media_url_placeholder" = "Optional https photo URL";
+"cust_intake_media_hint" = "Evidence link only — not a contractual quote.";
+"cust_intake_media_url_invalid" = "Photo URL must be https.";
+"cust_intake_media_count" = "%d evidence link(s)";
+"cust_intake_questions_placeholder" = "Optional questions (one per line)";
+"cust_intake_questions_hint" = "Open questions for the contractor — not AI contract text.";
+"cust_intake_questions_count" = "%d question(s)";
+"cust_intake_site_context_placeholder" = "Site context (optional)";
+"cust_intake_location_placeholder" = "City / area (optional)";
+"cust_intake_work_type_placeholder" = "Requested work type (optional)";
+"cust_intake_desired_start_placeholder" = "Desired start (YYYY-MM-DD, optional)";
+"cust_intake_desired_end_placeholder" = "Desired end (YYYY-MM-DD, optional)";
+"cust_intake_desired_dates_hint" = "Preferred window only — not a contractual schedule.";
+"cust_intake_desired_date_invalid" = "Dates must use YYYY-MM-DD.";
+"cust_intake_desired_range" = "Desired: %@ → %@";
+"cust_intake_bound_project" = "Linked to project: %@";
+"cust_intake_row_project" = "Project %@";
+"cust_intake_create" = "Save draft";
+"cust_intake_update" = "Update draft";
+"cust_intake_cancel_edit" = "Start a new draft";
+
+"cust_intake_list_title" = "Your drafts";
+
+"cust_intake_empty" = "No intake drafts yet.";
+
+"cust_intake_load_error" = "Could not load intake drafts.";
+
+"cust_intake_create_ok" = "Draft saved.";
+
+"cust_intake_create_error" = "Could not save draft.";
+"cust_intake_submit" = "Submit for review";
+"cust_intake_submit_ok" = "Draft submitted. This is not a contract.";
+"cust_intake_submit_error" = "Could not submit draft.";
+"cust_intake_withdraw" = "Reject draft";
+"cust_intake_withdraw_ok" = "Draft rejected. This is not a contract.";
+"cust_intake_withdraw_error" = "Could not reject draft.";

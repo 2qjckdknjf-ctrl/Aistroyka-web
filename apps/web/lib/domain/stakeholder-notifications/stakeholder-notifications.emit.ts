@@ -88,7 +88,7 @@ export async function emitClientRequestCreatedForStakeholders(
     instructions: string | null;
   }
 ): Promise<void> {
-  const stakeholders = await shRepo.listByProject(admin, params.tenantId, params.projectId);
+  const { rows: stakeholders } = await shRepo.listByProject(admin, params.tenantId, params.projectId);
   const active = stakeholders.filter((s) => s.status === "active" && s.user_id);
   const projectName = await fetchProjectName(admin, params.tenantId, params.projectId);
   const portalPath = `/dashboard/projects/${params.projectId}/client`;
@@ -177,7 +177,7 @@ export async function emitClientRequestReminderForStakeholders(
     title: string;
   }
 ): Promise<void> {
-  const stakeholders = await shRepo.listByProject(admin, params.tenantId, params.projectId);
+  const { rows: stakeholders } = await shRepo.listByProject(admin, params.tenantId, params.projectId);
   const active = stakeholders.filter((s) => s.status === "active" && s.user_id);
   const projectName = await fetchProjectName(admin, params.tenantId, params.projectId);
   const portalPath = `/dashboard/projects/${params.projectId}/client`;

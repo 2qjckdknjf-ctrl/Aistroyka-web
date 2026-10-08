@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getAdminClient } from "@/lib/supabase/admin";
 import {
   ensureOnboardingProfileExists,
   hasTenantMembership,
@@ -7,6 +8,7 @@ import {
   type IdentityProvider,
 } from "@/lib/auth/multi-provider";
 import { toSafeRelativePath } from "@/lib/auth/password-recovery";
+import { recordLoginSuccess } from "@/lib/growth/product-events";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +25,7 @@ export async function GET(request: NextRequest) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
   const explicitNext = url.searchParams.get("next");
+  const isLinkIntent = url.searchParams.get("intent") === "link";
   const callbackPath = toSafeRelativePath(url.searchParams.get("callback"), "/en/dashboard");
   const locale = localeFromPath(callbackPath);
 
@@ -97,10 +100,10 @@ export async function GET(request: NextRequest) {
         identity_id: authIdentity.identity_id || authIdentity.id,
       },
     });
-    if (!linkResult.ok && url.searchParams.get("intent") === "link") {
+    if (!linkResult.ok && isLinkIntent) {
       return NextResponse.redirect(new URL(`${callbackPath}?error=oauth_link_persist_failed`, request.url));
     }
-  } else if (url.searchParams.get("intent") === "link" && requestedProvider) {
+  } else if (isLinkIntent && requestedProvider) {
     return NextResponse.redirect(new URL(`${callbackPath}?error=oauth_identity_missing`, request.url));
   }
 
@@ -116,5 +119,8 @@ export async function GET(request: NextRequest) {
     ? `/${locale}/dashboard`
     : `/${locale}/dashboard?onboarding=1`;
   const next = toSafeRelativePath(explicitNext, fallbackTarget);
+  if (!isLinkIntent) {
+    await recordLoginSuccess(supabase, user.id, request.headers.get("x-client"), getAdminClient());
+  }
   return NextResponse.redirect(new URL(next, request.url));
 }

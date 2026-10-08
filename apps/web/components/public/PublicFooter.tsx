@@ -15,6 +15,7 @@ const PRODUCT_LINKS = [
 const COMPANY_LINKS = [
   { href: "/about", key: "about" as const },
   { href: "/contact", key: "contact" as const },
+  { href: "/support", key: "support" as const },
   { href: "/partners", key: "partners" as const },
   { href: "/security", key: "security" as const },
 ] as const;

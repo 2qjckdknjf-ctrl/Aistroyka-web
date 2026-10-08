@@ -108,7 +108,12 @@ export async function getDefaultTenantId(
  */
 export async function createAnalysisJob(
   _supabase: SupabaseClient,
-  params: { tenant_id: string; media_id: string; priority?: "high" | "normal" | "low" }
+  params: {
+    tenant_id: string;
+    media_id: string;
+    priority?: "high" | "normal" | "low";
+    request_key?: string | null;
+  }
 ): Promise<{ id: string; media_id: string; status: string }> {
   const admin = getAdminClient();
   if (!admin) {
@@ -120,7 +125,35 @@ export async function createAnalysisJob(
     p_tenant_id: params.tenant_id,
     p_media_id: params.media_id,
     p_priority: params.priority ?? "normal",
+    ...(params.request_key ? { p_request_key: params.request_key } : {}),
   });
+  if (params.request_key) {
+    const { error: stampErr } = await admin
+      .from("analysis_jobs")
+      .update({ request_key: params.request_key } as never)
+      .eq("id", row.id)
+      .eq("tenant_id", params.tenant_id)
+      .is("request_key", null);
+    if (stampErr?.code === "23505") {
+      const { data: existingRaw, error: lookupErr } = await admin
+        .from("analysis_jobs")
+        .select("id, media_id, status")
+        .eq("tenant_id", params.tenant_id)
+        .eq("request_key", params.request_key)
+        .maybeSingle();
+      if (lookupErr) throw lookupErr;
+      const existing = existingRaw as { id: string; media_id: string; status: string } | null;
+      if (!existing || existing.media_id !== params.media_id) {
+        throw stampErr;
+      }
+      return {
+        id: existing.id,
+        media_id: existing.media_id,
+        status: existing.status,
+      };
+    }
+    if (stampErr) throw stampErr;
+  }
   return {
     id: row.id,
     media_id: row.media_id,

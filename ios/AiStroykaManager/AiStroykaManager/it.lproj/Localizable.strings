@@ -470,3 +470,13 @@
 "mgr_v43_doc_approve" = "Approva";
 "mgr_v43_doc_reject" = "Rifiuta";
 "mgr_v43_doc_request_changes" = "Richiedi modifiche";
+
+"mgr_graph_ai_section" = "Grafo cantiere (contesto AI)";
+
+"mgr_graph_ai_disclaimer" = "Solo riferimenti overlay — non verità contrattuale.";
+
+"mgr_graph_ai_nodes" = "Nodi";
+
+"mgr_graph_ai_edges" = "Archi";
+
+"mgr_graph_ai_truncated" = "Vista del grafo troncata per dimensione.";

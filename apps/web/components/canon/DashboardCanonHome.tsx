@@ -26,6 +26,7 @@ import {
   portfolioStateToRisk,
   taskProgressPct,
 } from "@/components/canon/canon-live-data";
+import { portfolioReasonCell } from "@/components/canon/portfolio-reason-label";
 import { useProjects } from "@/lib/projects/useProjects";
 import { usePrefetchProject } from "@/lib/projects/prefetchProject";
 
@@ -178,10 +179,7 @@ export function DashboardCanonHome() {
         title={tDash("title")}
         subtitle={t("screen01Label")}
         actions={
-          <>
-            <button type="button" className="canon-ghost-btn">{t("filters")}</button>
-            <Link href="/projects/new" className="canon-gold-btn">{t("createProject")}</Link>
-          </>
+          <Link href="/projects/new" className="canon-gold-btn">{t("createProject")}</Link>
         }
       />
 
@@ -218,11 +216,8 @@ export function DashboardCanonHome() {
       <div className="grid gap-6 xl:grid-cols-[1fr_300px]">
         <div className="space-y-6">
           <section className="canon-glass overflow-hidden">
-            <div className="flex items-center justify-between border-b border-[var(--canon-border-glass)] px-4 py-3">
+            <div className="border-b border-[var(--canon-border-glass)] px-4 py-3">
               <h2 className="canon-section-title">{t("activeProjects")}</h2>
-              <button type="button" className="text-xs font-medium text-[var(--canon-text-muted)]">
-                {t("viewCards")} ▾
-              </button>
             </div>
             {projectsQuery.isPending ? (
               <div className="p-8 text-center text-[var(--canon-text-muted)]">{tDash("loading")}</div>
@@ -291,9 +286,14 @@ export function DashboardCanonHome() {
                           <td>
                             <span className={riskClass(risk)}>{riskLabel}</span>
                           </td>
-                          <td className="text-xs max-w-[120px] truncate" title={control?.primaryReason ?? ""}>
-                            {control?.primaryReason ?? "—"}
-                          </td>
+                          {(() => {
+                            const reason = portfolioReasonCell(control?.primaryReason, (key) => t(key));
+                            return (
+                              <td className="text-xs max-w-[120px] truncate" title={reason.title}>
+                                {reason.text}
+                              </td>
+                            );
+                          })()}
                         </tr>
                       );
                     })}
@@ -380,7 +380,12 @@ export function DashboardCanonHome() {
               {t("openAiCenter")} →
             </Link>
           </div>
-          <CanonPortfolioAiPanel projectCount={projects.length} highRiskCount={highRiskCount} />
+          <CanonPortfolioAiPanel
+            projectCount={projects.length}
+            highRiskCount={highRiskCount}
+            progressPct={summaries.length ? avgProgress : null}
+            budgetUtilizationPct={budgetAgg.planned > 0 ? budgetAgg.utilizationPct : null}
+          />
         </aside>
       </div>
     </div>

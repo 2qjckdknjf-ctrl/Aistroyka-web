@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
+import { selectRecentPortalActivity } from "@/components/canon/select-recent-portal-activity";
 
 type ActivityItem = {
   id: string;
@@ -35,14 +36,11 @@ export function CanonPortalActivityPanel({ projectId }: { projectId: string }) {
   });
 
   const items = q.data ?? [];
-  const mediaLike = items.filter((item) =>
-    /report|photo|media|upload|image|defect|progress/i.test(item.eventType + item.title)
-  );
-  const displayed = mediaLike.length > 0 ? mediaLike.slice(0, 8) : items.slice(0, 6);
+  const displayed = selectRecentPortalActivity(items);
 
   return (
     <div className="canon-portal-gallery canon-glass p-4">
-      <h3 className="font-semibold text-[var(--canon-text-primary)]">{t("portalPhotoGallery")}</h3>
+      <h3 className="font-semibold text-[var(--canon-text-primary)]">{t("portalRecentActivity")}</h3>
       <p className="mt-1 text-xs text-[var(--canon-text-muted)]">{tDetail("requestsResponsesPortalAccessHint")}</p>
 
       {q.isPending ? (

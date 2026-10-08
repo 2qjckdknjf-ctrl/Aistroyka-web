@@ -470,3 +470,13 @@
 "mgr_v43_doc_approve" = "Aprobar";
 "mgr_v43_doc_reject" = "Rechazar";
 "mgr_v43_doc_request_changes" = "Pedir cambios";
+
+"mgr_graph_ai_section" = "Grafo de construcción (contexto IA)";
+
+"mgr_graph_ai_disclaimer" = "Solo referencias de overlay — no es verdad contractual.";
+
+"mgr_graph_ai_nodes" = "Nodos";
+
+"mgr_graph_ai_edges" = "Aristas";
+
+"mgr_graph_ai_truncated" = "Vista del grafo truncada por tamaño.";
