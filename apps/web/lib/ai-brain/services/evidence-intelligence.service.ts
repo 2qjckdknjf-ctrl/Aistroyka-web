@@ -31,12 +31,13 @@ export async function getEvidenceSignals(
   const at = new Date().toISOString();
   const signals: EvidenceSignal[] = [];
 
-  const { data: tasks } = await supabase
+  const { data: tasks, error: tasksError } = await supabase
     .from("worker_tasks")
     .select("id, required_photos, title")
     .eq("project_id", projectId)
     .eq("tenant_id", tenantId)
     .in("status", ["pending", "in_progress"]);
+  if (tasksError) throw new Error("evidence_tasks_query_failed");
 
   if (!tasks?.length) return signals;
 
@@ -44,11 +45,12 @@ export async function getEvidenceSignals(
     const required = requiredPhotoCount(task.required_photos);
     const beforeAfter = parseBeforeAfter(task.required_photos);
 
-    const { data: reportRows } = await supabase
+    const { data: reportRows, error: reportsError } = await supabase
       .from("worker_reports")
       .select("id")
       .eq("tenant_id", tenantId)
       .eq("task_id", task.id);
+    if (reportsError) throw new Error("evidence_reports_query_failed");
     const reportIds = (reportRows ?? []).map((r: { id: string }) => r.id);
 
     let actual = 0;
@@ -57,19 +59,21 @@ export async function getEvidenceSignals(
     let hasUnlabeledMedia = false;
 
     if (reportIds.length > 0) {
-      const { data: rm } = await supabase
+      const { data: rm, error: mediaError } = await supabase
         .from("worker_report_media")
         .select("media_id, upload_session_id")
         .in("report_id", reportIds);
+      if (mediaError) throw new Error("evidence_report_media_query_failed");
       const rows = (rm ?? []) as { media_id: string | null; upload_session_id: string | null }[];
       actual = new Set(rows.map((x) => x.media_id).filter(Boolean)).size;
 
       const sessionIds = rows.map((r) => r.upload_session_id).filter(Boolean) as string[];
       if (sessionIds.length > 0) {
-        const { data: sessions } = await supabase
+        const { data: sessions, error: sessionsError } = await supabase
           .from("upload_sessions")
           .select("id, purpose")
           .in("id", sessionIds);
+        if (sessionsError) throw new Error("evidence_upload_sessions_query_failed");
         for (const s of (sessions ?? []) as { id: string; purpose: string }[]) {
           if (s.purpose === "report_before") beforeCount++;
           else if (s.purpose === "report_after") afterCount++;

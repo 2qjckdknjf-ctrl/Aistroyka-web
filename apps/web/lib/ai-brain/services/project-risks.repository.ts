@@ -10,11 +10,13 @@ export async function getExplicitProjectRisks(
   projectId: string,
   tenantId: string
 ): Promise<RiskSignal[]> {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("project_risks")
     .select("id, title, description, severity")
     .eq("project_id", projectId)
     .eq("tenant_id", tenantId);
+
+  if (error) throw new Error("project_risks_query_failed");
 
   const at = new Date().toISOString();
   return (data ?? []).map((r) => ({
