@@ -179,4 +179,34 @@ final class CustomerSmokeUITests: XCTestCase {
         XCTAssertTrue(app.buttons["pilot_customer_apple_sign_in"].exists)
         XCTAssertTrue(app.buttons["pilot_customer_google_sign_in"].exists)
     }
+    @MainActor
+    func testLivePublishedPhotoGallery() throws {
+        let env = ProcessInfo.processInfo.environment
+        let keys = ["CUSTOMER_E2E_EMAIL", "CUSTOMER_E2E_PASSWORD", "CUSTOMER_E2E_PROJECT_ID", "CUSTOMER_E2E_EVIDENCE_ID", "CUSTOMER_E2E_TAG", "CUSTOMER_E2E_BASE_URL"]
+        guard keys.allSatisfy({ !(env[$0] ?? "").isEmpty }) else { throw XCTSkip("Requires a scoped synthetic published-photo fixture") }
+        let projectId = env["CUSTOMER_E2E_PROJECT_ID"]!, evidenceId = env["CUSTOMER_E2E_EVIDENCE_ID"]!, tag = env["CUSTOMER_E2E_TAG"]!
+        guard UUID(uuidString: projectId) != nil, UUID(uuidString: evidenceId) != nil,
+              tag.hasPrefix("qa-published-evidence-"), env["CUSTOMER_E2E_EMAIL"] == tag + "@example.com",
+              env["CUSTOMER_E2E_BASE_URL"] == "https://staging.aistroyka.ai" else { XCTFail("Unexpected fixture scope"); return }
+        let app = XCUIApplication()
+        app.launchEnvironment["AISTROYKA_E2E"] = "1"
+        app.launchEnvironment["AISTROYKA_E2E_BASE_URL"] = env["CUSTOMER_E2E_BASE_URL"]
+        app.launchEnvironment["AISTROYKA_E2E_EMAIL"] = env["CUSTOMER_E2E_EMAIL"]
+        app.launchEnvironment["AISTROYKA_E2E_PASSWORD"] = env["CUSTOMER_E2E_PASSWORD"]
+        app.launch()
+        if app.buttons["pilot_customer_sign_out"].waitForExistence(timeout: 3) { app.buttons["pilot_customer_sign_out"].tap() }
+        XCTAssertTrue(app.textFields["pilot_customer_email"].waitForExistence(timeout: 20))
+        XCTAssertEqual(app.buttons["pilot_customer_sign_in"].value as? String, "fixture_match")
+        app.buttons["pilot_customer_sign_in"].tap()
+        let project = app.descendants(matching: .any).matching(identifier: "pilot_customer_project_" + projectId).firstMatch
+        guard project.waitForExistence(timeout: 40) else { XCTFail("Synthetic project not available after actual sign-in"); return }
+        project.tap()
+        let photo = app.images.matching(identifier: "pilot_customer_published_photo_image_" + evidenceId).firstMatch
+        XCTAssertTrue(photo.waitForExistence(timeout: 45), "Published original must decode into an actual image")
+        let screen = XCTAttachment(screenshot: app.screenshot()); screen.name = "Synthetic published photo decoded"; screen.lifetime = .keepAlways; add(screen)
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        app.buttons["pilot_customer_sign_out"].tap()
+        XCTAssertTrue(app.textFields["pilot_customer_email"].waitForExistence(timeout: 20))
+    }
+
 }
