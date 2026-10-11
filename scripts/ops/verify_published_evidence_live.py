@@ -21,7 +21,7 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
 def request(url, method='GET', body=None, headers=None):
     if not any(url.startswith(host + '/') for host in (STAGING, DATABASE)):
         raise ValueError('Probe refused a noncanonical host')
-    req = urllib.request.Request(url, method=method, data=None if body is None else json.dumps(body).encode(),
+    req = urllib.request.Request(url, method=method, data=None if body is None else body if isinstance(body, bytes) else json.dumps(body).encode(),
         headers={'Content-Type': 'application/json', **(headers or {})})
     try:
         response = urllib.request.build_opener(NoRedirect).open(req, timeout=25)
@@ -67,6 +67,20 @@ def verify_fixture_row(table, ident, fields, owner):
 def require_storage_denied(status):
     if status not in (400, 403, 404):
         raise ValueError('Direct Storage object access unexpectedly allowed or unverified')
+
+
+def fixture_pdf_bytes():
+    stream = b'BT /F1 10 Tf 10 50 Td (Synthetic QA only) Tj ET'
+    objects = [b'<< /Type /Catalog /Pages 2 0 R >>', b'<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+        b'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 200 100] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>',
+        b'<< /Length ' + str(len(stream)).encode() + b' >>\nstream\n' + stream + b'\nendstream',
+        b'<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>']
+    data = b'%PDF-1.4\n'; offsets = []
+    for index, obj in enumerate(objects, 1):
+        offsets.append(len(data)); data += str(index).encode() + b' 0 obj\n' + obj + b'\nendobj\n'
+    xref = len(data)
+    data += b'xref\n0 6\n0000000000 65535 f \n' + b''.join(('%010d 00000 n \n' % offset).encode() for offset in offsets)
+    return data + b'trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n' + str(xref).encode() + b'\n%%EOF\n'
 
 
 def run(fixture, expected_sha):
@@ -164,6 +178,25 @@ def run(fixture, expected_sha):
             status, _, headers = request(url); exact(status, 404, 'Revoked share route')
             if 'no-store' not in headers.get('Cache-Control', ''): raise ValueError('Share denial is cacheable')
         check('revoked_share_blocks_metadata_and_original')
+        docs_root = STAGING + '/api/v1/projects/' + fixture['project_id'] + '/documents'
+        status, raw, _ = request(DATABASE + '/rest/v1/project_documents?tenant_id=eq.' + fixture['tenant_id'] + '&project_id=eq.' + fixture['project_id'] + '&created_by=eq.' + fixture['owner_id'] + '&title=eq.' + fixture['tag'] + '&select=id', headers=owner)
+        exact(status, 200, 'Exact prior document absence'); assert json.loads(raw) == []
+        status, raw, _ = request(docs_root, 'POST', {'type': 'document', 'title': fixture['tag']}, owner)
+        exact(status, 200, 'Create exact synthetic document'); doc_id = identifier(json.loads(raw)['data']['id'])
+        pdf = fixture_pdf_bytes(); boundary = 'qa-document-' + doc_id
+        multipart = ('--' + boundary + '\r\nContent-Disposition: form-data; name="file"; filename="fixture.pdf"\r\nContent-Type: application/pdf\r\n\r\n').encode() + pdf + ('\r\n--' + boundary + '--\r\n').encode()
+        status, raw, _ = request(docs_root + '/' + doc_id + '/upload', 'POST', multipart, {**owner, 'Content-Type': 'multipart/form-data; boundary=' + boundary})
+        exact(status, 200, 'Upload exact synthetic PDF'); result = json.loads(raw)['data']
+        doc_original = docs_root + '/' + doc_id + '/original'
+        if result['file_url'] != doc_original.removeprefix(STAGING) or not result['object_path'].startswith(fixture['tenant_id'] + '/' + fixture['project_id'] + '/documents/'): raise ValueError('Document source scope mismatch')
+        status, raw, headers = request(doc_original, headers=owner); exact(status, 200, 'Private PDF preview')
+        if raw != pdf or headers.get('Content-Type') != 'application/pdf' or headers.get('X-Frame-Options') != 'SAMEORIGIN' or 'no-store' not in headers.get('Cache-Control', '') or headers.get('Location'): raise ValueError('Private PDF original differs or is cacheable')
+        check('actual_document_create_upload_private_preview')
+        status, _, headers = request(doc_original, headers=actor)
+        if status not in (403, 404): raise ValueError('Customer reached internal document source')
+        if 'no-store' not in headers.get('Cache-Control', ''): raise ValueError('Denied internal document is cacheable')
+        check('customer_cannot_read_internal_document')
+
 
         return {'checks': checks, 'expected_sha7': expected_sha[:7], 'business_records_untouched': True, 'cleanup_required': True}
     finally:

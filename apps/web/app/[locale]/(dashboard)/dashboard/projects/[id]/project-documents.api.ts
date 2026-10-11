@@ -1,4 +1,3 @@
-import { getPublicConfig } from "@/lib/config/public";
 
 export const PROJECT_DOCUMENTS_MEDIA_BUCKET = "media";
 export const PROJECT_DOCUMENTS_MAX_UPLOAD_MB = 25;
@@ -21,11 +20,9 @@ export interface ProjectDocumentRow {
   updated_at: string;
 }
 
-export function projectDocumentFileUrl(objectPath: string | null | undefined): string | null {
+export function projectDocumentFileUrl(objectPath: string | null | undefined, projectId: string, documentId: string): string | null {
   if (!objectPath) return null;
-  const base = (getPublicConfig().NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/$/, "");
-  if (!base) return null;
-  return `${base}/storage/v1/object/public/${PROJECT_DOCUMENTS_MEDIA_BUCKET}/${objectPath}`;
+  return `/api/v1/projects/${encodeURIComponent(projectId)}/documents/${encodeURIComponent(documentId)}/original`;
 }
 
 export function fileNameFromObjectPath(objectPath: string | null | undefined): string | null {

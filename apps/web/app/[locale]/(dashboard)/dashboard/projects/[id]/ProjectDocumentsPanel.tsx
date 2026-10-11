@@ -19,7 +19,7 @@ import {
   Textarea,
 } from "@/components/ui";
 import { Link } from "@/i18n/navigation";
-import { getPublicConfig } from "@/lib/config/public";
+import { projectDocumentFileUrl } from "./project-documents.api";
 import { DocumentApprovalHistory } from "@/components/approvals";
 import { ProjectProofPackPanel } from "./ProjectProofPackPanel";
 import { DashboardGlassCard } from "@/components/dashboard/DashboardGlassCard";
@@ -33,7 +33,6 @@ import {
   type DocumentFolderFilter,
 } from "./documents-workspace.utils";
 
-const MEDIA_BUCKET = "media";
 const MAX_UPLOAD_MB = 25;
 
 interface ProjectDocument {
@@ -73,12 +72,7 @@ interface TaskSummary {
   status: string;
 }
 
-function fileUrl(objectPath: string | null | undefined): string | null {
-  if (!objectPath) return null;
-  const base = (getPublicConfig().NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/$/, "");
-  if (!base) return null;
-  return `${base}/storage/v1/object/public/${MEDIA_BUCKET}/${objectPath}`;
-}
+
 
 async function fetchDocuments(projectId: string): Promise<ProjectDocument[]> {
   const res = await fetch(`/api/v1/projects/${projectId}/documents`, {
@@ -498,7 +492,7 @@ export function ProjectDocumentsPanel({ projectId }: { projectId: string }) {
           </TableHead>
           <TableBody>
             {visibleRows.map((doc) => {
-              const url = fileUrl(doc.object_path);
+              const url = projectDocumentFileUrl(doc.object_path, projectId, doc.id);
               const fileName = fileNameFromObjectPath(doc.object_path);
               const canUpload = doc.status === "draft" && !uploadMutation.isPending;
               const isUploading = uploadDocId === doc.id && uploadMutation.isPending;
