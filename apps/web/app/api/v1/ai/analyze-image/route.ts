@@ -21,7 +21,7 @@ import {
   TenantForbiddenError,
 } from "@/lib/tenant";
 import { authorize } from "@/lib/tenant/tenant.policy";
-import { getProjectForInternalWorkspace } from "@/lib/domain/projects/project.service";
+import { resolveVisionInputScope } from "@/lib/platform/ai/vision-input-scope";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { createClientFromRequest } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/platform/rate-limit/rate-limit.service";
@@ -179,42 +179,17 @@ export async function POST(request: Request) {
   }
 
   const userSupabase = await createClientFromRequest(request);
-  let projectId = parsed.data.project_id?.trim() || null;
-  if (parsed.data.media_id) {
-    const { data: media, error } = await userSupabase.from("media")
-      .select("id, project_id, tenant_id")
-      .eq("id", parsed.data.media_id).eq("tenant_id", tenantCtx.tenantId).maybeSingle();
-    if (error || !media || media.tenant_id !== tenantCtx.tenantId ||
-        (projectId && media.project_id !== projectId)) {
-      return wrap(NextResponse.json({ error: "Media not found", request_id: requestId }, { status: 404 }), tenantCtx.tenantId, tenantCtx.userId);
-    }
-    projectId = media.project_id;
+  const scope = await resolveVisionInputScope(userSupabase, tenantCtx, {
+    projectId: parsed.data.project_id, mediaId: parsed.data.media_id,
+  });
+  if (scope.error !== null) {
+    logVisionAnalyzeError({ request_id: requestId, route: ROUTE_KEY,
+      tenant_id: tenantCtx.tenantId, project_id: parsed.data.project_id ?? null,
+      latency_ms: Date.now() - start, error_kind: scope.status === 403 ? "tenant_failure" : "validation_failure",
+      http_status: scope.status, ...rel() });
+    return wrap(NextResponse.json({ error: scope.error, request_id: requestId }, { status: scope.status }), tenantCtx.tenantId, tenantCtx.userId);
   }
-  if (projectId) {
-    const { data: project, error: projectError } = await getProjectForInternalWorkspace(
-      userSupabase,
-      tenantCtx,
-      projectId
-    );
-    if (projectError || !project) {
-      const status = projectError === "Insufficient rights" ? 403 : 404;
-      logVisionAnalyzeError({
-        request_id: requestId,
-        route: ROUTE_KEY,
-        tenant_id: tenantCtx.tenantId,
-        project_id: projectId,
-        latency_ms: Date.now() - start,
-        error_kind: status === 403 ? "tenant_failure" : "validation_failure",
-        http_status: status,
-        ...rel(),
-      });
-      return wrap(
-        NextResponse.json({ error: projectError ?? "Not found", request_id: requestId }, { status }),
-        tenantCtx.tenantId,
-        tenantCtx.userId
-      );
-    }
-  }
+  const projectId = scope.projectId;
 
   const admin = getAdminClient();
   if (admin) {
