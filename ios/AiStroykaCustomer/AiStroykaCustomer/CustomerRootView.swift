@@ -3,6 +3,7 @@ import Shared
 
 struct CustomerRootView: View {
     @EnvironmentObject var sessionState: CustomerSessionState
+    @State private var didStartSession = false
 
     var body: some View {
         Group {
@@ -34,6 +35,10 @@ struct CustomerRootView: View {
             }
         }
         .onAppear {
+            // Group forwards onAppear to its changing children. Bootstrapping
+            // each login/loading transition can discard the form's local state.
+            guard !didStartSession else { return }
+            didStartSession = true
             Task { @MainActor in
                 await AppRuntime.configureSharedNetworkingForCustomer()
                 await APIClient.shared.setTokenProvider { await AuthService.shared.getAccessToken() }

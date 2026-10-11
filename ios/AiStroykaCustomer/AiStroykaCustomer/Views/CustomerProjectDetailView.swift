@@ -7,6 +7,8 @@ struct CustomerProjectDetailView: View {
     @State private var view: CustomerPortalProjectView?
     @State private var message: String?
     @State private var loading = true
+    @State private var accessDenied = false
+    @State private var loadGeneration = 0
     @State private var respondingRequestId: String?
     @State private var respondingEstimateId: String?
     @State private var respondMessage: String?
@@ -23,6 +25,7 @@ struct CustomerProjectDetailView: View {
                     actionTitle: NSLocalizedString("cust_retry", comment: ""),
                     action: { Task { await load() } }
                 )
+                .accessibilityIdentifier("pilot_customer_project_unavailable")
             } else if let view {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
@@ -51,22 +54,32 @@ struct CustomerProjectDetailView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .background(CustomerTokens.canvas.ignoresSafeArea())
+                .modifier(CustomerProjectScrollBounce())
                 .refreshable { await load() }
                 .accessibilityIdentifier("pilot_customer_project_detail")
             }
         }
-        .navigationTitle(view?.project.name ?? fallbackName)
+        .navigationTitle(accessDenied ? NSLocalizedString("cust_home_title", comment: "") : (view?.project.name ?? fallbackName))
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                NavigationLink {
-                    CustomerIntakeListView(
-                        boundProjectId: projectId,
-                        boundProjectName: view?.project.name ?? fallbackName
-                    )
-                } label: {
-                    Text(NSLocalizedString("cust_intake_nav", comment: ""))
+            if view != nil {
+                ToolbarItemGroup(placement: .topBarTrailing) {
+                    Button {
+                        Task { await load() }
+                    } label: {
+                        Image(systemName: "arrow.clockwise")
+                    }
+                    .accessibilityLabel(NSLocalizedString("cust_refresh_project", comment: ""))
+                    .accessibilityIdentifier("pilot_customer_project_refresh")
+                    NavigationLink {
+                        CustomerIntakeListView(
+                            boundProjectId: projectId,
+                            boundProjectName: view?.project.name ?? fallbackName
+                        )
+                    } label: {
+                        Text(NSLocalizedString("cust_intake_nav", comment: ""))
+                    }
+                    .accessibilityIdentifier("pilot_customer_project_intake_nav")
                 }
-                .accessibilityIdentifier("pilot_customer_project_intake_nav")
             }
         }
         .task { await load() }
@@ -394,24 +407,45 @@ struct CustomerProjectDetailView: View {
     }
 
     private func load() async {
+        loadGeneration &+= 1
+        let generation = loadGeneration
         let keepVisibleView = view != nil
         if !keepVisibleView {
             loading = true
         }
         message = nil
         do {
-            view = try await CustomerAPI.portalProject(id: projectId)
+            let latest = try await CustomerAPI.portalProject(id: projectId)
+            guard generation == loadGeneration else { return }
+            view = latest
+            accessDenied = false
         } catch let apiError as APIError {
+            guard generation == loadGeneration else { return }
             message = apiError.message
-            if !keepVisibleView {
+            accessDenied = apiError.isUnauthorized || apiError.isForbidden || apiError.statusCode == 404
+            if !keepVisibleView || accessDenied {
                 view = nil
+                feedbackDrafts = [:]
+                respondMessage = nil
             }
         } catch {
+            guard generation == loadGeneration else { return }
             message = NSLocalizedString("cust_project_error", comment: "")
             if !keepVisibleView {
                 view = nil
             }
         }
         loading = false
+    }
+}
+
+private struct CustomerProjectScrollBounce: ViewModifier {
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if #available(iOS 16.4, *) {
+            content.scrollBounceBehavior(.always)
+        } else {
+            content
+        }
     }
 }

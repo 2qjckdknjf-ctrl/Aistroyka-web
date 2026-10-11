@@ -110,3 +110,9 @@
 "cust_intake_withdraw" = "Rechazar borrador";
 "cust_intake_withdraw_ok" = "Borrador rechazado. Esto no es un contrato.";
 "cust_intake_withdraw_error" = "No se pudo rechazar el borrador.";
+
+"cust_err_invalid_credentials" = "Correo o contraseña incorrectos.";
+
+"cust_done" = "Listo";
+
+"cust_refresh_project" = "Actualizar proyecto";

@@ -110,3 +110,9 @@
 "cust_intake_withdraw" = "Отклонить черновик";
 "cust_intake_withdraw_ok" = "Черновик отклонён. Это не договор.";
 "cust_intake_withdraw_error" = "Не удалось отклонить черновик.";
+
+"cust_err_invalid_credentials" = "Неверный email или пароль.";
+
+"cust_done" = "Готово";
+
+"cust_refresh_project" = "Обновить проект";

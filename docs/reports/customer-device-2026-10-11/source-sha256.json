@@ -1,0 +1,17 @@
+{
+  "web_runtime_baseline": "0bc5d602709b62d589b2d348737aa3f0c576d14e",
+  "device_result": "customer-live-revocation-160757.xcresult",
+  "source_files": {
+    "ios/AiStroykaCustomer/AiStroykaCustomer/CustomerRootView.swift": "2980d02344b4ce4e295b6c90421fddecf61d04eae9cef5d3b633fad056c41a0d",
+    "ios/AiStroykaCustomer/AiStroykaCustomer/Views/CustomerIntakeListView.swift": "cbb75db0ec26712b94e5cffca1bacfe9e14339826b036fdf9b0020fe3cd5efc6",
+    "ios/AiStroykaCustomer/AiStroykaCustomer/Views/CustomerLoginView.swift": "30f11791f0255fe3252be89eb35603cd79cc65823ed97723452736e6c3d0b52c",
+    "ios/AiStroykaCustomer/AiStroykaCustomer/Views/CustomerProjectDetailView.swift": "b88ff2f82750060604d27c33b05f1cd984293a5a89f10e72be2817fd703fa4f4",
+    "ios/AiStroykaCustomer/AiStroykaCustomer/en.lproj/Localizable.strings": "4181168a61c0ab4cf6111e054f7c6656b84de680a27002797dfb83ab7df8aaf3",
+    "ios/AiStroykaCustomer/AiStroykaCustomer/es.lproj/Localizable.strings": "6fcf77cb35dfabf2f407e429f32693f74485588f950c9541848eff1d8ad627c3",
+    "ios/AiStroykaCustomer/AiStroykaCustomer/it.lproj/Localizable.strings": "3ad34f513693c9628351bf3e49fb3ad968e30abb24c020945053b9d2b91a2629",
+    "ios/AiStroykaCustomer/AiStroykaCustomer/ru.lproj/Localizable.strings": "4814abceed5c3b776b284fd23d5a579eff20546c1bade6169d4a18610e95bdd7",
+    "ios/AiStroykaCustomer/AiStroykaCustomerUITests/CustomerSmokeUITests.swift": "95a46bdd7c961bd3ff8ccee5f83b5cb26b22f3248824a9ea84bc08f9123ddb68",
+    "ios/Shared/Sources/Shared/APIError.swift": "f1be38eed8b047258099cae5d2b5fb434ec3830d676e032fbe88eacc9414743d",
+    "ios/Shared/Tests/SharedTests/APIErrorTests.swift": "984ddc1c408e9c3d51f8734b5edc0e6de4a9c4761c9f797968ef7a921e4077cb"
+  }
+}

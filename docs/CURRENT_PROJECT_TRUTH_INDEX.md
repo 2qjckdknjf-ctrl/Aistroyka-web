@@ -1,17 +1,10 @@
-> Текущие указатели обновлены в разделе 2026-10-11 ниже. Исторические разделы сохраняют первоначальные SHA/статусы; перед действием обновить origin/main, GitHub и health.
-
 # AISTROYKA Current Project Truth Index
 
-**Last updated:** 2026-10-11
-**Authoritative source:** refresh origin/main; canonical workspace AISTROYKA-main-clean
-**Observed main/runtime baseline:** 35fa3347025077fcf30ef472a9a469a17f7dc91f after protected #417 merge; staging/production buildStamp.sha7=35fa334, both HTTP 200 at 09:58 UTC
-**Current execution reconciliation:** [2026-10-11 state](roadmap/CURRENT_EXECUTION_STATE_2026-10-11.md)
-**Operational proof:** [closure report](reports/2026-10-11-operational-closure.md); required CI, staging Playwright/pilot, production security/pilot/stakeholder finance smoke and actual provider-without-fallback proof
-**Live database:** intake + lifecycle, 4-arg request-key RPC, private helpers and timestamp/FK tails applied; five source files mapped to four remote IDs in [receipts](ops/VERIFIED_DB_MIGRATION_RECEIPTS.md)
-**Current queue:** [registry](tasks/ACTIVE_WORK_REGISTRY.csv), 75 prior open PRs for semantic reconciliation; #281/#289/#293 closed/included with branches preserved
-**Scope classification:** contractor-ops-only / controlled pilot; not full project completion, Public GA, physical-device/store/legal/billing readiness
+Updated 2026-10-11. Observed main/runtime 0bc5d602 after protected #425; actual staging/production health 0bc5d60. Later HEADs require fresh publication proof. [STATUS](../STATUS.md), [plan/fact](roadmap/CURRENT_EXECUTION_STATE_2026-10-11.md), [registry](tasks/ACTIVE_WORK_REGISTRY.csv).
 
-Merged operational slices: #415 private helpers, #416 DB tails, #417 atomic source/provider deploy. Manual intake CRUD/submit/withdraw is proven; AI scope extraction and broader portal/device/Graph/job evidence remain separate. Header SHA is dated evidence; later docs/source merges must be observed afresh, not inferred deployed. Current entry points: [STATUS](../STATUS.md), [START_HERE](../START_HERE.md), [current handoff](handoff/2026-10-11-continuation-state.md).
+[Customer/device/Storage report](reports/2026-10-11-customer-device-and-storage-closure.md):#420–425 protections delivered, Storage live repair, current Customer Debug flow and cleanup. The Customer QA source is pending its own protected merge; physical functional QA is not store/pilot artifact readiness. [Eight-source/seven-ID receipts](ops/VERIFIED_DB_MIGRATION_RECEIPTS.md) prevent migration replay. [Intake hard audit](audit/2026-10-11-intake-extraction-hard-audit.md) identifies reusable manual intake/Vision/Graph and remaining Owner/evidence/preproject extraction boundaries.
+
+Current classification: contractor-ops-only controlled pilot; no full-project/GA/store/legal/billing closure claim. 74 old mixed PRs need semantic review; saved dirty/ahead/release/cursor sources remain. Dated snapshots below are historical, not current authority.
 
 ---
 
