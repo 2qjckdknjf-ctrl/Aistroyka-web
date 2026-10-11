@@ -27,3 +27,7 @@ Removed 3 task-created drafts, 2 projects, 2 media metadata rows, 1 cost, 1 gran
 Security advisors still show the prior INFO service-only RLS-without-policy group and WARN executable SECURITY DEFINER helper groups. This is not an all-advisors-zero claim. Old mixed #195/#196/#206 PRs remain for semantic review; #200 is closed as superseded with source retained.
 
 Storage signing/access control is distinct from an already-issued capability. Signed URLs remain valid until expiry ([Supabase serving-assets docs](https://supabase.com/docs/guides/storage/serving/downloads)); the proof URL used 60 seconds. Raw contractor Storage is now denied to customers, but a complete published-media gateway, per-request revocation, share/export/AI-summary and Owner UX contracts still need delivery. Do not expand the contractor-ops-only pilot automatically. The next queue is described in [plan/fact](../roadmap/CURRENT_EXECUTION_STATE_2026-10-11.md) and [intake hard audit](../audit/2026-10-11-intake-extraction-hard-audit.md).
+
+## Subsequent delivery
+
+#426 protected merge:HEAD677eea576217b472c7ba45d134b04341c11fa3f9 → main40c7e73b4a666e110eee0f7950bd8edd1242a871. Required CI38146714950 and Worker+Manager+Customer simulator smoke38146714922 SUCCESS. Staging38147780974/production38148048805 SUCCESS; actual canonical health40c7e73. The Customer source is now merged; the earlier QA-pending text records its pre-merge proof stage. Tested source hashes still match main.

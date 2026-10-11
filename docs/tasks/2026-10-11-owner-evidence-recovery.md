@@ -1,0 +1,7 @@
+# Recover Owner evidence from retained #244
+
+Current baseline40c7e73b after protected #426; staging38147780974 and production38148048805 SUCCESS, served health40c7e73. The reused native archive checkout now works on fix/published-evidence-guard-2026-10-11. Canonical checkout is clean/current after Customer closure. Retained #244 HEAD628bb6b1 remains clean and matches GitHub; its58-path feature is not broad merged.
+
+The [audit](../audit/2026-10-11-owner-evidence-recovery.md) identifies source/schema integration gaps. First recovery slice updates the existing consistency/visibility triggers and policies:verified report/task/media/upload pairing, true uploader, current project-manager/implicit-owner roles, client immutable source identity/reviewed content, account guard and no raw customer provenance. FK SET NULL archives/unpublishes and preserves removed references; archived records can outlive removed originals. No new table, provider, pilot activation or replay of historic SQL.
+
+42 adversarial SQL checks PASS in PGlite and native isolated PostgreSQL. Required CI runs the same contracts. No live apply yet:protected merge, fresh current-project history/receipt candidate guard and live zero-record compatibility snapshot precede apply. A controlled actual PostgREST fixture must verify roles/source/cleanup after apply. Published-only DTO/original access with per-request revocation and reviewed lifecycle wiring still follow; this guard does not deliver that UI/API or AIS-CLIENT-005A extraction.
