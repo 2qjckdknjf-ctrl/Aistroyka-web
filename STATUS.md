@@ -4,7 +4,7 @@
 
 | Контур | Подтверждено | Остаток |
 |---|---|---|
-| Main/runtime | #420–427 merged. Staging38154058767 attempt2 SUCCESS/served4a38ea0; production apex4a38ea0, www verification rerun pending | Следующий HEAD не считать опубликованным до новых health checks |
+| Main/runtime | #420–427 merged. Staging38154058767 attempt2 SUCCESS/served4a38ea0; production38154538257 attempt2 SUCCESS/оба hosts4a38ea0 | Следующий HEAD не считать опубликованным до новых health checks |
 | AI доступ | Image/video media binding, analysis:trigger, scoped session CAS/completion; canonical deployed provider smoke без fallback | Полный upload→job→source-linked result, видео worker и все AI capabilities |
 | БД | Девять source migrations/восемь remote IDs в receipts, включая Storage 20261011140341; replay guard PASS | Исторический drift отдельно, без broad apply |
 | Customer portal | #424 восстановил client_portal_enabled из сохранённой release-работы. Finance smoke требует HTTP 200 + expected project, production PASS | Published media, invitation/export/AI-summary/share и более широкий Owner контракт |

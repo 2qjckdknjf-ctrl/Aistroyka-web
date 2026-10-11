@@ -9,3 +9,5 @@ The live project_members key is tenant_id/project_id/user_id; current status enu
 Deployment verification now requests a unique nonce URL and explicitly disables browser/CDN caching of readiness responses. Five bounded attempts allow propagation; a mismatched SHA still fails and reports only sanitized expected/observed SHA values.12 Python proof-boundary tests and4 health route tests PASS. This prevents cache reuse from becoming deployment evidence; the observed rollout delay's precise edge cause is not claimed proven.
 
 The recovered Owner published-only API/original gateway is a separate branch based on4a38ea0b. Lifecycle/UI and live original/revocation E2E remain to deliver. Whole migration-chain/bootstrap, store/pilot/manual keyboard/legal/billing gates remain open.
+
+Production #427 closure:38154538257 attempt2 SUCCESS; exact-SHA verification passed on apex and www. The earlier stale www response was rejected, then the same reviewed source passed after republishing. No production source change or DB replay was needed.

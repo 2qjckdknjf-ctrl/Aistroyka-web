@@ -1,7 +1,7 @@
 {
   "project_ref": "vthfrxehrursfloevnlp",
   "observed_date": "2026-10-11",
-  "scope": "Eight verified source migrations under seven remote IDs; not a repair of historical migration drift",
+  "scope": "Nine source migrations applied on 2026-10-11 under eight remote IDs; excludes historical migration drift.",
   "receipts": [
     {
       "remote_version": "20261011090316",
