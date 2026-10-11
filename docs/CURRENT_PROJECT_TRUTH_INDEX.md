@@ -1,5 +1,7 @@
 # AISTROYKA Current Project Truth Index
 
+Последующий факт #426: main40c7e73b, staging38147780974 и production38148048805 SUCCESS; actual health40c7e73. Customer QA source merged, canonical clean/current. Следующая задача — existing published-evidence guard/recovery #244; новый SQL candidate ещё не applied. Датированные сведения ниже сохраняют baseline своей проверки.
+
 Updated 2026-10-11. Observed main/runtime 0bc5d602 after protected #425; actual staging/production health 0bc5d60. Later HEADs require fresh publication proof. [STATUS](../STATUS.md), [plan/fact](roadmap/CURRENT_EXECUTION_STATE_2026-10-11.md), [registry](tasks/ACTIVE_WORK_REGISTRY.csv).
 
 [Customer/device/Storage report](reports/2026-10-11-customer-device-and-storage-closure.md):#420–425 protections delivered, Storage live repair, current Customer Debug flow and cleanup. The Customer QA source is pending its own protected merge; physical functional QA is not store/pilot artifact readiness. [Eight-source/seven-ID receipts](ops/VERIFIED_DB_MIGRATION_RECEIPTS.md) prevent migration replay. [Intake hard audit](audit/2026-10-11-intake-extraction-hard-audit.md) identifies reusable manual intake/Vision/Graph and remaining Owner/evidence/preproject extraction boundaries.

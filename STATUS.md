@@ -1,6 +1,6 @@
 # STATUS — AISTROYKA
 
-Сверено 2026-10-11. Проверенный main/runtime:40c7e73b после #426. Рабочая папка:AISTROYKA-main-clean; Customer QA #426 merged. Следующая задача — published-evidence guard в fix/published-evidence-guard-2026-10-11, в повторно используемой архивной рабочей папке. Перед новой задачей:python 3 scripts/ops/workspace_preflight.py --refresh; занятые/грязные папки не переключать.
+Сверено 2026-10-11. Проверенный main/runtime:40c7e73b после #426. Рабочая папка:AISTROYKA-main-clean; Customer QA #426 merged. Следующая задача — published-evidence guard в fix/published-evidence-guard-2026-10-11, в повторно используемой архивной рабочей папке. Перед новой задачей:python3 scripts/ops/workspace_preflight.py --refresh; занятые/грязные папки не переключать.
 
 | Контур | Подтверждено | Остаток |
 |---|---|---|

@@ -1,5 +1,7 @@
 # AISTROYKA — план/факт,2026-10-11
 
+Последующий факт #426: main40c7e73b, staging38147780974 и production38148048805 SUCCESS; actual health40c7e73. Customer QA source merged, canonical clean/current. Следующая задача — existing published-evidence guard/recovery #244; новый SQL candidate ещё не applied. Датированные сведения ниже сохраняют baseline своей проверки.
+
 Источник:origin/main 0bc5d602 после #425; actual staging/production health 0bc5d60. Customer QA changes are tracked separately until protected merge. Это текущая сверка, не новый backlog и не объявление 100% готовности. [Mega roadmap](AISTROYKA_MEGA_ROADMAP_CUSTOMER_FINANCE_SAFE.md), [amendment](AISTROYKA_PLAN_AMENDMENT_2026-09-23.md), [факты проверки](../reports/2026-10-11-customer-device-and-storage-closure.md).
 
 | Контур | Факт | Следующая работа |
