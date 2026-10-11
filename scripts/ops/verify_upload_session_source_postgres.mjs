@@ -63,6 +63,7 @@ await test('service may clean an exact finalized source',()=>as(null,()=>q('dele
 await q("insert into media values($1,$2,$3,'image','original.png',now()),($4,$2,$3,'image','manual.png',now())",[id(901),id(201),id(301),id(902)]);
 await q("insert into worker_reports values($1,$2,'submitted',null)",[id(1001),id(201)]);await q('insert into worker_report_media values($1,$2)',[id(1001),id(901)]);
 await test('unreviewed media path may be corrected',()=>as(5,()=>q("update media set file_url='corrected.png' where id=$1",[id(901)])));
+await test('media primary identity is stable even before review',()=>as(null,()=>denied('update media set id=$1 where id=$2',[id(909),id(901)],'23514'),'service_role'));
 await q("update worker_reports set status='approved',reviewed_at=now() where id=$1",[id(1001)]);
 for(const [key,value] of [['file_url','substituted.png'],['id',id(909)],['tenant_id',id(202)],['project_id',id(302)],['type','video']])await test('reviewed media '+key+' immutable',()=>as(null,()=>denied('update media set '+key+'=$1 where id=$2',[value,id(901)],'23514'),'service_role'));
 await test('review history keeps media frozen after changes requested',async()=>{await q("update worker_reports set status='changes_requested' where id=$1",[id(1001)]);await as(5,()=>denied("update media set file_url='new-unreviewed.png' where id=$1",[id(901)],'23514'))});

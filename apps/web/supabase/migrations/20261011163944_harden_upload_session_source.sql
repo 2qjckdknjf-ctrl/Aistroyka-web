@@ -10,13 +10,7 @@ create table if not exists app_private.reviewed_media_sources (
 alter table app_private.reviewed_media_sources enable row level security;
 revoke all on app_private.reviewed_media_sources from public, anon, authenticated;
 grant all on app_private.reviewed_media_sources to service_role;
-insert into app_private.reviewed_media_sources(media_id,tenant_id,project_id,source_type,file_url)
-select distinct m.id,m.tenant_id,m.project_id,m.type::text,m.file_url from public.media m
-where exists (select 1 from public.worker_report_media rm join public.worker_reports wr on wr.id=rm.report_id
-    where rm.media_id=m.id and wr.tenant_id=m.tenant_id and (wr.status='approved' or wr.reviewed_at is not null))
-  or exists (select 1 from public.visual_evidence_records e where e.media_id=m.id and e.tenant_id=m.tenant_id
-    and (e.owner_visible or e.manager_verified))
-on conflict(media_id) do nothing;
+
 
 create or replace function app_private.seal_reviewed_report_media()
 returns trigger language plpgsql security definer set search_path=pg_catalog as $$
@@ -110,6 +104,9 @@ returns trigger language plpgsql security definer set search_path = pg_catalog a
 declare source_report record;
 begin
   if tg_op = 'DELETE' and auth.role() = 'service_role' then return old; end if;
+  if tg_op = 'UPDATE' and new.id is distinct from old.id then
+    raise exception 'Media identity is immutable; create a new media record' using errcode='23514';
+  end if;
   if tg_op = 'UPDATE' and new.id is not distinct from old.id and new.tenant_id is not distinct from old.tenant_id
       and new.project_id is not distinct from old.project_id and new.type is not distinct from old.type
       and new.file_url is not distinct from old.file_url then return new; end if;
@@ -206,5 +203,15 @@ create policy upload_sessions_own_delete on public.upload_sessions for delete to
 using (user_id = auth.uid() and status in ('created', 'uploaded', 'expired')
   and public.is_internal_tenant_writer_for_tenant(tenant_id)
   and app_private.customer_intake_tenant_account_active(tenant_id));
+
+-- Seed after all source/report/evidence DDL locks are held, from the latest
+-- committed bindings rather than a snapshot taken before guard installation.
+insert into app_private.reviewed_media_sources(media_id,tenant_id,project_id,source_type,file_url)
+select distinct m.id,m.tenant_id,m.project_id,m.type::text,m.file_url from public.media m
+where exists (select 1 from public.worker_report_media rm join public.worker_reports wr on wr.id=rm.report_id
+    where rm.media_id=m.id and wr.tenant_id=m.tenant_id and (wr.status='approved' or wr.reviewed_at is not null))
+  or exists (select 1 from public.visual_evidence_records e where e.media_id=m.id and e.tenant_id=m.tenant_id
+    and (e.owner_visible or e.manager_verified))
+on conflict(media_id) do nothing;
 
 commit;
