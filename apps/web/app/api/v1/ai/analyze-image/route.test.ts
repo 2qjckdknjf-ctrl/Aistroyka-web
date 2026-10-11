@@ -4,16 +4,9 @@ import { POST } from "./route";
 const getTenantContextFromRequest = vi.fn();
 const getProjectForInternalWorkspace = vi.fn();
 
-vi.mock("@/lib/tenant", () => ({
+vi.mock("@/lib/tenant", async (importOriginal) => ({
+  ...await importOriginal<typeof import("@/lib/tenant")>(),
   getTenantContextFromRequest: (...args: unknown[]) => getTenantContextFromRequest(...args),
-  requireTenant: (ctx: { tenantId?: string | null }) => {
-    if (!ctx.tenantId) throw new Error("Tenant required");
-  },
-  TenantRequiredError: class TenantRequiredError extends Error {
-    constructor(message = "Tenant required") {
-      super(message);
-    }
-  },
 }));
 
 vi.mock("@/lib/domain/projects/project.service", () => ({
@@ -39,8 +32,9 @@ function jsonRequest(body: object) {
 describe("POST /api/v1/ai/analyze-image", () => {
   beforeEach(() => {
     getTenantContextFromRequest.mockResolvedValue({
-      tenantId: null,
-      userId: null,
+      tenantId: "tenant-a",
+      userId: "user-1",
+      role: "member",
       subscriptionTier: "free",
     });
     getProjectForInternalWorkspace.mockResolvedValue({ data: { id: "p1" }, error: null });
@@ -51,6 +45,7 @@ describe("POST /api/v1/ai/analyze-image", () => {
     getTenantContextFromRequest.mockResolvedValueOnce({
       tenantId: "tenant-a",
       userId: "user-1",
+      role: "member",
       subscriptionTier: "free",
     });
     getProjectForInternalWorkspace.mockResolvedValueOnce({

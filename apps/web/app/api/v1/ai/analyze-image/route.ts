@@ -3,7 +3,8 @@
  *
  * Contract:
  * - Request: POST JSON { image_url (required), media_id?, project_id? }.
- * - When project_id is set: requires tenant auth and project membership (403 Insufficient rights).
+ * - Requires an authenticated internal tenant member, including unscoped calls.
+ * - Optional project/media identifiers must be visible in that tenant.
  * - Response: 200 with AnalysisResult { stage, completion_percent, risk_level, detected_issues, recommendations }.
  * - Degraded success: 200 deterministic AnalysisResult when vision routers fail but `AI_VISION_DETERMINISTIC_FALLBACK` is enabled (default); `X-AI-Fallback-Reason` header set.
  * - Errors: 400 (bad body), 413 (body too large), 402 (quota), 429 (rate limit), 403 (policy block), 502/504 (AI when fallback disabled), 503 (no vision provider configured).
@@ -17,7 +18,9 @@ import {
   getTenantContextFromRequest,
   requireTenant,
   TenantRequiredError,
+  TenantForbiddenError,
 } from "@/lib/tenant";
+import { authorize } from "@/lib/tenant/tenant.policy";
 import { getProjectForInternalWorkspace } from "@/lib/domain/projects/project.service";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { createClientFromRequest } from "@/lib/supabase/server";
@@ -90,6 +93,23 @@ export async function POST(request: Request) {
 
   const rel = () => getAiReleaseCorrelation();
 
+  let tenantCtx;
+  try {
+    tenantCtx = await getTenantContextFromRequest(request);
+    requireTenant(tenantCtx);
+  } catch (e) {
+    if (e instanceof TenantRequiredError || e instanceof TenantForbiddenError) {
+      return wrap(NextResponse.json(
+        { error: e.message, request_id: requestId },
+        { status: e instanceof TenantForbiddenError ? 403 : 401 }
+      ));
+    }
+    throw e;
+  }
+  if (!authorize(tenantCtx, "analysis:trigger")) {
+    return wrap(NextResponse.json({ error: "Insufficient rights", request_id: requestId }, { status: 403 }), tenantCtx.tenantId, tenantCtx.userId);
+  }
+
   if (!isAnyVisionProviderConfigured()) {
     logVisionAnalyzeError({
       request_id: requestId,
@@ -158,33 +178,19 @@ export async function POST(request: Request) {
     return wrap(NextResponse.json({ error: urlCheck.error, request_id: requestId }, { status: 400 }));
   }
 
-  const tenantCtx = await getTenantContextFromRequest(request);
   const userSupabase = await createClientFromRequest(request);
-
-  const projectId = parsed.data.project_id?.trim() || null;
-  if (projectId) {
-    try {
-      requireTenant(tenantCtx);
-    } catch (e) {
-      if (e instanceof TenantRequiredError) {
-        logVisionAnalyzeError({
-          request_id: requestId,
-          route: ROUTE_KEY,
-          tenant_id: tenantCtx.tenantId,
-          project_id: projectId,
-          latency_ms: Date.now() - start,
-          error_kind: "auth_failure",
-          http_status: 401,
-          ...rel(),
-        });
-        return wrap(
-          NextResponse.json({ error: e.message, request_id: requestId }, { status: 401 }),
-          tenantCtx.tenantId,
-          tenantCtx.userId
-        );
-      }
-      throw e;
+  let projectId = parsed.data.project_id?.trim() || null;
+  if (parsed.data.media_id) {
+    const { data: media, error } = await userSupabase.from("media")
+      .select("id, project_id, tenant_id")
+      .eq("id", parsed.data.media_id).eq("tenant_id", tenantCtx.tenantId).maybeSingle();
+    if (error || !media || media.tenant_id !== tenantCtx.tenantId ||
+        (projectId && media.project_id !== projectId)) {
+      return wrap(NextResponse.json({ error: "Media not found", request_id: requestId }, { status: 404 }), tenantCtx.tenantId, tenantCtx.userId);
     }
+    projectId = media.project_id;
+  }
+  if (projectId) {
     const { data: project, error: projectError } = await getProjectForInternalWorkspace(
       userSupabase,
       tenantCtx,
@@ -279,7 +285,7 @@ export async function POST(request: Request) {
       traceId: requestId,
     }, {
       imageUrl,
-      projectId: parsed.data.project_id ?? null,
+      projectId: projectId,
       mediaId: parsed.data.media_id ?? null,
     });
 
@@ -289,7 +295,7 @@ export async function POST(request: Request) {
       request_id: requestId,
       route: ROUTE_KEY,
       tenant_id: tenantCtx.tenantId,
-      project_id: parsed.data.project_id ?? null,
+      project_id: projectId,
       user_id: tenantCtx.userId ?? null,
       latency_ms: durationMs,
       output_type: "vision",
@@ -303,7 +309,7 @@ export async function POST(request: Request) {
         tenant_id: tenantCtx.tenantId,
         user_id: tenantCtx.userId ?? null,
         trace_id: requestId,
-        project_id: parsed.data.project_id ?? null,
+        project_id: projectId,
         action: "ai_vision_analyze_complete",
         details: {
           request_id: requestId,
@@ -329,7 +335,7 @@ export async function POST(request: Request) {
         request_id: requestId,
         route: ROUTE_KEY,
         tenant_id: tenantCtx.tenantId,
-        project_id: parsed.data.project_id ?? null,
+        project_id: projectId,
         latency_ms: durationMs,
         error_kind: "output_validation_failure",
         http_status: 403,
@@ -340,7 +346,7 @@ export async function POST(request: Request) {
           tenant_id: tenantCtx.tenantId,
           user_id: tenantCtx.userId ?? null,
           trace_id: requestId,
-          project_id: parsed.data.project_id ?? null,
+          project_id: projectId,
           action: "ai_vision_analyze_error",
           details: {
             request_id: requestId,
@@ -362,7 +368,7 @@ export async function POST(request: Request) {
         request_id: requestId,
         route: ROUTE_KEY,
         tenant_id: tenantCtx.tenantId,
-        project_id: parsed.data.project_id ?? null,
+        project_id: projectId,
         latency_ms: durationMs,
         error_kind: ek,
         http_status: isTimeout ? 504 : 502,
@@ -373,7 +379,7 @@ export async function POST(request: Request) {
           tenant_id: tenantCtx.tenantId,
           user_id: tenantCtx.userId ?? null,
           trace_id: requestId,
-          project_id: parsed.data.project_id ?? null,
+          project_id: projectId,
           action: "ai_vision_analyze_error",
           details: {
             request_id: requestId,
@@ -391,7 +397,7 @@ export async function POST(request: Request) {
           request_id: requestId,
           route: ROUTE_KEY,
           tenant_id: tenantCtx.tenantId,
-          project_id: parsed.data.project_id ?? null,
+          project_id: projectId,
           user_id: tenantCtx.userId ?? null,
           latency_ms: durationMs,
           output_type: "vision",
@@ -406,7 +412,7 @@ export async function POST(request: Request) {
             tenant_id: tenantCtx.tenantId,
             user_id: tenantCtx.userId ?? null,
             trace_id: requestId,
-            project_id: parsed.data.project_id ?? null,
+            project_id: projectId,
             action: "ai_vision_analyze_complete",
             details: {
               request_id: requestId,
@@ -432,7 +438,7 @@ export async function POST(request: Request) {
       request_id: requestId,
       route: ROUTE_KEY,
       tenant_id: tenantCtx.tenantId,
-      project_id: parsed.data.project_id ?? null,
+      project_id: projectId,
       latency_ms: durationMs,
       error_kind: "unknown_internal_error",
       http_status: 500,
@@ -443,7 +449,7 @@ export async function POST(request: Request) {
         tenant_id: tenantCtx.tenantId,
         user_id: tenantCtx.userId ?? null,
         trace_id: requestId,
-        project_id: parsed.data.project_id ?? null,
+        project_id: projectId,
         action: "ai_vision_analyze_error",
         details: {
           request_id: requestId,

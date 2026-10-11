@@ -29,6 +29,9 @@ jobs:
       - name: Production deploy boundary tests
         run: python3 scripts/release/test_deploy_production_worker.py -v
 
+      - name: AI deployment proof boundary tests
+        run: python3 scripts/smoke/test_ai_live_provider.py -v
+
       # CI builds with bun; Vercel installs with npm from the root lock. Catch
       # npm-lock corruption (missing versions, macOS-only platform binaries)
       # here instead of on the next Vercel deploy.
