@@ -123,3 +123,4 @@
 "cust_portalPhotosAccessUnavailable" = "Photo access is unavailable.";
 "cust_portalPhotosVerified" = "Reviewed by the project manager";
 "cust_portalPhotosOriginalUnavailable" = "This photo is currently unavailable.";
+"cust_photos_title" = "Site photos";

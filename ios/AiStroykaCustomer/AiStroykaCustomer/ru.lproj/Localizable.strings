@@ -123,3 +123,4 @@
 "cust_portalPhotosAccessUnavailable" = "Доступ к фото недоступен.";
 "cust_portalPhotosVerified" = "Проверено менеджером проекта";
 "cust_portalPhotosOriginalUnavailable" = "Сейчас это фото недоступно.";
+"cust_photos_title" = "Фото объекта";

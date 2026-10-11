@@ -1,4 +1,5 @@
 import SwiftUI
+import ImageIO
 import Shared
 
 struct CustomerProjectDetailView: View {
@@ -49,6 +50,7 @@ struct CustomerProjectDetailView: View {
                         requestsSection(view.clientRequests)
                         estimatesSection(view.customerEstimates)
                         documentsSection(view.documents)
+                        CustomerPublishedPhotosSection(projectId: projectId, refreshGeneration: loadGeneration)
                     }
                     .padding(24)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -436,6 +438,110 @@ struct CustomerProjectDetailView: View {
             }
         }
         loading = false
+    }
+}
+
+private struct CustomerPublishedPhotosSection: View {
+    let projectId: String
+    let refreshGeneration: Int
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var photos: [CustomerPublishedEvidence.Item] = []
+    @State private var message: String?
+    @State private var loading = true
+    @State private var generation = 0
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(NSLocalizedString("cust_photos_title", comment: "")).font(.headline)
+            if loading && photos.isEmpty {
+                ProgressView()
+            } else if let message {
+                Text(message).foregroundStyle(CustomerTokens.textSecondary)
+                Button(NSLocalizedString("cust_retry", comment: "")) { Task { await load() } }
+            } else if photos.isEmpty {
+                Text(NSLocalizedString("cust_portalPhotosEmpty", comment: "")).foregroundStyle(CustomerTokens.textSecondary)
+            } else {
+                ForEach(photos.prefix(9)) { photo in
+                    CustomerPublishedPhotoCard(projectId: projectId, photo: photo) { Task { await load() } }
+                }
+            }
+        }
+        .accessibilityIdentifier("pilot_customer_published_photos")
+        .task(id: refreshGeneration) {
+            await load()
+            while !Task.isCancelled {
+                do { try await Task.sleep(nanoseconds: 30_000_000_000) } catch { break }
+                if scenePhase == .active { await load() }
+            }
+        }
+        .onChange(of: scenePhase) { phase in if phase == .active { Task { await load() } } }
+    }
+
+    @MainActor private func load() async {
+        generation += 1
+        let current = generation
+        loading = true
+        do {
+            let latest = try await CustomerAPI.publishedPhotos(projectId: projectId)
+            guard current == generation, !Task.isCancelled else { return }
+            photos = latest
+            message = nil
+        } catch {
+            guard current == generation, !Task.isCancelled else { return }
+            photos = []
+            let api = error as? APIError
+            let denied = api?.isUnauthorized == true || api?.isForbidden == true || api?.statusCode == 404
+            message = NSLocalizedString(denied ? "cust_portalPhotosAccessUnavailable" : "cust_portalPhotosLoadError", comment: "")
+        }
+        loading = false
+    }
+}
+
+private struct CustomerPublishedPhotoCard: View {
+    let projectId: String
+    let photo: CustomerPublishedEvidence.Item
+    let onUnavailable: () -> Void
+    @State private var image: UIImage?
+    @State private var failed = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            if let image {
+                Image(uiImage: image).resizable().scaledToFit()
+                    .accessibilityLabel(photo.zoneLabel ?? NSLocalizedString("cust_photos_title", comment: ""))
+                    .accessibilityIdentifier("pilot_customer_published_photo_image_\(photo.id)")
+                Text(NSLocalizedString("cust_portalPhotosVerified", comment: "")).font(.caption)
+            } else if failed {
+                Text(NSLocalizedString("cust_portalPhotosOriginalUnavailable", comment: ""))
+                Button(NSLocalizedString("cust_retry", comment: "")) { Task { await load() } }
+            } else { ProgressView() }
+            if let zone = photo.zoneLabel { Text(zone).font(.caption) }
+        }
+        .accessibilityIdentifier("pilot_customer_published_photo_\(photo.id)")
+        .task(id: photo.updatedAt) { await load() }
+    }
+
+    @MainActor private func load() async {
+        image = nil
+        failed = false
+        do {
+            let data = try await APIClient.shared.requestPublishedPhoto(projectId: projectId, evidenceId: photo.id)
+            guard !Task.isCancelled else { return }
+            guard let source = CGImageSourceCreateWithData(data as CFData, [kCGImageSourceShouldCache: false] as CFDictionary),
+                  let preview = CGImageSourceCreateThumbnailAtIndex(source, 0, [
+                    kCGImageSourceCreateThumbnailFromImageAlways: true,
+                    kCGImageSourceCreateThumbnailWithTransform: true,
+                    kCGImageSourceThumbnailMaxPixelSize: 1200,
+                    kCGImageSourceShouldCacheImmediately: true,
+                  ] as CFDictionary) else { throw APIError(statusCode: 415, code: nil, message: "Invalid photo") }
+            let loaded = UIImage(cgImage: preview)
+            image = loaded
+        } catch {
+            guard !Task.isCancelled else { return }
+            image = nil
+            failed = true
+            onUnavailable()
+        }
     }
 }
 

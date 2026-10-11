@@ -153,14 +153,43 @@ public actor APIClient {
         }
     }
 
-    private func performData(_ request: URLRequest) async throws -> (Data, URLResponse) {
+    /// Customer originals stay on the API origin, with current bearer auth and no persistent cache.
+    public func requestPublishedPhoto(projectId: String, evidenceId: String) async throws -> Data {
+        let path = try CustomerPublishedEvidence.originalRequestPath(projectId: projectId, evidenceId: evidenceId)
+        guard let base = Config.apiBaseURL, let url = URL(string: path, relativeTo: base) else {
+            throw APIError(statusCode: nil, code: nil, message: "Invalid base URL")
+        }
+        let config = session.configuration
+        config.urlCache = nil
+        config.httpCookieStorage = nil
+        config.requestCachePolicy = .reloadIgnoringLocalCacheData
+        let privateSession = URLSession(configuration: config, delegate: RejectPhotoRedirect(), delegateQueue: nil)
+        defer { privateSession.finishTasksAndInvalidate() }
+        var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 30)
+        request.setValue(DeviceContext.deviceId, forHTTPHeaderField: "x-device-id")
+        request.setValue(clientProfile, forHTTPHeaderField: "x-client")
+        request.setValue("image/jpeg, image/png, image/webp", forHTTPHeaderField: "Accept")
+        let (data, response) = try await performData(request, transport: privateSession)
+        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+            throw APIError.from(data: data, response: response)
+        }
+        guard response.url?.absoluteURL == url.absoluteURL,
+              ["image/jpeg", "image/png", "image/webp"].contains(http.mimeType ?? ""),
+              data.count <= 20 * 1024 * 1024 else {
+            throw APIError(statusCode: 415, code: nil, message: "Unsupported photo response")
+        }
+        return data
+    }
+
+    private func performData(_ request: URLRequest, transport: URLSession? = nil) async throws -> (Data, URLResponse) {
+        let transport = transport ?? session
         var req = request
         await applyAuth(&req)
-        var result = try await session.data(for: req)
+        var result = try await transport.data(for: req)
         if (result.1 as? HTTPURLResponse)?.statusCode == 401 {
             if await AuthService.shared.refreshAfterUnauthorized() {
                 await applyAuth(&req)
-                result = try await session.data(for: req)
+                result = try await transport.data(for: req)
             }
             if (result.1 as? HTTPURLResponse)?.statusCode == 401 {
                 await notifySessionInvalidIfNeeded()
@@ -202,6 +231,13 @@ public actor APIClient {
         clientProfile == MobileClientProfile.manager.rawValue
             || clientProfile == MobileClientProfile.worker.rawValue
             || clientProfile == MobileClientProfile.customer.rawValue
+    }
+}
+
+private final class RejectPhotoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
+    func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse,
+                    newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void) {
+        completionHandler(nil)
     }
 }
 
