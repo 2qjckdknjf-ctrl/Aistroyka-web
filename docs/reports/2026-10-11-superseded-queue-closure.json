@@ -1,0 +1,29 @@
+[
+  {
+    "pr": 317,
+    "head_sha": "fff1336d31fa035687a876204636a21b9976214a",
+    "state": "CLOSED_SUPERSEDED",
+    "verified_main": "729126d4bfcc7efe331767d582cc851ac5c015cb",
+    "reason": "main retains internal project authorization and additionally denies anonymous unscoped calls (#386)",
+    "regression_evidence": "27 passing tests across video authz, pending approvals, project summary and report-project resolver",
+    "branch_deleted": false
+  },
+  {
+    "pr": 348,
+    "head_sha": "c43905ebb76768e5669bc1b414e0c3354e7f79d3",
+    "state": "CLOSED_SUPERSEDED",
+    "verified_main": "729126d4bfcc7efe331767d582cc851ac5c015cb",
+    "reason": "main retains real report columns, query failures and UI errors; adds canonical day-first project resolution and lookup-error propagation",
+    "regression_evidence": "27 passing tests across video authz, pending approvals, project summary and report-project resolver",
+    "branch_deleted": false
+  },
+  {
+    "pr": 352,
+    "head_sha": "abf69cc2a936d197900e1abac17364f6783e4c1f",
+    "state": "CLOSED_SUPERSEDED",
+    "verified_main": "729126d4bfcc7efe331767d582cc851ac5c015cb",
+    "reason": "main counts submitted reports through days/tasks with failures propagated; adds pagination and chunked filters with canonical nullable-day fallback",
+    "regression_evidence": "27 passing tests across video authz, pending approvals, project summary and report-project resolver",
+    "branch_deleted": false
+  }
+]
