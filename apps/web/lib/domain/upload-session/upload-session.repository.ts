@@ -104,16 +104,17 @@ export async function finalize(
 ): Promise<boolean> {
   const { data: row } = await supabase
     .from("upload_sessions")
-    .select("id, user_id, status, expires_at, object_path")
+    .select("id, user_id, status, expires_at, object_path, mime_type, size_bytes")
     .eq("id", sessionId)
     .eq("tenant_id", tenantId)
     .maybeSingle();
   if (!row || (row as { user_id: string }).user_id !== userId) return false;
-  const r = row as { status: string; expires_at: string; object_path: string | null };
-  if (r.status === "finalized" && r.object_path === payload.object_path) return true;
+  const r = row as { status: string; expires_at: string; object_path: string | null; mime_type: string | null; size_bytes: number | null };
+  if (r.status === "finalized" && r.object_path === payload.object_path
+      && r.mime_type === (payload.mime_type ?? null) && r.size_bytes === (payload.size_bytes ?? null)) return true;
   if (r.status !== "created" && r.status !== "uploaded") return false;
   if (new Date(r.expires_at) < new Date()) return false;
-  const { error } = await supabase
+  const { data: finalized, error } = await supabase
     .from("upload_sessions")
     .update({
       status: "finalized",
@@ -122,6 +123,26 @@ export async function finalize(
       size_bytes: payload.size_bytes ?? null,
     })
     .eq("id", sessionId)
-    .eq("tenant_id", tenantId);
-  return !error;
+    .eq("tenant_id", tenantId)
+    .eq("user_id", userId)
+    .in("status", ["created", "uploaded"])
+    .gt("expires_at", new Date().toISOString())
+    .select("id")
+    .maybeSingle();
+  if (error) return false;
+  if (finalized) return true;
+  // A concurrent identical request may have won the CAS. Confirm the exact
+  // committed binding rather than reporting either a false failure or success.
+  const { data: committed, error: readError } = await supabase
+    .from("upload_sessions")
+    .select("id, user_id, status, object_path, mime_type, size_bytes")
+    .eq("id", sessionId)
+    .eq("tenant_id", tenantId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (readError || !committed) return false;
+  return committed.user_id === userId && committed.status === "finalized"
+    && committed.object_path === payload.object_path
+    && committed.mime_type === (payload.mime_type ?? null)
+    && committed.size_bytes === (payload.size_bytes ?? null);
 }
