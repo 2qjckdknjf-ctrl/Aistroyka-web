@@ -96,6 +96,16 @@
           "sha256": "b1027dabb152da89b6ae05580cb13b628e9dc1d6f307c78a78a90e0fb838c41f"
         }
       ]
+    },
+    {
+      "remote_version": "20261011234051",
+      "remote_name": "unique_published_evidence_sources_20261011",
+      "sources": [
+        {
+          "path": "apps/web/supabase/migrations/20261011230105_unique_published_evidence_sources.sql",
+          "sha256": "19c8c5a94a805dab89ce96c505e28990f52669f7ad75234ccba13a71690240bf"
+        }
+      ]
     }
   ]
 }
