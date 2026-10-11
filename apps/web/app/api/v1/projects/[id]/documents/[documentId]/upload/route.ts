@@ -85,13 +85,12 @@ export async function POST(
   }
   const updated = updatedResult.data;
 
-  const { data: { publicUrl } } = supabase.storage.from(MEDIA_BUCKET).getPublicUrl(objectPath);
 
   return NextResponse.json({
     data: {
       document: updated,
       object_path: objectPath,
-      file_url: publicUrl,
+      file_url: `/api/v1/projects/${encodeURIComponent(projectId)}/documents/${encodeURIComponent(documentId)}/original`,
     },
   });
 }

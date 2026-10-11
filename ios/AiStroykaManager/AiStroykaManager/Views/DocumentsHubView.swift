@@ -5,6 +5,7 @@
 
 import SwiftUI
 import UIKit
+import QuickLook
 import Shared
 import UniformTypeIdentifiers
 
@@ -24,6 +25,11 @@ struct DocumentsHubView: View {
     @StateObject private var networkMonitor = NetworkMonitor.shared
     @State private var lastSync: Date?
     @State private var didLoad = false
+    @State private var documentPreview: URL?
+    @StateObject private var previewLease = DocumentPreviewLease()
+    @State private var documentLoadTask: Task<Void, Never>?
+    @State private var documentOpenError: String?
+    @State private var openingDocumentId: String?
     @State private var decidingDocumentId: String?
 
     var body: some View {
@@ -51,6 +57,14 @@ struct DocumentsHubView: View {
                 pendingFileURL = url
                 Task { await createDocument() }
             }
+        }
+        .quickLookPreview($documentPreview)
+        .alert(NSLocalizedString("mgr_v43_documents", comment: ""), isPresented: Binding(get: { documentOpenError != nil }, set: { if !$0 { documentOpenError = nil } })) {
+            Button("OK", role: .cancel) { documentOpenError = nil }
+        } message: { Text(documentOpenError ?? "") }
+        .onDisappear { documentLoadTask?.cancel() }
+        .onChange(of: documentPreview) { url in
+            if url == nil { clearTemporaryDocument() }
         }
         .onAppear { loadIfNeeded() }
         .onReceive(NotificationCenter.default.publisher(for: ManagerLiveSync.documentsChanged)) { _ in
@@ -149,7 +163,7 @@ struct DocumentsHubView: View {
                                     }
                                     Spacer()
                                     statusPill(doc.status)
-                                    if ManagerAPI.documentFileURL(objectPath: doc.objectPath) != nil {
+                                    if doc.objectPath?.isEmpty == false {
                                         Image(systemName: "arrow.up.right")
                                             .foregroundStyle(ManagerV43.textSecondary)
                                     }
@@ -351,11 +365,21 @@ struct DocumentsHubView: View {
         }
     }
 
+    private func clearTemporaryDocument() {
+        previewLease.clear()
+    }
+
     private func openDocument(_ doc: ProjectDocumentDTO) {
-        if let url = ManagerAPI.documentFileURL(objectPath: doc.objectPath) {
-            UIApplication.shared.open(url)
-        } else {
-            errorMessage = NSLocalizedString("mgr_v43_document_unavailable", comment: "")
+        guard openingDocumentId == nil else { return }
+        openingDocumentId = doc.id
+        documentLoadTask = Task { @MainActor in
+            defer { openingDocumentId = nil }
+            do {
+                let file = try await ManagerAPI.previewDocument(doc)
+                guard !Task.isCancelled else { try? FileManager.default.removeItem(at: file.deletingLastPathComponent()); return }
+                clearTemporaryDocument()
+                previewLease.file = file; documentPreview = file
+            } catch { if !Task.isCancelled { documentOpenError = localizedManagerError(error) } }
         }
     }
 
@@ -369,4 +393,13 @@ struct DocumentsHubView: View {
         default: return "application/octet-stream"
         }
     }
+}
+
+private final class DocumentPreviewLease: ObservableObject {
+    var file: URL?
+    func clear() {
+        if let file { try? FileManager.default.removeItem(at: file.deletingLastPathComponent()) }
+        file = nil
+    }
+    deinit { clear() }
 }

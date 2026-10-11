@@ -1,3 +1,4 @@
+vi.mock("@/lib/platform/ai/resolve-ai-media-image", () => ({ resolveAIMediaImage: vi.fn(async (_client: unknown, input: { projectIdClaim: string }) => ({ ok: true, imageUrl: "https://storage.test/private-signed?token=synthetic", objectPath: "private/source.png", trustedProjectId: input.projectIdClaim, source: "media" })) }));
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { processOneJob } from "./runOneJob";

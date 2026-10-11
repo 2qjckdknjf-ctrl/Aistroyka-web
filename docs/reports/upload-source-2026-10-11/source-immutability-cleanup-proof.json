@@ -1,0 +1,10 @@
+{
+  "exact_rows_checked_absent": 8,
+  "fixture_auth_absent": true,
+  "fixture_sessions_revoked": true,
+  "owner_task_session_local_revoked": true,
+  "storage_objects_written": 0,
+  "business_records_untouched": true,
+  "fixture_project_members_absent": true,
+  "fixture_reviewed_source_seal_absent": true
+}

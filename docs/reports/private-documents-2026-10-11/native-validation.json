@@ -1,0 +1,13 @@
+{
+  "shared_transport_tests_passed": 3,
+  "shared_tests_failed": 0,
+  "manager_debug_simulator_build": "PASS",
+  "live_device_preview": "NOT_YET_VERIFIED",
+  "store_upload": false,
+  "sources_sha256": {
+    "ios/Shared/Sources/Shared/APIClient.swift": "77524d18e403ea3f4923b8ada1d1c2983bd5f480170d4e3db03609028cbb5485",
+    "ios/Shared/Tests/SharedTests/PrivateDocumentTransportTests.swift": "b289096ef2bc03d4cb754029376f3e8389c2f1c32e9a4d2802096423c2c523f4",
+    "ios/AiStroykaManager/AiStroykaManager/Services/ManagerAPI.swift": "77859a21ffdfc8118c74631cf62aa9dc22703fe7e3905554b8766b10f4c37160",
+    "ios/AiStroykaManager/AiStroykaManager/Views/DocumentsHubView.swift": "6f7739ef596e0051dbc6eda9814e139cf2bb37a03513a700bf7c3406f89aea41"
+  }
+}
