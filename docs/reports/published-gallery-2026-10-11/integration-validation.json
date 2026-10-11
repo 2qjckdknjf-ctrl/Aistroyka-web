@@ -1,0 +1,13 @@
+{
+  "baseline_merge_sha": "eb8af3de3d0c7c69584a759210c36bc6f3a6e827",
+  "shared_tests_passed": 10,
+  "shared_tests_failed": 0,
+  "web_gallery_tests_passed": 15,
+  "customer_build_for_testing": "PASS",
+  "live_gallery": "PENDING_STAGING",
+  "source_sha256": {
+    "ios/Shared/Sources/Shared/APIClient.swift": "f2a02f4c0de2746fc8900fc35f9a982087900c289262d7dc865f827b77ba843d",
+    "ios/Shared/Sources/Shared/CustomerPublishedEvidence.swift": "031b9efe1ec66782512adc68d54c37d35890afa4654ee3f9262778e603895936",
+    "ios/AiStroykaCustomer/AiStroykaCustomer/Views/CustomerProjectDetailView.swift": "31aff8202ac5a8254c1bd6acd14b1414649b8c158f7b64053e225186314c7231"
+  }
+}
