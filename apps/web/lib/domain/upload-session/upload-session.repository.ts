@@ -113,7 +113,7 @@ export async function finalize(
   if (r.status === "finalized" && r.object_path === payload.object_path) return true;
   if (r.status !== "created" && r.status !== "uploaded") return false;
   if (new Date(r.expires_at) < new Date()) return false;
-  const { error } = await supabase
+  const { data: finalized, error } = await supabase
     .from("upload_sessions")
     .update({
       status: "finalized",
@@ -122,6 +122,11 @@ export async function finalize(
       size_bytes: payload.size_bytes ?? null,
     })
     .eq("id", sessionId)
-    .eq("tenant_id", tenantId);
-  return !error;
+    .eq("tenant_id", tenantId)
+    .eq("user_id", userId)
+    .in("status", ["created", "uploaded"])
+    .gt("expires_at", new Date().toISOString())
+    .select("id")
+    .maybeSingle();
+  return !error && !!finalized;
 }
