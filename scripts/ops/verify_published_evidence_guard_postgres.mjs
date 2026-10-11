@@ -33,7 +33,7 @@ create table project_members(tenant_id uuid,project_id uuid,user_id uuid,role te
 create table media(id uuid primary key,tenant_id uuid,project_id uuid);
 create table worker_tasks(id uuid primary key,tenant_id uuid,project_id uuid);
 create table worker_day(id uuid primary key,tenant_id uuid);
-create table worker_reports(id uuid primary key,tenant_id uuid,task_id uuid,day_id uuid,user_id uuid,status text);
+create table worker_reports(id uuid primary key,tenant_id uuid,task_id uuid references worker_tasks(id) on delete set null,day_id uuid references worker_day(id) on delete set null,user_id uuid,status text);
 create table upload_sessions(id uuid primary key);
 create table worker_report_media(report_id uuid,media_id uuid,upload_session_id uuid);
 
@@ -67,6 +67,10 @@ await test('current day-project fallback is accepted',async()=>{await db.exec('a
 await test('unscoped day-only report fails closed',async()=>{await q('insert into worker_day values($1,$2,null)',[id(702),id(201)]);await q("insert into worker_reports values($1,$2,null,$3,$4,'submitted')",[id(605),id(201),id(702),id(7)]);await q('insert into worker_report_media values($1,$2,null)',[id(605),id(401)]);await as(7,()=>denied('insert into visual_evidence_records(id,tenant_id,project_id,report_id,media_id,uploader_user_id) values($1,$2,$3,$4,$5,$6)',[id(802),id(201),id(301),id(605),id(401),id(7)],'23514'))});
 await test('manager cannot publish submitted report',()=>as(5,()=>denied('update visual_evidence_records set owner_visible=true,manager_verified=true where id=$1',[id(801)],'23514')));
 await test('unreviewed caption can be corrected by author',()=>as(7,()=>q("update visual_evidence_records set zone_label='Kitchen' where id=$1",[id(801)])));
+await q("update worker_reports set status='changes_requested' where id=$1",[id(601)]);
+for(const [column,value] of [['task_id',id(502)],['task_id',id(503)],['task_id',null],['day_id',id(701)],['user_id',id(6)],['tenant_id',id(202)]])await test('report with evidence cannot rebind '+column+' to '+value,()=>as(7,()=>denied('update worker_reports set '+column+'=$1 where id=$2',[value,id(601)],'23514')));
+await test('report without evidence may change tasks on resubmit',()=>as(7,()=>q('update worker_reports set task_id=$1 where id=$2',[id(503),id(603)])));
+await test('task parent cleanup archives report evidence without blocking FK',async()=>{await q('insert into worker_tasks values($1,$2,$3)',[id(504),id(201),id(301)]);await q("insert into worker_reports values($1,$2,$3,null,$4,'submitted')",[id(606),id(201),id(504),id(7)]);await q('insert into worker_report_media values($1,$2,null)',[id(606),id(401)]);await as(7,()=>insert(807,{r:606}));await q('delete from worker_tasks where id=$1',[id(504)]);const row=(await q('select * from visual_evidence_records where id=$1',[id(807)])).rows[0];assert.equal(row.report_id,null);assert.equal(row.owner_visible,false);assert.equal(row.retention_state,'archived');await q('delete from visual_evidence_records where id=$1',[id(807)])});
 await q("update worker_reports set status='approved' where id=$1",[id(601)]);
 await test('approved report closes source edit race before publication',()=>as(7,()=>denied("update visual_evidence_records set zone_label='Injected' where id=$1",[id(801)],'23514')));
 await test('cannot add source after approval',()=>as(7,async()=>{try{await insert(802);assert.fail('Expected denial')}catch(e){assert.equal(e.code,'23514')}}));

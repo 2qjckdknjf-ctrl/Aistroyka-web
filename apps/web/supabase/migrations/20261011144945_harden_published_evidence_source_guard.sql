@@ -46,7 +46,8 @@ begin
       or not app_private.customer_intake_tenant_account_active(p_tenant_id) then
     raise exception 'Evidence report access denied' using errcode = '42501';
   end if;
-  select pg_catalog.jsonb_build_object('user_id', wr.user_id, 'status', wr.status)
+  select pg_catalog.jsonb_build_object('user_id', wr.user_id, 'status', wr.status,
+      'task_id', wr.task_id, 'project_id', coalesce(wt.project_id, nullif(pg_catalog.to_jsonb(wd)->>'project_id','')::uuid))
     into result from public.worker_reports wr
     left join public.worker_tasks wt on wt.id = wr.task_id and wt.tenant_id = wr.tenant_id
     left join public.worker_day wd on wd.id = wr.day_id and wd.tenant_id = wr.tenant_id
@@ -60,6 +61,33 @@ end;
 $$;
 revoke all on function app_private.lock_evidence_report(uuid, uuid) from public, anon;
 grant execute on function app_private.lock_evidence_report(uuid, uuid) to authenticated, service_role;
+
+-- Resubmission may change a report task, but attached evidence belongs to the
+-- original source. The report row lock serializes this check with source writes.
+create or replace function app_private.guard_report_evidence_identity()
+returns trigger language plpgsql security definer set search_path = pg_catalog as $$
+begin
+  if pg_catalog.pg_trigger_depth() > 1 and (
+    (old.task_id is not null and new.task_id is null)
+    or (old.day_id is not null and new.day_id is null)
+  ) then
+    update public.visual_evidence_records set report_id = null where report_id = old.id;
+    return new;
+  end if;
+  if (new.tenant_id is distinct from old.tenant_id
+      or new.user_id is distinct from old.user_id
+      or new.task_id is distinct from old.task_id
+      or new.day_id is distinct from old.day_id)
+      and exists (select 1 from public.visual_evidence_records e where e.report_id = old.id) then
+    raise exception 'Report source identity has evidence; create a new report' using errcode = '23514';
+  end if;
+  return new;
+end;
+$$;
+revoke all on function app_private.guard_report_evidence_identity() from public, anon, authenticated;
+drop trigger if exists trg_report_evidence_identity on public.worker_reports;
+create trigger trg_report_evidence_identity before update on public.worker_reports
+for each row execute function app_private.guard_report_evidence_identity();
 
 create or replace function public.validate_visual_evidence_project_consistency()
 returns trigger language plpgsql security invoker set search_path = '' as $$
@@ -177,6 +205,13 @@ begin
     report_snapshot := app_private.lock_evidence_report(new.tenant_id, new.report_id);
     report_owner := nullif(report_snapshot->>'user_id', '')::uuid;
     approved := report_snapshot->>'status' = 'approved';
+    -- The consistency trigger ran before this lock. Recheck the locked identity
+    -- after a concurrent resubmission, instead of trusting its earlier snapshot.
+    if nullif(report_snapshot->>'project_id', '')::uuid is distinct from new.project_id
+        or report_owner is distinct from new.uploader_user_id
+        or (new.task_id is not null and nullif(report_snapshot->>'task_id', '')::uuid is distinct from new.task_id) then
+      raise exception 'Locked report source identity mismatch' using errcode = '23514';
+    end if;
   end if;
   if tg_op = 'INSERT' and new.report_id is null and new.uploader_user_id is distinct from actor then
     raise exception 'Manual evidence author must be the caller' using errcode = '42501';
