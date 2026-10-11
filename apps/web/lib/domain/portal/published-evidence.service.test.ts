@@ -4,6 +4,7 @@ import type { TenantContext } from "@/lib/tenant/tenant.types";
 import { listPublishedEvidence, downloadPublishedEvidence } from "./published-evidence.service";
 
 const mock = vi.hoisted(() => ({ allowed: vi.fn(), admin: vi.fn(), resolve: vi.fn(), download: vi.fn() }));
+vi.mock("@/lib/platform/media/private-original-download", () => ({ downloadPrivateOriginal: (_client: unknown, path: string) => mock.download(path) }));
 vi.mock("@/lib/supabase/admin", () => ({ getAdminClient: mock.admin }));
 vi.mock("@/lib/platform/ai/resolve-ai-media-image", () => ({ resolveAIMediaImage: mock.resolve }));
 const projectId = "00000000-0000-4000-8000-000000000301";

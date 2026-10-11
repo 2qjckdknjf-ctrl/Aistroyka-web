@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { downloadSharedProofMedia } from "./proof-media.service";
 const mocks = vi.hoisted(() => ({ resolve: vi.fn(), download: vi.fn() }));
+vi.mock("@/lib/platform/media/private-original-download", () => ({ downloadPrivateOriginal: (_client: unknown, path: string) => mocks.download(path) }));
 vi.mock("@/lib/platform/ai/resolve-ai-media-image", () => ({ resolveAIMediaImage: mocks.resolve }));
 let included = true;
 let tables: Record<string, Record<string, unknown> | null>, failing: string | null;

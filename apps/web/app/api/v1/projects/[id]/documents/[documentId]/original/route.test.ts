@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({ ctx: vi.fn(), doc: vi.fn(), download: vi.fn(), sign: vi.fn() }));
+vi.mock("@/lib/platform/media/private-original-download", () => ({ downloadPrivateOriginal: (_client: unknown, path: string) => mocks.download(path) }));
 vi.mock("@/lib/tenant", () => ({ getTenantContextFromRequest: mocks.ctx, requireTenant: vi.fn(), TenantRequiredError: class extends Error {}, TenantForbiddenError: class extends Error {} }));
 vi.mock("@/lib/supabase/server", () => ({ createClientFromRequest: async () => ({
   storage: { from: () => ({ download: mocks.download, createSignedUrl: mocks.sign }) },

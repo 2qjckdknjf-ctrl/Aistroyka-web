@@ -5,6 +5,7 @@ import type { TenantContext } from "@/lib/tenant/tenant.types";
 import { canReadProjects } from "@/lib/tenant/tenant.policy";
 import { isUuid, inspectMediaPathScope } from "@/lib/platform/ai/media-path-tenant-guard";
 import { MEDIA_BUCKET } from "@/lib/platform/ai/media-bucket.constants";
+import { downloadPrivateOriginal } from "@/lib/platform/media/private-original-download";
 export const dynamic = "force-dynamic";
 const headers = { "Cache-Control": "private, no-store", "CDN-Cache-Control": "no-store", "Cloudflare-CDN-Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", "X-Frame-Options": "SAMEORIGIN" };
 class DownloadError extends Error { constructor(public status: number) { super("Document unavailable"); } }
@@ -30,8 +31,8 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     const path = inspectMediaPathScope(doc.object_path!, ctx.tenantId!);
     if (path.kind === "denied" || (path.kind === "project_prefix_candidate" && path.projectIdCandidate !== projectId)
       || (path.kind === "tenant_prefixed" && !path.bucketRelativePath.startsWith(`${ctx.tenantId}/${projectId}/documents/`))) throw new DownloadError(404);
-    const { data: blob, error } = await client.storage.from(MEDIA_BUCKET).download(path.bucketRelativePath);
-    if (error || !blob) throw new DownloadError(503);
+    const { data: blob, error } = await downloadPrivateOriginal(client, path.bucketRelativePath, 25 * 1024 * 1024);
+    if (error || !blob) throw new DownloadError(error?.status ?? 503);
     // Re-resolve current membership/account and document binding after I/O.
     const currentCtx = await getTenantContextFromRequest(request); requireTenant(currentCtx);
     if (currentCtx.tenantId !== ctx.tenantId || currentCtx.userId !== ctx.userId) throw new DownloadError(403);

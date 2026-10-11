@@ -23,14 +23,14 @@ function mergeContentType(header: string | null): string {
 export async function fetchBinaryWithByteCap(
   url: string,
   maxBytes: number,
-  opts?: { signal?: AbortSignal; headTimeoutMs?: number; fetchTimeoutMs?: number }
+  opts?: { signal?: AbortSignal; headTimeoutMs?: number; fetchTimeoutMs?: number; redirect?: RequestRedirect; cache?: RequestCache; requireStream?: boolean }
 ): Promise<{ data: Uint8Array; contentType: string }> {
   const headTimeout = opts?.headTimeoutMs ?? 15_000;
   const fetchTimeout = opts?.fetchTimeoutMs ?? 180_000;
   const headSignal = AbortSignal.timeout(headTimeout);
 
   try {
-    const head = await fetch(url, { method: "HEAD", signal: headSignal });
+    const head = await fetch(url, { method: "HEAD", signal: headSignal, redirect: opts?.redirect, cache: opts?.cache });
     if (head.ok) {
       const cl = head.headers.get("content-length");
       if (cl) {
@@ -46,14 +46,20 @@ export async function fetchBinaryWithByteCap(
   }
 
   const signal = opts?.signal ?? AbortSignal.timeout(fetchTimeout);
-  const res = await fetch(url, { signal });
+  const res = await fetch(url, { signal, redirect: opts?.redirect, cache: opts?.cache });
   if (!res.ok) {
     throw new FetchBinaryCapError(`Video fetch failed: HTTP ${res.status}`, "fetch_failed");
   }
 
   const contentType = mergeContentType(res.headers.get("content-type"));
+  const length = Number(res.headers.get("content-length"));
+  if (Number.isFinite(length) && length > maxBytes) {
+    await res.body?.cancel().catch(() => {});
+    throw new FetchBinaryCapError("Binary exceeds size limit", "too_large");
+  }
   const reader = res.body?.getReader();
   if (!reader) {
+    if (opts?.requireStream) throw new FetchBinaryCapError("Streaming body unavailable", "fetch_failed");
     const buf = await res.arrayBuffer();
     const u = new Uint8Array(buf);
     if (u.length === 0) throw new FetchBinaryCapError("Empty video body", "empty");
