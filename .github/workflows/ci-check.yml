@@ -23,6 +23,9 @@ jobs:
       - name: Workspace preflight safety tests
         run: python3 scripts/ops/test_workspace_preflight.py
 
+      - name: Verified migration receipt guard tests
+        run: python3 scripts/ops/test_migration_receipts_preflight.py -v
+
       - name: Production deploy boundary tests
         run: python3 scripts/release/test_deploy_production_worker.py -v
 

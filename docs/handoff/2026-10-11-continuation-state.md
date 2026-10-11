@@ -1,15 +1,13 @@
 # Continuation state — 2026-10-11
 
-Canonical path: /Users/alex/Projects/AISTROYKA-main-clean. Refresh origin/main and run workspace_preflight; dated SHA 729126d4 is an observation only.
+This supersedes the pre-grant snapshot. Canonical workspace: /Users/alex/Projects/AISTROYKA-main-clean. Refresh origin/main and workspace_preflight; never infer freshness from folder names. Owner explicitly authorized autonomous operational work in this conversation.
 
-Completed: #410 intake runbook/evidence; #413 direct database status-transition guard. Both protected merges after current-head reviewer 6262265-cpu approval and required CI. #347/#351 are closed/included; #317/#348/#352 are closed/superseded. Branches preserved.
+Merged/applied: #415 private intake helpers (2e2f07da), #416 timestamp/FK tails (76579633), #417 atomic provider deploy (35fa3347). Existing #410/#411/#413/#385/#386 and intake PATCH/submit/withdraw remain included. Live remote migration IDs: 20261011090316, 20261011090351, 20261011092544, 20261011093430. Five exact source files map to four entries; use receipts guard, not replay or broad db push. No history rows were deleted/repaired.
 
-Actual defect reproduced and fixed locally: creator could change submitted -> withdrawn/draft via direct table writes. New additive migration 20261011080113_harden_customer_intake_status_transitions.sql permits only draft -> submitted/withdrawn, requires client inserts to start draft, preserves same-state retries, content edits and service maintenance. It depends on the existing intake table migration.
+Evidence: 38 sequential PostgreSQL checks, 26 native PostgreSQL 17.10/PostgREST 14.5 checks (three 40-request races), 97 application tests, 6 timestamp/index checks, 6 deploy-boundary tests and 8 receipt-guard tests. Live authenticated intake create/edit/submit/withdraw, retries and terminal-state negatives passed; exact owned synthetic fixtures removed. Anonymous video returns 401 on both hosts. Native fixtures omitted unrelated policies/triggers and Auth service; no full-project parity claim.
 
-Evidence: 34 sequential PostgreSQL/RLS checks PASS with PGlite 0.5.8 and synthetic prerequisites; 94 intake/finance and 27 queue/summary/video/resolver Vitest PASS. Single-connection tests do not prove concurrent RPC races or live PostgREST behavior. Harness and result JSON committed.
+Publication: staging и production HTTP 200, buildStamp.sha7 = 35fa334 (проверка 2026-10-11 09:58 UTC). Required CI, staging Playwright/pilot and production security/pilot/finance smoke evidence in the [operational report](../reports/2026-10-11-operational-closure.md). Provider proof must inspect the actual gate step/log, not a green continue-on-error job alone.
 
-Remote database unchanged. Live AISTROYKA RPC remains 3-arg; intake table absent. Staging client points to the same production database; no development branch existed on read-only inspection. Permission to create an isolated test branch and verify migrations is pending. Do not apply live changes under a generic continue instruction.
+Additional #281/#289/#293 duplicates closed after every changed file matched main; branch HEADs preserved. Fresh registry covers all 75 old open PRs and distinguishes head_sha/merge_sha. Semantic-review leftovers and dirty protected worktrees remain preserved.
 
-Existing SQL to verify in dependency order: 20261003170000_customer_intake_drafts.sql, 20261004180000_create_analysis_job_request_key.sql, 20261011080113_harden_customer_intake_status_transitions.sql. Run RPC concurrency, tenant/media mismatch, role EXECUTE negatives, and intake ownership/revocation/account/status negatives before any separately approved live apply.
-
-Reviewer credential available in canonical .env.local; Chrome unlock is no longer needed. Preserve private env backup; never print secrets or archive contents.
+Next ordered work: hard audit existing AI/security (including PR #200 image/legacy-worker boundaries), full Owner portal + mobile device scenario, then missing AIS-CLIENT-005A scope extraction. Manual CRUD does not complete AI extraction. Graph live lineage and full async job flow remain distinct checks; 005B/D2/stores/billing/legal keep their actual dependencies. No broad historical branch merges, fake live AI, fabricated legal/store/device proof or billing gate bypass.

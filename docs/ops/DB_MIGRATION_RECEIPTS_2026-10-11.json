@@ -1,0 +1,51 @@
+{
+  "project_ref": "vthfrxehrursfloevnlp",
+  "observed_date": "2026-10-11",
+  "scope": "Five verified source migrations only; not a repair of historical migration drift",
+  "receipts": [
+    {
+      "remote_version": "20261011090316",
+      "remote_name": "customer_intake_drafts_with_lifecycle_20261011",
+      "sources": [
+        {
+          "path": "apps/web/supabase/migrations/20261003170000_customer_intake_drafts.sql",
+          "sha256": "6f14ffef049a87c75219767a87bb5717f7503f0b604aded4fa850f522ae73e98"
+        },
+        {
+          "path": "apps/web/supabase/migrations/20261011080113_harden_customer_intake_status_transitions.sql",
+          "sha256": "007b719caccfe0f445e53c379714dfbcf77604a886ba04db7322c9515919ffdb"
+        }
+      ]
+    },
+    {
+      "remote_version": "20261011090351",
+      "remote_name": "create_analysis_job_request_key_atomic_20261011",
+      "sources": [
+        {
+          "path": "apps/web/supabase/migrations/20261004180000_create_analysis_job_request_key.sql",
+          "sha256": "39243741133b607fa6e412def7c78d6e31c65063e4c606d5e4bacda973c113f3"
+        }
+      ]
+    },
+    {
+      "remote_version": "20261011092544",
+      "remote_name": "hide_intake_policy_helpers_20261011",
+      "sources": [
+        {
+          "path": "apps/web/supabase/migrations/20261011091100_hide_intake_policy_helpers.sql",
+          "sha256": "ea482beef24ae9337d8ec280f322fb3907aa04afb7f501faed5cc1421c9ebccd"
+        }
+      ]
+    },
+    {
+      "remote_version": "20261011093430",
+      "remote_name": "close_post_apply_database_tails_20261011",
+      "sources": [
+        {
+          "path": "apps/web/supabase/migrations/20261011092645_close_post_apply_database_tails.sql",
+          "sha256": "b618271a427210ae0de90024c99cd45ce98f795b45d40762d7a6cfcefb700c05"
+        }
+      ]
+    }
+  ]
+}

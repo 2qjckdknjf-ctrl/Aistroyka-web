@@ -1,6 +1,22 @@
-> **Текущая точка входа с 2026-10-04:** [STATUS](../STATUS.md), [START_HERE](../START_HERE.md), [реестр существующей разработки](tasks/ACTIVE_WORK_REGISTRY.csv). Текст ниже сохранён как исторический снимок: его SHA, открытые PR и readiness-статусы нельзя использовать как сегодняшние без повторной проверки.
+> Текущие указатели обновлены в разделе 2026-10-11 ниже. Исторические разделы сохраняют первоначальные SHA/статусы; перед действием обновить origin/main, GitHub и health.
 
 # AISTROYKA Current Project Truth Index
+
+**Last updated:** 2026-10-11
+**Authoritative source:** refresh origin/main; canonical workspace AISTROYKA-main-clean
+**Observed main/runtime baseline:** 35fa3347025077fcf30ef472a9a469a17f7dc91f after protected #417 merge; staging/production buildStamp.sha7=35fa334, both HTTP 200 at 09:58 UTC
+**Current execution reconciliation:** [2026-10-11 state](roadmap/CURRENT_EXECUTION_STATE_2026-10-11.md)
+**Operational proof:** [closure report](reports/2026-10-11-operational-closure.md); required CI, staging Playwright/pilot, production security/pilot/stakeholder finance smoke and actual provider-without-fallback proof
+**Live database:** intake + lifecycle, 4-arg request-key RPC, private helpers and timestamp/FK tails applied; five source files mapped to four remote IDs in [receipts](ops/VERIFIED_DB_MIGRATION_RECEIPTS.md)
+**Current queue:** [registry](tasks/ACTIVE_WORK_REGISTRY.csv), 75 prior open PRs for semantic reconciliation; #281/#289/#293 closed/included with branches preserved
+**Scope classification:** contractor-ops-only / controlled pilot; not full project completion, Public GA, physical-device/store/legal/billing readiness
+
+Merged operational slices: #415 private helpers, #416 DB tails, #417 atomic source/provider deploy. Manual intake CRUD/submit/withdraw is proven; AI scope extraction and broader portal/device/Graph/job evidence remain separate. Header SHA is dated evidence; later docs/source merges must be observed afresh, not inferred deployed. Current entry points: [STATUS](../STATUS.md), [START_HERE](../START_HERE.md), [current handoff](handoff/2026-10-11-continuation-state.md).
+
+---
+
+
+# Historical pointer snapshot — 2026-10-03 (superseded)
 
 **Last updated:** 2026-10-03  
 **Main tip:** `0e3b1ede624183ac5e5d47ab3f72ad739553ebb7` (`0e3b1ed`)  

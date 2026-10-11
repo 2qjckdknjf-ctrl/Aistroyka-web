@@ -1,0 +1,72 @@
+{
+  "host": "staging.aistroyka.ai",
+  "database_shared_with_production": true,
+  "synthetic_rows_created": 2,
+  "checks": [
+    {
+      "name": "create synthetic draft 0",
+      "http": 201,
+      "expected": 201,
+      "pass": true
+    },
+    {
+      "name": "create synthetic draft 1",
+      "http": 201,
+      "expected": 201,
+      "pass": true
+    },
+    {
+      "name": "patch own draft",
+      "http": 200,
+      "expected": 200,
+      "pass": true
+    },
+    {
+      "name": "submit idempotent 0",
+      "http": 200,
+      "expected": 200,
+      "pass": true
+    },
+    {
+      "name": "submit idempotent 1",
+      "http": 200,
+      "expected": 200,
+      "pass": true
+    },
+    {
+      "name": "submitted withdrawal denied",
+      "http": 400,
+      "expected": 400,
+      "pass": true
+    },
+    {
+      "name": "withdraw idempotent 0",
+      "http": 200,
+      "expected": 200,
+      "pass": true
+    },
+    {
+      "name": "withdraw idempotent 1",
+      "http": 200,
+      "expected": 200,
+      "pass": true
+    },
+    {
+      "name": "withdrawn submit denied",
+      "http": 400,
+      "expected": 400,
+      "pass": true
+    },
+    {
+      "name": "remove exact owned synthetic probe rows",
+      "http": 204,
+      "expected": 204,
+      "pass": true
+    },
+    {
+      "name": "cleanup verified",
+      "pass": true
+    }
+  ],
+  "contains_customer_data": false
+}

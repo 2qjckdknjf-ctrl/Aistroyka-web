@@ -5,7 +5,8 @@
 - Search main, existing PRs and local salvage by requirement ID before writing another implementation.
 - Track implementation, current-head review, main, staging, production, DB migration and mobile build independently.
 - Finish the current delivery and verification queues recorded in STATUS and the registry before starting another product queue; a blocked gate does not authorize duplicate implementation.
-- Registry rows are dated observations: refresh HEAD/state before any action. Historical audits are evidence, not a live queue.
+- Registry rows are dated observations: refresh HEAD/state before any action. head_sha is the PR head; merge_sha is the integration commit. Historical audits are evidence, not a live queue.
+- Before DB apply, read docs/ops/VERIFIED_DB_MIGRATION_RECEIPTS.md and run the read-only receipt guard with fresh remote history and --candidate. Stop on a nonzero exit; no source replay or bulk apply based only on timestamp drift.
 
 
 # Active Work Rules
