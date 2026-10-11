@@ -50,6 +50,14 @@ enum CustomerAPI {
         return env.data
     }
 
+    static func publishedPhotos(projectId: String) async throws -> [CustomerPublishedEvidence.Item] {
+        guard UUID(uuidString: projectId) != nil else {
+            throw APIError(statusCode: 400, code: nil, message: "Invalid project identifier")
+        }
+        let env: Envelope<CustomerPublishedEvidence> = try await APIClient.shared.request(path: "portal/projects/\(projectId)/evidence")
+        return try env.data.validatedItems(projectId: projectId)
+    }
+
     /// POST /api/v1/portal/projects/:id/decisions/:requestId/respond
     static func respondToPortalDecision(
         projectId: String,

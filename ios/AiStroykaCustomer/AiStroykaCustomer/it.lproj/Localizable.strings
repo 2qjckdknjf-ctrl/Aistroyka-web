@@ -116,3 +116,11 @@
 "cust_done" = "Fine";
 
 "cust_refresh_project" = "Aggiorna progetto";
+
+// Published photo gateway states.
+"cust_portalPhotosEmpty" = "Nessuna foto è stata ancora condivisa.";
+"cust_portalPhotosLoadError" = "Impossibile caricare le foto. Riprova.";
+"cust_portalPhotosAccessUnavailable" = "Accesso alle foto non disponibile.";
+"cust_portalPhotosVerified" = "Verificato dal responsabile del progetto";
+"cust_portalPhotosOriginalUnavailable" = "Questa foto non è attualmente disponibile.";
+"cust_photos_title" = "Foto del cantiere";

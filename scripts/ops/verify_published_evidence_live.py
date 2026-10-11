@@ -22,7 +22,7 @@ def request(url, method='GET', body=None, headers=None):
     if not any(url.startswith(host + '/') for host in (STAGING, DATABASE)):
         raise ValueError('Probe refused a noncanonical host')
     req = urllib.request.Request(url, method=method, data=None if body is None else body if isinstance(body, bytes) else json.dumps(body).encode(),
-        headers={'Content-Type': 'application/json', **(headers or {})})
+        headers={'Content-Type': 'application/json', 'User-Agent': 'AistroykaQA/1.0', **(headers or {})})
     try:
         response = urllib.request.build_opener(NoRedirect).open(req, timeout=25)
     except urllib.error.HTTPError as error:

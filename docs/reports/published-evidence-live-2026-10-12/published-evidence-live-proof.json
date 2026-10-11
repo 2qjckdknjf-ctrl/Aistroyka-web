@@ -1,0 +1,63 @@
+{
+  "checks": [
+    {
+      "check": "safe_published_metadata",
+      "pass": true
+    },
+    {
+      "check": "exact_original_bytes_no_redirect_no_store",
+      "pass": true
+    },
+    {
+      "check": "raw_provenance_denied",
+      "pass": true
+    },
+    {
+      "check": "raw_storage_sign_denied",
+      "pass": true
+    },
+    {
+      "check": "unauthenticated_public_object_denied",
+      "pass": true
+    },
+    {
+      "check": "withdrawn_publication_revokes_original_and_metadata",
+      "pass": true
+    },
+    {
+      "check": "restored_approved_fixture_access",
+      "pass": true
+    },
+    {
+      "check": "revoked_grant_blocks_metadata_and_original",
+      "pass": true
+    },
+    {
+      "check": "proof_pack_private_path_uses_token_gateway",
+      "pass": true
+    },
+    {
+      "check": "proof_shared_original_exact_bytes",
+      "pass": true
+    },
+    {
+      "check": "revoked_share_blocks_metadata_and_original",
+      "pass": true
+    },
+    {
+      "check": "actual_document_create_upload_private_preview",
+      "pass": true
+    },
+    {
+      "check": "customer_cannot_read_internal_document",
+      "pass": true
+    }
+  ],
+  "expected_sha7": "eb8af3d",
+  "business_records_untouched": true,
+  "cleanup_required": true,
+  "fixture_lifecycle": "single_use_operator_cleanup",
+  "operator_user_agent": "AistroykaQA/1.0",
+  "application_source": "approved_main_eb8af3de",
+  "execution": "local_exact_fixture"
+}

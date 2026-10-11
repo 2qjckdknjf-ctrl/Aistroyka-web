@@ -153,6 +153,13 @@ public actor APIClient {
         }
     }
 
+    /// Customer originals use the shared private same-origin transport.
+    public func requestPublishedPhoto(projectId: String, evidenceId: String) async throws -> Data {
+        let path = try CustomerPublishedEvidence.originalRequestPath(projectId: projectId, evidenceId: evidenceId)
+        return try await requestPrivateOriginal(path: path, maxBytes: 20 * 1024 * 1024,
+                                              allowedMime: ["image/jpeg", "image/png", "image/webp"])
+    }
+
     public func requestPrivateDocument(projectId: String, documentId: String) async throws -> Data {
         guard UUID(uuidString: projectId) != nil, UUID(uuidString: documentId) != nil else {
             throw APIError(statusCode: 400, code: nil, message: "Invalid document identifier")
