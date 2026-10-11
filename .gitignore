@@ -138,6 +138,10 @@ uploads/
 # Mobile store MODE B — local credentials and upload artifacts (never commit)
 local-secrets/
 evidence/
+# The portal API source directory is code, not a local store evidence artifact.
+!apps/web/app/api/v1/portal/projects/*/evidence/
+!apps/web/app/api/v1/portal/projects/*/evidence/**/
+!apps/web/app/api/v1/portal/projects/*/evidence/**/*.ts
 .secrets/
 *.p8
 AuthKey_*.p8
