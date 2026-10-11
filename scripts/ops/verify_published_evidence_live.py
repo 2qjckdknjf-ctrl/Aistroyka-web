@@ -110,6 +110,8 @@ def run(fixture, expected_sha):
             raise ValueError('Original bytes differ from the exact synthetic image')
         if 'no-store' not in headers.get('Cache-Control', '') or headers.get('Location'):
             raise ValueError('Original response is cacheable or redirects')
+    share_token = None
+    share_revoked = False
     try:
         status, raw, headers = request(root, headers=actor); exact(status, 200, 'Published metadata')
         data = json.loads(raw)['data']; items = data['items']
@@ -138,8 +140,36 @@ def run(fixture, expected_sha):
             status, _, headers = request(url, headers=actor); exact(status, 404, 'Revoked project route')
             if 'no-store' not in headers.get('Cache-Control', ''): raise ValueError('Revocation response is cacheable')
         check('revoked_grant_blocks_metadata_and_original')
+        # Exercise the actual manager share action on this synthetic project only.
+        status, raw, _ = request(DATABASE + '/rest/v1/proof_pack_shares?project_id=eq.' + fixture['project_id'] + '&tenant_id=eq.' + fixture['tenant_id'] + '&created_by=eq.' + fixture['owner_id'] + '&title=eq.' + fixture['tag'] + '&select=id', headers=owner)
+        exact(status, 200, 'Exact prior share absence'); assert json.loads(raw) == []
+        share_action = STAGING + '/api/v1/projects/' + fixture['project_id'] + '/proof-pack'
+        status, raw, _ = request(share_action, 'POST', {'title': fixture['tag']}, owner)
+        exact(status, 200, 'Create exact synthetic proof share')
+        share_token = json.loads(raw)['data']['token']
+        if not re.fullmatch(r'[0-9a-f]{32}', share_token): raise ValueError('Unexpected share token')
+        if os.environ.get('GITHUB_ACTIONS') == 'true': print('::add-mask::' + share_token)
+        share_root = STAGING + '/api/v1/share/proof/' + share_token
+        shared_original = share_root + '/media/' + fixture['media_id']
+        status, raw, headers = request(share_root); exact(status, 200, 'Synthetic proof pack')
+        photos = json.loads(raw)['data']['media']
+        if len(photos) != 1 or photos[0]['file_url'] != shared_original.removeprefix(STAGING): raise ValueError('Shared photo does not use its exact token gateway')
+        if 'no-store' not in headers.get('Cache-Control', ''): raise ValueError('Shared metadata is cacheable')
+        check('proof_pack_private_path_uses_token_gateway')
+        status, raw, headers = request(shared_original); exact(status, 200, 'Exact shared image')
+        if hashlib.sha256(raw).hexdigest() != fixture['image_sha256'] or 'no-store' not in headers.get('Cache-Control', '') or headers.get('Location'): raise ValueError('Shared original is not exact uncached bytes')
+        check('proof_shared_original_exact_bytes')
+        status, _, _ = request(share_action + '/shares/' + share_token, 'DELETE', headers=owner); exact(status, 200, 'Revoke exact synthetic share'); share_revoked = True
+        for url in (share_root, shared_original):
+            status, _, headers = request(url); exact(status, 404, 'Revoked share route')
+            if 'no-store' not in headers.get('Cache-Control', ''): raise ValueError('Share denial is cacheable')
+        check('revoked_share_blocks_metadata_and_original')
+
         return {'checks': checks, 'expected_sha7': expected_sha[:7], 'business_records_untouched': True, 'cleanup_required': True}
     finally:
+        if share_token and not share_revoked:
+            # Revoke only this run's share even if a byte check fails.
+            request(STAGING + '/api/v1/projects/' + fixture['project_id'] + '/proof-pack/shares/' + share_token, 'DELETE', headers=owner)
         status, _, _ = request(DATABASE + '/auth/v1/logout?scope=global', 'POST', headers=actor)
         exact(status, 204, 'Fixture sessions revoke')
 

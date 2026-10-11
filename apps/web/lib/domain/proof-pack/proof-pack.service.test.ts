@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { buildProjectProofPack } from "./proof-pack.service";
+import { privateMediaDisplayUrl } from "@/lib/domain/media/private-media-display";
+vi.mock("@/lib/domain/media/private-media-display", () => ({ privateMediaDisplayUrl: vi.fn().mockResolvedValue("https://storage.test/signed") }));
 import * as projectRepo from "@/lib/domain/projects/project.repository";
 import * as summaryRepo from "@/lib/domain/projects/project-summary.repository";
 import * as mediaRepo from "@/lib/domain/media/media.repository";
@@ -53,6 +55,8 @@ describe("proof-pack.service", () => {
     const json = JSON.stringify(pack);
 
     expect(pack?.media[0].category).toBe("before");
+    expect(pack?.media[0].file_url).toBe("https://storage.test/signed");
+    expect(privateMediaDisplayUrl).toHaveBeenCalled();
     expect(json).not.toContain("object_path");
     expect(json).not.toContain("planned_total");
     expect(json).not.toContain("actual_total");
@@ -77,7 +81,8 @@ describe("proof-pack.service", () => {
       from: vi.fn((table: string) => (table === "project_commercial_items" ? commercial : changes)),
     } as never;
 
-    const pack = await buildProjectProofPack(supabase, "t1", "p1", { audience: "public" });
+    const pack = await buildProjectProofPack(supabase, "t1", "p1", { audience: "public", shareToken: "exact-share" });
     expect(pack?.media.map((x) => x.id)).toEqual(["m1"]);
+    expect(pack?.media[0].file_url).toBe("/api/v1/share/proof/exact-share/media/m1");
   });
 });

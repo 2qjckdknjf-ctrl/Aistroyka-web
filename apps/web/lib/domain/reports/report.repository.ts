@@ -217,7 +217,7 @@ export async function listMediaByReportId(
 
 export type ReportMediaRowWithUrl = ReportMediaRow & { file_url: string | null };
 
-/** Contractor report previews use the caller's RLS and private Storage signing. */
+/** Already-scoped attachment rows use caller RLS/private signing; legacy day rows may lack project_id. */
 export async function listMediaByReportIdWithUrls(
   supabase: SupabaseClient,
   reportId: string,
@@ -226,7 +226,7 @@ export async function listMediaByReportIdWithUrls(
   const rows = await listMediaByReportId(supabase, reportId, tenantId);
   return Promise.all(rows.map(async row => ({ ...row,
     file_url: await privateMediaDisplayUrl(supabase, {
-      tenantId, reportId, mediaId: row.media_id, uploadSessionId: row.upload_session_id,
+      tenantId, mediaId: row.media_id, uploadSessionId: row.upload_session_id,
     }),
   })));
 }
