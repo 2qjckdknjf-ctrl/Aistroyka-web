@@ -508,6 +508,9 @@ private struct CustomerPublishedPhotoCard: View {
         VStack(alignment: .leading, spacing: 6) {
             if let image {
                 Image(uiImage: image).resizable().scaledToFit()
+                    .frame(maxHeight: 260)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityAddTraits(.isImage)
                     .accessibilityLabel(photo.zoneLabel ?? NSLocalizedString("cust_photos_title", comment: ""))
                     .accessibilityIdentifier("pilot_customer_published_photo_image_\(photo.id)")
                 Text(NSLocalizedString("cust_portalPhotosVerified", comment: "")).font(.caption)
@@ -517,6 +520,7 @@ private struct CustomerPublishedPhotoCard: View {
             } else { ProgressView() }
             if let zone = photo.zoneLabel { Text(zone).font(.caption) }
         }
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("pilot_customer_published_photo_\(photo.id)")
         .task(id: photo.updatedAt) { await load() }
     }
