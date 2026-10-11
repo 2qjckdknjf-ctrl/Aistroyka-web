@@ -1,11 +1,15 @@
 # Current Focus
 
-Обновлено 2026-10-11. Текущий исходный код: origin/main; рабочий статус: [STATUS](../../STATUS.md).
+Обновлено 2026-10-11. Текущий исходный код определяется origin/main, а не названием папки. Снимок этой сверки: 729126d4. [STATUS](../../STATUS.md), [реестр](../tasks/ACTIVE_WORK_REGISTRY.csv).
 
-#385/#386 и Customer intake #404/#405/#406 уже объединены. #411 stakeholder tenant resolution объединён в `813c6ae3` после non-author APPROVED и успешных web/iOS CI. Не повторять эти реализации.
+#410 и #413 объединены после CI и non-author APPROVED. #413 добавляет миграцию защиты прямых переходов статуса intake; live apply не выполнен. #385/#386, #404/#405/#406 и #411 уже реализованы. #411 подтверждён на staging и production (813c6ae); публикация последующих коммитов требует отдельной проверки.
 
-Следующий этап: staging verification после #411 и подготовка существующих RPC/intake миграций. Live apply остаётся OWNER_GATE; отдельная целевая staging БД должна быть подтверждена до записи. На read-only проверке AISTROYKA RPC всё ещё 3-arg, customer_intake_drafts отсутствует.
+#347/#351 закрыты как побайтово включённые; #317/#348/#352 закрыты как заменённые более новой реализацией. Все ветки сохранены. Не повторять эти реализации.
 
-Тесты этой сессии: 30 portal route/resolver + 71 customer-intake domain PASS. macOS swift test Shared не поддерживает UIKit; iOS simulator CI #411 SUCCESS. Runtime health перед публикацией #411: staging/production HTTP 200, SHA `3adcabf`.
+Проверки: 94 intake/finance Vitest, 34 последовательные PostgreSQL checks с синтетическими данными, 27 approvals/summary/video/resolver tests PASS. Локальные проверки не доказывают concurrency, PostgREST или live apply. Воспроизводимый SQL harness: scripts/ops/verify_intake_lifecycle_postgres.mjs.
 
-[Handoff](../handoff/2026-10-11-intake-queue-verification.md). Дальнейшие задачи выбираются по зависимостям плана и актуальному реестру; D2/005B не запускать в обход существующих решений.
+Следующий гейт: разрешение на изолированную тестовую ветку существующего AISTROYKA для проверки миграций; действующий staging client использует production DB. Новые проекты не создавать. Live apply, stores, billing и legal — отдельные разрешения. Обычное «продолжай» не заменяет конкретный operational grant.
+
+Локальная настройка GITHUB_REVIEWER_TOKEN в канонической папке обновлена существующим действующим токеном. Не выводить и не коммитить секреты; перед ревью подтвердить независимый аккаунт и текущий HEAD.
+
+[Handoff](../handoff/2026-10-11-continuation-state.md). Следующие независимые задачи выбирать по зависимостям и свежему hard audit; 005B/D2/большие старые ветки не запускать в обход решений.
