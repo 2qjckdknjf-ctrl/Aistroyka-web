@@ -4,7 +4,7 @@
 
 ## Evidence
 
-[Harness](../audit/artifacts/2026-10-11-local-intake-rpc/verify.mjs) · [Results](../audit/artifacts/2026-10-11-local-intake-rpc/results.json).
+[Harness](local-intake-rpc-evidence-2026-10-11/verify.mjs) · [Results](local-intake-rpc-evidence-2026-10-11/results.json).
 
 RPC: four-argument identity replaces the old overload; legacy three-argument calls remain valid; a request key binds to an existing active job; retry returns the same job; another media or conflicting key raises 23505; cross-tenant media is rejected; anon/authenticated cannot execute.
 
