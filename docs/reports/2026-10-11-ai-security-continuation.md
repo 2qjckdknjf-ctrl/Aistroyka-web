@@ -25,3 +25,17 @@ Evidence: 26 PGlite role/scope checks and 21 native setup/session/media checks P
 Physical iPhone17Pro is paired, booted and accessible. Worker1.0 and Manager4.3.0 are installed; Customer absent. Installed versions do not prove current source or complete device smoke. Continue mobile functional verification on current approved sources; store candidates still follow the designated release branch and signing gates.
 
 Security repair precedes AIS-CLIENT-005A extraction. Manual intake, Customer targets, async Vision and Graph persistence already exist. Full portal/export/Graph/Vision/device/distribution/legal/billing and remaining semantic PR reconciliation must be verified separately; no whole-project completion claim.
+
+## #421 delivery and live checks
+
+#421 protected merge c25c8e0da5541707f623d4ba793a8b36c934480a, HEAD 9537188db75d3f9c06da454364ce16d170292137; required CI38136218256 SUCCESS, independent current-head APPROVED, no unresolved findings. New 42 session/media SQL contracts run in CI. Source 20261011112701_harden_media_analysis_access.sql applied as remote20261011114415; seven verified source files under six remote IDs. Live client AI-result INSERT/UPDATE/DELETE privileges false, service INSERT true; scoped media policies and identity trigger confirmed; analysis_jobs SELECT-only retained.
+
+Live owner probe used an isolated task-created project and media. Owner media create/metadata edit PASS; client identity change and AI-result POST/PATCH/DELETE all403/42501. Exact synthetic media/project deleted and absence verified; existing business records unchanged. Initial configured E2E project did not belong to this smoke actor's primary tenant, so that probe stopped before writing; a separate exact synthetic fixture avoided touching another project's data.
+
+Staging38136611642 and production38136807807 SUCCESS. Production canonical AI step GO, live success true, fallback_count0. Production health c25c8e0. Whole AI/portal capability closure remains separate.
+
+Physical Customer Debug build succeeded, but first test runner initialization failed with device authentication canceled. Device inventory still did not show the main app, so installation and smoke were not claimed. Owner now confirmed device ready; a fresh test result bundle is being generated. This is functional Debug QA, not a store/pilot release artifact.
+
+## Video permission follow-up
+
+Unscoped video analysis lacked analysis:trigger, typed service-token403 and media binding. Reuse caller-RLS project/media resolution across image/video, enforce the existing permission before provider configuration, and retain tenant quota. 75 targeted route tests PASS (20 new canonical/legacy video permission cases) plus TypeScript/lint. No new provider or capability. Runtime verification follows protected delivery.

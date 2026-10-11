@@ -1,7 +1,7 @@
 {
   "project_ref": "vthfrxehrursfloevnlp",
   "observed_date": "2026-10-11",
-  "scope": "Six verified source migrations under five remote IDs; not a repair of historical migration drift",
+  "scope": "Seven verified source migrations under six remote IDs; not a repair of historical migration drift",
   "receipts": [
     {
       "remote_version": "20261011090316",
@@ -54,6 +54,16 @@
         {
           "path": "apps/web/supabase/migrations/20261011110418_complete_session_analysis_job.sql",
           "sha256": "9d1e90c1a044cc6eaa69a83a2c7882f16daaee1f1a68520e9fc74c9041cea882"
+        }
+      ]
+    },
+    {
+      "remote_version": "20261011114415",
+      "remote_name": "harden_media_analysis_access_20261011",
+      "sources": [
+        {
+          "path": "apps/web/supabase/migrations/20261011112701_harden_media_analysis_access.sql",
+          "sha256": "14e9d399ff3cc8788693f990b3500ea800d589784250dd92630cb0eac3ea6418"
         }
       ]
     }

@@ -15,8 +15,10 @@ import {
   getTenantContextFromRequest,
   requireTenant,
   TenantRequiredError,
+  TenantForbiddenError,
 } from "@/lib/tenant";
-import { getProjectForInternalWorkspace } from "@/lib/domain/projects/project.service";
+import { resolveVisionInputScope } from "@/lib/platform/ai/vision-input-scope";
+import { authorize } from "@/lib/tenant/tenant.policy";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { createClientFromRequest } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/platform/rate-limit/rate-limit.service";
@@ -64,27 +66,33 @@ export async function POST(request: Request) {
   const rel = () => getAiReleaseCorrelation();
 
   // Fail closed on auth before provider/config disclosure or body work.
-  const tenantCtx = await getTenantContextFromRequest(request);
+  let tenantCtx;
   try {
+    tenantCtx = await getTenantContextFromRequest(request);
     requireTenant(tenantCtx);
   } catch (e) {
-    if (e instanceof TenantRequiredError) {
+    if (e instanceof TenantRequiredError || e instanceof TenantForbiddenError) {
+      const status = e instanceof TenantForbiddenError ? 403 : 401;
       logVisionAnalyzeError({
         request_id: requestId,
         route: ROUTE_KEY,
-        tenant_id: tenantCtx.tenantId,
+        tenant_id: tenantCtx?.tenantId,
         latency_ms: Date.now() - start,
         error_kind: "auth_failure",
-        http_status: 401,
+        http_status: status,
         ...rel(),
       });
       return wrap(
-        NextResponse.json({ error: e.message, request_id: requestId }, { status: 401 }),
-        tenantCtx.tenantId,
-        tenantCtx.userId
+        NextResponse.json({ error: e.message, request_id: requestId }, { status }),
+        tenantCtx?.tenantId,
+        tenantCtx?.userId
       );
     }
     throw e;
+  }
+
+  if (!authorize(tenantCtx, "analysis:trigger")) {
+    return wrap(NextResponse.json({ error: "Insufficient rights", request_id: requestId }, { status: 403 }), tenantCtx.tenantId, tenantCtx.userId);
   }
 
   if (!isGeminiConfigured()) {
@@ -187,33 +195,17 @@ export async function POST(request: Request) {
   }
 
   const userSupabase = await createClientFromRequest(request);
-  const projectId = parsed.data.project_id?.trim() || null;
-
-  if (projectId) {
-    const { data: project, error: projectError } = await getProjectForInternalWorkspace(
-      userSupabase,
-      tenantCtx,
-      projectId
-    );
-    if (projectError || !project) {
-      const status = projectError === "Insufficient rights" ? 403 : 404;
-      logVisionAnalyzeError({
-        request_id: requestId,
-        route: ROUTE_KEY,
-        tenant_id: tenantCtx.tenantId,
-        project_id: projectId,
-        latency_ms: Date.now() - start,
-        error_kind: status === 403 ? "tenant_failure" : "validation_failure",
-        http_status: status,
-        ...rel(),
-      });
-      return wrap(
-        NextResponse.json({ error: projectError ?? "Not found", request_id: requestId }, { status }),
-        tenantCtx.tenantId,
-        tenantCtx.userId
-      );
-    }
+  const scope = await resolveVisionInputScope(userSupabase, tenantCtx, {
+    projectId: parsed.data.project_id, mediaId: parsed.data.media_id,
+  });
+  if (scope.error !== null) {
+    logVisionAnalyzeError({ request_id: requestId, route: ROUTE_KEY,
+      tenant_id: tenantCtx.tenantId, project_id: parsed.data.project_id ?? null,
+      latency_ms: Date.now() - start, error_kind: scope.status === 403 ? "tenant_failure" : "validation_failure",
+      http_status: scope.status, ...rel() });
+    return wrap(NextResponse.json({ error: scope.error, request_id: requestId }, { status: scope.status }), tenantCtx.tenantId, tenantCtx.userId);
   }
+  const projectId = scope.projectId;
 
   const admin = getAdminClient();
   if (admin) {
