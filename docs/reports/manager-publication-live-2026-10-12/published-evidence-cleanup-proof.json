@@ -1,0 +1,12 @@
+{
+  "exact_rows_checked_absent": 8,
+  "fixture_auth_absent": true,
+  "fixture_sessions_revoked": true,
+  "owner_task_session_local_revoked": true,
+  "synthetic_blob_deleted": true,
+  "exact_task_shares_deleted": 1,
+  "exact_task_documents_deleted": 1,
+  "synthetic_pdf_blobs_deleted": 1,
+  "operational_audit_retained": true,
+  "business_records_untouched": true
+}

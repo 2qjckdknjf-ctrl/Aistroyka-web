@@ -1,10 +1,10 @@
 # AISTROYKA Current Project Truth Index
 
-Сверено2026-10-12: main #429 eb8af3de; staging38180679417/production38180877857 SUCCESS, actual staging/apex/www SHAeb8af3d. [STATUS](../STATUS.md), [plan/fact](roadmap/CURRENT_EXECUTION_STATE_2026-10-11.md), [registry](tasks/ACTIVE_WORK_REGISTRY.csv).
+Сверено2026-10-12: main #432 fef353f8; staging38184829698/production38185083582 SUCCESS, actual staging/apex/www fef353f. [STATUS](../STATUS.md), [registry](tasks/ACTIVE_WORK_REGISTRY.csv), [plan/fact](roadmap/CURRENT_EXECUTION_STATE_2026-10-11.md).
 
-[Published evidence live proof](reports/published-evidence-live-2026-10-12/RESULT.md):13 actual gateway/share/document/revocation checks PASS, exact synthetic cleanup. Customer #431:15 web/13 Shared tests, Debug build and live simulator decoded-photo1/1 PASS; protected gallery delivery pending. #426 physical Debug intake/access-revocation proof remains distinct from gallery/store readiness. [10-source/9-ID receipts](ops/VERIFIED_DB_MIGRATION_RECEIPTS.md) prevent migration replay.
+[Manager publication live closure](reports/manager-publication-live-2026-10-12/RESULT.md):10 actual lifecycle/source-unique checks +13 gateway/share/document checks PASS with exact cleanup. Unique-source migration applied after before-apply503/no-write proof;11-source/10-ID receipts verified. Customer #431 web/iOS source is deployed;13 Shared checks and live simulator image decode1/1 PASS, physical gallery/store separate. Active #433 repairs per-read streaming byte limits;76 scoped checks/typecheck/lint PASS, runtime proof pending.
 
-Next:explicit manager report/evidence publication workflow, source-linked Vision/Graph, then reviewed preproject extraction.74 older retained mixed PRs need semantic review; dirty/ahead/release/cursor sources preserved. Contractor-ops-only controlled pilot; full-project/store/legal/billing readiness remains open. Dated snapshots below are historical.
+Next:complete full Worker/report/publication and native Manager flow, source-linked Vision/Graph/video, then reviewed preproject extraction.74 retained mixed PRs need semantic review; saved dirty/ahead/release/cursor sources remain. Contractor-ops-only controlled pilot; full-project/store/legal/billing closure remains open. Older snapshots below are historical.
 
 ---
 

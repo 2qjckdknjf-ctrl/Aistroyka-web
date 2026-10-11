@@ -1,0 +1,49 @@
+{
+  "checks": [
+    {
+      "check": "approved_report_stays_private_before_explicit_publication",
+      "pass": true
+    },
+    {
+      "check": "manager_action_creates_exact_source_derived_evidence",
+      "pass": true
+    },
+    {
+      "check": "original_worker_author_retained",
+      "pass": true
+    },
+    {
+      "check": "customer_reads_actual_published_bytes",
+      "pass": true
+    },
+    {
+      "check": "stale_retry_is_conflict_without_duplicate_creation",
+      "pass": true
+    },
+    {
+      "check": "customer_cannot_control_publication",
+      "pass": true
+    },
+    {
+      "check": "actual_db_unique_source_blocks_direct_client_duplicate",
+      "pass": true
+    },
+    {
+      "check": "manager_withdrawal_revokes_metadata_and_original",
+      "pass": true
+    },
+    {
+      "check": "manager_republication_reuses_the_same_evidence_record",
+      "pass": true
+    },
+    {
+      "check": "one_source_record_after_full_publication_lifecycle",
+      "pass": true
+    }
+  ],
+  "expected_sha7": "fef353f",
+  "report_fixture_prepared_externally": true,
+  "manager_actions_real_http": true,
+  "cleanup_required": true,
+  "business_records_untouched": true
+}

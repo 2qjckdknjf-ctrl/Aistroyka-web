@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { resolveAIMediaImage } from "@/lib/platform/ai/resolve-ai-media-image";
-import { MEDIA_BUCKET } from "@/lib/platform/ai/media-bucket.constants";
+import { downloadPrivateOriginal } from "@/lib/platform/media/private-original-download";
 import { includeMediaInPublicProof } from "./proof-pack.service";
 import type { Media } from "@/lib/domain/media/media.types";
 export class ProofMediaError extends Error {
@@ -37,8 +37,8 @@ export async function downloadSharedProofMedia(admin: SupabaseClient, token: str
   const resolved = await resolveAIMediaImage(admin, { tenantId: share.tenant_id, projectIdClaim: share.project_id, mediaId });
   if (!resolved.ok) throw new ProofMediaError(resolved.retryable ? 503 : 404);
   if (resolved.trustedProjectId !== share.project_id) throw new ProofMediaError(404);
-  const { data: blob, error } = await admin.storage.from(MEDIA_BUCKET).download(resolved.objectPath);
-  if (error || !blob) throw new ProofMediaError(503);
+  const { data: blob, error } = await downloadPrivateOriginal(admin, resolved.objectPath, 20 * 1024 * 1024);
+  if (error || !blob) throw new ProofMediaError(error?.status === 413 ? 415 : 503);
   const current = await authorize(admin, token);
   if (current.tenant_id !== share.tenant_id || current.project_id !== share.project_id) throw new ProofMediaError(404);
   const currentSource = await mediaSource(admin, current, mediaId);

@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { TenantContext } from "@/lib/tenant/tenant.types";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { resolveAIMediaImage } from "@/lib/platform/ai/resolve-ai-media-image";
-import { MEDIA_BUCKET } from "@/lib/platform/ai/media-bucket.constants";
+import { downloadPrivateOriginal } from "@/lib/platform/media/private-original-download";
 import { assertCustomerFinanceSafePayload } from "@/lib/security/customer-finance-guard";
 
 export class PublishedEvidenceError extends Error {
@@ -145,8 +145,8 @@ export async function downloadPublishedEvidence(client: SupabaseClient, ctx: Ten
   if (!resolved.ok) throw new PublishedEvidenceError(resolved.retryable ? 503 : 404,
     resolved.retryable ? "Original temporarily unavailable" : "Original not available");
   if (resolved.trustedProjectId !== projectId) throw new PublishedEvidenceError(404, "Original not available");
-  const { data: blob, error } = await admin.storage.from(MEDIA_BUCKET).download(resolved.objectPath);
-  if (error || !blob) throw new PublishedEvidenceError(503, "Original temporarily unavailable");
+  const { data: blob, error } = await downloadPrivateOriginal(admin, resolved.objectPath, 20 * 1024 * 1024);
+  if (error || !blob) throw new PublishedEvidenceError(error?.status === 413 ? 415 : 503, "Original temporarily unavailable");
   // Check again after Storage I/O: do not return bytes if access/publication was withdrawn.
   await authorize(client, ctx, projectId);
   const [current] = await readSources(admin, ctx, projectId, evidenceId);
