@@ -22,7 +22,7 @@ async function authorize(admin: SupabaseClient, token: string): Promise<Share> {
 async function mediaSource(admin: SupabaseClient, share: Share, id: string): Promise<Media> {
   // Match the pack's current bounded selection, not every media UUID in its project.
   const selection = await admin.from("media").select("id,type").eq("tenant_id", share.tenant_id).eq("project_id", share.project_id)
-    .order("uploaded_at", { ascending: false }).limit(30);
+    .order("uploaded_at", { ascending: false }).order("id", { ascending: false }).limit(30);
   if (selection.error) throw new ProofMediaError(503);
   if (!(selection.data ?? []).some(row => row.id === id && includeMediaInPublicProof(row))) throw new ProofMediaError(404);
   const { data, error } = await admin.from("media").select("id,tenant_id,project_id,type,file_url").eq("id", id).eq("tenant_id", share.tenant_id).eq("project_id", share.project_id).maybeSingle();
