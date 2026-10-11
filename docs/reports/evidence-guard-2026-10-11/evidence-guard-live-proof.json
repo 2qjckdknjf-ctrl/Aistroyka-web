@@ -1,0 +1,45 @@
+{
+  "checks": [
+    {
+      "check": "worker_cannot_self_publish",
+      "pass": true
+    },
+    {
+      "check": "unlinked_source_rebinding_denied",
+      "http": 400,
+      "pass": true
+    },
+    {
+      "check": "post_review_source_edit_denied",
+      "http": 400,
+      "pass": true
+    },
+    {
+      "check": "non_manager_publication_denied",
+      "http": 403,
+      "pass": true
+    },
+    {
+      "check": "tenant_owner_publication_allowed",
+      "pass": true
+    },
+    {
+      "check": "active_project_manager_allowed",
+      "pass": true
+    },
+    {
+      "check": "revoked_manager_cannot_publish",
+      "http": 403,
+      "pass": true
+    },
+    {
+      "check": "raw_private_provenance_hidden_from_stakeholder",
+      "pass": true
+    },
+    {
+      "check": "FK_parent_cleanup_archives_and_preserves_provenance",
+      "pass": true
+    }
+  ],
+  "real_business_records_untouched": true
+}
