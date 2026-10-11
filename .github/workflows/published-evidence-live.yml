@@ -1,0 +1,32 @@
+name: Published evidence staging verification
+on:
+  workflow_dispatch:
+    inputs:
+      expected_sha:
+        description: Reviewed commit actually published on staging (full SHA)
+        required: true
+permissions:
+  contents: read
+concurrency:
+  group: published-evidence-staging-fixture
+  cancel-in-progress: false
+jobs:
+  verify:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.workflow_sha }}
+          persist-credentials: false
+      - name: Verify exact synthetic publication and grant revocation
+        env:
+          OWNER_EVIDENCE_E2E_FIXTURE: ${{ secrets.OWNER_EVIDENCE_E2E_FIXTURE }}
+          EXPECTED_EVIDENCE_SHA: ${{ inputs.expected_sha }}
+        run: python3 scripts/ops/verify_published_evidence_live.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: published-evidence-live-proof
+          path: published-evidence-live-proof.json
+          retention-days: 14
