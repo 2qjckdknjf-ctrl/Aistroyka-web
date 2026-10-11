@@ -412,4 +412,8 @@ jobs:
         continue-on-error: true
         env:
           BASE_URL: https://aistroyka.ai
+          SMOKE_EMAIL: ${{ secrets.PILOT_SMOKE_EMAIL_PRODUCTION }}
+          SMOKE_PASSWORD: ${{ secrets.PILOT_SMOKE_PASSWORD_PRODUCTION }}
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_PRODUCTION }}
+          SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_PRODUCTION }}
         run: bash scripts/smoke/ai_live_provider.sh --require-live

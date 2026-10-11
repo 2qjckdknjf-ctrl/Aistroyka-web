@@ -352,4 +352,8 @@ jobs:
         continue-on-error: true
         env:
           BASE_URL: https://staging.aistroyka.ai
+          SMOKE_EMAIL: ${{ secrets.PILOT_SMOKE_EMAIL_STAGING }}
+          SMOKE_PASSWORD: ${{ secrets.PILOT_SMOKE_PASSWORD_STAGING }}
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_STAGING }}
+          SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_STAGING }}
         run: bash scripts/smoke/ai_live_provider.sh --require-live

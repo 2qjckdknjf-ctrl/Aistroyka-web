@@ -1,5 +1,5 @@
 # Canonical live AI provider gate (apps/web Cloudflare Worker).
-# Probes production/staging vision path without auth; requires non-fallback HTTP 200.
+# Probes production/staging vision path with tenant auth; requires non-fallback HTTP 200.
 # Authoritative: scripts/smoke/ai_live_provider.sh --require-live
 # See docs/ai/AUDIT_AI_VALIDATION_REPORT.md
 
@@ -19,7 +19,15 @@ on:
         required: false
         type: string
         default: "https://aistroyka.ai"
-    secrets: {}
+    secrets:
+      PILOT_SMOKE_EMAIL_PRODUCTION:
+        required: true
+      PILOT_SMOKE_PASSWORD_PRODUCTION:
+        required: true
+      NEXT_PUBLIC_SUPABASE_URL_PRODUCTION:
+        required: true
+      NEXT_PUBLIC_SUPABASE_ANON_KEY_PRODUCTION:
+        required: true
 
 jobs:
   require-live:
@@ -32,6 +40,10 @@ jobs:
       - name: Run canonical live gate
         env:
           BASE_URL: ${{ inputs.base_url || 'https://aistroyka.ai' }}
+          SMOKE_EMAIL: ${{ secrets.PILOT_SMOKE_EMAIL_PRODUCTION }}
+          SMOKE_PASSWORD: ${{ secrets.PILOT_SMOKE_PASSWORD_PRODUCTION }}
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL_PRODUCTION }}
+          SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY_PRODUCTION }}
         run: |
           set -euo pipefail
           bash scripts/smoke/ai_live_provider.sh --require-live
