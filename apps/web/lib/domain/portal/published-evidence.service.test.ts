@@ -3,18 +3,16 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { TenantContext } from "@/lib/tenant/tenant.types";
 import { listPublishedEvidence, downloadPublishedEvidence } from "./published-evidence.service";
 
-const mock = vi.hoisted(() => ({ allowed: vi.fn(), admin: vi.fn(), project: vi.fn(), resolve: vi.fn(), download: vi.fn() }));
-vi.mock("@/lib/domain/stakeholders/stakeholders.policy", () => ({ canReadClientPortalView: mock.allowed }));
+const mock = vi.hoisted(() => ({ allowed: vi.fn(), admin: vi.fn(), resolve: vi.fn(), download: vi.fn() }));
 vi.mock("@/lib/supabase/admin", () => ({ getAdminClient: mock.admin }));
-vi.mock("@/lib/domain/reports/report.repository", () => ({ getProjectIdForReport: mock.project }));
 vi.mock("@/lib/platform/ai/resolve-ai-media-image", () => ({ resolveAIMediaImage: mock.resolve }));
 const projectId = "00000000-0000-4000-8000-000000000301";
 const evidenceId = "00000000-0000-4000-8000-000000000801";
 const ctx: TenantContext = { tenantId: "t1", userId: "u1", role: "stakeholder", clientProfile: "ios_customer", subscriptionTier: "free", traceId: "trace" };
-const client = {} as SupabaseClient;
+let client: SupabaseClient;
 let tables: Record<string, Array<Record<string, unknown>>>;
 let failedTable: string | undefined;
-function adminClient() {
+function adminClient(isRequester = false) {
   return {
     from(table: string) {
       const filters: Array<[string, unknown]> = [];
@@ -28,7 +26,7 @@ function adminClient() {
         in: (key: string, values: unknown[]) => { sets.push([key, values]); return chain; },
         order: () => chain,
         limit: (n: number) => { count = n; return chain; },
-        maybeSingle: async () => { const r = result(); return { ...r, data: r.data[0] ?? null }; },
+        maybeSingle: async () => { const r = result(); return { ...r, data: isRequester && table === "projects" && !(await mock.allowed()) ? null : r.data[0] ?? null }; },
         then: (resolve: (value: ReturnType<typeof result>) => unknown) => Promise.resolve(result()).then(resolve),
       };
       return chain;
@@ -44,8 +42,14 @@ beforeEach(() => {
     worker_report_media: [{ id: "link", report_id: "r1", media_id: "m1", upload_session_id: null }],
     worker_tasks: [{ id: "task1", tenant_id: "t1", project_id: projectId }],
     media: [{ id: "m1", tenant_id: "t1", project_id: projectId }],
+    projects: [{ id: projectId, tenant_id: "t1", client_portal_enabled: true }],
+    project_members: [],
+    project_stakeholders: [{ id: "grant", tenant_id: "t1", project_id: projectId, user_id: "u1", status: "active", expires_at: null }],
+    tenants: [{ id: "t1", account_id: "a1" }],
+    accounts: [{ id: "a1", status: "active" }],
   };
-  mock.admin.mockReturnValue(adminClient()); mock.allowed.mockResolvedValue(true); mock.project.mockResolvedValue(projectId);
+  client = adminClient(true);
+  mock.admin.mockReturnValue(adminClient()); mock.allowed.mockResolvedValue(true);
   mock.resolve.mockResolvedValue({ ok: true, trustedProjectId: projectId, objectPath: "t1/private-image.jpg", imageUrl: "https://storage.private/signed?token=secret" });
   mock.download.mockResolvedValue({ data: new Blob(["fixture-image"], { type: "image/jpeg" }), error: null });
 });
@@ -65,6 +69,25 @@ describe("published evidence projection", () => {
   it("does not turn a DB outage into successful empty evidence", async () => {
     failedTable = "visual_evidence_records";
     await expect(listPublishedEvidence(client, ctx, projectId)).rejects.toMatchObject({ status: 503 });
+  });
+  for (const table of ["projects", "project_members", "project_stakeholders", "tenants", "accounts"]) {
+    it("preserves authorization lookup failure as retryable: " + table, async () => {
+      failedTable = table;
+      await expect(listPublishedEvidence(client, ctx, projectId)).rejects.toMatchObject({ status: 503 });
+    });
+  }
+  it("current project owner does not depend on an unrelated stakeholder lookup", async () => {
+    tables.project_members = [{ tenant_id: "t1", project_id: projectId, user_id: "u1", role: "owner", status: "active" }];
+    failedTable = "project_stakeholders";
+    expect((await listPublishedEvidence(client, ctx, projectId)).items).toHaveLength(1);
+  });
+  it("suspended account denies a still-active project grant", async () => {
+    tables.accounts[0].status = "suspended";
+    await expect(listPublishedEvidence(client, ctx, projectId)).rejects.toMatchObject({ status: 404 });
+  });
+  it("expired grant denies published metadata", async () => {
+    tables.project_stakeholders[0].expires_at = "2020-01-01T00:00:00Z";
+    await expect(listPublishedEvidence(client, ctx, projectId)).rejects.toMatchObject({ status: 404 });
   });
   for (const patch of [{ owner_visible: false }, { manager_verified: false }, { internal_only: true }, { retention_state: "archived" }, { project_id: "other" }, { tenant_id: "other" }]) {
     it("excludes unpublished/foreign records " + JSON.stringify(patch), async () => {

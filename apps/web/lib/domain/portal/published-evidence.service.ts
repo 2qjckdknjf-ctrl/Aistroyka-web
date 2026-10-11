@@ -1,7 +1,6 @@
 /** Published-only recovery of #244. Raw records and Storage URLs stay server-side. */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { TenantContext } from "@/lib/tenant/tenant.types";
-import { canReadClientPortalView } from "@/lib/domain/stakeholders/stakeholders.policy";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { resolveAIMediaImage } from "@/lib/platform/ai/resolve-ai-media-image";
 import { MEDIA_BUCKET } from "@/lib/platform/ai/media-bucket.constants";
@@ -33,11 +32,32 @@ export type PublishedEvidenceItem = {
 
 async function authorize(client: SupabaseClient, ctx: TenantContext, projectId: string) {
   if (!ctx.tenantId || !ctx.userId) throw new PublishedEvidenceError(401, "Authentication required");
-  if (!(await canReadClientPortalView(client, ctx, projectId))) {
-    throw new PublishedEvidenceError(404, "Published evidence not available");
+  const unavailable = () => new PublishedEvidenceError(404, "Published evidence not available");
+  const retryable = () => new PublishedEvidenceError(503, "Published evidence temporarily unavailable");
+  // Match the existing portal policy while keeping transport/DB failures explicit.
+  const project = await client.from("projects").select("id,client_portal_enabled")
+    .eq("id", projectId).eq("tenant_id", ctx.tenantId).maybeSingle();
+  if (project.error) throw retryable();
+  if (!project.data?.client_portal_enabled) throw unavailable();
+  const membership = await client.from("project_members").select("role")
+    .eq("tenant_id", ctx.tenantId).eq("project_id", projectId).eq("user_id", ctx.userId)
+    .eq("status", "active").eq("role", "owner").maybeSingle();
+  if (membership.error) throw retryable();
+  if (!membership.data) {
+    const grant = await client.from("project_stakeholders").select("id,expires_at")
+      .eq("tenant_id", ctx.tenantId).eq("project_id", projectId).eq("user_id", ctx.userId)
+      .eq("status", "active").maybeSingle();
+    if (grant.error) throw retryable();
+    if (!grant.data || (grant.data.expires_at && !(new Date(grant.data.expires_at).getTime() > Date.now()))) throw unavailable();
   }
-  const admin = getAdminClient();
-  if (!admin) throw new PublishedEvidenceError(503, "Published evidence temporarily unavailable");
+  const admin: SupabaseClient | null = getAdminClient();
+  if (!admin) throw retryable();
+  const tenant = await admin.from("tenants").select("account_id").eq("id", ctx.tenantId).maybeSingle();
+  if (tenant.error) throw retryable();
+  if (!tenant.data?.account_id) throw unavailable();
+  const account = await admin.from("accounts").select("status").eq("id", tenant.data.account_id).maybeSingle();
+  if (account.error) throw retryable();
+  if (account.data?.status !== "active") throw unavailable();
   return admin;
 }
 
