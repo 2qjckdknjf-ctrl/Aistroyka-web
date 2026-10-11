@@ -1,6 +1,42 @@
 -- Finalized upload paths are reviewed source identities, not editable pointers.
 begin;
 
+-- Keep review history independent from reversible visibility flags/attachments.
+create table if not exists app_private.reviewed_media_sources (
+  media_id uuid primary key references public.media(id) on delete cascade,
+  tenant_id uuid not null, project_id uuid, source_type text, file_url text,
+  sealed_at timestamptz not null default now()
+);
+alter table app_private.reviewed_media_sources enable row level security;
+revoke all on app_private.reviewed_media_sources from public, anon, authenticated;
+grant all on app_private.reviewed_media_sources to service_role;
+insert into app_private.reviewed_media_sources(media_id,tenant_id,project_id,source_type,file_url)
+select distinct m.id,m.tenant_id,m.project_id,m.type::text,m.file_url from public.media m
+where exists (select 1 from public.worker_report_media rm join public.worker_reports wr on wr.id=rm.report_id
+    where rm.media_id=m.id and wr.tenant_id=m.tenant_id and (wr.status='approved' or wr.reviewed_at is not null))
+  or exists (select 1 from public.visual_evidence_records e where e.media_id=m.id and e.tenant_id=m.tenant_id
+    and (e.owner_visible or e.manager_verified))
+on conflict(media_id) do nothing;
+
+create or replace function app_private.seal_reviewed_report_media()
+returns trigger language plpgsql security definer set search_path=pg_catalog as $$
+begin
+  if new.status <> 'approved' then return new; end if;
+  -- The report UPDATE lock already serializes media writers; taking a media lock
+  -- here would invert that ordering against a media writer waiting on this report.
+  insert into app_private.reviewed_media_sources(media_id,tenant_id,project_id,source_type,file_url)
+  select distinct m.id,m.tenant_id,m.project_id,m.type::text,m.file_url from public.media m
+  join public.worker_report_media rm on rm.media_id=m.id
+  where rm.report_id=new.id and m.tenant_id=new.tenant_id on conflict(media_id) do nothing;
+  return new;
+end;
+$$;
+revoke all on function app_private.seal_reviewed_report_media() from public, anon, authenticated;
+grant execute on function app_private.seal_reviewed_report_media() to service_role;
+drop trigger if exists trg_report_reviewed_media_seal on public.worker_reports;
+create trigger trg_report_reviewed_media_seal after insert or update of status on public.worker_reports
+for each row execute function app_private.seal_reviewed_report_media();
+
 create or replace function public.guard_upload_session_source()
 returns trigger language plpgsql security invoker set search_path = '' as $$
 declare
@@ -77,6 +113,9 @@ begin
   if tg_op = 'UPDATE' and new.id is not distinct from old.id and new.tenant_id is not distinct from old.tenant_id
       and new.project_id is not distinct from old.project_id and new.type is not distinct from old.type
       and new.file_url is not distinct from old.file_url then return new; end if;
+  if exists (select 1 from app_private.reviewed_media_sources s where s.media_id=old.id) then
+    raise exception 'Previously reviewed media source is immutable; create a new media record' using errcode='23514';
+  end if;
   for source_report in
     select wr.status, wr.reviewed_at from public.worker_reports wr
     join public.worker_report_media rm on rm.report_id = wr.id
@@ -124,6 +163,25 @@ grant execute on function app_private.lock_published_evidence_media_source() to 
 drop trigger if exists trg_evidence_media_source_lock on public.visual_evidence_records;
 create trigger trg_evidence_media_source_lock before insert or update on public.visual_evidence_records
 for each row execute function app_private.lock_published_evidence_media_source();
+
+create or replace function app_private.seal_published_evidence_media_source()
+returns trigger language plpgsql security definer set search_path=pg_catalog as $$
+begin
+  if new.media_id is null or not (new.owner_visible or new.manager_verified) then return new; end if;
+  -- The BEFORE lock remains held. Seal only the final flags after the visibility
+  -- guard has stripped any worker attempt at self-publication.
+  insert into app_private.reviewed_media_sources(media_id,tenant_id,project_id,source_type,file_url)
+  select m.id,m.tenant_id,m.project_id,m.type::text,m.file_url from public.media m
+  where m.id=new.media_id and m.tenant_id=new.tenant_id and m.project_id=new.project_id
+  on conflict(media_id) do nothing;
+  return new;
+end;
+$$;
+revoke all on function app_private.seal_published_evidence_media_source() from public, anon, authenticated;
+grant execute on function app_private.seal_published_evidence_media_source() to service_role;
+drop trigger if exists trg_evidence_media_source_seal on public.visual_evidence_records;
+create trigger trg_evidence_media_source_seal after insert or update on public.visual_evidence_records
+for each row execute function app_private.seal_published_evidence_media_source();
 
 drop policy if exists upload_sessions_internal on public.upload_sessions;
 drop policy if exists upload_sessions_select_internal on public.upload_sessions;
