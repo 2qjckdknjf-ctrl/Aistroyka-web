@@ -1,0 +1,29 @@
+[
+  {
+    "pr": 347,
+    "head_sha": "b0da9fa7625bbc7c5c0fc1a1b2fdfbe98dbb9e6b",
+    "state": "CLOSED",
+    "reason": "Every changed file is byte-identical to origin/main",
+    "verified_main": "31b21bd42daa80c19afded5ecb92baab2ac5ecbe",
+    "blobs": {
+      "apps/web/lib/domain/field-daily-log/field-daily-log.service.test.ts": "ecda02945321a2492664f227855e51586b03fc0d",
+      "apps/web/lib/domain/field-daily-log/field-daily-log.service.ts": "ac194eb44e036c0c6f65ace708f1a120fbd3eed7",
+      "apps/web/lib/tenant/field-daily-log-rls.hardening.test.ts": "02a674d64ab65fd2ab7c6784a1bd57071199a878",
+      "apps/web/lib/tenant/field-daily-log-route-auth.contract.test.ts": "0bced84ae96537c1632b805a672a1155aa93d7f0",
+      "apps/web/supabase/migrations/20260920110000_harden_field_daily_logs_rls.sql": "45c615a037cbaafc6d64434abf4fbe4c0153c168"
+    },
+    "branch_deleted": false
+  },
+  {
+    "pr": 351,
+    "head_sha": "02da5a42e7e828c99c38352de5914728d828d241",
+    "state": "CLOSED",
+    "reason": "Every changed file is byte-identical to origin/main",
+    "verified_main": "31b21bd42daa80c19afded5ecb92baab2ac5ecbe",
+    "blobs": {
+      "apps/web/lib/tenant/membership-privilege-escalation.rls.test.ts": "dd5cc6a9944f9154ca9d463e42111231eee20b2a",
+      "apps/web/supabase/migrations/20260923110000_block_stakeholder_self_reactivation.sql": "782893c4544cab6467d7df887e452bc00fc72029"
+    },
+    "branch_deleted": false
+  }
+]
