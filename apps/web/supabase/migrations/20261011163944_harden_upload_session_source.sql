@@ -8,7 +8,7 @@ declare
   session_prefix text;
 begin
   if tg_op = 'UPDATE' then
-    if current_user = 'authenticated' and new.expires_at is distinct from old.expires_at then
+    if auth.role() = 'authenticated' and new.expires_at is distinct from old.expires_at then
       raise exception 'Upload session expiry is server controlled' using errcode = '23514';
     end if;
     if new.id is distinct from old.id or new.tenant_id is distinct from old.tenant_id
@@ -28,7 +28,7 @@ begin
     end if;
   end if;
 
-  if current_user = 'service_role' then return new; end if;
+  if auth.role() = 'service_role' then return new; end if;
   if auth.uid() is null or new.user_id is distinct from auth.uid()
       or not public.is_internal_tenant_writer_for_tenant(new.tenant_id)
       or not app_private.customer_intake_tenant_account_active(new.tenant_id) then
@@ -71,7 +71,7 @@ create index if not exists idx_worker_report_media_source_media on public.worker
 create index if not exists idx_visual_evidence_source_media on public.visual_evidence_records(media_id) where media_id is not null;
 create or replace function app_private.guard_reviewed_media_source()
 returns trigger language plpgsql security definer set search_path = pg_catalog as $$
-declare source_report record; source_evidence record;
+declare source_report record;
 begin
   if tg_op = 'DELETE' and auth.role() = 'service_role' then return old; end if;
   if tg_op = 'UPDATE' and new.id is not distinct from old.id and new.tenant_id is not distinct from old.tenant_id
@@ -87,14 +87,13 @@ begin
       raise exception 'Reviewed media source is immutable; create a new media record' using errcode = '23514';
     end if;
   end loop;
-  for source_evidence in
-    select e.owner_visible, e.manager_verified from public.visual_evidence_records e
-    where e.media_id = old.id and e.tenant_id = old.tenant_id for share of e
-  loop
-    if source_evidence.owner_visible or source_evidence.manager_verified then
-      raise exception 'Published media source is immutable; create a new media record' using errcode = '23514';
-    end if;
-  end loop;
+  -- Publication locks this media row first; do not lock evidence rows here and
+  -- invert the order against an evidence UPDATE that already holds its row.
+  if exists (select 1 from public.visual_evidence_records e
+      where e.media_id = old.id and e.tenant_id = old.tenant_id
+        and (e.owner_visible or e.manager_verified)) then
+    raise exception 'Published media source is immutable; create a new media record' using errcode = '23514';
+  end if;
   if tg_op = 'DELETE' then return old; end if;
   return new;
 end;
@@ -104,6 +103,27 @@ grant execute on function app_private.guard_reviewed_media_source() to service_r
 drop trigger if exists trg_reviewed_media_source on public.media;
 create trigger trg_reviewed_media_source before update or delete on public.media
 for each row execute function app_private.guard_reviewed_media_source();
+
+create or replace function app_private.lock_published_evidence_media_source()
+returns trigger language plpgsql security definer set search_path = pg_catalog as $$
+begin
+  if new.media_id is null or not (new.owner_visible or new.manager_verified) then return new; end if;
+  if auth.role() is distinct from 'service_role' and (auth.uid() is null
+      or not public.is_internal_tenant_writer_for_tenant(new.tenant_id)
+      or not app_private.customer_intake_tenant_account_active(new.tenant_id)) then
+    raise exception 'Evidence source lock denied' using errcode = '42501';
+  end if;
+  perform 1 from public.media m where m.id = new.media_id
+    and m.tenant_id = new.tenant_id and m.project_id = new.project_id for share of m;
+  if not found then raise exception 'Published media source unavailable' using errcode = '23514'; end if;
+  return new;
+end;
+$$;
+revoke all on function app_private.lock_published_evidence_media_source() from public, anon, authenticated;
+grant execute on function app_private.lock_published_evidence_media_source() to service_role;
+drop trigger if exists trg_evidence_media_source_lock on public.visual_evidence_records;
+create trigger trg_evidence_media_source_lock before insert or update on public.visual_evidence_records
+for each row execute function app_private.lock_published_evidence_media_source();
 
 drop policy if exists upload_sessions_internal on public.upload_sessions;
 drop policy if exists upload_sessions_select_internal on public.upload_sessions;

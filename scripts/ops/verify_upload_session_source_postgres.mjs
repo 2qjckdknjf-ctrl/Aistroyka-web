@@ -20,7 +20,7 @@ create table tenant_members(tenant_id uuid,user_id uuid,role text);
 create table media(id uuid primary key,tenant_id uuid,project_id uuid,type text,file_url text,uploaded_at timestamptz);
 create table worker_reports(id uuid primary key,tenant_id uuid,status text,reviewed_at timestamptz);
 create table worker_report_media(report_id uuid,media_id uuid);
-create table visual_evidence_records(id uuid primary key,tenant_id uuid,media_id uuid,owner_visible boolean,manager_verified boolean);
+create table visual_evidence_records(id uuid primary key,tenant_id uuid,project_id uuid,media_id uuid,owner_visible boolean,manager_verified boolean);
 create table upload_sessions(id uuid primary key,tenant_id uuid not null,user_id uuid not null,purpose text not null,status text not null default 'created' check(status in ('created','uploaded','finalized','expired')),object_path text,mime_type text,size_bytes bigint,created_at timestamptz not null default now(),expires_at timestamptz not null,archived_at timestamptz,checksum text,chunks_expected integer,chunks_received integer,background_hint boolean,last_client_ts timestamptz);
 alter table upload_sessions enable row level security;
 create policy upload_sessions_internal on upload_sessions for all using(true) with check(true);`);
@@ -36,6 +36,7 @@ const path=(n,name='original.png')=>id(201)+'/'+id(n)+'/'+name;
 const create=(n,u=5)=>q("insert into upload_sessions(id,tenant_id,user_id,purpose,expires_at) values($1,$2,$3,'report_before',now()+interval '1 hour')",[id(n),id(201),id(u)]);
 await test('member creates own empty session',()=>as(5,()=>create(801)));
 await test('client cannot extend its server expiry',()=>as(5,()=>denied("update upload_sessions set expires_at=now()+interval '10 years' where id=$1",[id(801)],'23514')));
+await test('definer context cannot extend a client expiry',async()=>{await db.exec("create function public.synthetic_extend_upload_expiry(p_id uuid) returns void language sql security definer set search_path=pg_catalog as $$update public.upload_sessions set expires_at=now()+interval '10 years' where id=p_id and user_id=auth.uid()$$");await as(5,()=>denied('select public.synthetic_extend_upload_expiry($1)',[id(801)],'23514'))});
 await test('client cannot create unlimited expiry',()=>as(5,()=>denied("insert into upload_sessions(id,tenant_id,user_id,purpose,expires_at) values($1,$2,$3,'report_before',now()+interval '10 years')",[id(803),id(201),id(5)],'23514')));
 await test('client cannot create an already elapsed session',()=>as(5,()=>denied("insert into upload_sessions(id,tenant_id,user_id,purpose,expires_at) values($1,$2,$3,'report_before',now()-interval '1 minute')",[id(803),id(201),id(5)],'23514')));
 await test('implicit tenant owner creates own session',()=>as(1,()=>create(802,1)));
@@ -54,7 +55,7 @@ await test('client cannot delete finalized evidence source',()=>as(5,async()=>as
 await test('trusted retention archive metadata is preserved',()=>as(null,()=>q('update upload_sessions set archived_at=now() where id=$1',[id(801)]),'service_role'));
 await test('expired source cannot be revived',async()=>{await as(5,()=>create(804));await as(5,()=>q("update upload_sessions set status='expired' where id=$1",[id(804)]));await as(5,()=>denied("update upload_sessions set status='created' where id=$1",[id(804)],'23514'))});
 await test('unexpired unprefixed path finalization remains compatible',async()=>{await as(5,()=>create(805));await as(5,()=>q("update upload_sessions set status='uploaded',object_path=$1 where id=$2",[path(805),id(805)]));await as(5,()=>denied("update upload_sessions set status='created' where id=$1",[id(805)],'23514'));await as(5,()=>q("update upload_sessions set status='finalized' where id=$1",[id(805)]))});
-await test('elapsed expiry prevents finalization',async()=>{await as(5,()=>create(806));await q("update upload_sessions set expires_at=now()-interval '1 minute' where id=$1",[id(806)]);await as(5,()=>denied("update upload_sessions set status='finalized',object_path=$1 where id=$2",[path(806),id(806)],'23514'))});
+await test('elapsed expiry prevents finalization',async()=>{await as(5,()=>create(806));await as(null,()=>q("update upload_sessions set expires_at=now()-interval '1 minute' where id=$1",[id(806)]),'service_role');await as(5,()=>denied("update upload_sessions set status='finalized',object_path=$1 where id=$2",[path(806),id(806)],'23514'))});
 await test('stakeholder raw sessions remain hidden',()=>as(3,async()=>assert.equal((await q('select id from upload_sessions')).rows.length,0)));
 await test('viewer may read but cannot mutate',()=>as(4,async()=>{assert((await q('select id from upload_sessions')).rows.length>0);assert.equal((await q('update upload_sessions set background_hint=true returning id')).rows.length,0)}));
 await test('suspended account hides and denies own session insert',async()=>{await q("update accounts set status='suspended' where id=$1",[id(101)]);await as(5,async()=>{assert.equal((await q('select id from upload_sessions')).rows.length,0);await denied("insert into upload_sessions(id,tenant_id,user_id,purpose,expires_at) values($1,$2,$3,'report_before',now()+interval '1 hour')",[id(807),id(201),id(5)],'42501')});await q("update accounts set status='active' where id=$1",[id(101)])});
@@ -65,7 +66,8 @@ await test('unreviewed media path may be corrected',()=>as(5,()=>q("update media
 await q("update worker_reports set status='approved',reviewed_at=now() where id=$1",[id(1001)]);
 for(const [key,value] of [['file_url','substituted.png'],['id',id(909)],['tenant_id',id(202)],['project_id',id(302)],['type','video']])await test('reviewed media '+key+' immutable',()=>as(null,()=>denied('update media set '+key+'=$1 where id=$2',[value,id(901)],'23514'),'service_role'));
 await test('review history keeps media frozen after changes requested',async()=>{await q("update worker_reports set status='changes_requested' where id=$1",[id(1001)]);await as(5,()=>denied("update media set file_url='new-unreviewed.png' where id=$1",[id(901)],'23514'))});
-await test('manual verified publication freezes its media pointer',async()=>{await q('insert into visual_evidence_records values($1,$2,$3,true,true)',[id(1101),id(201),id(902)]);await as(5,()=>denied("update media set file_url='manual-substitute.png' where id=$1",[id(902)],'23514'))});
+await test('manual verified publication freezes its media pointer',async()=>{await as(1,()=>q('insert into visual_evidence_records values($1,$2,$3,$4,true,true)',[id(1101),id(201),id(301),id(902)]));await as(5,()=>denied("update media set file_url='manual-substitute.png' where id=$1",[id(902)],'23514'))});
+await test('publication cannot lock a foreign project media',()=>as(1,()=>denied('insert into visual_evidence_records values($1,$2,$3,$4,true,true)',[id(1102),id(201),id(302),id(902)],'23514')));
 await test('client cannot delete a reviewed media source',()=>as(5,()=>denied('delete from media where id=$1',[id(901)],'23514')));
 await test('client cannot delete manually verified media',()=>as(5,()=>denied('delete from media where id=$1',[id(902)],'23514')));
 await test('unreviewed media deletion remains compatible',async()=>{await q("insert into media values($1,$2,$3,'image','draft.png',now())",[id(904),id(201),id(301)]);await as(5,async()=>assert.equal((await q('delete from media where id=$1 returning id',[id(904)])).rows.length,1))});
@@ -90,6 +92,14 @@ if(native){
     blocked=false;for(let i=0;i<250;i++){if((await native.query('select wait_event_type from pg_stat_activity where pid=$1',[firstPid])).rows[0]?.wait_event_type==='Lock'){blocked=true;break}await new Promise(r=>setTimeout(r,20))}assert(blocked);
     await second.query('commit');assert.equal((await lateMedia)?.code,'23514');await first.query('rollback');
     assert.equal((await q('select file_url from media where id=$1',[id(903)])).rows[0].file_url,'race-original.png');console.log('PASS native report approval blocks stale media substitution');
+    await q("insert into media values($1,$2,$3,'image','manual-race-original.png',now())",[id(905),id(201),id(301)]);
+    await first.query('begin');await first.query('set local role authenticated');await first.query("select set_config('request.jwt.claim.sub',$1,true),set_config('request.jwt.claim.role','authenticated',true)",[id(1)]);
+    await first.query('insert into visual_evidence_records values($1,$2,$3,$4,true,true)',[id(1103),id(201),id(301),id(905)]);
+    await second.query('begin');await second.query('set local role authenticated');await second.query("select set_config('request.jwt.claim.sub',$1,true),set_config('request.jwt.claim.role','authenticated',true)",[id(5)]);
+    const lateManual=second.query("update media set file_url='manual-race-substitute.png' where id=$1",[id(905)]).then(()=>null,e=>e);
+    blocked=false;for(let i=0;i<250;i++){if((await native.query('select wait_event_type from pg_stat_activity where pid=$1',[pid])).rows[0]?.wait_event_type==='Lock'){blocked=true;break}await new Promise(r=>setTimeout(r,20))}assert(blocked);
+    await first.query('commit');assert.equal((await lateManual)?.code,'23514');await second.query('rollback');
+    assert.equal((await q('select file_url from media where id=$1',[id(905)])).rows[0].file_url,'manual-race-original.png');console.log('PASS native new manual publication blocks media substitution');
   }finally{await first.query('rollback');await second.query('rollback');await first.end();await second.end()}
 }
 await test('service cleanup can remove reviewed media',()=>as(null,async()=>assert.equal((await q('delete from media where id=$1 returning id',[id(901)])).rows.length,1),'service_role'));
