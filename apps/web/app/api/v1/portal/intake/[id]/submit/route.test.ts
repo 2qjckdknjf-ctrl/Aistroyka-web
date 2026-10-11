@@ -25,9 +25,13 @@ const { submitCustomerIntakeDraft } = vi.hoisted(() => ({
   submitCustomerIntakeDraft: vi.fn(),
 }));
 
-vi.mock("@/lib/domain/customer-intake/portal-intake-tenant", () => ({
-  resolvePortalIntakeTenant,
-}));
+vi.mock("@/lib/domain/customer-intake/portal-intake-tenant", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/domain/customer-intake/portal-intake-tenant")>();
+  return {
+    ...actual,
+    resolvePortalIntakeTenant,
+  };
+});
 vi.mock("@/lib/domain/customer-intake/customer-intake.service", () => ({
   submitCustomerIntakeDraft,
 }));
@@ -59,6 +63,20 @@ describe("POST /api/v1/portal/intake/:id/submit", () => {
       params: Promise.resolve({ id: "d1" }),
     });
     expect(res.status).toBe(403);
+  });
+
+  it("forwards a project_id query when the stakeholder submit has no tenant header", async () => {
+    resolvePortalIntakeTenant.mockResolvedValueOnce({
+      error: "x-tenant-id or project_id is required for portal intake",
+      status: 400,
+    });
+    const res = await POST(
+      new Request("https://test/api/v1/portal/intake/d1/submit?project_id=p9", { method: "POST" }),
+      { params: Promise.resolve({ id: "d1" }) }
+    );
+    expect(res.status).toBe(400);
+    expect(resolvePortalIntakeTenant.mock.calls[0][3]).toBe("p9");
+    expect(submitCustomerIntakeDraft).not.toHaveBeenCalled();
   });
 
   it("submits a draft for the resolved tenant", async () => {
