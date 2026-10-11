@@ -1,6 +1,7 @@
 import unittest
+import json
 from unittest.mock import patch
-from verify_published_evidence_live import validate_fixture, request, NoRedirect
+from verify_published_evidence_live import validate_fixture, request, NoRedirect, verify_fixture_row, require_storage_denied
 
 
 def fixture():
@@ -37,6 +38,18 @@ class ScopeTests(unittest.TestCase):
             with self.subTest(url=url), patch('urllib.request.build_opener') as opener:
                 with self.assertRaises(ValueError): request(url, headers={'Authorization': 'Bearer synthetic'})
                 opener.assert_not_called()
+
+    def test_denial_requires_actual_access_denial(self):
+        for status in (400, 403, 404): require_storage_denied(status)
+        for status in (200, 206, 302, 401, 500, 503):
+            with self.subTest(status=status), self.assertRaises(ValueError): require_storage_denied(status)
+
+    def test_media_binding_rejects_stale_signing_target(self):
+        expected = {'file_url': fixture()['object_path'], 'tenant_id': fixture()['tenant_id']}
+        with patch('verify_published_evidence_live.request', return_value=(200, json.dumps([{**expected, 'file_url': 'different/object.png'}]).encode(), {})):
+            with self.assertRaises(ValueError): verify_fixture_row('media', fixture()['media_id'], expected, {})
+        with patch('verify_published_evidence_live.request', return_value=(200, json.dumps([expected]).encode(), {})):
+            verify_fixture_row('media', fixture()['media_id'], expected, {})
 
     def test_refuses_redirect_forwarding(self):
         with self.assertRaises(ValueError): NoRedirect().redirect_request(None, None, 302, '', {}, 'https://evil.test/')

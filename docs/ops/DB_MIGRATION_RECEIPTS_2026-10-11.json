@@ -1,7 +1,7 @@
 {
   "project_ref": "vthfrxehrursfloevnlp",
   "observed_date": "2026-10-11",
-  "scope": "Nine source migrations applied on 2026-10-11 under eight remote IDs; excludes historical migration drift.",
+  "scope": "Ten source migrations applied on 2026-10-11 under nine remote IDs; excludes historical migration drift.",
   "receipts": [
     {
       "remote_version": "20261011090316",
@@ -84,6 +84,16 @@
         {
           "path": "apps/web/supabase/migrations/20261011144945_harden_published_evidence_source_guard.sql",
           "sha256": "6d3d5264e7d61a8c3ac22c5b19936a2c0a3ab975a1d0e76f28ba316b8f5ef7aa"
+        }
+      ]
+    },
+    {
+      "remote_version": "20261011184023",
+      "remote_name": "harden_upload_session_and_reviewed_media_source_20261011",
+      "sources": [
+        {
+          "path": "apps/web/supabase/migrations/20261011163944_harden_upload_session_source.sql",
+          "sha256": "b1027dabb152da89b6ae05580cb13b628e9dc1d6f307c78a78a90e0fb838c41f"
         }
       ]
     }

@@ -56,6 +56,19 @@ def validate_fixture(fixture):
         raise ValueError('Unexpected fixture Storage path')
 
 
+def verify_fixture_row(table, ident, fields, owner):
+    status, raw, _ = request(DATABASE + '/rest/v1/' + table + '?id=eq.' + ident + '&select=' + ','.join(fields), headers=owner)
+    exact(status, 200, 'Exact fixture ' + table)
+    rows = json.loads(raw)
+    if len(rows) != 1 or any(rows[0].get(key) != value for key, value in fields.items()):
+        raise ValueError('Fixture scope mismatch for ' + table)
+
+
+def require_storage_denied(status):
+    if status not in (400, 403, 404):
+        raise ValueError('Direct Storage object access unexpectedly allowed or unverified')
+
+
 def run(fixture, expected_sha):
     validate_fixture(fixture)
     if not re.fullmatch(r'[0-9a-f]{40}', expected_sha):
@@ -72,15 +85,13 @@ def run(fixture, expected_sha):
     # Verify the exact parents/source/grant before any mutation. No broad filters.
     expected = [
         ('projects', fixture['project_id'], {'tenant_id': fixture['tenant_id'], 'name': fixture['tag']}),
+        ('media', fixture['media_id'], {'tenant_id': fixture['tenant_id'], 'project_id': fixture['project_id'], 'file_url': fixture['object_path'], 'type': 'image'}),
         ('worker_reports', fixture['report_id'], {'tenant_id': fixture['tenant_id'], 'user_id': fixture['user_id'], 'status': 'approved'}),
         ('visual_evidence_records', fixture['evidence_id'], {'tenant_id': fixture['tenant_id'], 'project_id': fixture['project_id'], 'report_id': fixture['report_id'], 'media_id': fixture['media_id'], 'owner_visible': True, 'manager_verified': True}),
         ('project_stakeholders', fixture['grant_id'], {'tenant_id': fixture['tenant_id'], 'project_id': fixture['project_id'], 'user_id': fixture['user_id'], 'status': 'active'}),
     ]
     for table, ident, fields in expected:
-        status, raw, _ = request(DATABASE + '/rest/v1/' + table + '?id=eq.' + ident + '&select=' + ','.join(fields), headers=owner)
-        exact(status, 200, 'Exact fixture ' + table); rows = json.loads(raw)
-        if len(rows) != 1 or any(rows[0].get(key) != value for key, value in fields.items()):
-            raise ValueError('Fixture scope mismatch for ' + table)
+        verify_fixture_row(table, ident, fields, owner)
     status, raw, _ = request(DATABASE + '/auth/v1/token?grant_type=password', 'POST', {'email': fixture['email'], 'password': fixture['password']}, {'apikey': anon})
     exact(status, 200, 'Fixture login'); session = json.loads(raw)
     if session['user']['id'] != fixture['user_id'] or session['user']['user_metadata'].get('qa_fixture') != fixture['tag']:
@@ -110,8 +121,11 @@ def run(fixture, expected_sha):
         status, raw, _ = request(DATABASE + '/rest/v1/visual_evidence_records?id=eq.' + fixture['evidence_id'] + '&select=*', headers=actor)
         exact(status, 200, 'Raw evidence RLS'); assert json.loads(raw) == []; check('raw_provenance_denied')
         status, _, _ = request(DATABASE + '/storage/v1/object/sign/media/' + fixture['object_path'], 'POST', {'expiresIn': 60}, actor)
-        if status not in (400, 403, 404): raise ValueError('Raw Storage signing unexpectedly allowed')
+        require_storage_denied(status)
         check('raw_storage_sign_denied')
+        status, _, _ = request(DATABASE + '/storage/v1/object/public/media/' + fixture['object_path'])
+        require_storage_denied(status)
+        check('unauthenticated_public_object_denied')
         evidence_url = DATABASE + '/rest/v1/visual_evidence_records?id=eq.' + fixture['evidence_id'] + '&tenant_id=eq.' + fixture['tenant_id'] + '&project_id=eq.' + fixture['project_id']
         status, _, _ = request(evidence_url, 'PATCH', {'owner_visible': False, 'manager_verified': False}, owner); exact(status, 204, 'Withdraw exact fixture publication')
         status, _, _ = request(original, headers=actor); exact(status, 404, 'Withdrawn original')

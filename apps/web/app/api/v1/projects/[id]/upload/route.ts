@@ -15,7 +15,7 @@ function isBucketNotFoundError(message: string): boolean {
 }
 
 const BUCKET_MANUAL_HINT =
-  "Создайте бакет вручную: Supabase Dashboard → Storage → New bucket → имя: media, Public: включить. Либо добавьте в .env.local переменную SUPABASE_SERVICE_ROLE_KEY (Project Settings → API → service_role) — тогда бакет создастся при загрузке.";
+  "Создайте бакет вручную: Supabase Dashboard → Storage → New bucket → имя: media, Public: выключить. Либо добавьте в .env.local переменную SUPABASE_SERVICE_ROLE_KEY (Project Settings → API → service_role) — тогда бакет создастся при загрузке.";
 
 async function ensureMediaBucket(): Promise<{ ok: true } | { ok: false; error: string }> {
   const admin = getAdminClient();
@@ -23,7 +23,7 @@ async function ensureMediaBucket(): Promise<{ ok: true } | { ok: false; error: s
     return { ok: false, error: BUCKET_MANUAL_HINT };
   }
   const { error } = await admin.storage.createBucket(MEDIA_BUCKET, {
-    public: true,
+    public: false,
   });
   if (error) {
     const msg = error.message?.toLowerCase() ?? "";
