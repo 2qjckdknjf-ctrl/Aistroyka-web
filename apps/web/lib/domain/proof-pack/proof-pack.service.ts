@@ -21,7 +21,7 @@ function mediaCategory(media: Media): ProofMediaCategory {
 }
 
 /** Public token surface: only media that reads as site/customer evidence. */
-export function includeMediaInPublicProof(m: Media): boolean {
+export function includeMediaInPublicProof(m: Pick<Media, "type">): boolean {
   const t = (m.type ?? "").toLowerCase();
   if (!t.trim()) return false;
   if (/(internal|private|confidential|worker_only|manager_only)/.test(t)) return false;
