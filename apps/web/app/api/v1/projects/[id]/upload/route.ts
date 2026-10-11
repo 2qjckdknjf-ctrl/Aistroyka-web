@@ -14,12 +14,12 @@ function isBucketNotFoundError(message: string): boolean {
   return false;
 }
 
-const BUCKET_MANUAL_HINT =
-  "Создайте бакет вручную: Supabase Dashboard → Storage → New bucket → имя: media, Public: выключить. Либо добавьте в .env.local переменную SUPABASE_SERVICE_ROLE_KEY (Project Settings → API → service_role) — тогда бакет создастся при загрузке.";
+const STORAGE_ADMIN_REQUIRED_HINT =
+  "File storage is unavailable. Contact the project administrator.";
 
 async function ensureMediaBucket(): Promise<{ ok: true } | { ok: false; error: string }> {
   const admin = getAdminClient();
-  if (!admin) return { ok: false, error: BUCKET_MANUAL_HINT };
+  if (!admin) return { ok: false, error: STORAGE_ADMIN_REQUIRED_HINT };
   let existing = await admin.storage.getBucket(MEDIA_BUCKET);
   if (existing.error) {
     if (!isBucketNotFoundError(existing.error.message)) return { ok: false, error: "Storage visibility verification failed" };
@@ -117,7 +117,7 @@ export async function POST(
 
   if (uploadError) {
     const msg = uploadError.message ?? "Upload failed";
-    const hint = isBucketNotFoundError(msg) ? ` ${BUCKET_MANUAL_HINT}` : "";
+    const hint = isBucketNotFoundError(msg) ? ` ${STORAGE_ADMIN_REQUIRED_HINT}` : "";
     return NextResponse.json(
       { success: false, error: msg + hint },
       { status: 500 }
