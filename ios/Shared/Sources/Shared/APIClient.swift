@@ -153,14 +153,45 @@ public actor APIClient {
         }
     }
 
-    private func performData(_ request: URLRequest) async throws -> (Data, URLResponse) {
+    public func requestPrivateDocument(projectId: String, documentId: String) async throws -> Data {
+        guard UUID(uuidString: projectId) != nil, UUID(uuidString: documentId) != nil else {
+            throw APIError(statusCode: 400, code: nil, message: "Invalid document identifier")
+        }
+        return try await requestPrivateOriginal(path: "projects/\(projectId)/documents/\(documentId)/original", maxBytes: 25 * 1024 * 1024)
+    }
+
+    /// Same-origin bearer requests only; no redirect, shared cookie jar or persistent response cache.
+    private func requestPrivateOriginal(path: String, maxBytes: Int, allowedMime: [String]? = nil) async throws -> Data {
+        guard let base = Config.apiBaseURL, let url = URL(string: path, relativeTo: base) else {
+            throw APIError(statusCode: nil, code: nil, message: "Invalid base URL")
+        }
+        let config = session.configuration
+        config.urlCache = nil; config.httpCookieStorage = nil
+        config.requestCachePolicy = .reloadIgnoringLocalCacheData
+        let transport = URLSession(configuration: config, delegate: RejectPrivateRedirect(), delegateQueue: nil)
+        defer { transport.finishTasksAndInvalidate() }
+        var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 30)
+        request.setValue(DeviceContext.deviceId, forHTTPHeaderField: "x-device-id")
+        request.setValue(clientProfile, forHTTPHeaderField: "x-client")
+        if let allowedMime { request.setValue(allowedMime.joined(separator: ", "), forHTTPHeaderField: "Accept") }
+        let (data, response) = try await performData(request, transport: transport)
+        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else { throw APIError.from(data: data, response: response) }
+        guard response.url?.absoluteURL == url.absoluteURL, data.count <= maxBytes else {
+            throw APIError(statusCode: 415, code: nil, message: "Unsupported original response")
+        }
+        if let allowedMime, !allowedMime.contains(http.mimeType ?? "") { throw APIError(statusCode: 415, code: nil, message: "Unsupported original response") }
+        return data
+    }
+
+    private func performData(_ request: URLRequest, transport: URLSession? = nil) async throws -> (Data, URLResponse) {
+        let transport = transport ?? session
         var req = request
         await applyAuth(&req)
-        var result = try await session.data(for: req)
+        var result = try await transport.data(for: req)
         if (result.1 as? HTTPURLResponse)?.statusCode == 401 {
             if await AuthService.shared.refreshAfterUnauthorized() {
                 await applyAuth(&req)
-                result = try await session.data(for: req)
+                result = try await transport.data(for: req)
             }
             if (result.1 as? HTTPURLResponse)?.statusCode == 401 {
                 await notifySessionInvalidIfNeeded()
@@ -210,4 +241,9 @@ private struct AnyEncodable: Encodable {
     let value: Encodable
     init(_ value: Encodable) { self.value = value }
     func encode(to encoder: Encoder) throws { try value.encode(to: encoder) }
+}
+
+private final class RejectPrivateRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
+    func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse,
+                    newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void) { completionHandler(nil) }
 }

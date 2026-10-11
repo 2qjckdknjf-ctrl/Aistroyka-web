@@ -54,11 +54,22 @@ enum ManagerAPI {
         return (updated?.isEmpty == false) ? updated : name
     }
 
-    static func documentFileURL(objectPath: String?) -> URL? {
-        guard let objectPath, !objectPath.isEmpty else { return nil }
-        let base = Config.supabaseURL.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-        let trimmed = objectPath.hasPrefix("media/") ? String(objectPath.dropFirst("media/".count)) : objectPath
-        return URL(string: "\(base)/storage/v1/object/public/media/\(trimmed)")
+    static func previewDocument(_ doc: ProjectDocumentDTO) async throws -> URL {
+        guard let projectId = doc.projectId, let path = doc.objectPath, !path.isEmpty else {
+            throw APIError(statusCode: 404, code: nil, message: NSLocalizedString("mgr_v43_document_unavailable", comment: ""))
+        }
+        let data = try await APIClient.shared.requestPrivateDocument(projectId: projectId, documentId: doc.id)
+        try Task.checkCancellation()
+        let suffix = (path as NSString).pathExtension.lowercased()
+        let validSuffix = !suffix.isEmpty && suffix.count <= 12 && suffix.unicodeScalars.allSatisfy { CharacterSet.alphanumerics.contains($0) && $0.isASCII }
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("aistroyka-document-" + UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        var file = folder.appendingPathComponent(doc.id + (validSuffix ? "." + suffix : ""))
+        do {
+            try data.write(to: file, options: [.atomic, .completeFileProtection])
+            var values = URLResourceValues(); values.isExcludedFromBackup = true; try file.setResourceValues(values)
+            return file
+        } catch { try? FileManager.default.removeItem(at: folder); throw error }
     }
 
     /// GET /api/v1/projects — list projects (tenant-scoped).
