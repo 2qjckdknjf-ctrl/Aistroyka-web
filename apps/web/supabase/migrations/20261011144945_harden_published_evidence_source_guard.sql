@@ -51,13 +51,8 @@ begin
     left join public.worker_tasks wt on wt.id = wr.task_id and wt.tenant_id = wr.tenant_id
     left join public.worker_day wd on wd.id = wr.day_id and wd.tenant_id = wr.tenant_id
     where wr.id = p_report_id and wr.tenant_id = p_tenant_id
-      and (wr.user_id = actor
-        or exists (select 1 from public.tenants t where t.id = p_tenant_id and t.user_id = actor)
-        or exists (select 1 from public.tenant_members tm where tm.tenant_id = p_tenant_id
-          and tm.user_id = actor and tm.role in ('owner','admin'))
-        or exists (select 1 from public.project_members pm where pm.tenant_id = p_tenant_id
-          and pm.project_id = coalesce(wt.project_id, nullif(pg_catalog.to_jsonb(wd)->>'project_id','')::uuid)
-          and pm.user_id = actor and pm.role = 'manager'))
+      and (wr.user_id = actor or public.can_manage_project_membership(
+        p_tenant_id, coalesce(wt.project_id, nullif(pg_catalog.to_jsonb(wd)->>'project_id','')::uuid)))
     for share of wr;
   if result is null then raise exception 'Evidence report unavailable' using errcode = '42501'; end if;
   return result;
@@ -177,11 +172,7 @@ begin
   ) then
     raise exception 'Evidence source identity is immutable' using errcode = '23514';
   end if;
-  manager := exists (select 1 from public.tenants t where t.id = new.tenant_id and t.user_id = actor)
-    or exists (select 1 from public.tenant_members tm where tm.tenant_id = new.tenant_id
-      and tm.user_id = actor and tm.role in ('owner', 'admin'))
-    or exists (select 1 from public.project_members pm where pm.tenant_id = new.tenant_id
-      and pm.project_id = new.project_id and pm.user_id = actor and pm.role = 'manager');
+  manager := public.can_manage_project_membership(new.tenant_id, new.project_id);
   if new.report_id is not null then
     report_snapshot := app_private.lock_evidence_report(new.tenant_id, new.report_id);
     report_owner := nullif(report_snapshot->>'user_id', '')::uuid;

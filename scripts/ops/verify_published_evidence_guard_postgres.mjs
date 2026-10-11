@@ -29,7 +29,7 @@ create table accounts(id uuid primary key,status text);
 create table tenants(id uuid primary key,user_id uuid,account_id uuid);
 create table projects(id uuid primary key,tenant_id uuid);
 create table tenant_members(tenant_id uuid,user_id uuid,role text);
-create table project_members(tenant_id uuid,project_id uuid,user_id uuid,role text);
+create table project_members(tenant_id uuid,project_id uuid,user_id uuid,role text,status text default 'active');
 create table media(id uuid primary key,tenant_id uuid,project_id uuid);
 create table worker_tasks(id uuid primary key,tenant_id uuid,project_id uuid);
 create table worker_day(id uuid primary key,tenant_id uuid);
@@ -40,13 +40,14 @@ create table worker_report_media(report_id uuid,media_id uuid,upload_session_id 
 `);
 function helper(file,name){const s=readFileSync(root+file,'utf8');const start=s.indexOf('create or replace function public.'+name+'(');assert(start>=0);const end=s.indexOf('$$;',s.indexOf('as $$',start));assert(end>start);return s.slice(start,end+3)}
 for(const [file,name] of [['20260329140000_stakeholder_rls_isolation.sql','is_internal_tenant_reader_for_tenant'],['20260906104000_project_write_authorization_hardening.sql','is_internal_tenant_writer_for_tenant']])await db.exec(helper(file,name));
+await db.exec(helper('20260620140442_rbac_stage1_security_hardening.sql','can_manage_project_membership'));
 await db.exec(helper('20261003170000_customer_intake_drafts.sql','customer_intake_tenant_account_active').replace('function public.customer_intake','function app_private.customer_intake'));
 await db.exec('grant execute on all functions in schema app_private to authenticated,service_role');
 await q("insert into accounts values($1,'active'),($2,'active')",[id(101),id(102)]);
 await q('insert into tenants values($1,$2,$3),($4,$5,$6)',[id(201),id(1),id(101),id(202),id(2),id(102)]);
 for(const [p,t] of [[301,201],[302,202],[303,201]])await q('insert into projects values($1,$2)',[id(p),id(t)]);
 for(const [u,r] of [[3,'stakeholder'],[4,'viewer'],[5,'member'],[6,'admin'],[7,'member']])await q('insert into tenant_members values($1,$2,$3)',[id(201),id(u),r]);
-await q("insert into project_members values($1,$2,$3,'manager')",[id(201),id(301),id(5)]);
+await q("insert into project_members(tenant_id,project_id,user_id,role) values($1,$2,$3,'manager')",[id(201),id(301),id(5)]);
 for(const [m,t,p] of [[401,201,301],[402,201,303],[403,202,302]])await q('insert into media values($1,$2,$3)',[id(m),id(t),id(p)]);
 for(const [task,p] of [[501,301],[502,303]])await q('insert into worker_tasks values($1,$2,$3)',[id(task),id(201),id(p)]);
 for(const [report,task,user] of [[601,501,7],[602,502,7],[603,501,6]])await q("insert into worker_reports values($1,$2,$3,null,$4,'submitted')",[id(report),id(201),id(task),id(user)]);
@@ -69,6 +70,7 @@ await test('unreviewed caption can be corrected by author',()=>as(7,()=>q("updat
 await q("update worker_reports set status='approved' where id=$1",[id(601)]);
 await test('approved report closes source edit race before publication',()=>as(7,()=>denied("update visual_evidence_records set zone_label='Injected' where id=$1",[id(801)],'23514')));
 await test('cannot add source after approval',()=>as(7,async()=>{try{await insert(802);assert.fail('Expected denial')}catch(e){assert.equal(e.code,'23514')}}));
+await test('revoked project manager cannot lock or publish another authors source',async()=>{await q("update project_members set status='revoked' where user_id=$1",[id(5)]);await as(5,()=>denied('update visual_evidence_records set owner_visible=true,manager_verified=true where id=$1',[id(801)],'42501'));await as(5,()=>denied('select app_private.lock_evidence_report($1,$2)',[id(201),id(601)],'42501'));await q("update project_members set status='active' where user_id=$1",[id(5)])});
 await test('current member/project-manager can publish reviewed source',()=>as(5,async()=>{await q('update visual_evidence_records set owner_visible=true,manager_verified=true where id=$1',[id(801)]);assert.equal((await q('select owner_visible from visual_evidence_records where id=$1',[id(801)])).rows[0].owner_visible,true)}));
 for(const user of [7,5,6])await test('reviewed provenance/content immutable for '+user,()=>as(user,()=>denied("update visual_evidence_records set provenance='{\"actual_amount\":9}' where id=$1",[id(801)],'23514')));
 for(const [key,value] of [['id',id(899)],['tenant_id',id(202)],['project_id',id(303)],['report_id',id(602)],['media_id',id(402)],['upload_session_id',id(900)],['uploader_user_id',id(6)]])await test('immutable '+key,()=>as(5,()=>denied('update visual_evidence_records set '+key+'=$1 where id=$2',[value,id(801)],'23514')));
