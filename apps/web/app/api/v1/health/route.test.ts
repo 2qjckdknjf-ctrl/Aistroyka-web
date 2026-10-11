@@ -7,6 +7,8 @@ describe("GET /api/v1/health", () => {
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "");
     const res = await GET(new Request("http://test/api/v1/health"));
     expect(res.status).toBe(503);
+    expect(res.headers.get("cache-control")).toContain("no-store");
+    expect(res.headers.get("cloudflare-cdn-cache-control")).toBe("no-store");
     const data = (await res.json()) as Record<string, unknown>;
     expect(data).toHaveProperty("ok", false);
     expect(data).toHaveProperty("db", "error");

@@ -29,7 +29,7 @@ create table accounts(id uuid primary key,status text);
 create table tenants(id uuid primary key,user_id uuid,account_id uuid);
 create table projects(id uuid primary key,tenant_id uuid);
 create table tenant_members(tenant_id uuid,user_id uuid,role text);
-create table project_members(tenant_id uuid,project_id uuid,user_id uuid,role text,status text default 'active');
+create table project_members(tenant_id uuid,project_id uuid,user_id uuid,role text,status text default 'active' check(status in ('active','inactive','removed')),primary key(tenant_id,project_id,user_id));
 create table media(id uuid primary key,tenant_id uuid,project_id uuid);
 create table worker_tasks(id uuid primary key,tenant_id uuid,project_id uuid);
 create table worker_day(id uuid primary key,tenant_id uuid);
@@ -74,7 +74,7 @@ await test('task parent cleanup archives report evidence without blocking FK',as
 await q("update worker_reports set status='approved' where id=$1",[id(601)]);
 await test('approved report closes source edit race before publication',()=>as(7,()=>denied("update visual_evidence_records set zone_label='Injected' where id=$1",[id(801)],'23514')));
 await test('cannot add source after approval',()=>as(7,async()=>{try{await insert(802);assert.fail('Expected denial')}catch(e){assert.equal(e.code,'23514')}}));
-await test('revoked project manager cannot lock or publish another authors source',async()=>{await q("update project_members set status='revoked' where user_id=$1",[id(5)]);await as(5,()=>denied('update visual_evidence_records set owner_visible=true,manager_verified=true where id=$1',[id(801)],'42501'));await as(5,()=>denied('select app_private.lock_evidence_report($1,$2)',[id(201),id(601)],'42501'));await q("update project_members set status='active' where user_id=$1",[id(5)])});
+await test('revoked project manager cannot lock or publish another authors source',async()=>{await q("update project_members set status='removed' where user_id=$1",[id(5)]);await as(5,()=>denied('update visual_evidence_records set owner_visible=true,manager_verified=true where id=$1',[id(801)],'42501'));await as(5,()=>denied('select app_private.lock_evidence_report($1,$2)',[id(201),id(601)],'42501'));await q("update project_members set status='active' where user_id=$1",[id(5)])});
 await test('current member/project-manager can publish reviewed source',()=>as(5,async()=>{await q('update visual_evidence_records set owner_visible=true,manager_verified=true where id=$1',[id(801)]);assert.equal((await q('select owner_visible from visual_evidence_records where id=$1',[id(801)])).rows[0].owner_visible,true)}));
 for(const user of [7,5,6])await test('reviewed provenance/content immutable for '+user,()=>as(user,()=>denied("update visual_evidence_records set provenance='{\"actual_amount\":9}' where id=$1",[id(801)],'23514')));
 for(const [key,value] of [['id',id(899)],['tenant_id',id(202)],['project_id',id(303)],['report_id',id(602)],['media_id',id(402)],['upload_session_id',id(900)],['uploader_user_id',id(6)]])await test('immutable '+key,()=>as(5,()=>denied('update visual_evidence_records set '+key+'=$1 where id=$2',[value,id(801)],'23514')));
