@@ -23,3 +23,5 @@ Concurrent identical finalize repair: after a zero-row CAS, re-read the exact ow
 Attachment/review race repair: a scoped private BEFORE attachment trigger locks its owned report and rechecks editable state after waiting. New attachment created_at comes from clock_timestamp after the lock. Two native orderings PASS: an inserted attachment commits before blocked rejection and receives its seal; rejection first denies a stale insert. Fixture seed links use the trusted service context, matching the real lifecycle.62 SQL contracts and5 native concurrent tests PASS.
 
 Missing-original/exact-finalize repair: client deletion is blocked for submitted report originals, and approval rejects dangling media references. Initial and losing-CAS finalized retries compare MIME and size as well as path/uploader/status.64 SQL checks and5 native races,27 repo/service/HTTP checks PASS; typecheck PASS. No live apply yet.
+
+Human review interval repair: submitted sources reject URI/core changes as well as deletion. Draft/replacement correction remains supported before resubmission; the updated lifecycle regression proves this order.65 SQL contracts plus5 native races PASS.

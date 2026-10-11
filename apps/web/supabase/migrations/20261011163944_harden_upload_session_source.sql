@@ -149,7 +149,7 @@ begin
     where rm.media_id = old.id and wr.tenant_id = old.tenant_id
     for share of wr
   loop
-    if source_report.status = 'approved' or (tg_op='DELETE' and source_report.status='submitted') then
+    if source_report.status in ('submitted','approved') then
       raise exception 'Reviewed media source is immutable; create a new media record' using errcode = '23514';
     end if;
   end loop;
