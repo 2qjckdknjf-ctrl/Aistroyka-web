@@ -23,3 +23,11 @@
 Порядок следующей работы: fresh semantic/hard audit существующих security/AI PR (включая #200 image auth и legacy worker boundaries), затем полный portal/device scenario и недостающая AIS-CLIENT-005A extraction поверх существующего intake/evidence/Vision/Graph. Проверить все существующие реализации/PR/dirty salvage до новой ветки. 75 старых открытых PR требуют semantic review; три дополнительных exact duplicates закрыты, ветки сохранены.
 
 Старый DAG 2026-10-03 и историческая requirement matrix сохраняют первоначальную постановку, но их TODO не доказывают отсутствие target, API, schema или кода сегодня. Реестр содержит реальный PR HEAD отдельно от merge SHA. Customer finance isolation, contractor-ops-only pilot, legal/device/store/billing/shadow gates сохраняются. Автономность не заменяет физические, временные или юридические свидетельства.
+
+## Продолжение: текущий факт после #420
+
+#420 merged, integration 2d5e44ba; staging и production, включая www: 2d5e44b. Авторизованные live AI gate steps PASS без fallback. Anonymous image/process aliases: 12 проверок HTTP401. Session worker tenant/CAS/token isolation исправлена; новая service-only миграция применена как 20261011112358, receipt записан. Шесть исходных миграций — пять remote IDs; не replay.
+
+Fresh hard audit нашёл следующий пробел: live media/ai_analysis FOR ALL позволяют прямые записи read-only ролей. На синтетическом native PostgreSQL/PostgREST воспроизведены cross-project stakeholder delete и viewer result forgery. Исправление подготовлено с 26 SQL и 21 native проверками, но новая media RLS миграция пока не применена. #206 не объединять целиком — его viewer/job write grants отклонены.
+
+Физический iPhone17Pro доступен и booted; Worker и Manager установлены, Customer отсутствует. Это заменяет старую гипотезу об отсутствии устройства, но не подтверждает свежесть установленной сборки или полный device smoke. Безопасность прямого доступа закрывается до нового scope extraction. [Подробные доказательства и оставшийся scope](../reports/2026-10-11-ai-security-continuation.md).

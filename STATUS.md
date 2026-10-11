@@ -1,3 +1,5 @@
+> Продолжение 2026-10-11: #420 merged (2d5e44ba); staging/production/apex/www 2d5e44b verified, authenticated live AI gates PASS without fallback. Scoped session RPC migration applied as 20261011112358; six source receipts under five remote IDs. Current task: media/result RLS fix from a fresh 2d5e44ba baseline, with synthetic before/after proof; it is not applied yet. Physical iPhone is accessible, Worker/Manager installed, Customer absent; device smoke remains pending. See docs/reports/2026-10-11-ai-security-continuation.md. Earlier dated observations below remain historical.
+
 # STATUS — AISTROYKA
 
 Обновлено 2026-10-11. Источник кода — свежий origin/main; даты и SHA ниже являются наблюдением, а не обещанием текущего состояния без повторной проверки.
