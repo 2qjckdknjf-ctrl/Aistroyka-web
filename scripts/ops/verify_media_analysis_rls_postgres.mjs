@@ -64,4 +64,32 @@ await test('disabled portal hides stakeholder media',async()=>{await query('upda
 await test('suspended account hides data and denies uploads',async()=>{await query("update accounts set status='suspended' where id=$1",[id(101)]);for(const user of [1,3,4,6])assert.deepEqual(await rows(user),[]);await as('authenticated',id(5),()=>denied("insert into media values($1,$2,$3,'image','https://example.invalid/suspended.jpg')",[id(412),id(201),id(301)],'42501'));await query("update accounts set status='active' where id=$1",[id(101)])});
 await test('service writes remain available',()=>as('service_role',null,async()=>{await query("update ai_analysis set completion_percent=30");await query("update media set type='video' where id=$1",[id(401)])}));
 await test('anon cannot read raw media/results',()=>as('anon',null,async()=>{await denied('select * from media',[],'42501');await denied('select * from ai_analysis',[],'42501')}));
-await db.close();console.log(passed.length+' media RLS SQL checks PASS');
+// Execute the storage policy using the same real role/account helpers. Storage
+// transport itself is verified separately against task-created live objects.
+await db.exec(`create schema storage;
+grant usage on schema storage to anon,authenticated,service_role;
+create function storage.foldername(name text) returns text[] language sql immutable as $$
+  select (string_to_array(name,'/'))[1:array_length(string_to_array(name,'/'),1)-1]
+$$;
+create table storage.objects(id uuid primary key default gen_random_uuid(),bucket_id text,name text);
+alter table storage.objects enable row level security;
+grant select,insert on storage.objects to anon,authenticated,service_role;
+`);
+for(const prefix of [201,202,301,302,303])await query('insert into storage.objects(bucket_id,name) values($1,$2)',['media',id(prefix)+'/fixture.txt']);
+await query("insert into storage.objects(bucket_id,name) values('other',$1),('media','not-a-uuid/fixture.txt')",[id(201)+'/fixture.txt']);
+const storageSql=readFileSync(root+'20261011134735_harden_media_storage_role_access.sql','utf8');
+await db.exec(storageSql);await db.exec(storageSql);
+const objects=async user=>as('authenticated',id(user),async()=> (await query('select name from storage.objects order by name')).rows.map(x=>x.name));
+const ownObjects=[201,301,303].map(n=>id(n)+'/fixture.txt').sort();
+for(const user of [1,4,6])await test('storage internal reader '+user+' keeps both path layouts',async()=>assert.deepEqual(await objects(user),ownObjects));
+await test('storage multi-tenant member only sees authorized tenants',async()=>assert.equal((await objects(5)).length,5));
+await test('storage stakeholder cannot read or sign any raw tenant object',async()=>assert.deepEqual(await objects(3),[]));
+await test('storage revoked stakeholder remains denied',async()=>{await query("update project_stakeholders set status='revoked'");assert.deepEqual(await objects(3),[]);await query("update project_stakeholders set status='active'")});
+for(const user of [3,4])for(const prefix of [201,301])await test('storage upload denied for role '+user+' path '+prefix,()=>as('authenticated',id(user),()=>denied("insert into storage.objects(bucket_id,name) values('media',$1)",[id(prefix)+'/denied-'+user+'.txt'],'42501')));
+for(const user of [1,5,6])for(const prefix of [201,301])await test('storage internal writer '+user+' path '+prefix,()=>as('authenticated',id(user),()=>query("insert into storage.objects(bucket_id,name) values('media',$1)",[id(prefix)+'/writer-'+user+'.txt'])));
+for(const prefix of [202,302])await test('storage foreign tenant upload denied '+prefix,()=>as('authenticated',id(1),()=>denied("insert into storage.objects(bucket_id,name) values('media',$1)",[id(prefix)+'/foreign.txt'],'42501')));
+await test('storage unknown prefixes and buckets fail closed',()=>as('authenticated',id(1),async()=>{await denied("insert into storage.objects(bucket_id,name) values('media','bad-prefix/test.txt')",[],'42501');await denied("insert into storage.objects(bucket_id,name) values('other',$1)",[id(201)+'/test.txt'],'42501')}));
+await test('storage suspended account removes reads and uploads',async()=>{await query("update accounts set status='suspended' where id=$1",[id(101)]);for(const user of [1,3,4,6])assert.deepEqual(await objects(user),[]);await as('authenticated',id(5),()=>denied("insert into storage.objects(bucket_id,name) values('media',$1)",[id(201)+'/suspended.txt'],'42501'));await query("update accounts set status='active' where id=$1",[id(101)])});
+await test('storage anonymous access and upload denied',()=>as('anon',null,async()=>{assert.equal((await query('select * from storage.objects')).rows.length,0);await denied("insert into storage.objects(bucket_id,name) values('media',$1)",[id(201)+'/anonymous.txt'],'42501')}));
+await test('storage service worker access remains available',()=>as('service_role',null,async()=>{assert((await query('select * from storage.objects')).rows.length>0);await query("insert into storage.objects(bucket_id,name) values('media','service/fixture.txt')")}));
+await db.close();console.log(passed.length+' media/storage RLS SQL checks PASS');
