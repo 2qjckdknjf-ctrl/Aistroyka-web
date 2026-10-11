@@ -61,8 +61,22 @@ jobs:
           npm install --prefix "$sql_test_dir" --ignore-scripts --no-audit --no-fund --package-lock=false @electric-sql/pglite@0.5.8
           cp scripts/ops/verify_session_analysis_postgres.mjs "$sql_test_dir/session.mjs"
           cp scripts/ops/verify_media_analysis_rls_postgres.mjs "$sql_test_dir/media.mjs"
+          cp scripts/ops/verify_published_evidence_guard_postgres.mjs "$sql_test_dir/evidence.mjs"
           node "$sql_test_dir/session.mjs" "$GITHUB_WORKSPACE"
           node "$sql_test_dir/media.mjs" "$GITHUB_WORKSPACE"
+          node "$sql_test_dir/evidence.mjs" "$GITHUB_WORKSPACE"
+
+      - name: Native evidence approval race contracts
+        run: |
+          set -euo pipefail
+          sudo systemctl start postgresql
+          race_user="$(id -un)"
+          sudo -u postgres createuser --superuser "$race_user"
+          sudo -u postgres createdb --owner="$race_user" aistroyka_evidence_race_ci
+          sql_test_dir="$RUNNER_TEMP/aistroyka-sql-contracts"
+          npm install --prefix "$sql_test_dir" --ignore-scripts --no-audit --no-fund --package-lock=false pg@8.23.1
+          EVIDENCE_NATIVE_DATABASE_URL="postgresql://$race_user@localhost/aistroyka_evidence_race_ci?host=/var/run/postgresql" \
+            node "$sql_test_dir/evidence.mjs" "$GITHUB_WORKSPACE"
 
       - name: i18n messages (dashboard + activation)
         run: bun run i18n:check
