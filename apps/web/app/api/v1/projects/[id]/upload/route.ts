@@ -19,16 +19,20 @@ const BUCKET_MANUAL_HINT =
 
 async function ensureMediaBucket(): Promise<{ ok: true } | { ok: false; error: string }> {
   const admin = getAdminClient();
-  if (!admin) {
-    return { ok: false, error: BUCKET_MANUAL_HINT };
+  if (!admin) return { ok: false, error: BUCKET_MANUAL_HINT };
+  let existing = await admin.storage.getBucket(MEDIA_BUCKET);
+  if (existing.error) {
+    if (!isBucketNotFoundError(existing.error.message)) return { ok: false, error: "Storage visibility verification failed" };
+    const created = await admin.storage.createBucket(MEDIA_BUCKET, { public: false });
+    if (created.error && !/already exists|duplicate/i.test(created.error.message)) return { ok: false, error: "Private storage setup failed" };
+    existing = await admin.storage.getBucket(MEDIA_BUCKET);
   }
-  const { error } = await admin.storage.createBucket(MEDIA_BUCKET, {
-    public: false,
-  });
-  if (error) {
-    const msg = error.message?.toLowerCase() ?? "";
-    if (msg.includes("already exists") || msg.includes("duplicate")) return { ok: true };
-    return { ok: false, error: error.message ?? "Failed to create bucket" };
+  if (existing.error || !existing.data) return { ok: false, error: "Storage visibility verification failed" };
+  if (existing.data.public !== false) {
+    const updated = await admin.storage.updateBucket(MEDIA_BUCKET, { public: false });
+    if (updated.error) return { ok: false, error: "Private storage setup failed" };
+    const verified = await admin.storage.getBucket(MEDIA_BUCKET);
+    if (verified.error || verified.data?.public !== false) return { ok: false, error: "Storage is not private" };
   }
   return { ok: true };
 }
@@ -90,7 +94,8 @@ export async function POST(
   const path = `${projectId}/${crypto.randomUUID()}.${ext}`;
 
   // Если задан SUPABASE_SERVICE_ROLE_KEY — создаём бакет при отсутствии
-  await ensureMediaBucket();
+  const initialStorage = await ensureMediaBucket();
+  if (!initialStorage.ok) return NextResponse.json({ success: false, error: initialStorage.error }, { status: 503 });
 
   let { error: uploadError } = await supabase.storage
     .from(MEDIA_BUCKET)

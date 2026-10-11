@@ -190,6 +190,7 @@ export async function getProofPackByToken(
   }
   const pack = await buildProjectProofPack(supabase, data.tenant_id, data.project_id, {
     audience: "public",
+    shareToken: token,
   });
   return pack ? { data: pack, error: "" } : { data: null, error: "Not found" };
 }

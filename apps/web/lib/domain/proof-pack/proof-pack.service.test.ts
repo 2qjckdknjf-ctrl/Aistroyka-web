@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { buildProjectProofPack } from "./proof-pack.service";
+import { buildProjectProofPack, getProofPackByToken } from "./proof-pack.service";
 import { privateMediaDisplayUrl } from "@/lib/domain/media/private-media-display";
 vi.mock("@/lib/domain/media/private-media-display", () => ({ privateMediaDisplayUrl: vi.fn().mockResolvedValue("https://storage.test/signed") }));
 import * as projectRepo from "@/lib/domain/projects/project.repository";
@@ -85,4 +85,15 @@ describe("proof-pack.service", () => {
     expect(pack?.media.map((x) => x.id)).toEqual(["m1"]);
     expect(pack?.media[0].file_url).toBe("/api/v1/share/proof/exact-share/media/m1");
   });
+  it("threads the live share token through the public builder", async () => {
+    vi.mocked(projectRepo.getById).mockResolvedValue({ id: "p1", name: "Fixture", tenant_id: "t1" } as never);
+    vi.mocked(summaryRepo.getProjectSummary).mockResolvedValue({ tasksDone: 0, tasksTotal: 0 } as never);
+    vi.mocked(mediaRepo.listByProject).mockResolvedValue([{ id: "m1", project_id: "p1", tenant_id: "t1", type: "image", file_url: "p1/private.png" }]);
+    vi.mocked(documentRepo.listByProject).mockResolvedValue([]); vi.mocked(clientRequestRepo.listByProject).mockResolvedValue([]);
+    const share = { select() { return this; }, eq() { return this; }, maybeSingle: async () => ({ data: { tenant_id: "t1", project_id: "p1", expires_at: null, revoked_at: null }, error: null }) };
+    const client = { from: (table: string) => table === "proof_pack_shares" ? share : tableResult([]) } as never;
+    const result = await getProofPackByToken(client, "actual-token");
+    expect(result.data?.media[0].file_url).toBe("/api/v1/share/proof/actual-token/media/m1");
+  });
+
 });
