@@ -116,3 +116,11 @@
 "cust_done" = "Готово";
 
 "cust_refresh_project" = "Обновить проект";
+
+// Published photo gateway states.
+"cust_portalPhotosEmpty" = "Опубликованных фото пока нет.";
+"cust_portalPhotosLoadError" = "Не удалось загрузить фото. Попробуйте снова.";
+"cust_portalPhotosAccessUnavailable" = "Доступ к фото недоступен.";
+"cust_portalPhotosVerified" = "Проверено менеджером проекта";
+"cust_portalPhotosOriginalUnavailable" = "Сейчас это фото недоступно.";
+"cust_photos_title" = "Фото объекта";
