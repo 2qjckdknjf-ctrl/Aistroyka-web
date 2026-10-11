@@ -1,0 +1,11 @@
+# Database post-apply tails — 2026-10-11
+
+Live review after authorized intake/RPC application found one existing mutable search_path warning on set_field_daily_logs_updated_at() and two new uncovered intake foreign keys. The current live trigger body only assigns new.updated_at = now(). The existing tenant-first intake index does not cover created_by or project_id as leading columns.
+
+The migration pins the timestamp function to pg_catalog without replacing its body or OID. Two ordinary, nonpartial intake indexes cover created_by and project_id; existing indexes remain. Live pre-apply table: 0 rows, 49,152 bytes, after exact synthetic probe cleanup. Ordinary index creation avoids unsupported concurrent DDL within the migration transaction; assess table growth before any later delayed apply.
+
+Six PGlite PostgreSQL checks passed: reproduced caller-path shadowing with synthetic shadow.now(), hardened server timestamp under that hostile path, fixed function configuration, idempotent rerun preserving trigger OID, ordinary update behavior, and valid leading-column covering indexes. The harness consumes the exact migration file and original repository trigger definition. Evidence: [results](database-post-apply-2026-10-11/results.json); scripts/ops/verify_daily_log_search_path_postgres.mjs. Use an isolated runtime containing @electric-sql/pglite 0.5.8, copy the harness there and pass repository path and output path to node. No project dependency/lock changes are needed.
+
+This is a focused correction, not a claim that all historical database advisories are resolved. The existing 12 anonymous/authenticated SECURITY DEFINER warnings, 123 other uncovered foreign keys, auth-initplan and permissive-policy warnings require separate semantic review; unused indexes should not be deleted on a fresh usage sample. Relevant official remediation: [mutable search path](https://supabase.com/docs/guides/database/database-linter?lint=0011_function_search_path_mutable), [foreign-key indexes](https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys).
+
+Protected merge and final live verification are required. Owner authorization was already granted in this conversation.
