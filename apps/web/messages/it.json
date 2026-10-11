@@ -3910,7 +3910,22 @@
     "managerActionSource_recommendation": "raccomandazione",
     "managerActionSource_health": "salute",
     "managerActionSource_executive": "sintesi executive",
-    "fromExecutiveSummary": "Dalla sintesi executive"
+    "fromExecutiveSummary": "Dalla sintesi executive",
+    "reportPublicationTitle": "Pubblica foto del rapporto",
+    "reportPublicationHint": "Seleziona esplicitamente le foto. Approvare un rapporto non condivide le foto con il cliente.",
+    "reportPublicationStale": "La pubblicazione è cambiata. Aggiorna la lista prima di riprovare.",
+    "reportPublicationError": "La pubblicazione non è disponibile. Aggiorna la lista e riprova.",
+    "reportPublicationRefresh": "Aggiorna",
+    "reportPublicationPrerequisite": "Approva il rapporto e attiva il portale cliente per pubblicare foto.",
+    "reportPublicationEmpty": "Questo rapporto non ha foto allegate.",
+    "reportPublicationPhoto": "Foto {number}",
+    "reportPublicationVisible": "Pubblicazione attiva",
+    "reportPublicationPrivate": "Solo uso interno",
+    "reportPublicationWithdrawPhoto": "Ritira foto {number}",
+    "reportPublicationPublishPhoto": "Pubblica foto {number}",
+    "reportPublicationWithdraw": "Ritira",
+    "reportPublicationPublish": "Pubblica",
+    "reportPublicationPaused": "Pubblicazione sospesa"
   },
   "governancePage": {
     "listSubtitle": "Governance ed escalation trasversali tra progetti attivi.",
