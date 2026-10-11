@@ -10,6 +10,9 @@ struct CustomerIntakeListView: View {
         self.boundProjectName = boundProjectName
     }
 
+    private enum Input: Hashable { case title, description, siteContext, location, workType, start, end, media, questions }
+    @FocusState private var focusedInput: Input?
+
     @State private var drafts: [CustomerIntakeDraft] = []
     @State private var message: String?
     @State private var loading = true
@@ -60,30 +63,37 @@ struct CustomerIntakeListView: View {
                         .foregroundStyle(CustomerTokens.textPrimary)
                     TextField(NSLocalizedString("cust_intake_title_placeholder", comment: ""), text: $title)
                         .textFieldStyle(.roundedBorder)
+                        .focused($focusedInput, equals: .title)
                         .accessibilityIdentifier("pilot_customer_intake_title")
                     TextField(NSLocalizedString("cust_intake_description_placeholder", comment: ""), text: $description, axis: .vertical)
                         .lineLimit(3...6)
                         .textFieldStyle(.roundedBorder)
+                        .focused($focusedInput, equals: .description)
                         .accessibilityIdentifier("pilot_customer_intake_description")
                     TextField(NSLocalizedString("cust_intake_site_context_placeholder", comment: ""), text: $siteContext, axis: .vertical)
                         .lineLimit(2...4)
                         .textFieldStyle(.roundedBorder)
+                        .focused($focusedInput, equals: .siteContext)
                         .accessibilityIdentifier("pilot_customer_intake_site_context")
                     TextField(NSLocalizedString("cust_intake_location_placeholder", comment: ""), text: $locationLabel)
                         .textFieldStyle(.roundedBorder)
+                        .focused($focusedInput, equals: .location)
                         .accessibilityIdentifier("pilot_customer_intake_location")
                     TextField(NSLocalizedString("cust_intake_work_type_placeholder", comment: ""), text: $requestedWorkType)
                         .textFieldStyle(.roundedBorder)
+                        .focused($focusedInput, equals: .workType)
                         .accessibilityIdentifier("pilot_customer_intake_work_type")
                     TextField(NSLocalizedString("cust_intake_desired_start_placeholder", comment: ""), text: $desiredStart)
                         .textFieldStyle(.roundedBorder)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
+                        .focused($focusedInput, equals: .start)
                         .accessibilityIdentifier("pilot_customer_intake_desired_start")
                     TextField(NSLocalizedString("cust_intake_desired_end_placeholder", comment: ""), text: $desiredEnd)
                         .textFieldStyle(.roundedBorder)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
+                        .focused($focusedInput, equals: .end)
                         .accessibilityIdentifier("pilot_customer_intake_desired_end")
                     Text(NSLocalizedString("cust_intake_desired_dates_hint", comment: ""))
                         .font(.caption2)
@@ -93,6 +103,7 @@ struct CustomerIntakeListView: View {
                         .textInputAutocapitalization(.never)
                         .keyboardType(.URL)
                         .autocorrectionDisabled()
+                        .focused($focusedInput, equals: .media)
                         .accessibilityIdentifier("pilot_customer_intake_media_url")
                     Text(NSLocalizedString("cust_intake_media_hint", comment: ""))
                         .font(.caption2)
@@ -100,6 +111,7 @@ struct CustomerIntakeListView: View {
                     TextField(NSLocalizedString("cust_intake_questions_placeholder", comment: ""), text: $questionsText, axis: .vertical)
                         .lineLimit(2...5)
                         .textFieldStyle(.roundedBorder)
+                        .focused($focusedInput, equals: .questions)
                         .accessibilityIdentifier("pilot_customer_intake_questions")
                     Text(NSLocalizedString("cust_intake_questions_hint", comment: ""))
                         .font(.caption2)
@@ -213,6 +225,14 @@ struct CustomerIntakeListView: View {
             }
             .padding(24)
             .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .scrollDismissesKeyboard(.interactively)
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button(NSLocalizedString("cust_done", comment: "")) { focusedInput = nil }
+                    .accessibilityIdentifier("pilot_customer_keyboard_done")
+            }
         }
         .background(CustomerTokens.canvas.ignoresSafeArea())
         .navigationTitle(NSLocalizedString("cust_intake_nav", comment: ""))

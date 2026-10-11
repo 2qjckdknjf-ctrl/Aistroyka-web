@@ -110,3 +110,9 @@
 "cust_intake_withdraw" = "Rifiuta bozza";
 "cust_intake_withdraw_ok" = "Bozza rifiutata. Questo non è un contratto.";
 "cust_intake_withdraw_error" = "Impossibile rifiutare la bozza.";
+
+"cust_err_invalid_credentials" = "Email o password non corretti.";
+
+"cust_done" = "Fine";
+
+"cust_refresh_project" = "Aggiorna progetto";

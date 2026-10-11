@@ -110,3 +110,9 @@
 "cust_intake_withdraw" = "Reject draft";
 "cust_intake_withdraw_ok" = "Draft rejected. This is not a contract.";
 "cust_intake_withdraw_error" = "Could not reject draft.";
+
+"cust_err_invalid_credentials" = "Incorrect email or password.";
+
+"cust_done" = "Done";
+
+"cust_refresh_project" = "Refresh project";

@@ -22,8 +22,11 @@ public struct APIError: Error {
         var apiCode: String?
         if let data = data,
            let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
-            message = (json["error"] as? String) ?? message
-            apiCode = json["code"] as? String
+            message = (json["error_description"] as? String)
+                ?? (json["error"] as? String)
+                ?? (json["msg"] as? String)
+                ?? message
+            apiCode = (json["error_code"] as? String) ?? (json["code"] as? String)
         }
         return APIError(statusCode: code, code: apiCode, message: message)
     }

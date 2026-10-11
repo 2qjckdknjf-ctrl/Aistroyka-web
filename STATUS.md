@@ -1,25 +1,16 @@
-> Продолжение 2026-10-11: #420 merged (2d5e44ba); staging/production/apex/www 2d5e44b verified, authenticated live AI gates PASS without fallback. Scoped session RPC migration applied as 20261011112358; six source receipts under five remote IDs. Current task: media/result RLS fix from a fresh 2d5e44ba baseline, with synthetic before/after proof; it is not applied yet. Physical iPhone is accessible, Worker/Manager installed, Customer absent; device smoke remains pending. See docs/reports/2026-10-11-ai-security-continuation.md. Earlier dated observations below remain historical.
-
 # STATUS — AISTROYKA
 
-Обновлено 2026-10-11. Источник кода — свежий origin/main; даты и SHA ниже являются наблюдением, а не обещанием текущего состояния без повторной проверки.
+Сверено 2026-10-11. Проверенный main/runtime:0bc5d602 после #425. Рабочая папка:AISTROYKA-main-clean; текущая Customer QA ветка:test/customer-live-device-2026-10-11. Код этой ветки проходит защищённый PR отдельно. Перед новой задачей:python 3 scripts/ops/workspace_preflight.py --refresh; занятые/грязные папки не переключать.
 
-| Что | Подтверждено |
-|---|---|
-| Рабочая папка | /Users/alex/Projects/AISTROYKA-main-clean; workspace_preflight перед задачей |
-| Код | #410/#411/#413/#415/#416/#417 merged; #385/#386 и intake PATCH/submit/withdraw уже в main |
-| Live БД | Intake + lifecycle guard, 4-arg create_analysis_job, private helpers, timestamp search_path и FK indexes применены |
-| Intake API | Create/edit/submit/withdraw, идемпотентность и запреты переходов PASS; синтетические записи удалены |
-| Публикация | staging и production HTTP 200, buildStamp.sha7 = 35fa334 (проверка 2026-10-11 09:58 UTC); health и workflow evidence в отчёте ниже |
-| Реестр | Все 75 старых открытых PR учтены; head_sha = HEAD PR, merge_sha = коммит объединения |
-| Следующая инженерная очередь | Сначала semantic audit существующих security/AI PR и полный portal/device scope; затем недостающий async scope extraction по плану |
+| Контур | Подтверждено | Остаток |
+|---|---|---|
+| Main/runtime | #420–425 merged. Staging 38145192971 и production 38145444741 SUCCESS; served health 0bc5d60 | Следующий HEAD не считать опубликованным до новых health checks |
+| AI доступ | Image/video media binding, analysis:trigger, scoped session CAS/completion; canonical deployed provider smoke без fallback | Полный upload→job→source-linked result, видео worker и все AI capabilities |
+| БД | Восемь source migrations/семь remote IDs в receipts, включая Storage 20261011140341; replay guard PASS | Исторический drift отдельно, без broad apply |
+| Customer portal | #424 восстановил client_portal_enabled из сохранённой release-работы. Finance smoke требует HTTP 200 + expected project, production PASS | Published media, invitation/export/AI-summary/share и более широкий Owner контракт |
+| Physical Customer QA | Debug на iPhone 17 Pro: login→project→detail→intake persisted→revoked 404→refresh hides content/actions→sign-out PASS 1/1; Shared contracts 17/17 | Это текущая QA ветка; credentials были private Debug prefill. Ручной ввод пароля, push/offline и store/pilot artifact отдельно |
+| Storage | #425 applied: stakeholder raw sign/download/upload deny, owner оба prefix layouts PASS 8 live checks;48 SQL contracts в двух изолированных engines | Уже выданные signed URLs живут до expiry; customer publication/immediate revocation не объявлены готовыми |
+| Cleanup | Три синтетических intake drafts, две project/media fixtures, grant/member/cost/Auth user и task blobs удалены; fixture sessions revoked; runner credentials scrubbed | Реальные business rows/objects не изменялись |
+| План | Manual intake, Customer target, Graph persistence и request_key уже есть | AI scope extraction, полноценный Owner/evidence/Graph flow, device/store/legal/billing gates |
 
-[Операционный отчёт](docs/reports/2026-10-11-operational-closure.md), [актуальная сверка плана](docs/roadmap/CURRENT_EXECUTION_STATE_2026-10-11.md), [реестр](docs/tasks/ACTIVE_WORK_REGISTRY.csv).
-
-Разрешение на выполненный DB apply и deployment получено в этой переписке. Не запрашивать его повторно и не переисполнять SQL: пять исходных файлов уже применены под четырьмя remote IDs. [Receipts и read-only guard](docs/ops/VERIFIED_DB_MIGRATION_RECEIPTS.md) обязательны перед следующей миграцией. Это не полное исправление исторического migration drift; broad db push --include-all запрещён до отдельной сверки.
-
-Не разрабатывать заново: Customer iOS #372/#375/#382, Graph #376, Vision #377/#385, video authz #386, intake #378/#404/#405/#406/#411, daily-log persist B2, ROMA advisory #407 и Android audit D1 #408. CRUD intake не равен автоматическому AI scope extraction: эта часть AIS-CLIENT-005A ещё требует hard audit/реализации. Live camera/voice 005B и Android D2 остаются в установленной очереди зависимостей.
-
-#281/#289/#293 дополнительно закрыты как включённые после blob-сверки; все ветки сохранены. #347/#351 закрыты ранее как включённые; #317/#348/#352 — как заменённые. Остальные старые PR нельзя объединять целиком без semantic audit.
-
-Остаются отдельные фактические gates: физический device smoke, store assets/distribution, 7-day billing shadow/cutover, LEGAL и полный portal/revocation/export/AI-summary proof. Подтверждение одного live AI-вызова не закрывает весь AI roadmap. Pilot scope — contractor-ops-only; DAG 100% не объявлен завершённым.
+[Проверки и точные границы](docs/reports/2026-10-11-customer-device-and-storage-closure.md), [реестр](docs/tasks/ACTIVE_WORK_REGISTRY.csv), [план/факт](docs/roadmap/CURRENT_EXECUTION_STATE_2026-10-11.md), [receipts](docs/ops/VERIFIED_DB_MIGRATION_RECEIPTS.md). #200 закрыт как superseded; #195/#196/#206 — смешанные остатки, не объединять и не закрывать целиком по одному исправленному срезу. Полная готовность проекта не объявлена.
