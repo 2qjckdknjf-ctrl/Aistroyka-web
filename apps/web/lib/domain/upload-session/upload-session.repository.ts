@@ -128,5 +128,18 @@ export async function finalize(
     .gt("expires_at", new Date().toISOString())
     .select("id")
     .maybeSingle();
-  return !error && !!finalized;
+  if (error) return false;
+  if (finalized) return true;
+  // A concurrent identical request may have won the CAS. Confirm the exact
+  // committed binding rather than reporting either a false failure or success.
+  const { data: committed, error: readError } = await supabase
+    .from("upload_sessions")
+    .select("id, user_id, status, object_path")
+    .eq("id", sessionId)
+    .eq("tenant_id", tenantId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (readError || !committed) return false;
+  return committed.user_id === userId && committed.status === "finalized"
+    && committed.object_path === payload.object_path;
 }
