@@ -25,6 +25,10 @@ risk_level text check(risk_level in ('low','medium','high')),detected_issues tex
 await db.exec(readFileSync(repo + '/apps/web/supabase/migrations/20261003145000_analysis_jobs_attempt_count.sql', 'utf8'));
 const migration = readFileSync(repo + '/apps/web/supabase/migrations/20261011110418_complete_session_analysis_job.sql', 'utf8');
 await db.exec(migration); await db.exec(migration);
+await test('fresh bootstrap gains retry timing without live-only priority dependency', async () => {
+  const columns = (await query("select column_name from information_schema.columns where table_name='analysis_jobs'")).rows.map(x => x.column_name);
+  assert(columns.includes('next_retry_at')); assert(!columns.includes('priority_order'));
+});
 await query("insert into analysis_jobs values($1,$2,$3,'processing',$4,null,null,null,0)", [id(1), id(10), id(20), id(30)]);
 const complete = (tenant = id(10), token = id(30), percent = 20) => query('select public.complete_session_analysis_job($1,$2,$3,$4,$5,$6,$7,$8,$9)', [id(1), tenant, token, 'foundation', percent, 'low', [], [], null]);
 const fail = (tenant = id(10), token = id(30)) => query('select public.fail_session_analysis_job($1,$2,$3,$4,$5)', [id(1), tenant, token, 'synthetic timeout', 'timeout']);

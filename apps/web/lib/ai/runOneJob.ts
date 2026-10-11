@@ -178,7 +178,7 @@ export async function processOneJob(
     .from("analysis_jobs").select("id, media_id, tenant_id")
     .eq("tenant_id", tenantId).eq("status", "queued")
     .is("execution_token", null).or(retryDue)
-    .order("priority_order", { ascending: false }).order("started_at", { ascending: true })
+    .order("started_at", { ascending: true })
     .limit(5);
   if (candidateError) return { ok: false, reason: "error", message: candidateError.message };
   let job: { id: string; media_id: string; tenant_id: string; execution_token: string } | null = null;

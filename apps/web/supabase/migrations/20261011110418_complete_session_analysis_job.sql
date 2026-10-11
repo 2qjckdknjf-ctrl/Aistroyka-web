@@ -1,3 +1,8 @@
+-- The live legacy queue has this column, but the original repository bootstrap did
+-- not define it. Preserve retry timing and make a fresh database reproducible.
+-- No priority_order dependency: session candidates retain legacy enqueue order.
+alter table public.analysis_jobs add column if not exists next_retry_at timestamptz;
+
 -- Explicit session-worker completion, without the ambiguous legacy overloads.
 -- Preserve the seven-argument completion semantics: result + terminal state;
 -- do not introduce the older nine-argument capacity/billing side effects.

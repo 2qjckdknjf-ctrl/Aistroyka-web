@@ -55,7 +55,11 @@ export async function POST(request: Request) {
   const aiRequestHeaders = new Headers();
   if (aiUrl) {
     const target = new URL(aiUrl);
-    if (target.origin === new URL(request.url).origin &&
+    const sourceOrigin = new URL(request.url).origin;
+    const productionOrigins = new Set(["https://aistroyka.ai", "https://www.aistroyka.ai"]);
+    const trustedOrigin = target.origin === sourceOrigin ||
+      (productionOrigins.has(target.origin) && productionOrigins.has(sourceOrigin));
+    if (trustedOrigin &&
         ["/api/v1/ai/analyze-image", "/api/ai/analyze-image"].includes(target.pathname)) {
       for (const name of ["authorization", "cookie"]) {
         const value = request.headers.get(name);

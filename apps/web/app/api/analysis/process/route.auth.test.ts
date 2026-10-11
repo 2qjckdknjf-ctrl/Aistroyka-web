@@ -32,6 +32,19 @@ describe.each([["legacy", POST], ["canonical", canonicalPost]] as const)("%s wor
     expect(options.aiRequestHeaders.get("authorization")).toBe("Bearer test-only");
     expect(options.aiRequestHeaders.get("cookie")).toBe("session=test-only");
   });
+  it.each([
+    ["https://www.aistroyka.ai", "https://aistroyka.ai"],
+    ["https://aistroyka.ai", "https://www.aistroyka.ai"],
+  ])("forwards auth between official production hosts (%s → %s)", async (source, target) => {
+    vi.stubEnv("AI_ANALYSIS_URL", target + "/api/ai/analyze-image");
+    await handler(new Request(source + "/api/analysis/process", { method: "POST", headers: { Authorization: "Bearer test-only" } }));
+    expect(mocks.process.mock.calls[0][2].aiRequestHeaders.get("authorization")).toBe("Bearer test-only");
+  });
+  it.each(["https://www.aistroyka.ai.evil.test", "https://staging.aistroyka.ai", "http://www.aistroyka.ai", "https://www.aistroyka.ai:444"])("rejects production credential forwarding to %s", async (target) => {
+    vi.stubEnv("AI_ANALYSIS_URL", target + "/api/ai/analyze-image");
+    await handler(new Request("https://aistroyka.ai/api/analysis/process", { method: "POST", headers: { Authorization: "Bearer test-only" } }));
+    expect([...mocks.process.mock.calls[0][2].aiRequestHeaders]).toEqual([]);
+  });
   it.each(["https://external.test/api/ai/analyze-image", "https://safe.test/unrelated"])("does not forward credentials to %s", async (url) => {
     vi.stubEnv("AI_ANALYSIS_URL", url);
     await handler(new Request("https://safe.test/api/analysis/process", { method: "POST", headers: { Authorization: "Bearer test-only", Cookie: "session=test-only" } }));
