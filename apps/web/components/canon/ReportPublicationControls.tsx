@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import Image from "next/image";
 
 type Item = { attachment_id: string; media_id: string | null; upload_session_id: string | null;
-  published: boolean; eligible: boolean; evidence_id: string | null; version: string | null };
+  published: boolean; sharing_enabled: boolean; eligible: boolean; evidence_id: string | null; version: string | null };
 type State = { report_id: string; project_id: string; report_status: string; portal_enabled: boolean; items: Item[] };
 
 type Preview = { media_id: string | null; upload_session_id: string | null; file_url?: string | null };
@@ -84,7 +84,7 @@ export function ReportPublicationControls({ reportId, previews }: { reportId: st
         return <li key={item.attachment_id} className="flex flex-wrap items-center gap-3">
         {preview && <Image src={preview} alt={t("reportPublicationPhoto", { number: index + 1 })} width={80} height={80} unoptimized className="rounded object-contain" />}
         <span>{t("reportPublicationPhoto", { number: index + 1 })}</span>
-        <span>{t(item.published ? "reportPublicationVisible" : "reportPublicationPrivate")}</span>
+        <span>{t(item.published ? (item.sharing_enabled ? "reportPublicationVisible" : "reportPublicationPaused") : "reportPublicationPrivate")}</span>
         <button type="button" className="canon-ghost-btn" disabled={busy || loading || (!item.published && (!item.eligible || state.report_status !== "approved" || !state.portal_enabled))}
           aria-label={t(item.published ? "reportPublicationWithdrawPhoto" : "reportPublicationPublishPhoto", { number: index + 1 })}
           onClick={() => void toggle(item)}>{t(item.published ? "reportPublicationWithdraw" : "reportPublicationPublish")}</button>

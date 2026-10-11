@@ -3919,12 +3919,13 @@
     "reportPublicationPrerequisite": "Approva il rapporto e attiva il portale cliente per pubblicare foto.",
     "reportPublicationEmpty": "Questo rapporto non ha foto allegate.",
     "reportPublicationPhoto": "Foto {number}",
-    "reportPublicationVisible": "Visibile al cliente",
+    "reportPublicationVisible": "Pubblicazione attiva",
     "reportPublicationPrivate": "Solo uso interno",
     "reportPublicationWithdrawPhoto": "Ritira foto {number}",
     "reportPublicationPublishPhoto": "Pubblica foto {number}",
     "reportPublicationWithdraw": "Ritira",
-    "reportPublicationPublish": "Pubblica"
+    "reportPublicationPublish": "Pubblica",
+    "reportPublicationPaused": "Pubblicazione sospesa"
   },
   "governancePage": {
     "listSubtitle": "Governance ed escalation trasversali tra progetti attivi.",

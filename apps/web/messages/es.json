@@ -3919,12 +3919,13 @@
     "reportPublicationPrerequisite": "Aprueba el informe y activa el portal del cliente para publicar fotos.",
     "reportPublicationEmpty": "Este informe no tiene fotos adjuntas.",
     "reportPublicationPhoto": "Foto {number}",
-    "reportPublicationVisible": "Visible para el cliente",
+    "reportPublicationVisible": "Publicación activada",
     "reportPublicationPrivate": "Solo uso interno",
     "reportPublicationWithdrawPhoto": "Retirar foto {number}",
     "reportPublicationPublishPhoto": "Publicar foto {number}",
     "reportPublicationWithdraw": "Retirar",
-    "reportPublicationPublish": "Publicar"
+    "reportPublicationPublish": "Publicar",
+    "reportPublicationPaused": "Publicación pausada"
   },
   "governancePage": {
     "listSubtitle": "Gobernanza y escalaciones entre proyectos activos.",

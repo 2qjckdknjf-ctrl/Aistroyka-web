@@ -3944,12 +3944,13 @@
     "reportPublicationPrerequisite": "Для публикации одобрите отчёт и включите портал заказчика.",
     "reportPublicationEmpty": "К отчёту не прикреплены фотографии.",
     "reportPublicationPhoto": "Фото {number}",
-    "reportPublicationVisible": "Видно заказчику",
+    "reportPublicationVisible": "Публикация включена",
     "reportPublicationPrivate": "Только внутри компании",
     "reportPublicationWithdrawPhoto": "Отозвать фото {number}",
     "reportPublicationPublishPhoto": "Опубликовать фото {number}",
     "reportPublicationWithdraw": "Отозвать",
-    "reportPublicationPublish": "Опубликовать"
+    "reportPublicationPublish": "Опубликовать",
+    "reportPublicationPaused": "Публикация приостановлена"
   },
   "governancePage": {
     "listSubtitle": "Кросс-проектное управление и эскалации по активным проектам.",

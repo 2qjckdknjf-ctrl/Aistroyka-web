@@ -155,3 +155,10 @@ it("fails closed before uniqueness is installed, while withdrawal remains availa
   tables.visual_evidence_records = [{ ...evidence(), owner_visible: true, manager_verified: true }];
   expect(await setReportPublication(client(), ctx, id, { ...input, visible: false, expectedVersion: evidence().updated_at })).toMatchObject({ published: false });
 });
+it("distinguishes retained publication intent from sharing disabled by portal or report state", async () => {
+  tables.visual_evidence_records = [{ ...evidence(), owner_visible: true, manager_verified: true }];
+  tables.projects[0].client_portal_enabled = false;
+  expect((await listReportPublication(client(), ctx, id)).items[0]).toMatchObject({ published: true, sharing_enabled: false });
+  tables.projects[0].client_portal_enabled = true; tables.worker_reports[0].status = "changes_requested";
+  expect((await listReportPublication(client(), ctx, id)).items[0]).toMatchObject({ published: true, sharing_enabled: false });
+});

@@ -3944,12 +3944,13 @@
     "reportPublicationPrerequisite": "Approve the report and enable the customer portal to publish photos.",
     "reportPublicationEmpty": "This report has no attached photos.",
     "reportPublicationPhoto": "Photo {number}",
-    "reportPublicationVisible": "Visible to customer",
+    "reportPublicationVisible": "Publication enabled",
     "reportPublicationPrivate": "Internal only",
     "reportPublicationWithdrawPhoto": "Withdraw photo {number}",
     "reportPublicationPublishPhoto": "Publish photo {number}",
     "reportPublicationWithdraw": "Withdraw",
-    "reportPublicationPublish": "Publish"
+    "reportPublicationPublish": "Publish",
+    "reportPublicationPaused": "Publication paused"
   },
   "governancePage": {
     "listSubtitle": "Cross-project governance and escalation across active projects.",

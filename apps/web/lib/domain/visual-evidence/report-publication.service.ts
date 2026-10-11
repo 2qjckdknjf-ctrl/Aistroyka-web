@@ -79,9 +79,10 @@ function forLink(rows: Evidence[], link: Link, report: Report, projectId: string
     fail(409, "Evidence identity requires reconciliation");
   return candidates[0] ?? null;
 }
-function projection(link: Link, row: Evidence | null) {
+function projection(link: Link, row: Evidence | null, sharingAvailable = true) {
+  const published = row?.owner_visible === true && row.manager_verified === true && !row.internal_only && row.retention_state === "active";
   return { attachment_id: link.id, media_id: link.media_id, upload_session_id: link.upload_session_id,
-    published: row?.owner_visible === true && row.manager_verified === true && !row.internal_only && row.retention_state === "active",
+    published, sharing_enabled: published && sharingAvailable,
     evidence_id: row?.id ?? null, version: row?.updated_at ?? null,
     eligible: !row || (!row.internal_only && row.retention_state === "active" && row.source_kind === "photo") };
 }
@@ -121,9 +122,10 @@ export async function listReportPublication(client: SupabaseClient, ctx: TenantC
     && ["image/jpeg", "image/png", "image/webp"].includes(row.mime_type)).map(row => row.id));
   return { report_id: report.id, project_id: projectId, report_status: report.status, portal_enabled: portalEnabled,
     items: links.map(link => {
-      const item = projection(link, forLink(evidence, link, report, projectId));
-      return { ...item, eligible: item.eligible && Boolean(link.media_id || link.upload_session_id)
-        && (!link.media_id || photos.has(link.media_id)) && (!link.upload_session_id || imageUploads.has(link.upload_session_id)) };
+      const item = projection(link, forLink(evidence, link, report, projectId), portalEnabled && report.status === "approved");
+      const eligible = item.eligible && Boolean(link.media_id || link.upload_session_id)
+        && (!link.media_id || photos.has(link.media_id)) && (!link.upload_session_id || imageUploads.has(link.upload_session_id));
+      return { ...item, eligible, sharing_enabled: item.sharing_enabled && eligible };
     }) };
 }
 

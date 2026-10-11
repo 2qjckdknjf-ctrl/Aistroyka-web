@@ -10,9 +10,9 @@ beforeEach(() => {
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   host = document.createElement("div"); document.body.append(host); root = createRoot(host); status = 200;
   state = { report_id: "report", project_id: "project", report_status: "approved", portal_enabled: true,
-    items: [{ attachment_id: "attachment", media_id: "media", upload_session_id: null, published: false, eligible: true, evidence_id: null, version: null }] };
+    items: [{ attachment_id: "attachment", media_id: "media", upload_session_id: null, published: false, sharing_enabled: false, eligible: true, evidence_id: null, version: null }] };
   fetcher = vi.fn(async (_url: string, options: RequestInit) => {
-    if (options.method === "PATCH" && status === 200) (state.items as Array<Record<string, unknown>>)[0] = { ...(state.items as Array<Record<string, unknown>>)[0], published: true, version: "new-version" };
+    if (options.method === "PATCH" && status === 200) (state.items as Array<Record<string, unknown>>)[0] = { ...(state.items as Array<Record<string, unknown>>)[0], published: true, sharing_enabled: true, version: "new-version" };
     return { ok: status === 200, status, json: async () => ({ data: state }) };
   }); vi.stubGlobal("fetch", fetcher);
 });
@@ -50,7 +50,13 @@ it("refreshes a successful write even if a focus read superseded its generation"
   await render(); await click(); await focus();
   expect(host.textContent).toContain("reportPublicationPrivate");
   (state.items as Array<Record<string, unknown>>)[0].published = true;
+  (state.items as Array<Record<string, unknown>>)[0].sharing_enabled = true;
   await act(async () => complete({ ok: true, status: 200, json: async () => ({}) }));
   expect(host.textContent).toContain("reportPublicationVisible");
   expect(fetcher.mock.calls.filter(([, options]) => options.method !== "PATCH")).toHaveLength(3);
+});
+it("shows paused sharing while still allowing withdrawal of the retained publication", async () => {
+  state.portal_enabled = false; (state.items as Array<Record<string, unknown>>)[0].published = true;
+  await render(); expect(host.textContent).toContain("reportPublicationPaused"); expect(host.textContent).not.toContain("reportPublicationVisible");
+  expect(host.querySelector("button")?.disabled).toBe(false);
 });
