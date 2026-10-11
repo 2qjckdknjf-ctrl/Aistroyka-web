@@ -17,6 +17,7 @@ def inspect(repo, receipts, history, candidate=None):
     if len(remote) != len(history["migrations"]):
         raise ValueError("Duplicate remote history version")
     sources = {}
+    applied_hashes = set()
     versions = set()
     for receipt in receipts["receipts"]:
         version = receipt["remote_version"]
@@ -34,6 +35,7 @@ def inspect(repo, receipts, history, candidate=None):
             if hashlib.sha256(path.read_bytes()).hexdigest() != source["sha256"]:
                 raise ValueError("Applied source changed; use a new additive migration")
             sources[source["path"]] = version
+            applied_hashes.add(source["sha256"])
     report = {"project_ref": receipts["project_ref"], "remote_receipts": len(versions),
               "verified_sources": len(sources), "database_mutated": False,
               "verdict": "VERIFIED_RECEIPTS_DO_NOT_REPLAY"}
@@ -44,7 +46,8 @@ def inspect(repo, receipts, history, candidate=None):
             raise ValueError("Candidate must be an existing repository migration")
         relative = str(path.relative_to(repo.resolve()))
         version = path.name.split("_", 1)[0]
-        if relative in sources or version in remote:
+        candidate_hash = hashlib.sha256(path.read_bytes()).hexdigest()
+        if relative in sources or version in remote or candidate_hash in applied_hashes:
             report.update(verdict="ALREADY_APPLIED_DO_NOT_REPLAY", candidate=relative)
             return report, 3
         report.update(verdict="CANDIDATE_NOT_PROVEN_APPLIED", candidate=relative,

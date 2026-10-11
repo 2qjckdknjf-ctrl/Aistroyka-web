@@ -12,7 +12,7 @@
 
 ## Проверки
 
-38 sequential SQL, 26 native PostgreSQL 17.10/PostgREST 14.5 checks (три сценария по 40 concurrent requests), 97 application Vitest checks, 6 timestamp/FK checks, 6 deploy-boundary checks и 7 receipt-guard tests PASS. Required CI для #415/#416/#417 SUCCESS. Native isolation использовала реальные affected-table definitions/constraints/indexes/dependency helpers с синтетическими пользователями и данными; unrelated policies/triggers/Auth service не клонировались.
+38 sequential SQL, 26 native PostgreSQL 17.10/PostgREST 14.5 checks (три сценария по 40 concurrent requests), 97 application Vitest checks, 6 timestamp/FK checks, 6 deploy-boundary checks и 8 receipt-guard tests PASS. Required CI для #415/#416/#417 SUCCESS. Native isolation использовала реальные affected-table definitions/constraints/indexes/dependency helpers с синтетическими пользователями и данными; unrelated policies/triggers/Auth service не клонировались.
 
 Live authenticated API cycle: create/edit/submit/withdraw, retries, запреты terminal transitions PASS; точные owned synthetic rows удалены и отсутствие проверено. [Evidence](operational-closure-2026-10-11/live-intake-cycle.json). Anonymous video 401 на обоих hosts ([negative](operational-closure-2026-10-11/video-anonymous-negative.json)). Это не заменяет весь Customer device/portal scenario.
 

@@ -37,6 +37,13 @@ class ReceiptGuardTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Applied source changed"):
             inspect(self.repo, self.receipts, self.history)
 
+    def test_exact_sql_copy_with_new_timestamp_is_blocked(self):
+        copied = "apps/web/supabase/migrations/20261012000000_copied_intake.sql"
+        (self.repo / copied).write_bytes((self.repo / self.path).read_bytes())
+        report, code = inspect(self.repo, self.receipts, self.history, copied)
+        self.assertEqual(code, 3)
+        self.assertEqual(report["verdict"], "ALREADY_APPLIED_DO_NOT_REPLAY")
+
     def test_missing_or_renamed_remote_entry_is_rejected(self):
         for migrations in [[], [{"version": "20261011090316", "name": "different"}]]:
             with self.assertRaises(ValueError):
