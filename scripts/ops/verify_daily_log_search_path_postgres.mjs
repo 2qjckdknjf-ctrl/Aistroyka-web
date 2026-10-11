@@ -1,0 +1,18 @@
+import {PGlite} from '@electric-sql/pglite';
+import {readFileSync,writeFileSync} from 'node:fs';
+import assert from 'node:assert/strict';
+const repo=process.argv[2];const db=new PGlite();const passed=[];
+const test=async(name,fn)=>{await fn();passed.push(name);console.log('PASS',name)};
+const src=readFileSync(repo+'/apps/web/supabase/migrations/20260916120000_field_daily_logs.sql','utf8');const start=src.indexOf('create or replace function public.set_field_daily_logs_updated_at()');const end=src.indexOf('$$ language plpgsql;',start)+'$$ language plpgsql;'.length;
+await db.exec(src.slice(start,end));
+await db.exec("create schema shadow;create function shadow.now() returns timestamptz language sql as $$select '2100-01-01T00:00:00Z'::timestamptz$$;create table public.synthetic_daily_log(id int primary key,updated_at timestamptz);create trigger synthetic_stamp before update on public.synthetic_daily_log for each row execute function public.set_field_daily_logs_updated_at();insert into public.synthetic_daily_log values(1,'2000-01-01');set search_path=shadow,public,pg_catalog;");
+await test('unpatched function inherits caller path and resolves shadow now',async()=>{assert.equal((await db.query('update public.synthetic_daily_log set updated_at=null returning extract(year from updated_at)::int as year')).rows[0].year,2100)});
+await db.exec('create table public.customer_intake_drafts(id uuid primary key,created_by uuid,project_id uuid);');
+const migration=readFileSync(repo+'/apps/web/supabase/migrations/20261011092645_close_post_apply_database_tails.sql','utf8');
+await db.exec(migration);
+await test('fixed function pins pg_catalog path',async()=>{assert.deepEqual((await db.query("select proconfig from pg_proc where oid='public.set_field_daily_logs_updated_at()'::regprocedure")).rows[0].proconfig,['search_path=pg_catalog'])});
+await test('trigger uses server time despite hostile caller path',async()=>{const row=(await db.query('update public.synthetic_daily_log set updated_at=null returning abs(extract(epoch from (updated_at-pg_catalog.now())))<1 as server_time')).rows[0];assert.equal(row.server_time,true)});
+await test('rerunning path migration preserves trigger identity',async()=>{const before=(await db.query("select tgfoid from pg_trigger where tgname='synthetic_stamp'")).rows[0].tgfoid;await db.exec(migration);assert.equal((await db.query("select tgfoid from pg_trigger where tgname='synthetic_stamp'")).rows[0].tgfoid,before)});
+await test('ordinary updates still stamp updated_at',async()=>{await db.exec('set search_path=public;');assert.equal((await db.query('update public.synthetic_daily_log set updated_at=null returning updated_at is not null as stamped')).rows[0].stamped,true)});
+await test('creator/project keys have valid nonpartial leading-column indexes',async()=>{for(const name of ['created_by','project_id']){const rows=(await db.query("select i.indisvalid,pg_get_indexdef(i.indexrelid,1,true) as leading,i.indpred from pg_index i join pg_class c on c.oid=i.indexrelid where c.relname=$1",['idx_customer_intake_'+name])).rows;assert.deepEqual(rows,[{indisvalid:true,leading:name,indpred:null}])}});
+writeFileSync(process.argv[3] ?? new URL('./daily-log-search-path-results.json',import.meta.url),JSON.stringify({engine:'PGlite 0.5.8 PostgreSQL',passed,live_database_mutated:false,synthetic_data_only:true},null,2)+'\n');await db.close();

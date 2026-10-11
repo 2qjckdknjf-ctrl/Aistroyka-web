@@ -1,0 +1,13 @@
+{
+  "engine": "PGlite 0.5.8 PostgreSQL",
+  "passed": [
+    "unpatched function inherits caller path and resolves shadow now",
+    "fixed function pins pg_catalog path",
+    "trigger uses server time despite hostile caller path",
+    "rerunning path migration preserves trigger identity",
+    "ordinary updates still stamp updated_at",
+    "creator/project keys have valid nonpartial leading-column indexes"
+  ],
+  "live_database_mutated": false,
+  "synthetic_data_only": true
+}
