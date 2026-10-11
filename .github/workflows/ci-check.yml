@@ -23,6 +23,9 @@ jobs:
       - name: Workspace preflight safety tests
         run: python3 scripts/ops/test_workspace_preflight.py
 
+      - name: Production deploy boundary tests
+        run: python3 scripts/release/test_deploy_production_worker.py -v
+
       # CI builds with bun; Vercel installs with npm from the root lock. Catch
       # npm-lock corruption (missing versions, macOS-only platform binaries)
       # here instead of on the next Vercel deploy.
