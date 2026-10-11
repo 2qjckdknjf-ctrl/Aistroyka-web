@@ -119,16 +119,12 @@ export async function POST(
     );
   }
 
-  const {
-    data: { publicUrl },
-  } = supabase.storage.from(MEDIA_BUCKET).getPublicUrl(path);
-
   const { data: media, error: mediaError } = await supabase
     .from("media")
     .insert({
       project_id: projectId,
       type: "image",
-      file_url: publicUrl,
+      file_url: path,
     })
     .select("id, tenant_id")
     .single();
