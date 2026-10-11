@@ -42,7 +42,9 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     const currentAccess = await client.storage.from(MEDIA_BUCKET).createSignedUrl(path.bucketRelativePath, 1);
     if (currentAccess.error || !currentAccess.data) throw new DownloadError(503);
     if (blob.size > 25 * 1024 * 1024) throw new DownloadError(413);
-    return new Response(blob, { headers: { ...headers, "Content-Type": blob.type || "application/octet-stream", "Content-Disposition": `${["application/pdf", "image/jpeg", "image/png", "image/webp"].includes(blob.type) ? "inline" : "attachment"}; filename="${documentId}"` } });
+    const extension = /\.([a-z0-9]{1,12})$/i.exec(path.bucketRelativePath)?.[1]?.toLowerCase();
+    const filename = extension ? `${documentId}.${extension}` : documentId;
+    return new Response(blob, { headers: { ...headers, "Content-Type": blob.type || "application/octet-stream", "Content-Disposition": `${["application/pdf", "image/jpeg", "image/png", "image/webp"].includes(blob.type) ? "inline" : "attachment"}; filename="${filename}"` } });
   } catch (error) {
     const status = error instanceof DownloadError ? error.status : error instanceof TenantRequiredError ? 401 : error instanceof TenantForbiddenError ? 403 : 503;
     return Response.json({ error: "Document unavailable" }, { status, headers });

@@ -5,6 +5,7 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { resolveAIMediaImage } from "@/lib/platform/ai/resolve-ai-media-image";
 import { getServerConfig } from "@/lib/config/server";
 import { logStructured } from "@/lib/observability";
 import { isAnalysisResult, type AnalysisResult } from "./types";
@@ -219,7 +220,6 @@ export async function processOneJob(
     return { ok: true, jobId, status: "failed" };
   }
 
-  const fileUrl = media.file_url as string;
   const projectId = media.project_id as string;
   const type = (media.type as string) || "image";
 
@@ -232,9 +232,15 @@ export async function processOneJob(
   logJobLifecycle("job_started", { job_id: jobId, request_id: traceId });
 
   try {
+    const source = await resolveAIMediaImage(supabase, { tenantId, mediaId, projectIdClaim: projectId });
+    if (!source.ok || source.trustedProjectId !== projectId) {
+      const retryable = !source.ok && source.retryable;
+      throw new VisionProviderError({ message: retryable ? "Private media source temporarily unavailable" : "Private media source denied",
+        errorType: retryable ? "provider_unavailable" : "validation_error", retryable });
+    }
     const result = await callAiAnalysis(aiAnalysisUrl, {
       media_id: mediaId,
-      image_url: fileUrl,
+      image_url: source.imageUrl,
       project_id: projectId,
     }, options.aiRequestHeaders);
 

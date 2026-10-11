@@ -32,8 +32,9 @@ describe("authenticated private document gateway", () => {
   it("keeps Storage failure explicit and sanitized", async () => {
     mocks.download.mockResolvedValue({ data: null, error: { message: "private-storage-error" } }); const r = await call(); expect(r.status).toBe(503); expect(await r.text()).not.toContain("private-storage-error");
   });
-  it("downloads unsafe inline types as attachments", async () => {
-    mocks.download.mockResolvedValue({ data: new Blob(["synthetic"], { type: "text/html" }), error: null }); const r = await call(); expect(r.status).toBe(200); expect(r.headers.get("content-disposition")).toContain("attachment;"); expect(r.headers.get("x-content-type-options")).toBe("nosniff");
+  it("downloads non-preview types as attachments with their stored extension", async () => {
+    mocks.doc.mockResolvedValue({ data: { ...doc, object_path: `${tenant}/${project}/documents/file.docx` }, error: null });
+    mocks.download.mockResolvedValue({ data: new Blob(["synthetic"], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" }), error: null }); const r = await call(); expect(r.status).toBe(200); expect(r.headers.get("content-disposition")).toContain(`attachment; filename="${docId}.docx"`); expect(r.headers.get("x-content-type-options")).toBe("nosniff");
   });
   it("does not disguise DB or current Storage policy failures as successful originals", async () => {
     mocks.doc.mockResolvedValueOnce({ data: null, error: { message: "private DB failure" } }); expect((await call()).status).toBe(503);
