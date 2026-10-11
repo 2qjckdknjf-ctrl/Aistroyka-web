@@ -4,6 +4,14 @@ Migration file: `apps/web/supabase/migrations/20261004180000_create_analysis_job
 
 **Do not apply from this document.** Apply only with an explicit OWNER_GATE, staging first, then production. This page is the post-apply / pre-apply observation contract.
 
+## Current apply receipt — 2026-10-11
+
+The existing live AISTROYKA RPC was applied after explicit authorization and isolated SQL/REST/concurrency verification. Remote version `20261011090351`, name `create_analysis_job_request_key_atomic_20261011`, maps to the source file above. The live identity is four arguments with defaulted `p_request_key`; the obsolete three-argument overload is absent. EXECUTE is denied to anon/authenticated and granted to service_role. Service REST accepted the keyed signature and rejected nonexistent tenant/media with `P0002`, creating no live analysis job.
+
+Use [verified receipts/guard](VERIFIED_DB_MIGRATION_RECEIPTS.md) before any proposed apply; missing original file timestamps do not mean this SQL is pending. Staging and production web share this live project. Native isolated PostgreSQL 17.10/PostgREST 14.5 proved three 40-request retry/race scenarios before live application. [Operational report](../reports/2026-10-11-operational-closure.md) contains evidence and remaining full-job-flow limitations.
+
+Sections below preserve the historical before/after verification contract. They do not revoke the completed owner's authorization or require another apply.
+
 ## 1. Pre-apply observation (already true on live 2026-10-05)
 
 ```sql

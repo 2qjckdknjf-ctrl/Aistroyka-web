@@ -6,14 +6,21 @@ Code:
 
 - Routes: `apps/web/app/api/v1/portal/intake/`
 - Domain: `apps/web/lib/domain/customer-intake/`
-- Migration: `apps/web/supabase/migrations/20261003170000_customer_intake_drafts.sql`
+- Base migration: `apps/web/supabase/migrations/20261003170000_customer_intake_drafts.sql`
+- Follow-ups: `20261011080113_harden_customer_intake_status_transitions.sql`, `20261011091100_hide_intake_policy_helpers.sql`, `20261011092645_close_post_apply_database_tails.sql` in that migration directory
 - Customer iOS: `CustomerAPI` in `ios/AiStroykaCustomer/` and `CustomerIntakeDraft` in `ios/Shared/`
 
 Endpoint index: [API-v1-ENDPOINTS.md](../API-v1-ENDPOINTS.md).
 
 ## Live database
 
-The migration is in the repo. Read-only verification on 2026-10-11 confirmed `customer_intake_drafts` as **absent** on the database they checked (`OWNER_GATE`, staging-first). Confirm `to_regclass('public.customer_intake_drafts')` before treating list/create failures as an app bug. Applying the migration is an owner step. The deployed staging client uses the same AISTROYKA project as production; confirm an isolated database test target before applying changes. A staging web hostname alone does not isolate database writes.
+After explicit owner authorization on 2026-10-11, live AISTROYKA has `customer_intake_drafts`, four RLS policies, identity/status protection and creator/project indexes. The base migration and lifecycle guard were applied atomically at remote version `20261011090316`; private helper hardening followed at `20261011092544`, timestamp/FK correction at `20261011093430`. The earlier same-day absent-table observation is superseded. Authenticated create/edit/submit/withdraw, retries and terminal-state negatives passed; exact synthetic probe rows were cleaned up.
+
+The helpers now live in `app_private`, with OIDs/policy/trigger bindings preserved; anon/PUBLIC EXECUTE is revoked. Client inserts start `draft`; only `draft -> submitted/withdrawn` is allowed, with same-state retries and service maintenance preserved. Application PATCH remains draft-only; database lifecycle protection independently stops direct terminal status changes.
+
+Do not reapply the original file timestamps: [verified receipts and read-only guard](../ops/VERIFIED_DB_MIGRATION_RECEIPTS.md) map the completed source files to actual remote IDs, including exact SQL copies under new filenames. For a new failure, recheck the actual table/grants/schema before treating it as missing migration. Do not rewrite/repair historical migration records blindly.
+
+The deployed staging and production clients use the same AISTROYKA database project. A staging hostname alone does not isolate writes; pre-apply tests used loopback-only native PostgreSQL/PostgREST with synthetic data. [Operational evidence](../reports/2026-10-11-operational-closure.md) records the actual apply and scope limits.
 
 ## Who can call it
 
