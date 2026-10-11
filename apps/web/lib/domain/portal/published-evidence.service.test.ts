@@ -88,6 +88,23 @@ describe("published evidence projection", () => {
     mock.allowed.mockResolvedValueOnce(true).mockResolvedValueOnce(false);
     await expect(listPublishedEvidence(client, ctx, projectId)).rejects.toMatchObject({ status: 404 });
   });
+  it("accepts a legacy day-linked report with current same-project proof", async () => {
+    Object.assign(tables.worker_reports[0], { task_id: null, day_id: "d1" });
+    tables.visual_evidence_records[0].task_id = null;
+    tables.worker_day = [{ id: "d1", tenant_id: "t1", project_id: projectId }];
+    expect((await listPublishedEvidence(client, ctx, projectId)).items).toHaveLength(1);
+  });
+  it("propagates a day scope database outage instead of successful empty evidence", async () => {
+    Object.assign(tables.worker_reports[0], { task_id: null, day_id: "d1" });
+    tables.visual_evidence_records[0].task_id = null; failedTable = "worker_day";
+    await expect(listPublishedEvidence(client, ctx, projectId)).rejects.toMatchObject({ status: 503 });
+  });
+  it("does not invent a project for an unscoped legacy day", async () => {
+    Object.assign(tables.worker_reports[0], { task_id: null, day_id: "d1" });
+    tables.visual_evidence_records[0].task_id = null;
+    tables.worker_day = [{ id: "d1", tenant_id: "t1" }];
+    expect((await listPublishedEvidence(client, ctx, projectId)).items).toEqual([]);
+  });
 });
 describe("current-access original delivery", () => {
   it("downloads authorized private bytes without redirecting to or returning Storage URL", async () => {
@@ -111,5 +128,14 @@ describe("current-access original delivery", () => {
   it("never serves active SVG content inline", async () => {
     mock.download.mockResolvedValue({ data: new Blob(["<svg/>"], { type: "image/svg+xml" }), error: null });
     await expect(downloadPublishedEvidence(client, ctx, projectId, evidenceId)).rejects.toMatchObject({ status: 415 });
+  });
+  it("keeps resolver dependency failures retryable", async () => {
+    mock.resolve.mockResolvedValue({ ok: false, retryable: true });
+    await expect(downloadPublishedEvidence(client, ctx, projectId, evidenceId)).rejects.toMatchObject({ status: 503 });
+    expect(mock.download).not.toHaveBeenCalled();
+  });
+  it("keeps corrupt or missing originals unavailable", async () => {
+    mock.resolve.mockResolvedValue({ ok: false, retryable: false });
+    await expect(downloadPublishedEvidence(client, ctx, projectId, evidenceId)).rejects.toMatchObject({ status: 404 });
   });
 });

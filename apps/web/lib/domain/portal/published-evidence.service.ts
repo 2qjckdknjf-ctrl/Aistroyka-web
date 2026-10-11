@@ -3,7 +3,6 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { TenantContext } from "@/lib/tenant/tenant.types";
 import { canReadClientPortalView } from "@/lib/domain/stakeholders/stakeholders.policy";
 import { getAdminClient } from "@/lib/supabase/admin";
-import * as reportRepo from "@/lib/domain/reports/report.repository";
 import { resolveAIMediaImage } from "@/lib/platform/ai/resolve-ai-media-image";
 import { MEDIA_BUCKET } from "@/lib/platform/ai/media-bucket.constants";
 import { assertCustomerFinanceSafePayload } from "@/lib/security/customer-finance-guard";
@@ -23,6 +22,7 @@ type SourceReport = { id: string; tenant_id: string; user_id: string; status: st
 type SourceLink = { report_id: string; media_id: string | null; upload_session_id: string | null };
 type ScopedSource = { id: string; tenant_id: string; project_id: string };
 type SourceUpload = { id: string; tenant_id: string; status: string };
+type SourceDay = { id: string; tenant_id: string; project_id?: string | null };
 const COLUMNS = "id,tenant_id,project_id,report_id,task_id,media_id,upload_session_id,uploader_user_id,zone_label,before_after_kind,capture_timestamp,source_kind,updated_at,owner_visible,manager_verified,internal_only,retention_state";
 
 export type PublishedEvidenceItem = {
@@ -70,7 +70,13 @@ async function readSources(admin: SupabaseClient, ctx: TenantContext, projectId:
     load<SourceUpload>("upload_sessions", "id,tenant_id,status", "id", uploadIds),
   ]);
   const taskIds = [...new Set(reports.flatMap(report => report.task_id ? [report.task_id as string] : []))];
-  const tasks = await load<ScopedSource>("worker_tasks", "id,tenant_id,project_id", "id", taskIds);
+  const dayIds = [...new Set(reports.flatMap(report => !report.task_id && report.day_id ? [report.day_id] : []))];
+  const [tasks, days] = await Promise.all([
+    load<ScopedSource>("worker_tasks", "id,tenant_id,project_id", "id", taskIds),
+    // Legacy live worker_day can lack project_id. Read only referenced same-tenant
+    // rows and inspect the optional field; keep DB failures explicit, never empty-success.
+    load<SourceDay>("worker_day", "*", "id", dayIds),
+  ]);
   const sources: EvidenceSource[] = [];
   for (const row of rows) {
     if (!row.media_id && !row.upload_session_id) continue;
@@ -82,7 +88,7 @@ async function readSources(admin: SupabaseClient, ctx: TenantContext, projectId:
         || (row.task_id && row.task_id !== report.task_id)) continue;
       const reportProject = report.task_id
         ? tasks.find(t => t.id === report.task_id && t.tenant_id === ctx.tenantId)?.project_id
-        : await reportRepo.getProjectIdForReport(admin, ctx.tenantId, report);
+        : days.find(day => day.id === report.day_id && day.tenant_id === ctx.tenantId)?.project_id;
       if (reportProject !== projectId || !links.some(link => link.report_id === row.report_id
         && (!row.media_id || link.media_id === row.media_id)
         && (!row.upload_session_id || link.upload_session_id === row.upload_session_id))) continue;
@@ -116,7 +122,9 @@ export async function downloadPublishedEvidence(client: SupabaseClient, ctx: Ten
     tenantId: ctx.tenantId, projectIdClaim: projectId, reportId: row.report_id,
     mediaId: row.media_id, uploadSessionId: row.upload_session_id,
   });
-  if (!resolved.ok || resolved.trustedProjectId !== projectId) throw new PublishedEvidenceError(404, "Original not available");
+  if (!resolved.ok) throw new PublishedEvidenceError(resolved.retryable ? 503 : 404,
+    resolved.retryable ? "Original temporarily unavailable" : "Original not available");
+  if (resolved.trustedProjectId !== projectId) throw new PublishedEvidenceError(404, "Original not available");
   const { data: blob, error } = await admin.storage.from(MEDIA_BUCKET).download(resolved.objectPath);
   if (error || !blob) throw new PublishedEvidenceError(503, "Original temporarily unavailable");
   // Check again after Storage I/O: do not return bytes if access/publication was withdrawn.
