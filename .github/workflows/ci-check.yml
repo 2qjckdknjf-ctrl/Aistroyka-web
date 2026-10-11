@@ -28,6 +28,8 @@ jobs:
 
       - name: Production deploy boundary tests
         run: python3 scripts/release/test_deploy_production_worker.py -v
+      - name: Verify served deployment commit checks
+        run: python3 scripts/release/test_verify_deployed_commit.py -v
 
       - name: AI deployment proof boundary tests
         run: python3 scripts/smoke/test_ai_live_provider.py -v

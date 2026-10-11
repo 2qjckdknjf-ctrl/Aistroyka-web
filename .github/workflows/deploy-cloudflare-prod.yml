@@ -261,6 +261,18 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: bash ../../scripts/release/deploy-production-worker.sh
 
+      - name: Checkout verification tooling from the workflow commit
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: .deployment-verification
+          sparse-checkout: scripts/release/verify_deployed_commit.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Verify served production commit (blocking)
+        run: python3 .deployment-verification/scripts/release/verify_deployed_commit.py --target production --expected-sha "$NEXT_PUBLIC_BUILD_SHA"
+
       - name: Post-deploy summary
         run: |
           SHA7="${NEXT_PUBLIC_BUILD_SHA:0:7}"

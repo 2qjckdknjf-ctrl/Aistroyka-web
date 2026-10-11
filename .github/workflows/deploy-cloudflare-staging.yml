@@ -1,6 +1,6 @@
 # Staging deploy: push to main → build (OpenNext) + deploy to Cloudflare Workers (env.staging).
 # Single install from repo root: bun install --frozen-lockfile. Build: bun run cf:build.
-# Requires GitHub secrets: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, PILOT_SMOKE_BEARER_STAGING; optional CRON_SECRET and smoke fallback creds.
+# Requires GitHub secrets: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, PILOT_SMOKE_BEARER_STAGING, CRON_SECRET; optional smoke fallback creds.
 # Optional non-blocking: ai-phase5-gate job (same auth secrets as pilot-smoke + staging pilot PROJECT_ID).
 
 name: Deploy Cloudflare (Staging)
@@ -170,7 +170,7 @@ jobs:
 
       - name: Set build stamp and app env
         run: |
-          echo "NEXT_PUBLIC_BUILD_SHA=${{ github.sha }}" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_BUILD_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
           echo "NEXT_PUBLIC_BUILD_TIME=$(date -u +%Y-%m-%d\ %H:%M)" >> $GITHUB_ENV
           echo "NEXT_PUBLIC_APP_ENV=staging" >> $GITHUB_ENV
 
@@ -207,20 +207,44 @@ jobs:
           grep -q 'x.includes("middleware") && x.includes("manifest")' .open-next/deploy/worker-bootstrap.js || (echo "::error::Patch not applied: middleware-manifest stub missing in deploy bundle" && exit 1)
           echo "Patched bundle verified."
 
+      - name: Configure required staging cron secret
+        working-directory: apps/web
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          set -euo pipefail
+          if [ -z "${CRON_SECRET:-}" ]; then
+            echo "::error::CRON_SECRET is required for staging; do not publish a cron bypass."
+            exit 1
+          fi
+          printf '%s' "$CRON_SECRET" | npx wrangler secret put CRON_SECRET --env staging --config wrangler.toml
+
       - name: Deploy to Cloudflare (staging, patched bundle)
         working-directory: apps/web
         env:
           OPEN_NEXT_DEPLOY: "true"
         run: |
           npx wrangler deploy --env staging --no-bundle --config wrangler.deploy.toml \
-            --var NEXT_PUBLIC_BUILD_SHA:${{ github.sha }} \
+            --var "NEXT_PUBLIC_BUILD_SHA:${NEXT_PUBLIC_BUILD_SHA}" \
             --var NEXT_PUBLIC_BUILD_TIME:"${{ env.NEXT_PUBLIC_BUILD_TIME }}" \
             --var NEXT_PUBLIC_APP_ENV:staging \
-            --var REQUIRE_CRON_SECRET:false
+            --var REQUIRE_CRON_SECRET:true
+
+      - name: Checkout verification tooling from the workflow commit
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: .deployment-verification
+          sparse-checkout: scripts/release/verify_deployed_commit.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Verify served staging commit (blocking)
+        run: python3 .deployment-verification/scripts/release/verify_deployed_commit.py --target staging --expected-sha "$NEXT_PUBLIC_BUILD_SHA"
 
       - name: Post-deploy summary
         run: |
-          SHA7="$(echo ${{ github.sha }} | cut -c1-7)"
+          SHA7="${NEXT_PUBLIC_BUILD_SHA:0:7}"
           echo "Deployed worker: aistroyka-web-staging (apps/web)"
           echo "Commit sha7: $SHA7"
           echo "workers.dev URL: see 'Deploy to Cloudflare (staging)' step output above"
