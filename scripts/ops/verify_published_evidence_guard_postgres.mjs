@@ -2,7 +2,20 @@ import {PGlite} from '@electric-sql/pglite';
 import {readFileSync} from 'node:fs';
 import assert from 'node:assert/strict';
 const repo=process.argv[2];assert(repo);const root=repo+'/apps/web/supabase/migrations/';
-const db=new PGlite(),pass=[];const id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
+const nativeUrl=process.env.EVIDENCE_NATIVE_DATABASE_URL;
+let nativeClient, NativeClient;
+let db;
+if(nativeUrl){
+  const url=new URL(nativeUrl);
+  assert(['localhost','127.0.0.1'].includes(url.hostname),'Native checks require an isolated local database');
+  ({Client:NativeClient}=await import('pg'));
+  nativeClient=new NativeClient({connectionString:nativeUrl});
+  assert(['localhost','127.0.0.1','/var/run/postgresql'].includes(nativeClient.connectionParameters.host),'Native connection must remain local');
+  await nativeClient.connect();
+  assert.equal((await nativeClient.query("select count(*)::int as n from pg_tables where schemaname in ('public','auth','app_private')")).rows[0].n,0,'Use an empty isolated database');
+  db={exec:sql=>nativeClient.query(sql),query:(sql,args)=>nativeClient.query(sql,args),close:()=>nativeClient.end()};
+}else{db=new PGlite()}
+const pass=[];const id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 const q=(s,p=[])=>db.query(s,p);
 const test=async(n,fn)=>{await fn();pass.push(n);console.log('PASS',n)};
 const as=async(user,fn,role='authenticated')=>{await db.exec('set role '+role);await q("select set_config('request.jwt.claim.sub',$1,false),set_config('request.jwt.claim.role',$2,false)",[user?id(user):'',role]);try{return await fn()}finally{await db.exec('reset role')}};
@@ -23,9 +36,7 @@ create table worker_day(id uuid primary key,tenant_id uuid);
 create table worker_reports(id uuid primary key,tenant_id uuid,task_id uuid,day_id uuid,user_id uuid,status text);
 create table upload_sessions(id uuid primary key);
 create table worker_report_media(report_id uuid,media_id uuid,upload_session_id uuid);
-create table visual_evidence_records(id uuid primary key,tenant_id uuid,project_id uuid,report_id uuid references worker_reports(id) on delete set null,task_id uuid references worker_tasks(id) on delete set null,media_id uuid references media(id) on delete set null,upload_session_id uuid references upload_sessions(id) on delete set null,uploader_user_id uuid,owner_visible boolean not null default false,manager_verified boolean not null default false,internal_only boolean not null default false,retention_state text not null default 'active',zone_label text,provenance jsonb default '{}',updated_at timestamptz default now());
-alter table visual_evidence_records enable row level security;
-create policy evidence_write on visual_evidence_records for all to authenticated using (tenant_id in(select tenant_id from tenant_members where user_id=auth.uid())) with check(tenant_id in(select tenant_id from tenant_members where user_id=auth.uid()));
+
 `);
 function helper(file,name){const s=readFileSync(root+file,'utf8');const start=s.indexOf('create or replace function public.'+name+'(');assert(start>=0);const end=s.indexOf('$$;',s.indexOf('as $$',start));assert(end>start);return s.slice(start,end+3)}
 for(const [file,name] of [['20260329140000_stakeholder_rls_isolation.sql','is_internal_tenant_reader_for_tenant'],['20260906104000_project_write_authorization_hardening.sql','is_internal_tenant_writer_for_tenant']])await db.exec(helper(file,name));
@@ -41,8 +52,7 @@ for(const [task,p] of [[501,301],[502,303]])await q('insert into worker_tasks va
 for(const [report,task,user] of [[601,501,7],[602,502,7],[603,501,6]])await q("insert into worker_reports values($1,$2,$3,null,$4,'submitted')",[id(report),id(201),id(task),id(user)]);
 await q('insert into worker_report_media values($1,$2,null),($3,$4,null)',[id(601),id(401),id(602),id(402)]);
 const sql=readFileSync(root+'20261011144945_harden_published_evidence_source_guard.sql','utf8');await db.exec(sql);await db.exec(sql);
-await db.exec(`create trigger evidence_scope before insert or update on visual_evidence_records for each row execute function validate_visual_evidence_project_consistency();create trigger evidence_visibility before insert or update on visual_evidence_records for each row execute function guard_visual_evidence_visibility_columns();
-drop policy evidence_write on visual_evidence_records;`);
+
 const insert=(n,{p=301,r=601,m=401,u=7,visible=false,verified=false}={})=>q('insert into visual_evidence_records(id,tenant_id,project_id,report_id,media_id,uploader_user_id,owner_visible,manager_verified) values($1,$2,$3,$4,$5,$6,$7,$8)',[id(n),id(201),id(p),r?id(r):null,m?id(m):null,id(u),visible,verified]);
 await test('worker own source accepted and self-publication stripped',()=>as(7,async()=>{await insert(801,{visible:true,verified:true});const r=(await q('select owner_visible,manager_verified from visual_evidence_records where id=$1',[id(801)])).rows[0];assert.equal(r.owner_visible,false);assert.equal(r.manager_verified,false)}));
 await test('worker cannot attribute another uploader',()=>as(7,()=>denied('insert into visual_evidence_records(id,tenant_id,project_id,report_id,media_id,uploader_user_id) values($1,$2,$3,$4,$5,$6)',[id(802),id(201),id(301),id(601),id(401),id(6)],'23514')));
@@ -77,4 +87,10 @@ await test('manual manager capture uses the actual caller',()=>as(5,()=>insert(8
 await test('authenticated draft report cleanup archives its evidence',()=>as(7,async()=>{await insert(805,{p:303,r:602,m:402});await q('delete from worker_reports where id=$1',[id(602)]);const r=(await q('select * from visual_evidence_records where id=$1',[id(805)])).rows[0];assert.equal(r.report_id,null);assert.equal(r.retention_state,'archived');assert.equal(r.owner_visible,false)}));
 await test('FK report unlink withdraws publication and preserves private provenance',()=>as(null,async()=>{await q('delete from worker_reports where id=$1',[id(601)]);const r=(await q('select * from visual_evidence_records where id=$1',[id(801)])).rows[0];assert.equal(r.report_id,null);assert.equal(r.owner_visible,false);assert.equal(r.manager_verified,false);assert.equal(r.retention_state,'archived');assert.equal(r.provenance.removed_source.report_id,id(601))},'service_role'));
 await test('FK last-media unlink archives without blocking cleanup',()=>as(null,async()=>{await q('delete from media where id=$1',[id(401)]);const r=(await q('select * from visual_evidence_records where id=$1',[id(801)])).rows[0];assert.equal(r.media_id,null);assert.equal(r.retention_state,'archived');assert.equal(r.provenance.removed_source.report_id,id(601));assert.equal(r.provenance.removed_source.media_id,id(401))},'service_role'));
+if(nativeClient){
+  const {verifyEvidenceApprovalRaces}=await import('file://'+repo+'/scripts/ops/verify_evidence_approval_races.mjs');
+  const writer=new NativeClient({connectionString:nativeUrl}),reviewer=new NativeClient({connectionString:nativeUrl});
+  await writer.connect();await reviewer.connect();
+  try{await verifyEvidenceApprovalRaces({writer,reviewer,observer:nativeClient,id})}finally{await writer.end();await reviewer.end()}
+}
 await db.close();console.log(pass.length+' published evidence SQL contracts PASS');

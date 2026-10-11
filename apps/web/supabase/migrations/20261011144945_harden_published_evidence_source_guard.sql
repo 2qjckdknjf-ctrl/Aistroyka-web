@@ -1,6 +1,71 @@
 -- Recover the existing #244 evidence schema safely; do not recreate or replay it.
 begin;
 
+-- Only a fresh database needs this definition. Live #244 objects are retained.
+do $$
+begin
+  if pg_catalog.to_regclass('public.visual_evidence_records') is null then
+    create table public.visual_evidence_records (
+      id uuid primary key default gen_random_uuid(),
+      tenant_id uuid not null references public.tenants(id) on delete cascade,
+      project_id uuid not null references public.projects(id) on delete cascade,
+      report_id uuid references public.worker_reports(id) on delete set null,
+      task_id uuid references public.worker_tasks(id) on delete set null,
+      media_id uuid references public.media(id) on delete set null,
+      upload_session_id uuid references public.upload_sessions(id) on delete set null,
+      zone_label text, floor_label text, room_label text,
+      source_kind text not null default 'photo' check (source_kind in ('photo','video','panorama_360','drone','sensor','equipment','robot')),
+      before_after_kind text check (before_after_kind in ('before','after','unpaired')),
+      pair_group_id text, issue_id uuid, capture_timestamp timestamptz,
+      uploader_user_id uuid, device_source text,
+      internal_only boolean not null default false,
+      owner_visible boolean not null default false,
+      manager_verified boolean not null default false,
+      ai_analysis_status text not null default 'none' check (ai_analysis_status in ('none','pending','complete','failed','skipped')),
+      provenance jsonb not null default '{}', checksum text,
+      retention_state text not null default 'active' check (retention_state in ('active','archived','pending_delete')),
+      created_at timestamptz not null default now(), updated_at timestamptz not null default now()
+    );
+    alter table public.visual_evidence_records enable row level security;
+    grant select, insert, update on public.visual_evidence_records to authenticated;
+    grant all on public.visual_evidence_records to service_role;
+  end if;
+end;
+$$;
+
+-- Serialize source writes with report UPDATE, without broadening report RLS or
+-- requiring a worker's submitted report to satisfy an UPDATE policy for locking.
+create or replace function app_private.lock_evidence_report(p_tenant_id uuid, p_report_id uuid)
+returns jsonb language plpgsql security definer set search_path = pg_catalog as $$
+declare
+  actor uuid;
+  result jsonb;
+begin
+  actor := auth.uid();
+  if actor is null or not public.is_internal_tenant_writer_for_tenant(p_tenant_id)
+      or not app_private.customer_intake_tenant_account_active(p_tenant_id) then
+    raise exception 'Evidence report access denied' using errcode = '42501';
+  end if;
+  select pg_catalog.jsonb_build_object('user_id', wr.user_id, 'status', wr.status)
+    into result from public.worker_reports wr
+    left join public.worker_tasks wt on wt.id = wr.task_id and wt.tenant_id = wr.tenant_id
+    left join public.worker_day wd on wd.id = wr.day_id and wd.tenant_id = wr.tenant_id
+    where wr.id = p_report_id and wr.tenant_id = p_tenant_id
+      and (wr.user_id = actor
+        or exists (select 1 from public.tenants t where t.id = p_tenant_id and t.user_id = actor)
+        or exists (select 1 from public.tenant_members tm where tm.tenant_id = p_tenant_id
+          and tm.user_id = actor and tm.role in ('owner','admin'))
+        or exists (select 1 from public.project_members pm where pm.tenant_id = p_tenant_id
+          and pm.project_id = coalesce(wt.project_id, nullif(pg_catalog.to_jsonb(wd)->>'project_id','')::uuid)
+          and pm.user_id = actor and pm.role = 'manager'))
+    for share of wr;
+  if result is null then raise exception 'Evidence report unavailable' using errcode = '42501'; end if;
+  return result;
+end;
+$$;
+revoke all on function app_private.lock_evidence_report(uuid, uuid) from public, anon;
+grant execute on function app_private.lock_evidence_report(uuid, uuid) to authenticated, service_role;
+
 create or replace function public.validate_visual_evidence_project_consistency()
 returns trigger language plpgsql security invoker set search_path = '' as $$
 declare
@@ -87,6 +152,7 @@ declare
   manager boolean;
   report_owner uuid;
   approved boolean := false;
+  report_snapshot jsonb;
 begin
   if tg_op = 'UPDATE' and pg_catalog.pg_trigger_depth() > 1
       and new.retention_state = 'archived' and not new.owner_visible and not new.manager_verified
@@ -117,9 +183,9 @@ begin
     or exists (select 1 from public.project_members pm where pm.tenant_id = new.tenant_id
       and pm.project_id = new.project_id and pm.user_id = actor and pm.role = 'manager');
   if new.report_id is not null then
-    select wr.user_id, wr.status = 'approved' into report_owner, approved
-      from public.worker_reports wr where wr.id = new.report_id and wr.tenant_id = new.tenant_id;
-    if not found then raise exception 'Evidence report unavailable' using errcode = '23514'; end if;
+    report_snapshot := app_private.lock_evidence_report(new.tenant_id, new.report_id);
+    report_owner := nullif(report_snapshot->>'user_id', '')::uuid;
+    approved := report_snapshot->>'status' = 'approved';
   end if;
   if tg_op = 'INSERT' and new.report_id is null and new.uploader_user_id is distinct from actor then
     raise exception 'Manual evidence author must be the caller' using errcode = '42501';
@@ -160,6 +226,13 @@ revoke all on function public.validate_visual_evidence_project_consistency() fro
 revoke all on function public.guard_visual_evidence_visibility_columns() from public, anon, authenticated;
 grant execute on function public.validate_visual_evidence_project_consistency() to service_role;
 grant execute on function public.guard_visual_evidence_visibility_columns() to service_role;
+
+drop trigger if exists trg_visual_evidence_project_consistency on public.visual_evidence_records;
+create trigger trg_visual_evidence_project_consistency before insert or update on public.visual_evidence_records
+for each row execute function public.validate_visual_evidence_project_consistency();
+drop trigger if exists trg_visual_evidence_visibility_guard on public.visual_evidence_records;
+create trigger trg_visual_evidence_visibility_guard before insert or update on public.visual_evidence_records
+for each row execute function public.guard_visual_evidence_visibility_columns();
 
 alter table public.visual_evidence_records drop constraint if exists visual_evidence_media_ref;
 alter table public.visual_evidence_records add constraint visual_evidence_media_ref
