@@ -1,5 +1,5 @@
-# Image authorization continuation
+# Image and session-worker authorization continuation
 
-Source: fix/ai-image-auth-2026-10-11 from e03cb5a. See the focused hard audit and task file for scope and local evidence.
+Source: fix/ai-image-auth-2026-10-11 from e03cb5a. Image auth and the existing worker callback must ship together; the combined change also removes global session dequeue and repairs ambiguous completion RPCs. See the fresh audit and two task files for scope and isolated SQL/REST evidence.
 
-Next: required CI plus independent current-head review, protected merge, staging-first deploy, anonymous/role negatives and authenticated strict live-provider verification on both hosts. Then repair the legacy global-dequeue path identified in #200; do not close #200 before that second gap is addressed. No DB migration is needed for the image entry-point fix. Full roadmap completion is not claimed.
+Next: required CI plus independent current-head review, protected merge; apply only the additive complete_session_analysis_job migration after fresh receipt/schema checks and native isolation evidence; verify staging first, then production negative access and authenticated strict live-provider responses. Never probe processing against real queued jobs. Close stale #200 only once its image/video/worker security intent is covered and verified. Preserve its branch and the temporary worker preparation commit locally; do not broad-merge stale branches. Full roadmap completion is not claimed.

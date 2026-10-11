@@ -11,13 +11,26 @@ function createMockSupabase(overrides: {
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
     single: vi.fn().mockImplementation(() =>
-      Promise.resolve(overrides.media ?? { data: null, error: null })
+      Promise.resolve(overrides.media?.data ? { ...overrides.media, data: { ...overrides.media.data as object, tenant_id: "tenant-a" } } : overrides.media ?? { data: null, error: null })
     ),
   };
   const updateChain = {
     update: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
-    in: vi.fn().mockResolvedValue({ error: null }),
+    is: vi.fn().mockReturnThis(), or: vi.fn().mockReturnThis(),
+    order: vi.fn().mockReturnThis(),
+    select: vi.fn().mockReturnThis(),
+    limit: vi.fn(async () => {
+      const r = overrides.dequeue ?? { data: [], error: null };
+      const rows = Array.isArray(r.data) ? r.data : r.data ? [r.data] : [];
+      return { ...r, data: rows.map((x: unknown) => ({ ...x as object, tenant_id: "tenant-a" })) };
+    }),
+    maybeSingle: vi.fn(async () => {
+      const r = overrides.dequeue ?? { data: [], error: null };
+      const row = Array.isArray(r.data) ? r.data[0] : r.data;
+      if (overrides.claim?.error) return { data: null, error: overrides.claim.error };
+      return { data: row ? { ...row as object, tenant_id: "tenant-a", execution_token: "token-a" } : null, error: null };
+    }),
   };
 
   const fromMock = vi.fn().mockImplementation((table: string) => {
@@ -31,9 +44,9 @@ function createMockSupabase(overrides: {
         return Promise.resolve(overrides.dequeue ?? { data: [], error: null });
       if (name === "claim_job_execution")
         return Promise.resolve(overrides.claim ?? { data: true, error: null });
-      if (name === "complete_analysis_job")
+      if (name === "complete_session_analysis_job")
         return Promise.resolve({ error: overrides.complete?.error ?? null });
-      if (name === "record_analysis_job_failure")
+      if (name === "fail_session_analysis_job")
         return Promise.resolve({ data: 1, error: null });
       return Promise.resolve({ data: null, error: null });
     }),
@@ -44,33 +57,33 @@ function createMockSupabase(overrides: {
 describe("processOneJob", () => {
   it("returns no_url when aiAnalysisUrl is missing", async () => {
     const supabase = createMockSupabase({});
-    const out = await processOneJob(supabase, undefined);
+    const out = await processOneJob(supabase, undefined, { tenantId: "tenant-a", callerClient: supabase });
     expect(out).toEqual({ ok: false, reason: "no_url", message: "AI_ANALYSIS_URL is not set" });
   });
 
   it("returns no_url when aiAnalysisUrl is empty string", async () => {
     const supabase = createMockSupabase({});
-    const out = await processOneJob(supabase, "   ");
+    const out = await processOneJob(supabase, "   ", { tenantId: "tenant-a", callerClient: supabase });
     expect(out).toEqual({ ok: false, reason: "no_url", message: "AI_ANALYSIS_URL is not set" });
   });
 
-  it("returns no_job when dequeue returns no job", async () => {
+  it("returns no_job when candidate read returns no job", async () => {
     const supabase = createMockSupabase({ dequeue: { data: [], error: null } });
-    const out = await processOneJob(supabase, "https://api.example.com/analyze");
+    const out = await processOneJob(supabase, "https://api.example.com/analyze", { tenantId: "tenant-a", callerClient: supabase });
     expect(out).toEqual({ ok: false, reason: "no_job" });
   });
 
-  it("returns no_job when dequeue returns null", async () => {
+  it("returns no_job when candidate read returns null", async () => {
     const supabase = createMockSupabase({ dequeue: { data: null, error: null } });
-    const out = await processOneJob(supabase, "https://api.example.com/analyze");
+    const out = await processOneJob(supabase, "https://api.example.com/analyze", { tenantId: "tenant-a", callerClient: supabase });
     expect(out).toEqual({ ok: false, reason: "no_job" });
   });
 
-  it("returns error when dequeue RPC fails", async () => {
+  it("returns error when candidate read fails", async () => {
     const supabase = createMockSupabase({
       dequeue: { data: null, error: { message: "connection failed" } },
     });
-    const out = await processOneJob(supabase, "https://api.example.com/analyze");
+    const out = await processOneJob(supabase, "https://api.example.com/analyze", { tenantId: "tenant-a", callerClient: supabase });
     expect(out).toEqual({ ok: false, reason: "error", message: "connection failed" });
   });
 
@@ -80,11 +93,11 @@ describe("processOneJob", () => {
       dequeue: { data: [{ id: jobId, media_id: "media-1" }], error: null },
       media: { data: null, error: { message: "not found" } },
     });
-    const out = await processOneJob(supabase, "https://api.example.com/analyze");
+    const out = await processOneJob(supabase, "https://api.example.com/analyze", { tenantId: "tenant-a", callerClient: supabase });
     expect(out).toEqual({ ok: true, jobId, status: "failed" });
   });
 
-  it("returns failed with jobId when claim_job_execution fails", async () => {
+  it("returns error without failing a job when atomic claim fails", async () => {
     const jobId = "job-1";
     const supabase = createMockSupabase({
       dequeue: { data: [{ id: jobId, media_id: "media-1" }], error: null },
@@ -98,8 +111,9 @@ describe("processOneJob", () => {
       },
       claim: { data: null, error: { message: "Job already claimed" } },
     });
-    const out = await processOneJob(supabase, "https://api.example.com/analyze");
-    expect(out).toEqual({ ok: true, jobId, status: "failed" });
+    const out = await processOneJob(supabase, "https://api.example.com/analyze", { tenantId: "tenant-a", callerClient: supabase });
+    expect(out).toEqual({ ok: false, reason: "error", message: "Job already claimed" });
+    expect(supabase.rpc).not.toHaveBeenCalled();
   });
 
   it("returns failed with jobId when type is video", async () => {
@@ -115,7 +129,7 @@ describe("processOneJob", () => {
         error: null,
       },
     });
-    const out = await processOneJob(supabase, "https://api.example.com/analyze");
+    const out = await processOneJob(supabase, "https://api.example.com/analyze", { tenantId: "tenant-a", callerClient: supabase });
     expect(out).toEqual({ ok: true, jobId, status: "failed" });
   });
 
@@ -132,6 +146,7 @@ describe("processOneJob", () => {
       "fetch",
       vi.fn().mockResolvedValue({
         ok: true,
+        headers: new Headers(),
         json: () => Promise.resolve(validResult),
       })
     );
@@ -148,7 +163,7 @@ describe("processOneJob", () => {
       },
       claim: { data: true, error: null },
     });
-    const out = await processOne(supabase, "https://api.example.com/analyze");
+    const out = await processOne(supabase, "https://api.example.com/analyze", { tenantId: "tenant-a", callerClient: supabase });
     vi.unstubAllGlobals();
     expect(out).toEqual({ ok: true, jobId, status: "completed" });
   });
@@ -171,6 +186,7 @@ describe("processOneJob", () => {
       })
       .mockResolvedValueOnce({
         ok: true,
+        headers: new Headers(),
         json: () => Promise.resolve(validResult),
       });
     vi.stubGlobal("fetch", fetchMock);
@@ -187,7 +203,7 @@ describe("processOneJob", () => {
       },
       claim: { data: true, error: null },
     });
-    const out = await processOne(supabase, "https://api.example.com/analyze");
+    const out = await processOne(supabase, "https://api.example.com/analyze", { tenantId: "tenant-a", callerClient: supabase });
     vi.unstubAllGlobals();
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(out).toEqual({ ok: true, jobId, status: "completed" });
@@ -214,12 +230,12 @@ describe("processOneJob", () => {
       },
       claim: { data: true, error: null },
     });
-    const out = await processOne(supabase, "https://api.example.com/analyze");
+    const out = await processOne(supabase, "https://api.example.com/analyze", { tenantId: "tenant-a", callerClient: supabase });
     vi.unstubAllGlobals();
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(out).toEqual({ ok: true, jobId, status: "failed" });
     expect(supabase.rpc).toHaveBeenCalledWith(
-      "record_analysis_job_failure",
+      "fail_session_analysis_job",
       expect.objectContaining({
         p_job_id: jobId,
         p_error_type: "invalid_request",
