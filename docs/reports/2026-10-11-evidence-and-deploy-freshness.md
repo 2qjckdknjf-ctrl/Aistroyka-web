@@ -1,0 +1,11 @@
+# Evidence guard and deployment freshness — 2026-10-11
+
+#427 merged4a38ea0b after exact HEAD b2bb50eb approval and CI38153767126 SUCCESS. Staging38154058767 attempt2 SUCCESS: actual served health4a38ea0 at16:12UTC. Attempt1 saw a stale runtime SHA; it was not accepted. Production apex served4a38ea0; www initially failed the exact-SHA gate, so production verification is retried and no all-host success is inferred.
+
+Migration source20261011144945 applied to live AISTROYKA as20261011161355 after a fresh196-entry history, unchanged8-source receipts and zero-record schema snapshot. The new9-source/8-ID receipts verify against197 remote entries. Applied source SQL is immutable.51 isolated SQL contracts and5 native concurrent transaction scenarios passed. Nine actual PostgREST creator/owner/manager/revocation/FK tests passed; see sanitized evidence files. All9 exact test rows were checked absent, the temporary Auth user removed, fixture sessions globally revoked and the existing QA owner's task session locally revoked. Storage objects written:0. Evidence count returned0. A failed preliminary login's one exact task-created Auth session was also removed; no unrelated sessions were revoked. No business evidence, parent row or blob was changed.
+
+The live project_members key is tenant_id/project_id/user_id; current status enum is active/inactive/removed. The controlled transport test and isolated harness now use that real schema rather than an invented id/revoked value. Authorization continues to require active membership.
+
+Deployment verification now requests a unique nonce URL and explicitly disables browser/CDN caching of readiness responses. Five bounded attempts allow propagation; a mismatched SHA still fails and reports only sanitized expected/observed SHA values.12 Python proof-boundary tests and4 health route tests PASS. This prevents cache reuse from becoming deployment evidence; the observed rollout delay's precise edge cause is not claimed proven.
+
+The recovered Owner published-only API/original gateway is a separate branch based on4a38ea0b. Lifecycle/UI and live original/revocation E2E remain to deliver. Whole migration-chain/bootstrap, store/pilot/manual keyboard/legal/billing gates remain open.

@@ -3,6 +3,7 @@
 import argparse
 import json
 import re
+import secrets
 import sys
 import time
 import urllib.error
@@ -41,7 +42,8 @@ def validate_health(status, body, expected_sha, expected_env):
     stamp = data.get('buildStamp')
     sha7 = stamp.get('sha7') if isinstance(stamp, dict) else None
     if sha7 != expected_sha[:7]:
-        raise VerificationError('Runtime commit does not match reviewed source')
+        observed = sha7 if isinstance(sha7, str) and re.fullmatch(r'[0-9a-f]{7}', sha7) else 'missing-or-invalid'
+        raise VerificationError('Runtime commit does not match reviewed source; expected=' + expected_sha[:7] + '; observed=' + observed)
     if data.get('env') != expected_env:
         raise VerificationError('Runtime environment does not match the canonical host')
     if data.get('supabaseReachable') is not True or data.get('serviceRoleConfigured') is not True:
@@ -52,7 +54,7 @@ def validate_health(status, body, expected_sha, expected_env):
 def fetch_health(host):
     if host not in {h for targets in TARGETS.values() for h, _ in targets}:
         raise VerificationError('Noncanonical health host')
-    request = urllib.request.Request('https://' + host + '/api/v1/health',
+    request = urllib.request.Request('https://' + host + '/api/v1/health?deployment_probe=' + secrets.token_hex(8),
         headers={'Accept': 'application/json', 'Cache-Control': 'no-cache', 'User-Agent': 'Aistroyka-Deployment-Verification'})
     opener = urllib.request.build_opener(NoRedirect)
     try:
@@ -63,7 +65,7 @@ def fetch_health(host):
         return error.code, b''
 
 
-def verify_host(host, expected_sha, expected_env, attempts=3, fetch=fetch_health, sleep=time.sleep):
+def verify_host(host, expected_sha, expected_env, attempts=5, fetch=fetch_health, sleep=time.sleep):
     validate_sha(expected_sha)
     if attempts < 1 or attempts > 5:
         raise VerificationError('Attempts must be between 1 and 5')
@@ -74,7 +76,7 @@ def verify_host(host, expected_sha, expected_env, attempts=3, fetch=fetch_health
         except (VerificationError, OSError, urllib.error.URLError) as error:
             failure = str(error) if isinstance(error, VerificationError) else 'Health transport failed'
         if attempt + 1 < attempts:
-            sleep(5)
+            sleep(10)
     raise VerificationError(host + ': ' + failure)
 
 

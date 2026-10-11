@@ -44,7 +44,7 @@ class DeployedCommitTests(unittest.TestCase):
         replies = iter([(200, payload(buildStamp={'sha7': 'c25c8e0'})), (200, payload())])
         sleeps = []
         result = verify_host('staging.aistroyka.ai', SHA, 'staging', fetch=lambda _: next(replies), sleep=sleeps.append)
-        self.assertTrue(result['pass']); self.assertEqual(sleeps, [5])
+        self.assertTrue(result['pass']); self.assertEqual(sleeps, [10])
 
     def test_transport_failure_cannot_pass_and_is_bounded(self):
         calls = []; sleeps = []
@@ -52,7 +52,27 @@ class DeployedCommitTests(unittest.TestCase):
             calls.append(host); raise urllib.error.URLError('untrusted remote detail')
         with self.assertRaisesRegex(VerificationError, 'Health transport failed'):
             verify_host('staging.aistroyka.ai', SHA, 'staging', fetch=failed, sleep=sleeps.append)
-        self.assertEqual(len(calls), 3); self.assertEqual(sleeps, [5, 5])
+        self.assertEqual(len(calls), 5); self.assertEqual(sleeps, [10, 10, 10, 10])
+
+    def test_mismatch_logs_only_safe_sha_diagnostics(self):
+        with self.assertRaisesRegex(VerificationError, 'expected=71899f4; observed=c25c8e0'):
+            validate_health(200, payload(buildStamp={'sha7':'c25c8e0'}), SHA, 'staging')
+        with self.assertRaisesRegex(VerificationError, 'observed=missing-or-invalid'):
+            validate_health(200, payload(buildStamp={'sha7':'private-untrusted-token'}), SHA, 'staging')
+
+    def test_probe_uses_a_unique_query_without_credentials(self):
+        class Reply:
+            status = 200
+            def __enter__(self): return self
+            def __exit__(self, *args): pass
+            def read(self, limit): return payload()
+        with patch('urllib.request.build_opener') as build:
+            build.return_value.open.return_value = Reply()
+            fetch_health('staging.aistroyka.ai'); fetch_health('staging.aistroyka.ai')
+            urls = [c.args[0].full_url for c in build.return_value.open.call_args_list]
+            self.assertNotEqual(urls[0], urls[1])
+            for url in urls:
+                self.assertRegex(url, r'^https://staging\.aistroyka\.ai/api/v1/health\?deployment_probe=[0-9a-f]{16}$')
 
     def test_refuses_redirects(self):
         with self.assertRaises(VerificationError):
