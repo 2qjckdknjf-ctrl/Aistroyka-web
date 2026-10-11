@@ -529,17 +529,22 @@ private struct CustomerPublishedPhotoCard: View {
         image = nil
         failed = false
         do {
-            let data = try await APIClient.shared.requestPublishedPhoto(projectId: projectId, evidenceId: photo.id)
+            let project = projectId, evidence = photo.id
+            let loaded = try await PhotoPreviewQueue.shared.run {
+                let data = try await APIClient.shared.requestPublishedPhoto(projectId: project, evidenceId: evidence)
+                try Task.checkCancellation()
+                guard let source = CGImageSourceCreateWithData(data as CFData, [kCGImageSourceShouldCache: false] as CFDictionary),
+                      let preview = CGImageSourceCreateThumbnailAtIndex(source, 0, [
+                        kCGImageSourceCreateThumbnailFromImageAlways: true,
+                        kCGImageSourceCreateThumbnailWithTransform: true,
+                        kCGImageSourceThumbnailMaxPixelSize: 1200,
+                        kCGImageSourceShouldCacheImmediately: true,
+                      ] as CFDictionary) else { throw APIError(statusCode: 415, code: nil, message: "Invalid photo") }
+                try Task.checkCancellation()
+                return CustomerPhotoPreview(image: UIImage(cgImage: preview))
+            }
             guard !Task.isCancelled else { return }
-            guard let source = CGImageSourceCreateWithData(data as CFData, [kCGImageSourceShouldCache: false] as CFDictionary),
-                  let preview = CGImageSourceCreateThumbnailAtIndex(source, 0, [
-                    kCGImageSourceCreateThumbnailFromImageAlways: true,
-                    kCGImageSourceCreateThumbnailWithTransform: true,
-                    kCGImageSourceThumbnailMaxPixelSize: 1200,
-                    kCGImageSourceShouldCacheImmediately: true,
-                  ] as CFDictionary) else { throw APIError(statusCode: 415, code: nil, message: "Invalid photo") }
-            let loaded = UIImage(cgImage: preview)
-            image = loaded
+            image = loaded.image
         } catch {
             guard !Task.isCancelled else { return }
             image = nil
@@ -547,6 +552,11 @@ private struct CustomerPublishedPhotoCard: View {
             onUnavailable()
         }
     }
+}
+
+/// The completed immutable preview crosses to MainActor; original bytes never do.
+private struct CustomerPhotoPreview: @unchecked Sendable {
+    let image: UIImage
 }
 
 private struct CustomerProjectScrollBounce: ViewModifier {
