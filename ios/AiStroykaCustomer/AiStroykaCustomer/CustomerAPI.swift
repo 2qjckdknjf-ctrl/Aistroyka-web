@@ -157,8 +157,10 @@ enum CustomerAPI {
         )
     }
 
-    static func listIntakeDrafts() async throws -> [CustomerIntakeDraft] {
-        let env: Envelope<[CustomerIntakeDraft]> = try await APIClient.shared.request(path: "portal/intake")
+    static func listIntakeDrafts(projectId: String? = nil) async throws -> [CustomerIntakeDraft] {
+        let env: Envelope<[CustomerIntakeDraft]> = try await APIClient.shared.request(
+            path: CustomerIntakeDraft.portalIntakeListPath(projectId: projectId)
+        )
         return env.data
     }
 
@@ -257,17 +259,17 @@ enum CustomerAPI {
         return env.data
     }
 
-    static func submitIntakeDraft(id: String) async throws -> CustomerIntakeDraft {
+    static func submitIntakeDraft(id: String, projectId: String? = nil) async throws -> CustomerIntakeDraft {
         let env: Envelope<CustomerIntakeDraft> = try await APIClient.shared.request(
-            path: "portal/intake/\(id)/submit",
+            path: CustomerIntakeDraft.portalIntakeSubmitPath(draftId: id, projectId: projectId),
             method: "POST"
         )
         return env.data
     }
 
-    static func withdrawIntakeDraft(id: String) async throws -> CustomerIntakeDraft {
+    static func withdrawIntakeDraft(id: String, projectId: String? = nil) async throws -> CustomerIntakeDraft {
         let env: Envelope<CustomerIntakeDraft> = try await APIClient.shared.request(
-            path: "portal/intake/\(id)/withdraw",
+            path: CustomerIntakeDraft.portalIntakeWithdrawPath(draftId: id, projectId: projectId),
             method: "POST"
         )
         return env.data
