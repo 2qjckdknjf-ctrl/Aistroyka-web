@@ -131,6 +131,10 @@ export async function setReportPublication(client: SupabaseClient, ctx: TenantCo
   input: { attachmentId: string; visible: boolean; expectedVersion: string | null }) {
   const { report, projectId, portalEnabled } = await scope(client, ctx, reportId);
   if (input.visible && (report.status !== "approved" || !portalEnabled)) fail(409, "Approve the report and enable the customer portal before publication");
+  if (input.visible) {
+    const ready = await client.rpc("published_evidence_source_guard_ready");
+    if (ready.error || ready.data !== true) unavailable();
+  }
   const { links, evidence } = await sources(client, ctx, report);
   const link = links.find(item => item.id === input.attachmentId);
   if (!link || (!link.media_id && !link.upload_session_id)) fail(404, "Attachment not available");

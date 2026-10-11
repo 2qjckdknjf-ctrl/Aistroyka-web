@@ -9,10 +9,10 @@ const id = "00000000-0000-4000-8000-000000000011", attachment = "00000000-0000-4
 const ctx: TenantContext = { tenantId: "tenant", userId: "manager", role: "owner", clientProfile: "web", subscriptionTier: "free", traceId: "trace" };
 let tables: Record<string, Record<string, unknown>[]>;
 let errors: Record<string, string>;
-let allowed: boolean, writes: number, zero: boolean, race: (() => void) | undefined;
+let allowed: boolean, ready: boolean, writes: number, zero: boolean, race: (() => void) | undefined;
 function client() {
   return {
-    rpc: async () => ({ data: allowed, error: errors.rpc ? { code: errors.rpc } : null }),
+    rpc: async (name: string) => ({ data: name === "published_evidence_source_guard_ready" ? ready : allowed, error: errors.rpc ? { code: errors.rpc } : null }),
     from(table: string) {
       const filters: [string, unknown][] = [];
       const sets: [string, unknown[]][] = [];
@@ -45,7 +45,7 @@ function evidence() { return { id: "legacy-evidence", tenant_id: "tenant", proje
   manager_verified: false, internal_only: false, retention_state: "active", source_kind: "photo", updated_at: "2026-10-12T00:00:00.000Z" }; }
 const input = { attachmentId: attachment, visible: true, expectedVersion: null };
 beforeEach(() => {
-  vi.resetAllMocks(); errors = {}; allowed = true; writes = 0; zero = false; race = undefined;
+  vi.resetAllMocks(); errors = {}; allowed = true; ready = true; writes = 0; zero = false; race = undefined;
   tables = { worker_reports: [{ id, tenant_id: "tenant", user_id: "worker", status: "approved", task_id: "task", day_id: null }],
     worker_tasks: [{ id: "task", tenant_id: "tenant", project_id: "project" }], worker_day: [],
     projects: [{ id: "project", tenant_id: "tenant", client_portal_enabled: true }],
@@ -149,4 +149,9 @@ it("a unique creation conflict is recoverable and cannot be reported as publishe
   race = () => { errors.visual_evidence_records = "23505"; };
   await expect(setReportPublication(current, ctx, id, input)).rejects.toMatchObject({ status: 409 });
   expect(tables.visual_evidence_records).toHaveLength(0);
+});
+it("fails closed before uniqueness is installed, while withdrawal remains available", async () => {
+  ready = false; await expect(setReportPublication(client(), ctx, id, input)).rejects.toMatchObject({ status: 503 }); expect(writes).toBe(0);
+  tables.visual_evidence_records = [{ ...evidence(), owner_visible: true, manager_verified: true }];
+  expect(await setReportPublication(client(), ctx, id, { ...input, visible: false, expectedVersion: evidence().updated_at })).toMatchObject({ published: false });
 });
