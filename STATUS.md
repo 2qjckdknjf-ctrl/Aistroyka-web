@@ -8,8 +8,8 @@
 | Рабочая папка Mac | `/Users/alex/Projects/AISTROYKA-main-clean`; [START_HERE](START_HERE.md) |
 | Активная очередь | [реестр PR](docs/tasks/ACTIVE_WORK_REGISTRY.csv) |
 | Завершённое продолжение | Stakeholder intake tenant [#411](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/411) объединён; list/submit/withdraw передают `project_id` |
-| Следующий этап | Проверка staging после #411; RPC/intake DB apply — OWNER_GATE, сначала подтвердить целевую staging БД |
-| Публикация | `/api/v1/health` production и staging; на проверке 2026-10-11 оба отвечали HTTP 200 с `3adcabf`; публикация #411 пока не подтверждена |
+| Следующий этап | Проверка RPC/intake на изолированной БД; live DB apply — OWNER_GATE, сначала подтвердить целевую staging БД |
+| Публикация | `/api/v1/health` production и staging; повторная проверка 2026-10-11: оба HTTP 200, `813c6ae` — #411 опубликован; публикация последующих docs-коммитов проверяется отдельно |
 
 В main: #411 stakeholder intake tenant, #406 withdraw intake, #405 submit, #409 STATUS queue, #408 D1 Android audit, #404 PATCH intake, #407 ROMA-VER-009 advisory. #403 viewer-replay ранее. A2–A5, video authz #386, vision #385 уже в main. Очередь intake 005A (PATCH/submit/withdraw) закрыта в коде.
 

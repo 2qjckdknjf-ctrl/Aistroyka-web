@@ -1,6 +1,6 @@
 # Customer portal intake
 
-Customers describe requested work as a draft, edit it, then confirm it. List returns the tenant drafts the caller may read. Create, update, and submit change only the caller’s own rows in `customer_intake_drafts`. Submit stores `status = submitted` on that row. Contracts, estimates, and tasks stay unchanged.
+Customers describe requested work as a draft, edit it, then confirm it. List returns the tenant drafts the caller may read. Create, update, submit, and withdraw change only the caller’s own rows in `customer_intake_drafts`. Submit stores `status = submitted` on that row. Contracts, estimates, and tasks stay unchanged.
 
 Code:
 
@@ -13,7 +13,7 @@ Endpoint index: [API-v1-ENDPOINTS.md](../API-v1-ENDPOINTS.md).
 
 ## Live database
 
-The migration is in the repo. Handoffs on 2026-10-05 recorded `customer_intake_drafts` as **absent** on the database they checked (`OWNER_GATE`, staging-first). Confirm `to_regclass('public.customer_intake_drafts')` before treating list/create failures as an app bug. Applying the migration is an owner step.
+The migration is in the repo. Read-only verification on 2026-10-11 confirmed `customer_intake_drafts` as **absent** on the database they checked (`OWNER_GATE`, staging-first). Confirm `to_regclass('public.customer_intake_drafts')` before treating list/create failures as an app bug. Applying the migration is an owner step. The deployed staging client uses the same AISTROYKA project as production; confirm an isolated database test target before applying changes. A staging web hostname alone does not isolate database writes.
 
 ## Who can call it
 
@@ -22,16 +22,17 @@ Every route requires a signed-in user with a tenant (`401` `Tenant required` whe
 Tenant for the query is chosen in this order (`resolvePortalIntakeTenant`):
 
 1. Header `x-tenant-id`, or, when that header is absent, cookie `aistroyka_active_tenant`.
-2. Else `project_id` on create, or `project_id` in a PATCH body, looked up on `projects`.
+2. Else `project_id` in a create/PATCH body, or the `project_id` query parameter on list/submit/withdraw, looked up on `projects`.
 3. Else the session tenant from `getTenantContextFromRequest`, for roles other than `stakeholder`.
+4. Else, for a stakeholder, the single distinct tenant among active `project_stakeholders` grants. Multiple grants in that same tenant are unambiguous; no grant or grants spanning several tenants require an explicit tenant/project selection. A lookup error fails closed.
 
-A stakeholder with no explicit claim and no `project_id` receives **400** `x-tenant-id or project_id is required for portal intake`. List and submit never pass a project hint, so a stakeholder needs the header or the cookie for those two calls.
+A stakeholder with no explicit claim, no `project_id`, and no single active portal tenant receives **400** `x-tenant-id or project_id is required for portal intake`. List, submit and withdraw accept a project query hint; the hint selects a tenant and does not bypass row-level authorization.
 
 An empty `x-tenant-id`, or a cookie value that fails to decode, counts as a present claim and returns **400** `x-tenant-id is required`. The project fallback is skipped in that case.
 
 The explicit tenant is allowed for a tenant owner, a `tenant_members` row with role `owner` / `admin` / `member` / `viewer`, or an **active** `project_stakeholders` grant in that tenant. A `tenant_members.role = stakeholder` row alone is **403** `Insufficient rights`.
 
-Session tenant selection prefers a tenant the user owns, then an internal membership over a stakeholder membership. A person who is both a contractor member and a portal stakeholder lists the contractor tenant unless they send `x-tenant-id`.
+Session tenant selection prefers a tenant the user owns, then an internal membership over a stakeholder membership. A person who is both a contractor member and a portal stakeholder lists the contractor tenant unless they send an explicit tenant claim or project hint.
 
 ## Authorization on the row
 
@@ -44,7 +45,7 @@ RLS (`customer_intake_drafts_*`) also requires an **active** account (`accounts.
 
 There is no DELETE route. The RLS delete policy is `using (false)`.
 
-`PATCH` and submit add `.eq("created_by", caller)`. Another creator’s id is **403** `Update denied`, including for tenant admins using this API.
+`PATCH`, submit and withdraw add `.eq("created_by", caller)`. Another creator’s id is **403** `Update denied`, including for tenant admins using this API.
 
 `tenant_id` and `created_by` are immutable. Sending either on `PATCH` is **400**. The database trigger raises the same rule for non-`service_role` updates.
 
@@ -57,7 +58,9 @@ Stored values: `draft` (create default), `submitted`, `withdrawn`.
 - `POST .../submit` updates a `draft` to `submitted` and returns **200** `{ "data": draft }`.
 - Submitting a row that is already `submitted` returns that row again and does not write.
 - A `withdrawn` row returns **400** `Only draft intake can be submitted`.
-- `PATCH` ignores `status`. Nothing in this API sets `withdrawn`.
+- `POST .../withdraw` moves `draft` to `withdrawn` and returns **200** `{ "data": draft }`. Repeat withdrawal returns the existing withdrawn row without writing.
+- Withdrawal of a submitted row returns **400** `Only draft intake can be withdrawn`.
+- `PATCH` ignores `status`; status transitions use submit/withdraw. These calls do not create contracts, estimates or tasks.
 
 ## Body
 
@@ -99,10 +102,11 @@ Invalid JSON is **400** `Invalid JSON body`. Other validation failures are **400
 
 | Client method | Call |
 |---------------|------|
-| `listIntakeDrafts` | `GET portal/intake` |
+| `listIntakeDrafts` | `GET portal/intake`, with `?project_id=...` when a portal project is bound |
 | `createIntakeDraft` | `POST portal/intake`. Sends `project_id` when the draft is bound to a portal project, which is how a stakeholder resolves tenant without the header. |
 | `updateIntakeDraft` | `PATCH portal/intake/:id` |
-| `submitIntakeDraft` | `POST portal/intake/:id/submit` with an empty body |
+| `submitIntakeDraft` | `POST portal/intake/:id/submit`, with the same bound-project query hint |
+| `withdrawIntakeDraft` | `POST portal/intake/:id/withdraw`, with the same bound-project query hint |
 
 `CustomerIntakeDraftPatch` encodes nil `site_context`, work type, dates, and location label as JSON `null`. A nil location label therefore stores `{ "precision": "city" }` and drops a previous label or coordinates. A nil `projectId` omits `project_id`, so the stored project stays. `budget_range` is not on the iOS create or patch body.
 
@@ -112,10 +116,11 @@ The intake form sends a date only when `CustomerIntakeDraft.isISODate` accepts i
 
 | Symptom | Cause |
 |---------|--------|
-| **400** asking for `x-tenant-id` or `project_id` | Stakeholder list/submit (or projectless create) without a tenant claim. Customer iOS list/submit hit this when the session role is `stakeholder`. |
+| **400** asking for `x-tenant-id` or `project_id` | Stakeholder call without a tenant/project claim when active grants do not resolve to one tenant. A bound Customer iOS project supplies the hint on list/submit/withdraw. |
 | **400** `x-tenant-id is required` | Header or active-tenant cookie is present and blank. |
 | **403** `Insert denied` / `Update denied` | Viewer write, revoked grant, suspended or closed account, or a draft whose `created_by` is someone else. |
 | **400** with a database error string | Create, list, and update pass through non-RLS Postgres/PostgREST messages. A missing `customer_intake_drafts` table shows up here. Confirm `to_regclass` before changing the client. |
 | **403** `lite_client_path_forbidden` | `x-client` is `ios_worker`, `android_worker`, `ios_lite`, or `android_lite`. |
 | **400** `Only draft intake can be submitted` | Row is `withdrawn`. |
-| Second submit looks like a no-op | Expected. Already-`submitted` returns the current row. |
+| **400** `Only draft intake can be withdrawn` | Row is already `submitted`. |
+| Second submit/withdraw looks like a no-op | Expected. A row already in the requested terminal state is returned unchanged. |
