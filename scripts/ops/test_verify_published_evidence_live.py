@@ -5,7 +5,7 @@ from verify_published_evidence_live import validate_fixture, request, NoRedirect
 
 
 def fixture():
-    value = {'tag': 'qa-published-evidence-00000000-0000-4000-8000-000000000001', 'image_sha256': 'a' * 64}
+    value = {'lifecycle': 'single_use_operator_cleanup', 'tag': 'qa-published-evidence-00000000-0000-4000-8000-000000000001', 'image_sha256': 'a' * 64}
     for index, key in enumerate(('tenant_id', 'owner_id', 'user_id', 'project_id', 'report_id', 'media_id', 'evidence_id', 'grant_id'), 1):
         value[key] = '00000000-0000-4000-8000-' + str(index).zfill(12)
     value['email'] = value['tag'] + '@example.com'
@@ -14,6 +14,10 @@ def fixture():
 
 
 class ScopeTests(unittest.TestCase):
+    def test_refuses_undeclared_or_reused_fixture_lifecycle(self):
+        for lifecycle in (None, "reusable"):
+            with self.subTest(lifecycle=lifecycle), self.assertRaises(ValueError): validate_fixture({**fixture(), 'lifecycle': lifecycle})
+
     def test_accepts_only_complete_exact_synthetic_scope(self):
         validate_fixture(fixture())
 

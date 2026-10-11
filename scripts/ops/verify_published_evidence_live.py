@@ -43,6 +43,8 @@ def identifier(value):
 
 
 def validate_fixture(fixture):
+    if fixture.get('lifecycle') != 'single_use_operator_cleanup':
+        raise ValueError('Fixture must declare single-use exact operator cleanup; see docs/ops/PUBLISHED_EVIDENCE_LIVE_RUNBOOK.md')
     if not re.fullmatch(r'qa-published-evidence-[0-9a-f-]{36}', fixture.get('tag', '')):
         raise ValueError('Missing exact synthetic fixture tag')
     for key in ('tenant_id', 'owner_id', 'user_id', 'project_id', 'report_id', 'media_id', 'evidence_id', 'grant_id'):
@@ -61,7 +63,7 @@ def verify_fixture_row(table, ident, fields, owner):
     exact(status, 200, 'Exact fixture ' + table)
     rows = json.loads(raw)
     if len(rows) != 1 or any(rows[0].get(key) != value for key, value in fields.items()):
-        raise ValueError('Fixture scope mismatch for ' + table)
+        raise ValueError('Fixture scope mismatch for ' + table + '; prior runs require exact cleanup and fresh fixture creation per docs/ops/PUBLISHED_EVIDENCE_LIVE_RUNBOOK.md')
 
 
 def require_storage_denied(status):
@@ -182,7 +184,7 @@ def run(fixture, expected_sha):
         status, raw, _ = request(DATABASE + '/rest/v1/project_documents?tenant_id=eq.' + fixture['tenant_id'] + '&project_id=eq.' + fixture['project_id'] + '&created_by=eq.' + fixture['owner_id'] + '&title=eq.' + fixture['tag'] + '&select=id', headers=owner)
         exact(status, 200, 'Exact prior document absence'); assert json.loads(raw) == []
         status, raw, _ = request(docs_root, 'POST', {'type': 'document', 'title': fixture['tag']}, owner)
-        exact(status, 200, 'Create exact synthetic document'); doc_id = identifier(json.loads(raw)['data']['id'])
+        exact(status, 201, 'Create exact synthetic document'); doc_id = identifier(json.loads(raw)['data']['id'])
         pdf = fixture_pdf_bytes(); boundary = 'qa-document-' + doc_id
         multipart = ('--' + boundary + '\r\nContent-Disposition: form-data; name="file"; filename="fixture.pdf"\r\nContent-Type: application/pdf\r\n\r\n').encode() + pdf + ('\r\n--' + boundary + '--\r\n').encode()
         status, raw, _ = request(docs_root + '/' + doc_id + '/upload', 'POST', multipart, {**owner, 'Content-Type': 'multipart/form-data; boundary=' + boundary})
@@ -198,7 +200,7 @@ def run(fixture, expected_sha):
         check('customer_cannot_read_internal_document')
 
 
-        return {'checks': checks, 'expected_sha7': expected_sha[:7], 'business_records_untouched': True, 'cleanup_required': True}
+        return {'checks': checks, 'expected_sha7': expected_sha[:7], 'business_records_untouched': True, 'cleanup_required': True, 'fixture_lifecycle': 'single_use_operator_cleanup'}
     finally:
         if share_token and not share_revoked:
             # Revoke only this run's share even if a byte check fails.
