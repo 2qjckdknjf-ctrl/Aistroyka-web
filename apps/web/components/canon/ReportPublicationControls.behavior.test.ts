@@ -41,3 +41,16 @@ it("disables publication while the report is unapproved or the portal is disable
   state.report_status = "submitted"; await render(); expect(host.querySelector("button")?.disabled).toBe(true);
   state.report_status = "approved"; state.portal_enabled = false; await focus(); expect(host.querySelector("button")?.disabled).toBe(true);
 });
+it("refreshes a successful write even if a focus read superseded its generation", async () => {
+  let complete: (value: unknown) => void = () => { throw new Error("PATCH not started"); };
+  fetcher.mockImplementation(async (_url: string, options: RequestInit) => {
+    if (options.method === "PATCH") return new Promise(resolve => { complete = resolve; });
+    return { ok: true, status: 200, json: async () => ({ data: state }) };
+  });
+  await render(); await click(); await focus();
+  expect(host.textContent).toContain("reportPublicationPrivate");
+  (state.items as Array<Record<string, unknown>>)[0].published = true;
+  await act(async () => complete({ ok: true, status: 200, json: async () => ({}) }));
+  expect(host.textContent).toContain("reportPublicationVisible");
+  expect(fetcher.mock.calls.filter(([, options]) => options.method !== "PATCH")).toHaveLength(3);
+});

@@ -17,6 +17,7 @@ export function ReportPublicationControls({ reportId, previews }: { reportId: st
   const [busy, setBusy] = useState(false);
   const [forbidden, setForbidden] = useState(false);
   const generation = useRef(0);
+  const mounted = useRef(false);
   const endpoint = `/api/v1/reports/${encodeURIComponent(reportId)}/publication`;
   const load = useCallback(async () => {
     const current = ++generation.current;
@@ -37,10 +38,12 @@ export function ReportPublicationControls({ reportId, previews }: { reportId: st
     } finally { if (current === generation.current) setLoading(false); }
   }, [endpoint, reportId]);
   useEffect(() => {
+    mounted.current = true;
     void load();
     const refresh = () => { void load(); };
     window.addEventListener("focus", refresh);
     return () => {
+      mounted.current = false;
       // Invalidate the latest request generation, rather than a DOM ref snapshot.
       // eslint-disable-next-line react-hooks/exhaustive-deps
       ++generation.current;
@@ -56,11 +59,15 @@ export function ReportPublicationControls({ reportId, previews }: { reportId: st
       const response = await fetch(endpoint, { method: "PATCH", credentials: "include", cache: "no-store",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ attachment_id: item.attachment_id, visible: !item.published, expected_version: item.version }) });
-      if (current !== generation.current) return;
-      if (!response.ok) { setState(null); setError(response.status === 409 ? "stale" : "load"); return; }
-      await load();
-    } catch { if (current === generation.current) { setState(null); setError("load"); } }
-    finally { setBusy(false); }
+      if (!mounted.current) return;
+      if (response.ok) { await load(); return; }
+      if (current !== generation.current) { await load(); return; }
+      setState(null); setError(response.status === 409 ? "stale" : "load");
+    } catch {
+      if (!mounted.current) return;
+      if (current !== generation.current) { await load(); return; }
+      setState(null); setError("load");
+    } finally { if (mounted.current) setBusy(false); }
   }
   if (forbidden) return null;
   return <section className="canon-glass p-4 space-y-3" aria-label={t("reportPublicationTitle")}>

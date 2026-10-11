@@ -2,7 +2,7 @@
 
 Сверено2026-10-12. Main:`d77dd28a6ae8c22ad1cef3657be934ae8d4521e9` после защищённого #431. Его staging run38183025235 ещё идёт; последний проверенный runtime staging/apex/www —eb8af3d (#429). #431 source/CI/review закрыты; новый runtime требует свежего SHA proof.
 
-Активное продолжение:#432, branch `feature/report-evidence-publication-2026-10-12`, `/Users/alex/AISTROYKA-archive/2026-10-04/worktrees/AISTROYKA-runtime-verification-2026-10-11`.39 publication +15 gallery checks PASS on current main;9 PGlite/11 native uniqueness contracts PASS. Additive migration20261011230105 pending; publication fails closed until actual unique-source readiness. Fresh active-project audit found0 duplicate groups; candidate receipts checked against198-entry history. No apply yet. Canonical `/Users/alex/Projects/AISTROYKA-main-clean` is clean at merged #431 baseline.
+Активное продолжение:#432, branch `feature/report-evidence-publication-2026-10-12`, `/Users/alex/AISTROYKA-archive/2026-10-04/worktrees/AISTROYKA-runtime-verification-2026-10-11`.40 publication +15 gallery checks PASS on current main;9 PGlite/11 native uniqueness contracts PASS. Additive migration20261011230105 pending; publication fails closed until actual unique-source readiness. Fresh active-project audit found0 duplicate groups; candidate receipts checked against198-entry history. No apply yet. Canonical `/Users/alex/Projects/AISTROYKA-main-clean` is clean at merged #431 baseline.
 
 | Контур | Подтверждено | Следующая работа |
 |---|---|---|
