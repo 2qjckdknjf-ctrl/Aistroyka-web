@@ -107,3 +107,6 @@
 "cust_intake_submit" = "Submit for review";
 "cust_intake_submit_ok" = "Draft submitted. This is not a contract.";
 "cust_intake_submit_error" = "Could not submit draft.";
+"cust_intake_withdraw" = "Reject draft";
+"cust_intake_withdraw_ok" = "Draft rejected. This is not a contract.";
+"cust_intake_withdraw_error" = "Could not reject draft.";

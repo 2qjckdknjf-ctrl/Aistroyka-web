@@ -107,3 +107,6 @@
 "cust_intake_submit" = "Invia in revisione";
 "cust_intake_submit_ok" = "Bozza inviata. Non è un contratto.";
 "cust_intake_submit_error" = "Impossibile inviare la bozza.";
+"cust_intake_withdraw" = "Rifiuta bozza";
+"cust_intake_withdraw_ok" = "Bozza rifiutata. Questo non è un contratto.";
+"cust_intake_withdraw_error" = "Impossibile rifiutare la bozza.";

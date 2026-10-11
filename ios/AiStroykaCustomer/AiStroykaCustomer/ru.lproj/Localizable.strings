@@ -107,3 +107,6 @@
 "cust_intake_submit" = "Отправить на рассмотрение";
 "cust_intake_submit_ok" = "Черновик отправлен. Это не договор.";
 "cust_intake_submit_error" = "Не удалось отправить черновик.";
+"cust_intake_withdraw" = "Отклонить черновик";
+"cust_intake_withdraw_ok" = "Черновик отклонён. Это не договор.";
+"cust_intake_withdraw_error" = "Не удалось отклонить черновик.";
