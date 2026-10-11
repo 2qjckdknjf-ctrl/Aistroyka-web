@@ -17,6 +17,10 @@ on:
         description: "Branch/tag/SHA containing the smoke script"
         required: false
         default: main
+      expected_sha:
+        description: "Optional full reviewed commit SHA to verify on the live hosts (no deploy)."
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -37,6 +41,13 @@ jobs:
         with:
           ref: ${{ inputs.ref }}
           persist-credentials: false
+
+      - name: Verify served commit (read-only)
+        if: ${{ inputs.expected_sha != '' }}
+        env:
+          TARGET: ${{ inputs.target }}
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        run: python3 scripts/release/verify_deployed_commit.py --target "$TARGET" --expected-sha "$EXPECTED_SHA"
 
       - name: Run security headers smoke with consecutive PASS requirement
         env:
