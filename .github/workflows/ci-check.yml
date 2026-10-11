@@ -34,6 +34,11 @@ jobs:
       - name: AI deployment proof boundary tests
         run: python3 scripts/smoke/test_ai_live_provider.py -v
 
+      - name: Customer finance proof boundary tests
+        run: |
+          python3 scripts/verify/test_customer_portal_payload.py -v
+          python3 scripts/verify/test_stakeholder_finance_sanity.py -v
+
       # CI builds with bun; Vercel installs with npm from the root lock. Catch
       # npm-lock corruption (missing versions, macOS-only platform binaries)
       # here instead of on the next Vercel deploy.
