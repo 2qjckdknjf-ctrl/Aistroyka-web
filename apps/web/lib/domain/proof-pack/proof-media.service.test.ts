@@ -3,14 +3,15 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { downloadSharedProofMedia } from "./proof-media.service";
 const mocks = vi.hoisted(() => ({ resolve: vi.fn(), download: vi.fn() }));
 vi.mock("@/lib/platform/ai/resolve-ai-media-image", () => ({ resolveAIMediaImage: mocks.resolve }));
+let included = true;
 let tables: Record<string, Record<string, unknown> | null>, failing: string | null;
 const filters: Array<[string, string, unknown]> = [];
 const admin = {
-  from: (table: string) => ({ select() { return this; }, eq(key: string, value: unknown) { filters.push([table, key, value]); return this; }, maybeSingle: async () => ({ data: tables[table], error: failing === table ? { message: "private failure" } : null }) }),
+  from: (table: string) => ({ select() { return this; }, eq(key: string, value: unknown) { filters.push([table, key, value]); return this; }, order() { return this; }, limit: async () => ({ data: included && tables.media ? [tables.media] : [], error: failing === "media" ? {} : null }), maybeSingle: async () => ({ data: tables[table], error: failing === table ? { message: "private failure" } : null }) }),
   storage: { from: () => ({ download: mocks.download }) },
 } as unknown as SupabaseClient;
 beforeEach(() => {
-  vi.clearAllMocks(); filters.length = 0; failing = null;
+  vi.clearAllMocks(); included = true; filters.length = 0; failing = null;
   tables = { proof_pack_shares: { tenant_id: "t1", project_id: "p1", revoked_at: null, expires_at: null }, tenants: { account_id: "a1" }, accounts: { status: "active" }, media: { id: "m1", tenant_id: "t1", project_id: "p1", type: "image", file_url: "p1/image.png" } };
   mocks.resolve.mockResolvedValue({ ok: true, trustedProjectId: "p1", objectPath: "p1/image.png" });
   mocks.download.mockResolvedValue({ data: new Blob(["synthetic"], { type: "image/png" }), error: null });
@@ -49,4 +50,12 @@ describe("token-scoped private proof originals", () => {
     mocks.download.mockResolvedValue({ data: new Blob(["html"], { type: "text/html" }), error: null });
     await expect(downloadSharedProofMedia(admin, "token", "m1")).rejects.toMatchObject({ status: 415 });
   });
+  it("denies known media omitted from the current pack", async () => {
+    included = false; await expect(downloadSharedProofMedia(admin, "token", "m1")).rejects.toMatchObject({ status: 404 }); expect(mocks.download).not.toHaveBeenCalled();
+  });
+  it("denies media that leaves the bounded selection during I/O", async () => {
+    mocks.download.mockImplementation(async () => { included = false; return { data: new Blob(["synthetic"], { type: "image/png" }), error: null }; });
+    await expect(downloadSharedProofMedia(admin, "token", "m1")).rejects.toMatchObject({ status: 404 });
+  });
+
 });
