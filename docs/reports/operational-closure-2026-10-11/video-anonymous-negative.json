@@ -1,0 +1,12 @@
+[
+  {
+    "host": "staging.aistroyka.ai",
+    "http": 401,
+    "anonymous_video_denied": true
+  },
+  {
+    "host": "aistroyka.ai",
+    "http": 401,
+    "anonymous_video_denied": true
+  }
+]

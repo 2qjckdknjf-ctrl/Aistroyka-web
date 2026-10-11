@@ -1,15 +1,13 @@
 # Current Focus
 
-Обновлено 2026-10-11. Текущий исходный код определяется origin/main, а не названием папки. Снимок этой сверки: 729126d4. [STATUS](../../STATUS.md), [реестр](../tasks/ACTIVE_WORK_REGISTRY.csv).
+Обновлено 2026-10-11. Source: свежий origin/main; каноническая папка AISTROYKA-main-clean. [STATUS](../../STATUS.md), [реестр](../tasks/ACTIVE_WORK_REGISTRY.csv), [сверка плана](../roadmap/CURRENT_EXECUTION_STATE_2026-10-11.md).
 
-#410 и #413 объединены после CI и non-author APPROVED. #413 добавляет миграцию защиты прямых переходов статуса intake; live apply не выполнен. #385/#386, #404/#405/#406 и #411 уже реализованы. #411 подтверждён на staging и production (813c6ae); публикация последующих коммитов требует отдельной проверки.
+Операционный DB хвост закрыт с явным разрешением владельца: intake + lifecycle, 4-arg RPC, private helpers и timestamp/FK corrections применены. #415/#416/#417 объединены через current-head non-author APPROVED + required check. Повторный API lifecycle и очистка точных синтетических строк PASS. staging и production HTTP 200, buildStamp.sha7 = 35fa334 (проверка 2026-10-11 09:58 UTC).
 
-#347/#351 закрыты как побайтово включённые; #317/#348/#352 закрыты как заменённые более новой реализацией. Все ветки сохранены. Не повторять эти реализации.
+Следующее действие перед SQL: свежий migration metadata export → migration_receipts_preflight.py. Пять исходных файлов уже применены под четырьмя remote IDs. Не replay, не broad db push, не blind history repair. [Контракт](../ops/VERIFIED_DB_MIGRATION_RECEIPTS.md).
 
-Проверки: 94 intake/finance Vitest, 34 последовательные PostgreSQL checks с синтетическими данными, 27 approvals/summary/video/resolver tests PASS. Локальные проверки не доказывают concurrency, PostgREST или live apply. Воспроизводимый SQL harness: scripts/ops/verify_intake_lifecycle_postgres.mjs.
+Все 75 старых open PR отражены в обновлённом реестре с разделёнными HEAD/merge SHA. #281/#289/#293 закрыты как включённые, ветки сохранены. Не restack уже реализованные Customer/Graph/Vision/intake/video/daily-log/ROMA/D1 срезы.
 
-Следующий гейт: разрешение на изолированную тестовую ветку существующего AISTROYKA для проверки миграций; действующий staging client использует production DB. Новые проекты не создавать. Live apply, stores, billing и legal — отдельные разрешения. Обычное «продолжай» не заменяет конкретный operational grant.
+Следующая приоритетная работа: hard audit существующего AI/security контура и PR #200 (image auth / legacy worker call paths), затем полный portal/device сценарий и недостающий async scope extraction AIS-CLIENT-005A. Новых AI возможностей до verdict не добавлять. Manual intake CRUD доказан; live camera/voice 005B зависит от следующих стадий. Android D2 не стартовать до iOS readiness. Store/legal/billing technical gates не закрыты общей автономностью.
 
-Локальная настройка GITHUB_REVIEWER_TOKEN в канонической папке обновлена существующим действующим токеном. Не выводить и не коммитить секреты; перед ревью подтвердить независимый аккаунт и текущий HEAD.
-
-[Handoff](../handoff/2026-10-11-continuation-state.md). Следующие независимые задачи выбирать по зависимостям и свежему hard audit; 005B/D2/большие старые ветки не запускать в обход решений.
+[Handoff](../handoff/2026-10-11-continuation-state.md). Пользователь разрешил этот операционный этап; секреты и приватные schema/env snapshots остаются только локально. Chrome для независимого ревью не нужен: действующий reviewer token доступен, идентичность/HEAD проверяются до каждого review.

@@ -1,5 +1,7 @@
 # AISTROYKA 100% Execution DAG — 2026-10-03
 
+> Historical execution snapshot. Current implementation/runtime reconciliation: [2026-10-11 execution state](CURRENT_EXECUTION_STATE_2026-10-11.md). TODO below is not evidence of absence from current main.
+
 Status values: TODO | IN_PROGRESS | WAITING_EXTERNAL | REVIEW | PASS | FAIL | BLOCKED_EXTERNAL | OWNER_GATE | PROVEN
 
 Independent lanes may proceed when a node is WAITING_EXTERNAL.

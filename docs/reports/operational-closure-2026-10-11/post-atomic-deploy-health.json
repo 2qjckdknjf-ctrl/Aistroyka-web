@@ -1,0 +1,14 @@
+[
+  {
+    "host": "staging.aistroyka.ai",
+    "http": 200,
+    "sha7": "35fa334",
+    "observed_utc": "2026-10-11T09:58:54.006647+00:00"
+  },
+  {
+    "host": "aistroyka.ai",
+    "http": 200,
+    "sha7": "35fa334",
+    "observed_utc": "2026-10-11T09:58:55.032871+00:00"
+  }
+]

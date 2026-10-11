@@ -21,7 +21,7 @@ python3 scripts/ops/workspace_preflight.py --refresh --resume-pr "${PR_NUMBER:?�
 4. Для новой согласованной задачи создайте отдельную ветку от обновлённого `origin/main`; не переключайте занятую или грязную папку.
 5. Закрывайте задачу через проверки → защищённое объединение → проверку staging → учёт БД/мобильной сборки → подтверждение публикации.
 
-Customer iOS #375/#382, Graph persistence #376, async Vision #377, Intake #378 и Vision `request_key` #385 уже в main. Открытая очередь: [#386](https://github.com/2qjckdknjf-ctrl/Aistroyka-web/pull/386) (tenant auth для unscoped video). Apply RPC `p_request_key`, таблицы intake и device smoke остаются OWNER_GATE / отдельными проверками. Agentic/старые дизайн- и мобильные ветки остаются в реестре на сверку.
+Customer iOS, Graph persistence, async Vision/request_key и ручной intake CRUD уже в main. Live intake/RPC/private-helper миграции применены 2026-10-11. Не повторяйте их из-за несовпадающих remote IDs: [receipts и проверка перед миграцией](docs/ops/VERIFIED_DB_MIGRATION_RECEIPTS.md). Состояние разработки: [актуальная сверка плана](docs/roadmap/CURRENT_EXECUTION_STATE_2026-10-11.md), [операционный отчёт](docs/reports/2026-10-11-operational-closure.md). Физическое device smoke, AI scope extraction и оставшиеся semantic-review PR проверяются отдельно. Старые датированные TODO не являются доказательством отсутствия кода.
 
 `/Users/alex/Projects/AISTROYKA` хранит общий Git и старую незаписанную работу. Это сохранённый исходник, а не актуальный кабинет. Старые датированные аудиты являются историей.
 

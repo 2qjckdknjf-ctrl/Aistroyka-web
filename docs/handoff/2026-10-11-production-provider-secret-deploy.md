@@ -1,5 +1,7 @@
 # Production secret deployment handoff — 2026-10-11
 
+Completion update: #417 was subsequently merged at 35fa3347; final rollout evidence is recorded in the operational closure report. Current handoff: [continuation state](2026-10-11-continuation-state.md). The text below is the earlier delivery snapshot.
+
 Branch fix/production-provider-secret-deploy-2026-10-11 starts at 76579633. Additive deployment fix and six boundary tests are ready; deployment-only Wrangler 4.149.0 requires Node 22 and supports additive --secrets-file. Production atomic secret update uses a private temporary file and reviewed patched bundle. Source stamp uses checkout HEAD, and staging-verified SHA ancestors are accepted via repository commit lookup.
 
 Protect merge with current-head non-author APPROVED and required check. Then verify staging followed by production health and blocking smoke/provider step evidence. Owner already authorized these operations; do not ask again. Never promote an unrelated inactive Worker version to satisfy a secret-edit error.

@@ -1,0 +1,8 @@
+{
+  "unit_tests_passed": 7,
+  "remote_receipts_verified": 4,
+  "source_files_verified": 5,
+  "candidate_intake_replay_exit": 3,
+  "bulk_apply_exit": 3,
+  "database_mutated": false
+}
